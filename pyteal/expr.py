@@ -20,6 +20,25 @@ class Expr(ABC):
           """
           pass
 
+     def __lt__(self, other):
+          from .ops import Lt
+          return Lt(self, other)
+
+     def __eq__(self, other):
+          from .ops import Eq
+          return Eq(self, other)
+
+     # logic and
+     def land(self, other):
+          from .ops import And
+          return And(self, other)
+
+     # logic or
+     def lor(self, other):
+          from .ops import Or
+          return Or(self, other)
+
+
 class BinaryExpr(Expr):
      left: ClassVar[Expr]
      right: ClassVar[Expr]

@@ -23,5 +23,5 @@ class TealTypeMismatchError(Exception):
 
 
 def require_type(actual: TealType, expected: TealType):
-    if acutal != expected:
+    if actual != expected:
         raise TealTypeError(actual, expected)
