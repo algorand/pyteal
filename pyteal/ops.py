@@ -4,9 +4,12 @@ Operators on uint64
 
 """
 
-from core import Expr, BinaryExpr, UnaryExpr, NaryExpr, LeafExpr, TealType
 from typing import ClassVar, List
 from enum import Enum
+
+from .util import TealType, TealTypeError, TealTypeMismatchError, require_type
+from .expr import Expr, BinaryExpr, UnaryExpr, NaryExpr, LeafExpr, TealType
+
 
 class TxnField(Enum):
      sender = 0
@@ -142,12 +145,12 @@ class Arg(LeafExpr):
 
 
 class And(BinaryExpr):
-    left: ClassVar[Expr]
-    right: ClassVar[Expr]
 
     # default constructor
     # TODO: operator override design
     def __init__(self, left:Expr, right:Expr):
+        require_type(left.type_of(), TealType.uint64)
+        require_type(right.type_of(), TealType.uint64)
         self.left = left
         self.right = right
 
@@ -156,11 +159,11 @@ class And(BinaryExpr):
 
 
 class Or(BinaryExpr):
-    left: ClassVar[Expr]
-    right: ClassVar[Expr]
 
     # default constructor
     def __init__(self, left:Expr, right:Expr):
+        require_type(left.type_of(), TealType.uint64)
+        require_type(right.type_of(), TealType.uint64)
         self.left = left
         self.right = right
 
@@ -169,12 +172,12 @@ class Or(BinaryExpr):
     
 
 # less than
-class LT(BinaryExpr):
-    left: ClassVar[Expr]
-    right: ClassVar[Expr]
+class Lt(BinaryExpr):
 
     # default constructor
     def __init__(self, left:Expr, right:Expr):
+        require_type(left.type_of(), TealType.uint64)
+        require_type(right.type_of(), TealType.uint64)
         self.left = left
         self.right = right
 
@@ -183,9 +186,7 @@ class LT(BinaryExpr):
 
 
 # less than
-class GT(BinaryExpr):
-    left: ClassVar[Expr]
-    right: ClassVar[Expr]
+class Gt(BinaryExpr):
 
     # default constructor
     def __init__(self, left:Expr, right:Expr):
@@ -195,10 +196,27 @@ class GT(BinaryExpr):
     def type_of(self):
         return TealType.uint64    
 
+
+# a polymorphic eq
+class Eq(BinaryExpr):
+
+    # default constructor
+    def __init__(self, left:Expr, right:Expr):
+        # type checking
+        t1 = left.type_of()
+        t2 = right.type_of()
+        if t1 != t2:
+            raise TealTypeMismatchError(t1, t2)
+
+        self.left = left
+        self.right = right
+
+    def type_of(self):
+        return TealType.uint64
+    
     
 # return the length of a bytes value
 class Len(UnaryExpr):
-    child: ClassVar[Expr]
 
     # default constructor
     def __init__(self, child:Expr):
@@ -233,11 +251,14 @@ class Global(LeafExpr):
 
 # ed25519 signature verification
 class Ed25519Verify(NaryExpr):
-    args: ClassVar[List[str]]
 
     # default constructor
-    def __init__(self, data:str, sig:str, pk:str):
-        arg_list = [data, sig, pk]
+    def __init__(self, arg0:Expr, arg1:Expr, arg2:Expr):
+        require_type(arg0.type_of(), TealType.bytes)
+        require_type(arg1.type_of(), TealType.bytes)
+        require_type(arg2.type_of(), TealType.bytes)
+        
+        arg_list = [arg0, arg1, arg2]
         self.args = arg_list
 
     def type_of(self):

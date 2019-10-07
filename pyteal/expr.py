@@ -7,11 +7,9 @@ An expression language for TEAL.
 
 from abc import ABC, abstractmethod
 from enum import Enum
+from typing import ClassVar, List
 
-class TealType(Enum):
-     uint64 = 0
-     bytes = 1
-     anytype = 2
+from .util import TealType
 
      
 class Expr(ABC):
@@ -23,14 +21,15 @@ class Expr(ABC):
           pass
 
 class BinaryExpr(Expr):
-     pass 
+     left: ClassVar[Expr]
+     right: ClassVar[Expr]
     
 
 class UnaryExpr(Expr):
-     pass
+     child: ClassVar[Expr]
 
 class NaryExpr(Expr):
-     pass
+     args: ClassVar[List[Expr]]
 
 class LeafExpr(Expr):
      pass
