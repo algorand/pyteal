@@ -5,13 +5,32 @@ An expression language for TEAL.
 
 """
 
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
+from enum import Enum
 
-class Expr(Printable):
-     __metaclass__ = ABCMeta
+class TealType(Enum):
+     uint64 = 0
+     raw_bytes = 1
+     anytype = 2 
+
+class Expr(ABC):
+
+     @abstractmethod
+     def typeof(self) -> TealType:
+          """Returns a TealType enum describing the expression's return type
+          """
+          pass
 
 class BinaryExpr(Expr):
-    pass
+     pass 
+    
 
 class UnaryExpr(Expr):
-    pass
+     pass
+
+class NaryExpr(Expr):
+     pass
+
+class LeafExpr(Expr):
+     pass
+
