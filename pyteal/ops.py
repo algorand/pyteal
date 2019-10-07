@@ -66,6 +66,32 @@ type_of_field = {
      TxnField.lease: TealType.bytes
 }
 
+str_of_field = {
+     TxnField.sender: "Sender",
+     TxnField.fee: "Fee",
+     TxnField.first_valid: "FirstValid",
+     TxnField.last_valid: "LastValid",
+     TxnField.note: "Note",
+     TxnField.receiver: "Receiver",
+     TxnField.amount: "Amount",
+     TxnField.close_remainder_to: "CloseRemainderTo",
+     TxnField.vote_pk: "VotePK",
+     TxnField.selection_pk: "SelectionPK",
+     TxnField.vote_first: "VoteFirst",
+     TxnField.vote_last: "VoteLast",
+     TxnField.vote_key_dilution: "VoteKeyDilution",
+     TxnField.type: "Type",
+     TxnField.type_enum: "TypeEnum",
+     TxnField.xfer_asset: "XferAsset",
+     TxnField.asset_amount: "AssetAmount",
+     TxnField.asset_sender: "AssetSender",
+     TxnField.asset_receiver: "AssetReceiver",
+     TxnField.asset_close_to: "AssetCloseTo",
+     TxnField.group_index: "GroupIndex",
+     TxnField.tx_id: "TxID",
+     TxnField.sender_balance: "SenderBalance",
+     TxnField.lease: "Lease"
+}
 
 class GlobalField(Enum):
      round = 0,
@@ -85,7 +111,17 @@ type_of_global_field = {
      GlobalField.time_stamp: TealType.uint64,
      GlobalField.zero_address: TealType.bytes,
      GlobalField.group_size: TealType.uint64
-}     
+}
+
+str_of_global_field = {
+     GlobalField.round: "Round",
+     GlobalField.min_txn_fee: "MinTxnFee",
+     GlobalField.min_balance: "MinBalance",
+     GlobalField.max_txn_life: "MaxTxnLife",
+     GlobalField.time_stamp: "TimeStamp",
+     GlobalField.zero_address: "ZeroAddress",
+     GlobalField.group_size: "GroupSize"
+}
 
 
 class Addr(LeafExpr):
@@ -95,7 +131,10 @@ class Addr(LeafExpr):
     def __init__(self, address:str):        
         #TODO: check the validity of the address
         self.address = address
-        
+
+    def __str__(self):
+        return "(address: {})".format(self.address)
+
     def type_of(self):
         return TealType.raw_bytes
 
@@ -113,6 +152,9 @@ class Byte(LeafExpr):
         else:
             raise "Byte: Invalid base"
 
+    def __str__(self):
+        return "({} bytes: {})".format(self.base, self.byte_str)
+
     def type_of(self):
         return TealType.raw_bytes
 
@@ -127,6 +169,9 @@ class Int(LeafExpr):
         else:
             raise "Int: {} is  out of range".format(value)
 
+    def __str__(self):
+        return "(Int: {})".format(self.value)
+
     def type_of(self):
         return TealType.uint64
     
@@ -139,6 +184,9 @@ class Arg(LeafExpr):
             raise "Invalid arg index: {}".format(index)
 
         self.index = index
+
+    def __str__(self):
+        return "(arg {})".format(index)
 
     def type_of(self):
         return TealType.raw_bytes
@@ -154,6 +202,9 @@ class And(BinaryExpr):
         self.left = left
         self.right = right
 
+    def __str__(self):
+        return "(and {} {})".format(self.left, self.right)
+
     def type_of(self):
         return TealType.uint64
 
@@ -166,6 +217,9 @@ class Or(BinaryExpr):
         require_type(right.type_of(), TealType.uint64)
         self.left = left
         self.right = right
+
+    def __str__(self):
+        return "(or {} {})".format(self.left, self.right) 
 
     def type_of(self):
         return TealType.uint64
@@ -181,6 +235,9 @@ class Lt(BinaryExpr):
         self.left = left
         self.right = right
 
+    def __str__(self):
+        return "(< {} {})".format(self.left, self.right)
+
     def type_of(self):
         return TealType.uint64
 
@@ -193,6 +250,9 @@ class Gt(BinaryExpr):
         self.left = left
         self.right = right
 
+    def __str__(self):
+        return "(> {} {})".format(self.left, self.right)
+        
     def type_of(self):
         return TealType.uint64    
 
@@ -211,6 +271,9 @@ class Eq(BinaryExpr):
         self.left = left
         self.right = right
 
+    def __str__(self):
+         return "(== {} {})".format(self.left, self.right)
+        
     def type_of(self):
         return TealType.uint64
     
@@ -221,6 +284,9 @@ class Len(UnaryExpr):
     # default constructor
     def __init__(self, child:Expr):
         self.child = child
+
+    def __str__(self):
+         return "(len {})".format(self.child)
 
     def type_of(self):
         return TealType.uint64
@@ -234,6 +300,9 @@ class Txn(LeafExpr):
     def __init__(self, field:TxnField):
         self.field = field
 
+    def __str__(self):
+        return "(Txn {})".format(str_of_field[self.field])
+
     def type_of(self):
         return type_of_field[self.field]
     
@@ -244,6 +313,9 @@ class Global(LeafExpr):
     # default constructor
     def __init__(self, field:GlobalField):
         self.field = field
+
+    def __str__(self):
+        return "(Global {})".format(str_of_global_field[self.field])
 
     def type_of(self):
         return type_of_global_field(self.field)
@@ -261,6 +333,10 @@ class Ed25519Verify(NaryExpr):
         arg_list = [arg0, arg1, arg2]
         self.args = arg_list
 
+    def __str__(self):
+         return "(ed25519verify {})".format(self.child)
+        
     def type_of(self):
         return TealType.uint64
-        
+
+

@@ -20,6 +20,12 @@ class Expr(ABC):
           """
           pass
 
+     @abstractmethod
+     def __str__(self) -> str:
+          """Returns the string representation of the experssion
+          """
+          pass
+     
      def __lt__(self, other):
           from .ops import Lt
           return Lt(self, other)
