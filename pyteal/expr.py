@@ -30,17 +30,21 @@ class Expr(ABC):
           from .ops import Lt
           return Lt(self, other)
 
+     def __gt__(self, other):
+          from .ops import Gt
+          return Gt(self, other)
+     
      def __eq__(self, other):
           from .ops import Eq
           return Eq(self, other)
 
      # logic and
-     def land(self, other):
+     def And(self, other):
           from .ops import And
           return And(self, other)
 
      # logic or
-     def lor(self, other):
+     def Or(self, other):
           from .ops import Or
           return Or(self, other)
 

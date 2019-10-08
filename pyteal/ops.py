@@ -139,7 +139,7 @@ class Addr(LeafExpr):
         return "(address: {})".format(self.address)
 
     def type_of(self):
-        return TealType.raw_bytes
+        return TealType.bytes
 
 
 class Bytes(LeafExpr):
@@ -155,11 +155,13 @@ class Bytes(LeafExpr):
         else:
             raise "Bytes: Invalid base"
 
+        self.byte_str = byte_str
+
     def __str__(self):
         return "({} bytes: {})".format(self.base, self.byte_str)
 
     def type_of(self):
-        return TealType.raw_bytes
+        return TealType.bytes
 
 
 class Int(LeafExpr):
@@ -190,10 +192,10 @@ class Arg(LeafExpr):
         self.index = index
 
     def __str__(self):
-        return "(arg {})".format(index)
+        return "(arg {})".format(self.index)
 
     def type_of(self):
-        return TealType.raw_bytes
+        return TealType.bytes
 
 
 class And(BinaryExpr):
@@ -447,7 +449,7 @@ class Global(LeafExpr):
         return cls(GlobalField.group_size)
 
     def type_of(self):
-        return type_of_global_field(self.field)
+        return type_of_global_field[self.field]
 
 
 # ed25519 signature verification
