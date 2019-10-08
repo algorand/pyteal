@@ -36,7 +36,7 @@ class TxnField(Enum):
      tx_id = 21
      sender_balance = 22
      lease = 23     
-     
+
 
 # data types of txn fields
 type_of_field = {
@@ -66,6 +66,7 @@ type_of_field = {
      TxnField.lease: TealType.bytes
 }
 
+
 str_of_field = {
      TxnField.sender: "Sender",
      TxnField.fee: "Fee",
@@ -93,6 +94,7 @@ str_of_field = {
      TxnField.lease: "Lease"
 }
 
+
 class GlobalField(Enum):
      round = 0,
      min_txn_fee = 1
@@ -112,6 +114,7 @@ type_of_global_field = {
      GlobalField.zero_address: TealType.bytes,
      GlobalField.group_size: TealType.uint64
 }
+
 
 str_of_global_field = {
      GlobalField.round: "Round",
@@ -139,7 +142,7 @@ class Addr(LeafExpr):
         return TealType.raw_bytes
 
 
-class Byte(LeafExpr):
+class Bytes(LeafExpr):
     base: ClassVar[str]
     byte_str: ClassVar[str]
 
@@ -150,7 +153,7 @@ class Byte(LeafExpr):
         elif base == "base64":
             self.base = base
         else:
-            raise "Byte: Invalid base"
+            raise "Bytes: Invalid base"
 
     def __str__(self):
         return "({} bytes: {})".format(self.base, self.byte_str)
@@ -174,7 +177,8 @@ class Int(LeafExpr):
 
     def type_of(self):
         return TealType.uint64
-    
+
+
 class Arg(LeafExpr):
     index: ClassVar[int]
 
@@ -303,6 +307,103 @@ class Txn(LeafExpr):
     def __str__(self):
         return "(Txn {})".format(str_of_field[self.field])
 
+    # a series of class methods for easier programmer experience
+    @classmethod
+    def sender(cls):
+        return cls(TxnField.sender)
+    
+    @classmethod
+    def fee(cls):
+        return cls(TxnField.fee)
+
+    @classmethod
+    def first_valid(cls):
+        return cls(TxnField.first_valid)
+
+    @classmethod
+    def last_valid(cls):
+        return cls(TxnField.last_valid)
+
+    @classmethod
+    def note(cls):
+        return cls(TxnField.note)
+
+    @classmethod
+    def receiver(cls):
+        return cls(TxnField.receiver)
+
+    @classmethod
+    def amount(cls):
+        return cls(TxnField.amount)
+
+    @classmethod
+    def close_remainder_to(cls):
+        return cls(TxnField.close_remainder_to)
+
+    @classmethod
+    def vote_pk(cls):
+        return cls(TxnField.vote_pk)
+
+    @classmethod
+    def selection_pk(cls):
+        return cls(TxnField.selection_pk)
+
+    @classmethod
+    def vote_first(cls):
+        return cls(TxnField.vote_first)
+
+    @classmethod
+    def vote_last(cls):
+        return cls(TxnField.vote_last)
+
+    @classmethod
+    def vote_key_dilution(cls):
+        return cls(TxnField.vote_key_dilution)
+
+    @classmethod
+    def type(cls):
+        return cls(TxnField.type)
+
+    @classmethod
+    def type_enum(cls):
+        return cls(TxnField.type_enum)
+
+    @classmethod
+    def xfer_asset(cls):
+        return cls(TxnField.xfer_asset)
+
+    @classmethod
+    def asset_amount(cls):
+        return cls(TxnField.asset_amount)
+
+    @classmethod
+    def asset_sender(cls):
+        return cls(TxnField.asset_sender)
+
+    @classmethod
+    def asset_receiver(cls):
+        return cls(TxnField.asset_receiver)
+
+    @classmethod
+    def asset_close_to(cls):
+        return cls(TxnField.asset_close_to)
+
+    @classmethod
+    def group_index(cls):
+        return cls(TxnField.group_index)
+
+    @classmethod
+    def tx_id(cls):
+        return cls(TxnField.tx_id)
+
+    @classmethod
+    def sender_balance(cls):
+        return cls(TxnField.sender_balance)
+
+    @classmethod
+    def lease(cls):
+        return cls(TxnField.lease)
+   
     def type_of(self):
         return type_of_field[self.field]
     
@@ -316,6 +417,34 @@ class Global(LeafExpr):
 
     def __str__(self):
         return "(Global {})".format(str_of_global_field[self.field])
+
+    @classmethod
+    def round(cls):
+        return cls(GlobalField.round)
+
+    @classmethod
+    def min_txn_fee(cls):
+        return cls(GlobalField.min_txn_fee)
+
+    @classmethod
+    def min_balance(cls):
+        return cls(GlobalField.min_balance)
+
+    @classmethod
+    def max_txn_life(cls):
+        return cls(GlobalField.max_txn_life)
+
+    @classmethod
+    def time_stamp(cls):
+        return cls(GlobalField.time_stamp)
+
+    @classmethod
+    def zero_address(cls):
+        return cls(GlobalField.zero_address)
+
+    @classmethod
+    def group_size(cls):
+        return cls(GlobalField.group_size)
 
     def type_of(self):
         return type_of_global_field(self.field)
