@@ -22,6 +22,12 @@ class TealTypeMismatchError(Exception):
         self.message = "Type mismatch error: {} cannot be resolved to {}".format(t1, t2)
 
 
+class TealInputError(Exception):
+
+     def __init__(self, msg):
+        self.message = "Input error: {}".format(msg)
+        
+
 def require_type(actual: TealType, expected: TealType):
     if actual != expected:
         raise TealTypeError(actual, expected)

@@ -7,7 +7,7 @@ Operators on uint64
 from typing import ClassVar, List
 from enum import Enum
 
-from .util import TealType, TealTypeError, TealTypeMismatchError, require_type
+from .util import *
 from .expr import Expr, BinaryExpr, UnaryExpr, NaryExpr, LeafExpr, TealType
 
 
@@ -128,8 +128,7 @@ str_of_global_field = {
 
 
 class Addr(LeafExpr):
-    address: ClassVar[str]
-    
+     
     # default constructor
     def __init__(self, address:str):        
         #TODO: check the validity of the address
@@ -143,9 +142,7 @@ class Addr(LeafExpr):
 
 
 class Bytes(LeafExpr):
-    base: ClassVar[str]
-    byte_str: ClassVar[str]
-
+     
     #default constructor
     def __init__(self, base:str, byte_str:str):
         if base == "base32":
@@ -153,7 +150,7 @@ class Bytes(LeafExpr):
         elif base == "base64":
             self.base = base
         else:
-            raise "Bytes: Invalid base"
+            raise TealInputError("invalid base {}".format(base))
 
         self.byte_str = byte_str
 
@@ -165,14 +162,13 @@ class Bytes(LeafExpr):
 
 
 class Int(LeafExpr):
-    value: ClassVar[int]
-
+     
     # default contructor
     def __init__(self, value:int):
         if value >= 0 and value < 2 ** 64:
-            self.value = value
+             self.value = value
         else:
-            raise "Int: {} is  out of range".format(value)
+            raise TealInputError("Int {} is  out of range".format(value))
 
     def __str__(self):
         return "(Int: {})".format(self.value)
@@ -182,12 +178,11 @@ class Int(LeafExpr):
 
 
 class Arg(LeafExpr):
-    index: ClassVar[int]
-
+     
     # default constructor
     def __init__(self, index:int):
         if index < 0 or index > 255:
-            raise "Invalid arg index: {}".format(index)
+            raise TealInputError("invalid arg index {}".format(index))
 
         self.index = index
 
@@ -201,12 +196,11 @@ class Arg(LeafExpr):
 class And(BinaryExpr):
 
     # default constructor
-    # TODO: operator override design
     def __init__(self, left:Expr, right:Expr):
-        require_type(left.type_of(), TealType.uint64)
-        require_type(right.type_of(), TealType.uint64)
-        self.left = left
-        self.right = right
+         require_type(left.type_of(), TealType.uint64)
+         require_type(right.type_of(), TealType.uint64)
+         self.left = left
+         self.right = right
 
     def __str__(self):
         return "(and {} {})".format(self.left, self.right)
@@ -225,21 +219,21 @@ class Or(BinaryExpr):
         self.right = right
 
     def __str__(self):
-        return "(or {} {})".format(self.left, self.right) 
+         return "(or {} {})".format(self.left, self.right) 
 
     def type_of(self):
-        return TealType.uint64
-    
+         return TealType.uint64
+   
 
 # less than
 class Lt(BinaryExpr):
 
     # default constructor
     def __init__(self, left:Expr, right:Expr):
-        require_type(left.type_of(), TealType.uint64)
-        require_type(right.type_of(), TealType.uint64)
-        self.left = left
-        self.right = right
+         require_type(left.type_of(), TealType.uint64)
+         require_type(right.type_of(), TealType.uint64)
+         self.left = left
+         self.right = right
 
     def __str__(self):
         return "(< {} {})".format(self.left, self.right)
@@ -253,12 +247,12 @@ class Gt(BinaryExpr):
 
     # default constructor
     def __init__(self, left:Expr, right:Expr):
-        self.left = left
-        self.right = right
+         self.left = left
+         self.right = right
 
     def __str__(self):
         return "(> {} {})".format(self.left, self.right)
-        
+   
     def type_of(self):
         return TealType.uint64    
 
@@ -268,7 +262,7 @@ class Eq(BinaryExpr):
 
     # default constructor
     def __init__(self, left:Expr, right:Expr):
-        # type checking
+         # type checking
         t1 = left.type_of()
         t2 = right.type_of()
         if t1 != t2:
@@ -279,32 +273,31 @@ class Eq(BinaryExpr):
 
     def __str__(self):
          return "(== {} {})".format(self.left, self.right)
-        
+    
     def type_of(self):
         return TealType.uint64
-    
+   
     
 # return the length of a bytes value
 class Len(UnaryExpr):
 
     # default constructor
     def __init__(self, child:Expr):
-        self.child = child
+         self.child = child
 
     def __str__(self):
          return "(len {})".format(self.child)
 
     def type_of(self):
         return TealType.uint64
-    
+   
 
 # get a field from the current txn
 class Txn(LeafExpr):
-    field: ClassVar[TxnField]
 
     # default constructor
     def __init__(self, field:TxnField):
-        self.field = field
+         self.field = field
 
     def __str__(self):
         return "(Txn {})".format(str_of_field[self.field])
@@ -313,7 +306,7 @@ class Txn(LeafExpr):
     @classmethod
     def sender(cls):
         return cls(TxnField.sender)
-    
+   
     @classmethod
     def fee(cls):
         return cls(TxnField.fee)
@@ -408,14 +401,13 @@ class Txn(LeafExpr):
    
     def type_of(self):
         return type_of_field[self.field]
-    
+   
 
 class Global(LeafExpr):
-    field: ClassVar[GlobalField]
 
     # default constructor
     def __init__(self, field:GlobalField):
-        self.field = field
+         self.field = field
 
     def __str__(self):
         return "(Global {})".format(str_of_global_field[self.field])
@@ -460,13 +452,13 @@ class Ed25519Verify(NaryExpr):
         require_type(arg0.type_of(), TealType.bytes)
         require_type(arg1.type_of(), TealType.bytes)
         require_type(arg2.type_of(), TealType.bytes)
-        
+         
         arg_list = [arg0, arg1, arg2]
         self.args = arg_list
 
     def __str__(self):
          return "(ed25519verify {})".format(self.child)
-        
+    
     def type_of(self):
         return TealType.uint64
 

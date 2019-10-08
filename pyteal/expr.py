@@ -50,15 +50,14 @@ class Expr(ABC):
 
 
 class BinaryExpr(Expr):
-     left: ClassVar[Expr]
-     right: ClassVar[Expr]
-    
+     pass
+
 
 class UnaryExpr(Expr):
-     child: ClassVar[Expr]
+     pass
 
 class NaryExpr(Expr):
-     args: ClassVar[List[Expr]]
+     pass
 
 class LeafExpr(Expr):
      pass
