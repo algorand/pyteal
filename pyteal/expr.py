@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-An expression language for TEAL.
+pyteal expressions
 
 """
 
@@ -38,6 +38,16 @@ class Expr(ABC):
           from .ops import Eq
           return Eq(self, other)
 
+     @abstractmethod
+     def __teal__(self):
+         """Assemble teal IR"""
+         pass
+
+     # get teal program string
+     def teal(self):
+         lines = [" ".join(i) for i in self.__teal__()]
+         return "\n".join(lines)
+        
      # logic and
      def And(self, other):
           from .ops import And
@@ -56,9 +66,10 @@ class BinaryExpr(Expr):
 class UnaryExpr(Expr):
      pass
 
+
 class NaryExpr(Expr):
      pass
 
+
 class LeafExpr(Expr):
      pass
-

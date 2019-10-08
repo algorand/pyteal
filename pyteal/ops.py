@@ -134,6 +134,9 @@ class Addr(LeafExpr):
         #TODO: check the validity of the address
         self.address = address
 
+    def __teal__(self):
+        return [["Addr", self.address]]
+
     def __str__(self):
         return "(address: {})".format(self.address)
 
@@ -154,6 +157,9 @@ class Bytes(LeafExpr):
 
         self.byte_str = byte_str
 
+    def __teal__(self):
+        return [["byte", self.base, self.byte_str]]
+        
     def __str__(self):
         return "({} bytes: {})".format(self.base, self.byte_str)
 
@@ -170,6 +176,9 @@ class Int(LeafExpr):
         else:
             raise TealInputError("Int {} is  out of range".format(value))
 
+    def __teal__(self):
+        return [["int", str(self.value)]]
+       
     def __str__(self):
         return "(Int: {})".format(self.value)
 
@@ -186,6 +195,9 @@ class Arg(LeafExpr):
 
         self.index = index
 
+    def __teal__(self):
+        return [["arg", str(self.index)]]
+        
     def __str__(self):
         return "(arg {})".format(self.index)
 
@@ -201,6 +213,9 @@ class And(BinaryExpr):
          require_type(right.type_of(), TealType.uint64)
          self.left = left
          self.right = right
+
+    def __teal__(self):
+        return self.left.__teal__() + self.right.__teal__() + [["&&"]]
 
     def __str__(self):
         return "(and {} {})".format(self.left, self.right)
@@ -218,6 +233,9 @@ class Or(BinaryExpr):
         self.left = left
         self.right = right
 
+    def __teal__(self):
+        return self.left.__teal__() + self.right.__teal__() + [["||"]]
+        
     def __str__(self):
          return "(or {} {})".format(self.left, self.right) 
 
@@ -235,6 +253,9 @@ class Lt(BinaryExpr):
          self.left = left
          self.right = right
 
+    def __teal__(self):
+        return self.left.__teal__() + self.right.__teal__() + [["<"]]
+         
     def __str__(self):
         return "(< {} {})".format(self.left, self.right)
 
@@ -249,6 +270,9 @@ class Gt(BinaryExpr):
     def __init__(self, left:Expr, right:Expr):
          self.left = left
          self.right = right
+
+    def __teal__(self):
+        return self.left.__teal__() + self.right.__teal__() + [[">"]]
 
     def __str__(self):
         return "(> {} {})".format(self.left, self.right)
@@ -271,6 +295,9 @@ class Eq(BinaryExpr):
         self.left = left
         self.right = right
 
+    def __teal__(self):
+        return self.left.__teal__() + self.right.__teal__() + [["="]]
+        
     def __str__(self):
          return "(== {} {})".format(self.left, self.right)
     
@@ -283,8 +310,11 @@ class Len(UnaryExpr):
 
     # default constructor
     def __init__(self, child:Expr):
-         self.child = child
+        self.child = child
 
+    def __teal__(self):
+        return self.child.__teal__() + [["len"]]
+         
     def __str__(self):
          return "(len {})".format(self.child)
 
@@ -302,7 +332,10 @@ class Txn(LeafExpr):
     def __str__(self):
         return "(Txn {})".format(str_of_field[self.field])
 
-    # a series of class methods for easier programmer experience
+    def __teal__(self):
+        return [["txn", str_of_field[self.field]]]
+   
+    # a series of class methods for better programmer experience
     @classmethod
     def sender(cls):
         return cls(TxnField.sender)
@@ -407,8 +440,11 @@ class Global(LeafExpr):
 
     # default constructor
     def __init__(self, field:GlobalField):
-         self.field = field
+        self.field = field
 
+    def __teal__(self):
+        return [["global", str_of_global_field[self.field]]]
+         
     def __str__(self):
         return "(Global {})".format(str_of_global_field[self.field])
 
@@ -456,10 +492,14 @@ class Ed25519Verify(NaryExpr):
         arg_list = [arg0, arg1, arg2]
         self.args = arg_list
 
+    def __teal__(self):
+        return self.args[0].__teal__() + \
+               self.args[1].__teal__() + \
+               self.args[2].__teal__() + \
+               [["ed25519verify"]]
+
     def __str__(self):
-         return "(ed25519verify {})".format(self.child)
+        return "(ed25519verify {})".format(self.child)
     
     def type_of(self):
         return TealType.uint64
-
-

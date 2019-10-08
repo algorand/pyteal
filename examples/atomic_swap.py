@@ -10,5 +10,5 @@ recv_cond = (Txn.close_remainder_to() == Global.zero_address()).And(
 esc_cond = (Txn.close_remainder_to()  == Global.zero_address()).And(
             Txn.receiver() == Addr("0x111111111111")).And(
             Txn.first_valid() > Int(300))
-atomic_swap = fee_cond.And(type_cond).And(recv_cond.Or(esc_cond))
-print(atomic_swap)    
+atomic_swap = fee_cond.And(type_cond).And(recv_cond.Or(esc_cond))   
+print(atomic_swap.teal())
