@@ -13,7 +13,7 @@ class TealType(Enum):
 class TealTypeError(Exception):
 
     def __init__(self, actual, expected):
-        self.message = "Type error: {} while expected {} ".format(acutal, expected)
+        self.message = "Type error: {} while expected {} ".format(actual, expected)
 
 
 class TealTypeMismatchError(Exception):
