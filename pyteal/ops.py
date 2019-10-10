@@ -173,7 +173,8 @@ class Int(LeafExpr):
     # default contructor
     def __init__(self, value:int):
         if type(value) is not int:
-            raise TealInputError("Int requires an integer.")
+            raise TealInputError("invalid input type {} to Int".format(
+                 type(value)))
  
         if value >= 0 and value < 2 ** 64:
              self.value = value
@@ -194,6 +195,10 @@ class Arg(LeafExpr):
      
     # default constructor
     def __init__(self, index:int):
+        if type(index) is not int:
+            raise TealInputError("invalid arg input type {}".format(
+                 type(index)))
+
         if index < 0 or index > 255:
             raise TealInputError("invalid arg index {}".format(index))
 

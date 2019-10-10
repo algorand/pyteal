@@ -19,3 +19,6 @@ Pip install pyteal in aditable state
  
 Type checking using mypy
 * `mypy pyteal`
+
+Run tests:
+* `pytest`
