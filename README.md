@@ -16,3 +16,6 @@ Active venv:
 
 Pip install pyteal in aditable state
  * `pip install -e .`
+ 
+Type checking using mypy
+* `mypy pyteal`

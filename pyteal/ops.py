@@ -131,7 +131,7 @@ class Addr(LeafExpr):
      
     # default constructor
     def __init__(self, address:str):        
-        #TODO: check the validity of the address
+        valid_address(address)
         self.address = address
 
     def __teal__(self):
@@ -155,6 +155,7 @@ class Bytes(LeafExpr):
         else:
             raise TealInputError("invalid base {}".format(base))
 
+        #TODO: check validity of encoded string
         self.byte_str = byte_str
 
     def __teal__(self):
@@ -171,10 +172,13 @@ class Int(LeafExpr):
      
     # default contructor
     def __init__(self, value:int):
+        if type(value) is not int:
+            raise TealInputError("Int requires an integer.")
+ 
         if value >= 0 and value < 2 ** 64:
              self.value = value
         else:
-            raise TealInputError("Int {} is  out of range".format(value))
+            raise TealInputError("Int {} is out of range".format(value))
 
     def __teal__(self):
         return [["int", str(self.value)]]
@@ -268,8 +272,10 @@ class Gt(BinaryExpr):
 
     # default constructor
     def __init__(self, left:Expr, right:Expr):
-         self.left = left
-         self.right = right
+        require_type(left.type_of(), TealType.uint64)
+        require_type(right.type_of(), TealType.uint64) 
+        self.left = left
+        self.right = right
 
     def __teal__(self):
         return self.left.__teal__() + self.right.__teal__() + [[">"]]
@@ -310,6 +316,7 @@ class Len(UnaryExpr):
 
     # default constructor
     def __init__(self, child:Expr):
+        require_type(child.type_of(), TealType.bytes)
         self.child = child
 
     def __teal__(self):
@@ -327,7 +334,7 @@ class Txn(LeafExpr):
 
     # default constructor
     def __init__(self, field:TxnField):
-         self.field = field
+        self.field = field
 
     def __str__(self):
         return "(Txn {})".format(str_of_field[self.field])
