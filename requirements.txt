@@ -1,0 +1,4 @@
+ipython
+jupyter
+mypy
+pytest

@@ -3,6 +3,8 @@
 Python Language Binding for Teal
 
 
+NOTE: This is still a prototype. DO NOT use it in production.
+
 ### Development Setup
 
 Setup venv (one time):
