@@ -1,5 +1,7 @@
 # PyTeal
 
+[![Build Status](https://travis-ci.com/algorand/pyteal.svg?token=B9eSse5TZikdgKBemvq3&branch=master)](https://travis-ci.com/algorand/pyteal)
+
 Python Language Binding for Teal
 
 
