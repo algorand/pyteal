@@ -526,3 +526,117 @@ class Ed25519Verify(NaryExpr):
     
     def type_of(self):
         return TealType.uint64
+
+
+class Gtxn(LeafExpr):
+
+        # default constructor
+    def __init__(self, field:TxnField):
+        self.field = field
+
+    def __str__(self):
+        return "(Gtxn {})".format(str_of_field[self.field])
+
+    def __teal__(self):
+        return [["gtxn", str_of_field[self.field]]]
+   
+    # a series of class methods for better programmer experience
+    @classmethod
+    def sender(cls):
+        return cls(TxnField.sender)
+   
+    @classmethod
+    def fee(cls):
+        return cls(TxnField.fee)
+
+    @classmethod
+    def first_valid(cls):
+        return cls(TxnField.first_valid)
+
+    @classmethod
+    def last_valid(cls):
+        return cls(TxnField.last_valid)
+
+    @classmethod
+    def note(cls):
+        return cls(TxnField.note)
+
+    @classmethod
+    def receiver(cls):
+        return cls(TxnField.receiver)
+
+    @classmethod
+    def amount(cls):
+        return cls(TxnField.amount)
+
+    @classmethod
+    def close_remainder_to(cls):
+        return cls(TxnField.close_remainder_to)
+
+    @classmethod
+    def vote_pk(cls):
+        return cls(TxnField.vote_pk)
+
+    @classmethod
+    def selection_pk(cls):
+        return cls(TxnField.selection_pk)
+
+    @classmethod
+    def vote_first(cls):
+        return cls(TxnField.vote_first)
+
+    @classmethod
+    def vote_last(cls):
+        return cls(TxnField.vote_last)
+
+    @classmethod
+    def vote_key_dilution(cls):
+        return cls(TxnField.vote_key_dilution)
+
+    @classmethod
+    def type(cls):
+        return cls(TxnField.type)
+
+    @classmethod
+    def type_enum(cls):
+        return cls(TxnField.type_enum)
+
+    @classmethod
+    def xfer_asset(cls):
+        return cls(TxnField.xfer_asset)
+
+    @classmethod
+    def asset_amount(cls):
+        return cls(TxnField.asset_amount)
+
+    @classmethod
+    def asset_sender(cls):
+        return cls(TxnField.asset_sender)
+
+    @classmethod
+    def asset_receiver(cls):
+        return cls(TxnField.asset_receiver)
+
+    @classmethod
+    def asset_close_to(cls):
+        return cls(TxnField.asset_close_to)
+
+    @classmethod
+    def group_index(cls):
+        return cls(TxnField.group_index)
+
+    @classmethod
+    def tx_id(cls):
+        return cls(TxnField.tx_id)
+
+    @classmethod
+    def sender_balance(cls):
+        return cls(TxnField.sender_balance)
+
+    @classmethod
+    def lease(cls):
+        return cls(TxnField.lease)
+   
+    def type_of(self):
+        return type_of_field[self.field]
+
