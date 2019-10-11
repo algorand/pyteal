@@ -2,13 +2,21 @@
 
 from pyteal import *
 
-fee_cond = Txn.fee() < Int(300)
+""" Atomic Swap
+"""
+alice = Addr("6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY")
+bob = Addr("7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M")
+secret = Bytes("base32", "23232323232323")
+
+fee_cond = Txn.fee() < Int(1000)
 type_cond = Txn.type_enum() == Int(1)
 recv_cond = (Txn.close_remainder_to() == Global.zero_address()).And(
-             Txn.receiver() == Addr("0x2223223d23d33223")).And(
-             Arg(0) == Bytes("base32", "23232323232323"))
+             Txn.receiver() == alice).And(
+             Arg(0) == secret)
 esc_cond = (Txn.close_remainder_to()  == Global.zero_address()).And(
-            Txn.receiver() == Addr("0x111111111111")).And(
-            Txn.first_valid() > Int(300))
+            Txn.receiver() == bob).And(
+            Txn.first_valid() > Int(3000))
+
 atomic_swap = fee_cond.And(type_cond).And(recv_cond.Or(esc_cond))   
-print(atomic_swap.teal())
+
+atomic_swap.teal()
