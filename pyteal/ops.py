@@ -150,15 +150,26 @@ class Bytes(LeafExpr):
     def __init__(self, base:str, byte_str:str):
         if base == "base32":
             self.base = base
+            valid_base32(byte_str)
+            self.byte_str = byte_str
         elif base == "base64":
             self.base = base
+            valid_base64(byte_str)
+            self.byte_str = byte_str
+        elif base == "base16":
+            self.base = base
+            if byte_str.startswith("0x"):
+                self.byte_str = byte_str[2:]
+            else:
+                self.byte_str = byte_str
+            valid_base16(self.byte_str)
         else:
-            raise TealInputError("invalid base {}".format(base))
+            raise TealInputError("invalid base {}, need to be base32, base64, or base16.".format(base))
 
-        #TODO: check validity of encoded string
-        self.byte_str = byte_str
 
     def __teal__(self):
+        if self.base == hex:
+            return [["byte", self.byte_str]]
         return [["byte", self.base, self.byte_str]]
         
     def __str__(self):
