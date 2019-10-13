@@ -142,3 +142,15 @@ def test_global():
     Global.time_stamp()
     Global.zero_address()
     Global.group_size()
+
+
+def test_ite():
+    Ite(Int(0), Txn.sender(), Txn.receiver())
+
+    with pytest.raises(TealTypeError):
+        Ite(Int(0), Txn.amount(), Txn.sender())
+
+    with pytest.raises(TealTypeError):
+        Ite(Txn.sender(), Int(1), Int(0))
+
+
