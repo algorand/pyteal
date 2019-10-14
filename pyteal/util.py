@@ -40,7 +40,7 @@ class TealInputError(Exception):
         return self.message
         
         
-def require_type(actual: TealType, expected: TealType):
+def require_type(actual, expected):
     if actual != expected:
         raise TealTypeError(actual, expected)
 
