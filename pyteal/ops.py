@@ -6,6 +6,7 @@ Operators on uint64
 
 from typing import ClassVar, List
 from enum import Enum
+from functools import reduce
 
 from .util import *
 from .expr import Expr, BinaryExpr, UnaryExpr, NaryExpr, LeafExpr, TealType
@@ -228,14 +229,25 @@ class Arg(LeafExpr):
 class And(BinaryExpr):
 
     # default constructor
-    def __init__(self, left:Expr, right:Expr):
-         require_type(left.type_of(), TealType.uint64)
-         require_type(right.type_of(), TealType.uint64)
-         self.left = left
-         self.right = right
+    def __init__(self, *argv):
+        if len(argv) < 2:
+            raise TealInputError("And requires at least two children.")
+        for arg in argv:
+            if not isinstance(arg, Expr):
+                raise TealInputError("{} is not a pyteal expression.".format(arg))
+            require_type(arg.type_of(), TealType.uint64)
+
+        self.args = argv
+        
 
     def __teal__(self):
-        return self.left.__teal__() + self.right.__teal__() + [["&&"]]
+        code = []
+        for i, a in enumerate(self.args):
+            if i == 0:
+                code = a.__teal__()
+            else:
+                code = code + a.__teal__() +[["&&"]]
+        return code
 
     def __str__(self):
         return "(and {} {})".format(self.left, self.right)

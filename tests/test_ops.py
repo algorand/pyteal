@@ -44,12 +44,20 @@ def test_arg():
 
 
 def test_and():
-    And(Int(1), Int(1))
-    Int(1).And(Int(1))
+    p1 = And(Int(1), Int(1))
+    p2 = Int(1).And(Int(1))
+    assert p1.teal() == p2.teal()
 
+    p3 = And(Int(1), Int(1), Int(2))
+    assert p3.__teal__() == \
+    [['int', '1'], ['int', '1'], ['&&'], ['int', '2'], ['&&']]
+    
     with pytest.raises(TealTypeError):
         And(Int(1), Txn.receiver())
 
+    with pytest.raises(TealInputError):
+        And(Int(1))
+        
 
 def test_bytes():
     Bytes("base32", "7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M")
