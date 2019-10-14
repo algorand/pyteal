@@ -658,7 +658,8 @@ class Ite(NaryExpr):
         l2 = new_label()
         # TODO: remove pop if teal check is removed
         ret = cond + [["bnz", l1]] + e_branch + [["int", "1"]] + \
-              [["bnz", l2], ["pop"], [l1+":"]] + t_branch + [[l2+":"]]  
+              [["bnz", l2], ["pop"], [l1+":"]] + t_branch + [[l2+":"]]
+        return ret
 
     def __str__(self):
         return "(Ite {} {} {})".format(self.args[0], self.args[1], self.args[2])
