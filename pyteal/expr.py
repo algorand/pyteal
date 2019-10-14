@@ -27,17 +27,33 @@ class Expr(ABC):
           pass
      
      def __lt__(self, other):
-          from .ops import Lt
-          return Lt(self, other)
+         from .ops import Lt
+         return Lt(self, other)
 
      def __gt__(self, other):
-          from .ops import Gt
-          return Gt(self, other)
+         from .ops import Gt
+         return Gt(self, other)
      
      def __eq__(self, other):
-          from .ops import Eq
-          return Eq(self, other)
+         from .ops import Eq
+         return Eq(self, other)
 
+     def __add__(self, other):
+         from .ops import Add
+         return Add(self, other)
+
+     def __sub__(self, other):
+         from .ops import Minus
+         return Minus(self, other)
+
+     def __mul__(self, other):
+         from .ops import Mul
+         return Mul(self, other)
+
+     def __truediv__(self, other):
+         from .ops import Div
+         return Div(self, other)
+     
      @abstractmethod
      def __teal__(self):
          """Assemble teal IR"""

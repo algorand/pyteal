@@ -116,6 +116,25 @@ def test_eq():
         Eq(Txn.fee(), Txn.receiver())
 
 
+def test_arithmic():
+    v = (Int(2) + Int(3))/((Int(5) - Int(6)) * Int(8))
+    assert v.__teal__() == \
+        [['int', '2'], ['int', '3'], ['+'], ['int', '5'], ['int', '6']] + \
+        [['-'], ['int', '8'], ['*'], ['/']]
+
+    with pytest.raises(TealTypeError):
+        Int(2) + Txn.receiver()
+
+    with pytest.raises(TealTypeError):
+        Int(2) - Txn.receiver()
+
+    with pytest.raises(TealTypeError):
+        Int(2) * Txn.receiver()
+
+    with pytest.raises(TealTypeError):
+        Int(2) / Txn.receiver()
+
+
 def test_len():
     Len(Txn.receiver())
 
