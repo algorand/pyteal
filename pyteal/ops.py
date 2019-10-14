@@ -9,6 +9,7 @@ from enum import Enum
 from functools import reduce
 
 from .util import *
+from .config import *
 from .expr import Expr, BinaryExpr, UnaryExpr, NaryExpr, LeafExpr, TealType
 
 
@@ -250,8 +251,12 @@ class And(BinaryExpr):
         return code
 
     def __str__(self):
-        return "(and {} {})".format(self.left, self.right)
-
+        ret_str = "(And"
+        for a in self.args:
+            ret_str += " " + a.__str__()
+        ret_str += ")"
+        return ret_str
+        
     def type_of(self):
         return TealType.uint64
 
@@ -259,20 +264,34 @@ class And(BinaryExpr):
 class Or(BinaryExpr):
 
     # default constructor
-    def __init__(self, left:Expr, right:Expr):
-        require_type(left.type_of(), TealType.uint64)
-        require_type(right.type_of(), TealType.uint64)
-        self.left = left
-        self.right = right
+    def __init__(self, *argv):
+        if len(argv) < 2:
+            raise TealInputError("Or requires at least two children.")
+        for arg in argv:
+            if not isinstance(arg, Expr):
+                raise TealInputError("{} is not a pyteal expression.".format(arg))
+            require_type(arg.type_of(), TealType.uint64)
+
+        self.args = argv
 
     def __teal__(self):
-        return self.left.__teal__() + self.right.__teal__() + [["||"]]
+        code = []
+        for i, a in enumerate(self.args):
+            if i == 0:
+                code = a.__teal__()
+            else:
+                code = code + a.__teal__() +[["||"]]
+        return code
         
     def __str__(self):
-         return "(or {} {})".format(self.left, self.right) 
+        ret_str = "(Or"
+        for a in self.args:
+            ret_str += " " + a.__str__()
+        ret_str += ")"
+        return ret_str 
 
     def type_of(self):
-         return TealType.uint64
+        return TealType.uint64
    
 
 # less than
@@ -543,111 +562,116 @@ class Ed25519Verify(NaryExpr):
 class Gtxn(LeafExpr):
 
         # default constructor
-    def __init__(self, field:TxnField):
+    def __init__(self, index:int, field:TxnField):
+        require_type(type(index), int)
+        if index < 0 or index >= MAX_GROUP_SIZE :
+            raise TealInputError("invalid Gtxn index {}, shoud [0, {})".format(
+                 index, MAX_GROUP_SIZE))
+        self.index = index
         self.field = field
 
     def __str__(self):
-        return "(Gtxn {})".format(str_of_field[self.field])
+        return "(Gtxn {} {})".format(self.index, str_of_field[self.field])
 
     def __teal__(self):
-        return [["gtxn", str_of_field[self.field]]]
+        return [["gtxn", str(self.index), str_of_field[self.field]]]
    
     # a series of class methods for better programmer experience
     @classmethod
-    def sender(cls):
-        return cls(TxnField.sender)
+    def sender(cls, index):
+        return cls(index, TxnField.sender)
    
     @classmethod
-    def fee(cls):
-        return cls(TxnField.fee)
+    def fee(cls, index):
+        return cls(index, TxnField.fee)
 
     @classmethod
-    def first_valid(cls):
-        return cls(TxnField.first_valid)
+    def first_valid(cls, index):
+        return cls(index, TxnField.first_valid)
 
     @classmethod
-    def last_valid(cls):
-        return cls(TxnField.last_valid)
+    def last_valid(cls, index):
+        return cls(index, TxnField.last_valid)
 
     @classmethod
-    def note(cls):
-        return cls(TxnField.note)
+    def note(cls, index):
+        return cls(index, TxnField.note)
 
     @classmethod
-    def receiver(cls):
-        return cls(TxnField.receiver)
+    def receiver(cls, index):
+        return cls(index, TxnField.receiver)
 
     @classmethod
-    def amount(cls):
-        return cls(TxnField.amount)
+    def amount(cls, index):
+        return cls(index, TxnField.amount)
 
     @classmethod
-    def close_remainder_to(cls):
-        return cls(TxnField.close_remainder_to)
+    def close_remainder_to(cls, index):
+        return cls(index, TxnField.close_remainder_to)
 
     @classmethod
-    def vote_pk(cls):
-        return cls(TxnField.vote_pk)
+    def vote_pk(cls, index):
+        return cls(index, TxnField.vote_pk)
 
     @classmethod
-    def selection_pk(cls):
-        return cls(TxnField.selection_pk)
+    def selection_pk(cls, index):
+        return cls(index, TxnField.selection_pk)
 
     @classmethod
-    def vote_first(cls):
-        return cls(TxnField.vote_first)
+    def vote_first(cls, index):
+        return cls(index, TxnField.vote_first)
 
     @classmethod
-    def vote_last(cls):
-        return cls(TxnField.vote_last)
+    def vote_last(cls, index):
+        return cls(index, TxnField.vote_last)
 
     @classmethod
-    def vote_key_dilution(cls):
-        return cls(TxnField.vote_key_dilution)
+    def vote_key_dilution(cls, index):
+        return cls(index, TxnField.vote_key_dilution)
 
     @classmethod
-    def type(cls):
-        return cls(TxnField.type)
+    def type(cls, index):
+        return cls(index, TxnField.type)
 
     @classmethod
-    def type_enum(cls):
-        return cls(TxnField.type_enum)
+    def type_enum(cls, index):
+        return cls(index, TxnField.type_enum)
 
     @classmethod
-    def xfer_asset(cls):
-        return cls(TxnField.xfer_asset)
+    def xfer_asset(cls, index):
+        return cls(index, TxnField.xfer_asset)
 
     @classmethod
-    def asset_amount(cls):
-        return cls(TxnField.asset_amount)
+    def asset_amount(cls, index):
+        return cls(index, TxnField.asset_amount)
 
     @classmethod
-    def asset_sender(cls):
-        return cls(TxnField.asset_sender)
+    def asset_sender(cls, index):
+        return cls(index, TxnField.asset_sender)
 
     @classmethod
-    def asset_receiver(cls):
-        return cls(TxnField.asset_receiver)
+    def asset_receiver(cls, index):
+        return cls(index, TxnField.asset_receiver)
 
     @classmethod
-    def asset_close_to(cls):
-        return cls(TxnField.asset_close_to)
+    def asset_close_to(cls, index):
+        return cls(index, TxnField.asset_close_to)
 
     @classmethod
-    def group_index(cls):
-        return cls(TxnField.group_index)
+    def group_index(cls, index):
+        return cls(index, TxnField.group_index)
 
     @classmethod
-    def tx_id(cls):
-        return cls(TxnField.tx_id)
+    def tx_id(cls, index):
+        return cls(index, TxnField.tx_id)
 
     @classmethod
-    def sender_balance(cls):
-        return cls(TxnField.sender_balance)
+    def sender_balance(cls, index):
+        return cls(index, TxnField.sender_balance)
 
     @classmethod
-    def lease(cls):
-        return cls(TxnField.lease)
+    def lease(cls, index):
+        return cls(index, TxnField.lease)
    
     def type_of(self):
         return type_of_field[self.field]

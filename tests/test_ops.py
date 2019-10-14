@@ -82,8 +82,14 @@ def test_bytes():
 
 
 def test_or():
-    Or(Int(1), Int(0))
+    p1 = Or(Int(1), Int(0))
+    p2 = Int(1).Or(Int(0))
+    assert p1.teal() == p2.teal()
 
+    p3 = Or(Int(0), Int(1), Int(2))
+    assert p3.__teal__() == \
+        [['int', '0'], ['int', '1'], ['||'], ['int', '2'], ['||']]
+    
     with pytest.raises(TealTypeError):
         Or(Int(1), Txn.receiver())
 
@@ -150,3 +156,38 @@ def test_global():
     Global.time_stamp()
     Global.zero_address()
     Global.group_size()
+
+
+def test_gtxn():
+
+    with pytest.raises(TealInputError):
+        Gtxn(-1, TxnField.fee)
+
+    with pytest.raises(TealInputError):
+        Gtxn(MAX_GROUP_SIZE+1, TxnField.sender)
+
+    Gtxn.sender(0)
+    Gtxn.fee(1)
+    Gtxn.first_valid(1)
+    Gtxn.last_valid(1)
+    Gtxn.note(1)
+    Gtxn.receiver(1)
+    Gtxn.amount(1)
+    Gtxn.close_remainder_to(1)
+    Gtxn.vote_pk(1)
+    Gtxn.selection_pk(1)
+    Gtxn.vote_first(1)
+    Gtxn.vote_last(1)
+    Gtxn.vote_key_dilution(1)
+    Gtxn.type(1)
+    Gtxn.type_enum(1)
+    Gtxn.xfer_asset(1)
+    Gtxn.asset_amount(1)
+    Gtxn.asset_sender(1)
+    Gtxn.asset_receiver(1)
+    Gtxn.asset_close_to(1)
+    Gtxn.group_index(1)
+    Gtxn.tx_id(1)
+    Gtxn.sender_balance(1)
+    Gtxn.lease(1)
+
