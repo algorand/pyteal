@@ -701,7 +701,7 @@ class Ite(NaryExpr):
         return "(Ite {} {} {})".format(self.args[0], self.args[1], self.args[2])
 
     def type_of(self):
-        return type_of(self.args[1])
+        return self.args[1].type_of()
 
 
 class Add(BinaryExpr):
