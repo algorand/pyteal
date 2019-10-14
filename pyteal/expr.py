@@ -53,7 +53,11 @@ class Expr(ABC):
      def __truediv__(self, other):
          from .ops import Div
          return Div(self, other)
-     
+
+     def __mod__(self, other):
+         from .ops import Mod
+         return Mod(self, other)
+    
      @abstractmethod
      def __teal__(self):
          """Assemble teal IR"""

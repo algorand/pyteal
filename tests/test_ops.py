@@ -117,10 +117,10 @@ def test_eq():
 
 
 def test_arithmic():
-    v = (Int(2) + Int(3))/((Int(5) - Int(6)) * Int(8))
+    v = ((Int(2) + Int(3))/((Int(5) - Int(6)) * Int(8))) % Int(9)
     assert v.__teal__() == \
         [['int', '2'], ['int', '3'], ['+'], ['int', '5'], ['int', '6']] + \
-        [['-'], ['int', '8'], ['*'], ['/']]
+        [['-'], ['int', '8'], ['*'], ['/'], ['int', '9'], ['%']]
 
     with pytest.raises(TealTypeError):
         Int(2) + Txn.receiver()
@@ -134,6 +134,9 @@ def test_arithmic():
     with pytest.raises(TealTypeError):
         Int(2) / Txn.receiver()
 
+    with pytest.raises(TealTypeError):
+        Txn.receiver() % Int(2)
+        
 
 def test_len():
     Len(Txn.receiver())
