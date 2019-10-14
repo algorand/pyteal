@@ -19,4 +19,4 @@ esc_cond = (Txn.close_remainder_to()  == Global.zero_address()).And(
 
 atomic_swap = fee_cond.And(type_cond).And(recv_cond.Or(esc_cond))   
 
-atomic_swap.teal()
+print(atomic_swap.teal())
