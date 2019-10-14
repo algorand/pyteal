@@ -543,8 +543,7 @@ class Ed25519Verify(NaryExpr):
         require_type(arg1.type_of(), TealType.bytes)
         require_type(arg2.type_of(), TealType.bytes)
          
-        arg_list = [arg0, arg1, arg2]
-        self.args = arg_list
+        self.args = [arg0, arg1, arg2]
 
     def __teal__(self):
         return self.args[0].__teal__() + \
@@ -553,7 +552,8 @@ class Ed25519Verify(NaryExpr):
                [["ed25519verify"]]
 
     def __str__(self):
-        return "(ed25519verify {})".format(self.child)
+        return "(ed25519verify {} {} {})".format(self.args[0],
+                                                 self.args[1], self.args[2])
     
     def type_of(self):
         return TealType.uint64
@@ -676,3 +676,29 @@ class Gtxn(LeafExpr):
     def type_of(self):
         return type_of_field[self.field]
 
+
+class Ite(NaryExpr):
+
+    #default constructor
+    def __init__(self, arg0:Expr, arg1:Expr, arg2:Expr):
+        require_type(arg0.type_of(), TealType.uint64)
+        require_type(arg2.type_of(), arg1.type_of())
+
+        self.args = [arg0, arg1, arg2]
+
+    def __teal__(self):
+        cond = self.args[0].__teal__()
+        l1 = new_label()
+        t_branch = self.args[1].__teal__()
+        e_branch = self.args[2].__teal__()
+        l2 = new_label()
+        # TODO: remove pop if teal check is removed
+        ret = cond + [["bnz", l1]] + e_branch + [["int", "1"]] + \
+              [["bnz", l2], ["pop"], [l1+":"]] + t_branch + [[l2+":"]]
+        return ret
+
+    def __str__(self):
+        return "(Ite {} {} {})".format(self.args[0], self.args[1], self.args[2])
+
+    def type_of(self):
+        return type_of(self.args[1])

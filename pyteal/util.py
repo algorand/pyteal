@@ -6,10 +6,12 @@ Helper functions and classes
 from enum import Enum
 import re
 
+
 class TealType(Enum):
      uint64 = 0
      bytes = 1
      anytype = 2
+
 
 class TealTypeError(Exception):
 
@@ -85,3 +87,12 @@ def valid_base16(s:str):
         raise TealInputError("{} is not a valid RFC 4648 base 16 string".format(
              s))
          
+
+label_count = 0
+
+
+def new_label():
+    global label_count
+    new_l = "l{}".format(label_count)
+    label_count += 1
+    return new_l
