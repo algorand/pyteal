@@ -33,7 +33,15 @@ class Expr(ABC):
      def __gt__(self, other):
          from .ops import Gt
          return Gt(self, other)
-     
+
+     def __le__(self, other):
+         from .ops import Le
+         return Le(self, other)
+
+     def __ge__(self, other):
+         from .ops import Ge
+         return Ge(self, other)
+
      def __eq__(self, other):
          from .ops import Eq
          return Eq(self, other)

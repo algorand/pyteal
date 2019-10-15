@@ -108,6 +108,20 @@ def test_gt():
         Gt(Txn.fee(), Txn.receiver())
 
 
+def test_le():
+    Int(1) <= Int(2)
+
+    with pytest.raises(TealTypeError):
+        Int(1) <= Txn.receiver()
+
+
+def test_ge():
+    Int(1) >= Int(1)
+
+    with pytest.raises(TealTypeError):
+        Int(1) >= Txn.receiver()
+        
+        
 def test_eq():
     Eq(Int(2), Int(3))
     Eq(Txn.receiver(), Txn.sender())
