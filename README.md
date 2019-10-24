@@ -7,6 +7,13 @@ Python Language Binding for Teal
 
 NOTE: This is still a prototype. DO NOT use it in production.
 
+### Install 
+
+pyteal requires python version >= 3.6
+
+* `pip install -r requirements.txt`
+
+
 ### Development Setup
 
 Setup venv (one time):
