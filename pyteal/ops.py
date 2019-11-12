@@ -17,36 +17,37 @@ class TxnField(Enum):
      sender = 0
      fee = 1
      first_valid = 2
-     last_valid = 3
-     note = 4
-     receiver = 5
-     amount = 6
-     close_remainder_to = 7
-     vote_pk = 8
-     selection_pk = 9
-     vote_first =10
-     vote_last = 11
-     vote_key_dilution = 12
-     type = 13
-     type_enum = 14
-     xfer_asset = 15
-     asset_amount = 16
-     asset_sender = 17
-     asset_receiver = 18
-     asset_close_to = 19
-     group_index = 20
-     tx_id = 21
-     sender_balance = 22
-     lease = 23     
-
+     first_valid_time = 3
+     last_valid = 4
+     note = 5
+     lease = 6
+     receiver = 7
+     amount = 8
+     close_remainder_to = 9
+     vote_pk = 10
+     selection_pk = 11
+     vote_first =12
+     vote_last = 13
+     vote_key_dilution = 14
+     type = 15
+     type_enum = 16
+     xfer_asset = 17
+     asset_amount = 18
+     asset_sender = 19
+     asset_receiver = 20
+     asset_close_to = 21
+     group_index = 22
+     tx_id = 23
 
 # data types of txn fields
 type_of_field = {
      TxnField.sender: TealType.bytes,
      TxnField.fee: TealType.uint64,
      TxnField.first_valid: TealType.uint64,
+     TxnField.first_valid_time: TealType.uint64,
      TxnField.last_valid: TealType.uint64,
      TxnField.note: TealType.bytes,
+     TxnField.lease: TealType.bytes,
      TxnField.receiver: TealType.bytes,
      TxnField.amount: TealType.uint64,
      TxnField.close_remainder_to: TealType.bytes,
@@ -63,9 +64,7 @@ type_of_field = {
      TxnField.asset_receiver: TealType.bytes,
      TxnField.asset_close_to: TealType.bytes,
      TxnField.group_index: TealType.uint64,
-     TxnField.tx_id: TealType.bytes,
-     TxnField.sender_balance: TealType.uint64,
-     TxnField.lease: TealType.bytes
+     TxnField.tx_id: TealType.bytes
 }
 
 
@@ -73,8 +72,10 @@ str_of_field = {
      TxnField.sender: "Sender",
      TxnField.fee: "Fee",
      TxnField.first_valid: "FirstValid",
+     TxnField.first_valid_time: "FirstValidTime",
      TxnField.last_valid: "LastValid",
      TxnField.note: "Note",
+     TxnField.lease: "Lease",
      TxnField.receiver: "Receiver",
      TxnField.amount: "Amount",
      TxnField.close_remainder_to: "CloseRemainderTo",
@@ -91,39 +92,31 @@ str_of_field = {
      TxnField.asset_receiver: "AssetReceiver",
      TxnField.asset_close_to: "AssetCloseTo",
      TxnField.group_index: "GroupIndex",
-     TxnField.tx_id: "TxID",
-     TxnField.sender_balance: "SenderBalance",
-     TxnField.lease: "Lease"
+     TxnField.tx_id: "TxID"
 }
 
 
 class GlobalField(Enum):
-     round = 0,
-     min_txn_fee = 1
-     min_balance = 2
-     max_txn_life = 3
-     time_stamp = 4
-     zero_address = 5
-     group_size = 6
+     min_txn_fee = 0
+     min_balance = 1
+     max_txn_life = 2
+     zero_address = 3
+     group_size = 4
 
 
 type_of_global_field = {
-     GlobalField.round: TealType.uint64,
      GlobalField.min_txn_fee: TealType.uint64,
      GlobalField.min_balance: TealType.uint64,
      GlobalField.max_txn_life: TealType.uint64,
-     GlobalField.time_stamp: TealType.uint64,
      GlobalField.zero_address: TealType.bytes,
      GlobalField.group_size: TealType.uint64
 }
 
 
 str_of_global_field = {
-     GlobalField.round: "Round",
      GlobalField.min_txn_fee: "MinTxnFee",
      GlobalField.min_balance: "MinBalance",
      GlobalField.max_txn_life: "MaxTxnLife",
-     GlobalField.time_stamp: "TimeStamp",
      GlobalField.zero_address: "ZeroAddress",
      GlobalField.group_size: "GroupSize"
 }
@@ -441,6 +434,10 @@ class Txn(LeafExpr):
         return cls(TxnField.first_valid)
 
     @classmethod
+    def first_valid_time(cls):
+        return cls(TxnField.first_valid_time)
+   
+    @classmethod
     def last_valid(cls):
         return cls(TxnField.last_valid)
 
@@ -448,6 +445,10 @@ class Txn(LeafExpr):
     def note(cls):
         return cls(TxnField.note)
 
+    @classmethod
+    def lease(cls):
+        return cls(TxnField.lease)
+   
     @classmethod
     def receiver(cls):
         return cls(TxnField.receiver)
@@ -515,14 +516,6 @@ class Txn(LeafExpr):
     @classmethod
     def tx_id(cls):
         return cls(TxnField.tx_id)
-
-    @classmethod
-    def sender_balance(cls):
-        return cls(TxnField.sender_balance)
-
-    @classmethod
-    def lease(cls):
-        return cls(TxnField.lease)
    
     def type_of(self):
         return type_of_field[self.field]
@@ -541,10 +534,6 @@ class Global(LeafExpr):
         return "(Global {})".format(str_of_global_field[self.field])
 
     @classmethod
-    def round(cls):
-        return cls(GlobalField.round)
-
-    @classmethod
     def min_txn_fee(cls):
         return cls(GlobalField.min_txn_fee)
 
@@ -555,10 +544,6 @@ class Global(LeafExpr):
     @classmethod
     def max_txn_life(cls):
         return cls(GlobalField.max_txn_life)
-
-    @classmethod
-    def time_stamp(cls):
-        return cls(GlobalField.time_stamp)
 
     @classmethod
     def zero_address(cls):
@@ -627,6 +612,14 @@ class Gtxn(LeafExpr):
     def first_valid(cls, index):
         return cls(index, TxnField.first_valid)
 
+    @classmethod
+    def first_valid_time(cls, index):
+        return cls(index, TxnField.first_valid_time)
+
+    @classmethod
+    def lease(cls, index):
+        return cls(index, TxnField.lease)
+   
     @classmethod
     def last_valid(cls, index):
         return cls(index, TxnField.last_valid)
@@ -702,14 +695,6 @@ class Gtxn(LeafExpr):
     @classmethod
     def tx_id(cls, index):
         return cls(index, TxnField.tx_id)
-
-    @classmethod
-    def sender_balance(cls, index):
-        return cls(index, TxnField.sender_balance)
-
-    @classmethod
-    def lease(cls, index):
-        return cls(index, TxnField.lease)
    
     def type_of(self):
         return type_of_field[self.field]

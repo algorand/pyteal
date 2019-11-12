@@ -180,16 +180,14 @@ def test_txn():
     Txn.asset_close_to()
     Txn.group_index()
     Txn.tx_id()
-    Txn.sender_balance()
     Txn.lease()
+    Txn.first_valid_time()
 
 
 def test_global():
-    Global.round()
     Global.min_txn_fee()
     Global.min_balance()
     Global.max_txn_life()
-    Global.time_stamp()
     Global.zero_address()
     Global.group_size()
 
@@ -205,8 +203,10 @@ def test_gtxn():
     Gtxn.sender(0)
     Gtxn.fee(1)
     Gtxn.first_valid(1)
+    Gtxn.first_valid_time(1)
     Gtxn.last_valid(1)
     Gtxn.note(1)
+    Gtxn.lease(1)
     Gtxn.receiver(1)
     Gtxn.amount(1)
     Gtxn.close_remainder_to(1)
@@ -224,8 +224,6 @@ def test_gtxn():
     Gtxn.asset_close_to(1)
     Gtxn.group_index(1)
     Gtxn.tx_id(1)
-    Gtxn.sender_balance(1)
-    Gtxn.lease(1)
 
     
 def test_ite():
