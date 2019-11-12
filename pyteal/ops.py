@@ -130,7 +130,7 @@ class Addr(LeafExpr):
         self.address = address
 
     def __teal__(self):
-        return [["Addr", self.address]]
+        return [["addr", self.address]]
 
     def __str__(self):
         return "(address: {})".format(self.address)
@@ -380,7 +380,7 @@ class Eq(BinaryExpr):
         self.right = right
 
     def __teal__(self):
-        return self.left.__teal__() + self.right.__teal__() + [["="]]
+        return self.left.__teal__() + self.right.__teal__() + [["=="]]
         
     def __str__(self):
          return "(== {} {})".format(self.left, self.right)
