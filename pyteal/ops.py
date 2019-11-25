@@ -17,34 +17,32 @@ class TxnField(Enum):
      sender = 0
      fee = 1
      first_valid = 2
-     first_valid_time = 3
-     last_valid = 4
-     note = 5
-     lease = 6
-     receiver = 7
-     amount = 8
-     close_remainder_to = 9
-     vote_pk = 10
-     selection_pk = 11
-     vote_first =12
-     vote_last = 13
-     vote_key_dilution = 14
-     type = 15
-     type_enum = 16
-     xfer_asset = 17
-     asset_amount = 18
-     asset_sender = 19
-     asset_receiver = 20
-     asset_close_to = 21
-     group_index = 22
-     tx_id = 23
+     last_valid = 3
+     note = 4
+     lease = 5
+     receiver = 6
+     amount = 7
+     close_remainder_to = 8
+     vote_pk = 9
+     selection_pk = 10
+     vote_first =11
+     vote_last = 12
+     vote_key_dilution = 13
+     type = 14
+     type_enum = 15
+     xfer_asset = 16
+     asset_amount = 17
+     asset_sender = 18
+     asset_receiver = 19
+     asset_close_to = 20
+     group_index = 21
+     tx_id = 22
 
 # data types of txn fields
 type_of_field = {
      TxnField.sender: TealType.bytes,
      TxnField.fee: TealType.uint64,
      TxnField.first_valid: TealType.uint64,
-     TxnField.first_valid_time: TealType.uint64,
      TxnField.last_valid: TealType.uint64,
      TxnField.note: TealType.bytes,
      TxnField.lease: TealType.bytes,
@@ -72,7 +70,6 @@ str_of_field = {
      TxnField.sender: "Sender",
      TxnField.fee: "Fee",
      TxnField.first_valid: "FirstValid",
-     TxnField.first_valid_time: "FirstValidTime",
      TxnField.last_valid: "LastValid",
      TxnField.note: "Note",
      TxnField.lease: "Lease",
@@ -432,10 +429,6 @@ class Txn(LeafExpr):
     @classmethod
     def first_valid(cls):
         return cls(TxnField.first_valid)
-
-    @classmethod
-    def first_valid_time(cls):
-        return cls(TxnField.first_valid_time)
    
     @classmethod
     def last_valid(cls):
@@ -611,10 +604,6 @@ class Gtxn(LeafExpr):
     @classmethod
     def first_valid(cls, index):
         return cls(index, TxnField.first_valid)
-
-    @classmethod
-    def first_valid_time(cls, index):
-        return cls(index, TxnField.first_valid_time)
 
     @classmethod
     def lease(cls, index):

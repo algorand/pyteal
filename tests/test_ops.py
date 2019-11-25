@@ -181,7 +181,6 @@ def test_txn():
     Txn.group_index()
     Txn.tx_id()
     Txn.lease()
-    Txn.first_valid_time()
 
 
 def test_global():
@@ -203,7 +202,6 @@ def test_gtxn():
     Gtxn.sender(0)
     Gtxn.fee(1)
     Gtxn.first_valid(1)
-    Gtxn.first_valid_time(1)
     Gtxn.last_valid(1)
     Gtxn.note(1)
     Gtxn.lease(1)
