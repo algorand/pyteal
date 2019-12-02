@@ -56,7 +56,7 @@ type_of_field = {
      TxnField.vote_key_dilution: TealType.uint64,
      TxnField.type: TealType.bytes,
      TxnField.type_enum: TealType.uint64,
-     TxnField.xfer_asset: TealType.bytes,
+     TxnField.xfer_asset: TealType.uint64,
      TxnField.asset_amount: TealType.uint64,
      TxnField.asset_sender: TealType.bytes,
      TxnField.asset_receiver: TealType.bytes,
