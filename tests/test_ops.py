@@ -233,4 +233,16 @@ def test_ite():
     with pytest.raises(TealTypeError):
         Ite(Txn.sender(), Int(1), Int(0))
 
+        
+def test_itob():
+    Itob(Int(1))
 
+    with pytest.raises(TealTypeError):
+        Itob(Arg(1))
+
+
+def test_itob():
+    Btoi(Arg(1))
+
+    with pytest.raises(TealTypeError):
+        Btoi(Int(1))
