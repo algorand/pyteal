@@ -158,10 +158,7 @@ class Bytes(LeafExpr):
         else:
             raise TealInputError("invalid base {}, need to be base32, base64, or base16.".format(base))
 
-
-    def __teal__(self):
-        if self.base == hex:
-            return [["byte", self.byte_str]]
+    def __teal__(self):        
         return [["byte", self.base, self.byte_str]]
         
     def __str__(self):
@@ -838,3 +835,35 @@ class Itob(UnaryExpr):
     def type_of(self):
         return TealType.bytes
 
+
+class Nonce(UnaryExpr):
+
+    #default constructor
+    def __init__(self, base:str, nonce:str, child:Expr):
+        self.child = child
+        if base == "base32":
+            self.base = base
+            valid_base32(nonce)
+            self.nonce = nonce
+        elif base == "base64":
+            self.base = base
+            valid_base64(nonce)
+            self.nonce = nonce
+        elif base == "base16":
+            self.base = base
+            if nonce.startswith("0x"):
+                self.nonce = nonce[2:]
+            else:
+                self.nonce = nonce
+            valid_base16(self.nonce)
+        else:
+            raise TealInputError("invalid base {}, need to be base32, base64, or base16.".format(base))
+
+    def __teal__(self):        
+        return [["byte", self.base, self.nonce], ["pop"]] + self.child.__teal__()
+        
+    def __str__(self):
+        return "({} nonce: {}) {}".format(self.base, self.nonce, self.child.__str__())
+
+    def type_of(self):
+        return self.child.type_of()
