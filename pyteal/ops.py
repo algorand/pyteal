@@ -848,7 +848,7 @@ class Nonce(UnaryExpr):
         self.nonce_bytes = Bytes(base, nonce)
 
     def __teal__(self):
-        return self.nonce_bytes._teal_() + [["pop"]] + self.child.__teal__()
+        return self.nonce_bytes.__teal__() + [["pop"]] + self.child.__teal__()
         
     def __str__(self):
         return "({} nonce: {}) {}".format(self.base, self.nonce, self.child.__str__())
