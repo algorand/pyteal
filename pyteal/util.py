@@ -81,7 +81,7 @@ def valid_base64(s:str):
 def valid_base16(s:str):
     """ check if s is a valid hex encoding string
     """
-    pattern = re.compile(r'[0-9A-F]*')
+    pattern = re.compile(r'[0-9A-Fa-f]*')
 
     if pattern.fullmatch(s) is None:
         raise TealInputError("{} is not a valid RFC 4648 base 16 string".format(

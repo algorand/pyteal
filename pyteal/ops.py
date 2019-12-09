@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """
 Operators on uint64
 
@@ -158,8 +159,11 @@ class Bytes(LeafExpr):
         else:
             raise TealInputError("invalid base {}, need to be base32, base64, or base16.".format(base))
 
-    def __teal__(self):        
-        return [["byte", self.base, self.byte_str]]
+    def __teal__(self):
+        if self.base != "base16":
+            return [["byte", self.base, self.byte_str]]
+        else:
+            return [["byte", "0x" + self.byte_str]]
         
     def __str__(self):
         return "({} bytes: {})".format(self.base, self.byte_str)
