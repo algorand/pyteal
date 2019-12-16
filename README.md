@@ -4,8 +4,7 @@
 
 Python Language Binding for Teal
 
-
-NOTE: This is still a prototype. DO NOT use it in production.
+This code **hasn't been audited**. Use it at your own risk.
 
 ### Install 
 
