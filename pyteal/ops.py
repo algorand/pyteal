@@ -120,27 +120,27 @@ str_of_global_field = {
 }
 
 
-class Temp(LeafExpr):
+class Tmpl(LeafExpr):
 
     # default constrcutor
-    def __init__(self, temp_v:str):
-        valid_temp(temp_v)
-        self.name = temp_v
+    def __init__(self, tmpl_v:str):
+        valid_tmpl(tmpl_v)
+        self.name = tmpl_v
 
     def __str__(self):
         return self.name
 
     def __teal__(self):
-        raise TealInternalError("Temp is not expected here")
+        raise TealInternalError("Tmpl is not expected here")
 
     def type_of(self):
-        raise TealInternalError("Temp is not expected here")
+        raise TealInternalError("Tmpl is not expected here")
 
 class Addr(LeafExpr):
      
     # default constructor
     def __init__(self, address):        
-        if isinstance(address, Temp):
+        if isinstance(address, Tmpl):
             self.address = address.name
         else:
             valid_address(address)
@@ -162,21 +162,21 @@ class Bytes(LeafExpr):
     def __init__(self, base:str, byte_str):
         if base == "base32":
             self.base = base
-            if isinstance(byte_str, Temp):
+            if isinstance(byte_str, Tmpl):
                 self.byte_str = byte_str.name
             else:
                 valid_base32(byte_str)
                 self.byte_str = byte_str
         elif base == "base64":
             self.base = base
-            if isinstance(byte_str, Temp):
+            if isinstance(byte_str, Tmpl):
                 self.byte_str = byte_str.name
             else:
                 self.byte_str = byte_str
                 valid_base64(byte_str)
         elif base == "base16":
             self.base = base
-            if isinstance(byte_str, Temp):
+            if isinstance(byte_str, Tmpl):
                 self.byte_str = byte_str.name
             elif byte_str.startswith("0x"):
                 self.byte_str = byte_str[2:]
@@ -204,7 +204,7 @@ class Int(LeafExpr):
      
     # default contructor
     def __init__(self, value):
-        if isinstance(value, Temp):
+        if isinstance(value, Tmpl):
             self.value = value.name
         elif type(value) is not int:
             raise TealInputError("invalid input type {} to Int".format(
