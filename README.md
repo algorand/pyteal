@@ -30,7 +30,7 @@ Active venv:
  * `. venv/bin/activate` (if your shell is bash/zsh)
 
 
-Pip install pyteal in aditable state
+Pip install pyteal in editable state
  * `pip install -e .`
  
 Type checking using mypy
