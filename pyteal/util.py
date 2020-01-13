@@ -96,10 +96,10 @@ def valid_base16(s:str):
         raise TealInputError("{} is not a valid RFC 4648 base 16 string".format(
              s))
 
-def  valid_temp(s:str):
+def  valid_tmpl(s:str):
      """ check if s is valid template name
      """
-     pattern = re.compile(r'TEMP_[A-Z0-9_]+')
+     pattern = re.compile(r'TMPL_[A-Z0-9_]+')
 
      if pattern.fullmatch(s) is None:
          raise TealInputError("{} is not a valid template variable".format(s))
