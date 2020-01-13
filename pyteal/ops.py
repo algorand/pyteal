@@ -120,12 +120,31 @@ str_of_global_field = {
 }
 
 
+class Temp(LeafExpr):
+
+    # default constrcutor
+    def __init__(self, temp_v:str):
+        valid_temp(temp_v)
+        self.name = temp_v
+
+    def __str__(self):
+        return self.name
+
+    def __teal__(self):
+        raise TealInternalError("Temp is not expected here")
+
+    def type_of(self):
+        raise TealInternalError("Temp is not expected here")
+
 class Addr(LeafExpr):
      
     # default constructor
-    def __init__(self, address:str):        
-        valid_address(address)
-        self.address = address
+    def __init__(self, address):        
+        if isinstance(address, Temp):
+            self.address = address.name
+        else:
+            valid_address(address)
+            self.address = address
 
     def __teal__(self):
         return [["addr", self.address]]
@@ -140,22 +159,31 @@ class Addr(LeafExpr):
 class Bytes(LeafExpr):
      
     #default constructor
-    def __init__(self, base:str, byte_str:str):
+    def __init__(self, base:str, byte_str):
         if base == "base32":
             self.base = base
-            valid_base32(byte_str)
-            self.byte_str = byte_str
+            if isinstance(byte_str, Temp):
+                self.byte_str = byte_str.name
+            else:
+                valid_base32(byte_str)
+                self.byte_str = byte_str
         elif base == "base64":
             self.base = base
-            valid_base64(byte_str)
-            self.byte_str = byte_str
-        elif base == "base16":
-            self.base = base
-            if byte_str.startswith("0x"):
-                self.byte_str = byte_str[2:]
+            if isinstance(byte_str, Temp):
+                self.byte_str = byte_str.name
             else:
                 self.byte_str = byte_str
-            valid_base16(self.byte_str)
+                valid_base64(byte_str)
+        elif base == "base16":
+            self.base = base
+            if isinstance(byte_str, Temp):
+                self.byte_str = byte_str.name
+            elif byte_str.startswith("0x"):
+                self.byte_str = byte_str[2:]
+                valid_base16(self.byte_str)
+            else:
+                self.byte_str = byte_str
+                valid_base16(self.byte_str)
         else:
             raise TealInputError("invalid base {}, need to be base32, base64, or base16.".format(base))
 
@@ -175,12 +203,13 @@ class Bytes(LeafExpr):
 class Int(LeafExpr):
      
     # default contructor
-    def __init__(self, value:int):
-        if type(value) is not int:
+    def __init__(self, value):
+        if isinstance(value, Temp):
+            self.value = value.name
+        elif type(value) is not int:
             raise TealInputError("invalid input type {} to Int".format(
-                 type(value)))
- 
-        if value >= 0 and value < 2 ** 64:
+                 type(value))) 
+        elif value >= 0 and value < 2 ** 64:
              self.value = value
         else:
             raise TealInputError("Int {} is out of range".format(value))

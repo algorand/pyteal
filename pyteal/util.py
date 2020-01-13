@@ -12,6 +12,15 @@ class TealType(Enum):
      bytes = 1
      anytype = 2
 
+     
+class TealInternalError(Exception):
+
+    def __init__(self, message:str):
+        self.message = "Internal Error: {}".format(message)
+
+    def __str__(self):
+        return self.message
+
 
 class TealTypeError(Exception):
 
@@ -86,8 +95,16 @@ def valid_base16(s:str):
     if pattern.fullmatch(s) is None:
         raise TealInputError("{} is not a valid RFC 4648 base 16 string".format(
              s))
-         
 
+def  valid_temp(s:str):
+     """ check if s is valid template name
+     """
+     pattern = re.compile(r'TEMP_[A-Z0-9_]+')
+
+     if pattern.fullmatch(s) is None:
+         raise TealInputError("{} is not a valid template variable".format(s))
+
+   
 label_count = 0
 
 
