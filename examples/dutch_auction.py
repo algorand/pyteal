@@ -85,11 +85,8 @@ wrapup = And(Global.group_size() == Int(1),
                     Txn.xfer_asset() == Int(asset_a))))
 
 
-# TODO: add a case expression in pyteal
-dutch = Ite(Global.group_size() == Int(5),
-            bid,
-            Ite(Global.group_size() == Int(4),
-                redeem,
-                wrapup))
+dutch = Cond([Global.group_size() == Int(5), bid],
+             [Global.group_size() == Int(4), redeem],
+             [Global.group_size() == Int(1), wrapup])
 
 print(dutch.teal())
