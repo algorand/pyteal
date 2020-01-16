@@ -855,3 +855,72 @@ class Nonce(UnaryExpr):
 
     def type_of(self):
         return self.child.type_of()
+
+
+class Err(LeafExpr):
+    """
+    only used internally, not a user facing operator
+    """
+
+    #default constructor
+    def __init__(self):
+        pass
+
+    def __teal__(self):
+        return [["err"]]
+
+    def __str__(self):
+        return "(err)"
+
+    def type_of(self):
+        return TealType.anytype
+    
+
+class Cond(NaryExpr):
+
+    # default constructor
+    def __init__(self, *argv):
+
+        if len(argv) < 1:
+            raise TealInputError("Cond requires at least one [condition, value]")
+
+        value_type = 0
+
+        for arg in argv:
+            msg = "Cond should be in the form of Cond([cond1, value1], [cond2, value2], ...), error in {}"
+            if not isinstance(arg, list):
+                raise TealInputError(msg.format(arg))
+            if len(arg) != 2:
+                raise TealInputError(msg.format(arg))
+            
+            require_type(arg[0].type_of(), TealType.uint64) # cond_n should be int
+
+            if value_type == 0: # the types of all branches should be the same
+                value_type = arg[1].type_of()
+            else:
+                require_type(arg[1].type_of(), value_type)
+
+        self.value_type = value_type        
+        self.args = argv        
+
+    def __teal__(self):
+        # converting cond to ite first
+        def make_ite(conds):
+            if len(conds) == 0:
+                return Err()
+            else:
+                e = conds[0]
+                return Ite(e[0], e[1], make_ite(conds[1:]))
+
+        desugared = make_ite(self.args)
+        return desugared.__teal__() 
+
+    def __str__(self):
+        ret_str = "(Cond"
+        for a in self.args:
+            ret_str += " [" + a[0].__str__() + ", " + a[1].__str__() + "]"
+        ret_str += ")"
+        return ret_str
+        
+    def type_of(self):
+        return self.value_type

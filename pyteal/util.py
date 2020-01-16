@@ -41,7 +41,7 @@ class TealInputError(Exception):
         
         
 def require_type(actual, expected):
-    if actual != expected:
+    if actual != expected and (actual != TealType.anytype) and (expected != TealType.anytype):
         raise TealTypeError(actual, expected)
 
 
