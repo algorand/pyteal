@@ -16,9 +16,15 @@ def test_addr():
     with pytest.raises(TealInputError):
         Addr(2)
 
+def test_tmpl():
+	Tmpl("TMPL_RECEIVER0")
 
+	with pytest.raises(TealInputError):
+		Tmpl("whatever")
+		
 def test_int():
     Int(232323)
+    Int(Tmpl("TMPL_INT_MAX"))
 
     with pytest.raises(TealInputError):
         Int(6.7)
@@ -67,6 +73,7 @@ def test_bytes():
     Bytes("base16", "A21212EF")
     Bytes("base16", "0xA21212EF")
     Bytes("base16","")
+    Bytes("base16", Tmpl("TMPL_SEC"))
 
     with pytest.raises(TealInputError):
         Bytes("base23", "")
