@@ -289,3 +289,18 @@ def test_cond():
     with pytest.raises(TealTypeError):
         Cond([Arg(0), Int(2)])
 
+
+def test_hashes():
+    Sha256(Arg(0))
+    Sha512_256(Arg(0))
+    Keccak256(Arg(0))
+
+    with pytest.raises(TealTypeError):
+        Sha256(Int(1))
+
+    with pytest.raises(TealTypeError):
+        Sha512_256(Int(1))
+
+    with pytest.raises(TealTypeError):
+        Keccak256(Int(1))
+

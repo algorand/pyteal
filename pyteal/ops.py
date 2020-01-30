@@ -869,6 +869,57 @@ class Itob(UnaryExpr):
         return TealType.bytes
 
 
+class Keccak256(UnaryExpr):    
+
+    # default constructor
+    def __init__(self, child:Expr):
+        require_type(child.type_of(), TealType.bytes)
+        self.child = child
+
+    def __teal__(self):
+        return self.child.__teal__() + [["keccak256"]]
+         
+    def __str__(self):
+         return "(keccak {})".format(self.child)
+
+    def type_of(self):
+        return TealType.bytes
+
+
+class Sha512_256(UnaryExpr):    
+
+    # default constructor
+    def __init__(self, child:Expr):
+        require_type(child.type_of(), TealType.bytes)
+        self.child = child
+
+    def __teal__(self):
+        return self.child.__teal__() + [["sha512_256"]]
+         
+    def __str__(self):
+         return "(sha512_256 {})".format(self.child)
+
+    def type_of(self):
+        return TealType.bytes
+
+
+class Sha256(UnaryExpr):   
+
+    # default constructor
+    def __init__(self, child:Expr):
+        require_type(child.type_of(), TealType.bytes)
+        self.child = child
+
+    def __teal__(self):
+        return self.child.__teal__() + [["sha256"]]
+         
+    def __str__(self):
+         return "(sha256 {})".format(self.child)
+
+    def type_of(self):
+        return TealType.bytes    
+
+
 class Nonce(UnaryExpr):
 
     #default constructor
