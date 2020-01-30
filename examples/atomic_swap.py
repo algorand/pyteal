@@ -12,7 +12,7 @@ fee_cond = Txn.fee() < Int(1000)
 type_cond = Txn.type_enum() == Int(1)
 recv_cond = (Txn.close_remainder_to() == Global.zero_address()).And(
              Txn.receiver() == alice).And(
-             Arg(0) == secret)
+             Sha256(Arg(0)) == secret)
 esc_cond = (Txn.close_remainder_to()  == Global.zero_address()).And(
             Txn.receiver() == bob).And(
             Txn.first_valid() > Int(3000))
