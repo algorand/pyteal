@@ -22,4 +22,4 @@ For each of our repositories we use the same model for contributing code. Develo
 
 We recommand the contributing code following [PEP 8 -- Style Guide for Python Code](https://www.python.org/dev/peps/pep-0008/).
 
-[issues_url]: https://github.com/algorand/go-algorand/issues
+[issues_url]: https://github.com/algorand/pyteal/issues
