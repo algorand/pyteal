@@ -10,7 +10,7 @@ called [Transaction Execution Approval Language (TEAL)](https://developer.algora
 This a non-Turing complete language that allows branch forwards but prevents recursive logic 
 to maximize safety and performance. 
 
-While TEAL is essentially an assembly based language. PyTeal allows smart contracts developers express smart contract logic purely using Python. It provides higher level functional programming style abstactions over TEAL and does type checking at construction time.
+While TEAL is essentially an assembly based language. PyTeal allows smart contracts developers express smart contract logic purely using Python. It provides higher level, functional programming style abstactions over TEAL and does type checking at construction time.
 
 PyTeal **hasn't been security audited**. Use it at your own risk.
 
