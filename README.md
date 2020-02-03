@@ -10,7 +10,7 @@ This code **hasn't been audited**. Use it at your own risk.
 
 pyteal requires python version >= 3.6
 
-* `pip install -r requirements.txt`
+* `pip3 install -r requirements.txt`
 
 ### Run Demo
 
