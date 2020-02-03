@@ -5,12 +5,13 @@
 
 PyTeal is a Python language binding for [Algorand Smart Contracts (ASC1s)](https://developer.algorand.org/docs/asc). 
 
-Algorand Smart Contracts are implemented using a new language that is stack-based and created by Algorand, 
+Algorand Smart Contracts are implemented using a new language that is stack-based, 
 called [Transaction Execution Approval Language (TEAL)](https://developer.algorand.org/docs/teal). 
 This a non-Turing complete language that allows branch forwards but prevents recursive logic 
 to maximize safety and performance. 
 
-While TEAL is essentially an assembly based language. PyTeal allows smart contracts developers express smart contract logic purely using Python. It provides higher level, functional programming style abstactions over TEAL and does type checking at construction time.
+However, TEAL is essentially an assembly language. With PyTeal, developers can express smart contract logic purely using Python. 
+PyTeal provides higher level, functional programming style abstactions over TEAL and does type checking at construction time.
 
 PyTeal **hasn't been security audited**. Use it at your own risk.
 
