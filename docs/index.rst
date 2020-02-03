@@ -6,7 +6,7 @@
 PyTeal: Algorand Smart Contracts in Python
 ==========================================
 
-
+.. mdinclude:: ../README.md
 
 .. toctree::
    :maxdepth: 2
