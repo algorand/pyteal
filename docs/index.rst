@@ -3,13 +3,43 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. mdinclude:: ../README.md
+PyTeal: Algorand Smart Contracts in Python
+==========================================
+
+PyTeal is a Python language binding for `Algorand Smart Contracts (ASC1s)<https://developer.algorand.org/docs/asc>`_. 
+
+Algorand Smart Contracts are implemented using a new language that is stack-based, 
+called `Transaction Execution Approval Language (TEAL)<https://developer.algorand.org/docs/teal>`_. 
+This a non-Turing complete language that allows branch forwards but prevents recursive logic 
+to maximize safety and performance. 
+
+However, TEAL is essentially an assembly language.
+With PyTeal, developers can express smart contract logic purely using Python. 
+PyTeal provides higher level, functional programming style abstactions over TEAL
+and does type checking at construction time.
+
+PyTeal **hasn't been security audited**. Use it at your own risk.
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
+   :caption: Getting Started
 
+   overview
+   installation
+   examples
 
+.. toctree::
+   :maxdepth: 1
+   :caption: User Guide
+
+   data_type
+   arithmetic_expression
+   accessing_transaction_field
+   atomic_transfer
+   control_structures
+   API
+   using_pyteal_with_sdk
+   
 
 Indices and tables
 ==================
