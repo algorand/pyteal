@@ -15,7 +15,7 @@ to maximize safety and performance.
 
 However, TEAL is essentially an assembly language.
 With PyTeal, developers can express smart contract logic purely using Python. 
-PyTeal provides higher level, functional programming style abstactions over TEAL
+PyTeal provides high level, functional programming style abstactions over TEAL
 and does type checking at construction time.
 
 PyTeal **hasn't been security audited**. Use it at your own risk.
