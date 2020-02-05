@@ -38,7 +38,6 @@ PyTeal **hasn't been security audited**. Use it at your own risk.
    atomic_transfer
    crypto
    control_structures
-   API
    using_pyteal_with_sdk
    
 
