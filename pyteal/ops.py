@@ -719,7 +719,7 @@ class Gtxn(LeafExpr):
         return type_of_field[self.field]
 
 
-class Ite(NaryExpr):
+class If(NaryExpr):
 
     #default constructor
     def __init__(self, arg0:Expr, arg1:Expr, arg2:Expr):
@@ -740,7 +740,7 @@ class Ite(NaryExpr):
         return ret
 
     def __str__(self):
-        return "(Ite {} {} {})".format(self.args[0], self.args[1], self.args[2])
+        return "(If {} {} {})".format(self.args[0], self.args[1], self.args[2])
 
     def type_of(self):
         return self.args[1].type_of()
@@ -984,13 +984,13 @@ class Cond(NaryExpr):
         self.args = argv        
 
     def __teal__(self):
-        # converting cond to ite first
-        def make_ite(conds):
+        # converting cond to if first
+        def make_if(conds):
             if len(conds) == 0:
                 return Err()
             else:
                 e = conds[0]
-                return Ite(e[0], e[1], make_ite(conds[1:]))
+                return If(e[0], e[1], make_if(conds[1:]))
 
         desugared = make_ite(self.args)
         return desugared.__teal__() 

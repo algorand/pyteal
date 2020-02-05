@@ -1,2 +1,6 @@
-Control Structures
-==================
+.. _conditionals:
+
+Conditionals
+============
+
+

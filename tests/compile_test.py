@@ -160,9 +160,9 @@ def test_split():
                       Txn.first_valid() > tmpl_timeout)
 
     split = And(split_core,
-                Ite(Global.group_size() == Int(2),
-                    split_transfer,
-                    split_close))
+                If(Global.group_size() == Int(2),
+                   split_transfer,
+                   split_close))
 
     target = """txn TypeEnum
 int 1

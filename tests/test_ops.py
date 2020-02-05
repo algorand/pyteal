@@ -231,14 +231,14 @@ def test_gtxn():
     Gtxn.tx_id(1)
 
     
-def test_ite():
-    Ite(Int(0), Txn.sender(), Txn.receiver())
+def test_if():
+    If(Int(0), Txn.sender(), Txn.receiver())
 
     with pytest.raises(TealTypeError):
-        Ite(Int(0), Txn.amount(), Txn.sender())
+        If(Int(0), Txn.amount(), Txn.sender())
 
     with pytest.raises(TealTypeError):
-        Ite(Txn.sender(), Int(1), Int(0))
+        If(Txn.sender(), Int(1), Int(0))
 
         
 def test_itob():

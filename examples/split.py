@@ -29,8 +29,9 @@ split_close = And(Txn.close_remainder_to() == tmpl_own,
                   Txn.receiver() == Global.zero_address(),
                   Txn.first_valid() == tmpl_timeout)
 
-split = split_core.And(Ite(Global.group_size() == Int(2),
-                           split_transfer,
-                           split_close))
+split = And(split_core,
+            If(Global.group_size() == Int(2),
+               split_transfer,
+               split_close))
 
 print(split.teal())
