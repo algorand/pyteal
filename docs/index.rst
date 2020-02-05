@@ -36,6 +36,7 @@ PyTeal **hasn't been security audited**. Use it at your own risk.
    arithmetic_expression
    accessing_transaction_field
    atomic_transfer
+   crypto
    control_structures
    API
    using_pyteal_with_sdk
