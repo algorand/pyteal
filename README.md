@@ -20,7 +20,7 @@ PyTeal **hasn't been security audited**. Use it at your own risk.
 
 pyteal requires python version >= 3.6
 
-* `pip3 install -r requirements.txt`
+* `pip3 install pyteal`
 
 ### Run Demo
 

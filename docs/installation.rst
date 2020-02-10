@@ -3,10 +3,11 @@ Install PyTeal
 
 The easiest way of installing PyTeal is using :code:`pip` : ::
 
-  pip install pyteal
+  $ pip3 install pyteal
 
-You can also install from source:
+Alternatively, choose a `distribution file <https://pypi.org/project/pyteal/#files>`_, and run ::
 
-  TODO: instructions for install from source
+  $ pip3 install [file name]
+
 
 

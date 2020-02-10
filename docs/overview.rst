@@ -33,7 +33,7 @@ Below is the example of writing *Hashed Time Locked Contract* in Pyteal::
 
 
 As shown in this exmaple, the logic of smart contract is expressed using PyTeal expressions constructed in Python. PyTeal overloads Python's arithmetic operators 
-such as :code:`<` and :code:`==` (more overloaded operators can be found in TODO), allowing Python developers express smart contract logic more naturally.
+such as :code:`<` and :code:`==` (more overloaded operators can be found in :ref:`arithmetic_expressions`), allowing Python developers express smart contract logic more naturally.
 
 Last, :code:`teal()` is called to convert an PyTeal expression
 to a TEAL program, consisting a sequence of TEAL opcodes.
