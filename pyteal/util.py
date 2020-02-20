@@ -4,7 +4,7 @@ Helper functions and classes
 """
 
 from enum import Enum
-import re
+import re, subprocess
 
 
 class TealType(Enum):
@@ -103,13 +103,23 @@ def  valid_tmpl(s:str):
 
      if pattern.fullmatch(s) is None:
          raise TealInputError("{} is not a valid template variable".format(s))
-
    
 label_count = 0
-
 
 def new_label():
     global label_count
     new_l = "l{}".format(label_count)
     label_count += 1
     return new_l
+
+def execute(args):
+    """ Execute in bash, return stdout and stderr in string
+    
+    Arguments:
+    args: command and arguments to run, e.g. ['ls', '-l']
+    """
+    process = subprocess.Popen(args, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    
+    return (stdout.decode("utf-8"), stderr.decode("utf-8"))
