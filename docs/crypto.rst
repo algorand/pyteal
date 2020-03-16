@@ -17,7 +17,7 @@ Operator                        Cost      Description
 :code:`Sha256(e)`               `7`       `SHA-256` hash function, produces 32 bytes
 :code:`Keccak256(e)`            `26`      `Keccak-256` hash funciton, produces 32 bytes
 :code:`Sha512_256(e)`           `9`       `SHA512-256` hash function, produces 32 bytes
-:code:`Ed25519verify(d, s, p)`  `1900`    `1` if :code:`s` is the signature of :code:`d` signed by :code:`p` (PK), else `0`
+:code:`Ed25519Verify(d, s, p)`  `1900`    `1` if :code:`s` is the signature of :code:`d` signed by :code:`p` (PK), else `0`
 =============================== ========= ================================================================================
 
 These cryptographic primitives cover the most used ones in blockchains and cryptocurrencies. For example, Bitcoin uses `SHA-256` for creating Bitcoin addresses;
