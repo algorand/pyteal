@@ -3,11 +3,11 @@
 from pyteal import *
 import uuid, params, base64
 from algosdk import algod, transaction, account, mnemonic
-from periodic_payment import periodic_pay_escrow
+from periodic_payment import periodic_pay
 
 #--------- compile & send transaction using Goal and Python SDK ----------
 
-teal_source = periodic_pay_escrow.teal() 
+teal_source = periodic_pay.teal() 
 
 # compile teal
 teal_file = str(uuid.uuid4()) + ".teal"

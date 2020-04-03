@@ -4,33 +4,44 @@ from pyteal import *
 
 """ Recurring Swap
 
-This is a recurring payment contract. This contract can be set as an escrow 
-and sending tmpl_amount recurringly to tmpl_rcv as long as secret is provided.
+This is a recurring swap contract. This contract can be set as an escrow 
+and sending tmpl_amount recurringly to tmpl_provider as long as the transaction is authoried
+by the provider.
 
 Use scenarios:
-An insurer company set up this escrow contract and funded with Algos. 
-Whenever the hospital received a record from the device, the hospital can send a 
-transaction to transfer tmpl_amount of Algos from the escrow to the hospital. 
-The hospital may be required to put some information about the record in the note 
+A buyer (an insurer, for example) set up this escrow contract and funded with Algos. 
+Whenever a service provider (a hospital, for example) authorize a payment,
+it submits a transaction with its signature of first_valid in the arguement and with
+the first_valid in the lease to prevent replay attacks.
+
+The hospital may some extra information about the transaction in the note 
 field for audit purpose.
 
-After timeout, the insurer can claw the remaining balance back.
+After timeout, the buyer can claw the remaining balance back.
+tmpl_buyer: buyer who receives the service
+tmpl_provider: provider of the service
+tmpl_ppk: public key of the provider
+tmpl_amount: the amount of microAlgo charged per service
+tmpl_fee: maximum transaction fee allowed
+tmpl_timeout: the timeout round, after which the buyer can reclaim her Algos
 """
 
-tmpl_rcv = Addr("6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY")
-tmpl_owner = Addr("7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M")
+tmpl_buyer = Addr("6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY")
+tmpl_provider = Addr("7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M")
+tmpl_ppk = Byte("base32", "GFFQ47565WX6VEIJXXIB4W5JNOS2UODKPASUO5T3N3RXLSBR2CEA")
 tmpl_amount = Int(500)
 tmpl_fee = Int(1000)
 tmpl_timeout = Int(100000)
-# secret_hash: replace the value with the SHA256 value of the secret
-tmpl_secret_hash = Bytes("base32", "23232323232323")
 
 fee_cond = Txn.fee() <= tmpl_fee
 type_cond = Txn.type_enum() == Int(1)
 recv_cond = And(Txn.close_remainder_to() == Global.zero_address(),
-                Txn.receiver() == tmpl_rcv,
-                Sha256(Arg(0)) == tmpl_secret_hash)
-close_cond = And(Txn.close_remainder_to() == tmpl_owner,
+                Txn.receiver() == tmpl_provider,
+                Txn.amount() == tmpl_amount,
+                Ed25519Verify(Itob(Txn.first_valid()), Arg(0), tmpl_ppk),
+                Txn.lease() == Itob(Txn.first_valid()))
+                
+close_cond = And(Txn.close_remainder_to() == tmpl_buyer,
                  Txn.amount() == Int(0),
                  Txn.first_valid() >= tmpl_timeout)
 
