@@ -28,22 +28,27 @@ tmpl_timeout: the timeout round, after which the buyer can reclaim her Algos
 
 tmpl_buyer = Addr("6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY")
 tmpl_provider = Addr("7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M")
-tmpl_ppk = Byte("base32", "GFFQ47565WX6VEIJXXIB4W5JNOS2UODKPASUO5T3N3RXLSBR2CEA")
-tmpl_amount = Int(500)
+tmpl_amount = Int(100000)
 tmpl_fee = Int(1000)
 tmpl_timeout = Int(100000)
 
-fee_cond = Txn.fee() <= tmpl_fee
-type_cond = Txn.type_enum() == Int(1)
-recv_cond = And(Txn.close_remainder_to() == Global.zero_address(),
-                Txn.receiver() == tmpl_provider,
-                Txn.amount() == tmpl_amount,
-                Ed25519Verify(Itob(Txn.first_valid()), Arg(0), tmpl_ppk),
-                Txn.lease() == Itob(Txn.first_valid()))
-                
-close_cond = And(Txn.close_remainder_to() == tmpl_buyer,
-                 Txn.amount() == Int(0),
-                 Txn.first_valid() >= tmpl_timeout)
+def recurring_swap(tmpl_buyer=tmpl_buyer,
+                   tmpl_provider=tmpl_provider,
+                   tmpl_amount=tmpl_amount,
+                   tmpl_fee=tmpl_fee,
+                   tmpl_timeout=tmpl_timeout):
+    fee_cond = Txn.fee() <= tmpl_fee
+    type_cond = Txn.type_enum() == Int(1)
+    recv_cond = And(Txn.close_remainder_to() == Global.zero_address(),
+                    Txn.receiver() == tmpl_provider,
+                    Txn.amount() == tmpl_amount,
+                    Ed25519Verify(Itob(Txn.first_valid()), Arg(0), tmpl_provider),
+                    Txn.lease() == Sha256(Itob(Txn.first_valid())))
+    
+    close_cond = And(Txn.close_remainder_to() == tmpl_buyer,
+                     Txn.amount() == Int(0),
+                     Txn.first_valid() >= tmpl_timeout)
 
-recurring_swap = And(fee_cond, type_cond, Or(recv_cond, close_cond))
-print(recurring_swap.teal())
+    return And(fee_cond, type_cond, Or(recv_cond, close_cond)).teal()
+
+# print(recurring_swap())
