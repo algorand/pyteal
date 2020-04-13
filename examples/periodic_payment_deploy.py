@@ -3,11 +3,11 @@
 from pyteal import *
 import uuid, params, base64
 from algosdk import algod, transaction, account, mnemonic
-from periodic_payment import periodic_pay
+from periodic_payment import periodic_payment, tmpl_amt
 
 #--------- compile & send transaction using Goal and Python SDK ----------
 
-teal_source = periodic_pay.teal() 
+teal_source = periodic_payment().teal() 
 
 # compile teal
 teal_file = str(uuid.uuid4()) + ".teal"
@@ -36,7 +36,8 @@ acl = algod.AlgodClient(params.algod_token, params.algod_address)
 passphrase = "patrol crawl rule faculty enemy sick reveal embody trumpet win shy zero ill draw swim excuse tongue under exact baby moral kite spring absent double"
 sk = mnemonic.to_private_key(passphrase)
 addr = account.address_from_private_key(sk)
-print( "Address of Sender/Delgator: " + addr )
+print("Dispense at least 201000 microAlgo to {}".format(addr))
+input("Make sure you did that. Press Enter to continue...")
 
 # sign the logic signature with an account sk
 lsig.sign(sk)
@@ -48,13 +49,9 @@ gh = params["genesishashb64"]
 startRound = params["lastRound"] - (params["lastRound"] % 1000)
 endRound = startRound + 1000
 fee = 1000
-amount = 2000
+amount = 200000
 receiver = "ZZAF5ARA4MEC5PVDOP64JM5O5MQST63Q2KOY2FLYFLXXD3PFSNJJBYAFZM"
 lease = base64.b64decode("y9OJ5MRLCHQj8GqbikAUKMBI7hom+SOj8dlopNdNHXI=")
-
-print(params["lastRound"])
-print(startRound)
-print(endRound)
 
 # create a transaction
 txn = transaction.PaymentTxn(addr, fee, startRound, endRound, gh, receiver, amount, flat_fee=True, lease=lease)
@@ -71,4 +68,3 @@ txid = acl.send_transaction(lstx)
 print("Transaction ID: " + txid )
 # except Exception as e:
 #     print(e)    
-
