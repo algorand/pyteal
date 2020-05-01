@@ -68,3 +68,7 @@ txid = acl.send_transaction(lstx)
 print("Transaction ID: " + txid )
 # except Exception as e:
 #     print(e)    
+
+# send raw LogicSigTransaction again to network
+txid = acl.send_transaction(lstx)
+print("Transaction ID: " + txid )
