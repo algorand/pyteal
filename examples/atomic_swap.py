@@ -19,7 +19,7 @@ def htlc(tmpl_seller=alice,
 	type_cond = Txn.type_enum() == Int(1)
 	recv_cond = And(Txn.close_remainder_to() == Global.zero_address(),
 					Txn.receiver() == tmpl_seller,
-					Sha256(Arg(0)) == tmpl_secret)
+					tmpl_hash_fn(Arg(0)) == tmpl_secret)
 	esc_cond = And(Txn.close_remainder_to()  == Global.zero_address(),
 				   Txn.receiver() == tmpl_buyer,
 				   Txn.first_valid() > Int(tmpl_timeout))
