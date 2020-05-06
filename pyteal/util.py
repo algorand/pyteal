@@ -15,7 +15,7 @@ class TealType(Enum):
      
 class TealInternalError(Exception):
 
-    def __init__(self, message:str):
+    def __init__(self, message:str) -> None:
         self.message = "Internal Error: {}".format(message)
 
     def __str__(self):

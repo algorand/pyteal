@@ -227,4 +227,13 @@ l1:
 &&"""
 
     assert split.teal() == target
-    
+
+
+def test_cond():
+	cond1 = Txn.fee() < Int(2000)
+	cond2 = Txn.amount() > Int(5000)
+	cond3 = Txn.receiver() == Txn.sender()
+	core = Cond([Global.group_size()==Int(2), cond1],
+				[Global.group_size()==Int(3), cond2],
+				[Global.group_size()==Int(4), cond3])
+	core.teal()

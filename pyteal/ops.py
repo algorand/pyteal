@@ -123,7 +123,7 @@ str_of_global_field = {
 class Tmpl(LeafExpr):
 
     # default constrcutor
-    def __init__(self, tmpl_v:str):
+    def __init__(self, tmpl_v:str) -> None:
         valid_tmpl(tmpl_v)
         self.name = tmpl_v
 
@@ -139,7 +139,7 @@ class Tmpl(LeafExpr):
 class Addr(LeafExpr):
      
     # default constructor
-    def __init__(self, address):        
+    def __init__(self, address) -> None:        
         if isinstance(address, Tmpl):
             self.address = address.name
         else:
@@ -159,7 +159,7 @@ class Addr(LeafExpr):
 class Bytes(LeafExpr):
      
     #default constructor
-    def __init__(self, base:str, byte_str):
+    def __init__(self, base:str, byte_str) -> None:
         if base == "base32":
             self.base = base
             if isinstance(byte_str, Tmpl):
@@ -227,7 +227,7 @@ class Int(LeafExpr):
 class Arg(LeafExpr):
      
     # default constructor
-    def __init__(self, index:int):
+    def __init__(self, index:int) -> None:
         if type(index) is not int:
             raise TealInputError("invalid arg input type {}".format(
                  type(index)))
@@ -318,7 +318,7 @@ class Or(BinaryExpr):
 class Lt(BinaryExpr):
 
     # default constructor
-    def __init__(self, left:Expr, right:Expr):
+    def __init__(self, left:Expr, right:Expr) -> None:
          require_type(left.type_of(), TealType.uint64)
          require_type(right.type_of(), TealType.uint64)
          self.left = left
@@ -338,7 +338,7 @@ class Lt(BinaryExpr):
 class Gt(BinaryExpr):
 
     # default constructor
-    def __init__(self, left:Expr, right:Expr):
+    def __init__(self, left:Expr, right:Expr) -> None:
         require_type(left.type_of(), TealType.uint64)
         require_type(right.type_of(), TealType.uint64) 
         self.left = left
@@ -357,7 +357,7 @@ class Gt(BinaryExpr):
 class Ge(BinaryExpr):
 
     # default constructor
-    def __init__(self, left:Expr, right:Expr):
+    def __init__(self, left:Expr, right:Expr) -> None:
         require_type(left.type_of(), TealType.uint64)
         require_type(right.type_of(), TealType.uint64) 
         self.left = left
@@ -376,7 +376,7 @@ class Ge(BinaryExpr):
 class Le(BinaryExpr):
 
     # default constructor
-    def __init__(self, left:Expr, right:Expr):
+    def __init__(self, left:Expr, right:Expr) -> None:
         require_type(left.type_of(), TealType.uint64)
         require_type(right.type_of(), TealType.uint64) 
         self.left = left
@@ -396,7 +396,7 @@ class Le(BinaryExpr):
 class Eq(BinaryExpr):
 
     # default constructor
-    def __init__(self, left:Expr, right:Expr):
+    def __init__(self, left:Expr, right:Expr) -> None:
          # type checking
         t1 = left.type_of()
         t2 = right.type_of()
@@ -420,7 +420,7 @@ class Eq(BinaryExpr):
 class Len(UnaryExpr):
 
     # default constructor
-    def __init__(self, child:Expr):
+    def __init__(self, child:Expr) -> None:
         require_type(child.type_of(), TealType.bytes)
         self.child = child
 
@@ -438,7 +438,7 @@ class Len(UnaryExpr):
 class Txn(LeafExpr):
 
     # default constructor
-    def __init__(self, field:TxnField):
+    def __init__(self, field:TxnField) -> None:
         self.field = field
 
     def __str__(self):
@@ -547,7 +547,7 @@ class Txn(LeafExpr):
 class Global(LeafExpr):
 
     # default constructor
-    def __init__(self, field:GlobalField):
+    def __init__(self, field:GlobalField) -> None:
         self.field = field
 
     def __teal__(self):
@@ -584,7 +584,7 @@ class Global(LeafExpr):
 class Ed25519Verify(NaryExpr):
 
     # default constructor
-    def __init__(self, arg0:Expr, arg1:Expr, arg2:Expr):
+    def __init__(self, arg0:Expr, arg1:Expr, arg2:Expr) -> None:
         require_type(arg0.type_of(), TealType.bytes)
         require_type(arg1.type_of(), TealType.bytes)
         require_type(arg2.type_of(), TealType.bytes)
@@ -608,7 +608,7 @@ class Ed25519Verify(NaryExpr):
 class Gtxn(LeafExpr):
 
         # default constructor
-    def __init__(self, index:int, field:TxnField):
+    def __init__(self, index:int, field:TxnField) -> None:
         require_type(type(index), int)
         if index < 0 or index >= MAX_GROUP_SIZE :
             raise TealInputError("invalid Gtxn index {}, shoud [0, {})".format(
@@ -722,7 +722,7 @@ class Gtxn(LeafExpr):
 class If(NaryExpr):
 
     #default constructor
-    def __init__(self, arg0:Expr, arg1:Expr, arg2:Expr):
+    def __init__(self, arg0:Expr, arg1:Expr, arg2:Expr) -> None:
         require_type(arg0.type_of(), TealType.uint64)
         require_type(arg2.type_of(), arg1.type_of())
 
@@ -748,7 +748,7 @@ class If(NaryExpr):
 
 class Add(BinaryExpr):
 
-    def __init__(self, left:Expr, right:Expr):
+    def __init__(self, left:Expr, right:Expr) -> None:
         require_type(left.type_of(), TealType.uint64)
         require_type(right.type_of(), TealType.uint64)
         self.left = left
@@ -766,7 +766,7 @@ class Add(BinaryExpr):
 
 class Minus(BinaryExpr):
 
-    def __init__(self, left:Expr, right:Expr):
+    def __init__(self, left:Expr, right:Expr) -> None:
         require_type(left.type_of(), TealType.uint64)
         require_type(right.type_of(), TealType.uint64)
         self.left = left
@@ -784,7 +784,7 @@ class Minus(BinaryExpr):
 
 class Mul(BinaryExpr):
 
-    def __init__(self, left:Expr, right:Expr):
+    def __init__(self, left:Expr, right:Expr) -> None:
         require_type(left.type_of(), TealType.uint64)
         require_type(right.type_of(), TealType.uint64)
         self.left = left
@@ -801,7 +801,7 @@ class Mul(BinaryExpr):
 
 class Div(BinaryExpr):
     
-    def __init__(self, left:Expr, right:Expr):
+    def __init__(self, left:Expr, right:Expr) -> None:
         require_type(left.type_of(), TealType.uint64)
         require_type(right.type_of(), TealType.uint64)
         self.left = left
@@ -819,7 +819,7 @@ class Div(BinaryExpr):
 
 class Mod(BinaryExpr):
 
-    def __init__(self, left:Expr, right:Expr):
+    def __init__(self, left:Expr, right:Expr) -> None:
         require_type(left.type_of(), TealType.uint64)
         require_type(right.type_of(), TealType.uint64)
         self.left = left
@@ -838,7 +838,7 @@ class Mod(BinaryExpr):
 class Btoi(UnaryExpr):
 
     # default constructor
-    def __init__(self, child:Expr):
+    def __init__(self, child:Expr) -> None:
         require_type(child.type_of(), TealType.bytes)
         self.child = child
 
@@ -855,7 +855,7 @@ class Btoi(UnaryExpr):
 class Itob(UnaryExpr):
 
     # default constructor
-    def __init__(self, child:Expr):
+    def __init__(self, child:Expr) -> None:
         require_type(child.type_of(), TealType.uint64)
         self.child = child
 
@@ -872,7 +872,7 @@ class Itob(UnaryExpr):
 class Keccak256(UnaryExpr):    
 
     # default constructor
-    def __init__(self, child:Expr):
+    def __init__(self, child:Expr) -> None:
         require_type(child.type_of(), TealType.bytes)
         self.child = child
 
@@ -889,7 +889,7 @@ class Keccak256(UnaryExpr):
 class Sha512_256(UnaryExpr):    
 
     # default constructor
-    def __init__(self, child:Expr):
+    def __init__(self, child:Expr) -> None:
         require_type(child.type_of(), TealType.bytes)
         self.child = child
 
@@ -906,7 +906,7 @@ class Sha512_256(UnaryExpr):
 class Sha256(UnaryExpr):   
 
     # default constructor
-    def __init__(self, child:Expr):
+    def __init__(self, child:Expr) -> None:
         require_type(child.type_of(), TealType.bytes)
         self.child = child
 
@@ -923,7 +923,7 @@ class Sha256(UnaryExpr):
 class Nonce(UnaryExpr):
 
     #default constructor
-    def __init__(self, base:str, nonce:str, child:Expr):
+    def __init__(self, base:str, nonce:str, child:Expr) -> None:
         self.child = child
         self.nonce_bytes = Bytes(base, nonce)
 
@@ -992,7 +992,7 @@ class Cond(NaryExpr):
                 e = conds[0]
                 return If(e[0], e[1], make_if(conds[1:]))
 
-        desugared = make_ite(self.args)
+        desugared = make_if(self.args)
         return desugared.__teal__() 
 
     def __str__(self):
