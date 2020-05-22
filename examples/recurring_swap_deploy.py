@@ -5,12 +5,13 @@ from nacl import encoding, hash
 from recurring_swap import recurring_swap, tmpl_provider
 from algosdk import algod, account
 from algosdk.future import transaction
-import uuid, params, re, base64
+import uuid, params, re, base64, time
 
 # ------- generate provider's account -----------------------------------------------
 key_fn = str(uuid.uuid4()) + ".key"
 execute(["algokey", "generate", "-f", key_fn])
 stdout, stderr = execute(["algokey", "export", "-f", key_fn])
+print("generated key file {}".format(key_fn))
 
 if stderr != "":
     print(stderr)
@@ -44,7 +45,7 @@ elif len(stdout) < 59:
 
 result = re.search(r': \w+', stdout)
 escrow_addr = result.group(0)[2:]
-print("Dispense at least 101000 microAlgo to {}".format(escrow_addr))
+print("Dispense at least 202000 microAlgo to {}".format(escrow_addr))
 input("Make sure you did that. Press Enter to continue...")
 
 # now, as a provider, you can withdraw Algo from the escrow if you sign the first valid
@@ -55,7 +56,7 @@ first_valid = sp.first
 data = first_valid.to_bytes(8, byteorder='big')
 lease = hash.sha256(data)
 lease_bytes = encoding.HexEncoder.decode(lease)
-
+print("first valid: {}".format(first_valid))
 
 txn = transaction.PaymentTxn(escrow_addr, sp, provider_addr, 100000, lease=lease_bytes)
 
@@ -67,10 +68,10 @@ lstx = transaction.LogicSigTransaction(txn, lsig)
 assert(lstx.verify())
 
 # send LogicSigTransaction to network
-transaction.write_to_file([lstx], "r_s.txn")
+transaction.write_to_file([lstx], "r_s_1.txn")
 
 stdout, stderr = execute(["goal", "clerk", "tealsign", "--data-b64", base64.b64encode(data),
-                          "--lsig-txn", "r_s.txn", "--keyfile", key_fn, "--set-lsig-arg-idx",
+                          "--lsig-txn", "r_s_1.txn", "--keyfile", key_fn, "--set-lsig-arg-idx",
                           "0"])
 if stderr != "":
     print(stderr)
@@ -78,7 +79,43 @@ if stderr != "":
 
 print(stdout)
 
-lstx = transaction.retrieve_from_file("r_s.txn")
+lstx = transaction.retrieve_from_file("r_s_1.txn")
 txid = acl.send_transactions(lstx)
 
-print("Succesfull! txid:{}".format(txid))
+print("1st withraw Succesfull! txid:{}".format(txid))
+
+# at least sleep to the next round
+time.sleep(6) 
+
+sp = acl.suggested_params_as_object()
+first_valid = sp.first
+data = first_valid.to_bytes(8, byteorder='big')
+lease = hash.sha256(data)
+lease_bytes = encoding.HexEncoder.decode(lease)
+
+print("first valid: {}".format(first_valid))
+
+txn = transaction.PaymentTxn(escrow_addr, sp, provider_addr, 100000, lease=lease_bytes)
+
+with open(lsig_fname, "rb") as f:
+    teal_bytes = f.read()
+lsig = transaction.LogicSig(teal_bytes)
+lstx = transaction.LogicSigTransaction(txn, lsig)
+
+assert(lstx.verify())
+
+# send LogicSigTransaction to network
+transaction.write_to_file([lstx], "r_s_2.txn")
+
+stdout, stderr = execute(["goal", "clerk", "tealsign", "--data-b64", base64.b64encode(data),
+                          "--lsig-txn", "r_s_2.txn", "--keyfile", key_fn, "--set-lsig-arg-idx",
+                          "0"])
+if stderr != "":
+    print(stderr)
+    raise
+
+print(stdout)
+
+lstx = transaction.retrieve_from_file("r_s_2.txn")
+txid = acl.send_transactions(lstx)
+print("2nd withraw Succesfull! txid:{}".format(txid))
