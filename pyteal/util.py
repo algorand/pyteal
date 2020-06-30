@@ -28,3 +28,9 @@ def execute(args):
     stdout, stderr = process.communicate()
     
     return (stdout.decode("utf-8"), stderr.decode("utf-8"))
+
+def escapeStr(s: str) -> str:
+    s = s.encode("utf-8").decode("latin-1").encode("unicode-escape").decode("latin-1")
+    s = s.replace("\"", "\\\"")
+    
+    return "\"" + s + "\""

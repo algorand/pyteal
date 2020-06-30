@@ -7,8 +7,9 @@ def test_int():
 
     for value in values:
         expr = Int(value)
+        assert expr.type_of() == TealType.uint64
         assert expr.__teal__() == [
-            ["int", str(value)]
+            TealOp(Op.int, value)
         ]
 
 def test_int_invalid():
@@ -23,3 +24,10 @@ def test_int_invalid():
     
     with pytest.raises(TealInputError):
         Int("0")
+
+def test_enum_int():
+    expr = EnumInt("OptIn")
+    assert expr.type_of() == TealType.uint64
+    assert expr.__teal__() == [
+        TealOp(Op.int, "OptIn")
+    ]

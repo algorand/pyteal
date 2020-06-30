@@ -1,4 +1,5 @@
 from ..types import TealType, require_type, types_match
+from ..ir import TealOp, Op, TealLabel
 from ..util import new_label
 from .expr import Expr
 
@@ -31,10 +32,16 @@ class If(Expr):
         t_branch = self.thenBranch.__teal__()
         e_branch = self.elseBranch.__teal__()
         l2 = new_label()
-        # TODO: remove pop if teal check is removed
-        ret = cond + [["bnz", l1]] + e_branch + [["int", "1"]] + \
-              [["bnz", l2], ["pop"], [l1+":"]] + t_branch + [[l2+":"]]
-        return ret
+
+        teal = cond
+        teal.append(TealOp(Op.bnz, l1))
+        teal += e_branch
+        teal.append(TealOp(Op.b, l2))
+        teal.append(TealLabel(l1))
+        teal += t_branch
+        teal.append(TealLabel(l2))
+
+        return teal
 
     def __str__(self):
         return "(If {} {} {})".format(self.cond, self.thenBranch, self.elseBranch)

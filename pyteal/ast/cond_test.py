@@ -3,66 +3,69 @@ import pytest
 from .. import *
 
 def test_cond_one_pred():
-    teal = Cond([Int(1), Int(2)]).__teal__()
+    expr = Cond([Int(1), Int(2)])
+    assert expr.type_of() == TealType.uint64
+    teal = expr.__teal__()
     assert len(teal) == 6
-    labels = [teal[3][0], teal[5][0]]
-    assert all(label.endswith(":") for label in labels)
+    labels = [teal[3], teal[5]]
+    assert all(isinstance(label, TealLabel) for label in labels)
     assert len(labels) == len(set(labels))
     assert teal == [
-        ["int", "1"],
-        ["bnz", labels[0][:-1]],
-        ["err"],
-        [labels[0]],
-        ["int", "2"],
-        [labels[1]]
+        TealOp(Op.int, 1),
+        TealOp(Op.bnz, labels[0].label),
+        TealOp(Op.err),
+        labels[0],
+        TealOp(Op.int, 2),
+        labels[1]
     ]
 
 def test_cond_two_pred():
-    teal = Cond([Int(1), Int(2)], [Int(0), Int(3)]).__teal__()
-    assert len(teal) == 12
-    labels = [teal[5][0], teal[9][0], teal[11][0]]
-    assert all(label.endswith(":") for label in labels)
+    expr = Cond([Int(1), Bytes("one")], [Int(0), Bytes("zero")])
+    assert expr.type_of() == TealType.bytes
+    teal = expr.__teal__()
+    assert len(teal) == 11
+    labels = [teal[5], teal[8], teal[10]]
+    assert all(isinstance(label, TealLabel) for label in labels)
     assert len(labels) == len(set(labels))
     assert teal == [
-        ["int", "1"],
-        ["bnz", labels[0][:-1]],
-        ["int", "0"],
-        ["bnz", labels[1][:-1]],
-        ["err"],
-        [labels[0]],
-        ["int", "2"],
-        ["int", "1"],
-        ["bnz", labels[2][:-1]],
-        [labels[1]],
-        ["int", "3"],
-        [labels[2]]
+        TealOp(Op.int, 1),
+        TealOp(Op.bnz, labels[0].label),
+        TealOp(Op.int, 0),
+        TealOp(Op.bnz, labels[1].label),
+        TealOp(Op.err),
+        labels[0],
+        TealOp(Op.byte, "\"one\""),
+        TealOp(Op.b, labels[2].label),
+        labels[1],
+        TealOp(Op.byte, "\"zero\""),
+        labels[2]
     ]
 
 def test_cond_three_pred():
-    teal = Cond([Int(1), Int(2)], [Int(3), Int(4)], [Int(5), Int(6)]).__teal__()
-    assert len(teal) == 18
-    labels = [teal[7][0], teal[11][0], teal[15][0], teal[17][0]]
-    assert all(label.endswith(":") for label in labels)
+    expr = Cond([Int(1), Int(2)], [Int(3), Int(4)], [Int(5), Int(6)])
+    assert expr.type_of() == TealType.uint64
+    teal = expr.__teal__()
+    assert len(teal) == 16
+    labels = [teal[7], teal[10], teal[13], teal[15]]
+    assert all(isinstance(label, TealLabel) for label in labels)
     assert len(labels) == len(set(labels))
     assert teal == [
-        ["int", "1"],
-        ["bnz", labels[0][:-1]],
-        ["int", "3"],
-        ["bnz", labels[1][:-1]],
-        ["int", "5"],
-        ["bnz", labels[2][:-1]],
-        ["err"],
-        [labels[0]],
-        ["int", "2"],
-        ["int", "1"],
-        ["bnz", labels[3][:-1]],
-        [labels[1]],
-        ["int", "4"],
-        ["int", "1"],
-        ["bnz", labels[3][:-1]],
-        [labels[2]],
-        ["int", "6"],
-        [labels[3]]
+        TealOp(Op.int, 1),
+        TealOp(Op.bnz, labels[0].label),
+        TealOp(Op.int, 3),
+        TealOp(Op.bnz, labels[1].label),
+        TealOp(Op.int, 5),
+        TealOp(Op.bnz, labels[2].label),
+        TealOp(Op.err),
+        labels[0],
+        TealOp(Op.int, 2),
+        TealOp(Op.b, labels[3].label),
+        labels[1],
+        TealOp(Op.int, 4),
+        TealOp(Op.b, labels[3].label),
+        labels[2],
+        TealOp(Op.int, 6),
+        labels[3]
     ]
 
 def test_cond_invalid():

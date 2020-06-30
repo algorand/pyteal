@@ -4,28 +4,31 @@ from .. import *
 
 def test_and_two():
     expr = And(Int(1), Int(2))
+    assert expr.type_of() == TealType.uint64
     assert expr.__teal__() == [
-        ["int", "1"],
-        ["int", "2"],
-        ["&&"]
+        TealOp(Op.int, 1),
+        TealOp(Op.int, 2),
+        TealOp(Op.logic_and)
     ]
 
 def test_and_three():
     expr = And(Int(1), Int(2), Int(3))
+    assert expr.type_of() == TealType.uint64
     assert expr.__teal__() == [
-        ["int", "1"],
-        ["int", "2"],
-        ["&&"],
-        ["int", "3"],
-        ["&&"]
+        TealOp(Op.int, 1),
+        TealOp(Op.int, 2),
+        TealOp(Op.logic_and),
+        TealOp(Op.int, 3),
+        TealOp(Op.logic_and)
     ]
 
 def test_and_overload():
     expr = Int(1).And(Int(2))
+    assert expr.type_of() == TealType.uint64
     assert expr.__teal__() == [
-        ["int", "1"],
-        ["int", "2"],
-        ["&&"]
+        TealOp(Op.int, 1),
+        TealOp(Op.int, 2),
+        TealOp(Op.logic_and)
     ]
 
 def test_and_invalid():
@@ -46,28 +49,31 @@ def test_and_invalid():
 
 def test_or_two():
     expr = Or(Int(1), Int(0))
+    assert expr.type_of() == TealType.uint64
     assert expr.__teal__() == [
-        ["int", "1"],
-        ["int", "0"],
-        ["||"]
+        TealOp(Op.int, 1),
+        TealOp(Op.int, 0),
+        TealOp(Op.logic_or)
     ]
 
 def test_or_three():
     expr = Or(Int(0), Int(1), Int(2))
+    assert expr.type_of() == TealType.uint64
     assert expr.__teal__() == [
-        ["int", "0"],
-        ["int", "1"],
-        ["||"],
-        ["int", "2"],
-        ["||"]
+        TealOp(Op.int, 0),
+        TealOp(Op.int, 1),
+        TealOp(Op.logic_or),
+        TealOp(Op.int, 2),
+        TealOp(Op.logic_or)
     ]
 
 def test_or_overload():
     expr = Int(1).Or(Int(0))
+    assert expr.type_of() == TealType.uint64
     assert expr.__teal__() == [
-        ["int", "1"],
-        ["int", "0"],
-        ["||"]
+        TealOp(Op.int, 1),
+        TealOp(Op.int, 0),
+        TealOp(Op.logic_or)
     ]
 
 def test_or_invalid():

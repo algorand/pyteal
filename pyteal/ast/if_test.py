@@ -3,39 +3,39 @@ import pytest
 from .. import *
 
 def test_if_int():
-    teal = If(Int(0), Int(1), Int(2)).__teal__()
-    assert len(teal) == 9
-    labels = [teal[6][0], teal[8][0]]
-    assert all(label.endswith(":") for label in labels)
+    expr = If(Int(0), Int(1), Int(2))
+    assert expr.type_of() == TealType.uint64
+    teal = expr.__teal__()
+    assert len(teal) == 7
+    labels = [teal[4], teal[6]]
+    assert all(isinstance(label, TealLabel) for label in labels)
     assert len(labels) == len(set(labels))
     assert teal == [
-        ["int", "0"],
-        ["bnz", labels[0][:-1]],
-        ["int", "2"],
-        ["int", "1"],
-        ["bnz", labels[1][:-1]],
-        ["pop"],
-        [labels[0]],
-        ["int", "1"],
-        [labels[1]]
+        TealOp(Op.int, 0),
+        TealOp(Op.bnz, labels[0].label),
+        TealOp(Op.int, 2),
+        TealOp(Op.b, labels[1].label),
+        labels[0],
+        TealOp(Op.int, 1),
+        labels[1]
     ]
 
 def test_if_bytes():
-    teal = If(Int(0), Txn.sender(), Txn.receiver()).__teal__()
-    assert len(teal) == 9
-    labels = [teal[6][0], teal[8][0]]
-    assert all(label.endswith(":") for label in labels)
+    expr = If(Int(0), Txn.sender(), Txn.receiver())
+    assert expr.type_of() == TealType.bytes
+    teal = expr.__teal__()
+    assert len(teal) == 7
+    labels = [teal[4], teal[6]]
+    assert all(isinstance(label, TealLabel) for label in labels)
     assert len(labels) == len(set(labels))
     assert teal == [
-        ["int", "0"],
-        ["bnz", labels[0][:-1]],
-        ["txn", "Receiver"],
-        ["int", "1"],
-        ["bnz", labels[1][:-1]],
-        ["pop"],
-        [labels[0]],
-        ["txn", "Sender"],
-        [labels[1]]
+        TealOp(Op.int, 0),
+        TealOp(Op.bnz, labels[0].label),
+        TealOp(Op.txn, "Receiver"),
+        TealOp(Op.b, labels[1].label),
+        labels[0],
+        TealOp(Op.txn, "Sender"),
+        labels[1]
     ]
 
 def test_if_invalid():

@@ -34,4 +34,4 @@ split = And(split_core,
                split_transfer,
                split_close))
 
-print(split.teal())
+print(compileTeal(split, Mode.Signature))
