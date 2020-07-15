@@ -10,8 +10,8 @@ from .int import Int, EnumInt
 
 # properties
 from .arg import Arg
-from .txn import TxnType, TxnField, Txn, Txna
-from .gtxn import Gtxn
+from .txn import TxnType, TxnField, TxnExpr, TxnaExpr, Txn
+from .gtxn import GtxnExpr, GtxnaExpr, Gtxn
 from .global_ import Global, GlobalField
 from .app import App, AppField, OnComplete
 from .asset import AssetHolding, AssetParam
