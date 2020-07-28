@@ -16,7 +16,7 @@ class Int(LeafExpr):
             2**64, or a Tmpl object.
         """
         if isinstance(value, Tmpl):
-            self.value = value.name
+            self.value: Union[int, str] = value.name
         elif type(value) is not int:
             raise TealInputError("invalid input type {} to Int".format(type(value))) 
         elif value >= 0 and value < 2 ** 64:
