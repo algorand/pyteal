@@ -133,7 +133,7 @@ def test_eq():
     Eq(Int(2), Int(3))
     Eq(Txn.receiver(), Txn.sender())
 
-    with pytest.raises(TealTypeMismatchError):
+    with pytest.raises(TealTypeError):
         Eq(Txn.fee(), Txn.receiver())
 
 
