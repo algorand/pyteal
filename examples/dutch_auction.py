@@ -89,4 +89,4 @@ dutch = Cond([Global.group_size() == Int(5), bid],
              [Global.group_size() == Int(4), redeem],
              [Global.group_size() == Int(1), wrapup])
 
-print(dutch.teal())
+print(compileTeal(dutch))

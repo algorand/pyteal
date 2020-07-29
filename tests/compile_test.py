@@ -19,7 +19,8 @@ def test_atomic_swap():
 
     atomic_swap = fee_cond.And(type_cond).And(recv_cond.Or(esc_cond))
 
-    a_teal = """txn Fee
+    a_teal = """#pragma version 1
+txn Fee
 int 1000
 <
 txn TypeEnum
@@ -50,7 +51,7 @@ int 3000
 &&
 ||
 &&"""
-    assert atomic_swap.teal() == a_teal
+    assert compileTeal(atomic_swap) == a_teal
 
 
 def test_periodic_payment():
@@ -79,7 +80,8 @@ def test_periodic_payment():
 
     periodic_pay_escrow = periodic_pay_core.And(periodic_pay_transfer.Or(periodic_pay_close))
 
-    p_teal = """txn TypeEnum
+    p_teal = """#pragma version 1
+txn TypeEnum
 int 1
 ==
 txn Fee
@@ -130,7 +132,7 @@ int 0
 &&
 ||
 &&"""
-    assert periodic_pay_escrow.teal() == p_teal
+    assert compileTeal(periodic_pay_escrow) == p_teal
 
 
 def test_split():
@@ -164,7 +166,8 @@ def test_split():
                    split_transfer,
                    split_close))
 
-    target = """txn TypeEnum
+    target = """#pragma version 1
+txn TypeEnum
 int 1
 ==
 txn Fee
@@ -226,7 +229,7 @@ int 5000000
 l1:
 &&"""
 
-    assert split.teal() == target
+    assert compileTeal(split) == target
 
 
 def test_cond():
@@ -236,4 +239,4 @@ def test_cond():
 	core = Cond([Global.group_size()==Int(2), cond1],
 				[Global.group_size()==Int(3), cond2],
 				[Global.group_size()==Int(4), cond3])
-	core.teal()
+	compileTeal(core)

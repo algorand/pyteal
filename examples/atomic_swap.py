@@ -28,4 +28,4 @@ def htlc(tmpl_seller=alice,
 			   type_cond,
 			   Or(recv_cond, esc_cond))
 
-print(htlc().teal())
+print(compileTeal(htlc()))
