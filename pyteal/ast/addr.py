@@ -1,23 +1,17 @@
-from typing import Union
-
 from ..types import TealType, valid_address
 from .leafexpr import LeafExpr
-from .tmpl import Tmpl
 
 class Addr(LeafExpr):
     """An expression that represents an Algorand address."""
      
-    def __init__(self, address: Union[str, Tmpl]) -> None:
+    def __init__(self, address: str) -> None:
         """Create a new Addr expression.
         
         Args:
-            address: A string containing a valid base32 Algorand address, or a Tmpl object.
+            address: A string containing a valid base32 Algorand address
         """
-        if isinstance(address, Tmpl):
-            self.address = address.name
-        else:
-            valid_address(address)
-            self.address = address
+        valid_address(address)
+        self.address = address
 
     def __teal__(self):
         return [["addr", self.address]]
