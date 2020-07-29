@@ -1,5 +1,5 @@
 from ..types import TealType, valid_tmpl
-from ..ir import TealOp, Op
+from ..ir import TealOp, Op, TealBlock
 from ..errors import TealInternalError
 from .leafexpr import LeafExpr
 
@@ -16,7 +16,8 @@ class Tmpl(LeafExpr):
         return "(Tmpl {} {})".format(self.op.value, self.name)
 
     def __teal__(self):
-        return [TealOp(self.op, self.name)]
+        block = TealBlock([TealOp(self.op, self.name)])
+        return block, block
 
     def type_of(self):
         return self.type

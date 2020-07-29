@@ -1,6 +1,6 @@
 from ..types import TealType, valid_base16, valid_base32, valid_base64
 from ..util import escapeStr
-from ..ir import TealOp, Op
+from ..ir import TealOp, Op, TealBlock
 from ..errors import TealInputError
 from .leafexpr import LeafExpr
 
@@ -51,7 +51,8 @@ class Bytes(LeafExpr):
             payload = "0x" + self.byte_str
         else:
             payload = "{}({})".format(self.base, self.byte_str)
-        return [TealOp(Op.byte, payload)]
+        block = TealBlock([TealOp(Op.byte, payload)])
+        return block, block
 
     def __str__(self):
         return "({} bytes: {})".format(self.base, self.byte_str)

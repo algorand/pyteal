@@ -1,7 +1,7 @@
 from typing import List
 
 from ..types import TealType, require_type
-from ..ir import TealOp, Op, TealLabel
+from ..ir import TealOp, Op, TealBlock
 from ..errors import TealInputError
 from ..util import new_label
 from .expr import Expr
@@ -53,36 +53,24 @@ class Cond(Expr):
         self.args = argv        
 
     def __teal__(self):
-        teal = []
-
-        labels = []
-        for arg in self.args:
-            l = new_label()
-            cond = arg[0]
-
-            teal += cond.__teal__()
-            teal.append(TealOp(Op.bnz, l))
-
-            labels.append(l)
-
-        # err if no conditions are met
-        teal.append(TealOp(Op.err))
-
-        # end label
-        labels.append(new_label())
+        start = None
+        end = TealBlock([])
+        prevCondEnd = None
+        for i, (cond, pred) in enumerate(self.args):
+            condStart, condEnd = cond.__teal__()
+            predStart, predEnd = pred.__teal__()
+            condEnd.setTrueBlock(predStart)
+            predEnd.setNextBlock(end)
+            if i == 0:
+                start = condStart
+            else:
+                prevCondEnd.setFalseBlock(condStart)
+            prevCondEnd = condEnd
         
-        for i, arg in enumerate(self.args):
-            label = TealLabel(labels[i])
-            branch = arg[1]
-
-            teal.append(label)
-            teal += branch.__teal__()
-            if i + 1 != len(self.args):
-                teal.append(TealOp(Op.b, labels[-1]))
-
-        teal.append(TealLabel(labels[-1]))
-
-        return teal
+        errBlock = TealBlock([TealOp(Op.err)])
+        prevCondEnd.setFalseBlock(errBlock)
+        
+        return start, end
 
     def __str__(self):
         ret_str = "(Cond"

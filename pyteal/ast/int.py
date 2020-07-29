@@ -1,7 +1,7 @@
 from typing import Union
 
 from ..types import TealType
-from ..ir import TealOp, Op
+from ..ir import TealOp, Op, TealBlock
 from ..errors import TealInputError
 from .leafexpr import LeafExpr
 
@@ -23,7 +23,8 @@ class Int(LeafExpr):
             raise TealInputError("Int {} is out of range".format(value))
 
     def __teal__(self):
-        return [TealOp(Op.int, self.value)]
+        block = TealBlock([TealOp(Op.int, self.value)])
+        return block, block
 
     def __str__(self):
         return "(Int: {})".format(self.value)
@@ -45,8 +46,9 @@ class EnumInt(LeafExpr):
         self.name = name
 
     def __teal__(self):
-        return [TealOp(Op.int, self.name)]
-       
+        block = TealBlock([TealOp(Op.int, self.name)])
+        return block, block
+
     def __str__(self):
         return "(IntEnum: {})".format(self.name)
 

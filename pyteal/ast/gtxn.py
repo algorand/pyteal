@@ -1,5 +1,5 @@
 from ..types import TealType
-from ..ir import TealOp, Op
+from ..ir import TealOp, Op, TealBlock
 from ..errors import TealInputError
 from ..config import MAX_GROUP_SIZE
 from .expr import Expr
@@ -18,7 +18,8 @@ class GtxnExpr(TxnExpr):
         return "(Gtxn {} {})".format(self.txnIndex, self.field.arg_name)
 
     def __teal__(self):
-        return [TealOp(Op.gtxn, self.txnIndex, self.field.arg_name)]
+        block = TealBlock([TealOp(Op.gtxn, self.txnIndex, self.field.arg_name)])
+        return block, block
 
 GtxnExpr.__module__ = "pyteal"
 
@@ -33,7 +34,8 @@ class GtxnaExpr(TxnaExpr):
         return "(Gtxna {} {} {})".format(self.index, self.field.arg_name, self.index)
 
     def __teal__(self):
-        return [TealOp(Op.gtxna, self.txnIndex, self.field.arg_name, self.index)]
+        block = TealBlock([TealOp(Op.gtxna, self.txnIndex, self.field.arg_name, self.index)])
+        return block, block
 
 GtxnaExpr.__module__ = "pyteal"
 

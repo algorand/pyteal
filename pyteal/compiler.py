@@ -1,10 +1,97 @@
-from typing import List
+from typing import List, DefaultDict
+from collections import defaultdict
 
 from .ast import Expr
-from .ir import Mode, TealComponent, TealOp
+from .ir import Mode, TealComponent, TealOp, TealLabel, TealBlock, Op
 from .errors import TealInputError, TealInternalError
 
 NUM_SLOTS = 256
+
+def normalizeBlocks(start: TealBlock):
+    for block in TealBlock.Iterate(start):
+        if len(block.incoming) == 1 and block.incoming[0].nextBlock == block:
+            # combine blocks
+            prev = block.incoming[0]
+            prev.ops += block.ops
+            prev.nextBlock = block.nextBlock
+            prev.trueBlock = block.trueBlock
+            prev.falseBlock = block.falseBlock
+            if block.isTerminal():
+                continue
+            if block.nextBlock is None:
+                i = block.trueBlock.incoming.index(block)
+                block.trueBlock.incoming[i] = prev
+                i = block.falseBlock.incoming.index(block)
+                block.falseBlock.incoming[i] = prev
+            else:
+                i = block.nextBlock.incoming.index(block)
+                block.nextBlock.incoming[i] = prev
+
+def sortBlocks(start: TealBlock) -> List[TealBlock]:
+    S = [start]
+    order = []
+
+    while len(S) != 0:
+        n = S.pop(0)
+        order.append(n)
+        if n.isTerminal():
+            continue
+        for m in (n.nextBlock, n.falseBlock, n.trueBlock):
+            if m is None:
+                continue
+            m.incoming.remove(n)
+            if len(m.incoming) == 0:
+                if m is n.trueBlock:
+                    S.append(m)
+                else:
+                    S.insert(0, m)
+    
+    return order
+
+def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
+    codeblocks = []
+    references: DefaultDict[int, int] = defaultdict(int)
+
+    indexToLabel = lambda index: "l{}".format(index)
+
+    for i, block in enumerate(blocks):
+        code = list(block.ops)
+        codeblocks.append(code)
+        if block.isTerminal():
+            continue
+
+        if block.nextBlock is not None:
+            nextIndex = blocks.index(block.nextBlock)
+            if nextIndex != i + 1:
+                references[nextIndex] += 1
+                code.append(TealOp(Op.b, indexToLabel(nextIndex)))
+        else:
+            trueIndex = blocks.index(block.trueBlock)
+            falseIndex = blocks.index(block.falseBlock)
+
+            if falseIndex == i + 1:
+                references[trueIndex] += 1
+                code.append(TealOp(Op.bnz, indexToLabel(trueIndex)))
+                continue
+
+            if trueIndex == i + 1:
+                references[falseIndex] += 1
+                code.append(TealOp(Op.bz, indexToLabel(falseIndex)))
+                continue
+
+            references[trueIndex] += 1
+            code.append(TealOp(Op.bnz, indexToLabel(trueIndex)))
+
+            references[falseIndex] += 1
+            code.append(TealOp(Op.b, indexToLabel(falseIndex)))
+
+    teal: List[TealComponent] = []
+    for i, code in enumerate(codeblocks):
+        if references[i] != 0:
+            teal.append(TealLabel(indexToLabel(i)))
+        teal += code
+
+    return teal
 
 def verifyOpsForMode(teal: List[TealComponent], mode: Mode):
     for stmt in teal:
@@ -22,7 +109,14 @@ def compileTeal(ast: Expr, mode: Mode) -> str:
     Returns:
         str: A TEAL assembly program compiled from the input expression.
     """
-    teal = ast.__teal__()
+    start, _ = ast.__teal__()
+    start.validate()
+    start.addIncoming()
+
+    normalizeBlocks(start)
+
+    order = sortBlocks(start)
+    teal = flattenBlocks(order)
 
     verifyOpsForMode(teal, mode)
 

@@ -3,7 +3,7 @@ from typing import Callable
 
 from ..types import TealType
 from ..errors import TealInputError
-from ..ir import TealOp, Op
+from ..ir import TealOp, Op, TealBlock
 from .leafexpr import LeafExpr
 from .int import EnumInt
 from .array import Array
@@ -90,7 +90,8 @@ class TxnExpr(LeafExpr):
         return "(Txn {})".format(self.field.arg_name)
 
     def __teal__(self):
-        return [TealOp(Op.txn, self.field.arg_name)]
+        block = TealBlock([TealOp(Op.txn, self.field.arg_name)])
+        return block, block
     
     def type_of(self):
         return self.field.type_of()
@@ -108,7 +109,8 @@ class TxnaExpr(LeafExpr):
         return "(Txna {} {})".format(self.field.arg_name, self.index)
     
     def __teal__(self):
-        return [TealOp(Op.txna, self.field.arg_name, self.index)]
+        block = TealBlock([TealOp(Op.txna, self.field.arg_name, self.index)])
+        return block, block
     
     def type_of(self):
         return self.field.type_of()

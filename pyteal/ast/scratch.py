@@ -54,8 +54,9 @@ class ScratchLoad(Expr):
         return "(Load {})".format(self.slot.__str__())
 
     def __teal__(self):
-        from ..ir import TealOp, Op
-        return [TealOp(Op.load, self.slot)]
+        from ..ir import TealOp, Op, TealBlock
+        block = TealBlock([TealOp(Op.load, self.slot)])
+        return block, block
 
     def type_of(self):
         return self.type
@@ -77,8 +78,9 @@ class ScratchStore(Expr):
         return "(Store {})".format(self.slot.__str__())
 
     def __teal__(self):
-        from ..ir import TealOp, Op
-        return [TealOp(Op.store, self.slot)]
+        from ..ir import TealOp, Op, TealBlock
+        block = TealBlock([TealOp(Op.store, self.slot)])
+        return block, block
 
     def type_of(self):
         return TealType.none
