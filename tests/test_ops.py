@@ -248,7 +248,7 @@ def test_itob():
         Itob(Arg(1))
 
 
-def test_itob():
+def test_btoi():
     Btoi(Arg(1))
 
     with pytest.raises(TealTypeError):
