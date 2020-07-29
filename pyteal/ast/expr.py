@@ -1,0 +1,83 @@
+from abc import ABC, abstractmethod
+from enum import Enum
+from typing import List
+
+from ..types import TealType
+
+class Expr(ABC):
+    """Abstract base class for PyTeal expressions."""
+
+    @abstractmethod
+    def type_of(self) -> TealType:
+        """Get the return type of this expression."""
+        pass
+
+    @abstractmethod
+    def __str__(self) -> str:
+        """Get a string representation of this experssion."""
+        pass
+
+    @abstractmethod
+    def __teal__(self) -> List[List[str]]:
+        """Assemble TEAL IR for this component and its arguments."""
+        pass
+
+    def teal(self) -> str:
+        lines = [" ".join(i) for i in self.__teal__()]
+        return "\n".join(lines)
+
+    def __lt__(self, other):
+        from .binaryexpr import Lt
+        return Lt(self, other)
+
+    def __gt__(self, other):
+        from .binaryexpr import Gt
+        return Gt(self, other)
+
+    def __le__(self, other):
+        from .binaryexpr import Le
+        return Le(self, other)
+
+    def __ge__(self, other):
+        from .binaryexpr import Ge
+        return Ge(self, other)
+
+    def __eq__(self, other):
+        from .binaryexpr import Eq
+        return Eq(self, other)
+
+    def __add__(self, other):
+        from .binaryexpr import Add
+        return Add(self, other)
+
+    def __sub__(self, other):
+        from .binaryexpr import Minus
+        return Minus(self, other)
+
+    def __mul__(self, other):
+        from .binaryexpr import Mul
+        return Mul(self, other)
+
+    def __truediv__(self, other):
+        from .binaryexpr import Div
+        return Div(self, other)
+
+    def __mod__(self, other):
+        from .binaryexpr import Mod
+        return Mod(self, other)
+       
+    def And(self, other: 'Expr') -> 'Expr':
+        """Take the logical And of this expression and another one.
+        
+        This expression must evaluate to uint64.
+        """
+        from .naryexpr import And
+        return And(self, other)
+
+    def Or(self, other: 'Expr') -> 'Expr':
+        """Take the logical Or of this expression and another one.
+        
+        This expression must evaluate to uint64.
+        """
+        from .naryexpr import Or
+        return Or(self, other)
