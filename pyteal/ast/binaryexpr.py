@@ -1,5 +1,4 @@
-from ..types import TealType, require_type, types_match
-from ..errors import TealTypeMismatchError
+from ..types import TealType, require_type
 from .expr import Expr
 
 class BinaryExpr(Expr):
@@ -88,12 +87,7 @@ def Eq(left: Expr, right: Expr):
         left: A value to check.
         right: The other value to check. Must evaluate to the same type as left.
     """
-    # a hack to make this op emit TealTypeMismatchError instead of TealTypeError
-    t1 = left.type_of()
-    t2 = right.type_of()
-    if not types_match(t1, t2):
-        raise TealTypeMismatchError(t1, t2)
-    return BinaryExpr("==", TealType.anytype, TealType.uint64, left, right)
+    return BinaryExpr("==", right.type_of(), TealType.uint64, left, right)
 
 def Lt(left: Expr, right: Expr):
     """Less than expression.

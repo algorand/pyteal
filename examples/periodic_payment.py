@@ -29,4 +29,4 @@ def periodic_payment(tmpl_fee=tmpl_fee,
 
     return And(periodic_pay_core, periodic_pay_transfer)
 
-# print(periodic_payment().teal())
+# print(compileTeal(periodic_payment()))

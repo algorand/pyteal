@@ -49,6 +49,6 @@ def recurring_swap(tmpl_buyer=tmpl_buyer,
                      Txn.amount() == Int(0),
                      Txn.first_valid() >= tmpl_timeout)
 
-    return And(fee_cond, type_cond, Or(recv_cond, close_cond)).teal()
+    return compileTeal(And(fee_cond, type_cond, Or(recv_cond, close_cond)))
 
 # print(recurring_swap())

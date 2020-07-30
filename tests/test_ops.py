@@ -17,14 +17,21 @@ def test_addr():
         Addr(2)
 
 def test_tmpl():
-	Tmpl("TMPL_RECEIVER0")
+    Tmpl.Int("TMPL_AMNT")
+    Tmpl.Bytes("TMPL_NOTE")
+    Tmpl.Addr("TMPL_RECEIVER0")
 
-	with pytest.raises(TealInputError):
-		Tmpl("whatever")
-		
+    with pytest.raises(TealInputError):
+        Tmpl.Int("whatever")
+    
+    with pytest.raises(TealInputError):
+        Tmpl.Bytes("whatever")
+    
+    with pytest.raises(TealInputError):
+        Tmpl.Addr("whatever")
+        
 def test_int():
     Int(232323)
-    Int(Tmpl("TMPL_INT_MAX"))
 
     with pytest.raises(TealInputError):
         Int(6.7)
@@ -52,7 +59,7 @@ def test_arg():
 def test_and():
     p1 = And(Int(1), Int(1))
     p2 = Int(1).And(Int(1))
-    assert p1.teal() == p2.teal()
+    assert compileTeal(p1) == compileTeal(p2)
 
     p3 = And(Int(1), Int(1), Int(2))
     assert p3.__teal__() == \
@@ -73,7 +80,6 @@ def test_bytes():
     Bytes("base16", "A21212EF")
     Bytes("base16", "0xA21212EF")
     Bytes("base16","")
-    Bytes("base16", Tmpl("TMPL_SEC"))
 
     with pytest.raises(TealInputError):
         Bytes("base23", "")
@@ -91,7 +97,7 @@ def test_bytes():
 def test_or():
     p1 = Or(Int(1), Int(0))
     p2 = Int(1).Or(Int(0))
-    assert p1.teal() == p2.teal()
+    assert compileTeal(p1) == compileTeal(p2)
 
     p3 = Or(Int(0), Int(1), Int(2))
     assert p3.__teal__() == \
@@ -133,7 +139,7 @@ def test_eq():
     Eq(Int(2), Int(3))
     Eq(Txn.receiver(), Txn.sender())
 
-    with pytest.raises(TealTypeMismatchError):
+    with pytest.raises(TealTypeError):
         Eq(Txn.fee(), Txn.receiver())
 
 
@@ -248,7 +254,7 @@ def test_itob():
         Itob(Arg(1))
 
 
-def test_itob():
+def test_btoi():
     Btoi(Arg(1))
 
     with pytest.raises(TealTypeError):

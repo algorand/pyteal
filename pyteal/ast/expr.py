@@ -22,10 +22,6 @@ class Expr(ABC):
         """Assemble TEAL IR for this component and its arguments."""
         pass
 
-    def teal(self) -> str:
-        lines = [" ".join(i) for i in self.__teal__()]
-        return "\n".join(lines)
-
     def __lt__(self, other):
         from .binaryexpr import Lt
         return Lt(self, other)
