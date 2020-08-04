@@ -10,7 +10,8 @@ class Bytes(LeafExpr):
 
         Args:
             base: The base type for this byte string. Must be one of base16, base32, or base64.
-            byte_string: The content of the byte string, encoding with the passed in base.
+            byte_string: The content of the byte string, encoding with the passed in base. If base
+            is base16, this may be an empty string, otherwise an empty string is not allowed.
         """
         if base == "base32":
             self.base = base

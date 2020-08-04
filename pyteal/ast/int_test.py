@@ -1,11 +1,17 @@
 import pytest
 
-from ..errors import TealInputError
-from .int import Int
+from .. import *
 
 def test_int():
-    Int(232323)
+    values = [0, 1, 8, 232323, 2**64 - 1]
 
+    for value in values:
+        expr = Int(value)
+        assert expr.__teal__() == [
+            ["int", str(value)]
+        ]
+
+def test_int_invalid():
     with pytest.raises(TealInputError):
         Int(6.7)
 
@@ -14,3 +20,6 @@ def test_int():
 
     with pytest.raises(TealInputError):
         Int(2 ** 64)
+    
+    with pytest.raises(TealInputError):
+        Int("0")

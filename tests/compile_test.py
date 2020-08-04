@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from pyteal import *
+from pyteal.util import reset_label_count
 
 def test_atomic_swap():
 
@@ -51,6 +52,7 @@ int 3000
 &&
 ||
 &&"""
+    reset_label_count()
     assert compileTeal(atomic_swap) == a_teal
 
 
@@ -132,6 +134,7 @@ int 0
 &&
 ||
 &&"""
+    reset_label_count()
     assert compileTeal(periodic_pay_escrow) == p_teal
 
 
@@ -228,7 +231,7 @@ int 5000000
 &&
 l1:
 &&"""
-
+    reset_label_count()
     assert compileTeal(split) == target
 
 

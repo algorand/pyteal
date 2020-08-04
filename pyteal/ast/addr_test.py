@@ -1,11 +1,14 @@
 import pytest
 
-from ..errors import TealInputError
-from .addr import Addr
+from .. import *
 
 def test_addr():
-    Addr("NJUWK3DJNZTWU2LFNRUW4Z3KNFSWY2LOM5VGSZLMNFXGO2TJMVWGS3THMF")
+    expr = Addr("NJUWK3DJNZTWU2LFNRUW4Z3KNFSWY2LOM5VGSZLMNFXGO2TJMVWGS3THMF")
+    assert expr.__teal__() == [
+        ["addr", "NJUWK3DJNZTWU2LFNRUW4Z3KNFSWY2LOM5VGSZLMNFXGO2TJMVWGS3THMF"]
+    ]
 
+def test_addr_invalid():
     with pytest.raises(TealInputError):
         Addr("NJUWK3DJNZTWU2LFNRUW4Z3KNFSWY2LOM5VGSZLMNFXGO2TJMVWGS3TH")
 

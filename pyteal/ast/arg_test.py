@@ -1,11 +1,14 @@
 import pytest
 
-from ..errors import TealInputError
-from .arg import Arg
+from .. import *
 
 def test_arg():
-    Arg(0)
+    expr = Arg(0)
+    assert expr.__teal__() == [
+        ["arg", "0"]
+    ]
 
+def test_arg_invalid():
     with pytest.raises(TealInputError):
         Arg("k")
 

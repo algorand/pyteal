@@ -39,7 +39,7 @@ def valid_base32(s:str):
     """
     pattern = re.compile(r'[A-Z2-9]*') # RFC 4648 base 32 w/o padding
 
-    if pattern.fullmatch(s) is None:
+    if len(s) == 0 or pattern.fullmatch(s) is None:
         raise TealInputError("{} is not a valid RFC 4648 base 32 string".format(s))
 
 def valid_base64(s:str):
@@ -47,7 +47,7 @@ def valid_base64(s:str):
     """
     pattern = re.compile(r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$')
 
-    if pattern.fullmatch(s) is None:
+    if len(s) == 0 or pattern.fullmatch(s) is None:
         raise TealInputError("{} is not a valid RFC 4648 base 64 string".format(s))
 
 def valid_base16(s:str):
