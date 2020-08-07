@@ -5,74 +5,53 @@ from .. import *
 def test_if_int():
     expr = If(Int(0), Int(1), Int(2))
     assert expr.type_of() == TealType.uint64
-    teal = expr.__teal__()
-    assert len(teal) == 7
-    labels = [teal[4], teal[6]]
-    assert all(isinstance(label, TealLabel) for label in labels)
-    assert len(labels) == len(set(labels))
-    assert teal == [
-        TealOp(Op.int, 0),
-        TealOp(Op.bnz, labels[0].label),
-        TealOp(Op.int, 2),
-        TealOp(Op.b, labels[1].label),
-        labels[0],
-        TealOp(Op.int, 1),
-        labels[1]
-    ]
+
+    expected, _ = Int(0).__teal__()
+    expected.setTrueBlock(Int(1).__teal__()[0])
+    expected.setFalseBlock(Int(2).__teal__()[0])
+
+    actual, _ = expr.__teal__()
+    actual.trim()
+
+    assert actual == expected
 
 def test_if_bytes():
-    expr = If(Int(0), Txn.sender(), Txn.receiver())
+    expr = If(Int(1), Txn.sender(), Txn.receiver())
     assert expr.type_of() == TealType.bytes
-    teal = expr.__teal__()
-    assert len(teal) == 7
-    labels = [teal[4], teal[6]]
-    assert all(isinstance(label, TealLabel) for label in labels)
-    assert len(labels) == len(set(labels))
-    assert teal == [
-        TealOp(Op.int, 0),
-        TealOp(Op.bnz, labels[0].label),
-        TealOp(Op.txn, "Receiver"),
-        TealOp(Op.b, labels[1].label),
-        labels[0],
-        TealOp(Op.txn, "Sender"),
-        labels[1]
-    ]
+
+    expected, _ = Int(1).__teal__()
+    expected.setTrueBlock(Txn.sender().__teal__()[0])
+    expected.setFalseBlock(Txn.receiver().__teal__()[0])
+
+    actual, _ = expr.__teal__()
+    actual.trim()
+
+    assert actual == expected
 
 def test_if_none():
     expr = If(Int(0), Pop(Txn.sender()), Pop(Txn.receiver()))
     assert expr.type_of() == TealType.none
-    teal = expr.__teal__()
-    assert len(teal) == 9
-    labels = [teal[5], teal[8]]
-    assert all(isinstance(label, TealLabel) for label in labels)
-    assert len(labels) == len(set(labels))
-    assert teal == [
-        TealOp(Op.int, 0),
-        TealOp(Op.bnz, labels[0].label),
-        TealOp(Op.txn, "Receiver"),
-        TealOp(Op.pop),
-        TealOp(Op.b, labels[1].label),
-        labels[0],
-        TealOp(Op.txn, "Sender"),
-        TealOp(Op.pop),
-        labels[1]
-    ]
+
+    expected, _ = Int(0).__teal__()
+    expected.setTrueBlock(Pop(Txn.sender()).__teal__()[0])
+    expected.setFalseBlock(Pop(Txn.receiver()).__teal__()[0])
+
+    actual, _ = expr.__teal__()
+    actual.trim()
+
+    assert actual == expected
 
 def test_if_single():
-    expr = If(Int(0), Pop(Int(1)))
+    expr = If(Int(1), Pop(Int(1)))
     assert expr.type_of() == TealType.none
-    teal = expr.__teal__()
-    assert len(teal) == 5
-    labels = [teal[4]]
-    assert all(isinstance(label, TealLabel) for label in labels)
-    assert len(labels) == len(set(labels))
-    assert teal == [
-        TealOp(Op.int, 0),
-        TealOp(Op.bz, labels[0].label),
-        TealOp(Op.int, 1),
-        TealOp(Op.pop),
-        labels[0]
-    ]
+
+    expected, _ = Int(1).__teal__()
+    expected.setTrueBlock(Pop(Int(1)).__teal__()[0])
+
+    actual, _ = expr.__teal__()
+    actual.trim()
+    
+    assert actual == expected
 
 def test_if_invalid():
     with pytest.raises(TealTypeError):

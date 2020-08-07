@@ -7,26 +7,6 @@ from .errors import TealInputError, TealInternalError
 
 NUM_SLOTS = 256
 
-def normalizeBlocks(start: TealBlock):
-    for block in TealBlock.Iterate(start):
-        if len(block.incoming) == 1 and block.incoming[0].nextBlock == block:
-            # combine blocks
-            prev = block.incoming[0]
-            prev.ops += block.ops
-            prev.nextBlock = block.nextBlock
-            prev.trueBlock = block.trueBlock
-            prev.falseBlock = block.falseBlock
-            if block.isTerminal():
-                continue
-            if block.nextBlock is None:
-                i = block.trueBlock.incoming.index(block)
-                block.trueBlock.incoming[i] = prev
-                i = block.falseBlock.incoming.index(block)
-                block.falseBlock.incoming[i] = prev
-            else:
-                i = block.nextBlock.incoming.index(block)
-                block.nextBlock.incoming[i] = prev
-
 def sortBlocks(start: TealBlock) -> List[TealBlock]:
     S = [start]
     order = []
@@ -110,10 +90,11 @@ def compileTeal(ast: Expr, mode: Mode) -> str:
         str: A TEAL assembly program compiled from the input expression.
     """
     start, _ = ast.__teal__()
-    start.validate()
     start.addIncoming()
+    start.validate()
 
-    normalizeBlocks(start)
+    TealBlock.NormalizeBlocks(start)
+    start.validate()
 
     order = sortBlocks(start)
     teal = flattenBlocks(order)
