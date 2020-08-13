@@ -36,7 +36,7 @@ addr 6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY
 ==
 &&
 arg 0
-byte base32 23232323232323
+byte base32(23232323232323)
 ==
 &&
 txn CloseRemainderTo
@@ -103,7 +103,7 @@ txn FirstValid
 ==
 &&
 txn Lease
-byte base64 023sdDE2
+byte base64(023sdDE2)
 ==
 &&
 txn CloseRemainderTo

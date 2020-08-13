@@ -10,8 +10,7 @@ class Bytes(LeafExpr):
 
         Args:
             base: The base type for this byte string. Must be one of base16, base32, or base64.
-            byte_string: The content of the byte string, encoding with the passed in base. If base
-            is base16, this may be an empty string, otherwise an empty string is not allowed.
+            byte_string: The content of the byte string, encoding with the passed in base.
         """
         if base == "base32":
             self.base = base
@@ -32,11 +31,12 @@ class Bytes(LeafExpr):
             raise TealInputError("invalid base {}, need to be base32, base64, or base16.".format(base))
 
     def __teal__(self):
-        if self.base != "base16":
-            return [["byte", self.base, self.byte_str]]
+        if self.base == "base16":
+            payload = "0x" + self.byte_str
         else:
-            return [["byte", "0x" + self.byte_str]]
-        
+            payload = "{}({})".format(self.base, self.byte_str)
+        return [["byte", payload]]
+
     def __str__(self):
         return "({} bytes: {})".format(self.base, self.byte_str)
 
