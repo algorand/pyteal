@@ -127,7 +127,7 @@ def test_mod_invalid():
     with pytest.raises(TealTypeError):
         Mod(Int(2), Txn.sender())
 
-def test_arithmic():
+def test_arithmetic():
     v = ((Int(2) + Int(3))/((Int(5) - Int(6)) * Int(8))) % Int(9)
     assert v.__teal__() == \
         [['int', '2'], ['int', '3'], ['+'], ['int', '5'], ['int', '6']] + \
