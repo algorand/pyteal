@@ -7,6 +7,10 @@ import subprocess
    
 label_count = 0
 
+def reset_label_count():
+    global label_count
+    label_count = 0
+
 def new_label():
     global label_count
     new_l = "l{}".format(label_count)

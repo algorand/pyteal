@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from pyteal import *
+from pyteal.util import reset_label_count
 
 def test_atomic_swap():
 
@@ -35,7 +36,7 @@ addr 6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY
 ==
 &&
 arg 0
-byte base32 23232323232323
+byte base32(23232323232323)
 ==
 &&
 txn CloseRemainderTo
@@ -51,6 +52,7 @@ int 3000
 &&
 ||
 &&"""
+    reset_label_count()
     assert compileTeal(atomic_swap) == a_teal
 
 
@@ -101,7 +103,7 @@ txn FirstValid
 ==
 &&
 txn Lease
-byte base64 023sdDE2
+byte base64(023sdDE2)
 ==
 &&
 txn CloseRemainderTo
@@ -132,6 +134,7 @@ int 0
 &&
 ||
 &&"""
+    reset_label_count()
     assert compileTeal(periodic_pay_escrow) == p_teal
 
 
@@ -228,7 +231,7 @@ int 5000000
 &&
 l1:
 &&"""
-
+    reset_label_count()
     assert compileTeal(split) == target
 
 
