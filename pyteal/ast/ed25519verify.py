@@ -1,4 +1,5 @@
 from ..types import TealType, require_type
+from ..ir import TealOp, Op
 from .expr import Expr
 
 class Ed25519Verify(Expr):
@@ -25,7 +26,7 @@ class Ed25519Verify(Expr):
         return self.data.__teal__() + \
                self.sig.__teal__() + \
                self.key.__teal__() + \
-               [["ed25519verify"]]
+               [TealOp(Op.ed25519verify)]
 
     def __str__(self):
         return "(ed25519verify {} {} {})".format(self.data, self.sig, self.key)

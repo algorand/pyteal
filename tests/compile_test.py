@@ -20,7 +20,7 @@ def test_atomic_swap():
 
     atomic_swap = fee_cond.And(type_cond).And(recv_cond.Or(esc_cond))
 
-    a_teal = """#pragma version 1
+    a_teal = """#pragma version 2
 txn Fee
 int 1000
 <
@@ -53,7 +53,7 @@ int 3000
 ||
 &&"""
     reset_label_count()
-    assert compileTeal(atomic_swap) == a_teal
+    assert compileTeal(atomic_swap, Mode.Signature) == a_teal
 
 
 def test_periodic_payment():
@@ -82,7 +82,7 @@ def test_periodic_payment():
 
     periodic_pay_escrow = periodic_pay_core.And(periodic_pay_transfer.Or(periodic_pay_close))
 
-    p_teal = """#pragma version 1
+    p_teal = """#pragma version 2
 txn TypeEnum
 int 1
 ==
@@ -135,7 +135,7 @@ int 0
 ||
 &&"""
     reset_label_count()
-    assert compileTeal(periodic_pay_escrow) == p_teal
+    assert compileTeal(periodic_pay_escrow, Mode.Signature) == p_teal
 
 
 def test_split():
@@ -169,7 +169,7 @@ def test_split():
                    split_transfer,
                    split_close))
 
-    target = """#pragma version 1
+    target = """#pragma version 2
 txn TypeEnum
 int 1
 ==
@@ -196,9 +196,7 @@ txn FirstValid
 int 30000
 >
 &&
-int 1
-bnz l1
-pop
+b l1
 l0:
 gtxn 0 Sender
 gtxn 1 Sender
@@ -232,7 +230,7 @@ int 5000000
 l1:
 &&"""
     reset_label_count()
-    assert compileTeal(split) == target
+    assert compileTeal(split, Mode.Signature) == target
 
 
 def test_cond():
@@ -242,4 +240,4 @@ def test_cond():
 	core = Cond([Global.group_size()==Int(2), cond1],
 				[Global.group_size()==Int(3), cond2],
 				[Global.group_size()==Int(4), cond3])
-	compileTeal(core)
+	compileTeal(core, Mode.Signature)

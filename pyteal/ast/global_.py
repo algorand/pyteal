@@ -1,45 +1,42 @@
 from enum import Enum
 
 from ..types import TealType
+from ..ir import TealOp, Op
 from .leafexpr import LeafExpr
 
 class GlobalField(Enum):
-     min_txn_fee = 0
-     min_balance = 1
-     max_txn_life = 2
-     zero_address = 3
-     group_size = 4
+    min_txn_fee = (0, "MinTxnFee", TealType.uint64)
+    min_balance = (1, "MinBalance", TealType.uint64)
+    max_txn_life = (2, "MaxTxnLife", TealType.uint64)
+    zero_address = (3, "ZeroAddress", TealType.bytes)
+    group_size = (4, "GroupSize", TealType.uint64)
+    logic_sig_version = (5, "LogicSigVersion", TealType.uint64)
+    round = (6, "Round", TealType.uint64)
+    latest_timestamp = (7, "LatestTimestamp", TealType.uint64)
+    current_app_id = (8, "CurrentApplicationID", TealType.uint64)
 
-type_of_global_field = {
-     GlobalField.min_txn_fee: TealType.uint64,
-     GlobalField.min_balance: TealType.uint64,
-     GlobalField.max_txn_life: TealType.uint64,
-     GlobalField.zero_address: TealType.bytes,
-     GlobalField.group_size: TealType.uint64
-}
-
-str_of_global_field = {
-     GlobalField.min_txn_fee: "MinTxnFee",
-     GlobalField.min_balance: "MinBalance",
-     GlobalField.max_txn_life: "MaxTxnLife",
-     GlobalField.zero_address: "ZeroAddress",
-     GlobalField.group_size: "GroupSize"
-}   
+    def __init__(self, id: int, name: str, type: TealType) -> None:
+        self.id = id
+        self.arg_name = name
+        self.ret_type = type
+    
+    def type_of(self) -> TealType:
+        return self.ret_type
 
 class Global(LeafExpr):
     """An expression that accesses a global property."""
 
-    def __init__(self, field:GlobalField) -> None:
+    def __init__(self, field: GlobalField) -> None:
         self.field = field
 
     def __teal__(self):
-        return [["global", str_of_global_field[self.field]]]
+        return [TealOp(Op.global_, self.field.arg_name)]
          
     def __str__(self):
-        return "(Global {})".format(str_of_global_field[self.field])
+        return "(Global {})".format(self.field.arg_name)
     
     def type_of(self):
-        return type_of_global_field[self.field]
+        return self.field.type_of()
 
     @classmethod
     def min_txn_fee(cls):
@@ -68,3 +65,27 @@ class Global(LeafExpr):
         This will be at least 1.
         """
         return cls(GlobalField.group_size)
+
+    @classmethod
+    def logic_sig_version(cls):
+        """Get the maximum supported TEAL version."""
+        return cls(GlobalField.logic_sig_version)
+    
+    @classmethod
+    def round(cls):
+        """Get the current round number."""
+        return cls(GlobalField.round)
+    
+    @classmethod
+    def latest_timestamp(cls):
+        """Get the latest confirmed block UNIX timestamp.
+        
+        Fails if negative."""
+        return cls(GlobalField.latest_timestamp)
+    
+    @classmethod
+    def current_application_id(cls):
+        """Get the ID of the current application executing.
+        
+        Fails if no application is executing."""
+        return cls(GlobalField.current_app_id)

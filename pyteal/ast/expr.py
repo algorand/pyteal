@@ -3,6 +3,7 @@ from enum import Enum
 from typing import List
 
 from ..types import TealType
+from ..ir import TealComponent
 
 class Expr(ABC):
     """Abstract base class for PyTeal expressions."""
@@ -18,7 +19,7 @@ class Expr(ABC):
         pass
 
     @abstractmethod
-    def __teal__(self) -> List[List[str]]:
+    def __teal__(self) -> List[TealComponent]:
         """Assemble TEAL IR for this component and its arguments."""
         pass
 
@@ -42,6 +43,10 @@ class Expr(ABC):
         from .binaryexpr import Eq
         return Eq(self, other)
 
+    def __ne__(self, other):
+        from .binaryexpr import Neq
+        return Neq(self, other)
+
     def __add__(self, other):
         from .binaryexpr import Add
         return Add(self, other)
@@ -61,7 +66,23 @@ class Expr(ABC):
     def __mod__(self, other):
         from .binaryexpr import Mod
         return Mod(self, other)
-       
+
+    def __invert__(self):
+        from .unaryexpr import BitwiseNot
+        return BitwiseNot(self)
+
+    def __and__(self, other):
+        from .binaryexpr import BitwiseAnd
+        return BitwiseAnd(self, other)
+
+    def __or__(self, other):
+        from .binaryexpr import BitwiseOr
+        return BitwiseOr(self, other)
+
+    def __xor__(self, other):
+        from .binaryexpr import BitwiseXor
+        return BitwiseXor(self, other)
+
     def And(self, other: 'Expr') -> 'Expr':
         """Take the logical And of this expression and another one.
         

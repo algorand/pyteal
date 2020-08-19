@@ -28,4 +28,4 @@ def htlc(tmpl_seller=alice,
 			   type_cond,
 			   Or(recv_cond, esc_cond))
 
-print(compileTeal(htlc()))
+print(compileTeal(htlc(), Mode.Signature))

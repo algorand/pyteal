@@ -1,6 +1,7 @@
 from typing import List
 
 from ..types import TealType, require_type
+from ..ir import TealOp, Op, TealLabel
 from ..errors import TealInputError
 from ..util import new_label
 from .expr import Expr
@@ -58,28 +59,26 @@ class Cond(Expr):
             cond = arg[0]
 
             teal += cond.__teal__()
-            teal += [["bnz", l]]
+            teal.append(TealOp(Op.bnz, l))
 
             labels.append(l)
 
         # err if no conditions are met
-        teal += [["err"]]
+        teal.append(TealOp(Op.err))
 
         # end label
         labels.append(new_label())
         
         for i, arg in enumerate(self.args):
-            label = labels[i] + ":"
+            label = TealLabel(labels[i])
             branch = arg[1]
 
-            teal += [[label]]
+            teal.append(label)
             teal += branch.__teal__()
             if i + 1 != len(self.args):
-                teal += [["int", "1"], ["bnz", labels[-1]]]
-        
-        endLabel = labels[-1] + ":"
+                teal.append(TealOp(Op.b, labels[-1]))
 
-        teal += [[endLabel]]
+        teal.append(TealLabel(labels[-1]))
 
         return teal
 
