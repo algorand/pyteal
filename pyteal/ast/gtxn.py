@@ -5,7 +5,6 @@ from ..config import MAX_GROUP_SIZE
 from .expr import Expr
 from .leafexpr import LeafExpr
 from .txn import TxnField, TxnExpr, TxnaExpr, TxnObject
-from .array import Array
 from .global_ import Global
 
 class GtxnExpr(TxnExpr):
@@ -34,15 +33,8 @@ class GtxnaExpr(TxnaExpr):
     def __teal__(self):
         return [TealOp(Op.gtxna, self.txnIndex, self.field.arg_name, self.index)]
 
-class TxnGroup(Array):
+class TxnGroup:
     """Represents a group of transactions."""
-    
-    def length(self) -> Expr:
-        """Get the number of transactions in this group.
-
-        This is the same as Global.group_size().
-        """
-        return Global.group_size()
 
     def __getitem__(self, txnIndex: int) -> TxnObject:
         if txnIndex < 0 or txnIndex >= MAX_GROUP_SIZE:
