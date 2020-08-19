@@ -1,31 +1,28 @@
-#!/usr/bin/env python3
-
 from pyteal import *
 from pyteal.util import reset_label_count
 
+def test_basic_bank():
+    import os
+    from examples.basic import bank_for_account
+
+    program = bank_for_account("ZZAF5ARA4MEC5PVDOP64JM5O5MQST63Q2KOY2FLYFLXXD3PFSNJJBYAFZM")
+
+    target_path = os.path.join(os.path.dirname(__file__), "../examples/basic.teal")
+    with open(target_path, "r") as target_file:
+        target = "".join(target_file.readlines())
+        assert compileTeal(program, Mode.Signature) == target
+
 def test_atomic_swap():
+    from examples.atomic_swap import htlc
 
-    alice = Addr("6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY")
-    bob = Addr("7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M")
-    secret = Bytes("base32", "23232323232323")
-
-    fee_cond = Txn.fee() < Int(1000)
-    type_cond = Txn.type_enum() == Int(1)
-    recv_cond = (Txn.close_remainder_to() == Global.zero_address()).And(
-        Txn.receiver() == alice).And(
-        Arg(0) == secret)
-    esc_cond = (Txn.close_remainder_to()  == Global.zero_address()).And(
-        Txn.receiver() == bob).And(
-        Txn.first_valid() > Int(3000))
-
-    atomic_swap = fee_cond.And(type_cond).And(recv_cond.Or(esc_cond))
+    program = htlc()
 
     a_teal = """#pragma version 2
 txn Fee
 int 1000
 <
 txn TypeEnum
-int 1
+int pay
 ==
 &&
 txn CloseRemainderTo
@@ -36,6 +33,7 @@ addr 6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY
 ==
 &&
 arg 0
+sha256
 byte base32(23232323232323)
 ==
 &&
@@ -52,39 +50,17 @@ int 3000
 &&
 ||
 &&"""
-    reset_label_count()
-    assert compileTeal(atomic_swap, Mode.Signature) == a_teal
+    assert compileTeal(program, Mode.Signature) == a_teal
 
 
 def test_periodic_payment():
-    tmpl_fee = Int(1000)
-    tmpl_period = Int(50)
-    tmpl_dur = Int(5000)
-    tmpl_x = Bytes("base64", "023sdDE2")
-    tmpl_amt = Int(2000)
-    tmpl_rcv = Addr("6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY")
-    tmpl_timeout = Int(30000)
+    from examples.periodic_payment import periodic_payment
 
-    periodic_pay_core = And(Txn.type_enum() == Int(1),
-                            Txn.fee() < tmpl_fee,
-                            Txn.first_valid() % tmpl_period == Int(0),
-                            Txn.last_valid() == tmpl_dur + Txn.first_valid(),
-                            Txn.lease() == tmpl_x)
-                      
-    periodic_pay_transfer = And(Txn.close_remainder_to() ==  Global.zero_address(),
-                                Txn.receiver() == tmpl_rcv,
-                                Txn.amount() == tmpl_amt)
-
-    periodic_pay_close = And(Txn.close_remainder_to() == tmpl_rcv,
-                             Txn.receiver() == Global.zero_address(),
-                             Txn.first_valid() == tmpl_timeout,
-                             Txn.amount() == Int(0))
-
-    periodic_pay_escrow = periodic_pay_core.And(periodic_pay_transfer.Or(periodic_pay_close))
+    program = periodic_payment()
 
     p_teal = """#pragma version 2
 txn TypeEnum
-int 1
+int pay
 ==
 txn Fee
 int 1000
@@ -134,44 +110,23 @@ int 0
 &&
 ||
 &&"""
-    reset_label_count()
-    assert compileTeal(periodic_pay_escrow, Mode.Signature) == p_teal
+    assert compileTeal(program, Mode.Signature) == p_teal
 
 
 def test_split():
-    # https://github.com/derbear/steal/blob/master/examples/split.rkt
-    tmpl_rcv1 = Addr("6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY")
-    tmpl_rcv2 = Addr("7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M")    
-    tmpl_ratn = Int(32)
-    tmpl_ratd = Int(68)
-    tmpl_minpay = Int(5000000)
-    tmpl_timeout = Int(30000)
-    tmpl_own = Addr("SXOUGKH6RM5SO5A2JAZ5LR3CRM2JWL4LPQDCNRQO2IMLIMEH6T4QWKOREE")
-    tmpl_fee = Int(1000)
+    from examples.split import split
 
-    split_core = And(Txn.type_enum() == Int(1),
-                     Txn.fee() < tmpl_fee)
-
-    split_transfer = And(Gtxn[0].sender() == Gtxn[1].sender(),
-                         Txn.close_remainder_to() == Global.zero_address(),
-                         Gtxn[0].receiver() == tmpl_rcv1,
-                         Gtxn[1].receiver() == tmpl_rcv2,
-                         Gtxn[1].amount() == ((Gtxn[0].amount() + Gtxn[1].amount()) * tmpl_ratn) / tmpl_ratd,
-                         Gtxn[0].amount() == tmpl_minpay)
-
-    split_close = And(Txn.close_remainder_to() == tmpl_own,
-                      Txn.receiver() == Global.zero_address(),
-                      Txn.amount() == Int(0),
-                      Txn.first_valid() > tmpl_timeout)
-
-    split = And(split_core,
-                If(Global.group_size() == Int(2),
-                   split_transfer,
-                   split_close))
+    program = split(
+        tmpl_own = Addr("SXOUGKH6RM5SO5A2JAZ5LR3CRM2JWL4LPQDCNRQO2IMLIMEH6T4QWKOREE"),
+        tmpl_ratn = Int(32),
+        tmpl_ratd = Int(68),
+        tmpl_min_pay = Int(5000000),
+        tmpl_timeout = Int(30000)
+    )
 
     target = """#pragma version 2
 txn TypeEnum
-int 1
+int pay
 ==
 txn Fee
 int 1000
@@ -213,7 +168,7 @@ gtxn 1 Receiver
 addr 7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M
 ==
 &&
-gtxn 1 Amount
+gtxn 0 Amount
 gtxn 0 Amount
 gtxn 1 Amount
 +
@@ -230,7 +185,7 @@ int 5000000
 l1:
 &&"""
     reset_label_count()
-    assert compileTeal(split, Mode.Signature) == target
+    assert compileTeal(program, Mode.Signature) == target
 
 
 def test_cond():
