@@ -5,22 +5,64 @@ Data Types and Constants
 
 A PyTeal expression has one of the following two data types:
 
- * :code:`TealType.uint64`, 64 bit unsigned integer
- * :code:`TealType.bytes`, a slice of bytes
+ * :any:`TealType.uint64`, 64 bit unsigned integer
+ * :any:`TealType.bytes`, a slice of bytes
 
+For example, all the transaction arguments (e.g. :code:`Arg(0)`) are of type :any:`TealType.bytes`.
+The first valid round of current transaction (:any:`Txn.first_valid() <TxnObject.first_valid()>`) is typed :any:`TealType.uint64`.
 
-For example, all the transaction arguments (e.g. :code:`Arg(0)`) are of type :code:`TealType.bytes`.
-The first valid round of current transaction (:code:`Txn.first_valid()`) is typed :code:`TealType.uint64`.
+Integers
+--------
 
 :code:`Int(n)` creates a :code:`TealType.uint64` constant, where :code:`n >= 0 and n < 2 ** 64`.
 
-:code:`Bytes(encoding, value)` creates a :code:`TealType.bytes` constant, where :code:`encoding` could be either
-of the following:
+Bytes
+-----
 
- * :code:`"base16"`: its paired :code:`value` needs to be a `RFC 4648 <https://tools.ietf.org/html/rfc4648>`_ base16 encoded string, e.g. :code:`"0xA21212EF"` or
-   :code:`"A21212EF"`
- * :code:`"base32"`: its paired :code:`value` needs to be a RFC 4648 base32 encoded string **without padding**, e.g. :code:`"7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M"`
- * :code:`"base64"`: its paired :code:`value` needs to be a RFC 4648 base64 encoded string, e.g. :code:`"Zm9vYmE="`
+A byte slice is a binary string. There are several ways to encode a byte slice in PyTeal:
+
+UTF-8
+~~~~~
+
+Byte slices can be created from UTF-8 encoded strings. For example:
+
+.. code-block:: Python
+
+    Bytes("hello world")
+
+Base16
+~~~~~~
+
+Byte slices can be created from a :rfc:`4648#section-8` base16 encoded
+binary string, e.g. :code:`"0xA21212EF"` or :code:`"A21212EF"`. For example:
+
+.. code-block:: Python
+
+    Bytes("base16", "0xA21212EF")
+    Bytes("base16", "A21212EF") # "0x" is optional
+
+Base32
+~~~~~~
+
+Byte slices can be created from a :rfc:`4648#section-6` base32 encoded
+binary string **without padding**, e.g. :code:`"7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M"`.
+
+.. code-block:: Python
+
+    Bytes("base32", "7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M")
+
+Base64
+~~~~~~
+
+Byte slices can be created from a :rfc:`4648#section-4` base64 encoded
+binary string, e.g. :code:`"Zm9vYmE="`.
+
+.. code-block:: Python
+
+    Bytes("base64", "Zm9vYmE=")
+
+Type Checking
+-------------
 
 All PyTeal expressions are type checked at construction time, for example, running
 the following code triggers a :code:`TealTypeError`:  ::
@@ -30,6 +72,9 @@ the following code triggers a :code:`TealTypeError`:  ::
 Since :code:`<` (overloaded Python operator, see :ref:`arithmetic_expressions` for more details)
 requires both operands of type :code:`TealType.uint64`,
 while :code:`Arg(0)` is of type :code:`TealType.bytes`.
+
+Conversion
+----------
 
 Converting a value to its corresponding value in the other data type is supported by the following two operators:
 
