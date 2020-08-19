@@ -1,10 +1,12 @@
 from enum import Enum
+from typing import Callable
 
 from ..types import TealType
 from ..errors import TealInputError
 from ..ir import TealOp, Op
 from .leafexpr import LeafExpr
 from .int import EnumInt
+from .array import Array
 
 class TxnType:
     """Enum of all possible transaction types."""
@@ -74,7 +76,22 @@ class TxnField(Enum):
     def type_of(self) -> TealType:
         return self.ret_type
 
-class Txna(LeafExpr):
+class TxnExpr(LeafExpr):
+    """An expression that accesses a transaction field from the current transaction."""
+
+    def __init__(self, field: TxnField) -> None:
+        self.field = field
+
+    def __str__(self):
+        return "(Txn {})".format(self.field.arg_name)
+
+    def __teal__(self):
+        return [TealOp(Op.txn, self.field.arg_name)]
+    
+    def type_of(self):
+        return self.field.type_of()
+
+class TxnaExpr(LeafExpr):
     """An expression that accesses a transaction array field from the current transaction."""
 
     def __init__(self, field: TxnField, index: int) -> None:
@@ -90,261 +107,212 @@ class Txna(LeafExpr):
     def type_of(self):
         return self.field.type_of()
 
-class Txn(LeafExpr):
-    """An expression that accesses a transaction field from the current transaction."""
+class TxnArray(Array):
+    """Represents a transaction array field."""
 
-    def __init__(self, field: TxnField) -> None:
-        self.field = field
-
-    def __str__(self):
-        return "(Txn {})".format(self.field.arg_name)
-
-    def __teal__(self):
-        return [TealOp(Op.txn, self.field.arg_name)]
+    def __init__(self, txnObject: 'TxnObject', accessField: TxnField, lengthField: TxnField) -> None:
+        self.txnObject = txnObject
+        self.accessField = accessField
+        self.lengthField = lengthField
     
-    def type_of(self):
-        return self.field.type_of()
+    def length(self) -> TxnExpr:
+        return self.txnObject.txnType(self.lengthField)
+    
+    def __getitem__(self, index: int) -> TxnaExpr:
+        if not isinstance(index, int) or index < 0:
+            raise TealInputError("Invalid array index: {}".format(index))
 
-    @classmethod
-    def sender(cls):
+        return self.txnObject.txnaType(self.accessField, index)
+
+class TxnObject:
+    """Represents a transaction and its fields."""
+
+    def __init__(self, txnType: Callable[[TxnField], TxnExpr], txnaType: Callable[[TxnField, int], TxnaExpr]) -> None:
+        self.txnType = txnType
+        self.txnaType = txnaType
+
+    def sender(self) -> TxnExpr:
         """Get the 32 byte address of the sender."""
-        return cls(TxnField.sender)
-
-    @classmethod
-    def fee(cls):
+        return self.txnType(TxnField.sender)
+   
+    def fee(self) -> TxnExpr:
         """Get the transaction fee in micro Algos."""
-        return cls(TxnField.fee)
+        return self.txnType(TxnField.fee)
 
-    @classmethod
-    def first_valid(cls):
+    def first_valid(self) -> TxnExpr:
         """Get the first valid round number."""
-        return cls(TxnField.first_valid)
+        return self.txnType(TxnField.first_valid)
    
-    @classmethod
-    def last_valid(cls):
+    def last_valid(self) -> TxnExpr:
         """Get the last valid round number."""
-        return cls(TxnField.last_valid)
+        return self.txnType(TxnField.last_valid)
 
-    @classmethod
-    def note(cls):
+    def note(self) -> TxnExpr:
         """Get the transaction note."""
-        return cls(TxnField.note)
+        return self.txnType(TxnField.note)
 
-    @classmethod
-    def lease(cls):
+    def lease(self) -> TxnExpr:
         """Get the transaction lease."""
-        return cls(TxnField.lease)
-   
-    @classmethod
-    def receiver(cls):
+        return self.txnType(TxnField.lease)
+
+    def receiver(self) -> TxnExpr:
         """Get the 32 byte address of the receiver."""
-        return cls(TxnField.receiver)
+        return self.txnType(TxnField.receiver)
 
-    @classmethod
-    def amount(cls):
+    def amount(self) -> TxnExpr:
         """Get the amount of the transaction in micro Algos."""
-        return cls(TxnField.amount)
+        return self.txnType(TxnField.amount)
 
-    @classmethod
-    def close_remainder_to(cls):
+    def close_remainder_to(self) -> TxnExpr:
         """Get the 32 byte address of the CloseRemainderTo field."""
-        return cls(TxnField.close_remainder_to)
+        return self.txnType(TxnField.close_remainder_to)
 
-    @classmethod
-    def vote_pk(cls):
-        return cls(TxnField.vote_pk)
+    def vote_pk(self) -> TxnExpr:
+        return self.txnType(TxnField.vote_pk)
 
-    @classmethod
-    def selection_pk(cls):
-        return cls(TxnField.selection_pk)
+    def selection_pk(self) -> TxnExpr:
+        return self.txnType(TxnField.selection_pk)
 
-    @classmethod
-    def vote_first(cls):
-        return cls(TxnField.vote_first)
+    def vote_first(self) -> TxnExpr:
+        return self.txnType(TxnField.vote_first)
 
-    @classmethod
-    def vote_last(cls):
-        return cls(TxnField.vote_last)
+    def vote_last(self) -> TxnExpr:
+        return self.txnType(TxnField.vote_last)
 
-    @classmethod
-    def vote_key_dilution(cls):
-        return cls(TxnField.vote_key_dilution)
+    def vote_key_dilution(self) -> TxnExpr:
+        return self.txnType(TxnField.vote_key_dilution)
 
-    @classmethod
-    def type(cls):
-        return cls(TxnField.type)
+    def type(self) -> TxnExpr:
+        return self.txnType(TxnField.type)
 
-    @classmethod
-    def type_enum(cls):
+    def type_enum(self) -> TxnExpr:
         """Get the type of this transaction.
         
         See the TxnType enum for possible values.
         """
-        return cls(TxnField.type_enum)
+        return self.txnType(TxnField.type_enum)
 
-    @classmethod
-    def xfer_asset(cls):
+    def xfer_asset(self) -> TxnExpr:
         """The ID of the asset being transferred."""
-        return cls(TxnField.xfer_asset)
+        return self.txnType(TxnField.xfer_asset)
 
-    @classmethod
-    def asset_amount(cls):
+    def asset_amount(self) -> TxnExpr:
         """The the amount of the asset being transferred, measured in the asset's units."""
-        return cls(TxnField.asset_amount)
+        return self.txnType(TxnField.asset_amount)
 
-    @classmethod
-    def asset_sender(cls):
+    def asset_sender(self) -> TxnExpr:
         """Get the 32 byte address of the subject of clawback.
         
         The transaction will clawback of all of an asset from this address if the transaction sender
         is the clawback address of the asset.
         """
-        return cls(TxnField.asset_sender)
+        return self.txnType(TxnField.asset_sender)
 
-    @classmethod
-    def asset_receiver(cls):
-        return cls(TxnField.asset_receiver)
+    def asset_receiver(self) -> TxnExpr:
+        return self.txnType(TxnField.asset_receiver)
 
-    @classmethod
-    def asset_close_to(cls):
-        return cls(TxnField.asset_close_to)
+    def asset_close_to(self) -> TxnExpr:
+        return self.txnType(TxnField.asset_close_to)
 
-    @classmethod
-    def group_index(cls):
-        """Get the position of the current transaction within the atomic transaction group.
+    def group_index(self) -> TxnExpr:
+        """Get the position of the transaction within the atomic transaction group.
         
         A stand-alone transaction is implictly element 0 in a group of 1.
         """
-        return cls(TxnField.group_index)
+        return self.txnType(TxnField.group_index)
 
-    @classmethod
-    def tx_id(cls):
-        """Get the 32 byte computed ID for the current transaction."""
-        return cls(TxnField.tx_id)
-    
-    @classmethod
-    def application_id(cls):
-        """Get the application ID from the ApplicationCall portion of the current transaction."""
-        return cls(TxnField.application_id)
+    def tx_id(self) -> TxnExpr:
+        """Get the 32 byte computed ID for the transaction."""
+        return self.txnType(TxnField.tx_id)
 
-    @classmethod
-    def on_completion(cls):
-        """Get the on completion action from the ApplicationCall portion of the current transaction."""
-        return cls(TxnField.on_completion)
+    def application_id(self) -> TxnExpr:
+        """Get the application ID from the ApplicationCall portion of the transaction."""
+        return self.txnType(TxnField.application_id)
 
-    @classmethod
-    def approval_program(cls):
+    def on_completion(self) -> TxnExpr:
+        """Get the on completion action from the ApplicationCall portion of the transaction."""
+        return self.txnType(TxnField.on_completion)
+
+    def approval_program(self) -> TxnExpr:
         """Get the approval program."""
-        return cls(TxnField.approval_program)
-    
-    @classmethod
-    def clear_state_program(cls):
+        return self.txnType(TxnField.approval_program)
+
+    def clear_state_program(self) -> TxnExpr:
         """Get the clear state program."""
-        return cls(TxnField.clear_state_program)
-    
-    @classmethod
-    def rekey_to(cls):
+        return self.txnType(TxnField.clear_state_program)
+
+    def rekey_to(self) -> TxnExpr:
         """Get the sender's new 32 byte AuthAddr"""
-        return cls(TxnField.rekey_to)
-    
-    @classmethod
-    def config_asset(cls):
+        return self.txnType(TxnField.rekey_to)
+
+    def config_asset(self) -> TxnExpr:
         """Get the asset ID in asset config transaction."""
-        return cls(TxnField.config_asset)
-    
-    @classmethod
-    def config_asset_total(cls):
+        return self.txnType(TxnField.config_asset)
+
+    def config_asset_total(self) -> TxnExpr:
         """Get the total number of units of this asset created."""
-        return cls(TxnField.config_asset_total)
+        return self.txnType(TxnField.config_asset_total)
 
-    @classmethod
-    def config_asset_decimals(cls):
+    def config_asset_decimals(self) -> TxnExpr:
         """Get the number of digits to display after the decimal place when displaying the asset."""
-        return cls(TxnField.config_asset_decimals)
-    
-    @classmethod
-    def config_asset_default_frozen(cls):
+        return self.txnType(TxnField.config_asset_decimals)
+
+    def config_asset_default_frozen(self) -> TxnExpr:
         """Check if the asset's slots are frozen by default or not."""
-        return cls(TxnField.config_asset_default_frozen)
-    
-    @classmethod
-    def config_asset_unit_name(cls):
+        return self.txnType(TxnField.config_asset_default_frozen)
+
+    def config_asset_unit_name(self) -> TxnExpr:
         """Get the unit name of the asset."""
-        return cls(TxnField.config_asset_unit_name)
+        return self.txnType(TxnField.config_asset_unit_name)
 
-    @classmethod
-    def config_asset_name(cls):
+    def config_asset_name(self) -> TxnExpr:
         """Get the asset name."""
-        return cls(TxnField.config_asset_name)
-    
-    @classmethod
-    def config_asset_url(cls):
+        return self.txnType(TxnField.config_asset_name)
+
+    def config_asset_url(self) -> TxnExpr:
         """Get the asset URL."""
-        return cls(TxnField.config_asset_url)
-    
-    @classmethod
-    def config_asset_metadata_hash(cls):
+        return self.txnType(TxnField.config_asset_url)
+
+    def config_asset_metadata_hash(self) -> TxnExpr:
         """Get the 32 byte commitment to some unspecified asset metdata."""
-        return cls(TxnField.config_asset_metadata_hash)
-    
-    @classmethod
-    def config_asset_manager(cls):
+        return self.txnType(TxnField.config_asset_metadata_hash)
+
+    def config_asset_manager(self) -> TxnExpr:
         """Get the 32 byte asset manager address."""
-        return cls(TxnField.config_asset_manager)
-    
-    @classmethod
-    def config_asset_reserve(cls):
+        return self.txnType(TxnField.config_asset_manager)
+
+    def config_asset_reserve(self) -> TxnExpr:
         """Get the 32 byte asset reserve address."""
-        return cls(TxnField.config_asset_reserve)
-    
-    @classmethod
-    def config_asset_freeze(cls):
+        return self.txnType(TxnField.config_asset_reserve)
+
+    def config_asset_freeze(self) -> TxnExpr:
         """Get the 32 byte asset freeze address."""
-        return cls(TxnField.config_asset_freeze)
-    
-    @classmethod
-    def config_asset_clawback(cls):
+        return self.txnType(TxnField.config_asset_freeze)
+
+    def config_asset_clawback(self) -> TxnExpr:
         """Get the 32 byte asset clawback address."""
-        return cls(TxnField.config_asset_clawback)
-    
-    @classmethod
-    def freeze_asset(cls):
+        return self.txnType(TxnField.config_asset_clawback)
+
+    def freeze_asset(self) -> TxnExpr:
         """Get the asset ID being frozen or un-frozen."""
-        return cls(TxnField.freeze_asset)
-    
-    @classmethod
-    def freeze_asset_account(cls):
+        return self.txnType(TxnField.freeze_asset)
+
+    def freeze_asset_account(self) -> TxnExpr:
         """Get the 32 byte address of the account whose asset slot is being frozen or un-frozen."""
-        return cls(TxnField.freeze_asset_account)
-    
-    @classmethod
-    def freeze_asset_frozen(cls):
+        return self.txnType(TxnField.freeze_asset_account)
+
+    def freeze_asset_frozen(self) -> TxnExpr:
         """Get the new frozen value for the asset."""
-        return cls(TxnField.freeze_asset_frozen)
-    
-    class ArrayAccessor:
+        return self.txnType(TxnField.freeze_asset_frozen)
 
-        def __init__(self, accessField: TxnField, lengthField: TxnField) -> None:
-            self.accessField = accessField
-            self.lengthField = lengthField
-        
-        def length(self):
-            """Get the length of this array."""
-            return Txn(self.lengthField)
-        
-        def __getitem__(self, index: int):
-            """Get the value at an index in this array.
-            
-            Args:
-                index: Must not be negative.
-            """
-            if not isinstance(index, int) or index < 0:
-                raise TealInputError("Invalid array index: {}".format(index))
+    @property
+    def application_args(self) -> TxnArray:
+        """Application arguments array."""
+        return TxnArray(self, TxnField.application_args, TxnField.num_app_args)
 
-            return Txna(self.accessField, index)
-    
-    """Application args array"""
-    application_args = ArrayAccessor(TxnField.application_args, TxnField.num_app_args)
+    @property
+    def accounts(self) -> TxnArray:
+        """Accounts array."""
+        return TxnArray(self, TxnField.accounts, TxnField.num_accounts)
 
-    """Accounts array"""
-    accounts = ArrayAccessor(TxnField.accounts, TxnField.num_accounts)
+Txn: TxnObject = TxnObject(TxnExpr, TxnaExpr)

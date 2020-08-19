@@ -152,12 +152,12 @@ def test_split():
     split_core = And(Txn.type_enum() == Int(1),
                      Txn.fee() < tmpl_fee)
 
-    split_transfer = And(Gtxn.sender(0) == Gtxn.sender(1),
+    split_transfer = And(Gtxn[0].sender() == Gtxn[1].sender(),
                          Txn.close_remainder_to() == Global.zero_address(),
-                         Gtxn.receiver(0) == tmpl_rcv1,
-                         Gtxn.receiver(1) == tmpl_rcv2,
-                         Gtxn.amount(1) == ((Gtxn.amount(0) + Gtxn.amount(1)) * tmpl_ratn) / tmpl_ratd,
-                         Gtxn.amount(0) == tmpl_minpay)
+                         Gtxn[0].receiver() == tmpl_rcv1,
+                         Gtxn[1].receiver() == tmpl_rcv2,
+                         Gtxn[1].amount() == ((Gtxn[0].amount() + Gtxn[1].amount()) * tmpl_ratn) / tmpl_ratd,
+                         Gtxn[0].amount() == tmpl_minpay)
 
     split_close = And(Txn.close_remainder_to() == tmpl_own,
                       Txn.receiver() == Global.zero_address(),
