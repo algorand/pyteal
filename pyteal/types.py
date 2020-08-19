@@ -4,14 +4,21 @@ from enum import Enum
 from .errors import TealTypeError, TealInputError
 
 class TealType(Enum):
+    """Teal type enum."""
+
     """Unsigned 64 bit integer type."""
     uint64 = 0
+
     """Byte string type."""
     bytes = 1
+    
     """Any type that is not none."""
     anytype = 2
+    
     """Represents no value."""
     none = 3
+
+TealType.__module__ = "pyteal"
 
 def require_type(actual, expected):
     if actual != expected and (expected == TealType.none or actual == TealType.none or (actual != TealType.anytype and expected != TealType.anytype)):

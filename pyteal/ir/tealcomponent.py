@@ -27,3 +27,5 @@ class TealComponent(ABC):
     @abstractmethod
     def __eq__(self, other: object) -> bool:
         pass
+
+TealComponent.__module__ = "pyteal"

@@ -17,7 +17,7 @@ class If(Expr):
             cond: The condition to check. Must evaluate to uint64.
             thenBranch: Expression to evaluate if the condition is true.
             elseBranch (optional): Expression to evaluate if the condition is false. Must evaluate
-            to the same type as thenBranch, if provided. Defaults to None.
+                to the same type as thenBranch, if provided. Defaults to None.
         """
         require_type(cond.type_of(), TealType.uint64)
 
@@ -61,3 +61,5 @@ class If(Expr):
 
     def type_of(self):
         return self.thenBranch.type_of()
+
+If.__module__ = "pyteal"

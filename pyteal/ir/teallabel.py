@@ -18,3 +18,5 @@ class TealLabel(TealComponent):
         if not isinstance(other, TealLabel):
             return False
         return self.label == other.label
+
+TealLabel.__module__ = "pyteal"

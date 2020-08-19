@@ -35,3 +35,5 @@ class Substring(Expr):
     
     def type_of(self):
         return TealType.bytes
+
+Substring.__module__ = "pyteal"

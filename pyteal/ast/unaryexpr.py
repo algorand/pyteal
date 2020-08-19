@@ -22,50 +22,55 @@ class UnaryExpr(Expr):
     def type_of(self):
         return self.outputType
 
-def Btoi(arg: Expr):
+UnaryExpr.__module__ = "pyteal"
+
+def Btoi(arg: Expr) -> UnaryExpr:
     """Convert a byte string to a uint64."""
     return UnaryExpr(Op.btoi, TealType.bytes, TealType.uint64, arg)
 
-def Itob(arg: Expr):
+def Itob(arg: Expr) -> UnaryExpr:
     """Convert a uint64 string to a byte string."""
     return UnaryExpr(Op.itob, TealType.uint64, TealType.bytes, arg)
 
-def Len(arg: Expr):
+def Len(arg: Expr) -> UnaryExpr:
     """Get the length of a byte string."""
     return UnaryExpr(Op.len, TealType.bytes, TealType.uint64, arg)
 
-def Sha256(arg: Expr):
+def Sha256(arg: Expr) -> UnaryExpr:
     """Get the SHA-256 hash of a byte string."""
     return UnaryExpr(Op.sha256, TealType.bytes, TealType.bytes, arg)
 
-def Sha512_256(arg: Expr):
+def Sha512_256(arg: Expr) -> UnaryExpr:
     """Get the SHA-512/256 hash of a byte string."""
     return UnaryExpr(Op.sha512_256, TealType.bytes, TealType.bytes, arg)
 
-def Keccak256(arg: Expr):
+def Keccak256(arg: Expr) -> UnaryExpr:
     """Get the KECCAK-256 hash of a byte string."""
     return UnaryExpr(Op.keccak256, TealType.bytes, TealType.bytes, arg)
 
-def Not(arg: Expr):
+def Not(arg: Expr) -> UnaryExpr:
     """Get the logical inverse of a uint64.
 
     If the argument is 0, then this will produce 1. Otherwise this will produce 0.
     """
     return UnaryExpr(Op.logic_not, TealType.uint64, TealType.uint64, arg)
 
-def BitwiseNot(arg: Expr):
-    """Get the bitwise inverse of a uint64."""
+def BitwiseNot(arg: Expr) -> UnaryExpr:
+    """Get the bitwise inverse of a uint64.
+    
+    Produces ~arg.
+    """
     return UnaryExpr(Op.bitwise_not, TealType.uint64, TealType.uint64, arg)
 
-def Pop(arg: Expr):
+def Pop(arg: Expr) -> UnaryExpr:
     """Pop a value from the stack."""
     return UnaryExpr(Op.pop, TealType.anytype, TealType.none, arg)
 
-def Return(arg: Expr):
-    """Immediately exit the program using the last value on stack as the success value."""
+def Return(arg: Expr) -> UnaryExpr:
+    """Immediately exit the program with the given success value."""
     return UnaryExpr(Op.return_, TealType.uint64, TealType.none, arg)
 
-def Balance(arg: Expr):
+def Balance(arg: Expr) -> UnaryExpr:
     """Get the balance of a user in micro Algos.
 
     Argument must be an index into Txn.Accounts that corresponds to the account to read from. It

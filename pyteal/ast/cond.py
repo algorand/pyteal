@@ -22,10 +22,12 @@ class Cond(Expr):
         the value for this Cond expression. If no condition evalutes to a true value, the Cond
         expression produces an error and the TEAL program terminates.
         
-        For example:
-            Cond([Global.group_size() == Int(5), bid],
-                [Global.group_size() == Int(4), redeem],
-                [Global.group_size() == Int(1), wrapup])
+        Example:
+            .. code-block:: python
+
+                Cond([Global.group_size() == Int(5), bid],
+                    [Global.group_size() == Int(4), redeem],
+                    [Global.group_size() == Int(1), wrapup])
         """
 
         if len(argv) < 1:
@@ -91,3 +93,5 @@ class Cond(Expr):
         
     def type_of(self):
         return self.value_type
+
+Cond.__module__ = "pyteal"

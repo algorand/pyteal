@@ -20,6 +20,8 @@ class GtxnExpr(TxnExpr):
     def __teal__(self):
         return [TealOp(Op.gtxn, self.txnIndex, self.field.arg_name)]
 
+GtxnExpr.__module__ = "pyteal"
+
 class GtxnaExpr(TxnaExpr):
     """An expression that accesses a transaction array field from a transaction in the current group."""
 
@@ -33,6 +35,8 @@ class GtxnaExpr(TxnaExpr):
     def __teal__(self):
         return [TealOp(Op.gtxna, self.txnIndex, self.field.arg_name, self.index)]
 
+GtxnaExpr.__module__ = "pyteal"
+
 class TxnGroup:
     """Represents a group of transactions."""
 
@@ -41,4 +45,8 @@ class TxnGroup:
             raise TealInputError("Invalid Gtxn index {}, shoud be in [0, {})".format(txnIndex, MAX_GROUP_SIZE))
         return TxnObject(lambda field: GtxnExpr(txnIndex, field), lambda field, index: GtxnaExpr(txnIndex, field, index))
 
+TxnGroup.__module__ = "pyteal"
+
 Gtxn: TxnGroup = TxnGroup()
+
+Gtxn.__module__ = "pyteal"

@@ -13,14 +13,14 @@ class Bytes(LeafExpr):
         Depending on the encoding, there are different arguments to pass:
 
         For UTF-8 strings:
-            Pass the string as the only argument. For example, Bytes("content").
+            Pass the string as the only argument. For example, ``Bytes("content")``.
         For base16, base32, or base64 strings:
             Pass the base as the first argument and the string as the second argument. For example,
-            Bytes("base16", "636F6E74656E74"), Bytes("base32", "ORFDPQ6ARJK"),
-            Bytes("base64", "Y29udGVudA==").
+            ``Bytes("base16", "636F6E74656E74")``, ``Bytes("base32", "ORFDPQ6ARJK")``,
+            ``Bytes("base64", "Y29udGVudA==")``.
         Special case for base16:
             The prefix "0x" may be present in a base16 byte string. For example,
-            Bytes("base16", "0x636F6E74656E74").
+            ``Bytes("base16", "0x636F6E74656E74")``.
         """
         if len(args) == 1:
             self.base = "utf8"
@@ -58,3 +58,5 @@ class Bytes(LeafExpr):
 
     def type_of(self):
         return TealType.bytes
+
+Bytes.__module__ = "pyteal"

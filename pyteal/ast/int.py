@@ -13,7 +13,7 @@ class Int(LeafExpr):
 
         Args:
             value: The integer value this uint64 will represent. Must be a positive value less than
-            2**64.
+                2**64.
         """
         if type(value) is not int:
             raise TealInputError("invalid input type {} to Int".format(type(value))) 
@@ -30,6 +30,8 @@ class Int(LeafExpr):
 
     def type_of(self):
         return TealType.uint64
+
+Int.__module__ = "pyteal"
 
 class EnumInt(LeafExpr):
     """An expression that represents uint64 enum values."""
@@ -50,3 +52,5 @@ class EnumInt(LeafExpr):
 
     def type_of(self):
         return TealType.uint64
+
+EnumInt.__module__ = "pyteal"

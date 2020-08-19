@@ -23,6 +23,8 @@ class GlobalField(Enum):
     def type_of(self) -> TealType:
         return self.ret_type
 
+GlobalField.__module__ = "pyteal"
+
 class Global(LeafExpr):
     """An expression that accesses a global property."""
 
@@ -39,27 +41,27 @@ class Global(LeafExpr):
         return self.field.type_of()
 
     @classmethod
-    def min_txn_fee(cls):
+    def min_txn_fee(cls) -> 'Global':
         """Get the minumum transaction fee in micro Algos."""
         return cls(GlobalField.min_txn_fee)
 
     @classmethod
-    def min_balance(cls):
+    def min_balance(cls) -> 'Global':
         """Get the minumum balance in micro Algos."""
         return cls(GlobalField.min_balance)
 
     @classmethod
-    def max_txn_life(cls):
+    def max_txn_life(cls) -> 'Global':
         """Get the maximum number of rounds a transaction can have."""
         return cls(GlobalField.max_txn_life)
 
     @classmethod
-    def zero_address(cls):
+    def zero_address(cls) -> 'Global':
         """Get the 32 byte zero address."""
         return cls(GlobalField.zero_address)
 
     @classmethod
-    def group_size(cls):
+    def group_size(cls) -> 'Global':
         """Get the number of transactions in this atomic transaction group.
         
         This will be at least 1.
@@ -67,25 +69,27 @@ class Global(LeafExpr):
         return cls(GlobalField.group_size)
 
     @classmethod
-    def logic_sig_version(cls):
+    def logic_sig_version(cls) -> 'Global':
         """Get the maximum supported TEAL version."""
         return cls(GlobalField.logic_sig_version)
     
     @classmethod
-    def round(cls):
+    def round(cls) -> 'Global':
         """Get the current round number."""
         return cls(GlobalField.round)
     
     @classmethod
-    def latest_timestamp(cls):
+    def latest_timestamp(cls) -> 'Global':
         """Get the latest confirmed block UNIX timestamp.
         
         Fails if negative."""
         return cls(GlobalField.latest_timestamp)
     
     @classmethod
-    def current_application_id(cls):
+    def current_application_id(cls) -> 'Global':
         """Get the ID of the current application executing.
         
         Fails if no application is executing."""
         return cls(GlobalField.current_app_id)
+
+Global.__module__ = "pyteal"

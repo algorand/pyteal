@@ -16,3 +16,5 @@ class Err(LeafExpr):
 
     def type_of(self):
         return TealType.none
+
+Err.__module__ = "pyteal"

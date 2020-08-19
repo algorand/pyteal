@@ -1,10 +1,16 @@
 from enum import Enum, Flag, auto
 
 class Mode(Flag):
+    """Enum of program running modes."""
+    
     Signature = auto()
     Application = auto()
 
+Mode.__module__ = "pyteal"
+
 class Op(Enum):
+    """Enum of program opcodes."""
+
     err = "err", Mode.Signature | Mode.Application
     sha256 = "sha256", Mode.Signature | Mode.Application
     keccak256 = "keccak256", Mode.Signature | Mode.Application
@@ -74,3 +80,5 @@ class Op(Enum):
 
     def __init__(self, value: str, mode: Mode):
         self.mode = mode
+
+Op.__module__ = "pyteal"
