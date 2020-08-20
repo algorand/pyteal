@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# This example is provided for informational purposes only and has not been audited for security.
 
 from pyteal import *
 
