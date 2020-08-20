@@ -24,7 +24,9 @@ class BinaryExpr(Expr):
     def type_of(self):
         return self.outputType
 
-def Add(left: Expr, right: Expr):
+BinaryExpr.__module__ = "pyteal"
+
+def Add(left: Expr, right: Expr) -> BinaryExpr:
     """Add two numbers.
     
     Produces left + right.
@@ -35,7 +37,7 @@ def Add(left: Expr, right: Expr):
     """
     return BinaryExpr(Op.add, TealType.uint64, TealType.uint64, left, right)
 
-def Minus(left: Expr, right: Expr):
+def Minus(left: Expr, right: Expr) -> BinaryExpr:
     """Subtract two numbers.
     
     Produces left - right.
@@ -46,7 +48,7 @@ def Minus(left: Expr, right: Expr):
     """
     return BinaryExpr(Op.minus, TealType.uint64, TealType.uint64, left, right)
 
-def Mul(left: Expr, right: Expr):
+def Mul(left: Expr, right: Expr) -> BinaryExpr:
     """Multiply two numbers.
     
     Produces left * right.
@@ -57,7 +59,7 @@ def Mul(left: Expr, right: Expr):
     """
     return BinaryExpr(Op.mul, TealType.uint64, TealType.uint64, left, right)
 
-def Div(left: Expr, right: Expr):
+def Div(left: Expr, right: Expr) -> BinaryExpr:
     """Divide two numbers.
     
     Produces left / right.
@@ -68,7 +70,7 @@ def Div(left: Expr, right: Expr):
     """
     return BinaryExpr(Op.div, TealType.uint64, TealType.uint64, left, right)
 
-def Mod(left: Expr, right: Expr):
+def Mod(left: Expr, right: Expr) -> BinaryExpr:
     """Modulo expression.
     
     Produces left % right.
@@ -79,8 +81,10 @@ def Mod(left: Expr, right: Expr):
     """
     return BinaryExpr(Op.mod, TealType.uint64, TealType.uint64, left, right)
 
-def BitwiseAnd(left: Expr, right: Expr):
+def BitwiseAnd(left: Expr, right: Expr) -> BinaryExpr:
     """Bitwise and expression.
+
+    Produces left & right.
 
     Args:
         left: Must evaluate to uint64.
@@ -88,8 +92,10 @@ def BitwiseAnd(left: Expr, right: Expr):
     """
     return BinaryExpr(Op.bitwise_and, TealType.uint64, TealType.uint64, left, right)
 
-def BitwiseOr(left: Expr, right: Expr):
+def BitwiseOr(left: Expr, right: Expr) -> BinaryExpr:
     """Bitwise or expression.
+
+    Produces left | right.
 
     Args:
         left: Must evaluate to uint64.
@@ -97,8 +103,10 @@ def BitwiseOr(left: Expr, right: Expr):
     """
     return BinaryExpr(Op.bitwise_or, TealType.uint64, TealType.uint64, left, right)
 
-def BitwiseXor(left: Expr, right: Expr):
+def BitwiseXor(left: Expr, right: Expr) -> BinaryExpr:
     """Bitwise xor expression.
+
+    Produces left ^ right.
 
     Args:
         left: Must evaluate to uint64.
@@ -106,7 +114,7 @@ def BitwiseXor(left: Expr, right: Expr):
     """
     return BinaryExpr(Op.bitwise_xor, TealType.uint64, TealType.uint64, left, right)
 
-def Eq(left: Expr, right: Expr):
+def Eq(left: Expr, right: Expr) -> BinaryExpr:
     """Equality expression.
     
     Checks if left == right.
@@ -117,7 +125,7 @@ def Eq(left: Expr, right: Expr):
     """
     return BinaryExpr(Op.eq, right.type_of(), TealType.uint64, left, right)
 
-def Neq(left: Expr, right: Expr):
+def Neq(left: Expr, right: Expr) -> BinaryExpr:
     """Difference expression.
     
     Checks if left != right.
@@ -128,7 +136,7 @@ def Neq(left: Expr, right: Expr):
     """
     return BinaryExpr(Op.neq, right.type_of(), TealType.uint64, left, right)
 
-def Lt(left: Expr, right: Expr):
+def Lt(left: Expr, right: Expr) -> BinaryExpr:
     """Less than expression.
     
     Checks if left < right.
@@ -139,7 +147,7 @@ def Lt(left: Expr, right: Expr):
     """
     return BinaryExpr(Op.lt, TealType.uint64, TealType.uint64, left, right)
 
-def Le(left: Expr, right: Expr):
+def Le(left: Expr, right: Expr) -> BinaryExpr:
     """Less than or equal to expression.
     
     Checks if left <= right.
@@ -150,7 +158,7 @@ def Le(left: Expr, right: Expr):
     """
     return BinaryExpr(Op.le, TealType.uint64, TealType.uint64, left, right)
 
-def Gt(left: Expr, right: Expr):
+def Gt(left: Expr, right: Expr) -> BinaryExpr:
     """Greater than expression.
     
     Checks if left > right.
@@ -161,7 +169,7 @@ def Gt(left: Expr, right: Expr):
     """
     return BinaryExpr(Op.gt, TealType.uint64, TealType.uint64, left, right)
 
-def Ge(left: Expr, right: Expr):
+def Ge(left: Expr, right: Expr) -> BinaryExpr:
     """Greater than or equal to expression.
     
     Checks if left >= right.

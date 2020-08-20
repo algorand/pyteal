@@ -52,3 +52,5 @@ class TealOp(TealComponent):
         if not isinstance(other, TealOp):
             return False
         return self.op == other.op and self.args == other.args
+
+TealOp.__module__ = "pyteal"

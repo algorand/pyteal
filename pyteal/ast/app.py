@@ -9,7 +9,7 @@ from .int import EnumInt
 from .global_ import Global
 
 class OnComplete:
-    """An enum of values that Txn.on_completion() may return."""
+    """An enum of values that :any:`TxnObject.on_completion()` may return."""
     NoOp = EnumInt("NoOp")
     OptIn = EnumInt("OptIn")
     CloseOut = EnumInt("CloseOut")
@@ -17,7 +17,10 @@ class OnComplete:
     UpdateApplication = EnumInt("UpdateApplication")
     DeleteApplication = EnumInt("DeleteApplication")
 
+OnComplete.__module__ = "pyteal"
+
 class AppField(Enum):
+    """Enum of app fields used to create :any:`App` objects."""
     optedIn = (Op.app_opted_in, TealType.uint64)
     localGet = (Op.app_local_get, TealType.anytype)
     localGetEx = (Op.app_local_get_ex, TealType.none)
@@ -37,6 +40,8 @@ class AppField(Enum):
     
     def type_of(self) -> TealType:
         return self.ret_type
+
+AppField.__module__ = "pyteal"
 
 class App(LeafExpr):
     """An expression related to applications."""
@@ -63,20 +68,20 @@ class App(LeafExpr):
         return self.field.type_of()
 
     @classmethod
-    def id(cls):
+    def id(cls) -> Global:
         """Get the ID of the current running application.
         
-        This is the same as Global.current_application_id().
+        This is the same as :any:`Global.current_application_id()`.
         """
         return Global.current_application_id()
 
     @classmethod
-    def optedIn(cls, account: Expr, app: Expr):
+    def optedIn(cls, account: Expr, app: Expr) -> 'App':
         """Check if an account has opted in for an application.
 
         Args:
             account: An index into Txn.Accounts that corresponds to the account to check. Must
-            evaluate to uint64.
+                evaluate to uint64.
             app: The ID of the application being checked. Must evaluate to uint64.
         """
         require_type(account.type_of(), TealType.uint64)
@@ -84,12 +89,12 @@ class App(LeafExpr):
         return cls(AppField.optedIn, [account, app])
     
     @classmethod
-    def localGet(cls, account: Expr, key: Expr):
+    def localGet(cls, account: Expr, key: Expr) -> 'App':
         """Read from an account's local state for the current application.
 
         Args:
             account: An index into Txn.Accounts that corresponds to the account to read from. Must
-            evaluate to uint64.
+                evaluate to uint64.
             key: The key to read from the account's local state. Must evaluate to bytes.
         """
         require_type(account.type_of(), TealType.uint64)
@@ -97,12 +102,12 @@ class App(LeafExpr):
         return cls(AppField.localGet, [account, key])
     
     @classmethod
-    def localGetEx(cls, account: Expr, app: Expr, key: Expr):
+    def localGetEx(cls, account: Expr, app: Expr, key: Expr) -> MaybeValue:
         """Read from an account's local state for an application.
 
         Args:
             account: An index into Txn.Accounts that corresponds to the account to read from. Must
-            evaluate to uint64.
+                evaluate to uint64.
             app: The ID of the application being checked. Must evaluate to uint64.
             key: The key to read from the account's local state. Must evaluate to bytes.
         """
@@ -112,7 +117,7 @@ class App(LeafExpr):
         return MaybeValue(AppField.localGetEx.get_op(), TealType.anytype, args=[account, app, key])
 
     @classmethod
-    def globalGet(cls, key: Expr):
+    def globalGet(cls, key: Expr) -> 'App':
         """Read from the global state of the current application.
 
         Args:
@@ -122,12 +127,12 @@ class App(LeafExpr):
         return cls(AppField.globalGet, [key])
     
     @classmethod
-    def globalGetEx(cls, app: Expr, key: Expr):
+    def globalGetEx(cls, app: Expr, key: Expr) -> MaybeValue:
         """Read from the global state of an application.
 
         Args:
             app: An index into Txn.ForeignApps that corresponds to the application to read from.
-            Must evaluate to uint64.
+                Must evaluate to uint64.
             key: The key to read from the global application state. Must evaluate to bytes.
         """
         require_type(app.type_of(), TealType.uint64)
@@ -135,12 +140,12 @@ class App(LeafExpr):
         return MaybeValue(AppField.globalGetEx.get_op(), TealType.anytype, args=[app, key])
 
     @classmethod
-    def localPut(cls, account: Expr, key: Expr, value: Expr):
+    def localPut(cls, account: Expr, key: Expr, value: Expr) -> 'App':
         """Write to an account's local state for the current application.
 
         Args:
             account: An index into Txn.Accounts that corresponds to the account to write to. Must
-            evaluate to uint64.
+                evaluate to uint64.
             key: The key to write in the account's local state. Must evaluate to bytes.
             value: The value to write in the account's local state. Can evaluate to any type.
         """
@@ -150,7 +155,7 @@ class App(LeafExpr):
         return cls(AppField.localPut, [account, key, value])
     
     @classmethod
-    def globalPut(cls, key: Expr, value: Expr):
+    def globalPut(cls, key: Expr, value: Expr) -> 'App':
         """Write to the global state of the current application.
 
         Args:
@@ -162,12 +167,12 @@ class App(LeafExpr):
         return cls(AppField.globalPut, [key, value])
 
     @classmethod
-    def localDel(cls, account: Expr, key: Expr):
+    def localDel(cls, account: Expr, key: Expr) -> 'App':
         """Delete a key from an account's local state for the current application.
 
         Args:
             account: An index into Txn.Accounts that corresponds to the account from which the key
-            should be deleted. Must evaluate to uint64.
+                should be deleted. Must evaluate to uint64.
             key: The key to delete from the account's local state. Must evaluate to bytes.
         """
         require_type(account.type_of(), TealType.uint64)
@@ -175,7 +180,7 @@ class App(LeafExpr):
         return cls(AppField.localDel, [account, key])
     
     @classmethod
-    def globalDel(cls, key: Expr):
+    def globalDel(cls, key: Expr) -> 'App':
         """Delete a key from the global state of the current application.
 
         Args:
@@ -183,3 +188,5 @@ class App(LeafExpr):
         """
         require_type(key.type_of(), TealType.bytes)
         return cls(AppField.globalDel, [key])
+
+App.__module__ = "pyteal"

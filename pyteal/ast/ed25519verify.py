@@ -11,7 +11,7 @@ class Ed25519Verify(Expr):
         Args:
             data: The data signed by the public. Must evalutes to bytes.
             sig: The proposed 64 byte signature of ("ProgData" || program_hash || data). Must
-            evalute to bytes.
+                evalute to bytes.
             key: The 32 byte public key that produced the signature. Must evaluate to bytes.
         """
         require_type(data.type_of(), TealType.bytes)
@@ -33,3 +33,5 @@ class Ed25519Verify(Expr):
 
     def type_of(self):
         return TealType.uint64
+
+Ed25519Verify.__module__ = "pyteal"

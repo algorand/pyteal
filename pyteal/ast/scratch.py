@@ -19,7 +19,7 @@ class ScratchSlot:
 
         Args:
             type (optional): The type being loaded from this slot, if known. Defaults to
-            TealType.anytype.
+                TealType.anytype.
         """
         return ScratchLoad(self, type)
     
@@ -34,6 +34,8 @@ class ScratchSlot:
     def __hash__(self):
         return hash(self.id)
 
+ScratchSlot.__module__ = "pyteal"
+
 class ScratchLoad(Expr):
     """Expression to load a value from scratch space."""
 
@@ -43,7 +45,7 @@ class ScratchLoad(Expr):
         Args:
             slot: The slot to load the value from.
             type (optional): The type being loaded from this slot, if known. Defaults to
-            TealType.anytype.
+                TealType.anytype.
         """
         self.slot = slot
         self.type = type
@@ -57,6 +59,8 @@ class ScratchLoad(Expr):
 
     def type_of(self):
         return self.type
+
+ScratchLoad.__module__ = "pyteal"
 
 class ScratchStore(Expr):
     """Expression to store a value in scratch space."""
@@ -78,3 +82,5 @@ class ScratchStore(Expr):
 
     def type_of(self):
         return TealType.none
+
+ScratchStore.__module__ = "pyteal"

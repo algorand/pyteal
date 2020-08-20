@@ -10,7 +10,7 @@ class Arg(LeafExpr):
         """Get an argument for this program.
         
         Should only be used in signature verification mode. For application mode arguments, see
-        Txn.application_args.
+        :any:`TxnObject.application_args`.
 
         Args:
             index: The integer index of the argument to get. Must be between 0 and 255 inclusive.
@@ -31,3 +31,5 @@ class Arg(LeafExpr):
 
     def type_of(self):
         return TealType.bytes
+
+Arg.__module__ = "pyteal"

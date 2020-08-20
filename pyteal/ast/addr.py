@@ -22,3 +22,5 @@ class Addr(LeafExpr):
 
     def type_of(self):
         return TealType.bytes
+
+Addr.__module__ = "pyteal"

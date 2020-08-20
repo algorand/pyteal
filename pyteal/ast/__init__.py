@@ -10,13 +10,14 @@ from .int import Int, EnumInt
 
 # properties
 from .arg import Arg
-from .txn import TxnType, TxnField, TxnExpr, TxnaExpr, Txn
-from .gtxn import GtxnExpr, GtxnaExpr, Gtxn
+from .txn import TxnType, TxnField, TxnExpr, TxnaExpr, TxnArray, TxnObject, Txn
+from .gtxn import GtxnExpr, GtxnaExpr, TxnGroup, Gtxn
 from .global_ import Global, GlobalField
 from .app import App, AppField, OnComplete
 from .asset import AssetHolding, AssetParam
 
 # meta
+from .array import Array
 from .tmpl import Tmpl
 from .nonce import Nonce
 

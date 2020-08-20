@@ -14,3 +14,5 @@ class Array(ABC):
     def __getitem__(self, index: int):
         """Get the value at a given index in this array."""
         pass
+
+Array.__module__ = "pyteal"

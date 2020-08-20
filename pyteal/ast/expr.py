@@ -87,6 +87,8 @@ class Expr(ABC):
         """Take the logical And of this expression and another one.
         
         This expression must evaluate to uint64.
+
+        This is the same as using :func:`And()` with two arguments.
         """
         from .naryexpr import And
         return And(self, other)
@@ -95,6 +97,10 @@ class Expr(ABC):
         """Take the logical Or of this expression and another one.
         
         This expression must evaluate to uint64.
+
+        This is the same as using :func:`Or()` with two arguments.
         """
         from .naryexpr import Or
         return Or(self, other)
+
+Expr.__module__ = "pyteal"

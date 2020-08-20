@@ -78,3 +78,5 @@ class MaybeValue(LeafExpr):
 
     def type_of(self):
         return TealType.none
+
+MaybeValue.__module__ = "pyteal"

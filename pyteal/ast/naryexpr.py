@@ -40,17 +40,22 @@ class NaryExpr(Expr):
     def type_of(self):
         return self.outputType
 
-def And(*args: Expr):
+NaryExpr.__module__ = "pyteal"
+
+def And(*args: Expr) -> NaryExpr:
     """Logical and expression.
 
     Produces 1 if all arguments are nonzero. Otherwise produces 0.
 
     All arguments must be PyTeal expressions that evaluate to uint64, and there must be at least two
     arguments.
+
+    Example:
+        ``And(Txn.amount() == Int(500), Txn.fee() <= Int(10))``
     """
     return NaryExpr(Op.logic_and, TealType.uint64, TealType.uint64, args)
 
-def Or(*args: Expr):
+def Or(*args: Expr) -> NaryExpr:
     """Logical or expression.
 
     Produces 1 if any argument is nonzero. Otherwise produces 0.
@@ -60,7 +65,7 @@ def Or(*args: Expr):
     """
     return NaryExpr(Op.logic_or, TealType.uint64, TealType.uint64, args)
 
-def Concat(*args: Expr):
+def Concat(*args: Expr) -> NaryExpr:
     """Concatenate byte strings.
     
     Produces a new byte string consisting of the contents of each of the passed in byte strings
@@ -68,5 +73,8 @@ def Concat(*args: Expr):
 
     All arguments must be PyTeal expressions that evaluate to bytes, and there must be at least two
     arguments.
+
+    Example:
+        ``Concat(Bytes("hello"), Bytes(" "), Bytes("world"))``
     """
     return NaryExpr(Op.concat, TealType.bytes, TealType.bytes, args)

@@ -7,7 +7,7 @@ from periodic_payment import periodic_payment, tmpl_amt
 
 #--------- compile & send transaction using Goal and Python SDK ----------
 
-teal_source = compileTeal(periodic_payment())
+teal_source = compileTeal(periodic_payment(), Mode.Signature)
 
 # compile teal
 teal_file = str(uuid.uuid4()) + ".teal"
