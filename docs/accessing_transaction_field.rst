@@ -18,7 +18,6 @@ Operator                                  Type                     Notes
 :code:`Txn.sender()`                      :code:`TealType.bytes`   32 byte address
 :code:`Txn.fee()`                         :code:`TealType.uint64`  in microAlgos
 :code:`Txn.first_valid()`                 :code:`TealType.uint64`  round number 
-:code:`Txn.first_valid_time()`            :code:`TealType.uint64`  causes program to fail, reserved for future use
 :code:`Txn.last_valid()`                  :code:`TealType.uint64`  round number
 :code:`Txn.note()`                        :code:`TealType.bytes`   transaction note in bytes
 :code:`Txn.lease()`                       :code:`TealType.bytes`   transaction lease in bytes
