@@ -142,6 +142,12 @@ class TxnObject:
     def first_valid(self) -> TxnExpr:
         """Get the first valid round number."""
         return self.txnType(TxnField.first_valid)
+    
+    def first_valid_time(self) -> TxnExpr:
+        """Causes the program to fail.
+        
+        Reserved for future use."""
+        return self.txnType(TxnField.first_valid_time)
    
     def last_valid(self) -> TxnExpr:
         """Get the last valid round number."""
