@@ -1,3 +1,5 @@
+# This example is provided for informational purposes only and has not been audited for security.
+
 from pyteal import *
 
 def approval_program():
