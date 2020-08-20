@@ -46,4 +46,60 @@ After :code:`tmpl_timeout`, all remaining funds in the escrow are available to :
 Application Mode
 ----------------
 
-TODO
+Voting
+~~~~~~
+
+*Voting* allows accounts to register and vote for arbitrary candiates. Here a *candiate* is any byte
+slice and anyone is allowed to register to vote.
+
+This example has a configurable *registration period* defined by the global state :code:`RegBegin`
+and :code:`RegEnd` which restrict when accounts can register to vote. There is also a separate
+configurable *voting period* defined by the global state :code:`VotingBegin` and :code:`VotingEnd`
+which restrict when voting can take place.
+
+An account must register in order to vote. Accounts cannot vote more than once, and if an account
+opts out of the application before the voting period has concluded, their vote is discarded. The
+results are visible in the global state of the application, and the winner is the candidate with the
+highest number of votes.
+
+.. literalinclude:: ../examples/vote.py
+    :language: python
+
+Asset
+~~~~~
+
+*Asset* is an implementation of a custom asset type using smart contracts. While Algorand has
+`ASAs <https://developer.algorand.org/docs/features/asa/>`_, in some blockchains the only way to
+create a custom asset is through smart contracts.
+
+At creation, the creator specifies the total supply of the asset. Initially this supply is placed in
+a reserve and the creator is made an admin. Any admin can move funds from the reserve into the
+balance of any account that has opted into the application using the *mint* argument. Additionally,
+any admin can move funds from any account's balance into the reserve using the *burn* argument.
+
+Accounts are free to transfer funds in their balance to any other account that has opted into the
+application. When an account opts out of the application, their balance is added to the reserve.
+
+.. literalinclude:: ../examples/asset.py
+    :language: python
+
+Security Token
+~~~~~~~~~~~~~~
+
+*Security Token* is an extension of the *Asset* example with more features and restrictions. There
+are two types of admins, *contract admins* and *transfer admins*.
+
+Contract admins can delete the smart contract if the entire supply is in the reserve. They can
+promote accounts to transfer or contract admins. They can also *mint* and *burn* funds.
+
+Transfer admins can impose maximum balance limitations on accounts, temporarily lock accounts,
+assign accounts to transfer groups, and impose transaction restrictions between transaction groups.
+
+Both contract and transfer admins can pause trading of funds and freeze individual accounts.
+
+Accounts can only transfer funds if trading is not paused, both the sender and receive accounts are
+not frozen or temporarily locked, transfer group restrictions are not in place between them, and the
+receiver's account does not have a maximum balance restriction that would be invalidated.
+
+.. literalinclude:: ../examples/security_token.py
+    :language: python
