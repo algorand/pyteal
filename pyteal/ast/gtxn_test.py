@@ -35,6 +35,14 @@ def test_gtxn_first_valid():
             TealOp(Op.gtxn, i, "FirstValid")
         ]
 
+def test_gtxn_first_valid_time():
+    for i in GTXN_RANGE:
+        expr = Gtxn[i].first_valid_time()
+        assert expr.type_of() == TealType.uint64
+        assert expr.__teal__() == [
+            TealOp(Op.gtxn, i, "FirstValidTime")
+        ]
+
 def test_gtxn_last_valid():
     for i in GTXN_RANGE:
         expr = Gtxn[i].last_valid()

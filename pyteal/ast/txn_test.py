@@ -23,6 +23,13 @@ def test_txn_first_valid():
         TealOp(Op.txn, "FirstValid")
     ]
 
+def test_txn_first_valid_time():
+    expr = Txn.first_valid_time()
+    assert expr.type_of() == TealType.uint64
+    assert expr.__teal__() == [
+        TealOp(Op.txn, "FirstValidTime")
+    ]
+
 def test_txn_last_valid():
     expr = Txn.last_valid()
     assert expr.type_of() == TealType.uint64
