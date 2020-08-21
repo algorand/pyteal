@@ -10,7 +10,7 @@ Transaction Fields
 ------------------
 
 Information about the current transaction being evaluated can be obtained using the :any:`Txn`
-object. Blow are the PyTeal expressions that refer to transaction fields:
+object. Below are the PyTeal expressions that refer to transaction fields:
 
 ========================================= ======================== =======================================================================
 Operator                                  Type                     Notes

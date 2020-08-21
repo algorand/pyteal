@@ -24,7 +24,7 @@ pyteal requires python version >= 3.6
 
 ### Documentation
 
-[PyTeal Docs](https://pyteal.readthedocs.io/en/latest/)
+[PyTeal Docs](https://pyteal.readthedocs.io/)
 
 ### Run Demo
 
