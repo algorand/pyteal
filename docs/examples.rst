@@ -3,87 +3,103 @@
 PyTeal Examples
 ===============
 
-We showcase some example PyTeal programs:
+Here are some additional PyTeal example programs:
 
+Signature Mode
+--------------
+
+Atomic Swap
+~~~~~~~~~~~~~~~
+
+*Atomic Swap* allows the transfer of Algos from a buyer to a seller in exchange for a good or
+service. This is done using a *Hashed Time Locked Contract*. In this scheme, the buyer and funds a
+TEAL account with the sale price. The buyer also picks a secret value and encodes a secure hash of
+this value in the TEAL program. The TEAL program will transfer its balance to the seller if the
+seller is able to provide the secret value that corresponds to the hash in the program. When the
+seller renders the good or service to the buyer, the buyer discloses the secret from the program.
+The seller can immediately verify the secret and withdraw the payment.
+
+.. literalinclude:: ../examples/atomic_swap.py
+    :language: python
 
 Split Payment
 ~~~~~~~~~~~~~
 
-*Split Payment* splits payment between :code:`tmpl_rcv1` and
-:code:`tmpl_rcv2` on the ratio of :code:`tmpl_ratn / tmpl_ratd` ::
+*Split Payment* splits payment between :code:`tmpl_rcv1` and :code:`tmpl_rcv2` on the ratio of
+:code:`tmpl_ratn / tmpl_ratd`.
 
-	from pyteal import *
-
-	"""Split
-	"""
-
-	# template variables
-	tmpl_fee = Int(1000)
-	tmpl_rcv1 = Addr("6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY")
-	tmpl_rcv2 = Addr("7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M")
-	tmpl_own = Addr("5MK5NGBRT5RL6IGUSYDIX5P7TNNZKRVXKT6FGVI6UVK6IZAWTYQGE4RZIQ")
-	tmpl_ratn  = Int(1)
-	tmpl_ratd = Int(3)
-	tmpl_min_pay = Int(1000)
-	tmpl_timeout = Int(3000)
-	
-	split_core = (Txn.type_enum() == Int(1)).And(Txn.fee() < tmpl_fee)
-
-	split_transfer = And(Gtxn.sender(0) == Gtxn.sender(1),
-                             Txn.close_remainder_to() == Global.zero_address(),
-                             Gtxn.receiver(0) == tmpl_rcv1,
-                             Gtxn.receiver(1) == tmpl_rcv2,
-                             Gtxn.amount(0) == ((Gtxn.amount(0) + Gtxn.amount(1)) * tmpl_ratn) / tmpl_ratd,
-                             Gtxn.amount(0) == tmpl_min_pay)
-
-	split_close = And(Txn.close_remainder_to() == tmpl_own,
-                          Txn.receiver() == Global.zero_address(),
-                          Txn.first_valid() == tmpl_timeout)
-
-	split = And(split_core,
-                    If(Global.group_size() == Int(2),
-                       split_transfer,
-                       split_close))
-
-	print(split.teal())
-
+.. literalinclude:: ../examples/split.py
+    :language: python
 
 Periodic Payment
 ~~~~~~~~~~~~~~~~
 
-*Periodic Payment*  allows some account to execute periodic withdrawal of funds. This PyTeal program creates an contract account that allows :code:`tmpl_rcv` to withdraw TMPL_AMT every :code:`tmpl_period` rounds for :code:`tmpl_dur` after every multiple
-of :code:`tmpl_period`.
+*Periodic Payment* allows some account to execute periodic withdrawal of funds. This PyTeal program
+creates an contract account that allows :code:`tmpl_rcv` to withdraw :code:`tmpl_amt` every
+:code:`tmpl_period` rounds for :code:`tmpl_dur` after every multiple of :code:`tmpl_period`.
 
-After :code:`tmpl_timeout`, all remaining funds in the escrow
-are available to :code:`tmpl_rcv` ::
+After :code:`tmpl_timeout`, all remaining funds in the escrow are available to :code:`tmpl_rcv`.
 
-  from pyteal import *
+.. literalinclude:: ../examples/periodic_payment.py
+    :language: python
 
-  tmpl_fee = Int(1000)
-  tmpl_period = Int(50)
-  tmpl_dur = Int(5000)
-  tmpl_x = Bytes("base64", "023sdDE2")
-  tmpl_amt = Int(2000)
-  tmpl_rcv = Addr("6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY")
-  tmpl_timeout = Int(30000)
+Application Mode
+----------------
 
-  periodic_pay_core = And(Txn.type_enum() == Int(1),
-                         Txn.fee() < tmpl_fee,
-                         Txn.first_valid() % tmpl_period == Int(0),
-                         Txn.last_valid() == tmpl_dur + Txn.first_valid(),
-                         Txn.lease() == tmpl_x)
-                      
+Voting
+~~~~~~
 
-  periodic_pay_transfer = And(Txn.close_remainder_to() ==  Global.zero_address(),
-                              Txn.receiver() == tmpl_rcv,
-                              Txn.amount() == tmpl_amt)
+*Voting* allows accounts to register and vote for arbitrary candiates. Here a *candiate* is any byte
+slice and anyone is allowed to register to vote.
 
-  periodic_pay_close = And(Txn.close_remainder_to() == tmpl_rcv,
-                           Txn.receiver() == Global.zero_address(),
-                           Txn.first_valid() == tmpl_timeout,
-                           Txn.amount() == Int(0))
+This example has a configurable *registration period* defined by the global state :code:`RegBegin`
+and :code:`RegEnd` which restrict when accounts can register to vote. There is also a separate
+configurable *voting period* defined by the global state :code:`VotingBegin` and :code:`VotingEnd`
+which restrict when voting can take place.
 
-  periodic_pay_escrow = periodic_pay_core.And(periodic_pay_transfer.Or(periodic_pay_close))
+An account must register in order to vote. Accounts cannot vote more than once, and if an account
+opts out of the application before the voting period has concluded, their vote is discarded. The
+results are visible in the global state of the application, and the winner is the candidate with the
+highest number of votes.
 
-  print(periodic_pay_escrow.teal())
+.. literalinclude:: ../examples/vote.py
+    :language: python
 
+Asset
+~~~~~
+
+*Asset* is an implementation of a custom asset type using smart contracts. While Algorand has
+`ASAs <https://developer.algorand.org/docs/features/asa/>`_, in some blockchains the only way to
+create a custom asset is through smart contracts.
+
+At creation, the creator specifies the total supply of the asset. Initially this supply is placed in
+a reserve and the creator is made an admin. Any admin can move funds from the reserve into the
+balance of any account that has opted into the application using the *mint* argument. Additionally,
+any admin can move funds from any account's balance into the reserve using the *burn* argument.
+
+Accounts are free to transfer funds in their balance to any other account that has opted into the
+application. When an account opts out of the application, their balance is added to the reserve.
+
+.. literalinclude:: ../examples/asset.py
+    :language: python
+
+Security Token
+~~~~~~~~~~~~~~
+
+*Security Token* is an extension of the *Asset* example with more features and restrictions. There
+are two types of admins, *contract admins* and *transfer admins*.
+
+Contract admins can delete the smart contract if the entire supply is in the reserve. They can
+promote accounts to transfer or contract admins. They can also *mint* and *burn* funds.
+
+Transfer admins can impose maximum balance limitations on accounts, temporarily lock accounts,
+assign accounts to transfer groups, and impose transaction restrictions between transaction groups.
+
+Both contract and transfer admins can pause trading of funds and freeze individual accounts.
+
+Accounts can only transfer funds if trading is not paused, both the sender and receive accounts are
+not frozen or temporarily locked, transfer group restrictions are not in place between them, and the
+receiver's account does not have a maximum balance restriction that would be invalidated.
+
+.. literalinclude:: ../examples/security_token.py
+    :language: python

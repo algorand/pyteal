@@ -18,6 +18,8 @@ With PyTeal, developers can express smart contract logic purely using Python.
 PyTeal provides high level, functional programming style abstactions over TEAL
 and does type checking at construction time.
 
+The :doc:`User Guide </data_type>` describes many useful features in PyTeal, and the complete documentation for every expression and operation can be found in the :doc:`PyTeal Package API documentation </api>`.
+
 PyTeal **hasn't been security audited**. Use it at your own risk.
 
 .. toctree::
@@ -34,12 +36,17 @@ PyTeal **hasn't been security audited**. Use it at your own risk.
 
    data_type
    arithmetic_expression
+   byte_expression
    accessing_transaction_field
-   atomic_transfer
    crypto
    control_structures
-   using_pyteal_with_sdk
-   
+   state
+
+.. toctree::
+   :maxdepth: 3
+   :caption: API
+
+   api
 
 Indices and tables
 ==================
