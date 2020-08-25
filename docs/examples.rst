@@ -49,7 +49,7 @@ Application Mode
 Voting
 ~~~~~~
 
-*Voting* allows accounts to register and vote for arbitrary candiates. Here a *candiate* is any byte
+*Voting* allows accounts to register and vote for arbitrary candidates. Here a *candidate* is any byte
 slice and anyone is allowed to register to vote.
 
 This example has a configurable *registration period* defined by the global state :code:`RegBegin`
