@@ -73,7 +73,7 @@ def approval_program():
     ])
 
     # modify the max balance of Txn.accounts[0]
-    # if max_balance_value is 0, will delete the exisint max balance limitation on the account
+    # if max_balance_value is 0, will delete the existing max balance limitation on the account
     # sender must be transfer admin
     max_balance_value = Btoi(Txn.application_args[1])
     max_balance = Seq([
