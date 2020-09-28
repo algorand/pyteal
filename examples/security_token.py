@@ -211,7 +211,7 @@ def approval_program():
 
     return program
 
-def close_out_program():
+def clear_state_program():
     program = Seq([
         App.globalPut(
             Bytes("reserve"),
@@ -222,10 +222,11 @@ def close_out_program():
 
     return program
 
-with open('security_token_approval.teal', 'w') as f:
-    compiled = compileTeal(approval_program(), Mode.Application)
-    f.write(compiled)
+if __name__ == "__main__":
+    with open('security_token_approval.teal', 'w') as f:
+        compiled = compileTeal(approval_program(), Mode.Application)
+        f.write(compiled)
 
-with open('security_token_close_out.teal', 'w') as f:
-    compiled = compileTeal(close_out_program(), Mode.Application)
-    f.write(compiled)
+    with open('security_token_clear_state.teal', 'w') as f:
+        compiled = compileTeal(clear_state_program(), Mode.Application)
+        f.write(compiled)
