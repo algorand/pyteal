@@ -49,7 +49,7 @@ Application Mode
 Voting
 ~~~~~~
 
-*Voting* allows accounts to register and vote for arbitrary candidates. Here a *candidate* is any byte
+*Voting* allows accounts to register and vote for arbitrary choices. Here a *choice* is any byte
 slice and anyone is allowed to register to vote.
 
 This example has a configurable *registration period* defined by the global state :code:`RegBegin`
@@ -64,6 +64,64 @@ highest number of votes.
 
 .. literalinclude:: ../examples/vote.py
     :language: python
+
+A reference script that deploys the voting application is below:
+
+.. literalinclude:: ../examples/vote_deploy.py
+    :language: python
+
+Example output for deployment would be:
+
+.. code-block:: bash
+
+    Registration rounds: 592 to 602
+    Vote rounds: 603 to 613
+    Waiting for confirmation...
+    Transaction KXJHR6J4QSCAHO36L77DPJ53CLZBCCSPSBAOGTGQDRA7WECDXUEA confirmed in round 584.
+    Created new app-id: 29
+    Global state: {'RegEnd': 602, 'VoteBegin': 603, 'VoteEnd': 613, 'Creator': '49y8gDrKSnM77cgRyFzYdlkw18SDVNKhhOiS6NVVH8U=', 'RegBegin': 592}
+    Waiting for round 592
+    Round 585
+    Round 586
+    Round 587
+    Round 588
+    Round 589
+    Round 590
+    Round 591
+    Round 592
+    OptIn from account:  FVQEFNOSD25TDBTTTIU2I5KW5DHR6PADYMZESTOCQ2O3ME4OWXEI7OHVRY
+    Waiting for confirmation...
+    Transaction YWXOAREFSUYID6QLWQHANTXK3NR2XOVTIQYKMD27F3VXJKP7CMYQ confirmed in round 595.
+    OptIn to app-id: 29
+    Waiting for round 603
+    Round 596
+    Round 597
+    Round 598
+    Round 599
+    Round 600
+    Round 601
+    Round 602
+    Round 603
+    Call from account: FVQEFNOSD25TDBTTTIU2I5KW5DHR6PADYMZESTOCQ2O3ME4OWXEI7OHVRY
+    Waiting for confirmation...
+    Transaction WNV4DTPEMVGUXNRZHMWNSCUU7AQJOCFTBKJT6NV2KN6THT4QGKNQ confirmed in round 606.
+    Local state: {'voted': 'choiceA'}
+    Waiting for round 613
+    Round 607
+    Round 608
+    Round 609
+    Round 610
+    Round 611
+    Round 612
+    Round 613
+    Global state: {'RegBegin': 592, 'RegEnd': 602, 'VoteBegin': 603, 'VoteEnd': 613, 'choiceA': 1, 'Creator': '49y8gDrKSnM77cgRyFzYdlkw18SDVNKhhOiS6NVVH8U='}
+    The winner is: choiceA
+    Waiting for confirmation...
+    Transaction 535KBWJ7RQX4ISV763IUUICQWI6VERYBJ7J6X7HPMAMFNKJPSNPQ confirmed in round 616.
+    Deleted app-id: 29
+    Waiting for confirmation...
+    Transaction Z56HDAJYARUC4PWGWQLCBA6TZYQOOLNOXY5XRM3IYUEEUCT5DRMA confirmed in round 618.
+    Cleared app-id: 29
 
 Asset
 ~~~~~

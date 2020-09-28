@@ -15,46 +15,35 @@ def approval_program():
 
     is_creator = Txn.sender() == App.globalGet(Bytes("Creator"))
 
-    get_vote = App.localGetEx(Int(0), Txn.application_id(), Bytes("voted"))
-    get_count = App.globalGetEx(Int(0), get_vote.value())
+    get_vote_of_sender = App.localGetEx(Int(0), App.id(), Bytes("voted"))
 
-    decrement_existing = Seq([
-        App.globalPut(get_vote.value(), get_count.value() - Int(1)),
+    on_closeout = Seq([
+        get_vote_of_sender,
+        If(And(Global.round() <= App.globalGet(Bytes("VoteEnd")), get_vote_of_sender.hasValue()),
+            App.globalPut(get_vote_of_sender.value(), App.globalGet(get_vote_of_sender.value()) - Int(1))
+        ),
         Return(Int(1))
     ])
-
-    if_voted = Seq([
-        get_count,
-        If(get_count.hasValue(), decrement_existing, Return(Int(1)))
-    ])
-
-    on_closeout = If(
-        Global.round() > App.globalGet(Bytes("VoteEnd")),
-        Return(Int(1)),
-        Seq([
-            get_vote,
-            If(get_vote.hasValue(), if_voted, Return(Int(1)))
-        ])
-    )
 
     on_register = Return(And(
         Global.round() >= App.globalGet(Bytes("RegBegin")),
         Global.round() <= App.globalGet(Bytes("RegEnd"))
     ))
 
-    get_candidate = App.globalGetEx(Int(0), Txn.application_args[1])
-
-    not_voted = Seq([
-        get_candidate,
-        App.globalPut(Txn.application_args[1], If(get_candidate.hasValue(), get_candidate.value() + Int(1), Int(1))),
-        App.localPut(Int(0), Bytes("voted"), Txn.application_args[1]),
-        Return(Int(1))
-    ])
-
+    choice = Txn.application_args[1]
+    choice_tally = App.globalGet(choice)
     on_vote = Seq([
-        Assert(And(Global.round() >= App.globalGet(Bytes("VoteBegin")), Global.round() <= App.globalGet(Bytes("VoteEnd")))),
-        get_vote,
-        If(get_vote.hasValue(), Return(Int(1)), not_voted)
+        Assert(And(
+            Global.round() >= App.globalGet(Bytes("VoteBegin")),
+            Global.round() <= App.globalGet(Bytes("VoteEnd"))
+        )),
+        get_vote_of_sender,
+        If(get_vote_of_sender.hasValue(),
+            Return(Int(0))
+        ),
+        App.globalPut(choice, choice_tally + Int(1)),
+        App.localPut(Int(0), Bytes("voted"), choice),
+        Return(Int(1))
     ])
 
     program = Cond(
@@ -63,40 +52,28 @@ def approval_program():
         [Txn.on_completion() == OnComplete.UpdateApplication, Return(is_creator)],
         [Txn.on_completion() == OnComplete.CloseOut, on_closeout],
         [Txn.on_completion() == OnComplete.OptIn, on_register],
-        [Bytes("vote") == Txn.application_args[0], on_vote]
+        [Txn.application_args[0] == Bytes("vote"), on_vote]
     )
 
     return program
 
-def close_out_program():
-    get_voted = App.localGetEx(Int(0), Txn.application_id(), Bytes("voted"))
-    get_candidate = App.globalGetEx(Int(0), get_voted.value())
-
-    decrement_existing = Seq([
-        App.globalPut(get_voted.value(), get_candidate.value() - Int(1)),
+def clear_state_program():
+    get_vote_of_sender = App.localGetEx(Int(0), App.id(), Bytes("voted"))
+    program = Seq([
+        get_vote_of_sender,
+        If(And(Global.round() <= App.globalGet(Bytes("VoteEnd")), get_vote_of_sender.hasValue()),
+            App.globalPut(get_vote_of_sender.value(), App.globalGet(get_vote_of_sender.value()) - Int(1))
+        ),
         Return(Int(1))
     ])
 
-    voted = Seq([
-        get_candidate,
-        If(get_candidate.hasValue(), decrement_existing, Return(Int(1)))
-    ])
-
-    program = If(
-        Global.round() > App.globalGet(Bytes("VoteEnd")),
-        Return(Int(1)),
-        Seq([
-            get_voted,
-            If(get_voted.hasValue(), voted, Return(Int(1)))
-        ])
-    )
-
     return program
 
-with open('vote_approval.teal', 'w') as f:
-    compiled = compileTeal(approval_program(), Mode.Application)
-    f.write(compiled)
+if __name__ == "__main__":
+    with open('vote_approval.teal', 'w') as f:
+        compiled = compileTeal(approval_program(), Mode.Application)
+        f.write(compiled)
 
-with open('vote_close_out.teal', 'w') as f:
-    compiled = compileTeal(close_out_program(), Mode.Application)
-    f.write(compiled)
+    with open('vote_clear_state.teal', 'w') as f:
+        compiled = compileTeal(clear_state_program(), Mode.Application)
+        f.write(compiled)
