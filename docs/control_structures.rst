@@ -94,7 +94,7 @@ program. The syntax for :code:`Assert` is:
 
 If :code:`test-expr` is always evaluated and must be typed :code:`TealType.uint64`. If
 :code:`test-expr` results in a value greater than `0`, the program continues. Otherwise, the program
-immediately exits an indicates that it encountered an error.
+immediately exits and indicates that it encountered an error.
 
 Example:
 
@@ -115,7 +115,8 @@ The syntax of `Cond` is:
 
 .. code-block:: racket
 
-    Cond([test-expr body],
+    Cond([test-expr-1, body-1],
+         [test-expr-2, body-2],
          . . . )
 
 Each :code:`test-expr` is evaluated in order. If it produces `0`, the paired :code:`body`
