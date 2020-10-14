@@ -42,7 +42,7 @@ write to, and the second argument is the value to write. For example:
 Reading
 ~~~~~~~
 
-To read from global state, use the :any:`App.globalGet` function. The only argument it takes it the
+To read from global state, use the :any:`App.globalGet` function. The only argument it takes is the
 key to read from. For example:
 
 .. code-block:: python
@@ -138,7 +138,7 @@ accessible from TEAL at this time.
 
 Unlike the other state access functions, :any:`App.globalGetEx` and :any:`App.localGetEx` return a
 :any:`MaybeValue`. This value cannot be used directly, but has methods :any:`MaybeValue.hasValue()`
-and :any:`MaybeValue.value()`. If the key being accessed exists in the global context of the app
+and :any:`MaybeValue.value()`. If the key being accessed exists in the context of the app
 being read, :code:`hasValue()` will return `1` and :code:`value()` will return its value. Otherwise,
 :code:`hasValue()` and :code:`value()` will return `0`.
 
@@ -177,7 +177,7 @@ second argument is the key to read. For example:
 
     # get "total supply" from the global context of Txn.ForeignApps[0]
     # if "total supply" has not been set, returns the default value of 0
-    otherSupply = App.globalGetEx(Int(1), Bytes("status"))
+    otherSupply = App.globalGetEx(Int(1), Bytes("total supply"))
     Seq([
         otherSupply,
         otherSupply.value()
