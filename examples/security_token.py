@@ -59,6 +59,20 @@ def approval_program():
         App.localPut(Int(1), new_admin_type, new_admin_status),
         Return(Int(1))
     ])
+    # NOTE: The above set_admin code is carefully constructed. If instead we used the following code:
+    # Seq([
+    #     Assert(And(
+    #         Txn.application_args.length() == Int(3),
+    #         Or(new_admin_type == Bytes("contract admin"), new_admin_type == Bytes("transfer admin")),
+    #         Txn.accounts.length() == Int(1)  
+    #     )),
+    #     App.localPut(Int(1), new_admin_type, new_admin_status),
+    #     Return(is_contract_admin)
+    # ])
+    # It would be vulnerable to the following attack: a sender passes in their own address as
+    # Txn.accounts[0], so then the line App.localPut(Int(1), new_admin_type, new_admin_status)
+    # changes the sender's admin status, meaning the final Return(is_contract_admin) can return
+    # anything the sender wants. This allows anyone to become an admin!
 
     # freeze Txn.accounts[0]
     # sender must be any admin
