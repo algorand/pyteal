@@ -19,7 +19,7 @@ seller is able to provide the secret value that corresponds to the hash in the p
 seller renders the good or service to the buyer, the buyer discloses the secret from the program.
 The seller can immediately verify the secret and withdraw the payment.
 
-.. literalinclude:: ../examples/atomic_swap.py
+.. literalinclude:: ../examples/signature/atomic_swap.py
     :language: python
 
 Split Payment
@@ -28,7 +28,7 @@ Split Payment
 *Split Payment* splits payment between :code:`tmpl_rcv1` and :code:`tmpl_rcv2` on the ratio of
 :code:`tmpl_ratn / tmpl_ratd`.
 
-.. literalinclude:: ../examples/split.py
+.. literalinclude:: ../examples/signature/split.py
     :language: python
 
 Periodic Payment
@@ -40,7 +40,7 @@ creates an contract account that allows :code:`tmpl_rcv` to withdraw :code:`tmpl
 
 After :code:`tmpl_timeout`, all remaining funds in the escrow are available to :code:`tmpl_rcv`.
 
-.. literalinclude:: ../examples/periodic_payment.py
+.. literalinclude:: ../examples/signature/periodic_payment.py
     :language: python
 
 Application Mode
@@ -62,12 +62,12 @@ opts out of the application before the voting period has concluded, their vote i
 results are visible in the global state of the application, and the winner is the candidate with the
 highest number of votes.
 
-.. literalinclude:: ../examples/vote.py
+.. literalinclude:: ../examples/application/vote.py
     :language: python
 
 A reference script that deploys the voting application is below:
 
-.. literalinclude:: ../examples/vote_deploy.py
+.. literalinclude:: ../examples/application/vote_deploy.py
     :language: python
 
 Example output for deployment would be:
@@ -138,7 +138,7 @@ any admin can move funds from any account's balance into the reserve using the *
 Accounts are free to transfer funds in their balance to any other account that has opted into the
 application. When an account opts out of the application, their balance is added to the reserve.
 
-.. literalinclude:: ../examples/asset.py
+.. literalinclude:: ../examples/application/asset.py
     :language: python
 
 Security Token
@@ -159,5 +159,5 @@ Accounts can only transfer funds if trading is not paused, both the sender and r
 not frozen or temporarily locked, transfer group restrictions are not in place between them, and the
 receiver's account does not have a maximum balance restriction that would be invalidated.
 
-.. literalinclude:: ../examples/security_token.py
+.. literalinclude:: ../examples/application/security_token.py
     :language: python
