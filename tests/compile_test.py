@@ -1,181 +1,59 @@
-#!/usr/bin/env python3
-
+import os
 from pyteal import *
 from pyteal.util import reset_label_count
 
+def test_basic_bank():
+    from examples.signature.basic import bank_for_account
+
+    program = bank_for_account("ZZAF5ARA4MEC5PVDOP64JM5O5MQST63Q2KOY2FLYFLXXD3PFSNJJBYAFZM")
+
+    target_path = os.path.join(os.path.dirname(__file__), "../examples/signature/basic.teal")
+    with open(target_path, "r") as target_file:
+        target = "".join(target_file.readlines()).strip()
+        assert compileTeal(program, Mode.Signature) == target
+
 def test_atomic_swap():
+    from examples.signature.atomic_swap import htlc
 
-    alice = Addr("6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY")
-    bob = Addr("7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M")
-    secret = Bytes("base32", "23232323232323")
+    program = htlc()
 
-    fee_cond = Txn.fee() < Int(1000)
-    type_cond = Txn.type_enum() == Int(1)
-    recv_cond = (Txn.close_remainder_to() == Global.zero_address()).And(
-        Txn.receiver() == alice).And(
-        Arg(0) == secret)
-    esc_cond = (Txn.close_remainder_to()  == Global.zero_address()).And(
-        Txn.receiver() == bob).And(
-        Txn.first_valid() > Int(3000))
-
-    atomic_swap = fee_cond.And(type_cond).And(recv_cond.Or(esc_cond))
-
-    a_teal = """#pragma version 2
-txn Fee
-int 1000
-<
-txn TypeEnum
-int 1
-==
-&&
-txn CloseRemainderTo
-global ZeroAddress
-==
-txn Receiver
-addr 6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY
-==
-&&
-arg 0
-byte base32(23232323232323)
-==
-&&
-txn CloseRemainderTo
-global ZeroAddress
-==
-txn Receiver
-addr 7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M
-==
-&&
-txn FirstValid
-int 3000
->
-&&
-||
-&&"""
-    reset_label_count()
-    assert compileTeal(atomic_swap, Mode.Signature) == a_teal
-
+    target_path = os.path.join(os.path.dirname(__file__), "../examples/signature/atomic_swap.teal")
+    with open(target_path, "r") as target_file:
+        target = "".join(target_file.readlines()).strip()
+        assert compileTeal(program, Mode.Signature) == target
 
 def test_periodic_payment():
-    tmpl_fee = Int(1000)
-    tmpl_period = Int(50)
-    tmpl_dur = Int(5000)
-    tmpl_x = Bytes("base64", "023sdDE2")
-    tmpl_amt = Int(2000)
-    tmpl_rcv = Addr("6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY")
-    tmpl_timeout = Int(30000)
+    from examples.signature.periodic_payment import periodic_payment
 
-    periodic_pay_core = And(Txn.type_enum() == Int(1),
-                            Txn.fee() < tmpl_fee,
-                            Txn.first_valid() % tmpl_period == Int(0),
-                            Txn.last_valid() == tmpl_dur + Txn.first_valid(),
-                            Txn.lease() == tmpl_x)
-                      
-    periodic_pay_transfer = And(Txn.close_remainder_to() ==  Global.zero_address(),
-                                Txn.receiver() == tmpl_rcv,
-                                Txn.amount() == tmpl_amt)
+    program = periodic_payment()
 
-    periodic_pay_close = And(Txn.close_remainder_to() == tmpl_rcv,
-                             Txn.receiver() == Global.zero_address(),
-                             Txn.first_valid() == tmpl_timeout,
-                             Txn.amount() == Int(0))
-
-    periodic_pay_escrow = periodic_pay_core.And(periodic_pay_transfer.Or(periodic_pay_close))
-
-    p_teal = """#pragma version 2
-txn TypeEnum
-int 1
-==
-txn Fee
-int 1000
-<
-&&
-txn FirstValid
-int 50
-%
-int 0
-==
-&&
-txn LastValid
-int 5000
-txn FirstValid
-+
-==
-&&
-txn Lease
-byte base64(023sdDE2)
-==
-&&
-txn CloseRemainderTo
-global ZeroAddress
-==
-txn Receiver
-addr 6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY
-==
-&&
-txn Amount
-int 2000
-==
-&&
-txn CloseRemainderTo
-addr 6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY
-==
-txn Receiver
-global ZeroAddress
-==
-&&
-txn FirstValid
-int 30000
-==
-&&
-txn Amount
-int 0
-==
-&&
-||
-&&"""
-    reset_label_count()
-    assert compileTeal(periodic_pay_escrow, Mode.Signature) == p_teal
-
+    target_path = os.path.join(os.path.dirname(__file__), "../examples/signature/periodic_payment.teal")
+    with open(target_path, "r") as target_file:
+        target = "".join(target_file.readlines()).strip()
+        assert compileTeal(program, Mode.Signature) == target
 
 def test_split():
-    # https://github.com/derbear/steal/blob/master/examples/split.rkt
-    tmpl_rcv1 = Addr("6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY")
-    tmpl_rcv2 = Addr("7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M")    
-    tmpl_ratn = Int(32)
-    tmpl_ratd = Int(68)
-    tmpl_minpay = Int(5000000)
-    tmpl_timeout = Int(30000)
-    tmpl_own = Addr("SXOUGKH6RM5SO5A2JAZ5LR3CRM2JWL4LPQDCNRQO2IMLIMEH6T4QWKOREE")
-    tmpl_fee = Int(1000)
+    from examples.signature.split import split
 
-    split_core = And(Txn.type_enum() == Int(1),
-                     Txn.fee() < tmpl_fee)
-
-    split_transfer = And(Gtxn[0].sender() == Gtxn[1].sender(),
-                         Txn.close_remainder_to() == Global.zero_address(),
-                         Gtxn[0].receiver() == tmpl_rcv1,
-                         Gtxn[1].receiver() == tmpl_rcv2,
-                         Gtxn[1].amount() == ((Gtxn[0].amount() + Gtxn[1].amount()) * tmpl_ratn) / tmpl_ratd,
-                         Gtxn[0].amount() == tmpl_minpay)
-
-    split_close = And(Txn.close_remainder_to() == tmpl_own,
-                      Txn.receiver() == Global.zero_address(),
-                      Txn.amount() == Int(0),
-                      Txn.first_valid() > tmpl_timeout)
-
-    split = And(split_core,
-                If(Global.group_size() == Int(2),
-                   split_transfer,
-                   split_close))
+    program = split(
+        tmpl_own = Addr("SXOUGKH6RM5SO5A2JAZ5LR3CRM2JWL4LPQDCNRQO2IMLIMEH6T4QWKOREE"),
+        tmpl_ratn = Int(32),
+        tmpl_ratd = Int(68),
+        tmpl_min_pay = Int(5000000),
+        tmpl_timeout = Int(30000)
+    )
 
     target = """#pragma version 2
 txn TypeEnum
-int 1
+int pay
 ==
 txn Fee
 int 1000
 <
+&&
+txn RekeyTo
+global ZeroAddress
+==
 &&
 global GroupSize
 int 2
@@ -213,7 +91,7 @@ gtxn 1 Receiver
 addr 7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M
 ==
 &&
-gtxn 1 Amount
+gtxn 0 Amount
 gtxn 0 Amount
 gtxn 1 Amount
 +
@@ -230,8 +108,59 @@ int 5000000
 l1:
 &&"""
     reset_label_count()
-    assert compileTeal(split, Mode.Signature) == target
+    assert compileTeal(program, Mode.Signature) == target
 
+def test_dutch_auction():
+    from examples.signature.dutch_auction import dutch_auction
+
+    program = dutch_auction()
+
+    target_path = os.path.join(os.path.dirname(__file__), "../examples/signature/dutch_auction.teal")
+    with open(target_path, "r") as target_file:
+        target = "".join(target_file.readlines()).strip()
+        reset_label_count()
+        assert compileTeal(program, Mode.Signature) == target
+
+def test_recurring_swap():
+    from examples.signature.recurring_swap import recurring_swap
+
+    program = recurring_swap()
+
+    target_path = os.path.join(os.path.dirname(__file__), "../examples/signature/recurring_swap.teal")
+    with open(target_path, "r") as target_file:
+        target = "".join(target_file.readlines()).strip()
+        reset_label_count()
+        assert compileTeal(program, Mode.Signature) == target
+
+def test_asset():
+    from examples.application.asset import approval_program, clear_state_program
+
+    approval = approval_program()
+    clear_state = clear_state_program()
+
+    # only checking for successful compilation for now
+    compileTeal(approval, Mode.Application)
+    compileTeal(clear_state, Mode.Application)
+
+def test_security_token():
+    from examples.application.security_token import approval_program, clear_state_program
+
+    approval = approval_program()
+    clear_state = clear_state_program()
+    
+    # only checking for successful compilation for now
+    compileTeal(approval, Mode.Application)
+    compileTeal(clear_state, Mode.Application)
+
+def test_vote():
+    from examples.application.vote import approval_program, clear_state_program
+
+    approval = approval_program()
+    clear_state = clear_state_program()
+    
+    # only checking for successful compilation for now
+    compileTeal(approval, Mode.Application)
+    compileTeal(clear_state, Mode.Application)
 
 def test_cond():
 	cond1 = Txn.fee() < Int(2000)

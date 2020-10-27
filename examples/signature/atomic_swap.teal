@@ -1,0 +1,33 @@
+#pragma version 2
+txn Fee
+int 1000
+<
+txn TypeEnum
+int pay
+==
+txn CloseRemainderTo
+global ZeroAddress
+==
+&&
+txn RekeyTo
+global ZeroAddress
+==
+&&
+&&
+txn Receiver
+addr 6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY
+==
+arg 0
+sha256
+byte base32(23232323232323)
+==
+&&
+txn Receiver
+addr 7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M
+==
+txn FirstValid
+int 3000
+>
+&&
+||
+&&

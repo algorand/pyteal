@@ -1,0 +1,48 @@
+#pragma version 2
+txn Fee
+int 1000
+<=
+txn TypeEnum
+int 1
+==
+txn RekeyTo
+global ZeroAddress
+==
+&&
+&&
+txn CloseRemainderTo
+global ZeroAddress
+==
+txn Receiver
+addr 7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M
+==
+&&
+txn Amount
+int 100000
+==
+&&
+txn FirstValid
+itob
+arg 0
+addr 7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M
+ed25519verify
+&&
+txn Lease
+txn FirstValid
+itob
+sha256
+==
+&&
+txn CloseRemainderTo
+addr 6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY
+==
+txn Amount
+int 0
+==
+&&
+txn FirstValid
+int 100000
+>=
+&&
+||
+&&
