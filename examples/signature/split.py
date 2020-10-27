@@ -22,7 +22,11 @@ def split(tmpl_fee=tmpl_fee,
              tmpl_min_pay=tmpl_min_pay,
              tmpl_timeout=tmpl_timeout):
     
-    split_core = (Txn.type_enum() == TxnType.Payment).And(Txn.fee() < tmpl_fee)
+    split_core = And(
+        Txn.type_enum() == TxnType.Payment,
+        Txn.fee() < tmpl_fee,
+        Txn.rekey_to() == Global.zero_address()
+    )
 
     split_transfer = And(
         Gtxn[0].sender() == Gtxn[1].sender(),
@@ -40,7 +44,7 @@ def split(tmpl_fee=tmpl_fee,
         Txn.first_valid() > tmpl_timeout
     )
 
-    split = And(
+    split_program = And(
         split_core,
         If(Global.group_size() == Int(2),
             split_transfer,
@@ -48,7 +52,7 @@ def split(tmpl_fee=tmpl_fee,
         )
     )
     
-    return split
+    return split_program
 
 if __name__ == "__main__":
-    print(compileTeal(split, Mode.Signature))
+    print(compileTeal(split(), Mode.Signature))

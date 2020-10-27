@@ -38,7 +38,7 @@ def recurring_swap(tmpl_buyer=tmpl_buyer,
                    tmpl_fee=tmpl_fee,
                    tmpl_timeout=tmpl_timeout):
     fee_cond = Txn.fee() <= tmpl_fee
-    type_cond = Txn.type_enum() == Int(1)
+    type_cond = And(Txn.type_enum() == Int(1), Txn.rekey_to() == Global.zero_address())
     recv_cond = And(Txn.close_remainder_to() == Global.zero_address(),
                     Txn.receiver() == tmpl_provider,
                     Txn.amount() == tmpl_amount,
@@ -48,7 +48,9 @@ def recurring_swap(tmpl_buyer=tmpl_buyer,
     close_cond = And(Txn.close_remainder_to() == tmpl_buyer,
                      Txn.amount() == Int(0),
                      Txn.first_valid() >= tmpl_timeout)
+    
+    program = And(fee_cond, type_cond, Or(recv_cond, close_cond))
 
-    return compileTeal(And(fee_cond, type_cond, Or(recv_cond, close_cond)), Mode.Signature)
+    return program
 
-# print(recurring_swap())
+# print(compileTeal(recurring_swap(), Mode.Signature))

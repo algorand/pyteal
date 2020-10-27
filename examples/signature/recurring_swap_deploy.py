@@ -23,7 +23,8 @@ print("provider addr: {}".format(provider_addr))
 
 # ------- instantiate template, compile teal source, get escrow address -------------
 
-teal_source = recurring_swap(tmpl_provider=Addr(provider_addr))
+program = recurring_swap(tmpl_provider=Addr(provider_addr))
+teal_source = compileTeal(program, Mode.Signature)
 # print(teal_source)
 
 # compile teal

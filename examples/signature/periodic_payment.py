@@ -30,12 +30,14 @@ def periodic_payment(tmpl_fee=tmpl_fee,
 
     periodic_pay_transfer = And(
         Txn.close_remainder_to() == Global.zero_address(),
+        Txn.rekey_to() == Global.zero_address(),
         Txn.receiver() == tmpl_rcv,
         Txn.amount() == tmpl_amt
     )
 
     periodic_pay_close = And(
         Txn.close_remainder_to() == tmpl_rcv,
+        Txn.rekey_to() == Global.zero_address(),
         Txn.receiver() == Global.zero_address(),
         Txn.first_valid() == tmpl_timeout,
         Txn.amount() == Int(0)
