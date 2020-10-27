@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pyteal", # Replace with your own username
-    version="0.6.0",
+    version="0.6.1",
     author="Shumo Chu",
     author_email="shumo.chu@gmail.com",
     description="Algorand Smart Contracts in Python",

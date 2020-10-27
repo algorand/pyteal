@@ -1,3 +1,16 @@
+# 0.6.1
+
+## Added
+* An application deployment example, `vote_deploy.py`.
+
+## Fixed
+* Internal modules no longer pollute the global namespace when importing with `from pyteal import *`
+([#29](https://github.com/algorand/pyteal/pull/29)).
+* Fixed several documentation typos.
+
+## Changed
+* Moved signature and application mode examples into separate folders.
+
 # 0.6.0
 
 ## Added
