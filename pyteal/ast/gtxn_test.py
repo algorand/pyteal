@@ -1,6 +1,8 @@
 import pytest
 
 from .. import *
+# this is not necessary but mypy complains if it's not included
+from .. import MAX_GROUP_SIZE
 
 GTXN_RANGE = range(MAX_GROUP_SIZE)
 
