@@ -24,8 +24,8 @@ class Arg(LeafExpr):
         self.index = index
 
     def __teal__(self):
-        block = TealBlock([TealOp(Op.arg, self.index)])
-        return block, block
+        op = TealOp(Op.arg, self.index)
+        return TealBlock.OpWithArgs(op, [])
         
     def __str__(self):
         return "(arg {})".format(self.index)

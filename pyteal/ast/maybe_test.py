@@ -24,7 +24,7 @@ def test_maybe_value():
 
                     assert expr.type_of() == TealType.none
 
-                    expected_call = TealBlock([
+                    expected_call = TealSimpleBlock([
                         TealOp(op, *iargs),
                         TealOp(Op.store, expr.slotOk),
                         TealOp(Op.store, expr.slotValue)
@@ -42,10 +42,10 @@ def test_maybe_value():
                         after_arg_2.setNextBlock(expected_call)
                     
                     expected.addIncoming()
-                    TealBlock.NormalizeBlocks(expected)
+                    expected = TealBlock.NormalizeBlocks(expected)
                     
                     actual, _ = expr.__teal__()
                     actual.addIncoming()
-                    TealBlock.NormalizeBlocks(actual)
+                    actual = TealBlock.NormalizeBlocks(actual)
 
                     assert actual == expected

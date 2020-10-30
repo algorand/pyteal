@@ -6,7 +6,7 @@ def test_substring():
     expr = Substring(Bytes("my string"), Int(0), Int(2))
     assert expr.type_of() == TealType.bytes
 
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.byte, "\"my string\""),
         TealOp(Op.int, 0),
         TealOp(Op.int, 2),
@@ -15,7 +15,7 @@ def test_substring():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 

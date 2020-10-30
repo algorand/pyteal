@@ -1,5 +1,5 @@
 from ..types import TealType, require_type, types_match
-from ..ir import TealBlock
+from ..ir import TealSimpleBlock, TealConditionalBlock
 from ..util import new_label
 from .expr import Expr
 
@@ -33,16 +33,19 @@ class If(Expr):
     def __teal__(self):
         condStart, condEnd = self.cond.__teal__()
         thenStart, thenEnd = self.thenBranch.__teal__()
-        end = TealBlock([])
+        end = TealSimpleBlock([])
 
-        condEnd.setTrueBlock(thenStart)
+        branchBlock = TealConditionalBlock([])
+        branchBlock.setTrueBlock(thenStart)
+
+        condEnd.setNextBlock(branchBlock)
         thenEnd.setNextBlock(end)
 
         if self.elseBranch is None:
-            condEnd.setFalseBlock(end)
+            branchBlock.setFalseBlock(end)
         else:
             elseStart, elseEnd = self.elseBranch.__teal__()
-            condEnd.setFalseBlock(elseStart)
+            branchBlock.setFalseBlock(elseStart)
             elseEnd.setNextBlock(end)
 
         return condStart, end

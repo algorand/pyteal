@@ -90,8 +90,8 @@ class TxnExpr(LeafExpr):
         return "(Txn {})".format(self.field.arg_name)
 
     def __teal__(self):
-        block = TealBlock([TealOp(Op.txn, self.field.arg_name)])
-        return block, block
+        op = TealOp(Op.txn, self.field.arg_name)
+        return TealBlock.OpWithArgs(op, [])
     
     def type_of(self):
         return self.field.type_of()
@@ -109,8 +109,8 @@ class TxnaExpr(LeafExpr):
         return "(Txna {} {})".format(self.field.arg_name, self.index)
     
     def __teal__(self):
-        block = TealBlock([TealOp(Op.txna, self.field.arg_name, self.index)])
-        return block, block
+        op = TealOp(Op.txna, self.field.arg_name, self.index)
+        return TealBlock.OpWithArgs(op, [])
     
     def type_of(self):
         return self.field.type_of()

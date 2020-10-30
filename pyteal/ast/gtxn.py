@@ -18,8 +18,8 @@ class GtxnExpr(TxnExpr):
         return "(Gtxn {} {})".format(self.txnIndex, self.field.arg_name)
 
     def __teal__(self):
-        block = TealBlock([TealOp(Op.gtxn, self.txnIndex, self.field.arg_name)])
-        return block, block
+        op = TealOp(Op.gtxn, self.txnIndex, self.field.arg_name)
+        return TealBlock.OpWithArgs(op, [])
 
 GtxnExpr.__module__ = "pyteal"
 
@@ -34,8 +34,8 @@ class GtxnaExpr(TxnaExpr):
         return "(Gtxna {} {} {})".format(self.index, self.field.arg_name, self.index)
 
     def __teal__(self):
-        block = TealBlock([TealOp(Op.gtxna, self.txnIndex, self.field.arg_name, self.index)])
-        return block, block
+        op = TealOp(Op.gtxna, self.txnIndex, self.field.arg_name, self.index)
+        return TealBlock.OpWithArgs(op, [])
 
 GtxnaExpr.__module__ = "pyteal"
 

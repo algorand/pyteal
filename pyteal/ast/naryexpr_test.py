@@ -6,7 +6,7 @@ def test_and_two():
     expr = And(Int(1), Int(2))
     assert expr.type_of() == TealType.uint64
 
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.int, 2),
         TealOp(Op.logic_and)
@@ -14,7 +14,7 @@ def test_and_two():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
@@ -22,7 +22,7 @@ def test_and_three():
     expr = And(Int(1), Int(2), Int(3))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.int, 2),
         TealOp(Op.logic_and),
@@ -32,7 +32,7 @@ def test_and_three():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
@@ -40,7 +40,7 @@ def test_and_overload():
     expr = Int(1).And(Int(2))
     assert expr.type_of() == TealType.uint64
 
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.int, 2),
         TealOp(Op.logic_and)
@@ -48,7 +48,7 @@ def test_and_overload():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
@@ -72,7 +72,7 @@ def test_or_two():
     expr = Or(Int(1), Int(0))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.int, 0),
         TealOp(Op.logic_or)
@@ -80,7 +80,7 @@ def test_or_two():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
@@ -88,7 +88,7 @@ def test_or_three():
     expr = Or(Int(0), Int(1), Int(2))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 0),
         TealOp(Op.int, 1),
         TealOp(Op.logic_or),
@@ -98,7 +98,7 @@ def test_or_three():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
@@ -106,7 +106,7 @@ def test_or_overload():
     expr = Int(1).Or(Int(0))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.int, 0),
         TealOp(Op.logic_or)
@@ -114,7 +114,7 @@ def test_or_overload():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 

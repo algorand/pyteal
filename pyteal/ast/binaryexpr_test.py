@@ -6,7 +6,7 @@ def test_add():
     expr = Add(Int(2), Int(3))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 2),
         TealOp(Op.int, 3),
         TealOp(Op.add)
@@ -14,7 +14,7 @@ def test_add():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -22,7 +22,7 @@ def test_add_overload():
     expr = Int(2) + Int(3) + Int(4)
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 2),
         TealOp(Op.int, 3),
         TealOp(Op.add),
@@ -32,7 +32,7 @@ def test_add_overload():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -47,7 +47,7 @@ def test_minus():
     expr = Minus(Int(5), Int(6))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 5),
         TealOp(Op.int, 6),
         TealOp(Op.minus)
@@ -55,7 +55,7 @@ def test_minus():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -63,7 +63,7 @@ def test_minus_overload():
     expr = Int(10) - Int(1) - Int(2)
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 10),
         TealOp(Op.int, 1),
         TealOp(Op.minus),
@@ -73,7 +73,7 @@ def test_minus_overload():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -88,7 +88,7 @@ def test_mul():
     expr = Mul(Int(3), Int(8))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 3),
         TealOp(Op.int, 8),
         TealOp(Op.mul)
@@ -96,7 +96,7 @@ def test_mul():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -104,7 +104,7 @@ def test_mul_overload():
     expr = Int(3) * Int(8) * Int(10)
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 3),
         TealOp(Op.int, 8),
         TealOp(Op.mul),
@@ -114,7 +114,7 @@ def test_mul_overload():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -129,7 +129,7 @@ def test_div():
     expr = Div(Int(9), Int(3))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 9),
         TealOp(Op.int, 3),
         TealOp(Op.div)
@@ -137,7 +137,7 @@ def test_div():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -145,7 +145,7 @@ def test_div_overload():
     expr = Int(9) / Int(3) / Int(3)
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 9),
         TealOp(Op.int, 3),
         TealOp(Op.div),
@@ -155,7 +155,7 @@ def test_div_overload():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -170,7 +170,7 @@ def test_mod():
     expr = Mod(Int(10), Int(9))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 10),
         TealOp(Op.int, 9),
         TealOp(Op.mod)
@@ -178,7 +178,7 @@ def test_mod():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -186,7 +186,7 @@ def test_mod_overload():
     expr = Int(10) % Int(9) % Int(100)
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 10),
         TealOp(Op.int, 9),
         TealOp(Op.mod),
@@ -196,7 +196,7 @@ def test_mod_overload():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -211,7 +211,7 @@ def test_arithmetic():
     v = ((Int(2) + Int(3))/((Int(5) - Int(6)) * Int(8))) % Int(9)
     assert v.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 2),
         TealOp(Op.int, 3),
         TealOp(Op.add),
@@ -227,7 +227,7 @@ def test_arithmetic():
 
     actual, _ = v.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -235,7 +235,7 @@ def test_bitwise_and():
     expr = BitwiseAnd(Int(1), Int(2))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.int, 2),
         TealOp(Op.bitwise_and)
@@ -243,7 +243,7 @@ def test_bitwise_and():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -251,7 +251,7 @@ def test_bitwise_and_overload():
     expr = Int(1) & Int(2) & Int(4)
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.int, 2),
         TealOp(Op.bitwise_and),
@@ -261,7 +261,7 @@ def test_bitwise_and_overload():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -276,7 +276,7 @@ def test_bitwise_or():
     expr = BitwiseOr(Int(1), Int(2))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.int, 2),
         TealOp(Op.bitwise_or)
@@ -284,7 +284,7 @@ def test_bitwise_or():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -292,7 +292,7 @@ def test_bitwise_or_overload():
     expr = Int(1) | Int(2) | Int(4)
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.int, 2),
         TealOp(Op.bitwise_or),
@@ -302,7 +302,7 @@ def test_bitwise_or_overload():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -317,7 +317,7 @@ def test_bitwise_xor():
     expr = BitwiseXor(Int(1), Int(3))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.int, 3),
         TealOp(Op.bitwise_xor)
@@ -325,7 +325,7 @@ def test_bitwise_xor():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -333,7 +333,7 @@ def test_bitwise_xor_overload():
     expr = Int(1) ^ Int(3) ^ Int(5)
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.int, 3),
         TealOp(Op.bitwise_xor),
@@ -343,7 +343,7 @@ def test_bitwise_xor_overload():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -358,7 +358,7 @@ def test_eq():
     expr_int = Eq(Int(2), Int(3))
     assert expr_int.type_of() == TealType.uint64
     
-    expected_int = TealBlock([
+    expected_int = TealSimpleBlock([
         TealOp(Op.int, 2),
         TealOp(Op.int, 3),
         TealOp(Op.eq)
@@ -366,14 +366,14 @@ def test_eq():
 
     actual_int, _ = expr_int.__teal__()
     actual_int.addIncoming()
-    TealBlock.NormalizeBlocks(actual_int)
+    actual_int = TealBlock.NormalizeBlocks(actual_int)
     
     assert actual_int == expected_int
 
     expr_bytes = Eq(Txn.receiver(), Txn.sender())
     assert expr_bytes.type_of() == TealType.uint64
     
-    expected_bytes = TealBlock([
+    expected_bytes = TealSimpleBlock([
         TealOp(Op.txn, "Receiver"),
         TealOp(Op.txn, "Sender"),
         TealOp(Op.eq)
@@ -381,7 +381,7 @@ def test_eq():
     
     actual_bytes, _ = expr_bytes.__teal__()
     actual_bytes.addIncoming()
-    TealBlock.NormalizeBlocks(actual_bytes)
+    actual_bytes = TealBlock.NormalizeBlocks(actual_bytes)
     
     assert actual_bytes == expected_bytes
 
@@ -389,7 +389,7 @@ def test_eq_overload():
     expr_int = Int(2) == Int(3)
     assert expr_int.type_of() == TealType.uint64
     
-    expected_int = TealBlock([
+    expected_int = TealSimpleBlock([
         TealOp(Op.int, 2),
         TealOp(Op.int, 3),
         TealOp(Op.eq)
@@ -397,14 +397,14 @@ def test_eq_overload():
 
     actual_int, _ = expr_int.__teal__()
     actual_int.addIncoming()
-    TealBlock.NormalizeBlocks(actual_int)
+    actual_int = TealBlock.NormalizeBlocks(actual_int)
     
     assert actual_int == expected_int
 
     expr_bytes = Txn.receiver() == Txn.sender()
     assert expr_bytes.type_of() == TealType.uint64
     
-    expected_bytes = TealBlock([
+    expected_bytes = TealSimpleBlock([
         TealOp(Op.txn, "Receiver"),
         TealOp(Op.txn, "Sender"),
         TealOp(Op.eq)
@@ -412,7 +412,7 @@ def test_eq_overload():
     
     actual_bytes, _ = expr_bytes.__teal__()
     actual_bytes.addIncoming()
-    TealBlock.NormalizeBlocks(actual_bytes)
+    actual_bytes = TealBlock.NormalizeBlocks(actual_bytes)
     
     assert actual_bytes == expected_bytes
 
@@ -427,7 +427,7 @@ def test_neq():
     expr_int = Neq(Int(2), Int(3))
     assert expr_int.type_of() == TealType.uint64
     
-    expected_int = TealBlock([
+    expected_int = TealSimpleBlock([
         TealOp(Op.int, 2),
         TealOp(Op.int, 3),
         TealOp(Op.neq)
@@ -435,14 +435,14 @@ def test_neq():
 
     actual_int, _ = expr_int.__teal__()
     actual_int.addIncoming()
-    TealBlock.NormalizeBlocks(actual_int)
+    actual_int = TealBlock.NormalizeBlocks(actual_int)
     
     assert actual_int == expected_int
 
     expr_bytes = Neq(Txn.receiver(), Txn.sender())
     assert expr_bytes.type_of() == TealType.uint64
     
-    expected_bytes = TealBlock([
+    expected_bytes = TealSimpleBlock([
         TealOp(Op.txn, "Receiver"),
         TealOp(Op.txn, "Sender"),
         TealOp(Op.neq)
@@ -450,7 +450,7 @@ def test_neq():
     
     actual_bytes, _ = expr_bytes.__teal__()
     actual_bytes.addIncoming()
-    TealBlock.NormalizeBlocks(actual_bytes)
+    actual_bytes = TealBlock.NormalizeBlocks(actual_bytes)
     
     assert actual_bytes == expected_bytes
 
@@ -458,7 +458,7 @@ def test_neq_overload():
     expr_int = Int(2) != Int(3)
     assert expr_int.type_of() == TealType.uint64
     
-    expected_int = TealBlock([
+    expected_int = TealSimpleBlock([
         TealOp(Op.int, 2),
         TealOp(Op.int, 3),
         TealOp(Op.neq)
@@ -466,14 +466,14 @@ def test_neq_overload():
 
     actual_int, _ = expr_int.__teal__()
     actual_int.addIncoming()
-    TealBlock.NormalizeBlocks(actual_int)
+    actual_int = TealBlock.NormalizeBlocks(actual_int)
     
     assert actual_int == expected_int
 
     expr_bytes = Txn.receiver() != Txn.sender()
     assert expr_bytes.type_of() == TealType.uint64
     
-    expected_bytes = TealBlock([
+    expected_bytes = TealSimpleBlock([
         TealOp(Op.txn, "Receiver"),
         TealOp(Op.txn, "Sender"),
         TealOp(Op.neq)
@@ -481,7 +481,7 @@ def test_neq_overload():
     
     actual_bytes, _ = expr_bytes.__teal__()
     actual_bytes.addIncoming()
-    TealBlock.NormalizeBlocks(actual_bytes)
+    actual_bytes = TealBlock.NormalizeBlocks(actual_bytes)
     
     assert actual_bytes == expected_bytes
 
@@ -496,7 +496,7 @@ def test_lt():
     expr = Lt(Int(2), Int(3))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 2),
         TealOp(Op.int, 3),
         TealOp(Op.lt)
@@ -504,7 +504,7 @@ def test_lt():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -512,7 +512,7 @@ def test_lt_overload():
     expr = Int(2) < Int(3)
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 2),
         TealOp(Op.int, 3),
         TealOp(Op.lt)
@@ -520,7 +520,7 @@ def test_lt_overload():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -535,7 +535,7 @@ def test_le():
     expr = Le(Int(1), Int(2))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.int, 2),
         TealOp(Op.le)
@@ -543,7 +543,7 @@ def test_le():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -551,7 +551,7 @@ def test_le_overload():
     expr = Int(1) <= Int(2)
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.int, 2),
         TealOp(Op.le)
@@ -559,7 +559,7 @@ def test_le_overload():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -574,7 +574,7 @@ def test_gt():
     expr = Gt(Int(2), Int(3))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 2),
         TealOp(Op.int, 3),
         TealOp(Op.gt)
@@ -582,7 +582,7 @@ def test_gt():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -590,7 +590,7 @@ def test_gt_overload():
     expr = Int(2) > Int(3)
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 2),
         TealOp(Op.int, 3),
         TealOp(Op.gt)
@@ -598,7 +598,7 @@ def test_gt_overload():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -613,7 +613,7 @@ def test_ge():
     expr = Ge(Int(1), Int(10))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.int, 10),
         TealOp(Op.ge)
@@ -621,7 +621,7 @@ def test_ge():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -629,7 +629,7 @@ def test_ge_overload():
     expr = Int(1) >= Int(10)
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.int, 10),
         TealOp(Op.ge)
@@ -637,7 +637,7 @@ def test_ge_overload():
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 

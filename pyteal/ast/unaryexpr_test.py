@@ -6,14 +6,14 @@ def test_btoi():
     expr = Btoi(Arg(1))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.arg, 1),
         TealOp(Op.btoi)
     ])
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
@@ -25,14 +25,14 @@ def test_itob():
     expr = Itob(Int(1))
     assert expr.type_of() == TealType.bytes
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.itob)
     ])
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
@@ -44,14 +44,14 @@ def test_len():
     expr = Len(Txn.receiver())
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.txn, "Receiver"),
         TealOp(Op.len)
     ])
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
@@ -63,14 +63,14 @@ def test_sha256():
     expr = Sha256(Arg(0))
     assert expr.type_of() == TealType.bytes
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.arg, 0),
         TealOp(Op.sha256)
     ])
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
@@ -82,14 +82,14 @@ def test_sha512_256():
     expr = Sha512_256(Arg(0))
     assert expr.type_of() == TealType.bytes
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.arg, 0),
         TealOp(Op.sha512_256)
     ])
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
@@ -101,14 +101,14 @@ def test_keccak256():
     expr = Keccak256(Arg(0))
     assert expr.type_of() == TealType.bytes
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.arg, 0),
         TealOp(Op.keccak256)
     ])
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
@@ -120,14 +120,14 @@ def test_not():
     expr = Not(Int(1))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.logic_not)
     ])
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
@@ -139,14 +139,14 @@ def test_bitwise_not():
     expr = BitwiseNot(Int(2))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 2),
         TealOp(Op.bitwise_not)
     ])
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
@@ -154,14 +154,14 @@ def test_bitwise_not_overload():
     expr = ~Int(10)
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 10),
         TealOp(Op.bitwise_not)
     ])
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
@@ -173,28 +173,28 @@ def test_pop():
     expr_int = Pop(Int(3))
     assert expr_int.type_of() == TealType.none
     
-    expected_int = TealBlock([
+    expected_int = TealSimpleBlock([
         TealOp(Op.int, 3),
         TealOp(Op.pop)
     ])
 
     actual_int, _ = expr_int.__teal__()
     actual_int.addIncoming()
-    TealBlock.NormalizeBlocks(actual_int)
+    actual_int = TealBlock.NormalizeBlocks(actual_int)
     
     assert actual_int == expected_int
 
     expr_bytes = Pop(Txn.receiver())
     assert expr_bytes.type_of() == TealType.none
 
-    expected_bytes = TealBlock([
+    expected_bytes = TealSimpleBlock([
         TealOp(Op.txn, "Receiver"),
         TealOp(Op.pop)
     ])
 
     actual_bytes, _ = expr_bytes.__teal__()
     actual_bytes.addIncoming()
-    TealBlock.NormalizeBlocks(actual_bytes)
+    actual_bytes = TealBlock.NormalizeBlocks(actual_bytes)
 
     assert actual_bytes == expected_bytes
 
@@ -207,14 +207,14 @@ def test_return():
     expr = Return(Int(1))
     assert expr.type_of() == TealType.none
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.return_)
     ])
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
@@ -226,14 +226,14 @@ def test_balance():
     expr = Balance(Int(0))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 0),
         TealOp(Op.balance)
     ])
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 

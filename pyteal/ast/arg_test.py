@@ -5,7 +5,7 @@ from .. import *
 def test_arg():
     expr = Arg(0)
     assert expr.type_of() == TealType.bytes
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.arg, 0)
     ])
     actual, _ = expr.__teal__()

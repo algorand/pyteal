@@ -23,8 +23,8 @@ class Int(LeafExpr):
             raise TealInputError("Int {} is out of range".format(value))
 
     def __teal__(self):
-        block = TealBlock([TealOp(Op.int, self.value)])
-        return block, block
+        op = TealOp(Op.int, self.value)
+        return TealBlock.OpWithArgs(op, [])
 
     def __str__(self):
         return "(Int: {})".format(self.value)
@@ -46,8 +46,8 @@ class EnumInt(LeafExpr):
         self.name = name
 
     def __teal__(self):
-        block = TealBlock([TealOp(Op.int, self.name)])
-        return block, block
+        op = TealOp(Op.int, self.name)
+        return TealBlock.OpWithArgs(op, [])
 
     def __str__(self):
         return "(IntEnum: {})".format(self.name)

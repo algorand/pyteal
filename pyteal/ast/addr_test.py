@@ -5,7 +5,7 @@ from .. import *
 def test_addr():
     expr = Addr("NJUWK3DJNZTWU2LFNRUW4Z3KNFSWY2LOM5VGSZLMNFXGO2TJMVWGS3THMF")
     assert expr.type_of() == TealType.bytes
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.addr, "NJUWK3DJNZTWU2LFNRUW4Z3KNFSWY2LOM5VGSZLMNFXGO2TJMVWGS3THMF")
     ])
     actual, _ = expr.__teal__()

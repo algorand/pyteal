@@ -7,7 +7,7 @@ def test_asset_holding_balance():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 0),
         TealOp(Op.int, 17),
         TealOp(Op.asset_holding_get, "AssetBalance"),
@@ -17,7 +17,7 @@ def test_asset_holding_balance():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -33,7 +33,7 @@ def test_asset_holding_frozen():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 0),
         TealOp(Op.int, 17),
         TealOp(Op.asset_holding_get, "AssetFrozen"),
@@ -43,7 +43,7 @@ def test_asset_holding_frozen():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -59,7 +59,7 @@ def test_asset_param_total():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 0),
         TealOp(Op.asset_params_get, "AssetTotal"),
         TealOp(Op.store, expr.slotOk),
@@ -68,7 +68,7 @@ def test_asset_param_total():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -81,7 +81,7 @@ def test_asset_param_decimals():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 0),
         TealOp(Op.asset_params_get, "AssetDecimals"),
         TealOp(Op.store, expr.slotOk),
@@ -90,7 +90,7 @@ def test_asset_param_decimals():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -103,7 +103,7 @@ def test_asset_param_default_frozen():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 0),
         TealOp(Op.asset_params_get, "AssetDefaultFrozen"),
         TealOp(Op.store, expr.slotOk),
@@ -112,7 +112,7 @@ def test_asset_param_default_frozen():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -125,7 +125,7 @@ def test_asset_param_unit_name():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.bytes
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 0),
         TealOp(Op.asset_params_get, "AssetUnitName"),
         TealOp(Op.store, expr.slotOk),
@@ -134,7 +134,7 @@ def test_asset_param_unit_name():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -147,7 +147,7 @@ def test_asset_param_name():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.bytes
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 0),
         TealOp(Op.asset_params_get, "AssetName"),
         TealOp(Op.store, expr.slotOk),
@@ -156,7 +156,7 @@ def test_asset_param_name():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -169,7 +169,7 @@ def test_asset_param_url():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.bytes
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 0),
         TealOp(Op.asset_params_get, "AssetURL"),
         TealOp(Op.store, expr.slotOk),
@@ -178,7 +178,7 @@ def test_asset_param_url():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -191,7 +191,7 @@ def test_asset_param_metadata_hash():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.bytes
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 0),
         TealOp(Op.asset_params_get, "AssetMetadataHash"),
         TealOp(Op.store, expr.slotOk),
@@ -200,7 +200,7 @@ def test_asset_param_metadata_hash():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -213,7 +213,7 @@ def test_asset_param_manager():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.bytes
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 0),
         TealOp(Op.asset_params_get, "AssetManager"),
         TealOp(Op.store, expr.slotOk),
@@ -222,7 +222,7 @@ def test_asset_param_manager():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -235,7 +235,7 @@ def test_asset_param_reserve():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.bytes
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 2),
         TealOp(Op.asset_params_get, "AssetReserve"),
         TealOp(Op.store, expr.slotOk),
@@ -244,7 +244,7 @@ def test_asset_param_reserve():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -257,7 +257,7 @@ def test_asset_param_freeze():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.bytes
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 0),
         TealOp(Op.asset_params_get, "AssetFreeze"),
         TealOp(Op.store, expr.slotOk),
@@ -266,7 +266,7 @@ def test_asset_param_freeze():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -279,7 +279,7 @@ def test_asset_param_clawback():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.bytes
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.asset_params_get, "AssetClawback"),
         TealOp(Op.store, expr.slotOk),
@@ -288,7 +288,7 @@ def test_asset_param_clawback():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 

@@ -9,8 +9,8 @@ class Err(LeafExpr):
         pass
 
     def __teal__(self):
-        block = TealBlock([TealOp(Op.err)])
-        return block, block
+        op = TealOp(Op.err)
+        return TealBlock.OpWithArgs(op, [])
 
     def __str__(self):
         return "(err)"

@@ -23,11 +23,11 @@ def test_seq_two():
     expected, first_end = items[0].__teal__()
     first_end.setNextBlock(items[1].__teal__()[0])
     expected.addIncoming()
-    TealBlock.NormalizeBlocks(expected)
+    expected = TealBlock.NormalizeBlocks(expected)
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
@@ -47,11 +47,11 @@ def test_seq_three():
     second_end.setNextBlock(third_start)
 
     expected.addIncoming()
-    TealBlock.NormalizeBlocks(expected)
+    expected = TealBlock.NormalizeBlocks(expected)
 
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 

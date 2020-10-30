@@ -7,10 +7,12 @@ def test_assert():
     assert expr.type_of() == TealType.none
 
     expected, _ = Int(1).__teal__()
-    expected.setFalseBlock(Err().__teal__()[0])
+    expectedBranch = TealConditionalBlock([])
+    expectedBranch.setTrueBlock(TealSimpleBlock([]))
+    expectedBranch.setFalseBlock(Err().__teal__()[0])
+    expected.setNextBlock(expectedBranch)
     
     actual, _ = expr.__teal__()
-    actual.trim()
     
     assert actual == expected
 

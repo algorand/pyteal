@@ -19,7 +19,7 @@ def test_scratch_load_default():
     expr = ScratchLoad(slot)
     assert expr.type_of() == TealType.anytype
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.load, slot)
     ])
 
@@ -33,7 +33,7 @@ def test_scratch_load_type():
         expr = ScratchLoad(slot, type)
         assert expr.type_of() == type
         
-        expected = TealBlock([
+        expected = TealSimpleBlock([
             TealOp(Op.load, slot)
         ])
 
@@ -46,7 +46,7 @@ def test_scratch_store():
     expr = ScratchStore(slot)
     assert expr.type_of() == TealType.none
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.store, slot)
     ])
 

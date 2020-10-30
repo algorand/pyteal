@@ -1,30 +1,27 @@
-from typing import List, DefaultDict
+from typing import List, DefaultDict, cast
 from collections import defaultdict
 
 from .ast import Expr
-from .ir import Mode, TealComponent, TealOp, TealLabel, TealBlock, Op
+from .ir import Op, Mode, TealComponent, TealOp, TealLabel, TealBlock, TealSimpleBlock, TealConditionalBlock
 from .errors import TealInputError, TealInternalError
-
-NUM_SLOTS = 256
+from .config import NUM_SLOTS
 
 def sortBlocks(start: TealBlock) -> List[TealBlock]:
+    # based on Kahn's algorithm from https://en.wikipedia.org/wiki/Topological_sorting
+
     S = [start]
     order = []
 
     while len(S) != 0:
         n = S.pop(0)
         order.append(n)
-        if n.isTerminal():
-            continue
-        for m in (n.nextBlock, n.falseBlock, n.trueBlock):
-            if m is None:
-                continue
-            m.incoming.remove(n)
+        for m in n.getOutgoing():
+            for i, block in enumerate(m.incoming):
+                if n is block:
+                    m.incoming.pop(i)
+                    break
             if len(m.incoming) == 0:
-                if m is n.trueBlock:
-                    S.append(m)
-                else:
-                    S.insert(0, m)
+                S.append(m)
     
     return order
 
@@ -40,14 +37,16 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
         if block.isTerminal():
             continue
 
-        if block.nextBlock is not None:
-            nextIndex = blocks.index(block.nextBlock)
+        if type(block) is TealSimpleBlock:
+            simpleBlock = cast(TealSimpleBlock, block)
+            nextIndex = blocks.index(simpleBlock.nextBlock, i+1)
             if nextIndex != i + 1:
                 references[nextIndex] += 1
                 code.append(TealOp(Op.b, indexToLabel(nextIndex)))
-        else:
-            trueIndex = blocks.index(block.trueBlock)
-            falseIndex = blocks.index(block.falseBlock)
+        elif type(block) is TealConditionalBlock:
+            conditionalBlock = cast(TealConditionalBlock, block)
+            trueIndex = blocks.index(conditionalBlock.trueBlock, i+1)
+            falseIndex = blocks.index(conditionalBlock.falseBlock, i+1)
 
             if falseIndex == i + 1:
                 references[trueIndex] += 1
@@ -64,6 +63,8 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
 
             references[falseIndex] += 1
             code.append(TealOp(Op.b, indexToLabel(falseIndex)))
+        else:
+            raise TealInternalError("Unrecognized block type: {}".format(type(block)))
 
     teal: List[TealComponent] = []
     for i, code in enumerate(codeblocks):
@@ -93,7 +94,7 @@ def compileTeal(ast: Expr, mode: Mode) -> str:
     start.addIncoming()
     start.validate()
 
-    TealBlock.NormalizeBlocks(start)
+    start = TealBlock.NormalizeBlocks(start)
     start.validate()
 
     order = sortBlocks(start)
@@ -108,7 +109,7 @@ def compileTeal(ast: Expr, mode: Mode) -> str:
     
     if len(slots) > NUM_SLOTS:
         # TODO: identify which slots can be reused
-        raise TealInternalError("Not yet implemented")
+        raise TealInternalError("Too many slots in use: {}, maximum is {}".format(slots, NUM_SLOTS))
     
     location = 0
     while len(slots) > 0:

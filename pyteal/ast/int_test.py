@@ -9,7 +9,7 @@ def test_int():
         expr = Int(value)
         assert expr.type_of() == TealType.uint64
 
-        expected = TealBlock([
+        expected = TealSimpleBlock([
             TealOp(Op.int, value)
         ])
 
@@ -34,7 +34,7 @@ def test_enum_int():
     expr = EnumInt("OptIn")
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, "OptIn")
     ])
 

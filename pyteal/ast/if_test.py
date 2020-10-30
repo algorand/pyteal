@@ -7,11 +7,17 @@ def test_if_int():
     assert expr.type_of() == TealType.uint64
 
     expected, _ = Int(0).__teal__()
-    expected.setTrueBlock(Int(1).__teal__()[0])
-    expected.setFalseBlock(Int(2).__teal__()[0])
+    thenBlock, _ = Int(1).__teal__()
+    elseBlock, _ = Int(2).__teal__()
+    expectedBranch = TealConditionalBlock([])
+    expectedBranch.setTrueBlock(thenBlock)
+    expectedBranch.setFalseBlock(elseBlock)
+    expected.setNextBlock(expectedBranch)
+    end = TealSimpleBlock([])
+    thenBlock.setNextBlock(end)
+    elseBlock.setNextBlock(end)
 
     actual, _ = expr.__teal__()
-    actual.trim()
 
     assert actual == expected
 
@@ -20,11 +26,17 @@ def test_if_bytes():
     assert expr.type_of() == TealType.bytes
 
     expected, _ = Int(1).__teal__()
-    expected.setTrueBlock(Txn.sender().__teal__()[0])
-    expected.setFalseBlock(Txn.receiver().__teal__()[0])
+    thenBlock, _ = Txn.sender().__teal__()
+    elseBlock, _ = Txn.receiver().__teal__()
+    expectedBranch = TealConditionalBlock([])
+    expectedBranch.setTrueBlock(thenBlock)
+    expectedBranch.setFalseBlock(elseBlock)
+    expected.setNextBlock(expectedBranch)
+    end = TealSimpleBlock([])
+    thenBlock.setNextBlock(end)
+    elseBlock.setNextBlock(end)
 
     actual, _ = expr.__teal__()
-    actual.trim()
 
     assert actual == expected
 
@@ -33,11 +45,17 @@ def test_if_none():
     assert expr.type_of() == TealType.none
 
     expected, _ = Int(0).__teal__()
-    expected.setTrueBlock(Pop(Txn.sender()).__teal__()[0])
-    expected.setFalseBlock(Pop(Txn.receiver()).__teal__()[0])
+    thenBlockStart, thenBlockEnd = Pop(Txn.sender()).__teal__()
+    elseBlockStart, elseBlockEnd = Pop(Txn.receiver()).__teal__()
+    expectedBranch = TealConditionalBlock([])
+    expectedBranch.setTrueBlock(thenBlockStart)
+    expectedBranch.setFalseBlock(elseBlockStart)
+    expected.setNextBlock(expectedBranch)
+    end = TealSimpleBlock([])
+    thenBlockEnd.setNextBlock(end)
+    elseBlockEnd.setNextBlock(end)
 
     actual, _ = expr.__teal__()
-    actual.trim()
 
     assert actual == expected
 
@@ -46,10 +64,15 @@ def test_if_single():
     assert expr.type_of() == TealType.none
 
     expected, _ = Int(1).__teal__()
-    expected.setTrueBlock(Pop(Int(1)).__teal__()[0])
+    thenBlockStart, thenBlockEnd = Pop(Int(1)).__teal__()
+    end = TealSimpleBlock([])
+    expectedBranch = TealConditionalBlock([])
+    expectedBranch.setTrueBlock(thenBlockStart)
+    expectedBranch.setFalseBlock(end)
+    expected.setNextBlock(expectedBranch)
+    thenBlockEnd.setNextBlock(end)
 
     actual, _ = expr.__teal__()
-    actual.trim()
     
     assert actual == expected
 

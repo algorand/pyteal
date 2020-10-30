@@ -51,8 +51,8 @@ class Bytes(LeafExpr):
             payload = "0x" + self.byte_str
         else:
             payload = "{}({})".format(self.base, self.byte_str)
-        block = TealBlock([TealOp(Op.byte, payload)])
-        return block, block
+        op = TealOp(Op.byte, payload)
+        return TealBlock.OpWithArgs(op, [])
 
     def __str__(self):
         return "({} bytes: {})".format(self.base, self.byte_str)

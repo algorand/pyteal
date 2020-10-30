@@ -3,27 +3,27 @@ import pytest
 from .. import *
 
 def test_on_complete():
-    assert OnComplete.NoOp.__teal__()[0] == TealBlock([
+    assert OnComplete.NoOp.__teal__()[0] == TealSimpleBlock([
         TealOp(Op.int, "NoOp")
     ])
 
-    assert OnComplete.OptIn.__teal__()[0] == TealBlock([
+    assert OnComplete.OptIn.__teal__()[0] == TealSimpleBlock([
         TealOp(Op.int, "OptIn")
     ])
 
-    assert OnComplete.CloseOut.__teal__()[0] == TealBlock([
+    assert OnComplete.CloseOut.__teal__()[0] == TealSimpleBlock([
         TealOp(Op.int, "CloseOut")
     ])
 
-    assert OnComplete.ClearState.__teal__()[0] == TealBlock([
+    assert OnComplete.ClearState.__teal__()[0] == TealSimpleBlock([
         TealOp(Op.int, "ClearState")
     ])
 
-    assert OnComplete.UpdateApplication.__teal__()[0] == TealBlock([
+    assert OnComplete.UpdateApplication.__teal__()[0] == TealSimpleBlock([
         TealOp(Op.int, "UpdateApplication")
     ])
 
-    assert OnComplete.DeleteApplication.__teal__()[0] == TealBlock([
+    assert OnComplete.DeleteApplication.__teal__()[0] == TealSimpleBlock([
         TealOp(Op.int, "DeleteApplication")
     ])
 
@@ -36,7 +36,7 @@ def test_opted_in():
     expr = App.optedIn(Int(1), Int(12))
     assert expr.type_of() == TealType.uint64
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 1),
         TealOp(Op.int, 12),
         TealOp(Op.app_opted_in)
@@ -44,7 +44,7 @@ def test_opted_in():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -52,7 +52,7 @@ def test_local_get():
     expr = App.localGet(Int(0), Bytes("key"))
     assert expr.type_of() == TealType.anytype
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 0),
         TealOp(Op.byte, "\"key\""),
         TealOp(Op.app_local_get)
@@ -60,7 +60,7 @@ def test_local_get():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -76,7 +76,7 @@ def test_local_get_ex():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.anytype
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 0),
         TealOp(Op.int, 6),
         TealOp(Op.byte, "\"key\""),
@@ -87,7 +87,7 @@ def test_local_get_ex():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -105,14 +105,14 @@ def test_global_get():
     expr = App.globalGet(Bytes("key"))
     assert expr.type_of() == TealType.anytype
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.byte, "\"key\""),
         TealOp(Op.app_global_get)
     ])
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -125,7 +125,7 @@ def test_global_get_ex():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.anytype
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 6),
         TealOp(Op.byte, "\"key\""),
         TealOp(Op.app_global_get_ex),
@@ -135,7 +135,7 @@ def test_global_get_ex():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -150,7 +150,7 @@ def test_local_put():
     expr = App.localPut(Int(0), Bytes("key"), Int(5))
     assert expr.type_of() == TealType.none
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 0),
         TealOp(Op.byte, "\"key\""),
         TealOp(Op.int, 5),
@@ -159,7 +159,7 @@ def test_local_put():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -177,7 +177,7 @@ def test_global_put():
     expr = App.globalPut(Bytes("key"), Int(5))
     assert expr.type_of() == TealType.none
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.byte, "\"key\""),
         TealOp(Op.int, 5),
         TealOp(Op.app_global_put)
@@ -185,7 +185,7 @@ def test_global_put():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -200,7 +200,7 @@ def test_local_del():
     expr = App.localDel(Int(0), Bytes("key"))
     assert expr.type_of() == TealType.none
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.int, 0),
         TealOp(Op.byte, "\"key\""),
         TealOp(Op.app_local_del)
@@ -208,7 +208,7 @@ def test_local_del():
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 
@@ -223,14 +223,14 @@ def test_global_del():
     expr = App.globalDel(Bytes("key"))
     assert expr.type_of() == TealType.none
     
-    expected = TealBlock([
+    expected = TealSimpleBlock([
         TealOp(Op.byte, "\"key\""),
         TealOp(Op.app_global_del)
     ])
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
-    TealBlock.NormalizeBlocks(actual)
+    actual = TealBlock.NormalizeBlocks(actual)
     
     assert actual == expected
 

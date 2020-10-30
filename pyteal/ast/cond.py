@@ -1,7 +1,7 @@
 from typing import List
 
 from ..types import TealType, require_type
-from ..ir import TealOp, Op, TealBlock
+from ..ir import TealOp, Op, TealSimpleBlock, TealConditionalBlock
 from ..errors import TealInputError
 from ..util import new_label
 from .expr import Expr
@@ -54,21 +54,25 @@ class Cond(Expr):
 
     def __teal__(self):
         start = None
-        end = TealBlock([])
-        prevCondEnd = None
+        end = TealSimpleBlock([])
+        prevBranch = None
         for i, (cond, pred) in enumerate(self.args):
             condStart, condEnd = cond.__teal__()
             predStart, predEnd = pred.__teal__()
-            condEnd.setTrueBlock(predStart)
+
+            branchBlock = TealConditionalBlock([])
+            branchBlock.setTrueBlock(predStart)
+
+            condEnd.setNextBlock(branchBlock)
             predEnd.setNextBlock(end)
             if i == 0:
                 start = condStart
             else:
-                prevCondEnd.setFalseBlock(condStart)
-            prevCondEnd = condEnd
+                prevBranch.setFalseBlock(condStart)
+            prevBranch = branchBlock
         
-        errBlock = TealBlock([TealOp(Op.err)])
-        prevCondEnd.setFalseBlock(errBlock)
+        errBlock = TealSimpleBlock([TealOp(Op.err)])
+        prevBranch.setFalseBlock(errBlock)
         
         return start, end
 
