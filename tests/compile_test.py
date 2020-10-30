@@ -35,80 +35,13 @@ def test_periodic_payment():
 def test_split():
     from examples.signature.split import split
 
-    program = split(
-        tmpl_own = Addr("SXOUGKH6RM5SO5A2JAZ5LR3CRM2JWL4LPQDCNRQO2IMLIMEH6T4QWKOREE"),
-        tmpl_ratn = Int(32),
-        tmpl_ratd = Int(68),
-        tmpl_min_pay = Int(5000000),
-        tmpl_timeout = Int(30000)
-    )
+    program = split()
 
-    target = """#pragma version 2
-txn TypeEnum
-int pay
-==
-txn Fee
-int 1000
-<
-&&
-txn RekeyTo
-global ZeroAddress
-==
-&&
-global GroupSize
-int 2
-==
-bnz l0
-txn CloseRemainderTo
-addr SXOUGKH6RM5SO5A2JAZ5LR3CRM2JWL4LPQDCNRQO2IMLIMEH6T4QWKOREE
-==
-txn Receiver
-global ZeroAddress
-==
-&&
-txn Amount
-int 0
-==
-&&
-txn FirstValid
-int 30000
->
-&&
-b l1
-l0:
-gtxn 0 Sender
-gtxn 1 Sender
-==
-txn CloseRemainderTo
-global ZeroAddress
-==
-&&
-gtxn 0 Receiver
-addr 6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY
-==
-&&
-gtxn 1 Receiver
-addr 7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M
-==
-&&
-gtxn 0 Amount
-gtxn 0 Amount
-gtxn 1 Amount
-+
-int 32
-*
-int 68
-/
-==
-&&
-gtxn 0 Amount
-int 5000000
-==
-&&
-l1:
-&&"""
-    reset_label_count()
-    assert compileTeal(program, Mode.Signature) == target
+    target_path = os.path.join(os.path.dirname(__file__), "../examples/signature/split.teal")
+    with open(target_path, "r") as target_file:
+        target = "".join(target_file.readlines()).strip()
+        reset_label_count()
+        assert compileTeal(program, Mode.Signature) == target
 
 def test_dutch_auction():
     from examples.signature.dutch_auction import dutch_auction
