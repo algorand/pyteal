@@ -24,7 +24,7 @@ class Int(LeafExpr):
 
     def __teal__(self):
         op = TealOp(Op.int, self.value)
-        return TealBlock.OpWithArgs(op, [])
+        return TealBlock.FromOp(op)
 
     def __str__(self):
         return "(Int: {})".format(self.value)
@@ -47,7 +47,7 @@ class EnumInt(LeafExpr):
 
     def __teal__(self):
         op = TealOp(Op.int, self.name)
-        return TealBlock.OpWithArgs(op, [])
+        return TealBlock.FromOp(op)
 
     def __str__(self):
         return "(IntEnum: {})".format(self.name)

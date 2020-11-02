@@ -33,7 +33,7 @@ class Global(LeafExpr):
 
     def __teal__(self):
         op = TealOp(Op.global_, self.field.arg_name)
-        return TealBlock.OpWithArgs(op, [])
+        return TealBlock.FromOp(op)
          
     def __str__(self):
         return "(Global {})".format(self.field.arg_name)

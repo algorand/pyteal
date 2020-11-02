@@ -10,7 +10,7 @@ class Err(LeafExpr):
 
     def __teal__(self):
         op = TealOp(Op.err)
-        return TealBlock.OpWithArgs(op, [])
+        return TealBlock.FromOp(op)
 
     def __str__(self):
         return "(err)"

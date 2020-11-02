@@ -12,7 +12,7 @@ class UnaryExpr(Expr):
         self.arg = arg
 
     def __teal__(self):
-        return TealBlock.OpWithArgs(TealOp(self.op), [self.arg])
+        return TealBlock.FromOp(TealOp(self.op), self.arg)
 
     def __str__(self):
         return "({} {})".format(self.op.value, self.arg)

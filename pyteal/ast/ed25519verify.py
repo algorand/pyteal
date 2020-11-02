@@ -23,7 +23,7 @@ class Ed25519Verify(Expr):
         self.key = key
 
     def __teal__(self):
-        return TealBlock.OpWithArgs(TealOp(Op.ed25519verify), [self.data, self.sig, self.key])
+        return TealBlock.FromOp(TealOp(Op.ed25519verify), self.data, self.sig, self.key)
 
     def __str__(self):
         return "(ed25519verify {} {} {})".format(self.data, self.sig, self.key)

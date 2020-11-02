@@ -14,7 +14,7 @@ class BinaryExpr(Expr):
         self.argRight = argRight
 
     def __teal__(self):
-        return TealBlock.OpWithArgs(TealOp(self.op), [self.argLeft, self.argRight])
+        return TealBlock.FromOp(TealOp(self.op), self.argLeft, self.argRight)
     
     def __str__(self):
         return "({} {} {})".format(self.op.value, self.argLeft, self.argRight)

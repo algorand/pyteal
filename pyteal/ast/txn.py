@@ -91,7 +91,7 @@ class TxnExpr(LeafExpr):
 
     def __teal__(self):
         op = TealOp(Op.txn, self.field.arg_name)
-        return TealBlock.OpWithArgs(op, [])
+        return TealBlock.FromOp(op)
     
     def type_of(self):
         return self.field.type_of()
@@ -110,7 +110,7 @@ class TxnaExpr(LeafExpr):
     
     def __teal__(self):
         op = TealOp(Op.txna, self.field.arg_name, self.index)
-        return TealBlock.OpWithArgs(op, [])
+        return TealBlock.FromOp(op)
     
     def type_of(self):
         return self.field.type_of()

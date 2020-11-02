@@ -17,7 +17,7 @@ class Tmpl(LeafExpr):
 
     def __teal__(self):
         op = TealOp(self.op, self.name)
-        return TealBlock.OpWithArgs(op, [])
+        return TealBlock.FromOp(op)
 
     def type_of(self):
         return self.type

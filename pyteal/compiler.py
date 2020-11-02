@@ -116,6 +116,7 @@ def compileTeal(ast: Expr, mode: Mode) -> str:
         # TODO: identify which slots can be reused
         raise TealInternalError("Too many slots in use: {}, maximum is {}".format(slots, NUM_SLOTS))
     
+    # TODO: convert slots to a list with a defined order so that generated code is deterministic
     location = 0
     while len(slots) > 0:
         slot = slots.pop()

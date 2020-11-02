@@ -58,7 +58,7 @@ class App(LeafExpr):
         return ret_str
 
     def __teal__(self):
-        return TealBlock.OpWithArgs(TealOp(self.field.get_op()), self.args)
+        return TealBlock.FromOp(TealOp(self.field.get_op()), *self.args)
 
     def type_of(self):
         return self.field.type_of()

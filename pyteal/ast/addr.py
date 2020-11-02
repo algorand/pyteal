@@ -16,7 +16,7 @@ class Addr(LeafExpr):
 
     def __teal__(self):
         op = TealOp(Op.addr, self.address)
-        return TealBlock.OpWithArgs(op, [])
+        return TealBlock.FromOp(op)
 
     def __str__(self):
         return "(address: {})".format(self.address)

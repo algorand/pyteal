@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List, Tuple, Iterator, TYPE_CHECKING
+from typing import Optional, List, Tuple, Iterator, cast, TYPE_CHECKING
 
-from ..errors import TealInternalError
 from .tealop import TealOp, Op
 if TYPE_CHECKING:
     from ..ast import Expr
+    from .tealsimpleblock import TealSimpleBlock
 
 class TealBlock(ABC):
 
@@ -51,12 +51,10 @@ class TealBlock(ABC):
     @abstractmethod
     def __eq__(self, other: object) -> bool:
         pass
-    
-    # def __hash__(self) -> int:
-    #     return hash((tuple(self.ops), self.trueBlock, self.falseBlock, self.nextBlock))
 
     @classmethod
-    def OpWithArgs(cls, op: TealOp, args: List['Expr']) -> Tuple['TealSimpleBlock', 'TealSimpleBlock']:
+    def FromOp(cls, op: TealOp, *args: 'Expr') -> Tuple['TealBlock', 'TealSimpleBlock']:
+        from .tealsimpleblock import TealSimpleBlock
         opBlock = TealSimpleBlock([op])
 
         if len(args) == 0:
@@ -69,12 +67,12 @@ class TealBlock(ABC):
             if i == 0:
                 start = argStart
             else:
-                prevArgEnd.setNextBlock(argStart)
+                cast(TealSimpleBlock, prevArgEnd).setNextBlock(argStart)
             prevArgEnd = argEnd
 
-        prevArgEnd.setNextBlock(opBlock)
+        cast(TealSimpleBlock, prevArgEnd).setNextBlock(opBlock)
 
-        return start, opBlock
+        return cast(TealBlock, start), opBlock
     
     @classmethod
     def Iterate(cls, start: 'TealBlock') -> Iterator['TealBlock']:
@@ -113,73 +111,4 @@ class TealBlock(ABC):
         
         return start
 
-class TealSimpleBlock(TealBlock):
-
-    def __init__(self, ops: List[TealOp]) -> None:
-        super().__init__(ops)
-        self.nextBlock: Optional[TealBlock] = None
-    
-    def setNextBlock(self, block: TealBlock) -> None:
-        self.nextBlock = block
-    
-    def getOutgoing(self) -> List[TealBlock]:
-        if self.nextBlock is None:
-            return []
-        return [self.nextBlock]
-    
-    def replaceOutgoing(self, oldBlock: TealBlock, newBlock: TealBlock) -> None:
-        if self.nextBlock is oldBlock:
-            self.nextBlock = newBlock
-    
-    def __repr__(self) -> str:
-        return "TealSimpleBlock({}, next={})".format(
-            repr(self.ops),
-            repr(self.nextBlock),
-        )
-    
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, TealSimpleBlock):
-            return False
-        return self.ops == other.ops and \
-            self.nextBlock == other.nextBlock
-
-class TealConditionalBlock(TealBlock):
-
-    def __init__(self, ops: List[TealOp]) -> None:
-        super().__init__(ops)
-        self.trueBlock: Optional[TealBlock] = None
-        self.falseBlock: Optional[TealBlock] = None
-    
-    def setTrueBlock(self, block: TealBlock) -> None:
-        self.trueBlock = block
-    
-    def setFalseBlock(self, block: TealBlock) -> None:
-        self.falseBlock = block
-    
-    def getOutgoing(self) -> List[TealBlock]:
-        outgoing = []
-        if self.trueBlock is not None:
-            outgoing.append(self.trueBlock)
-        if self.falseBlock is not None:
-            outgoing.append(self.falseBlock)
-        return outgoing
-    
-    def replaceOutgoing(self, oldBlock: TealBlock, newBlock: TealBlock) -> None:
-        if self.trueBlock is oldBlock:
-            self.trueBlock = newBlock
-        elif self.falseBlock is oldBlock:
-            self.falseBlock = newBlock
-    
-    def __repr__(self) -> str:
-        return "TealConditionalBlock({}, true={}, false={})".format(
-            repr(self.ops),
-            repr(self.trueBlock),
-            repr(self.falseBlock),
-        )
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, TealConditionalBlock):
-            return False
-        return self.ops == other.ops and \
-            self.trueBlock == other.trueBlock and \
-            self.falseBlock == other.falseBlock
+TealBlock.__module__ = "pyteal"

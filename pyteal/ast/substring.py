@@ -25,7 +25,7 @@ class Substring(Expr):
         self.end = end
 
     def __teal__(self):
-        return TealBlock.OpWithArgs(TealOp(Op.substring3), [self.string, self.start, self.end])
+        return TealBlock.FromOp(TealOp(Op.substring3), self.string, self.start, self.end)
 
     def __str__(self):
         return "(substring {} {} {})".format(self.string, self.start, self.end)
