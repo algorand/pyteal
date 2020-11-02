@@ -9,7 +9,7 @@ class TealLabel(TealComponent):
         return self.label + ":"
     
     def __repr__(self) -> str:
-        return "TealLabel({})".format(self.label.__repr__())
+        return "TealLabel({})".format(repr(self.label))
     
     def __hash__(self) -> int:
         return self.label.__hash__()

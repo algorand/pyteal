@@ -41,7 +41,7 @@ class TealOp(TealComponent):
     def __repr__(self) -> str:
         args = [self.op.__str__()]
         for a in self.args:
-            args.append(a.__repr__())
+            args.append(repr(a))
 
         return "TealOp({})".format(", ".join(args))
     
