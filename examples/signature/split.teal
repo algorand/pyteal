@@ -13,7 +13,24 @@ global ZeroAddress
 global GroupSize
 int 2
 ==
-bz l2
+bnz l2
+txn CloseRemainderTo
+addr 5MK5NGBRT5RL6IGUSYDIX5P7TNNZKRVXKT6FGVI6UVK6IZAWTYQGE4RZIQ
+==
+txn Receiver
+global ZeroAddress
+==
+&&
+txn Amount
+int 0
+==
+&&
+txn FirstValid
+int 3000
+>
+&&
+b l3
+l2:
 gtxn 0 Sender
 gtxn 1 Sender
 ==
@@ -42,23 +59,6 @@ int 3
 gtxn 0 Amount
 int 1000
 ==
-&&
-b l3
-l2:
-txn CloseRemainderTo
-addr 5MK5NGBRT5RL6IGUSYDIX5P7TNNZKRVXKT6FGVI6UVK6IZAWTYQGE4RZIQ
-==
-txn Receiver
-global ZeroAddress
-==
-&&
-txn Amount
-int 0
-==
-&&
-txn FirstValid
-int 3000
->
 &&
 l3:
 &&

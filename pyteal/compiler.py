@@ -15,13 +15,16 @@ def sortBlocks(start: TealBlock) -> List[TealBlock]:
     while len(S) != 0:
         n = S.pop(0)
         order.append(n)
-        for m in n.getOutgoing():
+        for i, m in enumerate(n.getOutgoing()):
             for i, block in enumerate(m.incoming):
                 if n is block:
                     m.incoming.pop(i)
                     break
             if len(m.incoming) == 0:
-                S.append(m)
+                if i == 0:
+                    S.insert(0, m)
+                else:
+                    S.append(m)
     
     return order
 
