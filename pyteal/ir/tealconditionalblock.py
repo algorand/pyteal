@@ -4,6 +4,7 @@ from .tealop import TealOp
 from .tealblock import TealBlock
 
 class TealConditionalBlock(TealBlock):
+    """Represents a basic block of TealComponents in a graph ending with a branch condition."""
 
     def __init__(self, ops: List[TealOp]) -> None:
         super().__init__(ops)
@@ -11,9 +12,11 @@ class TealConditionalBlock(TealBlock):
         self.falseBlock: Optional[TealBlock] = None
     
     def setTrueBlock(self, block: TealBlock) -> None:
+        """Set the block that this one should branch to if its condition is true."""
         self.trueBlock = block
     
     def setFalseBlock(self, block: TealBlock) -> None:
+        """Set the block that this one should branch to if its condition is false."""
         self.falseBlock = block
     
     def getOutgoing(self) -> List[TealBlock]:

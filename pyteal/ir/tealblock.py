@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from .tealsimpleblock import TealSimpleBlock
 
 class TealBlock(ABC):
+    """Represents a basic block of TealComponents in a graph."""
 
     def __init__(self, ops: List[TealOp]) -> None:
         self.ops = ops
@@ -14,19 +15,27 @@ class TealBlock(ABC):
     
     @abstractmethod
     def getOutgoing(self) -> List['TealBlock']:
+        """Get this block's children blocks, if any."""
         pass
 
     @abstractmethod
     def replaceOutgoing(self, oldBlock: 'TealBlock', newBlock: 'TealBlock') -> None:
+        """Replace one of this block's child blocks."""
         pass
     
     def isTerminal(self) -> bool:
+        """Check if this block ends the program."""
         for op in self.ops:
             if op.getOp() in (Op.return_, Op.err):
                 return True
         return len(self.getOutgoing()) == 0
     
     def validate(self, parent: 'TealBlock' = None) -> None:
+        """Check that this block and its children have valid parent pointers.
+
+        Args:
+            parent (optional): The parent block to this one, if it has one. Defaults to None.
+        """
         if parent is not None:
             count = 0
             for block in self.incoming:
@@ -38,6 +47,11 @@ class TealBlock(ABC):
             block.validate(self)
     
     def addIncoming(self, block: 'TealBlock' = None) -> None:
+        """Calculate the parent blocks for this block and its children.
+
+        Args:
+            block (optional): The parent block to this one, if it has one. Defaults to None.
+        """
         if block is not None and all(block is not b for b in self.incoming):
             self.incoming.append(block)
         
@@ -54,6 +68,11 @@ class TealBlock(ABC):
 
     @classmethod
     def FromOp(cls, op: TealOp, *args: 'Expr') -> Tuple['TealBlock', 'TealSimpleBlock']:
+        """Create a path of blocks from a TealOp and its arguments.
+
+        Returns:
+            The starting and ending block of the path that encodes the given TealOp and arguments.
+        """
         from .tealsimpleblock import TealSimpleBlock
         opBlock = TealSimpleBlock([op])
 
@@ -76,6 +95,7 @@ class TealBlock(ABC):
     
     @classmethod
     def Iterate(cls, start: 'TealBlock') -> Iterator['TealBlock']:
+        """Perform a depth-first search of the graph of blocks starting with start."""
         queue = [start]
         visited = list(queue)
 
@@ -96,6 +116,13 @@ class TealBlock(ABC):
     
     @classmethod
     def NormalizeBlocks(cls, start: 'TealBlock') -> 'TealBlock':
+        """Minimize the number of blocks in the graph of blocks starting with start by combining
+        sequential blocks. This operation does not alter the operations of the graph or the
+        functionality of its underlying program, however it does mutate the input graph.
+
+        Returns:
+            The new starting point of the altered graph. May be the same or differant than start.
+        """
         for block in TealBlock.Iterate(start):
             if len(block.incoming) == 1:
                 prev = block.incoming[0]

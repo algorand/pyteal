@@ -7,8 +7,16 @@ from .errors import TealInputError, TealInternalError
 from .config import NUM_SLOTS
 
 def sortBlocks(start: TealBlock) -> List[TealBlock]:
-    # based on Kahn's algorithm from https://en.wikipedia.org/wiki/Topological_sorting
+    """Topologically sort the graph which starts with the input TealBlock.
 
+    Args:
+        start: The starting point of the graph to sort.
+
+    Returns:
+        An ordered list of TealBlocks that is sorted such that every block is guaranteed to appear
+        in the list before all of its outgoing blocks.
+    """
+    # based on Kahn's algorithm from https://en.wikipedia.org/wiki/Topological_sorting
     S = [start]
     order = []
 
@@ -29,6 +37,11 @@ def sortBlocks(start: TealBlock) -> List[TealBlock]:
     return order
 
 def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
+    """Lowers a list of TealBlocks into a list of TealComponents.
+
+    Args:
+        blocks: The blocks to lower.
+    """
     codeblocks = []
     references: DefaultDict[int, int] = defaultdict(int)
 
@@ -83,6 +96,15 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
     return teal
 
 def verifyOpsForMode(teal: List[TealComponent], mode: Mode):
+    """Verify that all TEAL operations are allowed in mode.
+
+    Args:
+        teal: Code to check.
+        mode: The mode to check against.
+
+    Raises:
+        TealInputError: if teal contains an operation not allowed in mode.
+    """
     for stmt in teal:
         if isinstance(stmt, TealOp):
             op = stmt.getOp()
@@ -97,6 +119,9 @@ def compileTeal(ast: Expr, mode: Mode) -> str:
 
     Returns:
         str: A TEAL assembly program compiled from the input expression.
+
+    Raises:
+        TealInputError: if an operation in ast is not supported by the supplied mode.
     """
     start, _ = ast.__teal__()
     start.addIncoming()
