@@ -1,5 +1,5 @@
 from ..types import TealType, require_type
-from ..ir import TealOp, Op, TealLabel
+from ..ir import TealOp, Op, TealSimpleBlock, TealConditionalBlock
 from ..util import new_label
 from .expr import Expr
 
@@ -16,13 +16,18 @@ class Assert(Expr):
         self.cond = cond
     
     def __teal__(self):
-        end = new_label()
-        teal = self.cond.__teal__()
-        teal.append(TealOp(Op.bnz, end))
-        teal.append(TealOp(Op.err))
-        teal.append(TealLabel(end))
+        condStart, condEnd = self.cond.__teal__()
 
-        return teal
+        end = TealSimpleBlock([])
+        errBlock = TealSimpleBlock([TealOp(Op.err)])
+
+        branchBlock = TealConditionalBlock([])
+        branchBlock.setTrueBlock(end)
+        branchBlock.setFalseBlock(errBlock)
+
+        condEnd.setNextBlock(branchBlock)
+
+        return condStart, end
 
     def __str__(self):
         return "(Assert {})".format(self.cond)

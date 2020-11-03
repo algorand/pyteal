@@ -1,5 +1,5 @@
 from ..types import TealType, require_type
-from ..ir import TealOp, Op
+from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
 
 class Substring(Expr):
@@ -25,10 +25,7 @@ class Substring(Expr):
         self.end = end
 
     def __teal__(self):
-        return self.string.__teal__() + \
-               self.start.__teal__() + \
-               self.end.__teal__() + \
-               [TealOp(Op.substring3)]
+        return TealBlock.FromOp(TealOp(Op.substring3), self.string, self.start, self.end)
 
     def __str__(self):
         return "(substring {} {} {})".format(self.string, self.start, self.end)

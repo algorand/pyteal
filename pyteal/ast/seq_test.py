@@ -3,10 +3,14 @@ import pytest
 from .. import *
 
 def test_seq_one():
-    items = [Int(0)]
-    expr = Seq(items)
-    assert expr.type_of() == items[-1].type_of()
-    assert expr.__teal__() == [op for item in items for op in item.__teal__()]
+    expr = Seq([Int(0)])
+    assert expr.type_of() == TealType.uint64
+
+    expected, _ = Int(0).__teal__()
+
+    actual, _ = expr.__teal__()
+
+    assert actual == expected
 
 def test_seq_two():
     items = [
@@ -15,7 +19,17 @@ def test_seq_two():
     ]
     expr = Seq(items)
     assert expr.type_of() == items[-1].type_of()
-    assert expr.__teal__() == [op for item in items for op in item.__teal__()]
+
+    expected, first_end = items[0].__teal__()
+    first_end.setNextBlock(items[1].__teal__()[0])
+    expected.addIncoming()
+    expected = TealBlock.NormalizeBlocks(expected)
+
+    actual, _ = expr.__teal__()
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
 
 def test_seq_three():
     items = [
@@ -25,8 +39,21 @@ def test_seq_three():
     ]
     expr = Seq(items)
     assert expr.type_of() == items[-1].type_of()
-    assert expr.__teal__() == [op for item in items for op in item.__teal__()]
+    
+    expected, first_end = items[0].__teal__()
+    second_start, second_end = items[1].__teal__()
+    first_end.setNextBlock(second_start)
+    third_start, _ = items[2].__teal__()
+    second_end.setNextBlock(third_start)
 
+    expected.addIncoming()
+    expected = TealBlock.NormalizeBlocks(expected)
+
+    actual, _ = expr.__teal__()
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
 
 def test_seq_invalid():
     with pytest.raises(TealInputError):

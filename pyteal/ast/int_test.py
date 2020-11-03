@@ -8,9 +8,14 @@ def test_int():
     for value in values:
         expr = Int(value)
         assert expr.type_of() == TealType.uint64
-        assert expr.__teal__() == [
+
+        expected = TealSimpleBlock([
             TealOp(Op.int, value)
-        ]
+        ])
+
+        actual, _ = expr.__teal__()
+
+        assert actual == expected
 
 def test_int_invalid():
     with pytest.raises(TealInputError):
@@ -28,6 +33,11 @@ def test_int_invalid():
 def test_enum_int():
     expr = EnumInt("OptIn")
     assert expr.type_of() == TealType.uint64
-    assert expr.__teal__() == [
+    
+    expected = TealSimpleBlock([
         TealOp(Op.int, "OptIn")
-    ]
+    ])
+
+    actual, _ = expr.__teal__()
+
+    assert actual == expected

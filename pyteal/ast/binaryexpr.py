@@ -1,5 +1,5 @@
 from ..types import TealType, require_type
-from ..ir import TealOp, Op
+from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
 
 class BinaryExpr(Expr):
@@ -14,9 +14,7 @@ class BinaryExpr(Expr):
         self.argRight = argRight
 
     def __teal__(self):
-        teal = self.argLeft.__teal__() + self.argRight.__teal__()
-        teal.append(TealOp(self.op))
-        return teal
+        return TealBlock.FromOp(TealOp(self.op), self.argLeft, self.argRight)
     
     def __str__(self):
         return "({} {} {})".format(self.op.value, self.argLeft, self.argRight)

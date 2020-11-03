@@ -1,7 +1,7 @@
 from enum import Enum
 
 from ..types import TealType, require_type
-from ..ir import TealOp, Op
+from ..ir import TealOp, Op, TealBlock
 from .leafexpr import LeafExpr
 from .expr import Expr
 from .maybe import MaybeValue
@@ -58,11 +58,7 @@ class App(LeafExpr):
         return ret_str
 
     def __teal__(self):
-        teal = []
-        for arg in self.args:
-            teal += arg.__teal__()
-        teal += [TealOp(self.field.get_op())]
-        return teal
+        return TealBlock.FromOp(TealOp(self.field.get_op()), *self.args)
 
     def type_of(self):
         return self.field.type_of()

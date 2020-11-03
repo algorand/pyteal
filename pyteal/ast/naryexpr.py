@@ -2,7 +2,7 @@ from typing import Sequence
 
 from ..types import TealType, require_type
 from ..errors import TealInputError
-from ..ir import TealOp, Op
+from ..ir import TealOp, Op, TealSimpleBlock
 from .expr import Expr
 
 class NaryExpr(Expr):
@@ -23,12 +23,20 @@ class NaryExpr(Expr):
         self.args = args
 
     def __teal__(self):
-        code = []
-        for i, a in enumerate(self.args):
-            code += a.__teal__()
-            if i != 0:
-                code.append(TealOp(self.op))
-        return code
+        start = None
+        end = None
+        for i, arg in enumerate(self.args):
+            argStart, argEnd = arg.__teal__()
+            if i == 0:
+                start = argStart
+                end = argEnd
+            else:
+                end.setNextBlock(argStart)
+                opBlock = TealSimpleBlock([TealOp(self.op)])
+                argEnd.setNextBlock(opBlock)
+                end = opBlock
+
+        return start, end
 
     def __str__(self):
         ret_str = "(" + self.op.value,

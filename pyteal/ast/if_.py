@@ -1,5 +1,5 @@
 from ..types import TealType, require_type, types_match
-from ..ir import TealOp, Op, TealLabel
+from ..ir import TealSimpleBlock, TealConditionalBlock
 from ..util import new_label
 from .expr import Expr
 
@@ -31,28 +31,24 @@ class If(Expr):
         self.elseBranch = elseBranch
 
     def __teal__(self):
-        teal = self.cond.__teal__()
-        end = new_label()
-        tealThen = self.thenBranch.__teal__()
-        tealElse = [] if self.elseBranch is None else self.elseBranch.__teal__()
+        condStart, condEnd = self.cond.__teal__()
+        thenStart, thenEnd = self.thenBranch.__teal__()
+        end = TealSimpleBlock([])
+
+        branchBlock = TealConditionalBlock([])
+        branchBlock.setTrueBlock(thenStart)
+
+        condEnd.setNextBlock(branchBlock)
+        thenEnd.setNextBlock(end)
 
         if self.elseBranch is None:
-            teal.append(TealOp(Op.bz, end))
-            teal += tealThen
+            branchBlock.setFalseBlock(end)
         else:
-            # doing this swap so that labels remain consistent with previous If implementation.
-            then = end
-            end = new_label()
+            elseStart, elseEnd = self.elseBranch.__teal__()
+            branchBlock.setFalseBlock(elseStart)
+            elseEnd.setNextBlock(end)
 
-            teal.append(TealOp(Op.bnz, then))
-            teal += tealElse
-            teal.append(TealOp(Op.b, end))
-            teal.append(TealLabel(then))
-            teal += tealThen
-        
-        teal.append(TealLabel(end))
-
-        return teal
+        return condStart, end
 
     def __str__(self):
         if self.elseBranch is None:

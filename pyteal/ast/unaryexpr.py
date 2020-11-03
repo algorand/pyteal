@@ -1,5 +1,5 @@
 from ..types import TealType, require_type
-from ..ir import TealOp, Op
+from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
 
 class UnaryExpr(Expr):
@@ -12,9 +12,7 @@ class UnaryExpr(Expr):
         self.arg = arg
 
     def __teal__(self):
-        teal = self.arg.__teal__()
-        teal.append(TealOp(self.op))
-        return teal
+        return TealBlock.FromOp(TealOp(self.op), self.arg)
 
     def __str__(self):
         return "({} {})".format(self.op.value, self.arg)

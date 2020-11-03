@@ -23,8 +23,29 @@ def test_maybe_value():
                     assert expr.value().__teal__() == ScratchLoad(expr.slotValue).__teal__()
 
                     assert expr.type_of() == TealType.none
-                    assert expr.__teal__() == sum([arg.__teal__() for arg in args], []) + [
+
+                    expected_call = TealSimpleBlock([
                         TealOp(op, *iargs),
                         TealOp(Op.store, expr.slotOk),
                         TealOp(Op.store, expr.slotValue)
-                    ]
+                    ])
+
+                    if len(args) == 0:
+                        expected = expected_call
+                    elif len(args) == 1:
+                        expected, after_arg = args[0].__teal__()
+                        after_arg.setNextBlock(expected_call)
+                    elif len(args) == 2:
+                        expected, after_arg_1 = args[0].__teal__()
+                        arg_2, after_arg_2 = args[1].__teal__()
+                        after_arg_1.setNextBlock(arg_2)
+                        after_arg_2.setNextBlock(expected_call)
+                    
+                    expected.addIncoming()
+                    expected = TealBlock.NormalizeBlocks(expected)
+                    
+                    actual, _ = expr.__teal__()
+                    actual.addIncoming()
+                    actual = TealBlock.NormalizeBlocks(actual)
+
+                    assert actual == expected

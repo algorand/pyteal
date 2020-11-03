@@ -1,5 +1,5 @@
 from ..types import TealType, require_type
-from ..ir import TealOp, Op
+from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
 
 class Ed25519Verify(Expr):
@@ -23,10 +23,7 @@ class Ed25519Verify(Expr):
         self.key = key
 
     def __teal__(self):
-        return self.data.__teal__() + \
-               self.sig.__teal__() + \
-               self.key.__teal__() + \
-               [TealOp(Op.ed25519verify)]
+        return TealBlock.FromOp(TealOp(Op.ed25519verify), self.data, self.sig, self.key)
 
     def __str__(self):
         return "(ed25519verify {} {} {})".format(self.data, self.sig, self.key)

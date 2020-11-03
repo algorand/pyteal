@@ -5,9 +5,14 @@ from .. import *
 def test_tmpl_int():
     expr = Tmpl.Int("TMPL_AMNT")
     assert expr.type_of() == TealType.uint64
-    assert expr.__teal__() == [
+
+    expected = TealSimpleBlock([
         TealOp(Op.int, "TMPL_AMNT")
-    ]
+    ])
+
+    actual, _ = expr.__teal__()
+
+    assert actual == expected
 
 def test_tmpl_int_invalid():
     with pytest.raises(TealInputError):
@@ -16,9 +21,14 @@ def test_tmpl_int_invalid():
 def test_tmpl_bytes():
     expr = Tmpl.Bytes("TMPL_NOTE")
     assert expr.type_of() == TealType.bytes
-    assert expr.__teal__() == [
+    
+    expected = TealSimpleBlock([
         TealOp(Op.byte, "TMPL_NOTE")
-    ]
+    ])
+
+    actual, _ = expr.__teal__()
+
+    assert actual == expected
 
 def test_tmpl_bytes_invalid():
     with pytest.raises(TealInputError):
@@ -27,9 +37,14 @@ def test_tmpl_bytes_invalid():
 def test_tmpl_addr():
     expr = Tmpl.Addr("TMPL_RECEIVER0")
     assert expr.type_of() == TealType.bytes
-    assert expr.__teal__() == [
+    
+    expected = TealSimpleBlock([
         TealOp(Op.addr, "TMPL_RECEIVER0")
-    ]
+    ])
+
+    actual, _ = expr.__teal__()
+
+    assert actual == expected
 
 def test_tmpl_addr_invalid():
     with pytest.raises(TealInputError):

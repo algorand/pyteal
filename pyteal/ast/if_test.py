@@ -5,74 +5,76 @@ from .. import *
 def test_if_int():
     expr = If(Int(0), Int(1), Int(2))
     assert expr.type_of() == TealType.uint64
-    teal = expr.__teal__()
-    assert len(teal) == 7
-    labels = [teal[4], teal[6]]
-    assert all(isinstance(label, TealLabel) for label in labels)
-    assert len(labels) == len(set(labels))
-    assert teal == [
-        TealOp(Op.int, 0),
-        TealOp(Op.bnz, labels[0].label),
-        TealOp(Op.int, 2),
-        TealOp(Op.b, labels[1].label),
-        labels[0],
-        TealOp(Op.int, 1),
-        labels[1]
-    ]
+
+    expected, _ = Int(0).__teal__()
+    thenBlock, _ = Int(1).__teal__()
+    elseBlock, _ = Int(2).__teal__()
+    expectedBranch = TealConditionalBlock([])
+    expectedBranch.setTrueBlock(thenBlock)
+    expectedBranch.setFalseBlock(elseBlock)
+    expected.setNextBlock(expectedBranch)
+    end = TealSimpleBlock([])
+    thenBlock.setNextBlock(end)
+    elseBlock.setNextBlock(end)
+
+    actual, _ = expr.__teal__()
+
+    assert actual == expected
 
 def test_if_bytes():
-    expr = If(Int(0), Txn.sender(), Txn.receiver())
+    expr = If(Int(1), Txn.sender(), Txn.receiver())
     assert expr.type_of() == TealType.bytes
-    teal = expr.__teal__()
-    assert len(teal) == 7
-    labels = [teal[4], teal[6]]
-    assert all(isinstance(label, TealLabel) for label in labels)
-    assert len(labels) == len(set(labels))
-    assert teal == [
-        TealOp(Op.int, 0),
-        TealOp(Op.bnz, labels[0].label),
-        TealOp(Op.txn, "Receiver"),
-        TealOp(Op.b, labels[1].label),
-        labels[0],
-        TealOp(Op.txn, "Sender"),
-        labels[1]
-    ]
+
+    expected, _ = Int(1).__teal__()
+    thenBlock, _ = Txn.sender().__teal__()
+    elseBlock, _ = Txn.receiver().__teal__()
+    expectedBranch = TealConditionalBlock([])
+    expectedBranch.setTrueBlock(thenBlock)
+    expectedBranch.setFalseBlock(elseBlock)
+    expected.setNextBlock(expectedBranch)
+    end = TealSimpleBlock([])
+    thenBlock.setNextBlock(end)
+    elseBlock.setNextBlock(end)
+
+    actual, _ = expr.__teal__()
+
+    assert actual == expected
 
 def test_if_none():
     expr = If(Int(0), Pop(Txn.sender()), Pop(Txn.receiver()))
     assert expr.type_of() == TealType.none
-    teal = expr.__teal__()
-    assert len(teal) == 9
-    labels = [teal[5], teal[8]]
-    assert all(isinstance(label, TealLabel) for label in labels)
-    assert len(labels) == len(set(labels))
-    assert teal == [
-        TealOp(Op.int, 0),
-        TealOp(Op.bnz, labels[0].label),
-        TealOp(Op.txn, "Receiver"),
-        TealOp(Op.pop),
-        TealOp(Op.b, labels[1].label),
-        labels[0],
-        TealOp(Op.txn, "Sender"),
-        TealOp(Op.pop),
-        labels[1]
-    ]
+
+    expected, _ = Int(0).__teal__()
+    thenBlockStart, thenBlockEnd = Pop(Txn.sender()).__teal__()
+    elseBlockStart, elseBlockEnd = Pop(Txn.receiver()).__teal__()
+    expectedBranch = TealConditionalBlock([])
+    expectedBranch.setTrueBlock(thenBlockStart)
+    expectedBranch.setFalseBlock(elseBlockStart)
+    expected.setNextBlock(expectedBranch)
+    end = TealSimpleBlock([])
+    thenBlockEnd.setNextBlock(end)
+    elseBlockEnd.setNextBlock(end)
+
+    actual, _ = expr.__teal__()
+
+    assert actual == expected
 
 def test_if_single():
-    expr = If(Int(0), Pop(Int(1)))
+    expr = If(Int(1), Pop(Int(1)))
     assert expr.type_of() == TealType.none
-    teal = expr.__teal__()
-    assert len(teal) == 5
-    labels = [teal[4]]
-    assert all(isinstance(label, TealLabel) for label in labels)
-    assert len(labels) == len(set(labels))
-    assert teal == [
-        TealOp(Op.int, 0),
-        TealOp(Op.bz, labels[0].label),
-        TealOp(Op.int, 1),
-        TealOp(Op.pop),
-        labels[0]
-    ]
+
+    expected, _ = Int(1).__teal__()
+    thenBlockStart, thenBlockEnd = Pop(Int(1)).__teal__()
+    end = TealSimpleBlock([])
+    expectedBranch = TealConditionalBlock([])
+    expectedBranch.setTrueBlock(thenBlockStart)
+    expectedBranch.setFalseBlock(end)
+    expected.setNextBlock(expectedBranch)
+    thenBlockEnd.setNextBlock(end)
+
+    actual, _ = expr.__teal__()
+    
+    assert actual == expected
 
 def test_if_invalid():
     with pytest.raises(TealTypeError):

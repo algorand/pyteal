@@ -1,5 +1,5 @@
 from ..types import TealType
-from ..ir import TealOp, Op
+from ..ir import TealOp, Op, TealBlock
 from ..errors import TealInputError
 from .leafexpr import LeafExpr
 
@@ -24,7 +24,8 @@ class Arg(LeafExpr):
         self.index = index
 
     def __teal__(self):
-        return [TealOp(Op.arg, self.index)]
+        op = TealOp(Op.arg, self.index)
+        return TealBlock.FromOp(op)
         
     def __str__(self):
         return "(arg {})".format(self.index)

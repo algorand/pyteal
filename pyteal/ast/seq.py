@@ -35,10 +35,17 @@ class Seq(Expr):
         self.args = exprs
         
     def __teal__(self):
-        code = []
-        for a in self.args:
-            code += a.__teal__()
-        return code
+        start = None
+        end = None
+        for i, arg in enumerate(self.args):
+            argStart, argEnd = arg.__teal__()
+            if i == 0:
+                start = argStart
+            else:
+                end.setNextBlock(argStart)
+            end = argEnd
+
+        return start, end
 
     def __str__(self):
         ret_str = "(Seq"

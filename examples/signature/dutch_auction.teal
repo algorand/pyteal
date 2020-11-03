@@ -2,17 +2,162 @@
 global GroupSize
 int 5
 ==
-bnz l0
+bnz l6
 global GroupSize
 int 4
 ==
-bnz l1
+bnz l5
 global GroupSize
 int 1
 ==
-bnz l2
+bnz l4
 err
-l0:
+l4:
+txn RekeyTo
+global ZeroAddress
+==
+txn FirstValid
+int TMPL_START_ROUND
+int TMPL_WRAPUP_ROUND
++
+>=
+&&
+txn TypeEnum
+int pay
+==
+txn Amount
+int 0
+==
+&&
+txn CloseRemainderTo
+addr TMPL_RECEIVER
+==
+&&
+txn TypeEnum
+int axfer
+==
+txn AssetAmount
+int 0
+==
+&&
+txn AssetCloseTo
+addr TMPL_RECEIVER
+==
+&&
+txn XferAsset
+int TMPL_ASSET_A
+==
+&&
+||
+&&
+b l7
+l5:
+gtxn 0 RekeyTo
+global ZeroAddress
+==
+gtxn 1 RekeyTo
+global ZeroAddress
+==
+&&
+gtxn 2 RekeyTo
+global ZeroAddress
+==
+&&
+gtxn 3 RekeyTo
+global ZeroAddress
+==
+&&
+gtxn 0 FirstValid
+gtxn 1 FirstValid
+==
+&&
+gtxn 1 FirstValid
+gtxn 2 FirstValid
+==
+&&
+gtxn 2 FirstValid
+gtxn 3 FirstValid
+==
+&&
+gtxn 3 FirstValid
+int TMPL_REDEEM_ROUND
+>=
+&&
+gtxn 0 TypeEnum
+int axfer
+==
+&&
+gtxn 0 XferAsset
+int TMPL_ASSET_B
+==
+&&
+gtxn 1 TypeEnum
+int axfer
+==
+&&
+gtxn 1 XferAsset
+int TMPL_ASSET_A
+==
+&&
+gtxn 2 TypeEnum
+int axfer
+==
+&&
+gtxn 2 XferAsset
+int TMPL_ASSET_C
+==
+&&
+gtxn 2 AssetAmount
+int TMPL_REDEEM_ROUND
+int TMPL_N
+*
+int TMPL_PRICE_INCREMENT
+*
+==
+&&
+gtxn 3 TypeEnum
+int pay
+==
+&&
+gtxn 3 Amount
+gtxn 1 Fee
+gtxn 2 Fee
++
+==
+&&
+gtxn 1 AssetAmount
+gtxn 0 AssetAmount
+int TMPL_START_PRICE
+int TMPL_PRICE_INCREMENT
+arg 0
+btoi
+*
+-
+*
+==
+&&
+gtxn 0 Sender
+gtxn 1 Receiver
+==
+&&
+gtxn 0 Receiver
+gtxn 1 Sender
+==
+&&
+gtxn 1 Sender
+gtxn 2 Sender
+==
+&&
+gtxn 2 Sender
+gtxn 2 Receiver
+==
+&&
+gtxn 2 Receiver
+gtxn 3 Receiver
+==
+&&
+b l7
+l6:
 gtxn 0 RekeyTo
 global ZeroAddress
 ==
@@ -152,149 +297,4 @@ gtxn 3 Receiver
 gtxn 4 Receiver
 ==
 &&
-b l3
-l1:
-gtxn 0 RekeyTo
-global ZeroAddress
-==
-gtxn 1 RekeyTo
-global ZeroAddress
-==
-&&
-gtxn 2 RekeyTo
-global ZeroAddress
-==
-&&
-gtxn 3 RekeyTo
-global ZeroAddress
-==
-&&
-gtxn 0 FirstValid
-gtxn 1 FirstValid
-==
-&&
-gtxn 1 FirstValid
-gtxn 2 FirstValid
-==
-&&
-gtxn 2 FirstValid
-gtxn 3 FirstValid
-==
-&&
-gtxn 3 FirstValid
-int TMPL_REDEEM_ROUND
->=
-&&
-gtxn 0 TypeEnum
-int axfer
-==
-&&
-gtxn 0 XferAsset
-int TMPL_ASSET_B
-==
-&&
-gtxn 1 TypeEnum
-int axfer
-==
-&&
-gtxn 1 XferAsset
-int TMPL_ASSET_A
-==
-&&
-gtxn 2 TypeEnum
-int axfer
-==
-&&
-gtxn 2 XferAsset
-int TMPL_ASSET_C
-==
-&&
-gtxn 2 AssetAmount
-int TMPL_REDEEM_ROUND
-int TMPL_N
-*
-int TMPL_PRICE_INCREMENT
-*
-==
-&&
-gtxn 3 TypeEnum
-int pay
-==
-&&
-gtxn 3 Amount
-gtxn 1 Fee
-gtxn 2 Fee
-+
-==
-&&
-gtxn 1 AssetAmount
-gtxn 0 AssetAmount
-int TMPL_START_PRICE
-int TMPL_PRICE_INCREMENT
-arg 0
-btoi
-*
--
-*
-==
-&&
-gtxn 0 Sender
-gtxn 1 Receiver
-==
-&&
-gtxn 0 Receiver
-gtxn 1 Sender
-==
-&&
-gtxn 1 Sender
-gtxn 2 Sender
-==
-&&
-gtxn 2 Sender
-gtxn 2 Receiver
-==
-&&
-gtxn 2 Receiver
-gtxn 3 Receiver
-==
-&&
-b l3
-l2:
-txn RekeyTo
-global ZeroAddress
-==
-txn FirstValid
-int TMPL_START_ROUND
-int TMPL_WRAPUP_ROUND
-+
->=
-&&
-txn TypeEnum
-int pay
-==
-txn Amount
-int 0
-==
-&&
-txn CloseRemainderTo
-addr TMPL_RECEIVER
-==
-&&
-txn TypeEnum
-int axfer
-==
-txn AssetAmount
-int 0
-==
-&&
-txn AssetCloseTo
-addr TMPL_RECEIVER
-==
-&&
-txn XferAsset
-int TMPL_ASSET_A
-==
-&&
-||
-&&
-l3:
+l7:

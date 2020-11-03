@@ -1,7 +1,7 @@
 from enum import Enum
 
 from ..types import TealType
-from ..ir import TealOp, Op
+from ..ir import TealOp, Op, TealBlock
 from .leafexpr import LeafExpr
 
 class GlobalField(Enum):
@@ -32,7 +32,8 @@ class Global(LeafExpr):
         self.field = field
 
     def __teal__(self):
-        return [TealOp(Op.global_, self.field.arg_name)]
+        op = TealOp(Op.global_, self.field.arg_name)
+        return TealBlock.FromOp(op)
          
     def __str__(self):
         return "(Global {})".format(self.field.arg_name)

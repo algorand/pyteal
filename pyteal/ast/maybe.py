@@ -1,7 +1,7 @@
 from typing import List, Union
 
 from ..types import TealType
-from ..ir import TealOp, Op
+from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
 from .leafexpr import LeafExpr
 from .scratch import ScratchSlot, ScratchLoad
@@ -63,18 +63,18 @@ class MaybeValue(LeafExpr):
         return ret_str
     
     def __teal__(self):
-        teal = []
-        for arg in self.args:
-            teal += arg.__teal__()
-        teal.append(TealOp(self.op, *self.immediate_args))
+        callStart, callEnd = TealBlock.FromOp(TealOp(self.op, *self.immediate_args), *self.args)
 
         storeOk = self.slotOk.store()
         storeValue = self.slotValue.store()
 
-        teal += storeOk.__teal__()
-        teal += storeValue.__teal__()
+        storeOkStart, storeOkEnd = storeOk.__teal__()
+        storeValueStart, storeValueEnd = storeValue.__teal__()
 
-        return teal
+        callEnd.setNextBlock(storeOkStart)
+        storeOkEnd.setNextBlock(storeValueStart)
+        
+        return callStart, storeValueEnd
 
     def type_of(self):
         return TealType.none

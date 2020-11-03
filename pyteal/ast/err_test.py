@@ -5,6 +5,8 @@ from .. import *
 def test_err():
     expr = Err()
     assert expr.type_of() == TealType.none
-    assert expr.__teal__() == [
+    expected = TealSimpleBlock([
         TealOp(Op.err)
-    ]
+    ])
+    actual, _ = expr.__teal__()
+    assert actual == expected

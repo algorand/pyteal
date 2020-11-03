@@ -5,68 +5,83 @@ from .. import *
 def test_cond_one_pred():
     expr = Cond([Int(1), Int(2)])
     assert expr.type_of() == TealType.uint64
-    teal = expr.__teal__()
-    assert len(teal) == 6
-    labels = [teal[3], teal[5]]
-    assert all(isinstance(label, TealLabel) for label in labels)
-    assert len(labels) == len(set(labels))
-    assert teal == [
-        TealOp(Op.int, 1),
-        TealOp(Op.bnz, labels[0].label),
-        TealOp(Op.err),
-        labels[0],
-        TealOp(Op.int, 2),
-        labels[1]
-    ]
+
+    cond1, _ = Int(1).__teal__()
+    pred1, _ = Int(2).__teal__()
+    cond1Branch = TealConditionalBlock([])
+    cond1.setNextBlock(cond1Branch)
+    cond1Branch.setTrueBlock(pred1)
+    cond1Branch.setFalseBlock(Err().__teal__()[0])
+    pred1.setNextBlock(TealSimpleBlock([]))
+    expected = cond1
+
+    actual, _ = expr.__teal__()
+
+    assert actual == expected
 
 def test_cond_two_pred():
     expr = Cond([Int(1), Bytes("one")], [Int(0), Bytes("zero")])
     assert expr.type_of() == TealType.bytes
-    teal = expr.__teal__()
-    assert len(teal) == 11
-    labels = [teal[5], teal[8], teal[10]]
-    assert all(isinstance(label, TealLabel) for label in labels)
-    assert len(labels) == len(set(labels))
-    assert teal == [
-        TealOp(Op.int, 1),
-        TealOp(Op.bnz, labels[0].label),
-        TealOp(Op.int, 0),
-        TealOp(Op.bnz, labels[1].label),
-        TealOp(Op.err),
-        labels[0],
-        TealOp(Op.byte, "\"one\""),
-        TealOp(Op.b, labels[2].label),
-        labels[1],
-        TealOp(Op.byte, "\"zero\""),
-        labels[2]
-    ]
+
+    cond1, _ = Int(1).__teal__()
+    pred1, _ = Bytes("one").__teal__()
+    cond1Branch = TealConditionalBlock([])
+    cond2, _ = Int(0).__teal__()
+    pred2, _ = Bytes("zero").__teal__()
+    cond2Branch = TealConditionalBlock([])
+    end = TealSimpleBlock([])
+
+    cond1.setNextBlock(cond1Branch)
+    cond1Branch.setTrueBlock(pred1)
+    cond1Branch.setFalseBlock(cond2)
+    pred1.setNextBlock(end)
+
+    cond2.setNextBlock(cond2Branch)
+    cond2Branch.setTrueBlock(pred2)
+    cond2Branch.setFalseBlock(Err().__teal__()[0])
+    pred2.setNextBlock(end)
+
+    expected = cond1
+
+    actual, _ = expr.__teal__()
+
+    assert actual == expected
 
 def test_cond_three_pred():
     expr = Cond([Int(1), Int(2)], [Int(3), Int(4)], [Int(5), Int(6)])
     assert expr.type_of() == TealType.uint64
-    teal = expr.__teal__()
-    assert len(teal) == 16
-    labels = [teal[7], teal[10], teal[13], teal[15]]
-    assert all(isinstance(label, TealLabel) for label in labels)
-    assert len(labels) == len(set(labels))
-    assert teal == [
-        TealOp(Op.int, 1),
-        TealOp(Op.bnz, labels[0].label),
-        TealOp(Op.int, 3),
-        TealOp(Op.bnz, labels[1].label),
-        TealOp(Op.int, 5),
-        TealOp(Op.bnz, labels[2].label),
-        TealOp(Op.err),
-        labels[0],
-        TealOp(Op.int, 2),
-        TealOp(Op.b, labels[3].label),
-        labels[1],
-        TealOp(Op.int, 4),
-        TealOp(Op.b, labels[3].label),
-        labels[2],
-        TealOp(Op.int, 6),
-        labels[3]
-    ]
+
+    cond1, _ = Int(1).__teal__()
+    pred1, _ = Int(2).__teal__()
+    cond1Branch = TealConditionalBlock([])
+    cond2, _ = Int(3).__teal__()
+    pred2, _ = Int(4).__teal__()
+    cond2Branch = TealConditionalBlock([])
+    cond3, _ = Int(5).__teal__()
+    pred3, _ = Int(6).__teal__()
+    cond3Branch = TealConditionalBlock([])
+    end = TealSimpleBlock([])
+
+    cond1.setNextBlock(cond1Branch)
+    cond1Branch.setTrueBlock(pred1)
+    cond1Branch.setFalseBlock(cond2)
+    pred1.setNextBlock(end)
+
+    cond2.setNextBlock(cond2Branch)
+    cond2Branch.setTrueBlock(pred2)
+    cond2Branch.setFalseBlock(cond3)
+    pred2.setNextBlock(end)
+
+    cond3.setNextBlock(cond3Branch)
+    cond3Branch.setTrueBlock(pred3)
+    cond3Branch.setFalseBlock(Err().__teal__()[0])
+    pred3.setNextBlock(end)
+
+    expected = cond1
+
+    actual, _ = expr.__teal__()
+
+    assert actual == expected
 
 def test_cond_invalid():
     with pytest.raises(TealInputError):

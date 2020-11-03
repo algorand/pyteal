@@ -1,5 +1,5 @@
 from ..types import TealType
-from ..ir import TealOp, Op
+from ..ir import TealOp, Op, TealBlock
 from .leafexpr import LeafExpr
 
 class Err(LeafExpr):
@@ -9,7 +9,8 @@ class Err(LeafExpr):
         pass
 
     def __teal__(self):
-        return [TealOp(Op.err)]
+        op = TealOp(Op.err)
+        return TealBlock.FromOp(op)
 
     def __str__(self):
         return "(err)"

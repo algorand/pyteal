@@ -1,5 +1,5 @@
 from ..types import TealType, valid_address
-from ..ir import TealOp, Op
+from ..ir import TealOp, Op, TealBlock
 from .leafexpr import LeafExpr
 
 class Addr(LeafExpr):
@@ -15,7 +15,8 @@ class Addr(LeafExpr):
         self.address = address
 
     def __teal__(self):
-        return [TealOp(Op.addr, self.address)]
+        op = TealOp(Op.addr, self.address)
+        return TealBlock.FromOp(op)
 
     def __str__(self):
         return "(address: {})".format(self.address)
