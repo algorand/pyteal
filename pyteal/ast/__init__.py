@@ -40,6 +40,7 @@ from .assert_ import Assert
 
 # misc
 from .scratch import ScratchSlot, ScratchLoad, ScratchStore
+from .scratchvar import ScratchVar
 from .maybe import MaybeValue
 
 __all__ = [
@@ -112,5 +113,6 @@ __all__ = [
     "ScratchSlot",
     "ScratchLoad",
     "ScratchStore",
+    "ScratchVar",
     "MaybeValue",
 ]
