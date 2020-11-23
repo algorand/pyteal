@@ -72,11 +72,7 @@ class ScratchLoad(Expr):
 ScratchLoad.__module__ = "pyteal"
 
 class ScratchStore(Expr):
-    """Expression to store a value in scratch space.
-    
-    NOTE: This expression breaks the typical semantics of PyTeal, only use if you know what you're
-    doing.
-    """
+    """Expression to store a value in scratch space."""
 
     def __init__(self, slot: ScratchSlot, value: Expr):
         """Create a new ScratchStore expression.
@@ -102,7 +98,11 @@ class ScratchStore(Expr):
 ScratchStore.__module__ = "pyteal"
 
 class ScratchStackStore(Expr):
-    """Expression to store a value from the stack in scratch space."""
+    """Expression to store a value from the stack in scratch space.
+    
+    NOTE: This expression breaks the typical semantics of PyTeal, only use if you know what you're
+    doing.
+    """
 
     def __init__(self, slot: ScratchSlot):
         """Create a new ScratchStackStore expression.
