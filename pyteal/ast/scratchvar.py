@@ -1,60 +1,47 @@
 from ..types import TealType, require_type
-from ..ir import TealOp, Op, TealBlock
-from .leafexpr import LeafExpr
 from .expr import Expr
-from .scratch import ScratchSlot
-
+from .scratch import ScratchSlot, ScratchLoad
 
 class ScratchVar:
     """
     Interface around Scratch space, similiar to get/put local/global state
-    >>> myvar = ScratchVar()
-    >>> Seq([myvar.store(Int(5)), Assert(myvar.load() == Int(5))])
+
+    Example:
+        .. code-block:: python
+
+            myvar = ScratchVar(TealType.uint64)
+            Seq([
+                myvar.store(Int(5)),
+                Assert(myvar.load() == Int(5))
+            ])
     """
-    def __init__(self):
+
+    def __init__(self, type: TealType = TealType.anytype):
+        """Create a new ScratchVar with an optional type.
+
+        Args:
+            type (optional): The type that this variable can hold. An error will be thrown if an
+                expression with an incompatiable type is stored in this variable. Defaults to
+                TealType.anytype.
+        """
         self.slot = ScratchSlot()
+        self.type = type
+    
+    def storage_type(self) -> TealType:
+        """Get the type of expressions that can be stored in this ScratchVar."""
+        return self.type
 
-    def store(self, value: Expr) -> 'ScratchVarStore':
-        """Store value in Scratch Space"""
-        return ScratchVarStore(self.slot, value)
+    def store(self, value: Expr) -> Expr:
+        """Store value in Scratch Space
+        
+        Args:
+            value: The value to store. Must conform to this ScratchVar's type.
+        """
+        require_type(value.type_of(), self.type)
+        return self.slot.store(value)
 
-    def load(self) -> 'ScrachVarLoad':
+    def load(self) -> ScratchLoad:
         """Load value from Scratch Space"""
-        return ScrachVarLoad(self.slot)
+        return self.slot.load(self.type)
 
-    def __eq__(self, other):
-        return self.__eq__(other)
-
-
-class ScratchVarStore(LeafExpr):
-    """
-    Expression to store value in Scratch Space
-    """
-    def __init__(self, slot: ScratchSlot, value: Expr):
-        require_type(value.type_of(), TealType.anytype)
-        self.slot = slot
-        self.value = value
-
-    def __teal__(self):
-        return TealBlock.FromOp(TealOp(Op.store, self.slot), self.value)
-
-    def type_of(self) -> TealType:
-        return TealType.none
-
-    def __str__(self):
-        return "(ScratchVarStore {} {})".format(self.slot, self.value)
-
-
-class ScrachVarLoad(LeafExpr):
-    """Expression to load value from Scratch Space"""
-    def __init__(self, slot: ScratchSlot):
-        self.slot = slot
-
-    def __teal__(self):
-        return TealBlock.FromOp(TealOp(Op.load, self.slot))
-
-    def type_of(self) -> TealType:
-        return TealType.anytype
-
-    def __str__(self):
-        return "(ScrachVarLoad {})".format(self.slot)
+ScratchVar.__module__ = "pyteal"
