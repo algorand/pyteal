@@ -39,6 +39,7 @@ PyTeal **hasn't been security audited**. Use it at your own risk.
    byte_expression
    accessing_transaction_field
    crypto
+   scratch
    control_structures
    state
 
