@@ -39,7 +39,8 @@ from .seq import Seq
 from .assert_ import Assert
 
 # misc
-from .scratch import ScratchSlot, ScratchLoad, ScratchStore
+from .scratch import ScratchSlot, ScratchLoad, ScratchStore, ScratchStackStore
+from .scratchvar import ScratchVar
 from .maybe import MaybeValue
 
 __all__ = [
@@ -112,5 +113,7 @@ __all__ = [
     "ScratchSlot",
     "ScratchLoad",
     "ScratchStore",
+    "ScratchStackStore",
+    "ScratchVar",
     "MaybeValue",
 ]

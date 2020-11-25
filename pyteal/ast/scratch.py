@@ -10,11 +10,19 @@ class ScratchSlot:
         self.id = ScratchSlot.slotId
         ScratchSlot.slotId += 1
 
-    def store(self):
-        """Get an expression to store a value in this slot."""
-        return ScratchStore(self)
+    def store(self, value: Expr = None) -> Expr:
+        """Get an expression to store a value in this slot.
+        
+        Args:
+            value (optional): The value to store in this slot. If not included, the last value on
+            the stack will be stored. NOTE: storing the last value on the stack breaks the typical
+            semantics of PyTeal, only use if you know what you're doing.
+        """
+        if value is not None:
+            return ScratchStore(self, value)
+        return ScratchStackStore(self)
 
-    def load(self, type: TealType = TealType.anytype):
+    def load(self, type: TealType = TealType.anytype) -> 'ScratchLoad':
         """Get an expression to load a value from this slot.
 
         Args:
@@ -66,8 +74,38 @@ ScratchLoad.__module__ = "pyteal"
 class ScratchStore(Expr):
     """Expression to store a value in scratch space."""
 
-    def __init__(self, slot: ScratchSlot):
+    def __init__(self, slot: ScratchSlot, value: Expr):
         """Create a new ScratchStore expression.
+
+        Args:
+            slot: The slot to store the value in.
+            value: The value to store.
+        """
+        self.slot = slot
+        self.value = value
+
+    def __str__(self):
+        return "(Store {} {})".format(str(self.slot), str(self.value))
+
+    def __teal__(self):
+        from ..ir import TealOp, Op, TealBlock
+        op = TealOp(Op.store, self.slot)
+        return TealBlock.FromOp(op, self.value)
+
+    def type_of(self):
+        return TealType.none
+
+ScratchStore.__module__ = "pyteal"
+
+class ScratchStackStore(Expr):
+    """Expression to store a value from the stack in scratch space.
+    
+    NOTE: This expression breaks the typical semantics of PyTeal, only use if you know what you're
+    doing.
+    """
+
+    def __init__(self, slot: ScratchSlot):
+        """Create a new ScratchStackStore expression.
 
         Args:
             slot: The slot to store the value in.
@@ -75,7 +113,7 @@ class ScratchStore(Expr):
         self.slot = slot
 
     def __str__(self):
-        return "(Store {})".format(self.slot.__str__())
+        return "(StackStore {})".format(str(self.slot))
 
     def __teal__(self):
         from ..ir import TealOp, Op, TealBlock
@@ -85,4 +123,4 @@ class ScratchStore(Expr):
     def type_of(self):
         return TealType.none
 
-ScratchStore.__module__ = "pyteal"
+ScratchStackStore.__module__ = "pyteal"
