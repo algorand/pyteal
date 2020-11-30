@@ -260,19 +260,7 @@ def clear_app(client, private_key, index):
 
 # convert 64 bit integer i to byte string
 def intToBytes(i):
-    lower8 = (1 << 8) - 1
-    charList = [
-        (i >> (8*7)) & lower8,
-        (i >> (8*6)) & lower8,
-        (i >> (8*5)) & lower8,
-        (i >> (8*4)) & lower8,
-        (i >> (8*3)) & lower8,
-        (i >> (8*2)) & lower8,
-        (i >> (8*1)) & lower8,
-        i & lower8
-    ]
-    string = ''.join(chr(c) for c in charList)
-    return string.encode('latin1')
+    return i.to_bytes(8, "big")
 
 def main():
     # initialize an algodClient
