@@ -48,7 +48,7 @@ def valid_address(address:str):
 def valid_base32(s:str):
     """ check if s is a valid base32 encoding string
     """
-    pattern = re.compile(r'[A-Z2-9]*') # RFC 4648 base 32 w/o padding
+    pattern = re.compile(r'[A-Z2-7]*') # RFC 4648 base 32 w/o padding
 
     if pattern.fullmatch(s) is None:
         raise TealInputError("{} is not a valid RFC 4648 base 32 string".format(s))
