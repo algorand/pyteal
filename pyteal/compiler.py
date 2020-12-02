@@ -116,9 +116,10 @@ def compileTeal(ast: Expr, mode: Mode) -> str:
 
     Args:
         ast: The PyTeal expression to assemble.
+        mode: The mode of the program to assemble. Must be Signature or Application.
 
     Returns:
-        str: A TEAL assembly program compiled from the input expression.
+        A TEAL assembly program compiled from the input expression.
 
     Raises:
         TealInputError: if an operation in ast is not supported by the supplied mode.
