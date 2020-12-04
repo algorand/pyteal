@@ -6,7 +6,7 @@ from pyteal import *
 
 alice = Addr("6ZHGHH5Z5CTPCF5WCESXMGRSVK7QJETR63M3NY5FJCUYDHO57VTCMJOBGY")
 bob = Addr("7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M")
-secret = Bytes("base32", "23232323232323")
+secret = Bytes("base32", "2323232323232323")
 timeout = 3000
 
 def htlc(tmpl_seller=alice,
