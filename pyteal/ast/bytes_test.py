@@ -111,6 +111,27 @@ def test_bytes_invalid():
         Bytes("base32", "Zm9vYmE=")
 
     with pytest.raises(TealInputError):
+        Bytes("base32", "MFRGG====")
+
+    with pytest.raises(TealInputError):
+        Bytes("base32", "MFRGG==")
+
+    with pytest.raises(TealInputError):
+        Bytes("base32", "CCCCCC==")
+
+    with pytest.raises(TealInputError):
+        Bytes("base32", "CCCCCC")
+
+    with pytest.raises(TealInputError):
+        Bytes("base32", "C=======")
+            
+    with pytest.raises(TealInputError):
+        Bytes("base32", "C")
+    
+    with pytest.raises(TealInputError):
+        Bytes("base32", "=")
+
+    with pytest.raises(TealInputError):
         Bytes("base64", "?????")
 
     with pytest.raises(TealInputError):

@@ -48,10 +48,9 @@ def valid_address(address:str):
 def valid_base32(s:str):
     """ check if s is a valid base32 encoding string
     """
-    noPaddingPattern = re.compile(r'[A-Z2-7]*')
-    paddingPattern = re.compile(r'^(?:[A-Z2-7]{8})*(?:([A-Z2-7]{8})|([A-Z2-7]{2}[=]{6})|([A-Z2-7]{4}[=]{4})|([A-Z2-7]{5}[=]{3})|([A-Z2-7]{7}[=]{1}))')
+    pattern = re.compile(r'^(?:[A-Z2-7]{8})*(?:([A-Z2-7]{2}([=]{6})?)|([A-Z2-7]{4}([=]{4})?)|([A-Z2-7]{5}([=]{3})?)|([A-Z2-7]{7}([=]{1})?))?')
 
-    if noPaddingPattern.fullmatch(s) is None and paddingPattern.fullmatch(s) is None:
+    if pattern.fullmatch(s) is None:
         raise TealInputError("{} is not a valid RFC 4648 base 32 string".format(s))
 
 def valid_base64(s:str):
