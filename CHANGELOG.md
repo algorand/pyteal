@@ -3,6 +3,10 @@
 ## Added
 * Added `ScratchVar`, an inteface for storing and loading values from scratch space ([#33](https://github.com/algorand/pyteal/pull/33)).
 
+## Fixed
+* Fixed improper base32 validation and allow the use of padding ([#34](https://github.com/algorand/pyteal/pull/34)
+and [#37](https://github.com/algorand/pyteal/pull/37)).
+
 ## Changed
 * Rewrote internal code generation to produce smaller programs and make future optimization easier
 ([#26](https://github.com/algorand/pyteal/pull/26)). Programs compiled with this version will likely
