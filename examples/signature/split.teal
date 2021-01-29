@@ -47,7 +47,7 @@ addr 7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M
 ==
 &&
 gtxn 0 Amount
-gtxn 0 Amount
+dup
 gtxn 1 Amount
 +
 int 1

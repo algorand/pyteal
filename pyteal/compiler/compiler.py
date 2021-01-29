@@ -8,6 +8,7 @@ from ..config import NUM_SLOTS
 from .sort import sortBlocks
 from .flatten import flattenBlocks
 from .constants import createConstantBlocks
+from .optimizer import applyLocalOptimizationToList, detectDuplicatesInBlock
 
 MAX_TEAL_VERSION = 4
 MIN_TEAL_VERSION = 2
@@ -91,7 +92,9 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, a
         raise TealInternalError(msg) from errors[0]
 
     order = sortBlocks(start)
-    teal = flattenBlocks(order)
+    blocks = applyLocalOptimizationToList(order, detectDuplicatesInBlock)
+
+    teal = flattenBlocks(blocks)
 
     verifyOpsForVersion(teal, version)
     verifyOpsForMode(teal, mode)
