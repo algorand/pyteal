@@ -45,7 +45,7 @@ def approval_program():
         Return(is_any_admin)
     ])
 
-    # configure the admin status of the account Txn.accounts[0]
+    # configure the admin status of the account Txn.accounts[1]
     # sender must be contract admin
     new_admin_type = Txn.application_args[1]
     new_admin_status = Btoi(Txn.application_args[2])
@@ -70,11 +70,11 @@ def approval_program():
     #     Return(is_contract_admin)
     # ])
     # It would be vulnerable to the following attack: a sender passes in their own address as
-    # Txn.accounts[0], so then the line App.localPut(Int(1), new_admin_type, new_admin_status)
+    # Txn.accounts[1], so then the line App.localPut(Int(1), new_admin_type, new_admin_status)
     # changes the sender's admin status, meaning the final Return(is_contract_admin) can return
     # anything the sender wants. This allows anyone to become an admin!
 
-    # freeze Txn.accounts[0]
+    # freeze Txn.accounts[1]
     # sender must be any admin
     new_freeze_value = Btoi(Txn.application_args[1])
     freeze = Seq([
@@ -86,7 +86,7 @@ def approval_program():
         Return(is_any_admin)
     ])
 
-    # modify the max balance of Txn.accounts[0]
+    # modify the max balance of Txn.accounts[1]
     # if max_balance_value is 0, will delete the existing max balance limitation on the account
     # sender must be transfer admin
     max_balance_value = Btoi(Txn.application_args[1])
@@ -102,7 +102,7 @@ def approval_program():
         Return(is_transfer_admin)
     ])
 
-    # lock Txn.accounts[0] until a UNIX timestamp
+    # lock Txn.accounts[1] until a UNIX timestamp
     # sender must be transfer admin
     lock_until_value = Btoi(Txn.application_args[1])
     lock_until = Seq([
@@ -148,7 +148,7 @@ def approval_program():
         Return(is_transfer_admin)
     ])
 
-    # move assets from the reserve to Txn.accounts[0]
+    # move assets from the reserve to Txn.accounts[1]
     # sender must be contract admin
     mint_amount = Btoi(Txn.application_args[1])
     mint = Seq([
@@ -162,7 +162,7 @@ def approval_program():
         Return(is_contract_admin)
     ])
 
-    # move assets from Txn.accounts[0] to the reserve
+    # move assets from Txn.accounts[1] to the reserve
     # sender must be contract admin
     burn_amount = Btoi(Txn.application_args[1])
     burn = Seq([
@@ -176,7 +176,7 @@ def approval_program():
         Return(is_contract_admin)
     ])
 
-    # transfer assets from the sender to Txn.accounts[0]
+    # transfer assets from the sender to Txn.accounts[1]
     transfer_amount = Btoi(Txn.application_args[1])
     receiver_max_balance = App.localGetEx(Int(1), App.id(), Bytes("max balance"))
     transfer = Seq([

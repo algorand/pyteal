@@ -28,7 +28,11 @@ author = 'Algorand'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 # extensions = ['m2r']
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.autosectionlabel'
+]
 source_suffix = ['.rst', '.md']
 master_doc = 'index'
 
