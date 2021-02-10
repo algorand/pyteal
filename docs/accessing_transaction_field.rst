@@ -58,9 +58,12 @@ Operator                                  Type                     Notes
 :code:`Txn.freeze_asset()`                :code:`TealType.uint64`
 :code:`Txn.freeze_asset_account()`        :code:`TealType.bytes`   32 byte address
 :code:`Txn.freeze_asset_frozen()`         :code:`TealType.uint64`
-:code:`Txn.application_args()`            :code:`TealType.bytes[]`
-:code:`Txn.accounts()`                    :code:`TealType.bytes[]`
+:code:`Txn.application_args`              :code:`TealType.bytes[]` Array of application arguments
+:code:`Txn.accounts`                      :code:`TealType.bytes[]` Array of additional application accounts
 ========================================= ======================== =======================================================================
+
+Transaction Type
+~~~~~~~~~~~~~~~~
 
 The :code:`Txn.type_enum()` values can be checked using the :any:`TxnType` enum:
 
@@ -76,8 +79,32 @@ Value                          Numerical Value Type String  Description
 :any:`TxnType.ApplicationCall` :code:`6`       appl         application call
 ============================== =============== ============ =========================
 
-Atomic Tranfers
-~~~~~~~~~~~~~~~
+Tranasction Array Fields
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Some of the exposed transaction fields are arrays with the type :code:`TealType.bytes[]`. These
+fields are :code:`Txn.application_args` and :code:`Txn.accounts`.
+
+The length of these array fields can be found using the :code:`.length()` method, and individual
+items can be accesses using bracket notation. For example:
+
+.. code-block:: python
+
+  Txn.application_args.length() # get the number of application arguments in the transaction
+  Txn.application_args[0] # get the first application argument
+  Txn.application_args[1] # get the second application argument
+
+Special case: :code:`Txn.accounts`
+""""""""""""""""""""""""""""""""""
+
+The :code:`Txn.accounts` is a special case array. Normal arrays in PyTeal are :code:`0`-indexed, but
+this one is :code:`1`-indexed with a special value at index :code:`0`, the sender's address. That
+means if :code:`Txn.accounts.length()` is 2, then indexes :code:`0`, :code:`1`, and :code:`2` will
+be present. In fact, :code:`Txn.accounts[0]` will always evaluate to the sender's address, even when
+:code:`Txn.accounts.length()` is :code:`0`.
+
+Atomic Tranfer Groups
+---------------------
 
 `Atomic Transfers <https://developer.algorand.org/docs/features/atomic_transfers/>`_ are irreducible
 batch transactions that allow groups of transactions to be submitted at one time. If any of the
@@ -91,7 +118,12 @@ available on the elements of :code:`Gtxn`. For example:
   Gtxn[0].sender() # get the sender of the first transaction in the atomic transfer group
   Gtxn[1].receiver() # get the receiver of the second transaction in the atomic transfer group
 
-:code:`Gtxn` is zero-indexed and the maximum size of an atomic transfer group is 16.
+:code:`Gtxn` is zero-indexed and the maximum size of an atomic transfer group is 16. The size of the
+current transaction group is available as :any:`Global.group_size()`. A standalone transaction will
+have a group size of :code:`1`.
+
+To find the current transaction's index in the transfer group, use :code:`Txn.group_index()`. If the
+current transaction is standalone, it's group index will be :code:`0`.
 
 Global Parameters
 -----------------
@@ -106,7 +138,7 @@ Operator                                Type                    Notes
 :any:`Global.min_balance()`             :code:`TealType.uint64` in mircoAlgos
 :any:`Global.max_txn_life()`            :code:`TealType.uint64` number of rounds
 :any:`Global.zero_address()`            :code:`TealType.bytes`  32 byte address of all zero bytes
-:any:`Global.group_size()`              :code:`TealType.uint64` number of txns in this atomic transaction group, At least 1
+:any:`Global.group_size()`              :code:`TealType.uint64` number of txns in this atomic transaction group, at least 1
 :any:`Global.logic_sig_version()`       :code:`TealType.uint64` the maximum supported TEAL version
 :any:`Global.round()`                   :code:`TealType.uint64` the current round number
 :any:`Global.latest_timestamp()`        :code:`TealType.uint64` the latest confirmed block UNIX timestamp
