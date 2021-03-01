@@ -1,3 +1,10 @@
+# 0.6.2
+
+## Fixed
+* Corrected documentation and examples that incorrectly used the `Txn.accounts` array ([#42](https://github.com/algorand/pyteal/pull/42)).
+* Fixed improper base32 validation and allow the use of padding ([#34](https://github.com/algorand/pyteal/pull/34)
+and [#37](https://github.com/algorand/pyteal/pull/37)).
+
 # 0.6.1
 
 ## Added
