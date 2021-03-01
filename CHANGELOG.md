@@ -3,15 +3,17 @@
 ## Added
 * Added `ScratchVar`, an inteface for storing and loading values from scratch space ([#33](https://github.com/algorand/pyteal/pull/33)).
 
-## Fixed
-* Corrected documentation and examples that incorrectly used the `Txn.accounts` array ([#42](https://github.com/algorand/pyteal/pull/42)).
-* Fixed improper base32 validation and allow the use of padding ([#34](https://github.com/algorand/pyteal/pull/34)
-and [#37](https://github.com/algorand/pyteal/pull/37)).
-
 ## Changed
 * Rewrote internal code generation to produce smaller programs and make future optimization easier
 ([#26](https://github.com/algorand/pyteal/pull/26)). Programs compiled with this version will likely
 produce different TEAL code than previous versions, but their functionality will be the same.
+
+# 0.6.2
+
+## Fixed
+* Corrected documentation and examples that incorrectly used the `Txn.accounts` array ([#42](https://github.com/algorand/pyteal/pull/42)).
+* Fixed improper base32 validation and allow the use of padding ([#34](https://github.com/algorand/pyteal/pull/34)
+and [#37](https://github.com/algorand/pyteal/pull/37)).
 
 # 0.6.1
 
