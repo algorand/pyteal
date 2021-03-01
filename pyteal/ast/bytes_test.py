@@ -2,12 +2,21 @@ import pytest
 
 from .. import *
 
-def test_bytes_base32():
-    expr = Bytes("base32", "7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M")
-    assert expr.type_of() == TealType.bytes
-    assert expr.__teal__() == [
-        TealOp(Op.byte, "base32(7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M)")
-    ]
+def test_bytes_base32_no_padding():
+    for s in ("ME", "MFRA", "MFRGG", "MFRGGZA", "MFRGGZDF", "7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M"):
+        expr = Bytes("base32", s)
+        assert expr.type_of() == TealType.bytes
+        assert expr.__teal__() == [
+            TealOp(Op.byte, "base32(" + s + ")")
+        ]
+
+def test_bytes_base32_padding():
+    for s in ("ME======", "MFRA====", "MFRGG===", "MFRGGZA=", "7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M======"):
+        expr = Bytes("base32", s)
+        assert expr.type_of() == TealType.bytes
+        assert expr.__teal__() == [
+            TealOp(Op.byte, "base32(" + s + ")")
+        ]
 
 def test_bytes_base32_empty():
     expr = Bytes("base32", "")
