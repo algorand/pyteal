@@ -109,7 +109,7 @@ def verifyOpsForMode(teal: List[TealComponent], mode: Mode):
         if isinstance(stmt, TealOp):
             op = stmt.getOp()
             if not op.mode & mode:
-                raise TealInputError("Op not supported in {} mode: {}".format(mode.name, op.value))
+                raise TealInputError("Op not supported in {} mode: {}".format(mode.name, op))
 
 def compileTeal(ast: Expr, mode: Mode) -> str:
     """Compile a PyTeal expression into TEAL assembly.

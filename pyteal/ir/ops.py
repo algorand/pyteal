@@ -1,3 +1,4 @@
+from typing import NamedTuple
 from enum import Enum, Flag, auto
 
 class Mode(Flag):
@@ -8,77 +9,84 @@ class Mode(Flag):
 
 Mode.__module__ = "pyteal"
 
+OpType = NamedTuple('OpType', [('value', str), ('mode', Mode), ('min_version', int)])
+
 class Op(Enum):
     """Enum of program opcodes."""
 
-    err = "err", Mode.Signature | Mode.Application
-    sha256 = "sha256", Mode.Signature | Mode.Application
-    keccak256 = "keccak256", Mode.Signature | Mode.Application
-    sha512_256 = "sha512_256", Mode.Signature | Mode.Application
-    ed25519verify = "ed25519verify", Mode.Signature
-    add = "+", Mode.Signature | Mode.Application
-    minus = "-", Mode.Signature | Mode.Application
-    div = "/", Mode.Signature | Mode.Application
-    mul = "*", Mode.Signature | Mode.Application
-    lt = "<", Mode.Signature | Mode.Application
-    gt = ">", Mode.Signature | Mode.Application
-    le = "<=", Mode.Signature | Mode.Application
-    ge = ">=", Mode.Signature | Mode.Application
-    logic_and = "&&", Mode.Signature | Mode.Application
-    logic_or = "||", Mode.Signature | Mode.Application
-    eq = "==", Mode.Signature | Mode.Application
-    neq = "!=", Mode.Signature | Mode.Application
-    logic_not = "!", Mode.Signature | Mode.Application
-    len = "len", Mode.Signature | Mode.Application
-    itob = "itob", Mode.Signature | Mode.Application
-    btoi = "btoi", Mode.Signature | Mode.Application
-    mod = "%", Mode.Signature | Mode.Application
-    bitwise_or = "|", Mode.Signature | Mode.Application
-    bitwise_and = "&", Mode.Signature | Mode.Application
-    bitwise_xor = "^", Mode.Signature | Mode.Application
-    bitwise_not = "~", Mode.Signature | Mode.Application
-    mulw = "mulw", Mode.Signature | Mode.Application
-    addw = "addw", Mode.Signature | Mode.Application
-    int = "int", Mode.Signature | Mode.Application
-    byte = "byte", Mode.Signature | Mode.Application
-    addr = "addr", Mode.Signature | Mode.Application
-    arg = "arg", Mode.Signature
-    txn = "txn", Mode.Signature | Mode.Application
-    global_ = "global", Mode.Signature | Mode.Application
-    gtxn = "gtxn", Mode.Signature | Mode.Application
-    load = "load", Mode.Signature | Mode.Application
-    store = "store", Mode.Signature | Mode.Application
-    txna = "txna", Mode.Signature | Mode.Application
-    gtxna = "gtxna", Mode.Signature | Mode.Application
-    bnz = "bnz", Mode.Signature | Mode.Application
-    bz = "bz", Mode.Signature | Mode.Application
-    b = "b", Mode.Signature | Mode.Application
-    return_ = "return", Mode.Signature | Mode.Application
-    pop = "pop", Mode.Signature | Mode.Application
-    dup = "dup", Mode.Signature | Mode.Application
-    dup2 = "dup2", Mode.Signature | Mode.Application
-    concat = "concat", Mode.Signature | Mode.Application
-    substring = "substring", Mode.Signature | Mode.Application
-    substring3 = "substring3", Mode.Signature | Mode.Application
-    balance = "balance", Mode.Application
-    app_opted_in = "app_opted_in", Mode.Application
-    app_local_get = "app_local_get", Mode.Application
-    app_local_get_ex = "app_local_get_ex", Mode.Application
-    app_global_get = "app_global_get", Mode.Application
-    app_global_get_ex = "app_global_get_ex", Mode.Application
-    app_local_put = "app_local_put", Mode.Application
-    app_global_put = "app_global_put", Mode.Application
-    app_local_del = "app_local_del", Mode.Application
-    app_global_del = "app_global_del", Mode.Application
-    asset_holding_get = "asset_holding_get", Mode.Application
-    asset_params_get = "asset_params_get", Mode.Application
+    def __str__(self) -> str:
+        return self.value.value
 
-    def __new__(cls, value: str, mode: Mode):
-        obj = object.__new__(cls)
-        obj._value_ = value
-        return obj
+    @property
+    def mode(self) -> Mode:
+        """Get the modes where this op is available."""
+        return self.value.mode
 
-    def __init__(self, value: str, mode: Mode):
-        self.mode = mode
+    @property
+    def min_version(self) -> int:
+        """Get the minimum version where this op is available."""
+        return self.value.min_version
+
+    err               = OpType("err",               Mode.Signature | Mode.Application, 2)
+    sha256            = OpType("sha256",            Mode.Signature | Mode.Application, 2)
+    keccak256         = OpType("keccak256",         Mode.Signature | Mode.Application, 2)
+    sha512_256        = OpType("sha512_256",        Mode.Signature | Mode.Application, 2)
+    ed25519verify     = OpType("ed25519verify",     Mode.Signature,                    2)
+    add               = OpType("+",                 Mode.Signature | Mode.Application, 2)
+    minus             = OpType("-",                 Mode.Signature | Mode.Application, 2)
+    div               = OpType("/",                 Mode.Signature | Mode.Application, 2)
+    mul               = OpType("*",                 Mode.Signature | Mode.Application, 2)
+    lt                = OpType("<",                 Mode.Signature | Mode.Application, 2)
+    gt                = OpType(">",                 Mode.Signature | Mode.Application, 2)
+    le                = OpType("<=",                Mode.Signature | Mode.Application, 2)
+    ge                = OpType(">=",                Mode.Signature | Mode.Application, 2)
+    logic_and         = OpType("&&",                Mode.Signature | Mode.Application, 2)
+    logic_or          = OpType("||",                Mode.Signature | Mode.Application, 2)
+    eq                = OpType("==",                Mode.Signature | Mode.Application, 2)
+    neq               = OpType("!=",                Mode.Signature | Mode.Application, 2)
+    logic_not         = OpType("!",                 Mode.Signature | Mode.Application, 2)
+    len               = OpType("len",               Mode.Signature | Mode.Application, 2)
+    itob              = OpType("itob",              Mode.Signature | Mode.Application, 2)
+    btoi              = OpType("btoi",              Mode.Signature | Mode.Application, 2)
+    mod               = OpType("%",                 Mode.Signature | Mode.Application, 2)
+    bitwise_or        = OpType("|",                 Mode.Signature | Mode.Application, 2)
+    bitwise_and       = OpType("&",                 Mode.Signature | Mode.Application, 2)
+    bitwise_xor       = OpType("^",                 Mode.Signature | Mode.Application, 2)
+    bitwise_not       = OpType("~",                 Mode.Signature | Mode.Application, 2)
+    mulw              = OpType("mulw",              Mode.Signature | Mode.Application, 2)
+    addw              = OpType("addw",              Mode.Signature | Mode.Application, 2)
+    int               = OpType("int",               Mode.Signature | Mode.Application, 2)
+    byte              = OpType("byte",              Mode.Signature | Mode.Application, 2)
+    addr              = OpType("addr",              Mode.Signature | Mode.Application, 2)
+    arg               = OpType("arg",               Mode.Signature,                    2)
+    txn               = OpType("txn",               Mode.Signature | Mode.Application, 2)
+    global_           = OpType("global",            Mode.Signature | Mode.Application, 2)
+    gtxn              = OpType("gtxn",              Mode.Signature | Mode.Application, 2)
+    load              = OpType("load",              Mode.Signature | Mode.Application, 2)
+    store             = OpType("store",             Mode.Signature | Mode.Application, 2)
+    txna              = OpType("txna",              Mode.Signature | Mode.Application, 2)
+    gtxna             = OpType("gtxna",             Mode.Signature | Mode.Application, 2)
+    bnz               = OpType("bnz",               Mode.Signature | Mode.Application, 2)
+    bz                = OpType("bz",                Mode.Signature | Mode.Application, 2)
+    b                 = OpType("b",                 Mode.Signature | Mode.Application, 2)
+    return_           = OpType("return",            Mode.Signature | Mode.Application, 2)
+    pop               = OpType("pop",               Mode.Signature | Mode.Application, 2)
+    dup               = OpType("dup",               Mode.Signature | Mode.Application, 2)
+    dup2              = OpType("dup2",              Mode.Signature | Mode.Application, 2)
+    concat            = OpType("concat",            Mode.Signature | Mode.Application, 2)
+    substring         = OpType("substring",         Mode.Signature | Mode.Application, 2)
+    substring3        = OpType("substring3",        Mode.Signature | Mode.Application, 2)
+    balance           = OpType("balance",           Mode.Application,                  2)
+    app_opted_in      = OpType("app_opted_in",      Mode.Application,                  2)
+    app_local_get     = OpType("app_local_get",     Mode.Application,                  2)
+    app_local_get_ex  = OpType("app_local_get_ex",  Mode.Application,                  2)
+    app_global_get    = OpType("app_global_get",    Mode.Application,                  2)
+    app_global_get_ex = OpType("app_global_get_ex", Mode.Application,                  2)
+    app_local_put     = OpType("app_local_put",     Mode.Application,                  2)
+    app_global_put    = OpType("app_global_put",    Mode.Application,                  2)
+    app_local_del     = OpType("app_local_del",     Mode.Application,                  2)
+    app_global_del    = OpType("app_global_del",    Mode.Application,                  2)
+    asset_holding_get = OpType("asset_holding_get", Mode.Application,                  2)
+    asset_params_get  = OpType("asset_params_get",  Mode.Application,                  2)
 
 Op.__module__ = "pyteal"
