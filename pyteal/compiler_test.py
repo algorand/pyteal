@@ -344,3 +344,22 @@ app_global_get
 
     with pytest.raises(TealInputError):
         compileTeal(expr, Mode.Signature)
+
+def test_compile_version():
+    expr = Int(1)
+
+    with pytest.raises(TealInputError):
+        compileTeal(expr, Mode.Signature, 1)
+    
+    expected_version_2 = """
+#pragma version 2
+int 1
+""".strip()
+    actual_version_2 = compileTeal(expr, Mode.Signature, 2)
+    assert actual_version_2 == expected_version_2
+
+    actual_default = compileTeal(expr, Mode.Signature)
+    assert actual_default == expected_version_2
+
+    with pytest.raises(TealInputError):
+        compileTeal(expr, Mode.Signature, 3)
