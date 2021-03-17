@@ -26,7 +26,7 @@ class TealOp(TealComponent):
 
     def assemble(self) -> str:
         from ..ast import ScratchSlot
-        parts = [self.op.value]
+        parts = [str(self.op)]
         for arg in self.args:
             if isinstance(arg, ScratchSlot):
                 raise TealInternalError("Slot not assigned: {}".format(arg))
@@ -39,7 +39,7 @@ class TealOp(TealComponent):
         return " ".join(parts)
     
     def __repr__(self) -> str:
-        args = [self.op.__str__()]
+        args = [str(self.op)]
         for a in self.args:
             args.append(repr(a))
 

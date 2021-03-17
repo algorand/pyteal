@@ -6,6 +6,10 @@ from .ir import Op, Mode, TealComponent, TealOp, TealLabel, TealBlock, TealSimpl
 from .errors import TealInputError, TealInternalError
 from .config import NUM_SLOTS
 
+MAX_TEAL_VERSION = 2
+MIN_TEAL_VERSION = 2
+DEFAULT_TEAL_VERSION = 2
+
 def sortBlocks(start: TealBlock) -> List[TealBlock]:
     """Topologically sort the graph which starts with the input TealBlock.
 
@@ -95,6 +99,22 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
 
     return teal
 
+def verifyOpsForVersion(teal: List[TealComponent], version: int):
+    """Verify that all TEAL operations are allowed in the specified version.
+
+    Args:
+        teal: Code to check.
+        mode: The version to check against.
+
+    Raises:
+        TealInputError: if teal contains an operation not allowed in version.
+    """
+    for stmt in teal:
+        if isinstance(stmt, TealOp):
+            op = stmt.getOp()
+            if op.min_version > version:
+                raise TealInputError("Op not supported in TEAL version {}: {}".format(version, op))
+
 def verifyOpsForMode(teal: List[TealComponent], mode: Mode):
     """Verify that all TEAL operations are allowed in mode.
 
@@ -109,14 +129,17 @@ def verifyOpsForMode(teal: List[TealComponent], mode: Mode):
         if isinstance(stmt, TealOp):
             op = stmt.getOp()
             if not op.mode & mode:
-                raise TealInputError("Op not supported in {} mode: {}".format(mode.name, op.value))
+                raise TealInputError("Op not supported in {} mode: {}".format(mode.name, op))
 
-def compileTeal(ast: Expr, mode: Mode) -> str:
+def compileTeal(ast: Expr, mode: Mode, version: int = DEFAULT_TEAL_VERSION) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 
     Args:
         ast: The PyTeal expression to assemble.
         mode: The mode of the program to assemble. Must be Signature or Application.
+        version (optional): The TEAL version used to assemble the program. This will determine which
+        expressions and fields are able to be used in the program and how expressions compile to
+        TEAL opcodes. Defaults to 2 if not included.
 
     Returns:
         A TEAL assembly program compiled from the input expression.
@@ -124,6 +147,9 @@ def compileTeal(ast: Expr, mode: Mode) -> str:
     Raises:
         TealInputError: if an operation in ast is not supported by the supplied mode.
     """
+    if not (MIN_TEAL_VERSION <= version <= MAX_TEAL_VERSION):
+        raise TealInputError("Unsupported TEAL version: {}. Excepted a number in the range [{}, {}]".format(version, MIN_TEAL_VERSION, MAX_TEAL_VERSION))
+
     start, _ = ast.__teal__()
     start.addIncoming()
     start.validate()
@@ -134,6 +160,7 @@ def compileTeal(ast: Expr, mode: Mode) -> str:
     order = sortBlocks(start)
     teal = flattenBlocks(order)
 
+    verifyOpsForVersion(teal, version)
     verifyOpsForMode(teal, mode)
 
     slots = set()

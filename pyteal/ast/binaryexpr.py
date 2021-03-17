@@ -17,7 +17,7 @@ class BinaryExpr(Expr):
         return TealBlock.FromOp(TealOp(self.op), self.argLeft, self.argRight)
     
     def __str__(self):
-        return "({} {} {})".format(self.op.value, self.argLeft, self.argRight)
+        return "({} {} {})".format(self.op, self.argLeft, self.argRight)
     
     def type_of(self):
         return self.outputType

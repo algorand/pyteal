@@ -15,7 +15,7 @@ class UnaryExpr(Expr):
         return TealBlock.FromOp(TealOp(self.op), self.arg)
 
     def __str__(self):
-        return "({} {})".format(self.op.value, self.arg)
+        return "({} {})".format(self.op, self.arg)
 
     def type_of(self):
         return self.outputType

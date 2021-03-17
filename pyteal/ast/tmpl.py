@@ -13,7 +13,7 @@ class Tmpl(LeafExpr):
         self.name = name
 
     def __str__(self):
-        return "(Tmpl {} {})".format(self.op.value, self.name)
+        return "(Tmpl {} {})".format(self.op, self.name)
 
     def __teal__(self):
         op = TealOp(self.op, self.name)
