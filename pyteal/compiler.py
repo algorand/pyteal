@@ -180,6 +180,6 @@ def compileTeal(ast: Expr, mode: Mode, version: int = DEFAULT_TEAL_VERSION) -> s
             stmt.assignSlot(slot, location)
         location += 1
 
-    lines = ["#pragma version 2"]
+    lines = ["#pragma version {}".format(version)]
     lines += [i.assemble() for i in teal]
     return "\n".join(lines)
