@@ -3,12 +3,13 @@ import pytest
 from .. import *
 
 def test_btoi():
-    expr = Btoi(Arg(1))
+    arg = Arg(1)
+    expr = Btoi(arg)
     assert expr.type_of() == TealType.uint64
     
     expected = TealSimpleBlock([
-        TealOp(Op.arg, 1),
-        TealOp(Op.btoi)
+        TealOp(arg, Op.arg, 1),
+        TealOp(expr, Op.btoi)
     ])
 
     actual, _ = expr.__teal__()
@@ -22,12 +23,13 @@ def test_btoi_invalid():
         Btoi(Int(1))
 
 def test_itob():
-    expr = Itob(Int(1))
+    arg = Int(1)
+    expr = Itob(arg)
     assert expr.type_of() == TealType.bytes
     
     expected = TealSimpleBlock([
-        TealOp(Op.int, 1),
-        TealOp(Op.itob)
+        TealOp(arg, Op.int, 1),
+        TealOp(expr, Op.itob)
     ])
 
     actual, _ = expr.__teal__()
@@ -41,12 +43,13 @@ def test_itob_invalid():
         Itob(Arg(1))
 
 def test_len():
-    expr = Len(Txn.receiver())
+    arg = Txn.receiver()
+    expr = Len(arg)
     assert expr.type_of() == TealType.uint64
     
     expected = TealSimpleBlock([
-        TealOp(Op.txn, "Receiver"),
-        TealOp(Op.len)
+        TealOp(arg, Op.txn, "Receiver"),
+        TealOp(expr, Op.len)
     ])
 
     actual, _ = expr.__teal__()
@@ -60,12 +63,13 @@ def test_len_invalid():
         Len(Int(1))
 
 def test_sha256():
-    expr = Sha256(Arg(0))
+    arg = Arg(0)
+    expr = Sha256(arg)
     assert expr.type_of() == TealType.bytes
     
     expected = TealSimpleBlock([
-        TealOp(Op.arg, 0),
-        TealOp(Op.sha256)
+        TealOp(arg, Op.arg, 0),
+        TealOp(expr, Op.sha256)
     ])
 
     actual, _ = expr.__teal__()
@@ -79,12 +83,13 @@ def test_sha256_invalid():
         Sha256(Int(1))
 
 def test_sha512_256():
-    expr = Sha512_256(Arg(0))
+    arg = Arg(0)
+    expr = Sha512_256(arg)
     assert expr.type_of() == TealType.bytes
     
     expected = TealSimpleBlock([
-        TealOp(Op.arg, 0),
-        TealOp(Op.sha512_256)
+        TealOp(arg, Op.arg, 0),
+        TealOp(expr, Op.sha512_256)
     ])
 
     actual, _ = expr.__teal__()
@@ -98,12 +103,13 @@ def test_sha512_256_invalid():
         Sha512_256(Int(1))
 
 def test_keccak256():
-    expr = Keccak256(Arg(0))
+    arg = Arg(0)
+    expr = Keccak256(arg)
     assert expr.type_of() == TealType.bytes
     
     expected = TealSimpleBlock([
-        TealOp(Op.arg, 0),
-        TealOp(Op.keccak256)
+        TealOp(arg, Op.arg, 0),
+        TealOp(expr, Op.keccak256)
     ])
 
     actual, _ = expr.__teal__()
@@ -117,12 +123,13 @@ def test_keccak256_invalid():
         Keccak256(Int(1))
 
 def test_not():
-    expr = Not(Int(1))
+    arg = Int(1)
+    expr = Not(arg)
     assert expr.type_of() == TealType.uint64
     
     expected = TealSimpleBlock([
-        TealOp(Op.int, 1),
-        TealOp(Op.logic_not)
+        TealOp(arg, Op.int, 1),
+        TealOp(expr, Op.logic_not)
     ])
 
     actual, _ = expr.__teal__()
@@ -136,12 +143,13 @@ def test_not_invalid():
         Not(Txn.receiver())
 
 def test_bitwise_not():
-    expr = BitwiseNot(Int(2))
+    arg = Int(2)
+    expr = BitwiseNot(arg)
     assert expr.type_of() == TealType.uint64
     
     expected = TealSimpleBlock([
-        TealOp(Op.int, 2),
-        TealOp(Op.bitwise_not)
+        TealOp(arg, Op.int, 2),
+        TealOp(expr, Op.bitwise_not)
     ])
 
     actual, _ = expr.__teal__()
@@ -151,12 +159,13 @@ def test_bitwise_not():
     assert actual == expected
 
 def test_bitwise_not_overload():
-    expr = ~Int(10)
+    arg = Int(10)
+    expr = ~arg
     assert expr.type_of() == TealType.uint64
     
     expected = TealSimpleBlock([
-        TealOp(Op.int, 10),
-        TealOp(Op.bitwise_not)
+        TealOp(arg, Op.int, 10),
+        TealOp(expr, Op.bitwise_not)
     ])
 
     actual, _ = expr.__teal__()
@@ -170,12 +179,13 @@ def test_bitwise_not_invalid():
         BitwiseNot(Txn.receiver())
 
 def test_pop():
-    expr_int = Pop(Int(3))
+    arg_int = Int(3)
+    expr_int = Pop(arg_int)
     assert expr_int.type_of() == TealType.none
     
     expected_int = TealSimpleBlock([
-        TealOp(Op.int, 3),
-        TealOp(Op.pop)
+        TealOp(arg_int, Op.int, 3),
+        TealOp(expr_int, Op.pop)
     ])
 
     actual_int, _ = expr_int.__teal__()
@@ -184,12 +194,13 @@ def test_pop():
     
     assert actual_int == expected_int
 
-    expr_bytes = Pop(Txn.receiver())
+    arg_bytes = Txn.receiver()
+    expr_bytes = Pop(arg_bytes)
     assert expr_bytes.type_of() == TealType.none
 
     expected_bytes = TealSimpleBlock([
-        TealOp(Op.txn, "Receiver"),
-        TealOp(Op.pop)
+        TealOp(arg_bytes, Op.txn, "Receiver"),
+        TealOp(expr_bytes, Op.pop)
     ])
 
     actual_bytes, _ = expr_bytes.__teal__()
@@ -204,12 +215,13 @@ def test_pop_invalid():
         Pop(expr)
 
 def test_return():
-    expr = Return(Int(1))
+    arg = Int(1)
+    expr = Return(arg)
     assert expr.type_of() == TealType.none
     
     expected = TealSimpleBlock([
-        TealOp(Op.int, 1),
-        TealOp(Op.return_)
+        TealOp(arg, Op.int, 1),
+        TealOp(expr, Op.return_)
     ])
 
     actual, _ = expr.__teal__()
@@ -223,12 +235,13 @@ def test_return_invalid():
         Return(Txn.receiver())
 
 def test_balance():
-    expr = Balance(Int(0))
+    arg = Int(0)
+    expr = Balance(arg)
     assert expr.type_of() == TealType.uint64
     
     expected = TealSimpleBlock([
-        TealOp(Op.int, 0),
-        TealOp(Op.balance)
+        TealOp(arg, Op.int, 0),
+        TealOp(expr, Op.balance)
     ])
 
     actual, _ = expr.__teal__()

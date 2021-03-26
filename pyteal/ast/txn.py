@@ -84,13 +84,14 @@ class TxnExpr(LeafExpr):
     """An expression that accesses a transaction field from the current transaction."""
 
     def __init__(self, field: TxnField) -> None:
+        super().__init__()
         self.field = field
 
     def __str__(self):
         return "(Txn {})".format(self.field.arg_name)
 
     def __teal__(self):
-        op = TealOp(Op.txn, self.field.arg_name)
+        op = TealOp(self, Op.txn, self.field.arg_name)
         return TealBlock.FromOp(op)
     
     def type_of(self):
@@ -102,6 +103,7 @@ class TxnaExpr(LeafExpr):
     """An expression that accesses a transaction array field from the current transaction."""
 
     def __init__(self, field: TxnField, index: int) -> None:
+        super().__init__()
         self.field = field
         self.index = index
     
@@ -109,7 +111,7 @@ class TxnaExpr(LeafExpr):
         return "(Txna {} {})".format(self.field.arg_name, self.index)
     
     def __teal__(self):
-        op = TealOp(Op.txna, self.field.arg_name, self.index)
+        op = TealOp(self, Op.txna, self.field.arg_name, self.index)
         return TealBlock.FromOp(op)
     
     def type_of(self):

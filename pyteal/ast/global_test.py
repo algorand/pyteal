@@ -7,7 +7,7 @@ def test_global_min_txn_fee():
     assert expr.type_of() == TealType.uint64
 
     expected = TealSimpleBlock([
-        TealOp(Op.global_, "MinTxnFee")
+        TealOp(expr, Op.global_, "MinTxnFee")
     ])
 
     actual, _ = expr.__teal__()
@@ -19,7 +19,7 @@ def test_global_min_balance():
     assert expr.type_of() == TealType.uint64
 
     expected = TealSimpleBlock([
-        TealOp(Op.global_, "MinBalance")
+        TealOp(expr, Op.global_, "MinBalance")
     ])
 
     actual, _ = expr.__teal__()
@@ -31,7 +31,7 @@ def test_global_max_txn_life():
     assert expr.type_of() == TealType.uint64
 
     expected = TealSimpleBlock([
-        TealOp(Op.global_, "MaxTxnLife")
+        TealOp(expr, Op.global_, "MaxTxnLife")
     ])
 
     actual, _ = expr.__teal__()
@@ -43,7 +43,7 @@ def test_global_zero_address():
     assert expr.type_of() == TealType.bytes
 
     expected = TealSimpleBlock([
-        TealOp(Op.global_, "ZeroAddress")
+        TealOp(expr, Op.global_, "ZeroAddress")
     ])
 
     actual, _ = expr.__teal__()
@@ -55,7 +55,7 @@ def test_global_group_size():
     assert expr.type_of() == TealType.uint64
 
     expected = TealSimpleBlock([
-        TealOp(Op.global_, "GroupSize")
+        TealOp(expr, Op.global_, "GroupSize")
     ])
 
     actual, _ = expr.__teal__()
@@ -67,7 +67,7 @@ def test_global_logic_sig_version():
     assert expr.type_of() == TealType.uint64
 
     expected = TealSimpleBlock([
-        TealOp(Op.global_, "LogicSigVersion")
+        TealOp(expr, Op.global_, "LogicSigVersion")
     ])
 
     actual, _ = expr.__teal__()
@@ -79,7 +79,7 @@ def test_global_round():
     assert expr.type_of() == TealType.uint64
 
     expected = TealSimpleBlock([
-        TealOp(Op.global_, "Round")
+        TealOp(expr, Op.global_, "Round")
     ])
 
     actual, _ = expr.__teal__()
@@ -91,7 +91,7 @@ def test_global_latest_timestamp():
     assert expr.type_of() == TealType.uint64
 
     expected = TealSimpleBlock([
-        TealOp(Op.global_, "LatestTimestamp")
+        TealOp(expr, Op.global_, "LatestTimestamp")
     ])
 
     actual, _ = expr.__teal__()
@@ -103,7 +103,7 @@ def test_global_current_application_id():
     assert expr.type_of() == TealType.uint64
 
     expected = TealSimpleBlock([
-        TealOp(Op.global_, "CurrentApplicationID")
+        TealOp(expr, Op.global_, "CurrentApplicationID")
     ])
 
     actual, _ = expr.__teal__()

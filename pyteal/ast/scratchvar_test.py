@@ -36,11 +36,12 @@ def test_scratchvar_type():
 
 def test_scratchvar_store():
     myvar = ScratchVar(TealType.bytes)
-    expr = myvar.store(Bytes("value"))
+    arg = Bytes("value")
+    expr = myvar.store(arg)
 
     expected = TealSimpleBlock([
-        TealOp(Op.byte, "\"value\""),
-        TealOp(Op.store, myvar.slot),
+        TealOp(arg, Op.byte, "\"value\""),
+        TealOp(expr, Op.store, myvar.slot),
     ])
 
     actual, _ = expr.__teal__()
@@ -54,7 +55,7 @@ def test_scratchvar_load():
     expr = myvar.load()
 
     expected = TealSimpleBlock([
-        TealOp(Op.load, myvar.slot)
+        TealOp(expr, Op.load, myvar.slot)
     ])
 
     actual, _ = expr.__teal__()

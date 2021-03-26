@@ -22,6 +22,7 @@ class Bytes(LeafExpr):
             The prefix "0x" may be present in a base16 byte string. For example,
             ``Bytes("base16", "0x636F6E74656E74")``.
         """
+        super().__init__()
         if len(args) == 1:
             self.base = "utf8"
             self.byte_str = escapeStr(args[0])
@@ -51,7 +52,7 @@ class Bytes(LeafExpr):
             payload = "0x" + self.byte_str
         else:
             payload = "{}({})".format(self.base, self.byte_str)
-        op = TealOp(Op.byte, payload)
+        op = TealOp(self, Op.byte, payload)
         return TealBlock.FromOp(op)
 
     def __str__(self):

@@ -1,6 +1,5 @@
 import os
 from pyteal import *
-from pyteal.util import reset_label_count
 
 def test_basic_bank():
     from examples.signature.basic import bank_for_account
@@ -40,7 +39,6 @@ def test_split():
     target_path = os.path.join(os.path.dirname(__file__), "../examples/signature/split.teal")
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
-        reset_label_count()
         assert compileTeal(program, Mode.Signature) == target
 
 def test_dutch_auction():
@@ -51,7 +49,6 @@ def test_dutch_auction():
     target_path = os.path.join(os.path.dirname(__file__), "../examples/signature/dutch_auction.teal")
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
-        reset_label_count()
         assert compileTeal(program, Mode.Signature) == target
 
 def test_recurring_swap():
@@ -62,7 +59,6 @@ def test_recurring_swap():
     target_path = os.path.join(os.path.dirname(__file__), "../examples/signature/recurring_swap.teal")
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
-        reset_label_count()
         assert compileTeal(program, Mode.Signature) == target
 
 def test_asset():

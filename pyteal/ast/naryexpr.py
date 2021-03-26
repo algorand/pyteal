@@ -12,6 +12,7 @@ class NaryExpr(Expr):
     """
 
     def __init__(self, op: Op, inputType: TealType, outputType: TealType, args: Sequence[Expr]):
+        super().__init__()
         if len(args) < 2:
             raise TealInputError("NaryExpr requires at least two children.")
         for arg in args:
@@ -32,7 +33,7 @@ class NaryExpr(Expr):
                 end = argEnd
             else:
                 end.setNextBlock(argStart)
-                opBlock = TealSimpleBlock([TealOp(self.op)])
+                opBlock = TealSimpleBlock([TealOp(self, self.op)])
                 argEnd.setNextBlock(opBlock)
                 end = opBlock
 

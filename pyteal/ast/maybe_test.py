@@ -17,17 +17,19 @@ def test_maybe_value():
                     assert expr.slotOk != expr.slotValue
 
                     assert expr.hasValue().type_of() == TealType.uint64
-                    assert expr.hasValue().__teal__() == ScratchLoad(expr.slotOk).__teal__()
+                    with TealComponent.Context.ignoreExprEquality():
+                        assert expr.hasValue().__teal__() == ScratchLoad(expr.slotOk).__teal__()
                     
                     assert expr.value().type_of() == type
-                    assert expr.value().__teal__() == ScratchLoad(expr.slotValue).__teal__()
+                    with TealComponent.Context.ignoreExprEquality():
+                        assert expr.value().__teal__() == ScratchLoad(expr.slotValue).__teal__()
 
                     assert expr.type_of() == TealType.none
 
                     expected_call = TealSimpleBlock([
-                        TealOp(op, *iargs),
-                        TealOp(Op.store, expr.slotOk),
-                        TealOp(Op.store, expr.slotValue)
+                        TealOp(expr, op, *iargs),
+                        TealOp(None, Op.store, expr.slotOk),
+                        TealOp(None, Op.store, expr.slotValue)
                     ])
 
                     if len(args) == 0:
@@ -48,4 +50,5 @@ def test_maybe_value():
                     actual.addIncoming()
                     actual = TealBlock.NormalizeBlocks(actual)
 
-                    assert actual == expected
+                    with TealComponent.Context.ignoreExprEquality():
+                        assert actual == expected

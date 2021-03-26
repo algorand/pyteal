@@ -6,6 +6,7 @@ class BinaryExpr(Expr):
     """An expression with two arguments."""
 
     def __init__(self, op: Op, inputType: TealType, outputType: TealType, argLeft: Expr, argRight: Expr) -> None:
+        super().__init__()
         require_type(argLeft.type_of(), inputType)
         require_type(argRight.type_of(), inputType)
         self.op = op
@@ -14,7 +15,7 @@ class BinaryExpr(Expr):
         self.argRight = argRight
 
     def __teal__(self):
-        return TealBlock.FromOp(TealOp(self.op), self.argLeft, self.argRight)
+        return TealBlock.FromOp(TealOp(self, self.op), self.argLeft, self.argRight)
     
     def __str__(self):
         return "({} {} {})".format(self.op, self.argLeft, self.argRight)

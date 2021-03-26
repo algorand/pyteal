@@ -1,6 +1,5 @@
 from ..errors import TealInputError
 from .expr import Expr
-from ..ir import TealOp, Op
 from .seq import Seq
 from .bytes import Bytes
 from .unaryexpr import Pop
@@ -20,6 +19,8 @@ class Nonce(Expr):
             nonce: An arbitrary nonce string that conforms to base.
             child: The expression to wrap.
         """
+        super().__init__()
+        
         if base not in ("utf8", "base16", "base32", "base64"):
             raise TealInputError("Invalid base: {}".format(base))
 
@@ -28,15 +29,17 @@ class Nonce(Expr):
             self.nonce_bytes = Bytes(nonce)
         else:
             self.nonce_bytes = Bytes(base, nonce)
-
-    def __teal__(self):
-        return Seq([
+        
+        self.seq = Seq([
             Pop(self.nonce_bytes),
             self.child
-        ]).__teal__()
+        ])
+
+    def __teal__(self):
+        return self.seq.__teal__()
 
     def __str__(self):
-        return "(nonce: {}) {}".format(self.nonce_bytes.__str__(), self.child.__str__())
+        return "(nonce: {}) {}".format(self.nonce_bytes, self.child)
 
     def type_of(self):
         return self.child.type_of()
