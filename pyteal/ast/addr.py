@@ -11,11 +11,12 @@ class Addr(LeafExpr):
         Args:
             address: A string containing a valid base32 Algorand address
         """
+        super().__init__()
         valid_address(address)
         self.address = address
 
     def __teal__(self):
-        op = TealOp(Op.addr, self.address)
+        op = TealOp(self, Op.addr, self.address)
         return TealBlock.FromOp(op)
 
     def __str__(self):

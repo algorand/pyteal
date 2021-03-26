@@ -15,6 +15,8 @@ class Arg(LeafExpr):
         Args:
             index: The integer index of the argument to get. Must be between 0 and 255 inclusive.
         """
+        super().__init__()
+        
         if type(index) is not int:
             raise TealInputError("invalid arg input type {}".format(type(index)))
 
@@ -24,7 +26,7 @@ class Arg(LeafExpr):
         self.index = index
 
     def __teal__(self):
-        op = TealOp(Op.arg, self.index)
+        op = TealOp(self, Op.arg, self.index)
         return TealBlock.FromOp(op)
         
     def __str__(self):

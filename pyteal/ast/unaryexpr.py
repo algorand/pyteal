@@ -6,13 +6,14 @@ class UnaryExpr(Expr):
     """An expression with a single argument."""
 
     def __init__(self, op: Op, inputType: TealType, outputType: TealType, arg: Expr) -> None:
+        super().__init__()
         require_type(arg.type_of(), inputType)
         self.op = op
         self.outputType = outputType
         self.arg = arg
 
     def __teal__(self):
-        return TealBlock.FromOp(TealOp(self.op), self.arg)
+        return TealBlock.FromOp(TealOp(self, self.op), self.arg)
 
     def __str__(self):
         return "({} {})".format(self.op, self.arg)

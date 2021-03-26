@@ -3,10 +3,11 @@ import pytest
 from .. import *
 
 def test_seq_one():
-    expr = Seq([Int(0)])
+    items = [Int(0)]
+    expr = Seq(items)
     assert expr.type_of() == TealType.uint64
 
-    expected, _ = Int(0).__teal__()
+    expected, _ = items[0].__teal__()
 
     actual, _ = expr.__teal__()
 

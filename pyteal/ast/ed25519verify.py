@@ -14,6 +14,8 @@ class Ed25519Verify(Expr):
                 evalute to bytes.
             key: The 32 byte public key that produced the signature. Must evaluate to bytes.
         """
+        super().__init__()
+        
         require_type(data.type_of(), TealType.bytes)
         require_type(sig.type_of(), TealType.bytes)
         require_type(key.type_of(), TealType.bytes)
@@ -23,7 +25,7 @@ class Ed25519Verify(Expr):
         self.key = key
 
     def __teal__(self):
-        return TealBlock.FromOp(TealOp(Op.ed25519verify), self.data, self.sig, self.key)
+        return TealBlock.FromOp(TealOp(self, Op.ed25519verify), self.data, self.sig, self.key)
 
     def __str__(self):
         return "(ed25519verify {} {} {})".format(self.data, self.sig, self.key)

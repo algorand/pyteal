@@ -7,6 +7,7 @@ class Tmpl(LeafExpr):
     """Template expression for creating placeholder values."""
 
     def __init__(self, op: Op, type: TealType, name: str) -> None:
+        super().__init__()
         valid_tmpl(name)
         self.op = op
         self.type = type
@@ -16,7 +17,7 @@ class Tmpl(LeafExpr):
         return "(Tmpl {} {})".format(self.op, self.name)
 
     def __teal__(self):
-        op = TealOp(self.op, self.name)
+        op = TealOp(self, self.op, self.name)
         return TealBlock.FromOp(op)
 
     def type_of(self):

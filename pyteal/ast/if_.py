@@ -1,6 +1,5 @@
 from ..types import TealType, require_type, types_match
 from ..ir import TealSimpleBlock, TealConditionalBlock
-from ..util import new_label
 from .expr import Expr
 
 class If(Expr):
@@ -19,6 +18,7 @@ class If(Expr):
             elseBranch (optional): Expression to evaluate if the condition is false. Must evaluate
                 to the same type as thenBranch, if provided. Defaults to None.
         """
+        super().__init__()
         require_type(cond.type_of(), TealType.uint64)
 
         if elseBranch is None:

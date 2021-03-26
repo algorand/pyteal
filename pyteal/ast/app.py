@@ -47,6 +47,7 @@ class App(LeafExpr):
     """An expression related to applications."""
 
     def __init__(self, field:AppField, args) -> None:
+        super().__init__()
         self.field = field
         self.args = args
 
@@ -58,7 +59,7 @@ class App(LeafExpr):
         return ret_str
 
     def __teal__(self):
-        return TealBlock.FromOp(TealOp(self.field.get_op()), *self.args)
+        return TealBlock.FromOp(TealOp(self, self.field.get_op()), *self.args)
 
     def type_of(self):
         return self.field.type_of()

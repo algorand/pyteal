@@ -3,14 +3,15 @@ import pytest
 from .. import *
 
 def test_ed25519verify():
-    expr = Ed25519Verify(Bytes("data"), Bytes("sig"), Bytes("key"))
+    args = [Bytes("data"), Bytes("sig"), Bytes("key")]
+    expr = Ed25519Verify(args[0], args[1], args[2])
     assert expr.type_of() == TealType.uint64
 
     expected = TealSimpleBlock([
-        TealOp(Op.byte, "\"data\""),
-        TealOp(Op.byte, "\"sig\""),
-        TealOp(Op.byte, "\"key\""),
-        TealOp(Op.ed25519verify)
+        TealOp(args[0], Op.byte, "\"data\""),
+        TealOp(args[1], Op.byte, "\"sig\""),
+        TealOp(args[2], Op.byte, "\"key\""),
+        TealOp(expr, Op.ed25519verify)
     ])
 
     actual, _ = expr.__teal__()

@@ -1,12 +1,19 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Tuple
+from typing import Tuple, List
 
 from ..types import TealType
 from ..ir import TealBlock, TealSimpleBlock
 
 class Expr(ABC):
     """Abstract base class for PyTeal expressions."""
+
+    def __init__(self):
+        import traceback
+        self.trace = traceback.format_stack()[0:-1]
+    
+    def getDefinitionTrace(self) -> List[str]:
+        return self.trace
 
     @abstractmethod
     def type_of(self) -> TealType:

@@ -14,7 +14,8 @@ def test_assert():
     
     actual, _ = expr.__teal__()
     
-    assert actual == expected
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
 
 def test_assert_invalid():
     with pytest.raises(TealTypeError):

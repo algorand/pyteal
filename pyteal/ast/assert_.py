@@ -1,6 +1,5 @@
 from ..types import TealType, require_type
 from ..ir import TealOp, Op, TealSimpleBlock, TealConditionalBlock
-from ..util import new_label
 from .expr import Expr
 
 class Assert(Expr):
@@ -12,6 +11,7 @@ class Assert(Expr):
         Args:
             cond: The condition to check. Must evaluate to a uint64.
         """
+        super().__init__()
         require_type(cond.type_of(), TealType.uint64)
         self.cond = cond
     
@@ -19,7 +19,7 @@ class Assert(Expr):
         condStart, condEnd = self.cond.__teal__()
 
         end = TealSimpleBlock([])
-        errBlock = TealSimpleBlock([TealOp(Op.err)])
+        errBlock = TealSimpleBlock([TealOp(self, Op.err)])
 
         branchBlock = TealConditionalBlock([])
         branchBlock.setTrueBlock(end)

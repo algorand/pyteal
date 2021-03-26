@@ -8,12 +8,13 @@ def test_scratch_slot():
     assert slot.__hash__() == slot.__hash__()
     assert slot != ScratchSlot()
 
-    assert slot.store().__teal__()[0] == ScratchStackStore(slot).__teal__()[0]
-    assert slot.store(Int(1)).__teal__()[0] == ScratchStore(slot, Int(1)).__teal__()[0]
+    with TealComponent.Context.ignoreExprEquality():
+        assert slot.store().__teal__()[0] == ScratchStackStore(slot).__teal__()[0]
+        assert slot.store(Int(1)).__teal__()[0] == ScratchStore(slot, Int(1)).__teal__()[0]
 
-    assert slot.load().type_of() == TealType.anytype
-    assert slot.load(TealType.uint64).type_of() == TealType.uint64
-    assert slot.load().__teal__()[0] == ScratchLoad(slot).__teal__()[0]
+        assert slot.load().type_of() == TealType.anytype
+        assert slot.load(TealType.uint64).type_of() == TealType.uint64
+        assert slot.load().__teal__()[0] == ScratchLoad(slot).__teal__()[0]
 
 def test_scratch_load_default():
     slot = ScratchSlot()
@@ -21,7 +22,7 @@ def test_scratch_load_default():
     assert expr.type_of() == TealType.anytype
     
     expected = TealSimpleBlock([
-        TealOp(Op.load, slot)
+        TealOp(expr, Op.load, slot)
     ])
 
     actual, _ = expr.__teal__()
@@ -35,7 +36,7 @@ def test_scratch_load_type():
         assert expr.type_of() == type
         
         expected = TealSimpleBlock([
-            TealOp(Op.load, slot)
+            TealOp(expr, Op.load, slot)
         ])
 
         actual, _ = expr.__teal__()
@@ -50,7 +51,7 @@ def test_scratch_store():
         
         expected, valueEnd = value.__teal__()
         storeBlock = TealSimpleBlock([
-            TealOp(Op.store, slot)
+            TealOp(expr, Op.store, slot)
         ])
         valueEnd.setNextBlock(storeBlock)
 
@@ -64,7 +65,7 @@ def test_scratch_stack_store():
     assert expr.type_of() == TealType.none
     
     expected = TealSimpleBlock([
-        TealOp(Op.store, slot)
+        TealOp(expr, Op.store, slot)
     ])
 
     actual, _ = expr.__teal__()
