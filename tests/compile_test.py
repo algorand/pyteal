@@ -1,4 +1,6 @@
 import os
+import pytest
+
 from pyteal import *
 
 def test_basic_bank():
@@ -99,3 +101,27 @@ def test_cond():
 				[Global.group_size()==Int(3), cond2],
 				[Global.group_size()==Int(4), cond3])
 	compileTeal(core, Mode.Signature)
+
+@pytest.mark.timeout(2)
+def test_many_ifs():
+    """
+    Test with many If statements to trigger potential corner cases in code generation.
+    Previous versions of PyTeal took an exponential time to generate the TEAL code for this PyTEAL.
+    """
+
+    sv = ScratchVar(TealType.uint64)
+    s = Seq(
+        [
+            If(
+                Int(3 * i) == Int(3 * i),
+                sv.store(Int(3 * i + 1)),
+                sv.store(Int(3 * i + 2))
+            )
+            for i in range(30)
+        ] +
+        [
+            Return(sv.load())
+        ]
+    )
+
+    compileTeal(s, Mode.Signature)

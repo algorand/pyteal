@@ -31,33 +31,49 @@ class TealBlock(ABC):
                 return True
         return len(self.getOutgoing()) == 0
     
-    def validateTree(self, parent: 'TealBlock' = None) -> None:
+    def validateTree(self, parent: 'TealBlock' = None, visited: List['TealBlock'] = None) -> None:
         """Check that this block and its children have valid parent pointers.
 
         Args:
             parent (optional): The parent block to this one, if it has one. Defaults to None.
+            visited (optional): Used internally to remember blocks that have been visited. Set to None.
         """
+        if visited is None:
+            # using a list instead of a set as TealBlock is not hashable and PyTEAL programs should be short anyway
+            visited = []
+
         if parent is not None:
             count = 0
             for block in self.incoming:
                 if parent is block:
                     count += 1
             assert count == 1
-        
-        for block in self.getOutgoing():
-            block.validateTree(self)
-    
-    def addIncoming(self, block: 'TealBlock' = None) -> None:
+
+        if all(self is not b for b in visited):
+            # if the block was not already visited
+            visited.append(self)
+            for block in self.getOutgoing():
+                block.validateTree(self, visited)
+
+    def addIncoming(self, parent: 'TealBlock' = None, visited: List['TealBlock'] = None) -> None:
         """Calculate the parent blocks for this block and its children.
 
         Args:
-            block (optional): The parent block to this one, if it has one. Defaults to None.
+            parent (optional): The parent block to this one, if it has one. Defaults to None.
+            visited (optional): Used internally to remember blocks that have been visited. Set to None.
         """
-        if block is not None and all(block is not b for b in self.incoming):
-            self.incoming.append(block)
-        
-        for block in self.getOutgoing():
-            block.addIncoming(self)
+        if visited is None:
+            # using a list instead of a set as TealBlock is not hashable and PyTEAL programs should be short anyway
+            visited = []
+
+        if parent is not None and all(parent is not b for b in self.incoming):
+            self.incoming.append(parent)
+
+        if all(self is not b for b in visited):
+            # if the block was not already visited
+            visited.append(self)
+            for b in self.getOutgoing():
+                b.addIncoming(self, visited)
     
     def validateSlots(self, slotsInUse: Set['ScratchSlot'] = None, visited: Set[Tuple[int, ...]] = None) -> List[TealCompileError]:
         import traceback
