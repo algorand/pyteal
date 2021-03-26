@@ -7,7 +7,7 @@ def test_tmpl_int():
     assert expr.type_of() == TealType.uint64
 
     expected = TealSimpleBlock([
-        TealOp(Op.int, "TMPL_AMNT")
+        TealOp(expr, Op.int, "TMPL_AMNT")
     ])
 
     actual, _ = expr.__teal__()
@@ -23,7 +23,7 @@ def test_tmpl_bytes():
     assert expr.type_of() == TealType.bytes
     
     expected = TealSimpleBlock([
-        TealOp(Op.byte, "TMPL_NOTE")
+        TealOp(expr, Op.byte, "TMPL_NOTE")
     ])
 
     actual, _ = expr.__teal__()
@@ -39,7 +39,7 @@ def test_tmpl_addr():
     assert expr.type_of() == TealType.bytes
     
     expected = TealSimpleBlock([
-        TealOp(Op.addr, "TMPL_RECEIVER0")
+        TealOp(expr, Op.addr, "TMPL_RECEIVER0")
     ])
 
     actual, _ = expr.__teal__()

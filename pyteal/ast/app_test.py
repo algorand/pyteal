@@ -4,42 +4,44 @@ from .. import *
 
 def test_on_complete():
     assert OnComplete.NoOp.__teal__()[0] == TealSimpleBlock([
-        TealOp(Op.int, "NoOp")
+        TealOp(OnComplete.NoOp, Op.int, "NoOp")
     ])
 
     assert OnComplete.OptIn.__teal__()[0] == TealSimpleBlock([
-        TealOp(Op.int, "OptIn")
+        TealOp(OnComplete.OptIn, Op.int, "OptIn")
     ])
 
     assert OnComplete.CloseOut.__teal__()[0] == TealSimpleBlock([
-        TealOp(Op.int, "CloseOut")
+        TealOp(OnComplete.CloseOut, Op.int, "CloseOut")
     ])
 
     assert OnComplete.ClearState.__teal__()[0] == TealSimpleBlock([
-        TealOp(Op.int, "ClearState")
+        TealOp(OnComplete.ClearState, Op.int, "ClearState")
     ])
 
     assert OnComplete.UpdateApplication.__teal__()[0] == TealSimpleBlock([
-        TealOp(Op.int, "UpdateApplication")
+        TealOp(OnComplete.UpdateApplication, Op.int, "UpdateApplication")
     ])
 
     assert OnComplete.DeleteApplication.__teal__()[0] == TealSimpleBlock([
-        TealOp(Op.int, "DeleteApplication")
+        TealOp(OnComplete.DeleteApplication, Op.int, "DeleteApplication")
     ])
 
 def test_app_id():
     expr = App.id()
     assert expr.type_of() == TealType.uint64
-    assert expr.__teal__()[0] == Global.current_application_id().__teal__()[0]
+    with TealComponent.Context.ignoreExprEquality():
+        assert expr.__teal__()[0] == Global.current_application_id().__teal__()[0]
 
 def test_opted_in():
-    expr = App.optedIn(Int(1), Int(12))
+    args = [Int(1), Int(12)]
+    expr = App.optedIn(args[0], args[1])
     assert expr.type_of() == TealType.uint64
     
     expected = TealSimpleBlock([
-        TealOp(Op.int, 1),
-        TealOp(Op.int, 12),
-        TealOp(Op.app_opted_in)
+        TealOp(args[0], Op.int, 1),
+        TealOp(args[1], Op.int, 12),
+        TealOp(expr, Op.app_opted_in)
     ])
     
     actual, _ = expr.__teal__()
@@ -49,13 +51,14 @@ def test_opted_in():
     assert actual == expected
 
 def test_local_get():
-    expr = App.localGet(Int(0), Bytes("key"))
+    args = [Int(0), Bytes("key")]
+    expr = App.localGet(args[0], args[1])
     assert expr.type_of() == TealType.anytype
     
     expected = TealSimpleBlock([
-        TealOp(Op.int, 0),
-        TealOp(Op.byte, "\"key\""),
-        TealOp(Op.app_local_get)
+        TealOp(args[0], Op.int, 0),
+        TealOp(args[1], Op.byte, "\"key\""),
+        TealOp(expr, Op.app_local_get)
     ])
     
     actual, _ = expr.__teal__()
@@ -72,24 +75,26 @@ def test_local_get_invalid():
         App.localGet(Int(0), Int(1))
 
 def test_local_get_ex():
-    expr = App.localGetEx(Int(0), Int(6), Bytes("key"))
+    args = [Int(0), Int(6), Bytes("key")]
+    expr = App.localGetEx(args[0], args[1], args[2])
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.anytype
     
     expected = TealSimpleBlock([
-        TealOp(Op.int, 0),
-        TealOp(Op.int, 6),
-        TealOp(Op.byte, "\"key\""),
-        TealOp(Op.app_local_get_ex),
-        TealOp(Op.store, expr.slotOk),
-        TealOp(Op.store, expr.slotValue)
+        TealOp(args[0], Op.int, 0),
+        TealOp(args[1], Op.int, 6),
+        TealOp(args[2], Op.byte, "\"key\""),
+        TealOp(expr, Op.app_local_get_ex),
+        TealOp(None, Op.store, expr.slotOk),
+        TealOp(None, Op.store, expr.slotValue)
     ])
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
-    assert actual == expected
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
 
 def test_local_get_ex_invalid():
     with pytest.raises(TealTypeError):
@@ -102,12 +107,13 @@ def test_local_get_ex_invalid():
         App.localGetEx(Int(0), Int(0), Int(1))
 
 def test_global_get():
-    expr = App.globalGet(Bytes("key"))
+    arg = Bytes("key")
+    expr = App.globalGet(arg)
     assert expr.type_of() == TealType.anytype
     
     expected = TealSimpleBlock([
-        TealOp(Op.byte, "\"key\""),
-        TealOp(Op.app_global_get)
+        TealOp(arg, Op.byte, "\"key\""),
+        TealOp(expr, Op.app_global_get)
     ])
     
     actual, _ = expr.__teal__()
@@ -121,23 +127,25 @@ def test_global_get_invalid():
         App.globalGet(Int(7))
 
 def test_global_get_ex():
-    expr = App.globalGetEx(Int(6), Bytes("key"))
+    args = [Int(6), Bytes("key")]
+    expr = App.globalGetEx(args[0], args[1])
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.anytype
     
     expected = TealSimpleBlock([
-        TealOp(Op.int, 6),
-        TealOp(Op.byte, "\"key\""),
-        TealOp(Op.app_global_get_ex),
-        TealOp(Op.store, expr.slotOk),
-        TealOp(Op.store, expr.slotValue)
+        TealOp(args[0], Op.int, 6),
+        TealOp(args[1], Op.byte, "\"key\""),
+        TealOp(expr, Op.app_global_get_ex),
+        TealOp(None, Op.store, expr.slotOk),
+        TealOp(None, Op.store, expr.slotValue)
     ])
     
     actual, _ = expr.__teal__()
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
-    assert actual == expected
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
 
 def test_global_get_ex_invalid():
     with pytest.raises(TealTypeError):
@@ -147,14 +155,15 @@ def test_global_get_ex_invalid():
         App.globalGetEx(Int(0), Int(1))
 
 def test_local_put():
-    expr = App.localPut(Int(0), Bytes("key"), Int(5))
+    args = [Int(0), Bytes("key"), Int(5)]
+    expr = App.localPut(args[0], args[1], args[2])
     assert expr.type_of() == TealType.none
     
     expected = TealSimpleBlock([
-        TealOp(Op.int, 0),
-        TealOp(Op.byte, "\"key\""),
-        TealOp(Op.int, 5),
-        TealOp(Op.app_local_put)
+        TealOp(args[0], Op.int, 0),
+        TealOp(args[1], Op.byte, "\"key\""),
+        TealOp(args[2], Op.int, 5),
+        TealOp(expr, Op.app_local_put)
     ])
     
     actual, _ = expr.__teal__()
@@ -174,13 +183,14 @@ def test_local_put_invalid():
         App.localPut(Int(1), Bytes("key"), Pop(Int(1)))
 
 def test_global_put():
-    expr = App.globalPut(Bytes("key"), Int(5))
+    args = [Bytes("key"), Int(5)]
+    expr = App.globalPut(args[0], args[1])
     assert expr.type_of() == TealType.none
     
     expected = TealSimpleBlock([
-        TealOp(Op.byte, "\"key\""),
-        TealOp(Op.int, 5),
-        TealOp(Op.app_global_put)
+        TealOp(args[0], Op.byte, "\"key\""),
+        TealOp(args[1], Op.int, 5),
+        TealOp(expr, Op.app_global_put)
     ])
     
     actual, _ = expr.__teal__()
@@ -197,13 +207,14 @@ def test_global_put_invalid():
         App.globalPut(Bytes("key"), Pop(Int(1)))
 
 def test_local_del():
-    expr = App.localDel(Int(0), Bytes("key"))
+    args = [Int(0), Bytes("key")]
+    expr = App.localDel(args[0], args[1])
     assert expr.type_of() == TealType.none
     
     expected = TealSimpleBlock([
-        TealOp(Op.int, 0),
-        TealOp(Op.byte, "\"key\""),
-        TealOp(Op.app_local_del)
+        TealOp(args[0], Op.int, 0),
+        TealOp(args[1], Op.byte, "\"key\""),
+        TealOp(expr, Op.app_local_del)
     ])
     
     actual, _ = expr.__teal__()
@@ -220,12 +231,13 @@ def test_local_del_invalid():
         App.localDel(Int(1), Int(2))
 
 def test_global_del():
-    expr = App.globalDel(Bytes("key"))
+    arg = Bytes("key")
+    expr = App.globalDel(arg)
     assert expr.type_of() == TealType.none
     
     expected = TealSimpleBlock([
-        TealOp(Op.byte, "\"key\""),
-        TealOp(Op.app_global_del)
+        TealOp(arg, Op.byte, "\"key\""),
+        TealOp(expr, Op.app_global_del)
     ])
     
     actual, _ = expr.__teal__()

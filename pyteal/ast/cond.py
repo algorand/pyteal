@@ -3,7 +3,6 @@ from typing import List
 from ..types import TealType, require_type
 from ..ir import TealOp, Op, TealSimpleBlock, TealConditionalBlock
 from ..errors import TealInputError
-from ..util import new_label
 from .expr import Expr
 from .err import Err
 from .if_ import If
@@ -29,6 +28,7 @@ class Cond(Expr):
                     [Global.group_size() == Int(4), redeem],
                     [Global.group_size() == Int(1), wrapup])
         """
+        super().__init__()
 
         if len(argv) < 1:
             raise TealInputError("Cond requires at least one [condition, value]")
@@ -71,7 +71,7 @@ class Cond(Expr):
                 prevBranch.setFalseBlock(condStart)
             prevBranch = branchBlock
         
-        errBlock = TealSimpleBlock([TealOp(Op.err)])
+        errBlock = TealSimpleBlock([TealOp(self, Op.err)])
         prevBranch.setFalseBlock(errBlock)
         
         return start, end

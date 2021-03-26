@@ -55,15 +55,16 @@ class ScratchLoad(Expr):
             type (optional): The type being loaded from this slot, if known. Defaults to
                 TealType.anytype.
         """
+        super().__init__()
         self.slot = slot
         self.type = type
 
     def __str__(self):
-        return "(Load {})".format(self.slot.__str__())
+        return "(Load {})".format(self.slot)
 
     def __teal__(self):
         from ..ir import TealOp, Op, TealBlock
-        op = TealOp(Op.load, self.slot)
+        op = TealOp(self, Op.load, self.slot)
         return TealBlock.FromOp(op)
 
     def type_of(self):
@@ -81,15 +82,16 @@ class ScratchStore(Expr):
             slot: The slot to store the value in.
             value: The value to store.
         """
+        super().__init__()
         self.slot = slot
         self.value = value
 
     def __str__(self):
-        return "(Store {} {})".format(str(self.slot), str(self.value))
+        return "(Store {} {})".format(self.slot, self.value)
 
     def __teal__(self):
         from ..ir import TealOp, Op, TealBlock
-        op = TealOp(Op.store, self.slot)
+        op = TealOp(self, Op.store, self.slot)
         return TealBlock.FromOp(op, self.value)
 
     def type_of(self):
@@ -110,14 +112,15 @@ class ScratchStackStore(Expr):
         Args:
             slot: The slot to store the value in.
         """
+        super().__init__()
         self.slot = slot
 
     def __str__(self):
-        return "(StackStore {})".format(str(self.slot))
+        return "(StackStore {})".format(self.slot)
 
     def __teal__(self):
         from ..ir import TealOp, Op, TealBlock
-        op = TealOp(Op.store, self.slot)
+        op = TealOp(self, Op.store, self.slot)
         return TealBlock.FromOp(op)
 
     def type_of(self):

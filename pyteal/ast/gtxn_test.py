@@ -19,7 +19,7 @@ def test_gtxn_sender():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "Sender")
+            TealOp(expr, Op.gtxn, i, "Sender")
         ])
 
         actual, _ = expr.__teal__()
@@ -32,7 +32,7 @@ def test_gtxn_fee():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "Fee")
+            TealOp(expr, Op.gtxn, i, "Fee")
         ])
 
         actual, _ = expr.__teal__()
@@ -45,7 +45,7 @@ def test_gtxn_first_valid():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "FirstValid")
+            TealOp(expr, Op.gtxn, i, "FirstValid")
         ])
 
         actual, _ = expr.__teal__()
@@ -58,7 +58,7 @@ def test_gtxn_last_valid():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "LastValid")
+            TealOp(expr, Op.gtxn, i, "LastValid")
         ])
 
         actual, _ = expr.__teal__()
@@ -71,7 +71,7 @@ def test_gtxn_note():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "Note")
+            TealOp(expr, Op.gtxn, i, "Note")
         ])
 
         actual, _ = expr.__teal__()
@@ -84,7 +84,7 @@ def test_gtxn_lease():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "Lease")
+            TealOp(expr, Op.gtxn, i, "Lease")
         ])
 
         actual, _ = expr.__teal__()
@@ -97,7 +97,7 @@ def test_gtxn_receiver():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "Receiver")
+            TealOp(expr, Op.gtxn, i, "Receiver")
         ])
 
         actual, _ = expr.__teal__()
@@ -110,7 +110,7 @@ def test_gtxn_amount():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "Amount")
+            TealOp(expr, Op.gtxn, i, "Amount")
         ])
 
         actual, _ = expr.__teal__()
@@ -123,7 +123,7 @@ def test_gtxn_close_remainder_to():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "CloseRemainderTo")
+            TealOp(expr, Op.gtxn, i, "CloseRemainderTo")
         ])
 
         actual, _ = expr.__teal__()
@@ -136,7 +136,7 @@ def test_gtxn_vote_pk():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "VotePK")
+            TealOp(expr, Op.gtxn, i, "VotePK")
         ])
 
         actual, _ = expr.__teal__()
@@ -149,7 +149,7 @@ def test_gtxn_selection_pk():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "SelectionPK")
+            TealOp(expr, Op.gtxn, i, "SelectionPK")
         ])
 
         actual, _ = expr.__teal__()
@@ -162,7 +162,7 @@ def test_gtxn_vote_first():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "VoteFirst")
+            TealOp(expr, Op.gtxn, i, "VoteFirst")
         ])
 
         actual, _ = expr.__teal__()
@@ -175,7 +175,7 @@ def test_gtxn_vote_last():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "VoteLast")
+            TealOp(expr, Op.gtxn, i, "VoteLast")
         ])
 
         actual, _ = expr.__teal__()
@@ -188,7 +188,7 @@ def test_gtxn_vote_key_dilution():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "VoteKeyDilution")
+            TealOp(expr, Op.gtxn, i, "VoteKeyDilution")
         ])
 
         actual, _ = expr.__teal__()
@@ -201,7 +201,7 @@ def test_gtxn_type():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "Type")
+            TealOp(expr, Op.gtxn, i, "Type")
         ])
 
         actual, _ = expr.__teal__()
@@ -214,7 +214,7 @@ def test_gtxn_type_enum():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "TypeEnum")
+            TealOp(expr, Op.gtxn, i, "TypeEnum")
         ])
 
         actual, _ = expr.__teal__()
@@ -227,7 +227,7 @@ def test_gtxn_xfer_asset():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "XferAsset")
+            TealOp(expr, Op.gtxn, i, "XferAsset")
         ])
 
         actual, _ = expr.__teal__()
@@ -240,7 +240,7 @@ def test_gtxn_asset_amount():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "AssetAmount")
+            TealOp(expr, Op.gtxn, i, "AssetAmount")
         ])
 
         actual, _ = expr.__teal__()
@@ -253,7 +253,7 @@ def test_gtxn_asset_sender():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "AssetSender")
+            TealOp(expr, Op.gtxn, i, "AssetSender")
         ])
 
         actual, _ = expr.__teal__()
@@ -266,7 +266,7 @@ def test_gtxn_asset_receiver():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "AssetReceiver")
+            TealOp(expr, Op.gtxn, i, "AssetReceiver")
         ])
 
         actual, _ = expr.__teal__()
@@ -279,7 +279,7 @@ def test_gtxn_asset_close_to():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "AssetCloseTo")
+            TealOp(expr, Op.gtxn, i, "AssetCloseTo")
         ])
 
         actual, _ = expr.__teal__()
@@ -292,7 +292,7 @@ def test_gtxn_group_index():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "GroupIndex")
+            TealOp(expr, Op.gtxn, i, "GroupIndex")
         ])
 
         actual, _ = expr.__teal__()
@@ -305,7 +305,7 @@ def test_gtxn_id():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "TxID")
+            TealOp(expr, Op.gtxn, i, "TxID")
         ])
 
         actual, _ = expr.__teal__()
@@ -318,7 +318,7 @@ def test_txn_application_id():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "ApplicationID")
+            TealOp(expr, Op.gtxn, i, "ApplicationID")
         ])
 
         actual, _ = expr.__teal__()
@@ -331,7 +331,7 @@ def test_txn_on_completion():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "OnCompletion")
+            TealOp(expr, Op.gtxn, i, "OnCompletion")
         ])
 
         actual, _ = expr.__teal__()
@@ -345,7 +345,7 @@ def test_txn_application_args():
             assert expr.type_of() == TealType.bytes
             
             expected = TealSimpleBlock([
-                TealOp(Op.gtxna, i, "ApplicationArgs", j)
+                TealOp(expr, Op.gtxna, i, "ApplicationArgs", j)
             ])
 
             actual, _ = expr.__teal__()
@@ -358,7 +358,7 @@ def test_txn_application_args_length():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "NumAppArgs")
+            TealOp(expr, Op.gtxn, i, "NumAppArgs")
         ])
 
         actual, _ = expr.__teal__()
@@ -372,7 +372,7 @@ def test_txn_accounts():
             assert expr.type_of() == TealType.bytes
             
             expected = TealSimpleBlock([
-                TealOp(Op.gtxna, i, "Accounts", j)
+                TealOp(expr, Op.gtxna, i, "Accounts", j)
             ])
 
             actual, _ = expr.__teal__()
@@ -385,7 +385,7 @@ def test_txn_accounts_length():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "NumAccounts")
+            TealOp(expr, Op.gtxn, i, "NumAccounts")
         ])
 
         actual, _ = expr.__teal__()
@@ -398,7 +398,7 @@ def test_txn_approval_program():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "ApprovalProgram")
+            TealOp(expr, Op.gtxn, i, "ApprovalProgram")
         ])
 
         actual, _ = expr.__teal__()
@@ -411,7 +411,7 @@ def test_txn_clear_state_program():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "ClearStateProgram")
+            TealOp(expr, Op.gtxn, i, "ClearStateProgram")
         ])
 
         actual, _ = expr.__teal__()
@@ -424,7 +424,7 @@ def test_txn_rekey_to():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "RekeyTo")
+            TealOp(expr, Op.gtxn, i, "RekeyTo")
         ])
 
         actual, _ = expr.__teal__()
@@ -437,7 +437,7 @@ def test_txn_config_asset():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "ConfigAsset")
+            TealOp(expr, Op.gtxn, i, "ConfigAsset")
         ])
 
         actual, _ = expr.__teal__()
@@ -450,7 +450,7 @@ def test_txn_config_asset_total():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "ConfigAssetTotal")
+            TealOp(expr, Op.gtxn, i, "ConfigAssetTotal")
         ])
 
         actual, _ = expr.__teal__()
@@ -463,7 +463,7 @@ def test_txn_config_asset_decimals():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "ConfigAssetDecimals")
+            TealOp(expr, Op.gtxn, i, "ConfigAssetDecimals")
         ])
 
         actual, _ = expr.__teal__()
@@ -476,7 +476,7 @@ def test_txn_config_asset_default_frozen():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "ConfigAssetDefaultFrozen")
+            TealOp(expr, Op.gtxn, i, "ConfigAssetDefaultFrozen")
         ])
 
         actual, _ = expr.__teal__()
@@ -489,7 +489,7 @@ def test_txn_config_asset_unit_name():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "ConfigAssetUnitName")
+            TealOp(expr, Op.gtxn, i, "ConfigAssetUnitName")
         ])
 
         actual, _ = expr.__teal__()
@@ -502,7 +502,7 @@ def test_txn_config_asset_name():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "ConfigAssetName")
+            TealOp(expr, Op.gtxn, i, "ConfigAssetName")
         ])
 
         actual, _ = expr.__teal__()
@@ -515,7 +515,7 @@ def test_txn_config_asset_url():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "ConfigAssetURL")
+            TealOp(expr, Op.gtxn, i, "ConfigAssetURL")
         ])
 
         actual, _ = expr.__teal__()
@@ -528,7 +528,7 @@ def test_txn_config_asset_metadata_hash():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "ConfigAssetMetadataHash")
+            TealOp(expr, Op.gtxn, i, "ConfigAssetMetadataHash")
         ])
 
         actual, _ = expr.__teal__()
@@ -541,7 +541,7 @@ def test_txn_config_asset_manager():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "ConfigAssetManager")
+            TealOp(expr, Op.gtxn, i, "ConfigAssetManager")
         ])
 
         actual, _ = expr.__teal__()
@@ -554,7 +554,7 @@ def test_txn_config_asset_reserve():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "ConfigAssetReserve")
+            TealOp(expr, Op.gtxn, i, "ConfigAssetReserve")
         ])
 
         actual, _ = expr.__teal__()
@@ -567,7 +567,7 @@ def test_txn_config_asset_freeze():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "ConfigAssetFreeze")
+            TealOp(expr, Op.gtxn, i, "ConfigAssetFreeze")
         ])
 
         actual, _ = expr.__teal__()
@@ -580,7 +580,7 @@ def test_txn_config_asset_clawback():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "ConfigAssetClawback")
+            TealOp(expr, Op.gtxn, i, "ConfigAssetClawback")
         ])
 
         actual, _ = expr.__teal__()
@@ -593,7 +593,7 @@ def test_txn_freeze_asset():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "FreezeAsset")
+            TealOp(expr, Op.gtxn, i, "FreezeAsset")
         ])
 
         actual, _ = expr.__teal__()
@@ -606,7 +606,7 @@ def test_txn_freeze_asset_account():
         assert expr.type_of() == TealType.bytes
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "FreezeAssetAccount")
+            TealOp(expr, Op.gtxn, i, "FreezeAssetAccount")
         ])
 
         actual, _ = expr.__teal__()
@@ -619,7 +619,7 @@ def test_txn_freeze_asset_frozen():
         assert expr.type_of() == TealType.uint64
         
         expected = TealSimpleBlock([
-            TealOp(Op.gtxn, i, "FreezeAssetFrozen")
+            TealOp(expr, Op.gtxn, i, "FreezeAssetFrozen")
         ])
 
         actual, _ = expr.__teal__()

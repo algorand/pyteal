@@ -3,12 +3,13 @@ import pytest
 from .. import *
 
 def test_if_int():
-    expr = If(Int(0), Int(1), Int(2))
+    args = [Int(0), Int(1), Int(2)]
+    expr = If(args[0], args[1], args[2])
     assert expr.type_of() == TealType.uint64
 
-    expected, _ = Int(0).__teal__()
-    thenBlock, _ = Int(1).__teal__()
-    elseBlock, _ = Int(2).__teal__()
+    expected, _ = args[0].__teal__()
+    thenBlock, _ = args[1].__teal__()
+    elseBlock, _ = args[2].__teal__()
     expectedBranch = TealConditionalBlock([])
     expectedBranch.setTrueBlock(thenBlock)
     expectedBranch.setFalseBlock(elseBlock)
@@ -22,12 +23,13 @@ def test_if_int():
     assert actual == expected
 
 def test_if_bytes():
-    expr = If(Int(1), Txn.sender(), Txn.receiver())
+    args = [Int(1), Txn.sender(), Txn.receiver()]
+    expr = If(args[0], args[1], args[2])
     assert expr.type_of() == TealType.bytes
 
-    expected, _ = Int(1).__teal__()
-    thenBlock, _ = Txn.sender().__teal__()
-    elseBlock, _ = Txn.receiver().__teal__()
+    expected, _ = args[0].__teal__()
+    thenBlock, _ = args[1].__teal__()
+    elseBlock, _ = args[2].__teal__()
     expectedBranch = TealConditionalBlock([])
     expectedBranch.setTrueBlock(thenBlock)
     expectedBranch.setFalseBlock(elseBlock)
@@ -41,12 +43,13 @@ def test_if_bytes():
     assert actual == expected
 
 def test_if_none():
-    expr = If(Int(0), Pop(Txn.sender()), Pop(Txn.receiver()))
+    args = [Int(0), Pop(Txn.sender()), Pop(Txn.receiver())]
+    expr = If(args[0], args[1], args[2])
     assert expr.type_of() == TealType.none
 
-    expected, _ = Int(0).__teal__()
-    thenBlockStart, thenBlockEnd = Pop(Txn.sender()).__teal__()
-    elseBlockStart, elseBlockEnd = Pop(Txn.receiver()).__teal__()
+    expected, _ = args[0].__teal__()
+    thenBlockStart, thenBlockEnd = args[1].__teal__()
+    elseBlockStart, elseBlockEnd = args[2].__teal__()
     expectedBranch = TealConditionalBlock([])
     expectedBranch.setTrueBlock(thenBlockStart)
     expectedBranch.setFalseBlock(elseBlockStart)
@@ -60,11 +63,12 @@ def test_if_none():
     assert actual == expected
 
 def test_if_single():
-    expr = If(Int(1), Pop(Int(1)))
+    args = [Int(1), Pop(Int(1))]
+    expr = If(args[0], args[1])
     assert expr.type_of() == TealType.none
 
-    expected, _ = Int(1).__teal__()
-    thenBlockStart, thenBlockEnd = Pop(Int(1)).__teal__()
+    expected, _ = args[0].__teal__()
+    thenBlockStart, thenBlockEnd = args[1].__teal__()
     end = TealSimpleBlock([])
     expectedBranch = TealConditionalBlock([])
     expectedBranch.setTrueBlock(thenBlockStart)

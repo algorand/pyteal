@@ -15,6 +15,8 @@ class Int(LeafExpr):
             value: The integer value this uint64 will represent. Must be a positive value less than
                 2**64.
         """
+        super().__init__()
+        
         if type(value) is not int:
             raise TealInputError("invalid input type {} to Int".format(type(value))) 
         elif value >= 0 and value < 2 ** 64:
@@ -23,7 +25,7 @@ class Int(LeafExpr):
             raise TealInputError("Int {} is out of range".format(value))
 
     def __teal__(self):
-        op = TealOp(Op.int, self.value)
+        op = TealOp(self, Op.int, self.value)
         return TealBlock.FromOp(op)
 
     def __str__(self):
@@ -43,10 +45,11 @@ class EnumInt(LeafExpr):
         Args:
             name: The name of the enum value.
         """
+        super().__init__()
         self.name = name
 
     def __teal__(self):
-        op = TealOp(Op.int, self.name)
+        op = TealOp(self, Op.int, self.name)
         return TealBlock.FromOp(op)
 
     def __str__(self):

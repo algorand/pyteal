@@ -24,6 +24,8 @@ class Seq(Expr):
                     Int(1)
                 ])
         """
+        super().__init__()
+        
         if len(exprs) == 0:
             raise TealInputError("Seq requires children.")
         for i, expr in enumerate(exprs):

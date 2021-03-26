@@ -5,11 +5,8 @@ from .leafexpr import LeafExpr
 class Err(LeafExpr):
     """Expression that causes the program to immediately fail when executed."""
 
-    def __init__(self):
-        pass
-
     def __teal__(self):
-        op = TealOp(Op.err)
+        op = TealOp(self, Op.err)
         return TealBlock.FromOp(op)
 
     def __str__(self):

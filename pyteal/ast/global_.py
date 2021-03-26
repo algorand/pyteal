@@ -29,10 +29,11 @@ class Global(LeafExpr):
     """An expression that accesses a global property."""
 
     def __init__(self, field: GlobalField) -> None:
+        super().__init__()
         self.field = field
 
     def __teal__(self):
-        op = TealOp(Op.global_, self.field.arg_name)
+        op = TealOp(self, Op.global_, self.field.arg_name)
         return TealBlock.FromOp(op)
          
     def __str__(self):

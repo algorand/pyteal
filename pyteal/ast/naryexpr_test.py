@@ -3,13 +3,14 @@ import pytest
 from .. import *
 
 def test_and_two():
-    expr = And(Int(1), Int(2))
+    args = [Int(1), Int(2)]
+    expr = And(args[0], args[1])
     assert expr.type_of() == TealType.uint64
 
     expected = TealSimpleBlock([
-        TealOp(Op.int, 1),
-        TealOp(Op.int, 2),
-        TealOp(Op.logic_and)
+        TealOp(args[0], Op.int, 1),
+        TealOp(args[1], Op.int, 2),
+        TealOp(expr, Op.logic_and)
     ])
 
     actual, _ = expr.__teal__()
@@ -19,15 +20,16 @@ def test_and_two():
     assert actual == expected
 
 def test_and_three():
-    expr = And(Int(1), Int(2), Int(3))
+    args = [Int(1), Int(2), Int(3)]
+    expr = And(args[0], args[1], args[2])
     assert expr.type_of() == TealType.uint64
     
     expected = TealSimpleBlock([
-        TealOp(Op.int, 1),
-        TealOp(Op.int, 2),
-        TealOp(Op.logic_and),
-        TealOp(Op.int, 3),
-        TealOp(Op.logic_and)
+        TealOp(args[0], Op.int, 1),
+        TealOp(args[1], Op.int, 2),
+        TealOp(expr, Op.logic_and),
+        TealOp(args[2], Op.int, 3),
+        TealOp(expr, Op.logic_and)
     ])
 
     actual, _ = expr.__teal__()
@@ -37,13 +39,14 @@ def test_and_three():
     assert actual == expected
 
 def test_and_overload():
-    expr = Int(1).And(Int(2))
+    args = [Int(1), Int(2)]
+    expr = args[0].And(args[1])
     assert expr.type_of() == TealType.uint64
 
     expected = TealSimpleBlock([
-        TealOp(Op.int, 1),
-        TealOp(Op.int, 2),
-        TealOp(Op.logic_and)
+        TealOp(args[0], Op.int, 1),
+        TealOp(args[1], Op.int, 2),
+        TealOp(expr, Op.logic_and)
     ])
 
     actual, _ = expr.__teal__()
@@ -69,13 +72,14 @@ def test_and_invalid():
         And(Txn.receiver(), Txn.receiver())
 
 def test_or_two():
-    expr = Or(Int(1), Int(0))
+    args = [Int(1), Int(0)]
+    expr = Or(args[0], args[1])
     assert expr.type_of() == TealType.uint64
     
     expected = TealSimpleBlock([
-        TealOp(Op.int, 1),
-        TealOp(Op.int, 0),
-        TealOp(Op.logic_or)
+        TealOp(args[0], Op.int, 1),
+        TealOp(args[1], Op.int, 0),
+        TealOp(expr, Op.logic_or)
     ])
 
     actual, _ = expr.__teal__()
@@ -85,15 +89,16 @@ def test_or_two():
     assert actual == expected
 
 def test_or_three():
-    expr = Or(Int(0), Int(1), Int(2))
+    args = [Int(0), Int(1), Int(2)]
+    expr = Or(args[0], args[1], args[2])
     assert expr.type_of() == TealType.uint64
     
     expected = TealSimpleBlock([
-        TealOp(Op.int, 0),
-        TealOp(Op.int, 1),
-        TealOp(Op.logic_or),
-        TealOp(Op.int, 2),
-        TealOp(Op.logic_or)
+        TealOp(args[0], Op.int, 0),
+        TealOp(args[1], Op.int, 1),
+        TealOp(expr, Op.logic_or),
+        TealOp(args[2], Op.int, 2),
+        TealOp(expr, Op.logic_or)
     ])
 
     actual, _ = expr.__teal__()
@@ -103,13 +108,14 @@ def test_or_three():
     assert actual == expected
 
 def test_or_overload():
-    expr = Int(1).Or(Int(0))
+    args = [Int(1), Int(0)]
+    expr = args[0].Or(args[1])
     assert expr.type_of() == TealType.uint64
     
     expected = TealSimpleBlock([
-        TealOp(Op.int, 1),
-        TealOp(Op.int, 0),
-        TealOp(Op.logic_or)
+        TealOp(args[0], Op.int, 1),
+        TealOp(args[1], Op.int, 0),
+        TealOp(expr, Op.logic_or)
     ])
 
     actual, _ = expr.__teal__()

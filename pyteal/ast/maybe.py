@@ -18,6 +18,7 @@ class MaybeValue(LeafExpr):
             immediate_args (optional): Immediate arguments for the op. Defaults to None.
             args (optional): Stack arguments for the op. Defaults to None.
         """
+        super().__init__()
         self.op = op
         self.type = type
         if immediate_args != None:
@@ -63,7 +64,7 @@ class MaybeValue(LeafExpr):
         return ret_str
     
     def __teal__(self):
-        callStart, callEnd = TealBlock.FromOp(TealOp(self.op, *self.immediate_args), *self.args)
+        callStart, callEnd = TealBlock.FromOp(TealOp(self, self.op, *self.immediate_args), *self.args)
 
         storeOk = self.slotOk.store()
         storeValue = self.slotValue.store()

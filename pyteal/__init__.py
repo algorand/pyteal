@@ -4,8 +4,7 @@ from .ir import *
 from .ir import __all__ as ir_all
 from .compiler import compileTeal
 from .types import TealType
-from .errors import TealInternalError, TealTypeError, TealInputError
-from .util import execute
+from .errors import TealInternalError, TealTypeError, TealInputError, TealCompileError
 from .config import MAX_GROUP_SIZE
 
 __all__ = ast_all + ir_all + [
@@ -14,6 +13,6 @@ __all__ = ast_all + ir_all + [
     "TealInternalError",
     "TealTypeError",
     "TealInputError",
-    "execute",
+    "TealCompileError",
     "MAX_GROUP_SIZE",
 ]

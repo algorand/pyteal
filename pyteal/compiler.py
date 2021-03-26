@@ -64,7 +64,7 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             nextIndex = blocks.index(simpleBlock.nextBlock, i+1)
             if nextIndex != i + 1:
                 references[nextIndex] += 1
-                code.append(TealOp(Op.b, indexToLabel(nextIndex)))
+                code.append(TealOp(None, Op.b, indexToLabel(nextIndex)))
         elif type(block) is TealConditionalBlock:
             conditionalBlock = cast(TealConditionalBlock, block)
             assert conditionalBlock.trueBlock is not None
@@ -75,26 +75,26 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
 
             if falseIndex == i + 1:
                 references[trueIndex] += 1
-                code.append(TealOp(Op.bnz, indexToLabel(trueIndex)))
+                code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex)))
                 continue
 
             if trueIndex == i + 1:
                 references[falseIndex] += 1
-                code.append(TealOp(Op.bz, indexToLabel(falseIndex)))
+                code.append(TealOp(None, Op.bz, indexToLabel(falseIndex)))
                 continue
 
             references[trueIndex] += 1
-            code.append(TealOp(Op.bnz, indexToLabel(trueIndex)))
+            code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex)))
 
             references[falseIndex] += 1
-            code.append(TealOp(Op.b, indexToLabel(falseIndex)))
+            code.append(TealOp(None, Op.b, indexToLabel(falseIndex)))
         else:
             raise TealInternalError("Unrecognized block type: {}".format(type(block)))
 
     teal: List[TealComponent] = []
     for i, code in enumerate(codeblocks):
         if references[i] != 0:
-            teal.append(TealLabel(indexToLabel(i)))
+            teal.append(TealLabel(None, indexToLabel(i)))
         teal += code
 
     return teal
@@ -145,17 +145,22 @@ def compileTeal(ast: Expr, mode: Mode, version: int = DEFAULT_TEAL_VERSION) -> s
         A TEAL assembly program compiled from the input expression.
 
     Raises:
-        TealInputError: if an operation in ast is not supported by the supplied mode.
+        TealInputError: if an operation in ast is not supported by the supplied mode and version.
     """
-    if not (MIN_TEAL_VERSION <= version <= MAX_TEAL_VERSION):
-        raise TealInputError("Unsupported TEAL version: {}. Excepted a number in the range [{}, {}]".format(version, MIN_TEAL_VERSION, MAX_TEAL_VERSION))
+    if not (MIN_TEAL_VERSION <= version <= MAX_TEAL_VERSION) or type(version) != int:
+        raise TealInputError("Unsupported TEAL version: {}. Excepted an integer in the range [{}, {}]".format(version, MIN_TEAL_VERSION, MAX_TEAL_VERSION))
 
     start, _ = ast.__teal__()
     start.addIncoming()
-    start.validate()
+    start.validateTree()
 
     start = TealBlock.NormalizeBlocks(start)
-    start.validate()
+    start.validateTree()
+    
+    errors = start.validateSlots()
+    if len(errors) > 0:
+        msg = 'Encountered {} error{} during compilation'.format(len(errors), 's' if len(errors) != 1 else '')
+        raise TealInternalError(msg) from errors[0]
 
     order = sortBlocks(start)
     teal = flattenBlocks(order)
@@ -170,15 +175,11 @@ def compileTeal(ast: Expr, mode: Mode, version: int = DEFAULT_TEAL_VERSION) -> s
     
     if len(slots) > NUM_SLOTS:
         # TODO: identify which slots can be reused
-        raise TealInternalError("Too many slots in use: {}, maximum is {}".format(slots, NUM_SLOTS))
+        raise TealInternalError("Too many slots in use: {}, maximum is {}".format(len(slots), NUM_SLOTS))
     
-    # TODO: convert slots to a list with a defined order so that generated code is deterministic
-    location = 0
-    while len(slots) > 0:
-        slot = slots.pop()
+    for index, slot in enumerate(sorted(slots, key=lambda slot: slot.id)):
         for stmt in teal:
-            stmt.assignSlot(slot, location)
-        location += 1
+            stmt.assignSlot(slot, index)
 
     lines = ["#pragma version {}".format(version)]
     lines += [i.assemble() for i in teal]

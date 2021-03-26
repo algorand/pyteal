@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List, Tuple, Iterator, cast, TYPE_CHECKING
+from typing import Optional, List, Tuple, Set, Iterator, cast, TYPE_CHECKING
 
 from .tealop import TealOp, Op
+from ..errors import TealCompileError
 if TYPE_CHECKING:
-    from ..ast import Expr
+    from ..ast import Expr, ScratchSlot
     from .tealsimpleblock import TealSimpleBlock
 
 class TealBlock(ABC):
@@ -30,7 +31,7 @@ class TealBlock(ABC):
                 return True
         return len(self.getOutgoing()) == 0
     
-    def validate(self, parent: 'TealBlock' = None) -> None:
+    def validateTree(self, parent: 'TealBlock' = None) -> None:
         """Check that this block and its children have valid parent pointers.
 
         Args:
@@ -44,7 +45,7 @@ class TealBlock(ABC):
             assert count == 1
         
         for block in self.getOutgoing():
-            block.validate(self)
+            block.validateTree(self)
     
     def addIncoming(self, block: 'TealBlock' = None) -> None:
         """Calculate the parent blocks for this block and its children.
@@ -58,6 +59,42 @@ class TealBlock(ABC):
         for block in self.getOutgoing():
             block.addIncoming(self)
     
+    def validateSlots(self, slotsInUse: Set['ScratchSlot'] = None, visited: Set[Tuple[int, ...]] = None) -> List[TealCompileError]:
+        import traceback
+
+        if visited is None:
+            visited = set()
+
+        if slotsInUse is None:
+            slotsInUse = set()
+
+        currentSlotsInUse = set(slotsInUse)
+        errors = []
+
+        for op in self.ops:
+            if op.getOp() == Op.store:
+                for slot in op.getSlots():
+                    currentSlotsInUse.add(slot)
+
+            if op.getOp() == Op.load:
+                for slot in op.getSlots():
+                    if slot not in currentSlotsInUse:
+                        e = TealCompileError("Scratch slot load occurs before store", op.expr)
+                        errors.append(e)
+        
+        if not self.isTerminal():
+            sortedSlots = sorted(slot.id for slot in currentSlotsInUse)
+            for block in self.getOutgoing():
+                visitedKey = (id(block), *sortedSlots)
+                if visitedKey in visited:
+                    continue
+                for error in block.validateSlots(currentSlotsInUse, visited):
+                    if error not in errors:
+                        errors.append(error)
+                visited.add(visitedKey)
+
+        return errors
+
     @abstractmethod
     def __repr__(self) -> str:
         pass
