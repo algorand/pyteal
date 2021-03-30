@@ -8,5 +8,5 @@ def test_err():
     expected = TealSimpleBlock([
         TealOp(expr, Op.err)
     ])
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(CompileOptions())
     assert actual == expected

@@ -5,6 +5,7 @@ from .tealop import TealOp, Op
 from ..errors import TealCompileError
 if TYPE_CHECKING:
     from ..ast import Expr, ScratchSlot
+    from ..compiler import CompileOptions
     from .tealsimpleblock import TealSimpleBlock
 
 class TealBlock(ABC):
@@ -120,7 +121,7 @@ class TealBlock(ABC):
         pass
 
     @classmethod
-    def FromOp(cls, op: TealOp, *args: 'Expr') -> Tuple['TealBlock', 'TealSimpleBlock']:
+    def FromOp(cls, options: 'CompileOptions', op: TealOp, *args: 'Expr') -> Tuple['TealBlock', 'TealSimpleBlock']:
         """Create a path of blocks from a TealOp and its arguments.
 
         Returns:
@@ -135,7 +136,7 @@ class TealBlock(ABC):
         start = None
         prevArgEnd = None
         for i, arg in enumerate(args):
-            argStart, argEnd = arg.__teal__()
+            argStart, argEnd = arg.__teal__(options)
             if i == 0:
                 start = argStart
             else:

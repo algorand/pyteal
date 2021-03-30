@@ -1,6 +1,11 @@
+from typing import TYPE_CHECKING
+
 from ..types import TealType, require_type
 from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 class BinaryExpr(Expr):
     """An expression with two arguments."""
@@ -14,8 +19,8 @@ class BinaryExpr(Expr):
         self.argLeft = argLeft
         self.argRight = argRight
 
-    def __teal__(self):
-        return TealBlock.FromOp(TealOp(self, self.op), self.argLeft, self.argRight)
+    def __teal__(self, options: 'CompileOptions'):
+        return TealBlock.FromOp(options, TealOp(self, self.op), self.argLeft, self.argRight)
     
     def __str__(self):
         return "({} {} {})".format(self.op, self.argLeft, self.argRight)

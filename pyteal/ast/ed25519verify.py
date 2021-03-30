@@ -1,6 +1,11 @@
+from typing import TYPE_CHECKING
+
 from ..types import TealType, require_type
 from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 class Ed25519Verify(Expr):
     """An expression to verify ed25519 signatures."""
@@ -24,8 +29,8 @@ class Ed25519Verify(Expr):
         self.sig = sig
         self.key = key
 
-    def __teal__(self):
-        return TealBlock.FromOp(TealOp(self, Op.ed25519verify), self.data, self.sig, self.key)
+    def __teal__(self, options: 'CompileOptions'):
+        return TealBlock.FromOp(options, TealOp(self, Op.ed25519verify), self.data, self.sig, self.key)
 
     def __str__(self):
         return "(ed25519verify {} {} {})".format(self.data, self.sig, self.key)

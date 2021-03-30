@@ -2,6 +2,8 @@ import pytest
 
 from .. import *
 
+options = CompileOptions()
+
 def test_bytes_base32_no_padding():
     for s in ("ME", "MFRA", "MFRGG", "MFRGGZA", "MFRGGZDF", "7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M"):
         expr = Bytes("base32", s)
@@ -9,7 +11,7 @@ def test_bytes_base32_no_padding():
         expected = TealSimpleBlock([
             TealOp(expr, Op.byte, "base32(" + s + ")")
         ])
-        actual, _ = expr.__teal__()
+        actual, _ = expr.__teal__(options)
         assert actual == expected
 
 def test_bytes_base32_padding():
@@ -19,7 +21,7 @@ def test_bytes_base32_padding():
         expected = TealSimpleBlock([
             TealOp(expr, Op.byte, "base32(" + s + ")")
         ])
-        actual, _ = expr.__teal__()
+        actual, _ = expr.__teal__(options)
         assert actual == expected
 
 def test_bytes_base32_empty():
@@ -28,7 +30,7 @@ def test_bytes_base32_empty():
     expected = TealSimpleBlock([
         TealOp(expr, Op.byte, "base32()")
     ])
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     assert actual == expected
 
 def test_bytes_base64():
@@ -37,7 +39,7 @@ def test_bytes_base64():
     expected = TealSimpleBlock([
         TealOp(expr, Op.byte, "base64(Zm9vYmE=)")
     ])
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     assert actual == expected
 
 def test_bytes_base64_empty():
@@ -46,7 +48,7 @@ def test_bytes_base64_empty():
     expected = TealSimpleBlock([
         TealOp(expr, Op.byte, "base64()")
     ])
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     assert actual == expected
 
 def test_bytes_base16():
@@ -55,7 +57,7 @@ def test_bytes_base16():
     expected = TealSimpleBlock([
         TealOp(expr, Op.byte, "0xA21212EF")
     ])
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     assert actual == expected
 
 def test_bytes_base16_prefix():
@@ -64,7 +66,7 @@ def test_bytes_base16_prefix():
     expected = TealSimpleBlock([
         TealOp(expr, Op.byte, "0xA21212EF")
     ])
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     assert actual == expected
 
 def test_bytes_base16_empty():
@@ -73,7 +75,7 @@ def test_bytes_base16_empty():
     expected = TealSimpleBlock([
         TealOp(expr, Op.byte, "0x")
     ])
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     assert actual == expected
 
 def test_bytes_utf8():
@@ -82,7 +84,7 @@ def test_bytes_utf8():
     expected = TealSimpleBlock([
         TealOp(expr, Op.byte, "\"hello world\"")
     ])
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     assert actual == expected
 
 def test_bytes_utf8_special_chars():
@@ -91,7 +93,7 @@ def test_bytes_utf8_special_chars():
     expected = TealSimpleBlock([
         TealOp(expr, Op.byte, "\"\\t \\n \\r\\n \\\\ \\\" \' \\xf0\\x9f\\x98\\x80\"")
     ])
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     assert actual == expected
 
 def test_bytes_utf8_empty():
@@ -100,7 +102,7 @@ def test_bytes_utf8_empty():
     expected = TealSimpleBlock([
         TealOp(expr, Op.byte, "\"\"")
     ])
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     assert actual == expected
 
 def test_bytes_invalid():

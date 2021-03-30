@@ -1,7 +1,12 @@
+from typing import TYPE_CHECKING
+
 from ..types import TealType, valid_tmpl
 from ..ir import TealOp, Op, TealBlock
 from ..errors import TealInternalError
 from .leafexpr import LeafExpr
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 class Tmpl(LeafExpr):
     """Template expression for creating placeholder values."""
@@ -16,9 +21,9 @@ class Tmpl(LeafExpr):
     def __str__(self):
         return "(Tmpl {} {})".format(self.op, self.name)
 
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
         op = TealOp(self, self.op, self.name)
-        return TealBlock.FromOp(op)
+        return TealBlock.FromOp(options, op)
 
     def type_of(self):
         return self.type

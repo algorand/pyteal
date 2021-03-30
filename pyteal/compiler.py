@@ -6,9 +6,15 @@ from .ir import Op, Mode, TealComponent, TealOp, TealLabel, TealBlock, TealSimpl
 from .errors import TealInputError, TealInternalError
 from .config import NUM_SLOTS
 
-MAX_TEAL_VERSION = 2
+MAX_TEAL_VERSION = 3
 MIN_TEAL_VERSION = 2
-DEFAULT_TEAL_VERSION = 2
+DEFAULT_TEAL_VERSION = MIN_TEAL_VERSION
+
+class CompileOptions:
+
+    def __init__(self, *, mode: Mode = Mode.Signature, version: int = DEFAULT_TEAL_VERSION):
+        self.mode = mode
+        self.version = version
 
 def sortBlocks(start: TealBlock) -> List[TealBlock]:
     """Topologically sort the graph which starts with the input TealBlock.
@@ -150,7 +156,9 @@ def compileTeal(ast: Expr, mode: Mode, version: int = DEFAULT_TEAL_VERSION) -> s
     if not (MIN_TEAL_VERSION <= version <= MAX_TEAL_VERSION) or type(version) != int:
         raise TealInputError("Unsupported TEAL version: {}. Excepted an integer in the range [{}, {}]".format(version, MIN_TEAL_VERSION, MAX_TEAL_VERSION))
 
-    start, _ = ast.__teal__()
+    options = CompileOptions(mode=mode, version=version)
+
+    start, _ = ast.__teal__(options)
     start.addIncoming()
     start.validateTree()
 

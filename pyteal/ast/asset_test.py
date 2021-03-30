@@ -2,6 +2,8 @@ import pytest
 
 from .. import *
 
+options = CompileOptions()
+
 def test_asset_holding_balance():
     args = Int(0), Int(17)
     expr = AssetHolding.balance(args[0], args[1])
@@ -16,7 +18,7 @@ def test_asset_holding_balance():
         TealOp(None, Op.store, expr.slotValue)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -44,7 +46,7 @@ def test_asset_holding_frozen():
         TealOp(None, Op.store, expr.slotValue)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -71,7 +73,7 @@ def test_asset_param_total():
         TealOp(None, Op.store, expr.slotValue)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -95,7 +97,7 @@ def test_asset_param_decimals():
         TealOp(None, Op.store, expr.slotValue)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -119,7 +121,7 @@ def test_asset_param_default_frozen():
         TealOp(None, Op.store, expr.slotValue)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -143,7 +145,7 @@ def test_asset_param_unit_name():
         TealOp(None, Op.store, expr.slotValue)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -167,7 +169,7 @@ def test_asset_param_name():
         TealOp(None, Op.store, expr.slotValue)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -191,7 +193,7 @@ def test_asset_param_url():
         TealOp(None, Op.store, expr.slotValue)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -215,7 +217,7 @@ def test_asset_param_metadata_hash():
         TealOp(None, Op.store, expr.slotValue)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -239,7 +241,7 @@ def test_asset_param_manager():
         TealOp(None, Op.store, expr.slotValue)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -263,7 +265,7 @@ def test_asset_param_reserve():
         TealOp(None, Op.store, expr.slotValue)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -287,7 +289,7 @@ def test_asset_param_freeze():
         TealOp(None, Op.store, expr.slotValue)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -311,7 +313,7 @@ def test_asset_param_clawback():
         TealOp(None, Op.store, expr.slotValue)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     

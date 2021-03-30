@@ -2,6 +2,8 @@ import pytest
 
 from .. import *
 
+options = CompileOptions()
+
 def test_and_two():
     args = [Int(1), Int(2)]
     expr = And(args[0], args[1])
@@ -13,7 +15,7 @@ def test_and_two():
         TealOp(expr, Op.logic_and)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -32,7 +34,7 @@ def test_and_three():
         TealOp(expr, Op.logic_and)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -49,7 +51,7 @@ def test_and_overload():
         TealOp(expr, Op.logic_and)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -82,7 +84,7 @@ def test_or_two():
         TealOp(expr, Op.logic_or)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -101,7 +103,7 @@ def test_or_three():
         TealOp(expr, Op.logic_or)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -118,7 +120,7 @@ def test_or_overload():
         TealOp(expr, Op.logic_or)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 

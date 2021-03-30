@@ -2,6 +2,8 @@ import pytest
 
 from .. import *
 
+options = CompileOptions()
+
 def test_int():
     values = [0, 1, 8, 232323, 2**64 - 1]
 
@@ -13,7 +15,7 @@ def test_int():
             TealOp(expr, Op.int, value)
         ])
 
-        actual, _ = expr.__teal__()
+        actual, _ = expr.__teal__(options)
 
         assert actual == expected
 
@@ -38,6 +40,6 @@ def test_enum_int():
         TealOp(expr, Op.int, "OptIn")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
 
     assert actual == expected

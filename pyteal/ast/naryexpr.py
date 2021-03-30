@@ -1,9 +1,12 @@
-from typing import Sequence
+from typing import Sequence, TYPE_CHECKING
 
 from ..types import TealType, require_type
 from ..errors import TealInputError
 from ..ir import TealOp, Op, TealSimpleBlock
 from .expr import Expr
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 class NaryExpr(Expr):
     """N-ary expression base class.
@@ -23,11 +26,11 @@ class NaryExpr(Expr):
         self.outputType = outputType
         self.args = args
 
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
         start = None
         end = None
         for i, arg in enumerate(self.args):
-            argStart, argEnd = arg.__teal__()
+            argStart, argEnd = arg.__teal__(options)
             if i == 0:
                 start = argStart
                 end = argEnd

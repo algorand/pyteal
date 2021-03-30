@@ -2,6 +2,7 @@ import pytest
 
 from .. import *
 
+options = CompileOptions()
 
 def test_scratchvar_type():
     myvar_default = ScratchVar()
@@ -44,7 +45,7 @@ def test_scratchvar_store():
         TealOp(expr, Op.store, myvar.slot),
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -58,7 +59,7 @@ def test_scratchvar_load():
         TealOp(expr, Op.load, myvar.slot)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 

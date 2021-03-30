@@ -1,8 +1,12 @@
+from typing import TYPE_CHECKING
 from enum import Enum
 
 from ..types import TealType
 from ..ir import TealOp, Op, TealBlock
 from .leafexpr import LeafExpr
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 class GlobalField(Enum):
     min_txn_fee = (0, "MinTxnFee", TealType.uint64)
@@ -32,9 +36,9 @@ class Global(LeafExpr):
         super().__init__()
         self.field = field
 
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
         op = TealOp(self, Op.global_, self.field.arg_name)
-        return TealBlock.FromOp(op)
+        return TealBlock.FromOp(options, op)
          
     def __str__(self):
         return "(Global {})".format(self.field.arg_name)

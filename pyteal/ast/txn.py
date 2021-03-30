@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
 
 from ..types import TealType
 from ..errors import TealInputError
@@ -7,6 +7,9 @@ from ..ir import TealOp, Op, TealBlock
 from .leafexpr import LeafExpr
 from .int import EnumInt
 from .array import Array
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 class TxnType:
     """Enum of all possible transaction types."""
@@ -90,9 +93,9 @@ class TxnExpr(LeafExpr):
     def __str__(self):
         return "(Txn {})".format(self.field.arg_name)
 
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
         op = TealOp(self, Op.txn, self.field.arg_name)
-        return TealBlock.FromOp(op)
+        return TealBlock.FromOp(options, op)
     
     def type_of(self):
         return self.field.type_of()
@@ -110,9 +113,9 @@ class TxnaExpr(LeafExpr):
     def __str__(self):
         return "(Txna {} {})".format(self.field.arg_name, self.index)
     
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
         op = TealOp(self, Op.txna, self.field.arg_name, self.index)
-        return TealBlock.FromOp(op)
+        return TealBlock.FromOp(options, op)
     
     def type_of(self):
         return self.field.type_of()

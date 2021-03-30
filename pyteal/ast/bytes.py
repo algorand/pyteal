@@ -1,8 +1,13 @@
+from typing import TYPE_CHECKING
+
 from ..types import TealType, valid_base16, valid_base32, valid_base64
 from ..util import escapeStr
 from ..ir import TealOp, Op, TealBlock
 from ..errors import TealInputError
 from .leafexpr import LeafExpr
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 class Bytes(LeafExpr):
     """An expression that represents a byte string."""
@@ -45,7 +50,7 @@ class Bytes(LeafExpr):
         else:
             raise TealInputError("Only 1 or 2 arguments are expected for Bytes constructor, you provided {}".format(len(args)))
 
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
         if self.base == "utf8":
             payload = self.byte_str
         elif self.base == "base16":
@@ -53,7 +58,7 @@ class Bytes(LeafExpr):
         else:
             payload = "{}({})".format(self.base, self.byte_str)
         op = TealOp(self, Op.byte, payload)
-        return TealBlock.FromOp(op)
+        return TealBlock.FromOp(options, op)
 
     def __str__(self):
         return "({} bytes: {})".format(self.base, self.byte_str)

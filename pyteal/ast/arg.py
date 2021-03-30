@@ -1,7 +1,12 @@
+from typing import TYPE_CHECKING
+
 from ..types import TealType
 from ..ir import TealOp, Op, TealBlock
 from ..errors import TealInputError
 from .leafexpr import LeafExpr
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 class Arg(LeafExpr):
     """An expression to get an argument when running in signature verification mode."""
@@ -25,9 +30,9 @@ class Arg(LeafExpr):
 
         self.index = index
 
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
         op = TealOp(self, Op.arg, self.index)
-        return TealBlock.FromOp(op)
+        return TealBlock.FromOp(options, op)
         
     def __str__(self):
         return "(arg {})".format(self.index)

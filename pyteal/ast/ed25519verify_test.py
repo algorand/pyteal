@@ -14,7 +14,7 @@ def test_ed25519verify():
         TealOp(expr, Op.ed25519verify)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(CompileOptions())
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     

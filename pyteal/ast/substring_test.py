@@ -14,7 +14,7 @@ def test_substring():
         TealOp(expr, Op.substring3)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(CompileOptions())
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 

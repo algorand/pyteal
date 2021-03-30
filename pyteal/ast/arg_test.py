@@ -8,7 +8,7 @@ def test_arg():
     expected = TealSimpleBlock([
         TealOp(expr, Op.arg, 0)
     ])
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(CompileOptions())
     assert actual == expected
 
 def test_arg_invalid():

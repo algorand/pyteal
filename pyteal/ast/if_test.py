@@ -2,14 +2,16 @@ import pytest
 
 from .. import *
 
+options = CompileOptions()
+
 def test_if_int():
     args = [Int(0), Int(1), Int(2)]
     expr = If(args[0], args[1], args[2])
     assert expr.type_of() == TealType.uint64
 
-    expected, _ = args[0].__teal__()
-    thenBlock, _ = args[1].__teal__()
-    elseBlock, _ = args[2].__teal__()
+    expected, _ = args[0].__teal__(options)
+    thenBlock, _ = args[1].__teal__(options)
+    elseBlock, _ = args[2].__teal__(options)
     expectedBranch = TealConditionalBlock([])
     expectedBranch.setTrueBlock(thenBlock)
     expectedBranch.setFalseBlock(elseBlock)
@@ -18,7 +20,7 @@ def test_if_int():
     thenBlock.setNextBlock(end)
     elseBlock.setNextBlock(end)
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
 
     assert actual == expected
 
@@ -27,9 +29,9 @@ def test_if_bytes():
     expr = If(args[0], args[1], args[2])
     assert expr.type_of() == TealType.bytes
 
-    expected, _ = args[0].__teal__()
-    thenBlock, _ = args[1].__teal__()
-    elseBlock, _ = args[2].__teal__()
+    expected, _ = args[0].__teal__(options)
+    thenBlock, _ = args[1].__teal__(options)
+    elseBlock, _ = args[2].__teal__(options)
     expectedBranch = TealConditionalBlock([])
     expectedBranch.setTrueBlock(thenBlock)
     expectedBranch.setFalseBlock(elseBlock)
@@ -38,7 +40,7 @@ def test_if_bytes():
     thenBlock.setNextBlock(end)
     elseBlock.setNextBlock(end)
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
 
     assert actual == expected
 
@@ -47,9 +49,9 @@ def test_if_none():
     expr = If(args[0], args[1], args[2])
     assert expr.type_of() == TealType.none
 
-    expected, _ = args[0].__teal__()
-    thenBlockStart, thenBlockEnd = args[1].__teal__()
-    elseBlockStart, elseBlockEnd = args[2].__teal__()
+    expected, _ = args[0].__teal__(options)
+    thenBlockStart, thenBlockEnd = args[1].__teal__(options)
+    elseBlockStart, elseBlockEnd = args[2].__teal__(options)
     expectedBranch = TealConditionalBlock([])
     expectedBranch.setTrueBlock(thenBlockStart)
     expectedBranch.setFalseBlock(elseBlockStart)
@@ -58,7 +60,7 @@ def test_if_none():
     thenBlockEnd.setNextBlock(end)
     elseBlockEnd.setNextBlock(end)
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
 
     assert actual == expected
 
@@ -67,8 +69,8 @@ def test_if_single():
     expr = If(args[0], args[1])
     assert expr.type_of() == TealType.none
 
-    expected, _ = args[0].__teal__()
-    thenBlockStart, thenBlockEnd = args[1].__teal__()
+    expected, _ = args[0].__teal__(options)
+    thenBlockStart, thenBlockEnd = args[1].__teal__(options)
     end = TealSimpleBlock([])
     expectedBranch = TealConditionalBlock([])
     expectedBranch.setTrueBlock(thenBlockStart)
@@ -76,7 +78,7 @@ def test_if_single():
     expected.setNextBlock(expectedBranch)
     thenBlockEnd.setNextBlock(end)
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     
     assert actual == expected
 
