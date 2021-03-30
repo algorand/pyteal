@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from ..types import TealType
 from ..ir import TealOp, Op, TealBlock
-from ..errors import TealInputError
+from ..errors import TealInputError, verifyFieldVersion
 from ..config import MAX_GROUP_SIZE
 from .expr import Expr
 from .leafexpr import LeafExpr
@@ -23,6 +23,8 @@ class GtxnExpr(TxnExpr):
         return "(Gtxn {} {})".format(self.txnIndex, self.field.arg_name)
 
     def __teal__(self, options: 'CompileOptions'):
+        verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
+
         op = TealOp(self, Op.gtxn, self.txnIndex, self.field.arg_name)
         return TealBlock.FromOp(options, op)
 
@@ -39,6 +41,8 @@ class GtxnaExpr(TxnaExpr):
         return "(Gtxna {} {} {})".format(self.index, self.field.arg_name, self.index)
 
     def __teal__(self, options: 'CompileOptions'):
+        verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
+
         op = TealOp(self, Op.gtxna, self.txnIndex, self.field.arg_name, self.index)
         return TealBlock.FromOp(options, op)
 

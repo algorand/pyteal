@@ -51,3 +51,8 @@ class TealCompileError(Exception):
         return self.msg == other.msg and self.sourceExpr is other.sourceExpr
 
 TealCompileError.__module__ = "pyteal"
+
+def verifyFieldVersion(fieldName: str, fieldMinVersion: int, version: int):
+    if fieldMinVersion > version:
+        msg = "TEAL version too low to use field {}. Minimum version needed is {}, but current version being compiled is {}"
+        raise TealInputError(msg.format(fieldName, fieldMinVersion, version))
