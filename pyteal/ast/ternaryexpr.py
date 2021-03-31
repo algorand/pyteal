@@ -63,9 +63,11 @@ def SetBit(value: Expr, index: Expr, newBitValue: Expr) -> TernaryExpr:
     """Set the bit value of an expression at a specific index.
 
     The meaning of index differs if value is an integer or a byte string.
-    * For integers, bit indexing begins with low-order bits. For example, `SetBit(Int(0), Int(4), Int(1))`
+
+    * For integers, bit indexing begins with low-order bits. For example, :code:`SetBit(Int(0), Int(4), Int(1))`
       yields the integer 16 (2^4). Any integer less than 64 is a valid index.
-    * For byte strings, bit indexing begins at the first byte. For example, `SetBit(Bytes("base16", "0x00"), Int(7), Int(1))`
+    
+    * For byte strings, bit indexing begins at the first byte. For example, :code:`SetBit(Bytes("base16", "0x00"), Int(7), Int(1))`
       yields the byte string 0x01. Any integer less than 8*Len(value) is a valid index.
 
     Requires TEAL version 3 or higher.
@@ -80,7 +82,7 @@ def SetBit(value: Expr, index: Expr, newBitValue: Expr) -> TernaryExpr:
 def SetByte(value: Expr, index: Expr, newByteValue: Expr) -> TernaryExpr:
     """Set a single byte in a byte string from an integer value.
 
-    Similar to SetBit, indexing begins at the first byte. For example, `SetByte(Bytes("base16", "0x000000"), Int(0), Int(255))`
+    Similar to SetBit, indexing begins at the first byte. For example, :code:`SetByte(Bytes("base16", "0x000000"), Int(0), Int(255))`
     yields the byte string 0xff0000.
 
     Requires TEAL version 3 or higher.

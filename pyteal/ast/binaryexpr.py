@@ -190,10 +190,12 @@ def GetBit(value: Expr, index: Expr) -> BinaryExpr:
     """Get the bit value of an expression at a specific index.
 
     The meaning of index differs if value is an integer or a byte string.
-    * For integers, bit indexing begins with low-order bits. For example, `GetBit(Int(16), Int(4))`
+
+    * For integers, bit indexing begins with low-order bits. For example, :code:`GetBit(Int(16), Int(4))`
       yields 1. Any other valid index would yield a bit value of 0. Any integer less than 64 is a
       valid index.
-    * For byte strings, bit indexing begins at the first byte. For example, `GetBit(Bytes("base16", "0xf0"), Int(0))`
+    
+    * For byte strings, bit indexing begins at the first byte. For example, :code:`GetBit(Bytes("base16", "0xf0"), Int(0))`
       yields 1. Any index less than 4 would yield 1, and any valid index 4 or greater would yield 0.
       Any integer less than 8*Len(value) is a valid index.
 
@@ -208,7 +210,7 @@ def GetBit(value: Expr, index: Expr) -> BinaryExpr:
 def GetByte(value: Expr, index: Expr) -> BinaryExpr:
     """Extract a single byte as an integer from a byte string.
 
-    Similar to GetBit, indexing begins at the first byte. For example, `GetByte(Bytes("base16", "0xff0000"), Int(0))`
+    Similar to GetBit, indexing begins at the first byte. For example, :code:`GetByte(Bytes("base16", "0xff0000"), Int(0))`
     yields 255. Any other valid index would yield 0.
 
     Requires TEAL version 3 or higher.
