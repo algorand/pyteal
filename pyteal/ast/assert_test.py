@@ -23,6 +23,22 @@ def test_teal_2_assert():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+def test_teal_3_assert():
+    arg = Int(1)
+    expr = Assert(arg)
+    assert expr.type_of() == TealType.none
+
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.int, 1),
+        TealOp(expr, Op.assert_)
+    ])
+    
+    actual, _ = expr.__teal__(teal3Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
 def test_assert_invalid():
     with pytest.raises(TealTypeError):
         Assert(Txn.receiver())
