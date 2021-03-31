@@ -144,8 +144,8 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION) -
         ast: The PyTeal expression to assemble.
         mode: The mode of the program to assemble. Must be Signature or Application.
         version (optional): The TEAL version used to assemble the program. This will determine which
-        expressions and fields are able to be used in the program and how expressions compile to
-        TEAL opcodes. Defaults to 2 if not included.
+            expressions and fields are able to be used in the program and how expressions compile to
+            TEAL opcodes. Defaults to 2 if not included.
 
     Returns:
         A TEAL assembly program compiled from the input expression.
