@@ -693,3 +693,68 @@ def test_ge_invalid():
     
     with pytest.raises(TealTypeError):
         Ge(Txn.receiver(), Int(1))
+
+def test_get_bit_int():
+    args = [Int(3), Int(1)]
+    expr = GetBit(args[0], args[1])
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.int, 3),
+        TealOp(args[1], Op.int, 1),
+        TealOp(expr, Op.getbit)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_get_bit_bytes():
+    args = [Bytes("base16", "0xFF"), Int(1)]
+    expr = GetBit(args[0], args[1])
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.byte, "0xFF"),
+        TealOp(args[1], Op.int, 1),
+        TealOp(expr, Op.getbit)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_get_bit_invalid():
+    with pytest.raises(TealTypeError):
+        GetBit(Int(3), Bytes("index"))
+    
+    with pytest.raises(TealTypeError):
+        GetBit(Bytes("base16", "0xFF"), Bytes("index"))
+
+def test_get_byte():
+    args = [Bytes("base16", "0xFF"), Int(0)]
+    expr = GetByte(args[0], args[1])
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.byte, "0xFF"),
+        TealOp(args[1], Op.int, 0),
+        TealOp(expr, Op.getbyte)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_get_byte_invalid():
+    with pytest.raises(TealTypeError):
+        GetByte(Int(3), Int(0))
+    
+    with pytest.raises(TealTypeError):
+        GetBit(Bytes("base16", "0xFF"), Bytes("index"))
