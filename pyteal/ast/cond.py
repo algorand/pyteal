@@ -1,4 +1,4 @@
-from typing import List, TYPE_CHECKING
+from typing import List, cast, TYPE_CHECKING
 
 from ..types import TealType, require_type
 from ..ir import TealOp, Op, TealSimpleBlock, TealConditionalBlock
@@ -71,11 +71,11 @@ class Cond(Expr):
             if i == 0:
                 start = condStart
             else:
-                prevBranch.setFalseBlock(condStart)
+                cast(TealConditionalBlock, prevBranch).setFalseBlock(condStart)
             prevBranch = branchBlock
         
         errBlock = TealSimpleBlock([TealOp(self, Op.err)])
-        prevBranch.setFalseBlock(errBlock)
+        cast(TealConditionalBlock, prevBranch).setFalseBlock(errBlock)
         
         return start, end
 

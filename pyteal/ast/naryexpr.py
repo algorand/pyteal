@@ -1,4 +1,4 @@
-from typing import Sequence, TYPE_CHECKING
+from typing import Sequence, cast, TYPE_CHECKING
 
 from ..types import TealType, require_type
 from ..errors import TealInputError
@@ -35,7 +35,7 @@ class NaryExpr(Expr):
                 start = argStart
                 end = argEnd
             else:
-                end.setNextBlock(argStart)
+                cast(TealSimpleBlock, end).setNextBlock(argStart)
                 opBlock = TealSimpleBlock([TealOp(self, self.op)])
                 argEnd.setNextBlock(opBlock)
                 end = opBlock

@@ -1,10 +1,11 @@
-from typing import List, TYPE_CHECKING
+from typing import List, cast, TYPE_CHECKING
 
 from ..types import TealType, require_type
 from ..errors import TealInputError
 from .expr import Expr
 
 if TYPE_CHECKING:
+    from ..ir import TealSimpleBlock
     from ..compiler import CompileOptions
 
 class Seq(Expr):
@@ -47,7 +48,7 @@ class Seq(Expr):
             if i == 0:
                 start = argStart
             else:
-                end.setNextBlock(argStart)
+                cast('TealSimpleBlock', end).setNextBlock(argStart)
             end = argEnd
 
         return start, end

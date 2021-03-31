@@ -24,14 +24,8 @@ class MaybeValue(LeafExpr):
         super().__init__()
         self.op = op
         self.type = type
-        if immediate_args != None:
-            self.immediate_args = immediate_args
-        else:
-            self.immediate_args = []
-        if args != None:
-            self.args = args
-        else:
-            self.args = []
+        self.immediate_args = immediate_args if immediate_args is not None else []
+        self.args = args if args is not None else []
         self.slotOk = ScratchSlot()
         self.slotValue = ScratchSlot()
     
@@ -67,7 +61,8 @@ class MaybeValue(LeafExpr):
         return ret_str
     
     def __teal__(self, options: 'CompileOptions'):
-        callStart, callEnd = TealBlock.FromOp(options, TealOp(self, self.op, *self.immediate_args), *self.args)
+        tealOp = TealOp(self, self.op, *self.immediate_args)
+        callStart, callEnd = TealBlock.FromOp(options, tealOp, *self.args)
 
         storeOk = self.slotOk.store()
         storeValue = self.slotValue.store()

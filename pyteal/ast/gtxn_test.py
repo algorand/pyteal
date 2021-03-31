@@ -2,7 +2,7 @@ import pytest
 
 from .. import *
 # this is not necessary but mypy complains if it's not included
-from .. import MAX_GROUP_SIZE
+from .. import MAX_GROUP_SIZE, CompileOptions
 
 GTXN_RANGE = range(MAX_GROUP_SIZE)
 
