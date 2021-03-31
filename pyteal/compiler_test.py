@@ -349,13 +349,13 @@ def test_compile_version_invalid():
     expr = Int(1)
 
     with pytest.raises(TealInputError):
-        compileTeal(expr, Mode.Signature, 1) # too small
+        compileTeal(expr, Mode.Signature, version=1) # too small
 
     with pytest.raises(TealInputError):
-        compileTeal(expr, Mode.Signature, 4) # too large
+        compileTeal(expr, Mode.Signature, version=4) # too large
     
     with pytest.raises(TealInputError):
-        compileTeal(expr, Mode.Signature, 2.0) # decimal
+        compileTeal(expr, Mode.Signature, version=2.0) # decimal
 
 def test_compile_version_2():
     expr = Int(1)
@@ -364,14 +364,14 @@ def test_compile_version_2():
 #pragma version 2
 int 1
 """.strip()
-    actual = compileTeal(expr, Mode.Signature, 2)
+    actual = compileTeal(expr, Mode.Signature, version=2)
     assert actual == expected
 
 def test_compile_version_default():
     expr = Int(1)
 
     actual_default = compileTeal(expr, Mode.Signature)
-    actual_version_2 = compileTeal(expr, Mode.Signature, 2)
+    actual_version_2 = compileTeal(expr, Mode.Signature, version=2)
     assert actual_default == actual_version_2
 
 def test_compile_version_3():
@@ -381,27 +381,27 @@ def test_compile_version_3():
 #pragma version 3
 int 1
 """.strip()
-    actual = compileTeal(expr, Mode.Signature, 3)
+    actual = compileTeal(expr, Mode.Signature, version=3)
     assert actual == expected
 
 def test_slot_load_before_store():
 
     program = AssetHolding.balance(Int(0), Int(0)).value()
     with pytest.raises(TealInternalError):
-        compileTeal(program, Mode.Application, 2)
+        compileTeal(program, Mode.Application, version=2)
     
     program = AssetHolding.balance(Int(0), Int(0)).hasValue()
     with pytest.raises(TealInternalError):
-        compileTeal(program, Mode.Application, 2)
+        compileTeal(program, Mode.Application, version=2)
     
     program = App.globalGetEx(Int(0), Bytes("key")).value()
     with pytest.raises(TealInternalError):
-        compileTeal(program, Mode.Application, 2)
+        compileTeal(program, Mode.Application, version=2)
 
     program = App.globalGetEx(Int(0), Bytes("key")).hasValue()
     with pytest.raises(TealInternalError):
-        compileTeal(program, Mode.Application, 2)
+        compileTeal(program, Mode.Application, version=2)
     
     program = ScratchVar().load()
     with pytest.raises(TealInternalError):
-        compileTeal(program, Mode.Application, 2)
+        compileTeal(program, Mode.Application, version=2)
