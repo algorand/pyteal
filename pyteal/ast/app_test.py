@@ -1,29 +1,33 @@
 import pytest
 
 from .. import *
+# this is not necessary but mypy complains if it's not included
+from .. import CompileOptions
+
+options = CompileOptions()
 
 def test_on_complete():
-    assert OnComplete.NoOp.__teal__()[0] == TealSimpleBlock([
+    assert OnComplete.NoOp.__teal__(options)[0] == TealSimpleBlock([
         TealOp(OnComplete.NoOp, Op.int, "NoOp")
     ])
 
-    assert OnComplete.OptIn.__teal__()[0] == TealSimpleBlock([
+    assert OnComplete.OptIn.__teal__(options)[0] == TealSimpleBlock([
         TealOp(OnComplete.OptIn, Op.int, "OptIn")
     ])
 
-    assert OnComplete.CloseOut.__teal__()[0] == TealSimpleBlock([
+    assert OnComplete.CloseOut.__teal__(options)[0] == TealSimpleBlock([
         TealOp(OnComplete.CloseOut, Op.int, "CloseOut")
     ])
 
-    assert OnComplete.ClearState.__teal__()[0] == TealSimpleBlock([
+    assert OnComplete.ClearState.__teal__(options)[0] == TealSimpleBlock([
         TealOp(OnComplete.ClearState, Op.int, "ClearState")
     ])
 
-    assert OnComplete.UpdateApplication.__teal__()[0] == TealSimpleBlock([
+    assert OnComplete.UpdateApplication.__teal__(options)[0] == TealSimpleBlock([
         TealOp(OnComplete.UpdateApplication, Op.int, "UpdateApplication")
     ])
 
-    assert OnComplete.DeleteApplication.__teal__()[0] == TealSimpleBlock([
+    assert OnComplete.DeleteApplication.__teal__(options)[0] == TealSimpleBlock([
         TealOp(OnComplete.DeleteApplication, Op.int, "DeleteApplication")
     ])
 
@@ -31,7 +35,7 @@ def test_app_id():
     expr = App.id()
     assert expr.type_of() == TealType.uint64
     with TealComponent.Context.ignoreExprEquality():
-        assert expr.__teal__()[0] == Global.current_application_id().__teal__()[0]
+        assert expr.__teal__(options)[0] == Global.current_application_id().__teal__(options)[0]
 
 def test_opted_in():
     args = [Int(1), Int(12)]
@@ -44,7 +48,7 @@ def test_opted_in():
         TealOp(expr, Op.app_opted_in)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -61,7 +65,7 @@ def test_local_get():
         TealOp(expr, Op.app_local_get)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -89,7 +93,7 @@ def test_local_get_ex():
         TealOp(None, Op.store, expr.slotValue)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -116,7 +120,7 @@ def test_global_get():
         TealOp(expr, Op.app_global_get)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -140,7 +144,7 @@ def test_global_get_ex():
         TealOp(None, Op.store, expr.slotValue)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -166,7 +170,7 @@ def test_local_put():
         TealOp(expr, Op.app_local_put)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -193,7 +197,7 @@ def test_global_put():
         TealOp(expr, Op.app_global_put)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -217,7 +221,7 @@ def test_local_del():
         TealOp(expr, Op.app_local_del)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     
@@ -240,7 +244,7 @@ def test_global_del():
         TealOp(expr, Op.app_global_del)
     ])
     
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     

@@ -1,13 +1,17 @@
 import pytest
 
 from .. import *
+# this is not necessary but mypy complains if it's not included
+from .. import CompileOptions
+
+options = CompileOptions()
 
 def test_nonce_base32():
     arg = Int(1)
     expr = Nonce("base32", "7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M", arg)
     assert expr.type_of() == TealType.uint64
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -25,7 +29,7 @@ def test_nonce_base32_empty():
     expr = Nonce("base32", "", arg)
     assert expr.type_of() == TealType.uint64
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -43,7 +47,7 @@ def test_nonce_base64():
     expr = Nonce("base64", "Zm9vYmE=", arg)
     assert expr.type_of() == TealType.bytes
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -61,7 +65,7 @@ def test_nonce_base64_empty():
     expr = Nonce("base64", "", arg)
     assert expr.type_of() == TealType.uint64
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -79,7 +83,7 @@ def test_nonce_base16():
     expr = Nonce("base16", "A21212EF", arg)
     assert expr.type_of() == TealType.uint64
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -97,7 +101,7 @@ def test_nonce_base16_prefix():
     expr = Nonce("base16", "0xA21212EF", arg)
     assert expr.type_of() == TealType.uint64
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -115,7 +119,7 @@ def test_nonce_base16_empty():
     expr = Nonce("base16", "", arg)
     assert expr.type_of() == TealType.uint64
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 

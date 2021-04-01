@@ -6,9 +6,15 @@ from .ir import Op, Mode, TealComponent, TealOp, TealLabel, TealBlock, TealSimpl
 from .errors import TealInputError, TealInternalError
 from .config import NUM_SLOTS
 
-MAX_TEAL_VERSION = 2
+MAX_TEAL_VERSION = 3
 MIN_TEAL_VERSION = 2
-DEFAULT_TEAL_VERSION = 2
+DEFAULT_TEAL_VERSION = MIN_TEAL_VERSION
+
+class CompileOptions:
+
+    def __init__(self, *, mode: Mode = Mode.Signature, version: int = DEFAULT_TEAL_VERSION):
+        self.mode = mode
+        self.version = version
 
 def sortBlocks(start: TealBlock) -> List[TealBlock]:
     """Topologically sort the graph which starts with the input TealBlock.
@@ -131,15 +137,15 @@ def verifyOpsForMode(teal: List[TealComponent], mode: Mode):
             if not op.mode & mode:
                 raise TealInputError("Op not supported in {} mode: {}".format(mode.name, op))
 
-def compileTeal(ast: Expr, mode: Mode, version: int = DEFAULT_TEAL_VERSION) -> str:
+def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 
     Args:
         ast: The PyTeal expression to assemble.
         mode: The mode of the program to assemble. Must be Signature or Application.
         version (optional): The TEAL version used to assemble the program. This will determine which
-        expressions and fields are able to be used in the program and how expressions compile to
-        TEAL opcodes. Defaults to 2 if not included.
+            expressions and fields are able to be used in the program and how expressions compile to
+            TEAL opcodes. Defaults to 2 if not included.
 
     Returns:
         A TEAL assembly program compiled from the input expression.
@@ -150,7 +156,9 @@ def compileTeal(ast: Expr, mode: Mode, version: int = DEFAULT_TEAL_VERSION) -> s
     if not (MIN_TEAL_VERSION <= version <= MAX_TEAL_VERSION) or type(version) != int:
         raise TealInputError("Unsupported TEAL version: {}. Excepted an integer in the range [{}, {}]".format(version, MIN_TEAL_VERSION, MAX_TEAL_VERSION))
 
-    start, _ = ast.__teal__()
+    options = CompileOptions(mode=mode, version=version)
+
+    start, _ = ast.__teal__(options)
     start.addIncoming()
     start.validateTree()
 

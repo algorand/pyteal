@@ -1,6 +1,10 @@
 import pytest
 
 from .. import *
+# this is not necessary but mypy complains if it's not included
+from .. import CompileOptions
+
+options = CompileOptions()
 
 def test_btoi():
     arg = Arg(1)
@@ -12,7 +16,7 @@ def test_btoi():
         TealOp(expr, Op.btoi)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -32,7 +36,7 @@ def test_itob():
         TealOp(expr, Op.itob)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -52,7 +56,7 @@ def test_len():
         TealOp(expr, Op.len)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -72,7 +76,7 @@ def test_sha256():
         TealOp(expr, Op.sha256)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -92,7 +96,7 @@ def test_sha512_256():
         TealOp(expr, Op.sha512_256)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -112,7 +116,7 @@ def test_keccak256():
         TealOp(expr, Op.keccak256)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -132,7 +136,7 @@ def test_not():
         TealOp(expr, Op.logic_not)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -152,7 +156,7 @@ def test_bitwise_not():
         TealOp(expr, Op.bitwise_not)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -168,7 +172,7 @@ def test_bitwise_not_overload():
         TealOp(expr, Op.bitwise_not)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -188,7 +192,7 @@ def test_pop():
         TealOp(expr_int, Op.pop)
     ])
 
-    actual_int, _ = expr_int.__teal__()
+    actual_int, _ = expr_int.__teal__(options)
     actual_int.addIncoming()
     actual_int = TealBlock.NormalizeBlocks(actual_int)
     
@@ -203,7 +207,7 @@ def test_pop():
         TealOp(expr_bytes, Op.pop)
     ])
 
-    actual_bytes, _ = expr_bytes.__teal__()
+    actual_bytes, _ = expr_bytes.__teal__(options)
     actual_bytes.addIncoming()
     actual_bytes = TealBlock.NormalizeBlocks(actual_bytes)
 
@@ -224,7 +228,7 @@ def test_return():
         TealOp(expr, Op.return_)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -244,7 +248,7 @@ def test_balance():
         TealOp(expr, Op.balance)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 

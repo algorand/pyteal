@@ -8,7 +8,7 @@ def test_addr():
     expected = TealSimpleBlock([
         TealOp(expr, Op.addr, "NJUWK3DJNZTWU2LFNRUW4Z3KNFSWY2LOM5VGSZLMNFXGO2TJMVWGS3THMF")
     ])
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(CompileOptions())
     assert actual == expected
 
 def test_addr_invalid():

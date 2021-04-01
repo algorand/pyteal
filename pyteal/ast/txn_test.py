@@ -1,6 +1,11 @@
 import pytest
 
 from .. import *
+# this is not necessary but mypy complains if it's not included
+from .. import CompileOptions
+
+teal2Options = CompileOptions(version=2)
+teal3Options = CompileOptions(version=3)
 
 def test_txn_sender():
     expr = Txn.sender()
@@ -10,7 +15,7 @@ def test_txn_sender():
         TealOp(expr, Op.txn, "Sender")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -22,7 +27,7 @@ def test_txn_fee():
         TealOp(expr, Op.txn, "Fee")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -34,7 +39,7 @@ def test_txn_first_valid():
         TealOp(expr, Op.txn, "FirstValid")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -46,7 +51,7 @@ def test_txn_last_valid():
         TealOp(expr, Op.txn, "LastValid")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -58,7 +63,7 @@ def test_txn_note():
         TealOp(expr, Op.txn, "Note")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -70,7 +75,7 @@ def test_txn_lease():
         TealOp(expr, Op.txn, "Lease")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -82,7 +87,7 @@ def test_txn_receiver():
         TealOp(expr, Op.txn, "Receiver")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -94,7 +99,7 @@ def test_txn_amount():
         TealOp(expr, Op.txn, "Amount")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -106,7 +111,7 @@ def test_txn_close_remainder_to():
         TealOp(expr, Op.txn, "CloseRemainderTo")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -118,7 +123,7 @@ def test_txn_vote_pk():
         TealOp(expr, Op.txn, "VotePK")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -130,7 +135,7 @@ def test_txn_selection_pk():
         TealOp(expr, Op.txn, "SelectionPK")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -142,7 +147,7 @@ def test_txn_vote_first():
         TealOp(expr, Op.txn, "VoteFirst")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -154,7 +159,7 @@ def test_txn_vote_last():
         TealOp(expr, Op.txn, "VoteLast")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -166,7 +171,7 @@ def test_txn_vote_key_dilution():
         TealOp(expr, Op.txn, "VoteKeyDilution")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -178,7 +183,7 @@ def test_txn_type():
         TealOp(expr, Op.txn, "Type")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -190,7 +195,7 @@ def test_txn_type_enum():
         TealOp(expr, Op.txn, "TypeEnum")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -202,7 +207,7 @@ def test_txn_xfer_asset():
         TealOp(expr, Op.txn, "XferAsset")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -214,7 +219,7 @@ def test_txn_asset_amount():
         TealOp(expr, Op.txn, "AssetAmount")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -226,7 +231,7 @@ def test_txn_asset_sender():
         TealOp(expr, Op.txn, "AssetSender")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -238,7 +243,7 @@ def test_txn_asset_receiver():
         TealOp(expr, Op.txn, "AssetReceiver")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -250,7 +255,7 @@ def test_txn_asset_close_to():
         TealOp(expr, Op.txn, "AssetCloseTo")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -262,7 +267,7 @@ def test_txn_group_index():
         TealOp(expr, Op.txn, "GroupIndex")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -274,7 +279,7 @@ def test_txn_id():
         TealOp(expr, Op.txn, "TxID")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -286,7 +291,7 @@ def test_txn_application_id():
         TealOp(expr, Op.txn, "ApplicationID")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -298,12 +303,12 @@ def test_txn_on_completion():
         TealOp(expr, Op.txn, "OnCompletion")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
 def test_txn_application_args():
-    for i in range(4):
+    for i in range(32):
         expr = Txn.application_args[i]
         assert expr.type_of() == TealType.bytes
         
@@ -311,7 +316,7 @@ def test_txn_application_args():
             TealOp(expr, Op.txna, "ApplicationArgs", i)
         ])
 
-        actual, _ = expr.__teal__()
+        actual, _ = expr.__teal__(teal2Options)
 
         assert actual == expected
 
@@ -323,12 +328,12 @@ def test_txn_application_args_length():
         TealOp(expr, Op.txn, "NumAppArgs")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
 def test_txn_accounts():
-    for i in range(4):
+    for i in range(32):
         expr = Txn.accounts[i]
         assert expr.type_of() == TealType.bytes
         
@@ -336,7 +341,7 @@ def test_txn_accounts():
             TealOp(expr, Op.txna, "Accounts", i)
         ])
 
-        actual, _ = expr.__teal__()
+        actual, _ = expr.__teal__(teal2Options)
 
         assert actual == expected
 
@@ -348,7 +353,7 @@ def test_txn_accounts_length():
         TealOp(expr, Op.txn, "NumAccounts")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -360,7 +365,7 @@ def test_txn_approval_program():
         TealOp(expr, Op.txn, "ApprovalProgram")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -372,7 +377,7 @@ def test_txn_clear_state_program():
         TealOp(expr, Op.txn, "ClearStateProgram")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -384,7 +389,7 @@ def test_txn_rekey_to():
         TealOp(expr, Op.txn, "RekeyTo")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -396,7 +401,7 @@ def test_txn_config_asset():
         TealOp(expr, Op.txn, "ConfigAsset")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -408,7 +413,7 @@ def test_txn_config_asset_total():
         TealOp(expr, Op.txn, "ConfigAssetTotal")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -420,7 +425,7 @@ def test_txn_config_asset_decimals():
         TealOp(expr, Op.txn, "ConfigAssetDecimals")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -432,7 +437,7 @@ def test_txn_config_asset_default_frozen():
         TealOp(expr, Op.txn, "ConfigAssetDefaultFrozen")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -444,7 +449,7 @@ def test_txn_config_asset_unit_name():
         TealOp(expr, Op.txn, "ConfigAssetUnitName")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -456,7 +461,7 @@ def test_txn_config_asset_name():
         TealOp(expr, Op.txn, "ConfigAssetName")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -468,7 +473,7 @@ def test_txn_config_asset_url():
         TealOp(expr, Op.txn, "ConfigAssetURL")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -480,7 +485,7 @@ def test_txn_config_asset_metadata_hash():
         TealOp(expr, Op.txn, "ConfigAssetMetadataHash")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -492,7 +497,7 @@ def test_txn_config_asset_manager():
         TealOp(expr, Op.txn, "ConfigAssetManager")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -504,7 +509,7 @@ def test_txn_config_asset_reserve():
         TealOp(expr, Op.txn, "ConfigAssetReserve")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -516,7 +521,7 @@ def test_txn_config_asset_freeze():
         TealOp(expr, Op.txn, "ConfigAssetFreeze")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -528,7 +533,7 @@ def test_txn_config_asset_clawback():
         TealOp(expr, Op.txn, "ConfigAssetClawback")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -540,7 +545,7 @@ def test_txn_freeze_asset():
         TealOp(expr, Op.txn, "FreezeAsset")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -552,7 +557,7 @@ def test_txn_freeze_asset_account():
         TealOp(expr, Op.txn, "FreezeAssetAccount")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
 
@@ -564,6 +569,128 @@ def test_txn_freeze_asset_frozen():
         TealOp(expr, Op.txn, "FreezeAssetFrozen")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(teal2Options)
 
     assert actual == expected
+
+def test_txn_assets():
+    for i in range(32):
+        expr = Txn.assets[i]
+        assert expr.type_of() == TealType.uint64
+        
+        expected = TealSimpleBlock([
+            TealOp(expr, Op.txna, "Assets", i)
+        ])
+
+        actual, _ = expr.__teal__(teal3Options)
+
+        assert actual == expected
+
+        with pytest.raises(TealInputError):
+            expr.__teal__(teal2Options)
+
+def test_txn_assets_length():
+    expr = Txn.assets.length()
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(expr, Op.txn, "NumAssets")
+    ])
+
+    actual, _ = expr.__teal__(teal3Options)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+            expr.__teal__(teal2Options)
+
+def test_txn_applications():
+    for i in range(32):
+        expr = Txn.applications[i]
+        assert expr.type_of() == TealType.uint64
+        
+        expected = TealSimpleBlock([
+            TealOp(expr, Op.txna, "Applications", i)
+        ])
+
+        actual, _ = expr.__teal__(teal3Options)
+
+        assert actual == expected
+
+        with pytest.raises(TealInputError):
+            expr.__teal__(teal2Options)
+
+def test_txn_applications_length():
+    expr = Txn.applications.length()
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(expr, Op.txn, "NumApplications")
+    ])
+
+    actual, _ = expr.__teal__(teal3Options)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+            expr.__teal__(teal2Options)
+
+def test_txn_global_num_uints():
+    expr = Txn.global_num_uints()
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(expr, Op.txn, "GlobalNumUint")
+    ])
+
+    actual, _ = expr.__teal__(teal3Options)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal2Options)
+
+def test_txn_global_num_byte_slices():
+    expr = Txn.global_num_byte_slices()
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(expr, Op.txn, "GlobalNumByteSlice")
+    ])
+
+    actual, _ = expr.__teal__(teal3Options)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal2Options)
+
+def test_txn_local_num_uints():
+    expr = Txn.local_num_uints()
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(expr, Op.txn, "LocalNumUint")
+    ])
+
+    actual, _ = expr.__teal__(teal3Options)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal2Options)
+
+def test_txn_local_num_byte_slices():
+    expr = Txn.local_num_byte_slices()
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(expr, Op.txn, "LocalNumByteSlice")
+    ])
+
+    actual, _ = expr.__teal__(teal3Options)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal2Options)

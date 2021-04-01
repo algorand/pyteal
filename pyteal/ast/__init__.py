@@ -25,11 +25,12 @@ from .nonce import Nonce
 from .unaryexpr import UnaryExpr, Btoi, Itob, Len, Sha256, Sha512_256, Keccak256, Not, BitwiseNot, Pop, Return, Balance
 
 # binary ops
-from .binaryexpr import BinaryExpr, Add, Minus, Mul, Div, BitwiseAnd, BitwiseOr, BitwiseXor, Mod, Eq, Neq, Lt, Le, Gt, Ge
+from .binaryexpr import BinaryExpr, Add, Minus, Mul, Div, BitwiseAnd, BitwiseOr, BitwiseXor, Mod, Eq, Neq, Lt, Le, Gt, Ge, GetBit, GetByte
+
+# ternary ops
+from .ternaryexpr import Ed25519Verify, Substring, SetBit, SetByte
 
 # more ops
-from .ed25519verify import Ed25519Verify
-from .substring import Substring
 from .naryexpr import NaryExpr, And, Or, Concat
 
 # control flow
@@ -100,8 +101,12 @@ __all__ = [
     "Le",
     "Gt",
     "Ge",
+    "GetBit",
+    "GetByte",
     "Ed25519Verify",
     "Substring",
+    "SetBit",
+    "SetByte",
     "NaryExpr",
     "And",
     "Or",

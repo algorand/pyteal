@@ -1,6 +1,10 @@
 import pytest
 
 from .. import *
+# this is not necessary but mypy complains if it's not included
+from .. import CompileOptions
+
+options = CompileOptions()
 
 def test_int():
     values = [0, 1, 8, 232323, 2**64 - 1]
@@ -13,7 +17,7 @@ def test_int():
             TealOp(expr, Op.int, value)
         ])
 
-        actual, _ = expr.__teal__()
+        actual, _ = expr.__teal__(options)
 
         assert actual == expected
 
@@ -38,6 +42,6 @@ def test_enum_int():
         TealOp(expr, Op.int, "OptIn")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
 
     assert actual == expected

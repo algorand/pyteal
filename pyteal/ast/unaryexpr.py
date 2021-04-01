@@ -1,6 +1,11 @@
+from typing import TYPE_CHECKING
+
 from ..types import TealType, require_type
 from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 class UnaryExpr(Expr):
     """An expression with a single argument."""
@@ -12,8 +17,8 @@ class UnaryExpr(Expr):
         self.outputType = outputType
         self.arg = arg
 
-    def __teal__(self):
-        return TealBlock.FromOp(TealOp(self, self.op), self.arg)
+    def __teal__(self, options: 'CompileOptions'):
+        return TealBlock.FromOp(options, TealOp(self, self.op), self.arg)
 
     def __str__(self):
         return "({} {})".format(self.op, self.arg)

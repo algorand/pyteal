@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from enum import Enum
 
 from ..types import TealType, require_type
@@ -7,6 +8,9 @@ from .expr import Expr
 from .maybe import MaybeValue
 from .int import EnumInt
 from .global_ import Global
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 class OnComplete:
     """An enum of values that :any:`TxnObject.on_completion()` may return."""
@@ -58,8 +62,8 @@ class App(LeafExpr):
         ret_str += ")"
         return ret_str
 
-    def __teal__(self):
-        return TealBlock.FromOp(TealOp(self, self.field.get_op()), *self.args)
+    def __teal__(self, options: 'CompileOptions'):
+        return TealBlock.FromOp(options, TealOp(self, self.field.get_op()), *self.args)
 
     def type_of(self):
         return self.field.type_of()

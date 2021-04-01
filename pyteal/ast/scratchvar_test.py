@@ -1,7 +1,10 @@
 import pytest
 
 from .. import *
+# this is not necessary but mypy complains if it's not included
+from .. import CompileOptions
 
+options = CompileOptions()
 
 def test_scratchvar_type():
     myvar_default = ScratchVar()
@@ -44,7 +47,7 @@ def test_scratchvar_store():
         TealOp(expr, Op.store, myvar.slot),
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -58,7 +61,7 @@ def test_scratchvar_load():
         TealOp(expr, Op.load, myvar.slot)
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 

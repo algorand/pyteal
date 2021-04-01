@@ -1,9 +1,12 @@
-from typing import Union
+from typing import Union, TYPE_CHECKING
 
 from ..types import TealType
 from ..ir import TealOp, Op, TealBlock
 from ..errors import TealInputError
 from .leafexpr import LeafExpr
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 class Int(LeafExpr):
     """An expression that represents a uint64."""
@@ -24,9 +27,9 @@ class Int(LeafExpr):
         else:
             raise TealInputError("Int {} is out of range".format(value))
 
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
         op = TealOp(self, Op.int, self.value)
-        return TealBlock.FromOp(op)
+        return TealBlock.FromOp(options, op)
 
     def __str__(self):
         return "(Int: {})".format(self.value)
@@ -48,9 +51,9 @@ class EnumInt(LeafExpr):
         super().__init__()
         self.name = name
 
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
         op = TealOp(self, Op.int, self.name)
-        return TealBlock.FromOp(op)
+        return TealBlock.FromOp(options, op)
 
     def __str__(self):
         return "(IntEnum: {})".format(self.name)

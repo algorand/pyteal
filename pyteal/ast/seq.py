@@ -1,8 +1,12 @@
-from typing import List
+from typing import List, cast, TYPE_CHECKING
 
 from ..types import TealType, require_type
 from ..errors import TealInputError
 from .expr import Expr
+
+if TYPE_CHECKING:
+    from ..ir import TealSimpleBlock
+    from ..compiler import CompileOptions
 
 class Seq(Expr):
     """A control flow expression to represent a sequence of expressions."""
@@ -36,15 +40,15 @@ class Seq(Expr):
         
         self.args = exprs
         
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
         start = None
         end = None
         for i, arg in enumerate(self.args):
-            argStart, argEnd = arg.__teal__()
+            argStart, argEnd = arg.__teal__(options)
             if i == 0:
                 start = argStart
             else:
-                end.setNextBlock(argStart)
+                cast('TealSimpleBlock', end).setNextBlock(argStart)
             end = argEnd
 
         return start, end

@@ -1,12 +1,15 @@
 from enum import Enum
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
 
 from ..types import TealType
-from ..errors import TealInputError
+from ..errors import TealInputError, verifyFieldVersion
 from ..ir import TealOp, Op, TealBlock
 from .leafexpr import LeafExpr
 from .int import EnumInt
 from .array import Array
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 class TxnType:
     """Enum of all possible transaction types."""
@@ -21,59 +24,68 @@ class TxnType:
 TxnType.__module__ = "pyteal"
 
 class TxnField(Enum):
-    sender = (0, "Sender", TealType.bytes)
-    fee = (1, "Fee", TealType.uint64)
-    first_valid = (2, "FirstValid", TealType.uint64)
-    first_valid_time = (3, "FirstValidTime", TealType.uint64)
-    last_valid = (4, "LastValid", TealType.uint64)
-    note = (5, "Note", TealType.bytes)
-    lease = (6, "Lease", TealType.bytes)
-    receiver = (7, "Receiver", TealType.bytes)
-    amount = (8, "Amount", TealType.uint64)
-    close_remainder_to = (9, "CloseRemainderTo", TealType.bytes)
-    vote_pk = (10, "VotePK", TealType.bytes)
-    selection_pk = (11, "SelectionPK", TealType.bytes)
-    vote_first = (12, "VoteFirst", TealType.uint64)
-    vote_last = (13, "VoteLast", TealType.uint64)
-    vote_key_dilution = (14, "VoteKeyDilution", TealType.uint64)
-    type = (15, "Type", TealType.bytes)
-    type_enum = (16, "TypeEnum", TealType.uint64)
-    xfer_asset = (17, "XferAsset", TealType.uint64)
-    asset_amount = (18, "AssetAmount", TealType.uint64)
-    asset_sender = (19, "AssetSender", TealType.bytes)
-    asset_receiver = (20, "AssetReceiver", TealType.bytes)
-    asset_close_to = (21, "AssetCloseTo", TealType.bytes)
-    group_index = (22, "GroupIndex", TealType.uint64)
-    tx_id = (23, "TxID", TealType.bytes)
-    application_id = (24, "ApplicationID", TealType.uint64)
-    on_completion = (25, "OnCompletion", TealType.uint64)
-    application_args = (26, "ApplicationArgs", TealType.bytes)
-    num_app_args = (27, "NumAppArgs", TealType.uint64)
-    accounts = (28, "Accounts", TealType.bytes)
-    num_accounts = (2, "NumAccounts", TealType.uint64)
-    approval_program = (30, "ApprovalProgram", TealType.bytes)
-    clear_state_program = (31, "ClearStateProgram", TealType.bytes)
-    rekey_to = (32, "RekeyTo", TealType.bytes)
-    config_asset = (33, "ConfigAsset", TealType.uint64)
-    config_asset_total = (34, "ConfigAssetTotal", TealType.uint64)
-    config_asset_decimals = (35, "ConfigAssetDecimals", TealType.uint64)
-    config_asset_default_frozen = (36, "ConfigAssetDefaultFrozen", TealType.uint64)
-    config_asset_unit_name = (37, "ConfigAssetUnitName", TealType.bytes)
-    config_asset_name = (38, "ConfigAssetName", TealType.bytes)
-    config_asset_url = (39, "ConfigAssetURL", TealType.bytes)
-    config_asset_metadata_hash = (40, "ConfigAssetMetadataHash", TealType.bytes)
-    config_asset_manager = (41, "ConfigAssetManager", TealType.bytes)
-    config_asset_reserve = (42, "ConfigAssetReserve", TealType.bytes)
-    config_asset_freeze = (43, "ConfigAssetFreeze", TealType.bytes)
-    config_asset_clawback = (44, "ConfigAssetClawback", TealType.bytes)
-    freeze_asset = (45, "FreezeAsset", TealType.uint64)
-    freeze_asset_account = (46, "FreezeAssetAccount", TealType.bytes)
-    freeze_asset_frozen = (47, "FreezeAssetFrozen", TealType.uint64)
+    sender = (0, "Sender", TealType.bytes, 2)
+    fee = (1, "Fee", TealType.uint64, 2)
+    first_valid = (2, "FirstValid", TealType.uint64, 2)
+    first_valid_time = (3, "FirstValidTime", TealType.uint64, 2)
+    last_valid = (4, "LastValid", TealType.uint64, 2)
+    note = (5, "Note", TealType.bytes, 2)
+    lease = (6, "Lease", TealType.bytes, 2)
+    receiver = (7, "Receiver", TealType.bytes, 2)
+    amount = (8, "Amount", TealType.uint64, 2)
+    close_remainder_to = (9, "CloseRemainderTo", TealType.bytes, 2)
+    vote_pk = (10, "VotePK", TealType.bytes, 2)
+    selection_pk = (11, "SelectionPK", TealType.bytes, 2)
+    vote_first = (12, "VoteFirst", TealType.uint64, 2)
+    vote_last = (13, "VoteLast", TealType.uint64, 2)
+    vote_key_dilution = (14, "VoteKeyDilution", TealType.uint64, 2)
+    type = (15, "Type", TealType.bytes, 2)
+    type_enum = (16, "TypeEnum", TealType.uint64, 2)
+    xfer_asset = (17, "XferAsset", TealType.uint64, 2)
+    asset_amount = (18, "AssetAmount", TealType.uint64, 2)
+    asset_sender = (19, "AssetSender", TealType.bytes, 2)
+    asset_receiver = (20, "AssetReceiver", TealType.bytes, 2)
+    asset_close_to = (21, "AssetCloseTo", TealType.bytes, 2)
+    group_index = (22, "GroupIndex", TealType.uint64, 2)
+    tx_id = (23, "TxID", TealType.bytes, 2)
+    application_id = (24, "ApplicationID", TealType.uint64, 2)
+    on_completion = (25, "OnCompletion", TealType.uint64, 2)
+    application_args = (26, "ApplicationArgs", TealType.bytes, 2)
+    num_app_args = (27, "NumAppArgs", TealType.uint64, 2)
+    accounts = (28, "Accounts", TealType.bytes, 2)
+    num_accounts = (2, "NumAccounts", TealType.uint64, 2)
+    approval_program = (30, "ApprovalProgram", TealType.bytes, 2)
+    clear_state_program = (31, "ClearStateProgram", TealType.bytes, 2)
+    rekey_to = (32, "RekeyTo", TealType.bytes, 2)
+    config_asset = (33, "ConfigAsset", TealType.uint64, 2)
+    config_asset_total = (34, "ConfigAssetTotal", TealType.uint64, 2)
+    config_asset_decimals = (35, "ConfigAssetDecimals", TealType.uint64, 2)
+    config_asset_default_frozen = (36, "ConfigAssetDefaultFrozen", TealType.uint64, 2)
+    config_asset_unit_name = (37, "ConfigAssetUnitName", TealType.bytes, 2)
+    config_asset_name = (38, "ConfigAssetName", TealType.bytes, 2)
+    config_asset_url = (39, "ConfigAssetURL", TealType.bytes, 2)
+    config_asset_metadata_hash = (40, "ConfigAssetMetadataHash", TealType.bytes, 2)
+    config_asset_manager = (41, "ConfigAssetManager", TealType.bytes, 2)
+    config_asset_reserve = (42, "ConfigAssetReserve", TealType.bytes, 2)
+    config_asset_freeze = (43, "ConfigAssetFreeze", TealType.bytes, 2)
+    config_asset_clawback = (44, "ConfigAssetClawback", TealType.bytes, 2)
+    freeze_asset = (45, "FreezeAsset", TealType.uint64, 2)
+    freeze_asset_account = (46, "FreezeAssetAccount", TealType.bytes, 2)
+    freeze_asset_frozen = (47, "FreezeAssetFrozen", TealType.uint64, 2)
+    assets = (48, "Assets", TealType.uint64, 3)
+    num_assets = (49, "NumAssets", TealType.uint64, 3)
+    applications = (50, "Applications", TealType.uint64, 3)
+    num_applications = (51, "NumApplications", TealType.uint64, 3)
+    global_num_uints = (52, "GlobalNumUint", TealType.uint64, 3)
+    global_num_byte_slices = (53, "GlobalNumByteSlice", TealType.uint64, 3)
+    local_num_uints = (54, "LocalNumUint", TealType.uint64, 3)
+    local_num_byte_slices = (55, "LocalNumByteSlice", TealType.uint64, 3)
 
-    def __init__(self, id: int, name: str, type: TealType) -> None:
+    def __init__(self, id: int, name: str, type: TealType, min_version: int) -> None:
         self.id = id
         self.arg_name = name
         self.ret_type = type
+        self.min_version = min_version
     
     def type_of(self) -> TealType:
         return self.ret_type
@@ -90,9 +102,11 @@ class TxnExpr(LeafExpr):
     def __str__(self):
         return "(Txn {})".format(self.field.arg_name)
 
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
+        verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
+
         op = TealOp(self, Op.txn, self.field.arg_name)
-        return TealBlock.FromOp(op)
+        return TealBlock.FromOp(options, op)
     
     def type_of(self):
         return self.field.type_of()
@@ -110,9 +124,11 @@ class TxnaExpr(LeafExpr):
     def __str__(self):
         return "(Txna {} {})".format(self.field.arg_name, self.index)
     
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
+        verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
+
         op = TealOp(self, Op.txna, self.field.arg_name, self.index)
-        return TealBlock.FromOp(op)
+        return TealBlock.FromOp(options, op)
     
     def type_of(self):
         return self.field.type_of()
@@ -490,6 +506,42 @@ class TxnObject:
 
         For more information, see https://developer.algorand.org/docs/reference/transactions/#assetfrozen"""
         return self.txnType(TxnField.freeze_asset_frozen)
+    
+    def global_num_uints(self) -> TxnExpr:
+        """Get the schema count of global state integers in an application creation call.
+
+        Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall`.
+
+        Requires TEAL version 3 or higher.
+        """
+        return self.txnType(TxnField.global_num_uints)
+    
+    def global_num_byte_slices(self) -> TxnExpr:
+        """Get the schema count of global state byte slices in an application creation call.
+
+        Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall`.
+
+        Requires TEAL version 3 or higher.
+        """
+        return self.txnType(TxnField.global_num_byte_slices)
+    
+    def local_num_uints(self) -> TxnExpr:
+        """Get the schema count of local state integers in an application creation call.
+
+        Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall`.
+
+        Requires TEAL version 3 or higher.
+        """
+        return self.txnType(TxnField.local_num_uints)
+    
+    def local_num_byte_slices(self) -> TxnExpr:
+        """Get the schema count of local state byte slices in an application creation call.
+
+        Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall`.
+
+        Requires TEAL version 3 or higher.
+        """
+        return self.txnType(TxnField.local_num_byte_slices)
 
     @property
     def application_args(self) -> TxnArray:
@@ -501,11 +553,31 @@ class TxnObject:
 
     @property
     def accounts(self) -> TxnArray:
-        """Application call accounts array.
+        """The accounts array in an ApplicationCall transaction.
         
         :type: TxnArray
         """
         return TxnArray(self, TxnField.accounts, TxnField.num_accounts)
+    
+    @property
+    def assets(self) -> TxnArray:
+        """The foreign asset array in an ApplicationCall transaction.
+
+        :type: TxnArray
+
+        Requires TEAL version 3 or higher.
+        """
+        return TxnArray(self, TxnField.assets, TxnField.num_assets)
+    
+    @property
+    def applications(self) -> TxnArray:
+        """The applications array in an ApplicationCall transaction.
+
+        :type: TxnArray
+
+        Requires TEAL version 3 or higher.
+        """
+        return TxnArray(self, TxnField.applications, TxnField.num_applications)
 
 TxnObject.__module__ = "pyteal"
 

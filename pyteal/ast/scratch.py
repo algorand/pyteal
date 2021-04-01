@@ -1,5 +1,10 @@
+from typing import TYPE_CHECKING
+
 from ..types import TealType
 from .expr import Expr
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 class ScratchSlot:
     """Represents the allocation of a scratch space slot."""
@@ -62,10 +67,10 @@ class ScratchLoad(Expr):
     def __str__(self):
         return "(Load {})".format(self.slot)
 
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
         from ..ir import TealOp, Op, TealBlock
         op = TealOp(self, Op.load, self.slot)
-        return TealBlock.FromOp(op)
+        return TealBlock.FromOp(options, op)
 
     def type_of(self):
         return self.type
@@ -89,10 +94,10 @@ class ScratchStore(Expr):
     def __str__(self):
         return "(Store {} {})".format(self.slot, self.value)
 
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
         from ..ir import TealOp, Op, TealBlock
         op = TealOp(self, Op.store, self.slot)
-        return TealBlock.FromOp(op, self.value)
+        return TealBlock.FromOp(options, op, self.value)
 
     def type_of(self):
         return TealType.none
@@ -118,10 +123,10 @@ class ScratchStackStore(Expr):
     def __str__(self):
         return "(StackStore {})".format(self.slot)
 
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
         from ..ir import TealOp, Op, TealBlock
         op = TealOp(self, Op.store, self.slot)
-        return TealBlock.FromOp(op)
+        return TealBlock.FromOp(options, op)
 
     def type_of(self):
         return TealType.none

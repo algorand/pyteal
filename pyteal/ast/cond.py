@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, cast, TYPE_CHECKING
 
 from ..types import TealType, require_type
 from ..ir import TealOp, Op, TealSimpleBlock, TealConditionalBlock
@@ -6,6 +6,9 @@ from ..errors import TealInputError
 from .expr import Expr
 from .err import Err
 from .if_ import If
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 class Cond(Expr):
     """A chainable branching expression that supports an arbitrary number of conditions."""
@@ -52,13 +55,13 @@ class Cond(Expr):
         self.value_type = value_type        
         self.args = argv        
 
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
         start = None
         end = TealSimpleBlock([])
         prevBranch = None
         for i, (cond, pred) in enumerate(self.args):
-            condStart, condEnd = cond.__teal__()
-            predStart, predEnd = pred.__teal__()
+            condStart, condEnd = cond.__teal__(options)
+            predStart, predEnd = pred.__teal__(options)
 
             branchBlock = TealConditionalBlock([])
             branchBlock.setTrueBlock(predStart)
@@ -68,11 +71,11 @@ class Cond(Expr):
             if i == 0:
                 start = condStart
             else:
-                prevBranch.setFalseBlock(condStart)
+                cast(TealConditionalBlock, prevBranch).setFalseBlock(condStart)
             prevBranch = branchBlock
         
         errBlock = TealSimpleBlock([TealOp(self, Op.err)])
-        prevBranch.setFalseBlock(errBlock)
+        cast(TealConditionalBlock, prevBranch).setFalseBlock(errBlock)
         
         return start, end
 

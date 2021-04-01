@@ -1,11 +1,15 @@
 from .. import *
+# this is not necessary but mypy complains if it's not included
+from .. import CompileOptions
+
+options = CompileOptions()
 
 def test_from_op_no_args():
     op = TealOp(None, Op.int, 1)
 
     expected = TealSimpleBlock([op])
 
-    actual, _ = TealBlock.FromOp(op)
+    actual, _ = TealBlock.FromOp(options, op)
 
     assert actual == expected
 
@@ -18,7 +22,7 @@ def test_from_op_1_arg():
         op
     ])
 
-    actual, _ = TealBlock.FromOp(op, arg_1)
+    actual, _ = TealBlock.FromOp(options, op, arg_1)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     actual.validateTree()
@@ -36,7 +40,7 @@ def test_from_op_2_args():
         op
     ])
 
-    actual, _ = TealBlock.FromOp(op, arg_1, arg_2)
+    actual, _ = TealBlock.FromOp(options, op, arg_1, arg_2)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     actual.validateTree()
@@ -60,7 +64,7 @@ def test_from_op_3_args():
         op
     ])
 
-    actual, _ = TealBlock.FromOp(op, arg_1, arg_2, arg_3_plus_4)
+    actual, _ = TealBlock.FromOp(options, op, arg_1, arg_2, arg_3_plus_4)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
     actual.validateTree()

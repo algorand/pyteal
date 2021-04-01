@@ -1,24 +1,31 @@
+from typing import TYPE_CHECKING
 from enum import Enum
 
 from ..types import TealType
+from ..errors import verifyFieldVersion
 from ..ir import TealOp, Op, TealBlock
 from .leafexpr import LeafExpr
 
-class GlobalField(Enum):
-    min_txn_fee = (0, "MinTxnFee", TealType.uint64)
-    min_balance = (1, "MinBalance", TealType.uint64)
-    max_txn_life = (2, "MaxTxnLife", TealType.uint64)
-    zero_address = (3, "ZeroAddress", TealType.bytes)
-    group_size = (4, "GroupSize", TealType.uint64)
-    logic_sig_version = (5, "LogicSigVersion", TealType.uint64)
-    round = (6, "Round", TealType.uint64)
-    latest_timestamp = (7, "LatestTimestamp", TealType.uint64)
-    current_app_id = (8, "CurrentApplicationID", TealType.uint64)
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
-    def __init__(self, id: int, name: str, type: TealType) -> None:
+class GlobalField(Enum):
+    min_txn_fee = (0, "MinTxnFee", TealType.uint64, 2)
+    min_balance = (1, "MinBalance", TealType.uint64, 2)
+    max_txn_life = (2, "MaxTxnLife", TealType.uint64, 2)
+    zero_address = (3, "ZeroAddress", TealType.bytes, 2)
+    group_size = (4, "GroupSize", TealType.uint64, 2)
+    logic_sig_version = (5, "LogicSigVersion", TealType.uint64, 2)
+    round = (6, "Round", TealType.uint64, 2)
+    latest_timestamp = (7, "LatestTimestamp", TealType.uint64, 2)
+    current_app_id = (8, "CurrentApplicationID", TealType.uint64, 2)
+    creator_address = (9, "CreatorAddress", TealType.bytes, 3)
+
+    def __init__(self, id: int, name: str, type: TealType, min_version: int) -> None:
         self.id = id
         self.arg_name = name
         self.ret_type = type
+        self.min_version = min_version
     
     def type_of(self) -> TealType:
         return self.ret_type
@@ -32,9 +39,11 @@ class Global(LeafExpr):
         super().__init__()
         self.field = field
 
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
+        verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
+
         op = TealOp(self, Op.global_, self.field.arg_name)
-        return TealBlock.FromOp(op)
+        return TealBlock.FromOp(options, op)
          
     def __str__(self):
         return "(Global {})".format(self.field.arg_name)
@@ -93,5 +102,12 @@ class Global(LeafExpr):
         
         Fails if no application is executing."""
         return cls(GlobalField.current_app_id)
+    
+    @classmethod
+    def creator_address(cls) -> 'Global':
+        """Address of the creator of the current application.
+        
+        Fails if no such application is executing. Requires TEAL version 3 or higher."""
+        return cls(GlobalField.creator_address)
 
 Global.__module__ = "pyteal"

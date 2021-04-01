@@ -1,6 +1,10 @@
 import pytest
 
 from .. import *
+# this is not necessary but mypy complains if it's not included
+from .. import CompileOptions
+
+options = CompileOptions()
 
 def test_tmpl_int():
     expr = Tmpl.Int("TMPL_AMNT")
@@ -10,7 +14,7 @@ def test_tmpl_int():
         TealOp(expr, Op.int, "TMPL_AMNT")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
 
     assert actual == expected
 
@@ -26,7 +30,7 @@ def test_tmpl_bytes():
         TealOp(expr, Op.byte, "TMPL_NOTE")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
 
     assert actual == expected
 
@@ -42,7 +46,7 @@ def test_tmpl_addr():
         TealOp(expr, Op.addr, "TMPL_RECEIVER0")
     ])
 
-    actual, _ = expr.__teal__()
+    actual, _ = expr.__teal__(options)
 
     assert actual == expected
 

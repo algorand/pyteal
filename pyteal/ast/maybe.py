@@ -1,10 +1,13 @@
-from typing import List, Union
+from typing import List, Union, TYPE_CHECKING
 
 from ..types import TealType
 from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
 from .leafexpr import LeafExpr
 from .scratch import ScratchSlot, ScratchLoad
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 class MaybeValue(LeafExpr):
     """Represents a get operation returning a value that may not exist."""
@@ -21,14 +24,8 @@ class MaybeValue(LeafExpr):
         super().__init__()
         self.op = op
         self.type = type
-        if immediate_args != None:
-            self.immediate_args = immediate_args
-        else:
-            self.immediate_args = []
-        if args != None:
-            self.args = args
-        else:
-            self.args = []
+        self.immediate_args = immediate_args if immediate_args is not None else []
+        self.args = args if args is not None else []
         self.slotOk = ScratchSlot()
         self.slotValue = ScratchSlot()
     
@@ -63,14 +60,15 @@ class MaybeValue(LeafExpr):
 
         return ret_str
     
-    def __teal__(self):
-        callStart, callEnd = TealBlock.FromOp(TealOp(self, self.op, *self.immediate_args), *self.args)
+    def __teal__(self, options: 'CompileOptions'):
+        tealOp = TealOp(self, self.op, *self.immediate_args)
+        callStart, callEnd = TealBlock.FromOp(options, tealOp, *self.args)
 
         storeOk = self.slotOk.store()
         storeValue = self.slotValue.store()
 
-        storeOkStart, storeOkEnd = storeOk.__teal__()
-        storeValueStart, storeValueEnd = storeValue.__teal__()
+        storeOkStart, storeOkEnd = storeOk.__teal__(options)
+        storeValueStart, storeValueEnd = storeValue.__teal__(options)
 
         callEnd.setNextBlock(storeOkStart)
         storeOkEnd.setNextBlock(storeValueStart)

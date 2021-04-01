@@ -1,11 +1,16 @@
+from typing import TYPE_CHECKING
+
 from ..types import TealType
 from ..ir import TealOp, Op, TealBlock
-from ..errors import TealInputError
+from ..errors import TealInputError, verifyFieldVersion
 from ..config import MAX_GROUP_SIZE
 from .expr import Expr
 from .leafexpr import LeafExpr
 from .txn import TxnField, TxnExpr, TxnaExpr, TxnObject
 from .global_ import Global
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 class GtxnExpr(TxnExpr):
     """An expression that accesses a transaction field from a transaction in the current group."""
@@ -17,9 +22,11 @@ class GtxnExpr(TxnExpr):
     def __str__(self):
         return "(Gtxn {} {})".format(self.txnIndex, self.field.arg_name)
 
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
+        verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
+
         op = TealOp(self, Op.gtxn, self.txnIndex, self.field.arg_name)
-        return TealBlock.FromOp(op)
+        return TealBlock.FromOp(options, op)
 
 GtxnExpr.__module__ = "pyteal"
 
@@ -33,9 +40,11 @@ class GtxnaExpr(TxnaExpr):
     def __str__(self):
         return "(Gtxna {} {} {})".format(self.index, self.field.arg_name, self.index)
 
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
+        verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
+
         op = TealOp(self, Op.gtxna, self.txnIndex, self.field.arg_name, self.index)
-        return TealBlock.FromOp(op)
+        return TealBlock.FromOp(options, op)
 
 GtxnaExpr.__module__ = "pyteal"
 

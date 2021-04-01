@@ -1,6 +1,11 @@
+from typing import TYPE_CHECKING
+
 from ..types import TealType, valid_address
 from ..ir import TealOp, Op, TealBlock
 from .leafexpr import LeafExpr
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 class Addr(LeafExpr):
     """An expression that represents an Algorand address."""
@@ -15,9 +20,9 @@ class Addr(LeafExpr):
         valid_address(address)
         self.address = address
 
-    def __teal__(self):
+    def __teal__(self, options: 'CompileOptions'):
         op = TealOp(self, Op.addr, self.address)
-        return TealBlock.FromOp(op)
+        return TealBlock.FromOp(options, op)
 
     def __str__(self):
         return "(address: {})".format(self.address)

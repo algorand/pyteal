@@ -1,9 +1,12 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Tuple, List
+from typing import Tuple, List, TYPE_CHECKING
 
 from ..types import TealType
 from ..ir import TealBlock, TealSimpleBlock
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 class Expr(ABC):
     """Abstract base class for PyTeal expressions."""
@@ -26,7 +29,7 @@ class Expr(ABC):
         pass
 
     @abstractmethod
-    def __teal__(self) -> Tuple[TealBlock, TealSimpleBlock]:
+    def __teal__(self, options: 'CompileOptions') -> Tuple[TealBlock, TealSimpleBlock]:
         """Assemble TEAL IR for this component and its arguments."""
         pass
 

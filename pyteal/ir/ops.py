@@ -88,5 +88,18 @@ class Op(Enum):
     app_global_del    = OpType("app_global_del",    Mode.Application,                  2)
     asset_holding_get = OpType("asset_holding_get", Mode.Application,                  2)
     asset_params_get  = OpType("asset_params_get",  Mode.Application,                  2)
+    gtxns             = OpType("gtxns",             Mode.Signature | Mode.Application, 3)
+    gtxnsa            = OpType("gtxnsa",            Mode.Signature | Mode.Application, 3)
+    assert_           = OpType("assert",            Mode.Signature | Mode.Application, 3)
+    dig               = OpType("dig",               Mode.Signature | Mode.Application, 3)
+    swap              = OpType("swap",              Mode.Signature | Mode.Application, 3)
+    select            = OpType("select",            Mode.Signature | Mode.Application, 3)
+    getbit            = OpType("getbit",            Mode.Signature | Mode.Application, 3)
+    setbit            = OpType("setbit",            Mode.Signature | Mode.Application, 3)
+    getbyte           = OpType("getbyte",           Mode.Signature | Mode.Application, 3)
+    setbyte           = OpType("setbyte",           Mode.Signature | Mode.Application, 3)
+    min_balance       = OpType("min_balance",       Mode.Application,                  3)
+    pushbytes         = OpType("pushbytes",         Mode.Signature | Mode.Application, 3)
+    pushint           = OpType("pushint",           Mode.Signature | Mode.Application, 3)
 
 Op.__module__ = "pyteal"

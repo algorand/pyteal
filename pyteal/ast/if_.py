@@ -1,6 +1,11 @@
+from typing import TYPE_CHECKING
+
 from ..types import TealType, require_type, types_match
 from ..ir import TealSimpleBlock, TealConditionalBlock
 from .expr import Expr
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 class If(Expr):
     """Simple two-way conditional expression."""
@@ -30,9 +35,9 @@ class If(Expr):
         self.thenBranch = thenBranch
         self.elseBranch = elseBranch
 
-    def __teal__(self):
-        condStart, condEnd = self.cond.__teal__()
-        thenStart, thenEnd = self.thenBranch.__teal__()
+    def __teal__(self, options: 'CompileOptions'):
+        condStart, condEnd = self.cond.__teal__(options)
+        thenStart, thenEnd = self.thenBranch.__teal__(options)
         end = TealSimpleBlock([])
 
         branchBlock = TealConditionalBlock([])
@@ -44,7 +49,7 @@ class If(Expr):
         if self.elseBranch is None:
             branchBlock.setFalseBlock(end)
         else:
-            elseStart, elseEnd = self.elseBranch.__teal__()
+            elseStart, elseEnd = self.elseBranch.__teal__(options)
             branchBlock.setFalseBlock(elseStart)
             elseEnd.setNextBlock(end)
 
