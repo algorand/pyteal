@@ -52,7 +52,10 @@ class TealCompileError(Exception):
 
 TealCompileError.__module__ = "pyteal"
 
+def verifyTealVersion(minVersion: int, version: int, msg: str):
+    if minVersion > version:
+        msg = "{}. Minimum version needed is {}, but current version being compiled is {}".format(msg, minVersion, version)
+        raise TealInputError(msg)
+
 def verifyFieldVersion(fieldName: str, fieldMinVersion: int, version: int):
-    if fieldMinVersion > version:
-        msg = "TEAL version too low to use field {}. Minimum version needed is {}, but current version being compiled is {}"
-        raise TealInputError(msg.format(fieldName, fieldMinVersion, version))
+    verifyTealVersion(fieldMinVersion, version, "TEAL version too low to use field {}".format(fieldName))
