@@ -20,7 +20,7 @@ jobs:
       name: PyPi release
       python: "3.8"
       script: skip
-      if: branch = master
+      if: branch = master AND tag IS present
       deploy:
         provider: pypi
         username: __token__
