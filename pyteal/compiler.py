@@ -119,7 +119,7 @@ def verifyOpsForVersion(teal: List[TealComponent], version: int):
         if isinstance(stmt, TealOp):
             op = stmt.getOp()
             if op.min_version > version:
-                raise TealInputError("Op not supported in TEAL version {}: {}".format(version, op))
+                raise TealInputError("Op not supported in TEAL version {}: {}. Minimum required version is {}".format(version, op, op.min_version))
 
 def verifyOpsForMode(teal: List[TealComponent], mode: Mode):
     """Verify that all TEAL operations are allowed in mode.

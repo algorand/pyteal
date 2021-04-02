@@ -12,7 +12,7 @@ This a non-Turing complete language that allows branch forwards but prevents rec
 to maximize safety and performance. 
 
 However, TEAL is essentially an assembly language. With PyTeal, developers can express smart contract logic purely using Python. 
-PyTeal provides high level, functional programming style abstactions over TEAL and does type checking at construction time.
+PyTeal provides high level, functional programming style abstractions over TEAL and does type checking at construction time.
 
 PyTeal **hasn't been security audited**. Use it at your own risk.
 
