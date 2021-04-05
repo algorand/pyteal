@@ -74,12 +74,24 @@ def Return(arg: Expr) -> UnaryExpr:
     """Immediately exit the program with the given success value."""
     return UnaryExpr(Op.return_, TealType.uint64, TealType.none, arg)
 
-def Balance(arg: Expr) -> UnaryExpr:
-    """Get the balance of a user in micro Algos.
+def Balance(account: Expr) -> UnaryExpr:
+    """Get the balance of a user in microAlgos.
 
     Argument must be an index into Txn.Accounts that corresponds to the account to read from. It
     must evaluate to uint64.
 
     This operation is only permitted in application mode.
     """
-    return UnaryExpr(Op.balance, TealType.uint64, TealType.uint64, arg)
+    return UnaryExpr(Op.balance, TealType.uint64, TealType.uint64, account)
+
+def MinBalance(account: Expr) -> UnaryExpr:
+    """Get the minimum balance of a user in microAlgos.
+
+    For more information about minimum balances, see: https://developer.algorand.org/docs/features/accounts/#minimum-balance
+
+    Argument must be an index into Txn.Accounts that corresponds to the account to read from. It
+    must evaluate to uint64.
+
+    Requires TEAL version 3 or higher. This operation is only permitted in application mode.
+    """
+    return UnaryExpr(Op.min_balance, TealType.uint64, TealType.uint64, account)

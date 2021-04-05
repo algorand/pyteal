@@ -22,7 +22,7 @@ from .tmpl import Tmpl
 from .nonce import Nonce
 
 # unary ops
-from .unaryexpr import UnaryExpr, Btoi, Itob, Len, Sha256, Sha512_256, Keccak256, Not, BitwiseNot, Pop, Return, Balance
+from .unaryexpr import UnaryExpr, Btoi, Itob, Len, Sha256, Sha512_256, Keccak256, Not, BitwiseNot, Pop, Return, Balance, MinBalance
 
 # binary ops
 from .binaryexpr import BinaryExpr, Add, Minus, Mul, Div, BitwiseAnd, BitwiseOr, BitwiseXor, Mod, Eq, Neq, Lt, Le, Gt, Ge, GetBit, GetByte
@@ -86,6 +86,7 @@ __all__ = [
     "Pop",
     "Return",
     "Balance",
+    "MinBalance",
     "BinaryExpr",
     "Add",
     "Minus",
