@@ -25,6 +25,8 @@ class AssetHolding:
     def frozen(cls, account: Expr, asset: Expr) -> MaybeValue:
         """Check if an asset is frozen for an account.
 
+        A value of 1 indicates frozen and 0 indicates not frozen.
+
         Args:
             account: An index into Txn.Accounts that corresponds to the account to check. Must
                 evaluate to uint64.
@@ -108,6 +110,8 @@ class AssetParam:
     def metadataHash(cls, asset: Expr) -> MaybeValue:
         """Get the arbitrary commitment for an asset.
 
+        If set, this will be 32 bytes long.
+
         Args:
             asset: An index into Txn.ForeignAssets that corresponds to the asset to check. Must
                 evaluate to uint64.
@@ -117,7 +121,7 @@ class AssetParam:
     
     @classmethod
     def manager(cls, asset: Expr) -> MaybeValue:
-        """Get the manager commitment for an asset.
+        """Get the manager address for an asset.
 
         Args:
             asset: An index into Txn.ForeignAssets that corresponds to the asset to check. Must

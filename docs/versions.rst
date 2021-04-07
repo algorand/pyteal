@@ -12,9 +12,10 @@ TEAL Version PyTeal Version
 ============ ==============
 1            <= 0.5.4
 2            >= 0.6.0
+3            >= 0.7.0
 ============ ==============
 
-In order to support TEAL v2, PyTeal v0.6.4 breaks backward compatibility with v0.5.4. PyTeal
+In order to support TEAL v2, PyTeal v0.6.0 breaks backward compatibility with v0.5.4. PyTeal
 programs written for PyTeal version 0.5.4 and below will not compile properly and most likely will
 display an error of the form :code:`AttributeError: * object has no attribute 'teal'`.
 
