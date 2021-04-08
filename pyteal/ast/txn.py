@@ -510,7 +510,7 @@ class TxnObject:
     def global_num_uints(self) -> TxnExpr:
         """Get the schema count of global state integers in an application creation call.
 
-        Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall`.
+        Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall` and this is an app creation call.
 
         Requires TEAL version 3 or higher.
         """
@@ -519,7 +519,7 @@ class TxnObject:
     def global_num_byte_slices(self) -> TxnExpr:
         """Get the schema count of global state byte slices in an application creation call.
 
-        Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall`.
+        Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall` and this is an app creation call.
 
         Requires TEAL version 3 or higher.
         """
@@ -528,7 +528,7 @@ class TxnObject:
     def local_num_uints(self) -> TxnExpr:
         """Get the schema count of local state integers in an application creation call.
 
-        Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall`.
+        Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall` and this is an app creation call.
 
         Requires TEAL version 3 or higher.
         """
@@ -537,7 +537,7 @@ class TxnObject:
     def local_num_byte_slices(self) -> TxnExpr:
         """Get the schema count of local state byte slices in an application creation call.
 
-        Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall`.
+        Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall` and this is an app creation call.
 
         Requires TEAL version 3 or higher.
         """

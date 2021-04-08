@@ -1,47 +1,127 @@
 .. _arithmetic_expressions:
 
-Arithmetic Operators
-====================
+Arithmetic Operations
+=====================
 
 An arithmetic expression is an expression that results in a :code:`TealType.uint64` value.
-In PyTeal, arithmetic expressions include integer arithmetics operators and boolean operators.
-We overloaded all integer arithmetics operator in Python.
+In PyTeal, arithmetic expressions include integer and boolean operators (booleans are the integers
+`0` or `1`). The table below summarized all arithmetic expressions in PyTeal.
 
-======================== =========== ================================================= ===========================
-Operator                 Overloaded  Semantics                                         Example
-======================== =========== ================================================= ===========================
-:code:`Lt(a, b)`         :code:`<`   `1` if `a` is less than `b`, `0` otherwise            :code:`Int(1) < Int(5)`
-:code:`Gt(a, b)`         :code:`>`   `1` if `a` is greater than `b`, `0` otherwise         :code:`Int(1) > Int(5)`
-:code:`Le(a, b)`         :code:`<=`  `1` if `a` is no greater than `b`, `0` otherwise      :code:`Int(1) <= Int(5)`
-:code:`Ge(a, b)`         :code:`>=`  `1` if `a` is no less than `b`, `0` otherwise         :code:`Int(1) >= Int(5)`
-:code:`Add(a, b)`        :code:`+`   `a + b`, error (panic) if overflow                :code:`Int(1) + Int(5)`
-:code:`Minus(a, b)`      :code:`-`   `a - b`, error if underflow                       :code:`Int(5) - Int(1)`
-:code:`Mul(a, b)`        :code:`*`   `a * b`, error if overflow                        :code:`Int(2) * Int(3)`
-:code:`Div(a, b)`        :code:`/`   `a / b`, error if devided by zero                 :code:`Int(3) / Int(2)`
-:code:`Mod(a, b)`        :code:`%`   `a % b`, modulo operation                         :code:`Int(7) % Int(3)`
-:code:`Eq(a, b)`         :code:`==`  `1` if `a` equals `b`, `0` otherwise                  :code:`Int(7) == Int(7)`
-:code:`Neq(a, b)`        :code:`!=`  `0` if `a` equals `b`, `1` otherwise                  :code:`Int(7) != Int(7)`
-:code:`And(a, b)`                    `1` if `a > 0 && b > 0`, `0` otherwise            :code:`And(Int(1), Int(1))`
-:code:`Or(a, b)`                     `1` if `a > 0 || b > 0`, `0` otherwise            :code:`Or(Int(1), Int(0))`
-:code:`Not(a)`                       `1` if `a` equals `0`, `0` otherwise                  :code:`Not(Int(0))`
-:code:`BitwiseAnd(a,b)`  :code:`&`   `a & b`, bitwise and operation                    :code:`Int(1) & Int(3)`
-:code:`BitwiseOr(a,b)`   :code:`|`   `a | b`, bitwise or operation                     :code:`Int(2) | Int(5)`
-:code:`BitwiseXor(a,b)`  :code:`^`   `a ^ b`, bitwise xor operation                    :code:`Int(3) ^ Int(7)`
-:code:`BitwiseNot(a)`    :code:`~`   `~a`, bitwise complement operation                :code:`~Int(1)`
-======================== =========== ================================================= ===========================
+=================================== ============== ================================================= ===========================
+Operator                            Overloaded     Semantics                                         Example
+=================================== ============== ================================================= ===========================
+:any:`Lt(a, b) <Lt>`                :code:`a < b`  `1` if `a` is less than `b`, `0` otherwise        :code:`Int(1) < Int(5)`
+:any:`Gt(a, b) <Gt>`                :code:`a > b`  `1` if `a` is greater than `b`, `0` otherwise     :code:`Int(1) > Int(5)`
+:any:`Le(a, b) <Le>`                :code:`a <= b` `1` if `a` is no greater than `b`, `0` otherwise  :code:`Int(1) <= Int(5)`
+:any:`Ge(a, b) <Ge>`                :code:`a >= b` `1` if `a` is no less than `b`, `0` otherwise     :code:`Int(1) >= Int(5)`
+:any:`Add(a, b) <Add>`              :code:`a + b`  `a + b`, error (panic) if overflow                :code:`Int(1) + Int(5)`
+:any:`Minus(a, b) <Minus>`          :code:`a - b`  `a - b`, error if underflow                       :code:`Int(5) - Int(1)`
+:any:`Mul(a, b) <Mul>`              :code:`a * b`  `a * b`, error if overflow                        :code:`Int(2) * Int(3)`
+:any:`Div(a, b) <Div>`              :code:`a / b`  `a / b`, error if divided by zero                 :code:`Int(3) / Int(2)`
+:any:`Mod(a, b) <Mod>`              :code:`a % b`  `a % b`, modulo operation                         :code:`Int(7) % Int(3)`
+:any:`Eq(a, b) <Eq>`                :code:`a == b` `1` if `a` equals `b`, `0` otherwise              :code:`Int(7) == Int(7)`
+:any:`Neq(a, b) <Neq>`              :code:`a != b` `0` if `a` equals `b`, `1` otherwise              :code:`Int(7) != Int(7)`
+:any:`And(a, b) <pyteal.And>`                      `1` if `a > 0 && b > 0`, `0` otherwise            :code:`And(Int(1), Int(1))`
+:any:`Or(a, b) <pyteal.Or>`                        `1` if `a > 0 || b > 0`, `0` otherwise            :code:`Or(Int(1), Int(0))`
+:any:`Not(a) <pyteal.Not>`                         `1` if `a` equals `0`, `0` otherwise              :code:`Not(Int(0))`
+:any:`BitwiseAnd(a,b) <BitwiseAnd>` :code:`a & b`  `a & b`, bitwise and operation                    :code:`Int(1) & Int(3)`
+:any:`BitwiseOr(a,b) <BitwiseOr>`   :code:`a | b`  `a | b`, bitwise or operation                     :code:`Int(2) | Int(5)`
+:any:`BitwiseXor(a,b) <BitwiseXor>` :code:`a ^ b`  `a ^ b`, bitwise xor operation                    :code:`Int(3) ^ Int(7)`
+:any:`BitwiseNot(a) <BitwiseNot>`   :code:`~a`     `~a`, bitwise complement operation                :code:`~Int(1)`
+=================================== ============== ================================================= ===========================
 
-All these operators takes two :code:`TealType.uint64` values.
+Most of the above operations take two :code:`TealType.uint64` values as inputs.
 In addition, :code:`Eq(a, b)` (:code:`==`) and :code:`Neq(a, b)` (:code:`!=`) also work for byte slices.
 For example, :code:`Arg(0) == Arg(1)` and :code:`Arg(0) != Arg(1)` are valid PyTeal expressions.
 
-Both :code:`And` and :code:`Or` also support more than 2 arguements when called as functions:
+Both :code:`And` and :code:`Or` also support more than 2 arguments when called as functions:
 
  * :code:`And(a, b, ...)`
  * :code:`Or(a, b, ...)`
 
-The associativity and precedence of the overloaded Python arithmatic operators are the same as the
+The associativity and precedence of the overloaded Python arithmetic operators are the same as the
 `original python operators <https://docs.python.org/3/reference/expressions.html#operator-precedence>`_ . For example:
 
  * :code:`Int(1) + Int(2) + Int(3)` is equivalent to :code:`Add(Add(Int(1), Int(2)), Int(3))`
  * :code:`Int(1) + Int(2) * Int(3)` is equivalent to :code:`Add(Int(1), Mul(Int(2), Int(3)))` 
 
+.. _bit_and_byte_manipulation:
+
+Bit and Byte Operations
+-----------------------
+
+In addition to the standard arithmetic operators above, PyTeal also supports operations that
+manipulate the individual bits and bytes of PyTeal values.
+
+To use these operations, you'll need to provide an index specifying which bit or byte to access.
+These indexes have different meanings depending on whether you are manipulating integers or byte slices:
+
+* For integers, bit indexing begins with low-order bits. For example, the bit at index 4 of the integer
+  16 (:code:`000...0001000` in binary) is 1. Every other index has a bit value of 0. Any index less
+  than 64 is valid, regardless of the integer's value.
+
+  Byte indexing is not supported for integers.
+
+* For byte strings, bit indexing begins at the first bit. For example, the bit at index 0 of the base16
+  byte string :code:`0xf0` (:code:`11110000` in binary) is 1. Any index less than 4 has a bit
+  value of 1, and any index 4 or greater has a bit value of 0. Any index less than 8 times the length
+  of the byte string is valid.
+  
+  Likewise, byte indexing begins at the first byte of the string. For example, the byte at index 0 of
+  that the base16 string :code:`0xff00` (:code:`1111111100000000` in binary) is 255 (:code:`111111111` in binary),
+  and the byte at index 1 is 0. Any index less than the length of the byte string is valid.
+
+Bit Manipulation
+~~~~~~~~~~~~~~~~
+
+The :any:`GetBit` expression can extract individual bit values from integers and byte strings. For example,
+
+.. code-block:: python
+
+    GetBit(Int(16), Int(0)) # get the 0th bit of 16, produces 0
+    GetBit(Int(16), Int(4)) # get the 4th bit of 16, produces 1
+    GetBit(Int(16), Int(63)) # get the 63rd bit of 16, produces 0
+    GetBit(Int(16), Int(64)) # get the 64th bit of 16, invalid index
+
+    GetBit(Bytes("base16", "0xf0"), Int(0)) # get the 0th bit of 0xf0, produces 1
+    GetBit(Bytes("base16", "0xf0"), Int(7)) # get the 7th bit of 0xf0, produces 0
+    GetBit(Bytes("base16", "0xf0"), Int(8)) # get the 8th bit of 0xf0, invalid index
+
+Additionally, the :any:`SetBit` expression can modify individual bit values from integers and byte strings. For example,
+
+.. code-block:: python
+
+    SetBit(Int(0), Int(4), Int(1)) # set the 4th bit of 0 to 1, produces 16
+    SetBit(Int(4), Int(0), Int(1)) # set the 0th bit of 4 to 1, produces 5
+    SetBit(Int(4), Int(0), Int(0)) # set the 0th bit of 4 to 0, produces 4
+    
+    SetBit(Bytes("base16", "0x00"), Int(0), Int(1)) # set the 0th bit of 0x00 to 1, produces 0x80
+    SetBit(Bytes("base16", "0x00"), Int(3), Int(1)) # set the 3rd bit of 0x00 to 1, produces 0x10
+    SetBit(Bytes("base16", "0x00"), Int(7), Int(1)) # set the 7th bit of 0x00 to 1, produces 0x01
+
+Byte Manipulation
+~~~~~~~~~~~~~~~~~
+
+In addition to manipulating bits, individual bytes in byte strings can be manipulated.
+
+The :any:`GetByte` expression can extract individual bytes from byte strings. For example,
+
+.. code-block:: python
+
+    GetByte(Bytes("base16", "0xff00"), Int(0)) # get the 0th byte of 0xff00, produces 255
+    GetByte(Bytes("base16", "0xff00"), Int(1)) # get the 1st byte of 0xff00, produces 0
+    GetByte(Bytes("base16", "0xff00"), Int(2)) # get the 2nd byte of 0xff00, invalid index
+    
+    GetByte(Bytes("abc"), Int(0)) # get the 0th byte of "abc", produces 97 (ASCII 'a')
+    GetByte(Bytes("abc"), Int(1)) # get the 1st byte of "abc", produces 98 (ASCII 'b')
+    GetByte(Bytes("abc"), Int(2)) # get the 2nd byte of "abc", produces 99 (ASCII 'c')
+
+Additionally, the :any:`SetByte` expression can modify individual bytes in byte strings. For example,
+
+.. code-block:: python
+
+    SetByte(Bytes("base16", "0xff00"), Int(0), Int(0)) # set the 0th byte of 0xff00 to 0, produces 0x0000
+    SetByte(Bytes("base16", "0xff00"), Int(0), Int(128)) # set the 0th byte of 0xff00 to 128, produces 0x8000
+
+    SetByte(Bytes("abc"), Int(0), Int(98)) # set the 0th byte of "abc" to 98 (ASCII 'b'), produces "bbc"
+    SetByte(Bytes("abc"), Int(1), Int(66)) # set the 1st byte of "abc" to 66 (ASCII 'B'), produces "aBc"

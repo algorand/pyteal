@@ -79,7 +79,7 @@ application call transaction's :code:`Txn.accounts` array.
 
 **Note:** The :code:`Txn.accounts` array does not behave like a normal array. It's actually a
 :code:`1`-indexed array with a special value at index :code:`0`, the sender's account.
-See :ref:`Special case: :code:\`Txn.accounts\`` for more details.
+See :ref:`txn_special_case_arrays` for more details.
 
 Writing Local State
 ~~~~~~~~~~~~~~~~~~~
@@ -129,6 +129,8 @@ For example:
 
 If you try to delete a key that does not exist in the account's local state, nothing happens.
 
+.. _external_state:
+
 External State
 --------------
 
@@ -156,40 +158,42 @@ External Global
 To read a value from the global state of another application, use the :any:`App.globalGetEx`
 function.
 
-In order to use this function you need to pass in an integer that represents which application to
-read from. The integer :code:`0` is a special case that refers to the current application. The
-integer :code:`1` refers to the first element in `Txn.ForeignApps <https://developer.algorand.org/docs/reference/transactions/#application-call-transaction>`_,
-:code:`2` refers to the second element, and so on. Note that the transaction field :code:`ForeignApps`
-is not accessible from TEAL at this time.
+In order to use this function you need to pass in an integer that represents an application to
+read from. This integer corresponds to the index of an application in the
+:any:`Txn.applications <TxnObject.applications>` array.
 
-**Note:** In order to read from the global state of another application, that application's ID must
-be included in the transaction's :code:`ForeignApps` array.
+This means that in order to read or manipulate an external application's local state, that application
+must be present in the application call transaction's :code:`Txn.applications` array.
+
+**Note:** The :code:`Txn.applications` array does not behave like a normal array. It's actually a
+:code:`1`-indexed array with a special value at index :code:`0`, the current application's ID.
+See :ref:`txn_special_case_arrays` for more details.
 
 Now that you have an integer that represents an application to read from, pass this as the first
 argument to :any:`App.globalGetEx`, and pass the key to read as the second argument. For example:
 
 .. code-block:: python
 
-    # get "status" from the current global context
+    # get "status" from the global context of Txn.applications[0] (the current app)
     # if "status" has not been set, returns "none"
     myStatus = App.globalGetEx(Int(0), Bytes("status"))
-    Seq([
+    program = Seq([
         myStatus,
         If(myStatus.hasValue(), myStatus.value(), Bytes("none"))
     ])
 
-    # get "status" from the global context of the first app in Txn.ForeignApps
+    # get "status" from the global context of Txn.applications[1]
     # if "status" has not been set, returns "none"
     otherStatus = App.globalGetEx(Int(1), Bytes("status"))
-    Seq([
+    program = Seq([
         otherStatus,
         If(otherStatus.hasValue(), otherStatus.value(), Bytes("none"))
     ])
 
-    # get "total supply" from the global context of the first app in Txn.ForeignApps
+    # get "total supply" from the global context of Txn.applications[1]
     # if "total supply" has not been set, returns the default value of 0
     otherSupply = App.globalGetEx(Int(1), Bytes("total supply"))
-    Seq([
+    program = Seq([
         otherSupply,
         otherSupply.value()
     ])
@@ -205,10 +209,10 @@ format as :any:`App.localGet`), the second argument is the ID of the application
 the third argument is the key to read.
 
 **Note:** The second argument is the actual ID of the application to read from, not an index into
-:code:`ForeignApps`. This means that you can read from any application that the account has opted
-into, not just applications included in :code:`ForeignApps`. The ID :code:`0` is still a special
+:code:`Txn.applications`. This means that you can read from any application that the account has opted
+into, not just applications included in :code:`Txn.applications`. The ID :code:`0` is still a special
 value that refers to the ID of the current application, but you could also use :any:`Global.current_application_id()`
-or :code:`Txn.application_id()` to refer to the current application.
+or :any:`Txn.application_id() <TxnObject.application_id>` to refer to the current application.
 
 For example:
 
@@ -217,7 +221,7 @@ For example:
     # get "role" from the local state of Txn.accounts[0] (the sender) for the current app
     # if "role" has not been set, returns "none"
     myAppSenderRole = App.localGetEx(Int(0), Int(0), Bytes("role"))
-    Seq([
+    program = Seq([
         myAppSenderRole,
         If(myAppSenderRole.hasValue(), myAppSenderRole.value(), Bytes("none"))
     ])
@@ -225,7 +229,7 @@ For example:
     # get "role" from the local state of Txn.accounts[1] for the current app
     # if "role" has not been set, returns "none"
     myAppOtherAccountRole = App.localGetEx(Int(1), Int(0), Bytes("role"))
-    Seq([
+    program = Seq([
         myAppOtherAccountRole,
         If(myAppOtherAccountRole.hasValue(), myAppOtherAccountRole.value(), Bytes("none"))
     ])
@@ -233,7 +237,7 @@ For example:
     # get "role" from the local state of Txn.accounts[0] (the sender) for the app with ID 31
     # if "role" has not been set, returns "none"
     otherAppSenderRole = App.localGetEx(Int(0), Int(31), Bytes("role"))
-    Seq([
+    program = Seq([
         otherAppSenderRole,
         If(otherAppSenderRole.hasValue(), otherAppSenderRole.value(), Bytes("none"))
     ])
@@ -241,7 +245,7 @@ For example:
     # get "role" from the local state of Txn.accounts[1] for the app with ID 31
     # if "role" has not been set, returns "none"
     otherAppOtherAccountRole = App.localGetEx(Int(1), Int(31), Bytes("role"))
-    Seq([
+    program = Seq([
         otherAppOtherAccountRole,
         If(otherAppOtherAccountRole.hasValue(), otherAppOtherAccountRole.value(), Bytes("none"))
     ])

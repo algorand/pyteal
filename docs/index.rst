@@ -42,6 +42,7 @@ PyTeal **hasn't been security audited**. Use it at your own risk.
    scratch
    control_structures
    state
+   assets
    versions
 
 .. toctree::

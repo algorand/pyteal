@@ -35,3 +35,9 @@ expression can extract part of a byte slicing given start and end indices. For e
 .. code-block:: python
 
     Substring(Bytes("algorand"), Int(0), Int(4)) # will produce "algo"
+
+Manipulating Individual Bits and Bytes
+--------------------------------------
+
+The individual bits and bytes in a byte string can be extracted and changed. See :ref:`bit_and_byte_manipulation`
+for more information.

@@ -30,8 +30,7 @@ author = 'Algorand'
 # extensions = ['m2r']
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.autosectionlabel'
+    'sphinx.ext.napoleon'
 ]
 source_suffix = ['.rst', '.md']
 master_doc = 'index'
