@@ -1,7 +1,14 @@
-# Future
+# 0.7.0
 
 ## Added
-* Added `ScratchVar`, an inteface for storing and loading values from scratch space ([#33](https://github.com/algorand/pyteal/pull/33)).
+* Support for new TEAL 3 features:
+  * Bit/byte manipulation and new transaction and global fields ([#50](https://github.com/algorand/pyteal/pull/50)).
+  * Dynamic `Gtxn` indexes ([#53](https://github.com/algorand/pyteal/pull/53)).
+  * `MinBalance` expression ([#54](https://github.com/algorand/pyteal/pull/54)).
+  * Documentation for new features ([#55](https://github.com/algorand/pyteal/pull/55)).
+* Added the ability to specify the TEAL version target when using `compileTeal` ([#45](https://github.com/algorand/pyteal/pull/45)).
+* Added `ScratchVar`, an interface for storing and loading values from scratch space ([#33](https://github.com/algorand/pyteal/pull/33)).
+* Added a warning when scratch slots are loaded before anything has been stored ([#47](https://github.com/algorand/pyteal/pull/47)).
 
 ## Changed
 * Rewrote internal code generation to produce smaller programs and make future optimization easier
