@@ -45,7 +45,7 @@ Base32
 ~~~~~~
 
 Byte slices can be created from a :rfc:`4648#section-6` base32 encoded
-binary string **without padding**, e.g. :code:`"7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M"`.
+binary string with or without padding, e.g. :code:`"7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M"`.
 
 .. code-block:: Python
 
@@ -78,10 +78,10 @@ Conversion
 
 Converting a value to its corresponding value in the other data type is supported by the following two operators:
 
- * :code:`Itob(n)`: generate a :code:`TealType.bytes` value from a :code:`TealType.uint64` value :code:`n`
- * :code:`Btoi(b)`: generate a :code:`TealType.uint64` value from a :code:`TealType.bytes` value :code:`b`
+ * :any:`Itob(n) <Itob>`: generate a :code:`TealType.bytes` value from a :code:`TealType.uint64` value :code:`n`
+ * :any:`Btoi(b) <Btoi>`: generate a :code:`TealType.uint64` value from a :code:`TealType.bytes` value :code:`b`
 
 **Note:** These operations are **not** meant to convert between human-readable strings and numbers.
-:code:`Itob` produces a big-endian 8-byte encoding of an unsigned integers, not a human readable
+:code:`Itob` produces a big-endian 8-byte encoding of an unsigned integer, not a human readable
 string. For example, :code:`Itob(Int(1))` will produce the string :code:`"\x00\x00\x00\x00\x00\x00\x00\x01"`
 not the string :code:`"1"`.
