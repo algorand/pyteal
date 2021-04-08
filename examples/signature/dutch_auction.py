@@ -117,4 +117,4 @@ def dutch_auction(start_round = tmpl_start_round,
     return dutch
 
 if __name__ == "__main__":
-    print(compileTeal(dutch_auction(), Mode.Signature))
+    print(compileTeal(dutch_auction(), mode=Mode.Signature, version=2))

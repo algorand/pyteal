@@ -40,4 +40,4 @@ def htlc(tmpl_seller=alice,
     )
 
 if __name__ == "__main__":
-    print(compileTeal(htlc(), Mode.Signature))
+    print(compileTeal(htlc(), mode=Mode.Signature, version=2))

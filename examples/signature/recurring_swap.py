@@ -55,4 +55,4 @@ def recurring_swap(tmpl_buyer=tmpl_buyer,
 
 
 if __name__ == "__main__":
-    print(compileTeal(recurring_swap(), Mode.Signature))
+    print(compileTeal(recurring_swap(), mode=Mode.Signature, version=2))

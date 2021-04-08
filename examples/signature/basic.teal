@@ -1,4 +1,4 @@
-#pragma version 2
+#pragma version 3
 txn TypeEnum
 int pay
 ==

@@ -281,14 +281,14 @@ def main():
     # get PyTeal approval program
     approval_program_ast = approval_program()
     # compile program to TEAL assembly
-    approval_program_teal = compileTeal(approval_program_ast, Mode.Application)
+    approval_program_teal = compileTeal(approval_program_ast, mode=Mode.Application, version=2)
     # compile program to binary
     approval_program_compiled = compile_program(algod_client, approval_program_teal)
 
     # get PyTeal clear state program
     clear_state_program_ast = clear_state_program()
     # compile program to TEAL assembly
-    clear_state_program_teal = compileTeal(clear_state_program_ast, Mode.Application)
+    clear_state_program_teal = compileTeal(clear_state_program_ast, mode=Mode.Application, version=2)
     # compile program to binary
     clear_state_program_compiled = compile_program(algod_client, clear_state_program_teal)
 

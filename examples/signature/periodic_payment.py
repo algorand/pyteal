@@ -48,4 +48,4 @@ def periodic_payment(tmpl_fee=tmpl_fee,
     return periodic_pay_escrow
 
 if __name__ == "__main__":
-    print(compileTeal(periodic_payment(), Mode.Signature))
+    print(compileTeal(periodic_payment(), mode=Mode.Signature, version=2))

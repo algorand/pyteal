@@ -29,4 +29,4 @@ def bank_for_account(receiver):
 
 if __name__ == "__main__":
     program = bank_for_account("ZZAF5ARA4MEC5PVDOP64JM5O5MQST63Q2KOY2FLYFLXXD3PFSNJJBYAFZM")
-    print(compileTeal(program, Mode.Signature))
+    print(compileTeal(program, mode=Mode.Signature, version=3))

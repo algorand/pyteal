@@ -11,7 +11,7 @@ def test_basic_bank():
     target_path = os.path.join(os.path.dirname(__file__), "../examples/signature/basic.teal")
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
-        assert compileTeal(program, Mode.Signature) == target
+        assert compileTeal(program, mode=Mode.Signature, version=3) == target
 
 def test_atomic_swap():
     from examples.signature.atomic_swap import htlc
@@ -21,7 +21,7 @@ def test_atomic_swap():
     target_path = os.path.join(os.path.dirname(__file__), "../examples/signature/atomic_swap.teal")
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
-        assert compileTeal(program, Mode.Signature) == target
+        assert compileTeal(program, mode=Mode.Signature, version=2) == target
 
 def test_periodic_payment():
     from examples.signature.periodic_payment import periodic_payment
@@ -31,7 +31,7 @@ def test_periodic_payment():
     target_path = os.path.join(os.path.dirname(__file__), "../examples/signature/periodic_payment.teal")
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
-        assert compileTeal(program, Mode.Signature) == target
+        assert compileTeal(program, mode=Mode.Signature, version=2) == target
 
 def test_split():
     from examples.signature.split import split
@@ -41,7 +41,7 @@ def test_split():
     target_path = os.path.join(os.path.dirname(__file__), "../examples/signature/split.teal")
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
-        assert compileTeal(program, Mode.Signature) == target
+        assert compileTeal(program, mode=Mode.Signature, version=2) == target
 
 def test_dutch_auction():
     from examples.signature.dutch_auction import dutch_auction
@@ -51,7 +51,7 @@ def test_dutch_auction():
     target_path = os.path.join(os.path.dirname(__file__), "../examples/signature/dutch_auction.teal")
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
-        assert compileTeal(program, Mode.Signature) == target
+        assert compileTeal(program, mode=Mode.Signature, version=2) == target
 
 def test_recurring_swap():
     from examples.signature.recurring_swap import recurring_swap
@@ -61,7 +61,7 @@ def test_recurring_swap():
     target_path = os.path.join(os.path.dirname(__file__), "../examples/signature/recurring_swap.teal")
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
-        assert compileTeal(program, Mode.Signature) == target
+        assert compileTeal(program, mode=Mode.Signature, version=2) == target
 
 def test_asset():
     from examples.application.asset import approval_program, clear_state_program
@@ -70,8 +70,8 @@ def test_asset():
     clear_state = clear_state_program()
 
     # only checking for successful compilation for now
-    compileTeal(approval, Mode.Application)
-    compileTeal(clear_state, Mode.Application)
+    compileTeal(approval, mode=Mode.Application, version=2)
+    compileTeal(clear_state, mode=Mode.Application, version=2)
 
 def test_security_token():
     from examples.application.security_token import approval_program, clear_state_program
@@ -80,8 +80,8 @@ def test_security_token():
     clear_state = clear_state_program()
     
     # only checking for successful compilation for now
-    compileTeal(approval, Mode.Application)
-    compileTeal(clear_state, Mode.Application)
+    compileTeal(approval, mode=Mode.Application, version=2)
+    compileTeal(clear_state, mode=Mode.Application, version=2)
 
 def test_vote():
     from examples.application.vote import approval_program, clear_state_program
@@ -90,8 +90,8 @@ def test_vote():
     clear_state = clear_state_program()
     
     # only checking for successful compilation for now
-    compileTeal(approval, Mode.Application)
-    compileTeal(clear_state, Mode.Application)
+    compileTeal(approval, mode=Mode.Application, version=2)
+    compileTeal(clear_state, mode=Mode.Application, version=2)
 
 def test_cond():
 	cond1 = Txn.fee() < Int(2000)
@@ -100,7 +100,7 @@ def test_cond():
 	core = Cond([Global.group_size()==Int(2), cond1],
 				[Global.group_size()==Int(3), cond2],
 				[Global.group_size()==Int(4), cond3])
-	compileTeal(core, Mode.Signature)
+	compileTeal(core, mode=Mode.Signature, version=2)
 
 @pytest.mark.timeout(2)
 def test_many_ifs():
@@ -124,4 +124,4 @@ def test_many_ifs():
         ]
     )
 
-    compileTeal(s, Mode.Signature)
+    compileTeal(s, mode=Mode.Signature, version=2)
