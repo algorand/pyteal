@@ -1,10 +1,12 @@
-from typing import List, DefaultDict, cast
-from collections import defaultdict
+from typing import List
 
-from .ast import Expr
-from .ir import Op, Mode, TealComponent, TealOp, TealLabel, TealBlock, TealSimpleBlock, TealConditionalBlock
-from .errors import TealInputError, TealInternalError
-from .config import NUM_SLOTS
+from ..ast import Expr
+from ..ir import Mode, TealComponent, TealOp, TealBlock
+from ..errors import TealInputError, TealInternalError
+from ..config import NUM_SLOTS
+
+from .sort import sortBlocks
+from .flatten import flattenBlocks
 
 MAX_TEAL_VERSION = 3
 MIN_TEAL_VERSION = 2
@@ -15,95 +17,6 @@ class CompileOptions:
     def __init__(self, *, mode: Mode = Mode.Signature, version: int = DEFAULT_TEAL_VERSION):
         self.mode = mode
         self.version = version
-
-def sortBlocks(start: TealBlock) -> List[TealBlock]:
-    """Topologically sort the graph which starts with the input TealBlock.
-
-    Args:
-        start: The starting point of the graph to sort.
-
-    Returns:
-        An ordered list of TealBlocks that is sorted such that every block is guaranteed to appear
-        in the list before all of its outgoing blocks.
-    """
-    # based on Kahn's algorithm from https://en.wikipedia.org/wiki/Topological_sorting
-    S = [start]
-    order = []
-
-    while len(S) != 0:
-        n = S.pop(0)
-        order.append(n)
-        for i, m in enumerate(n.getOutgoing()):
-            for i, block in enumerate(m.incoming):
-                if n is block:
-                    m.incoming.pop(i)
-                    break
-            if len(m.incoming) == 0:
-                if i == 0:
-                    S.insert(0, m)
-                else:
-                    S.append(m)
-    
-    return order
-
-def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
-    """Lowers a list of TealBlocks into a list of TealComponents.
-
-    Args:
-        blocks: The blocks to lower.
-    """
-    codeblocks = []
-    references: DefaultDict[int, int] = defaultdict(int)
-
-    indexToLabel = lambda index: "l{}".format(index)
-
-    for i, block in enumerate(blocks):
-        code = list(block.ops)
-        codeblocks.append(code)
-        if block.isTerminal():
-            continue
-
-        if type(block) is TealSimpleBlock:
-            simpleBlock = cast(TealSimpleBlock, block)
-            assert simpleBlock.nextBlock is not None
-
-            nextIndex = blocks.index(simpleBlock.nextBlock, i+1)
-            if nextIndex != i + 1:
-                references[nextIndex] += 1
-                code.append(TealOp(None, Op.b, indexToLabel(nextIndex)))
-        elif type(block) is TealConditionalBlock:
-            conditionalBlock = cast(TealConditionalBlock, block)
-            assert conditionalBlock.trueBlock is not None
-            assert conditionalBlock.falseBlock is not None
-
-            trueIndex = blocks.index(conditionalBlock.trueBlock, i+1)
-            falseIndex = blocks.index(conditionalBlock.falseBlock, i+1)
-
-            if falseIndex == i + 1:
-                references[trueIndex] += 1
-                code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex)))
-                continue
-
-            if trueIndex == i + 1:
-                references[falseIndex] += 1
-                code.append(TealOp(None, Op.bz, indexToLabel(falseIndex)))
-                continue
-
-            references[trueIndex] += 1
-            code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex)))
-
-            references[falseIndex] += 1
-            code.append(TealOp(None, Op.b, indexToLabel(falseIndex)))
-        else:
-            raise TealInternalError("Unrecognized block type: {}".format(type(block)))
-
-    teal: List[TealComponent] = []
-    for i, code in enumerate(codeblocks):
-        if references[i] != 0:
-            teal.append(TealLabel(None, indexToLabel(i)))
-        teal += code
-
-    return teal
 
 def verifyOpsForVersion(teal: List[TealComponent], version: int):
     """Verify that all TEAL operations are allowed in the specified version.
