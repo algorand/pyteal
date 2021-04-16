@@ -31,6 +31,14 @@ def escapeStr(s: str) -> str:
     # Surround string in double quotes
     return "\"" + s + "\""
 
+def unescapeStr(s: str) -> str:
+    if len(s) < 2 or s[0] != "\"" or s[-1] != "\"":
+        raise ValueError("Escaped string if of the wrong format")
+    s = s[1:-1]
+    s = s.replace("\\\"", "\"")
+    s = s.encode("latin-1").decode("unicode-escape").encode("latin-1").decode("utf-8")
+    return s
+
 def correctBase32Padding(s: str) -> str:
     content = s.split('=')[0]
     trailing = len(content) % 8

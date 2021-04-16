@@ -7,6 +7,7 @@ from ..config import NUM_SLOTS
 
 from .sort import sortBlocks
 from .flatten import flattenBlocks
+from .constants import createConstantBlocks
 
 MAX_TEAL_VERSION = 3
 MIN_TEAL_VERSION = 2
@@ -50,7 +51,7 @@ def verifyOpsForMode(teal: List[TealComponent], mode: Mode):
             if not op.mode & mode:
                 raise TealInputError("Op not supported in {} mode: {}".format(mode.name, op))
 
-def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION) -> str:
+def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, assembleConstants: bool = False) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 
     Args:
@@ -59,6 +60,7 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION) -
         version (optional): The TEAL version used to assemble the program. This will determine which
             expressions and fields are able to be used in the program and how expressions compile to
             TEAL opcodes. Defaults to 2 if not included.
+        assembleConstants (optional): TODO document. Defaults to false.
 
     Returns:
         A TEAL assembly program compiled from the input expression.
@@ -101,6 +103,11 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION) -
     for index, slot in enumerate(sorted(slots, key=lambda slot: slot.id)):
         for stmt in teal:
             stmt.assignSlot(slot, index)
+    
+    if assembleConstants:
+        if version < 3:
+            raise TealInternalError("The minimum version to use assembleConstants is 3. The current version is {}".format(version))
+        teal = createConstantBlocks(teal)
 
     lines = ["#pragma version {}".format(version)]
     lines += [i.assemble() for i in teal]

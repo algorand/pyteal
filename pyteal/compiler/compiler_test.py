@@ -128,3 +128,47 @@ def test_slot_load_before_store():
     program = ScratchVar().load()
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2)
+
+def test_assembleConstants():
+    program = Itob(Int(1) + Int(1) + Int(2)) == Concat(Bytes("test"), Bytes("test"), Bytes("test2"))
+
+    expectedNoAssamble = """
+#pragma version 3
+int 1
+int 1
++
+int 2
++
+itob
+byte "test"
+byte "test"
+concat
+byte "test2"
+concat
+==
+""".strip()
+    actualNoAssamble = compileTeal(program, Mode.Application, version=3, assembleConstants=False)
+    assert expectedNoAssamble == actualNoAssamble
+
+    expectedAssamble = """
+#pragma version 3
+intcblock 1
+bytecblock 0x74657374
+intc_0 // 1
+intc_0 // 1
++
+pushint 2 // 2
++
+itob
+bytec_0 // "test"
+bytec_0 // "test"
+concat
+pushbytes 0x7465737432 // "test2"
+concat
+==
+""".strip()
+    actualAssamble = compileTeal(program, Mode.Application, version=3, assembleConstants=True)
+    assert expectedAssamble == actualAssamble
+
+    with pytest.raises(TealInternalError):
+        compileTeal(program, Mode.Application, version=2, assembleConstants=True)
