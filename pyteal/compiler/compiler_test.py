@@ -132,7 +132,7 @@ def test_slot_load_before_store():
 def test_assembleConstants():
     program = Itob(Int(1) + Int(1) + Int(2)) == Concat(Bytes("test"), Bytes("test"), Bytes("test2"))
 
-    expectedNoAssamble = """
+    expectedNoAssemble = """
 #pragma version 3
 int 1
 int 1
@@ -147,10 +147,10 @@ byte "test2"
 concat
 ==
 """.strip()
-    actualNoAssamble = compileTeal(program, Mode.Application, version=3, assembleConstants=False)
-    assert expectedNoAssamble == actualNoAssamble
+    actualNoAssemble = compileTeal(program, Mode.Application, version=3, assembleConstants=False)
+    assert expectedNoAssemble == actualNoAssemble
 
-    expectedAssamble = """
+    expectedAssemble = """
 #pragma version 3
 intcblock 1
 bytecblock 0x74657374
@@ -167,8 +167,8 @@ pushbytes 0x7465737432 // "test2"
 concat
 ==
 """.strip()
-    actualAssamble = compileTeal(program, Mode.Application, version=3, assembleConstants=True)
-    assert expectedAssamble == actualAssamble
+    actualAssemble = compileTeal(program, Mode.Application, version=3, assembleConstants=True)
+    assert expectedAssemble == actualAssemble
 
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2, assembleConstants=True)
