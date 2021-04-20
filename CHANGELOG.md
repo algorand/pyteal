@@ -1,3 +1,9 @@
+# Future
+
+## Added
+* Added the `assembleConstants` option to `compileTeal`. When enabled, the compiler will assemble
+int and byte constants in the most efficient way to reduce program size ([#57](https://github.com/algorand/pyteal/pull/57)).
+
 # 0.7.0
 
 ## Added
