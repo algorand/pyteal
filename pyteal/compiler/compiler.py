@@ -60,13 +60,18 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, a
         version (optional): The TEAL version used to assemble the program. This will determine which
             expressions and fields are able to be used in the program and how expressions compile to
             TEAL opcodes. Defaults to 2 if not included.
-        assembleConstants (optional): TODO document. Defaults to false.
+        assembleConstants (optional): When true, the compiler will produce a program with fully
+            assembled constants, rather than using the pseudo-ops `int`, `byte`, and `addr`. These
+            constants will be assembled in the most space-efficient way, so enabling this may reduce
+            the compiled program's size. Enabling this option requires a minimum TEAL version of 3.
+            Defaults to false.
 
     Returns:
         A TEAL assembly program compiled from the input expression.
 
     Raises:
         TealInputError: if an operation in ast is not supported by the supplied mode and version.
+        TealInternalError: if an internal error is encounter during compilation.
     """
     if not (MIN_TEAL_VERSION <= version <= MAX_TEAL_VERSION) or type(version) != int:
         raise TealInputError("Unsupported TEAL version: {}. Excepted an integer in the range [{}, {}]".format(version, MIN_TEAL_VERSION, MAX_TEAL_VERSION))
@@ -106,7 +111,7 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, a
     
     if assembleConstants:
         if version < 3:
-            raise TealInternalError("The minimum version to use assembleConstants is 3. The current version is {}".format(version))
+            raise TealInternalError("The minimum TEAL version required to enable assembleConstants is 3. The current version is {}".format(version))
         teal = createConstantBlocks(teal)
 
     lines = ["#pragma version {}".format(version)]
