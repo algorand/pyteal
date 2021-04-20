@@ -27,6 +27,12 @@ intEnumValues = {
 }
 
 def extractIntValue(op: TealOp) -> Union[str, int]:
+    """Extract the constant value being loaded by a TealOp whose op is Op.int.
+    
+    Returns:
+        If the op is loading a template variable, returns the name of the variable as a string.
+        Otherwise, returns the integer that the op is loading.
+    """
     if len(op.args) != 1 or type(op.args[0]) not in (int, str):
         raise TealInternalError("Unexpected args in int opcode: {}".format(op.args))
 
@@ -38,6 +44,12 @@ def extractIntValue(op: TealOp) -> Union[str, int]:
     return intEnumValues[cast(str, value)]
 
 def extractBytesValue(op: TealOp) -> Union[str, bytes]:
+    """Extract the constant value being loaded by a TealOp whose op is Op.byte.
+    
+    Returns:
+        If the op is loading a template variable, returns the name of the variable as a string.
+        Otherwise, returns the byte string that the op is loading.
+    """
     if len(op.args) != 1 or type(op.args[0]) != str:
         raise TealInternalError("Unexpected args in byte opcode: {}".format(op.args))
 
@@ -56,6 +68,12 @@ def extractBytesValue(op: TealOp) -> Union[str, bytes]:
     raise TealInternalError("Unexpected format for byte value: {}".format(value))
 
 def extractAddrValue(op: TealOp) -> Union[str, bytes]:
+    """Extract the constant value being loaded by a TealOp whose op is Op.addr.
+    
+    Returns:
+        If the op is loading a template variable, returns the name of the variable as a string.
+        Otherwise, returns the bytes of the public key of the address that the op is loading.
+    """
     if len(op.args) != 1 or type(op.args[0]) != str:
         raise TealInternalError("Unexpected args in addr opcode: {}".format(op.args))
 
@@ -65,6 +83,17 @@ def extractAddrValue(op: TealOp) -> Union[str, bytes]:
     return value
 
 def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
+    """Convert TEAL code from using pseudo-ops for constants to using assembled constant blocks.
+
+    This conversion will assemble constants to be as space-efficient as possible.
+
+    Args:
+        ops: A list of TealComponents to convert.
+
+    Returns:
+        A list of TealComponent that are functionally the same as the input, but with all constants
+        loaded either through blocks or the `pushint`/`pushbytes` single-use ops.
+    """
     intFreqs: DefaultDict[Union[str, int], int] = defaultdict(int)
     byteFreqs: DefaultDict[Union[str, bytes], int] = defaultdict(int)
 
