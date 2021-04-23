@@ -318,3 +318,162 @@ def test_createConstantBlocks_all():
     actual = createConstantBlocks(ops)
     assert actual == expected
 
+def test_createConstantBlocks_tmpl_int():
+    ops = [
+        TealOp(None, Op.int, "TMPL_INT_1"),
+        TealOp(None, Op.int, "TMPL_INT_1"),
+        TealOp(None, Op.eq),
+        TealOp(None, Op.int, "TMPL_INT_2"),
+        TealOp(None, Op.add),
+    ]
+
+    expected = [
+        TealOp(None, Op.intcblock, "TMPL_INT_1"),
+        TealOp(None, Op.intc_0, "//", "TMPL_INT_1"),
+        TealOp(None, Op.intc_0, "//", "TMPL_INT_1"),
+        TealOp(None, Op.eq),
+        TealOp(None, Op.pushint, "TMPL_INT_2", "//", "TMPL_INT_2"),
+        TealOp(None, Op.add),
+    ]
+
+    actual = createConstantBlocks(ops)
+    assert actual == expected
+
+def test_createConstantBlocks_tmpl_int_mixed():
+    ops = [
+        TealOp(None, Op.int, "TMPL_INT_1"),
+        TealOp(None, Op.int, "TMPL_INT_1"),
+        TealOp(None, Op.eq),
+        TealOp(None, Op.int, "TMPL_INT_2"),
+        TealOp(None, Op.add),
+        TealOp(None, Op.int, 0),
+        TealOp(None, Op.int, 0),
+        TealOp(None, Op.add),
+        TealOp(None, Op.int, 1),
+        TealOp(None, Op.add),
+    ]
+
+    expected = [
+        TealOp(None, Op.intcblock, "TMPL_INT_1", 0),
+        TealOp(None, Op.intc_0, "//", "TMPL_INT_1"),
+        TealOp(None, Op.intc_0, "//", "TMPL_INT_1"),
+        TealOp(None, Op.eq),
+        TealOp(None, Op.pushint, "TMPL_INT_2", "//", "TMPL_INT_2"),
+        TealOp(None, Op.add),
+        TealOp(None, Op.intc_1, "//", 0),
+        TealOp(None, Op.intc_1, "//", 0),
+        TealOp(None, Op.add),
+        TealOp(None, Op.pushint, 1, "//", 1),
+        TealOp(None, Op.add),
+    ]
+
+    actual = createConstantBlocks(ops)
+    assert actual == expected
+
+def test_createConstantBlocks_tmpl_bytes():
+    ops = [
+        TealOp(None, Op.byte, "TMPL_BYTES_1"),
+        TealOp(None, Op.byte, "TMPL_BYTES_1"),
+        TealOp(None, Op.eq),
+        TealOp(None, Op.byte, "TMPL_BYTES_2"),
+        TealOp(None, Op.concat),
+    ]
+
+    expected = [
+        TealOp(None, Op.bytecblock, "TMPL_BYTES_1"),
+        TealOp(None, Op.bytec_0, "//", "TMPL_BYTES_1"),
+        TealOp(None, Op.bytec_0, "//", "TMPL_BYTES_1"),
+        TealOp(None, Op.eq),
+        TealOp(None, Op.pushbytes, "TMPL_BYTES_2", "//", "TMPL_BYTES_2"),
+        TealOp(None, Op.concat),
+    ]
+
+    actual = createConstantBlocks(ops)
+    assert actual == expected
+
+def test_createConstantBlocks_tmpl_bytes_mixed():
+    ops = [
+        TealOp(None, Op.byte, "TMPL_BYTES_1"),
+        TealOp(None, Op.byte, "TMPL_BYTES_1"),
+        TealOp(None, Op.eq),
+        TealOp(None, Op.byte, "TMPL_BYTES_2"),
+        TealOp(None, Op.concat),
+        TealOp(None, Op.byte, "0x00"),
+        TealOp(None, Op.byte, "0x00"),
+        TealOp(None, Op.concat),
+        TealOp(None, Op.byte, "0x01"),
+        TealOp(None, Op.concat),
+    ]
+
+    expected = [
+        TealOp(None, Op.bytecblock, "TMPL_BYTES_1", "0x00"),
+        TealOp(None, Op.bytec_0, "//", "TMPL_BYTES_1"),
+        TealOp(None, Op.bytec_0, "//", "TMPL_BYTES_1"),
+        TealOp(None, Op.eq),
+        TealOp(None, Op.pushbytes, "TMPL_BYTES_2", "//", "TMPL_BYTES_2"),
+        TealOp(None, Op.concat),
+        TealOp(None, Op.bytec_1, "//", "0x00"),
+        TealOp(None, Op.bytec_1, "//", "0x00"),
+        TealOp(None, Op.concat),
+        TealOp(None, Op.pushbytes, "0x01", "//", "0x01"),
+        TealOp(None, Op.concat),
+    ]
+
+    actual = createConstantBlocks(ops)
+    assert actual == expected
+
+def test_createConstantBlocks_tmpl_all():
+    ops = [
+        TealOp(None, Op.byte, "TMPL_BYTES_1"),
+        TealOp(None, Op.byte, "TMPL_BYTES_1"),
+        TealOp(None, Op.eq),
+        TealOp(None, Op.byte, "TMPL_BYTES_2"),
+        TealOp(None, Op.concat),
+        TealOp(None, Op.byte, "0x00"),
+        TealOp(None, Op.byte, "0x00"),
+        TealOp(None, Op.concat),
+        TealOp(None, Op.byte, "0x01"),
+        TealOp(None, Op.concat),
+        TealOp(None, Op.len),
+        TealOp(None, Op.int, "TMPL_INT_1"),
+        TealOp(None, Op.int, "TMPL_INT_1"),
+        TealOp(None, Op.eq),
+        TealOp(None, Op.int, "TMPL_INT_2"),
+        TealOp(None, Op.add),
+        TealOp(None, Op.int, 0),
+        TealOp(None, Op.int, 0),
+        TealOp(None, Op.add),
+        TealOp(None, Op.int, 1),
+        TealOp(None, Op.add),
+        TealOp(None, Op.eq),
+    ]
+
+    expected = [
+        TealOp(None, Op.intcblock, "TMPL_INT_1", 0),
+        TealOp(None, Op.bytecblock, "TMPL_BYTES_1", "0x00"),
+        TealOp(None, Op.bytec_0, "//", "TMPL_BYTES_1"),
+        TealOp(None, Op.bytec_0, "//", "TMPL_BYTES_1"),
+        TealOp(None, Op.eq),
+        TealOp(None, Op.pushbytes, "TMPL_BYTES_2", "//", "TMPL_BYTES_2"),
+        TealOp(None, Op.concat),
+        TealOp(None, Op.bytec_1, "//", "0x00"),
+        TealOp(None, Op.bytec_1, "//", "0x00"),
+        TealOp(None, Op.concat),
+        TealOp(None, Op.pushbytes, "0x01", "//", "0x01"),
+        TealOp(None, Op.concat),
+        TealOp(None, Op.len),
+        TealOp(None, Op.intc_0, "//", "TMPL_INT_1"),
+        TealOp(None, Op.intc_0, "//", "TMPL_INT_1"),
+        TealOp(None, Op.eq),
+        TealOp(None, Op.pushint, "TMPL_INT_2", "//", "TMPL_INT_2"),
+        TealOp(None, Op.add),
+        TealOp(None, Op.intc_1, "//", 0),
+        TealOp(None, Op.intc_1, "//", 0),
+        TealOp(None, Op.add),
+        TealOp(None, Op.pushint, 1, "//", 1),
+        TealOp(None, Op.add),
+        TealOp(None, Op.eq),
+    ]
+
+    actual = createConstantBlocks(ops)
+    assert actual == expected

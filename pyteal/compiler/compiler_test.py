@@ -130,14 +130,14 @@ def test_slot_load_before_store():
         compileTeal(program, Mode.Application, version=2)
 
 def test_assembleConstants():
-    program = Itob(Int(1) + Int(1) + Int(2)) == Concat(Bytes("test"), Bytes("test"), Bytes("test2"))
+    program = Itob(Int(1) + Int(1) + Tmpl.Int("TMPL_VAR")) == Concat(Bytes("test"), Bytes("test"), Bytes("test2"))
 
     expectedNoAssemble = """
 #pragma version 3
 int 1
 int 1
 +
-int 2
+int TMPL_VAR
 +
 itob
 byte "test"
@@ -157,7 +157,7 @@ bytecblock 0x74657374
 intc_0 // 1
 intc_0 // 1
 +
-pushint 2 // 2
+pushint TMPL_VAR // TMPL_VAR
 +
 itob
 bytec_0 // "test"
