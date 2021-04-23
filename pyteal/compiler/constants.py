@@ -115,7 +115,7 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
 
     assembled: List[TealComponent] = []
     sortedInts = sorted(intFreqs.keys(), key=lambda x: (intFreqs[x], str(x)), reverse=True)
-    sortedBytes = sorted(byteFreqs.keys(), key=lambda x: (byteFreqs[x], x.hex() if type(x) == bytes else x), reverse=True)
+    sortedBytes = sorted(byteFreqs.keys(), key=lambda x: (byteFreqs[x], cast(bytes, x).hex() if type(x) == bytes else x), reverse=True)
 
     intBlock = [i for i in sortedInts if intFreqs[i] > 1]
     byteBlock = [('0x'+cast(bytes, b).hex()) if type(b) == bytes else cast(str, b) for b in sortedBytes if byteFreqs[b] > 1]
