@@ -53,3 +53,36 @@ def test_tmpl_addr():
 def test_tmpl_addr_invalid():
     with pytest.raises(TealInputError):
         Tmpl.Addr("whatever")
+
+
+def test_tmpl_push_int():
+    expr = Tmpl.PushInt("TMPL_AMNT")
+    assert expr.type_of() == TealType.uint64
+
+    expected = TealSimpleBlock([
+        TealOp(expr, Op.pushint, "TMPL_AMNT")
+    ])
+
+    actual, _ = expr.__teal__(options)
+
+    assert actual == expected
+
+def test_tmpl_push_int_invalid():
+    with pytest.raises(TealInputError):
+        Tmpl.PushInt("whatever")
+
+def test_tmpl_push_bytes():
+    expr = Tmpl.PushBytes("TMPL_NOTE")
+    assert expr.type_of() == TealType.bytes
+
+    expected = TealSimpleBlock([
+        TealOp(expr, Op.pushbytes, "TMPL_NOTE")
+    ])
+
+    actual, _ = expr.__teal__(options)
+
+    assert actual == expected
+
+def test_tmpl_push_bytes_invalid():
+    with pytest.raises(TealInputError):
+        Tmpl.PushBytes("whatever")

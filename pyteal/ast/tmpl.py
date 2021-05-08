@@ -58,4 +58,25 @@ class Tmpl(LeafExpr):
         """
         return cls(Op.addr, TealType.bytes, placeholder)
 
+
+    @classmethod
+    def PushInt(cls, placeholder: str):
+        """Create a new PushInt template.
+        
+        Args:
+            placeholder: The name to use for this template variable. Must start with `TMPL_` and
+                only consist of uppercase alphanumeric characters and underscores.
+        """
+        return cls(Op.pushint, TealType.uint64, placeholder)
+
+    @classmethod
+    def PushBytes(cls, placeholder: str):
+        """Create a new PushBytes template.
+        
+        Args:
+            placeholder: The name to use for this template variable. Must start with `TMPL_` and
+                only consist of uppercase alphanumeric characters and underscores.
+        """
+        return cls(Op.pushbytes, TealType.bytes, placeholder)
+
 Tmpl.__module__ = "pyteal"
