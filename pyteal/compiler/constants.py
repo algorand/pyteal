@@ -1,7 +1,7 @@
 import base64
-import collections
 
 from typing import Union, List, Dict, cast
+from collections import OrderedDict
 from algosdk import encoding
 
 from ..ir import Op, TealOp, TealLabel, TealComponent, TealBlock, TealSimpleBlock, TealConditionalBlock
@@ -94,8 +94,8 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
         A list of TealComponent that are functionally the same as the input, but with all constants
         loaded either through blocks or the `pushint`/`pushbytes` single-use ops.
     """
-    intFreqs: Dict[Union[str, int], int] = collections.OrderedDict()
-    byteFreqs: Dict[Union[str, bytes], int] = collections.OrderedDict()
+    intFreqs: Dict[Union[str, int], int] = OrderedDict()
+    byteFreqs: Dict[Union[str, bytes], int] = OrderedDict()
 
     for op in ops:
         if not isinstance(op, TealOp):
