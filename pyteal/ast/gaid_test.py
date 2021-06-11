@@ -1,6 +1,8 @@
 import pytest
 
 from .. import *
+# this is not necessary but mypy complains if it's not included
+from .. import MAX_GROUP_SIZE, CompileOptions
 
 teal3Options = CompileOptions(version=3)
 teal4Options = CompileOptions(version=4)
@@ -24,6 +26,9 @@ def test_gaid():
 def test_gaid_invalid():
     with pytest.raises(TealInputError):
         GeneratedID(-1)
+
+    with pytest.raises(TealInputError):
+        GeneratedID(MAX_GROUP_SIZE)
 
 def test_gaid_dynamic_teal_3():
     with pytest.raises(TealInputError):
