@@ -12,6 +12,7 @@ from .int import Int, EnumInt
 from .arg import Arg
 from .txn import TxnType, TxnField, TxnExpr, TxnaExpr, TxnArray, TxnObject, Txn
 from .gtxn import GtxnExpr, GtxnaExpr, TxnGroup, Gtxn
+from .gaid import GeneratedID
 from .global_ import Global, GlobalField
 from .app import App, AppField, OnComplete
 from .asset import AssetHolding, AssetParam
@@ -64,6 +65,7 @@ __all__ = [
     "GtxnaExpr",
     "TxnGroup",
     "Gtxn",
+    "GeneratedID",
     "Global",
     "GlobalField",
     "App",
