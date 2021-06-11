@@ -115,15 +115,15 @@ def test_createConstantBlocks_intblock_multiple():
     ]
 
     expected = [
-        TealOp(None, Op.intcblock, 3, 2, 1),
-        TealOp(None, Op.intc_2, "//", 1),
-        TealOp(None, Op.intc_2, "//", "OptIn"),
+        TealOp(None, Op.intcblock, 1, 2, 3),
+        TealOp(None, Op.intc_0, "//", 1),
+        TealOp(None, Op.intc_0, "//", "OptIn"),
         TealOp(None, Op.add),
         TealOp(None, Op.intc_1, "//", 2),
         TealOp(None, Op.intc_1, "//", "keyreg"),
         TealOp(None, Op.add),
-        TealOp(None, Op.intc_0, "//", 3),
-        TealOp(None, Op.intc_0, "//", "ClearState"),
+        TealOp(None, Op.intc_2, "//", 3),
+        TealOp(None, Op.intc_2, "//", "ClearState"),
         TealOp(None, Op.add),
     ]
 
@@ -214,19 +214,19 @@ def test_createConstantBlocks_byteblock_multiple():
     ]
 
     expected = [
-        TealOp(None, Op.bytecblock, "0x0102", "0xb49276bd3ec0977eab86a321c449ead802c96c0bd97c2956131511d2f11eebec", "0x74657374"),
+        TealOp(None, Op.bytecblock, "0x0102", "0x74657374", "0xb49276bd3ec0977eab86a321c449ead802c96c0bd97c2956131511d2f11eebec"),
         TealOp(None, Op.bytec_0, "//", "0x0102"),
         TealOp(None, Op.bytec_0, "//", "base64(AQI=)"),
         TealOp(None, Op.concat),
         TealOp(None, Op.bytec_0, "//", "base32(AEBA====)"),
         TealOp(None, Op.concat),
-        TealOp(None, Op.bytec_2, "//", "\"test\""),
+        TealOp(None, Op.bytec_1, "//", "\"test\""),
         TealOp(None, Op.concat),
-        TealOp(None, Op.bytec_2, "//", "base32(ORSXG5A=)"),
+        TealOp(None, Op.bytec_1, "//", "base32(ORSXG5A=)"),
         TealOp(None, Op.concat),
-        TealOp(None, Op.bytec_1, "//", "0xb49276bd3ec0977eab86a321c449ead802c96c0bd97c2956131511d2f11eebec"),
+        TealOp(None, Op.bytec_2, "//", "0xb49276bd3ec0977eab86a321c449ead802c96c0bd97c2956131511d2f11eebec"),
         TealOp(None, Op.concat),
-        TealOp(None, Op.bytec_1, "//", "WSJHNPJ6YCLX5K4GUMQ4ISPK3ABMS3AL3F6CSVQTCUI5F4I65PWEMCWT3M"),
+        TealOp(None, Op.bytec_2, "//", "WSJHNPJ6YCLX5K4GUMQ4ISPK3ABMS3AL3F6CSVQTCUI5F4I65PWEMCWT3M"),
         TealOp(None, Op.concat),
     ]
 

@@ -1,7 +1,7 @@
 import base64
 
-from typing import Union, List, DefaultDict, cast
-from collections import defaultdict
+from typing import Union, List, Dict, cast
+from collections import OrderedDict
 from algosdk import encoding
 
 from ..ir import Op, TealOp, TealLabel, TealComponent, TealBlock, TealSimpleBlock, TealConditionalBlock
@@ -94,8 +94,8 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
         A list of TealComponent that are functionally the same as the input, but with all constants
         loaded either through blocks or the `pushint`/`pushbytes` single-use ops.
     """
-    intFreqs: DefaultDict[Union[str, int], int] = defaultdict(int)
-    byteFreqs: DefaultDict[Union[str, bytes], int] = defaultdict(int)
+    intFreqs: Dict[Union[str, int], int] = OrderedDict()
+    byteFreqs: Dict[Union[str, bytes], int] = OrderedDict()
 
     for op in ops:
         if not isinstance(op, TealOp):
@@ -105,17 +105,20 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
 
         if basicOp == Op.int:
             intValue = extractIntValue(op)
-            intFreqs[intValue] += 1
+            intFreqs[intValue] = intFreqs.get(intValue, 0) + 1
         elif basicOp == Op.byte:
             byteValue = extractBytesValue(op)
-            byteFreqs[byteValue] += 1
+            byteFreqs[byteValue] = byteFreqs.get(byteValue, 0) + 1
         elif basicOp == Op.addr:
             addrValue = extractAddrValue(op)
-            byteFreqs[addrValue] += 1
+            byteFreqs[addrValue] = byteFreqs.get(addrValue, 0) + 1
 
     assembled: List[TealComponent] = []
-    sortedInts = sorted(intFreqs.keys(), key=lambda x: (intFreqs[x], str(x)), reverse=True)
-    sortedBytes = sorted(byteFreqs.keys(), key=lambda x: (byteFreqs[x], cast(bytes, x).hex() if type(x) == bytes else x), reverse=True)
+
+    # because we used OrderedDicts and python sorting is stable, constants with the same frequency
+    # will remain in the same order, i.e. first defined, first in block
+    sortedInts = sorted(intFreqs, key=lambda x: intFreqs[x], reverse=True)
+    sortedBytes = sorted(byteFreqs, key=lambda x: byteFreqs[x], reverse=True)
 
     intBlock = [i for i in sortedInts if intFreqs[i] > 1]
     byteBlock = [('0x'+cast(bytes, b).hex()) if type(b) == bytes else cast(str, b) for b in sortedBytes if byteFreqs[b] > 1]
