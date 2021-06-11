@@ -62,6 +62,7 @@ Operator                                  Type                      Notes
 :any:`Txn.global_num_byte_slices() <TxnObject.global_num_byte_slices>`           :code:`TealType.uint64`   Maximum global byte strings in app schema
 :any:`Txn.local_num_uints() <TxnObject.local_num_uints>`                         :code:`TealType.uint64`   Maximum local integers in app schema
 :any:`Txn.local_num_byte_slices() <TxnObject.local_num_byte_slices>`             :code:`TealType.uint64`   Maximum local byte strings in app schema
+:any:`Txn.extra_program_pages() <TxnObject.extra_program_pages>`                 :code:`TealType.uint64`   Number of extra program pages for app
 :any:`Txn.application_args <TxnObject.application_args>`                         :code:`TealType.bytes[]`  Array of application arguments
 :any:`Txn.accounts <TxnObject.accounts>`                                         :code:`TealType.bytes[]`  Array of application accounts
 :any:`Txn.assets <TxnObject.assets>`                                             :code:`TealType.uint64[]` Array of application assets
@@ -157,4 +158,5 @@ Operator                                Type                    Notes
 :any:`Global.round()`                   :code:`TealType.uint64` the current round number
 :any:`Global.latest_timestamp()`        :code:`TealType.uint64` the latest confirmed block UNIX timestamp
 :any:`Global.current_application_id()`  :code:`TealType.uint64` the ID of the current application executing
+:any:`Global.creator_address()`         :code:`TealType.bytes`  32 byte address of the creator of the current application
 ======================================= ======================= ============================================================

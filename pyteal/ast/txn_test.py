@@ -6,6 +6,7 @@ from .. import CompileOptions
 
 teal2Options = CompileOptions(version=2)
 teal3Options = CompileOptions(version=3)
+teal4Options = CompileOptions(version=4)
 
 def test_txn_sender():
     expr = Txn.sender()
@@ -694,3 +695,18 @@ def test_txn_local_num_byte_slices():
 
     with pytest.raises(TealInputError):
         expr.__teal__(teal2Options)
+
+def test_txn_extra_program_pages():
+    expr = Txn.extra_program_pages()
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(expr, Op.txn, "ExtraProgramPages")
+    ])
+
+    actual, _ = expr.__teal__(teal4Options)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
