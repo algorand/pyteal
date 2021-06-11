@@ -226,6 +226,51 @@ def test_mod_invalid():
     with pytest.raises(TealTypeError):
         Mod(Int(2), Txn.sender())
 
+def test_exp():
+    args = [Int(2), Int(9)]
+    expr = Exp(args[0], args[1])
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.int, 2),
+        TealOp(args[1], Op.int, 9),
+        TealOp(expr, Op.exp)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_exp_overload():
+    args = [Int(2), Int(3), Int(1)]
+    # this is equivalent to args[0] ** (args[1] ** args[2])
+    expr = args[0] ** args[1] ** args[2]
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.int, 2),
+        TealOp(args[1], Op.int, 3),
+        TealOp(args[2], Op.int, 1),
+        TealOp(None, Op.exp),
+        TealOp(None, Op.exp)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+def test_exp_invalid():
+    with pytest.raises(TealTypeError):
+        Exp(Txn.receiver(), Int(2))
+    
+    with pytest.raises(TealTypeError):
+        Exp(Int(2), Txn.sender())
+
 def test_arithmetic():
     args = [Int(2), Int(3), Int(5), Int(6), Int(8), Int(9)]
     v = ((args[0] + args[1])/((args[2] - args[3]) * args[4])) % args[5]
@@ -383,6 +428,94 @@ def test_bitwise_xor_invalid():
     
     with pytest.raises(TealTypeError):
         BitwiseXor(Txn.sender(), Int(2))
+
+def test_shift_left():
+    args = [Int(5), Int(1)]
+    expr = ShiftLeft(args[0], args[1])
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.int, 5),
+        TealOp(args[1], Op.int, 1),
+        TealOp(expr, Op.shl)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_shift_left_overload():
+    args = [Int(5), Int(1), Int(2)]
+    expr = args[0] << args[1] << args[2]
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.int, 5),
+        TealOp(args[1], Op.int, 1),
+        TealOp(None, Op.shl),
+        TealOp(args[2], Op.int, 2),
+        TealOp(None, Op.shl)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+def test_shift_left_invalid():
+    with pytest.raises(TealTypeError):
+        ShiftLeft(Int(2), Txn.receiver())
+    
+    with pytest.raises(TealTypeError):
+        ShiftLeft(Txn.sender(), Int(2))
+
+def test_shift_right():
+    args = [Int(5), Int(1)]
+    expr = ShiftRight(args[0], args[1])
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.int, 5),
+        TealOp(args[1], Op.int, 1),
+        TealOp(expr, Op.shr)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_shift_right_overload():
+    args = [Int(5), Int(1), Int(2)]
+    expr = args[0] >> args[1] >> args[2]
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.int, 5),
+        TealOp(args[1], Op.int, 1),
+        TealOp(None, Op.shr),
+        TealOp(args[2], Op.int, 2),
+        TealOp(None, Op.shr)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+def test_shift_right_invalid():
+    with pytest.raises(TealTypeError):
+        ShiftRight(Int(2), Txn.receiver())
+    
+    with pytest.raises(TealTypeError):
+        ShiftRight(Txn.sender(), Int(2))
 
 def test_eq():
     args_int = [Int(2), Int(3)]

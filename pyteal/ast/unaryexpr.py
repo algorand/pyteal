@@ -40,6 +40,17 @@ def Len(arg: Expr) -> UnaryExpr:
     """Get the length of a byte string."""
     return UnaryExpr(Op.len, TealType.bytes, TealType.uint64, arg)
 
+def BitLen(arg: Expr) -> UnaryExpr:
+    """Get the index of the highest nonzero bit in an integer.
+
+    If the argument is 0, 0 will be returned.
+
+    If the argument is a byte array, it is interpreted as a big-endian unsigned integer.
+    
+    Requires TEAL version 4 or higher.
+    """
+    return UnaryExpr(Op.bitlen, TealType.anytype, TealType.uint64, arg)
+
 def Sha256(arg: Expr) -> UnaryExpr:
     """Get the SHA-256 hash of a byte string."""
     return UnaryExpr(Op.sha256, TealType.bytes, TealType.bytes, arg)
@@ -65,6 +76,15 @@ def BitwiseNot(arg: Expr) -> UnaryExpr:
     Produces ~arg.
     """
     return UnaryExpr(Op.bitwise_not, TealType.uint64, TealType.uint64, arg)
+
+def Sqrt(arg: Expr) -> UnaryExpr:
+    """Get the integer square root of a uint64.
+    
+    This will return the largest integer X such that X^2 <= arg.
+
+    Requires TEAL version 4 or higher.
+    """
+    return UnaryExpr(Op.sqrt, TealType.uint64, TealType.uint64, arg)
 
 def Pop(arg: Expr) -> UnaryExpr:
     """Pop a value from the stack."""

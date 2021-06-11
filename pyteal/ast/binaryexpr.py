@@ -87,6 +87,19 @@ def Mod(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.mod, TealType.uint64, TealType.uint64, left, right)
 
+def Exp(a: Expr, b: Expr) -> BinaryExpr:
+    """Exponential expression.
+    
+    Produces a ** b.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        a: Must evaluate to uint64.
+        b: Must evaluate to uint64.
+    """
+    return BinaryExpr(Op.exp, TealType.uint64, TealType.uint64, a, b)
+
 def BitwiseAnd(left: Expr, right: Expr) -> BinaryExpr:
     """Bitwise and expression.
 
@@ -119,6 +132,32 @@ def BitwiseXor(left: Expr, right: Expr) -> BinaryExpr:
         right: Must evaluate to uint64.
     """
     return BinaryExpr(Op.bitwise_xor, TealType.uint64, TealType.uint64, left, right)
+
+def ShiftLeft(a: Expr, b: Expr) -> BinaryExpr:
+    """Bitwise left shift expression.
+
+    Produces a << b. This is equivalent to a times 2^b, modulo 2^64.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        a: Must evaluate to uint64.
+        b: Must evaluate to uint64.
+    """
+    return BinaryExpr(Op.shl, TealType.uint64, TealType.uint64, a, b)
+
+def ShiftRight(a: Expr, b: Expr) -> BinaryExpr:
+    """Bitwise right shift expression.
+
+    Produces a >> b. This is equivalent to a divided by 2^b.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        a: Must evaluate to uint64.
+        b: Must evaluate to uint64.
+    """
+    return BinaryExpr(Op.shr, TealType.uint64, TealType.uint64, a, b)
 
 def Eq(left: Expr, right: Expr) -> BinaryExpr:
     """Equality expression.
