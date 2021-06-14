@@ -12,6 +12,7 @@ from .int import Int, EnumInt
 from .arg import Arg
 from .txn import TxnType, TxnField, TxnExpr, TxnaExpr, TxnArray, TxnObject, Txn
 from .gtxn import GtxnExpr, GtxnaExpr, TxnGroup, Gtxn
+from .gaid import GeneratedID
 from .global_ import Global, GlobalField
 from .app import App, AppField, OnComplete
 from .asset import AssetHolding, AssetParam
@@ -22,10 +23,10 @@ from .tmpl import Tmpl
 from .nonce import Nonce
 
 # unary ops
-from .unaryexpr import UnaryExpr, Btoi, Itob, Len, Sha256, Sha512_256, Keccak256, Not, BitwiseNot, Pop, Return, Balance, MinBalance
+from .unaryexpr import UnaryExpr, Btoi, Itob, Len, BitLen, Sha256, Sha512_256, Keccak256, Not, BitwiseNot, Sqrt, Pop, Return, Balance, MinBalance
 
 # binary ops
-from .binaryexpr import BinaryExpr, Add, Minus, Mul, Div, BitwiseAnd, BitwiseOr, BitwiseXor, Mod, Eq, Neq, Lt, Le, Gt, Ge, GetBit, GetByte
+from .binaryexpr import BinaryExpr, Add, Minus, Mul, Div, Mod, Exp, BitwiseAnd, BitwiseOr, BitwiseXor, ShiftLeft, ShiftRight, Eq, Neq, Lt, Le, Gt, Ge, GetBit, GetByte
 
 # ternary ops
 from .ternaryexpr import Ed25519Verify, Substring, SetBit, SetByte
@@ -64,6 +65,7 @@ __all__ = [
     "GtxnaExpr",
     "TxnGroup",
     "Gtxn",
+    "GeneratedID",
     "Global",
     "GlobalField",
     "App",
@@ -78,11 +80,13 @@ __all__ = [
     "Btoi",
     "Itob",
     "Len",
+    "BitLen",
     "Sha256",
     "Sha512_256",
     "Keccak256",
     "Not",
     "BitwiseNot",
+    "Sqrt",
     "Pop",
     "Return",
     "Balance",
@@ -92,10 +96,13 @@ __all__ = [
     "Minus",
     "Mul",
     "Div",
+    "Mod",
+    "Exp",
     "BitwiseAnd",
     "BitwiseOr",
     "BitwiseXor",
-    "Mod",
+    "ShiftLeft",
+    "ShiftRight",
     "Eq",
     "Neq",
     "Lt",

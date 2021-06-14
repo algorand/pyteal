@@ -76,6 +76,10 @@ class Expr(ABC):
     def __mod__(self, other):
         from .binaryexpr import Mod
         return Mod(self, other)
+    
+    def __pow__(self, other):
+        from .binaryexpr import Exp
+        return Exp(self, other)
 
     def __invert__(self):
         from .unaryexpr import BitwiseNot
@@ -92,6 +96,14 @@ class Expr(ABC):
     def __xor__(self, other):
         from .binaryexpr import BitwiseXor
         return BitwiseXor(self, other)
+    
+    def __lshift__(self, other):
+        from .binaryexpr import ShiftLeft
+        return ShiftLeft(self, other)
+
+    def __rshift__(self, other):
+        from .binaryexpr import ShiftRight
+        return ShiftRight(self, other)
 
     def And(self, other: 'Expr') -> 'Expr':
         """Take the logical And of this expression and another one.

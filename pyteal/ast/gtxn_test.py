@@ -8,6 +8,7 @@ GTXN_RANGE = range(MAX_GROUP_SIZE)
 
 teal2Options = CompileOptions(version=2)
 teal3Options = CompileOptions(version=3)
+teal4Options = CompileOptions(version=4)
 
 def test_gtxn_invalid():
     with pytest.raises(TealInputError):
@@ -1676,3 +1677,38 @@ def test_txn_local_num_byte_slices_dynamic():
 
     with pytest.raises(TealInputError):
         expr.__teal__(teal2Options)
+
+def test_txn_extra_program_pages():
+    for i in GTXN_RANGE:
+        expr = Gtxn[i].extra_program_pages()
+        assert expr.type_of() == TealType.uint64
+        
+        expected = TealSimpleBlock([
+            TealOp(expr, Op.gtxn, i, "ExtraProgramPages")
+        ])
+
+        actual, _ = expr.__teal__(teal4Options)
+
+        assert actual == expected
+
+        with pytest.raises(TealInputError):
+            expr.__teal__(teal3Options)
+
+def test_txn_extra_program_pages_dynamic():
+    index = Int(0)
+    expr = Gtxn[index].extra_program_pages()
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(index, Op.int, 0),
+        TealOp(expr, Op.gtxns, "ExtraProgramPages")
+    ])
+
+    actual, _ = expr.__teal__(teal4Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)

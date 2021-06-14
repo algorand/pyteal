@@ -5,7 +5,8 @@ from .. import *
 from .. import CompileOptions
 
 teal2Options = CompileOptions(version=2)
-teal3Options = CompileOptions(version=2)
+teal3Options = CompileOptions(version=3)
+teal4Options = CompileOptions(version=4)
 
 def test_btoi():
     arg = Arg(1)
@@ -66,6 +67,38 @@ def test_len():
 def test_len_invalid():
     with pytest.raises(TealTypeError):
         Len(Int(1))
+
+def test_bitlen_int():
+    arg = Int(7)
+    expr = BitLen(arg)
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.int, 7),
+        TealOp(expr, Op.bitlen)
+    ])
+
+    actual, _ = expr.__teal__(teal4Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+def test_bitlen_bytes():
+    arg = Txn.receiver()
+    expr = BitLen(arg)
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.txn, "Receiver"),
+        TealOp(expr, Op.bitlen)
+    ])
+
+    actual, _ = expr.__teal__(teal4Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
 
 def test_sha256():
     arg = Arg(0)
@@ -182,6 +215,26 @@ def test_bitwise_not_overload():
 def test_bitwise_not_invalid():
     with pytest.raises(TealTypeError):
         BitwiseNot(Txn.receiver())
+
+def test_sqrt():
+    arg = Int(4)
+    expr = Sqrt(arg)
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.int, 4),
+        TealOp(expr, Op.sqrt)
+    ])
+
+    actual, _ = expr.__teal__(teal4Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+def test_sqrt_invalid():
+    with pytest.raises(TealTypeError):
+        Sqrt(Txn.receiver())
 
 def test_pop():
     arg_int = Int(3)

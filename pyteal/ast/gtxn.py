@@ -7,7 +7,6 @@ from ..config import MAX_GROUP_SIZE
 from .expr import Expr
 from .leafexpr import LeafExpr
 from .txn import TxnField, TxnExpr, TxnaExpr, TxnObject
-from .global_ import Global
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions

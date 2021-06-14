@@ -80,6 +80,7 @@ class TxnField(Enum):
     global_num_byte_slices = (53, "GlobalNumByteSlice", TealType.uint64, 3)
     local_num_uints = (54, "LocalNumUint", TealType.uint64, 3)
     local_num_byte_slices = (55, "LocalNumByteSlice", TealType.uint64, 3)
+    extra_program_pages = (56, "ExtraProgramPages", TealType.uint64, 4)
 
     def __init__(self, id: int, name: str, type: TealType, min_version: int) -> None:
         self.id = id
@@ -542,6 +543,17 @@ class TxnObject:
         Requires TEAL version 3 or higher.
         """
         return self.txnType(TxnField.local_num_byte_slices)
+
+    def extra_program_pages(self) -> TxnExpr:
+        """Get the number of additional pages for each of the application's approval and clear state programs.
+        
+        1 additional page means 2048 more total bytes, or 1024 for each program.
+
+        Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall` and this is an app creation call.
+
+        Requires TEAL version 4 or higher.
+        """
+        return self.txnType(TxnField.extra_program_pages)
 
     @property
     def application_args(self) -> TxnArray:

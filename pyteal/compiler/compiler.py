@@ -9,7 +9,7 @@ from .sort import sortBlocks
 from .flatten import flattenBlocks
 from .constants import createConstantBlocks
 
-MAX_TEAL_VERSION = 3
+MAX_TEAL_VERSION = 4
 MIN_TEAL_VERSION = 2
 DEFAULT_TEAL_VERSION = MIN_TEAL_VERSION
 

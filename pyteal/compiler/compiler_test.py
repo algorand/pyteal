@@ -75,7 +75,7 @@ def test_compile_version_invalid():
         compileTeal(expr, Mode.Signature, version=1) # too small
 
     with pytest.raises(TealInputError):
-        compileTeal(expr, Mode.Signature, version=4) # too large
+        compileTeal(expr, Mode.Signature, version=5) # too large
     
     with pytest.raises(TealInputError):
         compileTeal(expr, Mode.Signature, version=2.0) # decimal
@@ -105,6 +105,16 @@ def test_compile_version_3():
 int 1
 """.strip()
     actual = compileTeal(expr, Mode.Signature, version=3)
+    assert actual == expected
+
+def test_compile_version_4():
+    expr = Int(1)
+    
+    expected = """
+#pragma version 4
+int 1
+""".strip()
+    actual = compileTeal(expr, Mode.Signature, version=4)
     assert actual == expected
 
 def test_slot_load_before_store():
