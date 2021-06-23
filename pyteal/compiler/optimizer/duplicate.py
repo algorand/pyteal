@@ -3,6 +3,21 @@ from typing import List, Tuple
 from ...ir import Op, TealOp, TealLabel, TealComponent, TealBlock
 
 def detectDuplicatesInBlock(block: TealBlock) -> TealBlock:
+    """Detects duplicate opcodes in a block and replaces them with `dup` or `dup2`.
+
+    NOTE: This optimization relies on opcodes being idempotent, meaning
+    regardless of how many times an opcode is repeated with the same input (the elements it pops
+    from the stack), it will produce the same result (the elements it pushes to the stack, AND all
+    other side effects). Currently there are two cases that break this idempotence: the dig opcode,
+    and stateful write opcodes that depend on stateful reads. To address this, the dig opcode is
+    excluded from this type of optimization, and TODO: ADDRESS STATEFUL CASE
+
+    Args:
+        block: The block to optimize. This input will be modified.
+    
+    Returns:
+        The same input block, with its ops modified to reduce duplicate opcodes.
+    """
     # this is necessary to compare TealOps without compairing their origin Expr
     with TealComponent.Context.ignoreExprEquality():
         index = len(block.ops) - 1
@@ -61,6 +76,6 @@ def getDependenciesForOp(ops: List[TealOp], index: int) -> Tuple[bool, List[Teal
     # dig can read any value before it in the stack without popping it, so if we
     # depend on dig we can't know what it depends on (at least with this
     # algorithm)
-    complete = Op.dig not in dependencies
+    complete = all(Op.dig != op.getOp() for op in dependencies)
 
     return complete, dependencies[::-1]

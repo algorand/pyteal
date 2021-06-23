@@ -55,4 +55,4 @@ def split(tmpl_fee=tmpl_fee,
     return split_program
 
 if __name__ == "__main__":
-    print(compileTeal(split(), mode=Mode.Signature, version=2))
+    print(compileTeal(split(), mode=Mode.Signature, version=2, optimize=OptimizeOptions(useDup=True)))

@@ -8,7 +8,7 @@ from ..config import NUM_SLOTS
 from .sort import sortBlocks
 from .flatten import flattenBlocks
 from .constants import createConstantBlocks
-from .optimizer import applyLocalOptimizationToList, detectDuplicatesInBlock
+from .optimizer import OptimizeOptions, applyLocalOptimizationToList, detectDuplicatesInBlock
 
 MAX_TEAL_VERSION = 4
 MIN_TEAL_VERSION = 2
@@ -16,9 +16,10 @@ DEFAULT_TEAL_VERSION = MIN_TEAL_VERSION
 
 class CompileOptions:
 
-    def __init__(self, *, mode: Mode = Mode.Signature, version: int = DEFAULT_TEAL_VERSION):
+    def __init__(self, *, mode: Mode = Mode.Signature, version: int = DEFAULT_TEAL_VERSION, optimize: OptimizeOptions = None):
         self.mode = mode
         self.version = version
+        self.optimize = optimize if optimize is not None else OptimizeOptions()
 
 def verifyOpsForVersion(teal: List[TealComponent], version: int):
     """Verify that all TEAL operations are allowed in the specified version.
@@ -52,7 +53,7 @@ def verifyOpsForMode(teal: List[TealComponent], mode: Mode):
             if not op.mode & mode:
                 raise TealInputError("Op not supported in {} mode: {}".format(mode.name, op))
 
-def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, assembleConstants: bool = False) -> str:
+def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, assembleConstants: bool = False, optimize: OptimizeOptions = None) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 
     Args:
@@ -61,11 +62,13 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, a
         version (optional): The TEAL version used to assemble the program. This will determine which
             expressions and fields are able to be used in the program and how expressions compile to
             TEAL opcodes. Defaults to 2 if not included.
-        assembleConstants (optional): When true, the compiler will produce a program with fully
+        assembleConstants (optional): When True, the compiler will produce a program with fully
             assembled constants, rather than using the pseudo-ops `int`, `byte`, and `addr`. These
             constants will be assembled in the most space-efficient way, so enabling this may reduce
             the compiled program's size. Enabling this option requires a minimum TEAL version of 3.
-            Defaults to false.
+            Defaults to False.
+        optimize (optional): Options for compiler optimizations. If not included, no additional
+            optimizations will be performed.
 
     Returns:
         A TEAL assembly program compiled from the input expression.
@@ -77,7 +80,7 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, a
     if not (MIN_TEAL_VERSION <= version <= MAX_TEAL_VERSION) or type(version) != int:
         raise TealInputError("Unsupported TEAL version: {}. Excepted an integer in the range [{}, {}]".format(version, MIN_TEAL_VERSION, MAX_TEAL_VERSION))
 
-    options = CompileOptions(mode=mode, version=version)
+    options = CompileOptions(mode=mode, version=version, optimize=optimize)
 
     start, _ = ast.__teal__(options)
     start.addIncoming()
@@ -91,8 +94,10 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, a
         msg = 'Encountered {} error{} during compilation'.format(len(errors), 's' if len(errors) != 1 else '')
         raise TealInternalError(msg) from errors[0]
 
-    order = sortBlocks(start)
-    blocks = applyLocalOptimizationToList(order, detectDuplicatesInBlock)
+    blocks = sortBlocks(start)
+
+    if options.optimize.useDup:
+        blocks = applyLocalOptimizationToList(blocks, detectDuplicatesInBlock)
 
     teal = flattenBlocks(blocks)
 

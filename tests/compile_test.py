@@ -41,7 +41,7 @@ def test_split():
     target_path = os.path.join(os.path.dirname(__file__), "../examples/signature/split.teal")
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
-        assert compileTeal(program, mode=Mode.Signature, version=2) == target
+        assert compileTeal(program, mode=Mode.Signature, version=2, optimize=OptimizeOptions(useDup=True)) == target
 
 def test_dutch_auction():
     from examples.signature.dutch_auction import dutch_auction
