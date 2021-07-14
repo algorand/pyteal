@@ -22,6 +22,10 @@ pyteal requires python version >= 3.6
 
 * `pip3 install pyteal`
 
+Install dependencies :
+
+* `pip3 install -r requirements.txt`
+
 ### Documentation
 
 [PyTeal Docs](https://pyteal.readthedocs.io/)
