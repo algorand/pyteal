@@ -1087,7 +1087,7 @@ def test_b_xor_invalid():
 def test_b_eq():
     args = [Bytes("base16", "0xFFFFFFFFFFFFFFFFFF"), Bytes("base16", "0xFFFFFFFFFFFFFFFFFF")]
     expr = BEq(args[0], args[1])
-    assert expr.type_of() == TealType.bytes
+    assert expr.type_of() == TealType.uint64
     
     expected = TealSimpleBlock([
         TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFFF"),
@@ -1111,7 +1111,7 @@ def test_b_eq_invalid():
 def test_b_neq():
     args = [Bytes("base16", "0xFFFFFFFFFFFFFFFFFF"), Bytes("base16", "0xFFFFFFFFFFFFFFFFFF")]
     expr = BNeq(args[0], args[1])
-    assert expr.type_of() == TealType.bytes
+    assert expr.type_of() == TealType.uint64
     
     expected = TealSimpleBlock([
         TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFFF"),
@@ -1135,7 +1135,7 @@ def test_b_neq_invalid():
 def test_b_lt():
     args = [Bytes("base16", "0xFFFFFFFFFFFFFFFFF0"), Bytes("base16", "0xFFFFFFFFFFFFFFFFFF")]
     expr = BLt(args[0], args[1])
-    assert expr.type_of() == TealType.bytes
+    assert expr.type_of() == TealType.uint64
     
     expected = TealSimpleBlock([
         TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFF0"),
@@ -1159,7 +1159,7 @@ def test_b_lt_invalid():
 def test_b_le():
     args = [Bytes("base16", "0xFFFFFFFFFFFFFFFFF0"), Bytes("base16", "0xFFFFFFFFFFFFFFFFFF")]
     expr = BLe(args[0], args[1])
-    assert expr.type_of() == TealType.bytes
+    assert expr.type_of() == TealType.uint64
     
     expected = TealSimpleBlock([
         TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFF0"),
@@ -1183,7 +1183,7 @@ def test_b_le_invalid():
 def test_b_gt():
     args = [Bytes("base16", "0xFFFFFFFFFFFFFFFFFF"), Bytes("base16", "0xFFFFFFFFFFFFFFFFF0")]
     expr = BGt(args[0], args[1])
-    assert expr.type_of() == TealType.bytes
+    assert expr.type_of() == TealType.uint64
     
     expected = TealSimpleBlock([
         TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFFF"),
@@ -1207,7 +1207,7 @@ def test_b_gt_invalid():
 def test_b_ge():
     args = [Bytes("base16", "0xFFFFFFFFFFFFFFFFFF"), Bytes("base16", "0xFFFFFFFFFFFFFFFFF0")]
     expr = BGe(args[0], args[1])
-    assert expr.type_of() == TealType.bytes
+    assert expr.type_of() == TealType.uint64
     
     expected = TealSimpleBlock([
         TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFFF"),

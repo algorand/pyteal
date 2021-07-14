@@ -375,7 +375,7 @@ def BEq(left: Expr, right: Expr) -> BinaryExpr:
         left: A value to check.
         right: The other value to check. Must evaluate to the same type as left.
     """
-    return BinaryExpr(Op.b_eq, right.type_of(), TealType.bytes, left, right)
+    return BinaryExpr(Op.b_eq, TealType.bytes, TealType.uint64, left, right)
 
 def BNeq(left: Expr, right: Expr) -> BinaryExpr:
     """Difference expression with bytes as arguments.
@@ -388,7 +388,7 @@ def BNeq(left: Expr, right: Expr) -> BinaryExpr:
         left: A value to check.
         right: The other value to check. Must evaluate to the same type as left.
     """
-    return BinaryExpr(Op.b_neq, right.type_of(), TealType.bytes, left, right)
+    return BinaryExpr(Op.b_neq, TealType.bytes, TealType.uint64, left, right)
 
 def BLt(left: Expr, right: Expr) -> BinaryExpr:
     """Less than expression with bytes as arguments.
@@ -401,7 +401,7 @@ def BLt(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to bytes.
         right: Must evaluate to bytes.
     """
-    return BinaryExpr(Op.b_lt, TealType.bytes, TealType.bytes, left, right)
+    return BinaryExpr(Op.b_lt, TealType.bytes, TealType.uint64, left, right)
 
 def BLe(left: Expr, right: Expr) -> BinaryExpr:
     """Less than or equal to expression with bytes as arguments.
@@ -414,7 +414,7 @@ def BLe(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to bytes.
         right: Must evaluate to bytes.
     """
-    return BinaryExpr(Op.b_le, TealType.bytes, TealType.bytes, left, right)
+    return BinaryExpr(Op.b_le, TealType.bytes, TealType.uint64, left, right)
 
 def BGt(left: Expr, right: Expr) -> BinaryExpr:
     """Greater than expression with bytes as arguments.
@@ -427,7 +427,7 @@ def BGt(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to bytes.
         right: Must evaluate to bytes.
     """
-    return BinaryExpr(Op.b_gt, TealType.bytes, TealType.bytes, left, right)
+    return BinaryExpr(Op.b_gt, TealType.bytes, TealType.uint64, left, right)
 
 def BGe(left: Expr, right: Expr) -> BinaryExpr:
     """Greater than or equal to expression with bytes as arguments.
@@ -440,4 +440,4 @@ def BGe(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to bytes.
         right: Must evaluate to bytes.
     """
-    return BinaryExpr(Op.b_ge, TealType.bytes, TealType.bytes, left, right)
+    return BinaryExpr(Op.b_ge, TealType.bytes, TealType.uint64, left, right)
