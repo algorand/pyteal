@@ -331,3 +331,43 @@ def test_min_balance():
 def test_min_balance_invalid():
     with pytest.raises(TealTypeError):
         MinBalance(Txn.receiver())
+
+def test_b_not():
+    arg = Bytes("base16", "0xFFFFFFFFFFFFFFFFFF")
+    expr = BNot(arg)
+    assert expr.type_of() == TealType.bytes
+    
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.byte, "0xFFFFFFFFFFFFFFFFFF"),
+        TealOp(expr, Op.b_not)
+    ])
+
+    actual, _ = expr.__teal__(teal4Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_b_not_invalid():
+    with pytest.raises(TealTypeError):
+        BNot(Int(2))
+
+def test_b_zero():
+    arg = Int(8)
+    expr = BZero(arg)
+    assert expr.type_of() == TealType.bytes
+    
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.int, 8),
+        TealOp(expr, Op.bzero)
+    ])
+
+    actual, _ = expr.__teal__(teal4Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_b_zero_invalid():
+    with pytest.raises(TealTypeError):
+        BZero(Bytes("base16", "0x11"))

@@ -259,3 +259,185 @@ def GetByte(value: Expr, index: Expr) -> BinaryExpr:
         index: The index of the byte to extract. Must evaluate to an integer less than Len(value).
     """
     return BinaryExpr(Op.getbyte, (TealType.bytes, TealType.uint64), TealType.uint64, value, index)
+
+def BAdd(left: Expr, right: Expr) -> BinaryExpr:
+    """Add two numbers as bytes.
+    
+    Produces left + right.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_add, TealType.bytes, TealType.bytes, left, right)
+
+def BMinus(left: Expr, right: Expr) -> BinaryExpr:
+    """Subtract two numbers as bytes.
+    
+    Produces left - right.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_minus, TealType.bytes, TealType.bytes, left, right)
+    
+def BDiv(left: Expr, right: Expr) -> BinaryExpr:
+    """Divide two numbers as bytes.
+    
+    Produces left / right.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_div, TealType.bytes, TealType.bytes, left, right)
+    
+def BMul(left: Expr, right: Expr) -> BinaryExpr:
+    """Multiply two numbers as bytes.
+    
+    Produces left * right.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_mul, TealType.bytes, TealType.bytes, left, right)
+
+def BMod(left: Expr, right: Expr) -> BinaryExpr:
+    """Modulo expression with bytes as arguments.
+    
+    Produces left % right.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_mod, TealType.bytes, TealType.bytes, left, right)
+
+def BAnd(left: Expr, right: Expr) -> BinaryExpr:
+    """Bitwise and expression with bytes as arguments.
+
+    Produces left & right.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_and, TealType.bytes, TealType.bytes, left, right)
+
+def BOr(left: Expr, right: Expr) -> BinaryExpr:
+    """Bitwise or expression with bytes as arguments.
+
+    Produces left | right.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_or, TealType.bytes, TealType.bytes, left, right)
+
+def BXor(left: Expr, right: Expr) -> BinaryExpr:
+    """Bitwise xor expression with bytes as arguments.
+
+    Produces left ^ right.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_xor, TealType.bytes, TealType.bytes, left, right)
+
+def BEq(left: Expr, right: Expr) -> BinaryExpr:
+    """Equality expression with bytes as arguments.
+    
+    Checks if left == right.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: A value to check.
+        right: The other value to check. Must evaluate to the same type as left.
+    """
+    return BinaryExpr(Op.b_eq, right.type_of(), TealType.bytes, left, right)
+
+def BNeq(left: Expr, right: Expr) -> BinaryExpr:
+    """Difference expression with bytes as arguments.
+    
+    Checks if left != right.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: A value to check.
+        right: The other value to check. Must evaluate to the same type as left.
+    """
+    return BinaryExpr(Op.b_neq, right.type_of(), TealType.bytes, left, right)
+
+def BLt(left: Expr, right: Expr) -> BinaryExpr:
+    """Less than expression with bytes as arguments.
+    
+    Checks if left < right.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_lt, TealType.bytes, TealType.bytes, left, right)
+
+def BLe(left: Expr, right: Expr) -> BinaryExpr:
+    """Less than or equal to expression with bytes as arguments.
+    
+    Checks if left <= right.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_le, TealType.bytes, TealType.bytes, left, right)
+
+def BGt(left: Expr, right: Expr) -> BinaryExpr:
+    """Greater than expression with bytes as arguments.
+    
+    Checks if left > right.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_gt, TealType.bytes, TealType.bytes, left, right)
+
+def BGe(left: Expr, right: Expr) -> BinaryExpr:
+    """Greater than or equal to expression with bytes as arguments.
+    
+    Checks if left >= right.
+
+    Requires TEAL version 4 or higher.
+    
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_ge, TealType.bytes, TealType.bytes, left, right)
