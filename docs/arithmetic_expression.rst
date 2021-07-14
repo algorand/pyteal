@@ -45,6 +45,36 @@ The associativity and precedence of the overloaded Python arithmetic operators a
  * :code:`Int(1) + Int(2) + Int(3)` is equivalent to :code:`Add(Add(Int(1), Int(2)), Int(3))`
  * :code:`Int(1) + Int(2) * Int(3)` is equivalent to :code:`Add(Int(1), Mul(Int(2), Int(3)))` 
 
+Byteslice Arithmetic
+~~~~~~~~~~~~~~~~~~~~
+
+Byteslice arithemetic is available for Teal V4 and above. 
+In PyTeal, byteslice arithmetic expressions include :code:`TealType.Bytes` values as arguments (with the exception of :code:`BZero`).
+The table below summarizes the byteslize arithmetic operations in PyTeal.
+
+=================================== ================================================= ===========================
+Operator                            Semantics                                         Example
+=================================== ================================================= ===========================
+:any:`BLt(a, b) <BLt>`              `1` if `a` is less than `b`, `0` otherwise        :code:`BLt(Bytes("base16", "0xFF"), Bytes("base16", "0xFE"))`
+:any:`BGt(a, b) <BGt>`              `1` if `a` is greater than `b`, `0` otherwise     :code:`BGt(Bytes("base16", "0xFF"), Bytes("base16", "0xFE"))`
+:any:`BLe(a, b) <BLe>`              `1` if `a` is no greater than `b`, `0` otherwise  :code:`BLe(Bytes("base16", "0xFF"), Bytes("base16", "0xFE"))`
+:any:`BGe(a, b) <BGe>`              `1` if `a` is no less than `b`, `0` otherwise     :code:`BGe(Bytes("base16", "0xFF"), Bytes("base16", "0xFE"))`
+:any:`BAdd(a, b) <BAdd>`            `a + b`, error (panic) if overflow                :code:`BAdd(Bytes("base16", "0x10"), Bytes("base16", "0x11"))`
+:any:`BMinus(a, b) <BMinus>`        `a - b`, error if underflow                       :code:`BMinus(Bytes("base16", "0x10"), Bytes("base16", "0x11"))`
+:any:`BMul(a, b) <BMul>`            `a * b`, error if overflow                        :code:`BMul(Bytes("base16", "0x10"), Bytes("base16", "0x11"))`
+:any:`BDiv(a, b) <BDiv>`            `a / b`, error if divided by zero                 :code:`BDiv(Bytes("base16", "0x10"), Bytes("base16", "0x11"))`
+:any:`BMod(a, b) <BMod>`            `a % b`, modulo operation                         :code:`BMod(Bytes("base16", "0xFF"), Bytes("base16", "0xFE"))`
+:any:`BEq(a, b) <BEq>`              `1` if `a` equals `b`, `0` otherwise              :code:`BEq(Bytes("base16", "0xFF"), Bytes("base16", "0xFF"))`
+:any:`BNeq(a, b) <BNeq>`            `0` if `a` equals `b`, `1` otherwise              :code:`BNeq(Bytes("base16", "0xFF"), Bytes("base16", "0xFF"))`
+:any:`BAnd(a, b) <pyteal.BAnd>`     `1` if `a > 0 && b > 0`, `0` otherwise            :code:`BAnd(Bytes("base16", "0xFF"), Bytes("base16", "0xFE"))`
+:any:`BOr(a, b) <pyteal.BOr>`       `1` if `a > 0 || b > 0`, `0` otherwise            :code:`BOr(Bytes("base16", "0xFF"), Bytes("base16", "0xFE"))`
+:any:`BXOr(a, b) <pyteal.BXor>`     `a ^ b`, bit-wise xor operation                   :code:`BXor(Bytes("base16", "0xFF"), Bytes("base16", "0xFE"))`
+:any:`BNot(a) <pyteal.BNot>`        `~a`, invert all its bits                         :code:`BNot(Bytes("base16", "0xFF00"))`
+:any:`BZero(a) <pyteal.BZero>`      return bytearray of length a with all zero bytes  :code:`BZero(Int(8))`
+=================================== ================================================= ===========================
+
+Currently, byteslice arithmetic operations are not overloaded, and must be explicitly called.
+
 .. _bit_and_byte_manipulation:
 
 Bit and Byte Operations
