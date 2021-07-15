@@ -46,7 +46,7 @@ The associativity and precedence of the overloaded Python arithmetic operators a
  * :code:`Int(1) + Int(2) * Int(3)` is equivalent to :code:`Add(Int(1), Mul(Int(2), Int(3)))` 
 
 Byteslice Arithmetic
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 Byteslice arithemetic is available for Teal V4 and above. 
 Byteslice arithmetic operators allow up to 512-bit arithmetic.
@@ -73,7 +73,7 @@ Operator                                Return Type             Example         
 :any:`BytesOr(a, b) <pyteal.BytesOr>`   :code:`TealType.Bytes`  :code:`BytesOr(Bytes("base16", "0xBEEF"), Bytes("base16", "0x1337"))`  :code:`0xBFFF`
 :any:`BytesXor(a, b) <pyteal.BytesXor>` :code:`TealType.Bytes`  :code:`BytesXor(Bytes("base16", "0xBEEF"), Bytes("base16", "0x1337"))` :code:`0xADD8`
 :any:`BytesNot(a) <pyteal.BytesNot>`    :code:`TealType.Bytes`  :code:`BytesNot(Bytes("base16", "0xFF00"))`                            :code:`0x00FF`
-:any:`BytesZero(a) <pyteal.BytesZero>`  :code:`TealType.Bytes`  :code:`BytesZero(Int(8))`                                              :code:`0x00000000`
+:any:`BytesZero(a) <pyteal.BytesZero>`  :code:`TealType.Bytes`  :code:`BytesZero(Int(4))`                                              :code:`0x00000000`
 ======================================= ======================= ====================================================================== ==================
 
 Currently, byteslice arithmetic operations are not overloaded, and must be explicitly called.
