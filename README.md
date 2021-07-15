@@ -38,14 +38,15 @@ In pyteal root directory:
 Setup venv (one time):
  * `python3 -m venv venv`
 
-
 Active venv:
  * `. venv/bin/activate.fish` (if your shell is fish)
  * `. venv/bin/activate` (if your shell is bash/zsh)
 
-
 Pip install pyteal in editable state
  * `pip install -e .`
+
+Install dependencies :
+* `pip3 install -r requirements.txt`
  
 Type checking using mypy
 * `mypy pyteal`

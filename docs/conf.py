@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'PyTeal'
-copyright = '2020, Algorand'
+copyright = '2021, Algorand'
 author = 'Algorand'
 
 

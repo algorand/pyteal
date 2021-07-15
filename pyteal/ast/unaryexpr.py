@@ -115,3 +115,22 @@ def MinBalance(account: Expr) -> UnaryExpr:
     Requires TEAL version 3 or higher. This operation is only permitted in application mode.
     """
     return UnaryExpr(Op.min_balance, TealType.uint64, TealType.uint64, account)
+
+def BytesNot(arg: Expr) -> UnaryExpr:
+    """Get the bitwise inverse of bytes.
+    
+    Produces ~arg.
+    Argument must not exceed 64 bytes.
+
+    Requires TEAL version 4 or higher.
+    """
+    return UnaryExpr(Op.b_not, TealType.bytes, TealType.bytes, arg)
+
+def BytesZero(arg: Expr) -> UnaryExpr:
+    """Get a byte-array of a specified length, containing all zero bytes.
+
+    Argument must evaluate to uint64. 
+
+    Requires TEAL version 4 or higher.    
+    """
+    return UnaryExpr(Op.bzero, TealType.uint64, TealType.bytes, arg)

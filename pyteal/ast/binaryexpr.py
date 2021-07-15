@@ -259,3 +259,206 @@ def GetByte(value: Expr, index: Expr) -> BinaryExpr:
         index: The index of the byte to extract. Must evaluate to an integer less than Len(value).
     """
     return BinaryExpr(Op.getbyte, (TealType.bytes, TealType.uint64), TealType.uint64, value, index)
+
+def BytesAdd(left: Expr, right: Expr) -> BinaryExpr:
+    """Add two numbers as bytes.
+    
+    Produces left + right, where left and right are interpreted as big-endian unsigned integers.
+    Arguments must not exceed 64 bytes.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_add, TealType.bytes, TealType.bytes, left, right)
+
+def BytesMinus(left: Expr, right: Expr) -> BinaryExpr:
+    """Subtract two numbers as bytes.
+    
+    Produces left - right, where left and right are interpreted as big-endian unsigned integers.
+    Arguments must not exceed 64 bytes.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_minus, TealType.bytes, TealType.bytes, left, right)
+    
+def BytesDiv(left: Expr, right: Expr) -> BinaryExpr:
+    """Divide two numbers as bytes.
+    
+    Produces left / right, where left and right are interpreted as big-endian unsigned integers.
+    Arguments must not exceed 64 bytes.
+
+    Panics if right is 0. 
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_div, TealType.bytes, TealType.bytes, left, right)
+    
+def BytesMul(left: Expr, right: Expr) -> BinaryExpr:
+    """Multiply two numbers as bytes.
+    
+    Produces left * right, where left and right are interpreted as big-endian unsigned integers.
+    Arguments must not exceed 64 bytes.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_mul, TealType.bytes, TealType.bytes, left, right)
+
+def BytesMod(left: Expr, right: Expr) -> BinaryExpr:
+    """Modulo expression with bytes as arguments.
+    
+    Produces left % right, where left and right are interpreted as big-endian unsigned integers.
+    Arguments must not exceed 64 bytes.
+
+    Panics if right is 0. 
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_mod, TealType.bytes, TealType.bytes, left, right)
+
+def BytesAnd(left: Expr, right: Expr) -> BinaryExpr:
+    """Bitwise and expression with bytes as arguments.
+
+    Produces left & right.
+    Left and right are zero-left extended to the greater of their lengths.
+    Arguments must not exceed 64 bytes.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_and, TealType.bytes, TealType.bytes, left, right)
+
+def BytesOr(left: Expr, right: Expr) -> BinaryExpr:
+    """Bitwise or expression with bytes as arguments.
+
+    Produces left | right.
+    Left and right are zero-left extended to the greater of their lengths.
+    Arguments must not exceed 64 bytes.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_or, TealType.bytes, TealType.bytes, left, right)
+
+def BytesXor(left: Expr, right: Expr) -> BinaryExpr:
+    """Bitwise xor expression with bytes as arguments.
+
+    Produces left ^ right.
+    Left and right are zero-left extended to the greater of their lengths.
+    Arguments must not exceed 64 bytes.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_xor, TealType.bytes, TealType.bytes, left, right)
+
+def BytesEq(left: Expr, right: Expr) -> BinaryExpr:
+    """Equality expression with bytes as arguments.
+    
+    Checks if left == right, where left and right are interpreted as big-endian unsigned integers.
+    Arguments must not exceed 64 bytes.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_eq, TealType.bytes, TealType.uint64, left, right)
+
+def BytesNeq(left: Expr, right: Expr) -> BinaryExpr:
+    """Difference expression with bytes as arguments.
+    
+    Checks if left != right, where left and right are interpreted as big-endian unsigned integers.
+    Arguments must not exceed 64 bytes.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_neq, TealType.bytes, TealType.uint64, left, right)
+
+def BytesLt(left: Expr, right: Expr) -> BinaryExpr:
+    """Less than expression with bytes as arguments.
+    
+    Checks if left < right, where left and right are interpreted as big-endian unsigned integers.
+    Arguments must not exceed 64 bytes.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_lt, TealType.bytes, TealType.uint64, left, right)
+
+def BytesLe(left: Expr, right: Expr) -> BinaryExpr:
+    """Less than or equal to expression with bytes as arguments.
+    
+    Checks if left <= right, where left and right are interpreted as big-endian unsigned integers.
+    Arguments must not exceed 64 bytes.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_le, TealType.bytes, TealType.uint64, left, right)
+
+def BytesGt(left: Expr, right: Expr) -> BinaryExpr:
+    """Greater than expression with bytes as arguments.
+    
+    Checks if left > right, where left and right are interpreted as big-endian unsigned integers.
+    Arguments must not exceed 64 bytes.
+
+    Requires TEAL version 4 or higher.
+
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_gt, TealType.bytes, TealType.uint64, left, right)
+
+def BytesGe(left: Expr, right: Expr) -> BinaryExpr:
+    """Greater than or equal to expression with bytes as arguments.
+    
+    Checks if left >= right, where left and right are interpreted as big-endian unsigned integers.
+    Arguments must not exceed 64 bytes.
+
+    Requires TEAL version 4 or higher.
+    
+    Args:
+        left: Must evaluate to bytes.
+        right: Must evaluate to bytes.
+    """
+    return BinaryExpr(Op.b_ge, TealType.bytes, TealType.uint64, left, right)

@@ -891,3 +891,339 @@ def test_get_byte_invalid():
     
     with pytest.raises(TealTypeError):
         GetBit(Bytes("base16", "0xFF"), Bytes("index"))
+
+def test_b_add():
+    args = [Bytes("base16", "0xFFFFFFFFFFFFFFFFFF"), Bytes("base16", "0xFFFFFFFFFFFFFFFFFE")]
+    expr = BytesAdd(args[0], args[1])
+    assert expr.type_of() == TealType.bytes
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFFF"),
+        TealOp(args[1], Op.byte, "0xFFFFFFFFFFFFFFFFFE"),
+        TealOp(expr, Op.b_add)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_b_add_invalid():
+    with pytest.raises(TealTypeError):
+        BytesAdd(Int(2), Txn.receiver())
+    
+    with pytest.raises(TealTypeError):
+        BytesAdd(Bytes("base16", "0xFF"), Int(2))
+
+def test_b_minus():
+    args = [Bytes("base16", "0xFFFFFFFFFFFFFFFFFF"), Bytes("base16", "0xFFFFFFFFFFFFFFFFFE")]
+    expr = BytesMinus(args[0], args[1])
+    assert expr.type_of() == TealType.bytes
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFFF"),
+        TealOp(args[1], Op.byte, "0xFFFFFFFFFFFFFFFFFE"),
+        TealOp(expr, Op.b_minus)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_b_minus_invalid():
+    with pytest.raises(TealTypeError):
+        BytesMinus(Int(2), Txn.receiver())
+    
+    with pytest.raises(TealTypeError):
+        BytesMinus(Bytes("base16", "0xFF"), Int(2))
+
+def test_b_div():
+    args = [Bytes("base16", "0xFFFFFFFFFFFFFFFF00"), Bytes("base16", "0xFF")]
+    expr = BytesDiv(args[0], args[1])
+    assert expr.type_of() == TealType.bytes
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFF00"),
+        TealOp(args[1], Op.byte, "0xFF"),
+        TealOp(expr, Op.b_div)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_b_div_invalid():
+    with pytest.raises(TealTypeError):
+        BytesDiv(Int(2), Txn.receiver())
+    
+    with pytest.raises(TealTypeError):
+        BytesDiv(Bytes("base16", "0xFF"), Int(2))
+
+def test_b_mul():
+    args = [Bytes("base16", "0xFFFFFFFFFFFFFFFF"), Bytes("base16", "0xFF")]
+    expr = BytesMul(args[0], args[1])
+    assert expr.type_of() == TealType.bytes
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFF"),
+        TealOp(args[1], Op.byte, "0xFF"),
+        TealOp(expr, Op.b_mul)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_b_mul_invalid():
+    with pytest.raises(TealTypeError):
+        BytesMul(Int(2), Txn.receiver())
+    
+    with pytest.raises(TealTypeError):
+        BytesMul(Bytes("base16", "0xFF"), Int(2))
+
+def test_b_mod():
+    args = [Bytes("base16", "0xFFFFFFFFFFFFFFFFFF"), Bytes("base16", "0xFF")]
+    expr = BytesMod(args[0], args[1])
+    assert expr.type_of() == TealType.bytes
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFFF"),
+        TealOp(args[1], Op.byte, "0xFF"),
+        TealOp(expr, Op.b_mod)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_b_mod_invalid():
+    with pytest.raises(TealTypeError):
+        BytesMod(Int(2), Txn.receiver())
+    
+    with pytest.raises(TealTypeError):
+        BytesMod(Bytes("base16", "0xFF"), Int(2))
+
+def test_b_and():
+    args = [Bytes("base16", "0xFFFFFFFFFFFFFFFFF0"), Bytes("base16", "0xFF")]
+    expr = BytesAnd(args[0], args[1])
+    assert expr.type_of() == TealType.bytes
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFF0"),
+        TealOp(args[1], Op.byte, "0xFF"),
+        TealOp(expr, Op.b_and)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_b_and_invalid():
+    with pytest.raises(TealTypeError):
+        BytesAnd(Int(2), Txn.receiver())
+    
+    with pytest.raises(TealTypeError):
+        BytesAnd(Bytes("base16", "0xFF"), Int(2))
+
+def test_b_or():
+    args = [Bytes("base16", "0xFFFFFFFFFFFFFFFFF0"), Bytes("base16", "0xFF")]
+    expr = BytesOr(args[0], args[1])
+    assert expr.type_of() == TealType.bytes
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFF0"),
+        TealOp(args[1], Op.byte, "0xFF"),
+        TealOp(expr, Op.b_or)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_b_or_invalid():
+    with pytest.raises(TealTypeError):
+        BytesOr(Int(2), Txn.receiver())
+    
+    with pytest.raises(TealTypeError):
+        BytesOr(Bytes("base16", "0xFF"), Int(2))
+
+def test_b_xor():
+    args = [Bytes("base16", "0xFFFFFFFFFFFFFFFFF0"), Bytes("base16", "0xFF")]
+    expr = BytesXor(args[0], args[1])
+    assert expr.type_of() == TealType.bytes
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFF0"),
+        TealOp(args[1], Op.byte, "0xFF"),
+        TealOp(expr, Op.b_xor)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_b_xor_invalid():
+    with pytest.raises(TealTypeError):
+        BytesXor(Int(2), Txn.receiver())
+    
+    with pytest.raises(TealTypeError):
+        BytesXor(Bytes("base16", "0xFF"), Int(2))
+
+def test_b_eq():
+    args = [Bytes("base16", "0xFFFFFFFFFFFFFFFFFF"), Bytes("base16", "0xFFFFFFFFFFFFFFFFFF")]
+    expr = BytesEq(args[0], args[1])
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFFF"),
+        TealOp(args[1], Op.byte, "0xFFFFFFFFFFFFFFFFFF"),
+        TealOp(expr, Op.b_eq)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_b_eq_invalid():
+    with pytest.raises(TealTypeError):
+        BytesEq(Int(2), Txn.receiver())
+    
+    with pytest.raises(TealTypeError):
+        BytesEq(Bytes("base16", "0xFF"), Int(2))
+
+def test_b_neq():
+    args = [Bytes("base16", "0xFFFFFFFFFFFFFFFFFF"), Bytes("base16", "0xFFFFFFFFFFFFFFFFFF")]
+    expr = BytesNeq(args[0], args[1])
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFFF"),
+        TealOp(args[1], Op.byte, "0xFFFFFFFFFFFFFFFFFF"),
+        TealOp(expr, Op.b_neq)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_b_neq_invalid():
+    with pytest.raises(TealTypeError):
+        BytesNeq(Int(2), Txn.receiver())
+    
+    with pytest.raises(TealTypeError):
+        BytesNeq(Bytes("base16", "0xFF"), Int(2))
+
+def test_b_lt():
+    args = [Bytes("base16", "0xFFFFFFFFFFFFFFFFF0"), Bytes("base16", "0xFFFFFFFFFFFFFFFFFF")]
+    expr = BytesLt(args[0], args[1])
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFF0"),
+        TealOp(args[1], Op.byte, "0xFFFFFFFFFFFFFFFFFF"),
+        TealOp(expr, Op.b_lt)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_b_lt_invalid():
+    with pytest.raises(TealTypeError):
+        BytesLt(Int(2), Txn.receiver())
+    
+    with pytest.raises(TealTypeError):
+        BytesLt(Bytes("base16", "0xFF"), Int(2))
+
+def test_b_le():
+    args = [Bytes("base16", "0xFFFFFFFFFFFFFFFFF0"), Bytes("base16", "0xFFFFFFFFFFFFFFFFFF")]
+    expr = BytesLe(args[0], args[1])
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFF0"),
+        TealOp(args[1], Op.byte, "0xFFFFFFFFFFFFFFFFFF"),
+        TealOp(expr, Op.b_le)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_b_le_invalid():
+    with pytest.raises(TealTypeError):
+        BytesLe(Int(2), Txn.receiver())
+    
+    with pytest.raises(TealTypeError):
+        BytesLe(Bytes("base16", "0xFF"), Int(2))
+
+def test_b_gt():
+    args = [Bytes("base16", "0xFFFFFFFFFFFFFFFFFF"), Bytes("base16", "0xFFFFFFFFFFFFFFFFF0")]
+    expr = BytesGt(args[0], args[1])
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFFF"),
+        TealOp(args[1], Op.byte, "0xFFFFFFFFFFFFFFFFF0"),
+        TealOp(expr, Op.b_gt)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_b_gt_invalid():
+    with pytest.raises(TealTypeError):
+        BytesGt(Int(2), Txn.receiver())
+    
+    with pytest.raises(TealTypeError):
+        BytesGt(Bytes("base16", "0xFF"), Int(2))
+
+def test_b_ge():
+    args = [Bytes("base16", "0xFFFFFFFFFFFFFFFFFF"), Bytes("base16", "0xFFFFFFFFFFFFFFFFF0")]
+    expr = BytesGe(args[0], args[1])
+    assert expr.type_of() == TealType.uint64
+    
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFFF"),
+        TealOp(args[1], Op.byte, "0xFFFFFFFFFFFFFFFFF0"),
+        TealOp(expr, Op.b_ge)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    
+    assert actual == expected
+
+def test_b_ge_invalid():
+    with pytest.raises(TealTypeError):
+        BytesGe(Int(2), Txn.receiver())
+    
+    with pytest.raises(TealTypeError):
+        BytesGe(Bytes("base16", "0xFF"), Int(2))

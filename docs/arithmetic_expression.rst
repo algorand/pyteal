@@ -45,6 +45,39 @@ The associativity and precedence of the overloaded Python arithmetic operators a
  * :code:`Int(1) + Int(2) + Int(3)` is equivalent to :code:`Add(Add(Int(1), Int(2)), Int(3))`
  * :code:`Int(1) + Int(2) * Int(3)` is equivalent to :code:`Add(Int(1), Mul(Int(2), Int(3)))` 
 
+Byteslice Arithmetic
+--------------------
+
+Byteslice arithemetic is available for Teal V4 and above. 
+Byteslice arithmetic operators allow up to 512-bit arithmetic.
+In PyTeal, byteslice arithmetic expressions include 
+:code:`TealType.Bytes` values as arguments (with the exception of :code:`BytesZero`)
+and must be 64 bytes or less.
+The table below summarizes the byteslize arithmetic operations in PyTeal.
+
+======================================= ======================= ====================================================================== ==================
+Operator                                Return Type             Example                                                                Example Result
+======================================= ======================= ====================================================================== ==================
+:any:`BytesLt(a, b) <BytesLt>`          :code:`TealType.uint64` :code:`BytesLt(Bytes("base16", "0xFF"), Bytes("base16", "0xFE"))`      :code:`0`
+:any:`BytesGt(a, b) <BytesGt>`          :code:`TealType.uint64` :code:`BytesGt(Bytes("base16", "0xFF"), Bytes("base16", "0xFE"))`      :code:`1`
+:any:`BytesLe(a, b) <BytesLe>`          :code:`TealType.uint64` :code:`BytesLe(Bytes("base16", "0xFF"), Bytes("base16", "0xFE"))`      :code:`0`
+:any:`BytesGe(a, b) <BytesGe>`          :code:`TealType.uint64` :code:`BytesGe(Bytes("base16", "0xFF"), Bytes("base16", "0xFE"))`      :code:`1`
+:any:`BytesEq(a, b) <BytesEq>`          :code:`TealType.uint64` :code:`BytesEq(Bytes("base16", "0xFF"), Bytes("base16", "0xFF"))`      :code:`1`
+:any:`BytesNeq(a, b) <BytesNeq>`        :code:`TealType.uint64` :code:`BytesNeq(Bytes("base16", "0xFF"), Bytes("base16", "0xFF"))`     :code:`0`
+:any:`BytesAdd(a, b) <BytesAdd>`        :code:`TealType.Bytes`  :code:`BytesAdd(Bytes("base16", "0xFF"), Bytes("base16", "0xFE"))`     :code:`0x01FD`
+:any:`BytesMinus(a, b) <BytesMinus>`    :code:`TealType.Bytes`  :code:`BytesMinus(Bytes("base16", "0xFF"), Bytes("base16", "0xFE"))`   :code:`0x01`
+:any:`BytesMul(a, b) <BytesMul>`        :code:`TealType.Bytes`  :code:`BytesMul(Bytes("base16", "0xFF"), Bytes("base16", "0xFE"))`     :code:`0xFD02`
+:any:`BytesDiv(a, b) <BytesDiv>`        :code:`TealType.Bytes`  :code:`BytesDiv(Bytes("base16", "0xFF"), Bytes("base16", "0x11"))`     :code:`0x0F`
+:any:`BytesMod(a, b) <BytesMod>`        :code:`TealType.Bytes`  :code:`BytesMod(Bytes("base16", "0xFF"), Bytes("base16", "0x12"))`     :code:`0x03`
+:any:`BytesAnd(a, b) <pyteal.BytesAnd>` :code:`TealType.Bytes`  :code:`BytesAnd(Bytes("base16", "0xBEEF"), Bytes("base16", "0x1337"))` :code:`0x1227`
+:any:`BytesOr(a, b) <pyteal.BytesOr>`   :code:`TealType.Bytes`  :code:`BytesOr(Bytes("base16", "0xBEEF"), Bytes("base16", "0x1337"))`  :code:`0xBFFF`
+:any:`BytesXor(a, b) <pyteal.BytesXor>` :code:`TealType.Bytes`  :code:`BytesXor(Bytes("base16", "0xBEEF"), Bytes("base16", "0x1337"))` :code:`0xADD8`
+:any:`BytesNot(a) <pyteal.BytesNot>`    :code:`TealType.Bytes`  :code:`BytesNot(Bytes("base16", "0xFF00"))`                            :code:`0x00FF`
+:any:`BytesZero(a) <pyteal.BytesZero>`  :code:`TealType.Bytes`  :code:`BytesZero(Int(4))`                                              :code:`0x00000000`
+======================================= ======================= ====================================================================== ==================
+
+Currently, byteslice arithmetic operations are not overloaded, and must be explicitly called.
+
 .. _bit_and_byte_manipulation:
 
 Bit and Byte Operations
