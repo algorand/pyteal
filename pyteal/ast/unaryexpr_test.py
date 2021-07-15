@@ -334,7 +334,7 @@ def test_min_balance_invalid():
 
 def test_b_not():
     arg = Bytes("base16", "0xFFFFFFFFFFFFFFFFFF")
-    expr = BNot(arg)
+    expr = BytesNot(arg)
     assert expr.type_of() == TealType.bytes
     
     expected = TealSimpleBlock([
@@ -350,11 +350,11 @@ def test_b_not():
 
 def test_b_not_invalid():
     with pytest.raises(TealTypeError):
-        BNot(Int(2))
+        BytesNot(Int(2))
 
 def test_b_zero():
     arg = Int(8)
-    expr = BZero(arg)
+    expr = BytesZero(arg)
     assert expr.type_of() == TealType.bytes
     
     expected = TealSimpleBlock([
@@ -370,4 +370,4 @@ def test_b_zero():
 
 def test_b_zero_invalid():
     with pytest.raises(TealTypeError):
-        BZero(Bytes("base16", "0x11"))
+        BytesZero(Bytes("base16", "0x11"))

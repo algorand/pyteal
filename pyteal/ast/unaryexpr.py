@@ -116,16 +116,17 @@ def MinBalance(account: Expr) -> UnaryExpr:
     """
     return UnaryExpr(Op.min_balance, TealType.uint64, TealType.uint64, account)
 
-def BNot(arg: Expr) -> UnaryExpr:
+def BytesNot(arg: Expr) -> UnaryExpr:
     """Get the bitwise inverse of bytes.
     
     Produces ~arg.
+    Argument must not exceed 64 bytes.
 
     Requires TEAL version 4 or higher.
     """
     return UnaryExpr(Op.b_not, TealType.bytes, TealType.bytes, arg)
 
-def BZero(arg: Expr) -> UnaryExpr:
+def BytesZero(arg: Expr) -> UnaryExpr:
     """Get a byte-array of a specified length, containing all zero bytes.
 
     Argument must evaluate to uint64. 
