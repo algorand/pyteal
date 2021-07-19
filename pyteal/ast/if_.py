@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from ..errors import TealCompileError
+from ..errors import TealCompileError, TealInputError
 from ..types import TealType, require_type, types_match
 from ..ir import TealSimpleBlock, TealConditionalBlock
 from .expr import Expr
@@ -27,11 +27,12 @@ class If(Expr):
         super().__init__()
         require_type(cond.type_of(), TealType.uint64)
 
-        if elseBranch:
-            require_type(thenBranch.type_of(), elseBranch.type_of())
-        elif thenBranch:
-            # If there is only a thenBranch, then it should evaluate to none type
-            require_type(thenBranch.type_of(), TealType.none)
+        if thenBranch:
+            if elseBranch:
+                require_type(thenBranch.type_of(), elseBranch.type_of())
+            else:
+                # If there is only a thenBranch, then it should evaluate to none type
+                require_type(thenBranch.type_of(), TealType.none)
         
         self.cond = cond
         self.thenBranch = thenBranch
@@ -70,6 +71,8 @@ class If(Expr):
 
     def Then(self, thenBranch: Expr):
         if self.elseBranch:
+            if not isinstance(self.elseBranch, If):
+                raise TealInputError("Else-Then block is malformed")
             self.elseBranch.thenBranch = thenBranch
         else:
             self.thenBranch = thenBranch
@@ -82,6 +85,8 @@ class If(Expr):
     
     def Else(self, elseBranch: Expr):
         if self.elseBranch:
+            if not isinstance(self.elseBranch, If):
+                raise TealInputError("Else-Else block is malformed")
             self.elseBranch.elseBranch = elseBranch
         else:
             self.elseBranch = elseBranch
