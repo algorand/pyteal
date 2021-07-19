@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from ..errors import TealCompileError
 from ..types import TealType, require_type, types_match
 from ..ir import TealSimpleBlock, TealConditionalBlock
 from .expr import Expr
@@ -10,7 +11,7 @@ if TYPE_CHECKING:
 class If(Expr):
     """Simple two-way conditional expression."""
 
-    def __init__(self, cond: Expr, thenBranch: Expr, elseBranch: Expr = None) -> None:
+    def __init__(self, cond: Expr, thenBranch: Expr = None, elseBranch: Expr = None) -> None:
         """Create a new If expression.
 
         When this If expression is executed, the condition will be evaluated, and if it produces a
@@ -26,16 +27,20 @@ class If(Expr):
         super().__init__()
         require_type(cond.type_of(), TealType.uint64)
 
-        if elseBranch is None:
-            require_type(thenBranch.type_of(), TealType.none)
-        else:
+        if elseBranch:
             require_type(thenBranch.type_of(), elseBranch.type_of())
+        elif thenBranch:
+            # If there is only a thenBranch, then it should evaluate to none type
+            require_type(thenBranch.type_of(), TealType.none)
         
         self.cond = cond
         self.thenBranch = thenBranch
         self.elseBranch = elseBranch
 
     def __teal__(self, options: 'CompileOptions'):
+        if self.thenBranch is None:
+            raise TealCompileError("If expression must have a thenBranch", self.thenBranch)
+
         condStart, condEnd = self.cond.__teal__(options)
         thenStart, thenEnd = self.thenBranch.__teal__(options)
         end = TealSimpleBlock([])
@@ -62,5 +67,24 @@ class If(Expr):
 
     def type_of(self):
         return self.thenBranch.type_of()
+
+    def Then(self, thenBranch: Expr):
+        if self.elseBranch:
+            self.elseBranch.thenBranch = thenBranch
+        else:
+            self.thenBranch = thenBranch
+        return self
+
+    def ElseIf(self, cond):
+        elseIfBranch = If(cond)
+        self.elseBranch = elseIfBranch
+        return self
+    
+    def Else(self, elseBranch: Expr):
+        if self.elseBranch:
+            self.elseBranch.elseBranch = elseBranch
+        else:
+            self.elseBranch = elseBranch
+        return self
 
 If.__module__ = "pyteal"
