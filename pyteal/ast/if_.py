@@ -44,7 +44,7 @@ class If(Expr):
 
     def __teal__(self, options: 'CompileOptions'):
         if self.thenBranch is None:
-            raise TealCompileError("If expression must have a thenBranch", self.thenBranch)
+            raise TealCompileError("If expression must have a thenBranch", self)
 
         condStart, condEnd = self.cond.__teal__(options)
         thenStart, thenEnd = self.thenBranch.__teal__(options)
@@ -67,14 +67,14 @@ class If(Expr):
 
     def __str__(self):
         if self.thenBranch is None:
-            raise TealCompileError("If expression must have a thenBranch", self.thenBranch)
+            raise TealCompileError("If expression must have a thenBranch", self)
         if self.elseBranch is None:
             return "(If {} {})".format(self.cond, self.thenBranch)
         return "(If {} {} {})".format(self.cond, self.thenBranch, self.elseBranch)
 
     def type_of(self):
         if self.thenBranch is None:
-            raise TealCompileError("If expression must have a thenBranch", self.thenBranch) 
+            raise TealCompileError("If expression must have a thenBranch", self) 
         return self.thenBranch.type_of()
 
     def Then(self, thenBranch: Expr):
