@@ -26,6 +26,8 @@ class If(Expr):
         """
         super().__init__()
         require_type(cond.type_of(), TealType.uint64)
+        # Flag to denote and check whether the new If().Then() syntax is being used
+        self.alternateSyntaxFlag = False
 
         if thenBranch:
             if elseBranch:
@@ -33,6 +35,8 @@ class If(Expr):
             else:
                 # If there is only a thenBranch, then it should evaluate to none type
                 require_type(thenBranch.type_of(), TealType.none)
+        else:
+            self.alternateSyntaxFlag = True
         
         self.cond = cond
         self.thenBranch = thenBranch
@@ -62,34 +66,51 @@ class If(Expr):
         return condStart, end
 
     def __str__(self):
+        if self.thenBranch is None:
+            raise TealCompileError("If expression must have a thenBranch", self.thenBranch)
         if self.elseBranch is None:
             return "(If {} {})".format(self.cond, self.thenBranch)
         return "(If {} {} {})".format(self.cond, self.thenBranch, self.elseBranch)
 
     def type_of(self):
+        if self.thenBranch is None:
+            raise TealCompileError("If expression must have a thenBranch", self.thenBranch) 
         return self.thenBranch.type_of()
 
     def Then(self, thenBranch: Expr):
-        if self.elseBranch:
+        if not self.alternateSyntaxFlag:
+            raise TealInputError("Cannot mix two different If syntax styles")
+        
+        if not self.elseBranch:
+            self.thenBranch = thenBranch
+        else:
             if not isinstance(self.elseBranch, If):
                 raise TealInputError("Else-Then block is malformed")
-            self.elseBranch.thenBranch = thenBranch
-        else:
-            self.thenBranch = thenBranch
+            self.elseBranch.Then(thenBranch)
         return self
 
     def ElseIf(self, cond):
-        elseIfBranch = If(cond)
-        self.elseBranch = elseIfBranch
+        if not self.alternateSyntaxFlag:
+            raise TealInputError("Cannot mix two different If syntax styles")
+        
+        if not self.elseBranch:
+            self.elseBranch = If(cond)
+        else:
+            if not isinstance(self.elseBranch, If):
+                raise TealInputError("Else-ElseIf block is malformed")
+            self.elseBranch.ElseIf(cond)
         return self
     
     def Else(self, elseBranch: Expr):
-        if self.elseBranch:
+        if not self.alternateSyntaxFlag:
+            raise TealInputError("Cannot mix two different If syntax styles")
+        
+        if not self.elseBranch:
+            self.elseBranch = elseBranch
+        else:
             if not isinstance(self.elseBranch, If):
                 raise TealInputError("Else-Else block is malformed")
-            self.elseBranch.elseBranch = elseBranch
-        else:
-            self.elseBranch = elseBranch
+            self.elseBranch.Else(elseBranch)
         return self
 
 If.__module__ = "pyteal"
