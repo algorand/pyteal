@@ -1,6 +1,8 @@
-from typing import TYPE_CHECKING
+from pyteal.config import NUM_SLOTS
+from typing import cast, Union, TYPE_CHECKING
 
-from ..types import TealType
+from ..types import TealType, require_type
+from ..errors import TealInputError
 from .expr import Expr
 
 if TYPE_CHECKING:
@@ -9,11 +11,30 @@ if TYPE_CHECKING:
 class ScratchSlot:
     """Represents the allocation of a scratch space slot."""
 
-    slotId = 0
+    nextSlotId = 0 # Next slot ID for compiler to assign 
+    reservedSlots: set[int] = set()
 
-    def __init__(self):
-        self.id = ScratchSlot.slotId
-        ScratchSlot.slotId += 1
+    def __init__(self, requestedSlotId: int = None):
+        """Initializes a scratch slot with a particular id
+
+        Args:
+            requestedSlotId (optional): A scratch slot id that the compiler must store the value. 
+            This id may be a Python int in the range [0-256).       
+        """
+        if requestedSlotId is None:
+            self.id = ScratchSlot.nextSlotId
+        else:
+            # TODO: Is there a way to check whether the user hasn't alloted more than 
+            # NUM_SLOTS slots here? 
+            if requestedSlotId < 0 or requestedSlotId >= NUM_SLOTS:
+                raise TealInputError("Invalid slot ID {}, shoud be in [0, {})".format(requestedSlotId, NUM_SLOTS))
+            self.id = requestedSlotId
+        
+        self.reservedSlots.add(self.id)
+        while ScratchSlot.nextSlotId in self.reservedSlots:
+            if ScratchSlot.nextSlotId == NUM_SLOTS:
+                raise TealInputError("No more scratch slots can be alloted")
+            ScratchSlot.nextSlotId += 1
 
     def store(self, value: Expr = None) -> Expr:
         """Get an expression to store a value in this slot.

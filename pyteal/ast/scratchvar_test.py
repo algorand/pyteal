@@ -1,3 +1,4 @@
+from pyteal.compiler.compiler import compileTeal
 import pytest
 
 from .. import *
@@ -66,3 +67,24 @@ def test_scratchvar_load():
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+def test_scratchvar_double_assign_invalid():
+    myvar    = ScratchVar(TealType.uint64, 10)
+    otherVar = ScratchVar(TealType.uint64, 10)
+    prog  = Seq([
+                myvar.store(Int(5)),
+                otherVar.store(Int(0))
+            ])
+    with pytest.raises(TealInternalError):
+        compileTeal(prog, mode=Mode.Signature, version=4) 
+
+    # Users cannot assign a slot that has been automatically
+    # assigned by the compiler
+    myScratch     = ScratchVar(TealType.uint64)
+    otherScratch  = ScratchVar(TealType.uint64, ScratchSlot.nextSlotId-1)
+    prog          = Seq([
+                        myScratch.store(Int(5)),
+                        otherScratch.store(Int(0))
+                    ])
+    with pytest.raises(TealInternalError):
+        compileTeal(prog, mode=Mode.Signature, version=4) 

@@ -1,3 +1,4 @@
+from pyteal.ast.scratch import ScratchSlot
 from typing import List
 
 from ..ast import Expr
@@ -96,9 +97,14 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, a
     verifyOpsForVersion(teal, version)
     verifyOpsForMode(teal, mode)
 
-    slots = set()
+    slots: set[ScratchSlot] = set()
+    slotIds: set[int] = set()
     for stmt in teal:
         for slot in stmt.getSlots():
+            # If there are two unique slots with same IDs, raise an error
+            if slot.id in slotIds and id(slot) not in [id(s) for s in slots]:
+                raise TealInternalError("Slot ID {} has been assigned multiple times".format(slot.id))
+            slotIds.add(slot.id)
             slots.add(slot)
     
     if len(slots) > NUM_SLOTS:

@@ -1,3 +1,7 @@
+from pyteal.config import NUM_SLOTS
+from pyteal.compiler.compiler import compileTeal
+from pyteal.errors import TealInputError
+from pyteal.ast.scratch import ScratchSlot
 import pytest
 
 from .. import *
@@ -75,3 +79,23 @@ def test_scratch_stack_store():
     actual, _ = expr.__teal__(options)
 
     assert actual == expected
+
+def test_scratch_assign_id():
+    slot = ScratchSlot(255)
+    expr = ScratchStackStore(slot)
+    assert expr.type_of() == TealType.none
+    
+    expected = TealSimpleBlock([
+        TealOp(expr, Op.store, slot)
+    ])
+
+    actual, _ = expr.__teal__(options)
+
+    assert actual == expected
+
+def test_scratch_assign_id_invalid():
+    with pytest.raises(TealInputError):
+        slot = ScratchSlot(-1)
+
+    with pytest.raises(TealInputError):
+        slot = ScratchSlot(NUM_SLOTS)

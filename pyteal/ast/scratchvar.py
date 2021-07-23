@@ -16,7 +16,7 @@ class ScratchVar:
             ])
     """
 
-    def __init__(self, type: TealType = TealType.anytype):
+    def __init__(self, type: TealType = TealType.anytype, slotId: int = None):
         """Create a new ScratchVar with an optional type.
 
         Args:
@@ -24,7 +24,7 @@ class ScratchVar:
                 expression with an incompatiable type is stored in this variable. Defaults to
                 TealType.anytype.
         """
-        self.slot = ScratchSlot()
+        self.slot = ScratchSlot(requestedSlotId=slotId)
         self.type = type
     
     def storage_type(self) -> TealType:
