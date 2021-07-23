@@ -1,5 +1,5 @@
 from pyteal.ast.scratch import ScratchSlot
-from typing import List
+from typing import List, Set
 
 from ..ast import Expr
 from ..ir import Mode, TealComponent, TealOp, TealBlock
@@ -97,8 +97,8 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, a
     verifyOpsForVersion(teal, version)
     verifyOpsForMode(teal, mode)
 
-    slots: set[ScratchSlot] = set()
-    slotIds: set[int] = set()
+    slots: Set[ScratchSlot] = set()
+    slotIds: Set[int] = set()
     for stmt in teal:
         for slot in stmt.getSlots():
             # If there are two unique slots with same IDs, raise an error

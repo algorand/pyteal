@@ -1,5 +1,5 @@
 from pyteal.config import NUM_SLOTS
-from typing import cast, Union, TYPE_CHECKING
+from typing import cast, Set, Union, TYPE_CHECKING
 
 from ..types import TealType, require_type
 from ..errors import TealInputError
@@ -12,7 +12,7 @@ class ScratchSlot:
     """Represents the allocation of a scratch space slot."""
 
     nextSlotId = 0 # Next slot ID for compiler to assign 
-    reservedSlots: set[int] = set()
+    reservedSlots: Set[int] = set()
 
     def __init__(self, requestedSlotId: int = None):
         """Initializes a scratch slot with a particular id
