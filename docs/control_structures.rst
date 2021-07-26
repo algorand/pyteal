@@ -67,7 +67,7 @@ In an :any:`If` expression,
 
     If(test-expr, then-expr, else-expr)
 
-the :code:`test-expr` is always evaludated and needs to be typed :code:`TealType.uint64`.
+the :code:`test-expr` is always evaluated and needs to be typed :code:`TealType.uint64`.
 If it results in a value greater than `0`, then the :code:`then-expr` is evaluated.
 Otherwise, :code:`else-expr` is evaluated. Note that :code:`then-expr` and :code:`else-expr` must
 evaluate to the same type (e.g. both :code:`TealType.uint64`).
@@ -79,6 +79,17 @@ You may also invoke an :any:`If` expression without an :code:`else-expr`:
     If(test-expr, then-expr)
 
 In this case, :code:`then-expr` must be typed :code:`TealType.none`.
+
+There is also an alternate way to write an :any:`If` expression that makes reading
+complex statements easier to read.
+
+.. code-block:: racket
+
+    If(test-expr)
+    .Then(then-expr)
+    .ElseIf(test-expr)
+    .Then(then-expr)
+    .Else(else-expr)
 
 .. _assert_expr:
 
