@@ -1,11 +1,8 @@
-from pyteal.compiler.compiler import compileTeal
-from pyteal.config import NUM_SLOTS
 import pytest
 
 from .. import *
-from .gload import ImportScratchValue
 # this is not necessary but mypy complains if it's not included
-from .. import MAX_GROUP_SIZE, CompileOptions
+from .. import MAX_GROUP_SIZE, NUM_SLOTS, CompileOptions
 
 teal3Options = CompileOptions(version=3)
 teal4Options = CompileOptions(version=4)
@@ -19,7 +16,7 @@ def test_gload_teal_3():
 
 def test_gload():
     expr = ImportScratchValue(0, 0)
-    assert expr.type_of() == TealType.uint64
+    assert expr.type_of() == TealType.anytype
 
     expected = TealSimpleBlock([
         TealOp(expr, Op.gload, 0, 0)
@@ -32,7 +29,7 @@ def test_gload():
 def test_gload_dynamic():
     arg = Int(0)
     expr = ImportScratchValue(arg, 0)
-    assert expr.type_of() == TealType.uint64
+    assert expr.type_of() == TealType.anytype
 
     expected = TealSimpleBlock([
         TealOp(arg, Op.int, 0),

@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
 class ImportScratchValue(LeafExpr):
-    """"An expression to load a scratch value created by another transaction in the current group"""
+    """An expression to load a scratch value created by another transaction in the current group"""
 
     def __init__(self, txnIndex: Union[int, Expr], slotId: int) -> None:
         """ Create an expression to load a scratch space slot from a transaction in the current group.
@@ -43,16 +43,16 @@ class ImportScratchValue(LeafExpr):
         return "(Gload {} {})".format(self.txnIndex, self.slotId)
 
     def __teal__(self, options: 'CompileOptions'):
-        verifyTealVersion(Op.gaid.min_version, options.version, "TEAL version too low to use Gload expression")
+        verifyTealVersion(Op.gload.min_version, options.version, "TEAL version too low to use Gload expression")
 
         if type(self.txnIndex) == int:
             op = TealOp(self, Op.gload, cast(int, self.txnIndex), cast(int, self.slotId))
             return TealBlock.FromOp(options, op)
         
-        op = TealOp(self, Op.gloads, cast(int, self.slotId))
+        op = TealOp(self, Op.gloads, self.slotId)
         return TealBlock.FromOp(options, op, cast(Expr, self.txnIndex))
 
     def type_of(self):
-        return TealType.uint64
+        return TealType.anytype
 
 ImportScratchValue.__module__ = "pyteal"
