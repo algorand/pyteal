@@ -139,6 +139,42 @@ def test_slot_load_before_store():
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2)
 
+def test_assign_scratch_slots():
+    myScratch       = ScratchVar(TealType.uint64)
+    otherScratch    = ScratchVar(TealType.uint64, 1)
+    anotherScratch  = ScratchVar(TealType.uint64, 0)
+    lastScratch     = ScratchVar(TealType.uint64)
+    prog            = Seq([
+                        myScratch.store(Int(5)),      # Slot 2
+                        otherScratch.store(Int(0)),   # Slot 1
+                        anotherScratch.store(Int(7)), # Slot 0
+                        lastScratch.store(Int(9)),    # Slot 3
+                      ])
+
+    expected = """
+#pragma version 4
+int 5
+store 2
+int 0
+store 1
+int 7
+store 0
+int 9
+store 3
+""".strip()
+    actual = compileTeal(prog, mode=Mode.Signature, version=4) 
+    assert actual == expected
+
+def test_scratchvar_double_assign_invalid():
+    myvar    = ScratchVar(TealType.uint64, 10)
+    otherVar = ScratchVar(TealType.uint64, 10)
+    prog  = Seq([
+                myvar.store(Int(5)),
+                otherVar.store(Int(0))
+            ])
+    with pytest.raises(TealInternalError):
+        compileTeal(prog, mode=Mode.Signature, version=4) 
+
 def test_assembleConstants():
     program = Itob(Int(1) + Int(1) + Tmpl.Int("TMPL_VAR")) == Concat(Bytes("test"), Bytes("test"), Bytes("test2"))
 

@@ -1,7 +1,7 @@
-from pyteal.config import NUM_SLOTS
-from typing import cast, Set, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-from ..types import TealType, require_type
+from ..types import TealType
+from ..config import NUM_SLOTS
 from ..errors import TealInputError
 from .expr import Expr
 
@@ -14,7 +14,7 @@ class ScratchSlot:
     # Unique identifier for the compiler to automatically assign slots
     # The id field is used by the compiler to map to an actual slot in the source code
     # Slot ids under 256 are manually reserved slots
-    nextSlotId = 256 
+    nextSlotId = NUM_SLOTS 
 
     def __init__(self, requestedSlotId: int = None):
         """Initializes a scratch slot with a particular id

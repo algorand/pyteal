@@ -9,17 +9,17 @@ teal4Options = CompileOptions(version=4)
 
 def test_gload_teal_3():
     with pytest.raises(TealInputError):
-        ImportScratchValue(0, 0).__teal__(teal3Options)
+        ImportScratchValue(0, 1).__teal__(teal3Options)
 
     with pytest.raises(TealInputError):
-        ImportScratchValue(Int(0), 0).__teal__(teal3Options)
+        ImportScratchValue(Int(0), 1).__teal__(teal3Options)
 
 def test_gload():
-    expr = ImportScratchValue(0, 0)
+    expr = ImportScratchValue(0, 1)
     assert expr.type_of() == TealType.anytype
 
     expected = TealSimpleBlock([
-        TealOp(expr, Op.gload, 0, 0)
+        TealOp(expr, Op.gload, 0, 1)
     ])
     
     actual, _ = expr.__teal__(teal4Options)
@@ -27,12 +27,12 @@ def test_gload():
     assert actual == expected
 
 def test_gload_dynamic():
-    arg = Int(0)
+    arg = Int(1)
     expr = ImportScratchValue(arg, 0)
     assert expr.type_of() == TealType.anytype
 
     expected = TealSimpleBlock([
-        TealOp(arg, Op.int, 0),
+        TealOp(arg, Op.int, 1),
         TealOp(expr, Op.gloads, 0)
     ])
     

@@ -1,7 +1,3 @@
-from pyteal.config import NUM_SLOTS
-from pyteal.compiler.compiler import compileTeal
-from pyteal.errors import TealInputError
-from pyteal.ast.scratch import ScratchSlot
 import pytest
 
 from .. import *

@@ -19,4 +19,5 @@ __all__ = ast_all + ir_all + [
     "TealInputError",
     "TealCompileError",
     "MAX_GROUP_SIZE",
+    "NUM_SLOTS",
 ]

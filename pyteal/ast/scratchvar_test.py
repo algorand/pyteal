@@ -1,4 +1,3 @@
-from pyteal.compiler.compiler import compileTeal
 import pytest
 
 from .. import *
@@ -68,26 +67,34 @@ def test_scratchvar_load():
 
     assert actual == expected
 
-def test_scratchvar_assign_slot():
-    myScratch       = ScratchVar(TealType.uint64)
-    otherScratch    = ScratchVar(TealType.uint64, 1)
-    anotherScratch  = ScratchVar(TealType.uint64, 0)
-    lastScratch     = ScratchVar(TealType.uint64)
-    prog            = Seq([
-                        myScratch.store(Int(5)),      # Slot 2
-                        otherScratch.store(Int(0)),   # Slot 1
-                        anotherScratch.store(Int(7)), # Slot 0
-                        lastScratch.store(Int(9)),    # Slot 3
-                      ])
+def test_scratchvar_assign_store():
+    slotId = 2
+    myvar = ScratchVar(TealType.uint64, slotId)
+    arg = Int(10)
+    expr = myvar.store(arg)
 
-    compileTeal(prog, mode=Mode.Signature, version=4) 
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.int, 10),
+        TealOp(expr, Op.store, myvar.slot),
+    ])
 
-def test_scratchvar_double_assign_invalid():
-    myvar    = ScratchVar(TealType.uint64, 10)
-    otherVar = ScratchVar(TealType.uint64, 10)
-    prog  = Seq([
-                myvar.store(Int(5)),
-                otherVar.store(Int(0))
-            ])
-    with pytest.raises(TealInternalError):
-        compileTeal(prog, mode=Mode.Signature, version=4) 
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+def test_scratchvar_assign_load():
+    slotId = 5
+    myvar = ScratchVar(slotId=slotId)
+    expr = myvar.load()
+
+    expected = TealSimpleBlock([
+        TealOp(expr, Op.load, myvar.slot)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
