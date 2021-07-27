@@ -11,8 +11,10 @@ if TYPE_CHECKING:
 class ScratchSlot:
     """Represents the allocation of a scratch space slot."""
 
-    nextSlotId = 0 # Next slot ID for compiler to assign 
-    reservedSlots: Set[int] = set()
+    # Unique identifier for the compiler to automatically assign slots
+    # The id field is used by the compiler to map to an actual slot in the source code
+    # Slot ids under 256 are manually reserved slots
+    nextSlotId = 256 
 
     def __init__(self, requestedSlotId: int = None):
         """Initializes a scratch slot with a particular id
@@ -23,19 +25,16 @@ class ScratchSlot:
         """
         if requestedSlotId is None:
             self.id = ScratchSlot.nextSlotId
+            ScratchSlot.nextSlotId += 1
+            self.isReservedSlot = False
         else:
             # TODO: Is there a way to check whether the user hasn't alloted more than 
             # NUM_SLOTS slots here? 
             if requestedSlotId < 0 or requestedSlotId >= NUM_SLOTS:
                 raise TealInputError("Invalid slot ID {}, shoud be in [0, {})".format(requestedSlotId, NUM_SLOTS))
             self.id = requestedSlotId
+            self.isReservedSlot = True
         
-        self.reservedSlots.add(self.id)
-        while ScratchSlot.nextSlotId in self.reservedSlots:
-            if ScratchSlot.nextSlotId == NUM_SLOTS:
-                raise TealInputError("No more scratch slots can be alloted")
-            ScratchSlot.nextSlotId += 1
-
     def store(self, value: Expr = None) -> Expr:
         """Get an expression to store a value in this slot.
         
