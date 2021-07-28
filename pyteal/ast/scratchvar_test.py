@@ -66,3 +66,35 @@ def test_scratchvar_load():
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+def test_scratchvar_assign_store():
+    slotId = 2
+    myvar = ScratchVar(TealType.uint64, slotId)
+    arg = Int(10)
+    expr = myvar.store(arg)
+
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.int, 10),
+        TealOp(expr, Op.store, myvar.slot),
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+def test_scratchvar_assign_load():
+    slotId = 5
+    myvar = ScratchVar(slotId=slotId)
+    expr = myvar.load()
+
+    expected = TealSimpleBlock([
+        TealOp(expr, Op.load, myvar.slot)
+    ])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
