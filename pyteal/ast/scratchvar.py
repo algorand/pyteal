@@ -16,15 +16,17 @@ class ScratchVar:
             ])
     """
 
-    def __init__(self, type: TealType = TealType.anytype):
+    def __init__(self, type: TealType = TealType.anytype, slotId: int = None):
         """Create a new ScratchVar with an optional type.
 
         Args:
             type (optional): The type that this variable can hold. An error will be thrown if an
                 expression with an incompatiable type is stored in this variable. Defaults to
                 TealType.anytype.
+            slotId (optional): A scratch slot id that the compiler must store the value. 
+                This id may be a Python int in the range [0-256).  
         """
-        self.slot = ScratchSlot()
+        self.slot = ScratchSlot(requestedSlotId=slotId)
         self.type = type
     
     def storage_type(self) -> TealType:

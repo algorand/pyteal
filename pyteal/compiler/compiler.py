@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, Set
 
-from ..ast import Expr
+from ..ast import Expr, ScratchSlot
 from ..ir import Mode, TealComponent, TealOp, TealBlock
 from ..errors import TealInputError, TealInternalError
 from ..config import NUM_SLOTS
@@ -96,18 +96,32 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, a
     verifyOpsForVersion(teal, version)
     verifyOpsForMode(teal, mode)
 
-    slots = set()
+    slots: Set[ScratchSlot] = set()
+    slotIds: Set[int] = set()
+    nextSlotIndex = 0
     for stmt in teal:
         for slot in stmt.getSlots():
+            # If there are two unique slots with same IDs, raise an error
+            if slot.id in slotIds and id(slot) not in [id(s) for s in slots]:
+                raise TealInternalError("Slot ID {} has been assigned multiple times".format(slot.id))
+            slotIds.add(slot.id)
             slots.add(slot)
     
     if len(slots) > NUM_SLOTS:
         # TODO: identify which slots can be reused
         raise TealInternalError("Too many slots in use: {}, maximum is {}".format(len(slots), NUM_SLOTS))
     
-    for index, slot in enumerate(sorted(slots, key=lambda slot: slot.id)):
+    for slot in sorted(slots, key=lambda slot: slot.id):
+        # Find next vacant slot that compiler can assign to
+        while nextSlotIndex in slotIds:
+            nextSlotIndex += 1
         for stmt in teal:
-            stmt.assignSlot(slot, index)
+            if slot.isReservedSlot:
+                # Slot ids under 256 are manually reserved slots
+                stmt.assignSlot(slot, slot.id)
+            else:
+                stmt.assignSlot(slot, nextSlotIndex)
+                slotIds.add(nextSlotIndex)
     
     if assembleConstants:
         if version < 3:
