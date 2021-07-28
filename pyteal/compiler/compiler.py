@@ -1,10 +1,9 @@
 from typing import List, Set
 
-from ..ast import Expr
+from ..ast import Expr, ScratchSlot
 from ..ir import Mode, TealComponent, TealOp, TealBlock
 from ..errors import TealInputError, TealInternalError
 from ..config import NUM_SLOTS
-from ..ast import ScratchSlot
 
 from .sort import sortBlocks
 from .flatten import flattenBlocks

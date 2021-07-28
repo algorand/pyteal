@@ -28,8 +28,6 @@ class ScratchSlot:
             ScratchSlot.nextSlotId += 1
             self.isReservedSlot = False
         else:
-            # TODO: Is there a way to check whether the user hasn't alloted more than 
-            # NUM_SLOTS slots here? 
             if requestedSlotId < 0 or requestedSlotId >= NUM_SLOTS:
                 raise TealInputError("Invalid slot ID {}, shoud be in [0, {})".format(requestedSlotId, NUM_SLOTS))
             self.id = requestedSlotId
