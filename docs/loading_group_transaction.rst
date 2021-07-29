@@ -50,7 +50,7 @@ App A:
     # App is called at transaction index 0
     greeting = ScratchVar(TealType.bytes, 20) # this variable will live in scratch slot 20
     program = Seq([
-    If(Txn.sender() == App.globalGet(Bytes("creator")))
+        If(Txn.sender() == App.globalGet(Bytes("creator")))
         .Then(greeting.store(Bytes("hi creator!")))
         .Else(greeting.store(Bytes("hi user!"))),
     Return(Int(1))
