@@ -3,7 +3,7 @@ from enum import Enum, Flag, auto
 
 class Mode(Flag):
     """Enum of program running modes."""
-    
+
     Signature = auto()
     Application = auto()
 
@@ -142,5 +142,6 @@ class Op(Enum):
     gaids             = OpType("gaids",             Mode.Application,                  4)
     callsub           = OpType("callsub",           Mode.Signature | Mode.Application, 4)
     retsub            = OpType("retsub",            Mode.Signature | Mode.Application, 4)
+    app_params_get    = OpType("app_params_get",    Mode.Application,                  5)
 
 Op.__module__ = "pyteal"
