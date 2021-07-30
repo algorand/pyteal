@@ -326,7 +326,6 @@ def test_asset_param_clawback_invalid():
     with pytest.raises(TealTypeError):
         AssetParam.clawback(Txn.sender())
 
-
 def test_asset_param_creator_valid():
     arg = Int(1)
     expr = AssetParam.creator(arg)
