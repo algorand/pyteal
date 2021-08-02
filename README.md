@@ -1,3 +1,6 @@
+![PyTeal logo](https://github.com/ipaleka/pyteal/blob/master/docs/pyteal.png?raw=true)
+
+
 # PyTeal: Algorand Smart Contracts in Python
 
 [![Build Status](https://travis-ci.com/algorand/pyteal.svg?branch=master)](https://travis-ci.com/algorand/pyteal)
