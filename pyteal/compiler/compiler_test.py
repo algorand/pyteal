@@ -117,6 +117,15 @@ int 1
     actual = compileTeal(expr, Mode.Signature, version=4)
     assert actual == expected
 
+def test_compile_version_5():
+    expr = Int(1)
+    expected = """
+#pragma version 5
+int 1    
+""".strip()
+    actual = compileTeal(expr, Mode.Signature, version=5)
+    assert actual == expected
+
 def test_slot_load_before_store():
 
     program = AssetHolding.balance(Int(0), Int(0)).value()
