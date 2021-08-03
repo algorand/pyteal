@@ -46,7 +46,7 @@ def BitLen(arg: Expr) -> UnaryExpr:
     If the argument is 0, 0 will be returned.
 
     If the argument is a byte array, it is interpreted as a big-endian unsigned integer.
-    
+
     Requires TEAL version 4 or higher.
     """
     return UnaryExpr(Op.bitlen, TealType.anytype, TealType.uint64, arg)
@@ -72,14 +72,14 @@ def Not(arg: Expr) -> UnaryExpr:
 
 def BitwiseNot(arg: Expr) -> UnaryExpr:
     """Get the bitwise inverse of a uint64.
-    
+
     Produces ~arg.
     """
     return UnaryExpr(Op.bitwise_not, TealType.uint64, TealType.uint64, arg)
 
 def Sqrt(arg: Expr) -> UnaryExpr:
     """Get the integer square root of a uint64.
-    
+
     This will return the largest integer X such that X^2 <= arg.
 
     Requires TEAL version 4 or higher.
@@ -114,11 +114,11 @@ def MinBalance(account: Expr) -> UnaryExpr:
 
     Requires TEAL version 3 or higher. This operation is only permitted in application mode.
     """
-    return UnaryExpr(Op.min_balance, TealType.uint64, TealType.uint64, account)
+    return UnaryExpr(Op.min_balance, TealType.anytype, TealType.uint64, account)
 
 def BytesNot(arg: Expr) -> UnaryExpr:
     """Get the bitwise inverse of bytes.
-    
+
     Produces ~arg.
     Argument must not exceed 64 bytes.
 
@@ -129,8 +129,8 @@ def BytesNot(arg: Expr) -> UnaryExpr:
 def BytesZero(arg: Expr) -> UnaryExpr:
     """Get a byte-array of a specified length, containing all zero bytes.
 
-    Argument must evaluate to uint64. 
+    Argument must evaluate to uint64.
 
-    Requires TEAL version 4 or higher.    
+    Requires TEAL version 4 or higher.
     """
     return UnaryExpr(Op.bzero, TealType.uint64, TealType.bytes, arg)

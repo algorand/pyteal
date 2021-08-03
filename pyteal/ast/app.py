@@ -38,10 +38,10 @@ class AppField(Enum):
     def __init__(self, op: Op, type: TealType) -> None:
         self.op = op
         self.ret_type = type
-    
+
     def get_op(self) -> Op:
         return self.op
-    
+
     def type_of(self) -> TealType:
         return self.ret_type
 
@@ -50,7 +50,7 @@ AppField.__module__ = "pyteal"
 class App(LeafExpr):
     """An expression related to applications."""
 
-    def __init__(self, field:AppField, args) -> None:
+    def __init__(self, field: AppField, args) -> None:
         super().__init__()
         self.field = field
         self.args = args
@@ -71,7 +71,7 @@ class App(LeafExpr):
     @classmethod
     def id(cls) -> Global:
         """Get the ID of the current running application.
-        
+
         This is the same as :any:`Global.current_application_id()`.
         """
         return Global.current_application_id()
@@ -85,10 +85,10 @@ class App(LeafExpr):
                 evaluate to uint64.
             app: The ID of the application being checked. Must evaluate to uint64.
         """
-        require_type(account.type_of(), TealType.uint64)
+        require_type(account.type_of(), TealType.anytype)
         require_type(app.type_of(), TealType.uint64)
         return cls(AppField.optedIn, [account, app])
-    
+
     @classmethod
     def localGet(cls, account: Expr, key: Expr) -> 'App':
         """Read from an account's local state for the current application.
@@ -98,10 +98,10 @@ class App(LeafExpr):
                 evaluate to uint64.
             key: The key to read from the account's local state. Must evaluate to bytes.
         """
-        require_type(account.type_of(), TealType.uint64)
+        require_type(account.type_of(), TealType.anytype)
         require_type(key.type_of(), TealType.bytes)
         return cls(AppField.localGet, [account, key])
-    
+
     @classmethod
     def localGetEx(cls, account: Expr, app: Expr, key: Expr) -> MaybeValue:
         """Read from an account's local state for an application.
@@ -112,7 +112,7 @@ class App(LeafExpr):
             app: The ID of the application being checked. Must evaluate to uint64.
             key: The key to read from the account's local state. Must evaluate to bytes.
         """
-        require_type(account.type_of(), TealType.uint64)
+        require_type(account.type_of(), TealType.anytype)
         require_type(app.type_of(), TealType.uint64)
         require_type(key.type_of(), TealType.bytes)
         return MaybeValue(AppField.localGetEx.get_op(), TealType.anytype, args=[account, app, key])
@@ -126,7 +126,7 @@ class App(LeafExpr):
         """
         require_type(key.type_of(), TealType.bytes)
         return cls(AppField.globalGet, [key])
-    
+
     @classmethod
     def globalGetEx(cls, app: Expr, key: Expr) -> MaybeValue:
         """Read from the global state of an application.
@@ -150,11 +150,11 @@ class App(LeafExpr):
             key: The key to write in the account's local state. Must evaluate to bytes.
             value: The value to write in the account's local state. Can evaluate to any type.
         """
-        require_type(account.type_of(), TealType.uint64)
+        require_type(account.type_of(), TealType.anytype)
         require_type(key.type_of(), TealType.bytes)
         require_type(value.type_of(), TealType.anytype)
         return cls(AppField.localPut, [account, key, value])
-    
+
     @classmethod
     def globalPut(cls, key: Expr, value: Expr) -> 'App':
         """Write to the global state of the current application.
@@ -176,10 +176,10 @@ class App(LeafExpr):
                 should be deleted. Must evaluate to uint64.
             key: The key to delete from the account's local state. Must evaluate to bytes.
         """
-        require_type(account.type_of(), TealType.uint64)
+        require_type(account.type_of(), TealType.anytype)
         require_type(key.type_of(), TealType.bytes)
         return cls(AppField.localDel, [account, key])
-    
+
     @classmethod
     def globalDel(cls, key: Expr) -> 'App':
         """Delete a key from the global state of the current application.

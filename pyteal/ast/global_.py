@@ -26,7 +26,7 @@ class GlobalField(Enum):
         self.arg_name = name
         self.ret_type = type
         self.min_version = min_version
-    
+
     def type_of(self) -> TealType:
         return self.ret_type
 
@@ -44,10 +44,10 @@ class Global(LeafExpr):
 
         op = TealOp(self, Op.global_, self.field.arg_name)
         return TealBlock.FromOp(options, op)
-         
+
     def __str__(self):
         return "(Global {})".format(self.field.arg_name)
-    
+
     def type_of(self):
         return self.field.type_of()
 
@@ -74,7 +74,7 @@ class Global(LeafExpr):
     @classmethod
     def group_size(cls) -> 'Global':
         """Get the number of transactions in this atomic transaction group.
-        
+
         This will be at least 1.
         """
         return cls(GlobalField.group_size)
@@ -83,30 +83,30 @@ class Global(LeafExpr):
     def logic_sig_version(cls) -> 'Global':
         """Get the maximum supported TEAL version."""
         return cls(GlobalField.logic_sig_version)
-    
+
     @classmethod
     def round(cls) -> 'Global':
         """Get the current round number."""
         return cls(GlobalField.round)
-    
+
     @classmethod
     def latest_timestamp(cls) -> 'Global':
         """Get the latest confirmed block UNIX timestamp.
-        
+
         Fails if negative."""
         return cls(GlobalField.latest_timestamp)
-    
+
     @classmethod
     def current_application_id(cls) -> 'Global':
         """Get the ID of the current application executing.
-        
+
         Fails if no application is executing."""
         return cls(GlobalField.current_app_id)
-    
+
     @classmethod
     def creator_address(cls) -> 'Global':
         """Address of the creator of the current application.
-        
+
         Fails if no such application is executing. Requires TEAL version 3 or higher."""
         return cls(GlobalField.creator_address)
 
