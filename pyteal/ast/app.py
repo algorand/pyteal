@@ -81,8 +81,9 @@ class App(LeafExpr):
         """Check if an account has opted in for an application.
 
         Args:
-            account: An index into Txn.Accounts that corresponds to the account to check. Must
-                evaluate to uint64.
+            account: An index into Txn.Accounts that corresponds to the account to check,
+                must be evaluated to uint64 (or, since v4, an account address that appears in
+                Txn.Accounts or is Txn.Sender).
             app: The ID of the application being checked. Must evaluate to uint64.
         """
         require_type(account.type_of(), TealType.anytype)
@@ -94,8 +95,9 @@ class App(LeafExpr):
         """Read from an account's local state for the current application.
 
         Args:
-            account: An index into Txn.Accounts that corresponds to the account to read from. Must
-                evaluate to uint64.
+            account: An index into Txn.Accounts that corresponds to the account to check,
+                must be evaluated to uint64 (or, since v4, an account address that appears in
+                Txn.Accounts or is Txn.Sender).
             key: The key to read from the account's local state. Must evaluate to bytes.
         """
         require_type(account.type_of(), TealType.anytype)
@@ -107,8 +109,9 @@ class App(LeafExpr):
         """Read from an account's local state for an application.
 
         Args:
-            account: An index into Txn.Accounts that corresponds to the account to read from. Must
-                evaluate to uint64.
+            account: An index into Txn.Accounts that corresponds to the account to check,
+                must be evaluated to uint64 (or, since v4, an account address that appears in
+                Txn.Accounts or is Txn.Sender).
             app: The ID of the application being checked. Must evaluate to uint64.
             key: The key to read from the account's local state. Must evaluate to bytes.
         """
@@ -145,8 +148,9 @@ class App(LeafExpr):
         """Write to an account's local state for the current application.
 
         Args:
-            account: An index into Txn.Accounts that corresponds to the account to write to. Must
-                evaluate to uint64.
+            account: An index into Txn.Accounts that corresponds to the account to check,
+                must be evaluated to uint64 (or, since v4, an account address that appears in
+                Txn.Accounts or is Txn.Sender).
             key: The key to write in the account's local state. Must evaluate to bytes.
             value: The value to write in the account's local state. Can evaluate to any type.
         """
@@ -172,8 +176,9 @@ class App(LeafExpr):
         """Delete a key from an account's local state for the current application.
 
         Args:
-            account: An index into Txn.Accounts that corresponds to the account from which the key
-                should be deleted. Must evaluate to uint64.
+            account: An index into Txn.Accounts that corresponds to the account to check,
+                must be evaluated to uint64 (or, since v4, an account address that appears in
+                Txn.Accounts or is Txn.Sender).
             key: The key to delete from the account's local state. Must evaluate to bytes.
         """
         require_type(account.type_of(), TealType.anytype)

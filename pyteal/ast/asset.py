@@ -13,8 +13,9 @@ class AssetHolding:
         """Get the amount of an asset held by an account.
 
         Args:
-            account: An index into Txn.Accounts that corresponds to the account to check. Must
-                evaluate to uint64.
+            account: An index into Txn.Accounts that corresponds to the account to check,
+                must be evaluated to uint64 (or, since v4, an account address that appears in
+                Txn.Accounts or is Txn.Sender).
             asset: The ID of the asset to get. Must evaluate to uint64.
         """
         # TODO need to write test function for Version 4
@@ -29,8 +30,9 @@ class AssetHolding:
         A value of 1 indicates frozen and 0 indicates not frozen.
 
         Args:
-            account: An index into Txn.Accounts that corresponds to the account to check. Must
-                evaluate to uint64.
+            account: An index into Txn.Accounts that corresponds to the account to check,
+                must be evaluated to uint64 (or, since v4, an account address that appears in
+                Txn.Accounts or is Txn.Sender).
             asset: The ID of the asset to check. Must evaluate to uint64.
         """
         # TODO need to write test function for Version 4

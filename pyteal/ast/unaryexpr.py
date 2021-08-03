@@ -97,8 +97,9 @@ def Return(arg: Expr) -> UnaryExpr:
 def Balance(account: Expr) -> UnaryExpr:
     """Get the balance of a user in microAlgos.
 
-    Argument must be an index into Txn.Accounts that corresponds to the account to read from. It
-    must evaluate to uint64.
+    Argument must be an index into Txn.Accounts that corresponds to the account to read from,
+    must be evaluated to uint64 (or, since v4, an account address that appears in Txn.Accounts
+    or is Txn.Sender).
 
     This operation is only permitted in application mode.
     """
@@ -109,8 +110,9 @@ def MinBalance(account: Expr) -> UnaryExpr:
 
     For more information about minimum balances, see: https://developer.algorand.org/docs/features/accounts/#minimum-balance
 
-    Argument must be an index into Txn.Accounts that corresponds to the account to read from. It
-    must evaluate to uint64.
+    Argument must be an index into Txn.Accounts that corresponds to the account to read from,
+    must be evaluated to uint64 (or, since v4, an account address that appears in Txn.Accounts
+    or is Txn.Sender).
 
     Requires TEAL version 3 or higher. This operation is only permitted in application mode.
     """
