@@ -91,8 +91,11 @@ and the third argument is the value to write. For example:
 .. code-block:: python
 
     App.localPut(Int(0), Bytes("role"), Bytes("admin")) # write a byte slice to Txn.accounts[0], the sender's account
+    App.localPut(Txn.Sender(), Bytes("role"), Bytes("admin")) # write a byte slice to the sender's account
     App.localPut(Int(0), Bytes("balance"), Int(10)) # write a uint64 to Txn.accounts[0], the sender's account
+    App.localPut(Txn.Sender(), Bytes("balance"), Int(10)) # write a uint64 to the sender's account
     App.localPut(Int(1), Bytes("balance"), Int(10)) # write a uint64 to Txn.accounts[1]
+    App.localPut(Txn.account[1], Bytes("balance"), Int(10)) # write a uint64 to Txn.account[1]
 
 **Note:** It is only possible to write to the local state of an account if that account has opted
 into your application. If the account has not opted in, the program will fail with an error. The
@@ -108,8 +111,11 @@ For example:
 .. code-block:: python
 
     App.localGet(Int(0), Bytes("role")) # read from Txn.accounts[0], the sender's account
-    App.localGet(Int(0), Bytes("balance")) # read from Txn.accounts[0], the the sender's account
+    App.localGet(Txn.Sender(), Byte("role")) # read from the sender's account
+    App.localGet(Int(0), Bytes("balance")) # read from Txn.accounts[0], the sender's account
+    App.localGet(Txn.Sender(), Bytes("balance")) # read from the sender's account
     App.localGet(Int(1), Bytes("balance")) # read from Txn.accounts[1]
+    App.localGet(Txn.accounts[1], Bytes("balance")) # read from Txn.accounts[1]
 
 If you try to read from a key that does not exist in your app's global state, the integer :code:`0`
 is returned.
@@ -124,8 +130,11 @@ For example:
 .. code-block:: python
 
     App.localDel(Int(0), Bytes("role")) # delete "role" from Txn.accounts[0], the sender's account
-    App.localDel(Int(0), Bytes("balance")) # delete "balance" from Txn.accounts[0], the the sender's account
+    App.localDel(Txn.Sender(), Bytes("role")) # delete "role" from the sender's account
+    App.localDel(Int(0), Bytes("balance")) # delete "balance" from Txn.accounts[0], the sender's account
+    App.localDel(Txn.Sender(), Bytes("balance")) # delete "balance" from the sender's account
     App.localDel(Int(1), Bytes("balance")) # delete "balance" from Txn.accounts[1]
+    App.localDel(Txn.accounts[1], Bytes("balance")) # delete "balance" from Txn.accounts[1]
 
 If you try to delete a key that does not exist in the account's local state, nothing happens.
 

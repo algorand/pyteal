@@ -18,7 +18,6 @@ class AssetHolding:
                 Txn.Accounts or is Txn.Sender).
             asset: The ID of the asset to get. Must evaluate to uint64.
         """
-        # TODO need to write test function for Version 4
         require_type(account.type_of(), TealType.anytype)
         require_type(asset.type_of(), TealType.uint64)
         return MaybeValue(Op.asset_holding_get, TealType.uint64, immediate_args=["AssetBalance"], args=[account, asset])
@@ -35,7 +34,6 @@ class AssetHolding:
                 Txn.Accounts or is Txn.Sender).
             asset: The ID of the asset to check. Must evaluate to uint64.
         """
-        # TODO need to write test function for Version 4
         require_type(account.type_of(), TealType.anytype)
         require_type(asset.type_of(), TealType.uint64)
         return MaybeValue(Op.asset_holding_get, TealType.uint64, immediate_args=["AssetFrozen"], args=[account, asset])
