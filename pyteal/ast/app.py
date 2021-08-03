@@ -135,11 +135,12 @@ class App(LeafExpr):
         """Read from the global state of an application.
 
         Args:
-            app: An index into Txn.ForeignApps that corresponds to the application to read from.
-                Must evaluate to uint64.
+            app: An index into Txn.ForeignApps that corresponds to the application to read from,
+                must be evaluated to uint64 (or, since v4, an application id that appears in
+                Txn.ForeignApps or is the CurrentApplicationID).
             key: The key to read from the global application state. Must evaluate to bytes.
         """
-        require_type(app.type_of(), TealType.uint64)
+        require_type(app.type_of(), TealType.anytype)
         require_type(key.type_of(), TealType.bytes)
         return MaybeValue(AppField.globalGetEx.get_op(), TealType.anytype, args=[app, key])
 

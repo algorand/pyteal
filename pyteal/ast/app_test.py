@@ -5,6 +5,7 @@ from .. import *
 from .. import CompileOptions
 
 options = CompileOptions()
+teal4Options = CompileOptions(version=3)
 
 def test_on_complete():
     assert OnComplete.NoOp.__teal__(options)[0] == TealSimpleBlock([
@@ -214,9 +215,30 @@ def test_global_get_ex():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+def test_global_get_ex_direct_ref():
+    args = [Txn.applications[0], Bytes("key")]
+    expr = App.globalGetEx(args[0], args[1])
+    assert expr.type_of() == TealType.none
+    assert expr.value().type_of() == TealType.anytype
+
+    expected = TealSimpleBlock([
+        TealOp(args[0], Op.txna, "Applications", 0),
+        TealOp(args[1], Op.byte, "\"key\""),
+        TealOp(expr, Op.app_global_get_ex),
+        TealOp(None, Op.store, expr.slotOk),
+        TealOp(None, Op.store, expr.slotValue)
+    ])
+
+    actual, _ = expr.__teal__(teal4Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
 def test_global_get_ex_invalid():
     with pytest.raises(TealTypeError):
-        App.globalGetEx(Bytes("app"), Bytes("key"))
+        App.globalGetEx(Bytes("app"), Int(12))
 
     with pytest.raises(TealTypeError):
         App.globalGetEx(Int(0), Int(1))

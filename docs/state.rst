@@ -186,6 +186,7 @@ argument to :any:`App.globalGetEx`, and pass the key to read as the second argum
     # get "status" from the global context of Txn.applications[0] (the current app)
     # if "status" has not been set, returns "none"
     myStatus = App.globalGetEx(Int(0), Bytes("status"))
+
     program = Seq([
         myStatus,
         If(myStatus.hasValue(), myStatus.value(), Bytes("none"))
@@ -230,6 +231,7 @@ For example:
     # get "role" from the local state of Txn.accounts[0] (the sender) for the current app
     # if "role" has not been set, returns "none"
     myAppSenderRole = App.localGetEx(Int(0), Int(0), Bytes("role"))
+    myAppSenderRoleDirectRef = App.localGetEx(Txn.sender(), Int(0), Bytes("role"))
     program = Seq([
         myAppSenderRole,
         If(myAppSenderRole.hasValue(), myAppSenderRole.value(), Bytes("none"))
@@ -238,6 +240,7 @@ For example:
     # get "role" from the local state of Txn.accounts[1] for the current app
     # if "role" has not been set, returns "none"
     myAppOtherAccountRole = App.localGetEx(Int(1), Int(0), Bytes("role"))
+    myAppOtherAccountRoleDirectRef = App.localGetEx(Txn.sender(), Int(0), Bytes("role"))
     program = Seq([
         myAppOtherAccountRole,
         If(myAppOtherAccountRole.hasValue(), myAppOtherAccountRole.value(), Bytes("none"))
@@ -246,6 +249,7 @@ For example:
     # get "role" from the local state of Txn.accounts[0] (the sender) for the app with ID 31
     # if "role" has not been set, returns "none"
     otherAppSenderRole = App.localGetEx(Int(0), Int(31), Bytes("role"))
+    otherAppSenderRoleDirectRef = App.localGetEx(Txn.sender(), Int(31), Bytes("role"))
     program = Seq([
         otherAppSenderRole,
         If(otherAppSenderRole.hasValue(), otherAppSenderRole.value(), Bytes("none"))
@@ -254,6 +258,7 @@ For example:
     # get "role" from the local state of Txn.accounts[1] for the app with ID 31
     # if "role" has not been set, returns "none"
     otherAppOtherAccountRole = App.localGetEx(Int(1), Int(31), Bytes("role"))
+    otherAppOtherAccountRoleDirectRef = App.localGetEx(Txn.sender(), Int(31), Bytes("role"))
     program = Seq([
         otherAppOtherAccountRole,
         If(otherAppOtherAccountRole.hasValue(), otherAppOtherAccountRole.value(), Bytes("none"))

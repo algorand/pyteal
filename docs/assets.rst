@@ -15,7 +15,7 @@ For example,
 .. code-block:: python
 
     senderBalance = Balance(Int(0)) # get the balance of Txn.accounts[0] (the sender)
-    senderBalanceDirectRef = Balance(Txn.Sender()) # get the balance of the sender by passing the account address (bytes)
+    senderBalanceDirectRef = Balance(Txn.sender()) # get the balance of the sender by passing the account address (bytes)
     account1Balance = Balance(Int(1)) # get the balance of Txn.accounts[1]
     account1BalanceDirectRef = Balance(Txn.accounts[1]) # get the balance of Txn.accounts[1] by passing the account address (bytes)
 
@@ -25,7 +25,7 @@ This amount is also in microAlgos. For example,
 .. code-block:: python
 
     senderMinBalance = MinBalance(Int(0)) # get the minimum balance of Txn.accounts[0] (the sender)
-    senderMinBalanceDirectRef = MinBalance(Txn.Sender()) # get the minimum balance of the sender by passing the account address (bytes)
+    senderMinBalanceDirectRef = MinBalance(Txn.sender()) # get the minimum balance of the sender by passing the account address (bytes)
     account1MinBalance = MinBalance(Int(1)) # get the minimum balance of Txn.accounts[1]
     account1MinBalance = MinBalance(Txn.accounts[1]) # get the minimum balance of Txn.accounts[1] by passing the account address (bytes)
 
@@ -63,7 +63,7 @@ account holds. For example,
     # if the account is not opted into that asset, returns 0
     senderAssetBalance = AssetHolding.balance(Int(0), Int(31566704))
     # get the balance of the sender by passing the sender's account address
-    senderAssetBalanceDirectRef = AssetHolding.balance(Txn.Sender(), Int(31566704))
+    senderAssetBalanceDirectRef = AssetHolding.balance(Txn.sender(), Int(31566704))
     program = Seq([
         senderAssetBalance,
         senderAssetBalance.value()
@@ -73,7 +73,7 @@ account holds. For example,
     # if the account is not opted into that asset, exit with an error
     account1AssetBalance = AssetHolding.balance(Int(1), Int(27165954))
     # get the balance of Txn.accounts[1] by passing the account address
-    account1AssetBalanceDirectRef = AssetHolding.balance(Txn.Sender(), Int(27165954))
+    account1AssetBalanceDirectRef = AssetHolding.balance(Txn.sender(), Int(27165954))
     program = Seq([
         account1AssetBalance,
         Assert(account1AssetBalance.hasValue()),
@@ -92,7 +92,7 @@ A value of :code:`1` indicates frozen and :code:`0` indicates not frozen. For ex
     # if the account is not opted into that asset, returns 0
     senderAssetFrozen = AssetHolding.frozen(Int(0), Int(31566704))
     # get the frozen status of the sender by passing the sender's account address
-    senderAssetFrozenDirectRef = AssetHolding.frozen(Txn.Sender(), Int(31566704))
+    senderAssetFrozenDirectRef = AssetHolding.frozen(Txn.sender(), Int(31566704))
     program = Seq([
         senderAssetFrozen,
         senderAssetFrozen.value()
@@ -102,7 +102,7 @@ A value of :code:`1` indicates frozen and :code:`0` indicates not frozen. For ex
     # if the account is not opted into that asset, exit with an error
     account1AssetFrozen = AssetHolding.frozen(Int(1), Int(27165954))
     # get the frozen status of Txn.account[1] by passing the account address
-    account1AssetFrozenDirectRef = AssetHolding.frozen(Txn.Sender(), Int(27165954))
+    account1AssetFrozenDirectRef = AssetHolding.frozen(Txn.sender(), Int(27165954))
     program = Seq([
         account1AssetFrozen,
         Assert(account1AssetFrozen.hasValue()),
