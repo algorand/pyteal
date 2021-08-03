@@ -102,7 +102,7 @@ def Balance(account: Expr) -> UnaryExpr:
 
     This operation is only permitted in application mode.
     """
-    return UnaryExpr(Op.balance, TealType.uint64, TealType.uint64, account)
+    return UnaryExpr(Op.balance, TealType.anytype, TealType.uint64, account)
 
 def MinBalance(account: Expr) -> UnaryExpr:
     """Get the minimum balance of a user in microAlgos.

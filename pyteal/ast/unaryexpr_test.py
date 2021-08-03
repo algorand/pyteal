@@ -308,9 +308,27 @@ def test_balance():
 
     assert actual == expected
 
+def test_balance_direct_ref():
+    arg = Txn.sender()
+    expr = Balance(arg)
+    assert expr.type_of() == TealType.uint64
+
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.txn, "Sender"),
+        TealOp(expr, Op.balance)
+    ])
+
+    actual, _ = expr.__teal__(teal2Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
 def test_balance_invalid():
     with pytest.raises(TealTypeError):
-        Balance(Txn.receiver())
+        args = [Txn.sender(), Int(17)]
+        expr = AssetHolding.balance(args[0], args[1])
+        MinBalance(expr)
 
 def test_min_balance():
     arg = Int(0)
