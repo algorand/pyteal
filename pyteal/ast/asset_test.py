@@ -5,6 +5,7 @@ from .. import *
 from .. import CompileOptions
 
 options = CompileOptions()
+teal4Options = CompileOptions(version=4)
 
 def test_asset_holding_balance():
     args = Int(0), Int(17)
@@ -124,9 +125,29 @@ def test_asset_param_total():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+def test_asset_param_total_direct_ref():
+    arg = Txn.assets[0]
+    expr = AssetParam.total(arg)
+    assert expr.type_of() == TealType.none
+    assert expr.value().type_of() == TealType.uint64
+
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.txna, "Assets", 0),
+        TealOp(expr, Op.asset_params_get, "AssetTotal"),
+        TealOp(None, Op.store, expr.slotOk),
+        TealOp(None, Op.store, expr.slotValue)
+    ])
+
+    actual, _ = expr.__teal__(teal4Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
 def test_asset_param_total_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.total(Txn.sender())
+        AssetParam.total(AssetParam.total(Txn.assets[0]))
 
 def test_asset_param_decimals():
     arg = Int(0)
@@ -148,9 +169,29 @@ def test_asset_param_decimals():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+def test_asset_param_decimals_direct_ref():
+    arg = Txn.assets[0]
+    expr = AssetParam.decimals(arg)
+    assert expr.type_of() == TealType.none
+    assert expr.value().type_of() == TealType.uint64
+
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.txna, "Assets", 0),
+        TealOp(expr, Op.asset_params_get, "AssetDecimals"),
+        TealOp(None, Op.store, expr.slotOk),
+        TealOp(None, Op.store, expr.slotValue)
+    ])
+
+    actual, _ = expr.__teal__(teal4Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
 def test_asset_param_decimals_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.decimals(Txn.sender())
+        AssetParam.decimals(AssetParam.decimals(Txn.assets[0]))
 
 def test_asset_param_default_frozen():
     arg = Int(0)
@@ -172,9 +213,29 @@ def test_asset_param_default_frozen():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+def test_asset_param_default_frozen_direct_ref():
+    arg = Txn.assets[0]
+    expr = AssetParam.defaultFrozen(arg)
+    assert expr.type_of() == TealType.none
+    assert expr.value().type_of() == TealType.uint64
+
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.txna, "Assets", 0),
+        TealOp(expr, Op.asset_params_get, "AssetDefaultFrozen"),
+        TealOp(None, Op.store, expr.slotOk),
+        TealOp(None, Op.store, expr.slotValue)
+    ])
+
+    actual, _ = expr.__teal__(teal4Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
 def test_asset_param_default_frozen_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.defaultFrozen(Txn.sender())
+        AssetParam.defaultFrozen(AssetParam.defaultFrozen(Txn.assets[0]))
 
 def test_asset_param_unit_name():
     arg = Int(0)
@@ -196,9 +257,29 @@ def test_asset_param_unit_name():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+def test_asset_param_unit_name_direct_ref():
+    arg = Txn.assets[0]
+    expr = AssetParam.unitName(arg)
+    assert expr.type_of() == TealType.none
+    assert expr.value().type_of() == TealType.bytes
+
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.txna, "Assets", 0),
+        TealOp(expr, Op.asset_params_get, "AssetUnitName"),
+        TealOp(None, Op.store, expr.slotOk),
+        TealOp(None, Op.store, expr.slotValue)
+    ])
+
+    actual, _ = expr.__teal__(teal4Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
 def test_asset_param_unit_name_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.unitName(Txn.sender())
+        AssetParam.unitName(AssetParam.unitName(Txn.assets[0]))
 
 def test_asset_param_name():
     arg = Int(0)
@@ -220,9 +301,29 @@ def test_asset_param_name():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+def test_asset_param_name_direct_ref():
+    arg = Txn.assets[0]
+    expr = AssetParam.name(arg)
+    assert expr.type_of() == TealType.none
+    assert expr.value().type_of() == TealType.bytes
+
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.txna, "Assets", 0),
+        TealOp(expr, Op.asset_params_get, "AssetName"),
+        TealOp(None, Op.store, expr.slotOk),
+        TealOp(None, Op.store, expr.slotValue)
+    ])
+
+    actual, _ = expr.__teal__(teal4Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
 def test_asset_param_name_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.name(Txn.sender())
+        AssetParam.name(AssetParam.name(Txn.assets[0]))
 
 def test_asset_param_url():
     arg = Int(0)
@@ -244,9 +345,29 @@ def test_asset_param_url():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+def test_asset_param_url_direct_ref():
+    arg = Txn.assets[0]
+    expr = AssetParam.url(arg)
+    assert expr.type_of() == TealType.none
+    assert expr.value().type_of() == TealType.bytes
+
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.txna, "Assets", 0),
+        TealOp(expr, Op.asset_params_get, "AssetURL"),
+        TealOp(None, Op.store, expr.slotOk),
+        TealOp(None, Op.store, expr.slotValue)
+    ])
+
+    actual, _ = expr.__teal__(teal4Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
 def test_asset_param_url_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.url(Txn.sender())
+        AssetParam.url(AssetParam.url(Txn.assets[0]))
 
 def test_asset_param_metadata_hash():
     arg = Int(0)
@@ -268,9 +389,29 @@ def test_asset_param_metadata_hash():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+def test_asset_param_metadata_hash_direct_ref():
+    arg = Txn.assets[0]
+    expr = AssetParam.metadataHash(arg)
+    assert expr.type_of() == TealType.none
+    assert expr.value().type_of() == TealType.bytes
+
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.txna, "Assets", 0),
+        TealOp(expr, Op.asset_params_get, "AssetMetadataHash"),
+        TealOp(None, Op.store, expr.slotOk),
+        TealOp(None, Op.store, expr.slotValue)
+    ])
+
+    actual, _ = expr.__teal__(teal4Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
 def test_asset_param_metadata_hash_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.metadataHash(Txn.sender())
+        AssetParam.metadataHash(AssetParam.metadataHash(Txn.assets[0]))
 
 def test_asset_param_manager():
     arg = Int(0)
@@ -292,9 +433,29 @@ def test_asset_param_manager():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+def test_asset_param_manager_direct_ref():
+    arg = Txn.assets[0]
+    expr = AssetParam.manager(arg)
+    assert expr.type_of() == TealType.none
+    assert expr.value().type_of() == TealType.bytes
+
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.txna, "Assets", 0),
+        TealOp(expr, Op.asset_params_get, "AssetManager"),
+        TealOp(None, Op.store, expr.slotOk),
+        TealOp(None, Op.store, expr.slotValue)
+    ])
+
+    actual, _ = expr.__teal__(teal4Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
 def test_asset_param_manager_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.manager(Txn.sender())
+        AssetParam.manager(AssetParam.manager(Txn.assets[0]))
 
 def test_asset_param_reserve():
     arg = Int(2)
@@ -316,9 +477,29 @@ def test_asset_param_reserve():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+def test_asset_param_reserve_direct_ref():
+    arg = Txn.assets[2]
+    expr = AssetParam.reserve(arg)
+    assert expr.type_of() == TealType.none
+    assert expr.value().type_of() == TealType.bytes
+
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.txna, "Assets", 2),
+        TealOp(expr, Op.asset_params_get, "AssetReserve"),
+        TealOp(None, Op.store, expr.slotOk),
+        TealOp(None, Op.store, expr.slotValue)
+    ])
+
+    actual, _ = expr.__teal__(teal4Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
 def test_asset_param_reserve_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.reserve(Txn.sender())
+        AssetParam.reserve(AssetParam.reserve(Txn.assets[0]))
 
 def test_asset_param_freeze():
     arg = Int(0)
@@ -340,9 +521,29 @@ def test_asset_param_freeze():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+def test_asset_param_freeze_direct_ref():
+    arg = Txn.assets[0]
+    expr = AssetParam.freeze(arg)
+    assert expr.type_of() == TealType.none
+    assert expr.value().type_of() == TealType.bytes
+
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.txna, "Assets", 0),
+        TealOp(expr, Op.asset_params_get, "AssetFreeze"),
+        TealOp(None, Op.store, expr.slotOk),
+        TealOp(None, Op.store, expr.slotValue)
+    ])
+
+    actual, _ = expr.__teal__(teal4Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
 def test_asset_param_freeze_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.freeze(Txn.sender())
+        AssetParam.freeze(AssetParam.freeze(Txn.assets[0]))
 
 def test_asset_param_clawback():
     arg = Int(1)
@@ -364,6 +565,26 @@ def test_asset_param_clawback():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+def test_asset_param_clawback_direct_ref():
+    arg = Txn.assets[1]
+    expr = AssetParam.clawback(arg)
+    assert expr.type_of() == TealType.none
+    assert expr.value().type_of() == TealType.bytes
+
+    expected = TealSimpleBlock([
+        TealOp(arg, Op.txna, "Assets", 1),
+        TealOp(expr, Op.asset_params_get, "AssetClawback"),
+        TealOp(None, Op.store, expr.slotOk),
+        TealOp(None, Op.store, expr.slotValue)
+    ])
+
+    actual, _ = expr.__teal__(teal4Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
 def test_asset_param_clawback_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.clawback(Txn.sender())
+        AssetParam.clawback(AssetParam.clawback(Txn.assets[0]))

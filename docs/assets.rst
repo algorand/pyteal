@@ -152,6 +152,9 @@ Here's an example that uses an asset parameter:
     # get the total number of units for Txn.assets[0]
     # if the asset is invalid, exit with an error
     assetTotal = AssetParam.total(Int(0))
+    # another way to get the total number of units for Txn.assets[0]
+    assetTotalDirectRef = AssetParam.total(Txn.assets[0])
+
     program = Seq([
         assetTotal,
         Assert(assetTotal.hasValue()),

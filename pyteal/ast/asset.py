@@ -50,7 +50,7 @@ class AssetParam:
             asset: An index into Txn.ForeignAssets that corresponds to the asset to check. Must
                 evaluate to uint64.
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset.type_of(), TealType.anytype)
         return MaybeValue(Op.asset_params_get, TealType.uint64, immediate_args=["AssetTotal"], args=[asset])
 
     @classmethod
@@ -61,7 +61,7 @@ class AssetParam:
             asset: An index into Txn.ForeignAssets that corresponds to the asset to check. Must
                 evaluate to uint64.
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset.type_of(), TealType.anytype)
         return MaybeValue(Op.asset_params_get, TealType.uint64, immediate_args=["AssetDecimals"], args=[asset])
 
     @classmethod
@@ -72,7 +72,7 @@ class AssetParam:
             asset: An index into Txn.ForeignAssets that corresponds to the asset to check. Must
                 evaluate to uint64.
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset.type_of(), TealType.anytype)
         return MaybeValue(Op.asset_params_get, TealType.uint64, immediate_args=["AssetDefaultFrozen"], args=[asset])
 
     @classmethod
@@ -83,7 +83,7 @@ class AssetParam:
             asset: An index into Txn.ForeignAssets that corresponds to the asset to check. Must
                 evaluate to uint64.
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset.type_of(), TealType.anytype)
         return MaybeValue(Op.asset_params_get, TealType.bytes, immediate_args=["AssetUnitName"], args=[asset])
 
     @classmethod
@@ -94,7 +94,7 @@ class AssetParam:
             asset: An index into Txn.ForeignAssets that corresponds to the asset to check. Must
                 evaluate to uint64.
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset.type_of(), TealType.anytype)
         return MaybeValue(Op.asset_params_get, TealType.bytes, immediate_args=["AssetName"], args=[asset])
 
     @classmethod
@@ -105,7 +105,7 @@ class AssetParam:
             asset: An index into Txn.ForeignAssets that corresponds to the asset to check. Must
                 evaluate to uint64.
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset.type_of(), TealType.anytype)
         return MaybeValue(Op.asset_params_get, TealType.bytes, immediate_args=["AssetURL"], args=[asset])
 
     @classmethod
@@ -118,7 +118,7 @@ class AssetParam:
             asset: An index into Txn.ForeignAssets that corresponds to the asset to check. Must
                 evaluate to uint64.
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset.type_of(), TealType.anytype)
         return MaybeValue(Op.asset_params_get, TealType.bytes, immediate_args=["AssetMetadataHash"], args=[asset])
 
     @classmethod
@@ -129,7 +129,7 @@ class AssetParam:
             asset: An index into Txn.ForeignAssets that corresponds to the asset to check. Must
                 evaluate to uint64.
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset.type_of(), TealType.anytype)
         return MaybeValue(Op.asset_params_get, TealType.bytes, immediate_args=["AssetManager"], args=[asset])
 
     @classmethod
@@ -140,7 +140,7 @@ class AssetParam:
             asset: An index into Txn.ForeignAssets that corresponds to the asset to check. Must
                 evaluate to uint64.
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset.type_of(), TealType.anytype)
         return MaybeValue(Op.asset_params_get, TealType.bytes, immediate_args=["AssetReserve"], args=[asset])
 
     @classmethod
@@ -151,7 +151,7 @@ class AssetParam:
             asset: An index into Txn.ForeignAssets that corresponds to the asset to check. Must
                 evaluate to uint64.
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset.type_of(), TealType.anytype)
         return MaybeValue(Op.asset_params_get, TealType.bytes, immediate_args=["AssetFreeze"], args=[asset])
 
     @classmethod
@@ -162,7 +162,7 @@ class AssetParam:
             asset: An index into Txn.ForeignAssets that corresponds to the asset to check. Must
                 evaluate to uint64.
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset.type_of(), TealType.anytype)
         return MaybeValue(Op.asset_params_get, TealType.bytes, immediate_args=["AssetClawback"], args=[asset])
 
 AssetParam.__module__ = "pyteal"

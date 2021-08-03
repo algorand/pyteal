@@ -5,7 +5,7 @@ from .. import *
 from .. import CompileOptions
 
 options = CompileOptions()
-teal4Options = CompileOptions(version=3)
+teal4Options = CompileOptions(version=4)
 
 def test_on_complete():
     assert OnComplete.NoOp.__teal__(options)[0] == TealSimpleBlock([
