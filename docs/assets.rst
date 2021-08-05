@@ -14,19 +14,15 @@ For example,
 
 .. code-block:: python
 
-    senderBalance = Balance(Int(0)) # get the balance of Txn.accounts[0] (the sender)
-    senderBalanceDirectRef = Balance(Txn.sender()) # get the balance of the sender by passing the account address (bytes)
-    account1Balance = Balance(Int(1)) # get the balance of Txn.accounts[1]
-    account1BalanceDirectRef = Balance(Txn.accounts[1]) # get the balance of Txn.accounts[1] by passing the account address (bytes)
+    senderBalance = Balance(Txn.sender()) # get the balance of the sender
+    account1Balance = Balance(Txn.accounts[1]) # get the balance of Txn.accounts[1]
 
 The :any:`MinBalance` expression can be used to find an account's `minimum balance <https://developer.algorand.org/docs/features/accounts/#minimum-balance>`_.
 This amount is also in microAlgos. For example,
 
 .. code-block:: python
 
-    senderMinBalance = MinBalance(Int(0)) # get the minimum balance of Txn.accounts[0] (the sender)
-    senderMinBalanceDirectRef = MinBalance(Txn.sender()) # get the minimum balance of the sender by passing the account address (bytes)
-    account1MinBalance = MinBalance(Int(1)) # get the minimum balance of Txn.accounts[1]
+    senderMinBalance = MinBalance(Txn.sender()) # get the minimum balance of the sender by passing the account address (bytes)
     account1MinBalance = MinBalance(Txn.accounts[1]) # get the minimum balance of Txn.accounts[1] by passing the account address (bytes)
 
 Additionally, :any:`Balance` and :any:`MinBalance` can be used together to calculate how many Algos
@@ -34,8 +30,8 @@ an account can spend without closing. For example,
 
 .. code-block:: python
 
-    senderSpendableBalance = Balance(Int(0)) - MinBalance(Int(0)) # calculate how many Algos Txn.accounts[0] (the sender) can spend
-    account1SpendableBalance = Balance(Int(1)) - MinBalance(Int(1)) # calculate how many Algos Txn.accounts[1] can spend
+    senderSpendableBalance = Balance(Txn.sender()) - MinBalance(Txn.sender()) # calculate how many Algos the sender can spend
+    account1SpendableBalance = Balance(Txn.accounts[1]) - MinBalance(Txn.accounts[1]) # calculate how many Algos Txn.accounts[1] can spend
 
 Asset Holdings
 --------------
@@ -59,11 +55,9 @@ account holds. For example,
 
 .. code-block:: python
 
-    # get the balance of Txn.accounts[0] (the sender) for asset 31566704
+    # get the balance of the sender for asset 31566704
     # if the account is not opted into that asset, returns 0
-    senderAssetBalance = AssetHolding.balance(Int(0), Int(31566704))
-    # get the balance of the sender by passing the sender's account address
-    senderAssetBalanceDirectRef = AssetHolding.balance(Txn.sender(), Int(31566704))
+    senderAssetBalance = AssetHolding.balance(Txn.sender(), Txn.assets[31566704])
     program = Seq([
         senderAssetBalance,
         senderAssetBalance.value()
@@ -71,9 +65,7 @@ account holds. For example,
 
     # get the balance of Txn.accounts[1] for asset 27165954
     # if the account is not opted into that asset, exit with an error
-    account1AssetBalance = AssetHolding.balance(Int(1), Int(27165954))
-    # get the balance of Txn.accounts[1] by passing the account address
-    account1AssetBalanceDirectRef = AssetHolding.balance(Txn.sender(), Int(27165954))
+    account1AssetBalance = AssetHolding.balance(Txn.accounts[1], Txn.assets[27165954])
     program = Seq([
         account1AssetBalance,
         Assert(account1AssetBalance.hasValue()),
@@ -88,11 +80,9 @@ A value of :code:`1` indicates frozen and :code:`0` indicates not frozen. For ex
 
 .. code-block:: python
 
-    # get the frozen status of Txn.accounts[0] (the sender) for asset 31566704
+    # get the frozen status of the sender for asset 31566704
     # if the account is not opted into that asset, returns 0
-    senderAssetFrozen = AssetHolding.frozen(Int(0), Int(31566704))
-    # get the frozen status of the sender by passing the sender's account address
-    senderAssetFrozenDirectRef = AssetHolding.frozen(Txn.sender(), Int(31566704))
+    senderAssetFrozen = AssetHolding.frozen(Txn.sender(), Txn.assets[31566704])
     program = Seq([
         senderAssetFrozen,
         senderAssetFrozen.value()
@@ -100,9 +90,7 @@ A value of :code:`1` indicates frozen and :code:`0` indicates not frozen. For ex
 
     # get the frozen status of Txn.accounts[1] for asset 27165954
     # if the account is not opted into that asset, exit with an error
-    account1AssetFrozen = AssetHolding.frozen(Int(1), Int(27165954))
-    # get the frozen status of Txn.account[1] by passing the account address
-    account1AssetFrozenDirectRef = AssetHolding.frozen(Txn.sender(), Int(27165954))
+    account1AssetFrozen = AssetHolding.frozen(Txn.accounts[1], Txn.assets[27165954])
     program = Seq([
         account1AssetFrozen,
         Assert(account1AssetFrozen.hasValue()),
@@ -142,7 +130,6 @@ Expression                        Type                    Description
 :any:`AssetParam.reserve()`       :code:`TealType.bytes`  The address of the asset's reserve account.
 :any:`AssetParam.freeze()`        :code:`TealType.bytes`  The address of the asset's freeze account.
 :any:`AssetParam.clawback()`      :code:`TealType.bytes`  The address of the asset's clawback account.
-:any:`AssetParam.creator()`       :code:`TealType.bytes`  The address of the asset's creator account.
 ================================= ======================= ==========================================================
 
 Here's an example that uses an asset parameter:
@@ -151,9 +138,7 @@ Here's an example that uses an asset parameter:
 
     # get the total number of units for Txn.assets[0]
     # if the asset is invalid, exit with an error
-    assetTotal = AssetParam.total(Int(0))
-    # another way to get the total number of units for Txn.assets[0]
-    assetTotalDirectRef = AssetParam.total(Txn.assets[0])
+    assetTotal = AssetParam.total(Txn.assets[0])
 
     program = Seq([
         assetTotal,

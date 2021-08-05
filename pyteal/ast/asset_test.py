@@ -4,7 +4,7 @@ from .. import *
 # this is not necessary but mypy complains if it's not included
 from .. import CompileOptions
 
-options = CompileOptions()
+teal2Options = CompileOptions()
 teal4Options = CompileOptions(version=4)
 
 def test_asset_holding_balance():
@@ -21,7 +21,7 @@ def test_asset_holding_balance():
         TealOp(None, Op.store, expr.slotValue)
     ])
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -29,20 +29,20 @@ def test_asset_holding_balance():
         assert actual == expected
 
 def test_asset_holding_balance_direct_ref():
-    args = [Txn.sender(), Int(17)]
+    args = [Txn.sender(), Txn.assets[17]]
     expr = AssetHolding.balance(args[0], args[1])
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.uint64
 
     expected = TealSimpleBlock([
         TealOp(args[0], Op.txn, "Sender"),
-        TealOp(args[1], Op.int, 17),
+        TealOp(args[1], Op.txna, "Assets", 17),
         TealOp(expr, Op.asset_holding_get, "AssetBalance"),
         TealOp(None, Op.store, expr.slotOk),
         TealOp(None, Op.store, expr.slotValue)
     ])
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -70,7 +70,7 @@ def test_asset_holding_frozen():
         TealOp(None, Op.store, expr.slotValue)
     ])
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -78,20 +78,20 @@ def test_asset_holding_frozen():
         assert actual == expected
 
 def test_asset_holding_frozen_direct_ref():
-    args = [Txn.sender(), Int(17)]
+    args = [Txn.sender(), Txn.assets[17]]
     expr = AssetHolding.frozen(args[0], args[1])
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.uint64
 
     expected = TealSimpleBlock([
         TealOp(args[0], Op.txn, "Sender"),
-        TealOp(args[1], Op.int, 17),
+        TealOp(args[1], Op.txna, "Assets", 17),
         TealOp(expr, Op.asset_holding_get, "AssetFrozen"),
         TealOp(None, Op.store, expr.slotOk),
         TealOp(None, Op.store, expr.slotValue)
     ])
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -118,7 +118,7 @@ def test_asset_param_total():
         TealOp(None, Op.store, expr.slotValue)
     ])
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -147,7 +147,7 @@ def test_asset_param_total_direct_ref():
 
 def test_asset_param_total_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.total(AssetParam.total(Txn.assets[0]))
+        AssetParam.total(Txn.sender())
 
 def test_asset_param_decimals():
     arg = Int(0)
@@ -162,7 +162,7 @@ def test_asset_param_decimals():
         TealOp(None, Op.store, expr.slotValue)
     ])
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -191,7 +191,7 @@ def test_asset_param_decimals_direct_ref():
 
 def test_asset_param_decimals_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.decimals(AssetParam.decimals(Txn.assets[0]))
+        AssetParam.decimals(Txn.sender())
 
 def test_asset_param_default_frozen():
     arg = Int(0)
@@ -206,7 +206,7 @@ def test_asset_param_default_frozen():
         TealOp(None, Op.store, expr.slotValue)
     ])
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -235,7 +235,7 @@ def test_asset_param_default_frozen_direct_ref():
 
 def test_asset_param_default_frozen_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.defaultFrozen(AssetParam.defaultFrozen(Txn.assets[0]))
+        AssetParam.defaultFrozen(Txn.sender())
 
 def test_asset_param_unit_name():
     arg = Int(0)
@@ -250,7 +250,7 @@ def test_asset_param_unit_name():
         TealOp(None, Op.store, expr.slotValue)
     ])
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -279,7 +279,7 @@ def test_asset_param_unit_name_direct_ref():
 
 def test_asset_param_unit_name_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.unitName(AssetParam.unitName(Txn.assets[0]))
+        AssetParam.unitName(Txn.sender())
 
 def test_asset_param_name():
     arg = Int(0)
@@ -294,7 +294,7 @@ def test_asset_param_name():
         TealOp(None, Op.store, expr.slotValue)
     ])
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -323,7 +323,7 @@ def test_asset_param_name_direct_ref():
 
 def test_asset_param_name_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.name(AssetParam.name(Txn.assets[0]))
+        AssetParam.name(Txn.sender())
 
 def test_asset_param_url():
     arg = Int(0)
@@ -338,7 +338,7 @@ def test_asset_param_url():
         TealOp(None, Op.store, expr.slotValue)
     ])
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -367,7 +367,7 @@ def test_asset_param_url_direct_ref():
 
 def test_asset_param_url_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.url(AssetParam.url(Txn.assets[0]))
+        AssetParam.url(Txn.sender())
 
 def test_asset_param_metadata_hash():
     arg = Int(0)
@@ -382,7 +382,7 @@ def test_asset_param_metadata_hash():
         TealOp(None, Op.store, expr.slotValue)
     ])
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -411,7 +411,7 @@ def test_asset_param_metadata_hash_direct_ref():
 
 def test_asset_param_metadata_hash_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.metadataHash(AssetParam.metadataHash(Txn.assets[0]))
+        AssetParam.metadataHash(Txn.sender())
 
 def test_asset_param_manager():
     arg = Int(0)
@@ -426,7 +426,7 @@ def test_asset_param_manager():
         TealOp(None, Op.store, expr.slotValue)
     ])
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -455,7 +455,7 @@ def test_asset_param_manager_direct_ref():
 
 def test_asset_param_manager_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.manager(AssetParam.manager(Txn.assets[0]))
+        AssetParam.manager(Txn.sender())
 
 def test_asset_param_reserve():
     arg = Int(2)
@@ -470,7 +470,7 @@ def test_asset_param_reserve():
         TealOp(None, Op.store, expr.slotValue)
     ])
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -499,7 +499,7 @@ def test_asset_param_reserve_direct_ref():
 
 def test_asset_param_reserve_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.reserve(AssetParam.reserve(Txn.assets[0]))
+        AssetParam.reserve(Txn.sender())
 
 def test_asset_param_freeze():
     arg = Int(0)
@@ -514,7 +514,7 @@ def test_asset_param_freeze():
         TealOp(None, Op.store, expr.slotValue)
     ])
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -543,7 +543,7 @@ def test_asset_param_freeze_direct_ref():
 
 def test_asset_param_freeze_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.freeze(AssetParam.freeze(Txn.assets[0]))
+        AssetParam.freeze(Txn.sender())
 
 def test_asset_param_clawback():
     arg = Int(1)
@@ -558,7 +558,7 @@ def test_asset_param_clawback():
         TealOp(None, Op.store, expr.slotValue)
     ])
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -587,4 +587,4 @@ def test_asset_param_clawback_direct_ref():
 
 def test_asset_param_clawback_invalid():
     with pytest.raises(TealTypeError):
-        AssetParam.clawback(AssetParam.clawback(Txn.assets[0]))
+        AssetParam.clawback(Txn.sender())

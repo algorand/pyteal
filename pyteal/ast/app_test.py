@@ -143,21 +143,21 @@ def test_local_get_ex():
         assert actual == expected
 
 def test_local_get_ex_direct_ref():
-    args = [Txn.sender(), Int(6), Bytes("key")]
+    args = [Txn.sender(), Txn.applications[12], Bytes("key")]
     expr = App.localGetEx(args[0], args[1], args[2])
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.anytype
 
     expected = TealSimpleBlock([
         TealOp(args[0], Op.txn, "Sender"),
-        TealOp(args[1], Op.int, 6),
+        TealOp(args[1], Op.txna, "Applications", 12),
         TealOp(args[2], Op.byte, "\"key\""),
         TealOp(expr, Op.app_local_get_ex),
         TealOp(None, Op.store, expr.slotOk),
         TealOp(None, Op.store, expr.slotValue)
     ])
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -170,9 +170,6 @@ def test_local_get_ex_invalid():
 
     with pytest.raises(TealTypeError):
         App.localGetEx(Int(0), Bytes("app"), Bytes("key"))
-
-    with pytest.raises(TealTypeError):
-        App.localGetEx(Txn.sender(), Int(0), Int(1))
 
 def test_global_get():
     arg = Bytes("key")
