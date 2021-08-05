@@ -121,7 +121,7 @@ is not a payment.
 Chaining Tests: :code:`Cond`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A :any:`Cond` expression chians a series of tests to select a result expression.
+A :any:`Cond` expression chains a series of tests to select a result expression.
 The syntax of `Cond` is:
 
 .. code-block:: racket
