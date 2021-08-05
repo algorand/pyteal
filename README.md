@@ -1,4 +1,4 @@
-![PyTeal logo](https://github.com/ipaleka/pyteal/blob/master/docs/pyteal.png?raw=true)
+![PyTeal logo](https://github.com/algorand/pyteal/blob/master/docs/pyteal.png?raw=true)
 
 
 # PyTeal: Algorand Smart Contracts in Python
