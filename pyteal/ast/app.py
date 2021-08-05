@@ -38,10 +38,10 @@ class AppField(Enum):
     def __init__(self, op: Op, type: TealType) -> None:
         self.op = op
         self.ret_type = type
-    
+
     def get_op(self) -> Op:
         return self.op
-    
+
     def type_of(self) -> TealType:
         return self.ret_type
 
@@ -50,7 +50,7 @@ AppField.__module__ = "pyteal"
 class App(LeafExpr):
     """An expression related to applications."""
 
-    def __init__(self, field:AppField, args) -> None:
+    def __init__(self, field: AppField, args) -> None:
         super().__init__()
         self.field = field
         self.args = args
@@ -71,7 +71,7 @@ class App(LeafExpr):
     @classmethod
     def id(cls) -> Global:
         """Get the ID of the current running application.
-        
+
         This is the same as :any:`Global.current_application_id()`.
         """
         return Global.current_application_id()
@@ -88,7 +88,7 @@ class App(LeafExpr):
         require_type(account.type_of(), TealType.uint64)
         require_type(app.type_of(), TealType.uint64)
         return cls(AppField.optedIn, [account, app])
-    
+
     @classmethod
     def localGet(cls, account: Expr, key: Expr) -> 'App':
         """Read from an account's local state for the current application.
@@ -101,7 +101,7 @@ class App(LeafExpr):
         require_type(account.type_of(), TealType.uint64)
         require_type(key.type_of(), TealType.bytes)
         return cls(AppField.localGet, [account, key])
-    
+
     @classmethod
     def localGetEx(cls, account: Expr, app: Expr, key: Expr) -> MaybeValue:
         """Read from an account's local state for an application.
@@ -126,7 +126,7 @@ class App(LeafExpr):
         """
         require_type(key.type_of(), TealType.bytes)
         return cls(AppField.globalGet, [key])
-    
+
     @classmethod
     def globalGetEx(cls, app: Expr, key: Expr) -> MaybeValue:
         """Read from the global state of an application.
@@ -154,7 +154,7 @@ class App(LeafExpr):
         require_type(key.type_of(), TealType.bytes)
         require_type(value.type_of(), TealType.anytype)
         return cls(AppField.localPut, [account, key, value])
-    
+
     @classmethod
     def globalPut(cls, key: Expr, value: Expr) -> 'App':
         """Write to the global state of the current application.
@@ -179,7 +179,7 @@ class App(LeafExpr):
         require_type(account.type_of(), TealType.uint64)
         require_type(key.type_of(), TealType.bytes)
         return cls(AppField.localDel, [account, key])
-    
+
     @classmethod
     def globalDel(cls, key: Expr) -> 'App':
         """Delete a key from the global state of the current application.
@@ -191,3 +191,97 @@ class App(LeafExpr):
         return cls(AppField.globalDel, [key])
 
 App.__module__ = "pyteal"
+
+
+class AppParam:
+
+    @classmethod
+    def approvalProgram(cls, app: Expr) -> MaybeValue:
+        """Get the bytecode of Approval Program for the application.
+
+        Args:
+            app: An index into Txn.ForeignApps that correspond to the application to check.
+                Must evaluate to uint64.
+        """
+        require_type(app.type_of(), TealType.uint64)
+        return MaybeValue(Op.app_params_get, TealType.bytes, immediate_args=["AppApprovalProgram"], args=[app])
+
+    @classmethod
+    def clearStateProgram(cls, app: Expr) -> MaybeValue:
+        """Get the bytecode of Clear State Program for the application.
+
+        Args:
+            app: An index into Txn.ForeignApps that correspond to the application to check.
+                Must evaluate to uint64.
+        """
+        require_type(app.type_of(), TealType.uint64)
+        return MaybeValue(Op.app_params_get, TealType.bytes, immediate_args=["AppClearStateProgram"], args=[app])
+
+    @classmethod
+    def globalNumUnit(cls, app: Expr) -> MaybeValue:
+        """Get the number of uint64 values allowed in Global State for the application.
+
+        Args:
+            app: An index into Txn.ForeignApps that correspond to the application to check.
+                Must evaluate to uint64.
+        """
+        require_type(app.type_of(), TealType.uint64)
+        return MaybeValue(Op.app_params_get, TealType.uint64, immediate_args=["AppGlobalNumUnit"], args=[app])
+
+    @classmethod
+    def globalNumByteSlice(cls, app: Expr) -> MaybeValue:
+        """Get the number of byte array values allowed in Global State for the application.
+
+        Args:
+            app: An index into Txn.ForeignApps that correspond to the application to check.
+                Must evaluate to uint64.
+        """
+        require_type(app.type_of(), TealType.uint64)
+        return MaybeValue(Op.app_params_get, TealType.uint64, immediate_args=["AppGlobalNumByteSlice"], args=[app])
+
+    @classmethod
+    def localNumUnit(cls, app: Expr) -> MaybeValue:
+        """Get the number of uint64 values allowed in Local State for the application.
+
+        Args:
+            app: An index into Txn.ForeignApps that correspond to the application to check.
+                Must evaluate to uint64.
+        """
+        require_type(app.type_of(), TealType.uint64)
+        return MaybeValue(Op.app_params_get, TealType.uint64, immediate_args=["AppLocalNumUnit"], args=[app])
+
+    @classmethod
+    def localNumByteSlice(cls, app: Expr) -> MaybeValue:
+        """Get the number of byte array values allowed in Local State for the application.
+
+        Args:
+            app: An index into Txn.ForeignApps that correspond to the application to check.
+                Must evaluate to uint64.
+        """
+        require_type(app.type_of(), TealType.uint64)
+        return MaybeValue(Op.app_params_get, TealType.uint64, immediate_args=["AppLocalNumByteSlice"], args=[app])
+
+    @classmethod
+    def extraProgramPages(cls, app: Expr) -> MaybeValue:
+        """Get the number of Extra Program Pages of code space for the application.
+
+        Args:
+            app: An index into Txn.ForeignApps that correspond to the application to check.
+                Must evaluate to uint64.
+        """
+        require_type(app.type_of(), TealType.uint64)
+        return MaybeValue(Op.app_params_get, TealType.uint64, immediate_args=["AppExtraProgramPages"], args=[app])
+
+    @classmethod
+    def creator(cls, app: Expr) -> MaybeValue:
+        """Get the creator address for the application.
+
+        Args:
+            app: An index into Txn.ForeignApps that correspond to the application to check.
+                Must evaluate to uint64.
+        """
+        require_type(app.type_of(), TealType.uint64)
+        return MaybeValue(Op.app_params_get, TealType.bytes, immediate_args=["AppCreator"], args=[app])
+
+
+AppParam.__module__ = "pyteal"

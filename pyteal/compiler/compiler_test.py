@@ -75,14 +75,14 @@ def test_compile_version_invalid():
         compileTeal(expr, Mode.Signature, version=1) # too small
 
     with pytest.raises(TealInputError):
-        compileTeal(expr, Mode.Signature, version=5) # too large
-    
+        compileTeal(expr, Mode.Signature, version=6) # too large
+
     with pytest.raises(TealInputError):
         compileTeal(expr, Mode.Signature, version=2.0) # decimal
 
 def test_compile_version_2():
     expr = Int(1)
-    
+
     expected = """
 #pragma version 2
 int 1
@@ -99,7 +99,7 @@ def test_compile_version_default():
 
 def test_compile_version_3():
     expr = Int(1)
-    
+
     expected = """
 #pragma version 3
 int 1
@@ -109,7 +109,7 @@ int 1
 
 def test_compile_version_4():
     expr = Int(1)
-    
+
     expected = """
 #pragma version 4
 int 1
@@ -117,16 +117,25 @@ int 1
     actual = compileTeal(expr, Mode.Signature, version=4)
     assert actual == expected
 
+def test_compile_version_5():
+    expr = Int(1)
+    expected = """
+#pragma version 5
+int 1    
+""".strip()
+    actual = compileTeal(expr, Mode.Signature, version=5)
+    assert actual == expected
+
 def test_slot_load_before_store():
 
     program = AssetHolding.balance(Int(0), Int(0)).value()
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2)
-    
+
     program = AssetHolding.balance(Int(0), Int(0)).hasValue()
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2)
-    
+
     program = App.globalGetEx(Int(0), Bytes("key")).value()
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2)
@@ -134,7 +143,7 @@ def test_slot_load_before_store():
     program = App.globalGetEx(Int(0), Bytes("key")).hasValue()
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2)
-    
+
     program = ScratchVar().load()
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2)
@@ -162,7 +171,7 @@ store 0
 int 9
 store 3
 """.strip()
-    actual = compileTeal(prog, mode=Mode.Signature, version=4) 
+    actual = compileTeal(prog, mode=Mode.Signature, version=4)
     assert actual == expected
 
 def test_scratchvar_double_assign_invalid():
@@ -173,7 +182,7 @@ def test_scratchvar_double_assign_invalid():
                 otherVar.store(Int(0))
             ])
     with pytest.raises(TealInternalError):
-        compileTeal(prog, mode=Mode.Signature, version=4) 
+        compileTeal(prog, mode=Mode.Signature, version=4)
 
 def test_assembleConstants():
     program = Itob(Int(1) + Int(1) + Tmpl.Int("TMPL_VAR")) == Concat(Bytes("test"), Bytes("test"), Bytes("test2"))

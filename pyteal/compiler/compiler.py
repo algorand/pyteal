@@ -9,7 +9,7 @@ from .sort import sortBlocks
 from .flatten import flattenBlocks
 from .constants import createConstantBlocks
 
-MAX_TEAL_VERSION = 4
+MAX_TEAL_VERSION = 5
 MIN_TEAL_VERSION = 2
 DEFAULT_TEAL_VERSION = MIN_TEAL_VERSION
 
@@ -84,7 +84,7 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, a
 
     start = TealBlock.NormalizeBlocks(start)
     start.validateTree()
-    
+
     errors = start.validateSlots()
     if len(errors) > 0:
         msg = 'Encountered {} error{} during compilation'.format(len(errors), 's' if len(errors) != 1 else '')
@@ -106,11 +106,11 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, a
                 raise TealInternalError("Slot ID {} has been assigned multiple times".format(slot.id))
             slotIds.add(slot.id)
             slots.add(slot)
-    
+
     if len(slots) > NUM_SLOTS:
         # TODO: identify which slots can be reused
         raise TealInternalError("Too many slots in use: {}, maximum is {}".format(len(slots), NUM_SLOTS))
-    
+
     for slot in sorted(slots, key=lambda slot: slot.id):
         # Find next vacant slot that compiler can assign to
         while nextSlotIndex in slotIds:
@@ -122,7 +122,7 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, a
             else:
                 stmt.assignSlot(slot, nextSlotIndex)
                 slotIds.add(nextSlotIndex)
-    
+
     if assembleConstants:
         if version < 3:
             raise TealInternalError("The minimum TEAL version required to enable assembleConstants is 3. The current version is {}".format(version))
