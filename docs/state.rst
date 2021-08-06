@@ -90,7 +90,7 @@ third argument is the value to write. For example:
 
     App.localPut(Txn.sender(), Bytes("role"), Bytes("admin")) # write a byte slice to the sender's account
     App.localPut(Txn.sender(), Bytes("balance"), Int(10)) # write a uint64 to the sender's account
-    App.localPut(Txn.account[1], Bytes("balance"), Int(10)) # write a uint64 to Txn.account[1]
+    App.localPut(Txn.accounts[1], Bytes("balance"), Int(10)) # write a uint64 to Txn.account[1]
 
 **Note:** It is only possible to write to the local state of an account if that account has opted
 into your application. If the account has not opted in, the program will fail with an error. The
@@ -104,7 +104,7 @@ is the address of the account to read from, and the second argument is the key t
 
 .. code-block:: python
 
-    App.localGet(Txn.sender(), Byte("role")) # read from the sender's account
+    App.localGet(Txn.sender(), Bytes("role")) # read from the sender's account
     App.localGet(Txn.sender(), Bytes("balance")) # read from the sender's account
     App.localGet(Txn.accounts[1], Bytes("balance")) # read from Txn.accounts[1]
 
@@ -163,15 +163,14 @@ read from. This integer corresponds to an actual application ID that appears in 
 :code:`1`-indexed array with a special value at index :code:`0`, the current application's ID.
 See :ref:`txn_special_case_arrays` for more details.
 
-Now that you have an integer or a byte string that represents an application to read from, pass
-this as the first argument to :any:`App.globalGetEx`, and pass the key to read as the second
-argument. For example:
+Now that you have an integer that represents an application to read from, pass this as the first
+argument to :any:`App.globalGetEx`, and pass the key to read as the second argument. For example:
 
 .. code-block:: python
 
     # get "status" from the global context of Txn.applications[0] (the current app)
     # if "status" has not been set, returns "none"
-    myStatus = App.globalGetEx(Txn.application[0], Bytes("status"))
+    myStatus = App.globalGetEx(Txn.applications[0], Bytes("status"))
 
     program = Seq([
         myStatus,
@@ -180,7 +179,7 @@ argument. For example:
 
     # get "status" from the global context of Txn.applications[1]
     # if "status" has not been set, returns "none"
-    otherStatus = App.globalGetEx(Txn.application[1], Bytes("status"))
+    otherStatus = App.globalGetEx(Txn.applications[1], Bytes("status"))
     program = Seq([
         otherStatus,
         If(otherStatus.hasValue(), otherStatus.value(), Bytes("none"))
@@ -188,7 +187,7 @@ argument. For example:
 
     # get "total supply" from the global context of Txn.applications[1]
     # if "total supply" has not been set, returns the default value of 0
-    otherSupply = App.globalGetEx(Txn.application[1], Bytes("total supply"))
+    otherSupply = App.globalGetEx(Txn.applications[1], Bytes("total supply"))
     program = Seq([
         otherSupply,
         otherSupply.value()
@@ -216,7 +215,7 @@ For example:
 
     # get "role" from the local state of Txn.accounts[0] (the sender) for the current app
     # if "role" has not been set, returns "none"
-    myAppSenderRole = App.localGetEx(Txn.sender(), Int(0), Bytes("role"))
+    myAppSenderRole = App.localGetEx(Txn.accounts[0], Int(0), Bytes("role"))
     program = Seq([
         myAppSenderRole,
         If(myAppSenderRole.hasValue(), myAppSenderRole.value(), Bytes("none"))
@@ -224,7 +223,7 @@ For example:
 
     # get "role" from the local state of Txn.accounts[1] for the current app
     # if "role" has not been set, returns "none"
-    myAppOtherAccountRole = App.localGetEx(Txn.sender(), Int(0), Bytes("role"))
+    myAppOtherAccountRole = App.localGetEx(Txn.accounts[1], Int(0), Bytes("role"))
     program = Seq([
         myAppOtherAccountRole,
         If(myAppOtherAccountRole.hasValue(), myAppOtherAccountRole.value(), Bytes("none"))
@@ -232,7 +231,7 @@ For example:
 
     # get "role" from the local state of Txn.accounts[0] (the sender) for the app with ID 31
     # if "role" has not been set, returns "none"
-    otherAppSenderRole = App.localGetEx(Txn.sender(), Int(31), Bytes("role"))
+    otherAppSenderRole = App.localGetEx(Txn.accounts[0], Int(31), Bytes("role"))
     program = Seq([
         otherAppSenderRole,
         If(otherAppSenderRole.hasValue(), otherAppSenderRole.value(), Bytes("none"))
@@ -240,7 +239,7 @@ For example:
 
     # get "role" from the local state of Txn.accounts[1] for the app with ID 31
     # if "role" has not been set, returns "none"
-    otherAppOtherAccountRole = App.localGetEx(Txn.sender(), Int(31), Bytes("role"))
+    otherAppOtherAccountRole = App.localGetEx(Txn.accounts[1], Int(31), Bytes("role"))
     program = Seq([
         otherAppOtherAccountRole,
         If(otherAppOtherAccountRole.hasValue(), otherAppOtherAccountRole.value(), Bytes("none"))
