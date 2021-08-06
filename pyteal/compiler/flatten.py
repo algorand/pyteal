@@ -13,7 +13,7 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
         blocks: The blocks to lower.
     """
     codeblocks = []
-    scopes = []
+    labels = []
     references: DefaultDict[int, int] = defaultdict(int)
 
     indexToLabel = lambda index: "l{}".format(index)
@@ -35,6 +35,9 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             if nextIndex != i + 1:
                 references[nextIndex] += 1
                 code.append(TealOp(None, Op.b, indexToLabel(nextIndex)))
+                if len(labels) > 0:
+                    code.append(TealLabel(None, indexToLabel(labels[-1])))
+                    labels.pop()
         elif type(block) is TealConditionalBlock:
             conditionalBlock = cast(TealConditionalBlock, block)
             assert conditionalBlock.trueBlock is not None
@@ -43,15 +46,19 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             trueIndex = blocks.index(conditionalBlock.trueBlock)
             falseIndex = blocks.index(conditionalBlock.falseBlock)
 
-            if falseIndex == i + 1:
-                references[trueIndex] += 1
-                code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex)))
-                continue
+            # if trueIndex == i + 1:
+            #     references[falseIndex] += 1
+            #     code.append(TealOp(None, Op.bz, indexToLabel(falseIndex)))
+            #     continue
+            #
+            # if falseIndex == i + 1:
+            #     references[trueIndex] += 1
+            #     code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex)))
+            #     continue
 
-            if trueIndex == i + 1:
-                references[falseIndex] += 1
-                code.append(TealOp(None, Op.bz, indexToLabel(falseIndex)))
-                continue
+            labels.append(trueIndex+1)
+            code.append(TealOp(None, Op.bz, indexToLabel(trueIndex+1)))
+            continue
 
             references[trueIndex] += 1
             code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex)))
@@ -64,7 +71,7 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
 
     teal: List[TealComponent] = []
     for i, code in enumerate(codeblocks):
-        if i in references:
+        if references[i] != 0:
             teal.append(TealLabel(None, indexToLabel(i)))
         teal += code
 

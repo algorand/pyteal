@@ -64,7 +64,6 @@ class TealBlock(ABC):
             parent (optional): The parent block to this one, if it has one. Defaults to None.
             visited (optional): Used internally to remember blocks that have been visited. Set to None.
         """
-
         if visited is None:
             # using a list instead of a set as TealBlock is not hashable and PyTEAL programs should be short anyway
             visited = []
@@ -177,15 +176,13 @@ class TealBlock(ABC):
         functionality of its underlying program, however it does mutate the input graph.
 
         Returns:
-            The new starting point of the altered graph. May be the same or different than start.
+            The new starting point of the altered graph. May be the same or differant than start.
         """
-        from .tealconditionalblock import TealConditionalBlock
-
         for block in TealBlock.Iterate(start):
             if len(block.incoming) == 1:
                 prev = block.incoming[0]
                 prevOutgoing = prev.getOutgoing()
-                if (len(prevOutgoing) == 1 and prevOutgoing[0] is block and type(block) is not TealConditionalBlock):
+                if (len(prevOutgoing) == 1 and prevOutgoing[0] is block and type(block)):
                     # combine blocks
                     block.ops = prev.ops + block.ops
                     block.incoming = prev.incoming
@@ -193,6 +190,7 @@ class TealBlock(ABC):
                         incoming.replaceOutgoing(prev, block)
                     if prev is start:
                         start = block
+
         return start
 
 TealBlock.__module__ = "pyteal"

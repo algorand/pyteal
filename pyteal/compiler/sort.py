@@ -15,19 +15,16 @@ def sortBlocks(start: TealBlock) -> List[TealBlock]:
     # based on Kahn's algorithm from https://en.wikipedia.org/wiki/Topological_sorting
     S = [start]
     order = []
+    visited = []
+    visiting = []
 
     while len(S) != 0:
-        n = S.pop(0)
-        order.append(n)
+        n = S.pop()
+        visiting.append(n)
         for i, m in enumerate(n.getOutgoing()):
-            for j, block in enumerate(m.incoming):
-                if n is block:
-                    m.incoming.pop(j)
-                    break
-            # if len(m.incoming) == 0:
-            if i == 0:
-                S.insert(0, m)
-            else:
-                S.append(m)
-    
+            if m in visiting or m in visited:
+                continue
+            S.append(m)
+        visited.append(n)
+        order.append(n)
     return order
