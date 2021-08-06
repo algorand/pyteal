@@ -2,7 +2,9 @@ from typing import List, DefaultDict, cast
 from collections import defaultdict
 
 from ..ir import Op, TealOp, TealLabel, TealComponent, TealBlock, TealSimpleBlock, TealConditionalBlock
+
 from ..errors import TealInternalError
+
 
 def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
     """Lowers a list of TealBlocks into a list of TealComponents.
@@ -11,13 +13,16 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
         blocks: The blocks to lower.
     """
     codeblocks = []
+    scopes = []
     references: DefaultDict[int, int] = defaultdict(int)
 
     indexToLabel = lambda index: "l{}".format(index)
-
     for i, block in enumerate(blocks):
+        # print(type(block))
+
         code = list(block.ops)
         codeblocks.append(code)
+
         if block.isTerminal():
             continue
 
@@ -25,7 +30,8 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             simpleBlock = cast(TealSimpleBlock, block)
             assert simpleBlock.nextBlock is not None
 
-            nextIndex = blocks.index(simpleBlock.nextBlock, i+1)
+            nextIndex = blocks.index(simpleBlock.nextBlock)
+
             if nextIndex != i + 1:
                 references[nextIndex] += 1
                 code.append(TealOp(None, Op.b, indexToLabel(nextIndex)))
@@ -34,8 +40,8 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             assert conditionalBlock.trueBlock is not None
             assert conditionalBlock.falseBlock is not None
 
-            trueIndex = blocks.index(conditionalBlock.trueBlock, i+1)
-            falseIndex = blocks.index(conditionalBlock.falseBlock, i+1)
+            trueIndex = blocks.index(conditionalBlock.trueBlock)
+            falseIndex = blocks.index(conditionalBlock.falseBlock)
 
             if falseIndex == i + 1:
                 references[trueIndex] += 1
@@ -52,12 +58,13 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
 
             references[falseIndex] += 1
             code.append(TealOp(None, Op.b, indexToLabel(falseIndex)))
+
         else:
             raise TealInternalError("Unrecognized block type: {}".format(type(block)))
 
     teal: List[TealComponent] = []
     for i, code in enumerate(codeblocks):
-        if references[i] != 0:
+        if i in references:
             teal.append(TealLabel(None, indexToLabel(i)))
         teal += code
 

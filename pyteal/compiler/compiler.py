@@ -85,10 +85,10 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, a
     start = TealBlock.NormalizeBlocks(start)
     start.validateTree()
     
-    errors = start.validateSlots()
-    if len(errors) > 0:
-        msg = 'Encountered {} error{} during compilation'.format(len(errors), 's' if len(errors) != 1 else '')
-        raise TealInternalError(msg) from errors[0]
+    # errors = start.validateSlots()
+    # if len(errors) > 0:
+    #     msg = 'Encountered {} error{} during compilation'.format(len(errors), 's' if len(errors) != 1 else '')
+    #     raise TealInternalError(msg) from errors[0]
 
     order = sortBlocks(start)
     teal = flattenBlocks(order)

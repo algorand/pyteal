@@ -2,6 +2,7 @@ import pytest
 
 from .. import *
 
+
 def test_compile_single():
     expr = Int(1)
 
@@ -218,3 +219,22 @@ concat
 
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2, assembleConstants=True)
+
+
+def test_compile_while():
+    i = ScratchVar()
+    program = Seq([
+    i.store(Int(0)),
+    While(i.load() < Int(2))
+        .Do(Seq([
+            # App.globalPut(Itob(i.load()), i.load() * Int(2)),
+            i.store(i.load() + Int(1))
+        ])
+    )
+])
+
+    expectedNoAssemble = """
+    """.strip()
+    actualNoAssemble = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    print(actualNoAssemble)
+    # assert expectedNoAssemble == actualNoAssemble

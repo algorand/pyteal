@@ -40,6 +40,8 @@ from .if_ import If
 from .cond import Cond
 from .seq import Seq
 from .assert_ import Assert
+from .while_ import While
+
 
 # misc
 from .scratch import ScratchSlot, ScratchLoad, ScratchStore, ScratchStackStore
@@ -147,4 +149,5 @@ __all__ = [
     "BytesGe",
     "BytesNot",
     "BytesZero",
+    "While"
 ]
