@@ -55,17 +55,17 @@ account holds. For example,
 
 .. code-block:: python
 
-    # get the balance of the sender for asset 31566704
+    # get the balance of the sender for asset `Txn.assets[0]`
     # if the account is not opted into that asset, returns 0
-    senderAssetBalance = AssetHolding.balance(Txn.sender(), Txn.assets[31566704])
+    senderAssetBalance = AssetHolding.balance(Txn.sender(), Txn.assets[0])
     program = Seq([
         senderAssetBalance,
         senderAssetBalance.value()
     ])
 
-    # get the balance of Txn.accounts[1] for asset 27165954
+    # get the balance of Txn.accounts[1] for asset `Txn.assets[1]`
     # if the account is not opted into that asset, exit with an error
-    account1AssetBalance = AssetHolding.balance(Txn.accounts[1], Txn.assets[27165954])
+    account1AssetBalance = AssetHolding.balance(Txn.accounts[1], Txn.assets[1])
     program = Seq([
         account1AssetBalance,
         Assert(account1AssetBalance.hasValue()),
@@ -80,17 +80,17 @@ A value of :code:`1` indicates frozen and :code:`0` indicates not frozen. For ex
 
 .. code-block:: python
 
-    # get the frozen status of the sender for asset 31566704
+    # get the frozen status of the sender for asset `Txn.assets[0]`
     # if the account is not opted into that asset, returns 0
-    senderAssetFrozen = AssetHolding.frozen(Txn.sender(), Txn.assets[31566704])
+    senderAssetFrozen = AssetHolding.frozen(Txn.sender(), Txn.assets[0])
     program = Seq([
         senderAssetFrozen,
         senderAssetFrozen.value()
     ])
 
-    # get the frozen status of Txn.accounts[1] for asset 27165954
+    # get the frozen status of Txn.accounts[1] for asset `Txn.assets[1]`
     # if the account is not opted into that asset, exit with an error
-    account1AssetFrozen = AssetHolding.frozen(Txn.accounts[1], Txn.assets[27165954])
+    account1AssetFrozen = AssetHolding.frozen(Txn.accounts[1], Txn.assets[1])
     program = Seq([
         account1AssetFrozen,
         Assert(account1AssetFrozen.hasValue()),
@@ -136,7 +136,7 @@ Here's an example that uses an asset parameter:
 
 .. code-block:: python
 
-    # get the total number of units for Txn.assets[0]
+    # get the total number of units for asset `Txn.assets[0]`
     # if the asset is invalid, exit with an error
     assetTotal = AssetParam.total(Txn.assets[0])
 

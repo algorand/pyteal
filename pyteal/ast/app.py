@@ -144,7 +144,7 @@ class App(LeafExpr):
                 Txn.ForeignApps or is the CurrentApplicationID, must be evaluated to bytes).
             key: The key to read from the global application state. Must evaluate to bytes.
         """
-        require_type(app.type_of(), TealType.anytype)
+        require_type(app.type_of(), TealType.uint64)
         require_type(key.type_of(), TealType.bytes)
         return MaybeValue(AppField.globalGetEx.get_op(), TealType.anytype, args=[app, key])
 

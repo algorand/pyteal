@@ -71,9 +71,9 @@ Local State
 
 Local state consists of key-value pairs that are stored in a unique context for each account that
 has opted into your application. As a result, you will need to specify an account when manipulating
-local state. This is done by passing in an integer that corresponds to the index of the account in
-the :any:`Txn.accounts <TxnObject.accounts>` array (or since TEAL version 4, by passing in a byte
-string that appears in :code:`Txn.accounts` array).
+local state. This is done by passing in the address of an account. In order to read or manipulate
+an account's local state, that account must be presented in the
+:any:`Txn.accounts <TxnObject.accounts>` array.
 
 **Note:** The :code:`Txn.accounts` array does not behave like a normal array. It's actually a
 :code:`1`-indexed array with a special value at index :code:`0`, the sender's account.
@@ -83,8 +83,8 @@ Writing Local State
 ~~~~~~~~~~~~~~~~~~~
 
 To write to the local state of an account, use the :any:`App.localPut` function. The first argument
-is an integers or a byte string corresponding to the account to write to, the second argument is the
-key to write to, and the third argument is the value to write. For example:
+is the address of the account to write to, the second argument is the key to write to, and the
+third argument is the value to write. For example:
 
 .. code-block:: python
 
@@ -100,8 +100,7 @@ Reading Local State
 ~~~~~~~~~~~~~~~~~~~
 
 To read from the local state of an account, use the :any:`App.localGet` function. The first argument
-is an integer or a byte string corresponding to the account to read from and the second argument is
-the key to read. For example:
+is the address of the account to read from, and the second argument is the key to read. For example:
 
 .. code-block:: python
 
@@ -116,8 +115,8 @@ Deleting Local State
 ~~~~~~~~~~~~~~~~~~~~
 
 To delete a key from local state of an account, use the :any:`App.localDel` function. The first
-argument is an integer or a byte string corresponding to the account and the second argument is the
-key to delete. For example:
+argument is the address of the corresponding account, and the second argument is the key to delete.
+For example:
 
 .. code-block:: python
 
@@ -157,9 +156,8 @@ To read a value from the global state of another application, use the :any:`App.
 function.
 
 In order to use this function you need to pass in an integer that represents an application to
-read from. This integer corresponds to the index of an application in the
-:any:`Txn.applications <TxnObject.applications>` array, or since TEAL version 4, an byte string
-that represents an app id that appearing in :code:`Txn.applications` array.
+read from. This integer corresponds to an actual application ID that appears in the
+:any:`Txn.applications <TxnObject.applications>` array.
 
 **Note:** The :code:`Txn.applications` array does not behave like a normal array. It's actually a
 :code:`1`-indexed array with a special value at index :code:`0`, the current application's ID.
@@ -202,9 +200,9 @@ External Local
 To read a value from an account's local state for another application, use the :any:`App.localGetEx`
 function.
 
-The first argument is an integer or a byte string corresponding to the account to read from (in the
-same format as :any:`App.localGet`), the second argument is the ID of the application to read from,
-and the third argument is the key to read.
+The first argument is the address of the account to read from (in the same format as
+:any:`App.localGet`), the second argument is the ID of the application to read from, and the third
+argument is the key to read.
 
 **Note:** The second argument is the actual ID of the application to read from, not an index into
 :code:`Txn.applications`. This means that you can read from any application that the account has opted
