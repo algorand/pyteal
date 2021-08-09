@@ -77,7 +77,7 @@ class TealBlock(ABC):
             for b in self.getOutgoing():
                 b.addIncoming(self, visited)
 
-    def validateSlots(self, slotsInUse: Set['ScratchSlot'] = None, visited: Set[Tuple[int, ...]] = None) -> List[TealCompileError]:
+    def validateSlots(self, slotsInUse: Set['ScratchSlot'] = None, visited: Set[Tuple[int, ...]] = None, visitedBlocks=None) -> List[TealCompileError]:
         import traceback
 
         if visited is None:
@@ -85,6 +85,9 @@ class TealBlock(ABC):
 
         if slotsInUse is None:
             slotsInUse = set()
+
+        if visitedBlocks is None:
+            visitedBlocks = []
 
         currentSlotsInUse = set(slotsInUse)
         errors = []
@@ -106,7 +109,11 @@ class TealBlock(ABC):
                 visitedKey = (id(block), *sortedSlots)
                 if visitedKey in visited:
                     continue
-                for error in block.validateSlots(currentSlotsInUse, visited):
+                if block in visitedBlocks:
+                    continue
+
+                visitedBlocks.append(block)
+                for error in block.validateSlots(currentSlotsInUse, visited, visitedBlocks):
                     if error not in errors:
                         errors.append(error)
                 visited.add(visitedKey)

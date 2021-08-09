@@ -46,19 +46,15 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             trueIndex = blocks.index(conditionalBlock.trueBlock)
             falseIndex = blocks.index(conditionalBlock.falseBlock)
 
-            # if trueIndex == i + 1:
-            #     references[falseIndex] += 1
-            #     code.append(TealOp(None, Op.bz, indexToLabel(falseIndex)))
-            #     continue
-            #
-            # if falseIndex == i + 1:
-            #     references[trueIndex] += 1
-            #     code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex)))
-            #     continue
+            if trueIndex == i + 1:
+                references[falseIndex] += 1
+                code.append(TealOp(None, Op.bz, indexToLabel(falseIndex)))
+                continue
 
-            labels.append(trueIndex+1)
-            code.append(TealOp(None, Op.bz, indexToLabel(trueIndex+1)))
-            continue
+            if falseIndex == i + 1:
+                references[trueIndex] += 1
+                code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex)))
+                continue
 
             references[trueIndex] += 1
             code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex)))

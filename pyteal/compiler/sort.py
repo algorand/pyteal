@@ -1,6 +1,6 @@
 from typing import List
 
-from ..ir import TealBlock
+from ..ir import TealBlock, TealSimpleBlock
 
 def sortBlocks(start: TealBlock) -> List[TealBlock]:
     """Topologically sort the graph which starts with the input TealBlock.
@@ -17,14 +17,15 @@ def sortBlocks(start: TealBlock) -> List[TealBlock]:
     order = []
     visited = []
     visiting = []
-
+    emptyBlock = TealSimpleBlock([])
     while len(S) != 0:
         n = S.pop()
         visiting.append(n)
         for i, m in enumerate(n.getOutgoing()):
-            if m in visiting or m in visited:
+            if m in visiting or m in visited or m == emptyBlock:
                 continue
             S.append(m)
         visited.append(n)
         order.append(n)
+    order.append(emptyBlock)
     return order
