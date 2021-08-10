@@ -142,15 +142,12 @@ gtxn 3 Receiver
 gtxn 4 Receiver
 ==
 &&
-b l3
+b l7
 l2:
 global GroupSize
 int 4
 ==
-bnz l4
-b l5
-l3:
-l4:
+bz l4
 gtxn 0 RekeyTo
 global ZeroAddress
 ==
@@ -255,12 +252,12 @@ gtxn 2 Receiver
 gtxn 3 Receiver
 ==
 &&
-b l3
-l5:
+b l7
+l4:
 global GroupSize
 int 1
 ==
-bz l7
+bz l6
 txn RekeyTo
 global ZeroAddress
 ==
@@ -298,6 +295,7 @@ int TMPL_ASSET_A
 &&
 ||
 &&
-b l3
-l7:
+b l7
+l6:
 err
+l7:

@@ -37,6 +37,8 @@ class While(Expr):
         condStart, condEnd = self.cond.__teal__(options)
         doStart, doEnd = self.doBlock.__teal__(options)
 
+        end = TealSimpleBlock([])
+
         if self.step:
             stepStart, stepEnd = self.step.__teal__(options)
             stepEnd.setNextBlock(condStart)
@@ -44,7 +46,6 @@ class While(Expr):
         else:
             doEnd.setNextBlock(condStart)
 
-        end = TealSimpleBlock([])
 
         branchBlock = TealConditionalBlock([])
         branchBlock.setTrueBlock(doStart)

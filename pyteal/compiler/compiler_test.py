@@ -251,6 +251,58 @@ l3:
     actualNoAssemble = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
     assert expectedNoAssemble == actualNoAssemble
 
+    i = ScratchVar()
+    j = ScratchVar()
+
+    program = Seq([
+        i.store(Int(0)),
+        While(i.load() < Int(2))
+            .Do(Seq([
+            j.store(Int(0)),
+            While(j.load() < Int(5))
+                .Do(Seq([
+                j.store(j.load() + Int(1))
+            ])
+            ),
+            i.store(i.load() + Int(1))
+        ])
+        )
+    ])
+
+    expectedNoAssemble = """
+    #pragma version 4
+int 0
+store 0
+l1:
+load 0
+int 2
+<
+bz l6
+int 0
+store 1
+l3:
+load 1
+int 5
+<
+bz l5
+load 1
+int 1
++
+store 1
+b l3
+l5:
+load 0
+int 1
++
+store 0
+b l1
+l6:
+    """.strip()
+
+    actualNoAssemble = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    print(actualNoAssemble)
+    assert expectedNoAssemble == actualNoAssemble
+
 
 def test_compile_for():
     i = ScratchVar()
