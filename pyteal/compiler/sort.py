@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, cast
 
-from ..ir import TealBlock
+from ..ir import TealBlock, TealSimpleBlock, TealConditionalBlock
 
 def sortBlocks(start: TealBlock) -> List[TealBlock]:
     """Topologically sort the graph which starts with the input TealBlock.
@@ -12,22 +12,20 @@ def sortBlocks(start: TealBlock) -> List[TealBlock]:
         An ordered list of TealBlocks that is sorted such that every block is guaranteed to appear
         in the list before all of its outgoing blocks.
     """
-    # based on Kahn's algorithm from https://en.wikipedia.org/wiki/Topological_sorting
+    # bfs
     S = [start]
     order = []
+    visited = []
+    q = S
+    while len(q) != 0:
+        size = len(q)
+        for i in range(size):
+            n = q.pop(0)
+            visited.append(n)
+            order.append(n)
+            for j, m in enumerate(n.getOutgoing()):
+                if m not in visited:
+                    visited.append(m)
+                    q.append(m)
 
-    while len(S) != 0:
-        n = S.pop(0)
-        order.append(n)
-        for i, m in enumerate(n.getOutgoing()):
-            for i, block in enumerate(m.incoming):
-                if n is block:
-                    m.incoming.pop(i)
-                    break
-            if len(m.incoming) == 0:
-                if i == 0:
-                    S.insert(0, m)
-                else:
-                    S.append(m)
-    
     return order

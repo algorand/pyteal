@@ -3,6 +3,7 @@ from typing import Optional, List, Tuple, Set, Iterator, cast, TYPE_CHECKING
 
 from .tealop import TealOp, Op
 from ..errors import TealCompileError
+
 if TYPE_CHECKING:
     from ..ast import Expr, ScratchSlot
     from ..compiler import CompileOptions
@@ -75,8 +76,8 @@ class TealBlock(ABC):
             visited.append(self)
             for b in self.getOutgoing():
                 b.addIncoming(self, visited)
-    
-    def validateSlots(self, slotsInUse: Set['ScratchSlot'] = None, visited: Set[Tuple[int, ...]] = None) -> List[TealCompileError]:
+
+    def validateSlots(self, slotsInUse: Set['ScratchSlot'] = None, visited: Set[Tuple[int, ...]] = None, visitedBlocks=None) -> List[TealCompileError]:
         import traceback
 
         if visited is None:
@@ -84,6 +85,9 @@ class TealBlock(ABC):
 
         if slotsInUse is None:
             slotsInUse = set()
+
+        if visitedBlocks is None:
+            visitedBlocks = []
 
         currentSlotsInUse = set(slotsInUse)
         errors = []
@@ -105,7 +109,11 @@ class TealBlock(ABC):
                 visitedKey = (id(block), *sortedSlots)
                 if visitedKey in visited:
                     continue
-                for error in block.validateSlots(currentSlotsInUse, visited):
+                if block in visitedBlocks:
+                    continue
+
+                visitedBlocks.append(block)
+                for error in block.validateSlots(currentSlotsInUse, visited, visitedBlocks):
                     if error not in errors:
                         errors.append(error)
                 visited.add(visitedKey)
@@ -181,7 +189,7 @@ class TealBlock(ABC):
             if len(block.incoming) == 1:
                 prev = block.incoming[0]
                 prevOutgoing = prev.getOutgoing()
-                if len(prevOutgoing) == 1 and prevOutgoing[0] is block:
+                if (len(prevOutgoing) == 1 and prevOutgoing[0] is block and type(block)):
                     # combine blocks
                     block.ops = prev.ops + block.ops
                     block.incoming = prev.incoming
@@ -189,7 +197,7 @@ class TealBlock(ABC):
                         incoming.replaceOutgoing(prev, block)
                     if prev is start:
                         start = block
-        
+
         return start
 
 TealBlock.__module__ = "pyteal"

@@ -2,6 +2,7 @@ import pytest
 
 from .. import *
 
+
 def test_compile_single():
     expr = Int(1)
 
@@ -40,11 +41,11 @@ def test_compile_branch():
     expected = """
 #pragma version 2
 int 1
-bnz l2
-byte "false"
+bz l2
+byte "true"
 b l3
 l2:
-byte "true"
+byte "false"
 l3:
 """.strip()
     actual_application = compileTeal(expr, Mode.Application)
@@ -122,11 +123,11 @@ def test_slot_load_before_store():
     program = AssetHolding.balance(Int(0), Int(0)).value()
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2)
-    
+
     program = AssetHolding.balance(Int(0), Int(0)).hasValue()
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2)
-    
+
     program = App.globalGetEx(Int(0), Bytes("key")).value()
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2)
@@ -134,7 +135,7 @@ def test_slot_load_before_store():
     program = App.globalGetEx(Int(0), Bytes("key")).hasValue()
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2)
-    
+
     program = ScratchVar().load()
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2)
@@ -218,3 +219,69 @@ concat
 
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2, assembleConstants=True)
+
+
+def test_compile_while():
+    i = ScratchVar()
+    program = Seq([
+    i.store(Int(0)),
+    While(i.load() < Int(2))
+        .Do(Seq([
+            i.store(i.load() + Int(1))
+        ])
+    )
+])
+
+    expectedNoAssemble = """
+    #pragma version 4
+int 0
+store 0
+l1:
+load 0
+int 2
+<
+bz l3
+load 0
+int 1
++
+store 0
+b l1
+l3:
+    """.strip()
+    actualNoAssemble = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert expectedNoAssemble == actualNoAssemble
+
+
+def test_compile_for():
+    i = ScratchVar()
+    program = Seq([
+        For(i.store(Int(0)), i.load() < Int(10), i.store(i.load() + Int(1)))
+            .Do(Seq([
+            App.globalPut(Itob(i.load()), i.load() * Int(2))
+        ]))
+])
+
+    expectedNoAssemble = """
+    #pragma version 4
+int 0
+store 0
+l1:
+load 0
+int 10
+<
+bz l3
+load 0
+itob
+load 0
+int 2
+*
+app_global_put
+load 0
+int 1
++
+store 0
+b l1
+l3:
+    """.strip()
+    actualNoAssemble = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert expectedNoAssemble == actualNoAssemble
