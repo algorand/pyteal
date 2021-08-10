@@ -13,16 +13,13 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
         blocks: The blocks to lower.
     """
     codeblocks = []
-    labels = []
     references: DefaultDict[int, int] = defaultdict(int)
 
     indexToLabel = lambda index: "l{}".format(index)
-    for i, block in enumerate(blocks):
-        # print(type(block))
 
+    for i, block in enumerate(blocks):
         code = list(block.ops)
         codeblocks.append(code)
-
         if block.isTerminal():
             continue
 
@@ -35,9 +32,7 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             if nextIndex != i + 1:
                 references[nextIndex] += 1
                 code.append(TealOp(None, Op.b, indexToLabel(nextIndex)))
-                if len(labels) > 0:
-                    code.append(TealLabel(None, indexToLabel(labels[-1])))
-                    labels.pop()
+
         elif type(block) is TealConditionalBlock:
             conditionalBlock = cast(TealConditionalBlock, block)
             assert conditionalBlock.trueBlock is not None
@@ -46,14 +41,17 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             trueIndex = blocks.index(conditionalBlock.trueBlock)
             falseIndex = blocks.index(conditionalBlock.falseBlock)
 
-            if trueIndex == i + 1:
-                references[falseIndex] += 1
-                code.append(TealOp(None, Op.bz, indexToLabel(falseIndex)))
-                continue
-
+            print("i -", i)
             if falseIndex == i + 1:
+                print("false - ", falseIndex)
                 references[trueIndex] += 1
                 code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex)))
+                continue
+
+            if trueIndex == i + 1:
+                print("true - ", trueIndex)
+                references[falseIndex] += 1
+                code.append(TealOp(None, Op.bz, indexToLabel(falseIndex)))
                 continue
 
             references[trueIndex] += 1

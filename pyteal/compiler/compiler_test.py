@@ -41,11 +41,11 @@ def test_compile_branch():
     expected = """
 #pragma version 2
 int 1
-bnz l2
-byte "false"
+bz l2
+byte "true"
 b l3
 l2:
-byte "true"
+byte "false"
 l3:
 """.strip()
     actual_application = compileTeal(expr, Mode.Application)
@@ -227,14 +227,26 @@ def test_compile_while():
     i.store(Int(0)),
     While(i.load() < Int(2))
         .Do(Seq([
-            # App.globalPut(Itob(i.load()), i.load() * Int(2)),
             i.store(i.load() + Int(1))
         ])
     )
 ])
 
     expectedNoAssemble = """
+    #pragma version 4
+int 0
+store 0
+l1:
+load 0
+int 2
+<
+bz l3
+load 0
+int 1
++
+store 0
+b l1
+l3:
     """.strip()
     actualNoAssemble = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
-    print(actualNoAssemble)
-    # assert expectedNoAssemble == actualNoAssemble
+    assert expectedNoAssemble == actualNoAssemble
