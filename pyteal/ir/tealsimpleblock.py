@@ -6,7 +6,7 @@ from .tealblock import TealBlock
 class TealSimpleBlock(TealBlock):
     """Represents a basic block of TealComponents in a graph that does not contain a branch condition."""
 
-    def __init__(self, ops: List[TealOp], loop=False) -> None:
+    def __init__(self, ops: List[TealOp]) -> None:
         super().__init__(ops)
         self.nextBlock: Optional[TealBlock] = None
     
