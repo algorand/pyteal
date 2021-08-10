@@ -189,7 +189,7 @@ class TealBlock(ABC):
             if len(block.incoming) == 1:
                 prev = block.incoming[0]
                 prevOutgoing = prev.getOutgoing()
-                if (len(prevOutgoing) == 1 and prevOutgoing[0] is block and type(block)):
+                if len(prevOutgoing) == 1 and prevOutgoing[0] is block:
                     # combine blocks
                     block.ops = prev.ops + block.ops
                     block.incoming = prev.incoming
