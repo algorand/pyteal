@@ -41,7 +41,6 @@ def test_split():
     target_path = os.path.join(os.path.dirname(__file__), "../examples/signature/split.teal")
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
-        p=compileTeal(program, mode=Mode.Signature, version=2)
         assert compileTeal(program, mode=Mode.Signature, version=2) == target
 
 def test_dutch_auction():
@@ -52,7 +51,6 @@ def test_dutch_auction():
     target_path = os.path.join(os.path.dirname(__file__), "../examples/signature/dutch_auction.teal")
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
-        p=compileTeal(program, mode=Mode.Signature, version=2)
         assert compileTeal(program, mode=Mode.Signature, version=2) == target
 
 def test_recurring_swap():
