@@ -41,6 +41,7 @@ from .cond import Cond
 from .seq import Seq
 from .assert_ import Assert
 from .while_ import While
+from .for_ import For
 
 
 # misc
@@ -149,5 +150,6 @@ __all__ = [
     "BytesGe",
     "BytesNot",
     "BytesZero",
-    "While"
+    "While",
+    "For"
 ]

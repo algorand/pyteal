@@ -23,8 +23,7 @@ def test_while():
     expectedBranch.setTrueBlock(do)
     expectedBranch.setFalseBlock(end)
     condEnd.setNextBlock(expectedBranch)
-    doEnd.setNextBlock(end)
+    doEnd.setNextBlock(expected)
     actual, _ = expr.__teal__(options)
 
-
-    assert actual== expected
+    assert actual == expected

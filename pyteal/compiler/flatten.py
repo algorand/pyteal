@@ -2,9 +2,7 @@ from typing import List, DefaultDict, cast
 from collections import defaultdict
 
 from ..ir import Op, TealOp, TealLabel, TealComponent, TealBlock, TealSimpleBlock, TealConditionalBlock
-
 from ..errors import TealInternalError
-
 
 def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
     """Lowers a list of TealBlocks into a list of TealComponents.
@@ -41,15 +39,12 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             trueIndex = blocks.index(conditionalBlock.trueBlock)
             falseIndex = blocks.index(conditionalBlock.falseBlock)
 
-            print("i -", i)
             if falseIndex == i + 1:
-                print("false - ", falseIndex)
                 references[trueIndex] += 1
                 code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex)))
                 continue
 
             if trueIndex == i + 1:
-                print("true - ", trueIndex)
                 references[falseIndex] += 1
                 code.append(TealOp(None, Op.bz, indexToLabel(falseIndex)))
                 continue
@@ -59,7 +54,6 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
 
             references[falseIndex] += 1
             code.append(TealOp(None, Op.b, indexToLabel(falseIndex)))
-
         else:
             raise TealInternalError("Unrecognized block type: {}".format(type(block)))
 

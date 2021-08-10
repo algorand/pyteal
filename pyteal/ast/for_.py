@@ -1,8 +1,8 @@
 from typing import Union, TYPE_CHECKING
 
-from ..types import TealType
+from ..types import TealType, require_type
 from ..ir import TealOp, Op, TealBlock
-from ..errors import TealInputError
+from ..errors import TealCompileError
 from .leafexpr import LeafExpr
 from .expr import Expr
 from .seq import Seq
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class For(Expr):
     """For expression."""
 
-    def __init__(self, cond: Expr, thenBranch: Expr) -> None:
+    def __init__(self, start: Expr, cond: Expr, end:Expr) -> None:
         """Create a new For expression.
 
         When this For expression is executed, the condition will be evaluated, and if it produces a
@@ -28,27 +28,42 @@ class For(Expr):
         super().__init__()
         require_type(cond.type_of(), TealType.uint64)
 
+        self.start = start
         self.cond = cond
-        self.thenBranch = thenBranch
+        self.step = end
+        self.doBlock = None
 
     def __teal__(self, options: 'CompileOptions'):
-        if self.thenBranch is None:
+        if self.doBlock is None:
             raise TealCompileError("For expression must have a thenBranch", self)
 
-        return While.__teal__(self)
+        start, end = self.start.__teal__(options)
+
+        bodyStart, _= While.__teal__(self,self.cond)
+
+        end.nextBlock = bodyStart
+
+        return start,end
 
     def __str__(self):
-        if self.thenBranch is None:
+        if self.start is None:
+            raise TealCompileError("For expression must have a start", self)
+        if self.cond is None:
+            raise TealCompileError("For expression must have a condition", self)
+        if self.end is None:
+            raise TealCompileError("For expression must have a end", self)
+        if self.doBlock is None:
             raise TealCompileError("For expression must have a thenBranch", self)
         
-        return "(For {} {})".format(self.cond, self.thenBranch)
+        return "(For {} {} {} {})".format(self.start, self.cond, self.end, self.doBlock)
 
     def type_of(self):
-        if self.thenBranch is None:
+        if self.doBlock is None:
             raise TealCompileError("For expression must have a thenBranch", self) 
-        return self.thenBranch.type_of()
+        return self.doBlock.type_of()
 
-    def Do(self, thenBranch: Seq):
-        return While.Do(self)
+    def Do(self, doBlock: Seq):
+        self.doBlock = doBlock
+        return self
 
 While.__module__ = "pyteal"

@@ -28,7 +28,7 @@ class While(Expr):
 
         self.cond = cond
         self.doBlock = None
-        self.id = 0
+        self.step = None
 
     def __teal__(self, options: 'CompileOptions'):
         if self.doBlock is None:
@@ -36,14 +36,24 @@ class While(Expr):
 
         condStart, condEnd = self.cond.__teal__(options)
         doStart, doEnd = self.doBlock.__teal__(options)
+
+        if self.step:
+            stepStart, stepEnd = self.step.__teal__(options)
+            stepEnd.setNextBlock(condStart)
+            doEnd.setNextBlock(stepStart)
+        else:
+            doEnd.setNextBlock(condStart)
+
         end = TealSimpleBlock([])
 
         branchBlock = TealConditionalBlock([])
         branchBlock.setTrueBlock(doStart)
         branchBlock.setFalseBlock(end)
+
         condEnd.setNextBlock(branchBlock)
-        doEnd.setNextBlock(condStart)
         condStart.addIncoming(doEnd)
+
+
 
         return condStart, end
 
