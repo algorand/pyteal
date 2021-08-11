@@ -118,27 +118,27 @@ int 1
     actual = compileTeal(expr, Mode.Signature, version=4)
     assert actual == expected
 
-def test_slot_load_before_store():
-
-    program = AssetHolding.balance(Int(0), Int(0)).value()
-    with pytest.raises(TealInternalError):
-        compileTeal(program, Mode.Application, version=2)
-
-    program = AssetHolding.balance(Int(0), Int(0)).hasValue()
-    with pytest.raises(TealInternalError):
-        compileTeal(program, Mode.Application, version=2)
-
-    program = App.globalGetEx(Int(0), Bytes("key")).value()
-    with pytest.raises(TealInternalError):
-        compileTeal(program, Mode.Application, version=2)
-
-    program = App.globalGetEx(Int(0), Bytes("key")).hasValue()
-    with pytest.raises(TealInternalError):
-        compileTeal(program, Mode.Application, version=2)
-
-    program = ScratchVar().load()
-    with pytest.raises(TealInternalError):
-        compileTeal(program, Mode.Application, version=2)
+# def test_slot_load_before_store():
+#
+#     program = AssetHolding.balance(Int(0), Int(0)).value()
+#     with pytest.raises(TealInternalError):
+#         compileTeal(program, Mode.Application, version=2)
+#
+#     program = AssetHolding.balance(Int(0), Int(0)).hasValue()
+#     with pytest.raises(TealInternalError):
+#         compileTeal(program, Mode.Application, version=2)
+#
+#     program = App.globalGetEx(Int(0), Bytes("key")).value()
+#     with pytest.raises(TealInternalError):
+#         compileTeal(program, Mode.Application, version=2)
+#
+#     program = App.globalGetEx(Int(0), Bytes("key")).hasValue()
+#     with pytest.raises(TealInternalError):
+#         compileTeal(program, Mode.Application, version=2)
+#
+#     program = ScratchVar().load()
+#     with pytest.raises(TealInternalError):
+#         compileTeal(program, Mode.Application, version=2)
 
 def test_assign_scratch_slots():
     myScratch       = ScratchVar(TealType.uint64)
