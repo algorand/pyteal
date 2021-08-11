@@ -1,7 +1,7 @@
 from typing import Union, TYPE_CHECKING
 
 from ..types import TealType, require_type
-from ..ir import TealOp, Op, TealBlock
+from ..ir import TealOp, Op, TealBlock, TealSimpleBlock
 from ..errors import TealCompileError
 from .leafexpr import LeafExpr
 from .expr import Expr
@@ -10,6 +10,7 @@ from .while_ import While
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
+
 
 class For(Expr):
     """For expression."""
@@ -43,14 +44,16 @@ class For(Expr):
 
         end.nextBlock = bodyStart
 
-        return start,end
+        blockEnd = TealSimpleBlock([])
+
+        return start, blockEnd
 
     def __str__(self):
         if self.start is None:
             raise TealCompileError("For expression must have a start", self)
         if self.cond is None:
             raise TealCompileError("For expression must have a condition", self)
-        if self.end is None:
+        if self.step is None:
             raise TealCompileError("For expression must have a end", self)
         if self.doBlock is None:
             raise TealCompileError("For expression must have a thenBranch", self)

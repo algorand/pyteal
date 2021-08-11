@@ -46,13 +46,12 @@ class While(Expr):
         else:
             doEnd.setNextBlock(condStart)
 
-
         branchBlock = TealConditionalBlock([])
         branchBlock.setTrueBlock(doStart)
         branchBlock.setFalseBlock(end)
 
         condEnd.setNextBlock(branchBlock)
-        condStart.addIncoming(doEnd)
+        condStart.addIncoming(doStart)
 
 
 
