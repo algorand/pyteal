@@ -60,7 +60,7 @@ def test_sort_multiple_branch():
     block.addIncoming()
     block.validateTree()
 
-    expected = [block, blockTrue, blockFalse, blockTrueBranch, blockTrueTrue, blockTrueFalse]
+    expected = [block, blockTrue, blockTrueBranch, blockTrueTrue, blockTrueFalse, blockFalse]
     actual = sortBlocks(block)
 
     assert actual == expected
