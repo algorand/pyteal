@@ -40,9 +40,9 @@ def test_while():
     expectedBranch.setFalseBlock(end)
     condEnd.setNextBlock(expectedBranch)
     doEnd.setNextBlock(expected)
-    # actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(options)
 
-    # assert actual == expected
+    assert actual == expected
 
 def test_while_invalid():
     with pytest.raises(TealCompileError):
