@@ -1,12 +1,13 @@
 from typing import Union, TYPE_CHECKING
 
 from ..types import TealType, require_type
-from ..ir import TealOp, Op, TealBlock, TealSimpleBlock
+from ..ir import TealOp, Op, TealBlock, TealSimpleBlock, TealConditionalBlock
 from ..errors import TealCompileError
 from .leafexpr import LeafExpr
 from .expr import Expr
 from .seq import Seq
 from .while_ import While
+from .int import Int
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
@@ -32,21 +33,45 @@ class For(Expr):
         self.start = start
         self.cond = cond
         self.step = end
-        self.doBlock = None
+        self.doBlock = Seq([Int(0)])
 
     def __teal__(self, options: 'CompileOptions'):
-        if self.doBlock is None:
-            raise TealCompileError("For expression must have a thenBranch", self)
+        # if self.doBlock is None:
+        #     raise TealCompileError("For expression must have a thenBranch", self)
+        #
+        # start, end = self.start.__teal__(options)
+        #
+        # bodyStart, _= While.__teal__(self,self.cond)
+        #
+        # end.nextBlock = bodyStart
+        #
+        # blockEnd = TealSimpleBlock([])
 
-        start, end = self.start.__teal__(options)
+        if str(self.doBlock) == str(Seq([Int(0)])):
+            raise TealCompileError("While expression must have a doBlock", self)
 
-        bodyStart, _= While.__teal__(self,self.cond)
+        start, startEnd = self.start.__teal__(options)
+        condStart, condEnd = self.cond.__teal__(options)
+        doStart, doEnd = self.doBlock.__teal__(options)
 
-        end.nextBlock = bodyStart
+        end = TealSimpleBlock([])
 
-        blockEnd = TealSimpleBlock([])
 
-        return start, blockEnd
+        stepStart, stepEnd = self.step.__teal__(options)
+        stepEnd.setNextBlock(condStart)
+        doEnd.setNextBlock(stepStart)
+
+
+        branchBlock = TealConditionalBlock([])
+        branchBlock.setTrueBlock(doStart)
+        branchBlock.setFalseBlock(end)
+
+        condEnd.setNextBlock(branchBlock)
+        condStart.addIncoming(doStart)
+
+        startEnd.nextBlock=condStart
+
+        return start, end
 
     def __str__(self):
         if self.start is None:
@@ -55,13 +80,13 @@ class For(Expr):
             raise TealCompileError("For expression must have a condition", self)
         if self.step is None:
             raise TealCompileError("For expression must have a end", self)
-        if self.doBlock is None:
+        if str(self.doBlock) == str(Seq([Int(0)])):
             raise TealCompileError("For expression must have a thenBranch", self)
         
-        return "(For {} {} {} {})".format(self.start, self.cond, self.end, self.doBlock)
+        return "(For {} {} {} {})".format(self.start, self.cond, self.step, self.doBlock)
 
     def type_of(self):
-        if self.doBlock is None:
+        if str(self.doBlock) == str(Seq([Int(0)])):
             raise TealCompileError("For expression must have a thenBranch", self) 
         return self.doBlock.type_of()
 

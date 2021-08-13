@@ -5,6 +5,7 @@ from ..types import TealType, require_type, types_match
 from ..ir import TealSimpleBlock, TealConditionalBlock
 from .expr import Expr
 from .seq import Seq
+from .int import Int
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
@@ -27,11 +28,11 @@ class While(Expr):
         require_type(cond.type_of(), TealType.uint64)
 
         self.cond = cond
-        self.doBlock = None
+        self.doBlock = Seq([Int(0)])
         self.step = None
 
     def __teal__(self, options: 'CompileOptions'):
-        if self.doBlock is None:
+        if str(self.doBlock) == str(Seq([Int(0)])):
             raise TealCompileError("While expression must have a doBlock", self)
 
         condStart, condEnd = self.cond.__teal__(options)
@@ -58,18 +59,18 @@ class While(Expr):
         return condStart, end
 
     def __str__(self):
-        if self.doBlock is None:
+        if str(self.doBlock) == str(Seq([Int(0)])):
             raise TealCompileError("While expression must have a doBlock", self)
         
         return "(While {} {})".format(self.cond, self.doBlock)
 
     def type_of(self):
-        if self.doBlock is None:
+        if str(self.doBlock) == str(Seq([Int(0)])):
             raise TealCompileError("While expression must have a doBlock", self) 
         return self.doBlock.type_of()
 
     def Do(self, doBlock: Seq):
-        self.doBlock=doBlock
+        self.doBlock = doBlock
         return self
 
 While.__module__ = "pyteal"

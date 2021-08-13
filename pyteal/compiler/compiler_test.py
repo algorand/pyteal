@@ -353,10 +353,11 @@ l3:
         #pragma version 4
 int 0
 store 0
+l1:
 load 0
 int 10
 <
-bz l5
+bz l6
 int 0
 store 0
 l3:
@@ -371,6 +372,12 @@ int 2
 store 1
 b l3
 l5:
+load 0
+int 1
++
+store 0
+b l1
+l6:
         """.strip()
     actualNoAssemble = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
     print(actualNoAssemble)
