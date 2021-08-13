@@ -1,4 +1,4 @@
-from typing import List, cast, TYPE_CHECKING
+from typing import List, cast, TYPE_CHECKING, overload
 
 from ..types import TealType, require_type
 from ..errors import TealInputError
@@ -11,7 +11,15 @@ if TYPE_CHECKING:
 class Seq(Expr):
     """A control flow expression to represent a sequence of expressions."""
     
+    @overload
+    def __init__(self, *exprs: Expr):
+        ...
+
+    @overload
     def __init__(self, exprs: List[Expr]):
+        ...
+
+    def __init__(self, *exprs):
         """Create a new Seq expression.
 
         The new Seq expression will take on the return value of the final expression in the sequence.
@@ -29,6 +37,10 @@ class Seq(Expr):
                 ])
         """
         super().__init__()
+
+        # Handle case where a list of expressions is provided
+        if len(exprs) == 1 and isinstance(exprs[0], list):
+            exprs = exprs[0]
         
         if len(exprs) == 0:
             raise TealInputError("Seq requires children.")
