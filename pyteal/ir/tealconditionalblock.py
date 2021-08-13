@@ -10,9 +10,6 @@ class TealConditionalBlock(TealBlock):
         super().__init__(ops)
         self.trueBlock: Optional[TealBlock] = None
         self.falseBlock: Optional[TealBlock] = None
-        self.visited = []
-        self.blocks = []
-
     
     def setTrueBlock(self, block: TealBlock) -> None:
         """Set the block that this one should branch to if its condition is true."""
@@ -43,11 +40,7 @@ class TealConditionalBlock(TealBlock):
             repr(self.falseBlock),
         )
 
-
     def __eq__(self, other: object) -> bool:
-        if self in self.visited:
-            return True
-        self.visited.append(self)
         if type(other) is not TealConditionalBlock:
             return False
         other = cast(TealConditionalBlock, other)
