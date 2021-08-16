@@ -36,16 +36,6 @@ class For(Expr):
         self.doBlock = Seq([Int(0)])
 
     def __teal__(self, options: 'CompileOptions'):
-        # if self.doBlock is None:
-        #     raise TealCompileError("For expression must have a thenBranch", self)
-        #
-        # start, end = self.start.__teal__(options)
-        #
-        # bodyStart, _= While.__teal__(self,self.cond)
-        #
-        # end.nextBlock = bodyStart
-        #
-        # blockEnd = TealSimpleBlock([])
 
         if str(self.doBlock) == str(Seq([Int(0)])):
             raise TealCompileError("While expression must have a doBlock", self)
@@ -69,7 +59,7 @@ class For(Expr):
         condEnd.setNextBlock(branchBlock)
         condStart.addIncoming(doStart)
 
-        startEnd.nextBlock=condStart
+        startEnd.nextBlock = condStart
 
         return start, end
 

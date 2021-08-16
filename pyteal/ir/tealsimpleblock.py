@@ -9,11 +9,13 @@ class TealSimpleBlock(TealBlock):
     def __init__(self, ops: List[TealOp]) -> None:
         super().__init__(ops)
         self.nextBlock: Optional[TealBlock] = None
-    
+        self.blocks: List[TealBlock] = []
+        self.visited: List[TealBlock] = []
+
     def setNextBlock(self, block: TealBlock) -> None:
         """Set the block that follows this one."""
         self.nextBlock = block
-    
+
     def getOutgoing(self) -> List[TealBlock]:
         if self.nextBlock is None:
             return []
@@ -24,16 +26,33 @@ class TealSimpleBlock(TealBlock):
             self.nextBlock = newBlock
     
     def __repr__(self) -> str:
-        return "TealSimpleBlock({}, next={})".format(
+        if self in self.visited:
+            return "TealSimpleBlock({}, next={})".format(
+                repr(self.ops),
+                "",
+            )
+        self.visited.append(self)
+
+        s = "TealSimpleBlock({}, next={})".format(
             repr(self.ops),
             repr(self.nextBlock),
         )
-    
+
+        self.visited.pop()
+        return s
+
     def __eq__(self, other: object) -> bool:
+        if self in self.blocks:
+            return True
         if type(other) is not TealSimpleBlock:
             return False
+        self.blocks.append(self)
         other = cast(TealSimpleBlock, other)
-        return self.ops == other.ops and \
+        equal = self.ops == other.ops and \
             self.nextBlock == other.nextBlock
+        self.blocks.pop()
+        return equal
+
+
 
 TealSimpleBlock.__module__ = "pyteal"

@@ -17,7 +17,7 @@ def sortBlocks(start: TealBlock) -> List[TealBlock]:
     visited = []
     while len(S) != 0:
         n = S.pop(0)
-        if type(n)==TealConditionalBlock:
+        if type(n) == TealConditionalBlock:
             if n.falseBlock is not None:
                 S.insert(0, n.falseBlock)
             if n.trueBlock is not None:
