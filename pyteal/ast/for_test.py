@@ -23,6 +23,12 @@ def test_nested_for_compiles():
     expr =For(Int(0),Int(1),Int(2)).Do(Seq([For(Int(0),Int(1),Int(2)).Do(Seq([i.store(Int(0)), Int(2)]))]))
     assert expr.type_of() == TealType.uint64
 
+def test_continue_break():
+    expr = For(Int(0), Int(1), Int(2)).Do(Seq([If(Int(1),Break(),Continue())]))
+    assert expr.type_of() == TealType.none
+    expr.__teal__(options)
+
+
 def test_for():
     i = ScratchVar()
     items = [(i.store(Int(0))), i.load() < Int(10), i.store(i.load() + Int(1)),

@@ -1,6 +1,6 @@
-from typing import List, cast
+from typing import List
 
-from ..ir import TealBlock, TealSimpleBlock, TealConditionalBlock
+from ..ir import TealBlock, TealConditionalBlock
 
 def sortBlocks(start: TealBlock) -> List[TealBlock]:
     """Topologically sort the graph which starts with the input TealBlock.

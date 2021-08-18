@@ -26,6 +26,7 @@ class TealSimpleBlock(TealBlock):
             self.nextBlock = newBlock
     
     def __repr__(self) -> str:
+        # check for loop
         if self in self.visited:
             return "TealSimpleBlock({}, next={})".format(
                 repr(self.ops),
@@ -40,8 +41,9 @@ class TealSimpleBlock(TealBlock):
 
         self.visited.pop()
         return s
-
+    
     def __eq__(self, other: object) -> bool:
+        # check for loop
         if self in self.blocks:
             return True
         if type(other) is not TealSimpleBlock:

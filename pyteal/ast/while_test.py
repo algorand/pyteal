@@ -22,6 +22,11 @@ def test_nested_whiles_compile():
     expr = While(Int(2)).Do(Seq([While(Int(2)).Do(Seq([i.store(Int(0))]))]))
     assert expr.type_of() == TealType.none
 
+def test_continue_break():
+    expr = While(Int(0)).Do(Seq([If(Int(1),Break(),Continue())]))
+    assert expr.type_of() == TealType.none
+    expr.__teal__(options)
+
 def test_while():
     i=ScratchVar()
     i.store(Int(0))
@@ -42,7 +47,7 @@ def test_while():
     doEnd.setNextBlock(expected)
     actual, _ = expr.__teal__(options)
 
-    # assert actual == expected
+    assert actual == expected
 
 def test_while_invalid():
     with pytest.raises(TealCompileError):
