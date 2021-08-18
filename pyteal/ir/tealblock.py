@@ -3,7 +3,6 @@ from typing import Optional, List, Tuple, Set, Iterator, cast, TYPE_CHECKING
 
 from .tealop import TealOp, Op
 from ..errors import TealCompileError
-
 if TYPE_CHECKING:
     from ..ast import Expr, ScratchSlot
     from ..compiler import CompileOptions

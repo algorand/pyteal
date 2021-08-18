@@ -1,7 +1,7 @@
-from typing import List, Set
+from typing import List, Set, Optional
 
 from ..ast import Expr, ScratchSlot
-from ..ir import Mode, TealComponent, TealOp, TealBlock
+from ..ir import Mode, TealComponent, TealOp, TealBlock, TealSimpleBlock
 from ..errors import TealInputError, TealInternalError
 from ..config import NUM_SLOTS
 
@@ -18,6 +18,9 @@ class CompileOptions:
     def __init__(self, *, mode: Mode = Mode.Signature, version: int = DEFAULT_TEAL_VERSION):
         self.mode = mode
         self.version = version
+        self.currentLoop: Optional[Expr] = None
+        self.breakBlocks: List[TealSimpleBlock] = []
+        self.continueBlocks: List[TealSimpleBlock] = []
 
 def verifyOpsForVersion(teal: List[TealComponent], version: int):
     """Verify that all TEAL operations are allowed in the specified version.

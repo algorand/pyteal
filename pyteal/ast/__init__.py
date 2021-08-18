@@ -42,6 +42,8 @@ from .seq import Seq
 from .assert_ import Assert
 from .while_ import While
 from .for_ import For
+from .break_ import Break
+from .continue_ import Continue
 
 
 # misc
@@ -151,5 +153,7 @@ __all__ = [
     "BytesNot",
     "BytesZero",
     "While",
-    "For"
+    "For",
+    "Break",
+    "Continue",
 ]

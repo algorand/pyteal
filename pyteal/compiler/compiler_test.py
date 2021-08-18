@@ -251,6 +251,7 @@ l3:
     actualNoAssemble = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
     assert expectedNoAssemble == actualNoAssemble
 
+    # nested
     i = ScratchVar()
     j = ScratchVar()
 
@@ -338,6 +339,8 @@ l3:
     actualNoAssemble = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
     assert expectedNoAssemble == actualNoAssemble
 
+    # nested
+    i = ScratchVar()
     j = ScratchVar()
     program = Seq([
             For(i.store(Int(0)), i.load() < Int(10), i.store(i.load() + Int(1)))
@@ -379,6 +382,266 @@ store 0
 b l1
 l6:
         """.strip()
+    actualNoAssemble = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    print(actualNoAssemble)
+    assert expectedNoAssemble == actualNoAssemble
+
+
+def test_compile_break():
+
+    # While
+    i = ScratchVar()
+    program = Seq([
+        i.store(Int(0)),
+        While(i.load() < Int(3))
+            .Do(Seq([
+            If(i.load() == Int(2), Break()),
+            i.store(i.load() + Int(1))
+        ])
+        )
+    ])
+
+    expectedNoAssemble = """#pragma version 4
+int 0
+store 0
+l1:
+load 0
+int 3
+<
+bz l5
+load 0
+int 2
+==
+bz l4
+b l5
+l4:
+load 0
+int 1
++
+store 0
+b l1
+l5:
+            """.strip()
+    actualNoAssemble = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert expectedNoAssemble == actualNoAssemble
+
+    # For
+    i = ScratchVar()
+    program = Seq([
+        For(i.store(Int(0)), i.load() < Int(10), i.store(i.load() + Int(1)))
+            .Do(Seq([If(i.load() == Int(4), Break()),
+                     App.globalPut(Itob(i.load()), i.load() * Int(2))
+                     ]))
+    ])
+
+    expectedNoAssemble = """#pragma version 4
+int 0
+store 0
+l1:
+load 0
+int 10
+<
+bz l5
+load 0
+int 4
+==
+bz l4
+b l5
+l4:
+load 0
+itob
+load 0
+int 2
+*
+app_global_put
+load 0
+int 1
++
+store 0
+b l1
+l5:
+        """.strip()
+    actualNoAssemble = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert expectedNoAssemble == actualNoAssemble
+
+
+def test_compile_continue():
+    # While
+    i = ScratchVar()
+    program = Seq([
+        i.store(Int(0)),
+        While(i.load() < Int(3))
+            .Do(Seq([
+            If(i.load() == Int(2), Continue()),
+            i.store(i.load() + Int(1))
+        ])
+        )
+    ])
+
+    expectedNoAssemble = """#pragma version 4
+int 0
+store 0
+l1:
+load 0
+int 3
+<
+bz l5
+l2:
+load 0
+int 2
+==
+bz l4
+b l2
+l4:
+load 0
+int 1
++
+store 0
+b l1
+l5:
+                """.strip()
+    actualNoAssemble = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert expectedNoAssemble == actualNoAssemble
+
+    # For
+    i = ScratchVar()
+    program = Seq([
+        For(i.store(Int(0)), i.load() < Int(10), i.store(i.load() + Int(1)))
+            .Do(Seq([If(i.load() == Int(4), Continue()),
+                     App.globalPut(Itob(i.load()), i.load() * Int(2))
+                     ]))
+    ])
+
+    expectedNoAssemble = """#pragma version 4
+int 0
+store 0
+l1:
+load 0
+int 10
+<
+bz l5
+load 0
+int 4
+==
+bz l4
+l3:
+load 0
+int 1
++
+store 0
+b l1
+l4:
+load 0
+itob
+load 0
+int 2
+*
+app_global_put
+b l3
+l5:
+            """.strip()
+    actualNoAssemble = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert expectedNoAssemble == actualNoAssemble
+
+def test_compile_continue_break_nested():
+
+    i = ScratchVar()
+    program = Seq([
+        i.store(Int(0)),
+        While(i.load() < Int(10))
+            .Do(Seq([
+            i.store(i.load() + Int(1)),
+            If(i.load() < Int(4), Continue(), Break()),
+        ])
+        ),
+    ])
+
+    expectedNoAssemble = """#pragma version 4
+int 0
+store 0
+load 0
+int 10
+<
+bz l5
+l2:
+load 0
+int 1
++
+store 0
+load 0
+int 4
+<
+bz l4
+b l2
+l4:
+l5:
+    """.strip()
+    actualNoAssemble = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert expectedNoAssemble == actualNoAssemble
+
+
+    i = ScratchVar()
+    program = Seq([
+        i.store(Int(0)),
+        While(i.load() < Int(10))
+            .Do(Seq([
+            If(i.load() == Int(8), Break()),
+            While(i.load() < Int(6)).Do(Seq([
+                If(i.load() == Int(3), Break()),
+                i.store(i.load() + Int(1))
+            ])
+            ),
+            If(i.load() < Int(5), Continue()),
+            i.store(i.load() + Int(1)),
+        ])
+        ),
+    ])
+
+    expectedNoAssemble = """#pragma version 4
+int 0
+store 0
+l1:
+load 0
+int 10
+<
+bz l12
+l2:
+load 0
+int 8
+==
+bz l4
+b l12
+l4:
+l5:
+load 0
+int 6
+<
+bz l9
+load 0
+int 3
+==
+bz l8
+b l9
+l8:
+load 0
+int 1
++
+store 0
+b l5
+l9:
+load 0
+int 5
+<
+bz l11
+b l2
+l11:
+load 0
+int 1
++
+store 0
+b l1
+l12:    
+""".strip()
     actualNoAssemble = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
     print(actualNoAssemble)
     assert expectedNoAssemble == actualNoAssemble
