@@ -7,17 +7,20 @@ from .expr import Expr
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
+
 class UnaryExpr(Expr):
     """An expression with a single argument."""
 
-    def __init__(self, op: Op, inputType: TealType, outputType: TealType, arg: Expr) -> None:
+    def __init__(
+        self, op: Op, inputType: TealType, outputType: TealType, arg: Expr
+    ) -> None:
         super().__init__()
         require_type(arg.type_of(), inputType)
         self.op = op
         self.outputType = outputType
         self.arg = arg
 
-    def __teal__(self, options: 'CompileOptions'):
+    def __teal__(self, options: "CompileOptions"):
         return TealBlock.FromOp(options, TealOp(self, self.op), self.arg)
 
     def __str__(self):
@@ -26,19 +29,24 @@ class UnaryExpr(Expr):
     def type_of(self):
         return self.outputType
 
+
 UnaryExpr.__module__ = "pyteal"
+
 
 def Btoi(arg: Expr) -> UnaryExpr:
     """Convert a byte string to a uint64."""
     return UnaryExpr(Op.btoi, TealType.bytes, TealType.uint64, arg)
 
+
 def Itob(arg: Expr) -> UnaryExpr:
     """Convert a uint64 string to a byte string."""
     return UnaryExpr(Op.itob, TealType.uint64, TealType.bytes, arg)
 
+
 def Len(arg: Expr) -> UnaryExpr:
     """Get the length of a byte string."""
     return UnaryExpr(Op.len, TealType.bytes, TealType.uint64, arg)
+
 
 def BitLen(arg: Expr) -> UnaryExpr:
     """Get the index of the highest nonzero bit in an integer.
@@ -51,17 +59,21 @@ def BitLen(arg: Expr) -> UnaryExpr:
     """
     return UnaryExpr(Op.bitlen, TealType.anytype, TealType.uint64, arg)
 
+
 def Sha256(arg: Expr) -> UnaryExpr:
     """Get the SHA-256 hash of a byte string."""
     return UnaryExpr(Op.sha256, TealType.bytes, TealType.bytes, arg)
+
 
 def Sha512_256(arg: Expr) -> UnaryExpr:
     """Get the SHA-512/256 hash of a byte string."""
     return UnaryExpr(Op.sha512_256, TealType.bytes, TealType.bytes, arg)
 
+
 def Keccak256(arg: Expr) -> UnaryExpr:
     """Get the KECCAK-256 hash of a byte string."""
     return UnaryExpr(Op.keccak256, TealType.bytes, TealType.bytes, arg)
+
 
 def Not(arg: Expr) -> UnaryExpr:
     """Get the logical inverse of a uint64.
@@ -70,12 +82,14 @@ def Not(arg: Expr) -> UnaryExpr:
     """
     return UnaryExpr(Op.logic_not, TealType.uint64, TealType.uint64, arg)
 
+
 def BitwiseNot(arg: Expr) -> UnaryExpr:
     """Get the bitwise inverse of a uint64.
 
     Produces ~arg.
     """
     return UnaryExpr(Op.bitwise_not, TealType.uint64, TealType.uint64, arg)
+
 
 def Sqrt(arg: Expr) -> UnaryExpr:
     """Get the integer square root of a uint64.
@@ -86,13 +100,16 @@ def Sqrt(arg: Expr) -> UnaryExpr:
     """
     return UnaryExpr(Op.sqrt, TealType.uint64, TealType.uint64, arg)
 
+
 def Pop(arg: Expr) -> UnaryExpr:
     """Pop a value from the stack."""
     return UnaryExpr(Op.pop, TealType.anytype, TealType.none, arg)
 
+
 def Return(arg: Expr) -> UnaryExpr:
     """Immediately exit the program with the given success value."""
     return UnaryExpr(Op.return_, TealType.uint64, TealType.none, arg)
+
 
 def Balance(account: Expr) -> UnaryExpr:
     """Get the balance of a user in microAlgos.
@@ -104,6 +121,7 @@ def Balance(account: Expr) -> UnaryExpr:
     This operation is only permitted in application mode.
     """
     return UnaryExpr(Op.balance, TealType.anytype, TealType.uint64, account)
+
 
 def MinBalance(account: Expr) -> UnaryExpr:
     """Get the minimum balance of a user in microAlgos.
@@ -118,6 +136,7 @@ def MinBalance(account: Expr) -> UnaryExpr:
     """
     return UnaryExpr(Op.min_balance, TealType.anytype, TealType.uint64, account)
 
+
 def BytesNot(arg: Expr) -> UnaryExpr:
     """Get the bitwise inverse of bytes.
 
@@ -127,6 +146,7 @@ def BytesNot(arg: Expr) -> UnaryExpr:
     Requires TEAL version 4 or higher.
     """
     return UnaryExpr(Op.b_not, TealType.bytes, TealType.bytes, arg)
+
 
 def BytesZero(arg: Expr) -> UnaryExpr:
     """Get a byte-array of a specified length, containing all zero bytes.

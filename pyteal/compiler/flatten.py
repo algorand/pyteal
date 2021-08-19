@@ -1,8 +1,17 @@
 from typing import List, DefaultDict, cast
 from collections import defaultdict
 
-from ..ir import Op, TealOp, TealLabel, TealComponent, TealBlock, TealSimpleBlock, TealConditionalBlock
+from ..ir import (
+    Op,
+    TealOp,
+    TealLabel,
+    TealComponent,
+    TealBlock,
+    TealSimpleBlock,
+    TealConditionalBlock,
+)
 from ..errors import TealInternalError
+
 
 def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
     """Lowers a list of TealBlocks into a list of TealComponents.
@@ -25,7 +34,7 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             simpleBlock = cast(TealSimpleBlock, block)
             assert simpleBlock.nextBlock is not None
 
-            nextIndex = blocks.index(simpleBlock.nextBlock, i+1)
+            nextIndex = blocks.index(simpleBlock.nextBlock, i + 1)
             if nextIndex != i + 1:
                 references[nextIndex] += 1
                 code.append(TealOp(None, Op.b, indexToLabel(nextIndex)))
@@ -34,8 +43,8 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             assert conditionalBlock.trueBlock is not None
             assert conditionalBlock.falseBlock is not None
 
-            trueIndex = blocks.index(conditionalBlock.trueBlock, i+1)
-            falseIndex = blocks.index(conditionalBlock.falseBlock, i+1)
+            trueIndex = blocks.index(conditionalBlock.trueBlock, i + 1)
+            falseIndex = blocks.index(conditionalBlock.falseBlock, i + 1)
 
             if falseIndex == i + 1:
                 references[trueIndex] += 1

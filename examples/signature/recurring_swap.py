@@ -32,23 +32,30 @@ tmpl_amount = Int(100000)
 tmpl_fee = Int(1000)
 tmpl_timeout = Int(100000)
 
-def recurring_swap(tmpl_buyer=tmpl_buyer,
-                   tmpl_provider=tmpl_provider,
-                   tmpl_amount=tmpl_amount,
-                   tmpl_fee=tmpl_fee,
-                   tmpl_timeout=tmpl_timeout):
+
+def recurring_swap(
+    tmpl_buyer=tmpl_buyer,
+    tmpl_provider=tmpl_provider,
+    tmpl_amount=tmpl_amount,
+    tmpl_fee=tmpl_fee,
+    tmpl_timeout=tmpl_timeout,
+):
     fee_cond = Txn.fee() <= tmpl_fee
     type_cond = And(Txn.type_enum() == Int(1), Txn.rekey_to() == Global.zero_address())
-    recv_cond = And(Txn.close_remainder_to() == Global.zero_address(),
-                    Txn.receiver() == tmpl_provider,
-                    Txn.amount() == tmpl_amount,
-                    Ed25519Verify(Itob(Txn.first_valid()), Arg(0), tmpl_provider),
-                    Txn.lease() == Sha256(Itob(Txn.first_valid())))
-    
-    close_cond = And(Txn.close_remainder_to() == tmpl_buyer,
-                     Txn.amount() == Int(0),
-                     Txn.first_valid() >= tmpl_timeout)
-    
+    recv_cond = And(
+        Txn.close_remainder_to() == Global.zero_address(),
+        Txn.receiver() == tmpl_provider,
+        Txn.amount() == tmpl_amount,
+        Ed25519Verify(Itob(Txn.first_valid()), Arg(0), tmpl_provider),
+        Txn.lease() == Sha256(Itob(Txn.first_valid())),
+    )
+
+    close_cond = And(
+        Txn.close_remainder_to() == tmpl_buyer,
+        Txn.amount() == Int(0),
+        Txn.first_valid() >= tmpl_timeout,
+    )
+
     program = And(fee_cond, type_cond, Or(recv_cond, close_cond))
 
     return program

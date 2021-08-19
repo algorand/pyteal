@@ -2,6 +2,7 @@ from typing import List
 
 from ..ir import TealBlock
 
+
 def sortBlocks(start: TealBlock) -> List[TealBlock]:
     """Topologically sort the graph which starts with the input TealBlock.
 
@@ -29,5 +30,5 @@ def sortBlocks(start: TealBlock) -> List[TealBlock]:
                     S.insert(0, m)
                 else:
                     S.append(m)
-    
+
     return order

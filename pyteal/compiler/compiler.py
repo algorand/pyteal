@@ -13,11 +13,14 @@ MAX_TEAL_VERSION = 4
 MIN_TEAL_VERSION = 2
 DEFAULT_TEAL_VERSION = MIN_TEAL_VERSION
 
-class CompileOptions:
 
-    def __init__(self, *, mode: Mode = Mode.Signature, version: int = DEFAULT_TEAL_VERSION):
+class CompileOptions:
+    def __init__(
+        self, *, mode: Mode = Mode.Signature, version: int = DEFAULT_TEAL_VERSION
+    ):
         self.mode = mode
         self.version = version
+
 
 def verifyOpsForVersion(teal: List[TealComponent], version: int):
     """Verify that all TEAL operations are allowed in the specified version.
@@ -33,7 +36,12 @@ def verifyOpsForVersion(teal: List[TealComponent], version: int):
         if isinstance(stmt, TealOp):
             op = stmt.getOp()
             if op.min_version > version:
-                raise TealInputError("Op not supported in TEAL version {}: {}. Minimum required version is {}".format(version, op, op.min_version))
+                raise TealInputError(
+                    "Op not supported in TEAL version {}: {}. Minimum required version is {}".format(
+                        version, op, op.min_version
+                    )
+                )
+
 
 def verifyOpsForMode(teal: List[TealComponent], mode: Mode):
     """Verify that all TEAL operations are allowed in mode.
@@ -49,9 +57,18 @@ def verifyOpsForMode(teal: List[TealComponent], mode: Mode):
         if isinstance(stmt, TealOp):
             op = stmt.getOp()
             if not op.mode & mode:
-                raise TealInputError("Op not supported in {} mode: {}".format(mode.name, op))
+                raise TealInputError(
+                    "Op not supported in {} mode: {}".format(mode.name, op)
+                )
 
-def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, assembleConstants: bool = False) -> str:
+
+def compileTeal(
+    ast: Expr,
+    mode: Mode,
+    *,
+    version: int = DEFAULT_TEAL_VERSION,
+    assembleConstants: bool = False
+) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 
     Args:
@@ -74,7 +91,11 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, a
         TealInternalError: if an internal error is encounter during compilation.
     """
     if not (MIN_TEAL_VERSION <= version <= MAX_TEAL_VERSION) or type(version) != int:
-        raise TealInputError("Unsupported TEAL version: {}. Excepted an integer in the range [{}, {}]".format(version, MIN_TEAL_VERSION, MAX_TEAL_VERSION))
+        raise TealInputError(
+            "Unsupported TEAL version: {}. Excepted an integer in the range [{}, {}]".format(
+                version, MIN_TEAL_VERSION, MAX_TEAL_VERSION
+            )
+        )
 
     options = CompileOptions(mode=mode, version=version)
 
@@ -84,10 +105,12 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, a
 
     start = TealBlock.NormalizeBlocks(start)
     start.validateTree()
-    
+
     errors = start.validateSlots()
     if len(errors) > 0:
-        msg = 'Encountered {} error{} during compilation'.format(len(errors), 's' if len(errors) != 1 else '')
+        msg = "Encountered {} error{} during compilation".format(
+            len(errors), "s" if len(errors) != 1 else ""
+        )
         raise TealInternalError(msg) from errors[0]
 
     order = sortBlocks(start)
@@ -103,14 +126,18 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, a
         for slot in stmt.getSlots():
             # If there are two unique slots with same IDs, raise an error
             if slot.id in slotIds and id(slot) not in [id(s) for s in slots]:
-                raise TealInternalError("Slot ID {} has been assigned multiple times".format(slot.id))
+                raise TealInternalError(
+                    "Slot ID {} has been assigned multiple times".format(slot.id)
+                )
             slotIds.add(slot.id)
             slots.add(slot)
-    
+
     if len(slots) > NUM_SLOTS:
         # TODO: identify which slots can be reused
-        raise TealInternalError("Too many slots in use: {}, maximum is {}".format(len(slots), NUM_SLOTS))
-    
+        raise TealInternalError(
+            "Too many slots in use: {}, maximum is {}".format(len(slots), NUM_SLOTS)
+        )
+
     for slot in sorted(slots, key=lambda slot: slot.id):
         # Find next vacant slot that compiler can assign to
         while nextSlotIndex in slotIds:
@@ -122,10 +149,14 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, a
             else:
                 stmt.assignSlot(slot, nextSlotIndex)
                 slotIds.add(nextSlotIndex)
-    
+
     if assembleConstants:
         if version < 3:
-            raise TealInternalError("The minimum TEAL version required to enable assembleConstants is 3. The current version is {}".format(version))
+            raise TealInternalError(
+                "The minimum TEAL version required to enable assembleConstants is 3. The current version is {}".format(
+                    version
+                )
+            )
         teal = createConstantBlocks(teal)
 
     lines = ["#pragma version {}".format(version)]
