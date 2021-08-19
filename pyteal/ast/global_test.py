@@ -112,7 +112,7 @@ def test_global_current_application_id():
     ])
 
     actual, _ = expr.__teal__(teal2Options)
-    
+
     assert actual == expected
 
 def test_global_creator_address():
@@ -124,7 +124,7 @@ def test_global_creator_address():
     ])
 
     actual, _ = expr.__teal__(teal3Options)
-    
+
     assert actual == expected
 
     with pytest.raises(TealInputError):

@@ -61,9 +61,28 @@ def assignScratchSlotsToSubroutines(subroutineMapping: Dict[Optional[SubroutineD
         raise TealInternalError("Too many slots in use: {}, maximum is {}".format(len(allSlots), NUM_SLOTS))
     
     slotAssignments: Dict[ScratchSlot, int] = dict()
+    slotIds: Set[int] = set()
     
-    for index, slot in enumerate(sorted(allSlots, key=lambda slot: slot.id)):
-        slotAssignments[slot] = index
+    for slot in allSlots:
+        if not slot.isReservedSlot:
+            continue
+
+        # If there are two unique slots with same IDs, raise an error
+        if slot.id in slotIds:
+            raise TealInternalError("Slot ID {} has been assigned multiple times".format(slot.id))
+        slotIds.add(slot.id)
+
+    nextSlotIndex = 0
+    for slot in sorted(allSlots, key=lambda slot: slot.id):
+        # Find next vacant slot that compiler can assign to
+        while nextSlotIndex in slotIds:
+            nextSlotIndex += 1
+        
+        if slot.isReservedSlot:
+            # Slot ids under 256 are manually reserved slots
+            slotAssignments[slot] = slot.id
+        else:
+            slotAssignments[slot] = nextSlotIndex
     
     for ops in subroutineMapping.values():
         for stmt in ops:

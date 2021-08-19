@@ -1,6 +1,8 @@
 from typing import TYPE_CHECKING
 
 from ..types import TealType
+from ..config import NUM_SLOTS
+from ..errors import TealInputError
 from .expr import Expr
 
 if TYPE_CHECKING:
@@ -9,12 +11,28 @@ if TYPE_CHECKING:
 class ScratchSlot:
     """Represents the allocation of a scratch space slot."""
 
-    slotId = 0
+    # Unique identifier for the compiler to automatically assign slots
+    # The id field is used by the compiler to map to an actual slot in the source code
+    # Slot ids under 256 are manually reserved slots
+    nextSlotId = NUM_SLOTS 
 
-    def __init__(self):
-        self.id = ScratchSlot.slotId
-        ScratchSlot.slotId += 1
+    def __init__(self, requestedSlotId: int = None):
+        """Initializes a scratch slot with a particular id
 
+        Args:
+            requestedSlotId (optional): A scratch slot id that the compiler must store the value. 
+            This id may be a Python int in the range [0-256).       
+        """
+        if requestedSlotId is None:
+            self.id = ScratchSlot.nextSlotId
+            ScratchSlot.nextSlotId += 1
+            self.isReservedSlot = False
+        else:
+            if requestedSlotId < 0 or requestedSlotId >= NUM_SLOTS:
+                raise TealInputError("Invalid slot ID {}, shoud be in [0, {})".format(requestedSlotId, NUM_SLOTS))
+            self.id = requestedSlotId
+            self.isReservedSlot = True
+        
     def store(self, value: Expr = None) -> Expr:
         """Get an expression to store a value in this slot.
         

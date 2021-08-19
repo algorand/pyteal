@@ -18,7 +18,9 @@ Writing and Reading
 To write to scratch space, first create a :any:`ScratchVar` object and pass in the :any:`TealType`
 of the values that you will store there. It is possible to create a :any:`ScratchVar` that can store
 both integers and byte slices by passing no arguments to the :any:`ScratchVar` constructor, but note
-that no type checking takes places in this situation.
+that no type checking takes places in this situation. It is also possible to manually specify which 
+slot ID the compiler should assign the scratch slot to in the TEAL code. If no slot ID is specified,
+the compiler will assign it to any available slot. 
 
 To write or read values, use the corresponding :any:`ScratchVar.store` or :any:`ScratchVar.load` methods.
 
@@ -26,8 +28,9 @@ For example:
 
 .. code-block:: python
 
-    myvar = ScratchVar(TealType.uint64)
+    myvar = ScratchVar(TealType.uint64) # assign a scratch slot in any available slot
     program = Seq([
         myvar.store(Int(5)),
         Assert(myvar.load() == Int(5))
     ])
+    anotherVar = ScratchVar(TealType.bytes, 4) # assign this scratch slot to slot #4

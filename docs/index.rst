@@ -40,6 +40,7 @@ PyTeal **hasn't been security audited**. Use it at your own risk.
    accessing_transaction_field
    crypto
    scratch
+   loading_group_transaction
    control_structures
    state
    assets

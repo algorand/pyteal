@@ -72,3 +72,17 @@ def test_seq_invalid():
     
     with pytest.raises(TealTypeError):
         Seq([Seq([Pop(Int(1)), Int(2)]), Int(3)])
+
+def test_seq_overloads_equivalence():
+    items = [
+        App.localPut(Int(0), Bytes("key1"), Int(1)),
+        App.localPut(Int(1), Bytes("key2"), Bytes("value2")),
+        Pop(Bytes("end"))
+    ]
+    expr1 = Seq(items)
+    expr2 = Seq(*items)
+
+    expected = expr1.__teal__(options)
+    actual = expr2.__teal__(options)
+
+    assert actual == expected
