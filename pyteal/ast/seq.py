@@ -62,5 +62,8 @@ class Seq(Expr):
         
     def type_of(self):
         return self.args[-1].type_of()
+    
+    def has_return(self):
+        return self.args[-1].has_return()
 
 Seq.__module__ = "pyteal"

@@ -8,6 +8,7 @@ def test_compile_single():
     expected = """
 #pragma version 2
 int 1
+return
 """.strip()
     actual_application = compileTeal(expr, Mode.Application)
     actual_signature = compileTeal(expr, Mode.Signature)
@@ -27,6 +28,7 @@ pop
 int 3
 int 4
 +
+return
 """.strip()
     actual_application = compileTeal(expr, Mode.Application)
     actual_signature = compileTeal(expr, Mode.Signature)
@@ -35,17 +37,18 @@ int 4
     assert actual_application == expected
 
 def test_compile_branch():
-    expr = If(Int(1), Bytes("true"), Bytes("false"))
+    expr = If(Int(1), Int(2), Int(3))
 
     expected = """
 #pragma version 2
 int 1
-bnz l2
-byte "false"
-b l3
-l2:
-byte "true"
-l3:
+bnz main_l2
+int 3
+b main_l3
+main_l2:
+int 2
+main_l3:
+return
 """.strip()
     actual_application = compileTeal(expr, Mode.Application)
     actual_signature = compileTeal(expr, Mode.Signature)
@@ -60,6 +63,7 @@ def test_compile_mode():
 #pragma version 2
 byte "key"
 app_global_get
+return
 """.strip()
     actual_application = compileTeal(expr, Mode.Application)
 
@@ -86,6 +90,7 @@ def test_compile_version_2():
     expected = """
 #pragma version 2
 int 1
+return
 """.strip()
     actual = compileTeal(expr, Mode.Signature, version=2)
     assert actual == expected
@@ -103,6 +108,7 @@ def test_compile_version_3():
     expected = """
 #pragma version 3
 int 1
+return
 """.strip()
     actual = compileTeal(expr, Mode.Signature, version=3)
     assert actual == expected
@@ -113,6 +119,7 @@ def test_compile_version_4():
     expected = """
 #pragma version 4
 int 1
+return
 """.strip()
     actual = compileTeal(expr, Mode.Signature, version=4)
     assert actual == expected
@@ -156,6 +163,7 @@ concat
 byte "test2"
 concat
 ==
+return
 """.strip()
     actualNoAssemble = compileTeal(program, Mode.Application, version=3, assembleConstants=False)
     assert expectedNoAssemble == actualNoAssemble
@@ -176,6 +184,7 @@ concat
 pushbytes 0x7465737432 // "test2"
 concat
 ==
+return
 """.strip()
     actualAssemble = compileTeal(program, Mode.Application, version=3, assembleConstants=True)
     assert expectedAssemble == actualAssemble

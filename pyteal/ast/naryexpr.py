@@ -51,6 +51,9 @@ class NaryExpr(Expr):
 
     def type_of(self):
         return self.outputType
+    
+    def has_return(self):
+        return False
 
 NaryExpr.__module__ = "pyteal"
 

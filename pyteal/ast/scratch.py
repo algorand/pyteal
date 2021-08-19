@@ -74,6 +74,9 @@ class ScratchLoad(Expr):
 
     def type_of(self):
         return self.type
+    
+    def has_return(self):
+        return False
 
 ScratchLoad.__module__ = "pyteal"
 
@@ -101,6 +104,9 @@ class ScratchStore(Expr):
 
     def type_of(self):
         return TealType.none
+    
+    def has_return(self):
+        return False
 
 ScratchStore.__module__ = "pyteal"
 
@@ -130,5 +136,8 @@ class ScratchStackStore(Expr):
 
     def type_of(self):
         return TealType.none
+    
+    def has_return(self):
+        return False
 
 ScratchStackStore.__module__ = "pyteal"

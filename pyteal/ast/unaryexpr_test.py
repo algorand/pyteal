@@ -289,8 +289,8 @@ def test_return():
     assert actual == expected
 
 def test_return_invalid():
-    with pytest.raises(TealTypeError):
-        Return(Txn.receiver())
+    with pytest.raises(TealCompileError):
+        Return(Txn.receiver()).__teal__(teal4Options)
 
 def test_balance():
     arg = Int(0)

@@ -76,6 +76,11 @@ class If(Expr):
         if self.thenBranch is None:
             raise TealCompileError("If expression must have a thenBranch", self) 
         return self.thenBranch.type_of()
+    
+    def has_return(self):
+        if self.elseBranch is None:
+            return False
+        return self.thenBranch.has_return() and self.elseBranch.has_return()
 
     def Then(self, thenBranch: Expr):
         if not self.alternateSyntaxFlag:

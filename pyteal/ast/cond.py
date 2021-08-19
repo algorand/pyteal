@@ -88,5 +88,8 @@ class Cond(Expr):
         
     def type_of(self):
         return self.value_type
+    
+    def has_return(self):
+        return all(pred.has_return() for (_, pred) in self.args)
 
 Cond.__module__ = "pyteal"

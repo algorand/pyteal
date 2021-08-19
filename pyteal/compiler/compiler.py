@@ -1,12 +1,14 @@
-from typing import List
+from typing import List, Set, Dict, Optional, cast
 
-from ..ast import Expr
+from ..types import TealType
+from ..ast import Expr, Return, Seq, ScratchSlot, SubroutineDefinition, SubroutineDeclaration
 from ..ir import Mode, TealComponent, TealOp, TealBlock
 from ..errors import TealInputError, TealInternalError
-from ..config import NUM_SLOTS
 
 from .sort import sortBlocks
-from .flatten import flattenBlocks
+from .flatten import flattenBlocks, flattenSubroutines
+from .scratchslots import assignScratchSlotsToSubroutines
+from .subroutines import findRecursionPoints, spillLocalSlotsDuringRecursion, resolveSubroutines
 from .constants import createConstantBlocks
 
 MAX_TEAL_VERSION = 4
@@ -15,9 +17,10 @@ DEFAULT_TEAL_VERSION = MIN_TEAL_VERSION
 
 class CompileOptions:
 
-    def __init__(self, *, mode: Mode = Mode.Signature, version: int = DEFAULT_TEAL_VERSION):
+    def __init__(self, *, mode: Mode = Mode.Signature, version: int = DEFAULT_TEAL_VERSION, currentSubroutine: SubroutineDefinition = None):
         self.mode = mode
         self.version = version
+        self.currentSubroutine = currentSubroutine
 
 def verifyOpsForVersion(teal: List[TealComponent], version: int):
     """Verify that all TEAL operations are allowed in the specified version.
@@ -51,6 +54,49 @@ def verifyOpsForMode(teal: List[TealComponent], mode: Mode):
             if not op.mode & mode:
                 raise TealInputError("Op not supported in {} mode: {}".format(mode.name, op))
 
+def compileSubroutine(ast: Expr, options: CompileOptions, subroutineMapping: Dict[Optional[SubroutineDefinition], List[TealComponent]], subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]]) -> None:
+    currentSubroutine = cast(SubroutineDeclaration, ast).subroutine if isinstance(ast, SubroutineDeclaration) else None
+
+    if not ast.has_return():
+        if ast.type_of() == TealType.none:
+            ast = Seq([ast, Return()])
+        else:
+            ast = Return(ast)
+
+    options.currentSubroutine = currentSubroutine
+    start, _ = ast.__teal__(options)
+    start.addIncoming()
+    start.validateTree()
+
+    start = TealBlock.NormalizeBlocks(start)
+    start.validateTree()
+    
+    # TODO: this probably needs to get modified since scratch slots may span multiple subroutines
+    # errors = start.validateSlots()
+    # if len(errors) > 0:
+    #     msg = 'Encountered {} error{} during compilation'.format(len(errors), 's' if len(errors) != 1 else '')
+    #     raise TealInternalError(msg) from errors[0]
+
+    order = sortBlocks(start)
+    teal = flattenBlocks(order)
+
+    verifyOpsForVersion(teal, options.version)
+    verifyOpsForMode(teal, options.mode)
+
+    subroutineMapping[currentSubroutine] = teal
+
+    referencedSubroutines: Set[SubroutineDefinition] = set()
+    for stmt in teal:
+        for subroutine in stmt.getSubroutines():
+            referencedSubroutines.add(subroutine)
+    
+    if currentSubroutine is not None:
+        subroutineGraph[currentSubroutine] = referencedSubroutines
+
+    newSubroutines = referencedSubroutines - subroutineMapping.keys()
+    for subroutine in sorted(newSubroutines, key=lambda subroutine: subroutine.id):
+        compileSubroutine(subroutine.getDeclaration(), options, subroutineMapping, subroutineGraph)
+
 def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, assembleConstants: bool = False) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 
@@ -78,37 +124,18 @@ def compileTeal(ast: Expr, mode: Mode, *, version: int = DEFAULT_TEAL_VERSION, a
 
     options = CompileOptions(mode=mode, version=version)
 
-    start, _ = ast.__teal__(options)
-    start.addIncoming()
-    start.validateTree()
+    subroutineMapping: Dict[Optional[SubroutineDefinition], List[TealComponent]] = dict()
+    subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
+    compileSubroutine(ast, options, subroutineMapping, subroutineGraph)
 
-    start = TealBlock.NormalizeBlocks(start)
-    start.validateTree()
-    
-    errors = start.validateSlots()
-    if len(errors) > 0:
-        msg = 'Encountered {} error{} during compilation'.format(len(errors), 's' if len(errors) != 1 else '')
-        raise TealInternalError(msg) from errors[0]
+    localSlotAssignments = assignScratchSlotsToSubroutines(subroutineMapping)
 
-    order = sortBlocks(start)
-    teal = flattenBlocks(order)
+    recursivePoints = findRecursionPoints(subroutineGraph)
+    spillLocalSlotsDuringRecursion(subroutineMapping, recursivePoints, localSlotAssignments)
 
-    verifyOpsForVersion(teal, version)
-    verifyOpsForMode(teal, mode)
+    subroutineLabels = resolveSubroutines(subroutineMapping)
+    teal = flattenSubroutines(subroutineMapping, subroutineLabels)
 
-    slots = set()
-    for stmt in teal:
-        for slot in stmt.getSlots():
-            slots.add(slot)
-    
-    if len(slots) > NUM_SLOTS:
-        # TODO: identify which slots can be reused
-        raise TealInternalError("Too many slots in use: {}, maximum is {}".format(len(slots), NUM_SLOTS))
-    
-    for index, slot in enumerate(sorted(slots, key=lambda slot: slot.id)):
-        for stmt in teal:
-            stmt.assignSlot(slot, index)
-    
     if assembleConstants:
         if version < 3:
             raise TealInternalError("The minimum TEAL version required to enable assembleConstants is 3. The current version is {}".format(version))

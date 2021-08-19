@@ -28,7 +28,7 @@ class TealBlock(ABC):
     def isTerminal(self) -> bool:
         """Check if this block ends the program."""
         for op in self.ops:
-            if op.getOp() in (Op.return_, Op.err):
+            if op.getOp() in (Op.return_, Op.retsub, Op.err):
                 return True
         return len(self.getOutgoing()) == 0
     
@@ -77,8 +77,6 @@ class TealBlock(ABC):
                 b.addIncoming(self, visited)
     
     def validateSlots(self, slotsInUse: Set['ScratchSlot'] = None, visited: Set[Tuple[int, ...]] = None) -> List[TealCompileError]:
-        import traceback
-
         if visited is None:
             visited = set()
 

@@ -20,7 +20,7 @@ class TealType(Enum):
 
 TealType.__module__ = "pyteal"
 
-def require_type(actual, expected):
+def require_type(actual: TealType, expected: TealType):
     if actual != expected and (expected == TealType.none or actual == TealType.none or (actual != TealType.anytype and expected != TealType.anytype)):
         raise TealTypeError(actual, expected)
 

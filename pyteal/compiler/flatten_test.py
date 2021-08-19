@@ -89,10 +89,10 @@ def test_flatten_branch():
 
     expected = [
         TealOp(None, Op.int, 1),
-        TealOp(None, Op.bnz, "l2"),
+        TealOp(None, Op.bnz, LabelReference("l2")),
         TealOp(None, Op.byte, "\"false\""),
         TealOp(None, Op.return_),
-        TealLabel(None, "l2"),
+        TealLabel(None, LabelReference("l2")),
         TealOp(None, Op.byte, "\"true\""),
         TealOp(None, Op.return_)
     ]
@@ -115,12 +115,12 @@ def test_flatten_branch_converge():
 
     expected = [
         TealOp(None, Op.int, 1),
-        TealOp(None, Op.bnz, "l2"),
+        TealOp(None, Op.bnz, LabelReference("l2")),
         TealOp(None, Op.byte, "\"false\""),
-        TealOp(None, Op.b, "l3"),
-        TealLabel(None, "l2"),
+        TealOp(None, Op.b, LabelReference("l3")),
+        TealLabel(None, LabelReference("l2")),
         TealOp(None, Op.byte, "\"true\""),
-        TealLabel(None, "l3"),
+        TealLabel(None, LabelReference("l3")),
         TealOp(None, Op.return_)
     ]
     actual = flattenBlocks(blocks)
@@ -145,15 +145,15 @@ def test_flatten_multiple_branch():
     
     expected = [
         TealOp(None, Op.int, 1),
-        TealOp(None, Op.bnz, "l2"),
+        TealOp(None, Op.bnz, LabelReference("l2")),
         TealOp(None, Op.byte, "\"false\""),
         TealOp(None, Op.return_),
-        TealLabel(None, "l2"),
+        TealLabel(None, LabelReference("l2")),
         TealOp(None, Op.byte, "\"true\""),
-        TealOp(None, Op.bnz, "l5"),
+        TealOp(None, Op.bnz, LabelReference("l5")),
         TealOp(None, Op.byte, "\"true false\""),
         TealOp(None, Op.err),
-        TealLabel(None, "l5"),
+        TealLabel(None, LabelReference("l5")),
         TealOp(None, Op.byte, "\"true true\""),
         TealOp(None, Op.return_)
     ]
@@ -182,17 +182,17 @@ def test_flatten_multiple_branch_converge():
     
     expected = [
         TealOp(None, Op.int, 1),
-        TealOp(None, Op.bnz, "l2"),
+        TealOp(None, Op.bnz, LabelReference("l2")),
         TealOp(None, Op.byte, "\"false\""),
-        TealOp(None, Op.b, "l6"),
-        TealLabel(None, "l2"),
+        TealOp(None, Op.b, LabelReference("l6")),
+        TealLabel(None, LabelReference("l2")),
         TealOp(None, Op.byte, "\"true\""),
-        TealOp(None, Op.bnz, "l5"),
+        TealOp(None, Op.bnz, LabelReference("l5")),
         TealOp(None, Op.byte, "\"true false\""),
         TealOp(None, Op.err),
-        TealLabel(None, "l5"),
+        TealLabel(None, LabelReference("l5")),
         TealOp(None, Op.byte, "\"true true\""),
-        TealLabel(None, "l6"),
+        TealLabel(None, LabelReference("l6")),
         TealOp(None, Op.return_)
     ]
     actual = flattenBlocks(blocks)

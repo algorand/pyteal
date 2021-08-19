@@ -1,7 +1,8 @@
-from typing import List, DefaultDict, cast
-from collections import defaultdict
+from typing import List, Dict, DefaultDict, Optional, cast
+from collections import defaultdict, OrderedDict
 
-from ..ir import Op, TealOp, TealLabel, TealComponent, TealBlock, TealSimpleBlock, TealConditionalBlock
+from ..ast import SubroutineDefinition
+from ..ir import Op, TealOp, TealLabel, TealComponent, TealBlock, TealSimpleBlock, TealConditionalBlock, LabelReference
 from ..errors import TealInternalError
 
 def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
@@ -13,7 +14,11 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
     codeblocks = []
     references: DefaultDict[int, int] = defaultdict(int)
 
-    indexToLabel = lambda index: "l{}".format(index)
+    labelRefs: Dict[int, LabelReference] = dict()
+    def indexToLabel(index: int) -> LabelReference:
+        if index not in labelRefs:
+            labelRefs[index] = LabelReference("l{}".format(index))
+        return labelRefs[index]
 
     for i, block in enumerate(blocks):
         code = list(block.ops)
@@ -62,3 +67,31 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
         teal += code
 
     return teal
+
+def flattenSubroutines(subroutineMapping: Dict[Optional[SubroutineDefinition], List[TealComponent]], subroutineToLabel: OrderedDict[SubroutineDefinition, str]) -> List[TealComponent]:
+    combinedOps: List[TealComponent] = []
+
+    # By default all branch labels in each subroutine will start from "l0". To
+    # make each subroutine have unique labels, we prefix "main_" to the ones
+    # from the main routine, and "subX_" (the subroutine label) to the
+    # ones from each subroutine
+
+    mainRoutine = subroutineMapping[None]
+    for stmt in mainRoutine:
+        if isinstance(stmt, TealLabel):
+            stmt.getLabelRef().addPrefix("main_")
+    combinedOps += mainRoutine
+
+    for subroutine, label in subroutineToLabel.items():
+        comment = subroutine.name()
+        labelPrefix = label + "_"
+
+        subroutineOps = subroutineMapping[subroutine]
+        for stmt in subroutineOps:
+            if isinstance(stmt, TealLabel):
+                stmt.getLabelRef().addPrefix(labelPrefix)
+
+        combinedOps.append(TealLabel(None, LabelReference(label), comment))
+        combinedOps += subroutineOps
+    
+    return combinedOps
