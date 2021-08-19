@@ -5,4 +5,3 @@ mypy
 pytest
 pytest-timeout
 py-algorand-sdk
-
