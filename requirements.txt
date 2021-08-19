@@ -1,6 +1,8 @@
+black
 ipython
 jupyter
 mypy
 pytest
 pytest-timeout
 py-algorand-sdk
+
