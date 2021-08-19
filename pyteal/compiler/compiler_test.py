@@ -2,6 +2,7 @@ import pytest
 
 from .. import *
 
+
 def test_compile_single():
     expr = Int(1)
 
@@ -14,6 +15,7 @@ int 1
 
     assert actual_application == actual_signature
     assert actual_application == expected
+
 
 def test_compile_sequence():
     expr = Seq([Pop(Int(1)), Pop(Int(2)), Int(3) + Int(4)])
@@ -34,6 +36,7 @@ int 4
     assert actual_application == actual_signature
     assert actual_application == expected
 
+
 def test_compile_branch():
     expr = If(Int(1), Bytes("true"), Bytes("false"))
 
@@ -53,6 +56,7 @@ l3:
     assert actual_application == actual_signature
     assert actual_application == expected
 
+
 def test_compile_mode():
     expr = App.globalGet(Bytes("key"))
 
@@ -68,27 +72,30 @@ app_global_get
     with pytest.raises(TealInputError):
         compileTeal(expr, Mode.Signature)
 
+
 def test_compile_version_invalid():
     expr = Int(1)
 
     with pytest.raises(TealInputError):
-        compileTeal(expr, Mode.Signature, version=1) # too small
+        compileTeal(expr, Mode.Signature, version=1)  # too small
 
     with pytest.raises(TealInputError):
-        compileTeal(expr, Mode.Signature, version=5) # too large
-    
+        compileTeal(expr, Mode.Signature, version=5)  # too large
+
     with pytest.raises(TealInputError):
-        compileTeal(expr, Mode.Signature, version=2.0) # decimal
+        compileTeal(expr, Mode.Signature, version=2.0)  # decimal
+
 
 def test_compile_version_2():
     expr = Int(1)
-    
+
     expected = """
 #pragma version 2
 int 1
 """.strip()
     actual = compileTeal(expr, Mode.Signature, version=2)
     assert actual == expected
+
 
 def test_compile_version_default():
     expr = Int(1)
@@ -97,9 +104,10 @@ def test_compile_version_default():
     actual_version_2 = compileTeal(expr, Mode.Signature, version=2)
     assert actual_default == actual_version_2
 
+
 def test_compile_version_3():
     expr = Int(1)
-    
+
     expected = """
 #pragma version 3
 int 1
@@ -107,9 +115,10 @@ int 1
     actual = compileTeal(expr, Mode.Signature, version=3)
     assert actual == expected
 
+
 def test_compile_version_4():
     expr = Int(1)
-    
+
     expected = """
 #pragma version 4
 int 1
@@ -117,16 +126,17 @@ int 1
     actual = compileTeal(expr, Mode.Signature, version=4)
     assert actual == expected
 
+
 def test_slot_load_before_store():
 
     program = AssetHolding.balance(Int(0), Int(0)).value()
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2)
-    
+
     program = AssetHolding.balance(Int(0), Int(0)).hasValue()
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2)
-    
+
     program = App.globalGetEx(Int(0), Bytes("key")).value()
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2)
@@ -134,22 +144,25 @@ def test_slot_load_before_store():
     program = App.globalGetEx(Int(0), Bytes("key")).hasValue()
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2)
-    
+
     program = ScratchVar().load()
     with pytest.raises(TealInternalError):
         compileTeal(program, Mode.Application, version=2)
 
+
 def test_assign_scratch_slots():
-    myScratch       = ScratchVar(TealType.uint64)
-    otherScratch    = ScratchVar(TealType.uint64, 1)
-    anotherScratch  = ScratchVar(TealType.uint64, 0)
-    lastScratch     = ScratchVar(TealType.uint64)
-    prog            = Seq([
-                        myScratch.store(Int(5)),      # Slot 2
-                        otherScratch.store(Int(0)),   # Slot 1
-                        anotherScratch.store(Int(7)), # Slot 0
-                        lastScratch.store(Int(9)),    # Slot 3
-                      ])
+    myScratch = ScratchVar(TealType.uint64)
+    otherScratch = ScratchVar(TealType.uint64, 1)
+    anotherScratch = ScratchVar(TealType.uint64, 0)
+    lastScratch = ScratchVar(TealType.uint64)
+    prog = Seq(
+        [
+            myScratch.store(Int(5)),  # Slot 2
+            otherScratch.store(Int(0)),  # Slot 1
+            anotherScratch.store(Int(7)),  # Slot 0
+            lastScratch.store(Int(9)),  # Slot 3
+        ]
+    )
 
     expected = """
 #pragma version 4
@@ -162,21 +175,22 @@ store 0
 int 9
 store 3
 """.strip()
-    actual = compileTeal(prog, mode=Mode.Signature, version=4) 
+    actual = compileTeal(prog, mode=Mode.Signature, version=4)
     assert actual == expected
 
+
 def test_scratchvar_double_assign_invalid():
-    myvar    = ScratchVar(TealType.uint64, 10)
+    myvar = ScratchVar(TealType.uint64, 10)
     otherVar = ScratchVar(TealType.uint64, 10)
-    prog  = Seq([
-                myvar.store(Int(5)),
-                otherVar.store(Int(0))
-            ])
+    prog = Seq([myvar.store(Int(5)), otherVar.store(Int(0))])
     with pytest.raises(TealInternalError):
-        compileTeal(prog, mode=Mode.Signature, version=4) 
+        compileTeal(prog, mode=Mode.Signature, version=4)
+
 
 def test_assembleConstants():
-    program = Itob(Int(1) + Int(1) + Tmpl.Int("TMPL_VAR")) == Concat(Bytes("test"), Bytes("test"), Bytes("test2"))
+    program = Itob(Int(1) + Int(1) + Tmpl.Int("TMPL_VAR")) == Concat(
+        Bytes("test"), Bytes("test"), Bytes("test2")
+    )
 
     expectedNoAssemble = """
 #pragma version 3
@@ -193,7 +207,9 @@ byte "test2"
 concat
 ==
 """.strip()
-    actualNoAssemble = compileTeal(program, Mode.Application, version=3, assembleConstants=False)
+    actualNoAssemble = compileTeal(
+        program, Mode.Application, version=3, assembleConstants=False
+    )
     assert expectedNoAssemble == actualNoAssemble
 
     expectedAssemble = """
@@ -213,7 +229,9 @@ pushbytes 0x7465737432 // "test2"
 concat
 ==
 """.strip()
-    actualAssemble = compileTeal(program, Mode.Application, version=3, assembleConstants=True)
+    actualAssemble = compileTeal(
+        program, Mode.Application, version=3, assembleConstants=True
+    )
     assert expectedAssemble == actualAssemble
 
     with pytest.raises(TealInternalError):
