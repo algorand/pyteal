@@ -83,6 +83,7 @@ def assignScratchSlotsToSubroutines(subroutineMapping: Dict[Optional[SubroutineD
             slotAssignments[slot] = slot.id
         else:
             slotAssignments[slot] = nextSlotIndex
+            slotIds.add(nextSlotIndex)
     
     for ops in subroutineMapping.values():
         for stmt in ops:

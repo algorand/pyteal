@@ -156,6 +156,7 @@ def test_assign_scratch_slots():
                         otherScratch.store(Int(0)),   # Slot 1
                         anotherScratch.store(Int(7)), # Slot 0
                         lastScratch.store(Int(9)),    # Slot 3
+                        Approve(),
                       ])
 
     expected = """
@@ -168,6 +169,8 @@ int 7
 store 0
 int 9
 store 3
+int 1
+return
 """.strip()
     actual = compileTeal(prog, mode=Mode.Signature, version=4) 
     assert actual == expected
@@ -177,7 +180,8 @@ def test_scratchvar_double_assign_invalid():
     otherVar = ScratchVar(TealType.uint64, 10)
     prog  = Seq([
                 myvar.store(Int(5)),
-                otherVar.store(Int(0))
+                otherVar.store(Int(0)),
+                Approve()
             ])
     with pytest.raises(TealInternalError):
         compileTeal(prog, mode=Mode.Signature, version=4) 

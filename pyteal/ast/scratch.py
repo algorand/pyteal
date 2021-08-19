@@ -57,11 +57,6 @@ class ScratchSlot:
     def __str__(self):
         return "slot#{}".format(self.id)
     
-    def __eq__(self, other):
-        if isinstance(other, ScratchSlot):
-            return self.id == other.id
-        return False
-    
     def __hash__(self):
         return hash(self.id)
 
