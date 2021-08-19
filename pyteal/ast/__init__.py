@@ -23,10 +23,62 @@ from .tmpl import Tmpl
 from .nonce import Nonce
 
 # unary ops
-from .unaryexpr import UnaryExpr, Btoi, Itob, Len, BitLen, Sha256, Sha512_256, Keccak256, Not, BitwiseNot, Sqrt, Pop, Balance, MinBalance, BytesNot, BytesZero
+from .unaryexpr import (
+    UnaryExpr,
+    Btoi,
+    Itob,
+    Len,
+    BitLen,
+    Sha256,
+    Sha512_256,
+    Keccak256,
+    Not,
+    BitwiseNot,
+    Sqrt,
+    Pop,
+    Balance,
+    MinBalance,
+    BytesNot,
+    BytesZero,
+)
 
 # binary ops
-from .binaryexpr import BinaryExpr, Add, Minus, Mul, Div, Mod, Exp, BitwiseAnd, BitwiseOr, BitwiseXor, ShiftLeft, ShiftRight, Eq, Neq, Lt, Le, Gt, Ge, GetBit, GetByte, BytesAdd, BytesMinus, BytesDiv, BytesMul, BytesMod, BytesAnd, BytesOr, BytesXor, BytesEq, BytesNeq, BytesLt, BytesLe, BytesGt, BytesGe
+from .binaryexpr import (
+    BinaryExpr,
+    Add,
+    Minus,
+    Mul,
+    Div,
+    Mod,
+    Exp,
+    BitwiseAnd,
+    BitwiseOr,
+    BitwiseXor,
+    ShiftLeft,
+    ShiftRight,
+    Eq,
+    Neq,
+    Lt,
+    Le,
+    Gt,
+    Ge,
+    GetBit,
+    GetByte,
+    BytesAdd,
+    BytesMinus,
+    BytesDiv,
+    BytesMul,
+    BytesMod,
+    BytesAnd,
+    BytesOr,
+    BytesXor,
+    BytesEq,
+    BytesNeq,
+    BytesLt,
+    BytesLe,
+    BytesGt,
+    BytesGe,
+)
 
 # ternary ops
 from .ternaryexpr import Ed25519Verify, Substring, SetBit, SetByte
@@ -41,7 +93,12 @@ from .seq import Seq
 from .assert_ import Assert
 from .err import Err
 from .return_ import Return, Approve, Reject
-from .subroutine import Subroutine, SubroutineDefinition, SubroutineDeclaration, SubroutineCall
+from .subroutine import (
+    Subroutine,
+    SubroutineDefinition,
+    SubroutineDeclaration,
+    SubroutineCall,
+)
 
 # misc
 from .scratch import ScratchSlot, ScratchLoad, ScratchStore, ScratchStackStore
@@ -143,15 +200,15 @@ __all__ = [
     "BytesMinus",
     "BytesDiv",
     "BytesMul",
-    "BytesMod", 
-    "BytesAnd", 
-    "BytesOr", 
-    "BytesXor", 
-    "BytesEq", 
-    "BytesNeq", 
-    "BytesLt", 
-    "BytesLe", 
-    "BytesGt", 
+    "BytesMod",
+    "BytesAnd",
+    "BytesOr",
+    "BytesXor",
+    "BytesEq",
+    "BytesNeq",
+    "BytesLt",
+    "BytesLe",
+    "BytesGt",
     "BytesGe",
     "BytesNot",
     "BytesZero",

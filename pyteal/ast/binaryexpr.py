@@ -7,12 +7,24 @@ from .expr import Expr
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
+
 class BinaryExpr(Expr):
     """An expression with two arguments."""
 
-    def __init__(self, op: Op, inputType: Union[TealType, Tuple[TealType, TealType]], outputType: TealType, argLeft: Expr, argRight: Expr) -> None:
+    def __init__(
+        self,
+        op: Op,
+        inputType: Union[TealType, Tuple[TealType, TealType]],
+        outputType: TealType,
+        argLeft: Expr,
+        argRight: Expr,
+    ) -> None:
         super().__init__()
-        leftType, rightType = cast(Tuple[TealType, TealType], inputType) if type(inputType) == tuple else (cast(TealType, inputType), cast(TealType, inputType))
+        leftType, rightType = (
+            cast(Tuple[TealType, TealType], inputType)
+            if type(inputType) == tuple
+            else (cast(TealType, inputType), cast(TealType, inputType))
+        )
         require_type(argLeft.type_of(), leftType)
         require_type(argRight.type_of(), rightType)
 
@@ -21,23 +33,27 @@ class BinaryExpr(Expr):
         self.argLeft = argLeft
         self.argRight = argRight
 
-    def __teal__(self, options: 'CompileOptions'):
-        return TealBlock.FromOp(options, TealOp(self, self.op), self.argLeft, self.argRight)
-    
+    def __teal__(self, options: "CompileOptions"):
+        return TealBlock.FromOp(
+            options, TealOp(self, self.op), self.argLeft, self.argRight
+        )
+
     def __str__(self):
         return "({} {} {})".format(self.op, self.argLeft, self.argRight)
-    
+
     def type_of(self):
         return self.outputType
-    
+
     def has_return(self):
         return False
 
+
 BinaryExpr.__module__ = "pyteal"
+
 
 def Add(left: Expr, right: Expr) -> BinaryExpr:
     """Add two numbers.
-    
+
     Produces left + right.
 
     Args:
@@ -46,9 +62,10 @@ def Add(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.add, TealType.uint64, TealType.uint64, left, right)
 
+
 def Minus(left: Expr, right: Expr) -> BinaryExpr:
     """Subtract two numbers.
-    
+
     Produces left - right.
 
     Args:
@@ -57,9 +74,10 @@ def Minus(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.minus, TealType.uint64, TealType.uint64, left, right)
 
+
 def Mul(left: Expr, right: Expr) -> BinaryExpr:
     """Multiply two numbers.
-    
+
     Produces left * right.
 
     Args:
@@ -68,9 +86,10 @@ def Mul(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.mul, TealType.uint64, TealType.uint64, left, right)
 
+
 def Div(left: Expr, right: Expr) -> BinaryExpr:
     """Divide two numbers.
-    
+
     Produces left / right.
 
     Args:
@@ -79,9 +98,10 @@ def Div(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.div, TealType.uint64, TealType.uint64, left, right)
 
+
 def Mod(left: Expr, right: Expr) -> BinaryExpr:
     """Modulo expression.
-    
+
     Produces left % right.
 
     Args:
@@ -90,9 +110,10 @@ def Mod(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.mod, TealType.uint64, TealType.uint64, left, right)
 
+
 def Exp(a: Expr, b: Expr) -> BinaryExpr:
     """Exponential expression.
-    
+
     Produces a ** b.
 
     Requires TEAL version 4 or higher.
@@ -102,6 +123,7 @@ def Exp(a: Expr, b: Expr) -> BinaryExpr:
         b: Must evaluate to uint64.
     """
     return BinaryExpr(Op.exp, TealType.uint64, TealType.uint64, a, b)
+
 
 def BitwiseAnd(left: Expr, right: Expr) -> BinaryExpr:
     """Bitwise and expression.
@@ -114,6 +136,7 @@ def BitwiseAnd(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.bitwise_and, TealType.uint64, TealType.uint64, left, right)
 
+
 def BitwiseOr(left: Expr, right: Expr) -> BinaryExpr:
     """Bitwise or expression.
 
@@ -125,6 +148,7 @@ def BitwiseOr(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.bitwise_or, TealType.uint64, TealType.uint64, left, right)
 
+
 def BitwiseXor(left: Expr, right: Expr) -> BinaryExpr:
     """Bitwise xor expression.
 
@@ -135,6 +159,7 @@ def BitwiseXor(left: Expr, right: Expr) -> BinaryExpr:
         right: Must evaluate to uint64.
     """
     return BinaryExpr(Op.bitwise_xor, TealType.uint64, TealType.uint64, left, right)
+
 
 def ShiftLeft(a: Expr, b: Expr) -> BinaryExpr:
     """Bitwise left shift expression.
@@ -149,6 +174,7 @@ def ShiftLeft(a: Expr, b: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.shl, TealType.uint64, TealType.uint64, a, b)
 
+
 def ShiftRight(a: Expr, b: Expr) -> BinaryExpr:
     """Bitwise right shift expression.
 
@@ -162,9 +188,10 @@ def ShiftRight(a: Expr, b: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.shr, TealType.uint64, TealType.uint64, a, b)
 
+
 def Eq(left: Expr, right: Expr) -> BinaryExpr:
     """Equality expression.
-    
+
     Checks if left == right.
 
     Args:
@@ -173,9 +200,10 @@ def Eq(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.eq, right.type_of(), TealType.uint64, left, right)
 
+
 def Neq(left: Expr, right: Expr) -> BinaryExpr:
     """Difference expression.
-    
+
     Checks if left != right.
 
     Args:
@@ -184,9 +212,10 @@ def Neq(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.neq, right.type_of(), TealType.uint64, left, right)
 
+
 def Lt(left: Expr, right: Expr) -> BinaryExpr:
     """Less than expression.
-    
+
     Checks if left < right.
 
     Args:
@@ -195,9 +224,10 @@ def Lt(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.lt, TealType.uint64, TealType.uint64, left, right)
 
+
 def Le(left: Expr, right: Expr) -> BinaryExpr:
     """Less than or equal to expression.
-    
+
     Checks if left <= right.
 
     Args:
@@ -206,9 +236,10 @@ def Le(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.le, TealType.uint64, TealType.uint64, left, right)
 
+
 def Gt(left: Expr, right: Expr) -> BinaryExpr:
     """Greater than expression.
-    
+
     Checks if left > right.
 
     Args:
@@ -217,16 +248,18 @@ def Gt(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.gt, TealType.uint64, TealType.uint64, left, right)
 
+
 def Ge(left: Expr, right: Expr) -> BinaryExpr:
     """Greater than or equal to expression.
-    
+
     Checks if left >= right.
-    
+
     Args:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
     return BinaryExpr(Op.ge, TealType.uint64, TealType.uint64, left, right)
+
 
 def GetBit(value: Expr, index: Expr) -> BinaryExpr:
     """Get the bit value of an expression at a specific index.
@@ -236,7 +269,7 @@ def GetBit(value: Expr, index: Expr) -> BinaryExpr:
     * For integers, bit indexing begins with low-order bits. For example, :code:`GetBit(Int(16), Int(4))`
       yields 1. Any other valid index would yield a bit value of 0. Any integer less than 64 is a
       valid index.
-    
+
     * For byte strings, bit indexing begins at the first byte. For example, :code:`GetBit(Bytes("base16", "0xf0"), Int(0))`
       yields 1. Any index less than 4 would yield 1, and any valid index 4 or greater would yield 0.
       Any integer less than 8*Len(value) is a valid index.
@@ -247,7 +280,10 @@ def GetBit(value: Expr, index: Expr) -> BinaryExpr:
         value: The value containing bits. Can evaluate to any type.
         index: The index of the bit to extract. Must evaluate to uint64.
     """
-    return BinaryExpr(Op.getbit, (TealType.anytype, TealType.uint64), TealType.uint64, value, index)
+    return BinaryExpr(
+        Op.getbit, (TealType.anytype, TealType.uint64), TealType.uint64, value, index
+    )
+
 
 def GetByte(value: Expr, index: Expr) -> BinaryExpr:
     """Extract a single byte as an integer from a byte string.
@@ -261,11 +297,14 @@ def GetByte(value: Expr, index: Expr) -> BinaryExpr:
         value: The value containing the bytes. Must evaluate to bytes.
         index: The index of the byte to extract. Must evaluate to an integer less than Len(value).
     """
-    return BinaryExpr(Op.getbyte, (TealType.bytes, TealType.uint64), TealType.uint64, value, index)
+    return BinaryExpr(
+        Op.getbyte, (TealType.bytes, TealType.uint64), TealType.uint64, value, index
+    )
+
 
 def BytesAdd(left: Expr, right: Expr) -> BinaryExpr:
     """Add two numbers as bytes.
-    
+
     Produces left + right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
@@ -277,9 +316,10 @@ def BytesAdd(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.b_add, TealType.bytes, TealType.bytes, left, right)
 
+
 def BytesMinus(left: Expr, right: Expr) -> BinaryExpr:
     """Subtract two numbers as bytes.
-    
+
     Produces left - right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
@@ -290,14 +330,15 @@ def BytesMinus(left: Expr, right: Expr) -> BinaryExpr:
         right: Must evaluate to bytes.
     """
     return BinaryExpr(Op.b_minus, TealType.bytes, TealType.bytes, left, right)
-    
+
+
 def BytesDiv(left: Expr, right: Expr) -> BinaryExpr:
     """Divide two numbers as bytes.
-    
+
     Produces left / right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
-    Panics if right is 0. 
+    Panics if right is 0.
 
     Requires TEAL version 4 or higher.
 
@@ -306,10 +347,11 @@ def BytesDiv(left: Expr, right: Expr) -> BinaryExpr:
         right: Must evaluate to bytes.
     """
     return BinaryExpr(Op.b_div, TealType.bytes, TealType.bytes, left, right)
-    
+
+
 def BytesMul(left: Expr, right: Expr) -> BinaryExpr:
     """Multiply two numbers as bytes.
-    
+
     Produces left * right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
@@ -321,13 +363,14 @@ def BytesMul(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.b_mul, TealType.bytes, TealType.bytes, left, right)
 
+
 def BytesMod(left: Expr, right: Expr) -> BinaryExpr:
     """Modulo expression with bytes as arguments.
-    
+
     Produces left % right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
-    Panics if right is 0. 
+    Panics if right is 0.
 
     Requires TEAL version 4 or higher.
 
@@ -336,6 +379,7 @@ def BytesMod(left: Expr, right: Expr) -> BinaryExpr:
         right: Must evaluate to bytes.
     """
     return BinaryExpr(Op.b_mod, TealType.bytes, TealType.bytes, left, right)
+
 
 def BytesAnd(left: Expr, right: Expr) -> BinaryExpr:
     """Bitwise and expression with bytes as arguments.
@@ -352,6 +396,7 @@ def BytesAnd(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.b_and, TealType.bytes, TealType.bytes, left, right)
 
+
 def BytesOr(left: Expr, right: Expr) -> BinaryExpr:
     """Bitwise or expression with bytes as arguments.
 
@@ -366,6 +411,7 @@ def BytesOr(left: Expr, right: Expr) -> BinaryExpr:
         right: Must evaluate to bytes.
     """
     return BinaryExpr(Op.b_or, TealType.bytes, TealType.bytes, left, right)
+
 
 def BytesXor(left: Expr, right: Expr) -> BinaryExpr:
     """Bitwise xor expression with bytes as arguments.
@@ -382,9 +428,10 @@ def BytesXor(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.b_xor, TealType.bytes, TealType.bytes, left, right)
 
+
 def BytesEq(left: Expr, right: Expr) -> BinaryExpr:
     """Equality expression with bytes as arguments.
-    
+
     Checks if left == right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
@@ -396,9 +443,10 @@ def BytesEq(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.b_eq, TealType.bytes, TealType.uint64, left, right)
 
+
 def BytesNeq(left: Expr, right: Expr) -> BinaryExpr:
     """Difference expression with bytes as arguments.
-    
+
     Checks if left != right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
@@ -410,9 +458,10 @@ def BytesNeq(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.b_neq, TealType.bytes, TealType.uint64, left, right)
 
+
 def BytesLt(left: Expr, right: Expr) -> BinaryExpr:
     """Less than expression with bytes as arguments.
-    
+
     Checks if left < right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
@@ -424,9 +473,10 @@ def BytesLt(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.b_lt, TealType.bytes, TealType.uint64, left, right)
 
+
 def BytesLe(left: Expr, right: Expr) -> BinaryExpr:
     """Less than or equal to expression with bytes as arguments.
-    
+
     Checks if left <= right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
@@ -438,9 +488,10 @@ def BytesLe(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.b_le, TealType.bytes, TealType.uint64, left, right)
 
+
 def BytesGt(left: Expr, right: Expr) -> BinaryExpr:
     """Greater than expression with bytes as arguments.
-    
+
     Checks if left > right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
@@ -452,14 +503,15 @@ def BytesGt(left: Expr, right: Expr) -> BinaryExpr:
     """
     return BinaryExpr(Op.b_gt, TealType.bytes, TealType.uint64, left, right)
 
+
 def BytesGe(left: Expr, right: Expr) -> BinaryExpr:
     """Greater than or equal to expression with bytes as arguments.
-    
+
     Checks if left >= right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
     Requires TEAL version 4 or higher.
-    
+
     Args:
         left: Must evaluate to bytes.
         right: Must evaluate to bytes.

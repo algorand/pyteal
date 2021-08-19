@@ -1,10 +1,12 @@
 import pytest
 
 from .. import *
+
 # this is not necessary but mypy complains if it's not included
 from .. import CompileOptions
 
 options = CompileOptions()
+
 
 def test_scratchvar_type():
     myvar_default = ScratchVar()
@@ -33,39 +35,42 @@ def test_scratchvar_type():
 
     with pytest.raises(TealTypeError):
         myvar_bytes.store(Int(0))
-    
+
     with pytest.raises(TealTypeError):
         myvar_bytes.store(Pop(Int(1)))
+
 
 def test_scratchvar_store():
     myvar = ScratchVar(TealType.bytes)
     arg = Bytes("value")
     expr = myvar.store(arg)
 
-    expected = TealSimpleBlock([
-        TealOp(arg, Op.byte, "\"value\""),
-        TealOp(expr, Op.store, myvar.slot),
-    ])
+    expected = TealSimpleBlock(
+        [
+            TealOp(arg, Op.byte, '"value"'),
+            TealOp(expr, Op.store, myvar.slot),
+        ]
+    )
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
 
 def test_scratchvar_load():
     myvar = ScratchVar()
     expr = myvar.load()
 
-    expected = TealSimpleBlock([
-        TealOp(expr, Op.load, myvar.slot)
-    ])
+    expected = TealSimpleBlock([TealOp(expr, Op.load, myvar.slot)])
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
 
 def test_scratchvar_assign_store():
     slotId = 2
@@ -73,10 +78,12 @@ def test_scratchvar_assign_store():
     arg = Int(10)
     expr = myvar.store(arg)
 
-    expected = TealSimpleBlock([
-        TealOp(arg, Op.int, 10),
-        TealOp(expr, Op.store, myvar.slot),
-    ])
+    expected = TealSimpleBlock(
+        [
+            TealOp(arg, Op.int, 10),
+            TealOp(expr, Op.store, myvar.slot),
+        ]
+    )
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
@@ -84,14 +91,13 @@ def test_scratchvar_assign_store():
 
     assert actual == expected
 
+
 def test_scratchvar_assign_load():
     slotId = 5
     myvar = ScratchVar(slotId=slotId)
     expr = myvar.load()
 
-    expected = TealSimpleBlock([
-        TealOp(expr, Op.load, myvar.slot)
-    ])
+    expected = TealSimpleBlock([TealOp(expr, Op.load, myvar.slot)])
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()

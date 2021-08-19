@@ -9,12 +9,13 @@ from .leafexpr import LeafExpr
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
+
 class Bytes(LeafExpr):
     """An expression that represents a byte string."""
-    
+
     def __init__(self, *args: str) -> None:
         """Create a new byte string.
-        
+
         Depending on the encoding, there are different arguments to pass:
 
         For UTF-8 strings:
@@ -46,11 +47,19 @@ class Bytes(LeafExpr):
                     self.byte_str = byte_str
                 valid_base16(self.byte_str)
             else:
-                raise TealInputError("invalid base {}, need to be base32, base64, or base16.".format(self.base))
+                raise TealInputError(
+                    "invalid base {}, need to be base32, base64, or base16.".format(
+                        self.base
+                    )
+                )
         else:
-            raise TealInputError("Only 1 or 2 arguments are expected for Bytes constructor, you provided {}".format(len(args)))
+            raise TealInputError(
+                "Only 1 or 2 arguments are expected for Bytes constructor, you provided {}".format(
+                    len(args)
+                )
+            )
 
-    def __teal__(self, options: 'CompileOptions'):
+    def __teal__(self, options: "CompileOptions"):
         if self.base == "utf8":
             payload = self.byte_str
         elif self.base == "base16":
@@ -65,5 +74,6 @@ class Bytes(LeafExpr):
 
     def type_of(self):
         return TealType.bytes
+
 
 Bytes.__module__ = "pyteal"

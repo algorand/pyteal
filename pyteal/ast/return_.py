@@ -9,6 +9,7 @@ from .int import Int
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
+
 class Return(Expr):
     """Return a value from the current execution context."""
 
@@ -27,28 +28,50 @@ class Return(Expr):
             require_type(value.type_of(), TealType.anytype)
         self.value = value
 
-    def __teal__(self, options: 'CompileOptions'):
+    def __teal__(self, options: "CompileOptions"):
         if options.currentSubroutine is not None:
-            verifyTealVersion(Op.retsub.min_version, options.version, "TEAL version too low to use subroutines")
+            verifyTealVersion(
+                Op.retsub.min_version,
+                options.version,
+                "TEAL version too low to use subroutines",
+            )
             returnType = options.currentSubroutine.returnType
             if returnType == TealType.none:
                 if self.value is not None:
-                    raise TealCompileError("Cannot return a value from a subroutine with return type TealType.none", self)
+                    raise TealCompileError(
+                        "Cannot return a value from a subroutine with return type TealType.none",
+                        self,
+                    )
             else:
                 if self.value is None:
-                    raise TealCompileError("A subroutine declares it returns a value, but no value is being returned", self)
+                    raise TealCompileError(
+                        "A subroutine declares it returns a value, but no value is being returned",
+                        self,
+                    )
                 actualType = self.value.type_of()
                 if not types_match(actualType, returnType):
-                    raise TealCompileError("Incompatible return type from subroutine, expected {} but got {}".format(returnType, actualType), self)
+                    raise TealCompileError(
+                        "Incompatible return type from subroutine, expected {} but got {}".format(
+                            returnType, actualType
+                        ),
+                        self,
+                    )
             op = Op.retsub
         else:
             if self.value is None:
-                raise TealCompileError("Return from main program must have an argument", self)
+                raise TealCompileError(
+                    "Return from main program must have an argument", self
+                )
             actualType = self.value.type_of()
             if not types_match(actualType, TealType.uint64):
-                raise TealCompileError("Incompatible return type from main program, expected {} but got {}".format(TealType.uint64, actualType), self)
+                raise TealCompileError(
+                    "Incompatible return type from main program, expected {} but got {}".format(
+                        TealType.uint64, actualType
+                    ),
+                    self,
+                )
             op = Op.return_
-        
+
         args = []
         if self.value is not None:
             args.append(self.value)
@@ -60,11 +83,13 @@ class Return(Expr):
 
     def type_of(self):
         return TealType.none
-    
+
     def has_return(self):
         return True
 
+
 Return.__module__ = "pyteal"
+
 
 class ExitProgram(Expr):
     """Immediately exit the program with the indicated success value."""
@@ -73,8 +98,8 @@ class ExitProgram(Expr):
         super().__init__()
         require_type(success.type_of(), TealType.uint64)
         self.success = success
-    
-    def __teal__(self, options: 'CompileOptions'):
+
+    def __teal__(self, options: "CompileOptions"):
         return TealBlock.FromOp(options, TealOp(self, Op.return_), self.success)
 
     def __str__(self):
@@ -82,15 +107,18 @@ class ExitProgram(Expr):
 
     def type_of(self):
         return TealType.none
-    
+
     def has_return(self):
         return True
 
+
 ExitProgram.__module__ = "pyteal"
+
 
 def Approve() -> Expr:
     """Immediately exit the program and mark the execution as successful."""
     return ExitProgram(Int(1))
+
 
 def Reject() -> Expr:
     """Immediately exit the program and mark the execution as unsuccessful."""
