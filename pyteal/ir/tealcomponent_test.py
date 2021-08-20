@@ -2,6 +2,7 @@ import pytest
 
 from .. import *
 
+
 def test_EqualityContext():
     expr1 = Int(1)
     expr2 = Int(1)

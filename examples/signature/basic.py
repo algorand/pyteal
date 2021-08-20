@@ -4,9 +4,10 @@ from pyteal import *
 
 """Basic Bank"""
 
+
 def bank_for_account(receiver):
     """Only allow receiver to withdraw funds from this contract account.
-    
+
     Args:
         receiver (str): Base 32 Algorand address of the receiver.
     """
@@ -24,9 +25,12 @@ def bank_for_account(receiver):
         is_correct_receiver,
         no_close_out_addr,
         no_rekey_addr,
-        acceptable_fee
+        acceptable_fee,
     )
 
+
 if __name__ == "__main__":
-    program = bank_for_account("ZZAF5ARA4MEC5PVDOP64JM5O5MQST63Q2KOY2FLYFLXXD3PFSNJJBYAFZM")
+    program = bank_for_account(
+        "ZZAF5ARA4MEC5PVDOP64JM5O5MQST63Q2KOY2FLYFLXXD3PFSNJJBYAFZM"
+    )
     print(compileTeal(program, mode=Mode.Signature, version=3))

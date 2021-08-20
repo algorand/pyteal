@@ -1,15 +1,18 @@
 from typing import NamedTuple
 from enum import Enum, Flag, auto
 
+
 class Mode(Flag):
     """Enum of program running modes."""
-    
+
     Signature = auto()
     Application = auto()
 
+
 Mode.__module__ = "pyteal"
 
-OpType = NamedTuple('OpType', [('value', str), ('mode', Mode), ('min_version', int)])
+OpType = NamedTuple("OpType", [("value", str), ("mode", Mode), ("min_version", int)])
+
 
 class Op(Enum):
     """Enum of program opcodes."""
@@ -27,6 +30,7 @@ class Op(Enum):
         """Get the minimum version where this op is available."""
         return self.value.min_version
 
+    # fmt: off
     err               = OpType("err",               Mode.Signature | Mode.Application, 2)
     sha256            = OpType("sha256",            Mode.Signature | Mode.Application, 2)
     keccak256         = OpType("keccak256",         Mode.Signature | Mode.Application, 2)
@@ -142,5 +146,8 @@ class Op(Enum):
     gaids             = OpType("gaids",             Mode.Application,                  4)
     callsub           = OpType("callsub",           Mode.Signature | Mode.Application, 4)
     retsub            = OpType("retsub",            Mode.Signature | Mode.Application, 4)
+
+    # fmt: on
+
 
 Op.__module__ = "pyteal"

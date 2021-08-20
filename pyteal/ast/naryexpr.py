@@ -8,25 +8,30 @@ from .expr import Expr
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
+
 class NaryExpr(Expr):
     """N-ary expression base class.
-    
+
     This type of expression takes an arbitrary number of arguments.
     """
 
-    def __init__(self, op: Op, inputType: TealType, outputType: TealType, args: Sequence[Expr]):
+    def __init__(
+        self, op: Op, inputType: TealType, outputType: TealType, args: Sequence[Expr]
+    ):
         super().__init__()
         if len(args) < 2:
             raise TealInputError("NaryExpr requires at least two children.")
         for arg in args:
             if not isinstance(arg, Expr):
-                raise TealInputError("Argument is not a pyteal expression: {}".format(arg))
+                raise TealInputError(
+                    "Argument is not a pyteal expression: {}".format(arg)
+                )
             require_type(arg.type_of(), inputType)
         self.op = op
         self.outputType = outputType
         self.args = args
 
-    def __teal__(self, options: 'CompileOptions'):
+    def __teal__(self, options: "CompileOptions"):
         start = None
         end = None
         for i, arg in enumerate(self.args):
@@ -43,7 +48,7 @@ class NaryExpr(Expr):
         return start, end
 
     def __str__(self):
-        ret_str = "(" + str(self.op),
+        ret_str = ("(" + str(self.op),)
         for a in self.args:
             ret_str += " " + a.__str__()
         ret_str += ")"
@@ -52,7 +57,9 @@ class NaryExpr(Expr):
     def type_of(self):
         return self.outputType
 
+
 NaryExpr.__module__ = "pyteal"
+
 
 def And(*args: Expr) -> NaryExpr:
     """Logical and expression.
@@ -67,6 +74,7 @@ def And(*args: Expr) -> NaryExpr:
     """
     return NaryExpr(Op.logic_and, TealType.uint64, TealType.uint64, args)
 
+
 def Or(*args: Expr) -> NaryExpr:
     """Logical or expression.
 
@@ -77,9 +85,10 @@ def Or(*args: Expr) -> NaryExpr:
     """
     return NaryExpr(Op.logic_or, TealType.uint64, TealType.uint64, args)
 
+
 def Concat(*args: Expr) -> NaryExpr:
     """Concatenate byte strings.
-    
+
     Produces a new byte string consisting of the contents of each of the passed in byte strings
     joined together.
 

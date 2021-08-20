@@ -5,7 +5,7 @@ import uuid, params, base64
 from algosdk import algod, transaction, account, mnemonic
 from periodic_payment import periodic_payment, tmpl_amt
 
-#--------- compile & send transaction using Goal and Python SDK ----------
+# --------- compile & send transaction using Goal and Python SDK ----------
 
 teal_source = compileTeal(periodic_payment(), mode=Mode.Signature, version=2)
 
@@ -15,8 +15,7 @@ with open(teal_file, "w+") as f:
     f.write(teal_source)
 lsig_fname = str(uuid.uuid4()) + ".tealc"
 
-stdout, stderr = execute(["goal", "clerk", "compile", "-o", lsig_fname,
-                          teal_file])
+stdout, stderr = execute(["goal", "clerk", "compile", "-o", lsig_fname, teal_file])
 
 if stderr != "":
     print(stderr)
@@ -32,7 +31,7 @@ lsig = transaction.LogicSig(teal_bytes)
 # create algod clients
 acl = algod.AlgodClient(params.algod_token, params.algod_address)
 
-#Recover the account that is wanting to delegate signature
+# Recover the account that is wanting to delegate signature
 passphrase = "patrol crawl rule faculty enemy sick reveal embody trumpet win shy zero ill draw swim excuse tongue under exact baby moral kite spring absent double"
 sk = mnemonic.to_private_key(passphrase)
 addr = account.address_from_private_key(sk)
@@ -54,7 +53,9 @@ receiver = "ZZAF5ARA4MEC5PVDOP64JM5O5MQST63Q2KOY2FLYFLXXD3PFSNJJBYAFZM"
 lease = base64.b64decode("y9OJ5MRLCHQj8GqbikAUKMBI7hom+SOj8dlopNdNHXI=")
 
 # create a transaction
-txn = transaction.PaymentTxn(addr, fee, startRound, endRound, gh, receiver, amount, flat_fee=True, lease=lease)
+txn = transaction.PaymentTxn(
+    addr, fee, startRound, endRound, gh, receiver, amount, flat_fee=True, lease=lease
+)
 
 # Create the LogicSigTransaction with contract account LogicSig
 lstx = transaction.LogicSigTransaction(txn, lsig)
@@ -65,10 +66,10 @@ transaction.write_to_file(txns, "p_pay.stxn")
 
 # send raw LogicSigTransaction to network
 txid = acl.send_transaction(lstx)
-print("Transaction ID: " + txid )
+print("Transaction ID: " + txid)
 # except Exception as e:
-#     print(e)    
+#     print(e)
 
 # send raw LogicSigTransaction again to network
 txid = acl.send_transaction(lstx)
-print("Transaction ID: " + txid )
+print("Transaction ID: " + txid)

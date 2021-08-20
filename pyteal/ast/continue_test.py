@@ -1,10 +1,12 @@
 import pytest
 
 from .. import *
+
 # this is not necessary but mypy complains if it's not included
 from .. import CompileOptions
 
 options = CompileOptions()
+
 
 def test_continue_fail():
     with pytest.raises(TealCompileError):
@@ -28,7 +30,7 @@ def test_continue():
 
     options.currentLoop = expr
     expected, condEnd = items[0].__teal__(options)
-    do, doEnd =items[1].__teal__(options)
+    do, doEnd = items[1].__teal__(options)
     expectedBranch = TealConditionalBlock([])
     end = TealSimpleBlock([])
     expectedBranch.setTrueBlock(do)
@@ -37,4 +39,3 @@ def test_continue():
     doEnd.setNextBlock(expected)
 
     actual, _ = expr.__teal__(options)
-

@@ -3,39 +3,42 @@ from typing import List, Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from .ast import Expr
 
-class TealInternalError(Exception):
 
+class TealInternalError(Exception):
     def __init__(self, message: str) -> None:
         self.message = message
 
     def __str__(self):
         return self.message
 
+
 TealInternalError.__module__ = "pyteal"
 
-class TealTypeError(Exception):
 
+class TealTypeError(Exception):
     def __init__(self, actual, expected) -> None:
         self.message = "{} while expected {} ".format(actual, expected)
 
     def __str__(self) -> str:
         return self.message
 
+
 TealTypeError.__module__ = "pyteal"
 
-class TealInputError(Exception):
 
+class TealInputError(Exception):
     def __init__(self, msg: str) -> None:
         self.message = msg
 
     def __str__(self) -> str:
         return self.message
 
+
 TealInputError.__module__ = "pyteal"
 
-class TealCompileError(Exception):
 
-    def __init__(self, msg: str, sourceExpr: Optional['Expr']) -> None:
+class TealCompileError(Exception):
+    def __init__(self, msg: str, sourceExpr: Optional["Expr"]) -> None:
         self.msg = msg
         self.sourceExpr = sourceExpr
 
@@ -43,19 +46,32 @@ class TealCompileError(Exception):
         if self.sourceExpr is None:
             return self.msg
         trace = self.sourceExpr.getDefinitionTrace()
-        return self.msg + "\nTraceback of origin expression (most recent call last):\n" + "".join(trace)
-    
+        return (
+            self.msg
+            + "\nTraceback of origin expression (most recent call last):\n"
+            + "".join(trace)
+        )
+
     def __eq__(self, other) -> bool:
         if not isinstance(other, TealCompileError):
             return False
         return self.msg == other.msg and self.sourceExpr is other.sourceExpr
 
+
 TealCompileError.__module__ = "pyteal"
+
 
 def verifyTealVersion(minVersion: int, version: int, msg: str):
     if minVersion > version:
-        msg = "{}. Minimum version needed is {}, but current version being compiled is {}".format(msg, minVersion, version)
+        msg = "{}. Minimum version needed is {}, but current version being compiled is {}".format(
+            msg, minVersion, version
+        )
         raise TealInputError(msg)
 
+
 def verifyFieldVersion(fieldName: str, fieldMinVersion: int, version: int):
-    verifyTealVersion(fieldMinVersion, version, "TEAL version too low to use field {}".format(fieldName))
+    verifyTealVersion(
+        fieldMinVersion,
+        version,
+        "TEAL version too low to use field {}".format(fieldName),
+    )

@@ -1,6 +1,8 @@
+black==21.7b0
 ipython
 jupyter
 mypy
 pytest
 pytest-timeout
 py-algorand-sdk
+it

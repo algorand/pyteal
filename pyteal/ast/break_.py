@@ -14,18 +14,17 @@ class Break(Expr):
     """A break expression"""
 
     def __init__(self) -> None:
-        """ Create a new break expression.
+        """Create a new break expression.
 
         This operation is only permitted in a loop.
 
         """
         super().__init__()
 
-
     def __str__(self) -> str:
         return "break"
 
-    def __teal__(self, options: 'CompileOptions'):
+    def __teal__(self, options: "CompileOptions"):
         if options.currentLoop is None:
             raise TealCompileError("break is only allowed in a loop", self)
 

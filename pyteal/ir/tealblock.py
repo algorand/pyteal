@@ -3,10 +3,12 @@ from typing import Optional, List, Tuple, Set, Iterator, cast, TYPE_CHECKING
 
 from .tealop import TealOp, Op
 from ..errors import TealCompileError
+
 if TYPE_CHECKING:
     from ..ast import Expr, ScratchSlot
     from ..compiler import CompileOptions
     from .tealsimpleblock import TealSimpleBlock
+
 
 class TealBlock(ABC):
     """Represents a basic block of TealComponents in a graph."""
@@ -14,25 +16,27 @@ class TealBlock(ABC):
     def __init__(self, ops: List[TealOp]) -> None:
         self.ops = ops
         self.incoming: List[TealBlock] = []
-    
+
     @abstractmethod
-    def getOutgoing(self) -> List['TealBlock']:
+    def getOutgoing(self) -> List["TealBlock"]:
         """Get this block's children blocks, if any."""
         pass
 
     @abstractmethod
-    def replaceOutgoing(self, oldBlock: 'TealBlock', newBlock: 'TealBlock') -> None:
+    def replaceOutgoing(self, oldBlock: "TealBlock", newBlock: "TealBlock") -> None:
         """Replace one of this block's child blocks."""
         pass
-    
+
     def isTerminal(self) -> bool:
         """Check if this block ends the program."""
         for op in self.ops:
             if op.getOp() in (Op.return_, Op.err):
                 return True
         return len(self.getOutgoing()) == 0
-    
-    def validateTree(self, parent: 'TealBlock' = None, visited: List['TealBlock'] = None) -> None:
+
+    def validateTree(
+        self, parent: "TealBlock" = None, visited: List["TealBlock"] = None
+    ) -> None:
         """Check that this block and its children have valid parent pointers.
 
         Args:
@@ -56,7 +60,9 @@ class TealBlock(ABC):
             for block in self.getOutgoing():
                 block.validateTree(self, visited)
 
-    def addIncoming(self, parent: 'TealBlock' = None, visited: List['TealBlock'] = None) -> None:
+    def addIncoming(
+        self, parent: "TealBlock" = None, visited: List["TealBlock"] = None
+    ) -> None:
         """Calculate the parent blocks for this block and its children.
 
         Args:
@@ -76,7 +82,12 @@ class TealBlock(ABC):
             for b in self.getOutgoing():
                 b.addIncoming(self, visited)
 
-    def validateSlots(self, slotsInUse: Set['ScratchSlot'] = None, visited: Set[Tuple[int, ...]] = None, visitedBlocks=None) -> List[TealCompileError]:
+    def validateSlots(
+        self,
+        slotsInUse: Set["ScratchSlot"] = None,
+        visited: Set[Tuple[int, ...]] = None,
+        visitedBlocks=None,
+    ) -> List[TealCompileError]:
         import traceback
 
         if visited is None:
@@ -99,9 +110,11 @@ class TealBlock(ABC):
             if op.getOp() == Op.load:
                 for slot in op.getSlots():
                     if slot not in currentSlotsInUse:
-                        e = TealCompileError("Scratch slot load occurs before store", op.expr)
+                        e = TealCompileError(
+                            "Scratch slot load occurs before store", op.expr
+                        )
                         errors.append(e)
-        
+
         if not self.isTerminal():
             sortedSlots = sorted(slot.id for slot in currentSlotsInUse)
             for block in self.getOutgoing():
@@ -112,7 +125,9 @@ class TealBlock(ABC):
                     continue
 
                 visitedBlocks.append(block)
-                for error in block.validateSlots(currentSlotsInUse, visited, visitedBlocks):
+                for error in block.validateSlots(
+                    currentSlotsInUse, visited, visitedBlocks
+                ):
                     if error not in errors:
                         errors.append(error)
                 visited.add(visitedKey)
@@ -128,13 +143,16 @@ class TealBlock(ABC):
         pass
 
     @classmethod
-    def FromOp(cls, options: 'CompileOptions', op: TealOp, *args: 'Expr') -> Tuple['TealBlock', 'TealSimpleBlock']:
+    def FromOp(
+        cls, options: "CompileOptions", op: TealOp, *args: "Expr"
+    ) -> Tuple["TealBlock", "TealSimpleBlock"]:
         """Create a path of blocks from a TealOp and its arguments.
 
         Returns:
             The starting and ending block of the path that encodes the given TealOp and arguments.
         """
         from .tealsimpleblock import TealSimpleBlock
+
         opBlock = TealSimpleBlock([op])
 
         if len(args) == 0:
@@ -153,9 +171,9 @@ class TealBlock(ABC):
         cast(TealSimpleBlock, prevArgEnd).setNextBlock(opBlock)
 
         return cast(TealBlock, start), opBlock
-    
+
     @classmethod
-    def Iterate(cls, start: 'TealBlock') -> Iterator['TealBlock']:
+    def Iterate(cls, start: "TealBlock") -> Iterator["TealBlock"]:
         """Perform a depth-first search of the graph of blocks starting with start."""
         queue = [start]
         visited = list(queue)
@@ -174,9 +192,9 @@ class TealBlock(ABC):
                 if not is_in_visited(nextBlock):
                     visited.append(nextBlock)
                     queue.append(nextBlock)
-    
+
     @classmethod
-    def NormalizeBlocks(cls, start: 'TealBlock') -> 'TealBlock':
+    def NormalizeBlocks(cls, start: "TealBlock") -> "TealBlock":
         """Minimize the number of blocks in the graph of blocks starting with start by combining
         sequential blocks. This operation does not alter the operations of the graph or the
         functionality of its underlying program, however it does mutate the input graph.
@@ -198,5 +216,6 @@ class TealBlock(ABC):
                         start = block
 
         return start
+
 
 TealBlock.__module__ = "pyteal"

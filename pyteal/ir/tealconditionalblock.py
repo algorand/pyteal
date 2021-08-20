@@ -3,6 +3,7 @@ from typing import Optional, List, cast
 from .tealop import TealOp
 from .tealblock import TealBlock
 
+
 class TealConditionalBlock(TealBlock):
     """Represents a basic block of TealComponents in a graph ending with a branch condition."""
 
@@ -10,15 +11,15 @@ class TealConditionalBlock(TealBlock):
         super().__init__(ops)
         self.trueBlock: Optional[TealBlock] = None
         self.falseBlock: Optional[TealBlock] = None
-    
+
     def setTrueBlock(self, block: TealBlock) -> None:
         """Set the block that this one should branch to if its condition is true."""
         self.trueBlock = block
-    
+
     def setFalseBlock(self, block: TealBlock) -> None:
         """Set the block that this one should branch to if its condition is false."""
         self.falseBlock = block
-    
+
     def getOutgoing(self) -> List[TealBlock]:
         outgoing = []
         if self.trueBlock is not None:
@@ -26,13 +27,13 @@ class TealConditionalBlock(TealBlock):
         if self.falseBlock is not None:
             outgoing.append(self.falseBlock)
         return outgoing
-    
+
     def replaceOutgoing(self, oldBlock: TealBlock, newBlock: TealBlock) -> None:
         if self.trueBlock is oldBlock:
             self.trueBlock = newBlock
         elif self.falseBlock is oldBlock:
             self.falseBlock = newBlock
-    
+
     def __repr__(self) -> str:
         return "TealConditionalBlock({}, true={}, false={})".format(
             repr(self.ops),
@@ -44,8 +45,11 @@ class TealConditionalBlock(TealBlock):
         if type(other) is not TealConditionalBlock:
             return False
         other = cast(TealConditionalBlock, other)
-        return self.ops == other.ops and \
-            self.trueBlock == other.trueBlock and \
-            self.falseBlock == other.falseBlock
+        return (
+            self.ops == other.ops
+            and self.trueBlock == other.trueBlock
+            and self.falseBlock == other.falseBlock
+        )
+
 
 TealConditionalBlock.__module__ = "pyteal"

@@ -7,6 +7,7 @@ from .expr import Expr
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
+
 class Assert(Expr):
     """A control flow expression to verify that a condition is true."""
 
@@ -19,12 +20,12 @@ class Assert(Expr):
         super().__init__()
         require_type(cond.type_of(), TealType.uint64)
         self.cond = cond
-    
-    def __teal__(self, options: 'CompileOptions'):
+
+    def __teal__(self, options: "CompileOptions"):
         if options.version >= Op.assert_.min_version:
             # use assert op if available
             return TealBlock.FromOp(options, TealOp(self, Op.assert_), self.cond)
-        
+
         # if assert op is not available, use branches and err
         condStart, condEnd = self.cond.__teal__(options)
 
@@ -44,5 +45,6 @@ class Assert(Expr):
 
     def type_of(self):
         return TealType.none
+
 
 Assert.__module__ = "pyteal"

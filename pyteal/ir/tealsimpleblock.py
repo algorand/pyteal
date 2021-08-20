@@ -3,6 +3,7 @@ from typing import Optional, List, cast
 from .tealop import TealOp
 from .tealblock import TealBlock
 
+
 class TealSimpleBlock(TealBlock):
     """Represents a basic block of TealComponents in a graph that does not contain a branch condition."""
 
@@ -10,7 +11,7 @@ class TealSimpleBlock(TealBlock):
         super().__init__(ops)
         self.nextBlock: Optional[TealBlock] = None
         self.blocks: List[TealBlock] = []
-        self.visited: List[TealBlock] = []
+        self.visited = False
 
     def setNextBlock(self, block: TealBlock) -> None:
         """Set the block that follows this one."""
@@ -20,41 +21,39 @@ class TealSimpleBlock(TealBlock):
         if self.nextBlock is None:
             return []
         return [self.nextBlock]
-    
+
     def replaceOutgoing(self, oldBlock: TealBlock, newBlock: TealBlock) -> None:
         if self.nextBlock is oldBlock:
             self.nextBlock = newBlock
-    
+
     def __repr__(self) -> str:
         # check for loop
-        if self in self.visited:
+        if self.visited:
             return "TealSimpleBlock({}, next={})".format(
                 repr(self.ops),
                 "",
             )
-        self.visited.append(self)
+        self.visited = True
 
         s = "TealSimpleBlock({}, next={})".format(
             repr(self.ops),
             repr(self.nextBlock),
         )
 
-        self.visited.pop()
+        self.visited = False
         return s
-    
+
     def __eq__(self, other: object) -> bool:
         # check for loop
-        if self in self.blocks:
+        if self.visited:
             return True
         if type(other) is not TealSimpleBlock:
             return False
-        self.blocks.append(self)
+        self.visited = True
         other = cast(TealSimpleBlock, other)
-        equal = self.ops == other.ops and \
-            self.nextBlock == other.nextBlock
-        self.blocks.pop()
+        equal = self.ops == other.ops and self.nextBlock == other.nextBlock
+        self.visited = False
         return equal
-
 
 
 TealSimpleBlock.__module__ = "pyteal"

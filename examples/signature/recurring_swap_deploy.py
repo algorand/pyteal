@@ -17,7 +17,7 @@ if stderr != "":
     print(stderr)
     raise
 
-result = re.search(r'key: \w+', stdout)
+result = re.search(r"key: \w+", stdout)
 provider_addr = result.group(0)[5:]
 print("provider addr: {}".format(provider_addr))
 
@@ -34,8 +34,7 @@ with open(teal_file, "w+") as f:
     f.write(teal_source)
 lsig_fname = teal_base + ".tealc"
 
-stdout, stderr = execute(["goal", "clerk", "compile", "-o", lsig_fname,
-                          teal_file])
+stdout, stderr = execute(["goal", "clerk", "compile", "-o", lsig_fname, teal_file])
 
 if stderr != "":
     print(stderr)
@@ -44,7 +43,7 @@ elif len(stdout) < 59:
     print("error in compile teal")
     raise
 
-result = re.search(r': \w+', stdout)
+result = re.search(r": \w+", stdout)
 escrow_addr = result.group(0)[2:]
 print("Dispense at least 202000 microAlgo to {}".format(escrow_addr))
 input("Make sure you did that. Press Enter to continue...")
@@ -54,7 +53,7 @@ acl = algod.AlgodClient(params.algod_token, params.algod_address)
 
 sp = acl.suggested_params_as_object()
 first_valid = sp.first
-data = first_valid.to_bytes(8, byteorder='big')
+data = first_valid.to_bytes(8, byteorder="big")
 lease = hash.sha256(data)
 lease_bytes = encoding.HexEncoder.decode(lease)
 print("first valid: {}".format(first_valid))
@@ -66,14 +65,26 @@ with open(lsig_fname, "rb") as f:
 lsig = transaction.LogicSig(teal_bytes)
 lstx = transaction.LogicSigTransaction(txn, lsig)
 
-assert(lstx.verify())
+assert lstx.verify()
 
 # send LogicSigTransaction to network
 transaction.write_to_file([lstx], "r_s_1.txn")
 
-stdout, stderr = execute(["goal", "clerk", "tealsign", "--data-b64", base64.b64encode(data),
-                          "--lsig-txn", "r_s_1.txn", "--keyfile", key_fn, "--set-lsig-arg-idx",
-                          "0"])
+stdout, stderr = execute(
+    [
+        "goal",
+        "clerk",
+        "tealsign",
+        "--data-b64",
+        base64.b64encode(data),
+        "--lsig-txn",
+        "r_s_1.txn",
+        "--keyfile",
+        key_fn,
+        "--set-lsig-arg-idx",
+        "0",
+    ]
+)
 if stderr != "":
     print(stderr)
     raise
@@ -86,11 +97,11 @@ txid = acl.send_transactions(lstx)
 print("1st withraw Succesfull! txid:{}".format(txid))
 
 # at least sleep to the next round
-time.sleep(6) 
+time.sleep(6)
 
 sp = acl.suggested_params_as_object()
 first_valid = sp.first
-data = first_valid.to_bytes(8, byteorder='big')
+data = first_valid.to_bytes(8, byteorder="big")
 lease = hash.sha256(data)
 lease_bytes = encoding.HexEncoder.decode(lease)
 
@@ -103,14 +114,26 @@ with open(lsig_fname, "rb") as f:
 lsig = transaction.LogicSig(teal_bytes)
 lstx = transaction.LogicSigTransaction(txn, lsig)
 
-assert(lstx.verify())
+assert lstx.verify()
 
 # send LogicSigTransaction to network
 transaction.write_to_file([lstx], "r_s_2.txn")
 
-stdout, stderr = execute(["goal", "clerk", "tealsign", "--data-b64", base64.b64encode(data),
-                          "--lsig-txn", "r_s_2.txn", "--keyfile", key_fn, "--set-lsig-arg-idx",
-                          "0"])
+stdout, stderr = execute(
+    [
+        "goal",
+        "clerk",
+        "tealsign",
+        "--data-b64",
+        base64.b64encode(data),
+        "--lsig-txn",
+        "r_s_2.txn",
+        "--keyfile",
+        key_fn,
+        "--set-lsig-arg-idx",
+        "0",
+    ]
+)
 if stderr != "":
     print(stderr)
     raise
