@@ -76,31 +76,30 @@ def spillLocalSlotsDuringRecursion(
                     # spill local slots to the stack
                     before.append(TealOp(None, Op.load, slot))
 
-                if numArgs != 0:
-                    for _ in range(numArgs):
-                        # pull the subroutine arguments to the top of the stack, above the just spilled
-                        # local slots
+                for _ in range(numArgs):
+                    # pull the subroutine arguments to the top of the stack, above the just spilled
+                    # local slots
 
-                        # TODO: TEAL 5+, do this instead:
-                        # before.append(TealOp(None, Op.uncover, len(slots)))
-                        # or just do cover during the previous loop where slots are loaded, whichever
-                        # is more efficient I suppose
-                        before.append(
-                            TealOp(
-                                None,
-                                Op.dig,
-                                len(slots) + subroutine.argumentCount() - 1,
-                            )
+                    # TODO: TEAL 5+, do this instead:
+                    # before.append(TealOp(None, Op.uncover, len(slots)))
+                    # or just do cover during the previous loop where slots are loaded, whichever
+                    # is more efficient I suppose
+                    before.append(
+                        TealOp(
+                            None,
+                            Op.dig,
+                            len(slots) + subroutine.argumentCount() - 1,
                         )
-                        # because we are stuck using dig instead of uncover in TEAL 4, we'll need to
-                        # pop all of the dug up arguments after the function returns
+                    )
+                    # because we are stuck using dig instead of uncover in TEAL 4, we'll need to
+                    # pop all of the dug up arguments after the function returns
 
-                putReturnValueInLastSlot = False
+                preserveReturnValue = False
 
                 if subroutine.returnType != TealType.none:
                     # if the subroutine returns a value on the stack, we need to preserve this after
                     # restoring all local slots.
-                    putReturnValueInLastSlot = True
+                    preserveReturnValue = True
                     if len(slots) > 1:
                         # Store the return value into slots[0] temporarily. As an optimization, if
                         # len(slots) == 1 we can just do a single swap instead
@@ -111,7 +110,7 @@ def spillLocalSlotsDuringRecursion(
 
                 for slot in slots[::-1]:
                     # restore slots, iterating in reverse because slots[-1] is at the top of the stack
-                    if putReturnValueInLastSlot and slot == slots[0]:
+                    if preserveReturnValue and slot is slots[0]:
                         # time to restore the return value to the top of the stack
                         if len(slots) > 1:
                             # slots[0] is being used to store the return value, so load it again
@@ -120,16 +119,15 @@ def spillLocalSlotsDuringRecursion(
                         after.append(TealOp(None, Op.swap))
                     after.append(TealOp(None, Op.store, slot))
 
-                if numArgs != 0:
-                    for _ in range(numArgs):
-                        # clear out the duplicate arguments that were dug up previously, since dig
-                        # does not pop the dug values
-                        if subroutine.returnType != TealType.none:
-                            # if there is a return value on top of the stack, we need to preserve
-                            # it, so swap it with the subroutine argument that's below it on the
-                            # stack
-                            after.append(TealOp(None, Op.swap))
-                        after.append(TealOp(None, Op.pop))
+                for _ in range(numArgs):
+                    # clear out the duplicate arguments that were dug up previously, since dig
+                    # does not pop the dug values
+                    if subroutine.returnType != TealType.none:
+                        # if there is a return value on top of the stack, we need to preserve
+                        # it, so swap it with the subroutine argument that's below it on the
+                        # stack
+                        after.append(TealOp(None, Op.swap))
+                    after.append(TealOp(None, Op.pop))
 
             newOps += before
             newOps.append(stmt)

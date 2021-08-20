@@ -51,7 +51,7 @@ def assignScratchSlotsToSubroutines(
         allOtherSlots: Set[ScratchSlot] = set()
 
         for otherSubroutine, otherSubroutineSlots in subroutineSlots.items():
-            if subroutine != otherSubroutine:
+            if subroutine is not otherSubroutine:
                 allOtherSlots |= otherSubroutineSlots
 
         globalSlots |= slots & allOtherSlots
