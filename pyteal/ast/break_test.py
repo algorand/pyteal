@@ -1,10 +1,12 @@
 import pytest
 
 from .. import *
+
 # this is not necessary but mypy complains if it's not included
 from .. import CompileOptions
 
 options = CompileOptions()
+
 
 def test_break_fail():
 
@@ -23,14 +25,13 @@ def test_break_fail():
 
 def test_break():
 
-
     items = [Int(1), Seq([Break()])]
     expr = While(items[0]).Do(items[1])
     actual, _ = expr.__teal__(options)
 
     options.currentLoop = expr
     expected, condEnd = items[0].__teal__(options)
-    do, doEnd =items[1].__teal__(options)
+    do, doEnd = items[1].__teal__(options)
     expectedBranch = TealConditionalBlock([])
     end = TealSimpleBlock([])
     expectedBranch.setTrueBlock(do)

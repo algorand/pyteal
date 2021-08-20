@@ -18,7 +18,7 @@ class While(Expr):
 
         When this While expression is executed, the condition will be evaluated, and if it produces a
         true value, doBlock will be executed and return to the start of the expression execution.
-        Otherwise, no branch will be executed. 
+        Otherwise, no branch will be executed.
 
         Args:
             cond: The condition to check. Must evaluate to uint64.
@@ -27,9 +27,9 @@ class While(Expr):
         require_type(cond.type_of(), TealType.uint64)
 
         self.cond = cond
-        self.doBlock: Optional[Seq] = None
+        self.doBlock: Optional[Expr] = None
 
-    def __teal__(self, options: 'CompileOptions'):
+    def __teal__(self, options: "CompileOptions"):
         if self.doBlock is None:
             raise TealCompileError("While expression must have a doBlock", self)
 
@@ -38,9 +38,8 @@ class While(Expr):
         prevLoop = options.currentLoop
 
         options.breakBlocks = []
-        options.continueBlocks =[]
+        options.continueBlocks = []
         options.currentLoop = self
-
 
         condStart, condEnd = self.cond.__teal__(options)
         doStart, doEnd = self.doBlock.__teal__(options)
@@ -56,7 +55,6 @@ class While(Expr):
         options.continueBlocks = continueBlocks
         options.currentLoop = prevLoop
 
-
         doEnd.setNextBlock(condStart)
 
         branchBlock = TealConditionalBlock([])
@@ -66,23 +64,25 @@ class While(Expr):
         condEnd.setNextBlock(branchBlock)
         condStart.addIncoming(doStart)
 
-
-
         return condStart, end
 
     def __str__(self):
         if self.doBlock is None:
             raise TealCompileError("While expression must have a doBlock", self)
-        
+
         return "(While {} {})".format(self.cond, self.doBlock)
 
     def type_of(self):
         if self.doBlock is None:
-            raise TealCompileError("While expression must have a doBlock", self) 
-        return self.doBlock.type_of()
+            raise TealCompileError("While expression must have a doBlock", self)
+        return TealType.none
 
-    def Do(self, doBlock: Seq):
+    def Do(self, doBlock: Expr):
+        if self.doBlock is not None:
+            raise TealCompileError("While expression already has a doBlock", self)
+        require_type(doBlock.type_of(), TealType.none)
         self.doBlock = doBlock
         return self
+
 
 While.__module__ = "pyteal"

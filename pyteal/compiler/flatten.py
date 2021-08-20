@@ -1,8 +1,17 @@
 from typing import List, DefaultDict, cast
 from collections import defaultdict
 
-from ..ir import Op, TealOp, TealLabel, TealComponent, TealBlock, TealSimpleBlock, TealConditionalBlock
+from ..ir import (
+    Op,
+    TealOp,
+    TealLabel,
+    TealComponent,
+    TealBlock,
+    TealSimpleBlock,
+    TealConditionalBlock,
+)
 from ..errors import TealInternalError
+
 
 def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
     """Lowers a list of TealBlocks into a list of TealComponents.
