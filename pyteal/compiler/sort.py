@@ -1,6 +1,6 @@
 from typing import List
 
-from ..ir import TealBlock, TealSimpleBlock, TealConditionalBlock
+from ..ir import TealBlock
 from ..errors import TealInternalError
 
 
@@ -42,26 +42,3 @@ def sortBlocks(start: TealBlock, end: TealBlock) -> List[TealBlock]:
 
     return order
 
-    # S = [start]
-    # order = []
-    # visited = []
-    # while len(S) != 0:
-    #     n = S.pop(0)
-    #     if type(n) == TealConditionalBlock:
-    #         if n.falseBlock is not None:
-    #             S.insert(0, n.falseBlock)
-    #         if n.trueBlock is not None:
-    #             S.insert(0, n.trueBlock)
-    #     else:
-    #         for i, m in enumerate(n.getOutgoing()):
-    #             if m in visited or m in S:
-    #                 continue
-    #             if type(m) != TealConditionalBlock and len(m.incoming) != 0:
-    #                 S.append(m)
-    #             else:
-    #                 S.insert(0, m)
-    #
-    #     order.append(n)
-    #     visited.append(n)
-    #
-    # return order
