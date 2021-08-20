@@ -41,4 +41,3 @@ def sortBlocks(start: TealBlock, end: TealBlock) -> List[TealBlock]:
     order.append(end)
 
     return order
-
