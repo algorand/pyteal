@@ -9,6 +9,7 @@ from .unaryexpr import Pop
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
+
 class Nonce(Expr):
     """A meta expression only used to change the hash of a TEAL program."""
 
@@ -25,7 +26,7 @@ class Nonce(Expr):
             child: The expression to wrap.
         """
         super().__init__()
-        
+
         if base not in ("utf8", "base16", "base32", "base64"):
             raise TealInputError("Invalid base: {}".format(base))
 
@@ -34,13 +35,10 @@ class Nonce(Expr):
             self.nonce_bytes = Bytes(nonce)
         else:
             self.nonce_bytes = Bytes(base, nonce)
-        
-        self.seq = Seq([
-            Pop(self.nonce_bytes),
-            self.child
-        ])
 
-    def __teal__(self, options: 'CompileOptions'):
+        self.seq = Seq([Pop(self.nonce_bytes), self.child])
+
+    def __teal__(self, options: "CompileOptions"):
         return self.seq.__teal__(options)
 
     def __str__(self):
@@ -48,5 +46,6 @@ class Nonce(Expr):
 
     def type_of(self):
         return self.child.type_of()
+
 
 Nonce.__module__ = "pyteal"

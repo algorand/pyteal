@@ -3,6 +3,7 @@ from typing import Optional, List, cast
 from .tealop import TealOp
 from .tealblock import TealBlock
 
+
 class TealSimpleBlock(TealBlock):
     """Represents a basic block of TealComponents in a graph that does not contain a branch condition."""
 
@@ -20,11 +21,11 @@ class TealSimpleBlock(TealBlock):
         if self.nextBlock is None:
             return []
         return [self.nextBlock]
-    
+
     def replaceOutgoing(self, oldBlock: TealBlock, newBlock: TealBlock) -> None:
         if self.nextBlock is oldBlock:
             self.nextBlock = newBlock
-    
+
     def __repr__(self) -> str:
         # check for loop
         if self.visited:
@@ -41,7 +42,7 @@ class TealSimpleBlock(TealBlock):
 
         self.visited = False
         return s
-    
+
     def __eq__(self, other: object) -> bool:
         # check for loop
         if self.visited:
@@ -50,11 +51,9 @@ class TealSimpleBlock(TealBlock):
             return False
         self.visited = True
         other = cast(TealSimpleBlock, other)
-        equal = self.ops == other.ops and \
-            self.nextBlock == other.nextBlock
+        equal = self.ops == other.ops and self.nextBlock == other.nextBlock
         self.visited = False
         return equal
-
 
 
 TealSimpleBlock.__module__ = "pyteal"

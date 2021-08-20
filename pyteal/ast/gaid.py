@@ -10,6 +10,7 @@ from .leafexpr import LeafExpr
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
+
 class GeneratedID(LeafExpr):
     """An expression to obtain the ID of an asset or application created by another transaction in the current group."""
 
@@ -27,25 +28,34 @@ class GeneratedID(LeafExpr):
         super().__init__()
         if type(txnIndex) == int:
             if txnIndex < 0 or txnIndex >= MAX_GROUP_SIZE:
-                raise TealInputError("Invalid transaction index {}, shoud be in [0, {})".format(txnIndex, MAX_GROUP_SIZE))
+                raise TealInputError(
+                    "Invalid transaction index {}, shoud be in [0, {})".format(
+                        txnIndex, MAX_GROUP_SIZE
+                    )
+                )
         else:
             require_type(cast(Expr, txnIndex).type_of(), TealType.uint64)
         self.txnIndex = txnIndex
-    
+
     def __str__(self):
         return "(Gaid {})".format(self.txnIndex)
-    
-    def __teal__(self, options: 'CompileOptions'):
-        verifyTealVersion(Op.gaid.min_version, options.version, "TEAL version too low to use Gaid expression")
+
+    def __teal__(self, options: "CompileOptions"):
+        verifyTealVersion(
+            Op.gaid.min_version,
+            options.version,
+            "TEAL version too low to use Gaid expression",
+        )
 
         if type(self.txnIndex) == int:
             op = TealOp(self, Op.gaid, cast(int, self.txnIndex))
             return TealBlock.FromOp(options, op)
-        
+
         op = TealOp(self, Op.gaids)
         return TealBlock.FromOp(options, op, cast(Expr, self.txnIndex))
-    
+
     def type_of(self):
         return TealType.uint64
+
 
 GeneratedID.__module__ = "pyteal"

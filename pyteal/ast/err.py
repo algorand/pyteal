@@ -7,10 +7,11 @@ from .leafexpr import LeafExpr
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
+
 class Err(LeafExpr):
     """Expression that causes the program to immediately fail when executed."""
 
-    def __teal__(self, options: 'CompileOptions'):
+    def __teal__(self, options: "CompileOptions"):
         op = TealOp(self, Op.err)
         return TealBlock.FromOp(options, op)
 
@@ -19,5 +20,6 @@ class Err(LeafExpr):
 
     def type_of(self):
         return TealType.none
+
 
 Err.__module__ = "pyteal"

@@ -1,10 +1,12 @@
 import pytest
 
 from .. import *
+
 # this is not necessary but mypy complains if it's not included
 from .. import CompileOptions
 
 options = CompileOptions()
+
 
 def test_cond_one_pred():
     expr = Cond([Int(1), Int(2)])
@@ -23,6 +25,7 @@ def test_cond_one_pred():
 
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
 
 def test_cond_two_pred():
     expr = Cond([Int(1), Bytes("one")], [Int(0), Bytes("zero")])
@@ -52,6 +55,7 @@ def test_cond_two_pred():
 
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
 
 def test_cond_three_pred():
     expr = Cond([Int(1), Int(2)], [Int(3), Int(4)], [Int(5), Int(6)])
@@ -89,6 +93,7 @@ def test_cond_three_pred():
 
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
 
 def test_cond_invalid():
     with pytest.raises(TealInputError):

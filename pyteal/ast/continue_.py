@@ -14,18 +14,17 @@ class Continue(Expr):
     """A continue expression"""
 
     def __init__(self) -> None:
-        """ Create a new continue expression.
+        """Create a new continue expression.
 
         This operation is only permitted in a loop.
 
         """
         super().__init__()
 
-
     def __str__(self) -> str:
         return "continue"
 
-    def __teal__(self, options: 'CompileOptions'):
+    def __teal__(self, options: "CompileOptions"):
         if options.currentLoop is None:
             raise TealCompileError("continue is only allowed in a loop", self)
 
@@ -33,6 +32,7 @@ class Continue(Expr):
         options.continueBlocks.append(start)
 
         return start, start
+
     def type_of(self):
         return TealType.none
 
