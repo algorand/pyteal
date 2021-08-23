@@ -62,7 +62,6 @@ class While(Expr):
         branchBlock.setFalseBlock(end)
 
         condEnd.setNextBlock(branchBlock)
-        condStart.addIncoming(doStart)
 
         return condStart, end
 

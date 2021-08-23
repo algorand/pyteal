@@ -10,7 +10,6 @@ class TealSimpleBlock(TealBlock):
     def __init__(self, ops: List[TealOp]) -> None:
         super().__init__(ops)
         self.nextBlock: Optional[TealBlock] = None
-        self.blocks: List[TealBlock] = []
         self.visited = False
 
     def setNextBlock(self, block: TealBlock) -> None:

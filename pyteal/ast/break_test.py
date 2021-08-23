@@ -30,13 +30,7 @@ def test_break():
     actual, _ = expr.__teal__(options)
 
     options.currentLoop = expr
-    expected, condEnd = items[0].__teal__(options)
-    do, doEnd = items[1].__teal__(options)
-    expectedBranch = TealConditionalBlock([])
-    end = TealSimpleBlock([])
-    expectedBranch.setTrueBlock(do)
-    expectedBranch.setFalseBlock(end)
-    condEnd.setNextBlock(expectedBranch)
-    doEnd.setNextBlock(expected)
+    start, _ = items[1].__teal__(options)
 
-    actual, _ = expr.__teal__(options)
+    assert len(options.breakBlocks) == 1
+    assert start in options.breakBlocks

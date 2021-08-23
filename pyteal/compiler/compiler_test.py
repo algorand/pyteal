@@ -368,10 +368,10 @@ l3:
                 Seq(
                     [
                         For(
-                            i.store(Int(0)),
+                            j.store(Int(0)),
                             j.load() < Int(4),
                             j.store(j.load() + Int(2)),
-                        ).Do(Seq([j.store(Int(1))]))
+                        ).Do(Seq([App.globalPut(Itob(j.load()), j.load() * Int(2))]))
                     ]
                 )
             )
@@ -388,7 +388,7 @@ int 10
 <
 bz l6
 int 0
-store 0
+store 1
 l3:
 load 1
 int 4
@@ -400,8 +400,12 @@ int 1
 store 0
 b l1
 l5:
-int 1
-store 1
+load 1
+itob
+load 1
+int 2
+*
+app_global_put
 load 1
 int 2
 +
@@ -412,7 +416,6 @@ l6:
     actualNoAssemble = compileTeal(
         program, Mode.Application, version=4, assembleConstants=False
     )
-    print(actualNoAssemble)
     assert expectedNoAssemble == actualNoAssemble
 
 
@@ -562,11 +565,11 @@ l1:
 load 0
 int 10
 <
-bz l5
+bz l6
 load 0
 int 4
 ==
-bnz l4
+bnz l5
 load 0
 itob
 load 0
@@ -580,6 +583,8 @@ int 1
 store 0
 b l1
 l5:
+b l4
+l6:
             """.strip()
     actualNoAssemble = compileTeal(
         program, Mode.Application, version=4, assembleConstants=False
@@ -610,8 +615,8 @@ store 0
 load 0
 int 10
 <
-bz l5
-l2:
+bz l4
+l1:
 load 0
 int 1
 +
@@ -619,11 +624,11 @@ store 0
 load 0
 int 4
 <
-bnz l4
-b l5
+bnz l3
+b l4
+l3:
+b l1
 l4:
-b l2
-l5:
     """.strip()
     actualNoAssemble = compileTeal(
         program, Mode.Application, version=4, assembleConstants=False

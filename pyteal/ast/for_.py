@@ -28,6 +28,8 @@ class For(Expr):
         """
         super().__init__()
         require_type(cond.type_of(), TealType.uint64)
+        require_type(start.type_of(), TealType.none)
+        require_type(step.type_of(), TealType.none)
 
         self.start = start
         self.cond = cond
@@ -60,7 +62,6 @@ class For(Expr):
 
         for block in options.continueBlocks:
             block.setNextBlock(stepStart)
-            doEnd.setNextBlock(block)
 
         options.breakBlocks = breakBlocks
         options.continueBlocks = continueBlocks
@@ -71,9 +72,8 @@ class For(Expr):
         branchBlock.setFalseBlock(end)
 
         condEnd.setNextBlock(branchBlock)
-        condStart.addIncoming(doStart)
 
-        startEnd.nextBlock = condStart
+        startEnd.setNextBlock(condStart)
 
         return start, end
 
@@ -85,7 +85,7 @@ class For(Expr):
         if self.step is None:
             raise TealCompileError("For expression must have a end", self)
         if self.doBlock is None:
-            raise TealCompileError("For expression must have a thenBranch", self)
+            raise TealCompileError("For expression must have a doBlock", self)
 
         return "(For {} {} {} {})".format(
             self.start, self.cond, self.step, self.doBlock
@@ -93,7 +93,7 @@ class For(Expr):
 
     def type_of(self):
         if self.doBlock is None:
-            raise TealCompileError("For expression must have a thenBranch", self)
+            raise TealCompileError("For expression must have a doBlock", self)
         return TealType.none
 
     def Do(self, doBlock: Expr):

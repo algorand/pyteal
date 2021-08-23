@@ -49,6 +49,64 @@ def test_while():
     assert actual == expected
 
 
+def test_while_continue():
+    i = ScratchVar()
+    i.store(Int(0))
+    items = [
+        i.load() < Int(2),
+        i.store(i.load() + Int(1)),
+        If(i.load() == Int(1), Continue()),
+    ]
+    expr = While(items[0]).Do(Seq(items[1], items[2]))
+    assert expr.type_of() == TealType.none
+
+    options.currentLoop = expr
+    expected, condEnd = items[0].__teal__(options)
+    do, doEnd = Seq([items[1], items[2]]).__teal__(options)
+    expectedBranch = TealConditionalBlock([])
+    end = TealSimpleBlock([])
+
+    for block in options.continueBlocks:
+        block.setNextBlock(do)
+
+    expectedBranch.setTrueBlock(do)
+    expectedBranch.setFalseBlock(end)
+    condEnd.setNextBlock(expectedBranch)
+    doEnd.setNextBlock(expected)
+    actual, _ = expr.__teal__(options)
+
+    assert actual == expected
+
+
+def test_while_break():
+    i = ScratchVar()
+    i.store(Int(0))
+    items = [
+        i.load() < Int(2),
+        i.store(i.load() + Int(1)),
+        If(i.load() == Int(1), Break()),
+    ]
+    expr = While(items[0]).Do(Seq(items[1], items[2]))
+    assert expr.type_of() == TealType.none
+
+    options.currentLoop = expr
+    expected, condEnd = items[0].__teal__(options)
+    do, doEnd = Seq([items[1], items[2]]).__teal__(options)
+    expectedBranch = TealConditionalBlock([])
+    end = TealSimpleBlock([])
+
+    for block in options.breakBlocks:
+        block.setNextBlock(end)
+
+    expectedBranch.setTrueBlock(do)
+    expectedBranch.setFalseBlock(end)
+    condEnd.setNextBlock(expectedBranch)
+    doEnd.setNextBlock(expected)
+    actual, _ = expr.__teal__(options)
+
+    assert actual == expected
+
+
 def test_while_invalid():
 
     with pytest.raises(TypeError):

@@ -30,7 +30,7 @@ def sortBlocks(start: TealBlock, end: TealBlock) -> List[TealBlock]:
 
     endIndex = -1
     for i, block in enumerate(order):
-        if block == end:
+        if block is end:
             endIndex = i
             break
 
