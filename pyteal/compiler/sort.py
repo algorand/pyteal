@@ -1,9 +1,10 @@
 from typing import List
 
 from ..ir import TealBlock
+from ..errors import TealInternalError
 
 
-def sortBlocks(start: TealBlock) -> List[TealBlock]:
+def sortBlocks(start: TealBlock, end: TealBlock) -> List[TealBlock]:
     """Topologically sort the graph which starts with the input TealBlock.
 
     Args:
@@ -13,22 +14,30 @@ def sortBlocks(start: TealBlock) -> List[TealBlock]:
         An ordered list of TealBlocks that is sorted such that every block is guaranteed to appear
         in the list before all of its outgoing blocks.
     """
-    # based on Kahn's algorithm from https://en.wikipedia.org/wiki/Topological_sorting
     S = [start]
     order = []
-
+    visited = set()  # I changed visited to a set to be more efficient
     while len(S) != 0:
-        n = S.pop(0)
+        n = S.pop()
+
+        if id(n) in visited:
+            continue
+
+        S += n.getOutgoing()
+
         order.append(n)
-        for i, m in enumerate(n.getOutgoing()):
-            for i, block in enumerate(m.incoming):
-                if n is block:
-                    m.incoming.pop(i)
-                    break
-            if len(m.incoming) == 0:
-                if i == 0:
-                    S.insert(0, m)
-                else:
-                    S.append(m)
+        visited.add(id(n))
+
+    endIndex = -1
+    for i, block in enumerate(order):
+        if block is end:
+            endIndex = i
+            break
+
+    if endIndex == -1:
+        raise TealInternalError("End block not present")
+
+    order.pop(endIndex)
+    order.append(end)
 
     return order

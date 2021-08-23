@@ -1,7 +1,7 @@
-from typing import List, Set
+from typing import List, Set, Optional
 
 from ..ast import Expr, ScratchSlot
-from ..ir import Mode, TealComponent, TealOp, TealBlock
+from ..ir import Mode, TealComponent, TealOp, TealBlock, TealSimpleBlock
 from ..errors import TealInputError, TealInternalError
 from ..config import NUM_SLOTS
 
@@ -20,6 +20,9 @@ class CompileOptions:
     ):
         self.mode = mode
         self.version = version
+        self.currentLoop: Optional[Expr] = None
+        self.breakBlocks: List[TealSimpleBlock] = []
+        self.continueBlocks: List[TealSimpleBlock] = []
 
 
 def verifyOpsForVersion(teal: List[TealComponent], version: int):
@@ -99,21 +102,19 @@ def compileTeal(
 
     options = CompileOptions(mode=mode, version=version)
 
-    start, _ = ast.__teal__(options)
+    start, end = ast.__teal__(options)
     start.addIncoming()
     start.validateTree()
 
     start = TealBlock.NormalizeBlocks(start)
     start.validateTree()
 
-    errors = start.validateSlots()
-    if len(errors) > 0:
-        msg = "Encountered {} error{} during compilation".format(
-            len(errors), "s" if len(errors) != 1 else ""
-        )
-        raise TealInternalError(msg) from errors[0]
+    # errors = start.validateSlots()
+    # if len(errors) > 0:
+    #     msg = 'Encountered {} error{} during compilation'.format(len(errors), 's' if len(errors) != 1 else '')
+    #     raise TealInternalError(msg) from errors[0]
 
-    order = sortBlocks(start)
+    order = sortBlocks(start, end)
     teal = flattenBlocks(order)
 
     verifyOpsForVersion(teal, version)

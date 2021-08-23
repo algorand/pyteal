@@ -34,17 +34,19 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             simpleBlock = cast(TealSimpleBlock, block)
             assert simpleBlock.nextBlock is not None
 
-            nextIndex = blocks.index(simpleBlock.nextBlock, i + 1)
+            nextIndex = blocks.index(simpleBlock.nextBlock)
+
             if nextIndex != i + 1:
                 references[nextIndex] += 1
                 code.append(TealOp(None, Op.b, indexToLabel(nextIndex)))
+
         elif type(block) is TealConditionalBlock:
             conditionalBlock = cast(TealConditionalBlock, block)
             assert conditionalBlock.trueBlock is not None
             assert conditionalBlock.falseBlock is not None
 
-            trueIndex = blocks.index(conditionalBlock.trueBlock, i + 1)
-            falseIndex = blocks.index(conditionalBlock.falseBlock, i + 1)
+            trueIndex = blocks.index(conditionalBlock.trueBlock)
+            falseIndex = blocks.index(conditionalBlock.falseBlock)
 
             if falseIndex == i + 1:
                 references[trueIndex] += 1
