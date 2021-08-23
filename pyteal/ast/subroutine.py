@@ -129,6 +129,14 @@ class SubroutineCall(Expr):
         self.subroutine = subroutine
         self.args = args
 
+        for i, arg in enumerate(args):
+            if arg.type_of() == TealType.none:
+                raise TealInputError(
+                    "Subroutine argument at index {} evaluates to TealType.none".format(
+                        i
+                    )
+                )
+
     def __teal__(self, options: "CompileOptions"):
         verifyTealVersion(
             Op.callsub.min_version,
@@ -165,7 +173,13 @@ def Subroutine(
         subroutine = SubroutineDefinition(fnImplementation, returnType)
 
         @wraps(fnImplementation)
-        def subroutineCall(*args: Expr) -> Expr:
+        def subroutineCall(*args: Expr, **kwargs) -> Expr:
+            if len(kwargs) != 0:
+                raise TealInputError(
+                    "Subroutine cannot be called with keword arguments. Received keyword arguments: {}".format(
+                        ",".join(kwargs.keys())
+                    )
+                )
             return subroutine.invoke(list(args))
 
         return subroutineCall

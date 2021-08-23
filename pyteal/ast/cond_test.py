@@ -95,6 +95,19 @@ def test_cond_three_pred():
         assert actual == expected
 
 
+def test_cond_has_return():
+    exprWithReturn = Cond([Int(1), Return(Int(1))], [Int(0), Return(Int(0))])
+    assert exprWithReturn.has_return()
+
+    exprWithoutReturn = Cond([Int(1), Bytes("one")], [Int(0), Bytes("zero")])
+    assert not exprWithoutReturn.has_return()
+
+    exprSemiReturn = Cond(
+        [Int(1), Return(Int(1))], [Int(0), App.globalPut(Bytes("key"), Bytes("value"))]
+    )
+    assert not exprSemiReturn.has_return()
+
+
 def test_cond_invalid():
     with pytest.raises(TealInputError):
         Cond()
