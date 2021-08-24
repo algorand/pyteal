@@ -5,7 +5,7 @@ from .. import *
 from .subroutine import evaluateSubroutine
 
 # this is not necessary but mypy complains if it's not included
-from .. import CompileOptions
+from .. import CompileOptions, Return
 
 options = CompileOptions(version=4)
 

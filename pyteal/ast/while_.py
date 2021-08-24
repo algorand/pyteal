@@ -75,7 +75,7 @@ class While(Expr):
         if self.doBlock is None:
             raise TealCompileError("While expression must have a doBlock", self)
         return TealType.none
-    
+
     def has_return(self):
         return False
 

@@ -256,7 +256,7 @@ def test_compile_while():
         [
             i.store(Int(0)),
             While(i.load() < Int(2)).Do(Seq([i.store(i.load() + Int(1))])),
-            Approve()
+            Approve(),
         ]
     )
 
@@ -299,7 +299,7 @@ return
                     ]
                 )
             ),
-            Approve()
+            Approve(),
         ]
     )
 
@@ -396,7 +396,7 @@ return
                     ]
                 )
             ),
-            Approve()
+            Approve(),
         ]
     )
 
@@ -453,7 +453,7 @@ def test_compile_break():
             While(i.load() < Int(3)).Do(
                 Seq([If(i.load() == Int(2), Break()), i.store(i.load() + Int(1))])
             ),
-            Approve()
+            Approve(),
         ]
     )
 
@@ -496,7 +496,7 @@ return
                     ]
                 )
             ),
-            Approve()
+            Approve(),
         ]
     )
 
@@ -588,7 +588,7 @@ return
                     ]
                 )
             ),
-            Approve()
+            Approve(),
         ]
     )
 
@@ -642,7 +642,7 @@ def test_compile_continue_break_nested():
                     ]
                 )
             ),
-            Approve()
+            Approve(),
         ]
     )
 
@@ -695,7 +695,7 @@ return
                     ]
                 )
             ),
-            Approve()
+            Approve(),
         ]
     )
 
