@@ -91,7 +91,7 @@ def test_for_continue():
     assert expr.type_of() == TealType.none
     assert not expr.has_return()
 
-    options.currentLoop = items[0]
+    options.enterLoop()
 
     expected, varEnd = items[0].__teal__(options)
     condStart, condEnd = items[1].__teal__(options)
@@ -103,13 +103,15 @@ def test_for_continue():
     doEnd.setNextBlock(stepStart)
     stepEnd.setNextBlock(condStart)
 
-    for block in options.continueBlocks:
-        block.setNextBlock(stepStart)
-
     expectedBranch.setTrueBlock(do)
     expectedBranch.setFalseBlock(end)
     condEnd.setNextBlock(expectedBranch)
     varEnd.setNextBlock(condStart)
+
+    _, continueBlocks = options.exitLoop()
+
+    for block in continueBlocks:
+        block.setNextBlock(stepStart)
 
     actual, _ = expr.__teal__(options)
 
@@ -130,7 +132,7 @@ def test_for_break():
     assert expr.type_of() == TealType.none
     assert not expr.has_return()
 
-    options.currentLoop = expr
+    options.enterLoop()
 
     expected, varEnd = items[0].__teal__(options)
     condStart, condEnd = items[1].__teal__(options)
@@ -142,13 +144,15 @@ def test_for_break():
     doEnd.setNextBlock(stepStart)
     stepEnd.setNextBlock(condStart)
 
-    for block in options.breakBlocks:
-        block.setNextBlock(end)
-
     expectedBranch.setTrueBlock(do)
     expectedBranch.setFalseBlock(end)
     condEnd.setNextBlock(expectedBranch)
     varEnd.setNextBlock(condStart)
+
+    breakBlocks, _ = options.exitLoop()
+
+    for block in breakBlocks:
+        block.setNextBlock(end)
 
     actual, _ = expr.__teal__(options)
 

@@ -54,9 +54,9 @@ def test_subroutine_return_value():
             [TealOp(value, op, opValue), TealOp(expr, Op.retsub)]
         )
 
-        options.currentSubroutine = subroutine
+        options.setSubroutine(subroutine)
         actual, _ = expr.__teal__(options)
-        options.currentSubroutine = None
+        options.setSubroutine(None)
 
         actual.addIncoming()
         actual = TealBlock.NormalizeBlocks(actual)
@@ -78,10 +78,10 @@ def test_subroutine_return_value_invalid():
 
         subroutine = SubroutineDefinition(mySubroutine, tealType)
 
-        options.currentSubroutine = subroutine
+        options.setSubroutine(subroutine)
         with pytest.raises(TealCompileError):
             expr.__teal__(options)
-        options.currentSubroutine = None
+        options.setSubroutine(None)
 
 
 def test_subroutine_return_none():
@@ -97,9 +97,9 @@ def test_subroutine_return_none():
 
     expected = TealSimpleBlock([TealOp(expr, Op.retsub)])
 
-    options.currentSubroutine = subroutine
+    options.setSubroutine(subroutine)
     actual, _ = expr.__teal__(options)
-    options.currentSubroutine = None
+    options.setSubroutine(None)
 
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
@@ -116,7 +116,7 @@ def test_subroutine_return_none_invalid():
 
         subroutine = SubroutineDefinition(mySubroutine, TealType.none)
 
-        options.currentSubroutine = subroutine
+        options.setSubroutine(subroutine)
         with pytest.raises(TealCompileError):
             expr.__teal__(options)
-        options.currentSubroutine = None
+        options.setSubroutine(None)

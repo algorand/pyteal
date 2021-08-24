@@ -1,4 +1,4 @@
-from typing import List, Set, Dict, Optional, cast
+from typing import List, Tuple, Set, Dict, Optional, cast
 
 from ..types import TealType
 from ..ast import (
@@ -33,14 +33,33 @@ class CompileOptions:
         *,
         mode: Mode = Mode.Signature,
         version: int = DEFAULT_TEAL_VERSION,
-        currentSubroutine: SubroutineDefinition = None
-    ):
+    ) -> None:
         self.mode = mode
         self.version = version
-        self.currentSubroutine = currentSubroutine
-        self.currentLoop: Optional[Expr] = None
-        self.breakBlocks: List[TealSimpleBlock] = []
-        self.continueBlocks: List[TealSimpleBlock] = []
+
+        self.currentSubroutine: Optional[SubroutineDefinition] = None
+
+        self.breakBlocksStack: List[List[TealSimpleBlock]] = []
+        self.continueBlocksStack: List[List[TealSimpleBlock]] = []
+
+    def setSubroutine(self, subroutine: Optional[SubroutineDefinition]) -> None:
+        self.currentSubroutine = subroutine
+
+    def enterLoop(self) -> None:
+        self.breakBlocksStack.append([])
+        self.continueBlocksStack.append([])
+
+    def isInLoop(self) -> bool:
+        return len(self.breakBlocksStack) != 0
+
+    def addLoopBreakBlock(self, block: TealSimpleBlock) -> None:
+        self.breakBlocksStack[-1].append(block)
+
+    def addLoopContinueBlock(self, block: TealSimpleBlock) -> None:
+        self.continueBlocksStack[-1].append(block)
+
+    def exitLoop(self) -> Tuple[List[TealSimpleBlock], List[TealSimpleBlock]]:
+        return (self.breakBlocksStack.pop(), self.continueBlocksStack.pop())
 
 
 def verifyOpsForVersion(teal: List[TealComponent], version: int):
@@ -101,7 +120,7 @@ def compileSubroutine(
         else:
             ast = Return(ast)
 
-    options.currentSubroutine = currentSubroutine
+    options.setSubroutine(currentSubroutine)
     start, end = ast.__teal__(options)
     start.addIncoming()
     start.validateTree()
@@ -143,7 +162,7 @@ def compileTeal(
     mode: Mode,
     *,
     version: int = DEFAULT_TEAL_VERSION,
-    assembleConstants: bool = False
+    assembleConstants: bool = False,
 ) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 
@@ -183,9 +202,8 @@ def compileTeal(
 
     localSlotAssignments = assignScratchSlotsToSubroutines(subroutineMapping)
 
-    recursivePoints = findRecursionPoints(subroutineGraph)
     spillLocalSlotsDuringRecursion(
-        subroutineMapping, recursivePoints, localSlotAssignments
+        subroutineMapping, subroutineGraph, localSlotAssignments
     )
 
     subroutineLabels = resolveSubroutines(subroutineMapping)

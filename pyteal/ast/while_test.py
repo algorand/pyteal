@@ -65,19 +65,23 @@ def test_while_continue():
     assert expr.type_of() == TealType.none
     assert not expr.has_return()
 
-    options.currentLoop = expr
+    options.enterLoop()
+
     expected, condEnd = items[0].__teal__(options)
     do, doEnd = Seq([items[1], items[2]]).__teal__(options)
     expectedBranch = TealConditionalBlock([])
     end = TealSimpleBlock([])
 
-    for block in options.continueBlocks:
-        block.setNextBlock(do)
-
     expectedBranch.setTrueBlock(do)
     expectedBranch.setFalseBlock(end)
     condEnd.setNextBlock(expectedBranch)
     doEnd.setNextBlock(expected)
+
+    _, continueBlocks = options.exitLoop()
+
+    for block in continueBlocks:
+        block.setNextBlock(do)
+
     actual, _ = expr.__teal__(options)
 
     assert actual == expected
@@ -95,19 +99,23 @@ def test_while_break():
     assert expr.type_of() == TealType.none
     assert not expr.has_return()
 
-    options.currentLoop = expr
+    options.enterLoop()
+
     expected, condEnd = items[0].__teal__(options)
     do, doEnd = Seq([items[1], items[2]]).__teal__(options)
     expectedBranch = TealConditionalBlock([])
     end = TealSimpleBlock([])
 
-    for block in options.breakBlocks:
-        block.setNextBlock(end)
-
     expectedBranch.setTrueBlock(do)
     expectedBranch.setFalseBlock(end)
     condEnd.setNextBlock(expectedBranch)
     doEnd.setNextBlock(expected)
+
+    breakBlocks, _ = options.exitLoop()
+
+    for block in breakBlocks:
+        block.setNextBlock(end)
+
     actual, _ = expr.__teal__(options)
 
     assert actual == expected

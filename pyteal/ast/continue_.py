@@ -25,11 +25,11 @@ class Continue(Expr):
         return "continue"
 
     def __teal__(self, options: "CompileOptions"):
-        if options.currentLoop is None:
+        if not options.isInLoop():
             raise TealCompileError("continue is only allowed in a loop", self)
 
         start = TealSimpleBlock([])
-        options.continueBlocks.append(start)
+        options.addLoopContinueBlock(start)
 
         return start, start
 

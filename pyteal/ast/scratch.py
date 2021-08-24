@@ -59,6 +59,9 @@ class ScratchSlot:
         """
         return ScratchLoad(self, type)
 
+    def __repr__(self):
+        return "ScratchSlot({})".format(self.id)
+
     def __str__(self):
         return "slot#{}".format(self.id)
 

@@ -9,6 +9,17 @@ from ..config import NUM_SLOTS
 def collectScratchSlots(
     subroutineMapping: Dict[Optional[SubroutineDefinition], List[TealComponent]]
 ) -> Dict[Optional[SubroutineDefinition], Set[ScratchSlot]]:
+    """Find and return all referenced ScratchSlots for each subroutine.
+
+    Args:
+        subroutineMapping: A mapping from subroutine to the list of TealComponent which make up that
+            subroutine. The key None is taken to mean the main program routine.
+
+    Returns:
+        A dictionary whose keys are the same as subroutineMapping, and whose values are sets of
+        ScratchSlots referenced by each subroutine.
+    """
+
     subroutineSlots: Dict[Optional[SubroutineDefinition], Set[ScratchSlot]] = dict()
 
     for subroutine, ops in subroutineMapping.items():
@@ -26,17 +37,20 @@ def assignScratchSlotsToSubroutines(
 ) -> Dict[Optional[SubroutineDefinition], Set[int]]:
     """Assign scratch slot values for an entire program.
 
-    TODO: update this docstring
-
     Args:
-        ops: a list of TealComponents that may contain unassigned ScratchSlot objects. This must
-        represent the entire program being compiled.
+        subroutineMapping: A mapping from subroutine to the list of TealComponent which make up that
+            subroutine. The key None is taken to mean the main program routine. The values of this
+            map will be modified in order to assign specific slot values to all referenced scratch
+            slots.
 
     Raises:
-        TealInternalError: if the scratch slots referenced by the program do not fit into 256 slots.
+        TealInternalError: if the scratch slots referenced by the program do not fit into 256 slots,
+            or if multiple ScratchSlots request the same slot ID.
 
     Returns:
-        A list of TealComponents whose scratch slots have been assigned to concrete values.
+        A dictionary whose keys are the same as subroutineMapping, and whose values are sets of
+        integers representing the assigned IDs of slots which appear only in that subroutine
+        (subroutine local slots).
     """
     subroutineSlots = collectScratchSlots(subroutineMapping)
 

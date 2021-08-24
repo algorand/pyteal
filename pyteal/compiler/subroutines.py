@@ -34,6 +34,20 @@ def depthFirstSearch(graph: Dict[Node, Set[Node]], start: Node, end: Node) -> bo
 def findRecursionPoints(
     subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]]
 ) -> Dict[SubroutineDefinition, Set[SubroutineDefinition]]:
+    """Find all subroutine calls which may result in the current subroutine being called again
+    recursively.
+
+    Args:
+        subroutineGraph: A graph of subroutines. Each key is a subroutine (the main routine should
+            be present), which represents a node in the graph. Each value is a set of all
+            subroutines that specific subroutine calls, which represent directional edges in the
+            graph.
+
+    Returns:
+        A dictionary whose keys are the same as subroutineGraph, and whose values are a subset of
+        the key's values from subroutineGraph. Each element in this subset represents a subroutine
+        which may reenter the calling subroutine.
+    """
     reentryPoints: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
 
     for subroutine in subroutineGraph.keys():
@@ -49,14 +63,36 @@ def findRecursionPoints(
 
 def spillLocalSlotsDuringRecursion(
     subroutineMapping: Dict[Optional[SubroutineDefinition], List[TealComponent]],
-    recursivePoints: Dict[SubroutineDefinition, Set[SubroutineDefinition]],
+    subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]],
     localSlots: Dict[Optional[SubroutineDefinition], Set[int]],
 ) -> None:
+    """In order to prevent recursion from modifying the local scratch slots a subroutine uses,
+    subroutines must "spill" their local slots to the stack before calling any other subroutine
+    which may invoke the calling subroutine.
+
+    "Spill to stack" means loading all local slots onto the stack, invoking the subroutine which may
+    result in recursion, then restoring all local slots from the stack. This prevents the local
+    slots from being modifying by a new recursive invocation of the current subroutine.
+
+    Args:
+        subroutineMapping: A dictionary containing a list of TealComponents for every subroutine in
+            a program. The key None is taken to indicate the main program routine. This input may be
+            modified by this function in order to spill subroutine slots.
+        subroutineGraph: A graph of subroutines. Each key is a subroutine (the main routine should
+            not be present), which represents a node in the graph. Each value is a set of all
+            subroutines that specific subroutine calls, which represent directional edges in the
+            graph.
+        localSlots: The output from the function `assignScratchSlotsToSubroutines`, which indicates
+            the local slots which must be spilled for each subroutine.
+    """
+    recursivePoints = findRecursionPoints(subroutineGraph)
+
     for subroutine, reentryPoints in recursivePoints.items():
         slots = list(sorted(slot for slot in localSlots[subroutine]))
         numArgs = subroutine.argumentCount()
 
         if len(reentryPoints) == 0 or len(slots) == 0:
+            # no need to spill slots
             continue
 
         ops = subroutineMapping[subroutine]
@@ -83,7 +119,7 @@ def spillLocalSlotsDuringRecursion(
                     # TODO: TEAL 5+, do this instead:
                     # before.append(TealOp(None, Op.uncover, len(slots)))
                     # or just do cover during the previous loop where slots are loaded, whichever
-                    # is more efficient I suppose
+                    # is more efficient
                     before.append(
                         TealOp(
                             None,
@@ -121,7 +157,8 @@ def spillLocalSlotsDuringRecursion(
 
                 for _ in range(numArgs):
                     # clear out the duplicate arguments that were dug up previously, since dig
-                    # does not pop the dug values
+                    # does not pop the dug values -- once we use cover/uncover to properly set up
+                    # the spilled slots, this will no longer be necessary
                     if subroutine.returnType != TealType.none:
                         # if there is a return value on top of the stack, we need to preserve
                         # it, so swap it with the subroutine argument that's below it on the
@@ -142,13 +179,15 @@ def resolveSubroutines(
     """Resolve referenced subroutines for an entire program.
 
     Args:
-        TODO
-
-    Raises:
-        TODO
+        subroutineMapping: A dictionary containing a list of TealComponents for every subroutine in
+            a program. The key None is taken to indicate the main program routine. This input will
+            be modified by this function in order to assign labels to subroutines.
 
     Returns:
-        TODO
+        An ordered dictionary whose keys are the same as subroutineMapping, minus the None key. The
+        values of this dictionary will be the resolved label for each subroutine. The order of this
+        dictionary is taken to be the official ordering of the subroutines, which should be used in
+        later code generation steps.
     """
     allButMainRoutine = (
         subroutine for subroutine in subroutineMapping.keys() if subroutine is not None
