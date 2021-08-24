@@ -134,27 +134,27 @@ return
     assert actual == expected
 
 
-# def test_slot_load_before_store():
-#
-#     program = AssetHolding.balance(Int(0), Int(0)).value()
-#     with pytest.raises(TealInternalError):
-#         compileTeal(program, Mode.Application, version=2)
-#
-#     program = AssetHolding.balance(Int(0), Int(0)).hasValue()
-#     with pytest.raises(TealInternalError):
-#         compileTeal(program, Mode.Application, version=2)
-#
-#     program = App.globalGetEx(Int(0), Bytes("key")).value()
-#     with pytest.raises(TealInternalError):
-#         compileTeal(program, Mode.Application, version=2)
-#
-#     program = App.globalGetEx(Int(0), Bytes("key")).hasValue()
-#     with pytest.raises(TealInternalError):
-#         compileTeal(program, Mode.Application, version=2)
-#
-#     program = ScratchVar().load()
-#     with pytest.raises(TealInternalError):
-#         compileTeal(program, Mode.Application, version=2)
+def test_slot_load_before_store():
+
+    program = AssetHolding.balance(Int(0), Int(0)).value()
+    with pytest.raises(TealInternalError):
+        compileTeal(program, Mode.Application, version=2)
+
+    program = AssetHolding.balance(Int(0), Int(0)).hasValue()
+    with pytest.raises(TealInternalError):
+        compileTeal(program, Mode.Application, version=2)
+
+    program = App.globalGetEx(Int(0), Bytes("key")).value()
+    with pytest.raises(TealInternalError):
+        compileTeal(program, Mode.Application, version=2)
+
+    program = App.globalGetEx(Int(0), Bytes("key")).hasValue()
+    with pytest.raises(TealInternalError):
+        compileTeal(program, Mode.Application, version=2)
+
+    program = ScratchVar().load()
+    with pytest.raises(TealInternalError):
+        compileTeal(program, Mode.Application, version=2)
 
 
 def test_assign_scratch_slots():
@@ -256,6 +256,7 @@ def test_compile_while():
         [
             i.store(Int(0)),
             While(i.load() < Int(2)).Do(Seq([i.store(i.load() + Int(1))])),
+            Approve()
         ]
     )
 
@@ -263,17 +264,19 @@ def test_compile_while():
     #pragma version 4
 int 0
 store 0
-l1:
+main_l1:
 load 0
 int 2
 <
-bz l3
+bz main_l3
 load 0
 int 1
 +
 store 0
-b l1
-l3:
+b main_l1
+main_l3:
+int 1
+return
     """.strip()
     actualNoAssemble = compileTeal(
         program, Mode.Application, version=4, assembleConstants=False
@@ -296,36 +299,39 @@ l3:
                     ]
                 )
             ),
+            Approve()
         ]
     )
 
     expectedNoAssemble = """#pragma version 4
 int 0
 store 0
-l1:
+main_l1:
 load 0
 int 2
 <
-bz l6
+bz main_l6
 int 0
 store 1
-l3:
+main_l3:
 load 1
 int 5
 <
-bnz l5
+bnz main_l5
 load 0
 int 1
 +
 store 0
-b l1
-l5:
+b main_l1
+main_l5:
 load 1
 int 1
 +
 store 1
-b l3
-l6:
+b main_l3
+main_l6:
+int 1
+return
     """.strip()
 
     actualNoAssemble = compileTeal(
@@ -340,7 +346,8 @@ def test_compile_for():
         [
             For(i.store(Int(0)), i.load() < Int(10), i.store(i.load() + Int(1))).Do(
                 Seq([App.globalPut(Itob(i.load()), i.load() * Int(2))])
-            )
+            ),
+            Approve(),
         ]
     )
 
@@ -348,11 +355,11 @@ def test_compile_for():
     #pragma version 4
 int 0
 store 0
-l1:
+main_l1:
 load 0
 int 10
 <
-bz l3
+bz main_l3
 load 0
 itob
 load 0
@@ -363,8 +370,10 @@ load 0
 int 1
 +
 store 0
-b l1
-l3:
+b main_l1
+main_l3:
+int 1
+return
     """.strip()
     actualNoAssemble = compileTeal(
         program, Mode.Application, version=4, assembleConstants=False
@@ -386,7 +395,8 @@ l3:
                         ).Do(Seq([App.globalPut(Itob(j.load()), j.load() * Int(2))]))
                     ]
                 )
-            )
+            ),
+            Approve()
         ]
     )
 
@@ -394,24 +404,24 @@ l3:
         #pragma version 4
 int 0
 store 0
-l1:
+main_l1:
 load 0
 int 10
 <
-bz l6
+bz main_l6
 int 0
 store 1
-l3:
+main_l3:
 load 1
 int 4
 <
-bnz l5
+bnz main_l5
 load 0
 int 1
 +
 store 0
-b l1
-l5:
+b main_l1
+main_l5:
 load 1
 itob
 load 1
@@ -422,8 +432,10 @@ load 1
 int 2
 +
 store 1
-b l3
-l6:
+b main_l3
+main_l6:
+int 1
+return
         """.strip()
     actualNoAssemble = compileTeal(
         program, Mode.Application, version=4, assembleConstants=False
@@ -441,28 +453,31 @@ def test_compile_break():
             While(i.load() < Int(3)).Do(
                 Seq([If(i.load() == Int(2), Break()), i.store(i.load() + Int(1))])
             ),
+            Approve()
         ]
     )
 
     expectedNoAssemble = """#pragma version 4
 int 0
 store 0
-l1:
+main_l1:
 load 0
 int 3
 <
-bz l5
+bz main_l5
 load 0
 int 2
 ==
-bnz l4
+bnz main_l4
 load 0
 int 1
 +
 store 0
-b l1
-l4:
-l5:
+b main_l1
+main_l4:
+main_l5:
+int 1
+return
             """.strip()
     actualNoAssemble = compileTeal(
         program, Mode.Application, version=4, assembleConstants=False
@@ -480,22 +495,23 @@ l5:
                         App.globalPut(Itob(i.load()), i.load() * Int(2)),
                     ]
                 )
-            )
+            ),
+            Approve()
         ]
     )
 
     expectedNoAssemble = """#pragma version 4
 int 0
 store 0
-l1:
+main_l1:
 load 0
 int 10
 <
-bz l5
+bz main_l5
 load 0
 int 4
 ==
-bnz l4
+bnz main_l4
 load 0
 itob
 load 0
@@ -506,9 +522,11 @@ load 0
 int 1
 +
 store 0
-b l1
-l4:
-l5:
+b main_l1
+main_l4:
+main_l5:
+int 1
+return
         """.strip()
     actualNoAssemble = compileTeal(
         program, Mode.Application, version=4, assembleConstants=False
@@ -525,30 +543,33 @@ def test_compile_continue():
             While(i.load() < Int(3)).Do(
                 Seq([If(i.load() == Int(2), Continue()), i.store(i.load() + Int(1))])
             ),
+            Approve(),
         ]
     )
 
     expectedNoAssemble = """#pragma version 4
 int 0
 store 0
-l1:
+main_l1:
 load 0
 int 3
 <
-bz l5
-l2:
+bz main_l5
+main_l2:
 load 0
 int 2
 ==
-bnz l4
+bnz main_l4
 load 0
 int 1
 +
 store 0
-b l1
-l4:
-b l2
-l5:
+b main_l1
+main_l4:
+b main_l2
+main_l5:
+int 1
+return
                 """.strip()
     actualNoAssemble = compileTeal(
         program, Mode.Application, version=4, assembleConstants=False
@@ -566,37 +587,40 @@ l5:
                         App.globalPut(Itob(i.load()), i.load() * Int(2)),
                     ]
                 )
-            )
+            ),
+            Approve()
         ]
     )
 
     expectedNoAssemble = """#pragma version 4
 int 0
 store 0
-l1:
+main_l1:
 load 0
 int 10
 <
-bz l6
+bz main_l6
 load 0
 int 4
 ==
-bnz l5
+bnz main_l5
 load 0
 itob
 load 0
 int 2
 *
 app_global_put
-l4:
+main_l4:
 load 0
 int 1
 +
 store 0
-b l1
-l5:
-b l4
-l6:
+b main_l1
+main_l5:
+b main_l4
+main_l6:
+int 1
+return
             """.strip()
     actualNoAssemble = compileTeal(
         program, Mode.Application, version=4, assembleConstants=False
@@ -618,6 +642,7 @@ def test_compile_continue_break_nested():
                     ]
                 )
             ),
+            Approve()
         ]
     )
 
@@ -627,8 +652,8 @@ store 0
 load 0
 int 10
 <
-bz l4
-l1:
+bz main_l4
+main_l1:
 load 0
 int 1
 +
@@ -636,11 +661,13 @@ store 0
 load 0
 int 4
 <
-bnz l3
-b l4
-l3:
-b l1
-l4:
+bnz main_l3
+b main_l4
+main_l3:
+b main_l1
+main_l4:
+int 1
+return
     """.strip()
     actualNoAssemble = compileTeal(
         program, Mode.Application, version=4, assembleConstants=False
@@ -668,53 +695,56 @@ l4:
                     ]
                 )
             ),
+            Approve()
         ]
     )
 
     expectedNoAssemble = """#pragma version 4
 int 0
 store 0
-l1:
+main_l1:
 load 0
 int 10
 <
-bz l12
-l2:
+bz main_l12
+main_l2:
 load 0
 int 8
 ==
-bnz l11
-l4:
+bnz main_l11
+main_l4:
 load 0
 int 6
 <
-bnz l8
-l5:
+bnz main_l8
+main_l5:
 load 0
 int 5
 <
-bnz l7
+bnz main_l7
 load 0
 int 1
 +
 store 0
-b l1
-l7:
-b l2
-l8:
+b main_l1
+main_l7:
+b main_l2
+main_l8:
 load 0
 int 3
 ==
-bnz l10
+bnz main_l10
 load 0
 int 1
 +
 store 0
-b l4
-l10:
-b l5
-l11:
-l12:  
+b main_l4
+main_l10:
+b main_l5
+main_l11:
+main_l12:
+int 1
+return
 """.strip()
     actualNoAssemble = compileTeal(
         program, Mode.Application, version=4, assembleConstants=False

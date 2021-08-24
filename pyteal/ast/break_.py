@@ -35,6 +35,9 @@ class Break(Expr):
 
     def type_of(self):
         return TealType.none
+    
+    def has_return(self):
+        return False
 
 
 Break.__module__ = "pyteal"

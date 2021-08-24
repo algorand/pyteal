@@ -26,7 +26,11 @@ def test_continue():
 
     items = [Int(1), Seq([Continue()])]
     expr = While(items[0]).Do(items[1])
-    actual, _ = expr.__teal__(options)
+
+    assert expr.type_of() == TealType.none
+    assert not expr.has_return()
+
+    expr.__teal__(options)
 
     options.currentLoop = expr
     start, _ = items[1].__teal__(options)

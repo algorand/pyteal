@@ -15,6 +15,7 @@ def test_for_compiles():
         App.globalPut(Itob(Int(0)), Itob(Int(2)))
     )
     assert expr.type_of() == TealType.none
+    assert not expr.has_return()
     expr.__teal__(options)
 
 
@@ -30,6 +31,7 @@ def test_nested_for_compiles():
         )
     )
     assert expr.type_of() == TealType.none
+    assert not expr.has_return()
 
 
 def test_continue_break():
@@ -38,6 +40,7 @@ def test_continue_break():
         Seq([If(Int(1), Break(), Continue())])
     )
     assert expr.type_of() == TealType.none
+    assert not expr.has_return()
     expr.__teal__(options)
 
 
@@ -52,6 +55,7 @@ def test_for():
     expr = For(items[0], items[1], items[2]).Do(Seq([items[3]]))
 
     assert expr.type_of() == TealType.none
+    assert not expr.has_return()
 
     expected, varEnd = items[0].__teal__(options)
     condStart, condEnd = items[1].__teal__(options)
@@ -85,6 +89,7 @@ def test_for_continue():
     expr = For(items[0], items[1], items[2]).Do(Seq([items[3], items[4]]))
 
     assert expr.type_of() == TealType.none
+    assert not expr.has_return()
 
     options.currentLoop = items[0]
 
@@ -123,6 +128,7 @@ def test_for_break():
     expr = For(items[0], items[1], items[2]).Do(Seq([items[3], items[4]]))
 
     assert expr.type_of() == TealType.none
+    assert not expr.has_return()
 
     options.currentLoop = expr
 

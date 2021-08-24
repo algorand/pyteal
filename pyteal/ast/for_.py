@@ -95,6 +95,9 @@ class For(Expr):
         if self.doBlock is None:
             raise TealCompileError("For expression must have a doBlock", self)
         return TealType.none
+    
+    def has_return(self):
+        return False
 
     def Do(self, doBlock: Expr):
         if self.doBlock is not None:
