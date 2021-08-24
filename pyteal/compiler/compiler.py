@@ -9,7 +9,7 @@ from ..ast import (
     SubroutineDefinition,
     SubroutineDeclaration,
 )
-from ..ir import Mode, TealComponent, TealOp, TealBlock
+from ..ir import Mode, TealComponent, TealOp, TealBlock, TealSimpleBlock
 from ..errors import TealInputError, TealInternalError
 
 from .sort import sortBlocks
@@ -38,6 +38,9 @@ class CompileOptions:
         self.mode = mode
         self.version = version
         self.currentSubroutine = currentSubroutine
+        self.currentLoop: Optional[Expr] = None
+        self.breakBlocks: List[TealSimpleBlock] = []
+        self.continueBlocks: List[TealSimpleBlock] = []
 
 
 def verifyOpsForVersion(teal: List[TealComponent], version: int):
@@ -99,7 +102,7 @@ def compileSubroutine(
             ast = Return(ast)
 
     options.currentSubroutine = currentSubroutine
-    start, _ = ast.__teal__(options)
+    start, end = ast.__teal__(options)
     start.addIncoming()
     start.validateTree()
 
@@ -112,7 +115,7 @@ def compileSubroutine(
     #     msg = 'Encountered {} error{} during compilation'.format(len(errors), 's' if len(errors) != 1 else '')
     #     raise TealInternalError(msg) from errors[0]
 
-    order = sortBlocks(start)
+    order = sortBlocks(start, end)
     teal = flattenBlocks(order)
 
     verifyOpsForVersion(teal, options.version)

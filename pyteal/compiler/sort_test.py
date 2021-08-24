@@ -9,7 +9,7 @@ def test_sort_single():
     block.validateTree()
 
     expected = [block]
-    actual = sortBlocks(block)
+    actual = sortBlocks(block, block)
 
     assert actual == expected
 
@@ -28,7 +28,7 @@ def test_sort_sequence():
     block1.validateTree()
 
     expected = [block1, block2, block3, block4, block5]
-    actual = sortBlocks(block1)
+    actual = sortBlocks(block1, block5)
 
     assert actual == expected
 
@@ -42,8 +42,8 @@ def test_sort_branch():
     block.addIncoming()
     block.validateTree()
 
-    expected = [block, blockFalse, blockTrue]
-    actual = sortBlocks(block)
+    expected = [block, blockTrue, blockFalse]
+    actual = sortBlocks(block, blockFalse)
 
     assert actual == expected
 
@@ -65,13 +65,13 @@ def test_sort_multiple_branch():
 
     expected = [
         block,
-        blockFalse,
         blockTrue,
         blockTrueBranch,
         blockTrueFalse,
         blockTrueTrue,
+        blockFalse,
     ]
-    actual = sortBlocks(block)
+    actual = sortBlocks(block, blockFalse)
 
     assert actual == expected
 
@@ -89,6 +89,6 @@ def test_sort_branch_converge():
     block.validateTree()
 
     expected = [block, blockFalse, blockTrue, blockEnd]
-    actual = sortBlocks(block)
+    actual = sortBlocks(block, blockEnd)
 
     assert actual == expected
