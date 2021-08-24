@@ -138,7 +138,7 @@ def spillLocalSlotsDuringRecursion(
 
 def resolveSubroutines(
     subroutineMapping: Dict[Optional[SubroutineDefinition], List[TealComponent]]
-) -> OrderedDict[SubroutineDefinition, str]:
+) -> Dict[SubroutineDefinition, str]:
     """Resolve referenced subroutines for an entire program.
 
     Args:
@@ -155,7 +155,7 @@ def resolveSubroutines(
     )
 
     subroutineOrder = sorted(allButMainRoutine, key=lambda subroutine: subroutine.id)
-    subroutineToLabel: OrderedDict[SubroutineDefinition, str] = OrderedDict()
+    subroutineToLabel: Dict[SubroutineDefinition, str] = OrderedDict()
     for index, subroutine in enumerate(subroutineOrder):
         subroutineToLabel[subroutine] = "sub{}".format(index)
 
