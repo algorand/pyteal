@@ -1,5 +1,5 @@
 from typing import List, Dict, DefaultDict, Optional, cast
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 
 from ..ast import SubroutineDefinition
 from ..ir import (
@@ -84,7 +84,7 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
 
 def flattenSubroutines(
     subroutineMapping: Dict[Optional[SubroutineDefinition], List[TealComponent]],
-    subroutineToLabel: OrderedDict[SubroutineDefinition, str],
+    subroutineToLabel: Dict[SubroutineDefinition, str],
 ) -> List[TealComponent]:
     combinedOps: List[TealComponent] = []
 
