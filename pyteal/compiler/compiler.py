@@ -107,6 +107,7 @@ def compileSubroutine(
     options: CompileOptions,
     subroutineMapping: Dict[Optional[SubroutineDefinition], List[TealComponent]],
     subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]],
+    subroutineBlocks: Dict[Optional[SubroutineDefinition], TealBlock],
 ) -> None:
     currentSubroutine = (
         cast(SubroutineDeclaration, ast).subroutine
@@ -128,12 +129,6 @@ def compileSubroutine(
     start = TealBlock.NormalizeBlocks(start)
     start.validateTree()
 
-    # TODO: this probably needs to get modified since scratch slots may span multiple subroutines
-    # errors = start.validateSlots()
-    # if len(errors) > 0:
-    #     msg = 'Encountered {} error{} during compilation'.format(len(errors), 's' if len(errors) != 1 else '')
-    #     raise TealInternalError(msg) from errors[0]
-
     order = sortBlocks(start, end)
     teal = flattenBlocks(order)
 
@@ -141,6 +136,7 @@ def compileSubroutine(
     verifyOpsForMode(teal, options.mode)
 
     subroutineMapping[currentSubroutine] = teal
+    subroutineBlocks[currentSubroutine] = start
 
     referencedSubroutines: Set[SubroutineDefinition] = set()
     for stmt in teal:
@@ -153,7 +149,7 @@ def compileSubroutine(
     newSubroutines = referencedSubroutines - subroutineMapping.keys()
     for subroutine in sorted(newSubroutines, key=lambda subroutine: subroutine.id):
         compileSubroutine(
-            subroutine.getDeclaration(), options, subroutineMapping, subroutineGraph
+            subroutine.getDeclaration(), options, subroutineMapping, subroutineGraph, subroutineBlocks
         )
 
 
@@ -198,9 +194,10 @@ def compileTeal(
         Optional[SubroutineDefinition], List[TealComponent]
     ] = dict()
     subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
-    compileSubroutine(ast, options, subroutineMapping, subroutineGraph)
+    subroutineBlocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
+    compileSubroutine(ast, options, subroutineMapping, subroutineGraph, subroutineBlocks)
 
-    localSlotAssignments = assignScratchSlotsToSubroutines(subroutineMapping)
+    localSlotAssignments = assignScratchSlotsToSubroutines(subroutineMapping, subroutineBlocks)
 
     spillLocalSlotsDuringRecursion(
         subroutineMapping, subroutineGraph, localSlotAssignments

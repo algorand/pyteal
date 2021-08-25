@@ -76,7 +76,7 @@ def test_collect_scratch_slots():
     assert actual == expected
 
 
-def test_assign_scratch_slots_to_subroutines():
+def test_assignScratchSlotsToSubroutines_no_requested_ids():
     def sub1Impl():
         return None
 
@@ -135,6 +135,13 @@ def test_assign_scratch_slots_to_subroutines():
         subroutine3: subroutine3Ops,
     }
 
+    subroutineBlocks = {
+        None: TealSimpleBlock(mainOps),
+        subroutine1: TealSimpleBlock(subroutine1Ops),
+        subroutine2: TealSimpleBlock(subroutine2Ops),
+        subroutine3: TealSimpleBlock(subroutine3Ops),
+    }
+
     expectedAssignments = {
         globalSlot1: 0,
         subroutine1Slot1: 1,
@@ -154,7 +161,7 @@ def test_assign_scratch_slots_to_subroutines():
         subroutine3: set(),
     }
 
-    actual = assignScratchSlotsToSubroutines(subroutineMapping)
+    actual = assignScratchSlotsToSubroutines(subroutineMapping, subroutineBlocks)
 
     assert actual == expected
 
@@ -190,7 +197,7 @@ def test_assign_scratch_slots_to_subroutines():
     ]
 
 
-def test_assign_scratch_slots_to_subroutines_with_requested_ids():
+def test_assignScratchSlotsToSubroutines_with_requested_ids():
     def sub1Impl():
         return None
 
@@ -249,6 +256,13 @@ def test_assign_scratch_slots_to_subroutines_with_requested_ids():
         subroutine3: subroutine3Ops,
     }
 
+    subroutineBlocks = {
+        None: TealSimpleBlock(mainOps),
+        subroutine1: TealSimpleBlock(subroutine1Ops),
+        subroutine2: TealSimpleBlock(subroutine2Ops),
+        subroutine3: TealSimpleBlock(subroutine3Ops),
+    }
+
     expectedAssignments = {
         globalSlot1: 8,
         subroutine1Slot1: 0,
@@ -268,7 +282,7 @@ def test_assign_scratch_slots_to_subroutines_with_requested_ids():
         subroutine3: set(),
     }
 
-    actual = assignScratchSlotsToSubroutines(subroutineMapping)
+    actual = assignScratchSlotsToSubroutines(subroutineMapping, subroutineBlocks)
 
     assert actual == expected
 
@@ -304,7 +318,7 @@ def test_assign_scratch_slots_to_subroutines_with_requested_ids():
     ]
 
 
-def test_assign_scratch_slots_to_subroutines_invalid_requested_id():
+def test_assignScratchSlotsToSubroutines_invalid_requested_id():
     def sub1Impl():
         return None
 
@@ -363,6 +377,80 @@ def test_assign_scratch_slots_to_subroutines_invalid_requested_id():
         subroutine3: subroutine3Ops,
     }
 
+    subroutineBlocks = {
+        None: TealSimpleBlock(mainOps),
+        subroutine1: TealSimpleBlock(subroutine1Ops),
+        subroutine2: TealSimpleBlock(subroutine2Ops),
+        subroutine3: TealSimpleBlock(subroutine3Ops),
+    }
+
     # mainSlot2 and subroutine2Slot1 request the same ID, 100
     with pytest.raises(TealInternalError):
-        actual = assignScratchSlotsToSubroutines(subroutineMapping)
+        actual = assignScratchSlotsToSubroutines(subroutineMapping, subroutineBlocks)
+
+def test_assignScratchSlotsToSubroutines_slot_used_before_assignment():
+    def sub1Impl():
+        return None
+
+    def sub2Impl(a1):
+        return None
+
+    def sub3Impl(a1, a2, a3):
+        return None
+
+    subroutine1 = SubroutineDefinition(sub1Impl, TealType.uint64)
+    subroutine2 = SubroutineDefinition(sub2Impl, TealType.bytes)
+    subroutine3 = SubroutineDefinition(sub3Impl, TealType.none)
+
+    globalSlot1 = ScratchSlot()
+
+    subroutine1Slot1 = ScratchSlot()
+    subroutine1Slot2 = ScratchSlot()
+    subroutine1Ops = [
+        TealOp(None, Op.int, 1),
+        TealOp(None, Op.store, subroutine1Slot1),
+        TealOp(None, Op.int, 3),
+        TealOp(None, Op.store, subroutine1Slot2),
+        TealOp(None, Op.load, globalSlot1),
+        TealOp(None, Op.retsub),
+    ]
+
+    subroutine2Slot1 = ScratchSlot()
+    subroutine2Ops = [
+        TealOp(None, Op.byte, '"value"'),
+        TealOp(None, Op.store, subroutine2Slot1),
+        TealOp(None, Op.load, subroutine2Slot1),
+        TealOp(None, Op.retsub),
+    ]
+
+    subroutine3Ops = [
+        TealOp(None, Op.retsub),
+    ]
+
+    mainSlot1 = ScratchSlot()
+    mainSlot2 = ScratchSlot()
+    mainOps = [
+        TealOp(None, Op.int, 7),
+        TealOp(None, Op.store, globalSlot1),
+        TealOp(None, Op.int, 2),
+        TealOp(None, Op.store, mainSlot2),
+        TealOp(None, Op.load, mainSlot1),
+        TealOp(None, Op.return_),
+    ]
+
+    subroutineMapping = {
+        None: mainOps,
+        subroutine1: subroutine1Ops,
+        subroutine2: subroutine2Ops,
+        subroutine3: subroutine3Ops,
+    }
+
+    subroutineBlocks = {
+        None: TealSimpleBlock(mainOps),
+        subroutine1: TealSimpleBlock(subroutine1Ops),
+        subroutine2: TealSimpleBlock(subroutine2Ops),
+        subroutine3: TealSimpleBlock(subroutine3Ops),
+    }
+
+    with pytest.raises(TealInternalError):
+        assignScratchSlotsToSubroutines(subroutineMapping, subroutineBlocks)
