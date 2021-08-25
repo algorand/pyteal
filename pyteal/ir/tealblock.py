@@ -117,12 +117,10 @@ class TealBlock(ABC):
                     continue
                 visited.add(visitedKey)
 
-                for error in block.validateSlots(
-                    currentSlotsInUse, visited
-                ):
+                for error in block.validateSlots(currentSlotsInUse, visited):
                     if error not in errors:
                         errors.append(error)
-                
+
         return errors
 
     @abstractmethod

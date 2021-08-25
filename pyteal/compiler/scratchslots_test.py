@@ -388,6 +388,7 @@ def test_assignScratchSlotsToSubroutines_invalid_requested_id():
     with pytest.raises(TealInternalError):
         actual = assignScratchSlotsToSubroutines(subroutineMapping, subroutineBlocks)
 
+
 def test_assignScratchSlotsToSubroutines_slot_used_before_assignment():
     def sub1Impl():
         return None

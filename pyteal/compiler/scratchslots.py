@@ -82,14 +82,16 @@ def assignScratchSlotsToSubroutines(
         raise TealInternalError(
             "Too many slots in use: {}, maximum is {}".format(len(allSlots), NUM_SLOTS)
         )
-    
+
     # verify that all local slots are assigned to before being loaded.
     # TODO: for simplicity, the current implementation does not perform this check with global slots
     # as well, but that would be a good improvement
     for subroutine, start in subroutineBlocks.items():
         errors = start.validateSlots(slotsInUse=globalSlots)
         if len(errors) > 0:
-            msg = 'Encountered {} error{} when assigning slots to subroutine'.format(len(errors), 's' if len(errors) != 1 else '')
+            msg = "Encountered {} error{} when assigning slots to subroutine".format(
+                len(errors), "s" if len(errors) != 1 else ""
+            )
             raise TealInternalError(msg) from errors[0]
 
     slotAssignments: Dict[ScratchSlot, int] = dict()

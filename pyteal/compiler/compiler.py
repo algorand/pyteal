@@ -149,7 +149,11 @@ def compileSubroutine(
     newSubroutines = referencedSubroutines - subroutineMapping.keys()
     for subroutine in sorted(newSubroutines, key=lambda subroutine: subroutine.id):
         compileSubroutine(
-            subroutine.getDeclaration(), options, subroutineMapping, subroutineGraph, subroutineBlocks
+            subroutine.getDeclaration(),
+            options,
+            subroutineMapping,
+            subroutineGraph,
+            subroutineBlocks,
         )
 
 
@@ -195,9 +199,13 @@ def compileTeal(
     ] = dict()
     subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
     subroutineBlocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
-    compileSubroutine(ast, options, subroutineMapping, subroutineGraph, subroutineBlocks)
+    compileSubroutine(
+        ast, options, subroutineMapping, subroutineGraph, subroutineBlocks
+    )
 
-    localSlotAssignments = assignScratchSlotsToSubroutines(subroutineMapping, subroutineBlocks)
+    localSlotAssignments = assignScratchSlotsToSubroutines(
+        subroutineMapping, subroutineBlocks
+    )
 
     spillLocalSlotsDuringRecursion(
         subroutineMapping, subroutineGraph, localSlotAssignments
