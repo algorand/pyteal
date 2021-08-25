@@ -8,7 +8,7 @@ from ..ast import *
 from .flatten import flattenBlocks, flattenSubroutines
 
 
-def test_flatten_blocks_none():
+def test_flattenBlocks_none():
     blocks = []
 
     expected = []
@@ -17,7 +17,7 @@ def test_flatten_blocks_none():
     assert actual == expected
 
 
-def test_flatten_blocks_single_empty():
+def test_flattenBlocks_single_empty():
     blocks = [TealSimpleBlock([])]
 
     expected = []
@@ -26,7 +26,7 @@ def test_flatten_blocks_single_empty():
     assert actual == expected
 
 
-def test_flatten_blocks_single_one():
+def test_flattenBlocks_single_one():
     blocks = [TealSimpleBlock([TealOp(None, Op.int, 1)])]
 
     expected = [TealOp(None, Op.int, 1)]
@@ -35,7 +35,7 @@ def test_flatten_blocks_single_one():
     assert actual == expected
 
 
-def test_flatten_blocks_single_many():
+def test_flattenBlocks_single_many():
     blocks = [
         TealSimpleBlock(
             [
@@ -60,7 +60,7 @@ def test_flatten_blocks_single_many():
     assert actual == expected
 
 
-def test_flatten_blocks_sequence():
+def test_flattenBlocks_sequence():
     block5 = TealSimpleBlock([TealOp(None, Op.int, 5)])
     block4 = TealSimpleBlock([TealOp(None, Op.int, 4)])
     block4.setNextBlock(block5)
@@ -86,7 +86,7 @@ def test_flatten_blocks_sequence():
     assert actual == expected
 
 
-def test_flatten_blocks_branch():
+def test_flattenBlocks_branch():
     blockTrue = TealSimpleBlock(
         [TealOp(None, Op.byte, '"true"'), TealOp(None, Op.return_)]
     )
@@ -114,7 +114,7 @@ def test_flatten_blocks_branch():
     assert actual == expected
 
 
-def test_flatten_blocks_branch_equal_end_nodes():
+def test_flattenBlocks_branch_equal_end_nodes():
     blockTrueEnd = TealSimpleBlock([TealOp(None, Op.return_)])
     blockTrue = TealSimpleBlock([TealOp(None, Op.byte, '"true"')])
     blockTrue.setNextBlock(blockTrueEnd)
@@ -142,7 +142,7 @@ def test_flatten_blocks_branch_equal_end_nodes():
     assert actual == expected
 
 
-def test_flatten_blocks_branch_converge():
+def test_flattenBlocks_branch_converge():
     blockEnd = TealSimpleBlock([TealOp(None, Op.return_)])
     blockTrue = TealSimpleBlock([TealOp(None, Op.byte, '"true"')])
     blockTrue.setNextBlock(blockEnd)
@@ -170,7 +170,7 @@ def test_flatten_blocks_branch_converge():
     assert actual == expected
 
 
-def test_flatten_blocks_multiple_branch():
+def test_flattenBlocks_multiple_branch():
     blockTrueTrue = TealSimpleBlock(
         [TealOp(None, Op.byte, '"true true"'), TealOp(None, Op.return_)]
     )
@@ -218,7 +218,7 @@ def test_flatten_blocks_multiple_branch():
     assert actual == expected
 
 
-def test_flatten_blocks_multiple_branch_converge():
+def test_flattenBlocks_multiple_branch_converge():
     blockEnd = TealSimpleBlock([TealOp(None, Op.return_)])
     blockTrueTrue = TealSimpleBlock([TealOp(None, Op.byte, '"true true"')])
     blockTrueTrue.setNextBlock(blockEnd)
@@ -267,7 +267,7 @@ def test_flatten_blocks_multiple_branch_converge():
     assert actual == expected
 
 
-def test_flatten_subroutines_no_subroutines():
+def test_flattenSubroutines_no_subroutines():
     subroutineToLabel = OrderedDict()
 
     l1Label = LabelReference("l1")
@@ -303,7 +303,7 @@ def test_flatten_subroutines_no_subroutines():
     assert actual == expected
 
 
-def test_flatten_subroutines_1_subroutine():
+def test_flattenSubroutines_1_subroutine():
     subroutine = SubroutineDefinition(lambda: Int(1) + Int(2) + Int(3), TealType.uint64)
 
     subroutineToLabel = OrderedDict()
@@ -360,7 +360,7 @@ def test_flatten_subroutines_1_subroutine():
     assert actual == expected
 
 
-def test_flatten_subroutines_multiple_subroutines():
+def test_flattenSubroutines_multiple_subroutines():
     def sub1Impl():
         return None
 

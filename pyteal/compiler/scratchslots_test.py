@@ -5,7 +5,7 @@ from .. import *
 from .scratchslots import collectScratchSlots, assignScratchSlotsToSubroutines
 
 
-def test_collect_scratch_slots():
+def test_collectScratchSlots():
     def sub1Impl():
         return None
 
