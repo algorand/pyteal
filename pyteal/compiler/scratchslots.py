@@ -56,7 +56,9 @@ def assignScratchSlotsToSubroutines(
     subroutineSlots = collectScratchSlots(subroutineMapping)
 
     # all scratch slots referenced by the program
-    allSlots: Set[ScratchSlot] = cast(Set[ScratchSlot], set()).union(*subroutineSlots.values())
+    allSlots: Set[ScratchSlot] = cast(Set[ScratchSlot], set()).union(
+        *subroutineSlots.values()
+    )
 
     # all scratch slots referenced by more than 1 subroutine
     globalSlots: Set[ScratchSlot] = set()
