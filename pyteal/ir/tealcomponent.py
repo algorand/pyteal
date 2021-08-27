@@ -3,7 +3,7 @@ from typing import List, Optional, TYPE_CHECKING
 from contextlib import AbstractContextManager
 
 if TYPE_CHECKING:
-    from ..ast import Expr, ScratchSlot
+    from ..ast import Expr, ScratchSlot, SubroutineDefinition
 
 
 class TealComponent(ABC):
@@ -13,7 +13,13 @@ class TealComponent(ABC):
     def getSlots(self) -> List["ScratchSlot"]:
         return []
 
-    def assignSlot(self, slot: "ScratchSlot", location: int):
+    def assignSlot(self, slot: "ScratchSlot", location: int) -> None:
+        pass
+
+    def getSubroutines(self) -> List["SubroutineDefinition"]:
+        return []
+
+    def resolveSubroutine(self, subroutine: "SubroutineDefinition", label: str) -> None:
         pass
 
     @abstractmethod

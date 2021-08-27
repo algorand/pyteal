@@ -30,7 +30,7 @@ class TealBlock(ABC):
     def isTerminal(self) -> bool:
         """Check if this block ends the program."""
         for op in self.ops:
-            if op.getOp() in (Op.return_, Op.err):
+            if op.getOp() in (Op.return_, Op.retsub, Op.err):
                 return True
         return len(self.getOutgoing()) == 0
 
@@ -86,18 +86,12 @@ class TealBlock(ABC):
         self,
         slotsInUse: Set["ScratchSlot"] = None,
         visited: Set[Tuple[int, ...]] = None,
-        visitedBlocks=None,
     ) -> List[TealCompileError]:
-        import traceback
-
         if visited is None:
             visited = set()
 
         if slotsInUse is None:
             slotsInUse = set()
-
-        if visitedBlocks is None:
-            visitedBlocks = []
 
         currentSlotsInUse = set(slotsInUse)
         errors = []
@@ -121,16 +115,11 @@ class TealBlock(ABC):
                 visitedKey = (id(block), *sortedSlots)
                 if visitedKey in visited:
                     continue
-                if block in visitedBlocks:
-                    continue
+                visited.add(visitedKey)
 
-                visitedBlocks.append(block)
-                for error in block.validateSlots(
-                    currentSlotsInUse, visited, visitedBlocks
-                ):
+                for error in block.validateSlots(currentSlotsInUse, visited):
                     if error not in errors:
                         errors.append(error)
-                visited.add(visitedKey)
 
         return errors
 

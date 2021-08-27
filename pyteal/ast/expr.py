@@ -26,6 +26,11 @@ class Expr(ABC):
         pass
 
     @abstractmethod
+    def has_return(self) -> bool:
+        """Check if this expression always returns from the current subroutine or program."""
+        pass
+
+    @abstractmethod
     def __str__(self) -> str:
         """Get a string representation of this experssion."""
         pass

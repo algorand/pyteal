@@ -2,13 +2,13 @@ from typing import TYPE_CHECKING
 
 from ..types import TealType
 from ..ir import TealOp, Op, TealBlock
-from .leafexpr import LeafExpr
+from .expr import Expr
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
 
-class Err(LeafExpr):
+class Err(Expr):
     """Expression that causes the program to immediately fail when executed."""
 
     def __teal__(self, options: "CompileOptions"):
@@ -20,6 +20,9 @@ class Err(LeafExpr):
 
     def type_of(self):
         return TealType.none
+
+    def has_return(self):
+        return True
 
 
 Err.__module__ = "pyteal"

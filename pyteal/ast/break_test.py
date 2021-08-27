@@ -25,12 +25,17 @@ def test_break_fail():
 
 def test_break():
 
-    items = [Int(1), Seq([Break()])]
-    expr = While(items[0]).Do(items[1])
+    expr = Break()
+
+    assert expr.type_of() == TealType.none
+    assert not expr.has_return()
+
+    expected = TealSimpleBlock([])
+
+    options.enterLoop()
     actual, _ = expr.__teal__(options)
+    breakBlocks, continueBlocks = options.exitLoop()
 
-    options.currentLoop = expr
-    start, _ = items[1].__teal__(options)
-
-    assert len(options.breakBlocks) == 1
-    assert start in options.breakBlocks
+    assert actual == expected
+    assert breakBlocks == [actual]
+    assert continueBlocks == []

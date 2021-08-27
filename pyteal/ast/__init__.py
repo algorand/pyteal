@@ -5,7 +5,6 @@ from .expr import Expr
 from .leafexpr import LeafExpr
 from .addr import Addr
 from .bytes import Bytes
-from .err import Err
 from .int import Int, EnumInt
 
 # properties
@@ -37,7 +36,6 @@ from .unaryexpr import (
     BitwiseNot,
     Sqrt,
     Pop,
-    Return,
     Balance,
     MinBalance,
     BytesNot,
@@ -93,6 +91,14 @@ from .if_ import If
 from .cond import Cond
 from .seq import Seq
 from .assert_ import Assert
+from .err import Err
+from .return_ import Return, Approve, Reject
+from .subroutine import (
+    Subroutine,
+    SubroutineDefinition,
+    SubroutineDeclaration,
+    SubroutineCall,
+)
 from .while_ import While
 from .for_ import For
 from .break_ import Break
@@ -109,7 +115,6 @@ __all__ = [
     "LeafExpr",
     "Addr",
     "Bytes",
-    "Err",
     "Int",
     "EnumInt",
     "Arg",
@@ -148,7 +153,6 @@ __all__ = [
     "BitwiseNot",
     "Sqrt",
     "Pop",
-    "Return",
     "Balance",
     "MinBalance",
     "BinaryExpr",
@@ -183,6 +187,14 @@ __all__ = [
     "Cond",
     "Seq",
     "Assert",
+    "Err",
+    "Return",
+    "Approve",
+    "Reject",
+    "Subroutine",
+    "SubroutineDefinition",
+    "SubroutineDeclaration",
+    "SubroutineCall",
     "ScratchSlot",
     "ScratchLoad",
     "ScratchStore",

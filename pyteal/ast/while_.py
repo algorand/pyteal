@@ -33,27 +33,11 @@ class While(Expr):
         if self.doBlock is None:
             raise TealCompileError("While expression must have a doBlock", self)
 
-        breakBlocks = options.breakBlocks
-        continueBlocks = options.continueBlocks
-        prevLoop = options.currentLoop
-
-        options.breakBlocks = []
-        options.continueBlocks = []
-        options.currentLoop = self
+        options.enterLoop()
 
         condStart, condEnd = self.cond.__teal__(options)
         doStart, doEnd = self.doBlock.__teal__(options)
         end = TealSimpleBlock([])
-
-        for block in options.breakBlocks:
-            block.setNextBlock(end)
-
-        for block in options.continueBlocks:
-            block.setNextBlock(doStart)
-
-        options.breakBlocks = breakBlocks
-        options.continueBlocks = continueBlocks
-        options.currentLoop = prevLoop
 
         doEnd.setNextBlock(condStart)
 
@@ -62,6 +46,14 @@ class While(Expr):
         branchBlock.setFalseBlock(end)
 
         condEnd.setNextBlock(branchBlock)
+
+        breakBlocks, continueBlocks = options.exitLoop()
+
+        for block in breakBlocks:
+            block.setNextBlock(end)
+
+        for block in continueBlocks:
+            block.setNextBlock(doStart)
 
         return condStart, end
 
@@ -75,6 +67,9 @@ class While(Expr):
         if self.doBlock is None:
             raise TealCompileError("While expression must have a doBlock", self)
         return TealType.none
+
+    def has_return(self):
+        return False
 
     def Do(self, doBlock: Expr):
         if self.doBlock is not None:

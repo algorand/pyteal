@@ -47,5 +47,8 @@ class Nonce(Expr):
     def type_of(self):
         return self.child.type_of()
 
+    def has_return(self):
+        return self.child.has_return()
+
 
 Nonce.__module__ = "pyteal"

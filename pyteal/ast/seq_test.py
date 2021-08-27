@@ -62,6 +62,14 @@ def test_seq_three():
     assert actual == expected
 
 
+def test_seq_has_return():
+    exprWithReturn = Seq([App.localPut(Int(0), Bytes("key1"), Int(1)), Return(Int(1))])
+    assert exprWithReturn.has_return()
+
+    exprWithoutReturn = Seq([App.localPut(Int(0), Bytes("key1"), Int(1)), Int(1)])
+    assert not exprWithoutReturn.has_return()
+
+
 def test_seq_invalid():
     with pytest.raises(TealInputError):
         Seq([])

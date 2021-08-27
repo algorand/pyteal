@@ -46,5 +46,8 @@ class Assert(Expr):
     def type_of(self):
         return TealType.none
 
+    def has_return(self):
+        return False
+
 
 Assert.__module__ = "pyteal"

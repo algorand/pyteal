@@ -24,12 +24,17 @@ def test_continue_fail():
 
 def test_continue():
 
-    items = [Int(1), Seq([Continue()])]
-    expr = While(items[0]).Do(items[1])
+    expr = Continue()
+
+    assert expr.type_of() == TealType.none
+    assert not expr.has_return()
+
+    expected = TealSimpleBlock([])
+
+    options.enterLoop()
     actual, _ = expr.__teal__(options)
+    breakBlocks, continueBlocks = options.exitLoop()
 
-    options.currentLoop = expr
-    start, _ = items[1].__teal__(options)
-
-    assert len(options.continueBlocks) == 1
-    assert start in options.continueBlocks
+    assert actual == expected
+    assert breakBlocks == []
+    assert continueBlocks == [actual]

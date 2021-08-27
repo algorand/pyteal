@@ -80,6 +80,17 @@ class If(Expr):
             raise TealCompileError("If expression must have a thenBranch", self)
         return self.thenBranch.type_of()
 
+    def has_return(self):
+        if self.thenBranch is None:
+            raise TealCompileError("If expression must have a thenBranch", self)
+
+        if self.elseBranch is None:
+            # return false in this case because elseBranch does not exist, so it can't have a return
+            # op
+            return False
+        # otherwise, this expression has a return op only if both branches result in a return op
+        return self.thenBranch.has_return() and self.elseBranch.has_return()
+
     def Then(self, thenBranch: Expr):
         if not self.alternateSyntaxFlag:
             raise TealInputError("Cannot mix two different If syntax styles")

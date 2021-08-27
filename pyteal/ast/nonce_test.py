@@ -8,6 +8,20 @@ from .. import CompileOptions
 options = CompileOptions()
 
 
+def test_nonce_has_return():
+    exprWithReturn = Nonce(
+        "base32",
+        "7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M",
+        Return(Int(1)),
+    )
+    assert exprWithReturn.has_return()
+
+    exprWithoutReturn = Nonce(
+        "base32", "7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M", Int(1)
+    )
+    assert not exprWithoutReturn.has_return()
+
+
 def test_nonce_base32():
     arg = Int(1)
     expr = Nonce(

@@ -29,6 +29,9 @@ class UnaryExpr(Expr):
     def type_of(self):
         return self.outputType
 
+    def has_return(self):
+        return False
+
 
 UnaryExpr.__module__ = "pyteal"
 
@@ -104,11 +107,6 @@ def Sqrt(arg: Expr) -> UnaryExpr:
 def Pop(arg: Expr) -> UnaryExpr:
     """Pop a value from the stack."""
     return UnaryExpr(Op.pop, TealType.anytype, TealType.none, arg)
-
-
-def Return(arg: Expr) -> UnaryExpr:
-    """Immediately exit the program with the given success value."""
-    return UnaryExpr(Op.return_, TealType.uint64, TealType.none, arg)
 
 
 def Balance(account: Expr) -> UnaryExpr:

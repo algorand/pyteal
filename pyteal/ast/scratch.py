@@ -59,13 +59,11 @@ class ScratchSlot:
         """
         return ScratchLoad(self, type)
 
+    def __repr__(self):
+        return "ScratchSlot({})".format(self.id)
+
     def __str__(self):
         return "slot#{}".format(self.id)
-
-    def __eq__(self, other):
-        if isinstance(other, ScratchSlot):
-            return self.id == other.id
-        return False
 
     def __hash__(self):
         return hash(self.id)
@@ -101,6 +99,9 @@ class ScratchLoad(Expr):
     def type_of(self):
         return self.type
 
+    def has_return(self):
+        return False
+
 
 ScratchLoad.__module__ = "pyteal"
 
@@ -130,6 +131,9 @@ class ScratchStore(Expr):
 
     def type_of(self):
         return TealType.none
+
+    def has_return(self):
+        return False
 
 
 ScratchStore.__module__ = "pyteal"
@@ -162,6 +166,9 @@ class ScratchStackStore(Expr):
 
     def type_of(self):
         return TealType.none
+
+    def has_return(self):
+        return False
 
 
 ScratchStackStore.__module__ = "pyteal"

@@ -40,13 +40,7 @@ class For(Expr):
         if self.doBlock is None:
             raise TealCompileError("For expression must have a doBlock", self)
 
-        breakBlocks = options.breakBlocks
-        continueBlocks = options.continueBlocks
-        prevLoop = options.currentLoop
-
-        options.breakBlocks = []
-        options.continueBlocks = []
-        options.currentLoop = self
+        options.enterLoop()
 
         end = TealSimpleBlock([])
         start, startEnd = self.start.__teal__(options)
@@ -57,16 +51,6 @@ class For(Expr):
         stepEnd.setNextBlock(condStart)
         doEnd.setNextBlock(stepStart)
 
-        for block in options.breakBlocks:
-            block.setNextBlock(end)
-
-        for block in options.continueBlocks:
-            block.setNextBlock(stepStart)
-
-        options.breakBlocks = breakBlocks
-        options.continueBlocks = continueBlocks
-        options.currentLoop = prevLoop
-
         branchBlock = TealConditionalBlock([])
         branchBlock.setTrueBlock(doStart)
         branchBlock.setFalseBlock(end)
@@ -74,6 +58,14 @@ class For(Expr):
         condEnd.setNextBlock(branchBlock)
 
         startEnd.setNextBlock(condStart)
+
+        breakBlocks, continueBlocks = options.exitLoop()
+
+        for block in breakBlocks:
+            block.setNextBlock(end)
+
+        for block in continueBlocks:
+            block.setNextBlock(stepStart)
 
         return start, end
 
@@ -95,6 +87,9 @@ class For(Expr):
         if self.doBlock is None:
             raise TealCompileError("For expression must have a doBlock", self)
         return TealType.none
+
+    def has_return(self):
+        return False
 
     def Do(self, doBlock: Expr):
         if self.doBlock is not None:

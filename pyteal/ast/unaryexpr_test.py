@@ -261,25 +261,6 @@ def test_pop_invalid():
         Pop(expr)
 
 
-def test_return():
-    arg = Int(1)
-    expr = Return(arg)
-    assert expr.type_of() == TealType.none
-
-    expected = TealSimpleBlock([TealOp(arg, Op.int, 1), TealOp(expr, Op.return_)])
-
-    actual, _ = expr.__teal__(teal2Options)
-    actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
-
-    assert actual == expected
-
-
-def test_return_invalid():
-    with pytest.raises(TealTypeError):
-        Return(Txn.receiver())
-
-
 def test_balance():
     arg = Int(0)
     expr = Balance(arg)

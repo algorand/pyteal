@@ -25,16 +25,19 @@ class Break(Expr):
         return "break"
 
     def __teal__(self, options: "CompileOptions"):
-        if options.currentLoop is None:
+        if not options.isInLoop():
             raise TealCompileError("break is only allowed in a loop", self)
 
         start = TealSimpleBlock([])
-        options.breakBlocks.append(start)
+        options.addLoopBreakBlock(start)
 
         return start, start
 
     def type_of(self):
         return TealType.none
+
+    def has_return(self):
+        return False
 
 
 Break.__module__ = "pyteal"

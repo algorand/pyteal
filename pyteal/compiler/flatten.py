@@ -1,6 +1,7 @@
-from typing import List, DefaultDict, cast
+from typing import List, Dict, DefaultDict, Optional, cast
 from collections import defaultdict
 
+from ..ast import SubroutineDefinition
 from ..ir import (
     Op,
     TealOp,
@@ -9,6 +10,7 @@ from ..ir import (
     TealBlock,
     TealSimpleBlock,
     TealConditionalBlock,
+    LabelReference,
 )
 from ..errors import TealInternalError
 
@@ -22,7 +24,18 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
     codeblocks = []
     references: DefaultDict[int, int] = defaultdict(int)
 
-    indexToLabel = lambda index: "l{}".format(index)
+    labelRefs: Dict[int, LabelReference] = dict()
+
+    def indexToLabel(index: int) -> LabelReference:
+        if index not in labelRefs:
+            labelRefs[index] = LabelReference("l{}".format(index))
+        return labelRefs[index]
+
+    def blockIndexByReference(block: TealBlock) -> int:
+        for i, b in enumerate(blocks):
+            if block is b:
+                return i
+        raise ValueError("Block not present in list: {}".format(block))
 
     for i, block in enumerate(blocks):
         code = list(block.ops)
@@ -34,7 +47,7 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             simpleBlock = cast(TealSimpleBlock, block)
             assert simpleBlock.nextBlock is not None
 
-            nextIndex = blocks.index(simpleBlock.nextBlock)
+            nextIndex = blockIndexByReference(simpleBlock.nextBlock)
 
             if nextIndex != i + 1:
                 references[nextIndex] += 1
@@ -45,8 +58,8 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             assert conditionalBlock.trueBlock is not None
             assert conditionalBlock.falseBlock is not None
 
-            trueIndex = blocks.index(conditionalBlock.trueBlock)
-            falseIndex = blocks.index(conditionalBlock.falseBlock)
+            trueIndex = blockIndexByReference(conditionalBlock.trueBlock)
+            falseIndex = blockIndexByReference(conditionalBlock.falseBlock)
 
             if falseIndex == i + 1:
                 references[trueIndex] += 1
@@ -73,3 +86,46 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
         teal += code
 
     return teal
+
+
+def flattenSubroutines(
+    subroutineMapping: Dict[Optional[SubroutineDefinition], List[TealComponent]],
+    subroutineToLabel: Dict[SubroutineDefinition, str],
+) -> List[TealComponent]:
+    """Combines each subroutine's list of TealComponents into a single list of TealComponents that
+    represents the entire program.
+
+    Args:
+        subroutineMapping: A dictionary containing a list of TealComponents for every subroutine in
+            a program. The key None is taken to indicate the main program routine.
+        subroutineToLabel: An ordered dictionary which resolves each subroutine to a string label.
+
+    Returns:
+        A single list of TealComponents representing the entire program.
+    """
+    combinedOps: List[TealComponent] = []
+
+    # By default all branch labels in each subroutine will start from "l0". To
+    # make each subroutine have unique labels, we prefix "main_" to the ones
+    # from the main routine, and "subX_" (the subroutine label) to the
+    # ones from each subroutine
+
+    mainRoutine = subroutineMapping[None]
+    for stmt in mainRoutine:
+        if isinstance(stmt, TealLabel):
+            stmt.getLabelRef().addPrefix("main_")
+    combinedOps += mainRoutine
+
+    for subroutine, label in subroutineToLabel.items():
+        comment = subroutine.name()
+        labelPrefix = label + "_"
+
+        subroutineOps = subroutineMapping[subroutine]
+        for stmt in subroutineOps:
+            if isinstance(stmt, TealLabel):
+                stmt.getLabelRef().addPrefix(labelPrefix)
+
+        combinedOps.append(TealLabel(None, LabelReference(label), comment))
+        combinedOps += subroutineOps
+
+    return combinedOps

@@ -8,6 +8,19 @@ from .. import CompileOptions
 options = CompileOptions()
 
 
+def test_if_has_return():
+    exprWithReturn = If(Int(1), Return(Int(1)), Return(Int(0)))
+    assert exprWithReturn.has_return()
+
+    exprWithoutReturn = If(Int(1), Int(1), Int(0))
+    assert not exprWithoutReturn.has_return()
+
+    exprSemiReturn = If(
+        Int(1), Return(Int(1)), App.globalPut(Bytes("key"), Bytes("value"))
+    )
+    assert not exprSemiReturn.has_return()
+
+
 def test_if_int():
     args = [Int(0), Int(1), Int(2)]
     expr = If(args[0], args[1], args[2])

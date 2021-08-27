@@ -44,6 +44,9 @@ class TernaryExpr(Expr):
     def type_of(self):
         return self.outputType
 
+    def has_return(self):
+        return False
+
 
 TernaryExpr.__module__ = "pyteal"
 
