@@ -20,11 +20,11 @@ class BinaryExpr(Expr):
         argRight: Expr,
     ) -> None:
         super().__init__()
-        leftType, rightType = (
-            cast(Tuple[TealType, TealType], inputType)
-            if type(inputType) == tuple
-            else (cast(TealType, inputType), cast(TealType, inputType))
-        )
+        if type(inputType) is tuple:
+            leftType, rightType = cast(Tuple[TealType, TealType], inputType)
+        else:
+            leftType = cast(TealType, inputType)
+            rightType = leftType
         require_type(argLeft.type_of(), leftType)
         require_type(argRight.type_of(), rightType)
 

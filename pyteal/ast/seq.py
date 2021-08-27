@@ -77,6 +77,10 @@ class Seq(Expr):
         return self.args[-1].type_of()
 
     def has_return(self):
+        # this expression declares it has a return op only if its final expression has a return op
+        # TODO: technically if ANY expression, not just the final one, returns true for has_return,
+        # this could return true as well. But in that case all expressions after the one that
+        # returns true for has_return is dead code, so it could be optimized away
         return self.args[-1].has_return()
 
 

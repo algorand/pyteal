@@ -27,7 +27,7 @@ class Expr(ABC):
 
     @abstractmethod
     def has_return(self) -> bool:
-        """Check if this expressions contains an operation which returns from the current subroutine or program."""
+        """Check if this expression always returns from the current subroutine or program."""
         pass
 
     @abstractmethod

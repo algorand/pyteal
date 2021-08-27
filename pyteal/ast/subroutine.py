@@ -164,27 +164,44 @@ class SubroutineCall(Expr):
 SubroutineCall.__module__ = "pyteal"
 
 
-def Subroutine(
-    returnType: TealType,
-) -> Callable[[Callable[..., Expr]], Callable[..., Expr]]:
-    def SubroutineWithArgs(
-        fnImplementation: Callable[..., Expr]
-    ) -> Callable[..., Expr]:
-        subroutine = SubroutineDefinition(fnImplementation, returnType)
+class Subroutine:
+    """Used to create a PyTeal subroutine from a Python function.
+
+    This class is meant to be used as a function decorator. For example:
+        .. code-block:: python
+            @Subroutine(TealType.uint64)
+            def mySubroutine(a: Expr, b: Expr) -> Expr:
+                return a + b
+
+            program = Seq([
+                App.globalPut(Bytes("key"), mySubroutine(Int(1), Int(2))),
+                Approve(),
+            ])
+    """
+
+    def __init__(self, returnType: TealType) -> None:
+        """Define a new subroutine with the given return type.
+
+        Args:
+            returnType: The type that the return value of this subroutine must conform to.
+                TealType.none indicates that this subroutine does not return any value.
+        """
+        self.returnType = returnType
+
+    def __call__(self, fnImplementation: Callable[..., Expr]) -> Callable[..., Expr]:
+        subroutine = SubroutineDefinition(fnImplementation, self.returnType)
 
         @wraps(fnImplementation)
         def subroutineCall(*args: Expr, **kwargs) -> Expr:
             if len(kwargs) != 0:
                 raise TealInputError(
-                    "Subroutine cannot be called with keword arguments. Received keyword arguments: {}".format(
+                    "Subroutine cannot be called with keyword arguments. Received keyword arguments: {}".format(
                         ",".join(kwargs.keys())
                     )
                 )
             return subroutine.invoke(list(args))
 
         return subroutineCall
-
-    return SubroutineWithArgs
 
 
 Subroutine.__module__ = "pyteal"

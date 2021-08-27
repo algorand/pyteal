@@ -21,7 +21,8 @@ class Return(Expr):
         uint64, 0 indicates failure, 1 or greater indicates success).
 
         If called from within a subroutine, this will return from the current
-        subroutine with the given return value.
+        subroutine with either no value if the subroutine does not produce a
+        return value, or the given return value if it does produce a return value.
         """
         super().__init__()
         if value is not None:

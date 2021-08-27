@@ -91,6 +91,7 @@ class Cond(Expr):
         return self.value_type
 
     def has_return(self):
+        # this expression has a return op only if all possible conditions result in a return op
         return all(pred.has_return() for (_, pred) in self.args)
 
 

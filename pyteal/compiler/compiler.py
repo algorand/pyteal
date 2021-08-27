@@ -53,12 +53,18 @@ class CompileOptions:
         return len(self.breakBlocksStack) != 0
 
     def addLoopBreakBlock(self, block: TealSimpleBlock) -> None:
+        if len(self.breakBlocksStack) == 0:
+            raise TealInternalError("Cannot add break block when no loop is active")
         self.breakBlocksStack[-1].append(block)
 
     def addLoopContinueBlock(self, block: TealSimpleBlock) -> None:
+        if len(self.continueBlocksStack) == 0:
+            raise TealInternalError("Cannot add continue block when no loop is active")
         self.continueBlocksStack[-1].append(block)
 
     def exitLoop(self) -> Tuple[List[TealSimpleBlock], List[TealSimpleBlock]]:
+        if len(self.breakBlocksStack) == 0 or len(self.continueBlocksStack) == 0:
+            raise TealInternalError("Cannot exit loop when no loop is active")
         return (self.breakBlocksStack.pop(), self.continueBlocksStack.pop())
 
 

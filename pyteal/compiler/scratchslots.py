@@ -1,4 +1,4 @@
-from typing import Tuple, List, Set, Dict, Optional
+from typing import Tuple, List, Set, Dict, Optional, cast
 
 from ..ast import ScratchSlot, SubroutineDefinition
 from ..ir import Mode, TealComponent, TealBlock
@@ -56,12 +56,14 @@ def assignScratchSlotsToSubroutines(
     subroutineSlots = collectScratchSlots(subroutineMapping)
 
     # all scratch slots referenced by the program
-    allSlots: Set[ScratchSlot] = set()
-    for slots in subroutineSlots.values():
-        allSlots |= slots
+    allSlots: Set[ScratchSlot] = cast(Set[ScratchSlot], set()).union(*subroutineSlots.values())
 
     # all scratch slots referenced by more than 1 subroutine
     globalSlots: Set[ScratchSlot] = set()
+
+    # all scratch slots referenced by only 1 subroutine
+    localSlots: Dict[Optional[SubroutineDefinition], Set[ScratchSlot]] = dict()
+
     for subroutine, slots in subroutineSlots.items():
         allOtherSlots: Set[ScratchSlot] = set()
 
@@ -70,10 +72,6 @@ def assignScratchSlotsToSubroutines(
                 allOtherSlots |= otherSubroutineSlots
 
         globalSlots |= slots & allOtherSlots
-
-    # all scratch slots referenced by only 1 subroutine
-    localSlots: Dict[Optional[SubroutineDefinition], Set[ScratchSlot]] = dict()
-    for subroutine, slots in subroutineSlots.items():
         localSlots[subroutine] = slots - globalSlots
 
     if len(allSlots) > NUM_SLOTS:
