@@ -48,7 +48,7 @@ class NaryExpr(Expr):
         return start, end
 
     def __str__(self):
-        ret_str = ("(" + str(self.op),)
+        ret_str = "(" + str(self.op)
         for a in self.args:
             ret_str += " " + a.__str__()
         ret_str += ")"
