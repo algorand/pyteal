@@ -1,4 +1,4 @@
-# Future
+# 0.8.0
 
 ## Added
 * Support for new TEAL 4 features:
@@ -18,6 +18,10 @@ int and byte constants in the most efficient way to reduce program size ([#57](h
 * Fixed `NaryExpr.__str__` method ([#102](https://github.com/algorand/pyteal/pull/102)).
 
 ## Changed
+* **WARNING**: Due to code generation changes required to support TEAL 4 loops and subroutines,
+  programs compiled with this version will likely produce different TEAL code than previous
+  versions, but their functionality will be the same. Be aware that even small differences in
+  generated TEAL code will change the address associated with escrow LogicSig contracts.
 * Improved crypto cost docs ([#81](https://github.com/algorand/pyteal/pull/81)).
 * Applied code formatter ([#100](https://github.com/algorand/pyteal/pull/100)).
 
