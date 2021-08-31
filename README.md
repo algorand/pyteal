@@ -5,7 +5,7 @@
 
 [![Build Status](https://travis-ci.com/algorand/pyteal.svg?branch=master)](https://travis-ci.com/algorand/pyteal)
 [![PyPI version](https://badge.fury.io/py/pyteal.svg)](https://badge.fury.io/py/pyteal)
-[![Documentation Status](https://readthedocs.org/projects/pyteal/badge/)](https://pyteal.readthedocs.io/en/latest/)
+[![Documentation Status](https://readthedocs.org/projects/pyteal/badge/?version=latest)](https://pyteal.readthedocs.io/en/latest/?badge=latest)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 PyTeal is a Python language binding for [Algorand Smart Contracts (ASC1s)](https://developer.algorand.org/docs/features/asc1/). 
