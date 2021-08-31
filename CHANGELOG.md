@@ -1,8 +1,25 @@
 # Future
 
 ## Added
+* Support for new TEAL 4 features:
+  * Basic ops ([#67](https://github.com/algorand/pyteal/pull/67))
+  * Byteslice arithmetic ([#75](https://github.com/algorand/pyteal/pull/75))
+  * Importing scratch slot values from previous app calls ([#79](https://github.com/algorand/pyteal/pull/79), [#83](https://github.com/algorand/pyteal/pull/83))
+  * Direct reference support for applications/accounts/assets ([#90](https://github.com/algorand/pyteal/pull/90))
+  * `While` and `For` loops ([#95](https://github.com/algorand/pyteal/pull/95))
+  * Subroutines ([#99](https://github.com/algorand/pyteal/pull/99))
+* New logo ([#88](https://github.com/algorand/pyteal/pull/88), [#91](https://github.com/algorand/pyteal/pull/91))
 * Added the `assembleConstants` option to `compileTeal`. When enabled, the compiler will assemble
-int and byte constants in the most efficient way to reduce program size ([#57](https://github.com/algorand/pyteal/pull/57)).
+int and byte constants in the most efficient way to reduce program size ([#57](https://github.com/algorand/pyteal/pull/57), [#61](https://github.com/algorand/pyteal/pull/61), [#66](https://github.com/algorand/pyteal/pull/66)).
+* Added an alternative syntax for constructing `If` statements ([#77](https://github.com/algorand/pyteal/pull/77), [#82](https://github.com/algorand/pyteal/pull/82)).
+* Align `Seq` with the rest of the API ([#96](https://github.com/algorand/pyteal/pull/96)).
+
+## Fixed
+* Fixed `NaryExpr.__str__` method ([#102](https://github.com/algorand/pyteal/pull/102)).
+
+## Changed
+* Improved crypto cost docs ([#81](https://github.com/algorand/pyteal/pull/81)).
+* Applied code formatter ([#100](https://github.com/algorand/pyteal/pull/100)).
 
 # 0.7.0
 
