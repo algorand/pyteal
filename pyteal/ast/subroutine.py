@@ -168,7 +168,9 @@ class Subroutine:
     """Used to create a PyTeal subroutine from a Python function.
 
     This class is meant to be used as a function decorator. For example:
+
         .. code-block:: python
+
             @Subroutine(TealType.uint64)
             def mySubroutine(a: Expr, b: Expr) -> Expr:
                 return a + b

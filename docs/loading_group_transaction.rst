@@ -53,7 +53,7 @@ App A:
         If(Txn.sender() == App.globalGet(Bytes("creator")))
         .Then(greeting.store(Bytes("hi creator!")))
         .Else(greeting.store(Bytes("hi user!"))),
-    Return(Int(1))
+        Return(Int(1))
     ])
 
 App B:

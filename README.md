@@ -6,6 +6,7 @@
 [![Build Status](https://travis-ci.com/algorand/pyteal.svg?branch=master)](https://travis-ci.com/algorand/pyteal)
 [![PyPI version](https://badge.fury.io/py/pyteal.svg)](https://badge.fury.io/py/pyteal)
 [![Documentation Status](https://readthedocs.org/projects/pyteal/badge/?version=latest)](https://pyteal.readthedocs.io/en/latest/?badge=latest)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 PyTeal is a Python language binding for [Algorand Smart Contracts (ASC1s)](https://developer.algorand.org/docs/features/asc1/). 
 
@@ -17,7 +18,7 @@ PyTeal provides high level, functional programming style abstractions over TEAL 
 
 ### Install 
 
-pyteal requires python version >= 3.6
+PyTeal requires Python version >= 3.6
 
 * `pip3 install pyteal`
 
@@ -27,7 +28,7 @@ pyteal requires python version >= 3.6
 
 ### Run Demo
 
-In pyteal root directory:
+In PyTeal root directory:
 
 * `jupyter notebook demo/Pyteal\ Demonstration.ipynb`
 
@@ -41,7 +42,7 @@ Active venv:
  * `. venv/bin/activate.fish` (if your shell is fish)
  * `. venv/bin/activate` (if your shell is bash/zsh)
 
-Pip install pyteal in editable state
+Pip install PyTeal in editable state
  * `pip install -e .`
 
 Install dependencies :
@@ -52,3 +53,6 @@ Type checking using mypy
 
 Run tests:
 * `pytest`
+
+Format code:
+* `black .`
