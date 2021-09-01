@@ -8,8 +8,6 @@ from .maybe import MaybeValue
 
 
 class AssetHolding:
-
-
     @classmethod
     def balance(cls, account: Expr, asset: Expr) -> MaybeValue:
         """Get the amount of an asset held by an account.
@@ -246,7 +244,6 @@ class AssetParam:
             args=[asset],
         )
 
-
     @classmethod
     def creator(cls, asset: Expr) -> MaybeValue:
         """Get the creator address for an asset.
@@ -256,7 +253,12 @@ class AssetParam:
                 evaluate to uint64.
         """
         require_type(asset.type_of(), TealType.uint64)
-        return MaybeValue(Op.asset_params_get, TealType.bytes, immediate_args=["AssetCreator"], args=[asset])
+        return MaybeValue(
+            Op.asset_params_get,
+            TealType.bytes,
+            immediate_args=["AssetCreator"],
+            args=[asset],
+        )
 
 
 AssetParam.__module__ = "pyteal"

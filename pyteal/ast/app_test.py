@@ -426,18 +426,21 @@ def test_global_del_invalid():
     with pytest.raises(TealTypeError):
         App.globalDel(Int(2))
 
+
 def test_app_param_approval_program_valid():
     arg = Int(1)
     expr = AppParam.approvalProgram(arg)
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.bytes
 
-    expected = TealSimpleBlock([
-        TealOp(arg, Op.int, 1),
-        TealOp(expr, Op.app_params_get, "AppApprovalProgram"),
-        TealOp(None, Op.store, expr.slotOk),
-        TealOp(None, Op.store, expr.slotValue)
-    ])
+    expected = TealSimpleBlock(
+        [
+            TealOp(arg, Op.int, 1),
+            TealOp(expr, Op.app_params_get, "AppApprovalProgram"),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
+        ]
+    )
 
     actual, _ = expr.__teal__(teal5Options)
     actual.addIncoming()
@@ -446,9 +449,11 @@ def test_app_param_approval_program_valid():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+
 def test_app_param_approval_program_invalid():
     with pytest.raises(TealTypeError):
         AppParam.approvalProgram(Txn.sender())
+
 
 def test_app_param_clear_state_program_valid():
     arg = Int(0)
@@ -456,12 +461,14 @@ def test_app_param_clear_state_program_valid():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.bytes
 
-    expected = TealSimpleBlock([
-        TealOp(arg, Op.int, 0),
-        TealOp(expr, Op.app_params_get, "AppClearStateProgram"),
-        TealOp(None, Op.store, expr.slotOk),
-        TealOp(None, Op.store, expr.slotValue)
-    ])
+    expected = TealSimpleBlock(
+        [
+            TealOp(arg, Op.int, 0),
+            TealOp(expr, Op.app_params_get, "AppClearStateProgram"),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
+        ]
+    )
 
     actual, _ = expr.__teal__(teal5Options)
     actual.addIncoming()
@@ -470,9 +477,11 @@ def test_app_param_clear_state_program_valid():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+
 def test_app_param_clear_state_program_invalid():
     with pytest.raises(TealTypeError):
         AppParam.clearStateProgram(Txn.sender())
+
 
 def test_app_param_global_num_unit_valid():
     arg = Int(1)
@@ -480,12 +489,14 @@ def test_app_param_global_num_unit_valid():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.uint64
 
-    expected = TealSimpleBlock([
-        TealOp(arg, Op.int, 1),
-        TealOp(expr, Op.app_params_get, "AppGlobalNumUnit"),
-        TealOp(None, Op.store, expr.slotOk),
-        TealOp(None, Op.store, expr.slotValue)
-    ])
+    expected = TealSimpleBlock(
+        [
+            TealOp(arg, Op.int, 1),
+            TealOp(expr, Op.app_params_get, "AppGlobalNumUnit"),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
+        ]
+    )
 
     actual, _ = expr.__teal__(teal5Options)
     actual.addIncoming()
@@ -494,9 +505,11 @@ def test_app_param_global_num_unit_valid():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+
 def test_app_param_global_num_unit_invalid():
     with pytest.raises(TealTypeError):
         AppParam.globalNumUnit(Txn.sender())
+
 
 def test_app_param_global_num_byte_slice_valid():
     arg = Int(1)
@@ -504,12 +517,14 @@ def test_app_param_global_num_byte_slice_valid():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.uint64
 
-    expected = TealSimpleBlock([
-        TealOp(arg, Op.int, 1),
-        TealOp(expr, Op.app_params_get, "AppGlobalNumByteSlice"),
-        TealOp(None, Op.store, expr.slotOk),
-        TealOp(None, Op.store, expr.slotValue)
-    ])
+    expected = TealSimpleBlock(
+        [
+            TealOp(arg, Op.int, 1),
+            TealOp(expr, Op.app_params_get, "AppGlobalNumByteSlice"),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
+        ]
+    )
 
     actual, _ = expr.__teal__(teal5Options)
     actual.addIncoming()
@@ -518,9 +533,11 @@ def test_app_param_global_num_byte_slice_valid():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+
 def test_app_param_global_num_byte_slice_invalid():
     with pytest.raises(TealTypeError):
         AppParam.globalNumByteSlice(Txn.sender())
+
 
 def test_app_param_local_num_unit_valid():
     arg = Int(1)
@@ -528,12 +545,14 @@ def test_app_param_local_num_unit_valid():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.uint64
 
-    expected = TealSimpleBlock([
-        TealOp(arg, Op.int, 1),
-        TealOp(expr, Op.app_params_get, "AppLocalNumUnit"),
-        TealOp(None, Op.store, expr.slotOk),
-        TealOp(None, Op.store, expr.slotValue)
-    ])
+    expected = TealSimpleBlock(
+        [
+            TealOp(arg, Op.int, 1),
+            TealOp(expr, Op.app_params_get, "AppLocalNumUnit"),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
+        ]
+    )
 
     actual, _ = expr.__teal__(teal5Options)
     actual.addIncoming()
@@ -542,9 +561,11 @@ def test_app_param_local_num_unit_valid():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+
 def test_app_param_local_num_unit_invalid():
     with pytest.raises(TealTypeError):
         AppParam.localNumUnit(Txn.sender())
+
 
 def test_app_param_local_num_byte_slice_valid():
     arg = Int(1)
@@ -552,12 +573,14 @@ def test_app_param_local_num_byte_slice_valid():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.uint64
 
-    expected = TealSimpleBlock([
-        TealOp(arg, Op.int, 1),
-        TealOp(expr, Op.app_params_get, "AppLocalNumByteSlice"),
-        TealOp(None, Op.store, expr.slotOk),
-        TealOp(None, Op.store, expr.slotValue)
-    ])
+    expected = TealSimpleBlock(
+        [
+            TealOp(arg, Op.int, 1),
+            TealOp(expr, Op.app_params_get, "AppLocalNumByteSlice"),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
+        ]
+    )
 
     actual, _ = expr.__teal__(teal5Options)
     actual.addIncoming()
@@ -566,9 +589,11 @@ def test_app_param_local_num_byte_slice_valid():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+
 def test_app_param_local_num_byte_slice_invalid():
     with pytest.raises(TealTypeError):
         AppParam.localNumByteSlice(Txn.sender())
+
 
 def test_app_param_extra_programs_page_valid():
     arg = Int(1)
@@ -576,12 +601,14 @@ def test_app_param_extra_programs_page_valid():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.uint64
 
-    expected = TealSimpleBlock([
-        TealOp(arg, Op.int, 1),
-        TealOp(expr, Op.app_params_get, "AppExtraProgramPages"),
-        TealOp(None, Op.store, expr.slotOk),
-        TealOp(None, Op.store, expr.slotValue)
-    ])
+    expected = TealSimpleBlock(
+        [
+            TealOp(arg, Op.int, 1),
+            TealOp(expr, Op.app_params_get, "AppExtraProgramPages"),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
+        ]
+    )
 
     actual, _ = expr.__teal__(teal5Options)
     actual.addIncoming()
@@ -590,9 +617,11 @@ def test_app_param_extra_programs_page_valid():
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+
 def test_app_param_extra_program_pages_invalid():
     with pytest.raises(TealTypeError):
         AppParam.extraProgramPages(Txn.sender())
+
 
 def test_app_param_creator_valid():
     arg = Int(1)
@@ -600,12 +629,14 @@ def test_app_param_creator_valid():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.bytes
 
-    expected = TealSimpleBlock([
-        TealOp(arg, Op.int, 1),
-        TealOp(expr, Op.app_params_get, "AppCreator"),
-        TealOp(None, Op.store, expr.slotOk),
-        TealOp(None, Op.store, expr.slotValue)
-    ])
+    expected = TealSimpleBlock(
+        [
+            TealOp(arg, Op.int, 1),
+            TealOp(expr, Op.app_params_get, "AppCreator"),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
+        ]
+    )
 
     actual, _ = expr.__teal__(teal5Options)
     actual.addIncoming()
@@ -613,6 +644,7 @@ def test_app_param_creator_valid():
 
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
 
 def test_app_param_creator_invalid():
     with pytest.raises(TealTypeError):

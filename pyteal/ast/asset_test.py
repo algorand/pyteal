@@ -682,18 +682,21 @@ def test_asset_param_clawback_invalid():
     with pytest.raises(TealTypeError):
         AssetParam.clawback(Txn.sender())
 
+
 def test_asset_param_creator():
     arg = Int(1)
     expr = AssetParam.creator(arg)
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.bytes
 
-    expected = TealSimpleBlock([
-        TealOp(arg, Op.txna, "Assets", 1),
-        TealOp(expr, Op.asset_params_get, "AssetCreator"),
-        TealOp(None, Op.store, expr.slotOk),
-        TealOp(None, Op.store, expr.slotValue)
-    ])
+    expected = TealSimpleBlock(
+        [
+            TealOp(arg, Op.txna, "Assets", 1),
+            TealOp(expr, Op.asset_params_get, "AssetCreator"),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
+        ]
+    )
 
     actual, _ = expr.__teal__(teal5Options)
     actual.addIncoming()
@@ -701,6 +704,7 @@ def test_asset_param_creator():
 
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
 
 def test_asset_param_creator_direct_ref():
     arg = Txn.assets[1]
@@ -708,12 +712,14 @@ def test_asset_param_creator_direct_ref():
     assert expr.type_of() == TealType.none
     assert expr.value().type_of() == TealType.bytes
 
-    expected = TealSimpleBlock([
-        TealOp(arg, Op.txn, 1),
-        TealOp(expr, Op.asset_params_get, "AssetCreator"),
-        TealOp(None, Op.store, expr.slotOk),
-        TealOp(None, Op.store, expr.slotValue)
-    ])
+    expected = TealSimpleBlock(
+        [
+            TealOp(arg, Op.txn, 1),
+            TealOp(expr, Op.asset_params_get, "AssetCreator"),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
+        ]
+    )
 
     actual, _ = expr.__teal__(teal5Options)
     actual.addIncoming()
@@ -721,6 +727,7 @@ def test_asset_param_creator_direct_ref():
 
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
 
 def test_asset_param_creator_invalid():
     with pytest.raises(TealTypeError):

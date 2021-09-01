@@ -216,7 +216,6 @@ App.__module__ = "pyteal"
 
 
 class AppParam:
-
     @classmethod
     def approvalProgram(cls, app: Expr) -> MaybeValue:
         """Get the bytecode of Approval Program for the application.
@@ -226,7 +225,12 @@ class AppParam:
                 Must evaluate to uint64.
         """
         require_type(app.type_of(), TealType.uint64)
-        return MaybeValue(Op.app_params_get, TealType.bytes, immediate_args=["AppApprovalProgram"], args=[app])
+        return MaybeValue(
+            Op.app_params_get,
+            TealType.bytes,
+            immediate_args=["AppApprovalProgram"],
+            args=[app],
+        )
 
     @classmethod
     def clearStateProgram(cls, app: Expr) -> MaybeValue:
@@ -237,7 +241,12 @@ class AppParam:
                 Must evaluate to uint64.
         """
         require_type(app.type_of(), TealType.uint64)
-        return MaybeValue(Op.app_params_get, TealType.bytes, immediate_args=["AppClearStateProgram"], args=[app])
+        return MaybeValue(
+            Op.app_params_get,
+            TealType.bytes,
+            immediate_args=["AppClearStateProgram"],
+            args=[app],
+        )
 
     @classmethod
     def globalNumUnit(cls, app: Expr) -> MaybeValue:
@@ -248,7 +257,12 @@ class AppParam:
                 Must evaluate to uint64.
         """
         require_type(app.type_of(), TealType.uint64)
-        return MaybeValue(Op.app_params_get, TealType.uint64, immediate_args=["AppGlobalNumUnit"], args=[app])
+        return MaybeValue(
+            Op.app_params_get,
+            TealType.uint64,
+            immediate_args=["AppGlobalNumUnit"],
+            args=[app],
+        )
 
     @classmethod
     def globalNumByteSlice(cls, app: Expr) -> MaybeValue:
@@ -259,7 +273,12 @@ class AppParam:
                 Must evaluate to uint64.
         """
         require_type(app.type_of(), TealType.uint64)
-        return MaybeValue(Op.app_params_get, TealType.uint64, immediate_args=["AppGlobalNumByteSlice"], args=[app])
+        return MaybeValue(
+            Op.app_params_get,
+            TealType.uint64,
+            immediate_args=["AppGlobalNumByteSlice"],
+            args=[app],
+        )
 
     @classmethod
     def localNumUnit(cls, app: Expr) -> MaybeValue:
@@ -270,7 +289,12 @@ class AppParam:
                 Must evaluate to uint64.
         """
         require_type(app.type_of(), TealType.uint64)
-        return MaybeValue(Op.app_params_get, TealType.uint64, immediate_args=["AppLocalNumUnit"], args=[app])
+        return MaybeValue(
+            Op.app_params_get,
+            TealType.uint64,
+            immediate_args=["AppLocalNumUnit"],
+            args=[app],
+        )
 
     @classmethod
     def localNumByteSlice(cls, app: Expr) -> MaybeValue:
@@ -281,7 +305,12 @@ class AppParam:
                 Must evaluate to uint64.
         """
         require_type(app.type_of(), TealType.uint64)
-        return MaybeValue(Op.app_params_get, TealType.uint64, immediate_args=["AppLocalNumByteSlice"], args=[app])
+        return MaybeValue(
+            Op.app_params_get,
+            TealType.uint64,
+            immediate_args=["AppLocalNumByteSlice"],
+            args=[app],
+        )
 
     @classmethod
     def extraProgramPages(cls, app: Expr) -> MaybeValue:
@@ -292,7 +321,12 @@ class AppParam:
                 Must evaluate to uint64.
         """
         require_type(app.type_of(), TealType.uint64)
-        return MaybeValue(Op.app_params_get, TealType.uint64, immediate_args=["AppExtraProgramPages"], args=[app])
+        return MaybeValue(
+            Op.app_params_get,
+            TealType.uint64,
+            immediate_args=["AppExtraProgramPages"],
+            args=[app],
+        )
 
     @classmethod
     def creator(cls, app: Expr) -> MaybeValue:
@@ -303,7 +337,9 @@ class AppParam:
                 Must evaluate to uint64.
         """
         require_type(app.type_of(), TealType.uint64)
-        return MaybeValue(Op.app_params_get, TealType.bytes, immediate_args=["AppCreator"], args=[app])
+        return MaybeValue(
+            Op.app_params_get, TealType.bytes, immediate_args=["AppCreator"], args=[app]
+        )
 
 
 AppParam.__module__ = "pyteal"
