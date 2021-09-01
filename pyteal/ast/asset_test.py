@@ -7,6 +7,7 @@ from .. import CompileOptions
 
 teal2Options = CompileOptions()
 teal4Options = CompileOptions(version=4)
+teal5Options = CompileOptions(version=5)
 
 
 def test_asset_holding_balance():
@@ -680,3 +681,31 @@ def test_asset_param_clawback_direct_ref():
 def test_asset_param_clawback_invalid():
     with pytest.raises(TealTypeError):
         AssetParam.clawback(Txn.sender())
+
+
+def test_asset_param_creator_valid():
+    arg = Int(1)
+    expr = AssetParam.creator(arg)
+    assert expr.type_of() == TealType.none
+    assert expr.value().type_of() == TealType.bytes
+
+    expected = TealSimpleBlock(
+        [
+            TealOp(arg, Op.int, 1),
+            TealOp(expr, Op.asset_params_get, "AssetCreator"),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
+        ]
+    )
+
+    actual, _ = expr.__teal__(teal5Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
+def test_asset_param_creator_invalid():
+    with pytest.raises(TealTypeError):
+        AssetParam.creator(Txn.sender())

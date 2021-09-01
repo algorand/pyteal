@@ -244,5 +244,21 @@ class AssetParam:
             args=[asset],
         )
 
+    @classmethod
+    def creator(cls, asset: Expr) -> MaybeValue:
+        """Get the creator address for an asset.
+
+        Args:
+            asset: An index into Txn.ForeignAssets that corresponds to the asset to check. Must
+                evaluate to uint64.
+        """
+        require_type(asset.type_of(), TealType.uint64)
+        return MaybeValue(
+            Op.asset_params_get,
+            TealType.bytes,
+            immediate_args=["AssetCreator"],
+            args=[asset],
+        )
+
 
 AssetParam.__module__ = "pyteal"

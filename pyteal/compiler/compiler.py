@@ -22,7 +22,7 @@ from .subroutines import (
 )
 from .constants import createConstantBlocks
 
-MAX_TEAL_VERSION = 4
+MAX_TEAL_VERSION = 5
 MIN_TEAL_VERSION = 2
 DEFAULT_TEAL_VERSION = MIN_TEAL_VERSION
 

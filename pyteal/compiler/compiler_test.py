@@ -87,7 +87,7 @@ def test_compile_version_invalid():
         compileTeal(expr, Mode.Signature, version=1)  # too small
 
     with pytest.raises(TealInputError):
-        compileTeal(expr, Mode.Signature, version=5)  # too large
+        compileTeal(expr, Mode.Signature, version=6)  # too large
 
     with pytest.raises(TealInputError):
         compileTeal(expr, Mode.Signature, version=2.0)  # decimal
@@ -134,6 +134,17 @@ int 1
 return
 """.strip()
     actual = compileTeal(expr, Mode.Signature, version=4)
+    assert actual == expected
+
+
+def test_compile_version_5():
+    expr = Int(1)
+    expected = """
+#pragma version 5
+int 1
+return
+""".strip()
+    actual = compileTeal(expr, Mode.Signature, version=5)
     assert actual == expected
 
 
