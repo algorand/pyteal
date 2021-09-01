@@ -1,10 +1,12 @@
 import pytest
 
 from .. import *
+
 # this is not necessary but mypy complains if it's not included
 from .. import CompileOptions
 
 options = CompileOptions()
+
 
 def test_cond_one_pred():
     expr = Cond([Int(1), Int(2)])
@@ -23,6 +25,7 @@ def test_cond_one_pred():
 
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
 
 def test_cond_two_pred():
     expr = Cond([Int(1), Bytes("one")], [Int(0), Bytes("zero")])
@@ -52,6 +55,7 @@ def test_cond_two_pred():
 
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
 
 def test_cond_three_pred():
     expr = Cond([Int(1), Int(2)], [Int(3), Int(4)], [Int(5), Int(6)])
@@ -89,6 +93,20 @@ def test_cond_three_pred():
 
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+
+def test_cond_has_return():
+    exprWithReturn = Cond([Int(1), Return(Int(1))], [Int(0), Return(Int(0))])
+    assert exprWithReturn.has_return()
+
+    exprWithoutReturn = Cond([Int(1), Bytes("one")], [Int(0), Bytes("zero")])
+    assert not exprWithoutReturn.has_return()
+
+    exprSemiReturn = Cond(
+        [Int(1), Return(Int(1))], [Int(0), App.globalPut(Bytes("key"), Bytes("value"))]
+    )
+    assert not exprSemiReturn.has_return()
+
 
 def test_cond_invalid():
     with pytest.raises(TealInputError):

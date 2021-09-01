@@ -1,4 +1,3 @@
-
 # Maximum size of an atomic transaction group.
 MAX_GROUP_SIZE = 16
 

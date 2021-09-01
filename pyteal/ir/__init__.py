@@ -7,6 +7,8 @@ from .tealblock import TealBlock
 from .tealsimpleblock import TealSimpleBlock
 from .tealconditionalblock import TealConditionalBlock
 
+from .labelref import LabelReference
+
 __all__ = [
     "Op",
     "Mode",
@@ -16,4 +18,5 @@ __all__ = [
     "TealBlock",
     "TealSimpleBlock",
     "TealConditionalBlock",
+    "LabelReference",
 ]

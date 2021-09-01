@@ -1,111 +1,117 @@
 import pytest
 
 from .. import *
+
 # this is not necessary but mypy complains if it's not included
 from .. import CompileOptions
 
 options = CompileOptions()
 
+
 def test_bytes_base32_no_padding():
-    for s in ("ME", "MFRA", "MFRGG", "MFRGGZA", "MFRGGZDF", "7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M"):
+    for s in (
+        "ME",
+        "MFRA",
+        "MFRGG",
+        "MFRGGZA",
+        "MFRGGZDF",
+        "7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M",
+    ):
         expr = Bytes("base32", s)
         assert expr.type_of() == TealType.bytes
-        expected = TealSimpleBlock([
-            TealOp(expr, Op.byte, "base32(" + s + ")")
-        ])
+        expected = TealSimpleBlock([TealOp(expr, Op.byte, "base32(" + s + ")")])
         actual, _ = expr.__teal__(options)
         assert actual == expected
 
+
 def test_bytes_base32_padding():
-    for s in ("ME======", "MFRA====", "MFRGG===", "MFRGGZA=", "7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M======"):
+    for s in (
+        "ME======",
+        "MFRA====",
+        "MFRGG===",
+        "MFRGGZA=",
+        "7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M======",
+    ):
         expr = Bytes("base32", s)
         assert expr.type_of() == TealType.bytes
-        expected = TealSimpleBlock([
-            TealOp(expr, Op.byte, "base32(" + s + ")")
-        ])
+        expected = TealSimpleBlock([TealOp(expr, Op.byte, "base32(" + s + ")")])
         actual, _ = expr.__teal__(options)
         assert actual == expected
+
 
 def test_bytes_base32_empty():
     expr = Bytes("base32", "")
     assert expr.type_of() == TealType.bytes
-    expected = TealSimpleBlock([
-        TealOp(expr, Op.byte, "base32()")
-    ])
+    expected = TealSimpleBlock([TealOp(expr, Op.byte, "base32()")])
     actual, _ = expr.__teal__(options)
     assert actual == expected
+
 
 def test_bytes_base64():
     expr = Bytes("base64", "Zm9vYmE=")
     assert expr.type_of() == TealType.bytes
-    expected = TealSimpleBlock([
-        TealOp(expr, Op.byte, "base64(Zm9vYmE=)")
-    ])
+    expected = TealSimpleBlock([TealOp(expr, Op.byte, "base64(Zm9vYmE=)")])
     actual, _ = expr.__teal__(options)
     assert actual == expected
+
 
 def test_bytes_base64_empty():
     expr = Bytes("base64", "")
     assert expr.type_of() == TealType.bytes
-    expected = TealSimpleBlock([
-        TealOp(expr, Op.byte, "base64()")
-    ])
+    expected = TealSimpleBlock([TealOp(expr, Op.byte, "base64()")])
     actual, _ = expr.__teal__(options)
     assert actual == expected
+
 
 def test_bytes_base16():
     expr = Bytes("base16", "A21212EF")
     assert expr.type_of() == TealType.bytes
-    expected = TealSimpleBlock([
-        TealOp(expr, Op.byte, "0xA21212EF")
-    ])
+    expected = TealSimpleBlock([TealOp(expr, Op.byte, "0xA21212EF")])
     actual, _ = expr.__teal__(options)
     assert actual == expected
+
 
 def test_bytes_base16_prefix():
     expr = Bytes("base16", "0xA21212EF")
     assert expr.type_of() == TealType.bytes
-    expected = TealSimpleBlock([
-        TealOp(expr, Op.byte, "0xA21212EF")
-    ])
+    expected = TealSimpleBlock([TealOp(expr, Op.byte, "0xA21212EF")])
     actual, _ = expr.__teal__(options)
     assert actual == expected
+
 
 def test_bytes_base16_empty():
     expr = Bytes("base16", "")
     assert expr.type_of() == TealType.bytes
-    expected = TealSimpleBlock([
-        TealOp(expr, Op.byte, "0x")
-    ])
+    expected = TealSimpleBlock([TealOp(expr, Op.byte, "0x")])
     actual, _ = expr.__teal__(options)
     assert actual == expected
+
 
 def test_bytes_utf8():
     expr = Bytes("hello world")
     assert expr.type_of() == TealType.bytes
-    expected = TealSimpleBlock([
-        TealOp(expr, Op.byte, "\"hello world\"")
-    ])
+    expected = TealSimpleBlock([TealOp(expr, Op.byte, '"hello world"')])
     actual, _ = expr.__teal__(options)
     assert actual == expected
 
+
 def test_bytes_utf8_special_chars():
-    expr = Bytes("\t \n \r\n \\ \" \' 😀")
+    expr = Bytes("\t \n \r\n \\ \" ' 😀")
     assert expr.type_of() == TealType.bytes
-    expected = TealSimpleBlock([
-        TealOp(expr, Op.byte, "\"\\t \\n \\r\\n \\\\ \\\" \' \\xf0\\x9f\\x98\\x80\"")
-    ])
+    expected = TealSimpleBlock(
+        [TealOp(expr, Op.byte, '"\\t \\n \\r\\n \\\\ \\" \' \\xf0\\x9f\\x98\\x80"')]
+    )
     actual, _ = expr.__teal__(options)
     assert actual == expected
+
 
 def test_bytes_utf8_empty():
     expr = Bytes("")
     assert expr.type_of() == TealType.bytes
-    expected = TealSimpleBlock([
-        TealOp(expr, Op.byte, "\"\"")
-    ])
+    expected = TealSimpleBlock([TealOp(expr, Op.byte, '""')])
     actual, _ = expr.__teal__(options)
     assert actual == expected
+
 
 def test_bytes_invalid():
     with pytest.raises(TealInputError):
@@ -128,10 +134,10 @@ def test_bytes_invalid():
 
     with pytest.raises(TealInputError):
         Bytes("base32", "C=======")
-            
+
     with pytest.raises(TealInputError):
         Bytes("base32", "C")
-    
+
     with pytest.raises(TealInputError):
         Bytes("base32", "=")
 

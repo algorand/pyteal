@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pyteal",
-    version="0.8.0.dev",
+    version="0.8.0",
     author="Algorand",
     author_email="pypiservice@algorand.com",
     description="Algorand Smart Contracts in Python",
@@ -15,13 +15,11 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/algorand/pyteal",
     packages=setuptools.find_packages(),
-    install_requires=[
-        "py-algorand-sdk"
-    ],
+    install_requires=["py-algorand-sdk"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires=">=3.6",
 )

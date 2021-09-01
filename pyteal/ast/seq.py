@@ -1,4 +1,4 @@
-from typing import List, cast, TYPE_CHECKING
+from typing import List, cast, TYPE_CHECKING, overload
 
 from ..types import TealType, require_type
 from ..errors import TealInputError
@@ -8,10 +8,19 @@ if TYPE_CHECKING:
     from ..ir import TealSimpleBlock
     from ..compiler import CompileOptions
 
+
 class Seq(Expr):
     """A control flow expression to represent a sequence of expressions."""
-    
+
+    @overload
+    def __init__(self, *exprs: Expr):
+        ...
+
+    @overload
     def __init__(self, exprs: List[Expr]):
+        ...
+
+    def __init__(self, *exprs):
         """Create a new Seq expression.
 
         The new Seq expression will take on the return value of the final expression in the sequence.
@@ -19,17 +28,21 @@ class Seq(Expr):
         Args:
             exprs: The expressions to include in this sequence. All expressions that are not the
                 final one in this list must not return any values.
-        
+
         Example:
             .. code-block:: python
-            
+
                 Seq([
                     App.localPut(Bytes("key"), Bytes("value")),
                     Int(1)
                 ])
         """
         super().__init__()
-        
+
+        # Handle case where a list of expressions is provided
+        if len(exprs) == 1 and isinstance(exprs[0], list):
+            exprs = exprs[0]
+
         if len(exprs) == 0:
             raise TealInputError("Seq requires children.")
         for i, expr in enumerate(exprs):
@@ -37,10 +50,10 @@ class Seq(Expr):
                 raise TealInputError("{} is not a pyteal expression.".format(expr))
             if i + 1 < len(exprs):
                 require_type(expr.type_of(), TealType.none)
-        
+
         self.args = exprs
-        
-    def __teal__(self, options: 'CompileOptions'):
+
+    def __teal__(self, options: "CompileOptions"):
         start = None
         end = None
         for i, arg in enumerate(self.args):
@@ -48,7 +61,7 @@ class Seq(Expr):
             if i == 0:
                 start = argStart
             else:
-                cast('TealSimpleBlock', end).setNextBlock(argStart)
+                cast("TealSimpleBlock", end).setNextBlock(argStart)
             end = argEnd
 
         return start, end
@@ -59,8 +72,16 @@ class Seq(Expr):
             ret_str += " " + a.__str__()
         ret_str += ")"
         return ret_str
-        
+
     def type_of(self):
         return self.args[-1].type_of()
+
+    def has_return(self):
+        # this expression declares it has a return op only if its final expression has a return op
+        # TODO: technically if ANY expression, not just the final one, returns true for has_return,
+        # this could return true as well. But in that case all expressions after the one that
+        # returns true for has_return is dead code, so it could be optimized away
+        return self.args[-1].has_return()
+
 
 Seq.__module__ = "pyteal"

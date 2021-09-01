@@ -3,19 +3,25 @@ from typing import List, Optional, TYPE_CHECKING
 from contextlib import AbstractContextManager
 
 if TYPE_CHECKING:
-    from ..ast import Expr, ScratchSlot
+    from ..ast import Expr, ScratchSlot, SubroutineDefinition
+
 
 class TealComponent(ABC):
-
-    def __init__(self, expr: Optional['Expr']):
+    def __init__(self, expr: Optional["Expr"]):
         self.expr = expr
 
-    def getSlots(self) -> List['ScratchSlot']:
+    def getSlots(self) -> List["ScratchSlot"]:
         return []
-    
-    def assignSlot(self, slot: 'ScratchSlot', location: int):
+
+    def assignSlot(self, slot: "ScratchSlot", location: int) -> None:
         pass
-    
+
+    def getSubroutines(self) -> List["SubroutineDefinition"]:
+        return []
+
+    def resolveSubroutine(self, subroutine: "SubroutineDefinition", label: str) -> None:
+        pass
+
     @abstractmethod
     def assemble(self) -> str:
         pass
@@ -35,12 +41,12 @@ class TealComponent(ABC):
     class Context:
 
         checkExpr = True
-        
+
         class EqualityContext(AbstractContextManager):
             def __enter__(self):
                 TealComponent.Context.checkExpr = False
                 return self
-            
+
             def __exit__(self, *args):
                 TealComponent.Context.checkExpr = True
                 return None
@@ -48,5 +54,6 @@ class TealComponent(ABC):
         @classmethod
         def ignoreExprEquality(cls):
             return cls.EqualityContext()
+
 
 TealComponent.__module__ = "pyteal"

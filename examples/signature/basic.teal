@@ -22,3 +22,4 @@ txn Fee
 int 1000
 <=
 &&
+return

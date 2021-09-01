@@ -7,6 +7,7 @@ from .leafexpr import LeafExpr
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
+
 class Addr(LeafExpr):
     """An expression that represents an Algorand address."""
 
@@ -20,7 +21,7 @@ class Addr(LeafExpr):
         valid_address(address)
         self.address = address
 
-    def __teal__(self, options: 'CompileOptions'):
+    def __teal__(self, options: "CompileOptions"):
         op = TealOp(self, Op.addr, self.address)
         return TealBlock.FromOp(options, op)
 
@@ -29,5 +30,6 @@ class Addr(LeafExpr):
 
     def type_of(self):
         return TealType.bytes
+
 
 Addr.__module__ = "pyteal"

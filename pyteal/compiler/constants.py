@@ -4,7 +4,15 @@ from typing import Union, List, Dict, cast
 from collections import OrderedDict
 from algosdk import encoding
 
-from ..ir import Op, TealOp, TealLabel, TealComponent, TealBlock, TealSimpleBlock, TealConditionalBlock
+from ..ir import (
+    Op,
+    TealOp,
+    TealLabel,
+    TealComponent,
+    TealBlock,
+    TealSimpleBlock,
+    TealConditionalBlock,
+)
 from ..util import unescapeStr, correctBase32Padding
 from ..errors import TealInternalError
 
@@ -26,9 +34,10 @@ intEnumValues = {
     "appl": 6,
 }
 
+
 def extractIntValue(op: TealOp) -> Union[str, int]:
     """Extract the constant value being loaded by a TealOp whose op is Op.int.
-    
+
     Returns:
         If the op is loading a template variable, returns the name of the variable as a string.
         Otherwise, returns the integer that the op is loading.
@@ -37,15 +46,16 @@ def extractIntValue(op: TealOp) -> Union[str, int]:
         raise TealInternalError("Unexpected args in int opcode: {}".format(op.args))
 
     value = cast(Union[str, int], op.args[0])
-    if type(value) == int or cast(str, value).startswith('TMPL_'):
+    if type(value) == int or cast(str, value).startswith("TMPL_"):
         return value
     if value not in intEnumValues:
         raise TealInternalError("Int constant not recognized: {}".format(value))
     return intEnumValues[cast(str, value)]
 
+
 def extractBytesValue(op: TealOp) -> Union[str, bytes]:
     """Extract the constant value being loaded by a TealOp whose op is Op.byte.
-    
+
     Returns:
         If the op is loading a template variable, returns the name of the variable as a string.
         Otherwise, returns the byte string that the op is loading.
@@ -54,22 +64,23 @@ def extractBytesValue(op: TealOp) -> Union[str, bytes]:
         raise TealInternalError("Unexpected args in byte opcode: {}".format(op.args))
 
     value = cast(str, op.args[0])
-    if value.startswith('TMPL_'):
+    if value.startswith("TMPL_"):
         return value
     if value.startswith('"') and value.endswith('"'):
-        return unescapeStr(value).encode('utf-8')
-    if value.startswith('0x'):
+        return unescapeStr(value).encode("utf-8")
+    if value.startswith("0x"):
         return bytes.fromhex(value[2:])
-    if value.startswith('base32(') and value.endswith(')'):
-        return base64.b32decode(correctBase32Padding(value[len('base32('):-1]))
-    if value.startswith('base64(') and value.endswith(')'):
-        return base64.b64decode(value[len('base64('):-1])
+    if value.startswith("base32(") and value.endswith(")"):
+        return base64.b32decode(correctBase32Padding(value[len("base32(") : -1]))
+    if value.startswith("base64(") and value.endswith(")"):
+        return base64.b64decode(value[len("base64(") : -1])
 
     raise TealInternalError("Unexpected format for byte value: {}".format(value))
 
+
 def extractAddrValue(op: TealOp) -> Union[str, bytes]:
     """Extract the constant value being loaded by a TealOp whose op is Op.addr.
-    
+
     Returns:
         If the op is loading a template variable, returns the name of the variable as a string.
         Otherwise, returns the bytes of the public key of the address that the op is loading.
@@ -78,9 +89,10 @@ def extractAddrValue(op: TealOp) -> Union[str, bytes]:
         raise TealInternalError("Unexpected args in addr opcode: {}".format(op.args))
 
     value = cast(str, op.args[0])
-    if not value.startswith('TMPL_'):
+    if not value.startswith("TMPL_"):
         value = encoding.decode_address(value)
     return value
+
 
 def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
     """Convert TEAL code from using pseudo-ops for constants to using assembled constant blocks.
@@ -121,7 +133,11 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
     sortedBytes = sorted(byteFreqs, key=lambda x: byteFreqs[x], reverse=True)
 
     intBlock = [i for i in sortedInts if intFreqs[i] > 1]
-    byteBlock = [('0x'+cast(bytes, b).hex()) if type(b) == bytes else cast(str, b) for b in sortedBytes if byteFreqs[b] > 1]
+    byteBlock = [
+        ("0x" + cast(bytes, b).hex()) if type(b) == bytes else cast(str, b)
+        for b in sortedBytes
+        if byteFreqs[b] > 1
+    ]
 
     if len(intBlock) != 0:
         assembled.append(TealOp(None, Op.intcblock, *intBlock))
@@ -136,40 +152,52 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
             if basicOp == Op.int:
                 intValue = extractIntValue(op)
                 if intFreqs[intValue] == 1:
-                    assembled.append(TealOp(op.expr, Op.pushint, intValue, '//', *op.args))
+                    assembled.append(
+                        TealOp(op.expr, Op.pushint, intValue, "//", *op.args)
+                    )
                     continue
-                
+
                 index = sortedInts.index(intValue)
                 if index == 0:
-                    assembled.append(TealOp(op.expr, Op.intc_0, '//', *op.args))
+                    assembled.append(TealOp(op.expr, Op.intc_0, "//", *op.args))
                 elif index == 1:
-                    assembled.append(TealOp(op.expr, Op.intc_1, '//', *op.args))
+                    assembled.append(TealOp(op.expr, Op.intc_1, "//", *op.args))
                 elif index == 2:
-                    assembled.append(TealOp(op.expr, Op.intc_2, '//', *op.args))
+                    assembled.append(TealOp(op.expr, Op.intc_2, "//", *op.args))
                 elif index == 3:
-                    assembled.append(TealOp(op.expr, Op.intc_3, '//', *op.args))
+                    assembled.append(TealOp(op.expr, Op.intc_3, "//", *op.args))
                 else:
-                    assembled.append(TealOp(op.expr, Op.intc, index, '//', *op.args))
+                    assembled.append(TealOp(op.expr, Op.intc, index, "//", *op.args))
                 continue
 
             if basicOp == Op.byte or basicOp == Op.addr:
-                byteValue = extractBytesValue(op) if basicOp == Op.byte else extractAddrValue(op)
+                byteValue = (
+                    extractBytesValue(op)
+                    if basicOp == Op.byte
+                    else extractAddrValue(op)
+                )
                 if byteFreqs[byteValue] == 1:
-                    encodedValue = ('0x' + cast(bytes, byteValue).hex()) if type(byteValue) == bytes else cast(str, byteValue)
-                    assembled.append(TealOp(op.expr, Op.pushbytes, encodedValue, '//', *op.args))
+                    encodedValue = (
+                        ("0x" + cast(bytes, byteValue).hex())
+                        if type(byteValue) == bytes
+                        else cast(str, byteValue)
+                    )
+                    assembled.append(
+                        TealOp(op.expr, Op.pushbytes, encodedValue, "//", *op.args)
+                    )
                     continue
-                
+
                 index = sortedBytes.index(byteValue)
                 if index == 0:
-                    assembled.append(TealOp(op.expr, Op.bytec_0, '//', *op.args))
+                    assembled.append(TealOp(op.expr, Op.bytec_0, "//", *op.args))
                 elif index == 1:
-                    assembled.append(TealOp(op.expr, Op.bytec_1, '//', *op.args))
+                    assembled.append(TealOp(op.expr, Op.bytec_1, "//", *op.args))
                 elif index == 2:
-                    assembled.append(TealOp(op.expr, Op.bytec_2, '//', *op.args))
+                    assembled.append(TealOp(op.expr, Op.bytec_2, "//", *op.args))
                 elif index == 3:
-                    assembled.append(TealOp(op.expr, Op.bytec_3, '//', *op.args))
+                    assembled.append(TealOp(op.expr, Op.bytec_3, "//", *op.args))
                 else:
-                    assembled.append(TealOp(op.expr, Op.bytec, index, '//', *op.args))
+                    assembled.append(TealOp(op.expr, Op.bytec, index, "//", *op.args))
                 continue
 
         assembled.append(op)
