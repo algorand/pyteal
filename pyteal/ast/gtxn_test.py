@@ -674,6 +674,7 @@ def test_gtxn_id_dynamic():
 
     assert actual == expected
 
+
 def test_gtxn_nonparticipation():
 
     for i in GTXN_RANGE:
@@ -685,6 +686,7 @@ def test_gtxn_nonparticipation():
         actual, _ = expr.__teal__(teal2Options)
 
         assert actual == expected
+
 
 def test_txn_application_id():
     for i in GTXN_RANGE:
