@@ -164,7 +164,7 @@ def test_txn_vote_key_dilution():
     assert actual == expected
 
 
-def test_txn_vote_key_dilution():
+def test_txn_nonparticipation():
     expr = Txn.nonparticipation()
     assert expr.type_of() == TealType.uint64
 
