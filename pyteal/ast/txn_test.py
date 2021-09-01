@@ -163,6 +163,15 @@ def test_txn_vote_key_dilution():
 
     assert actual == expected
 
+def test_txn_vote_key_dilution():
+    expr = Txn.nonparticipation()
+    assert expr.type_of() == TealType.uint64
+
+    expected = TealSimpleBlock([TealOp(expr, Op.txn, "Nonparticipation")])
+
+    actual, _ = expr.__teal__(teal2Options)
+
+    assert actual == expected
 
 def test_txn_type():
     expr = Txn.type()
