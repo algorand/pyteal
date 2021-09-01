@@ -141,7 +141,8 @@ def test_compile_version_5():
     expr = Int(1)
     expected = """
 #pragma version 5
-int 1    
+int 1
+return
 """.strip()
     actual = compileTeal(expr, Mode.Signature, version=5)
     assert actual == expected
