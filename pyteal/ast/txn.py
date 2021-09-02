@@ -85,7 +85,7 @@ class TxnField(Enum):
     local_num_uints = (54, "LocalNumUint", TealType.uint64, 3)
     local_num_byte_slices = (55, "LocalNumByteSlice", TealType.uint64, 3)
     extra_program_pages = (56, "ExtraProgramPages", TealType.uint64, 4)
-    nonparticipation = (57, "Nonparticipation", TealType.uint64, 2)
+    nonparticipation = (57, "Nonparticipation", TealType.uint64, 5)
 
     def __init__(self, id: int, name: str, type: TealType, min_version: int) -> None:
         self.id = id
@@ -301,6 +301,8 @@ class TxnObject:
         Only set when :any:`type_enum()` is :any:`TxnType.KeyRegistration`.
 
         For more information, see https://developer.algorand.org/docs/reference/transactions/#nonparticipation
+
+        Requires TEAL version 5 or higher.
         """
         return self.txnType(TxnField.nonparticipation)
 

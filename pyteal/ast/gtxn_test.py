@@ -10,6 +10,7 @@ GTXN_RANGE = range(MAX_GROUP_SIZE)
 teal2Options = CompileOptions(version=2)
 teal3Options = CompileOptions(version=3)
 teal4Options = CompileOptions(version=4)
+teal5Options = CompileOptions(version=5)
 
 
 def test_gtxn_invalid():
@@ -683,9 +684,28 @@ def test_gtxn_nonparticipation():
 
         expected = TealSimpleBlock([TealOp(expr, Op.gtxn, i, "Nonparticipation")])
 
-        actual, _ = expr.__teal__(teal2Options)
+        actual, _ = expr.__teal__(teal5Options)
 
         assert actual == expected
+
+        with pytest.raises(TealInputError):
+            expr.__teal__(teal4Options)
+
+
+def test_gtxn_nonparticipation_dynamic():
+
+    i = Int(0)
+    expr = Gtxn[i].nonparticipation()
+    assert expr.type_of() == TealType.uint64
+
+    expected = TealSimpleBlock(
+        [TealOp(i, Op.int, 0), TealOp(expr, Op.gtxns, "Nonparticipation")]
+    )
+
+    actual, _ = expr.__teal__(teal5Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+    assert actual == expected
 
 
 def test_txn_application_id():

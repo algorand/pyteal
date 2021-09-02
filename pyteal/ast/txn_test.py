@@ -8,6 +8,7 @@ from .. import CompileOptions
 teal2Options = CompileOptions(version=2)
 teal3Options = CompileOptions(version=3)
 teal4Options = CompileOptions(version=4)
+teal5Options = CompileOptions(version=5)
 
 
 def test_txn_sender():
@@ -170,9 +171,12 @@ def test_txn_nonparticipation():
 
     expected = TealSimpleBlock([TealOp(expr, Op.txn, "Nonparticipation")])
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(teal5Options)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal4Options)
 
 
 def test_txn_type():
