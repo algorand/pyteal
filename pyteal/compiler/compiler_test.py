@@ -816,7 +816,7 @@ app_global_put
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
-    assert expected == actual
+    assert actual == expected
 
 
 def test_compile_subroutine_with_return():
@@ -869,7 +869,7 @@ app_global_get
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
-    assert expected == actual
+    assert actual == expected
 
 
 def test_compile_subroutine_many_args():
@@ -916,7 +916,7 @@ load 5
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
-    assert expected == actual
+    assert actual == expected
 
 
 def test_compile_subroutine_recursive():
@@ -967,7 +967,56 @@ sub0_l6:
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
-    assert expected == actual
+    assert actual == expected
+
+
+def test_compile_subroutine_recursive_5():
+    @Subroutine(TealType.uint64)
+    def isEven(i: Expr) -> Expr:
+        return (
+            If(i == Int(0))
+            .Then(Int(1))
+            .ElseIf(i == Int(1))
+            .Then(Int(0))
+            .Else(isEven(i - Int(2)))
+        )
+
+    program = Return(isEven(Int(6)))
+
+    expected = """#pragma version 5
+int 6
+callsub sub0
+return
+sub0: // isEven
+store 0
+load 0
+int 0
+==
+bnz sub0_l5
+load 0
+int 1
+==
+bnz sub0_l4
+load 0
+int 2
+-
+load 0
+swap
+callsub sub0
+swap
+store 0
+sub0_l3:
+b sub0_l6
+sub0_l4:
+int 0
+b sub0_l3
+sub0_l5:
+int 1
+sub0_l6:
+retsub
+    """.strip()
+    actual = compileTeal(program, Mode.Application, version=5, assembleConstants=False)
+    assert actual == expected
 
 
 def test_compile_subroutine_mutually_recursive():
@@ -1031,7 +1080,7 @@ sub1_l3:
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
-    assert expected == actual
+    assert actual == expected
 
 
 def test_compile_loop_in_subroutine():
@@ -1071,7 +1120,7 @@ sub0_l3:
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
-    assert expected == actual
+    assert actual == expected
 
 
 def test_compile_subroutine_assemble_constants():
@@ -1129,4 +1178,4 @@ app_global_put
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=True)
-    assert expected == actual
+    assert actual == expected

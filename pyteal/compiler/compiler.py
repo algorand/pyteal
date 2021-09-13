@@ -217,7 +217,7 @@ def compileTeal(
     )
 
     spillLocalSlotsDuringRecursion(
-        subroutineMapping, subroutineGraph, localSlotAssignments
+        version, subroutineMapping, subroutineGraph, localSlotAssignments
     )
 
     subroutineLabels = resolveSubroutines(subroutineMapping)
