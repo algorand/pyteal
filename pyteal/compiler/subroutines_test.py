@@ -846,6 +846,7 @@ def test_spillLocalSlotsDuringRecursion_multiple_subroutines_recursion_v5():
         ],
     }
 
+
 def test_spillLocalSlotsDuringRecursion_recursive_many_args_no_return_v4():
     def subImpl(a1, a2, a3):
         return None
@@ -918,6 +919,7 @@ def test_spillLocalSlotsDuringRecursion_recursive_many_args_no_return_v4():
         ],
     }
 
+
 def test_spillLocalSlotsDuringRecursion_recursive_many_args_no_return_v5():
     def subImpl(a1, a2, a3):
         return None
@@ -986,6 +988,7 @@ def test_spillLocalSlotsDuringRecursion_recursive_many_args_no_return_v5():
             TealOp(None, Op.retsub),
         ],
     }
+
 
 def test_spillLocalSlotsDuringRecursion_recursive_many_args_return_v4():
     def subImpl(a1, a2, a3):
@@ -1063,6 +1066,7 @@ def test_spillLocalSlotsDuringRecursion_recursive_many_args_return_v4():
         ],
     }
 
+
 def test_spillLocalSlotsDuringRecursion_recursive_many_args_return_v5():
     def subImpl(a1, a2, a3):
         return None
@@ -1130,6 +1134,7 @@ def test_spillLocalSlotsDuringRecursion_recursive_many_args_return_v5():
             TealOp(None, Op.retsub),
         ],
     }
+
 
 def test_resolveSubroutines():
     def sub1Impl(a1):
