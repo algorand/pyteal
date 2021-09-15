@@ -7,6 +7,7 @@ from .. import CompileOptions
 
 teal2Options = CompileOptions(version=2)
 teal3Options = CompileOptions(version=3)
+teal5Options = CompileOptions(version=5)
 
 
 def test_global_min_txn_fee():
@@ -120,3 +121,31 @@ def test_global_creator_address():
 
     with pytest.raises(TealInputError):
         expr.__teal__(teal2Options)
+
+
+def test_global_current_application_address():
+    expr = Global.current_application_address()
+    assert expr.type_of() == TealType.bytes
+
+    expected = TealSimpleBlock([TealOp(expr, Op.global_, "CurrentApplicationAddress")])
+
+    actual, _ = expr.__teal__(teal5Options)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
+
+
+def test_global_group_id():
+    expr = Global.group_id()
+    assert expr.type_of() == TealType.bytes
+
+    expected = TealSimpleBlock([TealOp(expr, Op.global_, "GroupID")])
+
+    actual, _ = expr.__teal__(teal5Options)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
