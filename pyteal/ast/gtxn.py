@@ -16,11 +16,11 @@ class GtxnExpr(TxnExpr):
     """An expression that accesses a transaction field from a transaction in the current group."""
 
     def __init__(self, txnIndex: Union[int, Expr], field: TxnField) -> None:
-        super().__init__(field)
+        super().__init__(Op.gtxn, "Gtxn", field)
         self.txnIndex = txnIndex
 
     def __str__(self):
-        return "(Gtxn {} {})".format(self.txnIndex, self.field.arg_name)
+        return "({} {} {})".format(self.name, self.txnIndex, self.field.arg_name)
 
     def __teal__(self, options: "CompileOptions"):
         verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
@@ -46,11 +46,13 @@ class GtxnaExpr(TxnaExpr):
     """An expression that accesses a transaction array field from a transaction in the current group."""
 
     def __init__(self, txnIndex: Union[int, Expr], field: TxnField, index: int) -> None:
-        super().__init__(field, index)
+        super().__init__(Op.gtxna, "Gtxna", field, index)
         self.txnIndex = txnIndex
 
     def __str__(self):
-        return "(Gtxna {} {} {})".format(self.txnIndex, self.field.arg_name, self.index)
+        return "({} {} {} {})".format(
+            self.name, self.txnIndex, self.field.arg_name, self.index
+        )
 
     def __teal__(self, options: "CompileOptions"):
         verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)

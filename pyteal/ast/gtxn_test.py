@@ -1306,6 +1306,40 @@ def test_txn_config_asset_clawback_dynamic():
     assert actual == expected
 
 
+def test_txn_created_asset_id():
+    for i in GTXN_RANGE:
+        expr = expr = Gtxn[i].created_asset_id()
+        assert expr.type_of() == TealType.uint64
+
+        expected = TealSimpleBlock([TealOp(expr, Op.gtxn, i, "CreatedAssetID")])
+
+        actual, _ = expr.__teal__(teal5Options)
+
+        assert actual == expected
+
+        with pytest.raises(TealInputError):
+            expr.__teal__(teal4Options)
+
+
+def test_txn_created_asset_id_dynamic():
+    index = Int(0)
+    expr = expr = Gtxn[index].created_asset_id()
+    assert expr.type_of() == TealType.uint64
+
+    expected = TealSimpleBlock(
+        [TealOp(index, Op.int, 0), TealOp(expr, Op.gtxns, "CreatedAssetID")]
+    )
+
+    actual, _ = expr.__teal__(teal5Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal4Options)
+
+
 def test_txn_freeze_asset():
     for i in GTXN_RANGE:
         expr = Gtxn[i].freeze_asset()
@@ -1698,3 +1732,107 @@ def test_txn_extra_program_pages_dynamic():
 
     with pytest.raises(TealInputError):
         expr.__teal__(teal3Options)
+
+
+def test_txn_created_application_id():
+    for i in GTXN_RANGE:
+        expr = expr = Gtxn[i].created_application_id()
+        assert expr.type_of() == TealType.uint64
+
+        expected = TealSimpleBlock([TealOp(expr, Op.gtxn, i, "CreatedApplicationID")])
+
+        actual, _ = expr.__teal__(teal5Options)
+
+        assert actual == expected
+
+        with pytest.raises(TealInputError):
+            expr.__teal__(teal4Options)
+
+
+def test_txn_created_application_id_dynamic():
+    index = Int(0)
+    expr = expr = Gtxn[index].created_application_id()
+    assert expr.type_of() == TealType.uint64
+
+    expected = TealSimpleBlock(
+        [TealOp(index, Op.int, 0), TealOp(expr, Op.gtxns, "CreatedApplicationID")]
+    )
+
+    actual, _ = expr.__teal__(teal5Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal4Options)
+
+
+def test_txn_logs():
+    for i in GTXN_RANGE:
+        for j in range(32):
+            expr = Gtxn[i].logs[j]
+            assert expr.type_of() == TealType.bytes
+
+            expected = TealSimpleBlock([TealOp(expr, Op.gtxna, i, "Logs", j)])
+
+            actual, _ = expr.__teal__(teal5Options)
+
+            assert actual == expected
+
+            with pytest.raises(TealInputError):
+                expr.__teal__(teal4Options)
+
+
+def test_txn_logs_dynamic():
+    index = Int(0)
+    for j in range(32):
+        expr = Gtxn[index].logs[j]
+        assert expr.type_of() == TealType.bytes
+
+        expected = TealSimpleBlock(
+            [TealOp(index, Op.int, 0), TealOp(expr, Op.gtxnsa, "Logs", j)]
+        )
+
+        actual, _ = expr.__teal__(teal5Options)
+        actual.addIncoming()
+        actual = TealBlock.NormalizeBlocks(actual)
+
+        assert actual == expected
+
+        with pytest.raises(TealInputError):
+            expr.__teal__(teal4Options)
+
+
+def test_txn_logs_length():
+    for i in GTXN_RANGE:
+        expr = Gtxn[i].logs.length()
+        assert expr.type_of() == TealType.uint64
+
+        expected = TealSimpleBlock([TealOp(expr, Op.gtxn, i, "NumLogs")])
+
+        actual, _ = expr.__teal__(teal5Options)
+
+        assert actual == expected
+
+        with pytest.raises(TealInputError):
+            expr.__teal__(teal4Options)
+
+
+def test_txn_logs_length_dynamic():
+    index = Int(0)
+    expr = Gtxn[index].logs.length()
+    assert expr.type_of() == TealType.uint64
+
+    expected = TealSimpleBlock(
+        [TealOp(index, Op.int, 0), TealOp(expr, Op.gtxns, "NumLogs")]
+    )
+
+    actual, _ = expr.__teal__(teal5Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal4Options)

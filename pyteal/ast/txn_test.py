@@ -511,6 +511,20 @@ def test_txn_config_asset_clawback():
     assert actual == expected
 
 
+def test_txn_created_asset_id():
+    expr = Txn.created_asset_id()
+    assert expr.type_of() == TealType.uint64
+
+    expected = TealSimpleBlock([TealOp(expr, Op.txn, "CreatedAssetID")])
+
+    actual, _ = expr.__teal__(teal5Options)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal4Options)
+
+
 def test_txn_freeze_asset():
     expr = Txn.freeze_asset()
     assert expr.type_of() == TealType.uint64
@@ -670,3 +684,46 @@ def test_txn_extra_program_pages():
 
     with pytest.raises(TealInputError):
         expr.__teal__(teal3Options)
+
+
+def test_txn_created_application_id():
+    expr = Txn.created_application_id()
+    assert expr.type_of() == TealType.uint64
+
+    expected = TealSimpleBlock([TealOp(expr, Op.txn, "CreatedApplicationID")])
+
+    actual, _ = expr.__teal__(teal5Options)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal4Options)
+
+
+def test_txn_logs():
+    for i in range(32):
+        expr = Txn.logs[i]
+        assert expr.type_of() == TealType.bytes
+
+        expected = TealSimpleBlock([TealOp(expr, Op.txna, "Logs", i)])
+
+        actual, _ = expr.__teal__(teal5Options)
+
+        assert actual == expected
+
+        with pytest.raises(TealInputError):
+            expr.__teal__(teal4Options)
+
+
+def test_txn_logs_length():
+    expr = Txn.logs.length()
+    assert expr.type_of() == TealType.uint64
+
+    expected = TealSimpleBlock([TealOp(expr, Op.txn, "NumLogs")])
+
+    actual, _ = expr.__teal__(teal5Options)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal4Options)
