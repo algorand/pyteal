@@ -64,11 +64,23 @@ class TxnField(Enum):
     config_asset = (33, "ConfigAsset", TealType.uint64, False, 2)
     config_asset_total = (34, "ConfigAssetTotal", TealType.uint64, False, 2)
     config_asset_decimals = (35, "ConfigAssetDecimals", TealType.uint64, False, 2)
-    config_asset_default_frozen = (36, "ConfigAssetDefaultFrozen", TealType.uint64, False, 2)
+    config_asset_default_frozen = (
+        36,
+        "ConfigAssetDefaultFrozen",
+        TealType.uint64,
+        False,
+        2,
+    )
     config_asset_unit_name = (37, "ConfigAssetUnitName", TealType.bytes, False, 2)
     config_asset_name = (38, "ConfigAssetName", TealType.bytes, False, 2)
     config_asset_url = (39, "ConfigAssetURL", TealType.bytes, False, 2)
-    config_asset_metadata_hash = (40, "ConfigAssetMetadataHash", TealType.bytes, False, 2)
+    config_asset_metadata_hash = (
+        40,
+        "ConfigAssetMetadataHash",
+        TealType.bytes,
+        False,
+        2,
+    )
     config_asset_manager = (41, "ConfigAssetManager", TealType.bytes, False, 2)
     config_asset_reserve = (42, "ConfigAssetReserve", TealType.bytes, False, 2)
     config_asset_freeze = (43, "ConfigAssetFreeze", TealType.bytes, False, 2)
@@ -91,7 +103,9 @@ class TxnField(Enum):
     created_asset_id = (60, "CreatedAssetID", TealType.uint64, False, 5)
     created_application_id = (61, "CreatedApplicationID", TealType.uint64, False, 5)
 
-    def __init__(self, id: int, name: str, type: TealType, is_array: bool, min_version: int) -> None:
+    def __init__(
+        self, id: int, name: str, type: TealType, is_array: bool, min_version: int
+    ) -> None:
         self.id = id
         self.arg_name = name
         self.ret_type = type
