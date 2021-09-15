@@ -2,10 +2,10 @@ from typing import List, cast, TYPE_CHECKING, overload
 
 from ..types import TealType, require_type
 from ..errors import TealInputError
+from ..ir import TealSimpleBlock
 from .expr import Expr
 
 if TYPE_CHECKING:
-    from ..ir import TealSimpleBlock
     from ..compiler import CompileOptions
 
 
@@ -43,8 +43,6 @@ class Seq(Expr):
         if len(exprs) == 1 and isinstance(exprs[0], list):
             exprs = exprs[0]
 
-        if len(exprs) == 0:
-            raise TealInputError("Seq requires children.")
         for i, expr in enumerate(exprs):
             if not isinstance(expr, Expr):
                 raise TealInputError("{} is not a pyteal expression.".format(expr))
@@ -54,16 +52,12 @@ class Seq(Expr):
         self.args = exprs
 
     def __teal__(self, options: "CompileOptions"):
-        start = None
-        end = None
-        for i, arg in enumerate(self.args):
+        start = TealSimpleBlock([])
+        end = start
+        for arg in self.args:
             argStart, argEnd = arg.__teal__(options)
-            if i == 0:
-                start = argStart
-            else:
-                cast("TealSimpleBlock", end).setNextBlock(argStart)
+            end.setNextBlock(argStart)
             end = argEnd
-
         return start, end
 
     def __str__(self):
@@ -74,6 +68,8 @@ class Seq(Expr):
         return ret_str
 
     def type_of(self):
+        if len(self.args) == 0:
+            return TealType.none
         return self.args[-1].type_of()
 
     def has_return(self):
@@ -81,6 +77,8 @@ class Seq(Expr):
         # TODO: technically if ANY expression, not just the final one, returns true for has_return,
         # this could return true as well. But in that case all expressions after the one that
         # returns true for has_return is dead code, so it could be optimized away
+        if len(self.args) == 0:
+            return False
         return self.args[-1].has_return()
 
 

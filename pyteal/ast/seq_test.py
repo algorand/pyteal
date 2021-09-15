@@ -8,6 +8,18 @@ from .. import CompileOptions
 options = CompileOptions()
 
 
+def test_seq_zero():
+    for expr in (Seq(), Seq([])):
+        assert expr.type_of() == TealType.none
+        assert not expr.has_return()
+
+        expected = TealSimpleBlock([])
+
+        actual, _ = expr.__teal__(options)
+
+        assert actual == expected
+
+
 def test_seq_one():
     items = [Int(0)]
     expr = Seq(items)
@@ -16,6 +28,8 @@ def test_seq_one():
     expected, _ = items[0].__teal__(options)
 
     actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
@@ -71,9 +85,6 @@ def test_seq_has_return():
 
 
 def test_seq_invalid():
-    with pytest.raises(TealInputError):
-        Seq([])
-
     with pytest.raises(TealTypeError):
         Seq([Int(1), Pop(Int(2))])
 
