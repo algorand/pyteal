@@ -166,7 +166,7 @@ class Op(Enum):
     itxn                = OpType("itxn",                Mode.Application,                  5)
     itxna               = OpType("itxna",               Mode.Application,                  5)
     txnas               = OpType("txnas",               Mode.Signature | Mode.Application, 5)
-    gtxnsa              = OpType("gtxnsa",              Mode.Signature | Mode.Application, 5)
+    gtxnas              = OpType("gtxnas",              Mode.Signature | Mode.Application, 5)
     gtxnsas             = OpType("gtxnsas",             Mode.Signature | Mode.Application, 5)
     args                = OpType("args",                Mode.Signature,                    5)
     # fmt: on
