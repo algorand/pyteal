@@ -384,7 +384,7 @@ class TxnObject:
         return self.makeTxnExpr(TxnField.vote_key_dilution)
 
     def nonparticipation(self) -> TxnExpr:
-        """Get flag for participation key .
+        """Marks an account nonparticipating for rewards.
 
         Only set when :any:`type_enum()` is :any:`TxnType.KeyRegistration`.
 
