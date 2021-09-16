@@ -29,7 +29,7 @@ class ImportScratchValue(LeafExpr):
                 in the range [0-256).
         """
         super().__init__()
-        if type(txnIndex) == int:
+        if type(txnIndex) is int:
             if txnIndex < 0 or txnIndex >= MAX_GROUP_SIZE:
                 raise TealInputError(
                     "Invalid transaction index {}, shoud be in [0, {})".format(
@@ -56,10 +56,8 @@ class ImportScratchValue(LeafExpr):
             "TEAL version too low to use Gload expression",
         )
 
-        if type(self.txnIndex) == int:
-            op = TealOp(
-                self, Op.gload, cast(int, self.txnIndex), cast(int, self.slotId)
-            )
+        if type(self.txnIndex) is int:
+            op = TealOp(self, Op.gload, self.txnIndex, self.slotId)
             return TealBlock.FromOp(options, op)
 
         op = TealOp(self, Op.gloads, self.slotId)

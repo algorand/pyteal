@@ -17,6 +17,9 @@ from .global_ import Global, GlobalField
 from .app import App, AppField, OnComplete, AppParam
 from .asset import AssetHolding, AssetParam
 
+# inner txns
+from .itxn import InnerTxnBuilder, InnerTxn
+
 # meta
 from .array import Array
 from .tmpl import Tmpl
@@ -139,6 +142,8 @@ __all__ = [
     "AppParam",
     "AssetHolding",
     "AssetParam",
+    "InnerTxnBuilder",
+    "InnerTxn",
     "Array",
     "Tmpl",
     "Nonce",

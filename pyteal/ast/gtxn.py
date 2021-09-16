@@ -16,17 +16,17 @@ class GtxnExpr(TxnExpr):
     """An expression that accesses a transaction field from a transaction in the current group."""
 
     def __init__(self, txnIndex: Union[int, Expr], field: TxnField) -> None:
-        super().__init__(field)
+        super().__init__(Op.gtxn, "Gtxn", field)
         self.txnIndex = txnIndex
 
     def __str__(self):
-        return "(Gtxn {} {})".format(self.txnIndex, self.field.arg_name)
+        return "({} {} {})".format(self.name, self.txnIndex, self.field.arg_name)
 
     def __teal__(self, options: "CompileOptions"):
         verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
 
-        if type(self.txnIndex) == int:
-            op = TealOp(self, Op.gtxn, cast(int, self.txnIndex), self.field.arg_name)
+        if type(self.txnIndex) is int:
+            op = TealOp(self, Op.gtxn, self.txnIndex, self.field.arg_name)
             return TealBlock.FromOp(options, op)
 
         verifyTealVersion(
@@ -45,34 +45,54 @@ GtxnExpr.__module__ = "pyteal"
 class GtxnaExpr(TxnaExpr):
     """An expression that accesses a transaction array field from a transaction in the current group."""
 
-    def __init__(self, txnIndex: Union[int, Expr], field: TxnField, index: int) -> None:
-        super().__init__(field, index)
+    def __init__(
+        self, txnIndex: Union[int, Expr], field: TxnField, index: Union[int, Expr]
+    ) -> None:
+        super().__init__(Op.gtxna, Op.gtxnas, "Gtxna", field, index)
         self.txnIndex = txnIndex
 
     def __str__(self):
-        return "(Gtxna {} {} {})".format(self.txnIndex, self.field.arg_name, self.index)
+        return "({} {} {} {})".format(
+            self.name, self.txnIndex, self.field.arg_name, self.index
+        )
 
     def __teal__(self, options: "CompileOptions"):
         verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
 
-        if type(self.txnIndex) == int:
-            op = TealOp(
-                self,
-                Op.gtxna,
-                cast(int, self.txnIndex),
-                self.field.arg_name,
-                self.index,
-            )
-            return TealBlock.FromOp(options, op)
+        if type(self.txnIndex) is int:
+            if type(self.index) is int:
+                opToUse = Op.gtxna
+            else:
+                opToUse = Op.gtxnas
+        else:
+            if type(self.index) is int:
+                opToUse = Op.gtxnsa
+            else:
+                opToUse = Op.gtxnsas
 
         verifyTealVersion(
-            Op.gtxnsa.min_version,
+            opToUse.min_version,
             options.version,
-            "TEAL version too low to index Gtxn with dynamic values",
+            "TEAL version too low to use op {}".format(opToUse),
         )
 
-        op = TealOp(self, Op.gtxnsa, self.field.arg_name, self.index)
-        return TealBlock.FromOp(options, op, cast(Expr, self.txnIndex))
+        if type(self.txnIndex) is int:
+            if type(self.index) is int:
+                op = TealOp(
+                    self, opToUse, self.txnIndex, self.field.arg_name, self.index
+                )
+                return TealBlock.FromOp(options, op)
+            op = TealOp(self, opToUse, self.txnIndex, self.field.arg_name)
+            return TealBlock.FromOp(options, op, cast(Expr, self.index))
+
+        if type(self.index) is int:
+            op = TealOp(self, opToUse, self.field.arg_name, self.index)
+            return TealBlock.FromOp(options, op, cast(Expr, self.txnIndex))
+
+        op = TealOp(self, opToUse, self.field.arg_name)
+        return TealBlock.FromOp(
+            options, op, cast(Expr, self.txnIndex), cast(Expr, self.index)
+        )
 
 
 GtxnaExpr.__module__ = "pyteal"
@@ -82,7 +102,7 @@ class TxnGroup:
     """Represents a group of transactions."""
 
     def __getitem__(self, txnIndex: Union[int, Expr]) -> TxnObject:
-        if type(txnIndex) == int:
+        if type(txnIndex) is int:
             if txnIndex < 0 or txnIndex >= MAX_GROUP_SIZE:
                 raise TealInputError(
                     "Invalid Gtxn index {}, shoud be in [0, {})".format(

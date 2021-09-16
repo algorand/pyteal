@@ -192,8 +192,8 @@ def test_evaluate_subroutine_no_args():
         assert declaration.type_of() == returnValue.type_of()
         assert declaration.has_return() == returnValue.has_return()
 
-        options.currentSubroutine = definition
-        expected, _ = returnValue.__teal__(options)
+        options.setSubroutine(definition)
+        expected, _ = Seq([returnValue]).__teal__(options)
 
         actual, _ = declaration.__teal__(options)
         options.setSubroutine(None)
@@ -233,7 +233,7 @@ def test_evaluate_subroutine_1_arg():
 
         assert declaration.body.args[0].slot is argSlots[-1]
 
-        options.currentSubroutine = definition
+        options.setSubroutine(definition)
         expected, _ = Seq([declaration.body.args[0], returnValue]).__teal__(options)
 
         actual, _ = declaration.__teal__(options)
@@ -278,7 +278,7 @@ def test_evaluate_subroutine_2_args():
         assert declaration.body.args[0].slot is argSlots[-1]
         assert declaration.body.args[1].slot is argSlots[-2]
 
-        options.currentSubroutine = definition
+        options.setSubroutine(definition)
         expected, _ = Seq(
             [declaration.body.args[0], declaration.body.args[1], returnValue]
         ).__teal__(options)
@@ -324,7 +324,7 @@ def test_evaluate_subroutine_10_args():
         for i in range(10):
             assert declaration.body.args[i].slot is argSlots[-i - 1]
 
-        options.currentSubroutine = definition
+        options.setSubroutine(definition)
         expected, _ = Seq(declaration.body.args[:10] + [returnValue]).__teal__(options)
 
         actual, _ = declaration.__teal__(options)

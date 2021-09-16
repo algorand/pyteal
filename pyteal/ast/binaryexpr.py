@@ -21,7 +21,7 @@ class BinaryExpr(Expr):
     ) -> None:
         super().__init__()
         if type(inputType) is tuple:
-            leftType, rightType = cast(Tuple[TealType, TealType], inputType)
+            leftType, rightType = inputType
         else:
             leftType = cast(TealType, inputType)
             rightType = leftType

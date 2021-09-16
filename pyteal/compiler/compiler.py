@@ -191,7 +191,10 @@ def compileTeal(
         TealInputError: if an operation in ast is not supported by the supplied mode and version.
         TealInternalError: if an internal error is encounter during compilation.
     """
-    if not (MIN_TEAL_VERSION <= version <= MAX_TEAL_VERSION) or type(version) != int:
+    if (
+        not (MIN_TEAL_VERSION <= version <= MAX_TEAL_VERSION)
+        or type(version) is not int
+    ):
         raise TealInputError(
             "Unsupported TEAL version: {}. Excepted an integer in the range [{}, {}]".format(
                 version, MIN_TEAL_VERSION, MAX_TEAL_VERSION

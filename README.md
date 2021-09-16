@@ -45,10 +45,10 @@ Active venv:
 Pip install PyTeal in editable state
  * `pip install -e .`
 
-Install dependencies :
+Install dependencies:
 * `pip3 install -r requirements.txt`
  
-Type checking using mypy
+Type checking using mypy:
 * `mypy pyteal`
 
 Run tests:

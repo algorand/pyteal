@@ -12,62 +12,66 @@ Transaction Fields
 Information about the current transaction being evaluated can be obtained using the :any:`Txn`
 object. Below are the PyTeal expressions that refer to transaction fields:
 
-================================================================================ ========================= =======================================================================
-Operator                                  Type                      Notes
-================================================================================ ========================= =======================================================================
-:any:`Txn.sender() <TxnObject.sender>`                                           :code:`TealType.bytes`    32 byte address
-:any:`Txn.fee() <TxnObject.fee>`                                                 :code:`TealType.uint64`   in microAlgos
-:any:`Txn.first_valid() <TxnObject.first_valid>`                                 :code:`TealType.uint64`   round number 
-:any:`Txn.last_valid() <TxnObject.last_valid>`                                   :code:`TealType.uint64`   round number
-:any:`Txn.note() <TxnObject.note>`                                               :code:`TealType.bytes`    transaction note in bytes
-:any:`Txn.lease() <TxnObject.lease>`                                             :code:`TealType.bytes`    transaction lease in bytes
-:any:`Txn.receiver() <TxnObject.receiver>`                                       :code:`TealType.bytes`    32 byte address
-:any:`Txn.amount() <TxnObject.amount>`                                           :code:`TealType.uint64`   in microAlgos
-:any:`Txn.close_remainder_to() <TxnObject.close_remainder_to>`                   :code:`TealType.bytes`    32 byte address
-:any:`Txn.vote_pk() <TxnObject.vote_pk>`                                         :code:`TealType.bytes`    32 byte address
-:any:`Txn.selection_pk() <TxnObject.selection_pk>`                               :code:`TealType.bytes`    32 byte address
-:any:`Txn.vote_first() <TxnObject.vote_first>`                                   :code:`TealType.uint64`
-:any:`Txn.vote_last() <TxnObject.vote_last>`                                     :code:`TealType.uint64`
-:any:`Txn.vote_key_dilution() <TxnObject.vote_key_dilution>`                     :code:`TealType.uint64`
-:any:`Txn.type() <TxnObject.type>`                                               :code:`TealType.bytes`
-:any:`Txn.type_enum() <TxnObject.type_enum>`                                     :code:`TealType.uint64`   see table below
-:any:`Txn.xfer_asset() <TxnObject.xfer_asset>`                                   :code:`TealType.uint64`   ID of asset being transferred
-:any:`Txn.asset_amount() <TxnObject.asset_amount>`                               :code:`TealType.uint64`   value in Asset's units
-:any:`Txn.asset_sender() <TxnObject.asset_sender>`                               :code:`TealType.bytes`    32 byte address, causes clawback of all value if sender is the clawback
-:any:`Txn.asset_receiver() <TxnObject.asset_receiver>`                           :code:`TealType.bytes`    32 byte address
-:any:`Txn.asset_close_to() <TxnObject.asset_close_to>`                           :code:`TealType.bytes`    32 byte address
-:any:`Txn.group_index() <TxnObject.group_index>`                                 :code:`TealType.uint64`   position of this transaction within a transaction group, starting at 0
-:any:`Txn.tx_id() <TxnObject.tx_id>`                                             :code:`TealType.bytes`    the computed ID for this transaction, 32 bytes
-:any:`Txn.application_id() <TxnObject.application_id>`                           :code:`TealType.uint64`
-:any:`Txn.on_completion() <TxnObject.on_completion>`                             :code:`TealType.uint64`
-:any:`Txn.approval_program() <TxnObject.approval_program>`                       :code:`TealType.bytes`
-:any:`Txn.clear_state_program() <TxnObject.clear_state_program>`                 :code:`TealType.bytes`
-:any:`Txn.rekey_to() <TxnObject.rekey_to>`                                       :code:`TealType.bytes`    32 byte address
-:any:`Txn.config_asset() <TxnObject.config_asset>`                               :code:`TealType.uint64`   ID of asset being configured
-:any:`Txn.config_asset_total() <TxnObject.config_asset_total>`                   :code:`TealType.uint64`
-:any:`Txn.config_asset_decimals() <TxnObject.config_asset_decimals>`             :code:`TealType.uint64`
-:any:`Txn.config_asset_default_frozen() <TxnObject.config_asset_default_frozen>` :code:`TealType.uint64`
-:any:`Txn.config_asset_unit_name() <TxnObject.config_asset_unit_name>`           :code:`TealType.bytes`
-:any:`Txn.config_asset_name() <TxnObject.config_asset_name>`                     :code:`TealType.bytes`
-:any:`Txn.config_asset_url() <TxnObject.config_asset_url>`                       :code:`TealType.bytes`
-:any:`Txn.config_asset_metadata_hash() <TxnObject.config_asset_metadata_hash>`   :code:`TealType.bytes`
-:any:`Txn.config_asset_manager() <TxnObject.config_asset_manager>`               :code:`TealType.bytes`    32 byte address
-:any:`Txn.config_asset_reserve() <TxnObject.config_asset_reserve>`               :code:`TealType.bytes`    32 byte address
-:any:`Txn.config_asset_freeze() <TxnObject.config_asset_freeze>`                 :code:`TealType.bytes`    32 byte address
-:any:`Txn.config_asset_clawback() <TxnObject.config_asset_clawback>`             :code:`TealType.bytes`    32 byte address
-:any:`Txn.freeze_asset() <TxnObject.freeze_asset>`                               :code:`TealType.uint64`
-:any:`Txn.freeze_asset_account() <TxnObject.freeze_asset_account>`               :code:`TealType.bytes`    32 byte address
-:any:`Txn.freeze_asset_frozen() <TxnObject.freeze_asset_frozen>`                 :code:`TealType.uint64`
-:any:`Txn.global_num_uints() <TxnObject.global_num_uints>`                       :code:`TealType.uint64`   Maximum global integers in app schema
-:any:`Txn.global_num_byte_slices() <TxnObject.global_num_byte_slices>`           :code:`TealType.uint64`   Maximum global byte strings in app schema
-:any:`Txn.local_num_uints() <TxnObject.local_num_uints>`                         :code:`TealType.uint64`   Maximum local integers in app schema
-:any:`Txn.local_num_byte_slices() <TxnObject.local_num_byte_slices>`             :code:`TealType.uint64`   Maximum local byte strings in app schema
-:any:`Txn.extra_program_pages() <TxnObject.extra_program_pages>`                 :code:`TealType.uint64`   Number of extra program pages for app
-:any:`Txn.application_args <TxnObject.application_args>`                         :code:`TealType.bytes[]`  Array of application arguments
-:any:`Txn.accounts <TxnObject.accounts>`                                         :code:`TealType.bytes[]`  Array of application accounts
-:any:`Txn.assets <TxnObject.assets>`                                             :code:`TealType.uint64[]` Array of application assets
-:any:`Txn.applications <TxnObject.applications>`                                 :code:`TealType.uint64[]` Array of applications
-================================================================================ ========================= =======================================================================
+================================================================================ ========================= ================ ============================================================================
+Operator                                                                         Type                      Min TEAL Version Notes
+================================================================================ ========================= ================ ============================================================================
+:any:`Txn.sender() <TxnObject.sender>`                                           :code:`TealType.bytes`    2                32 byte address
+:any:`Txn.fee() <TxnObject.fee>`                                                 :code:`TealType.uint64`   2                in microAlgos
+:any:`Txn.first_valid() <TxnObject.first_valid>`                                 :code:`TealType.uint64`   2                round number 
+:any:`Txn.last_valid() <TxnObject.last_valid>`                                   :code:`TealType.uint64`   2                round number
+:any:`Txn.note() <TxnObject.note>`                                               :code:`TealType.bytes`    2                transaction note in bytes
+:any:`Txn.lease() <TxnObject.lease>`                                             :code:`TealType.bytes`    2                transaction lease in bytes
+:any:`Txn.receiver() <TxnObject.receiver>`                                       :code:`TealType.bytes`    2                32 byte address
+:any:`Txn.amount() <TxnObject.amount>`                                           :code:`TealType.uint64`   2                in microAlgos
+:any:`Txn.close_remainder_to() <TxnObject.close_remainder_to>`                   :code:`TealType.bytes`    2                32 byte address
+:any:`Txn.vote_pk() <TxnObject.vote_pk>`                                         :code:`TealType.bytes`    2                32 byte address
+:any:`Txn.selection_pk() <TxnObject.selection_pk>`                               :code:`TealType.bytes`    2                32 byte address
+:any:`Txn.vote_first() <TxnObject.vote_first>`                                   :code:`TealType.uint64`   2
+:any:`Txn.vote_last() <TxnObject.vote_last>`                                     :code:`TealType.uint64`   2
+:any:`Txn.vote_key_dilution() <TxnObject.vote_key_dilution>`                     :code:`TealType.uint64`   2
+:any:`Txn.nonparticipation() <TxnObject.nonparticipation>`                       :code:`TealType.uint64`   5                Marks an account nonparticipating for rewards
+:any:`Txn.type() <TxnObject.type>`                                               :code:`TealType.bytes`    2
+:any:`Txn.type_enum() <TxnObject.type_enum>`                                     :code:`TealType.uint64`   2                see table below
+:any:`Txn.xfer_asset() <TxnObject.xfer_asset>`                                   :code:`TealType.uint64`   2                ID of asset being transferred
+:any:`Txn.asset_amount() <TxnObject.asset_amount>`                               :code:`TealType.uint64`   2                value in Asset's units
+:any:`Txn.asset_sender() <TxnObject.asset_sender>`                               :code:`TealType.bytes`    2                32 byte address, causes clawback of all value if sender is the clawback
+:any:`Txn.asset_receiver() <TxnObject.asset_receiver>`                           :code:`TealType.bytes`    2                32 byte address
+:any:`Txn.asset_close_to() <TxnObject.asset_close_to>`                           :code:`TealType.bytes`    2                32 byte address
+:any:`Txn.group_index() <TxnObject.group_index>`                                 :code:`TealType.uint64`   2                position of this transaction within a transaction group, starting at 0
+:any:`Txn.tx_id() <TxnObject.tx_id>`                                             :code:`TealType.bytes`    2                the computed ID for this transaction, 32 bytes
+:any:`Txn.application_id() <TxnObject.application_id>`                           :code:`TealType.uint64`   2
+:any:`Txn.on_completion() <TxnObject.on_completion>`                             :code:`TealType.uint64`   2
+:any:`Txn.approval_program() <TxnObject.approval_program>`                       :code:`TealType.bytes`    2
+:any:`Txn.clear_state_program() <TxnObject.clear_state_program>`                 :code:`TealType.bytes`    2
+:any:`Txn.rekey_to() <TxnObject.rekey_to>`                                       :code:`TealType.bytes`    2                32 byte address
+:any:`Txn.config_asset() <TxnObject.config_asset>`                               :code:`TealType.uint64`   2                ID of asset being configured
+:any:`Txn.config_asset_total() <TxnObject.config_asset_total>`                   :code:`TealType.uint64`   2
+:any:`Txn.config_asset_decimals() <TxnObject.config_asset_decimals>`             :code:`TealType.uint64`   2
+:any:`Txn.config_asset_default_frozen() <TxnObject.config_asset_default_frozen>` :code:`TealType.uint64`   2
+:any:`Txn.config_asset_unit_name() <TxnObject.config_asset_unit_name>`           :code:`TealType.bytes`    2
+:any:`Txn.config_asset_name() <TxnObject.config_asset_name>`                     :code:`TealType.bytes`    2
+:any:`Txn.config_asset_url() <TxnObject.config_asset_url>`                       :code:`TealType.bytes`    2
+:any:`Txn.config_asset_metadata_hash() <TxnObject.config_asset_metadata_hash>`   :code:`TealType.bytes`    2
+:any:`Txn.config_asset_manager() <TxnObject.config_asset_manager>`               :code:`TealType.bytes`    2                32 byte address
+:any:`Txn.config_asset_reserve() <TxnObject.config_asset_reserve>`               :code:`TealType.bytes`    2                32 byte address
+:any:`Txn.config_asset_freeze() <TxnObject.config_asset_freeze>`                 :code:`TealType.bytes`    2                32 byte address
+:any:`Txn.config_asset_clawback() <TxnObject.config_asset_clawback>`             :code:`TealType.bytes`    2                32 byte address
+:any:`Txn.freeze_asset() <TxnObject.freeze_asset>`                               :code:`TealType.uint64`   2
+:any:`Txn.freeze_asset_account() <TxnObject.freeze_asset_account>`               :code:`TealType.bytes`    2                32 byte address
+:any:`Txn.freeze_asset_frozen() <TxnObject.freeze_asset_frozen>`                 :code:`TealType.uint64`   2
+:any:`Txn.global_num_uints() <TxnObject.global_num_uints>`                       :code:`TealType.uint64`   3                Maximum global integers in app schema
+:any:`Txn.global_num_byte_slices() <TxnObject.global_num_byte_slices>`           :code:`TealType.uint64`   3                Maximum global byte strings in app schema
+:any:`Txn.local_num_uints() <TxnObject.local_num_uints>`                         :code:`TealType.uint64`   3                Maximum local integers in app schema
+:any:`Txn.local_num_byte_slices() <TxnObject.local_num_byte_slices>`             :code:`TealType.uint64`   3                Maximum local byte strings in app schema
+:any:`Txn.extra_program_pages() <TxnObject.extra_program_pages>`                 :code:`TealType.uint64`   4                Number of extra program pages for app
+:any:`Txn.application_args <TxnObject.application_args>`                         :code:`TealType.bytes[]`  2                Array of application arguments
+:any:`Txn.accounts <TxnObject.accounts>`                                         :code:`TealType.bytes[]`  2                Array of application accounts
+:any:`Txn.assets <TxnObject.assets>`                                             :code:`TealType.uint64[]` 3                Array of application assets
+:any:`Txn.applications <TxnObject.applications>`                                 :code:`TealType.uint64[]` 3                Array of applications
+:any:`InnerTxn.created_asset_id() <TxnObject.created_asset_id>`                  :code:`TealType.uint64`   5                The ID of the newly created asset in this transaction. This is only valid on inner transactions.
+:any:`InnerTxn.created_application_id() <TxnObject.created_application_id>`      :code:`TealType.uint64`   5                The ID of the newly created application in this transaction. This is only valid on inner transactions.
+:any:`InnerTxn.logs <TxnObject.logs>`                                            :code:`TealType.bytes[]`  5                Array of application logged items. This is only valid on inner transactions.
+================================================================================ ========================= ================ ============================================================================
 
 Transaction Type
 ~~~~~~~~~~~~~~~~
@@ -90,7 +94,8 @@ Transaction Array Fields
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Some of the exposed transaction fields are arrays with the type :code:`TealType.uint64[]` or :code:`TealType.bytes[]`.
-These fields are :code:`Txn.application_args`, :code:`Txn.assets`, :code:`Txn.accounts`, and :code:`Txn.applications`.
+These fields are :code:`Txn.application_args`, :code:`Txn.assets`, :code:`Txn.accounts`, :code:`Txn.applications`,
+and :code:`InnerTxn.logs`.
 
 The length of these array fields can be found using the :code:`.length()` method, and individual
 items can be accesses using bracket notation. For example:
@@ -100,6 +105,9 @@ items can be accesses using bracket notation. For example:
   Txn.application_args.length() # get the number of application arguments in the transaction
   Txn.application_args[0] # get the first application argument
   Txn.application_args[1] # get the second application argument
+
+  # as of TEAL v5, PyTeal expressions can be used to dynamically index into array properties as well
+  Txn.application_args[Txn.application_args.length() - Int(1)] # get the last application argument
 
 .. _txn_special_case_arrays:
 
@@ -133,12 +141,26 @@ available on the elements of :code:`Gtxn`. For example:
   Gtxn[0].sender() # get the sender of the first transaction in the atomic transfer group
   Gtxn[1].receiver() # get the receiver of the second transaction in the atomic transfer group
 
+  # as of TEAL v3, PyTeal expressions can be used to dynamically index into Gtxn as well
+  Gtxn[Txn.group_index() - Int(1)].sender() # get the sender of the previous transaction in the atomic transfer group
+
 :code:`Gtxn` is zero-indexed and the maximum size of an atomic transfer group is 16. The size of the
 current transaction group is available as :any:`Global.group_size()`. A standalone transaction will
 have a group size of :code:`1`.
 
 To find the current transaction's index in the transfer group, use :any:`Txn.group_index() <TxnObject.group_index>`. If the
 current transaction is standalone, it's group index will be :code:`0`.
+
+Inner Transactions
+------------------
+
+.. note::
+    Inner transactions are only available in TEAL version 5 or higher.
+
+Inner transactions can be created and submitted with expressions from the :any:`InnerTxnBuilder` class.
+The properties of the most recently submitted inner transaction can be accessed using the :any:`InnerTxn`
+object. This object is an instance of :any:`TxnObject`, meaning all of the above transaction fields
+on :code:`Txn` are available on :code:`InnerTxn` as well.
 
 Global Parameters
 -----------------

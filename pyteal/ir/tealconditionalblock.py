@@ -44,7 +44,6 @@ class TealConditionalBlock(TealBlock):
     def __eq__(self, other: object) -> bool:
         if type(other) is not TealConditionalBlock:
             return False
-        other = cast(TealConditionalBlock, other)
         return (
             self.ops == other.ops
             and self.trueBlock == other.trueBlock

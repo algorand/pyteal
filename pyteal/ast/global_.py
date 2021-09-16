@@ -21,6 +21,8 @@ class GlobalField(Enum):
     latest_timestamp = (7, "LatestTimestamp", TealType.uint64, 2)
     current_app_id = (8, "CurrentApplicationID", TealType.uint64, 2)
     creator_address = (9, "CreatorAddress", TealType.bytes, 3)
+    current_app_address = (10, "CurrentApplicationAddress", TealType.bytes, 5)
+    group_id = (11, "GroupID", TealType.bytes, 5)
 
     def __init__(self, id: int, name: str, type: TealType, min_version: int) -> None:
         self.id = id
@@ -110,8 +112,24 @@ class Global(LeafExpr):
     def creator_address(cls) -> "Global":
         """Address of the creator of the current application.
 
-        Fails if no such application is executing. Requires TEAL version 3 or higher."""
+        Fails during Signature mode. Requires TEAL version 3 or higher."""
         return cls(GlobalField.creator_address)
+
+    @classmethod
+    def current_application_address(cls) -> "Global":
+        """Get the address of that the current application controls.
+
+        Fails during Signature mode. Requires TEAL version 5 or higher."""
+        return cls(GlobalField.current_app_address)
+
+    @classmethod
+    def group_id(cls) -> "Global":
+        """Get the ID of the current transaction group.
+
+        If the current transaction is not part of a group, this will return 32 zero bytes.
+
+        Requires TEAL version 5 or higher."""
+        return cls(GlobalField.group_id)
 
 
 Global.__module__ = "pyteal"
