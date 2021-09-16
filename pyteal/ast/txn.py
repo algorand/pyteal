@@ -1,10 +1,16 @@
 from enum import Enum
-from typing import Callable, TYPE_CHECKING
+from typing import Callable, Optional, Union, cast, TYPE_CHECKING
 
-from ..types import TealType
-from ..errors import TealInputError, verifyFieldVersion, verifyTealVersion
+from ..types import TealType, require_type
+from ..errors import (
+    TealInputError,
+    TealCompileError,
+    verifyFieldVersion,
+    verifyTealVersion,
+)
 from ..ir import TealOp, Op, TealBlock
 from .leafexpr import LeafExpr
+from .expr import Expr
 from .int import EnumInt
 from .array import Array
 
@@ -154,11 +160,19 @@ TxnExpr.__module__ = "pyteal"
 class TxnaExpr(LeafExpr):
     """An expression that accesses a transaction array field from the current transaction."""
 
-    def __init__(self, op: Op, name: str, field: TxnField, index: int) -> None:
+    def __init__(
+        self,
+        staticOp: Op,
+        dynamicOp: Optional[Op],
+        name: str,
+        field: TxnField,
+        index: Union[int, Expr],
+    ) -> None:
         super().__init__()
         if not field.is_array:
             raise TealInputError("Unexpected non-array field: {}".format(field))
-        self.op = op
+        self.staticOp = staticOp
+        self.dynamicOp = dynamicOp
         self.name = name
         self.field = field
         self.index = index
@@ -168,14 +182,23 @@ class TxnaExpr(LeafExpr):
 
     def __teal__(self, options: "CompileOptions"):
         verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
+
+        opToUse = self.staticOp if type(self.index) is int else self.dynamicOp
+        if opToUse is None:
+            raise TealCompileError("Dynamic array indexing not supported", self)
+
         verifyTealVersion(
-            self.op.min_version,
+            opToUse.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(self.op),
+            "TEAL version too low to use op {}".format(opToUse),
         )
 
-        op = TealOp(self, self.op, self.field.arg_name, self.index)
-        return TealBlock.FromOp(options, op)
+        if type(self.index) is int:
+            op = TealOp(self, opToUse, self.field.arg_name, cast(int, self.index))
+            return TealBlock.FromOp(options, op)
+
+        op = TealOp(self, opToUse, self.field.arg_name)
+        return TealBlock.FromOp(options, op, cast(Expr, self.index))
 
     def type_of(self):
         return self.field.type_of()
@@ -197,12 +220,13 @@ TxnExprBuilder.__module__ = "pyteal"
 
 
 class TxnaExprBuilder:
-    def __init__(self, op: Op, name: str):
-        self.op = op
+    def __init__(self, staticOp: Op, dynamicOp: Optional[Op], name: str):
+        self.staticOp = staticOp
+        self.dynamicOp = dynamicOp
         self.name = name
 
-    def __call__(self, field: TxnField, index: int) -> TxnaExpr:
-        return TxnaExpr(self.op, self.name, field, index)
+    def __call__(self, field: TxnField, index: Union[int, Expr]) -> TxnaExpr:
+        return TxnaExpr(self.staticOp, self.dynamicOp, self.name, field, index)
 
 
 TxnaExprBuilder.__module__ = "pyteal"
@@ -221,9 +245,12 @@ class TxnArray(Array):
     def length(self) -> TxnExpr:
         return self.txnObject.makeTxnExpr(self.lengthField)
 
-    def __getitem__(self, index: int) -> TxnaExpr:
-        if not isinstance(index, int) or index < 0:
-            raise TealInputError("Invalid array index: {}".format(index))
+    def __getitem__(self, index: Union[int, Expr]) -> TxnaExpr:
+        if type(index) is int:
+            if index < 0:
+                raise TealInputError("Invalid array index: {}".format(index))
+        else:
+            require_type(cast(Expr, index).type_of(), TealType.uint64)
 
         return self.txnObject.makeTxnaExpr(self.accessField, index)
 
@@ -237,7 +264,7 @@ class TxnObject:
     def __init__(
         self,
         makeTxnExpr: Callable[[TxnField], TxnExpr],
-        makeTxnaExpr: Callable[[TxnField, int], TxnaExpr],
+        makeTxnaExpr: Callable[[TxnField, Union[int, Expr]], TxnaExpr],
     ) -> None:
         self.makeTxnExpr = makeTxnExpr
         self.makeTxnaExpr = makeTxnaExpr
@@ -720,7 +747,7 @@ class TxnObject:
 TxnObject.__module__ = "pyteal"
 
 Txn: TxnObject = TxnObject(
-    TxnExprBuilder(Op.txn, "Txn"), TxnaExprBuilder(Op.txna, "Txna")
+    TxnExprBuilder(Op.txn, "Txn"), TxnaExprBuilder(Op.txna, Op.txnas, "Txna")
 )
 
 Txn.__module__ = "pyteal"

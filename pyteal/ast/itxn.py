@@ -89,7 +89,7 @@ class InnerTxnBuilder:
 InnerTxnBuilder.__module__ = "pyteal"
 
 InnerTxn: TxnObject = TxnObject(
-    TxnExprBuilder(Op.itxn, "InnerTxn"), TxnaExprBuilder(Op.itxna, "InnerTxna")
+    TxnExprBuilder(Op.itxn, "InnerTxn"), TxnaExprBuilder(Op.itxna, None, "InnerTxna")
 )
 
 InnerTxn.__module__ = "pyteal"

@@ -45,8 +45,10 @@ GtxnExpr.__module__ = "pyteal"
 class GtxnaExpr(TxnaExpr):
     """An expression that accesses a transaction array field from a transaction in the current group."""
 
-    def __init__(self, txnIndex: Union[int, Expr], field: TxnField, index: int) -> None:
-        super().__init__(Op.gtxna, "Gtxna", field, index)
+    def __init__(
+        self, txnIndex: Union[int, Expr], field: TxnField, index: Union[int, Expr]
+    ) -> None:
+        super().__init__(Op.gtxna, Op.gtxnas, "Gtxna", field, index)
         self.txnIndex = txnIndex
 
     def __str__(self):
@@ -57,24 +59,45 @@ class GtxnaExpr(TxnaExpr):
     def __teal__(self, options: "CompileOptions"):
         verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
 
-        if type(self.txnIndex) == int:
-            op = TealOp(
-                self,
-                Op.gtxna,
-                cast(int, self.txnIndex),
-                self.field.arg_name,
-                self.index,
-            )
-            return TealBlock.FromOp(options, op)
+        if type(self.txnIndex) is int:
+            if type(self.index) is int:
+                opToUse = Op.gtxna
+            else:
+                opToUse = Op.gtxnas
+        else:
+            if type(self.index) is int:
+                opToUse = Op.gtxnsa
+            else:
+                opToUse = Op.gtxnsas
 
         verifyTealVersion(
-            Op.gtxnsa.min_version,
+            opToUse.min_version,
             options.version,
-            "TEAL version too low to index Gtxn with dynamic values",
+            "TEAL version too low to use op {}".format(opToUse),
         )
 
-        op = TealOp(self, Op.gtxnsa, self.field.arg_name, self.index)
-        return TealBlock.FromOp(options, op, cast(Expr, self.txnIndex))
+        if type(self.txnIndex) is int:
+            if type(self.index) is int:
+                op = TealOp(
+                    self,
+                    opToUse,
+                    cast(int, self.txnIndex),
+                    self.field.arg_name,
+                    cast(int, self.index),
+                )
+                return TealBlock.FromOp(options, op)
+
+            op = TealOp(self, opToUse, cast(int, self.txnIndex), self.field.arg_name)
+            return TealBlock.FromOp(options, op, cast(Expr, self.index))
+
+        if type(self.index) is int:
+            op = TealOp(self, opToUse, self.field.arg_name, cast(int, self.index))
+            return TealBlock.FromOp(options, op, cast(Expr, self.txnIndex))
+
+        op = TealOp(self, opToUse, self.field.arg_name)
+        return TealBlock.FromOp(
+            options, op, cast(Expr, self.txnIndex), cast(Expr, self.index)
+        )
 
 
 GtxnaExpr.__module__ = "pyteal"
@@ -84,7 +107,7 @@ class TxnGroup:
     """Represents a group of transactions."""
 
     def __getitem__(self, txnIndex: Union[int, Expr]) -> TxnObject:
-        if type(txnIndex) == int:
+        if type(txnIndex) is int:
             if txnIndex < 0 or txnIndex >= MAX_GROUP_SIZE:
                 raise TealInputError(
                     "Invalid Gtxn index {}, shoud be in [0, {})".format(
