@@ -46,7 +46,7 @@ def extractIntValue(op: TealOp) -> Union[str, int]:
         raise TealInternalError("Unexpected args in int opcode: {}".format(op.args))
 
     value = cast(Union[str, int], op.args[0])
-    if type(value) == int or cast(str, value).startswith("TMPL_"):
+    if type(value) is int or cast(str, value).startswith("TMPL_"):
         return value
     if value not in intEnumValues:
         raise TealInternalError("Int constant not recognized: {}".format(value))
@@ -60,10 +60,10 @@ def extractBytesValue(op: TealOp) -> Union[str, bytes]:
         If the op is loading a template variable, returns the name of the variable as a string.
         Otherwise, returns the byte string that the op is loading.
     """
-    if len(op.args) != 1 or type(op.args[0]) != str:
+    if len(op.args) != 1 or type(op.args[0]) is not str:
         raise TealInternalError("Unexpected args in byte opcode: {}".format(op.args))
 
-    value = cast(str, op.args[0])
+    value = op.args[0]
     if value.startswith("TMPL_"):
         return value
     if value.startswith('"') and value.endswith('"'):
@@ -134,7 +134,7 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
 
     intBlock = [i for i in sortedInts if intFreqs[i] > 1]
     byteBlock = [
-        ("0x" + cast(bytes, b).hex()) if type(b) == bytes else cast(str, b)
+        ("0x" + b.hex()) if type(b) is bytes else cast(str, b)
         for b in sortedBytes
         if byteFreqs[b] > 1
     ]
@@ -178,8 +178,8 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
                 )
                 if byteFreqs[byteValue] == 1:
                     encodedValue = (
-                        ("0x" + cast(bytes, byteValue).hex())
-                        if type(byteValue) == bytes
+                        ("0x" + byteValue.hex())
+                        if type(byteValue) is bytes
                         else cast(str, byteValue)
                     )
                     assembled.append(

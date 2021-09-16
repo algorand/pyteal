@@ -49,7 +49,6 @@ class TealSimpleBlock(TealBlock):
         if type(other) is not TealSimpleBlock:
             return False
         self.visited = True
-        other = cast(TealSimpleBlock, other)
         equal = self.ops == other.ops and self.nextBlock == other.nextBlock
         self.visited = False
         return equal

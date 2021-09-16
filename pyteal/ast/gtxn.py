@@ -25,8 +25,8 @@ class GtxnExpr(TxnExpr):
     def __teal__(self, options: "CompileOptions"):
         verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
 
-        if type(self.txnIndex) == int:
-            op = TealOp(self, Op.gtxn, cast(int, self.txnIndex), self.field.arg_name)
+        if type(self.txnIndex) is int:
+            op = TealOp(self, Op.gtxn, self.txnIndex, self.field.arg_name)
             return TealBlock.FromOp(options, op)
 
         verifyTealVersion(
@@ -79,19 +79,14 @@ class GtxnaExpr(TxnaExpr):
         if type(self.txnIndex) is int:
             if type(self.index) is int:
                 op = TealOp(
-                    self,
-                    opToUse,
-                    cast(int, self.txnIndex),
-                    self.field.arg_name,
-                    cast(int, self.index),
+                    self, opToUse, self.txnIndex, self.field.arg_name, self.index
                 )
                 return TealBlock.FromOp(options, op)
-
-            op = TealOp(self, opToUse, cast(int, self.txnIndex), self.field.arg_name)
+            op = TealOp(self, opToUse, self.txnIndex, self.field.arg_name)
             return TealBlock.FromOp(options, op, cast(Expr, self.index))
 
         if type(self.index) is int:
-            op = TealOp(self, opToUse, self.field.arg_name, cast(int, self.index))
+            op = TealOp(self, opToUse, self.field.arg_name, self.index)
             return TealBlock.FromOp(options, op, cast(Expr, self.txnIndex))
 
         op = TealOp(self, opToUse, self.field.arg_name)

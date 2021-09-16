@@ -194,7 +194,7 @@ class TxnaExpr(LeafExpr):
         )
 
         if type(self.index) is int:
-            op = TealOp(self, opToUse, self.field.arg_name, cast(int, self.index))
+            op = TealOp(self, opToUse, self.field.arg_name, self.index)
             return TealBlock.FromOp(options, op)
 
         op = TealOp(self, opToUse, self.field.arg_name)
