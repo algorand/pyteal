@@ -28,8 +28,8 @@ class Bytes(LeafExpr):
 
         For UTF-8 strings:
             Pass the string as the only argument. For example, ``Bytes("content")``.
-        For raw byte or bytearray objects:
-            Pass the byte or bytearray as the only argument. For example, ``Bytes(b"content")``.
+        For raw bytes or bytearray objects:
+            Pass the bytes or bytearray as the only argument. For example, ``Bytes(b"content")``.
         For base16, base32, or base64 strings:
             Pass the base as the first argument and the string as the second argument. For example,
             ``Bytes("base16", "636F6E74656E74")``, ``Bytes("base32", "ORFDPQ6ARJK")``,
