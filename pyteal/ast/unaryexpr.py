@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from ..types import TealType, require_type
+from ..errors import verifyTealVersion
 from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
 
@@ -21,6 +22,12 @@ class UnaryExpr(Expr):
         self.arg = arg
 
     def __teal__(self, options: "CompileOptions"):
+        verifyTealVersion(
+            self.op.min_version,
+            options.version,
+            "TEAL version too low to use op {}".format(self.op),
+        )
+
         return TealBlock.FromOp(options, TealOp(self, self.op), self.arg)
 
     def __str__(self):
@@ -154,3 +161,17 @@ def BytesZero(arg: Expr) -> UnaryExpr:
     Requires TEAL version 4 or higher.
     """
     return UnaryExpr(Op.bzero, TealType.uint64, TealType.bytes, arg)
+
+
+def Log(message: Expr) -> UnaryExpr:
+    """Write a message to log state of the current application.
+
+    This will fail if called more than :code:`MaxLogCalls` times in a program (32 as of TEAL v5), or
+    if the sum of the lengths of all logged messages in a program exceeds 1024 bytes.
+
+    Args:
+        message: The message to write. Must evaluate to bytes.
+
+    Requires TEAL version 5 or higher.
+    """
+    return UnaryExpr(Op.log, TealType.bytes, TealType.none, message)
