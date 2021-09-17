@@ -216,7 +216,7 @@ def test_concat_two():
     assert actual == expected
 
 
-def test_or_three():
+def test_concat_three():
     args = [Bytes("a"), Bytes("b"), Bytes("c")]
     expr = Concat(args[0], args[1], args[2])
     assert expr.type_of() == TealType.bytes
