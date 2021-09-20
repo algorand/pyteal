@@ -8,6 +8,7 @@ from .. import CompileOptions
 teal2Options = CompileOptions(version=2)
 teal3Options = CompileOptions(version=3)
 teal4Options = CompileOptions(version=4)
+teal5Options = CompileOptions(version=5)
 
 
 def test_btoi():
@@ -373,3 +374,28 @@ def test_b_zero():
 def test_b_zero_invalid():
     with pytest.raises(TealTypeError):
         BytesZero(Bytes("base16", "0x11"))
+
+
+def test_log():
+    arg = Bytes("message")
+    expr = Log(arg)
+    assert expr.type_of() == TealType.none
+    assert not expr.has_return()
+
+    expected = TealSimpleBlock(
+        [TealOp(arg, Op.byte, '"message"'), TealOp(expr, Op.log)]
+    )
+
+    actual, _ = expr.__teal__(teal5Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal4Options)
+
+
+def test_log_invalid():
+    with pytest.raises(TealTypeError):
+        Log(Int(7))

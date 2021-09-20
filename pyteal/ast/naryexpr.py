@@ -2,7 +2,7 @@ from typing import Sequence, cast, TYPE_CHECKING
 
 from ..types import TealType, require_type
 from ..errors import TealInputError
-from ..ir import TealOp, Op, TealSimpleBlock
+from ..ir import TealOp, Op, TealSimpleBlock, TealBlock
 from .expr import Expr
 
 if TYPE_CHECKING:
@@ -19,12 +19,12 @@ class NaryExpr(Expr):
         self, op: Op, inputType: TealType, outputType: TealType, args: Sequence[Expr]
     ):
         super().__init__()
-        if len(args) < 2:
-            raise TealInputError("NaryExpr requires at least two children.")
+        if len(args) == 0:
+            raise TealInputError("NaryExpr requires at least one child")
         for arg in args:
             if not isinstance(arg, Expr):
                 raise TealInputError(
-                    "Argument is not a pyteal expression: {}".format(arg)
+                    "Argument is not a PyTeal expression: {}".format(arg)
                 )
             require_type(arg.type_of(), inputType)
         self.op = op
@@ -69,8 +69,8 @@ def And(*args: Expr) -> NaryExpr:
 
     Produces 1 if all arguments are nonzero. Otherwise produces 0.
 
-    All arguments must be PyTeal expressions that evaluate to uint64, and there must be at least two
-    arguments.
+    All arguments must be PyTeal expressions that evaluate to uint64, and there must be at least one
+    argument.
 
     Example:
         ``And(Txn.amount() == Int(500), Txn.fee() <= Int(10))``
@@ -83,8 +83,8 @@ def Or(*args: Expr) -> NaryExpr:
 
     Produces 1 if any argument is nonzero. Otherwise produces 0.
 
-    All arguments must be PyTeal expressions that evaluate to uint64, and there must be at least two
-    arguments.
+    All arguments must be PyTeal expressions that evaluate to uint64, and there must be at least one
+    argument.
     """
     return NaryExpr(Op.logic_or, TealType.uint64, TealType.uint64, args)
 
@@ -95,8 +95,8 @@ def Concat(*args: Expr) -> NaryExpr:
     Produces a new byte string consisting of the contents of each of the passed in byte strings
     joined together.
 
-    All arguments must be PyTeal expressions that evaluate to bytes, and there must be at least two
-    arguments.
+    All arguments must be PyTeal expressions that evaluate to bytes, and there must be at least one
+    argument.
 
     Example:
         ``Concat(Bytes("hello"), Bytes(" "), Bytes("world"))``

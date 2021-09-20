@@ -43,6 +43,7 @@ from .unaryexpr import (
     MinBalance,
     BytesNot,
     BytesZero,
+    Log,
 )
 
 # binary ops
@@ -223,6 +224,7 @@ __all__ = [
     "BytesGe",
     "BytesNot",
     "BytesZero",
+    "Log",
     "While",
     "For",
     "Break",
