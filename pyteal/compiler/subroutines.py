@@ -135,18 +135,20 @@ def spillLocalSlotsDuringRecursion(
                     # pull the subroutine arguments to the top of the stack, above the just spilled
                     # local slots, if needed
 
+                    stackDistance = len(slots) + numArgs - 1
+
                     if uncoverArgs:
-                        if len(slots) == 1:
+                        if stackDistance == 1:
                             before.append(TealOp(None, Op.swap))
                         else:
-                            before.append(TealOp(None, Op.uncover, len(slots)))
+                            before.append(TealOp(None, Op.uncover, stackDistance))
 
                     if digArgs:
                         before.append(
                             TealOp(
                                 None,
                                 Op.dig,
-                                len(slots) + numArgs - 1,
+                                stackDistance,
                             )
                         )
                         # because we are stuck using dig instead of uncover in TEAL 4, we'll need to
