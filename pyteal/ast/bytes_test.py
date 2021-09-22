@@ -113,7 +113,31 @@ def test_bytes_utf8_empty():
     assert actual == expected
 
 
+def test_bytes_raw():
+    for value in (b"hello world", bytearray(b"hello world")):
+        expr = Bytes(value)
+        assert expr.type_of() == TealType.bytes
+        expected = TealSimpleBlock([TealOp(expr, Op.byte, "0x" + value.hex())])
+        actual, _ = expr.__teal__(options)
+        assert actual == expected
+
+
+def test_bytes_raw_empty():
+    for value in (b"", bytearray(b"")):
+        expr = Bytes(value)
+        assert expr.type_of() == TealType.bytes
+        expected = TealSimpleBlock([TealOp(expr, Op.byte, "0x")])
+        actual, _ = expr.__teal__(options)
+        assert actual == expected
+
+
 def test_bytes_invalid():
+    with pytest.raises(TealInputError):
+        Bytes("base16", b"FF")
+
+    with pytest.raises(TealInputError):
+        Bytes(b"base16", "FF")
+
     with pytest.raises(TealInputError):
         Bytes("base23", "")
 
