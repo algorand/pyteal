@@ -5,7 +5,7 @@ from .. import *
 # this is not necessary but mypy complains if it's not included
 from .. import CompileOptions
 
-options = CompileOptions()
+options = CompileOptions(version=5)
 
 
 def test_add():
@@ -1385,3 +1385,40 @@ def test_b_ge_invalid():
 
     with pytest.raises(TealTypeError):
         BytesGe(Bytes("base16", "0xFF"), Int(2))
+
+
+def test_extract_uint():
+    for expression, op in (
+        (ExtractUint16, Op.extract_uint16),
+        (ExtractUint32, Op.extract_uint32),
+        (ExtractUint64, Op.extract_uint64),
+    ):
+        args = [
+            Bytes("base16", "0xFFFFFFFFFFFFFFFFFF"),
+            Int(2),
+        ]
+        expr = expression(args[0], args[1])
+        assert expr.type_of() == TealType.uint64
+
+        expected = TealSimpleBlock(
+            [
+                TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFFF"),
+                TealOp(args[1], Op.int, 2),
+                TealOp(expr, op),
+            ]
+        )
+
+        actual, _ = expr.__teal__(options)
+        actual.addIncoming()
+        actual = TealBlock.NormalizeBlocks(actual)
+
+        assert actual == expected
+
+
+def test_extract_uint_invalid():
+    for expression in (ExtractUint16, ExtractUint32, ExtractUint64):
+        with pytest.raises(TealTypeError):
+            expression(Int(2), Txn.receiver())
+
+        with pytest.raises(TealTypeError):
+            expression(Bytes("base16", "0xFF"), Txn.receiver())

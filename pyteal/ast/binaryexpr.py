@@ -1,6 +1,7 @@
 from typing import Union, Tuple, cast, TYPE_CHECKING
 
 from ..types import TealType, require_type
+from ..errors import verifyTealVersion
 from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
 
@@ -34,6 +35,12 @@ class BinaryExpr(Expr):
         self.argRight = argRight
 
     def __teal__(self, options: "CompileOptions"):
+        verifyTealVersion(
+            self.op.min_version,
+            options.version,
+            "TEAL version too low to use op {}".format(self.op),
+        )
+
         return TealBlock.FromOp(
             options, TealOp(self, self.op), self.argLeft, self.argRight
         )
@@ -517,3 +524,72 @@ def BytesGe(left: Expr, right: Expr) -> BinaryExpr:
         right: Must evaluate to bytes.
     """
     return BinaryExpr(Op.b_ge, TealType.bytes, TealType.uint64, left, right)
+
+
+def ExtractUint16(string: Expr, offset: Expr) -> BinaryExpr:
+    """Extract 2 bytes (16 bits) and convert them to an integer.
+
+    The bytes starting at :code:`offset` up to but not including :code:`offset + 2` will be
+    interpreted as a big-endian unsigned integer.
+
+    If :code:`offset + 2` exceeds :code:`Len(string)`, the program fails.
+
+    Requires TEAL version 5 or higher.
+
+    Args:
+        string: The bytestring to extract from. Must evaluate to bytes.
+        offset: The offset in the bytestring to start extracing. Must evaluate to uint64.
+    """
+    return BinaryExpr(
+        Op.extract_uint16,
+        (TealType.bytes, TealType.uint64),
+        TealType.uint64,
+        string,
+        offset,
+    )
+
+
+def ExtractUint32(string: Expr, offset: Expr) -> BinaryExpr:
+    """Extract 4 bytes (32 bits) and convert them to an integer.
+
+    The bytes starting at :code:`offset` up to but not including :code:`offset + 4` will be
+    interpreted as a big-endian unsigned integer.
+
+    If :code:`offset + 4` exceeds :code:`Len(string)`, the program fails.
+
+    Requires TEAL version 5 or higher.
+
+    Args:
+        string: The bytestring to extract from. Must evaluate to bytes.
+        offset: The offset in the bytestring to start extracing. Must evaluate to uint64.
+    """
+    return BinaryExpr(
+        Op.extract_uint32,
+        (TealType.bytes, TealType.uint64),
+        TealType.uint64,
+        string,
+        offset,
+    )
+
+
+def ExtractUint64(string: Expr, offset: Expr) -> BinaryExpr:
+    """Extract 8 bytes (64 bits) and convert them to an integer.
+
+    The bytes starting at :code:`offset` up to but not including :code:`offset + 8` will be
+    interpreted as a big-endian unsigned integer.
+
+    If :code:`offset + 8` exceeds :code:`Len(string)`, the program fails.
+
+    Requires TEAL version 5 or higher.
+
+    Args:
+        string: The bytestring to extract from. Must evaluate to bytes.
+        offset: The offset in the bytestring to start extracing. Must evaluate to uint64.
+    """
+    return BinaryExpr(
+        Op.extract_uint64,
+        (TealType.bytes, TealType.uint64),
+        TealType.uint64,
+        string,
+        offset,
+    )
