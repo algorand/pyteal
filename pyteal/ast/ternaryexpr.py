@@ -1,6 +1,7 @@
 from typing import Tuple, TYPE_CHECKING
 
 from ..types import TealType, require_type
+from ..errors import verifyTealVersion
 from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
 
@@ -32,6 +33,12 @@ class TernaryExpr(Expr):
         self.thirdArg = thirdArg
 
     def __teal__(self, options: "CompileOptions"):
+        verifyTealVersion(
+            self.op.min_version,
+            options.version,
+            "TEAL version too low to use op {}".format(self.op),
+        )
+
         return TealBlock.FromOp(
             options, TealOp(self, self.op), self.firstArg, self.secondArg, self.thirdArg
         )

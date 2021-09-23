@@ -5,7 +5,10 @@ from .. import *
 # this is not necessary but mypy complains if it's not included
 from .. import CompileOptions
 
-options = CompileOptions()
+teal2Options = CompileOptions(version=2)
+teal3Options = CompileOptions(version=3)
+teal4Options = CompileOptions(version=4)
+teal5Options = CompileOptions(version=5)
 
 
 def test_ed25519verify():
@@ -22,7 +25,7 @@ def test_ed25519verify():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -54,7 +57,7 @@ def test_substring():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -86,11 +89,14 @@ def test_extract():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal5Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal4Options)
 
 
 def test_extract_invalid():
@@ -118,11 +124,14 @@ def test_set_bit_int():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal3Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal2Options)
 
 
 def test_set_bit_bytes():
@@ -139,11 +148,14 @@ def test_set_bit_bytes():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal3Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal2Options)
 
 
 def test_set_bit_invalid():
@@ -174,11 +186,14 @@ def test_set_byte():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal3Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal2Options)
 
 
 def test_set_byte_invalid():
