@@ -82,10 +82,13 @@ from .binaryexpr import (
     BytesLe,
     BytesGt,
     BytesGe,
+    ExtractUint16,
+    ExtractUint32,
+    ExtractUint64,
 )
 
 # ternary ops
-from .ternaryexpr import Ed25519Verify, Substring, SetBit, SetByte
+from .ternaryexpr import Ed25519Verify, Substring, Extract, SetBit, SetByte
 
 # more ops
 from .naryexpr import NaryExpr, And, Or, Concat
@@ -184,6 +187,7 @@ __all__ = [
     "GetByte",
     "Ed25519Verify",
     "Substring",
+    "Extract",
     "SetBit",
     "SetByte",
     "NaryExpr",
@@ -224,6 +228,9 @@ __all__ = [
     "BytesGe",
     "BytesNot",
     "BytesZero",
+    "ExtractUint16",
+    "ExtractUint32",
+    "ExtractUint64",
     "Log",
     "While",
     "For",

@@ -5,7 +5,10 @@ from .. import *
 # this is not necessary but mypy complains if it's not included
 from .. import CompileOptions
 
-options = CompileOptions()
+teal2Options = CompileOptions(version=2)
+teal3Options = CompileOptions(version=3)
+teal4Options = CompileOptions(version=4)
+teal5Options = CompileOptions(version=5)
 
 
 def test_add():
@@ -17,7 +20,7 @@ def test_add():
         [TealOp(args[0], Op.int, 2), TealOp(args[1], Op.int, 3), TealOp(expr, Op.add)]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -39,7 +42,7 @@ def test_add_overload():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -64,7 +67,7 @@ def test_minus():
         [TealOp(args[0], Op.int, 5), TealOp(args[1], Op.int, 6), TealOp(expr, Op.minus)]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -86,7 +89,7 @@ def test_minus_overload():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -111,7 +114,7 @@ def test_mul():
         [TealOp(args[0], Op.int, 3), TealOp(args[1], Op.int, 8), TealOp(expr, Op.mul)]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -133,7 +136,7 @@ def test_mul_overload():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -158,7 +161,7 @@ def test_div():
         [TealOp(args[0], Op.int, 9), TealOp(args[1], Op.int, 3), TealOp(expr, Op.div)]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -180,7 +183,7 @@ def test_div_overload():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -205,7 +208,7 @@ def test_mod():
         [TealOp(args[0], Op.int, 10), TealOp(args[1], Op.int, 9), TealOp(expr, Op.mod)]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -227,7 +230,7 @@ def test_mod_overload():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -252,11 +255,14 @@ def test_exp():
         [TealOp(args[0], Op.int, 2), TealOp(args[1], Op.int, 9), TealOp(expr, Op.exp)]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_exp_overload():
@@ -275,12 +281,15 @@ def test_exp_overload():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_exp_invalid():
@@ -312,7 +321,7 @@ def test_arithmetic():
         ]
     )
 
-    actual, _ = v.__teal__(options)
+    actual, _ = v.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -333,7 +342,7 @@ def test_bitwise_and():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -355,7 +364,7 @@ def test_bitwise_and_overload():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -384,7 +393,7 @@ def test_bitwise_or():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -406,7 +415,7 @@ def test_bitwise_or_overload():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -435,7 +444,7 @@ def test_bitwise_xor():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -457,7 +466,7 @@ def test_bitwise_xor_overload():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -482,11 +491,14 @@ def test_shift_left():
         [TealOp(args[0], Op.int, 5), TealOp(args[1], Op.int, 1), TealOp(expr, Op.shl)]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_shift_left_overload():
@@ -504,12 +516,15 @@ def test_shift_left_overload():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_shift_left_invalid():
@@ -529,11 +544,14 @@ def test_shift_right():
         [TealOp(args[0], Op.int, 5), TealOp(args[1], Op.int, 1), TealOp(expr, Op.shr)]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_shift_right_overload():
@@ -551,12 +569,15 @@ def test_shift_right_overload():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_shift_right_invalid():
@@ -580,7 +601,7 @@ def test_eq():
         ]
     )
 
-    actual_int, _ = expr_int.__teal__(options)
+    actual_int, _ = expr_int.__teal__(teal2Options)
     actual_int.addIncoming()
     actual_int = TealBlock.NormalizeBlocks(actual_int)
 
@@ -598,7 +619,7 @@ def test_eq():
         ]
     )
 
-    actual_bytes, _ = expr_bytes.__teal__(options)
+    actual_bytes, _ = expr_bytes.__teal__(teal2Options)
     actual_bytes.addIncoming()
     actual_bytes = TealBlock.NormalizeBlocks(actual_bytes)
 
@@ -618,7 +639,7 @@ def test_eq_overload():
         ]
     )
 
-    actual_int, _ = expr_int.__teal__(options)
+    actual_int, _ = expr_int.__teal__(teal2Options)
     actual_int.addIncoming()
     actual_int = TealBlock.NormalizeBlocks(actual_int)
 
@@ -636,7 +657,7 @@ def test_eq_overload():
         ]
     )
 
-    actual_bytes, _ = expr_bytes.__teal__(options)
+    actual_bytes, _ = expr_bytes.__teal__(teal2Options)
     actual_bytes.addIncoming()
     actual_bytes = TealBlock.NormalizeBlocks(actual_bytes)
 
@@ -664,7 +685,7 @@ def test_neq():
         ]
     )
 
-    actual_int, _ = expr_int.__teal__(options)
+    actual_int, _ = expr_int.__teal__(teal2Options)
     actual_int.addIncoming()
     actual_int = TealBlock.NormalizeBlocks(actual_int)
 
@@ -682,7 +703,7 @@ def test_neq():
         ]
     )
 
-    actual_bytes, _ = expr_bytes.__teal__(options)
+    actual_bytes, _ = expr_bytes.__teal__(teal2Options)
     actual_bytes.addIncoming()
     actual_bytes = TealBlock.NormalizeBlocks(actual_bytes)
 
@@ -702,7 +723,7 @@ def test_neq_overload():
         ]
     )
 
-    actual_int, _ = expr_int.__teal__(options)
+    actual_int, _ = expr_int.__teal__(teal2Options)
     actual_int.addIncoming()
     actual_int = TealBlock.NormalizeBlocks(actual_int)
 
@@ -720,7 +741,7 @@ def test_neq_overload():
         ]
     )
 
-    actual_bytes, _ = expr_bytes.__teal__(options)
+    actual_bytes, _ = expr_bytes.__teal__(teal2Options)
     actual_bytes.addIncoming()
     actual_bytes = TealBlock.NormalizeBlocks(actual_bytes)
 
@@ -744,7 +765,7 @@ def test_lt():
         [TealOp(args[0], Op.int, 2), TealOp(args[1], Op.int, 3), TealOp(expr, Op.lt)]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -760,7 +781,7 @@ def test_lt_overload():
         [TealOp(args[0], Op.int, 2), TealOp(args[1], Op.int, 3), TealOp(expr, Op.lt)]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -784,7 +805,7 @@ def test_le():
         [TealOp(args[0], Op.int, 1), TealOp(args[1], Op.int, 2), TealOp(expr, Op.le)]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -800,7 +821,7 @@ def test_le_overload():
         [TealOp(args[0], Op.int, 1), TealOp(args[1], Op.int, 2), TealOp(expr, Op.le)]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -824,7 +845,7 @@ def test_gt():
         [TealOp(args[0], Op.int, 2), TealOp(args[1], Op.int, 3), TealOp(expr, Op.gt)]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -840,7 +861,7 @@ def test_gt_overload():
         [TealOp(args[0], Op.int, 2), TealOp(args[1], Op.int, 3), TealOp(expr, Op.gt)]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -864,7 +885,7 @@ def test_ge():
         [TealOp(args[0], Op.int, 1), TealOp(args[1], Op.int, 10), TealOp(expr, Op.ge)]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -880,7 +901,7 @@ def test_ge_overload():
         [TealOp(args[0], Op.int, 1), TealOp(args[1], Op.int, 10), TealOp(expr, Op.ge)]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -908,11 +929,14 @@ def test_get_bit_int():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal3Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal2Options)
 
 
 def test_get_bit_bytes():
@@ -928,11 +952,14 @@ def test_get_bit_bytes():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal3Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal2Options)
 
 
 def test_get_bit_invalid():
@@ -956,11 +983,14 @@ def test_get_byte():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal3Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal2Options)
 
 
 def test_get_byte_invalid():
@@ -987,11 +1017,14 @@ def test_b_add():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_b_add_invalid():
@@ -1018,11 +1051,14 @@ def test_b_minus():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_b_minus_invalid():
@@ -1046,11 +1082,14 @@ def test_b_div():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_b_div_invalid():
@@ -1074,11 +1113,14 @@ def test_b_mul():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_b_mul_invalid():
@@ -1102,11 +1144,14 @@ def test_b_mod():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_b_mod_invalid():
@@ -1130,11 +1175,14 @@ def test_b_and():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_b_and_invalid():
@@ -1158,11 +1206,14 @@ def test_b_or():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_b_or_invalid():
@@ -1186,11 +1237,14 @@ def test_b_xor():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_b_xor_invalid():
@@ -1217,11 +1271,14 @@ def test_b_eq():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_b_eq_invalid():
@@ -1248,11 +1305,14 @@ def test_b_neq():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_b_neq_invalid():
@@ -1279,11 +1339,14 @@ def test_b_lt():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_b_lt_invalid():
@@ -1310,11 +1373,14 @@ def test_b_le():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_b_le_invalid():
@@ -1341,11 +1407,14 @@ def test_b_gt():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_b_gt_invalid():
@@ -1372,11 +1441,14 @@ def test_b_ge():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal3Options)
 
 
 def test_b_ge_invalid():
@@ -1385,3 +1457,43 @@ def test_b_ge_invalid():
 
     with pytest.raises(TealTypeError):
         BytesGe(Bytes("base16", "0xFF"), Int(2))
+
+
+def test_extract_uint():
+    for expression, op in (
+        (ExtractUint16, Op.extract_uint16),
+        (ExtractUint32, Op.extract_uint32),
+        (ExtractUint64, Op.extract_uint64),
+    ):
+        args = [
+            Bytes("base16", "0xFFFFFFFFFFFFFFFFFF"),
+            Int(2),
+        ]
+        expr = expression(args[0], args[1])
+        assert expr.type_of() == TealType.uint64
+
+        expected = TealSimpleBlock(
+            [
+                TealOp(args[0], Op.byte, "0xFFFFFFFFFFFFFFFFFF"),
+                TealOp(args[1], Op.int, 2),
+                TealOp(expr, op),
+            ]
+        )
+
+        actual, _ = expr.__teal__(teal5Options)
+        actual.addIncoming()
+        actual = TealBlock.NormalizeBlocks(actual)
+
+        assert actual == expected
+
+        with pytest.raises(TealInputError):
+            expr.__teal__(teal4Options)
+
+
+def test_extract_uint_invalid():
+    for expression in (ExtractUint16, ExtractUint32, ExtractUint64):
+        with pytest.raises(TealTypeError):
+            expression(Int(2), Txn.receiver())
+
+        with pytest.raises(TealTypeError):
+            expression(Bytes("base16", "0xFF"), Txn.receiver())

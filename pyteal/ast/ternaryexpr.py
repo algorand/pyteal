@@ -1,6 +1,7 @@
 from typing import Tuple, TYPE_CHECKING
 
 from ..types import TealType, require_type
+from ..errors import verifyTealVersion
 from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
 
@@ -32,6 +33,12 @@ class TernaryExpr(Expr):
         self.thirdArg = thirdArg
 
     def __teal__(self, options: "CompileOptions"):
+        verifyTealVersion(
+            self.op.min_version,
+            options.version,
+            "TEAL version too low to use op {}".format(self.op),
+        )
+
         return TealBlock.FromOp(
             options, TealOp(self, self.op), self.firstArg, self.secondArg, self.thirdArg
         )
@@ -73,13 +80,16 @@ def Ed25519Verify(data: Expr, sig: Expr, key: Expr) -> TernaryExpr:
 def Substring(string: Expr, start: Expr, end: Expr) -> TernaryExpr:
     """Take a substring of a byte string.
 
-    Produces a new byte string consisting of the bytes starting at start up to but not including
-    end.
+    Produces a new byte string consisting of the bytes starting at :code:`start` up to but not
+    including :code:`end`.
+
+    This expression is similar to :any:`Extract`, except this expression uses start and end indexes,
+    while :code:`Extract` uses a start index and length.
 
     Args:
         string: The byte string.
         start: The starting index for the substring. Must be an integer less than or equal to
-            Len(string).
+            :code:`Len(string)`.
         end: The ending index for the substring. Must be an integer greater or equal to start, but
             less than or equal to Len(string).
     """
@@ -90,6 +100,33 @@ def Substring(string: Expr, start: Expr, end: Expr) -> TernaryExpr:
         string,
         start,
         end,
+    )
+
+
+def Extract(string: Expr, start: Expr, length: Expr) -> TernaryExpr:
+    """Extract a section of a byte string.
+
+    Produces a new byte string consisting of the bytes starting at :code:`start` up to but not
+    including :code:`start + length`.
+
+    This expression is similar to :any:`Substring`, except this expression uses a start index and
+    length, while :code:`Substring` uses start and end indexes.
+
+    Requires TEAL version 5 or higher.
+
+    Args:
+        string: The byte string.
+        start: The starting index for the extraction. Must be an integer less than or equal to
+            :code:`Len(string)`.
+        length: The number of bytes to extract. Must be an integer such that :code:`start + length <= Len(string)`.
+    """
+    return TernaryExpr(
+        Op.extract3,
+        (TealType.bytes, TealType.uint64, TealType.uint64),
+        TealType.bytes,
+        string,
+        start,
+        length,
     )
 
 

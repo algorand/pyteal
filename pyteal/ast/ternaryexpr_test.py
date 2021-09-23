@@ -5,7 +5,10 @@ from .. import *
 # this is not necessary but mypy complains if it's not included
 from .. import CompileOptions
 
-options = CompileOptions()
+teal2Options = CompileOptions(version=2)
+teal3Options = CompileOptions(version=3)
+teal4Options = CompileOptions(version=4)
+teal5Options = CompileOptions(version=5)
 
 
 def test_ed25519verify():
@@ -22,7 +25,7 @@ def test_ed25519verify():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -54,7 +57,7 @@ def test_substring():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -72,6 +75,41 @@ def test_substring_invalid():
         Substring(Bytes("my string"), Int(0), Txn.sender())
 
 
+def test_extract():
+    args = [Bytes("my string"), Int(0), Int(2)]
+    expr = Extract(args[0], args[1], args[2])
+    assert expr.type_of() == TealType.bytes
+
+    expected = TealSimpleBlock(
+        [
+            TealOp(args[0], Op.byte, '"my string"'),
+            TealOp(args[1], Op.int, 0),
+            TealOp(args[2], Op.int, 2),
+            TealOp(expr, Op.extract3),
+        ]
+    )
+
+    actual, _ = expr.__teal__(teal5Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal4Options)
+
+
+def test_extract_invalid():
+    with pytest.raises(TealTypeError):
+        Extract(Int(0), Int(0), Int(2))
+
+    with pytest.raises(TealTypeError):
+        Extract(Bytes("my string"), Txn.sender(), Int(2))
+
+    with pytest.raises(TealTypeError):
+        Extract(Bytes("my string"), Int(0), Txn.sender())
+
+
 def test_set_bit_int():
     args = [Int(0), Int(2), Int(1)]
     expr = SetBit(args[0], args[1], args[2])
@@ -86,11 +124,14 @@ def test_set_bit_int():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal3Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal2Options)
 
 
 def test_set_bit_bytes():
@@ -107,11 +148,14 @@ def test_set_bit_bytes():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal3Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal2Options)
 
 
 def test_set_bit_invalid():
@@ -142,11 +186,14 @@ def test_set_byte():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(teal3Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal2Options)
 
 
 def test_set_byte_invalid():
