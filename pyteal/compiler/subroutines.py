@@ -89,6 +89,8 @@ def spillLocalSlotsDuringRecursion(
     """
     recursivePoints = findRecursionPoints(subroutineGraph)
 
+    coverAvailable = version >= Op.cover.min_version
+
     for subroutine, reentryPoints in recursivePoints.items():
         slots = list(sorted(slot for slot in localSlots[subroutine]))
         numArgs = subroutine.argumentCount()
@@ -111,10 +113,10 @@ def spillLocalSlotsDuringRecursion(
                 # reentry into the current subroutine from modifying variables we are currently
                 # using.
 
+                digArgs = True
                 coverSpilledSlots = False
                 uncoverArgs = False
-                digArgs = True
-                if version >= Op.cover.min_version:
+                if coverAvailable:
                     digArgs = False
                     if len(slots) < numArgs:
                         coverSpilledSlots = True
@@ -154,7 +156,6 @@ def spillLocalSlotsDuringRecursion(
                         # because we are stuck using dig instead of uncover in TEAL 4, we'll need to
                         # pop all of the dug up arguments after the function returns
 
-                coverAvailable = version >= Op.cover.min_version
                 hideReturnValueInFirstSlot = False
 
                 if subroutine.returnType != TealType.none:
