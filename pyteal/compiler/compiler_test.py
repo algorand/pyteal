@@ -43,7 +43,7 @@ return
 
 
 def test_compile_branch():
-    expr = If(Int(1), Int(2), Int(3))
+    expr = If(Int(1)).Then(Int(2)).Else(Int(3))
 
     expected = """
 #pragma version 2
@@ -61,6 +61,53 @@ return
 
     assert actual_application == actual_signature
     assert actual_application == expected
+
+
+def test_compile_branch_multiple():
+    expr = If(Int(1)).Then(Int(2)).ElseIf(Int(3)).Then(Int(4)).Else(Int(5))
+
+    expected = """
+#pragma version 2
+int 1
+bnz main_l4
+int 3
+bnz main_l3
+int 5
+b main_l5
+main_l3:
+int 4
+b main_l5
+main_l4:
+int 2
+main_l5:
+return
+""".strip()
+    actual_application = compileTeal(expr, Mode.Application)
+    actual_signature = compileTeal(expr, Mode.Signature)
+
+    assert actual_application == actual_signature
+    assert actual_application == expected
+
+
+def test_empty_branch():
+    program = Seq(
+        [
+            If(Txn.application_id() == Int(0)).Then(Seq()),
+            Approve(),
+        ]
+    )
+
+    expected = """#pragma version 5
+txn ApplicationID
+int 0
+==
+bnz main_l1
+main_l1:
+int 1
+return
+    """.strip()
+    actual = compileTeal(program, Mode.Application, version=5, assembleConstants=False)
+    assert actual == expected
 
 
 def test_compile_mode():
@@ -1300,25 +1347,4 @@ app_global_put
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=True)
-    assert actual == expected
-
-
-def test_empty_branch():
-    program = Seq(
-        [
-            If(Txn.application_id() == Int(0)).Then(Seq()),
-            Approve(),
-        ]
-    )
-
-    expected = """#pragma version 5
-txn ApplicationID
-int 0
-==
-bnz main_l1
-main_l1:
-int 1
-return
-    """.strip()
-    actual = compileTeal(program, Mode.Application, version=5, assembleConstants=False)
     assert actual == expected
