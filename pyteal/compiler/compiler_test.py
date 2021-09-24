@@ -274,7 +274,7 @@ def test_compile_while():
         ]
     )
 
-    expectedNoAssemble = """
+    expected = """
     #pragma version 4
 int 0
 store 0
@@ -292,10 +292,8 @@ main_l3:
 int 1
 return
     """.strip()
-    actualNoAssemble = compileTeal(
-        program, Mode.Application, version=4, assembleConstants=False
-    )
-    assert expectedNoAssemble == actualNoAssemble
+    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert expected == actual
 
     # nested
     i = ScratchVar()
@@ -317,7 +315,7 @@ return
         ]
     )
 
-    expectedNoAssemble = """#pragma version 4
+    expected = """#pragma version 4
 int 0
 store 0
 main_l1:
@@ -348,10 +346,8 @@ int 1
 return
     """.strip()
 
-    actualNoAssemble = compileTeal(
-        program, Mode.Application, version=4, assembleConstants=False
-    )
-    assert expectedNoAssemble == actualNoAssemble
+    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert expected == actual
 
 
 def test_compile_for():
@@ -365,7 +361,7 @@ def test_compile_for():
         ]
     )
 
-    expectedNoAssemble = """
+    expected = """
     #pragma version 4
 int 0
 store 0
@@ -389,10 +385,8 @@ main_l3:
 int 1
 return
     """.strip()
-    actualNoAssemble = compileTeal(
-        program, Mode.Application, version=4, assembleConstants=False
-    )
-    assert expectedNoAssemble == actualNoAssemble
+    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert expected == actual
 
     # nested
     i = ScratchVar()
@@ -414,7 +408,7 @@ return
         ]
     )
 
-    expectedNoAssemble = """
+    expected = """
         #pragma version 4
 int 0
 store 0
@@ -451,10 +445,8 @@ main_l6:
 int 1
 return
         """.strip()
-    actualNoAssemble = compileTeal(
-        program, Mode.Application, version=4, assembleConstants=False
-    )
-    assert expectedNoAssemble == actualNoAssemble
+    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert expected == actual
 
 
 def test_compile_break():
@@ -471,14 +463,14 @@ def test_compile_break():
         ]
     )
 
-    expectedNoAssemble = """#pragma version 4
+    expected = """#pragma version 4
 int 0
 store 0
 main_l1:
 load 0
 int 3
 <
-bz main_l5
+bz main_l4
 load 0
 int 2
 ==
@@ -489,14 +481,11 @@ int 1
 store 0
 b main_l1
 main_l4:
-main_l5:
 int 1
 return
             """.strip()
-    actualNoAssemble = compileTeal(
-        program, Mode.Application, version=4, assembleConstants=False
-    )
-    assert expectedNoAssemble == actualNoAssemble
+    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert expected == actual
 
     # For
     i = ScratchVar()
@@ -514,14 +503,14 @@ return
         ]
     )
 
-    expectedNoAssemble = """#pragma version 4
+    expected = """#pragma version 4
 int 0
 store 0
 main_l1:
 load 0
 int 10
 <
-bz main_l5
+bz main_l4
 load 0
 int 4
 ==
@@ -538,14 +527,11 @@ int 1
 store 0
 b main_l1
 main_l4:
-main_l5:
 int 1
 return
         """.strip()
-    actualNoAssemble = compileTeal(
-        program, Mode.Application, version=4, assembleConstants=False
-    )
-    assert expectedNoAssemble == actualNoAssemble
+    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert expected == actual
 
 
 def test_compile_continue():
@@ -561,34 +547,30 @@ def test_compile_continue():
         ]
     )
 
-    expectedNoAssemble = """#pragma version 4
+    expected = """#pragma version 4
 int 0
 store 0
 main_l1:
 load 0
 int 3
 <
-bz main_l5
+bz main_l4
 main_l2:
 load 0
 int 2
 ==
-bnz main_l4
+bnz main_l2
 load 0
 int 1
 +
 store 0
 b main_l1
 main_l4:
-b main_l2
-main_l5:
 int 1
 return
                 """.strip()
-    actualNoAssemble = compileTeal(
-        program, Mode.Application, version=4, assembleConstants=False
-    )
-    assert expectedNoAssemble == actualNoAssemble
+    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert expected == actual
 
     # For
     i = ScratchVar()
@@ -606,18 +588,18 @@ return
         ]
     )
 
-    expectedNoAssemble = """#pragma version 4
+    expected = """#pragma version 4
 int 0
 store 0
 main_l1:
 load 0
 int 10
 <
-bz main_l6
+bz main_l5
 load 0
 int 4
 ==
-bnz main_l5
+bnz main_l4
 load 0
 itob
 load 0
@@ -631,15 +613,11 @@ int 1
 store 0
 b main_l1
 main_l5:
-b main_l4
-main_l6:
 int 1
 return
             """.strip()
-    actualNoAssemble = compileTeal(
-        program, Mode.Application, version=4, assembleConstants=False
-    )
-    assert expectedNoAssemble == actualNoAssemble
+    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert expected == actual
 
 
 def test_compile_continue_break_nested():
@@ -660,13 +638,13 @@ def test_compile_continue_break_nested():
         ]
     )
 
-    expectedNoAssemble = """#pragma version 4
+    expected = """#pragma version 4
 int 0
 store 0
 load 0
 int 10
 <
-bz main_l4
+bz main_l2
 main_l1:
 load 0
 int 1
@@ -675,18 +653,13 @@ store 0
 load 0
 int 4
 <
-bnz main_l3
-b main_l4
-main_l3:
-b main_l1
-main_l4:
+bnz main_l1
+main_l2:
 int 1
 return
     """.strip()
-    actualNoAssemble = compileTeal(
-        program, Mode.Application, version=4, assembleConstants=False
-    )
-    assert expectedNoAssemble == actualNoAssemble
+    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert expected == actual
 
     i = ScratchVar()
     program = Seq(
@@ -713,57 +686,50 @@ return
         ]
     )
 
-    expectedNoAssemble = """#pragma version 4
+    expected = """#pragma version 4
 int 0
 store 0
 main_l1:
 load 0
 int 10
 <
-bz main_l12
+bz main_l8
 main_l2:
 load 0
 int 8
 ==
-bnz main_l11
-main_l4:
+bnz main_l8
+main_l3:
 load 0
 int 6
 <
-bnz main_l8
-main_l5:
+bnz main_l6
+main_l4:
 load 0
 int 5
 <
-bnz main_l7
+bnz main_l2
 load 0
 int 1
 +
 store 0
 b main_l1
-main_l7:
-b main_l2
-main_l8:
+main_l6:
 load 0
 int 3
 ==
-bnz main_l10
+bnz main_l4
 load 0
 int 1
 +
 store 0
-b main_l4
-main_l10:
-b main_l5
-main_l11:
-main_l12:
+b main_l3
+main_l8:
 int 1
 return
 """.strip()
-    actualNoAssemble = compileTeal(
-        program, Mode.Application, version=4, assembleConstants=False
-    )
-    assert expectedNoAssemble == actualNoAssemble
+    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert expected == actual
 
 
 def test_compile_subroutine_unsupported():
@@ -941,11 +907,11 @@ store 0
 load 0
 int 0
 ==
-bnz sub0_l5
+bnz sub0_l4
 load 0
 int 1
 ==
-bnz sub0_l4
+bnz sub0_l3
 load 0
 int 2
 -
@@ -956,14 +922,13 @@ swap
 store 0
 swap
 pop
+b sub0_l5
 sub0_l3:
-b sub0_l6
-sub0_l4:
 int 0
-b sub0_l3
-sub0_l5:
+b sub0_l5
+sub0_l4:
 int 1
-sub0_l6:
+sub0_l5:
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
@@ -992,11 +957,11 @@ store 0
 load 0
 int 0
 ==
-bnz sub0_l5
+bnz sub0_l4
 load 0
 int 1
 ==
-bnz sub0_l4
+bnz sub0_l3
 load 0
 int 2
 -
@@ -1005,14 +970,13 @@ swap
 callsub sub0
 swap
 store 0
+b sub0_l5
 sub0_l3:
-b sub0_l6
-sub0_l4:
 int 0
-b sub0_l3
-sub0_l5:
+b sub0_l5
+sub0_l4:
 int 1
-sub0_l6:
+sub0_l5:
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=5, assembleConstants=False)
@@ -1336,4 +1300,25 @@ app_global_put
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=True)
+    assert actual == expected
+
+
+def test_empty_branch():
+    program = Seq(
+        [
+            If(Txn.application_id() == Int(0)).Then(Seq()),
+            Approve(),
+        ]
+    )
+
+    expected = """#pragma version 5
+txn ApplicationID
+int 0
+==
+bnz main_l1
+main_l1:
+int 1
+return
+    """.strip()
+    actual = compileTeal(program, Mode.Application, version=5, assembleConstants=False)
     assert actual == expected
