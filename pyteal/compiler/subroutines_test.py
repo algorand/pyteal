@@ -1135,6 +1135,145 @@ def test_spillLocalSlotsDuringRecursion_recursive_many_args_return_v5():
         ],
     }
 
+def test_spillLocalSlotsDuringRecursion_recursive_more_args_than_slots_v5():
+    def subImpl(a1, a2, a3):
+        return None
+
+    subroutine = SubroutineDefinition(subImpl, TealType.uint64)
+
+    subroutineOps = [
+        TealOp(None, Op.store, 0),
+        TealOp(None, Op.store, 1),
+        TealOp(None, Op.pop),
+        TealOp(None, Op.int, 1),
+        TealOp(None, Op.int, 2),
+        TealOp(None, Op.int, 3),
+        TealOp(None, Op.callsub, subroutine),
+        TealOp(None, Op.retsub),
+    ]
+
+    mainOps = [
+        TealOp(None, Op.int, 1),
+        TealOp(None, Op.int, 2),
+        TealOp(None, Op.int, 3),
+        TealOp(None, Op.callsub, subroutine),
+        TealOp(None, Op.return_),
+    ]
+
+    subroutineMapping = {
+        None: mainOps,
+        subroutine: subroutineOps,
+    }
+
+    subroutineGraph = {
+        subroutine: {subroutine},
+    }
+
+    localSlots = {None: set(), subroutine: {0, 1}}
+
+    spillLocalSlotsDuringRecursion(5, subroutineMapping, subroutineGraph, localSlots)
+
+    assert subroutineMapping == {
+        None: [
+            TealOp(None, Op.int, 1),
+            TealOp(None, Op.int, 2),
+            TealOp(None, Op.int, 3),
+            TealOp(None, Op.callsub, subroutine),
+            TealOp(None, Op.return_),
+        ],
+        subroutine: [
+            TealOp(None, Op.store, 0),
+            TealOp(None, Op.store, 1),
+            TealOp(None, Op.pop),
+            TealOp(None, Op.int, 1),
+            TealOp(None, Op.int, 2),
+            TealOp(None, Op.int, 3),
+            TealOp(None, Op.load, 0),
+            TealOp(None, Op.cover, 3),
+            TealOp(None, Op.load, 1),
+            TealOp(None, Op.cover, 3),
+            TealOp(None, Op.callsub, subroutine),
+            TealOp(None, Op.cover, 2),
+            TealOp(None, Op.store, 1),
+            TealOp(None, Op.store, 0),
+            TealOp(None, Op.retsub),
+        ],
+    }
+
+def test_spillLocalSlotsDuringRecursion_recursive_more_slots_than_args_v5():
+    def subImpl(a1, a2, a3):
+        return None
+
+    subroutine = SubroutineDefinition(subImpl, TealType.uint64)
+
+    subroutineOps = [
+        TealOp(None, Op.store, 0),
+        TealOp(None, Op.store, 1),
+        TealOp(None, Op.store, 2),
+        TealOp(None, Op.int, 10),
+        TealOp(None, Op.store, 3),
+        TealOp(None, Op.int, 1),
+        TealOp(None, Op.int, 2),
+        TealOp(None, Op.int, 3),
+        TealOp(None, Op.callsub, subroutine),
+        TealOp(None, Op.retsub),
+    ]
+
+    mainOps = [
+        TealOp(None, Op.int, 1),
+        TealOp(None, Op.int, 2),
+        TealOp(None, Op.int, 3),
+        TealOp(None, Op.callsub, subroutine),
+        TealOp(None, Op.return_),
+    ]
+
+    subroutineMapping = {
+        None: mainOps,
+        subroutine: subroutineOps,
+    }
+
+    subroutineGraph = {
+        subroutine: {subroutine},
+    }
+
+    localSlots = {None: set(), subroutine: {0, 1, 2, 3}}
+
+    spillLocalSlotsDuringRecursion(5, subroutineMapping, subroutineGraph, localSlots)
+
+    assert subroutineMapping == {
+        None: [
+            TealOp(None, Op.int, 1),
+            TealOp(None, Op.int, 2),
+            TealOp(None, Op.int, 3),
+            TealOp(None, Op.callsub, subroutine),
+            TealOp(None, Op.return_),
+        ],
+        subroutine: [
+            TealOp(None, Op.store, 0),
+            TealOp(None, Op.store, 1),
+            TealOp(None, Op.store, 2),
+            TealOp(None, Op.int, 10),
+            TealOp(None, Op.store, 3),
+            TealOp(None, Op.int, 1),
+            TealOp(None, Op.int, 2),
+            TealOp(None, Op.int, 3),
+            TealOp(None, Op.load, 0),
+            TealOp(None, Op.load, 1),
+            TealOp(None, Op.load, 2),
+            TealOp(None, Op.load, 3),
+            TealOp(None, Op.uncover, 6),
+            TealOp(None, Op.uncover, 6),
+            TealOp(None, Op.uncover, 6),
+            TealOp(None, Op.callsub, subroutine),
+            TealOp(None, Op.cover, 4),
+            TealOp(None, Op.store, 3),
+            TealOp(None, Op.store, 2),
+            TealOp(None, Op.store, 1),
+            TealOp(None, Op.store, 0),
+            TealOp(None, Op.retsub),
+        ],
+    }
+
 
 def test_resolveSubroutines():
     def sub1Impl(a1):
