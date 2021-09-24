@@ -92,6 +92,7 @@ from .ternaryexpr import Ed25519Verify, Substring, Extract, SetBit, SetByte
 
 # more ops
 from .naryexpr import NaryExpr, And, Or, Concat
+from .safemath import SafeRatio
 
 # control flow
 from .if_ import If
@@ -194,6 +195,7 @@ __all__ = [
     "And",
     "Or",
     "Concat",
+    "SafeRatio",
     "If",
     "Cond",
     "Seq",
