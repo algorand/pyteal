@@ -77,8 +77,8 @@ def multiplyFactors(
 class SafeRatio(Expr):
     """A class used to calculate expressions of the form :code:`(N_1 * N_2 * N_3 * ...) / (D_1 * D_2 * D_3 * ...)`
 
-    Use this class if all inputs to the expression are uint64s, the output is fits in a uint64, and
-    all intermediate values fit in a uint128.
+    Use this class if all inputs to the expression are uint64s, the output fits in a uint64, and all
+    intermediate values fit in a uint128.
     """
 
     def __init__(
