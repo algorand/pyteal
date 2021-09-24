@@ -1135,6 +1135,7 @@ def test_spillLocalSlotsDuringRecursion_recursive_many_args_return_v5():
         ],
     }
 
+
 def test_spillLocalSlotsDuringRecursion_recursive_more_args_than_slots_v5():
     def subImpl(a1, a2, a3):
         return None
@@ -1199,6 +1200,7 @@ def test_spillLocalSlotsDuringRecursion_recursive_more_args_than_slots_v5():
             TealOp(None, Op.retsub),
         ],
     }
+
 
 def test_spillLocalSlotsDuringRecursion_recursive_more_slots_than_args_v5():
     def subImpl(a1, a2, a3):
