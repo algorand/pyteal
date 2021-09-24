@@ -816,7 +816,7 @@ app_global_put
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
-    assert expected == actual
+    assert actual == expected
 
 
 def test_compile_subroutine_with_return():
@@ -869,7 +869,7 @@ app_global_get
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
-    assert expected == actual
+    assert actual == expected
 
 
 def test_compile_subroutine_many_args():
@@ -916,7 +916,7 @@ load 5
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
-    assert expected == actual
+    assert actual == expected
 
 
 def test_compile_subroutine_recursive():
@@ -967,7 +967,154 @@ sub0_l6:
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
-    assert expected == actual
+    assert actual == expected
+
+
+def test_compile_subroutine_recursive_5():
+    @Subroutine(TealType.uint64)
+    def isEven(i: Expr) -> Expr:
+        return (
+            If(i == Int(0))
+            .Then(Int(1))
+            .ElseIf(i == Int(1))
+            .Then(Int(0))
+            .Else(isEven(i - Int(2)))
+        )
+
+    program = Return(isEven(Int(6)))
+
+    expected = """#pragma version 5
+int 6
+callsub sub0
+return
+sub0: // isEven
+store 0
+load 0
+int 0
+==
+bnz sub0_l5
+load 0
+int 1
+==
+bnz sub0_l4
+load 0
+int 2
+-
+load 0
+swap
+callsub sub0
+swap
+store 0
+sub0_l3:
+b sub0_l6
+sub0_l4:
+int 0
+b sub0_l3
+sub0_l5:
+int 1
+sub0_l6:
+retsub
+    """.strip()
+    actual = compileTeal(program, Mode.Application, version=5, assembleConstants=False)
+    assert actual == expected
+
+
+def test_compile_subroutine_recursive_multiple_args():
+    @Subroutine(TealType.uint64)
+    def multiplyByAdding(a, b):
+        return (
+            If(a == Int(0))
+            .Then(Return(Int(0)))
+            .Else(Return(b + multiplyByAdding(a - Int(1), b)))
+        )
+
+    program = Return(multiplyByAdding(Int(3), Int(5)))
+
+    expected = """#pragma version 4
+int 3
+int 5
+callsub sub0
+return
+sub0: // multiplyByAdding
+store 1
+store 0
+load 0
+int 0
+==
+bnz sub0_l2
+load 1
+load 0
+int 1
+-
+load 1
+load 0
+load 1
+dig 3
+dig 3
+callsub sub0
+store 0
+store 1
+load 0
+swap
+store 0
+swap
+pop
+swap
+pop
++
+retsub
+sub0_l2:
+int 0
+retsub
+    """.strip()
+    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert actual == expected
+
+
+def test_compile_subroutine_recursive_multiple_args_5():
+    @Subroutine(TealType.uint64)
+    def multiplyByAdding(a, b):
+        return (
+            If(a == Int(0))
+            .Then(Return(Int(0)))
+            .Else(Return(b + multiplyByAdding(a - Int(1), b)))
+        )
+
+    program = Return(multiplyByAdding(Int(3), Int(5)))
+
+    expected = """#pragma version 5
+int 3
+int 5
+callsub sub0
+return
+sub0: // multiplyByAdding
+store 1
+store 0
+load 0
+int 0
+==
+bnz sub0_l2
+load 1
+load 0
+int 1
+-
+load 1
+load 0
+load 1
+uncover 3
+uncover 3
+callsub sub0
+cover 2
+store 1
+store 0
++
+retsub
+sub0_l2:
+int 0
+retsub
+    """.strip()
+    actual = compileTeal(program, Mode.Application, version=5, assembleConstants=False)
+    assert actual == expected
 
 
 def test_compile_subroutine_mutually_recursive():
@@ -1031,7 +1178,67 @@ sub1_l3:
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
-    assert expected == actual
+    assert actual == expected
+
+
+def test_compile_subroutine_mutually_recursive_5():
+    @Subroutine(TealType.uint64)
+    def isEven(i: Expr) -> Expr:
+        return If(i == Int(0), Int(1), Not(isOdd(i - Int(1))))
+
+    @Subroutine(TealType.uint64)
+    def isOdd(i: Expr) -> Expr:
+        return If(i == Int(0), Int(0), Not(isEven(i - Int(1))))
+
+    program = Return(isEven(Int(6)))
+
+    expected = """#pragma version 5
+int 6
+callsub sub0
+return
+sub0: // isEven
+store 0
+load 0
+int 0
+==
+bnz sub0_l2
+load 0
+int 1
+-
+load 0
+swap
+callsub sub1
+swap
+store 0
+!
+b sub0_l3
+sub0_l2:
+int 1
+sub0_l3:
+retsub
+sub1: // isOdd
+store 1
+load 1
+int 0
+==
+bnz sub1_l2
+load 1
+int 1
+-
+load 1
+swap
+callsub sub0
+swap
+store 1
+!
+b sub1_l3
+sub1_l2:
+int 0
+sub1_l3:
+retsub
+    """.strip()
+    actual = compileTeal(program, Mode.Application, version=5, assembleConstants=False)
+    assert actual == expected
 
 
 def test_compile_loop_in_subroutine():
@@ -1071,7 +1278,7 @@ sub0_l3:
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
-    assert expected == actual
+    assert actual == expected
 
 
 def test_compile_subroutine_assemble_constants():
@@ -1129,4 +1336,4 @@ app_global_put
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=True)
-    assert expected == actual
+    assert actual == expected
