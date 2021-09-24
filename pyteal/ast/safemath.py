@@ -90,11 +90,12 @@ class SafeRatio(Expr):
         :code:`N_i` represents an element in :code:`numeratorFactors` and each :code:`D_i`
         represents an element in :code:`denominatorFactors`.
 
-
+        Requires TEAL version 5 or higher.
 
         Args:
             numeratorFactors: The factors in the numerator of the ratio. This list must have at
-                least 1 element.
+                least 1 element. If this list has exactly 1 element, then denominatorFactors must
+                have more than 1 element (otherwise basic division should be used).
             denominatorFactors: The factors in the denominator of the ratio. This list must have at
                 least 1 element.
         """
