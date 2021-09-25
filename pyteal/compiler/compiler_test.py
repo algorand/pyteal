@@ -1337,3 +1337,157 @@ retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=True)
     assert actual == expected
+
+
+def test_compile_safe_ratio():
+    cases = (
+        (
+            SafeRatio([Int(2), Int(100)], [Int(5)]),
+            """#pragma version 5
+int 2
+int 100
+mulw
+int 0
+int 5
+divmodw
+pop
+pop
+swap
+!
+assert
+return
+""",
+        ),
+        (
+            SafeRatio([Int(2), Int(100)], [Int(10), Int(5)]),
+            """#pragma version 5
+int 2
+int 100
+mulw
+int 10
+int 5
+mulw
+divmodw
+pop
+pop
+swap
+!
+assert
+return
+""",
+        ),
+        (
+            SafeRatio([Int(2), Int(100), Int(3)], [Int(10), Int(5)]),
+            """#pragma version 5
+int 2
+int 100
+mulw
+int 3
+uncover 2
+dig 1
+*
+cover 2
+mulw
+cover 2
++
+swap
+int 10
+int 5
+mulw
+divmodw
+pop
+pop
+swap
+!
+assert
+return
+""",
+        ),
+        (
+            SafeRatio([Int(2), Int(100), Int(3)], [Int(10), Int(5), Int(6)]),
+            """#pragma version 5
+int 2
+int 100
+mulw
+int 3
+uncover 2
+dig 1
+*
+cover 2
+mulw
+cover 2
++
+swap
+int 10
+int 5
+mulw
+int 6
+uncover 2
+dig 1
+*
+cover 2
+mulw
+cover 2
++
+swap
+divmodw
+pop
+pop
+swap
+!
+assert
+return
+""",
+        ),
+        (
+            SafeRatio([Int(2), Int(100), Int(3), Int(4)], [Int(10), Int(5), Int(6)]),
+            """#pragma version 5
+int 2
+int 100
+mulw
+int 3
+uncover 2
+dig 1
+*
+cover 2
+mulw
+cover 2
++
+swap
+int 4
+uncover 2
+dig 1
+*
+cover 2
+mulw
+cover 2
++
+swap
+int 10
+int 5
+mulw
+int 6
+uncover 2
+dig 1
+*
+cover 2
+mulw
+cover 2
++
+swap
+divmodw
+pop
+pop
+swap
+!
+assert
+return
+""",
+        ),
+    )
+
+    for program, expected in cases:
+        actual = compileTeal(
+            program, Mode.Application, version=5, assembleConstants=False
+        )
+        assert actual == expected.strip()
