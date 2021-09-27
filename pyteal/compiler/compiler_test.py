@@ -1339,10 +1339,10 @@ retsub
     assert actual == expected
 
 
-def test_compile_safe_ratio():
+def test_compile_wide_ratio():
     cases = (
         (
-            SafeRatio([Int(2), Int(100)], [Int(5)]),
+            WideRatio([Int(2), Int(100)], [Int(5)]),
             """#pragma version 5
 int 2
 int 100
@@ -1359,7 +1359,7 @@ return
 """,
         ),
         (
-            SafeRatio([Int(2), Int(100)], [Int(10), Int(5)]),
+            WideRatio([Int(2), Int(100)], [Int(10), Int(5)]),
             """#pragma version 5
 int 2
 int 100
@@ -1377,7 +1377,7 @@ return
 """,
         ),
         (
-            SafeRatio([Int(2), Int(100), Int(3)], [Int(10), Int(5)]),
+            WideRatio([Int(2), Int(100), Int(3)], [Int(10), Int(5)]),
             """#pragma version 5
 int 2
 int 100
@@ -1404,7 +1404,7 @@ return
 """,
         ),
         (
-            SafeRatio([Int(2), Int(100), Int(3)], [Int(10), Int(5), Int(6)]),
+            WideRatio([Int(2), Int(100), Int(3)], [Int(10), Int(5), Int(6)]),
             """#pragma version 5
 int 2
 int 100
@@ -1440,7 +1440,7 @@ return
 """,
         ),
         (
-            SafeRatio([Int(2), Int(100), Int(3), Int(4)], [Int(10), Int(5), Int(6)]),
+            WideRatio([Int(2), Int(100), Int(3), Int(4)], [Int(10), Int(5), Int(6)]),
             """#pragma version 5
 int 2
 int 100
