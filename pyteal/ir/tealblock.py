@@ -204,6 +204,28 @@ class TealBlock(ABC):
                     if prev is start:
                         start = block
 
+        for block in TealBlock.Iterate(start):
+            if len(block.ops) == 0:
+                outgoing = block.getOutgoing()
+                if len(outgoing) == 1:
+                    # if block has 0 ops and 1 outgoing edge, directly connect every incoming block
+                    # to the single outgoing block, thereby removing an unnecessary intermediate
+                    # jump to this block
+                    outgoingBlock = outgoing[0]
+                    for i, incomingBlock in enumerate(outgoingBlock.incoming):
+                        if block is incomingBlock:
+                            # remove block from incoming of outgoing
+                            outgoingBlock.incoming.pop(i)
+                            break
+
+                    for prev in block.incoming:
+                        prev.replaceOutgoing(block, outgoing[0])
+                        if id(prev) not in [id(b) for b in outgoingBlock.incoming]:
+                            outgoingBlock.incoming.append(prev)
+
+                    if block is start:
+                        start = block
+
         return start
 
 
