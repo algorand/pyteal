@@ -215,10 +215,7 @@ class TealBlock(ABC):
                     for i, incomingBlock in enumerate(outgoingBlock.incoming):
                         if block is incomingBlock:
                             # remove block from incoming of outgoing
-                            outgoingBlock.incoming = (
-                                outgoingBlock.incoming[:i]
-                                + outgoingBlock.incoming[i + 1 :]
-                            )
+                            outgoingBlock.incoming.pop(i)
                             break
 
                     for prev in block.incoming:
