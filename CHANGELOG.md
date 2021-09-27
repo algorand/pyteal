@@ -1,3 +1,22 @@
+# 0.9.0
+
+## Added
+* Support for new TEAL 5 features:
+  * `AppParam` expressions ([#107](https://github.com/algorand/pyteal/pull/107), [#123](https://github.com/algorand/pyteal/pull/123))
+  * New `nonparticipation` transaction field ([#106](https://github.com/algorand/pyteal/pull/106))
+  * Inner transactions, zero-element `Seq` expressions, dynamic transaction array access ([#115](https://github.com/algorand/pyteal/pull/115))
+  * Logs, dynamic LogicSig argument indexes, single-element `NaryExpr`s, and creating `Bytes` from `bytes` and `bytearray` ([#117](https://github.com/algorand/pyteal/pull/117))
+  * Extract expressions ([#118](https://github.com/algorand/pyteal/pull/118))
+  * More efficient implementation of recursive subroutines in TEAL 5+ ([#114](https://github.com/algorand/pyteal/pull/114))
+* Add `WideRatio`, an expression which exposes `mulw` and `divmodw` ([#121](https://github.com/algorand/pyteal/pull/121), [#122](https://github.com/algorand/pyteal/pull/122))
+
+## Changed
+* **WARNING**: Due to code generation improvements, programs compiled with this version will likely
+  produce different TEAL code than previous versions, but their functionality will be the same. Be
+  aware that even small differences in generated TEAL code will change the address associated with
+  escrow LogicSig contracts.
+* Some unnecessary branch conditions have been removed ([#120](https://github.com/algorand/pyteal/pull/120))
+
 # 0.8.0
 
 ## Added
