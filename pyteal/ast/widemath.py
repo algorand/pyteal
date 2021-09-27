@@ -74,7 +74,7 @@ def multiplyFactors(
     return start, end
 
 
-class SafeRatio(Expr):
+class WideRatio(Expr):
     """A class used to calculate expressions of the form :code:`(N_1 * N_2 * N_3 * ...) / (D_1 * D_2 * D_3 * ...)`
 
     Use this class if all inputs to the expression are uint64s, the output fits in a uint64, and all
@@ -84,7 +84,7 @@ class SafeRatio(Expr):
     def __init__(
         self, numeratorFactors: List[Expr], denominatorFactors: List[Expr]
     ) -> None:
-        """Create a new SafeRatio expression with the given numerator and denominator factors.
+        """Create a new WideRatio expression with the given numerator and denominator factors.
 
         This will calculate :code:`(N_1 * N_2 * N_3 * ...) / (D_1 * D_2 * D_3 * ...)`, where each
         :code:`N_i` represents an element in :code:`numeratorFactors` and each :code:`D_i`
@@ -114,7 +114,7 @@ class SafeRatio(Expr):
     def __teal__(self, options: "CompileOptions"):
         if options.version < Op.cover.min_version:
             raise TealCompileError(
-                "SafeRatio requires TEAL version {} or higher".format(
+                "WideRatio requires TEAL version {} or higher".format(
                     Op.cover.min_version
                 ),
                 self,
@@ -140,7 +140,7 @@ class SafeRatio(Expr):
         return numStart, combine
 
     def __str__(self):
-        ret_str = "(SafeRatio (*"
+        ret_str = "(WideRatio (*"
         for f in self.numeratorFactors:
             ret_str += " " + str(f)
         ret_str += ") (*"
@@ -156,4 +156,4 @@ class SafeRatio(Expr):
         return False
 
 
-SafeRatio.__module__ = "pyteal"
+WideRatio.__module__ = "pyteal"
