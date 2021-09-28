@@ -168,17 +168,19 @@ Global Parameters
 Information about the current state of the blockchain can be obtained using the following
 :any:`Global` expressions:
 
-======================================= ======================= ============================================================
-Operator                                Type                    Notes
-======================================= ======================= ============================================================
-:any:`Global.min_txn_fee()`             :code:`TealType.uint64` in microAlgos  
-:any:`Global.min_balance()`             :code:`TealType.uint64` in mircoAlgos
-:any:`Global.max_txn_life()`            :code:`TealType.uint64` number of rounds
-:any:`Global.zero_address()`            :code:`TealType.bytes`  32 byte address of all zero bytes
-:any:`Global.group_size()`              :code:`TealType.uint64` number of txns in this atomic transaction group, at least 1
-:any:`Global.logic_sig_version()`       :code:`TealType.uint64` the maximum supported TEAL version
-:any:`Global.round()`                   :code:`TealType.uint64` the current round number
-:any:`Global.latest_timestamp()`        :code:`TealType.uint64` the latest confirmed block UNIX timestamp
-:any:`Global.current_application_id()`  :code:`TealType.uint64` the ID of the current application executing
-:any:`Global.creator_address()`         :code:`TealType.bytes`  32 byte address of the creator of the current application
-======================================= ======================= ============================================================
+=========================================== ======================= ================ =============================================================
+Operator                                    Type                    Min TEAL Version Notes
+=========================================== ======================= ================ =============================================================
+:any:`Global.min_txn_fee()`                 :code:`TealType.uint64` 2                in microAlgos  
+:any:`Global.min_balance()`                 :code:`TealType.uint64` 2                in mircoAlgos
+:any:`Global.max_txn_life()`                :code:`TealType.uint64` 2                number of rounds
+:any:`Global.zero_address()`                :code:`TealType.bytes`  2                32 byte address of all zero bytes
+:any:`Global.group_size()`                  :code:`TealType.uint64` 2                number of txns in this atomic transaction group, at least 1
+:any:`Global.logic_sig_version()`           :code:`TealType.uint64` 2                the maximum supported TEAL version
+:any:`Global.round()`                       :code:`TealType.uint64` 2                the current round number
+:any:`Global.latest_timestamp()`            :code:`TealType.uint64` 2                the latest confirmed block UNIX timestamp
+:any:`Global.current_application_id()`      :code:`TealType.uint64` 2                the ID of the current application executing
+:any:`Global.creator_address()`             :code:`TealType.bytes`  3                32 byte address of the creator of the current application
+:any:`Global.current_application_address()` :code:`TealType.bytes`  5                32 byte address of the current application controlled account
+:any:`Global.group_id()`                    :code:`TealType.bytes`  5                32 byte ID of the current transaction group
+=========================================== ======================= ================ =============================================================
