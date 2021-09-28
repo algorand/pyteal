@@ -341,5 +341,18 @@ class AppParam:
             Op.app_params_get, TealType.bytes, immediate_args=["AppCreator"], args=[app]
         )
 
+    @classmethod
+    def address(cls, app: Expr) -> MaybeValue:
+        """Get the escrow address for the application.
+
+        Args:
+            app: An index into Txn.ForeignApps that correspond to the application to check.
+                Must evaluate to uint64.
+        """
+        require_type(app.type_of(), TealType.uint64)
+        return MaybeValue(
+            Op.app_params_get, TealType.bytes, immediate_args=["AppAddress"], args=[app]
+        )
+
 
 AppParam.__module__ = "pyteal"

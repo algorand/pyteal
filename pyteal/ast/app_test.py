@@ -649,3 +649,31 @@ def test_app_param_creator_valid():
 def test_app_param_creator_invalid():
     with pytest.raises(TealTypeError):
         AppParam.creator(Txn.sender())
+
+
+def test_app_param_address_valid():
+    arg = Int(1)
+    expr = AppParam.address(arg)
+    assert expr.type_of() == TealType.none
+    assert expr.value().type_of() == TealType.bytes
+
+    expected = TealSimpleBlock(
+        [
+            TealOp(arg, Op.int, 1),
+            TealOp(expr, Op.app_params_get, "AppAddress"),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
+        ]
+    )
+
+    actual, _ = expr.__teal__(teal5Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
+def test_app_param_address_invalid():
+    with pytest.raises(TealTypeError):
+        AppParam.address(Txn.sender())
