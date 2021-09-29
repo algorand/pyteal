@@ -18,20 +18,25 @@ PyTeal provides high level, functional programming style abstractions over TEAL 
 
 ### Install 
 
-PyTeal requires Python version >= 3.6
+PyTeal requires Python version >= 3.6.
 
-* `pip3 install pyteal`
+#### Recommended: Install from PyPi
+
+Install the latest official release from PyPi:
+
+* `pip install pyteal`
+
+#### Install Latest Commit
+
+If needed, it's possible to install directly from the latest commit on master to use unreleased features:
+
+> **WARNING:** Unreleased code is experimental and may not be backwards compatible or function properly. Use extreme caution when installing PyTeal this way.
+
+* `pip install git+https://github.com/algorand/pyteal`
 
 ### Documentation
 
 [PyTeal Docs](https://pyteal.readthedocs.io/)
-
-### Run Demo
-
-In PyTeal root directory:
-
-* `jupyter notebook demo/Pyteal\ Demonstration.ipynb`
-
 
 ### Development Setup
 
@@ -39,14 +44,14 @@ Setup venv (one time):
  * `python3 -m venv venv`
 
 Active venv:
- * `. venv/bin/activate.fish` (if your shell is fish)
  * `. venv/bin/activate` (if your shell is bash/zsh)
+ * `. venv/bin/activate.fish` (if your shell is fish)
 
 Pip install PyTeal in editable state
  * `pip install -e .`
 
 Install dependencies:
-* `pip3 install -r requirements.txt`
+* `pip install -r requirements.txt`
  
 Type checking using mypy:
 * `mypy pyteal`

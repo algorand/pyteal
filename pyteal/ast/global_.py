@@ -105,7 +105,7 @@ class Global(LeafExpr):
     def current_application_id(cls) -> "Global":
         """Get the ID of the current application executing.
 
-        Fails if no application is executing."""
+        Fails during Signature mode."""
         return cls(GlobalField.current_app_id)
 
     @classmethod

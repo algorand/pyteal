@@ -17,16 +17,16 @@ jobs:
       python: "3.7"
     - name: Python 3.8
       python: "3.8"
+    - name: Python 3.9
+      python: "3.9"
     - stage: Release
       name: PyPi release
-      python: "3.8"
+      python: "3.9"
       script: skip
       if: tag IS present AND type = push
       deploy:
         provider: pypi
         username: __token__
-        password:
-          secure: W0VZ1e3uo6+fVbJgrXsAdQc0WQCxuWVEX2DT4oOFhsX3GgTxi7I1phPmtZkl2gacuhfAQKN4XC04eZmgdYd3SrERWqae4/Fa9C/RvGwmhFCBpBYcr9c3CthUCIkgpRQVgTbmFzoWAX2/2YyzrWhjAv+CadrcP4KXcylOtdBEEYRZYz3LzhcNOJrDE/e9OQeziTiTUVs63iJniUvFDQxcbMfccpF1CGTsdTPqRllC7UfpE5CS/pVdHzyRVRmxw5Y3l53sqKi5uX4OWFwyIaqN37m0f4z+I6+L9oZ+FL8NCjTRfV8Lc9wT/PzSFBHcPhItyTg5/qbegm2TNx+zUeRWaRpG0HNHSHqF2QlaAvOcxufGb+QC/gvUYZfFEUXjhyCgb7W2QmB94Nwsm1S+35Vpjit7hJ9AXIaIfcJTa3KZR02gAuan9AS5mhDTR3TPZp4E4DWhC941/7zzACJOHoqU7u3lAd/0zuoIvUm0SmJfx1+wpSoxs4kf0c3LaitzCkXubj64PxtK3mJHVkJW9mRvmaGP7Akxd3BgW+3bZrbi/3/DBoWvth569xAoAFqI6bRdoritpDlBcVK8P1FzbwfZrTLNqyAAJ00StfHzttKYuSHB9TJdhdHhFbT2GLeWZ+8+dOqaw7D9jNyNyYAjbDKdCeo4y2aPclD1svrTs+jfHtw=
         on:
           tags: true
           branch: master
