@@ -63,7 +63,7 @@ def test_substring_immediate():
 
 
 def test_substring_stack():
-    my_string = '*' * 257
+    my_string = "*" * 257
     args = [Bytes(my_string), Int(256), Int(257)]
     expr = Substring(args[0], args[1], args[2])
     assert expr.type_of() == TealType.bytes
@@ -118,7 +118,7 @@ def test_extract_immediate():
 
 
 def test_extract_stack():
-    my_string = '*' * 257
+    my_string = "*" * 257
     args = [Bytes(my_string), Int(256), Int(257)]
     expr = Extract(args[0], args[1], args[2])
     assert expr.type_of() == TealType.bytes
@@ -174,7 +174,7 @@ def test_suffix_immediate():
 
 
 def test_suffix_stack():
-    my_string = '*' * 257
+    my_string = "*" * 257
     args = [Bytes(my_string), Int(256)]
     expr = Suffix(args[0], args[1])
     assert expr.type_of() == TealType.bytes
