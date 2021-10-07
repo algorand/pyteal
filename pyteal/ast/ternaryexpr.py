@@ -4,6 +4,8 @@ from ..types import TealType, require_type
 from ..errors import verifyTealVersion
 from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
+from .int import Int
+from .unaryexpr import Len
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
@@ -93,6 +95,35 @@ def Substring(string: Expr, start: Expr, end: Expr) -> TernaryExpr:
         end: The ending index for the substring. Must be an integer greater or equal to start, but
             less than or equal to Len(string).
     """
+
+    class SubstringExpr(TernaryExpr):
+        """For optimization using immediate args when index values can each be stored in one byte"""
+
+        def __teal__(self, options: "CompileOptions"):
+            verifyTealVersion(
+                self.op.min_version,
+                options.version,
+                "TEAL version too low to use op {}".format(self.op),
+            )
+
+            if isinstance(self.secondArg, Int) and isinstance(self.thirdArg, Int):
+                start, end = self.secondArg.value, self.thirdArg.value
+                return TealBlock.FromOp(
+                    options, TealOp(self, self.op, start, end), self.firstArg
+                )
+
+    if isinstance(start, Int) and isinstance(end, Int):
+        s, e = start.value, end.value
+        if s < 2 ** 8 and e < 2 ** 8:
+            return SubstringExpr(
+                Op.substring,
+                (TealType.bytes, TealType.uint64, TealType.uint64),
+                TealType.bytes,
+                string,
+                start,
+                end,
+            )
+
     return TernaryExpr(
         Op.substring3,
         (TealType.bytes, TealType.uint64, TealType.uint64),
@@ -120,6 +151,36 @@ def Extract(string: Expr, start: Expr, length: Expr) -> TernaryExpr:
             :code:`Len(string)`.
         length: The number of bytes to extract. Must be an integer such that :code:`start + length <= Len(string)`.
     """
+
+    class ExtractExpr(TernaryExpr):
+        """For optimization using immediate args when index and length values can each be stored in one byte"""
+
+        def __teal__(self, options: "CompileOptions"):
+            verifyTealVersion(
+                self.op.min_version,
+                options.version,
+                "TEAL version too low to use op {}".format(self.op),
+            )
+
+            if isinstance(self.secondArg, Int) and isinstance(self.thirdArg, Int):
+                start, length = self.secondArg.value, self.thirdArg.value
+
+                return TealBlock.FromOp(
+                    options, TealOp(self, self.op, start, length), self.firstArg
+                )
+
+    if isinstance(start, Int) and isinstance(length, Int):
+        s, l = start.value, length.value
+        if s < 2 ** 8 and l < 2 ** 8:
+            return ExtractExpr(
+                Op.extract,
+                (TealType.bytes, TealType.uint64, TealType.uint64),
+                TealType.bytes,
+                string,
+                start,
+                length,
+            )
+
     return TernaryExpr(
         Op.extract3,
         (TealType.bytes, TealType.uint64, TealType.uint64),
@@ -128,6 +189,26 @@ def Extract(string: Expr, start: Expr, length: Expr) -> TernaryExpr:
         start,
         length,
     )
+
+
+def Suffix(string: Expr, start: Expr) -> TernaryExpr:
+    """Take a suffix of a byte string.
+
+    Produces a new byte string consisting of the suffix of the byte string starting at :code:`start`
+
+    This expression is similar to :any:`Substring` and :any:`Extract`, except this expression only uses a
+    start index.
+
+    Requires TEAL version 5 or higher.
+
+    Args:
+        string: The byte string.
+        start: The starting index for the suffix. Must be an integer less than or equal to :code:`Len(string)`.
+    """
+    if isinstance(start, Int) and start.value < 2 ** 8:
+        return Extract(string, start, Int(0))
+
+    return Substring(string, start, Len(string))
 
 
 def SetBit(value: Expr, index: Expr, newBitValue: Expr) -> TernaryExpr:

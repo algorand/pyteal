@@ -43,7 +43,7 @@ def test_ed25519verify_invalid():
         Ed25519Verify(Bytes("data"), Bytes("sig"), Int(0))
 
 
-def test_substring():
+def test_substring_immediate():
     args = [Bytes("my string"), Int(0), Int(2)]
     expr = Substring(args[0], args[1], args[2])
     assert expr.type_of() == TealType.bytes
@@ -51,8 +51,27 @@ def test_substring():
     expected = TealSimpleBlock(
         [
             TealOp(args[0], Op.byte, '"my string"'),
-            TealOp(args[1], Op.int, 0),
-            TealOp(args[2], Op.int, 2),
+            TealOp(expr, Op.substring, 0, 2),
+        ]
+    )
+
+    actual, _ = expr.__teal__(teal2Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+
+def test_substring_stack():
+    args = [Bytes("my string"), Int(256), Int(257)]
+    expr = Substring(args[0], args[1], args[2])
+    assert expr.type_of() == TealType.bytes
+
+    expected = TealSimpleBlock(
+        [
+            TealOp(args[0], Op.byte, '"my string"'),
+            TealOp(args[1], Op.int, 256),
+            TealOp(args[2], Op.int, 257),
             TealOp(expr, Op.substring3),
         ]
     )
@@ -75,7 +94,7 @@ def test_substring_invalid():
         Substring(Bytes("my string"), Int(0), Txn.sender())
 
 
-def test_extract():
+def test_extract_immediate():
     args = [Bytes("my string"), Int(0), Int(2)]
     expr = Extract(args[0], args[1], args[2])
     assert expr.type_of() == TealType.bytes
@@ -83,8 +102,30 @@ def test_extract():
     expected = TealSimpleBlock(
         [
             TealOp(args[0], Op.byte, '"my string"'),
-            TealOp(args[1], Op.int, 0),
-            TealOp(args[2], Op.int, 2),
+            TealOp(expr, Op.extract, 0, 2),
+        ]
+    )
+
+    actual, _ = expr.__teal__(teal5Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal4Options)
+
+
+def test_extract_stack():
+    args = [Bytes("my string"), Int(256), Int(257)]
+    expr = Extract(args[0], args[1], args[2])
+    assert expr.type_of() == TealType.bytes
+
+    expected = TealSimpleBlock(
+        [
+            TealOp(args[0], Op.byte, '"my string"'),
+            TealOp(args[1], Op.int, 256),
+            TealOp(args[2], Op.int, 257),
             TealOp(expr, Op.extract3),
         ]
     )
@@ -108,6 +149,49 @@ def test_extract_invalid():
 
     with pytest.raises(TealTypeError):
         Extract(Bytes("my string"), Int(0), Txn.sender())
+
+
+def test_suffix_immediate():
+    args = [Bytes("my string"), Int(1)]
+    expr = Suffix(args[0], args[1])
+    assert expr.type_of() == TealType.bytes
+
+    expected = TealSimpleBlock(
+        [
+            TealOp(args[0], Op.byte, '"my string"'),
+            TealOp(expr, Op.extract, 1, 0),
+        ]
+    )
+
+    actual, _ = expr.__teal__(teal5Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
+def test_suffix_stack():
+    args = [Bytes("my string"), Int(256)]
+    expr = Suffix(args[0], args[1])
+    assert expr.type_of() == TealType.bytes
+
+    expected = TealSimpleBlock(
+        [
+            TealOp(args[0], Op.byte, '"my string"'),
+            TealOp(args[1], Op.int, 256),
+            TealOp(args[0], Op.byte, '"my string"'),
+            TealOp(Len(args[0]), Op.len),
+            TealOp(expr, Op.substring3),
+        ]
+    )
+
+    actual, _ = expr.__teal__(teal2Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
 
 
 def test_set_bit_int():
