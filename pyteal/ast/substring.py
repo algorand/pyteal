@@ -11,40 +11,26 @@ from .ternaryexpr import TernaryExpr
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
-
-class StringOp(Enum):
-    SUBSTRING = 1
-    EXTRACT = 2
-    SUFFIX = 3
-
-
 class SubstringExpr(Expr):
-    """For optimization using immediate args when index values can each be stored in one byte"""
-    """An expression with three arguments."""
-
     def __init__(
         self,
-        string_op: StringOp,
         stringArg: Expr,
         startArg: Expr,
-        thirdArg: Expr = None
+        endArg: Expr
     ) -> None:
         super().__init__()
 
         require_type(stringArg.type_of(), TealType.bytes)
         require_type(startArg.type_of(), TealType.uint64)
+        require_type(endArg.type_of(), TealType.uint64)
 
-        if string_op != StringOp.SUFFIX:
-            require_type(thirdArg.type_of(), TealType.uint64)
-
-        self.string_op = string_op
         self.stringArg = stringArg
         self.startArg = startArg
-        self.thirdArg = thirdArg
+        self.endArg = endArg
 
     # helper methods for correctly populating self.op
-    def __handleSubstring(self, options: "CompileOptions"):
-        s, e = self.startArg.value, self.thirdArg.value
+    def __setOp(self, options: "CompileOptions"):
+        s, e = self.startArg.value, self.endArg.value
         l = e - s
         if options.version >= Op.extract.min_version:
             if s < 2 ** 8 and l < 2 ** 8:
@@ -57,14 +43,143 @@ class SubstringExpr(Expr):
             else:
                 self.op = Op.substring3
 
-    def __handleExtract(self, options: "CompileOptions"):
-        s, l = self.startArg.value, self.thirdArg.value
-        if s < 2 ** 8 and l < 2 ** 8:
+    def __teal__(self, options: "CompileOptions"):
+        if isinstance(self.startArg, Int) and isinstance(self.endArg, Int):
+            self.__setOp(options)
+        else:
+            return TernaryExpr(
+                Op.substring3,
+                (TealType.bytes, TealType.uint64, TealType.uint64),
+                TealType.bytes,
+                self.stringArg,
+                self.startArg,
+                self.endArg,
+            ).__teal__(options)
+
+        verifyTealVersion(
+            self.op.min_version,
+            options.version,
+            "TEAL version too low to use op {}".format(self.op),
+        )
+
+        if self.op == Op.extract:
+            length = self.endArg.value - self.startArg.value
+            return TealBlock.FromOp(
+                options, TealOp(self, self.op, self.startArg.value, length), self.stringArg
+            )
+        elif self.op == Op.extract3:
+            length = self.endArg.value - self.startArg.value
+            return TealBlock.FromOp(
+                options, TealOp(self, self.op), self.stringArg, self.startArg, Int(length)
+            )
+        elif self.op == Op.substring:
+            return TealBlock.FromOp(
+                options, TealOp(self, self.op, self.startArg.value, self.endArg.value), self.stringArg
+            )
+        elif self.op == Op.substring3:
+            return TealBlock.FromOp(
+                options, TealOp(self, self.op), self.stringArg, self.startArg, self.endArg
+            )
+
+    def __str__(self):
+        return "({} {} {} {})".format(
+            self.op, self.stringArg, self.startArg, self.endArg
+        )
+
+    def type_of(self):
+        return TealType.bytes
+
+    def has_return(self):
+        return False
+
+
+class ExtractExpr(Expr):
+    """For optimization using immediate args when index values can each be stored in one byte"""
+    """An expression with three arguments."""
+
+    def __init__(
+        self,
+        stringArg: Expr,
+        startArg: Expr,
+        lenArg: Expr
+    ) -> None:
+        super().__init__()
+
+        require_type(stringArg.type_of(), TealType.bytes)
+        require_type(startArg.type_of(), TealType.uint64)
+        require_type(lenArg.type_of(), TealType.uint64)
+
+        self.stringArg = stringArg
+        self.startArg = startArg
+        self.lenArg = lenArg
+
+    # helper methods for correctly populating self.op
+    def __setOp(self, options: "CompileOptions"):
+        s, l = self.startArg.value, self.lenArg.value
+        if s < 2 ** 8 and l > 0 and l < 2 ** 8:
             self.op = Op.extract
         else:
             self.op = Op.extract3
 
-    def __handleSuffix(self, options: "CompileOptions"):
+    def __teal__(self, options: "CompileOptions"):
+        if isinstance(self.startArg, Int) and isinstance(self.lenArg, Int):
+            self.__setOp(options)
+        else:
+            return TernaryExpr(
+                Op.extract3,
+                (TealType.bytes, TealType.uint64, TealType.uint64),
+                TealType.bytes,
+                self.stringArg,
+                self.startArg,
+                self.lenArg,
+            ).__teal__(options)
+
+        verifyTealVersion(
+            self.op.min_version,
+            options.version,
+            "TEAL version too low to use op {}".format(self.op),
+        )
+
+        if self.op == Op.extract:
+            return TealBlock.FromOp(
+                options, TealOp(self, self.op, self.startArg.value, self.lenArg.value), self.stringArg
+            )
+        elif self.op == Op.extract3:
+            return TealBlock.FromOp(
+                options, TealOp(self, self.op), self.stringArg, self.startArg, self.lenArg
+            )
+
+    def __str__(self):
+        return "({} {} {} {})".format(
+            self.op, self.stringArg, self.startArg, self.lenArg
+        )
+
+    def type_of(self):
+        return TealType.bytes
+
+    def has_return(self):
+        return False
+
+
+class SuffixExpr(Expr):
+    """For optimization using immediate args when index values can each be stored in one byte"""
+    """An expression with three arguments."""
+
+    def __init__(
+        self,
+        stringArg: Expr,
+        startArg: Expr,
+    ) -> None:
+        super().__init__()
+
+        require_type(stringArg.type_of(), TealType.bytes)
+        require_type(startArg.type_of(), TealType.uint64)
+
+        self.stringArg = stringArg
+        self.startArg = startArg
+
+    # helper methods for correctly populating self.op
+    def __setOp(self, options: "CompileOptions"):
         if not isinstance(self.startArg, Int):
             self.op = Op.substring3
             return
@@ -76,32 +191,7 @@ class SubstringExpr(Expr):
             self.op = Op.substring3
 
     def __teal__(self, options: "CompileOptions"):
-        if (self.string_op == StringOp.SUBSTRING):
-            if isinstance(self.startArg, Int) and isinstance(self.thirdArg, Int):
-                self.__handleSubstring(options)
-            else:
-                return TernaryExpr(
-                    Op.substring3,
-                    (TealType.bytes, TealType.uint64, TealType.uint64),
-                    TealType.bytes,
-                    self.stringArg,
-                    self.startArg,
-                    self.thirdArg,
-                ).__teal__(options)
-        elif (self.string_op == StringOp.EXTRACT):
-            if isinstance(self.startArg, Int) and isinstance(self.thirdArg, Int):
-                self.__handleExtract(options)
-            else:
-                return TernaryExpr(
-                    Op.extract3,
-                    (TealType.bytes, TealType.uint64, TealType.uint64),
-                    TealType.bytes,
-                    self.stringArg,
-                    self.startArg,
-                    self.thirdArg,
-                ).__teal__(options)
-        elif (self.string_op == StringOp.SUFFIX):
-            self.__handleSuffix(options)
+        self.__setOp(options)
 
         verifyTealVersion(
             self.op.min_version,
@@ -110,44 +200,28 @@ class SubstringExpr(Expr):
         )
 
         if self.op == Op.extract:
-            if self.string_op == StringOp.SUFFIX:
-                self.thirdArg = Int(0)
             return TealBlock.FromOp(
-                options, TealOp(self, self.op, self.startArg.value, self.thirdArg.value), self.stringArg
-            )
-        elif self.op == Op.extract3:
-            return TealBlock.FromOp(
-                options, TealOp(self, self.op), self.stringArg, self.startArg, self.thirdArg
-            )
-        elif self.op == Op.substring:
-            return TealBlock.FromOp(
-                options, TealOp(self, self.op, self.startArg.value, self.thirdArg.value), self.stringArg
+                options, TealOp(self, self.op, self.startArg.value, 0), self.stringArg
             )
         elif self.op == Op.substring3:
-            if self.string_op == StringOp.SUFFIX:
-                strBlockStart, strBlockEnd = self.stringArg.__teal__(options)
-                nextBlockStart, nextBlockEnd = self.startArg.__teal__(options)
-                strBlockEnd.setNextBlock(nextBlockStart)
-                
-                finalBlock = TealSimpleBlock(
-                    [
-                        TealOp(..., Op.dig, 1),
-                        TealOp(..., Op.len),
-                        TealOp(..., Op.substring3),
-                    ]
-                )
-                
-                nextBlockEnd.setNextBlock(finalBlock)
-
-                return strBlockStart, finalBlock
-            else:
-                return TealBlock.FromOp(
-                    options, TealOp(self, self.op), self.stringArg, self.startArg, self.thirdArg
-                )
+            strBlockStart, strBlockEnd = self.stringArg.__teal__(options)
+            nextBlockStart, nextBlockEnd = self.startArg.__teal__(options)
+            strBlockEnd.setNextBlock(nextBlockStart)
+            
+            finalBlock = TealSimpleBlock(
+                [
+                    TealOp(..., Op.dig, 1),
+                    TealOp(..., Op.len),
+                    TealOp(..., Op.substring3),
+                ]
+            )
+            
+            nextBlockEnd.setNextBlock(finalBlock)
+            return strBlockStart, finalBlock
 
     def __str__(self):
         return "({} {} {} {})".format(
-            self.op, self.stringArg, self.startArg, self.thirdArg
+            self.op, self.stringArg, self.startArg
         )
 
     def type_of(self):
@@ -174,7 +248,6 @@ def Substring(string: Expr, start: Expr, end: Expr) -> Expr:
             less than or equal to Len(string).
     """
     return SubstringExpr(
-        StringOp.SUBSTRING,
         string,
         start,
         end,
@@ -198,8 +271,7 @@ def Extract(string: Expr, start: Expr, length: Expr) -> Expr:
             :code:`Len(string)`.
         length: The number of bytes to extract. Must be an integer such that :code:`start + length <= Len(string)`.
     """
-    return SubstringExpr(
-        StringOp.EXTRACT,
+    return ExtractExpr(
         string,
         start,
         length,
@@ -220,8 +292,7 @@ def Suffix(string: Expr, start: Expr) -> Expr:
         string: The byte string.
         start: The starting index for the suffix. Must be an integer less than or equal to :code:`Len(string)`.
     """
-    return SubstringExpr(
-        StringOp.SUFFIX,
+    return SuffixExpr(
         string,
         start,
     )
