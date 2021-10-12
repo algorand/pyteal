@@ -90,8 +90,6 @@ def test_substring_stack_v2():
     actual = TealBlock.NormalizeBlocks(actual)
 
     with TealComponent.Context.ignoreExprEquality():
-        print(actual)
-        print(expected)
         assert actual == expected
 
 
@@ -115,8 +113,6 @@ def test_substring_stack_v5():
     actual = TealBlock.NormalizeBlocks(actual)
 
     with TealComponent.Context.ignoreExprEquality():
-        print(actual)
-        print(expected)
         assert actual == expected
 
 
@@ -229,8 +225,7 @@ def test_suffix_immediate():
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
+    assert actual == expected
 
 
 def test_suffix_stack():
@@ -243,9 +238,9 @@ def test_suffix_stack():
         [
             TealOp(args[0], Op.byte, '"{my_string}"'.format(my_string=my_string)),
             TealOp(args[1], Op.int, 257),
-            TealOp(..., Op.dig, 1),
-            TealOp(..., Op.len),
-            TealOp(..., Op.substring3),
+            TealOp(expr, Op.dig, 1),
+            TealOp(expr, Op.len),
+            TealOp(expr, Op.substring3),
         ]
     )
 
@@ -253,6 +248,12 @@ def test_suffix_stack():
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
-        print(actual)
-        assert actual == expected
+    assert actual == expected
+
+
+def test_suffix_invalid():
+    with pytest.raises(TealTypeError):
+        Suffix(Int(0), Int(0))
+
+    with pytest.raises(TealTypeError):
+        Suffix(Bytes("my string"), Txn.sender())
