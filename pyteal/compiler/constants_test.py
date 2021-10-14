@@ -552,7 +552,7 @@ def test_createConstantBlocks_intc():
     If the 4th constant can't fit in one varuint byte (more than 2**7) it
     should be referenced with the Op.intc 4 command.
     """
-    
+
     ops = [
         TealOp(None, Op.int, 0),
         TealOp(None, Op.int, 0),
@@ -588,7 +588,7 @@ def test_createConstantBlocks_small_constant():
     """If a constant cannot be referenced using the intc_[0..3] commands
     and it can be stored in one varuint it byte then Op.pushint is used.
     """
-    
+
     ops = [
         TealOp(None, Op.int, 0),
         TealOp(None, Op.int, 0),
