@@ -116,6 +116,27 @@ def test_substring_stack_v5():
         assert actual == expected
 
 
+def test_zero_length_substring_immediate():
+    my_string = "a" * 257
+    args = [Bytes(my_string), Int(1), Int(1)]
+    expr = Substring(args[0], args[1], args[2])
+    assert expr.type_of() == TealType.bytes
+
+    expected = TealSimpleBlock(
+        [
+            TealOp(args[0], Op.byte, '"{my_string}"'.format(my_string=my_string)),
+            TealOp(expr, Op.substring, 1, 1),
+        ]
+    )
+
+    actual, _ = expr.__teal__(teal5Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
 def test_substring_invalid():
     with pytest.raises(TealTypeError):
         Substring(Int(0), Int(0), Int(2))
@@ -125,6 +146,9 @@ def test_substring_invalid():
 
     with pytest.raises(TealTypeError):
         Substring(Bytes("my string"), Int(0), Txn.sender())
+
+    with pytest.raises(Exception):
+        Substring(Bytes("my string"), Int(1), Int(0)).__teal__(teal5Options)
 
 
 def test_extract_immediate():

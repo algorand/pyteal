@@ -2,7 +2,7 @@ from enum import Enum
 from typing import cast, Tuple, TYPE_CHECKING
 
 from ..types import TealType, require_type
-from ..errors import verifyTealVersion
+from ..errors import TealCompileError, verifyTealVersion
 from ..ir import TealOp, Op, TealBlock, TealSimpleBlock
 from .expr import Expr
 from .int import Int
@@ -26,25 +26,30 @@ class SubstringExpr(Expr):
         self.startArg = startArg
         self.endArg = endArg
 
-    # helper method for correctly populating self.op
-    def __setOp(self, options: "CompileOptions"):
+    # helper method for correctly populating op
+    def __getOp(self, options: "CompileOptions"):
         s, e = cast(Int, self.startArg).value, cast(Int, self.endArg).value
         l = e - s
-        if options.version >= Op.extract.min_version:
+
+        if l < 0:
+            raise TealCompileError(
+                "The end index must be greater than or equal to the start index",
+                self,
+            )
+
+        if l > 0 and options.version >= Op.extract.min_version:
             if s < 2 ** 8 and l < 2 ** 8:
-                self.op = Op.extract
+                return Op.extract
             else:
-                self.op = Op.extract3
+                return Op.extract3
         else:
             if s < 2 ** 8 and e < 2 ** 8:
-                self.op = Op.substring
+                return Op.substring
             else:
-                self.op = Op.substring3
+                return Op.substring3
 
     def __teal__(self, options: "CompileOptions"):
-        if isinstance(self.startArg, Int) and isinstance(self.endArg, Int):
-            self.__setOp(options)
-        else:
+        if not isinstance(self.startArg, Int) or not isinstance(self.endArg, Int):
             return TernaryExpr(
                 Op.substring3,
                 (TealType.bytes, TealType.uint64, TealType.uint64),
@@ -54,46 +59,46 @@ class SubstringExpr(Expr):
                 self.endArg,
             ).__teal__(options)
 
+        op = self.__getOp(options)
+
         verifyTealVersion(
-            self.op.min_version,
+            op.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(self.op),
+            "TEAL version too low to use op {}".format(op),
         )
 
         start, end = cast(Int, self.startArg).value, cast(Int, self.endArg).value
-        if self.op == Op.extract:
+        if op == Op.extract:
             length = end - start
             return TealBlock.FromOp(
                 options,
-                TealOp(self, self.op, self.startArg.value, length),
+                TealOp(self, op, self.startArg.value, length),
                 self.stringArg,
             )
-        elif self.op == Op.extract3:
+        elif op == Op.extract3:
             length = end - start
             return TealBlock.FromOp(
                 options,
-                TealOp(self, self.op),
+                TealOp(self, op),
                 self.stringArg,
                 self.startArg,
                 Int(length),
             )
-        elif self.op == Op.substring:
+        elif op == Op.substring:
             return TealBlock.FromOp(
-                options, TealOp(self, self.op, start, end), self.stringArg
+                options, TealOp(self, op, start, end), self.stringArg
             )
-        elif self.op == Op.substring3:
+        elif op == Op.substring3:
             return TealBlock.FromOp(
                 options,
-                TealOp(self, self.op),
+                TealOp(self, op),
                 self.stringArg,
                 self.startArg,
                 self.endArg,
             )
 
     def __str__(self):
-        return "({} {} {} {})".format(
-            self.op, self.stringArg, self.startArg, self.endArg
-        )
+        return "(Substring {} {} {})".format(self.stringArg, self.startArg, self.endArg)
 
     def type_of(self):
         return TealType.bytes
@@ -116,18 +121,16 @@ class ExtractExpr(Expr):
         self.startArg = startArg
         self.lenArg = lenArg
 
-    # helper method for correctly populating self.op
-    def __setOp(self, options: "CompileOptions"):
+    # helper method for correctly populating op
+    def __getOp(self, options: "CompileOptions"):
         s, l = cast(Int, self.startArg).value, cast(Int, self.lenArg).value
         if s < 2 ** 8 and l > 0 and l < 2 ** 8:
-            self.op = Op.extract
+            return Op.extract
         else:
-            self.op = Op.extract3
+            return Op.extract3
 
     def __teal__(self, options: "CompileOptions"):
-        if isinstance(self.startArg, Int) and isinstance(self.lenArg, Int):
-            self.__setOp(options)
-        else:
+        if not isinstance(self.startArg, Int) or not isinstance(self.lenArg, Int):
             return TernaryExpr(
                 Op.extract3,
                 (TealType.bytes, TealType.uint64, TealType.uint64),
@@ -137,30 +140,28 @@ class ExtractExpr(Expr):
                 self.lenArg,
             ).__teal__(options)
 
+        op = self.__getOp(options)
+
         verifyTealVersion(
-            self.op.min_version,
+            op.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(self.op),
+            "TEAL version too low to use op {}".format(op),
         )
 
         s, l = cast(Int, self.startArg).value, cast(Int, self.lenArg).value
-        if self.op == Op.extract:
-            return TealBlock.FromOp(
-                options, TealOp(self, self.op, s, l), self.stringArg
-            )
-        elif self.op == Op.extract3:
+        if op == Op.extract:
+            return TealBlock.FromOp(options, TealOp(self, op, s, l), self.stringArg)
+        elif op == Op.extract3:
             return TealBlock.FromOp(
                 options,
-                TealOp(self, self.op),
+                TealOp(self, op),
                 self.stringArg,
                 self.startArg,
                 self.lenArg,
             )
 
     def __str__(self):
-        return "({} {} {} {})".format(
-            self.op, self.stringArg, self.startArg, self.lenArg
-        )
+        return "(Extract {} {} {})".format(self.stringArg, self.startArg, self.lenArg)
 
     def type_of(self):
         return TealType.bytes
@@ -185,36 +186,35 @@ class SuffixExpr(Expr):
         self.stringArg = stringArg
         self.startArg = startArg
 
-    # helper method for correctly populating self.op
-    def __setOp(self, options: "CompileOptions"):
+    # helper method for correctly populating op
+    def __getOp(self, options: "CompileOptions"):
         if not isinstance(self.startArg, Int):
-            self.op = Op.substring3
-            return
+            return Op.substring3
 
         s = cast(Int, self.startArg).value
         if s < 2 ** 8:
-            self.op = Op.extract
+            return Op.extract
         else:
-            self.op = Op.substring3
+            return Op.substring3
 
     def __teal__(self, options: "CompileOptions"):
-        self.__setOp(options)
+        op = self.__getOp(options)
 
         verifyTealVersion(
-            self.op.min_version,
+            op.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(self.op),
+            "TEAL version too low to use op {}".format(op),
         )
 
-        if self.op == Op.extract:
+        if op == Op.extract:
             # if possible, exploit optimization in the extract opcode that takes the suffix
             # when the length argument is 0
             return TealBlock.FromOp(
                 options,
-                TealOp(self, self.op, cast(Int, self.startArg).value, 0),
+                TealOp(self, op, cast(Int, self.startArg).value, 0),
                 self.stringArg,
             )
-        elif self.op == Op.substring3:
+        elif op == Op.substring3:
             strBlockStart, strBlockEnd = self.stringArg.__teal__(options)
             nextBlockStart, nextBlockEnd = self.startArg.__teal__(options)
             strBlockEnd.setNextBlock(nextBlockStart)
@@ -231,7 +231,7 @@ class SuffixExpr(Expr):
             return strBlockStart, finalBlock
 
     def __str__(self):
-        return "({} {} {})".format(self.op, self.stringArg, self.startArg)
+        return "(Suffix {} {})".format(self.stringArg, self.startArg)
 
     def type_of(self):
         return TealType.bytes
