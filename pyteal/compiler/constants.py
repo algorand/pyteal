@@ -132,6 +132,8 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
     sortedInts = sorted(intFreqs, key=lambda x: intFreqs[x], reverse=True)
     sortedBytes = sorted(byteFreqs, key=lambda x: byteFreqs[x], reverse=True)
 
+    # Use Op.pushint if the constant does not occur in the top 4 most frequent and is smaller than
+    # 2 ** 7 to improve performance and save block space.
     intBlock = [
         val
         for i, val in enumerate(sortedInts)

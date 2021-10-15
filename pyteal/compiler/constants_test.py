@@ -589,32 +589,33 @@ def test_createConstantBlocks_small_constant():
     and it can be stored in one varuint it byte then Op.pushint is used.
     """
 
-    ops = [
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.int, 4),
-        TealOp(None, Op.int, 4),
-    ]
+    for cur in range(4, 2 ** 7):
+        ops = [
+            TealOp(None, Op.int, 0),
+            TealOp(None, Op.int, 0),
+            TealOp(None, Op.int, 1),
+            TealOp(None, Op.int, 1),
+            TealOp(None, Op.int, 2),
+            TealOp(None, Op.int, 2),
+            TealOp(None, Op.int, 3),
+            TealOp(None, Op.int, 3),
+            TealOp(None, Op.int, cur),
+            TealOp(None, Op.int, cur),
+        ]
 
-    expected = [
-        TealOp(None, Op.intcblock, 0, 1, 2, 3),
-        TealOp(None, Op.intc_0, "//", 0),
-        TealOp(None, Op.intc_0, "//", 0),
-        TealOp(None, Op.intc_1, "//", 1),
-        TealOp(None, Op.intc_1, "//", 1),
-        TealOp(None, Op.intc_2, "//", 2),
-        TealOp(None, Op.intc_2, "//", 2),
-        TealOp(None, Op.intc_3, "//", 3),
-        TealOp(None, Op.intc_3, "//", 3),
-        TealOp(None, Op.pushint, 4, "//", 4),
-        TealOp(None, Op.pushint, 4, "//", 4),
-    ]
+        expected = [
+            TealOp(None, Op.intcblock, 0, 1, 2, 3),
+            TealOp(None, Op.intc_0, "//", 0),
+            TealOp(None, Op.intc_0, "//", 0),
+            TealOp(None, Op.intc_1, "//", 1),
+            TealOp(None, Op.intc_1, "//", 1),
+            TealOp(None, Op.intc_2, "//", 2),
+            TealOp(None, Op.intc_2, "//", 2),
+            TealOp(None, Op.intc_3, "//", 3),
+            TealOp(None, Op.intc_3, "//", 3),
+            TealOp(None, Op.pushint, cur, "//", cur),
+            TealOp(None, Op.pushint, cur, "//", cur),
+        ]
 
-    actual = createConstantBlocks(ops)
-    assert actual == expected
+        actual = createConstantBlocks(ops)
+        assert actual == expected
