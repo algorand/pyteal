@@ -545,3 +545,77 @@ def test_createConstantBlocks_tmpl_all():
 
     actual = createConstantBlocks(ops)
     assert actual == expected
+
+
+def test_createConstantBlocks_intc():
+    """Test scenario where there are more than 4 constants in the intcblock.
+    If the 4th constant can't fit in one varuint byte (more than 2**7) it
+    should be referenced with the Op.intc 4 command.
+    """
+
+    ops = [
+        TealOp(None, Op.int, 0),
+        TealOp(None, Op.int, 0),
+        TealOp(None, Op.int, 1),
+        TealOp(None, Op.int, 1),
+        TealOp(None, Op.int, 2),
+        TealOp(None, Op.int, 2),
+        TealOp(None, Op.int, 3),
+        TealOp(None, Op.int, 3),
+        TealOp(None, Op.int, 2 ** 7),
+        TealOp(None, Op.int, 2 ** 7),
+    ]
+
+    expected = [
+        TealOp(None, Op.intcblock, 0, 1, 2, 3, 2 ** 7),
+        TealOp(None, Op.intc_0, "//", 0),
+        TealOp(None, Op.intc_0, "//", 0),
+        TealOp(None, Op.intc_1, "//", 1),
+        TealOp(None, Op.intc_1, "//", 1),
+        TealOp(None, Op.intc_2, "//", 2),
+        TealOp(None, Op.intc_2, "//", 2),
+        TealOp(None, Op.intc_3, "//", 3),
+        TealOp(None, Op.intc_3, "//", 3),
+        TealOp(None, Op.intc, 4, "//", 2 ** 7),
+        TealOp(None, Op.intc, 4, "//", 2 ** 7),
+    ]
+
+    actual = createConstantBlocks(ops)
+    assert actual == expected
+
+
+def test_createConstantBlocks_small_constant():
+    """If a constant cannot be referenced using the intc_[0..3] commands
+    and it can be stored in one varuint it byte then Op.pushint is used.
+    """
+
+    for cur in range(4, 2 ** 7):
+        ops = [
+            TealOp(None, Op.int, 0),
+            TealOp(None, Op.int, 0),
+            TealOp(None, Op.int, 1),
+            TealOp(None, Op.int, 1),
+            TealOp(None, Op.int, 2),
+            TealOp(None, Op.int, 2),
+            TealOp(None, Op.int, 3),
+            TealOp(None, Op.int, 3),
+            TealOp(None, Op.int, cur),
+            TealOp(None, Op.int, cur),
+        ]
+
+        expected = [
+            TealOp(None, Op.intcblock, 0, 1, 2, 3),
+            TealOp(None, Op.intc_0, "//", 0),
+            TealOp(None, Op.intc_0, "//", 0),
+            TealOp(None, Op.intc_1, "//", 1),
+            TealOp(None, Op.intc_1, "//", 1),
+            TealOp(None, Op.intc_2, "//", 2),
+            TealOp(None, Op.intc_2, "//", 2),
+            TealOp(None, Op.intc_3, "//", 3),
+            TealOp(None, Op.intc_3, "//", 3),
+            TealOp(None, Op.pushint, cur, "//", cur),
+            TealOp(None, Op.pushint, cur, "//", cur),
+        ]
+
+        actual = createConstantBlocks(ops)
+        assert actual == expected
