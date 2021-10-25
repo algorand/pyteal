@@ -135,7 +135,6 @@ __all__ = [
     "For",
     "Break",
     "Continue",
-
     # ir
     "Op",
     "Mode",
@@ -146,8 +145,7 @@ __all__ = [
     "TealSimpleBlock",
     "TealConditionalBlock",
     "LabelReference",
-
-    # Base 
+    # Base
     "MAX_TEAL_VERSION",
     "MIN_TEAL_VERSION",
     "DEFAULT_TEAL_VERSION",
