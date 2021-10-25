@@ -19,6 +19,7 @@ Operator                            Overloaded     Semantics                    
 :any:`Mul(a, b) <Mul>`              :code:`a * b`  `a * b`, error if overflow                        :code:`Int(2) * Int(3)`
 :any:`Div(a, b) <Div>`              :code:`a / b`  `a / b`, error if divided by zero                 :code:`Int(3) / Int(2)`
 :any:`Mod(a, b) <Mod>`              :code:`a % b`  `a % b`, modulo operation                         :code:`Int(7) % Int(3)`
+:any:`Exp(a, b) <Exp>`              :code:`a ** b` `a ** b`, exponent operation                      :code:`Int(7) ** Int(3)`
 :any:`Eq(a, b) <Eq>`                :code:`a == b` `1` if `a` equals `b`, `0` otherwise              :code:`Int(7) == Int(7)`
 :any:`Neq(a, b) <Neq>`              :code:`a != b` `0` if `a` equals `b`, `1` otherwise              :code:`Int(7) != Int(7)`
 :any:`And(a, b) <pyteal.And>`                      `1` if `a > 0 && b > 0`, `0` otherwise            :code:`And(Int(1), Int(1))`
