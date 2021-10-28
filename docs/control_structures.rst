@@ -26,8 +26,10 @@ These expressions also work inside :ref:`subroutines <subroutine_expr>`.
 Chaining Expressions: :code:`Seq`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The :any:`Seq` expression can be used to create a sequence of multiple expressions. It takes either a 
-single list of expressions, or a set of Expression arguments to include in the sequence. For example:
+The :any:`Seq` expression can be used to create a sequence of multiple expressions.  It's arguments are the 
+expressions to include in the sequence, either as a variable number of arguments, or as a single list
+
+For example:
 
 .. code-block:: python
 
