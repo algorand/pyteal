@@ -3,21 +3,19 @@ from pyteal import __all__ as static_all
 
 
 # Start of the template to be appended to
-pyi_template = """
-## File generated from scripts/generate_init.py.
+pyi_template = """## File generated from scripts/generate_init.py.
 ## DO NOT EDIT DIRECTLY
+
 """
 
 # Template for __all__ export list
-all_template = """
-__all__ = [
+all_template = """__all__ = [
     {}
-]
-"""
+]"""
 
 # Flags to denote the beginning/end of the __all__ exports in __init__.py
-begin_flag = "#begin __all__"
-end_flag = "#end __all__"
+begin_flag = "# begin __all__"
+end_flag = "# end __all__"
 
 # Make it safe to run from anywhere
 curr_dir = os.path.dirname(os.path.abspath(__file__))
@@ -78,7 +76,9 @@ if __name__ == "__main__":
 
     if args.check:
         if is_different(regen):
-            print("The __init__.pyi needs to be regenerated. Please run scripts/generate_init.py")
+            print(
+                "The __init__.pyi needs to be regenerated. Please run scripts/generate_init.py"
+            )
             sys.exit(1)
         print("No changes in __init__.py")
         sys.exit(0)

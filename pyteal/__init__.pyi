@@ -1,4 +1,6 @@
-## File generated from scripts/generate_init.py DO NOT EDIT DIRECTLY
+## File generated from scripts/generate_init.py.
+## DO NOT EDIT DIRECTLY
+
 from .ast import *
 from .ast import __all__ as ast_all
 from .ir import *
@@ -155,5 +157,5 @@ __all__ = [
     "TealInputError",
     "TealCompileError",
     "MAX_GROUP_SIZE",
-    "NUM_SLOTS",
+    "NUM_SLOTS"
 ]
