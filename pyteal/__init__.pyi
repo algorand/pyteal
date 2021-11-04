@@ -157,5 +157,5 @@ __all__ = [
     "TealInputError",
     "TealCompileError",
     "MAX_GROUP_SIZE",
-    "NUM_SLOTS"
+    "NUM_SLOTS",
 ]
