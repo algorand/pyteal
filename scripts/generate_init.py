@@ -10,7 +10,7 @@ pyi_template = """## File generated from scripts/generate_init.py.
 
 # Template for __all__ export list
 all_template = """__all__ = [
-    {}
+    {},
 ]"""
 
 # Flags to denote the beginning/end of the __all__ exports in __init__.py
