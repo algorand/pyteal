@@ -4,7 +4,8 @@ from pyteal import __all__ as static_all
 
 # Start of the template to be appended to
 pyi_template = """
-## File generated from scripts/generate_init.py DO NOT EDIT DIRECTLY
+## File generated from scripts/generate_init.py.
+## DO NOT EDIT DIRECTLY
 """
 
 # Template for __all__ export list
@@ -77,10 +78,9 @@ if __name__ == "__main__":
 
     if args.check:
         if is_different(regen):
-            print("File changed!")
+            print("The __init__.pyi needs to be regenerated. Please run scripts/generate_init.py")
             sys.exit(1)
-
-        print("File same, we chillin")
+        print("No changes in __init__.py")
         sys.exit(0)
 
     overwrite(regen)
