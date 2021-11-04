@@ -1,6 +1,8 @@
+## File generated from scripts/generate_init.py DO NOT EDIT DIRECTLY
 from .ast import *
+from .ast import __all__ as ast_all
 from .ir import *
-
+from .ir import __all__ as ir_all
 from .compiler import (
     MAX_TEAL_VERSION,
     MIN_TEAL_VERSION,
@@ -8,7 +10,6 @@ from .compiler import (
     CompileOptions,
     compileTeal,
 )
-
 from .types import TealType
 from .errors import TealInternalError, TealTypeError, TealInputError, TealCompileError
 from .config import MAX_GROUP_SIZE, NUM_SLOTS

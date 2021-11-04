@@ -1,70 +1,68 @@
 import argparse, os, sys
-
-
 from pyteal import __all__ as static_all
 
 
+# Start of the template to be appended to
 pyi_template = """
-from .ast import *
-from .ir import *
+## File generated from scripts/generate_init.py DO NOT EDIT DIRECTLY
+"""
 
-from .compiler import (
-    MAX_TEAL_VERSION,
-    MIN_TEAL_VERSION,
-    DEFAULT_TEAL_VERSION,
-    CompileOptions,
-    compileTeal,
-)
-
-from .types import TealType
-from .errors import TealInternalError, TealTypeError, TealInputError, TealCompileError
-from .config import MAX_GROUP_SIZE, NUM_SLOTS
-
+# Template for __all__ export list
+all_template = """
 __all__ = [
-{}
+    {}
 ]
 """
 
-pyi_file = "__init__.pyi"
+# Flags to denote the beginning/end of the __all__ exports in __init__.py
+begin_flag = "#begin __all__"
+end_flag = "#end __all__"
+
+# Make it safe to run from anywhere
 curr_dir = os.path.dirname(os.path.abspath(__file__))
-orig_dir = os.path.relpath("../pyteal", curr_dir)
+orig_dir = os.path.join(curr_dir, os.path.join("..", "pyteal"))
+
+# Path to pyi
+pyi_file = "__init__.pyi"
+orig_file = os.path.join(orig_dir, pyi_file)
+
+# Path to py
+py_file = "__init__.py"
+init_file = os.path.join(orig_dir, py_file)
 
 
 def generate_tmp():
+    with open(init_file, "r") as f:
+        init_contents = f.read()
 
-    all_imports = ",\n".join(['"{}"'.format(s) for s in static_all])
+    start_idx = init_contents.index(begin_flag)
+    end_idx = init_contents.index(end_flag)
 
-    with open(os.path.join(curr_dir, pyi_file), "w") as f:
-        f.write(pyi_template.format(all_imports))
+    all_imports = ",\n    ".join(['"{}"'.format(s) for s in static_all])
+
+    return (
+        pyi_template
+        + init_contents[:start_idx]
+        + all_template.format(all_imports)
+        + init_contents[end_idx + len(end_flag) :]
+    )
 
 
-def is_different():
-    orig_file = os.path.join(orig_dir, pyi_file)
-
+def is_different(regen):
     if not os.path.exists(orig_file):
         return True
 
-    with open(orig_file) as f:
+    with open(orig_file, "r") as f:
         orig_lines = f.readlines()
-    with open(os.path.join(curr_dir, pyi_file)) as f:
-        curr_lines = f.readlines()
 
-    if len(orig_lines) != len(curr_lines):
-        return True
+    curr_lines = regen.split("\n")
 
-    for lidx in range(len(orig_lines)):
-        if orig_lines[lidx] != curr_lines[lidx]:
-            return True
-
-    return False
+    return orig_lines == curr_lines
 
 
-def overwrite():
-    os.rename(os.path.join(curr_dir, pyi_file), os.path.join(orig_dir, pyi_file))
-
-
-def delete():
-    os.remove(os.path.join(curr_dir, pyi_file))
+def overwrite(regen):
+    with open(orig_file, "w") as f:
+        f.write(regen)
 
 
 if __name__ == "__main__":
@@ -75,15 +73,14 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    generate_tmp()
+    regen = generate_tmp()
 
     if args.check:
-        if is_different():
+        if is_different(regen):
             print("File changed!")
             sys.exit(1)
-        else:
-            print("File same, we chillin")
-            delete()
-            sys.exit(0)
 
-    overwrite()
+        print("File same, we chillin")
+        sys.exit(0)
+
+    overwrite(regen)
