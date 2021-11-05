@@ -68,7 +68,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--check", action="store_true", help="Only check if the generated file would change"
+        "--check",
+        action="store_true",
+        help="Only check if the generated file would change",
     )
     args = parser.parse_args()
 
