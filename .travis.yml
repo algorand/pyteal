@@ -6,6 +6,7 @@ install:
 script:
   - pytest
   - mypy pyteal
+  - python3 -c "import pyteal" scripts/generate_init.py --check
   - black --check .
 
 jobs:
