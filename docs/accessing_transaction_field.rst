@@ -69,7 +69,6 @@ Operator                                                                        
 :any:`Txn.assets <TxnObject.assets>`                                             :code:`TealType.uint64[]` 3                Array of application assets
 :any:`Txn.applications <TxnObject.applications>`                                 :code:`TealType.uint64[]` 3                Array of applications
 :any:`InnerTxn.created_asset_id() <TxnObject.created_asset_id>`                  :code:`TealType.uint64`   5                The ID of the newly created asset in this transaction. This is only valid on inner transactions.
-:any:`InnerTxn.created_application_id() <TxnObject.created_application_id>`      :code:`TealType.uint64`   5                The ID of the newly created application in this transaction. This is only valid on inner transactions.
 :any:`InnerTxn.logs <TxnObject.logs>`                                            :code:`TealType.bytes[]`  5                Array of application logged items. This is only valid on inner transactions.
 ================================================================================ ========================= ================ ============================================================================
 
