@@ -132,14 +132,7 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
     sortedInts = sorted(intFreqs, key=lambda x: intFreqs[x], reverse=True)
     sortedBytes = sorted(byteFreqs, key=lambda x: byteFreqs[x], reverse=True)
 
-    # Use Op.pushint if the constant does not occur in the top 4 most frequent and is smaller than
-    # 2 ** 7 to improve performance and save block space.
-    intBlock = [
-        val
-        for i, val in enumerate(sortedInts)
-        if intFreqs[val] > 1 and (i < 4 or isinstance(val, str) or val >= 2 ** 7)
-    ]
-
+    intBlock = [i for i in sortedInts if intFreqs[i] > 1]
     byteBlock = [
         ("0x" + b.hex()) if type(b) is bytes else cast(str, b)
         for b in sortedBytes
@@ -158,13 +151,13 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
 
             if basicOp == Op.int:
                 intValue = extractIntValue(op)
-                if intValue not in intBlock:
+                if intFreqs[intValue] == 1:
                     assembled.append(
                         TealOp(op.expr, Op.pushint, intValue, "//", *op.args)
                     )
                     continue
 
-                index = intBlock.index(intValue)
+                index = sortedInts.index(intValue)
                 if index == 0:
                     assembled.append(TealOp(op.expr, Op.intc_0, "//", *op.args))
                 elif index == 1:
