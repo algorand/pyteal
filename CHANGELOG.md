@@ -1,3 +1,12 @@
+# 0.9.1
+
+## Added
+* Documentation for exponent operator ([#134](https://github.com/algorand/pyteal/pull/134))
+* Documentation for using `Seq` with lists ([#135](https://github.com/algorand/pyteal/pull/135))
+
+## Fixed
+* Fixed use of wildcard import in Pylance ([#133](https://github.com/algorand/pyteal/pull/133))
+
 # 0.9.0
 
 ## Added
