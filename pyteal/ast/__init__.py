@@ -88,7 +88,8 @@ from .binaryexpr import (
 )
 
 # ternary ops
-from .ternaryexpr import Ed25519Verify, Substring, Extract, SetBit, SetByte
+from .ternaryexpr import Ed25519Verify, SetBit, SetByte
+from .substring import Substring, Extract, Suffix
 
 # more ops
 from .naryexpr import NaryExpr, And, Or, Concat
@@ -189,6 +190,7 @@ __all__ = [
     "Ed25519Verify",
     "Substring",
     "Extract",
+    "Suffix",
     "SetBit",
     "SetByte",
     "NaryExpr",
