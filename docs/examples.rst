@@ -12,7 +12,7 @@ Atomic Swap
 ~~~~~~~~~~~~~~~
 
 *Atomic Swap* allows the transfer of Algos from a buyer to a seller in exchange for a good or
-service. This is done using a *Hashed Time Locked Contract*. In this scheme, the buyer and funds a
+service. This is done using a *Hashed Time Locked Contract*. In this scheme, the buyer funds a
 TEAL account with the sale price. The buyer also picks a secret value and encodes a secure hash of
 this value in the TEAL program. The TEAL program will transfer its balance to the seller if the
 seller is able to provide the secret value that corresponds to the hash in the program. When the
