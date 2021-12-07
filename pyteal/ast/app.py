@@ -150,7 +150,7 @@ class App(LeafExpr):
         Args:
             app: An index into Txn.ForeignApps that corresponds to the application to read from,
                 must be evaluated to uint64 (or, since v4, an application id that appears in
-                Txn.ForeignApps or is the CurrentApplicationID, must be evaluated to bytes).
+                Txn.ForeignApps or is the CurrentApplicationID, must be evaluated to uint64).
             key: The key to read from the global application state. Must evaluate to bytes.
         """
         require_type(app.type_of(), TealType.uint64)
