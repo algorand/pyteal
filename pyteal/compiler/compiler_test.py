@@ -134,7 +134,7 @@ def test_compile_version_invalid():
         compileTeal(expr, Mode.Signature, version=1)  # too small
 
     with pytest.raises(TealInputError):
-        compileTeal(expr, Mode.Signature, version=6)  # too large
+        compileTeal(expr, Mode.Signature, version=MAX_TEAL_VERSION+1)  # too large
 
     with pytest.raises(TealInputError):
         compileTeal(expr, Mode.Signature, version=2.0)  # decimal
