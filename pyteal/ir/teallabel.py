@@ -20,7 +20,7 @@ class TealLabel(TealComponent):
 
     def assemble(self) -> str:
         comment = " // {}".format(self.comment) if self.comment is not None else ""
-        return "{}:{}".format(self.label.getLabel(), comment)
+        return "\n{}:{}".format(self.label.getLabel(), comment)
 
     def __repr__(self) -> str:
         return "TealLabel({}, {}, {})".format(
