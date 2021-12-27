@@ -172,6 +172,7 @@ class Op(Enum):
     itxn_next           = OpType("itxn_next",           Mode.Application,                  6)
     gitxn               = OpType("gitxn",               Mode.Application,                  6)
     gitxna              = OpType("gitxna",              Mode.Application,                  6)
+    gloadss             = OpType("gloadss",             Mode.Application,                  6)
     # fmt: on
 
 
