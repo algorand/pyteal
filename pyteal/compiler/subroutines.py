@@ -226,7 +226,7 @@ def resolveSubroutines(
     subroutineOrder = sorted(allButMainRoutine, key=lambda subroutine: subroutine.id)
     subroutineToLabel: Dict[SubroutineDefinition, str] = OrderedDict()
     for index, subroutine in enumerate(subroutineOrder):
-        subroutineToLabel[subroutine] = "sub{}".format(index)  # subroutine.name()
+        subroutineToLabel[subroutine] = "sub{}".format(index)
 
     for subroutine, label in subroutineToLabel.items():
         for ops in subroutineMapping.values():

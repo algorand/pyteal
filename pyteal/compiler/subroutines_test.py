@@ -1288,8 +1288,8 @@ def test_resolveSubroutines():
         return None
 
     subroutine1 = SubroutineDefinition(sub1Impl, TealType.uint64)
-    subroutine2 = SubroutineDefinition(sub1Impl, TealType.uint64)
-    subroutine3 = SubroutineDefinition(sub1Impl, TealType.none)
+    subroutine2 = SubroutineDefinition(sub2Impl, TealType.uint64)
+    subroutine3 = SubroutineDefinition(sub3Impl, TealType.none)
 
     subroutine1L1Label = LabelReference("l1")
     subroutine1Ops = [
