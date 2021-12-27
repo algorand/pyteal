@@ -12,6 +12,7 @@ int 1
 ==
 bnz main_l4
 err
+
 main_l4:
 txn RekeyTo
 global ZeroAddress
@@ -51,6 +52,7 @@ int TMPL_ASSET_A
 ||
 &&
 b main_l7
+
 main_l5:
 gtxn 0 RekeyTo
 global ZeroAddress
@@ -157,6 +159,7 @@ gtxn 3 Receiver
 ==
 &&
 b main_l7
+
 main_l6:
 gtxn 0 RekeyTo
 global ZeroAddress
@@ -297,5 +300,6 @@ gtxn 3 Receiver
 gtxn 4 Receiver
 ==
 &&
+
 main_l7:
 return

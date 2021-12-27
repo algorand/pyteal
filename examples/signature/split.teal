@@ -30,6 +30,7 @@ int 3000
 >
 &&
 b main_l3
+
 main_l2:
 gtxn 0 Sender
 gtxn 1 Sender
@@ -60,6 +61,7 @@ gtxn 0 Amount
 int 1000
 ==
 &&
+
 main_l3:
 &&
 return
