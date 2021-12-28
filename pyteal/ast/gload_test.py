@@ -7,6 +7,7 @@ from .. import MAX_GROUP_SIZE, NUM_SLOTS, CompileOptions
 
 teal3Options = CompileOptions(version=3)
 teal4Options = CompileOptions(version=4)
+teal6Options = CompileOptions(version=6)
 
 
 def test_gload_teal_3():
@@ -54,3 +55,6 @@ def test_gload_invalid():
 
     with pytest.raises(TealInputError):
         ImportScratchValue(0, NUM_SLOTS)
+
+
+# TODO gloadss test
