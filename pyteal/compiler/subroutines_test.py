@@ -1288,8 +1288,8 @@ def test_resolveSubroutines():
         return None
 
     subroutine1 = SubroutineDefinition(sub1Impl, TealType.uint64)
-    subroutine2 = SubroutineDefinition(sub1Impl, TealType.uint64)
-    subroutine3 = SubroutineDefinition(sub1Impl, TealType.none)
+    subroutine2 = SubroutineDefinition(sub2Impl, TealType.uint64)
+    subroutine3 = SubroutineDefinition(sub3Impl, TealType.none)
 
     subroutine1L1Label = LabelReference("l1")
     subroutine1Ops = [
@@ -1366,9 +1366,9 @@ def test_resolveSubroutines():
     }
 
     expected = OrderedDict()
-    expected[subroutine1] = "sub0"
-    expected[subroutine2] = "sub1"
-    expected[subroutine3] = "sub2"
+    expected[subroutine1] = "sub1Impl_0"
+    expected[subroutine2] = "sub2Impl_1"
+    expected[subroutine3] = "sub3Impl_2"
 
     actual = resolveSubroutines(subroutineMapping)
     assert actual == expected

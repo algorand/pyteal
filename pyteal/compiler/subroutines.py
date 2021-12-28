@@ -1,3 +1,4 @@
+import re
 from typing import List, Dict, Set, Optional, TypeVar
 from collections import OrderedDict
 from itertools import chain
@@ -226,7 +227,8 @@ def resolveSubroutines(
     subroutineOrder = sorted(allButMainRoutine, key=lambda subroutine: subroutine.id)
     subroutineToLabel: Dict[SubroutineDefinition, str] = OrderedDict()
     for index, subroutine in enumerate(subroutineOrder):
-        subroutineToLabel[subroutine] = "sub{}".format(index)
+        safer_name = re.sub(r"[^A-Za-z0-9]", "", subroutine.name())
+        subroutineToLabel[subroutine] = "{}_{}".format(safer_name, index)
 
     for subroutine, label in subroutineToLabel.items():
         for ops in subroutineMapping.values():
