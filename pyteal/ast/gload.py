@@ -83,7 +83,7 @@ class ImportScratchValue(LeafExpr):
                 op = TealOp(self, Op.gloads, self.slotId)
                 return TealBlock.FromOp(options, op, cast(Expr, self.txnIndex))
         else:
-            op = TealOp(self, Op.gloadss, self.txnIndex, self.slotId)
+            op = TealOp(self, Op.gloadss)
             return TealBlock.FromOp(
                 options, op, cast(Expr, self.txnIndex), cast(Expr, self.slotId)
             )
