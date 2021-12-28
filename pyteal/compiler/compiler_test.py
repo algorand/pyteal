@@ -1327,6 +1327,26 @@ retsub
     assert actual == expected
 
 
+def test_compile_subroutine_invalid_name():
+    def tmp() -> Expr:
+        return Int(1)
+
+    tmp.__name__ = "invalid-;)"
+
+    program = Subroutine(TealType.uint64)(tmp)()
+    expected = """#pragma version 4
+callsub invalid_0
+return
+
+// invalid-;)
+invalid_0:
+int 1
+retsub
+    """.strip()
+    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert actual == expected
+
+
 def test_compile_subroutine_assemble_constants():
     @Subroutine(TealType.none)
     def storeValue(key: Expr, t1: Expr, t2: Expr, t3: Expr) -> Expr:
