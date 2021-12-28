@@ -51,10 +51,8 @@ int 1
 bnz main_l2
 int 3
 b main_l3
-
 main_l2:
 int 2
-
 main_l3:
 return
 """.strip()
@@ -76,14 +74,11 @@ int 3
 bnz main_l3
 int 5
 b main_l5
-
 main_l3:
 int 4
 b main_l5
-
 main_l4:
 int 2
-
 main_l5:
 return
 """.strip()
@@ -107,7 +102,6 @@ txn ApplicationID
 int 0
 ==
 bnz main_l1
-
 main_l1:
 int 1
 return
@@ -342,7 +336,6 @@ def test_compile_while():
     #pragma version 4
 int 0
 store 0
-
 main_l1:
 load 0
 int 2
@@ -353,7 +346,6 @@ int 1
 +
 store 0
 b main_l1
-
 main_l3:
 int 1
 return
@@ -384,7 +376,6 @@ return
     expected = """#pragma version 4
 int 0
 store 0
-
 main_l1:
 load 0
 int 2
@@ -392,7 +383,6 @@ int 2
 bz main_l6
 int 0
 store 1
-
 main_l3:
 load 1
 int 5
@@ -403,14 +393,12 @@ int 1
 +
 store 0
 b main_l1
-
 main_l5:
 load 1
 int 1
 +
 store 1
 b main_l3
-
 main_l6:
 int 1
 return
@@ -431,11 +419,9 @@ def test_compile_for():
         ]
     )
 
-    expected = """
-    #pragma version 4
+    expected = """#pragma version 4
 int 0
 store 0
-
 main_l1:
 load 0
 int 10
@@ -452,7 +438,6 @@ int 1
 +
 store 0
 b main_l1
-
 main_l3:
 int 1
 return
@@ -480,11 +465,9 @@ return
         ]
     )
 
-    expected = """
-        #pragma version 4
+    expected = """#pragma version 4
 int 0
 store 0
-
 main_l1:
 load 0
 int 10
@@ -492,7 +475,6 @@ int 10
 bz main_l6
 int 0
 store 1
-
 main_l3:
 load 1
 int 4
@@ -503,7 +485,6 @@ int 1
 +
 store 0
 b main_l1
-
 main_l5:
 load 1
 itob
@@ -516,11 +497,10 @@ int 2
 +
 store 1
 b main_l3
-
 main_l6:
 int 1
 return
-        """.strip()
+    """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
     assert expected == actual
 
@@ -542,7 +522,6 @@ def test_compile_break():
     expected = """#pragma version 4
 int 0
 store 0
-
 main_l1:
 load 0
 int 3
@@ -557,7 +536,6 @@ int 1
 +
 store 0
 b main_l1
-
 main_l4:
 int 1
 return
@@ -584,7 +562,6 @@ return
     expected = """#pragma version 4
 int 0
 store 0
-
 main_l1:
 load 0
 int 10
@@ -605,7 +582,6 @@ int 1
 +
 store 0
 b main_l1
-
 main_l4:
 int 1
 return
@@ -630,13 +606,11 @@ def test_compile_continue():
     expected = """#pragma version 4
 int 0
 store 0
-
 main_l1:
 load 0
 int 3
 <
 bz main_l4
-
 main_l2:
 load 0
 int 2
@@ -647,7 +621,6 @@ int 1
 +
 store 0
 b main_l1
-
 main_l4:
 int 1
 return
@@ -674,7 +647,6 @@ return
     expected = """#pragma version 4
 int 0
 store 0
-
 main_l1:
 load 0
 int 10
@@ -690,14 +662,12 @@ load 0
 int 2
 *
 app_global_put
-
 main_l4:
 load 0
 int 1
 +
 store 0
 b main_l1
-
 main_l5:
 int 1
 return
@@ -731,7 +701,6 @@ load 0
 int 10
 <
 bz main_l2
-
 main_l1:
 load 0
 int 1
@@ -741,7 +710,6 @@ load 0
 int 4
 <
 bnz main_l1
-
 main_l2:
 int 1
 return
@@ -777,25 +745,21 @@ return
     expected = """#pragma version 4
 int 0
 store 0
-
 main_l1:
 load 0
 int 10
 <
 bz main_l8
-
 main_l2:
 load 0
 int 8
 ==
 bnz main_l8
-
 main_l3:
 load 0
 int 6
 <
 bnz main_l6
-
 main_l4:
 load 0
 int 5
@@ -806,7 +770,6 @@ int 1
 +
 store 0
 b main_l1
-
 main_l6:
 load 0
 int 3
@@ -817,7 +780,6 @@ int 1
 +
 store 0
 b main_l3
-
 main_l8:
 int 1
 return
@@ -865,12 +827,12 @@ global CreatorAddress
 bz main_l2
 txna ApplicationArgs 0
 callsub sub0
-
 main_l2:
 int 1
 return
 
-sub0: // storeValue
+// storeValue
+sub0:
 store 0
 byte "key"
 load 0
@@ -905,7 +867,6 @@ txn Sender
 global CreatorAddress
 ==
 bnz main_l3
-
 main_l1:
 callsub sub1
 byte "fail"
@@ -913,24 +874,24 @@ byte "fail"
 bz main_l4
 int 0
 return
-
 main_l3:
 txna ApplicationArgs 0
 callsub sub0
 b main_l1
-
 main_l4:
 int 1
 return
 
-sub0: // storeValue
+// storeValue
+sub0:
 store 0
 byte "key"
 load 0
 app_global_put
 retsub
 
-sub1: // getValue
+// getValue
+sub1:
 byte "key"
 app_global_get
 retsub
@@ -963,7 +924,8 @@ int 21
 ==
 return
 
-sub0: // calculateSum
+// calculateSum
+sub0:
 store 5
 store 4
 store 3
@@ -1005,7 +967,8 @@ int 6
 callsub sub0
 return
 
-sub0: // isEven
+// isEven
+sub0:
 store 0
 load 0
 int 0
@@ -1026,14 +989,11 @@ store 0
 swap
 pop
 b sub0_l5
-
 sub0_l3:
 int 0
 b sub0_l5
-
 sub0_l4:
 int 1
-
 sub0_l5:
 retsub
     """.strip()
@@ -1059,7 +1019,8 @@ int 6
 callsub sub0
 return
 
-sub0: // isEven
+// isEven
+sub0:
 store 0
 load 0
 int 0
@@ -1078,14 +1039,11 @@ callsub sub0
 swap
 store 0
 b sub0_l5
-
 sub0_l3:
 int 0
 b sub0_l5
-
 sub0_l4:
 int 1
-
 sub0_l5:
 retsub
     """.strip()
@@ -1110,7 +1068,8 @@ int 5
 callsub sub0
 return
 
-sub0: // multiplyByAdding
+// multiplyByAdding
+sub0:
 store 1
 store 0
 load 0
@@ -1138,7 +1097,6 @@ swap
 pop
 +
 retsub
-
 sub0_l2:
 int 0
 retsub
@@ -1164,7 +1122,8 @@ int 5
 callsub sub0
 return
 
-sub0: // multiplyByAdding
+// multiplyByAdding
+sub0:
 store 1
 store 0
 load 0
@@ -1186,7 +1145,6 @@ store 1
 store 0
 +
 retsub
-
 sub0_l2:
 int 0
 retsub
@@ -1211,7 +1169,8 @@ int 6
 callsub sub0
 return
 
-sub0: // isEven
+// isEven
+sub0:
 store 0
 load 0
 int 0
@@ -1229,14 +1188,13 @@ swap
 pop
 !
 b sub0_l3
-
 sub0_l2:
 int 1
-
 sub0_l3:
 retsub
 
-sub1: // isOdd
+// isOdd
+sub1:
 store 1
 load 1
 int 0
@@ -1254,10 +1212,8 @@ swap
 pop
 !
 b sub1_l3
-
 sub1_l2:
 int 0
-
 sub1_l3:
 retsub
     """.strip()
@@ -1281,7 +1237,8 @@ int 6
 callsub sub0
 return
 
-sub0: // isEven
+// isEven
+sub0:
 store 0
 load 0
 int 0
@@ -1297,14 +1254,13 @@ swap
 store 0
 !
 b sub0_l3
-
 sub0_l2:
 int 1
-
 sub0_l3:
 retsub
 
-sub1: // isOdd
+// isOdd
+sub1:
 store 1
 load 1
 int 0
@@ -1320,10 +1276,8 @@ swap
 store 1
 !
 b sub1_l3
-
 sub1_l2:
 int 0
-
 sub1_l3:
 retsub
     """.strip()
@@ -1347,11 +1301,11 @@ callsub sub0
 int 1
 return
 
-sub0: // setState
+// setState
+sub0:
 store 0
 int 0
 store 1
-
 sub0_l1:
 load 1
 int 10
@@ -1366,7 +1320,6 @@ int 1
 +
 store 1
 b sub0_l1
-
 sub0_l3:
 retsub
     """.strip()
@@ -1409,12 +1362,12 @@ intc_0 // 1
 intc_0 // 1
 pushint 3 // 3
 callsub sub0
-
 main_l2:
 intc_0 // 1
 return
 
-sub0: // storeValue
+// storeValue
+sub0:
 store 3
 store 2
 store 1
