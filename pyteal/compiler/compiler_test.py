@@ -826,13 +826,13 @@ global CreatorAddress
 ==
 bz main_l2
 txna ApplicationArgs 0
-callsub sub0
+callsub storeValue_0
 main_l2:
 int 1
 return
 
 // storeValue
-sub0:
+storeValue_0:
 store 0
 byte "key"
 load 0
@@ -868,7 +868,7 @@ global CreatorAddress
 ==
 bnz main_l3
 main_l1:
-callsub sub1
+callsub getValue_1
 byte "fail"
 ==
 bz main_l4
@@ -876,14 +876,14 @@ int 0
 return
 main_l3:
 txna ApplicationArgs 0
-callsub sub0
+callsub storeValue_0
 b main_l1
 main_l4:
 int 1
 return
 
 // storeValue
-sub0:
+storeValue_0:
 store 0
 byte "key"
 load 0
@@ -891,7 +891,7 @@ app_global_put
 retsub
 
 // getValue
-sub1:
+getValue_1:
 byte "key"
 app_global_get
 retsub
@@ -919,13 +919,13 @@ int 3
 int 4
 int 5
 int 6
-callsub sub0
+callsub calculateSum_0
 int 21
 ==
 return
 
 // calculateSum
-sub0:
+calculateSum_0:
 store 5
 store 4
 store 3
@@ -964,37 +964,37 @@ def test_compile_subroutine_recursive():
 
     expected = """#pragma version 4
 int 6
-callsub sub0
+callsub isEven_0
 return
 
 // isEven
-sub0:
+isEven_0:
 store 0
 load 0
 int 0
 ==
-bnz sub0_l4
+bnz isEven_0_l4
 load 0
 int 1
 ==
-bnz sub0_l3
+bnz isEven_0_l3
 load 0
 int 2
 -
 load 0
 dig 1
-callsub sub0
+callsub isEven_0
 swap
 store 0
 swap
 pop
-b sub0_l5
-sub0_l3:
+b isEven_0_l5
+isEven_0_l3:
 int 0
-b sub0_l5
-sub0_l4:
+b isEven_0_l5
+isEven_0_l4:
 int 1
-sub0_l5:
+isEven_0_l5:
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
@@ -1016,35 +1016,35 @@ def test_compile_subroutine_recursive_5():
 
     expected = """#pragma version 5
 int 6
-callsub sub0
+callsub isEven_0
 return
 
 // isEven
-sub0:
+isEven_0:
 store 0
 load 0
 int 0
 ==
-bnz sub0_l4
+bnz isEven_0_l4
 load 0
 int 1
 ==
-bnz sub0_l3
+bnz isEven_0_l3
 load 0
 int 2
 -
 load 0
 swap
-callsub sub0
+callsub isEven_0
 swap
 store 0
-b sub0_l5
-sub0_l3:
+b isEven_0_l5
+isEven_0_l3:
 int 0
-b sub0_l5
-sub0_l4:
+b isEven_0_l5
+isEven_0_l4:
 int 1
-sub0_l5:
+isEven_0_l5:
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=5, assembleConstants=False)
@@ -1065,17 +1065,17 @@ def test_compile_subroutine_recursive_multiple_args():
     expected = """#pragma version 4
 int 3
 int 5
-callsub sub0
+callsub multiplyByAdding_0
 return
 
 // multiplyByAdding
-sub0:
+multiplyByAdding_0:
 store 1
 store 0
 load 0
 int 0
 ==
-bnz sub0_l2
+bnz multiplyByAdding_0_l2
 load 1
 load 0
 int 1
@@ -1085,7 +1085,7 @@ load 0
 load 1
 dig 3
 dig 3
-callsub sub0
+callsub multiplyByAdding_0
 store 0
 store 1
 load 0
@@ -1097,7 +1097,7 @@ swap
 pop
 +
 retsub
-sub0_l2:
+multiplyByAdding_0_l2:
 int 0
 retsub
     """.strip()
@@ -1119,17 +1119,17 @@ def test_compile_subroutine_recursive_multiple_args_5():
     expected = """#pragma version 5
 int 3
 int 5
-callsub sub0
+callsub multiplyByAdding_0
 return
 
 // multiplyByAdding
-sub0:
+multiplyByAdding_0:
 store 1
 store 0
 load 0
 int 0
 ==
-bnz sub0_l2
+bnz multiplyByAdding_0_l2
 load 1
 load 0
 int 1
@@ -1139,13 +1139,13 @@ load 0
 load 1
 uncover 3
 uncover 3
-callsub sub0
+callsub multiplyByAdding_0
 cover 2
 store 1
 store 0
 +
 retsub
-sub0_l2:
+multiplyByAdding_0_l2:
 int 0
 retsub
     """.strip()
@@ -1166,55 +1166,55 @@ def test_compile_subroutine_mutually_recursive():
 
     expected = """#pragma version 4
 int 6
-callsub sub0
+callsub isEven_0
 return
 
 // isEven
-sub0:
+isEven_0:
 store 0
 load 0
 int 0
 ==
-bnz sub0_l2
+bnz isEven_0_l2
 load 0
 int 1
 -
 load 0
 dig 1
-callsub sub1
+callsub isOdd_1
 swap
 store 0
 swap
 pop
 !
-b sub0_l3
-sub0_l2:
+b isEven_0_l3
+isEven_0_l2:
 int 1
-sub0_l3:
+isEven_0_l3:
 retsub
 
 // isOdd
-sub1:
+isOdd_1:
 store 1
 load 1
 int 0
 ==
-bnz sub1_l2
+bnz isOdd_1_l2
 load 1
 int 1
 -
 load 1
 dig 1
-callsub sub0
+callsub isEven_0
 swap
 store 1
 swap
 pop
 !
-b sub1_l3
-sub1_l2:
+b isOdd_1_l3
+isOdd_1_l2:
 int 0
-sub1_l3:
+isOdd_1_l3:
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
@@ -1234,51 +1234,51 @@ def test_compile_subroutine_mutually_recursive_5():
 
     expected = """#pragma version 5
 int 6
-callsub sub0
+callsub isEven_0
 return
 
 // isEven
-sub0:
+isEven_0:
 store 0
 load 0
 int 0
 ==
-bnz sub0_l2
+bnz isEven_0_l2
 load 0
 int 1
 -
 load 0
 swap
-callsub sub1
+callsub isOdd_1
 swap
 store 0
 !
-b sub0_l3
-sub0_l2:
+b isEven_0_l3
+isEven_0_l2:
 int 1
-sub0_l3:
+isEven_0_l3:
 retsub
 
 // isOdd
-sub1:
+isOdd_1:
 store 1
 load 1
 int 0
 ==
-bnz sub1_l2
+bnz isOdd_1_l2
 load 1
 int 1
 -
 load 1
 swap
-callsub sub0
+callsub isEven_0
 swap
 store 1
 !
-b sub1_l3
-sub1_l2:
+b isOdd_1_l3
+isOdd_1_l2:
 int 0
-sub1_l3:
+isOdd_1_l3:
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=5, assembleConstants=False)
@@ -1297,20 +1297,20 @@ def test_compile_loop_in_subroutine():
 
     expected = """#pragma version 4
 byte "value"
-callsub sub0
+callsub setState_0
 int 1
 return
 
 // setState
-sub0:
+setState_0:
 store 0
 int 0
 store 1
-sub0_l1:
+setState_0_l1:
 load 1
 int 10
 <
-bz sub0_l3
+bz setState_0_l3
 load 1
 itob
 load 0
@@ -1319,8 +1319,8 @@ load 1
 int 1
 +
 store 1
-b sub0_l1
-sub0_l3:
+b setState_0_l1
+setState_0_l3:
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
@@ -1361,13 +1361,13 @@ concat
 intc_0 // 1
 intc_0 // 1
 pushint 3 // 3
-callsub sub0
+callsub storeValue_0
 main_l2:
 intc_0 // 1
 return
 
 // storeValue
-sub0:
+storeValue_0:
 store 3
 store 2
 store 1

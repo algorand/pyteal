@@ -1366,9 +1366,9 @@ def test_resolveSubroutines():
     }
 
     expected = OrderedDict()
-    expected[subroutine1] = "sub0"
-    expected[subroutine2] = "sub1"
-    expected[subroutine3] = "sub2"
+    expected[subroutine1] = "sub1Impl_0"
+    expected[subroutine2] = "sub2Impl_1"
+    expected[subroutine3] = "sub3Impl_2"
 
     actual = resolveSubroutines(subroutineMapping)
     assert actual == expected
