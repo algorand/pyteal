@@ -57,11 +57,9 @@ def test_gloadss():
     expr = ImportScratchValue(txID, slotID)
     assert expr.type_of() == TealType.anytype
 
-    expected = TealSimpleBlock([
-        TealOp(txID, Op.int, 1),
-        TealOp(slotID, Op.int, 0),
-        TealOp(expr, Op.gloadss)
-    ])
+    expected = TealSimpleBlock(
+        [TealOp(txID, Op.int, 1), TealOp(slotID, Op.int, 0), TealOp(expr, Op.gloadss)]
+    )
 
     actual, _ = expr.__teal__(teal6Options)
     actual.addIncoming()
@@ -88,6 +86,3 @@ def test_gload_invalid():
 
     with pytest.raises(TealTypeError):
         ImportScratchValue(Bytes("AQID"), 0)  # byte encoding of [1, 2, 3]
-
-
-# TODO gloadss test
