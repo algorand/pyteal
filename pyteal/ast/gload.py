@@ -62,11 +62,12 @@ class ImportScratchValue(LeafExpr):
         return "(Gload {} {})".format(self.txnIndex, self.slotId)
 
     def __teal__(self, options: "CompileOptions"):
-        verifyTealVersion(
-            Op.gload.min_version,
-            options.version,
-            "TEAL version too low to use Gload expression",
-        )
+        def local_version_check(opcode: TealOp):
+            verifyTealVersion(
+                opcode.op.min_version,
+                options.version,
+                "TEAL version too low to use {} experssion".format(opcode.op.name)
+            )
 
         # For txnIndex and slotId, there are only three scenario as following
         #     immediate    immediate
@@ -75,15 +76,17 @@ class ImportScratchValue(LeafExpr):
         # the last one is not allowed
         # --> immediate    stack
         # which is eliminated in __init__
-        if type(self.slotId) is int:
-            if type(self.txnIndex) is int:
-                op = TealOp(self, Op.gload, self.txnIndex, self.slotId)
-                return TealBlock.FromOp(options, op)
-            else:
-                op = TealOp(self, Op.gloads, self.slotId)
-                return TealBlock.FromOp(options, op, cast(Expr, self.txnIndex))
+        if type(self.txnIndex) is int and type(self.slotId) is int:
+            op = TealOp(self, Op.gload, self.txnIndex, self.slotId)
+            local_version_check(op)
+            return TealBlock.FromOp(options, op)
+        elif type(self.slotId) is int:
+            op = TealOp(self, Op.gloads, self.slotId)
+            local_version_check(op)
+            return TealBlock.FromOp(options, op, cast(Expr, self.txnIndex))
         else:
             op = TealOp(self, Op.gloadss)
+            local_version_check(op)
             return TealBlock.FromOp(
                 options, op, cast(Expr, self.txnIndex), cast(Expr, self.slotId)
             )

@@ -17,6 +17,14 @@ def test_gload_teal_3():
     with pytest.raises(TealInputError):
         ImportScratchValue(Int(0), 1).__teal__(teal3Options)
 
+    with pytest.raises(TealInputError):
+        ImportScratchValue(Int(0), Int(1)).__teal__(teal3Options)
+
+
+def test_gload_teal_4():
+    with pytest.raises(TealInputError):
+        ImportScratchValue(Int(0), Int(2)).__teal__(teal4Options)
+
 
 def test_gload():
     expr = ImportScratchValue(0, 1)
@@ -55,6 +63,12 @@ def test_gload_invalid():
 
     with pytest.raises(TealInputError):
         ImportScratchValue(0, NUM_SLOTS)
+    
+    with pytest.raises(TealInputError):
+        ImportScratchValue(0, Int(0))
+    
+    with pytest.raises(TealTypeError):
+        ImportScratchValue(Bytes("AQID"), 0) # byte encoding of [1, 2, 3]
 
 
 # TODO gloadss test
