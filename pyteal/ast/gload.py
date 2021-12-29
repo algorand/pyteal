@@ -5,7 +5,6 @@ from ..ir import TealOp, Op, TealBlock
 from ..errors import TealInputError, verifyTealVersion
 from ..config import MAX_GROUP_SIZE, NUM_SLOTS
 from .expr import Expr
-from .int import Int
 from .leafexpr import LeafExpr
 
 if TYPE_CHECKING:
