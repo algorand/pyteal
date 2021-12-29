@@ -37,7 +37,7 @@ def test_gload():
     assert actual == expected
 
 
-def test_gload_dynamic():
+def test_gloads():
     arg = Int(1)
     expr = ImportScratchValue(arg, 0)
     assert expr.type_of() == TealType.anytype
@@ -45,6 +45,25 @@ def test_gload_dynamic():
     expected = TealSimpleBlock([TealOp(arg, Op.int, 1), TealOp(expr, Op.gloads, 0)])
 
     actual, _ = expr.__teal__(teal4Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+
+def test_gloadss():
+    txID = Int(1)
+    slotID = Int(0)
+    expr = ImportScratchValue(txID, slotID)
+    assert expr.type_of() == TealType.anytype
+
+    expected = TealSimpleBlock([
+        TealOp(txID, Op.int, 1),
+        TealOp(slotID, Op.int, 0),
+        TealOp(expr, Op.gloadss)
+    ])
+
+    actual, _ = expr.__teal__(teal6Options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
