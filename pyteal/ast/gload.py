@@ -66,7 +66,7 @@ class ImportScratchValue(LeafExpr):
             verifyTealVersion(
                 opcode.op.min_version,
                 options.version,
-                "TEAL version too low to use {} experssion".format(opcode.op.name)
+                "TEAL version too low to use {} experssion".format(opcode.op.name),
             )
 
         # For txnIndex and slotId, there are only three scenario as following

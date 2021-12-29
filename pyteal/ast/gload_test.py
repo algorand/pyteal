@@ -63,12 +63,12 @@ def test_gload_invalid():
 
     with pytest.raises(TealInputError):
         ImportScratchValue(0, NUM_SLOTS)
-    
+
     with pytest.raises(TealInputError):
         ImportScratchValue(0, Int(0))
-    
+
     with pytest.raises(TealTypeError):
-        ImportScratchValue(Bytes("AQID"), 0) # byte encoding of [1, 2, 3]
+        ImportScratchValue(Bytes("AQID"), 0)  # byte encoding of [1, 2, 3]
 
 
 # TODO gloadss test
