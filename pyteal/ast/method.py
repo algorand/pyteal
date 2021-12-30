@@ -30,7 +30,7 @@ class Method(LeafExpr):
         self.methodName = methodName
 
     def __teal__(self, options: "CompileOptions"):
-        op = TealOp(self, Op.method, "\"{}\"".format(self.methodName))
+        op = TealOp(self, Op.method, '"{}"'.format(self.methodName))
         return TealBlock.FromOp(options, op)
 
     def __str__(self) -> str:
