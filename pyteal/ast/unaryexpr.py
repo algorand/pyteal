@@ -16,7 +16,7 @@ class UnaryExpr(Expr):
         self, op: Op, inputType: TealType, outputType: TealType, arg: Expr
     ) -> None:
         super().__init__()
-        require_type(arg.type_of(), inputType)
+        require_type(arg, inputType)
         self.op = op
         self.outputType = outputType
         self.arg = arg

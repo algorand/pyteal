@@ -26,7 +26,7 @@ class NaryExpr(Expr):
                 raise TealInputError(
                     "Argument is not a PyTeal expression: {}".format(arg)
                 )
-            require_type(arg.type_of(), inputType)
+            require_type(arg, inputType)
         self.op = op
         self.outputType = outputType
         self.args = args

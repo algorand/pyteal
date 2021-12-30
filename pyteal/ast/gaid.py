@@ -34,7 +34,7 @@ class GeneratedID(LeafExpr):
                     )
                 )
         else:
-            require_type(cast(Expr, txnIndex).type_of(), TealType.uint64)
+            require_type(cast(Expr, txnIndex), TealType.uint64)
         self.txnIndex = txnIndex
 
     def __str__(self):
