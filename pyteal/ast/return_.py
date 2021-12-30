@@ -1,10 +1,11 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 from ..types import TealType, require_type, types_match
 from ..errors import verifyTealVersion, TealCompileError
 from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
 from .int import Int
+from .get_teal_type import get_teal_type
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
@@ -13,7 +14,7 @@ if TYPE_CHECKING:
 class Return(Expr):
     """Return a value from the current execution context."""
 
-    def __init__(self, value: Expr = None) -> None:
+    def __init__(self, value: Union[int, Expr] = None) -> None:
         """Create a new Return expression.
 
         If called from the main program, this will immediately exit the program
@@ -26,6 +27,7 @@ class Return(Expr):
         """
         super().__init__()
         if value is not None:
+            value = get_teal_type(value)
             require_type(value.type_of(), TealType.anytype)
         self.value = value
 

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 from ..types import TealType
 from ..config import NUM_SLOTS
@@ -38,7 +38,7 @@ class ScratchSlot:
             self.id = requestedSlotId
             self.isReservedSlot = True
 
-    def store(self, value: Expr = None) -> Expr:
+    def store(self, value: Union[int, str, Expr] = None) -> Expr:
         """Get an expression to store a value in this slot.
 
         Args:

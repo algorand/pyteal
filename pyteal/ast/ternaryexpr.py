@@ -1,4 +1,4 @@
-from typing import Tuple, TYPE_CHECKING
+from typing import Tuple, TYPE_CHECKING, Union
 
 from ..types import TealType, require_type
 from ..errors import verifyTealVersion
@@ -6,6 +6,7 @@ from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
 from .int import Int
 from .unaryexpr import Len
+from .get_teal_type import get_teal_type
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
@@ -60,7 +61,7 @@ class TernaryExpr(Expr):
 TernaryExpr.__module__ = "pyteal"
 
 
-def Ed25519Verify(data: Expr, sig: Expr, key: Expr) -> TernaryExpr:
+def Ed25519Verify(data: Union[str, Expr], sig: Union[str, Expr], key: Union[str, Expr]) -> TernaryExpr:
     """Verify the ed25519 signature of the concatenation ("ProgData" + hash_of_current_program + data).
 
     Args:
@@ -69,6 +70,8 @@ def Ed25519Verify(data: Expr, sig: Expr, key: Expr) -> TernaryExpr:
             Must evalute to bytes.
         key: The 32 byte public key that produced the signature. Must evaluate to bytes.
     """
+    data, sig, key = map(get_teal_type, [data, sig, key])
+    
     return TernaryExpr(
         Op.ed25519verify,
         (TealType.bytes, TealType.bytes, TealType.bytes),
@@ -79,7 +82,7 @@ def Ed25519Verify(data: Expr, sig: Expr, key: Expr) -> TernaryExpr:
     )
 
 
-def SetBit(value: Expr, index: Expr, newBitValue: Expr) -> TernaryExpr:
+def SetBit(value: Union[int, str, Expr], index: Union[int, Expr], newBitValue: Union[int, Expr]) -> TernaryExpr:
     """Set the bit value of an expression at a specific index.
 
     The meaning of index differs if value is an integer or a byte string.
@@ -97,6 +100,8 @@ def SetBit(value: Expr, index: Expr, newBitValue: Expr) -> TernaryExpr:
         index: The index of the bit to set. Must evaluate to uint64.
         newBitValue: The new bit value to set. Must evaluate to the integer 0 or 1.
     """
+    value, index, newBitValue = map(get_teal_type, [value, index, newBitValue])
+
     return TernaryExpr(
         Op.setbit,
         (TealType.anytype, TealType.uint64, TealType.uint64),
@@ -107,7 +112,7 @@ def SetBit(value: Expr, index: Expr, newBitValue: Expr) -> TernaryExpr:
     )
 
 
-def SetByte(value: Expr, index: Expr, newByteValue: Expr) -> TernaryExpr:
+def SetByte(value: Union[str, Expr], index: Union[int, Expr], newByteValue: Union[int, Expr]) -> TernaryExpr:
     """Set a single byte in a byte string from an integer value.
 
     Similar to SetBit, indexing begins at the first byte. For example, :code:`SetByte(Bytes("base16", "0x000000"), Int(0), Int(255))`
@@ -120,6 +125,8 @@ def SetByte(value: Expr, index: Expr, newByteValue: Expr) -> TernaryExpr:
         index: The index of the byte to set. Must evaluate to an integer less than Len(value).
         newByteValue: The new byte value to set. Must evaluate to an integer less than 256.
     """
+    value, index, newByteValue = map(get_teal_type, [value, index, newByteValue])
+
     return TernaryExpr(
         Op.setbyte,
         (TealType.bytes, TealType.uint64, TealType.uint64),

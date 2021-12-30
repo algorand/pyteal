@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import cast, Tuple, TYPE_CHECKING
+from typing import cast, Tuple, TYPE_CHECKING, Union
 
 from ..types import TealType, require_type
 from ..errors import TealCompileError, verifyTealVersion
@@ -7,6 +7,7 @@ from ..ir import TealOp, Op, TealBlock, TealSimpleBlock
 from .expr import Expr
 from .int import Int
 from .ternaryexpr import TernaryExpr
+from .get_teal_type import get_teal_type
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
@@ -240,7 +241,7 @@ class SuffixExpr(Expr):
         return False
 
 
-def Substring(string: Expr, start: Expr, end: Expr) -> Expr:
+def Substring(string: Union[str, Expr], start: Union[int, Expr], end: Union[int, Expr]) -> Expr:
     """Take a substring of a byte string.
 
     Produces a new byte string consisting of the bytes starting at :code:`start` up to but not
@@ -258,6 +259,7 @@ def Substring(string: Expr, start: Expr, end: Expr) -> Expr:
         end: The ending index for the substring. Must be an integer greater or equal to start, but
             less than or equal to Len(string).
     """
+    string, start, end = map(get_teal_type, [string, start, end])
     return SubstringExpr(
         string,
         start,
@@ -265,7 +267,7 @@ def Substring(string: Expr, start: Expr, end: Expr) -> Expr:
     )
 
 
-def Extract(string: Expr, start: Expr, length: Expr) -> Expr:
+def Extract(string: Union[str, Expr], start: Union[int, Expr], length: Union[int, Expr]) -> Expr:
     """Extract a section of a byte string.
 
     Produces a new byte string consisting of the bytes starting at :code:`start` up to but not
@@ -282,6 +284,8 @@ def Extract(string: Expr, start: Expr, length: Expr) -> Expr:
             :code:`Len(string)`.
         length: The number of bytes to extract. Must be an integer such that :code:`start + length <= Len(string)`.
     """
+    string, start, length = map(get_teal_type, [string, start, length])
+
     return ExtractExpr(
         string,
         start,
@@ -289,7 +293,7 @@ def Extract(string: Expr, start: Expr, length: Expr) -> Expr:
     )
 
 
-def Suffix(string: Expr, start: Expr) -> Expr:
+def Suffix(string: Union[str, Expr], start: Union[int, Expr]) -> Expr:
     """Take a suffix of a byte string.
 
     Produces a new byte string consisting of the suffix of the byte string starting at :code:`start`
@@ -303,6 +307,8 @@ def Suffix(string: Expr, start: Expr) -> Expr:
         string: The byte string.
         start: The starting index for the suffix. Must be an integer less than or equal to :code:`Len(string)`.
     """
+    string, start = map(get_teal_type, [string, start])
+
     return SuffixExpr(
         string,
         start,

@@ -1,15 +1,17 @@
 from enum import Enum
+from typing import Union
 
 from ..types import TealType, require_type
 from ..ir import Op
 from .expr import Expr
 from .leafexpr import LeafExpr
 from .maybe import MaybeValue
+from .get_teal_type import get_teal_type
 
 
 class AssetHolding:
     @classmethod
-    def balance(cls, account: Expr, asset: Expr) -> MaybeValue:
+    def balance(cls, account: Union[int, str, Expr], asset: Union[int, Expr]) -> MaybeValue:
         """Get the amount of an asset held by an account.
 
         Args:
@@ -19,6 +21,8 @@ class AssetHolding:
             asset: The ID of the asset to get, must be evaluated to uint64 (or, since v4,
                 a Txn.ForeignAssets offset).
         """
+        account, asset = map(get_teal_type, [account, asset])
+
         require_type(account.type_of(), TealType.anytype)
         require_type(asset.type_of(), TealType.uint64)
         return MaybeValue(
@@ -29,7 +33,7 @@ class AssetHolding:
         )
 
     @classmethod
-    def frozen(cls, account: Expr, asset: Expr) -> MaybeValue:
+    def frozen(cls, account: Union[int, str, Expr], asset: Union[int, Expr]) -> MaybeValue:
         """Check if an asset is frozen for an account.
 
         A value of 1 indicates frozen and 0 indicates not frozen.
@@ -41,6 +45,8 @@ class AssetHolding:
             asset: The ID of the asset to get, must be evaluated to uint64 (or, since v4,
                 a Txn.ForeignAssets offset).
         """
+        account, asset = map(get_teal_type, [account, asset])
+
         require_type(account.type_of(), TealType.anytype)
         require_type(asset.type_of(), TealType.uint64)
         return MaybeValue(
@@ -56,7 +62,7 @@ AssetHolding.__module__ = "pyteal"
 
 class AssetParam:
     @classmethod
-    def total(cls, asset: Expr) -> MaybeValue:
+    def total(cls, asset: Union[int, Expr]) -> MaybeValue:
         """Get the total number of units of an asset.
 
         Args:
@@ -64,6 +70,8 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
+        asset = get_teal_type(asset)
+
         require_type(asset.type_of(), TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
@@ -73,7 +81,7 @@ class AssetParam:
         )
 
     @classmethod
-    def decimals(cls, asset: Expr) -> MaybeValue:
+    def decimals(cls, asset: Union[int, Expr]) -> MaybeValue:
         """Get the number of decimals for an asset.
 
         Args:
@@ -81,6 +89,8 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
+        asset = get_teal_type(asset)
+
         require_type(asset.type_of(), TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
@@ -90,7 +100,7 @@ class AssetParam:
         )
 
     @classmethod
-    def defaultFrozen(cls, asset: Expr) -> MaybeValue:
+    def defaultFrozen(cls, asset: Union[int, Expr]) -> MaybeValue:
         """Check if an asset is frozen by default.
 
         Args:
@@ -98,6 +108,8 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
+        asset = get_teal_type(asset)
+
         require_type(asset.type_of(), TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
@@ -107,7 +119,7 @@ class AssetParam:
         )
 
     @classmethod
-    def unitName(cls, asset: Expr) -> MaybeValue:
+    def unitName(cls, asset: Union[int, Expr]) -> MaybeValue:
         """Get the unit name of an asset.
 
         Args:
@@ -115,6 +127,8 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
+        asset = get_teal_type(asset)
+
         require_type(asset.type_of(), TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
@@ -124,7 +138,7 @@ class AssetParam:
         )
 
     @classmethod
-    def name(cls, asset: Expr) -> MaybeValue:
+    def name(cls, asset: Union[int, Expr]) -> MaybeValue:
         """Get the name of an asset.
 
         Args:
@@ -132,6 +146,8 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
+        asset = get_teal_type(asset)
+
         require_type(asset.type_of(), TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
@@ -141,7 +157,7 @@ class AssetParam:
         )
 
     @classmethod
-    def url(cls, asset: Expr) -> MaybeValue:
+    def url(cls, asset: Union[int, Expr]) -> MaybeValue:
         """Get the URL of an asset.
 
         Args:
@@ -149,6 +165,8 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
+        asset = get_teal_type(asset)
+
         require_type(asset.type_of(), TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
@@ -158,7 +176,7 @@ class AssetParam:
         )
 
     @classmethod
-    def metadataHash(cls, asset: Expr) -> MaybeValue:
+    def metadataHash(cls, asset: Union[int, Expr]) -> MaybeValue:
         """Get the arbitrary commitment for an asset.
 
         If set, this will be 32 bytes long.
@@ -168,6 +186,8 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
+        asset = get_teal_type(asset)
+
         require_type(asset.type_of(), TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
@@ -177,7 +197,7 @@ class AssetParam:
         )
 
     @classmethod
-    def manager(cls, asset: Expr) -> MaybeValue:
+    def manager(cls, asset: Union[int, Expr]) -> MaybeValue:
         """Get the manager address for an asset.
 
         Args:
@@ -185,6 +205,8 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
+        asset = get_teal_type(asset)
+
         require_type(asset.type_of(), TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
@@ -194,7 +216,7 @@ class AssetParam:
         )
 
     @classmethod
-    def reserve(cls, asset: Expr) -> MaybeValue:
+    def reserve(cls, asset: Union[int, Expr]) -> MaybeValue:
         """Get the reserve address for an asset.
 
         Args:
@@ -202,6 +224,8 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
+        asset = get_teal_type(asset)
+
         require_type(asset.type_of(), TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
@@ -211,7 +235,7 @@ class AssetParam:
         )
 
     @classmethod
-    def freeze(cls, asset: Expr) -> MaybeValue:
+    def freeze(cls, asset: Union[int, Expr]) -> MaybeValue:
         """Get the freeze address for an asset.
 
         Args:
@@ -219,6 +243,8 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
+        asset = get_teal_type(asset)
+
         require_type(asset.type_of(), TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
@@ -228,7 +254,7 @@ class AssetParam:
         )
 
     @classmethod
-    def clawback(cls, asset: Expr) -> MaybeValue:
+    def clawback(cls, asset: Union[int, Expr]) -> MaybeValue:
         """Get the clawback address for an asset.
 
         Args:
@@ -236,6 +262,8 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
+        asset = get_teal_type(asset)
+
         require_type(asset.type_of(), TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
@@ -245,13 +273,15 @@ class AssetParam:
         )
 
     @classmethod
-    def creator(cls, asset: Expr) -> MaybeValue:
+    def creator(cls, asset: Union[int, Expr]) -> MaybeValue:
         """Get the creator address for an asset.
 
         Args:
             asset: An index into Txn.ForeignAssets that corresponds to the asset to check. Must
                 evaluate to uint64.
         """
+        asset = get_teal_type(asset)
+
         require_type(asset.type_of(), TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
