@@ -95,8 +95,8 @@ class App(LeafExpr):
                 must be evaluated to uint64 (or, since v4, an application id that appears in
                 Txn.ForeignApps or is the CurrentApplicationID, must be evaluated to bytes).
         """
-        require_type(account.type_of(), TealType.anytype)
-        require_type(app.type_of(), TealType.uint64)
+        require_type(account, TealType.anytype)
+        require_type(app, TealType.uint64)
         return cls(AppField.optedIn, [account, app])
 
     @classmethod
@@ -109,8 +109,8 @@ class App(LeafExpr):
                 Txn.Accounts or is Txn.Sender, must be evaluated to bytes).
             key: The key to read from the account's local state. Must evaluate to bytes.
         """
-        require_type(account.type_of(), TealType.anytype)
-        require_type(key.type_of(), TealType.bytes)
+        require_type(account, TealType.anytype)
+        require_type(key, TealType.bytes)
         return cls(AppField.localGet, [account, key])
 
     @classmethod
@@ -126,9 +126,9 @@ class App(LeafExpr):
                 Txn.ForeignApps or is the CurrentApplicationID, must be evaluated to bytes).
             key: The key to read from the account's local state. Must evaluate to bytes.
         """
-        require_type(account.type_of(), TealType.anytype)
-        require_type(app.type_of(), TealType.uint64)
-        require_type(key.type_of(), TealType.bytes)
+        require_type(account, TealType.anytype)
+        require_type(app, TealType.uint64)
+        require_type(key, TealType.bytes)
         return MaybeValue(
             AppField.localGetEx.get_op(), TealType.anytype, args=[account, app, key]
         )
@@ -140,7 +140,7 @@ class App(LeafExpr):
         Args:
             key: The key to read from the global application state. Must evaluate to bytes.
         """
-        require_type(key.type_of(), TealType.bytes)
+        require_type(key, TealType.bytes)
         return cls(AppField.globalGet, [key])
 
     @classmethod
@@ -153,8 +153,8 @@ class App(LeafExpr):
                 Txn.ForeignApps or is the CurrentApplicationID, must be evaluated to uint64).
             key: The key to read from the global application state. Must evaluate to bytes.
         """
-        require_type(app.type_of(), TealType.uint64)
-        require_type(key.type_of(), TealType.bytes)
+        require_type(app, TealType.uint64)
+        require_type(key, TealType.bytes)
         return MaybeValue(
             AppField.globalGetEx.get_op(), TealType.anytype, args=[app, key]
         )
@@ -170,9 +170,9 @@ class App(LeafExpr):
             key: The key to write in the account's local state. Must evaluate to bytes.
             value: The value to write in the account's local state. Can evaluate to any type.
         """
-        require_type(account.type_of(), TealType.anytype)
-        require_type(key.type_of(), TealType.bytes)
-        require_type(value.type_of(), TealType.anytype)
+        require_type(account, TealType.anytype)
+        require_type(key, TealType.bytes)
+        require_type(value, TealType.anytype)
         return cls(AppField.localPut, [account, key, value])
 
     @classmethod
@@ -183,8 +183,8 @@ class App(LeafExpr):
             key: The key to write in the global application state. Must evaluate to bytes.
             value: THe value to write in the global application state. Can evaluate to any type.
         """
-        require_type(key.type_of(), TealType.bytes)
-        require_type(value.type_of(), TealType.anytype)
+        require_type(key, TealType.bytes)
+        require_type(value, TealType.anytype)
         return cls(AppField.globalPut, [key, value])
 
     @classmethod
@@ -197,8 +197,8 @@ class App(LeafExpr):
                 Txn.Accounts or is Txn.Sender, must be evaluated to bytes).
             key: The key to delete from the account's local state. Must evaluate to bytes.
         """
-        require_type(account.type_of(), TealType.anytype)
-        require_type(key.type_of(), TealType.bytes)
+        require_type(account, TealType.anytype)
+        require_type(key, TealType.bytes)
         return cls(AppField.localDel, [account, key])
 
     @classmethod
@@ -208,7 +208,7 @@ class App(LeafExpr):
         Args:
             key: The key to delete from the global application state. Must evaluate to bytes.
         """
-        require_type(key.type_of(), TealType.bytes)
+        require_type(key, TealType.bytes)
         return cls(AppField.globalDel, [key])
 
 
@@ -224,7 +224,7 @@ class AppParam:
             app: An index into Txn.ForeignApps that correspond to the application to check.
                 Must evaluate to uint64.
         """
-        require_type(app.type_of(), TealType.uint64)
+        require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get,
             TealType.bytes,
@@ -240,7 +240,7 @@ class AppParam:
             app: An index into Txn.ForeignApps that correspond to the application to check.
                 Must evaluate to uint64.
         """
-        require_type(app.type_of(), TealType.uint64)
+        require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get,
             TealType.bytes,
@@ -256,7 +256,7 @@ class AppParam:
             app: An index into Txn.ForeignApps that correspond to the application to check.
                 Must evaluate to uint64.
         """
-        require_type(app.type_of(), TealType.uint64)
+        require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get,
             TealType.uint64,
@@ -272,7 +272,7 @@ class AppParam:
             app: An index into Txn.ForeignApps that correspond to the application to check.
                 Must evaluate to uint64.
         """
-        require_type(app.type_of(), TealType.uint64)
+        require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get,
             TealType.uint64,
@@ -288,7 +288,7 @@ class AppParam:
             app: An index into Txn.ForeignApps that correspond to the application to check.
                 Must evaluate to uint64.
         """
-        require_type(app.type_of(), TealType.uint64)
+        require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get,
             TealType.uint64,
@@ -304,7 +304,7 @@ class AppParam:
             app: An index into Txn.ForeignApps that correspond to the application to check.
                 Must evaluate to uint64.
         """
-        require_type(app.type_of(), TealType.uint64)
+        require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get,
             TealType.uint64,
@@ -320,7 +320,7 @@ class AppParam:
             app: An index into Txn.ForeignApps that correspond to the application to check.
                 Must evaluate to uint64.
         """
-        require_type(app.type_of(), TealType.uint64)
+        require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get,
             TealType.uint64,
@@ -336,7 +336,7 @@ class AppParam:
             app: An index into Txn.ForeignApps that correspond to the application to check.
                 Must evaluate to uint64.
         """
-        require_type(app.type_of(), TealType.uint64)
+        require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get, TealType.bytes, immediate_args=["AppCreator"], args=[app]
         )
@@ -349,7 +349,7 @@ class AppParam:
             app: An index into Txn.ForeignApps that correspond to the application to check.
                 Must evaluate to uint64.
         """
-        require_type(app.type_of(), TealType.uint64)
+        require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get, TealType.bytes, immediate_args=["AppAddress"], args=[app]
         )

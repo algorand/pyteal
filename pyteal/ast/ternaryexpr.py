@@ -24,9 +24,9 @@ class TernaryExpr(Expr):
         thirdArg: Expr,
     ) -> None:
         super().__init__()
-        require_type(firstArg.type_of(), inputTypes[0])
-        require_type(secondArg.type_of(), inputTypes[1])
-        require_type(thirdArg.type_of(), inputTypes[2])
+        require_type(firstArg, inputTypes[0])
+        require_type(secondArg, inputTypes[1])
+        require_type(thirdArg, inputTypes[2])
 
         self.op = op
         self.outputType = outputType

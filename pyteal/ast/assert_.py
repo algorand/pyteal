@@ -18,7 +18,7 @@ class Assert(Expr):
             cond: The condition to check. Must evaluate to a uint64.
         """
         super().__init__()
-        require_type(cond.type_of(), TealType.uint64)
+        require_type(cond, TealType.uint64)
         self.cond = cond
 
     def __teal__(self, options: "CompileOptions"):
