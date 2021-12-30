@@ -26,8 +26,10 @@ class Return(Expr):
         return value, or the given return value if it does produce a return value.
         """
         super().__init__()
+        
+        value = get_teal_type(value)
+
         if value is not None:
-            value = get_teal_type(value)
             require_type(value.type_of(), TealType.anytype)
         self.value = value
 
