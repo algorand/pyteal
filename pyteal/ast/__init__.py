@@ -118,6 +118,7 @@ from .continue_ import Continue
 from .scratch import ScratchSlot, ScratchLoad, ScratchStore, ScratchStackStore
 from .scratchvar import ScratchVar
 from .maybe import MaybeValue
+from .get_teal_type import get_teal_type
 
 __all__ = [
     "Expr",
@@ -240,4 +241,5 @@ __all__ = [
     "For",
     "Break",
     "Continue",
+    "get_teal_type"
 ]
