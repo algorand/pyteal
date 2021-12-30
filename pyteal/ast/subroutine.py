@@ -10,7 +10,6 @@ from .seq import Seq
 from .scratchvar import ScratchVar
 
 if TYPE_CHECKING:
-    from ..ir import TealSimpleBlock
     from ..compiler import CompileOptions
 
 
