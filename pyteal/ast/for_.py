@@ -27,9 +27,9 @@ class For(Expr):
             step: Expression to update the variable's value.
         """
         super().__init__()
-        require_type(cond.type_of(), TealType.uint64)
-        require_type(start.type_of(), TealType.none)
-        require_type(step.type_of(), TealType.none)
+        require_type(cond, TealType.uint64)
+        require_type(start, TealType.none)
+        require_type(step, TealType.none)
 
         self.start = start
         self.cond = cond
@@ -94,7 +94,7 @@ class For(Expr):
     def Do(self, doBlock: Expr):
         if self.doBlock is not None:
             raise TealCompileError("For expression already has a doBlock", self)
-        require_type(doBlock.type_of(), TealType.none)
+        require_type(doBlock, TealType.none)
         self.doBlock = doBlock
         return self
 

@@ -24,7 +24,7 @@ class While(Expr):
             cond: The condition to check. Must evaluate to uint64.
         """
         super().__init__()
-        require_type(cond.type_of(), TealType.uint64)
+        require_type(cond, TealType.uint64)
 
         self.cond = cond
         self.doBlock: Optional[Expr] = None
@@ -74,7 +74,7 @@ class While(Expr):
     def Do(self, doBlock: Expr):
         if self.doBlock is not None:
             raise TealCompileError("While expression already has a doBlock", self)
-        require_type(doBlock.type_of(), TealType.none)
+        require_type(doBlock, TealType.none)
         self.doBlock = doBlock
         return self
 

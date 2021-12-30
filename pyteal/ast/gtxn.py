@@ -110,7 +110,7 @@ class TxnGroup:
                     )
                 )
         else:
-            require_type(cast(Expr, txnIndex).type_of(), TealType.uint64)
+            require_type(cast(Expr, txnIndex), TealType.uint64)
         return TxnObject(
             lambda field: GtxnExpr(txnIndex, field),
             lambda field, index: GtxnaExpr(txnIndex, field, index),

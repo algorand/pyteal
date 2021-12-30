@@ -29,7 +29,7 @@ class Arg(LeafExpr):
             if index < 0 or index > 255:
                 raise TealInputError("invalid arg index {}".format(index))
         else:
-            require_type(cast(Expr, index).type_of(), TealType.uint64)
+            require_type(cast(Expr, index), TealType.uint64)
 
         self.index = index
 
