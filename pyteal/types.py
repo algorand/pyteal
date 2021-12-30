@@ -28,8 +28,7 @@ def require_type(input: Any, expected: TealType):
     try:
         actual = input.type_of()
     except AttributeError:
-        raise TypeError(f'Expected a {expected} object, but got a {type(input)}')
-        
+        raise TypeError(f"Expected a {expected} object, but got a {type(input)}")
 
     if actual != expected and (
         expected == TealType.none
