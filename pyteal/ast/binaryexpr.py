@@ -4,6 +4,7 @@ from ..types import TealType, require_type
 from ..errors import verifyTealVersion
 from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
+from .get_teal_type import get_teal_type
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
@@ -58,7 +59,7 @@ class BinaryExpr(Expr):
 BinaryExpr.__module__ = "pyteal"
 
 
-def Add(left: Expr, right: Expr) -> BinaryExpr:
+def Add(left: Union[int, Expr], right: Union[int, Expr]) -> BinaryExpr:
     """Add two numbers.
 
     Produces left + right.
@@ -67,10 +68,11 @@ def Add(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.add, TealType.uint64, TealType.uint64, left, right)
 
 
-def Minus(left: Expr, right: Expr) -> BinaryExpr:
+def Minus(left: Union[int, Expr], right: Union[int, Expr]) -> BinaryExpr:
     """Subtract two numbers.
 
     Produces left - right.
@@ -79,10 +81,11 @@ def Minus(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.minus, TealType.uint64, TealType.uint64, left, right)
 
 
-def Mul(left: Expr, right: Expr) -> BinaryExpr:
+def Mul(left: Union[int, Expr], right: Union[int, Expr]) -> BinaryExpr:
     """Multiply two numbers.
 
     Produces left * right.
@@ -91,10 +94,11 @@ def Mul(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.mul, TealType.uint64, TealType.uint64, left, right)
 
 
-def Div(left: Expr, right: Expr) -> BinaryExpr:
+def Div(left: Union[int, Expr], right: Union[int, Expr]) -> BinaryExpr:
     """Divide two numbers.
 
     Produces left / right.
@@ -103,10 +107,11 @@ def Div(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.div, TealType.uint64, TealType.uint64, left, right)
 
 
-def Mod(left: Expr, right: Expr) -> BinaryExpr:
+def Mod(left: Union[int, Expr], right: Union[int, Expr]) -> BinaryExpr:
     """Modulo expression.
 
     Produces left % right.
@@ -115,10 +120,11 @@ def Mod(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.mod, TealType.uint64, TealType.uint64, left, right)
 
 
-def Exp(a: Expr, b: Expr) -> BinaryExpr:
+def Exp(a: Union[int, Expr], b: Union[int, Expr]) -> BinaryExpr:
     """Exponential expression.
 
     Produces a ** b.
@@ -129,10 +135,11 @@ def Exp(a: Expr, b: Expr) -> BinaryExpr:
         a: Must evaluate to uint64.
         b: Must evaluate to uint64.
     """
+    a, b = map(get_teal_type, [a, b])
     return BinaryExpr(Op.exp, TealType.uint64, TealType.uint64, a, b)
 
 
-def BitwiseAnd(left: Expr, right: Expr) -> BinaryExpr:
+def BitwiseAnd(left: Union[int, Expr], right: Union[int, Expr]) -> BinaryExpr:
     """Bitwise and expression.
 
     Produces left & right.
@@ -141,10 +148,11 @@ def BitwiseAnd(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.bitwise_and, TealType.uint64, TealType.uint64, left, right)
 
 
-def BitwiseOr(left: Expr, right: Expr) -> BinaryExpr:
+def BitwiseOr(left: Union[int, Expr], right: Union[int, Expr]) -> BinaryExpr:
     """Bitwise or expression.
 
     Produces left | right.
@@ -153,10 +161,11 @@ def BitwiseOr(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.bitwise_or, TealType.uint64, TealType.uint64, left, right)
 
 
-def BitwiseXor(left: Expr, right: Expr) -> BinaryExpr:
+def BitwiseXor(left: Union[int, Expr], right: Union[int, Expr]) -> BinaryExpr:
     """Bitwise xor expression.
 
     Produces left ^ right.
@@ -165,10 +174,11 @@ def BitwiseXor(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.bitwise_xor, TealType.uint64, TealType.uint64, left, right)
 
 
-def ShiftLeft(a: Expr, b: Expr) -> BinaryExpr:
+def ShiftLeft(a: Union[int, Expr], b: Union[int, Expr]) -> BinaryExpr:
     """Bitwise left shift expression.
 
     Produces a << b. This is equivalent to a times 2^b, modulo 2^64.
@@ -179,10 +189,11 @@ def ShiftLeft(a: Expr, b: Expr) -> BinaryExpr:
         a: Must evaluate to uint64.
         b: Must evaluate to uint64.
     """
+    a, b = map(get_teal_type, [a, b])
     return BinaryExpr(Op.shl, TealType.uint64, TealType.uint64, a, b)
 
 
-def ShiftRight(a: Expr, b: Expr) -> BinaryExpr:
+def ShiftRight(a: Union[int, Expr], b: Union[int, Expr]) -> BinaryExpr:
     """Bitwise right shift expression.
 
     Produces a >> b. This is equivalent to a divided by 2^b.
@@ -193,10 +204,11 @@ def ShiftRight(a: Expr, b: Expr) -> BinaryExpr:
         a: Must evaluate to uint64.
         b: Must evaluate to uint64.
     """
+    a, b = map(get_teal_type, [a, b])
     return BinaryExpr(Op.shr, TealType.uint64, TealType.uint64, a, b)
 
 
-def Eq(left: Expr, right: Expr) -> BinaryExpr:
+def Eq(left: Union[int, str, Expr], right: Union[int, str, Expr]) -> BinaryExpr:
     """Equality expression.
 
     Checks if left == right.
@@ -205,10 +217,11 @@ def Eq(left: Expr, right: Expr) -> BinaryExpr:
         left: A value to check.
         right: The other value to check. Must evaluate to the same type as left.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.eq, right.type_of(), TealType.uint64, left, right)
 
 
-def Neq(left: Expr, right: Expr) -> BinaryExpr:
+def Neq(left: Union[int, str, Expr], right: Union[int, str, Expr]) -> BinaryExpr:
     """Difference expression.
 
     Checks if left != right.
@@ -217,10 +230,11 @@ def Neq(left: Expr, right: Expr) -> BinaryExpr:
         left: A value to check.
         right: The other value to check. Must evaluate to the same type as left.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.neq, right.type_of(), TealType.uint64, left, right)
 
 
-def Lt(left: Expr, right: Expr) -> BinaryExpr:
+def Lt(left: Union[int, Expr], right: Union[int, Expr]) -> BinaryExpr:
     """Less than expression.
 
     Checks if left < right.
@@ -229,10 +243,11 @@ def Lt(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.lt, TealType.uint64, TealType.uint64, left, right)
 
 
-def Le(left: Expr, right: Expr) -> BinaryExpr:
+def Le(left: Union[int, Expr], right: Union[int, Expr]) -> BinaryExpr:
     """Less than or equal to expression.
 
     Checks if left <= right.
@@ -241,10 +256,11 @@ def Le(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.le, TealType.uint64, TealType.uint64, left, right)
 
 
-def Gt(left: Expr, right: Expr) -> BinaryExpr:
+def Gt(left: Union[int, Expr], right: Union[int, Expr]) -> BinaryExpr:
     """Greater than expression.
 
     Checks if left > right.
@@ -253,10 +269,11 @@ def Gt(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.gt, TealType.uint64, TealType.uint64, left, right)
 
 
-def Ge(left: Expr, right: Expr) -> BinaryExpr:
+def Ge(left: Union[int, Expr], right: Union[int, Expr]) -> BinaryExpr:
     """Greater than or equal to expression.
 
     Checks if left >= right.
@@ -265,10 +282,11 @@ def Ge(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.ge, TealType.uint64, TealType.uint64, left, right)
 
 
-def GetBit(value: Expr, index: Expr) -> BinaryExpr:
+def GetBit(value: Union[int, str, Expr], index: Union[int, Expr]) -> BinaryExpr:
     """Get the bit value of an expression at a specific index.
 
     The meaning of index differs if value is an integer or a byte string.
@@ -287,12 +305,13 @@ def GetBit(value: Expr, index: Expr) -> BinaryExpr:
         value: The value containing bits. Can evaluate to any type.
         index: The index of the bit to extract. Must evaluate to uint64.
     """
+    value, index = map(get_teal_type, [value, index])
     return BinaryExpr(
         Op.getbit, (TealType.anytype, TealType.uint64), TealType.uint64, value, index
     )
 
 
-def GetByte(value: Expr, index: Expr) -> BinaryExpr:
+def GetByte(value: Union[str, Expr], index: Union[int, Expr]) -> BinaryExpr:
     """Extract a single byte as an integer from a byte string.
 
     Similar to GetBit, indexing begins at the first byte. For example, :code:`GetByte(Bytes("base16", "0xff0000"), Int(0))`
@@ -309,7 +328,7 @@ def GetByte(value: Expr, index: Expr) -> BinaryExpr:
     )
 
 
-def BytesAdd(left: Expr, right: Expr) -> BinaryExpr:
+def BytesAdd(left: Union[str, Expr], right: Union[str, Expr]) -> BinaryExpr:
     """Add two numbers as bytes.
 
     Produces left + right, where left and right are interpreted as big-endian unsigned integers.
@@ -321,10 +340,11 @@ def BytesAdd(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to bytes.
         right: Must evaluate to bytes.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.b_add, TealType.bytes, TealType.bytes, left, right)
 
 
-def BytesMinus(left: Expr, right: Expr) -> BinaryExpr:
+def BytesMinus(left: Union[str, Expr], right: Union[str, Expr]) -> BinaryExpr:
     """Subtract two numbers as bytes.
 
     Produces left - right, where left and right are interpreted as big-endian unsigned integers.
@@ -336,10 +356,11 @@ def BytesMinus(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to bytes.
         right: Must evaluate to bytes.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.b_minus, TealType.bytes, TealType.bytes, left, right)
 
 
-def BytesDiv(left: Expr, right: Expr) -> BinaryExpr:
+def BytesDiv(left: Union[str, Expr], right: Union[str, Expr]) -> BinaryExpr:
     """Divide two numbers as bytes.
 
     Produces left / right, where left and right are interpreted as big-endian unsigned integers.
@@ -353,10 +374,11 @@ def BytesDiv(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to bytes.
         right: Must evaluate to bytes.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.b_div, TealType.bytes, TealType.bytes, left, right)
 
 
-def BytesMul(left: Expr, right: Expr) -> BinaryExpr:
+def BytesMul(left: Union[str, Expr], right: Union[str, Expr]) -> BinaryExpr:
     """Multiply two numbers as bytes.
 
     Produces left * right, where left and right are interpreted as big-endian unsigned integers.
@@ -368,10 +390,11 @@ def BytesMul(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to bytes.
         right: Must evaluate to bytes.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.b_mul, TealType.bytes, TealType.bytes, left, right)
 
 
-def BytesMod(left: Expr, right: Expr) -> BinaryExpr:
+def BytesMod(left: Union[str, Expr], right: Union[str, Expr]) -> BinaryExpr:
     """Modulo expression with bytes as arguments.
 
     Produces left % right, where left and right are interpreted as big-endian unsigned integers.
@@ -385,10 +408,11 @@ def BytesMod(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to bytes.
         right: Must evaluate to bytes.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.b_mod, TealType.bytes, TealType.bytes, left, right)
 
 
-def BytesAnd(left: Expr, right: Expr) -> BinaryExpr:
+def BytesAnd(left: Union[str, Expr], right: Union[str, Expr]) -> BinaryExpr:
     """Bitwise and expression with bytes as arguments.
 
     Produces left & right.
@@ -401,10 +425,11 @@ def BytesAnd(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to bytes.
         right: Must evaluate to bytes.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.b_and, TealType.bytes, TealType.bytes, left, right)
 
 
-def BytesOr(left: Expr, right: Expr) -> BinaryExpr:
+def BytesOr(left: Union[str, Expr], right: Union[str, Expr]) -> BinaryExpr:
     """Bitwise or expression with bytes as arguments.
 
     Produces left | right.
@@ -417,10 +442,11 @@ def BytesOr(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to bytes.
         right: Must evaluate to bytes.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.b_or, TealType.bytes, TealType.bytes, left, right)
 
 
-def BytesXor(left: Expr, right: Expr) -> BinaryExpr:
+def BytesXor(left: Union[str, Expr], right: Union[str, Expr]) -> BinaryExpr:
     """Bitwise xor expression with bytes as arguments.
 
     Produces left ^ right.
@@ -433,10 +459,11 @@ def BytesXor(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to bytes.
         right: Must evaluate to bytes.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.b_xor, TealType.bytes, TealType.bytes, left, right)
 
 
-def BytesEq(left: Expr, right: Expr) -> BinaryExpr:
+def BytesEq(left: Union[str, Expr], right: Union[str, Expr]) -> BinaryExpr:
     """Equality expression with bytes as arguments.
 
     Checks if left == right, where left and right are interpreted as big-endian unsigned integers.
@@ -448,10 +475,11 @@ def BytesEq(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to bytes.
         right: Must evaluate to bytes.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.b_eq, TealType.bytes, TealType.uint64, left, right)
 
 
-def BytesNeq(left: Expr, right: Expr) -> BinaryExpr:
+def BytesNeq(left: Union[str, Expr], right: Union[str, Expr]) -> BinaryExpr:
     """Difference expression with bytes as arguments.
 
     Checks if left != right, where left and right are interpreted as big-endian unsigned integers.
@@ -463,10 +491,11 @@ def BytesNeq(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to bytes.
         right: Must evaluate to bytes.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.b_neq, TealType.bytes, TealType.uint64, left, right)
 
 
-def BytesLt(left: Expr, right: Expr) -> BinaryExpr:
+def BytesLt(left: Union[str, Expr], right: Union[str, Expr]) -> BinaryExpr:
     """Less than expression with bytes as arguments.
 
     Checks if left < right, where left and right are interpreted as big-endian unsigned integers.
@@ -478,10 +507,11 @@ def BytesLt(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to bytes.
         right: Must evaluate to bytes.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.b_lt, TealType.bytes, TealType.uint64, left, right)
 
 
-def BytesLe(left: Expr, right: Expr) -> BinaryExpr:
+def BytesLe(left: Union[str, Expr], right: Union[str, Expr]) -> BinaryExpr:
     """Less than or equal to expression with bytes as arguments.
 
     Checks if left <= right, where left and right are interpreted as big-endian unsigned integers.
@@ -493,10 +523,11 @@ def BytesLe(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to bytes.
         right: Must evaluate to bytes.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.b_le, TealType.bytes, TealType.uint64, left, right)
 
 
-def BytesGt(left: Expr, right: Expr) -> BinaryExpr:
+def BytesGt(left: Union[str, Expr], right: Union[str, Expr]) -> BinaryExpr:
     """Greater than expression with bytes as arguments.
 
     Checks if left > right, where left and right are interpreted as big-endian unsigned integers.
@@ -508,10 +539,11 @@ def BytesGt(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to bytes.
         right: Must evaluate to bytes.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.b_gt, TealType.bytes, TealType.uint64, left, right)
 
 
-def BytesGe(left: Expr, right: Expr) -> BinaryExpr:
+def BytesGe(left: Union[str, Expr], right: Union[str, Expr]) -> BinaryExpr:
     """Greater than or equal to expression with bytes as arguments.
 
     Checks if left >= right, where left and right are interpreted as big-endian unsigned integers.
@@ -523,10 +555,11 @@ def BytesGe(left: Expr, right: Expr) -> BinaryExpr:
         left: Must evaluate to bytes.
         right: Must evaluate to bytes.
     """
+    left, right = map(get_teal_type, [left, right])
     return BinaryExpr(Op.b_ge, TealType.bytes, TealType.uint64, left, right)
 
 
-def ExtractUint16(string: Expr, offset: Expr) -> BinaryExpr:
+def ExtractUint16(string: Union[str, Expr], offset: Union[int, Expr]) -> BinaryExpr:
     """Extract 2 bytes (16 bits) and convert them to an integer.
 
     The bytes starting at :code:`offset` up to but not including :code:`offset + 2` will be
@@ -540,6 +573,7 @@ def ExtractUint16(string: Expr, offset: Expr) -> BinaryExpr:
         string: The bytestring to extract from. Must evaluate to bytes.
         offset: The offset in the bytestring to start extracing. Must evaluate to uint64.
     """
+    string, offset = map(get_teal_type, [string, offset])
     return BinaryExpr(
         Op.extract_uint16,
         (TealType.bytes, TealType.uint64),
@@ -549,7 +583,7 @@ def ExtractUint16(string: Expr, offset: Expr) -> BinaryExpr:
     )
 
 
-def ExtractUint32(string: Expr, offset: Expr) -> BinaryExpr:
+def ExtractUint32(string: Union[str, Expr], offset: Union[int, Expr]) -> BinaryExpr:
     """Extract 4 bytes (32 bits) and convert them to an integer.
 
     The bytes starting at :code:`offset` up to but not including :code:`offset + 4` will be
@@ -563,6 +597,7 @@ def ExtractUint32(string: Expr, offset: Expr) -> BinaryExpr:
         string: The bytestring to extract from. Must evaluate to bytes.
         offset: The offset in the bytestring to start extracing. Must evaluate to uint64.
     """
+    string, offset = map(get_teal_type, [string, offset])
     return BinaryExpr(
         Op.extract_uint32,
         (TealType.bytes, TealType.uint64),
@@ -572,7 +607,7 @@ def ExtractUint32(string: Expr, offset: Expr) -> BinaryExpr:
     )
 
 
-def ExtractUint64(string: Expr, offset: Expr) -> BinaryExpr:
+def ExtractUint64(string: Union[str, Expr], offset: Union[int, Expr]) -> BinaryExpr:
     """Extract 8 bytes (64 bits) and convert them to an integer.
 
     The bytes starting at :code:`offset` up to but not including :code:`offset + 8` will be
@@ -586,6 +621,7 @@ def ExtractUint64(string: Expr, offset: Expr) -> BinaryExpr:
         string: The bytestring to extract from. Must evaluate to bytes.
         offset: The offset in the bytestring to start extracing. Must evaluate to uint64.
     """
+    string, offset = map(get_teal_type, [string, offset])
     return BinaryExpr(
         Op.extract_uint64,
         (TealType.bytes, TealType.uint64),
