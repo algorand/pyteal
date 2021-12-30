@@ -212,7 +212,7 @@ class App(LeafExpr):
                 Txn.Accounts or is Txn.Sender, must be evaluated to bytes).
             key: The key to delete from the account's local state. Must evaluate to bytes.
         """
-        key = get_teal_type(key)
+        account, key = map(get_teal_type, [account, key])
 
         require_type(account.type_of(), TealType.anytype)
         require_type(key.type_of(), TealType.bytes)

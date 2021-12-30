@@ -323,6 +323,7 @@ def GetByte(value: Union[str, Expr], index: Union[int, Expr]) -> BinaryExpr:
         value: The value containing the bytes. Must evaluate to bytes.
         index: The index of the byte to extract. Must evaluate to an integer less than Len(value).
     """
+    value, index = map(get_teal_type, [value, index])
     return BinaryExpr(
         Op.getbyte, (TealType.bytes, TealType.uint64), TealType.uint64, value, index
     )

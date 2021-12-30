@@ -4,6 +4,7 @@ from ..types import TealType
 from ..config import NUM_SLOTS
 from ..errors import TealInputError
 from .expr import Expr
+from .get_teal_type import get_teal_type
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
@@ -47,7 +48,8 @@ class ScratchSlot:
             semantics of PyTeal, only use if you know what you're doing.
         """
         if value is not None:
-            return ScratchStore(self, value)
+            value_expr = get_teal_type(value)
+            return ScratchStore(self, value_expr)
         return ScratchStackStore(self)
 
     def load(self, type: TealType = TealType.anytype) -> "ScratchLoad":
