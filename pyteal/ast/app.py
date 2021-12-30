@@ -100,8 +100,8 @@ class App(LeafExpr):
         """
         account, app = map(get_teal_type, [account, app])
 
-        require_type(account.type_of(), TealType.anytype)
-        require_type(app.type_of(), TealType.uint64)
+        require_type(account, TealType.anytype)
+        require_type(app, TealType.uint64)
         return cls(AppField.optedIn, [account, app])
 
     @classmethod
@@ -116,8 +116,8 @@ class App(LeafExpr):
         """
         account, key = map(get_teal_type, [account, key])
 
-        require_type(account.type_of(), TealType.anytype)
-        require_type(key.type_of(), TealType.bytes)
+        require_type(account, TealType.anytype)
+        require_type(key, TealType.bytes)
         return cls(AppField.localGet, [account, key])
 
     @classmethod
@@ -140,9 +140,9 @@ class App(LeafExpr):
         """
         account, app, key = map(get_teal_type, [account, app, key])
 
-        require_type(account.type_of(), TealType.anytype)
-        require_type(app.type_of(), TealType.uint64)
-        require_type(key.type_of(), TealType.bytes)
+        require_type(account, TealType.anytype)
+        require_type(app, TealType.uint64)
+        require_type(key, TealType.bytes)
         return MaybeValue(
             AppField.localGetEx.get_op(), TealType.anytype, args=[account, app, key]
         )
@@ -156,7 +156,7 @@ class App(LeafExpr):
         """
         key = get_teal_type(key)
 
-        require_type(key.type_of(), TealType.bytes)
+        require_type(key, TealType.bytes)
         return cls(AppField.globalGet, [key])
 
     @classmethod
@@ -171,8 +171,8 @@ class App(LeafExpr):
         """
         app, key = map(get_teal_type, [app, key])
 
-        require_type(app.type_of(), TealType.uint64)
-        require_type(key.type_of(), TealType.bytes)
+        require_type(app, TealType.uint64)
+        require_type(key, TealType.bytes)
         return MaybeValue(
             AppField.globalGetEx.get_op(), TealType.anytype, args=[app, key]
         )
@@ -195,9 +195,9 @@ class App(LeafExpr):
         """
         account, value, key = map(get_teal_type, [account, value, key])
 
-        require_type(account.type_of(), TealType.anytype)
-        require_type(key.type_of(), TealType.bytes)
-        require_type(value.type_of(), TealType.anytype)
+        require_type(account, TealType.anytype)
+        require_type(key, TealType.bytes)
+        require_type(value, TealType.anytype)
         return cls(AppField.localPut, [account, key, value])
 
     @classmethod
@@ -210,8 +210,8 @@ class App(LeafExpr):
         """
         value, key = map(get_teal_type, [value, key])
 
-        require_type(key.type_of(), TealType.bytes)
-        require_type(value.type_of(), TealType.anytype)
+        require_type(key, TealType.bytes)
+        require_type(value, TealType.anytype)
         return cls(AppField.globalPut, [key, value])
 
     @classmethod
@@ -226,8 +226,8 @@ class App(LeafExpr):
         """
         account, key = map(get_teal_type, [account, key])
 
-        require_type(account.type_of(), TealType.anytype)
-        require_type(key.type_of(), TealType.bytes)
+        require_type(account, TealType.anytype)
+        require_type(key, TealType.bytes)
         return cls(AppField.localDel, [account, key])
 
     @classmethod
@@ -239,7 +239,7 @@ class App(LeafExpr):
         """
         key = get_teal_type(key)
 
-        require_type(key.type_of(), TealType.bytes)
+        require_type(key, TealType.bytes)
         return cls(AppField.globalDel, [key])
 
 
@@ -257,7 +257,7 @@ class AppParam:
         """
         app = get_teal_type(app)
 
-        require_type(app.type_of(), TealType.uint64)
+        require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get,
             TealType.bytes,
@@ -275,7 +275,7 @@ class AppParam:
         """
         app = get_teal_type(app)
 
-        require_type(app.type_of(), TealType.uint64)
+        require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get,
             TealType.bytes,
@@ -293,7 +293,7 @@ class AppParam:
         """
         app = get_teal_type(app)
 
-        require_type(app.type_of(), TealType.uint64)
+        require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get,
             TealType.uint64,
@@ -311,7 +311,7 @@ class AppParam:
         """
         app = get_teal_type(app)
 
-        require_type(app.type_of(), TealType.uint64)
+        require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get,
             TealType.uint64,
@@ -329,7 +329,7 @@ class AppParam:
         """
         app = get_teal_type(app)
 
-        require_type(app.type_of(), TealType.uint64)
+        require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get,
             TealType.uint64,
@@ -347,7 +347,7 @@ class AppParam:
         """
         app = get_teal_type(app)
 
-        require_type(app.type_of(), TealType.uint64)
+        require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get,
             TealType.uint64,
@@ -365,7 +365,7 @@ class AppParam:
         """
         app = get_teal_type(app)
 
-        require_type(app.type_of(), TealType.uint64)
+        require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get,
             TealType.uint64,
@@ -383,7 +383,7 @@ class AppParam:
         """
         app = get_teal_type(app)
 
-        require_type(app.type_of(), TealType.uint64)
+        require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get, TealType.bytes, immediate_args=["AppCreator"], args=[app]
         )
@@ -398,7 +398,7 @@ class AppParam:
         """
         app = get_teal_type(app)
 
-        require_type(app.type_of(), TealType.uint64)
+        require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get, TealType.bytes, immediate_args=["AppAddress"], args=[app]
         )

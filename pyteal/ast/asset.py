@@ -25,8 +25,8 @@ class AssetHolding:
         """
         account, asset = map(get_teal_type, [account, asset])
 
-        require_type(account.type_of(), TealType.anytype)
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(account, TealType.anytype)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_holding_get,
             TealType.uint64,
@@ -51,8 +51,8 @@ class AssetHolding:
         """
         account, asset = map(get_teal_type, [account, asset])
 
-        require_type(account.type_of(), TealType.anytype)
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(account, TealType.anytype)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_holding_get,
             TealType.uint64,
@@ -76,7 +76,7 @@ class AssetParam:
         """
         asset = get_teal_type(asset)
 
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.uint64,
@@ -95,7 +95,7 @@ class AssetParam:
         """
         asset = get_teal_type(asset)
 
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.uint64,
@@ -114,7 +114,7 @@ class AssetParam:
         """
         asset = get_teal_type(asset)
 
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.uint64,
@@ -133,7 +133,7 @@ class AssetParam:
         """
         asset = get_teal_type(asset)
 
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.bytes,
@@ -152,7 +152,7 @@ class AssetParam:
         """
         asset = get_teal_type(asset)
 
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.bytes,
@@ -171,7 +171,7 @@ class AssetParam:
         """
         asset = get_teal_type(asset)
 
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.bytes,
@@ -192,7 +192,7 @@ class AssetParam:
         """
         asset = get_teal_type(asset)
 
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.bytes,
@@ -211,7 +211,7 @@ class AssetParam:
         """
         asset = get_teal_type(asset)
 
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.bytes,
@@ -230,7 +230,7 @@ class AssetParam:
         """
         asset = get_teal_type(asset)
 
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.bytes,
@@ -249,7 +249,7 @@ class AssetParam:
         """
         asset = get_teal_type(asset)
 
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.bytes,
@@ -268,7 +268,7 @@ class AssetParam:
         """
         asset = get_teal_type(asset)
 
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.bytes,
@@ -286,7 +286,7 @@ class AssetParam:
         """
         asset = get_teal_type(asset)
 
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.bytes,
