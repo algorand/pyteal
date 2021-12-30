@@ -199,7 +199,9 @@ class Subroutine:
         self.methodSignature = methodSignature
 
     def __call__(self, fnImplementation: Callable[..., Expr]) -> Callable[..., Expr]:
-        subroutine = SubroutineDefinition(fnImplementation, self.returnType, self.methodSignature)
+        subroutine = SubroutineDefinition(
+            fnImplementation, self.returnType, self.methodSignature
+        )
 
         @wraps(fnImplementation)
         def subroutineCall(*args: Expr, **kwargs) -> Expr:
