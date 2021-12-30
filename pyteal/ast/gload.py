@@ -37,7 +37,7 @@ class ImportScratchValue(LeafExpr):
                     )
                 )
         else:
-            require_type(cast(Expr, txnIndex).type_of(), TealType.uint64)
+            require_type(cast(Expr, txnIndex), TealType.uint64)
         if slotId < 0 or slotId >= NUM_SLOTS:
             raise TealInputError(
                 "Invalid slot ID {}, shoud be in [0, {})".format(slotId, NUM_SLOTS)

@@ -26,8 +26,8 @@ class BinaryExpr(Expr):
         else:
             leftType = cast(TealType, inputType)
             rightType = leftType
-        require_type(argLeft.type_of(), leftType)
-        require_type(argRight.type_of(), rightType)
+        require_type(argLeft, leftType)
+        require_type(argRight, rightType)
 
         self.op = op
         self.outputType = outputType

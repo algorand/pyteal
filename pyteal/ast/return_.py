@@ -26,7 +26,7 @@ class Return(Expr):
         """
         super().__init__()
         if value is not None:
-            require_type(value.type_of(), TealType.anytype)
+            require_type(value, TealType.anytype)
         self.value = value
 
     def __teal__(self, options: "CompileOptions"):
@@ -97,7 +97,7 @@ class ExitProgram(Expr):
 
     def __init__(self, success: Expr) -> None:
         super().__init__()
-        require_type(success.type_of(), TealType.uint64)
+        require_type(success, TealType.uint64)
         self.success = success
 
     def __teal__(self, options: "CompileOptions"):

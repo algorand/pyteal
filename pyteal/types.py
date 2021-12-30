@@ -1,5 +1,6 @@
 import re
 from enum import Enum
+from typing import Any
 
 from .errors import TealTypeError, TealInputError
 
@@ -23,7 +24,12 @@ class TealType(Enum):
 TealType.__module__ = "pyteal"
 
 
-def require_type(actual: TealType, expected: TealType):
+def require_type(input: Any, expected: TealType):
+    try:
+        actual = input.type_of()
+    except AttributeError:
+        raise TypeError(f"Expected a {expected} object, but got a {type(input)}")
+
     if actual != expected and (
         expected == TealType.none
         or actual == TealType.none

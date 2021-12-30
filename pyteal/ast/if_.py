@@ -28,16 +28,16 @@ class If(Expr):
                 to the same type as thenBranch, if provided. Defaults to None.
         """
         super().__init__()
-        require_type(cond.type_of(), TealType.uint64)
+        require_type(cond, TealType.uint64)
         # Flag to denote and check whether the new If().Then() syntax is being used
         self.alternateSyntaxFlag = False
 
         if thenBranch:
             if elseBranch:
-                require_type(thenBranch.type_of(), elseBranch.type_of())
+                require_type(thenBranch, elseBranch.type_of())
             else:
                 # If there is only a thenBranch, then it should evaluate to none type
-                require_type(thenBranch.type_of(), TealType.none)
+                require_type(thenBranch, TealType.none)
         else:
             self.alternateSyntaxFlag = True
 

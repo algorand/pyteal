@@ -42,7 +42,7 @@ class InnerTxnFieldExpr(Expr):
         super().__init__()
         if field.is_array:
             raise TealInputError("Unexpected array field: {}".format(field))
-        require_type(value.type_of(), field.type_of())
+        require_type(value, field.type_of())
         self.field = field
         self.value = value
 

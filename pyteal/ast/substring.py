@@ -18,9 +18,9 @@ class SubstringExpr(Expr):
     def __init__(self, stringArg: Expr, startArg: Expr, endArg: Expr) -> None:
         super().__init__()
 
-        require_type(stringArg.type_of(), TealType.bytes)
-        require_type(startArg.type_of(), TealType.uint64)
-        require_type(endArg.type_of(), TealType.uint64)
+        require_type(stringArg, TealType.bytes)
+        require_type(startArg, TealType.uint64)
+        require_type(endArg, TealType.uint64)
 
         self.stringArg = stringArg
         self.startArg = startArg
@@ -113,9 +113,9 @@ class ExtractExpr(Expr):
     def __init__(self, stringArg: Expr, startArg: Expr, lenArg: Expr) -> None:
         super().__init__()
 
-        require_type(stringArg.type_of(), TealType.bytes)
-        require_type(startArg.type_of(), TealType.uint64)
-        require_type(lenArg.type_of(), TealType.uint64)
+        require_type(stringArg, TealType.bytes)
+        require_type(startArg, TealType.uint64)
+        require_type(lenArg, TealType.uint64)
 
         self.stringArg = stringArg
         self.startArg = startArg
@@ -180,8 +180,8 @@ class SuffixExpr(Expr):
     ) -> None:
         super().__init__()
 
-        require_type(stringArg.type_of(), TealType.bytes)
-        require_type(startArg.type_of(), TealType.uint64)
+        require_type(stringArg, TealType.bytes)
+        require_type(startArg, TealType.uint64)
 
         self.stringArg = stringArg
         self.startArg = startArg
