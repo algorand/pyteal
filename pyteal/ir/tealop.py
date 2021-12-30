@@ -1,4 +1,4 @@
-from typing import cast, Union, List, Optional, TYPE_CHECKING
+from typing import Union, List, Optional, TYPE_CHECKING
 
 from .tealcomponent import TealComponent
 from .labelref import LabelReference
