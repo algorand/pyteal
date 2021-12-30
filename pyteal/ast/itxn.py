@@ -84,6 +84,8 @@ class InnerTxnBuilder:
     :any:`TxnType.AssetConfig`, and :any:`TxnType.AssetFreeze` are allowed. Additionally, not all
     fields are allowed to be set. For example, it is not currently allowed to set the rekeyTo field
     of an inner transaction.
+
+    TODO add something for TEAL verison 6
     """
 
     @classmethod
