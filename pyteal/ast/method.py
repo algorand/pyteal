@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from pyteal.errors import TealInputError
 
 from pyteal.types import TealType
 
@@ -20,7 +21,12 @@ class Method(LeafExpr):
             methodName: A string containing a valid ABI method signature
         """
         super().__init__()
-        # TODO do we need to check method name validity?
+        if type(methodName) is not str:
+            raise TealInputError(
+                "invalid input type {} to Method".format(type(methodName))
+            )
+        elif len(methodName) == 0:
+            raise TealInputError("invalid input empty string to Method")
         self.methodName = methodName
 
     def __teal__(self, options: "CompileOptions"):
