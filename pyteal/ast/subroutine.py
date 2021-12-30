@@ -14,6 +14,9 @@ if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
 
+# TODO also need to support method here, see first argument is hash of four bytes.
+
+
 class SubroutineDefinition:
 
     nextSubroutineId = 0

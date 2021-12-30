@@ -1,4 +1,4 @@
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 from enum import Enum, Flag, auto
 
 
@@ -74,6 +74,7 @@ class Op(Enum):
     bytec_3             = OpType("bytec_3",             Mode.Signature | Mode.Application, 2)
     byte                = OpType("byte",                Mode.Signature | Mode.Application, 2)
     addr                = OpType("addr",                Mode.Signature | Mode.Application, 2)
+    method              = OpType("method",              Mode.Signature | Mode.Application, 2)
     arg                 = OpType("arg",                 Mode.Signature,                    2)
     txn                 = OpType("txn",                 Mode.Signature | Mode.Application, 2)
     global_             = OpType("global",              Mode.Signature | Mode.Application, 2)
