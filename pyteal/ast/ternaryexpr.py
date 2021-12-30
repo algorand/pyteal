@@ -61,7 +61,9 @@ class TernaryExpr(Expr):
 TernaryExpr.__module__ = "pyteal"
 
 
-def Ed25519Verify(data: Union[str, Expr], sig: Union[str, Expr], key: Union[str, Expr]) -> TernaryExpr:
+def Ed25519Verify(
+    data: Union[str, Expr], sig: Union[str, Expr], key: Union[str, Expr]
+) -> TernaryExpr:
     """Verify the ed25519 signature of the concatenation ("ProgData" + hash_of_current_program + data).
 
     Args:
@@ -71,7 +73,7 @@ def Ed25519Verify(data: Union[str, Expr], sig: Union[str, Expr], key: Union[str,
         key: The 32 byte public key that produced the signature. Must evaluate to bytes.
     """
     data, sig, key = map(get_teal_type, [data, sig, key])
-    
+
     return TernaryExpr(
         Op.ed25519verify,
         (TealType.bytes, TealType.bytes, TealType.bytes),
@@ -82,7 +84,9 @@ def Ed25519Verify(data: Union[str, Expr], sig: Union[str, Expr], key: Union[str,
     )
 
 
-def SetBit(value: Union[int, str, Expr], index: Union[int, Expr], newBitValue: Union[int, Expr]) -> TernaryExpr:
+def SetBit(
+    value: Union[int, str, Expr], index: Union[int, Expr], newBitValue: Union[int, Expr]
+) -> TernaryExpr:
     """Set the bit value of an expression at a specific index.
 
     The meaning of index differs if value is an integer or a byte string.
@@ -112,7 +116,9 @@ def SetBit(value: Union[int, str, Expr], index: Union[int, Expr], newBitValue: U
     )
 
 
-def SetByte(value: Union[str, Expr], index: Union[int, Expr], newByteValue: Union[int, Expr]) -> TernaryExpr:
+def SetByte(
+    value: Union[str, Expr], index: Union[int, Expr], newByteValue: Union[int, Expr]
+) -> TernaryExpr:
     """Set a single byte in a byte string from an integer value.
 
     Similar to SetBit, indexing begins at the first byte. For example, :code:`SetByte(Bytes("base16", "0x000000"), Int(0), Int(255))`

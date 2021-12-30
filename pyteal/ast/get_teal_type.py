@@ -1,6 +1,7 @@
 from .bytes import Bytes
 from .int import Int
 
+
 def get_teal_type(obj):
     if isinstance(obj, str):
         return Bytes(obj)

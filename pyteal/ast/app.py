@@ -85,7 +85,9 @@ class App(LeafExpr):
         return Global.current_application_id()
 
     @classmethod
-    def optedIn(cls, account: Union[int, str, Expr], app: Union[int, str, Expr]) -> "App":
+    def optedIn(
+        cls, account: Union[int, str, Expr], app: Union[int, str, Expr]
+    ) -> "App":
         """Check if an account has opted in for an application.
 
         Args:
@@ -119,7 +121,12 @@ class App(LeafExpr):
         return cls(AppField.localGet, [account, key])
 
     @classmethod
-    def localGetEx(cls, account: Union[int, str, Expr], app: Union[int, str, Expr], key: Union[str, Expr]) -> MaybeValue:
+    def localGetEx(
+        cls,
+        account: Union[int, str, Expr],
+        app: Union[int, str, Expr],
+        key: Union[str, Expr],
+    ) -> MaybeValue:
         """Read from an account's local state for an application.
 
         Args:
@@ -171,7 +178,12 @@ class App(LeafExpr):
         )
 
     @classmethod
-    def localPut(cls, account: Union[int, str, Expr], key: Union[str, Expr], value: Union[int, str, Expr]) -> "App":
+    def localPut(
+        cls,
+        account: Union[int, str, Expr],
+        key: Union[str, Expr],
+        value: Union[int, str, Expr],
+    ) -> "App":
         """Write to an account's local state for the current application.
 
         Args:

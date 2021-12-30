@@ -241,5 +241,5 @@ __all__ = [
     "For",
     "Break",
     "Continue",
-    "get_teal_type"
+    "get_teal_type",
 ]

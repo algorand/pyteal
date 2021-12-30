@@ -11,7 +11,9 @@ from .get_teal_type import get_teal_type
 
 class AssetHolding:
     @classmethod
-    def balance(cls, account: Union[int, str, Expr], asset: Union[int, Expr]) -> MaybeValue:
+    def balance(
+        cls, account: Union[int, str, Expr], asset: Union[int, Expr]
+    ) -> MaybeValue:
         """Get the amount of an asset held by an account.
 
         Args:
@@ -33,7 +35,9 @@ class AssetHolding:
         )
 
     @classmethod
-    def frozen(cls, account: Union[int, str, Expr], asset: Union[int, Expr]) -> MaybeValue:
+    def frozen(
+        cls, account: Union[int, str, Expr], asset: Union[int, Expr]
+    ) -> MaybeValue:
         """Check if an asset is frozen for an account.
 
         A value of 1 indicates frozen and 0 indicates not frozen.

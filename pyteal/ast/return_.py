@@ -26,7 +26,7 @@ class Return(Expr):
         return value, or the given return value if it does produce a return value.
         """
         super().__init__()
-        
+
         value = get_teal_type(value)
 
         if value is not None:

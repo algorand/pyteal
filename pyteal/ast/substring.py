@@ -241,7 +241,9 @@ class SuffixExpr(Expr):
         return False
 
 
-def Substring(string: Union[str, Expr], start: Union[int, Expr], end: Union[int, Expr]) -> Expr:
+def Substring(
+    string: Union[str, Expr], start: Union[int, Expr], end: Union[int, Expr]
+) -> Expr:
     """Take a substring of a byte string.
 
     Produces a new byte string consisting of the bytes starting at :code:`start` up to but not
@@ -267,7 +269,9 @@ def Substring(string: Union[str, Expr], start: Union[int, Expr], end: Union[int,
     )
 
 
-def Extract(string: Union[str, Expr], start: Union[int, Expr], length: Union[int, Expr]) -> Expr:
+def Extract(
+    string: Union[str, Expr], start: Union[int, Expr], length: Union[int, Expr]
+) -> Expr:
     """Extract a section of a byte string.
 
     Produces a new byte string consisting of the bytes starting at :code:`start` up to but not
