@@ -27,7 +27,7 @@ class ImportScratchValue(LeafExpr):
             slotId: The index of the scratch slot that should be loaded.
                 This index may be a Python int, or it may be a PyTeal expression that evaluates at
                 runtime. If it's an expression, it must evaluate to a uint64. In all cases, the index
-                must be in the range [0-256).
+                must be in the range [0, 256).
         """
         super().__init__()
         if type(txnIndex) is int:
