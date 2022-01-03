@@ -5,6 +5,7 @@ from .constants import (
     extractBytesValue,
     extractAddrValue,
     createConstantBlocks,
+    extractMethodValue,
 )
 
 
@@ -60,6 +61,31 @@ def test_extractAddrValue():
 
     for op, expected in tests:
         actual = extractAddrValue(op)
+        assert actual == expected
+
+
+def test_extractMethodValue():
+    tests = [
+        (TealOp(None, Op.method, "create(uint64)uint64"), b"\x43\x46\x41\x01"),
+        (TealOp(None, Op.method, "update()void"), b"\xa0\xe8\x18\x72"),
+        (TealOp(None, Op.method, "optIn(string)string"), b"\xcf\xa6\x8e\x36"),
+        (TealOp(None, Op.method, "closeOut()string"), b"\xa9\xf4\x2b\x3d"),
+        (TealOp(None, Op.method, "delete()void"), b"\x24\x37\x8d\x3c"),
+        (TealOp(None, Op.method, "add(uint64,uint64)uint64"), b"\xfe\x6b\xdf\x69"),
+        (TealOp(None, Op.method, "empty()void"), b"\xa8\x8c\x26\xa5"),
+        (TealOp(None, Op.method, "payment(pay,uint64)bool"), b"\x3e\x3b\x3d\x28"),
+        (
+            TealOp(
+                None,
+                Op.method,
+                "referenceTest(account,application,account,asset,account,asset,asset,application,application)uint8[9]",
+            ),
+            b"\x0d\xf0\x05\x0f",
+        ),
+    ]
+
+    for op, expected in tests:
+        actual = extractMethodValue(op)
         assert actual == expected
 
 
@@ -184,12 +210,14 @@ def test_createConstantBlocks_pushbytes():
     ops = [
         TealOp(None, Op.byte, "0x0102"),
         TealOp(None, Op.byte, "0x0103"),
+        TealOp(None, Op.method, "empty()void"),
         TealOp(None, Op.concat),
     ]
 
     expected = [
         TealOp(None, Op.pushbytes, "0x0102", "//", "0x0102"),
         TealOp(None, Op.pushbytes, "0x0103", "//", "0x0103"),
+        TealOp(None, Op.pushbytes, "0xa88c26a5", "//", "empty()void"),
         TealOp(None, Op.concat),
     ]
 
@@ -240,6 +268,9 @@ def test_createConstantBlocks_byteblock_multiple():
             None, Op.addr, "WSJHNPJ6YCLX5K4GUMQ4ISPK3ABMS3AL3F6CSVQTCUI5F4I65PWEMCWT3M"
         ),
         TealOp(None, Op.concat),
+        TealOp(None, Op.method, "closeOut()string"),
+        TealOp(None, Op.concat),
+        TealOp(None, Op.byte, "base64(qfQrPQ==)"),
     ]
 
     expected = [
@@ -249,6 +280,7 @@ def test_createConstantBlocks_byteblock_multiple():
             "0x0102",
             "0x74657374",
             "0xb49276bd3ec0977eab86a321c449ead802c96c0bd97c2956131511d2f11eebec",
+            "0xa9f42b3d",
         ),
         TealOp(None, Op.bytec_0, "//", "0x0102"),
         TealOp(None, Op.bytec_0, "//", "base64(AQI=)"),
@@ -273,6 +305,9 @@ def test_createConstantBlocks_byteblock_multiple():
             "WSJHNPJ6YCLX5K4GUMQ4ISPK3ABMS3AL3F6CSVQTCUI5F4I65PWEMCWT3M",
         ),
         TealOp(None, Op.concat),
+        TealOp(None, Op.bytec_3, "//", "closeOut()string"),
+        TealOp(None, Op.concat),
+        TealOp(None, Op.bytec_3, "//", "base64(qfQrPQ==)"),
     ]
 
     actual = createConstantBlocks(ops)
