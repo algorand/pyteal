@@ -90,7 +90,7 @@ def extractAddrValue(op: TealOp) -> Union[str, bytes]:
     return value
 
 
-def extractMethodValue(op: TealOp) -> bytes:
+def extractMethodSigValue(op: TealOp) -> bytes:
     """Extract the constant value being loaded by a TealOp whose op is Op.method.
 
     Returns:
@@ -135,7 +135,7 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
             addrValue = extractAddrValue(op)
             byteFreqs[addrValue] = byteFreqs.get(addrValue, 0) + 1
         elif basicOp == Op.method_signature:
-            methodValue = extractMethodValue(op)
+            methodValue = extractMethodSigValue(op)
             byteFreqs[methodValue] = byteFreqs.get(methodValue, 0) + 1
 
     assembled: List[TealComponent] = []
@@ -200,7 +200,7 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
                 elif basicOp == Op.addr:
                     byteValue = extractAddrValue(op)
                 elif basicOp == Op.method_signature:
-                    byteValue = extractMethodValue(op)
+                    byteValue = extractMethodSigValue(op)
                 else:
                     raise TealInternalError(
                         "Expect a byte-like constant opcode, get {}".format(op)

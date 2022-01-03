@@ -5,7 +5,7 @@ from .constants import (
     extractBytesValue,
     extractAddrValue,
     createConstantBlocks,
-    extractMethodValue,
+    extractMethodSigValue,
 )
 
 
@@ -95,7 +95,7 @@ def test_extractMethodValue():
     ]
 
     for op, expected in tests:
-        actual = extractMethodValue(op)
+        actual = extractMethodSigValue(op)
         assert actual == expected
 
 
