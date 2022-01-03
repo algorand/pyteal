@@ -10,7 +10,6 @@ from .seq import Seq
 from .scratchvar import ScratchVar
 
 if TYPE_CHECKING:
-    from ..ir import TealSimpleBlock
     from ..compiler import CompileOptions
 
 
@@ -19,7 +18,10 @@ class SubroutineDefinition:
     nextSubroutineId = 0
 
     def __init__(
-        self, implementation: Callable[..., Expr], returnType: TealType
+        self,
+        implementation: Callable[..., Expr],
+        returnType: TealType,
+        nameStr: str = None,
     ) -> None:
         super().__init__()
         self.id = SubroutineDefinition.nextSubroutineId
@@ -53,6 +55,7 @@ class SubroutineDefinition:
         self.returnType = returnType
 
         self.declaration: Optional["SubroutineDeclaration"] = None
+        self.__name = self.implementation.__name__ if nameStr is None else nameStr
 
     def getDeclaration(self) -> "SubroutineDeclaration":
         if self.declaration is None:
@@ -61,7 +64,7 @@ class SubroutineDefinition:
         return self.declaration
 
     def name(self) -> str:
-        return self.implementation.__name__
+        return self.__name
 
     def argumentCount(self) -> int:
         return len(self.implementationParams)
@@ -181,7 +184,7 @@ class Subroutine:
             ])
     """
 
-    def __init__(self, returnType: TealType) -> None:
+    def __init__(self, returnType: TealType, name: str = None) -> None:
         """Define a new subroutine with the given return type.
 
         Args:
@@ -189,9 +192,10 @@ class Subroutine:
                 TealType.none indicates that this subroutine does not return any value.
         """
         self.returnType = returnType
+        self.name = name
 
     def __call__(self, fnImplementation: Callable[..., Expr]) -> Callable[..., Expr]:
-        subroutine = SubroutineDefinition(fnImplementation, self.returnType)
+        subroutine = SubroutineDefinition(fnImplementation, self.returnType, self.name)
 
         @wraps(fnImplementation)
         def subroutineCall(*args: Expr, **kwargs) -> Expr:
