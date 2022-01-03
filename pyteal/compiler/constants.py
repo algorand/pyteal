@@ -134,7 +134,7 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
         elif basicOp == Op.addr:
             addrValue = extractAddrValue(op)
             byteFreqs[addrValue] = byteFreqs.get(addrValue, 0) + 1
-        elif basicOp == Op.method:
+        elif basicOp == Op.method_signature:
             methodValue = extractMethodValue(op)
             byteFreqs[methodValue] = byteFreqs.get(methodValue, 0) + 1
 
@@ -190,12 +190,16 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
                     assembled.append(TealOp(op.expr, Op.intc, index, "//", *op.args))
                 continue
 
-            if basicOp == Op.byte or basicOp == Op.addr or basicOp == Op.method:
+            if (
+                basicOp == Op.byte
+                or basicOp == Op.addr
+                or basicOp == Op.method_signature
+            ):
                 if basicOp == Op.byte:
                     byteValue = extractBytesValue(op)
                 elif basicOp == Op.addr:
                     byteValue = extractAddrValue(op)
-                elif basicOp == Op.method:
+                elif basicOp == Op.method_signature:
                     byteValue = extractMethodValue(op)
                 else:
                     raise TealInternalError(

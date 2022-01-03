@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
 
-class Method(LeafExpr):
+class MethodSignature(LeafExpr):
     """An expression that represents an ABI method selector"""
 
     def __init__(self, methodName: str) -> None:
@@ -30,7 +30,7 @@ class Method(LeafExpr):
         self.methodName = methodName
 
     def __teal__(self, options: "CompileOptions"):
-        op = TealOp(self, Op.method, '"{}"'.format(self.methodName))
+        op = TealOp(self, Op.method_signature, '"{}"'.format(self.methodName))
         return TealBlock.FromOp(options, op)
 
     def __str__(self) -> str:
@@ -40,4 +40,4 @@ class Method(LeafExpr):
         return TealType.bytes
 
 
-Method.__module__ = "pyteal"
+MethodSignature.__module__ = "pyteal"
