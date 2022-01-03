@@ -102,6 +102,12 @@ def extractMethodSigValue(op: TealOp) -> bytes:
     methodSignature = cast(str, op.args[0])
     if methodSignature[0] == methodSignature[-1] and methodSignature.startswith('"'):
         methodSignature = methodSignature[1:-1]
+    else:
+        raise TealInternalError(
+            "Method signature opcode error: signatue {} not wrapped with double-quotes".format(
+                methodSignature
+            )
+        )
     methodSelector = encoding.checksum(bytes(methodSignature, "utf-8"))[:4]
     return methodSelector
 

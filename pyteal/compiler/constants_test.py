@@ -68,7 +68,7 @@ def test_extractAddrValue():
 def test_extractMethodValue():
     tests = [
         (
-            TealOp(None, Op.method_signature, "create(uint64)uint64"),
+            TealOp(None, Op.method_signature, '"create(uint64)uint64"'),
             b"\x43\x46\x41\x01",
         ),
         (TealOp(None, Op.method_signature, '"update()void"'), b"\xa0\xe8\x18\x72"),
@@ -223,14 +223,14 @@ def test_createConstantBlocks_pushbytes():
     ops = [
         TealOp(None, Op.byte, "0x0102"),
         TealOp(None, Op.byte, "0x0103"),
-        TealOp(None, Op.method_signature, "empty()void"),
+        TealOp(None, Op.method_signature, '"empty()void"'),
         TealOp(None, Op.concat),
     ]
 
     expected = [
         TealOp(None, Op.pushbytes, "0x0102", "//", "0x0102"),
         TealOp(None, Op.pushbytes, "0x0103", "//", "0x0103"),
-        TealOp(None, Op.pushbytes, "0xa88c26a5", "//", "empty()void"),
+        TealOp(None, Op.pushbytes, "0xa88c26a5", "//", '"empty()void"'),
         TealOp(None, Op.concat),
     ]
 
@@ -281,7 +281,7 @@ def test_createConstantBlocks_byteblock_multiple():
             None, Op.addr, "WSJHNPJ6YCLX5K4GUMQ4ISPK3ABMS3AL3F6CSVQTCUI5F4I65PWEMCWT3M"
         ),
         TealOp(None, Op.concat),
-        TealOp(None, Op.method_signature, "closeOut()string"),
+        TealOp(None, Op.method_signature, '"closeOut()string"'),
         TealOp(None, Op.concat),
         TealOp(None, Op.byte, "base64(qfQrPQ==)"),
     ]
@@ -318,7 +318,7 @@ def test_createConstantBlocks_byteblock_multiple():
             "WSJHNPJ6YCLX5K4GUMQ4ISPK3ABMS3AL3F6CSVQTCUI5F4I65PWEMCWT3M",
         ),
         TealOp(None, Op.concat),
-        TealOp(None, Op.bytec_3, "//", "closeOut()string"),
+        TealOp(None, Op.bytec_3, "//", '"closeOut()string"'),
         TealOp(None, Op.concat),
         TealOp(None, Op.bytec_3, "//", "base64(qfQrPQ==)"),
     ]
