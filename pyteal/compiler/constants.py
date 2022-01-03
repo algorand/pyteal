@@ -100,6 +100,8 @@ def extractMethodSigValue(op: TealOp) -> bytes:
         raise TealInternalError("Unexpected args in method opcode: {}".format(op.args))
 
     methodSignature = cast(str, op.args[0])
+    if methodSignature[0] == methodSignature[-1] and methodSignature.startswith('"'):
+        methodSignature = methodSignature[1:-1]
     methodSelector = encoding.checksum(bytes(methodSignature, "utf-8"))[:4]
     return methodSelector
 
