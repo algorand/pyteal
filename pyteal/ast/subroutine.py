@@ -55,7 +55,7 @@ class SubroutineDefinition:
         self.returnType = returnType
 
         self.declaration: Optional["SubroutineDeclaration"] = None
-        self.nameStr = nameStr
+        self.__name = self.implementation.__name__ if nameStr is None else nameStr
 
     def getDeclaration(self) -> "SubroutineDeclaration":
         if self.declaration is None:
@@ -64,7 +64,7 @@ class SubroutineDefinition:
         return self.declaration
 
     def name(self) -> str:
-        return self.implementation.__name__ if self.nameStr is None else self.nameStr
+        return self.__name
 
     def argumentCount(self) -> int:
         return len(self.implementationParams)
