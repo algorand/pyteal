@@ -21,7 +21,7 @@ class SubroutineDefinition:
         self,
         implementation: Callable[..., Expr],
         returnType: TealType,
-        methodSignature: str = None,
+        nameStr: str = None,
     ) -> None:
         super().__init__()
         self.id = SubroutineDefinition.nextSubroutineId
@@ -55,7 +55,7 @@ class SubroutineDefinition:
         self.returnType = returnType
 
         self.declaration: Optional["SubroutineDeclaration"] = None
-        self.methodSignature = methodSignature
+        self.nameStr = nameStr
 
     def getDeclaration(self) -> "SubroutineDeclaration":
         if self.declaration is None:
@@ -64,11 +64,7 @@ class SubroutineDefinition:
         return self.declaration
 
     def name(self) -> str:
-        return (
-            self.implementation.__name__
-            if self.methodSignature is None
-            else self.methodSignature
-        )
+        return self.implementation.__name__ if self.nameStr is None else self.nameStr
 
     def argumentCount(self) -> int:
         return len(self.implementationParams)
@@ -188,7 +184,7 @@ class Subroutine:
             ])
     """
 
-    def __init__(self, returnType: TealType, methodSignature: str = None) -> None:
+    def __init__(self, returnType: TealType, name: str = None) -> None:
         """Define a new subroutine with the given return type.
 
         Args:
@@ -196,12 +192,10 @@ class Subroutine:
                 TealType.none indicates that this subroutine does not return any value.
         """
         self.returnType = returnType
-        self.methodSignature = methodSignature
+        self.name = name
 
     def __call__(self, fnImplementation: Callable[..., Expr]) -> Callable[..., Expr]:
-        subroutine = SubroutineDefinition(
-            fnImplementation, self.returnType, self.methodSignature
-        )
+        subroutine = SubroutineDefinition(fnImplementation, self.returnType, self.name)
 
         @wraps(fnImplementation)
         def subroutineCall(*args: Expr, **kwargs) -> Expr:
