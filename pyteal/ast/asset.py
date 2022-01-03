@@ -19,8 +19,8 @@ class AssetHolding:
             asset: The ID of the asset to get, must be evaluated to uint64 (or, since v4,
                 a Txn.ForeignAssets offset).
         """
-        require_type(account.type_of(), TealType.anytype)
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(account, TealType.anytype)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_holding_get,
             TealType.uint64,
@@ -41,8 +41,8 @@ class AssetHolding:
             asset: The ID of the asset to get, must be evaluated to uint64 (or, since v4,
                 a Txn.ForeignAssets offset).
         """
-        require_type(account.type_of(), TealType.anytype)
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(account, TealType.anytype)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_holding_get,
             TealType.uint64,
@@ -64,7 +64,7 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.uint64,
@@ -81,7 +81,7 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.uint64,
@@ -98,7 +98,7 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.uint64,
@@ -115,7 +115,7 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.bytes,
@@ -132,7 +132,7 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.bytes,
@@ -149,7 +149,7 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.bytes,
@@ -168,7 +168,7 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.bytes,
@@ -185,7 +185,7 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.bytes,
@@ -202,7 +202,7 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.bytes,
@@ -219,7 +219,7 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.bytes,
@@ -236,7 +236,7 @@ class AssetParam:
                 must be evaluated to uint64 (or since v4, an asset ID that appears in
                 Txn.ForeignAssets).
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.bytes,
@@ -252,7 +252,7 @@ class AssetParam:
             asset: An index into Txn.ForeignAssets that corresponds to the asset to check. Must
                 evaluate to uint64.
         """
-        require_type(asset.type_of(), TealType.uint64)
+        require_type(asset, TealType.uint64)
         return MaybeValue(
             Op.asset_params_get,
             TealType.bytes,

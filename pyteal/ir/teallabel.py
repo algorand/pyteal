@@ -19,8 +19,8 @@ class TealLabel(TealComponent):
         return self.label
 
     def assemble(self) -> str:
-        comment = " // {}".format(self.comment) if self.comment is not None else ""
-        return "{}:{}".format(self.label.getLabel(), comment)
+        comment = "\n// {}\n".format(self.comment) if self.comment is not None else ""
+        return "{}{}:".format(comment, self.label.getLabel())
 
     def __repr__(self) -> str:
         return "TealLabel({}, {}, {})".format(

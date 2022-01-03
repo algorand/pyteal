@@ -40,7 +40,7 @@ class ScratchVar:
         Args:
             value: The value to store. Must conform to this ScratchVar's type.
         """
-        require_type(value.type_of(), self.type)
+        require_type(value, self.type)
         return self.slot.store(value)
 
     def load(self) -> ScratchLoad:

@@ -6,6 +6,7 @@ from .leafexpr import LeafExpr
 from .addr import Addr
 from .bytes import Bytes
 from .int import Int, EnumInt
+from .methodsig import MethodSignature
 
 # properties
 from .arg import Arg
@@ -126,6 +127,7 @@ __all__ = [
     "Bytes",
     "Int",
     "EnumInt",
+    "MethodSignature",
     "Arg",
     "TxnType",
     "TxnField",

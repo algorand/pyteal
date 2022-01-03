@@ -44,7 +44,7 @@ class ImportScratchValue(LeafExpr):
                     )
                 )
         else:
-            require_type(cast(Expr, txnIndex).type_of(), TealType.uint64)
+            require_type(cast(Expr, txnIndex), TealType.uint64)
 
         if type(slotId) is int:
             if slotId < 0 or slotId >= NUM_SLOTS:
@@ -52,7 +52,7 @@ class ImportScratchValue(LeafExpr):
                     "Invalid slot ID {}, shoud be in [0, {})".format(slotId, NUM_SLOTS)
                 )
         else:
-            require_type(cast(Expr, slotId).type_of(), TealType.uint64)
+            require_type(cast(Expr, slotId), TealType.uint64)
 
         self.txnIndex = txnIndex
         self.slotId = slotId
