@@ -105,9 +105,12 @@ class InnerTxnBuilder:
     def Next(cls) -> Expr:
         """Begin preparation of a new inner transaction (in the same transaction group).
 
-        TODO some thing to be filled in.
+        This new inner transaction is initialized with its sender to the application address (:any:`Global.current_application_address`);
+        fee to the minimum allowable, taking into account :code:`MinTxnFee` and credit from
+        overpaying in earlier transactions; :code:`FirstValid`/:code:`LastValid` to the values in
+        the top-level transaction, and all other fields to zero values.
 
-        Requires TEAL version 6 or higher. This operation is only permitted  in application mode.
+        Requires TEAL version 6 or higher. This operation is only permitted in application mode.
         """
         return InnerTxnActionExpr(InnerTxnAction.Next)
 
