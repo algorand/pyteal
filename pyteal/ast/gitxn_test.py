@@ -27,3 +27,6 @@ def test_gitxn_valid():
 
     for i in range(MAX_GROUP_SIZE):
         Gitxn[i].sender()
+
+
+# txn_test.py performs additional testing
