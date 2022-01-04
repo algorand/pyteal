@@ -9,24 +9,6 @@ from .txn import TxnExpr, TxnField, TxnObject, TxnaExpr
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
-"""
-## gitxn t f
-
-- Opcode: 0xb7 {uint8 transaction group index} {uint8 transaction field index}
-- Pops: _None_
-- Pushes: any
-- push field F of the Tth transaction in the last inner group
-- LogicSigVersion >= 6
-- Mode: Application
-## gitxna t f i
-- Opcode: 0xb8 {uint8 transaction group index} {uint8 transaction field index} {uint8 transaction field array index}
-- Pops: _None_
-- Pushes: any
-- push Ith value of the array field F from the Tth transaction in the last inner group
-- LogicSigVersion >= 6
-- Mode: Application
-"""
-
 
 class GitxnExpr(TxnExpr):
     """An expression that accesses an inner transaction field from an inner transaction in the last inner group."""
