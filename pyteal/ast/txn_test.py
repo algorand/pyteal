@@ -232,6 +232,3 @@ def test_txn_fields():
             if version > 2:
                 with pytest.raises(TealInputError):
                     expr.__teal__(CompileOptions(version=version - 1))
-
-
-# TODO need gitxn tests
