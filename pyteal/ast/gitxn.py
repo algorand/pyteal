@@ -67,7 +67,7 @@ class GitxnaExpr(TxnaExpr):
         verifyTealVersion(
             Op.gitxna.min_version, options.version, "TEAL version too low to use gitxna"
         )
-        op = TealOp(self, Op.gitxna, self.field.arg_name, self.index)
+        op = TealOp(self, Op.gitxna, self.txnIndex, self.field.arg_name, self.index)
         return TealBlock.FromOp(options, op)
 
 

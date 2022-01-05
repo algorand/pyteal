@@ -2,6 +2,8 @@ from typing import Dict, Callable
 
 import pytest
 
+from pyteal.ast.gitxn import Gitxn
+
 from .. import *
 
 # this is not necessary but mypy complains if it's not included
@@ -96,6 +98,10 @@ def test_txn_fields():
             [TealOp(dynamicGtxnArg, Op.int, 0)],
         ),
         (InnerTxn, Op.itxn, Op.itxna, None, [], []),
+        *[
+            (Gitxn[i], Op.gitxn, Op.gitxna, None, [i], [])
+            for i in range(MAX_GROUP_SIZE)
+        ],
     ]
 
     for (
