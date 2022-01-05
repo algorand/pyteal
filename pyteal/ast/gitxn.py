@@ -59,8 +59,8 @@ class GitxnaExpr(TxnaExpr):
         verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
         if type(self.txnIndex) is not int or type(self.index) is not int:
             raise TealInputError(
-                "Invalid gitxna syntax with immediate transaction field {}, transaction index {}, array index {}".format(
-                    self.field, self.txnIndex, self.index
+                "Invalid gitxna syntax with immediate transaction index {}, transaction field {}, array index {}".format(
+                    self.txnIndex, self.field, self.index
                 )
             )
 
