@@ -1,7 +1,5 @@
 import pytest
 
-from pyteal.ir import tealsimpleblock
-
 from .. import *
 from ..types import types_match
 
