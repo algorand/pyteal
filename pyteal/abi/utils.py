@@ -3,6 +3,7 @@ from pyteal import *
 
 # Copy/Pasted from pyteal utils for methods that are used in this package
 
+
 def accumulate(vals: List[Expr], op: Op) -> Expr:
     "accumulate recursively pairs elements from the list of expressions passed to return a single value"
     ops = []
@@ -19,10 +20,12 @@ def accumulate(vals: List[Expr], op: Op) -> Expr:
 
     return Seq(ops)
 
+
 @Subroutine(TealType.uint64)
 def pow10(x: TealType.uint64) -> Expr:
     """Returns 10^x, useful for things like total supply of an asset"""
     return Exp(Int(10), x)
+
 
 # Magic number to convert between ascii chars and integers
 _ascii_zero = 48
@@ -112,4 +115,3 @@ def prefix(s: TealType.bytes, n: TealType.uint64):
 def rest(s: TealType.bytes, n: TealType.uint64):
     """prefix returns the first n bytes of a given byte string"""
     return Substring(s, n, Len(s))
-
