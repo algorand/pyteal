@@ -23,6 +23,7 @@ from .abi_type import ABIType
 
 # TODO make a single Uint class that accepts bit size?
 
+
 class Uint512(ABIType):
     stack_type = TealType.bytes
     byte_len = Int(512 // 8)

@@ -6,6 +6,7 @@ from .abi_type import ABIType
 from .bytes import *
 from .uint import *
 
+
 class Tuple(ABIType):
     stack_type = TealType.bytes
 
