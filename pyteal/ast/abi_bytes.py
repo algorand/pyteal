@@ -1,3 +1,4 @@
+from typing import Union, cast
 from . import Bytes, Concat, Expr, Extract, Int, Len, Seq
 from ..types import TealType
 
@@ -9,12 +10,16 @@ class String(ABIType):
     stack_type = TealType.bytes
     dynamic = True
 
-    def __init__(self, value: Bytes):
+    def __init__(self, value: Union[str, Expr]):
+        if type(value) == str:
+            value = Bytes(value)
+
+        value = cast(Expr, value)
         self.value = value
         self.byte_len = Seq(Len(value) + Int(2))
 
     @classmethod
-    def decode(cls, value: Bytes) -> "String":
+    def decode(cls, value: Expr) -> "String":
         return String(Extract(value, Int(2), Uint16.decode(value)))
 
     def encode(self) -> Expr:
@@ -25,11 +30,11 @@ class Address(ABIType):
     stack_type = TealType.bytes
     byte_len = Int(32)
 
-    def __init__(self, value: Bytes):
+    def __init__(self, value: Expr):
         self.value = value
 
     @classmethod
-    def decode(cls, value: Bytes):
+    def decode(cls, value: Expr) -> "Address":
         return Address(value)
 
     def encode(self) -> Expr:
