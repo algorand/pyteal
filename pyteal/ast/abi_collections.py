@@ -23,7 +23,8 @@ class ABITuple(ABIType):
         """__call__ provides an method to construct a tuple for a list of types"""
 
         head_pos_lengths = []
-        head_ops, tail_ops = [], []
+        head_ops: List[Expr] = []
+        tail_ops: List[Expr] = []
         v, head_pos = ScratchVar(), ScratchVar()
 
         for elem in elements:
@@ -96,7 +97,7 @@ class ABIFixedArray(ABITuple):
     def __init__(self, t: ABIType, N: int):
         self.types = [t] * N
 
-    def decode(self, value: Bytes) -> "ABIFixedArray":
+    def decode(self, value: Expr) -> "ABIFixedArray":
         inst = ABIFixedArray(self.types[0], len(self.types))
         inst.value = value
         return inst
@@ -112,12 +113,12 @@ class ABIDynamicArray(ABITuple):
     def __init__(self, type: ABIType):
         self.element_type = type
 
-    def __call__(self, data: List[ABIType]) -> "ABIDynamicArray":
+    def __call__(self, *data: ABIType) -> "ABIDynamicArray":
         return self.decode(
             Concat(Uint16(Int(len(data))).encode(), super().__call__(*data))
         )
 
-    def decode(self, data: Bytes) -> "ABIDynamicArray":
+    def decode(self, data: Expr) -> "ABIDynamicArray":
         da = ABIDynamicArray(self.element_type)
         da.value = rest(data, Int(2))
         da.item_len = Uint16.decode(data)
@@ -147,4 +148,4 @@ class ABIDynamicArray(ABITuple):
         return Concat(self.item_len.encode(), self.value)
 
     def __str__(self):
-        return "[{}]{}".format(self.element_type)
+        return "[]{}".format(self.element_type)

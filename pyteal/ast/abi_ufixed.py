@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, cast
 
 from . import (
     Assert,
@@ -12,6 +12,7 @@ from . import (
     BytesZero,
     Concat,
     GetByte,
+    Expr,
     If,
     Int,
     Itob,
@@ -42,9 +43,7 @@ def assert_fp_match(a: Bytes, b: Bytes):
 
 
 @Subroutine(TealType.bytes)
-def check_overflow(
-    prec: Bytes, bytelen: Int, value: Bytes
-):
+def check_overflow(prec: Bytes, bytelen: Int, value: Bytes):
     """check_overflow checks to make sure we didnt overflow and sets the appropriate 0 padding if necessary
 
     Args:
@@ -83,32 +82,37 @@ class UFixed(ABIType):
 
     stack_type = TealType.bytes
 
-    value: Bytes
+    value: Expr
 
     def __init__(self, N: int, M: int):
         self.bits = N
         self.precision = M
 
-    def __call__(self, value: Union[int, float]) -> "UFixed":
+    def __call__(self, value: Union[int, float, Expr, Bytes]) -> "UFixed":
         if type(value) not in [int, float]:
             raise ValueError
 
-        expected_bytes = self.bits // 8
-        return self.decode(
-            Bytes(int(value * (10 ** self.precision)).to_bytes(expected_bytes, "big"))
-        )
+        if type(value) in (int, float):
+            expected_bytes = self.bits // 8
+            value = Bytes(
+                int(value * (10 ** self.precision)).to_bytes(expected_bytes, "big")
+            )
 
-    def decode(self, value: Bytes) -> "UFixed":
+        value = cast(Expr, value)
+
+        return self.decode(value)
+
+    def decode(self, value: Expr) -> "UFixed":
         f = UFixed(self.bits, self.precision)
         f.value = Concat(Bytes(precision_uint8(self.precision)), value)
         return f
 
-    @staticmethod
-    def encode(value: Bytes):
-        return tail(value)
+    def encode(self):
+        return tail(self.value)
 
     def rescaled(self, p: int):
-        return UFixed(self.bits, p, fp_rescale(self.value, Int(p)))
+        rescaled = UFixed(self.bits, p)
+        return rescaled(fp_rescale(self.value, Int(p)))
 
     def to_ascii(self):
         return fp_to_ascii(self.value)

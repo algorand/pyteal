@@ -27,18 +27,19 @@ from .abi_type import ABIType
 
 class Uint512(ABIType):
     stack_type = TealType.bytes
-    _byte_len =  512 // 8
+    _byte_len = 512 // 8
     byte_len = Int(_byte_len)
 
-    def __init__(self, value: Union[int, Int, Bytes]):
+    def __init__(self, value: Union[int, Int, Bytes, Expr]):
         if isinstance(value, int):
             value = Bytes(value.to_bytes(self._byte_len, "big"))
         if isinstance(value, Int):
             value = Itob(cast(Int, value))
-        self.value = cast(Bytes, value)
+        value = cast(Expr, value)
+        self.value = value
 
     @classmethod
-    def decode(cls, value: Bytes) -> "Uint512":
+    def decode(cls, value: Expr) -> "Uint512":
         return Uint512(Extract(value, Int(0), min(cls.byte_len, Len(value))))
 
     def encode(self) -> Expr:
@@ -54,15 +55,16 @@ class Uint256(ABIType):
     _byte_len = 256 // 8
     byte_len = Int(_byte_len)
 
-    def __init__(self, value: Union[int, Int, Bytes]):
+    def __init__(self, value: Union[int, Int, Bytes, Expr]):
         if isinstance(value, int):
             value = Bytes(value.to_bytes(self._byte_len, "big"))
         if isinstance(value, Int):
             value = Itob(value)
+        value = cast(Expr, value)
         self.value = value
 
     @classmethod
-    def decode(cls, value: Bytes) -> "Uint256":
+    def decode(cls, value: Expr) -> "Uint256":
         return Uint256(Extract(value, Int(0), min(cls.byte_len, Len(value))))
 
     def encode(self) -> Expr:
@@ -78,16 +80,16 @@ class Uint128(ABIType):
     _byte_len = 128 // 8
     byte_len = Int(_byte_len)
 
-    def __init__(self, value: Union[int, Int, Bytes]):
+    def __init__(self, value: Union[int, Int, Bytes, Expr]):
         if isinstance(value, int):
             value = Bytes(value.to_bytes(self._byte_len, "big"))
         if isinstance(value, Int):
             value = Itob(value)
-
+        value = cast(Expr, value)
         self.value = value
 
     @classmethod
-    def decode(cls, value: Bytes):
+    def decode(cls, value: Expr):
         return Uint128(Extract(value, Int(0), min(cls.byte_len, Len(value))))
 
     def encode(self) -> Expr:
@@ -102,13 +104,14 @@ class Uint64(ABIType):
     stack_type = TealType.uint64
     byte_len = Int(64 // 8)
 
-    def __init__(self, value: Union[int, Int]):
+    def __init__(self, value: Union[int, Int, Expr]):
         if isinstance(value, int):
             value = Int(value)
+        value = cast(Expr, value)
         self.value = value
 
     @classmethod
-    def decode(cls, value: Bytes) -> "Uint64":
+    def decode(cls, value: Expr) -> "Uint64":
         return Uint64(ExtractUint64(value, Int(0)))
 
     def encode(self) -> Expr:
@@ -119,13 +122,14 @@ class Uint32(ABIType):
     stack_type = TealType.uint64
     byte_len = Int(32 // 8)
 
-    def __init__(self, value: Union[int, Int]):
+    def __init__(self, value: Union[int, Int, Expr]):
         if isinstance(value, int):
             value = Int(value)
+        value = cast(Expr, value)
         self.value = value
 
     @classmethod
-    def decode(cls, value: Bytes):
+    def decode(cls, value: Expr):
         return Uint32(ExtractUint32(value, Int(0)))
 
     def encode(self) -> Expr:
@@ -136,13 +140,14 @@ class Uint16(ABIType):
     stack_type = TealType.uint64
     byte_len = Int(16 // 8)
 
-    def __init__(self, value: Union[int, Int]):
+    def __init__(self, value: Union[int, Int, Expr]):
         if isinstance(value, int):
             value = Int(value)
+        value = cast(Expr, value)
         self.value = value
 
     @classmethod
-    def decode(cls, value: Bytes) -> "Uint16":
+    def decode(cls, value: Expr) -> "Uint16":
         return Uint16(If(Len(value) >= Int(2), ExtractUint16(value, Int(0)), Int(0)))
 
     def encode(self) -> Expr:
@@ -153,13 +158,14 @@ class Uint8(ABIType):
     stack_type = TealType.uint64
     byte_len = Int(1)
 
-    def __init__(self, value: Union[int, Int]):
+    def __init__(self, value: Union[int, Int, Expr]):
         if isinstance(value, int):
             value = Int(value)
+        value = cast(Expr, value)
         self.value = value
 
     @classmethod
-    def decode(cls, value: Bytes) -> "Uint8":
+    def decode(cls, value: Expr) -> "Uint8":
         return Uint8(If(Len(value) >= Int(1), GetByte(value, Int(0)), Int(0)))
 
     def encode(self) -> Expr:
