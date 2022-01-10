@@ -1,6 +1,6 @@
 from typing import Union
 
-from pyteal import (
+from . import (
     Bytes,
     BytesZero,
     Concat,
@@ -14,10 +14,11 @@ from pyteal import (
     Int,
     Itob,
     Len,
-    TealType,
 )
 
-from .utils import suffix
+from ..types import TealType
+
+from .abi_utils import suffix
 from .abi_type import ABIType
 
 

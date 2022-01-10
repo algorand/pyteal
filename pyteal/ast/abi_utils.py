@@ -1,4 +1,8 @@
-from pyteal import *
+from typing import List
+from . import *
+from .binaryexpr import Op
+
+from ..types import TealType
 
 
 # Copy/Pasted from pyteal utils for methods that are used in this package
