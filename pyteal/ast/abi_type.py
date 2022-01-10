@@ -1,10 +1,9 @@
 from abc import abstractmethod
 
-from pyteal import Bytes, CompileOptions, Expr, TealType
+from . import Bytes, Expr
 
 
 class ABIType(Expr):
-    stack_type = TealType.anytype
     dynamic = False
 
     byte_len: Expr
@@ -17,7 +16,7 @@ class ABIType(Expr):
     def decode(self, value: Bytes) -> "ABIType":
         pass
 
-    def type_of(self) -> TealType:
+    def type_of(self) -> "TealType":
         return self.stack_type
 
     def has_return(self) -> bool:
@@ -26,5 +25,5 @@ class ABIType(Expr):
     def __str__(self) -> str:
         return ""
 
-    def __teal__(self, options: CompileOptions):
+    def __teal__(self, options: "CompileOptions"):
         return self.value.__teal__(options)

@@ -1,19 +1,21 @@
 from typing import List, Tuple
 
-from pyteal import *
+from . import ScratchVar
+from .binaryexpr import Op
 
+from .abi_utils import accumulate, rest
 from .abi_type import ABIType
-from .bytes import *
-from .uint import *
+from .abi_bytes import *
+from .abi_uint import *
 
 
 class Tuple(ABIType):
-    stack_type = TealType.bytes
 
     types: List[ABIType]
     value: Expr
 
     def __init__(self, t: List[ABIType]):
+        self.stack_type = Bytes
         self.types = t
 
     def __call__(self, *elements: ABIType) -> "Tuple":
@@ -135,7 +137,7 @@ class DynamicArray(Tuple):
 
         return Seq(*ops, pos.load())
 
-    def __teal__(self, options: CompileOptions):
+    def __teal__(self, options: "CompileOptions"):
         return self.value.__teal__(options)
 
     def encode(self) -> Expr:

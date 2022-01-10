@@ -23,6 +23,7 @@ __all__ = [
     "Bytes",
     "Int",
     "EnumInt",
+    "MethodSignature",
     "Arg",
     "TxnType",
     "TxnField",

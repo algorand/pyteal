@@ -1,7 +1,8 @@
-from pyteal import Bytes, Concat, Expr, Extract, Int, Len, Seq, TealType
+from . import Bytes, Concat, Expr, Extract, Int, Len, Seq
+from ..types import TealType
 
 from .abi_type import ABIType
-from .uint import Uint16
+from .abi_uint import Uint16
 
 
 class String(ABIType):
