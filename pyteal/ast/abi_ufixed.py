@@ -24,7 +24,7 @@ from . import (
 from ..types import TealType
 from .abi_type import ABIType
 
-from .abi_utils import head, itoa, prefix, suffix, tail, witoa
+from .abi_utils import head, itoa, prefix, suffix, tail, witoa, pow10
 
 
 def precision_uint8(p: int):
@@ -32,18 +32,18 @@ def precision_uint8(p: int):
 
 
 @Subroutine(TealType.bytes)
-def byte_precision(v: TealType.bytes):
+def byte_precision(v: Bytes):
     return Itob(pow10(GetByte(v, Int(0))))
 
 
 @Subroutine(TealType.none)
-def assert_fp_match(a: TealType.bytes, b: TealType.bytes):
+def assert_fp_match(a: Bytes, b: Bytes):
     return Assert(head(a) == head(b))  # Check precision matches
 
 
 @Subroutine(TealType.bytes)
 def check_overflow(
-    prec: TealType.bytes, bytelen: TealType.uint64, value: TealType.bytes
+    prec: Bytes, bytelen: Int, value: Bytes
 ):
     """check_overflow checks to make sure we didnt overflow and sets the appropriate 0 padding if necessary
 
@@ -126,11 +126,11 @@ class UFixed(ABIType):
         return fp_div(self.value, other.value)
 
     def __str__(self) -> str:
-        return "uFixed{}x{}".format(self.bits, self.presicion)
+        return "uFixed{}x{}".format(self.bits, self.precision)
 
 
 @Subroutine(TealType.bytes)
-def fp_add(a: TealType.bytes, b: TealType.bytes):
+def fp_add(a: Bytes, b: Bytes):
     return Seq(
         assert_fp_match(a, b),
         check_overflow(head(a), Len(b), BytesAdd(tail(a), tail(b))),
@@ -138,7 +138,7 @@ def fp_add(a: TealType.bytes, b: TealType.bytes):
 
 
 @Subroutine(TealType.bytes)
-def fp_sub(a: TealType.bytes, b: TealType.bytes):
+def fp_sub(a: Bytes, b: Bytes):
     return Seq(
         assert_fp_match(a, b),
         check_overflow(head(a), Len(a), BytesMinus(tail(a), tail(b))),
@@ -146,7 +146,7 @@ def fp_sub(a: TealType.bytes, b: TealType.bytes):
 
 
 @Subroutine(TealType.bytes)
-def fp_mul(a: TealType.bytes, b: TealType.bytes):
+def fp_mul(a: Bytes, b: Bytes):
     return Seq(
         assert_fp_match(a, b),
         check_overflow(
@@ -162,7 +162,7 @@ def fp_mul(a: TealType.bytes, b: TealType.bytes):
 
 
 @Subroutine(TealType.bytes)
-def fp_div(a: TealType.bytes, b: TealType.bytes):
+def fp_div(a: Bytes, b: Bytes):
     return Seq(
         assert_fp_match(a, b),
         check_overflow(
@@ -178,7 +178,7 @@ def fp_div(a: TealType.bytes, b: TealType.bytes):
 
 
 @Subroutine(TealType.bytes)
-def fp_rescale(v: TealType.bytes, p: TealType.uint64):
+def fp_rescale(v: Bytes, p: Int):
     return check_overflow(
         # Prepend new precision byte
         suffix(Itob(p), Int(1)),
@@ -193,7 +193,7 @@ def fp_rescale(v: TealType.bytes, p: TealType.uint64):
 
 
 @Subroutine(TealType.bytes)
-def fp_to_ascii(v: TealType.bytes):
+def fp_to_ascii(v: Bytes):
     val = tail(v)
     prec = GetByte(v, Int(-2))
     ascii = ScratchVar()

@@ -1,6 +1,7 @@
 from typing import List, Tuple
 
 from . import ScratchVar
+from ..compiler import CompileOptions
 from .binaryexpr import Op
 
 from .abi_utils import accumulate, rest
@@ -9,16 +10,16 @@ from .abi_bytes import *
 from .abi_uint import *
 
 
-class Tuple(ABIType):
+class ABITuple(ABIType):
 
     types: List[ABIType]
     value: Expr
 
     def __init__(self, t: List[ABIType]):
-        self.stack_type = Bytes
+        self.stack_type = TealType.bytes
         self.types = t
 
-    def __call__(self, *elements: ABIType) -> "Tuple":
+    def __call__(self, *elements: ABIType) -> "ABITuple":
         """__call__ provides an method to construct a tuple for a list of types"""
 
         head_pos_lengths = []
@@ -56,8 +57,8 @@ class Tuple(ABIType):
             )
         )
 
-    def decode(self, value: Bytes) -> "Tuple":
-        inst = Tuple(self.types)
+    def decode(self, value: Expr) -> "ABITuple":
+        inst = ABITuple(self.types)
         inst.value = value
         return inst
 
@@ -91,12 +92,12 @@ class Tuple(ABIType):
         )
 
 
-class FixedArray(Tuple):
+class ABIFixedArray(ABITuple):
     def __init__(self, t: ABIType, N: int):
         self.types = [t] * N
 
-    def decode(self, value: Bytes) -> "FixedArray":
-        inst = FixedArray(self.types[0], len(self.types))
+    def decode(self, value: Bytes) -> "ABIFixedArray":
+        inst = ABIFixedArray(self.types[0], len(self.types))
         inst.value = value
         return inst
 
@@ -104,20 +105,20 @@ class FixedArray(Tuple):
         return "[{}]{}".format(len(self.types), self.types[0])
 
 
-class DynamicArray(Tuple):
+class ABIDynamicArray(ABITuple):
 
     item_len: Uint16
 
     def __init__(self, type: ABIType):
         self.element_type = type
 
-    def __call__(self, data: List[ABIType]) -> "DynamicArray":
+    def __call__(self, data: List[ABIType]) -> "ABIDynamicArray":
         return self.decode(
             Concat(Uint16(Int(len(data))).encode(), super().__call__(*data))
         )
 
-    def decode(self, data: Bytes) -> "DynamicArray":
-        da = DynamicArray(self.element_type)
+    def decode(self, data: Bytes) -> "ABIDynamicArray":
+        da = ABIDynamicArray(self.element_type)
         da.value = rest(data, Int(2))
         da.item_len = Uint16.decode(data)
         return da

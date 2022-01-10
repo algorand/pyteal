@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, cast
 
 from . import (
     Bytes,
@@ -27,14 +27,15 @@ from .abi_type import ABIType
 
 class Uint512(ABIType):
     stack_type = TealType.bytes
-    byte_len = Int(512 // 8)
+    _byte_len =  512 // 8
+    byte_len = Int(_byte_len)
 
     def __init__(self, value: Union[int, Int, Bytes]):
         if isinstance(value, int):
-            value = Bytes(value.to_bytes(self.byte_len, "big"))
+            value = Bytes(value.to_bytes(self._byte_len, "big"))
         if isinstance(value, Int):
-            value = Itob(value)
-        self.value = value
+            value = Itob(cast(Int, value))
+        self.value = cast(Bytes, value)
 
     @classmethod
     def decode(cls, value: Bytes) -> "Uint512":
@@ -50,11 +51,12 @@ class Uint512(ABIType):
 
 class Uint256(ABIType):
     stack_type = TealType.bytes
-    byte_len = Int(256 // 8)
+    _byte_len = 256 // 8
+    byte_len = Int(_byte_len)
 
     def __init__(self, value: Union[int, Int, Bytes]):
         if isinstance(value, int):
-            value = Bytes(value.to_bytes(self.byte_len, "big"))
+            value = Bytes(value.to_bytes(self._byte_len, "big"))
         if isinstance(value, Int):
             value = Itob(value)
         self.value = value
@@ -73,11 +75,12 @@ class Uint256(ABIType):
 
 class Uint128(ABIType):
     stack_type = TealType.bytes
-    byte_len = Int(128 // 8)
+    _byte_len = 128 // 8
+    byte_len = Int(_byte_len)
 
     def __init__(self, value: Union[int, Int, Bytes]):
         if isinstance(value, int):
-            value = Bytes(value.to_bytes(self.byte_len, "big"))
+            value = Bytes(value.to_bytes(self._byte_len, "big"))
         if isinstance(value, Int):
             value = Itob(value)
 
