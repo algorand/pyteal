@@ -47,11 +47,13 @@ class Tuple(ABIType):
         # Write them in reverse
         head_ops.reverse()
 
-        return Seq(
-            v.store(Bytes("")),
-            head_pos.store(accumulate(head_pos_lengths, Op.add)),
-            *head_ops,
-            Concat(v.load(), *tail_ops),
+        return self.decode(
+            Seq(
+                v.store(Bytes("")),
+                head_pos.store(accumulate(head_pos_lengths, Op.add)),
+                *head_ops,
+                Concat(v.load(), *tail_ops),
+            )
         )
 
     def decode(self, value: Bytes) -> "Tuple":
