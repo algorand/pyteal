@@ -26,8 +26,9 @@ class ABIType(Expr):
     def has_return(self) -> bool:
         return True
 
-    def __str__(self) -> str:
-        return ""
+    @classmethod
+    def __str__(cls) -> str:
+        return cls.__name__.lower()
 
     def __teal__(self, options: "CompileOptions"):
         return self.value.__teal__(options)

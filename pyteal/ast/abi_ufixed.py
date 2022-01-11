@@ -129,8 +129,8 @@ class UFixed(ABIType):
     def __truediv__(self, other: "UFixed"):
         return fp_div(self.value, other.value)
 
-    def __str__(self) -> str:
-        return "uFixed{}x{}".format(self.bits, self.precision)
+    def __str__(self):
+        return "ufixed{}x{}".format(self.bits, self.precision)
 
 
 @Subroutine(TealType.bytes)
