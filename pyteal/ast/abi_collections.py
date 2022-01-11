@@ -87,9 +87,14 @@ class ABITuple(ABIType):
     def encode(self) -> Expr:
         return self.value
 
+    def __name__(self):
+        return ("(" + ",".join(["{}"] * len(self.types)) + ")").format(
+            *[t for t in self.types]
+        )
+
     def __str__(self):
-        return ("tuple(" + ",".join(["{}"] * len(self.types)) + ")").format(
-            *[t.__name__.lower() for t in self.types]
+        return ("(" + ",".join(["{}"] * len(self.types)) + ")").format(
+            *[t for t in self.types]
         )
 
 
@@ -103,7 +108,7 @@ class ABIFixedArray(ABITuple):
         return inst
 
     def __str__(self):
-        return "[{}]{}".format(len(self.types), self.types[0])
+        return "{}[{}]".format(self.types[0], len(self.types))
 
 
 class ABIDynamicArray(ABITuple):
@@ -148,4 +153,4 @@ class ABIDynamicArray(ABITuple):
         return Concat(self.item_len.encode(), self.value)
 
     def __str__(self):
-        return "[]{}".format(self.element_type)
+        return "{}[]".format(self.element_type)
