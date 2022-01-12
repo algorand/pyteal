@@ -1,3 +1,4 @@
+import inspect
 import pytest
 
 from .. import *
@@ -1559,3 +1560,111 @@ return
             program, Mode.Application, version=5, assembleConstants=False
         )
         assert actual == expected.strip()
+
+
+from .source_map import tabulateSourceMap
+
+
+def test_zeph():
+    @Subroutine(TealType.none)
+    def storeValue(key: Expr, t1: Expr, t2: Expr, t3: Expr) -> Expr:
+        return App.globalPut(key, t1 + t2 + t3 + Int(10))
+
+    program = Seq(
+        [
+            If(Txn.application_id() == Int(0)).Then(
+                storeValue(
+                    Concat(Bytes("test"), Bytes("test"), Bytes("a")),
+                    Int(1),
+                    Int(1),
+                    Int(3),
+                )
+            ),
+            Approve(),
+        ]
+    )
+
+    expected = """#pragma version 4
+intcblock 1
+bytecblock 0x74657374
+txn ApplicationID
+pushint 0 // 0
+==
+bz main_l2
+bytec_0 // "test"
+bytec_0 // "test"
+concat
+pushbytes 0x61 // "a"
+concat
+intc_0 // 1
+intc_0 // 1
+pushint 3 // 3
+callsub storeValue_0
+main_l2:
+intc_0 // 1
+return
+
+// storeValue
+storeValue_0:
+store 3
+store 2
+store 1
+store 0
+load 0
+load 1
+load 2
++
+load 3
++
+pushint 10 // 10
++
+app_global_put
+retsub
+    """.strip()
+    actual, lines, sourceMap = compileTeal(
+        program, Mode.Application, version=4, assembleConstants=True, sourceMap=True
+    )
+    assert actual == expected
+    table = tabulateSourceMap(lines, sourceMap)
+
+    expected_table = """
+  TEAL line  TEAL                     PyTeal line  PyTeal                                             Op                                                                                                                                                                 Source
+-----------  ---------------------  -------------  -------------------------------------------------  -----------------------------------------------------------------------------------------------------------------------------------------------------------------  -------------------------------------------------------------------
+          1  #pragma version 4
+          2  intcblock 1                     1575  If(Txn.application_id() == Int(0)).Then(           TealOp(None, intcblock, 1)                                                                                                                                         /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+          3  bytecblock 0x74657374           1575  If(Txn.application_id() == Int(0)).Then(           TealOp(None, bytecblock, '0x74657374')                                                                                                                             /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+          4  txn ApplicationID               1575  If(Txn.application_id() == Int(0)).Then(           TealOp((Txn ApplicationID), txn, 'ApplicationID')                                                                                                                  /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+          5  pushint 0 // 0                  1575  If(Txn.application_id() == Int(0)).Then(           TealOp((Int: 0), pushint, 0, '//', 0)                                                                                                                              /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+          6  ==                              1575  If(Txn.application_id() == Int(0)).Then(           TealOp((== (Txn ApplicationID) (Int: 0)), ==)                                                                                                                      /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+          7  bz main_l2                      1577  Concat(Bytes("test"), Bytes("test"), Bytes("a")),  TealOp(None, bz, 'main_l2')                                                                                                                                        /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+          8  bytec_0 // "test"               1577  Concat(Bytes("test"), Bytes("test"), Bytes("a")),  TealOp((utf8 bytes: "test"), bytec_0, '//', '"test"')                                                                                                              /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+          9  bytec_0 // "test"               1577  Concat(Bytes("test"), Bytes("test"), Bytes("a")),  TealOp((utf8 bytes: "test"), bytec_0, '//', '"test"')                                                                                                              /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         10  concat                          1577  Concat(Bytes("test"), Bytes("test"), Bytes("a")),  TealOp((concat (utf8 bytes: "test") (utf8 bytes: "test") (utf8 bytes: "a")), concat)                                                                               /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         11  pushbytes 0x61 // "a"           1577  Concat(Bytes("test"), Bytes("test"), Bytes("a")),  TealOp((utf8 bytes: "a"), pushbytes, '0x61', '//', '"a"')                                                                                                          /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         12  concat                          1577  Concat(Bytes("test"), Bytes("test"), Bytes("a")),  TealOp((concat (utf8 bytes: "test") (utf8 bytes: "test") (utf8 bytes: "a")), concat)                                                                               /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         13  intc_0 // 1                     1578  Int(1),                                            TealOp((Int: 1), intc_0, '//', 1)                                                                                                                                  /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         14  intc_0 // 1                     1579  Int(1),                                            TealOp((Int: 1), intc_0, '//', 1)                                                                                                                                  /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         15  pushint 3 // 3                  1580  Int(3),                                            TealOp((Int: 3), pushint, 3, '//', 3)                                                                                                                              /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         16  callsub storeValue_0            1576  storeValue(                                        TealOp((SubroutineCall "storeValue" ( (concat (utf8 bytes: "test") (utf8 bytes: "test") (utf8 bytes: "a")) (Int: 1) (Int: 1) (Int: 3))), callsub, 'storeValue_0')  /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         17  main_l2:                        1583  Approve(),                                         TealLabel(None, 'main_l2', None)                                                                                                                                   /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         18  intc_0 // 1                     1583  Approve(),                                         TealOp((Int: 1), intc_0, '//', 1)                                                                                                                                  /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         19  return                          1583  Approve(),                                         TealOp((ExitProgram (Int: 1)), return)                                                                                                                             /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         20  // storeValue                   1624  actual, lines, sourceMap = compileTeal(            TealLabel(None, 'storeValue_0', 'storeValue')                                                                                                                      /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+             storeValue_0:
+         21  store 3                         1624  actual, lines, sourceMap = compileTeal(            TealOp((StackStore slot#259), store, 3)                                                                                                                            /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         22  store 2                         1624  actual, lines, sourceMap = compileTeal(            TealOp((StackStore slot#258), store, 2)                                                                                                                            /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         23  store 1                         1624  actual, lines, sourceMap = compileTeal(            TealOp((StackStore slot#257), store, 1)                                                                                                                            /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         24  store 0                         1624  actual, lines, sourceMap = compileTeal(            TealOp((StackStore slot#256), store, 0)                                                                                                                            /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         25  load 0                          1624  actual, lines, sourceMap = compileTeal(            TealOp((Load slot#256), load, 0)                                                                                                                                   /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         26  load 1                          1624  actual, lines, sourceMap = compileTeal(            TealOp((Load slot#257), load, 1)                                                                                                                                   /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         27  load 2                          1624  actual, lines, sourceMap = compileTeal(            TealOp((Load slot#258), load, 2)                                                                                                                                   /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         28  +                               1624  actual, lines, sourceMap = compileTeal(            TealOp((+ (Load slot#257) (Load slot#258)), +)                                                                                                                     /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         29  load 3                          1624  actual, lines, sourceMap = compileTeal(            TealOp((Load slot#259), load, 3)                                                                                                                                   /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         30  +                               1624  actual, lines, sourceMap = compileTeal(            TealOp((+ (+ (Load slot#257) (Load slot#258)) (Load slot#259)), +)                                                                                                 /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         31  pushint 10 // 10                1624  actual, lines, sourceMap = compileTeal(            TealOp((Int: 10), pushint, 10, '//', 10)                                                                                                                           /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         32  +                               1624  actual, lines, sourceMap = compileTeal(            TealOp((+ (+ (+ (Load slot#257) (Load slot#258)) (Load slot#259)) (Int: 10)), +)                                                                                   /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         33  app_global_put                  1624  actual, lines, sourceMap = compileTeal(            TealOp((app_global_put (Load slot#256) (+ (+ (+ (Load slot#257) (Load slot#258)) (Load slot#259)) (Int: 10))), app_global_put)                                     /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+         34  retsub                          1624  actual, lines, sourceMap = compileTeal(            TealOp((Return None), retsub)                                                                                                                                      /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
+"""
+
+    assert expected_table == "\n" + table + "\n"

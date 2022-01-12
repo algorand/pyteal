@@ -1,4 +1,4 @@
-from typing import List, Tuple, Set, Dict, Optional, cast
+from typing import List, NamedTuple, Tuple, Set, Dict, Optional, cast
 
 from ..types import TealType
 from ..ast import (
@@ -33,9 +33,11 @@ class CompileOptions:
         *,
         mode: Mode = Mode.Signature,
         version: int = DEFAULT_TEAL_VERSION,
+        sourceMap: bool = False,
     ) -> None:
         self.mode = mode
         self.version = version
+        self.sourceMap: bool = sourceMap
 
         self.currentSubroutine: Optional[SubroutineDefinition] = None
 
@@ -169,6 +171,7 @@ def compileTeal(
     *,
     version: int = DEFAULT_TEAL_VERSION,
     assembleConstants: bool = False,
+    sourceMap: bool = False,
 ) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 
@@ -201,7 +204,7 @@ def compileTeal(
             )
         )
 
-    options = CompileOptions(mode=mode, version=version)
+    options = CompileOptions(mode=mode, version=version, sourceMap=sourceMap)
 
     subroutineMapping: Dict[
         Optional[SubroutineDefinition], List[TealComponent]
@@ -234,4 +237,43 @@ def compileTeal(
 
     lines = ["#pragma version {}".format(version)]
     lines += [i.assemble() for i in teal]
-    return "\n".join(lines)
+
+    tealCode = "\n".join(lines)
+    if not sourceMap:
+        return tealCode
+
+    return tealCode, lines, getSourceMap(teal)
+
+
+import inspect
+
+
+def getSourceMap(
+    teal: List[TealOp],
+    stackIndex: int = 2,
+    firstLine: int = 2,
+    assumeNextAvailable: bool = True,
+) -> Dict[int, Tuple[TealOp, Optional[NamedTuple]]]:
+    # TODD: what about several source files!!!!
+    # TODO: what about assemble constants?
+    sourceFrame = inspect.stack()[stackIndex]
+    source = sourceFrame.filename
+    rawMap = [bestFrame(t, source) for t in teal]
+    if assumeNextAvailable:
+        nextAvail = None
+        for i in range(len(rawMap) - 1, -1, -1):
+            curr = rawMap[i]
+            if not curr:
+                rawMap[i] = nextAvail
+            else:
+                nextAvail = curr
+
+    return {i + firstLine: (t, rawMap[i]) for i, t in enumerate(teal)}
+
+
+def bestFrame(t: TealOp, sourceFileName: str) -> Optional[NamedTuple]:
+    if not t.expr:
+        return None
+
+    candidates = [f for f in t.expr.frames if f.filename == sourceFileName]
+    return candidates[-1] if candidates else None

@@ -8,9 +8,29 @@ from ..ir import TealBlock, TealSimpleBlock
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
+import inspect
+
+
+def depth(init):
+    def wrapper(*args, **kwargs):
+        if not hasattr(args[0], "depth"):
+            args[0].depth = 0
+        args[0].depth += 1
+
+        if not hasattr(args[0], "frame"):
+            args[0].frames = inspect.stack()
+            args[0].kframe = args[0].frames[args[0].depth * 2 - 1]
+
+        return init(*args, **kwargs)
+
+    return wrapper
+
 
 class Expr(ABC):
     """Abstract base class for PyTeal expressions."""
+
+    def __init_subclass__(cls):
+        cls.__init__ = depth(cls.__init__)
 
     def __init__(self):
         import traceback
