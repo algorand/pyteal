@@ -256,6 +256,8 @@ def getSourceMap(
 ) -> Dict[int, Tuple[TealOp, Optional[NamedTuple]]]:
     # TODD: what about several source files!!!!
     # TODO: what about assemble constants?
+    # TODO: what about multiple line TEAL statements (label comment on first line)
+    # TODO: what about all the subroutine stuff?
     sourceFrame = inspect.stack()[stackIndex]
     source = sourceFrame.filename
     rawMap = [bestFrame(t, source) for t in teal]
