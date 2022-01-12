@@ -1,4 +1,5 @@
-from typing import List, Tuple
+from typing import List, Tuple, TypeVar, Generic, Sequence
+from typing_extensions import ParamSpec
 
 from . import ScratchVar
 from ..compiler import CompileOptions
@@ -10,16 +11,19 @@ from .abi_bytes import *
 from .abi_uint import *
 
 
-class ABITuple(ABIType):
+T = TypeVar('T', bound=ABIType)
+P = ParamSpec('P')
 
-    types: List[ABIType]
+class ABITuple(Sequence[T]):
+
+    types: T
     value: Expr
 
-    def __init__(self, t: List[ABIType]):
+    def __init__(self, t: T):
         self.stack_type = TealType.bytes
         self.types = t
 
-    def __call__(self, *elements: ABIType) -> "ABITuple":
+    def __call__(self, elements: T) -> "ABITuple":
         """__call__ provides an method to construct a tuple for a list of types"""
 
         head_pos_lengths = []
@@ -28,6 +32,7 @@ class ABITuple(ABIType):
         v, head_pos = ScratchVar(), ScratchVar()
 
         for elem in elements:
+            elem = cast(ABIType, elem)
             if elem.dynamic:
 
                 head_pos_lengths.append(elem.byte_len + Int(2))
@@ -87,10 +92,14 @@ class ABITuple(ABIType):
     def encode(self) -> Expr:
         return self.value
 
-    def __str__(self):
-        return ("(" + ",".join(["{}"] * len(self.types)) + ")").format(
-            *[t.__str__() for t in self.types]
-        )
+    @classmethod
+    def __str__(cls):
+        print(dir(cls))
+        print(cls.__annotations__)
+        return ""
+        #return ("(" + ",".join(["{}"] * len(self.types)) + ")").format(
+        #    *[t.__str__() for t in self.types]
+        #)
 
 ABITuple.__module__ = "pyteal"
 
