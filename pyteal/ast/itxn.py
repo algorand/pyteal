@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, TYPE_CHECKING, List
+from typing import Dict, TYPE_CHECKING, List, Union, cast
 
 from ..types import TealType, require_type
 from ..errors import TealInputError, verifyTealVersion
@@ -132,7 +132,7 @@ class InnerTxnBuilder:
         return InnerTxnActionExpr(InnerTxnAction.Submit)
 
     @classmethod
-    def SetField(cls, field: TxnField, value: Expr) -> Expr:
+    def SetField(cls, field: TxnField, value: Union[Expr, List[Expr]]) -> Expr:
         """Set a field of the current inner transaction.
 
         :any:`InnerTxnBuilder.Begin` must be called before setting any fields on an inner
@@ -145,14 +145,23 @@ class InnerTxnBuilder:
             value: The value to that the field should take. This must evaluate to a type that is
                 compatible with the field being set.
         """
-        if field.is_array:
-            raise TealInputError(
-                "inner transaction set field does not support array field"
-            )
-        return InnerTxnFieldExpr(field, value)
+        if not field.is_array:
+            if type(value) is list:
+                raise TealInputError(
+                    "inner transaction set field does not support array field"
+                )
+            return InnerTxnFieldExpr(field, cast(Expr, value))
+        else:
+            if type(value) is not list:
+                raise TealInputError(
+                    "inner transaction set array field does not support non-array field"
+                )
+            values = cast(List[Expr], value)
+            fieldsArrayToSet = [cls.SetField(field, valueIter) for valueIter in values]
+            return Seq(fieldsArrayToSet)
 
     @classmethod
-    def SetFields(cls, fields: Dict[TxnField, Expr]) -> Expr:
+    def SetFields(cls, fields: Dict[TxnField, Union[Expr, List[Expr]]]) -> Expr:
         """Set multiple fields of the current inner transaction.
 
         :any:`InnerTxnBuilder.Begin` must be called before setting any fields on an inner
@@ -167,25 +176,6 @@ class InnerTxnBuilder:
         """
         fieldsToSet = [cls.SetField(field, value) for field, value in fields.items()]
         return Seq(fieldsToSet)
-
-    @classmethod
-    def SetFieldArray(cls, field: TxnField, values: List[Expr]) -> Expr:
-        """Set an array field of the current inner transaction.
-
-        :any:`InnerTxnBuilder.Begin` must be called before setting any fields on an inner
-        transaction.
-
-        Require TEAL version 5 or higher. This operation is only permitted in application mode.
-
-        Args:
-            field: The array field to set on the inner transaction.
-            values: The array of values to that array field should take.
-        """
-        if not field.is_array:
-            raise TealInputError(
-                "inner transaction set array field does not support non-array field"
-            )
-        return Seq([cls.SetField(field, valueIter) for valueIter in values])
 
 
 InnerTxnBuilder.__module__ = "pyteal"
