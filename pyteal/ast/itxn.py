@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, TYPE_CHECKING
+from typing import Dict, TYPE_CHECKING, List
 
 from ..types import TealType, require_type
 from ..errors import TealInputError, verifyTealVersion
@@ -47,8 +47,6 @@ class InnerTxnActionExpr(Expr):
 class InnerTxnFieldExpr(Expr):
     def __init__(self, field: TxnField, value: Expr) -> None:
         super().__init__()
-        if field.is_array:
-            raise TealInputError("Unexpected array field: {}".format(field))
         require_type(value, field.type_of())
         self.field = field
         self.value = value
@@ -147,6 +145,10 @@ class InnerTxnBuilder:
             value: The value to that the field should take. This must evaluate to a type that is
                 compatible with the field being set.
         """
+        if field.is_array:
+            raise TealInputError(
+                "inner transaction set field does not support array field"
+            )
         return InnerTxnFieldExpr(field, value)
 
     @classmethod
@@ -165,6 +167,25 @@ class InnerTxnBuilder:
         """
         fieldsToSet = [cls.SetField(field, value) for field, value in fields.items()]
         return Seq(fieldsToSet)
+
+    @classmethod
+    def SetFieldArray(cls, field: TxnField, values: List[Expr]) -> Expr:
+        """Set an array field of the current inner transaction.
+
+        :any:`InnerTxnBuilder.Begin` must be called before setting any fields on an inner
+        transaction.
+
+        Require TEAL version 5 or higher. This operation is only permitted in application mode.
+
+        Args:
+            field: The array field to set on the inner transaction.
+            values: The array of values to that array field should take.
+        """
+        if not field.is_array:
+            raise TealInputError(
+                "inner transaction set array field does not support non-array field"
+            )
+        return Seq([cls.SetField(field, valueIter) for valueIter in values])
 
 
 InnerTxnBuilder.__module__ = "pyteal"
