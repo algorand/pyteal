@@ -120,6 +120,13 @@ from .scratch import ScratchSlot, ScratchLoad, ScratchStore, ScratchStackStore
 from .scratchvar import ScratchVar
 from .maybe import MaybeValue
 
+# abi types
+from .abi_type import ABIType
+from .abi_collections import ABITuple, ABIFixedArray, ABIDynamicArray
+from .abi_bytes import String, Address
+from .abi_uint import Uint8, Uint16, Uint32, Uint64, Uint128, Uint256, Uint512
+from .abi_ufixed import UFixed
+
 __all__ = [
     "Expr",
     "LeafExpr",
@@ -242,11 +249,19 @@ __all__ = [
     "For",
     "Break",
     "Continue",
+    "ABIType",
+    "ABITuple",
+    "ABIFixedArray",
+    "ABIDynamicArray",
+    "String",
+    "Address",
+    "Uint8",
+    "Uint16",
+    "Uint32",
+    "Uint64",
+    "Uint128",
+    "Uint256",
+    "Uint512",
+    "UFixed",
 ]
 
-# abi types
-from .abi_type import ABIType
-from .abi_collections import ABITuple, ABIFixedArray, ABIDynamicArray
-from .abi_bytes import String, Address
-from .abi_uint import Uint16, Uint32, Uint64, Uint128, Uint256, Uint512
-from .abi_ufixed import UFixed

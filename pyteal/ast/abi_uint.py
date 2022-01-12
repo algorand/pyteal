@@ -170,3 +170,12 @@ class Uint8(ABIType):
 
     def encode(self) -> Expr:
         return suffix(Itob(self.value), self.byte_len)
+
+
+Uint512.__module__ = "pyteal"
+Uint256.__module__ = "pyteal"
+Uint128.__module__ = "pyteal"
+Uint64.__module__ = "pyteal"
+Uint32.__module__ = "pyteal"
+Uint16.__module__ = "pyteal"
+Uint8.__module__ = "pyteal"
