@@ -132,6 +132,7 @@ class UFixed(ABIType):
     def __str__(self):
         return "ufixed{}x{}".format(self.bits, self.precision)
 
+UFixed.__module__ = "pyteal"
 
 @Subroutine(TealType.bytes)
 def fp_add(a: Bytes, b: Bytes):

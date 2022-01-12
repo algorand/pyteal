@@ -92,6 +92,7 @@ class ABITuple(ABIType):
             *[t.__str__() for t in self.types]
         )
 
+ABITuple.__module__ = "pyteal"
 
 class ABIFixedArray(ABITuple):
     def __init__(self, t: ABIType, N: int):
@@ -105,6 +106,7 @@ class ABIFixedArray(ABITuple):
     def __str__(self):
         return "{}[{}]".format(self.types[0].__str__(), len(self.types))
 
+ABIFixedArray.__module__ = "pyteal"
 
 class ABIDynamicArray(ABITuple):
 
@@ -149,3 +151,5 @@ class ABIDynamicArray(ABITuple):
 
     def __str__(self):
         return "{}[]".format(self.element_type.__str__())
+
+ABIDynamicArray.__module__ = "pyteal"

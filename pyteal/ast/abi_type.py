@@ -32,3 +32,5 @@ class ABIType(Expr):
 
     def __teal__(self, options: "CompileOptions"):
         return self.value.__teal__(options)
+
+ABIType.__module__ = "pyteal"
