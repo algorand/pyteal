@@ -1,5 +1,4 @@
 from typing import List, Generic, Sequence, TypeVar, get_type_hints
-from typing_extensions import ParamSpec
 
 from . import ScratchVar
 from ..compiler import CompileOptions

@@ -149,7 +149,6 @@ __all__ = [
     "Break",
     "Continue",
     "ABIType",
-    "abiTypeString",
     "ABITuple",
     "ABIFixedArray",
     "ABIDynamicArray",
