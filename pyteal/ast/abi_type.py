@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from typing_extensions import ParamSpec
 
 from . import Bytes, Expr
 from ..types import TealType
@@ -32,5 +33,6 @@ class ABIType(Expr):
 
     def __teal__(self, options: "CompileOptions"):
         return self.value.__teal__(options)
+
 
 ABIType.__module__ = "pyteal"

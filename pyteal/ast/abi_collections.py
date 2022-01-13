@@ -1,4 +1,4 @@
-from typing import List, Tuple, TypeVar, Generic, Sequence
+from typing import List, Generic, Sequence, TypeVar, get_type_hints
 from typing_extensions import ParamSpec
 
 from . import ScratchVar
@@ -10,31 +10,34 @@ from .abi_type import ABIType
 from .abi_bytes import *
 from .abi_uint import *
 
+T = TypeVar("T", bound=Sequence[ABIType])
 
-T = TypeVar('T', bound=ABIType)
-P = ParamSpec('P')
 
-class ABITuple(Sequence[T]):
+class ABITuple(ABIType, Generic[T]):
 
-    types: T
+    stack_type = TealType.bytes
     value: Expr
+    types: T
 
-    def __init__(self, t: T):
-        self.stack_type = TealType.bytes
-        self.types = t
+    def __init__(self, data: Union[T, Expr]):
 
-    def __call__(self, elements: T) -> "ABITuple":
-        """__call__ provides an method to construct a tuple for a list of types"""
+        # Yikes
+        self.types = self.__class__.__orig_bases__[0].__args__[0].__args__
+
+        if isinstance(data, Expr):
+            self.value = data
+            return
+
+        self.elements = data
 
         head_pos_lengths = []
         head_ops: List[Expr] = []
         tail_ops: List[Expr] = []
         v, head_pos = ScratchVar(), ScratchVar()
 
-        for elem in elements:
+        for elem in data:
             elem = cast(ABIType, elem)
             if elem.dynamic:
-
                 head_pos_lengths.append(elem.byte_len + Int(2))
 
                 head_ops.append(
@@ -54,19 +57,19 @@ class ABITuple(Sequence[T]):
         # Write them in reverse
         head_ops.reverse()
 
-        return self.decode(
-            Seq(
-                v.store(Bytes("")),
-                head_pos.store(accumulate(head_pos_lengths, Op.add)),
-                *head_ops,
-                Concat(v.load(), *tail_ops),
-            )
+        self.value = Seq(
+            v.store(Bytes("")),
+            head_pos.store(accumulate(head_pos_lengths, Op.add)),
+            *head_ops,
+            Concat(v.load(), *tail_ops),
         )
 
-    def decode(self, value: Expr) -> "ABITuple":
-        inst = ABITuple(self.types)
-        inst.value = value
-        return inst
+    @classmethod
+    def decode(cls, value: Expr) -> "ABITuple[T]":
+        return cls(value)
+
+    def __len__(self) -> int:
+        return len(self.elements)
 
     def __getitem__(self, i: int) -> Expr:
         target_type = self.types[i]
@@ -94,44 +97,36 @@ class ABITuple(Sequence[T]):
 
     @classmethod
     def __str__(cls):
-        print(dir(cls))
-        print(cls.__annotations__)
-        return ""
-        #return ("(" + ",".join(["{}"] * len(self.types)) + ")").format(
-        #    *[t.__str__() for t in self.types]
-        #)
+        types = cls.__orig_bases__[0].__args__[0].__args__
+        return ("(" + ",".join(["{}"] * len(types)) + ")").format(
+            *[t.__str__() for t in types]
+        )
+
 
 ABITuple.__module__ = "pyteal"
 
-class ABIFixedArray(ABITuple):
-    def __init__(self, t: ABIType, N: int):
-        self.types = [t] * N
 
-    def decode(self, value: Expr) -> "ABIFixedArray":
-        inst = ABIFixedArray(self.types[0], len(self.types))
-        inst.value = value
-        return inst
+class ABIFixedArray(ABITuple[T]):
+    @classmethod
+    def decode(cls, value: Expr) -> "ABIFixedArray[T]":
+        return cls(value)
 
-    def __str__(self):
-        return "{}[{}]".format(self.types[0].__str__(), len(self.types))
+    @classmethod
+    def __str__(cls):
+        types = cls.__orig_bases__[0].__args__[0].__args__
+        return "{}[{}]".format(types[0].__str__(), len(types))
+
 
 ABIFixedArray.__module__ = "pyteal"
 
-class ABIDynamicArray(ABITuple):
+
+class ABIDynamicArray(ABITuple[T]):
 
     item_len: Uint16
 
-    def __init__(self, type: ABIType):
-        self.element_type = type
-
-    def __call__(self, *data: ABIType) -> "ABIDynamicArray":
-        return self.decode(
-            Concat(Uint16(Int(len(data))).encode(), super().__call__(*data))
-        )
-
-    def decode(self, data: Expr) -> "ABIDynamicArray":
-        da = ABIDynamicArray(self.element_type)
-        da.value = rest(data, Int(2))
+    @classmethod
+    def decode(cls, data: Expr) -> "ABIDynamicArray[T]":
+        da = cls(rest(data, Int(2)))
         da.item_len = Uint16.decode(data)
         return da
 
@@ -158,7 +153,10 @@ class ABIDynamicArray(ABITuple):
     def encode(self) -> Expr:
         return Concat(self.item_len.encode(), self.value)
 
-    def __str__(self):
-        return "{}[]".format(self.element_type.__str__())
+    @classmethod
+    def __str__(cls):
+        types = cls.__orig_bases__[0].__args__[0].__args__
+        return "{}[]".format(types[0].__str__())
+
 
 ABIDynamicArray.__module__ = "pyteal"
