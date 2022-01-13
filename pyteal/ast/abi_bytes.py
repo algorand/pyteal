@@ -25,6 +25,7 @@ class String(ABIType):
     def encode(self) -> Expr:
         return Concat(Uint16(Len(self.value)).encode(), self.value)
 
+
 String.__module__ = "pyteal"
 
 
@@ -41,5 +42,6 @@ class Address(ABIType):
 
     def encode(self) -> Expr:
         return self.value
+
 
 Address.__module__ = "pyteal"
