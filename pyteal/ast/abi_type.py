@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from typing_extensions import ParamSpec
 
 from . import Bytes, Expr
 from ..types import TealType
