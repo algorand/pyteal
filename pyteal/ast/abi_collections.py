@@ -21,7 +21,8 @@ class ABITuple(ABIType, Generic[T]):
     def __init__(self, data: Union[T, Expr]):
 
         # Yikes
-        self.types = self.__class__.__orig_bases__[0].__args__[0].__args__
+        orig = getattr(self.__class__, "__orig_bases__")
+        self.types = orig[0].__args__[0].__args__
 
         if isinstance(data, Expr):
             self.value = data
