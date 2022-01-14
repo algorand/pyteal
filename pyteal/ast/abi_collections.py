@@ -124,11 +124,13 @@ class ABIDynamicArray(ABITuple[T]):
 
     item_len: Uint16
 
+    def __init__(self, data: Expr):
+        self.item_len = Uint16.decode(data)
+        super().__init__(rest(data, Int(2)))
+
     @classmethod
     def decode(cls, data: Expr) -> "ABIDynamicArray[T]":
-        da = cls(rest(data, Int(2)))
-        da.item_len = Uint16.decode(data)
-        return da
+        return cls(data)
 
     def element_position(self, i: int) -> Expr:
         pos = ScratchVar()
@@ -148,7 +150,7 @@ class ABIDynamicArray(ABITuple[T]):
         return Seq(*ops, pos.load())
 
     def __teal__(self, options: "CompileOptions"):
-        return self.value.__teal__(options)
+        return self.encode().__teal__(options)
 
     def encode(self) -> Expr:
         return Concat(self.item_len.encode(), self.value)

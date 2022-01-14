@@ -116,5 +116,5 @@ def prefix(s: Bytes, n: Int):
 
 @Subroutine(TealType.bytes)
 def rest(s: Bytes, n: Int):
-    """prefix returns the first n bytes of a given byte string"""
+    """rest returns all bytes after n for a given byte string"""
     return Substring(s, n, Len(s))
