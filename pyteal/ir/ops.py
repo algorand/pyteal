@@ -170,6 +170,7 @@ class Op(Enum):
     gtxnas              = OpType("gtxnas",              Mode.Signature | Mode.Application, 5)
     gtxnsas             = OpType("gtxnsas",             Mode.Signature | Mode.Application, 5)
     args                = OpType("args",                Mode.Signature,                    5)
+    bsqrt               = OpType("bsqrt",               Mode.Signature | Mode.Application, 6)
     # fmt: on
 
 
