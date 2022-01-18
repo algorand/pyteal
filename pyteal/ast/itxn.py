@@ -164,7 +164,7 @@ class InnerTxnBuilder:
                         )
                     )
             return Seq(
-                exprs=[
+                *[
                     InnerTxnFieldExpr(field, cast(Expr, valueIter))
                     for valueIter in value
                 ]
