@@ -68,7 +68,7 @@ class InnerTxnArrayFieldExpr(Expr):
 
         start = TealSimpleBlock([])
         end = start
-        for idx, v in enumerate(self.value):
+        for v in self.value:
             v = cast(Expr, v)
             pushStart, pushEnd = v.__teal__(options)
             end.setNextBlock(pushStart)
