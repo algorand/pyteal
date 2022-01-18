@@ -72,9 +72,8 @@ class InnerTxnArrayFieldExpr(Expr):
             v = cast(Expr, v)
             pushStart, pushEnd = v.__teal__(options)
             end.setNextBlock(pushStart)
-
             addStart, addEnd = TealBlock.FromOp(
-                options, TealOp(self, Op.itxna, self.field.arg_name, idx)
+                options, TealOp(self, Op.itxn_field, self.field.arg_name, idx)
             )
             pushEnd.setNextBlock(addStart)
 
@@ -201,7 +200,7 @@ class InnerTxnBuilder:
                 raise TealInputError(
                     "inner transaction set array field does not support non-array field"
                 )
-            return InnerTxnArrayFieldExpr(field, value)
+            return InnerTxnArrayFieldExpr(field, cast(Expr, value))
 
     @classmethod
     def SetFields(cls, fields: Dict[TxnField, Union[Expr, List[Expr]]]) -> Expr:
