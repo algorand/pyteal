@@ -3,7 +3,7 @@ from typing import Dict, TYPE_CHECKING, List, Union, cast
 
 from ..types import TealType, require_type
 from ..errors import TealInputError, verifyTealVersion
-from ..ir import TealOp, Op, TealBlock
+from ..ir import TealOp, Op, TealBlock, TealSimpleBlock
 from .expr import Expr
 from .txn import TxnField, TxnExprBuilder, TxnaExprBuilder, TxnObject
 from .seq import Seq
@@ -36,6 +36,51 @@ class InnerTxnActionExpr(Expr):
         )
 
         return TealBlock.FromOp(options, TealOp(self, op))
+
+    def type_of(self):
+        return TealType.none
+
+    def has_return(self):
+        return False
+
+
+class InnerTxnArrayFieldExpr(Expr):
+    def __init__(self, field: TxnField, value: List[Expr]) -> None:
+        super().__init__()
+
+        assert len(value) > 0, "Length of array field must be > 0"
+
+        for v in value:
+            require_type(v, field.type_of())
+
+        self.field = field
+        self.value = value
+
+    def __str__(self):
+        return "(InnerTxnArraySetField {} {})".format(self.field.arg_name, self.value)
+
+    def __teal__(self, options: "CompileOptions"):
+        verifyTealVersion(
+            Op.itxn_field.min_version,
+            options.version,
+            "TEAL version too low to create inner transactions",
+        )
+
+        start = TealSimpleBlock([])
+        end = start
+        for idx, v in enumerate(self.value):
+            v = cast(Expr, v)
+            pushStart, pushEnd = v.__teal__(options)
+            end.setNextBlock(pushStart)
+
+            addStart, addEnd = TealBlock.FromOp(
+                options, TealOp(self, Op.itxna, self.field.arg_name, idx)
+            )
+            pushEnd.setNextBlock(addStart)
+
+            end = addEnd
+
+        return start, end
 
     def type_of(self):
         return TealType.none
@@ -156,9 +201,7 @@ class InnerTxnBuilder:
                 raise TealInputError(
                     "inner transaction set array field does not support non-array field"
                 )
-            values = cast(List[Expr], value)
-            fieldsArrayToSet = [cls.SetField(field, valueIter) for valueIter in values]
-            return Seq(fieldsArrayToSet)
+            return InnerTxnArrayFieldExpr(field, value)
 
     @classmethod
     def SetFields(cls, fields: Dict[TxnField, Union[Expr, List[Expr]]]) -> Expr:
