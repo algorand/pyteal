@@ -156,9 +156,12 @@ class InnerTxnBuilder:
                 raise TealInputError(
                     "inner transaction set array field does not support non-array field"
                 )
-            values = cast(List[Expr], value)
-            fieldsArrayToSet = [cls.SetField(field, valueIter) for valueIter in values]
-            return Seq(fieldsArrayToSet)
+            return Seq(
+                exprs=[
+                    InnerTxnFieldExpr(field, cast(Expr, valueIter))
+                    for valueIter in value
+                ]
+            )
 
     @classmethod
     def SetFields(cls, fields: Dict[TxnField, Union[Expr, List[Expr]]]) -> Expr:
