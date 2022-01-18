@@ -156,6 +156,13 @@ class InnerTxnBuilder:
                 raise TealInputError(
                     "inner transaction set array field does not support non-array field"
                 )
+            for valueIter in value:
+                if not isinstance(valueIter, Expr):
+                    raise TealInputError(
+                        "inner transaction set field: array argument {} is not a PyTeal expression".format(
+                            valueIter
+                        )
+                    )
             return Seq(
                 exprs=[
                     InnerTxnFieldExpr(field, cast(Expr, valueIter))
