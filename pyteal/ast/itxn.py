@@ -73,7 +73,7 @@ class InnerTxnArrayFieldExpr(Expr):
             pushStart, pushEnd = v.__teal__(options)
             end.setNextBlock(pushStart)
             addStart, addEnd = TealBlock.FromOp(
-                options, TealOp(self, Op.itxn_field, self.field.arg_name, idx)
+                options, TealOp(self, Op.itxn_field, self.field.arg_name)
             )
             pushEnd.setNextBlock(addStart)
 
