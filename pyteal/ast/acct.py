@@ -36,7 +36,7 @@ class AcctParam:
         """
         require_type(acct, TealType.uint64)
         return MaybeValue(
-            Op.app_params_get,
+            Op.acct_params_get,
             TealType.uint64,
             immediate_args=["AcctMinBalance"],
             args=[acct],
@@ -52,8 +52,8 @@ class AcctParam:
         """
         require_type(acct, TealType.uint64)
         return MaybeValue(
-            Op.app_params_get,
-            TealType.uint64,
+            Op.acct_params_get,
+            TealType.bytes,
             immediate_args=["AcctAuthAddr"],
             args=[acct],
         )
