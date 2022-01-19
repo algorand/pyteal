@@ -13,6 +13,7 @@ from .arg import Arg
 from .txn import TxnType, TxnField, TxnExpr, TxnaExpr, TxnArray, TxnObject, Txn
 from .gtxn import GtxnExpr, GtxnaExpr, TxnGroup, Gtxn
 from .gaid import GeneratedID
+from .gitxn import Gitxn, GitxnExpr, GitxnaExpr, InnerTxnGroup
 from .gload import ImportScratchValue
 from .global_ import Global, GlobalField
 from .app import App, AppField, OnComplete, AppParam
@@ -153,6 +154,10 @@ __all__ = [
     "InnerTxnBuilder",
     "InnerTxn",
     "InnerTxnAction",
+    "Gitxn",
+    "GitxnExpr",
+    "GitxnaExpr",
+    "InnerTxnGroup",
     "Array",
     "Tmpl",
     "Nonce",

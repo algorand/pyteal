@@ -2,8 +2,6 @@ from typing import Dict, Callable
 
 import pytest
 
-from pyteal.ast.gitxn import Gitxn
-
 from .. import *
 
 # this is not necessary but mypy complains if it's not included

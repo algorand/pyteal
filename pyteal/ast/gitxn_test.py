@@ -1,7 +1,5 @@
 import pytest
 
-from pyteal.ast.gitxn import Gitxn, GitxnExpr, GitxnaExpr, InnerTxnGroup
-
 from .. import *
 
 teal5Options = CompileOptions(version=5)

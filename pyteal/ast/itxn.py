@@ -18,6 +18,9 @@ class InnerTxnAction(Enum):
     Next = Op.itxn_next
 
 
+InnerTxnAction.__module__ = "pyteal"
+
+
 class InnerTxnActionExpr(Expr):
     def __init__(self, action: InnerTxnAction) -> None:
         super().__init__()
