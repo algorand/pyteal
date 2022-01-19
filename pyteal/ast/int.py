@@ -1,4 +1,4 @@
-from typing import Union, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from ..types import TealType
 from ..ir import TealOp, Op, TealBlock

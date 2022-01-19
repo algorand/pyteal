@@ -1,4 +1,4 @@
-from typing import List, cast, TYPE_CHECKING, overload
+from typing import List, TYPE_CHECKING, overload
 
 from ..types import TealType, require_type
 from ..errors import TealInputError

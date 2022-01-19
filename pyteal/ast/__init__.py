@@ -13,6 +13,7 @@ from .arg import Arg
 from .txn import TxnType, TxnField, TxnExpr, TxnaExpr, TxnArray, TxnObject, Txn
 from .gtxn import GtxnExpr, GtxnaExpr, TxnGroup, Gtxn
 from .gaid import GeneratedID
+from .gitxn import Gitxn, GitxnExpr, GitxnaExpr, InnerTxnGroup
 from .gload import ImportScratchValue
 from .global_ import Global, GlobalField
 from .app import App, AppField, OnComplete, AppParam
@@ -20,7 +21,7 @@ from .asset import AssetHolding, AssetParam
 from .acct import AcctParam
 
 # inner txns
-from .itxn import InnerTxnBuilder, InnerTxn
+from .itxn import InnerTxnBuilder, InnerTxn, InnerTxnAction
 
 # meta
 from .array import Array
@@ -154,6 +155,11 @@ __all__ = [
     "AcctParam",
     "InnerTxnBuilder",
     "InnerTxn",
+    "InnerTxnAction",
+    "Gitxn",
+    "GitxnExpr",
+    "GitxnaExpr",
+    "InnerTxnGroup",
     "Array",
     "Tmpl",
     "Nonce",

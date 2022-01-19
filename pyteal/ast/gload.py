@@ -5,7 +5,6 @@ from ..ir import TealOp, Op, TealBlock
 from ..errors import TealInputError, verifyTealVersion
 from ..config import MAX_GROUP_SIZE, NUM_SLOTS
 from .expr import Expr
-from .int import Int
 from .leafexpr import LeafExpr
 
 if TYPE_CHECKING:
@@ -15,7 +14,7 @@ if TYPE_CHECKING:
 class ImportScratchValue(LeafExpr):
     """An expression to load a scratch value created by another transaction in the current group"""
 
-    def __init__(self, txnIndex: Union[int, Expr], slotId: int) -> None:
+    def __init__(self, txnIndex: Union[int, Expr], slotId: Union[int, Expr]) -> None:
         """Create an expression to load a scratch space slot from a transaction in the current group.
 
         Requires TEAL version 4 or higher. This operation is only permitted in application mode.
@@ -25,8 +24,10 @@ class ImportScratchValue(LeafExpr):
                 This index may be a Python int, or it may be a PyTeal expression that evaluates at
                 runtime. If it's an expression, it must evaluate to a uint64. In all cases, the index
                 must be less than the index of the current transaction.
-            slotId: The index of the scratch slot that should be loaded. The index must be a Python int
-                in the range [0-256).
+            slotId: The index of the scratch slot that should be loaded.
+                This index may be a Python int, or it may be a PyTeal expression that evaluates at
+                runtime. If it's an expression, it must evaluate to a uint64. In all cases, the index
+                must be in the range [0, 256).
         """
         super().__init__()
         if type(txnIndex) is int:
@@ -36,12 +37,22 @@ class ImportScratchValue(LeafExpr):
                         txnIndex, MAX_GROUP_SIZE
                     )
                 )
+            if type(slotId) is not int:
+                raise TealInputError(
+                    "Invalid gload syntax with immediate transaction index {} and stack slot ID {}".format(
+                        txnIndex, slotId
+                    )
+                )
         else:
             require_type(cast(Expr, txnIndex), TealType.uint64)
-        if slotId < 0 or slotId >= NUM_SLOTS:
-            raise TealInputError(
-                "Invalid slot ID {}, shoud be in [0, {})".format(slotId, NUM_SLOTS)
-            )
+
+        if type(slotId) is int:
+            if slotId < 0 or slotId >= NUM_SLOTS:
+                raise TealInputError(
+                    "Invalid slot ID {}, shoud be in [0, {})".format(slotId, NUM_SLOTS)
+                )
+        else:
+            require_type(cast(Expr, slotId), TealType.uint64)
 
         self.txnIndex = txnIndex
         self.slotId = slotId
@@ -50,18 +61,34 @@ class ImportScratchValue(LeafExpr):
         return "(Gload {} {})".format(self.txnIndex, self.slotId)
 
     def __teal__(self, options: "CompileOptions"):
-        verifyTealVersion(
-            Op.gload.min_version,
-            options.version,
-            "TEAL version too low to use Gload expression",
-        )
+        def local_version_check(opcode: TealOp):
+            verifyTealVersion(
+                opcode.op.min_version,
+                options.version,
+                "TEAL version too low to use {} experssion".format(opcode.op.name),
+            )
 
-        if type(self.txnIndex) is int:
+        # For txnIndex and slotId, there are only three scenario as following
+        #     immediate    immediate
+        #     stack        immediate
+        #     stack        stack
+        # the last one is not allowed
+        # --> immediate    stack
+        # which is eliminated in __init__
+        if type(self.txnIndex) is int and type(self.slotId) is int:
             op = TealOp(self, Op.gload, self.txnIndex, self.slotId)
+            local_version_check(op)
             return TealBlock.FromOp(options, op)
-
-        op = TealOp(self, Op.gloads, self.slotId)
-        return TealBlock.FromOp(options, op, cast(Expr, self.txnIndex))
+        elif type(self.slotId) is int:
+            op = TealOp(self, Op.gloads, self.slotId)
+            local_version_check(op)
+            return TealBlock.FromOp(options, op, cast(Expr, self.txnIndex))
+        else:
+            op = TealOp(self, Op.gloadss)
+            local_version_check(op)
+            return TealBlock.FromOp(
+                options, op, cast(Expr, self.txnIndex), cast(Expr, self.slotId)
+            )
 
     def type_of(self):
         return TealType.anytype
