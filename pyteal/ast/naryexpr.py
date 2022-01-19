@@ -2,7 +2,7 @@ from typing import Sequence, cast, TYPE_CHECKING
 
 from ..types import TealType, require_type
 from ..errors import TealInputError
-from ..ir import TealOp, Op, TealSimpleBlock, TealBlock
+from ..ir import TealOp, Op, TealSimpleBlock
 from .expr import Expr
 
 if TYPE_CHECKING:
