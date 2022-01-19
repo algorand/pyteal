@@ -134,6 +134,7 @@ __all__ = [
     "BytesGt",
     "BytesGe",
     "BytesNot",
+    "BytesSqrt",
     "BytesZero",
     "ExtractUint16",
     "ExtractUint32",

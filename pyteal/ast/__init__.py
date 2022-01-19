@@ -44,6 +44,7 @@ from .unaryexpr import (
     Balance,
     MinBalance,
     BytesNot,
+    BytesSqrt,
     BytesZero,
     Log,
 )
@@ -239,6 +240,7 @@ __all__ = [
     "BytesGt",
     "BytesGe",
     "BytesNot",
+    "BytesSqrt",
     "BytesZero",
     "ExtractUint16",
     "ExtractUint32",
