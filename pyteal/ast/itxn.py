@@ -1,4 +1,5 @@
-from typing import Dict, Tuple, TYPE_CHECKING
+from enum import Enum
+from typing import Dict, TYPE_CHECKING, List, Union, cast
 
 from ..types import TealType, require_type
 from ..errors import TealInputError, verifyTealVersion
@@ -11,16 +12,25 @@ if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
 
+class InnerTxnAction(Enum):
+    Begin = Op.itxn_begin
+    Submit = Op.itxn_submit
+    Next = Op.itxn_next
+
+
+InnerTxnAction.__module__ = "pyteal"
+
+
 class InnerTxnActionExpr(Expr):
-    def __init__(self, begin: bool) -> None:
+    def __init__(self, action: InnerTxnAction) -> None:
         super().__init__()
-        self.begin = begin
+        self.action = action
 
     def __str__(self):
-        return "(InnerTxn{})".format("Begin" if self.begin else "Submit")
+        return "(InnerTxn{})".format(self.action.name)
 
     def __teal__(self, options: "CompileOptions"):
-        op = Op.itxn_begin if self.begin else Op.itxn_submit
+        op = self.action.value
 
         verifyTealVersion(
             op.min_version,
@@ -40,8 +50,6 @@ class InnerTxnActionExpr(Expr):
 class InnerTxnFieldExpr(Expr):
     def __init__(self, field: TxnField, value: Expr) -> None:
         super().__init__()
-        if field.is_array:
-            raise TealInputError("Unexpected array field: {}".format(field))
         require_type(value, field.type_of())
         self.field = field
         self.value = value
@@ -90,7 +98,20 @@ class InnerTxnBuilder:
 
         Requires TEAL version 5 or higher. This operation is only permitted in application mode.
         """
-        return InnerTxnActionExpr(True)
+        return InnerTxnActionExpr(InnerTxnAction.Begin)
+
+    @classmethod
+    def Next(cls) -> Expr:
+        """Begin preparation of a new inner transaction (in the same transaction group).
+
+        This new inner transaction is initialized with its sender to the application address (:any:`Global.current_application_address`);
+        fee to the minimum allowable, taking into account :code:`MinTxnFee` and credit from
+        overpaying in earlier transactions; :code:`FirstValid`/:code:`LastValid` to the values in
+        the top-level transaction, and all other fields to zero values.
+
+        Requires TEAL version 6 or higher. This operation is only permitted in application mode.
+        """
+        return InnerTxnActionExpr(InnerTxnAction.Next)
 
     @classmethod
     def Submit(cls) -> Expr:
@@ -111,14 +132,17 @@ class InnerTxnBuilder:
 
         Requires TEAL version 5 or higher. This operation is only permitted in application mode.
         """
-        return InnerTxnActionExpr(False)
+        return InnerTxnActionExpr(InnerTxnAction.Submit)
 
     @classmethod
-    def SetField(cls, field: TxnField, value: Expr) -> Expr:
+    def SetField(cls, field: TxnField, value: Union[Expr, List[Expr]]) -> Expr:
         """Set a field of the current inner transaction.
 
         :any:`InnerTxnBuilder.Begin` must be called before setting any fields on an inner
         transaction.
+
+        Note: For non-array field (e.g., note), setting it twice will overwrite the original value.
+              While for array field (e.g., accounts), setting it multiple times will append the values.
 
         Requires TEAL version 5 or higher. This operation is only permitted in application mode.
 
@@ -127,14 +151,44 @@ class InnerTxnBuilder:
             value: The value to that the field should take. This must evaluate to a type that is
                 compatible with the field being set.
         """
-        return InnerTxnFieldExpr(field, value)
+        if not field.is_array:
+            if type(value) is list:
+                raise TealInputError(
+                    "inner transaction set field {} does not support array value".format(
+                        field
+                    )
+                )
+            return InnerTxnFieldExpr(field, cast(Expr, value))
+        else:
+            if type(value) is not list:
+                raise TealInputError(
+                    "inner transaction set array field {} with non-array value".format(
+                        field
+                    )
+                )
+            for valueIter in value:
+                if not isinstance(valueIter, Expr):
+                    raise TealInputError(
+                        "inner transaction set array field {} with non PyTeal expression array element {}".format(
+                            field, valueIter
+                        )
+                    )
+            return Seq(
+                *[
+                    InnerTxnFieldExpr(field, cast(Expr, valueIter))
+                    for valueIter in value
+                ]
+            )
 
     @classmethod
-    def SetFields(cls, fields: Dict[TxnField, Expr]) -> Expr:
+    def SetFields(cls, fields: Dict[TxnField, Union[Expr, List[Expr]]]) -> Expr:
         """Set multiple fields of the current inner transaction.
 
         :any:`InnerTxnBuilder.Begin` must be called before setting any fields on an inner
         transaction.
+
+        Note: For non-array field (e.g., note), setting it twice will overwrite the original value.
+              While for array field (e.g., accounts), setting it multiple times will append the values.
 
         Requires TEAL version 5 or higher. This operation is only permitted in application mode.
 
