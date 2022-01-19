@@ -376,7 +376,7 @@ def test_bsqrt():
 
 def test_bsqrt_invalid():
     with pytest.raises(TealTypeError):
-        BytesNot(Int(2 ** 64 - 1))
+        BytesSqrt(Int(2 ** 64 - 1))
 
 
 def test_b_zero():
