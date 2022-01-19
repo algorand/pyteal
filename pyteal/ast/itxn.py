@@ -141,6 +141,9 @@ class InnerTxnBuilder:
         :any:`InnerTxnBuilder.Begin` must be called before setting any fields on an inner
         transaction.
 
+        Note: For non-array field (e.g., note), setting it twice will overwrite the original value.
+              While for array field (e.g., accounts), setting it multiple times will append the values.
+
         Requires TEAL version 5 or higher. This operation is only permitted in application mode.
 
         Args:
@@ -151,19 +154,23 @@ class InnerTxnBuilder:
         if not field.is_array:
             if type(value) is list:
                 raise TealInputError(
-                    "inner transaction set field does not support array field"
+                    "inner transaction set field {} does not support array value".format(
+                        field
+                    )
                 )
             return InnerTxnFieldExpr(field, cast(Expr, value))
         else:
             if type(value) is not list:
                 raise TealInputError(
-                    "inner transaction set array field does not support non-array field"
+                    "inner transaction set array field {} with non-array value".format(
+                        field
+                    )
                 )
             for valueIter in value:
                 if not isinstance(valueIter, Expr):
                     raise TealInputError(
-                        "inner transaction set field: array argument {} is not a PyTeal expression".format(
-                            valueIter
+                        "inner transaction set array field {} with non PyTeal expression array element {}".format(
+                            field, valueIter
                         )
                     )
             return Seq(
@@ -179,6 +186,9 @@ class InnerTxnBuilder:
 
         :any:`InnerTxnBuilder.Begin` must be called before setting any fields on an inner
         transaction.
+
+        Note: For non-array field (e.g., note), setting it twice will overwrite the original value.
+              While for array field (e.g., accounts), setting it multiple times will append the values.
 
         Requires TEAL version 5 or higher. This operation is only permitted in application mode.
 
