@@ -56,16 +56,14 @@ def is_different(regen: str) -> bool:
 
     curr_lines = regen.splitlines(keepends=True)
 
-    diff = list(difflib.unified_diff(
-        orig_lines,
-        curr_lines,
-        fromfile="original",
-        tofile="generated",
-        n=3
-    ))
+    diff = list(
+        difflib.unified_diff(
+            orig_lines, curr_lines, fromfile="original", tofile="generated", n=3
+        )
+    )
 
     if len(diff) != 0:
-        print(''.join(diff), end="")
+        print("".join(diff), end="")
         return True
 
     return False
