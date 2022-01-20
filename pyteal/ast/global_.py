@@ -27,7 +27,6 @@ class GlobalField(Enum):
     caller_app_id = (13, "CallerApplicationID", TealType.uint64, 6)
     caller_app_address = (14, "CallerApplicationAddress", TealType.bytes, 6)
 
-
     def __init__(self, id: int, name: str, type: TealType, min_version: int) -> None:
         self.id = id
         self.arg_name = name
@@ -144,9 +143,9 @@ class Global(LeafExpr):
 
     @classmethod
     def caller_app_id(cls) -> "Global":
-        """Get the id of the app that submitted the InnerTransaction that triggered this app to execute. 
-        
-        If not called from another app, this will return 0 
+        """Get the id of the app that submitted the InnerTransaction that triggered this app to execute.
+
+        If not called from another app, this will return 0
 
         Requires TEAL version 6 or higher."""
         return cls(GlobalField.caller_app_id)

@@ -165,6 +165,7 @@ def test_global_opcode_budget():
     with pytest.raises(TealInputError):
         expr.__teal__(teal5Options)
 
+
 def test_global_caller_application_id():
     expr = Global.caller_app_id()
     assert expr.type_of() == TealType.uint64
@@ -177,6 +178,7 @@ def test_global_caller_application_id():
 
     with pytest.raises(TealInputError):
         expr.__teal__(teal5Options)
+
 
 def test_global_caller_app_address():
     expr = Global.caller_app_address()
