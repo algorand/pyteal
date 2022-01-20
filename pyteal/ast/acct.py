@@ -15,10 +15,9 @@ class AccountParam:
         """Get the current balance in microalgos an account.
 
         Args:
-            acct: An index into Txn.accounts that corresponds to the account to check.
-                Must evaluate to uint64.
+            acct: An index into Txn.accounts that corresponds to the application to check or an address in the Txn.accounts array.
+                May evaluate to uint64 or an address.
         """
-        require_type(acct, TealType.uint64)
         return MaybeValue(
             Op.acct_params_get,
             TealType.uint64,
@@ -31,10 +30,9 @@ class AccountParam:
         """Get the minimum balance in microalgos for an account.
 
         Args:
-            acct: An index into Txn.accounts that corresponds to the application to check.
-                Must evaluate to uint64.
+            acct: An index into Txn.accounts that corresponds to the application to check or an address in the Txn.accounts array.
+                May evaluate to uint64 or an address.
         """
-        require_type(acct, TealType.uint64)
         return MaybeValue(
             Op.acct_params_get,
             TealType.uint64,
@@ -44,13 +42,12 @@ class AccountParam:
 
     @classmethod
     def authAddr(cls, acct: Expr) -> MaybeValue:
-        """Get the authorizing address for an account.
+        """Get the authorizing address for an account. If the account is not rekeyed, the empty addresss is returned.
 
         Args:
-            app: An index into Txn.accounts that corresponds to the application to check.
-                Must evaluate to uint64.
+            acct: An index into Txn.accounts that corresponds to the application to check or an address in the Txn.accounts array.
+                May evaluate to uint64 or an address.
         """
-        require_type(acct, TealType.uint64)
         return MaybeValue(
             Op.acct_params_get,
             TealType.bytes,

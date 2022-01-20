@@ -34,11 +34,6 @@ def test_acct_param_balance_valid():
         assert actual == expected
 
 
-def test_acct_param_balance_invalid():
-    with pytest.raises(TealTypeError):
-        AccountParam.balance(Txn.sender())
-
-
 def test_acct_param_min_balance_valid():
     arg = Int(0)
     expr = AccountParam.minBalance(arg)
@@ -62,11 +57,6 @@ def test_acct_param_min_balance_valid():
         assert actual == expected
 
 
-def test_acct_param_min_balance_invalid():
-    with pytest.raises(TealTypeError):
-        AccountParam.minBalance(Txn.sender())
-
-
 def test_acct_param_auth_addr_valid():
     arg = Int(1)
     expr = AccountParam.authAddr(arg)
@@ -88,8 +78,3 @@ def test_acct_param_auth_addr_valid():
 
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
-
-
-def test_acct_param_auth_addr_invalid():
-    with pytest.raises(TealTypeError):
-        AccountParam.authAddr(Txn.sender())
