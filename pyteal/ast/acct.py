@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
 
-class AcctParam:
+class AccountParam:
     @classmethod
     def balance(cls, acct: Expr) -> MaybeValue:
         """Get the current balance in microalgos an account.
@@ -59,4 +59,4 @@ class AcctParam:
         )
 
 
-AcctParam.__module__ = "pyteal"
+AccountParam.__module__ = "pyteal"
