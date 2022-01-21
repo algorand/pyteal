@@ -50,9 +50,7 @@ from .unaryexpr import (
 # binary ops
 from .binaryexpr import (
     BinaryExpr,
-    Add,
     Minus,
-    Mul,
     Div,
     Mod,
     Exp,
@@ -93,7 +91,7 @@ from .ternaryexpr import Ed25519Verify, SetBit, SetByte
 from .substring import Substring, Extract, Suffix
 
 # more ops
-from .naryexpr import NaryExpr, And, Or, Concat
+from .naryexpr import NaryExpr, Add, Mul, And, Or, Concat
 from .widemath import WideRatio
 
 # control flow

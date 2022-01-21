@@ -64,7 +64,35 @@ class NaryExpr(Expr):
 NaryExpr.__module__ = "pyteal"
 
 
-def And(*args: Expr) -> NaryExpr:
+def Add(*args: Expr) -> Expr:
+    """Numerical addition.
+
+    Produces the sum of all the input arguments.
+
+    All arguments must be PyTeal expressions that evaluate to uint64, and there must be at least one
+    argument.
+
+    Example:
+        ``Add(Int(1), Int(2), Int(3))``
+    """
+    return NaryExpr(Op.add, TealType.uint64, TealType.uint64, args)
+
+
+def Mul(*args: Expr) -> Expr:
+    """Numerical multiplication.
+
+    Produces the product of all the input arguments.
+
+    All arguments must be PyTeal expressions that evaluate to uint64, and there must be at least one
+    argument.
+
+    Example:
+        ``Mul(Int(2), Int(3), Int(4))``
+    """
+    return NaryExpr(Op.mul, TealType.uint64, TealType.uint64, args)
+
+
+def And(*args: Expr) -> Expr:
     """Logical and expression.
 
     Produces 1 if all arguments are nonzero. Otherwise produces 0.
@@ -78,7 +106,7 @@ def And(*args: Expr) -> NaryExpr:
     return NaryExpr(Op.logic_and, TealType.uint64, TealType.uint64, args)
 
 
-def Or(*args: Expr) -> NaryExpr:
+def Or(*args: Expr) -> Expr:
     """Logical or expression.
 
     Produces 1 if any argument is nonzero. Otherwise produces 0.
@@ -89,7 +117,7 @@ def Or(*args: Expr) -> NaryExpr:
     return NaryExpr(Op.logic_or, TealType.uint64, TealType.uint64, args)
 
 
-def Concat(*args: Expr) -> NaryExpr:
+def Concat(*args: Expr) -> Expr:
     """Concatenate byte strings.
 
     Produces a new byte string consisting of the contents of each of the passed in byte strings
