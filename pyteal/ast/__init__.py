@@ -18,6 +18,7 @@ from .gload import ImportScratchValue
 from .global_ import Global, GlobalField
 from .app import App, AppField, OnComplete, AppParam
 from .asset import AssetHolding, AssetParam
+from .acct import AccountParam
 
 # inner txns
 from .itxn import InnerTxnBuilder, InnerTxn, InnerTxnAction
@@ -152,6 +153,7 @@ __all__ = [
     "AppParam",
     "AssetHolding",
     "AssetParam",
+    "AccountParam",
     "InnerTxnBuilder",
     "InnerTxn",
     "InnerTxnAction",

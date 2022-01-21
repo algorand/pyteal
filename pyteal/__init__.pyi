@@ -46,6 +46,7 @@ __all__ = [
     "AppParam",
     "AssetHolding",
     "AssetParam",
+    "AccountParam",
     "InnerTxnBuilder",
     "InnerTxn",
     "InnerTxnAction",

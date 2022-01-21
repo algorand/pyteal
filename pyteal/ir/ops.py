@@ -175,6 +175,7 @@ class Op(Enum):
     gitxn               = OpType("gitxn",               Mode.Application,                  6)
     gitxna              = OpType("gitxna",              Mode.Application,                  6)
     gloadss             = OpType("gloadss",             Mode.Application,                  6)
+    acct_params_get     = OpType("acct_params_get",     Mode.Application,                  6)
     # fmt: on
 
 
