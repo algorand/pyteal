@@ -53,7 +53,6 @@ class ABIRouter:
 
         triggerCond = And(*condList)
 
-
     def bareAppCall(self) -> None:
         # Decorator form of onBareAppCall
         pass
