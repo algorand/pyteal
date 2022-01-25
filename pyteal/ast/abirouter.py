@@ -41,8 +41,18 @@ class ABIRouter:
         onCompletes: Union[OnComplete, List[OnComplete]],
         creation: bool,
     ) -> None:
-        # TODO must check if txn NumAppArgs == 0
-        pass
+        condList = [Txn.application_args.length() == Int(0)]
+        if creation:
+            condList.append(Txn.application_id() == Int(0))
+
+        if isinstance(onCompletes, list):
+            for i in onCompletes:
+                condList.append(Txn.on_completion() == i)
+        else:
+            condList.append(Txn.on_completion() == onCompletes)
+
+        triggerCond = And(*condList)
+
 
     def bareAppCall(self) -> None:
         # Decorator form of onBareAppCall
@@ -54,6 +64,8 @@ class ABIRouter:
         onComplete: OnComplete,
         creation: bool,
     ) -> None:
+        # trigger condition: txna ApplicationArgs 0 == MethodSignature(methodAppCall.name) and onComplete == self.onComplete
+        # if create app id == 0
         # TODO unpack the arguments and pass them to handler function
         # MethodSignature(methodAppCall.name)
         # TODO take return value from handler and prefix + log
