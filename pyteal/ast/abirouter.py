@@ -53,10 +53,6 @@ class ABIRouter:
 
         triggerCond = And(*condList)
 
-    def bareAppCall(self) -> None:
-        # Decorator form of onBareAppCall
-        pass
-
     def onMethodCall(
         self,
         methodAppCall: Subroutine,
@@ -69,10 +65,6 @@ class ABIRouter:
         # MethodSignature(methodAppCall.name)
         # TODO take return value from handler and prefix + log
         # Log(Concat(return_event_selector, ...))
-        pass
-
-    def methodCall(self) -> None:
-        # Decorator form of methodCall
         pass
 
     def buildProgram(self) -> None:
