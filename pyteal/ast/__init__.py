@@ -6,7 +6,6 @@ from .leafexpr import LeafExpr
 from .addr import Addr
 from .bytes import Bytes
 from .int import Int, EnumInt
-from .methodsig import MethodSignature
 
 # properties
 from .arg import Arg
@@ -116,12 +115,13 @@ from .while_ import While
 from .for_ import For
 from .break_ import Break
 from .continue_ import Continue
-
+from .abirouter import ABIRouter
 
 # misc
 from .scratch import ScratchSlot, ScratchLoad, ScratchStore, ScratchStackStore
 from .scratchvar import ScratchVar
 from .maybe import MaybeValue
+from .methodsig import MethodSignature
 
 __all__ = [
     "Expr",
@@ -217,6 +217,7 @@ __all__ = [
     "Return",
     "Approve",
     "Reject",
+    "ABIRouter",
     "Subroutine",
     "SubroutineDefinition",
     "SubroutineDeclaration",

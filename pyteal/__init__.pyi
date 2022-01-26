@@ -14,7 +14,7 @@ from .compiler import (
 )
 from .types import TealType
 from .errors import TealInternalError, TealTypeError, TealInputError, TealCompileError
-from .config import MAX_GROUP_SIZE, NUM_SLOTS
+from .config import MAX_GROUP_SIZE, NUM_SLOTS, RETURN_EVENT_SELECTOR
 
 __all__ = [
     "Expr",
@@ -110,6 +110,7 @@ __all__ = [
     "Return",
     "Approve",
     "Reject",
+    "ABIRouter",
     "Subroutine",
     "SubroutineDefinition",
     "SubroutineDeclaration",
@@ -166,4 +167,5 @@ __all__ = [
     "TealCompileError",
     "MAX_GROUP_SIZE",
     "NUM_SLOTS",
+    "RETURN_EVENT_SELECTOR",
 ]

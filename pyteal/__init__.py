@@ -11,7 +11,7 @@ from .compiler import (
 )
 from .types import TealType
 from .errors import TealInternalError, TealTypeError, TealInputError, TealCompileError
-from .config import MAX_GROUP_SIZE, NUM_SLOTS
+from .config import MAX_GROUP_SIZE, NUM_SLOTS, RETURN_EVENT_SELECTOR
 
 # begin __all__
 __all__ = (
@@ -30,6 +30,7 @@ __all__ = (
         "TealCompileError",
         "MAX_GROUP_SIZE",
         "NUM_SLOTS",
+        "RETURN_EVENT_SELECTOR",
     ]
 )
 # end __all__
