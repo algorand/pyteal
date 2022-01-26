@@ -101,17 +101,17 @@ class ABIRouter:
 
     def onMethodCall(
         self,
-        methodName: str,
+        methodSig: str,
         methodAppCall: Callable[..., Expr],
         onComplete: EnumInt = OnComplete.NoOp,
         creation: bool = False,
     ) -> None:
         ocList: List[EnumInt] = [cast(EnumInt, onComplete)]
         approvalCond = ABIRouter.approvalCondition(
-            methodName=methodName, onCompletes=ocList, creation=creation
+            methodName=methodSig, onCompletes=ocList, creation=creation
         )
         clearStateCond = ABIRouter.clearStateCondition(
-            methodName=methodName, onCompletes=ocList
+            methodName=methodSig, onCompletes=ocList
         )
         # TODO unpack the arguments and pass them to handler function
         # TODO take return value from handler and prefix + log: Log(Concat(return_event_selector, ...))
