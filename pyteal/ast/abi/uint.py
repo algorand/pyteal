@@ -33,10 +33,13 @@ class Uint16Type(ABIType):
     def byte_length_static(self) -> int:
         return 16 // NUM_BITS_IN_BYTE
 
-    def decode(self, encoded: Expr, offset: Expr = None) -> "Uint16":
-        if offset is None:
-            offset = Int(0)
-        return Uint16(ExtractUint16(encoded, offset))
+    def decode(self, encoded: Expr, offset: Expr, length: Expr) -> "Uint16":
+        return Uint16(
+            Seq(
+                Assert(length == Int(self.byte_length_static())),
+                ExtractUint16(encoded, offset),
+            )
+        )
 
 
 Uint16Type.__module__ = "pyteal"
@@ -86,10 +89,13 @@ class Uint64Type(ABIType):
     def byte_length_static(self) -> int:
         return 64 // NUM_BITS_IN_BYTE
 
-    def decode(self, encoded: Expr, offset: Expr = None) -> "Uint64":
-        if offset is None:
-            offset = Int(0)
-        return Uint64(ExtractUint64(encoded, offset))
+    def decode(self, encoded: Expr, offset: Expr, length: Expr) -> "Uint64":
+        return Uint64(
+            Seq(
+                Assert(length == Int(self.byte_length_static())),
+                ExtractUint64(encoded, offset),
+            )
+        )
 
 
 Uint64Type.__module__ = "pyteal"

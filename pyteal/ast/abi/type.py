@@ -13,7 +13,7 @@ class ABIType(ABC):
         pass
 
     @abstractmethod
-    def decode(self, encoded: Expr, offset: Expr = None) -> "ABIValue":
+    def decode(self, encoded: Expr, offset: Expr, length: Expr) -> "ABIValue":
         pass
 
 
