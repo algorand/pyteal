@@ -17,7 +17,7 @@ from .txn import Txn
 
 """
 Implementing a Method
-çAn ARC-4 app implementing a method:
+An ARC-4 app implementing a method:
 
 MUST check if txn NumAppArgs equals 0. If true, then this is a bare application call. If the Contract supports bare application calls for the current transaction parameters (it SHOULD check the OnCompletion action and whether the transaction is creating the application), it MUST handle the call appropriately and either approve or reject the transaction. The following steps MUST be ignored in this case. Otherwise, if the Contract does not support this bare application call, the Contract MUST reject the transaction.
 
@@ -48,34 +48,49 @@ class ABIRouter:
         self.clearStateIfThen: List[Tuple[Expr, Expr]] = []
 
     @staticmethod
-    def approvalCondition(
+    def parseConditions(
         methodName: Union[str, None], onCompletes: List[EnumInt], creation: bool
-    ) -> Union[Expr, None]:
-        condList: List[Expr] = [] if not creation else [Txn.application_id() == Int(0)]
-        if methodName != None:
-            condList.append(
-                Txn.application_args[0] == MethodSignature(cast(str, methodName))
-            )
-        ocCondList: List[Expr] = []
-        for oc in onCompletes:
-            if oc != OnComplete.ClearState:
-                ocCondList.append(Txn.on_completion() == oc)
-        if len(ocCondList) == 0:
-            return None
-        condList.append(Or(*ocCondList))
-        return And(*condList)
+    ) -> Tuple[List[Expr], List[Expr]]:
+        # Check if it is a *CREATION*
+        approvalConds: List[Expr] = [Txn.application_id() == Int(0)] if creation else []
+        clearStateConds: List[Expr] = []
 
-    @staticmethod
-    def clearStateCondition(
-        methodName: Union[str, None], onCompletes: List[EnumInt]
-    ) -> Union[Expr, None]:
-        if not any(map(lambda x: x == OnComplete.ClearState, onCompletes)):
-            return None
-        return (
+        # Check if current condition is for *ABI METHOD* (method selector) or *BARE APP CALL* (numAppArg == 0)
+        methodOrBareCondition = (
             Txn.application_args[0] == MethodSignature(cast(str, methodName))
-            if methodName != None
+            if methodName is not None
             else Txn.application_args.length() == Int(0)
         )
+        approvalConds.append(methodOrBareCondition)
+
+        # Check the existence of OC.CloseOut
+        closeOutExist = any(map(lambda x: x == OnComplete.CloseOut, onCompletes))
+        # Check the existence of OC.ClearState (needed later)
+        clearStateExist = any(map(lambda x: x == OnComplete.ClearState, onCompletes))
+        # Ill formed report if app create with existence of OC.CloseOut or OC.ClearState
+        if creation and (closeOutExist or clearStateExist):
+            raise TealInputError(
+                "OnComplete ClearState/CloseOut may be ill-formed with app creation"
+            )
+        # if OC.ClearState exists, add method-or-bare-condition since it is only needed in ClearStateProgram
+        if clearStateExist:
+            clearStateConds.append(methodOrBareCondition)
+
+        # Check onComplete conditions for approvalConds, filter out *ClearState*
+        approvalOcConds: List[Expr] = [
+            Txn.on_completion() == oc
+            for oc in onCompletes
+            if oc != OnComplete.ClearState
+        ]
+
+        # if approval OC condition is not empty, append Or to approvalConds
+        if len(approvalOcConds) > 0:
+            approvalConds.append(Or(*approvalOcConds))
+
+        # what we have here is:
+        # list of conds for approval program on one branch: creation?, method/bare, Or[OCs]
+        # list of conds for clearState program on one branch: method/bare
+        return approvalConds, clearStateConds
 
     def onBareAppCall(
         self,
@@ -88,11 +103,8 @@ class ABIRouter:
             if isinstance(onCompletes, list)
             else [cast(EnumInt, onCompletes)]
         )
-        approvalCond = ABIRouter.approvalCondition(
+        approvalConds, clearStateConds = ABIRouter.parseConditions(
             methodName=None, onCompletes=ocList, creation=creation
-        )
-        clearStateCond = ABIRouter.clearStateCondition(
-            methodName=None, onCompletes=ocList
         )
         # execBareAppCall: Expr = bareAppCall() if isinstance(bareAppCall, Subroutine) else cast(Expr, bareAppCall)
         # TODO update then branch (either activate subroutine or run seq of expr), then approve
@@ -107,11 +119,8 @@ class ABIRouter:
         creation: bool = False,
     ) -> None:
         ocList: List[EnumInt] = [cast(EnumInt, onComplete)]
-        approvalCond = ABIRouter.approvalCondition(
+        approvalConds, clearStateConds = ABIRouter.parseConditions(
             methodName=methodSig, onCompletes=ocList, creation=creation
-        )
-        clearStateCond = ABIRouter.clearStateCondition(
-            methodName=methodSig, onCompletes=ocList
         )
         # TODO unpack the arguments and pass them to handler function
         # TODO take return value from handler and prefix + log: Log(Concat(return_event_selector, ...))
