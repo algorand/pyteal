@@ -92,6 +92,11 @@ class ABIRouter:
         # list of conds for clearState program on one branch: method/bare
         return approvalConds, clearStateConds
 
+    @staticmethod
+    def wrapHandler(isMethod: bool, branch: Union[Callable[..., Expr], Expr]) -> Expr:
+        # TODO
+        return Seq([Approve()])
+
     def onBareAppCall(
         self,
         bareAppCall: Union[Callable[..., Expr], Expr],
@@ -108,7 +113,7 @@ class ABIRouter:
         )
         # execBareAppCall: Expr = bareAppCall() if isinstance(bareAppCall, Subroutine) else cast(Expr, bareAppCall)
         # TODO update then branch (either activate subroutine or run seq of expr), then approve
-        thenBranch = Seq([Approve()])
+        thenBranch = ABIRouter.wrapHandler(False, bareAppCall)
         # self.approvalIfThen.append((triggerCond, thenBranch))
 
     def onMethodCall(
@@ -125,7 +130,7 @@ class ABIRouter:
         # TODO unpack the arguments and pass them to handler function
         # TODO take return value from handler and prefix + log: Log(Concat(return_event_selector, ...))
         # TODO update then branch (either activate subroutine or run seq of expr), then approve
-        thenBranch = Seq([Approve()])
+        thenBranch = ABIRouter.wrapHandler(True, methodAppCall)
         # self.approvalIfThen.append((triggerCond, thenBranch))
 
     def buildProgram(self) -> Expr:
