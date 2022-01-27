@@ -1,8 +1,7 @@
-from typing import Callable, Tuple, List, Optional, cast, TYPE_CHECKING
+from typing import Callable, List, Optional, TYPE_CHECKING
 from inspect import Parameter, signature
-from functools import wraps
 
-from ..types import TealType, require_type
+from ..types import TealType
 from ..ir import TealOp, Op, TealBlock
 from ..errors import TealInputError, verifyTealVersion
 from .expr import Expr
@@ -167,6 +166,39 @@ class SubroutineCall(Expr):
 SubroutineCall.__module__ = "pyteal"
 
 
+class SubroutineFnWrapper:
+    def __init__(
+        self,
+        fnImplementation: Callable[..., Expr],
+        returnType: TealType,
+        name: str = None,
+    ) -> None:
+        self.subroutine = SubroutineDefinition(
+            fnImplementation, returnType=returnType, nameStr=name
+        )
+
+    def __call__(self, *args: Expr, **kwargs) -> Expr:
+        if len(kwargs) != 0:
+            raise TealInputError(
+                "Subroutine cannot be called with keyword arguments. Received keyword arguments: {}".format(
+                    ",".join(kwargs.keys())
+                )
+            )
+        return self.subroutine.invoke(list(args))
+
+    def name(self) -> str:
+        return self.subroutine.name()
+
+    def type_of(self):
+        return self.subroutine.getDeclaration().type_of()
+
+    def has_return(self):
+        return self.subroutine.getDeclaration().has_return()
+
+
+SubroutineFnWrapper.__module__ = "pyteal"
+
+
 class Subroutine:
     """Used to create a PyTeal subroutine from a Python function.
 
@@ -194,20 +226,12 @@ class Subroutine:
         self.returnType = returnType
         self.name = name
 
-    def __call__(self, fnImplementation: Callable[..., Expr]) -> Callable[..., Expr]:
-        subroutine = SubroutineDefinition(fnImplementation, self.returnType, self.name)
-
-        @wraps(fnImplementation)
-        def subroutineCall(*args: Expr, **kwargs) -> Expr:
-            if len(kwargs) != 0:
-                raise TealInputError(
-                    "Subroutine cannot be called with keyword arguments. Received keyword arguments: {}".format(
-                        ",".join(kwargs.keys())
-                    )
-                )
-            return subroutine.invoke(list(args))
-
-        return subroutineCall
+    def __call__(self, fnImplementation: Callable[..., Expr]) -> SubroutineFnWrapper:
+        return SubroutineFnWrapper(
+            fnImplementation=fnImplementation,
+            returnType=self.returnType,
+            name=self.name,
+        )
 
 
 Subroutine.__module__ = "pyteal"

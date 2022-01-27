@@ -115,6 +115,7 @@ __all__ = [
     "SubroutineDefinition",
     "SubroutineDeclaration",
     "SubroutineCall",
+    "SubroutineFnWrapper",
     "ScratchSlot",
     "ScratchLoad",
     "ScratchStore",

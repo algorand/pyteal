@@ -110,6 +110,7 @@ from .subroutine import (
     SubroutineDefinition,
     SubroutineDeclaration,
     SubroutineCall,
+    SubroutineFnWrapper,
 )
 from .while_ import While
 from .for_ import For
@@ -222,6 +223,7 @@ __all__ = [
     "SubroutineDefinition",
     "SubroutineDeclaration",
     "SubroutineCall",
+    "SubroutineFnWrapper",
     "ScratchSlot",
     "ScratchLoad",
     "ScratchStore",
