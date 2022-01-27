@@ -148,7 +148,7 @@ def test_decorator():
     def mySubroutine(a):
         return Return()
 
-    assert callable(mySubroutine)
+    assert isinstance(mySubroutine, SubroutineFnWrapper)
 
     invocation = mySubroutine(Int(1))
     assert isinstance(invocation, SubroutineCall)
