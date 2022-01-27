@@ -1,10 +1,18 @@
-from typing import List, Union, Generic, Sequence, TypeVar, get_type_hints, cast
+from typing import (
+    Callable,
+    List,
+    Optional,
+    Union,
+    Sequence,
+    NamedTuple,
+)
 
 from ...compiler import CompileOptions
 from ..scratchvar import ScratchVar
 from ..naryexpr import Concat, Add
 from ..substring import Substring
 from ..for_ import For
+from ..if_ import If
 
 from .type import ABIType, ABIValue
 from .bytes import *
@@ -55,26 +63,140 @@ def indexTuple(valueTypes: Sequence[ABIType], encoded: Expr, index: int) -> ABIV
             offset += 2
         else:
             offset += typeBefore.byte_length_static()
-    valueOffset = Int(offset)
 
     valueType = valueTypes[index]
     if valueType.is_dynamic():
-        offset = ExtractUint16(encoded, valueOffset)
-
-    return valueType.decode(encoded, valueOffset)
-
-
-def indexArray(valueType: ABIType, encoded: Expr, index: Expr) -> ABIValue:
-    if valueType.is_dynamic():
-        stride = Int(2)
+        startIndex = ExtractUint16(encoded, Int(offset))
+        if index + 1 == len(valueType):
+            length = Len(encoded) - startIndex
+        else:
+            length = ExtractUint16(encoded, Int(offset + 2)) - startIndex
     else:
-        stride = Int(valueType.byte_length_static())
-    offset = stride * index
+        startIndex = Int(offset)
+        length = Int(valueType.byte_length_static())
 
-    if valueType.is_dynamic():
-        offset = ExtractUint16(encoded, offset)
+    return valueType.decode(encoded, startIndex, length)
 
-    return valueType.decode(encoded, offset)
+
+class ArrayData(NamedTuple):
+    offsets: Optional[Expr]
+    offset_stride: int
+    values: Expr
+
+
+def createArray(elementType: ABIType, values: Sequence[ABIValue]) -> ArrayData:
+    if not elementType.is_dynamic():
+        # all values will encode to the same length, no need to keep offsets
+        return ArrayData(
+            offsets=None,
+            offset_stride=elementType.byte_length_static(),
+            values=Concat(*[value.encode() for value in values]),
+        )
+
+    encodedValues = Concat(*[value.encode() for value in values])
+
+    offsets = Bytes("")
+    current_offset = ScratchVar(TealType.uint64)
+
+    for i, value in enumerate(values):
+        tmp = ScratchVar(TealType.uint64)
+
+        if i == 0:
+            offsets = Seq(
+                tmp.store(value.byte_length()),
+                current_offset.store(tmp.load()),
+                Uint16(tmp.load()).encode(),
+            )
+            continue
+
+        next_offset = current_offset.load() + tmp.load()
+
+        offsets = Seq(
+            tmp.store(value.byte_length()),
+            current_offset.store(next_offset),
+            Concat(encodedValues, Uint16(next_offset).encode()),
+        )
+
+    return ArrayData(
+        offsets=offsets,
+        offset_stride=Uint16Type.byte_length_static(),
+        values=Concat(*encodedValues),
+    )
+
+
+def arrayLength(data: ArrayData) -> Expr:
+    if data.offsets is None:
+        return Len(data.values) / Int(data.offset_stride)
+
+    return Len(data.offsets) / Int(data.offset_stride)
+
+
+def encodedArrayLength(data: ArrayData, dynamic_length: bool) -> Expr:
+    if not dynamic_length:
+        if data.offsets is None:
+            return Len(data.values)
+
+        return Len(data.offsets) + Len(data.values)
+
+    return Int(2) + encodedArrayLength(data, False)
+
+
+def encodeArray(data: ArrayData, dynamic_length: bool) -> Expr:
+    if not dynamic_length:
+        if data.offsets is None:
+            return data.values
+
+        return Concat(data.offsets, data.values)
+
+    return Concat(
+        Uint16(arrayLength(data)).encode(),
+        encodeArray(data, False),
+    )
+
+
+def decodeStaticArray(
+    elementType: ABIType, size: Expr, encoded: Expr, offset: Expr, length: Expr
+) -> ArrayData:
+    if elementType.is_dynamic():
+        stride = 2
+        offsets_start = ExtractUint16(encoded, offset)
+        offsets_length = Int(stride) * size
+        offsets = Extract(encoded, offset + offsets_start, offsets_length)
+        values = Extract(
+            encoded, offset + offsets_start + offsets_length, length - offsets_length
+        )
+    else:
+        stride = elementType.byte_length_static()
+        offsets = None
+        values = Extract(encoded, offset, length)
+
+    return ArrayData(offsets=offsets, offset_stride=stride, values=values)
+
+
+def decodeDynamicArray(
+    elementType: ABIType, encoded: Expr, offset: Expr, length: Expr
+) -> ArrayData:
+    size = ExtractUint16(encoded, offset, Int(2))
+    return decodeStaticArray(
+        elementType, size, encoded, offset + Int(2), length - Int(2)
+    )
+
+
+def indexArray(valueType: ABIType, data: ArrayData, index: Expr) -> ABIValue:
+    offsetIndex = Int(data.offset_stride) * index
+
+    if data.offsets is not None:
+        startIndex = ExtractUint16(data.offsets, offsetIndex)
+        length = (
+            If((index + Int(1)) * Int(data.offset_stride) == Len(data.offsets))
+            .Then(Len(data.offsets) - startIndex)
+            .Else(ExtractUint16(data.offsets, offsetIndex + Int(2)) - startIndex)
+        )
+    else:
+        startIndex = offsetIndex
+        length = Int(data.offset_stride)
+
+    return valueType.decode(data.values, startIndex, length)
 
 
 class ABITupleType(ABIType):
@@ -91,18 +213,29 @@ class ABITupleType(ABIType):
         # TODO: bool support
         return sum(e.byte_length_static() for e in self.elementTypes)
 
-    def decode(self, encoded: Expr, offset: Expr = None) -> "ABITupleType":
-        raise NotImplementedError
+    def decode(self, encoded: Expr, offset: Expr, length: Expr) -> "ABITuple":
+        return ABITuple(type=self, _rawValues=Extract(encoded, offset, length))
 
 
 ABITupleType.__module__ = "pyteal"
 
 
 class ABITuple(ABIValue):
-    def __init__(self, values: Sequence[ABIValue]) -> None:
-        types = [v.get_type() for v in values]
-        super().__init__(ABITupleType(types))
-        self.value = encodeTuple(values)
+    def __init__(
+        self,
+        *,
+        values: Sequence[ABIValue] = None,
+        type: ABITupleType = None,
+        _rawValues: Expr = None
+    ) -> None:
+        # TODO: argument checking
+        if type is None:
+            type = ABITupleType([v.get_type() for v in values])
+        super().__init__(type)
+        if _rawValues is not None:
+            self.value = _rawValues
+        else:
+            self.value = encodeTuple(values)
 
     def byte_length(self) -> Expr:
         return Len(self.value)
@@ -138,37 +271,56 @@ class ABIFixedArrayType(ABIType):
         # TODO: bool support
         return self.length * self.elementType.byte_length_static()
 
-    def decode(self, encoded: Expr, offset: Expr = None) -> "ABIFixedArrayType":
-        raise NotImplementedError
+    def decode(self, encoded: Expr, offset: Expr, length: Expr) -> "ABIFixedArray":
+        data = decodeStaticArray(
+            self.elementType, Int(self.length), encoded, offset, length
+        )
+        return ABIFixedArray(type=self, _rawData=data)
 
 
 ABIFixedArrayType.__module__ = "pyteal"
 
 
 class ABIFixedArray(ABIValue):
-    def __init__(self, values: Sequence[ABIValue]) -> None:
-        elementType = type(values[0])
-        # TODO: check all values conform to elementType
-        super().__init__(ABIFixedArrayType(elementType, len(values)))
-        self.value = encodeTuple(values)
-        self.length = len(values)
+    def __init__(
+        self,
+        *,
+        values: Sequence[ABIValue],
+        type: ABIFixedArrayType = None,
+        _rawData: ArrayData
+    ) -> None:
+        # TODO: argument checking
+        if type is None:
+            type = ABIFixedArrayType(values[0].get_type(), len(values))
+            # TODO: check all values conform to elementType
+        super().__init__(type)
+        if _rawData is not None:
+            self.data = _rawData
+        else:
+            self.data = createArray(type.elementType, values)
 
     def byte_length(self) -> Expr:
-        return Len(self.value) + Int(2)
+        return encodedArrayLength(self.data)
 
     def encode(self) -> Expr:
-        return self.value
+        return encodeArray(self.data, False)
 
     def length_static(self) -> int:
         return self.length
 
-    def length(self) -> Uint64:
-        return Uint64(self.length_static())
+    def length(self) -> Expr:
+        return Int(self.length_static())
 
     def __getitem__(self, index: Union[int, Expr]) -> ABIValue:
         if type(index) is int:
             index = Int(index)
-        return indexArray(self.type.elementType, self.value, index)
+        return indexArray(self.type.elementType, self.data, index)
+
+    def forEach(self, action: Callable[[ABIValue, Expr], Expr]) -> Expr:
+        i = ScratchVar(TealType.uint64)
+        return For(
+            i.store(Int(0)), i.load() < self.length(), i.store(i.load() + Int(1))
+        ).Do(action(self.__getitem__(i.load()), i.load()))
 
 
 ABIFixedArray.__module__ = "pyteal"
@@ -185,7 +337,7 @@ class ABIDynamicArrayType(ABIType):
     def byte_length_static(self) -> int:
         raise ValueError("Type is dynamic")
 
-    def decode(self, encoded: Expr, offset: Expr = None) -> "ABIDynamicArrayType":
+    def decode(self, encoded: Expr, offset: Expr, length: Expr) -> "ABIDynamicArray":
         raise NotImplementedError
 
 
@@ -194,28 +346,41 @@ ABIDynamicArrayType.__module__ = "pyteal"
 
 class ABIDynamicArray(ABIValue):
     def __init__(
-        self, values: Sequence[ABIValue] = None, elementType: ABIType = None
+        self,
+        *,
+        values: Sequence[ABIValue] = None,
+        type: ABIDynamicArrayType = None,
+        _rawData: ArrayData = None
     ) -> None:
-        if values is not None and len(values) != 0:
-            elementType = values[0].get_type()
-        # TODO: check all values conform to elementType
-        super().__init__(ABIDynamicArrayType(elementType))
-        self.value = encodeTuple(values)
-        self.len = Uint16(len(values))
+        # TODO: argument checking
+        if type is None:
+            type = ABIDynamicArrayType(values[0].get_type())
+            # TODO: check all values conform to elementType
+        super().__init__(type)
+        if _rawData is not None:
+            self.data = _rawData
+        else:
+            self.data = createArray(type.elementType, values)
 
-    def length(self) -> Uint16:
-        return self.len
+    def length(self) -> Expr:
+        return arrayLength(self.data)
 
     def byte_length(self) -> Expr:
-        return Int(2) + Len(self.value)
+        return encodedArrayLength(self.data, True)
 
     def encode(self) -> Expr:
-        return Concat(self.len.encode(), self.value)
+        return encodeArray(self.data, True)
 
     def __getitem__(self, index: Union[int, Expr]) -> ABIValue:
         if type(index) is int:
             index = Int(index)
-        return indexArray(self.type.elementType, self.value, index)
+        return indexArray(self.type.elementType, self.data, index)
+
+    def forEach(self, action: Callable[[ABIValue, Expr], Expr]) -> Expr:
+        i = ScratchVar(TealType.uint64)
+        return For(
+            i.store(Int(0)), i.load() < self.length(), i.store(i.load() + Int(1))
+        ).Do(action(self.__getitem__(i.load()), i.load()))
 
 
 ABIDynamicArray.__module__ = "pyteal"
