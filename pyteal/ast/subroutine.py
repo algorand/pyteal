@@ -167,6 +167,27 @@ class SubroutineCall(Expr):
 SubroutineCall.__module__ = "pyteal"
 
 
+class SubroutineFnWrapper:
+    def __init__(self, fnImplementation: Callable[..., Expr], returnType: TealType, name: str = None) -> None:
+        self.fnImplementation = fnImplementation
+        self.returnType = returnType
+        self.name = name
+
+    def __call__(self, *args: Expr, **kwds) -> Expr:
+        # TODO
+        return Seq()
+
+    def type_of(self):
+        return self.returnType
+
+    def has_return(self):
+        # TODO
+        return True
+
+
+SubroutineFnWrapper.__module__ = "pyteal"
+
+
 class Subroutine:
     """Used to create a PyTeal subroutine from a Python function.
 
