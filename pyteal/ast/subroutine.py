@@ -1,8 +1,7 @@
-from typing import Callable, Tuple, List, Optional, cast, TYPE_CHECKING
+from typing import Callable, List, Optional, TYPE_CHECKING
 from inspect import Parameter, signature
-from functools import wraps
 
-from ..types import TealType, require_type
+from ..types import TealType
 from ..ir import TealOp, Op, TealBlock
 from ..errors import TealInputError, verifyTealVersion
 from .expr import Expr
