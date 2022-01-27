@@ -174,20 +174,24 @@ class SubroutineFnWrapper:
         returnType: TealType,
         name: str = None,
     ) -> None:
-        self.fnImplementation = fnImplementation
-        self.returnType = returnType
-        self.name = name
+        self.subroutine = SubroutineDefinition(
+            fnImplementation, returnType=returnType, nameStr=name
+        )
 
-    def __call__(self, *args: Expr, **kwds) -> Expr:
-        # TODO
-        return Seq()
+    def __call__(self, *args: Expr, **kwargs) -> Expr:
+        if len(kwargs) != 0:
+            raise TealInputError(
+                "Subroutine cannot be called with keyword arguments. Received keyword arguments: {}".format(
+                    ",".join(kwargs.keys())
+                )
+            )
+        return self.subroutine.invoke(list(args))
 
     def type_of(self):
-        return self.returnType
+        return self.subroutine.getDeclaration().type_of()
 
     def has_return(self):
-        # TODO
-        return True
+        return self.subroutine.getDeclaration().has_return()
 
 
 SubroutineFnWrapper.__module__ = "pyteal"
@@ -220,20 +224,12 @@ class Subroutine:
         self.returnType = returnType
         self.name = name
 
-    def __call__(self, fnImplementation: Callable[..., Expr]) -> Callable[..., Expr]:
-        subroutine = SubroutineDefinition(fnImplementation, self.returnType, self.name)
-
-        @wraps(fnImplementation)
-        def subroutineCall(*args: Expr, **kwargs) -> Expr:
-            if len(kwargs) != 0:
-                raise TealInputError(
-                    "Subroutine cannot be called with keyword arguments. Received keyword arguments: {}".format(
-                        ",".join(kwargs.keys())
-                    )
-                )
-            return subroutine.invoke(list(args))
-
-        return subroutineCall
+    def __call__(self, fnImplementation: Callable[..., Expr]) -> SubroutineFnWrapper:
+        return SubroutineFnWrapper(
+            fnImplementation=fnImplementation,
+            returnType=self.returnType,
+            name=self.name,
+        )
 
 
 Subroutine.__module__ = "pyteal"
