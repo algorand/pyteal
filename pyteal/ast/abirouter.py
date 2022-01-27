@@ -145,3 +145,6 @@ class ABIRouter:
 
         # TODO clear program
         return approvalProgram
+
+
+ABIRouter.__module__ = "pyteal"
