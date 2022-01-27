@@ -187,6 +187,9 @@ class SubroutineFnWrapper:
             )
         return self.subroutine.invoke(list(args))
 
+    def name(self) -> str:
+        return self.subroutine.name()
+
     def type_of(self):
         return self.subroutine.getDeclaration().type_of()
 
