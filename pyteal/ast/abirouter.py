@@ -12,7 +12,7 @@ from .methodsig import MethodSignature
 from .naryexpr import And, Or
 from .return_ import Approve, Reject
 from .seq import Seq
-from .subroutine import Subroutine, SubroutineDefinition
+from .subroutine import SubroutineFnWrapper
 from .txn import Txn
 
 """
@@ -93,13 +93,13 @@ class ABIRouter:
         return approvalConds, clearStateConds
 
     @staticmethod
-    def wrapHandler(isMethod: bool, branch: Union[Callable[..., Expr], Expr]) -> Expr:
+    def wrapHandler(isMethod: bool, branch: Union[SubroutineFnWrapper, Expr]) -> Expr:
         # TODO
         return Seq([Approve()])
 
     def onBareAppCall(
         self,
-        bareAppCall: Union[Callable[..., Expr], Expr],
+        bareAppCall: Union[SubroutineFnWrapper, Expr],
         onCompletes: Union[EnumInt, List[EnumInt]],
         creation: bool = False,
     ) -> None:
@@ -118,14 +118,13 @@ class ABIRouter:
 
     def onMethodCall(
         self,
-        methodSig: str,
-        methodAppCall: Callable[..., Expr],
+        methodAppCall: SubroutineFnWrapper,
         onComplete: EnumInt = OnComplete.NoOp,
         creation: bool = False,
     ) -> None:
         ocList: List[EnumInt] = [cast(EnumInt, onComplete)]
         approvalConds, clearStateConds = ABIRouter.parseConditions(
-            methodName=methodSig, onCompletes=ocList, creation=creation
+            methodName=methodAppCall.name(), onCompletes=ocList, creation=creation
         )
         # TODO unpack the arguments and pass them to handler function
         # TODO take return value from handler and prefix + log: Log(Concat(return_event_selector, ...))
