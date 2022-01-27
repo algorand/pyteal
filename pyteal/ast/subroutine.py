@@ -168,7 +168,12 @@ SubroutineCall.__module__ = "pyteal"
 
 
 class SubroutineFnWrapper:
-    def __init__(self, fnImplementation: Callable[..., Expr], returnType: TealType, name: str = None) -> None:
+    def __init__(
+        self,
+        fnImplementation: Callable[..., Expr],
+        returnType: TealType,
+        name: str = None,
+    ) -> None:
         self.fnImplementation = fnImplementation
         self.returnType = returnType
         self.name = name
