@@ -59,6 +59,7 @@ fieldToMethod: Dict[TxnField, Callable[[TxnObject], Expr]] = {
     TxnField.nonparticipation: lambda txn: txn.nonparticipation(),
     TxnField.created_asset_id: lambda txn: txn.created_asset_id(),
     TxnField.created_application_id: lambda txn: txn.created_application_id(),
+    TxnField.last_log: lambda txn: txn.last_log(),
 }
 
 arrayFieldToProperty: Dict[TxnField, Callable[[TxnObject], TxnArray]] = {

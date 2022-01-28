@@ -108,6 +108,7 @@ class TxnField(Enum):
     num_logs = (59, "NumLogs", TealType.uint64, False, 5)
     created_asset_id = (60, "CreatedAssetID", TealType.uint64, False, 5)
     created_application_id = (61, "CreatedApplicationID", TealType.uint64, False, 5)
+    last_log = (62, "LastLog", TealType.bytes, False, 6)
 
     def __init__(
         self, id: int, name: str, type: TealType, is_array: bool, min_version: int
@@ -694,6 +695,17 @@ class TxnObject:
         Requires TEAL version 5 or higher.
         """
         return self.makeTxnExpr(TxnField.created_application_id)
+
+    def last_log(self) -> TxnExpr:
+        """Get the last logged message from a transaction.
+
+        Only application calls may log a message. Returns an empty string if no messages were logged.
+
+        Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall`.
+
+        Requires TEAL version 6 or higher.
+        """
+        return self.makeTxnExpr(TxnField.last_log)
 
     @property
     def application_args(self) -> TxnArray:
