@@ -1,7 +1,6 @@
 from typing import Callable, List, Tuple, Union, cast
 
 from pyteal.errors import TealInputError
-from pyteal.config import RETURN_EVENT_SELECTOR
 
 from .app import OnComplete
 from .bytes import Bytes
@@ -14,6 +13,11 @@ from .return_ import Approve, Reject
 from .seq import Seq
 from .subroutine import SubroutineFnWrapper
 from .txn import Txn
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..compiler import CompileOptions
 
 """
 Implementing a Method
@@ -113,8 +117,9 @@ class ABIRouter:
         )
         # execBareAppCall: Expr = bareAppCall() if isinstance(bareAppCall, Subroutine) else cast(Expr, bareAppCall)
         # TODO update then branch (either activate subroutine or run seq of expr), then approve
-        thenBranch = ABIRouter.wrapHandler(False, bareAppCall)
+        approvalBranch = ABIRouter.wrapHandler(False, bareAppCall)
         # self.approvalIfThen.append((triggerCond, thenBranch))
+        clearStateBranch = Seq([])
 
     def onMethodCall(
         self,
@@ -129,7 +134,10 @@ class ABIRouter:
         # TODO unpack the arguments and pass them to handler function
         # TODO take return value from handler and prefix + log: Log(Concat(return_event_selector, ...))
         # TODO update then branch (either activate subroutine or run seq of expr), then approve
-        thenBranch = ABIRouter.wrapHandler(True, methodAppCall)
+        approvalBranch = Seq(
+            [MethodReturn(ABIRouter.wrapHandler(True, methodAppCall)), Approve()]
+        )
+        clearStateBranch = Seq([])
         # self.approvalIfThen.append((triggerCond, thenBranch))
 
     def buildProgram(self) -> Expr:
@@ -147,3 +155,22 @@ class ABIRouter:
 
 
 ABIRouter.__module__ = "pyteal"
+
+
+class MethodReturn(Expr):
+    def __init__(self, value: Expr) -> None:
+        super().__init__()
+        """THIS IS A DUMMY CLASS, SHOULD WAIT ON ABI SIDE"""
+        self.value = value
+
+    def has_return(self) -> bool:
+        return super().has_return()
+
+    def __teal__(self, options: "CompileOptions"):
+        return super().__teal__(options)
+
+    def type_of(self):
+        return super().type_of()
+
+    def __str__(self) -> str:
+        return super().__str__()
