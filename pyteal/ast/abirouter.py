@@ -1,4 +1,5 @@
-from typing import Callable, List, Tuple, Union, cast
+from typing import List, Tuple, Union, cast
+from attr import dataclass
 
 from pyteal.errors import TealInputError
 
@@ -117,9 +118,11 @@ class ABIRouter:
         )
         # execBareAppCall: Expr = bareAppCall() if isinstance(bareAppCall, Subroutine) else cast(Expr, bareAppCall)
         # TODO update then branch (either activate subroutine or run seq of expr), then approve
-        approvalBranch = ABIRouter.wrapHandler(False, bareAppCall)
-        # self.approvalIfThen.append((triggerCond, thenBranch))
-        clearStateBranch = Seq([])
+        branch = ABIRouter.wrapHandler(False, bareAppCall)
+        if len(approvalConds) > 0:
+            self.approvalIfThen.append((And(*approvalConds), branch))
+        if len(clearStateConds) > 0:
+            self.approvalIfThen.append((And(*clearStateConds), branch))
 
     def onMethodCall(
         self,
@@ -134,24 +137,27 @@ class ABIRouter:
         # TODO unpack the arguments and pass them to handler function
         # TODO take return value from handler and prefix + log: Log(Concat(return_event_selector, ...))
         # TODO update then branch (either activate subroutine or run seq of expr), then approve
-        approvalBranch = Seq(
+        branch = Seq(
             [MethodReturn(ABIRouter.wrapHandler(True, methodAppCall)), Approve()]
         )
-        clearStateBranch = Seq([])
-        # self.approvalIfThen.append((triggerCond, thenBranch))
+        if len(approvalConds) > 0:
+            self.approvalIfThen.append((And(*approvalConds), branch))
+        if len(clearStateConds) > 0:
+            self.approvalIfThen.append((And(*clearStateConds), branch))
 
-    def buildProgram(self) -> Expr:
-        approvalProgram: If = If(self.approvalIfThen[0][0]).Then(
-            self.approvalIfThen[0][1]
+    @staticmethod
+    def astConstruct(astList: List[Tuple[Expr, Expr]]) -> Expr:
+        program: If = If(astList[0][0]).Then(astList[0][1])
+        for i in range(1, len(astList)):
+            program.ElseIf(astList[i][0]).Then(astList[i][1])
+        program.Else(Reject())
+        return program
+
+    def buildProgram(self) -> Tuple[Expr, Expr]:
+        return (
+            ABIRouter.astConstruct(self.approvalIfThen),
+            ABIRouter.astConstruct(self.clearStateIfThen),
         )
-        for i in range(1, len(self.approvalIfThen)):
-            approvalProgram.ElseIf(self.approvalIfThen[i][0]).Then(
-                self.approvalIfThen[i][1]
-            )
-        approvalProgram.Else(Reject())
-
-        # TODO clear program
-        return approvalProgram
 
 
 ABIRouter.__module__ = "pyteal"
