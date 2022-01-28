@@ -1,10 +1,8 @@
 from typing import List, Tuple, Union, cast
-from attr import dataclass
 
 from pyteal.errors import TealInputError
 
 from .app import OnComplete
-from .bytes import Bytes
 from .expr import Expr
 from .int import EnumInt, Int
 from .if_ import If
