@@ -85,16 +85,6 @@ def indexTuple(
     if not valueType.has_same_type_as(output):
         raise TypeError("Output type does not match value type")
 
-    # TODO: how to decode???
-    # must it be:
-    # a = Uint64()
-    # b = StaticArray(Uint64(), 10)
-    # return Seq(
-    #   a.set(100),
-    #   b.set([a, ...]),
-    #   b.array_get(6, a) # put the value from index 6 into a
-    #   a.get() # use the value from index 6...
-    # )
     return output.decode(encoded, startIndex, length)
 
 
