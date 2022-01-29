@@ -1,15 +1,31 @@
-from typing import Callable, Union, Sequence, NamedTuple, TypeVar, Generic, Optional
+from typing import (
+    Callable,
+    Union,
+    Sequence,
+    NamedTuple,
+    TypeVar,
+    Generic,
+    Optional,
+    cast,
+)
 from abc import abstractmethod
 
-from ..scratchvar import ScratchVar
-from ..naryexpr import Concat
-from ..for_ import For
+from ...types import TealType
+from ..expr import Expr
+from ..seq import Seq
+from ..int import Int
+from ..bytes import Bytes
 from ..if_ import If
+from ..for_ import For
+from ..unaryexpr import BytesZero, Len
+from ..binaryexpr import ExtractUint16
+from ..naryexpr import Concat
+from ..substring import Extract, Suffix
+from ..scratchvar import ScratchVar
 
 from .type import Type
 from .tuple import encodeTuple
-from .bytes import *
-from .uint import *
+from .uint import Uint16
 
 
 class ArrayProperties(NamedTuple):
@@ -127,9 +143,76 @@ class Array(Type, Generic[T]):
 
     def forEach(self, action: Callable[[T, Expr], Expr]) -> Expr:
         i = ScratchVar(TealType.uint64)
+        length = ScratchVar(TealType.uint64)
         return For(
-            i.store(Int(0)), i.load() < self.length(), i.store(i.load() + Int(1))
+            Seq(length.store(self.length()), i.store(Int(0))),
+            i.load() < length.load(),
+            i.store(i.load() + Int(1)),
         ).Do(self.__getitem__(i.load()).use(lambda value: action(value, i.load())))
+
+    def map(self, mapFn: Callable[[T, Expr, T], Expr]) -> Expr:
+        # This implementation of map is functional (though I haven't tested it), but it returns the
+        # encoded value of an Array. Instead, we actually want it to return an instance of an Array
+        # Type -- to do this, we might want to generalize the ArrayElement and TupleElement interface
+        # (meaning you could store the return value into a compatible Type object, or call .use on it
+        # directly to immediately to use it)
+        i = ScratchVar(TealType.uint64)
+        length = ScratchVar(TealType.uint64)
+        mappedArray = ScratchVar(TealType.bytes)
+        mappedArrayIndex = ScratchVar(TealType.uint64)
+        mappedValue = self._valueType.new_instance()
+
+        initMappedArray = Seq(mappedArray.store(Bytes("")))
+        addMappedValueToArray = Seq(
+            mappedArray.store(Concat(mappedArray.load(), mappedValue.encode()))
+        )
+
+        if self._props.has_offsets:
+            initMappedArray = Seq(
+                mappedArrayIndex.store(Int(0)),
+                # allocate space for header
+                mappedArray.store(BytesZero(length.load() * Int(self._props.stride))),
+            )
+
+            newPointer = Uint16()
+
+            # update new element in header
+            addMappedValueToArray = Seq(
+                mappedArray.store(
+                    Concat(
+                        Extract(
+                            mappedArray.load(),
+                            mappedArrayIndex.load(),
+                            Int(self._props.stride),
+                        ),
+                        Seq(
+                            mappedArrayIndex.store(
+                                mappedArrayIndex.load() + Int(self._props.stride)
+                            ),
+                            newPointer.set(Len(mappedArray.load())),
+                            newPointer.encode(),
+                        ),
+                        Suffix(mappedArray.load(), mappedArrayIndex.load()),
+                        mappedValue.encode(),
+                    )
+                ),
+            )
+
+        return Seq(
+            length.store(self.length()),
+            initMappedArray,  # allocate space for bounds
+            For(
+                i.store(Int(0)), i.load() < length.load(), i.store(i.load() + Int(1))
+            ).Do(
+                Seq(
+                    self.__getitem__(i.load()).use(
+                        lambda value: mapFn(value, i.load(), mappedValue)
+                    ),
+                    addMappedValueToArray,
+                )
+            ),
+            mappedArray.load(),
+        )
 
 
 Array.__module__ = "pyteal"
