@@ -9,7 +9,7 @@ from ..substring import Extract
 from ..naryexpr import Concat
 from ..seq import Seq
 
-from .type import ABIType
+from .type import Type
 from .uint import Uint16
 
 

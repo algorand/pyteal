@@ -1,9 +1,26 @@
+from typing import TypeVar
 from abc import ABC, abstractmethod
 
+from ...types import TealType
 from ..expr import Expr
+from ..scratchvar import ScratchVar
+
+T = TypeVar("T", bound="Type")
 
 
-class ABIType(ABC):
+class Type(ABC):
+    def __init__(self, valueType: TealType) -> None:
+        super().__init__()
+        self.stored_value = ScratchVar(valueType)
+
+    @abstractmethod
+    def has_same_type_as(self, other: "Type") -> bool:
+        pass
+
+    @abstractmethod
+    def new_instance(self: T) -> T:
+        pass
+
     @abstractmethod
     def is_dynamic(self) -> bool:
         pass
@@ -13,28 +30,12 @@ class ABIType(ABC):
         pass
 
     @abstractmethod
-    def decode(self, encoded: Expr, offset: Expr, length: Expr) -> "ABIValue":
-        pass
-
-
-ABIType.__module__ = "pyteal"
-
-
-class ABIValue(ABC):
-    def __init__(self, type: ABIType) -> None:
-        super().__init__()
-        self.type = type
-
-    def get_type(self) -> ABIType:
-        return self.type
-
-    @abstractmethod
-    def byte_length(self) -> Expr:
-        pass
-
-    @abstractmethod
     def encode(self) -> Expr:
         pass
 
+    @abstractmethod
+    def decode(self, encoded: Expr, offset: Expr, length: Expr) -> Expr:
+        pass
 
-ABIValue.__module__ = "pyteal"
+
+Type.__module__ = "pyteal"

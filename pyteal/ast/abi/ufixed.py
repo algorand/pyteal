@@ -23,9 +23,9 @@ from .. import (
 )
 
 from ...types import TealType
-from .type import ABIType
+from .type import Type
 
-from .utils import head, itoa, prefix, suffix, tail, witoa, pow10
+# from .utils import head, itoa, prefix, suffix, tail, witoa, pow10
 
 
 # def precision_uint8(p: int):
