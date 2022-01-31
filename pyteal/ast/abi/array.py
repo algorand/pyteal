@@ -2,7 +2,6 @@ from typing import (
     Callable,
     Union,
     Sequence,
-    NamedTuple,
     TypeVar,
     Generic,
     Optional,
@@ -28,96 +27,20 @@ from .tuple import encodeTuple
 from .uint import Uint16
 
 
-class ArrayProperties(NamedTuple):
-    has_offsets: bool
-    stride: int
-    static_length: Optional[int]
-
-
-def createArrayProperties(
-    valueType: Type, static_length: Optional[int]
-) -> ArrayProperties:
-    if static_length is not None:
-        if not valueType.is_dynamic():
-            return ArrayProperties(
-                has_offsets=False,
-                stride=valueType.byte_length_static(),  # TODO: bool support
-                static_length=static_length,
-            )
-
-        return ArrayProperties(has_offsets=True, stride=2, static_length=static_length)
-
-    tmpProps = createArrayProperties(valueType, 1)
-    return ArrayProperties(
-        has_offsets=tmpProps.has_offsets, stride=tmpProps.stride, static_length=None
-    )
-
-
-def encodeArray(values: Sequence[Type], props: ArrayProperties) -> Expr:
-    tupleEncoding = encodeTuple(values)
-
-    if props.static_length is None:
-        length_tmp = Uint16()
-        length_prefix = Seq(length_tmp.set(len(values)), length_tmp.encode())
-        return Concat(length_prefix, tupleEncoding)
-
-    return tupleEncoding
-
-
-def arrayLength(encoded: Expr, props: ArrayProperties) -> Expr:
-    assert props.static_length is None
-
-    output = Uint16()
-    return Seq(
-        output.decode(encoded, Int(0), Int(2)),
-        output.get(),
-    )
-
-
 T = TypeVar("T", bound=Type)
-
-
-def indexArray(
-    valueType: T,
-    encoded: Expr,
-    index: Expr,
-    output: T,
-    props: ArrayProperties,
-) -> Expr:
-    offsetIndex = Int(props.stride) * index
-
-    if props.static_length is None:
-        lengthExpr = arrayLength(encoded, props)
-        offsetIndex = offsetIndex + Int(2)
-    else:
-        lengthExpr = Int(props.static_length)
-
-    if props.has_offsets:
-        valueStartRelative = ExtractUint16(encoded, offsetIndex)
-        if props.static_length is None:
-            valueStart = valueStartRelative + Int(2)
-        else:
-            valueStart = valueStartRelative
-        valueLength = (
-            If(index + Int(1) == lengthExpr)
-            .Then(lengthExpr * Int(props.stride) - valueStartRelative)
-            .Else(ExtractUint16(encoded, offsetIndex + Int(2)) - valueStartRelative)
-        )
-    else:
-        valueStart = offsetIndex
-        valueLength = Int(props.stride)
-
-    if not valueType.has_same_type_as(output):
-        raise TypeError("Output type does not match value type")
-
-    return output.decode(encoded, valueStart, valueLength)
 
 
 class Array(Type, Generic[T]):
     def __init__(self, valueType: T, staticLength: Optional[int]) -> None:
         super().__init__(TealType.bytes)
         self._valueType = valueType
-        self._props = createArrayProperties(valueType, staticLength)
+
+        self._has_offsets = valueType.is_dynamic()
+        if self._has_offsets:
+            self._stride = 2
+        else:
+            self._stride = valueType.byte_length_static()
+        self._static_length = staticLength
 
     def decode(self, encoded: Expr, offset: Expr, length: Expr) -> Expr:
         return self.stored_value.store(Extract(encoded, offset, length))
@@ -127,7 +50,15 @@ class Array(Type, Generic[T]):
             raise ValueError(
                 "Input values do not match type"
             )  # TODO: add more to error message
-        return self.stored_value.store(encodeArray(values, self._props))
+
+        encoded = encodeTuple(values)
+
+        if self._static_length is None:
+            length_tmp = Uint16()
+            length_prefix = Seq(length_tmp.set(len(values)), length_tmp.encode())
+            encoded = Concat(length_prefix, encoded)
+
+        return self.stored_value.store(encoded)
 
     def encode(self) -> Expr:
         return self.stored_value.load()
@@ -136,10 +67,12 @@ class Array(Type, Generic[T]):
     def length(self) -> Expr:
         pass
 
-    def __getitem__(self, index: Union[int, Expr]) -> "ArrayElement[T]":
+    def __getitem__(
+        self, index: Union[int, Expr], length: Expr = None
+    ) -> "ArrayElement[T]":
         if type(index) is int:
             index = Int(index)
-        return ArrayElement(self, cast(Expr, index))
+        return ArrayElement(self, cast(Expr, index), length)
 
     def forEach(self, action: Callable[[T, Expr], Expr]) -> Expr:
         i = ScratchVar(TealType.uint64)
@@ -148,7 +81,11 @@ class Array(Type, Generic[T]):
             Seq(length.store(self.length()), i.store(Int(0))),
             i.load() < length.load(),
             i.store(i.load() + Int(1)),
-        ).Do(self.__getitem__(i.load()).use(lambda value: action(value, i.load())))
+        ).Do(
+            self.__getitem__(i.load(), length=length.load()).use(
+                lambda value: action(value, i.load())
+            )
+        )
 
     def map(self, mapFn: Callable[[T, Expr, T], Expr]) -> Expr:
         # This implementation of map is functional (though I haven't tested it), but it returns the
@@ -167,11 +104,11 @@ class Array(Type, Generic[T]):
             mappedArray.store(Concat(mappedArray.load(), mappedValue.encode()))
         )
 
-        if self._props.has_offsets:
+        if self._has_offsets:
             initMappedArray = Seq(
                 mappedArrayIndex.store(Int(0)),
                 # allocate space for header
-                mappedArray.store(BytesZero(length.load() * Int(self._props.stride))),
+                mappedArray.store(BytesZero(length.load() * Int(self._stride))),
             )
 
             newPointer = Uint16()
@@ -183,11 +120,11 @@ class Array(Type, Generic[T]):
                         Extract(
                             mappedArray.load(),
                             mappedArrayIndex.load(),
-                            Int(self._props.stride),
+                            Int(self._stride),
                         ),
                         Seq(
                             mappedArrayIndex.store(
-                                mappedArrayIndex.load() + Int(self._props.stride)
+                                mappedArrayIndex.load() + Int(self._stride)
                             ),
                             newPointer.set(Len(mappedArray.load())),
                             newPointer.encode(),
@@ -205,7 +142,7 @@ class Array(Type, Generic[T]):
                 i.store(Int(0)), i.load() < length.load(), i.store(i.load() + Int(1))
             ).Do(
                 Seq(
-                    self.__getitem__(i.load()).use(
+                    self.__getitem__(i.load(), length=length.load()).use(
                         lambda value: mapFn(value, i.load(), mappedValue)
                     ),
                     addMappedValueToArray,
@@ -258,7 +195,7 @@ class StaticArray(Array[T]):
         return super().set(values)
 
     def length_static(self) -> int:
-        return cast(int, self._props.static_length)
+        return cast(int, self._static_length)
 
     def length(self) -> Expr:
         return Int(self.length_static())
@@ -286,29 +223,63 @@ class DynamicArray(Array[T]):
         raise ValueError("Type is dynamic")
 
     def length(self) -> Expr:
-        return arrayLength(self.encode(), self._props)
+        output = Uint16()
+        return Seq(
+            output.decode(self.encode(), Int(0), Int(2)),
+            output.get(),
+        )
 
 
 DynamicArray.__module__ = "pyteal"
 
 
 class ArrayElement(Generic[T]):
-    def __init__(self, parent: Array[T], index: Expr) -> None:
-        self.parent = parent
+    def __init__(self, array: Array[T], index: Expr, length: Expr = None) -> None:
+        self.array = array
         self.index = index
+        self.length = length
 
     def store_into(self, output: T) -> Expr:
-        return indexArray(
-            self.parent._valueType,
-            self.parent.encode(),
-            self.index,
-            output,
-            self.parent._props,
-        )
+        return self._compute(output)
 
     def use(self, action: Callable[[T], Expr]) -> Expr:
-        newInstance = self.parent._valueType.new_instance()
+        newInstance = self.array._valueType.new_instance()
         return Seq(self.store_into(newInstance), action(newInstance))
+
+    def _compute(self, output: T) -> Expr:
+        offsetIndex = Int(self.array._stride) * self.index
+        if self.array._static_length is None:
+            offsetIndex = offsetIndex + Int(2)
+
+        if self.length:
+            arrayLength = self.length
+        else:
+            arrayLength = self.array.length()
+
+        encodedArray = self.array.encode()
+
+        if self.array._has_offsets:
+            valueStartRelative = ExtractUint16(encodedArray, offsetIndex)
+            if self.array._static_length is None:
+                valueStart = valueStartRelative + Int(2)
+            else:
+                valueStart = valueStartRelative
+            valueLength = (
+                If(self.index + Int(1) == arrayLength)
+                .Then(arrayLength * Int(self.array._stride) - valueStartRelative)
+                .Else(
+                    ExtractUint16(encodedArray, offsetIndex + Int(2))
+                    - valueStartRelative
+                )
+            )
+        else:
+            valueStart = offsetIndex
+            valueLength = Int(self.array._stride)
+
+        if not self.array._valueType.has_same_type_as(output):
+            raise TypeError("Output type does not match value type")
+
+        return output.decode(encodedArray, valueStart, valueLength)
 
 
 ArrayElement.__module__ = "pyteal"
