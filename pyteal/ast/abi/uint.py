@@ -66,7 +66,7 @@ class Uint16(Uint):
     def encode(self) -> Expr:
         # value might exceed a uint16, need to check at runtime
         return Seq(
-            Assert(Not(self.get() >> Int(2))),
+            Assert(Not(self.get() >> Int(16))),
             Suffix(Itob(self.get()), Int(6)),
         )
 
