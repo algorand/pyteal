@@ -63,7 +63,7 @@ class ABIRouter:
             And(
                 Txn.application_args.length()
                 == Int(1 + len(mReg.subroutine.implementationParams)),
-                Txn.application_args[0] == MethodSignature(cast(str, mReg.name)),
+                Txn.application_args[0] == MethodSignature(mReg.name()),
             )
             if mReg is not None
             else Txn.application_args.length() == Int(0)
