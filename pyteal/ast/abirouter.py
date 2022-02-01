@@ -1,6 +1,7 @@
 from typing import List, Tuple, Union, cast
 
 from pyteal.errors import TealInputError
+from pyteal.types import TealType
 
 from .app import OnComplete
 from .expr import Expr
@@ -24,7 +25,7 @@ Notes:
 - On a BareApp Call, check
   - [x] txn NumAppArgs == 0
   - [x] On-Completion should match (can be a list of On-Completion here)
-  - [ ] Must execute actions required to invoke the method
+  - [x] Must execute actions required to invoke the method
 
 - On Method Call, check
   - [x] txna ApplicationArgs 0 == method "method-signature"
@@ -93,8 +94,28 @@ class ABIRouter:
 
     @staticmethod
     def wrapHandler(isMethod: bool, branch: Union[SubroutineFnWrapper, Expr]) -> Expr:
-        # TODO
-        return Seq([Approve()])
+        exprList: List[Expr] = []
+        if not isMethod:
+            if (
+                isinstance(branch, Seq)
+                and not branch.has_return()
+                and branch.type_of() == TealType.none
+            ):
+                exprList.append(branch)
+            elif (
+                isinstance(branch, SubroutineFnWrapper)
+                and branch.has_return()
+                and branch.type_of() == TealType.none
+            ):
+                exprList.append(branch())
+            else:
+                raise TealInputError(
+                    "For bare app call: should only register Seq (with no ret) and Subroutine (with ret but none type)"
+                )
+        else:
+            pass
+        exprList.append(Approve())
+        return Seq(*exprList)
 
     def onBareAppCall(
         self,
