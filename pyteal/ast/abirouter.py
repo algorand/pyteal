@@ -1,7 +1,7 @@
 from typing import List, Tuple, Union, cast
 
-from pyteal.errors import TealInputError
-from pyteal.types import TealType
+from ..errors import TealInputError
+from ..types import TealType
 
 from .app import OnComplete
 from .expr import Expr
