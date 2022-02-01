@@ -131,8 +131,6 @@ class ABIRouter:
         approvalConds, clearStateConds = ABIRouter.parseConditions(
             methodName=None, onCompletes=ocList, creation=creation
         )
-        # execBareAppCall: Expr = bareAppCall() if isinstance(bareAppCall, Subroutine) else cast(Expr, bareAppCall)
-        # TODO update then branch (either activate subroutine or run seq of expr), then approve
         branch = ABIRouter.wrapHandler(False, bareAppCall)
         if len(approvalConds) > 0:
             self.approvalIfThen.append((And(*approvalConds), branch))
