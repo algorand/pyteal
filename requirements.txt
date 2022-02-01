@@ -3,3 +3,4 @@ mypy==0.910
 pytest
 pytest-timeout
 py-algorand-sdk
+tabulate
