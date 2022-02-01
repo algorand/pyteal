@@ -1,8 +1,6 @@
 from typing import List, NamedTuple, Tuple, Union, cast
 
-from pyteal.ast.unaryexpr import Log
-from pyteal.config import RETURN_EVENT_SELECTOR
-
+from ..config import RETURN_EVENT_SELECTOR
 from ..errors import TealInputError
 from ..types import TealType
 
@@ -11,6 +9,7 @@ from .expr import Expr
 from .int import EnumInt, Int
 from .if_ import If
 from .methodsig import MethodSignature
+from .unaryexpr import Log
 from .naryexpr import And, Concat, Or
 from .return_ import Approve, Reject
 from .seq import Seq
