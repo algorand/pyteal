@@ -16,7 +16,7 @@ from ..naryexpr import Add, Concat
 from ..substring import Extract
 from ..scratchvar import ScratchVar
 
-from .type import Type
+from .type import Type, ComputedType
 from .uint import Uint16
 
 
@@ -153,22 +153,15 @@ class Tuple(Type):
 Tuple.__module__ = "pyteal"
 
 
-class TupleElement:
-    def __init__(self, parent: Tuple, index: int) -> None:
-        self.parent = parent
+class TupleElement(ComputedType[Type]):
+    def __init__(self, tuple: Tuple, index: int) -> None:
+        super().__init__(self.tuple.valueTypes[index])
+        self.tuple = tuple
         self.index = index
 
     def store_into(self, output: Type) -> Expr:
         return indexTuple(
             self.parent.valueTypes, self.parent.encode(), self.index, output
-        )
-
-    def use(self, action: Callable[[Type], Expr]) -> Expr:
-        valueType = self.parent.valueTypes[self.index]
-        newInstance = valueType.new_instance()
-        return Seq(
-            self.store_into(newInstance),
-            action(newInstance),
         )
 
 
