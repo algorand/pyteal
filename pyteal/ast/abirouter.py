@@ -14,10 +14,10 @@ from .seq import Seq
 from .subroutine import SubroutineFnWrapper
 from .txn import Txn
 
-from typing import TYPE_CHECKING
+# from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+# if TYPE_CHECKING:
+#     from ..compiler import CompileOptions
 
 
 """
@@ -31,9 +31,9 @@ Notes:
   - [x] txna ApplicationArgs 0 == method "method-signature"
   - [x] On-Completion should match (only one On-Completion specified here?)
   - [?] non void method call should log with 0x151f7c75 return-method-specifier (kinda done in another PR to ABI-Type)
+  - [?] redirect the method arguments and pass them to handler function (kinda done, but need to do with extraction and (en/de)-code)
   - [ ] Must execute actions required to invoke the method
   - [ ] extract arguments if needed (decode txna ApplicationArgs 15 if there exists, and extract arguments to feed method)
-  - [ ] redirect the method arguments and pass them to handler function
 
 Notes for OC:
 - creation conflict with closeout and clearstate
@@ -49,16 +49,23 @@ class ABIRouter:
 
     @staticmethod
     def parseConditions(
-        methodName: Union[str, None], onCompletes: List[EnumInt], creation: bool
+        mReg: Union[SubroutineFnWrapper, None],
+        onCompletes: List[EnumInt],
+        creation: bool,
     ) -> Tuple[List[Expr], List[Expr]]:
         # Check if it is a *CREATION*
         approvalConds: List[Expr] = [Txn.application_id() == Int(0)] if creation else []
         clearStateConds: List[Expr] = []
 
-        # Check if current condition is for *ABI METHOD* (method selector) or *BARE APP CALL* (numAppArg == 0)
+        # Check if current condition is for *ABI METHOD* (method selector && numAppArg == 1 + subroutineSyntaxArgNum)
+        #       or *BARE APP CALL* (numAppArg == 0)
         methodOrBareCondition = (
-            Txn.application_args[0] == MethodSignature(cast(str, methodName))
-            if methodName is not None
+            And(
+                Txn.application_args.length()
+                == Int(1 + len(mReg.subroutine.implementationParams)),
+                Txn.application_args[0] == MethodSignature(cast(str, mReg.name)),
+            )
+            if mReg is not None
             else Txn.application_args.length() == Int(0)
         )
         approvalConds.append(methodOrBareCondition)
@@ -110,10 +117,25 @@ class ABIRouter:
                 exprList.append(branch())
             else:
                 raise TealInputError(
-                    "For bare app call: should only register Seq (with no ret) and Subroutine (with ret but none type)"
+                    "For bare app call: should only register Seq (with no ret) or Subroutine (with ret but none type)"
                 )
         else:
-            pass
+            if isinstance(branch, SubroutineFnWrapper) and branch.has_return():
+                # TODO need to encode/decode things
+                exprList.append(
+                    branch(
+                        *[
+                            Txn.application_args[i + 1]
+                            for i in range(
+                                0, len(branch.subroutine.implementationParams)
+                            )
+                        ]
+                    )
+                )
+            else:
+                raise TealInputError(
+                    "For method call: should only register Subroutine with return"
+                )
         exprList.append(Approve())
         return Seq(*exprList)
 
@@ -129,7 +151,7 @@ class ABIRouter:
             else [cast(EnumInt, onCompletes)]
         )
         approvalConds, clearStateConds = ABIRouter.parseConditions(
-            methodName=None, onCompletes=ocList, creation=creation
+            mReg=None, onCompletes=ocList, creation=creation
         )
         branch = ABIRouter.wrapHandler(False, bareAppCall)
         if len(approvalConds) > 0:
@@ -145,14 +167,9 @@ class ABIRouter:
     ) -> None:
         ocList: List[EnumInt] = [cast(EnumInt, onComplete)]
         approvalConds, clearStateConds = ABIRouter.parseConditions(
-            methodName=methodAppCall.name(), onCompletes=ocList, creation=creation
+            mReg=methodAppCall, onCompletes=ocList, creation=creation
         )
-        # TODO unpack the arguments and pass them to handler function
-        # TODO take return value from handler and prefix + log: Log(Concat(return_event_selector, ...))
-        # TODO update then branch (either activate subroutine or run seq of expr), then approve
-        branch = Seq(
-            [MethodReturn(ABIRouter.wrapHandler(True, methodAppCall)), Approve()]
-        )
+        branch = Seq([ABIRouter.wrapHandler(True, methodAppCall), Approve()])
         if len(approvalConds) > 0:
             self.approvalIfThen.append((And(*approvalConds), branch))
         if len(clearStateConds) > 0:
@@ -174,22 +191,3 @@ class ABIRouter:
 
 
 ABIRouter.__module__ = "pyteal"
-
-
-class MethodReturn(Expr):
-    def __init__(self, value: Expr) -> None:
-        super().__init__()
-        """THIS IS A DUMMY CLASS, SHOULD WAIT ON ABI SIDE"""
-        self.value = value
-
-    def has_return(self) -> bool:
-        return super().has_return()
-
-    def __teal__(self, options: "CompileOptions"):
-        return super().__teal__(options)
-
-    def type_of(self):
-        return super().type_of()
-
-    def __str__(self) -> str:
-        return super().__str__()
