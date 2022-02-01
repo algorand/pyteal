@@ -14,11 +14,6 @@ from .seq import Seq
 from .subroutine import SubroutineFnWrapper
 from .txn import Txn
 
-# from typing import TYPE_CHECKING
-
-# if TYPE_CHECKING:
-#     from ..compiler import CompileOptions
-
 
 """
 Notes:
@@ -126,9 +121,7 @@ class ABIRouter:
                     branch(
                         *[
                             Txn.application_args[i + 1]
-                            for i in range(
-                                0, len(branch.subroutine.implementationParams)
-                            )
+                            for i in range(len(branch.subroutine.implementationParams))
                         ]
                     )
                 )
@@ -138,6 +131,24 @@ class ABIRouter:
                 )
         exprList.append(Approve())
         return Seq(*exprList)
+
+    def __appendToAST(
+        self, approvalConds: List[Expr], clearConds: List[Expr], branch: Expr
+    ) -> None:
+        if len(approvalConds) > 0:
+            self.approvalIfThen.append(
+                (
+                    And(*approvalConds) if len(approvalConds) > 1 else approvalConds[0],
+                    branch,
+                )
+            )
+        if len(clearConds) > 0:
+            self.clearStateIfThen.append(
+                (
+                    And(*clearConds) if len(approvalConds) > 1 else clearConds[0],
+                    branch,
+                )
+            )
 
     def onBareAppCall(
         self,
@@ -150,14 +161,11 @@ class ABIRouter:
             if isinstance(onCompletes, list)
             else [cast(EnumInt, onCompletes)]
         )
-        approvalConds, clearStateConds = ABIRouter.parseConditions(
+        approvalConds, clearConds = ABIRouter.parseConditions(
             mReg=None, onCompletes=ocList, creation=creation
         )
         branch = ABIRouter.wrapHandler(False, bareAppCall)
-        if len(approvalConds) > 0:
-            self.approvalIfThen.append((And(*approvalConds), branch))
-        if len(clearStateConds) > 0:
-            self.approvalIfThen.append((And(*clearStateConds), branch))
+        self.__appendToAST(approvalConds, clearConds, branch)
 
     def onMethodCall(
         self,
@@ -166,14 +174,11 @@ class ABIRouter:
         creation: bool = False,
     ) -> None:
         ocList: List[EnumInt] = [cast(EnumInt, onComplete)]
-        approvalConds, clearStateConds = ABIRouter.parseConditions(
+        approvalConds, clearConds = ABIRouter.parseConditions(
             mReg=methodAppCall, onCompletes=ocList, creation=creation
         )
-        branch = Seq([ABIRouter.wrapHandler(True, methodAppCall), Approve()])
-        if len(approvalConds) > 0:
-            self.approvalIfThen.append((And(*approvalConds), branch))
-        if len(clearStateConds) > 0:
-            self.approvalIfThen.append((And(*clearStateConds), branch))
+        branch = ABIRouter.wrapHandler(True, methodAppCall)
+        self.__appendToAST(approvalConds, clearConds, branch)
 
     @staticmethod
     def astConstruct(astList: List[Tuple[Expr, Expr]]) -> Expr:
