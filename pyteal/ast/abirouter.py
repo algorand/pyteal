@@ -1,5 +1,8 @@
 from typing import List, NamedTuple, Tuple, Union, cast
 
+from pyteal.ast.unaryexpr import Log
+from pyteal.config import RETURN_EVENT_SELECTOR
+
 from ..errors import TealInputError
 from ..types import TealType
 
@@ -8,7 +11,7 @@ from .expr import Expr
 from .int import EnumInt, Int
 from .if_ import If
 from .methodsig import MethodSignature
-from .naryexpr import And, Or
+from .naryexpr import And, Concat, Or
 from .return_ import Approve, Reject
 from .seq import Seq
 from .subroutine import SubroutineFnWrapper
@@ -122,13 +125,18 @@ class ABIRouter:
         else:
             if isinstance(branch, SubroutineFnWrapper) and branch.has_return():
                 # TODO need to encode/decode things
+
+                execBranch: Expr = branch(
+                    *[
+                        Txn.application_args[i + 1]
+                        for i in range(len(branch.subroutine.implementationParams))
+                    ]
+                )
+
                 exprList.append(
-                    branch(
-                        *[
-                            Txn.application_args[i + 1]
-                            for i in range(len(branch.subroutine.implementationParams))
-                        ]
-                    )
+                    Log(Concat(RETURN_EVENT_SELECTOR, execBranch))
+                    if branch.type_of() != TealType.none
+                    else execBranch
                 )
             else:
                 raise TealInputError(
