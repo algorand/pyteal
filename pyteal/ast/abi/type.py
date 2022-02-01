@@ -37,5 +37,9 @@ class Type(ABC):
     def decode(self, encoded: Expr, offset: Expr, length: Expr) -> Expr:
         pass
 
+    @abstractmethod
+    def __str__(self) -> str:
+        pass
+
 
 Type.__module__ = "pyteal"

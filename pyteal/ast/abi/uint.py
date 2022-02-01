@@ -39,6 +39,9 @@ class Uint(Type):
     def set(self, value: Union[int, Expr]) -> Expr:
         pass
 
+    def __str__(self) -> str:
+        return "uint{}".format(self.bit_size)
+
 
 class Uint16(Uint):
     def __init__(
