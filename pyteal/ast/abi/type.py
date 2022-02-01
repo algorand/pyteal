@@ -1,9 +1,10 @@
-from typing import TypeVar
+from typing import TypeVar, Generic, Callable
 from abc import ABC, abstractmethod
 
 from ...types import TealType
 from ..expr import Expr
 from ..scratchvar import ScratchVar
+from ..seq import Seq
 
 T = TypeVar("T", bound="Type")
 
@@ -43,3 +44,20 @@ class Type(ABC):
 
 
 Type.__module__ = "pyteal"
+
+
+class ComputedType(ABC, Generic[T]):
+    def __init__(self, producedType: T) -> None:
+        super().__init__()
+        self._producedType = producedType
+
+    @abstractmethod
+    def store_into(self, output: T) -> Expr:
+        pass
+
+    def use(self, action: Callable[[T], Expr]) -> Expr:
+        newInstance = self._producedType.new_instance()
+        return Seq(self.store_into(newInstance), action(newInstance))
+
+
+ComputedType.__module__ = "pyteal"

@@ -22,7 +22,7 @@ from ..naryexpr import Concat
 from ..substring import Extract, Suffix
 from ..scratchvar import ScratchVar
 
-from .type import Type
+from .type import Type, ComputedType
 from .tuple import encodeTuple
 from .uint import Uint16
 
@@ -87,69 +87,8 @@ class Array(Type, Generic[T]):
             )
         )
 
-    def map(self, mapFn: Callable[[T, Expr, T], Expr]) -> Expr:
-        # This implementation of map is functional (though I haven't tested it), but it returns the
-        # encoded value of an Array. Instead, we actually want it to return an instance of an Array
-        # Type -- to do this, we might want to generalize the ArrayElement and TupleElement interface
-        # (meaning you could store the return value into a compatible Type object, or call .use on it
-        # directly to immediately to use it)
-        i = ScratchVar(TealType.uint64)
-        length = ScratchVar(TealType.uint64)
-        mappedArray = ScratchVar(TealType.bytes)
-        mappedArrayIndex = ScratchVar(TealType.uint64)
-        mappedValue = self._valueType.new_instance()
-
-        initMappedArray = Seq(mappedArray.store(Bytes("")))
-        addMappedValueToArray = Seq(
-            mappedArray.store(Concat(mappedArray.load(), mappedValue.encode()))
-        )
-
-        if self._has_offsets:
-            initMappedArray = Seq(
-                mappedArrayIndex.store(Int(0)),
-                # allocate space for header
-                mappedArray.store(BytesZero(length.load() * Int(self._stride))),
-            )
-
-            newPointer = Uint16()
-
-            # update new element in header
-            addMappedValueToArray = Seq(
-                mappedArray.store(
-                    Concat(
-                        Extract(
-                            mappedArray.load(),
-                            mappedArrayIndex.load(),
-                            Int(self._stride),
-                        ),
-                        Seq(
-                            mappedArrayIndex.store(
-                                mappedArrayIndex.load() + Int(self._stride)
-                            ),
-                            newPointer.set(Len(mappedArray.load())),
-                            newPointer.encode(),
-                        ),
-                        Suffix(mappedArray.load(), mappedArrayIndex.load()),
-                        mappedValue.encode(),
-                    )
-                ),
-            )
-
-        return Seq(
-            length.store(self.length()),
-            initMappedArray,  # allocate space for bounds
-            For(
-                i.store(Int(0)), i.load() < length.load(), i.store(i.load() + Int(1))
-            ).Do(
-                Seq(
-                    self.__getitem__(i.load(), length=length.load()).use(
-                        lambda value: mapFn(value, i.load(), mappedValue)
-                    ),
-                    addMappedValueToArray,
-                )
-            ),
-            mappedArray.load(),
-        )
+    def map(self, mapFn: Callable[[T, Expr, T], Expr]) -> "MappedArray[T]":
+        return MappedArray(self, mapFn)
 
     def __str__(self) -> str:
         return self._valueType.__str__() + (
@@ -233,20 +172,14 @@ class DynamicArray(Array[T]):
 DynamicArray.__module__ = "pyteal"
 
 
-class ArrayElement(Generic[T]):
+class ArrayElement(ComputedType[T]):
     def __init__(self, array: Array[T], index: Expr, length: Expr = None) -> None:
+        super().__init__(array._valueType)
         self.array = array
         self.index = index
         self.length = length
 
     def store_into(self, output: T) -> Expr:
-        return self._compute(output)
-
-    def use(self, action: Callable[[T], Expr]) -> Expr:
-        newInstance = self.array._valueType.new_instance()
-        return Seq(self.store_into(newInstance), action(newInstance))
-
-    def _compute(self, output: T) -> Expr:
         offsetIndex = Int(self.array._stride) * self.index
         if self.array._static_length is None:
             offsetIndex = offsetIndex + Int(2)
@@ -283,3 +216,80 @@ class ArrayElement(Generic[T]):
 
 
 ArrayElement.__module__ = "pyteal"
+
+# TODO: right now MappedArray loses the Static vs Dynamic type of the array
+class MappedArray(ComputedType[Array[T]]):
+    def __init__(self, array: Array[T], mapFn: Callable[[T, Expr, T], Expr]) -> None:
+        super().__init__(array)
+        self.array = array
+        self.mapFn = mapFn
+
+    def store_into(self, output: Array[T]) -> Expr:
+        i = ScratchVar(TealType.uint64)
+        length = ScratchVar(TealType.uint64)
+        mappedArray = ScratchVar(TealType.bytes)
+        mappedArrayIndex = ScratchVar(TealType.uint64)
+        mappedValue = self.array._valueType.new_instance()
+
+        initMappedArray = Seq(mappedArray.store(Bytes("")))
+        addMappedValueToArray = Seq(
+            mappedArray.store(Concat(mappedArray.load(), mappedValue.encode()))
+        )
+
+        if self.array._static_length is None:
+            finishMappedArray = mappedArray.store(
+                Concat(Extract(self.array.encode(), Int(0), Int(2)), mappedArray.load())
+            )
+        else:
+            finishMappedArray = Seq()
+
+        if self.array._has_offsets:
+            initMappedArray = Seq(
+                mappedArrayIndex.store(Int(0)),
+                # allocate space for header
+                mappedArray.store(BytesZero(length.load() * Int(self._stride))),
+            )
+
+            newPointer = Uint16()
+
+            # update new element in header
+            addMappedValueToArray = Seq(
+                mappedArray.store(
+                    Concat(
+                        Extract(
+                            mappedArray.load(),
+                            mappedArrayIndex.load(),
+                            Int(self._stride),
+                        ),
+                        Seq(
+                            mappedArrayIndex.store(
+                                mappedArrayIndex.load() + Int(self._stride)
+                            ),
+                            newPointer.set(Len(mappedArray.load())),
+                            newPointer.encode(),
+                        ),
+                        Suffix(mappedArray.load(), mappedArrayIndex.load()),
+                        mappedValue.encode(),
+                    )
+                ),
+            )
+
+        if not self.array.has_same_type_as(output):
+            raise TypeError("Output type does not match array type")
+
+        return Seq(
+            length.store(self.array.length()),
+            initMappedArray,  # allocate space for bounds
+            For(
+                i.store(Int(0)), i.load() < length.load(), i.store(i.load() + Int(1))
+            ).Do(
+                Seq(
+                    self.array.__getitem__(i.load(), length=length.load()).use(
+                        lambda value: self.mapFn(value, i.load(), mappedValue)
+                    ),
+                    addMappedValueToArray,
+                )
+            ),
+            finishMappedArray,
+            output.decode(mappedArray.load(), Int(0), Len(mappedArray.load())),
+        )
