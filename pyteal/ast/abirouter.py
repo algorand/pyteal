@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union, cast
+from typing import List, NamedTuple, Tuple, Union, cast
 
 from ..errors import TealInputError
 from ..types import TealType
@@ -37,10 +37,15 @@ Notes for OC:
 """
 
 
+class ProgramNode(NamedTuple):
+    condition: Expr
+    branch: Expr
+
+
 class ABIRouter:
     def __init__(self) -> None:
-        self.approvalIfThen: List[Tuple[Expr, Expr]] = []
-        self.clearStateIfThen: List[Tuple[Expr, Expr]] = []
+        self.approvalIfThen: List[ProgramNode] = []
+        self.clearStateIfThen: List[ProgramNode] = []
 
     @staticmethod
     def parseConditions(
@@ -137,15 +142,15 @@ class ABIRouter:
     ) -> None:
         if len(approvalConds) > 0:
             self.approvalIfThen.append(
-                (
+                ProgramNode(
                     And(*approvalConds) if len(approvalConds) > 1 else approvalConds[0],
                     branch,
                 )
             )
         if len(clearConds) > 0:
             self.clearStateIfThen.append(
-                (
-                    And(*clearConds) if len(approvalConds) > 1 else clearConds[0],
+                ProgramNode(
+                    And(*clearConds) if len(clearConds) > 1 else clearConds[0],
                     branch,
                 )
             )
@@ -181,14 +186,15 @@ class ABIRouter:
         self.__appendToAST(approvalConds, clearConds, branch)
 
     @staticmethod
-    def astConstruct(astList: List[Tuple[Expr, Expr]]) -> Expr:
-        program: If = If(astList[0][0]).Then(astList[0][1])
+    def astConstruct(astList: List[ProgramNode]) -> Expr:
+        program: If = If(astList[0].condition).Then(astList[0].branch)
         for i in range(1, len(astList)):
-            program.ElseIf(astList[i][0]).Then(astList[i][1])
+            program.ElseIf(astList[i].condition).Then(astList[i].branch)
         program.Else(Reject())
         return program
 
     def buildProgram(self) -> Tuple[Expr, Expr]:
+        # TODO need to recheck how the program is built
         return (
             ABIRouter.astConstruct(self.approvalIfThen),
             ABIRouter.astConstruct(self.clearStateIfThen),
