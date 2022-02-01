@@ -195,6 +195,8 @@ class ABIRouter:
 
     def buildProgram(self) -> Tuple[Expr, Expr]:
         # TODO need to recheck how the program is built
+        # question: if there's no approval condition/branch registered, shall it reject/approve everything?
+        # similarly, if there's no clearstate condition/branch registered, shall it reject/approve everything?
         return (
             ABIRouter.astConstruct(self.approvalIfThen),
             ABIRouter.astConstruct(self.clearStateIfThen),
