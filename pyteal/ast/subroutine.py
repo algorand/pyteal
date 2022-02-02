@@ -49,6 +49,16 @@ class SubroutineDefinition:
                     )
                 )
 
+        for var, var_type in implementation.__annotations__.items():
+            if var_type is not Expr:
+                stub = "Return" if var == "return" else ("parameter " + var)
+
+                raise TealInputError(
+                    "Function has {} of disallowed type {}. Only type Expr is allowed".format(
+                        stub, var_type
+                    )
+                )
+
         self.implementation = implementation
         self.implementationParams = sig.parameters
         self.returnType = returnType
