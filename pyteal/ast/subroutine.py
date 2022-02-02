@@ -15,6 +15,10 @@ if TYPE_CHECKING:
 class SubroutineDefinition:
     PARAM_ANNOTATION_TYPES = [Expr, ScratchVar]
 
+    @classmethod
+    def param_type_names(cls) -> List[str]:
+        return list(map(lambda t: t.__name__, cls.PARAM_ANNOTATION_TYPES))
+
     nextSubroutineId = 0
 
     def __init__(
@@ -58,8 +62,10 @@ class SubroutineDefinition:
                 raise TealInputError(f_err.format(var_type))
 
             if var != "return" and var_type not in self.PARAM_ANNOTATION_TYPES:
-                f_err = "Function has param {} of disallowed type {}"
-                raise TealInputError(f_err.format(var, var_type))
+                f_err = "Function has parameter {} of disallowed type {}. Only the types {} are allowed"
+                raise TealInputError(
+                    f_err.format(var, var_type, self.param_type_names())
+                )
 
         self.implementation = implementation
         self.implementationParams = sig.parameters

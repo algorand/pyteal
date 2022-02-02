@@ -127,7 +127,7 @@ def test_subroutine_definition_invalid():
         ),
         (
             fnWithNonExprParamAnnotation,
-            "TealInputError('Function has param b of disallowed type TealType.uint64",
+            """TealInputError("Function has parameter b of disallowed type TealType.uint64. Only the types [\'Expr\', \'ScratchVar\'] are allowed""",
         ),
     )
 
