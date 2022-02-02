@@ -146,6 +146,9 @@ class Tuple(Type):
     def __getitem__(self, index: int) -> "TupleElement":
         return TupleElement(self, index)
 
+    def __str__(self) -> str:
+        return "({})".format(",".join(map(lambda x: x.__str__(), self.valueTypes)))
+
 
 Tuple.__module__ = "pyteal"
 
