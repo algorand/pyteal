@@ -1,4 +1,3 @@
-from __future__ import annotations
 from typing import Callable, List, Optional, TYPE_CHECKING
 from inspect import Parameter, signature
 
