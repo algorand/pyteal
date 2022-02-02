@@ -83,34 +83,34 @@ def test_subroutine_definition_invalid():
         return Return()
 
     cases = (
-        (1, "TealInputError('Input to SubroutineDefinition is not callable')"),
-        (None, "TealInputError('Input to SubroutineDefinition is not callable')"),
+        (1, "TealInputError('Input to SubroutineDefinition is not callable'"),
+        (None, "TealInputError('Input to SubroutineDefinition is not callable'"),
         (
             fnWithDefaults,
-            "TealInputError('Function has a parameter with a default value, which is not allowed in a subroutine: b')",
+            "TealInputError('Function has a parameter with a default value, which is not allowed in a subroutine: b'",
         ),
         (
             fnWithKeywordArgs,
-            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type KEYWORD_ONLY')",
+            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type KEYWORD_ONLY'",
         ),
         (
             fnWithVariableArgs,
-            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type VAR_POSITIONAL')",
+            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type VAR_POSITIONAL'",
         ),
         (
             fnWithNonExprReturnAnnotation,
-            "TealInputError('Function has Return of disallowed type TealType.uint64. Only type Expr is allowed')",
+            "TealInputError('Function has Return of disallowed type TealType.uint64. Only type Expr is allowed'",
         ),
         (
             fnWithNonExprParamAnnotation,
-            "TealInputError('Function has parameter b of disallowed type TealType.uint64. Only type Expr is allowed')",
+            "TealInputError('Function has parameter b of disallowed type TealType.uint64. Only type Expr is allowed'",
         ),
     )
 
     for case, msg in cases:
         with pytest.raises(TealInputError) as e:
             SubroutineDefinition(case, TealType.none)
-        assert msg in str(e)
+        assert msg in str(e), "failed for case [{}]".format(case)
 
 
 def test_subroutine_declaration():
