@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Callable, List, Optional, TYPE_CHECKING
 from inspect import Parameter, signature
 
@@ -47,6 +48,14 @@ class SubroutineDefinition:
                     "Function has a parameter with a default value, which is not allowed in a subroutine: {}".format(
                         name
                     )
+                )
+
+        for var, var_type in implementation.__annotations__.items():
+            if var_type != Expr:
+                stub = "return " if var == 'Return' else ("parameter " + var)
+                    
+                raise TealInputError(
+                    "Function has {} of disallowed type {}. Only type Expr is allowed".format(stub, var_type)
                 )
 
         self.implementation = implementation

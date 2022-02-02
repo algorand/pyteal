@@ -28,6 +28,9 @@ def test_subroutine_definition():
     lam2Args = lambda a1, a2: Return()
     lam10Args = lambda a1, a2, a3, a4, a5, a6, a7, a8, a9, a10: Return()
 
+    def fnWithExprAnnotations(a: Expr, b: Expr) -> Expr:
+        return Return()
+
     cases = (
         (fn0Args, 0, "fn0Args"),
         (fn1Args, 1, "fn1Args"),
@@ -37,6 +40,7 @@ def test_subroutine_definition():
         (lam1Args, 1, "<lambda>"),
         (lam2Args, 2, "<lambda>"),
         (lam10Args, 10, "<lambda>"),
+        (fnWithExprAnnotations, 2, "fnWithExprAnnotations")
     )
 
     for (fn, numArgs, name) in cases:
@@ -72,12 +76,21 @@ def test_subroutine_definition_invalid():
     def fnWithVariableArgs(a, *b):
         return Return()
 
+    def fnWithNonExprReturnAnnotation(a, b) -> TealType.uint64:
+        return Return()
+
+
+    def fnWithNonExprParamAnnotation(a, b: TealType.uint64):
+        return Return()
+
     cases = (
         1,
         None,
         fnWithDefaults,
         fnWithKeywordArgs,
         fnWithVariableArgs,
+        fnWithNonExprReturnAnnotation,
+        fnWithNonExprParamAnnotation,
     )
 
     for case in cases:
