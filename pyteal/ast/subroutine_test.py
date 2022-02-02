@@ -31,6 +31,18 @@ def test_subroutine_definition():
     def fnWithExprAnnotations(a: Expr, b: Expr) -> Expr:
         return Return()
 
+
+    def fnWithOnlyReturnExprAnnotations(a, b) -> Expr:
+        return Return()
+
+
+    def fnWithOnlyArgExprAnnotations(a: Expr, b: Expr):
+        return Return()
+
+
+    def fnWithPartialExprAnnotations(a, b: Expr) -> Expr:
+        return Return()
+
     cases = (
         (fn0Args, 0, "fn0Args"),
         (fn1Args, 1, "fn1Args"),
@@ -41,6 +53,9 @@ def test_subroutine_definition():
         (lam2Args, 2, "<lambda>"),
         (lam10Args, 10, "<lambda>"),
         (fnWithExprAnnotations, 2, "fnWithExprAnnotations"),
+        (fnWithOnlyReturnExprAnnotations, 2, "fnWithOnlyReturnExprAnnotations"),
+        (fnWithOnlyArgExprAnnotations, 2, "fnWithOnlyArgExprAnnotations"),
+        (fnWithPartialExprAnnotations, 2, "fnWithPartialExprAnnotations"),
     )
 
     for (fn, numArgs, name) in cases:
