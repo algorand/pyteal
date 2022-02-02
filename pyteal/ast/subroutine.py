@@ -51,7 +51,7 @@ class SubroutineDefinition:
 
         for var, var_type in implementation.__annotations__.items():
             if var_type != Expr:
-                stub = "return " if var == "Return" else ("parameter " + var)
+                stub = "Return" if var == "return" else ("parameter " + var)
 
                 raise TealInputError(
                     "Function has {} of disallowed type {}. Only type Expr is allowed".format(

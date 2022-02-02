@@ -83,18 +83,34 @@ def test_subroutine_definition_invalid():
         return Return()
 
     cases = (
-        1,
-        None,
-        fnWithDefaults,
-        fnWithKeywordArgs,
-        fnWithVariableArgs,
-        fnWithNonExprReturnAnnotation,
-        fnWithNonExprParamAnnotation,
+        (1, "TealInputError('Input to SubroutineDefinition is not callable')"),
+        (None, "TealInputError('Input to SubroutineDefinition is not callable')"),
+        (
+            fnWithDefaults,
+            "TealInputError('Function has a parameter with a default value, which is not allowed in a subroutine: b')",
+        ),
+        (
+            fnWithKeywordArgs,
+            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type KEYWORD_ONLY')",
+        ),
+        (
+            fnWithVariableArgs,
+            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type VAR_POSITIONAL')",
+        ),
+        (
+            fnWithNonExprReturnAnnotation,
+            "TealInputError('Function has Return of disallowed type TealType.uint64. Only type Expr is allowed')",
+        ),
+        (
+            fnWithNonExprParamAnnotation,
+            "TealInputError('Function has parameter b of disallowed type TealType.uint64. Only type Expr is allowed')",
+        ),
     )
 
-    for case in cases:
-        with pytest.raises(TealInputError):
+    for case, msg in cases:
+        with pytest.raises(TealInputError) as e:
             SubroutineDefinition(case, TealType.none)
+        assert msg in str(e)
 
 
 def test_subroutine_declaration():
