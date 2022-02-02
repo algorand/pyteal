@@ -115,11 +115,11 @@ def test_subroutine_definition_invalid():
         ),
         (
             fnWithKeywordArgs,
-            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type'",
+            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type",
         ),
         (
             fnWithVariableArgs,
-            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type'",
+            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type",
         ),
         (
             fnWithNonExprReturnAnnotation,
