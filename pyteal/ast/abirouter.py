@@ -64,7 +64,7 @@ class ABIRouter:
         methodOrBareCondition = (
             And(
                 Txn.application_args.length()
-                == Int(1 + len(mReg.subroutine.implementationParams)),
+                == Int(1 + mReg.subroutine.argumentCount()),
                 Txn.application_args[0] == MethodSignature(mReg.name()),
             )
             if mReg is not None
@@ -128,7 +128,7 @@ class ABIRouter:
                 execBranch: Expr = branch(
                     *[
                         Txn.application_args[i + 1]
-                        for i in range(len(branch.subroutine.implementationParams))
+                        for i in range(branch.subroutine.argumentCount())
                     ]
                 )
 
