@@ -2,6 +2,8 @@ from typing import List
 import pytest
 
 from .. import *
+from ..ast.ternaryexpr import TernaryExpr
+
 from .subroutine import evaluateSubroutine
 
 # this is not necessary but mypy complains if it's not included
@@ -40,6 +42,12 @@ def test_subroutine_definition():
     def fnWithPartialExprAnnotations(a, b: Expr) -> Expr:
         return Return()
 
+    def fnWithReturnTernaryExprAnnotations(a, b: Expr) -> TernaryExpr:
+        return Return()
+
+    def fnWithScratchAndExprAnnotations(a: ScratchVar, b: Expr) -> Expr:
+        return Return()
+
     cases = (
         (fn0Args, 0, "fn0Args"),
         (fn1Args, 1, "fn1Args"),
@@ -53,6 +61,8 @@ def test_subroutine_definition():
         (fnWithOnlyReturnExprAnnotations, 2, "fnWithOnlyReturnExprAnnotations"),
         (fnWithOnlyArgExprAnnotations, 2, "fnWithOnlyArgExprAnnotations"),
         (fnWithPartialExprAnnotations, 2, "fnWithPartialExprAnnotations"),
+        (fnWithReturnTernaryExprAnnotations, 2, "fnWithReturnTernaryExprAnnotations"),
+        (fnWithScratchAndExprAnnotations, 2, "fnWithScratchAndExprAnnotations"),
     )
 
     for (fn, numArgs, name) in cases:

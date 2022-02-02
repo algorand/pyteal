@@ -1,5 +1,5 @@
 from typing import Callable, List, Optional, TYPE_CHECKING
-from inspect import Parameter, signature
+from inspect import Parameter, isclass, signature
 
 from ..types import TealType
 from ..ir import TealOp, Op, TealBlock
@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
 
 class SubroutineDefinition:
+    PARAM_ANNOTATION_TYPES = [Expr, ScratchVar]
 
     nextSubroutineId = 0
 
@@ -50,14 +51,15 @@ class SubroutineDefinition:
                 )
 
         for var, var_type in implementation.__annotations__.items():
-            if var_type != Expr:
-                stub = "Return" if var == "return" else ("parameter " + var)
+            f_err = "Function has {} of disallowed type {}. Only type Expr is allowed"
 
-                raise TealInputError(
-                    "Function has {} of disallowed type {}. Only type Expr is allowed".format(
-                        stub, var_type
-                    )
-                )
+            if var == "return" and not (
+                isclass(var_type) and issubclass(var_type, Expr)
+            ):
+                raise TealInputError(f_err.format("return", var_type))
+
+            if var != "return" and var_type not in self.PARAM_ANNOTATION_TYPES:
+                raise TealInputError(f_err.format(var, var_type))
 
         self.implementation = implementation
         self.implementationParams = sig.parameters
