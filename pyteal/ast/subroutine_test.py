@@ -40,7 +40,7 @@ def test_subroutine_definition():
         (lam1Args, 1, "<lambda>"),
         (lam2Args, 2, "<lambda>"),
         (lam10Args, 10, "<lambda>"),
-        (fnWithExprAnnotations, 2, "fnWithExprAnnotations")
+        (fnWithExprAnnotations, 2, "fnWithExprAnnotations"),
     )
 
     for (fn, numArgs, name) in cases:
