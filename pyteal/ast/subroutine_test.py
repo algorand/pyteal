@@ -31,14 +31,11 @@ def test_subroutine_definition():
     def fnWithExprAnnotations(a: Expr, b: Expr) -> Expr:
         return Return()
 
-
     def fnWithOnlyReturnExprAnnotations(a, b) -> Expr:
         return Return()
 
-
     def fnWithOnlyArgExprAnnotations(a: Expr, b: Expr):
         return Return()
-
 
     def fnWithPartialExprAnnotations(a, b: Expr) -> Expr:
         return Return()
