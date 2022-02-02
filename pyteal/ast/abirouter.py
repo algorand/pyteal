@@ -59,12 +59,12 @@ class ABIRouter:
         approvalConds: List[Expr] = [Txn.application_id() == Int(0)] if creation else []
         clearStateConds: List[Expr] = []
 
-        # Check if current condition is for *ABI METHOD* (method selector && numAppArg == 1 + subroutineSyntaxArgNum)
+        # Check if current condition is for *ABI METHOD* (method selector && numAppArg == max(16, 1 + subroutineSyntaxArgNum))
         #       or *BARE APP CALL* (numAppArg == 0)
         methodOrBareCondition = (
             And(
                 Txn.application_args.length()
-                == Int(1 + mReg.subroutine.argumentCount()),
+                == Int(max(1 + mReg.subroutine.argumentCount(), 16)),
                 Txn.application_args[0] == MethodSignature(mReg.name()),
             )
             if mReg is not None
@@ -194,6 +194,8 @@ class ABIRouter:
 
     @staticmethod
     def astConstruct(astList: List[ProgramNode]) -> Expr:
+        if len(astList) == 0:
+            raise TealInputError("ABIRouter: Cannot build program with an empty AST")
         program: If = If(astList[0].condition).Then(astList[0].branch)
         for i in range(1, len(astList)):
             program.ElseIf(astList[i].condition).Then(astList[i].branch)
