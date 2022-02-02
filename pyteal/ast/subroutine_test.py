@@ -110,7 +110,8 @@ def test_subroutine_definition_invalid():
     for case, msg in cases:
         with pytest.raises(TealInputError) as e:
             SubroutineDefinition(case, TealType.none)
-        assert msg in str(e), "failed for case [{}]".format(case)
+
+            assert msg in str(e), "failed for case [{}]".format(case)
 
 
 def test_subroutine_declaration():
