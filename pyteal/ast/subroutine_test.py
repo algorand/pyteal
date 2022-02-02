@@ -1,8 +1,10 @@
+from distutils.version import StrictVersion
 from typing import List
 import pytest
 
 from .. import *
-from ..ast.ternaryexpr import TernaryExpr
+from ..ast.nonce import Nonce
+
 
 from .subroutine import evaluateSubroutine
 
@@ -42,8 +44,8 @@ def test_subroutine_definition():
     def fnWithPartialExprAnnotations(a, b: Expr) -> Expr:
         return Return()
 
-    def fnWithReturnTernaryExprAnnotations(a, b: Expr) -> TernaryExpr:
-        return Return()
+    def fnWithReturnTernaryExprAnnotations(a, b: Expr) -> Nonce:
+        return Nonce("hello", "nonce", Bytes("some bytes"))
 
     def fnWithScratchAndExprAnnotations(a: ScratchVar, b: Expr) -> Expr:
         return Return()
