@@ -79,7 +79,6 @@ def test_subroutine_definition_invalid():
     def fnWithNonExprReturnAnnotation(a, b) -> TealType.uint64:
         return Return()
 
-
     def fnWithNonExprParamAnnotation(a, b: TealType.uint64):
         return Return()
 
