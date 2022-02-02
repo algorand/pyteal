@@ -51,14 +51,14 @@ class SubroutineDefinition:
                 )
 
         for var, var_type in implementation.__annotations__.items():
-            f_err = "Function has {} of disallowed type {}. Only type Expr is allowed"
-
             if var == "return" and not (
                 isclass(var_type) and issubclass(var_type, Expr)
             ):
-                raise TealInputError(f_err.format("return", var_type))
+                f_err = "Function has return of disallowed type {}. Only subtype of Expr is allowed"
+                raise TealInputError(f_err.format(var_type))
 
             if var != "return" and var_type not in self.PARAM_ANNOTATION_TYPES:
+                f_err = "Function has param {} of disallowed type {}"
                 raise TealInputError(f_err.format(var, var_type))
 
         self.implementation = implementation
