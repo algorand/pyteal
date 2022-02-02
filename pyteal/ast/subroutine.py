@@ -50,7 +50,7 @@ class SubroutineDefinition:
                 )
 
         for var, var_type in implementation.__annotations__.items():
-            if var_type != Expr:
+            if var_type is not Expr:
                 stub = "Return" if var == "return" else ("parameter " + var)
 
                 raise TealInputError(
