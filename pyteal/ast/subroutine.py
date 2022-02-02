@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 class SubroutineDefinition:
-    PARAM_ANNOTATION_TYPES = [Expr, ScratchVar]
+    PARAM_ANNOTATION_TYPES = (Expr, ScratchVar)
 
     @classmethod
     def param_type_names(cls) -> List[str]:
