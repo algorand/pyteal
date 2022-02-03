@@ -23,6 +23,9 @@ class GlobalField(Enum):
     creator_address = (9, "CreatorAddress", TealType.bytes, 3)
     current_app_address = (10, "CurrentApplicationAddress", TealType.bytes, 5)
     group_id = (11, "GroupID", TealType.bytes, 5)
+    opcode_budget = (12, "OpcodeBudget", TealType.uint64, 6)
+    caller_app_id = (13, "CallerApplicationID", TealType.uint64, 6)
+    caller_app_address = (14, "CallerApplicationAddress", TealType.bytes, 6)
 
     def __init__(self, id: int, name: str, type: TealType, min_version: int) -> None:
         self.id = id
@@ -130,6 +133,31 @@ class Global(LeafExpr):
 
         Requires TEAL version 5 or higher."""
         return cls(GlobalField.group_id)
+
+    @classmethod
+    def opcode_budget(cls) -> "Global":
+        """Get the remaining opcode execution budget
+
+        Requires TEAL version 6 or higher."""
+        return cls(GlobalField.opcode_budget)
+
+    @classmethod
+    def caller_app_id(cls) -> "Global":
+        """Get the id of the app that submitted the InnerTransaction that triggered this app to execute.
+
+        If not called from another app, this will return 0
+
+        Requires TEAL version 6 or higher."""
+        return cls(GlobalField.caller_app_id)
+
+    @classmethod
+    def caller_app_address(cls) -> "Global":
+        """Get the address of the app that submitted the InnerTransaction that triggered this app to execute.
+
+        If not called from another app, this will return the ZeroAddress
+
+        Requires TEAL version 6 or higher."""
+        return cls(GlobalField.caller_app_address)
 
 
 Global.__module__ = "pyteal"

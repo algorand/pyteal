@@ -153,6 +153,16 @@ def BytesNot(arg: Expr) -> UnaryExpr:
     return UnaryExpr(Op.b_not, TealType.bytes, TealType.bytes, arg)
 
 
+def BytesSqrt(arg: Expr) -> UnaryExpr:
+    """Get the bytes square root of bytes.
+
+    This will return the largest integer X such that X^2 <= arg.
+
+    Requires TEAL version 6 or higher.
+    """
+    return UnaryExpr(Op.bsqrt, TealType.bytes, TealType.bytes, arg)
+
+
 def BytesZero(arg: Expr) -> UnaryExpr:
     """Get a byte-array of a specified length, containing all zero bytes.
 
