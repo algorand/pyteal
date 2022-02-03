@@ -1,4 +1,3 @@
-from distutils.version import StrictVersion
 from typing import List
 import pytest
 
