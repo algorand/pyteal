@@ -96,9 +96,7 @@ class Array(Type, Generic[T]):
 
     def __str__(self) -> str:
         return self._valueType.__str__() + (
-            "[]"
-            if self._props.static_length is None
-            else "[{}]".format(self._props.static_length)
+            "[]" if self._static_length is None else "[{}]".format(self._static_length)
         )
 
 

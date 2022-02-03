@@ -49,6 +49,9 @@ class Bool(Type):
     def encode(self) -> Expr:
         return SetBit(Bytes(b"\x00"), Int(0), self.get())
 
+    def __str__(self) -> str:
+        return "bool"
+
 
 def boolAwareStaticByteLength(types: Sequence[Type]) -> int:
     length = 0
