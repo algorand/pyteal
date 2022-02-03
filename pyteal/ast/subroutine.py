@@ -7,13 +7,15 @@ from ..errors import TealInputError, verifyTealVersion
 from .expr import Expr
 from .seq import Seq
 from .scratchvar import ScratchVar
+from . import abi
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
+# NOTE trying to do return, rather than "write to reference", experimenting here
 
 class SubroutineDefinition:
-    PARAM_ANNOTATION_TYPES = (Expr, ScratchVar)
+    PARAM_ANNOTATION_TYPES = (Expr, ScratchVar, abi.Type)
 
     @classmethod
     def param_type_names(cls) -> List[str]:
@@ -55,6 +57,7 @@ class SubroutineDefinition:
                 )
 
         for var, var_type in implementation.__annotations__.items():
+            # TODO something about return for ABI should be polished?
             if var == "return" and not (
                 isclass(var_type) and issubclass(var_type, Expr)
             ):
