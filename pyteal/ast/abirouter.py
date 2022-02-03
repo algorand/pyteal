@@ -130,7 +130,7 @@ class ABIRouter:
                 # TODO need to encode/decode things
                 execBranchArgs: List[Expr] = []
                 if branch.subroutine.argumentCount() >= METHOD_APP_ARG_NUM_LIMIT:
-                    # decode (if arg num > 15 need to de-tuple 15th (last) argument)
+                    # NOTE decode (if arg num > 15 need to de-tuple 15th (last) argument)
                     pass
                 else:
                     pass
