@@ -13,13 +13,11 @@ from ...types import TealType
 from ..expr import Expr
 from ..seq import Seq
 from ..int import Int
-from ..bytes import Bytes
 from ..if_ import If
 from ..for_ import For
-from ..unaryexpr import BytesZero, Len
 from ..binaryexpr import ExtractUint16
 from ..naryexpr import Concat
-from ..substring import Extract, Suffix
+from ..substring import Extract, Substring, Suffix
 from ..scratchvar import ScratchVar
 
 from .type import Type, ComputedType
@@ -43,8 +41,26 @@ class Array(Type, Generic[T]):
             self._stride = valueType.byte_length_static()
         self._static_length = staticLength
 
-    def decode(self, encoded: Expr, offset: Expr, length: Expr) -> Expr:
-        return self.stored_value.store(Extract(encoded, offset, length))
+    def decode(
+        self,
+        encoded: Expr,
+        *,
+        startIndex: Expr = None,
+        endIndex: Expr = None,
+        length: Expr = None
+    ) -> Expr:
+        if startIndex is None:
+            assert length is None
+            assert endIndex is None
+            extracted = encoded
+        elif length is not None:
+            assert endIndex is None
+            extracted = Extract(encoded, startIndex, length)
+        elif endIndex is not None:
+            extracted = Substring(encoded, startIndex, endIndex)
+        else:
+            extracted = Suffix(encoded, startIndex)
+        return self.stored_value.store(extracted)
 
     def set(self, values: Sequence[T]) -> Expr:
         if not all(self._valueType.has_same_type_as(value) for value in values):
@@ -164,7 +180,7 @@ class DynamicArray(Array[T]):
     def length(self) -> Expr:
         output = Uint16()
         return Seq(
-            output.decode(self.encode(), Int(0), Int(2)),
+            output.decode(self.encode()),
             output.get(),
         )
 
@@ -193,31 +209,29 @@ class ArrayElement(ComputedType[T]):
 
         encodedArray = self.array.encode()
 
-        if self.array._has_offsets:
-            valueStartRelative = ExtractUint16(encodedArray, offsetIndex)
-            if self.array._static_length is None:
-                valueStart = valueStartRelative + Int(2)
-            else:
-                valueStart = valueStartRelative
-            valueLength = (
-                If(self.index + Int(1) == arrayLength)
-                .Then(arrayLength * Int(self.array._stride) - valueStartRelative)
-                .Else(
-                    ExtractUint16(encodedArray, offsetIndex + Int(2))
-                    - valueStartRelative
-                )
-            )
-        else:
-            valueStart = offsetIndex
-            valueLength = Int(self.array._stride)
-
         if not self.array._valueType.has_same_type_as(output):
             raise TypeError("Output type does not match value type")
 
         if type(output) is Bool:
             return cast(Bool, output).decodeBit(encodedArray, offsetBit)
 
-        return output.decode(encodedArray, valueStart, valueLength)
+        if self.array._has_offsets:
+            valueStart = ExtractUint16(encodedArray, offsetIndex)
+            valueEnd = (
+                If(self.index + Int(1) == arrayLength)
+                .Then(arrayLength * Int(self.array._stride))
+                .Else(ExtractUint16(encodedArray, offsetIndex + Int(2)))
+            )
+
+            if self.array._static_length is None:
+                valueStart = valueStart + Int(2)
+                valueEnd = valueEnd + Int(2)
+
+            return output.decode(encodedArray, startIndex=valueStart, endIndex=valueEnd)
+
+        valueStart = offsetIndex
+        valueLength = Int(self.array._stride)
+        return output.decode(encodedArray, startIndex=valueStart, length=valueLength)
 
 
 ArrayElement.__module__ = "pyteal"
