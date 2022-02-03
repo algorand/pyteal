@@ -1,6 +1,6 @@
 from typing import List, NamedTuple, Tuple, Union, cast
 
-from ..config import RETURN_EVENT_SELECTOR
+from ..config import METHOD_APP_ARG_NUM_LIMIT, RETURN_EVENT_SELECTOR
 from ..errors import TealInputError
 from ..types import TealType
 
@@ -50,7 +50,7 @@ class ABIRouter:
         self.clearStateIfThen: List[ProgramNode] = []
 
     @staticmethod
-    def parseConditions(
+    def __parseConditions(
         mReg: Union[SubroutineFnWrapper, None],
         onCompletes: List[EnumInt],
         creation: bool,
@@ -59,13 +59,17 @@ class ABIRouter:
         approvalConds: List[Expr] = [Txn.application_id() == Int(0)] if creation else []
         clearStateConds: List[Expr] = []
 
-        # Check if current condition is for *ABI METHOD* (method selector && numAppArg == max(16, 1 + subroutineSyntaxArgNum))
-        #       or *BARE APP CALL* (numAppArg == 0)
+        # Check:
+        # - if current condition is for *ABI METHOD*
+        #   (method selector && numAppArg == max(METHOD_APP_ARG_NUM_LIMIT, 1 + subroutineSyntaxArgNum))
+        # - or *BARE APP CALL* (numAppArg == 0)
         methodOrBareCondition = (
             And(
-                Txn.application_args.length()
-                == Int(max(1 + mReg.subroutine.argumentCount(), 16)),
                 Txn.application_args[0] == MethodSignature(mReg.name()),
+                Txn.application_args.length()
+                == Int(
+                    max(1 + mReg.subroutine.argumentCount(), METHOD_APP_ARG_NUM_LIMIT)
+                ),
             )
             if mReg is not None
             else Txn.application_args.length() == Int(0)
@@ -102,7 +106,7 @@ class ABIRouter:
         return approvalConds, clearStateConds
 
     @staticmethod
-    def wrapHandler(isMethod: bool, branch: Union[SubroutineFnWrapper, Expr]) -> Expr:
+    def __wrapHandler(isMethod: bool, branch: Union[SubroutineFnWrapper, Expr]) -> Expr:
         exprList: List[Expr] = []
         if not isMethod:
             if (
@@ -124,18 +128,18 @@ class ABIRouter:
         else:
             if isinstance(branch, SubroutineFnWrapper) and branch.has_return():
                 # TODO need to encode/decode things
-
-                execBranch: Expr = branch(
-                    *[
-                        Txn.application_args[i + 1]
-                        for i in range(branch.subroutine.argumentCount())
-                    ]
-                )
+                execBranchArgs: List[Expr] = []
+                if branch.subroutine.argumentCount() >= METHOD_APP_ARG_NUM_LIMIT:
+                    # decode (if arg num > 15 need to de-tuple 15th (last) argument)
+                    pass
+                else:
+                    pass
 
                 exprList.append(
-                    Log(Concat(RETURN_EVENT_SELECTOR, execBranch))
+                    # TODO this line can be changed to method-return in ABI side
+                    Log(Concat(RETURN_EVENT_SELECTOR, branch(*execBranchArgs)))
                     if branch.type_of() != TealType.none
-                    else execBranch
+                    else branch(*execBranchArgs)
                 )
             else:
                 raise TealInputError(
@@ -166,6 +170,7 @@ class ABIRouter:
         self,
         bareAppCall: Union[SubroutineFnWrapper, Expr],
         onCompletes: Union[EnumInt, List[EnumInt]],
+        *,
         creation: bool = False,
     ) -> None:
         ocList: List[EnumInt] = (
@@ -173,42 +178,42 @@ class ABIRouter:
             if isinstance(onCompletes, list)
             else [cast(EnumInt, onCompletes)]
         )
-        approvalConds, clearConds = ABIRouter.parseConditions(
+        approvalConds, clearConds = ABIRouter.__parseConditions(
             mReg=None, onCompletes=ocList, creation=creation
         )
-        branch = ABIRouter.wrapHandler(False, bareAppCall)
+        branch = ABIRouter.__wrapHandler(False, bareAppCall)
         self.__appendToAST(approvalConds, clearConds, branch)
 
     def onMethodCall(
         self,
         methodAppCall: SubroutineFnWrapper,
+        *,
         onComplete: EnumInt = OnComplete.NoOp,
         creation: bool = False,
     ) -> None:
         ocList: List[EnumInt] = [cast(EnumInt, onComplete)]
-        approvalConds, clearConds = ABIRouter.parseConditions(
+        approvalConds, clearConds = ABIRouter.__parseConditions(
             mReg=methodAppCall, onCompletes=ocList, creation=creation
         )
-        branch = ABIRouter.wrapHandler(True, methodAppCall)
+        branch = ABIRouter.__wrapHandler(True, methodAppCall)
         self.__appendToAST(approvalConds, clearConds, branch)
 
     @staticmethod
-    def astConstruct(astList: List[ProgramNode]) -> Expr:
+    def __astConstruct(
+        astList: List[ProgramNode], *, astDefault: Expr = Reject()
+    ) -> Expr:
         if len(astList) == 0:
             raise TealInputError("ABIRouter: Cannot build program with an empty AST")
         program: If = If(astList[0].condition).Then(astList[0].branch)
         for i in range(1, len(astList)):
             program.ElseIf(astList[i].condition).Then(astList[i].branch)
-        program.Else(Reject())
+        program.Else(astDefault)
         return program
 
     def buildProgram(self) -> Tuple[Expr, Expr]:
-        # TODO need to recheck how the program is built
-        # question: if there's no approval condition/branch registered, shall it reject/approve everything?
-        # similarly, if there's no clearstate condition/branch registered, shall it reject/approve everything?
         return (
-            ABIRouter.astConstruct(self.approvalIfThen),
-            ABIRouter.astConstruct(self.clearStateIfThen),
+            ABIRouter.__astConstruct(self.approvalIfThen, astDefault=Reject()),
+            ABIRouter.__astConstruct(self.clearStateIfThen, astDefault=Approve()),
         )
 
 
