@@ -7,8 +7,10 @@ from ..seq import Seq
 from ..assert_ import Assert
 from ..substring import Suffix
 from ..int import Int
+from ..bytes import Bytes
 from ..unaryexpr import Itob, Not
-from ..binaryexpr import ExtractUint64, ExtractUint16
+from ..binaryexpr import GetByte, ExtractUint16, ExtractUint32, ExtractUint64
+from ..ternaryexpr import SetByte
 from .type import Type
 
 NUM_BITS_IN_BYTE = 8
@@ -43,6 +45,39 @@ class Uint(Type):
         return "uint{}".format(self.bit_size)
 
 
+class Uint8(Uint):
+    def __init__(
+        self,
+    ) -> None:
+        super().__init__(8)
+
+    def new_instance(self) -> "Uint8":
+        return Uint8()
+
+    def set(self, value: Union[int, Expr]) -> Expr:
+        if type(value) is int:
+            if value >= 2 ** 8:
+                raise ValueError("Value exceeds Uint8 maximum: {}".format(value))
+            value = Int(value)
+        # TODO: check dynamic value bounds?
+        return self.stored_value.store(cast(Expr, value))
+
+    def decode(self, encoded: Expr, offset: Expr, length: Expr) -> Expr:
+        return Seq(
+            Assert(length == Int(self.byte_length_static())),  # TODO: remove?
+            self.set(GetByte(encoded, offset)),
+        )
+
+    def encode(self) -> Expr:
+        # value might exceed a uint16, need to check at runtime
+        return SetByte(Bytes(b"\x00"), Int(0), self.get())
+
+
+Uint8.__module__ = "pyteal"
+
+Byte = Uint8
+
+
 class Uint16(Uint):
     def __init__(
         self,
@@ -75,6 +110,40 @@ class Uint16(Uint):
 
 
 Uint16.__module__ = "pyteal"
+
+
+class Uint32(Uint):
+    def __init__(
+        self,
+    ) -> None:
+        super().__init__(32)
+
+    def new_instance(self) -> "Uint32":
+        return Uint32()
+
+    def set(self, value: Union[int, Expr]) -> Expr:
+        if type(value) is int:
+            if value >= 2 ** 32:
+                raise ValueError("Value exceeds Uint32 maximum: {}".format(value))
+            value = Int(value)
+        # TODO: check dynamic value bounds?
+        return self.stored_value.store(cast(Expr, value))
+
+    def decode(self, encoded: Expr, offset: Expr, length: Expr) -> Expr:
+        return Seq(
+            Assert(length == Int(self.byte_length_static())),  # TODO: remove?
+            self.set(ExtractUint32(encoded, offset)),
+        )
+
+    def encode(self) -> Expr:
+        # value might exceed a uint32, need to check at runtime
+        return Seq(
+            Assert(Not(self.get() >> Int(32))),
+            Suffix(Itob(self.get()), Int(4)),
+        )
+
+
+Uint32.__module__ = "pyteal"
 
 
 class Uint64(Uint):

@@ -17,21 +17,41 @@ from ..substring import Extract
 from ..scratchvar import ScratchVar
 
 from .type import Type, ComputedType
-from .uint import Uint16
+from .bool import (
+    Bool,
+    consecutiveBools,
+    boolSequenceLength,
+    encodeBoolSequence,
+    boolAwareStaticByteLength,
+)
+from .uint import NUM_BITS_IN_BYTE, Uint16
 
 
 def encodeTuple(values: Sequence[Type]) -> Expr:
     heads: List[Optional[Expr]] = []
     head_length_static: int = 0
 
-    for elem in values:
+    ignoreNext = 0
+    for i, elem in enumerate(values):
+        if ignoreNext > 0:
+            ignoreNext -= 1
+            continue
+
+        if type(elem) is Bool:
+            ignoreNext = consecutiveBools(values, i)
+            head_length_static += boolSequenceLength(ignoreNext + 1)
+            heads.append(
+                encodeBoolSequence(cast(Sequence[Bool], values[i : i + ignoreNext + 1]))
+            )
+            continue
+
         if elem.is_dynamic():
             head_length_static += 2
             heads.append(None)  # a placeholder
-        else:
-            # TODO: bool support
-            head_length_static += elem.byte_length_static()
-            heads.append(elem.encode())
+            continue
+
+        head_length_static += elem.byte_length_static()
+        heads.append(elem.encode())
 
     tails: List[ScratchVar] = []
 
@@ -65,13 +85,38 @@ def indexTuple(
         raise ValueError("Index outside of range")
 
     offset = 0
-    for typeBefore in valueTypes[:index]:
+    ignoreNext = 0
+    lastBoolStart = 0
+    lastBoolLength = 0
+    for i, typeBefore in enumerate(valueTypes[:index]):
+        if ignoreNext > 0:
+            ignoreNext -= 1
+            continue
+
+        if type(typeBefore) is Bool:
+            lastBoolStart = offset
+            lastBoolLength = consecutiveBools(valueTypes, i) + 1
+            offset += boolSequenceLength(lastBoolLength)
+            ignoreNext = lastBoolLength - 1
+            continue
+
         if typeBefore.is_dynamic():
             offset += 2
-        else:
-            offset += typeBefore.byte_length_static()
+            continue
+
+        offset += typeBefore.byte_length_static()
 
     valueType = valueTypes[index]
+    if not valueType.has_same_type_as(output):
+        raise TypeError("Output type does not match value type")
+
+    if ignoreNext > 0:
+        # value is part of a bool sequence
+        assert type(output) is Bool
+        bitOffsetInBoolSeq = lastBoolLength - ignoreNext
+        bitOffsetInEncoded = lastBoolStart * NUM_BITS_IN_BYTE + bitOffsetInBoolSeq
+        return output.decodeBit(encoded, Int(bitOffsetInEncoded))
+
     if valueType.is_dynamic():
         startIndex = ExtractUint16(encoded, Int(offset))
         if index + 1 == len(valueTypes):
@@ -81,9 +126,6 @@ def indexTuple(
     else:
         startIndex = Int(offset)
         length = Int(valueType.byte_length_static())
-
-    if not valueType.has_same_type_as(output):
-        raise TypeError("Output type does not match value type")
 
     return output.decode(encoded, startIndex, length)
 
@@ -112,8 +154,7 @@ class Tuple(Type):
     def byte_length_static(self) -> int:
         if self.is_dynamic():
             raise ValueError("Type is dynamic")
-        # TODO: bool support
-        return sum(valueType.byte_length_static() for valueType in self.valueTypes)
+        return boolAwareStaticByteLength(self.valueTypes)
 
     def decode(self, encoded: Expr, offset: Expr, length: Expr) -> Expr:
         return self.stored_value.store(Extract(encoded, offset, length))
@@ -155,13 +196,13 @@ Tuple.__module__ = "pyteal"
 
 class TupleElement(ComputedType[Type]):
     def __init__(self, tuple: Tuple, index: int) -> None:
-        super().__init__(self.tuple.valueTypes[index])
+        super().__init__(tuple.valueTypes[index])
         self.tuple = tuple
         self.index = index
 
     def store_into(self, output: Type) -> Expr:
         return indexTuple(
-            self.parent.valueTypes, self.parent.encode(), self.index, output
+            self.tuple.valueTypes, self.tuple.encode(), self.index, output
         )
 
 
