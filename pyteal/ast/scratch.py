@@ -17,26 +17,36 @@ class ScratchSlot:
     # Slot ids under 256 are manually reserved slots
     nextSlotId = NUM_SLOTS
 
-    def __init__(self, requestedSlotId: int = None):
+    def __init__(self, requestedSlotId: int = None, *, slotIdFromStack: bool = False):
         """Initializes a scratch slot with a particular id
 
         Args:
             requestedSlotId (optional): A scratch slot id that the compiler must store the value.
             This id may be a Python int in the range [0-256).
         """
-        if requestedSlotId is None:
-            self.id = ScratchSlot.nextSlotId
-            ScratchSlot.nextSlotId += 1
-            self.isReservedSlot = False
-        else:
-            if requestedSlotId < 0 or requestedSlotId >= NUM_SLOTS:
-                raise TealInputError(
-                    "Invalid slot ID {}, shoud be in [0, {})".format(
-                        requestedSlotId, NUM_SLOTS
-                    )
-                )
-            self.id = requestedSlotId
+        assert (
+            requestedSlotId is None or not slotIdFromStack
+        ), "cannot specify requestedSlotId when fromStack"
+
+        self.slotIdFromStack = slotIdFromStack
+
+        if self.slotIdFromStack:
+            self.id = None
             self.isReservedSlot = True
+        else:
+            if requestedSlotId is None:
+                self.id = ScratchSlot.nextSlotId
+                ScratchSlot.nextSlotId += 1
+                self.isReservedSlot = False
+            else:
+                if requestedSlotId < 0 or requestedSlotId >= NUM_SLOTS:
+                    raise TealInputError(
+                        "Invalid slot ID {}, shoud be in [0, {})".format(
+                            requestedSlotId, NUM_SLOTS
+                        )
+                    )
+                self.id = requestedSlotId
+                self.isReservedSlot = True
 
     def store(self, value: Expr = None) -> Expr:
         """Get an expression to store a value in this slot.
@@ -46,6 +56,8 @@ class ScratchSlot:
             the stack will be stored. NOTE: storing the last value on the stack breaks the typical
             semantics of PyTeal, only use if you know what you're doing.
         """
+        # if self.fromStack:
+
         if value is not None:
             return ScratchStore(self, value)
         return ScratchStackStore(self)
@@ -60,19 +72,22 @@ class ScratchSlot:
         return ScratchLoad(self, type)
 
     def __repr__(self):
-        return "ScratchSlot({})".format(self.id)
+        stub = "slotIdfromStack=True" if self.slotIdFromStack else self.id
+        return "ScratchSlot({})".format(stub)
 
     def __str__(self):
-        return "slot#{}".format(self.id)
+        return "slot#fromStack" if self.slotIdFromStack else "slot#{}".format(self.id)
 
     def __hash__(self):
-        return hash(self.id)
+        return id(self) if self.slotIdFromStack else hash(self.id)
 
 
 ScratchSlot.__module__ = "pyteal"
 
 
-class ScratchLoad(Expr):
+class ScratchLoad(
+    Expr,
+):
     """Expression to load a value from scratch space."""
 
     def __init__(self, slot: ScratchSlot, type: TealType = TealType.anytype):
@@ -93,7 +108,10 @@ class ScratchLoad(Expr):
     def __teal__(self, options: "CompileOptions"):
         from ..ir import TealOp, Op, TealBlock
 
-        op = TealOp(self, Op.load, self.slot)
+        load_op = Op.loads if self.slot.loadSlotIdFromStack else Op.load
+        op_args = [] if self.slot.loadSlotIdFromStack else [self.slot]
+
+        op = TealOp(self, load_op, *op_args)
         return TealBlock.FromOp(options, op)
 
     def type_of(self):
@@ -126,7 +144,10 @@ class ScratchStore(Expr):
     def __teal__(self, options: "CompileOptions"):
         from ..ir import TealOp, Op, TealBlock
 
-        op = TealOp(self, Op.store, self.slot)
+        store_op = Op.stores if self.slot.loadSlotIdFromStack else Op.store
+        op_args = [] if self.slot.loadSlotIdFromStack else [self.slot]
+
+        op = TealOp(self, store_op, *op_args)
         return TealBlock.FromOp(options, op, self.value)
 
     def type_of(self):
@@ -140,7 +161,10 @@ ScratchStore.__module__ = "pyteal"
 
 
 class ScratchStackStore(Expr):
-    """Expression to store a value from the stack in scratch space.
+    """
+    TODO: handle `OpStores`
+
+    Expression to store a value from the stack in scratch space.
 
     NOTE: This expression breaks the typical semantics of PyTeal, only use if you know what you're
     doing.

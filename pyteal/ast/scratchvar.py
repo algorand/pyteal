@@ -17,7 +17,15 @@ class ScratchVar:
             ])
     """
 
-    def __init__(self, type: TealType = TealType.anytype, slotId: int = None):
+    MAX_STACK_DEPTH = 700 * 256 / 2
+
+    def __init__(
+        self,
+        type: TealType = TealType.anytype,
+        slotId: int = None,
+        *,
+        fromStack: bool = False,
+    ):
         """Create a new ScratchVar with an optional type.
 
         Args:
@@ -27,6 +35,13 @@ class ScratchVar:
             slotId (optional): A scratch slot id that the compiler must store the value.
                 This id may be a Python int in the range [0-256).
         """
+        assert (
+            slotId is None or not fromStack
+        ), "cannot specify explicit slotId when fromStack"
+
+        self.fromStack = fromStack
+
+        # when fromStack is True, slotId is therefore None and self.slot.store(Expr) will make sense
         self.slot = ScratchSlot(requestedSlotId=slotId)
         self.type = type
 

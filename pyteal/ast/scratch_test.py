@@ -8,6 +8,28 @@ from .. import CompileOptions
 options = CompileOptions()
 
 
+def test_scratch_init():
+    slot = ScratchSlot()
+    assert slot.slotIdFromStack is False
+
+    slot_from_stack = ScratchSlot(slotIdFromStack=True)
+    assert slot_from_stack.slotIdFromStack is True
+
+    assert ScratchSlot(slotIdFromStack=False)
+    with pytest.raises(TypeError):
+        ScratchSlot(42, False)  # fromStack must be a keyword arg
+
+    assert ScratchSlot(42, slotIdFromStack=False)
+    with pytest.raises(AssertionError) as e:
+        ScratchSlot(42, slotIdFromStack=True)
+    assert "cannot specify requestedSlotId when fromStack" in str(e)
+
+    assert ScratchSlot(requestedSlotId=42, slotIdFromStack=False)
+    with pytest.raises(AssertionError) as e:
+        ScratchSlot(requestedSlotId=42, slotIdFromStack=True)
+    assert "cannot specify requestedSlotId when fromStack" in str(e)
+
+
 def test_scratch_slot():
     slot = ScratchSlot()
     assert slot == slot

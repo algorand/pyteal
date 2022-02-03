@@ -8,6 +8,28 @@ from .. import CompileOptions
 options = CompileOptions()
 
 
+def test_scratchvar_init():
+    myvar_default = ScratchVar()
+    assert myvar_default.fromStack is False
+
+    myvar_from_stack = ScratchVar(fromStack=True)
+    assert myvar_from_stack.fromStack is True
+
+    assert ScratchVar(TealType.uint64, fromStack=False)
+    with pytest.raises(TypeError):
+        ScratchVar(TealType.uint64, 42, False)  # fromStack must be a keyword arg
+
+    assert ScratchVar(TealType.uint64, 42, fromStack=False)
+    with pytest.raises(AssertionError) as e:
+        ScratchVar(TealType.uint64, 42, fromStack=True)
+    assert "cannot specify explicit slotId when fromStack" in str(e)
+
+    assert ScratchVar(slotId=42, fromStack=False)
+    with pytest.raises(AssertionError) as e:
+        ScratchVar(slotId=42, fromStack=True)
+    assert "cannot specify explicit slotId when fromStack" in str(e)
+
+
 def test_scratchvar_type():
     myvar_default = ScratchVar()
     assert myvar_default.storage_type() == TealType.anytype
