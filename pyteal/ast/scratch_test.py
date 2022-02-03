@@ -12,6 +12,9 @@ def test_scratch_init():
     slot = ScratchSlot()
     assert slot.slotIdFromStack is False
 
+    slot_with_requested = ScratchSlot(42)
+    assert slot_with_requested.slotIdFromStack is False
+
     slot_from_stack = ScratchSlot(slotIdFromStack=True)
     assert slot_from_stack.slotIdFromStack is True
 
