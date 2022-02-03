@@ -24,7 +24,7 @@ class ScratchVar:
         type: TealType = TealType.anytype,
         slotId: int = None,
         *,
-        fromStack: bool = False,
+        slodIdFromStack: bool = False,
     ):
         """Create a new ScratchVar with an optional type.
 
@@ -36,12 +36,12 @@ class ScratchVar:
                 This id may be a Python int in the range [0-256).
         """
         assert (
-            slotId is None or not fromStack
+            slotId is None or not slodIdFromStack
         ), "cannot specify explicit slotId when fromStack"
 
-        self.fromStack = fromStack
+        self.slotIdFromStack = slodIdFromStack
 
-        # when fromStack is True, slotId is therefore None and self.slot.store(Expr) will make sense
+        # when slotIdFromStack is True, slotId is therefore None and self.slot.store(Expr) will make sense
         self.slot = ScratchSlot(requestedSlotId=slotId)
         self.type = type
 

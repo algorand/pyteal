@@ -10,23 +10,23 @@ options = CompileOptions()
 
 def test_scratchvar_init():
     myvar_default = ScratchVar()
-    assert myvar_default.fromStack is False
+    assert myvar_default.slotIdFromStack is False
 
-    myvar_from_stack = ScratchVar(fromStack=True)
-    assert myvar_from_stack.fromStack is True
+    myvar_from_stack = ScratchVar(slodIdFromStack=True)
+    assert myvar_from_stack.slotIdFromStack is True
 
-    assert ScratchVar(TealType.uint64, fromStack=False)
+    assert ScratchVar(TealType.uint64, slodIdFromStack=False)
     with pytest.raises(TypeError):
         ScratchVar(TealType.uint64, 42, False)  # fromStack must be a keyword arg
 
-    assert ScratchVar(TealType.uint64, 42, fromStack=False)
+    assert ScratchVar(TealType.uint64, 42, slodIdFromStack=False)
     with pytest.raises(AssertionError) as e:
-        ScratchVar(TealType.uint64, 42, fromStack=True)
+        ScratchVar(TealType.uint64, 42, slodIdFromStack=True)
     assert "cannot specify explicit slotId when fromStack" in str(e)
 
-    assert ScratchVar(slotId=42, fromStack=False)
+    assert ScratchVar(slotId=42, slodIdFromStack=False)
     with pytest.raises(AssertionError) as e:
-        ScratchVar(slotId=42, fromStack=True)
+        ScratchVar(slotId=42, slodIdFromStack=True)
     assert "cannot specify explicit slotId when fromStack" in str(e)
 
 
