@@ -62,11 +62,17 @@ class Uint8(Uint):
         # TODO: check dynamic value bounds?
         return self.stored_value.store(cast(Expr, value))
 
-    def decode(self, encoded: Expr, offset: Expr, length: Expr) -> Expr:
-        return Seq(
-            Assert(length == Int(self.byte_length_static())),  # TODO: remove?
-            self.set(GetByte(encoded, offset)),
-        )
+    def decode(
+        self,
+        encoded: Expr,
+        *,
+        startIndex: Expr = None,
+        endIndex: Expr = None,
+        length: Expr = None
+    ) -> Expr:
+        if startIndex is None:
+            startIndex = Int(0)
+        return self.set(GetByte(encoded, startIndex))
 
     def encode(self) -> Expr:
         # value might exceed a uint16, need to check at runtime
@@ -95,11 +101,17 @@ class Uint16(Uint):
         # TODO: check dynamic value bounds?
         return self.stored_value.store(cast(Expr, value))
 
-    def decode(self, encoded: Expr, offset: Expr, length: Expr) -> Expr:
-        return Seq(
-            Assert(length == Int(self.byte_length_static())),  # TODO: remove?
-            self.set(ExtractUint16(encoded, offset)),
-        )
+    def decode(
+        self,
+        encoded: Expr,
+        *,
+        startIndex: Expr = None,
+        endIndex: Expr = None,
+        length: Expr = None
+    ) -> Expr:
+        if startIndex is None:
+            startIndex = Int(0)
+        return self.set(ExtractUint16(encoded, startIndex))
 
     def encode(self) -> Expr:
         # value might exceed a uint16, need to check at runtime
@@ -129,11 +141,17 @@ class Uint32(Uint):
         # TODO: check dynamic value bounds?
         return self.stored_value.store(cast(Expr, value))
 
-    def decode(self, encoded: Expr, offset: Expr, length: Expr) -> Expr:
-        return Seq(
-            Assert(length == Int(self.byte_length_static())),  # TODO: remove?
-            self.set(ExtractUint32(encoded, offset)),
-        )
+    def decode(
+        self,
+        encoded: Expr,
+        *,
+        startIndex: Expr = None,
+        endIndex: Expr = None,
+        length: Expr = None
+    ) -> Expr:
+        if startIndex is None:
+            startIndex = Int(0)
+        return self.set(ExtractUint32(encoded, startIndex))
 
     def encode(self) -> Expr:
         # value might exceed a uint32, need to check at runtime
@@ -158,11 +176,17 @@ class Uint64(Uint):
             value = Int(value)
         return self.stored_value.store(cast(Expr, value))
 
-    def decode(self, encoded: Expr, offset: Expr, length: Expr) -> Expr:
-        return Seq(
-            Assert(length == Int(self.byte_length_static())),  # TODO: remove?
-            self.set(ExtractUint64(encoded, offset)),
-        )
+    def decode(
+        self,
+        encoded: Expr,
+        *,
+        startIndex: Expr = None,
+        endIndex: Expr = None,
+        length: Expr = None
+    ) -> Expr:
+        if startIndex is None:
+            startIndex = Int(0)
+        return self.set(ExtractUint64(encoded, startIndex))
 
     def encode(self) -> Expr:
         return Itob(self.get())

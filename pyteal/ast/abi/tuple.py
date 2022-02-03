@@ -13,7 +13,7 @@ from ..int import Int
 from ..unaryexpr import Len
 from ..binaryexpr import ExtractUint16
 from ..naryexpr import Add, Concat
-from ..substring import Extract
+from ..substring import Extract, Substring, Suffix
 from ..scratchvar import ScratchVar
 
 from .type import Type, ComputedType
@@ -120,14 +120,14 @@ def indexTuple(
     if valueType.is_dynamic():
         startIndex = ExtractUint16(encoded, Int(offset))
         if index + 1 == len(valueTypes):
-            length = Len(encoded) - startIndex
-        else:
-            length = ExtractUint16(encoded, Int(offset + 2)) - startIndex
-    else:
-        startIndex = Int(offset)
-        length = Int(valueType.byte_length_static())
+            return output.decode(encoded, startIndex=startIndex)
 
-    return output.decode(encoded, startIndex, length)
+        endIndex = ExtractUint16(encoded, Int(offset + 2))
+        return output.decode(encoded, startIndex=startIndex, endIndex=endIndex)
+
+    startIndex = Int(offset)
+    length = Int(valueType.byte_length_static())
+    return output.decode(encoded, startIndex=startIndex, length=length)
 
 
 class Tuple(Type):
@@ -156,8 +156,26 @@ class Tuple(Type):
             raise ValueError("Type is dynamic")
         return boolAwareStaticByteLength(self.valueTypes)
 
-    def decode(self, encoded: Expr, offset: Expr, length: Expr) -> Expr:
-        return self.stored_value.store(Extract(encoded, offset, length))
+    def decode(
+        self,
+        encoded: Expr,
+        *,
+        startIndex: Expr = None,
+        endIndex: Expr = None,
+        length: Expr = None
+    ) -> Expr:
+        if startIndex is None:
+            assert length is None
+            assert endIndex is None
+            extracted = encoded
+        elif length is not None:
+            assert endIndex is None
+            extracted = Extract(encoded, startIndex, length)
+        elif endIndex is not None:
+            extracted = Substring(encoded, startIndex, endIndex)
+        else:
+            extracted = Suffix(encoded, startIndex)
+        return self.stored_value.store(extracted)
 
     def set(self, *values: Type) -> Expr:
         if len(self.valueTypes) != len(values):

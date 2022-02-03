@@ -35,7 +35,14 @@ class Type(ABC):
         pass
 
     @abstractmethod
-    def decode(self, encoded: Expr, offset: Expr, length: Expr) -> Expr:
+    def decode(
+        self,
+        encoded: Expr,
+        *,
+        startIndex: Expr = None,
+        endIndex: Expr = None,
+        length: Expr = None
+    ) -> Expr:
         pass
 
     @abstractmethod

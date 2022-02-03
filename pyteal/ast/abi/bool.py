@@ -37,11 +37,17 @@ class Bool(Type):
             value = Int(0x80) if value else Int(0)
         return self.stored_value.store(cast(Expr, value))
 
-    def decode(self, encoded: Expr, offset: Expr, length: Expr) -> Expr:
-        return Seq(
-            Assert(length == Int(self.byte_length_static())),  # TODO: remove?
-            self.decodeBit(encoded, offset * Int(NUM_BITS_IN_BYTE)),
-        )
+    def decode(
+        self,
+        encoded: Expr,
+        *,
+        startIndex: Expr = None,
+        endIndex: Expr = None,
+        length: Expr = None
+    ) -> Expr:
+        if startIndex is None:
+            startIndex = Int(0)
+        return self.decodeBit(encoded, startIndex * Int(NUM_BITS_IN_BYTE))
 
     def decodeBit(self, encoded, bit: Expr) -> Expr:
         return self.set(GetBit(encoded, bit))
