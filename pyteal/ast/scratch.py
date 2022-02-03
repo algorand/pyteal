@@ -26,12 +26,12 @@ class ScratchSlot:
         """
         assert (
             requestedSlotId is None or not slotIdFromStack
-        ), "cannot specify requestedSlotId when fromStack"
+        ), "cannot specify requestedSlotId when slotIdFromStack"
 
         self.slotIdFromStack = slotIdFromStack
 
         if self.slotIdFromStack:
-            self.id = None
+            self.id = -1
             self.isReservedSlot = True
         else:
             if requestedSlotId is None:
@@ -56,8 +56,6 @@ class ScratchSlot:
             the stack will be stored. NOTE: storing the last value on the stack breaks the typical
             semantics of PyTeal, only use if you know what you're doing.
         """
-        # if self.fromStack:
-
         if value is not None:
             return ScratchStore(self, value)
         return ScratchStackStore(self)

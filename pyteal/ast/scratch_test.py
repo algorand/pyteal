@@ -20,17 +20,17 @@ def test_scratch_init():
 
     assert ScratchSlot(slotIdFromStack=False)
     with pytest.raises(TypeError):
-        ScratchSlot(42, False)  # fromStack must be a keyword arg
+        ScratchSlot(42, False)  # slotIdFromStack must be a keyword arg
 
     assert ScratchSlot(42, slotIdFromStack=False)
     with pytest.raises(AssertionError) as e:
         ScratchSlot(42, slotIdFromStack=True)
-    assert "cannot specify requestedSlotId when fromStack" in str(e)
+    assert "cannot specify requestedSlotId when slotIdFromStack" in str(e)
 
     assert ScratchSlot(requestedSlotId=42, slotIdFromStack=False)
     with pytest.raises(AssertionError) as e:
         ScratchSlot(requestedSlotId=42, slotIdFromStack=True)
-    assert "cannot specify requestedSlotId when fromStack" in str(e)
+    assert "cannot specify requestedSlotId when slotIdFromStack" in str(e)
 
 
 def test_scratch_slot():
