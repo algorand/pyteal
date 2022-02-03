@@ -108,8 +108,8 @@ class ScratchLoad(
     def __teal__(self, options: "CompileOptions"):
         from ..ir import TealOp, Op, TealBlock
 
-        load_op = Op.loads if self.slot.loadSlotIdFromStack else Op.load
-        op_args = [] if self.slot.loadSlotIdFromStack else [self.slot]
+        load_op = Op.loads if self.slot.slotIdFromStack else Op.load
+        op_args = [] if self.slot.slotIdFromStack else [self.slot]
 
         op = TealOp(self, load_op, *op_args)
         return TealBlock.FromOp(options, op)
@@ -144,8 +144,8 @@ class ScratchStore(Expr):
     def __teal__(self, options: "CompileOptions"):
         from ..ir import TealOp, Op, TealBlock
 
-        store_op = Op.stores if self.slot.loadSlotIdFromStack else Op.store
-        op_args = [] if self.slot.loadSlotIdFromStack else [self.slot]
+        store_op = Op.stores if self.slot.slotIdFromStack else Op.store
+        op_args = [] if self.slot.slotIdFromStack else [self.slot]
 
         op = TealOp(self, store_op, *op_args)
         return TealBlock.FromOp(options, op, self.value)
