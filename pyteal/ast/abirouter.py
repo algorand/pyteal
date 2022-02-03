@@ -16,6 +16,7 @@ from .seq import Seq
 from .subroutine import SubroutineFnWrapper
 from .txn import Txn
 
+# NOTE this should sit in `abi` directory, still waiting on abi to be merged in
 
 """
 Notes:
