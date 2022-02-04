@@ -22,9 +22,7 @@ class ScratchVar:
     def __init__(
         self,
         type: TealType = TealType.anytype,
-        slotId: int = None,
-        *,
-        slodIdFromStack: bool = False,
+        slotId: Union[int, Expr] = None,
     ):
         """Create a new ScratchVar with an optional type.
 
