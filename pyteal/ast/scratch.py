@@ -9,44 +9,11 @@ if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
 
-class ScratchSlot:
-    """Represents the allocation of a scratch space slot."""
+class Slot:
+    """Abstract Slot class"""
 
-    # Unique identifier for the compiler to automatically assign slots
-    # The id field is used by the compiler to map to an actual slot in the source code
-    # Slot ids under 256 are manually reserved slots
-    nextSlotId = NUM_SLOTS
-
-    def __init__(self, requestedSlotId: int = None, *, slotIdFromStack: bool = False):
-        """Initializes a scratch slot with a particular id
-
-        Args:
-            requestedSlotId (optional): A scratch slot id that the compiler must store the value.
-            This id may be a Python int in the range [0-256).
-        """
-        assert (
-            requestedSlotId is None or not slotIdFromStack
-        ), "cannot specify requestedSlotId when slotIdFromStack"
-
-        self.slotIdFromStack = slotIdFromStack
-
-        if self.slotIdFromStack:
-            self.id = -1
-            self.isReservedSlot = True
-        else:
-            if requestedSlotId is None:
-                self.id = ScratchSlot.nextSlotId
-                ScratchSlot.nextSlotId += 1
-                self.isReservedSlot = False
-            else:
-                if requestedSlotId < 0 or requestedSlotId >= NUM_SLOTS:
-                    raise TealInputError(
-                        "Invalid slot ID {}, shoud be in [0, {})".format(
-                            requestedSlotId, NUM_SLOTS
-                        )
-                    )
-                self.id = requestedSlotId
-                self.isReservedSlot = True
+    def slotIdFromStack(self) -> bool:
+        pass
 
     def store(self, value: Expr = None) -> Expr:
         """Get an expression to store a value in this slot.
@@ -69,26 +36,85 @@ class ScratchSlot:
         """
         return ScratchLoad(self, type)
 
+
+Slot.__module__ = "pyteal"
+
+
+class DynamicSlot(Slot):
+    def slotIdFromStack(self) -> bool:
+        return True
+
+    # def store(self, value: Expr = None) -> Expr:
+    #     return super().store(value)
+
+    # def load(self, type: TealType = TealType.anytype) -> "ScratchLoad":
+    #     return super().load(type)
+
     def __repr__(self):
-        stub = "slotIdfromStack=True" if self.slotIdFromStack else self.id
-        return "ScratchSlot({})".format(stub)
+        return "DynamicSlot()"
 
     def __str__(self):
-        return "slot#fromStack" if self.slotIdFromStack else "slot#{}".format(self.id)
+        return "slot#fromStack"
 
     def __hash__(self):
-        return id(self) if self.slotIdFromStack else hash(self.id)
+        return id(self)  # not really hashing
+
+
+class ScratchSlot(Slot):
+    """Represents the allocation of a scratch space slot."""
+
+    # Unique identifier for the compiler to automatically assign slots
+    # The id field is used by the compiler to map to an actual slot in the source code
+    # Slot ids under 256 are manually reserved slots
+    nextSlotId = NUM_SLOTS
+
+    def __init__(self, requestedSlotId: int = None):
+        """Initializes a scratch slot with a particular id
+
+        Args:
+            requestedSlotId (optional): A scratch slot id that the compiler must store the value.
+            This id may be a Python int in the range [0-256).
+        """
+        if requestedSlotId is None:
+            self.id = ScratchSlot.nextSlotId
+            ScratchSlot.nextSlotId += 1
+            self.isReservedSlot = False
+        else:
+            if requestedSlotId < 0 or requestedSlotId >= NUM_SLOTS:
+                raise TealInputError(
+                    "Invalid slot ID {}, shoud be in [0, {})".format(
+                        requestedSlotId, NUM_SLOTS
+                    )
+                )
+            self.id = requestedSlotId
+            self.isReservedSlot = True
+
+    def slotIdFromStack(self) -> bool:
+        return False
+
+    # def store(self, value: Expr = None) -> Expr:
+    #     return super().store(value)
+
+    # def load(self, type: TealType = TealType.anytype) -> "ScratchLoad":
+    #     return super().load(type)
+
+    def __repr__(self):
+        return "ScratchSlot({})".format(self.id)
+
+    def __str__(self):
+        return "slot#{}".format(self.id)
+
+    def __hash__(self):
+        return hash(self.id)
 
 
 ScratchSlot.__module__ = "pyteal"
 
 
-class ScratchLoad(
-    Expr,
-):
+class ScratchLoad(Expr):
     """Expression to load a value from scratch space."""
 
-    def __init__(self, slot: ScratchSlot, type: TealType = TealType.anytype):
+    def __init__(self, slot: Slot, type: TealType = TealType.anytype):
         """Create a new ScratchLoad expression.
 
         Args:
@@ -106,8 +132,8 @@ class ScratchLoad(
     def __teal__(self, options: "CompileOptions"):
         from ..ir import TealOp, Op, TealBlock
 
-        load_op = Op.loads if self.slot.slotIdFromStack else Op.load
-        op_args = [] if self.slot.slotIdFromStack else [self.slot]
+        load_op = Op.loads if self.slot.slotIdFromStack() else Op.load
+        op_args = [] if self.slot.slotIdFromStack() else [self.slot]
 
         op = TealOp(self, load_op, *op_args)
         return TealBlock.FromOp(options, op)
@@ -142,8 +168,8 @@ class ScratchStore(Expr):
     def __teal__(self, options: "CompileOptions"):
         from ..ir import TealOp, Op, TealBlock
 
-        store_op = Op.stores if self.slot.slotIdFromStack else Op.store
-        op_args = [] if self.slot.slotIdFromStack else [self.slot]
+        store_op = Op.stores if self.slot.slotIdFromStack() else Op.store
+        op_args = [] if self.slot.slotIdFromStack() else [self.slot]
 
         op = TealOp(self, store_op, *op_args)
         return TealBlock.FromOp(options, op, self.value)
@@ -159,10 +185,7 @@ ScratchStore.__module__ = "pyteal"
 
 
 class ScratchStackStore(Expr):
-    """
-    TODO: handle `OpStores`
-
-    Expression to store a value from the stack in scratch space.
+    """Expression to store a value from the stack in scratch space.
 
     NOTE: This expression breaks the typical semantics of PyTeal, only use if you know what you're
     doing.

@@ -1,5 +1,7 @@
 import pytest
 
+from pyteal.ast.scratch import DynamicSlot
+
 from .. import *
 
 # this is not necessary but mypy complains if it's not included
@@ -10,27 +12,18 @@ options = CompileOptions()
 
 def test_scratch_init():
     slot = ScratchSlot()
-    assert slot.slotIdFromStack is False
+    assert slot.slotIdFromStack() is False
 
     slot_with_requested = ScratchSlot(42)
-    assert slot_with_requested.slotIdFromStack is False
+    assert slot_with_requested.slotIdFromStack() is False
 
-    slot_from_stack = ScratchSlot(slotIdFromStack=True)
-    assert slot_from_stack.slotIdFromStack is True
+    dynamic_slot = DynamicSlot()
+    assert dynamic_slot.slotIdFromStack() is True
 
-    assert ScratchSlot(slotIdFromStack=False)
-    with pytest.raises(TypeError):
-        ScratchSlot(42, False)  # slotIdFromStack must be a keyword arg
+    with pytest.raises(TypeError) as e:
+        DynamicSlot(42)
 
-    assert ScratchSlot(42, slotIdFromStack=False)
-    with pytest.raises(AssertionError) as e:
-        ScratchSlot(42, slotIdFromStack=True)
-    assert "cannot specify requestedSlotId when slotIdFromStack" in str(e)
-
-    assert ScratchSlot(requestedSlotId=42, slotIdFromStack=False)
-    with pytest.raises(AssertionError) as e:
-        ScratchSlot(requestedSlotId=42, slotIdFromStack=True)
-    assert "cannot specify requestedSlotId when slotIdFromStack" in str(e)
+    assert "DynamicSlot() takes no arguments" in str(e)
 
 
 def test_scratch_slot():
