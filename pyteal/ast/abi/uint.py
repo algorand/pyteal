@@ -2,6 +2,7 @@ from typing import Union, cast
 from abc import abstractmethod
 
 from ...types import TealType
+from ...errors import TealInputError
 from ..expr import Expr
 from ..seq import Seq
 from ..assert_ import Assert
@@ -55,12 +56,20 @@ class Uint8(Uint):
         return Uint8()
 
     def set(self, value: Union[int, Expr]) -> Expr:
+        checked = False
         if type(value) is int:
             if value >= 2 ** 8:
-                raise ValueError("Value exceeds Uint8 maximum: {}".format(value))
+                raise TealInputError("Value exceeds Uint8 maximum: {}".format(value))
             value = Int(value)
-        # TODO: check dynamic value bounds?
-        return self.stored_value.store(cast(Expr, value))
+            checked = True
+
+        if checked:
+            return self.stored_value.store(cast(Expr, value))
+
+        return Seq(
+            self.stored_value.store(cast(Expr, value)),
+            Assert(self.stored_value.load() < Int(2 ** 8)),
+        )
 
     def decode(
         self,
@@ -72,10 +81,9 @@ class Uint8(Uint):
     ) -> Expr:
         if startIndex is None:
             startIndex = Int(0)
-        return self.set(GetByte(encoded, startIndex))
+        return self.stored_value.store(GetByte(encoded, startIndex))
 
     def encode(self) -> Expr:
-        # value might exceed a uint16, need to check at runtime
         return SetByte(Bytes(b"\x00"), Int(0), self.get())
 
 
@@ -94,12 +102,20 @@ class Uint16(Uint):
         return Uint16()
 
     def set(self, value: Union[int, Expr]) -> Expr:
+        checked = False
         if type(value) is int:
             if value >= 2 ** 16:
-                raise ValueError("Value exceeds Uint16 maximum: {}".format(value))
+                raise TealInputError("Value exceeds Uint16 maximum: {}".format(value))
             value = Int(value)
-        # TODO: check dynamic value bounds?
-        return self.stored_value.store(cast(Expr, value))
+            checked = True
+
+        if checked:
+            return self.stored_value.store(cast(Expr, value))
+
+        return Seq(
+            self.stored_value.store(cast(Expr, value)),
+            Assert(self.stored_value.load() < Int(2 ** 16)),
+        )
 
     def decode(
         self,
@@ -111,14 +127,10 @@ class Uint16(Uint):
     ) -> Expr:
         if startIndex is None:
             startIndex = Int(0)
-        return self.set(ExtractUint16(encoded, startIndex))
+        return self.stored_value.store(ExtractUint16(encoded, startIndex))
 
     def encode(self) -> Expr:
-        # value might exceed a uint16, need to check at runtime
-        return Seq(
-            Assert(Not(self.get() >> Int(16))),
-            Suffix(Itob(self.get()), Int(6)),
-        )
+        return Suffix(Itob(self.get()), Int(6))
 
 
 Uint16.__module__ = "pyteal"
@@ -134,12 +146,20 @@ class Uint32(Uint):
         return Uint32()
 
     def set(self, value: Union[int, Expr]) -> Expr:
+        checked = False
         if type(value) is int:
             if value >= 2 ** 32:
-                raise ValueError("Value exceeds Uint32 maximum: {}".format(value))
+                raise TealInputError("Value exceeds Uint32 maximum: {}".format(value))
             value = Int(value)
-        # TODO: check dynamic value bounds?
-        return self.stored_value.store(cast(Expr, value))
+            checked = True
+
+        if checked:
+            return self.stored_value.store(cast(Expr, value))
+
+        return Seq(
+            self.stored_value.store(cast(Expr, value)),
+            Assert(self.stored_value.load() < Int(2 ** 32)),
+        )
 
     def decode(
         self,
@@ -151,14 +171,10 @@ class Uint32(Uint):
     ) -> Expr:
         if startIndex is None:
             startIndex = Int(0)
-        return self.set(ExtractUint32(encoded, startIndex))
+        return self.stored_value.store(ExtractUint32(encoded, startIndex))
 
     def encode(self) -> Expr:
-        # value might exceed a uint32, need to check at runtime
-        return Seq(
-            Assert(Not(self.get() >> Int(32))),
-            Suffix(Itob(self.get()), Int(4)),
-        )
+        return Suffix(Itob(self.get()), Int(4))
 
 
 Uint32.__module__ = "pyteal"
@@ -186,7 +202,7 @@ class Uint64(Uint):
     ) -> Expr:
         if startIndex is None:
             startIndex = Int(0)
-        return self.set(ExtractUint64(encoded, startIndex))
+        return self.stored_value.store(ExtractUint64(encoded, startIndex))
 
     def encode(self) -> Expr:
         return Itob(self.get())
