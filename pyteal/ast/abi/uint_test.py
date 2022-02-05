@@ -1,4 +1,3 @@
-from tracemalloc import start
 from typing import NamedTuple, Callable, Union
 import pytest
 
