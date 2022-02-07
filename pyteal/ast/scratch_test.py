@@ -11,19 +11,43 @@ options = CompileOptions()
 
 
 def test_scratch_init():
+    ######## ScratchSlot.__init__() #########
+
     slot = ScratchSlot()
-    assert slot.slotIdFromStack() is False
+    assert slot.dynamic() is False
+    assert slot.id >= 0
 
     slot_with_requested = ScratchSlot(42)
-    assert slot_with_requested.slotIdFromStack() is False
+    assert slot_with_requested.dynamic() is False
+    assert slot_with_requested.id == 42
+
+    slot_with_requested = ScratchSlot(requestedSlotId=42)
+    assert slot_with_requested.dynamic() is False
+    assert slot_with_requested.id == 42
+
+    with pytest.raises(AssertionError) as e:
+        ScratchSlot(Int(42))
+
+    assert "requestedSlotId must be an int but was provided " in str(e)
+
+    ######## DynamicSlot.__init__() #########
 
     dynamic_slot = DynamicSlot()
-    assert dynamic_slot.slotIdFromStack() is True
+    assert dynamic_slot.dynamic() is True
+    assert dynamic_slot.id is None
 
-    with pytest.raises(TypeError) as e:
+    dynamic_with_slotExpr = DynamicSlot(Int(42))
+    assert dynamic_with_slotExpr.dynamic() is True
+    assert dynamic_with_slotExpr.id == Int(42)
+
+    dynamic_with_slotExpr = DynamicSlot(slotIdExpr=Int(1337))
+    assert dynamic_with_slotExpr.dynamic() is True
+    assert dynamic_with_slotExpr.id == Int(1337)
+
+    with pytest.raises(AssertionError) as e:
         DynamicSlot(42)
 
-    assert "DynamicSlot() takes no arguments" in str(e)
+    assert "slotIdExpr must be an Expr but was provided " in str(e)
 
 
 def test_scratch_slot():
