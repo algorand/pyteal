@@ -296,17 +296,17 @@ Subroutines
 .. note::
     Subroutines are only available in TEAL version 4 or higher.
 
-A subroutine is section of code that can be called multiple times from within a program. Subroutines
-are PyTeal's equivalent to functions. Subroutines can accept any number of arguments, and these
-arguments must be PyTeal expressions. Additionally, a subroutine may return a single value, or no value.
+A subroutine is a section of code that can be called multiple times from within a program.
+Subroutines are PyTeal's equivalent to functions. Subroutines can accept any number of arguments which must be PyTeal expressions.
+Additionally, a subroutine may return a single value, or no value.
 
 Creating Subroutines
 --------------------
 
 To create a subroutine, apply the :any:`Subroutine` function decorator to a Python function which
-implements the subroutine. This decorator takes one argument, which is the return type of the subroutine.
-:any:`TealType.none` indicates that the subroutine does not return a value, and any other type
-(e.g. :any:`TealType.uint64` or :any:`TealType.bytes`) indicates the return type of the single value
+implements the subroutine. This decorator takes one argument -the return type of the subroutine.
+:any:`TealType.none` indicates that the subroutine does not return a value, and another type
+(e.g. :any:`TealType.uint64`, :any:`TealType.bytes`) indicates the return type of the single value
 the subroutine returns.
 
 For example,
