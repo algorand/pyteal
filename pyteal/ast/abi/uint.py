@@ -9,7 +9,7 @@ from ..assert_ import Assert
 from ..substring import Suffix
 from ..int import Int
 from ..bytes import Bytes
-from ..unaryexpr import Itob, Not
+from ..unaryexpr import Itob
 from ..binaryexpr import GetByte, ExtractUint16, ExtractUint32, ExtractUint64
 from ..ternaryexpr import SetByte
 from .type import Type

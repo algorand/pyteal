@@ -38,10 +38,11 @@ def encodeTuple(values: Sequence[Type]) -> Expr:
             continue
 
         if type(elem) is Bool:
-            ignoreNext = consecutiveBools(values, i)
-            head_length_static += boolSequenceLength(ignoreNext + 1)
+            numBools = consecutiveBools(values, i)
+            ignoreNext = numBools - 1
+            head_length_static += boolSequenceLength(numBools)
             heads.append(
-                encodeBoolSequence(cast(Sequence[Bool], values[i : i + ignoreNext + 1]))
+                encodeBoolSequence(cast(Sequence[Bool], values[i : i + numBools]))
             )
             continue
 
@@ -95,7 +96,7 @@ def indexTuple(
 
         if type(typeBefore) is Bool:
             lastBoolStart = offset
-            lastBoolLength = consecutiveBools(valueTypes, i) + 1
+            lastBoolLength = consecutiveBools(valueTypes, i)
             offset += boolSequenceLength(lastBoolLength)
             ignoreNext = lastBoolLength - 1
             continue
