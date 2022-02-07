@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
 
+from pyteal.ir.tealsimpleblock import TealSimpleBlock
+
 from ..types import TealType
 from ..config import NUM_SLOTS
 from ..errors import TealInputError
@@ -12,7 +14,8 @@ if TYPE_CHECKING:
 class Slot:
     """Abstract Slot class"""
 
-    def slotIdFromStack(self) -> bool:
+    def dynamic(self) -> bool:
+        """Indicates whether the slotId is computed at execution time based on a provided expression."""
         pass
 
     def store(self, value: Expr = None) -> Expr:
@@ -36,12 +39,36 @@ class Slot:
         """
         return ScratchLoad(self, type)
 
+    def __repr__(self):
+        return "ScratchSlot({})".format(self.id)
+
+    def __str__(self):
+        return "slot#{}".format(self.id)
+
+    def __hash__(self):
+        return hash(self.id)
+
 
 Slot.__module__ = "pyteal"
 
 
 class DynamicSlot(Slot):
-    def slotIdFromStack(self) -> bool:
+    def __init__(self, slotIdExpr: Expr = None) -> None:
+        """Initializes a scratch slot whose id is determined at runtime.
+
+        Args:
+            slotIdExpr (optional): An expression evaluating to TealType.uint64 in the range of 0-255
+            and representing a scratch slot id.
+            If no slotIdExpr is provided, the slot id is implicitly picked up from whatever is at the top of the stack at runtime.
+        """
+        super().__init__()
+
+        assert slotIdExpr is None or isinstance(
+            slotIdExpr, Expr
+        ), "slotIdExpr must be an Expr but was provided {}".format(type(slotIdExpr))
+        self.id: Expr = slotIdExpr
+
+    def dynamic(self) -> bool:
         return True
 
     # def store(self, value: Expr = None) -> Expr:
@@ -50,14 +77,17 @@ class DynamicSlot(Slot):
     # def load(self, type: TealType = TealType.anytype) -> "ScratchLoad":
     #     return super().load(type)
 
-    def __repr__(self):
-        return "DynamicSlot()"
+    # def __repr__(self):
+    #     return "DynamicSlot({})".format(self.id)
 
-    def __str__(self):
-        return "slot#fromStack"
+    # def __str__(self):
+    #     return "slot#{}".format(self.id)
 
-    def __hash__(self):
-        return id(self)  # not really hashing
+    # def __hash__(self):
+    #     return id(self)  # not really hashing
+
+
+DynamicSlot.__module__ = "pyteal"
 
 
 class ScratchSlot(Slot):
@@ -68,18 +98,24 @@ class ScratchSlot(Slot):
     # Slot ids under 256 are manually reserved slots
     nextSlotId = NUM_SLOTS
 
-    def __init__(self, requestedSlotId: int = None):
+    def __init__(self, requestedSlotId: int = None) -> None:
         """Initializes a scratch slot with a particular id
 
         Args:
             requestedSlotId (optional): A scratch slot id that the compiler must store the value.
             This id may be a Python int in the range [0-256).
         """
+        super().__init__()
         if requestedSlotId is None:
             self.id = ScratchSlot.nextSlotId
             ScratchSlot.nextSlotId += 1
             self.isReservedSlot = False
         else:
+            assert isinstance(
+                requestedSlotId, int
+            ), "requestedSlotId must be an int but was provided {}".format(
+                type(requestedSlotId)
+            )
             if requestedSlotId < 0 or requestedSlotId >= NUM_SLOTS:
                 raise TealInputError(
                     "Invalid slot ID {}, shoud be in [0, {})".format(
@@ -89,7 +125,7 @@ class ScratchSlot(Slot):
             self.id = requestedSlotId
             self.isReservedSlot = True
 
-    def slotIdFromStack(self) -> bool:
+    def dynamic(self) -> bool:
         return False
 
     # def store(self, value: Expr = None) -> Expr:
@@ -98,14 +134,14 @@ class ScratchSlot(Slot):
     # def load(self, type: TealType = TealType.anytype) -> "ScratchLoad":
     #     return super().load(type)
 
-    def __repr__(self):
-        return "ScratchSlot({})".format(self.id)
+    # def __repr__(self):
+    #     return "ScratchSlot({})".format(self.id)
 
-    def __str__(self):
-        return "slot#{}".format(self.id)
+    # def __str__(self):
+    #     return "slot#{}".format(self.id)
 
-    def __hash__(self):
-        return hash(self.id)
+    # def __hash__(self):
+    #     return hash(self.id)
 
 
 ScratchSlot.__module__ = "pyteal"
@@ -132,11 +168,22 @@ class ScratchLoad(Expr):
     def __teal__(self, options: "CompileOptions"):
         from ..ir import TealOp, Op, TealBlock
 
-        load_op = Op.loads if self.slot.slotIdFromStack() else Op.load
-        op_args = [] if self.slot.slotIdFromStack() else [self.slot]
+        if self.slot.dynamic():
+            load_op = Op.loads
+            op_args = []
+            block_args = [self.slot.id] if self.slot.id else []
+        else:
+            load_op = Op.load
+            op_args = [self.slot]
+            block_args = []
 
+        # Four cases: ????
+        # static + requested slot   ---> load  + requested
+        # static + default          ---> load  + nextSlotId
+        # dynamic + slot expr       ---> loads + slot expr
+        # dynamic + None            ---> loads ONLY
         op = TealOp(self, load_op, *op_args)
-        return TealBlock.FromOp(options, op)
+        return TealBlock.FromOp(options, op, *block_args)
 
     def type_of(self):
         return self.type
@@ -168,11 +215,31 @@ class ScratchStore(Expr):
     def __teal__(self, options: "CompileOptions"):
         from ..ir import TealOp, Op, TealBlock
 
-        store_op = Op.stores if self.slot.slotIdFromStack() else Op.store
-        op_args = [] if self.slot.slotIdFromStack() else [self.slot]
+        if self.slot.dynamic():
+            store_op = Op.stores
+            op_args = []
+            block_args = [self.slot.id] if self.slot.id else []
+        else:
+            store_op = Op.store
+            op_args = [self.slot]
+            block_args = []
+
+        # Four cases ???:
+        # static + requested slot   ---> store  + requested
+        # static + default          ---> store  + nextSlotId
+        # dynamic + slot expr       ---> stores + slot expr
+        # dynamic + None            ---> stores ONLY
 
         op = TealOp(self, store_op, *op_args)
-        return TealBlock.FromOp(options, op, self.value)
+        blockStart, blockEnd = TealBlock.FromOp(options, op, self.value, *block_args)
+
+        if self.slot.dynamic():
+            blockEnd.ops = [TealOp(self, Op.swap)] + blockEnd.ops
+            # penultimate = blockEnd
+            # blockEnd = TealSimpleBlock([TealOp(self, Op.swap)])
+            # penultimate.setNextBlock(blockEnd)
+
+        return blockStart, blockEnd
 
     def type_of(self):
         return TealType.none

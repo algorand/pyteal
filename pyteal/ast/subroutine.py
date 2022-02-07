@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional, TYPE_CHECKING
+from typing import Callable, List, Optional, Union, TYPE_CHECKING
 from inspect import Parameter, isclass, signature
 
 from ..types import TealType
@@ -74,10 +74,16 @@ class SubroutineDefinition:
         self.declaration: Optional["SubroutineDeclaration"] = None
         self.__name = self.implementation.__name__ if nameStr is None else nameStr
 
-    def getDeclaration(self) -> "SubroutineDeclaration":
+    def isRefArg(self, arg: str) -> bool:
+        anns = self.implementation.__annotations__
+        return arg in anns and anns[arg] == ScratchVar
+
+    def getDeclaration(
+        self, callback: "SubroutineCall" = None
+    ) -> "SubroutineDeclaration":
         if self.declaration is None:
             # lazy evaluate subroutine
-            self.declaration = evaluateSubroutine(self)
+            self.declaration = evaluateSubroutine(self, callback=callback)
         return self.declaration
 
     def name(self) -> str:
@@ -86,7 +92,7 @@ class SubroutineDefinition:
     def argumentCount(self) -> int:
         return len(self.implementationParams)
 
-    def invoke(self, args: List[Expr]) -> "SubroutineCall":
+    def invoke(self, args: List[Union[Expr, ScratchVar]]) -> "SubroutineCall":
         if len(args) != self.argumentCount():
             raise TealInputError(
                 "Incorrect number of arguments for subroutine call. Expected {} arguments, got {}".format(
@@ -95,7 +101,7 @@ class SubroutineDefinition:
             )
 
         for i, arg in enumerate(args):
-            if not isinstance(arg, Expr):
+            if not isinstance(arg, SubroutineDefinition.PARAM_ANNOTATION_TYPES):
                 raise TealInputError(
                     "Argument at index {} of subroutine call is not a PyTeal expression: {}".format(
                         i, arg
@@ -103,6 +109,21 @@ class SubroutineDefinition:
                 )
 
         return SubroutineCall(self, args)
+
+    def scratchVars(self, callback: "SubroutineCall" = None) -> List[ScratchVar]:
+        arg_vars = []
+        for i, arg in enumerate(self.implementationParams.keys()):
+            if self.isRefArg(arg):
+                assert (
+                    callback is not None
+                ), "provided no SubroutineCall but have pass by ref arg [{}]".format(
+                    arg
+                )
+                arg_vars.append(callback.args[i])
+            else:
+                arg_vars.append(ScratchVar())
+        return arg_vars
+        # return [ScratchVar() for v in range(self.argumentCount())]
 
     def __str__(self):
         return "subroutine#{}".format(self.id)
@@ -150,12 +171,35 @@ class SubroutineCall(Expr):
         self.args = args
 
         for i, arg in enumerate(args):
-            if arg.type_of() == TealType.none:
+            if self._arg_type(i) == TealType.none:
                 raise TealInputError(
                     "Subroutine argument at index {} evaluates to TealType.none".format(
                         i
                     )
                 )
+
+    def _arg_type(self, arg_idx: int) -> TealType:
+        arg = self.args[arg_idx]
+        if isinstance(arg, Expr):
+            return arg.type_of()
+        if isinstance(arg, ScratchVar):
+            return arg.type
+        raise TealInputError(
+            "Subroutine argument {} at index {} was of unexpected Python type {}".format(
+                arg, arg_idx, type(arg)
+            )
+        )
+
+    def _call_args(self):
+        ca = []
+        for i, arg in enumerate(self.args):
+            assert isinstance(
+                arg, SubroutineDefinition.PARAM_ANNOTATION_TYPES
+            ), "cannot interpert arg {} at index {} as call argument because of unexpected Python type {}".format(
+                arg, i, type(arg)
+            )
+            ca.append(arg if isinstance(arg, Expr) else arg.load())
+        return ca
 
     def __teal__(self, options: "CompileOptions"):
         verifyTealVersion(
@@ -165,7 +209,7 @@ class SubroutineCall(Expr):
         )
 
         op = TealOp(self, Op.callsub, self.subroutine)
-        return TealBlock.FromOp(options, op, *self.args)
+        return TealBlock.FromOp(options, op, *self._call_args())
 
     def __str__(self):
         ret_str = '(SubroutineCall "' + self.subroutine.name() + '" ('
@@ -255,11 +299,20 @@ class Subroutine:
 Subroutine.__module__ = "pyteal"
 
 
-def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaration:
-    argumentVars = [ScratchVar() for _ in range(subroutine.argumentCount())]
-    loadedArgs = [var.load() for var in argumentVars]
+def evaluateSubroutine(
+    subroutine: SubroutineDefinition, callback: SubroutineCall = None
+) -> SubroutineDeclaration:
+    scratchVars = subroutine.scratchVars(callback=callback)
+    implVars = []
+    argVars = []
+    for var in scratchVars:
+        if var.slot.dynamic():
+            implVars.append(var)
+        else:
+            implVars.append(var.load())
+            argVars.append(var)
 
-    subroutineBody = subroutine.implementation(*loadedArgs)
+    subroutineBody = subroutine.implementation(*implVars)
 
     if not isinstance(subroutineBody, Expr):
         raise TealInputError(
@@ -268,8 +321,8 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
             )
         )
 
-    # need to reverse order of argumentVars because the last argument will be on top of the stack
-    bodyOps = [var.slot.store() for var in argumentVars[::-1]]
+    # need to reverse order of argVars because the last argument will be on top of the stack
+    bodyOps = [var.slot.store() for var in argVars[::-1]]
     bodyOps.append(subroutineBody)
 
     return SubroutineDeclaration(subroutine, Seq(bodyOps))
