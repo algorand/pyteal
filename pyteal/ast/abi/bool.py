@@ -33,8 +33,8 @@ class Bool(Type):
         return self.stored_value.load()
 
     def set(self, value: Union[bool, Expr]) -> Expr:
-        if value is bool:
-            value = Int(0x80) if value else Int(0)
+        if type(value) is bool:
+            value = Int(1 if value else 0)
         return self.stored_value.store(cast(Expr, value))
 
     def decode(
@@ -63,9 +63,13 @@ def boolAwareStaticByteLength(types: Sequence[Type]) -> int:
     length = 0
     ignoreNext = 0
     for i, t in enumerate(types):
+        if ignoreNext > 0:
+            ignoreNext -= 1
+            continue
         if type(t) is Bool:
-            ignoreNext = consecutiveBools(types, i)
-            length += boolSequenceLength(ignoreNext + 1)
+            numBools = consecutiveBools(types, i)
+            ignoreNext = numBools - 1
+            length += boolSequenceLength(numBools)
             continue
         length += t.byte_length_static()
     return length
@@ -73,7 +77,7 @@ def boolAwareStaticByteLength(types: Sequence[Type]) -> int:
 
 def consecutiveBools(types: Sequence[Type], startIndex: int) -> int:
     numConsecutiveBools = 0
-    for t in types[startIndex + 1 :]:
+    for t in types[startIndex:]:
         if type(t) is not Bool:
             break
         numConsecutiveBools += 1

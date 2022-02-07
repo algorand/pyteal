@@ -95,6 +95,13 @@ def test_Uint_has_same_type_as():
                 continue
             assert not test.uintType.has_same_type_as(otherTest.uintType)
 
+        for otherType in (
+            abi.Bool(),
+            abi.StaticArray(test.uintType, 1),
+            abi.DynamicArray(test.uintType),
+        ):
+            assert not test.uintType.has_same_type_as(otherType)
+
 
 def test_Uint_new_instance():
     for test in testData:
