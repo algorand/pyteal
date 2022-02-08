@@ -1,5 +1,4 @@
 from typing import (
-    Callable,
     List,
     Sequence,
     Optional,
@@ -12,50 +11,86 @@ from ..seq import Seq
 from ..int import Int
 from ..unaryexpr import Len
 from ..binaryexpr import ExtractUint16
-from ..naryexpr import Add, Concat
-from ..substring import Extract
+from ..naryexpr import Concat
+from ..substring import Extract, Substring, Suffix
 from ..scratchvar import ScratchVar
 
-from .type import Type
-from .uint import Uint16
+from .type import Type, ComputedType
+from .bool import (
+    Bool,
+    consecutiveBools,
+    boolSequenceLength,
+    encodeBoolSequence,
+    boolAwareStaticByteLength,
+)
+from .uint import NUM_BITS_IN_BYTE, Uint16
 
 
 def encodeTuple(values: Sequence[Type]) -> Expr:
     heads: List[Optional[Expr]] = []
     head_length_static: int = 0
 
-    for elem in values:
+    ignoreNext = 0
+    for i, elem in enumerate(values):
+        if ignoreNext > 0:
+            ignoreNext -= 1
+            continue
+
+        if type(elem) is Bool:
+            numBools = consecutiveBools(values, i)
+            ignoreNext = numBools - 1
+            head_length_static += boolSequenceLength(numBools)
+            heads.append(
+                encodeBoolSequence(cast(Sequence[Bool], values[i : i + numBools]))
+            )
+            continue
+
         if elem.is_dynamic():
             head_length_static += 2
             heads.append(None)  # a placeholder
-        else:
-            # TODO: bool support
-            head_length_static += elem.byte_length_static()
-            heads.append(elem.encode())
+            continue
 
-    tails: List[ScratchVar] = []
+        head_length_static += elem.byte_length_static()
+        heads.append(elem.encode())
 
-    # tail_length_dynamic = ScratchVar(TealType.uint64)
-    # tail_holder = ScratchVar(TealType.bytes)
+    tail_offset = Uint16()
+    tail_offset_accumulator = Uint16()
+    tail_holder = ScratchVar(TealType.bytes)
+    encoded_tail = ScratchVar(TealType.bytes)
 
-    # TODO
-    # tail_length_dynamic.store(Int(head_length_static))
-
+    firstDynamicTail = True
     for i, elem in enumerate(values):
         if elem.is_dynamic():
-            elemTail = ScratchVar(TealType.bytes)
-            offset = Uint16()
+            if firstDynamicTail:
+                firstDynamicTail = False
+                updateVars = Seq(
+                    tail_holder.store(encoded_tail.load()),
+                    tail_offset.set(head_length_static)
+                )
+            else:
+                updateVars = Seq(
+                    tail_holder.store(Concat(tail_holder.load(), encoded_tail.load())),
+                    tail_offset.set(tail_offset_accumulator.get())
+                )
+            
+            notLastDynamicValue = any([nextValue.is_dynamic() for nextValue in values[i+1:]])
+            if notLastDynamicValue:
+                updateAccumulator = tail_offset_accumulator.set(tail_offset.get() + Len(encoded_tail.load()))
+            else:
+                updateAccumulator = Seq()
 
             heads[i] = Seq(
-                elemTail.store(elem.encode()),
-                offset.set(
-                    Add(Int(head_length_static), *[Len(tail.load()) for tail in tails])
-                ),
-                offset.encode(),
+                encoded_tail.store(elem.encode()),
+                updateVars,
+                updateAccumulator,
+                tail_offset.encode(),
             )
-            tails.append(elemTail)
+    
+    toConcat = cast(List[Expr], heads)
+    if not firstDynamicTail:
+        toConcat.append(tail_holder.load())
 
-    return Concat(*cast(List[Expr], heads), *[tail.load() for tail in tails])
+    return Concat(*toConcat)
 
 
 def indexTuple(
@@ -65,27 +100,49 @@ def indexTuple(
         raise ValueError("Index outside of range")
 
     offset = 0
-    for typeBefore in valueTypes[:index]:
+    ignoreNext = 0
+    lastBoolStart = 0
+    lastBoolLength = 0
+    for i, typeBefore in enumerate(valueTypes[:index]):
+        if ignoreNext > 0:
+            ignoreNext -= 1
+            continue
+
+        if type(typeBefore) is Bool:
+            lastBoolStart = offset
+            lastBoolLength = consecutiveBools(valueTypes, i)
+            offset += boolSequenceLength(lastBoolLength)
+            ignoreNext = lastBoolLength - 1
+            continue
+
         if typeBefore.is_dynamic():
             offset += 2
-        else:
-            offset += typeBefore.byte_length_static()
+            continue
+
+        offset += typeBefore.byte_length_static()
 
     valueType = valueTypes[index]
-    if valueType.is_dynamic():
-        startIndex = ExtractUint16(encoded, Int(offset))
-        if index + 1 == len(valueTypes):
-            length = Len(encoded) - startIndex
-        else:
-            length = ExtractUint16(encoded, Int(offset + 2)) - startIndex
-    else:
-        startIndex = Int(offset)
-        length = Int(valueType.byte_length_static())
-
     if not valueType.has_same_type_as(output):
         raise TypeError("Output type does not match value type")
 
-    return output.decode(encoded, startIndex, length)
+    if ignoreNext > 0:
+        # value is part of a bool sequence
+        assert type(output) is Bool
+        bitOffsetInBoolSeq = lastBoolLength - ignoreNext
+        bitOffsetInEncoded = lastBoolStart * NUM_BITS_IN_BYTE + bitOffsetInBoolSeq
+        return output.decodeBit(encoded, Int(bitOffsetInEncoded))
+
+    if valueType.is_dynamic():
+        startIndex = ExtractUint16(encoded, Int(offset))
+        if index + 1 == len(valueTypes):
+            return output.decode(encoded, startIndex=startIndex)
+
+        endIndex = ExtractUint16(encoded, Int(offset + 2))
+        return output.decode(encoded, startIndex=startIndex, endIndex=endIndex)
+
+    startIndex = Int(offset)
+    length = Int(valueType.byte_length_static())
+    return output.decode(encoded, startIndex=startIndex, length=length)
 
 
 class Tuple(Type):
@@ -112,11 +169,28 @@ class Tuple(Type):
     def byte_length_static(self) -> int:
         if self.is_dynamic():
             raise ValueError("Type is dynamic")
-        # TODO: bool support
-        return sum(valueType.byte_length_static() for valueType in self.valueTypes)
+        return boolAwareStaticByteLength(self.valueTypes)
 
-    def decode(self, encoded: Expr, offset: Expr, length: Expr) -> Expr:
-        return self.stored_value.store(Extract(encoded, offset, length))
+    def decode(
+        self,
+        encoded: Expr,
+        *,
+        startIndex: Expr = None,
+        endIndex: Expr = None,
+        length: Expr = None
+    ) -> Expr:
+        if startIndex is None:
+            assert length is None
+            assert endIndex is None
+            extracted = encoded
+        elif length is not None:
+            assert endIndex is None
+            extracted = Extract(encoded, startIndex, length)
+        elif endIndex is not None:
+            extracted = Substring(encoded, startIndex, endIndex)
+        else:
+            extracted = Suffix(encoded, startIndex)
+        return self.stored_value.store(extracted)
 
     def set(self, *values: Type) -> Expr:
         if len(self.valueTypes) != len(values):
@@ -153,22 +227,15 @@ class Tuple(Type):
 Tuple.__module__ = "pyteal"
 
 
-class TupleElement:
-    def __init__(self, parent: Tuple, index: int) -> None:
-        self.parent = parent
+class TupleElement(ComputedType[Type]):
+    def __init__(self, tuple: Tuple, index: int) -> None:
+        super().__init__(tuple.valueTypes[index])
+        self.tuple = tuple
         self.index = index
 
     def store_into(self, output: Type) -> Expr:
         return indexTuple(
-            self.parent.valueTypes, self.parent.encode(), self.index, output
-        )
-
-    def use(self, action: Callable[[Type], Expr]) -> Expr:
-        valueType = self.parent.valueTypes[self.index]
-        newInstance = valueType.new_instance()
-        return Seq(
-            self.store_into(newInstance),
-            action(newInstance),
+            self.tuple.valueTypes, self.tuple.encode(), self.index, output
         )
 
 
