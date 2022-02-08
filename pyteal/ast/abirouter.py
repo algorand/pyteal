@@ -28,10 +28,13 @@ Notes:
 - On Method Call, check
   - [x] txna ApplicationArgs 0 == method "method-signature"
   - [x] On-Completion should match (only one On-Completion specified here?)
-  - [?] non void method call should log with 0x151f7c75 return-method-specifier (kinda done in another PR to ABI-Type)
-  - [?] redirect the method arguments and pass them to handler function (kinda done, but need to do with extraction and (en/de)-code)
+  - [?] non void method call should log with 0x151f7c75 return-method-specifier
+        (kinda done in another PR to ABI-Type)
+  - [?] redirect the method arguments and pass them to handler function
+        (kinda done, but need to do with extraction and (en/de)-code)
   - [ ] Must execute actions required to invoke the method
-  - [ ] extract arguments if needed (decode txna ApplicationArgs 15 if there exists, and extract arguments to feed method)
+  - [ ] extract arguments if needed
+        (decode txna ApplicationArgs 15 if there exists, and extract arguments to feed method)
 
 Notes for OC:
 - creation conflict with closeout and clearstate
@@ -124,7 +127,7 @@ class ABIRouter:
                 exprList.append(branch())
             else:
                 raise TealInputError(
-                    "For bare app call: should only register Seq (with no ret) or Subroutine (with ret but none type)"
+                    "bare appcall can only accept: none type + Seq (no ret) or Subroutine (with ret)"
                 )
         else:
             if isinstance(branch, SubroutineFnWrapper) and branch.has_return():
