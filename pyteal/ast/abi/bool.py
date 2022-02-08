@@ -2,8 +2,6 @@ from typing import Union, cast, Sequence
 
 from ...types import TealType
 from ..expr import Expr
-from ..seq import Seq
-from ..assert_ import Assert
 from ..int import Int
 from ..bytes import Bytes
 from ..binaryexpr import GetBit
@@ -32,9 +30,11 @@ class Bool(Type):
     def get(self) -> Expr:
         return self.stored_value.load()
 
-    def set(self, value: Union[bool, Expr]) -> Expr:
+    def set(self, value: Union[bool, Expr, "Bool"]) -> Expr:
         if type(value) is bool:
             value = Int(1 if value else 0)
+        if type(value) is Bool:
+            value = value.get()
         return self.stored_value.store(cast(Expr, value))
 
     def decode(

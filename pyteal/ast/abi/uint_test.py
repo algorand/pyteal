@@ -136,7 +136,7 @@ def test_Uint_set_static():
             test.uintType.set(-1)
 
 
-def test_Uint_set_dynamic():
+def test_Uint_set_expr():
     for test in testData:
         expr = test.uintType.set(Int(10) + Int(1))
         assert expr.type_of() == TealType.none
@@ -159,6 +159,28 @@ def test_Uint_set_dynamic():
                 TealOp(None, Op.store, test.uintType.stored_value.slot),
             ]
             + upperBoundCheck
+        )
+
+        actual, _ = expr.__teal__(options)
+        actual.addIncoming()
+        actual = TealBlock.NormalizeBlocks(actual)
+
+        with TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
+
+
+def test_Uint_set_copy():
+    for test in testData:
+        other = test.uintType.new_instance()
+        expr = test.uintType.set(other)
+        assert expr.type_of() == TealType.none
+        assert not expr.has_return()
+
+        expected = TealSimpleBlock(
+            [
+                TealOp(None, Op.load, other.stored_value.slot),
+                TealOp(None, Op.store, test.uintType.stored_value.slot),
+            ]
         )
 
         actual, _ = expr.__teal__(options)

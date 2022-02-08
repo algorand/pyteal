@@ -65,7 +65,7 @@ def test_Bool_set_static():
             assert actual == expected
 
 
-def test_Bool_set_dynamic():
+def test_Bool_set_expr():
     boolType = abi.Bool()
     expr = boolType.set(Int(0).Or(Int(1)))
     assert expr.type_of() == TealType.none
@@ -76,6 +76,28 @@ def test_Bool_set_dynamic():
             TealOp(None, Op.int, 0),
             TealOp(None, Op.int, 1),
             TealOp(None, Op.logic_or),
+            TealOp(None, Op.store, boolType.stored_value.slot),
+        ]
+    )
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
+def test_Bool_set_copy():
+    other = abi.Bool()
+    boolType = abi.Bool()
+    expr = boolType.set(other)
+    assert expr.type_of() == TealType.none
+    assert not expr.has_return()
+
+    expected = TealSimpleBlock(
+        [
+            TealOp(None, Op.load, other.stored_value.slot),
             TealOp(None, Op.store, boolType.stored_value.slot),
         ]
     )
