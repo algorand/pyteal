@@ -50,6 +50,9 @@ def test_subroutine_definition():
     def fnWithScratchAndExprAnnotations(a: ScratchVar, b: Expr) -> Expr:
         return Return()
 
+    def fnWithABITypeAnnotations(a: abi.Uint16, b: abi.Tuple) -> Expr:
+        return Return()
+
     cases = (
         (fn0Args, 0, "fn0Args"),
         (fn1Args, 1, "fn1Args"),
@@ -65,6 +68,7 @@ def test_subroutine_definition():
         (fnWithPartialExprAnnotations, 2, "fnWithPartialExprAnnotations"),
         (fnWithReturnTernaryExprAnnotations, 2, "fnWithReturnTernaryExprAnnotations"),
         (fnWithScratchAndExprAnnotations, 2, "fnWithScratchAndExprAnnotations"),
+        (fnWithABITypeAnnotations, 2, "fnWithABITypeAnnotations"),
     )
 
     for (fn, numArgs, name) in cases:

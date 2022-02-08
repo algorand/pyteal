@@ -14,12 +14,19 @@ if TYPE_CHECKING:
 
 # NOTE trying to do return, rather than "write to reference", experimenting here
 
+
 class SubroutineDefinition:
     PARAM_ANNOTATION_TYPES = (Expr, ScratchVar, abi.Type)
 
     @classmethod
     def param_type_names(cls) -> List[str]:
         return list(map(lambda t: t.__name__, cls.PARAM_ANNOTATION_TYPES))
+
+    @classmethod
+    def is_param_type_allowed(cls, var_type):
+        var_type_in_annotated = var_type in cls.PARAM_ANNOTATION_TYPES
+        var_type_abi_subtype = isclass(var_type) and issubclass(var_type, abi.Type)
+        return var_type_in_annotated or var_type_abi_subtype
 
     nextSubroutineId = 0
 
@@ -64,7 +71,7 @@ class SubroutineDefinition:
                 f_err = "Function has return of disallowed type {}. Only subtype of Expr is allowed"
                 raise TealInputError(f_err.format(var_type))
 
-            if var != "return" and var_type not in self.PARAM_ANNOTATION_TYPES:
+            if var != "return" and not self.is_param_type_allowed(var_type):
                 f_err = "Function has parameter {} of disallowed type {}. Only the types {} are allowed"
                 raise TealInputError(
                     f_err.format(var, var_type, self.param_type_names())
