@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING, cast
 
 from ..config import MAX_GROUP_SIZE
-
 from ..errors import TealInputError, verifyFieldVersion, verifyTealVersion
 from ..ir import TealOp, Op, TealBlock
+
 from .txn import TxnExpr, TxnField, TxnObject, TxnaExpr
 
 if TYPE_CHECKING:
