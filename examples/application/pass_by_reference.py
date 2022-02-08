@@ -229,8 +229,8 @@ if __name__ == "__main__":
 
     teal = Path.cwd() / "examples" / "application" / "teal"
 
-    # with open(teal / "clear.teal", "w") as f:
-    #     f.write(compileTeal(clear(), mode=Mode.Application, version=6))
+    with open(teal / "clear.teal", "w") as f:
+        f.write(compileTeal(clear(), mode=Mode.Application, version=6))
 
     with open(teal / "increment.teal", "w") as f:
         f.write(compileTeal(approval_increment(), mode=Mode.Application, version=6))
