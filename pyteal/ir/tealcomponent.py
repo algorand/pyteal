@@ -10,7 +10,7 @@ class TealComponent(ABC):
     def __init__(self, expr: Optional["Expr"]):
         self.expr = expr
 
-    def getSlots(self) -> List["ScratchSlot"]:
+    def getSlots(self, withDynamic: bool = True) -> List["ScratchSlot"]:
         return []
 
     def assignSlot(self, slot: "ScratchSlot", location: int) -> None:

@@ -13,11 +13,11 @@ if TYPE_CHECKING:
 
 
 class SubroutineDefinition:
-    PARAM_ANNOTATION_TYPES = (Expr, ScratchVar)
+    PARAM_TYPES = (Expr, ScratchVar)
 
     @classmethod
     def param_type_names(cls) -> List[str]:
-        return list(map(lambda t: t.__name__, cls.PARAM_ANNOTATION_TYPES))
+        return list(map(lambda t: t.__name__, cls.PARAM_TYPES))
 
     nextSubroutineId = 0
 
@@ -61,7 +61,7 @@ class SubroutineDefinition:
                 f_err = "Function has return of disallowed type {}. Only subtype of Expr is allowed"
                 raise TealInputError(f_err.format(var_type))
 
-            if var != "return" and var_type not in self.PARAM_ANNOTATION_TYPES:
+            if var != "return" and var_type not in self.PARAM_TYPES:
                 f_err = "Function has parameter {} of disallowed type {}. Only the types {} are allowed"
                 raise TealInputError(
                     f_err.format(var, var_type, self.param_type_names())
@@ -101,7 +101,7 @@ class SubroutineDefinition:
             )
 
         for i, arg in enumerate(args):
-            if not isinstance(arg, SubroutineDefinition.PARAM_ANNOTATION_TYPES):
+            if not isinstance(arg, SubroutineDefinition.PARAM_TYPES):
                 raise TealInputError(
                     "Argument at index {} of subroutine call is not a PyTeal expression: {}".format(
                         i, arg
@@ -116,14 +116,13 @@ class SubroutineDefinition:
             if self.isRefArg(arg):
                 assert (
                     callback is not None
-                ), "provided no SubroutineCall but have pass by ref arg [{}]".format(
+                ), "provided no SubroutineCall but have pass-by-ref arg [{}]".format(
                     arg
                 )
                 arg_vars.append(callback.args[i])
             else:
                 arg_vars.append(ScratchVar())
         return arg_vars
-        # return [ScratchVar() for v in range(self.argumentCount())]
 
     def __str__(self):
         return "subroutine#{}".format(self.id)
@@ -190,15 +189,16 @@ class SubroutineCall(Expr):
             )
         )
 
-    def _call_args(self):
+    def _subroutine_args(self, withDynamic=False):
         ca = []
         for i, arg in enumerate(self.args):
             assert isinstance(
-                arg, SubroutineDefinition.PARAM_ANNOTATION_TYPES
+                arg, SubroutineDefinition.PARAM_TYPES
             ), "cannot interpert arg {} at index {} as call argument because of unexpected Python type {}".format(
                 arg, i, type(arg)
             )
-            ca.append(arg if isinstance(arg, Expr) else arg.load())
+            if withDynamic or isinstance(arg, Expr):
+                ca.append(arg if isinstance(arg, Expr) else arg.load())
         return ca
 
     def __teal__(self, options: "CompileOptions"):
@@ -209,7 +209,7 @@ class SubroutineCall(Expr):
         )
 
         op = TealOp(self, Op.callsub, self.subroutine)
-        return TealBlock.FromOp(options, op, *self._call_args())
+        return TealBlock.FromOp(options, op, *self._subroutine_args())
 
     def __str__(self):
         ret_str = '(SubroutineCall "' + self.subroutine.name() + '" ('

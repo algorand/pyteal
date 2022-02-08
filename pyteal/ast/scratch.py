@@ -235,9 +235,6 @@ class ScratchStore(Expr):
 
         if self.slot.dynamic():
             blockEnd.ops = [TealOp(self, Op.swap)] + blockEnd.ops
-            # penultimate = blockEnd
-            # blockEnd = TealSimpleBlock([TealOp(self, Op.swap)])
-            # penultimate.setNextBlock(blockEnd)
 
         return blockStart, blockEnd
 

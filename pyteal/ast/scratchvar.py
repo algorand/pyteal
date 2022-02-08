@@ -2,7 +2,7 @@ from typing import Union
 
 from ..types import TealType, require_type
 from .expr import Expr
-from .scratch import ScratchSlot, ScratchLoad, Slot, DynamicSlot
+from .scratch import DynamicSlot, ScratchSlot, ScratchLoad, Slot
 
 
 class ScratchVar:

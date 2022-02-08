@@ -23,10 +23,15 @@ class TealOp(TealComponent):
     def getOp(self) -> Op:
         return self.op
 
-    def getSlots(self) -> List["ScratchSlot"]:
+    def getSlots(self, withDynamic: bool = True) -> List["ScratchSlot"]:
         from ..ast import ScratchSlot
 
-        return [arg for arg in self.args if isinstance(arg, ScratchSlot)]
+        # TODO: (Zeph) I probly don't need this new more complex version
+
+        def keep(arg):
+            return isinstance(arg, ScratchSlot) and (withDynamic or not arg.dynamic())
+
+        return [arg for arg in self.args if keep(arg)]
 
     def assignSlot(self, slot: "ScratchSlot", location: int) -> None:
         for i, arg in enumerate(self.args):

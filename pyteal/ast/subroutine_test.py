@@ -50,19 +50,19 @@ def test_subroutine_definition():
         return Return()
 
     cases = (
-        # (fn0Args, 0, "fn0Args"),
-        # (fn1Args, 1, "fn1Args"),
-        # (fn2Args, 2, "fn2Args"),
-        # (fn10Args, 10, "fn10Args"),
-        # (lam0Args, 0, "<lambda>"),
-        # (lam1Args, 1, "<lambda>"),
-        # (lam2Args, 2, "<lambda>"),
-        # (lam10Args, 10, "<lambda>"),
-        # (fnWithExprAnnotations, 2, "fnWithExprAnnotations"),
-        # (fnWithOnlyReturnExprAnnotations, 2, "fnWithOnlyReturnExprAnnotations"),
-        # (fnWithOnlyArgExprAnnotations, 2, "fnWithOnlyArgExprAnnotations"),
-        # (fnWithPartialExprAnnotations, 2, "fnWithPartialExprAnnotations"),
-        # (fnWithReturnTernaryExprAnnotations, 2, "fnWithReturnTernaryExprAnnotations"),
+        (fn0Args, 0, "fn0Args"),
+        (fn1Args, 1, "fn1Args"),
+        (fn2Args, 2, "fn2Args"),
+        (fn10Args, 10, "fn10Args"),
+        (lam0Args, 0, "<lambda>"),
+        (lam1Args, 1, "<lambda>"),
+        (lam2Args, 2, "<lambda>"),
+        (lam10Args, 10, "<lambda>"),
+        (fnWithExprAnnotations, 2, "fnWithExprAnnotations"),
+        (fnWithOnlyReturnExprAnnotations, 2, "fnWithOnlyReturnExprAnnotations"),
+        (fnWithOnlyArgExprAnnotations, 2, "fnWithOnlyArgExprAnnotations"),
+        (fnWithPartialExprAnnotations, 2, "fnWithPartialExprAnnotations"),
+        (fnWithReturnTernaryExprAnnotations, 2, "fnWithReturnTernaryExprAnnotations"),
         (fnWithScratchAndExprAnnotations, 2, "fnWithScratchAndExprAnnotations"),
     )
 
