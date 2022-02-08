@@ -92,7 +92,7 @@ def test_encodeTuple():
 def test_indexTuple():
     class IndexTest(NamedTuple):
         types: List[abi.Type]
-        index: int
+        typeIndex: int
         expected: Callable[[abi.Type], Expr]
 
     # variables used to construct the tests
@@ -110,112 +110,112 @@ def test_indexTuple():
     tests: List[IndexTest] = [
         IndexTest(
             types=[uint64_a],
-            index=0,
+            typeIndex=0,
             expected=lambda output: output.decode(encoded, startIndex=Int(0)),
         ),
         IndexTest(
             types=[uint64_a, uint64_b],
-            index=0,
+            typeIndex=0,
             expected=lambda output: output.decode(encoded, startIndex=Int(0)),
         ),
         IndexTest(
             types=[uint64_a, uint64_b],
-            index=1,
+            typeIndex=1,
             expected=lambda output: output.decode(encoded, startIndex=Int(8)),
         ),
         IndexTest(
             types=[uint64_a, byte_a, uint64_b],
-            index=1,
+            typeIndex=1,
             expected=lambda output: output.decode(encoded, startIndex=Int(8)),
         ),
         IndexTest(
             types=[uint64_a, byte_a, uint64_b],
-            index=2,
+            typeIndex=2,
             expected=lambda output: output.decode(encoded, startIndex=Int(9)),
         ),
         IndexTest(
             types=[bool_a],
-            index=0,
+            typeIndex=0,
             expected=lambda output: output.decodeBit(encoded, Int(0)),
         ),
         IndexTest(
             types=[bool_a, bool_b],
-            index=0,
+            typeIndex=0,
             expected=lambda output: output.decodeBit(encoded, Int(0)),
         ),
         IndexTest(
             types=[bool_a, bool_b],
-            index=1,
+            typeIndex=1,
             expected=lambda output: output.decodeBit(encoded, Int(1)),
         ),
         IndexTest(
             types=[uint64_a, bool_a],
-            index=1,
+            typeIndex=1,
             expected=lambda output: output.decodeBit(encoded, Int(8 * 8)),
         ),
         IndexTest(
             types=[uint64_a, bool_a, bool_b],
-            index=1,
+            typeIndex=1,
             expected=lambda output: output.decodeBit(encoded, Int(8 * 8)),
         ),
         IndexTest(
             types=[uint64_a, bool_a, bool_b],
-            index=2,
+            typeIndex=2,
             expected=lambda output: output.decodeBit(encoded, Int(8 * 8 + 1)),
         ),
         IndexTest(
-            types=[tuple_a], index=0, expected=lambda output: output.decode(encoded)
+            types=[tuple_a], typeIndex=0, expected=lambda output: output.decode(encoded)
         ),
         IndexTest(
             types=[byte_a, tuple_a],
-            index=1,
+            typeIndex=1,
             expected=lambda output: output.decode(encoded, startIndex=Int(1)),
         ),
         IndexTest(
             types=[tuple_a, byte_a],
-            index=0,
+            typeIndex=0,
             expected=lambda output: output.decode(
                 encoded, startIndex=Int(0), length=Int(tuple_a.byte_length_static())
             ),
         ),
         IndexTest(
             types=[byte_a, tuple_a, byte_a],
-            index=1,
+            typeIndex=1,
             expected=lambda output: output.decode(
                 encoded, startIndex=Int(1), length=Int(tuple_a.byte_length_static())
             ),
         ),
         IndexTest(
             types=[dynamic_array_a],
-            index=0,
+            typeIndex=0,
             expected=lambda output: output.decode(
                 encoded, startIndex=ExtractUint16(encoded, Int(0))
             ),
         ),
         IndexTest(
             types=[byte_a, dynamic_array_a],
-            index=1,
+            typeIndex=1,
             expected=lambda output: output.decode(
                 encoded, startIndex=ExtractUint16(encoded, Int(1))
             ),
         ),
         IndexTest(
             types=[dynamic_array_a, byte_a],
-            index=0,
+            typeIndex=0,
             expected=lambda output: output.decode(
                 encoded, startIndex=ExtractUint16(encoded, Int(0))
             ),
         ),
         IndexTest(
             types=[byte_a, dynamic_array_a, byte_a],
-            index=1,
+            typeIndex=1,
             expected=lambda output: output.decode(
                 encoded, startIndex=ExtractUint16(encoded, Int(1))
             ),
         ),
         IndexTest(
             types=[byte_a, dynamic_array_a, byte_a, dynamic_array_b],
-            index=1,
+            typeIndex=1,
             expected=lambda output: output.decode(
                 encoded,
                 startIndex=ExtractUint16(encoded, Int(1)),
@@ -224,14 +224,14 @@ def test_indexTuple():
         ),
         IndexTest(
             types=[byte_a, dynamic_array_a, byte_a, dynamic_array_b],
-            index=3,
+            typeIndex=3,
             expected=lambda output: output.decode(
                 encoded, startIndex=ExtractUint16(encoded, Int(4))
             ),
         ),
         IndexTest(
             types=[byte_a, dynamic_array_a, tuple_a, dynamic_array_b],
-            index=1,
+            typeIndex=1,
             expected=lambda output: output.decode(
                 encoded,
                 startIndex=ExtractUint16(encoded, Int(1)),
@@ -240,7 +240,7 @@ def test_indexTuple():
         ),
         IndexTest(
             types=[byte_a, dynamic_array_a, tuple_a, dynamic_array_b],
-            index=3,
+            typeIndex=3,
             expected=lambda output: output.decode(
                 encoded, startIndex=ExtractUint16(encoded, Int(4))
             ),
@@ -248,8 +248,8 @@ def test_indexTuple():
     ]
 
     for i, test in enumerate(tests):
-        output = test.types[test.index].new_instance()
-        expr = indexTuple(test.types, encoded, test.index, output)
+        output = test.types[test.typeIndex].new_instance()
+        expr = indexTuple(test.types, encoded, test.typeIndex, output)
         assert expr.type_of() == TealType.none
         assert not expr.has_return()
 
