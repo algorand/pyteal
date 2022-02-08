@@ -1,11 +1,16 @@
+from os import dup
 from typing import TYPE_CHECKING
-
-from pyteal.ir.tealsimpleblock import TealSimpleBlock
 
 from ..types import TealType
 from ..config import NUM_SLOTS
+from ..ir.ops import Op
 from ..errors import TealInputError
+
+from .bytes import Bytes
 from .expr import Expr
+from .int import Int
+from .naryexpr import NaryExpr
+from .seq import Seq
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
@@ -39,6 +44,11 @@ class Slot:
         """
         return ScratchLoad(self, type)
 
+    # TODO: Can I get this to work?
+    # def index(self) -> Expr:
+    #     """Get the slot index as an expression."""
+    #     pass
+
     def __repr__(self):
         return "ScratchSlot({})".format(self.id)
 
@@ -55,7 +65,7 @@ Slot.__module__ = "pyteal"
 class DynamicSlot(Slot):
     """A Slot whose id is defined dynamically via an expression"""
 
-    def __init__(self, slotIdExpr: Expr = None) -> None:
+    def __init__(self, slotIdExpr: Expr) -> None:
         """Initializes a scratch slot whose id is determined at runtime.
 
         Args:
@@ -65,13 +75,27 @@ class DynamicSlot(Slot):
         """
         super().__init__()
 
-        assert slotIdExpr is None or isinstance(
+        assert slotIdExpr is not None, "cannot create a DynamicSlot with no slotIdExpr"
+
+        assert isinstance(
             slotIdExpr, Expr
         ), "slotIdExpr must be an Expr but was provided {}".format(type(slotIdExpr))
+
         self.id: Expr = slotIdExpr
 
     def dynamic(self) -> bool:
         return True
+
+    # TODO: Can I get this to work?
+    # def index(self) -> Expr:
+
+    #     if self.id is not None:
+    #         return self.id
+
+    #     return Seq(
+    #         NaryExpr(Op.dup, TealType.none, TealType.uint64, []),
+    #         NaryExpr(Op.pop, TealType.uint64, TealType.uint64, []),
+    #     )
 
 
 DynamicSlot.__module__ = "pyteal"
@@ -114,6 +138,10 @@ class ScratchSlot(Slot):
 
     def dynamic(self) -> bool:
         return False
+
+    # TODO: Can I get this to work?
+    # def index(self) -> Expr:
+    #     return Int(self.id)
 
 
 ScratchSlot.__module__ = "pyteal"

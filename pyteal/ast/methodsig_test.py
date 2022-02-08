@@ -1,6 +1,6 @@
 import pytest
 
-from pyteal.ast.methodsig import MethodSignature
+from .methodsig import MethodSignature
 
 from .. import *
 

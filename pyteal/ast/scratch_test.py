@@ -1,7 +1,5 @@
 import pytest
 
-from pyteal.ast.scratch import DynamicSlot
-
 from .. import *
 
 # this is not necessary but mypy complains if it's not included
@@ -32,9 +30,8 @@ def test_scratch_init():
 
     ######## DynamicSlot.__init__() #########
 
-    dynamic_slot = DynamicSlot()
-    assert dynamic_slot.dynamic() is True
-    assert dynamic_slot.id is None
+    with pytest.raises(TypeError):
+        dynamic_slot = DynamicSlot()
 
     dynamic_with_slotExpr = DynamicSlot(Int(42))
     assert dynamic_with_slotExpr.dynamic() is True

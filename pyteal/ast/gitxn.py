@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, cast
 
-from pyteal.config import MAX_GROUP_SIZE
+from ..config import MAX_GROUP_SIZE
 
 from ..errors import TealInputError, verifyFieldVersion, verifyTealVersion
 from ..ir import TealOp, Op, TealBlock

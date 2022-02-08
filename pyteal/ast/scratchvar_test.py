@@ -10,16 +10,13 @@ options = CompileOptions()
 
 def test_scratchvar_init():
     myvar_default = ScratchVar()
-    assert myvar_default.slotIdFromStack is False
+    assert not myvar_default.slot.dynamic()
 
     myvar_explicit = ScratchVar(slotId=42)
-    assert myvar_explicit.slotIdFromStack is False
+    assert not myvar_explicit.slot.dynamic()
 
     myvar_from_stack = ScratchVar(slotId=Int(42))
-    assert myvar_from_stack.slotIdFromStack is True
-
-    myvar_force_stack = ScratchVar(slotId=None, forceSlotIdFromStack=True)
-    assert myvar_force_stack.slotIdFromStack is True
+    assert myvar_from_stack.slot.dynamic()
 
 
 def test_scratchvar_type():

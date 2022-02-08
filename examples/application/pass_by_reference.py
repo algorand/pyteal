@@ -13,54 +13,60 @@ linearTransformation_selector = MethodSignature(
     "linearTransformation(uint64,uint64,uint64,uint64,uint64,uint64)void"
 )
 
+# Currently broken
+#
+# @Subroutine(TealType.uint64)
+# def itchy(dynamic_scratcher: ScratchVar, regular_scratcher: ScratchVar) -> Expr:
+#     dyn_idx = dynamic_scratcher.index()
+#     reg_idx = regular_scratcher.index()
+#     stop_val = regular_scratcher.load()
+#     return_val = stop_val + dynamic_scratcher.load()
+#     dynamic_scratcher = ScratchVar(TealType.uint64, dyn_idx + Int(5))
+#     dynamic_scratcher.store(return_val)
+#     return Seq(
+#         If(stop_val > Int(0))
+#         .Then(
+#             Seq(
+#                 regular_scratcher.store(stop_val - Int(1)),
+#                 dynamic_scratcher.store(
+#                     return_val + itchy(dynamic_scratcher, regular_scratcher)
+#                 ),
+#             )
+#         )
+#         .Else(
+#             Log(
+#                 Concat(
+#                     Bytes("dyn_idx:"),
+#                     Itob(dyn_idx),
+#                     Bytes("dyn_val:"),
+#                     Itob(dynamic_scratcher.load()),
+#                     Bytes("reg_idx:"),
+#                     Itob(reg_idx),
+#                     Bytes("reg_val:"),
+#                     Itob(regular_scratcher.load()),
+#                 )
+#             )
+#         ),
+#         return_val,
+#     )
 
-@Subroutine(TealType.uint64)
-def itchy(dynamic_scratcher: ScratchVar, regular_scratcher: ScratchVar) -> Expr:
-    dyn_idx = dynamic_scratcher.Index()
-    reg_idx = regular_scratcher.Index()
-    stop_val = regular_scratcher.load()
-    return_val = stop_val + dynamic_scratcher.load()
-    dynamic_scratcher = ScratchVar(TealType.uint64, dyn_idx * Int(2))
-    dynamic_scratcher.store(return_val)
-    return Return(
-        Seq(
-            If(stop_val > 0)
-            .Then(
-                Seq(
-                    regular_scratcher.store(stop_val - Int(1)),
-                    return_val=return_val + itchy(dynamic_scratcher, regular_scratcher),
-                )
-            )
-            .Else(
-                Log(
-                    Concat(
-                        "dyn_idx:",
-                        Itob(dyn_idx),
-                        "dyn_val:",
-                        Itob(dynamic_scratcher.load()),
-                        "reg_idx:",
-                        Itob(reg_idx),
-                        "reg_val:",
-                        Itob(regular_scratcher.load()),
-                    )
-                )
-            ),
-            return_val,
-        )
-    )
 
+# def approval_itchy():
+#     regular_scratcher = ScratchVar(TealType.uint64)
+#     dynamic_scratcher = ScratchVar(TealType.uint64, regular_scratcher.index() + Int(5))
 
-def approval_itchy():
-    regular_scratcher = ScratchVar(TealType.uint64)
-    dynamic_scratcher = ScratchVar(TealType.uint64, regular_scratcher.Index() * Int(2))
-    regular_scratcher.load(Int(1))
-    dynamic_scratcher.load(Int(1))
-    return Cond(
-        [
-            Txn.application_args[0] == itchy_selector,
-            Return(itchy(dynamic_scratcher, regular_scratcher)),
-        ],
-    )
+#     return Cond(
+#         [
+#             Txn.application_args[0] == itchy_selector,
+#             Return(
+#                 Seq(
+#                     regular_scratcher.store(Int(1)),
+#                     dynamic_scratcher.store(Int(1)),
+#                     itchy(dynamic_scratcher, regular_scratcher),
+#                 )
+#             ),
+#         ],
+#     )
 
 
 @Subroutine(TealType.none)
@@ -294,5 +300,5 @@ if __name__ == "__main__":
     with open(teal / "approval1.teal", "w") as f:
         f.write(compileTeal(approval_fib2(), mode=Mode.Application, version=6))
 
-    with open(teal / "itch_scratcher.teal", "w") as f:
-        f.write(compileTeal(approval_itchy(), mode=Mode.Application, version=6))
+    # with open(teal / "itch_scratcher.teal", "w") as f:
+    #     f.write(compileTeal(approval_itchy(), mode=Mode.Application, version=6))
