@@ -65,17 +65,21 @@ def encodeTuple(values: Sequence[Type]) -> Expr:
                 firstDynamicTail = False
                 updateVars = Seq(
                     tail_holder.store(encoded_tail.load()),
-                    tail_offset.set(head_length_static)
+                    tail_offset.set(head_length_static),
                 )
             else:
                 updateVars = Seq(
                     tail_holder.store(Concat(tail_holder.load(), encoded_tail.load())),
-                    tail_offset.set(tail_offset_accumulator.get())
+                    tail_offset.set(tail_offset_accumulator.get()),
                 )
-            
-            notLastDynamicValue = any([nextValue.is_dynamic() for nextValue in values[i+1:]])
+
+            notLastDynamicValue = any(
+                [nextValue.is_dynamic() for nextValue in values[i + 1 :]]
+            )
             if notLastDynamicValue:
-                updateAccumulator = tail_offset_accumulator.set(tail_offset.get() + Len(encoded_tail.load()))
+                updateAccumulator = tail_offset_accumulator.set(
+                    tail_offset.get() + Len(encoded_tail.load())
+                )
             else:
                 updateAccumulator = Seq()
 
@@ -85,7 +89,7 @@ def encodeTuple(values: Sequence[Type]) -> Expr:
                 updateAccumulator,
                 tail_offset.encode(),
             )
-    
+
     toConcat = cast(List[Expr], heads)
     if not firstDynamicTail:
         toConcat.append(tail_holder.load())
@@ -125,22 +129,58 @@ def indexTuple(
     if not valueType.has_same_type_as(output):
         raise TypeError("Output type does not match value type")
 
-    if ignoreNext > 0:
-        # value is part of a bool sequence
-        assert type(output) is Bool
-        bitOffsetInBoolSeq = lastBoolLength - ignoreNext
-        bitOffsetInEncoded = lastBoolStart * NUM_BITS_IN_BYTE + bitOffsetInBoolSeq
+    if type(output) is Bool:
+        if ignoreNext > 0:
+            # value is in the middle of a bool sequence
+            bitOffsetInBoolSeq = lastBoolLength - ignoreNext
+            bitOffsetInEncoded = lastBoolStart * NUM_BITS_IN_BYTE + bitOffsetInBoolSeq
+        else:
+            # value is the beginning of a bool sequence (or a single bool)
+            bitOffsetInEncoded = offset * NUM_BITS_IN_BYTE
         return output.decodeBit(encoded, Int(bitOffsetInEncoded))
 
     if valueType.is_dynamic():
+        hasNextDynamicValue = False
+        nextDynamicValueOffset = offset + 2
+        ignoreNext = 0
+        for i, typeAfter in enumerate(valueTypes[index + 1 :], start=index + 1):
+            if ignoreNext > 0:
+                ignoreNext -= 1
+                continue
+
+            if type(typeAfter) is Bool:
+                boolLength = consecutiveBools(valueTypes, i)
+                nextDynamicValueOffset += boolSequenceLength(boolLength)
+                ignoreNext = boolLength - 1
+
+            if typeAfter.is_dynamic():
+                hasNextDynamicValue = True
+                break
+
+            nextDynamicValueOffset += typeAfter.byte_length_static()
+
         startIndex = ExtractUint16(encoded, Int(offset))
-        if index + 1 == len(valueTypes):
+        if not hasNextDynamicValue:
+            # This is the final dynamic value, so decode the substring from startIndex to the end of
+            # encoded
             return output.decode(encoded, startIndex=startIndex)
 
-        endIndex = ExtractUint16(encoded, Int(offset + 2))
+        # There is a dynamic value after this one, and endIndex is where its tail starts, so decode
+        # the substring from startIndex to endIndex
+        endIndex = ExtractUint16(encoded, Int(nextDynamicValueOffset))
         return output.decode(encoded, startIndex=startIndex, endIndex=endIndex)
 
     startIndex = Int(offset)
+
+    if index + 1 == len(valueTypes):
+        if offset == 0:
+            # This is the first and only value in the tuple, so decode all of encoded
+            return output.decode(encoded)
+        # This is the last value in the tuple, so decode the substring from startIndex to the end of
+        # encoded
+        return output.decode(encoded, startIndex=startIndex)
+
+    # This is not the first or last value, so decode the substring from startIndex with length length
     length = Int(valueType.byte_length_static())
     return output.decode(encoded, startIndex=startIndex, length=length)
 
