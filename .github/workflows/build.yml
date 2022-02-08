@@ -2,7 +2,7 @@ name: "Build workflow"
 on: [push, pull_request]
 jobs:
   build-test:
-    # runs-on: ubuntu-20.04
+    runs-on: ubuntu-20.04
     container: python:${{ matrix.python }}-slim
     strategy:
       matrix:
@@ -25,6 +25,8 @@ jobs:
     needs: ['build-test']
     # if: ${{ github.event_name == 'push' && contains(github.ref, 'master') && startsWith(github.ref, 'refs/tags') }}
     steps:
+      # - name: Install pip dependencies
+      #   run: pip install -r requirements.txt
       - name: Install dependencies
         run: pip install wheel
       - name: Build package
