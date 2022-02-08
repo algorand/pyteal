@@ -189,7 +189,7 @@ class SubroutineCall(Expr):
             )
         )
 
-    def _subroutine_args(self, withDynamic=False):
+    def _subroutine_args(self):
         ca = []
         for i, arg in enumerate(self.args):
             assert isinstance(
@@ -197,8 +197,8 @@ class SubroutineCall(Expr):
             ), "cannot interpert arg {} at index {} as call argument because of unexpected Python type {}".format(
                 arg, i, type(arg)
             )
-            if withDynamic or isinstance(arg, Expr):
-                ca.append(arg if isinstance(arg, Expr) else arg.load())
+            if isinstance(arg, Expr):
+                ca.append(arg)
         return ca
 
     def __teal__(self, options: "CompileOptions"):

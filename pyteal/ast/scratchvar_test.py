@@ -21,20 +21,6 @@ def test_scratchvar_init():
     myvar_force_stack = ScratchVar(slotId=None, forceSlotIdFromStack=True)
     assert myvar_force_stack.slotIdFromStack is True
 
-    # assert ScratchVar(TealType.uint64, 42)
-    # with pytest.raises(TypeError):
-    #     ScratchVar(TealType.uint64, 42, False)  # fromStack must be a keyword arg
-
-    # assert ScratchVar(TealType.uint64, 42, slodIdFromStack=False)
-    # with pytest.raises(AssertionError) as e:
-    #     ScratchVar(TealType.uint64, 42, slodIdFromStack=True)
-    # assert "cannot specify explicit slotId when fromStack" in str(e)
-
-    # assert ScratchVar(slotId=42, slodIdFromStack=False)
-    # with pytest.raises(AssertionError) as e:
-    #     ScratchVar(slotId=42, slodIdFromStack=True)
-    # assert "cannot specify explicit slotId when fromStack" in str(e)
-
 
 def test_scratchvar_type():
     myvar_default = ScratchVar()
