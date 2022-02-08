@@ -94,19 +94,6 @@ class Array(Type, Generic[T]):
             index = Int(index)
         return ArrayElement(self, cast(Expr, index), length)
 
-    def forEach(self, action: Callable[[T, Expr], Expr]) -> Expr:
-        i = ScratchVar(TealType.uint64)
-        length = ScratchVar(TealType.uint64)
-        return For(
-            Seq(length.store(self.length()), i.store(Int(0))),
-            i.load() < length.load(),
-            i.store(i.load() + Int(1)),
-        ).Do(
-            self._getItemWithLength(i.load(), length=length.load()).use(
-                lambda value: action(value, i.load())
-            )
-        )
-
     def __str__(self) -> str:
         return self._valueType.__str__() + (
             "[]" if self._static_length is None else "[{}]".format(self._static_length)
