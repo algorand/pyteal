@@ -1,5 +1,4 @@
 from typing import (
-    Callable,
     List,
     Sequence,
     Optional,
@@ -12,7 +11,7 @@ from ..seq import Seq
 from ..int import Int
 from ..unaryexpr import Len
 from ..binaryexpr import ExtractUint16
-from ..naryexpr import Add, Concat
+from ..naryexpr import Concat
 from ..substring import Extract, Substring, Suffix
 from ..scratchvar import ScratchVar
 
@@ -54,29 +53,44 @@ def encodeTuple(values: Sequence[Type]) -> Expr:
         head_length_static += elem.byte_length_static()
         heads.append(elem.encode())
 
-    tails: List[ScratchVar] = []
+    tail_offset = Uint16()
+    tail_offset_accumulator = Uint16()
+    tail_holder = ScratchVar(TealType.bytes)
+    encoded_tail = ScratchVar(TealType.bytes)
 
-    # tail_length_dynamic = ScratchVar(TealType.uint64)
-    # tail_holder = ScratchVar(TealType.bytes)
-
-    # TODO
-    # tail_length_dynamic.store(Int(head_length_static))
-
+    firstDynamicTail = True
     for i, elem in enumerate(values):
         if elem.is_dynamic():
-            elemTail = ScratchVar(TealType.bytes)
-            offset = Uint16()
+            if firstDynamicTail:
+                firstDynamicTail = False
+                updateVars = Seq(
+                    tail_holder.store(encoded_tail.load()),
+                    tail_offset.set(head_length_static)
+                )
+            else:
+                updateVars = Seq(
+                    tail_holder.store(Concat(tail_holder.load(), encoded_tail.load())),
+                    tail_offset.set(tail_offset_accumulator.get())
+                )
+            
+            notLastDynamicValue = any([nextValue.is_dynamic() for nextValue in values[i+1:]])
+            if notLastDynamicValue:
+                updateAccumulator = tail_offset_accumulator.set(tail_offset.get() + Len(encoded_tail.load()))
+            else:
+                updateAccumulator = Seq()
 
             heads[i] = Seq(
-                elemTail.store(elem.encode()),
-                offset.set(
-                    Add(Int(head_length_static), *[Len(tail.load()) for tail in tails])
-                ),
-                offset.encode(),
+                encoded_tail.store(elem.encode()),
+                updateVars,
+                updateAccumulator,
+                tail_offset.encode(),
             )
-            tails.append(elemTail)
+    
+    toConcat = cast(List[Expr], heads)
+    if not firstDynamicTail:
+        toConcat.append(tail_holder.load())
 
-    return Concat(*cast(List[Expr], heads), *[tail.load() for tail in tails])
+    return Concat(*toConcat)
 
 
 def indexTuple(
