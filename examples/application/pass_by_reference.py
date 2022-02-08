@@ -49,7 +49,7 @@ def approval_trans():
     x = ScratchVar(TealType.uint64, Int(127))
     y = ScratchVar(TealType.uint64, Int(128))
 
-    # 90 degrees counter-clockwise:
+    # positive affine transformation
     a = Int(1)
     b = Int(3)
     c = Int(1)
