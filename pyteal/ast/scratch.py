@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class Slot:
-    """Abstract Slot class"""
+    """Abstract Slot class representing the allocation of a scratch space slot."""
 
     def dynamic(self) -> bool:
         """Indicates whether the slotId is computed at execution time based on a provided expression."""
@@ -53,6 +53,8 @@ Slot.__module__ = "pyteal"
 
 
 class DynamicSlot(Slot):
+    """A Slot whose id is defined dynamically via an expression"""
+
     def __init__(self, slotIdExpr: Expr = None) -> None:
         """Initializes a scratch slot whose id is determined at runtime.
 
@@ -71,27 +73,12 @@ class DynamicSlot(Slot):
     def dynamic(self) -> bool:
         return True
 
-    # def store(self, value: Expr = None) -> Expr:
-    #     return super().store(value)
-
-    # def load(self, type: TealType = TealType.anytype) -> "ScratchLoad":
-    #     return super().load(type)
-
-    # def __repr__(self):
-    #     return "DynamicSlot({})".format(self.id)
-
-    # def __str__(self):
-    #     return "slot#{}".format(self.id)
-
-    # def __hash__(self):
-    #     return id(self)  # not really hashing
-
 
 DynamicSlot.__module__ = "pyteal"
 
 
 class ScratchSlot(Slot):
-    """Represents the allocation of a scratch space slot."""
+    """A slot with static id given by a Python int, or pre-allocated by the compiler"""
 
     # Unique identifier for the compiler to automatically assign slots
     # The id field is used by the compiler to map to an actual slot in the source code
@@ -128,21 +115,6 @@ class ScratchSlot(Slot):
     def dynamic(self) -> bool:
         return False
 
-    # def store(self, value: Expr = None) -> Expr:
-    #     return super().store(value)
-
-    # def load(self, type: TealType = TealType.anytype) -> "ScratchLoad":
-    #     return super().load(type)
-
-    # def __repr__(self):
-    #     return "ScratchSlot({})".format(self.id)
-
-    # def __str__(self):
-    #     return "slot#{}".format(self.id)
-
-    # def __hash__(self):
-    #     return hash(self.id)
-
 
 ScratchSlot.__module__ = "pyteal"
 
@@ -177,11 +149,6 @@ class ScratchLoad(Expr):
             op_args = [self.slot]
             block_args = []
 
-        # Four cases: ????
-        # static + requested slot   ---> load  + requested
-        # static + default          ---> load  + nextSlotId
-        # dynamic + slot expr       ---> loads + slot expr
-        # dynamic + None            ---> loads ONLY
         op = TealOp(self, load_op, *op_args)
         return TealBlock.FromOp(options, op, *block_args)
 
@@ -218,25 +185,14 @@ class ScratchStore(Expr):
         if self.slot.dynamic():
             store_op = Op.stores
             op_args = []
-            block_args = [self.slot.id] if self.slot.id else []
+            block_args = ([self.slot.id] if self.slot.id else []) + [self.value]
         else:
             store_op = Op.store
             op_args = [self.slot]
-            block_args = []
-
-        # Four cases ???:
-        # static + requested slot   ---> store  + requested
-        # static + default          ---> store  + nextSlotId
-        # dynamic + slot expr       ---> stores + slot expr
-        # dynamic + None            ---> stores ONLY
+            block_args = [self.value]
 
         op = TealOp(self, store_op, *op_args)
-        blockStart, blockEnd = TealBlock.FromOp(options, op, self.value, *block_args)
-
-        if self.slot.dynamic():
-            blockEnd.ops = [TealOp(self, Op.swap)] + blockEnd.ops
-
-        return blockStart, blockEnd
+        return TealBlock.FromOp(options, op, *block_args)
 
     def type_of(self):
         return TealType.none

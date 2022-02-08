@@ -6,6 +6,7 @@ from pyteal.types import require_type
 RETURN_PREFIX = Bytes("base16", "151f7c75")
 
 increment_selector = MethodSignature("increment(uint64)void")
+fib1_selector = MethodSignature("fib1(uint64)uint64")
 fib2_selector = MethodSignature("fib2(uint64)uint64")
 linearTransformation_selector = MethodSignature(
     "linearTransformation(uint64,uint64,uint64,uint64,uint64,uint64)void"
@@ -58,68 +59,72 @@ def approval_trans():
             Txn.application_args[0] == linearTransformation_selector,
             Return(
                 Seq(
-                    x.store(Int(1)),
-                    y.store(Int(0)),
+                    x.store(Int(17)),
+                    y.store(Int(42)),
                     linearTransformation(a, b, c, d, x, y),
-                    Assert(x.load() == Int(1)),
-                    Assert(y.load() == Int(1)),
+                    Assert(x.load() == Int(143)),
+                    Assert(y.load() == Int(227)),
                     linearTransformation(a, b, c, d, x, y),
-                    Assert(x.load() == Int(4)),
-                    y.load() == Int(6),
+                    Assert(x.load() == Int(824)),
+                    y.load() == Int(1278),
                 )
             ),
         ],
     )
 
 
-# TODO:
-# @Subroutine(TealType.none)
-# def addAndPlaceSumInFirstArg(a: ScratchVar, b: Expr):
-#     return a.store(a.load() + b)
-
-# value = ScratchVar(TealType.uint64)
-# program = Seq(
-#     value.store(Int(1)),
-#     addAndPlaceSumInFirstArg(value, Int(100)),
-#     Log(Itob(value.load())),  # value should now be 101
-# )
+@Subroutine(TealType.none)
+def addAndPlaceSumInFirstArg(a: ScratchVar, b: Expr):
+    return a.store(a.load() + b)
 
 
-# TODO:
-# @Subroutine(TealType.uint64)
-# def fib1(n):
-#     i = ScratchVar(TealType.uint64)
-#     a = ScratchVar(TealType.uint64)
-#     b = ScratchVar(TealType.uint64)
-#     init = Seq(
-#         i.store(Int(0)),
-#         a.store(Int(0)),
-#         b.store(Int(1)),
-#     )
-#     cond = i.load() < n - Int(1)
-#     iter = i.store(i.load() + Int(1))
+def approval_add100():
+    value = ScratchVar(TealType.uint64)
+    return Seq(
+        value.store(Int(1)),
+        addAndPlaceSumInFirstArg(value, Int(100)),
+        Log(Itob(value.load())),  # value should now be 101
+        Approve(),
+    )
 
-#     return Seq(
-#         If(n < Int(2))
-#         .Then(
-#             Seq(
-#                 uint64_log4return(n),
-#                 Return(n),
-#             )
-#         )
-#         .Else(
-#             Seq(
-#                 For(init, cond, iter).Do(
-#                     Seq(
-#                         b.store(b.load() + a.load()),
-#                         a.store(b.load() - a.load()),
-#                     )
-#                 ),
-#                 uint64_log4return(b.load()),
-#                 Return(b.load()),
-#             )
-#         ),
-#     )
+
+@Subroutine(TealType.none)
+def fib_swap_step(a: ScratchVar, b: ScratchVar):
+    return Seq(
+        b.store(b.load() + a.load()),
+        a.store(b.load() - a.load()),
+    )
+
+
+@Subroutine(TealType.uint64)
+def fib1(n):
+    i = ScratchVar(TealType.uint64)
+    a = ScratchVar(TealType.uint64)
+    b = ScratchVar(TealType.uint64)
+    init = Seq(
+        i.store(Int(0)),
+        a.store(Int(0)),
+        b.store(Int(1)),
+    )
+    cond = i.load() < n - Int(1)
+    iter = i.store(i.load() + Int(1))
+
+    return Seq(
+        If(n < Int(2))
+        .Then(
+            Seq(
+                uint64_log4return(n),
+                Return(n),
+            )
+        )
+        .Else(
+            Seq(
+                For(init, cond, iter).Do(Seq(fib_swap_step(a, b))),
+                uint64_log4return(b.load()),
+                Return(b.load()),
+            )
+        ),
+    )
 
 
 @Subroutine(TealType.uint64)
@@ -180,19 +185,13 @@ def approval_fib2():
         [Txn.on_completion() == OnComplete.CloseOut, Approve()],
         [Txn.on_completion() == OnComplete.OptIn, Approve()],
         [
+            Txn.application_args[0] == fib1_selector,
+            Return(Seq(Pop(fib1(Txn.application_args[1])), Int(1))),
+        ],
+        [
             Txn.application_args[0] == fib2_selector,
             Return(Seq(Pop(fib2(Txn.application_args[1])), Int(1))),
         ],
-        # [
-        #     Txn.application_args[0] == increment_selector,
-        #     Return(
-        #         Seq(
-        #             x.store(Int(41)),
-        #             increment(x),
-        #             x.load() == Int(42),
-        #         )
-        #     ),
-        # ],
     )
 
 
@@ -230,8 +229,8 @@ if __name__ == "__main__":
 
     teal = Path.cwd() / "examples" / "application" / "teal"
 
-    with open(teal / "clear.teal", "w") as f:
-        f.write(compileTeal(clear(), mode=Mode.Application, version=6))
+    # with open(teal / "clear.teal", "w") as f:
+    #     f.write(compileTeal(clear(), mode=Mode.Application, version=6))
 
     with open(teal / "increment.teal", "w") as f:
         f.write(compileTeal(approval_increment(), mode=Mode.Application, version=6))
@@ -239,5 +238,8 @@ if __name__ == "__main__":
     with open(teal / "matrix.teal", "w") as f:
         f.write(compileTeal(approval_trans(), mode=Mode.Application, version=6))
 
-    # with open(teal / "approval1.teal", "w") as f:
-    #     f.write(compileTeal(approval_fib2(), mode=Mode.Application, version=6))
+    with open(teal / "add100.teal", "w") as f:
+        f.write(compileTeal(approval_add100(), mode=Mode.Application, version=6))
+
+    with open(teal / "approval1.teal", "w") as f:
+        f.write(compileTeal(approval_fib2(), mode=Mode.Application, version=6))

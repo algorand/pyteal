@@ -24,6 +24,7 @@ class ScratchVar:
         type: TealType = TealType.anytype,
         slotId: Union[int, Expr] = None,
         forceSlotIdFromStack: bool = False,
+        subroutineInternal: bool = False,
     ):
         """Create a new ScratchVar with an optional type.
         TODO: fix this comment (Zeph)
@@ -56,6 +57,7 @@ class ScratchVar:
             DynamicSlot(slotId) if self.slotIdFromStack else ScratchSlot(slotId)
         )
         self.type = type
+        self.subroutineInternal = subroutineInternal
 
     def storage_type(self) -> TealType:
         """Get the type of expressions that can be stored in this ScratchVar."""
