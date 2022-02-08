@@ -55,7 +55,7 @@ class Uint8(Uint):
     def new_instance(self) -> "Uint8":
         return Uint8()
 
-    def set(self, value: Union[int, Expr]) -> Expr:
+    def set(self, value: Union[int, Expr, "Uint8"]) -> Expr:
         checked = False
         if type(value) is int:
             if value >= 2 ** 8:
@@ -63,12 +63,16 @@ class Uint8(Uint):
             value = Int(value)
             checked = True
 
+        if type(value) is Uint8:
+            value = value.get()
+            checked = True
+
         if checked:
             return self.stored_value.store(cast(Expr, value))
 
         return Seq(
             self.stored_value.store(cast(Expr, value)),
-            Assert(self.stored_value.load() < Int(2 ** 8)),
+            Assert(self.stored_value.load() < Int(2 ** self.bit_size)),
         )
 
     def decode(
@@ -101,7 +105,7 @@ class Uint16(Uint):
     def new_instance(self) -> "Uint16":
         return Uint16()
 
-    def set(self, value: Union[int, Expr]) -> Expr:
+    def set(self, value: Union[int, Expr, "Uint16"]) -> Expr:
         checked = False
         if type(value) is int:
             if value >= 2 ** 16:
@@ -109,12 +113,16 @@ class Uint16(Uint):
             value = Int(value)
             checked = True
 
+        if type(value) is Uint16:
+            value = value.get()
+            checked = True
+
         if checked:
             return self.stored_value.store(cast(Expr, value))
 
         return Seq(
             self.stored_value.store(cast(Expr, value)),
-            Assert(self.stored_value.load() < Int(2 ** 16)),
+            Assert(self.stored_value.load() < Int(2 ** self.bit_size)),
         )
 
     def decode(
@@ -145,7 +153,7 @@ class Uint32(Uint):
     def new_instance(self) -> "Uint32":
         return Uint32()
 
-    def set(self, value: Union[int, Expr]) -> Expr:
+    def set(self, value: Union[int, Expr, "Uint32"]) -> Expr:
         checked = False
         if type(value) is int:
             if value >= 2 ** 32:
@@ -153,12 +161,16 @@ class Uint32(Uint):
             value = Int(value)
             checked = True
 
+        if type(value) is Uint32:
+            value = value.get()
+            checked = True
+
         if checked:
             return self.stored_value.store(cast(Expr, value))
 
         return Seq(
             self.stored_value.store(cast(Expr, value)),
-            Assert(self.stored_value.load() < Int(2 ** 32)),
+            Assert(self.stored_value.load() < Int(2 ** self.bit_size)),
         )
 
     def decode(
@@ -187,9 +199,11 @@ class Uint64(Uint):
     def new_instance(self) -> "Uint64":
         return Uint64()
 
-    def set(self, value: Union[int, Expr]) -> Expr:
+    def set(self, value: Union[int, Expr, "Uint64"]) -> Expr:
         if type(value) is int:
             value = Int(value)
+        if type(value) is Uint64:
+            value = value.get()
         return self.stored_value.store(cast(Expr, value))
 
     def decode(
