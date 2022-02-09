@@ -25,7 +25,11 @@ class SubroutineDefinition:
     @classmethod
     def is_param_type_allowed(cls, var_type):
         var_type_in_annotated = var_type in cls.PARAM_ANNOTATION_TYPES
-        var_type_abi_subtype = isclass(var_type) and issubclass(var_type, abi.Type)
+        var_type_abi_subtype = (
+            isclass(var_type)
+            and issubclass(var_type, abi.Type)
+            and var_type != abi.Type
+        )
         return var_type_in_annotated or var_type_abi_subtype
 
     nextSubroutineId = 0

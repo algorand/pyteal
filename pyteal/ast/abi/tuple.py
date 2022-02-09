@@ -65,17 +65,21 @@ def encodeTuple(values: Sequence[Type]) -> Expr:
                 firstDynamicTail = False
                 updateVars = Seq(
                     tail_holder.store(encoded_tail.load()),
-                    tail_offset.set(head_length_static)
+                    tail_offset.set(head_length_static),
                 )
             else:
                 updateVars = Seq(
                     tail_holder.store(Concat(tail_holder.load(), encoded_tail.load())),
-                    tail_offset.set(tail_offset_accumulator.get())
+                    tail_offset.set(tail_offset_accumulator.get()),
                 )
-            
-            notLastDynamicValue = any([nextValue.is_dynamic() for nextValue in values[i+1:]])
+
+            notLastDynamicValue = any(
+                [nextValue.is_dynamic() for nextValue in values[i + 1 :]]
+            )
             if notLastDynamicValue:
-                updateAccumulator = tail_offset_accumulator.set(tail_offset.get() + Len(encoded_tail.load()))
+                updateAccumulator = tail_offset_accumulator.set(
+                    tail_offset.get() + Len(encoded_tail.load())
+                )
             else:
                 updateAccumulator = Seq()
 
@@ -85,7 +89,7 @@ def encodeTuple(values: Sequence[Type]) -> Expr:
                 updateAccumulator,
                 tail_offset.encode(),
             )
-    
+
     toConcat = cast(List[Expr], heads)
     if not firstDynamicTail:
         toConcat.append(tail_holder.load())

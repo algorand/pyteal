@@ -64,9 +64,9 @@ def test_encodeTuple():
                 encodeBoolSequence([bool_a, bool_b]),
             ),
         ),
-       # TODO: test encoding dynamic types. This is more complicated because temporary abi.Uint16s
-       # and ScratchVars are created in the function to help with encoding, meaning a direct
-       # comparison is not currently possible.
+        # TODO: test encoding dynamic types. This is more complicated because temporary abi.Uint16s
+        # and ScratchVars are created in the function to help with encoding, meaning a direct
+        # comparison is not currently possible.
     ]
 
     for i, test in enumerate(tests):
