@@ -107,8 +107,8 @@ class SubroutineDefinition:
         for i, arg in enumerate(args):
             if not isinstance(arg, SubroutineDefinition.PARAM_TYPES):
                 raise TealInputError(
-                    "Argument at index {} of subroutine call is not a PyTeal expression: {}".format(
-                        i, arg
+                    "Argument {} at index {} of subroutine call has incorrect type {}".format(
+                        i, arg, type(arg)
                     )
                 )
 
@@ -170,7 +170,9 @@ SubroutineDeclaration.__module__ = "pyteal"
 
 
 class SubroutineCall(Expr):
-    def __init__(self, subroutine: SubroutineDefinition, args: List[Expr]) -> None:
+    def __init__(
+        self, subroutine: SubroutineDefinition, args: List[Union[Expr, ScratchVar]]
+    ) -> None:
         super().__init__()
         self.subroutine = subroutine
         self.args = args
@@ -178,8 +180,8 @@ class SubroutineCall(Expr):
         for i, arg in enumerate(args):
             if self._arg_type(i) == TealType.none:
                 raise TealInputError(
-                    "Subroutine argument at index {} evaluates to TealType.none".format(
-                        i
+                    "Subroutine argument {} at index {} evaluates to TealType.none".format(
+                        arg, i
                     )
                 )
 
@@ -245,7 +247,7 @@ class SubroutineFnWrapper:
             fnImplementation, returnType=returnType, nameStr=name
         )
 
-    def __call__(self, *args: Expr, **kwargs) -> Expr:
+    def __call__(self, *args: Union[Expr, ScratchVar], **kwargs) -> Expr:
         if len(kwargs) != 0:
             raise TealInputError(
                 "Subroutine cannot be called with keyword arguments. Received keyword arguments: {}".format(
