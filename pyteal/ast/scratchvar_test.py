@@ -11,15 +11,15 @@ options = CompileOptions()
 def test_scratchvar_init():
     myvar_default = ScratchVar()
     assert not myvar_default.slot.dynamic()
-    assert not myvar_default._subroutineInternal
+    assert not myvar_default._subroutineCreated
 
     myvar_explicit = ScratchVar(slotId=42)
     assert not myvar_explicit.slot.dynamic()
-    assert not myvar_explicit._subroutineInternal
+    assert not myvar_explicit._subroutineCreated
 
     myvar_from_stack = ScratchVar(slotId=Int(42))
     assert myvar_from_stack.slot.dynamic()
-    assert not myvar_from_stack._subroutineInternal
+    assert not myvar_from_stack._subroutineCreated
 
 
 def test_scratchvar_type():

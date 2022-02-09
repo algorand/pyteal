@@ -80,7 +80,7 @@ class SubroutineDefinition:
 
     def isRefArg(self, arg: str) -> bool:
         anns = self.implementation.__annotations__
-        return arg in anns and anns[arg] == ScratchVar
+        return arg in anns and anns[arg] is ScratchVar
 
     def getDeclaration(
         self, callback: "SubroutineCall" = None
@@ -126,7 +126,7 @@ class SubroutineDefinition:
                 arg_vars.append(callback.args[i])
             else:
                 sv = ScratchVar()
-                sv._subroutineInternal = True
+                sv._subroutineCreated = True
                 arg_vars.append(sv)
         return arg_vars
 
@@ -309,16 +309,16 @@ def evaluateSubroutine(
     subroutine: SubroutineDefinition, callback: SubroutineCall = None
 ) -> SubroutineDeclaration:
     scratchVars = subroutine.scratchVars(callback=callback)
-    implVars = []
-    argVars = []
+    loadedArgs = []
+    argumentVars = []
     for var in scratchVars:
-        if var._subroutineInternal:
-            implVars.append(var.load())
-            argVars.append(var)
+        if var._subroutineCreated:
+            loadedArgs.append(var.load())
+            argumentVars.append(var)
         else:
-            implVars.append(var)
+            loadedArgs.append(var)
 
-    subroutineBody = subroutine.implementation(*implVars)
+    subroutineBody = subroutine.implementation(*loadedArgs)
 
     if not isinstance(subroutineBody, Expr):
         raise TealInputError(
@@ -328,7 +328,7 @@ def evaluateSubroutine(
         )
 
     # need to reverse order of argVars because the last argument will be on top of the stack
-    bodyOps = [var.slot.store() for var in argVars[::-1]]
+    bodyOps = [var.slot.store() for var in argumentVars[::-1]]
     bodyOps.append(subroutineBody)
 
     return SubroutineDeclaration(subroutine, Seq(bodyOps))

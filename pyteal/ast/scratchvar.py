@@ -45,7 +45,7 @@ class ScratchVar:
         )
 
         self.type = type
-        self._subroutineInternal = False
+        self._subroutineCreated = False
 
     def storage_type(self) -> TealType:
         """Get the type of expressions that can be stored in this ScratchVar."""
