@@ -204,10 +204,18 @@ class ABIRouter:
 
     @staticmethod
     def __astConstruct(
-        astList: List[ProgramNode], *, astDefault: Expr = Reject()
+        astList: List[ProgramNode],
+        *,
+        astDefault: Expr = Reject(),
+        astNoRegDefault: Expr = Approve(),
     ) -> Expr:
         if len(astList) == 0:
-            raise TealInputError("ABIRouter: Cannot build program with an empty AST")
+            if astNoRegDefault is None:
+                raise TealInputError(
+                    "ABIRouter: Cannot build program with an empty AST"
+                )
+            else:
+                return astNoRegDefault
         program: If = If(astList[0].condition).Then(astList[0].branch)
         for i in range(1, len(astList)):
             program.ElseIf(astList[i].condition).Then(astList[i].branch)
@@ -216,8 +224,12 @@ class ABIRouter:
 
     def buildProgram(self) -> Tuple[Expr, Expr]:
         return (
-            ABIRouter.__astConstruct(self.approvalIfThen, astDefault=Reject()),
-            ABIRouter.__astConstruct(self.clearStateIfThen, astDefault=Approve()),
+            ABIRouter.__astConstruct(
+                self.approvalIfThen, astDefault=Reject(), astNoRegDefault=Approve()
+            ),
+            ABIRouter.__astConstruct(
+                self.clearStateIfThen, astDefault=Approve(), astNoRegDefault=Approve()
+            ),
         )
 
 
