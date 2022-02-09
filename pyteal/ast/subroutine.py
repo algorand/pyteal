@@ -121,7 +121,9 @@ class SubroutineDefinition:
                 )
                 arg_vars.append(callback.args[i])
             else:
-                arg_vars.append(ScratchVar(subroutineInternal=True))
+                sv = ScratchVar()
+                sv._subroutineInternal = True
+                arg_vars.append(sv)
         return arg_vars
 
     def __str__(self):
@@ -306,7 +308,7 @@ def evaluateSubroutine(
     implVars = []
     argVars = []
     for var in scratchVars:
-        if var.subroutineInternal:
+        if var._subroutineInternal:
             implVars.append(var.load())
             argVars.append(var)
         else:

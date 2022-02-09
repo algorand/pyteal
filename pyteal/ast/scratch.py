@@ -68,7 +68,9 @@ class DynamicSlot(Slot):
         """
         super().__init__()
 
-        assert slotIdExpr is not None, "cannot create a DynamicSlot with no slotIdExpr"
+        assert (
+            slotIdExpr is not None
+        ), "cannot create a DynamicSlot without a slotIdExpr"
 
         assert isinstance(
             slotIdExpr, Expr

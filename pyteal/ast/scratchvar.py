@@ -25,10 +25,8 @@ class ScratchVar:
         self,
         type: TealType = TealType.anytype,
         slotId: Union[int, Expr] = None,
-        subroutineInternal: bool = False,
     ):
-        """Create a new ScratchVar with an optional type.
-        TODO: fix this comment (Zeph)
+        """Create a new ScratchVar with an optional type and slot index
 
         Args:
             type (optional): The type that this variable can hold. An error will be thrown if an
@@ -47,7 +45,7 @@ class ScratchVar:
         )
 
         self.type = type
-        self.subroutineInternal = subroutineInternal
+        self._subroutineInternal = False
 
     def storage_type(self) -> TealType:
         """Get the type of expressions that can be stored in this ScratchVar."""
