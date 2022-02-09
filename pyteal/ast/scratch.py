@@ -1,16 +1,10 @@
-from os import dup
 from typing import TYPE_CHECKING
 
 from ..types import TealType
 from ..config import NUM_SLOTS
-from ..ir.ops import Op
 from ..errors import TealInputError
 
-from .bytes import Bytes
 from .expr import Expr
-from .int import Int
-from .naryexpr import NaryExpr
-from .seq import Seq
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
