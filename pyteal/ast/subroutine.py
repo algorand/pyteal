@@ -58,13 +58,17 @@ class SubroutineDefinition:
             if var == "return" and not (
                 isclass(var_type) and issubclass(var_type, Expr)
             ):
-                f_err = "Function has return of disallowed type {}. Only subtype of Expr is allowed"
-                raise TealInputError(f_err.format(var_type))
+                raise TealInputError(
+                    "Function has return of disallowed type {}. Only subtype of Expr is allowed".format(
+                        var_type
+                    )
+                )
 
             if var != "return" and var_type not in self.PARAM_TYPES:
-                f_err = "Function has parameter {} of disallowed type {}. Only the types {} are allowed"
                 raise TealInputError(
-                    f_err.format(var, var_type, self.param_type_names())
+                    "Function has parameter {} of disallowed type {}. Only the types {} are allowed".format(
+                        var, var_type, self.param_type_names()
+                    )
                 )
 
         self.implementation = implementation
