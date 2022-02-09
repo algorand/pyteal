@@ -260,9 +260,11 @@ class SubroutineFnWrapper:
         return self.subroutine.name()
 
     def type_of(self):
+        # TODO: should we get the type from self.subroutine.return_type ?
         return self.subroutine.getDeclaration().type_of()
 
     def has_return(self):
+        # TODO: should we just infer as self.type_of() != TealType.none ?
         return self.subroutine.getDeclaration().has_return()
 
 
