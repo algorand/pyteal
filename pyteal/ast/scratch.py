@@ -63,9 +63,8 @@ class DynamicSlot(Slot):
         """Initializes a scratch slot whose id is determined at runtime.
 
         Args:
-            slotIdExpr (optional): An expression evaluating to TealType.uint64 in the range of 0-255
+            slotIdExpr: An expression evaluating to TealType.uint64 in the range of 0-255
             and representing a scratch slot id.
-            If no slotIdExpr is provided, the slot id is implicitly picked up from whatever is at the top of the stack at runtime.
         """
         super().__init__()
 
@@ -123,7 +122,7 @@ class ScratchSlot(Slot):
             )
             if requestedSlotId < 0 or requestedSlotId >= NUM_SLOTS:
                 raise TealInputError(
-                    "Invalid slot ID {}, shoud be in [0, {})".format(
+                    "Invalid slot ID {}, should be in [0, {})".format(
                         requestedSlotId, NUM_SLOTS
                     )
                 )
@@ -165,7 +164,7 @@ class ScratchLoad(Expr):
         if self.slot.dynamic():
             load_op = Op.loads
             op_args = []
-            block_args = [self.slot.id] if self.slot.id else []
+            block_args = [self.slot.id]
         else:
             load_op = Op.load
             op_args = [self.slot]
@@ -207,7 +206,7 @@ class ScratchStore(Expr):
         if self.slot.dynamic():
             store_op = Op.stores
             op_args = []
-            block_args = ([self.slot.id] if self.slot.id else []) + [self.value]
+            block_args = [self.slot.id, self.value]
         else:
             store_op = Op.store
             op_args = [self.slot]
