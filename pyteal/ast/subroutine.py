@@ -329,7 +329,7 @@ def evaluateSubroutine(
             )
         )
 
-    # need to reverse order of argVars because the last argument will be on top of the stack
+    # need to reverse order of argumentVars because the last argument will be on top of the stack
     bodyOps = [var.slot.store() for var in argumentVars[::-1]]
     bodyOps.append(subroutineBody)
 
