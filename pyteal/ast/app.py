@@ -93,7 +93,7 @@ class App(LeafExpr):
                 Txn.Accounts or is Txn.Sender, must be evaluated to bytes).
             app: An index into Txn.ForeignApps that corresponds to the application to read from,
                 must be evaluated to uint64 (or, since v4, an application id that appears in
-                Txn.ForeignApps or is the CurrentApplicationID, must be evaluated to bytes).
+                Txn.ForeignApps or is the CurrentApplicationID, must be evaluated to int).
         """
         require_type(account, TealType.anytype)
         require_type(app, TealType.uint64)
@@ -123,7 +123,7 @@ class App(LeafExpr):
                 Txn.Accounts or is Txn.Sender, must be evaluated to bytes).
             app: An index into Txn.ForeignApps that corresponds to the application to read from,
                 must be evaluated to uint64 (or, since v4, an application id that appears in
-                Txn.ForeignApps or is the CurrentApplicationID, must be evaluated to bytes).
+                Txn.ForeignApps or is the CurrentApplicationID, must be evaluated to int).
             key: The key to read from the account's local state. Must evaluate to bytes.
         """
         require_type(account, TealType.anytype)
