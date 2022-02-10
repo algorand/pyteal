@@ -25,6 +25,7 @@ def test_encodeTuple():
     tuple_a = abi.Tuple(abi.Bool(), abi.Bool())
 
     tests: List[EncodeTest] = [
+        EncodeTest(types=[], expected=Bytes("")),
         EncodeTest(types=[uint64_a], expected=uint64_a.encode()),
         EncodeTest(
             types=[uint64_a, uint64_b],
@@ -85,9 +86,6 @@ def test_encodeTuple():
 
         with TealComponent.Context.ignoreExprEquality():
             assert actual == expected, "Test at index {} failed".format(i)
-
-    with pytest.raises(TealInputError):
-        encodeTuple([])
 
 
 def test_indexTuple():
@@ -289,7 +287,9 @@ def test_Tuple_has_same_type_as():
 
 def test_Tuple_new_instance():
     tupleA = abi.Tuple(abi.Uint64(), abi.Uint32(), abi.Bool())
-    assert tupleA.new_instance().has_same_type_as(tupleA)
+    newTuple = tupleA.new_instance()
+    assert type(newTuple) is abi.Tuple
+    assert newTuple.valueTypes == tupleA.valueTypes
 
 
 def test_Tuple_is_dynamic():
@@ -545,4 +545,4 @@ def test_TupleElement_store_into():
             actual = TealBlock.NormalizeBlocks(actual)
 
             with TealComponent.Context.ignoreExprEquality():
-                assert actual == expected
+                assert actual == expected, "Test at index {} failed".format(i)
