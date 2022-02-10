@@ -1,3 +1,4 @@
+from sys import implementation
 from typing import Callable, List, Optional, Union, TYPE_CHECKING
 from inspect import Parameter, isclass, signature
 
@@ -83,11 +84,12 @@ class SubroutineDefinition:
         return arg in anns and anns[arg] is ScratchVar
 
     def getDeclaration(
-        self, callback: "SubroutineCall" = None
+        # self, callback: "SubroutineCall" = None
+        self,
     ) -> "SubroutineDeclaration":
         if self.declaration is None:
             # lazy evaluate subroutine
-            self.declaration = evaluateSubroutine(self, callback=callback)
+            self.declaration = evaluateSubroutine(self)  # , callback=callback)
         return self.declaration
 
     def name(self) -> str:
@@ -114,21 +116,36 @@ class SubroutineDefinition:
 
         return SubroutineCall(self, args)
 
-    def scratchVars(self, callback: "SubroutineCall" = None) -> List[ScratchVar]:
-        arg_vars = []
-        for i, arg in enumerate(self.implementationParams.keys()):
-            if self.isRefArg(arg):
-                assert (
-                    callback is not None
-                ), "provided no SubroutineCall but have pass-by-ref arg [{}]".format(
-                    arg
-                )
-                arg_vars.append(callback.args[i])
-            else:
-                sv = ScratchVar()
-                sv._subroutineCreated = True
-                arg_vars.append(sv)
-        return arg_vars
+    # def scratchVars(self, callback: "SubroutineCall" = None) -> List[ScratchVar]:
+    # def scratchVars(self) -> List[ScratchVar]:
+    #     # arg_vars = []
+    #     # for i, arg in enumerate(self.implementationParams.keys()):
+    #     #     if self.isRefArg(arg):
+    #     #         # assert (
+    #     #         #     callback
+    #     #         # ), "internal error: provided no SubroutineCall but have pass-by-ref arg [{}]".format(
+    #     #         #     arg
+    #     #         # )
+
+    #     #         sv = callback.args[i]
+    #     #         # assert isinstance(
+    #     #         #     sv, ScratchVar
+    #     #         # ), "internal error: arg [{}] should be a ScratchVar but instead is a {}".format(
+    #     #         #     arg, type(sv)
+    #     #         # )
+    #     #         sv._by_ref = True
+    #     #     else:
+    #     #         sv = ScratchVar()
+    #     #         sv._by_ref = False
+
+    #     #     arg_vars.append(sv)
+    #     # return arg_vars
+    #     def make_scratch_var(arg):
+    #         sv = ScratchVar()
+    #         sv._by_ref = self.isRefArg(arg)
+    #         return sv
+
+    #     return list(map(make_scratch_var, self.implementationParams.keys()))
 
     def __str__(self):
         return "subroutine#{}".format(self.id)
@@ -200,13 +217,16 @@ class SubroutineCall(Expr):
     def _subroutine_args(self):
         ca = []
         for i, arg in enumerate(self.args):
-            assert isinstance(
-                arg, SubroutineDefinition.PARAM_TYPES
-            ), "cannot interpert arg {} at index {} as call argument because of unexpected Python type {}".format(
-                arg, i, type(arg)
-            )
             if isinstance(arg, Expr):
                 ca.append(arg)
+            elif isinstance(arg, ScratchVar):
+                ca.append(arg.index())
+            else:
+                raise TealInputError(
+                    "cannot interpert arg {} at index {} as call argument because of unexpected Python type {}".format(
+                        arg, i, type(arg)
+                    )
+                )
         return ca
 
     def __teal__(self, options: "CompileOptions"):
@@ -310,17 +330,47 @@ Subroutine.__module__ = "pyteal"
 
 
 def evaluateSubroutine(
-    subroutine: SubroutineDefinition, callback: SubroutineCall = None
+    subroutine: SubroutineDefinition,
+    # subroutine: SubroutineDefinition, callback: SubroutineCall = None
 ) -> SubroutineDeclaration:
-    scratchVars = subroutine.scratchVars(callback=callback)
+    # scratchVars = subroutine.scratchVars()  # callback=callback)
+
+    # def make_scratch_var(arg):
+    #     sv = ScratchVar()
+    #     sv._by_ref = subroutine.isRefArg(arg)
+    #     return sv
+
+    # scratchVars = list(map(make_scratch_var, subroutine.implementationParams.keys()))
+
     loadedArgs = []
     argumentVars = []
-    for var in scratchVars:
-        if var._subroutineCreated:
-            loadedArgs.append(var.load())
-            argumentVars.append(var)
+    for arg in subroutine.implementationParams.keys():
+        # TODO: with the variable name "arg" in-hand, we could add labels to ScratchVars
+        new_sv = ScratchVar()  # increment nextSlotID
+        if subroutine.isRefArg(arg):
+            sv = ScratchVar(TealType.uint64)
+            sv.store(new_sv.index())
+            loadedArgs.append(sv)
         else:
-            loadedArgs.append(var)
+            sv = new_sv
+            loadedArgs.append(sv.load())
+        argumentVars.append(sv)
+
+    # loadedArgs = []
+    # argumentVars = []
+    # for var in scratchVars:
+    #     sv = var
+    #     if sv._by_ref:
+    #         sv = ScratchVar(TealType.uint64)
+    #         sv._by_ref = True
+    #         sv.store(var.index())
+    #     loadedArgs.append(sv if sv._by_ref else sv.load())
+    #     argumentVars.append(sv)
+    #     # if var._subroutineCreated:
+    #     #     loadedArgs.append(var.load())
+    #     #     argumentVars.append(var)
+    #     # else:
+    #     #     loadedArgs.append(var)
 
     subroutineBody = subroutine.implementation(*loadedArgs)
 

@@ -1,3 +1,4 @@
+from ast import Sub
 from pathlib import Path
 
 from pyteal import *
@@ -5,6 +6,7 @@ from pyteal.types import require_type
 
 RETURN_PREFIX = Bytes("base16", "151f7c75")
 
+identity_selector = MethodSignature("identity(uint64)uint64")
 itchy_selector = MethodSignature("itchy(uint64,uint64)uint64")
 increment_selector = MethodSignature("increment(uint64)void")
 fib1_selector = MethodSignature("fib1(uint64)uint64")
@@ -12,6 +14,54 @@ fib2_selector = MethodSignature("fib2(uint64)uint64")
 linearTransformation_selector = MethodSignature(
     "linearTransformation(uint64,uint64,uint64,uint64,uint64,uint64)void"
 )
+
+
+@Subroutine(TealType.uint64)
+def xyz(x: ScratchVar, y: ScratchVar, z):
+    return Seq(
+        x.store(x.load() + Int(1)),
+        y.store(y.load() + Int(2)),
+        x.load() + y.load() + z,
+    )
+
+
+def approval_xyz():
+    x = ScratchVar(TealType.uint64, Int(42))
+    y = ScratchVar(TealType.uint64, Int(43))
+    return Seq(
+        [
+            x.store(Int(1)),
+            y.store(Int(2)),
+            Pop(xyz(x, y, Int(3))),
+            Pop(xyz(x, y, x.load() + y.load())),
+            Pop(xyz(x, y, x.load() + y.load())),
+            Approve(),
+        ]
+    )
+
+
+@Subroutine(TealType.none)
+def identity(x: ScratchVar):
+    return x.store(x.load())
+
+
+def approval_identity():
+    x = ScratchVar(TealType.uint64, Int(42))
+    y = ScratchVar(TealType.uint64, Int(43))
+    return Seq(
+        [
+            x.store(Int(11)),
+            identity(x),
+            y.store(Int(17)),
+            identity(y),
+            x.store(Int(99)),
+            identity(x),
+            y.store(Int(101)),
+            identity(y),
+            Approve(),
+        ]
+    )
+
 
 # Currently broken
 #
@@ -279,26 +329,33 @@ def clear():
 
 
 if __name__ == "__main__":
-    for n in range(43):
-        assert pyfib1(n) == pyfib2(n), f"oops {n}: {pyfib1(n)} != {pyfib2(n)}"
-        print(f"pyfib({n}) = {pyfib1(n):,}")
+    # for n in range(43):
+    #     assert pyfib1(n) == pyfib2(n), f"oops {n}: {pyfib1(n)} != {pyfib2(n)}"
+    #     print(f"pyfib({n}) = {pyfib1(n):,}")
 
     teal = Path.cwd() / "examples" / "application" / "teal"
 
     with open(teal / "clear.teal", "w") as f:
         f.write(compileTeal(clear(), mode=Mode.Application, version=6))
 
-    with open(teal / "increment.teal", "w") as f:
-        f.write(compileTeal(approval_increment(), mode=Mode.Application, version=6))
+    # with open(teal / "increment.teal", "w") as f:
+    #     f.write(compileTeal(approval_increment(), mode=Mode.Application, version=6))
 
-    with open(teal / "matrix.teal", "w") as f:
-        f.write(compileTeal(approval_trans(), mode=Mode.Application, version=6))
+    # with open(teal / "matrix.teal", "w") as f:
+    #     f.write(compileTeal(approval_trans(), mode=Mode.Application, version=6))
 
-    with open(teal / "add100.teal", "w") as f:
-        f.write(compileTeal(approval_add100(), mode=Mode.Application, version=6))
+    # with open(teal / "add100.teal", "w") as f:
+    #     f.write(compileTeal(approval_add100(), mode=Mode.Application, version=6))
 
-    with open(teal / "approval1.teal", "w") as f:
-        f.write(compileTeal(approval_fib2(), mode=Mode.Application, version=6))
+    # with open(teal / "approval1.teal", "w") as f:
+    #     f.write(compileTeal(approval_fib2(), mode=Mode.Application, version=6))
 
     # with open(teal / "itch_scratcher.teal", "w") as f:
     #     f.write(compileTeal(approval_itchy(), mode=Mode.Application, version=6))
+
+    # with open(teal / "repetition.teal", "w") as f:
+    #     f.write(compileTeal(approval_identity(), mode=Mode.Application, version=6))
+
+    compiled = compileTeal(approval_xyz(), mode=Mode.Application, version=6)
+    with open(teal / "xyz.teal", "w") as f:
+        f.write(compiled)

@@ -160,7 +160,7 @@ def compileSubroutine(
     newSubroutines = referencedSubroutines - subroutineMapping.keys()
     for subroutine in sorted(newSubroutines, key=lambda subroutine: subroutine.id):
         cb = subroutineCallbacks[subroutine]
-        declaration = subroutine.getDeclaration(callback=cb)
+        declaration = subroutine.getDeclaration()  # callback=cb)
         compileSubroutine(
             declaration,
             options,

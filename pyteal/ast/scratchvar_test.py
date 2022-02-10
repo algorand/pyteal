@@ -11,15 +11,15 @@ options = CompileOptions()
 def test_scratchvar_init():
     myvar_default = ScratchVar()
     assert not myvar_default.slot.dynamic()
-    assert not myvar_default._subroutineCreated
+    assert not myvar_default._by_ref
 
     myvar_explicit = ScratchVar(slotId=42)
     assert not myvar_explicit.slot.dynamic()
-    assert not myvar_explicit._subroutineCreated
+    assert not myvar_explicit._by_ref
 
     myvar_from_stack = ScratchVar(slotId=Int(42))
     assert myvar_from_stack.slot.dynamic()
-    assert not myvar_from_stack._subroutineCreated
+    assert not myvar_from_stack._by_ref
 
 
 def test_scratchvar_type():
@@ -118,3 +118,19 @@ def test_scratchvar_assign_load():
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+
+def test_scratchvar_index():
+    five_at42 = ScratchVar(TealType.uint64, 42)
+    # five_at42.load(Int(5))
+    assert not five_at42.slot.dynamic()
+    assert isinstance(five_at42.index(), Int)
+    assert five_at42.index().value == 42
+
+    at_256 = ScratchVar(TealType.uint64)
+    assert at_256.index().value == 0
+
+    # five_at11 = ScratchVar(5, Int(11))
+    # assert five_at11.slot.dynamic()
+    # assert isinstance(five_at11.index(), Int)
+    # assert five_at11.index().value == 11

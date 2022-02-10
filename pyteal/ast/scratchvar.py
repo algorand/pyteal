@@ -45,7 +45,7 @@ class ScratchVar:
         )
 
         self.type = type
-        self._subroutineCreated = False
+        self._by_ref = False
 
     def storage_type(self) -> TealType:
         """Get the type of expressions that can be stored in this ScratchVar."""
@@ -64,9 +64,8 @@ class ScratchVar:
         """Load value from Scratch Space"""
         return self.slot.load(self.type)
 
-    # TODO: Can I get this to work?
-    # def index(self) -> Expr:
-    #     return self.slot.id if self.slot.dynamic() else Int(self.slot.id)
+    def index(self) -> Expr:
+        return self.slot.id if self.slot.dynamic() else Int(self.slot.id)
 
 
 ScratchVar.__module__ = "pyteal"

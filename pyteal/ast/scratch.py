@@ -235,6 +235,8 @@ class ScratchStackStore(Expr):
     """
 
     def __init__(self, slot: ScratchSlot):
+        # TODO: ensure that slot is not dynamic... here or elsewhere
+
         """Create a new ScratchStackStore expression.
 
         Args:
