@@ -14,13 +14,11 @@ from ..expr import Expr
 from ..seq import Seq
 from ..int import Int
 from ..if_ import If
-from ..for_ import For
 from ..binaryexpr import ExtractUint16
 from ..naryexpr import Concat
 from ..substring import Extract, Substring, Suffix
-from ..scratchvar import ScratchVar
 
-from .type import Type, ComputedType
+from .type import Type, ComputedType, substringForDecoding
 from .tuple import encodeTuple
 from .bool import Bool, boolSequenceLength
 from .uint import NUM_BITS_IN_BYTE, Uint16
@@ -49,17 +47,9 @@ class Array(Type, Generic[T]):
         endIndex: Expr = None,
         length: Expr = None
     ) -> Expr:
-        if startIndex is None:
-            assert length is None
-            assert endIndex is None
-            extracted = encoded
-        elif length is not None:
-            assert endIndex is None
-            extracted = Extract(encoded, startIndex, length)
-        elif endIndex is not None:
-            extracted = Substring(encoded, startIndex, endIndex)
-        else:
-            extracted = Suffix(encoded, startIndex)
+        extracted = substringForDecoding(
+            encoded, startIndex=startIndex, endIndex=endIndex, length=length
+        )
         return self.stored_value.store(extracted)
 
     def set(self, values: Sequence[T]) -> Expr:

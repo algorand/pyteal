@@ -6,16 +6,16 @@ from typing import (
 )
 
 from ...types import TealType
+from ...errors import TealInputError
 from ..expr import Expr
 from ..seq import Seq
 from ..int import Int
 from ..unaryexpr import Len
 from ..binaryexpr import ExtractUint16
 from ..naryexpr import Concat
-from ..substring import Extract, Substring, Suffix
 from ..scratchvar import ScratchVar
 
-from .type import Type, ComputedType
+from .type import Type, ComputedType, substringForDecoding
 from .bool import (
     Bool,
     consecutiveBools,
@@ -219,22 +219,14 @@ class Tuple(Type):
         endIndex: Expr = None,
         length: Expr = None
     ) -> Expr:
-        if startIndex is None:
-            assert length is None
-            assert endIndex is None
-            extracted = encoded
-        elif length is not None:
-            assert endIndex is None
-            extracted = Extract(encoded, startIndex, length)
-        elif endIndex is not None:
-            extracted = Substring(encoded, startIndex, endIndex)
-        else:
-            extracted = Suffix(encoded, startIndex)
+        extracted = substringForDecoding(
+            encoded, startIndex=startIndex, endIndex=endIndex, length=length
+        )
         return self.stored_value.store(extracted)
 
     def set(self, *values: Type) -> Expr:
         if len(self.valueTypes) != len(values):
-            raise ValueError(
+            raise TealInputError(
                 "Incorrect length for values. Expected {}, got {}".format(
                     len(self.valueTypes), len(values)
                 )
@@ -243,9 +235,7 @@ class Tuple(Type):
             self.valueTypes[i].has_same_type_as(values[i])
             for i in range(len(self.valueTypes))
         ):
-            raise ValueError(
-                "Input values do not match type"
-            )  # TODO: add more to error message
+            raise TealInputError("Input values do not match type")
         return self.stored_value.store(encodeTuple(values))
 
     def encode(self) -> Expr:
@@ -258,6 +248,8 @@ class Tuple(Type):
         return Int(self.length_static())
 
     def __getitem__(self, index: int) -> "TupleElement":
+        if not (0 <= index < self.length_static()):
+            raise TealInputError("Index out of bounds")
         return TupleElement(self, index)
 
     def __str__(self) -> str:

@@ -2,8 +2,9 @@ from typing import NamedTuple, List, Callable
 import pytest
 
 from ... import *
-from .tuple import encodeTuple, indexTuple
+from .tuple import encodeTuple, indexTuple, TupleElement
 from .bool import encodeBoolSequence
+from .type import substringForDecoding
 
 # this is not necessary but mypy complains if it's not included
 from ... import CompileOptions
@@ -278,48 +279,270 @@ def test_indexTuple():
 
 
 def test_Tuple_has_same_type_as():
-    pass
+    tupleA = abi.Tuple(abi.Uint64(), abi.Uint32(), abi.Bool())
+    tupleB = abi.Tuple(abi.Uint64(), abi.Uint32(), abi.Bool())
+    tupleC = abi.Tuple(abi.Bool(), abi.Uint64(), abi.Uint32())
+    assert tupleA.has_same_type_as(tupleA)
+    assert tupleA.has_same_type_as(tupleB)
+    assert not tupleA.has_same_type_as(tupleC)
 
 
 def test_Tuple_new_instance():
-    pass
+    tupleA = abi.Tuple(abi.Uint64(), abi.Uint32(), abi.Bool())
+    assert tupleA.new_instance().has_same_type_as(tupleA)
 
 
 def test_Tuple_is_dynamic():
-    pass
+    assert not abi.Tuple().is_dynamic()
+    assert not abi.Tuple(abi.Uint64(), abi.Uint32(), abi.Bool()).is_dynamic()
+    assert abi.Tuple(abi.Uint16(), abi.DynamicArray(abi.Uint8())).is_dynamic()
 
 
 def test_tuple_str():
-    pass
+    assert str(abi.Tuple()) == "()"
+    assert str(abi.Tuple(abi.Tuple())) == "(())"
+    assert str(abi.Tuple(abi.Tuple(), abi.Tuple())) == "((),())"
+    assert (
+        str(abi.Tuple(abi.Uint64(), abi.Uint32(), abi.Bool())) == "(uint64,uint32,bool)"
+    )
+    assert (
+        str(abi.Tuple(abi.Bool(), abi.Uint64(), abi.Uint32())) == "(bool,uint64,uint32)"
+    )
+    assert (
+        str(abi.Tuple(abi.Uint16(), abi.DynamicArray(abi.Uint8())))
+        == "(uint16,uint8[])"
+    )
 
 
 def test_Tuple_byte_length_static():
-    pass
+    assert abi.Tuple().byte_length_static() == 0
+    assert abi.Tuple(abi.Tuple()).byte_length_static() == 0
+    assert abi.Tuple(abi.Tuple(), abi.Tuple()).byte_length_static() == 0
+    assert (
+        abi.Tuple(abi.Uint64(), abi.Uint32(), abi.Bool()).byte_length_static()
+        == 8 + 4 + 1
+    )
+    assert (
+        abi.Tuple(
+            abi.Uint64(),
+            abi.Uint32(),
+            abi.Bool(),
+            abi.Bool(),
+            abi.Bool(),
+            abi.Bool(),
+            abi.Bool(),
+            abi.Bool(),
+            abi.Bool(),
+            abi.Bool(),
+        ).byte_length_static()
+        == 8 + 4 + 1
+    )
+    assert (
+        abi.Tuple(
+            abi.Uint64(),
+            abi.Uint32(),
+            abi.Bool(),
+            abi.Bool(),
+            abi.Bool(),
+            abi.Bool(),
+            abi.Bool(),
+            abi.Bool(),
+            abi.Bool(),
+            abi.Bool(),
+            abi.Bool(),
+        ).byte_length_static()
+        == 8 + 4 + 2
+    )
+
+    with pytest.raises(ValueError):
+        abi.Tuple(abi.Uint16(), abi.DynamicArray(abi.Uint8())).byte_length_static()
 
 
 def test_Tuple_decode():
-    pass
+    tupleType = abi.Tuple()
+    for startIndex in (None, Int(1)):
+        for endIndex in (None, Int(2)):
+            for length in (None, Int(3)):
+                encoded = Bytes("encoded")
+
+                if endIndex is not None and length is not None:
+                    with pytest.raises(TealInputError):
+                        tupleType.decode(
+                            encoded,
+                            startIndex=startIndex,
+                            endIndex=endIndex,
+                            length=length,
+                        )
+                    continue
+
+                expr = tupleType.decode(
+                    encoded, startIndex=startIndex, endIndex=endIndex, length=length
+                )
+                assert expr.type_of() == TealType.none
+                assert not expr.has_return()
+
+                expectedExpr = tupleType.stored_value.store(
+                    substringForDecoding(
+                        encoded, startIndex=startIndex, endIndex=endIndex, length=length
+                    )
+                )
+                expected, _ = expectedExpr.__teal__(options)
+                expected.addIncoming()
+                expected = TealBlock.NormalizeBlocks(expected)
+
+                actual, _ = expr.__teal__(options)
+                actual.addIncoming()
+                actual = TealBlock.NormalizeBlocks(actual)
+
+                with TealComponent.Context.ignoreExprEquality():
+                    assert actual == expected
 
 
 def test_Tuple_set():
-    pass
+    tupleType = abi.Tuple(abi.Uint8(), abi.Uint16(), abi.Uint32())
+    uint8 = abi.Uint8()
+    uint16 = abi.Uint16()
+    uint32 = abi.Uint32()
+
+    with pytest.raises(TealInputError):
+        tupleType.set()
+
+    with pytest.raises(TealInputError):
+        tupleType.set(uint8, uint16)
+
+    with pytest.raises(TealInputError):
+        tupleType.set(uint8, uint16, uint32, uint32)
+
+    with pytest.raises(TealInputError):
+        tupleType.set(uint8, uint32, uint16)
+
+    with pytest.raises(TealInputError):
+        tupleType.set(uint8, uint16, uint16)
+
+    expr = tupleType.set(uint8, uint16, uint32)
+    assert expr.type_of() == TealType.none
+    assert not expr.has_return()
+
+    expectedExpr = tupleType.stored_value.store(encodeTuple([uint8, uint16, uint32]))
+    expected, _ = expectedExpr.__teal__(options)
+    expected.addIncoming()
+    expected = TealBlock.NormalizeBlocks(expected)
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
 
 
 def test_Tuple_encode():
-    pass
+    tupleType = abi.Tuple()
+    expr = tupleType.encode()
+    assert expr.type_of() == TealType.bytes
+    assert not expr.has_return()
+
+    expected = TealSimpleBlock([TealOp(None, Op.load, tupleType.stored_value.slot)])
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
 
 
 def test_Tuple_length_static():
-    pass
+    tests: List[List[abi.Type]] = [
+        [],
+        [abi.Uint64()],
+        [abi.Tuple(abi.Uint64(), abi.Uint64()), abi.Uint64()],
+        [abi.Bool()] * 8,
+    ]
+
+    for i, test in enumerate(tests):
+        tupleType = abi.Tuple(*test)
+        actual = tupleType.length_static()
+        expected = len(test)
+        assert actual == expected, "Test at index {} failed".format(i)
 
 
 def test_Tuple_length():
-    pass
+    tests: List[List[abi.Type]] = [
+        [],
+        [abi.Uint64()],
+        [abi.Tuple(abi.Uint64(), abi.Uint64()), abi.Uint64()],
+        [abi.Bool()] * 8,
+    ]
+
+    for i, test in enumerate(tests):
+        tupleType = abi.Tuple(*test)
+        expr = tupleType.length()
+        assert expr.type_of() == TealType.uint64
+        assert not expr.has_return()
+
+        expectedLength = len(test)
+        expected = TealSimpleBlock([TealOp(None, Op.int, expectedLength)])
+
+        actual, _ = expr.__teal__(options)
+        actual.addIncoming()
+        actual = TealBlock.NormalizeBlocks(actual)
+
+        with TealComponent.Context.ignoreExprEquality():
+            assert actual == expected, "Test at index {} failed".format(i)
 
 
 def test_Tuple_getitem():
-    pass
+    tests: List[List[abi.Type]] = [
+        [],
+        [abi.Uint64()],
+        [abi.Tuple(abi.Uint64(), abi.Uint64()), abi.Uint64()],
+        [abi.Bool()] * 8,
+    ]
+
+    for i, test in enumerate(tests):
+        tupleType = abi.Tuple(*test)
+        for j in range(len(test)):
+            element = tupleType[j]
+            assert type(element) is TupleElement, "Test at index {} failed".format(i)
+            assert element.tuple is tupleType, "Test at index {} failed".format(i)
+            assert element.index == j, "Test at index {} failed".format(i)
+
+        with pytest.raises(TealInputError):
+            tupleType[-1]
+
+        with pytest.raises(TealInputError):
+            tupleType[len(test)]
 
 
 def test_TupleElement_store_into():
-    pass
+    tests: List[List[abi.Type]] = [
+        [],
+        [abi.Uint64()],
+        [abi.Tuple(abi.Uint64(), abi.Uint64()), abi.Uint64()],
+        [abi.Bool()] * 8,
+    ]
+
+    for i, test in enumerate(tests):
+        tupleType = abi.Tuple(*test)
+        for j in range(len(test)):
+            element = TupleElement(tupleType, j)
+            output = tupleType.valueTypes[j]
+
+            expr = element.store_into(output)
+            assert expr.type_of() == TealType.none
+            assert not expr.has_return()
+
+            expectedExpr = indexTuple(
+                tupleType.valueTypes, tupleType.encode(), j, output
+            )
+            expected, _ = expectedExpr.__teal__(options)
+            expected.addIncoming()
+            expected = TealBlock.NormalizeBlocks(expected)
+
+            actual, _ = expr.__teal__(options)
+            actual.addIncoming()
+            actual = TealBlock.NormalizeBlocks(actual)
+
+            with TealComponent.Context.ignoreExprEquality():
+                assert actual == expected
