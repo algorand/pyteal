@@ -10,6 +10,7 @@ from typing import (
 from abc import abstractmethod
 
 from ...types import TealType
+from ...errors import TealInputError
 from ..expr import Expr
 from ..seq import Seq
 from ..int import Int
@@ -54,9 +55,7 @@ class Array(Type, Generic[T]):
 
     def set(self, values: Sequence[T]) -> Expr:
         if not all(self._valueType.has_same_type_as(value) for value in values):
-            raise ValueError(
-                "Input values do not match type"
-            )  # TODO: add more to error message
+            raise TealInputError("Input values do not match type")
 
         encoded = encodeTuple(values)
 
@@ -81,6 +80,10 @@ class Array(Type, Generic[T]):
         self, index: Union[int, Expr], length: Expr = None
     ) -> "ArrayElement[T]":
         if type(index) is int:
+            if index < 0 or (
+                self._static_length is not None and index >= self._static_length
+            ):
+                raise TealInputError("Index out of bounds")
             index = Int(index)
         return ArrayElement(self, cast(Expr, index), length)
 
@@ -119,7 +122,7 @@ class StaticArray(Array[T]):
 
     def set(self, values: Sequence[T]) -> Expr:
         if self.length_static() != len(values):
-            raise ValueError(
+            raise TealInputError(
                 "Incorrect length for values. Expected {}, got {}".format(
                     self.length_static(), len(values)
                 )

@@ -10,6 +10,7 @@ from ...errors import TealInputError
 from ..expr import Expr
 from ..seq import Seq
 from ..int import Int
+from ..bytes import Bytes
 from ..unaryexpr import Len
 from ..binaryexpr import ExtractUint16
 from ..naryexpr import Concat
@@ -93,6 +94,9 @@ def encodeTuple(values: Sequence[Type]) -> Expr:
     toConcat = cast(List[Expr], heads)
     if not firstDynamicTail:
         toConcat.append(tail_holder.load())
+
+    if len(toConcat) == 0:
+        return Bytes("")
 
     return Concat(*toConcat)
 
