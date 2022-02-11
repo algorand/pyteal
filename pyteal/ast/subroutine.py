@@ -343,18 +343,28 @@ def evaluateSubroutine(
     # scratchVars = list(map(make_scratch_var, subroutine.implementationParams.keys()))
 
     loadedArgs = []
-    argumentVars = []
+    bodyArgs = []
     for arg in subroutine.implementationParams.keys():
         # TODO: with the variable name "arg" in-hand, we could add labels to ScratchVars
         new_sv = ScratchVar()  # increment nextSlotID
         if subroutine.isRefArg(arg):
-            sv = ScratchVar(TealType.uint64)
-            sv.store(new_sv.index())
-            loadedArgs.append(sv)
+            body_sv = ScratchVar(TealType.uint64)
+            body_sv.store(new_sv.index())
+            # loadedArgs.append(body_sv)
+
+            loadedArgs.append(body_sv.newByRef(TealType.anytype))
+            # TODO: instead of adding sv to loadedArgs, add SubroutineScratchVar(sv)
         else:
-            sv = new_sv
-            loadedArgs.append(sv.load())
-        argumentVars.append(sv)
+            body_sv = new_sv
+            loadedArgs.append(body_sv.load())
+
+        bodyArgs.append(body_sv)
+
+    """
+    SubroutineScratchVar should have the API:
+        * x.load()   --> op.Load(self.sv.index()), op.Loads()
+        * x.store(e) --> op.Load(self.sv.index()), op.swap(), op.stores()
+    """
 
     # loadedArgs = []
     # argumentVars = []
@@ -382,7 +392,7 @@ def evaluateSubroutine(
         )
 
     # need to reverse order of argumentVars because the last argument will be on top of the stack
-    bodyOps = [var.slot.store() for var in argumentVars[::-1]]
+    bodyOps = [var.slot.store() for var in bodyArgs[::-1]]
     bodyOps.append(subroutineBody)
 
     return SubroutineDeclaration(subroutine, Seq(bodyOps))

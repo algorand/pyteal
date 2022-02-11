@@ -11,15 +11,32 @@ options = CompileOptions()
 def test_scratchvar_init():
     myvar_default = ScratchVar()
     assert not myvar_default.slot.dynamic()
-    assert not myvar_default._by_ref
+    assert not myvar_default.slot.byRef
+    assert not myvar_default.byRef()
 
     myvar_explicit = ScratchVar(slotId=42)
     assert not myvar_explicit.slot.dynamic()
-    assert not myvar_explicit._by_ref
+    assert not myvar_explicit.slot.byRef
+    assert not myvar_explicit.byRef()
 
     myvar_from_stack = ScratchVar(slotId=Int(42))
     assert myvar_from_stack.slot.dynamic()
-    assert not myvar_from_stack._by_ref
+    assert not myvar_from_stack.slot.byRef
+    assert not myvar_from_stack.byRef()
+
+    myvar_default = ScratchVar(ref=myvar_explicit)
+    assert not myvar_default.slot.dynamic()
+    assert myvar_default.slot.byRef
+    assert myvar_default.byRef()
+
+    with pytest.raises(TealInputError):
+        ScratchVar("fourty two")
+
+    with pytest.raises(TealInternalError):
+        ScratchVar(slotId=42, ref=myvar_explicit)
+
+    with pytest.raises(TealInternalError):
+        ScratchVar(ref="hello")
 
 
 def test_scratchvar_type():

@@ -1,8 +1,11 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
+from pyteal.ast.unaryexpr import UnaryExpr
+
+from pyteal.ir.tealsimpleblock import TealSimpleBlock
 
 from ..types import TealType
 from ..config import NUM_SLOTS
-from ..errors import TealInputError
+from ..errors import TealInputError, TealInternalError
 
 from .expr import Expr
 
@@ -13,11 +16,15 @@ if TYPE_CHECKING:
 class Slot:
     """Abstract Slot class representing the allocation of a scratch space slot."""
 
+    def __init__(self, byRef: bool):
+        """Consructor for abstract Slot to keep track of internal information"""
+        self.byRef = byRef
+
     def dynamic(self) -> bool:
         """Indicates whether the slotId is computed at execution time based on a provided expression."""
         pass
 
-    def store(self, value: Expr = None) -> Expr:
+    def store(self, value: Expr = None, byRef: bool = True) -> Expr:
         """Get an expression to store a value in this slot.
 
         Args:
@@ -26,17 +33,19 @@ class Slot:
             semantics of PyTeal, only use if you know what you're doing.
         """
         if value is not None:
-            return ScratchStore(self, value)
-        return ScratchStackStore(self)
+            return ScratchStore(self, value, byRef=byRef)
+        return ScratchStackStore(self, byRef=byRef)
 
-    def load(self, type: TealType = TealType.anytype) -> "ScratchLoad":
+    def load(
+        self, type: TealType = TealType.anytype, byRef: bool = False
+    ) -> "ScratchLoad":
         """Get an expression to load a value from this slot.
 
         Args:
             type (optional): The type being loaded from this slot, if known. Defaults to
                 TealType.anytype.
         """
-        return ScratchLoad(self, type)
+        return ScratchLoad(self, type, byRef=byRef)
 
     # TODO: Can I get this to work?
     # def index(self) -> Expr:
@@ -44,7 +53,7 @@ class Slot:
     #     pass
 
     def __repr__(self):
-        return "ScratchSlot({})".format(self.id)
+        return "ScratchSlot({}{})".format(self.id, ", byRef=True" if self.byRef else "")
 
     def __str__(self):
         return "slot#{}".format(self.id)
@@ -59,14 +68,14 @@ Slot.__module__ = "pyteal"
 class DynamicSlot(Slot):
     """A Slot whose id is defined dynamically via an expression"""
 
-    def __init__(self, slotIdExpr: Expr) -> None:
+    def __init__(self, slotIdExpr: Expr, byRef: bool = False) -> None:
         """Initializes a scratch slot whose id is determined at runtime.
 
         Args:
             slotIdExpr: An expression evaluating to TealType.uint64 in the range of 0-255
             and representing a scratch slot id.
         """
-        super().__init__()
+        super().__init__(byRef=byRef)
 
         assert (
             slotIdExpr is not None
@@ -104,14 +113,15 @@ class ScratchSlot(Slot):
     # Slot ids under 256 are manually reserved slots
     nextSlotId = NUM_SLOTS
 
-    def __init__(self, requestedSlotId: int = None) -> None:
+    def __init__(self, requestedSlotId: int = None, byRef: bool = False) -> None:
         """Initializes a scratch slot with a particular id
 
         Args:
             requestedSlotId (optional): A scratch slot id that the compiler must store the value.
             This id may be a Python int in the range [0-256).
         """
-        super().__init__()
+        super().__init__(byRef=byRef)
+
         if requestedSlotId is None:
             self.id = ScratchSlot.nextSlotId
             ScratchSlot.nextSlotId += 1
@@ -122,14 +132,14 @@ class ScratchSlot(Slot):
             ), "requestedSlotId must be an int but was provided {}".format(
                 type(requestedSlotId)
             )
-            if requestedSlotId < 0 or requestedSlotId >= NUM_SLOTS:
+            if not (self.byRef or 0 <= requestedSlotId < NUM_SLOTS):
                 raise TealInputError(
                     "Invalid slot ID {}, should be in [0, {})".format(
                         requestedSlotId, NUM_SLOTS
                     )
                 )
             self.id = requestedSlotId
-            self.isReservedSlot = True
+            self.isReservedSlot = not self.byRef
 
     def dynamic(self) -> bool:
         return False
@@ -145,7 +155,9 @@ ScratchSlot.__module__ = "pyteal"
 class ScratchLoad(Expr):
     """Expression to load a value from scratch space."""
 
-    def __init__(self, slot: Slot, type: TealType = TealType.anytype):
+    def __init__(
+        self, slot: Slot, type: TealType = TealType.anytype, byRef: bool = False
+    ):
         """Create a new ScratchLoad expression.
 
         Args:
@@ -156,12 +168,13 @@ class ScratchLoad(Expr):
         super().__init__()
         self.slot = slot
         self.type = type
+        self.byRef = byRef
 
     def __str__(self):
         return "(Load {})".format(self.slot)
 
     def __teal__(self, options: "CompileOptions"):
-        from ..ir import TealOp, Op, TealBlock
+        from ..ir import TealOp, Op, TealBlock, TealSimpleBlock
 
         if self.slot.dynamic():
             load_op = Op.loads
@@ -173,7 +186,13 @@ class ScratchLoad(Expr):
             block_args = []
 
         op = TealOp(self, load_op, *op_args)
-        return TealBlock.FromOp(options, op, *block_args)
+        start, opBlock = TealBlock.FromOp(options, op, *block_args)
+
+        if self.byRef:
+            opBlock = TealSimpleBlock([TealOp(self, Op.loads)])
+            cast(TealSimpleBlock, start).setNextBlock(opBlock)
+
+        return start, opBlock
 
     def type_of(self):
         return self.type
@@ -188,7 +207,7 @@ ScratchLoad.__module__ = "pyteal"
 class ScratchStore(Expr):
     """Expression to store a value in scratch space."""
 
-    def __init__(self, slot: ScratchSlot, value: Expr):
+    def __init__(self, slot: ScratchSlot, value: Expr, byRef: bool = False):
         """Create a new ScratchStore expression.
 
         Args:
@@ -198,12 +217,66 @@ class ScratchStore(Expr):
         super().__init__()
         self.slot = slot
         self.value = value
+        self.byRef = byRef
 
     def __str__(self):
         return "(Store {} {})".format(self.slot, self.value)
 
     def __teal__(self, options: "CompileOptions"):
         from ..ir import TealOp, Op, TealBlock
+
+        class UnaryPlus(Expr):
+            def __init__(self, op, arg, val):
+                super().__init__()
+                self.op = op
+                self.arg = arg
+                self.val = val
+
+            def __teal__(self, options):
+                return TealBlock.FromOp(
+                    options, TealOp(self, self.op, self.arg), self.val
+                )
+
+            def type_of(self) -> TealType:
+                pass
+
+            def has_return(self) -> bool:
+                pass
+
+            def __str__(self) -> str:
+                pass
+
+        if self.byRef:
+            loader = UnaryPlus(Op.load, self.slot, self.value)
+            swapper = UnaryPlus(Op.swap, self.slot, loader)
+            return TealBlock.FromOp(options, TealOp(self, Op.stores), swapper)
+
+            op_args = []
+            block_args = [self.slot.id, self.value]
+            # def block(op, *op_args, *block_args):
+            #     return TealBlock.FromOp(options, TealOp(self, op, *op_args, *block_args))
+
+            # load = UnaryExpr.opToTeal(Op.load)
+
+            # def Ustore(slot, arg) -> UnaryExpr:
+            #     return UnaryExpr(Op.)
+
+            # a, b = TealBlock.FromOp(self, TealOp(self, Op.load, self.slot))
+            # c, _ = TealBlock.FromOp(
+            #     options, TealOp(self, Op.store, self.slot), self.value
+            # )
+            # cast(TealSimpleBlock, c).setNextBlock(a)
+            # return a, b
+
+            # trythis = TealSimpleBlock(
+            #     [
+            #         TealOp(self, Op.stores),
+            #         TealOp(self, Op.swap),
+            #     ]
+            # )
+            # start, opBlock = TealBlock.FromOp(options, TealOp(self, Op.load, self.slot))
+            # trythis.setNextBlock(cast(TealSimpleBlock, start))
+            # return trythis, opBlock
 
         if self.slot.dynamic():
             store_op = Op.stores
@@ -234,7 +307,7 @@ class ScratchStackStore(Expr):
     doing.
     """
 
-    def __init__(self, slot: ScratchSlot):
+    def __init__(self, slot: ScratchSlot, byRef: bool = False):
         # TODO: ensure that slot is not dynamic... here or elsewhere
 
         """Create a new ScratchStackStore expression.

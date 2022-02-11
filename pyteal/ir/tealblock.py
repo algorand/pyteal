@@ -99,11 +99,13 @@ class TealBlock(ABC):
         for op in self.ops:
             if op.getOp() == Op.store:
                 for slot in op.getSlots():
+                    if slot.byRef:
+                        continue
                     currentSlotsInUse.add(slot)
 
             if op.getOp() == Op.load:
                 for slot in op.getSlots():
-                    if slot not in currentSlotsInUse:
+                    if slot not in currentSlotsInUse and not slot.byRef:
                         e = TealCompileError(
                             "Scratch slot load occurs before store", op.expr
                         )

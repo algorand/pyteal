@@ -20,21 +20,30 @@ linearTransformation_selector = MethodSignature(
 def xyz(x: ScratchVar, y: ScratchVar, z):
     return Seq(
         x.store(x.load() + Int(1)),
+        # x.load():         load 1; loads;
+        # + Int(1):         int 1; +;
+        # x.store(...):     load 1; swap; stores;
         y.store(y.load() + Int(2)),
         x.load() + y.load() + z,
     )
 
 
 def approval_xyz():
-    x = ScratchVar(TealType.uint64, Int(42))
-    y = ScratchVar(TealType.uint64, Int(43))
+    x = ScratchVar(TealType.uint64, 45)
+    y = ScratchVar(TealType.uint64, 46)
+    a = ScratchVar(TealType.uint64, 142)
+    b = ScratchVar(TealType.uint64, 143)
     return Seq(
         [
+            a.store(Int(100)),
+            b.store(Int(200)),
             x.store(Int(1)),
             y.store(Int(2)),
             Pop(xyz(x, y, Int(3))),
             Pop(xyz(x, y, x.load() + y.load())),
             Pop(xyz(x, y, x.load() + y.load())),
+            Pop(xyz(a, b, Int(177))),
+            Pop(a.load() + b.load()),
             Approve(),
         ]
     )

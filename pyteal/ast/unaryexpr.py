@@ -21,6 +21,10 @@ class UnaryExpr(Expr):
         self.outputType = outputType
         self.arg = arg
 
+    @classmethod
+    def opToTeal(cls, op, arg, options):
+        return cls(op, TealType.any, TealType.any, arg).__teal__(options)
+
     def __teal__(self, options: "CompileOptions"):
         verifyTealVersion(
             self.op.min_version,
