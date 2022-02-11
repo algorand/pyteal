@@ -33,6 +33,16 @@ class Expr(ABC):
         ttype: TealType = None,
         has_return: bool = None,
     ):
+        """Helper method for creating anonymous expressions. For Example:
+        >>> parent_expr = some Expr object (e.g. Self if you're in a Expr subtype)
+        >>> pop3 = parent_expr.chainOp(
+                Op.pop, [], []
+            ).chainOp(
+                Op.pop, [], []
+            ).chainOp(
+                Op.pop, [], []
+            )
+        """
         return self.fromOp(
             self,
             options,
