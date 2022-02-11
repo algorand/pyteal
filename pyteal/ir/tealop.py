@@ -8,13 +8,14 @@ from ..errors import TealInternalError
 if TYPE_CHECKING:
     from ..ast import Expr, ScratchSlot, SubroutineDefinition
 
+IMMEDIATE_ARG_TYPE = Union[
+    int, str, LabelReference, "ScratchSlot", "SubroutineDefinition"
+]
+
 
 class TealOp(TealComponent):
     def __init__(
-        self,
-        expr: Optional["Expr"],
-        op: Op,
-        *args: Union[int, str, LabelReference, "ScratchSlot", "SubroutineDefinition"]
+        self, expr: Optional["Expr"], op: Op, *args: IMMEDIATE_ARG_TYPE
     ) -> None:
         super().__init__(expr)
         self.op = op

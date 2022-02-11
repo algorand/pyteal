@@ -1,3 +1,4 @@
+import tty
 from typing import TYPE_CHECKING, cast
 from pyteal.ast.unaryexpr import UnaryExpr
 
@@ -236,15 +237,27 @@ class ScratchStore(Expr):
 
         ttype = self.type if self.type else TealType.any
         if self.byRef:
-            chained = UnaryExpr(
-                Op.load,
-                ttype,
-                TealType.anytype,
-                self.value,
-                self.slot,
-            ).chain(Op.swap, TealType.anytype, TealType.anytype, self.slot)
+            load_expr = Expr.fromOp(
+                self, options, Op.load, [self.slot], [], ttype=TealType.uint64
+            )
+            stores_expr = Expr.fromOp(
+                self,
+                options,
+                Op.stores,
+                [],
+                [load_expr, self.value],
+                ttype=TealType.none,
+            )
+            return stores_expr.__teal__(options)
 
-            return TealBlock.FromOp(options, TealOp(self, Op.stores), chained)
+        #     chained = UnaryExpr(
+        #         Op.load,
+        #         ttype,
+        #         TealType.anytype,
+        #         self.value,
+        #         self.slot,
+        #     ).chain(Op.swap, TealType.anytype, TealType.anytype, self.slot)
+        #     return TealBlock.FromOp(options, TealOp(self, Op.stores), chained)
 
         if self.slot.dynamic():
             store_op = Op.stores

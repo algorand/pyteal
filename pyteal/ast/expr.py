@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
-from enum import Enum
-from typing import Tuple, List, TYPE_CHECKING
+from typing import Tuple, List, Union, TYPE_CHECKING
 
+from ..ir import TealBlock, TealSimpleBlock, Op, tealop
 from ..types import TealType
-from ..ir import TealBlock, TealSimpleBlock
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
@@ -12,6 +11,8 @@ if TYPE_CHECKING:
 class Expr(ABC):
     """Abstract base class for PyTeal expressions."""
 
+    ANONYMOUS_EXPR_CLASS_COUNT = 0
+
     def __init__(self):
         import traceback
 
@@ -19,6 +20,61 @@ class Expr(ABC):
 
     def getDefinitionTrace(self) -> List[str]:
         return self.trace
+
+    @classmethod
+    def fromOp(
+        cls,
+        parent: Union["Expr", None],
+        options: "CompileOptions",
+        op: Op,
+        op_args: List[tealop.IMMEDIATE_ARG_TYPE],
+        block_args: List["Expr"],
+        type_prefix: str = "AnonymousExpr",
+        ttype: TealType = None,
+        has_return: bool = None,
+    ) -> "Expr":
+        type_name = "{}_{}".format(type_prefix, cls.ANONYMOUS_EXPR_CLASS_COUNT + 1)
+
+        def __str__(_):
+            return "{}(op={}, op_args={}, block_args={})".format(
+                type_name, op, op_args, block_args
+            )
+
+        def __init__(self):
+            # TealOp:
+            self.op = tealop.TealOp(parent, op, *op_args)
+            # TealBlock:
+            self.teal_block = TealBlock.FromOp(options, self.op, *block_args)
+            # TealType:
+            self.type = TealType.anytype if ttype is None else ttype
+            # bool:
+            self.has_return = has_return
+
+        def type_of(self):
+            return self.type
+
+        def _has_return(self):
+            return self.has_return
+
+        def __teal__(self, _):
+            return self.teal_block
+
+        expr_type = type(
+            type_name,
+            (cls,),
+            {
+                "__init__": __init__,
+                "type_of": type_of,
+                "has_return": _has_return,
+                "__str__": __str__,
+                "__teal__": __teal__,
+            },
+        )
+
+        expr = expr_type()
+        cls.ANONYMOUS_EXPR_CLASS_COUNT += 1
+
+        return expr
 
     @abstractmethod
     def type_of(self) -> TealType:

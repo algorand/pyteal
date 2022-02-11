@@ -53,7 +53,16 @@ class UnaryExpr(Expr):
         outputType: TealType,
         *immediate_args: Expr,
     ) -> "UnaryExpr":
-        """Allows expressions such as UnaryExpr(...).chain(...).chain(...)"""
+        """Allows expressions such as UnaryExpr(...).chain(...).chain(...)
+
+        For example:
+        ... anExpr ... previously defined
+        >>> (sv := ScratchVar(TealType.uint64)).store(Int(42))
+        >>> chained = (
+                UnaryExpr(Op.load, TealType.uint64, TealType.anytype, anExpr, sv.slot)
+                .chain(Op.swap, TealType.anytype, TealType.anytype, sv.slot)
+            )
+        """
         return type(self)(op, inputType, outputType, self, *immediate_args)
 
 
