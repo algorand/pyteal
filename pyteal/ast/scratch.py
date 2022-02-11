@@ -1,5 +1,7 @@
 import tty
 from typing import TYPE_CHECKING, cast
+
+from attr import has
 from pyteal.ast.unaryexpr import UnaryExpr
 
 from pyteal.ir.tealsimpleblock import TealSimpleBlock
@@ -235,29 +237,14 @@ class ScratchStore(Expr):
     def __teal__(self, options: "CompileOptions"):
         from ..ir import TealOp, Op, TealBlock
 
-        ttype = self.type if self.type else TealType.any
         if self.byRef:
-            load_expr = Expr.fromOp(
-                self, options, Op.load, [self.slot], [], ttype=TealType.uint64
-            )
-            stores_expr = Expr.fromOp(
-                self,
-                options,
-                Op.stores,
-                [],
-                [load_expr, self.value],
-                ttype=TealType.none,
-            )
-            return stores_expr.__teal__(options)
 
-        #     chained = UnaryExpr(
-        #         Op.load,
-        #         ttype,
-        #         TealType.anytype,
-        #         self.value,
-        #         self.slot,
-        #     ).chain(Op.swap, TealType.anytype, TealType.anytype, self.slot)
-        #     return TealBlock.FromOp(options, TealOp(self, Op.stores), chained)
+            def expr(op, op_args, block_args):
+                """Creates an Expr with parent self"""
+                return self.chainOp(options, op, op_args, block_args)
+
+            load_expr = expr(Op.load, [self.slot], [])
+            return expr(Op.stores, [], [load_expr, self.value]).__teal__(options)
 
         if self.slot.dynamic():
             store_op = Op.stores

@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Tuple, List, Union, TYPE_CHECKING
 
+from attr import has
+
 from ..ir import TealBlock, TealSimpleBlock, Op, tealop
 from ..types import TealType
 
@@ -20,6 +22,27 @@ class Expr(ABC):
 
     def getDefinitionTrace(self) -> List[str]:
         return self.trace
+
+    def chainOp(
+        self,
+        options: "CompileOptions",
+        op: Op,
+        op_args: List[tealop.IMMEDIATE_ARG_TYPE],
+        block_args: List["Expr"],
+        type_prefix: str = "AnonymousExpr",
+        ttype: TealType = None,
+        has_return: bool = None,
+    ):
+        return self.fromOp(
+            self,
+            options,
+            op,
+            op_args,
+            block_args,
+            type_prefix=type_prefix,
+            ttype=ttype,
+            has_return=has_return,
+        )
 
     @classmethod
     def fromOp(
