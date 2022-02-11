@@ -24,7 +24,9 @@ class Slot:
         """Indicates whether the slotId is computed at execution time based on a provided expression."""
         pass
 
-    def store(self, value: Expr = None, byRef: bool = True) -> Expr:
+    def store(
+        self, value: Expr = None, byRef: bool = True, ttype: TealType = None
+    ) -> Expr:
         """Get an expression to store a value in this slot.
 
         Args:
@@ -33,7 +35,7 @@ class Slot:
             semantics of PyTeal, only use if you know what you're doing.
         """
         if value is not None:
-            return ScratchStore(self, value, byRef=byRef)
+            return ScratchStore(self, value, byRef=byRef, ttype=ttype)
         return ScratchStackStore(self, byRef=byRef)
 
     def load(
@@ -207,7 +209,13 @@ ScratchLoad.__module__ = "pyteal"
 class ScratchStore(Expr):
     """Expression to store a value in scratch space."""
 
-    def __init__(self, slot: ScratchSlot, value: Expr, byRef: bool = False):
+    def __init__(
+        self,
+        slot: ScratchSlot,
+        value: Expr,
+        byRef: bool = False,
+        ttype: TealType = None,
+    ):
         """Create a new ScratchStore expression.
 
         Args:
@@ -218,6 +226,7 @@ class ScratchStore(Expr):
         self.slot = slot
         self.value = value
         self.byRef = byRef
+        self.type = ttype
 
     def __str__(self):
         return "(Store {} {})".format(self.slot, self.value)
@@ -225,14 +234,15 @@ class ScratchStore(Expr):
     def __teal__(self, options: "CompileOptions"):
         from ..ir import TealOp, Op, TealBlock
 
+        ttype = self.type if self.type else TealType.any
         if self.byRef:
             chained = UnaryExpr(
                 Op.load,
-                TealType.uint64,
-                TealType.none,
+                ttype,
+                TealType.anytype,
                 self.value,
                 self.slot,
-            ).chain(Op.swap, TealType.none, TealType.none, self.slot)
+            ).chain(Op.swap, TealType.anytype, TealType.anytype, self.slot)
 
             return TealBlock.FromOp(options, TealOp(self, Op.stores), chained)
 

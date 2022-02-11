@@ -72,7 +72,6 @@ class ScratchVar:
             )
 
         self.type = type
-        # self._stored = False
 
     def storage_type(self) -> TealType:
         """Get the type of expressions that can be stored in this ScratchVar."""
@@ -85,8 +84,7 @@ class ScratchVar:
             value: The value to store. Must conform to this ScratchVar's type.
         """
         require_type(value, self.type)
-        # self._stored = True
-        return self.slot.store(value, byRef=self.byRef())
+        return self.slot.store(value, byRef=self.byRef(), ttype=self.type)
 
     def load(self) -> ScratchLoad:
         """Load value from Scratch Space"""

@@ -331,56 +331,22 @@ Subroutine.__module__ = "pyteal"
 
 def evaluateSubroutine(
     subroutine: SubroutineDefinition,
-    # subroutine: SubroutineDefinition, callback: SubroutineCall = None
 ) -> SubroutineDeclaration:
-    # scratchVars = subroutine.scratchVars()  # callback=callback)
-
-    # def make_scratch_var(arg):
-    #     sv = ScratchVar()
-    #     sv._by_ref = subroutine.isRefArg(arg)
-    #     return sv
-
-    # scratchVars = list(map(make_scratch_var, subroutine.implementationParams.keys()))
-
     loadedArgs = []
     bodyArgs = []
     for arg in subroutine.implementationParams.keys():
         # TODO: with the variable name "arg" in-hand, we could add labels to ScratchVars
-        new_sv = ScratchVar()  # increment nextSlotID
+        new_sv = ScratchVar(TealType.anytype)  # increment nextSlotID
         if subroutine.isRefArg(arg):
             body_sv = ScratchVar(TealType.uint64)
             body_sv.store(new_sv.index())
-            # loadedArgs.append(body_sv)
 
             loadedArgs.append(body_sv.newByRef(TealType.anytype))
-            # TODO: instead of adding sv to loadedArgs, add SubroutineScratchVar(sv)
         else:
             body_sv = new_sv
             loadedArgs.append(body_sv.load())
 
         bodyArgs.append(body_sv)
-
-    """
-    SubroutineScratchVar should have the API:
-        * x.load()   --> op.Load(self.sv.index()), op.Loads()
-        * x.store(e) --> op.Load(self.sv.index()), op.swap(), op.stores()
-    """
-
-    # loadedArgs = []
-    # argumentVars = []
-    # for var in scratchVars:
-    #     sv = var
-    #     if sv._by_ref:
-    #         sv = ScratchVar(TealType.uint64)
-    #         sv._by_ref = True
-    #         sv.store(var.index())
-    #     loadedArgs.append(sv if sv._by_ref else sv.load())
-    #     argumentVars.append(sv)
-    #     # if var._subroutineCreated:
-    #     #     loadedArgs.append(var.load())
-    #     #     argumentVars.append(var)
-    #     # else:
-    #     #     loadedArgs.append(var)
 
     subroutineBody = subroutine.implementation(*loadedArgs)
 
