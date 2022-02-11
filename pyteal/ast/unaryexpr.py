@@ -13,17 +13,19 @@ class UnaryExpr(Expr):
     """An expression with a single argument."""
 
     def __init__(
-        self, op: Op, inputType: TealType, outputType: TealType, arg: Expr
+        self,
+        op: Op,
+        inputType: TealType,
+        outputType: TealType,
+        arg: Expr,
+        *immediate_args: Expr,
     ) -> None:
         super().__init__()
         require_type(arg, inputType)
         self.op = op
         self.outputType = outputType
         self.arg = arg
-
-    @classmethod
-    def opToTeal(cls, op, arg, options):
-        return cls(op, TealType.any, TealType.any, arg).__teal__(options)
+        self.immediate_args = immediate_args
 
     def __teal__(self, options: "CompileOptions"):
         verifyTealVersion(
@@ -32,7 +34,8 @@ class UnaryExpr(Expr):
             "TEAL version too low to use op {}".format(self.op),
         )
 
-        return TealBlock.FromOp(options, TealOp(self, self.op), self.arg)
+        op = TealOp(self, self.op, *self.immediate_args)
+        return TealBlock.FromOp(options, op, self.arg)
 
     def __str__(self):
         return "({} {})".format(self.op, self.arg)
@@ -42,6 +45,16 @@ class UnaryExpr(Expr):
 
     def has_return(self):
         return False
+
+    def chain(
+        self,
+        op: Op,
+        inputType: TealType,
+        outputType: TealType,
+        *immediate_args: Expr,
+    ) -> "UnaryExpr":
+        """Allows expressions such as UnaryExpr(...).chain(...).chain(...)"""
+        return type(self)(op, inputType, outputType, self, *immediate_args)
 
 
 UnaryExpr.__module__ = "pyteal"

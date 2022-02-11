@@ -225,58 +225,16 @@ class ScratchStore(Expr):
     def __teal__(self, options: "CompileOptions"):
         from ..ir import TealOp, Op, TealBlock
 
-        class UnaryPlus(Expr):
-            def __init__(self, op, arg, val):
-                super().__init__()
-                self.op = op
-                self.arg = arg
-                self.val = val
-
-            def __teal__(self, options):
-                return TealBlock.FromOp(
-                    options, TealOp(self, self.op, self.arg), self.val
-                )
-
-            def type_of(self) -> TealType:
-                pass
-
-            def has_return(self) -> bool:
-                pass
-
-            def __str__(self) -> str:
-                pass
-
         if self.byRef:
-            loader = UnaryPlus(Op.load, self.slot, self.value)
-            swapper = UnaryPlus(Op.swap, self.slot, loader)
-            return TealBlock.FromOp(options, TealOp(self, Op.stores), swapper)
+            chained = UnaryExpr(
+                Op.load,
+                TealType.uint64,
+                TealType.none,
+                self.value,
+                self.slot,
+            ).chain(Op.swap, TealType.none, TealType.none, self.slot)
 
-            op_args = []
-            block_args = [self.slot.id, self.value]
-            # def block(op, *op_args, *block_args):
-            #     return TealBlock.FromOp(options, TealOp(self, op, *op_args, *block_args))
-
-            # load = UnaryExpr.opToTeal(Op.load)
-
-            # def Ustore(slot, arg) -> UnaryExpr:
-            #     return UnaryExpr(Op.)
-
-            # a, b = TealBlock.FromOp(self, TealOp(self, Op.load, self.slot))
-            # c, _ = TealBlock.FromOp(
-            #     options, TealOp(self, Op.store, self.slot), self.value
-            # )
-            # cast(TealSimpleBlock, c).setNextBlock(a)
-            # return a, b
-
-            # trythis = TealSimpleBlock(
-            #     [
-            #         TealOp(self, Op.stores),
-            #         TealOp(self, Op.swap),
-            #     ]
-            # )
-            # start, opBlock = TealBlock.FromOp(options, TealOp(self, Op.load, self.slot))
-            # trythis.setNextBlock(cast(TealSimpleBlock, start))
-            # return trythis, opBlock
+            return TealBlock.FromOp(options, TealOp(self, Op.stores), chained)
 
         if self.slot.dynamic():
             store_op = Op.stores
