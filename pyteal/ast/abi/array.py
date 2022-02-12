@@ -107,7 +107,7 @@ class StaticArray(Array[T]):
             and self.length_static() == other.length_static()
         )
 
-    def new_instance(self) -> "StaticArray":
+    def new_instance(self) -> "StaticArray[T]":
         return StaticArray(self._valueType, self.length_static())
 
     def is_dynamic(self) -> bool:
@@ -148,7 +148,7 @@ class DynamicArray(Array[T]):
             other._valueType
         )
 
-    def new_instance(self) -> "DynamicArray":
+    def new_instance(self) -> "DynamicArray[T]":
         return DynamicArray(self._valueType)
 
     def is_dynamic(self) -> bool:
