@@ -1,4 +1,4 @@
-from typing import NamedTuple, Callable, Union
+from typing import NamedTuple, Callable, Union, Optional
 import pytest
 
 from ... import *
@@ -14,7 +14,9 @@ class UintTestData(NamedTuple):
     expectedBits: int
     maxValue: int
     checkUpperBound: bool
-    expectedDecoding: Callable[[Expr, Expr], Expr]
+    expectedDecoding: Callable[
+        [Expr, Optional[Expr], Optional[Expr], Optional[Expr]], Expr
+    ]
     expectedEncoding: Callable[[abi.Uint], Expr]
 
 
@@ -30,7 +32,7 @@ testData = [
         expectedBits=8,
         maxValue=2 ** 8 - 1,
         checkUpperBound=True,
-        expectedDecoding=lambda encoded, startIndex: GetByte(
+        expectedDecoding=lambda encoded, startIndex, endIndex, length: GetByte(
             encoded, noneToInt0(startIndex)
         ),
         expectedEncoding=lambda uintType: SetByte(
@@ -42,7 +44,7 @@ testData = [
         expectedBits=16,
         maxValue=2 ** 16 - 1,
         checkUpperBound=True,
-        expectedDecoding=lambda encoded, startIndex: ExtractUint16(
+        expectedDecoding=lambda encoded, startIndex, endIndex, length: ExtractUint16(
             encoded, noneToInt0(startIndex)
         ),
         expectedEncoding=lambda uintType: Suffix(Itob(uintType.get()), Int(6)),
@@ -52,7 +54,7 @@ testData = [
         expectedBits=32,
         maxValue=2 ** 32 - 1,
         checkUpperBound=True,
-        expectedDecoding=lambda encoded, startIndex: ExtractUint32(
+        expectedDecoding=lambda encoded, startIndex, endIndex, length: ExtractUint32(
             encoded, noneToInt0(startIndex)
         ),
         expectedEncoding=lambda uintType: Suffix(Itob(uintType.get()), Int(4)),
@@ -62,9 +64,9 @@ testData = [
         expectedBits=64,
         maxValue=2 ** 64 - 1,
         checkUpperBound=False,
-        expectedDecoding=lambda encoded, startIndex: ExtractUint64(encoded, startIndex)
-        if startIndex is not None
-        else Btoi(encoded),
+        expectedDecoding=lambda encoded, startIndex, endIndex, length: Btoi(encoded)
+        if startIndex is None and endIndex is None and length is None
+        else ExtractUint64(encoded, noneToInt0(startIndex)),
         expectedEncoding=lambda uintType: Itob(uintType.get()),
     ),
 ]
@@ -219,7 +221,7 @@ def test_Uint_decode():
                     assert not expr.has_return()
 
                     expectedDecoding = test.uintType.stored_value.store(
-                        test.expectedDecoding(encoded, startIndex)
+                        test.expectedDecoding(encoded, startIndex, endIndex, length)
                     )
                     expected, _ = expectedDecoding.__teal__(options)
                     expected.addIncoming()
