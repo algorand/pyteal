@@ -182,7 +182,7 @@ class ArrayElement(ComputedType[T]):
             offsetBit = offsetBit + Int(2 * NUM_BITS_IN_BYTE)
             offsetIndex = offsetIndex + Int(2)
 
-        if self.length:
+        if self.length is not None:
             arrayLength = self.length
         else:
             arrayLength = self.array.length()
@@ -190,7 +190,7 @@ class ArrayElement(ComputedType[T]):
         encodedArray = self.array.encode()
 
         if not self.array._valueType.has_same_type_as(output):
-            raise TypeError("Output type does not match value type")
+            raise TealInputError("Output type does not match value type")
 
         if type(output) is Bool:
             return cast(Bool, output).decodeBit(encodedArray, offsetBit)

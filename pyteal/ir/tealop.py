@@ -68,7 +68,7 @@ class TealOp(TealComponent):
         for a in self.args:
             args.append(repr(a))
 
-        return "TealOp({}, {})".format(self.expr, ", ".join(args))
+        return "TealOp({})".format(", ".join(args))
 
     def __hash__(self) -> int:
         return (self.op, *self.args).__hash__()
@@ -76,9 +76,24 @@ class TealOp(TealComponent):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, TealOp):
             return False
-        if TealComponent.Context.checkExpr and self.expr is not other.expr:
+
+        if TealComponent.Context.checkExprEquality and self.expr is not other.expr:
             return False
-        return self.op == other.op and self.args == other.args
+
+        if not TealComponent.Context.checkScratchSlotEquality:
+            from ..ast import ScratchSlot
+
+            if len(self.args) != len(other.args):
+                return False
+            for myArg, otherArg in zip(self.args, other.args):
+                if type(myArg) is ScratchSlot and type(otherArg) is ScratchSlot:
+                    continue
+                if myArg != otherArg:
+                    return False
+        elif self.args != other.args:
+            return False
+
+        return self.op == other.op
 
 
 TealOp.__module__ = "pyteal"

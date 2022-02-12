@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List, Tuple, Set, Iterator, cast, TYPE_CHECKING
+from typing import Dict, List, Tuple, Set, Iterator, cast, TYPE_CHECKING
 
 from .tealop import TealOp, Op
 from ..errors import TealCompileError
@@ -163,7 +163,7 @@ class TealBlock(ABC):
 
     @classmethod
     def Iterate(cls, start: "TealBlock") -> Iterator["TealBlock"]:
-        """Perform a depth-first search of the graph of blocks starting with start."""
+        """Perform a breadth-first search of the graph of blocks starting with start."""
         queue = [start]
         visited = list(queue)
 
@@ -227,6 +227,41 @@ class TealBlock(ABC):
                         start = block
 
         return start
+
+    @classmethod
+    def GetReferencedScratchSlots(cls, start: "TealBlock") -> List["ScratchSlot"]:
+        slots: List[ScratchSlot] = []
+
+        for block in TealBlock.Iterate(start):
+            for op in block.ops:
+                slots += op.getSlots()
+
+        return slots
+
+    @classmethod
+    def MatchScratchSlotReferences(
+        cls, actual: List["ScratchSlot"], expected: List["ScratchSlot"]
+    ) -> bool:
+        if len(actual) != len(expected):
+            return False
+
+        commonSlots = set(actual) & set(expected)
+        mapFromActualToExpected: Dict[ScratchSlot, ScratchSlot] = {
+            slot: slot for slot in commonSlots
+        }
+
+        for actualSlot, expectedSlot in zip(actual, expected):
+            if not actualSlot in mapFromActualToExpected:
+                if expectedSlot in mapFromActualToExpected.values():
+                    # this value was already seen
+                    return False
+                mapFromActualToExpected[actualSlot] = expectedSlot
+                continue
+
+            if mapFromActualToExpected[actualSlot] != expectedSlot:
+                return False
+
+        return True
 
 
 TealBlock.__module__ = "pyteal"

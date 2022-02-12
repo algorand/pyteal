@@ -20,9 +20,16 @@ def test_encodeTuple():
     # variables used to construct the tests
     uint64_a = abi.Uint64()
     uint64_b = abi.Uint64()
+    uint16_a = abi.Uint16()
+    uint16_b = abi.Uint16()
     bool_a = abi.Bool()
     bool_b = abi.Bool()
     tuple_a = abi.Tuple(abi.Bool(), abi.Bool())
+    dynamic_array_a = abi.DynamicArray(abi.Uint64())
+    dynamic_array_b = abi.DynamicArray(abi.Uint16())
+    dynamic_array_c = abi.DynamicArray(abi.Bool())
+    tail_holder = ScratchVar()
+    encoded_tail = ScratchVar()
 
     tests: List[EncodeTest] = [
         EncodeTest(types=[], expected=Bytes("")),
@@ -66,9 +73,117 @@ def test_encodeTuple():
                 encodeBoolSequence([bool_a, bool_b]),
             ),
         ),
-        # TODO: test encoding dynamic types. This is more complicated because temporary abi.Uint16s
-        # and ScratchVars are created in the function to help with encoding, meaning a direct
-        # comparison is not currently possible.
+        EncodeTest(
+            types=[dynamic_array_a],
+            expected=Concat(
+                Seq(
+                    encoded_tail.store(dynamic_array_a.encode()),
+                    tail_holder.store(encoded_tail.load()),
+                    uint16_a.set(2),
+                    uint16_a.encode(),
+                ),
+                tail_holder.load(),
+            ),
+        ),
+        EncodeTest(
+            types=[uint64_a, dynamic_array_a],
+            expected=Concat(
+                uint64_a.encode(),
+                Seq(
+                    encoded_tail.store(dynamic_array_a.encode()),
+                    tail_holder.store(encoded_tail.load()),
+                    uint16_a.set(8 + 2),
+                    uint16_a.encode(),
+                ),
+                tail_holder.load(),
+            ),
+        ),
+        EncodeTest(
+            types=[uint64_a, dynamic_array_a, uint64_b],
+            expected=Concat(
+                uint64_a.encode(),
+                Seq(
+                    encoded_tail.store(dynamic_array_a.encode()),
+                    tail_holder.store(encoded_tail.load()),
+                    uint16_a.set(8 + 2 + 8),
+                    uint16_a.encode(),
+                ),
+                uint64_b.encode(),
+                tail_holder.load(),
+            ),
+        ),
+        EncodeTest(
+            types=[uint64_a, dynamic_array_a, bool_a, bool_b],
+            expected=Concat(
+                uint64_a.encode(),
+                Seq(
+                    encoded_tail.store(dynamic_array_a.encode()),
+                    tail_holder.store(encoded_tail.load()),
+                    uint16_a.set(8 + 2 + 1),
+                    uint16_a.encode(),
+                ),
+                encodeBoolSequence([bool_a, bool_b]),
+                tail_holder.load(),
+            ),
+        ),
+        EncodeTest(
+            types=[uint64_a, dynamic_array_a, uint64_b, dynamic_array_b],
+            expected=Concat(
+                uint64_a.encode(),
+                Seq(
+                    encoded_tail.store(dynamic_array_a.encode()),
+                    tail_holder.store(encoded_tail.load()),
+                    uint16_a.set(8 + 2 + 8 + 2),
+                    uint16_b.set(uint16_a.get() + Len(encoded_tail.load())),
+                    uint16_a.encode(),
+                ),
+                uint64_b.encode(),
+                Seq(
+                    encoded_tail.store(dynamic_array_b.encode()),
+                    tail_holder.store(Concat(tail_holder.load(), encoded_tail.load())),
+                    uint16_a.set(uint16_b),
+                    uint16_a.encode(),
+                ),
+                tail_holder.load(),
+            ),
+        ),
+        EncodeTest(
+            types=[
+                uint64_a,
+                dynamic_array_a,
+                uint64_b,
+                dynamic_array_b,
+                bool_a,
+                bool_b,
+                dynamic_array_c,
+            ],
+            expected=Concat(
+                uint64_a.encode(),
+                Seq(
+                    encoded_tail.store(dynamic_array_a.encode()),
+                    tail_holder.store(encoded_tail.load()),
+                    uint16_a.set(8 + 2 + 8 + 2 + 1 + 2),
+                    uint16_b.set(uint16_a.get() + Len(encoded_tail.load())),
+                    uint16_a.encode(),
+                ),
+                uint64_b.encode(),
+                Seq(
+                    encoded_tail.store(dynamic_array_b.encode()),
+                    tail_holder.store(Concat(tail_holder.load(), encoded_tail.load())),
+                    uint16_a.set(uint16_b),
+                    uint16_b.set(uint16_a.get() + Len(encoded_tail.load())),
+                    uint16_a.encode(),
+                ),
+                encodeBoolSequence([bool_a, bool_b]),
+                Seq(
+                    encoded_tail.store(dynamic_array_c.encode()),
+                    tail_holder.store(Concat(tail_holder.load(), encoded_tail.load())),
+                    uint16_a.set(uint16_b),
+                    uint16_a.encode(),
+                ),
+                tail_holder.load(),
+            ),
+        ),
     ]
 
     for i, test in enumerate(tests):
@@ -83,6 +198,17 @@ def test_encodeTuple():
         actual, _ = expr.__teal__(options)
         actual.addIncoming()
         actual = TealBlock.NormalizeBlocks(actual)
+
+        if any(t.is_dynamic() for t in test.types):
+            with TealComponent.Context.ignoreExprEquality():
+                with TealComponent.Context.ignoreScratchSlotEquality():
+                    assert actual == expected, "Test at index {} failed".format(i)
+
+            assert TealBlock.MatchScratchSlotReferences(
+                TealBlock.GetReferencedScratchSlots(actual),
+                TealBlock.GetReferencedScratchSlots(expected),
+            )
+            continue
 
         with TealComponent.Context.ignoreExprEquality():
             assert actual == expected, "Test at index {} failed".format(i)

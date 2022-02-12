@@ -1,4 +1,4 @@
-from typing import NamedTuple, List, Union, Any
+from typing import List, cast
 import pytest
 
 from ... import *
@@ -384,14 +384,7 @@ def test_DynamicArray_set():
         assert expr.type_of() == TealType.none
         assert not expr.has_return()
 
-        # some hacky code to get the right slot to build expectedExpr
-        assert type(expr) is ScratchStore
-        assert type(expr.value) is NaryExpr
-        assert type(expr.value.args[0]) is Seq
-        assert type(expr.value.args[0].args[0]) is ScratchStore
         length_tmp = abi.Uint16()
-        length_tmp.stored_value.slot = expr.value.args[0].args[0].slot
-
         expectedExpr = dynamicArrayType.stored_value.store(
             Concat(
                 Seq(length_tmp.set(len(values)), length_tmp.encode()),
@@ -407,7 +400,13 @@ def test_DynamicArray_set():
         actual = TealBlock.NormalizeBlocks(actual)
 
         with TealComponent.Context.ignoreExprEquality():
-            assert actual == expected
+            with TealComponent.Context.ignoreScratchSlotEquality():
+                assert actual == expected
+
+        assert TealBlock.MatchScratchSlotReferences(
+            TealBlock.GetReferencedScratchSlots(actual),
+            TealBlock.GetReferencedScratchSlots(expected),
+        )
 
 
 def test_DynamicArray_encode():
@@ -434,12 +433,7 @@ def test_DynamicArray_length():
     assert expr.type_of() == TealType.uint64
     assert not expr.has_return()
 
-    # some hacky code to get the right slot to build expectedExpr
-    assert type(expr) is Seq
-    assert type(expr.args[0]) is ScratchStore
     length_tmp = abi.Uint16()
-    length_tmp.stored_value.slot = expr.args[0].slot
-
     expectedExpr = Seq(length_tmp.decode(dynamicArrayType.encode()), length_tmp.get())
     expected, _ = expectedExpr.__teal__(options)
     expected.addIncoming()
@@ -450,7 +444,13 @@ def test_DynamicArray_length():
     actual = TealBlock.NormalizeBlocks(actual)
 
     with TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
+        with TealComponent.Context.ignoreScratchSlotEquality():
+            assert actual == expected
+
+    assert TealBlock.MatchScratchSlotReferences(
+        TealBlock.GetReferencedScratchSlots(actual),
+        TealBlock.GetReferencedScratchSlots(expected),
+    )
 
 
 def test_DynamicArray_getitem():
@@ -479,4 +479,97 @@ def test_DynamicArray_getitem():
 
 
 def test_ArrayElement_store_into():
-    pass
+    for elementType in STATIC_TYPES + DYNAMIC_TYPES:
+        staticArrayType = abi.StaticArray(elementType, 100)
+        index = Int(9)
+
+        for lengthExpr in (None, Int(500)):
+            element = ArrayElement(staticArrayType, index, lengthExpr)
+            output = elementType.new_instance()
+            expr = element.store_into(output)
+
+            encoded = staticArrayType.encode()
+            stride = Int(staticArrayType._stride)
+            expectedLength = (
+                lengthExpr if lengthExpr is not None else staticArrayType.length()
+            )
+            if type(elementType) is abi.Bool:
+                expectedExpr = cast(abi.Bool, output).decodeBit(encoded, index)
+            elif not elementType.is_dynamic():
+                expectedExpr = output.decode(
+                    encoded, startIndex=stride * index, length=stride
+                )
+            else:
+                expectedExpr = output.decode(
+                    encoded,
+                    startIndex=ExtractUint16(encoded, stride * index),
+                    endIndex=If(index + Int(1) == expectedLength)
+                    .Then(expectedLength * stride)
+                    .Else(ExtractUint16(encoded, stride * index + Int(2))),
+                )
+
+            expected, _ = expectedExpr.__teal__(options)
+            expected.addIncoming()
+            expected = TealBlock.NormalizeBlocks(expected)
+
+            actual, _ = expr.__teal__(options)
+            actual.addIncoming()
+            actual = TealBlock.NormalizeBlocks(actual)
+
+            with TealComponent.Context.ignoreExprEquality():
+                assert actual == expected
+
+            with pytest.raises(TealInputError):
+                element.store_into(abi.Tuple(output))
+
+    for elementType in STATIC_TYPES + DYNAMIC_TYPES:
+        dynamicArrayType = abi.DynamicArray(elementType)
+        index = Int(9)
+
+        for lengthExpr in (None, Int(500)):
+            element = ArrayElement(dynamicArrayType, index, lengthExpr)
+            output = elementType.new_instance()
+            expr = element.store_into(output)
+
+            encoded = dynamicArrayType.encode()
+            stride = Int(dynamicArrayType._stride)
+            expectedLength = (
+                lengthExpr if lengthExpr is not None else dynamicArrayType.length()
+            )
+            if type(elementType) is abi.Bool:
+                expectedExpr = cast(abi.Bool, output).decodeBit(
+                    encoded, index + Int(16)
+                )
+            elif not elementType.is_dynamic():
+                expectedExpr = output.decode(
+                    encoded, startIndex=stride * index + Int(2), length=stride
+                )
+            else:
+                expectedExpr = output.decode(
+                    encoded,
+                    startIndex=ExtractUint16(encoded, stride * index + Int(2)) + Int(2),
+                    endIndex=If(index + Int(1) == expectedLength)
+                    .Then(expectedLength * stride)
+                    .Else(ExtractUint16(encoded, stride * index + Int(2) + Int(2)))
+                    + Int(2),
+                )
+
+            expected, _ = expectedExpr.__teal__(options)
+            expected.addIncoming()
+            expected = TealBlock.NormalizeBlocks(expected)
+
+            actual, _ = expr.__teal__(options)
+            actual.addIncoming()
+            actual = TealBlock.NormalizeBlocks(actual)
+
+            with TealComponent.Context.ignoreExprEquality():
+                with TealComponent.Context.ignoreScratchSlotEquality():
+                    assert actual == expected
+
+            assert TealBlock.MatchScratchSlotReferences(
+                TealBlock.GetReferencedScratchSlots(actual),
+                TealBlock.GetReferencedScratchSlots(expected),
+            )
+
+            with pytest.raises(TealInputError):
+                element.store_into(abi.Tuple(output))

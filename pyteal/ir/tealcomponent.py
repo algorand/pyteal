@@ -40,20 +40,34 @@ class TealComponent(ABC):
 
     class Context:
 
-        checkExpr = True
+        checkExprEquality = True
 
-        class EqualityContext(AbstractContextManager):
+        class ExprEqualityContext(AbstractContextManager):
             def __enter__(self):
-                TealComponent.Context.checkExpr = False
+                TealComponent.Context.checkExprEquality = False
                 return self
 
             def __exit__(self, *args):
-                TealComponent.Context.checkExpr = True
+                TealComponent.Context.checkExprEquality = True
                 return None
 
         @classmethod
         def ignoreExprEquality(cls):
-            return cls.EqualityContext()
+            return cls.ExprEqualityContext()
+
+        checkScratchSlotEquality = True
+
+        class ScratchSlotEqualityContext(AbstractContextManager):
+            def __enter__(self):
+                TealComponent.Context.checkScratchSlotEquality = False
+
+            def __exit__(self, *args):
+                TealComponent.Context.checkScratchSlotEquality = True
+                return None
+
+        @classmethod
+        def ignoreScratchSlotEquality(cls):
+            return cls.ScratchSlotEqualityContext()
 
 
 TealComponent.__module__ = "pyteal"
