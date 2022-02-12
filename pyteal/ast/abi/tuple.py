@@ -1,7 +1,7 @@
 from typing import (
     List,
     Sequence,
-    Optional,
+    Dict,
     cast,
 )
 
@@ -28,9 +28,10 @@ from .uint import NUM_BITS_IN_BYTE, Uint16
 
 
 def encodeTuple(values: Sequence[Type]) -> Expr:
-    heads: List[Optional[Expr]] = []
+    heads: List[Expr] = []
     head_length_static: int = 0
 
+    dynamicValueIndexToHeadIndex: Dict[int, int] = dict()
     ignoreNext = 0
     for i, elem in enumerate(values):
         if ignoreNext > 0:
@@ -48,7 +49,8 @@ def encodeTuple(values: Sequence[Type]) -> Expr:
 
         if elem.is_dynamic():
             head_length_static += 2
-            heads.append(None)  # a placeholder
+            dynamicValueIndexToHeadIndex[i] = len(heads)
+            heads.append(Seq())  # a placeholder
             continue
 
         head_length_static += elem.byte_length_static()
@@ -71,7 +73,7 @@ def encodeTuple(values: Sequence[Type]) -> Expr:
             else:
                 updateVars = Seq(
                     tail_holder.store(Concat(tail_holder.load(), encoded_tail.load())),
-                    tail_offset.set(tail_offset_accumulator.get()),
+                    tail_offset.set(tail_offset_accumulator),
                 )
 
             notLastDynamicValue = any(
@@ -84,14 +86,14 @@ def encodeTuple(values: Sequence[Type]) -> Expr:
             else:
                 updateAccumulator = Seq()
 
-            heads[i] = Seq(
+            heads[dynamicValueIndexToHeadIndex[i]] = Seq(
                 encoded_tail.store(elem.encode()),
                 updateVars,
                 updateAccumulator,
                 tail_offset.encode(),
             )
 
-    toConcat = cast(List[Expr], heads)
+    toConcat = heads
     if not firstDynamicTail:
         toConcat.append(tail_holder.load())
 
