@@ -177,6 +177,7 @@ def indexTuple(
         return output.decode(encoded, startIndex=startIndex, endIndex=endIndex)
 
     startIndex = Int(offset)
+    length = Int(valueType.byte_length_static())
 
     if index + 1 == len(valueTypes):
         if offset == 0:
@@ -186,8 +187,11 @@ def indexTuple(
         # encoded
         return output.decode(encoded, startIndex=startIndex)
 
+    if offset == 0:
+        # This is the first value in the tuple, so decode the substring from 0 with length length
+        return output.decode(encoded, length=length)
+
     # This is not the first or last value, so decode the substring from startIndex with length length
-    length = Int(valueType.byte_length_static())
     return output.decode(encoded, startIndex=startIndex, length=length)
 
 

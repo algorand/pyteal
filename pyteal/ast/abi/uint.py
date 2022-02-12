@@ -215,7 +215,9 @@ class Uint64(Uint):
         length: Expr = None
     ) -> Expr:
         if startIndex is None:
-            return self.stored_value.store(Btoi(encoded))
+            if endIndex is None and length is None:
+                return self.stored_value.store(Btoi(encoded))
+            startIndex = Int(0)
         return self.stored_value.store(ExtractUint64(encoded, startIndex))
 
     def encode(self) -> Expr:
