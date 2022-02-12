@@ -9,7 +9,7 @@ from ..assert_ import Assert
 from ..substring import Suffix
 from ..int import Int
 from ..bytes import Bytes
-from ..unaryexpr import Itob
+from ..unaryexpr import Itob, Btoi
 from ..binaryexpr import GetByte, ExtractUint16, ExtractUint32, ExtractUint64
 from ..ternaryexpr import SetByte
 from .type import Type
@@ -58,7 +58,7 @@ class Uint8(Uint):
     def set(self, value: Union[int, Expr, "Uint8"]) -> Expr:
         checked = False
         if type(value) is int:
-            if value >= 2 ** 8:
+            if value >= 2 ** self.bit_size:
                 raise TealInputError("Value exceeds Uint8 maximum: {}".format(value))
             value = Int(value)
             checked = True
@@ -108,7 +108,7 @@ class Uint16(Uint):
     def set(self, value: Union[int, Expr, "Uint16"]) -> Expr:
         checked = False
         if type(value) is int:
-            if value >= 2 ** 16:
+            if value >= 2 ** self.bit_size:
                 raise TealInputError("Value exceeds Uint16 maximum: {}".format(value))
             value = Int(value)
             checked = True
@@ -156,7 +156,7 @@ class Uint32(Uint):
     def set(self, value: Union[int, Expr, "Uint32"]) -> Expr:
         checked = False
         if type(value) is int:
-            if value >= 2 ** 32:
+            if value >= 2 ** self.bit_size:
                 raise TealInputError("Value exceeds Uint32 maximum: {}".format(value))
             value = Int(value)
             checked = True
@@ -215,7 +215,7 @@ class Uint64(Uint):
         length: Expr = None
     ) -> Expr:
         if startIndex is None:
-            startIndex = Int(0)
+            return self.stored_value.store(Btoi(encoded))
         return self.stored_value.store(ExtractUint64(encoded, startIndex))
 
     def encode(self) -> Expr:

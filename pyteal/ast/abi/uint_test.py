@@ -62,9 +62,9 @@ testData = [
         expectedBits=64,
         maxValue=2 ** 64 - 1,
         checkUpperBound=False,
-        expectedDecoding=lambda encoded, startIndex: ExtractUint64(
-            encoded, noneToInt0(startIndex)
-        ),
+        expectedDecoding=lambda encoded, startIndex: ExtractUint64(encoded, startIndex)
+        if startIndex is not None
+        else Btoi(encoded),
         expectedEncoding=lambda uintType: Itob(uintType.get()),
     ),
 ]
