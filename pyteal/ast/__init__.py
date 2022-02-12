@@ -92,7 +92,7 @@ from .binaryexpr import (
 )
 
 # ternary ops
-from .ternaryexpr import Ed25519Verify, SetBit, SetByte
+from .ternaryexpr import Divw, Ed25519Verify, SetBit, SetByte
 from .substring import Substring, Extract, Suffix
 
 # more ops
@@ -186,6 +186,7 @@ __all__ = [
     "Div",
     "Mod",
     "Exp",
+    "Divw",
     "BitwiseAnd",
     "BitwiseOr",
     "BitwiseXor",
