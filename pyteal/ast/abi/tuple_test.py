@@ -236,12 +236,12 @@ def test_indexTuple():
         IndexTest(
             types=[uint64_a],
             typeIndex=0,
-            expected=lambda output: output.decode(encoded, startIndex=Int(0)),
+            expected=lambda output: output.decode(encoded),
         ),
         IndexTest(
             types=[uint64_a, uint64_b],
             typeIndex=0,
-            expected=lambda output: output.decode(encoded, startIndex=Int(0)),
+            expected=lambda output: output.decode(encoded, length=Int(8)),
         ),
         IndexTest(
             types=[uint64_a, uint64_b],
@@ -251,12 +251,16 @@ def test_indexTuple():
         IndexTest(
             types=[uint64_a, byte_a, uint64_b],
             typeIndex=1,
-            expected=lambda output: output.decode(encoded, startIndex=Int(8)),
+            expected=lambda output: output.decode(
+                encoded, startIndex=Int(8), length=Int(1)
+            ),
         ),
         IndexTest(
             types=[uint64_a, byte_a, uint64_b],
             typeIndex=2,
-            expected=lambda output: output.decode(encoded, startIndex=Int(9)),
+            expected=lambda output: output.decode(
+                encoded, startIndex=Int(9), length=Int(8)
+            ),
         ),
         IndexTest(
             types=[bool_a],
