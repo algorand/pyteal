@@ -21,8 +21,8 @@ def test_asset_holding_balance():
             TealOp(args[0], Op.int, 0),
             TealOp(args[1], Op.int, 17),
             TealOp(expr, Op.asset_holding_get, "AssetBalance"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -45,8 +45,8 @@ def test_asset_holding_balance_direct_ref():
             TealOp(args[0], Op.txn, "Sender"),
             TealOp(args[1], Op.txna, "Assets", 17),
             TealOp(expr, Op.asset_holding_get, "AssetBalance"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -77,8 +77,8 @@ def test_asset_holding_frozen():
             TealOp(args[0], Op.int, 0),
             TealOp(args[1], Op.int, 17),
             TealOp(expr, Op.asset_holding_get, "AssetFrozen"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -101,8 +101,8 @@ def test_asset_holding_frozen_direct_ref():
             TealOp(args[0], Op.txn, "Sender"),
             TealOp(args[1], Op.txna, "Assets", 17),
             TealOp(expr, Op.asset_holding_get, "AssetFrozen"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -132,8 +132,8 @@ def test_asset_param_total():
         [
             TealOp(arg, Op.int, 0),
             TealOp(expr, Op.asset_params_get, "AssetTotal"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -155,8 +155,8 @@ def test_asset_param_total_direct_ref():
         [
             TealOp(arg, Op.txna, "Assets", 0),
             TealOp(expr, Op.asset_params_get, "AssetTotal"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -183,8 +183,8 @@ def test_asset_param_decimals():
         [
             TealOp(arg, Op.int, 0),
             TealOp(expr, Op.asset_params_get, "AssetDecimals"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -206,8 +206,8 @@ def test_asset_param_decimals_direct_ref():
         [
             TealOp(arg, Op.txna, "Assets", 0),
             TealOp(expr, Op.asset_params_get, "AssetDecimals"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -234,8 +234,8 @@ def test_asset_param_default_frozen():
         [
             TealOp(arg, Op.int, 0),
             TealOp(expr, Op.asset_params_get, "AssetDefaultFrozen"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -257,8 +257,8 @@ def test_asset_param_default_frozen_direct_ref():
         [
             TealOp(arg, Op.txna, "Assets", 0),
             TealOp(expr, Op.asset_params_get, "AssetDefaultFrozen"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -285,8 +285,8 @@ def test_asset_param_unit_name():
         [
             TealOp(arg, Op.int, 0),
             TealOp(expr, Op.asset_params_get, "AssetUnitName"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -308,8 +308,8 @@ def test_asset_param_unit_name_direct_ref():
         [
             TealOp(arg, Op.txna, "Assets", 0),
             TealOp(expr, Op.asset_params_get, "AssetUnitName"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -336,8 +336,8 @@ def test_asset_param_name():
         [
             TealOp(arg, Op.int, 0),
             TealOp(expr, Op.asset_params_get, "AssetName"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -359,8 +359,8 @@ def test_asset_param_name_direct_ref():
         [
             TealOp(arg, Op.txna, "Assets", 0),
             TealOp(expr, Op.asset_params_get, "AssetName"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -387,8 +387,8 @@ def test_asset_param_url():
         [
             TealOp(arg, Op.int, 0),
             TealOp(expr, Op.asset_params_get, "AssetURL"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -410,8 +410,8 @@ def test_asset_param_url_direct_ref():
         [
             TealOp(arg, Op.txna, "Assets", 0),
             TealOp(expr, Op.asset_params_get, "AssetURL"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -438,8 +438,8 @@ def test_asset_param_metadata_hash():
         [
             TealOp(arg, Op.int, 0),
             TealOp(expr, Op.asset_params_get, "AssetMetadataHash"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -461,8 +461,8 @@ def test_asset_param_metadata_hash_direct_ref():
         [
             TealOp(arg, Op.txna, "Assets", 0),
             TealOp(expr, Op.asset_params_get, "AssetMetadataHash"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -489,8 +489,8 @@ def test_asset_param_manager():
         [
             TealOp(arg, Op.int, 0),
             TealOp(expr, Op.asset_params_get, "AssetManager"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -512,8 +512,8 @@ def test_asset_param_manager_direct_ref():
         [
             TealOp(arg, Op.txna, "Assets", 0),
             TealOp(expr, Op.asset_params_get, "AssetManager"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -540,8 +540,8 @@ def test_asset_param_reserve():
         [
             TealOp(arg, Op.int, 2),
             TealOp(expr, Op.asset_params_get, "AssetReserve"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -563,8 +563,8 @@ def test_asset_param_reserve_direct_ref():
         [
             TealOp(arg, Op.txna, "Assets", 2),
             TealOp(expr, Op.asset_params_get, "AssetReserve"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -591,8 +591,8 @@ def test_asset_param_freeze():
         [
             TealOp(arg, Op.int, 0),
             TealOp(expr, Op.asset_params_get, "AssetFreeze"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -614,8 +614,8 @@ def test_asset_param_freeze_direct_ref():
         [
             TealOp(arg, Op.txna, "Assets", 0),
             TealOp(expr, Op.asset_params_get, "AssetFreeze"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -642,8 +642,8 @@ def test_asset_param_clawback():
         [
             TealOp(arg, Op.int, 1),
             TealOp(expr, Op.asset_params_get, "AssetClawback"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -665,8 +665,8 @@ def test_asset_param_clawback_direct_ref():
         [
             TealOp(arg, Op.txna, "Assets", 1),
             TealOp(expr, Op.asset_params_get, "AssetClawback"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 
@@ -693,8 +693,8 @@ def test_asset_param_creator_valid():
         [
             TealOp(arg, Op.int, 1),
             TealOp(expr, Op.asset_params_get, "AssetCreator"),
-            TealOp(None, Op.store, expr.slotOk),
-            TealOp(None, Op.store, expr.slotValue),
+            TealOp(None, Op.store, expr.output_slots[0]),
+            TealOp(None, Op.store, expr.output_slots[1]),
         ]
     )
 

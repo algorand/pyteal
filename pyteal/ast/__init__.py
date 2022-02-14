@@ -118,6 +118,7 @@ from .continue_ import Continue
 from .scratch import ScratchSlot, ScratchLoad, ScratchStore, ScratchStackStore
 from .scratchvar import ScratchVar
 from .maybe import MaybeValue
+from .multi import MultiValue
 
 __all__ = [
     "Expr",
@@ -216,6 +217,7 @@ __all__ = [
     "ScratchStackStore",
     "ScratchVar",
     "MaybeValue",
+    "MultiValue",
     "BytesAdd",
     "BytesMinus",
     "BytesDiv",
