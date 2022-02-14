@@ -1,0 +1,42 @@
+#pragma version 6
+int 129
+store 0
+int 1
+store 1
+main_l1:
+load 1
+int 10
+<=
+bz main_l3
+int 129
+load 1
+int 1
+-
+int 5
+%
++
+store 0
+byte "Current player: "
+load 0
+itob
+concat
+log
+byte "Player score index: "
+load 0
+itob
+concat
+log
+load 0
+load 0
+loads
+load 1
++
+stores
+load 1
+int 1
++
+store 1
+b main_l1
+main_l3:
+int 1
+return

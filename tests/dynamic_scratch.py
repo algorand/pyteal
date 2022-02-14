@@ -6,6 +6,9 @@ from pyteal import *
 from pyteal.types import require_type
 
 
+# HELPERS:
+
+
 def compile_and_save(approval):
     teal = Path.cwd() / "tests" / "teal"
     compiled = compileTeal(approval(), mode=Mode.Application, version=6)
@@ -42,15 +45,30 @@ but ACTUALLY got {len(alines)} lines in {path2actual}"""
             expected = elines[i]
             assert expected.startswith(
                 actual
-            ), f"""ACTUAL line
+            ), f"""ACTUAL line in {path2actual}
 LINE{i+1}:
 {actual}
 {mismatch_ligature(expected, actual)}
-DOES NOT prefix the EXPECTED (which should have been actual + some commentary):
+DOES NOT prefix the EXPECTED (which should have been actual + some commentary) in {path2expected}:
 LINE{i+1}:
 {expected}  
 {mismatch_ligature(expected, actual)}
 """
+
+
+def assert_new_v_old(dynamic_scratch):
+    teal_dir, name, compiled = compile_and_save(dynamic_scratch)
+    print(
+        f"""Compilation resulted in TEAL program of length {len(compiled)}. 
+Inspect output {name}.teal in {teal_dir}"""
+    )
+
+    path2actual = teal_dir / (name + ".teal")
+    path2expected = teal_dir / (name + "_expected.teal")
+    assert_teal_as_expected(path2actual, path2expected)
+
+
+# PYTEALS:
 
 
 def dynamic_scratch():
@@ -74,7 +92,7 @@ def dynamic_scratch():
 def dynamic_scratch_2():
     current_player = ScratchVar(TealType.uint64)
     player_score = ScratchVar(TealType.uint64, current_player.load())
-    i = ScratchVar(TealType.uint64, 0)
+    i = ScratchVar(TealType.uint64)
     return Seq(
         current_player.store(Int(129)),
         For(i.store(Int(1)), i.load() <= Int(10), i.store(i.load() + Int(1))).Do(
@@ -90,10 +108,7 @@ def dynamic_scratch_2():
 
 
 if __name__ == "__main__":
-    teal_dir, name, compiled = compile_and_save(dynamic_scratch)
-    path2actual = teal_dir / (name + ".teal")
-    path2expected = teal_dir / (name + "_expected.teal")
-
-    assert_teal_as_expected(path2actual, path2expected)
+    assert_new_v_old(dynamic_scratch)
+    assert_new_v_old(dynamic_scratch_2)
 
     teal_dir, name, compiled = compile_and_save(dynamic_scratch_2)

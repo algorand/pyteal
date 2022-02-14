@@ -177,8 +177,15 @@ class ScratchStore(Expr):
     def __teal__(self, options: "CompileOptions"):
         from ..ir import TealOp, Op, TealBlock
 
-        op = TealOp(self, Op.store, self.slot)
-        return TealBlock.FromOp(options, op, self.value)
+        if isinstance(self.slot, ScratchSlot):
+            op = TealOp(self, Op.store, self.slot)
+            return TealBlock.FromOp(options, op, self.value)
+
+        if not isinstance(self.slot, DynamicSlot):
+            raise TealInternalError("unrecognized slot type {}".format(type(self.slot)))
+
+        op = TealOp(self, Op.stores)
+        return TealBlock.FromOp(options, op, self.slot.id, self.value)
 
     def type_of(self):
         return TealType.none
