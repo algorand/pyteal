@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Union
 
 from ..types import TealType
 from ..config import NUM_SLOTS
-from ..errors import TealInputError
+from ..errors import TealInputError, TealInternalError
 from .expr import Expr
 
 if TYPE_CHECKING:
@@ -137,8 +137,15 @@ class ScratchLoad(Expr):
     def __teal__(self, options: "CompileOptions"):
         from ..ir import TealOp, Op, TealBlock
 
-        op = TealOp(self, Op.load, self.slot)
-        return TealBlock.FromOp(options, op)
+        if isinstance(self.slot, ScratchSlot):
+            op = TealOp(self, Op.load, self.slot)
+            return TealBlock.FromOp(options, op)
+
+        if not isinstance(self.slot, DynamicSlot):
+            raise TealInternalError("unrecognized slot type {}".format(type(self.slot)))
+
+        op = TealOp(self, Op.loads)
+        return TealBlock.FromOp(options, op, self.slot.id)
 
     def type_of(self):
         return self.type
