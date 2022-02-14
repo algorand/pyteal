@@ -70,23 +70,11 @@ class GitxnaExpr(TxnaExpr):
             "TEAL version too low to use op {}".format(opToUse),
         )
 
-        if type(self.txnIndex) is int:
-            if type(self.index) is int:
-                op = TealOp(
-                    self, opToUse, self.txnIndex, self.field.arg_name, self.index
-                )
-                return TealBlock.FromOp(options, op)
-            op = TealOp(self, opToUse, self.txnIndex, self.field.arg_name)
-            return TealBlock.FromOp(options, op, cast(Expr, self.index))
-
         if type(self.index) is int:
-            op = TealOp(self, opToUse, self.field.arg_name, self.index)
-            return TealBlock.FromOp(options, op, cast(Expr, self.txnIndex))
-
-        op = TealOp(self, opToUse, self.field.arg_name)
-        return TealBlock.FromOp(
-            options, op, cast(Expr, self.txnIndex), cast(Expr, self.index)
-        )
+            op = TealOp(self, opToUse, self.txnIndex, self.field.arg_name, self.index)
+            return TealBlock.FromOp(options, op)
+        op = TealOp(self, opToUse, self.txnIndex, self.field.arg_name)
+        return TealBlock.FromOp(options, op, cast(Expr, self.index))
 
 
 GitxnaExpr.__module__ = "pyteal"
