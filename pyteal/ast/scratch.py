@@ -37,9 +37,6 @@ class Slot:
         """
         return ScratchLoad(self, type)
 
-    def __str__(self):
-        return "slot#{}".format(self.id)
-
     def __hash__(self):
         return hash(self.id)
 
@@ -81,6 +78,9 @@ class ScratchSlot(Slot):
     def __repr__(self):
         return "ScratchSlot({})".format(self.id)
 
+    def __str__(self):
+        return "slot#{}".format(self.id)
+
 
 ScratchSlot.__module__ = "pyteal"
 
@@ -107,7 +107,10 @@ class DynamicSlot(Slot):
         self.isReservedSlot = False
 
     def __repr__(self):
-        return "ScratchSlot({})".format(self.id)
+        return "DynamicSlot({})".format(self.id)
+
+    def __str__(self):
+        return "dslot#{}".format(self.id)
 
 
 DynamicSlot.__module__ = "pyteal"

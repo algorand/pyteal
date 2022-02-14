@@ -1,5 +1,6 @@
 from ..types import TealType, require_type
 from .expr import Expr
+from .int import Int
 from .scratch import ScratchSlot, ScratchLoad, DynamicSlot
 
 
@@ -74,6 +75,10 @@ class ScratchVar:
     def load(self) -> ScratchLoad:
         """Load value from Scratch Space"""
         return self.slot.load(self.type)
+
+    def index(self) -> Expr:
+        """TODO: Zeph - this probably doesn't work for regular ScratchSlot's without fixed int slotId"""
+        return self.slot.id if isinstance(self.slot, DynamicSlot) else Int(self.slot.id)
 
 
 ScratchVar.__module__ = "pyteal"

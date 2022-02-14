@@ -71,9 +71,29 @@ def dynamic_scratch():
     )
 
 
+def dynamic_scratch_2():
+    current_player = ScratchVar(TealType.uint64)
+    player_score = ScratchVar(TealType.uint64, current_player.load())
+    i = ScratchVar(TealType.uint64, 0)
+    return Seq(
+        current_player.store(Int(129)),
+        For(i.store(Int(1)), i.load() <= Int(10), i.store(i.load() + Int(1))).Do(
+            Seq(
+                current_player.store(Int(129) + (i.load() - Int(1)) % Int(5)),
+                Log(Concat(Bytes("Current player: "), Itob(current_player.load()))),
+                Log(Concat(Bytes("Player score index: "), Itob(player_score.index()))),
+                player_score.store(player_score.load() + i.load()),
+            )
+        ),
+        Int(1),
+    )
+
+
 if __name__ == "__main__":
     teal_dir, name, compiled = compile_and_save(dynamic_scratch)
     path2actual = teal_dir / (name + ".teal")
     path2expected = teal_dir / (name + "_expected.teal")
 
     assert_teal_as_expected(path2actual, path2expected)
+
+    teal_dir, name, compiled = compile_and_save(dynamic_scratch_2)
