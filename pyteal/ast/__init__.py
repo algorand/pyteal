@@ -6,19 +6,22 @@ from .leafexpr import LeafExpr
 from .addr import Addr
 from .bytes import Bytes
 from .int import Int, EnumInt
+from .methodsig import MethodSignature
 
 # properties
 from .arg import Arg
 from .txn import TxnType, TxnField, TxnExpr, TxnaExpr, TxnArray, TxnObject, Txn
 from .gtxn import GtxnExpr, GtxnaExpr, TxnGroup, Gtxn
 from .gaid import GeneratedID
+from .gitxn import Gitxn, GitxnExpr, GitxnaExpr, InnerTxnGroup
 from .gload import ImportScratchValue
 from .global_ import Global, GlobalField
 from .app import App, AppField, OnComplete, AppParam
 from .asset import AssetHolding, AssetParam
+from .acct import AccountParam
 
 # inner txns
-from .itxn import InnerTxnBuilder, InnerTxn
+from .itxn import InnerTxnBuilder, InnerTxn, InnerTxnAction
 
 # meta
 from .array import Array
@@ -42,6 +45,7 @@ from .unaryexpr import (
     Balance,
     MinBalance,
     BytesNot,
+    BytesSqrt,
     BytesZero,
     Log,
 )
@@ -107,6 +111,7 @@ from .subroutine import (
     SubroutineDefinition,
     SubroutineDeclaration,
     SubroutineCall,
+    SubroutineFnWrapper,
 )
 from .while_ import While
 from .for_ import For
@@ -127,6 +132,7 @@ __all__ = [
     "Bytes",
     "Int",
     "EnumInt",
+    "MethodSignature",
     "Arg",
     "TxnType",
     "TxnField",
@@ -149,8 +155,14 @@ __all__ = [
     "AppParam",
     "AssetHolding",
     "AssetParam",
+    "AccountParam",
     "InnerTxnBuilder",
     "InnerTxn",
+    "InnerTxnAction",
+    "Gitxn",
+    "GitxnExpr",
+    "GitxnaExpr",
+    "InnerTxnGroup",
     "Array",
     "Tmpl",
     "Nonce",
@@ -211,6 +223,7 @@ __all__ = [
     "SubroutineDefinition",
     "SubroutineDeclaration",
     "SubroutineCall",
+    "SubroutineFnWrapper",
     "ScratchSlot",
     "ScratchLoad",
     "ScratchStore",
@@ -233,6 +246,7 @@ __all__ = [
     "BytesGt",
     "BytesGe",
     "BytesNot",
+    "BytesSqrt",
     "BytesZero",
     "ExtractUint16",
     "ExtractUint32",

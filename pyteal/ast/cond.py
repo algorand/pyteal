@@ -46,12 +46,12 @@ class Cond(Expr):
             if len(arg) != 2:
                 raise TealInputError(msg.format(arg))
 
-            require_type(arg[0].type_of(), TealType.uint64)  # cond_n should be int
+            require_type(arg[0], TealType.uint64)  # cond_n should be int
 
             if value_type is None:  # the types of all branches should be the same
                 value_type = arg[1].type_of()
             else:
-                require_type(arg[1].type_of(), value_type)
+                require_type(arg[1], value_type)
 
         self.value_type = value_type
         self.args = argv

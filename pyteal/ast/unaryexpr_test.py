@@ -9,6 +9,7 @@ teal2Options = CompileOptions(version=2)
 teal3Options = CompileOptions(version=3)
 teal4Options = CompileOptions(version=4)
 teal5Options = CompileOptions(version=5)
+teal6Options = CompileOptions(version=6)
 
 
 def test_btoi():
@@ -355,6 +356,27 @@ def test_b_not():
 def test_b_not_invalid():
     with pytest.raises(TealTypeError):
         BytesNot(Int(2))
+
+
+def test_bsqrt():
+    arg = Bytes("base16", "0xFEDCBA9876543210")
+    expr = BytesSqrt(arg)
+    assert expr.type_of() == TealType.bytes
+
+    expected = TealSimpleBlock(
+        [TealOp(arg, Op.byte, "0xFEDCBA9876543210"), TealOp(expr, Op.bsqrt)]
+    )
+
+    actual, _ = expr.__teal__(teal6Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+
+def test_bsqrt_invalid():
+    with pytest.raises(TealTypeError):
+        BytesSqrt(Int(2 ** 64 - 1))
 
 
 def test_b_zero():

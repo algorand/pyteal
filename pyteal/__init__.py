@@ -13,6 +13,7 @@ from .types import TealType
 from .errors import TealInternalError, TealTypeError, TealInputError, TealCompileError
 from .config import MAX_GROUP_SIZE, NUM_SLOTS
 
+# begin __all__
 __all__ = (
     ast_all
     + ir_all
@@ -31,3 +32,4 @@ __all__ = (
         "NUM_SLOTS",
     ]
 )
+# end __all__

@@ -2,7 +2,7 @@ from typing import Sequence, cast, TYPE_CHECKING
 
 from ..types import TealType, require_type
 from ..errors import TealInputError
-from ..ir import TealOp, Op, TealSimpleBlock, TealBlock
+from ..ir import TealOp, Op, TealSimpleBlock
 from .expr import Expr
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ class NaryExpr(Expr):
                 raise TealInputError(
                     "Argument is not a PyTeal expression: {}".format(arg)
                 )
-            require_type(arg.type_of(), inputType)
+            require_type(arg, inputType)
         self.op = op
         self.outputType = outputType
         self.args = args

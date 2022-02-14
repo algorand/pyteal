@@ -26,15 +26,17 @@ These expressions also work inside :ref:`subroutines <subroutine_expr>`.
 Chaining Expressions: :code:`Seq`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The :any:`Seq` expression can be used to create a sequence of multiple expressions. It takes a
-single argument, which is a list of expressions to include in the sequence. For example:
+The :any:`Seq` expression can be used to create a sequence of multiple expressions.  It's arguments are the 
+expressions to include in the sequence, either as a variable number of arguments, or as a single list
+
+For example:
 
 .. code-block:: python
 
-    Seq([
+    Seq(
         App.globalPut(Bytes("creator"), Txn.sender()),
         Return(Int(1))
-    ])
+    )
 
 A :code:`Seq` expression will take on the value of its last expression. Additionally, all
 expressions in a :code:`Seq` expression, except the last one, must not return anything (e.g.
@@ -44,10 +46,10 @@ add things to the TEAL stack. As a result, the following is an invalid sequence:
 .. code-block:: python
     :caption: Invalid Seq expression
 
-    Seq([
+    Seq(
         Txn.sender(),
         Return(Int(1))
-    ])
+    )
 
 
 If you must include an operation that returns a value in the earlier
@@ -55,10 +57,10 @@ part of a sequence, you can wrap the value in a :any:`Pop` expression to discard
 
 .. code-block:: python
 
-    Seq([
+    Seq(
         Pop(Txn.sender()),
         Return(Int(1))
-    ])
+    )
 
 .. _if_expr:
 

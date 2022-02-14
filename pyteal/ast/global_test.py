@@ -8,6 +8,7 @@ from .. import CompileOptions
 teal2Options = CompileOptions(version=2)
 teal3Options = CompileOptions(version=3)
 teal5Options = CompileOptions(version=5)
+teal6Options = CompileOptions(version=6)
 
 
 def test_global_min_txn_fee():
@@ -149,3 +150,45 @@ def test_global_group_id():
 
     with pytest.raises(TealInputError):
         expr.__teal__(teal3Options)
+
+
+def test_global_opcode_budget():
+    expr = Global.opcode_budget()
+    assert expr.type_of() == TealType.uint64
+
+    expected = TealSimpleBlock([TealOp(expr, Op.global_, "OpcodeBudget")])
+
+    actual, _ = expr.__teal__(teal6Options)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal5Options)
+
+
+def test_global_caller_application_id():
+    expr = Global.caller_app_id()
+    assert expr.type_of() == TealType.uint64
+
+    expected = TealSimpleBlock([TealOp(expr, Op.global_, "CallerApplicationID")])
+
+    actual, _ = expr.__teal__(teal6Options)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal5Options)
+
+
+def test_global_caller_app_address():
+    expr = Global.caller_app_address()
+    assert expr.type_of() == TealType.bytes
+
+    expected = TealSimpleBlock([TealOp(expr, Op.global_, "CallerApplicationAddress")])
+
+    actual, _ = expr.__teal__(teal6Options)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal5Options)

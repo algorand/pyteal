@@ -16,7 +16,7 @@ class UnaryExpr(Expr):
         self, op: Op, inputType: TealType, outputType: TealType, arg: Expr
     ) -> None:
         super().__init__()
-        require_type(arg.type_of(), inputType)
+        require_type(arg, inputType)
         self.op = op
         self.outputType = outputType
         self.arg = arg
@@ -151,6 +151,16 @@ def BytesNot(arg: Expr) -> UnaryExpr:
     Requires TEAL version 4 or higher.
     """
     return UnaryExpr(Op.b_not, TealType.bytes, TealType.bytes, arg)
+
+
+def BytesSqrt(arg: Expr) -> UnaryExpr:
+    """Get the bytes square root of bytes.
+
+    This will return the largest integer X such that X^2 <= arg.
+
+    Requires TEAL version 6 or higher.
+    """
+    return UnaryExpr(Op.bsqrt, TealType.bytes, TealType.bytes, arg)
 
 
 def BytesZero(arg: Expr) -> UnaryExpr:

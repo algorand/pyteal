@@ -7,11 +7,7 @@ from algosdk import encoding
 from ..ir import (
     Op,
     TealOp,
-    TealLabel,
     TealComponent,
-    TealBlock,
-    TealSimpleBlock,
-    TealConditionalBlock,
 )
 from ..util import unescapeStr, correctBase32Padding
 from ..errors import TealInternalError
@@ -94,6 +90,28 @@ def extractAddrValue(op: TealOp) -> Union[str, bytes]:
     return value
 
 
+def extractMethodSigValue(op: TealOp) -> bytes:
+    """Extract the constant value being loaded by a TealOp whose op is Op.method.
+
+    Returns:
+        The bytes of method selector computed from the method signature that the op is loading.
+    """
+    if len(op.args) != 1 or type(op.args[0]) != str:
+        raise TealInternalError("Unexpected args in method opcode: {}".format(op.args))
+
+    methodSignature = cast(str, op.args[0])
+    if methodSignature[0] == methodSignature[-1] and methodSignature.startswith('"'):
+        methodSignature = methodSignature[1:-1]
+    else:
+        raise TealInternalError(
+            "Method signature opcode error: signatue {} not wrapped with double-quotes".format(
+                methodSignature
+            )
+        )
+    methodSelector = encoding.checksum(bytes(methodSignature, "utf-8"))[:4]
+    return methodSelector
+
+
 def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
     """Convert TEAL code from using pseudo-ops for constants to using assembled constant blocks.
 
@@ -124,6 +142,9 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
         elif basicOp == Op.addr:
             addrValue = extractAddrValue(op)
             byteFreqs[addrValue] = byteFreqs.get(addrValue, 0) + 1
+        elif basicOp == Op.method_signature:
+            methodValue = extractMethodSigValue(op)
+            byteFreqs[methodValue] = byteFreqs.get(methodValue, 0) + 1
 
     assembled: List[TealComponent] = []
 
@@ -177,12 +198,22 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
                     assembled.append(TealOp(op.expr, Op.intc, index, "//", *op.args))
                 continue
 
-            if basicOp == Op.byte or basicOp == Op.addr:
-                byteValue = (
-                    extractBytesValue(op)
-                    if basicOp == Op.byte
-                    else extractAddrValue(op)
-                )
+            if (
+                basicOp == Op.byte
+                or basicOp == Op.addr
+                or basicOp == Op.method_signature
+            ):
+                if basicOp == Op.byte:
+                    byteValue = extractBytesValue(op)
+                elif basicOp == Op.addr:
+                    byteValue = extractAddrValue(op)
+                elif basicOp == Op.method_signature:
+                    byteValue = extractMethodSigValue(op)
+                else:
+                    raise TealInternalError(
+                        "Expect a byte-like constant opcode, get {}".format(op)
+                    )
+
                 if byteFreqs[byteValue] == 1:
                     encodedValue = (
                         ("0x" + byteValue.hex())

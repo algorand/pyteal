@@ -5,7 +5,6 @@ from ..ir import TealOp, Op, TealBlock
 from ..errors import TealInputError, verifyFieldVersion, verifyTealVersion
 from ..config import MAX_GROUP_SIZE
 from .expr import Expr
-from .leafexpr import LeafExpr
 from .txn import TxnField, TxnExpr, TxnaExpr, TxnObject
 
 if TYPE_CHECKING:
@@ -26,6 +25,9 @@ class GtxnExpr(TxnExpr):
         verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
 
         if type(self.txnIndex) is int:
+            verifyTealVersion(
+                Op.gtxn.min_version, options.version, "TEAL version too low to use gtxn"
+            )
             op = TealOp(self, Op.gtxn, self.txnIndex, self.field.arg_name)
             return TealBlock.FromOp(options, op)
 
@@ -110,7 +112,7 @@ class TxnGroup:
                     )
                 )
         else:
-            require_type(cast(Expr, txnIndex).type_of(), TealType.uint64)
+            require_type(cast(Expr, txnIndex), TealType.uint64)
         return TxnObject(
             lambda field: GtxnExpr(txnIndex, field),
             lambda field, index: GtxnaExpr(txnIndex, field, index),

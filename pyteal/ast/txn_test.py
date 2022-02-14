@@ -96,6 +96,10 @@ def test_txn_fields():
             [TealOp(dynamicGtxnArg, Op.int, 0)],
         ),
         (InnerTxn, Op.itxn, Op.itxna, None, [], []),
+        *[
+            (Gitxn[i], Op.gitxn, Op.gitxna, None, [i], [])
+            for i in range(MAX_GROUP_SIZE)
+        ],
     ]
 
     for (

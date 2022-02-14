@@ -74,6 +74,7 @@ class Op(Enum):
     bytec_3             = OpType("bytec_3",             Mode.Signature | Mode.Application, 2)
     byte                = OpType("byte",                Mode.Signature | Mode.Application, 2)
     addr                = OpType("addr",                Mode.Signature | Mode.Application, 2)
+    method_signature    = OpType("method",              Mode.Signature | Mode.Application, 2)
     arg                 = OpType("arg",                 Mode.Signature,                    2)
     txn                 = OpType("txn",                 Mode.Signature | Mode.Application, 2)
     global_             = OpType("global",              Mode.Signature | Mode.Application, 2)
@@ -169,6 +170,12 @@ class Op(Enum):
     gtxnas              = OpType("gtxnas",              Mode.Signature | Mode.Application, 5)
     gtxnsas             = OpType("gtxnsas",             Mode.Signature | Mode.Application, 5)
     args                = OpType("args",                Mode.Signature,                    5)
+    bsqrt               = OpType("bsqrt",               Mode.Signature | Mode.Application, 6)
+    itxn_next           = OpType("itxn_next",           Mode.Application,                  6)
+    gitxn               = OpType("gitxn",               Mode.Application,                  6)
+    gitxna              = OpType("gitxna",              Mode.Application,                  6)
+    gloadss             = OpType("gloadss",             Mode.Application,                  6)
+    acct_params_get     = OpType("acct_params_get",     Mode.Application,                  6)
     # fmt: on
 
 

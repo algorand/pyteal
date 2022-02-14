@@ -1,4 +1,4 @@
-from typing import List, cast, TYPE_CHECKING, overload
+from typing import List, TYPE_CHECKING, overload
 
 from ..types import TealType, require_type
 from ..errors import TealInputError
@@ -47,7 +47,7 @@ class Seq(Expr):
             if not isinstance(expr, Expr):
                 raise TealInputError("{} is not a pyteal expression.".format(expr))
             if i + 1 < len(exprs):
-                require_type(expr.type_of(), TealType.none)
+                require_type(expr, TealType.none)
 
         self.args = exprs
 
