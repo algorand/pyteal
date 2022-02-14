@@ -1,0 +1,45 @@
+name: "Build workflow"
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+jobs:
+  build-test:
+    runs-on: ubuntu-20.04
+    container: python:${{ matrix.python }}-slim
+    strategy:
+      matrix:
+        python: ['3.6', '3.7', '3.8', '3.9']
+    steps:
+      - run: python3 --version
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Install pip dependencies
+        run: pip install -r requirements.txt
+      - name: Build and Test
+        run: |
+          pytest
+          mypy pyteal
+          python3 -c "import pyteal" scripts/generate_init.py --check
+          black --check .
+  upload-to-pypi:
+    runs-on: ubuntu-20.04
+    needs: ['build-test']
+    if: ${{ github.event_name == 'push' && contains(github.ref, 'master') && startsWith(github.ref, 'refs/tags') }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Install dependencies
+        run: pip install wheel
+      - name: Build package
+        run: python setup.py sdist bdist_wheel
+      - name: Release
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
