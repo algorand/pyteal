@@ -81,6 +81,7 @@ def test_Uint_bits():
 def test_Uint_str():
     for test in testData:
         assert str(test.uintType) == "uint{}".format(test.expectedBits)
+    assert str(abi.Byte()) == "byte"
 
 
 def test_Uint_is_dynamic():
@@ -244,6 +245,40 @@ def test_Uint_encode():
         expected, _ = test.expectedEncoding(test.uintType).__teal__(options)
         expected.addIncoming()
         expected = TealBlock.NormalizeBlocks(expected)
+
+        actual, _ = expr.__teal__(options)
+        actual.addIncoming()
+        actual = TealBlock.NormalizeBlocks(actual)
+
+        with TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
+
+
+def test_ByteUint8_set_error():
+    with pytest.raises(TealInputError) as uint8_err_msg:
+        abi.Uint8().set(256)
+    assert "Uint8" in uint8_err_msg.__str__()
+
+    with pytest.raises(TealInputError) as byte_err_msg:
+        abi.Byte().set(256)
+    assert "Byte" in byte_err_msg.__str__()
+
+
+def test_ByteUint8_mutual_conversion():
+    for type_a, type_b in [(abi.Uint8, abi.Byte), (abi.Byte, abi.Uint8)]:
+        type_b_instance = type_b()
+        other = type_a()
+        expr = type_b_instance.set(other)
+
+        assert expr.type_of() == TealType.none
+        assert not expr.has_return()
+
+        expected = TealSimpleBlock(
+            [
+                TealOp(None, Op.load, other.stored_value.slot),
+                TealOp(None, Op.store, type_b_instance.stored_value.slot),
+            ]
+        )
 
         actual, _ = expr.__teal__(options)
         actual.addIncoming()

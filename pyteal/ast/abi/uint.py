@@ -55,15 +55,19 @@ class Uint8(Uint):
     def new_instance(self) -> "Uint8":
         return Uint8()
 
-    def set(self, value: Union[int, Expr, "Uint8"]) -> Expr:
+    def set(self, value: Union[int, Expr, "Uint8", "Byte"]) -> Expr:
         checked = False
         if type(value) is int:
             if value >= 2 ** self.bit_size:
-                raise TealInputError("Value exceeds Uint8 maximum: {}".format(value))
+                raise TealInputError(
+                    "Value exceeds {} maximum: {}".format(
+                        self.__class__.__name__, value
+                    )
+                )
             value = Int(value)
             checked = True
 
-        if type(value) is Uint8:
+        if type(value) is Uint8 or type(value) is Byte:
             value = value.get()
             checked = True
 
@@ -93,7 +97,19 @@ class Uint8(Uint):
 
 Uint8.__module__ = "pyteal"
 
-Byte = Uint8
+
+class Byte(Uint8):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def new_instance(self) -> "Byte":
+        return Byte()
+
+    def __str__(self) -> str:
+        return "byte"
+
+
+Byte.__module__ = "pyteal"
 
 
 class Uint16(Uint):
