@@ -1,75 +1,6 @@
-from ast import Sub
-from cmath import exp
-from pathlib import Path
-
 from pyteal import *
-from pyteal.types import require_type
 
-
-# HELPERS:
-
-
-def compile_and_save(approval):
-    teal = Path.cwd() / "tests" / "teal"
-    compiled = compileTeal(approval(), mode=Mode.Application, version=6)
-    name = approval.__name__
-    with open(teal / (name + ".teal"), "w") as f:
-        f.write(compiled)
-    return teal, name, compiled
-
-
-def mismatch_ligature(expected, actual):
-    la, le = len(actual), len(expected)
-    mm_idx = -1
-    for i in range(min(la, le)):
-        if expected[i] != actual[i]:
-            mm_idx = i
-            break
-    if mm_idx < 0:
-        return ""
-    return " " * (mm_idx) + "X" + "-" * (max(la, le) - mm_idx - 1)
-
-
-def assert_teal_as_expected(path2actual, path2expected):
-
-    with open(path2actual, "r") as fa, open(path2expected, "r") as fe:
-        alines = fa.read().split("\n")
-        elines = fe.read().split("\n")
-
-        assert len(elines) == len(
-            alines
-        ), f"""EXPECTED {len(elines)} lines for {path2expected}
-but ACTUALLY got {len(alines)} lines in {path2actual}"""
-
-        for i, actual in enumerate(alines):
-            expected = elines[i]
-            assert expected.startswith(
-                actual
-            ), f"""ACTUAL line in {path2actual}
-LINE{i+1}:
-{actual}
-{mismatch_ligature(expected, actual)}
-DOES NOT prefix the EXPECTED (which should have been actual + some commentary) in {path2expected}:
-LINE{i+1}:
-{expected}  
-{mismatch_ligature(expected, actual)}
-"""
-
-
-def assert_new_v_old(dynamic_scratch):
-    teal_dir, name, compiled = compile_and_save(dynamic_scratch)
-    print(
-        f"""Compilation resulted in TEAL program of length {len(compiled)}. 
-To view output SEE <{name}.teal> in ({teal_dir})
---------------"""
-    )
-
-    path2actual = teal_dir / (name + ".teal")
-    path2expected = teal_dir / (name + "_expected.teal")
-    assert_teal_as_expected(path2actual, path2expected)
-
-
-# PYTEALS:
+from .compile_asserts import assert_new_v_old, compile_and_save
 
 
 def dynamic_scratch():
@@ -127,8 +58,19 @@ def wilt_the_stilt():
     )
 
 
-if __name__ == "__main__":
-    for pt in (dynamic_scratch, dynamic_scratch_2, wilt_the_stilt):
+TEST_CASES = (dynamic_scratch, dynamic_scratch_2, wilt_the_stilt)
+
+
+def test_all():
+    for pt in TEST_CASES:
         assert_new_v_old(pt)
 
+
+def test_new():
     teal_dir, name, compiled = compile_and_save(wilt_the_stilt)
+    print(
+        f"""Successfuly tested approval program {name} having 
+compiled it into {len(compiled)} characters. See the results in:
+{teal_dir}
+"""
+    )
