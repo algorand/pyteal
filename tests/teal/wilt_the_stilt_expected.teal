@@ -1,0 +1,42 @@
+#pragma version 6
+int 129
+store 0
+load 0
+int 100
+stores
+int 130
+store 0
+load 0
+int 81
+stores
+int 131
+store 0
+load 0
+int 73
+stores
+load 0
+loads
+int 73
+==
+assert
+load 0
+int 131
+==
+assert
+load 0
+load 0
+loads
+int 2
+-
+stores
+load 0
+loads
+int 100
+==
+assert
+load 0
+int 129
+==
+assert
+int 100
+return

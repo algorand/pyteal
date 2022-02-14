@@ -19,18 +19,18 @@ class ScratchVar:
 
     Example of Dynamic Scratch space whereby the slot index is picked up from the stack:
         .. code-block:: python
-                player_index = ScratchVar(TealType.uint64, 128)
+                player_index = ScratchVar(TealType.uint64)
                 player_score = ScratchVar(TealType.uint64, player_index.load())
                 Seq(
-                    player_index.store(Int(129)),     // Wilt Chamberlain
+                    player_index.store(Int(129)),     # Wilt Chamberlain
                     player_score.store(Int(100)),
-                    player_index.store(Int(130)),     // Kobe Bryant
+                    player_index.store(Int(130)),     # Kobe Bryant
                     player_score.store(Int(81)),
-                    player_index.store(Int(131)),     // David Thompson
+                    player_index.store(Int(131)),     # David Thompson
                     player_score.store(Int(73)),
                     Assert(player_score.load() == Int(73)),
                     Assert(player_score.index() == Int(131)),
-                    player_score.store(player_score.load() - Int(2)),     // back to Wilt:
+                    player_score.store(player_score.load() - Int(2)),     # back to Wilt:
                     Assert(player_score.load() == Int(100)),
                     Assert(player_score.index() == Int(129)),
                 )

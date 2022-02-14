@@ -60,7 +60,8 @@ def assert_new_v_old(dynamic_scratch):
     teal_dir, name, compiled = compile_and_save(dynamic_scratch)
     print(
         f"""Compilation resulted in TEAL program of length {len(compiled)}. 
-Inspect output {name}.teal in {teal_dir}"""
+To view output SEE <{name}.teal> in ({teal_dir})
+--------------"""
     )
 
     path2actual = teal_dir / (name + ".teal")
@@ -107,8 +108,27 @@ def dynamic_scratch_2():
     )
 
 
-if __name__ == "__main__":
-    assert_new_v_old(dynamic_scratch)
-    assert_new_v_old(dynamic_scratch_2)
+def wilt_the_stilt():
+    player_index = ScratchVar(TealType.uint64)
+    player_score = ScratchVar(TealType.uint64, player_index.load())
+    return Seq(
+        player_index.store(Int(129)),  # Wilt Chamberlain
+        player_score.store(Int(100)),
+        player_index.store(Int(130)),  # Kobe Bryant
+        player_score.store(Int(81)),
+        player_index.store(Int(131)),  # David Thompson
+        player_score.store(Int(73)),
+        Assert(player_score.load() == Int(73)),
+        Assert(player_score.index() == Int(131)),
+        player_score.store(player_score.load() - Int(2)),  # back to Wilt:
+        Assert(player_score.load() == Int(100)),
+        Assert(player_score.index() == Int(129)),
+        Int(100),
+    )
 
-    teal_dir, name, compiled = compile_and_save(dynamic_scratch_2)
+
+if __name__ == "__main__":
+    for pt in (dynamic_scratch, dynamic_scratch_2, wilt_the_stilt):
+        assert_new_v_old(pt)
+
+    teal_dir, name, compiled = compile_and_save(wilt_the_stilt)

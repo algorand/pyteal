@@ -41,7 +41,7 @@ class Slot:
         return hash(self.id)
 
 
-Slot.__modlue__ = "pyteal"
+Slot.__module__ = "pyteal"
 
 
 class ScratchSlot(Slot):
