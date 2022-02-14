@@ -52,7 +52,7 @@ class MultiValue(LeafExpr):
             ret_str += " " + a.__str__()
         ret_str += ") "
 
-        ret_str += ' '.join([slot.store().__str__() for slot in self.output_slots])
+        ret_str += " ".join([slot.store().__str__() for slot in self.output_slots])
         ret_str += ")"
 
         return ret_str
@@ -69,7 +69,9 @@ class MultiValue(LeafExpr):
             curEnd = storeEnd
 
         if self.reducer_set:
-            input = [slot.load(self.types[i]) for i, slot in enumerate(self.output_slots)]
+            input = [
+                slot.load(self.types[i]) for i, slot in enumerate(self.output_slots)
+            ]
             reducerStart, reducerEnd = self.reducer(*input).__teal__(options)
             curEnd.setNextBlock(reducerStart)
             return callStart, reducerEnd
