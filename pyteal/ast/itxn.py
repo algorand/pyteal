@@ -120,7 +120,7 @@ class InnerTxnBuilder:
         :any:`InnerTxnBuilder.Begin` and :any:`InnerTxnBuilder.SetField` must be called before
         submitting an inner transaction.
 
-        This will fail if 16 inner transactions have already been executed, or if the
+        This will fail if 256 inner transactions have already been executed, or if the
         inner transaction itself fails. Upon failure, the current program will immediately exit and
         fail as well.
 
