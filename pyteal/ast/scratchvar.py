@@ -1,6 +1,6 @@
 from ..types import TealType, require_type
 from .expr import Expr
-from .scratch import ScratchSlot, ScratchLoad
+from .scratch import ScratchSlot, ScratchLoad, DynamicSlot
 
 
 class ScratchVar:
@@ -48,7 +48,14 @@ class ScratchVar:
             slotId (optional): A scratch slot id that the compiler must store the value.
                 This id may be a Python int in the range [0-256).
         """
-        self.slot = ScratchSlot(requestedSlotId=slotId)
+
+        # TODO: Zeph to add assertions
+
+        self.slot = (
+            ScratchSlot(requestedSlotId=slotId)
+            if not isinstance(slotId, Expr)
+            else DynamicSlot(slotId)
+        )
         self.type = type
 
     def storage_type(self) -> TealType:

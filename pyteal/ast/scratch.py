@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 from ..types import TealType
 from ..config import NUM_SLOTS
@@ -9,34 +9,12 @@ if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
 
-class ScratchSlot:
-    """Represents the allocation of a scratch space slot."""
+class Slot:
+    """Abstract base closs for ScratchSlot and DynamicSlot"""
 
-    # Unique identifier for the compiler to automatically assign slots
-    # The id field is used by the compiler to map to an actual slot in the source code
-    # Slot ids under 256 are manually reserved slots
-    nextSlotId = NUM_SLOTS
-
-    def __init__(self, requestedSlotId: int = None):
-        """Initializes a scratch slot with a particular id
-
-        Args:
-            requestedSlotId (optional): A scratch slot id that the compiler must store the value.
-            This id may be a Python int in the range [0-256).
-        """
-        if requestedSlotId is None:
-            self.id = ScratchSlot.nextSlotId
-            ScratchSlot.nextSlotId += 1
-            self.isReservedSlot = False
-        else:
-            if requestedSlotId < 0 or requestedSlotId >= NUM_SLOTS:
-                raise TealInputError(
-                    "Invalid slot ID {}, shoud be in [0, {})".format(
-                        requestedSlotId, NUM_SLOTS
-                    )
-                )
-            self.id = requestedSlotId
-            self.isReservedSlot = True
+    def __init__(self):
+        self.id: Union[int, Expr] = None
+        self.isReservedSlot: bool = None
 
     def store(self, value: Expr = None) -> Expr:
         """Get an expression to store a value in this slot.
@@ -59,9 +37,6 @@ class ScratchSlot:
         """
         return ScratchLoad(self, type)
 
-    def __repr__(self):
-        return "ScratchSlot({})".format(self.id)
-
     def __str__(self):
         return "slot#{}".format(self.id)
 
@@ -69,7 +44,73 @@ class ScratchSlot:
         return hash(self.id)
 
 
+Slot.__modlue__ = "pyteal"
+
+
+class ScratchSlot(Slot):
+    """Represents the allocation of a scratch space slot."""
+
+    # Unique identifier for the compiler to automatically assign slots
+    # The id field is used by the compiler to map to an actual slot in the source code
+    # Slot ids under 256 are manually reserved slots
+    nextSlotId = NUM_SLOTS
+
+    def __init__(self, requestedSlotId: int = None):
+        """Initializes a scratch slot with a particular id
+
+        Args:
+            requestedSlotId (optional): A scratch slot id that the compiler must store the value.
+            This id may be a Python int in the range [0-256).
+        """
+        super().__init__()
+
+        if requestedSlotId is None:
+            self.id = ScratchSlot.nextSlotId
+            ScratchSlot.nextSlotId += 1
+            self.isReservedSlot = False
+        else:
+            if requestedSlotId < 0 or requestedSlotId >= NUM_SLOTS:
+                raise TealInputError(
+                    "Invalid slot ID {}, shoud be in [0, {})".format(
+                        requestedSlotId, NUM_SLOTS
+                    )
+                )
+            self.id = requestedSlotId
+            self.isReservedSlot = True
+
+    def __repr__(self):
+        return "ScratchSlot({})".format(self.id)
+
+
 ScratchSlot.__module__ = "pyteal"
+
+
+class DynamicSlot(Slot):
+    """Represents the allocation of a scratch space slot."""
+
+    # Unique identifier for the compiler to automatically assign slots
+    # The id field is used by the compiler to map to an actual slot in the source code
+    # Slot ids under 256 are manually reserved slots
+    nextSlotId = NUM_SLOTS
+
+    def __init__(self, slotExpr: Expr):
+        """Initializes a scratch slot with a particular id
+
+        Args:
+            requestedSlotId (optional): A scratch slot id that the compiler must store the value.
+            This id may be a Python int in the range [0-256).
+        """
+        super().__init__()
+
+        # TODO: Zeph to add assertions
+        self.id = slotExpr
+        self.isReservedSlot = False
+
+    def __repr__(self):
+        return "ScratchSlot({})".format(self.id)
+
+
+DynamicSlot.__module__ = "pyteal"
 
 
 class ScratchLoad(Expr):
