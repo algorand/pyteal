@@ -26,7 +26,15 @@ class Slot:
         """
         if value is not None:
             return ScratchStore(self, value)
-        return ScratchStackStore(self)
+
+        if not isinstance(self, ScratchSlot):
+            raise TealInternalError(
+                "ScratchStackStore is only setup to handle ScratchSlot's but was about to supply type {}".format(
+                    type(self)
+                )
+            )
+
+        return ScratchStackStore(cast(ScratchSlot, self))
 
     def load(self, type: TealType = TealType.anytype) -> "ScratchLoad":
         """Get an expression to load a value from this slot.
@@ -204,7 +212,7 @@ class ScratchStackStore(Expr):
     doing.
     """
 
-    def __init__(self, slot: Slot):
+    def __init__(self, slot: ScratchSlot):
         """Create a new ScratchStackStore expression.
 
         Args:
@@ -212,10 +220,6 @@ class ScratchStackStore(Expr):
         """
         super().__init__()
 
-        if isinstance(slot, DynamicSlot):
-            raise TealInternalError(
-                "ScratchStackStore is not setup to handle DynamicSlot's"
-            )
         self.slot = slot
 
     def __str__(self):

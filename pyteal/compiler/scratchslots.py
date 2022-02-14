@@ -113,7 +113,7 @@ def assignScratchSlotsToSubroutines(
                     slot.id, type(slot.id)
                 )
             )
-        slotIds.add(cast(int, slot.id))
+        slotIds.add(slot.id)
 
     nextSlotIndex = 0
     for slot in sorted(allSlots, key=lambda slot: slot.id):
@@ -130,7 +130,7 @@ def assignScratchSlotsToSubroutines(
                 )
 
             # Slot ids under 256 are manually reserved slots
-            slotAssignments[slot] = cast(int, slot.id)
+            slotAssignments[slot] = slot.id
         else:
             slotAssignments[slot] = nextSlotIndex
             slotIds.add(nextSlotIndex)
