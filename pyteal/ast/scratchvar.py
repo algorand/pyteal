@@ -1,3 +1,5 @@
+from typing import cast
+
 from ..types import TealType, require_type
 from .expr import Expr
 from .int import Int
@@ -55,7 +57,7 @@ class ScratchVar:
         self.slot = (
             ScratchSlot(requestedSlotId=slotId)
             if not isinstance(slotId, Expr)
-            else DynamicSlot(slotId)
+            else DynamicSlot(cast(Expr, slotId))
         )
         self.type = type
 
@@ -78,7 +80,11 @@ class ScratchVar:
 
     def index(self) -> Expr:
         """TODO: Zeph - this probably doesn't work for regular ScratchSlot's without fixed int slotId"""
-        return self.slot.id if isinstance(self.slot, DynamicSlot) else Int(self.slot.id)
+        return (
+            cast(Expr, self.slot.id)
+            if isinstance(self.slot, DynamicSlot)
+            else Int(cast(int, self.slot.id))
+        )
 
 
 ScratchVar.__module__ = "pyteal"

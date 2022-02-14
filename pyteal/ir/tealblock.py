@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List, Tuple, Set, Iterator, cast, TYPE_CHECKING
+from typing import Union, List, Tuple, Set, Iterator, cast, TYPE_CHECKING
 
 from .tealop import TealOp, Op
 from ..errors import TealCompileError
@@ -85,7 +85,7 @@ class TealBlock(ABC):
     def validateSlots(
         self,
         slotsInUse: Set["ScratchSlot"] = None,
-        visited: Set[Tuple[int, ...]] = None,
+        visited: Set[Tuple[Union[int, Expr], ...]] = None,
     ) -> List[TealCompileError]:
         if visited is None:
             visited = set()

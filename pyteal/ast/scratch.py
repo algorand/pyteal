@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Union
+from typing import cast, TYPE_CHECKING, Union
 
 from ..types import TealType
 from ..config import NUM_SLOTS
@@ -119,7 +119,7 @@ DynamicSlot.__module__ = "pyteal"
 class ScratchLoad(Expr):
     """Expression to load a value from scratch space."""
 
-    def __init__(self, slot: ScratchSlot, type: TealType = TealType.anytype):
+    def __init__(self, slot: Slot, type: TealType = TealType.anytype):
         """Create a new ScratchLoad expression.
 
         Args:
@@ -145,7 +145,7 @@ class ScratchLoad(Expr):
             raise TealInternalError("unrecognized slot type {}".format(type(self.slot)))
 
         op = TealOp(self, Op.loads)
-        return TealBlock.FromOp(options, op, self.slot.id)
+        return TealBlock.FromOp(options, op, cast(Expr, self.slot.id))
 
     def type_of(self):
         return self.type
@@ -160,7 +160,7 @@ ScratchLoad.__module__ = "pyteal"
 class ScratchStore(Expr):
     """Expression to store a value in scratch space."""
 
-    def __init__(self, slot: ScratchSlot, value: Expr):
+    def __init__(self, slot: Slot, value: Expr):
         """Create a new ScratchStore expression.
 
         Args:
@@ -185,7 +185,7 @@ class ScratchStore(Expr):
             raise TealInternalError("unrecognized slot type {}".format(type(self.slot)))
 
         op = TealOp(self, Op.stores)
-        return TealBlock.FromOp(options, op, self.slot.id, self.value)
+        return TealBlock.FromOp(options, op, cast(Expr, self.slot.id), self.value)
 
     def type_of(self):
         return TealType.none
@@ -204,22 +204,27 @@ class ScratchStackStore(Expr):
     doing.
     """
 
-    def __init__(self, slot: ScratchSlot):
+    def __init__(self, slot: Slot):
         """Create a new ScratchStackStore expression.
 
         Args:
             slot: The slot to store the value in.
         """
         super().__init__()
+
+        if isinstance(slot, DynamicSlot):
+            raise TealInternalError(
+                "ScratchStackStore is not setup to handle DynamicSlot's"
+            )
         self.slot = slot
 
     def __str__(self):
-        return "(StackStore {})".format(self.slot)
+        return "(ScratchStackStore {})".format(self.slot)
 
     def __teal__(self, options: "CompileOptions"):
         from ..ir import TealOp, Op, TealBlock
 
-        op = TealOp(self, Op.store, self.slot)
+        op = TealOp(self, Op.store, cast(ScratchSlot, self.slot))
         return TealBlock.FromOp(options, op)
 
     def type_of(self):
