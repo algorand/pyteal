@@ -47,9 +47,7 @@ GitxnExpr.__module__ = "pyteal"
 class GitxnaExpr(TxnaExpr):
     """An expression that accesses an inner transaction array field from an inner transaction in the last inner group."""
 
-    def __init__(
-        self, txnIndex: Union[int, Expr], field: TxnField, index: Union[int, Expr]
-    ) -> None:
+    def __init__(self, txnIndex: int, field: TxnField, index: Union[int, Expr]) -> None:
         super().__init__(Op.gitxna, Op.gitxnas, "Gitxna", field, index)
         self.txnIndex = txnIndex
 
