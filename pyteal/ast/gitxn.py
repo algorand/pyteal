@@ -59,6 +59,15 @@ class GitxnaExpr(TxnaExpr):
     def __teal__(self, options: "CompileOptions"):
         verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
 
+        if type(self.txnIndex) is not int or not (
+            type(self.index) is int or isinstance(self.index, Expr)
+        ):
+            raise TealInputError(
+                "Invalid gitxna syntax with immediate transaction index {}, transaction field {}, array index {}".format(
+                    self.txnIndex, self.field, self.index
+                )
+            )
+
         if type(self.index) is int:
             opToUse = Op.gitxna
         else:
@@ -98,7 +107,7 @@ class InnerTxnGroup:
 
         return TxnObject(
             lambda field: GitxnExpr(txnIndex, field),
-            lambda field, index: GitxnaExpr(txnIndex, field, cast(int, index)),
+            lambda field, index: GitxnaExpr(txnIndex, field, index),
         )
 
 
