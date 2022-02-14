@@ -1,0 +1,42 @@
+#pragma version 6
+int 129                          
+store 128                       128: 129   
+int 1                           >1
+store 0                         0: 1
+main_l1:                                                ... after 10 iters: <EMPTY STACK> 0: 11; 128: 133; 129: 7, 130: 9; ... ; 133: 15
+load 0                          >1                      >11
+int 10                          >1,10                   >11,10
+<=                              >1                      >0
+bz main_l3                      (DON'T BRANCH)          (GOTO main_l3)                        
+int 129                         >129                      
+load 0                          >129,1                    
+int 1                           >129,1,1                  
+-                               >129,0
+int 5                           >129,0,5
+%                               >129,9
++                               >129
+store 128                       128: 129
+byte "Current player: "                          
+load 128                          
+itob                          
+concat                          >"Current player: 129" 
+log                          
+byte "Player score index: "                          
+load 128                          
+itob                          
+concat                          >"Player score index: 129"
+log                             
+load 128                        >129  
+load 128                        >129,129
+loads                           >129,0
+load 0                          >129,0,1
++                               >129,1
+stores                          129:1
+load 0                          >1
+int 1                           >1,1
++                               >2
+store 0                         0: 2
+b main_l1                       ... now repeat until 0: 11; 128: 133 (== 129+(10-1)%5); 129: 7, 130: 9, ... , 133: 15
+main_l3:                                            ... at the end: <EMPTY STACK> 0: 11; 128: 133; 129: 7, 130: 9; ... ; 133: 15
+int 1                                               >1
+return                                              SUCCESS   
