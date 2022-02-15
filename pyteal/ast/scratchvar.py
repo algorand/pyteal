@@ -79,7 +79,6 @@ class ScratchVar:
         return self.slot.load(self.type)
 
     def index(self) -> Expr:
-        """TODO: Zeph - this probably doesn't work for regular ScratchSlot's without fixed int slotId"""
         return (
             cast(Expr, self.slot.id)
             if isinstance(self.slot, DynamicSlot)
