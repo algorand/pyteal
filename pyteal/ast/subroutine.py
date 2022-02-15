@@ -161,11 +161,7 @@ class SubroutineCall(Expr):
                     )
                 )
 
-            if isinstance(arg, Expr):
-                arg_type = arg.type_of()
-            else:
-                assert isinstance(arg, ScratchVar)
-                arg_type = arg.type
+            arg_type = arg.type_of() if isinstance(arg, Expr) else arg.type
 
             if arg_type == TealType.none:
                 raise TealInputError(

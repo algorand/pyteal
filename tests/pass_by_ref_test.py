@@ -10,7 +10,6 @@ def swap(x: ScratchVar, y: ScratchVar):
         z.store(x.load()),
         x.store(y.load()),
         y.store(z.load()),
-        Int(101),
     )
 
 
@@ -20,7 +19,7 @@ def swapper():
     return Seq(
         a.store(Bytes("hello")),
         b.store(Bytes("goodbye")),
-        Pop(swap(a, b)),
+        swap(a, b),
         Assert(a.load() == Bytes("goodbye")),
         Assert(b.load() == Bytes("hello")),
         Int(1000),
@@ -43,3 +42,7 @@ compiled it into {len(compiled)} characters. See the results in:
 {teal_dir}
 """
     )
+
+
+if __name__ == "__main__":
+    test_generate_another()
