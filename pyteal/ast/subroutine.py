@@ -1,5 +1,5 @@
-from typing import Callable, List, Optional, TYPE_CHECKING
-from inspect import Parameter, signature
+from typing import Callable, List, Optional, Union, TYPE_CHECKING
+from inspect import isclass, Parameter, signature
 
 from ..types import TealType
 from ..ir import TealOp, Op, TealBlock
@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
 
 class SubroutineDefinition:
+    PARAM_TYPES = (Expr, ScratchVar)
 
     nextSubroutineId = 0
 
@@ -50,12 +51,19 @@ class SubroutineDefinition:
                 )
 
         for var, var_type in implementation.__annotations__.items():
-            if var_type is not Expr:
-                stub = "Return" if var == "return" else ("parameter " + var)
-
+            if var == "return" and not (
+                isclass(var_type) and issubclass(var_type, Expr)
+            ):
                 raise TealInputError(
-                    "Function has {} of disallowed type {}. Only type Expr is allowed".format(
-                        stub, var_type
+                    "Function has return of disallowed type {}. Only subtype of Expr is allowed".format(
+                        var_type
+                    )
+                )
+
+            if var != "return" and var_type not in self.PARAM_TYPES:
+                raise TealInputError(
+                    "Function has parameter {} of disallowed type {}. Only the types {} are allowed".format(
+                        var, var_type, self.param_type_names()
                     )
                 )
 
@@ -87,10 +95,10 @@ class SubroutineDefinition:
             )
 
         for i, arg in enumerate(args):
-            if not isinstance(arg, Expr):
+            if not isinstance(arg, self.PARAM_TYPES):
                 raise TealInputError(
-                    "Argument at index {} of subroutine call is not a PyTeal expression: {}".format(
-                        i, arg
+                    "Argument {} at index {} of subroutine call has incorrect type {}".format(
+                        i, arg, type(arg)
                     )
                 )
 
@@ -136,16 +144,33 @@ SubroutineDeclaration.__module__ = "pyteal"
 
 
 class SubroutineCall(Expr):
-    def __init__(self, subroutine: SubroutineDefinition, args: List[Expr]) -> None:
+    def __init__(
+        self, subroutine: SubroutineDefinition, args: List[Union[Expr, ScratchVar]]
+    ) -> None:
         super().__init__()
         self.subroutine = subroutine
         self.args = args
 
         for i, arg in enumerate(args):
-            if arg.type_of() == TealType.none:
+            arg_type = None
+
+            if not isinstance(arg, (Expr, ScratchVar)):
                 raise TealInputError(
-                    "Subroutine argument at index {} evaluates to TealType.none".format(
-                        i
+                    "Subroutine argument {} at index {} was of unexpected Python type {}".format(
+                        arg, i, type(arg)
+                    )
+                )
+
+            if isinstance(arg, Expr):
+                arg_type = arg.type_of()
+            else:
+                assert isinstance(arg, ScratchVar)
+                arg_type = arg.type
+
+            if arg_type == TealType.none:
+                raise TealInputError(
+                    "Subroutine argument {} at index {} evaluates to TealType.none".format(
+                        arg, i
                     )
                 )
 
