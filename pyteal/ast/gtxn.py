@@ -18,6 +18,12 @@ class GtxnExpr(TxnExpr):
         super().__init__(Op.gtxn, "Gtxn", field)
         self.txnIndex = txnIndex
 
+        def validate_types_or_throw():
+            if isinstance(self.txnIndex, Expr):
+                require_type(txnIndex, TealType.uint64)
+
+        validate_types_or_throw()
+
     def __str__(self):
         return "({} {} {})".format(self.name, self.txnIndex, self.field.arg_name)
 
@@ -52,6 +58,23 @@ class GtxnaExpr(TxnaExpr):
     ) -> None:
         super().__init__(Op.gtxna, Op.gtxnas, "Gtxna", field, index)
         self.txnIndex = txnIndex
+
+        def validate_types_or_throw():
+            def validate_index_or_throw(i):
+                is_expr = isinstance(i, Expr)
+                if not (type(i) is int or is_expr):
+                    raise TealInputError(
+                        "Invalid gtxna syntax with immediate transaction index {}, transaction field {}, array index {}".format(
+                            self.txnIndex, self.field, self.index
+                        )
+                    )
+                if is_expr:
+                    require_type(i, TealType.uint64)
+
+            validate_index_or_throw(self.index)
+            validate_index_or_throw(self.txnIndex)
+
+        validate_types_or_throw()
 
     def __str__(self):
         return "({} {} {} {})".format(

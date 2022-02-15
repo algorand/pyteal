@@ -6,6 +6,7 @@ from ..errors import TealInputError, verifyFieldVersion, verifyTealVersion
 from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
 from .txn import TxnExpr, TxnField, TxnObject, TxnaExpr
+from ..types import require_type, TealType
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
@@ -18,19 +19,22 @@ class GitxnExpr(TxnExpr):
         super().__init__(Op.gitxn, "Gitxn", field)
         self.txnIndex = txnIndex
 
+        def validate_types_or_throw():
+            # currently we do not have gitxns, only gitxn with immediate transaction index supported
+            if type(self.txnIndex) is not int:
+                raise TealInputError(
+                    "Invalid gitxn syntax with immediate transaction field {} and transaction index {}".format(
+                        self.field, self.txnIndex
+                    )
+                )
+
+        validate_types_or_throw()
+
     def __str__(self):
         return "({} {} {})".format(self.name, self.txnIndex, self.field.arg_name)
 
     def __teal__(self, options: "CompileOptions"):
         verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
-
-        # currently we do not have gitxns, only gitxn with immediate transaction index supported
-        if type(self.txnIndex) is not int:
-            raise TealInputError(
-                "Invalid gitxn syntax with immediate transaction field {} and transaction index {}".format(
-                    self.field, self.txnIndex
-                )
-            )
 
         verifyTealVersion(
             Op.gitxn.min_version,
@@ -51,6 +55,21 @@ class GitxnaExpr(TxnaExpr):
         super().__init__(Op.gitxna, Op.gitxnas, "Gitxna", field, index)
         self.txnIndex = txnIndex
 
+        def validate_types_or_throw():
+            is_index_expr = isinstance(self.index, Expr)
+            if type(self.txnIndex) is not int or not (
+                type(self.index) is int or is_index_expr
+            ):
+                raise TealInputError(
+                    "Invalid gitxna syntax with immediate transaction index {}, transaction field {}, array index {}".format(
+                        self.txnIndex, self.field, self.index
+                    )
+                )
+            if is_index_expr:
+                require_type(index, TealType.uint64)
+
+        validate_types_or_throw()
+
     def __str__(self):
         return "({} {} {} {})".format(
             self.name, self.txnIndex, self.field.arg_name, self.index
@@ -58,15 +77,6 @@ class GitxnaExpr(TxnaExpr):
 
     def __teal__(self, options: "CompileOptions"):
         verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
-
-        if type(self.txnIndex) is not int or not (
-            type(self.index) is int or isinstance(self.index, Expr)
-        ):
-            raise TealInputError(
-                "Invalid gitxna syntax with immediate transaction index {}, transaction field {}, array index {}".format(
-                    self.txnIndex, self.field, self.index
-                )
-            )
 
         if type(self.index) is int:
             opToUse = Op.gitxna
