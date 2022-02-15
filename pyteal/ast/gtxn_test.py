@@ -42,7 +42,10 @@ def test_gtxna_expr_invalid():
         (lambda: GtxnaExpr(1, TxnField.assets, "Invalid_type"), TealInputError),
         (lambda: GtxnaExpr(Assert(Int(1)), TxnField.assets, 1), TealTypeError),
         (lambda: GtxnaExpr(1, TxnField.assets, Assert(Int(1))), TealTypeError),
-        (lambda: GtxnaExpr(1, TxnField.assets, 1).__teal__(teal1Options), TealInputError)
+        (
+            lambda: GtxnaExpr(1, TxnField.assets, 1).__teal__(teal1Options),
+            TealInputError,
+        ),
     ]:
         with pytest.raises(e):
             f()
@@ -52,8 +55,8 @@ def test_gtxna_expr_valid():
     [
         e.__teal__(teal6Options)
         for e in [
-        GtxnaExpr(1, TxnField.assets, 1),
-        GtxnaExpr(Int(1), TxnField.assets, Int(1)),
+            GtxnaExpr(1, TxnField.assets, 1),
+            GtxnaExpr(Int(1), TxnField.assets, Int(1)),
         ]
     ]
 
