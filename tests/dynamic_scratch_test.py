@@ -51,7 +51,7 @@ def wilt_the_stilt():
         player_score.store(Int(73)),
         Assert(player_score.load() == Int(73)),
         Assert(player_score.index() == Int(131)),
-        player_score.store(player_score.load() - Int(2)),  # back to Wilt:
+        player_index.store(player_index.load() - Int(2)),  # back to Wilt:
         Assert(player_score.load() == Int(100)),
         Assert(player_score.index() == Int(129)),
         Int(100),
