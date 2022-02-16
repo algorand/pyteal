@@ -13,28 +13,66 @@ T = TypeVar("T", bound="Type")
 
 
 class Type(ABC):
+    """The abstract base class for all ABI types.
+    
+    This class contains both information about an ABI type, and a value that conforms to that type.
+    The value is contained in a unique ScratchVar that only the type has access to. As a result, the
+    value of an ABI type is mutable and can be efficiently referenced multiple times without needing
+    to recompute it.
+    """
+
     def __init__(self, valueType: TealType) -> None:
+        """Create a new Type.
+
+        Args:
+            valueType: The TealType (uint64 or bytes) that this ABI type will store in its internal
+                ScratchVar.
+        """
         super().__init__()
         self.stored_value = ScratchVar(valueType)
 
     @abstractmethod
     def has_same_type_as(self, other: "Type") -> bool:
+        """Check if this type is considered equal to the other ABI type, irrespective of their
+        values.
+
+        Args:
+            other: The ABI type to compare to.
+
+        Returns:
+            True if and only if self and other can store the same ABI value.
+        """
         pass
 
     @abstractmethod
     def new_instance(self: T) -> T:
+        """Create a new instance of this ABI type.
+
+        The value of this type will not be applied to the new type.
+        """
         pass
 
     @abstractmethod
     def is_dynamic(self) -> bool:
+        """Check if this ABI type is dynamic.
+        
+        If a type is dynamic, the length of its encoding depends on its value. Otherwise, the type
+        is considered static (not dynamic).
+        """
         pass
 
     @abstractmethod
     def byte_length_static(self) -> int:
+        """Get the byte length of this ABI type's encoding. Only valid for static types."""
         pass
 
     @abstractmethod
     def encode(self) -> Expr:
+        """Encode this ABI type to a byte string.
+
+        Returns:
+            A PyTeal expression that encodes this type to a byte string.
+        """
         pass
 
     @abstractmethod
@@ -81,6 +119,7 @@ class Type(ABC):
 
     @abstractmethod
     def __str__(self) -> str:
+        """Get the string representation of this ABI type, used for creating method signatures."""
         pass
 
 
