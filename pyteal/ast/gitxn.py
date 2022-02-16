@@ -17,18 +17,16 @@ class GitxnExpr(TxnExpr):
 
     def __init__(self, txnIndex: int, field: TxnField) -> None:
         super().__init__(Op.gitxn, "Gitxn", field)
-        self.txnIndex = txnIndex
 
-        def validate_types_or_throw():
-            # currently we do not have gitxns, only gitxn with immediate transaction index supported
-            if type(self.txnIndex) is not int:
-                raise TealInputError(
-                    "Invalid gitxn syntax with immediate transaction field {} and transaction index {}".format(
-                        self.field, self.txnIndex
-                    )
+        # Currently we do not have gitxns. Only gitxn with immediate transaction index supported.
+        if type(txnIndex) is not int:
+            raise TealInputError(
+                "Invalid gitxn syntax with immediate transaction field {} and transaction index {}".format(
+                    field, txnIndex
                 )
+            )
 
-        validate_types_or_throw()
+        self.txnIndex = txnIndex
 
     def __str__(self):
         return "({} {} {})".format(self.name, self.txnIndex, self.field.arg_name)

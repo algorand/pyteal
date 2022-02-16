@@ -16,13 +16,11 @@ class GtxnExpr(TxnExpr):
 
     def __init__(self, txnIndex: Union[int, Expr], field: TxnField) -> None:
         super().__init__(Op.gtxn, "Gtxn", field)
+
+        if isinstance(txnIndex, Expr):
+            require_type(txnIndex, TealType.uint64)
+
         self.txnIndex = txnIndex
-
-        def validate_types_or_throw():
-            if isinstance(self.txnIndex, Expr):
-                require_type(txnIndex, TealType.uint64)
-
-        validate_types_or_throw()
 
     def __str__(self):
         return "({} {} {})".format(self.name, self.txnIndex, self.field.arg_name)
