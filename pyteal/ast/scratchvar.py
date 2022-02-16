@@ -1,3 +1,4 @@
+from operator import index
 from typing import cast
 
 from ..types import TealType, require_type
@@ -79,11 +80,39 @@ class ScratchVar:
         return self.slot.load(self.type)
 
     def index(self) -> Expr:
-        return (
-            cast(Expr, self.slot.id)
-            if isinstance(self.slot, DynamicSlot)
-            else Int(cast(int, self.slot.id))
-        )
+        return self.slot.index()
+        # return (
+        #     cast(Expr, self.slot.id)
+        #     if isinstance(self.slot, DynamicSlot)
+        #     else Int(cast(int, self.slot.id))
+        # )
 
 
 ScratchVar.__module__ = "pyteal"
+
+
+class PassByRefScratchVar(ScratchVar):
+    def __init__(self, sv: ScratchVar, index_for_store: bool = False):
+        # self.ref: ScratchVar = ScratchVar(sv.type, sv.index())
+        self.ref: ScratchVar = sv
+        self.slot = self.ref.slot
+        self.index_for_store = index_for_store
+
+    def store(self, value: Expr) -> Expr:
+        # if self.index_for_store:
+        #     return self.ref.index()
+
+        dynsv = ScratchVar(TealType.uint64, self.ref.load())
+        return dynsv.store(value)
+
+    def load(self) -> ScratchLoad:
+        # if self.index_for_store:
+        #     return self.ref.index()
+        dynsv = ScratchVar(TealType.uint64, self.ref.load())
+        return dynsv.load()
+
+    def index(self) -> Expr:
+        return self.ref.index()
+
+
+PassByRefScratchVar.__module__ = "pyteal"

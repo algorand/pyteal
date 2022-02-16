@@ -51,14 +51,18 @@ LINE{i+1}:
 """
 
 
-def assert_new_v_old(dynamic_scratch):
-    teal_dir, name, compiled = compile_and_save(dynamic_scratch)
-    print(
-        f"""Compilation resulted in TEAL program of length {len(compiled)}. 
-To view output SEE <{name}.teal> in ({teal_dir})
---------------"""
-    )
+def assert_new_v_old(approve_func):
+    try:
+        teal_dir, name, compiled = compile_and_save(approve_func)
 
-    path2actual = teal_dir / (name + ".teal")
-    path2expected = teal_dir / (name + "_expected.teal")
-    assert_teal_as_expected(path2actual, path2expected)
+        print(
+            f"""Compilation resulted in TEAL program of length {len(compiled)}. 
+    To view output SEE <{name}.teal> in ({teal_dir})
+    --------------"""
+        )
+
+        path2actual = teal_dir / (name + ".teal")
+        path2expected = teal_dir / (name + "_expected.teal")
+        assert_teal_as_expected(path2actual, path2expected)
+    except Exception as e:
+        assert not e, f"failed to ASSERT NEW v OLD for {approve_func.__name__}: {e}"

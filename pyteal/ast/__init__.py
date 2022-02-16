@@ -127,7 +127,7 @@ from .scratch import (
     ScratchStore,
     ScratchStackStore,
 )
-from .scratchvar import ScratchVar
+from .scratchvar import PassByRefScratchVar, ScratchVar
 from .maybe import MaybeValue
 
 __all__ = [
@@ -226,6 +226,7 @@ __all__ = [
     "Not",
     "OnComplete",
     "Or",
+    "PassByRefScratchVar",
     "Pop",
     "Reject",
     "Return",

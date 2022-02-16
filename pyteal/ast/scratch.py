@@ -45,6 +45,9 @@ class Slot:
         """
         return ScratchLoad(self, type)
 
+    def index(self) -> "ScratchIndex":
+        return ScratchIndex(self)
+
     def __hash__(self):
         return hash(self.id)
 
@@ -122,6 +125,42 @@ class DynamicSlot(Slot):
 
 
 DynamicSlot.__module__ = "pyteal"
+
+
+class ScratchIndex(Expr):
+    def __init__(self, slot: Slot):
+        super().__init__()
+        self.slot = slot
+
+    def __str__(self):
+        return "(ScratchIndex {})".format(self.slot)
+
+    def __hash__(self):
+        return hash(self.slot.id)
+
+    def type_of(self):
+        return TealType.uint64
+
+    def has_return(self):
+        return False
+
+    def __teal__(self, options: "CompileOptions"):
+        from ..ir import TealOp, Op, TealBlock
+
+        op = TealOp(self, Op.int, self.slot)
+        return TealBlock.FromOp(options, op)
+
+        # if isinstance(self.slot, ScratchSlot):
+        #     op = TealOp(self, Op.int, self.slot)
+        #     return TealBlock.FromOp(options, op)
+
+        # if not isinstance(self.slot, DynamicSlot):
+        #     raise TealInternalError("unrecognized slot type {}".format(type(self.slot)))
+
+        # return self.slot.id
+
+
+ScratchIndex.__module__ = "pyteal"
 
 
 class ScratchLoad(Expr):

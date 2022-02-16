@@ -6,17 +6,16 @@ store 1             1: goodbye // y
 int 0
 int 1
 callsub swap_0      >0,1
-int 0
-loads               >goodbye
+load 0              >goodbye
 byte "goodbye"
 ==
 assert              <<EMPTY>>
-int 1
-loads               >hello
-byte "goodbye"
+load 1               >hello
+byte "hello"
 ==
 assert              <<EMPTY>>
 int 1000            >1000
+return
 
 // swap
 swap_0:

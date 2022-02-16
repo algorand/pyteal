@@ -1,0 +1,5 @@
+#pragma version 6
+int 42
+store 0
+int 0
+

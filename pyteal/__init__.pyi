@@ -122,6 +122,7 @@ __all__ = [
     "OnComplete",
     "Op",
     "Or",
+    "PassByRefScratchVar",
     "Pop",
     "Reject",
     "Return",

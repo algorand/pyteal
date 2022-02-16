@@ -187,7 +187,9 @@ def subroutines():
     )
 
 
-TEST_CASES = (dynamic_scratch, dynamic_scratch_2, wilt_the_stilt, subroutines)
+# TEST_CASES = (dynamic_scratch, dynamic_scratch_2, wilt_the_stilt, subroutines)
+
+TEST_CASES = (wilt_the_stilt,)
 
 
 def test_all():
@@ -198,8 +200,12 @@ def test_all():
 def test_generate_another():
     teal_dir, name, compiled = compile_and_save(subroutines)
     print(
-        f"""Successfuly tested approval program {name} having 
+        f"""Successfuly tested approval program <<{name}>> having 
 compiled it into {len(compiled)} characters. See the results in:
 {teal_dir}
 """
     )
+
+
+if __name__ == "__main__":
+    test_all()

@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional, Union, TYPE_CHECKING
+from typing import Callable, List, Optional, Set, Union, TYPE_CHECKING
 from inspect import isclass, Parameter, signature
 
 from ..types import TealType
@@ -6,7 +6,7 @@ from ..ir import TealOp, Op, TealBlock
 from ..errors import TealInputError, verifyTealVersion
 from .expr import Expr
 from .seq import Seq
-from .scratchvar import ScratchVar
+from .scratchvar import PassByRefScratchVar, ScratchVar
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
@@ -26,6 +26,8 @@ class SubroutineDefinition:
         super().__init__()
         self.id = SubroutineDefinition.nextSubroutineId
         SubroutineDefinition.nextSubroutineId += 1
+
+        self.by_ref_args: Set[str] = set()
 
         if not callable(implementation):
             raise TealInputError("Input to SubroutineDefinition is not callable")
@@ -66,6 +68,8 @@ class SubroutineDefinition:
                         var, var_type, self.param_type_names()
                     )
                 )
+            if var_type is ScratchVar:
+                self.by_ref_args.add(var)
 
         self.implementation = implementation
         self.implementationParams = sig.parameters
@@ -178,7 +182,19 @@ class SubroutineCall(Expr):
         )
 
         op = TealOp(self, Op.callsub, self.subroutine)
-        return TealBlock.FromOp(options, op, *self.args)
+
+        def handle_arg(arg):
+            if isinstance(arg, PassByRefScratchVar):
+                raise "shouldn't handle PassByRefScratchVar over here"
+                # return arg.index()
+
+            if isinstance(arg, ScratchVar):
+                return arg.load()
+
+            return arg
+
+        arg_handler = map(handle_arg, self.args)
+        return TealBlock.FromOp(options, op, *arg_handler)
 
     def __str__(self):
         ret_str = '(SubroutineCall "' + self.subroutine.name() + '" ('
@@ -269,8 +285,22 @@ Subroutine.__module__ = "pyteal"
 
 
 def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaration:
-    argumentVars = [ScratchVar() for _ in range(subroutine.argumentCount())]
-    loadedArgs = [var.load() for var in argumentVars]
+    argumentVars = []
+    loadedArgs = []
+
+    for arg in subroutine.implementationParams.keys():
+        new_sv = ScratchVar()
+        if arg in subroutine.by_ref_args:
+            argVar = PassByRefScratchVar(new_sv, index_for_store=True)
+            # argVar = new_sv
+            # argVar.store(new_sv.index())
+            # loadedArgs.append(new_sv)
+            loadedArgs.append(PassByRefScratchVar(new_sv))  # , index_for_store=True))
+        else:
+            argVar = new_sv
+            loadedArgs.append(new_sv.load())
+
+        argumentVars.append(argVar)
 
     subroutineBody = subroutine.implementation(*loadedArgs)
 
@@ -281,6 +311,8 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
             )
         )
 
+    # supp the r'th variable is byref
+    # then argumentVars[r] needs to have _the index_ of the
     # need to reverse order of argumentVars because the last argument will be on top of the stack
     bodyOps = [var.slot.store() for var in argumentVars[::-1]]
     bodyOps.append(subroutineBody)
