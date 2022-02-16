@@ -2,7 +2,6 @@ import pytest
 
 from .. import *
 
-teal1Options = CompileOptions(version=1)
 teal6Options = CompileOptions(version=6)
 
 
@@ -20,7 +19,6 @@ def test_gtxn_invalid():
 def test_gtxn_expr_invalid():
     for f, e in [
         (lambda: GtxnExpr(Assert(Int(1)), TxnField.sender), TealTypeError),
-        (lambda: GtxnExpr(1, TxnField.sender).__teal__(teal1Options), TealInputError),
     ]:
         with pytest.raises(e):
             f()
@@ -42,10 +40,6 @@ def test_gtxna_expr_invalid():
         (lambda: GtxnaExpr(1, TxnField.assets, "Invalid_type"), TealInputError),
         (lambda: GtxnaExpr(Assert(Int(1)), TxnField.assets, 1), TealTypeError),
         (lambda: GtxnaExpr(1, TxnField.assets, Assert(Int(1))), TealTypeError),
-        (
-            lambda: GtxnaExpr(1, TxnField.assets, 1).__teal__(teal1Options),
-            TealInputError,
-        ),
     ]:
         with pytest.raises(e):
             f()
