@@ -14,12 +14,18 @@ if TYPE_CHECKING:
 class GtxnExpr(TxnExpr):
     """An expression that accesses a transaction field from a transaction in the current group."""
 
-    def __init__(self, txnIndex: Union[int, Expr], field: TxnField) -> None:
-        super().__init__(Op.gtxn, "Gtxn", field)
-
+    @staticmethod
+    def __validate_txn_index_or_throw(txnIndex: Union[int, Expr]):
+        if not isinstance(txnIndex, (int, Expr)):
+            raise TealInputError(
+                f"Invalid txnIndex type:  Expected int or Expr, but received {txnIndex}"
+            )
         if isinstance(txnIndex, Expr):
             require_type(txnIndex, TealType.uint64)
 
+    def __init__(self, txnIndex: Union[int, Expr], field: TxnField) -> None:
+        super().__init__(Op.gtxn, "Gtxn", field)
+        self.__validate_txn_index_or_throw(txnIndex)
         self.txnIndex = txnIndex
 
     def __str__(self):
