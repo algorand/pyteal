@@ -161,6 +161,16 @@ TxnExpr.__module__ = "pyteal"
 class TxnaExpr(LeafExpr):
     """An expression that accesses a transaction array field from the current transaction."""
 
+    @staticmethod
+    def __validate_index_or_throw(index: Union[int, Expr]):
+        is_expr = isinstance(index, Expr)
+        if not (type(index) is int or is_expr):
+            raise TealInputError(
+                f"Invalid index type:  Expected int or Expr, but received {index}."
+            )
+        if is_expr:
+            require_type(index, TealType.uint64)
+
     def __init__(
         self,
         staticOp: Op,
@@ -172,6 +182,8 @@ class TxnaExpr(LeafExpr):
         super().__init__()
         if not field.is_array:
             raise TealInputError("Unexpected non-array field: {}".format(field))
+        self.__validate_index_or_throw(index)
+
         self.staticOp = staticOp
         self.dynamicOp = dynamicOp
         self.name = name

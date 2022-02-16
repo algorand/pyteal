@@ -53,28 +53,22 @@ GtxnExpr.__module__ = "pyteal"
 class GtxnaExpr(TxnaExpr):
     """An expression that accesses a transaction array field from a transaction in the current group."""
 
+    @staticmethod
+    def __validate_txn_index_or_throw(txnIndex: Union[int, Expr]):
+        is_expr = isinstance(txnIndex, Expr)
+        if not (type(txnIndex) is int or is_expr):
+            raise TealInputError(
+                f"Invalid txnIndex type:  Expected int or Expr, but received {txnIndex}"
+            )
+        if is_expr:
+            require_type(txnIndex, TealType.uint64)
+
     def __init__(
         self, txnIndex: Union[int, Expr], field: TxnField, index: Union[int, Expr]
     ) -> None:
         super().__init__(Op.gtxna, Op.gtxnas, "Gtxna", field, index)
+        self.__validate_txn_index_or_throw(txnIndex)
         self.txnIndex = txnIndex
-
-        def validate_types_or_throw():
-            def validate_index_or_throw(i):
-                is_expr = isinstance(i, Expr)
-                if not (type(i) is int or is_expr):
-                    raise TealInputError(
-                        "Invalid gtxna syntax with immediate transaction index {}, transaction field {}, array index {}".format(
-                            self.txnIndex, self.field, self.index
-                        )
-                    )
-                if is_expr:
-                    require_type(i, TealType.uint64)
-
-            validate_index_or_throw(self.index)
-            validate_index_or_throw(self.txnIndex)
-
-        validate_types_or_throw()
 
     def __str__(self):
         return "({} {} {} {})".format(

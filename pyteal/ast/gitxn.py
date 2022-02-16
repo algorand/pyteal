@@ -53,22 +53,13 @@ class GitxnaExpr(TxnaExpr):
 
     def __init__(self, txnIndex: int, field: TxnField, index: Union[int, Expr]) -> None:
         super().__init__(Op.gitxna, Op.gitxnas, "Gitxna", field, index)
+
+        if type(txnIndex) is not int:
+            raise TealInputError(
+                f"Invalid txnIndex type:  Expected int, but received {txnIndex}."
+            )
+
         self.txnIndex = txnIndex
-
-        def validate_types_or_throw():
-            is_index_expr = isinstance(self.index, Expr)
-            if type(self.txnIndex) is not int or not (
-                type(self.index) is int or is_index_expr
-            ):
-                raise TealInputError(
-                    "Invalid gitxna syntax with immediate transaction index {}, transaction field {}, array index {}".format(
-                        self.txnIndex, self.field, self.index
-                    )
-                )
-            if is_index_expr:
-                require_type(index, TealType.uint64)
-
-        validate_types_or_throw()
 
     def __str__(self):
         return "({} {} {} {})".format(
