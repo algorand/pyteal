@@ -53,7 +53,7 @@ def test_gitxna_expr_invalid():
             TealInputError,
         ),
         (
-            lambda: GitxnaExpr("Invalid_type", TxnField.application_args, 1),
+            lambda: GitxnaExpr(1, TxnField.application_args, "Invalid_type"),
             TealInputError,
         ),
         (
