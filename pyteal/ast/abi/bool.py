@@ -2,6 +2,8 @@ from typing import Union, cast, Sequence
 
 from ...types import TealType
 from ..expr import Expr
+from ..seq import Seq
+from ..assert_ import Assert
 from ..int import Int
 from ..bytes import Bytes
 from ..binaryexpr import GetBit
@@ -31,11 +33,22 @@ class Bool(Type):
         return self.stored_value.load()
 
     def set(self, value: Union[bool, Expr, "Bool"]) -> Expr:
+        checked = False
         if type(value) is bool:
             value = Int(1 if value else 0)
+            checked = True
+
         if type(value) is Bool:
             value = value.get()
-        return self.stored_value.store(cast(Expr, value))
+            checked = True
+
+        if checked:
+            return self.stored_value.store(cast(Expr, value))
+
+        return Seq(
+            self.stored_value.store(cast(Expr, value)),
+            Assert(self.stored_value.load() < Int(2)),
+        )
 
     def decode(
         self,
@@ -50,7 +63,7 @@ class Bool(Type):
         return self.decodeBit(encoded, startIndex * Int(NUM_BITS_IN_BYTE))
 
     def decodeBit(self, encoded, bit: Expr) -> Expr:
-        return self.set(GetBit(encoded, bit))
+        return self.stored_value.store(GetBit(encoded, bit))
 
     def encode(self) -> Expr:
         return SetBit(Bytes(b"\x00"), Int(0), self.get())
@@ -67,7 +80,7 @@ def boolAwareStaticByteLength(types: Sequence[Type]) -> int:
             ignoreNext -= 1
             continue
         if type(t) is Bool:
-            numBools = consecutiveBools(types, i)
+            numBools = consecutiveBoolNum(types, i)
             ignoreNext = numBools - 1
             length += boolSequenceLength(numBools)
             continue
@@ -75,7 +88,7 @@ def boolAwareStaticByteLength(types: Sequence[Type]) -> int:
     return length
 
 
-def consecutiveBools(types: Sequence[Type], startIndex: int) -> int:
+def consecutiveBoolNum(types: Sequence[Type], startIndex: int) -> int:
     numConsecutiveBools = 0
     for t in types[startIndex:]:
         if type(t) is not Bool:

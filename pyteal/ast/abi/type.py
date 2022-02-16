@@ -14,7 +14,7 @@ T = TypeVar("T", bound="Type")
 
 class Type(ABC):
     """The abstract base class for all ABI types.
-    
+
     This class contains both information about an ABI type, and a value that conforms to that type.
     The value is contained in a unique ScratchVar that only the type has access to. As a result, the
     value of an ABI type is mutable and can be efficiently referenced multiple times without needing
@@ -55,7 +55,7 @@ class Type(ABC):
     @abstractmethod
     def is_dynamic(self) -> bool:
         """Check if this ABI type is dynamic.
-        
+
         If a type is dynamic, the length of its encoding depends on its value. Otherwise, the type
         is considered static (not dynamic).
         """
