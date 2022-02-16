@@ -25,18 +25,18 @@ def test_maybe_value():
                 for args in argv:
                     expr = MaybeValue(op, type, immediate_args=iargs, args=args)
 
-                    assert expr.output_slots[0] != expr.output_slots[1]
+                    assert expr.slotOk != expr.slotValue
 
                     assert expr.hasValue().type_of() == TealType.uint64
                     with TealComponent.Context.ignoreExprEquality():
                         assert expr.hasValue().__teal__(options) == ScratchLoad(
-                            expr.output_slots[0]
+                            expr.slotOk
                         ).__teal__(options)
 
                     assert expr.value().type_of() == type
                     with TealComponent.Context.ignoreExprEquality():
                         assert expr.value().__teal__(options) == ScratchLoad(
-                            expr.output_slots[1]
+                            expr.slotValue
                         ).__teal__(options)
 
                     assert expr.type_of() == TealType.none
@@ -44,8 +44,8 @@ def test_maybe_value():
                     expected_call = TealSimpleBlock(
                         [
                             TealOp(expr, op, *iargs),
-                            TealOp(None, Op.store, expr.output_slots[0]),
-                            TealOp(None, Op.store, expr.output_slots[1]),
+                            TealOp(None, Op.store, expr.slotOk),
+                            TealOp(None, Op.store, expr.slotValue),
                         ]
                     )
 

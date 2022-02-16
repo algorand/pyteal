@@ -154,8 +154,8 @@ def test_local_get_ex():
             TealOp(args[1], Op.int, 6),
             TealOp(args[2], Op.byte, '"key"'),
             TealOp(expr, Op.app_local_get_ex),
-            TealOp(None, Op.store, expr.output_slots[0]),
-            TealOp(None, Op.store, expr.output_slots[1]),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
         ]
     )
 
@@ -179,8 +179,8 @@ def test_local_get_ex_direct_ref():
             TealOp(args[1], Op.int, 6),
             TealOp(args[2], Op.byte, '"key"'),
             TealOp(expr, Op.app_local_get_ex),
-            TealOp(None, Op.store, expr.output_slots[0]),
-            TealOp(None, Op.store, expr.output_slots[1]),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
         ]
     )
 
@@ -232,8 +232,8 @@ def test_global_get_ex():
             TealOp(args[0], Op.int, 6),
             TealOp(args[1], Op.byte, '"key"'),
             TealOp(expr, Op.app_global_get_ex),
-            TealOp(None, Op.store, expr.output_slots[0]),
-            TealOp(None, Op.store, expr.output_slots[1]),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
         ]
     )
 
@@ -256,8 +256,8 @@ def test_global_get_ex_direct_ref():
             TealOp(args[0], Op.txna, "Applications", 0),
             TealOp(args[1], Op.byte, '"key"'),
             TealOp(expr, Op.app_global_get_ex),
-            TealOp(None, Op.store, expr.output_slots[0]),
-            TealOp(None, Op.store, expr.output_slots[1]),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
         ]
     )
 
@@ -437,8 +437,8 @@ def test_app_param_approval_program_valid():
         [
             TealOp(arg, Op.int, 1),
             TealOp(expr, Op.app_params_get, "AppApprovalProgram"),
-            TealOp(None, Op.store, expr.output_slots[0]),
-            TealOp(None, Op.store, expr.output_slots[1]),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
         ]
     )
 
@@ -465,8 +465,8 @@ def test_app_param_clear_state_program_valid():
         [
             TealOp(arg, Op.int, 0),
             TealOp(expr, Op.app_params_get, "AppClearStateProgram"),
-            TealOp(None, Op.store, expr.output_slots[0]),
-            TealOp(None, Op.store, expr.output_slots[1]),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
         ]
     )
 
@@ -493,8 +493,8 @@ def test_app_param_global_num_unit_valid():
         [
             TealOp(arg, Op.int, 1),
             TealOp(expr, Op.app_params_get, "AppGlobalNumUnit"),
-            TealOp(None, Op.store, expr.output_slots[0]),
-            TealOp(None, Op.store, expr.output_slots[1]),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
         ]
     )
 
@@ -521,8 +521,8 @@ def test_app_param_global_num_byte_slice_valid():
         [
             TealOp(arg, Op.int, 1),
             TealOp(expr, Op.app_params_get, "AppGlobalNumByteSlice"),
-            TealOp(None, Op.store, expr.output_slots[0]),
-            TealOp(None, Op.store, expr.output_slots[1]),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
         ]
     )
 
@@ -549,8 +549,8 @@ def test_app_param_local_num_unit_valid():
         [
             TealOp(arg, Op.int, 1),
             TealOp(expr, Op.app_params_get, "AppLocalNumUnit"),
-            TealOp(None, Op.store, expr.output_slots[0]),
-            TealOp(None, Op.store, expr.output_slots[1]),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
         ]
     )
 
@@ -577,8 +577,8 @@ def test_app_param_local_num_byte_slice_valid():
         [
             TealOp(arg, Op.int, 1),
             TealOp(expr, Op.app_params_get, "AppLocalNumByteSlice"),
-            TealOp(None, Op.store, expr.output_slots[0]),
-            TealOp(None, Op.store, expr.output_slots[1]),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
         ]
     )
 
@@ -605,8 +605,8 @@ def test_app_param_extra_programs_page_valid():
         [
             TealOp(arg, Op.int, 1),
             TealOp(expr, Op.app_params_get, "AppExtraProgramPages"),
-            TealOp(None, Op.store, expr.output_slots[0]),
-            TealOp(None, Op.store, expr.output_slots[1]),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
         ]
     )
 
@@ -633,8 +633,8 @@ def test_app_param_creator_valid():
         [
             TealOp(arg, Op.int, 1),
             TealOp(expr, Op.app_params_get, "AppCreator"),
-            TealOp(None, Op.store, expr.output_slots[0]),
-            TealOp(None, Op.store, expr.output_slots[1]),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
         ]
     )
 
@@ -661,8 +661,8 @@ def test_app_param_address_valid():
         [
             TealOp(arg, Op.int, 1),
             TealOp(expr, Op.app_params_get, "AppAddress"),
-            TealOp(None, Op.store, expr.output_slots[0]),
-            TealOp(None, Op.store, expr.output_slots[1]),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
         ]
     )
 

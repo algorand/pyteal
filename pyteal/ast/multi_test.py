@@ -25,20 +25,20 @@ def __test_single(expr: MultiValue):
     assert expr.type_of() == TealType.none
 
 
-def __test_single_conditional(expr: MultiValue, op, args: List[Expr], iargs):
+def __test_single_conditional(expr: MultiValue, op, args: List[Expr], iargs, reducer):
     __test_single(expr)
 
     expected_call = TealSimpleBlock(
         [
             TealOp(expr, op, *iargs),
-            TealOp(expr.output_slots[0].store(), Op.store, expr.output_slots[0]),
             TealOp(expr.output_slots[1].store(), Op.store, expr.output_slots[1]),
+            TealOp(expr.output_slots[0].store(), Op.store, expr.output_slots[0]),
         ]
     )
 
     ifExpr = (
-        If(expr.output_slots[0].load())
-        .Then(expr.output_slots[1].load())
+        If(expr.output_slots[1].load())
+        .Then(expr.output_slots[0].load())
         .Else(Bytes("None"))
     )
     ifBlockStart, _ = ifExpr.__teal__(options)
@@ -59,7 +59,7 @@ def __test_single_conditional(expr: MultiValue, op, args: List[Expr], iargs):
     expected.addIncoming()
     expected = TealBlock.NormalizeBlocks(expected)
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.outputReducer(reducer).__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -67,18 +67,18 @@ def __test_single_conditional(expr: MultiValue, op, args: List[Expr], iargs):
         assert actual == expected
 
 
-def __test_single_assert(expr: MultiValue, op, args: List[Expr], iargs):
+def __test_single_assert(expr: MultiValue, op, args: List[Expr], iargs, reducer):
     __test_single(expr)
 
     expected_call = TealSimpleBlock(
         [
             TealOp(expr, op, *iargs),
-            TealOp(expr.output_slots[0].store(), Op.store, expr.output_slots[0]),
             TealOp(expr.output_slots[1].store(), Op.store, expr.output_slots[1]),
+            TealOp(expr.output_slots[0].store(), Op.store, expr.output_slots[0]),
         ]
     )
 
-    assertExpr = Seq(Assert(expr.output_slots[0].load()), expr.output_slots[1].load())
+    assertExpr = Seq(Assert(expr.output_slots[1].load()), expr.output_slots[0].load())
     assertBlockStart, _ = assertExpr.__teal__(options)
 
     expected_call.setNextBlock(assertBlockStart)
@@ -97,7 +97,7 @@ def __test_single_assert(expr: MultiValue, op, args: List[Expr], iargs):
     expected.addIncoming()
     expected = TealBlock.NormalizeBlocks(expected)
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.outputReducer(reducer).__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -105,19 +105,21 @@ def __test_single_assert(expr: MultiValue, op, args: List[Expr], iargs):
         assert actual == expected
 
 
-def __test_single_with_vars(expr: MultiValue, op, args: List[Expr], iargs, var1, var2):
+def __test_single_with_vars(
+    expr: MultiValue, op, args: List[Expr], iargs, var1, var2, reducer
+):
     __test_single(expr)
 
     expected_call = TealSimpleBlock(
         [
             TealOp(expr, op, *iargs),
-            TealOp(expr.output_slots[0].store(), Op.store, expr.output_slots[0]),
             TealOp(expr.output_slots[1].store(), Op.store, expr.output_slots[1]),
+            TealOp(expr.output_slots[0].store(), Op.store, expr.output_slots[0]),
         ]
     )
 
     varExpr = Seq(
-        var1.store(expr.output_slots[0].load()), var2.store(expr.output_slots[1].load())
+        var1.store(expr.output_slots[1].load()), var2.store(expr.output_slots[0].load())
     )
     varBlockStart, _ = varExpr.__teal__(options)
 
@@ -137,7 +139,7 @@ def __test_single_with_vars(expr: MultiValue, op, args: List[Expr], iargs, var1,
     expected.addIncoming()
     expected = TealBlock.NormalizeBlocks(expected)
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.outputReducer(reducer).__teal__(options)
     actual.addIncoming()
     actual = TealBlock.NormalizeBlocks(actual)
 
@@ -161,29 +163,29 @@ def test_multi_value():
             for iargs in immedate_argv:
                 for args in argv:
                     reducer = (
-                        lambda hasValue, value: If(hasValue)
+                        lambda value, hasValue: If(hasValue)
                         .Then(value)
                         .Else(Bytes("None"))
                     )
                     expr = MultiValue(
-                        op, [TealType.uint64, type], immediate_args=iargs, args=args
-                    ).outputReducer(reducer)
-                    __test_single_conditional(expr, op, args, iargs)
+                        op, [type, TealType.uint64], immediate_args=iargs, args=args
+                    )
+                    __test_single_conditional(expr, op, args, iargs, reducer)
 
-                    reducer = lambda hasValue, value: Seq(Assert(hasValue), value)
+                    reducer = lambda value, hasValue: Seq(Assert(hasValue), value)
                     expr = MultiValue(
-                        op, [TealType.uint64, type], immediate_args=iargs, args=args
-                    ).outputReducer(reducer)
-                    __test_single_assert(expr, op, args, iargs)
+                        op, [type, TealType.uint64], immediate_args=iargs, args=args
+                    )
+                    __test_single_assert(expr, op, args, iargs, reducer)
 
                     hasValueVar = ScratchVar(TealType.uint64)
                     valueVar = ScratchVar(type)
-                    reducer = lambda hasValue, value: Seq(
+                    reducer = lambda value, hasValue: Seq(
                         hasValueVar.store(hasValue), valueVar.store(value)
                     )
                     expr = MultiValue(
-                        op, [TealType.uint64, type], immediate_args=iargs, args=args
-                    ).outputReducer(reducer)
+                        op, [type, TealType.uint64], immediate_args=iargs, args=args
+                    )
                     __test_single_with_vars(
-                        expr, op, args, iargs, hasValueVar, valueVar
+                        expr, op, args, iargs, hasValueVar, valueVar, reducer
                     )

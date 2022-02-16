@@ -21,8 +21,8 @@ def test_acct_param_balance_valid():
         [
             TealOp(arg, Op.int, 1),
             TealOp(expr, Op.acct_params_get, "AcctBalance"),
-            TealOp(None, Op.store, expr.output_slots[0]),
-            TealOp(None, Op.store, expr.output_slots[1]),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
         ]
     )
 
@@ -44,8 +44,8 @@ def test_acct_param_min_balance_valid():
         [
             TealOp(arg, Op.int, 0),
             TealOp(expr, Op.acct_params_get, "AcctMinBalance"),
-            TealOp(None, Op.store, expr.output_slots[0]),
-            TealOp(None, Op.store, expr.output_slots[1]),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
         ]
     )
 
@@ -67,8 +67,8 @@ def test_acct_param_auth_addr_valid():
         [
             TealOp(arg, Op.int, 1),
             TealOp(expr, Op.acct_params_get, "AcctAuthAddr"),
-            TealOp(None, Op.store, expr.output_slots[0]),
-            TealOp(None, Op.store, expr.output_slots[1]),
+            TealOp(None, Op.store, expr.slotOk),
+            TealOp(None, Op.store, expr.slotValue),
         ]
     )
 

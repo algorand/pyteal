@@ -5,7 +5,7 @@ from pyteal.ast.multi import MultiValue
 from ..types import TealType
 from ..ir import Op
 from .expr import Expr
-from .scratch import ScratchLoad
+from .scratch import ScratchLoad, ScratchSlot
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
@@ -30,7 +30,7 @@ class MaybeValue(MultiValue):
             immediate_args (optional): Immediate arguments for the op. Defaults to None.
             args (optional): Stack arguments for the op. Defaults to None.
         """
-        types = [TealType.uint64, type]
+        types = [type, TealType.uint64]
         super().__init__(op, types, immediate_args=immediate_args, args=args)
 
     def hasValue(self) -> ScratchLoad:
@@ -38,7 +38,7 @@ class MaybeValue(MultiValue):
 
         This will return 1 if the value exists, otherwise 0.
         """
-        return self.output_slots[0].load(self.types[0])
+        return self.output_slots[1].load(self.types[1])
 
     def value(self) -> ScratchLoad:
         """Get the value.
@@ -46,7 +46,26 @@ class MaybeValue(MultiValue):
         If the value exists, it will be returned. Otherwise, the zero value for this type will be
         returned (i.e. either 0 or an empty byte string, depending on the type).
         """
-        return self.output_slots[1].load(self.types[1])
+        return self.output_slots[0].load(self.types[0])
+
+    @property
+    def slotOk(self) -> ScratchSlot:
+        """Get the scratch slot that stores hasValue.
+
+        Note: This is mainly added for backwards compatability and normally shouldn't be used
+        directly in pyteal code.
+        """
+        return self.output_slots[1]
+
+    @property
+    def slotValue(self) -> ScratchSlot:
+        """Get the scratch slot that stores the value or the zero value for the type if the value
+        doesn't exist.
+
+        Note: This is mainly added for backwards compatability and normally shouldn't be used
+        directly in pyteal code.
+        """
+        return self.output_slots[0]
 
 
 MaybeValue.__module__ = "pyteal"

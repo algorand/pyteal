@@ -5,6 +5,7 @@ from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
 from .leafexpr import LeafExpr
 from .scratch import ScratchSlot
+from .seq import Seq
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
@@ -36,12 +37,10 @@ class MultiValue(LeafExpr):
         self.args = args if args is not None else []
 
         self.output_slots = [ScratchSlot() for _ in self.types]
-        self.reducer_set = False
 
     def outputReducer(self, reducer: Callable[..., Expr]) -> Expr:
-        self.reducer = reducer
-        self.reducer_set = True
-        return self
+        input = [slot.load(self.types[i]) for i, slot in enumerate(self.output_slots)]
+        return Seq(self, reducer(*input))
 
     def __str__(self):
         ret_str = "(({}".format(self.op)
@@ -62,19 +61,14 @@ class MultiValue(LeafExpr):
         callStart, callEnd = TealBlock.FromOp(options, tealOp, *self.args)
 
         curEnd = callEnd
-        for slot in self.output_slots:
+        # the list is reversed in order to preserve the ordering of the opcode's returned
+        # values. ie the output to stack [A, B, C] should correspond to C->output_slots[2]
+        # B->output_slots[1], and A->output_slots[0].
+        for slot in reversed(self.output_slots):
             store = slot.store()
             storeStart, storeEnd = store.__teal__(options)
             curEnd.setNextBlock(storeStart)
             curEnd = storeEnd
-
-        if self.reducer_set:
-            input = [
-                slot.load(self.types[i]) for i, slot in enumerate(self.output_slots)
-            ]
-            reducerStart, reducerEnd = self.reducer(*input).__teal__(options)
-            curEnd.setNextBlock(reducerStart)
-            return callStart, reducerEnd
 
         return callStart, curEnd
 
