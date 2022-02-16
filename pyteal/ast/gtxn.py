@@ -53,12 +53,11 @@ class GtxnaExpr(TxnaExpr):
 
     @staticmethod
     def __validate_txn_index_or_throw(txnIndex: Union[int, Expr]):
-        is_expr = isinstance(txnIndex, Expr)
-        if not (type(txnIndex) is int or is_expr):
+        if not isinstance(txnIndex, (int, Expr)):
             raise TealInputError(
                 f"Invalid txnIndex type:  Expected int or Expr, but received {txnIndex}"
             )
-        if is_expr:
+        if isinstance(txnIndex, Expr):
             require_type(txnIndex, TealType.uint64)
 
     def __init__(

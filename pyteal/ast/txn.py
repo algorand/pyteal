@@ -163,12 +163,11 @@ class TxnaExpr(LeafExpr):
 
     @staticmethod
     def __validate_index_or_throw(index: Union[int, Expr]):
-        is_expr = isinstance(index, Expr)
-        if not (type(index) is int or is_expr):
+        if not isinstance(index, (int, Expr)):
             raise TealInputError(
                 f"Invalid index type:  Expected int or Expr, but received {index}."
             )
-        if is_expr:
+        if isinstance(index, Expr):
             require_type(index, TealType.uint64)
 
     def __init__(
