@@ -3,6 +3,23 @@ from pyteal import *
 from compile_asserts import assert_new_v_old, compile_and_save
 
 
+@Subroutine(TealType.bytes)
+def logcat(some_bytes, an_int):
+    catted = ScratchVar(TealType.bytes)
+    return Seq(
+        catted.store(Concat(some_bytes, Itob(an_int))),
+        Log(catted.load()),
+        catted.load(),
+    )
+
+
+def sub_logcat():
+    return Seq(
+        Pop(logcat(Bytes("hello"), Int(42))),
+        Int(1),
+    )
+
+
 def wilt_the_stilt():
     player_score = DynamicScratchVar(TealType.uint64)
 
@@ -80,7 +97,7 @@ def fac_by_ref():
     )
 
 
-TEST_CASES = (swapper, wilt_the_stilt)
+TEST_CASES = (sub_logcat, swapper, wilt_the_stilt)
 
 
 def test_swapper():
