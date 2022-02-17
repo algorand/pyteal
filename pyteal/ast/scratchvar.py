@@ -70,21 +70,27 @@ ScratchVar.__module__ = "pyteal"
 class DynamicScratchVar:
     """
     Example of Dynamic Scratch space whereby the slot index is picked up from the stack:
-    .. code-block:: python
-            player_index = ScratchVar(TealType.uint64)
-            player_score = ScratchVar(TealType.uint64, player_index.load())
-            Seq(
-                player_index.store(Int(129)),     # Wilt Chamberlain
+        .. code-block:: python1
+
+            player_score = DynamicScratchVar(TealType.uint64)
+
+            wilt = ScratchVar(TealType.uint64, 129)
+            kobe = ScratchVar(TealType.uint64)
+            dt = ScratchVar(TealType.uint64, 131)
+
+            seq = Seq(
+                player_score.set_index(wilt),
                 player_score.store(Int(100)),
-                player_index.store(Int(130)),     # Kobe Bryant
+                player_score.set_index(kobe),
                 player_score.store(Int(81)),
-                player_index.store(Int(131)),     # David Thompson
+                player_score.set_index(dt),
                 player_score.store(Int(73)),
                 Assert(player_score.load() == Int(73)),
                 Assert(player_score.index() == Int(131)),
-                player_score.store(player_score.load() - Int(2)),     # back to Wilt:
+                player_score.set_index(wilt),
                 Assert(player_score.load() == Int(100)),
                 Assert(player_score.index() == Int(129)),
+                Int(100),
             )
     """
 
@@ -92,17 +98,11 @@ class DynamicScratchVar:
         self,
         ttype: TealType = TealType.anytype,
         indexer: ScratchVar = None,
-        # slotId: int = None,
     ):
-        # if (indexer is None) == (slotId is None):
-        #     raise TealInputError(
-        #         "must either provide an indexer or slotId and not both"
-        #     )
 
         self.type = ttype
         if indexer is None:
             indexer = ScratchVar(TealType.uint64)
-            # indexer.store(Int(slotId))
 
         self.indexer: ScratchVar
         self.slot: ScratchSlot
