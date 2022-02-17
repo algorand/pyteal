@@ -106,13 +106,6 @@ def assignScratchSlotsToSubroutines(
             raise TealInternalError(
                 "Slot ID {} has been assigned multiple times".format(slot.id)
             )
-
-        if not isinstance(slot.id, int):
-            raise TealInternalError(
-                "slot id {} was expected to be an int but was instead of type {}".format(
-                    slot.id, type(slot.id)
-                )
-            )
         slotIds.add(slot.id)
 
     nextSlotIndex = 0
@@ -122,13 +115,6 @@ def assignScratchSlotsToSubroutines(
             nextSlotIndex += 1
 
         if slot.isReservedSlot:
-            if not isinstance(slot.id, int):
-                raise TealInternalError(
-                    "slot id {} was expected to be an int but was instead of type {}".format(
-                        slot.id, type(slot.id)
-                    )
-                )
-
             # Slot ids under 256 are manually reserved slots
             slotAssignments[slot] = slot.id
         else:

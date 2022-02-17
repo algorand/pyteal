@@ -1,6 +1,6 @@
 from pyteal import *
 
-from compile_asserts import assert_new_v_old, compile_and_save
+from .compile_asserts import assert_new_v_old, compile_and_save
 
 #### TESTS FOR PyTEAL THAT PREDATES PASS-BY-REF
 
