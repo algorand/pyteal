@@ -1,40 +1,38 @@
 #pragma version 6
 int 129
-store 0         // set the roaming index variable to 129, aka Wilt
+store 0         0: @129     // pointer to wilt's address
 load 0
-int 100         // give Wilt 100 points
-stores          // Done with Wilt
-int 130         
-store 0         // set the roaming index variable to 130, aka Kobe
+int 100
+stores          129: 100    // set wilt's value
+int 1
+store 0         0: @1       // pointer to kobe's address (compiler assigned)
 load 0
 int 81
-stores          // Done with Kobe
-int 131         
-store 0         // set the roaming index variable to 131, David Thompson, aka D.T.
+stores          1: 81       // set kobe's value
+int 131
+store 0         0: @131     // pointer to dt's address
 load 0
 int 73
-stores          // Done with D.T.
+stores          131: 73     // set dt's value
 load 0
 loads
-int 73
-==
-assert
-load 0
-int 131
-==
-assert          // asserting that player_score.Index() == Int(131)
-load 0
-int 2
--
-store 0         // now the player index should be 129 aka Wilt's score
+int 73          >73,73
+==              >1
+assert          <<EMPTY>>
 load 0          
-loads           // Wilt's score
-int 100         
-==
-assert
-load 0
+int 131         >131,131
+==              >1
+assert          <<EMPTY>>
 int 129
-==
-assert
+store 0         0: @129
+load 0
+loads
+int 100         >100,100
+==              >1
+assert          <<EMPTY>>
+load 0
+int 129         >129,129
+==              >1
+assert          <<EMPTY>>
 int 100
 return

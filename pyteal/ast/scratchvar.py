@@ -1,7 +1,9 @@
 from operator import index
 from typing import cast
 
+from ..errors import TealInputError
 from ..types import TealType, require_type
+
 from .expr import Expr
 from .int import Int
 from .scratch import ScratchSlot, ScratchLoad, DynamicSlot
@@ -19,28 +21,7 @@ class ScratchVar:
                 myvar.store(Int(5)),
                 Assert(myvar.load() == Int(5))
             ])
-
-    Example of Dynamic Scratch space whereby the slot index is picked up from the stack:
-        .. code-block:: python
-                player_index = ScratchVar(TealType.uint64)
-                player_score = ScratchVar(TealType.uint64, player_index.load())
-                Seq(
-                    player_index.store(Int(129)),     # Wilt Chamberlain
-                    player_score.store(Int(100)),
-                    player_index.store(Int(130)),     # Kobe Bryant
-                    player_score.store(Int(81)),
-                    player_index.store(Int(131)),     # David Thompson
-                    player_score.store(Int(73)),
-                    Assert(player_score.load() == Int(73)),
-                    Assert(player_score.index() == Int(131)),
-                    player_score.store(player_score.load() - Int(2)),     # back to Wilt:
-                    Assert(player_score.load() == Int(100)),
-                    Assert(player_score.index() == Int(129)),
-                )
     """
-
-    # TODO: In the case that a DYNAMIC scratch variable is detected, we should limit the auto-assigned slot indices to less than < 128
-    # and suggest a best practice of requiring (without checking) that dynamic slot expressions should be in the range [128-255)
 
     def __init__(self, type: TealType = TealType.anytype, slotId: int = None):
         """Create a new ScratchVar with an optional type.
@@ -86,21 +67,81 @@ class ScratchVar:
 ScratchVar.__module__ = "pyteal"
 
 
-class PassByRefScratchVar(ScratchVar):
-    def __init__(self, sv: ScratchVar):
-        self.ref: ScratchVar = sv
-        self.slot = self.ref.slot
+class DynamicScratchVar:
+    """
+    Example of Dynamic Scratch space whereby the slot index is picked up from the stack:
+    .. code-block:: python
+            player_index = ScratchVar(TealType.uint64)
+            player_score = ScratchVar(TealType.uint64, player_index.load())
+            Seq(
+                player_index.store(Int(129)),     # Wilt Chamberlain
+                player_score.store(Int(100)),
+                player_index.store(Int(130)),     # Kobe Bryant
+                player_score.store(Int(81)),
+                player_index.store(Int(131)),     # David Thompson
+                player_score.store(Int(73)),
+                Assert(player_score.load() == Int(73)),
+                Assert(player_score.index() == Int(131)),
+                player_score.store(player_score.load() - Int(2)),     # back to Wilt:
+                Assert(player_score.load() == Int(100)),
+                Assert(player_score.index() == Int(129)),
+            )
+    """
+
+    def __init__(
+        self,
+        ttype: TealType = TealType.anytype,
+        indexer: ScratchVar = None,
+        # slotId: int = None,
+    ):
+        # if (indexer is None) == (slotId is None):
+        #     raise TealInputError(
+        #         "must either provide an indexer or slotId and not both"
+        #     )
+
+        self.type = ttype
+        if indexer is None:
+            indexer = ScratchVar(TealType.uint64)
+            # indexer.store(Int(slotId))
+
+        self.indexer: ScratchVar
+        self.slot: ScratchSlot
+        self._set_indexer(indexer)
+
+    def _set_indexer(self, indexer: ScratchVar) -> None:
+        if not isinstance(indexer, ScratchVar):
+            raise TealInputError(
+                "indexer must be a ScratchVar but had python type {}".format(
+                    type(indexer)
+                )
+            )
+
+        if indexer.type != TealType.uint64:
+            raise TealInputError(
+                "indexer must have teal type uint64 but was {} instead".format(
+                    indexer.type
+                )
+            )
+
+        self.indexer = indexer
+        self.slot = self.indexer.slot
+
+    def set_index(self, indexVar: ScratchVar) -> Expr:
+        return self.indexer.store(indexVar.index())
 
     def store(self, value: Expr) -> Expr:
-        dynsv = ScratchVar(TealType.uint64, self.ref.load())
+        dynsv = ScratchVar(TealType.uint64, self.indexer.load())
         return dynsv.store(value)
 
     def load(self) -> ScratchLoad:
-        dynsv = ScratchVar(TealType.uint64, self.ref.load())
+        dynsv = ScratchVar(TealType.uint64, self.indexer.load())
         return dynsv.load()
 
     def index(self) -> Expr:
-        return self.ref.index()
+        return self.indexer.load()
+
+    def internal_index(self) -> Expr:
+        return self.indexer.index()
 
 
-PassByRefScratchVar.__module__ = "pyteal"
+DynamicScratchVar.__module__ = "pyteal"

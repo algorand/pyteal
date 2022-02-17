@@ -6,7 +6,7 @@ from ..ir import TealOp, Op, TealBlock
 from ..errors import TealInputError, verifyTealVersion
 from .expr import Expr
 from .seq import Seq
-from .scratchvar import PassByRefScratchVar, ScratchVar
+from .scratchvar import DynamicScratchVar, ScratchVar
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
@@ -324,13 +324,17 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
             the ScratchVar API. I.e., the user will write `x.load()` instead of `x` as they would have for by-value variables.
     """
 
-    def loadedArg(argVar, param):
+    def var_n_loaded(param):
         if param in subroutine.by_ref_args:
-            return PassByRefScratchVar(argVar)
-        return argVar.load()
+            argVar = ScratchVar(TealType.uint64)
+            loaded = DynamicScratchVar(indexer=argVar)
+        else:
+            argVar = ScratchVar(TealType.anytype)
+            loaded = argVar.load()
 
-    argumentVars = [ScratchVar() for _ in range(subroutine.argumentCount())]
-    loadedArgs = [loadedArg(a, p) for a, p in zip(argumentVars, subroutine.arguments())]
+        return argVar, loaded
+
+    argumentVars, loadedArgs = zip(*map(var_n_loaded, subroutine.arguments()))
 
     # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:
     subroutineBody = subroutine.implementation(*loadedArgs)
