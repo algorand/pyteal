@@ -174,7 +174,7 @@ def fac_by_ref():
 
 
 OLD_CASES = (sub_logcat, sub_slowfib, sub_fastfib, sub_even)
-NEW_CASES = (sub_logcat_dynamic, swapper, wilt_the_stilt)
+NEW_CASES = (sub_logcat_dynamic, swapper, wilt_the_stilt, fac_by_ref)
 
 
 def test_swapper():
@@ -187,7 +187,7 @@ def test_old():
 
 
 def test_new():
-    for pt in OLD_CASES:
+    for pt in NEW_CASES:
         assert_new_v_old(pt)
 
 

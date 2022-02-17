@@ -6,7 +6,7 @@ from ..types import TealType, require_type
 
 from .expr import Expr
 from .int import Int
-from .scratch import ScratchSlot, ScratchLoad, DynamicSlot
+from .scratch import ScratchSlot, ScratchLoad, ScratchStore  # DynamicSlot
 
 
 class ScratchVar:
@@ -36,11 +36,12 @@ class ScratchVar:
 
         # TODO: Zeph to add assertions
 
-        self.slot = (
-            ScratchSlot(requestedSlotId=slotId)
-            if not isinstance(slotId, Expr)
-            else DynamicSlot(cast(Expr, slotId))
-        )
+        self.slot = ScratchSlot(requestedSlotId=slotId)
+        # self.slot = (
+        #     ScratchSlot(requestedSlotId=slotId)
+        #     if not isinstance(slotId, Expr)
+        #     else DynamicSlot(cast(Expr, slotId))
+        # )
         self.type = type
 
     def storage_type(self) -> TealType:
@@ -130,12 +131,16 @@ class DynamicScratchVar:
         return self.indexer.store(indexVar.index())
 
     def store(self, value: Expr) -> Expr:
-        dynsv = ScratchVar(self.type, self.indexer.load())
-        return dynsv.store(value)
+        index = ScratchLoad(self.indexer.slot, TealType.uint64)
+        return ScratchStore(slot=None, value=value, index_expression=index)
+        # dynsv = ScratchVar(self.type, self.indexer.load())
+        # return dynsv.store(value)
 
     def load(self) -> ScratchLoad:
-        dynsv = ScratchVar(self.type, self.indexer.load())
-        return dynsv.load()
+        index = ScratchLoad(self.indexer.slot, TealType.uint64)
+        return ScratchLoad(slot=None, type=self.type, index_expression=index)
+        # dynsv = ScratchVar(self.type, self.indexer.load())
+        # return dynsv.load()
 
     def index(self) -> Expr:
         return self.indexer.load()

@@ -121,7 +121,7 @@ from .continue_ import Continue
 
 # misc
 from .scratch import (
-    DynamicSlot,
+    # DynamicSlot,
     ScratchSlot,
     ScratchLoad,
     ScratchStore,
@@ -175,7 +175,7 @@ __all__ = [
     "Cond",
     "Continue",
     "Div",
-    "DynamicSlot",
+    # "DynamicSlot",
     "Ed25519Verify",
     "EnumInt",
     "Eq",

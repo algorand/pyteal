@@ -2,7 +2,9 @@
 byte "hello"        >"hello"
 int 42              >"hello",42
 callsub logcat_0    >"hello42"
-pop             
+byte "hello42"     >"hello42","hello42"
+==                  >1
+assert              <<EMPTY>>
 int 1               >1
 return              <<SUCCESS>>
 
