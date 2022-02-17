@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Union, List, Tuple, Set, Iterator, cast, TYPE_CHECKING
+from typing import Optional, List, Tuple, Set, Iterator, cast, TYPE_CHECKING
 
 from .tealop import TealOp, Op
-from ..errors import TealCompileError, TealInputError, TealInternalError
+from ..errors import TealCompileError
 
 if TYPE_CHECKING:
     from ..ast import Expr, ScratchSlot
@@ -82,14 +82,6 @@ class TealBlock(ABC):
             for b in self.getOutgoing():
                 b.addIncoming(self, visited)
 
-    @classmethod
-    def force_cast_int(cls, si: object, msg: str) -> int:
-        if not isinstance(si, int):
-            raise TealInternalError(
-                "expected {} of type {} to be an int: {}".format(si, type(si), msg)
-            )
-        return cast(int, si)
-
     def validateSlots(
         self,
         slotsInUse: Set["ScratchSlot"] = None,
@@ -118,10 +110,7 @@ class TealBlock(ABC):
                         errors.append(e)
 
         if not self.isTerminal():
-            sortedSlots = sorted(
-                self.force_cast_int(slot.id, "compiled slots should have int id's")
-                for slot in currentSlotsInUse
-            )
+            sortedSlots = sorted(slot.id for slot in currentSlotsInUse)
             for block in self.getOutgoing():
                 visitedKey = (id(block), *sortedSlots)
                 if visitedKey in visited:
