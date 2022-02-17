@@ -48,15 +48,7 @@ class ScratchSlot:
         """
         if value is not None:
             return ScratchStore(self, value)
-
-        if not isinstance(self, ScratchSlot):
-            raise TealInternalError(
-                "ScratchStackStore is only setup to handle ScratchSlot's but was about to supply type {}".format(
-                    type(self)
-                )
-            )
-
-        return ScratchStackStore(cast(ScratchSlot, self))
+        return ScratchStackStore(self)
 
     def load(self, type: TealType = TealType.anytype) -> "ScratchLoad":
         """Get an expression to load a value from this slot.
@@ -69,9 +61,6 @@ class ScratchSlot:
 
     def index(self) -> "ScratchIndex":
         return ScratchIndex(self)
-
-    def __hash__(self):
-        return hash(self.id)
 
     def __repr__(self):
         return "ScratchSlot({})".format(self.id)
@@ -230,7 +219,6 @@ class ScratchStackStore(Expr):
             slot: The slot to store the value in.
         """
         super().__init__()
-
         self.slot = slot
 
     def __str__(self):
@@ -239,7 +227,7 @@ class ScratchStackStore(Expr):
     def __teal__(self, options: "CompileOptions"):
         from ..ir import TealOp, Op, TealBlock
 
-        op = TealOp(self, Op.store, cast(ScratchSlot, self.slot))
+        op = TealOp(self, Op.store, self.slot)
         return TealBlock.FromOp(options, op)
 
     def type_of(self):
