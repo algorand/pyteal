@@ -96,9 +96,9 @@ def test_txn_fields():
             [],
             [TealOp(dynamicGtxnArg, Op.int, 0)],
         ),
-        (InnerTxn, Op.itxn, Op.itxna, None, [], []),
+        (InnerTxn, Op.itxn, Op.itxna, Op.itxnas, [], []),
         *[
-            (Gitxn[i], Op.gitxn, Op.gitxna, None, [i], [])
+            (Gitxn[i], Op.gitxn, Op.gitxna, Op.gitxnas, [i], [])
             for i in range(MAX_GROUP_SIZE)
         ],
     ]
