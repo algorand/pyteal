@@ -1,4 +1,4 @@
-from typing import cast, TYPE_CHECKING, Union
+from typing import cast, TYPE_CHECKING, Optional
 
 from ..types import TealType
 from ..config import NUM_SLOTS
@@ -104,7 +104,7 @@ class ScratchLoad(Expr):
 
     def __init__(
         self,
-        slot: ScratchSlot,
+        slot: Optional[ScratchSlot],
         type: TealType = TealType.anytype,
         index_expression: Expr = None,
     ):
@@ -158,7 +158,9 @@ ScratchLoad.__module__ = "pyteal"
 class ScratchStore(Expr):
     """Expression to store a value in scratch space."""
 
-    def __init__(self, slot: ScratchSlot, value: Expr, index_expression: Expr = None):
+    def __init__(
+        self, slot: Optional[ScratchSlot], value: Expr, index_expression: Expr = None
+    ):
         """Create a new ScratchStore expression.
 
         Args:

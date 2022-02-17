@@ -2,6 +2,8 @@ import pytest
 
 from .. import *
 
+from .bytes import Bytes
+
 teal6Options = CompileOptions(version=6)
 
 

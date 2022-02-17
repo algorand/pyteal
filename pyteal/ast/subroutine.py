@@ -93,7 +93,7 @@ class SubroutineDefinition:
     def arguments(self) -> List[str]:
         return list(self.implementationParams.keys())
 
-    def invoke(self, args: List[Expr]) -> "SubroutineCall":
+    def invoke(self, args: List[Union[Expr, ScratchVar]]) -> "SubroutineCall":
         if len(args) != self.argumentCount():
             raise TealInputError(
                 "Incorrect number of arguments for subroutine call. Expected {} arguments, got {}".format(
