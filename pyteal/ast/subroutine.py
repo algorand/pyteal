@@ -65,7 +65,7 @@ class SubroutineDefinition:
             if var != "return" and var_type not in self.PARAM_TYPES:
                 raise TealInputError(
                     "Function has parameter {} of disallowed type {}. Only the types {} are allowed".format(
-                        var, var_type, self.param_type_names()
+                        var, var_type, self.PARAM_TYPES
                     )
                 )
             if var_type is ScratchVar:
@@ -334,7 +334,8 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
 
         return argVar, loaded
 
-    argumentVars, loadedArgs = zip(*map(var_n_loaded, subroutine.arguments()))
+    args = subroutine.arguments()
+    argumentVars, loadedArgs = zip(*map(var_n_loaded, args)) if args else ([], [])
 
     # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:
     subroutineBody = subroutine.implementation(*loadedArgs)

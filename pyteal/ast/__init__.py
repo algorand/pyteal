@@ -155,6 +155,7 @@ __all__ = [
     "BitwiseNot",
     "BitwiseOr",
     "BitwiseXor",
+    "Break",
     "Btoi",
     "Bytes",
     "BytesAdd",
