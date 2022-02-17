@@ -9,52 +9,6 @@ if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
 
-# class Slot:
-#     """Abstract base closs for ScratchSlot and DynamicSlot"""
-
-#     def __init__(self):
-#         self.id: Union[int, Expr] = None
-#         self.isReservedSlot: bool = None
-
-#     def store(self, value: Expr = None) -> Expr:
-#         """Get an expression to store a value in this slot.
-
-#         Args:
-#             value (optional): The value to store in this slot. If not included, the last value on
-#             the stack will be stored. NOTE: storing the last value on the stack breaks the typical
-#             semantics of PyTeal, only use if you know what you're doing.
-#         """
-#         if value is not None:
-#             return ScratchStore(self, value)
-
-#         if not isinstance(self, ScratchSlot):
-#             raise TealInternalError(
-#                 "ScratchStackStore is only setup to handle ScratchSlot's but was about to supply type {}".format(
-#                     type(self)
-#                 )
-#             )
-
-#         return ScratchStackStore(cast(ScratchSlot, self))
-
-#     def load(self, type: TealType = TealType.anytype) -> "ScratchLoad":
-#         """Get an expression to load a value from this slot.
-
-#         Args:
-#             type (optional): The type being loaded from this slot, if known. Defaults to
-#                 TealType.anytype.
-#         """
-#         return ScratchLoad(self, type)
-
-#     def index(self) -> "ScratchIndex":
-#         return ScratchIndex(self)
-
-#     def __hash__(self):
-#         return hash(self.id)
-
-
-# Slot.__module__ = "pyteal"
-
-
 class ScratchSlot:
     """Represents the allocation of a scratch space slot."""
 
@@ -63,9 +17,6 @@ class ScratchSlot:
     # Slot ids under 256 are manually reserved slots
     nextSlotId = NUM_SLOTS
 
-    # def __init__(self):
-    #     self.id: Union[int, Expr] = None
-    #     self.isReservedSlot: bool = None
     def __init__(self, requestedSlotId: int = None):
         """Initializes a scratch slot with a particular id
 
@@ -73,8 +24,6 @@ class ScratchSlot:
             requestedSlotId (optional): A scratch slot id that the compiler must store the value.
             This id may be a Python int in the range [0-256).
         """
-        # super().__init__()
-
         if requestedSlotId is None:
             self.id = ScratchSlot.nextSlotId
             ScratchSlot.nextSlotId += 1
@@ -134,37 +83,6 @@ class ScratchSlot:
 ScratchSlot.__module__ = "pyteal"
 
 
-# class DynamicSlot(Slot):
-#     """Represents the allocation of a scratch space slot."""
-
-#     # Unique identifier for the compiler to automatically assign slots
-#     # The id field is used by the compiler to map to an actual slot in the source code
-#     # Slot ids under 256 are manually reserved slots
-#     nextSlotId = NUM_SLOTS
-
-#     def __init__(self, slotExpr: Expr):
-#         """Initializes a scratch slot with a particular id
-
-#         Args:
-#             requestedSlotId (optional): A scratch slot id that the compiler must store the value.
-#             This id may be a Python int in the range [0-256).
-#         """
-#         super().__init__()
-
-#         # TODO: Zeph to add assertions
-#         self.id = slotExpr
-#         self.isReservedSlot = False
-
-#     def __repr__(self):
-#         return "DynamicSlot({})".format(self.id)
-
-#     def __str__(self):
-#         return "dslot#{}".format(self.id)
-
-
-# DynamicSlot.__module__ = "pyteal"
-
-
 class ScratchIndex(Expr):
     def __init__(self, slot: ScratchSlot):
         super().__init__()
@@ -204,9 +122,11 @@ class ScratchLoad(Expr):
         """Create a new ScratchLoad expression.
 
         Args:
-            slot: The slot to load the value from.
+            slot (optional): The slot to load the value from.
             type (optional): The type being loaded from this slot, if known. Defaults to
                 TealType.anytype.
+            index_expression (optional): As an alternative to slot,
+                an expression can be supplied for the slot index.
         """
         super().__init__()
 
@@ -236,12 +156,6 @@ class ScratchLoad(Expr):
         op = TealOp(self, Op.load, self.slot)
         return TealBlock.FromOp(options, op)
 
-        # if not isinstance(self.slot, DynamicSlot):
-        #     raise TealInternalError("unrecognized slot type {}".format(type(self.slot)))
-
-        # op = TealOp(self, Op.loads)
-        # return TealBlock.FromOp(options, op, cast(Expr, self.slot.id))
-
     def type_of(self):
         return self.type
 
@@ -259,8 +173,10 @@ class ScratchStore(Expr):
         """Create a new ScratchStore expression.
 
         Args:
-            slot: The slot to store the value in.
+            slot (optional): The slot to store the value in.
             value: The value to store.
+            index_expression (optional): As an alternative to slot,
+                an expression can be supplied for the slot index.
         """
         super().__init__()
 
@@ -289,12 +205,6 @@ class ScratchStore(Expr):
             )
         op = TealOp(self, Op.store, self.slot)
         return TealBlock.FromOp(options, op, self.value)
-
-        # if not isinstance(self.slot, DynamicSlot):
-        #     raise TealInternalError("unrecognized slot type {}".format(type(self.slot)))
-
-        # op = TealOp(self, Op.stores)
-        # return TealBlock.FromOp(options, op, cast(Expr, self.slot.id), self.value)
 
     def type_of(self):
         return TealType.none
