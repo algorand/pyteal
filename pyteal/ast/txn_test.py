@@ -59,6 +59,8 @@ fieldToMethod: Dict[TxnField, Callable[[TxnObject], Expr]] = {
     TxnField.nonparticipation: lambda txn: txn.nonparticipation(),
     TxnField.created_asset_id: lambda txn: txn.created_asset_id(),
     TxnField.created_application_id: lambda txn: txn.created_application_id(),
+    TxnField.last_log: lambda txn: txn.last_log(),
+    TxnField.state_proof_pk: lambda txn: txn.state_proof_pk(),
 }
 
 arrayFieldToProperty: Dict[TxnField, Callable[[TxnObject], TxnArray]] = {
@@ -95,9 +97,9 @@ def test_txn_fields():
             [],
             [TealOp(dynamicGtxnArg, Op.int, 0)],
         ),
-        (InnerTxn, Op.itxn, Op.itxna, None, [], []),
+        (InnerTxn, Op.itxn, Op.itxna, Op.itxnas, [], []),
         *[
-            (Gitxn[i], Op.gitxn, Op.gitxna, None, [i], [])
+            (Gitxn[i], Op.gitxn, Op.gitxna, Op.gitxnas, [i], [])
             for i in range(MAX_GROUP_SIZE)
         ],
     ]

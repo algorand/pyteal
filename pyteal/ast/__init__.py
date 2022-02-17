@@ -92,7 +92,7 @@ from .binaryexpr import (
 )
 
 # ternary ops
-from .ternaryexpr import Ed25519Verify, SetBit, SetByte
+from .ternaryexpr import Divw, Ed25519Verify, SetBit, SetByte
 from .substring import Substring, Extract, Suffix
 
 # more ops
@@ -129,6 +129,7 @@ from .scratch import (
 )
 from .scratchvar import DynamicScratchVar, ScratchVar
 from .maybe import MaybeValue
+from .multi import MultiValue
 
 __all__ = [
     "AccountParam",
@@ -146,14 +147,58 @@ __all__ = [
     "AssetParam",
     "Balance",
     "BinaryExpr",
-    "BitLen",
+    "Add",
+    "Minus",
+    "Mul",
+    "Div",
+    "Mod",
+    "Exp",
+    "Divw",
     "BitwiseAnd",
     "BitwiseNot",
     "BitwiseOr",
     "BitwiseXor",
-    "Break",
-    "Btoi",
-    "Bytes",
+    "ShiftLeft",
+    "ShiftRight",
+    "Eq",
+    "Neq",
+    "Lt",
+    "Le",
+    "Gt",
+    "Ge",
+    "GetBit",
+    "GetByte",
+    "Ed25519Verify",
+    "Substring",
+    "Extract",
+    "Suffix",
+    "SetBit",
+    "SetByte",
+    "NaryExpr",
+    "And",
+    "Or",
+    "Concat",
+    "WideRatio",
+    "If",
+    "Cond",
+    "Seq",
+    "Assert",
+    "Err",
+    "Return",
+    "Approve",
+    "Reject",
+    "Subroutine",
+    "SubroutineDefinition",
+    "SubroutineDeclaration",
+    "SubroutineCall",
+    "SubroutineFnWrapper",
+    "ScratchSlot",
+    "ScratchLoad",
+    "ScratchStore",
+    "ScratchStackStore",
+    "ScratchVar",
+    "MaybeValue",
+    "MultiValue",
     "BytesAdd",
     "BytesAnd",
     "BytesDiv",
