@@ -1,16 +1,17 @@
 from typing import List, Union, TYPE_CHECKING
 
+from pyteal.ast.multi import MultiValue
+
 from ..types import TealType
-from ..ir import TealOp, Op, TealBlock
+from ..ir import Op
 from .expr import Expr
-from .leafexpr import LeafExpr
-from .scratch import ScratchSlot, ScratchLoad
+from .scratch import ScratchLoad, ScratchSlot
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
 
-class MaybeValue(LeafExpr):
+class MaybeValue(MultiValue):
     """Represents a get operation returning a value that may not exist."""
 
     def __init__(
@@ -29,20 +30,15 @@ class MaybeValue(LeafExpr):
             immediate_args (optional): Immediate arguments for the op. Defaults to None.
             args (optional): Stack arguments for the op. Defaults to None.
         """
-        super().__init__()
-        self.op = op
-        self.type = type
-        self.immediate_args = immediate_args if immediate_args is not None else []
-        self.args = args if args is not None else []
-        self.slotOk = ScratchSlot()
-        self.slotValue = ScratchSlot()
+        types = [type, TealType.uint64]
+        super().__init__(op, types, immediate_args=immediate_args, args=args)
 
     def hasValue(self) -> ScratchLoad:
         """Check if the value exists.
 
         This will return 1 if the value exists, otherwise 0.
         """
-        return self.slotOk.load(TealType.uint64)
+        return self.output_slots[1].load(self.types[1])
 
     def value(self) -> ScratchLoad:
         """Get the value.
@@ -50,41 +46,26 @@ class MaybeValue(LeafExpr):
         If the value exists, it will be returned. Otherwise, the zero value for this type will be
         returned (i.e. either 0 or an empty byte string, depending on the type).
         """
-        return self.slotValue.load(self.type)
+        return self.output_slots[0].load(self.types[0])
 
-    def __str__(self):
-        ret_str = "(({}".format(self.op)
-        for a in self.immediate_args:
-            ret_str += " " + a.__str__()
+    @property
+    def slotOk(self) -> ScratchSlot:
+        """Get the scratch slot that stores hasValue.
 
-        for a in self.args:
-            ret_str += " " + a.__str__()
-        ret_str += ") "
+        Note: This is mainly added for backwards compatability and normally shouldn't be used
+        directly in pyteal code.
+        """
+        return self.output_slots[1]
 
-        storeOk = self.slotOk.store()
-        storeValue = self.slotValue.store()
+    @property
+    def slotValue(self) -> ScratchSlot:
+        """Get the scratch slot that stores the value or the zero value for the type if the value
+        doesn't exist.
 
-        ret_str += storeOk.__str__() + " " + storeValue.__str__() + ")"
-
-        return ret_str
-
-    def __teal__(self, options: "CompileOptions"):
-        tealOp = TealOp(self, self.op, *self.immediate_args)
-        callStart, callEnd = TealBlock.FromOp(options, tealOp, *self.args)
-
-        storeOk = self.slotOk.store()
-        storeValue = self.slotValue.store()
-
-        storeOkStart, storeOkEnd = storeOk.__teal__(options)
-        storeValueStart, storeValueEnd = storeValue.__teal__(options)
-
-        callEnd.setNextBlock(storeOkStart)
-        storeOkEnd.setNextBlock(storeValueStart)
-
-        return callStart, storeValueEnd
-
-    def type_of(self):
-        return TealType.none
+        Note: This is mainly added for backwards compatability and normally shouldn't be used
+        directly in pyteal code.
+        """
+        return self.output_slots[0]
 
 
 MaybeValue.__module__ = "pyteal"

@@ -121,6 +121,7 @@ __all__ = [
     "ScratchStackStore",
     "ScratchVar",
     "MaybeValue",
+    "MultiValue",
     "BytesAdd",
     "BytesMinus",
     "BytesDiv",
