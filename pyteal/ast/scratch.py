@@ -150,15 +150,6 @@ class ScratchIndex(Expr):
         op = TealOp(self, Op.int, self.slot)
         return TealBlock.FromOp(options, op)
 
-        # if isinstance(self.slot, ScratchSlot):
-        #     op = TealOp(self, Op.int, self.slot)
-        #     return TealBlock.FromOp(options, op)
-
-        # if not isinstance(self.slot, DynamicSlot):
-        #     raise TealInternalError("unrecognized slot type {}".format(type(self.slot)))
-
-        # return self.slot.id
-
 
 ScratchIndex.__module__ = "pyteal"
 

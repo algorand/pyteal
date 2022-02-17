@@ -195,12 +195,11 @@ class SubroutineCall(Expr):
             "TEAL version too low to use SubroutineCall expression",
         )
 
-        op = TealOp(self, Op.callsub, self.subroutine)
-
-        def handle(arg):
+        def handle_arg(arg):
             return arg.index() if isinstance(arg, ScratchVar) else arg
 
-        return TealBlock.FromOp(options, op, *(handle(x) for x in self.args))
+        op = TealOp(self, Op.callsub, self.subroutine)
+        return TealBlock.FromOp(options, op, *(handle_arg(x) for x in self.args))
 
     def __str__(self):
         ret_str = '(SubroutineCall "' + self.subroutine.name() + '" ('
