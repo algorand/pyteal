@@ -618,11 +618,12 @@ class TxnObject:
     def created_asset_id(self) -> TxnExpr:
         """Get the asset ID allocated by the creation of an ASA.
 
-        Currently this only works on inner transactions.
-
         Only set when :any:`type_enum()` is :any:`TxnType.AssetConfig` and this is an asset creation transaction.
 
         Requires TEAL version 5 or higher.
+
+        * v5 - Only works on inner transactions.
+        * >= v6 - Works on all transaction types.
         """
         return self.makeTxnExpr(TxnField.created_asset_id)
 
@@ -700,11 +701,12 @@ class TxnObject:
     def created_application_id(self) -> TxnExpr:
         """Get the application ID allocated by the creation of an application.
 
-        Currently this only works on inner transactions.
-
         Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall` and this is an app creation call.
 
         Requires TEAL version 5 or higher.
+
+        * v5 - Only works on inner transactions.
+        * >= v6 - Works on all transaction types.
         """
         return self.makeTxnExpr(TxnField.created_application_id)
 
@@ -766,11 +768,12 @@ class TxnObject:
     def logs(self) -> TxnArray:
         """The log messages emitted by an application call.
 
-        Currently this only works on inner transactions.
-
         :type: TxnArray
 
         Requires TEAL version 5 or higher.
+
+        * v5 - Only works on inner transactions.
+        * >= v6 - Works with all transaction types.
         """
         return TxnArray(self, TxnField.logs, TxnField.num_logs)
 
