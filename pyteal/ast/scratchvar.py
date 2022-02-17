@@ -130,11 +130,11 @@ class DynamicScratchVar:
         return self.indexer.store(indexVar.index())
 
     def store(self, value: Expr) -> Expr:
-        dynsv = ScratchVar(TealType.uint64, self.indexer.load())
+        dynsv = ScratchVar(self.type, self.indexer.load())
         return dynsv.store(value)
 
     def load(self) -> ScratchLoad:
-        dynsv = ScratchVar(TealType.uint64, self.indexer.load())
+        dynsv = ScratchVar(self.type, self.indexer.load())
         return dynsv.load()
 
     def index(self) -> Expr:

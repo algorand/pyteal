@@ -327,7 +327,7 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
     def var_n_loaded(param):
         if param in subroutine.by_ref_args:
             argVar = ScratchVar(TealType.uint64)
-            loaded = DynamicScratchVar(indexer=argVar)
+            loaded = DynamicScratchVar(TealType.anytype, indexer=argVar)
         else:
             argVar = ScratchVar(TealType.anytype)
             loaded = argVar.load()
