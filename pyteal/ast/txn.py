@@ -708,7 +708,7 @@ class TxnObject:
         return self.makeTxnExpr(TxnField.created_application_id)
 
     def last_log(self) -> TxnExpr:
-        """Get the last logged message from a transaction.
+        """A convenience method for getting the last logged message from a transaction.
 
         Only application calls may log a message. Returns an empty string if no messages were logged.
 
