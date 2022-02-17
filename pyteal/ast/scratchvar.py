@@ -1,12 +1,12 @@
 from operator import index
 from typing import cast
 
-from ..errors import TealInputError
+from ..errors import TealInputError, TealInternalError
 from ..types import TealType, require_type
 
 from .expr import Expr
 from .int import Int
-from .scratch import ScratchSlot, ScratchLoad, ScratchStore  # DynamicSlot
+from .scratch import ScratchSlot, ScratchLoad, ScratchStore
 
 
 class ScratchVar:
@@ -34,14 +34,7 @@ class ScratchVar:
                 This id may be a Python int in the range [0-256).
         """
 
-        # TODO: Zeph to add assertions
-
         self.slot = ScratchSlot(requestedSlotId=slotId)
-        # self.slot = (
-        #     ScratchSlot(requestedSlotId=slotId)
-        #     if not isinstance(slotId, Expr)
-        #     else DynamicSlot(cast(Expr, slotId))
-        # )
         self.type = type
 
     def storage_type(self) -> TealType:
@@ -111,14 +104,14 @@ class DynamicScratchVar:
 
     def _set_indexer(self, indexer: ScratchVar) -> None:
         if not isinstance(indexer, ScratchVar):
-            raise TealInputError(
+            raise TealInternalError(
                 "indexer must be a ScratchVar but had python type {}".format(
                     type(indexer)
                 )
             )
 
         if indexer.type != TealType.uint64:
-            raise TealInputError(
+            raise TealInternalError(
                 "indexer must have teal type uint64 but was {} instead".format(
                     indexer.type
                 )
@@ -133,14 +126,10 @@ class DynamicScratchVar:
     def store(self, value: Expr) -> Expr:
         index = ScratchLoad(self.indexer.slot, TealType.uint64)
         return ScratchStore(slot=None, value=value, index_expression=index)
-        # dynsv = ScratchVar(self.type, self.indexer.load())
-        # return dynsv.store(value)
 
     def load(self) -> ScratchLoad:
         index = ScratchLoad(self.indexer.slot, TealType.uint64)
         return ScratchLoad(slot=None, type=self.type, index_expression=index)
-        # dynsv = ScratchVar(self.type, self.indexer.load())
-        # return dynsv.load()
 
     def index(self) -> Expr:
         return self.indexer.load()
