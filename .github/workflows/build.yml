@@ -27,7 +27,7 @@ jobs:
           black --check .
   build-docset:
     runs-on: ubuntu-20.04
-    container: python:3.9-slim
+    container: python:3.9  # Needs `make`, can't be slim
     steps:
       - name: Check out code
         uses: actions/checkout@v2
