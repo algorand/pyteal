@@ -3,6 +3,9 @@ byte "hello"
 store 0             0: hello   // x
 byte "goodbye"
 store 1             1: goodbye // y
+load 0
+load 1
+callsub cat_1
 int 0
 int 1
 callsub swap_0      >0,1
@@ -31,4 +34,14 @@ stores              0: goodbye
 load 3              >1
 load 4              >1,hello
 stores              1: hello
+retsub
+
+// cat
+cat_1:
+store 6
+store 5
+load 5
+load 6
+concat
+pop
 retsub

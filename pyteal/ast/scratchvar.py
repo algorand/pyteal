@@ -81,33 +81,21 @@ class ScratchVar:
 
     def index(self) -> Expr:
         return self.slot.index()
-        # return (
-        #     cast(Expr, self.slot.id)
-        #     if isinstance(self.slot, DynamicSlot)
-        #     else Int(cast(int, self.slot.id))
-        # )
 
 
 ScratchVar.__module__ = "pyteal"
 
 
 class PassByRefScratchVar(ScratchVar):
-    def __init__(self, sv: ScratchVar, index_for_store: bool = False):
-        # self.ref: ScratchVar = ScratchVar(sv.type, sv.index())
+    def __init__(self, sv: ScratchVar):
         self.ref: ScratchVar = sv
         self.slot = self.ref.slot
-        self.index_for_store = index_for_store
 
     def store(self, value: Expr) -> Expr:
-        # if self.index_for_store:
-        #     return self.ref.index()
-
         dynsv = ScratchVar(TealType.uint64, self.ref.load())
         return dynsv.store(value)
 
     def load(self) -> ScratchLoad:
-        # if self.index_for_store:
-        #     return self.ref.index()
         dynsv = ScratchVar(TealType.uint64, self.ref.load())
         return dynsv.load()
 

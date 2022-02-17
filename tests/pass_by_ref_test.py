@@ -13,12 +13,18 @@ def swap(x: ScratchVar, y: ScratchVar):
     )
 
 
+@Subroutine(TealType.none)
+def cat(x, y):
+    return Pop(Concat(x, y))
+
+
 def swapper():
     a = ScratchVar(TealType.bytes)
     b = ScratchVar(TealType.bytes)
     return Seq(
         a.store(Bytes("hello")),
         b.store(Bytes("goodbye")),
+        cat(a.load(), b.load()),
         swap(a, b),
         Assert(a.load() == Bytes("goodbye")),
         Assert(b.load() == Bytes("hello")),
@@ -30,13 +36,13 @@ def swapper():
 def factorial(n: ScratchVar):
     tmp = ScratchVar(TealType.uint64)
     return (
-        If(n.load() <= 1)
+        If(n.load() <= Int(1))
         .Then(n.store(Int(1)))
         .Else(
             Seq(
                 tmp.store(n.load() - Int(1)),
                 factorial(tmp),
-                n.store(n * tmp.load()),
+                n.store(n.load() * tmp.load()),
             )
         )
     )
@@ -54,20 +60,15 @@ def fac_by_ref():
 TEST_CASES = (swapper,)
 
 
+def test_swapper():
+    compile_and_save(swapper)
+
+
 def test_all():
     for pt in TEST_CASES:
         assert_new_v_old(pt)
 
 
-def test_generate_another():
-    teal_dir, name, compiled = compile_and_save(swapper)
-    print(
-        f"""Successfuly tested approval program <<{name}>> having 
-compiled it into {len(compiled)} characters. See the results in:
-{teal_dir}
-"""
-    )
-
-
 if __name__ == "__main__":
-    test_generate_another()
+    test_swapper()
+    test_all()

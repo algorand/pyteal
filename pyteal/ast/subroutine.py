@@ -90,6 +90,9 @@ class SubroutineDefinition:
     def argumentCount(self) -> int:
         return len(self.implementationParams)
 
+    def arguments(self) -> List[str]:
+        return list(self.implementationParams.keys())
+
     def invoke(self, args: List[Expr]) -> "SubroutineCall":
         if len(args) != self.argumentCount():
             raise TealInputError(
@@ -175,6 +178,17 @@ class SubroutineCall(Expr):
                 )
 
     def __teal__(self, options: "CompileOptions"):
+        """
+        Generate the subroutine's start and end teal blocks.
+        The subroutine's arguments put on the stack to be picked up into local scratch variables.
+        There are 2 cases for the arg expression put on the stack:
+
+        1. (by-value) In the case of typical arguments of type Expr, the expression ITSELF is evaluated for the stack
+            and will be stored in a local ScratchVar when beginning the subroutine execution
+
+        2. (by-reference) In the case of a by-reference argument of type ScratchVar, its SLOT INDEX is put on the stack
+            and will be stored in a local PassByRefScratchVar when beginning the subroutine execution
+        """
         verifyTealVersion(
             Op.callsub.min_version,
             options.version,
@@ -183,18 +197,10 @@ class SubroutineCall(Expr):
 
         op = TealOp(self, Op.callsub, self.subroutine)
 
-        def handle_arg(arg):
-            if isinstance(arg, PassByRefScratchVar):
-                raise "shouldn't handle PassByRefScratchVar over here"
-                # return arg.index()
+        def handle(arg):
+            return arg.index() if isinstance(arg, ScratchVar) else arg
 
-            if isinstance(arg, ScratchVar):
-                return arg.load()
-
-            return arg
-
-        arg_handler = map(handle_arg, self.args)
-        return TealBlock.FromOp(options, op, *arg_handler)
+        return TealBlock.FromOp(options, op, *(handle(x) for x in self.args))
 
     def __str__(self):
         ret_str = '(SubroutineCall "' + self.subroutine.name() + '" ('
@@ -285,23 +291,49 @@ Subroutine.__module__ = "pyteal"
 
 
 def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaration:
-    argumentVars = []
-    loadedArgs = []
+    """
+    Puts together the data necessary to define the code for a subroutine.
+    "evaluate" is used here to connote evaluating the PyTEAL AST into a SubroutineDeclaration,
+    but not actually placing it at call locations. The trickiest part here is managing the subroutine's arguments.
+    The arguments are needed in two different ways, and there are 2 different argument types to consider:
 
-    for arg in subroutine.implementationParams.keys():
-        new_sv = ScratchVar()
-        if arg in subroutine.by_ref_args:
-            argVar = PassByRefScratchVar(new_sv, index_for_store=True)
-            # argVar = new_sv
-            # argVar.store(new_sv.index())
-            # loadedArgs.append(new_sv)
-            loadedArgs.append(PassByRefScratchVar(new_sv))  # , index_for_store=True))
-        else:
-            argVar = new_sv
-            loadedArgs.append(new_sv.load())
+    2 Argument Usages
+    - -------- ------
+    Usage (A) for run-time: "argumentVars" --reverse--> "bodyOps"
+        These are "store" expressions that pick up parameters that have been pre-placed on the stack prior to subroutine invocation.
+        These are stored into local scratch space to be used by the TEAL subroutine.
 
-        argumentVars.append(argVar)
+    Usage (B) for compile-time: "loadedArgs"
+        These are expressions supplied to the user-defined PyTEAL function.
+        These are invoked to by the subroutine create a self-contained AST which will then define the TEAL subroutine.
 
+    In both usage cases, we need to handle
+
+    2 Argument Types
+    - -------- -----
+    Type 1 (by-value): these have python type Expr
+    Type 2 (by-reference): these hae python type ScratchVar
+
+    Usage (A) "argumentVars" --reverse--> "bodyOps" for storing pre-placed stack variables into local scratch space:
+        Type 1. (by-value) use ScratchVar.store() to pick the actual value into a local scratch space
+        Type 2. (by-reference) ALSO use ScratchVar.store() to pick up from the stack
+            NOTE: SubroutineCall.__teal__() has placed the _SLOT INDEX_ on the stack so this is stored into the local scratch space
+
+    Usage (B) "loadedArgs" - Storing pre-placed stack variables into local scratch-variables:
+        Type 1. (by-value) use ScratchVar.load() to have an Expr that can be compiled in python by the PyTEAL subroutine
+        Type 2. (by-reference) use a PassByRefScratchVar as the user will have written the PyTEAL in a way that satifies
+            the ScratchVar API. I.e., the user will write `x.load()` instead of `x` as they would have for by-value variables.
+    """
+
+    def loadedArg(argVar, param):
+        if param in subroutine.by_ref_args:
+            return PassByRefScratchVar(argVar)
+        return argVar.load()
+
+    argumentVars = [ScratchVar() for _ in range(subroutine.argumentCount())]
+    loadedArgs = [loadedArg(a, p) for a, p in zip(argumentVars, subroutine.arguments())]
+
+    # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:
     subroutineBody = subroutine.implementation(*loadedArgs)
 
     if not isinstance(subroutineBody, Expr):
@@ -311,8 +343,7 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
             )
         )
 
-    # supp the r'th variable is byref
-    # then argumentVars[r] needs to have _the index_ of the
+    # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
     # need to reverse order of argumentVars because the last argument will be on top of the stack
     bodyOps = [var.slot.store() for var in argumentVars[::-1]]
     bodyOps.append(subroutineBody)

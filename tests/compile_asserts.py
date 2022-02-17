@@ -10,6 +10,12 @@ def compile_and_save(approval):
     name = approval.__name__
     with open(teal / (name + ".teal"), "w") as f:
         f.write(compiled)
+    print(
+        f"""Successfuly tested approval program <<{name}>> having 
+compiled it into {len(compiled)} characters. See the results in:
+{teal}
+"""
+    )
     return teal, name, compiled
 
 
