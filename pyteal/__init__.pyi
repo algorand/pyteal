@@ -78,6 +78,7 @@ __all__ = [
     "Div",
     "Mod",
     "Exp",
+    "Divw",
     "BitwiseAnd",
     "BitwiseOr",
     "BitwiseXor",
