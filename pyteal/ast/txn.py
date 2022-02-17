@@ -623,7 +623,7 @@ class TxnObject:
         Requires TEAL version 5 or higher.
 
         * v5 - Only works on inner transactions.
-        * >= v6 - Works on all transaction types.
+        * >= v6 - Works on top-level and inner transactions.
         """
         return self.makeTxnExpr(TxnField.created_asset_id)
 
@@ -706,7 +706,7 @@ class TxnObject:
         Requires TEAL version 5 or higher.
 
         * v5 - Only works on inner transactions.
-        * >= v6 - Works on all transaction types.
+        * >= v6 - Works on top-level and inner transactions.
         """
         return self.makeTxnExpr(TxnField.created_application_id)
 
@@ -773,7 +773,7 @@ class TxnObject:
         Requires TEAL version 5 or higher.
 
         * v5 - Only works on inner transactions.
-        * >= v6 - Works with all transaction types.
+        * >= v6 - Works on top-level and inner transactions.
         """
         return TxnArray(self, TxnField.logs, TxnField.num_logs)
 
