@@ -109,6 +109,7 @@ class TxnField(Enum):
     created_asset_id = (60, "CreatedAssetID", TealType.uint64, False, 5)
     created_application_id = (61, "CreatedApplicationID", TealType.uint64, False, 5)
     last_log = (62, "LastLog", TealType.bytes, False, 6)
+    state_proof_pk = (63, "StateProofPK", TealType.bytes, False, 6)
 
     def __init__(
         self, id: int, name: str, type: TealType, is_array: bool, min_version: int
@@ -717,6 +718,13 @@ class TxnObject:
         Requires TEAL version 6 or higher.
         """
         return self.makeTxnExpr(TxnField.last_log)
+
+    def state_proof_pk(self) -> TxnExpr:
+        """Get the state proof public key commitment from a transaction.
+
+        Requires TEAL version 6 or higher.
+        """
+        return self.makeTxnExpr(TxnField.state_proof_pk)
 
     @property
     def application_args(self) -> TxnArray:
