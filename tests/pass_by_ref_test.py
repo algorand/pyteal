@@ -165,6 +165,20 @@ if not OLD_CODE_ONLY:
             n.load(),
         )
 
+    @Subroutine(TealType.uint64)
+    def mixed_annotations(x: Expr, y: Expr, z: ScratchVar) -> Int:
+        return Seq(
+            z.store(x),
+            Log(Concat(y, Bytes("="), Itob(x))),
+            x,
+        )
+
+    def sub_mixed():
+        x = Int(42)
+        y = Bytes("x")
+        z = ScratchVar(TealType.uint64)
+        return mixed_annotations(x, y, z)
+
 
 OLD_CASES = (sub_logcat, sub_slowfib, sub_fastfib, sub_even)
 
@@ -179,7 +193,7 @@ if __name__ == "__main__":
 
 
 if not OLD_CODE_ONLY:
-    NEW_CASES = (sub_logcat_dynamic, swapper, wilt_the_stilt, fac_by_ref)
+    NEW_CASES = (sub_logcat_dynamic, swapper, wilt_the_stilt, fac_by_ref, sub_mixed)
 
     def test_swapper():
         compile_and_save(swapper)

@@ -55,7 +55,9 @@ class SubroutineDefinition:
                         name
                     )
                 )
-            if name in implementation.__annotations__:
+            if name in implementation.__annotations__ and issubclass(
+                implementation.__annotations__[name], ScratchVar
+            ):
                 self.expected_arg_types.append(ScratchVar)
             else:
                 self.expected_arg_types.append(Expr)
