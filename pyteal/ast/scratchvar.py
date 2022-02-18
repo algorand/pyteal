@@ -104,34 +104,8 @@ class DynamicScratchVar:
                 this is needed in the internal PyTEAL compiler code for handling pass-by-reference semantics.
         """
         self.type = ttype
-        # if indexer is None:
-        #     indexer = ScratchVar(TealType.uint64)
-
         self.indexer = ScratchVar(TealType.uint64)
         self.slot = self.indexer.slot
-
-        # indexer = ScratchVar(TealType.uint64)
-        # self.indexer: ScratchVar
-        # self.slot: ScratchSlot
-        # self._set_indexer(indexer)
-
-    # def _set_indexer(self, indexer: ScratchVar) -> None:
-    #     if not isinstance(indexer, ScratchVar):
-    #         raise TealInternalError(
-    #             "indexer must be a ScratchVar but had python type {}".format(
-    #                 type(indexer)
-    #             )
-    #         )
-
-    #     if indexer.type != TealType.uint64:
-    #         raise TealInternalError(
-    #             "indexer must have teal type uint64 but was {} instead".format(
-    #                 indexer.type
-    #             )
-    #         )
-
-    #     self.indexer = indexer
-    #     self.slot = self.indexer.slot
 
     def set_index(self, indexVar: ScratchVar) -> Expr:
         """Set this DynamicScratchVar to reference the provided `indexVar`.
