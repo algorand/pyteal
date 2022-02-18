@@ -32,7 +32,6 @@ def mismatch_ligature(expected, actual):
 
 
 def assert_teal_as_expected(path2actual, path2expected):
-
     with open(path2actual, "r") as fa, open(path2expected, "r") as fe:
         alines = fa.read().split("\n")
         elines = fe.read().split("\n")
