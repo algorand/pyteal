@@ -136,8 +136,13 @@ class DynamicScratchVar:
         """
         return self.indexer.store(indexVar.index())
 
+    def storage_type(self) -> TealType:
+        """Get the type of expressions that can be stored in this ScratchVar."""
+        return self.type
+
     def store(self, value: Expr) -> Expr:
         """Store the value in the referenced ScratchVar."""
+        require_type(value, self.type)
         index = ScratchLoad(self.indexer.slot, TealType.uint64)
         return ScratchStore(slot=None, value=value, index_expression=index)
 

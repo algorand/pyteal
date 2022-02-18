@@ -40,6 +40,9 @@ def test_subroutine_definition():
     def fnWithPartialExprAnnotations(a, b: Expr) -> Expr:
         return Return()
 
+    def fnWithMixedAnnotations(a: ScratchVar, b: Expr) -> Int:
+        return Return()
+
     cases = (
         (fn0Args, 0, "fn0Args"),
         (fn1Args, 1, "fn1Args"),
@@ -53,6 +56,7 @@ def test_subroutine_definition():
         (fnWithOnlyReturnExprAnnotations, 2, "fnWithOnlyReturnExprAnnotations"),
         (fnWithOnlyArgExprAnnotations, 2, "fnWithOnlyArgExprAnnotations"),
         (fnWithPartialExprAnnotations, 2, "fnWithPartialExprAnnotations"),
+        (fnWithMixedAnnotations, 2, "fnWithMixedAnnotations"),
     )
 
     for (fn, numArgs, name) in cases:
