@@ -294,17 +294,18 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
     Puts together the data necessary to define the code for a subroutine.
     "evaluate" is used here to connote evaluating the PyTEAL AST into a SubroutineDeclaration,
     but not actually placing it at call locations. The trickiest part here is managing the subroutine's arguments.
-    The arguments are needed in two different ways, and there are 2 different argument types to consider:
+    The arguments are needed for two different code-paths, and there are 2 different argument types to consider
+    for each of the code-paths:
 
-    2 Argument Usages
-    - -------- ------
+    2 Argument Usages / Code-Paths
+    - -------- ------   ----------
     Usage (A) for run-time: "argumentVars" --reverse--> "bodyOps"
         These are "store" expressions that pick up parameters that have been pre-placed on the stack prior to subroutine invocation.
-        These are stored into local scratch space to be used by the TEAL subroutine.
+        The argumentVars are stored into local scratch space to be used by the TEAL subroutine.
 
     Usage (B) for compile-time: "loadedArgs"
         These are expressions supplied to the user-defined PyTEAL function.
-        These are invoked to by the subroutine create a self-contained AST which will then define the TEAL subroutine.
+        The loadedArgs are invoked to by the subroutine to create a self-contained AST which will translate into a TEAL subroutine.
 
     In both usage cases, we need to handle
 
@@ -313,12 +314,12 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
     Type 1 (by-value): these have python type Expr
     Type 2 (by-reference): these hae python type ScratchVar
 
-    Usage (A) "argumentVars" --reverse--> "bodyOps" for storing pre-placed stack variables into local scratch space:
+    Usage (A) "argumentVars" - Storing pre-placed stack variables into local scratch space:
         Type 1. (by-value) use ScratchVar.store() to pick the actual value into a local scratch space
         Type 2. (by-reference) ALSO use ScratchVar.store() to pick up from the stack
             NOTE: SubroutineCall.__teal__() has placed the _SLOT INDEX_ on the stack so this is stored into the local scratch space
 
-    Usage (B) "loadedArgs" - Storing pre-placed stack variables into local scratch-variables:
+    Usage (B) "loadedArgs" - Passing through to an invoked PyTEAL subroutine AST:
         Type 1. (by-value) use ScratchVar.load() to have an Expr that can be compiled in python by the PyTEAL subroutine
         Type 2. (by-reference) use a PassByRefScratchVar as the user will have written the PyTEAL in a way that satifies
             the ScratchVar API. I.e., the user will write `x.load()` instead of `x` as they would have for by-value variables.
