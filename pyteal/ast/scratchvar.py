@@ -130,7 +130,7 @@ class DynamicScratchVar:
         self.slot = self.indexer.slot
 
     def set_index(self, indexVar: ScratchVar) -> Expr:
-        """Set the this DynamicScratchVar to reference the provided `indexVar`.
+        """Set this DynamicScratchVar to reference the provided `indexVar`.
         Followup `store`, `load` and `index` operations will use the provided `indexVar` until
         `set_index()` is called again to reset the referenced ScratchVar.
         """
