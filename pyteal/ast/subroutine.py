@@ -55,12 +55,14 @@ class SubroutineDefinition:
                         name
                     )
                 )
-            if name in implementation.__annotations__ and issubclass(
-                implementation.__annotations__[name], ScratchVar
-            ):
-                self.expected_arg_types.append(ScratchVar)
-            else:
-                self.expected_arg_types.append(Expr)
+
+            expected_arg_type = Expr
+            if name in implementation.__annotations__:
+                ptype = implementation.__annotations__[name]
+                if isclass(ptype) and issubclass(ptype, ScratchVar):
+                    expected_arg_type = ScratchVar
+
+            self.expected_arg_types.append(expected_arg_type)
 
         for var, var_type in implementation.__annotations__.items():
             if var == "return" and not (
