@@ -120,8 +120,13 @@ class ScratchLoad(Expr):
         super().__init__()
 
         if (slot is None) == (index_expression is None):
-            raise TealInternalError(
+            raise TealInputError(
                 "Exactly one of slot or index_expressions must be provided"
+            )
+
+        if slot and not isinstance(slot, ScratchSlot):
+            raise TealInputError(
+                "cannot handle slot of type {}".format(type(self.slot))
             )
 
         self.slot = slot
@@ -138,11 +143,8 @@ class ScratchLoad(Expr):
             op = TealOp(self, Op.loads)
             return TealBlock.FromOp(options, op, self.index_expression)
 
-        if not isinstance(self.slot, ScratchSlot):
-            raise TealInternalError(
-                "cannot handle slot of type {}".format(type(self.slot))
-            )
-        op = TealOp(self, Op.load, self.slot)
+        s = cast(ScratchSlot, self.slot)
+        op = TealOp(self, Op.load, s)
         return TealBlock.FromOp(options, op)
 
     def type_of(self):

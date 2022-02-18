@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional, Set, Union, TYPE_CHECKING
+from typing import Callable, Dict, List, Optional, Set, Union, TYPE_CHECKING
 from inspect import isclass, Parameter, signature
 
 from ..types import TealType
@@ -29,12 +29,15 @@ class SubroutineDefinition:
 
         self.by_ref_args: Set[str] = set()
 
+        self.expected_arg_types: List[type] = []
+
         if not callable(implementation):
             raise TealInputError("Input to SubroutineDefinition is not callable")
 
         sig = signature(implementation)
 
         for name, param in sig.parameters.items():
+            param = sig.parameters[name]
             if param.kind not in (
                 Parameter.POSITIONAL_ONLY,
                 Parameter.POSITIONAL_OR_KEYWORD,
@@ -51,6 +54,10 @@ class SubroutineDefinition:
                         name
                     )
                 )
+            if name in implementation.__annotations__:
+                self.expected_arg_types.append(ScratchVar)
+            else:
+                self.expected_arg_types.append(Expr)
 
         for var, var_type in implementation.__annotations__.items():
             if var == "return" and not (
@@ -102,10 +109,11 @@ class SubroutineDefinition:
             )
 
         for i, arg in enumerate(args):
-            if not isinstance(arg, self.PARAM_TYPES):
+            atype = self.expected_arg_types[i]
+            if not isinstance(arg, atype):
                 raise TealInputError(
-                    "Argument {} at index {} of subroutine call has incorrect type {}".format(
-                        i, arg, type(arg)
+                    "supplied argument {} at index {} had type {} but was expecting type {}".format(
+                        arg, i, type(arg), atype
                     )
                 )
 
