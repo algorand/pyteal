@@ -1,4 +1,3 @@
-import re
 from typing import List
 from xml.dom import InvalidModificationErr
 import pytest
@@ -205,11 +204,11 @@ def test_subroutine_definition_invalid():
         ),
         (
             fnWithKeywordArgs,
-            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type KEYWORD_ONLY'",
+            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type",
         ),
         (
             fnWithVariableArgs,
-            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type VAR_POSITIONAL'",
+            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type",
         ),
         (
             fnWithNonExprReturnAnnotation,
