@@ -98,7 +98,7 @@ These fields are :code:`Txn.application_args`, :code:`Txn.assets`, :code:`Txn.ac
 and :code:`InnerTxn.logs`.
 
 The length of these array fields can be found using the :code:`.length()` method, and individual
-items can be accesses using bracket notation. For example:
+items can be accessed using bracket notation. For example:
 
 .. code-block:: python
 
