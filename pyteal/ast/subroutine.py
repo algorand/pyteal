@@ -180,14 +180,14 @@ class SubroutineCall(Expr):
     def __teal__(self, options: "CompileOptions"):
         """
         Generate the subroutine's start and end teal blocks.
-        The subroutine's arguments put on the stack to be picked up into local scratch variables.
-        There are 2 cases for the arg expression put on the stack:
+        The subroutine's arguments are pushed on the stack to be picked up into local scratch variables.
+        There are 2 cases to consider for the pushed arg expression:
 
         1. (by-value) In the case of typical arguments of type Expr, the expression ITSELF is evaluated for the stack
-            and will be stored in a local ScratchVar when beginning the subroutine execution
+            and will be stored in a local ScratchVar for subroutine evaluation
 
         2. (by-reference) In the case of a by-reference argument of type ScratchVar, its SLOT INDEX is put on the stack
-            and will be stored in a local PassByRefScratchVar when beginning the subroutine execution
+            and will be stored in a local DynamicScratchVar for subroutine evaluation
         """
         verifyTealVersion(
             Op.callsub.min_version,
