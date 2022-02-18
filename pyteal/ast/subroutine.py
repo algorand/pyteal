@@ -321,8 +321,8 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
 
     Usage (B) "loadedArgs" - Passing through to an invoked PyTEAL subroutine AST:
         Type 1. (by-value) use ScratchVar.load() to have an Expr that can be compiled in python by the PyTEAL subroutine
-        Type 2. (by-reference) use a PassByRefScratchVar as the user will have written the PyTEAL in a way that satifies
-            the ScratchVar API. I.e., the user will write `x.load()` instead of `x` as they would have for by-value variables.
+        Type 2. (by-reference) use a DynamicScratchVar as the user will have written the PyTEAL in a way that satifies
+            the ScratchVar API. I.e., the user will write `x.load()` and `x.store(val)` as opposed to just `x`.
     """
 
     def var_n_loaded(param):
