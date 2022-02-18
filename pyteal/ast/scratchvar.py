@@ -101,7 +101,7 @@ class DynamicScratchVar:
                 using to look up other slots. It is _NOT RECOMMENDED_ that a developer provide this optional
                 argument, but instead, to let the compiler construct one dynamically. In rare situations
                 it could be useful to provide the ability to explicitly provide the indexer. For example,
-                this is useful in handling pass-by-reference subroutine call semantics.
+                this is needed in the internal PyTEAL compiler code for handling pass-by-reference semantics.
         """
         self.type = ttype
         if indexer is None:
