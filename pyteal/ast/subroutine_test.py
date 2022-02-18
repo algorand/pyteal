@@ -83,7 +83,7 @@ def test_subroutine_definition():
         assert invocation.args == args
 
 
-def test_subroutine_definition_param_types():
+def test_subroutine_invocation_param_types():
     def fnWithNoAnnotations(a, b):
         return Return()
 
@@ -193,6 +193,9 @@ def test_subroutine_definition_invalid():
     def fnWithNonExprParamAnnotation(a, b: TealType.uint64):
         return Return()
 
+    def fnWithScratchVarSubclass(a, b: DynamicScratchVar):
+        return Return()
+
     cases = (
         (1, "TealInputError('Input to SubroutineDefinition is not callable'"),
         (None, "TealInputError('Input to SubroutineDefinition is not callable'"),
@@ -210,19 +213,23 @@ def test_subroutine_definition_invalid():
         ),
         (
             fnWithNonExprReturnAnnotation,
-            "TealInputError('Function has Return of disallowed type TealType.uint64. Only type Expr is allowed'",
+            "Function has return of disallowed type TealType.uint64. Only subtype of Expr is allowed",
         ),
         (
             fnWithNonExprParamAnnotation,
-            "TealInputError('Function has parameter b of disallowed type TealType.uint64. Only type Expr is allowed'",
+            "Function has parameter b of disallowed type TealType.uint64. Only the types",
+        ),
+        (
+            fnWithScratchVarSubclass,
+            "Function has parameter b of disallowed type <class 'pyteal.DynamicScratchVar'>",
         ),
     )
 
-    for case, msg in cases:
+    for fn, msg in cases:
         with pytest.raises(TealInputError) as e:
-            SubroutineDefinition(case, TealType.none)
+            SubroutineDefinition(fn, TealType.none)
 
-            assert msg in str(e), "failed for case [{}]".format(case)
+        assert msg in str(e), "failed for case [{}]".format(fn.__name__)
 
 
 def test_subroutine_declaration():

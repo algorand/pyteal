@@ -157,7 +157,7 @@ def test_dynamic_scratchvar_load():
 
     expected = TealSimpleBlock(
         [
-            TealOp(ScratchLoad(myvar.indexer.slot), Op.load, myvar.indexer.slot),
+            TealOp(ScratchLoad(myvar._indexer.slot), Op.load, myvar._indexer.slot),
             TealOp(expr, Op.loads),
         ]
     )
@@ -177,7 +177,7 @@ def test_dynamic_scratchvar_store():
 
     expected = TealSimpleBlock(
         [
-            TealOp(ScratchLoad(myvar.indexer.slot), Op.load, myvar.indexer.slot),
+            TealOp(ScratchLoad(myvar._indexer.slot), Op.load, myvar._indexer.slot),
             TealOp(arg, Op.byte, '"value"'),
             TealOp(expr, Op.stores),
         ]
@@ -195,7 +195,7 @@ def test_dynamic_scratchvar_index():
     myvar = DynamicScratchVar()
     expr = myvar.index()
 
-    expected = TealSimpleBlock([TealOp(expr, Op.load, myvar.indexer.slot)])
+    expected = TealSimpleBlock([TealOp(expr, Op.load, myvar._indexer.slot)])
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
