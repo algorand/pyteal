@@ -88,11 +88,7 @@ class DynamicScratchVar:
             )
     """
 
-    def __init__(
-        self,
-        ttype: TealType = TealType.anytype,
-        # indexer: ScratchVar = None,
-    ):
+    def __init__(self, ttype: TealType = TealType.anytype):
         """Create a new DynamicScratchVar which references other ScratchVar's
 
         Args:
