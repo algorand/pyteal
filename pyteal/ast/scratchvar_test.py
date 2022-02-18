@@ -151,6 +151,46 @@ def test_dynamic_scratchvar_type():
         myvar_bytes.store(Pop(Int(1)))
 
 
+def test_dynamic_scratchvar_load():
+    myvar = DynamicScratchVar()
+    expr = myvar.load()
+
+    expected = TealSimpleBlock(
+        [
+            TealOp(ScratchLoad(myvar.indexer.slot), Op.load, myvar.indexer.slot),
+            TealOp(expr, Op.loads),
+        ]
+    )
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
+def test_dynamic_scratchvar_store():
+    myvar = DynamicScratchVar(TealType.bytes)
+    arg = Bytes("value")
+    expr = myvar.store(arg)
+
+    expected = TealSimpleBlock(
+        [
+            TealOp(ScratchLoad(myvar.indexer.slot), Op.load, myvar.indexer.slot),
+            TealOp(arg, Op.byte, '"value"'),
+            TealOp(expr, Op.stores),
+        ]
+    )
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
 def test_dynamic_scratchvar_index():
     myvar = DynamicScratchVar()
     expr = myvar.index()
