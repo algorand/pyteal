@@ -112,3 +112,17 @@ def test_scratch_index():
     slot = ScratchSlot()
 
     index = ScratchIndex(slot)
+    assert index.slot is slot
+
+    assert str(index) == "(ScratchIndex " + str(slot) + ")"
+
+    assert hash(index) == hash(slot.id)
+
+    assert index.type_of() == TealType.uint64
+
+    assert not index.has_return()
+
+    expected = TealSimpleBlock([TealOp(index, Op.int, slot)])
+    actual, _ = index.__teal__(options)
+
+    assert actual == expected
