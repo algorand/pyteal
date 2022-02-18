@@ -27,7 +27,7 @@ class SubroutineDefinition:
         self.id = SubroutineDefinition.nextSubroutineId
         SubroutineDefinition.nextSubroutineId += 1
 
-        self.compiler_version: Optional[int] = None
+        # self.compiler_version: Optional[int] = None
         self.by_ref_args: Set[str] = set()
 
         self.expected_arg_types: List[type] = []
@@ -91,11 +91,11 @@ class SubroutineDefinition:
         self.__name = self.implementation.__name__ if nameStr is None else nameStr
 
     def getDeclaration(
-        self, options: "CompileOptions" = None
+        self,  # , options: "CompileOptions" = None
     ) -> "SubroutineDeclaration":
         if self.declaration is None:
             # lazy evaluate subroutine
-            self.declaration = evaluateSubroutine(self, options=options)
+            self.declaration = evaluateSubroutine(self)  # , options=options)
         return self.declaration
 
     def name(self) -> str:
@@ -306,7 +306,7 @@ Subroutine.__module__ = "pyteal"
 
 
 def evaluateSubroutine(
-    subroutine: SubroutineDefinition, options: "CompileOptions" = None
+    subroutine: SubroutineDefinition,  # , options: "CompileOptions" = None
 ) -> SubroutineDeclaration:
     """
     Puts together the data necessary to define the code for a subroutine.
@@ -342,8 +342,8 @@ def evaluateSubroutine(
         Type 2. (by-reference) use a DynamicScratchVar as the user will have written the PyTEAL in a way that satifies
             the ScratchVar API. I.e., the user will write `x.load()` and `x.store(val)` as opposed to just `x`.
     """
-    if options:
-        subroutine.compiler_version = options.version
+    # if options:
+    #     subroutine.compiler_version = options.version
 
     def var_n_loaded(param):
         if param in subroutine.by_ref_args:

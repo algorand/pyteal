@@ -153,7 +153,7 @@ def compileSubroutine(
     newSubroutines = referencedSubroutines - subroutineMapping.keys()
     for subroutine in sorted(newSubroutines, key=lambda subroutine: subroutine.id):
         compileSubroutine(
-            subroutine.getDeclaration(options=options),
+            subroutine.getDeclaration(),  # options),  # =options),
             options,
             subroutineMapping,
             subroutineGraph,
