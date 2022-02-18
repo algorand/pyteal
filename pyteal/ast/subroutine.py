@@ -27,6 +27,7 @@ class SubroutineDefinition:
         self.id = SubroutineDefinition.nextSubroutineId
         SubroutineDefinition.nextSubroutineId += 1
 
+        self.compiler_version: int = None
         self.by_ref_args: Set[str] = set()
 
         self.expected_arg_types: List[type] = []
@@ -85,10 +86,12 @@ class SubroutineDefinition:
         self.declaration: Optional["SubroutineDeclaration"] = None
         self.__name = self.implementation.__name__ if nameStr is None else nameStr
 
-    def getDeclaration(self) -> "SubroutineDeclaration":
+    def getDeclaration(
+        self, options: "CompileOptions" = None
+    ) -> "SubroutineDeclaration":
         if self.declaration is None:
             # lazy evaluate subroutine
-            self.declaration = evaluateSubroutine(self)
+            self.declaration = evaluateSubroutine(self, options=options)
         return self.declaration
 
     def name(self) -> str:
@@ -108,14 +111,15 @@ class SubroutineDefinition:
                 )
             )
 
-        for i, arg in enumerate(args):
-            atype = self.expected_arg_types[i]
-            if not isinstance(arg, atype):
-                raise TealInputError(
-                    "supplied argument {} at index {} had type {} but was expecting type {}".format(
-                        arg, i, type(arg), atype
+        if self.compiler_version is not None and self.compiler_version >= 6:
+            for i, arg in enumerate(args):
+                atype = self.expected_arg_types[i]
+                if not isinstance(arg, atype):
+                    raise TealInputError(
+                        "supplied argument {} at index {} had type {} but was expecting type {}".format(
+                            arg, i, type(arg), atype
+                        )
                     )
-                )
 
         return SubroutineCall(self, args)
 
@@ -297,7 +301,9 @@ class Subroutine:
 Subroutine.__module__ = "pyteal"
 
 
-def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaration:
+def evaluateSubroutine(
+    subroutine: SubroutineDefinition, options: "CompileOptions" = None
+) -> SubroutineDeclaration:
     """
     Puts together the data necessary to define the code for a subroutine.
     "evaluate" is used here to connote evaluating the PyTEAL AST into a SubroutineDeclaration,
@@ -332,6 +338,8 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
         Type 2. (by-reference) use a DynamicScratchVar as the user will have written the PyTEAL in a way that satifies
             the ScratchVar API. I.e., the user will write `x.load()` and `x.store(val)` as opposed to just `x`.
     """
+    if options:
+        subroutine.compiler_version = options.version
 
     def var_n_loaded(param):
         if param in subroutine.by_ref_args:
