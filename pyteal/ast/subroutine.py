@@ -115,15 +115,15 @@ class SubroutineDefinition:
                 )
             )
 
-        if self.compiler_version is not None and self.compiler_version >= 6:
-            for i, arg in enumerate(args):
-                atype = self.expected_arg_types[i]
-                if not isinstance(arg, atype):
-                    raise TealInputError(
-                        "supplied argument {} at index {} had type {} but was expecting type {}".format(
-                            arg, i, type(arg), atype
-                        )
+        # if self.compiler_version is not None and self.compiler_version >= 6:
+        for i, arg in enumerate(args):
+            atype = self.expected_arg_types[i]
+            if not isinstance(arg, atype):
+                raise TealInputError(
+                    "supplied argument {} at index {} had type {} but was expecting type {}".format(
+                        arg, i, type(arg), atype
                     )
+                )
 
         return SubroutineCall(self, args)
 
@@ -347,11 +347,8 @@ def evaluateSubroutine(
 
     def var_n_loaded(param):
         if param in subroutine.by_ref_args:
-            # Jason's idea:
             argVar = DynamicScratchVar(TealType.anytype)
             loaded = argVar
-            # argVar = ScratchVar(TealType.uint64)
-            # loaded = DynamicScratchVar(TealType.anytype, indexer=argVar)
         else:
             argVar = ScratchVar(TealType.anytype)
             loaded = argVar.load()

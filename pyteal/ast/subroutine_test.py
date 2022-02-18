@@ -1,4 +1,6 @@
+import re
 from typing import List
+from xml.dom import InvalidModificationErr
 import pytest
 
 from .. import *
@@ -56,7 +58,6 @@ def test_subroutine_definition():
         (fnWithOnlyReturnExprAnnotations, 2, "fnWithOnlyReturnExprAnnotations"),
         (fnWithOnlyArgExprAnnotations, 2, "fnWithOnlyArgExprAnnotations"),
         (fnWithPartialExprAnnotations, 2, "fnWithPartialExprAnnotations"),
-        (fnWithMixedAnnotations, 2, "fnWithMixedAnnotations"),
     )
 
     for (fn, numArgs, name) in cases:
@@ -80,6 +81,100 @@ def test_subroutine_definition():
         assert isinstance(invocation, SubroutineCall)
         assert invocation.subroutine is definition
         assert invocation.args == args
+
+
+def test_subroutine_definition_param_types():
+    def fnWithNoAnnotations(a, b):
+        return Return()
+
+    def fnWithExprAnnotations(a: Expr, b: Expr) -> Expr:
+        return Return()
+
+    def fnWithSVAnnotations(a: ScratchVar, b: ScratchVar):
+        return Return()
+
+    def fnWithMixedAnns1(a: ScratchVar, b: Expr) -> Expr:
+        return Return()
+
+    def fnWithMixedAnns2(a: ScratchVar, b) -> Expr:
+        return Return()
+
+    def fnWithMixedAnns3(a: Expr, b: ScratchVar):
+        return Return()
+
+    def fnWithMixedAnns4AndIntReturn(a: Expr, b: ScratchVar) -> Bytes:
+        return Return()
+
+    sv = ScratchVar()
+    x = Int(42)
+    s = Bytes("hello")
+    cases = [
+        ("vannila 1", fnWithNoAnnotations, [x, s], None),
+        ("vannila 2", fnWithNoAnnotations, [x, x], None),
+        ("vanilla no sv's allowed 1", fnWithNoAnnotations, [x, sv], TealInputError),
+        ("exprs 1", fnWithExprAnnotations, [x, s], None),
+        ("exprs 2", fnWithExprAnnotations, [x, x], None),
+        ("exprs no sv's asllowed 1", fnWithExprAnnotations, [x, sv], TealInputError),
+        ("all sv's 1", fnWithSVAnnotations, [sv, sv], None),
+        ("all sv's but strings", fnWithSVAnnotations, [s, s], TealInputError),
+        ("all sv's but ints", fnWithSVAnnotations, [x, x], TealInputError),
+        ("mixed1 copacetic", fnWithMixedAnns1, [sv, x], None),
+        ("mixed1 flipped", fnWithMixedAnns1, [x, sv], TealInputError),
+        ("mixed1 missing the sv", fnWithMixedAnns1, [x, s], TealInputError),
+        ("mixed1 missing the non-sv", fnWithMixedAnns1, [sv, sv], TealInputError),
+        ("mixed2 copacetic", fnWithMixedAnns2, [sv, x], None),
+        ("mixed2 flipped", fnWithMixedAnns2, [x, sv], TealInputError),
+        ("mixed2 missing the sv", fnWithMixedAnns2, [x, s], TealInputError),
+        ("mixed2 missing the non-sv", fnWithMixedAnns2, [sv, sv], TealInputError),
+        ("mixed3 copacetic", fnWithMixedAnns3, [s, sv], None),
+        ("mixed3 flipped", fnWithMixedAnns3, [sv, x], TealInputError),
+        ("mixed3 missing the sv", fnWithMixedAnns3, [x, s], TealInputError),
+        (
+            "mixed3 missing the non-sv",
+            fnWithMixedAnns4AndIntReturn,
+            [sv, sv],
+            TealInputError,
+        ),
+        ("mixed4 flipped", fnWithMixedAnns4AndIntReturn, [sv, x], TealInputError),
+        ("mixed4 missing the sv", fnWithMixedAnns4AndIntReturn, [x, s], TealInputError),
+        (
+            "mixed4 missing the non-sv",
+            fnWithMixedAnns4AndIntReturn,
+            [sv, sv],
+            TealInputError,
+        ),
+    ]
+    for case_name, fn, args, err in cases:
+        definition = SubroutineDefinition(fn, TealType.none)
+        assert definition.argumentCount() == len(args), case_name
+        assert definition.name() == fn.__name__, case_name
+
+        if err is None:
+            assert len(definition.by_ref_args) == len(
+                [x for x in args if isinstance(x, ScratchVar)]
+            ), case_name
+
+            try:
+                invocation = definition.invoke(args)
+                assert isinstance(invocation, SubroutineCall), case_name
+                assert invocation.subroutine is definition, case_name
+                assert invocation.args == args, case_name
+                assert invocation.has_return() is False, case_name
+
+            except Exception as e:
+                if isinstance(e, AssertionError):
+                    raise
+                assert (
+                    not e
+                ), f"EXPECTED SUCCESS. encountered unexpected error during invocation case <{case_name}>: {e}"
+        else:
+            try:
+                with pytest.raises(err):
+                    definition.invoke(args)
+            except Exception as e:
+                assert (
+                    not e
+                ), f"EXPECTED ERROR of type {err}. encountered unexpected error during invocation case <{case_name}>: {e}"
 
 
 def test_subroutine_definition_invalid():
