@@ -27,7 +27,7 @@ class SubroutineDefinition:
         self.id = SubroutineDefinition.nextSubroutineId
         SubroutineDefinition.nextSubroutineId += 1
 
-        self.compiler_version: int = None
+        self.compiler_version: Optional[int] = None
         self.by_ref_args: Set[str] = set()
 
         self.expected_arg_types: List[type] = []
