@@ -40,7 +40,7 @@ def test_subroutine_definition():
     def fnWithPartialExprAnnotations(a, b: Expr) -> Expr:
         return Return()
 
-    def fnWithMixedAnnotations(a: ScratchVar, b: Expr) -> Int:
+    def fnWithMixedAnnotations(a: ScratchVar, b: Expr) -> Return:
         return Return()
 
     cases = (
