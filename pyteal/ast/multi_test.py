@@ -2,8 +2,6 @@ from typing import List
 
 from .. import *
 
-from .bytes import Bytes
-
 options = CompileOptions()
 
 

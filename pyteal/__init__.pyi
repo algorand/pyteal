@@ -36,6 +36,7 @@ __all__ = [
     "BitwiseNot",
     "BitwiseOr",
     "BitwiseXor",
+    "Bytes",
     "BytesAdd",
     "BytesAnd",
     "BytesDiv",
