@@ -56,7 +56,7 @@ class SubroutineDefinition:
                     )
                 )
 
-            expected_arg_type = Expr
+            expected_arg_type: type = Expr
             if name in implementation.__annotations__:
                 ptype = implementation.__annotations__[name]
                 if isclass(ptype) and issubclass(ptype, ScratchVar):
