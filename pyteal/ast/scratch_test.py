@@ -106,3 +106,9 @@ def test_scratch_assign_id_invalid():
 
     with pytest.raises(TealInputError):
         slot = ScratchSlot(NUM_SLOTS)
+
+
+def test_scratch_index():
+    slot = ScratchSlot()
+
+    index = ScratchIndex(slot)
