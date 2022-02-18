@@ -103,7 +103,7 @@ def test_subroutine_definition_param_types():
         return Return()
 
     def fnWithMixedAnns4AndIntReturn(a: Expr, b: ScratchVar) -> Bytes:
-        return Return()
+        return Bytes("helo")
 
     sv = ScratchVar()
     x = Int(42)
