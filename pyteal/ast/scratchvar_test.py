@@ -202,3 +202,16 @@ def test_dynamic_scratchvar_index():
     actual = TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+
+def test_dynamic_scratchvar_cannot_set_index_to_another_dynamic():
+    myvar = DynamicScratchVar()
+    sl1 = myvar.load()
+
+    regvar = ScratchVar()
+    myvar.set_index(regvar)
+
+    dynvar = DynamicScratchVar()
+
+    with pytest.raises(TealInputError):
+        myvar.set_index(dynvar)

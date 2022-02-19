@@ -98,12 +98,19 @@ class DynamicScratchVar(ScratchVar):
         self._indexer = ScratchVar(TealType.uint64)
         self.slot = self._indexer.slot
 
-    def set_index(self, indexVar: ScratchVar) -> Expr:
+    def set_index(self, index_var: ScratchVar) -> Expr:
         """Set this DynamicScratchVar to reference the provided `indexVar`.
         Followup `store`, `load` and `index` operations will use the provided `indexVar` until
         `set_index()` is called again to reset the referenced ScratchVar.
         """
-        return self._indexer.store(indexVar.index())
+        if type(index_var) is not ScratchVar:
+            raise TealInputError(
+                "Only allowed to use ScratchVar objects for setting indices, but was given a {}".format(
+                    type(index_var)
+                )
+            )
+
+        return self._indexer.store(index_var.index())
 
     def storage_type(self) -> TealType:
         """Get the type of expressions that can be stored in this ScratchVar."""
