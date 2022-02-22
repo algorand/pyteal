@@ -35,28 +35,27 @@ Operator                                                                        
 :any:`Txn.rekey_to() <TxnObject.rekey_to>`                                       :code:`TealType.bytes`    2                32 byte address
 ================================================================================ ========================= ================ ============================================================================
 
-Key Registration
+Application Call
 .......................................................
 ================================================================================ ========================= ================ ============================================================================
 Operator                                                                         Type                      Min TEAL Version Notes
 ================================================================================ ========================= ================ ============================================================================
-:any:`Txn.vote_pk() <TxnObject.vote_pk>`                                         :code:`TealType.bytes`    2                32 byte address
-:any:`Txn.selection_pk() <TxnObject.selection_pk>`                               :code:`TealType.bytes`    2                32 byte address
-:any:`Txn.state_proof_pk <TxnObject.state_proof_pk>`                             :code:`TealType.bytes`    6                64 byte state proof public key commitment.
-:any:`Txn.vote_first() <TxnObject.vote_first>`                                   :code:`TealType.uint64`   2
-:any:`Txn.vote_last() <TxnObject.vote_last>`                                     :code:`TealType.uint64`   2
-:any:`Txn.vote_key_dilution() <TxnObject.vote_key_dilution>`                     :code:`TealType.uint64`   2
-:any:`Txn.nonparticipation() <TxnObject.nonparticipation>`                       :code:`TealType.uint64`   5                Marks an account nonparticipating for rewards
-================================================================================ ========================= ================ ============================================================================
-
-Payment
-.......................................................
-================================================================================ ========================= ================ ============================================================================
-Operator                                                                         Type                      Min TEAL Version Notes
-================================================================================ ========================= ================ ============================================================================
-:any:`Txn.receiver() <TxnObject.receiver>`                                       :code:`TealType.bytes`    2                32 byte address
-:any:`Txn.amount() <TxnObject.amount>`                                           :code:`TealType.uint64`   2                in microAlgos
-:any:`Txn.close_remainder_to() <TxnObject.close_remainder_to>`                   :code:`TealType.bytes`    2                32 byte address
+:any:`Txn.application_id() <TxnObject.application_id>`                           :code:`TealType.uint64`   2
+:any:`Txn.on_completion() <TxnObject.on_completion>`                             :code:`TealType.uint64`   2
+:any:`Txn.approval_program() <TxnObject.approval_program>`                       :code:`TealType.bytes`    2
+:any:`Txn.global_num_uints() <TxnObject.global_num_uints>`                       :code:`TealType.uint64`   3                Maximum global integers in app schema
+:any:`Txn.global_num_byte_slices() <TxnObject.global_num_byte_slices>`           :code:`TealType.uint64`   3                Maximum global byte strings in app schema
+:any:`Txn.local_num_uints() <TxnObject.local_num_uints>`                         :code:`TealType.uint64`   3                Maximum local integers in app schema
+:any:`Txn.local_num_byte_slices() <TxnObject.local_num_byte_slices>`             :code:`TealType.uint64`   3                Maximum local byte strings in app schema
+:any:`Txn.accounts <TxnObject.accounts>`                                         :code:`TealType.bytes[]`  2                Array of application accounts
+:any:`Txn.assets <TxnObject.assets>`                                             :code:`TealType.uint64[]` 3                Array of application assets
+:any:`Txn.applications <TxnObject.applications>`                                 :code:`TealType.uint64[]` 3                Array of applications
+:any:`Txn.clear_state_program() <TxnObject.clear_state_program>`                 :code:`TealType.bytes`    2
+:any:`Txn.extra_program_pages() <TxnObject.extra_program_pages>`                 :code:`TealType.uint64`   4                Number of extra program pages for app
+:any:`Txn.application_args <TxnObject.application_args>`                         :code:`TealType.bytes[]`  2                Array of application arguments
+:any:`Txn.created_application_id() <TxnObject.created_application_id>`           :code:`TealType.uint64`   5                The ID of the newly created application in this transaction. In v5, only valid on inner transactions. >= v6 works with top-level and inner transactions.
+:any:`Txn.logs <TxnObject.logs>`                                                 :code:`TealType.bytes[]`  5                Array of application logged items. In v5, only valid on inner transactions. >= v6 works with top-level and inner transactions.
+:any:`Txn.last_log() <TxnObject.last_log>`                                       :code:`TealType.bytes[]`  6                The last message emitted. Empty bytes if none were emitted. Application mode only.
 ================================================================================ ========================= ================ ============================================================================
 
 Asset Config
@@ -79,6 +78,16 @@ Operator                                                                        
 :any:`Txn.created_asset_id() <TxnObject.created_asset_id>`                       :code:`TealType.uint64`   5                The ID of the newly created asset in this transaction. In v5, only valid on inner transactions. >= v6 works with top-level and inner transactions.
 ================================================================================ ========================= ================ ============================================================================
 
+Asset Freeze
+.......................................................
+================================================================================ ========================= ================ ============================================================================
+Operator                                                                         Type                      Min TEAL Version Notes
+================================================================================ ========================= ================ ============================================================================
+:any:`Txn.freeze_asset() <TxnObject.freeze_asset>`                               :code:`TealType.uint64`   2
+:any:`Txn.freeze_asset_account() <TxnObject.freeze_asset_account>`               :code:`TealType.bytes`    2                32 byte address
+:any:`Txn.freeze_asset_frozen() <TxnObject.freeze_asset_frozen>`                 :code:`TealType.uint64`   2
+================================================================================ ========================= ================ ============================================================================
+
 Asset Transfer
 .......................................................
 ================================================================================ ========================= ================ ============================================================================
@@ -91,37 +100,28 @@ Operator                                                                        
 :any:`Txn.asset_close_to() <TxnObject.asset_close_to>`                           :code:`TealType.bytes`    2                32 byte address
 ================================================================================ ========================= ================ ============================================================================
 
-Asset Freeze
+Key Registration
 .......................................................
 ================================================================================ ========================= ================ ============================================================================
 Operator                                                                         Type                      Min TEAL Version Notes
 ================================================================================ ========================= ================ ============================================================================
-:any:`Txn.freeze_asset() <TxnObject.freeze_asset>`                               :code:`TealType.uint64`   2
-:any:`Txn.freeze_asset_account() <TxnObject.freeze_asset_account>`               :code:`TealType.bytes`    2                32 byte address
-:any:`Txn.freeze_asset_frozen() <TxnObject.freeze_asset_frozen>`                 :code:`TealType.uint64`   2
+:any:`Txn.vote_pk() <TxnObject.vote_pk>`                                         :code:`TealType.bytes`    2                32 byte address
+:any:`Txn.selection_pk() <TxnObject.selection_pk>`                               :code:`TealType.bytes`    2                32 byte address
+:any:`Txn.state_proof_pk <TxnObject.state_proof_pk>`                             :code:`TealType.bytes`    6                64 byte state proof public key commitment.
+:any:`Txn.vote_first() <TxnObject.vote_first>`                                   :code:`TealType.uint64`   2
+:any:`Txn.vote_last() <TxnObject.vote_last>`                                     :code:`TealType.uint64`   2
+:any:`Txn.vote_key_dilution() <TxnObject.vote_key_dilution>`                     :code:`TealType.uint64`   2
+:any:`Txn.nonparticipation() <TxnObject.nonparticipation>`                       :code:`TealType.uint64`   5                Marks an account nonparticipating for rewards
 ================================================================================ ========================= ================ ============================================================================
 
-Application Call
+Payment
 .......................................................
 ================================================================================ ========================= ================ ============================================================================
 Operator                                                                         Type                      Min TEAL Version Notes
 ================================================================================ ========================= ================ ============================================================================
-:any:`Txn.application_id() <TxnObject.application_id>`                           :code:`TealType.uint64`   2
-:any:`Txn.on_completion() <TxnObject.on_completion>`                             :code:`TealType.uint64`   2
-:any:`Txn.approval_program() <TxnObject.approval_program>`                       :code:`TealType.bytes`    2
-:any:`Txn.global_num_uints() <TxnObject.global_num_uints>`                       :code:`TealType.uint64`   3                Maximum global integers in app schema
-:any:`Txn.global_num_byte_slices() <TxnObject.global_num_byte_slices>`           :code:`TealType.uint64`   3                Maximum global byte strings in app schema
-:any:`Txn.local_num_uints() <TxnObject.local_num_uints>`                         :code:`TealType.uint64`   3                Maximum local integers in app schema
-:any:`Txn.local_num_byte_slices() <TxnObject.local_num_byte_slices>`             :code:`TealType.uint64`   3                Maximum local byte strings in app schema
-:any:`Txn.accounts <TxnObject.accounts>`                                         :code:`TealType.bytes[]`  2                Array of application accounts
-:any:`Txn.assets <TxnObject.assets>`                                             :code:`TealType.uint64[]` 3                Array of application assets
-:any:`Txn.applications <TxnObject.applications>`                                 :code:`TealType.uint64[]` 3                Array of applications
-:any:`Txn.clear_state_program() <TxnObject.clear_state_program>`                 :code:`TealType.bytes`    2
-:any:`Txn.extra_program_pages() <TxnObject.extra_program_pages>`                 :code:`TealType.uint64`   4                Number of extra program pages for app
-:any:`Txn.application_args <TxnObject.application_args>`                         :code:`TealType.bytes[]`  2                Array of application arguments
-:any:`Txn.created_application_id() <TxnObject.created_application_id>`           :code:`TealType.uint64`   5                The ID of the newly created application in this transaction. In v5, only valid on inner transactions. >= v6 works with top-level and inner transactions.
-:any:`Txn.logs <TxnObject.logs>`                                                 :code:`TealType.bytes[]`  5                Array of application logged items. In v5, only valid on inner transactions. >= v6 works with top-level and inner transactions.
-:any:`Txn.last_log() <TxnObject.last_log>`                                       :code:`TealType.bytes[]`  6                The last message emitted. Empty bytes if none were emitted. Application mode only.
+:any:`Txn.receiver() <TxnObject.receiver>`                                       :code:`TealType.bytes`    2                32 byte address
+:any:`Txn.amount() <TxnObject.amount>`                                           :code:`TealType.uint64`   2                in microAlgos
+:any:`Txn.close_remainder_to() <TxnObject.close_remainder_to>`                   :code:`TealType.bytes`    2                32 byte address
 ================================================================================ ========================= ================ ============================================================================
 
 Transaction Types
