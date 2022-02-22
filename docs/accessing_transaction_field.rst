@@ -11,7 +11,7 @@ Transaction Fields
 
 Information about the current transaction being evaluated can be obtained using the :any:`Txn` object using the PyTeal expressions shown below.
 
-Since numerous transaction fields are available, the fields are logically organized into tables matching the structure of `go-algorand's Transaction struct definition <https://github.com/search?q=%22type+Transaction+struct%22+repo%3Aalgorand%2Fgo-algorand+path%3A%2Fdata%2Ftransactions&type=Code>`_.
+Since numerous transaction fields exist, the fields are logically organized into tables by transaction type.
 
 Transaction Fields:  Common Fields
 **********************************
