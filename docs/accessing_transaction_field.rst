@@ -118,7 +118,7 @@ Operator                                                                        
 :any:`Txn.application_args <TxnObject.application_args>`                         :code:`TealType.bytes[]`  2                Array of application arguments
 :any:`Txn.created_application_id() <TxnObject.created_application_id>`           :code:`TealType.uint64`   5                The ID of the newly created application in this transaction. In v5, only valid on inner transactions. >= v6 works with top-level and inner transactions.
 :any:`Txn.logs <TxnObject.logs>`                                                 :code:`TealType.bytes[]`  5                Array of application logged items. In v5, only valid on inner transactions. >= v6 works with top-level and inner transactions.
-:any:`Txn.last_log() <TxnObject.last_log>`                                         :code:`TealType.bytes[]`  6                The last message emitted. Empty bytes if none were emitted. Application mode only.
+:any:`Txn.last_log() <TxnObject.last_log>`                                       :code:`TealType.bytes[]`  6                The last message emitted. Empty bytes if none were emitted. Application mode only.
 ================================================================================ ========================= ================ ============================================================================
 
 Transaction Type
@@ -126,7 +126,7 @@ Transaction Type
 
 The :any:`Txn.type_enum() <TxnObject.type_enum>` values can be checked using the :any:`TxnType` enum:
 
-============================== =============== ============ ========================= 
+============================== =============== ============ =========================
 Value                          Numerical Value Type String  Description
 ============================== =============== ============ =========================
 :any:`TxnType.Unknown`         :code:`0`       unkown       unknown type, invalid
@@ -219,7 +219,7 @@ Information about the current state of the blockchain can be obtained using the 
 =========================================== ======================= ================ =============================================================
 Operator                                    Type                    Min TEAL Version Notes
 =========================================== ======================= ================ =============================================================
-:any:`Global.min_txn_fee()`                 :code:`TealType.uint64` 2                in microAlgos  
+:any:`Global.min_txn_fee()`                 :code:`TealType.uint64` 2                in microAlgos
 :any:`Global.min_balance()`                 :code:`TealType.uint64` 2                in mircoAlgos
 :any:`Global.max_txn_life()`                :code:`TealType.uint64` 2                number of rounds
 :any:`Global.zero_address()`                :code:`TealType.bytes`  2                32 byte address of all zero bytes
