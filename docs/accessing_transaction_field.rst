@@ -118,8 +118,7 @@ Operator                                                                        
 :any:`Txn.application_args <TxnObject.application_args>`                         :code:`TealType.bytes[]`  2                Array of application arguments
 :any:`Txn.created_application_id() <TxnObject.created_application_id>`           :code:`TealType.uint64`   5                The ID of the newly created application in this transaction. In v5, only valid on inner transactions. >= v6 works with top-level and inner transactions.
 :any:`Txn.logs <TxnObject.logs>`                                                 :code:`TealType.bytes[]`  5                Array of application logged items. In v5, only valid on inner transactions. >= v6 works with top-level and inner transactions.
-:any:`Txn.num_logs <TxnObject.num_logs>`                                         :code:`TealType.uint64`   5                Number of log messages emitted by an application call.
-:any:`Txn.last_log <TxnObject.last_log>`                                         :code:`TealType.bytes[]`  6                The last message emitted. Empty bytes if none were emitted. Application mode only.
+:any:`Txn.last_log() <TxnObject.last_log>`                                         :code:`TealType.bytes[]`  6                The last message emitted. Empty bytes if none were emitted. Application mode only.
 ================================================================================ ========================= ================ ============================================================================
 
 Transaction Type
