@@ -39,7 +39,7 @@ Operator                                                                        
 ================================================================================ ========================= ================ ============================================================================
 :any:`Txn.vote_pk() <TxnObject.vote_pk>`                                         :code:`TealType.bytes`    2                32 byte address
 :any:`Txn.selection_pk() <TxnObject.selection_pk>`                               :code:`TealType.bytes`    2                32 byte address
-:any:`Txn.state_proof_pk <TxnObject.state_proof_pk>`                             :code:`TealType.bytes[]`  6                64 byte state proof public key commitment.
+:any:`Txn.state_proof_pk <TxnObject.state_proof_pk>`                             :code:`TealType.bytes`    6                64 byte state proof public key commitment.
 :any:`Txn.vote_first() <TxnObject.vote_first>`                                   :code:`TealType.uint64`   2
 :any:`Txn.vote_last() <TxnObject.vote_last>`                                     :code:`TealType.uint64`   2
 :any:`Txn.vote_key_dilution() <TxnObject.vote_key_dilution>`                     :code:`TealType.uint64`   2
