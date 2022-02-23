@@ -13,8 +13,8 @@ Here's the process:
 * Generate HTML docs:  `make html`.
 * If successful, generated HTML is available in `docs/_build/html`.
 
-Additionally, each PR commit generates HTML docs via https://github.com/algorand/pyteal/blob/master/.github/workflows/build.yml.
+Additionally, each PR commit generates HTML docs via [Github Actions](../.github/workflows/build.yml).
 
 ## Releasing
 
-Production docs live at https://pyteal.readthedocs.io/en/stable/.  Github actions automate the releasing process:  https://github.com/algorand/pyteal/blob/master/.github/workflows/build.yml.
+Production docs live at https://pyteal.readthedocs.io/en/stable/.  [Github Actions](../.github/workflows/build.yml) automate the releasing process.
