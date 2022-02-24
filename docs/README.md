@@ -8,8 +8,8 @@ Pyteal uses [Sphinx](https://github.com/sphinx-doc/sphinx) to generate HTML from
 
 Here's the process:
 * Perform one-time environment setup:
-  * Create a virtual environment isolated to `docs/`.  Do _not_ mix with a top-level virtual environment.
-  * Install dependencies via `pip`.
+  * Activate the top-level virtual environment.
+  * Install dependencies: `pip install -r requirements.txt`.
 * Generate HTML docs:  `make html`.
 * If successful, generated HTML is available in `docs/_build/html`.
 
