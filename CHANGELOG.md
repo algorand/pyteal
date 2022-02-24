@@ -15,7 +15,7 @@
 * Added the `MultiValue` class as an alternative to `MaybeValue` ([#196](https://github.com/algorand/pyteal/pull/196))
 
 ## Fixed
-* Various documentation fixes ([#140](https://github.com/algorand/pyteal/pull/140), [#142](https://github.com/algorand/pyteal/pull/142), [#191](https://github.com/algorand/pyteal/pull/191), [#202](https://github.com/algorand/pyteal/pull/202))
+* Various documentation fixes ([#140](https://github.com/algorand/pyteal/pull/140), [#142](https://github.com/algorand/pyteal/pull/142), [#191](https://github.com/algorand/pyteal/pull/191), [#202](https://github.com/algorand/pyteal/pull/202), [#207](https://github.com/algorand/pyteal/pull/207))
 * Clearer error messages when non-PyTeal expressions are present ([#151](https://github.com/algorand/pyteal/pull/151))
 
 ## Changed
@@ -27,6 +27,7 @@
 * Generated TEAL code for subroutines is more human-readable ([#148](https://github.com/algorand/pyteal/pull/148))
 * Subroutine argument and return type annotations, if present, **MUST** be `Expr` ([#182](https://github.com/algorand/pyteal/pull/182))
 * Transaction field documentation now separates fields by transaction type ([#204](https://github.com/algorand/pyteal/pull/204))
+* Added documentation about how to generate the documentation ([#205](https://github.com/algorand/pyteal/pull/205))
 
 # 0.9.1
 
