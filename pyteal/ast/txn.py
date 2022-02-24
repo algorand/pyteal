@@ -108,6 +108,8 @@ class TxnField(Enum):
     num_logs = (59, "NumLogs", TealType.uint64, False, 5)
     created_asset_id = (60, "CreatedAssetID", TealType.uint64, False, 5)
     created_application_id = (61, "CreatedApplicationID", TealType.uint64, False, 5)
+    last_log = (62, "LastLog", TealType.bytes, False, 6)
+    state_proof_pk = (63, "StateProofPK", TealType.bytes, False, 6)
 
     def __init__(
         self, id: int, name: str, type: TealType, is_array: bool, min_version: int
@@ -160,6 +162,15 @@ TxnExpr.__module__ = "pyteal"
 class TxnaExpr(LeafExpr):
     """An expression that accesses a transaction array field from the current transaction."""
 
+    @staticmethod
+    def __validate_index_or_throw(index: Union[int, Expr]):
+        if not isinstance(index, (int, Expr)):
+            raise TealInputError(
+                f"Invalid index type:  Expected int or Expr, but received {index}."
+            )
+        if isinstance(index, Expr):
+            require_type(index, TealType.uint64)
+
     def __init__(
         self,
         staticOp: Op,
@@ -171,6 +182,8 @@ class TxnaExpr(LeafExpr):
         super().__init__()
         if not field.is_array:
             raise TealInputError("Unexpected non-array field: {}".format(field))
+        self.__validate_index_or_throw(index)
+
         self.staticOp = staticOp
         self.dynamicOp = dynamicOp
         self.name = name
@@ -605,11 +618,12 @@ class TxnObject:
     def created_asset_id(self) -> TxnExpr:
         """Get the asset ID allocated by the creation of an ASA.
 
-        Currently this only works on inner transactions.
-
         Only set when :any:`type_enum()` is :any:`TxnType.AssetConfig` and this is an asset creation transaction.
 
         Requires TEAL version 5 or higher.
+
+        * v5 - Only works on inner transactions.
+        * >= v6 - Works on top-level and inner transactions.
         """
         return self.makeTxnExpr(TxnField.created_asset_id)
 
@@ -687,13 +701,32 @@ class TxnObject:
     def created_application_id(self) -> TxnExpr:
         """Get the application ID allocated by the creation of an application.
 
-        Currently this only works on inner transactions.
-
         Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall` and this is an app creation call.
 
         Requires TEAL version 5 or higher.
+
+        * v5 - Only works on inner transactions.
+        * >= v6 - Works on top-level and inner transactions.
         """
         return self.makeTxnExpr(TxnField.created_application_id)
+
+    def last_log(self) -> TxnExpr:
+        """A convenience method for getting the last logged message from a transaction.
+
+        Only application calls may log a message. Returns an empty string if no messages were logged.
+
+        Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall`.
+
+        Requires TEAL version 6 or higher.
+        """
+        return self.makeTxnExpr(TxnField.last_log)
+
+    def state_proof_pk(self) -> TxnExpr:
+        """Get the state proof public key commitment from a transaction.
+
+        Requires TEAL version 6 or higher.
+        """
+        return self.makeTxnExpr(TxnField.state_proof_pk)
 
     @property
     def application_args(self) -> TxnArray:
@@ -735,11 +768,12 @@ class TxnObject:
     def logs(self) -> TxnArray:
         """The log messages emitted by an application call.
 
-        Currently this only works on inner transactions.
-
         :type: TxnArray
 
         Requires TEAL version 5 or higher.
+
+        * v5 - Only works on inner transactions.
+        * >= v6 - Works on top-level and inner transactions.
         """
         return TxnArray(self, TxnField.logs, TxnField.num_logs)
 

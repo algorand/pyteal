@@ -9,6 +9,7 @@ teal2Options = CompileOptions(version=2)
 teal3Options = CompileOptions(version=3)
 teal4Options = CompileOptions(version=4)
 teal5Options = CompileOptions(version=5)
+teal6Options = CompileOptions(version=6)
 
 
 def test_ed25519verify():
@@ -138,3 +139,35 @@ def test_set_byte_invalid():
 
     with pytest.raises(TealTypeError):
         SetByte(Bytes("base16", "0xFF"), Int(0), Bytes("one"))
+
+
+def test_divw():
+    args = [Int(0), Int(90), Int(30)]
+    expr = Divw(args[0], args[1], args[2])
+    assert expr.type_of() == TealType.uint64
+
+    expected = TealSimpleBlock(
+        [
+            TealOp(args[0], Op.int, args[0].value),
+            TealOp(args[1], Op.int, args[1].value),
+            TealOp(args[2], Op.int, args[2].value),
+            TealOp(expr, Op.divw),
+        ]
+    )
+
+    actual, _ = expr.__teal__(teal6Options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+
+def test_divw_invalid():
+    with pytest.raises(TealTypeError):
+        Divw(Bytes("10"), Int(0), Int(1))
+
+    with pytest.raises(TealTypeError):
+        Divw(Int(10), Bytes("0"), Int(1))
+
+    with pytest.raises(TealTypeError):
+        Divw(Int(10), Int(0), Bytes("1"))

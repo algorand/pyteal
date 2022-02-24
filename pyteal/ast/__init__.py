@@ -90,7 +90,7 @@ from .binaryexpr import (
 )
 
 # ternary ops
-from .ternaryexpr import Ed25519Verify, SetBit, SetByte
+from .ternaryexpr import Divw, Ed25519Verify, SetBit, SetByte
 from .substring import Substring, Extract, Suffix
 
 # more ops
@@ -121,6 +121,10 @@ from .continue_ import Continue
 from .scratch import ScratchSlot, ScratchLoad, ScratchStore, ScratchStackStore
 from .scratchvar import ScratchVar
 from .maybe import MaybeValue
+from .multi import MultiValue
+
+# abi
+from . import abi
 
 # abi
 from . import abi
@@ -187,6 +191,7 @@ __all__ = [
     "Div",
     "Mod",
     "Exp",
+    "Divw",
     "BitwiseAnd",
     "BitwiseOr",
     "BitwiseXor",
@@ -230,6 +235,7 @@ __all__ = [
     "ScratchStackStore",
     "ScratchVar",
     "MaybeValue",
+    "MultiValue",
     "BytesAdd",
     "BytesMinus",
     "BytesDiv",

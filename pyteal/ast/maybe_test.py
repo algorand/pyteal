@@ -26,6 +26,7 @@ def test_maybe_value():
                     expr = MaybeValue(op, type, immediate_args=iargs, args=args)
 
                     assert expr.slotOk != expr.slotValue
+                    assert expr.output_slots == [expr.slotValue, expr.slotOk]
 
                     assert expr.hasValue().type_of() == TealType.uint64
                     with TealComponent.Context.ignoreExprEquality():

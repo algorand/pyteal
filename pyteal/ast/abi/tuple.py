@@ -19,7 +19,7 @@ from ..scratchvar import ScratchVar
 from .type import Type, ComputedType, substringForDecoding
 from .bool import (
     Bool,
-    consecutiveBools,
+    consecutiveBoolNum,
     boolSequenceLength,
     encodeBoolSequence,
     boolAwareStaticByteLength,
@@ -39,7 +39,7 @@ def encodeTuple(values: Sequence[Type]) -> Expr:
             continue
 
         if type(elem) is Bool:
-            numBools = consecutiveBools(values, i)
+            numBools = consecutiveBoolNum(values, i)
             ignoreNext = numBools - 1
             head_length_static += boolSequenceLength(numBools)
             heads.append(
@@ -120,7 +120,7 @@ def indexTuple(
 
         if type(typeBefore) is Bool:
             lastBoolStart = offset
-            lastBoolLength = consecutiveBools(valueTypes, i)
+            lastBoolLength = consecutiveBoolNum(valueTypes, i)
             offset += boolSequenceLength(lastBoolLength)
             ignoreNext = lastBoolLength - 1
             continue
@@ -155,7 +155,7 @@ def indexTuple(
                 continue
 
             if type(typeAfter) is Bool:
-                boolLength = consecutiveBools(valueTypes, i)
+                boolLength = consecutiveBoolNum(valueTypes, i)
                 nextDynamicValueOffset += boolSequenceLength(boolLength)
                 ignoreNext = boolLength - 1
 

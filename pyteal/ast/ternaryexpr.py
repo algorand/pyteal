@@ -128,3 +128,25 @@ def SetByte(value: Expr, index: Expr, newByteValue: Expr) -> TernaryExpr:
         index,
         newByteValue,
     )
+
+
+def Divw(hi: Expr, lo: Expr, y: Expr) -> TernaryExpr:
+    """
+    Performs wide division by interpreting `hi` and `lo` as a uint128 value.
+
+    Requires TEAL version 6 or higher.
+
+    Args:
+        hi: Quotient's high 64 bits.  Must evaluate to uint64.
+        lo: Quotient's low 64 bits.  Must evaluate to uint64.
+        y: Divisor.  Must evaluate to uint64.
+
+    """
+    return TernaryExpr(
+        Op.divw,
+        (TealType.uint64, TealType.uint64, TealType.uint64),
+        TealType.uint64,
+        hi,
+        lo,
+        y,
+    )
