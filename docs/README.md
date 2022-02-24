@@ -17,4 +17,4 @@ Additionally, each PR commit generates HTML docs via [Github Actions](../.github
 
 ## Releasing
 
-Production docs live at https://pyteal.readthedocs.io/en/stable/.  [Github Actions](../.github/workflows/build.yml) automate the releasing process.
+Production docs live at https://pyteal.readthedocs.io/en/stable/.
