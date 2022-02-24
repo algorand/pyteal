@@ -1,3 +1,34 @@
+# 0.10.0
+
+## Added
+* Support for new TEAL 6 features:
+  * Increase maximum TEAL version ([#146](https://github.com/algorand/pyteal/pull/146))
+  * New `Gitxn` expression, inner transaction group creation with `InnerTxnBuilder.Next()`, inner
+    transaction array field setting, and allow using dynamic slot IDs with `ImportScratchValue` ([#149](https://github.com/algorand/pyteal/pull/149))
+  * New `BytesSqrt` expression ([#163](https://github.com/algorand/pyteal/pull/163))
+  * New `Global` fields `opcode_budget`, `caller_app_id`, and `caller_app_address` ([#168](https://github.com/algorand/pyteal/pull/168))
+  * New `AccountParam` expressions for getting information about accounts ([#165](https://github.com/algorand/pyteal/pull/165))
+  * New `Divw` expression, new transaction fields `last_log` and `state_proof_pk`, and dynamic index
+    support for `InnerTxn` array fields ([#174](https://github.com/algorand/pyteal/pull/174))
+* Added a new `MethodSignature` expression ([#153](https://github.com/algorand/pyteal/pull/153))
+* Added a new `Suffix` expression and optimized existing `Substring` and `Extract` expressions ([#126](https://github.com/algorand/pyteal/pull/126))
+* Added the `MultiValue` class as an alternative to `MaybeValue` ([#196](https://github.com/algorand/pyteal/pull/196))
+
+## Fixed
+* Various documentation fixes ([#140](https://github.com/algorand/pyteal/pull/140), [#142](https://github.com/algorand/pyteal/pull/142), [#191](https://github.com/algorand/pyteal/pull/191), [#202](https://github.com/algorand/pyteal/pull/202), [#207](https://github.com/algorand/pyteal/pull/207))
+* Clearer error messages when non-PyTeal expressions are present ([#151](https://github.com/algorand/pyteal/pull/151))
+
+## Changed
+* **WARNING**: Due to code generation improvements, programs compiled with this version will likely
+  produce different TEAL code than previous versions, but their functionality will be the same. Be
+  aware that even small differences in generated TEAL code will change the address associated with
+  escrow LogicSig contracts.
+* Optimized constant assembly for small integers ([#128](https://github.com/algorand/pyteal/pull/128))
+* Generated TEAL code for subroutines is more human-readable ([#148](https://github.com/algorand/pyteal/pull/148))
+* Subroutine argument and return type annotations, if present, **MUST** be `Expr` ([#182](https://github.com/algorand/pyteal/pull/182))
+* Transaction field documentation now separates fields by transaction type ([#204](https://github.com/algorand/pyteal/pull/204))
+* Added documentation about how to generate the documentation ([#205](https://github.com/algorand/pyteal/pull/205))
+
 # 0.9.1
 
 ## Added
