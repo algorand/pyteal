@@ -132,7 +132,7 @@ The :any:`Txn.type_enum() <TxnObject.type_enum>` values can be checked using the
 ============================== =============== ============ =========================
 Value                          Numerical Value Type String  Description
 ============================== =============== ============ =========================
-:any:`TxnType.Unknown`         :code:`0`       unkown       unknown type, invalid
+:any:`TxnType.Unknown`         :code:`0`       unknown      unknown type, invalid
 :any:`TxnType.Payment`         :code:`1`       pay          payment
 :any:`TxnType.KeyRegistration` :code:`2`       keyreg       key registration
 :any:`TxnType.AssetConfig`     :code:`3`       acfg         asset config
