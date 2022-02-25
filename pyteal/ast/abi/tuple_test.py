@@ -293,6 +293,31 @@ def test_indexTuple():
             expected=lambda output: output.decodeBit(encoded, Int(8 * 8 + 1)),
         ),
         IndexTest(
+            types=[bool_a, uint64_a],
+            typeIndex=0,
+            expected=lambda output: output.decodeBit(encoded, Int(0)),
+        ),
+        IndexTest(
+            types=[bool_a, uint64_a],
+            typeIndex=1,
+            expected=lambda output: output.decode(encoded, startIndex=Int(1)),
+        ),
+        IndexTest(
+            types=[bool_a, bool_b, uint64_a],
+            typeIndex=0,
+            expected=lambda output: output.decodeBit(encoded, Int(0)),
+        ),
+        IndexTest(
+            types=[bool_a, bool_b, uint64_a],
+            typeIndex=1,
+            expected=lambda output: output.decodeBit(encoded, Int(1)),
+        ),
+        IndexTest(
+            types=[bool_a, bool_b, uint64_a],
+            typeIndex=2,
+            expected=lambda output: output.decode(encoded, startIndex=Int(1)),
+        ),
+        IndexTest(
             types=[tuple_a], typeIndex=0, expected=lambda output: output.decode(encoded)
         ),
         IndexTest(
@@ -370,6 +395,22 @@ def test_indexTuple():
         IndexTest(
             types=[byte_a, dynamic_array_a, tuple_a, dynamic_array_b],
             typeIndex=3,
+            expected=lambda output: output.decode(
+                encoded, startIndex=ExtractUint16(encoded, Int(4))
+            ),
+        ),
+        IndexTest(
+            types=[byte_a, dynamic_array_a, bool_a, bool_b, dynamic_array_b],
+            typeIndex=1,
+            expected=lambda output: output.decode(
+                encoded,
+                startIndex=ExtractUint16(encoded, Int(1)),
+                endIndex=ExtractUint16(encoded, Int(4)),
+            ),
+        ),
+        IndexTest(
+            types=[byte_a, dynamic_array_a, bool_a, bool_b, dynamic_array_b],
+            typeIndex=4,
             expected=lambda output: output.decode(
                 encoded, startIndex=ExtractUint16(encoded, Int(4))
             ),

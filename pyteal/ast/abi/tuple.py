@@ -158,6 +158,7 @@ def indexTuple(
                 boolLength = consecutiveBoolNum(valueTypes, i)
                 nextDynamicValueOffset += boolSequenceLength(boolLength)
                 ignoreNext = boolLength - 1
+                continue
 
             if typeAfter.is_dynamic():
                 hasNextDynamicValue = True
