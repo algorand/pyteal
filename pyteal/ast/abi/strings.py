@@ -1,4 +1,5 @@
 from ..unaryexpr import Len
+from ..naryexpr import Concat
 from ..substring import Extract
 from ...types import TealType
 from ..expr import Expr
@@ -28,14 +29,13 @@ class String(Type):
         endIndex: Expr = None,
         length: Expr = None
     ) -> Expr:
-
         extracted = substringForDecoding(
             encoded, startIndex=startIndex, endIndex=endIndex, length=length
         )
         return self.stored_value.store(extracted)
 
     def encode(self) -> Expr:
-        return self.stored_value.load()
+        return Concat(self.length(), self.stored_value.load())
 
     def length(self) -> Expr:
         return Len(self.value.load())
