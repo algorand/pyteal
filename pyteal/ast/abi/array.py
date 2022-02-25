@@ -1,5 +1,4 @@
 from typing import (
-    Callable,
     Union,
     Sequence,
     TypeVar,
@@ -9,20 +8,20 @@ from typing import (
 )
 from abc import abstractmethod
 
-from ...types import TealType
+from ...types import TealType, require_type
 from ...errors import TealInputError
 from ..expr import Expr
 from ..seq import Seq
 from ..int import Int
 from ..if_ import If
+from ..unaryexpr import Len
 from ..binaryexpr import ExtractUint16
 from ..naryexpr import Concat
-from ..substring import Extract, Substring, Suffix
 
 from .type import Type, ComputedType, substringForDecoding
 from .tuple import encodeTuple
 from .bool import Bool, boolSequenceLength
-from .uint import NUM_BITS_IN_BYTE, Uint16
+from .uint import Uint16
 
 
 T = TypeVar("T", bound=Type)
@@ -35,7 +34,7 @@ class Array(Type, Generic[T]):
 
         self._has_offsets = valueType.is_dynamic()
         if self._has_offsets:
-            self._stride = 2
+            self._stride = Uint16().byte_length_static()
         else:
             self._stride = valueType.byte_length_static()
         self._static_length = staticLength
@@ -54,8 +53,13 @@ class Array(Type, Generic[T]):
         return self.stored_value.store(extracted)
 
     def set(self, values: Sequence[T]) -> Expr:
-        if not all(self._valueType.has_same_type_as(value) for value in values):
-            raise TealInputError("Input values do not match type")
+        for index, value in enumerate(values):
+            if not self._valueType.has_same_type_as(value):
+                raise TealInputError(
+                    "Cannot assign type {} at index {} to {}".format(
+                        value, index, self._valueType
+                    )
+                )
 
         encoded = encodeTuple(values)
 
@@ -74,18 +78,13 @@ class Array(Type, Generic[T]):
         pass
 
     def __getitem__(self, index: Union[int, Expr]) -> "ArrayElement[T]":
-        return self._getItemWithLength(index, None)
-
-    def _getItemWithLength(
-        self, index: Union[int, Expr], length: Expr = None
-    ) -> "ArrayElement[T]":
         if type(index) is int:
             if index < 0 or (
                 self._static_length is not None and index >= self._static_length
             ):
-                raise TealInputError("Index out of bounds")
+                raise TealInputError("Index out of bounds: {}".format(index))
             index = Int(index)
-        return ArrayElement(self, cast(Expr, index), length)
+        return ArrayElement(self, cast(Expr, index))
 
     def __str__(self) -> str:
         return self._valueType.__str__() + (
@@ -98,6 +97,10 @@ Array.__module__ = "pyteal"
 # until something like https://github.com/python/mypy/issues/3345 is added, we can't make the size of the array a generic parameter
 class StaticArray(Array[T]):
     def __init__(self, valueType: T, length: int) -> None:
+        if length < 0:
+            raise TealInputError(
+                "Static array length cannot be negative. Got {}".format(length)
+            )
         super().__init__(valueType, length)
 
     def has_same_type_as(self, other: Type) -> bool:
@@ -120,7 +123,12 @@ class StaticArray(Array[T]):
             return boolSequenceLength(self.length_static())
         return self.length_static() * self._valueType.byte_length_static()
 
-    def set(self, values: Sequence[T]) -> Expr:
+    def set(self, values: Union[Sequence[T], "StaticArray[T]"]) -> Expr:
+        if isinstance(values, Type):
+            if not self.has_same_type_as(values):
+                raise TealInputError("Cannot assign type {} to {}".format(values, self))
+            return self.stored_value.store(cast(StaticArray[T], values).encode())
+
         if self.length_static() != len(values):
             raise TealInputError(
                 "Incorrect length for values. Expected {}, got {}".format(
@@ -157,6 +165,13 @@ class DynamicArray(Array[T]):
     def byte_length_static(self) -> int:
         raise ValueError("Type is dynamic")
 
+    def set(self, values: Union[Sequence[T], "DynamicArray[T]"]) -> Expr:
+        if isinstance(values, Type):
+            if not self.has_same_type_as(values):
+                raise TealInputError("Cannot assign type {} to {}".format(values, self))
+            return self.stored_value.store(cast(DynamicArray[T], values).encode())
+        return super().set(values)
+
     def length(self) -> Expr:
         output = Uint16()
         return Seq(
@@ -169,47 +184,48 @@ DynamicArray.__module__ = "pyteal"
 
 
 class ArrayElement(ComputedType[T]):
-    def __init__(self, array: Array[T], index: Expr, length: Expr = None) -> None:
+    def __init__(self, array: Array[T], index: Expr) -> None:
         super().__init__(array._valueType)
+        require_type(index, TealType.uint64)
         self.array = array
         self.index = index
-        self.length = length
 
     def store_into(self, output: T) -> Expr:
-        offsetBit = self.index
-        offsetIndex = Int(self.array._stride) * self.index
-        if self.array._static_length is None:
-            offsetBit = offsetBit + Int(2 * NUM_BITS_IN_BYTE)
-            offsetIndex = offsetIndex + Int(2)
-
-        if self.length is not None:
-            arrayLength = self.length
-        else:
-            arrayLength = self.array.length()
-
-        encodedArray = self.array.encode()
-
         if not self.array._valueType.has_same_type_as(output):
             raise TealInputError("Output type does not match value type")
 
-        if type(output) is Bool:
-            return cast(Bool, output).decodeBit(encodedArray, offsetBit)
+        encodedArray = self.array.encode()
 
-        if self.array._has_offsets:
-            valueStart = ExtractUint16(encodedArray, offsetIndex)
+        if type(output) is Bool:
+            bitIndex = self.index
+            if self.array.is_dynamic():
+                bitIndex = bitIndex + Int(Uint16().bits())
+            return cast(Bool, output).decodeBit(encodedArray, bitIndex)
+
+        byteIndex = Int(self.array._stride) * self.index
+        if self.array._static_length is None:
+            byteIndex = byteIndex + Int(Uint16().byte_length_static())
+
+        arrayLength = self.array.length()
+
+        if self.array._valueType.is_dynamic():
+            valueStart = ExtractUint16(encodedArray, byteIndex)
+            nextValueStart = ExtractUint16(
+                encodedArray, byteIndex + Int(Uint16().byte_length_static())
+            )
+            if self.array._static_length is None:
+                valueStart = valueStart + Int(Uint16().byte_length_static())
+                nextValueStart = nextValueStart + Int(Uint16().byte_length_static())
+
             valueEnd = (
                 If(self.index + Int(1) == arrayLength)
-                .Then(arrayLength * Int(self.array._stride))
-                .Else(ExtractUint16(encodedArray, offsetIndex + Int(2)))
+                .Then(Len(encodedArray))
+                .Else(nextValueStart)
             )
-
-            if self.array._static_length is None:
-                valueStart = valueStart + Int(2)
-                valueEnd = valueEnd + Int(2)
 
             return output.decode(encodedArray, startIndex=valueStart, endIndex=valueEnd)
 
-        valueStart = offsetIndex
+        valueStart = byteIndex
         valueLength = Int(self.array._stride)
         return output.decode(encodedArray, startIndex=valueStart, length=valueLength)
 

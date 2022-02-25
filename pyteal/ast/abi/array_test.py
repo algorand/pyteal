@@ -56,6 +56,9 @@ def test_StaticArray_init():
             assert staticArrayType._stride == elementType.byte_length_static()
             assert staticArrayType._static_length == length
 
+        with pytest.raises(TealInputError):
+            abi.StaticArray(elementType, -1)
+
     for elementType in DYNAMIC_TYPES:
         for length in range(256):
             staticArrayType = abi.StaticArray(elementType, length)
@@ -63,6 +66,9 @@ def test_StaticArray_init():
             assert staticArrayType._has_offsets
             assert staticArrayType._stride == 2
             assert staticArrayType._static_length == length
+
+        with pytest.raises(TealInputError):
+            abi.StaticArray(elementType, -1)
 
 
 def test_StaticArray_str():
@@ -169,7 +175,7 @@ def test_StaticArray_decode():
                     assert actual == expected
 
 
-def test_StaticArray_set():
+def test_StaticArray_set_values():
     staticArrayType = abi.StaticArray(abi.Uint64(), 10)
 
     with pytest.raises(TealInputError):
@@ -196,6 +202,38 @@ def test_StaticArray_set():
     expected, _ = expectedExpr.__teal__(options)
     expected.addIncoming()
     expected = TealBlock.NormalizeBlocks(expected)
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
+def test_StaticArray_set_copy():
+    staticArrayType = abi.StaticArray(abi.Uint64(), 10)
+    otherArray = abi.StaticArray(abi.Uint64(), 10)
+
+    with pytest.raises(TealInputError):
+        staticArrayType.set(abi.StaticArray(abi.Uint64(), 11))
+
+    with pytest.raises(TealInputError):
+        staticArrayType.set(abi.StaticArray(abi.Uint8(), 10))
+
+    with pytest.raises(TealInputError):
+        staticArrayType.set(abi.Uint64())
+
+    expr = staticArrayType.set(otherArray)
+    assert expr.type_of() == TealType.none
+    assert not expr.has_return()
+
+    expected = TealSimpleBlock(
+        [
+            TealOp(None, Op.load, otherArray.stored_value.slot),
+            TealOp(None, Op.store, staticArrayType.stored_value.slot),
+        ]
+    )
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
@@ -257,7 +295,6 @@ def test_StaticArray_getitem():
             assert type(element) is ArrayElement
             assert element.array is staticArrayType
             assert element.index is indexExpr
-            assert element.length is None
 
         for index in range(length):
             # static indexes
@@ -266,7 +303,6 @@ def test_StaticArray_getitem():
             assert element.array is staticArrayType
             assert type(element.index) is Int
             assert element.index.value == index
-            assert element.length is None
 
         with pytest.raises(TealInputError):
             staticArrayType[-1]
@@ -370,7 +406,7 @@ def test_DynamicArray_decode():
                     assert actual == expected
 
 
-def test_DynamicArray_set():
+def test_DynamicArray_set_values():
     dynamicArrayType = abi.DynamicArray(abi.Uint64())
 
     valuesToSet: List[abi.Uint64] = [
@@ -407,6 +443,35 @@ def test_DynamicArray_set():
             TealBlock.GetReferencedScratchSlots(actual),
             TealBlock.GetReferencedScratchSlots(expected),
         )
+
+
+def test_DynamicArray_set_copy():
+    dynamicArrayType = abi.DynamicArray(abi.Uint64())
+    otherArray = abi.DynamicArray(abi.Uint64())
+
+    with pytest.raises(TealInputError):
+        dynamicArrayType.set(abi.DynamicArray(abi.Uint8()))
+
+    with pytest.raises(TealInputError):
+        dynamicArrayType.set(abi.Uint64())
+
+    expr = dynamicArrayType.set(otherArray)
+    assert expr.type_of() == TealType.none
+    assert not expr.has_return()
+
+    expected = TealSimpleBlock(
+        [
+            TealOp(None, Op.load, otherArray.stored_value.slot),
+            TealOp(None, Op.store, dynamicArrayType.stored_value.slot),
+        ]
+    )
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
 
 
 def test_DynamicArray_encode():
@@ -463,7 +528,6 @@ def test_DynamicArray_getitem():
         assert type(element) is ArrayElement
         assert element.array is dynamicArrayType
         assert element.index is indexExpr
-        assert element.length is None
 
     for index in (0, 1, 2, 3, 1000):
         # static indexes
@@ -472,10 +536,24 @@ def test_DynamicArray_getitem():
         assert element.array is dynamicArrayType
         assert type(element.index) is Int
         assert element.index.value == index
-        assert element.length is None
 
     with pytest.raises(TealInputError):
         dynamicArrayType[-1]
+
+
+def test_ArrayElement_init():
+    array = abi.DynamicArray(abi.Uint64())
+    index = Int(6)
+
+    element = ArrayElement(array, index)
+    assert element.array is array
+    assert element.index is index
+
+    with pytest.raises(TealTypeError):
+        ArrayElement(array, Bytes("abc"))
+
+    with pytest.raises(TealTypeError):
+        ArrayElement(array, Assert(index))
 
 
 def test_ArrayElement_store_into():
@@ -483,93 +561,86 @@ def test_ArrayElement_store_into():
         staticArrayType = abi.StaticArray(elementType, 100)
         index = Int(9)
 
-        for lengthExpr in (None, Int(500)):
-            element = ArrayElement(staticArrayType, index, lengthExpr)
-            output = elementType.new_instance()
-            expr = element.store_into(output)
+        element = ArrayElement(staticArrayType, index)
+        output = elementType.new_instance()
+        expr = element.store_into(output)
 
-            encoded = staticArrayType.encode()
-            stride = Int(staticArrayType._stride)
-            expectedLength = (
-                lengthExpr if lengthExpr is not None else staticArrayType.length()
+        encoded = staticArrayType.encode()
+        stride = Int(staticArrayType._stride)
+        expectedLength = staticArrayType.length()
+        if type(elementType) is abi.Bool:
+            expectedExpr = cast(abi.Bool, output).decodeBit(encoded, index)
+        elif not elementType.is_dynamic():
+            expectedExpr = output.decode(
+                encoded, startIndex=stride * index, length=stride
             )
-            if type(elementType) is abi.Bool:
-                expectedExpr = cast(abi.Bool, output).decodeBit(encoded, index)
-            elif not elementType.is_dynamic():
-                expectedExpr = output.decode(
-                    encoded, startIndex=stride * index, length=stride
-                )
-            else:
-                expectedExpr = output.decode(
-                    encoded,
-                    startIndex=ExtractUint16(encoded, stride * index),
-                    endIndex=If(index + Int(1) == expectedLength)
-                    .Then(expectedLength * stride)
-                    .Else(ExtractUint16(encoded, stride * index + Int(2))),
-                )
+        else:
+            expectedExpr = output.decode(
+                encoded,
+                startIndex=ExtractUint16(encoded, stride * index),
+                endIndex=If(index + Int(1) == expectedLength)
+                .Then(Len(encoded))
+                .Else(ExtractUint16(encoded, stride * index + Int(2))),
+            )
 
-            expected, _ = expectedExpr.__teal__(options)
-            expected.addIncoming()
-            expected = TealBlock.NormalizeBlocks(expected)
+        expected, _ = expectedExpr.__teal__(options)
+        expected.addIncoming()
+        expected = TealBlock.NormalizeBlocks(expected)
 
-            actual, _ = expr.__teal__(options)
-            actual.addIncoming()
-            actual = TealBlock.NormalizeBlocks(actual)
+        actual, _ = expr.__teal__(options)
+        actual.addIncoming()
+        actual = TealBlock.NormalizeBlocks(actual)
 
-            with TealComponent.Context.ignoreExprEquality():
-                assert actual == expected
+        with TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
 
-            with pytest.raises(TealInputError):
-                element.store_into(abi.Tuple(output))
+        with pytest.raises(TealInputError):
+            element.store_into(abi.Tuple(output))
 
     for elementType in STATIC_TYPES + DYNAMIC_TYPES:
         dynamicArrayType = abi.DynamicArray(elementType)
         index = Int(9)
 
-        for lengthExpr in (None, Int(500)):
-            element = ArrayElement(dynamicArrayType, index, lengthExpr)
-            output = elementType.new_instance()
-            expr = element.store_into(output)
+        element = ArrayElement(dynamicArrayType, index)
+        output = elementType.new_instance()
+        expr = element.store_into(output)
 
-            encoded = dynamicArrayType.encode()
-            stride = Int(dynamicArrayType._stride)
-            expectedLength = (
-                lengthExpr if lengthExpr is not None else dynamicArrayType.length()
+        encoded = dynamicArrayType.encode()
+        stride = Int(dynamicArrayType._stride)
+        expectedLength = dynamicArrayType.length()
+        if type(elementType) is abi.Bool:
+            expectedExpr = cast(abi.Bool, output).decodeBit(encoded, index + Int(16))
+        elif not elementType.is_dynamic():
+            expectedExpr = output.decode(
+                encoded, startIndex=stride * index + Int(2), length=stride
             )
-            if type(elementType) is abi.Bool:
-                expectedExpr = cast(abi.Bool, output).decodeBit(
-                    encoded, index + Int(16)
-                )
-            elif not elementType.is_dynamic():
-                expectedExpr = output.decode(
-                    encoded, startIndex=stride * index + Int(2), length=stride
-                )
-            else:
-                expectedExpr = output.decode(
-                    encoded,
-                    startIndex=ExtractUint16(encoded, stride * index + Int(2)) + Int(2),
-                    endIndex=If(index + Int(1) == expectedLength)
-                    .Then(expectedLength * stride)
-                    .Else(ExtractUint16(encoded, stride * index + Int(2) + Int(2)))
-                    + Int(2),
-                )
-
-            expected, _ = expectedExpr.__teal__(options)
-            expected.addIncoming()
-            expected = TealBlock.NormalizeBlocks(expected)
-
-            actual, _ = expr.__teal__(options)
-            actual.addIncoming()
-            actual = TealBlock.NormalizeBlocks(actual)
-
-            with TealComponent.Context.ignoreExprEquality():
-                with TealComponent.Context.ignoreScratchSlotEquality():
-                    assert actual == expected
-
-            assert TealBlock.MatchScratchSlotReferences(
-                TealBlock.GetReferencedScratchSlots(actual),
-                TealBlock.GetReferencedScratchSlots(expected),
+        else:
+            expectedExpr = output.decode(
+                encoded,
+                startIndex=ExtractUint16(encoded, stride * index + Int(2)) + Int(2),
+                endIndex=If(index + Int(1) == expectedLength)
+                .Then(Len(encoded))
+                .Else(
+                    ExtractUint16(encoded, stride * index + Int(2) + Int(2)) + Int(2)
+                ),
             )
 
-            with pytest.raises(TealInputError):
-                element.store_into(abi.Tuple(output))
+        expected, _ = expectedExpr.__teal__(options)
+        expected.addIncoming()
+        expected = TealBlock.NormalizeBlocks(expected)
+
+        actual, _ = expr.__teal__(options)
+        actual.addIncoming()
+        actual = TealBlock.NormalizeBlocks(actual)
+
+        with TealComponent.Context.ignoreExprEquality():
+            with TealComponent.Context.ignoreScratchSlotEquality():
+                assert actual == expected
+
+        assert TealBlock.MatchScratchSlotReferences(
+            TealBlock.GetReferencedScratchSlots(actual),
+            TealBlock.GetReferencedScratchSlots(expected),
+        )
+
+        with pytest.raises(TealInputError):
+            element.store_into(abi.Tuple(output))

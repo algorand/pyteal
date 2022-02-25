@@ -62,8 +62,8 @@ class Bool(Type):
             startIndex = Int(0)
         return self.decodeBit(encoded, startIndex * Int(NUM_BITS_IN_BYTE))
 
-    def decodeBit(self, encoded, bit: Expr) -> Expr:
-        return self.stored_value.store(GetBit(encoded, bit))
+    def decodeBit(self, encoded, bitIndex: Expr) -> Expr:
+        return self.stored_value.store(GetBit(encoded, bitIndex))
 
     def encode(self) -> Expr:
         return SetBit(Bytes(b"\x00"), Int(0), self.get())
