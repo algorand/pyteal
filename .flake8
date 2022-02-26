@@ -1,0 +1,13 @@
+[flake8]
+
+extend-ignore =
+    # See https://github.com/PyCQA/pycodestyle/issues/373
+    E203,
+ignore = 
+    # Allow longer lines permissively.
+    E501,
+per-file-ignores =
+    # Allow tests to import permissively.
+    *_test.py:F403,F405
+    # Disable checks where black is disabled via `# fmt: off`.
+    pyteal/ir/ops.py:E221,E241

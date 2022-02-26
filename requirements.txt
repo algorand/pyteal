@@ -1,5 +1,8 @@
 black==21.7b0
+flake8
+flake8-black
 mypy==0.910
+pep8-naming
 pytest
 pytest-timeout
 py-algorand-sdk
