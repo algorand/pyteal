@@ -5,7 +5,7 @@ from .scratch import ScratchSlot, ScratchLoad
 
 class ScratchVar:
     """
-    Interface around Scratch space, similiar to get/put local/global state
+    Interface around Scratch space, similar to get/put local/global state
 
     Example:
         .. code-block:: python
@@ -22,7 +22,7 @@ class ScratchVar:
 
         Args:
             type (optional): The type that this variable can hold. An error will be thrown if an
-                expression with an incompatiable type is stored in this variable. Defaults to
+                expression with an incompatible type is stored in this variable. Defaults to
                 TealType.anytype.
             slotId (optional): A scratch slot id that the compiler must store the value.
                 This id may be a Python int in the range [0-256).
