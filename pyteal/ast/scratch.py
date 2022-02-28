@@ -31,7 +31,7 @@ class ScratchSlot:
         else:
             if requestedSlotId < 0 or requestedSlotId >= NUM_SLOTS:
                 raise TealInputError(
-                    "Invalid slot ID {}, shoud be in [0, {})".format(
+                    "Invalid slot ID {}, should be in [0, {})".format(
                         requestedSlotId, NUM_SLOTS
                     )
                 )
