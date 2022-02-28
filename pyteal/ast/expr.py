@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from enum import Enum
 from typing import Tuple, List, TYPE_CHECKING
 
 from ..types import TealType
@@ -32,7 +31,7 @@ class Expr(ABC):
 
     @abstractmethod
     def __str__(self) -> str:
-        """Get a string representation of this experssion."""
+        """Get a string representation of this expression."""
         pass
 
     @abstractmethod
