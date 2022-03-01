@@ -79,7 +79,7 @@ class SubroutineDefinition:
     @staticmethod
     def _validate_parameter_type(
         user_defined_annotations: dict, parameter_name: str
-    ) -> Type[Expr]:
+    ) -> Type[Union[Expr, ScratchVar]]:
         ptype = user_defined_annotations.get(parameter_name, None)
         if ptype is None:
             # Without a type annotation, `SubroutineDefinition` presumes an implicit `Expr` declaration rather than these alternatives:
