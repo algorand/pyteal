@@ -106,7 +106,7 @@ def test_subroutine_invocation_param_types():
         ("vanilla no sv's allowed 1", fnWithNoAnnotations, [x, sv], TealInputError),
         ("exprs 1", fnWithExprAnnotations, [x, s], None),
         ("exprs 2", fnWithExprAnnotations, [x, x], None),
-        ("exprs no sv's asllowed 1", fnWithExprAnnotations, [x, sv], TealInputError),
+        ("exprs no sv's allowed 1", fnWithExprAnnotations, [x, sv], TealInputError),
         ("all sv's 1", fnWithSVAnnotations, [sv, sv], None),
         ("all sv's but strings", fnWithSVAnnotations, [s, s], TealInputError),
         ("all sv's but ints", fnWithSVAnnotations, [x, x], TealInputError),
