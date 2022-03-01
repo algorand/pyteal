@@ -70,7 +70,7 @@ class Expr(ABC):
         return Neq(self, other)
 
     def __add__(self, other):
-        from .binaryexpr import Add
+        from .naryexpr import Add
 
         return Add(self, other)
 
@@ -80,7 +80,7 @@ class Expr(ABC):
         return Minus(self, other)
 
     def __mul__(self, other):
-        from .binaryexpr import Mul
+        from .naryexpr import Mul
 
         return Mul(self, other)
 

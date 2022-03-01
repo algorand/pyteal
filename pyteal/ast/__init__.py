@@ -53,9 +53,7 @@ from .unaryexpr import (
 # binary ops
 from .binaryexpr import (
     BinaryExpr,
-    Add,
     Minus,
-    Mul,
     Div,
     Mod,
     Exp,
@@ -96,7 +94,7 @@ from .ternaryexpr import Divw, Ed25519Verify, SetBit, SetByte
 from .substring import Substring, Extract, Suffix
 
 # more ops
-from .naryexpr import NaryExpr, And, Or, Concat
+from .naryexpr import NaryExpr, Add, Mul, And, Or, Concat
 from .widemath import WideRatio
 
 # control flow
@@ -124,6 +122,9 @@ from .scratch import ScratchSlot, ScratchLoad, ScratchStore, ScratchStackStore
 from .scratchvar import ScratchVar
 from .maybe import MaybeValue
 from .multi import MultiValue
+
+# abi
+from . import abi
 
 __all__ = [
     "Expr",
@@ -257,4 +258,5 @@ __all__ = [
     "For",
     "Break",
     "Continue",
+    "abi",
 ]

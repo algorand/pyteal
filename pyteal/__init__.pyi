@@ -148,6 +148,7 @@ __all__ = [
     "For",
     "Break",
     "Continue",
+    "abi",
     "Op",
     "Mode",
     "TealComponent",
