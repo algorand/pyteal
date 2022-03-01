@@ -128,7 +128,7 @@ def test_dynamic_scratchvar_type():
     with pytest.raises(TealTypeError):
         myvar_default.store(Pop(Int(1)))
 
-    myvar_int = ScratchVar(TealType.uint64)
+    myvar_int = DynamicScratchVar(TealType.uint64)
     assert myvar_int.storage_type() == TealType.uint64
     assert myvar_int.store(Int(1)).type_of() == TealType.none
     assert myvar_int.load().type_of() == TealType.uint64
@@ -139,7 +139,7 @@ def test_dynamic_scratchvar_type():
     with pytest.raises(TealTypeError):
         myvar_int.store(Pop(Int(1)))
 
-    myvar_bytes = ScratchVar(TealType.bytes)
+    myvar_bytes = DynamicScratchVar(TealType.bytes)
     assert myvar_bytes.storage_type() == TealType.bytes
     assert myvar_bytes.store(Bytes("value")).type_of() == TealType.none
     assert myvar_bytes.load().type_of() == TealType.bytes
@@ -206,7 +206,7 @@ def test_dynamic_scratchvar_index():
 
 def test_dynamic_scratchvar_cannot_set_index_to_another_dynamic():
     myvar = DynamicScratchVar()
-    sl1 = myvar.load()
+    myvar.load()
 
     regvar = ScratchVar()
     myvar.set_index(regvar)
