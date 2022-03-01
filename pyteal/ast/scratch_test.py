@@ -151,8 +151,6 @@ def test_scratch_index():
 
     assert str(index) == "(ScratchIndex " + str(slot) + ")"
 
-    assert hash(index) == hash(slot.id)
-
     assert index.type_of() == TealType.uint64
 
     assert not index.has_return()
