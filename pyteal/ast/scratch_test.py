@@ -48,7 +48,7 @@ def test_scratch_load_index_expression():
     assert expr.type_of() == TealType.anytype
 
     expected = TealSimpleBlock([TealOp(Int(1337), Op.int, 1337)])
-    expected.nextBlock = TealSimpleBlock([TealOp(expr, Op.loads)])
+    expected.setNextBlock(TealSimpleBlock([TealOp(None, Op.loads)]))
 
     actual, _ = expr.__teal__(options)
 
@@ -99,9 +99,10 @@ def test_scratch_store_index_expression():
         expr = ScratchStore(slot=None, value=value, index_expression=Int(1337))
         assert expr.type_of() == TealType.none
 
-        expected = TealSimpleBlock([TealOp(Int(1337), Op.int, 1337)])
+        expected = TealSimpleBlock([TealOp(None, Op.int, 1337)])
         valueStart, valueEnd = value.__teal__(options)
-        expected.nextBlock = valueStart
+        expected.setNextBlock(valueStart)
+
         storeBlock = TealSimpleBlock([TealOp(expr, Op.stores)])
         valueEnd.setNextBlock(storeBlock)
 
