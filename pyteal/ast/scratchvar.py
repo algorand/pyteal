@@ -1,11 +1,7 @@
-from operator import index
-from typing import cast
-
-from ..errors import TealInputError, TealInternalError
+from ..errors import TealInputError
 from ..types import TealType, require_type
 
 from .expr import Expr
-from .int import Int
 from .scratch import ScratchSlot, ScratchLoad, ScratchStore
 
 

@@ -37,7 +37,7 @@ def generate_init_pyi() -> str:
     start_idx = init_contents.index(begin_flag)
     end_idx = init_contents.index(end_flag)
 
-    all_imports = ",\n    ".join(['"{}"'.format(s) for s in static_all])
+    all_imports = ",\n    ".join(['"{}"'.format(s) for s in sorted(set(static_all))])
 
     return (
         pyi_template
