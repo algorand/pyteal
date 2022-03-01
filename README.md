@@ -36,7 +36,8 @@ If needed, it's possible to install directly from the latest commit on master to
 
 ### Documentation
 
-[PyTeal Docs](https://pyteal.readthedocs.io/)
+* [PyTeal Docs](https://pyteal.readthedocs.io/)
+* `docs/` ([README](docs/README.md)) contains raw docs.
 
 ### Development Setup
 
