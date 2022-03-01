@@ -118,8 +118,14 @@ from .continue_ import Continue
 
 
 # misc
-from .scratch import ScratchSlot, ScratchLoad, ScratchStore, ScratchStackStore
-from .scratchvar import ScratchVar
+from .scratch import (
+    ScratchIndex,
+    ScratchLoad,
+    ScratchSlot,
+    ScratchStackStore,
+    ScratchStore,
+)
+from .scratchvar import DynamicScratchVar, ScratchVar
 from .maybe import MaybeValue
 from .multi import MultiValue
 
@@ -226,10 +232,12 @@ __all__ = [
     "SubroutineDeclaration",
     "SubroutineCall",
     "SubroutineFnWrapper",
-    "ScratchSlot",
+    "ScratchIndex",
     "ScratchLoad",
-    "ScratchStore",
+    "ScratchSlot",
     "ScratchStackStore",
+    "ScratchStore",
+    "DynamicScratchVar",
     "ScratchVar",
     "MaybeValue",
     "MultiValue",
