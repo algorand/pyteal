@@ -1,0 +1,47 @@
+#pragma version 6
+byte "hello"
+store 5          //   5: hello   // x
+byte "goodbye"
+store 6          //   6: goodbye // y
+load 5
+load 6
+callsub cat_1    //   <<EMPTY>>
+int 5
+int 6
+callsub swap_0   //   >5,6
+load 5           //   >goodbye
+byte "goodbye"
+==
+assert           //   <<EMPTY>>
+load 6           //   >hello
+byte "hello"
+==
+assert           //   <<EMPTY>>
+int 1000         //   >1000
+return           //   <<SUCCESS>>
+
+// swap
+swap_0:
+store 1          //   1: 6      // @y  
+store 0          //   0: 5      // @x
+load 0           //   >5
+loads            //   >hello
+store 2          //   2: hello  // z
+load 0           //   >5
+load 1           //   >5,6
+loads            //   >5,goodbye
+stores           //   5: goodbye
+load 1           //   >6
+load 2           //   >6,hello
+stores           //   6: hello
+retsub
+
+// cat
+cat_1:
+store 4          //   4: goodbye
+store 3          //   3: hello
+load 3           //   >hello
+load 4           //   >hello,goodbye
+concat           //   >hellogoodbye
+pop              //   >
+retsub

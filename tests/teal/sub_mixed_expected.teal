@@ -1,0 +1,24 @@
+#pragma version 6
+int 42                     //     >42
+byte "x"                   //     >42,"x"
+int 0                      //     >42,"x",0
+callsub mixedannotations_0 //     >42
+return                     // <<SUCCESS>>
+
+// mixed_annotations
+mixedannotations_0:        //     >42,"x",0
+store 3                    //     3:0
+store 2                    //     2:"x"
+store 1                    //     1:42
+load 3                     //     >0
+load 1                     //     >0,42
+stores                     //     0:42
+load 2                     //     >"x"
+byte "="                   //     >"x","="
+concat                     //     >"x="
+load 1                     //     >"x=",42
+itob                       //     >"x=","42"
+concat                     //     >"x=42"
+log                        //   LOG
+load 1                     //     >42
+retsub

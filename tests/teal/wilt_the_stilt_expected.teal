@@ -1,0 +1,38 @@
+#pragma version 6
+int 129
+store 0         // 0: @129     // pointer to wilt's address
+load 0
+int 100
+stores          // 129: 100    // set wilt's value
+int 1
+store 0         // 0: @1       // pointer to kobe's address (compiler assigned)
+load 0
+int 81
+stores          // 1: 81       // set kobe's value
+int 131
+store 0         // 0: @131     // pointer to dt's address
+load 0
+int 73
+stores          // 131: 73     // set dt's value
+load 0
+loads
+int 73          // >73,73
+==              // >1
+assert          // <<EMPTY>>
+load 0          
+int 131         // >131,131
+==              // >1
+assert          // <<EMPTY>>
+int 129
+store 0         // 0: @129
+load 0
+loads
+int 100         // >100,100
+==              // >1
+assert          // <<EMPTY>>
+load 0
+int 129         // >129,129
+==              // >1
+assert          // <<EMPTY>>
+int 100
+return

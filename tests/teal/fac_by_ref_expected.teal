@@ -1,0 +1,41 @@
+#pragma version 6         // Case n = 1   Case n = 2
+int 42                    //  >1          >2
+store 0                   //  0:1         0:2
+int 0                     //  >0          >0
+callsub factorial_0       //  CALL        CALL
+load 0                    //  >1          >2   
+return                    //  RET(1!==1)  RET(2!==1*2)
+
+// factorial
+factorial_0:              //  *>0         *>0          *>2,0,1,2
+store 1                   //   1: 0        1: 0         1: 2
+load 1                    //   >0          >0          *>2,0,1,2  
+loads                     //   >1          >2          *>2,0,1,1
+int 1                     //   >1,1        >2,1        *>2,0,1,1,1
+<=                        //  *>1         *>2,0        *>2,0,1,1
+bnz factorial_0_l2        //  BRANCH      *>2          BRANCH
+load 1                    //              *>2,0        
+loads                     //              *>2,2
+int 1                     //              *>2,2,1
+-                         //              *>2,1
+store 2                   //               2: 1
+int 2                     //              *>2,2
+load 1                    //              *>2,2,0
+load 2                    //              *>2,2,0,1
+uncover 2                 //              *>2,0,1,2
+callsub factorial_0       //          CALL  SRET >2,0,1
+store 2                   //               2: 1
+store 1                   //               1: 0
+load 1                    //               >2,0
+load 1                    //               >2,0,0
+loads                     //               >2,0,2
+load 2                    //               >2,0,2,1
+*                         //               >2,0,2
+stores                    //               0: 2
+b factorial_0_l3          //               BRANCH
+factorial_0_l2:           //   <EMPTY>     |           *>2,0,1
+load 1                    //  *>0          |           *>2,0,1,2
+int 1                     //  *>0,1        |           *>2,0,1,2,1
+stores                    //   0: 1        |           2: 1
+factorial_0_l3:           //               >2
+retsub                 // SRET<EMPTY>  SRET>2         SRET*>2,0,1

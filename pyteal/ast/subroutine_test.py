@@ -78,6 +78,76 @@ def test_subroutine_definition():
         assert invocation.args == args
 
 
+def test_subroutine_invocation_param_types():
+    def fnWithNoAnnotations(a, b):
+        return Return()
+
+    def fnWithExprAnnotations(a: Expr, b: Expr) -> Expr:
+        return Return()
+
+    def fnWithSVAnnotations(a: ScratchVar, b: ScratchVar):
+        return Return()
+
+    def fnWithMixedAnns1(a: ScratchVar, b: Expr) -> Expr:
+        return Return()
+
+    def fnWithMixedAnns2(a: ScratchVar, b) -> Expr:
+        return Return()
+
+    def fnWithMixedAnns3(a: Expr, b: ScratchVar):
+        return Return()
+
+    sv = ScratchVar()
+    x = Int(42)
+    s = Bytes("hello")
+    cases = [
+        ("vanilla 1", fnWithNoAnnotations, [x, s], None),
+        ("vanilla 2", fnWithNoAnnotations, [x, x], None),
+        ("vanilla no sv's allowed 1", fnWithNoAnnotations, [x, sv], TealInputError),
+        ("exprs 1", fnWithExprAnnotations, [x, s], None),
+        ("exprs 2", fnWithExprAnnotations, [x, x], None),
+        ("exprs no sv's allowed 1", fnWithExprAnnotations, [x, sv], TealInputError),
+        ("all sv's 1", fnWithSVAnnotations, [sv, sv], None),
+        ("all sv's but strings", fnWithSVAnnotations, [s, s], TealInputError),
+        ("all sv's but ints", fnWithSVAnnotations, [x, x], TealInputError),
+        ("mixed1 copacetic", fnWithMixedAnns1, [sv, x], None),
+        ("mixed1 flipped", fnWithMixedAnns1, [x, sv], TealInputError),
+        ("mixed1 missing the sv", fnWithMixedAnns1, [x, s], TealInputError),
+        ("mixed1 missing the non-sv", fnWithMixedAnns1, [sv, sv], TealInputError),
+        ("mixed2 copacetic", fnWithMixedAnns2, [sv, x], None),
+        ("mixed2 flipped", fnWithMixedAnns2, [x, sv], TealInputError),
+        ("mixed2 missing the sv", fnWithMixedAnns2, [x, s], TealInputError),
+        ("mixed2 missing the non-sv", fnWithMixedAnns2, [sv, sv], TealInputError),
+        ("mixed3 copacetic", fnWithMixedAnns3, [s, sv], None),
+        ("mixed3 flipped", fnWithMixedAnns3, [sv, x], TealInputError),
+        ("mixed3 missing the sv", fnWithMixedAnns3, [x, s], TealInputError),
+    ]
+    for case_name, fn, args, err in cases:
+        definition = SubroutineDefinition(fn, TealType.none)
+        assert definition.argumentCount() == len(args), case_name
+        assert definition.name() == fn.__name__, case_name
+
+        if err is None:
+            assert len(definition.by_ref_args) == len(
+                [x for x in args if isinstance(x, ScratchVar)]
+            ), case_name
+
+            invocation = definition.invoke(args)
+            assert isinstance(invocation, SubroutineCall), case_name
+            assert invocation.subroutine is definition, case_name
+            assert invocation.args == args, case_name
+            assert invocation.has_return() is False, case_name
+
+        else:
+            try:
+                with pytest.raises(err):
+                    definition.invoke(args)
+            except Exception as e:
+                assert (
+                    not e
+                ), f"EXPECTED ERROR of type {err}. encountered unexpected error during invocation case <{case_name}>: {e}"
+
+
 def test_subroutine_definition_invalid():
     def fnWithDefaults(a, b=None):
         return Return()
@@ -94,6 +164,15 @@ def test_subroutine_definition_invalid():
     def fnWithNonExprParamAnnotation(a, b: TealType.uint64):
         return Return()
 
+    def fnWithScratchVarSubclass(a, b: DynamicScratchVar):
+        return Return()
+
+    def fnReturningExprSubclass(a: ScratchVar, b: Expr) -> Return:
+        return Return()
+
+    def fnWithMixedAnns4AndBytesReturn(a: Expr, b: ScratchVar) -> Bytes:
+        return Bytes("helo")
+
     cases = (
         (1, "TealInputError('Input to SubroutineDefinition is not callable'"),
         (None, "TealInputError('Input to SubroutineDefinition is not callable'"),
@@ -103,27 +182,40 @@ def test_subroutine_definition_invalid():
         ),
         (
             fnWithKeywordArgs,
-            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type KEYWORD_ONLY'",
+            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type",
         ),
         (
             fnWithVariableArgs,
-            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type VAR_POSITIONAL'",
+            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type",
         ),
         (
             fnWithNonExprReturnAnnotation,
-            "TealInputError('Function has Return of disallowed type TealType.uint64. Only type Expr is allowed'",
+            "Function has return of disallowed type TealType.uint64. Only Expr is allowed",
         ),
         (
             fnWithNonExprParamAnnotation,
-            "TealInputError('Function has parameter b of disallowed type TealType.uint64. Only type Expr is allowed'",
+            "Function has parameter b of declared type TealType.uint64 which is not a class",
+        ),
+        (
+            fnWithScratchVarSubclass,
+            "Function has parameter b of disallowed type <class 'pyteal.DynamicScratchVar'>",
+        ),
+        (
+            fnReturningExprSubclass,
+            "Function has return of disallowed type <class 'pyteal.Return'>",
+        ),
+        (
+            fnWithMixedAnns4AndBytesReturn,
+            "Function has return of disallowed type <class 'pyteal.Bytes'>",
         ),
     )
 
-    for case, msg in cases:
+    for fn, msg in cases:
         with pytest.raises(TealInputError) as e:
-            SubroutineDefinition(case, TealType.none)
+            print(f"case=[{msg}]")
+            SubroutineDefinition(fn, TealType.none)
 
-            assert msg in str(e), "failed for case [{}]".format(case)
+        assert msg in str(e), "failed for case [{}]".format(fn.__name__)
 
 
 def test_subroutine_declaration():

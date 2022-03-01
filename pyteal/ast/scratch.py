@@ -1,8 +1,8 @@
-from typing import TYPE_CHECKING
+from typing import cast, TYPE_CHECKING, Optional
 
-from ..types import TealType
+from ..types import TealType, require_type
 from ..config import NUM_SLOTS
-from ..errors import TealInputError
+from ..errors import TealInputError, TealInternalError
 from .expr import Expr
 
 if TYPE_CHECKING:
@@ -59,41 +59,98 @@ class ScratchSlot:
         """
         return ScratchLoad(self, type)
 
+    def index(self) -> "ScratchIndex":
+        return ScratchIndex(self)
+
     def __repr__(self):
         return "ScratchSlot({})".format(self.id)
 
     def __str__(self):
         return "slot#{}".format(self.id)
 
-    def __hash__(self):
-        return hash(self.id)
-
 
 ScratchSlot.__module__ = "pyteal"
+
+
+class ScratchIndex(Expr):
+    def __init__(self, slot: ScratchSlot):
+        super().__init__()
+        self.slot = slot
+
+    def __str__(self):
+        return "(ScratchIndex {})".format(self.slot)
+
+    def type_of(self):
+        return TealType.uint64
+
+    def has_return(self):
+        return False
+
+    def __teal__(self, options: "CompileOptions"):
+        from ..ir import TealOp, Op, TealBlock
+
+        op = TealOp(self, Op.int, self.slot)
+        return TealBlock.FromOp(options, op)
+
+
+ScratchIndex.__module__ = "pyteal"
 
 
 class ScratchLoad(Expr):
     """Expression to load a value from scratch space."""
 
-    def __init__(self, slot: ScratchSlot, type: TealType = TealType.anytype):
+    def __init__(
+        self,
+        slot: ScratchSlot = None,
+        type: TealType = TealType.anytype,
+        index_expression: Expr = None,
+    ):
         """Create a new ScratchLoad expression.
 
         Args:
-            slot: The slot to load the value from.
+            slot (optional): The slot to load the value from.
             type (optional): The type being loaded from this slot, if known. Defaults to
                 TealType.anytype.
+            index_expression (optional): As an alternative to slot,
+                an expression can be supplied for the slot index.
         """
         super().__init__()
+
+        if (slot is None) == (index_expression is None):
+            raise TealInputError(
+                "Exactly one of slot or index_expressions must be provided"
+            )
+
+        if index_expression:
+            if not isinstance(index_expression, Expr):
+                raise TealInputError(
+                    "index_expression must be an Expr but was of type {}".format(
+                        type(index_expression)
+                    )
+                )
+            require_type(index_expression, TealType.uint64)
+
+        if slot and not isinstance(slot, ScratchSlot):
+            raise TealInputError(
+                "cannot handle slot of type {}".format(type(self.slot))
+            )
+
         self.slot = slot
         self.type = type
+        self.index_expression = index_expression
 
     def __str__(self):
-        return "(Load {})".format(self.slot)
+        return "(Load {})".format(self.slot if self.slot else self.index_expression)
 
     def __teal__(self, options: "CompileOptions"):
         from ..ir import TealOp, Op, TealBlock
 
-        op = TealOp(self, Op.load, self.slot)
+        if self.index_expression is not None:
+            op = TealOp(self, Op.loads)
+            return TealBlock.FromOp(options, op, self.index_expression)
+
+        s = cast(ScratchSlot, self.slot)
+        op = TealOp(self, Op.load, s)
         return TealBlock.FromOp(options, op)
 
     def type_of(self):
@@ -109,23 +166,53 @@ ScratchLoad.__module__ = "pyteal"
 class ScratchStore(Expr):
     """Expression to store a value in scratch space."""
 
-    def __init__(self, slot: ScratchSlot, value: Expr):
+    def __init__(
+        self, slot: Optional[ScratchSlot], value: Expr, index_expression: Expr = None
+    ):
         """Create a new ScratchStore expression.
 
         Args:
-            slot: The slot to store the value in.
+            slot (optional): The slot to store the value in.
             value: The value to store.
+            index_expression (optional): As an alternative to slot,
+                an expression can be supplied for the slot index.
         """
         super().__init__()
+
+        if (slot is None) == (index_expression is None):
+            raise TealInternalError(
+                "Exactly one of slot or index_expressions must be provided"
+            )
+
+        if index_expression:
+            if not isinstance(index_expression, Expr):
+                raise TealInputError(
+                    "index_expression must be an Expr but was of type {}".format(
+                        type(index_expression)
+                    )
+                )
+            require_type(index_expression, TealType.uint64)
+
         self.slot = slot
         self.value = value
+        self.index_expression = index_expression
 
     def __str__(self):
-        return "(Store {} {})".format(self.slot, self.value)
+        return "(Store {} {})".format(
+            self.slot if self.slot else self.index_expression, self.value
+        )
 
     def __teal__(self, options: "CompileOptions"):
         from ..ir import TealOp, Op, TealBlock
 
+        if self.index_expression is not None:
+            op = TealOp(self, Op.stores)
+            return TealBlock.FromOp(options, op, self.index_expression, self.value)
+
+        if not isinstance(self.slot, ScratchSlot):
+            raise TealInternalError(
+                "cannot handle slot of type {}".format(type(self.slot))
+            )
         op = TealOp(self, Op.store, self.slot)
         return TealBlock.FromOp(options, op, self.value)
 
