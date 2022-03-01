@@ -166,7 +166,7 @@ if not OLD_CODE_ONLY:
         )
 
     @Subroutine(TealType.uint64)
-    def mixed_annotations(x: Expr, y: Expr, z: ScratchVar) -> Int:
+    def mixed_annotations(x: Expr, y: Expr, z: ScratchVar) -> Expr:
         return Seq(
             z.store(x),
             Log(Concat(y, Bytes("="), Itob(x))),

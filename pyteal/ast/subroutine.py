@@ -1,9 +1,11 @@
-from typing import Callable, Dict, List, Optional, Set, Union, TYPE_CHECKING
+from collections import OrderedDict
 from inspect import isclass, Parameter, signature
+from typing import Callable, List, Optional, Set, Type, Union, TYPE_CHECKING
 
-from ..types import TealType
-from ..ir import TealOp, Op, TealBlock
 from ..errors import TealInputError, verifyTealVersion
+from ..ir import TealOp, Op, TealBlock
+from ..types import TealType
+
 from .expr import Expr
 from .seq import Seq
 from .scratchvar import DynamicScratchVar, ScratchVar
@@ -13,8 +15,6 @@ if TYPE_CHECKING:
 
 
 class SubroutineDefinition:
-    PARAM_TYPES = (Expr, ScratchVar)
-
     nextSubroutineId = 0
 
     def __init__(
@@ -29,15 +29,23 @@ class SubroutineDefinition:
 
         self.by_ref_args: Set[str] = set()
 
-        self.expected_arg_types: List[type] = []
+        self.expected_arg_types: List[Type[Union[Expr, ScratchVar]]] = []
 
         if not callable(implementation):
             raise TealInputError("Input to SubroutineDefinition is not callable")
 
         sig = signature(implementation)
 
+        annotations = getattr(implementation, "__annotations__", OrderedDict())
+
+        if "return" in annotations and annotations["return"] is not Expr:
+            raise TealInputError(
+                "Function has return of disallowed type {}. Only Expr is allowed".format(
+                    annotations["return"]
+                )
+            )
+
         for name, param in sig.parameters.items():
-            param = sig.parameters[name]
             if param.kind not in (
                 Parameter.POSITIONAL_ONLY,
                 Parameter.POSITIONAL_OR_KEYWORD,
@@ -56,29 +64,29 @@ class SubroutineDefinition:
                 )
 
             expected_arg_type: type = Expr
-            if name in implementation.__annotations__:
-                ptype = implementation.__annotations__[name]
-                if isclass(ptype) and issubclass(ptype, ScratchVar):
-                    expected_arg_type = ScratchVar
+            if name in annotations:
+                ptype = annotations[name]
+                if not isclass(ptype):
+                    raise TealInputError(
+                        "Function has parameter {} of declared type {} which is not a class".format(
+                            name, ptype
+                        )
+                    )
+
+                if ptype not in (Expr, ScratchVar):
+                    raise TealInputError(
+                        "Function has parameter {} of disallowed type {}. Only the types {} are allowed".format(
+                            name, ptype, (Expr, ScratchVar)
+                        )
+                    )
+
+                expected_arg_type = ptype
+            else:
+                expected_arg_type = Expr
 
             self.expected_arg_types.append(expected_arg_type)
-
-        for var_name, var_type in implementation.__annotations__.items():
-            if var_name == "return" and not var_type is Expr:
-                raise TealInputError(
-                    "Function has return of disallowed type {}. Only subtype of Expr is allowed".format(
-                        var_type
-                    )
-                )
-
-            if var_name != "return" and var_type not in self.PARAM_TYPES:
-                raise TealInputError(
-                    "Function has parameter {} of disallowed type {}. Only the types {} are allowed".format(
-                        var_name, var_type, self.PARAM_TYPES
-                    )
-                )
-            if var_type is ScratchVar:
-                self.by_ref_args.add(var_name)
+            if expected_arg_type is ScratchVar:
+                self.by_ref_args.add(name)
 
         self.implementation = implementation
         self.implementationParams = sig.parameters
@@ -322,7 +330,7 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
     2 Argument Types
     - -------- -----
     Type 1 (by-value): these have python type Expr
-    Type 2 (by-reference): these hae python type ScratchVar
+    Type 2 (by-reference): these have python type ScratchVar
 
     Usage (A) "argumentVars" - Storing pre-placed stack variables into local scratch space:
         Type 1. (by-value) use ScratchVar.store() to pick the actual value into a local scratch space
@@ -331,7 +339,7 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
 
     Usage (B) "loadedArgs" - Passing through to an invoked PyTEAL subroutine AST:
         Type 1. (by-value) use ScratchVar.load() to have an Expr that can be compiled in python by the PyTEAL subroutine
-        Type 2. (by-reference) use a DynamicScratchVar as the user will have written the PyTEAL in a way that satifies
+        Type 2. (by-reference) use a DynamicScratchVar as the user will have written the PyTEAL in a way that satisfies
             the ScratchVar API. I.e., the user will write `x.load()` and `x.store(val)` as opposed to just `x`.
     """
 

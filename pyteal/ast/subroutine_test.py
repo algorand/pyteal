@@ -190,11 +190,11 @@ def test_subroutine_definition_invalid():
         ),
         (
             fnWithNonExprReturnAnnotation,
-            "Function has return of disallowed type TealType.uint64. Only subtype of Expr is allowed",
+            "Function has return of disallowed type TealType.uint64. Only Expr is allowed",
         ),
         (
             fnWithNonExprParamAnnotation,
-            "Function has parameter b of disallowed type TealType.uint64. Only the types",
+            "Function has parameter b of declared type TealType.uint64 which is not a class",
         ),
         (
             fnWithScratchVarSubclass,
@@ -212,6 +212,7 @@ def test_subroutine_definition_invalid():
 
     for fn, msg in cases:
         with pytest.raises(TealInputError) as e:
+            print(f"case=[{msg}]")
             SubroutineDefinition(fn, TealType.none)
 
         assert msg in str(e), "failed for case [{}]".format(fn.__name__)
