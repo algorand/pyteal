@@ -77,7 +77,9 @@ class SubroutineDefinition:
         self.__name = self.implementation.__name__ if nameStr is None else nameStr
 
     @staticmethod
-    def _validate_parameter_type(user_defined_annotations: OrderedDict, parameter_name: str):
+    def _validate_parameter_type(
+        user_defined_annotations: dict[str, str], parameter_name: str
+    ):
         ptype = user_defined_annotations.get(parameter_name, None)
         if ptype is None:
             # Without a type annotation, `SubroutineDefinition` presumes an implicit `Expr` declaration rather than these alternatives:
