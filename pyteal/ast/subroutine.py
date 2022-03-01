@@ -63,26 +63,7 @@ class SubroutineDefinition:
                     )
                 )
 
-            expected_arg_type: type = Expr
-            if name in annotations:
-                ptype = annotations[name]
-                if not isclass(ptype):
-                    raise TealInputError(
-                        "Function has parameter {} of declared type {} which is not a class".format(
-                            name, ptype
-                        )
-                    )
-
-                if ptype not in (Expr, ScratchVar):
-                    raise TealInputError(
-                        "Function has parameter {} of disallowed type {}. Only the types {} are allowed".format(
-                            name, ptype, (Expr, ScratchVar)
-                        )
-                    )
-
-                expected_arg_type = ptype
-            else:
-                expected_arg_type = Expr
+            expected_arg_type = self._validate_parameter_type(annotations, name)
 
             self.expected_arg_types.append(expected_arg_type)
             if expected_arg_type is ScratchVar:
@@ -94,6 +75,36 @@ class SubroutineDefinition:
 
         self.declaration: Optional["SubroutineDeclaration"] = None
         self.__name = self.implementation.__name__ if nameStr is None else nameStr
+
+    @staticmethod
+    def _validate_parameter_type(user_defined_annotations: OrderedDict, parameter_name: str):
+        ptype = user_defined_annotations.get(parameter_name, None)
+        if ptype is None:
+            # Without a type annotation, `SubroutineDefinition` presumes an implicit `Expr` declaration rather than these alternatives:
+            # * Throw error requiring type annotation.
+            # * Defer parameter type checks until arguments provided during invocation.
+            #
+            # * Rationale:
+            #   * Provide an upfront, best-effort type check before invocation.
+            #   * Preserve backwards compatibility with TEAL programs written when `Expr` is the only supported annotation type.
+            # * `invoke` type checks provided arguments against parameter types to catch mismatches.
+            return Expr
+        else:
+            if not isclass(ptype):
+                raise TealInputError(
+                    "Function has parameter {} of declared type {} which is not a class".format(
+                        parameter_name, ptype
+                    )
+                )
+
+            if ptype not in (Expr, ScratchVar):
+                raise TealInputError(
+                    "Function has parameter {} of disallowed type {}. Only the types {} are allowed".format(
+                        parameter_name, ptype, (Expr, ScratchVar)
+                    )
+                )
+
+            return ptype
 
     def getDeclaration(self) -> "SubroutineDeclaration":
         if self.declaration is None:
