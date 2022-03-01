@@ -1,5 +1,7 @@
 from typing import List, NamedTuple, Tuple, Union, cast
 
+from pyteal.ast.cond import Cond
+
 from ..config import METHOD_APP_ARG_NUM_LIMIT, RETURN_EVENT_SELECTOR
 from ..errors import TealInputError
 from ..types import TealType
@@ -205,31 +207,18 @@ class ABIRouter:
     @staticmethod
     def __astConstruct(
         astList: List[ProgramNode],
-        *,
-        astDefault: Expr = Reject(),
-        astNoRegDefault: Expr = Approve(),
     ) -> Expr:
         if len(astList) == 0:
-            if astNoRegDefault is None:
-                raise TealInputError(
-                    "ABIRouter: Cannot build program with an empty AST"
-                )
-            else:
-                return astNoRegDefault
-        program: If = If(astList[0].condition).Then(astList[0].branch)
-        for i in range(1, len(astList)):
-            program.ElseIf(astList[i].condition).Then(astList[i].branch)
-        program.Else(astDefault)
+            raise TealInputError("ABIRouter: Cannot build program with an empty AST")
+
+        program: Cond = Cond(*[[node.condition, node.branch] for node in astList])
+
         return program
 
     def buildProgram(self) -> Tuple[Expr, Expr]:
         return (
-            ABIRouter.__astConstruct(
-                self.approvalIfThen, astDefault=Reject(), astNoRegDefault=Approve()
-            ),
-            ABIRouter.__astConstruct(
-                self.clearStateIfThen, astDefault=Approve(), astNoRegDefault=Approve()
-            ),
+            ABIRouter.__astConstruct(self.approvalIfThen),
+            ABIRouter.__astConstruct(self.clearStateIfThen),
         )
 
 
