@@ -29,7 +29,6 @@ class ScratchVar:
             slotId (optional): A scratch slot id that the compiler must store the value.
                 This id may be a Python int in the range [0-256).
         """
-
         self.slot = ScratchSlot(requestedSlotId=slotId)
         self.type = type
 
