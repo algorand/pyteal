@@ -9,11 +9,10 @@ from ..types import TealType
 from .app import OnComplete
 from .expr import Expr
 from .int import EnumInt, Int
-from .if_ import If
 from .methodsig import MethodSignature
 from .unaryexpr import Log
 from .naryexpr import And, Concat, Or
-from .return_ import Approve, Reject
+from .return_ import Approve
 from .seq import Seq
 from .subroutine import SubroutineFnWrapper
 from .txn import Txn
@@ -46,11 +45,15 @@ Notes for OC:
 
 
 class ProgramNode(NamedTuple):
+    """ """
+
     condition: Expr
     branch: Expr
 
 
 class ABIRouter:
+    """ """
+
     def __init__(self) -> None:
         self.approvalIfThen: List[ProgramNode] = []
         self.clearStateIfThen: List[ProgramNode] = []
@@ -61,6 +64,7 @@ class ABIRouter:
         onCompletes: List[EnumInt],
         creation: bool,
     ) -> Tuple[List[Expr], List[Expr]]:
+        """ """
         # Check if it is a *CREATION*
         approvalConds: List[Expr] = [Txn.application_id() == Int(0)] if creation else []
         clearStateConds: List[Expr] = []
@@ -113,6 +117,7 @@ class ABIRouter:
 
     @staticmethod
     def __wrapHandler(isMethod: bool, branch: Union[SubroutineFnWrapper, Expr]) -> Expr:
+        """"""
         exprList: List[Expr] = []
         if not isMethod:
             if (
@@ -157,6 +162,7 @@ class ABIRouter:
     def __appendToAST(
         self, approvalConds: List[Expr], clearConds: List[Expr], branch: Expr
     ) -> None:
+        """ """
         if len(approvalConds) > 0:
             self.approvalIfThen.append(
                 ProgramNode(
@@ -179,6 +185,7 @@ class ABIRouter:
         *,
         creation: bool = False,
     ) -> None:
+        """ """
         ocList: List[EnumInt] = (
             cast(List[EnumInt], onCompletes)
             if isinstance(onCompletes, list)
@@ -197,6 +204,7 @@ class ABIRouter:
         onComplete: EnumInt = OnComplete.NoOp,
         creation: bool = False,
     ) -> None:
+        """ """
         ocList: List[EnumInt] = [cast(EnumInt, onComplete)]
         approvalConds, clearConds = ABIRouter.__parseConditions(
             mReg=methodAppCall, onCompletes=ocList, creation=creation
@@ -208,6 +216,7 @@ class ABIRouter:
     def __astConstruct(
         astList: List[ProgramNode],
     ) -> Expr:
+        """ """
         if len(astList) == 0:
             raise TealInputError("ABIRouter: Cannot build program with an empty AST")
 
@@ -216,6 +225,7 @@ class ABIRouter:
         return program
 
     def buildProgram(self) -> Tuple[Expr, Expr]:
+        """ """
         return (
             ABIRouter.__astConstruct(self.approvalIfThen),
             ABIRouter.__astConstruct(self.clearStateIfThen),
