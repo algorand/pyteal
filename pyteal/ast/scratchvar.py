@@ -90,9 +90,8 @@ class DynamicScratchVar(ScratchVar):
         Args:
             ttype (optional): The type that this variable can hold. Defaults to TealType.anytype.
         """
-        self.type = ttype
-        self._indexer = ScratchVar(TealType.uint64)
-        self.slot = self._indexer.slot
+        super().__init__(TealType.uint64)
+        self.dynamic_type = ttype  # differentiates from ScratchVar.type
 
     def set_index(self, index_var: ScratchVar) -> Expr:
         """Set this DynamicScratchVar to reference the provided `index_var`.
@@ -106,30 +105,30 @@ class DynamicScratchVar(ScratchVar):
                 )
             )
 
-        return self._indexer.store(index_var.index())
+        return super().store(index_var.index())
 
     def storage_type(self) -> TealType:
         """Get the type of expressions that can be stored in this ScratchVar."""
-        return self.type
+        return self.dynamic_type
 
     def store(self, value: Expr) -> Expr:
         """Store the value in the referenced ScratchVar."""
-        require_type(value, self.type)
-        index = ScratchLoad(self._indexer.slot, TealType.uint64)
-        return ScratchStore(slot=None, value=value, index_expression=index)
+        require_type(value, self.dynamic_type)
+        return ScratchStore(slot=None, value=value, index_expression=self.index())
 
     def load(self) -> ScratchLoad:
         """Load the current value from the referenced ScratchVar."""
-        index = ScratchLoad(self._indexer.slot, TealType.uint64)
-        return ScratchLoad(slot=None, type=self.type, index_expression=index)
+        return ScratchLoad(
+            slot=None, type=self.dynamic_type, index_expression=self.index()
+        )
 
     def index(self) -> Expr:
         """Get the index of the referenced ScratchVar."""
-        return self._indexer.load()
+        return super().load()
 
     def internal_index(self) -> Expr:
         """Get the index of _this_ DynamicScratchVar, as opposed to that of the referenced ScratchVar."""
-        return self._indexer.index()
+        return super().index()
 
 
 DynamicScratchVar.__module__ = "pyteal"
