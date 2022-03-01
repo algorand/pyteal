@@ -1,5 +1,4 @@
 from typing import List
-from xml.dom import InvalidModificationErr
 import pytest
 
 from .. import *
@@ -39,9 +38,6 @@ def test_subroutine_definition():
         return Return()
 
     def fnWithPartialExprAnnotations(a, b: Expr) -> Expr:
-        return Return()
-
-    def fnWithMixedAnnotations(a: ScratchVar, b: Expr) -> Return:
         return Return()
 
     cases = (
@@ -101,15 +97,12 @@ def test_subroutine_invocation_param_types():
     def fnWithMixedAnns3(a: Expr, b: ScratchVar):
         return Return()
 
-    def fnWithMixedAnns4AndIntReturn(a: Expr, b: ScratchVar) -> Bytes:
-        return Bytes("helo")
-
     sv = ScratchVar()
     x = Int(42)
     s = Bytes("hello")
     cases = [
-        ("vannila 1", fnWithNoAnnotations, [x, s], None),
-        ("vannila 2", fnWithNoAnnotations, [x, x], None),
+        ("vanilla 1", fnWithNoAnnotations, [x, s], None),
+        ("vanilla 2", fnWithNoAnnotations, [x, x], None),
         ("vanilla no sv's allowed 1", fnWithNoAnnotations, [x, sv], TealInputError),
         ("exprs 1", fnWithExprAnnotations, [x, s], None),
         ("exprs 2", fnWithExprAnnotations, [x, x], None),
@@ -128,20 +121,6 @@ def test_subroutine_invocation_param_types():
         ("mixed3 copacetic", fnWithMixedAnns3, [s, sv], None),
         ("mixed3 flipped", fnWithMixedAnns3, [sv, x], TealInputError),
         ("mixed3 missing the sv", fnWithMixedAnns3, [x, s], TealInputError),
-        (
-            "mixed3 missing the non-sv",
-            fnWithMixedAnns4AndIntReturn,
-            [sv, sv],
-            TealInputError,
-        ),
-        ("mixed4 flipped", fnWithMixedAnns4AndIntReturn, [sv, x], TealInputError),
-        ("mixed4 missing the sv", fnWithMixedAnns4AndIntReturn, [x, s], TealInputError),
-        (
-            "mixed4 missing the non-sv",
-            fnWithMixedAnns4AndIntReturn,
-            [sv, sv],
-            TealInputError,
-        ),
     ]
     for case_name, fn, args, err in cases:
         definition = SubroutineDefinition(fn, TealType.none)
@@ -153,19 +132,12 @@ def test_subroutine_invocation_param_types():
                 [x for x in args if isinstance(x, ScratchVar)]
             ), case_name
 
-            try:
-                invocation = definition.invoke(args)
-                assert isinstance(invocation, SubroutineCall), case_name
-                assert invocation.subroutine is definition, case_name
-                assert invocation.args == args, case_name
-                assert invocation.has_return() is False, case_name
+            invocation = definition.invoke(args)
+            assert isinstance(invocation, SubroutineCall), case_name
+            assert invocation.subroutine is definition, case_name
+            assert invocation.args == args, case_name
+            assert invocation.has_return() is False, case_name
 
-            except Exception as e:
-                if isinstance(e, AssertionError):
-                    raise
-                assert (
-                    not e
-                ), f"EXPECTED SUCCESS. encountered unexpected error during invocation case <{case_name}>: {e}"
         else:
             try:
                 with pytest.raises(err):
@@ -195,6 +167,12 @@ def test_subroutine_definition_invalid():
     def fnWithScratchVarSubclass(a, b: DynamicScratchVar):
         return Return()
 
+    def fnReturningExprSubclass(a: ScratchVar, b: Expr) -> Return:
+        return Return()
+
+    def fnWithMixedAnns4AndBytesReturn(a: Expr, b: ScratchVar) -> Bytes:
+        return Bytes("helo")
+
     cases = (
         (1, "TealInputError('Input to SubroutineDefinition is not callable'"),
         (None, "TealInputError('Input to SubroutineDefinition is not callable'"),
@@ -221,6 +199,14 @@ def test_subroutine_definition_invalid():
         (
             fnWithScratchVarSubclass,
             "Function has parameter b of disallowed type <class 'pyteal.DynamicScratchVar'>",
+        ),
+        (
+            fnReturningExprSubclass,
+            "Function has return of disallowed type <class 'pyteal.Return'>",
+        ),
+        (
+            fnWithMixedAnns4AndBytesReturn,
+            "Function has return of disallowed type <class 'pyteal.Bytes'>",
         ),
     )
 

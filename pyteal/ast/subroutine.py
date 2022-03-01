@@ -63,24 +63,22 @@ class SubroutineDefinition:
 
             self.expected_arg_types.append(expected_arg_type)
 
-        for var, var_type in implementation.__annotations__.items():
-            if var == "return" and not (
-                isclass(var_type) and issubclass(var_type, Expr)
-            ):
+        for var_name, var_type in implementation.__annotations__.items():
+            if var_name == "return" and not var_type is Expr:
                 raise TealInputError(
                     "Function has return of disallowed type {}. Only subtype of Expr is allowed".format(
                         var_type
                     )
                 )
 
-            if var != "return" and var_type not in self.PARAM_TYPES:
+            if var_name != "return" and var_type not in self.PARAM_TYPES:
                 raise TealInputError(
                     "Function has parameter {} of disallowed type {}. Only the types {} are allowed".format(
-                        var, var_type, self.PARAM_TYPES
+                        var_name, var_type, self.PARAM_TYPES
                     )
                 )
             if var_type is ScratchVar:
-                self.by_ref_args.add(var)
+                self.by_ref_args.add(var_name)
 
         self.implementation = implementation
         self.implementationParams = sig.parameters
