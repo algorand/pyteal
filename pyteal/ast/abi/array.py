@@ -94,9 +94,9 @@ class Array(Type, Generic[T]):
     def set(self, values: Sequence[T]) -> Expr:
         """Set the ABI array with a sequence of ABI type variables.
 
-        The argument to this function is meant to be type-checked before storing to the underlying
-        ScratchVar. If any of the input sequence element does not match expected array element type,
-        error would be raised about type-unmatch.
+        The function first type-check the argument `values` to make sure the sequence of ABI type
+        variables before storing them to the underlying ScratchVar. If any of the input element does
+        not match expected array element type, error would be raised about type-mismatch.
 
         If static length of array is not available, this function would
         * infer the array length from the sequence element number.
@@ -407,7 +407,7 @@ class ArrayElement(ComputedType[T]):
         element in the ABI value output.
 
         The function first checks if the output type matches with array element type, and throw
-        error if type-unmatch.
+        error if type-mismatch.
 
         Args:
             output: An ABI typed value that the array element byte string stores into.
