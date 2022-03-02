@@ -114,7 +114,6 @@ from .while_ import While
 from .for_ import For
 from .break_ import Break
 from .continue_ import Continue
-from .abirouter import ABIRouter
 
 # misc
 from .scratch import (
@@ -227,7 +226,6 @@ __all__ = [
     "Return",
     "Approve",
     "Reject",
-    "ABIRouter",
     "Subroutine",
     "SubroutineDefinition",
     "SubroutineDeclaration",

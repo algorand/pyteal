@@ -2,20 +2,20 @@ from typing import List, NamedTuple, Tuple, Union, cast
 
 from pyteal.ast.cond import Cond
 
-from ..config import METHOD_APP_ARG_NUM_LIMIT, RETURN_EVENT_SELECTOR
-from ..errors import TealInputError
-from ..types import TealType
+from ...config import METHOD_APP_ARG_NUM_LIMIT, RETURN_EVENT_SELECTOR
+from ...errors import TealInputError
+from ...types import TealType
 
-from .app import OnComplete
-from .expr import Expr
-from .int import EnumInt, Int
-from .methodsig import MethodSignature
-from .unaryexpr import Log
-from .naryexpr import And, Concat, Or
-from .return_ import Approve
-from .seq import Seq
-from .subroutine import SubroutineFnWrapper
-from .txn import Txn
+from ..app import OnComplete
+from ..expr import Expr
+from ..int import EnumInt, Int
+from ..methodsig import MethodSignature
+from ..unaryexpr import Log
+from ..naryexpr import And, Concat, Or
+from ..return_ import Approve
+from ..seq import Seq
+from ..subroutine import SubroutineFnWrapper
+from ..txn import Txn
 
 # NOTE this should sit in `abi` directory, still waiting on abi to be merged in
 
@@ -51,7 +51,7 @@ class ProgramNode(NamedTuple):
     branch: Expr
 
 
-class ABIRouter:
+class Router:
     """ """
 
     def __init__(self) -> None:
@@ -191,10 +191,10 @@ class ABIRouter:
             if isinstance(onCompletes, list)
             else [cast(EnumInt, onCompletes)]
         )
-        approvalConds, clearConds = ABIRouter.__parseConditions(
+        approvalConds, clearConds = Router.__parseConditions(
             mReg=None, onCompletes=ocList, creation=creation
         )
-        branch = ABIRouter.__wrapHandler(False, bareAppCall)
+        branch = Router.__wrapHandler(False, bareAppCall)
         self.__appendToAST(approvalConds, clearConds, branch)
 
     def onMethodCall(
@@ -206,10 +206,10 @@ class ABIRouter:
     ) -> None:
         """ """
         ocList: List[EnumInt] = [cast(EnumInt, onComplete)]
-        approvalConds, clearConds = ABIRouter.__parseConditions(
+        approvalConds, clearConds = Router.__parseConditions(
             mReg=methodAppCall, onCompletes=ocList, creation=creation
         )
-        branch = ABIRouter.__wrapHandler(True, methodAppCall)
+        branch = Router.__wrapHandler(True, methodAppCall)
         self.__appendToAST(approvalConds, clearConds, branch)
 
     @staticmethod
@@ -227,9 +227,9 @@ class ABIRouter:
     def buildProgram(self) -> Tuple[Expr, Expr]:
         """ """
         return (
-            ABIRouter.__astConstruct(self.approvalIfThen),
-            ABIRouter.__astConstruct(self.clearStateIfThen),
+            Router.__astConstruct(self.approvalIfThen),
+            Router.__astConstruct(self.clearStateIfThen),
         )
 
 
-ABIRouter.__module__ = "pyteal"
+Router.__module__ = "pyteal"

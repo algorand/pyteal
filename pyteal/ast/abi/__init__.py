@@ -3,6 +3,7 @@ from .bool import Bool
 from .uint import Uint, Byte, Uint8, Uint16, Uint32, Uint64
 from .tuple import Tuple
 from .array import StaticArray, DynamicArray
+from .router import Router
 
 __all__ = [
     "Type",
@@ -17,4 +18,5 @@ __all__ = [
     "Tuple",
     "StaticArray",
     "DynamicArray",
+    "Router",
 ]
