@@ -20,7 +20,7 @@ from ..assert_ import Assert
 from ..substring import Suffix
 from ..int import Int
 from ..bytes import Bytes
-from ..unaryexpr import Itob
+from ..unaryexpr import Itob, Btoi
 from ..binaryexpr import GetByte, ExtractUint16, ExtractUint32, ExtractUint64
 from ..ternaryexpr import SetByte
 from .type import Type
@@ -65,6 +65,13 @@ def uint_decode(
     endIndex: Optional[Expr],
     length: Optional[Expr],
 ) -> Expr:
+    if size == 64:
+        if startIndex is None:
+            if endIndex is None and length is None:
+                return uintVar.store(Btoi(encoded))
+            startIndex = Int(0)
+        return uintVar.store(ExtractUint64(encoded, startIndex))
+
     if startIndex is None:
         startIndex = Int(0)
 
@@ -74,8 +81,6 @@ def uint_decode(
         return uintVar.store(ExtractUint16(encoded, startIndex))
     if size == 32:
         return uintVar.store(ExtractUint32(encoded, startIndex))
-    if size == 64:
-        return uintVar.store(ExtractUint64(encoded, startIndex))
 
     raise ValueError("Unsupported uint size: {}".format(size))
 

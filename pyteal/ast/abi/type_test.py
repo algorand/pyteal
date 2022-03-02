@@ -1,4 +1,4 @@
-from typing import NamedTuple, List, Optional, Union, Any, cast
+from typing import NamedTuple, List, Optional, Union, Any, Type, cast
 import pytest
 
 from ... import *
@@ -12,8 +12,11 @@ options = CompileOptions(version=5)
 
 class DummyComputedType(ComputedType[abi.Uint64]):
     def __init__(self, value: int) -> None:
-        super().__init__(abi.Uint64())
+        super().__init__()
         self._value = value
+
+    def produced_type(cls) -> Type[abi.Uint64]:
+        return abi.Uint64
 
     def store_into(self, output: abi.Uint64) -> Expr:
         return output.set(self._value)
