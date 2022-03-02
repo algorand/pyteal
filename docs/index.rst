@@ -58,6 +58,7 @@ PyTeal **hasn't been security audited**. Use it at your own risk.
 
    repository
    architecture
+   docs
 
 Indices and tables
 ==================
