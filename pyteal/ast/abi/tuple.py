@@ -210,6 +210,10 @@ class Tuple(Type):
         # TODO: verify all params are instantiable. It should not be possible to call Tuple.of(Type)
 
         class TypedTuple(Tuple):
+            def __class_getitem__(cls, _):
+                # prevent Tuple[A][B]
+                raise TypeError("Cannot index into Tuple[...]")
+
             @classmethod
             def value_types(cls) -> List[PyType[Type]]:
                 return list(params)

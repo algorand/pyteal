@@ -1,83 +1,159 @@
-from typing import Union, cast
+from typing import (
+    Generic,
+    TypeVar,
+    Union,
+    Optional,
+    cast,
+    Type as PyType,
+    Literal,
+    get_origin,
+    get_args,
+)
 from abc import abstractmethod
 
 from ...types import TealType
 from ...errors import TealInputError
+from ..scratchvar import ScratchVar
 from ..expr import Expr
 from ..seq import Seq
 from ..assert_ import Assert
 from ..substring import Suffix
 from ..int import Int
 from ..bytes import Bytes
-from ..unaryexpr import Itob, Btoi
+from ..unaryexpr import Itob
 from ..binaryexpr import GetByte, ExtractUint16, ExtractUint32, ExtractUint64
 from ..ternaryexpr import SetByte
 from .type import Type
 
 NUM_BITS_IN_BYTE = 8
 
+SUPPORTED_SIZES = (8, 16, 32, 64)
 
-class Uint(Type):
-    def __init__(self, bit_size: int) -> None:
-        valueType = TealType.uint64 if bit_size <= 64 else TealType.bytes
-        super().__init__(valueType)
-        self.bit_size = bit_size
 
-    def has_same_type_as(self, other: Type) -> bool:
-        return isinstance(other, Uint) and self.bit_size == other.bit_size
+def uint_storage_type(size: int) -> TealType:
+    if size <= 64:
+        return TealType.uint64
+    return TealType.bytes
 
-    def is_dynamic(self) -> bool:
+
+def uint_set(size: int, uintVar: ScratchVar, value: Union[int, Expr, "Uint"]) -> Expr:
+    checked = False
+    if type(value) is int:
+        if value >= 2 ** size:
+            raise TealInputError("Value exceeds uint{} maximum: {}".format(size, value))
+        value = Int(value)
+        checked = True
+
+    if isinstance(value, Uint):
+        value = value.get()
+        checked = True
+
+    if checked or size == 64:
+        return uintVar.store(cast(Expr, value))
+
+    return Seq(
+        uintVar.store(cast(Expr, value)),
+        Assert(uintVar.load() < Int(2 ** size)),
+    )
+
+
+def uint_decode(
+    size: int,
+    uintVar: ScratchVar,
+    encoded: Expr,
+    startIndex: Optional[Expr],
+    endIndex: Optional[Expr],
+    length: Optional[Expr],
+) -> Expr:
+    if startIndex is None:
+        startIndex = Int(0)
+
+    if size == 8:
+        return uintVar.store(GetByte(encoded, startIndex))
+    if size == 16:
+        return uintVar.store(ExtractUint16(encoded, startIndex))
+    if size == 32:
+        return uintVar.store(ExtractUint32(encoded, startIndex))
+    if size == 64:
+        return uintVar.store(ExtractUint64(encoded, startIndex))
+
+    raise ValueError("Unsupported uint size: {}".format(size))
+
+
+def uint_encode(size: int, uintVar: ScratchVar) -> Expr:
+    if size == 8:
+        return SetByte(Bytes(b"\x00"), Int(0), uintVar.load())
+    if size == 16:
+        return Suffix(Itob(uintVar.load()), Int(6))
+    if size == 32:
+        return Suffix(Itob(uintVar.load()), Int(4))
+    if size == 64:
+        return Itob(uintVar.load())
+
+    raise ValueError("Unsupported uint size: {}".format(size))
+
+
+N = TypeVar("N", bound=int)
+
+
+class Uint(Type, Generic[N]):
+    def __class_getitem__(cls, size: int) -> PyType["Uint"]:
+        if get_origin(size) is Literal:
+            args = get_args(size)
+            assert len(args) == 1
+            assert type(args[0]) is int
+            size = args[0]
+
+        assert isinstance(size, int)
+
+        if size not in SUPPORTED_SIZES:
+            raise ValueError("Unsupported uint size: {}".format(size))
+
+        class SizedUint(Uint):
+            def __class_getitem__(cls, _):
+                # prevent Uint[A][B]
+                raise TypeError("Cannot index into Uint[{}]".format(size))
+
+            @classmethod
+            def bit_size(cls) -> int:
+                return size
+
+        return SizedUint
+
+    @classmethod
+    def has_same_type_as(cls, other: Union[PyType[Type], Type]) -> bool:
+        return (
+            isinstance(other, Uint) or issubclass(cast(PyType[Type], other), Uint)
+        ) and cls.bit_size() == cast(Union[PyType[Uint], Uint], other).bit_size()
+
+    @classmethod
+    def is_dynamic(cls) -> bool:
         return False
 
-    def bits(self) -> int:
-        return self.bit_size
+    @classmethod
+    def byte_length_static(cls) -> int:
+        return cls.bit_size() // NUM_BITS_IN_BYTE
 
-    def byte_length_static(self) -> int:
-        return self.bit_size // NUM_BITS_IN_BYTE
+    @classmethod
+    def storage_type(cls) -> TealType:
+        return uint_storage_type(cls.bit_size())
+
+    @classmethod
+    def __str__(cls) -> str:
+        return "uint{}".format(cls.bit_size())
+
+    @classmethod
+    @abstractmethod
+    def bit_size(cls) -> int:
+        pass
 
     def get(self) -> Expr:
         return self.stored_value.load()
 
-    @abstractmethod
-    def set(self, value: Union[int, Expr]) -> Expr:
-        pass
-
-    def __str__(self) -> str:
-        return "uint{}".format(self.bit_size)
-
-
-class Uint8(Uint):
-    def __init__(
-        self,
-    ) -> None:
-        super().__init__(8)
-
-    def new_instance(self) -> "Uint8":
-        return Uint8()
-
-    def set(self, value: Union[int, Expr, "Uint8", "Byte"]) -> Expr:
-        checked = False
-        if type(value) is int:
-            if value >= 2 ** self.bit_size:
-                raise TealInputError(
-                    "Value exceeds {} maximum: {}".format(
-                        self.__class__.__name__, value
-                    )
-                )
-            value = Int(value)
-            checked = True
-
-        if type(value) is Uint8 or type(value) is Byte:
-            value = value.get()
-            checked = True
-
-        if checked:
-            return self.stored_value.store(cast(Expr, value))
-
-        return Seq(
-            self.stored_value.store(cast(Expr, value)),
-            Assert(self.stored_value.load() < Int(2 ** self.bit_size)),
-        )
+    def set(self, value: Union[int, Expr, "Uint"]) -> Expr:
+        if isinstance(value, Type) and not self.has_same_type_as(value):
+            raise TealInputError("Cannot set type {} to {}".format(self, value))
+        return uint_set(self.bit_size(), self.stored_value, value)
 
     def decode(
         self,
@@ -87,157 +163,26 @@ class Uint8(Uint):
         endIndex: Expr = None,
         length: Expr = None
     ) -> Expr:
-        if startIndex is None:
-            startIndex = Int(0)
-        return self.stored_value.store(GetByte(encoded, startIndex))
+        return uint_decode(
+            self.bit_size(), self.stored_value, encoded, startIndex, endIndex, length
+        )
 
     def encode(self) -> Expr:
-        return SetByte(Bytes(b"\x00"), Int(0), self.get())
+        return uint_encode(self.bit_size(), self.stored_value)
 
 
-Uint8.__module__ = "pyteal"
+Uint.__module__ = "pyteal"
+
+Uint8 = Uint[Literal[8]]
+Uint16 = Uint[Literal[16]]
+Uint32 = Uint[Literal[32]]
+Uint64 = Uint[Literal[64]]
 
 
 class Byte(Uint8):
-    def __init__(self) -> None:
-        super().__init__()
-
-    def new_instance(self) -> "Byte":
-        return Byte()
-
-    def __str__(self) -> str:
+    @classmethod
+    def __str__(cls) -> str:
         return "byte"
 
 
 Byte.__module__ = "pyteal"
-
-
-class Uint16(Uint):
-    def __init__(
-        self,
-    ) -> None:
-        super().__init__(16)
-
-    def new_instance(self) -> "Uint16":
-        return Uint16()
-
-    def set(self, value: Union[int, Expr, "Uint16"]) -> Expr:
-        checked = False
-        if type(value) is int:
-            if value >= 2 ** self.bit_size:
-                raise TealInputError("Value exceeds Uint16 maximum: {}".format(value))
-            value = Int(value)
-            checked = True
-
-        if type(value) is Uint16:
-            value = value.get()
-            checked = True
-
-        if checked:
-            return self.stored_value.store(cast(Expr, value))
-
-        return Seq(
-            self.stored_value.store(cast(Expr, value)),
-            Assert(self.stored_value.load() < Int(2 ** self.bit_size)),
-        )
-
-    def decode(
-        self,
-        encoded: Expr,
-        *,
-        startIndex: Expr = None,
-        endIndex: Expr = None,
-        length: Expr = None
-    ) -> Expr:
-        if startIndex is None:
-            startIndex = Int(0)
-        return self.stored_value.store(ExtractUint16(encoded, startIndex))
-
-    def encode(self) -> Expr:
-        return Suffix(Itob(self.get()), Int(6))
-
-
-Uint16.__module__ = "pyteal"
-
-
-class Uint32(Uint):
-    def __init__(
-        self,
-    ) -> None:
-        super().__init__(32)
-
-    def new_instance(self) -> "Uint32":
-        return Uint32()
-
-    def set(self, value: Union[int, Expr, "Uint32"]) -> Expr:
-        checked = False
-        if type(value) is int:
-            if value >= 2 ** self.bit_size:
-                raise TealInputError("Value exceeds Uint32 maximum: {}".format(value))
-            value = Int(value)
-            checked = True
-
-        if type(value) is Uint32:
-            value = value.get()
-            checked = True
-
-        if checked:
-            return self.stored_value.store(cast(Expr, value))
-
-        return Seq(
-            self.stored_value.store(cast(Expr, value)),
-            Assert(self.stored_value.load() < Int(2 ** self.bit_size)),
-        )
-
-    def decode(
-        self,
-        encoded: Expr,
-        *,
-        startIndex: Expr = None,
-        endIndex: Expr = None,
-        length: Expr = None
-    ) -> Expr:
-        if startIndex is None:
-            startIndex = Int(0)
-        return self.stored_value.store(ExtractUint32(encoded, startIndex))
-
-    def encode(self) -> Expr:
-        return Suffix(Itob(self.get()), Int(4))
-
-
-Uint32.__module__ = "pyteal"
-
-
-class Uint64(Uint):
-    def __init__(self) -> None:
-        super().__init__(64)
-
-    def new_instance(self) -> "Uint64":
-        return Uint64()
-
-    def set(self, value: Union[int, Expr, "Uint64"]) -> Expr:
-        if type(value) is int:
-            value = Int(value)
-        if type(value) is Uint64:
-            value = value.get()
-        return self.stored_value.store(cast(Expr, value))
-
-    def decode(
-        self,
-        encoded: Expr,
-        *,
-        startIndex: Expr = None,
-        endIndex: Expr = None,
-        length: Expr = None
-    ) -> Expr:
-        if startIndex is None:
-            if endIndex is None and length is None:
-                return self.stored_value.store(Btoi(encoded))
-            startIndex = Int(0)
-        return self.stored_value.store(ExtractUint64(encoded, startIndex))
-
-    def encode(self) -> Expr:
-        return Itob(self.get())
-
-
-Uint64.__module__ = "pyteal"
