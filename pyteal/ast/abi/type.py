@@ -1,4 +1,4 @@
-from typing import TypeVar, Generic, Callable
+from typing import TypeVar, Generic, Callable, Type as PyType, Union
 from abc import ABC, abstractmethod
 
 from ...types import TealType
@@ -8,8 +8,6 @@ from ..scratchvar import ScratchVar
 from ..seq import Seq
 from ..int import Int
 from ..substring import Extract, Substring, Suffix
-
-T = TypeVar("T", bound="Type")
 
 
 class Type(ABC):
@@ -21,39 +19,31 @@ class Type(ABC):
     to recompute it.
     """
 
-    def __init__(self, valueType: TealType) -> None:
+    def __init__(self) -> None:
         """Create a new Type.
 
-        Args:
-            valueType: The TealType (uint64 or bytes) that this ABI type will store in its internal
-                ScratchVar.
+        Every subclass of Type must allow its __init__ method to be called with no arguments.
         """
         super().__init__()
-        self.stored_value = ScratchVar(valueType)
+        self.stored_value = ScratchVar(self.storage_type())
 
+    @classmethod
     @abstractmethod
-    def has_same_type_as(self, other: "Type") -> bool:
-        """Check if this type is considered equal to the other ABI type, irrespective of their
-        values.
+    def has_same_type_as(cls, other: Union[PyType["Type"], "Type"]) -> bool:
+        """Check if this type is considered equal to the other ABI type, irrespective of the values
+        of types.
 
         Args:
-            other: The ABI type to compare to.
+            other: The ABI type to compare to. This may be an instance of Type or a subclass of Type.
 
         Returns:
-            True if and only if self and other can store the same ABI value.
+            True if and only if self and other conform to the same ABI type.
         """
         pass
 
+    @classmethod
     @abstractmethod
-    def new_instance(self: T) -> T:
-        """Create a new instance of this ABI type.
-
-        The value of this type will not be applied to the new type.
-        """
-        pass
-
-    @abstractmethod
-    def is_dynamic(self) -> bool:
+    def is_dynamic(cls) -> bool:
         """Check if this ABI type is dynamic.
 
         If a type is dynamic, the length of its encoding depends on its value. Otherwise, the type
@@ -61,9 +51,22 @@ class Type(ABC):
         """
         pass
 
+    @classmethod
     @abstractmethod
-    def byte_length_static(self) -> int:
+    def byte_length_static(cls) -> int:
         """Get the byte length of this ABI type's encoding. Only valid for static types."""
+        pass
+
+    @classmethod
+    @abstractmethod
+    def storage_type(cls) -> TealType:
+        """Get the TealType that the underlying ScratchVar should hold for this type."""
+        pass
+
+    @classmethod
+    @abstractmethod
+    def __str__(cls) -> str:
+        """Get the string representation of this ABI type, used for creating method signatures."""
         pass
 
     @abstractmethod
@@ -117,26 +120,50 @@ class Type(ABC):
         """
         pass
 
-    @abstractmethod
-    def __str__(self) -> str:
-        """Get the string representation of this ABI type, used for creating method signatures."""
-        pass
-
 
 Type.__module__ = "pyteal"
 
+T = TypeVar("T", bound=Type)
+
 
 class ComputedType(ABC, Generic[T]):
-    def __init__(self, producedType: T) -> None:
-        super().__init__()
-        self._producedType = producedType
+    """Represents an ABI Type whose value must be computed by an expression."""
+
+    @abstractmethod
+    def produced_type(cls) -> PyType[T]:
+        """Get the ABI Type that this object produces.
+
+        Returns:
+            The type class of the produced ABI type. This class should be immediately instantiable
+            with no arguments.
+        """
+        pass
 
     @abstractmethod
     def store_into(self, output: T) -> Expr:
+        """Store the value of this computed type into an existing ABI Type object.
+
+        Args:
+            output: The object where the computed value will be stored. This object must have the
+                same type as this class's produced type.
+
+        Returns:
+            An expression which stores the computed value represented by this class into the output
+            object.
+        """
         pass
 
     def use(self, action: Callable[[T], Expr]) -> Expr:
-        newInstance = self._producedType.new_instance()
+        """Use the computed value represented by this class in a function or lambda expression.
+
+        Args:
+            action: A callable object that will receive an instance of this class's produced type
+                with the correct value. TODO: explanation of the callable's return value
+
+        Returns:
+            TODO
+        """
+        newInstance = self.produced_type()()
         return Seq(self.store_into(newInstance), action(newInstance))
 
 

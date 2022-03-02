@@ -1,9 +1,5 @@
-from typing import (
-    List,
-    Sequence,
-    Dict,
-    cast,
-)
+from abc import abstractmethod
+from typing import List, Sequence, Dict, cast, Type as PyType, Tuple as PyTuple, Union
 
 from ...types import TealType
 from ...errors import TealInputError
@@ -197,30 +193,77 @@ def indexTuple(
 
 
 class Tuple(Type):
-    def __init__(self, *valueTypes: Type) -> None:
-        super().__init__(TealType.bytes)
-        self.valueTypes = list(valueTypes)
+    @classmethod
+    def of(cls, *params: PyType[Type]) -> PyType["Tuple"]:
+        """Get an instance of an instantiable Tuple class that can hold the given types.
 
-    def has_same_type_as(self, other: Type) -> bool:
-        return (
-            type(other) is Tuple
-            and len(self.valueTypes) == len(other.valueTypes)
-            and all(
-                self.valueTypes[i].has_same_type_as(other.valueTypes[i])
-                for i in range(len(self.valueTypes))
-            )
+        Args:
+            params: A list of instantiable Type classes that the returned Tuple class should hold.
+                The order of these parameters will be the same order of the Tuple's types.
+
+        Returns:
+            An instantiable Tuple class that holds the given types.
+        """
+        # TODO: give a better error message if the below condition is not true
+        assert all(issubclass(param, Type) for param in params)
+
+        # TODO: verify all params are instantiable. It should not be possible to call Tuple.of(Type)
+
+        class TypedTuple(Tuple):
+            @classmethod
+            def value_types(cls) -> List[PyType[Type]]:
+                return list(params)
+
+        return TypedTuple
+
+    def __class_getitem__(cls, params: PyTuple[PyType[Type], ...]) -> PyType["Tuple"]:
+        """Syntactic sugar for the Tuple.of function.
+
+        This special function is called when the Tuple type is indexed, e.g. `Tuple[A, B, C]`.
+        """
+        return cls.of(*params)
+
+    @classmethod
+    def has_same_type_as(cls, other: Union[PyType[Type], Type]) -> bool:
+        if not issubclass(other, Tuple) and not isinstance(other, Tuple):
+            return False
+
+        myValueTypes = cls.value_types()
+        otherValueTypes = other.value_types()
+
+        return len(myValueTypes) == len(otherValueTypes) and all(
+            myValueTypes[i].has_same_type_as(otherValueTypes[i])
+            for i in range(len(myValueTypes))
         )
 
-    def new_instance(self) -> "Tuple":
-        return Tuple(*self.valueTypes)
+    @classmethod
+    def is_dynamic(cls) -> bool:
+        return any(valueType.is_dynamic() for valueType in cls.value_types())
 
-    def is_dynamic(self) -> bool:
-        return any(valueType.is_dynamic() for valueType in self.valueTypes)
-
-    def byte_length_static(self) -> int:
-        if self.is_dynamic():
+    @classmethod
+    def byte_length_static(cls) -> int:
+        if cls.is_dynamic():
             raise ValueError("Type is dynamic")
-        return boolAwareStaticByteLength(self.valueTypes)
+        return boolAwareStaticByteLength(cls.value_types())
+
+    @classmethod
+    def storage_type(cls) -> TealType:
+        return TealType.bytes
+
+    @classmethod
+    def __str__(cls) -> str:
+        return "({})".format(",".join(map(lambda x: x.__str__(), cls.value_types())))
+
+    @classmethod
+    @abstractmethod
+    def value_types(cls) -> List[PyType[Type]]:
+        """Get a list of the types of values this tuple holds."""
+        pass
+
+    @classmethod
+    def length_static(cls) -> int:
+        """Get the number of values this tuple holds."""
+        return len(cls.value_types())
 
     def decode(
         self,
@@ -236,49 +279,48 @@ class Tuple(Type):
         return self.stored_value.store(extracted)
 
     def set(self, *values: Type) -> Expr:
-        if len(self.valueTypes) != len(values):
+        myTypes = self.value_types()
+        if len(myTypes) != len(values):
             raise TealInputError(
                 "Incorrect length for values. Expected {}, got {}".format(
-                    len(self.valueTypes), len(values)
+                    len(myTypes), len(values)
                 )
             )
-        if not all(
-            self.valueTypes[i].has_same_type_as(values[i])
-            for i in range(len(self.valueTypes))
-        ):
+        if not all(myTypes[i].has_same_type_as(values[i]) for i in range(len(myTypes))):
             raise TealInputError("Input values do not match type")
         return self.stored_value.store(encodeTuple(values))
 
     def encode(self) -> Expr:
         return self.stored_value.load()
 
-    def length_static(self) -> int:
-        return len(self.valueTypes)
-
     def length(self) -> Expr:
+        """Get the number of values this tuple holds as an Expr."""
         return Int(self.length_static())
 
     def __getitem__(self, index: int) -> "TupleElement":
         if not (0 <= index < self.length_static()):
             raise TealInputError("Index out of bounds")
-        return TupleElement(self, index)
-
-    def __str__(self) -> str:
-        return "({})".format(",".join(map(lambda x: x.__str__(), self.valueTypes)))
+        valueType = self.value_types()[index]
+        return TupleElement[valueType](index)
 
 
 Tuple.__module__ = "pyteal"
 
 
 class TupleElement(ComputedType[Type]):
+    """Represents the extraction of a specific element from a Tuple."""
+
     def __init__(self, tuple: Tuple, index: int) -> None:
-        super().__init__(tuple.valueTypes[index])
+        super().__init__()
         self.tuple = tuple
         self.index = index
 
+    def produced_type(self) -> PyType[Type]:
+        return self.tuple.value_types()[self.index]
+
     def store_into(self, output: Type) -> Expr:
         return indexTuple(
-            self.tuple.valueTypes, self.tuple.encode(), self.index, output
+            self.tuple.value_types(), self.tuple.encode(), self.index, output
         )
 
 
