@@ -52,6 +52,13 @@ PyTeal **hasn't been security audited**. Use it at your own risk.
 
    api
 
+.. toctree::
+   :maxdepth: 3
+   :caption: Extending PyTeal
+
+   repository
+   architecture
+
 Indices and tables
 ==================
 

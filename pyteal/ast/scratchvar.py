@@ -58,7 +58,7 @@ ScratchVar.__module__ = "pyteal"
 
 class DynamicScratchVar(ScratchVar):
     """
-    Example of Dynamic Scratch space whereby the slot index is picked up from the stack:
+    Example of dynamic scratch space whereby the slot index is picked up from the stack:
         .. code-block:: python1
 
             player_score = DynamicScratchVar(TealType.uint64)
@@ -126,7 +126,7 @@ class DynamicScratchVar(ScratchVar):
         return super().load()
 
     def internal_index(self) -> Expr:
-        """Get the index of _this_ DynamicScratchVar, as opposed to that of the referenced ScratchVar."""
+        """Get the index of *this* DynamicScratchVar, as opposed to that of the referenced ScratchVar."""
         return super().index()
 
 
