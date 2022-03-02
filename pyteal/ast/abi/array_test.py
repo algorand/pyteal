@@ -1,14 +1,13 @@
 from typing import List, cast
 import pytest
 
+from .. import *
 from ... import *
+
 from .type import substringForDecoding
 from .tuple import encodeTuple
 from .bool import boolSequenceLength
 from .array import ArrayElement
-
-# this is not necessary but mypy complains if it's not included
-from ... import CompileOptions
 
 options = CompileOptions(version=5)
 

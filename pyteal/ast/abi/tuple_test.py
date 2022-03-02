@@ -1,13 +1,11 @@
 from typing import NamedTuple, List, Callable
 import pytest
 
+from .. import *
 from ... import *
 from .tuple import encodeTuple, indexTuple, TupleElement
 from .bool import encodeBoolSequence
 from .type import substringForDecoding
-
-# this is not necessary but mypy complains if it's not included
-from ... import CompileOptions
 
 options = CompileOptions(version=5)
 

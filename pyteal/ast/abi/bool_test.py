@@ -1,6 +1,6 @@
 from typing import NamedTuple, List
-import pytest
 
+from .. import *
 from ... import *
 from .bool import (
     boolAwareStaticByteLength,
@@ -8,9 +8,6 @@ from .bool import (
     boolSequenceLength,
     encodeBoolSequence,
 )
-
-# this is not necessary but mypy complains if it's not included
-from ... import CompileOptions
 
 options = CompileOptions(version=5)
 

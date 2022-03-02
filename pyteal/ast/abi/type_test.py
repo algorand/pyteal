@@ -1,11 +1,9 @@
 from typing import NamedTuple, List, Optional, Union, Any, cast
 import pytest
 
+from .. import *
 from ... import *
 from .type import ComputedType, substringForDecoding
-
-# this is not necessary but mypy complains if it's not included
-from ... import CompileOptions
 
 options = CompileOptions(version=5)
 
