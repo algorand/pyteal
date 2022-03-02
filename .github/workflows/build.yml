@@ -20,12 +20,14 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install pip dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          pip install -e .
       - name: Build and Test
         run: |
           pytest
           mypy pyteal
-          python3 -c "import pyteal" scripts/generate_init.py --check
+          python scripts/generate_init.py --check
           black --check .
   build-docset:
     runs-on: ubuntu-20.04
