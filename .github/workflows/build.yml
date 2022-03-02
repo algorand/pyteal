@@ -2,6 +2,8 @@ name: "Build workflow"
 on:
   pull_request:
   push:
+    tags:
+      - v**
     branches:
       - master
 jobs:
@@ -10,7 +12,7 @@ jobs:
     container: python:${{ matrix.python }}-slim
     strategy:
       matrix:
-        python: ['3.6', '3.7', '3.8', '3.9']
+        python: ['3.6', '3.7', '3.8', '3.9', '3.10']
     steps:
       - run: python3 --version
       - name: Check out code
@@ -25,10 +27,35 @@ jobs:
           mypy pyteal
           python3 -c "import pyteal" scripts/generate_init.py --check
           black --check .
+  build-docset:
+    runs-on: ubuntu-20.04
+    container: python:3.9  # Needs `make`, can't be slim
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Install pip dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r docs/requirements.txt
+          pip install doc2dash
+      - name: Make docs
+        run: |
+          cd docs
+          make html
+          doc2dash --name pyteal --index-page index.html --online-redirect-url https://pyteal.readthedocs.io/en/ _build/html
+          tar -czvf pyteal.docset.tar.gz pyteal.docset
+      - name: Archive docset
+        uses: actions/upload-artifact@v2
+        with:
+          name: pyteal.docset
+          path: docs/pyteal.docset.tar.gz
   upload-to-pypi:
     runs-on: ubuntu-20.04
+    container: python:3.9
     needs: ['build-test']
-    if: ${{ github.event_name == 'push' && contains(github.ref, 'master') && startsWith(github.ref, 'refs/tags') }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
     steps:
       - name: Check out code
         uses: actions/checkout@v2

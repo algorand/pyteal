@@ -14,6 +14,8 @@ TEAL Version PyTeal Version
 2            >= 0.6.0
 3            >= 0.7.0
 4            >= 0.8.0
+5            >= 0.9.0
+6            >= 0.10.0
 ============ ==============
 
 In order to support TEAL v2, PyTeal v0.6.0 breaks backward compatibility with v0.5.4. PyTeal
