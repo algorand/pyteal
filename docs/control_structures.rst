@@ -298,7 +298,8 @@ Subroutines
 
 A subroutine is section of code that can be called multiple times from within a program. Subroutines are PyTeal's equivalent to functions.  Subroutine constraints include:
 
-* Subroutines accept any number of arguments.  Argument types can be PyTeal expressions (`Expr`) or `ScratchVar`.
+* Subroutines accept any number of arguments.
+* Subroutine argument types can be `Expr` (PyTeal expression) or `ScratchVar`.  PyTeal applies pass-by-value semantics to `Expr` and pass-by-reference to `ScratchVar`.
 * Subroutines return a single value, or no value.
 
 Creating Subroutines
