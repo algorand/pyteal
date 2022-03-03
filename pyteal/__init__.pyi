@@ -124,9 +124,9 @@ __all__ = [
     "Op",
     "Or",
     "Pop",
+    "RETURN_EVENT_SELECTOR",
     "Reject",
     "Return",
-    "RETURN_EVENT_SELECTOR",
     "ScratchIndex",
     "ScratchLoad",
     "ScratchSlot",
@@ -171,5 +171,6 @@ __all__ = [
     "UnaryExpr",
     "While",
     "WideRatio",
+    "abi",
     "compileTeal",
 ]
