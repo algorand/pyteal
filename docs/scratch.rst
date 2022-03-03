@@ -35,12 +35,14 @@ For example:
     ])
     anotherVar = ScratchVar(TealType.bytes, 4) # assign this scratch slot to slot #4
 
-DynamicScratchVar:  Tracking a ScratchVar
+DynamicScratchVar:  Referencing a ScratchVar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:any:`DynamicScratchVar` provides cursor-like capabilities to track a :any:`ScratchVar` by its scratch slot index.
+:any:`DynamicScratchVar` functions as a pointer to a :any:`ScratchVar` instance.
 
-Here's a simple example to motivate usage.  The example shows how a :any:`DynamicScratchVar` updates the *value* of a tracked :any:`ScratchVar` from 7 to 10.
+Reference a :any:`ScratchVar` instance by invoking :any:`DynamicScratchVar.set_index`.  :any:`DynamicScratchVar.set_index` *must* be invoked before using :any:`DynamicScratchVar.load` and :any:`DynamicScratchVar.store`.
+
+Here's an example to motivate usage.  The example shows how a :any:`DynamicScratchVar` updates the *value* of a referenced :any:`ScratchVar` from 7 to 10.
 
 .. code-block:: python
 
