@@ -170,5 +170,6 @@ __all__ = [
     "UnaryExpr",
     "While",
     "WideRatio",
+    "abi",
     "compileTeal",
 ]
