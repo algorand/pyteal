@@ -144,7 +144,7 @@ if not OLD_CODE_ONLY:
 
     @Subroutine(TealType.none)
     def factorial(n: ScratchVar):
-        tmp = ScratchVar(TealType.uint64)
+        tmp = DynamicScratchVar(TealType.uint64)
         return (
             If(n.load() <= Int(1))
             .Then(n.store(Int(1)))
@@ -179,6 +179,31 @@ if not OLD_CODE_ONLY:
         z = ScratchVar(TealType.uint64)
         return mixed_annotations(x, y, z)
 
+    @Subroutine(TealType.none)
+    def plus_one(n: ScratchVar):
+        tmp = ScratchVar(TealType.uint64)
+        return If(n.load() == Int(0)).Then(n.store(Int(1))).Else(Seq(
+            tmp.store(n.load() - Int(1)),
+            plus_one(tmp),
+            n.store(tmp.load() + Int(1))
+        ))
+
+    def increment():
+        n = ScratchVar(TealType.uint64)
+        return Seq(n.store(Int(4)), plus_one(n), Int(1))
+
+
+    @Subroutine(TealType.none)
+    def tally(n, result: ScratchVar):
+        return If(n == Int(0)).Then(result.store(Bytes(''))).Else(Seq(
+            tally(n - Int(1), result),
+            result.store(Concat(result.load(), Bytes('1')))
+        ))
+
+    def tallygo():
+        result = ScratchVar(TealType.bytes)
+        return Seq(result.store(Bytes("dummy")), tally(Int(4), result), Btoi(result.load()))
+
 
 OLD_CASES = (sub_logcat, sub_slowfib, sub_fastfib, sub_even)
 
@@ -198,10 +223,19 @@ if not OLD_CODE_ONLY:
     def test_swapper():
         compile_and_save(swapper)
 
+    def test_increment():
+        compile_and_save(increment)
+
+    def test_tally():
+        compile_and_save(tallygo)
+
     def test_new():
         for pt in NEW_CASES:
             assert_new_v_old(pt)
 
+
     if __name__ == "__main__":
-        test_swapper()
-        test_new()
+        # test_swapper()
+        # test_new()
+        # test_increment()
+        test_tally()
