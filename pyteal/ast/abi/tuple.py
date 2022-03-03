@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from inspect import isabstract
 from typing import List, Sequence, Dict, cast, Type as PyType, Tuple as PyTuple, Union
 
 from ...types import TealType
@@ -128,7 +129,7 @@ def indexTuple(
         offset += typeBefore.byte_length_static()
 
     valueType = valueTypes[index]
-    if not valueType.has_same_type_as(output):
+    if not valueType.has_same_type_as(output) or not isinstance(output, Type):
         raise TypeError("Output type does not match value type")
 
     if type(output) is Bool:
@@ -207,7 +208,7 @@ class Tuple(Type):
         # TODO: give a better error message if the below condition is not true
         assert all(issubclass(param, Type) for param in params)
 
-        # TODO: verify all params are instantiable. It should not be possible to call Tuple.of(Type)
+        assert all(not isabstract(param) for param in params)
 
         class TypedTuple(Tuple):
             def __class_getitem__(cls, _):
@@ -220,16 +221,20 @@ class Tuple(Type):
 
         return TypedTuple
 
-    def __class_getitem__(cls, params: PyTuple[PyType[Type], ...]) -> PyType["Tuple"]:
+    def __class_getitem__(
+        cls, params: Union[PyType[Type], PyTuple[PyType[Type], ...]]
+    ) -> PyType["Tuple"]:
         """Syntactic sugar for the Tuple.of function.
 
         This special function is called when the Tuple type is indexed, e.g. `Tuple[A, B, C]`.
         """
-        return cls.of(*params)
+        if type(params) is tuple:
+            return cls.of(*params)
+        return cls.of(params)
 
     @classmethod
     def has_same_type_as(cls, other: Union[PyType[Type], Type]) -> bool:
-        if not issubclass(other, Tuple) and not isinstance(other, Tuple):
+        if not isinstance(other, Tuple) and not issubclass(other, Tuple):
             return False
 
         myValueTypes = cls.value_types()

@@ -10,6 +10,7 @@ from typing import (
     get_args,
 )
 from abc import abstractmethod
+from inspect import isclass
 
 from ...types import TealType
 from ...errors import TealInputError
@@ -112,7 +113,7 @@ class Uint(Type, Generic[N]):
         assert isinstance(size, int)
 
         if size not in SUPPORTED_SIZES:
-            raise ValueError("Unsupported uint size: {}".format(size))
+            raise TypeError("Unsupported uint size: {}".format(size))
 
         class SizedUint(Uint):
             def __class_getitem__(cls, _):
@@ -128,7 +129,7 @@ class Uint(Type, Generic[N]):
     @classmethod
     def has_same_type_as(cls, other: Union[PyType[Type], Type]) -> bool:
         return (
-            isinstance(other, Uint) or issubclass(cast(PyType[Type], other), Uint)
+            isinstance(other, Uint) or (isclass(other) and issubclass(other, Uint))
         ) and cls.bit_size() == cast(Union[PyType[Uint], Uint], other).bit_size()
 
     @classmethod

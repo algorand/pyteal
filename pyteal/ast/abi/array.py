@@ -3,9 +3,14 @@ from typing import (
     Sequence,
     TypeVar,
     Generic,
-    Optional,
     cast,
+    Type as PyType,
+    Tuple,
+    get_origin,
+    get_args,
+    Literal,
 )
+from inspect import isabstract, isclass
 from abc import abstractmethod
 
 from ...types import TealType, require_type
@@ -39,29 +44,35 @@ class Array(Type, Generic[T]):
       * item retrieving by index (expression or integer)
     """
 
-    def __init__(self, valueType: T, staticLength: Optional[int]) -> None:
-        """Creates a new ABI array.
+    @classmethod
+    def storage_type(cls) -> TealType:
+        return TealType.bytes
 
-        This function determines distinct storage format over byte string by inferring if the array
-        element type is static:
-        * if it is static, then the stride is the static byte length of the element.
-        * otherwise the stride is 2 bytes, which is the size of a Uint16.
+    @classmethod
+    @abstractmethod
+    def value_type(cls) -> PyType[Type]:
+        """Get the types of value this array holds."""
+        pass
 
-        This function also stores the static array length of an instance of ABI array, if it exists.
+    @classmethod
+    @abstractmethod
+    def is_length_dynamic(cls) -> bool:
+        """Check if this length has a dynamic or static length."""
+        pass
 
-        Args:
-            valueType: The ABI type of the array element.
-            staticLength (optional): An integer representing the static length of the array.
+    @classmethod
+    def _stride(cls) -> int:
+        """Get the "stride" of this array.
+
+        The stride is defined as the byte length of each element in the array's encoded "head"
+        portion.
+
+        If the underlying value type is static, then the stride is the static byte length of that
+        type. Otherwise, the stride is the static byte length of a Uint16 (2 bytes).
         """
-        super().__init__(TealType.bytes)
-        self._valueType = valueType
-
-        self._has_offsets = valueType.is_dynamic()
-        if self._has_offsets:
-            self._stride = Uint16().byte_length_static()
-        else:
-            self._stride = valueType.byte_length_static()
-        self._static_length = staticLength
+        if cls.value_type().is_dynamic():
+            return Uint16.byte_length_static()
+        return cls.value_type().byte_length_static()
 
     def decode(
         self,
@@ -111,16 +122,16 @@ class Array(Type, Generic[T]):
             ScratchVar.
         """
         for index, value in enumerate(values):
-            if not self._valueType.has_same_type_as(value):
+            if not self.value_type().has_same_type_as(value):
                 raise TealInputError(
                     "Cannot assign type {} at index {} to {}".format(
-                        value, index, self._valueType
+                        value, index, self.value_type()
                     )
                 )
 
         encoded = encodeTuple(values)
 
-        if self._static_length is None:
+        if self.is_length_dynamic():
             length_tmp = Uint16()
             length_prefix = Seq(length_tmp.set(len(values)), length_tmp.encode())
             encoded = Concat(length_prefix, encoded)
@@ -147,8 +158,7 @@ class Array(Type, Generic[T]):
     def __getitem__(self, index: Union[int, Expr]) -> "ArrayElement[T]":
         """Retrieve an ABI array element by an index (either a PyTeal expression or an integer).
 
-        If the static array length is available and the argument index is integer, the function
-        checks if the index is in [0, static_length - 1].
+        If the argument index is integer, the function will raise an error if the index is negative.
 
         Args:
             index: either an integer or a PyTeal expression that evaluates to a uint64.
@@ -157,52 +167,64 @@ class Array(Type, Generic[T]):
             An ArrayElement that represents the ABI array element at the index.
         """
         if type(index) is int:
-            if index < 0 or (
-                self._static_length is not None and index >= self._static_length
-            ):
+            if index < 0:
                 raise TealInputError("Index out of bounds: {}".format(index))
             index = Int(index)
         return ArrayElement(self, cast(Expr, index))
 
-    def __str__(self) -> str:
-        """Get the string representation of ABI array type, for creating method signatures."""
-        return self._valueType.__str__() + (
-            "[]" if self._static_length is None else "[{}]".format(self._static_length)
-        )
-
 
 Array.__module__ = "pyteal"
 
-# until something like https://github.com/python/mypy/issues/3345 is added, we can't make the size of the array a generic parameter
-class StaticArray(Array[T]):
-    """The class that represents ABI static array type.
+N = TypeVar("N", bound=int)
 
-    This class requires static length on initialization.
-    """
 
-    def __init__(self, valueType: T, length: int) -> None:
-        """Create a new static array.
+class StaticArray(Array[T], Generic[T, N]):
+    """The class that represents ABI static array type."""
 
-        Checks if the static array length is non-negative, if it is negative throw error.
+    def __class_getitem__(
+        cls, params: Tuple[PyType[Type], int]
+    ) -> PyType["StaticArray"]:
+        assert len(params) == 2
+        value_type, length = params
 
-        Args:
-            valueType: The ABI type of the array element.
-            length: An integer representing the static length of the array.
-        """
+        assert not isabstract(value_type)
+
+        assert issubclass(value_type, Type)
+        if get_origin(length) is Literal:
+            args = get_args(length)
+            assert len(args) == 1
+            assert type(args[0]) is int
+            length = args[0]
+
+        assert isinstance(length, int)
+
         if length < 0:
-            raise TealInputError(
-                "Static array length cannot be negative. Got {}".format(length)
-            )
-        super().__init__(valueType, length)
+            raise TypeError("Unsupported StaticArray length: {}".format(length))
 
-    def has_same_type_as(self, other: Type) -> bool:
+        class TypedStaticArray(StaticArray):
+            def __class_getitem__(cls, _):
+                # prevent StaticArray[A, B][C, D]
+                raise TypeError("Cannot index into StaticArray[...]")
+
+            @classmethod
+            def value_type(cls) -> PyType[Type]:
+                return value_type
+
+            @classmethod
+            def length_static(cls) -> int:
+                return length
+
+        return TypedStaticArray
+
+    @classmethod
+    def has_same_type_as(cls, other: Union[PyType[Type], Type]) -> bool:
         """Check if this type is considered equal to the other ABI type, irrespective of their
         values.
 
         For static array, this is determined by:
-        * the equivalance of static array type.
-        * the underlying array element type equivalance.
-        * the static array length equivalance.
+        * the equivalence of static array type.
+        * the underlying array element type equivalence.
+        * the static array length equivalence.
 
         Args:
             other: The ABI type to compare to.
@@ -210,36 +232,57 @@ class StaticArray(Array[T]):
         Returns:
             True if and only if self and other can store the same ABI value.
         """
+        if not isinstance(other, StaticArray) and not (
+            isclass(other) and issubclass(other, StaticArray)
+        ):
+            return False
         return (
-            type(other) is StaticArray
-            and self._valueType.has_same_type_as(other._valueType)
-            and self.length_static() == other.length_static()
+            cls.value_type().has_same_type_as(other.value_type())
+            and cls.length_static() == other.length_static()
         )
 
-    def new_instance(self) -> "StaticArray[T]":
-        """Create a new instance of this ABI type.
-
-        The value of this type will not be applied to the new type.
-        """
-        return StaticArray(self._valueType, self.length_static())
-
-    def is_dynamic(self) -> bool:
+    @classmethod
+    def is_dynamic(cls) -> bool:
         """Check if this ABI type is dynamic.
 
-        Whether this ABI static array is dymamic is decided by its array elements' ABI type.
+        Whether this ABI static array is dynamic is decided by its array elements' ABI type.
         """
-        return self._valueType.is_dynamic()
+        return cls.value_type().is_dynamic()
 
-    def byte_length_static(self) -> int:
+    @classmethod
+    def byte_length_static(cls) -> int:
         """Get the byte length of this ABI static array's encoding.
 
         Only valid when array elements' type is static.
         """
-        if self.is_dynamic():
+        if cls.is_dynamic():
             raise ValueError("Type is dynamic")
-        if type(self._valueType) is Bool:
-            return boolSequenceLength(self.length_static())
-        return self.length_static() * self._valueType.byte_length_static()
+
+        value_type = cls.value_type()
+        length = cls.length_static()
+
+        if value_type is Bool:
+            return boolSequenceLength(length)
+        return length * value_type.byte_length_static()
+
+    @classmethod
+    def __str__(cls) -> str:
+        """Get the string representation of ABI array type, for creating method signatures."""
+        return "{}[{}]".format(cls.value_type().__str__(), cls.length_static())
+
+    @classmethod
+    @abstractmethod
+    def length_static(cls) -> int:
+        """Get the size of this static array type.
+
+        Returns:
+            A Python integer that represents the static array length.
+        """
+        pass
+
+    @classmethod
+    def is_length_dynamic(cls) -> bool:
+        return False
 
     def set(self, values: Union[Sequence[T], "StaticArray[T]"]) -> Expr:
         """Set the ABI static array with a sequence of ABI type variables, or another ABI static
@@ -262,7 +305,7 @@ class StaticArray(Array[T]):
         if isinstance(values, Type):
             if not self.has_same_type_as(values):
                 raise TealInputError("Cannot assign type {} to {}".format(values, self))
-            return self.stored_value.store(cast(StaticArray[T], values).encode())
+            return self.stored_value.store(values.encode())
 
         if self.length_static() != len(values):
             raise TealInputError(
@@ -272,14 +315,6 @@ class StaticArray(Array[T]):
             )
         return super().set(values)
 
-    def length_static(self) -> int:
-        """Get the element number of this static ABI array.
-
-        Returns:
-            A Python integer that represents the static array length.
-        """
-        return cast(int, self._static_length)
-
     def length(self) -> Expr:
         """Get the element number of this ABI static array.
 
@@ -288,6 +323,11 @@ class StaticArray(Array[T]):
         """
         return Int(self.length_static())
 
+    def __getitem__(self, index: Union[int, Expr]) -> "ArrayElement[T]":
+        if type(index) is int and index >= self.length_static():
+            raise TealInputError("Index out of bounds: {}".format(index))
+        return super().__getitem__(index)
+
 
 StaticArray.__module__ = "pyteal"
 
@@ -295,20 +335,29 @@ StaticArray.__module__ = "pyteal"
 class DynamicArray(Array[T]):
     """The class that represents ABI dynamic array type."""
 
-    def __init__(self, valueType: T) -> None:
-        """Creates a new dynamic array.
+    def __class_getitem__(cls, value_type: PyType[Type]) -> PyType["DynamicArray"]:
+        assert issubclass(value_type, Type)
 
-        Args:
-            valueType: The ABI type of the array element.
-        """
-        super().__init__(valueType, None)
+        assert not isabstract(value_type)
 
-    def has_same_type_as(self, other: Type) -> bool:
+        class TypedDynamicArray(DynamicArray):
+            def __class_getitem__(cls, _):
+                # prevent DynamicArray[A][B]
+                raise TypeError("Cannot index into DynamicArray[...]")
+
+            @classmethod
+            def value_type(cls) -> PyType[Type]:
+                return value_type
+
+        return TypedDynamicArray
+
+    @classmethod
+    def has_same_type_as(cls, other: Union[PyType[Type], Type]) -> bool:
         """Check if this type is considered equal to the other ABI type, irrespective of their
         values.
 
         For dynamic array, this is determined by
-        * the equivalance of dynamic array type.
+        * the equivalence of dynamic array type.
         * the underlying array element type equivalence.
 
         Args:
@@ -317,30 +366,36 @@ class DynamicArray(Array[T]):
         Returns:
             True if and only if self and other can store the same ABI value.
         """
-        return type(other) is DynamicArray and self._valueType.has_same_type_as(
-            other._valueType
-        )
+        if not (isclass(other) and issubclass(other, DynamicArray)) and not isinstance(
+            other, DynamicArray
+        ):
+            return False
+        return cls.value_type().has_same_type_as(other.value_type())
 
-    def new_instance(self) -> "DynamicArray[T]":
-        """Create a new instance of this ABI type.
-
-        The value of this type will not be applied to the new type.
-        """
-        return DynamicArray(self._valueType)
-
-    def is_dynamic(self) -> bool:
+    @classmethod
+    def is_dynamic(cls) -> bool:
         """Check if this ABI type is dynamic.
 
         An ABI dynamic array is always dynamic.
         """
         return True
 
-    def byte_length_static(self) -> int:
+    @classmethod
+    def byte_length_static(cls) -> int:
         """Get the byte length of this ABI dynamic array's encoding.
 
         Always raise error for this method is only valid for static ABI types.
         """
         raise ValueError("Type is dynamic")
+
+    @classmethod
+    def __str__(cls) -> str:
+        """Get the string representation of ABI array type, for creating method signatures."""
+        return "{}[]".format(cls.value_type().__str__())
+
+    @classmethod
+    def is_length_dynamic(cls) -> bool:
+        return True
 
     def set(self, values: Union[Sequence[T], "DynamicArray[T]"]) -> Expr:
         """Set the ABI dynamic array with a sequence of ABI type variables, or another ABI dynamic
@@ -362,7 +417,7 @@ class DynamicArray(Array[T]):
         if isinstance(values, Type):
             if not self.has_same_type_as(values):
                 raise TealInputError("Cannot assign type {} to {}".format(values, self))
-            return self.stored_value.store(cast(DynamicArray[T], values).encode())
+            return self.stored_value.store(values.encode())
         return super().set(values)
 
     def length(self) -> Expr:
@@ -397,10 +452,13 @@ class ArrayElement(ComputedType[T]):
             array: The ABI array that the array element belongs to.
             index: A PyTeal expression (required to be TealType.uint64) stands for array index.
         """
-        super().__init__(array._valueType)
+        super().__init__()
         require_type(index, TealType.uint64)
         self.array = array
         self.index = index
+
+    def produced_type(self) -> PyType[T]:
+        return self.array.value_type()
 
     def store_into(self, output: T) -> Expr:
         """Partitions the byte string of the given ABI array and stores the byte string of array
@@ -415,7 +473,9 @@ class ArrayElement(ComputedType[T]):
         Returns:
             An expression that stores the byte string of the array element into value `output`.
         """
-        if not self.array._valueType.has_same_type_as(output):
+        if not self.array.value_type().has_same_type_as(output) or not isinstance(
+            output, Type
+        ):
             raise TealInputError("Output type does not match value type")
 
         encodedArray = self.array.encode()
@@ -426,14 +486,14 @@ class ArrayElement(ComputedType[T]):
         if type(output) is Bool:
             bitIndex = self.index
             if self.array.is_dynamic():
-                bitIndex = bitIndex + Int(Uint16().bits())
+                bitIndex = bitIndex + Int(Uint16.bit_size())
             return cast(Bool, output).decodeBit(encodedArray, bitIndex)
 
         # Compute the byteIndex (first byte indicating the element encoding)
         # (If the array is dynamic, add 2 to byte index for dynamic array length uint16 prefix)
-        byteIndex = Int(self.array._stride) * self.index
-        if self.array._static_length is None:
-            byteIndex = byteIndex + Int(Uint16().byte_length_static())
+        byteIndex = Int(self.array._stride()) * self.index
+        if self.array.is_length_dynamic():
+            byteIndex = byteIndex + Int(Uint16.byte_length_static())
 
         arrayLength = self.array.length()
 
@@ -448,14 +508,14 @@ class ArrayElement(ComputedType[T]):
         #
         # * otherwise, `valueEnd` is inferred from `nextValueStart`, which is the beginning offset
         #   of the next array element byte encoding.
-        if self.array._valueType.is_dynamic():
+        if self.array.value_type().is_dynamic():
             valueStart = ExtractUint16(encodedArray, byteIndex)
             nextValueStart = ExtractUint16(
-                encodedArray, byteIndex + Int(Uint16().byte_length_static())
+                encodedArray, byteIndex + Int(Uint16.byte_length_static())
             )
-            if self.array._static_length is None:
-                valueStart = valueStart + Int(Uint16().byte_length_static())
-                nextValueStart = nextValueStart + Int(Uint16().byte_length_static())
+            if self.array.is_length_dynamic():
+                valueStart = valueStart + Int(Uint16.byte_length_static())
+                nextValueStart = nextValueStart + Int(Uint16.byte_length_static())
 
             valueEnd = (
                 If(self.index + Int(1) == arrayLength)
@@ -466,10 +526,10 @@ class ArrayElement(ComputedType[T]):
             return output.decode(encodedArray, startIndex=valueStart, endIndex=valueEnd)
 
         # Handling case for array elements are static:
-        # since array._stride is element's static byte length
+        # since array._stride() is element's static byte length
         # we partition the substring for array element.
         valueStart = byteIndex
-        valueLength = Int(self.array._stride)
+        valueLength = Int(self.array._stride())
         return output.decode(encodedArray, startIndex=valueStart, length=valueLength)
 
 

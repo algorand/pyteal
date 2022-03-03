@@ -1,4 +1,4 @@
-from typing import List, cast
+from typing import List, Type, Literal as L, cast
 import pytest
 
 from ... import *
@@ -12,116 +12,124 @@ from ... import CompileOptions
 
 options = CompileOptions(version=5)
 
-STATIC_TYPES: List[abi.Type] = [
-    abi.Bool(),
-    abi.Uint8(),
-    abi.Uint16(),
-    abi.Uint32(),
-    abi.Uint64(),
-    abi.Tuple(),
-    abi.Tuple(abi.Bool(), abi.Bool(), abi.Uint64()),
-    abi.StaticArray(abi.Bool(), 10),
-    abi.StaticArray(abi.Uint8(), 10),
-    abi.StaticArray(abi.Uint16(), 10),
-    abi.StaticArray(abi.Uint32(), 10),
-    abi.StaticArray(abi.Uint64(), 10),
-    abi.StaticArray(abi.Tuple(abi.Bool(), abi.Bool(), abi.Uint64()), 10),
+STATIC_TYPES: List[Type[abi.Type]] = [
+    abi.Bool,
+    abi.Uint8,
+    abi.Uint16,
+    abi.Uint32,
+    abi.Uint64,
+    abi.Tuple.of(),
+    abi.Tuple[abi.Bool, abi.Bool, abi.Uint64],
+    abi.StaticArray[abi.Bool, L[10]],
+    abi.StaticArray[abi.Uint8, L[10]],
+    abi.StaticArray[abi.Uint16, L[10]],
+    abi.StaticArray[abi.Uint32, L[10]],
+    abi.StaticArray[abi.Uint64, L[10]],
+    abi.StaticArray[abi.Tuple[abi.Bool, abi.Bool, abi.Uint64], L[10]],
 ]
 
-DYNAMIC_TYPES: List[abi.Type] = [
-    abi.DynamicArray(abi.Bool()),
-    abi.DynamicArray(abi.Uint8()),
-    abi.DynamicArray(abi.Uint16()),
-    abi.DynamicArray(abi.Uint32()),
-    abi.DynamicArray(abi.Uint64()),
-    abi.DynamicArray(abi.Tuple()),
-    abi.DynamicArray(abi.Tuple(abi.Bool(), abi.Bool(), abi.Uint64())),
-    abi.DynamicArray(abi.StaticArray(abi.Bool(), 10)),
-    abi.DynamicArray(abi.StaticArray(abi.Uint8(), 10)),
-    abi.DynamicArray(abi.StaticArray(abi.Uint16(), 10)),
-    abi.DynamicArray(abi.StaticArray(abi.Uint32(), 10)),
-    abi.DynamicArray(abi.StaticArray(abi.Uint64(), 10)),
-    abi.DynamicArray(
-        abi.StaticArray(abi.Tuple(abi.Bool(), abi.Bool(), abi.Uint64()), 10)
-    ),
+DYNAMIC_TYPES: List[Type[abi.Type]] = [
+    abi.DynamicArray[abi.Bool],
+    abi.DynamicArray[abi.Uint8],
+    abi.DynamicArray[abi.Uint16],
+    abi.DynamicArray[abi.Uint32],
+    abi.DynamicArray[abi.Uint64],
+    abi.DynamicArray[abi.Tuple.of()],
+    abi.DynamicArray[abi.Tuple[abi.Bool, abi.Bool, abi.Uint64]],
+    abi.DynamicArray[abi.StaticArray[abi.Bool, L[10]]],
+    abi.DynamicArray[abi.StaticArray[abi.Uint8, L[10]]],
+    abi.DynamicArray[abi.StaticArray[abi.Uint16, L[10]]],
+    abi.DynamicArray[abi.StaticArray[abi.Uint32, L[10]]],
+    abi.DynamicArray[abi.StaticArray[abi.Uint64, L[10]]],
+    abi.DynamicArray[abi.StaticArray[abi.Tuple[abi.Bool, abi.Bool, abi.Uint64], L[10]]],
 ]
 
 
 def test_StaticArray_init():
     for elementType in STATIC_TYPES:
         for length in range(256):
-            staticArrayType = abi.StaticArray(elementType, length)
-            assert staticArrayType._valueType is elementType
-            assert not staticArrayType._has_offsets
-            assert staticArrayType._stride == elementType.byte_length_static()
-            assert staticArrayType._static_length == length
+            staticArrayType = abi.StaticArray[elementType, length]
+            assert staticArrayType.value_type() is elementType
+            assert not staticArrayType.is_length_dynamic()
+            assert staticArrayType._stride() == elementType.byte_length_static()
+            assert staticArrayType.length_static() == length
 
-        with pytest.raises(TealInputError):
-            abi.StaticArray(elementType, -1)
+        with pytest.raises(TypeError):
+            abi.StaticArray[elementType, -1]
 
     for elementType in DYNAMIC_TYPES:
         for length in range(256):
-            staticArrayType = abi.StaticArray(elementType, length)
-            assert staticArrayType._valueType is elementType
-            assert staticArrayType._has_offsets
-            assert staticArrayType._stride == 2
-            assert staticArrayType._static_length == length
+            staticArrayType = abi.StaticArray[elementType, length]
+            assert staticArrayType.value_type() is elementType
+            assert not staticArrayType.is_length_dynamic()
+            assert staticArrayType._stride() == 2
+            assert staticArrayType.length_static() == length
 
-        with pytest.raises(TealInputError):
-            abi.StaticArray(elementType, -1)
+        with pytest.raises(TypeError):
+            abi.StaticArray[elementType, -1]
 
 
 def test_StaticArray_str():
     for elementType in STATIC_TYPES + DYNAMIC_TYPES:
         for length in range(256):
-            staticArrayType = abi.StaticArray(elementType, length)
-            assert str(staticArrayType) == "{}[{}]".format(elementType, length)
+            staticArrayType = abi.StaticArray[elementType, length]
+            assert str(staticArrayType()) == "{}[{}]".format(
+                elementType.__str__(), length
+            )
 
 
 def test_StaticArray_new_instance():
     for elementType in STATIC_TYPES + DYNAMIC_TYPES:
         for length in range(256):
-            staticArrayType = abi.StaticArray(elementType, length)
-            newInstance = staticArrayType.new_instance()
-            assert type(newInstance) is abi.StaticArray
-            assert newInstance._valueType is elementType
-            assert newInstance._has_offsets == staticArrayType._has_offsets
-            assert newInstance._stride == staticArrayType._stride
-            assert newInstance._static_length == length
+            abi.StaticArray[elementType, length]()
+
+        value_with_literal = abi.StaticArray[elementType, L[10]]()
+        assert value_with_literal.length_static() == 10
 
 
 def test_StaticArray_has_same_type_as():
     for elementType in STATIC_TYPES + DYNAMIC_TYPES:
-        for length in range(256):
-            staticArrayType = abi.StaticArray(elementType, length)
+        for length in range(10):
+            # lowered the range here because isinstance and issubclass have relatively poor
+            # performance possibly due to dynamically creating classes at runtime
+            staticArrayType = abi.StaticArray[elementType, length]
             assert staticArrayType.has_same_type_as(staticArrayType)
+            assert staticArrayType.has_same_type_as(staticArrayType())
+
             assert not staticArrayType.has_same_type_as(
-                abi.StaticArray(elementType, length + 1)
+                abi.StaticArray[elementType, length + 1]
             )
             assert not staticArrayType.has_same_type_as(
-                abi.StaticArray(abi.Tuple(elementType), length)
+                abi.StaticArray[elementType, length + 1]()
+            )
+
+            assert not staticArrayType.has_same_type_as(
+                abi.StaticArray[abi.Tuple[elementType], length]
+            )
+            assert not staticArrayType.has_same_type_as(
+                abi.StaticArray[abi.Tuple[elementType], length]()
             )
 
 
 def test_StaticArray_is_dynamic():
     for elementType in STATIC_TYPES:
         for length in range(256):
-            staticArrayType = abi.StaticArray(elementType, length)
+            staticArrayType = abi.StaticArray[elementType, length]
             assert not staticArrayType.is_dynamic()
 
     for elementType in DYNAMIC_TYPES:
         for length in range(256):
-            staticArrayType = abi.StaticArray(elementType, length)
+            staticArrayType = abi.StaticArray[elementType, length]
             assert staticArrayType.is_dynamic()
 
 
 def test_StaticArray_byte_length_static():
     for elementType in STATIC_TYPES:
         for length in range(256):
-            staticArrayType = abi.StaticArray(elementType, length)
+            staticArrayType = abi.StaticArray[elementType, length]
             actual = staticArrayType.byte_length_static()
 
-            if type(elementType) is abi.Bool:
+            if elementType is abi.Bool:
                 expected = boolSequenceLength(length)
             else:
                 expected = elementType.byte_length_static() * length
@@ -130,21 +138,21 @@ def test_StaticArray_byte_length_static():
 
     for elementType in DYNAMIC_TYPES:
         for length in range(256):
-            staticArrayType = abi.StaticArray(elementType, length)
+            staticArrayType = abi.StaticArray[elementType, length]
             with pytest.raises(ValueError):
                 staticArrayType.byte_length_static()
 
 
 def test_StaticArray_decode():
-    staticArrayType = abi.StaticArray(abi.Uint64(), 10)
+    encoded = Bytes("encoded")
     for startIndex in (None, Int(1)):
         for endIndex in (None, Int(2)):
             for length in (None, Int(3)):
-                encoded = Bytes("encoded")
+                value = abi.StaticArray[abi.Uint64, 10]()
 
                 if endIndex is not None and length is not None:
                     with pytest.raises(TealInputError):
-                        staticArrayType.decode(
+                        value.decode(
                             encoded,
                             startIndex=startIndex,
                             endIndex=endIndex,
@@ -152,13 +160,13 @@ def test_StaticArray_decode():
                         )
                     continue
 
-                expr = staticArrayType.decode(
+                expr = value.decode(
                     encoded, startIndex=startIndex, endIndex=endIndex, length=length
                 )
                 assert expr.type_of() == TealType.none
                 assert not expr.has_return()
 
-                expectedExpr = staticArrayType.stored_value.store(
+                expectedExpr = value.stored_value.store(
                     substringForDecoding(
                         encoded, startIndex=startIndex, endIndex=endIndex, length=length
                     )
@@ -176,29 +184,29 @@ def test_StaticArray_decode():
 
 
 def test_StaticArray_set_values():
-    staticArrayType = abi.StaticArray(abi.Uint64(), 10)
+    value = abi.StaticArray[abi.Uint64, 10]()
 
     with pytest.raises(TealInputError):
-        staticArrayType.set([])
+        value.set([])
 
     with pytest.raises(TealInputError):
-        staticArrayType.set([abi.Uint64()] * 9)
+        value.set([abi.Uint64()] * 9)
 
     with pytest.raises(TealInputError):
-        staticArrayType.set([abi.Uint64()] * 11)
+        value.set([abi.Uint64()] * 11)
 
     with pytest.raises(TealInputError):
-        staticArrayType.set([abi.Uint16()] * 10)
+        value.set([abi.Uint16()] * 10)
 
     with pytest.raises(TealInputError):
-        staticArrayType.set([abi.Uint64()] * 9 + [abi.Uint16()])
+        value.set([abi.Uint64()] * 9 + [abi.Uint16()])
 
     values = [abi.Uint64() for _ in range(10)]
-    expr = staticArrayType.set(values)
+    expr = value.set(values)
     assert expr.type_of() == TealType.none
     assert not expr.has_return()
 
-    expectedExpr = staticArrayType.stored_value.store(encodeTuple(values))
+    expectedExpr = value.stored_value.store(encodeTuple(values))
     expected, _ = expectedExpr.__teal__(options)
     expected.addIncoming()
     expected = TealBlock.NormalizeBlocks(expected)
@@ -212,26 +220,26 @@ def test_StaticArray_set_values():
 
 
 def test_StaticArray_set_copy():
-    staticArrayType = abi.StaticArray(abi.Uint64(), 10)
-    otherArray = abi.StaticArray(abi.Uint64(), 10)
+    value = abi.StaticArray[abi.Uint64, 10]()
+    otherArray = abi.StaticArray[abi.Uint64, 10]()
 
     with pytest.raises(TealInputError):
-        staticArrayType.set(abi.StaticArray(abi.Uint64(), 11))
+        value.set(abi.StaticArray[abi.Uint64, 11]())
 
     with pytest.raises(TealInputError):
-        staticArrayType.set(abi.StaticArray(abi.Uint8(), 10))
+        value.set(abi.StaticArray[abi.Uint8, 10]())
 
     with pytest.raises(TealInputError):
-        staticArrayType.set(abi.Uint64())
+        value.set(abi.Uint64())
 
-    expr = staticArrayType.set(otherArray)
+    expr = value.set(otherArray)
     assert expr.type_of() == TealType.none
     assert not expr.has_return()
 
     expected = TealSimpleBlock(
         [
             TealOp(None, Op.load, otherArray.stored_value.slot),
-            TealOp(None, Op.store, staticArrayType.stored_value.slot),
+            TealOp(None, Op.store, value.stored_value.slot),
         ]
     )
 
@@ -244,14 +252,12 @@ def test_StaticArray_set_copy():
 
 
 def test_StaticArray_encode():
-    staticArrayType = abi.StaticArray(abi.Uint64(), 10)
-    expr = staticArrayType.encode()
+    value = abi.StaticArray[abi.Uint64, 10]()
+    expr = value.encode()
     assert expr.type_of() == TealType.bytes
     assert not expr.has_return()
 
-    expected = TealSimpleBlock(
-        [TealOp(None, Op.load, staticArrayType.stored_value.slot)]
-    )
+    expected = TealSimpleBlock([TealOp(None, Op.load, value.stored_value.slot)])
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
@@ -263,14 +269,14 @@ def test_StaticArray_encode():
 
 def test_StaticArray_length_static():
     for length in (0, 1, 2, 3, 1000):
-        staticArrayType = abi.StaticArray(abi.Uint64(), length)
+        staticArrayType = abi.StaticArray[abi.Uint64, length]
         assert staticArrayType.length_static() == length
 
 
 def test_StaticArray_length():
     for length in (0, 1, 2, 3, 1000):
-        staticArrayType = abi.StaticArray(abi.Uint64(), length)
-        expr = staticArrayType.length()
+        value = abi.StaticArray[abi.Uint64, length]()
+        expr = value.length()
         assert expr.type_of() == TealType.uint64
         assert not expr.has_return()
 
@@ -286,96 +292,94 @@ def test_StaticArray_length():
 
 def test_StaticArray_getitem():
     for length in (0, 1, 2, 3, 1000):
-        staticArrayType = abi.StaticArray(abi.Uint64(), length)
+        value = abi.StaticArray[abi.Uint64, length]()
 
         for index in range(length):
             # dynamic indexes
             indexExpr = Int(index)
-            element = staticArrayType[indexExpr]
+            element = value[indexExpr]
             assert type(element) is ArrayElement
-            assert element.array is staticArrayType
+            assert element.array is value
             assert element.index is indexExpr
 
         for index in range(length):
             # static indexes
-            element = staticArrayType[index]
+            element = value[index]
             assert type(element) is ArrayElement
-            assert element.array is staticArrayType
+            assert element.array is value
             assert type(element.index) is Int
             assert element.index.value == index
 
         with pytest.raises(TealInputError):
-            staticArrayType[-1]
+            value[-1]
 
         with pytest.raises(TealInputError):
-            staticArrayType[length]
+            value[length]
 
 
 def test_DynamicArray_init():
     for elementType in STATIC_TYPES:
-        dynamicArrayType = abi.DynamicArray(elementType)
-        assert dynamicArrayType._valueType is elementType
-        assert not dynamicArrayType._has_offsets
-        assert dynamicArrayType._stride == elementType.byte_length_static()
-        assert dynamicArrayType._static_length is None
+        dynamicArrayType = abi.DynamicArray[elementType]
+        assert dynamicArrayType.value_type() is elementType
+        assert dynamicArrayType.is_length_dynamic()
+        assert dynamicArrayType._stride() == elementType.byte_length_static()
 
     for elementType in DYNAMIC_TYPES:
-        dynamicArrayType = abi.DynamicArray(elementType)
-        assert dynamicArrayType._valueType is elementType
-        assert dynamicArrayType._has_offsets
-        assert dynamicArrayType._stride == 2
-        assert dynamicArrayType._static_length is None
+        dynamicArrayType = abi.DynamicArray[elementType]
+        assert dynamicArrayType.value_type() is elementType
+        assert dynamicArrayType.is_length_dynamic()
+        assert dynamicArrayType._stride() == 2
 
 
 def test_DynamicArray_str():
     for elementType in STATIC_TYPES + DYNAMIC_TYPES:
-        dynamicArrayType = abi.DynamicArray(elementType)
-        assert str(dynamicArrayType) == "{}[]".format(elementType)
+        dynamicArrayType = abi.DynamicArray[elementType]
+        assert str(dynamicArrayType()) == "{}[]".format(elementType.__str__())
 
 
 def test_DynamicArray_new_instance():
     for elementType in STATIC_TYPES + DYNAMIC_TYPES:
-        dynamicArrayType = abi.DynamicArray(elementType)
-        newInstance = dynamicArrayType.new_instance()
-        assert type(newInstance) is abi.DynamicArray
-        assert newInstance._valueType is elementType
-        assert newInstance._has_offsets == dynamicArrayType._has_offsets
-        assert newInstance._stride == dynamicArrayType._stride
-        assert newInstance._static_length is None
+        abi.DynamicArray[elementType]()
 
 
 def test_DynamicArray_has_same_type_as():
     for elementType in STATIC_TYPES + DYNAMIC_TYPES:
-        dynamicArrayType = abi.DynamicArray(elementType)
+        dynamicArrayType = abi.DynamicArray[elementType]
+
         assert dynamicArrayType.has_same_type_as(dynamicArrayType)
+        assert dynamicArrayType.has_same_type_as(dynamicArrayType())
+
         assert not dynamicArrayType.has_same_type_as(
-            abi.DynamicArray(abi.Tuple(elementType))
+            abi.DynamicArray[abi.Tuple[elementType]]
+        )
+        assert not dynamicArrayType.has_same_type_as(
+            abi.DynamicArray[abi.Tuple[elementType]]()
         )
 
 
 def test_DynamicArray_is_dynamic():
     for elementType in STATIC_TYPES + DYNAMIC_TYPES:
-        dynamicArrayType = abi.DynamicArray(elementType)
+        dynamicArrayType = abi.DynamicArray[elementType]
         assert dynamicArrayType.is_dynamic()
 
 
 def test_DynamicArray_byte_length_static():
     for elementType in STATIC_TYPES + DYNAMIC_TYPES:
-        dynamicArrayType = abi.DynamicArray(elementType)
+        dynamicArrayType = abi.DynamicArray[elementType]
         with pytest.raises(ValueError):
             dynamicArrayType.byte_length_static()
 
 
 def test_DynamicArray_decode():
-    dynamicArrayType = abi.DynamicArray(abi.Uint64())
+    encoded = Bytes("encoded")
     for startIndex in (None, Int(1)):
         for endIndex in (None, Int(2)):
             for length in (None, Int(3)):
-                encoded = Bytes("encoded")
+                value = abi.DynamicArray[abi.Uint64]()
 
                 if endIndex is not None and length is not None:
                     with pytest.raises(TealInputError):
-                        dynamicArrayType.decode(
+                        value.decode(
                             encoded,
                             startIndex=startIndex,
                             endIndex=endIndex,
@@ -383,13 +387,13 @@ def test_DynamicArray_decode():
                         )
                     continue
 
-                expr = dynamicArrayType.decode(
+                expr = value.decode(
                     encoded, startIndex=startIndex, endIndex=endIndex, length=length
                 )
                 assert expr.type_of() == TealType.none
                 assert not expr.has_return()
 
-                expectedExpr = dynamicArrayType.stored_value.store(
+                expectedExpr = value.stored_value.store(
                     substringForDecoding(
                         encoded, startIndex=startIndex, endIndex=endIndex, length=length
                     )
@@ -407,8 +411,6 @@ def test_DynamicArray_decode():
 
 
 def test_DynamicArray_set_values():
-    dynamicArrayType = abi.DynamicArray(abi.Uint64())
-
     valuesToSet: List[abi.Uint64] = [
         [],
         [abi.Uint64()],
@@ -416,12 +418,13 @@ def test_DynamicArray_set_values():
     ]
 
     for values in valuesToSet:
-        expr = dynamicArrayType.set(values)
+        value = abi.DynamicArray[abi.Uint64]()
+        expr = value.set(values)
         assert expr.type_of() == TealType.none
         assert not expr.has_return()
 
         length_tmp = abi.Uint16()
-        expectedExpr = dynamicArrayType.stored_value.store(
+        expectedExpr = value.stored_value.store(
             Concat(
                 Seq(length_tmp.set(len(values)), length_tmp.encode()),
                 encodeTuple(values),
@@ -446,23 +449,23 @@ def test_DynamicArray_set_values():
 
 
 def test_DynamicArray_set_copy():
-    dynamicArrayType = abi.DynamicArray(abi.Uint64())
-    otherArray = abi.DynamicArray(abi.Uint64())
+    value = abi.DynamicArray[abi.Uint64]()
+    otherArray = abi.DynamicArray[abi.Uint64]()
 
     with pytest.raises(TealInputError):
-        dynamicArrayType.set(abi.DynamicArray(abi.Uint8()))
+        value.set(abi.DynamicArray[abi.Uint8]())
 
     with pytest.raises(TealInputError):
-        dynamicArrayType.set(abi.Uint64())
+        value.set(abi.Uint64())
 
-    expr = dynamicArrayType.set(otherArray)
+    expr = value.set(otherArray)
     assert expr.type_of() == TealType.none
     assert not expr.has_return()
 
     expected = TealSimpleBlock(
         [
             TealOp(None, Op.load, otherArray.stored_value.slot),
-            TealOp(None, Op.store, dynamicArrayType.stored_value.slot),
+            TealOp(None, Op.store, value.stored_value.slot),
         ]
     )
 
@@ -475,14 +478,12 @@ def test_DynamicArray_set_copy():
 
 
 def test_DynamicArray_encode():
-    dynamicArrayType = abi.DynamicArray(abi.Uint64())
-    expr = dynamicArrayType.encode()
+    value = abi.DynamicArray[abi.Uint64]()
+    expr = value.encode()
     assert expr.type_of() == TealType.bytes
     assert not expr.has_return()
 
-    expected = TealSimpleBlock(
-        [TealOp(None, Op.load, dynamicArrayType.stored_value.slot)]
-    )
+    expected = TealSimpleBlock([TealOp(None, Op.load, value.stored_value.slot)])
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
@@ -493,13 +494,13 @@ def test_DynamicArray_encode():
 
 
 def test_DynamicArray_length():
-    dynamicArrayType = abi.DynamicArray(abi.Uint64())
-    expr = dynamicArrayType.length()
+    value = abi.DynamicArray[abi.Uint64]()
+    expr = value.length()
     assert expr.type_of() == TealType.uint64
     assert not expr.has_return()
 
     length_tmp = abi.Uint16()
-    expectedExpr = Seq(length_tmp.decode(dynamicArrayType.encode()), length_tmp.get())
+    expectedExpr = Seq(length_tmp.decode(value.encode()), length_tmp.get())
     expected, _ = expectedExpr.__teal__(options)
     expected.addIncoming()
     expected = TealBlock.NormalizeBlocks(expected)
@@ -519,30 +520,30 @@ def test_DynamicArray_length():
 
 
 def test_DynamicArray_getitem():
-    dynamicArrayType = abi.DynamicArray(abi.Uint64())
+    value = abi.DynamicArray[abi.Uint64]()
 
     for index in (0, 1, 2, 3, 1000):
         # dynamic indexes
         indexExpr = Int(index)
-        element = dynamicArrayType[indexExpr]
+        element = value[indexExpr]
         assert type(element) is ArrayElement
-        assert element.array is dynamicArrayType
+        assert element.array is value
         assert element.index is indexExpr
 
     for index in (0, 1, 2, 3, 1000):
         # static indexes
-        element = dynamicArrayType[index]
+        element = value[index]
         assert type(element) is ArrayElement
-        assert element.array is dynamicArrayType
+        assert element.array is value
         assert type(element.index) is Int
         assert element.index.value == index
 
     with pytest.raises(TealInputError):
-        dynamicArrayType[-1]
+        value[-1]
 
 
 def test_ArrayElement_init():
-    array = abi.DynamicArray(abi.Uint64())
+    array = abi.DynamicArray[abi.Uint64]()
     index = Int(6)
 
     element = ArrayElement(array, index)
@@ -558,17 +559,17 @@ def test_ArrayElement_init():
 
 def test_ArrayElement_store_into():
     for elementType in STATIC_TYPES + DYNAMIC_TYPES:
-        staticArrayType = abi.StaticArray(elementType, 100)
+        staticArray = abi.StaticArray[elementType, 100]()
         index = Int(9)
 
-        element = ArrayElement(staticArrayType, index)
-        output = elementType.new_instance()
+        element = ArrayElement(staticArray, index)
+        output = elementType()
         expr = element.store_into(output)
 
-        encoded = staticArrayType.encode()
-        stride = Int(staticArrayType._stride)
-        expectedLength = staticArrayType.length()
-        if type(elementType) is abi.Bool:
+        encoded = staticArray.encode()
+        stride = Int(staticArray._stride())
+        expectedLength = staticArray.length()
+        if elementType is abi.Bool:
             expectedExpr = cast(abi.Bool, output).decodeBit(encoded, index)
         elif not elementType.is_dynamic():
             expectedExpr = output.decode(
@@ -595,20 +596,20 @@ def test_ArrayElement_store_into():
             assert actual == expected
 
         with pytest.raises(TealInputError):
-            element.store_into(abi.Tuple(output))
+            element.store_into(abi.Tuple[elementType]())
 
     for elementType in STATIC_TYPES + DYNAMIC_TYPES:
-        dynamicArrayType = abi.DynamicArray(elementType)
+        dynamicArray = abi.DynamicArray[elementType]()
         index = Int(9)
 
-        element = ArrayElement(dynamicArrayType, index)
-        output = elementType.new_instance()
+        element = ArrayElement(dynamicArray, index)
+        output = elementType()
         expr = element.store_into(output)
 
-        encoded = dynamicArrayType.encode()
-        stride = Int(dynamicArrayType._stride)
-        expectedLength = dynamicArrayType.length()
-        if type(elementType) is abi.Bool:
+        encoded = dynamicArray.encode()
+        stride = Int(dynamicArray._stride())
+        expectedLength = dynamicArray.length()
+        if elementType is abi.Bool:
             expectedExpr = cast(abi.Bool, output).decodeBit(encoded, index + Int(16))
         elif not elementType.is_dynamic():
             expectedExpr = output.decode(
@@ -643,4 +644,4 @@ def test_ArrayElement_store_into():
         )
 
         with pytest.raises(TealInputError):
-            element.store_into(abi.Tuple(output))
+            element.store_into(abi.Tuple[elementType]())
