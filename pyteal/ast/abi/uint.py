@@ -9,7 +9,7 @@ from ..assert_ import Assert
 from ..substring import Suffix
 from ..int import Int
 from ..bytes import Bytes
-from ..unaryexpr import Itob
+from ..unaryexpr import Itob, Btoi
 from ..binaryexpr import GetByte, ExtractUint16, ExtractUint32, ExtractUint64
 from ..ternaryexpr import SetByte
 from .type import Type
@@ -55,15 +55,19 @@ class Uint8(Uint):
     def new_instance(self) -> "Uint8":
         return Uint8()
 
-    def set(self, value: Union[int, Expr, "Uint8"]) -> Expr:
+    def set(self, value: Union[int, Expr, "Uint8", "Byte"]) -> Expr:
         checked = False
         if type(value) is int:
-            if value >= 2 ** 8:
-                raise TealInputError("Value exceeds Uint8 maximum: {}".format(value))
+            if value >= 2 ** self.bit_size:
+                raise TealInputError(
+                    "Value exceeds {} maximum: {}".format(
+                        self.__class__.__name__, value
+                    )
+                )
             value = Int(value)
             checked = True
 
-        if type(value) is Uint8:
+        if type(value) is Uint8 or type(value) is Byte:
             value = value.get()
             checked = True
 
@@ -93,7 +97,19 @@ class Uint8(Uint):
 
 Uint8.__module__ = "pyteal"
 
-Byte = Uint8
+
+class Byte(Uint8):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def new_instance(self) -> "Byte":
+        return Byte()
+
+    def __str__(self) -> str:
+        return "byte"
+
+
+Byte.__module__ = "pyteal"
 
 
 class Uint16(Uint):
@@ -108,7 +124,7 @@ class Uint16(Uint):
     def set(self, value: Union[int, Expr, "Uint16"]) -> Expr:
         checked = False
         if type(value) is int:
-            if value >= 2 ** 16:
+            if value >= 2 ** self.bit_size:
                 raise TealInputError("Value exceeds Uint16 maximum: {}".format(value))
             value = Int(value)
             checked = True
@@ -156,7 +172,7 @@ class Uint32(Uint):
     def set(self, value: Union[int, Expr, "Uint32"]) -> Expr:
         checked = False
         if type(value) is int:
-            if value >= 2 ** 32:
+            if value >= 2 ** self.bit_size:
                 raise TealInputError("Value exceeds Uint32 maximum: {}".format(value))
             value = Int(value)
             checked = True
@@ -215,6 +231,8 @@ class Uint64(Uint):
         length: Expr = None
     ) -> Expr:
         if startIndex is None:
+            if endIndex is None and length is None:
+                return self.stored_value.store(Btoi(encoded))
             startIndex = Int(0)
         return self.stored_value.store(ExtractUint64(encoded, startIndex))
 

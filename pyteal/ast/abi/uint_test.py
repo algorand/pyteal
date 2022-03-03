@@ -1,4 +1,4 @@
-from typing import NamedTuple, Callable, Union
+from typing import NamedTuple, Callable, Union, Optional
 import pytest
 
 from ... import *
@@ -14,7 +14,9 @@ class UintTestData(NamedTuple):
     expectedBits: int
     maxValue: int
     checkUpperBound: bool
-    expectedDecoding: Callable[[Expr, Expr], Expr]
+    expectedDecoding: Callable[
+        [Expr, Optional[Expr], Optional[Expr], Optional[Expr]], Expr
+    ]
     expectedEncoding: Callable[[abi.Uint], Expr]
 
 
@@ -30,7 +32,7 @@ testData = [
         expectedBits=8,
         maxValue=2 ** 8 - 1,
         checkUpperBound=True,
-        expectedDecoding=lambda encoded, startIndex: GetByte(
+        expectedDecoding=lambda encoded, startIndex, endIndex, length: GetByte(
             encoded, noneToInt0(startIndex)
         ),
         expectedEncoding=lambda uintType: SetByte(
@@ -42,7 +44,7 @@ testData = [
         expectedBits=16,
         maxValue=2 ** 16 - 1,
         checkUpperBound=True,
-        expectedDecoding=lambda encoded, startIndex: ExtractUint16(
+        expectedDecoding=lambda encoded, startIndex, endIndex, length: ExtractUint16(
             encoded, noneToInt0(startIndex)
         ),
         expectedEncoding=lambda uintType: Suffix(Itob(uintType.get()), Int(6)),
@@ -52,7 +54,7 @@ testData = [
         expectedBits=32,
         maxValue=2 ** 32 - 1,
         checkUpperBound=True,
-        expectedDecoding=lambda encoded, startIndex: ExtractUint32(
+        expectedDecoding=lambda encoded, startIndex, endIndex, length: ExtractUint32(
             encoded, noneToInt0(startIndex)
         ),
         expectedEncoding=lambda uintType: Suffix(Itob(uintType.get()), Int(4)),
@@ -62,9 +64,9 @@ testData = [
         expectedBits=64,
         maxValue=2 ** 64 - 1,
         checkUpperBound=False,
-        expectedDecoding=lambda encoded, startIndex: ExtractUint64(
-            encoded, noneToInt0(startIndex)
-        ),
+        expectedDecoding=lambda encoded, startIndex, endIndex, length: Btoi(encoded)
+        if startIndex is None and endIndex is None and length is None
+        else ExtractUint64(encoded, noneToInt0(startIndex)),
         expectedEncoding=lambda uintType: Itob(uintType.get()),
     ),
 ]
@@ -79,6 +81,7 @@ def test_Uint_bits():
 def test_Uint_str():
     for test in testData:
         assert str(test.uintType) == "uint{}".format(test.expectedBits)
+    assert str(abi.Byte()) == "byte"
 
 
 def test_Uint_is_dynamic():
@@ -219,7 +222,7 @@ def test_Uint_decode():
                     assert not expr.has_return()
 
                     expectedDecoding = test.uintType.stored_value.store(
-                        test.expectedDecoding(encoded, startIndex)
+                        test.expectedDecoding(encoded, startIndex, endIndex, length)
                     )
                     expected, _ = expectedDecoding.__teal__(options)
                     expected.addIncoming()
@@ -242,6 +245,40 @@ def test_Uint_encode():
         expected, _ = test.expectedEncoding(test.uintType).__teal__(options)
         expected.addIncoming()
         expected = TealBlock.NormalizeBlocks(expected)
+
+        actual, _ = expr.__teal__(options)
+        actual.addIncoming()
+        actual = TealBlock.NormalizeBlocks(actual)
+
+        with TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
+
+
+def test_ByteUint8_set_error():
+    with pytest.raises(TealInputError) as uint8_err_msg:
+        abi.Uint8().set(256)
+    assert "Uint8" in uint8_err_msg.__str__()
+
+    with pytest.raises(TealInputError) as byte_err_msg:
+        abi.Byte().set(256)
+    assert "Byte" in byte_err_msg.__str__()
+
+
+def test_ByteUint8_mutual_conversion():
+    for type_a, type_b in [(abi.Uint8, abi.Byte), (abi.Byte, abi.Uint8)]:
+        type_b_instance = type_b()
+        other = type_a()
+        expr = type_b_instance.set(other)
+
+        assert expr.type_of() == TealType.none
+        assert not expr.has_return()
+
+        expected = TealSimpleBlock(
+            [
+                TealOp(None, Op.load, other.stored_value.slot),
+                TealOp(None, Op.store, type_b_instance.stored_value.slot),
+            ]
+        )
 
         actual, _ = expr.__teal__(options)
         actual.addIncoming()

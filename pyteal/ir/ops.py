@@ -171,9 +171,12 @@ class Op(Enum):
     gtxnsas             = OpType("gtxnsas",             Mode.Signature | Mode.Application, 5)
     args                = OpType("args",                Mode.Signature,                    5)
     bsqrt               = OpType("bsqrt",               Mode.Signature | Mode.Application, 6)
+    divw                = OpType("divw",                Mode.Signature | Mode.Application, 6)
     itxn_next           = OpType("itxn_next",           Mode.Application,                  6)
+    itxnas              = OpType("itxnas",              Mode.Application,                  6)
     gitxn               = OpType("gitxn",               Mode.Application,                  6)
     gitxna              = OpType("gitxna",              Mode.Application,                  6)
+    gitxnas             = OpType("gitxnas",             Mode.Application,                  6)
     gloadss             = OpType("gloadss",             Mode.Application,                  6)
     acct_params_get     = OpType("acct_params_get",     Mode.Application,                  6)
     # fmt: on

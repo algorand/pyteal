@@ -1,4 +1,6 @@
 import argparse, os, sys, difflib
+from collections import Counter
+
 from pyteal import __all__ as static_all
 
 
@@ -37,7 +39,14 @@ def generate_init_pyi() -> str:
     start_idx = init_contents.index(begin_flag)
     end_idx = init_contents.index(end_flag)
 
-    all_imports = ",\n    ".join(['"{}"'.format(s) for s in static_all])
+    counts = Counter(static_all)
+    dupes = [x for x, n in counts.items() if n > 1]
+    BR = "\n"
+    assert (
+        not dupes
+    ), f"Aborting pyi file generation. The following duplicate imports were detected:{BR}{BR.join(dupes)}"
+
+    all_imports = ",\n    ".join(['"{}"'.format(s) for s in sorted(static_all)])
 
     return (
         pyi_template

@@ -4,7 +4,7 @@ import pytest
 from ... import *
 from .bool import (
     boolAwareStaticByteLength,
-    consecutiveBools,
+    consecutiveBoolNum,
     boolSequenceLength,
     encodeBoolSequence,
 )
@@ -77,6 +77,10 @@ def test_Bool_set_expr():
             TealOp(None, Op.int, 1),
             TealOp(None, Op.logic_or),
             TealOp(None, Op.store, boolType.stored_value.slot),
+            TealOp(None, Op.load, boolType.stored_value.slot),
+            TealOp(None, Op.int, 2),
+            TealOp(None, Op.lt),
+            TealOp(None, Op.assert_),
         ]
     )
 
@@ -125,10 +129,10 @@ def test_Bool_get():
 
 def test_Bool_decode():
     boolType = abi.Bool()
+    encoded = Bytes("encoded")
     for startIndex in (None, Int(1)):
         for endIndex in (None, Int(2)):
             for length in (None, Int(3)):
-                encoded = Bytes("encoded")
                 expr = boolType.decode(
                     encoded, startIndex=startIndex, endIndex=endIndex, length=length
                 )
@@ -232,7 +236,7 @@ def test_boolAwareStaticByteLength():
         assert actual == test.expectedLength, "Test at index {} failed".format(i)
 
 
-def test_consecutiveBools():
+def test_consecutiveBoolNum():
     class ConsecutiveTest(NamedTuple):
         types: List[abi.Type]
         start: int
@@ -265,7 +269,7 @@ def test_consecutiveBools():
     ]
 
     for i, test in enumerate(tests):
-        actual = consecutiveBools(test.types, test.start)
+        actual = consecutiveBoolNum(test.types, test.start)
         assert actual == test.expected, "Test at index {} failed".format(i)
 
 

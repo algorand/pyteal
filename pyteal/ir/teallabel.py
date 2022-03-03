@@ -33,7 +33,7 @@ class TealLabel(TealComponent):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, TealLabel):
             return False
-        if TealComponent.Context.checkExpr and self.expr is not other.expr:
+        if TealComponent.Context.checkExprEquality and self.expr is not other.expr:
             return False
         return self.label == other.label and self.comment == other.comment
 
