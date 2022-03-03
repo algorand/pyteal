@@ -14,8 +14,7 @@ def tabulateSourceMap(
 
         # TODO: (ZEPH) THIS CANNOT GO INTO PROD:
         assert len(t[1].code_context) == 1
-        return t[1].lineno, t[1].code_context[0], t[0], t[1].filename
-
+        return t[1].lineno, t[1].code_context[0], t[0]
     table = [
         [n, lines[n - 1], *row(sourceMap[n] if n in sourceMap else None)]
         for n in range(1, len(lines) + 1)

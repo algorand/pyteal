@@ -1667,4 +1667,4 @@ retsub
          34  retsub                          1624  actual, lines, sourceMap = compileTeal(            TealOp((Return None), retsub)                                                                                                                                      /Users/zeph/github/algorand/pyteal/pyteal/compiler/compiler_test.py
 """
 
-    assert expected_table == "\n" + table + "\n"
+    assert expected_table == "\n" + table + "\n", table
