@@ -179,6 +179,22 @@ if not OLD_CODE_ONLY:
         z = ScratchVar(TealType.uint64)
         return mixed_annotations(x, y, z)
 
+    def api_docs_dynamic_scratch_var_demo() -> Expr:
+        """
+        The API docs use the test to illustrate `DynamicScratchVar` usage.  If the test breaks, then the API docs must be updated along with the test.
+        """
+
+        s = ScratchVar(TealType.uint64)
+        d = DynamicScratchVar(TealType.uint64)
+
+        return Seq(
+            d.set_index(s),
+            s.store(Int(7)),
+            d.store(d.load() + Int(3)),
+            Assert(s.load() == Int(10)),
+            Int(1),
+        )
+
 
 OLD_CASES = (sub_logcat, sub_slowfib, sub_fastfib, sub_even)
 
@@ -193,10 +209,20 @@ if __name__ == "__main__":
 
 
 if not OLD_CODE_ONLY:
-    NEW_CASES = (sub_logcat_dynamic, swapper, wilt_the_stilt, fac_by_ref, sub_mixed)
+    NEW_CASES = (
+        sub_logcat_dynamic,
+        swapper,
+        wilt_the_stilt,
+        fac_by_ref,
+        sub_mixed,
+        api_docs_dynamic_scratch_var_demo,
+    )
 
     def test_swapper():
         compile_and_save(swapper)
+
+    def test_api_docs_dynamic_scratch_var_demo():
+        compile_and_save(api_docs_dynamic_scratch_var_demo)
 
     def test_new():
         for pt in NEW_CASES:

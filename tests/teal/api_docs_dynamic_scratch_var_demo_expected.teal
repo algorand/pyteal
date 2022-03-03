@@ -1,0 +1,17 @@
+#pragma version 6
+int 0
+store 1
+int 7
+store 0
+load 1
+load 1
+loads
+int 3
++
+stores
+load 0
+int 10
+==
+assert
+int 1
+return
