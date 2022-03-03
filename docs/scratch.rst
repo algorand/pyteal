@@ -54,5 +54,3 @@ Here's a simple example to motivate usage.  The example shows how a :any:`Dynami
         Assert(s.load() == Int(10)),
         Int(1),
     )
-
-PyTeal extends the above example to support defining subroutines with :any:`ScratchVar` parameters.  By tracking the reference of a :any:`ScratchVar` via its scratch slot index, the PyTeal compiler points to a subroutine's :any:`ScratchVar` argument with corresponding `stores` and `loads` instructions.
