@@ -304,8 +304,7 @@ class Tuple(Type):
     def __getitem__(self, index: int) -> "TupleElement":
         if not (0 <= index < self.length_static()):
             raise TealInputError("Index out of bounds")
-        valueType = self.value_types()[index]
-        return TupleElement[valueType](index)
+        return TupleElement(self, index)
 
 
 Tuple.__module__ = "pyteal"
