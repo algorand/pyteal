@@ -25,10 +25,10 @@ jobs:
           pip install -e .
       - name: Build and Test
         run: |
-          pytest
-          mypy pyteal
           python scripts/generate_init.py --check
           black --check .
+          mypy pyteal
+          pytest
   build-docset:
     runs-on: ubuntu-20.04
     container: python:3.9  # Needs `make`, can't be slim
