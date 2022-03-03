@@ -1,10 +1,11 @@
-from typing import NamedTuple, List
+from typing import NamedTuple, List, Type
 import pytest
 
 from ... import *
 from .bool import (
     boolAwareStaticByteLength,
     consecutiveBoolNum,
+    consecutiveBoolTypeNum,
     boolSequenceLength,
     encodeBoolSequence,
 )
@@ -21,39 +22,34 @@ def test_Bool_str():
 
 
 def test_Bool_is_dynamic():
-    boolType = abi.Bool()
-    assert not boolType.is_dynamic()
+    assert not abi.Bool.is_dynamic()
 
 
 def test_Bool_has_same_type_as():
-    boolType = abi.Bool()
-    assert boolType.has_same_type_as(abi.Bool())
+    assert abi.Bool.has_same_type_as(abi.Bool)
+    assert abi.Bool.has_same_type_as(abi.Bool())
 
     for otherType in (
-        abi.Byte(),
-        abi.Uint64(),
-        abi.StaticArray(boolType, 1),
-        abi.DynamicArray(boolType),
+        abi.Byte,
+        abi.Uint64,
+        abi.StaticArray[abi.Bool, 1],
+        abi.DynamicArray[abi.Bool],
     ):
-        assert not boolType.has_same_type_as(otherType)
-
-
-def test_Bool_new_instance():
-    boolType = abi.Bool()
-    assert type(boolType.new_instance()) is abi.Bool
+        assert not abi.Bool.has_same_type_as(otherType)
+        assert not abi.Bool.has_same_type_as(otherType())
 
 
 def test_Bool_set_static():
-    boolType = abi.Bool()
-    for value in (True, False):
-        expr = boolType.set(value)
+    value = abi.Bool()
+    for value_to_set in (True, False):
+        expr = value.set(value_to_set)
         assert expr.type_of() == TealType.none
         assert not expr.has_return()
 
         expected = TealSimpleBlock(
             [
-                TealOp(None, Op.int, 1 if value else 0),
-                TealOp(None, Op.store, boolType.stored_value.slot),
+                TealOp(None, Op.int, 1 if value_to_set else 0),
+                TealOp(None, Op.store, value.stored_value.slot),
             ]
         )
 
@@ -66,8 +62,8 @@ def test_Bool_set_static():
 
 
 def test_Bool_set_expr():
-    boolType = abi.Bool()
-    expr = boolType.set(Int(0).Or(Int(1)))
+    value = abi.Bool()
+    expr = value.set(Int(0).Or(Int(1)))
     assert expr.type_of() == TealType.none
     assert not expr.has_return()
 
@@ -76,8 +72,8 @@ def test_Bool_set_expr():
             TealOp(None, Op.int, 0),
             TealOp(None, Op.int, 1),
             TealOp(None, Op.logic_or),
-            TealOp(None, Op.store, boolType.stored_value.slot),
-            TealOp(None, Op.load, boolType.stored_value.slot),
+            TealOp(None, Op.store, value.stored_value.slot),
+            TealOp(None, Op.load, value.stored_value.slot),
             TealOp(None, Op.int, 2),
             TealOp(None, Op.lt),
             TealOp(None, Op.assert_),
@@ -94,15 +90,15 @@ def test_Bool_set_expr():
 
 def test_Bool_set_copy():
     other = abi.Bool()
-    boolType = abi.Bool()
-    expr = boolType.set(other)
+    value = abi.Bool()
+    expr = value.set(other)
     assert expr.type_of() == TealType.none
     assert not expr.has_return()
 
     expected = TealSimpleBlock(
         [
             TealOp(None, Op.load, other.stored_value.slot),
-            TealOp(None, Op.store, boolType.stored_value.slot),
+            TealOp(None, Op.store, value.stored_value.slot),
         ]
     )
 
@@ -115,12 +111,12 @@ def test_Bool_set_copy():
 
 
 def test_Bool_get():
-    boolType = abi.Bool()
-    expr = boolType.get()
+    value = abi.Bool()
+    expr = value.get()
     assert expr.type_of() == TealType.uint64
     assert not expr.has_return()
 
-    expected = TealSimpleBlock([TealOp(expr, Op.load, boolType.stored_value.slot)])
+    expected = TealSimpleBlock([TealOp(expr, Op.load, value.stored_value.slot)])
 
     actual, _ = expr.__teal__(options)
 
@@ -128,12 +124,12 @@ def test_Bool_get():
 
 
 def test_Bool_decode():
-    boolType = abi.Bool()
+    value = abi.Bool()
     encoded = Bytes("encoded")
     for startIndex in (None, Int(1)):
         for endIndex in (None, Int(2)):
             for length in (None, Int(3)):
-                expr = boolType.decode(
+                expr = value.decode(
                     encoded, startIndex=startIndex, endIndex=endIndex, length=length
                 )
                 assert expr.type_of() == TealType.none
@@ -146,7 +142,7 @@ def test_Bool_decode():
                         TealOp(None, Op.int, 8),
                         TealOp(None, Op.mul),
                         TealOp(None, Op.getbit),
-                        TealOp(None, Op.store, boolType.stored_value.slot),
+                        TealOp(None, Op.store, value.stored_value.slot),
                     ]
                 )
 
@@ -159,10 +155,10 @@ def test_Bool_decode():
 
 
 def test_Bool_decodeBit():
-    boolType = abi.Bool()
+    value = abi.Bool()
     bitIndex = Int(17)
     encoded = Bytes("encoded")
-    expr = boolType.decodeBit(encoded, bitIndex)
+    expr = value.decodeBit(encoded, bitIndex)
     assert expr.type_of() == TealType.none
     assert not expr.has_return()
 
@@ -171,7 +167,7 @@ def test_Bool_decodeBit():
             TealOp(None, Op.byte, '"encoded"'),
             TealOp(None, Op.int, 17),
             TealOp(None, Op.getbit),
-            TealOp(None, Op.store, boolType.stored_value.slot),
+            TealOp(None, Op.store, value.stored_value.slot),
         ]
     )
 
@@ -184,8 +180,8 @@ def test_Bool_decodeBit():
 
 
 def test_Bool_encode():
-    boolType = abi.Bool()
-    expr = boolType.encode()
+    value = abi.Bool()
+    expr = value.encode()
     assert expr.type_of() == TealType.bytes
     assert not expr.has_return()
 
@@ -193,7 +189,7 @@ def test_Bool_encode():
         [
             TealOp(None, Op.byte, "0x00"),
             TealOp(None, Op.int, 0),
-            TealOp(None, Op.load, boolType.stored_value.slot),
+            TealOp(None, Op.load, value.stored_value.slot),
             TealOp(None, Op.setbit),
         ]
     )
@@ -208,25 +204,25 @@ def test_Bool_encode():
 
 def test_boolAwareStaticByteLength():
     class ByteLengthTest(NamedTuple):
-        types: List[abi.Type]
+        types: List[Type[abi.Type]]
         expectedLength: int
 
     tests: List[ByteLengthTest] = [
         ByteLengthTest(types=[], expectedLength=0),
-        ByteLengthTest(types=[abi.Uint64()], expectedLength=8),
-        ByteLengthTest(types=[abi.Bool()], expectedLength=1),
-        ByteLengthTest(types=[abi.Bool()] * 8, expectedLength=1),
-        ByteLengthTest(types=[abi.Bool()] * 9, expectedLength=2),
-        ByteLengthTest(types=[abi.Bool()] * 16, expectedLength=2),
-        ByteLengthTest(types=[abi.Bool()] * 17, expectedLength=3),
-        ByteLengthTest(types=[abi.Bool()] * 100, expectedLength=13),
-        ByteLengthTest(types=[abi.Bool(), abi.Byte(), abi.Bool()], expectedLength=3),
+        ByteLengthTest(types=[abi.Uint64], expectedLength=8),
+        ByteLengthTest(types=[abi.Bool], expectedLength=1),
+        ByteLengthTest(types=[abi.Bool] * 8, expectedLength=1),
+        ByteLengthTest(types=[abi.Bool] * 9, expectedLength=2),
+        ByteLengthTest(types=[abi.Bool] * 16, expectedLength=2),
+        ByteLengthTest(types=[abi.Bool] * 17, expectedLength=3),
+        ByteLengthTest(types=[abi.Bool] * 100, expectedLength=13),
+        ByteLengthTest(types=[abi.Bool, abi.Byte, abi.Bool], expectedLength=3),
         ByteLengthTest(
-            types=[abi.Bool(), abi.Bool(), abi.Byte(), abi.Bool(), abi.Bool()],
+            types=[abi.Bool, abi.Bool, abi.Byte, abi.Bool, abi.Bool],
             expectedLength=3,
         ),
         ByteLengthTest(
-            types=[abi.Bool()] * 16 + [abi.Byte(), abi.Bool(), abi.Bool()],
+            types=[abi.Bool] * 16 + [abi.Byte, abi.Bool, abi.Bool],
             expectedLength=4,
         ),
     ]
@@ -238,38 +234,41 @@ def test_boolAwareStaticByteLength():
 
 def test_consecutiveBoolNum():
     class ConsecutiveTest(NamedTuple):
-        types: List[abi.Type]
+        types: List[Type[abi.Type]]
         start: int
         expected: int
 
     tests: List[ConsecutiveTest] = [
         ConsecutiveTest(types=[], start=0, expected=0),
-        ConsecutiveTest(types=[abi.Uint16()], start=0, expected=0),
-        ConsecutiveTest(types=[abi.Bool()], start=0, expected=1),
-        ConsecutiveTest(types=[abi.Bool()], start=1, expected=0),
-        ConsecutiveTest(types=[abi.Bool(), abi.Bool()], start=0, expected=2),
-        ConsecutiveTest(types=[abi.Bool(), abi.Bool()], start=1, expected=1),
-        ConsecutiveTest(types=[abi.Bool(), abi.Bool()], start=2, expected=0),
-        ConsecutiveTest(types=[abi.Bool() for _ in range(10)], start=0, expected=10),
+        ConsecutiveTest(types=[abi.Uint16], start=0, expected=0),
+        ConsecutiveTest(types=[abi.Bool], start=0, expected=1),
+        ConsecutiveTest(types=[abi.Bool], start=1, expected=0),
+        ConsecutiveTest(types=[abi.Bool, abi.Bool], start=0, expected=2),
+        ConsecutiveTest(types=[abi.Bool, abi.Bool], start=1, expected=1),
+        ConsecutiveTest(types=[abi.Bool, abi.Bool], start=2, expected=0),
+        ConsecutiveTest(types=[abi.Bool for _ in range(10)], start=0, expected=10),
         ConsecutiveTest(
-            types=[abi.Bool(), abi.Bool(), abi.Byte(), abi.Bool()], start=0, expected=2
+            types=[abi.Bool, abi.Bool, abi.Byte, abi.Bool], start=0, expected=2
         ),
         ConsecutiveTest(
-            types=[abi.Bool(), abi.Bool(), abi.Byte(), abi.Bool()], start=2, expected=0
+            types=[abi.Bool, abi.Bool, abi.Byte, abi.Bool], start=2, expected=0
         ),
         ConsecutiveTest(
-            types=[abi.Bool(), abi.Bool(), abi.Byte(), abi.Bool()], start=3, expected=1
+            types=[abi.Bool, abi.Bool, abi.Byte, abi.Bool], start=3, expected=1
         ),
         ConsecutiveTest(
-            types=[abi.Byte(), abi.Bool(), abi.Bool(), abi.Byte()], start=0, expected=0
+            types=[abi.Byte, abi.Bool, abi.Bool, abi.Byte], start=0, expected=0
         ),
         ConsecutiveTest(
-            types=[abi.Byte(), abi.Bool(), abi.Bool(), abi.Byte()], start=1, expected=2
+            types=[abi.Byte, abi.Bool, abi.Bool, abi.Byte], start=1, expected=2
         ),
     ]
 
     for i, test in enumerate(tests):
-        actual = consecutiveBoolNum(test.types, test.start)
+        actual = consecutiveBoolTypeNum(test.types, test.start)
+        assert actual == test.expected, "Test at index {} failed".format(i)
+
+        actual = consecutiveBoolNum([t() for t in test.types], test.start)
         assert actual == test.expected, "Test at index {} failed".format(i)
 
 
