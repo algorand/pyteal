@@ -129,7 +129,8 @@ class Uint(Type, Generic[N]):
     @classmethod
     def has_same_type_as(cls, other: Union[PyType[Type], Type]) -> bool:
         return (
-            isinstance(other, Uint) or (isclass(other) and issubclass(other, Uint))
+            isinstance(other, Uint)
+            or (isclass(other) and issubclass(cast(type, other), Uint))
         ) and cls.bit_size() == cast(Union[PyType[Uint], Uint], other).bit_size()
 
     @classmethod
