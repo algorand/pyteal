@@ -57,11 +57,6 @@ def tabulateSourceMap(
         for n in range(1, len(lines) + 1)
     ]
 
-    # table = [
-    #     [n, lines[n - 1], *row(sourceMap[n] if n in sourceMap else None)]
-    #     for n in range(1, len(lines) + 1)
-    # ]
-
     table = [[r.get(k) for k in ORDER] for r in records]
 
     return tabulate(table, headers=ORDER, tablefmt="presto")

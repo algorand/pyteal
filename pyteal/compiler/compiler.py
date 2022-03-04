@@ -171,7 +171,7 @@ def compileTeal(
     version: int = DEFAULT_TEAL_VERSION,
     assembleConstants: bool = False,
     sourceMap: bool = False,
-) -> str:
+) -> Tuple[str, Dict[int, Tuple[TealOp, Optional[NamedTuple], Optional[str]]]]:
     """Compile a PyTeal expression into TEAL assembly.
 
     Args:
