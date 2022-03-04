@@ -142,16 +142,46 @@ if not OLD_CODE_ONLY:
             Int(1000),
         )
 
+    # def factorial(n):
+    #     if n.get() <= 1:
+    #         return n.set(1)
+
+    #     return factorial(n.get()-1) *
+
     @Subroutine(TealType.none)
-    def factorial(n: ScratchVar):
-        tmp = DynamicScratchVar(TealType.uint64)
+    def factorial_BAD(n: ScratchVar):
+        tmp = ScratchVar(TealType.uint64)
         return (
             If(n.load() <= Int(1))
             .Then(n.store(Int(1)))
             .Else(
                 Seq(
                     tmp.store(n.load() - Int(1)),
-                    factorial(tmp),
+                    factorial_BAD(tmp),
+                    n.store(n.load() * tmp.load()),
+                )
+            )
+        )
+
+    def fac_by_ref_BAD():
+        n = ScratchVar(TealType.uint64)
+        return Seq(
+            n.store(Int(10)),
+            factorial_BAD(n),
+            n.load(),
+        )
+
+    @Subroutine(TealType.none)
+    def factorial(n: ScratchVar):
+        tmp = ScratchVar(TealType.uint64)
+        return (
+            If(n.load() <= Int(1))
+            .Then(n.store(Int(1)))
+            .Else(
+                Seq(
+                    tmp.store(n.load()),
+                    n.store(n.load() - Int(1)),
+                    factorial(n),
                     n.store(n.load() * tmp.load()),
                 )
             )
@@ -160,11 +190,10 @@ if not OLD_CODE_ONLY:
     def fac_by_ref():
         n = ScratchVar(TealType.uint64)
         return Seq(
-            n.store(Int(42)),
+            n.store(Int(10)),
             factorial(n),
             n.load(),
         )
-
     @Subroutine(TealType.uint64)
     def mixed_annotations(x: Expr, y: Expr, z: ScratchVar) -> Expr:
         return Seq(
@@ -218,7 +247,7 @@ if __name__ == "__main__":
 
 
 if not OLD_CODE_ONLY:
-    NEW_CASES = (sub_logcat_dynamic, swapper, wilt_the_stilt, fac_by_ref, sub_mixed)
+    NEW_CASES = (sub_logcat_dynamic, swapper, wilt_the_stilt, fac_by_ref, fac_by_ref_BAD, sub_mixed)
 
     def test_swapper():
         compile_and_save(swapper)
@@ -228,6 +257,9 @@ if not OLD_CODE_ONLY:
 
     def test_tally():
         compile_and_save(tallygo)
+
+    def test_fac_by_ref_BAD():
+        compile_and_save(fac_by_ref_BAD)
 
     def test_new():
         for pt in NEW_CASES:
