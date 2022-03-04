@@ -1566,6 +1566,8 @@ from .source_map import tabulateSourceMap
 
 
 def test_source_map1():
+    # TODO: This is a BAD TEST. Asserting that the source map will look
+    # as below. But the source map NEEDS SIGNIFICANT IMPROMENTS (AND CORRECTIONS)
     @Subroutine(TealType.none)
     def storeValue(key: Expr, t1: Expr, t2: Expr, t3: Expr) -> Expr:
         return App.globalPut(key, t1 + t2 + t3 + Int(10))
@@ -1628,43 +1630,181 @@ retsub
     table = tabulateSourceMap(lines, sourceMap)
 
     expected_table = """
-  TL  TEAL                     PTL  PyTeal                                             Op                                                                                                                                                                 file
-----  ---------------------  -----  -------------------------------------------------  -----------------------------------------------------------------------------------------------------------------------------------------------------------------  --------------------------------
-   1  #pragma version 4
-   2  intcblock 1             1575  If(Txn.application_id() == Int(0)).Then(           TealOp(None, intcblock, 1)                                                                                                                                         pyteal/compiler/compiler_test.py
-   3  bytecblock 0x74657374   1575  If(Txn.application_id() == Int(0)).Then(           TealOp(None, bytecblock, '0x74657374')                                                                                                                             pyteal/compiler/compiler_test.py
-   4  txn ApplicationID       1575  If(Txn.application_id() == Int(0)).Then(           TealOp((Txn ApplicationID), txn, 'ApplicationID')                                                                                                                  pyteal/compiler/compiler_test.py
-   5  pushint 0 // 0          1575  If(Txn.application_id() == Int(0)).Then(           TealOp((Int: 0), pushint, 0, '//', 0)                                                                                                                              pyteal/compiler/compiler_test.py
-   6  ==                      1575  If(Txn.application_id() == Int(0)).Then(           TealOp((== (Txn ApplicationID) (Int: 0)), ==)                                                                                                                      pyteal/compiler/compiler_test.py
-   7  bz main_l2              1577  Concat(Bytes("test"), Bytes("test"), Bytes("a")),  TealOp(None, bz, 'main_l2')                                                                                                                                        pyteal/compiler/compiler_test.py
-   8  bytec_0 // "test"       1577  Concat(Bytes("test"), Bytes("test"), Bytes("a")),  TealOp((utf8 bytes: "test"), bytec_0, '//', '"test"')                                                                                                              pyteal/compiler/compiler_test.py
-   9  bytec_0 // "test"       1577  Concat(Bytes("test"), Bytes("test"), Bytes("a")),  TealOp((utf8 bytes: "test"), bytec_0, '//', '"test"')                                                                                                              pyteal/compiler/compiler_test.py
-  10  concat                  1577  Concat(Bytes("test"), Bytes("test"), Bytes("a")),  TealOp((concat (utf8 bytes: "test") (utf8 bytes: "test") (utf8 bytes: "a")), concat)                                                                               pyteal/compiler/compiler_test.py
-  11  pushbytes 0x61 // "a"   1577  Concat(Bytes("test"), Bytes("test"), Bytes("a")),  TealOp((utf8 bytes: "a"), pushbytes, '0x61', '//', '"a"')                                                                                                          pyteal/compiler/compiler_test.py
-  12  concat                  1577  Concat(Bytes("test"), Bytes("test"), Bytes("a")),  TealOp((concat (utf8 bytes: "test") (utf8 bytes: "test") (utf8 bytes: "a")), concat)                                                                               pyteal/compiler/compiler_test.py
-  13  intc_0 // 1             1578  Int(1),                                            TealOp((Int: 1), intc_0, '//', 1)                                                                                                                                  pyteal/compiler/compiler_test.py
-  14  intc_0 // 1             1579  Int(1),                                            TealOp((Int: 1), intc_0, '//', 1)                                                                                                                                  pyteal/compiler/compiler_test.py
-  15  pushint 3 // 3          1580  Int(3),                                            TealOp((Int: 3), pushint, 3, '//', 3)                                                                                                                              pyteal/compiler/compiler_test.py
-  16  callsub storeValue_0    1576  storeValue(                                        TealOp((SubroutineCall "storeValue" ( (concat (utf8 bytes: "test") (utf8 bytes: "test") (utf8 bytes: "a")) (Int: 1) (Int: 1) (Int: 3))), callsub, 'storeValue_0')  pyteal/compiler/compiler_test.py
-  17  main_l2:                1583  Approve(),                                         TealLabel(None, 'main_l2', None)                                                                                                                                   pyteal/compiler/compiler_test.py
-  18  intc_0 // 1             1583  Approve(),                                         TealOp((Int: 1), intc_0, '//', 1)                                                                                                                                  pyteal/compiler/compiler_test.py
-  19  return                  1583  Approve(),                                         TealOp((ExitProgram (Int: 1)), return)                                                                                                                             pyteal/compiler/compiler_test.py
-  20  // storeValue           1624  actual, lines, sourceMap = compileTeal(            TealLabel(None, 'storeValue_0', 'storeValue')                                                                                                                      pyteal/compiler/compiler_test.py
-      storeValue_0:
-  21  store 3                 1624  actual, lines, sourceMap = compileTeal(            TealOp((StackStore slot#306), store, 3)                                                                                                                            pyteal/compiler/compiler_test.py
-  22  store 2                 1624  actual, lines, sourceMap = compileTeal(            TealOp((StackStore slot#305), store, 2)                                                                                                                            pyteal/compiler/compiler_test.py
-  23  store 1                 1624  actual, lines, sourceMap = compileTeal(            TealOp((StackStore slot#304), store, 1)                                                                                                                            pyteal/compiler/compiler_test.py
-  24  store 0                 1624  actual, lines, sourceMap = compileTeal(            TealOp((StackStore slot#303), store, 0)                                                                                                                            pyteal/compiler/compiler_test.py
-  25  load 0                  1624  actual, lines, sourceMap = compileTeal(            TealOp((Load slot#303), load, 0)                                                                                                                                   pyteal/compiler/compiler_test.py
-  26  load 1                  1624  actual, lines, sourceMap = compileTeal(            TealOp((Load slot#304), load, 1)                                                                                                                                   pyteal/compiler/compiler_test.py
-  27  load 2                  1624  actual, lines, sourceMap = compileTeal(            TealOp((Load slot#305), load, 2)                                                                                                                                   pyteal/compiler/compiler_test.py
-  28  +                       1624  actual, lines, sourceMap = compileTeal(            TealOp((+ (Load slot#304) (Load slot#305)), +)                                                                                                                     pyteal/compiler/compiler_test.py
-  29  load 3                  1624  actual, lines, sourceMap = compileTeal(            TealOp((Load slot#306), load, 3)                                                                                                                                   pyteal/compiler/compiler_test.py
-  30  +                       1624  actual, lines, sourceMap = compileTeal(            TealOp((+ (+ (Load slot#304) (Load slot#305)) (Load slot#306)), +)                                                                                                 pyteal/compiler/compiler_test.py
-  31  pushint 10 // 10        1624  actual, lines, sourceMap = compileTeal(            TealOp((Int: 10), pushint, 10, '//', 10)                                                                                                                           pyteal/compiler/compiler_test.py
-  32  +                       1624  actual, lines, sourceMap = compileTeal(            TealOp((+ (+ (+ (Load slot#304) (Load slot#305)) (Load slot#306)) (Int: 10)), +)                                                                                   pyteal/compiler/compiler_test.py
-  33  app_global_put          1624  actual, lines, sourceMap = compileTeal(            TealOp((app_global_put (Load slot#303) (+ (+ (+ (Load slot#304) (Load slot#305)) (Load slot#306)) (Int: 10))), app_global_put)                                     pyteal/compiler/compiler_test.py
-  34  retsub                  1624  actual, lines, sourceMap = compileTeal(            TealOp((Return None), retsub)                                                                                                                                      pyteal/compiler/compiler_test.py
-"""
+   TL | TEAL                  |   PTL | PyTeal                                                     | note                       | file
+------+-----------------------+-------+------------------------------------------------------------+----------------------------+----------------------------------
+    1 | #pragma version 4     |       |                                                            |                            |
+    2 | intcblock 1           |  1577 | If(Txn.application_id() == Int(0)).Then(                   | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+    3 | bytecblock 0x74657374 |  1577 | If(Txn.application_id() == Int(0)).Then(                   | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+    4 | txn ApplicationID     |  1577 | If(Txn.application_id() == Int(0)).Then(                   | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+    5 | pushint 0 // 0        |  1577 | If(Txn.application_id() == Int(0)).Then(                   | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+    6 | ==                    |  1577 | If(Txn.application_id() == Int(0)).Then(                   | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+    7 | bz main_l2            |  1579 | Concat(Bytes("test"), Bytes("test"), Bytes("a")),          | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+    8 | bytec_0 // "test"     |  1579 | Concat(Bytes("test"), Bytes("test"), Bytes("a")),          | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+    9 | bytec_0 // "test"     |  1579 | Concat(Bytes("test"), Bytes("test"), Bytes("a")),          | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   10 | concat                |  1579 | Concat(Bytes("test"), Bytes("test"), Bytes("a")),          | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   11 | pushbytes 0x61 // "a" |  1579 | Concat(Bytes("test"), Bytes("test"), Bytes("a")),          | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   12 | concat                |  1579 | Concat(Bytes("test"), Bytes("test"), Bytes("a")),          | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   13 | intc_0 // 1           |  1580 | Int(1),                                                    | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   14 | intc_0 // 1           |  1581 | Int(1),                                                    | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   15 | pushint 3 // 3        |  1582 | Int(3),                                                    | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   16 | callsub storeValue_0  |   143 | return SubroutineCall(self, args)                          | subroutine generated       | pyteal/ast/subroutine.py
+   17 | main_l2:              |  1585 | Approve(),                                                 | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   18 | intc_0 // 1           |  1585 | Approve(),                                                 | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   19 | return                |  1585 | Approve(),                                                 | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   20 | // storeValue         |   384 | bodyOps = [var.slot.store() for var in argumentVars[::-1]] | subroutine generated       | pyteal/ast/subroutine.py
+      | storeValue_0:         |       |                                                            |                            |
+   21 | store 3               |   384 | bodyOps = [var.slot.store() for var in argumentVars[::-1]] | subroutine generated       | pyteal/ast/subroutine.py
+   22 | store 2               |   384 | bodyOps = [var.slot.store() for var in argumentVars[::-1]] | subroutine generated       | pyteal/ast/subroutine.py
+   23 | store 1               |   384 | bodyOps = [var.slot.store() for var in argumentVars[::-1]] | subroutine generated       | pyteal/ast/subroutine.py
+   24 | store 0               |   384 | bodyOps = [var.slot.store() for var in argumentVars[::-1]] | subroutine generated       | pyteal/ast/subroutine.py
+   25 | load 0                |   365 | loaded = argVar.load()                                     | subroutine generated       | pyteal/ast/subroutine.py
+   26 | load 1                |   365 | loaded = argVar.load()                                     | subroutine generated       | pyteal/ast/subroutine.py
+   27 | load 2                |   365 | loaded = argVar.load()                                     | subroutine generated       | pyteal/ast/subroutine.py
+   28 | +                     |  1573 | return App.globalPut(key, t1 + t2 + t3 + Int(10))          | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   29 | load 3                |   365 | loaded = argVar.load()                                     | subroutine generated       | pyteal/ast/subroutine.py
+   30 | +                     |  1573 | return App.globalPut(key, t1 + t2 + t3 + Int(10))          | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   31 | pushint 10 // 10      |  1573 | return App.globalPut(key, t1 + t2 + t3 + Int(10))          | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   32 | +                     |  1573 | return App.globalPut(key, t1 + t2 + t3 + Int(10))          | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   33 | app_global_put        |  1573 | return App.globalPut(key, t1 + t2 + t3 + Int(10))          | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   34 | retsub                |  1626 | actual, lines, sourceMap = compileTeal(                    | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+""".strip()
+
+    assert expected_table == table.strip(), print(table)
+
+
+def test_source_map2():
+    # TODO: This is a BAD TEST. Asserting that the source map will look
+    # as below. But the source map NEEDS SIGNIFICANT IMPROMENTS (AND CORRECTIONS)
+    @Subroutine(TealType.none)
+    def swap(x: ScratchVar, y: ScratchVar):
+        z = ScratchVar(TealType.anytype)
+        return Seq(
+            z.store(x.load()),
+            x.store(y.load()),
+            y.store(z.load()),
+        )
+
+    @Subroutine(TealType.none)
+    def cat(x, y):
+        return Pop(Concat(x, y))
+
+    def swapper():
+        a = ScratchVar(TealType.bytes)
+        b = ScratchVar(TealType.bytes)
+        return Seq(
+            a.store(Bytes("hello")),
+            b.store(Bytes("goodbye")),
+            cat(a.load(), b.load()),
+            swap(a, b),
+            Assert(a.load() == Bytes("goodbye")),
+            Assert(b.load() == Bytes("hello")),
+            Int(1000),
+        )
+
+    expected = """#pragma version 6
+bytecblock 0x68656c6c6f 0x676f6f64627965
+bytec_0 // "hello"
+store 0
+bytec_1 // "goodbye"
+store 1
+load 0
+load 1
+callsub cat_1
+pushint 0 // 0
+pushint 1 // 1
+callsub swap_0
+load 0
+bytec_1 // "goodbye"
+==
+assert
+load 1
+bytec_0 // "hello"
+==g
+assert
+pushint 1000 // 1000
+return
+
+// swap
+swap_0:
+store 3
+store 2
+load 2
+loads
+store 4
+load 2
+load 3
+loads
+stores
+load 3
+load 4
+stores
+retsub
+
+// cat
+cat_1:
+store 6
+store 5
+load 5
+load 6
+concat
+pop
+retsub""".strip()
+    actual, lines, sourceMap = compileTeal(
+        swapper(), Mode.Application, version=6, assembleConstants=True, sourceMap=True
+    )
+    assert expected == actual.strip(), print(actual)
+
+    table = tabulateSourceMap(lines, sourceMap)
+
+    expected_table = """
+   TL | TEAL                                     |   PTL | PyTeal                                                     | note                       | file
+------+------------------------------------------+-------+------------------------------------------------------------+----------------------------+----------------------------------
+    1 | #pragma version 6                        |       |                                                            |                            |
+    2 | bytecblock 0x68656c6c6f 0x676f6f64627965 |  1695 | a.store(Bytes("hello")),                                   | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+    3 | bytec_0 // "hello"                       |  1695 | a.store(Bytes("hello")),                                   | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+    4 | store 0                                  |  1695 | a.store(Bytes("hello")),                                   | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+    5 | bytec_1 // "goodbye"                     |  1696 | b.store(Bytes("goodbye")),                                 | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+    6 | store 1                                  |  1696 | b.store(Bytes("goodbye")),                                 | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+    7 | load 0                                   |  1697 | cat(a.load(), b.load()),                                   | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+    8 | load 1                                   |  1697 | cat(a.load(), b.load()),                                   | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+    9 | callsub cat_1                            |   143 | return SubroutineCall(self, args)                          | subroutine generated       | pyteal/ast/subroutine.py
+   10 | pushint 0 // 0                           |   230 | return arg.index() if isinstance(arg, ScratchVar) else arg | subroutine generated       | pyteal/ast/subroutine.py
+   11 | pushint 1 // 1                           |   230 | return arg.index() if isinstance(arg, ScratchVar) else arg | subroutine generated       | pyteal/ast/subroutine.py
+   12 | callsub swap_0                           |   143 | return SubroutineCall(self, args)                          | subroutine generated       | pyteal/ast/subroutine.py
+   13 | load 0                                   |  1699 | Assert(a.load() == Bytes("goodbye")),                      | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   14 | bytec_1 // "goodbye"                     |  1699 | Assert(a.load() == Bytes("goodbye")),                      | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   15 | ==                                       |  1699 | Assert(a.load() == Bytes("goodbye")),                      | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   16 | assert                                   |  1699 | Assert(a.load() == Bytes("goodbye")),                      | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   17 | load 1                                   |  1700 | Assert(b.load() == Bytes("hello")),                        | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   18 | bytec_0 // "hello"                       |  1700 | Assert(b.load() == Bytes("hello")),                        | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   19 | ==                                       |  1700 | Assert(b.load() == Bytes("hello")),                        | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   20 | assert                                   |  1700 | Assert(b.load() == Bytes("hello")),                        | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   21 | pushint 1000 // 1000                     |  1701 | Int(1000),                                                 | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   22 | return                                   |  1752 | actual, lines, sourceMap = compileTeal(                    | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   23 | // swap                                  |   384 | bodyOps = [var.slot.store() for var in argumentVars[::-1]] | subroutine generated       | pyteal/ast/subroutine.py
+      | swap_0:                                  |       |                                                            |                            |
+   24 | store 3                                  |   384 | bodyOps = [var.slot.store() for var in argumentVars[::-1]] | subroutine generated       | pyteal/ast/subroutine.py
+   25 | store 2                                  |   384 | bodyOps = [var.slot.store() for var in argumentVars[::-1]] | subroutine generated       | pyteal/ast/subroutine.py
+   26 | load 2                                   |  1682 | z.store(x.load()),                                         | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   27 | loads                                    |  1682 | z.store(x.load()),                                         | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   28 | store 4                                  |  1682 | z.store(x.load()),                                         | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   29 | load 2                                   |  1683 | x.store(y.load()),                                         | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   30 | load 3                                   |  1683 | x.store(y.load()),                                         | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   31 | loads                                    |  1683 | x.store(y.load()),                                         | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   32 | stores                                   |  1683 | x.store(y.load()),                                         | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   33 | load 3                                   |  1684 | y.store(z.load()),                                         | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   34 | load 4                                   |  1684 | y.store(z.load()),                                         | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   35 | stores                                   |  1684 | y.store(z.load()),                                         | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   36 | retsub                                   |  1752 | actual, lines, sourceMap = compileTeal(                    | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   37 | // cat                                   |   384 | bodyOps = [var.slot.store() for var in argumentVars[::-1]] | subroutine generated       | pyteal/ast/subroutine.py
+      | cat_1:                                   |       |                                                            |                            |
+   38 | store 6                                  |   384 | bodyOps = [var.slot.store() for var in argumentVars[::-1]] | subroutine generated       | pyteal/ast/subroutine.py
+   39 | store 5                                  |   384 | bodyOps = [var.slot.store() for var in argumentVars[::-1]] | subroutine generated       | pyteal/ast/subroutine.py
+   40 | load 5                                   |   365 | loaded = argVar.load()                                     | subroutine generated       | pyteal/ast/subroutine.py
+   41 | load 6                                   |   365 | loaded = argVar.load()                                     | subroutine generated       | pyteal/ast/subroutine.py
+   42 | concat                                   |  1689 | return Pop(Concat(x, y))                                   | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   43 | pop                                      |  1689 | return Pop(Concat(x, y))                                   | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+   44 | retsub                                   |  1752 | actual, lines, sourceMap = compileTeal(                    | PyTeal Unit Test generated | pyteal/compiler/compiler_test.py
+""".strip()
 
     assert expected_table.strip() == table.strip(), print(table)

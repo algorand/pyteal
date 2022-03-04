@@ -1,3 +1,4 @@
+import sys
 from typing import List, NamedTuple, Tuple, Set, Dict, Optional, cast
 
 from ..types import TealType
@@ -251,30 +252,71 @@ def getSourceMap(
     stackIndex: int = 2,
     firstLine: int = 2,
     assumeNextAvailable: bool = True,
-) -> Dict[int, Tuple[TealOp, Optional[NamedTuple]]]:
+) -> Dict[int, Tuple[TealOp, Tuple[Optional[NamedTuple], Optional[str]]]]:
     # TODD: what about several source files!!!!
     # TODO: what about assemble constants?
     # TODO: what about multiple line TEAL statements (label comment on first line)
     # TODO: what about all the subroutine stuff?
     sourceFrame = inspect.stack()[stackIndex]
     source = sourceFrame.filename
-    rawMap = [bestFrame(t, source) for t in teal]
+    rawMap = [bestFrameWithNote(t, source) for t in teal]
     if assumeNextAvailable:
-        nextAvail = None
+        nextAvail = (None, None)
         for i in range(len(rawMap) - 1, -1, -1):
             curr = rawMap[i]
-            if not curr:
+            if not curr[0]:
                 rawMap[i] = nextAvail
             else:
                 nextAvail = curr
 
-    return {i + firstLine: (t, rawMap[i]) for i, t in enumerate(teal)}
+    return {i + firstLine: (t, rawMap[i][0], rawMap[i][1]) for i, t in enumerate(teal)}
 
 
-def bestFrame(t: TealOp, sourceFileName: str) -> Optional[NamedTuple]:
+NOTES = {
+    "ast/subroutine.py": "subroutine generated",
+    "_test.py": "PyTeal Unit Test generated",
+    "DEFAULT": "user generated",
+}
+
+
+def bestFrameWithNote(
+    t: TealOp, sourceFileName: str
+) -> Tuple[Optional[NamedTuple], Optional[str]]:
     if not t.expr:
-        return None
+        return None, None
 
-    candidates = [f for f in t.expr.frames if f.filename == sourceFileName]
-    cand =  candidates[-1] if candidates else None
-    return cand
+    this_module = sys.modules[__name__]
+    this_file = this_module.__file__
+    pyteal_idx = this_file.rfind("pyteal") + len("pyteal/")
+    pyteal_path = this_file[:pyteal_idx]
+
+    def reportable(file):
+        return not file.startswith(pyteal_path) or any(file.endswith(x) for x in NOTES)
+
+    def get_note(file):
+        assert reportable(file)
+        if file.startswith(pyteal_path) and any(file.endswith(x) for x in NOTES):
+            for x in NOTES:
+                if file.endswith(x):
+                    return NOTES[x]
+        return NOTES["DEFAULT"]
+
+    assert t.expr.frames and not reportable(
+        t.expr.frames[0].filename
+    ), "TODO: better assertion"
+
+    candidates = [f for f in t.expr.frames if reportable(f.filename)]
+    if not candidates:
+        return None, None
+
+    cand = candidates[0]
+    return cand, get_note(cand.filename)
+
+
+# def bestFrame(t: TealOp, sourceFileName: str) -> Optional[NamedTuple]:
+#     if not t.expr:
+#         return None
+
+#     candidates = [f for f in t.expr.frames if f.filename == sourceFileName]
+#     cand = candidates[-1] if candidates else None
+#     return cand
