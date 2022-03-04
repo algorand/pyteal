@@ -1,0 +1,28 @@
+#pragma version 6
+byte "hello"
+store 0                   //  0: "hello"
+int 0
+int 42                    //  >@0,42
+callsub logcatdynamic_0   //  <<EMPTY>>
+byte "hello42"            //  >"hello42"
+load 0                    //  >"hello42","hello42"
+==                        //  >1
+assert                    //  <<EMPTY>>
+int 1                     //  >1
+return                    //  <<SUCCESS>
+
+// logcat_dynamic
+logcatdynamic_0:          //  >@0,42
+store 2                   //  2: 42
+store 1                   //  1: @0
+load 1
+load 1                    //  >@0,@0
+loads                     //  >@0,"hello"
+load 2                    //  >@0,"hello",42
+itob                      //  >@0,"hello","42"
+concat                    //  >@0,"hello42"
+stores                    //  0: "hello42"
+load 1                    //  >@0
+loads                     //  >"hello42"
+log                     
+retsub

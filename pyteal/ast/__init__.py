@@ -13,13 +13,15 @@ from .arg import Arg
 from .txn import TxnType, TxnField, TxnExpr, TxnaExpr, TxnArray, TxnObject, Txn
 from .gtxn import GtxnExpr, GtxnaExpr, TxnGroup, Gtxn
 from .gaid import GeneratedID
+from .gitxn import Gitxn, GitxnExpr, GitxnaExpr, InnerTxnGroup
 from .gload import ImportScratchValue
 from .global_ import Global, GlobalField
 from .app import App, AppField, OnComplete, AppParam
 from .asset import AssetHolding, AssetParam
+from .acct import AccountParam
 
 # inner txns
-from .itxn import InnerTxnBuilder, InnerTxn
+from .itxn import InnerTxnBuilder, InnerTxn, InnerTxnAction
 
 # meta
 from .array import Array
@@ -43,6 +45,7 @@ from .unaryexpr import (
     Balance,
     MinBalance,
     BytesNot,
+    BytesSqrt,
     BytesZero,
     Log,
 )
@@ -89,7 +92,7 @@ from .binaryexpr import (
 )
 
 # ternary ops
-from .ternaryexpr import Ed25519Verify, SetBit, SetByte
+from .ternaryexpr import Divw, Ed25519Verify, SetBit, SetByte
 from .substring import Substring, Extract, Suffix
 
 # more ops
@@ -108,6 +111,7 @@ from .subroutine import (
     SubroutineDefinition,
     SubroutineDeclaration,
     SubroutineCall,
+    SubroutineFnWrapper,
 )
 from .while_ import While
 from .for_ import For
@@ -116,9 +120,16 @@ from .continue_ import Continue
 
 
 # misc
-from .scratch import ScratchSlot, ScratchLoad, ScratchStore, ScratchStackStore
-from .scratchvar import ScratchVar
+from .scratch import (
+    ScratchIndex,
+    ScratchLoad,
+    ScratchSlot,
+    ScratchStackStore,
+    ScratchStore,
+)
+from .scratchvar import DynamicScratchVar, ScratchVar
 from .maybe import MaybeValue
+from .multi import MultiValue
 
 __all__ = [
     "Expr",
@@ -150,8 +161,14 @@ __all__ = [
     "AppParam",
     "AssetHolding",
     "AssetParam",
+    "AccountParam",
     "InnerTxnBuilder",
     "InnerTxn",
+    "InnerTxnAction",
+    "Gitxn",
+    "GitxnExpr",
+    "GitxnaExpr",
+    "InnerTxnGroup",
     "Array",
     "Tmpl",
     "Nonce",
@@ -176,6 +193,7 @@ __all__ = [
     "Div",
     "Mod",
     "Exp",
+    "Divw",
     "BitwiseAnd",
     "BitwiseOr",
     "BitwiseXor",
@@ -212,12 +230,16 @@ __all__ = [
     "SubroutineDefinition",
     "SubroutineDeclaration",
     "SubroutineCall",
-    "ScratchSlot",
+    "SubroutineFnWrapper",
+    "ScratchIndex",
     "ScratchLoad",
-    "ScratchStore",
+    "ScratchSlot",
     "ScratchStackStore",
+    "ScratchStore",
+    "DynamicScratchVar",
     "ScratchVar",
     "MaybeValue",
+    "MultiValue",
     "BytesAdd",
     "BytesMinus",
     "BytesDiv",
@@ -233,6 +255,7 @@ __all__ = [
     "BytesGt",
     "BytesGe",
     "BytesNot",
+    "BytesSqrt",
     "BytesZero",
     "ExtractUint16",
     "ExtractUint32",

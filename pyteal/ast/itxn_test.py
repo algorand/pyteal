@@ -8,6 +8,7 @@ from .. import MAX_GROUP_SIZE, CompileOptions
 
 teal4Options = CompileOptions(version=4)
 teal5Options = CompileOptions(version=5)
+teal6Options = CompileOptions(version=6)
 
 
 def test_InnerTxnBuilder_Begin():
@@ -38,6 +39,21 @@ def test_InnerTxnBuilder_Submit():
 
     with pytest.raises(TealInputError):
         expr.__teal__(teal4Options)
+
+
+def test_InnerTxnBuilder_Next():
+    expr = InnerTxnBuilder.Next()
+    assert expr.type_of() == TealType.none
+    assert not expr.has_return()
+
+    expected = TealSimpleBlock([TealOp(expr, Op.itxn_next)])
+
+    actual, _ = expr.__teal__(teal6Options)
+
+    assert actual == expected
+
+    with pytest.raises(TealInputError):
+        expr.__teal__(teal5Options)
 
 
 def test_InnerTxnBuilder_SetField():

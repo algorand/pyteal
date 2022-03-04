@@ -5,11 +5,19 @@ from ..ir import TealOp, Op, TealBlock
 from ..errors import TealInputError, verifyFieldVersion, verifyTealVersion
 from ..config import MAX_GROUP_SIZE
 from .expr import Expr
-from .leafexpr import LeafExpr
 from .txn import TxnField, TxnExpr, TxnaExpr, TxnObject
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
+
+
+def validate_txn_index_or_throw(txnIndex: Union[int, Expr]):
+    if not isinstance(txnIndex, (int, Expr)):
+        raise TealInputError(
+            f"Invalid txnIndex type:  Expected int or Expr, but received {txnIndex}"
+        )
+    if isinstance(txnIndex, Expr):
+        require_type(txnIndex, TealType.uint64)
 
 
 class GtxnExpr(TxnExpr):
@@ -17,6 +25,7 @@ class GtxnExpr(TxnExpr):
 
     def __init__(self, txnIndex: Union[int, Expr], field: TxnField) -> None:
         super().__init__(Op.gtxn, "Gtxn", field)
+        validate_txn_index_or_throw(txnIndex)
         self.txnIndex = txnIndex
 
     def __str__(self):
@@ -26,6 +35,9 @@ class GtxnExpr(TxnExpr):
         verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
 
         if type(self.txnIndex) is int:
+            verifyTealVersion(
+                Op.gtxn.min_version, options.version, "TEAL version too low to use gtxn"
+            )
             op = TealOp(self, Op.gtxn, self.txnIndex, self.field.arg_name)
             return TealBlock.FromOp(options, op)
 
@@ -49,6 +61,7 @@ class GtxnaExpr(TxnaExpr):
         self, txnIndex: Union[int, Expr], field: TxnField, index: Union[int, Expr]
     ) -> None:
         super().__init__(Op.gtxna, Op.gtxnas, "Gtxna", field, index)
+        validate_txn_index_or_throw(txnIndex)
         self.txnIndex = txnIndex
 
     def __str__(self):

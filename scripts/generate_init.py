@@ -1,4 +1,6 @@
-import argparse, os, sys
+import argparse, os, sys, difflib
+from collections import Counter
+
 from pyteal import __all__ as static_all
 
 
@@ -30,14 +32,21 @@ py_file = "__init__.py"
 init_file = os.path.join(orig_dir, py_file)
 
 
-def generate_tmp():
+def generate_init_pyi() -> str:
     with open(init_file, "r") as f:
         init_contents = f.read()
 
     start_idx = init_contents.index(begin_flag)
     end_idx = init_contents.index(end_flag)
 
-    all_imports = ",\n    ".join(['"{}"'.format(s) for s in static_all])
+    counts = Counter(static_all)
+    dupes = [x for x, n in counts.items() if n > 1]
+    BR = "\n"
+    assert (
+        not dupes
+    ), f"Aborting pyi file generation. The following duplicate imports were detected:{BR}{BR.join(dupes)}"
+
+    all_imports = ",\n    ".join(['"{}"'.format(s) for s in sorted(static_all)])
 
     return (
         pyi_template
@@ -47,19 +56,29 @@ def generate_tmp():
     )
 
 
-def is_different(regen):
+def is_different(regen: str) -> bool:
     if not os.path.exists(orig_file):
         return True
 
     with open(orig_file, "r") as f:
         orig_lines = f.readlines()
 
-    curr_lines = regen.split("\n")
+    curr_lines = regen.splitlines(keepends=True)
 
-    return orig_lines == curr_lines
+    diff = list(
+        difflib.unified_diff(
+            orig_lines, curr_lines, fromfile="original", tofile="generated", n=3
+        )
+    )
+
+    if len(diff) != 0:
+        print("".join(diff), end="")
+        return True
+
+    return False
 
 
-def overwrite(regen):
+def overwrite(regen: str):
     with open(orig_file, "w") as f:
         f.write(regen)
 
@@ -74,7 +93,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    regen = generate_tmp()
+    regen = generate_init_pyi()
 
     if args.check:
         if is_different(regen):
