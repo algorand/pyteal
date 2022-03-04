@@ -278,4 +278,5 @@ def bestFrame(t: TealOp, sourceFileName: str) -> Optional[NamedTuple]:
         return None
 
     candidates = [f for f in t.expr.frames if f.filename == sourceFileName]
-    return candidates[-1] if candidates else None
+    cand =  candidates[-1] if candidates else None
+    return cand
