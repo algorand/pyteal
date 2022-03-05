@@ -230,7 +230,7 @@ class Tuple(Type):
         """
         if type(params) is tuple:
             return cls.of(*params)
-        return cls.of(params)
+        return cls.of(cast(PyType[Type], params))
 
     @classmethod
     def has_same_type_as(cls, other: Union[PyType[Type], Type]) -> bool:
@@ -238,7 +238,7 @@ class Tuple(Type):
             return False
 
         myValueTypes = cls.value_types()
-        otherValueTypes = other.value_types()
+        otherValueTypes = cast(Union[PyType[Tuple], Tuple], other).value_types()
 
         return len(myValueTypes) == len(otherValueTypes) and all(
             myValueTypes[i].has_same_type_as(otherValueTypes[i])
