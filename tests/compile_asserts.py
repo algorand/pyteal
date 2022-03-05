@@ -4,9 +4,9 @@ from pyteal.compiler import compileTeal
 from pyteal.ir import Mode
 
 
-def compile_and_save(approval):
+def compile_and_save(approval, version):
     teal = Path.cwd() / "tests" / "teal"
-    compiled = compileTeal(approval(), mode=Mode.Application, version=6)
+    compiled = compileTeal(approval(), mode=Mode.Application, version=version)
     name = approval.__name__
     with open(teal / (name + ".teal"), "w") as f:
         f.write(compiled)
@@ -56,9 +56,9 @@ LINE{i+1}:
 """
 
 
-def assert_new_v_old(approve_func):
+def assert_new_v_old(approve_func, version):
     try:
-        teal_dir, name, compiled = compile_and_save(approve_func)
+        teal_dir, name, compiled = compile_and_save(approve_func, version)
 
         print(
             f"""Compilation resulted in TEAL program of length {len(compiled)}. 
