@@ -94,7 +94,6 @@ def spillLocalSlotsDuringRecursion(
 
     for subroutine, reentryPoints in recursivePoints.items():
         slots = list(sorted(slot for slot in localSlots[subroutine]))
-        numArgs = subroutine.argumentCount()
 
         if len(reentryPoints) == 0 or len(slots) == 0:
             # no need to spill slots
@@ -107,12 +106,21 @@ def spillLocalSlotsDuringRecursion(
             before: List[TealComponent] = []
             after: List[TealComponent] = []
 
-            if len(reentryPoints.intersection(stmt.getSubroutines())) != 0:
+            reentrySubroutineCalls = reentryPoints.intersection(stmt.getSubroutines())
+            if len(reentrySubroutineCalls) != 0:
                 # A subroutine is being called which may reenter the current subroutine, so insert
                 # ops to spill local slots to the stack before calling the subroutine and also to
                 # restore the local slots after returning from the subroutine. This prevents a
                 # reentry into the current subroutine from modifying variables we are currently
                 # using.
+
+                # the only opcode that references subroutines is callsub, and it should only ever
+                # reference one subroutine at a time
+                assert (
+                    len(reentrySubroutineCalls) == 1
+                ), "Multiple subroutines are called from the same op"
+                reentrySubroutineCall = reentrySubroutineCalls.pop()
+                numArgs = reentrySubroutineCall.argumentCount()
 
                 digArgs = True
                 coverSpilledSlots = False
