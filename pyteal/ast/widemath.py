@@ -1,12 +1,49 @@
 from typing import List, Tuple, TYPE_CHECKING
 
-from ..types import TealType, require_type
-from ..errors import TealInputError, TealInternalError, TealCompileError
-from ..ir import TealOp, Op, TealSimpleBlock, TealBlock
+from pyteal.ast.multi import MultiValue
+from pyteal.ir.tealblock import TealBlock
+
+from ..types import TealType
+from ..errors import TealInternalError, TealCompileError
+from ..ir import TealOp, Op, TealSimpleBlock
 from .expr import Expr
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
+
+
+def multU128U64(
+    expr: Expr, factor: Expr, options: "CompileOptions"
+) -> Tuple[TealBlock, TealSimpleBlock]:
+    facSrt, facEnd = factor.__teal__(options)
+    # stack is [..., A, B, C], where C is current factor
+    # need to pop all A,B,C from stack and push X,Y, where X and Y are:
+    #       X * 2**64 + Y = (A * 2**64 + B) * C
+    # <=>   X * 2**64 + Y = A * C * 2**64 + B * C
+    # <=>   X = A * C + highword(B * C)
+    #       Y = lowword(B * C)
+    multiply = TealSimpleBlock(
+        [
+            TealOp(expr, Op.uncover, 2),  # stack: [..., B, C, A]
+            TealOp(expr, Op.dig, 1),  # stack: [..., B, C, A, C]
+            TealOp(expr, Op.mul),  # stack: [..., B, C, A*C]
+            TealOp(expr, Op.cover, 2),  # stack: [..., A*C, B, C]
+            TealOp(
+                expr, Op.mulw
+            ),  # stack: [..., A*C, highword(B*C), lowword(B*C)]
+            TealOp(
+                expr, Op.cover, 2
+            ),  # stack: [..., lowword(B*C), A*C, highword(B*C)]
+            TealOp(
+                expr, Op.add
+            ),  # stack: [..., lowword(B*C), A*C+highword(B*C)]
+            TealOp(
+                expr, Op.swap
+            ),  # stack: [..., A*C+highword(B*C), lowword(B*C)]
+        ]
+    )
+    facEnd.setNextBlock(multiply)
+    return facSrt, multiply
 
 
 def multiplyFactors(
@@ -38,40 +75,68 @@ def multiplyFactors(
 
         end = multiplyFirst2
         for factor in factors[2:]:
-            facXStart, facXEnd = factor.__teal__(options)
-            end.setNextBlock(facXStart)
-
-            # stack is [..., A, B, C], where C is current factor
-            # need to pop all A,B,C from stack and push X,Y, where X and Y are:
-            #       X * 2**64 + Y = (A * 2**64 + B) * C
-            # <=>   X * 2**64 + Y = A * C * 2**64 + B * C
-            # <=>   X = A * C + highword(B * C)
-            #       Y = lowword(B * C)
-            multiply = TealSimpleBlock(
-                [
-                    TealOp(expr, Op.uncover, 2),  # stack: [..., B, C, A]
-                    TealOp(expr, Op.dig, 1),  # stack: [..., B, C, A, C]
-                    TealOp(expr, Op.mul),  # stack: [..., B, C, A*C]
-                    TealOp(expr, Op.cover, 2),  # stack: [..., A*C, B, C]
-                    TealOp(
-                        expr, Op.mulw
-                    ),  # stack: [..., A*C, highword(B*C), lowword(B*C)]
-                    TealOp(
-                        expr, Op.cover, 2
-                    ),  # stack: [..., lowword(B*C), A*C, highword(B*C)]
-                    TealOp(
-                        expr, Op.add
-                    ),  # stack: [..., lowword(B*C), A*C+highword(B*C)]
-                    TealOp(
-                        expr, Op.swap
-                    ),  # stack: [..., A*C+highword(B*C), lowword(B*C)]
-                ]
-            )
-
-            facXEnd.setNextBlock(multiply)
-            end = multiply
+            facSrt, multed = multU128U64(expr, factor, options)
+            end.setNextBlock(facSrt)
+            end = multed
 
     return start, end
+
+
+def addU128U64(
+    expr: Expr, term: Expr, options: "CompileOptions"
+) -> Tuple[TealBlock, TealSimpleBlock]:
+    termSrt, termEnd = term.__teal__(options)
+    addition = TealSimpleBlock(
+        [
+            TealOp(expr, Op.addw),
+            TealOp(expr, Op.cover, 2),
+            TealOp(expr, Op.add),
+            TealOp(expr, Op.uncover, 1),
+        ]
+    )
+    termEnd.setNextBlock(addition)
+    return termSrt, addition
+
+
+def addTerms(
+    expr: Expr, terms: List[Expr], options: "CompileOptions"
+) -> Tuple[TealSimpleBlock, TealSimpleBlock]:
+    if len(terms) == 0:
+        raise TealInternalError("Received 0 terms")
+
+    start = TealSimpleBlock([])
+
+    term0srt, term0end = terms[0].__teal__(options)
+
+    if len(terms) == 1:
+        highword = TealSimpleBlock([TealOp(expr, Op.int, 0)])
+
+        start.setNextBlock(highword)
+        highword.setNextBlock(term0srt)
+        end = term0end
+    else:
+        start.setNextBlock(term0srt)
+
+        term1srt, term1end = terms[1].__teal__(options)
+        term0end.setNextBlock(term1srt)
+        addFirst2 = TealSimpleBlock([TealOp(expr, Op.addw)])
+        term1end.setNextBlock(addFirst2)
+        end = addFirst2
+
+        for term in terms[2:]:
+            termSrt, added = addU128U64(expr, term, options)
+            end.setNextBlock(termSrt)
+            end = added
+
+    return start, end
+
+
+"""
+def substractU128U64(
+    expr: Expr, term: Expr, options: "CompileOptions"
+) -> Tuple[TealBlock, TealSimpleBlock]:
+    pass
+"""
 
 
 class WideRatio(Expr):
@@ -157,3 +222,45 @@ class WideRatio(Expr):
 
 
 WideRatio.__module__ = "pyteal"
+
+
+class WideUint128(MultiValue):
+    @staticmethod
+    def addw(*terms: Expr):
+        if len(terms) < 2:
+            pass
+        return WideUint128(
+            Op.addw, [TealType.uint64, TealType.uint64], args=list(terms)
+        )
+
+    @staticmethod
+    def mulw(*factors: Expr):
+        if len(factors) < 2:
+            pass
+        return WideUint128(
+            Op.addw, [TealType.uint64, TealType.uint64], args=list(factors)
+        )
+
+    @staticmethod
+    def expw(base: Expr, _pow: Expr):
+        return WideUint128(
+            Op.expw, [TealType.uint64, TealType.uint64], args=[base, _pow]
+        )
+
+    def __init__(self, op: Op, types: List[TealType], *, args: List[Expr]):
+        super().__init__(op, types, args=args)
+
+    def __add__(self, other: Expr):
+        return super().__add__(other)
+
+    def __sub__(self, other: Expr):
+        return super().__sub__(other)
+
+    def __divmod__(self, other: "WideUint128"):
+        pass
+
+    def __truediv__(self, other: Expr):
+        return super().__truediv__(other)
+
+    def __teal__(self, options: "CompileOptions"):
+        return super().__teal__(options)
