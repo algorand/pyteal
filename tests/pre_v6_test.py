@@ -73,12 +73,15 @@ def sub_even():
     )
 
 
-OLD_CASES = (sub_logcat, sub_slowfib, sub_fastfib, sub_even)
+CASES_5 = (sub_logcat, sub_slowfib, sub_fastfib, sub_even)
+CASES_6 = []
 
 
 def test_old():
-    for pt in OLD_CASES:
+    for pt in CASES_5:
         assert_new_v_old(pt, 5)
+    for pt in CASES_6:
+        assert_new_v_old(pt, 6)
 
 
 if __name__ == "__main__":

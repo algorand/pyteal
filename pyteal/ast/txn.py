@@ -488,6 +488,14 @@ class TxnObject:
         """
         return self.makeTxnExpr(TxnField.application_id)
 
+    # TODO: Zeph needs to add unit tests. And do I really need this?
+    def num_app_args(self) -> TxnExpr:
+        """Get the nummber of args for the current application transaction.
+
+        Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall`.
+        """
+        return self.makeTxnExpr(TxnField.num_app_args)
+
     def on_completion(self) -> TxnExpr:
         """Get the on completion action from the ApplicationCall portion of the transaction.
 
