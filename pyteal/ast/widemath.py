@@ -28,18 +28,10 @@ def multU128U64(
             TealOp(expr, Op.dig, 1),  # stack: [..., B, C, A, C]
             TealOp(expr, Op.mul),  # stack: [..., B, C, A*C]
             TealOp(expr, Op.cover, 2),  # stack: [..., A*C, B, C]
-            TealOp(
-                expr, Op.mulw
-            ),  # stack: [..., A*C, highword(B*C), lowword(B*C)]
-            TealOp(
-                expr, Op.cover, 2
-            ),  # stack: [..., lowword(B*C), A*C, highword(B*C)]
-            TealOp(
-                expr, Op.add
-            ),  # stack: [..., lowword(B*C), A*C+highword(B*C)]
-            TealOp(
-                expr, Op.swap
-            ),  # stack: [..., A*C+highword(B*C), lowword(B*C)]
+            TealOp(expr, Op.mulw),  # stack: [..., A*C, highword(B*C), lowword(B*C)]
+            TealOp(expr, Op.cover, 2),  # stack: [..., lowword(B*C), A*C, highword(B*C)]
+            TealOp(expr, Op.add),  # stack: [..., lowword(B*C), A*C+highword(B*C)]
+            TealOp(expr, Op.swap),  # stack: [..., A*C+highword(B*C), lowword(B*C)]
         ]
     )
     facEnd.setNextBlock(multiply)
