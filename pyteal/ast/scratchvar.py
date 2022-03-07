@@ -1,8 +1,6 @@
-from ..errors import TealInputError
 from ..types import TealType, require_type
-
 from .expr import Expr
-from .scratch import ScratchSlot, ScratchLoad, ScratchStore
+from .scratch import ScratchSlot, ScratchLoad
 
 
 class ScratchVar:
@@ -49,85 +47,5 @@ class ScratchVar:
         """Load value from Scratch Space"""
         return self.slot.load(self.type)
 
-    def index(self) -> Expr:
-        return self.slot.index()
-
 
 ScratchVar.__module__ = "pyteal"
-
-
-class DynamicScratchVar(ScratchVar):
-    """
-    Example of Dynamic Scratch space whereby the slot index is picked up from the stack:
-        .. code-block:: python1
-
-            player_score = DynamicScratchVar(TealType.uint64)
-
-            wilt = ScratchVar(TealType.uint64, 129)
-            kobe = ScratchVar(TealType.uint64)
-            dt = ScratchVar(TealType.uint64, 131)
-
-            seq = Seq(
-                player_score.set_index(wilt),
-                player_score.store(Int(100)),
-                player_score.set_index(kobe),
-                player_score.store(Int(81)),
-                player_score.set_index(dt),
-                player_score.store(Int(73)),
-                Assert(player_score.load() == Int(73)),
-                Assert(player_score.index() == Int(131)),
-                player_score.set_index(wilt),
-                Assert(player_score.load() == Int(100)),
-                Assert(player_score.index() == Int(129)),
-                Int(100),
-            )
-    """
-
-    def __init__(self, ttype: TealType = TealType.anytype):
-        """Create a new DynamicScratchVar which references other ScratchVar's
-
-        Args:
-            ttype (optional): The type that this variable can hold. Defaults to TealType.anytype.
-        """
-        super().__init__(TealType.uint64)
-        self.dynamic_type = ttype  # differentiates from ScratchVar.type
-
-    def set_index(self, index_var: ScratchVar) -> Expr:
-        """Set this DynamicScratchVar to reference the provided `index_var`.
-        Followup `store`, `load` and `index` operations will use the provided `index_var` until
-        `set_index()` is called again to reset the referenced ScratchVar.
-        """
-        if type(index_var) is not ScratchVar:
-            raise TealInputError(
-                "Only allowed to use ScratchVar objects for setting indices, but was given a {}".format(
-                    type(index_var)
-                )
-            )
-
-        return super().store(index_var.index())
-
-    def storage_type(self) -> TealType:
-        """Get the type of expressions that can be stored in this ScratchVar."""
-        return self.dynamic_type
-
-    def store(self, value: Expr) -> Expr:
-        """Store the value in the referenced ScratchVar."""
-        require_type(value, self.dynamic_type)
-        return ScratchStore(slot=None, value=value, index_expression=self.index())
-
-    def load(self) -> ScratchLoad:
-        """Load the current value from the referenced ScratchVar."""
-        return ScratchLoad(
-            slot=None, type=self.dynamic_type, index_expression=self.index()
-        )
-
-    def index(self) -> Expr:
-        """Get the index of the referenced ScratchVar."""
-        return super().load()
-
-    def internal_index(self) -> Expr:
-        """Get the index of _this_ DynamicScratchVar, as opposed to that of the referenced ScratchVar."""
-        return super().index()
-
-
-DynamicScratchVar.__module__ = "pyteal"

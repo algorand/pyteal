@@ -43,19 +43,6 @@ def test_scratch_load_default():
     assert actual == expected
 
 
-def test_scratch_load_index_expression():
-    expr = ScratchLoad(slot=None, index_expression=Int(1337))
-    assert expr.type_of() == TealType.anytype
-
-    expected = TealSimpleBlock([TealOp(Int(1337), Op.int, 1337)])
-    expected.setNextBlock(TealSimpleBlock([TealOp(None, Op.loads)]))
-
-    actual, _ = expr.__teal__(options)
-
-    with TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
-
-
 def test_scratch_load_type():
     for type in (TealType.uint64, TealType.bytes, TealType.anytype):
         slot = ScratchSlot()
@@ -89,29 +76,6 @@ def test_scratch_store():
         assert actual == expected
 
 
-def test_scratch_store_index_expression():
-    for value in (
-        Int(1),
-        Bytes("test"),
-        App.globalGet(Bytes("key")),
-        If(Int(1), Int(2), Int(3)),
-    ):
-        expr = ScratchStore(slot=None, value=value, index_expression=Int(1337))
-        assert expr.type_of() == TealType.none
-
-        expected = TealSimpleBlock([TealOp(None, Op.int, 1337)])
-        valueStart, valueEnd = value.__teal__(options)
-        expected.setNextBlock(valueStart)
-
-        storeBlock = TealSimpleBlock([TealOp(expr, Op.stores)])
-        valueEnd.setNextBlock(storeBlock)
-
-        actual, _ = expr.__teal__(options)
-
-        with TealComponent.Context.ignoreExprEquality():
-            assert actual == expected
-
-
 def test_scratch_stack_store():
     slot = ScratchSlot()
     expr = ScratchStackStore(slot)
@@ -142,21 +106,3 @@ def test_scratch_assign_id_invalid():
 
     with pytest.raises(TealInputError):
         slot = ScratchSlot(NUM_SLOTS)
-
-
-def test_scratch_index():
-    slot = ScratchSlot()
-
-    index = ScratchIndex(slot)
-    assert index.slot is slot
-
-    assert str(index) == "(ScratchIndex " + str(slot) + ")"
-
-    assert index.type_of() == TealType.uint64
-
-    assert not index.has_return()
-
-    expected = TealSimpleBlock([TealOp(index, Op.int, slot)])
-    actual, _ = index.__teal__(options)
-
-    assert actual == expected

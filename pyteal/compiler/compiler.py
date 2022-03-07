@@ -5,6 +5,7 @@ from ..ast import (
     Expr,
     Return,
     Seq,
+    ScratchSlot,
     SubroutineDefinition,
     SubroutineDeclaration,
 )
@@ -15,6 +16,7 @@ from .sort import sortBlocks
 from .flatten import flattenBlocks, flattenSubroutines
 from .scratchslots import assignScratchSlotsToSubroutines
 from .subroutines import (
+    findRecursionPoints,
     spillLocalSlotsDuringRecursion,
     resolveSubroutines,
 )
