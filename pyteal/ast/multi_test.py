@@ -1,6 +1,10 @@
-from typing import List
+import pytest
 
 from .. import *
+from typing import List
+
+# this is not necessary but mypy complains if it's not included
+from .. import CompileOptions
 
 options = CompileOptions()
 
