@@ -8,7 +8,7 @@ is a temporary place to store values for later use in your program. It is tempor
 changes to scratch space do not persist beyond the current transaction. Scratch space can be used
 in both Application and Signature mode.
 
-Scratch space consists of 256 scratch slots, each capable of storing one integer or byte slice. A scratch slot's default value is uint64 zero.  When
+Scratch space consists of 256 scratch slots, each capable of storing one integer or byte slice. When
 using the :any:`ScratchVar` class to work with scratch space, a slot is automatically assigned to
 each variable.
 
@@ -22,7 +22,7 @@ that no type checking takes places in this situation. It is also possible to man
 slot ID the compiler should assign the scratch slot to in the TEAL code. If no slot ID is specified,
 the compiler will assign it to any available slot. 
 
-To write or read values, use the corresponding :any:`ScratchVar.store` or :any:`ScratchVar.load` methods.
+To write or read values, use the corresponding :any:`ScratchVar.store` or :any:`ScratchVar.load` methods.  :any:`ScratchVar.store` *must* be invoked before invoking :any:`ScratchVar.load`.
 
 For example:
 
