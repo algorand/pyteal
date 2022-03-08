@@ -73,7 +73,7 @@ class Uint8(Uint):
                 # There's insufficient evidence to attempt resolution.
                 return cast(Expr, value)
             else:
-                raise TypeError(f"Unsupported type: {value = } with { type(value) = }")
+                raise TypeError(f"Unsupported type: {type(value)}")
 
         r = resolve_storage_value()
         return SizedExpr.store_into(r, self.stored_value, self.bit_size)
