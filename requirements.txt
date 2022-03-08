@@ -3,3 +3,4 @@ mypy==0.931
 pytest
 pytest-timeout
 py-algorand-sdk
+types-dataclasses
