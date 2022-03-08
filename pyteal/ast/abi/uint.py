@@ -1,6 +1,7 @@
 from typing import Union, cast
 from abc import abstractmethod
 
+from .sized import SizedExpr
 from ...types import TealType
 from ...errors import TealInputError
 from ..expr import Expr
@@ -56,28 +57,26 @@ class Uint8(Uint):
         return Uint8()
 
     def set(self, value: Union[int, Expr, "Uint8", "Byte"]) -> Expr:
-        checked = False
-        if type(value) is int:
-            if value >= 2 ** self.bit_size:
-                raise TealInputError(
-                    "Value exceeds {} maximum: {}".format(
-                        self.__class__.__name__, value
+        def resolve_storage_value() -> Union[Expr, SizedExpr]:
+            if type(value) is int:
+                if value >= 2 ** self.bit_size:
+                    raise TealInputError(
+                        "Value exceeds {} maximum: {}".format(
+                            self.__class__.__name__, value
+                        )
                     )
-                )
-            value = Int(value)
-            checked = True
+                return SizedExpr(Int(value))
 
-        if type(value) is Uint8 or type(value) is Byte:
-            value = value.get()
-            checked = True
+            elif isinstance(value, Uint8):
+                return SizedExpr(value.get())
+            elif isinstance(value, Expr):
+                # There's insufficient evidence to attempt resolution.
+                return cast(Expr, value)
+            else:
+                raise TypeError(f"Unsupported type: {value = } with { type(value) = }")
 
-        if checked:
-            return self.stored_value.store(cast(Expr, value))
-
-        return Seq(
-            self.stored_value.store(cast(Expr, value)),
-            Assert(self.stored_value.load() < Int(2 ** self.bit_size)),
-        )
+        r = resolve_storage_value()
+        return SizedExpr.store_into(r, self.stored_value, self.bit_size)
 
     def decode(
         self,
@@ -85,7 +84,7 @@ class Uint8(Uint):
         *,
         startIndex: Expr = None,
         endIndex: Expr = None,
-        length: Expr = None
+        length: Expr = None,
     ) -> Expr:
         if startIndex is None:
             startIndex = Int(0)
@@ -147,7 +146,7 @@ class Uint16(Uint):
         *,
         startIndex: Expr = None,
         endIndex: Expr = None,
-        length: Expr = None
+        length: Expr = None,
     ) -> Expr:
         if startIndex is None:
             startIndex = Int(0)
@@ -195,7 +194,7 @@ class Uint32(Uint):
         *,
         startIndex: Expr = None,
         endIndex: Expr = None,
-        length: Expr = None
+        length: Expr = None,
     ) -> Expr:
         if startIndex is None:
             startIndex = Int(0)
@@ -228,7 +227,7 @@ class Uint64(Uint):
         *,
         startIndex: Expr = None,
         endIndex: Expr = None,
-        length: Expr = None
+        length: Expr = None,
     ) -> Expr:
         if startIndex is None:
             if endIndex is None and length is None:
