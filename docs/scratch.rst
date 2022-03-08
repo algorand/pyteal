@@ -8,7 +8,7 @@ is a temporary place to store values for later use in your program. It is tempor
 changes to scratch space do not persist beyond the current transaction. Scratch space can be used
 in both Application and Signature mode.
 
-Scratch space consists of 256 scratch slots, each capable of storing one integer or byte slice. When
+Scratch space consists of 256 scratch slots, each capable of storing one integer or byte slice. A scratch slot's default value is uint64 zero.  When
 using the :any:`ScratchVar` class to work with scratch space, a slot is automatically assigned to
 each variable.
 
