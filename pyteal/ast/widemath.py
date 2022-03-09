@@ -216,7 +216,7 @@ def __substrctU128U64(expr: Expr) -> Tuple[TealSimpleBlock, TealSimpleBlock]:
             TealOp(expr, Op.minus),
             # stack: [..., A - 1, 2^64 - 1 - (C - B)]
             TealOp(expr, Op.bitwise_not),
-            # stack: [..., A - 1, 2^64 - (C - B), 1]
+            # stack: [..., A - 1, 2^64 - 1 - (C - B), 1]
             TealOp(expr, Op.int, 1),
             # stack: [..., A - 1, 2^64 - (C - B)]
             TealOp(expr, Op.add),
