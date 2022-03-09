@@ -296,9 +296,11 @@ Subroutines
 .. note::
     Subroutines are only available in TEAL version 4 or higher.
 
-A subroutine is section of code that can be called multiple times from within a program. Subroutines
-are PyTeal's equivalent to functions. Subroutines can accept any number of arguments, and these
-arguments must be PyTeal expressions. Additionally, a subroutine may return a single value, or no value.
+A subroutine is section of code that can be called multiple times from within a program. Subroutines are PyTeal's equivalent to functions.  Subroutine constraints include:
+
+* Subroutines accept any number of arguments.
+* Subroutine argument types can be any `Expr` (PyTeal expression) or strictly `ScratchVar` (no subclasses allowed).  PyTeal applies pass-by-value semantics to `Expr` and pass-by-reference to `ScratchVar`.
+* Subroutines return a single value, or no value.
 
 Creating Subroutines
 --------------------
@@ -316,6 +318,24 @@ For example,
         @Subroutine(TealType.uint64)
         def isEven(i):
             return i % Int(2) == Int(0)
+
+PyTeal applies these parameter type annotation constraints when compiling subroutine definitions:
+
+* :any:`ScratchVar` parameters *require* a type annotation.
+* :any:`Expr` parameters do *not* require a type annotation.  PyTeal implicitly declares unannotated parameter types as :any:`Expr`.
+
+Here's an example illustrating `ScratchVar` parameter declaration with parameter type annotations:
+
+.. code-block:: python
+
+    @Subroutine(TealType.none)
+    def swap(x: ScratchVar, y: ScratchVar):
+        z = ScratchVar(TealType.anytype)
+        return Seq(
+            z.store(x.load()),
+            x.store(y.load()),
+            y.store(z.load()),
+        )
 
 Calling Subroutines
 -------------------
