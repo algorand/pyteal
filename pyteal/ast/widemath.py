@@ -174,49 +174,54 @@ assert    // [B, D]
         """
 
 
-
 def __substrctU128U64(expr: Expr) -> Tuple[TealSimpleBlock, TealSimpleBlock]:
     # stack: [..., A, B, C], where A * 2 ** 64 + B is 128 bit uint, C is uint64
-    substractPrep = TealSimpleBlock([
-        # stack: [..., A, B, C, B, C]
-        TealOp(expr, Op.dup2),
-        # stack: [..., A, B, C, B >= C]
-        TealOp(expr, Op.gt),
-    ])
+    substractPrep = TealSimpleBlock(
+        [
+            # stack: [..., A, B, C, B, C]
+            TealOp(expr, Op.dup2),
+            # stack: [..., A, B, C, B >= C]
+            TealOp(expr, Op.gt),
+        ]
+    )
     substractCond = TealConditionalBlock([])
-    substractTrueBlock = TealSimpleBlock([
-        # stack: [..., A, B - C]
-        TealOp(expr, Op.minus)
-    ])
+    substractTrueBlock = TealSimpleBlock(
+        [
+            # stack: [..., A, B - C]
+            TealOp(expr, Op.minus)
+        ]
+    )
 
-    substractFalseBlock = TealSimpleBlock([
-        # stack: [..., B, C, A]
-        TealOp(expr, Op.uncover, 2),
-        # stack: [..., B, C, A, A]
-        TealOp(expr, Op.dup),
-        # stack: [..., B, C, A, A, 1]
-        TealOp(expr, Op.int, 1),
-        # stack: [..., B, C, A, A >= 1],
-        TealOp(expr, Op.gt),
-        # stack: [..., B, C, A]
-        TealOp(expr, Op.assert_),
-        # stack: [..., B, C, A, 1]
-        TealOp(expr, Op.int, 1),
-        # stack: [..., B, C, A - 1]
-        TealOp(expr, Op.minus),
-        # stack: [..., A - 1, B, C]
-        TealOp(expr, Op.cover, 2),
-        # stack: [..., A - 1, C, B]
-        TealOp(expr, Op.cover, 1),
-        # stack: [..., A - 1, C - B]
-        TealOp(expr, Op.minus),
-        # stack: [..., A - 1, 2^64 - 1 - (C - B)]
-        TealOp(expr, Op.bitwise_not),
-        # stack: [..., A - 1, 2^64 - (C - B), 1]
-        TealOp(expr, Op.int, 1),
-        # stack: [..., A - 1, 2^64 - (C - B)]
-        TealOp(expr, Op.add)
-    ])
+    substractFalseBlock = TealSimpleBlock(
+        [
+            # stack: [..., B, C, A]
+            TealOp(expr, Op.uncover, 2),
+            # stack: [..., B, C, A, A]
+            TealOp(expr, Op.dup),
+            # stack: [..., B, C, A, A, 1]
+            TealOp(expr, Op.int, 1),
+            # stack: [..., B, C, A, A >= 1],
+            TealOp(expr, Op.gt),
+            # stack: [..., B, C, A]
+            TealOp(expr, Op.assert_),
+            # stack: [..., B, C, A, 1]
+            TealOp(expr, Op.int, 1),
+            # stack: [..., B, C, A - 1]
+            TealOp(expr, Op.minus),
+            # stack: [..., A - 1, B, C]
+            TealOp(expr, Op.cover, 2),
+            # stack: [..., A - 1, C, B]
+            TealOp(expr, Op.cover, 1),
+            # stack: [..., A - 1, C - B]
+            TealOp(expr, Op.minus),
+            # stack: [..., A - 1, 2^64 - 1 - (C - B)]
+            TealOp(expr, Op.bitwise_not),
+            # stack: [..., A - 1, 2^64 - (C - B), 1]
+            TealOp(expr, Op.int, 1),
+            # stack: [..., A - 1, 2^64 - (C - B)]
+            TealOp(expr, Op.add),
+        ]
+    )
     substractPrep.setNextBlock(substractCond)
     substractCond.setTrueBlock(substractTrueBlock)
     substractCond.setFalseBlock(substractFalseBlock)
@@ -245,22 +250,24 @@ def substractU128(
     start.setNextBlock(lhsSrt)
     lhsEnd.setNextBlock(rhsSrt)
     # stack: [..., A, B, C, D]
-    highwordPrep = TealSimpleBlock([
-        # stack: [..., B, C, D, A]
-        TealOp(expr, Op.uncover, 3),
-        # stack: [..., B, D, A, C]
-        TealOp(expr, Op.uncover, 2),
-        # stack: [..., B, D, A, C, A, C]
-        TealOp(expr, Op.dup2),
-        # stack: [..., B, D, A, C, A >= C]
-        TealOp(expr, Op.gt),
-        # stack: [..., B, D, A, C]
-        TealOp(expr, Op.assert_),
-        # stack: [..., B, D, A - C]
-        TealOp(expr, Op.minus),
-        # stack: [..., A - C, B, D]
-        TealOp(expr, Op.cover, 2)
-    ])
+    highwordPrep = TealSimpleBlock(
+        [
+            # stack: [..., B, C, D, A]
+            TealOp(expr, Op.uncover, 3),
+            # stack: [..., B, D, A, C]
+            TealOp(expr, Op.uncover, 2),
+            # stack: [..., B, D, A, C, A, C]
+            TealOp(expr, Op.dup2),
+            # stack: [..., B, D, A, C, A >= C]
+            TealOp(expr, Op.gt),
+            # stack: [..., B, D, A, C]
+            TealOp(expr, Op.assert_),
+            # stack: [..., B, D, A - C]
+            TealOp(expr, Op.minus),
+            # stack: [..., A - C, B, D]
+            TealOp(expr, Op.cover, 2),
+        ]
+    )
     rhsEnd.setNextBlock(highwordPrep)
     subsSrt, subsEnd = __substrctU128U64(expr)
     highwordPrep.setNextBlock(subsSrt)
