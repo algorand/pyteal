@@ -8,11 +8,11 @@ int 0
 ||
 bnz main_l2
 byte "dummy"
-store 2
+store 0
 int 4
-int 2
+int 0
 callsub tally_0
-load 2
+load 0
 btoi
 b main_l3
 main_l2:
@@ -22,32 +22,32 @@ return
 
 // tally
 tally_0:
+store 2
 store 1
-store 0
-load 0
+load 1
 int 0
 ==
 bnz tally_0_l2
-load 0
+load 1
 int 1
 -
+load 2
 load 1
-load 0
-load 1
+load 2
 uncover 3
 uncover 3
 callsub tally_0
+store 2
 store 1
-store 0
-load 1
-load 1
+load 2
+load 2
 loads
 byte "a"
 concat
 stores
 b tally_0_l3
 tally_0_l2:
-load 1
+load 2
 byte ""
 stores
 tally_0_l3:

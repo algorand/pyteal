@@ -1,3 +1,5 @@
+import pytest
+
 from pyteal import *
 
 from .compile_asserts import assert_new_v_old, compile_and_save
@@ -285,6 +287,10 @@ def lots_o_vars():
     )
 
 
+def test_increment():
+    compile_and_save(increment, 6)
+
+
 CASES = (
     sub_logcat_dynamic,
     swapper,
@@ -298,15 +304,11 @@ CASES = (
 )
 
 
-def test_increment():
-    compile_and_save(increment, 6)
-
-
-def test_teal_output_is_unchanged():
-    for pt in CASES:
-        assert_new_v_old(pt, 6)
+@pytest.mark.parametrize("pt", CASES)
+def test_teal_output_is_unchanged(pt):
+    assert_new_v_old(pt, 6)
 
 
 if __name__ == "__main__":
-    test_teal_output_is_unchanged()
     test_increment()
+    test_teal_output_is_unchanged()
