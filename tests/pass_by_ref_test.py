@@ -193,7 +193,13 @@ if __name__ == "__main__":
 
 
 if not OLD_CODE_ONLY:
-    NEW_CASES = (sub_logcat_dynamic, swapper, wilt_the_stilt, fac_by_ref, sub_mixed)
+    NEW_CASES = (
+        sub_logcat_dynamic,
+        swapper,
+        wilt_the_stilt,
+        fac_by_ref,
+        sub_mixed,
+    )
 
     def test_swapper():
         compile_and_save(swapper)
