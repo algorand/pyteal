@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from typing import List, Tuple, TYPE_CHECKING
 
 from ..types import TealType, require_type
-from ..errors import TealInternalError, TealCompileError
+from ..errors import TealInputError, TealInternalError, TealCompileError
 from ..ir import TealOp, Op, TealSimpleBlock, TealBlock, TealConditionalBlock
 from .expr import Expr
 from .leafexpr import LeafExpr
@@ -10,79 +10,6 @@ from .multi import MultiValue
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
-
-
-def multU128U64(
-    expr: Expr, factor: Expr, options: "CompileOptions"
-) -> Tuple[TealBlock, TealSimpleBlock]:
-    facSrt, facEnd = factor.__teal__(options)
-    # stack is [..., A, B, C], where C is current factor
-    # need to pop all A,B,C from stack and push X,Y, where X and Y are:
-    #       X * 2**64 + Y = (A * 2**64 + B) * C
-    # <=>   X * 2**64 + Y = A * C * 2**64 + B * C
-    # <=>   X = A * C + highword(B * C)
-    #       Y = lowword(B * C)
-    multiply = TealSimpleBlock(
-        [
-            # stack: [..., B, C, A]
-            TealOp(expr, Op.uncover, 2),
-            # stack: [..., B, C, A, C]
-            TealOp(expr, Op.dig, 1),
-            # stack: [..., B, C, A*C]
-            TealOp(expr, Op.mul),
-            # stack: [..., A*C, B, C]
-            TealOp(expr, Op.cover, 2),
-            # stack: [..., A*C, highword(B*C), lowword(B*C)]
-            TealOp(expr, Op.mulw),
-            # stack: [..., lowword(B*C), A*C, highword(B*C)]
-            TealOp(expr, Op.cover, 2),
-            # stack: [..., lowword(B*C), A*C+highword(B*C)]
-            TealOp(expr, Op.add),
-            # stack: [..., A*C+highword(B*C), lowword(B*C)]
-            TealOp(expr, Op.swap),
-        ]
-    )
-    facEnd.setNextBlock(multiply)
-    return facSrt, multiply
-
-
-def multiplyFactors(
-    expr: Expr, factors: List[Expr], options: "CompileOptions"
-) -> Tuple[TealSimpleBlock, TealSimpleBlock]:
-    if len(factors) == 0:
-        raise TealInternalError("Received 0 factors")
-
-    for factor in factors:
-        require_type(factor, TealType.uint64)
-
-    start = TealSimpleBlock([])
-
-    fac0Start, fac0End = factors[0].__teal__(options)
-
-    if len(factors) == 1:
-        # need to use 0 as high word
-        highword = TealSimpleBlock([TealOp(expr, Op.int, 0)])
-
-        start.setNextBlock(highword)
-        highword.setNextBlock(fac0Start)
-
-        end = fac0End
-    else:
-        start.setNextBlock(fac0Start)
-
-        fac1Start, fac1End = factors[1].__teal__(options)
-        fac0End.setNextBlock(fac1Start)
-
-        multiplyFirst2 = TealSimpleBlock([TealOp(expr, Op.mulw)])
-        fac1End.setNextBlock(multiplyFirst2)
-
-        end = multiplyFirst2
-        for factor in factors[2:]:
-            facSrt, multed = multU128U64(expr, factor, options)
-            end.setNextBlock(facSrt)
-            end = multed
-
-    return start, end
 
 
 def addU128U64(
@@ -147,31 +74,35 @@ def addTerms(
     return start, end
 
 
-def substractU128toU64(
+def addU128(
     expr: Expr, term: Expr, options: "CompileOptions"
-) -> Tuple[TealBlock, TealSimpleBlock]:
+) -> Tuple[TealSimpleBlock, TealSimpleBlock]:
+    start = TealSimpleBlock([])
     termSrt, termEnd = term.__teal__(options)
-    substract = TealSimpleBlock(
+    # stack: [..., A, B, C, D]
+    addition = TealSimpleBlock(
         [
-            TealOp(expr, Op.uncover, 3),
+            # stack: [..., A, C, D, B]
             TealOp(expr, Op.uncover, 2),
-            TealOp(expr, Op.minus),
-            TealOp(expr, Op.neq),
-            TealOp(expr, Op.assert_),
-            TealOp(expr, Op.minus),
+            # stack: [..., A, C, B, D]
+            TealOp(expr, Op.swap),
+            # stack: [..., A, C, highword(B + D), lowword(B + D)]
+            TealOp(expr, Op.addw),
+            # stack: [..., lowword(B + D), A, C, highword(B + D)]
+            TealOp(expr, Op.cover, 3),
+            # stack: [..., lowword(B + D), highword(B + D), A, C]
+            TealOp(expr, Op.cover, 2),
+            # stack: [..., lowword(B + D), highword(B + D), A + C]
+            TealOp(expr, Op.add),
+            # stack: [..., lowword(B + D), highword(B + D) + A + C]
+            TealOp(expr, Op.add),
+            # stack: [..., highword(B + D) + A + C, lowword(B + D)]
+            TealOp(expr, Op.swap),
         ]
     )
-    termEnd.setNextBlock(substract)
-    return termSrt, substract
-
-    """
-uncover 3 // [B, C, D, A]
-uncover 2 // [B, D, A, C]
--         // [B, D, A-C]
-!         // [B, D, A-C == 0]
-assert    // [B, D]
--         // [B-D], aka [X]
-        """
+    start.setNextBlock(termSrt)
+    termEnd.setNextBlock(addition)
+    return start, addition
 
 
 def __substrctU128U64(expr: Expr) -> Tuple[TealSimpleBlock, TealSimpleBlock]:
@@ -242,13 +173,12 @@ def substractU128U64(
 
 
 def substractU128(
-    expr: Expr, lhsTerm: Expr, rhsTerm: Expr, options: "CompileOptions"
+    expr: Expr, rhsTerm: Expr, options: "CompileOptions"
 ) -> Tuple[TealSimpleBlock, TealSimpleBlock]:
     start = TealSimpleBlock([])
-    lhsSrt, lhsEnd = lhsTerm.__teal__(options)
     rhsSrt, rhsEnd = rhsTerm.__teal__(options)
-    start.setNextBlock(lhsSrt)
-    lhsEnd.setNextBlock(rhsSrt)
+    start.setNextBlock(rhsSrt)
+    rhsEnd.setNextBlock(rhsSrt)
     # stack: [..., A, B, C, D]
     highwordPrep = TealSimpleBlock(
         [
@@ -272,6 +202,158 @@ def substractU128(
     subsSrt, subsEnd = __substrctU128U64(expr)
     highwordPrep.setNextBlock(subsSrt)
     return start, subsEnd
+
+
+def __multU128U64(expr: Expr) -> Tuple[TealSimpleBlock, TealSimpleBlock]:
+    srt = TealSimpleBlock([])
+    # stack: [..., A, B, C]
+    multiply = TealSimpleBlock(
+        [
+            # stack: [..., B, C, A]
+            TealOp(expr, Op.uncover, 2),
+            # stack: [..., B, C, A, C]
+            TealOp(expr, Op.dig, 1),
+            # stack: [..., B, C, A*C]
+            TealOp(expr, Op.mul),
+            # stack: [..., A*C, B, C]
+            TealOp(expr, Op.cover, 2),
+            # stack: [..., A*C, highword(B*C), lowword(B*C)]
+            TealOp(expr, Op.mulw),
+            # stack: [..., lowword(B*C), A*C, highword(B*C)]
+            TealOp(expr, Op.cover, 2),
+            # stack: [..., lowword(B*C), A*C+highword(B*C)]
+            TealOp(expr, Op.add),
+            # stack: [..., A*C+highword(B*C), lowword(B*C)]
+            TealOp(expr, Op.swap),
+        ]
+    )
+    end = TealSimpleBlock([])
+    srt.setNextBlock(multiply)
+    multiply.setNextBlock(end)
+    return srt, end
+
+
+def multU128U64(
+    expr: Expr, factor: Expr, options: "CompileOptions"
+) -> Tuple[TealBlock, TealSimpleBlock]:
+    facSrt, facEnd = factor.__teal__(options)
+    # stack is [..., A, B, C], where C is current factor
+    # need to pop all A,B,C from stack and push X,Y, where X and Y are:
+    #       X * 2**64 + Y = (A * 2**64 + B) * C
+    # <=>   X * 2**64 + Y = A * C * 2**64 + B * C
+    # <=>   X = A * C + highword(B * C)
+    #       Y = lowword(B * C)
+    multSrt, multEnd = __multU128U64(expr)
+    facEnd.setNextBlock(multSrt)
+    return facSrt, multEnd
+
+
+def multiplyFactors(
+    expr: Expr, factors: List[Expr], options: "CompileOptions"
+) -> Tuple[TealSimpleBlock, TealSimpleBlock]:
+    if len(factors) == 0:
+        raise TealInternalError("Received 0 factors")
+
+    for factor in factors:
+        require_type(factor, TealType.uint64)
+
+    start = TealSimpleBlock([])
+
+    fac0Start, fac0End = factors[0].__teal__(options)
+
+    if len(factors) == 1:
+        # need to use 0 as high word
+        highword = TealSimpleBlock([TealOp(expr, Op.int, 0)])
+
+        start.setNextBlock(highword)
+        highword.setNextBlock(fac0Start)
+
+        end = fac0End
+    else:
+        start.setNextBlock(fac0Start)
+
+        fac1Start, fac1End = factors[1].__teal__(options)
+        fac0End.setNextBlock(fac1Start)
+
+        multiplyFirst2 = TealSimpleBlock([TealOp(expr, Op.mulw)])
+        fac1End.setNextBlock(multiplyFirst2)
+
+        end = multiplyFirst2
+        for factor in factors[2:]:
+            facSrt, multed = multU128U64(expr, factor, options)
+            end.setNextBlock(facSrt)
+            end = multed
+
+    return start, end
+
+
+def multU128(
+    expr: Expr, rhsFactor: Expr, options: "CompileOptions"
+) -> Tuple[TealSimpleBlock, TealSimpleBlock]:
+    start = TealSimpleBlock([])
+    rhsSrt, rhsEnd = rhsFactor.__teal__(options)
+    start.setNextBlock(rhsSrt)
+    # stack: [..., A, B, C, D]
+    multPrep = TealSimpleBlock(
+        [
+            # stack; [..., B, C, D, A]
+            TealOp(expr, Op.uncover, 3),
+            # stack: [..., B, D, A, C]
+            TealOp(expr, Op.uncover, 2),
+            # stack: [..., B, D, A, C, A, C]
+            TealOp(expr, Op.dup2),
+            # stack: [..., B, D, A, C, A * C], if mul overflow, then u128 mult will also overflow
+            TealOp(expr, Op.mul),
+            # stack: [..., B, D, A, C, A * C != 0]
+            TealOp(expr, Op.logic_not),
+            # stack: [..., B, D, A, C], at least one of A and C is 0
+            TealOp(expr, Op.assert_),
+            # stack: [..., B, D, A, C, C]
+            TealOp(expr, Op.dup),
+            # stack: [..., B, D, C, C, A]
+            TealOp(expr, Op.uncover, 2),
+            # stack: [..., B, D, C, C + A]
+            TealOp(expr, Op.add),
+            # stack: [..., B, D, C, C + A, C + A]
+            TealOp(expr, Op.dup),
+            # stack: [..., B, D, C + A, C, C + A]
+            TealOp(expr, Op.cover, 2),
+            # stack: [..., B, D, C + A, C == C + A] decide C + A should be swapped to before B or D
+            TealOp(expr, Op.eq),
+        ]
+    )
+    rhsEnd.setNextBlock(multPrep)
+
+    multCond = TealConditionalBlock([])
+    multPrep.setNextBlock(multCond)
+
+    # stack: [..., B, D, C]
+    multCondTrue = TealSimpleBlock(
+        [
+            # stack: [..., B, C, D]
+            TealOp(expr, Op.swap),
+            # stack: [..., D, B, C]
+            TealOp(expr, Op.cover, 2),
+            # stack: [..., C, D, B]
+            TealOp(expr, Op.cover, 2),
+        ]
+    )
+    # stack: [..., B, D, A]
+    multCondFalse = TealSimpleBlock(
+        [
+            # stack: [..., A, B, D]
+            TealOp(expr, Op.cover, 2)
+        ]
+    )
+    multCond.setTrueBlock(multCondTrue)
+    multCond.setFalseBlock(multCondFalse)
+
+    # stack: [..., C, D, B] or [..., A, B, D]
+    multSrt, multEnd = __multU128U64(expr)
+    multCondTrue.setNextBlock(multSrt)
+    multCondFalse.setNextBlock(multSrt)
+
+    return start, multEnd
 
 
 class WideRatio(Expr):
@@ -366,57 +448,369 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
 
     def __add__(self, other: Expr):
         if isinstance(other, WideUint128):
-            return self.add128w(other)
+            return self.addU128(other)
         else:
             require_type(other, TealType.uint64)
-            return self.add(other)
+            return self.addU64(other)
 
-    def add128w(self, other: "WideUint128"):
-        pass
+    def addU128(self, other: "WideUint128"):
+        if not isinstance(other, WideUint128):
+            raise TealInputError("expected WideUint128 input for addU128")
 
-    def add(self, other: Expr):
-        pass
+        class WideUint128AddU128(WideUint128):
+            def __init__(self, lhs: WideUint128, arg: WideUint128):
+                WideUint128.__init__(self, arg)
+                self.term = arg
+                self.lhs = lhs
+
+            def __teal__(self, options: "CompileOptions"):
+                lhsSrt, lhsEnd = self.lhs.__teal__(options)
+                addSrt, addEnd = addU128(self, self.term, options)
+                lhsEnd.setNextBlock(addSrt)
+                return lhsSrt, addEnd
+
+            def __str__(self) -> str:
+                return "(addw {} {})".format(self.lhs, self.term)
+
+        return WideUint128AddU128(self, other)
+
+    def addU64(self, other: Expr):
+        require_type(other, TealType.uint64)
+
+        class WideUint128AddU64(WideUint128):
+            def __init__(self, lhs: WideUint128, arg: Expr):
+                WideUint128.__init__(self, arg)
+                self.term = arg
+                self.lhs = lhs
+
+            def __teal__(self, options: "CompileOptions"):
+                lhsSrt, lhsEnd = self.lhs.__teal__(options)
+                addSrt, addEnd = addU128U64(self, self.term, options)
+                lhsEnd.setNextBlock(addSrt)
+                return lhsSrt, addEnd
+
+            def __str__(self) -> str:
+                return "(addw {} {})".format(self.lhs, self.term)
+
+        return WideUint128AddU64(self, other)
 
     def __sub__(self, other: Expr):
         if isinstance(other, WideUint128):
-            return self.minus128w(other)
+            return self.minusU128(other)
         else:
             require_type(other, TealType.uint64)
-            return self.minus(other)
+            return self.minusU64(other)
 
-    def minus128w(self, other: "WideUint128"):
-        pass
+    def minusU128(self, other: "WideUint128"):
+        if not isinstance(other, WideUint128):
+            raise TealInputError("expected WideUint128 input for minusU128")
 
-    def minus(self, other: Expr):
-        pass
+        class WideUint128MinusU128(WideUint128):
+            def __init__(self, lhs: WideUint128, arg: WideUint128):
+                WideUint128.__init__(self, arg)
+                self.term = arg
+                self.lhs = lhs
+
+            def __teal__(self, options: "CompileOptions"):
+                lhsSrt, lhsEnd = self.lhs.__teal__(options)
+                subSrt, subEnd = substractU128(self, self.term, options)
+                lhsEnd.setNextBlock(subSrt)
+                return lhsSrt, subEnd
+
+            def __str__(self) -> str:
+                return "(minusW {} {})".format(self.lhs, self.term)
+
+        return WideUint128MinusU128(self, other)
+
+    def minusU64(self, other: Expr):
+        require_type(other, TealType.uint64)
+
+        class WideUint128MinusU64(WideUint128):
+            def __init__(self, lhs: WideUint128, arg: Expr):
+                WideUint128.__init__(self, arg)
+                self.term = arg
+                self.lhs = lhs
+
+            def __teal__(self, options: "CompileOptions"):
+                lhsSrt, lhsEnd = self.lhs.__teal__(options)
+                subSrt, subEnd = substractU128U64(self, self.term, options)
+                lhsEnd.setNextBlock(subSrt)
+                return lhsSrt, subEnd
+
+            def __str__(self) -> str:
+                return "(minusW {} {})".format(self.lhs, self.term)
+
+        return WideUint128MinusU64(self, other)
+
+    def __mul__(self, other):
+        if isinstance(other, WideUint128):
+            return self.mulU128(other)
+        else:
+            require_type(other, TealType.uint64)
+            return self.mulU64(other)
+
+    def mulU128(self, other: "WideUint128"):
+        if not isinstance(other, WideUint128):
+            raise TealInputError("expected WideUint128 input for mulU128")
+
+        class WideUint128MulU128(WideUint128):
+            def __init__(self, lhs: WideUint128, arg: WideUint128):
+                WideUint128.__init__(self, arg)
+                self.term = arg
+                self.lhs = lhs
+
+            def __teal__(self, options: "CompileOptions"):
+                lhsSrt, lhsEnd = self.lhs.__teal__(options)
+                mulSrt, mulEnd = multU128(self, self.term, options)
+                lhsEnd.setNextBlock(mulSrt)
+                return lhsSrt, mulEnd
+
+            def __str__(self) -> str:
+                return "(mulw {} {})".format(self.lhs, self.term)
+
+        return WideUint128MulU128(self, other)
+
+    def mulU64(self, other: Expr):
+        require_type(other, TealType.uint64)
+
+        class WideUint128MulU64(WideUint128):
+            def __init__(self, lhs: WideUint128, arg: Expr):
+                WideUint128.__init__(self, arg)
+                self.term = arg
+                self.lhs = lhs
+
+            def __teal__(self, options: "CompileOptions"):
+                lhsSrt, lhsEnd = self.lhs.__teal__(options)
+                mulSrt, mulEnd = multU128U64(self, self.term, options)
+                lhsEnd.setNextBlock(mulSrt)
+                return lhsSrt, mulEnd
+
+            def __str__(self) -> str:
+                return "(mulw {} {})".format(self.lhs, self.term)
+
+        return WideUint128MulU64(self, other)
 
     def __truediv__(self, other: Expr):
-        pass
-
-    def div128w(self, other: "WideUint128"):
         if isinstance(other, WideUint128):
-            return self.div128w(other)
+            return self.divU128(other)
         else:
             require_type(other, TealType.uint64)
-            return self.div(other)
+            return self.divU64(other)
 
-    def div(self, other: Expr):
-        # returns u64
-        pass
+    def divU128(self, other: "WideUint128"):
+        if not isinstance(other, WideUint128):
+            raise TealInputError("expected WideUint128 input for divU128")
 
-    def __divmod__(self, other: "WideUint128"):
-        pass
+        class WideUint128DivU128(WideUint128):
+            def __init__(self, lhs: WideUint128, arg: WideUint128):
+                WideUint128.__init__(self, arg)
+                self.term = arg
+                self.lhs = lhs
+
+            def __teal__(self, options: "CompileOptions"):
+                lhsSrt, lhsEnd = self.lhs.__teal__(options)
+                termSrt, termEnd = self.term.__teal__(options)
+                lhsEnd.setNextBlock(termSrt)
+                divFromDivmodW = TealSimpleBlock(
+                    [
+                        TealOp(self, Op.divmodw),
+                        TealOp(self, Op.pop),
+                        TealOp(self, Op.pop),
+                    ]
+                )
+                termEnd.setNextBlock(divFromDivmodW)
+                return lhsSrt, divFromDivmodW
+
+            def __str__(self) -> str:
+                return "(divW {} {})".format(self.lhs, self.term)
+
+        return WideUint128DivU128(self, other)
+
+    def divU64(self, other: Expr):
+        require_type(other, TealType.uint64)
+
+        class WideUint128DivU64(WideUint128):
+            def __init__(self, lhs: WideUint128, arg: Expr):
+                WideUint128.__init__(self, arg)
+                self.term = arg
+                self.lhs = lhs
+
+            def __teal__(self, options: "CompileOptions"):
+                lhsSrt, lhsEnd = self.lhs.__teal__(options)
+                termSrt, termEnd = self.term.__teal__(options)
+                lhsEnd.setNextBlock(termSrt)
+                divFromDivW = TealSimpleBlock(
+                    [
+                        TealOp(self, Op.divw),
+                    ]
+                )
+                termEnd.setNextBlock(divFromDivW)
+                return lhsSrt, divFromDivW
+
+            def __str__(self) -> str:
+                return "(divW {} {})".format(self.lhs, self.term)
+
+            def type_of(self) -> TealType:
+                return TealType.uint64
+
+        return WideUint128DivU64(self, other)
 
     def __mod__(self, other: "WideUint128"):
-        pass
+        if isinstance(other, WideUint128):
+            return self.modU128(other)
+        else:
+            require_type(other, TealType.uint64)
+            return self.modU64(other)
+
+    def modU128(self, other: "WideUint128"):
+        if not isinstance(other, WideUint128):
+            raise TealInputError("expected WideUint128 input for modU128")
+
+        class WideUint128ModU128(WideUint128):
+            def __init__(self, lhs: WideUint128, arg: WideUint128):
+                WideUint128.__init__(self, arg)
+                self.term = arg
+                self.lhs = lhs
+
+            def __teal__(self, options: "CompileOptions"):
+                lhsSrt, lhsEnd = self.lhs.__teal__(options)
+                termSrt, termEnd = self.term.__teal__(options)
+                lhsEnd.setNextBlock(termSrt)
+                modFromDivModW = TealSimpleBlock(
+                    [
+                        # stack: [..., divH, divL, modH, modL]
+                        TealOp(self, Op.divmodw),
+                        # stack: [..., divL, modH, modL, divH]
+                        TealOp(self, Op.uncover, 3),
+                        # stack: [..., modH, modL, divH, divL]
+                        TealOp(self, Op.uncover, 3),
+                        TealOp(self, Op.pop),
+                        TealOp(self, Op.pop),
+                    ]
+                )
+                termEnd.setNextBlock(modFromDivModW)
+                return lhsSrt, modFromDivModW
+
+            def __str__(self) -> str:
+                return "(modW {} {})".format(self.lhs, self.term)
+
+        return WideUint128ModU128(self, other)
+
+    def modU64(self, other: Expr):
+        require_type(other, TealType.uint64)
+        # returns u64
+        class WideUint128ModU64(WideUint128):
+            def __init__(self, lhs: WideUint128, arg: Expr):
+                WideUint128.__init__(self, arg)
+                self.term = arg
+                self.lhs = lhs
+
+            def __teal__(self, options: "CompileOptions"):
+                lhsSrt, lhsEnd = self.lhs.__teal__(options)
+                termSrt, termEnd = self.term.__teal__(options)
+                lhsEnd.setNextBlock(termSrt)
+                divFromDivW = TealSimpleBlock(
+                    [
+                        # stack: [..., A, B, C, 0]
+                        TealOp(self, Op.int, 0),
+                        # stack: [..., A, B, 0, C]
+                        TealOp(self, Op.swap),
+                        # stack: [..., divH, divL, modH, modL]
+                        TealOp(self, Op.divmodw),
+                        # stack: [..., divL, modH, modL, divH]
+                        TealOp(self, Op.uncover, 3),
+                        # stack: [..., modH, modL, divH, divL]
+                        TealOp(self, Op.uncover, 3),
+                        TealOp(self, Op.pop),
+                        TealOp(self, Op.pop),
+                    ]
+                )
+                termEnd.setNextBlock(divFromDivW)
+                return lhsSrt, divFromDivW
+
+            def __str__(self) -> str:
+                return "(divW {} {})".format(self.lhs, self.term)
+
+            def type_of(self) -> TealType:
+                return TealType.uint64
+
+        return WideUint128ModU64(self, other)
 
     @abstractmethod
-    def __teal__(self, options: "CompileOptions"):
+    def __teal__(
+        self, options: "CompileOptions"
+    ) -> Tuple[TealSimpleBlock, TealSimpleBlock]:
         pass
 
     def type_of(self) -> TealType:
         return TealType.none
 
+    def toUint64(self) -> Expr:
+        if self.type_of() == TealType.uint64:
+            raise TealInternalError("expression is already evaluated to uint64")
+
+        class WideUint128ToUint64(Expr):
+            def __init__(self, wideArith: WideUint128):
+                super().__init__()
+                self.wideArith = wideArith
+
+            def type_of(self) -> TealType:
+                return TealType.uint64
+
+            def has_return(self) -> bool:
+                return False
+
+            def __teal__(
+                self, options: "CompileOptions"
+            ) -> Tuple[TealBlock, TealSimpleBlock]:
+                arithSrt, arithEnd = self.wideArith.__teal__(options)
+                reducer = TealSimpleBlock([TealOp(self, Op.swap), TealOp(self, Op.pop)])
+                arithEnd.setNextBlock(reducer)
+                return arithSrt, reducer
+
+            def __str__(self) -> str:
+                return "(toUint64 {})".format(self.wideArith)
+
+        return WideUint128ToUint64(self)
+
+    def toBinary(self) -> Expr:
+        if self.type_of() == TealType.uint64:
+            raise TealInternalError("expression is already evaluated to uint64")
+
+        class WideUint128ToBinary(Expr):
+            def __init__(self, wideArith: WideUint128):
+                super().__init__()
+                self.wideArith = wideArith
+
+            def type_of(self) -> TealType:
+                return TealType.uint64
+
+            def has_return(self) -> bool:
+                return False
+
+            def __teal__(
+                self, options: "CompileOptions"
+            ) -> Tuple[TealBlock, TealSimpleBlock]:
+                arithSrt, arithEnd = self.wideArith.__teal__(options)
+                reducer = TealSimpleBlock(
+                    [
+                        TealOp(self, Op.itob),
+                        TealOp(self, Op.swap),
+                        TealOp(self, Op.itob),
+                        TealOp(self, Op.swap),
+                        TealOp(self, Op.concat),
+                    ]
+                )
+                arithEnd.setNextBlock(reducer)
+                return arithSrt, reducer
+
+            def __str__(self) -> str:
+                return "(toBinary {})".format(self.wideArith)
+
+        return WideUint128ToBinary(self)
+
+
+WideUint128.__module__ = "pyteal"
 
 # (A + B - C) * D
 # sumW(A, B).minus(C).mul(D).reduce(lambda high, low: Seq(Assert(Not(high)), low)) # alias as .to64Bits()
