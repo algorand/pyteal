@@ -170,5 +170,9 @@ __all__ = [
     "UnaryExpr",
     "While",
     "WideRatio",
+    "WideUint128",
     "compileTeal",
+    "expW",
+    "prodW",
+    "sumW",
 ]

@@ -97,7 +97,7 @@ from .substring import Substring, Extract, Suffix
 
 # more ops
 from .naryexpr import NaryExpr, And, Or, Concat
-from .widemath import WideRatio
+from .widemath import WideRatio, sumW, prodW, expW, WideUint128
 
 # control flow
 from .if_ import If
@@ -218,6 +218,10 @@ __all__ = [
     "Or",
     "Concat",
     "WideRatio",
+    "sumW",
+    "prodW",
+    "expW",
+    "WideUint128",
     "If",
     "Cond",
     "Seq",
