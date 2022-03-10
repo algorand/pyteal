@@ -6,7 +6,6 @@ from ..errors import TealInputError, TealInternalError, TealCompileError
 from ..ir import TealOp, Op, TealSimpleBlock, TealBlock, TealConditionalBlock
 from .expr import Expr
 from .leafexpr import LeafExpr
-from .multi import MultiValue
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
@@ -827,19 +826,16 @@ def sumW(*terms: Expr):
     for term in terms:
         require_type(term, TealType.uint64)
 
-    class WideUint128Sum(MultiValue, WideUint128):
+    class WideUint128Sum(WideUint128):
         def __init__(self, *args: Expr):
             WideUint128.__init__(self, *args)
-            MultiValue.__init__(
-                self, Op.addw, [TealType.uint64, TealType.uint64], args=list(args)
-            )
             self.terms = list(args)
 
         def __teal__(self, options: "CompileOptions"):
             return addTerms(self, self.terms, options)
 
         def __str__(self) -> str:
-            return MultiValue.__str__(self)
+            return "(addw {})".format(" ".join([term.__str__() for term in self.terms]))
 
     return WideUint128Sum(*terms)
 
@@ -851,19 +847,18 @@ def prodW(*factors: Expr):
     for factor in factors:
         require_type(factor, TealType.uint64)
 
-    class WideUint128Prod(MultiValue, WideUint128):
+    class WideUint128Prod(WideUint128):
         def __init__(self, *args: Expr):
             WideUint128.__init__(self, *args)
-            MultiValue.__init__(
-                self, Op.mulw, [TealType.uint64, TealType.uint64], args=list(args)
-            )
             self.factors = list(args)
 
         def __teal__(self, options: "CompileOptions"):
             return multiplyFactors(self, self.factors, options)
 
         def __str__(self) -> str:
-            return MultiValue.__str__(self)
+            return "(mulw {})".format(
+                " ".join([factor.__str__() for factor in self.factors])
+            )
 
     return WideUint128Prod(*factors)
 
@@ -872,12 +867,9 @@ def expW(base: Expr, _pow: Expr):
     require_type(base, TealType.uint64)
     require_type(_pow, TealType.uint64)
 
-    class WideUint128Exp(MultiValue, WideUint128):
+    class WideUint128Exp(WideUint128):
         def __init__(self, *args: Expr):
             WideUint128.__init__(self, *args)
-            MultiValue.__init__(
-                self, Op.expw, [TealType.uint64, TealType.uint64], args=list(args)
-            )
             self.base = args[0]
             self.power = args[1]
 
@@ -887,6 +879,6 @@ def expW(base: Expr, _pow: Expr):
             )
 
         def __str__(self) -> str:
-            return MultiValue.__str__(self)
+            return "(expw {} {})".format(self.base.__str__(), self.power.__str__())
 
     return WideUint128Exp(base, _pow)
