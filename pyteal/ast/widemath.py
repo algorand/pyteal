@@ -697,7 +697,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
 
     def modU64(self, other: Expr):
         require_type(other, TealType.uint64)
-        # returns u64
+
         class WideUint128ModU64(WideUint128):
             def __init__(self, lhs: WideUint128, arg: Expr):
                 WideUint128.__init__(self, arg)
@@ -733,7 +733,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
             def type_of(self) -> TealType:
                 return TealType.uint64
 
-        return WideUint128ModU64(self, other)
+        return WideUint128ModU64(self, other).toUint64()
 
     @abstractmethod
     def __teal__(
