@@ -443,7 +443,7 @@ WideRatio.__module__ = "pyteal"
 class WideUint128(LeafExpr, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, *args: Expr):
-        pass
+        super().__init__()
 
     def __add__(self, other: Expr):
         if isinstance(other, WideUint128):
@@ -835,7 +835,7 @@ def sumW(*terms: Expr):
             return addTerms(self, self.terms, options)
 
         def __str__(self) -> str:
-            return "(addw {})".format(" ".join([term.__str__() for term in self.terms]))
+            return "(addw {})".format(" ".join([t.__str__() for t in self.terms]))
 
     return WideUint128Sum(*terms)
 
@@ -857,7 +857,7 @@ def prodW(*factors: Expr):
 
         def __str__(self) -> str:
             return "(mulw {})".format(
-                " ".join([factor.__str__() for factor in self.factors])
+                " ".join([f.__str__() for f in self.factors])
             )
 
     return WideUint128Prod(*factors)
