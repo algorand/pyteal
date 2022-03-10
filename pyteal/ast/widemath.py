@@ -856,9 +856,7 @@ def prodW(*factors: Expr):
             return multiplyFactors(self, self.factors, options)
 
         def __str__(self) -> str:
-            return "(mulw {})".format(
-                " ".join([f.__str__() for f in self.factors])
-            )
+            return "(mulw {})".format(" ".join([f.__str__() for f in self.factors]))
 
     return WideUint128Prod(*factors)
 
