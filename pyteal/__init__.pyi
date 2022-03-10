@@ -222,7 +222,11 @@ __all__ = [
     "VrfVerify",
     "While",
     "WideRatio",
-    "abi",
+    "WideUint128",
     "compileTeal",
+    "expW",
+    "prodW",
+    "sumW",
+    "abi",
     "pragma",
 ]
