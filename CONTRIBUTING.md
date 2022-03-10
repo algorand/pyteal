@@ -23,5 +23,3 @@ For each of our repositories we use the same model for contributing code. Develo
 We make a best-effort attempt to adhere to [PEP 8 - Style Guide for Python Code](https://www.python.org/dev/peps/pep-0008/).  Keep the following context in mind:
 * Our default stance is to run linter checks during the build process.
 * Notable exception:  naming conventions.  Since PyTeal aims for backwards compatibility, it's _not_ straightforward to change naming conventions in public APIs.  Consequently, the repo contains some deviations from PEP 8 naming conventions.  For new software, we rely on PR creators and reviewers to make a best-effort attempt to enforce PEP 8 naming conventions.
-
-[issues_url]: https://github.com/algorand/pyteal/issues
