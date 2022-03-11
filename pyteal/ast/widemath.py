@@ -786,7 +786,13 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
                 self, options: "CompileOptions"
             ) -> Tuple[TealBlock, TealSimpleBlock]:
                 arithSrt, arithEnd = self.wideArith.__teal__(options)
-                reducer = TealSimpleBlock([TealOp(self, Op.swap), TealOp(self, Op.pop)])
+                reducer = TealSimpleBlock(
+                    [
+                        TealOp(self, Op.swap),
+                        TealOp(self, Op.logic_not),
+                        TealOp(self, Op.assert_),
+                    ]
+                )
                 arithEnd.setNextBlock(reducer)
                 return arithSrt, reducer
 
@@ -880,7 +886,8 @@ WideUint128.__module__ = "pyteal"
 # sumW(A, B).minus(C).mul(D).reduce(lambda high, low: Concat(Itob(high), Itob(low))) # alias as .toBinary()
 
 # (A + B) - (C * D)
-# sumW(A, B).minus(mulW(C, D)).to64Bits()
+# sumW(A, B).minus(mulW(C, D)).toUint64()
+# (sumW(A, B) - prodW(C, D)).toUint64()
 
 
 def sumW(*terms: Expr):
