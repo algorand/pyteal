@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from typing import List, Tuple, TYPE_CHECKING
 from pyteal.ast.multi import MultiValue
 from pyteal.ir.tealblock import TealBlock
-from pyteal.types import TealType
+from pyteal.types import TealType, require_type
 from pyteal.errors import TealInternalError, TealCompileError
 from pyteal.ir import TealOp, Op, TealSimpleBlock
 from pyteal.ast.expr import Expr
@@ -442,8 +442,9 @@ WideRatio.__module__ = "pyteal"
 
 class WideUint128(LeafExpr, metaclass=ABCMeta):
     @abstractmethod
-    def __init__(self, *args: Expr):
+    def __init__(self, outputNum: int):
         super().__init__()
+        self.output_slots = [ScratchSlot() for _ in range(outputNum)]
 
     def __add__(self, other: Expr):
         if isinstance(other, WideUint128):
@@ -458,7 +459,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
 
         class WideUint128AddU128(WideUint128):
             def __init__(self, lhs: WideUint128, arg: WideUint128):
-                WideUint128.__init__(self, arg)
+                WideUint128.__init__(self, 2)
                 self.term = arg
                 self.lhs = lhs
 
@@ -478,7 +479,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
 
         class WideUint128AddU64(WideUint128):
             def __init__(self, lhs: WideUint128, arg: Expr):
-                WideUint128.__init__(self, arg)
+                WideUint128.__init__(self, 2)
                 self.term = arg
                 self.lhs = lhs
 
@@ -506,7 +507,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
 
         class WideUint128MinusU128(WideUint128):
             def __init__(self, lhs: WideUint128, arg: WideUint128):
-                WideUint128.__init__(self, arg)
+                WideUint128.__init__(self, 2)
                 self.term = arg
                 self.lhs = lhs
 
@@ -526,7 +527,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
 
         class WideUint128MinusU64(WideUint128):
             def __init__(self, lhs: WideUint128, arg: Expr):
-                WideUint128.__init__(self, arg)
+                WideUint128.__init__(self, 2)
                 self.term = arg
                 self.lhs = lhs
 
@@ -554,7 +555,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
 
         class WideUint128MulU128(WideUint128):
             def __init__(self, lhs: WideUint128, arg: WideUint128):
-                WideUint128.__init__(self, arg)
+                WideUint128.__init__(self, 2)
                 self.term = arg
                 self.lhs = lhs
 
@@ -574,7 +575,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
 
         class WideUint128MulU64(WideUint128):
             def __init__(self, lhs: WideUint128, arg: Expr):
-                WideUint128.__init__(self, arg)
+                WideUint128.__init__(self, 2)
                 self.term = arg
                 self.lhs = lhs
 
@@ -602,7 +603,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
 
         class WideUint128DivU128(WideUint128):
             def __init__(self, lhs: WideUint128, arg: WideUint128):
-                WideUint128.__init__(self, arg)
+                WideUint128.__init__(self, 2)
                 self.term = arg
                 self.lhs = lhs
 
@@ -630,7 +631,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
 
         class WideUint128DivU64(WideUint128):
             def __init__(self, lhs: WideUint128, arg: Expr):
-                WideUint128.__init__(self, arg)
+                WideUint128.__init__(self, 1)
                 self.term = arg
                 self.lhs = lhs
 
@@ -649,9 +650,6 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
             def __str__(self) -> str:
                 return "(divW {} {})".format(self.lhs, self.term)
 
-            def type_of(self) -> TealType:
-                return TealType.uint64
-
         return WideUint128DivU64(self, other)
 
     def __mod__(self, other: Expr):
@@ -667,7 +665,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
 
         class WideUint128ModU128(WideUint128):
             def __init__(self, lhs: WideUint128, arg: WideUint128):
-                WideUint128.__init__(self, arg)
+                WideUint128.__init__(self, 2)
                 self.term = arg
                 self.lhs = lhs
 
@@ -700,7 +698,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
 
         class WideUint128ModU64(WideUint128):
             def __init__(self, lhs: WideUint128, arg: Expr):
-                WideUint128.__init__(self, arg)
+                WideUint128.__init__(self, 2)
                 self.term = arg
                 self.lhs = lhs
 
@@ -736,9 +734,6 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
             def __str__(self) -> str:
                 return "(modW {} {})".format(self.lhs, self.term)
 
-            def type_of(self) -> TealType:
-                return TealType.uint64
-
         return WideUint128ModU64(self, other).toUint64()
 
     @abstractmethod
@@ -748,11 +743,13 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
         pass
 
     def type_of(self) -> TealType:
-        return TealType.none
+        return TealType.uint64 if len(self.output_slots) == 1 else TealType.none
 
     def toUint64(self) -> Expr:
         if self.type_of() == TealType.uint64:
             raise TealInternalError("expression is already evaluated to uint64")
+        elif len(self.output_slots) > 2:
+            raise TealInternalError("expression is only appliable for uint128")
 
         class WideUint128ToUint64(Expr):
             def __init__(self, wideArith: WideUint128):
@@ -781,6 +778,8 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
     def toBinary(self) -> Expr:
         if self.type_of() == TealType.uint64:
             raise TealInternalError("expression is already evaluated to uint64")
+        elif len(self.output_slots) > 2:
+            raise TealInternalError("expression is only appliable for uint128")
 
         class WideUint128ToBinary(Expr):
             def __init__(self, wideArith: WideUint128):
@@ -814,6 +813,45 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
 
         return WideUint128ToBinary(self)
 
+    def reduceTo(self, reducer: Callable[..., Expr]):
+        if self.type_of() == TealType.uint64:
+            raise TealInternalError("expression is already evaluated to uint64")
+
+        class WideUint128Reduced(Expr):
+            def __init__(self, wideArith: WideUint128):
+                super().__init__()
+                self.wideArith = wideArith
+
+                argsLoaded = [
+                    slot.load(TealType.uint64) for slot in self.wideArith.output_slots
+                ]
+                self.reduceExpr = reducer(argsLoaded)
+
+            def __str__(self) -> str:
+                return "(reduced {})".format(self.wideArith)
+
+            def __teal__(
+                self, options: "CompileOptions"
+            ) -> Tuple[TealBlock, TealSimpleBlock]:
+                srt = TealSimpleBlock([])
+                curEnd = srt
+                for slot in reversed(self.wideArith.output_slots):
+                    store = slot.store()
+                    storeSrt, storeEnd = store.__teal__(options)
+                    curEnd.setNextBlock(storeSrt)
+                    curEnd = storeEnd
+                reduceSrt, reduceEnd = self.reduceExpr.__teal__(options)
+                curEnd.setNextBlock(reduceSrt)
+                return srt, reduceEnd
+
+            def type_of(self) -> TealType:
+                return self.reduceExpr.type_of()
+
+            def has_return(self) -> bool:
+                return False
+
+        return WideUint128Reduced(self)
+
 
 WideUint128.__module__ = "pyteal"
 
@@ -834,7 +872,7 @@ def sumW(*terms: Expr):
 
     class WideUint128Sum(WideUint128):
         def __init__(self, *args: Expr):
-            WideUint128.__init__(self, *args)
+            WideUint128.__init__(self, 2)
             self.terms = list(args)
 
         def __teal__(self, options: "CompileOptions"):
@@ -855,7 +893,7 @@ def prodW(*factors: Expr):
 
     class WideUint128Prod(WideUint128):
         def __init__(self, *args: Expr):
-            WideUint128.__init__(self, *args)
+            WideUint128.__init__(self, 2)
             self.factors = list(args)
 
         def __teal__(self, options: "CompileOptions"):
@@ -873,7 +911,7 @@ def expW(base: Expr, _pow: Expr):
 
     class WideUint128Exp(WideUint128):
         def __init__(self, *args: Expr):
-            WideUint128.__init__(self, *args)
+            WideUint128.__init__(self, 2)
             self.base = args[0]
             self.power = args[1]
 
