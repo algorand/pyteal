@@ -469,7 +469,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
                 return lhsSrt, addEnd
 
             def __str__(self) -> str:
-                return "(addw {} {})".format(self.lhs, self.term)
+                return "(addW {} {})".format(self.lhs, self.term)
 
         return WideUint128AddU128(self, other)
 
@@ -489,7 +489,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
                 return lhsSrt, addEnd
 
             def __str__(self) -> str:
-                return "(addw {} {})".format(self.lhs, self.term)
+                return "(addW {} {})".format(self.lhs, self.term)
 
         return WideUint128AddU64(self, other)
 
@@ -541,7 +541,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
 
         return WideUint128MinusU64(self, other)
 
-    def __mul__(self, other):
+    def __mul__(self, other: Expr):
         if isinstance(other, WideUint128):
             return self.mulU128(other)
         else:
@@ -565,7 +565,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
                 return lhsSrt, mulEnd
 
             def __str__(self) -> str:
-                return "(mulw {} {})".format(self.lhs, self.term)
+                return "(mulW {} {})".format(self.lhs, self.term)
 
         return WideUint128MulU128(self, other)
 
@@ -585,7 +585,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
                 return lhsSrt, mulEnd
 
             def __str__(self) -> str:
-                return "(mulw {} {})".format(self.lhs, self.term)
+                return "(mulW {} {})".format(self.lhs, self.term)
 
         return WideUint128MulU64(self, other)
 
@@ -654,7 +654,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
 
         return WideUint128DivU64(self, other)
 
-    def __mod__(self, other: "WideUint128"):
+    def __mod__(self, other: Expr):
         if isinstance(other, WideUint128):
             return self.modU128(other)
         else:
@@ -720,7 +720,13 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
                         TealOp(self, Op.uncover, 3),
                         # stack: [..., modH, modL, divH, divL]
                         TealOp(self, Op.uncover, 3),
+                        # stack: [..., modH, modL, divH]
                         TealOp(self, Op.pop),
+                        # stack: [..., modH, modL]
+                        TealOp(self, Op.pop),
+                        # stack: [..., modL, modH]
+                        TealOp(self, Op.swap),
+                        # stack: [..., modL]
                         TealOp(self, Op.pop),
                     ]
                 )
@@ -728,7 +734,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
                 return lhsSrt, divFromDivW
 
             def __str__(self) -> str:
-                return "(divW {} {})".format(self.lhs, self.term)
+                return "(modW {} {})".format(self.lhs, self.term)
 
             def type_of(self) -> TealType:
                 return TealType.uint64
@@ -782,7 +788,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
                 self.wideArith = wideArith
 
             def type_of(self) -> TealType:
-                return TealType.uint64
+                return TealType.bytes
 
             def has_return(self) -> bool:
                 return False
