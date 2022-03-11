@@ -737,6 +737,31 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
 
         return WideUint128ModU64(self, other).toUint64()
 
+    def __divmod__(self, other: "WideUint128"):
+        if not isinstance(other, WideUint128):
+            raise TealInputError("expected WideUint128 input for divmodW")
+
+        class WideUint128DivmodW(WideUint128):
+            def __init__(self, lhs: WideUint128, rhs: WideUint128):
+                WideUint128.__init__(self, 4)
+                self.lhs = lhs
+                self.term = rhs
+
+            def __teal__(
+                self, options: "CompileOptions"
+            ) -> Tuple[TealBlock, TealSimpleBlock]:
+                lhsSrt, lhsEnd = self.lhs.__teal__(options)
+                termSrt, termEnd = self.term.__teal__(options)
+                lhsEnd.setNextBlock(termSrt)
+                divmodW = TealSimpleBlock([TealOp(self, Op.divmodw)])
+                termEnd.setNextBlock(divmodW)
+                return lhsSrt, divmodW
+
+            def __str__(self) -> str:
+                return "(divmodW {} {})".format(self.lhs, self.term)
+
+        return WideUint128DivmodW(self, other)
+
     def type_of(self) -> TealType:
         return TealType.uint64 if len(self.output_slots) == 1 else TealType.none
 
