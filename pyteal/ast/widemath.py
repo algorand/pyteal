@@ -737,12 +737,6 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
 
         return WideUint128ModU64(self, other).toUint64()
 
-    @abstractmethod
-    def __teal__(
-        self, options: "CompileOptions"
-    ) -> Tuple[TealSimpleBlock, TealSimpleBlock]:
-        pass
-
     def type_of(self) -> TealType:
         return TealType.uint64 if len(self.output_slots) == 1 else TealType.none
 
