@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 import pytest
 
 from pyteal import *
@@ -123,21 +125,6 @@ def fac_by_ref():
         n.store(Int(10)),
         factorial(n),
         n.load(),
-    )
-
-
-def fac_by_ref_args():
-    n = ScratchVar(TealType.uint64)
-    return Seq(
-        If(Or(App.id() == Int(0), Txn.num_app_args() == Int(0)))
-        .Then(Int(1))
-        .Else(
-            Seq(
-                n.store(Btoi(Txn.application_args[0])),
-                factorial(n),
-                n.load(),
-            )
-        )
     )
 
 
@@ -291,6 +278,143 @@ def test_increment():
     compile_and_save(increment, 6)
 
 
+# Testable by black-box:
+def fac_by_ref_args():
+    n = ScratchVar(TealType.uint64)
+    return Seq(
+        If(Or(App.id() == Int(0), Txn.num_app_args() == Int(0)))
+        .Then(Int(1))
+        .Else(
+            Seq(
+                n.store(Btoi(Txn.application_args[0])),
+                factorial(n),
+                n.load(),
+            )
+        )
+    )
+
+
+@Subroutine(TealType.none)
+def subr_string_mult(s: ScratchVar, n):
+    tmp = ScratchVar(TealType.bytes)
+    return (
+        If(n == Int(0))
+        .Then(s.store(Bytes("")))
+        .Else(
+            Seq(
+                tmp.store(s.load()),
+                subr_string_mult(s, n - Int(1)),
+                s.store(Concat(s.load(), tmp.load())),
+            )
+        )
+    )
+
+
+def string_mult():
+    s = ScratchVar(TealType.bytes)
+    return Seq(
+        s.store(Txn.application_args[0]),
+        subr_string_mult(s, Btoi(Txn.application_args[1])),
+        Log(s.load()),
+        Int(100),
+    )
+
+
+def empty_scratches():
+    cursor = DynamicScratchVar()
+    i1 = ScratchVar(TealType.uint64, 0)
+    i2 = ScratchVar(TealType.uint64, 2)
+    i3 = ScratchVar(TealType.uint64, 4)
+    s1 = ScratchVar(TealType.bytes, 1)
+    s2 = ScratchVar(TealType.bytes, 3)
+    s3 = ScratchVar(TealType.bytes, 5)
+    return Seq(
+        cursor.set_index(i1),
+        cursor.store(Int(0)),
+        cursor.set_index(s1),
+        cursor.store(Bytes("")),
+        cursor.set_index(i2),
+        cursor.store(Int(0)),
+        cursor.set_index(s2),
+        cursor.store(Bytes("")),
+        cursor.set_index(i3),
+        cursor.store(Int(0)),
+        cursor.set_index(s3),
+        cursor.store(Bytes("")),
+        Int(42),
+    )
+
+
+def should_it_work() -> Expr:
+    xs = [
+        ScratchVar(TealType.uint64),
+        ScratchVar(TealType.uint64),
+    ]
+
+    def store_initial_values():
+        return [s.store(Int(i + 1)) for i, s in enumerate(xs)]
+
+    d = DynamicScratchVar(TealType.uint64)
+
+    @Subroutine(TealType.none)
+    def retrieve_and_increment(s: ScratchVar):
+        return Seq(d.set_index(s), d.store(d.load() + Int(1)))
+
+    def asserts():
+        return [Assert(x.load() == Int(i + 2)) for i, x in enumerate(xs)]
+
+    return Seq(
+        Seq(store_initial_values()),
+        Seq([retrieve_and_increment(x) for x in xs]),
+        Seq(asserts()),
+        Int(1),
+    )
+
+
+def make_creatable_factory(approval):
+    """
+    Wrap a pyteal program with code that:
+    * approves immediately in the case of app creation (appId == 0)
+    * runs the original code otherwise
+    """
+
+    def func():
+        return If(Txn.application_id() == Int(0)).Then(Int(1)).Else(approval())
+
+    func.__name__ = approval.__name__
+    return func
+
+
+@Subroutine(TealType.uint64)
+def oldfac(n):
+    return If(n < Int(2)).Then(Int(1)).Else(n * oldfac(n - Int(1)))
+
+
+def wrap_for_semantic_e2e(subr_with_params: Tuple[Tuple[Expr, List[TealType]]]) -> Expr:
+    subr, params = subr_with_params
+
+    def arg(i, p):
+        arg = Txn.application_args[i]
+        if p == TealType.uint64:
+            arg = Btoi(arg)
+        return arg
+
+    def approval():
+        return subr(*(arg(i, p) for i, p in enumerate(params)))
+
+    setattr(approval, "__name__", f"sem_{subr.name()}")
+
+    return approval
+
+
+TESTABLE_CASES = [(oldfac, [TealType.uint64])]
+
+
+@pytest.mark.parametrize("pt", map(wrap_for_semantic_e2e, TESTABLE_CASES))
+def test_semantic_unchanged(pt):
+    assert_new_v_old(pt, 6)
+
+
 CASES = (
     sub_logcat_dynamic,
     swapper,
@@ -301,7 +425,12 @@ CASES = (
     sub_mixed,
     lots_o_vars,
     tallygo,
+    empty_scratches,
+    should_it_work,
 )
+
+
+DEPRECATED_CASES = (string_mult, should_it_work)
 
 
 @pytest.mark.parametrize("pt", CASES)
@@ -309,6 +438,13 @@ def test_teal_output_is_unchanged(pt):
     assert_new_v_old(pt, 6)
 
 
+@pytest.mark.parametrize("pt", map(make_creatable_factory, DEPRECATED_CASES))
+def test_deprecated(pt):
+    assert_new_v_old(pt, 6)
+
+
 if __name__ == "__main__":
-    test_increment()
-    test_teal_output_is_unchanged()
+    # test_increment()
+    # test_teal_output_is_unchanged()
+    # make_testable_factory(oldfac)
+    wrap_for_semantic_e2e((oldfac, [TealType.uint64]))

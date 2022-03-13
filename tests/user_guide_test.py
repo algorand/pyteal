@@ -24,4 +24,4 @@ def user_guide_snippet_dynamic_scratch_var() -> Expr:
 
 @pytest.mark.parametrize("snippet", [user_guide_snippet_dynamic_scratch_var])
 def test_user_guide_snippets(snippet):
-    assert_new_v_old(snippet)
+    assert_new_v_old(snippet, version=6)
