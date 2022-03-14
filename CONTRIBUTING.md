@@ -28,7 +28,7 @@ We make a best-effort attempt to adhere to [PEP 8 - Style Guide for Python Code]
 Since PyTeal aims for backwards compatibility, it's _not_ straightforward to change naming conventions in public APIs.  Consequently, the repo contains some deviations from PEP 8 naming conventions.
 
 In order to retain a consistent style, we prefer to continue deviating from PEP 8 naming conventions in the following cases.  We try to balance minimizing exceptions against providing a consistent style for existing software.
-* Enums - Define with lowercase camelcase like https://github.com/algorand/pyteal/blob/7c953f600113abcb9a31df68165b61a2c897f591/pyteal/ast/txn.py#L37.
-* Factory methods - Define following [class name](https://peps.python.org/pep-0008/#class-names) conventions like https://github.com/algorand/pyteal/blob/7c953f600113abcb9a31df68165b61a2c897f591/pyteal/ast/ternaryexpr.py#L63.
+* Enums - Define with lowercase camelcase.  Example:  https://github.com/algorand/pyteal/blob/7c953f600113abcb9a31df68165b61a2c897f591/pyteal/ast/txn.py#L37
+* Factory methods - Define following [class name](https://peps.python.org/pep-0008/#class-names) conventions.  Example:  https://github.com/algorand/pyteal/blob/7c953f600113abcb9a31df68165b61a2c897f591/pyteal/ast/ternaryexpr.py#L63
 
 Since it's challenging to enforce these exceptions with a linter, we rely on PR creators and reviewers to make a best-effort attempt to enforce agreed upon naming conventions.
