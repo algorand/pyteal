@@ -444,6 +444,8 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, outputNum: int):
         super().__init__()
+        if outputNum <= 0:
+            raise TealInputError("number of output slot should be positive")
         self.output_slots = [ScratchSlot() for _ in range(outputNum)]
 
     def __add__(self, other: Expr):
@@ -454,7 +456,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
             return self.addU64(other)
 
     def addU128(self, other: "WideUint128"):
-        if not isinstance(other, WideUint128):
+        if not isinstance(other, WideUint128) or len(other.output_slots) != 2:
             raise TealInputError("expected WideUint128 input for addU128")
 
         class WideUint128AddU128(WideUint128):
@@ -502,7 +504,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
             return self.minusU64(other)
 
     def minusU128(self, other: "WideUint128"):
-        if not isinstance(other, WideUint128):
+        if not isinstance(other, WideUint128) or len(other.output_slots) != 2:
             raise TealInputError("expected WideUint128 input for minusU128")
 
         class WideUint128MinusU128(WideUint128):
@@ -550,7 +552,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
             return self.mulU64(other)
 
     def mulU128(self, other: "WideUint128"):
-        if not isinstance(other, WideUint128):
+        if not isinstance(other, WideUint128) or len(other.output_slots) != 2:
             raise TealInputError("expected WideUint128 input for mulU128")
 
         class WideUint128MulU128(WideUint128):
@@ -598,7 +600,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
             return self.divU64(other)
 
     def divU128(self, other: "WideUint128"):
-        if not isinstance(other, WideUint128):
+        if not isinstance(other, WideUint128) or len(other.output_slots) != 2:
             raise TealInputError("expected WideUint128 input for divU128")
 
         class WideUint128DivU128(WideUint128):
@@ -660,7 +662,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
             return self.modU64(other)
 
     def modU128(self, other: "WideUint128"):
-        if not isinstance(other, WideUint128):
+        if not isinstance(other, WideUint128) or len(other.output_slots) != 2:
             raise TealInputError("expected WideUint128 input for modU128")
 
         class WideUint128ModU128(WideUint128):
@@ -737,7 +739,7 @@ class WideUint128(LeafExpr, metaclass=ABCMeta):
         return WideUint128ModU64(self, other).toUint64()
 
     def __divmod__(self, other: "WideUint128"):
-        if not isinstance(other, WideUint128):
+        if not isinstance(other, WideUint128) or len(other.output_slots) != 2:
             raise TealInputError("expected WideUint128 input for divmodW")
 
         class WideUint128DivmodW(WideUint128):
