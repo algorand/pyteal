@@ -8,8 +8,14 @@ from ..seq import Seq
 
 
 class TypeSpec(ABC):
+    """TypeSpec represents a specification for an ABI type.
+
+    Essentially this is a factory that can produce specific instances of ABI types.
+    """
+
     @abstractmethod
     def new_instance(self) -> "BaseType":
+        """Create a new instance of the specified type."""
         pass
 
     @abstractmethod
@@ -33,14 +39,14 @@ class TypeSpec(ABC):
 
     @abstractmethod
     def __eq__(self, other: object) -> bool:
-        """Check if this type is considered equal to the other ABI type, irrespective of the values
-        of types.
+        """Check if this type is considered equal to another ABI type.
 
         Args:
-            other: The ABI type to compare to. This may be an instance of Type or a subclass of Type.
+            other: The object to compare to. If this is not a TypeSpec, this method will never
+                return true.
 
         Returns:
-            True if and only if self and other conform to the same ABI type.
+            True if and only if self and other represent the same ABI type.
         """
         pass
 
@@ -54,22 +60,22 @@ TypeSpec.__module__ = "pyteal"
 
 
 class BaseType(ABC):
-    """The abstract base class for all ABI types.
+    """The abstract base class for all ABI type instances.
 
-    This class contains both information about an ABI type, and a value that conforms to that type.
-    The value is contained in a unique ScratchVar that only the type has access to. As a result, the
-    value of an ABI type is mutable and can be efficiently referenced multiple times without needing
-    to recompute it.
+    The value of the type is contained in a unique ScratchVar that only this instance has access to.
+    As a result, the value of an ABI type is mutable and can be efficiently referenced multiple
+    times without needing to recompute it.
     """
 
     def __init__(self, spec: TypeSpec) -> None:
-        """Create a new Type."""
+        """Create a new BaseType."""
         super().__init__()
-        self.type_spec = spec
+        self._type_spec = spec
         self.stored_value = ScratchVar(spec.storage_type())
 
-    def get_type_spec(self) -> TypeSpec:
-        return self.type_spec
+    def type_spec(self) -> TypeSpec:
+        """Get the TypeSpec for this ABI type instance."""
+        return self._type_spec
 
     @abstractmethod
     def encode(self) -> Expr:
@@ -133,17 +139,12 @@ class ComputedType(ABC, Generic[T]):
 
     @abstractmethod
     def produced_type_spec(cls) -> TypeSpec:
-        """Get the ABI Type that this object produces.
-
-        Returns:
-            The type class of the produced ABI type. This class should be immediately instantiable
-            with no arguments.
-        """
+        """Get the ABI TypeSpec that this object produces."""
         pass
 
     @abstractmethod
     def store_into(self, output: T) -> Expr:
-        """Store the value of this computed type into an existing ABI Type object.
+        """Store the value of this computed type into an existing ABI type instance.
 
         Args:
             output: The object where the computed value will be stored. This object must have the
@@ -160,10 +161,12 @@ class ComputedType(ABC, Generic[T]):
 
         Args:
             action: A callable object that will receive an instance of this class's produced type
-                with the correct value. TODO: explanation of the callable's return value
+                with the computed value. The callable object may use that value as it sees fit, but
+                it must return an Expr to be included in the program's AST.
 
         Returns:
-            TODO
+            An expression which contains the returned expression from invoking action with the
+            computed value.
         """
         newInstance = cast(T, self.produced_type_spec().new_instance())
         return Seq(self.store_into(newInstance), action(newInstance))

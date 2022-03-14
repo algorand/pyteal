@@ -49,7 +49,7 @@ def test_StaticArrayTypeSpec_new_instance():
                 instance,
                 abi.StaticArray,
             )
-            assert instance.get_type_spec() == staticArrayType
+            assert instance.type_spec() == staticArrayType
 
 
 def test_StaticArrayTypeSpec_eq():

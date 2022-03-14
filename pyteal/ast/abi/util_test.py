@@ -225,6 +225,35 @@ def test_type_spec_from_annotation():
                 abi.TupleTypeSpec(abi.Uint32TypeSpec(), abi.Uint16TypeSpec()),
             ),
         ),
+        TypeAnnotationTest(
+            annotation=abi.Tuple4[abi.Uint32, abi.Uint16, abi.Byte, abi.Bool],
+            expected=abi.TupleTypeSpec(
+                abi.Uint32TypeSpec(),
+                abi.Uint16TypeSpec(),
+                abi.ByteTypeSpec(),
+                abi.BoolTypeSpec(),
+            ),
+        ),
+        TypeAnnotationTest(
+            annotation=abi.Tuple4,
+            expected=TypeError,
+        ),
+        TypeAnnotationTest(
+            annotation=abi.Tuple5[
+                abi.Uint32, abi.Uint16, abi.Byte, abi.Bool, abi.Tuple0
+            ],
+            expected=abi.TupleTypeSpec(
+                abi.Uint32TypeSpec(),
+                abi.Uint16TypeSpec(),
+                abi.ByteTypeSpec(),
+                abi.BoolTypeSpec(),
+                abi.TupleTypeSpec(),
+            ),
+        ),
+        TypeAnnotationTest(
+            annotation=abi.Tuple5,
+            expected=TypeError,
+        ),
     ]
 
     for i, test in enumerate(tests):

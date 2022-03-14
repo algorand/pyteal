@@ -14,7 +14,17 @@ from .uint import (
     Uint64TypeSpec,
     Uint64,
 )
-from .tuple import TupleTypeSpec, Tuple, TupleElement, Tuple0, Tuple1, Tuple2, Tuple3
+from .tuple import (
+    TupleTypeSpec,
+    Tuple,
+    TupleElement,
+    Tuple0,
+    Tuple1,
+    Tuple2,
+    Tuple3,
+    Tuple4,
+    Tuple5,
+)
 from .array_base import ArrayTypeSpec, Array, ArrayElement
 from .array_static import StaticArrayTypeSpec, StaticArray
 from .array_dynamic import DynamicArrayTypeSpec, DynamicArray
@@ -45,6 +55,8 @@ __all__ = [
     "Tuple1",
     "Tuple2",
     "Tuple3",
+    "Tuple4",
+    "Tuple5",
     "ArrayTypeSpec",
     "Array",
     "ArrayElement",

@@ -196,7 +196,7 @@ def test_encodeTuple():
         actual.addIncoming()
         actual = TealBlock.NormalizeBlocks(actual)
 
-        if any(t.get_type_spec().is_dynamic() for t in test.types):
+        if any(t.type_spec().is_dynamic() for t in test.types):
             with TealComponent.Context.ignoreExprEquality():
                 with TealComponent.Context.ignoreScratchSlotEquality():
                     assert actual == expected, "Test at index {} failed".format(i)
@@ -436,7 +436,7 @@ def test_indexTuple():
             indexTuple(test.types, encoded, -1, output)
 
         otherType = abi.Uint64()
-        if output.get_type_spec() == otherType.get_type_spec():
+        if output.type_spec() == otherType.type_spec():
             otherType = abi.Uint16()
         with pytest.raises(TypeError):
             indexTuple(test.types, encoded, test.types, otherType)

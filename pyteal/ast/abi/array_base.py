@@ -27,11 +27,14 @@ T = TypeVar("T", bound=BaseType)
 
 
 class ArrayTypeSpec(TypeSpec, Generic[T]):
+    """The abstract base class for both static and dynamic array TypeSpecs."""
+
     def __init__(self, value_type_spec: TypeSpec) -> None:
         super().__init__()
         self.value_spec = value_type_spec
 
     def value_type_spec(self) -> TypeSpec:
+        """Get the TypeSpec of the value type this array can hold."""
         return self.value_spec
 
     def storage_type(self) -> TealType:
@@ -60,13 +63,10 @@ ArrayTypeSpec.__module__ = "pyteal"
 
 
 class Array(BaseType, Generic[T]):
-    """The base class for both ABI static array and ABI dynamic array.
+    """The abstract base class for both ABI static and dynamic array instances.
 
-    This class contains
-    * both underlying array element ABI type and an optional array length
-    * a basic implementation for inherited ABI static and dynamic array types, including
+    This class contains basic implementations of ABI array methods, including:
       * basic array elements setting method
-      * string representation for ABI array
       * basic encoding and decoding of ABI array
       * item retrieving by index (expression or integer)
     """
@@ -74,8 +74,8 @@ class Array(BaseType, Generic[T]):
     def __init__(self, spec: ArrayTypeSpec) -> None:
         super().__init__(spec)
 
-    def get_type_spec(self) -> ArrayTypeSpec[T]:
-        return cast(ArrayTypeSpec, super().get_type_spec())
+    def type_spec(self) -> ArrayTypeSpec[T]:
+        return cast(ArrayTypeSpec, super().type_spec())
 
     def decode(
         self,
@@ -125,18 +125,18 @@ class Array(BaseType, Generic[T]):
             ScratchVar.
         """
         for index, value in enumerate(values):
-            if self.get_type_spec().value_type_spec() != value.get_type_spec():
+            if self.type_spec().value_type_spec() != value.type_spec():
                 raise TealInputError(
                     "Cannot assign type {} at index {} to {}".format(
-                        value.get_type_spec(),
+                        value.type_spec(),
                         index,
-                        self.get_type_spec().value_type_spec(),
+                        self.type_spec().value_type_spec(),
                     )
                 )
 
         encoded = encodeTuple(values)
 
-        if self.get_type_spec().is_length_dynamic():
+        if self.type_spec().is_length_dynamic():
             length_tmp = Uint16()
             length_prefix = Seq(length_tmp.set(len(values)), length_tmp.encode())
             encoded = Concat(length_prefix, encoded)
@@ -185,7 +185,7 @@ class ArrayElement(ComputedType[T]):
     """The class that represents an ABI array element.
 
     This class requires a reference to the array that the array element belongs to, and a PyTeal
-    expression (required to be TealType.uint64) which stands for array index.
+    expression (required to be TealType.uint64) which contains the array index.
     """
 
     def __init__(self, array: Array[T], index: Expr) -> None:
@@ -201,7 +201,7 @@ class ArrayElement(ComputedType[T]):
         self.index = index
 
     def produced_type_spec(self) -> TypeSpec:
-        return self.array.get_type_spec().value_type_spec()
+        return self.array.type_spec().value_type_spec()
 
     def store_into(self, output: T) -> Expr:
         """Partitions the byte string of the given ABI array and stores the byte string of array
@@ -216,24 +216,25 @@ class ArrayElement(ComputedType[T]):
         Returns:
             An expression that stores the byte string of the array element into value `output`.
         """
-        if output.get_type_spec() != self.produced_type_spec():
+        if output.type_spec() != self.produced_type_spec():
             raise TealInputError("Output type does not match value type")
 
         encodedArray = self.array.encode()
+        arrayType = self.array.type_spec()
 
         # If the array element type is Bool, we compute the bit index
         # (if array is dynamic we add 16 to bit index for dynamic array length uint16 prefix)
         # and decode bit with given array encoding and the bit index for boolean bit.
-        if output.get_type_spec() == BoolTypeSpec():
+        if output.type_spec() == BoolTypeSpec():
             bitIndex = self.index
-            if self.array.get_type_spec().is_dynamic():
+            if arrayType.is_dynamic():
                 bitIndex = bitIndex + Int(Uint16TypeSpec().bit_size())
             return cast(Bool, output).decodeBit(encodedArray, bitIndex)
 
         # Compute the byteIndex (first byte indicating the element encoding)
         # (If the array is dynamic, add 2 to byte index for dynamic array length uint16 prefix)
-        byteIndex = Int(self.array.get_type_spec()._stride()) * self.index
-        if self.array.get_type_spec().is_length_dynamic():
+        byteIndex = Int(arrayType._stride()) * self.index
+        if arrayType.is_length_dynamic():
             byteIndex = byteIndex + Int(Uint16TypeSpec().byte_length_static())
 
         arrayLength = self.array.length()
@@ -249,12 +250,12 @@ class ArrayElement(ComputedType[T]):
         #
         # * otherwise, `valueEnd` is inferred from `nextValueStart`, which is the beginning offset
         #   of the next array element byte encoding.
-        if self.array.get_type_spec().value_type_spec().is_dynamic():
+        if arrayType.value_type_spec().is_dynamic():
             valueStart = ExtractUint16(encodedArray, byteIndex)
             nextValueStart = ExtractUint16(
                 encodedArray, byteIndex + Int(Uint16TypeSpec().byte_length_static())
             )
-            if self.array.get_type_spec().is_length_dynamic():
+            if arrayType.is_length_dynamic():
                 valueStart = valueStart + Int(Uint16TypeSpec().byte_length_static())
                 nextValueStart = nextValueStart + Int(
                     Uint16TypeSpec().byte_length_static()
@@ -272,7 +273,7 @@ class ArrayElement(ComputedType[T]):
         # since array._stride() is element's static byte length
         # we partition the substring for array element.
         valueStart = byteIndex
-        valueLength = Int(self.array.get_type_spec()._stride())
+        valueLength = Int(arrayType._stride())
         return output.decode(encodedArray, startIndex=valueStart, length=valueLength)
 
 

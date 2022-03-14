@@ -50,8 +50,8 @@ class DynamicArray(Array[T]):
     def __init__(self, value_type_spec: TypeSpec) -> None:
         super().__init__(DynamicArrayTypeSpec(value_type_spec))
 
-    def get_type_spec(self) -> DynamicArrayTypeSpec[T]:
-        return cast(DynamicArrayTypeSpec[T], super().get_type_spec())
+    def type_spec(self) -> DynamicArrayTypeSpec[T]:
+        return cast(DynamicArrayTypeSpec[T], super().type_spec())
 
     def set(self, values: Union[Sequence[T], "DynamicArray[T]"]) -> Expr:
         """Set the ABI dynamic array with a sequence of ABI type variables, or another ABI dynamic
@@ -71,10 +71,10 @@ class DynamicArray(Array[T]):
             A PyTeal expression that stores encoded `values` in its internal ScratchVar.
         """
         if isinstance(values, BaseType):
-            if self.get_type_spec() != values.get_type_spec():
+            if self.type_spec() != values.type_spec():
                 raise TealInputError(
                     "Cannot assign type {} to {}".format(
-                        values.get_type_spec(), self.get_type_spec()
+                        values.type_spec(), self.type_spec()
                     )
                 )
             return self.stored_value.store(values.encode())

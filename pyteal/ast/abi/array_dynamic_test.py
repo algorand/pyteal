@@ -34,7 +34,7 @@ def test_DynamicArrayTypeSpec_new_instance():
         dynamicArrayType = abi.DynamicArrayTypeSpec(elementType)
         instance = dynamicArrayType.new_instance()
         assert isinstance(instance, abi.DynamicArray)
-        assert instance.get_type_spec() == dynamicArrayType
+        assert instance.type_spec() == dynamicArrayType
 
 
 def test_DynamicArrayTypeSpec_eq():

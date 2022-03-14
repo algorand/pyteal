@@ -113,7 +113,7 @@ def consecutiveThingNum(
 def consecutiveBoolTypeNum(types: Sequence[TypeSpec], startIndex: int) -> int:
     if len(types) != 0 and not isinstance(types[0], TypeSpec):
         raise TypeError("Sequence of types expected")
-    return consecutiveThingNum(types, startIndex, lambda t: type(t) is BoolTypeSpec)
+    return consecutiveThingNum(types, startIndex, lambda t: t == BoolTypeSpec())
 
 
 def consecutiveBoolNum(values: Sequence[BaseType], startIndex: int) -> int:

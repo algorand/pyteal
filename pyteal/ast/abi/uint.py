@@ -121,6 +121,7 @@ class UintTypeSpec(TypeSpec):
         return uint_storage_type(self.bit_size())
 
     def __eq__(self, other: object) -> bool:
+        # NOTE: this implementation implies ByteTypeSpec() == Uint8TypeSpec()
         return isinstance(other, UintTypeSpec) and self.bit_size() == other.bit_size()
 
     def __str__(self) -> str:
@@ -192,19 +193,16 @@ class Uint(BaseType):
     def __init__(self, spec: UintTypeSpec) -> None:
         super().__init__(spec)
 
-    def get_type_spec(self) -> UintTypeSpec:
-        return cast(UintTypeSpec, super().get_type_spec())
+    def type_spec(self) -> UintTypeSpec:
+        return cast(UintTypeSpec, super().type_spec())
 
     def get(self) -> Expr:
         return self.stored_value.load()
 
     def set(self, value: Union[int, Expr, "Uint"]) -> Expr:
-        if (
-            isinstance(value, BaseType)
-            and self.get_type_spec() != value.get_type_spec()
-        ):
+        if isinstance(value, BaseType) and self.type_spec() != value.type_spec():
             raise TealInputError("Cannot set type {} to {}".format(self, value))
-        return uint_set(self.get_type_spec().bit_size(), self.stored_value, value)
+        return uint_set(self.type_spec().bit_size(), self.stored_value, value)
 
     def decode(
         self,
@@ -215,7 +213,7 @@ class Uint(BaseType):
         length: Expr = None
     ) -> Expr:
         return uint_decode(
-            self.get_type_spec().bit_size(),
+            self.type_spec().bit_size(),
             self.stored_value,
             encoded,
             startIndex,
@@ -224,7 +222,7 @@ class Uint(BaseType):
         )
 
     def encode(self) -> Expr:
-        return uint_encode(self.get_type_spec().bit_size(), self.stored_value)
+        return uint_encode(self.type_spec().bit_size(), self.stored_value)
 
 
 Uint.__module__ = "pyteal"
