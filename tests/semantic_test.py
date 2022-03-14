@@ -1,45 +1,15 @@
-from typing import Callable
 import pytest
 
-from algosdk import kmd
-from algosdk.v2client import algod, indexer
+from algosdk.testing.dryrun import Helper as DryRunHelper
+
+from .semantic_asserts import (
+    _algod_client,
+    e2e_teal,
+    lightly_encode_args,
+    lightly_encode_output,
+)
 
 from pyteal import *
-
-# from .pass_by_ref_test import oldfac
-
-# TODO: refactor these into utility
-
-## Clients
-
-
-def _kmd_client(kmd_address="http://localhost:4002", kmd_token="a" * 64):
-    """Instantiate and return a KMD client object."""
-    return kmd.KMDClient(kmd_token, kmd_address)
-
-
-def _algod_client(algod_address="http://localhost:4001", algod_token="a" * 64):
-    """Instantiate and return Algod client object."""
-    return algod.AlgodClient(algod_token, algod_address)
-
-
-def _indexer_client(indexer_address="http://localhost:8980", indexer_token="a" * 64):
-    """Instantiate and return Indexer client object."""
-    return indexer.IndexerClient(indexer_token, indexer_address)
-
-
-def get_clients():
-    try:
-        kmd = _kmd_client()
-    except Exception as e:
-        raise Exception("kmd is missing from environment") from e
-
-    try:
-        algod = _algod_client()
-    except Exception as e:
-        raise Exception("algod is missing from environment") from e
-
-    return kmd, algod
 
 
 @Subroutine(TealType.uint64, input_types=[])
@@ -81,87 +51,51 @@ def oldfac(n):
 
 SEMANTIC_TESTING = True
 
+SCENARIOS = {
+    exp: {"args": [[]]},
+    square: {"args": [[i] for i in range(100)]},
+    swap: {"args": [[1, 2], [1, "two"], ["one", 2], ["one", "two"]]},
+    string_mult: {"args": [["xyzw", i] for i in range(100)]},
+    oldfac: {"args": [[i] for i in range(25)]},
+}
 
-SEMANTIC_CASES = [exp, square, swap, string_mult, oldfac]
+SEMANTIC_CASES = SCENARIOS.keys()
 if not SEMANTIC_TESTING:
     SEMANTIC_CASES = []
-
-
-def semantic_e2e_factory(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
-    input_types = subr.subroutine.input_types
-    arg_names = subr.subroutine.arguments()
-
-    def arg_prep_n_call(i, p):
-        name = arg_names[i]
-        by_ref = name in subr.subroutine.by_ref_args
-        x = subr
-        arg_expr = Txn.application_args[i] if mode == Mode.Application else Arg(i)
-        if p == TealType.uint64:
-            arg_expr = Btoi(arg_expr)
-        prep = None
-        arg_var = arg_expr
-        if by_ref:
-            arg_var = ScratchVar(p)
-            prep = arg_var.store(arg_expr)
-        return prep, arg_var
-
-    def subr_caller():
-        preps_n_calls = [*(arg_prep_n_call(i, p) for i, p in enumerate(input_types))]
-        preps, calls = zip(*preps_n_calls) if preps_n_calls else ([], [])
-        preps = [p for p in preps if p]
-        invocation = subr(*calls)
-        if preps:
-            return Seq(*(preps + [invocation]))
-        return invocation
-
-    def make_return(e):
-        if e.type_of() == TealType.uint64:
-            return e
-        if e.type_of() == TealType.bytes:
-            return Btoi(e)
-        return Seq(e, Int(1339))
-
-    def make_log(e):
-        if e.type_of() == TealType.uint64:
-            return Log(Itob(e))
-        if e.type_of() == TealType.bytes:
-            return Log(e)
-        return Log(Bytes("nada"))
-
-    if mode == Mode.Signature:
-
-        def approval():
-            return make_return(subr_caller())
-
-    else:
-
-        def approval():
-            result = ScratchVar(subr.subroutine.returnType)
-            return Seq(
-                result.store(subr_caller()),
-                make_log(result.load()),
-                make_return(result.load()),
-            )
-
-    setattr(approval, "__name__", f"sem_{mode}_{subr.name()}")
-    return approval
 
 
 @pytest.mark.parametrize("mode", [Mode.Signature, Mode.Application])
 @pytest.mark.parametrize("subr", SEMANTIC_CASES)
 def test_semantic(subr: SubroutineFnWrapper, mode: Mode):
+    case_name = subr.name()
     assert isinstance(subr, SubroutineFnWrapper), f"unexpected subr type {type(subr)}"
-    print(f"semantic e2e test of {subr.name()}")
-    approval = semantic_e2e_factory(subr, mode)
+    print(f"semantic e2e test of {case_name}")
+    approval = e2e_teal(subr, mode)
     teal = compileTeal(approval(), mode, version=6, assembleConstants=True)
     print(
-        f"""subroutine {subr.name()}@{mode}:
+        f"""subroutine {case_name}@{mode}:
 -------
 {teal}
 -------"""
     )
+    algod = _algod_client()
 
-    kmd, algod = get_clients()
+    dr_builder = (
+        DryRunHelper.build_simple_app_request
+        if mode == Mode.Application
+        else DryRunHelper.build_simple_lsig_request
+    )
+    dry_run_reqs = list(
+        map(
+            lambda args: dr_builder(teal, lightly_encode_args(args)),
+            SCENARIOS[subr]["args"],
+        )
+    )
+    dry_run_resps = list(map(algod.dryrun, dry_run_reqs))
+    x = 42
+    # dry_run_req =
+
+    # kmd, algod = get_clients()
 
 
 # if __name__ == "__main__":

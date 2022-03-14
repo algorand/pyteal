@@ -2,4 +2,4 @@ black==21.7b0
 mypy==0.931
 pytest
 pytest-timeout
-py-algorand-sdk
+git+https://github.com/algorand/py-algorand-sdk@teal-blackbox
