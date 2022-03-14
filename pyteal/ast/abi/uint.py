@@ -1,16 +1,10 @@
 from typing import (
-    Generic,
     TypeVar,
     Union,
     Optional,
     cast,
-    Type as PyType,
-    Literal,
-    get_origin,
-    get_args,
 )
 from abc import abstractmethod
-from inspect import isclass
 
 from ...types import TealType
 from ...errors import TealInputError
@@ -24,11 +18,11 @@ from ..bytes import Bytes
 from ..unaryexpr import Itob, Btoi
 from ..binaryexpr import GetByte, ExtractUint16, ExtractUint32, ExtractUint64
 from ..ternaryexpr import SetByte
-from .type import Type
+from .type import TypeSpec, BaseType
 
 NUM_BITS_IN_BYTE = 8
 
-SUPPORTED_SIZES = (8, 16, 32, 64)
+SUPPORTED_UINT_SIZES = (8, 16, 32, 64)
 
 
 def uint_storage_type(size: int) -> TealType:
@@ -102,65 +96,115 @@ def uint_encode(size: int, uintVar: ScratchVar) -> Expr:
 N = TypeVar("N", bound=int)
 
 
-class Uint(Type, Generic[N]):
-    def __class_getitem__(cls, size: int) -> PyType["Uint"]:
-        if get_origin(size) is Literal:
-            args = get_args(size)
-            assert len(args) == 1
-            assert type(args[0]) is int
-            size = args[0]
+class UintTypeSpec(TypeSpec):
+    def __init__(self, bit_size: int) -> None:
+        super().__init__()
+        if bit_size not in SUPPORTED_UINT_SIZES:
+            raise TypeError("Unsupported uint size: {}".format(bit_size))
+        self.size = bit_size
 
-        assert isinstance(size, int)
+    @abstractmethod
+    def new_instance(self) -> "Uint":
+        pass
 
-        if size not in SUPPORTED_SIZES:
-            raise TypeError("Unsupported uint size: {}".format(size))
+    def bit_size(self) -> int:
+        """Get the bit size of this uint type"""
+        return self.size
 
-        class SizedUint(Uint):
-            def __class_getitem__(cls, _):
-                # prevent Uint[A][B]
-                raise TypeError("Cannot index into Uint[{}]".format(size))
-
-            @classmethod
-            def bit_size(cls) -> int:
-                return size
-
-        return SizedUint
-
-    @classmethod
-    def has_same_type_as(cls, other: Union[PyType[Type], Type]) -> bool:
-        return (
-            isinstance(other, Uint)
-            or (isclass(other) and issubclass(cast(type, other), Uint))
-        ) and cls.bit_size() == cast(Union[PyType[Uint], Uint], other).bit_size()
-
-    @classmethod
-    def is_dynamic(cls) -> bool:
+    def is_dynamic(self) -> bool:
         return False
 
-    @classmethod
-    def byte_length_static(cls) -> int:
-        return cls.bit_size() // NUM_BITS_IN_BYTE
+    def byte_length_static(self) -> int:
+        return self.bit_size() // NUM_BITS_IN_BYTE
 
-    @classmethod
-    def storage_type(cls) -> TealType:
-        return uint_storage_type(cls.bit_size())
+    def storage_type(self) -> TealType:
+        return uint_storage_type(self.bit_size())
 
-    @classmethod
-    def __str__(cls) -> str:
-        return "uint{}".format(cls.bit_size())
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, UintTypeSpec) and self.bit_size() == other.bit_size()
 
-    @classmethod
-    @abstractmethod
-    def bit_size(cls) -> int:
-        pass
+    def __str__(self) -> str:
+        return "uint{}".format(self.bit_size())
+
+
+UintTypeSpec.__module__ = "pyteal"
+
+
+class ByteTypeSpec(UintTypeSpec):
+    def __init__(self) -> None:
+        super().__init__(8)
+
+    def new_instance(self) -> "Byte":
+        return Byte()
+
+    def __str__(self) -> str:
+        return "byte"
+
+
+ByteTypeSpec.__module__ = "pyteal"
+
+
+class Uint8TypeSpec(UintTypeSpec):
+    def __init__(self) -> None:
+        super().__init__(8)
+
+    def new_instance(self) -> "Uint8":
+        return Uint8()
+
+
+Uint8TypeSpec.__module__ = "pyteal"
+
+
+class Uint16TypeSpec(UintTypeSpec):
+    def __init__(self) -> None:
+        super().__init__(16)
+
+    def new_instance(self) -> "Uint16":
+        return Uint16()
+
+
+Uint16TypeSpec.__module__ = "pyteal"
+
+
+class Uint32TypeSpec(UintTypeSpec):
+    def __init__(self) -> None:
+        super().__init__(32)
+
+    def new_instance(self) -> "Uint32":
+        return Uint32()
+
+
+Uint32TypeSpec.__module__ = "pyteal"
+
+
+class Uint64TypeSpec(UintTypeSpec):
+    def __init__(self) -> None:
+        super().__init__(64)
+
+    def new_instance(self) -> "Uint64":
+        return Uint64()
+
+
+Uint32TypeSpec.__module__ = "pyteal"
+
+
+class Uint(BaseType):
+    def __init__(self, spec: UintTypeSpec) -> None:
+        super().__init__(spec)
+
+    def get_type_spec(self) -> UintTypeSpec:
+        return cast(UintTypeSpec, super().get_type_spec())
 
     def get(self) -> Expr:
         return self.stored_value.load()
 
     def set(self, value: Union[int, Expr, "Uint"]) -> Expr:
-        if isinstance(value, Type) and not self.has_same_type_as(value):
+        if (
+            isinstance(value, BaseType)
+            and self.get_type_spec() != value.get_type_spec()
+        ):
             raise TealInputError("Cannot set type {} to {}".format(self, value))
-        return uint_set(self.bit_size(), self.stored_value, value)
+        return uint_set(self.get_type_spec().bit_size(), self.stored_value, value)
 
     def decode(
         self,
@@ -171,25 +215,56 @@ class Uint(Type, Generic[N]):
         length: Expr = None
     ) -> Expr:
         return uint_decode(
-            self.bit_size(), self.stored_value, encoded, startIndex, endIndex, length
+            self.get_type_spec().bit_size(),
+            self.stored_value,
+            encoded,
+            startIndex,
+            endIndex,
+            length,
         )
 
     def encode(self) -> Expr:
-        return uint_encode(self.bit_size(), self.stored_value)
+        return uint_encode(self.get_type_spec().bit_size(), self.stored_value)
 
 
 Uint.__module__ = "pyteal"
 
-Uint8 = Uint[Literal[8]]
-Uint16 = Uint[Literal[16]]
-Uint32 = Uint[Literal[32]]
-Uint64 = Uint[Literal[64]]
 
-
-class Byte(Uint8):
-    @classmethod
-    def __str__(cls) -> str:
-        return "byte"
+class Byte(Uint):
+    def __init__(self) -> None:
+        super().__init__(ByteTypeSpec())
 
 
 Byte.__module__ = "pyteal"
+
+
+class Uint8(Uint):
+    def __init__(self) -> None:
+        super().__init__(Uint8TypeSpec())
+
+
+Uint8.__module__ = "pyteal"
+
+
+class Uint16(Uint):
+    def __init__(self) -> None:
+        super().__init__(Uint16TypeSpec())
+
+
+Uint16.__module__ = "pyteal"
+
+
+class Uint32(Uint):
+    def __init__(self) -> None:
+        super().__init__(Uint32TypeSpec())
+
+
+Uint32.__module__ = "pyteal"
+
+
+class Uint64(Uint):
+    def __init__(self) -> None:
+        super().__init__(Uint64TypeSpec())
+
+
+Uint64.__module__ = "pyteal"

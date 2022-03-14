@@ -16,27 +16,32 @@ from ... import CompileOptions
 options = CompileOptions(version=5)
 
 
-def test_Bool_str():
-    boolType = abi.Bool()
-    assert str(boolType) == "bool"
+def test_BoolTypeSpec_str():
+    assert str(abi.BoolTypeSpec()) == "bool"
 
 
-def test_Bool_is_dynamic():
-    assert not abi.Bool.is_dynamic()
+def test_BoolTypeSpec_is_dynamic():
+    assert not abi.BoolTypeSpec().is_dynamic()
 
 
-def test_Bool_has_same_type_as():
-    assert abi.Bool.has_same_type_as(abi.Bool)
-    assert abi.Bool.has_same_type_as(abi.Bool())
+def test_BoolTypeSpec_byte_length_static():
+    assert abi.BoolTypeSpec().byte_length_static() == 1
+
+
+def test_BoolTypeSpec_new_instance():
+    assert isinstance(abi.BoolTypeSpec().new_instance(), abi.Bool)
+
+
+def test_BoolTypeSpec_eq():
+    assert abi.BoolTypeSpec() == abi.BoolTypeSpec()
 
     for otherType in (
-        abi.Byte,
-        abi.Uint64,
-        abi.StaticArray[abi.Bool, 1],
-        abi.DynamicArray[abi.Bool],
+        abi.ByteTypeSpec,
+        abi.Uint64TypeSpec,
+        abi.StaticArrayTypeSpec(abi.BoolTypeSpec(), 1),
+        abi.DynamicArrayTypeSpec(abi.BoolTypeSpec()),
     ):
-        assert not abi.Bool.has_same_type_as(otherType)
-        assert not abi.Bool.has_same_type_as(otherType())
+        assert abi.BoolTypeSpec() != otherType
 
 
 def test_Bool_set_static():
@@ -204,25 +209,35 @@ def test_Bool_encode():
 
 def test_boolAwareStaticByteLength():
     class ByteLengthTest(NamedTuple):
-        types: List[Type[abi.Type]]
+        types: List[abi.TypeSpec]
         expectedLength: int
 
     tests: List[ByteLengthTest] = [
         ByteLengthTest(types=[], expectedLength=0),
-        ByteLengthTest(types=[abi.Uint64], expectedLength=8),
-        ByteLengthTest(types=[abi.Bool], expectedLength=1),
-        ByteLengthTest(types=[abi.Bool] * 8, expectedLength=1),
-        ByteLengthTest(types=[abi.Bool] * 9, expectedLength=2),
-        ByteLengthTest(types=[abi.Bool] * 16, expectedLength=2),
-        ByteLengthTest(types=[abi.Bool] * 17, expectedLength=3),
-        ByteLengthTest(types=[abi.Bool] * 100, expectedLength=13),
-        ByteLengthTest(types=[abi.Bool, abi.Byte, abi.Bool], expectedLength=3),
+        ByteLengthTest(types=[abi.Uint64TypeSpec()], expectedLength=8),
+        ByteLengthTest(types=[abi.BoolTypeSpec()], expectedLength=1),
+        ByteLengthTest(types=[abi.BoolTypeSpec()] * 8, expectedLength=1),
+        ByteLengthTest(types=[abi.BoolTypeSpec()] * 9, expectedLength=2),
+        ByteLengthTest(types=[abi.BoolTypeSpec()] * 16, expectedLength=2),
+        ByteLengthTest(types=[abi.BoolTypeSpec()] * 17, expectedLength=3),
+        ByteLengthTest(types=[abi.BoolTypeSpec()] * 100, expectedLength=13),
         ByteLengthTest(
-            types=[abi.Bool, abi.Bool, abi.Byte, abi.Bool, abi.Bool],
+            types=[abi.BoolTypeSpec(), abi.ByteTypeSpec(), abi.BoolTypeSpec()],
             expectedLength=3,
         ),
         ByteLengthTest(
-            types=[abi.Bool] * 16 + [abi.Byte, abi.Bool, abi.Bool],
+            types=[
+                abi.BoolTypeSpec(),
+                abi.BoolTypeSpec(),
+                abi.ByteTypeSpec(),
+                abi.BoolTypeSpec(),
+                abi.BoolTypeSpec(),
+            ],
+            expectedLength=3,
+        ),
+        ByteLengthTest(
+            types=[abi.BoolTypeSpec()] * 16
+            + [abi.ByteTypeSpec(), abi.BoolTypeSpec(), abi.BoolTypeSpec()],
             expectedLength=4,
         ),
     ]
@@ -234,33 +249,76 @@ def test_boolAwareStaticByteLength():
 
 def test_consecutiveBoolNum():
     class ConsecutiveTest(NamedTuple):
-        types: List[Type[abi.Type]]
+        types: List[abi.TypeSpec]
         start: int
         expected: int
 
     tests: List[ConsecutiveTest] = [
         ConsecutiveTest(types=[], start=0, expected=0),
-        ConsecutiveTest(types=[abi.Uint16], start=0, expected=0),
-        ConsecutiveTest(types=[abi.Bool], start=0, expected=1),
-        ConsecutiveTest(types=[abi.Bool], start=1, expected=0),
-        ConsecutiveTest(types=[abi.Bool, abi.Bool], start=0, expected=2),
-        ConsecutiveTest(types=[abi.Bool, abi.Bool], start=1, expected=1),
-        ConsecutiveTest(types=[abi.Bool, abi.Bool], start=2, expected=0),
-        ConsecutiveTest(types=[abi.Bool for _ in range(10)], start=0, expected=10),
+        ConsecutiveTest(types=[abi.Uint16TypeSpec()], start=0, expected=0),
+        ConsecutiveTest(types=[abi.BoolTypeSpec()], start=0, expected=1),
+        ConsecutiveTest(types=[abi.BoolTypeSpec()], start=1, expected=0),
         ConsecutiveTest(
-            types=[abi.Bool, abi.Bool, abi.Byte, abi.Bool], start=0, expected=2
+            types=[abi.BoolTypeSpec(), abi.BoolTypeSpec()], start=0, expected=2
         ),
         ConsecutiveTest(
-            types=[abi.Bool, abi.Bool, abi.Byte, abi.Bool], start=2, expected=0
+            types=[abi.BoolTypeSpec(), abi.BoolTypeSpec()], start=1, expected=1
         ),
         ConsecutiveTest(
-            types=[abi.Bool, abi.Bool, abi.Byte, abi.Bool], start=3, expected=1
+            types=[abi.BoolTypeSpec(), abi.BoolTypeSpec()], start=2, expected=0
         ),
         ConsecutiveTest(
-            types=[abi.Byte, abi.Bool, abi.Bool, abi.Byte], start=0, expected=0
+            types=[abi.BoolTypeSpec() for _ in range(10)], start=0, expected=10
         ),
         ConsecutiveTest(
-            types=[abi.Byte, abi.Bool, abi.Bool, abi.Byte], start=1, expected=2
+            types=[
+                abi.BoolTypeSpec(),
+                abi.BoolTypeSpec(),
+                abi.ByteTypeSpec(),
+                abi.BoolTypeSpec(),
+            ],
+            start=0,
+            expected=2,
+        ),
+        ConsecutiveTest(
+            types=[
+                abi.BoolTypeSpec(),
+                abi.BoolTypeSpec(),
+                abi.ByteTypeSpec(),
+                abi.BoolTypeSpec(),
+            ],
+            start=2,
+            expected=0,
+        ),
+        ConsecutiveTest(
+            types=[
+                abi.BoolTypeSpec(),
+                abi.BoolTypeSpec(),
+                abi.ByteTypeSpec(),
+                abi.BoolTypeSpec(),
+            ],
+            start=3,
+            expected=1,
+        ),
+        ConsecutiveTest(
+            types=[
+                abi.ByteTypeSpec(),
+                abi.BoolTypeSpec(),
+                abi.BoolTypeSpec(),
+                abi.ByteTypeSpec(),
+            ],
+            start=0,
+            expected=0,
+        ),
+        ConsecutiveTest(
+            types=[
+                abi.ByteTypeSpec(),
+                abi.BoolTypeSpec(),
+                abi.BoolTypeSpec(),
+                abi.ByteTypeSpec(),
+            ],
+            start=1,
+            expected=2,
         ),
     ]
 
@@ -268,7 +326,7 @@ def test_consecutiveBoolNum():
         actual = consecutiveBoolTypeNum(test.types, test.start)
         assert actual == test.expected, "Test at index {} failed".format(i)
 
-        actual = consecutiveBoolNum([t() for t in test.types], test.start)
+        actual = consecutiveBoolNum([t.new_instance() for t in test.types], test.start)
         assert actual == test.expected, "Test at index {} failed".format(i)
 
 

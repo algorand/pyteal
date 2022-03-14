@@ -1,16 +1,16 @@
-from typing import NamedTuple, Callable, Union, Optional, Type
+from typing import List, Tuple, NamedTuple, Callable, Union, Optional
 import pytest
 
-from ... import *
+from pyteal.ast.abi.uint import UintTypeSpec
 
-# this is not necessary but mypy complains if it's not included
-from ... import CompileOptions
+from ... import *
 
 options = CompileOptions(version=5)
 
 
 class UintTestData(NamedTuple):
-    uintType: Type[abi.Uint]
+    uintType: abi.UintTypeSpec
+    instanceType: type
     expectedBits: int
     maxValue: int
     checkUpperBound: bool
@@ -28,7 +28,8 @@ def noneToInt0(value: Union[None, Expr]):
 
 testData = [
     UintTestData(
-        uintType=abi.Uint8,
+        uintType=abi.Uint8TypeSpec(),
+        instanceType=abi.Uint8,
         expectedBits=8,
         maxValue=2 ** 8 - 1,
         checkUpperBound=True,
@@ -40,7 +41,8 @@ testData = [
         ),
     ),
     UintTestData(
-        uintType=abi.Uint16,
+        uintType=abi.Uint16TypeSpec(),
+        instanceType=abi.Uint16,
         expectedBits=16,
         maxValue=2 ** 16 - 1,
         checkUpperBound=True,
@@ -50,7 +52,8 @@ testData = [
         expectedEncoding=lambda uintType: Suffix(Itob(uintType.get()), Int(6)),
     ),
     UintTestData(
-        uintType=abi.Uint32,
+        uintType=abi.Uint32TypeSpec(),
+        instanceType=abi.Uint32,
         expectedBits=32,
         maxValue=2 ** 32 - 1,
         checkUpperBound=True,
@@ -60,7 +63,8 @@ testData = [
         expectedEncoding=lambda uintType: Suffix(Itob(uintType.get()), Int(4)),
     ),
     UintTestData(
-        uintType=abi.Uint64,
+        uintType=abi.Uint64TypeSpec(),
+        instanceType=abi.Uint64,
         expectedBits=64,
         maxValue=2 ** 64 - 1,
         checkUpperBound=False,
@@ -72,57 +76,60 @@ testData = [
 ]
 
 
-def test_Uint_bits():
+def test_UintTypeSpec_bits():
     for test in testData:
         assert test.uintType.bit_size() == test.expectedBits
         assert test.uintType.byte_length_static() * 8 == test.expectedBits
 
 
-def test_Uint_str():
+def test_UintTypeSpec_str():
     for test in testData:
-        assert str(test.uintType()) == "uint{}".format(test.expectedBits)
-    assert str(abi.Byte()) == "byte"
+        assert str(test.uintType) == "uint{}".format(test.expectedBits)
+    assert str(abi.ByteTypeSpec()) == "byte"
 
 
-def test_Uint_is_dynamic():
+def test_UintTypeSpec_is_dynamic():
     for test in testData:
         assert not test.uintType.is_dynamic()
+    assert not abi.BoolTypeSpec().is_dynamic()
 
 
-def test_Uint_has_same_type_as():
+def test_UintTypeSpec_eq():
     for i, test in enumerate(testData):
-        assert test.uintType.has_same_type_as(test.uintType)
-        assert test.uintType.has_same_type_as(test.uintType())
+        assert test.uintType == test.uintType
 
         for j, otherTest in enumerate(testData):
             if i == j:
                 continue
-            assert not test.uintType.has_same_type_as(otherTest.uintType)
-            assert not test.uintType.has_same_type_as(otherTest.uintType())
+            assert test.uintType != otherTest.uintType
 
         for otherType in (
-            abi.Bool,
-            abi.StaticArray[test.uintType, 1],
-            abi.DynamicArray[test.uintType],
+            abi.BoolTypeSpec(),
+            abi.StaticArrayTypeSpec(test.uintType, 1),
+            abi.DynamicArrayTypeSpec(test.uintType),
         ):
-            assert not test.uintType.has_same_type_as(otherType)
-            assert not test.uintType.has_same_type_as(otherType())
+            assert test.uintType != otherType
 
-    assert abi.Byte.has_same_type_as(abi.Uint8)
-    assert abi.Byte.has_same_type_as(abi.Uint8())
-    assert abi.Uint8.has_same_type_as(abi.Byte)
-    assert abi.Uint8.has_same_type_as(abi.Byte())
+    assert abi.ByteTypeSpec() == abi.Uint8TypeSpec()
+    assert abi.Uint8TypeSpec() == abi.ByteTypeSpec()
 
 
-def test_Uint_storage_type():
+def test_UintTypeSpec_storage_type():
     for test in testData:
         assert test.uintType.storage_type() == TealType.uint64
+    assert abi.BoolTypeSpec().storage_type() == TealType.uint64
+
+
+def test_UintTypeSpec_new_instance():
+    for test in testData:
+        assert isinstance(test.uintType.new_instance(), test.instanceType)
+    assert isinstance(abi.ByteTypeSpec().new_instance(), abi.Byte)
 
 
 def test_Uint_set_static():
     for test in testData:
         for value_to_set in (0, 1, 100, test.maxValue):
-            value = test.uintType()
+            value = test.uintType.new_instance()
             expr = value.set(value_to_set)
             assert expr.type_of() == TealType.none
             assert not expr.has_return()
@@ -150,7 +157,7 @@ def test_Uint_set_static():
 
 def test_Uint_set_expr():
     for test in testData:
-        value = test.uintType()
+        value = test.uintType.new_instance()
         expr = value.set(Int(10) + Int(1))
         assert expr.type_of() == TealType.none
         assert not expr.has_return()
@@ -184,8 +191,8 @@ def test_Uint_set_expr():
 
 def test_Uint_set_copy():
     for test in testData:
-        value = test.uintType()
-        other = test.uintType()
+        value = test.uintType.new_instance()
+        other = test.uintType.new_instance()
         expr = value.set(other)
         assert expr.type_of() == TealType.none
         assert not expr.has_return()
@@ -207,7 +214,7 @@ def test_Uint_set_copy():
 
 def test_Uint_get():
     for test in testData:
-        value = test.uintType()
+        value = test.uintType.new_instance()
         expr = value.get()
         assert expr.type_of() == TealType.uint64
         assert not expr.has_return()
@@ -225,7 +232,7 @@ def test_Uint_decode():
         for startIndex in (None, Int(1)):
             for endIndex in (None, Int(2)):
                 for length in (None, Int(3)):
-                    value = test.uintType()
+                    value = test.uintType.new_instance()
                     expr = value.decode(
                         encoded, startIndex=startIndex, endIndex=endIndex, length=length
                     )
@@ -249,7 +256,7 @@ def test_Uint_decode():
 
 def test_Uint_encode():
     for test in testData:
-        value = test.uintType()
+        value = test.uintType.new_instance()
         expr = value.encode()
         assert expr.type_of() == TealType.bytes
         assert not expr.has_return()
@@ -267,9 +274,13 @@ def test_Uint_encode():
 
 
 def test_ByteUint8_mutual_conversion():
-    for type_a, type_b in [(abi.Uint8, abi.Byte), (abi.Byte, abi.Uint8)]:
-        type_b_instance = type_b()
-        other = type_a()
+    cases: List[Tuple[UintTypeSpec, UintTypeSpec]] = [
+        (abi.Uint8TypeSpec(), abi.ByteTypeSpec()),
+        (abi.ByteTypeSpec(), abi.Uint8TypeSpec()),
+    ]
+    for type_a, type_b in cases:
+        type_b_instance = type_b.new_instance()
+        other = type_a.new_instance()
         expr = type_b_instance.set(other)
 
         assert expr.type_of() == TealType.none

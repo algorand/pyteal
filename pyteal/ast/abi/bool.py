@@ -1,4 +1,4 @@
-from typing import TypeVar, Union, cast, Sequence, Callable, Type as PyType
+from typing import TypeVar, Union, cast, Sequence, Callable
 
 from ...types import TealType
 from ..expr import Expr
@@ -8,31 +8,37 @@ from ..int import Int
 from ..bytes import Bytes
 from ..binaryexpr import GetBit
 from ..ternaryexpr import SetBit
-from .type import Type
+from .type import TypeSpec, BaseType
 from .uint import NUM_BITS_IN_BYTE
 
 
-class Bool(Type):
-    @classmethod
-    def has_same_type_as(cls, other: Union[PyType[Type], Type]) -> bool:
-        return other is Bool or type(other) is Bool
+class BoolTypeSpec(TypeSpec):
+    def new_instance(self) -> "Bool":
+        return Bool()
 
-    @classmethod
-    def is_dynamic(cls) -> bool:
+    def is_dynamic(self) -> bool:
+        # Only accurate if this value is alone, since up to 8 consecutive bools will fit into a single byte
         return False
 
-    @classmethod
-    def byte_length_static(cls) -> int:
-        # Not completely accurate since up to 8 consecutive bools will fit into a single byte
+    def byte_length_static(self) -> int:
         return 1
 
-    @classmethod
-    def storage_type(cls) -> TealType:
+    def storage_type(self) -> TealType:
         return TealType.uint64
 
-    @classmethod
-    def __str__(cls) -> str:
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, BoolTypeSpec)
+
+    def __str__(self) -> str:
         return "bool"
+
+
+BoolTypeSpec.__module__ = "pyteal"
+
+
+class Bool(BaseType):
+    def __init__(self) -> None:
+        super().__init__(BoolTypeSpec())
 
     def get(self) -> Expr:
         return self.stored_value.load()
@@ -74,14 +80,14 @@ class Bool(Type):
         return SetBit(Bytes(b"\x00"), Int(0), self.get())
 
 
-def boolAwareStaticByteLength(types: Sequence[PyType[Type]]) -> int:
+def boolAwareStaticByteLength(types: Sequence[TypeSpec]) -> int:
     length = 0
     ignoreNext = 0
     for i, t in enumerate(types):
         if ignoreNext > 0:
             ignoreNext -= 1
             continue
-        if t is Bool:
+        if type(t) is BoolTypeSpec:
             numBools = consecutiveBoolTypeNum(types, i)
             ignoreNext = numBools - 1
             length += boolSequenceLength(numBools)
@@ -104,15 +110,17 @@ def consecutiveThingNum(
     return numConsecutiveThings
 
 
-def consecutiveBoolTypeNum(types: Sequence[PyType[Type]], startIndex: int) -> int:
-    if len(types) != 0 and not issubclass(types[0], Type):
+def consecutiveBoolTypeNum(types: Sequence[TypeSpec], startIndex: int) -> int:
+    if len(types) != 0 and not isinstance(types[0], TypeSpec):
         raise TypeError("Sequence of types expected")
-    return consecutiveThingNum(types, startIndex, lambda t: t is Bool)
+    return consecutiveThingNum(types, startIndex, lambda t: type(t) is BoolTypeSpec)
 
 
-def consecutiveBoolNum(values: Sequence[Type], startIndex: int) -> int:
-    if len(values) != 0 and not isinstance(values[0], Type):
-        raise TypeError("Sequence of types expected")
+def consecutiveBoolNum(values: Sequence[BaseType], startIndex: int) -> int:
+    if len(values) != 0 and not isinstance(values[0], BaseType):
+        raise TypeError(
+            "Sequence of types expected, but got {}".format(type(values[0]))
+        )
     return consecutiveThingNum(values, startIndex, lambda t: type(t) is Bool)
 
 
