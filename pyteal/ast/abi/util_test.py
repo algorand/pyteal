@@ -109,7 +109,8 @@ def test_int_literal_from_annotation():
     ]
 
     for i, test in enumerate(tests):
-        print("Test case {}".format(i))
+        print("Test case {}: annotation={}, args={}".format(i, test.annotation, get_args(test.annotation)))
+
         if type(test.expected) is not int:
             with pytest.raises(test.expected):
                 int_literal_from_annotation(test.annotation)
