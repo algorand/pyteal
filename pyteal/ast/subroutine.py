@@ -22,11 +22,12 @@ class SubroutineDefinition:
         implementation: Callable[..., Expr],
         returnType: TealType,
         nameStr: str = None,
+        input_types: List[TealType] = None,
     ) -> None:
         super().__init__()
         self.id = SubroutineDefinition.nextSubroutineId
         SubroutineDefinition.nextSubroutineId += 1
-
+        self.input_types = input_types
         self.by_ref_args: Set[str] = set()
 
         self.expected_arg_types: List[Type[Union[Expr, ScratchVar]]] = []
@@ -35,6 +36,13 @@ class SubroutineDefinition:
             raise TealInputError("Input to SubroutineDefinition is not callable")
 
         sig = signature(implementation)
+
+        if self.input_types and len(self.input_types) != len(sig.parameters):
+            raise TealInputError(
+                "Provided number of input_types ({}) does not match detected number of parameters ({})".format(
+                    len(input_types), len(sig.parameters)
+                )
+            )
 
         annotations = getattr(implementation, "__annotations__", OrderedDict())
 
@@ -45,7 +53,8 @@ class SubroutineDefinition:
                 )
             )
 
-        for name, param in sig.parameters.items():
+        for i, name_param in enumerate(sig.parameters.items()):
+            name, param = name_param
             if param.kind not in (
                 Parameter.POSITIONAL_ONLY,
                 Parameter.POSITIONAL_OR_KEYWORD,
@@ -63,7 +72,12 @@ class SubroutineDefinition:
                     )
                 )
 
-            expected_arg_type = self._validate_parameter_type(annotations, name)
+            input_type = None
+            if input_type:
+                input_type = input_types[i]
+            expected_arg_type = self._validate_parameter_type(
+                annotations, name, input_type
+            )
 
             self.expected_arg_types.append(expected_arg_type)
             if expected_arg_type is ScratchVar:
@@ -78,7 +92,9 @@ class SubroutineDefinition:
 
     @staticmethod
     def _validate_parameter_type(
-        user_defined_annotations: dict, parameter_name: str
+        user_defined_annotations: dict,
+        parameter_name: str,
+        input_type: Optional[TealType],
     ) -> Type[Union[Expr, ScratchVar]]:
         ptype = user_defined_annotations.get(parameter_name, None)
         if ptype is None:
@@ -103,6 +119,14 @@ class SubroutineDefinition:
                 raise TealInputError(
                     "Function has parameter {} of disallowed type {}. Only the types {} are allowed".format(
                         parameter_name, ptype, (Expr, ScratchVar)
+                    )
+                )
+
+            if ptype is Expr and input_type and ptype.type_of() != input_type:
+                raise TealInputError(
+                    "Function has Expr parameter {} of type {} which contradicts declared input_type {}".format(
+                        parameter_name,
+                        ptype.type_of(),
                     )
                 )
 
@@ -255,9 +279,13 @@ class SubroutineFnWrapper:
         fnImplementation: Callable[..., Expr],
         returnType: TealType,
         name: str = None,
+        input_types: List[TealType] = None,
     ) -> None:
         self.subroutine = SubroutineDefinition(
-            fnImplementation, returnType=returnType, nameStr=name
+            fnImplementation,
+            returnType=returnType,
+            nameStr=name,
+            input_types=input_types,
         )
 
     def __call__(self, *args: Expr, **kwargs) -> Expr:
@@ -299,7 +327,9 @@ class Subroutine:
             ])
     """
 
-    def __init__(self, returnType: TealType, name: str = None) -> None:
+    def __init__(
+        self, returnType: TealType, name: str = None, input_types: List[TealType] = None
+    ) -> None:
         """Define a new subroutine with the given return type.
 
         Args:
@@ -308,12 +338,14 @@ class Subroutine:
         """
         self.returnType = returnType
         self.name = name
+        self.input_types = input_types
 
     def __call__(self, fnImplementation: Callable[..., Expr]) -> SubroutineFnWrapper:
         return SubroutineFnWrapper(
             fnImplementation=fnImplementation,
             returnType=self.returnType,
             name=self.name,
+            input_types=self.input_types,
         )
 
 
