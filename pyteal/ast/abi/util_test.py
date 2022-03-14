@@ -105,9 +105,11 @@ def test_int_literal_from_annotation():
         IntAnnotationTest(annotation=Literal["test"], expected=TypeError),
         IntAnnotationTest(annotation=Literal[b"test"], expected=TypeError),
         IntAnnotationTest(annotation=Literal[0, 1], expected=TypeError),
+        IntAnnotationTest(annotation=Literal, expected=TypeError),
     ]
 
     for i, test in enumerate(tests):
+        print("Test case {}".format(i))
         if type(test.expected) is not int:
             with pytest.raises(test.expected):
                 int_literal_from_annotation(test.annotation)
