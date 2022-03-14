@@ -1,4 +1,4 @@
-from typing import NamedTuple, List, Literal, Optional, Union, Any, cast
+from typing import NamedTuple, List, Literal, Optional, Union, Any, cast, get_args
 import pytest
 
 from ... import *
@@ -109,7 +109,11 @@ def test_int_literal_from_annotation():
     ]
 
     for i, test in enumerate(tests):
-        print("Test case {}: annotation={}, args={}".format(i, test.annotation, get_args(test.annotation)))
+        print(
+            "Test case {}: annotation={}, args={}".format(
+                i, test.annotation, get_args(test.annotation)
+            )
+        )
 
         if type(test.expected) is not int:
             with pytest.raises(test.expected):
