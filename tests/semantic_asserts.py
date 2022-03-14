@@ -6,35 +6,41 @@ from algosdk.v2client import algod, indexer
 from pyteal import *
 
 ## Clients
+LIVE_ALGOD: algod.AlgodClient = None
 
 
-def _kmd_client(kmd_address="http://localhost:4002", kmd_token="a" * 64):
+def _kmd_client(
+    kmd_address="http://localhost:4002", kmd_token="a" * 64
+) -> kmd.KMDClient:
     """Instantiate and return a KMD client object."""
     return kmd.KMDClient(kmd_token, kmd_address)
 
 
-def _algod_client(algod_address="http://localhost:4001", algod_token="a" * 64):
+def _algod_client(
+    algod_address="http://localhost:4001", algod_token="a" * 64
+) -> algod.AlgodClient:
     """Instantiate and return Algod client object."""
     return algod.AlgodClient(algod_token, algod_address)
 
 
-def _indexer_client(indexer_address="http://localhost:8980", indexer_token="a" * 64):
+def _indexer_client(
+    indexer_address="http://localhost:8980", indexer_token="a" * 64
+) -> indexer.IndexerClient:
     """Instantiate and return Indexer client object."""
     return indexer.IndexerClient(indexer_token, indexer_address)
 
 
-def get_clients():
+def algod_with_assertion(force_retry: bool = False):
+    global LIVE_ALGOD
     try:
-        kmd = _kmd_client()
+        if not LIVE_ALGOD or force_retry:
+            algod = _algod_client()
+            assert algod.status(), "alod.status() did not produce any results"
+            LIVE_ALGOD = algod
+        return LIVE_ALGOD
     except Exception as e:
-        raise Exception("kmd is missing from environment") from e
-
-    try:
-        algod = _algod_client()
-    except Exception as e:
+        LIVE_ALGOD = None
         raise Exception("algod is missing from environment") from e
-
-    return kmd, algod
 
 
 def e2e_teal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
@@ -44,7 +50,6 @@ def e2e_teal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
     def arg_prep_n_call(i, p):
         name = arg_names[i]
         by_ref = name in subr.subroutine.by_ref_args
-        x = subr
         arg_expr = Txn.application_args[i] if mode == Mode.Application else Arg(i)
         if p == TealType.uint64:
             arg_expr = Btoi(arg_expr)
@@ -69,7 +74,7 @@ def e2e_teal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
             return e
         if e.type_of() == TealType.bytes:
             return Len(e)
-        return Seq(e, Int(1339))
+        return Seq(e, Int(1337))
 
     def make_log(e):
         if e.type_of() == TealType.uint64:
@@ -86,20 +91,24 @@ def e2e_teal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
     else:
 
         def approval():
-            result = ScratchVar(subr.subroutine.returnType)
-            return Seq(
-                result.store(subr_caller()),
-                make_log(result.load()),
-                make_return(result.load()),
-            )
+
+            if subr.subroutine.returnType == TealType.none:
+                result = ScratchVar(TealType.uint64)
+                part1 = [subr_caller(), result.store(Int(7331))]
+            else:
+                result = ScratchVar(subr.subroutine.returnType)
+                part1 = [result.store(subr_caller())]
+
+            part2 = [make_log(result.load()), make_return(result.load())]
+            return Seq(*(part1 + part2))
 
     setattr(approval, "__name__", f"sem_{mode}_{subr.name()}")
     return approval
 
 
-def lightly_encode_output(out: Union[int, str]) -> Union[int, str]:
+def lightly_encode_output(out: Union[int, str], logs=False) -> Union[int, str]:
     if isinstance(out, int):
-        return out
+        return out.to_bytes(8, "big").hex() if logs else out
 
     if isinstance(out, str):
         return bytes(out, "utf-8").hex()
