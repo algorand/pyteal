@@ -1,5 +1,7 @@
 black==21.7b0
+glom==22.1.0   # do I need this?
 mypy==0.931
 pytest
 pytest-timeout
+tabulate   # do I need this?
 git+https://github.com/algorand/py-algorand-sdk@teal-blackbox

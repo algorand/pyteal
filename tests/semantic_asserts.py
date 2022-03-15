@@ -3,6 +3,7 @@ from typing import Callable, List, Union
 from algosdk import kmd
 from algosdk.v2client import algod, indexer
 
+
 from pyteal import *
 
 ## Clients
@@ -94,7 +95,7 @@ def e2e_teal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
 
             if subr.subroutine.returnType == TealType.none:
                 result = ScratchVar(TealType.uint64)
-                part1 = [subr_caller(), result.store(Int(7331))]
+                part1 = [subr_caller(), result.store(Int(1337))]
             else:
                 result = ScratchVar(subr.subroutine.returnType)
                 part1 = [result.store(subr_caller())]
