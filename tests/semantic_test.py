@@ -2,8 +2,9 @@ from base64 import b64decode
 from dataclasses import dataclass
 from enum import Enum
 from glom import glom
+from pathlib import Path
 from tabulate import tabulate
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union, final
 
 import pytest
 
@@ -57,7 +58,7 @@ class TealVal:
 @dataclass
 class BlackBoxResults:
     steps_executed: int
-    program_counters: int
+    program_counters: List[int]
     teal_line_numbers: List[int]
     teal_source_lines: List[str]
     stack_evolution: List[list]
@@ -75,10 +76,43 @@ class BlackBoxResults:
                 self.stack_evolution,
                 self.scratch_evolution,
             )
-        )
+        ), f"some mismatch in trace sizes: all expected to be {self.steps_executed}"
 
     def __str__(self) -> str:
         return f"BlackBoxResult(steps_executed={self.steps_executed})"
+
+    def steps(self) -> int:
+        return self.steps_executed
+
+    def final_stack(self) -> str:
+        return self.stack_evolution[-1]
+
+    def final_stack_top(self) -> Union[int, str, None]:
+        final_stack = self.raw_stacks[-1]
+        if not final_stack:
+            return None
+        top = final_stack[-1]
+        return str(top) if top.is_b else top.i
+
+    def final_scratch(
+        self, with_formatting: bool = False
+    ) -> Dict[Union[int, str], Union[int, str]]:
+        unformatted = {
+            i: str(s) if s.is_b else s.i for i, s in self.final_scratch_state.items()
+        }
+        if not with_formatting:
+            return unformatted
+        return {f"S@{i:03}": s for i, s in unformatted.items()}
+
+    def slots(self) -> List[int]:
+        return self.slots_used
+
+    def final_as_row(self) -> Dict[str, Union[str, int]]:
+        return {
+            "steps": self.steps(),
+            "top_of_stack": self.final_stack_top(),
+            **self.final_scratch(with_formatting=True),
+        }
 
 
 class DryRunTester:
@@ -240,14 +274,14 @@ LOCAL UINTS USED: {self.local_uints_used()}
         lsig_messages = txn["logic-sig-messages"]
         lsig_trace = txn["logic-sig-trace"]
 
-        app_table = trace_table(
+        app_table = deprecated_table(
             app_trace,
             app_lines,
             col_max,
             scratch_colon=self.scratch_colon,
             scratch_verbose=self.scratch_verbose,
         )
-        lsig_table = trace_table(
+        lsig_table = deprecated_table(
             lsig_trace,
             lsig_lines,
             col_max,
@@ -280,7 +314,7 @@ Local Delta:
 """
 
 
-def trace_table(
+def deprecated_table(
     trace: List[dict],
     lines: List[str],
     col_max: int,
@@ -291,12 +325,31 @@ def trace_table(
     assert not (
         scratch_verbose and scratch_before_stack
     ), "Cannot request scratch columns before stack when verbose"
+
     black_box_result = scrape_the_black_box(
         trace,
         lines,
         scratch_colon=scratch_colon,
         scratch_verbose=scratch_verbose,
     )
+
+    return make_table(
+        black_box_result,
+        col_max,
+        scratch_verbose=scratch_verbose,
+        scratch_before_stack=scratch_before_stack,
+    )
+
+
+def make_table(
+    black_box_result: BlackBoxResults,
+    col_max: int,
+    scratch_verbose: bool = False,
+    scratch_before_stack: bool = True,
+):
+    assert not (
+        scratch_verbose and scratch_before_stack
+    ), "Cannot request scratch columns before stack when verbose"
 
     def empty_hack(se):
         return se if se else [""]
@@ -347,7 +400,6 @@ def scrape_the_black_box(
 ) -> BlackBoxResults:
     pcs = [t["pc"] for t in trace]
     line_nums = [t["line"] for t in trace]
-    # tls = [lines[t["line"] - 1] for t in trace]
     tls = [lines[ln - 1] for ln in line_nums]
     N = len(pcs)
     assert N == len(tls), f"mismatch of lengths in pcs v. tls ({N} v. {len(tls)})"
@@ -554,6 +606,14 @@ def dig_actual(
     raise Exception(f"Unknown assert_type {assert_type}")
 
 
+def extract_logs(txn):
+    return txn.get("logs", [])
+
+
+def extract_cost(txn):
+    return txn.get("cost")
+
+
 def extract_status(mode, txn):
     return (
         txn["logic-sig-messages"][-1]
@@ -572,6 +632,42 @@ def extract_trace(txn, is_app):
 
 def extract_messages(txn, is_app):
     return txn["app-call-messages" if is_app else "logic-sig-messages"]
+
+
+def extract_local_deltas(txn):
+    return txn.get("local-deltas", [])
+
+
+def extract_global_delta(txn):
+    return txn.get("global-delta", [])
+
+
+def extract_all(txn: dict, is_app: bool) -> dict:
+    trace = extract_trace(txn, is_app)
+    lines = extract_lines(txn, is_app)
+    bbr = scrape_the_black_box(trace, lines)
+
+    return {
+        "cost": extract_cost(txn),
+        "logs": extract_logs(txn),
+        "gdelta": extract_global_delta(txn),
+        "ldeltas": extract_local_deltas(txn),
+        "messages": extract_messages(txn, is_app),
+        "trace": trace,
+        "lines": lines,
+        "bbr": bbr,
+    }
+
+
+def txn_as_row(txn: dict, is_app: bool) -> dict:
+    extracts = extract_all(txn, is_app)
+    logs = extracts["logs"]
+    return {
+        "cost": extracts["cost"],
+        "final_log": logs[-1] if logs else None,
+        "status": extracts["messages"][-1],
+        **extracts["bbr"].final_as_row(),
+    }
 
 
 def dryrun_assert(
@@ -600,27 +696,20 @@ def dryrun_assert(
         actual = dig_actual(resp, assert_type)
         ok, msg = test(args, actual)
         if not ok:
-            cost = txn.get("cost")
-
-            logs = txn.get("logs", [])
-
-            gdelta = txn.get("global-delta", [])
-            ldelta = txn.get("local-deltas", [])
-
-            messages = extract_messages(txn, is_app)
-            trace = extract_trace(txn, is_app)
-            lines = extract_lines(txn, is_app)
-
-            table = trace_table(
-                trace,
-                lines,
-                -1,
-                scratch_colon=":",
-                scratch_verbose=False,
-            )
+            extracts = extract_all(txn, is_app)
+            cost = extracts["cost"]
+            logs = extracts["logs"]
+            gdelta = extracts["gdelta"]
+            ldelta = extracts["ldeltas"]
+            messages = extracts["messages"]
+            bbr = extracts["bbr"]
+            table = make_table(bbr, -1)
 
             assert ok, f"""===============
 {msg}
+===============
+App Trace:
+{table}
 ===============
 MODE: {mode}
 TOTAL COST: {cost}
@@ -629,8 +718,14 @@ txn.app_call_rejected={messages[-1] != 'PASS'}
 ===============
 Messages: {messages}
 Logs: {logs}
-App Trace:
-{table}
+===============
+-----{bbr}-----
+TOTAL STEPS: {bbr.steps()}
+FINAL STACK: {bbr.final_stack()}
+FINAL STACK TOP: {bbr.final_stack_top()}
+FINAL SCRATCH: {bbr.final_scratch()}
+SLOTS USED: {bbr.slots()}
+FINAL AS ROW: {bbr.final_as_row()}
 ===============
 Global Delta:
 {gdelta}
@@ -640,6 +735,7 @@ Local Delta:
 ===============
 {msg}
 ===============
+TXN AS ROW: {txn_as_row(txn, is_app)}
 """
 
 
@@ -695,6 +791,12 @@ def expected_contained(expected, actual):
     return True
 
 
+def fac(n):
+    if n < 2:
+        return 1
+    return n * fac(n - 1)
+
+
 SCENARIOS = {
     exp: {
         "inputs": [[]],
@@ -745,19 +847,26 @@ SCENARIOS = {
     },
     swap: {"inputs": [[1, 2], [1, "two"], ["one", 2], ["one", "two"]]},
     string_mult: {"inputs": [["xyzw", i] for i in range(100)]},
-    oldfac: {"inputs": [[i] for i in range(25)]},
+    oldfac: {
+        "inputs": [[i] for i in range(25)],
+        "assertions": {DRA.stackTop: lambda args: fac(args[0])},
+    },
 }
 
 
 @pytest.mark.parametrize("mode", [Mode.Signature, Mode.Application])
 @pytest.mark.parametrize("subr", SCENARIOS.keys() if SEMANTIC_TESTING else [])
 def test_semantic(subr: SubroutineFnWrapper, mode: Mode):
+    path = Path.cwd() / "tests" / "teal"
     case_name = subr.name()
     scenario = SCENARIOS[subr]
     assert isinstance(subr, SubroutineFnWrapper), f"unexpected subr type {type(subr)}"
     print(f"semantic e2e test of {case_name}")
     approval = e2e_teal(subr, mode)
     teal = compileTeal(approval(), mode, version=6, assembleConstants=True)
+    path /= f'{"lsig" if mode == Mode.Signature else "app"}_{case_name}.teal'
+    with open(path, "w") as f:
+        f.write(teal)
     print(
         f"""subroutine {case_name}@{mode}:
 -------
