@@ -400,7 +400,13 @@ def scrape_the_black_box(
 ) -> BlackBoxResults:
     pcs = [t["pc"] for t in trace]
     line_nums = [t["line"] for t in trace]
-    tls = [lines[ln - 1] for ln in line_nums]
+
+    def line_or_err(i, ln):
+        line = lines[ln - 1]
+        err = trace[i].get("error")
+        return err if err else line
+
+    tls = [line_or_err(i, ln) for i, ln in enumerate(line_nums)]
     N = len(pcs)
     assert N == len(tls), f"mismatch of lengths in pcs v. tls ({N} v. {len(tls)})"
 
@@ -665,7 +671,7 @@ def txn_as_row(txn: dict, is_app: bool) -> dict:
     return {
         "cost": extracts["cost"],
         "final_log": logs[-1] if logs else None,
-        "status": extracts["messages"][-1],
+        "final_message": extracts["messages"][-1],
         **extracts["bbr"].final_as_row(),
     }
 
@@ -852,6 +858,8 @@ SCENARIOS = {
         "assertions": {DRA.stackTop: lambda args: fac(args[0])},
     },
 }
+
+SCENARIOS = {oldfac: SCENARIOS[oldfac]}
 
 
 @pytest.mark.parametrize("mode", [Mode.Signature, Mode.Application])
