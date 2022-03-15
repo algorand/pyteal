@@ -106,6 +106,7 @@ def test_int_literal_from_annotation():
         # IntAnnotationTest(annotation=Literal[True], expected=TypeError),
         IntAnnotationTest(annotation=Literal["test"], expected=TypeError),
         IntAnnotationTest(annotation=Literal[b"test"], expected=TypeError),
+        IntAnnotationTest(annotation=Literal[None], expected=TypeError),
         IntAnnotationTest(annotation=Literal[0, 1], expected=TypeError),
         IntAnnotationTest(annotation=Literal, expected=TypeError),
     ]
@@ -255,6 +256,10 @@ def test_type_spec_from_annotation():
         ),
         TypeAnnotationTest(
             annotation=abi.Tuple5,
+            expected=TypeError,
+        ),
+        TypeAnnotationTest(
+            annotation=List[abi.Uint16],
             expected=TypeError,
         ),
     ]

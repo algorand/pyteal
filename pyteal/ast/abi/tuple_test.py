@@ -438,8 +438,9 @@ def test_indexTuple():
         otherType = abi.Uint64()
         if output.type_spec() == otherType.type_spec():
             otherType = abi.Uint16()
+
         with pytest.raises(TypeError):
-            indexTuple(test.types, encoded, test.types, otherType)
+            indexTuple(test.types, encoded, test.typeIndex, otherType)
 
 
 def test_TupleTypeSpec_eq():

@@ -1,6 +1,7 @@
 from typing import TypeVar, Union, cast, Sequence, Callable
 
 from ...types import TealType
+from ...errors import TealInputError
 from ..expr import Expr
 from ..seq import Seq
 from ..assert_ import Assert
@@ -49,15 +50,19 @@ class Bool(BaseType):
             value = Int(1 if value else 0)
             checked = True
 
-        if type(value) is Bool:
+        if isinstance(value, BaseType):
+            if value.type_spec() != self.type_spec():
+                raise TealInputError(
+                    "Cannot set type bool to {}".format(value.type_spec())
+                )
             value = value.get()
             checked = True
 
         if checked:
-            return self.stored_value.store(cast(Expr, value))
+            return self.stored_value.store(value)
 
         return Seq(
-            self.stored_value.store(cast(Expr, value)),
+            self.stored_value.store(value),
             Assert(self.stored_value.load() < Int(2)),
         )
 

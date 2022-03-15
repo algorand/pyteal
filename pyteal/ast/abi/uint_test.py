@@ -211,6 +211,9 @@ def test_Uint_set_copy():
         with TealComponent.Context.ignoreExprEquality():
             assert actual == expected
 
+        with pytest.raises(TealInputError):
+            value.set(abi.Bool())
+
 
 def test_Uint_get():
     for test in testData:
