@@ -1,4 +1,7 @@
 from typing import List, Tuple, Set, Dict, Optional, cast
+from pyteal.compiler import optimizer
+
+from pyteal.compiler.optimizer import OptimizeOptions, apply_optimizations
 
 from ..types import TealType
 from ..ast import (
@@ -31,9 +34,11 @@ class CompileOptions:
         *,
         mode: Mode = Mode.Signature,
         version: int = DEFAULT_TEAL_VERSION,
+        optimize: OptimizeOptions = None,
     ) -> None:
         self.mode = mode
         self.version = version
+        self.optimize = optimize if optimize is not None else OptimizeOptions()
 
         self.currentSubroutine: Optional[SubroutineDefinition] = None
 
@@ -167,6 +172,7 @@ def compileTeal(
     *,
     version: int = DEFAULT_TEAL_VERSION,
     assembleConstants: bool = False,
+    optimize: OptimizeOptions = OptimizeOptions(),
 ) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 
@@ -181,6 +187,7 @@ def compileTeal(
             constants will be assembled in the most space-efficient way, so enabling this may reduce
             the compiled program's size. Enabling this option requires a minimum TEAL version of 3.
             Defaults to false.
+        optimize (optional): todo
 
     Returns:
         A TEAL assembly program compiled from the input expression.
@@ -199,7 +206,7 @@ def compileTeal(
             )
         )
 
-    options = CompileOptions(mode=mode, version=version)
+    options = CompileOptions(mode=mode, version=version, optimize=optimize)
 
     subroutineMapping: Dict[
         Optional[SubroutineDefinition], List[TealComponent]
@@ -229,6 +236,12 @@ def compileTeal(
                 )
             )
         teal = createConstantBlocks(teal)
+
+    # note: optimizations are off by default, in which case, applyOptimizations
+    # won't make any changes. Because the optimizer is invoked on the compiled teal,
+    # optimization may apply across block boundaries. This is necessary so for
+    # dependency checking.
+    teal = apply_optimizations(teal, options.optimize)
 
     lines = ["#pragma version {}".format(version)]
     lines += [i.assemble() for i in teal]
