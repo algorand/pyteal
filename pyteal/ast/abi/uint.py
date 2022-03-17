@@ -190,6 +190,7 @@ Uint32TypeSpec.__module__ = "pyteal"
 
 
 class Uint(BaseType):
+    @abstractmethod
     def __init__(self, spec: UintTypeSpec) -> None:
         super().__init__(spec)
 

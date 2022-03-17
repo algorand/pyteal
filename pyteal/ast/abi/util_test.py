@@ -1,4 +1,5 @@
-from typing import NamedTuple, List, Literal, Optional, Union, Any, cast, get_args
+from typing import NamedTuple, List, Literal, Optional, Union, Any, cast
+from inspect import isabstract
 import pytest
 
 from ... import *
@@ -272,3 +273,26 @@ def test_type_spec_from_annotation():
 
         actual = type_spec_from_annotation(test.annotation)
         assert actual == test.expected, "Test at index {} failed".format(i)
+
+
+def test_type_spec_from_annotation_is_exhaustive():
+    # This test is to make sure there are no new subclasses of BaseType that type_spec_from_annotation
+    # is not aware of.
+
+    subclasses = abi.BaseType.__subclasses__()
+    while len(subclasses) > 0:
+        subclass = subclasses.pop()
+        subclasses += subclass.__subclasses__()
+
+        if isabstract(subclass):
+            # abstract class type annotations should not be supported
+            with pytest.raises(TypeError, match=r"^Unknown annotation origin"):
+                type_spec_from_annotation(subclass)
+            continue
+
+        try:
+            # if subclass is not generic, this will succeed
+            type_spec_from_annotation(subclass)
+        except TypeError as e:
+            # if subclass is generic, we should get an error that is NOT "Unknown annotation origin"
+            assert "Unknown annotation origin" not in str(e)
