@@ -3,6 +3,7 @@ from typing import (
     Sequence,
     TypeVar,
     Generic,
+    Final,
     cast,
 )
 
@@ -24,7 +25,7 @@ class StaticArrayTypeSpec(ArrayTypeSpec[T], Generic[T, N]):
         super().__init__(value_type_spec)
         if not isinstance(array_length, int) or array_length < 0:
             raise TypeError("Unsupported StaticArray length: {}".format(array_length))
-        self.array_length = array_length
+        self.array_length: Final = array_length
 
     def new_instance(self) -> "StaticArray[T, N]":
         return StaticArray(self.value_type_spec(), self.length_static())

@@ -587,11 +587,10 @@ def test_TupleTypeSpec_byte_length_static():
 
 def test_Tuple_decode():
     encoded = Bytes("encoded")
+    tupleValue = abi.Tuple(abi.Uint64TypeSpec())
     for startIndex in (None, Int(1)):
         for endIndex in (None, Int(2)):
             for length in (None, Int(3)):
-                tupleValue = abi.Tuple(abi.Uint64TypeSpec())
-
                 if endIndex is not None and length is not None:
                     with pytest.raises(TealInputError):
                         tupleValue.decode(

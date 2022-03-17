@@ -3,6 +3,7 @@ from typing import (
     Sequence,
     TypeVar,
     Generic,
+    Final,
     cast,
 )
 from abc import abstractmethod
@@ -31,7 +32,7 @@ class ArrayTypeSpec(TypeSpec, Generic[T]):
 
     def __init__(self, value_type_spec: TypeSpec) -> None:
         super().__init__()
-        self.value_spec = value_type_spec
+        self.value_spec: Final = value_type_spec
 
     def value_type_spec(self) -> TypeSpec:
         """Get the TypeSpec of the value type this array can hold."""

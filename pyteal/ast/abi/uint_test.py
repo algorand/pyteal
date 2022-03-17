@@ -110,8 +110,8 @@ def test_UintTypeSpec_eq():
         ):
             assert test.uintType != otherType
 
-    assert abi.ByteTypeSpec() == abi.Uint8TypeSpec()
-    assert abi.Uint8TypeSpec() == abi.ByteTypeSpec()
+    assert abi.ByteTypeSpec() != abi.Uint8TypeSpec()
+    assert abi.Uint8TypeSpec() != abi.ByteTypeSpec()
 
 
 def test_UintTypeSpec_storage_type():

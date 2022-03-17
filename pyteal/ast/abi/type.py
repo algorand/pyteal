@@ -1,4 +1,4 @@
-from typing import TypeVar, Generic, Callable, cast
+from typing import TypeVar, Generic, Callable, Final, cast
 from abc import ABC, abstractmethod
 
 from ...types import TealType
@@ -70,8 +70,8 @@ class BaseType(ABC):
     def __init__(self, spec: TypeSpec) -> None:
         """Create a new BaseType."""
         super().__init__()
-        self._type_spec = spec
-        self.stored_value = ScratchVar(spec.storage_type())
+        self._type_spec: Final = spec
+        self.stored_value: Final = ScratchVar(spec.storage_type())
 
     def type_spec(self) -> TypeSpec:
         """Get the TypeSpec for this ABI type instance."""
