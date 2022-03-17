@@ -259,9 +259,6 @@ class Byte(Uint):
     def __init__(self) -> None:
         super().__init__(ByteTypeSpec())
 
-    def set(self, value: Union[int, Expr, "Byte", "Uint8"]) -> Expr:
-        return super().set(value)
-
 
 Byte.__module__ = "pyteal"
 
@@ -269,9 +266,6 @@ Byte.__module__ = "pyteal"
 class Uint8(Uint):
     def __init__(self) -> None:
         super().__init__(Uint8TypeSpec())
-
-    def set(self, value: Union[int, Expr, "Uint8", Byte]) -> Expr:
-        return super().set(value)
 
 
 Uint8.__module__ = "pyteal"
@@ -281,9 +275,6 @@ class Uint16(Uint):
     def __init__(self) -> None:
         super().__init__(Uint16TypeSpec())
 
-    def set(self, value: Union[int, Expr, "Uint16"]) -> Expr:
-        return super().set(value)
-
 
 Uint16.__module__ = "pyteal"
 
@@ -292,9 +283,6 @@ class Uint32(Uint):
     def __init__(self) -> None:
         super().__init__(Uint32TypeSpec())
 
-    def set(self, value: Union[int, Expr, "Uint32"]) -> Expr:
-        return super().set(value)
-
 
 Uint32.__module__ = "pyteal"
 
@@ -302,9 +290,6 @@ Uint32.__module__ = "pyteal"
 class Uint64(Uint):
     def __init__(self) -> None:
         super().__init__(Uint64TypeSpec())
-
-    def set(self, value: Union[int, Expr, "Uint64"]) -> Expr:
-        return super().set(value)
 
 
 Uint64.__module__ = "pyteal"
