@@ -92,8 +92,8 @@ def boolAwareStaticByteLength(types: Sequence[TypeSpec]) -> int:
         if ignoreNext > 0:
             ignoreNext -= 1
             continue
-        if type(t) is BoolTypeSpec:
-            numBools = consecutiveBoolTypeNum(types, i)
+        if t == BoolTypeSpec():
+            numBools = consecutiveBoolTypeSpecNum(types, i)
             ignoreNext = numBools - 1
             length += boolSequenceLength(numBools)
             continue
@@ -115,25 +115,36 @@ def consecutiveThingNum(
     return numConsecutiveThings
 
 
-def consecutiveBoolTypeNum(types: Sequence[TypeSpec], startIndex: int) -> int:
+def consecutiveBoolTypeSpecNum(types: Sequence[TypeSpec], startIndex: int) -> int:
     if len(types) != 0 and not isinstance(types[0], TypeSpec):
         raise TypeError("Sequence of types expected")
     return consecutiveThingNum(types, startIndex, lambda t: t == BoolTypeSpec())
 
 
-def consecutiveBoolNum(values: Sequence[BaseType], startIndex: int) -> int:
+def consecutiveBoolInstanceNum(values: Sequence[BaseType], startIndex: int) -> int:
     if len(values) != 0 and not isinstance(values[0], BaseType):
         raise TypeError(
             "Sequence of types expected, but got {}".format(type(values[0]))
         )
-    return consecutiveThingNum(values, startIndex, lambda t: type(t) is Bool)
+    return consecutiveThingNum(
+        values, startIndex, lambda t: t.type_spec() == BoolTypeSpec()
+    )
 
 
 def boolSequenceLength(num_bools: int) -> int:
+    """Get the length in bytes of an encoding of `num_bools` consecutive booleans values."""
     return (num_bools + NUM_BITS_IN_BYTE - 1) // NUM_BITS_IN_BYTE
 
 
 def encodeBoolSequence(values: Sequence[Bool]) -> Expr:
+    """Encoding a sequences of boolean values into a byte string.
+
+    Args:
+        values: The values to encode. Each must be an instance of Bool.
+
+    Returns:
+        An expression which creates an encoded byte string with the input boolean values.
+    """
     length = boolSequenceLength(len(values))
     expr: Expr = Bytes(b"\x00" * length)
 

@@ -91,7 +91,7 @@ def test_UintTypeSpec_str():
 def test_UintTypeSpec_is_dynamic():
     for test in testData:
         assert not test.uintType.is_dynamic()
-    assert not abi.BoolTypeSpec().is_dynamic()
+    assert not abi.ByteTypeSpec().is_dynamic()
 
 
 def test_UintTypeSpec_eq():

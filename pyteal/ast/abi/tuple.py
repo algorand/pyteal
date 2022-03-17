@@ -15,8 +15,8 @@ from .type import TypeSpec, BaseType, ComputedType
 from .bool import (
     Bool,
     BoolTypeSpec,
-    consecutiveBoolNum,
-    consecutiveBoolTypeNum,
+    consecutiveBoolInstanceNum,
+    consecutiveBoolTypeSpecNum,
     boolSequenceLength,
     encodeBoolSequence,
     boolAwareStaticByteLength,
@@ -39,7 +39,7 @@ def encodeTuple(values: Sequence[BaseType]) -> Expr:
         elemType = elem.type_spec()
 
         if elemType == BoolTypeSpec():
-            numBools = consecutiveBoolNum(values, i)
+            numBools = consecutiveBoolInstanceNum(values, i)
             ignoreNext = numBools - 1
             head_length_static += boolSequenceLength(numBools)
             heads.append(
@@ -120,7 +120,7 @@ def indexTuple(
 
         if typeBefore == BoolTypeSpec():
             lastBoolStart = offset
-            lastBoolLength = consecutiveBoolTypeNum(valueTypes, i)
+            lastBoolLength = consecutiveBoolTypeSpecNum(valueTypes, i)
             offset += boolSequenceLength(lastBoolLength)
             ignoreNext = lastBoolLength - 1
             continue
@@ -155,7 +155,7 @@ def indexTuple(
                 continue
 
             if type(typeAfter) is BoolTypeSpec:
-                boolLength = consecutiveBoolTypeNum(valueTypes, i)
+                boolLength = consecutiveBoolTypeSpecNum(valueTypes, i)
                 nextDynamicValueOffset += boolSequenceLength(boolLength)
                 ignoreNext = boolLength - 1
                 continue
@@ -230,7 +230,7 @@ class TupleTypeSpec(TypeSpec):
         )
 
     def __str__(self) -> str:
-        return "({})".format(",".join(map(lambda x: str(x), self.value_type_specs())))
+        return "({})".format(",".join(map(str, self.value_type_specs())))
 
 
 TupleTypeSpec.__module__ = "pyteal"

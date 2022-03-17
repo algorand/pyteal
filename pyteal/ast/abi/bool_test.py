@@ -4,8 +4,8 @@ import pytest
 from ... import *
 from .bool import (
     boolAwareStaticByteLength,
-    consecutiveBoolNum,
-    consecutiveBoolTypeNum,
+    consecutiveBoolInstanceNum,
+    consecutiveBoolTypeSpecNum,
     boolSequenceLength,
     encodeBoolSequence,
 )
@@ -250,7 +250,7 @@ def test_boolAwareStaticByteLength():
         assert actual == test.expectedLength, "Test at index {} failed".format(i)
 
 
-def test_consecutiveBoolNum():
+def test_consecutiveBool():
     class ConsecutiveTest(NamedTuple):
         types: List[abi.TypeSpec]
         start: int
@@ -326,10 +326,12 @@ def test_consecutiveBoolNum():
     ]
 
     for i, test in enumerate(tests):
-        actual = consecutiveBoolTypeNum(test.types, test.start)
+        actual = consecutiveBoolTypeSpecNum(test.types, test.start)
         assert actual == test.expected, "Test at index {} failed".format(i)
 
-        actual = consecutiveBoolNum([t.new_instance() for t in test.types], test.start)
+        actual = consecutiveBoolInstanceNum(
+            [t.new_instance() for t in test.types], test.start
+        )
         assert actual == test.expected, "Test at index {} failed".format(i)
 
 
