@@ -59,7 +59,7 @@ ScratchVar.__module__ = "pyteal"
 class DynamicScratchVar(ScratchVar):
     """
     Example of Dynamic Scratch space whereby the slot index is picked up from the stack:
-        .. code-block:: python1
+        .. code-block:: python
 
             player_score = DynamicScratchVar(TealType.uint64)
 

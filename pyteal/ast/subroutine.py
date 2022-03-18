@@ -36,11 +36,12 @@ class SubroutineDefinition:
             raise TealInputError("Input to SubroutineDefinition is not callable")
 
         sig = signature(implementation)
+        sig_params = sig.parameters
 
-        if self.input_types and len(self.input_types) != len(sig.parameters):
+        if input_types is not None and len(input_types) != len(sig_params):
             raise TealInputError(
                 "Provided number of input_types ({}) does not match detected number of parameters ({})".format(
-                    len(input_types), len(sig.parameters)
+                    len(input_types), len(sig_params)
                 )
             )
 
@@ -53,7 +54,7 @@ class SubroutineDefinition:
                 )
             )
 
-        for i, name_param in enumerate(sig.parameters.items()):
+        for i, name_param in enumerate(sig_params.items()):
             name, param = name_param
             if param.kind not in (
                 Parameter.POSITIONAL_ONLY,
@@ -84,7 +85,7 @@ class SubroutineDefinition:
                 self.by_ref_args.add(name)
 
         self.implementation = implementation
-        self.implementationParams = sig.parameters
+        self.implementationParams = sig_params
         self.returnType = returnType
 
         self.declaration: Optional["SubroutineDeclaration"] = None
@@ -122,11 +123,16 @@ class SubroutineDefinition:
                     )
                 )
 
-            if ptype is Expr and input_type and ptype.type_of() != input_type:
+            if (
+                ptype is Expr
+                and input_type is not None
+                and ptype.type_of() != input_type
+            ):
                 raise TealInputError(
                     "Function has Expr parameter {} of type {} which contradicts declared input_type {}".format(
                         parameter_name,
                         ptype.type_of(),
+                        input_type,
                     )
                 )
 
