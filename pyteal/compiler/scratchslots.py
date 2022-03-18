@@ -92,8 +92,6 @@ def assignScratchSlotsToSubroutines(
             msg = "Encountered {} error{} when assigning slots to subroutine".format(
                 len(errors), "s" if len(errors) != 1 else ""
             )
-            # TODO: ZEPH remove the next line before merging
-            msg += "\n\n\nDETAILS: " + "\n--->".join(map(str, errors))
             raise TealInternalError(msg) from errors[0]
 
     slotAssignments: Dict[ScratchSlot, int] = dict()
