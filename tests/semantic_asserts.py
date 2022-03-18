@@ -110,7 +110,7 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
 
     Example usage of e2e_pyteal
         .. code-block:: python
-            from algosdk.testing.dryrun import Helper as DryRunHelper
+            import algosdk.testing.teal_blackbox as blackbox
 
             @Subroutine(TealType.uint64, input_types=[TealType.uint64])
             def square(x):
@@ -130,8 +130,8 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
 
             # evaluate the programs
             algod = algod_with_assertion()
-            app_response = DryRunHelper.execute_singleton_app(algod.dryrun, app_teal, args)
-            lsig_response = DryRunHelper.execute_singleton_logicsig(algod.dryrun, lsig_teal, args)
+            app_response = blackbox.execute_singleton_app(algod.dryrun, app_teal, args)
+            lsig_response = blackbox.execute_singleton_logicsig(algod.dryrun, lsig_teal, args)
 
             # check to see that x^2 is at the top of the stack as expected
             assert app_result.final_stack_top() == x ** 2
