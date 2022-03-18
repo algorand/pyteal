@@ -140,15 +140,15 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
             lsig_response = algod.dryrun(lsig_request)
 
             # convert the dry runs to results objects
-            app_results = DryRunResults(app_response)
-            lsig_results = DryRunResults(lsig_response)
+            app_result = DryRunTransactionResult(app_response)
+            lsig_result = DryRunTransactionResult(lsig_response)
 
             # check to see that x^2 is at the top of the stack as expected
-            assert app_results.final_stack_top() == x ** 2
-            assert lsig_results.final_stack_top() == x ** 2
+            assert app_result.final_stack_top() == x ** 2
+            assert lsig_result.final_stack_top() == x ** 2
 
             # check to see that btoi of x^2 has been logged (only for the app case)
-            assert app_results.final_log() == (x ** 2).to_bytes(8, "big").hex()
+            assert app_result.final_log() == (x ** 2).to_bytes(8, "big").hex()
     """
     input_types = subr.subroutine.input_types
     assert (
