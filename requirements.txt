@@ -1,6 +1,7 @@
 black==21.7b0
 mypy==0.931
+git+https://github.com/algorand/py-algorand-sdk@teal-blackbox
 pytest
 pytest-cov
 pytest-timeout
-git+https://github.com/algorand/py-algorand-sdk@teal-blackbox
+tabulate==0.8.9
