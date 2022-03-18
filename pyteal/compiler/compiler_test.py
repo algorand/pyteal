@@ -1153,7 +1153,7 @@ retsub
     assert actual == expected
 
 
-def test_compile_subroutine_mutually_recursive():
+def test_compile_subroutine_mutually_recursive_4():
     @Subroutine(TealType.uint64)
     def isEven(i: Expr) -> Expr:
         return If(i == Int(0), Int(1), Not(isOdd(i - Int(1))))
@@ -1279,6 +1279,147 @@ b isOdd_1_l3
 isOdd_1_l2:
 int 0
 isOdd_1_l3:
+retsub
+    """.strip()
+    actual = compileTeal(program, Mode.Application, version=5, assembleConstants=False)
+    assert actual == expected
+
+
+def test_compile_subroutine_mutually_recursive_different_arg_count_4():
+    @Subroutine(TealType.uint64)
+    def factorial(i: Expr) -> Expr:
+        return If(
+            i <= Int(1),
+            Int(1),
+            factorial_intermediate(i - Int(1), Bytes("inconsequential")) * i,
+        )
+
+    @Subroutine(TealType.uint64)
+    def factorial_intermediate(i: Expr, j: Expr) -> Expr:
+        return Seq(Pop(j), factorial(i))
+
+    program = Return(factorial(Int(4)) == Int(24))
+
+    expected = """#pragma version 4
+int 4
+callsub factorial_0
+int 24
+==
+return
+
+// factorial
+factorial_0:
+store 0
+load 0
+int 1
+<=
+bnz factorial_0_l2
+load 0
+int 1
+-
+byte "inconsequential"
+load 0
+dig 2
+dig 2
+callsub factorialintermediate_1
+swap
+store 0
+swap
+pop
+swap
+pop
+load 0
+*
+b factorial_0_l3
+factorial_0_l2:
+int 1
+factorial_0_l3:
+retsub
+
+// factorial_intermediate
+factorialintermediate_1:
+store 2
+store 1
+load 2
+pop
+load 1
+load 1
+load 2
+dig 2
+callsub factorial_0
+store 1
+store 2
+load 1
+swap
+store 1
+swap
+pop
+retsub
+    """.strip()
+    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    assert actual == expected
+
+
+def test_compile_subroutine_mutually_recursive_different_arg_count_5():
+    @Subroutine(TealType.uint64)
+    def factorial(i: Expr) -> Expr:
+        return If(
+            i <= Int(1),
+            Int(1),
+            factorial_intermediate(i - Int(1), Bytes("inconsequential")) * i,
+        )
+
+    @Subroutine(TealType.uint64)
+    def factorial_intermediate(i: Expr, j: Expr) -> Expr:
+        return Seq(Log(j), factorial(i))
+
+    program = Return(factorial(Int(4)) == Int(24))
+
+    expected = """#pragma version 5
+int 4
+callsub factorial_0
+int 24
+==
+return
+
+// factorial
+factorial_0:
+store 0
+load 0
+int 1
+<=
+bnz factorial_0_l2
+load 0
+int 1
+-
+byte "inconsequential"
+load 0
+cover 2
+callsub factorialintermediate_1
+swap
+store 0
+load 0
+*
+b factorial_0_l3
+factorial_0_l2:
+int 1
+factorial_0_l3:
+retsub
+
+// factorial_intermediate
+factorialintermediate_1:
+store 2
+store 1
+load 2
+log
+load 1
+load 1
+load 2
+uncover 2
+callsub factorial_0
+cover 2
+store 2
+store 1
 retsub
     """.strip()
     actual = compileTeal(program, Mode.Application, version=5, assembleConstants=False)

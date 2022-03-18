@@ -1,3 +1,10 @@
+# 0.10.1
+
+## Fixed
+* Fixed a bug which caused incorrect TEAL code to be produced for mutually recursive subroutines
+  with different argument counts ([#234](https://github.com/algorand/pyteal/pull/234))
+* Minor docs updates ([#211](https://github.com/algorand/pyteal/pull/211), [#210](https://github.com/algorand/pyteal/pull/210), [#229](https://github.com/algorand/pyteal/pull/229))
+
 # 0.10.0
 
 ## Added
