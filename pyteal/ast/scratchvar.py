@@ -98,7 +98,6 @@ class DynamicScratchVar(ScratchVar):
         `set_index()` is called again to reset the referenced ScratchVar.
         """
         # TODO: this type check can probably be changed to isinstance(..., ScratchVar) (cf. issues #232, #242)
-        # if not isinstance(index_var, ScratchVar): # requires further investigation
         if type(index_var) is not ScratchVar:
             raise TealInputError(
                 "Only allowed to use ScratchVar objects for setting indices, but was given a {}".format(
