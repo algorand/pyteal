@@ -22,7 +22,7 @@ jobs:
       - name: Install required os level applications
         run: |
           apt update -y
-          apt install -y git
+          apt install -y git make
           git --version
       - name: Install pip dependencies
         run: make pip
