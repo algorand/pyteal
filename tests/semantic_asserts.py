@@ -111,12 +111,10 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
     Example usage of e2e_pyteal
         .. code-block:: python
             from algosdk.testing.dryrun import Helper as DryRunHelper
-            from algosdk.testing.teal_blackbox import DryRunResults
 
             @Subroutine(TealType.uint64, input_types=[TealType.uint64])
             def square(x):
                 return x ** Int(2)
-
 
             # use this function to create pyteal app and signature expression approval functions:
             approval_app = e2e_pyteal(square, mode.Application)
@@ -130,18 +128,10 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
             x = 9
             args = [x.to_bytes(8, byteorder="big")]
 
-            # build up dry run requests
-            app_request = DryRunHelper.singleton_app_request(app_teal, args)
-            lsig_request = DryRunHelper.singleton_logicsig_request(app_teal, args)
-
-            # run the dry run requests
+            # evaluate the programs
             algod = algod_with_assertion()
-            app_response = algod.dryrun(app_request)
-            lsig_response = algod.dryrun(lsig_request)
-
-            # convert the dry runs to results objects
-            app_result = DryRunTransactionResult(app_response)
-            lsig_result = DryRunTransactionResult(lsig_response)
+            app_response = DryRunHelper.execute_singleton_app(algod.dryrun, app_teal, args)
+            lsig_response = DryRunHelper.execute_singleton_logicsig(algod.dryrun, lsig_teal, args)
 
             # check to see that x^2 is at the top of the stack as expected
             assert app_result.final_stack_top() == x ** 2
