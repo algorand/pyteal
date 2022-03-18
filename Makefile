@@ -23,3 +23,6 @@ test:
 
 coverage:
 	pytest --cov-report html --cov=pyteal
+
+blackbox:
+	HAS_ALGOD=TRUE pytest tests/semantic_test.py

@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from itertools import product
 from typing import Dict, Tuple
@@ -26,7 +27,7 @@ from algosdk.testing.teal_blackbox import (
 from pyteal import *
 
 # TODO: get tests working on github and set this to True
-SEMANTIC_TESTING = False
+SEMANTIC_TESTING = os.environ.get("HAS_ALGOD") == "TRUE"
 # TODO: remove these skips after the following issue has been fixed https://github.com/algorand/pyteal/issues/199
 STABLE_SLOT_GENERATION = False
 SKIP_SCRATCH_ASSERTIONS = not STABLE_SLOT_GENERATION
