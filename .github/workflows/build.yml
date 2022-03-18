@@ -21,8 +21,8 @@ jobs:
           fetch-depth: 0
       - name: Install required os level applications
         run: |
-          apt update
-          apt install git
+          apt update -y
+          apt install -y git
           git --version
       - name: Install pip dependencies
         run: |
