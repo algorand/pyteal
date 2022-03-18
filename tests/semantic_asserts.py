@@ -59,7 +59,102 @@ def get_blackbox_scenario_components(
 
 
 def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
+    """Functor producing ready-to-compile PyTeal programs from annotated subroutines
+
+    Args:
+        subr: annotated subroutine to wrap inside program.
+            Note: the `input_types` parameters should be supplied to @Subroutine() annotation
+        mode: type of program to produce: logic sig (Mode.Signature) or app (Mode.Application)
+
+    Returns:
+        a function that called with no parameters -e.g. result()-
+        returns a PyTeal expression compiling to a ready-to-test E2E TEAL program.
+
+    The return type is callable in order to adhere to the API of end-to-end unit tests.
+
+    Generated TEAL code depends on the mode, subroutine input types, and subroutine output types.
+    * logic sigs:
+        * input received via `arg i`
+        * args are converted (cf. "input conversion" below) and passed to the subroutine
+        * subroutine output is not logged (log is not available)
+        * subroutine output is converted (cf "output conversion" below)
+    * apps:
+        * input received via `txna ApplicationArgs i`
+        * args are converted (cf. "input conversion" below) and passed to the subroutine
+        * subroutine output is logged after possible conversion (cf. "logging coversion")
+        * subroutine output is converted (cf "output conversion" below)
+    * input conversion:
+        * Empty input array:
+            do not read any args and call subroutine immediately
+        * arg of TealType.bytes and TealType.any:
+            read arg and pass to subroutine as is
+        * arg of TealType.uint64:
+            convert arg to int using Btoi() when received
+    * output conversion:
+        * TealType.uint64:
+            provide subroutine's result to the top of the stack when exiting program
+        * TealType.bytes:
+            convert subroutine's result to the top of the stack to its length and then exit
+        * TealType.none or TealType.anytype:
+            push Int(1337) to the stack as it is either impossible (TealType.none),
+            or unknown at compile time (TealType.any) to convert to an Int
+    * logging conversion:
+        * TealType.uint64:
+            convert subroutine's output using Itob() and log the result
+        * TealType.bytes:
+            log the subroutine's result
+        * TealType.none or TealType.anytype:
+            log Itob(Int(1337)) as it is either impossible (TealType.none),
+            or unknown at compile time (TealType.any) how to convert to Bytes
+
+
+    Example usage of e2e_pyteal
+        .. code-block:: python
+            from algosdk.testing.dryrun import Helper as DryRunHelper
+            from algosdk.testing.teal_blackbox import DryRunResults
+
+            @Subroutine(TealType.uint64, input_types=[TealType.uint64])
+            def square(x):
+                return x ** Int(2)
+
+
+            # use this function to create pyteal app and signature expression approval functions:
+            approval_app = e2e_pyteal(square, mode.Application)
+            approval_lsig = e2e_pyteal(square, mode.Signature)
+
+            # compile the evaluated approvals to generate TEAL code
+            app_teal = compileTeal(approval_app(), mode.Signature, version=6)
+            lsig_teal = compileTeal(approval_lsig(), mode.Signature, version=6)
+
+            # provide args for evaluation (will compute x^2)
+            x = 9
+            args = [x.to_bytes(8, byteorder="big")]
+
+            # build up dry run requests
+            app_request = DryRunHelper.singleton_app_request(app_teal, args)
+            lsig_request = DryRunHelper.singleton_logicsig_request(app_teal, args)
+
+            # run the dry run requests
+            algod = algod_with_assertion()
+            app_response = algod.dryrun(app_request)
+            lsig_response = algod.dryrun(lsig_request)
+
+            # convert the dry runs to results objects
+            app_results = DryRunResults(app_response)
+            lsig_results = DryRunResults(lsig_response)
+
+            # check to see that x^2 is at the top of the stack as expected
+            assert app_results.final_stack_top() == x ** 2
+            assert lsig_results.final_stack_top() == x ** 2
+
+            # check to see that btoi of x^2 has been logged (only for the app case)
+            assert app_results.final_log() == (x ** 2).to_bytes(8, "big").hex()
+    """
     input_types = subr.subroutine.input_types
+    assert (
+        input_types is not None
+    ), "please provide input_types in your @Subroutine annotation (crucial for generating proper ent-to-end testable PyTeal"
+
     arg_names = subr.subroutine.arguments()
 
     def arg_prep_n_call(i, p):
@@ -89,6 +184,10 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
             return e
         if e.type_of() == TealType.bytes:
             return Len(e)
+        if e.type_of() == TealType.anytype:
+            x = ScratchVar(TealType.anytype)
+            return Seq(x.store(e), Int(1337))
+        # TealType.anytype:
         return Seq(e, Int(1337))
 
     def make_log(e):

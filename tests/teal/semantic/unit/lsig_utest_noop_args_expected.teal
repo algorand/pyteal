@@ -1,0 +1,17 @@
+#pragma version 6
+arg 0
+btoi
+arg 1
+arg 2
+callsub utestnoopargs_0
+int 1337
+return
+
+// utest_noop_args
+utestnoopargs_0:
+store 2
+store 1
+store 0
+int 0
+pop
+retsub

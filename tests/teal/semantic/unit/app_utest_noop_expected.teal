@@ -1,0 +1,15 @@
+#pragma version 6
+callsub utestnoop_0
+int 1337
+store 0
+load 0
+itob
+log
+load 0
+return
+
+// utest_noop
+utestnoop_0:
+int 0
+pop
+retsub

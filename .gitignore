@@ -55,8 +55,8 @@ coverage.xml
 .pytest_cache/
 
 # Tests generating TEAL output to compared against an expected example.
-tests/teal/*.teal
-!tests/teal/*_expected.teal
+tests/**/*.teal
+!tests/**/*_expected.teal
 
 # Translations
 *.mo

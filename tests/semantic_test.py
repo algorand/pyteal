@@ -8,8 +8,8 @@ import pytest
 from .compile_asserts import assert_teal_as_expected
 from .semantic_asserts import (
     algod_with_assertion,
-    get_blackbox_scenario_components,
     e2e_pyteal,
+    get_blackbox_scenario_components,
     mode_has_assertion,
 )
 
@@ -33,9 +33,58 @@ STABLE_SLOT_GENERATION = False
 SKIP_SCRATCH_ASSERTIONS = not STABLE_SLOT_GENERATION
 
 
-####### Subroutine Definitions Being Tested ########
+####### Unit Test Subroutines #######
+@Subroutine(TealType.none, input_types=[])
+def utest_noop():
+    return Pop(Int(0))
 
 
+@Subroutine(
+    TealType.none, input_types=[TealType.uint64, TealType.bytes, TealType.anytype]
+)
+def utest_noop_args(x, y, z):
+    return Pop(Int(0))
+
+
+@Subroutine(TealType.uint64, input_types=[])
+def utest_int():
+    return Int(0)
+
+
+@Subroutine(
+    TealType.uint64, input_types=[TealType.uint64, TealType.bytes, TealType.anytype]
+)
+def utest_int_args(x, y, z):
+    return Int(0)
+
+
+@Subroutine(TealType.bytes, input_types=[])
+def utest_bytes():
+    return Bytes("")
+
+
+@Subroutine(
+    TealType.bytes, input_types=[TealType.uint64, TealType.bytes, TealType.anytype]
+)
+def utest_bytes_args(x, y, z):
+    return Bytes("")
+
+
+@Subroutine(TealType.anytype, input_types=[])
+def utest_any():
+    x = ScratchVar(TealType.anytype)
+    return Seq(x.store(Int(0)), x.load())
+
+
+@Subroutine(
+    TealType.anytype, input_types=[TealType.uint64, TealType.bytes, TealType.anytype]
+)
+def utest_any_args(x, y, z):
+    x = ScratchVar(TealType.anytype)
+    return Seq(x.store(Int(0)), x.load())
+
+
+####### Subroutine Definitions for Semantic E2E Testing ########
 @Subroutine(TealType.uint64, input_types=[])
 def exp():
     return Int(2) ** Int(10)
@@ -85,6 +134,38 @@ def slow_fibonacci(n):
         .Then(n)
         .Else(slow_fibonacci(n - Int(2)) + slow_fibonacci(n - Int(1)))
     )
+
+
+####### Unit Testing ########
+UNITS = [
+    utest_noop,
+    utest_noop_args,
+    utest_int,
+    utest_int_args,
+    utest_bytes,
+    utest_bytes_args,
+    utest_any,
+    utest_any_args,
+]
+
+
+@pytest.mark.parametrize("subr_n_mode", product(UNITS, Mode))
+def test_e2e_pyteal(subr_n_mode):
+    subr, mode = subr_n_mode
+
+    path = Path.cwd() / "tests" / "teal" / "semantic" / "unit"
+    is_app = mode == Mode.Application
+    name = f"{'app' if is_app else 'lsig'}_{subr.name()}"
+
+    compiled = compileTeal(e2e_pyteal(subr, mode)(), mode, version=6)
+    save_to = path / (name + ".teal")
+    with open(save_to, "w") as f:
+        f.write(compiled)
+
+    assert_teal_as_expected(save_to, path / (name + "_expected.teal"))
+
+
+####### Semantic E2E Testing ########
 
 
 def fac_with_overflow(n):
