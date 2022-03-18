@@ -27,7 +27,7 @@ from pyteal import *
 
 # TODO: get tests working on Circle and set this to True
 SEMANTIC_TESTING = True
-# TODO: remove thise skips after the following issue has been fixed https://github.com/algorand/pyteal/issues/199
+# TODO: remove these skips after the following issue has been fixed https://github.com/algorand/pyteal/issues/199
 STABLE_SLOT_GENERATION = False
 SKIP_SCRATCH_ASSERTIONS = not STABLE_SLOT_GENERATION
 
