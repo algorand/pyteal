@@ -307,7 +307,7 @@ class TupleElement(ComputedType[BaseType]):
 TupleElement.__module__ = "pyteal"
 
 # Until Python 3.11 is released with support for PEP 646 -- Variadic Generics, it's not possible for
-# the Tuple class to take an arbitrary number of template paramters. As a workaround, we define the
+# the Tuple class to take an arbitrary number of template parameters. As a workaround, we define the
 # following classes for specifically sized Tuples. If needed, more classes can be added for larger
 # sizes.
 
