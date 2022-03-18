@@ -186,7 +186,7 @@ def tallygo():
     result = ScratchVar(TealType.bytes)
     # If-Then is a hook for creating + opting in without providing any args
     return (
-        If(Or(App.id() == Int(0), Txn.num_app_args() == Int(0)))
+        If(Or(App.id() == Int(0), Txn.application_args.length() == Int(0)))
         .Then(Int(1))
         .Else(
             Seq(
@@ -219,7 +219,7 @@ def lots_o_vars():
     leet = Int(1337)
     ngl = Bytes("NGL: ")
     return (
-        If(Or(App.id() == Int(0), Txn.num_app_args() == Int(0)))
+        If(Or(App.id() == Int(0), Txn.application_args.length() == Int(0)))
         .Then(Int(1))
         .Else(
             Seq(
@@ -285,7 +285,7 @@ def test_increment():
 def fac_by_ref_args():
     n = ScratchVar(TealType.uint64)
     return Seq(
-        If(Or(App.id() == Int(0), Txn.num_app_args() == Int(0)))
+        If(Or(App.id() == Int(0), Txn.application_args.length() == Int(0)))
         .Then(Int(1))
         .Else(
             Seq(
