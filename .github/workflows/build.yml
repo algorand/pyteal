@@ -25,15 +25,9 @@ jobs:
           apt install -y git
           git --version
       - name: Install pip dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install -e .
+        run: make pip
       - name: Build and Test
-        run: |
-          python scripts/generate_init.py --check
-          black --check .
-          mypy pyteal
-          pytest
+        run: make build-and-test
   build-docset:
     runs-on: ubuntu-20.04
     container: python:3.9  # Needs `make`, can't be slim
