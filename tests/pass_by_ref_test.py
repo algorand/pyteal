@@ -6,6 +6,9 @@ from pyteal import *
 
 from .compile_asserts import assert_new_v_old, compile_and_save
 
+# TODO: remove thise skips after the following issue has been fixed https://github.com/algorand/pyteal/issues/199
+STABLE_SLOT_GENERATION = False
+
 #### TESTS FOR NEW PyTEAL THAT USES PASS-BY-REF / DYNAMIC
 @Subroutine(TealType.none)
 def logcat_dynamic(first: ScratchVar, an_int):
@@ -410,6 +413,7 @@ def wrap_for_semantic_e2e(subr_with_params: Tuple[Tuple[Expr, List[TealType]]]) 
 TESTABLE_CASES = [(oldfac, [TealType.uint64])]
 
 
+@pytest.mark.skipif(not STABLE_SLOT_GENERATION, reason="cf. #199")
 @pytest.mark.parametrize("pt", map(wrap_for_semantic_e2e, TESTABLE_CASES))
 def test_semantic_unchanged(pt):
     assert_new_v_old(pt, 6)
@@ -433,18 +437,13 @@ CASES = (
 DEPRECATED_CASES = (string_mult, should_it_work)
 
 
+@pytest.mark.skipif(not STABLE_SLOT_GENERATION, reason="cf. #199")
 @pytest.mark.parametrize("pt", CASES)
 def test_teal_output_is_unchanged(pt):
     assert_new_v_old(pt, 6)
 
 
+@pytest.mark.skipif(not STABLE_SLOT_GENERATION, reason="cf. #199")
 @pytest.mark.parametrize("pt", map(make_creatable_factory, DEPRECATED_CASES))
 def test_deprecated(pt):
     assert_new_v_old(pt, 6)
-
-
-if __name__ == "__main__":
-    # test_increment()
-    # test_teal_output_is_unchanged()
-    # make_testable_factory(oldfac)
-    wrap_for_semantic_e2e((oldfac, [TealType.uint64]))

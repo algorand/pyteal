@@ -1,13 +1,13 @@
-from typing import Callable, List, Union
+from typing import Callable, Dict, List, Union
 
 from algosdk import kmd
 from algosdk.v2client import algod, indexer
 
+import algosdk.testing.teal_blackbox as blackbox
 
 from pyteal import *
 
 ## Clients
-LIVE_ALGOD: algod.AlgodClient = None
 
 
 def _kmd_client(
@@ -31,20 +31,34 @@ def _indexer_client(
     return indexer.IndexerClient(indexer_token, indexer_address)
 
 
-def algod_with_assertion(force_retry: bool = False):
-    global LIVE_ALGOD
-    try:
-        if not LIVE_ALGOD or force_retry:
-            algod = _algod_client()
-            assert algod.status(), "alod.status() did not produce any results"
-            LIVE_ALGOD = algod
-        return LIVE_ALGOD
-    except Exception as e:
-        LIVE_ALGOD = None
-        raise Exception("algod is missing from environment") from e
+def algod_with_assertion():
+    algod = _algod_client()
+    assert algod.status(), "alod.status() did not produce any results"
+    return algod
 
 
-def e2e_teal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
+def mode_to_execution_mode(mode: Mode) -> blackbox.ExecutionMode:
+    if mode == Mode.Application:
+        return blackbox.ExecutionMode.Application
+    if mode == Mode.Signature:
+        return blackbox.ExecutionMode.Signature
+
+    raise Exception(f"Unknown mode {mode} of type {type(mode)}")
+
+
+def mode_has_assertion(mode: Mode, assert_type: blackbox.DryRunAssertionType) -> bool:
+    return blackbox.mode_has_assertion(mode_to_execution_mode(mode), assert_type)
+
+
+def get_blackbox_scenario_components(
+    scenario: Dict[blackbox.DryRunAssertionType, dict], mode: Mode
+):
+    return blackbox.get_blackbox_scenario_components(
+        scenario, mode_to_execution_mode(mode)
+    )
+
+
+def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
     input_types = subr.subroutine.input_types
     arg_names = subr.subroutine.arguments()
 
@@ -131,7 +145,3 @@ def lightly_encode_args(args: List[Union[str, int]]) -> List[str]:
         return arg if isinstance(arg, str) else arg.to_bytes(8, byteorder="big")
 
     return [encode(a) for a in args]
-
-
-# def dryrun_singleton(mode: Mode, teal: str, args):
-#     pass
