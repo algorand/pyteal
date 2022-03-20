@@ -98,7 +98,7 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
 
     Example usage of e2e_pyteal
         .. code-block:: python
-            import algosdk.testing.teal_blackbox as blackbox
+            from import algosdk.testing.teal_blackbox import DryRunExecutor as Executor, DryRunEncoder
 
             @Subroutine(TealType.uint64, input_types=[TealType.uint64])
             def square(x):
@@ -109,24 +109,24 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
             approval_lsig = e2e_pyteal(square, mode.Signature)
 
             # compile the evaluated approvals to generate TEAL code
-            app_teal = compileTeal(approval_app(), mode.Signature, version=6)
+            app_teal = compileTeal(approval_app(), mode.Application, version=6)
             lsig_teal = compileTeal(approval_lsig(), mode.Signature, version=6)
 
             # provide args for evaluation (will compute x^2)
             x = 9
-            args = [x.to_bytes(8, byteorder="big")]
+            args = [x]
 
             # evaluate the programs
             algod = algod_with_assertion()
-            app_response = blackbox.execute_singleton_app(algod.dryrun, app_teal, args)
-            lsig_response = blackbox.execute_singleton_logicsig(algod.dryrun, lsig_teal, args)
+            app_response = Executor.dryrun_app(algod, app_teal, args)
+            lsig_response = Executor.dryrun_logicsig(algod, lsig_teal, args)
 
             # check to see that x^2 is at the top of the stack as expected
-            assert app_result.final_stack_top() == x ** 2
-            assert lsig_result.final_stack_top() == x ** 2
+            assert app_result.stack_top() == x ** 2
+            assert lsig_result.stack_top() == x ** 2
 
             # check to see that btoi of x^2 has been logged (only for the app case)
-            assert app_result.final_log() == (x ** 2).to_bytes(8, "big").hex()
+            assert app_result.last_log() == DryRunEncoder.hex(x ** 2)
     """
     input_types = subr.subroutine.input_types
     assert (
