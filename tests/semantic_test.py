@@ -9,19 +9,16 @@ from .compile_asserts import assert_teal_as_expected
 from .semantic_asserts import (
     algod_with_assertion,
     e2e_pyteal,
-    get_blackbox_scenario_components,
-    mode_has_assertion,
+    mode_to_execution_mode,
 )
 
 from algosdk.testing.dryrun import Helper as DryRunHelper
 from algosdk.testing.teal_blackbox import (
-    DryRunAssertionType as DRA,
+    DryRunEncoder as Encoder,
+    DryRunExecutor,
+    DryRunProperty as DRProp,
+    DryRunTransactionResult,
     SequenceAssertion,
-    csv_from_dryruns,
-    dryrun_assert,
-    lightly_encode_args,
-    lightly_encode_output,
-    scratch_encode,
 )
 
 from pyteal import *
@@ -195,123 +192,121 @@ APP_SCENARIOS = {
         "inputs": [()],
         # since only a single input, just assert a constant in each case
         "assertions": {
-            DRA.cost: 11,
+            DRProp.cost: 11,
             # int assertions on log outputs need encoding to varuint-hex:
-            DRA.lastLog: lightly_encode_output(2 ** 10, logs=True),
+            DRProp.lastLog: Encoder.hex(2 ** 10),
             # dicts have a special meaning as assertions. So in the case of "finalScratch"
             # which is supposed to _ALSO_ output a dict, we need to use a lambda as a work-around
-            DRA.finalScratch: lambda _: {0: 1024},
-            DRA.stackTop: 1024,
-            DRA.maxStackHeight: 2,
-            DRA.status: "PASS",
-            DRA.passed: True,
-            DRA.rejected: False,
-            DRA.noError: True,
+            DRProp.finalScratch: lambda _: {0: 1024},
+            DRProp.stackTop: 1024,
+            DRProp.maxStackHeight: 2,
+            DRProp.status: "PASS",
+            DRProp.passed: True,
+            DRProp.rejected: False,
+            DRProp.noError: True,
         },
     },
     square_byref: {
         "inputs": [(i,) for i in range(100)],
         "assertions": {
-            DRA.cost: lambda _, actual: 20 < actual < 22,
-            DRA.lastLog: lightly_encode_output(1337, logs=True),
+            DRProp.cost: lambda _, actual: 20 < actual < 22,
+            DRProp.lastLog: Encoder.hex(1337),
             # due to dry-run artifact of not reporting 0-valued scratchvars,
             # we have a special case for n=0:
-            DRA.finalScratch: lambda args, actual: (
+            DRProp.finalScratch: lambda args, actual: (
                 {1, 1337, (args[0] ** 2 if args[0] else 1)}
             ).issubset(set(actual.values())),
-            DRA.stackTop: 1337,
-            DRA.maxStackHeight: 3,
-            DRA.status: "PASS",
-            DRA.passed: True,
-            DRA.rejected: False,
-            DRA.noError: True,
+            DRProp.stackTop: 1337,
+            DRProp.maxStackHeight: 3,
+            DRProp.status: "PASS",
+            DRProp.passed: True,
+            DRProp.rejected: False,
+            DRProp.noError: True,
         },
     },
     square: {
         "inputs": [(i,) for i in range(100)],
         "assertions": {
-            DRA.cost: 14,
-            DRA.lastLog: {
+            DRProp.cost: 14,
+            DRProp.lastLog: {
                 # since execution REJECTS for 0, expect last log for this case to be None
-                (i,): lightly_encode_output(i * i, logs=True) if i else None
+                (i,): Encoder.hex(i * i) if i else None
                 for i in range(100)
             },
-            DRA.finalScratch: lambda args: (
+            DRProp.finalScratch: lambda args: (
                 {0: args[0] ** 2, 1: args[0]} if args[0] else {}
             ),
-            DRA.stackTop: lambda args: args[0] ** 2,
-            DRA.maxStackHeight: 2,
-            DRA.status: lambda i: "PASS" if i[0] > 0 else "REJECT",
-            DRA.passed: lambda i: i[0] > 0,
-            DRA.rejected: lambda i: i[0] == 0,
-            DRA.noError: True,
+            DRProp.stackTop: lambda args: args[0] ** 2,
+            DRProp.maxStackHeight: 2,
+            DRProp.status: lambda i: "PASS" if i[0] > 0 else "REJECT",
+            DRProp.passed: lambda i: i[0] > 0,
+            DRProp.rejected: lambda i: i[0] == 0,
+            DRProp.noError: True,
         },
     },
     swap: {
         "inputs": [(1, 2), (1, "two"), ("one", 2), ("one", "two")],
         "assertions": {
-            DRA.cost: 27,
-            DRA.lastLog: lightly_encode_output(1337, logs=True),
-            DRA.finalScratch: lambda args: {
+            DRProp.cost: 27,
+            DRProp.lastLog: Encoder.hex(1337),
+            DRProp.finalScratch: lambda args: {
                 0: 1337,
-                1: scratch_encode(args[1]),
-                2: scratch_encode(args[0]),
+                1: Encoder.hex0x(args[1]),
+                2: Encoder.hex0x(args[0]),
                 3: 1,
                 4: 2,
-                5: scratch_encode(args[0]),
+                5: Encoder.hex0x(args[0]),
             },
-            DRA.stackTop: 1337,
-            DRA.maxStackHeight: 2,
-            DRA.status: "PASS",
-            DRA.passed: True,
-            DRA.rejected: False,
-            DRA.noError: True,
+            DRProp.stackTop: 1337,
+            DRProp.maxStackHeight: 2,
+            DRProp.status: "PASS",
+            DRProp.passed: True,
+            DRProp.rejected: False,
+            DRProp.noError: True,
         },
     },
     string_mult: {
         "inputs": [("xyzw", i) for i in range(100)],
         "assertions": {
-            DRA.cost: lambda args: 30 + 15 * args[1],
-            DRA.lastLog: (
-                lambda args: lightly_encode_output(args[0] * args[1])
-                if args[1]
-                else None
+            DRProp.cost: lambda args: 30 + 15 * args[1],
+            DRProp.lastLog: (
+                lambda args: Encoder.hex(args[0] * args[1]) if args[1] else None
             ),
             # due to dryrun 0-scratchvar artifact, special case for i == 0:
-            DRA.finalScratch: lambda args: (
+            DRProp.finalScratch: lambda args: (
                 {
-                    0: scratch_encode(args[0] * args[1]),
-                    1: scratch_encode(args[0] * args[1]),
+                    0: Encoder.hex0x(args[0] * args[1]),
+                    1: Encoder.hex0x(args[0] * args[1]),
                     2: 1,
                     3: args[1],
                     4: args[1] + 1,
-                    5: scratch_encode(args[0]),
+                    5: Encoder.hex0x(args[0]),
                 }
                 if args[1]
                 else {
                     2: 1,
                     4: args[1] + 1,
-                    5: scratch_encode(args[0]),
+                    5: Encoder.hex0x(args[0]),
                 }
             ),
-            DRA.stackTop: lambda args: len(args[0] * args[1]),
-            DRA.maxStackHeight: lambda args: 3 if args[1] else 2,
-            DRA.status: lambda args: ("PASS" if 0 < args[1] < 45 else "REJECT"),
-            DRA.passed: lambda args: 0 < args[1] < 45,
-            DRA.rejected: lambda args: 0 >= args[1] or args[1] >= 45,
-            DRA.noError: True,
+            DRProp.stackTop: lambda args: len(args[0] * args[1]),
+            DRProp.maxStackHeight: lambda args: 3 if args[1] else 2,
+            DRProp.status: lambda args: ("PASS" if 0 < args[1] < 45 else "REJECT"),
+            DRProp.passed: lambda args: 0 < args[1] < 45,
+            DRProp.rejected: lambda args: 0 >= args[1] or args[1] >= 45,
+            DRProp.noError: True,
         },
     },
     oldfac: {
         "inputs": [(i,) for i in range(25)],
         "assertions": {
-            DRA.cost: lambda args, actual: (actual - 40 <= 17 * args[0] <= actual + 40),
-            DRA.lastLog: lambda args: (
-                lightly_encode_output(fac_with_overflow(args[0]), logs=True)
-                if args[0] < 21
-                else None
+            DRProp.cost: lambda args, actual: (
+                actual - 40 <= 17 * args[0] <= actual + 40
             ),
-            DRA.finalScratch: lambda args: (
+            DRProp.lastLog: lambda args: (
+                Encoder.hex(fac_with_overflow(args[0])) if args[0] < 21 else None
+            ),
+            DRProp.finalScratch: lambda args: (
                 {1: args[0], 0: fac_with_overflow(args[0])}
                 if 0 < args[0] < 21
                 else (
@@ -320,12 +315,12 @@ APP_SCENARIOS = {
                     else {0: fac_with_overflow(args[0])}
                 )
             ),
-            DRA.stackTop: lambda args: fac_with_overflow(args[0]),
-            DRA.maxStackHeight: lambda args: max(2, 2 * args[0]),
-            DRA.status: lambda args: "PASS" if args[0] < 21 else "REJECT",
-            DRA.passed: lambda args: args[0] < 21,
-            DRA.rejected: lambda args: args[0] >= 21,
-            DRA.noError: lambda args, actual: (
+            DRProp.stackTop: lambda args: fac_with_overflow(args[0]),
+            DRProp.maxStackHeight: lambda args: max(2, 2 * args[0]),
+            DRProp.status: lambda args: "PASS" if args[0] < 21 else "REJECT",
+            DRProp.passed: lambda args: args[0] < 21,
+            DRProp.rejected: lambda args: args[0] >= 21,
+            DRProp.noError: lambda args, actual: (
                 actual is True if args[0] < 21 else "overflowed" in actual
             ),
         },
@@ -333,29 +328,27 @@ APP_SCENARIOS = {
     slow_fibonacci: {
         "inputs": [(i,) for i in range(18)],
         "assertions": {
-            DRA.cost: lambda args: (fib_cost(args) if args[0] < 17 else 70_000),
-            DRA.lastLog: lambda args: (
-                lightly_encode_output(fib(args[0]), logs=True)
-                if 0 < args[0] < 17
-                else None
+            DRProp.cost: lambda args: (fib_cost(args) if args[0] < 17 else 70_000),
+            DRProp.lastLog: lambda args: (
+                Encoder.hex(fib(args[0])) if 0 < args[0] < 17 else None
             ),
-            DRA.finalScratch: lambda args, actual: (
+            DRProp.finalScratch: lambda args, actual: (
                 actual == {1: args[0], 0: fib(args[0])}
                 if 0 < args[0] < 17
                 else (True if args[0] >= 17 else actual == {})
             ),
             # we declare to "not care" about the top of the stack for n >= 17
-            DRA.stackTop: lambda args, actual: (
+            DRProp.stackTop: lambda args, actual: (
                 actual == fib(args[0]) if args[0] < 17 else True
             ),
             # similarly, we don't care about max stack height for n >= 17
-            DRA.maxStackHeight: lambda args, actual: (
+            DRProp.maxStackHeight: lambda args, actual: (
                 actual == max(2, 2 * args[0]) if args[0] < 17 else True
             ),
-            DRA.status: lambda args: "PASS" if 0 < args[0] < 8 else "REJECT",
-            DRA.passed: lambda args: 0 < args[0] < 8,
-            DRA.rejected: lambda args: 0 >= args[0] or args[0] >= 8,
-            DRA.noError: lambda args, actual: (
+            DRProp.status: lambda args: "PASS" if 0 < args[0] < 8 else "REJECT",
+            DRProp.passed: lambda args: 0 < args[0] < 8,
+            DRProp.rejected: lambda args: 0 >= args[0] or args[0] >= 8,
+            DRProp.noError: lambda args, actual: (
                 actual is True
                 if args[0] < 17
                 else "dynamic cost budget exceeded" in actual
@@ -370,109 +363,111 @@ LOGICSIG_SCENARIOS = {
     exp: {
         "inputs": [()],
         "assertions": {
-            # DRA.cost: 11,
-            # DRA.lastLog: lightly_encode_output(2 ** 10, logs=True),
-            DRA.finalScratch: lambda _: {},
-            DRA.stackTop: 1024,
-            DRA.maxStackHeight: 2,
-            DRA.status: "PASS",
-            DRA.passed: True,
-            DRA.rejected: False,
-            DRA.noError: True,
+            # DRProp.cost: 11,
+            # DRProp.lastLog: Encoder.hex(2 ** 10),
+            DRProp.finalScratch: lambda _: {},
+            DRProp.stackTop: 1024,
+            DRProp.maxStackHeight: 2,
+            DRProp.status: "PASS",
+            DRProp.passed: True,
+            DRProp.rejected: False,
+            DRProp.noError: True,
         },
     },
     square_byref: {
         "inputs": [(i,) for i in range(100)],
         "assertions": {
-            # DRA.cost: lambda _, actual: 20 < actual < 22,
-            # DRA.lastLog: lightly_encode_output(1337, logs=True),
+            # DRProp.cost: lambda _, actual: 20 < actual < 22,
+            # DRProp.lastLog: Encoder.hex(1337),
             # due to dry-run artifact of not reporting 0-valued scratchvars,
             # we have a special case for n=0:
-            DRA.finalScratch: lambda args: (
+            DRProp.finalScratch: lambda args: (
                 {0: 1, 1: args[0] ** 2} if args[0] else {0: 1}
             ),
-            DRA.stackTop: 1337,
-            DRA.maxStackHeight: 3,
-            DRA.status: "PASS",
-            DRA.passed: True,
-            DRA.rejected: False,
-            DRA.noError: True,
+            DRProp.stackTop: 1337,
+            DRProp.maxStackHeight: 3,
+            DRProp.status: "PASS",
+            DRProp.passed: True,
+            DRProp.rejected: False,
+            DRProp.noError: True,
         },
     },
     square: {
         "inputs": [(i,) for i in range(100)],
         "assertions": {
-            # DRA.cost: 14,
-            # DRA.lastLog: {(i,): lightly_encode_output(i * i, logs=True) if i else None for i in range(100)},
-            DRA.finalScratch: lambda args: ({0: args[0]} if args[0] else {}),
-            DRA.stackTop: lambda args: args[0] ** 2,
-            DRA.maxStackHeight: 2,
-            DRA.status: lambda i: "PASS" if i[0] > 0 else "REJECT",
-            DRA.passed: lambda i: i[0] > 0,
-            DRA.rejected: lambda i: i[0] == 0,
-            DRA.noError: True,
+            # DRProp.cost: 14,
+            # DRProp.lastLog: {(i,): Encoder.hex(i * i) if i else None for i in range(100)},
+            DRProp.finalScratch: lambda args: ({0: args[0]} if args[0] else {}),
+            DRProp.stackTop: lambda args: args[0] ** 2,
+            DRProp.maxStackHeight: 2,
+            DRProp.status: lambda i: "PASS" if i[0] > 0 else "REJECT",
+            DRProp.passed: lambda i: i[0] > 0,
+            DRProp.rejected: lambda i: i[0] == 0,
+            DRProp.noError: True,
         },
     },
     swap: {
         "inputs": [(1, 2), (1, "two"), ("one", 2), ("one", "two")],
         "assertions": {
-            # DRA.cost: 27,
-            # DRA.lastLog: lightly_encode_output(1337, logs=True),
-            DRA.finalScratch: lambda args: {
+            # DRProp.cost: 27,
+            # DRProp.lastLog: Encoder.hex(1337),
+            DRProp.finalScratch: lambda args: {
                 0: 3,
                 1: 4,
-                2: scratch_encode(args[0]),
-                3: scratch_encode(args[1]),
-                4: scratch_encode(args[0]),
+                2: Encoder.hex0x(args[0]),
+                3: Encoder.hex0x(args[1]),
+                4: Encoder.hex0x(args[0]),
             },
-            DRA.stackTop: 1337,
-            DRA.maxStackHeight: 2,
-            DRA.status: "PASS",
-            DRA.passed: True,
-            DRA.rejected: False,
-            DRA.noError: True,
+            DRProp.stackTop: 1337,
+            DRProp.maxStackHeight: 2,
+            DRProp.status: "PASS",
+            DRProp.passed: True,
+            DRProp.rejected: False,
+            DRProp.noError: True,
         },
     },
     string_mult: {
         "inputs": [("xyzw", i) for i in range(100)],
         "assertions": {
-            # DRA.cost: lambda args: 30 + 15 * args[1],
-            # DRA.lastLog: lambda args: lightly_encode_output(args[0] * args[1]) if args[1] else None,
-            DRA.finalScratch: lambda args: (
+            # DRProp.cost: lambda args: 30 + 15 * args[1],
+            # DRProp.lastLog: lambda args: Encoder.hex(args[0] * args[1]) if args[1] else None,
+            DRProp.finalScratch: lambda args: (
                 {
                     0: len(args[0]),
                     1: args[1],
                     2: args[1] + 1,
-                    3: scratch_encode(args[0]),
-                    4: scratch_encode(args[0] * args[1]),
+                    3: Encoder.hex0x(args[0]),
+                    4: Encoder.hex0x(args[0] * args[1]),
                 }
                 if args[1]
                 else {
                     0: len(args[0]),
                     2: args[1] + 1,
-                    3: scratch_encode(args[0]),
+                    3: Encoder.hex0x(args[0]),
                 }
             ),
-            DRA.stackTop: lambda args: len(args[0] * args[1]),
-            DRA.maxStackHeight: lambda args: 3 if args[1] else 2,
-            DRA.status: lambda args: "PASS" if args[1] else "REJECT",
-            DRA.passed: lambda args: bool(args[1]),
-            DRA.rejected: lambda args: not bool(args[1]),
-            DRA.noError: True,
+            DRProp.stackTop: lambda args: len(args[0] * args[1]),
+            DRProp.maxStackHeight: lambda args: 3 if args[1] else 2,
+            DRProp.status: lambda args: "PASS" if args[1] else "REJECT",
+            DRProp.passed: lambda args: bool(args[1]),
+            DRProp.rejected: lambda args: not bool(args[1]),
+            DRProp.noError: True,
         },
     },
     oldfac: {
         "inputs": [(i,) for i in range(25)],
         "assertions": {
-            # DRA.cost: lambda args, actual: actual - 40 <= 17 * args[0] <= actual + 40,
-            # DRA.lastLog: lambda args, actual: (actual is None) or (int(actual, base=16) == fac_with_overflow(args[0])),
-            DRA.finalScratch: lambda args: ({0: min(args[0], 21)} if args[0] else {}),
-            DRA.stackTop: lambda args: fac_with_overflow(args[0]),
-            DRA.maxStackHeight: lambda args: max(2, 2 * args[0]),
-            DRA.status: lambda args: "PASS" if args[0] < 21 else "REJECT",
-            DRA.passed: lambda args: args[0] < 21,
-            DRA.rejected: lambda args: args[0] >= 21,
-            DRA.noError: lambda args, actual: (
+            # DRProp.cost: lambda args, actual: actual - 40 <= 17 * args[0] <= actual + 40,
+            # DRProp.lastLog: lambda args, actual: (actual is None) or (int(actual, base=16) == fac_with_overflow(args[0])),
+            DRProp.finalScratch: lambda args: (
+                {0: min(args[0], 21)} if args[0] else {}
+            ),
+            DRProp.stackTop: lambda args: fac_with_overflow(args[0]),
+            DRProp.maxStackHeight: lambda args: max(2, 2 * args[0]),
+            DRProp.status: lambda args: "PASS" if args[0] < 21 else "REJECT",
+            DRProp.passed: lambda args: args[0] < 21,
+            DRProp.rejected: lambda args: args[0] >= 21,
+            DRProp.noError: lambda args, actual: (
                 actual is True
                 if args[0] < 21
                 else "logic 0 failed at line 21: * overflowed" in actual
@@ -482,24 +477,24 @@ LOGICSIG_SCENARIOS = {
     slow_fibonacci: {
         "inputs": [(i,) for i in range(18)],
         "assertions": {
-            # DRA.cost: fib_cost,
-            # DRA.lastLog: fib_last_log,
+            # DRProp.cost: fib_cost,
+            # DRProp.lastLog: fib_last_log,
             # by returning True for n >= 15, we're declaring that we don't care about the scratchvar's for such cases:
-            DRA.finalScratch: lambda args, actual: (
+            DRProp.finalScratch: lambda args, actual: (
                 actual == {0: args[0]}
                 if 0 < args[0] < 15
                 else (True if args[0] else actual == {})
             ),
-            DRA.stackTop: lambda args, actual: (
+            DRProp.stackTop: lambda args, actual: (
                 actual == fib(args[0]) if args[0] < 15 else True
             ),
-            DRA.maxStackHeight: lambda args, actual: (
+            DRProp.maxStackHeight: lambda args, actual: (
                 actual == max(2, 2 * args[0]) if args[0] < 15 else True
             ),
-            DRA.status: lambda args: "PASS" if 0 < args[0] < 15 else "REJECT",
-            DRA.passed: lambda args: 0 < args[0] < 15,
-            DRA.rejected: lambda args: not (0 < args[0] < 15),
-            DRA.noError: lambda args, actual: (
+            DRProp.status: lambda args: "PASS" if 0 < args[0] < 15 else "REJECT",
+            DRProp.passed: lambda args: 0 < args[0] < 15,
+            DRProp.rejected: lambda args: not (0 < args[0] < 15),
+            DRProp.noError: lambda args, actual: (
                 actual is True
                 if args[0] < 15
                 else "dynamic cost budget exceeded" in actual
@@ -539,18 +534,20 @@ saved to {tealpath}:
 def semantic_test_runner(
     subr: SubroutineFnWrapper,
     mode: Mode,
-    scenario: Dict[DRA, dict],
+    scenario: Dict[DRProp, dict],
     version: int,
     assemble_constants: bool = True,
 ):
     case_name = subr.name()
     print(f"semantic e2e test of {case_name} with mode {mode}")
+    exec_mode = mode_to_execution_mode(mode)
 
     # 0. Validations
     assert isinstance(subr, SubroutineFnWrapper), f"unexpected subr type {type(subr)}"
     assert isinstance(mode, Mode)
 
-    teal, is_app, path, filebase = wrap_compile_and_save(
+    # 1. Compile to TEAL
+    teal, _, path, filebase = wrap_compile_and_save(
         subr, mode, version, assemble_constants, case_name
     )
 
@@ -559,27 +556,20 @@ def semantic_test_runner(
             "Exiting early without conducting end-to-end dry run testing. Sayonara!!!!!"
         )
         return
-
-    inputs, assertions = get_blackbox_scenario_components(scenario, mode)
-
     # Fail fast in case algod is not configured:
     algod = algod_with_assertion()
 
-    # 3. Build the Dryrun requests:
-    drbuilder = (
-        DryRunHelper.singleton_app_request
-        if is_app
-        else DryRunHelper.singleton_logicsig_request
-    )
-    dryrun_reqs = list(map(lambda a: drbuilder(teal, lightly_encode_args(a)), inputs))
+    # 2. validate dry run scenarios:
+    inputs, assertions = SequenceAssertion.inputs_and_assertions(scenario, exec_mode)
 
-    # 3. Run the requests to obtain sequence of Dryrun resonses:
-    dryrun_resps = list(map(algod.dryrun, dryrun_reqs))
+    # 3. execute dry run sequence:
+    execute = DryRunExecutor.execute_one_dryrun
+    dryrun_results = list(map(lambda a: execute(algod, teal, a, exec_mode), inputs))
 
-    # 4. Generate statistical report of all the runs:
+    # 4. Statistical report:
     csvpath = path / f"{filebase}.csv"
     with open(csvpath, "w") as f:
-        f.write(csv_from_dryruns(inputs, dryrun_resps))
+        f.write(DryRunTransactionResult.csv_report(inputs, dryrun_results))
 
     print(f"Saved Dry Run CSV report to {csvpath}")
 
@@ -587,13 +577,11 @@ def semantic_test_runner(
     for i, type_n_assertion in enumerate(assertions.items()):
         assert_type, assertion = type_n_assertion
 
-        if SKIP_SCRATCH_ASSERTIONS and assert_type == DRA.finalScratch:
+        if SKIP_SCRATCH_ASSERTIONS and assert_type == DRProp.finalScratch:
             print("skipping scratch assertions because unstable slots produced")
             continue
 
-        assert mode_has_assertion(
-            mode, assert_type
-        ), f"assert_type {assert_type} is not applicable for {mode}. Please REMOVE of MODIFY"
+        assert SequenceAssertion.mode_has_assertion(exec_mode, assert_type)
 
         assertion = SequenceAssertion(
             assertion, name=f"{case_name}[{i}]@{mode}-{assert_type}"
@@ -601,7 +589,7 @@ def semantic_test_runner(
         print(
             f"{i+1}. Semantic assertion for {case_name}-{mode}: {assert_type} <<{assertion}>>"
         )
-        dryrun_assert(inputs, dryrun_resps, assert_type, assertion)
+        assertion.dryrun_assert(inputs, dryrun_results, assert_type)
 
 
 @pytest.mark.skipif(not STABLE_SLOT_GENERATION, reason="cf. #199")
@@ -629,7 +617,7 @@ def test_stable_teal_generation():
 
 @pytest.mark.parametrize("subr_n_scenario", APP_SCENARIOS.items())
 def test_e2e_subroutines_as_apps(
-    subr_n_scenario: Tuple[SubroutineFnWrapper, Dict[DRA, dict]]
+    subr_n_scenario: Tuple[SubroutineFnWrapper, Dict[DRProp, dict]]
 ):
     subr, scenario = subr_n_scenario
     semantic_test_runner(subr, Mode.Application, scenario, 6)
@@ -637,7 +625,7 @@ def test_e2e_subroutines_as_apps(
 
 @pytest.mark.parametrize("subr_n_scenario", LOGICSIG_SCENARIOS.items())
 def test_e2e_subroutines_as_logic_sigs(
-    subr_n_scenario: Tuple[SubroutineFnWrapper, Dict[DRA, dict]]
+    subr_n_scenario: Tuple[SubroutineFnWrapper, Dict[DRProp, dict]]
 ):
     subr, scenario = subr_n_scenario
     semantic_test_runner(subr, Mode.Signature, scenario, 6)

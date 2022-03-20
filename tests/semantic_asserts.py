@@ -10,18 +10,18 @@ from pyteal import *
 ## Clients
 
 
-def _kmd_client(
-    kmd_address="http://localhost:4002", kmd_token="a" * 64
-) -> kmd.KMDClient:
-    """Instantiate and return a KMD client object."""
-    return kmd.KMDClient(kmd_token, kmd_address)
-
-
 def _algod_client(
     algod_address="http://localhost:4001", algod_token="a" * 64
 ) -> algod.AlgodClient:
     """Instantiate and return Algod client object."""
     return algod.AlgodClient(algod_token, algod_address)
+
+
+def _kmd_client(
+    kmd_address="http://localhost:4002", kmd_token="a" * 64
+) -> kmd.KMDClient:
+    """Instantiate and return a KMD client object."""
+    return kmd.KMDClient(kmd_token, kmd_address)
 
 
 def _indexer_client(
@@ -44,18 +44,6 @@ def mode_to_execution_mode(mode: Mode) -> blackbox.ExecutionMode:
         return blackbox.ExecutionMode.Signature
 
     raise Exception(f"Unknown mode {mode} of type {type(mode)}")
-
-
-def mode_has_assertion(mode: Mode, assert_type: blackbox.DryRunAssertionType) -> bool:
-    return blackbox.mode_has_assertion(mode_to_execution_mode(mode), assert_type)
-
-
-def get_blackbox_scenario_components(
-    scenario: Dict[blackbox.DryRunAssertionType, dict], mode: Mode
-):
-    return blackbox.get_blackbox_scenario_components(
-        scenario, mode_to_execution_mode(mode)
-    )
 
 
 def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
