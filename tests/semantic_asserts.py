@@ -299,29 +299,3 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
 
     setattr(approval, "__name__", f"sem_{mode}_{subr.name()}")
     return approval
-
-
-def lightly_encode_output(out: Union[int, str], logs=False) -> Union[int, str]:
-    if isinstance(out, int):
-        return out.to_bytes(8, "big").hex() if logs else out
-
-    if isinstance(out, str):
-        return bytes(out, "utf-8").hex()
-
-    raise f"can't handle output [{out}] of type {type(out)}"
-
-
-def lightly_encode_args(args: List[Union[str, int]]) -> List[str]:
-    """
-    Assumes int's are uint64 and
-    """
-
-    def encode(arg):
-        assert isinstance(
-            arg, (int, str)
-        ), f"can't handle arg [{arg}] of type {type(arg)}"
-        if isinstance(arg, int):
-            assert arg >= 0, f"can't handle negative arguments but was given {arg}"
-        return arg if isinstance(arg, str) else arg.to_bytes(8, byteorder="big")
-
-    return [encode(a) for a in args]
