@@ -447,3 +447,17 @@ def test_teal_output_is_unchanged(pt):
 @pytest.mark.parametrize("pt", map(make_creatable_factory, DEPRECATED_CASES))
 def test_deprecated(pt):
     assert_new_v_old(pt, 6)
+
+
+def test_pass_by_ref_guardrails():
+    @Subroutine(TealType.uint64)
+    def ok(x):
+        # not really, ok at runtime... but should be ok at compile time
+        return ok(x)
+
+    @Subroutine(TealType.uint64)
+    def not_ok(x: ScratchVar):
+        # not really, ok at runtime... but should be ok at compile time
+        return not_ok(x)
+
+    pytest.fail("the test is currently RED")
