@@ -160,8 +160,7 @@ def test_e2e_pyteal_examples():
     exec_mode = mode_to_execution_mode(Mode.Application)
     inputs, assertions = SequenceAssertion.inputs_and_assertions(scenario, exec_mode)
     euclid_results = Executor.dryrun_app_on_sequence(algod, euclid_app_teal, inputs)
-    for i, type_n_assertion in enumerate(assertions.items()):
-        assert_type, predicate = type_n_assertion
+    for assert_type, predicate in assertions.items():
         assertion = SequenceAssertion(predicate, name=str(assert_type))
         assertion.dryrun_assert(inputs, euclid_results, assert_type)
 
