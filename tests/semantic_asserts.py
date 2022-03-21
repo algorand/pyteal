@@ -233,7 +233,7 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
     input_types = subr.subroutine.input_types
     assert (
         input_types is not None
-    ), "please provide input_types in your @Subroutine annotation (crucial for generating proper ent-to-end testable PyTeal"
+    ), "please provide input_types in your @Subroutine annotation (crucial for generating proper end-to-end testable PyTeal)"
 
     arg_names = subr.subroutine.arguments()
 
