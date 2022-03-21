@@ -278,7 +278,12 @@ def lots_o_vars():
 
 
 def test_increment():
-    compile_and_save(increment, 6)
+    with pytest.raises(TealInputError) as e:
+        compile_and_save(increment, 6)
+    assert (
+        "pass-by-ref recursion disallowed. Currently, a recursive @Subroutine may not accept ScratchVar-typed arguments but a possible recursive call-path was detected: plus_one()-->plus_one()"
+        in str(e)
+    )
 
 
 # Testable by black-box:
@@ -481,6 +486,67 @@ def test_pass_by_ref_guardrails():
     def not_ok_indirect2(x: ScratchVar):
         return not_ok_indirect1(x)
 
+    """
+    Complex subroutine graph example:
+
+    a --> b --> a (loop)
+            --> e 
+            --> f
+      --> *c--> g --> a (loop)
+            --> h 
+      --> d --> d (loop)
+            --> i
+            --> j
+
+    stack, path:    b|c|d  a
+                    b|c    a|d
+
+    *c - this is the only "pass by-ref" subroutine
+    I expected the following error path "c-->g-->a-->c"
+    (but DFS actually gave the equally invalid path: "c-->g-->a-->d-->j-->i-->c")
+    """
+
+    @Subroutine(TealType.uint64)
+    def a(x):
+        tmp = ScratchVar(TealType.uint64)
+        return Seq(tmp.store(x), b(x) + c(tmp) + d(x))
+
+    @Subroutine(TealType.uint64)
+    def b(x):
+        return a(x) + e(x) * f(x)
+
+    @Subroutine(TealType.uint64)
+    def c(x: ScratchVar):
+        return g(Int(42)) - h(x.load())
+
+    @Subroutine(TealType.uint64)
+    def d(x):
+        return d(x) + i(Int(11)) * j(x)
+
+    @Subroutine(TealType.uint64)
+    def e(x):
+        return Int(42)
+
+    @Subroutine(TealType.uint64)
+    def f(x):
+        return Int(42)
+
+    @Subroutine(TealType.uint64)
+    def g(x):
+        return a(Int(17))
+
+    @Subroutine(TealType.uint64)
+    def h(x):
+        return Int(42)
+
+    @Subroutine(TealType.uint64)
+    def i(x):
+        return Int(42)
+
+    @Subroutine(TealType.uint64)
+    def j(x):
+        return Int(42)
+
     ##### Approval PyTEAL Expressions #####
 
     approval_ok = ok(Int(42))
@@ -495,18 +561,36 @@ def test_pass_by_ref_guardrails():
 
     approval_not_ok_indirect = Seq(x.store(Int(42)), not_ok_indirect1(x))
 
+    approval_its_complicated = a(Int(42))
+
+    ##### Assertions #####
+
     assert compileTeal(approval_ok, Mode.Application, version=6)
 
     assert compileTeal(approval_ok_byref, Mode.Application, version=6)
 
     assert compileTeal(approval_ok_indirect, Mode.Application, version=6)
 
-    with pytest.raises(TealInputError) as e:
+    with pytest.raises(TealInputError) as err:
         compileTeal(approval_not_ok, Mode.Application, version=6)
 
-    assert "pass-by-ref recursion disallowed. Currently, a recursive @Subroutine may not accept ScratchVar-typed arguments but a a possible recursive call-path was detected: not_ok()-->not_ok()"
+    assert (
+        "pass-by-ref recursion disallowed. Currently, a recursive @Subroutine may not accept ScratchVar-typed arguments but a possible recursive call-path was detected: not_ok()-->not_ok()"
+        in str(err)
+    )
 
-    with pytest.raises(TealInputError) as e:
+    with pytest.raises(TealInputError) as err:
         compileTeal(approval_not_ok_indirect, Mode.Application, version=6)
 
-    assert "pass-by-ref recursion disallowed. Currently, a recursive @Subroutine may not accept ScratchVar-typed arguments but a a possible recursive call-path was detected: not_ok_indirect1()-->not_ok_indirect2()-->not_ok_indirect1()"
+    assert (
+        "pass-by-ref recursion disallowed. Currently, a recursive @Subroutine may not accept ScratchVar-typed arguments but a possible recursive call-path was detected: not_ok_indirect1()-->not_ok_indirect2()-->not_ok_indirect1()"
+        in str(err)
+    )
+
+    with pytest.raises(TealInputError) as err:
+        compileTeal(approval_its_complicated, Mode.Application, version=6)
+
+    assert (
+        "pass-by-ref recursion disallowed. Currently, a recursive @Subroutine may not accept ScratchVar-typed arguments but a possible recursive call-path was detected: c()-->g()-->a()-->c()"
+        in str(err)
+    )

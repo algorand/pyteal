@@ -12,9 +12,7 @@ from ..ir import TealComponent, TealOp, Op
 Node = TypeVar("Node")
 
 
-def depthFirstSearch(
-    graph: Dict[Node, Set[Node]], start: Node, end: Node, include_path: bool = False
-) -> bool:
+def depthFirstSearch(graph: Dict[Node, Set[Node]], start: Node, end: Node) -> bool:
     """Check whether a path between start and end exists in the graph.
 
     This works even if start == end, in which case True is only returned if the
@@ -22,23 +20,16 @@ def depthFirstSearch(
     """
     visited: Set[Node] = set()
     stack: List[Node] = list(graph[start])
-    path: List[Node] = [start]
 
     while len(stack) != 0:
         current = stack.pop()
-        path.append(current)
         if current in visited:
-            path.pop()
             continue
         visited.add(current)
         if end == current:
-            if include_path:
-                return True, path
             return True
         stack += list(graph[current])
 
-    if include_path:
-        return False, []
     return False
 
 
@@ -76,15 +67,26 @@ def find_recursive_path(
     subroutine_graph: Dict[SubroutineDefinition, Set[SubroutineDefinition]],
     subroutine: SubroutineDefinition,
 ) -> List[SubroutineDefinition]:
-    found, path = depthFirstSearch(
-        subroutine_graph, subroutine, subroutine, include_path=True
-    )
-    if found != bool(path):
-        raise TealInternalError(
-            f"mismatch between found ({found}) and actual found path {path}"
-        )
+    visited = set()
+    loop = []
 
-    return path
+    def dfs(x):
+        if x in visited:
+            return False
+
+        visited.add(x)
+        loop.append(x)
+        for y in subroutine_graph[x]:
+            if y == subroutine:
+                loop.append(y)
+                return True
+            if dfs(y):
+                return True
+        loop.pop()
+        return False
+
+    found = dfs(subroutine)
+    return loop if found else []
 
 
 def spillLocalSlotsDuringRecursion(
@@ -129,7 +131,7 @@ def spillLocalSlotsDuringRecursion(
 
     if recursive_byref_path:
         raise TealInputError(
-            f"pass-by-ref recursion disallowed. Currently, a recursive @Subroutine may not accept ScratchVar-typed arguments but a a possible recursive call-path was detected: {'()-->'.join(recursive_byref_path)}()"
+            f"pass-by-ref recursion disallowed. Currently, a recursive @Subroutine may not accept ScratchVar-typed arguments but a possible recursive call-path was detected: {'()-->'.join(recursive_byref_path)}()"
         )
 
     coverAvailable = version >= Op.cover.min_version
