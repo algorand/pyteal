@@ -26,3 +26,4 @@ coverage:
 
 blackbox:
 	HAS_ALGOD=TRUE pytest tests/semantic_test.py
+	HAS_ALGOD=TRUE pytest tests/user_guide_test.py
