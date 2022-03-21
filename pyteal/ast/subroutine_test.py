@@ -1,7 +1,11 @@
+from distutils.version import StrictVersion
 from typing import List
 import pytest
 
 from .. import *
+from ..ast.nonce import Nonce
+
+
 from .subroutine import evaluateSubroutine
 
 # this is not necessary but mypy complains if it's not included
@@ -40,6 +44,15 @@ def test_subroutine_definition():
     def fnWithPartialExprAnnotations(a, b: Expr) -> Expr:
         return Return()
 
+    def fnWithReturnTernaryExprAnnotations(a, b: Expr) -> Nonce:
+        return Nonce("hello", "nonce", Bytes("some bytes"))
+
+    def fnWithScratchAndExprAnnotations(a: ScratchVar, b: Expr) -> Expr:
+        return Return()
+
+    def fnWithABITypeAnnotations(a: abi.Uint16, b: abi.Tuple) -> Expr:
+        return Return()
+
     cases = (
         (fn0Args, 0, "fn0Args"),
         (fn1Args, 1, "fn1Args"),
@@ -53,6 +66,9 @@ def test_subroutine_definition():
         (fnWithOnlyReturnExprAnnotations, 2, "fnWithOnlyReturnExprAnnotations"),
         (fnWithOnlyArgExprAnnotations, 2, "fnWithOnlyArgExprAnnotations"),
         (fnWithPartialExprAnnotations, 2, "fnWithPartialExprAnnotations"),
+        (fnWithReturnTernaryExprAnnotations, 2, "fnWithReturnTernaryExprAnnotations"),
+        (fnWithScratchAndExprAnnotations, 2, "fnWithScratchAndExprAnnotations"),
+        (fnWithABITypeAnnotations, 2, "fnWithABITypeAnnotations"),
     )
 
     for (fn, numArgs, name) in cases:

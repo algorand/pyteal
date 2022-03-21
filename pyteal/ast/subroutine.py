@@ -13,6 +13,8 @@ from .scratchvar import DynamicScratchVar, ScratchVar
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
+# NOTE trying to do return, rather than "write to reference", experimenting here
+
 
 class SubroutineDefinition:
     nextSubroutineId = 0
