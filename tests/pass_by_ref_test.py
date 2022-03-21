@@ -452,12 +452,24 @@ def test_deprecated(pt):
 def test_pass_by_ref_guardrails():
     @Subroutine(TealType.uint64)
     def ok(x):
-        # not really, ok at runtime... but should be ok at compile time
+        # not really ok at runtime... but should be ok at compile time
         return ok(x)
 
     @Subroutine(TealType.uint64)
     def not_ok(x: ScratchVar):
-        # not really, ok at runtime... but should be ok at compile time
+        # not ok both at compile and runtime
         return not_ok(x)
 
-    pytest.fail("the test is currently RED")
+    approval_ok = ok(Int(42))
+
+    x = ScratchVar(TealType.uint64)
+    approval_not_ok = Seq(x.store(Int(42)), not_ok(x))
+
+    assert compileTeal(approval_ok, Mode.Application, version=6)
+
+    with pytest.raises(TealInputError) as e:
+        compileTeal(approval_not_ok, Mode.Application, version=6)
+
+    assert "pass-by-ref recursion disallowed: currently, a recursive @Subroutine may not accept ScratchVar-typed arguments"
+
+    # pytest.fail("the test is currently RED")
