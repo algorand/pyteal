@@ -69,7 +69,7 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
     * apps:
         * input received via `txna ApplicationArgs i`
         * args are converted (cf. "input conversion" below) and passed to the subroutine
-        * subroutine output is logged after possible conversion (cf. "logging coversion")
+        * subroutine output is logged after possible conversion (cf. "logging conversion")
         * subroutine output is converted (cf "output conversion" below)
     * input conversion:
         * Empty input array:
