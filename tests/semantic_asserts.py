@@ -218,8 +218,8 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
                     DRProp.maxStackHeight: 2,
                     DRProp.status: lambda args: "PASS" if math.gcd(*args) else "REJECT",
                     DRProp.passed: lambda args: bool(math.gcd(*args)),
-                    DRProp.passed: lambda args: not bool(math.gcd(*args)),
-                    DRProp.passed: lambda args: True,
+                    DRProp.rejected: lambda args: not bool(math.gcd(*args)),
+                    DRProp.noError: lambda args: True,
                 },
             }
 
