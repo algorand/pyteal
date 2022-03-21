@@ -3,6 +3,7 @@ from typing import List, Dict, Set, Optional, TypeVar
 from collections import OrderedDict
 from itertools import chain
 
+from ..errors import TealInputError, TealInternalError
 from ..types import TealType
 from ..ast import SubroutineDefinition
 from ..ir import TealComponent, TealOp, Op
@@ -11,7 +12,9 @@ from ..ir import TealComponent, TealOp, Op
 Node = TypeVar("Node")
 
 
-def depthFirstSearch(graph: Dict[Node, Set[Node]], start: Node, end: Node) -> bool:
+def depthFirstSearch(
+    graph: Dict[Node, Set[Node]], start: Node, end: Node, include_path: bool = False
+) -> bool:
     """Check whether a path between start and end exists in the graph.
 
     This works even if start == end, in which case True is only returned if the
@@ -19,16 +22,23 @@ def depthFirstSearch(graph: Dict[Node, Set[Node]], start: Node, end: Node) -> bo
     """
     visited: Set[Node] = set()
     stack: List[Node] = list(graph[start])
+    path: List[Node] = [start]
 
     while len(stack) != 0:
         current = stack.pop()
+        path.append(current)
         if current in visited:
+            path.pop()
             continue
         visited.add(current)
         if end == current:
+            if include_path:
+                return True, path
             return True
         stack += list(graph[current])
 
+    if include_path:
+        return False, []
     return False
 
 
@@ -62,6 +72,21 @@ def findRecursionPoints(
     return reentryPoints
 
 
+def find_recursive_path(
+    subroutine_graph: Dict[SubroutineDefinition, Set[SubroutineDefinition]],
+    subroutine: SubroutineDefinition,
+) -> List[SubroutineDefinition]:
+    found, path = depthFirstSearch(
+        subroutine_graph, subroutine, subroutine, include_path=True
+    )
+    if found != bool(path):
+        raise TealInternalError(
+            f"mismatch between found ({found}) and actual found path {path}"
+        )
+
+    return path
+
+
 def spillLocalSlotsDuringRecursion(
     version: int,
     subroutineMapping: Dict[Optional[SubroutineDefinition], List[TealComponent]],
@@ -89,6 +114,23 @@ def spillLocalSlotsDuringRecursion(
             the local slots which must be spilled for each subroutine.
     """
     recursivePoints = findRecursionPoints(subroutineGraph)
+
+    recursive_byref = None
+    for k, v in recursivePoints.items():
+        if v and k.by_ref_args:
+            recursive_byref = k
+            break
+
+    recursive_byref_path = []
+    if recursive_byref:
+        recursive_byref_path = [
+            f.name() for f in find_recursive_path(subroutineGraph, recursive_byref)
+        ]
+
+    if recursive_byref_path:
+        raise TealInputError(
+            f"pass-by-ref recursion disallowed. Currently, a recursive @Subroutine may not accept ScratchVar-typed arguments but a a possible recursive call-path was detected: {'()-->'.join(recursive_byref_path)}()"
+        )
 
     coverAvailable = version >= Op.cover.min_version
 

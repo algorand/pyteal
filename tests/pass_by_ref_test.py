@@ -450,26 +450,63 @@ def test_deprecated(pt):
 
 
 def test_pass_by_ref_guardrails():
+    ##### Subroutine Definitions #####
     @Subroutine(TealType.uint64)
     def ok(x):
         # not really ok at runtime... but should be ok at compile time
         return ok(x)
 
     @Subroutine(TealType.uint64)
+    def ok_byref(x: ScratchVar):
+        return Int(42)
+
+    @Subroutine(TealType.uint64)
+    def ok_indirect1(x):
+        return ok_indirect2(x)
+
+    @Subroutine(TealType.uint64)
+    def ok_indirect2(x):
+        return ok_indirect1(x)
+
+    @Subroutine(TealType.uint64)
     def not_ok(x: ScratchVar):
         # not ok both at compile and runtime
         return not_ok(x)
 
+    @Subroutine(TealType.uint64)
+    def not_ok_indirect1(x: ScratchVar):
+        return not_ok_indirect2(x)
+
+    @Subroutine(TealType.uint64)
+    def not_ok_indirect2(x: ScratchVar):
+        return not_ok_indirect1(x)
+
+    ##### Approval PyTEAL Expressions #####
+
     approval_ok = ok(Int(42))
 
     x = ScratchVar(TealType.uint64)
+
+    approval_ok_byref = Seq(x.store(Int(42)), ok_byref(x))
+
+    approval_ok_indirect = ok_indirect1(Int(42))
+
     approval_not_ok = Seq(x.store(Int(42)), not_ok(x))
 
+    approval_not_ok_indirect = Seq(x.store(Int(42)), not_ok_indirect1(x))
+
     assert compileTeal(approval_ok, Mode.Application, version=6)
+
+    assert compileTeal(approval_ok_byref, Mode.Application, version=6)
+
+    assert compileTeal(approval_ok_indirect, Mode.Application, version=6)
 
     with pytest.raises(TealInputError) as e:
         compileTeal(approval_not_ok, Mode.Application, version=6)
 
-    assert "pass-by-ref recursion disallowed: currently, a recursive @Subroutine may not accept ScratchVar-typed arguments"
+    assert "pass-by-ref recursion disallowed. Currently, a recursive @Subroutine may not accept ScratchVar-typed arguments but a a possible recursive call-path was detected: not_ok()-->not_ok()"
 
-    # pytest.fail("the test is currently RED")
+    with pytest.raises(TealInputError) as e:
+        compileTeal(approval_not_ok_indirect, Mode.Application, version=6)
+
+    assert "pass-by-ref recursion disallowed. Currently, a recursive @Subroutine may not accept ScratchVar-typed arguments but a a possible recursive call-path was detected: not_ok_indirect1()-->not_ok_indirect2()-->not_ok_indirect1()"
