@@ -41,15 +41,13 @@ def user_guide_snippet_dynamic_scratch_var() -> Expr:
     )
 
 
-SEMANTIC_TESTING = True
-
 # RECURSIVE VERSION HAS AN INFINITE LOOP!!!!
 @Subroutine(TealType.uint64, input_types=[TealType.uint64, TealType.uint64])
-def euclid(x, y):
+def buggy_euclid(x, y):
     return (
         If(x < y)
-        .Then(euclid(y, x))
-        .Else(If(y == Int(0)).Then(x).Else(euclid(x, Mod(y, x))))
+        .Then(buggy_euclid(y, x))
+        .Else(If(y == Int(0)).Then(x).Else(buggy_euclid(x, Mod(y, x))))
     )
 
 
