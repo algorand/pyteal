@@ -286,7 +286,6 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
     else:
 
         def approval():
-
             if subr.subroutine.returnType == TealType.none:
                 result = ScratchVar(TealType.uint64)
                 part1 = [subr_caller(), result.store(Int(1337))]
