@@ -575,7 +575,7 @@ def semantic_test_runner(
 
     # 5. Sequential assertions (if provided any)
     for i, type_n_assertion in enumerate(assertions.items()):
-        assert_type, assertion = type_n_assertion
+        assert_type, predicate = type_n_assertion
 
         if SKIP_SCRATCH_ASSERTIONS and assert_type == DRProp.finalScratch:
             print("skipping scratch assertions because unstable slots produced")
@@ -584,10 +584,10 @@ def semantic_test_runner(
         assert SequenceAssertion.mode_has_assertion(exec_mode, assert_type)
 
         assertion = SequenceAssertion(
-            assertion, name=f"{case_name}[{i}]@{mode}-{assert_type}"
+            predicate, name=f"{case_name}[{i}]@{mode}-{assert_type}"
         )
         print(
-            f"{i+1}. Semantic assertion for {case_name}-{mode}: {assert_type} <<{assertion}>>"
+            f"{i+1}. Semantic assertion for {case_name}-{mode}: {assert_type} <<{predicate}>>"
         )
         assertion.dryrun_assert(inputs, dryrun_results, assert_type)
 
