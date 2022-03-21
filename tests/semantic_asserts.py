@@ -178,7 +178,7 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
                     args, f"failed for {args}"
                 )
             euclid_csv = DryRunTransactionResult.csv_report(inputs, euclid_results)
-            with open(Encodercwd() / "euclid.csv", "w") as f:
+            with open(Path.cwd() / "euclid.csv", "w") as f:
                 f.write(euclid_csv)
 
     Example 3: Declarative Sequence Assertions with e2e_pyteal
