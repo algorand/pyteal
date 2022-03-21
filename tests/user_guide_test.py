@@ -133,7 +133,7 @@ def test_e2e_pyteal_examples():
         args, "stack_top() failed for lsig"
     )
 
-    # check to see that btoi of x^2 has been logged (only for the app case)
+    # check to see that itbo of x^2 has been logged (only for the app case)
     assert app_result.last_log() == DryRunEncoder.hex(x ** 2), app_result.report(
         args, "last_log() failed for app"
     )
