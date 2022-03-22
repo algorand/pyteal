@@ -99,7 +99,7 @@ class DynamicScratchVar(ScratchVar):
         """
         # Explanatory comment per Issue #242: Preliminary evidence shows that letting users
         # pass in any ScratchVar subtype (i.e. DynamicScratchVar) may in fact work.
-        # However, we are leaving this guard in place pending further invstigation.
+        # However, we are leaving this guard in place pending further investigation.
         # TODO: gain confidence that DynamicScratchVar can be used here and
         # modify the below strict type equality to `isinstance(index_var, ScratchVar)`
         if type(index_var) is not ScratchVar:
