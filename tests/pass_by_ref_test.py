@@ -278,7 +278,7 @@ def lots_o_vars():
 
 
 def test_increment():
-    prefix = "pass-by-ref recursion disallowed. ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: "
+    prefix = "ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: "
 
     with pytest.raises(TealInputError) as e:
         compile_and_save(increment, 6)
@@ -569,7 +569,7 @@ def test_pass_by_ref_guardrails():
     with pytest.raises(TealInputError) as err:
         compileTeal(approval_not_ok, Mode.Application, version=6)
 
-    prefix = "pass-by-ref recursion disallowed. ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: "
+    prefix = "ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: "
     assert f"{prefix}not_ok()-->not_ok()" in str(err)
 
     with pytest.raises(TealInputError) as err:

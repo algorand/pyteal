@@ -124,7 +124,7 @@ def spillLocalSlotsDuringRecursion(
             break
 
     if recursive_byref:
-        msg = "pass-by-ref recursion disallowed. ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: {}()"
+        msg = "ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: {}()"
         raise TealInputError(
             msg.format(
                 "()-->".join(
