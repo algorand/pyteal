@@ -3,7 +3,7 @@ from typing import List, Dict, Set, Optional, TypeVar
 from collections import OrderedDict
 from itertools import chain
 
-from ..errors import TealInputError, TealInternalError
+from ..errors import TealInputError
 from ..types import TealType
 from ..ast import SubroutineDefinition
 from ..ir import TealComponent, TealOp, Op
