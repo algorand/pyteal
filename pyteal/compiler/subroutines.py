@@ -123,15 +123,15 @@ def spillLocalSlotsDuringRecursion(
             recursive_byref = k
             break
 
-    recursive_byref_path = []
     if recursive_byref:
-        recursive_byref_path = [
-            f.name() for f in find_recursive_path(subroutineGraph, recursive_byref)
-        ]
-
-    if recursive_byref_path:
+        msg = "pass-by-ref recursion disallowed. ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: {}()"
         raise TealInputError(
-            f"pass-by-ref recursion disallowed. Currently, a recursive @Subroutine may not accept ScratchVar-typed arguments but a possible recursive call-path was detected: {'()-->'.join(recursive_byref_path)}()"
+            msg.format(
+                "()-->".join(
+                    f.name()
+                    for f in find_recursive_path(subroutineGraph, recursive_byref)
+                )
+            )
         )
 
     coverAvailable = version >= Op.cover.min_version

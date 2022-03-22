@@ -278,12 +278,11 @@ def lots_o_vars():
 
 
 def test_increment():
+    prefix = "pass-by-ref recursion disallowed. ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: "
+
     with pytest.raises(TealInputError) as e:
         compile_and_save(increment, 6)
-    assert (
-        "pass-by-ref recursion disallowed. Currently, a recursive @Subroutine may not accept ScratchVar-typed arguments but a possible recursive call-path was detected: plus_one()-->plus_one()"
-        in str(e)
-    )
+    assert f"{prefix}plus_one()-->plus_one()" in str(e)
 
 
 # Testable by black-box:
@@ -574,23 +573,18 @@ def test_pass_by_ref_guardrails():
     with pytest.raises(TealInputError) as err:
         compileTeal(approval_not_ok, Mode.Application, version=6)
 
-    assert (
-        "pass-by-ref recursion disallowed. Currently, a recursive @Subroutine may not accept ScratchVar-typed arguments but a possible recursive call-path was detected: not_ok()-->not_ok()"
-        in str(err)
-    )
+    prefix = "pass-by-ref recursion disallowed. ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: "
+    assert f"{prefix}not_ok()-->not_ok()" in str(err)
 
     with pytest.raises(TealInputError) as err:
         compileTeal(approval_not_ok_indirect, Mode.Application, version=6)
 
     assert (
-        "pass-by-ref recursion disallowed. Currently, a recursive @Subroutine may not accept ScratchVar-typed arguments but a possible recursive call-path was detected: not_ok_indirect1()-->not_ok_indirect2()-->not_ok_indirect1()"
+        f"{prefix}not_ok_indirect1()-->not_ok_indirect2()-->not_ok_indirect1()"
         in str(err)
     )
 
     with pytest.raises(TealInputError) as err:
         compileTeal(approval_its_complicated, Mode.Application, version=6)
 
-    assert (
-        "pass-by-ref recursion disallowed. Currently, a recursive @Subroutine may not accept ScratchVar-typed arguments but a possible recursive call-path was detected: c()-->g()-->a()-->c()"
-        in str(err)
-    )
+    assert f"{prefix}c()-->g()-->a()-->c()" in str(err)
