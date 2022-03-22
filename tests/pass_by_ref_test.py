@@ -498,8 +498,7 @@ def test_pass_by_ref_guardrails():
             --> j
 
     *c - this is the only "pass by-ref" subroutine
-    I expected the following error path "c-->g-->a-->c"
-    (but DFS actually gave the equally invalid path: "c-->g-->a-->d-->j-->i-->c")
+    Expect the following error path: c-->g-->a-->c
     """
 
     @Subroutine(TealType.uint64)
