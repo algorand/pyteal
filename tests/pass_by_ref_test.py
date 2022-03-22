@@ -497,9 +497,6 @@ def test_pass_by_ref_guardrails():
             --> i
             --> j
 
-    stack, path:    b|c|d  a
-                    b|c    a|d
-
     *c - this is the only "pass by-ref" subroutine
     I expected the following error path "c-->g-->a-->c"
     (but DFS actually gave the equally invalid path: "c-->g-->a-->d-->j-->i-->c")
