@@ -1,6 +1,6 @@
 from pickletools import optimize
-from .optimizer import OptimizeOptions, apply_optimizations
-from .optimizer import apply_local_optimizations
+from .optimizer import OptimizeOptions
+from .optimizer import _apply_local_optimizations
 
 from pyteal.ir.tealop import TealOp
 from pyteal.ir.ops import Op
@@ -17,14 +17,14 @@ def test_optimize_slots_basic():
         TealOp(None, Op.load, 1),
     ]
 
-    options = OptimizeOptions(useSlotToStack=True)
-    result_teal = apply_local_optimizations(teal, options)
+    options = OptimizeOptions(use_slot_to_stack=True)
+    result_teal = _apply_local_optimizations(teal, options)
 
     expected = []
     assert result_teal == expected
 
     options = OptimizeOptions()
-    result_teal = apply_local_optimizations(teal, options)
+    result_teal = _apply_local_optimizations(teal, options)
 
     expected = teal
     assert result_teal == expected
@@ -38,14 +38,14 @@ def test_optimize_slots_iteration():
         TealOp(None, Op.load, 1),
     ]
 
-    options = OptimizeOptions(useSlotToStack=True, iterateOptimizations=True)
-    result_teal = apply_local_optimizations(teal, options)
+    options = OptimizeOptions(use_slot_to_stack=True, iterate_optimizations=True)
+    result_teal = _apply_local_optimizations(teal, options)
 
     expected = []
     assert result_teal == expected
 
-    options = OptimizeOptions(useSlotToStack=True)
-    result_teal = apply_local_optimizations(teal, options)
+    options = OptimizeOptions(use_slot_to_stack=True)
+    result_teal = _apply_local_optimizations(teal, options)
 
     expected = [
         TealOp(None, Op.store, 1),
@@ -63,8 +63,8 @@ def test_optimize_slots_with_dependency():
         TealOp(None, Op.load, 1),
     ]
 
-    options = OptimizeOptions(useSlotToStack=True, iterateOptimizations=True)
-    result_teal = apply_local_optimizations(teal, options)
+    options = OptimizeOptions(use_slot_to_stack=True, iterate_optimizations=True)
+    result_teal = _apply_local_optimizations(teal, options)
 
     expected = [
         TealOp(None, Op.store, 1),
@@ -81,8 +81,8 @@ def test_optimize_slots_with_dependency():
         TealOp(None, Op.load, 2),
     ]
 
-    options = OptimizeOptions(useSlotToStack=True, iterateOptimizations=True)
-    result_teal = apply_local_optimizations(teal, options)
+    options = OptimizeOptions(use_slot_to_stack=True, iterate_optimizations=True)
+    result_teal = _apply_local_optimizations(teal, options)
 
     expected = teal
     assert result_teal == expected
