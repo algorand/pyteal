@@ -5,6 +5,7 @@ from pyteal.ir.tealcomponent import TealComponent
 from pyteal.ir.tealop import TealOp
 from pyteal.ir.ops import Op
 
+
 @dataclass
 class OptimizeOptions:
     """An object which specifies the optimizations to be performed.
