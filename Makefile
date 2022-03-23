@@ -18,6 +18,13 @@ mypy:
 test:
 	pytest
 
+integration-env-up:
+	rm -rf .sandbox
+	git clone git@github.com:algorand/sandbox.git .sandbox
+	.sandbox/sandbox up dev
+
+integration-env-down:
+	.sandbox/sandbox down dev
 
 # Extras:
 

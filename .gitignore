@@ -136,3 +136,6 @@ dmypy.json
 
 # Comma Separated Value report files
 *.csv
+
+# Integration tests
+.sandbox

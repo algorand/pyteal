@@ -28,6 +28,16 @@ jobs:
         run: make pip
       - name: Build and Test
         run: make build-and-test
+  run-integration-tests:
+    runs-on: ubuntu-20.04
+    container: python:3.10-slim
+    steps:
+      - name: Setup integration test environment
+        run: make integration-env-up
+      - name: Run integration tests
+        run: make blackbox
+      - name: Tear down integration test environment
+        run: make integration-env-down
   build-docset:
     runs-on: ubuntu-20.04
     container: python:3.9  # Needs `make`, can't be slim
