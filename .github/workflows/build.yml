@@ -40,6 +40,11 @@ jobs:
         run: |
           apt update -y
           apt install -y git make
+      - name: Clone sandbox
+        uses: actions/checkout@v2
+        with:
+          repository: algorand/sandbox
+          path: .sandbox
       - name: Setup integration test environment
         run: make integration-env-up
       - name: Run integration tests
