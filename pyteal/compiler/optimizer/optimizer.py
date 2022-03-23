@@ -73,7 +73,7 @@ def _apply_local_optimizations(
 
 
 # Currently, only local optimizations are available so this is equivalent to
-# calling applyLocalOptimizations().
+# calling apply_local_optimizations().
 def apply_optimizations(
     teal: List[TealComponent], options: OptimizeOptions
 ) -> List[TealComponent]:
