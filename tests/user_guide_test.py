@@ -19,9 +19,9 @@ from pyteal import *
 
 
 from .compile_asserts import assert_new_v_old
-from .semantic_asserts import e2e_pyteal, algod_with_assertion, mode_to_execution_mode
+from .blackbox_asserts import e2e_pyteal, algod_with_assertion, mode_to_execution_mode
 
-SEMANTIC_TESTING = os.environ.get("HAS_ALGOD") == "TRUE"
+BLACKBOX_TESTING = os.environ.get("HAS_ALGOD") == "TRUE"
 
 
 def user_guide_snippet_dynamic_scratch_var() -> Expr:
@@ -110,7 +110,7 @@ def test_e2e_pyteal_examples():
         },
     }
 
-    if not SEMANTIC_TESTING:
+    if not BLACKBOX_TESTING:
         print("exiting test without dry run execution")
         return
 

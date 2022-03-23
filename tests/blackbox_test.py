@@ -6,7 +6,7 @@ from typing import Dict, Tuple
 import pytest
 
 from .compile_asserts import assert_teal_as_expected
-from .semantic_asserts import (
+from .blackbox_asserts import (
     algod_with_assertion,
     e2e_pyteal,
     mode_to_execution_mode,
@@ -24,7 +24,7 @@ from algosdk.testing.teal_blackbox import (
 from pyteal import *
 
 # TODO: get tests working on github and set this to True
-SEMANTIC_TESTING = os.environ.get("HAS_ALGOD") == "TRUE"
+BLACKBOX_TESTING = os.environ.get("HAS_ALGOD") == "TRUE"
 # TODO: remove these skips after the following issue has been fixed https://github.com/algorand/pyteal/issues/199
 STABLE_SLOT_GENERATION = False
 SKIP_SCRATCH_ASSERTIONS = not STABLE_SLOT_GENERATION
@@ -81,7 +81,7 @@ def utest_any_args(x, y, z):
     return Seq(x.store(Int(0)), x.load())
 
 
-####### Subroutine Definitions for Semantic E2E Testing ########
+####### Subroutine Definitions for Blackbox Testing ########
 @Subroutine(TealType.uint64, input_types=[])
 def exp():
     return Int(2) ** Int(10)
@@ -150,7 +150,7 @@ UNITS = [
 def test_e2e_pyteal(subr_n_mode):
     subr, mode = subr_n_mode
 
-    path = Path.cwd() / "tests" / "teal" / "semantic" / "unit"
+    path = Path.cwd() / "tests" / "teal" / "blackbox" / "unit"
     is_app = mode == Mode.Application
     name = f"{'app' if is_app else 'lsig'}_{subr.name()}"
 
@@ -162,7 +162,7 @@ def test_e2e_pyteal(subr_n_mode):
     assert_teal_as_expected(save_to, path / (name + "_expected.teal"))
 
 
-####### Semantic E2E Testing ########
+####### Blackbox Testing ########
 
 
 def fac_with_overflow(n):
@@ -531,7 +531,7 @@ saved to {tealpath}:
     return teal, is_app, path, filebase
 
 
-def semantic_test_runner(
+def blackbox_test_runner(
     subr: SubroutineFnWrapper,
     mode: Mode,
     scenario: Dict[DRProp, dict],
@@ -539,7 +539,7 @@ def semantic_test_runner(
     assemble_constants: bool = True,
 ):
     case_name = subr.name()
-    print(f"semantic e2e test of {case_name} with mode {mode}")
+    print(f"blackbox test of {case_name} with mode {mode}")
     exec_mode = mode_to_execution_mode(mode)
 
     # 0. Validations
@@ -551,7 +551,7 @@ def semantic_test_runner(
         subr, mode, version, assemble_constants, case_name
     )
 
-    if not SEMANTIC_TESTING:
+    if not BLACKBOX_TESTING:
         print(
             "Exiting early without conducting end-to-end dry run testing. Sayonara!!!!!"
         )
@@ -586,9 +586,7 @@ def semantic_test_runner(
         assertion = SequenceAssertion(
             predicate, name=f"{case_name}[{i}]@{mode}-{assert_type}"
         )
-        print(
-            f"{i+1}. Semantic assertion for {case_name}-{mode}: {assert_type} <<{predicate}>>"
-        )
+        print(f"{i+1}. Assertion for {case_name}-{mode}: {assert_type} <<{predicate}>>")
         assertion.dryrun_assert(inputs, dryrun_results, assert_type)
 
 
@@ -620,7 +618,7 @@ def test_e2e_subroutines_as_apps(
     subr_n_scenario: Tuple[SubroutineFnWrapper, Dict[DRProp, dict]]
 ):
     subr, scenario = subr_n_scenario
-    semantic_test_runner(subr, Mode.Application, scenario, 6)
+    blackbox_test_runner(subr, Mode.Application, scenario, 6)
 
 
 @pytest.mark.parametrize("subr_n_scenario", LOGICSIG_SCENARIOS.items())
@@ -628,4 +626,4 @@ def test_e2e_subroutines_as_logic_sigs(
     subr_n_scenario: Tuple[SubroutineFnWrapper, Dict[DRProp, dict]]
 ):
     subr, scenario = subr_n_scenario
-    semantic_test_runner(subr, Mode.Signature, scenario, 6)
+    blackbox_test_runner(subr, Mode.Signature, scenario, 6)
