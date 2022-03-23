@@ -46,7 +46,7 @@ def mode_to_execution_mode(mode: Mode) -> blackbox.ExecutionMode:
     raise Exception(f"Unknown mode {mode} of type {type(mode)}")
 
 
-def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
+def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
     """Functor producing ready-to-compile PyTeal programs from annotated subroutines
 
     Args:
@@ -56,7 +56,7 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
 
     Returns:
         a function that called with no parameters -e.g. result()-
-        returns a PyTeal expression compiling to a ready-to-test E2E TEAL program.
+        returns a PyTeal expression compiling to a ready-to-test TEAL program.
 
     The return type is callable in order to adhere to the API of end-to-end unit tests.
 
@@ -96,7 +96,7 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
             or unknown at compile time (TealType.any) how to convert to Bytes
 
 
-    Example 1: Using e2e_pyteal for a simple test of both an app and logic sig:
+    Example 1: Using blackbox_pyteal for a simple test of both an app and logic sig:
         .. code-block:: python
             from algosdk.testing.teal_blackbox import (
                 DryRunEncoder,
@@ -108,8 +108,8 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
                 return x ** Int(2)
 
             # use this function to create pyteal app and signature expression approval functions:
-            approval_app = e2e_pyteal(square, Mode.Application)
-            approval_lsig = e2e_pyteal(square, Mode.Signature)
+            approval_app = blackbox_pyteal(square, Mode.Application)
+            approval_lsig = blackbox_pyteal(square, Mode.Signature)
 
             # compile the evaluated approvals to generate TEAL code
             app_teal = compileTeal(approval_app(), Mode.Application, version=6)
@@ -137,7 +137,7 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
                 args, "last_log() failed for app"
             )
 
-    Example 2: Using e2e_pyteal to make 400 assertions and generate a CSV report with 400 dryrun rows
+    Example 2: Using blackbox_pyteal to make 400 assertions and generate a CSV report with 400 dryrun rows
         .. code-block:: python
             from itertools import product
             import math
@@ -160,7 +160,7 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
                 )
                 return Seq(For(start, cond, step).Do(Pop(Int(1))), a.load())
 
-            euclid_app = e2e_pyteal(euclid, Mode.Application)
+            euclid_app = blackbox_pyteal(euclid, Mode.Application)
             euclid_app_teal = compileTeal(euclid_app(), Mode.Application, version=6)
 
             # generate a report with 400 = 20*20 dry run rows:
@@ -181,7 +181,7 @@ def e2e_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
             with open(Path.cwd() / "euclid.csv", "w") as f:
                 f.write(euclid_csv)
 
-    Example 3: Declarative Sequence Assertions with e2e_pyteal
+    Example 3: Declarative Sequence Assertions with blackbox_pyteal
         .. code-block:: python
             from itertools import product
             import math

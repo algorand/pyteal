@@ -19,7 +19,11 @@ from pyteal import *
 
 
 from .compile_asserts import assert_new_v_old
-from .blackbox_asserts import e2e_pyteal, algod_with_assertion, mode_to_execution_mode
+from .blackbox_asserts import (
+    blackbox_pyteal,
+    algod_with_assertion,
+    mode_to_execution_mode,
+)
 
 BLACKBOX_TESTING = os.environ.get("HAS_ALGOD") == "TRUE"
 
@@ -51,7 +55,7 @@ def buggy_euclid(x, y):
     )
 
 
-def test_e2e_pyteal_examples():
+def test_blackbox_pyteal_examples():
     ##### COMPILATION #####
     # Example 1 - test both app and logic sig
     @Subroutine(TealType.uint64, input_types=[TealType.uint64])
@@ -59,8 +63,8 @@ def test_e2e_pyteal_examples():
         return x ** Int(2)
 
     # use this function to create pyteal app and signature expression approval functions:
-    approval_app = e2e_pyteal(square, Mode.Application)
-    approval_lsig = e2e_pyteal(square, Mode.Signature)
+    approval_app = blackbox_pyteal(square, Mode.Application)
+    approval_lsig = blackbox_pyteal(square, Mode.Signature)
 
     # compile the evaluated approvals to generate TEAL code
     app_teal = compileTeal(approval_app(), Mode.Application, version=6)
@@ -79,7 +83,7 @@ def test_e2e_pyteal_examples():
         )
         return Seq(For(start, cond, step).Do(Pop(Int(1))), a.load())
 
-    euclid_app = e2e_pyteal(euclid, Mode.Application)
+    euclid_app = blackbox_pyteal(euclid, Mode.Application)
     euclid_app_teal = compileTeal(euclid_app(), Mode.Application, version=6)
 
     # Example 3: A Declarative Test Scenario

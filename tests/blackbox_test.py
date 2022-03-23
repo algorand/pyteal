@@ -8,7 +8,7 @@ import pytest
 from .compile_asserts import assert_teal_as_expected
 from .blackbox_asserts import (
     algod_with_assertion,
-    e2e_pyteal,
+    blackbox_pyteal,
     mode_to_execution_mode,
 )
 
@@ -147,14 +147,14 @@ UNITS = [
 
 
 @pytest.mark.parametrize("subr_n_mode", product(UNITS, Mode))
-def test_e2e_pyteal(subr_n_mode):
+def test_blackbox_pyteal(subr_n_mode):
     subr, mode = subr_n_mode
 
     path = Path.cwd() / "tests" / "teal" / "blackbox" / "unit"
     is_app = mode == Mode.Application
     name = f"{'app' if is_app else 'lsig'}_{subr.name()}"
 
-    compiled = compileTeal(e2e_pyteal(subr, mode)(), mode, version=6)
+    compiled = compileTeal(blackbox_pyteal(subr, mode)(), mode, version=6)
     save_to = path / (name + ".teal")
     with open(save_to, "w") as f:
         f.write(compiled)
@@ -508,7 +508,7 @@ def wrap_compile_and_save(subr, mode, version, assemble_constants, case_name):
     is_app = mode == Mode.Application
 
     # 1. PyTeal program Expr generation
-    approval = e2e_pyteal(subr, mode)
+    approval = blackbox_pyteal(subr, mode)
 
     # 2. TEAL generation
     path = Path.cwd() / "tests" / "teal"
@@ -614,7 +614,7 @@ def test_stable_teal_generation():
 
 
 @pytest.mark.parametrize("subr_n_scenario", APP_SCENARIOS.items())
-def test_e2e_subroutines_as_apps(
+def test_blackbox_subroutines_as_apps(
     subr_n_scenario: Tuple[SubroutineFnWrapper, Dict[DRProp, dict]]
 ):
     subr, scenario = subr_n_scenario
@@ -622,7 +622,7 @@ def test_e2e_subroutines_as_apps(
 
 
 @pytest.mark.parametrize("subr_n_scenario", LOGICSIG_SCENARIOS.items())
-def test_e2e_subroutines_as_logic_sigs(
+def test_blackbox_subroutines_as_logic_sigs(
     subr_n_scenario: Tuple[SubroutineFnWrapper, Dict[DRProp, dict]]
 ):
     subr, scenario = subr_n_scenario
