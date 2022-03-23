@@ -68,6 +68,7 @@ jobs:
         with:
           repository: algorand/sandbox
           path: .sandbox
+          ref: sleep_longer
 
       - name: Setup integration test environment
         run: make pip build integration-env-up
