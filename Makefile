@@ -19,7 +19,7 @@ test:
 	pytest
 
 integration-env-up:
-	.sandbox/sandbox up dev
+	bash -x .sandbox/sandbox up dev
 
 integration-env-down:
 	.sandbox/sandbox down dev
