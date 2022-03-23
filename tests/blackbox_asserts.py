@@ -185,7 +185,6 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
         .. code-block:: python
             from itertools import product
             import math
-            from pathlib import Path
             import random
 
             from algosdk.testing.teal_blackbox import (
