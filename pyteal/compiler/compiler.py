@@ -174,7 +174,7 @@ def compileTeal(
     *,
     version: int = DEFAULT_TEAL_VERSION,
     assembleConstants: bool = False,
-    optimize: OptimizeOptions = OptimizeOptions(),
+    optimize: OptimizeOptions = None,
 ) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 
@@ -219,7 +219,7 @@ def compileTeal(
         ast, options, subroutineMapping, subroutineGraph, subroutineBlocks
     )
 
-    localSlotAssignments = assignScratchSlotsToSubroutines(
+    localSlotAssignments, reserved_ids = assignScratchSlotsToSubroutines(
         subroutineMapping, subroutineBlocks
     )
 
@@ -239,10 +239,11 @@ def compileTeal(
             )
         teal = createConstantBlocks(teal)
 
-    # note: optimizations are off by default, in which case, applyOptimizations
+    # note: optimizations are off by default, in which case, apply_optimizations
     # won't make any changes. Because the optimizer is invoked on the compiled teal,
     # optimization may apply across block boundaries. This is necessary so for
     # dependency checking.
+    options.optimize.reserved_ids = reserved_ids
     teal = apply_optimizations(teal, options.optimize)
 
     lines = ["#pragma version {}".format(version)]

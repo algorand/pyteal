@@ -1,4 +1,3 @@
-from pickletools import optimize
 from .optimizer import OptimizeOptions
 from .optimizer import _apply_local_optimizations
 
@@ -17,7 +16,7 @@ def test_optimize_slots_basic():
         TealOp(None, Op.load, 1),
     ]
 
-    options = OptimizeOptions(use_slot_to_stack=True)
+    options = OptimizeOptions(scratch_slots=True)
     result_teal = _apply_local_optimizations(teal, options)
 
     expected = []
@@ -38,19 +37,10 @@ def test_optimize_slots_iteration():
         TealOp(None, Op.load, 1),
     ]
 
-    options = OptimizeOptions(use_slot_to_stack=True, iterate_optimizations=True)
+    options = OptimizeOptions(scratch_slots=True)
     result_teal = _apply_local_optimizations(teal, options)
 
     expected = []
-    assert result_teal == expected
-
-    options = OptimizeOptions(use_slot_to_stack=True)
-    result_teal = _apply_local_optimizations(teal, options)
-
-    expected = [
-        TealOp(None, Op.store, 1),
-        TealOp(None, Op.load, 1),
-    ]
     assert result_teal == expected
 
 
@@ -63,7 +53,7 @@ def test_optimize_slots_with_dependency():
         TealOp(None, Op.load, 1),
     ]
 
-    options = OptimizeOptions(use_slot_to_stack=True, iterate_optimizations=True)
+    options = OptimizeOptions(scratch_slots=True)
     result_teal = _apply_local_optimizations(teal, options)
 
     expected = [
@@ -81,7 +71,6 @@ def test_optimize_slots_with_dependency():
         TealOp(None, Op.load, 2),
     ]
 
-    options = OptimizeOptions(use_slot_to_stack=True, iterate_optimizations=True)
     result_teal = _apply_local_optimizations(teal, options)
 
     expected = teal
@@ -130,34 +119,7 @@ retsub
     )
     assert actual == expected
 
-    # single pass optimization
-    expected = """#pragma version 4
-txn Sender
-global CreatorAddress
-==
-bz main_l2
-int 1
-int 2
-callsub add_0
-pop
-main_l2:
-int 1
-return
-
-// add
-add_0:
-store 1
-load 1
-+
-retsub
-    """.strip()
-    optimize_options.use_slot_to_stack = True
-    actual = compileTeal(
-        program, version=4, mode=Mode.Application, optimize=optimize_options
-    )
-    assert actual == expected
-
-    # iterative optimization
+    # optimized
     expected = """#pragma version 4
 txn Sender
 global CreatorAddress
@@ -176,8 +138,7 @@ add_0:
 +
 retsub
     """.strip()
-    optimize_options.use_slot_to_stack = True
-    optimize_options.iterate_optimizations = True
+    optimize_options.scratch_slots = True
     actual = compileTeal(
         program, version=4, mode=Mode.Application, optimize=optimize_options
     )
@@ -249,8 +210,60 @@ load 1
 +
 retsub
     """.strip()
-    optimize_options.use_slot_to_stack = True
-    optimize_options.iterate_optimizations = True
+    optimize_options.scratch_slots = True
+    actual = compileTeal(
+        program, version=4, mode=Mode.Application, optimize=optimize_options
+    )
+    assert actual == expected
+
+
+def test_optimize_subroutine_with_reserved_global_var():
+    global_var = ScratchVar(TealType.uint64, 0)
+
+    @Subroutine(TealType.uint64)
+    def add(a1: Expr) -> Expr:
+        return Seq(global_var.store(Int(2)), global_var.load() + a1)
+
+    program = Seq(
+        [
+            If(Txn.sender() == Global.creator_address()).Then(Pop(add(Int(1)))),
+            Approve(),
+        ]
+    )
+
+    optimize_options = OptimizeOptions()
+
+    # unoptimized
+    expected = """#pragma version 4
+txn Sender
+global CreatorAddress
+==
+bz main_l2
+int 1
+callsub add_0
+pop
+main_l2:
+int 1
+return
+
+// add
+add_0:
+store 1
+int 2
+store 0
+load 0
+load 1
++
+retsub
+    """.strip()
+    actual = compileTeal(
+        program, version=4, mode=Mode.Application, optimize=optimize_options
+    )
+    assert actual == expected
+
+    # The optimization must skip over the reserved slot id so the expected result
+    # hasn't changed.
+    optimize_options.scratch_slots = True
     actual = compileTeal(
         program, version=4, mode=Mode.Application, optimize=optimize_options
     )
@@ -306,8 +319,7 @@ retsub
 
     # optimization shouldn't apply because of the dependency on the
     # slot belonging to the global var.
-    optimize_options.use_slot_to_stack = True
-    optimize_options.iterate_optimizations = True
+    optimize_options.scratch_slots = True
     actual = compileTeal(
         program, version=4, mode=Mode.Application, optimize=optimize_options
     )
@@ -346,7 +358,7 @@ return""".strip()
     )
     assert actual == expected
 
-    # fully optimized
+    # optimized
     expected = """#pragma version 4
 int 0
 int 1
@@ -355,8 +367,7 @@ app_global_get_ex
 pop
 int 1
 return""".strip()
-    optimize_options.use_slot_to_stack = True
-    optimize_options.iterate_optimizations = True
+    optimize_options.scratch_slots = True
     actual = compileTeal(
         program, version=4, mode=Mode.Application, optimize=optimize_options
     )

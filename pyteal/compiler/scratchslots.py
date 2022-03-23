@@ -35,7 +35,7 @@ def collectScratchSlots(
 def assignScratchSlotsToSubroutines(
     subroutineMapping: Dict[Optional[SubroutineDefinition], List[TealComponent]],
     subroutineBlocks: Dict[Optional[SubroutineDefinition], TealBlock],
-) -> Dict[Optional[SubroutineDefinition], Set[int]]:
+) -> Tuple[Dict[Optional[SubroutineDefinition], Set[int]], Set[int]]:
     """Assign scratch slot values for an entire program.
 
     Args:
@@ -96,6 +96,7 @@ def assignScratchSlotsToSubroutines(
 
     slotAssignments: Dict[ScratchSlot, int] = dict()
     slotIds: Set[int] = set()
+    reserved_ids: Set[int] = set()
 
     for slot in allSlots:
         if not slot.isReservedSlot:
@@ -107,6 +108,7 @@ def assignScratchSlotsToSubroutines(
                 "Slot ID {} has been assigned multiple times".format(slot.id)
             )
         slotIds.add(slot.id)
+        reserved_ids.add(slot.id)
 
     nextSlotIndex = 0
     for slot in sorted(allSlots, key=lambda slot: slot.id):
@@ -130,4 +132,4 @@ def assignScratchSlotsToSubroutines(
     for subroutine, slots in localSlots.items():
         assignedLocalSlots[subroutine] = set(slotAssignments[slot] for slot in slots)
 
-    return assignedLocalSlots
+    return assignedLocalSlots, reserved_ids

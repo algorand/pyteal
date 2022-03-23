@@ -161,7 +161,7 @@ def test_assignScratchSlotsToSubroutines_no_requested_ids():
         subroutine3: set(),
     }
 
-    actual = assignScratchSlotsToSubroutines(subroutineMapping, subroutineBlocks)
+    actual, _ = assignScratchSlotsToSubroutines(subroutineMapping, subroutineBlocks)
 
     assert actual == expected
 
@@ -282,7 +282,7 @@ def test_assignScratchSlotsToSubroutines_with_requested_ids():
         subroutine3: set(),
     }
 
-    actual = assignScratchSlotsToSubroutines(subroutineMapping, subroutineBlocks)
+    actual, _ = assignScratchSlotsToSubroutines(subroutineMapping, subroutineBlocks)
 
     assert actual == expected
 
@@ -386,7 +386,7 @@ def test_assignScratchSlotsToSubroutines_invalid_requested_id():
 
     # mainSlot2 and subroutine2Slot1 request the same ID, 100
     with pytest.raises(TealInternalError):
-        actual = assignScratchSlotsToSubroutines(subroutineMapping, subroutineBlocks)
+        actual, _ = assignScratchSlotsToSubroutines(subroutineMapping, subroutineBlocks)
 
 
 def test_assignScratchSlotsToSubroutines_slot_used_before_assignment():
