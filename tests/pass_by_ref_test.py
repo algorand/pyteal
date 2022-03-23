@@ -393,7 +393,7 @@ def oldfac(n):
     return If(n < Int(2)).Then(Int(1)).Else(n * oldfac(n - Int(1)))
 
 
-def wrap_for_semantic_e2e(subr_with_params: Tuple[Tuple[Expr, List[TealType]]]) -> Expr:
+def wrap_for_blackbox(subr_with_params: Tuple[Tuple[Expr, List[TealType]]]) -> Expr:
     subr, params = subr_with_params
 
     def arg(i, p):
@@ -414,8 +414,8 @@ TESTABLE_CASES = [(oldfac, [TealType.uint64])]
 
 
 @pytest.mark.skipif(not STABLE_SLOT_GENERATION, reason="cf. #199")
-@pytest.mark.parametrize("pt", map(wrap_for_semantic_e2e, TESTABLE_CASES))
-def test_semantic_unchanged(pt):
+@pytest.mark.parametrize("pt", map(wrap_for_blackbox, TESTABLE_CASES))
+def test_blackbox_unchanged(pt):
     assert_new_v_old(pt, 6)
 
 
