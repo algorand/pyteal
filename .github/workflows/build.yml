@@ -47,7 +47,7 @@ jobs:
           repository: algorand/sandbox
           path: .sandbox
       - name: Setup integration test environment
-        run: make integration-env-up
+        run: .sandbox/sandbox up dev
       - name: Run integration tests
         run: make blackbox
       - name: Tear down integration test environment
