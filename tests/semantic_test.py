@@ -203,7 +203,7 @@ APP_SCENARIOS = {
             DRProp.status: "PASS",
             DRProp.passed: True,
             DRProp.rejected: False,
-            DRProp.noError: True,
+            DRProp.errorMessage: None,
         },
     },
     square_byref: {
@@ -221,7 +221,7 @@ APP_SCENARIOS = {
             DRProp.status: "PASS",
             DRProp.passed: True,
             DRProp.rejected: False,
-            DRProp.noError: True,
+            DRProp.errorMessage: None,
         },
     },
     square: {
@@ -241,7 +241,7 @@ APP_SCENARIOS = {
             DRProp.status: lambda i: "PASS" if i[0] > 0 else "REJECT",
             DRProp.passed: lambda i: i[0] > 0,
             DRProp.rejected: lambda i: i[0] == 0,
-            DRProp.noError: True,
+            DRProp.errorMessage: None,
         },
     },
     swap: {
@@ -262,7 +262,7 @@ APP_SCENARIOS = {
             DRProp.status: "PASS",
             DRProp.passed: True,
             DRProp.rejected: False,
-            DRProp.noError: True,
+            DRProp.errorMessage: None,
         },
     },
     string_mult: {
@@ -294,7 +294,7 @@ APP_SCENARIOS = {
             DRProp.status: lambda args: ("PASS" if 0 < args[1] < 45 else "REJECT"),
             DRProp.passed: lambda args: 0 < args[1] < 45,
             DRProp.rejected: lambda args: 0 >= args[1] or args[1] >= 45,
-            DRProp.noError: True,
+            DRProp.errorMessage: None,
         },
     },
     oldfac: {
@@ -320,8 +320,8 @@ APP_SCENARIOS = {
             DRProp.status: lambda args: "PASS" if args[0] < 21 else "REJECT",
             DRProp.passed: lambda args: args[0] < 21,
             DRProp.rejected: lambda args: args[0] >= 21,
-            DRProp.noError: lambda args, actual: (
-                actual is True if args[0] < 21 else "overflowed" in actual
+            DRProp.errorMessage: lambda args, actual: (
+                actual is None if args[0] < 21 else "overflowed" in actual
             ),
         },
     },
@@ -348,8 +348,8 @@ APP_SCENARIOS = {
             DRProp.status: lambda args: "PASS" if 0 < args[0] < 8 else "REJECT",
             DRProp.passed: lambda args: 0 < args[0] < 8,
             DRProp.rejected: lambda args: 0 >= args[0] or args[0] >= 8,
-            DRProp.noError: lambda args, actual: (
-                actual is True
+            DRProp.errorMessage: lambda args, actual: (
+                actual is None
                 if args[0] < 17
                 else "dynamic cost budget exceeded" in actual
             ),
@@ -371,7 +371,7 @@ LOGICSIG_SCENARIOS = {
             DRProp.status: "PASS",
             DRProp.passed: True,
             DRProp.rejected: False,
-            DRProp.noError: True,
+            DRProp.errorMessage: None,
         },
     },
     square_byref: {
@@ -389,7 +389,7 @@ LOGICSIG_SCENARIOS = {
             DRProp.status: "PASS",
             DRProp.passed: True,
             DRProp.rejected: False,
-            DRProp.noError: True,
+            DRProp.errorMessage: None,
         },
     },
     square: {
@@ -403,7 +403,7 @@ LOGICSIG_SCENARIOS = {
             DRProp.status: lambda i: "PASS" if i[0] > 0 else "REJECT",
             DRProp.passed: lambda i: i[0] > 0,
             DRProp.rejected: lambda i: i[0] == 0,
-            DRProp.noError: True,
+            DRProp.errorMessage: None,
         },
     },
     swap: {
@@ -423,7 +423,7 @@ LOGICSIG_SCENARIOS = {
             DRProp.status: "PASS",
             DRProp.passed: True,
             DRProp.rejected: False,
-            DRProp.noError: True,
+            DRProp.errorMessage: None,
         },
     },
     string_mult: {
@@ -451,7 +451,7 @@ LOGICSIG_SCENARIOS = {
             DRProp.status: lambda args: "PASS" if args[1] else "REJECT",
             DRProp.passed: lambda args: bool(args[1]),
             DRProp.rejected: lambda args: not bool(args[1]),
-            DRProp.noError: True,
+            DRProp.errorMessage: None,
         },
     },
     oldfac: {
@@ -467,8 +467,8 @@ LOGICSIG_SCENARIOS = {
             DRProp.status: lambda args: "PASS" if args[0] < 21 else "REJECT",
             DRProp.passed: lambda args: args[0] < 21,
             DRProp.rejected: lambda args: args[0] >= 21,
-            DRProp.noError: lambda args, actual: (
-                actual is True
+            DRProp.errorMessage: lambda args, actual: (
+                actual is None
                 if args[0] < 21
                 else "logic 0 failed at line 21: * overflowed" in actual
             ),
@@ -494,8 +494,8 @@ LOGICSIG_SCENARIOS = {
             DRProp.status: lambda args: "PASS" if 0 < args[0] < 15 else "REJECT",
             DRProp.passed: lambda args: 0 < args[0] < 15,
             DRProp.rejected: lambda args: not (0 < args[0] < 15),
-            DRProp.noError: lambda args, actual: (
-                actual is True
+            DRProp.errorMessage: lambda args, actual: (
+                actual is None
                 if args[0] < 15
                 else "dynamic cost budget exceeded" in actual
             ),

@@ -106,7 +106,7 @@ def test_e2e_pyteal_examples():
             DRProp.status: lambda args: "PASS" if math.gcd(*args) else "REJECT",
             DRProp.passed: lambda args: bool(math.gcd(*args)),
             DRProp.rejected: lambda args: not bool(math.gcd(*args)),
-            DRProp.noError: True,
+            DRProp.errorMessage: None,
         },
     }
 
