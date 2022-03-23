@@ -36,6 +36,11 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+      - name: Install required os level applications
+        run: |
+          sudo apt update -y
+          sudo apt install -y curl git nodejs python-is-python3 python3-pip
+          pip install docker-compose
 #      - name: Install required os level applications
 #        run: |
 #         # https://serverfault.com/a/992421
