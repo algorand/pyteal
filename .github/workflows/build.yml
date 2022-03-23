@@ -32,6 +32,10 @@ jobs:
     runs-on: ubuntu-20.04
     container: python:3.10-slim
     steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Install required os level applications
         run: |
           apt update -y
