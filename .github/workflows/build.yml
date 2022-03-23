@@ -30,7 +30,7 @@ jobs:
         run: make build-and-test
   run-integration-tests:
     runs-on: ubuntu-20.04
-    container: python:3.10-slim
+    container: python:3.10
     steps:
       - name: Check out code
         uses: actions/checkout@v2
