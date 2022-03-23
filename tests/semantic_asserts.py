@@ -33,7 +33,7 @@ def _indexer_client(
 
 def algod_with_assertion():
     algod = _algod_client()
-    assert algod.status(), "alod.status() did not produce any results"
+    assert algod.status(), "algod.status() did not produce any results"
     return algod
 
 
