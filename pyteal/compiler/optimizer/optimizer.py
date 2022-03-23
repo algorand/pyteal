@@ -12,7 +12,7 @@ class OptimizeOptions:
     Args:
         useSlotToStack (optional): cancel contiguous store/load operations
             that have no load dependencies elsewhere.
-        iterateOptimizations (optional): repeat the optimizations until the
+        iterate_optimizations (optional): repeat the optimizations until the
             code is no longer changed."""
 
     use_slot_to_stack: bool = False
