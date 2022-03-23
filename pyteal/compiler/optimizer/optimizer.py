@@ -10,9 +10,10 @@ from pyteal.ir.ops import Op
 class OptimizeOptions:
     """An object which specifies the optimizations to be performed.
     Args:
-        useSlotToStack (optional): cancel contiguous store/load operations
+
+        use_slot_to_stack (optional): cancel contiguous store/load operations
             that have no load dependencies elsewhere.
-        iterateOptimizations (optional): repeat the optimizations until the
+        iterate_optimizations (optional): repeat the optimizations until the
             code is no longer changed."""
 
     use_slot_to_stack: bool = False

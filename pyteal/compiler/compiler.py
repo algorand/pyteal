@@ -1,4 +1,7 @@
 from typing import List, Tuple, Set, Dict, Optional, cast
+from pyteal.compiler import optimizer
+
+from pyteal.compiler.optimizer import OptimizeOptions, apply_optimizations
 
 from .optimizer import OptimizeOptions, apply_optimizations
 
