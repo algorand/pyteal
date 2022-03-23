@@ -158,7 +158,7 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
                 step = Seq(
                     tmp.store(b.load()), b.store(Mod(a.load(), b.load())), a.store(tmp.load())
                 )
-                return Seq(For(start, cond, step).Do(Pop(Int(1))), a.load())
+                return Seq(For(start, cond, step).Do(Seq()), a.load())
 
             euclid_app = blackbox_pyteal(euclid, Mode.Application)
             euclid_app_teal = compileTeal(euclid_app(), Mode.Application, version=6)
