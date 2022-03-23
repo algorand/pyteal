@@ -39,7 +39,8 @@ jobs:
       - name: Install required os level applications
         run: |
           apt update -y
-          apt install -y git make
+          apt install -y git make python3-pip
+          pip3 install docker-compose
       - name: Clone sandbox
         uses: actions/checkout@v2
         with:
