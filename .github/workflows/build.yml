@@ -19,11 +19,6 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      # - name: Install required os level applications
-      #   run: |
-      #     apt update -y
-      #     apt install -y git make
-      #     git --version
       - name: Install pip dependencies
         run: make pip
       - name: Build and Test

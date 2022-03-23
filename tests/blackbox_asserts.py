@@ -74,10 +74,14 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
     * input conversion:
         * Empty input array:
             do not read any args and call subroutine immediately
-        * arg of TealType.bytes and TealType.any:
+        * arg of TealType.bytes and TealType.anytype:
             read arg and pass to subroutine as is
         * arg of TealType.uint64:
             convert arg to int using Btoi() when received
+        * pass-by-ref ScratchVar arguments:
+            in addition to the above -
+                o store the arg (or converted arg) in a ScratchVar
+                o invoke the subroutine using this ScratchVar instead of the arg (or converted arg)
     * output conversion:
         * TealType.uint64:
             provide subroutine's result to the top of the stack when exiting program
@@ -85,7 +89,7 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
             convert subroutine's result to the top of the stack to its length and then exit
         * TealType.none or TealType.anytype:
             push Int(1337) to the stack as it is either impossible (TealType.none),
-            or unknown at compile time (TealType.any) to convert to an Int
+            or unknown at compile time (TealType.anytype) to convert to an Int
     * logging conversion:
         * TealType.uint64:
             convert subroutine's output using Itob() and log the result
@@ -93,7 +97,7 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
             log the subroutine's result
         * TealType.none or TealType.anytype:
             log Itob(Int(1337)) as it is either impossible (TealType.none),
-            or unknown at compile time (TealType.any) how to convert to Bytes
+            or unknown at compile time (TealType.anytype) how to convert to Bytes
 
 
     Example 1: Using blackbox_pyteal for a simple test of both an app and logic sig:
@@ -266,7 +270,7 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
         if e.type_of() == TealType.anytype:
             x = ScratchVar(TealType.anytype)
             return Seq(x.store(e), Int(1337))
-        # TealType.anytype:
+        # TealType.none:
         return Seq(e, Int(1337))
 
     def make_log(e):
