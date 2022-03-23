@@ -40,7 +40,7 @@ jobs:
         run: |
           sudo apt update -y
           sudo apt install -y curl git nodejs python-is-python3 python3-pip
-          pip install docker-compose
+          # pip install docker-compose
           sudo apt -y install ca-certificates curl gnupg lsb-release
           sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
           sudo echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
