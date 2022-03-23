@@ -9,7 +9,7 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-20.04
-    container: python:${{ matrix.python }}-slim
+    container: python:${{ matrix.python }}
     strategy:
       matrix:
         python: ['3.6', '3.7', '3.8', '3.9', '3.10']
@@ -19,11 +19,11 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Install required os level applications
-        run: |
-          apt update -y
-          apt install -y git make
-          git --version
+      # - name: Install required os level applications
+      #   run: |
+      #     apt update -y
+      #     apt install -y git make
+      #     git --version
       - name: Install pip dependencies
         run: make pip
       - name: Build and Test
