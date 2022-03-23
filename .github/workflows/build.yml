@@ -32,6 +32,10 @@ jobs:
     runs-on: ubuntu-20.04
     container: python:3.10-slim
     steps:
+      - name: Install required os level applications
+        run: |
+          apt update -y
+          apt install -y git make
       - name: Setup integration test environment
         run: make integration-env-up
       - name: Run integration tests
