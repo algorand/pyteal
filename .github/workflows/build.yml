@@ -30,7 +30,7 @@ jobs:
         run: make build-and-test
   run-integration-tests:
     runs-on: ubuntu-20.04
-    container: python:3.10
+    # container: python:3.10
     steps:
       - name: Check out code
         uses: actions/checkout@v2
@@ -39,15 +39,16 @@ jobs:
       - name: Install required os level applications
         run: |
           apt update -y
-          apt install -y git make python3-pip
+          apt install -y python3-pip
           pip3 install docker-compose
       - name: Clone sandbox
         uses: actions/checkout@v2
         with:
           repository: algorand/sandbox
           path: .sandbox
+
       - name: Setup integration test environment
-        run: .sandbox/sandbox up dev
+        run: make pip build integration-env-up
       - name: Run integration tests
         run: make blackbox
       - name: Tear down integration test environment
