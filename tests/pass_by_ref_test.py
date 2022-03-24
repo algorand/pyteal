@@ -96,27 +96,6 @@ def sub_mixed():
     return mixed_annotations(x, y, z)
 
 
-@Subroutine(TealType.none)
-def plus_one(n: ScratchVar):
-    tmp = ScratchVar(TealType.uint64)
-    return (
-        If(n.load() == Int(0))
-        .Then(n.store(Int(1)))
-        .Else(
-            Seq(
-                tmp.store(n.load() - Int(1)),
-                plus_one(tmp),
-                n.store(tmp.load() + Int(1)),
-            )
-        )
-    )
-
-
-def increment():
-    n = ScratchVar(TealType.uint64)
-    return Seq(n.store(Int(4)), plus_one(n), Int(1))
-
-
 def lots_o_vars():
     z = Int(0)
     one = ScratchVar()
@@ -196,14 +175,6 @@ def lots_o_vars():
             )
         )
     )
-
-
-def test_increment():
-    prefix = "ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: "
-
-    with pytest.raises(TealInputError) as e:
-        compile_and_save(increment, 6)
-    assert f"{prefix}plus_one()-->plus_one()" in str(e)
 
 
 def empty_scratches():
@@ -414,6 +385,21 @@ def test_pass_by_ref_guardrails():
             )
         )
 
+    @Subroutine(TealType.none)
+    def plus_one(n: ScratchVar):
+        tmp = ScratchVar(TealType.uint64)
+        return (
+            If(n.load() == Int(0))
+            .Then(n.store(Int(1)))
+            .Else(
+                Seq(
+                    tmp.store(n.load() - Int(1)),
+                    plus_one(tmp),
+                    n.store(tmp.load() + Int(1)),
+                )
+            )
+        )
+
     ##### Approval PyTEAL Expressions #####
 
     approval_ok = ok(Int(42))
@@ -485,6 +471,10 @@ def test_pass_by_ref_guardrails():
             )
         )
 
+    def increment():
+        n = ScratchVar(TealType.uint64)
+        return Seq(n.store(Int(4)), plus_one(n), Int(1))
+
     ##### Assertions #####
 
     assert compileTeal(approval_ok, Mode.Application, version=6)
@@ -536,3 +526,8 @@ def test_pass_by_ref_guardrails():
         compileTeal(fac_by_ref_args(), Mode.Application, version=5)
 
     assert f"{prefix}factorial()-->factorial()" in str(err)
+
+    with pytest.raises(TealInputError) as err:
+        compileTeal(increment(), Mode.Application, version=5)
+
+    assert f"{prefix}plus_one()-->plus_one()" in str(err)
