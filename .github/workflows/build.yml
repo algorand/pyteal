@@ -63,23 +63,23 @@ jobs:
 #          curl -fsSL https://get.docker.com -o get-docker.sh
 #          sh get-docker.sh
 #          pip3 install docker-compose
-      - name: Clone sandbox
-        uses: actions/checkout@v2
-        with:
-          repository: algorand/sandbox
-          path: .sandbox
-          ref: will/reliable-startup
-#      - name: Create sandbox
-#        uses: lucasvanmol/algorand-sandbox-action@v1
+#      - name: Clone sandbox
+#        uses: actions/checkout@v2
 #        with:
-#          config: dev
+#          repository: algorand/sandbox
+#          path: .sandbox
+#          ref: sleep_longer
+      - name: Create sandbox
+        uses: lucasvanmol/algorand-sandbox-action@v1
+        with:
+          config: dev
 
       - name: Setup integration test environment
-        run: make pip build integration-env-up
+        run: make pip build # integration-env-up
       - name: Run integration tests
         run: make blackbox
-      - name: Tear down integration test environment
-        run: make integration-env-down
+#      - name: Tear down integration test environment
+#        run: make integration-env-down
   build-docset:
     runs-on: ubuntu-20.04
     container: python:3.9  # Needs `make`, can't be slim
