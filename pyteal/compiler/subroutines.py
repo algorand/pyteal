@@ -3,6 +3,7 @@ from typing import List, Dict, Set, Optional, TypeVar
 from collections import OrderedDict
 from itertools import chain
 
+from ..errors import TealInputError
 from ..types import TealType
 from ..ast import SubroutineDefinition
 from ..ir import TealComponent, TealOp, Op
@@ -62,6 +63,32 @@ def findRecursionPoints(
     return reentryPoints
 
 
+def find_recursive_path(
+    subroutine_graph: Dict[SubroutineDefinition, Set[SubroutineDefinition]],
+    subroutine: SubroutineDefinition,
+) -> List[SubroutineDefinition]:
+    visited = set()
+    loop = []
+
+    def dfs(x):
+        if x in visited:
+            return False
+
+        visited.add(x)
+        loop.append(x)
+        for y in subroutine_graph[x]:
+            if y == subroutine:
+                loop.append(y)
+                return True
+            if dfs(y):
+                return True
+        loop.pop()
+        return False
+
+    found = dfs(subroutine)
+    return loop if found else []
+
+
 def spillLocalSlotsDuringRecursion(
     version: int,
     subroutineMapping: Dict[Optional[SubroutineDefinition], List[TealComponent]],
@@ -89,6 +116,23 @@ def spillLocalSlotsDuringRecursion(
             the local slots which must be spilled for each subroutine.
     """
     recursivePoints = findRecursionPoints(subroutineGraph)
+
+    recursive_byref = None
+    for k, v in recursivePoints.items():
+        if v and k.by_ref_args:
+            recursive_byref = k
+            break
+
+    if recursive_byref:
+        msg = "ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: {}()"
+        raise TealInputError(
+            msg.format(
+                "()-->".join(
+                    f.name()
+                    for f in find_recursive_path(subroutineGraph, recursive_byref)
+                )
+            )
+        )
 
     coverAvailable = version >= Op.cover.min_version
 
