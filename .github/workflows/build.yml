@@ -65,7 +65,7 @@ jobs:
         with:
           key: docker-layer-caching-${{ github.workflow }}-${{ hashFiles(env.CONFIG, env.GENESIS) }}-{hash}
           restore-keys: docker-layer-caching-${{ github.workflow }}-${{ hashFiles(env.CONFIG, env.GENESIS) }}-
-#      - name: Install required os level applications
+#      - name: Install required OS level applications
 #        run: |
 #         # https://serverfault.com/a/992421
 #          export DEBIAN_FRONTEND=noninteractive
