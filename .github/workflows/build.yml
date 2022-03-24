@@ -6,6 +6,11 @@ on:
       - v**
     branches:
       - master
+
+env:
+  CONFIG: dev
+  GENESIS: genesis/dev/genesis.json
+
 jobs:
   build-test:
     runs-on: ubuntu-20.04
@@ -53,6 +58,13 @@ jobs:
            sudo chmod +x /usr/local/bin/docker-compose
            sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
            docker-compose --version
+      - name: Check cache for Docker layers
+        uses: satackey/action-docker-layer-caching@v0.0.11
+        # Ignore the failure of a step and avoid terminating the job.
+        continue-on-error: true
+        with:
+          key: docker-layer-caching-${{ github.workflow }}-${{ hashFiles(env.CONFIG, env.GENESIS) }}-{hash}
+          restore-keys: docker-layer-caching-${{ github.workflow }}-${{ hashFiles(env.CONFIG, env.GENESIS) }}-
 #      - name: Install required os level applications
 #        run: |
 #         # https://serverfault.com/a/992421
@@ -72,7 +84,7 @@ jobs:
       - name: Create sandbox
         uses: lucasvanmol/algorand-sandbox-action@v1
         with:
-          config: dev
+          config: ${{ env.CONFIG }}
 
       - name: Setup integration test environment
         run: make pip build # integration-env-up
