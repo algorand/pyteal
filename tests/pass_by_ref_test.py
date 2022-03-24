@@ -6,7 +6,7 @@ from pyteal import *
 
 from .compile_asserts import assert_new_v_old, compile_and_save
 
-# TODO: remove thise skips after the following issue has been fixed https://github.com/algorand/pyteal/issues/199
+# TODO: remove these skips when the following is fixed: https://github.com/algorand/pyteal/issues/199
 STABLE_SLOT_GENERATION = False
 
 #### TESTS FOR NEW PyTEAL THAT USES PASS-BY-REF / DYNAMIC
