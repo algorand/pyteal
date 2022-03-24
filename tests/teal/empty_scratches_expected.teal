@@ -1,0 +1,33 @@
+#pragma version 6
+int 0
+store 6
+load 6
+int 0
+stores
+int 1
+store 6
+load 6
+byte ""
+stores
+int 2
+store 6
+load 6
+int 0
+stores
+int 3
+store 6
+load 6
+byte ""
+stores
+int 4
+store 6
+load 6
+int 0
+stores
+int 5
+store 6
+load 6
+byte ""
+stores
+int 42
+return
