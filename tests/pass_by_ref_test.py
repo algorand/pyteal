@@ -202,20 +202,6 @@ def empty_scratches():
     )
 
 
-def make_creatable_factory(approval):
-    """
-    Wrap a pyteal program with code that:
-    * approves immediately in the case of app creation (appId == 0)
-    * runs the original code otherwise
-    """
-
-    def func():
-        return If(Txn.application_id() == Int(0)).Then(Int(1)).Else(approval())
-
-    func.__name__ = approval.__name__
-    return func
-
-
 @Subroutine(TealType.uint64)
 def oldfac(n):
     return If(n < Int(2)).Then(Int(1)).Else(n * oldfac(n - Int(1)))
