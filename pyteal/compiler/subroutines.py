@@ -11,7 +11,7 @@ from ..ir import TealComponent, TealOp, Op
 Node = TypeVar("Node")
 
 
-def depthFirstSearch(graph: Dict[Node, Set[Node]], start: Node, end: Node) -> bool:
+def graph_search(graph: Dict[Node, Set[Node]], start: Node, end: Node) -> bool:
     """Check whether a path between start and end exists in the graph.
 
     This works even if start == end, in which case True is only returned if the
@@ -56,7 +56,7 @@ def findRecursionPoints(
         reentryPoints[subroutine] = set(
             callee
             for callee in subroutineGraph[subroutine]
-            if depthFirstSearch(subroutineGraph, callee, subroutine)
+            if graph_search(subroutineGraph, callee, subroutine)
         )
 
     return reentryPoints
