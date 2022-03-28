@@ -45,16 +45,6 @@ def user_guide_snippet_dynamic_scratch_var() -> Expr:
     )
 
 
-# RECURSIVE VERSION HAS AN INFINITE LOOP!!!!
-@Subroutine(TealType.uint64, input_types=[TealType.uint64, TealType.uint64])
-def buggy_euclid(x, y):
-    return (
-        If(x < y)
-        .Then(buggy_euclid(y, x))
-        .Else(If(y == Int(0)).Then(x).Else(buggy_euclid(x, Mod(y, x))))
-    )
-
-
 def test_blackbox_pyteal_examples():
     ##### COMPILATION #####
     # Example 1 - test both app and logic sig
@@ -172,3 +162,22 @@ def test_blackbox_pyteal_examples():
 @pytest.mark.parametrize("snippet", [user_guide_snippet_dynamic_scratch_var])
 def test_user_guide_snippets(snippet):
     assert_new_v_old(snippet, version=6)
+
+
+# RECURSIVE VERSION HAS AN INFINITE LOOP!!!!
+@Subroutine(TealType.uint64, input_types=[TealType.uint64, TealType.uint64])
+def buggy_euclid(x, y):
+    return (
+        If(x < y)
+        .Then(buggy_euclid(y, x))
+        .Else(If(y == Int(0)).Then(x).Else(buggy_euclid(x, Mod(y, x))))
+    )
+
+
+def be(x, y):
+    return be(y, x) if x < y else (x if y == 0 else be(y, x % y))
+
+
+def test_euclid():
+    y = be(7, 3)
+    y == 42
