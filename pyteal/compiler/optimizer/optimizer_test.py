@@ -1,12 +1,8 @@
-from pyteal.compiler import optimizer
 from .optimizer import OptimizeOptions
-from .optimizer import apply_global_optimizations
 
-from pyteal.ir.tealop import TealOp
 from pyteal.ir.ops import Op
 
 from pyteal import *
-from pyteal.ast.subroutine import evaluateSubroutine
 
 import pytest
 

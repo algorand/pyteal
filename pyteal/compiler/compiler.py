@@ -18,7 +18,6 @@ from .sort import sortBlocks
 from .flatten import flattenBlocks, flattenSubroutines
 from .scratchslots import (
     assignScratchSlotsToSubroutines,
-    collectScratchSlots,
     collectUnoptimizedSlotIDs,
 )
 from .subroutines import (

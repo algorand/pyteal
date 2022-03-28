@@ -1,6 +1,5 @@
 from typing import Tuple, List, Set, Dict, Optional, cast
 
-
 from ..ast import ScratchSlot, SubroutineDefinition
 from ..ir import Mode, TealComponent, TealBlock
 from ..ir.ops import Op
@@ -28,11 +27,8 @@ def collectUnoptimizedSlotIDs(
     def collectSlotsFromBlock(block: TealBlock):
         for op in block.ops:
             for slot in op.getSlots():
-                # dynamic slots
-                if op.op == Op.int:
-                    unoptimized_slots.add(slot.id)
-                # reserved slots
-                elif slot.isReservedSlot:
+                # dynamic slot or reserved slot
+                if op.op == Op.int or slot.isReservedSlot:
                     unoptimized_slots.add(slot.id)
 
     for _, start in subroutineBlocks.items():
