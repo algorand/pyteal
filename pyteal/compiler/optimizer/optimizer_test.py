@@ -1,5 +1,6 @@
+from pyteal.compiler import optimizer
 from .optimizer import OptimizeOptions
-from .optimizer import _apply_local_optimizations
+from .optimizer import apply_global_optimizations
 
 from pyteal.ir.tealop import TealOp
 from pyteal.ir.ops import Op
@@ -8,73 +9,6 @@ from pyteal import *
 from pyteal.ast.subroutine import evaluateSubroutine
 
 import pytest
-
-
-def test_optimize_slots_basic():
-    teal = [
-        TealOp(None, Op.store, 1),
-        TealOp(None, Op.load, 1),
-    ]
-
-    options = OptimizeOptions(scratch_slots=True)
-    result_teal = _apply_local_optimizations(teal, options)
-
-    expected = []
-    assert result_teal == expected
-
-    options = OptimizeOptions()
-    result_teal = _apply_local_optimizations(teal, options)
-
-    expected = teal
-    assert result_teal == expected
-
-
-def test_optimize_slots_iteration():
-    teal = [
-        TealOp(None, Op.store, 1),
-        TealOp(None, Op.store, 2),
-        TealOp(None, Op.load, 2),
-        TealOp(None, Op.load, 1),
-    ]
-
-    options = OptimizeOptions(scratch_slots=True)
-    result_teal = _apply_local_optimizations(teal, options)
-
-    expected = []
-    assert result_teal == expected
-
-
-def test_optimize_slots_with_dependency():
-    teal = [
-        TealOp(None, Op.store, 1),
-        TealOp(None, Op.store, 2),
-        TealOp(None, Op.load, 2),
-        TealOp(None, Op.load, 1),
-        TealOp(None, Op.load, 1),
-    ]
-
-    options = OptimizeOptions(scratch_slots=True)
-    result_teal = _apply_local_optimizations(teal, options)
-
-    expected = [
-        TealOp(None, Op.store, 1),
-        TealOp(None, Op.load, 1),
-        TealOp(None, Op.load, 1),
-    ]
-    assert result_teal == expected
-
-    teal = [
-        TealOp(None, Op.store, 1),
-        TealOp(None, Op.store, 2),
-        TealOp(None, Op.load, 2),
-        TealOp(None, Op.load, 1),
-        TealOp(None, Op.load, 2),
-    ]
-
-    result_teal = _apply_local_optimizations(teal, options)
-
-    expected = teal
-    assert result_teal == expected
 
 
 def test_optimize_subroutine():
@@ -138,7 +72,7 @@ add_0:
 +
 retsub
     """.strip()
-    optimize_options.scratch_slots = True
+    optimize_options = OptimizeOptions(scratch_slots=True)
     actual = compileTeal(
         program, version=4, mode=Mode.Application, optimize=optimize_options
     )
@@ -204,13 +138,13 @@ return
 
 // add
 add_0:
-store 1
+store 0
 int 2
-load 1
+load 0
 +
 retsub
     """.strip()
-    optimize_options.scratch_slots = True
+    optimize_options = OptimizeOptions(scratch_slots=True)
     actual = compileTeal(
         program, version=4, mode=Mode.Application, optimize=optimize_options
     )
@@ -263,7 +197,7 @@ retsub
 
     # The optimization must skip over the reserved slot id so the expected result
     # hasn't changed.
-    optimize_options.scratch_slots = True
+    optimize_options = OptimizeOptions(scratch_slots=True)
     actual = compileTeal(
         program, version=4, mode=Mode.Application, optimize=optimize_options
     )
@@ -367,7 +301,7 @@ app_global_get_ex
 pop
 int 1
 return""".strip()
-    optimize_options.scratch_slots = True
+    optimize_options = OptimizeOptions(scratch_slots=True)
     actual = compileTeal(
         program, version=4, mode=Mode.Application, optimize=optimize_options
     )

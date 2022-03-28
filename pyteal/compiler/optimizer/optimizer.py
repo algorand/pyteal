@@ -1,4 +1,5 @@
 from typing import List, cast, Set
+from pyteal.ir.tealblock import TealBlock
 
 from pyteal.ir.tealcomponent import TealComponent
 from pyteal.ir.tealop import TealOp
@@ -11,69 +12,71 @@ class OptimizeOptions:
 
         scratch_slots (optional): cancel contiguous store/load operations
             that have no load dependencies elsewhere.
-        reserved_ids (optional): reserved slot ids that may be treated
+        skip_ids (optional): reserved slot ids that may be treated
             differently during optimization."""
 
-    def __init__(self, *, scratch_slots: bool = False, reserved_ids: Set[int] = None):
+    def __init__(self, *, scratch_slots: bool = False, skip_ids: Set[int] = None):
         self.scratch_slots = scratch_slots
-        self.reserved_ids = reserved_ids if reserved_ids is not None else set()
+        self.skip_ids: Set[int] = skip_ids if skip_ids is not None else set()
 
 
-def _has_load_dependencies(teal: List[TealComponent], slot: int, pos: int):
-    for i, op in enumerate(teal):
-        if i == pos:
-            continue
-
-        if type(op) == TealOp and op.op == Op.load and op.args[0] == slot:
+def _remove_extraneous_slot_access(start: TealBlock, remove: Set[int]):
+    def keep_op(op: TealOp):
+        if type(op) != TealOp or (op.op != Op.store and op.op != Op.load):
             return True
+
+        return cast(int, op.args[0]) not in remove
+
+    for block in TealBlock.Iterate(start):
+        block.ops = list(filter(keep_op, block.ops))
+
+
+def _has_load_dependencies(cur_block: TealBlock, start: TealBlock, slot: int, pos: int):
+    for block in TealBlock.Iterate(start):
+        for i, op in enumerate(block.ops):
+            if block == cur_block and i == pos:
+                continue
+
+            if type(op) == TealOp and op.op == Op.load and op.args[0] == slot:
+                return True
 
     return False
 
 
-def _apply_slot_to_stack(
-    teal: List[TealComponent], reserved_ids: Set[int]
-) -> List[TealComponent]:
-    remove = set()
-    for i, op in enumerate(teal[:-1]):
+def _apply_slot_to_stack(cur_block: TealBlock, start: TealBlock, skip_ids: Set[int]):
+    slots_to_remove = set()
+    for i, op in enumerate(cur_block.ops[:-1]):
         if type(op) != TealOp or op.op != Op.store:
             continue
 
-        # do not optimize away reserved slots
-        if cast(int, op.args[0]) in reserved_ids:
+        # do not optimize away reserved and global slots
+        if op.getSlots()[0].id in skip_ids:
             continue
 
-        next_op = teal[i + 1]
+        next_op = cur_block.ops[i + 1]
         if type(next_op) != TealOp or next_op.op != Op.load:
             continue
 
         if op.args[0] != next_op.args[0]:
             continue
 
-        if not _has_load_dependencies(teal, cast(int, op.args[0]), i + 1):
-            remove.update([i, i + 1])
+        if not _has_load_dependencies(cur_block, start, cast(int, op.args[0]), i + 1):
+            slots_to_remove.add(cast(int, op.args[0]))
 
-    return [op for i, op in enumerate(teal) if i not in remove]
+    # print(str(slots_to_remove))
+    _remove_extraneous_slot_access(start, slots_to_remove)
 
 
-def _apply_local_optimizations(
-    teal: List[TealComponent], options: OptimizeOptions
-) -> List[TealComponent]:
+def apply_global_optimizations(start: TealBlock, options: OptimizeOptions) -> TealBlock:
     # limit number of iterations to length of teal program to avoid potential
     # infinite loops.
-    for _ in range(len(teal)):
-        prev_teal = teal.copy()
-        if options.scratch_slots:
-            teal = _apply_slot_to_stack(teal, options.reserved_ids)
+    for block in TealBlock.Iterate(start):
+        prev_ops = block.ops.copy()
+        for _ in range(len(block.ops)):
+            if options.scratch_slots:
+                _apply_slot_to_stack(block, start, options.skip_ids)
 
-        if prev_teal == teal:
-            break
+            if prev_ops == block.ops:
+                break
 
-    return teal
-
-
-# Currently, only local optimizations are available so this is equivalent to
-# calling apply_local_optimizations().
-def apply_optimizations(
-    teal: List[TealComponent], options: OptimizeOptions
-) -> List[TealComponent]:
-    return _apply_local_optimizations(teal, options)
+    return start

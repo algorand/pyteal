@@ -1,9 +1,7 @@
 from typing import List, Tuple, Set, Dict, Optional, cast
-from pyteal.compiler import optimizer
 
-from pyteal.compiler.optimizer import OptimizeOptions, apply_optimizations
-
-from .optimizer import OptimizeOptions, apply_optimizations
+from pyteal.compiler.optimizer import OptimizeOptions
+from .optimizer import optimizer
 
 from ..types import TealType
 from ..ast import (
@@ -18,7 +16,11 @@ from ..errors import TealInputError, TealInternalError
 
 from .sort import sortBlocks
 from .flatten import flattenBlocks, flattenSubroutines
-from .scratchslots import assignScratchSlotsToSubroutines
+from .scratchslots import (
+    assignScratchSlotsToSubroutines,
+    collectScratchSlots,
+    collectUnoptimizedSlotIDs,
+)
 from .subroutines import (
     spillLocalSlotsDuringRecursion,
     resolveSubroutines,
@@ -116,9 +118,9 @@ def verifyOpsForMode(teal: List[TealComponent], mode: Mode):
 def compileSubroutine(
     ast: Expr,
     options: CompileOptions,
-    subroutineMapping: Dict[Optional[SubroutineDefinition], List[TealComponent]],
     subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]],
     subroutineBlocks: Dict[Optional[SubroutineDefinition], TealBlock],
+    subroutineEndBlocks: Dict[Optional[SubroutineDefinition], TealBlock],
 ) -> None:
     currentSubroutine = (
         cast(SubroutineDeclaration, ast).subroutine
@@ -146,8 +148,8 @@ def compileSubroutine(
     verifyOpsForVersion(teal, options.version)
     verifyOpsForMode(teal, options.mode)
 
-    subroutineMapping[currentSubroutine] = teal
     subroutineBlocks[currentSubroutine] = start
+    subroutineEndBlocks[currentSubroutine] = end
 
     referencedSubroutines: Set[SubroutineDefinition] = set()
     for stmt in teal:
@@ -157,15 +159,29 @@ def compileSubroutine(
     if currentSubroutine is not None:
         subroutineGraph[currentSubroutine] = referencedSubroutines
 
-    newSubroutines = referencedSubroutines - subroutineMapping.keys()
+    newSubroutines = referencedSubroutines - subroutineBlocks.keys()
     for subroutine in sorted(newSubroutines, key=lambda subroutine: subroutine.id):
         compileSubroutine(
             subroutine.getDeclaration(),
             options,
-            subroutineMapping,
             subroutineGraph,
             subroutineBlocks,
+            subroutineEndBlocks,
         )
+
+
+def createTealMapping(
+    subroutineBlocks: Dict[Optional[SubroutineDefinition], TealBlock],
+    subroutineEndBlocks: Dict[Optional[SubroutineDefinition], TealBlock],
+) -> Dict[Optional[SubroutineDefinition], List[TealComponent]]:
+    subroutineMapping: Dict[
+        Optional[SubroutineDefinition], List[TealComponent]
+    ] = dict()
+    for subroutine, start in subroutineBlocks.items():
+        order = sortBlocks(start, subroutineEndBlocks[subroutine])
+        subroutineMapping[subroutine] = flattenBlocks(order)
+
+    return subroutineMapping
 
 
 def compileTeal(
@@ -210,18 +226,29 @@ def compileTeal(
 
     options = CompileOptions(mode=mode, version=version, optimize=optimize)
 
-    subroutineMapping: Dict[
-        Optional[SubroutineDefinition], List[TealComponent]
-    ] = dict()
     subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
     subroutineBlocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
+    subroutineEndBlocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
     compileSubroutine(
-        ast, options, subroutineMapping, subroutineGraph, subroutineBlocks
+        ast, options, subroutineGraph, subroutineBlocks, subroutineEndBlocks
     )
 
-    localSlotAssignments, reserved_ids = assignScratchSlotsToSubroutines(
-        subroutineMapping, subroutineBlocks
-    )
+    # note: optimizations are off by default, in which case, apply_optimizations
+    # won't make any changes. Because the optimizer is invoked on a subroutine's
+    # control flow graph, optimizations may apply across block boundaries. This is
+    # necessary for the dependency checking of local slots. Global slots, slots
+    # used by DynamicScratchVar, and reserved slots are not optimized.
+    if options.optimize.scratch_slots:
+        options.optimize.skip_ids = collectUnoptimizedSlotIDs(subroutineBlocks)
+        print(str(options.optimize.skip_ids))
+        for start in subroutineBlocks.values():
+            optimizer.apply_global_optimizations(start, options.optimize)
+
+    localSlotAssignments = assignScratchSlotsToSubroutines(subroutineBlocks)
+
+    subroutineMapping: Dict[
+        Optional[SubroutineDefinition], List[TealComponent]
+    ] = createTealMapping(subroutineBlocks, subroutineEndBlocks)
 
     spillLocalSlotsDuringRecursion(
         version, subroutineMapping, subroutineGraph, localSlotAssignments
@@ -238,13 +265,6 @@ def compileTeal(
                 )
             )
         teal = createConstantBlocks(teal)
-
-    # note: optimizations are off by default, in which case, apply_optimizations
-    # won't make any changes. Because the optimizer is invoked on the compiled teal,
-    # optimization may apply across block boundaries. This is necessary so for
-    # dependency checking.
-    options.optimize.reserved_ids = reserved_ids
-    teal = apply_optimizations(teal, options.optimize)
 
     lines = ["#pragma version {}".format(version)]
     lines += [i.assemble() for i in teal]
