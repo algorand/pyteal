@@ -12,14 +12,19 @@ from .blackbox_asserts import (
     mode_to_execution_mode,
 )
 
-from algosdk.testing.dryrun import Helper as DryRunHelper
-from algosdk.testing.teal_blackbox import (
+# TODO: remove this comment before merging
+# why did I need to make a symbolic link like this?
+# ❯ cd py39-pyteal/lib/python3.9/site-packages
+# ❯ ln -s ~/github/algorand/graviton graviton
+from graviton.blackbox.blackbox import (
+    DryRunProperty as DRProp,
     DryRunEncoder as Encoder,
     DryRunExecutor,
-    DryRunProperty as DRProp,
-    DryRunTransactionResult,
-    SequenceAssertion,
+    DryRunInspector,
+    mode_has_property,
 )
+
+from graviton.blackbox.invariant import Invariant
 
 from pyteal import *
 
@@ -560,7 +565,9 @@ def blackbox_test_runner(
     algod = algod_with_assertion()
 
     # 2. validate dry run scenarios:
-    inputs, assertions = SequenceAssertion.inputs_and_assertions(scenario, exec_mode)
+    inputs, predicates = Invariant.inputs_and_invariants(
+        scenario, exec_mode, raw_predicates=True
+    )
 
     # 3. execute dry run sequence:
     execute = DryRunExecutor.execute_one_dryrun
@@ -569,23 +576,21 @@ def blackbox_test_runner(
     # 4. Statistical report:
     csvpath = path / f"{filebase}.csv"
     with open(csvpath, "w") as f:
-        f.write(DryRunTransactionResult.csv_report(inputs, dryrun_results))
+        f.write(DryRunInspector.csv_report(inputs, dryrun_results))
 
     print(f"Saved Dry Run CSV report to {csvpath}")
 
     # 5. Sequential assertions (if provided any)
-    for i, type_n_assertion in enumerate(assertions.items()):
+    for i, type_n_assertion in enumerate(predicates.items()):
         assert_type, predicate = type_n_assertion
 
         if SKIP_SCRATCH_ASSERTIONS and assert_type == DRProp.finalScratch:
             print("skipping scratch assertions because unstable slots produced")
             continue
 
-        assert SequenceAssertion.mode_has_assertion(exec_mode, assert_type)
+        assert mode_has_property(exec_mode, assert_type)
 
-        assertion = SequenceAssertion(
-            predicate, name=f"{case_name}[{i}]@{mode}-{assert_type}"
-        )
+        assertion = Invariant(predicate, name=f"{case_name}[{i}]@{mode}-{assert_type}")
         print(f"{i+1}. Assertion for {case_name}-{mode}: {assert_type} <<{predicate}>>")
         assertion.dryrun_assert(inputs, dryrun_results, assert_type)
 
