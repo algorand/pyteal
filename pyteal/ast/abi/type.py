@@ -1,6 +1,7 @@
-from typing import TypeVar, Generic, Callable, Final, cast
+from typing import Type, TypeVar, Generic, Callable, Final, cast
 from abc import ABC, abstractmethod
 
+from ...errors import TealInputError
 from ...types import TealType
 from ..expr import Expr
 from ..scratchvar import ScratchVar
@@ -93,7 +94,7 @@ class BaseType(ABC):
         *,
         startIndex: Expr = None,
         endIndex: Expr = None,
-        length: Expr = None
+        length: Expr = None,
     ) -> Expr:
         """Decode a substring of the passed in encoded string and set it as this type's value.
 
@@ -173,3 +174,27 @@ class ComputedType(ABC, Generic[T]):
 
 
 ComputedType.__module__ = "pyteal"
+
+
+def runtime_inherit_computed_type(obj: TypeSpec) -> Type:
+    if not isinstance(obj, TypeSpec):
+        raise TealInputError(f"expected type spec but get {type(obj)}")
+
+    class InheritedComputedT(ComputedType):
+        type_spec = obj
+
+        def __init__(self, encodings: Expr) -> None:
+            self.encodings = encodings
+
+        @classmethod
+        def produced_type_spec(cls) -> TypeSpec:
+            return cls.type_spec
+
+        def store_into(self, output: BaseType) -> Expr:
+            if output.type_spec() != self.produced_type_spec():
+                raise TealInputError(
+                    f"input for store_into has type_spec {output.type_spec()} must comply with {self.type_spec}"
+                )
+            return output.stored_value.store(self.encodings)
+
+    return InheritedComputedT

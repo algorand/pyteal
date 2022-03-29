@@ -1,7 +1,6 @@
 import re
 from typing import List, Dict, Set, Optional, TypeVar
 from collections import OrderedDict
-from itertools import chain
 
 from ..types import TealType
 from ..ast import SubroutineDefinition
@@ -171,7 +170,7 @@ def spillLocalSlotsDuringRecursion(
 
                 hideReturnValueInFirstSlot = False
 
-                if subroutine.returnType != TealType.none:
+                if subroutine.return_type != TealType.none:
                     # if the subroutine returns a value on the stack, we need to preserve this after
                     # restoring all local slots.
 
@@ -202,7 +201,7 @@ def spillLocalSlotsDuringRecursion(
                         # clear out the duplicate arguments that were dug up previously, since dig
                         # does not pop the dug values -- once we use cover/uncover to properly set up
                         # the spilled slots, this will no longer be necessary
-                        if subroutine.returnType != TealType.none:
+                        if subroutine.return_type != TealType.none:
                             # if there is a return value on top of the stack, we need to preserve
                             # it, so swap it with the subroutine argument that's below it on the
                             # stack
