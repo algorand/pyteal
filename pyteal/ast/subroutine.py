@@ -95,7 +95,7 @@ class SubroutineDefinition:
     @staticmethod
     def _validate_parameter_type(
         user_defined_annotations: dict, parameter_name: str
-    ) -> Union[Type[Union[Expr, ScratchVar]], abi.TypeSpec]:
+    ) -> Union[Type[Expr], Type[ScratchVar], abi.TypeSpec]:
         ptype = user_defined_annotations.get(parameter_name, None)
 
         if ptype is None:
@@ -134,7 +134,7 @@ class SubroutineDefinition:
         sig: Signature,
         annotations: Dict[str, type],
     ) -> Tuple[
-        List[Union[Type[Union[Expr, ScratchVar]], abi.TypeSpec]],
+        List[Union[Type[Expr], Type[ScratchVar], abi.TypeSpec]],
         Set[str],
         Dict[str, abi.TypeSpec],
     ]:
