@@ -401,17 +401,13 @@ def main():
     max_votes = 0
     max_votes_choice = None
     for key, value in global_state.items():
-        if (
-            key
-            not in (
-                "RegBegin",
-                "RegEnd",
-                "VoteBegin",
-                "VoteEnd",
-                "Creator",
-            )
-            and isinstance(value, int)
-        ):
+        if key not in (
+            "RegBegin",
+            "RegEnd",
+            "VoteBegin",
+            "VoteEnd",
+            "Creator",
+        ) and isinstance(value, int):
             if value > max_votes:
                 max_votes = value
                 max_votes_choice = key

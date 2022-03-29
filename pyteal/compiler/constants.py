@@ -158,7 +158,7 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
     intBlock = [
         val
         for i, val in enumerate(sortedInts)
-        if intFreqs[val] > 1 and (i < 4 or isinstance(val, str) or val >= 2 ** 7)
+        if intFreqs[val] > 1 and (i < 4 or isinstance(val, str) or val >= 2**7)
     ]
 
     byteBlock = [
