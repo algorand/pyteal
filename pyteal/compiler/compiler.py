@@ -232,10 +232,10 @@ def compileTeal(
         ast, options, subroutineGraph, subroutineBlocks, subroutineEndBlocks
     )
 
-    # note: optimizations are off by default, in which case, apply_optimizations
+    # note: optimizations are off by default, in which case, apply_global_optimizations
     # won't make any changes. Because the optimizer is invoked on a subroutine's
-    # control flow graph, optimizations may apply across block boundaries. This is
-    # necessary for the dependency checking of local slots. Global slots, slots
+    # control flow graph, the optimizer requires context across block boundaries. This
+    # is necessary for the dependency checking of local slots. Global slots, slots
     # used by DynamicScratchVar, and reserved slots are not optimized.
     if options.optimize.scratch_slots:
         options.optimize.skip_ids = collectUnoptimizedSlotIDs(subroutineBlocks)

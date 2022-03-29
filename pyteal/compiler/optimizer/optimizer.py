@@ -12,8 +12,17 @@ class OptimizeOptions:
 
         scratch_slots (optional): cancel contiguous store/load operations
             that have no load dependencies elsewhere.
-        skip_ids (optional): reserved slot ids that may be treated
-            differently during optimization."""
+        skip_ids (optional): the slot ids that should be skipped during
+            optimization. At the moment this includes:
+                1. reserved slots because they may have dependencies outside
+                the current application. For example, the 'gloads' opcode can
+                access the slots of other applications in the tx group.
+                2. global slots because they're outside the scope of global
+                optimizations, which only apply to the control flow graph of
+                a single subroutine.
+                3. slots used with dynamic scratch vars. These slots use
+                indirection by means of the 'stores' opcode and dependencies
+                can only be determined at runtime."""
 
     def __init__(self, *, scratch_slots: bool = False, skip_ids: Set[int] = None):
         self.scratch_slots = scratch_slots

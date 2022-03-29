@@ -64,16 +64,19 @@ def test_collectScratchSlots():
         subroutine3: TealSimpleBlock(subroutine3Ops),
     }
 
-    expected = {
+    expected_global = {globalSlot1}
+
+    expected_local = {
         None: {mainSlot1, mainSlot2},
         subroutine1: {subroutine1Slot1, subroutine1Slot2},
         subroutine2: {subroutine2Slot1},
         subroutine3: set(),
     }
 
-    _, actual = collectScratchSlots(subroutineBlocks)
+    actual_global, actual_local = collectScratchSlots(subroutineBlocks)
 
-    assert actual == expected
+    assert actual_global == expected_global
+    assert actual_local == expected_local
 
 
 def test_assignScratchSlotsToSubroutines_no_requested_ids():

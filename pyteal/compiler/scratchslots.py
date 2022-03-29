@@ -50,9 +50,8 @@ def collectScratchSlots(
         The key None is taken to mean the main program routine.
 
     Returns:
-        A set which contains all global slots
-        A dictionary whose keys are the same as subroutineBlocks, and whose values are the
-            local slots of that subroutine.
+        A set which contains all global slots and s dictionary whose keys are the same as
+            subroutineBlocks, and whose values are the local slots of that subroutine.
     """
 
     subroutineSlots: Dict[Optional[SubroutineDefinition], Set[ScratchSlot]] = dict()
