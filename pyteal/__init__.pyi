@@ -171,6 +171,5 @@ __all__ = [
     "While",
     "WideRatio",
     "abi",
-    "abi_return_subroutine",
     "compileTeal",
 ]
