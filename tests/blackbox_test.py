@@ -16,7 +16,7 @@ from .blackbox_asserts import (
 # why did I need to make a symbolic link like this?
 # ❯ cd py39-pyteal/lib/python3.9/site-packages
 # ❯ ln -s ~/github/algorand/graviton graviton
-from graviton.blackbox.blackbox import (
+from graviton.blackbox import (
     DryRunProperty as DRProp,
     DryRunEncoder as Encoder,
     DryRunExecutor,
@@ -24,7 +24,7 @@ from graviton.blackbox.blackbox import (
     mode_has_property,
 )
 
-from graviton.blackbox.invariant import Invariant
+from graviton.invariant import Invariant
 
 from pyteal import *
 

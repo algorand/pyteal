@@ -1,9 +1,8 @@
 from typing import Callable, Dict, List, Union
 
-from algosdk import kmd
-from algosdk.v2client import algod, indexer
+from algosdk.v2client import algod
 
-from graviton.blackbox import blackbox
+from graviton import blackbox
 
 from pyteal import *
 
@@ -88,7 +87,7 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
 
     Example 1: Using blackbox_pyteal for a simple test of both an app and logic sig:
         .. code-block:: python
-            from graviton.blackbox.blackbox import DryRunEncoder, DryRunExecutor
+            from graviton import DryRunEncoder, DryRunExecutor
 
             from tests.blackbox_asserts import algod_with_assertion, blackbox_pyteal
 
@@ -134,7 +133,7 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
             from pathlib import Path
             import random
 
-            from graviton.blackbox.blackbox import DryRunExecutor, DryRunInspector
+            from graviton import DryRunExecutor, DryRunInspector
 
             from tests.blackbox_asserts import algod_with_assertion, blackbox_pyteal
 
@@ -190,12 +189,12 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
             # avoid flaky tests just in case I was wrong about the stack height invariant...
             random.seed(42)
 
-            from graviton.blackbox.blackbox import (
+            from graviton import (
                 DryRunEncoder,
                 DryRunExecutor,
                 DryRunProperty as DRProp,
             )
-            from graviton.blackbox.invariant import Invariant
+            from graviton.invariant import Invariant
 
             from tests.blackbox_asserts import (
                 algod_with_assertion,

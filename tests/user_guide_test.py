@@ -26,7 +26,7 @@ def user_guide_snippet_dynamic_scratch_var() -> Expr:
 
 def blackbox_pyteal_example1():
     # Example 1: Using blackbox_pyteal for a simple test of both an app and logic sig:
-    from graviton.blackbox.blackbox import DryRunEncoder, DryRunExecutor
+    from graviton.blackbox import DryRunEncoder, DryRunExecutor
 
     from tests.blackbox_asserts import algod_with_assertion, blackbox_pyteal
 
@@ -72,7 +72,7 @@ def blackbox_pyteal_example2():
     from pathlib import Path
     import random
 
-    from graviton.blackbox.blackbox import DryRunExecutor, DryRunInspector
+    from graviton.blackbox import DryRunExecutor, DryRunInspector
 
     from tests.blackbox_asserts import algod_with_assertion, blackbox_pyteal
 
@@ -128,12 +128,12 @@ def blackbox_pyteal_example3():
     # avoid flaky tests just in case I was wrong about the stack height invariant...
     random.seed(42)
 
-    from graviton.blackbox.blackbox import (
+    from graviton.blackbox import (
         DryRunEncoder,
         DryRunExecutor,
         DryRunProperty as DRProp,
     )
-    from graviton.blackbox.invariant import Invariant
+    from graviton.invariant import Invariant
 
     from tests.blackbox_asserts import (
         algod_with_assertion,
