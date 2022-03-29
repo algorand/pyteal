@@ -610,12 +610,12 @@ def test_createConstantBlocks_intc():
         TealOp(None, Op.int, 2),
         TealOp(None, Op.int, 3),
         TealOp(None, Op.int, 3),
-        TealOp(None, Op.int, 2 ** 7),
-        TealOp(None, Op.int, 2 ** 7),
+        TealOp(None, Op.int, 2**7),
+        TealOp(None, Op.int, 2**7),
     ]
 
     expected = [
-        TealOp(None, Op.intcblock, 0, 1, 2, 3, 2 ** 7),
+        TealOp(None, Op.intcblock, 0, 1, 2, 3, 2**7),
         TealOp(None, Op.intc_0, "//", 0),
         TealOp(None, Op.intc_0, "//", 0),
         TealOp(None, Op.intc_1, "//", 1),
@@ -624,8 +624,8 @@ def test_createConstantBlocks_intc():
         TealOp(None, Op.intc_2, "//", 2),
         TealOp(None, Op.intc_3, "//", 3),
         TealOp(None, Op.intc_3, "//", 3),
-        TealOp(None, Op.intc, 4, "//", 2 ** 7),
-        TealOp(None, Op.intc, 4, "//", 2 ** 7),
+        TealOp(None, Op.intc, 4, "//", 2**7),
+        TealOp(None, Op.intc, 4, "//", 2**7),
     ]
 
     actual = createConstantBlocks(ops)
@@ -637,7 +637,7 @@ def test_createConstantBlocks_small_constant():
     and it can be stored in one varuint it byte then Op.pushint is used.
     """
 
-    for cur in range(4, 2 ** 7):
+    for cur in range(4, 2**7):
         ops = [
             TealOp(None, Op.int, 0),
             TealOp(None, Op.int, 0),

@@ -9,7 +9,7 @@ options = CompileOptions()
 
 
 def test_int():
-    values = [0, 1, 8, 232323, 2 ** 64 - 1]
+    values = [0, 1, 8, 232323, 2**64 - 1]
 
     for value in values:
         expr = Int(value)
@@ -30,7 +30,7 @@ def test_int_invalid():
         Int(-1)
 
     with pytest.raises(TealInputError):
-        Int(2 ** 64)
+        Int(2**64)
 
     with pytest.raises(TealInputError):
         Int("0")
