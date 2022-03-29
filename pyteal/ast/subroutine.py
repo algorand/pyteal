@@ -35,12 +35,10 @@ class SubroutineDefinition:
         implementation: Callable[..., Expr],
         return_type: TealType,
         nameStr: Optional[str] = None,
-        router_registrable: bool = False,
     ) -> None:
         super().__init__()
         self.id = SubroutineDefinition.nextSubroutineId
         SubroutineDefinition.nextSubroutineId += 1
-        self.__routerRegistrable = router_registrable
 
         if not callable(implementation):
             raise TealInputError("Input to SubroutineDefinition is not callable")
@@ -54,22 +52,17 @@ class SubroutineDefinition:
                 f"Function has return of disallowed type {annotations['return']}. Only Expr is allowed"
             )
 
-        # validate full signature takes following four arguments:
-        # - `can_accept_abi_outputs`, which is decided by the `returnType`: if `returnType` is `TealType.none`,
-        #    then we are able to return an ABI value, which eventually evaluates to `TealType.none` on stack.
+        # validate full signature takes following two arguments:
         # - `signature`, which contains the signature of the python function.
         #    NOTE: it contains all the arguments, we get type annotations from `annotations`.
         # - `annotations`, which contains all available argument type annotations and return type annotation.
         #    NOTE: `annotations` does not contain all the arguments,
         #          an argument is not included in `annotations` if its type annotation is not available.
-        # - `routerRegistrable`, which enforces every argument are ABI typed.
         (
             expected_arg_types,
             by_ref_args,
             abi_args,
-        ) = SubroutineDefinition._arg_types_and_by_refs(
-            return_type == TealType.none, sig, annotations, self.__routerRegistrable
-        )
+        ) = SubroutineDefinition._arg_types_and_by_refs(sig, annotations)
         self.expected_arg_types: List[
             Union[Type[Expr], Type[ScratchVar], abi.TypeSpec]
         ] = expected_arg_types
@@ -100,49 +93,10 @@ class SubroutineDefinition:
             return False
 
     @staticmethod
-    def _check_abi_output(annotations: Dict[str, type], sig: Signature) -> None:
-        """Checks the `output` keyword argument in subroutine, specialized for outputting ABI value case.
-
-        Assuming that `output` keyword argument is available in `annotations`, which satisfying:
-        - it is a KEYWORD_ONLY argument
-        - it has no default value
-        - it is annotated with ABI type
-
-        Args:
-            annotations: annotations obtained from the subroutine definition python implementation
-            sig: function signature obtained from the subroutine definition python implementation
-        """
-        outputParams = sig.parameters["output"]
-        if outputParams.kind != Parameter.KEYWORD_ONLY:
-            raise TealInputError(
-                "output is a reserved name in subroutine for ABI type annotation"
-            )
-        if outputParams.default != Parameter.empty:
-            raise TealInputError(
-                "reserved name output in subroutine for ABI type annotation is not allowed to have default value"
-            )
-        outputPType = annotations.get("output", None)
-        if not outputPType:
-            raise TealInputError(
-                "ABI type annotation for subroutine argument output is required"
-            )
-        if not SubroutineDefinition.is_abi_annotation(outputPType):
-            raise TealInputError(
-                "ABI type annotation for subroutine argument output get unexpected: {}".format(
-                    outputPType
-                )
-            )
-
-    @staticmethod
     def _validate_parameter_type(
-        user_defined_annotations: dict, parameter_name: str, enforce_abi: bool
+        user_defined_annotations: dict, parameter_name: str
     ) -> Union[Type[Union[Expr, ScratchVar]], abi.TypeSpec]:
         ptype = user_defined_annotations.get(parameter_name, None)
-
-        if enforce_abi and not SubroutineDefinition.is_abi_annotation(ptype):
-            raise TealInputError(
-                f"Function has parameter {parameter_name} of not ABI type: {ptype}"
-            )
 
         if ptype is None:
             # Without a type annotation, `SubroutineDefinition` presumes an implicit `Expr` declaration
@@ -177,10 +131,8 @@ class SubroutineDefinition:
 
     @staticmethod
     def _arg_types_and_by_refs(
-        can_have_abi_output: bool,
         sig: Signature,
         annotations: Dict[str, type],
-        enforce_all_abi: bool,
     ) -> Tuple[
         List[Union[Type[Union[Expr, ScratchVar]], abi.TypeSpec]],
         Set[str],
@@ -190,31 +142,25 @@ class SubroutineDefinition:
 
         This function iterates through `sig.parameters.items()`, and checks each of subroutine arguments.
         On each of the subroutine arguments, the following checks are performed:
-        - If argument is not POSITION_ONLY or not POSITIONAL_OR_KEYWORD
-          - if we can_have_abi_output, and the argument name is not `output`, error.
-          - if we cannot have abi output (i.e., subroutine return is not `TealType.none`), then error.
+        - If argument is not POSITION_ONLY or not POSITIONAL_OR_KEYWORD, error
         - If argument has default value, error
-        - If `output` is available in function signature, then perform `_check_abi_output` on `output` argument.
 
-        After the previous three checks, the function signature is correct in structure,
+        After the previous checks, the function signature is correct in structure,
         but we still need to check the argument types are matching requirements
         (i.e., in {Expr, ScratchVar, inheritances of abi.BaseType} or {inheritances of abi.BaseTypes}).
 
         Finally, this function outputs `expected_arg_types` for type-checking, and `by_ref_args` for compilation.
         - `expected_arg_types` is an array of elements of Type[Expr], Type[ScratchVar] or abi.TypeSpec instances.
           It helps type-checking on SubroutineCall from `invoke` method.
-        - `by_ref_args` is a set of argument names, which are type annotated by ScratchVar or ABI types
+        - `by_ref_args` is a set of argument names, which are type annotated by ScratchVar.
           We put the scratch slot id on stack, rather than value itself.
 
         Args:
-            can_have_abi_output: decided by the subroutine's `returnType`, if `returnType` is `TealType.none`,
-                then we are able to return an ABI value, which eventually evaluates to `TealType.none` on stack.
             sig: containing the signature of the python function for subroutine definition.
                 NOTE: it contains all the arguments, we obtain type annotations from `annotations`.
             annotations: all available argument type annotations and return type annotation.
                 NOTE: `annotations` does not contain all the arguments,
                 an argument is not included in `annotations` if its type annotation is not available.
-            enforce_all_abi: decides whether we enforce each subroutine argument is only ABI typed
         """
         expected_arg_types = []
         by_ref_args: Set[str] = set()
@@ -223,24 +169,18 @@ class SubroutineDefinition:
             if param.kind not in (
                 Parameter.POSITIONAL_ONLY,
                 Parameter.POSITIONAL_OR_KEYWORD,
-            ) and (not can_have_abi_output or name != "output"):
+            ):
                 raise TealInputError(
-                    "Function has a parameter type that is not allowed in a subroutine: "
-                    "parameter {} with type {}".format(name, param.kind)
+                    f"Function has a parameter type that is not allowed in a subroutine: "
+                    f"parameter {name} with type {param.kind}"
                 )
             if param.default != Parameter.empty:
                 raise TealInputError(
                     f"Function has a parameter with a default value, which is not allowed in a subroutine: {name}"
                 )
 
-            # if an argument with name `output` reach here, and it's kind is `KEYWORD_ONLY`,
-            # then we are only under `enforce_all_abi == True` case.
-            # otherwise (`enforce_all_abi == False`), it is eliminated in previous argument kind check.
-            if name == "output" and param.kind == Parameter.KEYWORD_ONLY:
-                SubroutineDefinition._check_abi_output(annotations, sig)
-
             expected_arg_type = SubroutineDefinition._validate_parameter_type(
-                annotations, name, enforce_all_abi
+                annotations, name
             )
             expected_arg_types.append(expected_arg_type)
             if expected_arg_type is ScratchVar:
@@ -249,9 +189,6 @@ class SubroutineDefinition:
                 abi_args[name] = expected_arg_type
 
         return expected_arg_types, by_ref_args, abi_args
-
-    def routerRegistrable(self) -> bool:
-        return self.__routerRegistrable
 
     def getDeclaration(self) -> "SubroutineDeclaration":
         if self.declaration is None:
@@ -273,9 +210,8 @@ class SubroutineDefinition:
     ) -> "SubroutineCall":
         if len(args) != self.argumentCount():
             raise TealInputError(
-                "Incorrect number of arguments for subroutine call. Expected {} arguments, got {}".format(
-                    self.argumentCount(), len(args)
-                )
+                f"Incorrect number of arguments for subroutine call. "
+                f"Expected {self.argumentCount()} arguments, got {len(args)}"
             )
 
         for i, arg in enumerate(args):
@@ -302,7 +238,7 @@ class SubroutineDefinition:
         return SubroutineCall(self, args)
 
     def __str__(self):
-        return "subroutine#{}".format(self.id)
+        return f"subroutine#{self.id}"
 
     def __eq__(self, other):
         if isinstance(other, SubroutineDefinition):
@@ -326,9 +262,7 @@ class SubroutineDeclaration(Expr):
         return self.body.__teal__(options)
 
     def __str__(self):
-        return '(SubroutineDeclaration "{}" {})'.format(
-            self.subroutine.name(), self.body
-        )
+        return f'(SubroutineDeclaration "{self.subroutine.name()}" {self.body})'
 
     def type_of(self):
         return self.body.type_of()
@@ -359,16 +293,12 @@ class SubroutineCall(Expr):
                 arg_type = cast(abi.BaseType, arg).stored_value.type
             else:
                 raise TealInputError(
-                    "Subroutine argument {} at index {} was of unexpected Python type {}".format(
-                        arg, i, type(arg)
-                    )
+                    f"Subroutine argument {arg} at index {i} was of unexpected Python type {type(arg)}"
                 )
 
             if arg_type == TealType.none:
                 raise TealInputError(
-                    "Subroutine argument {} at index {} evaluates to TealType.none".format(
-                        arg, i
-                    )
+                    f"Subroutine argument {arg} at index {i} evaluates to TealType.none"
                 )
 
     def __teal__(self, options: "CompileOptions"):
@@ -398,7 +328,7 @@ class SubroutineCall(Expr):
                 return arg.stored_value.load()
             else:
                 raise TealInputError(
-                    "cannot handle current arg: {} to put it on stack".format(arg)
+                    f"cannot handle current arg: {arg} to put it on stack"
                 )
 
         op = TealOp(self, Op.callsub, self.subroutine)
@@ -427,21 +357,18 @@ class SubroutineFnWrapper:
         fnImplementation: Callable[..., Expr],
         returnType: TealType,
         name: Optional[str] = None,
-        routerRegistrable: bool = False,
     ) -> None:
         self.subroutine = SubroutineDefinition(
             fnImplementation,
             return_type=returnType,
             nameStr=name,
-            router_registrable=routerRegistrable,
         )
 
     def __call__(self, *args: Union[Expr, ScratchVar, abi.BaseType], **kwargs) -> Expr:
         if len(kwargs) != 0:
             raise TealInputError(
-                "Subroutine cannot be called with keyword arguments. Received keyword arguments: {}".format(
-                    ",".join(kwargs.keys())
-                )
+                f"Subroutine cannot be called with keyword arguments. "
+                f"Received keyword arguments: {','.join(kwargs.keys())}"
             )
         return self.subroutine.invoke(list(args))
 
@@ -496,12 +423,6 @@ class Subroutine:
 Subroutine.__module__ = "pyteal"
 
 
-def abi_return_subroutine(fnImplementation: Callable[..., Expr]) -> SubroutineFnWrapper:
-    return SubroutineFnWrapper(
-        fnImplementation, returnType=TealType.none, routerRegistrable=True
-    )
-
-
 def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaration:
     """
     Puts together the data necessary to define the code for a subroutine.
@@ -531,7 +452,6 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
         Type 1. (by-value) use ScratchVar.store() to pick the actual value into a local scratch space
         Type 2. (by-reference) ALSO use ScratchVar.store() to pick up from the stack
             NOTE: SubroutineCall.__teal__() has placed the _SLOT INDEX_ on the stack so this is stored into the local scratch space
-        Type 3. ABI ...
 
     Usage (B) "loadedArgs" - Passing through to an invoked PyTEAL subroutine AST:
         Type 1. (by-value) use ScratchVar.load() to have an Expr that can be compiled in python by the PyTEAL subroutine
@@ -541,9 +461,6 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
     """
 
     def var_n_loaded(param):
-        # the question is that, abi args are indices laied on the stack, then how to pass by ref with write protection for args?
-        # - if we know they are arguments (not output), we can loads from index, and store into arg
-        # - if we know it is an output, then how to create an arg that has same index as output one.
         if param in subroutine.abi_args:
             internal_abi_var = subroutine.abi_args[param].new_instance()
             argVar = internal_abi_var.stored_value

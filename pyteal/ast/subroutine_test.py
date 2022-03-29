@@ -107,15 +107,6 @@ def test_subroutine_invocation_param_types():
     def fnWithMixedAnns4(a: ScratchVar, b, c: abi.Uint16) -> Expr:
         return Return()
 
-    def fnWithAllABIAnns(
-        a: abi.Uint16,
-        b: abi.StaticArray[abi.Uint32, Literal[10]],
-        c: abi.DynamicArray[abi.Bool],
-        *,
-        output: abi.Bool,
-    ):
-        return Return()
-
     sv = ScratchVar()
     x = Int(42)
     s = Bytes("hello")
@@ -218,30 +209,6 @@ def test_subroutine_invocation_param_types():
             "mixed anno but wrong typed 3",
             fnWithMixedAnns4,
             [sv, x, av_byte],
-            TealInputError,
-        ),
-        (
-            "all ABI anno with abi output",
-            fnWithAllABIAnns,
-            [av_u16, av_u32_static_arr, av_bool_dym_arr, av_bool],
-            None,
-        ),
-        (
-            "all ABI anno with abi output 1",
-            fnWithAllABIAnns,
-            [av_u16, av_u32_static_arr, av_bool_dym_arr, sv],
-            TealInputError,
-        ),
-        (
-            "all ABI anno with abi output 2",
-            fnWithAllABIAnns,
-            [av_u16, av_u32_static_arr, av_bool_dym_arr, x],
-            TealInputError,
-        ),
-        (
-            "all ABI anno with abi output 3",
-            fnWithAllABIAnns,
-            [av_u16, av_u32_static_arr, av_byte, av_bool],
             TealInputError,
         ),
     ]
@@ -440,74 +407,6 @@ def test_decorator():
 
     with pytest.raises(TealInputError):
         mySubroutine(a=Int(1))
-
-
-def test_router_subroutine_definition():
-    assert callable(abi_return_subroutine)
-
-    def fnAllABIVoid(a: abi.Bool, b: abi.Byte):
-        return Return()
-
-    def fnAllABIwithOutput(
-        a: abi.Byte, b: abi.Uint16, c: abi.Bool, *, output: abi.DynamicArray[abi.Uint8]
-    ):
-        return Return()
-
-    def fnNotAllABIVoid(a: abi.Byte, b):
-        return Return()
-
-    def fnNotAllABIwithOutput(
-        a: abi.Byte,
-        b: abi.Uint16,
-        c: ScratchVar,
-        *,
-        output: abi.DynamicArray[abi.Uint8],
-    ):
-        return Return()
-
-    av_byte = abi.Byte()
-    av_u16 = abi.Uint16()
-    av_u8_dym_arr = abi.DynamicArray(abi.Uint8TypeSpec())
-    av_bool = abi.Bool()
-    x = Int(1)
-    sv = ScratchVar()
-
-    cases = (
-        (fnAllABIVoid, "all ABI arguments, void output", [av_bool, av_byte], None),
-        (
-            fnAllABIwithOutput,
-            "all ABI argument, with output argument",
-            [av_byte, av_u16, av_bool, av_u8_dym_arr],
-            None,
-        ),
-        (fnNotAllABIVoid, "not all ABI arguments", [av_byte, x], TealInputError),
-        (
-            fnNotAllABIwithOutput,
-            "not all ABI arguments with output keyword",
-            [av_byte, av_u16, sv, av_u8_dym_arr],
-            TealInputError,
-        ),
-    )
-
-    for (func, case_name, args, err) in cases:
-        if err:
-            try:
-                with pytest.raises(err):
-                    abi_return_subroutine(func)
-            except Exception as e:
-                assert not e, (
-                    f"EXPECTED ERROR of type {err}. "
-                    f"encountered unexpected error during invocation case <{case_name}>: {e}"
-                )
-            continue
-
-        routerSub = abi_return_subroutine(func)
-        assert routerSub.subroutine.argumentCount() == len(args)
-        routerSubInvoked = routerSub(*args)
-        assert isinstance(routerSubInvoked, SubroutineCall), case_name
-        assert routerSubInvoked.subroutine is routerSub.subroutine, case_name
-        assert routerSubInvoked.args == args, case_name
-        assert not routerSubInvoked.has_return(), case_name
 
 
 def test_evaluate_subroutine_no_args():
