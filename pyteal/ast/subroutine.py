@@ -149,11 +149,14 @@ class SubroutineDefinition:
         but we still need to check the argument types are matching requirements
         (i.e., in {Expr, ScratchVar, inheritances of abi.BaseType} or {inheritances of abi.BaseTypes}).
 
-        Finally, this function outputs `expected_arg_types` for type-checking, and `by_ref_args` for compilation.
+        Finally, this function outputs `expected_arg_types` for type-checking, `by_ref_args` for compilation,
+        and `abi_args` for compilation.
         - `expected_arg_types` is an array of elements of Type[Expr], Type[ScratchVar] or abi.TypeSpec instances.
           It helps type-checking on SubroutineCall from `invoke` method.
         - `by_ref_args` is a set of argument names, which are type annotated by ScratchVar.
           We put the scratch slot id on stack, rather than value itself.
+        - `abi_args` is a set of argument names, which are type annotated by ABI types.
+          We load the ABI scratch space stored value to stack, and store them later in subroutine's local ABI values.
 
         Args:
             sig: containing the signature of the python function for subroutine definition.
@@ -312,6 +315,9 @@ class SubroutineCall(Expr):
 
         2. (by-reference) In the case of a by-reference argument of type ScratchVar, its SLOT INDEX is put on the stack
             and will be stored in a local DynamicScratchVar for subroutine evaluation
+
+        3. (ABI, or a special case in by-value) In this case, the storage of an ABI value are loaded
+            to the stack and will be stored in a local ABI value for subroutine evaluation
         """
         verifyTealVersion(
             Op.callsub.min_version,
@@ -447,17 +453,19 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
     - -------- -----
     Type 1 (by-value): these have python type Expr
     Type 2 (by-reference): these have python type ScratchVar
+    Type 3 (ABI): these are ABI typed variables with scratch space storage, and still pass by value
 
     Usage (A) "argumentVars" - Storing pre-placed stack variables into local scratch space:
         Type 1. (by-value) use ScratchVar.store() to pick the actual value into a local scratch space
         Type 2. (by-reference) ALSO use ScratchVar.store() to pick up from the stack
             NOTE: SubroutineCall.__teal__() has placed the _SLOT INDEX_ on the stack so this is stored into the local scratch space
+        Type 3. (ABI) abi_value.stored_value.store() to pick from the stack
 
     Usage (B) "loadedArgs" - Passing through to an invoked PyTEAL subroutine AST:
         Type 1. (by-value) use ScratchVar.load() to have an Expr that can be compiled in python by the PyTEAL subroutine
         Type 2. (by-reference) use a DynamicScratchVar as the user will have written the PyTEAL in a way that satisfies
             the ScratchVar API. I.e., the user will write `x.load()` and `x.store(val)` as opposed to just `x`.
-        Type 3. ABI ...
+        Type 3. (ABI) use abi_value itself after storing stack value into scratch space.
     """
 
     def var_n_loaded(param):
