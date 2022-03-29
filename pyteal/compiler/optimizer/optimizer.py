@@ -1,7 +1,6 @@
-from typing import List, cast, Set
+from typing import cast, Set
 from pyteal.ir.tealblock import TealBlock
 
-from pyteal.ir.tealcomponent import TealComponent
 from pyteal.ir.tealop import TealOp
 from pyteal.ir.ops import Op
 
@@ -72,7 +71,6 @@ def _apply_slot_to_stack(cur_block: TealBlock, start: TealBlock, skip_ids: Set[i
         if not _has_load_dependencies(cur_block, start, cast(int, op.args[0]), i + 1):
             slots_to_remove.add(cast(int, op.args[0]))
 
-    # print(str(slots_to_remove))
     _remove_extraneous_slot_access(start, slots_to_remove)
 
 
