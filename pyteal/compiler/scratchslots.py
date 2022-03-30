@@ -6,7 +6,7 @@ from ..errors import TealInputError, TealInternalError
 from ..config import NUM_SLOTS
 
 
-def collectedUnoptimizedSlots(
+def collect_unoptimized_slots(
     subroutineBlocks: Dict[Optional[SubroutineDefinition], TealBlock]
 ) -> Set[ScratchSlot]:
     """Find and return all referenced ScratchSlots that need to be skipped

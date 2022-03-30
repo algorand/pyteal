@@ -41,6 +41,9 @@ def _remove_extraneous_slot_access(start: TealBlock, remove: Set[ScratchSlot]):
         block.ops = list(filter(keep_op, block.ops))
 
 
+# Very dumb, overly eager dependency checking. A "dependency" is considered
+# any time the slot is loaded from in the entire control flow graph. This
+# can definitely be improved in the future.
 def _has_load_dependencies(
     cur_block: TealBlock, start: TealBlock, slot: ScratchSlot, pos: int
 ) -> bool:
