@@ -38,12 +38,12 @@ class SubstringExpr(Expr):
             )
 
         if l > 0 and options.version >= Op.extract.min_version:
-            if s < 2 ** 8 and l < 2 ** 8:
+            if s < 2**8 and l < 2**8:
                 return Op.extract
             else:
                 return Op.extract3
         else:
-            if s < 2 ** 8 and e < 2 ** 8:
+            if s < 2**8 and e < 2**8:
                 return Op.substring
             else:
                 return Op.substring3
@@ -124,7 +124,7 @@ class ExtractExpr(Expr):
     # helper method for correctly populating op
     def __getOp(self, options: "CompileOptions"):
         s, l = cast(Int, self.startArg).value, cast(Int, self.lenArg).value
-        if s < 2 ** 8 and l > 0 and l < 2 ** 8:
+        if s < 2**8 and l > 0 and l < 2**8:
             return Op.extract
         else:
             return Op.extract3
@@ -192,7 +192,7 @@ class SuffixExpr(Expr):
             return Op.substring3
 
         s = cast(Int, self.startArg).value
-        if s < 2 ** 8:
+        if s < 2**8:
             return Op.extract
         else:
             return Op.substring3
