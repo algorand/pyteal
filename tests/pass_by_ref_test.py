@@ -223,297 +223,302 @@ def test_teal_output_is_unchanged(pt):
     assert_new_v_old(pt, 6)
 
 
-def test_pass_by_ref_guardrails():
-    ##### Subroutine Definitions #####
-    @Subroutine(TealType.uint64)
-    def ok(x):
-        # not really ok at runtime... but should be ok at compile time
-        return ok(x)
+##### Subroutine Definitions for pass-by-ref guardrails testing #####
+@Subroutine(TealType.uint64)
+def ok(x):
+    # not really ok at runtime... but should be ok at compile time
+    return ok(x)
 
-    @Subroutine(TealType.uint64)
-    def ok_byref(x: ScratchVar):
-        return Int(42)
 
-    @Subroutine(TealType.uint64)
-    def ok_indirect1(x):
-        return ok_indirect2(x)
+@Subroutine(TealType.uint64)
+def ok_byref(x: ScratchVar):
+    return Int(42)
 
-    @Subroutine(TealType.uint64)
-    def ok_indirect2(x):
-        return ok_indirect1(x)
 
-    @Subroutine(TealType.uint64)
-    def not_ok(x: ScratchVar):
-        # not ok both at compile and runtime
-        return not_ok(x)
+@Subroutine(TealType.uint64)
+def ok_indirect1(x):
+    return ok_indirect2(x)
 
-    @Subroutine(TealType.uint64)
-    def not_ok_indirect1(x: ScratchVar):
-        return not_ok_indirect2(x)
 
-    @Subroutine(TealType.uint64)
-    def not_ok_indirect2(x: ScratchVar):
-        return not_ok_indirect1(x)
+@Subroutine(TealType.uint64)
+def ok_indirect2(x):
+    return ok_indirect1(x)
 
-    """
-    Complex subroutine graph example:
 
-    a --> b --> a (loop)
-            --> e 
-            --> f
-      --> *c--> g --> a (loop)
-            --> h 
-      --> d --> d (loop)
-            --> i
-            --> j
+@Subroutine(TealType.uint64)
+def not_ok(x: ScratchVar):
+    # not ok both at compile and runtime
+    return not_ok(x)
 
-    *c - this is the only "pass by-ref" subroutine
-    Expect the following error path: c-->g-->a-->c
-    """
 
-    @Subroutine(TealType.uint64)
-    def a(x):
-        tmp = ScratchVar(TealType.uint64)
-        return Seq(tmp.store(x), b(x) + c(tmp) + d(x))
+@Subroutine(TealType.uint64)
+def not_ok_indirect1(x: ScratchVar):
+    return not_ok_indirect2(x)
 
-    @Subroutine(TealType.uint64)
-    def b(x):
-        return a(x) + e(x) * f(x)
 
-    @Subroutine(TealType.uint64)
-    def c(x: ScratchVar):
-        return g(Int(42)) - h(x.load())
+@Subroutine(TealType.uint64)
+def not_ok_indirect2(x: ScratchVar):
+    return not_ok_indirect1(x)
 
-    @Subroutine(TealType.uint64)
-    def d(x):
-        return d(x) + i(Int(11)) * j(x)
 
-    @Subroutine(TealType.uint64)
-    def e(x):
-        return Int(42)
+"""
+Complex subroutine graph example:
 
-    @Subroutine(TealType.uint64)
-    def f(x):
-        return Int(42)
+a --> b --> a (loop)
+        --> e 
+        --> f
+    --> *c--> g --> a (loop)
+        --> h 
+    --> d --> d (loop)
+        --> i
+        --> j
 
-    @Subroutine(TealType.uint64)
-    def g(x):
-        return a(Int(17))
+*c - this is the only "pass by-ref" subroutine
+Expect the following error path: c-->g-->a-->c
+"""
 
-    @Subroutine(TealType.uint64)
-    def h(x):
-        return Int(42)
 
-    @Subroutine(TealType.uint64)
-    def i(x):
-        return Int(42)
+@Subroutine(TealType.uint64)
+def a(x):
+    tmp = ScratchVar(TealType.uint64)
+    return Seq(tmp.store(x), b(x) + c(tmp) + d(x))
 
-    @Subroutine(TealType.uint64)
-    def j(x):
-        return Int(42)
 
-    @Subroutine(TealType.none)
-    def tally(n, result: ScratchVar):
-        return (
-            If(n == Int(0))
-            .Then(result.store(Bytes("")))
-            .Else(
-                Seq(
-                    tally(n - Int(1), result),
-                    result.store(Concat(result.load(), Bytes("a"))),
-                )
+@Subroutine(TealType.uint64)
+def b(x):
+    return a(x) + e(x) * f(x)
+
+
+@Subroutine(TealType.uint64)
+def c(x: ScratchVar):
+    return g(Int(42)) - h(x.load())
+
+
+@Subroutine(TealType.uint64)
+def d(x):
+    return d(x) + i(Int(11)) * j(x)
+
+
+@Subroutine(TealType.uint64)
+def e(x):
+    return Int(42)
+
+
+@Subroutine(TealType.uint64)
+def f(x):
+    return Int(42)
+
+
+@Subroutine(TealType.uint64)
+def g(x):
+    return a(Int(17))
+
+
+@Subroutine(TealType.uint64)
+def h(x):
+    return Int(42)
+
+
+@Subroutine(TealType.uint64)
+def i(x):
+    return Int(42)
+
+
+@Subroutine(TealType.uint64)
+def j(x):
+    return Int(42)
+
+
+@Subroutine(TealType.none)
+def tally(n, result: ScratchVar):
+    return (
+        If(n == Int(0))
+        .Then(result.store(Bytes("")))
+        .Else(
+            Seq(
+                tally(n - Int(1), result),
+                result.store(Concat(result.load(), Bytes("a"))),
             )
         )
-
-    @Subroutine(TealType.none)
-    def subr_string_mult(s: ScratchVar, n):
-        tmp = ScratchVar(TealType.bytes)
-        return (
-            If(n == Int(0))
-            .Then(s.store(Bytes("")))
-            .Else(
-                Seq(
-                    tmp.store(s.load()),
-                    subr_string_mult(s, n - Int(1)),
-                    s.store(Concat(s.load(), tmp.load())),
-                )
-            )
-        )
-
-    @Subroutine(TealType.none)
-    def factorial_BAD(n: ScratchVar):
-        tmp = ScratchVar(TealType.uint64)
-        return (
-            If(n.load() <= Int(1))
-            .Then(n.store(Int(1)))
-            .Else(
-                Seq(
-                    tmp.store(n.load() - Int(1)),
-                    factorial_BAD(tmp),
-                    n.store(n.load() * tmp.load()),
-                )
-            )
-        )
-
-    @Subroutine(TealType.none)
-    def factorial(n: ScratchVar):
-        tmp = ScratchVar(TealType.uint64)
-        return (
-            If(n.load() <= Int(1))
-            .Then(n.store(Int(1)))
-            .Else(
-                Seq(
-                    tmp.store(n.load()),
-                    n.store(n.load() - Int(1)),
-                    factorial(n),
-                    n.store(n.load() * tmp.load()),
-                )
-            )
-        )
-
-    @Subroutine(TealType.none)
-    def plus_one(n: ScratchVar):
-        tmp = ScratchVar(TealType.uint64)
-        return (
-            If(n.load() == Int(0))
-            .Then(n.store(Int(1)))
-            .Else(
-                Seq(
-                    tmp.store(n.load() - Int(1)),
-                    plus_one(tmp),
-                    n.store(tmp.load() + Int(1)),
-                )
-            )
-        )
-
-    ##### Approval PyTEAL Expressions #####
-
-    approval_ok = ok(Int(42))
-
-    x = ScratchVar(TealType.uint64)
-
-    approval_ok_byref = Seq(x.store(Int(42)), ok_byref(x))
-
-    approval_ok_indirect = ok_indirect1(Int(42))
-
-    approval_not_ok = Seq(x.store(Int(42)), not_ok(x))
-
-    approval_not_ok_indirect = Seq(x.store(Int(42)), not_ok_indirect1(x))
-
-    approval_its_complicated = a(Int(42))
-
-    def tallygo():
-        result = ScratchVar(TealType.bytes)
-        # If-Then is a hook for creating + opting in without providing any args
-        return (
-            If(Or(App.id() == Int(0), Txn.application_args.length() == Int(0)))
-            .Then(Int(1))
-            .Else(
-                Seq(
-                    result.store(Bytes("dummy")),
-                    tally(Int(4), result),
-                    Btoi(result.load()),
-                )
-            )
-        )
-
-    def string_mult():
-        s = ScratchVar(TealType.bytes)
-        return Seq(
-            s.store(Txn.application_args[0]),
-            subr_string_mult(s, Btoi(Txn.application_args[1])),
-            Log(s.load()),
-            Int(100),
-        )
-
-    def fac_by_ref_BAD():
-        n = ScratchVar(TealType.uint64)
-        return Seq(
-            n.store(Int(10)),
-            factorial_BAD(n),
-            n.load(),
-        )
-
-    def fac_by_ref():
-        n = ScratchVar(TealType.uint64)
-        return Seq(
-            n.store(Int(10)),
-            factorial(n),
-            n.load(),
-        )
-
-    # Testable by black-box:
-    def fac_by_ref_args():
-        n = ScratchVar(TealType.uint64)
-        return Seq(
-            If(Or(App.id() == Int(0), Txn.application_args.length() == Int(0)))
-            .Then(Int(1))
-            .Else(
-                Seq(
-                    n.store(Btoi(Txn.application_args[0])),
-                    factorial(n),
-                    n.load(),
-                )
-            )
-        )
-
-    def increment():
-        n = ScratchVar(TealType.uint64)
-        return Seq(n.store(Int(4)), plus_one(n), Int(1))
-
-    ##### Assertions #####
-
-    assert compileTeal(approval_ok, Mode.Application, version=6)
-
-    assert compileTeal(approval_ok_byref, Mode.Application, version=6)
-
-    assert compileTeal(approval_ok_indirect, Mode.Application, version=6)
-
-    with pytest.raises(TealInputError) as err:
-        compileTeal(approval_not_ok, Mode.Application, version=6)
-
-    prefix = "ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: "
-    assert f"{prefix}not_ok()-->not_ok()" in str(err)
-
-    with pytest.raises(TealInputError) as err:
-        compileTeal(approval_not_ok_indirect, Mode.Application, version=6)
-
-    assert (
-        f"{prefix}not_ok_indirect1()-->not_ok_indirect2()-->not_ok_indirect1()"
-        in str(err)
     )
 
+
+@Subroutine(TealType.none)
+def subr_string_mult(s: ScratchVar, n):
+    tmp = ScratchVar(TealType.bytes)
+    return (
+        If(n == Int(0))
+        .Then(s.store(Bytes("")))
+        .Else(
+            Seq(
+                tmp.store(s.load()),
+                subr_string_mult(s, n - Int(1)),
+                s.store(Concat(s.load(), tmp.load())),
+            )
+        )
+    )
+
+
+@Subroutine(TealType.none)
+def factorial_BAD(n: ScratchVar):
+    tmp = ScratchVar(TealType.uint64)
+    return (
+        If(n.load() <= Int(1))
+        .Then(n.store(Int(1)))
+        .Else(
+            Seq(
+                tmp.store(n.load() - Int(1)),
+                factorial_BAD(tmp),
+                n.store(n.load() * tmp.load()),
+            )
+        )
+    )
+
+
+@Subroutine(TealType.none)
+def factorial(n: ScratchVar):
+    tmp = ScratchVar(TealType.uint64)
+    return (
+        If(n.load() <= Int(1))
+        .Then(n.store(Int(1)))
+        .Else(
+            Seq(
+                tmp.store(n.load()),
+                n.store(n.load() - Int(1)),
+                factorial(n),
+                n.store(n.load() * tmp.load()),
+            )
+        )
+    )
+
+
+@Subroutine(TealType.none)
+def plus_one(n: ScratchVar):
+    tmp = ScratchVar(TealType.uint64)
+    return (
+        If(n.load() == Int(0))
+        .Then(n.store(Int(1)))
+        .Else(
+            Seq(
+                tmp.store(n.load() - Int(1)),
+                plus_one(tmp),
+                n.store(tmp.load() + Int(1)),
+            )
+        )
+    )
+
+
+##### Approval PyTEAL Expressions (COPACETIC) #####
+
+approval_ok = ok(Int(42))
+
+x_scratchvar = ScratchVar(TealType.uint64)
+
+approval_ok_byref = Seq(x_scratchvar.store(Int(42)), ok_byref(x_scratchvar))
+
+approval_ok_indirect = ok_indirect1(Int(42))
+
+##### BANNED Approval PyTEAL Expressions (wrapped in a function) #####
+
+approval_not_ok = lambda: Seq(x_scratchvar.store(Int(42)), not_ok(x_scratchvar))
+
+approval_not_ok_indirect = lambda: Seq(
+    x_scratchvar.store(Int(42)), not_ok_indirect1(x_scratchvar)
+)
+
+approval_its_complicated = lambda: a(Int(42))
+
+
+def tallygo():
+    result = ScratchVar(TealType.bytes)
+    # If-Then is a hook for creating + opting in without providing any args
+    return (
+        If(Or(App.id() == Int(0), Txn.application_args.length() == Int(0)))
+        .Then(Int(1))
+        .Else(
+            Seq(
+                result.store(Bytes("dummy")),
+                tally(Int(4), result),
+                Btoi(result.load()),
+            )
+        )
+    )
+
+
+def string_mult():
+    s = ScratchVar(TealType.bytes)
+    return Seq(
+        s.store(Txn.application_args[0]),
+        subr_string_mult(s, Btoi(Txn.application_args[1])),
+        Log(s.load()),
+        Int(100),
+    )
+
+
+def fac_by_ref_BAD():
+    n = ScratchVar(TealType.uint64)
+    return Seq(
+        n.store(Int(10)),
+        factorial_BAD(n),
+        n.load(),
+    )
+
+
+def fac_by_ref():
+    n = ScratchVar(TealType.uint64)
+    return Seq(
+        n.store(Int(10)),
+        factorial(n),
+        n.load(),
+    )
+
+
+# Proved correct via blackbox testing, but BANNING for now
+def fac_by_ref_args():
+    n = ScratchVar(TealType.uint64)
+    return Seq(
+        If(Or(App.id() == Int(0), Txn.application_args.length() == Int(0)))
+        .Then(Int(1))
+        .Else(
+            Seq(
+                n.store(Btoi(Txn.application_args[0])),
+                factorial(n),
+                n.load(),
+            )
+        )
+    )
+
+
+def increment():
+    n = ScratchVar(TealType.uint64)
+    return Seq(n.store(Int(4)), plus_one(n), Int(1))
+
+
+COPACETIC_APPROVALS = [approval_ok, approval_ok_byref, approval_ok_indirect]
+
+ILLEGAL_APPROVALS = {
+    approval_not_ok: "not_ok()-->not_ok()",
+    approval_not_ok_indirect: "not_ok_indirect1()-->not_ok_indirect2()-->not_ok_indirect1()",
+    approval_its_complicated: "c()-->g()-->a()-->c()",
+    tallygo: "tally()-->tally()",
+    string_mult: "subr_string_mult()-->subr_string_mult()",
+    fac_by_ref: "factorial()-->factorial()",
+    fac_by_ref_BAD: "factorial_BAD()-->factorial_BAD()",
+    fac_by_ref_args: "factorial()-->factorial()",
+    increment: "plus_one()-->plus_one()",
+}
+
+
+@pytest.mark.parametrize("approval", COPACETIC_APPROVALS)
+def test_pass_by_ref_guardrails_COPACETIC(approval):
+    assert compileTeal(approval, Mode.Application, version=6)
+
+
+@pytest.mark.parametrize("approval_func_n_suffix", ILLEGAL_APPROVALS.items())
+def test_pass_by_ref_guardrails_BANNED(approval_func_n_suffix):
+    approval, suffix = approval_func_n_suffix
     with pytest.raises(TealInputError) as err:
-        compileTeal(approval_its_complicated, Mode.Application, version=6)
+        compileTeal(approval(), Mode.Application, version=6)
 
-    assert f"{prefix}c()-->g()-->a()-->c()" in str(err)
-
-    with pytest.raises(TealInputError) as err:
-        compileTeal(tallygo(), Mode.Signature, version=5)
-
-    assert f"{prefix}tally()-->tally()" in str(err)
-
-    with pytest.raises(TealInputError) as err:
-        compileTeal(string_mult(), Mode.Application, version=5)
-
-    assert f"{prefix}subr_string_mult()-->subr_string_mult()" in str(err)
-
-    with pytest.raises(TealInputError) as err:
-        compileTeal(fac_by_ref(), Mode.Application, version=5)
-
-    assert f"{prefix}factorial()-->factorial()" in str(err)
-
-    with pytest.raises(TealInputError) as err:
-        compileTeal(fac_by_ref_BAD(), Mode.Application, version=5)
-
-    assert f"{prefix}factorial_BAD()-->factorial_BAD()" in str(err)
-
-    with pytest.raises(TealInputError) as err:
-        compileTeal(fac_by_ref_args(), Mode.Application, version=5)
-
-    assert f"{prefix}factorial()-->factorial()" in str(err)
-
-    with pytest.raises(TealInputError) as err:
-        compileTeal(increment(), Mode.Application, version=5)
-
-    assert f"{prefix}plus_one()-->plus_one()" in str(err)
+    prefix = "ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: "
+    assert f"{prefix}{suffix}" in str(err)
