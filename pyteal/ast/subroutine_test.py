@@ -11,6 +11,7 @@ options = CompileOptions(version=6)
 
 # something here
 
+
 def test_subroutine_definition():
     def fn0Args():
         return Return()
