@@ -1,8 +1,9 @@
 # Required for merging:
 
 pip:
-	pip install -r requirements.txt
-	pip install -e .
+	pip install --upgrade pip
+	pip install -e .[test]
+
 
 build-and-test: build black mypy test
 

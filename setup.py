@@ -5,6 +5,17 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+test_requirements = [
+    "black==22.3.0",
+    "graviton@git+https://github.com/algorand/graviton@🦙",
+    "mypy==0.931",
+    "py-algorand-sdk",
+    "pytest",
+    "pytest-cov",
+    "pytest-timeout",
+    "tabulate==0.8.9",
+]
+
 setuptools.setup(
     name="pyteal",
     version="0.10.1",
@@ -16,6 +27,7 @@ setuptools.setup(
     url="https://github.com/algorand/pyteal",
     packages=setuptools.find_packages(),
     install_requires=["py-algorand-sdk"],
+    extras_require={"test": test_requirements},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
