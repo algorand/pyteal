@@ -34,7 +34,7 @@ class SubroutineDefinition:
         self,
         implementation: Callable[..., Expr],
         return_type: TealType,
-        nameStr: Optional[str] = None,
+        name_str: Optional[str] = None,
     ) -> None:
         super().__init__()
         self.id = SubroutineDefinition.nextSubroutineId
@@ -74,7 +74,7 @@ class SubroutineDefinition:
         self.return_type = return_type
 
         self.declaration: Optional["SubroutineDeclaration"] = None
-        self.__name = self.implementation.__name__ if nameStr is None else nameStr
+        self.__name = self.implementation.__name__ if name_str is None else name_str
 
     @staticmethod
     def is_abi_class(arg_type: Type) -> bool:
@@ -360,14 +360,14 @@ SubroutineCall.__module__ = "pyteal"
 class SubroutineFnWrapper:
     def __init__(
         self,
-        fnImplementation: Callable[..., Expr],
-        returnType: TealType,
+        fn_implementation: Callable[..., Expr],
+        return_type: TealType,
         name: Optional[str] = None,
     ) -> None:
         self.subroutine = SubroutineDefinition(
-            fnImplementation,
-            return_type=returnType,
-            nameStr=name,
+            fn_implementation,
+            return_type=return_type,
+            name_str=name,
         )
 
     def __call__(self, *args: Union[Expr, ScratchVar, abi.BaseType], **kwargs) -> Expr:
@@ -408,20 +408,20 @@ class Subroutine:
             ])
     """
 
-    def __init__(self, returnType: TealType, name: Optional[str] = None) -> None:
+    def __init__(self, return_type: TealType, name: Optional[str] = None) -> None:
         """Define a new subroutine with the given return type.
 
         Args:
             returnType: The type that the return value of this subroutine must conform to.
                 TealType.none indicates that this subroutine does not return any value.
         """
-        self.returnType = returnType
+        self.return_type = return_type
         self.name = name
 
     def __call__(self, fnImplementation: Callable[..., Expr]) -> SubroutineFnWrapper:
         return SubroutineFnWrapper(
-            fnImplementation=fnImplementation,
-            returnType=self.returnType,
+            fn_implementation=fnImplementation,
+            return_type=self.return_type,
             name=self.name,
         )
 
