@@ -63,7 +63,7 @@ class CompileOptions:
     def exitLoop(self) -> Tuple[List[TealSimpleBlock], List[TealSimpleBlock]]:
         if len(self.breakBlocksStack) == 0 or len(self.continueBlocksStack) == 0:
             raise TealInternalError("Cannot exit loop when no loop is active")
-        return (self.breakBlocksStack.pop(), self.continueBlocksStack.pop())
+        return self.breakBlocksStack.pop(), self.continueBlocksStack.pop()
 
 
 def verifyOpsForVersion(teal: List[TealComponent], version: int):

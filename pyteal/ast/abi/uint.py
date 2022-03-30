@@ -40,7 +40,7 @@ def uint_set(size: int, uintVar: ScratchVar, value: Union[int, Expr, "Uint"]) ->
 
     checked = False
     if type(value) is int:
-        if value >= 2 ** size:
+        if value >= 2**size:
             raise TealInputError("Value exceeds uint{} maximum: {}".format(size, value))
         value = Int(value)
         checked = True
@@ -54,7 +54,7 @@ def uint_set(size: int, uintVar: ScratchVar, value: Union[int, Expr, "Uint"]) ->
 
     return Seq(
         uintVar.store(cast(Expr, value)),
-        Assert(uintVar.load() < Int(2 ** size)),
+        Assert(uintVar.load() < Int(2**size)),
     )
 
 
@@ -222,7 +222,8 @@ class Uint(BaseType):
     def set(self, value: Union[int, Expr, "Uint"]) -> Expr:
         if isinstance(value, BaseType) and not (
             isinstance(value.type_spec(), UintTypeSpec)
-            and self.type_spec().bit_size() == value.type_spec().bit_size()
+            and self.type_spec().bit_size()
+            == cast(UintTypeSpec, value.type_spec()).bit_size()
         ):
             raise TealInputError(
                 "Type {} is not assignable to type {}".format(

@@ -31,7 +31,7 @@ testData = [
         uintType=abi.Uint8TypeSpec(),
         instanceType=abi.Uint8,
         expectedBits=8,
-        maxValue=2 ** 8 - 1,
+        maxValue=2**8 - 1,
         checkUpperBound=True,
         expectedDecoding=lambda encoded, startIndex, endIndex, length: GetByte(
             encoded, noneToInt0(startIndex)
@@ -44,7 +44,7 @@ testData = [
         uintType=abi.Uint16TypeSpec(),
         instanceType=abi.Uint16,
         expectedBits=16,
-        maxValue=2 ** 16 - 1,
+        maxValue=2**16 - 1,
         checkUpperBound=True,
         expectedDecoding=lambda encoded, startIndex, endIndex, length: ExtractUint16(
             encoded, noneToInt0(startIndex)
@@ -55,7 +55,7 @@ testData = [
         uintType=abi.Uint32TypeSpec(),
         instanceType=abi.Uint32,
         expectedBits=32,
-        maxValue=2 ** 32 - 1,
+        maxValue=2**32 - 1,
         checkUpperBound=True,
         expectedDecoding=lambda encoded, startIndex, endIndex, length: ExtractUint32(
             encoded, noneToInt0(startIndex)
@@ -66,7 +66,7 @@ testData = [
         uintType=abi.Uint64TypeSpec(),
         instanceType=abi.Uint64,
         expectedBits=64,
-        maxValue=2 ** 64 - 1,
+        maxValue=2**64 - 1,
         checkUpperBound=False,
         expectedDecoding=lambda encoded, startIndex, endIndex, length: Btoi(encoded)
         if startIndex is None and endIndex is None and length is None

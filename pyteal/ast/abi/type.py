@@ -93,7 +93,7 @@ class BaseType(ABC):
         *,
         startIndex: Expr = None,
         endIndex: Expr = None,
-        length: Expr = None
+        length: Expr = None,
     ) -> Expr:
         """Decode a substring of the passed in encoded string and set it as this type's value.
 
