@@ -1,4 +1,4 @@
-black==21.7b0
+black==22.3.0
 git+https://github.com/algorand/graviton@github-actions
 mypy==0.931
 py-algorand-sdk
