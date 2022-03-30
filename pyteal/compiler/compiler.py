@@ -18,7 +18,7 @@ from .sort import sortBlocks
 from .flatten import flattenBlocks, flattenSubroutines
 from .scratchslots import (
     assignScratchSlotsToSubroutines,
-    collectUnoptimizedSlotIDs,
+    collectedUnoptimizedSlots,
 )
 from .subroutines import (
     spillLocalSlotsDuringRecursion,
@@ -169,7 +169,7 @@ def compileSubroutine(
         )
 
 
-def createTealMapping(
+def sort_subroutine_blocks(
     subroutineBlocks: Dict[Optional[SubroutineDefinition], TealBlock],
     subroutineEndBlocks: Dict[Optional[SubroutineDefinition], TealBlock],
 ) -> Dict[Optional[SubroutineDefinition], List[TealComponent]]:
@@ -238,8 +238,7 @@ def compileTeal(
     # is necessary for the dependency checking of local slots. Global slots, slots
     # used by DynamicScratchVar, and reserved slots are not optimized.
     if options.optimize.scratch_slots:
-        options.optimize.skip_ids = collectUnoptimizedSlotIDs(subroutineBlocks)
-        print(str(options.optimize.skip_ids))
+        options.optimize._skip_slots = collectedUnoptimizedSlots(subroutineBlocks)
         for start in subroutineBlocks.values():
             optimizer.apply_global_optimizations(start, options.optimize)
 
@@ -247,7 +246,7 @@ def compileTeal(
 
     subroutineMapping: Dict[
         Optional[SubroutineDefinition], List[TealComponent]
-    ] = createTealMapping(subroutineBlocks, subroutineEndBlocks)
+    ] = sort_subroutine_blocks(subroutineBlocks, subroutineEndBlocks)
 
     spillLocalSlotsDuringRecursion(
         version, subroutineMapping, subroutineGraph, localSlotAssignments

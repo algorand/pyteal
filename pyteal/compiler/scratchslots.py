@@ -1,15 +1,14 @@
-from typing import Tuple, List, Set, Dict, Optional, cast
+from typing import Tuple, Set, Dict, Optional, cast
 
 from ..ast import ScratchSlot, SubroutineDefinition
-from ..ir import Mode, TealComponent, TealBlock
-from ..ir.ops import Op
+from ..ir import Mode, TealComponent, TealBlock, Op
 from ..errors import TealInputError, TealInternalError
 from ..config import NUM_SLOTS
 
 
-def collectUnoptimizedSlotIDs(
+def collectedUnoptimizedSlots(
     subroutineBlocks: Dict[Optional[SubroutineDefinition], TealBlock]
-) -> Set[int]:
+) -> Set[ScratchSlot]:
     """Find and return all referenced ScratchSlots that need to be skipped
     during optimization.
 
@@ -18,25 +17,25 @@ def collectUnoptimizedSlotIDs(
         The key None is taken to mean the main program routine.
 
     Returns:
-        A set which contains the slot ids used by DynamicScratchVars, all the reserved
-        slot ids, and all global slots.
+        A set which contains the slots used by DynamicScratchVars, all the reserved slots,
+            and all global slots.
     """
 
-    unoptimized_slots: Set[int] = set()
+    unoptimized_slots: Set[ScratchSlot] = set()
 
     def collectSlotsFromBlock(block: TealBlock):
         for op in block.ops:
             for slot in op.getSlots():
                 # dynamic slot or reserved slot
                 if op.op == Op.int or slot.isReservedSlot:
-                    unoptimized_slots.add(slot.id)
+                    unoptimized_slots.add(slot)
 
     for _, start in subroutineBlocks.items():
         for block in TealBlock.Iterate(start):
             collectSlotsFromBlock(block)
 
     global_slots, _ = collectScratchSlots(subroutineBlocks)
-    unoptimized_slots.update(slot.id for slot in global_slots)
+    unoptimized_slots.update(global_slots)
     return unoptimized_slots
 
 
@@ -50,8 +49,9 @@ def collectScratchSlots(
         The key None is taken to mean the main program routine.
 
     Returns:
-        A set which contains all global slots and s dictionary whose keys are the same as
-            subroutineBlocks, and whose values are the local slots of that subroutine.
+        A tuple of a set containing all global slots and a dictionary whose keys are the
+            same as subroutineBlocks, and whose values are the local slots of that
+            subroutine.
     """
 
     subroutineSlots: Dict[Optional[SubroutineDefinition], Set[ScratchSlot]] = dict()

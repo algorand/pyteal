@@ -1,18 +1,14 @@
-from typing import cast, Set
-from pyteal.ir.tealblock import TealBlock
-
-from pyteal.ir.tealop import TealOp
-from pyteal.ir.ops import Op
+from typing import Set
+from ...ast import ScratchSlot
+from ...ir import TealBlock, TealOp, Op
+from ...errors import TealInternalError
 
 
 class OptimizeOptions:
     """An object which specifies the optimizations to be performed and relevant context.
-    Args:
 
-        scratch_slots (optional): cancel contiguous store/load operations
-            that have no load dependencies elsewhere.
-        skip_ids (optional): the slot ids that should be skipped during
-            optimization. At the moment this includes:
+    _skip_slots: the slots that should be skipped during optimization. At the
+        moment this includes:
                 1. reserved slots because they may have dependencies outside
                 the current application. For example, the 'gloads' opcode can
                 access the slots of other applications in the tx group.
@@ -21,55 +17,70 @@ class OptimizeOptions:
                 a single subroutine.
                 3. slots used with dynamic scratch vars. These slots use
                 indirection by means of the 'stores' opcode and dependencies
-                can only be determined at runtime."""
+                can only be determined at runtime.
 
-    def __init__(self, *, scratch_slots: bool = False, skip_ids: Set[int] = None):
+    Args:
+
+        scratch_slots (optional): cancel contiguous store/load operations
+            that have no load dependencies elsewhere.
+    """
+
+    def __init__(self, *, scratch_slots: bool = False):
         self.scratch_slots = scratch_slots
-        self.skip_ids: Set[int] = skip_ids if skip_ids is not None else set()
+        self._skip_slots: Set[ScratchSlot] = set()
 
 
-def _remove_extraneous_slot_access(start: TealBlock, remove: Set[int]):
-    def keep_op(op: TealOp):
+def _remove_extraneous_slot_access(start: TealBlock, remove: Set[ScratchSlot]):
+    def keep_op(op: TealOp) -> bool:
         if type(op) != TealOp or (op.op != Op.store and op.op != Op.load):
             return True
 
-        return cast(int, op.args[0]) not in remove
+        return not set(op.getSlots()).issubset(remove)
 
     for block in TealBlock.Iterate(start):
         block.ops = list(filter(keep_op, block.ops))
 
 
-def _has_load_dependencies(cur_block: TealBlock, start: TealBlock, slot: int, pos: int):
+def _has_load_dependencies(
+    cur_block: TealBlock, start: TealBlock, slot: ScratchSlot, pos: int
+) -> bool:
     for block in TealBlock.Iterate(start):
         for i, op in enumerate(block.ops):
             if block == cur_block and i == pos:
                 continue
 
-            if type(op) == TealOp and op.op == Op.load and op.args[0] == slot:
+            if type(op) == TealOp and op.op == Op.load and slot in set(op.getSlots()):
                 return True
 
     return False
 
 
-def _apply_slot_to_stack(cur_block: TealBlock, start: TealBlock, skip_ids: Set[int]):
+def _apply_slot_to_stack(
+    cur_block: TealBlock, start: TealBlock, skip_slots: Set[ScratchSlot]
+):
     slots_to_remove = set()
+    # surprisingly, this slicing is totally safe - even if the list is empty.
     for i, op in enumerate(cur_block.ops[:-1]):
         if type(op) != TealOp or op.op != Op.store:
             continue
 
-        # do not optimize away reserved and global slots
-        if op.getSlots()[0].id in skip_ids:
+        if set(op.getSlots()).issubset(skip_slots):
             continue
 
         next_op = cur_block.ops[i + 1]
         if type(next_op) != TealOp or next_op.op != Op.load:
             continue
 
-        if op.args[0] != next_op.args[0]:
+        cur_slots, next_slots = op.getSlots(), next_op.getSlots()
+        if len(cur_slots) != 1 or len(next_slots) != 1:
+            raise TealInternalError(
+                "load/store op does not have exactly one slot argument"
+            )
+        if cur_slots[0] != next_slots[0]:
             continue
 
-        if not _has_load_dependencies(cur_block, start, cast(int, op.args[0]), i + 1):
-            slots_to_remove.add(cast(int, op.args[0]))
+        if not _has_load_dependencies(cur_block, start, cur_slots[0], i + 1):
+            slots_to_remove.add(cur_slots[0])
 
     _remove_extraneous_slot_access(start, slots_to_remove)
 
@@ -78,10 +89,10 @@ def apply_global_optimizations(start: TealBlock, options: OptimizeOptions) -> Te
     # limit number of iterations to length of teal program to avoid potential
     # infinite loops.
     for block in TealBlock.Iterate(start):
-        prev_ops = block.ops.copy()
         for _ in range(len(block.ops)):
+            prev_ops = block.ops.copy()
             if options.scratch_slots:
-                _apply_slot_to_stack(block, start, options.skip_ids)
+                _apply_slot_to_stack(block, start, options._skip_slots)
 
             if prev_ops == block.ops:
                 break
