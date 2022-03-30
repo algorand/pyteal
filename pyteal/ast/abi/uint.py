@@ -236,9 +236,9 @@ class Uint(BaseType):
         self,
         encoded: Expr,
         *,
-        startIndex: Optional[Expr] = None,
-        endIndex: Optional[Expr] = None,
-        length: Optional[Expr] = None
+        startIndex: Expr = None,
+        endIndex: Expr = None,
+        length: Expr = None
     ) -> Expr:
         return uint_decode(
             self.type_spec().bit_size(),

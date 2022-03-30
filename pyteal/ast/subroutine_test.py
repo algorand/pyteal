@@ -172,13 +172,13 @@ def test_subroutine_invocation_param_types():
         (
             "all abi's but wrong typed 2",
             fnWithABIAnnotations,
-            [av_u32_static_arr, av_u32_static_arr, av_bool_dym_arr],
+            [av_bool, av_bool_dym_arr, av_u16],
             TealInputError,
         ),
         (
             "all abi's but wrong typed 3",
             fnWithABIAnnotations,
-            [av_u32_static_arr, av_u32_static_arr, av_bool_dym_arr],
+            [av_u16, av_bool, av_byte],
             TealInputError,
         ),
         ("mixed1 copacetic", fnWithMixedAnns1, [sv, x], None),

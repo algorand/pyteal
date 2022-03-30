@@ -77,14 +77,6 @@ class SubroutineDefinition:
         self.__name = self.implementation.__name__ if name_str is None else name_str
 
     @staticmethod
-    def is_abi_class(arg_type: Type) -> bool:
-        return (
-            isclass(arg_type)
-            and arg_type is not abi.BaseType
-            and issubclass(arg_type, abi.BaseType)
-        )
-
-    @staticmethod
     def is_abi_annotation(obj: Any) -> bool:
         try:
             abi.type_spec_from_annotation(obj)
@@ -147,7 +139,7 @@ class SubroutineDefinition:
 
         After the previous checks, the function signature is correct in structure,
         but we still need to check the argument types are matching requirements
-        (i.e., in {Expr, ScratchVar, inheritances of abi.BaseType} or {inheritances of abi.BaseTypes}).
+        (i.e., in {Expr, ScratchVar, inheritances of abi.BaseType}).
 
         Finally, this function outputs `expected_arg_types` for type-checking, `by_ref_args` for compilation,
         and `abi_args` for compilation.
@@ -292,7 +284,7 @@ class SubroutineCall(Expr):
                 arg_type = arg.type_of()
             elif isinstance(arg, ScratchVar):
                 arg_type = arg.type
-            elif SubroutineDefinition.is_abi_class(type(arg)):
+            elif isinstance(arg, abi.BaseType):
                 arg_type = cast(abi.BaseType, arg).stored_value.type
             else:
                 raise TealInputError(
@@ -412,15 +404,15 @@ class Subroutine:
         """Define a new subroutine with the given return type.
 
         Args:
-            returnType: The type that the return value of this subroutine must conform to.
+            return_type: The type that the return value of this subroutine must conform to.
                 TealType.none indicates that this subroutine does not return any value.
         """
         self.return_type = return_type
         self.name = name
 
-    def __call__(self, fnImplementation: Callable[..., Expr]) -> SubroutineFnWrapper:
+    def __call__(self, fn_implementation: Callable[..., Expr]) -> SubroutineFnWrapper:
         return SubroutineFnWrapper(
-            fn_implementation=fnImplementation,
+            fn_implementation=fn_implementation,
             return_type=self.return_type,
             name=self.name,
         )
@@ -468,14 +460,19 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
         Type 3. (ABI) use abi_value itself after storing stack value into scratch space.
     """
 
-    def var_n_loaded(param):
-        if param in subroutine.abi_args:
+    def var_n_loaded(
+        param: str,
+    ) -> Tuple[ScratchVar, Union[ScratchVar, abi.BaseType, Expr]]:
+        loaded: Union[ScratchVar, abi.BaseType, Expr]
+        argVar: ScratchVar
+
+        if param in subroutine.by_ref_args:
+            argVar = DynamicScratchVar(TealType.anytype)
+            loaded = argVar
+        elif param in subroutine.abi_args:
             internal_abi_var = subroutine.abi_args[param].new_instance()
             argVar = internal_abi_var.stored_value
             loaded = internal_abi_var
-        elif param in subroutine.by_ref_args:
-            argVar = DynamicScratchVar(TealType.anytype)
-            loaded = argVar
         else:
             argVar = ScratchVar(TealType.anytype)
             loaded = argVar.load()
@@ -484,8 +481,6 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
 
     args = subroutine.arguments()
     argumentVars, loadedArgs = zip(*map(var_n_loaded, args)) if args else ([], [])
-
-    argumentVars = cast(List[Union[ScratchVar, DynamicScratchVar]], argumentVars)
 
     # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:
     subroutineBody = subroutine.implementation(*loadedArgs)
