@@ -24,7 +24,7 @@ class MethodReturn(Expr):
         return Log(self.arg.encode()).__teal__(options)
 
     def __str__(self) -> str:
-        return f"(MethodReturn {self.arg.type_spec})"
+        return f"(MethodReturn {self.arg.type_spec()})"
 
     def type_of(self) -> TealType:
         return TealType.none
