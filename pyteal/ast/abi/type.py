@@ -190,7 +190,6 @@ class ReturnedType(ComputedType):
     def produced_type_spec(self) -> TypeSpec:
         return self.type_spec
 
-    @abstractmethod
     def store_into(self, output: BaseType) -> Expr:
         if output.type_spec() != self.type_spec:
             raise TealInputError(
