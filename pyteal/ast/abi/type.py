@@ -176,10 +176,10 @@ class ComputedType(ABC, Generic[T]):
 ComputedType.__module__ = "pyteal"
 
 
-void_t = Literal["void"]
+Void = Literal["void"]
 
 
-void_t.__module__ = "pyteal"
+Void.__module__ = "pyteal"
 
 
 class ReturnedType(ComputedType):
