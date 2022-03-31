@@ -11,6 +11,7 @@ from .compiler import (
     DEFAULT_TEAL_VERSION,
     CompileOptions,
     compileTeal,
+    OptimizeOptions,
 )
 from .types import TealType
 from .errors import TealInternalError, TealTypeError, TealInputError, TealCompileError
@@ -122,6 +123,7 @@ __all__ = [
     "Not",
     "OnComplete",
     "Op",
+    "OptimizeOptions",
     "Or",
     "Pop",
     "Reject",
