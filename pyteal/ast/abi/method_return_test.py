@@ -24,6 +24,8 @@ def test_method_return(case):
 NEGATIVE_CASES = [
     Int(0),
     Bytes("aaaaaaa"),
+    Uint16,
+    Uint32,
 ]
 
 
