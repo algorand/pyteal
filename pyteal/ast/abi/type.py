@@ -5,6 +5,7 @@ from ...types import TealType
 from ..expr import Expr
 from ..scratchvar import ScratchVar
 from ..seq import Seq
+from ...errors import TealInputError
 
 
 class TypeSpec(ABC):
@@ -179,3 +180,23 @@ void_t = Literal["void"]
 
 
 void_t.__module__ = "pyteal"
+
+
+class ReturnedType(ComputedType):
+    def __init__(self, type_spec: TypeSpec, encodings: Expr):
+        self.type_spec = type_spec
+        self.encodings = encodings
+
+    def produced_type_spec(self) -> TypeSpec:
+        return self.type_spec
+
+    @abstractmethod
+    def store_into(self, output: BaseType) -> Expr:
+        if output.type_spec() != self.type_spec:
+            raise TealInputError(
+                f"expected type_spec {self.type_spec} but get {output.type_spec()}"
+            )
+        return output.stored_value.store(self.encodings)
+
+
+ReturnedType.__module__ = "pyteal"
