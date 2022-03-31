@@ -7,17 +7,16 @@ from ...errors import TealInternalError
 class OptimizeOptions:
     """An object which specifies the optimizations to be performed and relevant context.
 
-    _skip_slots: the slots that should be skipped during optimization. At the
-        moment this includes:
-                1. reserved slots because they may have dependencies outside
-                the current application. For example, the 'gloads' opcode can
-                access the slots of other applications in the tx group.
-                2. global slots because they're outside the scope of global
-                optimizations, which only apply to the control flow graph of
-                a single subroutine.
-                3. slots used with dynamic scratch vars. These slots use
-                indirection by means of the 'stores' opcode and dependencies
-                can only be determined at runtime.
+    _skip_slots: the slots that should be skipped during optimization. At the moment this includes:
+            1. reserved slots because they may have dependencies outside
+            the current application. For example, the 'gloads' opcode can
+            access the slots of other applications in the tx group.
+            2. global slots because they're outside the scope of global
+            optimizations, which only apply to the control flow graph of
+            a single subroutine.
+            3. slots used with dynamic scratch vars. These slots use
+            indirection by means of the 'stores' opcode and dependencies
+            can only be determined at runtime.
 
     Args:
 

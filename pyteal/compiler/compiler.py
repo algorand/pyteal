@@ -203,7 +203,7 @@ def compileTeal(
             constants will be assembled in the most space-efficient way, so enabling this may reduce
             the compiled program's size. Enabling this option requires a minimum TEAL version of 3.
             Defaults to false.
-        optimize (optional): OptimizeOptions that determine which optimization will be applied.
+        optimize (optional): OptimizeOptions that determine which optimizations will be applied.
 
     Returns:
         A TEAL assembly program compiled from the input expression.
