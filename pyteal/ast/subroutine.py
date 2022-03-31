@@ -12,6 +12,7 @@ from typing import (
     Tuple,
     cast,
     Any,
+    TypeVar,
 )
 
 from ..errors import TealInputError, verifyTealVersion
@@ -378,6 +379,45 @@ class SubroutineFnWrapper:
 
 
 SubroutineFnWrapper.__module__ = "pyteal"
+
+
+T = TypeVar("T", bound=abi.BaseType)
+ABI_Return_T = Union[abi.Void, abi.ComputedType[T]]
+
+
+class ABIReturnSubroutineFnWrapper:
+    def __init__(
+        self,
+        fn_implementation: Callable[..., ABI_Return_T],
+        return_type: TealType,
+        name: Optional[str] = None,
+    ) -> None:
+        # self.subroutine = SubroutineDefinition(
+        #     fn_implementation,
+        #     return_type=return_type,
+        #     name_str=name,
+        # )
+        pass
+
+    def __call__(
+        self, *args: Union[Expr, ScratchVar, abi.BaseType], **kwargs
+    ) -> Union[abi.ReturnedType, Expr]:
+        pass
+
+    def name(self) -> str:
+        pass
+
+    def is_void(self) -> bool:
+        pass
+
+    def type_of(self) -> Union[str, abi.TypeSpec]:
+        pass
+
+    def is_registrable(self) -> bool:
+        pass
+
+
+ABIReturnSubroutineFnWrapper.__module__ = "pyteal"
 
 
 class Subroutine:
