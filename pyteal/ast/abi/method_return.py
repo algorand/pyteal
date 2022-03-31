@@ -17,7 +17,7 @@ class MethodReturn(Expr):
         self.arg = arg
 
     def __teal__(self, options: "CompileOptions") -> Tuple[TealBlock, TealSimpleBlock]:
-        if options.version >= Op.log.min_version:
+        if options.version < Op.log.min_version:
             raise TealInputError(
                 f"current version {options.version} is lower than log's min version {Op.log.min_version}"
             )
