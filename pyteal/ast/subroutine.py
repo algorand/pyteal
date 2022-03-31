@@ -474,20 +474,10 @@ class Subroutine:
 Subroutine.__module__ = "pyteal"
 
 
-class ABIReturnSubroutine:
-    def __init__(self, name: Optional[str] = None) -> None:
-        self.name = name
-
-    def __call__(
-        self, fn_implementation: Callable[..., T_abi_ret]
-    ) -> ABIReturnSubroutineFnWrapper:
-        return ABIReturnSubroutineFnWrapper(
-            fn_implementation=fn_implementation,
-            name=self.name,
-        )
-
-
-ABIReturnSubroutine.__module__ = "pyteal"
+def abi_return_subroutine(
+    fn_implementation: Callable[..., T_abi_ret]
+) -> ABIReturnSubroutineFnWrapper:
+    return ABIReturnSubroutineFnWrapper(fn_implementation=fn_implementation)
 
 
 def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaration:
