@@ -105,9 +105,7 @@ class SubroutineDefinition:
         else:
             if not isclass(ptype) and not SubroutineDefinition.is_abi_annotation(ptype):
                 raise TealInputError(
-                    "Function has parameter {} of declared type {} which is not a class".format(
-                        parameter_name, ptype
-                    )
+                    f"Function has parameter {parameter_name} of declared type {ptype} which is not a class"
                 )
 
             if ptype in (Expr, ScratchVar):
@@ -116,9 +114,8 @@ class SubroutineDefinition:
                 return abi.type_spec_from_annotation(ptype)
             else:
                 raise TealInputError(
-                    "Function has parameter {} of disallowed type {}. Only the types {} are allowed".format(
-                        parameter_name, ptype, (Expr, ScratchVar, "ABI")
-                    )
+                    f"Function has parameter {parameter_name} of disallowed type {ptype}. "
+                    f"Only the types {(Expr, ScratchVar, 'ABI')} are allowed"
                 )
 
     @staticmethod
