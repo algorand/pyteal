@@ -176,7 +176,7 @@ class ComputedType(ABC, Generic[T]):
 ComputedType.__module__ = "pyteal"
 
 
-void_t = ComputedType[Literal["void"]]
+void_t = Literal["void"]
 
 
 void_t.__module__ = "pyteal"
