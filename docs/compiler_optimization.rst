@@ -14,7 +14,7 @@ Optimizer Usage
 
 The compiler determines which optimizations to apply based on the provided :any:`OptimizeOptions` object as
 shown in the code block below. The :any:`OptimizeOptions` constructor receives a set of keyword arguments 
-representing flags corresponding to particular optimizations. If arguments are provided to the
+representing flags corresponding to particular optimizations. If arguments are not provided to the
 constructor or no :any:`OptimizeOptions` object is passed to :any:`compileTeal` then the default behavior is
 that no optimizations are applied.
 
@@ -27,4 +27,4 @@ Optimization Flag              Description                                      
 .. code-block:: python
 
     optimize_options = OptimizeOptions(scratch_slots=True)
-    compileTeal(approval_program(), mode=Mode.Application, version=4, optimizer=optimize_options)
+    compileTeal(approval_program(), mode=Mode.Application, version=4, optimize=optimize_options)
