@@ -389,7 +389,6 @@ class ABIReturnSubroutineFnWrapper:
     def __init__(
         self,
         fn_implementation: Callable[..., ABI_Return_T],
-        return_type: TealType,
         name: Optional[str] = None,
     ) -> None:
         # self.subroutine = SubroutineDefinition(
@@ -456,6 +455,22 @@ class Subroutine:
 
 
 Subroutine.__module__ = "pyteal"
+
+
+class ABIReturnSubroutine:
+    def __init__(self, name: Optional[str] = None) -> None:
+        self.name = name
+
+    def __call__(
+        self, fn_implementation: Callable[..., ABI_Return_T]
+    ) -> ABIReturnSubroutineFnWrapper:
+        return ABIReturnSubroutineFnWrapper(
+            fn_implementation=fn_implementation,
+            name=self.name,
+        )
+
+
+ABIReturnSubroutine.__module__ = "pyteal"
 
 
 def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaration:
