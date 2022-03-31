@@ -1,4 +1,4 @@
-from typing import TypeVar, Generic, Callable, Final, cast
+from typing import TypeVar, Generic, Callable, Final, cast, Literal
 from abc import ABC, abstractmethod
 
 from ...types import TealType
@@ -173,3 +173,7 @@ class ComputedType(ABC, Generic[T]):
 
 
 ComputedType.__module__ = "pyteal"
+
+
+Void = Literal["void"]
+

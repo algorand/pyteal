@@ -1,4 +1,4 @@
-from .type import TypeSpec, BaseType, ComputedType
+from .type import TypeSpec, BaseType, ComputedType, ReturnedType, Void
 from .bool import BoolTypeSpec, Bool
 from .uint import (
     UintTypeSpec,
@@ -28,12 +28,14 @@ from .tuple import (
 from .array_base import ArrayTypeSpec, Array, ArrayElement
 from .array_static import StaticArrayTypeSpec, StaticArray
 from .array_dynamic import DynamicArrayTypeSpec, DynamicArray
-from .util import type_spec_from_annotation
+from .util import type_spec_from_annotation, type_spec_from_computed_type_annotation
 
 __all__ = [
     "TypeSpec",
     "BaseType",
     "ComputedType",
+    "ReturnedType",
+    "Void",
     "BoolTypeSpec",
     "Bool",
     "UintTypeSpec",
@@ -65,4 +67,5 @@ __all__ = [
     "DynamicArrayTypeSpec",
     "DynamicArray",
     "type_spec_from_annotation",
+    "type_spec_from_computed_type_annotation",
 ]

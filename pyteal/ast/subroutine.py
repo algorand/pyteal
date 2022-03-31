@@ -12,7 +12,10 @@ from typing import (
     Tuple,
     cast,
     Any,
+    TypeVar,
 )
+
+from pyteal.ast.int import Int
 
 from ..errors import TealInputError, verifyTealVersion
 from ..ir import TealOp, Op, TealBlock
@@ -27,12 +30,17 @@ if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
 
+T_abi = TypeVar("T_abi", bound=abi.BaseType)
+T_abi_ret = Union[abi.Void, abi.ComputedType[T_abi]]
+T_sub_ret = Union[T_abi_ret, Expr]
+
+
 class SubroutineDefinition:
     nextSubroutineId = 0
 
     def __init__(
         self,
-        implementation: Callable[..., Expr],
+        implementation: Callable[..., T_sub_ret],
         return_type: TealType,
         name_str: Optional[str] = None,
     ) -> None:
@@ -105,9 +113,7 @@ class SubroutineDefinition:
         else:
             if not isclass(ptype) and not SubroutineDefinition.is_abi_annotation(ptype):
                 raise TealInputError(
-                    "Function has parameter {} of declared type {} which is not a class".format(
-                        parameter_name, ptype
-                    )
+                    f"Function has parameter {parameter_name} of declared type {ptype} which is not a class"
                 )
 
             if ptype in (Expr, ScratchVar):
@@ -116,9 +122,8 @@ class SubroutineDefinition:
                 return abi.type_spec_from_annotation(ptype)
             else:
                 raise TealInputError(
-                    "Function has parameter {} of disallowed type {}. Only the types {} are allowed".format(
-                        parameter_name, ptype, (Expr, ScratchVar, "ABI")
-                    )
+                    f"Function has parameter {parameter_name} of disallowed type {ptype}. "
+                    f"Only the types {(Expr, ScratchVar, 'ABI')} are allowed"
                 )
 
     @staticmethod
@@ -383,6 +388,56 @@ class SubroutineFnWrapper:
 SubroutineFnWrapper.__module__ = "pyteal"
 
 
+class ABIReturnSubroutineFnWrapper:
+    def __init__(
+        self,
+        fn_implementation: Callable[..., T_abi_ret],
+        name: Optional[str] = None,
+    ) -> None:
+        annos = getattr(fn_implementation, "__annotations__")
+        type_spec_or_void = annos.get("return", abi.Void)
+        self.abi_type = abi.type_spec_from_computed_type_annotation(type_spec_or_void)
+
+        stack_type: TealType = (
+            TealType.none
+            if type_spec_or_void == abi.Void
+            else cast(abi.TypeSpec, type_spec_or_void).storage_type()
+        )
+        self.subroutine = SubroutineDefinition(
+            fn_implementation,
+            return_type=stack_type,
+            name_str=name,
+        )
+
+    def __call__(
+        self, *args: Union[Expr, ScratchVar, abi.BaseType], **kwargs
+    ) -> Union[abi.ReturnedType, Expr]:
+        if len(kwargs) != 0:
+            raise TealInputError(
+                f"Subroutine cannot be called with keyword arguments. "
+                f"Received keyword arguments: {','.join(kwargs.keys())}"
+            )
+
+        invoked = self.subroutine.invoke(list(args))
+
+        if self.type_of() == "void":
+            return invoked
+        else:
+            return abi.ReturnedType(cast(abi.TypeSpec, self.abi_type), invoked)
+
+    def name(self) -> str:
+        return self.subroutine.name()
+
+    def type_of(self) -> Union[str, abi.TypeSpec]:
+        return self.abi_type
+
+    def is_registrable(self) -> bool:
+        return len(self.subroutine.abi_args) == self.subroutine.argumentCount()
+
+
+ABIReturnSubroutineFnWrapper.__module__ = "pyteal"
+
+
 class Subroutine:
     """Used to create a PyTeal subroutine from a Python function.
 
@@ -419,6 +474,22 @@ class Subroutine:
 
 
 Subroutine.__module__ = "pyteal"
+
+
+class ABIReturnSubroutine:
+    def __init__(self, name: Optional[str] = None) -> None:
+        self.name = name
+
+    def __call__(
+        self, fn_implementation: Callable[..., T_abi_ret]
+    ) -> ABIReturnSubroutineFnWrapper:
+        return ABIReturnSubroutineFnWrapper(
+            fn_implementation=fn_implementation,
+            name=self.name,
+        )
+
+
+ABIReturnSubroutine.__module__ = "pyteal"
 
 
 def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaration:
