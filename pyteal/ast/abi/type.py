@@ -1,4 +1,4 @@
-from typing import TypeVar, Generic, Callable, Final, cast, Literal
+from typing import TypeVar, Generic, Callable, Final, cast
 from abc import ABC, abstractmethod
 
 from ...types import TealType
