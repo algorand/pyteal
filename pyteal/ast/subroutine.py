@@ -15,8 +15,6 @@ from typing import (
     TypeVar,
 )
 
-from pyteal.ast.int import Int
-
 from ..errors import TealInputError, verifyTealVersion
 from ..ir import TealOp, Op, TealBlock
 from ..types import TealType

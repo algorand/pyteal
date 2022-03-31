@@ -5,6 +5,7 @@ from ...types import TealType
 from ..expr import Expr
 from ..scratchvar import ScratchVar
 from ..seq import Seq
+from ...errors import TealInputError
 
 
 class TypeSpec(ABC):
@@ -138,7 +139,7 @@ class ComputedType(ABC, Generic[T]):
     """Represents an ABI Type whose value must be computed by an expression."""
 
     @abstractmethod
-    def produced_type_spec(cls) -> TypeSpec:
+    def produced_type_spec(self) -> TypeSpec:
         """Get the ABI TypeSpec that this object produces."""
         pass
 
@@ -177,3 +178,23 @@ ComputedType.__module__ = "pyteal"
 
 Void = Literal["void"]
 
+Void.__module__ = "pyteal"
+
+
+class ReturnedType(ComputedType):
+    def __init__(self, type_spec: TypeSpec, encodings: Expr):
+        self.type_spec = type_spec
+        self.encodings = encodings
+
+    def produced_type_spec(self) -> TypeSpec:
+        return self.type_spec
+
+    def store_into(self, output: BaseType) -> Expr:
+        if output.type_spec() != self.type_spec:
+            raise TealInputError(
+                f"expected type_spec {self.type_spec} but get {output.type_spec()}"
+            )
+        return output.stored_value.store(self.encodings)
+
+
+ReturnedType.__module__ = "pyteal"
