@@ -1,5 +1,7 @@
 from typing import List, Tuple, Set, Dict, Optional, cast
 
+from .optimizer import OptimizeOptions, apply_global_optimizations
+
 from ..types import TealType
 from ..ast import (
     Expr,
@@ -13,7 +15,10 @@ from ..errors import TealInputError, TealInternalError
 
 from .sort import sortBlocks
 from .flatten import flattenBlocks, flattenSubroutines
-from .scratchslots import assignScratchSlotsToSubroutines
+from .scratchslots import (
+    assignScratchSlotsToSubroutines,
+    collect_unoptimized_slots,
+)
 from .subroutines import (
     spillLocalSlotsDuringRecursion,
     resolveSubroutines,
@@ -31,9 +36,11 @@ class CompileOptions:
         *,
         mode: Mode = Mode.Signature,
         version: int = DEFAULT_TEAL_VERSION,
+        optimize: OptimizeOptions = None,
     ) -> None:
         self.mode = mode
         self.version = version
+        self.optimize = optimize if optimize is not None else OptimizeOptions()
 
         self.currentSubroutine: Optional[SubroutineDefinition] = None
 
@@ -109,9 +116,9 @@ def verifyOpsForMode(teal: List[TealComponent], mode: Mode):
 def compileSubroutine(
     ast: Expr,
     options: CompileOptions,
-    subroutineMapping: Dict[Optional[SubroutineDefinition], List[TealComponent]],
     subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]],
-    subroutineBlocks: Dict[Optional[SubroutineDefinition], TealBlock],
+    subroutine_start_blocks: Dict[Optional[SubroutineDefinition], TealBlock],
+    subroutine_end_blocks: Dict[Optional[SubroutineDefinition], TealBlock],
 ) -> None:
     currentSubroutine = (
         cast(SubroutineDeclaration, ast).subroutine
@@ -139,8 +146,8 @@ def compileSubroutine(
     verifyOpsForVersion(teal, options.version)
     verifyOpsForMode(teal, options.mode)
 
-    subroutineMapping[currentSubroutine] = teal
-    subroutineBlocks[currentSubroutine] = start
+    subroutine_start_blocks[currentSubroutine] = start
+    subroutine_end_blocks[currentSubroutine] = end
 
     referencedSubroutines: Set[SubroutineDefinition] = set()
     for stmt in teal:
@@ -150,15 +157,29 @@ def compileSubroutine(
     if currentSubroutine is not None:
         subroutineGraph[currentSubroutine] = referencedSubroutines
 
-    newSubroutines = referencedSubroutines - subroutineMapping.keys()
+    newSubroutines = referencedSubroutines - subroutine_start_blocks.keys()
     for subroutine in sorted(newSubroutines, key=lambda subroutine: subroutine.id):
         compileSubroutine(
             subroutine.getDeclaration(),
             options,
-            subroutineMapping,
             subroutineGraph,
-            subroutineBlocks,
+            subroutine_start_blocks,
+            subroutine_end_blocks,
         )
+
+
+def sort_subroutine_blocks(
+    subroutine_start_blocks: Dict[Optional[SubroutineDefinition], TealBlock],
+    subroutine_end_blocks: Dict[Optional[SubroutineDefinition], TealBlock],
+) -> Dict[Optional[SubroutineDefinition], List[TealComponent]]:
+    subroutine_mapping: Dict[
+        Optional[SubroutineDefinition], List[TealComponent]
+    ] = dict()
+    for subroutine, start in subroutine_start_blocks.items():
+        order = sortBlocks(start, subroutine_end_blocks[subroutine])
+        subroutine_mapping[subroutine] = flattenBlocks(order)
+
+    return subroutine_mapping
 
 
 def compileTeal(
@@ -167,6 +188,7 @@ def compileTeal(
     *,
     version: int = DEFAULT_TEAL_VERSION,
     assembleConstants: bool = False,
+    optimize: OptimizeOptions = None,
 ) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 
@@ -181,6 +203,7 @@ def compileTeal(
             constants will be assembled in the most space-efficient way, so enabling this may reduce
             the compiled program's size. Enabling this option requires a minimum TEAL version of 3.
             Defaults to false.
+        optimize (optional): OptimizeOptions that determine which optimizations will be applied.
 
     Returns:
         A TEAL assembly program compiled from the input expression.
@@ -199,20 +222,32 @@ def compileTeal(
             )
         )
 
-    options = CompileOptions(mode=mode, version=version)
+    options = CompileOptions(mode=mode, version=version, optimize=optimize)
+
+    subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
+    subroutine_start_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
+    subroutine_end_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
+    compileSubroutine(
+        ast, options, subroutineGraph, subroutine_start_blocks, subroutine_end_blocks
+    )
+
+    # note: optimizations are off by default, in which case, apply_global_optimizations
+    # won't make any changes. Because the optimizer is invoked on a subroutine's
+    # control flow graph, the optimizer requires context across block boundaries. This
+    # is necessary for the dependency checking of local slots. Global slots, slots
+    # used by DynamicScratchVar, and reserved slots are not optimized.
+    if options.optimize.scratch_slots:
+        options.optimize._skip_slots = collect_unoptimized_slots(
+            subroutine_start_blocks
+        )
+        for start in subroutine_start_blocks.values():
+            apply_global_optimizations(start, options.optimize)
+
+    localSlotAssignments = assignScratchSlotsToSubroutines(subroutine_start_blocks)
 
     subroutineMapping: Dict[
         Optional[SubroutineDefinition], List[TealComponent]
-    ] = dict()
-    subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
-    subroutineBlocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
-    compileSubroutine(
-        ast, options, subroutineMapping, subroutineGraph, subroutineBlocks
-    )
-
-    localSlotAssignments = assignScratchSlotsToSubroutines(
-        subroutineMapping, subroutineBlocks
-    )
+    ] = sort_subroutine_blocks(subroutine_start_blocks, subroutine_end_blocks)
 
     spillLocalSlotsDuringRecursion(
         version, subroutineMapping, subroutineGraph, localSlotAssignments
