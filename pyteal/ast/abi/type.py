@@ -1,4 +1,4 @@
-from typing import TypeVar, Generic, Callable, Final, cast
+from typing import TypeVar, Generic, Callable, Final, cast, Literal
 from abc import ABC, abstractmethod
 
 from ...types import TealType
@@ -138,7 +138,7 @@ class ComputedType(ABC, Generic[T]):
     """Represents an ABI Type whose value must be computed by an expression."""
 
     @abstractmethod
-    def produced_type_spec(cls) -> TypeSpec:
+    def produced_type_spec(self) -> TypeSpec:
         """Get the ABI TypeSpec that this object produces."""
         pass
 
@@ -173,3 +173,9 @@ class ComputedType(ABC, Generic[T]):
 
 
 ComputedType.__module__ = "pyteal"
+
+
+void_t = Literal["void"]
+
+
+void_t.__module__ = "pyteal"
