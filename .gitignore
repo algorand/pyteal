@@ -132,6 +132,3 @@ dmypy.json
 
 # IDE
 .idea
-
-# emacs
-*.~undo-tree~
