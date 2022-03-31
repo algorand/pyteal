@@ -4,7 +4,7 @@ from ...errors import TealInputError
 from ..expr import Expr
 from ..int import Int
 from ..substring import Extract, Substring, Suffix
-from .type import TypeSpec, ComputedType, void_t
+from .type import TypeSpec, ComputedType, Void
 
 
 def substringForDecoding(
@@ -196,7 +196,7 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
 
 
 def type_spec_from_computed_type_annotation(annotation: Any) -> Union[str, TypeSpec]:
-    if annotation is void_t:
+    if annotation is Void:
         return "void"
 
     if get_origin(annotation) is not ComputedType:
