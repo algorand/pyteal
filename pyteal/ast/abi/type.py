@@ -176,11 +176,6 @@ class ComputedType(ABC, Generic[T]):
 ComputedType.__module__ = "pyteal"
 
 
-Void = Literal["void"]
-
-Void.__module__ = "pyteal"
-
-
 class ReturnedType(ComputedType):
     def __init__(self, type_spec: TypeSpec, encodings: Expr):
         self.type_spec = type_spec

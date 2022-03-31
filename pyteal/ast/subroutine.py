@@ -12,7 +12,6 @@ from typing import (
     Tuple,
     cast,
     Any,
-    TypeVar,
 )
 
 from ..errors import TealInputError, verifyTealVersion
@@ -28,17 +27,12 @@ if TYPE_CHECKING:
     from ..compiler import CompileOptions
 
 
-T_abi = TypeVar("T_abi", bound=abi.BaseType)
-T_abi_ret = Union[abi.Void, abi.ComputedType[T_abi]]
-T_sub_ret = Union[T_abi_ret, Expr]
-
-
 class SubroutineDefinition:
     nextSubroutineId = 0
 
     def __init__(
         self,
-        implementation: Callable[..., T_sub_ret],
+        implementation: Callable[..., Expr],
         return_type: TealType,
         name_str: Optional[str] = None,
     ) -> None:
@@ -389,16 +383,16 @@ SubroutineFnWrapper.__module__ = "pyteal"
 class ABIReturnSubroutineFnWrapper:
     def __init__(
         self,
-        fn_implementation: Callable[..., T_abi_ret],
+        fn_implementation: Callable[..., Expr],
         name: Optional[str] = None,
     ) -> None:
         annos = getattr(fn_implementation, "__annotations__")
-        type_spec_or_void = annos.get("return", abi.Void)
+        type_spec_or_void = annos.get("return", None)
         self.abi_type = abi.type_spec_from_computed_type_annotation(type_spec_or_void)
 
         stack_type: TealType = (
             TealType.none
-            if type_spec_or_void == abi.Void
+            if type_spec_or_void == "void"
             else cast(abi.TypeSpec, type_spec_or_void).storage_type()
         )
         self.subroutine = SubroutineDefinition(
@@ -475,7 +469,7 @@ Subroutine.__module__ = "pyteal"
 
 
 def abi_return_subroutine(
-    fn_implementation: Callable[..., T_abi_ret]
+    fn_implementation: Callable[..., Expr]
 ) -> ABIReturnSubroutineFnWrapper:
     return ABIReturnSubroutineFnWrapper(fn_implementation=fn_implementation)
 
