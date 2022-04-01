@@ -29,6 +29,7 @@ from .array_base import ArrayTypeSpec, Array, ArrayElement
 from .array_static import StaticArrayTypeSpec, StaticArray
 from .array_dynamic import DynamicArrayTypeSpec, DynamicArray
 from .util import type_spec_from_annotation, type_spec_from_computed_type_annotation
+from .method_return import MethodReturn
 
 __all__ = [
     "TypeSpec",
@@ -67,4 +68,5 @@ __all__ = [
     "DynamicArray",
     "type_spec_from_annotation",
     "type_spec_from_computed_type_annotation",
+    "MethodReturn",
 ]
