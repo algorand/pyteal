@@ -22,8 +22,8 @@ class MethodReturn(Expr):
             raise TealInputError(
                 f"current version {options.version} is lower than log's min version {Op.log.min_version}"
             )
-        return Concat(
-            Bytes("base16", RETURN_METHOD_SELECTOR), Log(self.arg.encode())
+        return Log(
+            Concat(Bytes("base16", RETURN_METHOD_SELECTOR), self.arg.encode())
         ).__teal__(options)
 
     def __str__(self) -> str:
