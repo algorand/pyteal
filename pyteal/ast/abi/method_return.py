@@ -2,8 +2,9 @@ from typing import TYPE_CHECKING, Tuple
 from . import BaseType
 from ...types import TealType
 from ...errors import TealInputError
-from .. import Expr, Log
+from .. import Expr, Log, Concat, Bytes
 from ...ir import TealBlock, TealSimpleBlock, Op
+from ...config import RETURN_METHOD_SELECTOR
 
 if TYPE_CHECKING:
     from ...compiler import CompileOptions
@@ -21,7 +22,9 @@ class MethodReturn(Expr):
             raise TealInputError(
                 f"current version {options.version} is lower than log's min version {Op.log.min_version}"
             )
-        return Log(self.arg.encode()).__teal__(options)
+        return Concat(
+            Bytes("base16", RETURN_METHOD_SELECTOR), Log(self.arg.encode())
+        ).__teal__(options)
 
     def __str__(self) -> str:
         return f"(MethodReturn {self.arg.type_spec()})"
