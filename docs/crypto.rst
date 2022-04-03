@@ -20,7 +20,7 @@ Operator                        Cost      Description
 :code:`Ed25519Verify(d, s, p)`  `1900`\*  `1` if :code:`s` is the signature of :code:`d` signed by private key :code:`p`, else `0`
 =============================== ========= ========================================================================================
 
-\* :code:`Ed25519Verify` is only available in signature mode.
+\* :code:`Ed25519Verify` is only available in signature mode up to version 4 of TEAL. From version 5 upwards, `Ed25519Verify` can be used in any mode.
 
 Note the cost amount is accurate for version 2 of TEAL and higher.
 
