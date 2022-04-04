@@ -364,6 +364,27 @@ argument is even, but uses recursion to do so.
                 .Else(recursiveIsEven(i - Int(2)))
             )
 
+Recursion and `ScratchVar`'s
+----------------------------
+
+Recursion with parameters of type `ScratchVar` is disallowed. For example, the following
+subroutine is considered illegal and attempting compilation will result in a `TealInputError`:
+
+.. code-block:: python
+
+        @Subroutine(TealType.none)
+        def ILLEGAL_recursion(i: ScratchVar):
+            return (
+                If(i.load() == Int(0))
+                .Then(i.store(Int(1)))
+                .ElseIf(i.load() == Int(1))
+                .Then(i.store(Int(0)))
+                .Else(Seq(i.store(i.load() - Int(2)), ILLEGAL_recursion(i)))
+            )
+
+
+
+
 Exiting Subroutines
 -------------------
 

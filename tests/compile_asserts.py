@@ -4,9 +4,9 @@ from pyteal.compiler import compileTeal
 from pyteal.ir import Mode
 
 
-def compile_and_save(approval):
+def compile_and_save(approval, version):
     teal = Path.cwd() / "tests" / "teal"
-    compiled = compileTeal(approval(), mode=Mode.Application, version=6)
+    compiled = compileTeal(approval(), mode=Mode.Application, version=version)
     name = approval.__name__
     with open(teal / (name + ".teal"), "w") as f:
         f.write(compiled)
@@ -38,8 +38,7 @@ def assert_teal_as_expected(path2actual, path2expected):
 
         assert len(elines) == len(
             alines
-        ), f"""EXPECTED {len(elines)} lines for {path2expected}
-but ACTUALLY got {len(alines)} lines in {path2actual}"""
+        ), f"""EXPECTED {len(elines)} lines for {path2expected} but ACTUALLY got {len(alines)} lines in {path2actual}"""
 
         for i, actual in enumerate(alines):
             expected = elines[i]
@@ -56,18 +55,15 @@ LINE{i+1}:
 """
 
 
-def assert_new_v_old(approve_func):
-    try:
-        teal_dir, name, compiled = compile_and_save(approve_func)
+def assert_new_v_old(approve_func, version):
+    teal_dir, name, compiled = compile_and_save(approve_func, version)
 
-        print(
-            f"""Compilation resulted in TEAL program of length {len(compiled)}. 
-    To view output SEE <{name}.teal> in ({teal_dir})
-    --------------"""
-        )
+    print(
+        f"""Compilation resulted in TEAL program of length {len(compiled)}. 
+To view output SEE <{name}.teal> in ({teal_dir})
+--------------"""
+    )
 
-        path2actual = teal_dir / (name + ".teal")
-        path2expected = teal_dir / (name + "_expected.teal")
-        assert_teal_as_expected(path2actual, path2expected)
-    except Exception as e:
-        assert not e, f"failed to ASSERT NEW v OLD for {approve_func.__name__}: {e}"
+    path2actual = teal_dir / (name + ".teal")
+    path2expected = teal_dir / (name + "_expected.teal")
+    assert_teal_as_expected(path2actual, path2expected)
