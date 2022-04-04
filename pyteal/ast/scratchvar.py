@@ -59,7 +59,7 @@ ScratchVar.__module__ = "pyteal"
 class DynamicScratchVar(ScratchVar):
     """
     Example of Dynamic Scratch space whereby the slot index is picked up from the stack:
-        .. code-block:: python1
+        .. code-block:: python
 
             player_score = DynamicScratchVar(TealType.uint64)
 
@@ -97,6 +97,11 @@ class DynamicScratchVar(ScratchVar):
         Followup `store`, `load` and `index` operations will use the provided `index_var` until
         `set_index()` is called again to reset the referenced ScratchVar.
         """
+        # Explanatory comment per Issue #242: Preliminary evidence shows that letting users
+        # pass in any ScratchVar subtype (i.e. DynamicScratchVar) may in fact work.
+        # However, we are leaving this guard in place pending further investigation.
+        # TODO: gain confidence that DynamicScratchVar can be used here and
+        # modify the below strict type equality to `isinstance(index_var, ScratchVar)`
         if type(index_var) is not ScratchVar:
             raise TealInputError(
                 "Only allowed to use ScratchVar objects for setting indices, but was given a {}".format(
