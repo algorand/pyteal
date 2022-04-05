@@ -54,8 +54,13 @@ class DynamicArray(Array[T]):
         return cast(DynamicArrayTypeSpec[T], super().type_spec())
 
     def set(self, values: Union[Sequence[T], "DynamicArray[T]", ComputedType]) -> Expr:
-        """Set the ABI dynamic array with a sequence of ABI type variables, or another ABI dynamic
-        array.
+        """Set the ABI dynamic array with one of the following
+        * a sequence of ABI type variables
+        * or another ABI static array
+        * or a ComputedType with same TypeSpec
+
+        If the argument `values` is a ComputedType, we call `store_into` method
+        from ComputedType to store the internal ABI encoding into this StaticArray.
 
         This function determines if the argument `values` is an ABI dynamic array:
         * if so:

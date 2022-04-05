@@ -81,8 +81,13 @@ class StaticArray(Array[T], Generic[T, N]):
     def set(
         self, values: Union[Sequence[T], "StaticArray[T, N]", ComputedType]
     ) -> Expr:
-        """Set the ABI static array with a sequence of ABI type variables, or another ABI static
-        array.
+        """Set the ABI static array with one of the following:
+        * a sequence of ABI type variables
+        * or another ABI static array
+        * or a ComputedType with same TypeSpec
+
+        If the argument `values` is a ComputedType, we call `store_into` method
+        from ComputedType to store the internal ABI encoding into this StaticArray.
 
         This function determines if the argument `values` is an ABI static array:
         * if so:
