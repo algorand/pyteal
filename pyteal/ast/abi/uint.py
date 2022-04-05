@@ -19,7 +19,7 @@ from ..bytes import Bytes
 from ..unaryexpr import Itob, Btoi
 from ..binaryexpr import GetByte, ExtractUint16, ExtractUint32, ExtractUint64
 from ..ternaryexpr import SetByte
-from .type import TypeSpec, BaseType
+from .type import ComputedType, TypeSpec, BaseType
 
 NUM_BITS_IN_BYTE = 8
 
@@ -219,7 +219,10 @@ class Uint(BaseType):
     def get(self) -> Expr:
         return self.stored_value.load()
 
-    def set(self, value: Union[int, Expr, "Uint"]) -> Expr:
+    def set(self, value: Union[int, Expr, "Uint", ComputedType]) -> Expr:
+        if isinstance(value, ComputedType):
+            return self._set_with_computed_type(value)
+
         if isinstance(value, BaseType) and not (
             isinstance(value.type_spec(), UintTypeSpec)
             and self.type_spec().bit_size()
@@ -238,7 +241,7 @@ class Uint(BaseType):
         *,
         startIndex: Expr = None,
         endIndex: Expr = None,
-        length: Expr = None
+        length: Expr = None,
     ) -> Expr:
         return uint_decode(
             self.type_spec().bit_size(),

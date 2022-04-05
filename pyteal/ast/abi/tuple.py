@@ -1,4 +1,4 @@
-from typing import List, Sequence, Dict, Generic, TypeVar, cast
+from typing import List, Sequence, Dict, Generic, TypeVar, Union, cast
 
 from ...types import TealType
 from ...errors import TealInputError
@@ -249,20 +249,27 @@ class Tuple(BaseType):
         *,
         startIndex: Expr = None,
         endIndex: Expr = None,
-        length: Expr = None
+        length: Expr = None,
     ) -> Expr:
         extracted = substringForDecoding(
             encoded, startIndex=startIndex, endIndex=endIndex, length=length
         )
         return self.stored_value.store(extracted)
 
-    def set(self, *values: BaseType) -> Expr:
+    def set(self, *values: Union[BaseType, ComputedType]) -> Expr:
+        if len(values) == 1 and isinstance(values[0], ComputedType):
+            self._set_with_computed_type(values[0])
+
+        values = cast(tuple[BaseType], values)
+
+        for value in values:
+            if not isinstance(value, BaseType):
+                raise TealInputError(f"Expected BaseType, got {value}")
+
         myTypes = self.type_spec().value_type_specs()
         if len(myTypes) != len(values):
             raise TealInputError(
-                "Incorrect length for values. Expected {}, got {}".format(
-                    len(myTypes), len(values)
-                )
+                f"Incorrect length for values. Expected {len(myTypes)}, got {len(values)}"
             )
         if not all(myTypes[i] == values[i].type_spec() for i in range(len(myTypes))):
             raise TealInputError("Input values do not match type")
