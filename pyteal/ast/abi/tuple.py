@@ -260,11 +260,11 @@ class Tuple(BaseType):
         if len(values) == 1 and isinstance(values[0], ComputedType):
             self._set_with_computed_type(values[0])
 
-        values = cast(tuple[BaseType], values)
-
         for value in values:
             if not isinstance(value, BaseType):
                 raise TealInputError(f"Expected BaseType, got {value}")
+
+        values = cast(tuple[BaseType], values)
 
         myTypes = self.type_spec().value_type_specs()
         if len(myTypes) != len(values):
