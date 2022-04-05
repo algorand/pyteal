@@ -5,6 +5,7 @@ from ... import *
 from .tuple import encodeTuple, indexTuple, TupleElement
 from .bool import encodeBoolSequence
 from .util import substringForDecoding
+from .type import ContainerType
 
 options = CompileOptions(version=5)
 
@@ -662,6 +663,37 @@ def test_Tuple_set():
 
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+
+def test_Tuple_set_Computed():
+    tupleValue = abi.Tuple(
+        abi.Uint8TypeSpec(), abi.Uint16TypeSpec(), abi.Uint32TypeSpec()
+    )
+    computed = ContainerType(tupleValue.type_spec(), Bytes("internal representation"))
+    expr = tupleValue.set(computed)
+    assert expr.type_of() == TealType.none
+    assert not expr.has_return()
+
+    expected = TealSimpleBlock(
+        [
+            TealOp(None, Op.byte, '"internal representation"'),
+            TealOp(None, Op.store, tupleValue.stored_value.slot),
+        ]
+    )
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    with pytest.raises(TealInputError):
+        tupleValue.set(computed, computed)
+
+    with pytest.raises(TealInputError):
+        tupleValue.set(
+            ContainerType(abi.TupleTypeSpec(abi.ByteTypeSpec()), Bytes(b"a"))
+        )
 
 
 def test_Tuple_encode():
