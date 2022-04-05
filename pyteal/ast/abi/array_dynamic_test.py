@@ -5,6 +5,7 @@ from ... import *
 from .util import substringForDecoding
 from .tuple import encodeTuple
 from .array_base_test import STATIC_TYPES, DYNAMIC_TYPES
+from .type import ContainerType
 
 options = CompileOptions(version=5)
 
@@ -165,6 +166,35 @@ def test_DynamicArray_set_copy():
 
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+
+def test_DynamicArray_set_computed():
+    value = abi.DynamicArray(abi.ByteTypeSpec())
+    computed = ContainerType(value.type_spec(), Bytes("this should be a dynamic array"))
+    expr = value.set(computed)
+    assert expr.type_of() == TealType.none
+    assert not expr.has_return()
+
+    expected = TealSimpleBlock(
+        [
+            TealOp(None, Op.byte, '"this should be a dynamic array"'),
+            TealOp(None, Op.store, value.stored_value.slot),
+        ]
+    )
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = actual.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    with pytest.raises(TealInputError):
+        value.set(
+            ContainerType(
+                abi.DynamicArrayTypeSpec(abi.Uint16TypeSpec()),
+                Bytes("well i am trolling again"),
+            )
+        )
 
 
 def test_DynamicArray_encode():
