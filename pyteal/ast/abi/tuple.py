@@ -1,4 +1,13 @@
-from typing import List, Sequence, Dict, Generic, TypeVar, Union, cast
+from typing import (
+    List,
+    Sequence,
+    Dict,
+    Generic,
+    TypeVar,
+    Union,
+    cast,
+    Tuple as TypingTuple,
+)
 
 from ...types import TealType
 from ...errors import TealInputError
@@ -264,7 +273,9 @@ class Tuple(BaseType):
             if not isinstance(value, BaseType):
                 raise TealInputError(f"Expected BaseType, got {value}")
 
-        values = cast(tuple[BaseType], values)
+        # NOTE: this should be changed after we upgrading things to 3.10
+        # 3.8 does not support subscriptable type like tuple[BaseType]
+        values = cast(TypingTuple[BaseType], values)
 
         myTypes = self.type_spec().value_type_specs()
         if len(myTypes) != len(values):
