@@ -144,8 +144,6 @@ def test_Bool_set_computed():
     with pytest.raises(TealInputError):
         value.set(ContainerType(abi.Uint32TypeSpec(), Int(65537)))
 
-    pass
-
 
 def test_Bool_get():
     value = abi.Bool()
