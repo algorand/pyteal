@@ -46,7 +46,7 @@ class Bool(BaseType):
 
     def set(self, value: Union[bool, Expr, "Bool", ComputedType]) -> Expr:
         if isinstance(value, ComputedType):
-            self._set_with_computed_type(value)
+            return self._set_with_computed_type(value)
 
         value = cast(Union[bool, Expr, "Bool"], value)
 

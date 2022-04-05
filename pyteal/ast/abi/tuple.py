@@ -267,7 +267,7 @@ class Tuple(BaseType):
 
     def set(self, *values: Union[BaseType, ComputedType]) -> Expr:
         if len(values) == 1 and isinstance(values[0], ComputedType):
-            self._set_with_computed_type(values[0])
+            return self._set_with_computed_type(values[0])
 
         for value in values:
             if not isinstance(value, BaseType):

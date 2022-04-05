@@ -99,7 +99,7 @@ class StaticArray(Array[T], Generic[T, N]):
             A PyTeal expression that stores encoded `values` in its internal ScratchVar.
         """
         if isinstance(values, ComputedType):
-            self._set_with_computed_type(values)
+            return self._set_with_computed_type(values)
 
         values = cast(Union[Sequence[T], "StaticArray[T, N]"], values)
 

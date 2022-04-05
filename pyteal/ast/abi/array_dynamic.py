@@ -72,7 +72,7 @@ class DynamicArray(Array[T]):
         """
 
         if isinstance(values, ComputedType):
-            self._set_with_computed_type(values)
+            return self._set_with_computed_type(values)
 
         values = cast(Union[Sequence[T], "DynamicArray[T]"], values)
 

@@ -222,6 +222,8 @@ def test_Uint_set_computed():
         computed_value = ContainerType(test.uintType, Int(0x44))
         value = test.uintType.new_instance()
         expr = value.set(computed_value)
+        assert expr.type_of() == TealType.none
+        assert not expr.has_return()
 
         expected = TealSimpleBlock(
             [
