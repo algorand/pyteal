@@ -182,3 +182,22 @@ class ComputedType(ABC, Generic[T]):
 
 
 ComputedType.__module__ = "pyteal"
+
+
+class ContainerType(ComputedType):
+    def __init__(self, type_spec: TypeSpec, encodings: Expr):
+        self.type_spec = type_spec
+        self.encodings = encodings
+
+    def produced_type_spec(self) -> TypeSpec:
+        return self.type_spec
+
+    def store_into(self, output: BaseType) -> Expr:
+        if output.type_spec() != self.type_spec:
+            raise TealInputError(
+                f"expected type_spec {self.type_spec} but get {output.type_spec()}"
+            )
+        return output.stored_value.store(self.encodings)
+
+
+ContainerType.__module__ = "pyteal"
