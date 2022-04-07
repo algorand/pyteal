@@ -12,7 +12,12 @@ from .compiler import (
 )
 from .types import TealType
 from .errors import TealInternalError, TealTypeError, TealInputError, TealCompileError
-from .config import MAX_GROUP_SIZE, NUM_SLOTS, RETURN_EVENT_SELECTOR
+from .config import (
+    MAX_GROUP_SIZE,
+    NUM_SLOTS,
+    RETURN_METHOD_SELECTOR,
+    METHOD_ARG_NUM_LIMIT,
+)
 
 # begin __all__
 __all__ = (
@@ -32,7 +37,8 @@ __all__ = (
         "TealCompileError",
         "MAX_GROUP_SIZE",
         "NUM_SLOTS",
-        "RETURN_EVENT_SELECTOR",
+        "RETURN_METHOD_SELECTOR",
+        "METHOD_ARG_NUM_LIMIT",
     ]
 )
 # end __all__

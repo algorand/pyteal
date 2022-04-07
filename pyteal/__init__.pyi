@@ -15,7 +15,12 @@ from .compiler import (
 )
 from .types import TealType
 from .errors import TealInternalError, TealTypeError, TealInputError, TealCompileError
-from .config import MAX_GROUP_SIZE, NUM_SLOTS, RETURN_EVENT_SELECTOR
+from .config import (
+    MAX_GROUP_SIZE,
+    NUM_SLOTS,
+    RETURN_METHOD_SELECTOR,
+    METHOD_ARG_NUM_LIMIT,
+)
 
 __all__ = [
     "AccountParam",
@@ -107,6 +112,7 @@ __all__ = [
     "Lt",
     "MAX_GROUP_SIZE",
     "MAX_TEAL_VERSION",
+    "METHOD_ARG_NUM_LIMIT",
     "MIN_TEAL_VERSION",
     "MaybeValue",
     "MethodSignature",
@@ -126,7 +132,7 @@ __all__ = [
     "OptimizeOptions",
     "Or",
     "Pop",
-    "RETURN_EVENT_SELECTOR",
+    "RETURN_METHOD_SELECTOR",
     "Reject",
     "Return",
     "ScratchIndex",
