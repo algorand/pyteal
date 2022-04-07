@@ -1,6 +1,3 @@
-from .ast.bytes import Bytes
-
-
 # Maximum size of an atomic transaction group.
 MAX_GROUP_SIZE = 16
 
@@ -9,3 +6,6 @@ NUM_SLOTS = 256
 
 # Method return selector in base16
 RETURN_METHOD_SELECTOR = "0x151F7C75"
+
+# Method argument number limit
+METHOD_ARG_NUM_LIMIT = 15

@@ -1,21 +1,24 @@
-from typing import List, NamedTuple, Tuple, Union, cast
+from typing import List, Tuple, Union, cast
+from dataclasses import dataclass
 
-from pyteal.ast.cond import Cond
-
-from ...config import METHOD_APP_ARG_NUM_LIMIT, RETURN_EVENT_SELECTOR
+from ...config import METHOD_ARG_NUM_LIMIT
 from ...errors import TealInputError
 from ...types import TealType
-
-from ..app import OnComplete
-from ..expr import Expr
-from ..int import EnumInt, Int
-from ..methodsig import MethodSignature
-from ..unaryexpr import Log
-from ..naryexpr import And, Concat, Or
-from ..return_ import Approve
-from ..seq import Seq
-from ..subroutine import SubroutineFnWrapper
-from ..txn import Txn
+from .. import (
+    Cond,
+    OnComplete,
+    Expr,
+    EnumInt,
+    Int,
+    MethodSignature,
+    And,
+    Or,
+    Approve,
+    Seq,
+    SubroutineFnWrapper,
+    Txn,
+)
+from . import MethodReturn
 
 # NOTE this should sit in `abi` directory, still waiting on abi to be merged in
 
@@ -44,9 +47,8 @@ Notes for OC:
 """
 
 
-class ProgramNode(NamedTuple):
-    """ """
-
+@dataclass
+class ProgramNode:
     condition: Expr
     branch: Expr
 
@@ -77,9 +79,7 @@ class Router:
             And(
                 Txn.application_args[0] == MethodSignature(mReg.name()),
                 Txn.application_args.length()
-                == Int(
-                    max(1 + mReg.subroutine.argumentCount(), METHOD_APP_ARG_NUM_LIMIT)
-                ),
+                == Int(max(1 + mReg.subroutine.argumentCount(), METHOD_ARG_NUM_LIMIT)),
             )
             if mReg is not None
             else Txn.application_args.length() == Int(0)
@@ -140,18 +140,18 @@ class Router:
             if isinstance(branch, SubroutineFnWrapper) and branch.has_return():
                 # TODO need to encode/decode things
                 execBranchArgs: List[Expr] = []
-                if branch.subroutine.argumentCount() >= METHOD_APP_ARG_NUM_LIMIT:
+                if branch.subroutine.argumentCount() >= METHOD_ARG_NUM_LIMIT:
                     # NOTE decode (if arg num > 15 need to de-tuple 15th (last) argument)
                     pass
                 else:
                     pass
 
-                exprList.append(
-                    # TODO this line can be changed to method-return in ABI side
-                    Log(Concat(RETURN_EVENT_SELECTOR, branch(*execBranchArgs)))
-                    if branch.type_of() != TealType.none
-                    else branch(*execBranchArgs)
-                )
+                # exprList.append(
+                # TODO this line can be changed to method-return in ABI side
+                # MethodReturn(branch(*execBranchArgs))
+                # if branch.type_of() != TealType.none
+                # else branch(*execBranchArgs)
+                # )
             else:
                 raise TealInputError(
                     "For method call: should only register Subroutine with return"
