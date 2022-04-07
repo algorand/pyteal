@@ -79,7 +79,7 @@ class Router:
             And(
                 Txn.application_args[0] == MethodSignature(mReg.name()),
                 Txn.application_args.length()
-                == Int(max(1 + mReg.subroutine.argumentCount(), METHOD_ARG_NUM_LIMIT)),
+                == Int(1 + max(mReg.subroutine.argumentCount(), METHOD_ARG_NUM_LIMIT)),
             )
             if mReg is not None
             else Txn.application_args.length() == Int(0)
