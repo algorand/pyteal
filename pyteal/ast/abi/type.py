@@ -1,55 +1,21 @@
-from typing import TypeVar, Generic, Callable
+from typing import TypeVar, Generic, Callable, Final, cast
 from abc import ABC, abstractmethod
 
 from ...types import TealType
-from ...errors import TealInputError
 from ..expr import Expr
 from ..scratchvar import ScratchVar
 from ..seq import Seq
-from ..int import Int
-from ..substring import Extract, Substring, Suffix
-
-T = TypeVar("T", bound="Type")
 
 
-class Type(ABC):
-    """The abstract base class for all ABI types.
+class TypeSpec(ABC):
+    """TypeSpec represents a specification for an ABI type.
 
-    This class contains both information about an ABI type, and a value that conforms to that type.
-    The value is contained in a unique ScratchVar that only the type has access to. As a result, the
-    value of an ABI type is mutable and can be efficiently referenced multiple times without needing
-    to recompute it.
+    Essentially this is a factory that can produce specific instances of ABI types.
     """
 
-    def __init__(self, valueType: TealType) -> None:
-        """Create a new Type.
-
-        Args:
-            valueType: The TealType (uint64 or bytes) that this ABI type will store in its internal
-                ScratchVar.
-        """
-        super().__init__()
-        self.stored_value = ScratchVar(valueType)
-
     @abstractmethod
-    def has_same_type_as(self, other: "Type") -> bool:
-        """Check if this type is considered equal to the other ABI type, irrespective of their
-        values.
-
-        Args:
-            other: The ABI type to compare to.
-
-        Returns:
-            True if and only if self and other can store the same ABI value.
-        """
-        pass
-
-    @abstractmethod
-    def new_instance(self: T) -> T:
-        """Create a new instance of this ABI type.
-
-        The value of this type will not be applied to the new type.
-        """
+    def new_instance(self) -> "BaseType":
+        """Create a new instance of the specified type."""
         pass
 
     @abstractmethod
@@ -67,6 +33,51 @@ class Type(ABC):
         pass
 
     @abstractmethod
+    def storage_type(self) -> TealType:
+        """Get the TealType that the underlying ScratchVar should hold for this type."""
+        pass
+
+    @abstractmethod
+    def __eq__(self, other: object) -> bool:
+        """Check if this type is considered equal to another ABI type.
+
+        Args:
+            other: The object to compare to. If this is not a TypeSpec, this method will never
+                return true.
+
+        Returns:
+            True if and only if self and other represent the same ABI type.
+        """
+        pass
+
+    @abstractmethod
+    def __str__(self) -> str:
+        """Get the string representation of this ABI type, used for creating method signatures."""
+        pass
+
+
+TypeSpec.__module__ = "pyteal"
+
+
+class BaseType(ABC):
+    """The abstract base class for all ABI type instances.
+
+    The value of the type is contained in a unique ScratchVar that only this instance has access to.
+    As a result, the value of an ABI type is mutable and can be efficiently referenced multiple
+    times without needing to recompute it.
+    """
+
+    def __init__(self, spec: TypeSpec) -> None:
+        """Create a new BaseType."""
+        super().__init__()
+        self._type_spec: Final = spec
+        self.stored_value: Final = ScratchVar(spec.storage_type())
+
+    def type_spec(self) -> TypeSpec:
+        """Get the TypeSpec for this ABI type instance."""
+        return self._type_spec
+
+    @abstractmethod
     def encode(self) -> Expr:
         """Encode this ABI type to a byte string.
 
@@ -82,7 +93,7 @@ class Type(ABC):
         *,
         startIndex: Expr = None,
         endIndex: Expr = None,
-        length: Expr = None
+        length: Expr = None,
     ) -> Expr:
         """Decode a substring of the passed in encoded string and set it as this type's value.
 
@@ -117,62 +128,48 @@ class Type(ABC):
         """
         pass
 
-    @abstractmethod
-    def __str__(self) -> str:
-        """Get the string representation of this ABI type, used for creating method signatures."""
-        pass
 
+BaseType.__module__ = "pyteal"
 
-Type.__module__ = "pyteal"
+T = TypeVar("T", bound=BaseType)
 
 
 class ComputedType(ABC, Generic[T]):
-    def __init__(self, producedType: T) -> None:
-        super().__init__()
-        self._producedType = producedType
+    """Represents an ABI Type whose value must be computed by an expression."""
+
+    @abstractmethod
+    def produced_type_spec(cls) -> TypeSpec:
+        """Get the ABI TypeSpec that this object produces."""
+        pass
 
     @abstractmethod
     def store_into(self, output: T) -> Expr:
+        """Store the value of this computed type into an existing ABI type instance.
+
+        Args:
+            output: The object where the computed value will be stored. This object must have the
+                same type as this class's produced type.
+
+        Returns:
+            An expression which stores the computed value represented by this class into the output
+            object.
+        """
         pass
 
     def use(self, action: Callable[[T], Expr]) -> Expr:
-        newInstance = self._producedType.new_instance()
+        """Use the computed value represented by this class in a function or lambda expression.
+
+        Args:
+            action: A callable object that will receive an instance of this class's produced type
+                with the computed value. The callable object may use that value as it sees fit, but
+                it must return an Expr to be included in the program's AST.
+
+        Returns:
+            An expression which contains the returned expression from invoking action with the
+            computed value.
+        """
+        newInstance = cast(T, self.produced_type_spec().new_instance())
         return Seq(self.store_into(newInstance), action(newInstance))
 
 
 ComputedType.__module__ = "pyteal"
-
-
-def substringForDecoding(
-    encoded: Expr,
-    *,
-    startIndex: Expr = None,
-    endIndex: Expr = None,
-    length: Expr = None
-) -> Expr:
-    """A helper function for getting the substring to decode according to the rules of Type.decode."""
-    if length is not None and endIndex is not None:
-        raise TealInputError("length and endIndex are mutually exclusive arguments")
-
-    if startIndex is not None:
-        if length is not None:
-            # substring from startIndex to startIndex + length
-            return Extract(encoded, startIndex, length)
-
-        if endIndex is not None:
-            # substring from startIndex to endIndex
-            return Substring(encoded, startIndex, endIndex)
-
-        # substring from startIndex to end of string
-        return Suffix(encoded, startIndex)
-
-    if length is not None:
-        # substring from 0 to length
-        return Extract(encoded, Int(0), length)
-
-    if endIndex is not None:
-        # substring from 0 to endIndex
-        return Substring(encoded, Int(0), endIndex)
-
-    # the entire string
-    return encoded

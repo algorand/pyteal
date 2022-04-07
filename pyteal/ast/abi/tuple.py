@@ -1,9 +1,4 @@
-from typing import (
-    List,
-    Sequence,
-    Dict,
-    cast,
-)
+from typing import List, Sequence, Dict, Generic, TypeVar, cast
 
 from ...types import TealType
 from ...errors import TealInputError
@@ -16,18 +11,21 @@ from ..binaryexpr import ExtractUint16
 from ..naryexpr import Concat
 from ..scratchvar import ScratchVar
 
-from .type import Type, ComputedType, substringForDecoding
+from .type import TypeSpec, BaseType, ComputedType
 from .bool import (
     Bool,
-    consecutiveBoolNum,
+    BoolTypeSpec,
+    consecutiveBoolInstanceNum,
+    consecutiveBoolTypeSpecNum,
     boolSequenceLength,
     encodeBoolSequence,
     boolAwareStaticByteLength,
 )
 from .uint import NUM_BITS_IN_BYTE, Uint16
+from .util import substringForDecoding
 
 
-def encodeTuple(values: Sequence[Type]) -> Expr:
+def encodeTuple(values: Sequence[BaseType]) -> Expr:
     heads: List[Expr] = []
     head_length_static: int = 0
 
@@ -38,8 +36,10 @@ def encodeTuple(values: Sequence[Type]) -> Expr:
             ignoreNext -= 1
             continue
 
-        if type(elem) is Bool:
-            numBools = consecutiveBoolNum(values, i)
+        elemType = elem.type_spec()
+
+        if elemType == BoolTypeSpec():
+            numBools = consecutiveBoolInstanceNum(values, i)
             ignoreNext = numBools - 1
             head_length_static += boolSequenceLength(numBools)
             heads.append(
@@ -47,13 +47,13 @@ def encodeTuple(values: Sequence[Type]) -> Expr:
             )
             continue
 
-        if elem.is_dynamic():
+        if elemType.is_dynamic():
             head_length_static += 2
             dynamicValueIndexToHeadIndex[i] = len(heads)
             heads.append(Seq())  # a placeholder
             continue
 
-        head_length_static += elem.byte_length_static()
+        head_length_static += elemType.byte_length_static()
         heads.append(elem.encode())
 
     tail_offset = Uint16()
@@ -63,7 +63,7 @@ def encodeTuple(values: Sequence[Type]) -> Expr:
 
     firstDynamicTail = True
     for i, elem in enumerate(values):
-        if elem.is_dynamic():
+        if elem.type_spec().is_dynamic():
             if firstDynamicTail:
                 firstDynamicTail = False
                 updateVars = Seq(
@@ -77,7 +77,7 @@ def encodeTuple(values: Sequence[Type]) -> Expr:
                 )
 
             notLastDynamicValue = any(
-                [nextValue.is_dynamic() for nextValue in values[i + 1 :]]
+                [nextValue.type_spec().is_dynamic() for nextValue in values[i + 1 :]]
             )
             if notLastDynamicValue:
                 updateAccumulator = tail_offset_accumulator.set(
@@ -104,7 +104,7 @@ def encodeTuple(values: Sequence[Type]) -> Expr:
 
 
 def indexTuple(
-    valueTypes: Sequence[Type], encoded: Expr, index: int, output: Type
+    valueTypes: Sequence[TypeSpec], encoded: Expr, index: int, output: BaseType
 ) -> Expr:
     if not (0 <= index < len(valueTypes)):
         raise ValueError("Index outside of range")
@@ -118,9 +118,9 @@ def indexTuple(
             ignoreNext -= 1
             continue
 
-        if type(typeBefore) is Bool:
+        if typeBefore == BoolTypeSpec():
             lastBoolStart = offset
-            lastBoolLength = consecutiveBoolNum(valueTypes, i)
+            lastBoolLength = consecutiveBoolTypeSpecNum(valueTypes, i)
             offset += boolSequenceLength(lastBoolLength)
             ignoreNext = lastBoolLength - 1
             continue
@@ -132,7 +132,7 @@ def indexTuple(
         offset += typeBefore.byte_length_static()
 
     valueType = valueTypes[index]
-    if not valueType.has_same_type_as(output):
+    if output.type_spec() != valueType:
         raise TypeError("Output type does not match value type")
 
     if type(output) is Bool:
@@ -154,8 +154,8 @@ def indexTuple(
                 ignoreNext -= 1
                 continue
 
-            if type(typeAfter) is Bool:
-                boolLength = consecutiveBoolNum(valueTypes, i)
+            if type(typeAfter) is BoolTypeSpec:
+                boolLength = consecutiveBoolTypeSpecNum(valueTypes, i)
                 nextDynamicValueOffset += boolSequenceLength(boolLength)
                 ignoreNext = boolLength - 1
                 continue
@@ -196,31 +196,52 @@ def indexTuple(
     return output.decode(encoded, startIndex=startIndex, length=length)
 
 
-class Tuple(Type):
-    def __init__(self, *valueTypes: Type) -> None:
-        super().__init__(TealType.bytes)
-        self.valueTypes = list(valueTypes)
+class TupleTypeSpec(TypeSpec):
+    def __init__(self, *value_type_specs: TypeSpec) -> None:
+        super().__init__()
+        self.value_specs = list(value_type_specs)
 
-    def has_same_type_as(self, other: Type) -> bool:
-        return (
-            type(other) is Tuple
-            and len(self.valueTypes) == len(other.valueTypes)
-            and all(
-                self.valueTypes[i].has_same_type_as(other.valueTypes[i])
-                for i in range(len(self.valueTypes))
-            )
-        )
+    def value_type_specs(self) -> List[TypeSpec]:
+        """Get the TypeSpecs for the values of this tuple."""
+        return self.value_specs
+
+    def length_static(self) -> int:
+        """Get the number of values this tuple holds."""
+        return len(self.value_specs)
 
     def new_instance(self) -> "Tuple":
-        return Tuple(*self.valueTypes)
+        return Tuple(*self.value_specs)
 
     def is_dynamic(self) -> bool:
-        return any(valueType.is_dynamic() for valueType in self.valueTypes)
+        return any(type_spec.is_dynamic() for type_spec in self.value_type_specs())
 
     def byte_length_static(self) -> int:
         if self.is_dynamic():
             raise ValueError("Type is dynamic")
-        return boolAwareStaticByteLength(self.valueTypes)
+        return boolAwareStaticByteLength(self.value_type_specs())
+
+    def storage_type(self) -> TealType:
+        return TealType.bytes
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, TupleTypeSpec)
+            and self.value_type_specs() == other.value_type_specs()
+        )
+
+    def __str__(self) -> str:
+        return "({})".format(",".join(map(str, self.value_type_specs())))
+
+
+TupleTypeSpec.__module__ = "pyteal"
+
+
+class Tuple(BaseType):
+    def __init__(self, *value_type_specs: TypeSpec) -> None:
+        super().__init__(TupleTypeSpec(*value_type_specs))
+
+    def type_spec(self) -> TupleTypeSpec:
+        return cast(TupleTypeSpec, super().type_spec())
 
     def decode(
         self,
@@ -235,51 +256,153 @@ class Tuple(Type):
         )
         return self.stored_value.store(extracted)
 
-    def set(self, *values: Type) -> Expr:
-        if len(self.valueTypes) != len(values):
+    def set(self, *values: BaseType) -> Expr:
+        myTypes = self.type_spec().value_type_specs()
+        if len(myTypes) != len(values):
             raise TealInputError(
                 "Incorrect length for values. Expected {}, got {}".format(
-                    len(self.valueTypes), len(values)
+                    len(myTypes), len(values)
                 )
             )
-        if not all(
-            self.valueTypes[i].has_same_type_as(values[i])
-            for i in range(len(self.valueTypes))
-        ):
+        if not all(myTypes[i] == values[i].type_spec() for i in range(len(myTypes))):
             raise TealInputError("Input values do not match type")
         return self.stored_value.store(encodeTuple(values))
 
     def encode(self) -> Expr:
         return self.stored_value.load()
 
-    def length_static(self) -> int:
-        return len(self.valueTypes)
-
     def length(self) -> Expr:
-        return Int(self.length_static())
+        """Get the number of values this tuple holds as an Expr."""
+        return Int(self.type_spec().length_static())
 
     def __getitem__(self, index: int) -> "TupleElement":
-        if not (0 <= index < self.length_static()):
+        if not (0 <= index < self.type_spec().length_static()):
             raise TealInputError("Index out of bounds")
         return TupleElement(self, index)
-
-    def __str__(self) -> str:
-        return "({})".format(",".join(map(lambda x: x.__str__(), self.valueTypes)))
 
 
 Tuple.__module__ = "pyteal"
 
 
-class TupleElement(ComputedType[Type]):
+class TupleElement(ComputedType[BaseType]):
+    """Represents the extraction of a specific element from a Tuple."""
+
     def __init__(self, tuple: Tuple, index: int) -> None:
-        super().__init__(tuple.valueTypes[index])
+        super().__init__()
         self.tuple = tuple
         self.index = index
 
-    def store_into(self, output: Type) -> Expr:
+    def produced_type_spec(self) -> TypeSpec:
+        return self.tuple.type_spec().value_type_specs()[self.index]
+
+    def store_into(self, output: BaseType) -> Expr:
         return indexTuple(
-            self.tuple.valueTypes, self.tuple.encode(), self.index, output
+            self.tuple.type_spec().value_type_specs(),
+            self.tuple.encode(),
+            self.index,
+            output,
         )
 
 
 TupleElement.__module__ = "pyteal"
+
+# Until Python 3.11 is released with support for PEP 646 -- Variadic Generics, it's not possible for
+# the Tuple class to take an arbitrary number of template parameters. As a workaround, we define the
+# following classes for specifically sized Tuples. If needed, more classes can be added for larger
+# sizes.
+
+
+class Tuple0(Tuple):
+    """A Tuple with 0 values."""
+
+    def __init__(self) -> None:
+        super().__init__()
+
+
+Tuple0.__module__ = "pyteal"
+
+T1 = TypeVar("T1", bound=BaseType)
+
+
+class Tuple1(Tuple, Generic[T1]):
+    """A Tuple with 1 value."""
+
+    def __init__(self, value1_type_spec: TypeSpec) -> None:
+        super().__init__(value1_type_spec)
+
+
+Tuple1.__module__ = "pyteal"
+
+T2 = TypeVar("T2", bound=BaseType)
+
+
+class Tuple2(Tuple, Generic[T1, T2]):
+    """A Tuple with 2 values."""
+
+    def __init__(self, value1_type_spec: TypeSpec, value2_type_spec: TypeSpec) -> None:
+        super().__init__(value1_type_spec, value2_type_spec)
+
+
+Tuple2.__module__ = "pyteal"
+
+T3 = TypeVar("T3", bound=BaseType)
+
+
+class Tuple3(Tuple, Generic[T1, T2, T3]):
+    """A Tuple with 3 values."""
+
+    def __init__(
+        self,
+        value1_type_spec: TypeSpec,
+        value2_type_spec: TypeSpec,
+        value3_type_spec: TypeSpec,
+    ) -> None:
+        super().__init__(value1_type_spec, value2_type_spec, value3_type_spec)
+
+
+Tuple3.__module__ = "pyteal"
+
+T4 = TypeVar("T4", bound=BaseType)
+
+
+class Tuple4(Tuple, Generic[T1, T2, T3, T4]):
+    """A Tuple with 4 values."""
+
+    def __init__(
+        self,
+        value1_type_spec: TypeSpec,
+        value2_type_spec: TypeSpec,
+        value3_type_spec: TypeSpec,
+        value4_type_spec: TypeSpec,
+    ) -> None:
+        super().__init__(
+            value1_type_spec, value2_type_spec, value3_type_spec, value4_type_spec
+        )
+
+
+Tuple4.__module__ = "pyteal"
+
+T5 = TypeVar("T5", bound=BaseType)
+
+
+class Tuple5(Tuple, Generic[T1, T2, T3, T4, T5]):
+    """A Tuple with 5 values."""
+
+    def __init__(
+        self,
+        value1_type_spec: TypeSpec,
+        value2_type_spec: TypeSpec,
+        value3_type_spec: TypeSpec,
+        value4_type_spec: TypeSpec,
+        value5_type_spec: TypeSpec,
+    ) -> None:
+        super().__init__(
+            value1_type_spec,
+            value2_type_spec,
+            value3_type_spec,
+            value4_type_spec,
+            value5_type_spec,
+        )
+
+
+Tuple5.__module__ = "pyteal"
