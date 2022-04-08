@@ -19,6 +19,7 @@ setuptools.setup(
     extras_require={
         "development": [
             "black==22.3.0",
+            "flake8==4.0.1",
             "graviton@git+https://github.com/algorand/graviton@fuzz",
             "mypy==0.942",
             "py-algorand-sdk",

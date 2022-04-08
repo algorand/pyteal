@@ -1,9 +1,8 @@
-# Required for merging:
-
 pip:
-	pip install --upgrade pip
-	pip install -e .[test]
+	pip install -e .
 
+pip-development: pip
+	pip install -e.[development]
 
 build-and-test: build black mypy test
 
@@ -13,8 +12,12 @@ build:
 black:
 	black --check .
 
+# currently not enforced on github
+flake8:
+	flake8 pyteal tests
+
 mypy:
-	mypy pyteal
+	mypy pyteal tests
 
 test:
 	pytest
@@ -28,3 +31,5 @@ coverage:
 blackbox:
 	pytest tests/blackbox_test.py
 	pytest tests/user_guide_test.py
+
+.PHONY: build
