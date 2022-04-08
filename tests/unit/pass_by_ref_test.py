@@ -1,10 +1,10 @@
-from typing import List, Tuple
+from typing import Callable, List, Tuple
 
 import pytest
 
 from pyteal import *
 
-from .compile_asserts import assert_new_v_old
+from ..compile_asserts import assert_new_v_old
 
 # TODO: remove these skips when the following is fixed: https://github.com/algorand/pyteal/issues/199
 STABLE_SLOT_GENERATION = False
@@ -346,22 +346,6 @@ def tally(n, result: ScratchVar):
 
 
 @Subroutine(TealType.none)
-def subr_string_mult(s: ScratchVar, n):
-    tmp = ScratchVar(TealType.bytes)
-    return (
-        If(n == Int(0))
-        .Then(s.store(Bytes("")))
-        .Else(
-            Seq(
-                tmp.store(s.load()),
-                subr_string_mult(s, n - Int(1)),
-                s.store(Concat(s.load(), tmp.load())),
-            )
-        )
-    )
-
-
-@Subroutine(TealType.none)
 def factorial_BAD(n: ScratchVar):
     tmp = ScratchVar(TealType.uint64)
     return (
@@ -450,23 +434,6 @@ def make_creatable_factory(approval):
     return func
 
 
-def wrap_for_blackbox(subr_with_params: Tuple[Tuple[Expr, List[TealType]]]) -> Expr:
-    subr, params = subr_with_params
-
-    def arg(i, p):
-        arg = Txn.application_args[i]
-        if p == TealType.uint64:
-            arg = Btoi(arg)
-        return arg
-
-    def approval():
-        return subr(*(arg(i, p) for i, p in enumerate(params)))
-
-    setattr(approval, "__name__", f"sem_{subr.name()}")
-
-    return approval
-
-
 def fac_by_ref():
     n = ScratchVar(TealType.uint64)
     return Seq(
@@ -517,28 +484,73 @@ def tallygo():
     )
 
 
+@Subroutine(TealType.none)
+def subr_string_mult(s: ScratchVar, n):
+    tmp = ScratchVar(TealType.bytes)
+    return (
+        If(n == Int(0))
+        .Then(s.store(Bytes("")))
+        .Else(
+            Seq(
+                tmp.store(s.load()),
+                subr_string_mult(s, n - Int(1)),
+                s.store(Concat(s.load(), tmp.load())),
+            )
+        )
+    )
+
+
+def string_mult():
+    s = ScratchVar(TealType.bytes)
+    return Seq(
+        s.store(Txn.application_args[0]),
+        subr_string_mult(s, Btoi(Txn.application_args[1])),
+        Log(s.load()),
+        Int(100),
+    )
+
+
 TESTABLE_CASES = [(oldfac, [TealType.uint64])]
 
 
-@pytest.mark.skipif(not STABLE_SLOT_GENERATION, reason="cf. #199")
-@pytest.mark.parametrize("pt", map(wrap_for_blackbox, TESTABLE_CASES))
-def test_blackbox_unchanged(pt):
-    assert_new_v_old(pt, 6)
+# def wrap_for_blackbox(
+#     subr_with_params: Tuple[SubroutineDefinition, List[TealType]]
+# ) -> Callable[..., Expr]:
+#     subr, params = subr_with_params
+
+#     def arg(i, p):
+#         arg = Txn.application_args[i]
+#         if p == TealType.uint64:
+#             arg = Btoi(arg)
+#         return arg
+
+#     def approval():
+#         return subr(*(arg(i, p) for i, p in enumerate(params)))
+
+#     setattr(approval, "__name__", f"sem_{subr.name()}")
+
+#     return approval
 
 
-CASES = (
-    sub_logcat_dynamic,
-    swapper,
-    wilt_the_stilt,
-    fac_by_ref,
-    fac_by_ref_BAD,
-    fac_by_ref_args,
-    sub_mixed,
-    lots_o_vars,
-    tallygo,
-    empty_scratches,
-    should_it_work,
-)
+# @pytest.mark.skipif(not STABLE_SLOT_GENERATION, reason="cf. #199")
+# @pytest.mark.parametrize("pt", map(wrap_for_blackbox, TESTABLE_CASES))
+# def test_blackbox_unchanged(pt):
+#     assert_new_v_old(pt, 6)
+
+
+# CASES = (
+#     sub_logcat_dynamic,
+#     swapper,
+#     wilt_the_stilt,
+#     fac_by_ref,
+#     fac_by_ref_BAD,
+#     fac_by_ref_args,
+#     sub_mixed,
+#     lots_o_vars,
+#     tallygo,
+#     empty_scratches,
+#     should_it_work,
+# )
 
 
 DEPRECATED_CASES = (string_mult, should_it_work)
@@ -573,16 +585,6 @@ def approval_not_ok_indirect():
 
 def approval_its_complicated():
     return a(Int(42))
-
-
-def string_mult():
-    s = ScratchVar(TealType.bytes)
-    return Seq(
-        s.store(Txn.application_args[0]),
-        subr_string_mult(s, Btoi(Txn.application_args[1])),
-        Log(s.load()),
-        Int(100),
-    )
 
 
 def increment():

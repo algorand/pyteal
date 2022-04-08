@@ -4,7 +4,7 @@ import pytest
 from pyteal import *
 
 
-from .compile_asserts import assert_new_v_old
+from ..compile_asserts import assert_new_v_old
 
 
 def user_guide_snippet_dynamic_scratch_var() -> Expr:

@@ -12,24 +12,21 @@ build:
 black:
 	black --check .
 
-# currently not enforced on github
-flake8:
-	flake8 pyteal tests
 
 mypy:
 	mypy pyteal tests
 
-test:
-	pytest
+test-unit:
+	pytest pyteal tests/unit
 
+test-integration:
+	pytest tests/integration
 
 # Extras:
-
 coverage:
 	pytest --cov-report html --cov=pyteal
 
-blackbox:
-	pytest tests/blackbox_test.py
-	pytest tests/user_guide_test.py
+flake8:
+	flake8 pyteal tests
 
 .PHONY: build

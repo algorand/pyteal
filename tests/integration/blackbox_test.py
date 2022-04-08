@@ -5,8 +5,8 @@ from typing import Dict, Tuple
 
 import pytest
 
-from .compile_asserts import assert_teal_as_expected
-from .blackbox_asserts import (
+from tests.compile_asserts import assert_teal_as_expected
+from tests.blackbox_asserts import (
     algod_with_assertion,
     blackbox_pyteal,
     mode_to_execution_mode,
@@ -199,7 +199,7 @@ APP_SCENARIOS = {
         "assertions": {
             DRProp.cost: 11,
             # int assertions on log outputs need encoding to varuint-hex:
-            DRProp.lastLog: Encoder.hex(2 ** 10),
+            DRProp.lastLog: Encoder.hex(2**10),
             # dicts have a special meaning as assertions. So in the case of "finalScratch"
             # which is supposed to _ALSO_ output a dict, we need to use a lambda as a work-around
             DRProp.finalScratch: lambda _: {0: 1024},

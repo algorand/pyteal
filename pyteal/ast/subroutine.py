@@ -312,7 +312,7 @@ class SubroutineFnWrapper:
             input_types=input_types,
         )
 
-    def __call__(self, *args: Expr, **kwargs) -> Expr:
+    def __call__(self, *args: Union[Expr, ScratchVar], **kwargs) -> Expr:
         if len(kwargs) != 0:
             raise TealInputError(
                 "Subroutine cannot be called with keyword arguments. Received keyword arguments: {}".format(
