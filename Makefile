@@ -4,7 +4,7 @@ pip:
 pip-development: pip
 	pip install -e.[development]
 
-build-and-test: build black mypy test
+build-and-test: build black mypy test-unit
 
 build:
 	python -m scripts.generate_init --check
