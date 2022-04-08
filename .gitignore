@@ -133,6 +133,7 @@ dmypy.json
 
 # IDE
 .idea
+.vscode
 
 # Comma Separated Value report files
 *.csv

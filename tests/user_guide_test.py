@@ -24,6 +24,73 @@ def user_guide_snippet_dynamic_scratch_var() -> Expr:
     )
 
 
+@pytest.mark.parametrize("snippet", [user_guide_snippet_dynamic_scratch_var])
+def test_user_guide_snippets(snippet):
+    assert_new_v_old(snippet, version=6)
+
+
+def user_guide_snippet_recursiveIsEven():
+    @Subroutine(TealType.uint64)
+    def recursiveIsEven(i):
+        return (
+            If(i == Int(0))
+            .Then(Int(1))
+            .ElseIf(i == Int(1))
+            .Then(Int(0))
+            .Else(recursiveIsEven(i - Int(2)))
+        )
+
+    return recursiveIsEven(Int(15))
+
+
+def user_guide_snippet_ILLEGAL_recursion():
+    @Subroutine(TealType.none)
+    def ILLEGAL_recursion(i: ScratchVar):
+        return (
+            If(i.load() == Int(0))
+            .Then(i.store(Int(1)))
+            .ElseIf(i.load() == Int(1))
+            .Then(i.store(Int(0)))
+            .Else(Seq(i.store(i.load() - Int(2)), ILLEGAL_recursion(i)))
+        )
+
+    i = ScratchVar(TealType.uint64)
+    return Seq(i.store(Int(15)), ILLEGAL_recursion(i), Int(1))
+
+
+USER_GUIDE_SNIPPETS_COPACETIC = [
+    user_guide_snippet_dynamic_scratch_var,
+    user_guide_snippet_recursiveIsEven,
+]
+
+
+@pytest.mark.parametrize("snippet", USER_GUIDE_SNIPPETS_COPACETIC)
+def test_user_guide_snippets_good(snippet):
+    assert_new_v_old(snippet, 6)
+
+
+USER_GUIDE_SNIPPETS_ERRORING = {
+    user_guide_snippet_ILLEGAL_recursion: (
+        TealInputError,
+        "ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: ILLEGAL_recursion()-->ILLEGAL_recursion()",
+    )
+}
+
+
+@pytest.mark.parametrize("snippet_etype_e", USER_GUIDE_SNIPPETS_ERRORING.items())
+def test_user_guide_snippets_bad(snippet_etype_e):
+    snippet, etype_e = snippet_etype_e
+    etype, e = etype_e
+
+    print(
+        f"Test case function=[{snippet.__name__}]. Expecting error of type {etype} with message <{e}>"
+    )
+    with pytest.raises(etype) as tie:
+        compileTeal(snippet(), mode=Mode.Application, version=6)
+
+    assert e in str(tie)
+
+
 def blackbox_pyteal_example1():
     # Example 1: Using blackbox_pyteal for a simple test of both an app and logic sig:
     from graviton.blackbox import DryRunEncoder, DryRunExecutor
@@ -52,15 +119,15 @@ def blackbox_pyteal_example1():
     lsig_result = DryRunExecutor.dryrun_logicsig(algod, lsig_teal, args)
 
     # check to see that x^2 is at the top of the stack as expected
-    assert app_result.stack_top() == x ** 2, app_result.report(
+    assert app_result.stack_top() == x**2, app_result.report(
         args, "stack_top() gave unexpected results for app"
     )
-    assert lsig_result.stack_top() == x ** 2, lsig_result.report(
+    assert lsig_result.stack_top() == x**2, lsig_result.report(
         args, "stack_top() gave unexpected results for lsig"
     )
 
     # check to see that itob of x^2 has been logged (only for the app case)
-    assert app_result.last_log() == DryRunEncoder.hex(x ** 2), app_result.report(
+    assert app_result.last_log() == DryRunEncoder.hex(x**2), app_result.report(
         args, "last_log() gave unexprected results from app"
     )
 
@@ -138,7 +205,6 @@ def blackbox_pyteal_example3():
     from tests.blackbox_asserts import (
         algod_with_assertion,
         blackbox_pyteal,
-        mode_to_execution_mode,
     )
 
     # helper that will be used for scratch-slots invariant:
@@ -207,8 +273,3 @@ def blackbox_pyteal_example3():
 )
 def test_blackbox_pyteal_examples(example):
     example()
-
-
-@pytest.mark.parametrize("snippet", [user_guide_snippet_dynamic_scratch_var])
-def test_user_guide_snippets(snippet):
-    assert_new_v_old(snippet, version=6)

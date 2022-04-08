@@ -43,6 +43,7 @@ PyTeal **hasn't been security audited**. Use it at your own risk.
    state
    assets
    versions
+   compiler_optimization
 
 .. toctree::
    :maxdepth: 3
