@@ -1,4 +1,3 @@
-import imp
 from .optimizer import OptimizeOptions, _apply_slot_to_stack
 
 from pyteal import *
