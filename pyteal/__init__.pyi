@@ -1,9 +1,9 @@
 ## File generated from scripts/generate_init.py.
 ## DO NOT EDIT DIRECTLY
 
-from .ast import *
+from .ast import *  # noqa: F401
 from .ast import __all__ as ast_all
-from .ir import *
+from .ir import *  # noqa: F401
 from .ir import __all__ as ir_all
 from .compiler import (
     MAX_TEAL_VERSION,
