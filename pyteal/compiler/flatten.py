@@ -1,4 +1,4 @@
-from typing import List, Dict, DefaultDict, Optional, cast
+from typing import List, Dict, DefaultDict, Optional
 from collections import defaultdict
 
 from ..ast import SubroutineDefinition

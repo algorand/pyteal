@@ -20,7 +20,7 @@ docs:
 	doc2dash --name pyteal --index-page index.html --online-redirect-url https://pyteal.readthedocs.io/en/ _build/html && \
 	tar -czvf pyteal.docset.tar.gz pyteal.docset
 
-build-and-test: build black mypy test-unit
+build-and-test: build lint test-unit
 
 build:
 	python -m scripts.generate_init --check
@@ -31,6 +31,11 @@ black:
 mypy:
 	mypy pyteal tests
 
+flake8:
+	flake8 pyteal tests
+
+lint: black mypy flake8
+
 test-unit:
 	pytest pyteal tests/unit
 
@@ -40,8 +45,5 @@ test-integration:
 # Extras:
 coverage:
 	pytest --cov-report html --cov=pyteal
-
-flake8:
-	flake8 pyteal tests
 
 .PHONY: build docs

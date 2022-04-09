@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List, Tuple, Set, Iterator, cast, TYPE_CHECKING
+from typing import List, Tuple, Set, Iterator, cast, TYPE_CHECKING
 
 from .tealop import TealOp, Op
 from ..errors import TealCompileError

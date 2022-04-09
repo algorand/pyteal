@@ -2,9 +2,11 @@ from typing import List
 
 from pyteal import *
 
-from ..compile_asserts import assert_new_v_old, compile_and_save
+from ..compile_asserts import assert_new_v_old
 
 #### TESTS FOR PyTEAL THAT PREDATE PASS-BY-REF
+
+
 @Subroutine(TealType.bytes)
 def logcat(some_bytes, an_int):
     catted = ScratchVar(TealType.bytes)

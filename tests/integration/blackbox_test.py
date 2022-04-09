@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from itertools import product
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 import pytest
 

@@ -23,10 +23,10 @@ def test_subroutine_definition():
     def fn10Args(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10):
         return Return()
 
-    lam0Args = lambda: Return()
-    lam1Args = lambda a1: Return()
-    lam2Args = lambda a1, a2: Return()
-    lam10Args = lambda a1, a2, a3, a4, a5, a6, a7, a8, a9, a10: Return()
+    lam0Args = lambda: Return()  # noqa: E731
+    lam1Args = lambda a1: Return()  # noqa: E731
+    lam2Args = lambda a1, a2: Return()  # noqa: E731
+    lam10Args = lambda a1, a2, a3, a4, a5, a6, a7, a8, a9, a10: Return()  # noqa: E731
 
     def fnWithExprAnnotations(a: Expr, b: Expr) -> Expr:
         return Return()
