@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from itertools import product
-from typing import Dict, Tuple
+from typing import Any, Dict, Tuple
 
 import pytest
 
@@ -539,7 +539,7 @@ saved to {tealpath}:
 def blackbox_test_runner(
     subr: SubroutineFnWrapper,
     mode: Mode,
-    scenario: Dict[DRProp, dict],
+    scenario: Dict[str, Any],
     version: int,
     assemble_constants: bool = True,
 ):
@@ -571,28 +571,28 @@ def blackbox_test_runner(
 
     # 3. execute dry run sequence:
     execute = DryRunExecutor.execute_one_dryrun
-    dryrun_results = list(map(lambda a: execute(algod, teal, a, exec_mode), inputs))
+    inspectors = list(map(lambda a: execute(algod, teal, a, exec_mode), inputs))
 
     # 4. Statistical report:
     csvpath = path / f"{filebase}.csv"
     with open(csvpath, "w") as f:
-        f.write(DryRunInspector.csv_report(inputs, dryrun_results))
+        f.write(DryRunInspector.csv_report(inputs, inspectors))
 
     print(f"Saved Dry Run CSV report to {csvpath}")
 
     # 5. Sequential assertions (if provided any)
     for i, type_n_assertion in enumerate(predicates.items()):
-        assert_type, predicate = type_n_assertion
+        dr_prop, predicate = type_n_assertion
 
-        if SKIP_SCRATCH_ASSERTIONS and assert_type == DRProp.finalScratch:
+        if SKIP_SCRATCH_ASSERTIONS and dr_prop == DRProp.finalScratch:
             print("skipping scratch assertions because unstable slots produced")
             continue
 
-        assert mode_has_property(exec_mode, assert_type)
+        assert mode_has_property(exec_mode, dr_prop)
 
-        assertion = Invariant(predicate, name=f"{case_name}[{i}]@{mode}-{assert_type}")
-        print(f"{i+1}. Assertion for {case_name}-{mode}: {assert_type} <<{predicate}>>")
-        assertion.dryrun_assert(inputs, dryrun_results, assert_type)
+        invariant = Invariant(predicate, name=f"{case_name}[{i}]@{mode}-{dr_prop}")
+        print(f"{i+1}. Assertion for {case_name}-{mode}: {dr_prop} <<{predicate}>>")
+        invariant.validates(dr_prop, inputs, inspectors)
 
 
 @pytest.mark.skipif(not STABLE_SLOT_GENERATION, reason="cf. #199")
@@ -618,17 +618,17 @@ def test_stable_teal_generation():
         assert_teal_as_expected(path2actual, path2expected)
 
 
-@pytest.mark.parametrize("subr_n_scenario", APP_SCENARIOS.items())
+@pytest.mark.parametrize("(subr, scenario)", APP_SCENARIOS.items())
 def test_blackbox_subroutines_as_apps(
-    subr_n_scenario: Tuple[SubroutineFnWrapper, Dict[DRProp, dict]]
+    subr: SubroutineFnWrapper,
+    scenario: Dict[str, Any],
 ):
-    subr, scenario = subr_n_scenario
     blackbox_test_runner(subr, Mode.Application, scenario, 6)
 
 
-@pytest.mark.parametrize("subr_n_scenario", LOGICSIG_SCENARIOS.items())
+@pytest.mark.parametrize("(subr, scenario)", LOGICSIG_SCENARIOS.items())
 def test_blackbox_subroutines_as_logic_sigs(
-    subr_n_scenario: Tuple[SubroutineFnWrapper, Dict[DRProp, dict]]
+    subr: SubroutineFnWrapper,
+    scenario: Dict[str, Any],
 ):
-    subr, scenario = subr_n_scenario
     blackbox_test_runner(subr, Mode.Signature, scenario, 6)
