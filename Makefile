@@ -4,6 +4,9 @@ pip:
 pip-development: pip
 	pip install -e.[development]
 
+pip-integration: pip-development
+	pip install -e.[integration]
+
 pip-docs: pip-development
 	pip install -r docs/requirements.txt
 	pip install doc2dash
@@ -43,7 +46,7 @@ build-and-test: build lint test-unit
 
 # set NUM_PROCS = auto when the following issue has been fixed https://github.com/algorand/pyteal/issues/199
 NUM_PROCS = 1 
-integration-test:
+integration-test: pip-integration
 	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration
 
 # Extras:

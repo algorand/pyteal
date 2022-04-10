@@ -20,15 +20,17 @@ setuptools.setup(
         "development": [
             "black==22.3.0",
             "flake8==4.0.1",
-            "graviton@git+https://github.com/algorand/graviton@fuzz",
             "mypy==0.942",
             "py-algorand-sdk",
             "pytest==7.1.1",
             "pytest-cov",
             "pytest-timeout",
+        ],
+        "integration": [
+            "graviton@git+https://github.com/algorand/graviton@fuzz",
             "pytest-xdist==2.5.0",
             "tabulate==0.8.9",
-        ]
+        ],
     },
     classifiers=[
         "Programming Language :: Python :: 3",
