@@ -1,6 +1,6 @@
 import os
-from pathlib import Path
 from itertools import product
+from pathlib import Path
 from typing import Any, Dict
 
 import pytest
@@ -618,7 +618,7 @@ def test_stable_teal_generation():
         assert_teal_as_expected(path2actual, path2expected)
 
 
-@pytest.mark.parametrize("(subr, scenario)", APP_SCENARIOS.items())
+@pytest.mark.parametrize("subr, scenario", APP_SCENARIOS.items())
 def test_blackbox_subroutines_as_apps(
     subr: SubroutineFnWrapper,
     scenario: Dict[str, Any],
@@ -626,7 +626,7 @@ def test_blackbox_subroutines_as_apps(
     blackbox_test_runner(subr, Mode.Application, scenario, 6)
 
 
-@pytest.mark.parametrize("(subr, scenario)", LOGICSIG_SCENARIOS.items())
+@pytest.mark.parametrize("subr, scenario", LOGICSIG_SCENARIOS.items())
 def test_blackbox_subroutines_as_logic_sigs(
     subr: SubroutineFnWrapper,
     scenario: Dict[str, Any],
