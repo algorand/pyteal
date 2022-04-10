@@ -151,10 +151,14 @@ UNITS = [
 ]
 
 
-@pytest.mark.parametrize("subr_n_mode", product(UNITS, Mode))
-def test_blackbox_pyteal(subr_n_mode):
-    subr, mode = subr_n_mode
-
+@pytest.mark.parametrize("subr, mode", product(UNITS, Mode))
+def test_blackbox_pyteal(subr, mode):
+    """
+    compare the following!
+    >>> pytest -n 2 tests/integration/blackbox_test.py::test_blackbox_pyteal
+    vs
+    >>> pytest -n 1 tests/integration/blackbox_test.py::test_blackbox_pyteal
+    """
     path = Path.cwd() / "tests" / "teal" / "blackbox" / "unit"
     is_app = mode == Mode.Application
     name = f"{'app' if is_app else 'lsig'}_{subr.name()}"
