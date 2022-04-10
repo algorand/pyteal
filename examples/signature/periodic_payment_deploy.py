@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 
-from pyteal import *
-import uuid, params, base64
+import base64
+import params
+import uuid
+
 from algosdk import algod, transaction, account, mnemonic
-from periodic_payment import periodic_payment, tmpl_amt
+from periodic_payment import periodic_payment
+
+from pyteal import *
 
 # --------- compile & send transaction using Goal and Python SDK ----------
 

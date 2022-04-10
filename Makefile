@@ -23,14 +23,16 @@ docs:
 build:
 	python -m scripts.generate_init --check
 
+ALLPY = docs examples pyteal scripts tests *.py
 black:
-	black --check .
-
-mypy:
-	mypy pyteal tests
+	black --check $(ALLPY)
 
 flake8:
-	flake8 pyteal tests
+	flake8 $(ALLPY)
+
+MYPY = pyteal scripts tests
+mypy:
+	mypy $(MYPY)
 
 lint: black mypy flake8
 
