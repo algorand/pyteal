@@ -26,18 +26,18 @@ docs:
 build:
 	python -m scripts.generate_init --check
 
-ALLPY = docs examples pyteal scripts tests *.py
+ALLPY = docs examples pyteal scripts *.py
 black:
 	black --check $(ALLPY)
 
 flake8:
 	flake8 $(ALLPY)
 
-MYPY = pyteal scripts tests
+MYPY = pyteal scripts
 mypy:
 	mypy $(MYPY)
 
-lint: black mypy flake8
+lint: black flake8 mypy
 
 test-unit:
 	pytest pyteal tests/unit
@@ -46,7 +46,10 @@ build-and-test: build lint test-unit
 
 # set NUM_PROCS = auto when the following issue has been fixed https://github.com/algorand/pyteal/issues/199
 NUM_PROCS = 1 
-integration-test: pip-integration
+integration-test: pip-integration build
+	black --check tests $(ALLPY)
+	flake8 tests $(ALLPY)
+	mypy tests
 	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration
 
 # Extras:
