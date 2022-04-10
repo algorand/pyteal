@@ -39,8 +39,9 @@ test-unit:
 
 build-and-test: build lint test-unit
 
+NUM_PROCS = auto
 integration-test:
-	pytest tests/integration
+	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration
 
 # Extras:
 coverage:

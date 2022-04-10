@@ -23,9 +23,10 @@ setuptools.setup(
             "graviton@git+https://github.com/algorand/graviton@fuzz",
             "mypy==0.942",
             "py-algorand-sdk",
-            "pytest",
+            "pytest==7.1.1",
             "pytest-cov",
             "pytest-timeout",
+            "pytest-xdist==2.5.0",
             "tabulate==0.8.9",
         ]
     },
