@@ -155,9 +155,9 @@ UNITS = [
 def test_blackbox_pyteal(subr, mode):
     """
     compare the following!
-    >>> pytest -n 2 tests/integration/blackbox_test.py::test_blackbox_pyteal
+    % pytest -n 2 tests/integration/blackbox_test.py::test_blackbox_pyteal
     vs
-    >>> pytest -n 1 tests/integration/blackbox_test.py::test_blackbox_pyteal
+    % pytest -n 1 tests/integration/blackbox_test.py::test_blackbox_pyteal
     """
     path = Path.cwd() / "tests" / "teal" / "blackbox" / "unit"
     is_app = mode == Mode.Application
