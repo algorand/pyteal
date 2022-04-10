@@ -56,4 +56,7 @@ integration-test: pip-integration build
 coverage:
 	pytest --cov-report html --cov=pyteal
 
-.PHONY: build docs
+graviton-demo:
+	pytest -n $(NUM_PROCS) --durations=10 -svv tests/integration/logicsigs_test.py::test_factorizer_game
+
+.PHONY: build docs demo
