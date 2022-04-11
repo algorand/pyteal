@@ -18,7 +18,9 @@ PyTeal provides high level, functional programming style abstractions over TEAL 
 
 ### Install 
 
-PyTeal requires Python version >= 3.6.
+PyTeal requires Python version >= 3.10.
+
+To manage multiple Python versions use tooling like [pyenv](https://github.com/pyenv/pyenv).
 
 #### Recommended: Install from PyPi
 
