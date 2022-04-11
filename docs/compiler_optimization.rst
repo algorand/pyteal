@@ -12,10 +12,10 @@ to: compiled code size, scratch slot usage, opcode cost, etc.
 Optimizer Usage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The compiler determines which optimizations to apply based on the provided :any:`OptimizeOptions` object as
-shown in the code block below. The :any:`OptimizeOptions` constructor receives a set of keyword arguments 
+The compiler determines which optimizations to apply based on the provided :any:`pyteal.OptimizeOptions` object as
+shown in the code block below. The :any:`pyteal.OptimizeOptions` constructor receives a set of keyword arguments
 representing flags corresponding to particular optimizations. If arguments are not provided to the
-constructor or no :any:`OptimizeOptions` object is passed to :any:`compileTeal` then the default behavior is
+constructor or no :any:`pyteal.OptimizeOptions` object is passed to :any:`compileTeal` then the default behavior is
 that no optimizations are applied.
 
 ============================== ================================================================================ ===========================
