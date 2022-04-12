@@ -368,7 +368,7 @@ def test_assignScratchSlotsToSubroutines_invalid_requested_id():
 
     # mainSlot2 and subroutine2Slot1 request the same ID, 100
     with pytest.raises(TealInternalError):
-        actual = assignScratchSlotsToSubroutines(subroutineBlocks)
+        assignScratchSlotsToSubroutines(subroutineBlocks)
 
 
 def test_assignScratchSlotsToSubroutines_slot_used_before_assignment():
