@@ -4,7 +4,7 @@ from ...errors import TealInputError
 from ..expr import Expr
 from ..int import Int
 from ..substring import Extract, Substring, Suffix
-from .type import TypeSpec, ComputedType
+from .type import TypeSpec, ComputedValue
 
 
 def substringForDecoding(
@@ -199,7 +199,7 @@ def type_spec_from_computed_type_annotation(annotation: Any) -> Union[TypeSpec, 
     if annotation is None:
         return "void"
 
-    if get_origin(annotation) is not ComputedType:
+    if get_origin(annotation) is not ComputedValue:
         raise TealInputError(
             f"expected type annotation ComputedType[...] but get {get_origin(annotation)}"
         )
