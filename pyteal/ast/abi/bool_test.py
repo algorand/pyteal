@@ -1,7 +1,8 @@
-from typing import NamedTuple, List, Type
+from typing import NamedTuple, List
 import pytest
 
 from ... import *
+from .type_test import ContainerType
 from .bool import (
     boolAwareStaticByteLength,
     consecutiveBoolInstanceNum,
@@ -116,6 +117,31 @@ def test_Bool_set_copy():
 
     with pytest.raises(TealInputError):
         value.set(abi.Uint16())
+
+
+def test_Bool_set_computed():
+    value = abi.Bool()
+    computed = ContainerType(abi.BoolTypeSpec(), Int(0x80))
+    expr = value.set(computed)
+    assert expr.type_of() == TealType.none
+    assert not expr.has_return()
+
+    expected = TealSimpleBlock(
+        [
+            TealOp(None, Op.int, 0x80),
+            TealOp(None, Op.store, value.stored_value.slot),
+        ]
+    )
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    with pytest.raises(TealInputError):
+        value.set(ContainerType(abi.Uint32TypeSpec(), Int(65537)))
 
 
 def test_Bool_get():

@@ -4,6 +4,7 @@ from ... import *
 from .util import substringForDecoding
 from .tuple import encodeTuple
 from .bool import boolSequenceLength
+from .type_test import ContainerType
 from .array_base_test import STATIC_TYPES, DYNAMIC_TYPES
 
 options = CompileOptions(version=5)
@@ -203,6 +204,37 @@ def test_StaticArray_set_copy():
 
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+
+def test_StaticArray_set_computed():
+    value = abi.StaticArray(abi.Uint64TypeSpec(), 10)
+    computed = ContainerType(
+        value.type_spec(), Bytes("indeed this is hard to simulate")
+    )
+    expr = value.set(computed)
+    assert expr.type_of() == TealType.none
+    assert not expr.has_return()
+
+    expected = TealSimpleBlock(
+        [
+            TealOp(None, Op.byte, '"indeed this is hard to simulate"'),
+            TealOp(None, Op.store, value.stored_value.slot),
+        ]
+    )
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = actual.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    with pytest.raises(TealInputError):
+        value.set(
+            ContainerType(
+                abi.StaticArrayTypeSpec(abi.Uint16TypeSpec(), 40),
+                Bytes("well i am trolling"),
+            )
+        )
 
 
 def test_StaticArray_encode():
