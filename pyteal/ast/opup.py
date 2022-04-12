@@ -8,6 +8,7 @@ from .int import Int
 from .bytes import Bytes
 from .gitxn import Gitxn
 from .itxn import InnerTxnBuilder
+from .scratch import ScratchSlot
 from .txn import TxnField, TxnType, Txn
 from enum import Enum
 
@@ -54,6 +55,8 @@ class OpUp():
             self.target_app_id = target_app_id
         elif mode == OpUpMode.OnCreate:
             self.target_app_id = Global.current_application_id + Int(1)
+        elif mode == OpUpMode.OnCall:
+            self.target_app_id_slot = ScratchSlot()
 
         self.mode = mode
 
@@ -71,10 +74,12 @@ class OpUp():
         )
 
         if self.mode == OpUpMode.OnCall:
-            self.target_app_id = Gitxn[0].created_application_id
+            self.target_app_id = self.target_app_id_slot.load()
             return Seq(
                 create_app_expr,
-                self.target_app_id,
+                self.target_app_id_slot.store(
+                    Gitxn[0].created_application_id
+                ),
             )
 
         return create_app_expr
