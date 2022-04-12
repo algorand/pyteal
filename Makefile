@@ -16,7 +16,7 @@ bdist-wheel:
 
 docs:
 	cd docs && \
-    make html && \
+	make html && \
 	doc2dash --name pyteal --index-page index.html --online-redirect-url https://pyteal.readthedocs.io/en/ _build/html && \
 	tar -czvf pyteal.docset.tar.gz pyteal.docset
 
@@ -37,9 +37,9 @@ mypy:
 lint: black flake8 mypy
 
 test-unit:
-	pytest pyteal tests/unit
+	pytest pyteal tests
 
-build-and-test: build lint test-unit
+build-and-test: build lint
 
 # Extras:
 coverage:

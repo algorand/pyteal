@@ -138,10 +138,10 @@ def test_scratch_assign_id():
 
 def test_scratch_assign_id_invalid():
     with pytest.raises(TealInputError):
-        slot = ScratchSlot(-1)
+        ScratchSlot(-1)
 
     with pytest.raises(TealInputError):
-        slot = ScratchSlot(NUM_SLOTS)
+        ScratchSlot(NUM_SLOTS)
 
 
 def test_scratch_index():
