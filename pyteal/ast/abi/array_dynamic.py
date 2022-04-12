@@ -10,7 +10,7 @@ from ...errors import TealInputError
 from ..expr import Expr
 from ..seq import Seq
 
-from .type import ComputedType, TypeSpec, BaseType
+from .type import ComputedValue, TypeSpec, BaseType
 from .uint import Uint16
 from .array_base import ArrayTypeSpec, Array
 
@@ -53,7 +53,10 @@ class DynamicArray(Array[T]):
     def type_spec(self) -> DynamicArrayTypeSpec[T]:
         return cast(DynamicArrayTypeSpec[T], super().type_spec())
 
-    def set(self, values: Union[Sequence[T], "DynamicArray[T]", ComputedType]) -> Expr:
+    def set(
+        self,
+        values: Union[Sequence[T], "DynamicArray[T]", ComputedValue["DynamicArray[T]"]],
+    ) -> Expr:
         """Set the ABI dynamic array with one of the following
         * a sequence of ABI type variables
         * or another ABI static array
@@ -76,7 +79,7 @@ class DynamicArray(Array[T]):
             A PyTeal expression that stores encoded `values` in its internal ScratchVar.
         """
 
-        if isinstance(values, ComputedType):
+        if isinstance(values, ComputedValue):
             return self._set_with_computed_type(values)
 
         values = cast(Union[Sequence[T], "DynamicArray[T]"], values)

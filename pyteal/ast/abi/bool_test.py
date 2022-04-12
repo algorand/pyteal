@@ -2,9 +2,8 @@ from typing import NamedTuple, List
 import pytest
 
 from ... import *
-from .type import ContainerType
+from .type_test import ContainerType
 from .bool import (
-    BoolTypeSpec,
     boolAwareStaticByteLength,
     consecutiveBoolInstanceNum,
     consecutiveBoolTypeSpecNum,
@@ -122,7 +121,7 @@ def test_Bool_set_copy():
 
 def test_Bool_set_computed():
     value = abi.Bool()
-    computed = ContainerType(BoolTypeSpec(), Int(0x80))
+    computed = ContainerType(abi.BoolTypeSpec(), Int(0x80))
     expr = value.set(computed)
     assert expr.type_of() == TealType.none
     assert not expr.has_return()

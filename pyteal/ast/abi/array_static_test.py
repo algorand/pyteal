@@ -4,7 +4,7 @@ from ... import *
 from .util import substringForDecoding
 from .tuple import encodeTuple
 from .bool import boolSequenceLength
-from .type import ContainerType
+from .type_test import ContainerType
 from .array_base_test import STATIC_TYPES, DYNAMIC_TYPES
 
 options = CompileOptions(version=5)

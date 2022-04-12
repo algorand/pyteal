@@ -5,7 +5,7 @@ from ... import *
 from .tuple import encodeTuple, indexTuple, TupleElement
 from .bool import encodeBoolSequence
 from .util import substringForDecoding
-from .type import ContainerType
+from .type_test import ContainerType
 
 options = CompileOptions(version=5)
 

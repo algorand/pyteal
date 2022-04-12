@@ -1,6 +1,5 @@
 from typing import List, Tuple, NamedTuple, Callable, Union, Optional
-from .type import ContainerType
-from .uint import UintTypeSpec
+from .type_test import ContainerType
 from ... import *
 
 import pytest
@@ -305,7 +304,7 @@ def test_Uint_encode():
 
 
 def test_ByteUint8_mutual_conversion():
-    cases: List[Tuple[UintTypeSpec, UintTypeSpec]] = [
+    cases: List[Tuple[abi.UintTypeSpec, abi.UintTypeSpec]] = [
         (abi.Uint8TypeSpec(), abi.ByteTypeSpec()),
         (abi.ByteTypeSpec(), abi.Uint8TypeSpec()),
     ]

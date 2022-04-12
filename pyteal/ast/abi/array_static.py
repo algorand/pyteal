@@ -11,7 +11,7 @@ from ...errors import TealInputError
 from ..expr import Expr
 from ..int import Int
 
-from .type import ComputedType, TypeSpec, BaseType
+from .type import ComputedValue, TypeSpec, BaseType
 from .bool import BoolTypeSpec, boolSequenceLength
 from .array_base import ArrayTypeSpec, Array, ArrayElement
 
@@ -79,7 +79,10 @@ class StaticArray(Array[T], Generic[T, N]):
         return cast(StaticArrayTypeSpec[T, N], super().type_spec())
 
     def set(
-        self, values: Union[Sequence[T], "StaticArray[T, N]", ComputedType]
+        self,
+        values: Union[
+            Sequence[T], "StaticArray[T, N]", ComputedValue["StaticArray[T, N]"]
+        ],
     ) -> Expr:
         """Set the ABI static array with one of the following:
         * a sequence of ABI type variables
@@ -103,7 +106,7 @@ class StaticArray(Array[T], Generic[T, N]):
         Returns:
             A PyTeal expression that stores encoded `values` in its internal ScratchVar.
         """
-        if isinstance(values, ComputedType):
+        if isinstance(values, ComputedValue):
             return self._set_with_computed_type(values)
 
         values = cast(Union[Sequence[T], "StaticArray[T, N]"], values)

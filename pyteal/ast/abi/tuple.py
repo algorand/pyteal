@@ -7,6 +7,7 @@ from typing import (
     Union,
     cast,
     Tuple as TypingTuple,
+    overload,
 )
 
 from ...types import TealType
@@ -20,7 +21,7 @@ from ..binaryexpr import ExtractUint16
 from ..naryexpr import Concat
 from ..scratchvar import ScratchVar
 
-from .type import TypeSpec, BaseType, ComputedType
+from .type import TypeSpec, BaseType, ComputedValue
 from .bool import (
     Bool,
     BoolTypeSpec,
@@ -245,6 +246,9 @@ class TupleTypeSpec(TypeSpec):
 TupleTypeSpec.__module__ = "pyteal"
 
 
+T = TypeVar("T", bound="Tuple")
+
+
 class Tuple(BaseType):
     def __init__(self, *value_type_specs: TypeSpec) -> None:
         super().__init__(TupleTypeSpec(*value_type_specs))
@@ -265,17 +269,21 @@ class Tuple(BaseType):
         )
         return self.stored_value.store(extracted)
 
-    def set(self, *values: Union[BaseType, ComputedType]) -> Expr:
-        if len(values) == 1 and isinstance(values[0], ComputedType):
+    @overload
+    def set(self, *values: BaseType) -> Expr:
+        ...
+
+    @overload
+    def set(self, value: ComputedValue[T]) -> Expr:
+        ...
+
+    def set(self, *values):
+        if len(values) == 1 and isinstance(values[0], ComputedValue):
             return self._set_with_computed_type(values[0])
 
         for value in values:
             if not isinstance(value, BaseType):
                 raise TealInputError(f"Expected BaseType, got {value}")
-
-        # NOTE: this should be changed after we upgrading things to 3.10
-        # 3.8 does not support subscriptable type like tuple[BaseType]
-        values = cast(TypingTuple[BaseType], values)
 
         myTypes = self.type_spec().value_type_specs()
         if len(myTypes) != len(values):
@@ -302,7 +310,7 @@ class Tuple(BaseType):
 Tuple.__module__ = "pyteal"
 
 
-class TupleElement(ComputedType[BaseType]):
+class TupleElement(ComputedValue[BaseType]):
     """Represents the extraction of a specific element from a Tuple."""
 
     def __init__(self, tuple: Tuple, index: int) -> None:

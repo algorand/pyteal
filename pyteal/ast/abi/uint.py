@@ -19,7 +19,7 @@ from ..bytes import Bytes
 from ..unaryexpr import Itob, Btoi
 from ..binaryexpr import GetByte, ExtractUint16, ExtractUint32, ExtractUint64
 from ..ternaryexpr import SetByte
-from .type import ComputedType, TypeSpec, BaseType
+from .type import ComputedValue, TypeSpec, BaseType
 
 NUM_BITS_IN_BYTE = 8
 
@@ -208,6 +208,9 @@ class Uint64TypeSpec(UintTypeSpec):
 Uint32TypeSpec.__module__ = "pyteal"
 
 
+T = TypeVar("T", bound="Uint")
+
+
 class Uint(BaseType):
     @abstractmethod
     def __init__(self, spec: UintTypeSpec) -> None:
@@ -219,8 +222,8 @@ class Uint(BaseType):
     def get(self) -> Expr:
         return self.stored_value.load()
 
-    def set(self, value: Union[int, Expr, "Uint", ComputedType]) -> Expr:
-        if isinstance(value, ComputedType):
+    def set(self, value: Union[int, Expr, "Uint", ComputedValue[T]]) -> Expr:
+        if isinstance(value, ComputedValue):
             return self._set_with_computed_type(value)
 
         if isinstance(value, BaseType) and not (
