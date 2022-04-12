@@ -23,7 +23,7 @@ docs:
 build:
 	python -m scripts.generate_init --check
 
-ALLPY = docs examples pyteal scripts *.py
+ALLPY = docs examples pyteal scripts tests *.py
 black:
 	black --check $(ALLPY)
 
@@ -37,9 +37,9 @@ mypy:
 lint: black flake8 mypy
 
 test-unit:
-	pytest pyteal tests
+	pytest
 
-build-and-test: build lint
+build-and-test: build lint test-unit
 
 # Extras:
 coverage:

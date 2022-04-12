@@ -1,10 +1,8 @@
-from typing import List, Tuple
-
 import pytest
 
 from pyteal import *
 
-from .compile_asserts import assert_new_v_old, compile_and_save
+from .compile_asserts import assert_new_v_old
 
 # TODO: remove these skips when the following is fixed: https://github.com/algorand/pyteal/issues/199
 STABLE_SLOT_GENERATION = False
@@ -420,13 +418,17 @@ approval_ok_indirect = ok_indirect1(Int(42))
 
 ##### BANNED Approval PyTEAL Expressions (wrapped in a function) #####
 
-approval_not_ok = lambda: Seq(x_scratchvar.store(Int(42)), not_ok(x_scratchvar))
 
-approval_not_ok_indirect = lambda: Seq(
-    x_scratchvar.store(Int(42)), not_ok_indirect1(x_scratchvar)
-)
+def approval_not_ok():
+    return Seq(x_scratchvar.store(Int(42)), not_ok(x_scratchvar))
 
-approval_its_complicated = lambda: a(Int(42))
+
+def approval_not_ok_indirect():
+    return Seq(x_scratchvar.store(Int(42)), not_ok_indirect1(x_scratchvar))
+
+
+def approval_its_complicated():
+    return a(Int(42))
 
 
 def tallygo():
