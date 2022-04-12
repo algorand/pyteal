@@ -2,7 +2,7 @@
 
 ## Added
 * Introduce optional compiler optimization to remove redundant sequential `ScratchSlot` store/load invocations ([#247](https://github.com/algorand/pyteal/pull/247)).  The optimization is disabled by default.
-* Expose `DynamicScratchVar` to reference arbitrary `ScratchVar` instances  ([#198](https://github.com/algorand/pyteal/pull/198)). 
+* Expose `DynamicScratchVar` to reference arbitrary `ScratchVar` instances ([#198](https://github.com/algorand/pyteal/pull/198)). 
 
 ## Changed
 * Bump minimum supported Python version to v3.10 ([#269](https://github.com/algorand/pyteal/pull/269)).
