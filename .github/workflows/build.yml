@@ -6,10 +6,15 @@ on:
       - v**
     branches:
       - master
+
+env:
+  SANDBOX_CONFIG: dev
+  SANDBOX_GENESIS: genesis/dev/genesis.json
+
 jobs:
   build-test:
     runs-on: ubuntu-20.04
-    container: python:${{ matrix.python }}-slim
+    container: python:${{ matrix.python }}
     strategy:
       matrix:
         python: ['3.10']
@@ -20,15 +25,63 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install pip dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install -e .
+        run: make pip-development
       - name: Build and Test
+        run: make build-and-test
+
+  run-integration-tests:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python: [ "3.10" ]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "${{ matrix.python }}"
+      - name: Test Python version
         run: |
-          python scripts/generate_init.py --check
-          black --check .
-          mypy pyteal
-          pytest
+          installed="$(python --version)"
+          expected="${{ matrix.python }}"
+          echo $installed
+          [[ $installed =~ "Python ${expected}" ]] && echo "Configured Python" || (echo "Failed to configure Python" && exit 1)
+      - name: Install required os level applications
+        run: |
+          sudo apt update -y
+          sudo apt install -y curl git nodejs
+          sudo apt -y install ca-certificates curl gnupg lsb-release
+          sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+          sudo echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+            $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+          sudo apt update
+          sudo apt -y install docker-ce docker-ce-cli containerd.io
+      - name: Setup docker compose
+        run: |
+           sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+           sudo chmod +x /usr/local/bin/docker-compose
+           sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+           docker-compose --version
+      - name: Check cache for Docker layers
+        uses: satackey/action-docker-layer-caching@v0.0.11
+        # Ignore the failure of a step and avoid terminating the job.
+        continue-on-error: true
+        with:
+          key: docker-layer-caching-${{ github.workflow }}-${{ hashFiles(env.SANDBOX_CONFIG, env.SANDBOX_GENESIS) }}-{hash}
+          restore-keys: docker-layer-caching-${{ github.workflow }}-${{ hashFiles(env.CONFIG, env.SANDBOX_GENESIS) }}-
+      - name: Create sandbox
+        uses: lucasvanmol/algorand-sandbox-action@v1
+        with:
+          config: ${{ env.SANDBOX_CONFIG }}
+      - name: Install pip dependencies
+        run: make pip-development
+      - name: Build and Test
+        run: make build-and-test
+      - name: Run integration tests
+        run: make integration-test
+
   build-docset:
     runs-on: ubuntu-20.04
     container: python:3.10  # Needs `make`, can't be slim
@@ -38,21 +91,15 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install pip dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install -r docs/requirements.txt
-          pip install doc2dash
+        run: make pip-docs
       - name: Make docs
-        run: |
-          cd docs
-          make html
-          doc2dash --name pyteal --index-page index.html --online-redirect-url https://pyteal.readthedocs.io/en/ _build/html
-          tar -czvf pyteal.docset.tar.gz pyteal.docset
+        run: make docs
       - name: Archive docset
         uses: actions/upload-artifact@v2
         with:
           name: pyteal.docset
           path: docs/pyteal.docset.tar.gz
+
   upload-to-pypi:
     runs-on: ubuntu-20.04
     container: python:3.10
@@ -64,9 +111,9 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install dependencies
-        run: pip install wheel
+        run: make pip-wheel
       - name: Build package
-        run: python setup.py sdist bdist_wheel
+        run: make bdist-wheel
       - name: Release
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
