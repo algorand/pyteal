@@ -38,7 +38,7 @@ class DynamicArrayTypeSpec(ArrayTypeSpec[T]):
         )
 
     def __str__(self) -> str:
-        return "{}[]".format(self.value_type_spec())
+        return f"{self.value_type_spec()}[]"
 
 
 DynamicArrayTypeSpec.__module__ = "pyteal"
@@ -81,15 +81,10 @@ class DynamicArray(Array[T]):
 
         if isinstance(values, ComputedValue):
             return self._set_with_computed_type(values)
-
-        values = cast(Union[Sequence[T], "DynamicArray[T]"], values)
-
-        if isinstance(values, BaseType):
+        elif isinstance(values, BaseType):
             if self.type_spec() != values.type_spec():
                 raise TealInputError(
-                    "Cannot assign type {} to {}".format(
-                        values.type_spec(), self.type_spec()
-                    )
+                    f"Cannot assign type {values.type_spec()} to {self.type_spec()}"
                 )
             return self.stored_value.store(values.encode())
         return super().set(values)

@@ -24,7 +24,7 @@ class StaticArrayTypeSpec(ArrayTypeSpec[T], Generic[T, N]):
     def __init__(self, value_type_spec: TypeSpec, array_length: int) -> None:
         super().__init__(value_type_spec)
         if not isinstance(array_length, int) or array_length < 0:
-            raise TypeError("Unsupported StaticArray length: {}".format(array_length))
+            raise TypeError(f"Unsupported StaticArray length: {array_length}")
         self.array_length: Final = array_length
 
     def new_instance(self) -> "StaticArray[T, N]":
@@ -63,7 +63,7 @@ class StaticArrayTypeSpec(ArrayTypeSpec[T], Generic[T, N]):
         )
 
     def __str__(self) -> str:
-        return "{}[{}]".format(self.value_type_spec(), self.length_static())
+        return f"{self.value_type_spec()}[{self.length_static()}]"
 
 
 StaticArrayTypeSpec.__module__ = "pyteal"
@@ -108,23 +108,16 @@ class StaticArray(Array[T], Generic[T, N]):
         """
         if isinstance(values, ComputedValue):
             return self._set_with_computed_type(values)
-
-        values = cast(Union[Sequence[T], "StaticArray[T, N]"], values)
-
-        if isinstance(values, BaseType):
+        elif isinstance(values, BaseType):
             if self.type_spec() != values.type_spec():
                 raise TealInputError(
-                    "Cannot assign type {} to {}".format(
-                        values.type_spec(), self.type_spec()
-                    )
+                    f"Cannot assign type {values.type_spec()} to {self.type_spec()}"
                 )
             return self.stored_value.store(values.encode())
 
         if self.type_spec().length_static() != len(values):
             raise TealInputError(
-                "Incorrect length for values. Expected {}, got {}".format(
-                    self.type_spec().length_static(), len(values)
-                )
+                f"Incorrect length for values. Expected {self.type_spec()}, got {len(values)}"
             )
         return super().set(values)
 
@@ -138,7 +131,7 @@ class StaticArray(Array[T], Generic[T, N]):
 
     def __getitem__(self, index: Union[int, Expr]) -> "ArrayElement[T]":
         if type(index) is int and index >= self.type_spec().length_static():
-            raise TealInputError("Index out of bounds: {}".format(index))
+            raise TealInputError(f"Index out of bounds: {index}")
         return super().__getitem__(index)
 
 
