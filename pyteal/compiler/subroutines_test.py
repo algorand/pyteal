@@ -1,5 +1,7 @@
 from collections import OrderedDict
 
+import pytest
+
 from .. import *
 
 from .subroutines import (
@@ -1275,6 +1277,94 @@ def test_spillLocalSlotsDuringRecursion_recursive_more_slots_than_args_v5():
             TealOp(None, Op.retsub),
         ],
     }
+
+
+def test_spillLocalSlotsDuringRecursion_recursive_with_scratchvar():
+    # modifying test_spillLocalSlotsDuringRecursion_multiple_subroutines_no_recursion()
+    # to be recursive and fail due to by-ref args
+    def sub1Impl(a1):
+        return None
+
+    def sub2Impl(a1, a2: ScratchVar):
+        return None
+
+    def sub3Impl(a1, a2, a3):
+        return None
+
+    subroutine1 = SubroutineDefinition(sub1Impl, TealType.uint64)
+    subroutine2 = SubroutineDefinition(sub2Impl, TealType.uint64)
+    subroutine3 = SubroutineDefinition(sub3Impl, TealType.none)
+
+    subroutine1L1Label = LabelReference("l1")
+    subroutine1Ops = [
+        TealOp(None, Op.store, 0),
+        TealOp(None, Op.load, 0),
+        TealOp(None, Op.int, 0),
+        TealOp(None, Op.eq),
+        TealOp(None, Op.bnz, subroutine1L1Label),
+        TealOp(None, Op.err),
+        TealLabel(None, subroutine1L1Label),
+        TealOp(None, Op.int, 1),
+        TealOp(None, Op.callsub, subroutine3),
+        TealOp(None, Op.retsub),
+    ]
+
+    subroutine2L1Label = LabelReference("l1")
+    subroutine2Ops = [
+        TealOp(None, Op.store, 1),
+        TealOp(None, Op.load, 1),
+        TealOp(None, Op.int, 0),
+        TealOp(None, Op.eq),
+        TealOp(None, Op.bnz, subroutine2L1Label),
+        TealOp(None, Op.err),
+        TealLabel(None, subroutine2L1Label),
+        TealOp(None, Op.int, 1),
+        TealOp(None, Op.retsub),
+    ]
+
+    subroutine3Ops = [
+        TealOp(None, Op.retsub),
+    ]
+
+    l1Label = LabelReference("l1")
+    mainOps = [
+        TealOp(None, Op.txn, "Fee"),
+        TealOp(None, Op.int, 0),
+        TealOp(None, Op.eq),
+        TealOp(None, Op.bz, l1Label),
+        TealOp(None, Op.int, 100),
+        TealOp(None, Op.callsub, subroutine1),
+        TealOp(None, Op.return_),
+        TealLabel(None, l1Label),
+        TealOp(None, Op.int, 101),
+        TealOp(None, Op.callsub, subroutine2),
+        TealOp(None, Op.return_),
+    ]
+
+    subroutineMapping = {
+        None: mainOps,
+        subroutine1: subroutine1Ops,
+        subroutine2: subroutine2Ops,
+        subroutine3: subroutine3Ops,
+    }
+
+    subroutineGraph = {
+        subroutine1: {subroutine2},
+        subroutine2: {subroutine1},
+        subroutine3: set(),
+    }
+
+    localSlots = {None: set(), subroutine1: {0}, subroutine2: {1}, subroutine3: {}}
+
+    with pytest.raises(TealInputError) as tie:
+        spillLocalSlotsDuringRecursion(
+            5, subroutineMapping, subroutineGraph, localSlots
+        )
+
+    assert (
+        "ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: sub2Impl()-->sub1Impl()-->sub2Impl()"
+        in str(tie)
+    )
 
 
 def test_resolveSubroutines():

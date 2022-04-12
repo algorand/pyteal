@@ -18,7 +18,7 @@ from ..unaryexpr import Len
 from ..binaryexpr import ExtractUint16
 from ..naryexpr import Concat
 
-from .type import TypeSpec, BaseType, ComputedType
+from .type import TypeSpec, BaseType, ComputedValue
 from .tuple import encodeTuple
 from .bool import Bool, BoolTypeSpec
 from .uint import Uint16, Uint16TypeSpec
@@ -182,7 +182,7 @@ class Array(BaseType, Generic[T]):
 Array.__module__ = "pyteal"
 
 
-class ArrayElement(ComputedType[T]):
+class ArrayElement(ComputedValue[T]):
     """The class that represents an ABI array element.
 
     This class requires a reference to the array that the array element belongs to, and a PyTeal

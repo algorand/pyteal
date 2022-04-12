@@ -1,0 +1,189 @@
+#pragma version 6
+global CurrentApplicationID
+int 0
+==
+txn NumAppArgs
+int 0
+==
+||
+bnz main_l2
+int 1
+store 0
+byte "two"
+store 1
+int 3
+store 2
+byte "four"
+store 3
+int 0
+byte "five"
+int 5
+app_local_put
+int 0
+byte "six"
+byte "six"
+app_local_put
+int 0
+byte "seven"
+int 7
+app_local_put
+int 0
+byte "eight"
+byte "eight"
+app_local_put
+byte "nine"
+int 9
+app_global_put
+byte "ten"
+byte "ten"
+app_global_put
+byte "eleven"
+int 11
+app_global_put
+byte "twelve"
+byte "twelve"
+app_global_put
+load 0
+int 1337
++
+store 0
+byte "NGL: "
+load 1
+concat
+store 1
+load 2
+int 1337
++
+store 2
+byte "NGL: "
+load 3
+concat
+store 3
+int 0
+byte "five"
+int 1337
+int 0
+byte "five"
+app_local_get
++
+app_local_put
+int 0
+byte "six"
+byte "NGL: "
+int 0
+byte "six"
+app_local_get
+concat
+app_local_put
+int 0
+byte "seven"
+int 0
+byte "seven"
+app_local_get
+app_local_put
+int 0
+byte "eight"
+byte "NGL: "
+int 0
+byte "eight"
+app_local_get
+concat
+app_local_put
+byte "nine"
+int 1337
+byte "nine"
+app_global_get
++
+app_global_put
+byte "ten"
+byte "NGL: "
+byte "ten"
+app_global_get
+concat
+app_global_put
+byte "eleven"
+int 1337
+byte "eleven"
+app_global_get
++
+app_global_put
+byte "twelve"
+byte "NGL: "
+byte "twelve"
+app_global_get
+concat
+app_global_put
+txna ApplicationArgs 0
+btoi
+store 13
+txna ApplicationArgs 1
+store 14
+txna ApplicationArgs 2
+btoi
+store 6
+txna ApplicationArgs 3
+store 7
+load 0
+pop
+load 1
+pop
+load 2
+pop
+load 3
+pop
+int 0
+byte "five"
+app_local_get
+pop
+int 0
+byte "six"
+app_local_get
+pop
+int 0
+byte "seven"
+app_local_get
+pop
+int 0
+byte "eight"
+app_local_get
+pop
+byte "nine"
+app_global_get
+pop
+byte "ten"
+app_global_get
+pop
+byte "eleven"
+app_global_get
+pop
+byte "twelve"
+app_global_get
+pop
+int 13
+store 4
+load 4
+loads
+itob
+log
+int 14
+store 5
+load 5
+loads
+log
+int 6
+store 4
+load 4
+loads
+itob
+log
+int 7
+store 5
+load 5
+loads
+log
+int 1337
+b main_l3
+main_l2:
+int 1
+main_l3:
+return

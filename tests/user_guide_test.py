@@ -1,3 +1,4 @@
+import re
 import pytest
 
 from pyteal import *
@@ -22,6 +23,63 @@ def user_guide_snippet_dynamic_scratch_var() -> Expr:
     )
 
 
-@pytest.mark.parametrize("snippet", [user_guide_snippet_dynamic_scratch_var])
-def test_user_guide_snippets(snippet):
-    assert_new_v_old(snippet)
+def user_guide_snippet_recursiveIsEven():
+    @Subroutine(TealType.uint64)
+    def recursiveIsEven(i):
+        return (
+            If(i == Int(0))
+            .Then(Int(1))
+            .ElseIf(i == Int(1))
+            .Then(Int(0))
+            .Else(recursiveIsEven(i - Int(2)))
+        )
+
+    return recursiveIsEven(Int(15))
+
+
+def user_guide_snippet_ILLEGAL_recursion():
+    @Subroutine(TealType.none)
+    def ILLEGAL_recursion(i: ScratchVar):
+        return (
+            If(i.load() == Int(0))
+            .Then(i.store(Int(1)))
+            .ElseIf(i.load() == Int(1))
+            .Then(i.store(Int(0)))
+            .Else(Seq(i.store(i.load() - Int(2)), ILLEGAL_recursion(i)))
+        )
+
+    i = ScratchVar(TealType.uint64)
+    return Seq(i.store(Int(15)), ILLEGAL_recursion(i), Int(1))
+
+
+USER_GUIDE_SNIPPETS_COPACETIC = [
+    user_guide_snippet_dynamic_scratch_var,
+    user_guide_snippet_recursiveIsEven,
+]
+
+
+@pytest.mark.parametrize("snippet", USER_GUIDE_SNIPPETS_COPACETIC)
+def test_user_guide_snippets_good(snippet):
+    assert_new_v_old(snippet, 6)
+
+
+USER_GUIDE_SNIPPETS_ERRORING = {
+    user_guide_snippet_ILLEGAL_recursion: (
+        TealInputError,
+        "ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: ILLEGAL_recursion()-->ILLEGAL_recursion()",
+    )
+}
+
+
+@pytest.mark.parametrize("snippet_etype_e", USER_GUIDE_SNIPPETS_ERRORING.items())
+def test_user_guide_snippets_bad(snippet_etype_e):
+    snippet, etype_e = snippet_etype_e
+    etype, e = etype_e
+
+    print(
+        f"Test case function=[{snippet.__name__}]. Expecting error of type {etype} with message <{e}>"
+    )
+    with pytest.raises(etype) as tie:
+        compileTeal(snippet(), mode=Mode.Application, version=6)
+
+    assert e in str(tie)

@@ -11,7 +11,7 @@ from ...errors import TealInputError
 from ..expr import Expr
 from ..int import Int
 
-from .type import TypeSpec, BaseType
+from .type import ComputedValue, TypeSpec, BaseType
 from .bool import BoolTypeSpec, boolSequenceLength
 from .array_base import ArrayTypeSpec, Array, ArrayElement
 
@@ -24,7 +24,7 @@ class StaticArrayTypeSpec(ArrayTypeSpec[T], Generic[T, N]):
     def __init__(self, value_type_spec: TypeSpec, array_length: int) -> None:
         super().__init__(value_type_spec)
         if not isinstance(array_length, int) or array_length < 0:
-            raise TypeError("Unsupported StaticArray length: {}".format(array_length))
+            raise TypeError(f"Unsupported StaticArray length: {array_length}")
         self.array_length: Final = array_length
 
     def new_instance(self) -> "StaticArray[T, N]":
@@ -63,7 +63,7 @@ class StaticArrayTypeSpec(ArrayTypeSpec[T], Generic[T, N]):
         )
 
     def __str__(self) -> str:
-        return "{}[{}]".format(self.value_type_spec(), self.length_static())
+        return f"{self.value_type_spec()}[{self.length_static()}]"
 
 
 StaticArrayTypeSpec.__module__ = "pyteal"
@@ -78,9 +78,19 @@ class StaticArray(Array[T], Generic[T, N]):
     def type_spec(self) -> StaticArrayTypeSpec[T, N]:
         return cast(StaticArrayTypeSpec[T, N], super().type_spec())
 
-    def set(self, values: Union[Sequence[T], "StaticArray[T, N]"]) -> Expr:
-        """Set the ABI static array with a sequence of ABI type variables, or another ABI static
-        array.
+    def set(
+        self,
+        values: Union[
+            Sequence[T], "StaticArray[T, N]", ComputedValue["StaticArray[T, N]"]
+        ],
+    ) -> Expr:
+        """Set the ABI static array with one of the following:
+        * a sequence of ABI type variables
+        * or another ABI static array
+        * or a ComputedType with same TypeSpec
+
+        If the argument `values` is a ComputedType, we call `store_into` method
+        from ComputedType to store the internal ABI encoding into this StaticArray.
 
         This function determines if the argument `values` is an ABI static array:
         * if so:
@@ -96,20 +106,18 @@ class StaticArray(Array[T], Generic[T, N]):
         Returns:
             A PyTeal expression that stores encoded `values` in its internal ScratchVar.
         """
-        if isinstance(values, BaseType):
+        if isinstance(values, ComputedValue):
+            return self._set_with_computed_type(values)
+        elif isinstance(values, BaseType):
             if self.type_spec() != values.type_spec():
                 raise TealInputError(
-                    "Cannot assign type {} to {}".format(
-                        values.type_spec(), self.type_spec()
-                    )
+                    f"Cannot assign type {values.type_spec()} to {self.type_spec()}"
                 )
             return self.stored_value.store(values.encode())
 
         if self.type_spec().length_static() != len(values):
             raise TealInputError(
-                "Incorrect length for values. Expected {}, got {}".format(
-                    self.type_spec().length_static(), len(values)
-                )
+                f"Incorrect length for values. Expected {self.type_spec()}, got {len(values)}"
             )
         return super().set(values)
 
@@ -123,7 +131,7 @@ class StaticArray(Array[T], Generic[T, N]):
 
     def __getitem__(self, index: Union[int, Expr]) -> "ArrayElement[T]":
         if type(index) is int and index >= self.type_spec().length_static():
-            raise TealInputError("Index out of bounds: {}".format(index))
+            raise TealInputError(f"Index out of bounds: {index}")
         return super().__getitem__(index)
 
 

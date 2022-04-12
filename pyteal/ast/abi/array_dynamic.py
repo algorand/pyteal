@@ -10,7 +10,7 @@ from ...errors import TealInputError
 from ..expr import Expr
 from ..seq import Seq
 
-from .type import TypeSpec, BaseType
+from .type import ComputedValue, TypeSpec, BaseType
 from .uint import Uint16
 from .array_base import ArrayTypeSpec, Array
 
@@ -38,7 +38,7 @@ class DynamicArrayTypeSpec(ArrayTypeSpec[T]):
         )
 
     def __str__(self) -> str:
-        return "{}[]".format(self.value_type_spec())
+        return f"{self.value_type_spec()}[]"
 
 
 DynamicArrayTypeSpec.__module__ = "pyteal"
@@ -53,9 +53,17 @@ class DynamicArray(Array[T]):
     def type_spec(self) -> DynamicArrayTypeSpec[T]:
         return cast(DynamicArrayTypeSpec[T], super().type_spec())
 
-    def set(self, values: Union[Sequence[T], "DynamicArray[T]"]) -> Expr:
-        """Set the ABI dynamic array with a sequence of ABI type variables, or another ABI dynamic
-        array.
+    def set(
+        self,
+        values: Union[Sequence[T], "DynamicArray[T]", ComputedValue["DynamicArray[T]"]],
+    ) -> Expr:
+        """Set the ABI dynamic array with one of the following
+        * a sequence of ABI type variables
+        * or another ABI static array
+        * or a ComputedType with same TypeSpec
+
+        If the argument `values` is a ComputedType, we call `store_into` method
+        from ComputedType to store the internal ABI encoding into this StaticArray.
 
         This function determines if the argument `values` is an ABI dynamic array:
         * if so:
@@ -70,12 +78,13 @@ class DynamicArray(Array[T]):
         Returns:
             A PyTeal expression that stores encoded `values` in its internal ScratchVar.
         """
-        if isinstance(values, BaseType):
+
+        if isinstance(values, ComputedValue):
+            return self._set_with_computed_type(values)
+        elif isinstance(values, BaseType):
             if self.type_spec() != values.type_spec():
                 raise TealInputError(
-                    "Cannot assign type {} to {}".format(
-                        values.type_spec(), self.type_spec()
-                    )
+                    f"Cannot assign type {values.type_spec()} to {self.type_spec()}"
                 )
             return self.stored_value.store(values.encode())
         return super().set(values)
