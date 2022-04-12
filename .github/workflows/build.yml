@@ -9,7 +9,7 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-20.04
-    container: python:${{ matrix.python }}-slim
+    container: python:${{ matrix.python }}
     strategy:
       matrix:
         python: ['3.10']
