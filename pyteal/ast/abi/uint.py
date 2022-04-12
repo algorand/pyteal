@@ -222,7 +222,7 @@ class Uint(BaseType):
     def get(self) -> Expr:
         return self.stored_value.load()
 
-    def set(self, value: Union[int, Expr, "Uint", ComputedValue[T]]) -> Expr:
+    def set(self: T, value: Union[int, Expr, "Uint", ComputedValue[T]]) -> Expr:
         if isinstance(value, ComputedValue):
             return self._set_with_computed_type(value)
 

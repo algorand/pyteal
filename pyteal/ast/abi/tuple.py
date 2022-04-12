@@ -274,7 +274,7 @@ class Tuple(BaseType):
         ...
 
     @overload
-    def set(self, value: ComputedValue[T]) -> Expr:
+    def set(self: T, value: ComputedValue[T]) -> Expr:
         ...
 
     def set(self, *values):
