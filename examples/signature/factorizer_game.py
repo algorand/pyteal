@@ -37,8 +37,8 @@ def logicsig(a: int, p: int, q: int) -> Expr:
     WO3TQD3WBSDKB6WEHUMSEBFH53GZVVXYGPWYDWKUZCKEXTVCDNDHJGG6II
     """
     assert all(
-        isinstance(x, int) and p != q and a > 0 and x >= 0 for x in (a, p, q)
-    ), f"require non-negative ints a, p, q with p != q but got {a, p, q}"
+        isinstance(x, int) and p < q and a > 0 and x >= 0 for x in (a, p, q)
+    ), f"require non-negative ints a, p, q with p < q but got {a, p, q}"
 
     b, c = a * (p + q), a * p * q
     msg = Bytes(f"Can you factor {a} * x^2 - {b} * x + {c} ?")
