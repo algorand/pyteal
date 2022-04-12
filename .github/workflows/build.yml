@@ -7,10 +7,6 @@ on:
     branches:
       - master
 
-env:
-  SANDBOX_CONFIG: dev
-  SANDBOX_GENESIS: genesis/dev/genesis.json
-
 jobs:
   build-test:
     runs-on: ubuntu-20.04
