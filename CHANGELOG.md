@@ -9,6 +9,7 @@
 * Add `@Subroutine` support for `ScratchVar` parameters ([#198](https://github.com/algorand/pyteal/pull/198)).
 * Make minor doc updates ([#248](https://github.com/algorand/pyteal/pull/248)) and ([#265](https://github.com/algorand/pyteal/pull/265)).
 * Remove outdated Jupyter notebook demo ([#268](https://github.com/algorand/pyteal/pull/268)).
+* Fix docs warning about multiple OptimizeOptions targets ([#271](https://github.com/algorand/pyteal/pull/271)).
 
 # 0.10.1
 
