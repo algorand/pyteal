@@ -7,7 +7,7 @@ from .compile_asserts import assert_new_v_old
 # TODO: remove these skips when the following is fixed: https://github.com/algorand/pyteal/issues/199
 STABLE_SLOT_GENERATION = False
 
-#### TESTS FOR NEW PyTEAL THAT USES PASS-BY-REF / DYNAMIC
+# ### TESTS FOR NEW PyTEAL THAT USES PASS-BY-REF / DYNAMIC
 @Subroutine(TealType.none)
 def logcat_dynamic(first: ScratchVar, an_int):
     return Seq(
@@ -221,7 +221,7 @@ def test_teal_output_is_unchanged(pt):
     assert_new_v_old(pt, 6)
 
 
-##### Subroutine Definitions for pass-by-ref guardrails testing #####
+# #### Subroutine Definitions for pass-by-ref guardrails testing #####
 @Subroutine(TealType.uint64)
 def ok(x):
     # not really ok at runtime... but should be ok at compile time
@@ -406,7 +406,7 @@ def plus_one(n: ScratchVar):
     )
 
 
-##### Approval PyTEAL Expressions (COPACETIC) #####
+# #### Approval PyTEAL Expressions (COPACETIC) #####
 
 approval_ok = ok(Int(42))
 
@@ -416,7 +416,7 @@ approval_ok_byref = Seq(x_scratchvar.store(Int(42)), ok_byref(x_scratchvar))
 
 approval_ok_indirect = ok_indirect1(Int(42))
 
-##### BANNED Approval PyTEAL Expressions (wrapped in a function) #####
+# #### BANNED Approval PyTEAL Expressions (wrapped in a function) #####
 
 
 def approval_not_ok():
