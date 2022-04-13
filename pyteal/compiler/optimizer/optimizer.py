@@ -100,3 +100,6 @@ def apply_global_optimizations(start: TealBlock, options: OptimizeOptions) -> Te
                 break
 
     return start
+
+
+OptimizeOptions.__module__ = "pyteal"
