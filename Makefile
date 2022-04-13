@@ -15,6 +15,7 @@ bdist-wheel:
 	python setup.py sdist bdist_wheel
 
 docs:
+	rm -rf docs/pyteal.docset
 	cd docs && \
 	make html && \
 	doc2dash --name pyteal --index-page index.html --online-redirect-url https://pyteal.readthedocs.io/en/ _build/html && \
