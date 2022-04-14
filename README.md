@@ -71,4 +71,4 @@ Format code:
 
 Lint using flake8:
 
-* `flake8 .`
+* `flake8 docs examples pyteal scripts tests *.py`
