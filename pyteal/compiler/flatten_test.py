@@ -2,9 +2,6 @@ from collections import OrderedDict
 
 from .. import *
 
-# this is not necessary but mypy complains if it's not included
-from ..ast import *
-
 from .flatten import flattenBlocks, flattenSubroutines
 
 
@@ -466,7 +463,7 @@ def test_flattenSubroutines_multiple_subroutines():
         subroutine3: subroutine3Ops,
     }
 
-    expectedL1Label = LabelReference("main_l1")
+    # expectedL1Label = LabelReference("main_l1")
     expectedSubroutine1Label = LabelReference("sub0")
     expectedSubroutine2Label = LabelReference("sub1")
     expectedSubroutine2L1Label = LabelReference("sub1_l1")

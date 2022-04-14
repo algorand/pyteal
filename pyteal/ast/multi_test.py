@@ -1,6 +1,8 @@
 from typing import List
 
-from .. import *
+from pyteal import *
+from pyteal.ast import *
+from pyteal.ir import *
 
 options = CompileOptions()
 
@@ -168,7 +170,9 @@ def test_multi_value():
                     )
                     __test_single_conditional(expr, op, args, iargs, reducer)
 
-                    reducer = lambda value, hasValue: Seq(Assert(hasValue), value)
+                    reducer = lambda value, hasValue: Seq(  # noqa: E731
+                        Assert(hasValue), value
+                    )
                     expr = MultiValue(
                         op, [type, TealType.uint64], immediate_args=iargs, args=args
                     )
@@ -176,7 +180,7 @@ def test_multi_value():
 
                     hasValueVar = ScratchVar(TealType.uint64)
                     valueVar = ScratchVar(type)
-                    reducer = lambda value, hasValue: Seq(
+                    reducer = lambda value, hasValue: Seq(  # noqa: E731
                         hasValueVar.store(hasValue), valueVar.store(value)
                     )
                     expr = MultiValue(

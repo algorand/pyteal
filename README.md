@@ -51,16 +51,19 @@ Active venv:
  * `. venv/bin/activate.fish` (if your shell is fish)
 
 Pip install PyTeal in editable state
- * `pip install -e .`
+ * `make pip`
 
 Install dependencies:
-* `pip install -r requirements.txt`
+* `make pip-development`
  
 Type checking using mypy:
-* `mypy pyteal`
+* `make mypy`
 
 Run tests:
-* `pytest`
+* `make test-unit`
 
 Format code:
-* `black .`
+* `make black`
+
+Lint using flake8:
+* `make flake8`

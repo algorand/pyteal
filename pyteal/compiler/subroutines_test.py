@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 import pytest
 
-from .. import *
+from pyteal import *
 
 from .subroutines import (
     findRecursionPoints,

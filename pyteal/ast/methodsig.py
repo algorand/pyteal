@@ -3,7 +3,6 @@ from pyteal.errors import TealInputError
 
 from pyteal.types import TealType
 
-from ..types import TealType
 from ..ir import TealOp, Op, TealBlock
 from .leafexpr import LeafExpr
 

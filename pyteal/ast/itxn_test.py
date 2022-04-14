@@ -3,9 +3,6 @@ import pytest
 from .. import *
 from ..types import types_match
 
-# this is not necessary but mypy complains if it's not included
-from .. import MAX_GROUP_SIZE, CompileOptions
-
 teal4Options = CompileOptions(version=4)
 teal5Options = CompileOptions(version=5)
 teal6Options = CompileOptions(version=6)

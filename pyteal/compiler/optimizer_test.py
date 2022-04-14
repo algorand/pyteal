@@ -1,8 +1,7 @@
 from .optimizer import OptimizeOptions, _apply_slot_to_stack
 
-from ... import *
-
-import pytest
+from pyteal import *
+from pyteal.ast import *
 
 
 def test_optimize_single_block():
