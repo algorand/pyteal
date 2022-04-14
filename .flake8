@@ -11,4 +11,5 @@ ignore =
     E741,
 
 per-file-ignores =
-    pyteal/ir/ops.py:E221
+    pyteal/ir/ops.py:       E221
+    tests/module_test.py:   F401

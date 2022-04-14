@@ -466,7 +466,7 @@ def test_flattenSubroutines_multiple_subroutines():
         subroutine3: subroutine3Ops,
     }
 
-    # expectedL1Label = LabelReference("main_l1")
+    expectedL1Label = LabelReference("main_l1")
     expectedSubroutine1Label = LabelReference("sub0")
     expectedSubroutine2Label = LabelReference("sub1")
     expectedSubroutine2L1Label = LabelReference("sub1_l1")
@@ -483,13 +483,13 @@ def test_flattenSubroutines_multiple_subroutines():
         TealOp(None, Op.txn, "Fee"),
         TealOp(None, Op.int, 0),
         TealOp(None, Op.eq),
-        TealOp(None, Op.bz, l1Label),
+        TealOp(None, Op.bz, expectedL1Label),
         TealOp(None, Op.int, 3),
         TealOp(None, Op.callsub, subroutine2Label),
         TealOp(None, Op.pop),
         TealOp(None, Op.callsub, subroutine1Label),
         TealOp(None, Op.return_),
-        TealLabel(None, l1Label),
+        TealLabel(None, expectedL1Label),
         TealOp(None, Op.int, 0),
         TealOp(None, Op.return_),
         TealLabel(None, expectedSubroutine1Label, "sub1Impl"),

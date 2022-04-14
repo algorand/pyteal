@@ -6,7 +6,7 @@ from .compiler import (
     compileTeal,
 )
 
-from .optimizer import OptimizeOptions
+from .optimizer.optimizer import OptimizeOptions
 
 __all__ = [
     "MAX_TEAL_VERSION",
