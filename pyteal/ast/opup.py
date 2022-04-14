@@ -113,6 +113,7 @@ class OpUp:
         )
 
     def ensure_budget(self, required_budget: Expr) -> Expr:
+        """Ensure that the budget will be at least the required_budget."""
         require_type(required_budget, TealType.uint64)
 
         buffered_budget = required_budget + self.buffer
@@ -144,6 +145,7 @@ class OpUp:
         )
 
     def maximize_budget(self, fee: Expr) -> Expr:
+        """Maximize the available opcode budget without spending more than the given fee."""
         require_type(fee, TealType.uint64)
 
         if self.mode == OpUpMode.OnCall:
