@@ -2,9 +2,6 @@ import pytest
 
 from .. import *
 
-# this is not necessary but mypy complains if it's not included
-from .. import CompileOptions
-
 teal2Options = CompileOptions(version=2)
 teal3Options = CompileOptions(version=3)
 teal5Options = CompileOptions(version=5)

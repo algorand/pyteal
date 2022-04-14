@@ -2,9 +2,6 @@ from collections import OrderedDict
 
 from .. import *
 
-# this is not necessary but mypy complains if it's not included
-from ..ast import *
-
 from .flatten import flattenBlocks, flattenSubroutines
 
 
