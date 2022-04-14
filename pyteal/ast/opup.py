@@ -1,4 +1,5 @@
 from pyteal.ast.app import OnComplete
+from pyteal.errors import TealInputError
 from .while_ import While
 from .expr import Expr
 from .global_ import Global
@@ -9,29 +10,28 @@ from .bytes import Bytes
 from .gitxn import Gitxn
 from .itxn import InnerTxnBuilder
 from .scratch import ScratchSlot
-from .txn import TxnField, TxnType, Txn
+from .scratchvar import ScratchVar
+from .txn import TxnField, TxnType
+from .for_ import For
+from ..types import TealType, require_type
 from enum import Enum
 
 
 class OpUpMode(Enum):
     """An Enum object that defines the mode used for the OpUp utility.
        
-       Note: the Explicit and OnCreate modes require the app id to be provided
+       Note: the Explicit mode requires the app id to be provided
        through the foreign apps array.
     """
 
     """The app to call must be provided by the user."""
     Explicit = 0
 
-    """The app to call is created/deleted when the main app is created/deleted."""
-    OnCreate = 1
-
     """The app to call is created then deleted for each request to increase budget."""
-    OnCall = 2
+    OnCall = 1
 
 
-NoOpApp = Bytes("byte 0x068101") # teal program "int 1" assembled
-
+ON_CALL_APP = Bytes("base16", "06810143") # v6 pyteal program "Int(1)"
 
 class OpUp():
     """Utility for increasing opcode budget during app execution.
@@ -39,54 +39,49 @@ class OpUp():
     Example:
         .. code-block:: python
 
-            # only the OnCreate mode requires a call to opup.setup()
-            opup = OpUp(OpUpMode.OnCreate)
+            opup = OpUp(OpUpMode.OnCall)
             program_with_opup = Seq(
-                opup.setup(),
                 ...,
-                opup.execute(Int(1000))
+                opup.ensure_budget(Int(1000)),
                 ...,
             )
     """
 
     def __init__(self, mode: OpUpMode, target_app_id: Expr = None):
         if mode == OpUpMode.Explicit:
-            assert target_app_id != None
+            if target_app_id is None:
+                raise TealInputError("target_app_id must be specified in Explicit OpUp mode")
+            require_type(target_app_id, TealType.uint64)
             self.target_app_id = target_app_id
-        elif mode == OpUpMode.OnCreate:
-            self.target_app_id = Global.current_application_id + Int(1)
         elif mode == OpUpMode.OnCall:
             self.target_app_id_slot = ScratchSlot()
+        else:
+            raise TealInputError("Invalid OpUp mode provided")
 
         self.mode = mode
 
+        # A budget buffer is necessary to deal with an edge case of ensure_budget():
+        #   if the current budget is equal to or only slightly higher than the 
+        #   required budget then it's possible for ensure_budget() to return with a
+        #   current budget less than the required budget. The buffer prevents this
+        #   from being the case.
+        self.buffer = Int(50)
+
     def _create_app(self) -> Expr:
-        create_app_expr = Seq(
+        self.target_app_id = self.target_app_id_slot.load()
+        return Seq(
             InnerTxnBuilder.Begin(),
             InnerTxnBuilder.SetFields(
                 {
                     TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.approval_program: NoOpApp,
-                    TxnField.clear_state_program: NoOpApp,
+                    TxnField.approval_program: ON_CALL_APP,
+                    TxnField.clear_state_program: ON_CALL_APP,
                 }
             ),
             InnerTxnBuilder.Submit(),
-        )
-
-        if self.mode == OpUpMode.OnCall:
-            self.target_app_id = self.target_app_id_slot.load()
-            return Seq(
-                create_app_expr,
-                self.target_app_id_slot.store(
-                    Gitxn[0].created_application_id
-                ),
-            )
-
-        return create_app_expr
-
-    def _begin(self) -> Expr:
-        return If(Global.current_application_id == Int(0)).Then(
-            self._create_app()
+            self.target_app_id_slot.store(
+                Gitxn[0].created_application_id()
+            ),
         )
 
     def _delete_app(self, app_id: Expr) -> Expr:
@@ -102,20 +97,7 @@ class OpUp():
             InnerTxnBuilder.Submit(),
         )
 
-    def _end(self) -> Expr:
-        return If(Txn.on_completion() == OnComplete.DeleteApplication).Then(
-            self._delete_app(self.target_app_id)
-        )
-
-    # setup() should only be used in OnCreate mode
-    def setup(self) -> Expr:
-        assert(self.mode == OpUpMode.OnCreate)
-        return Seq(
-            self._begin(),
-            self._end(),
-        )
-
-    def _opup_expr(self, required_budget: Expr) -> Expr:
+    def _ensure_budget_expr(self, required_budget: Expr) -> Expr:
         return While(Global.opcode_budget() < required_budget).Do(
             Seq(
                 InnerTxnBuilder.Begin(),
@@ -129,13 +111,46 @@ class OpUp():
             )
         )
 
-    def execute(self, required_budget: Expr) -> Expr:
+    def ensure_budget(self, required_budget: Expr) -> Expr:
+        require_type(required_budget, TealType.uint64)
+
+        buffered_budget = required_budget + self.buffer
         if self.mode == OpUpMode.OnCall:
-            return If(Global.opcode_budget() < required_budget).Then(
+            return If(Global.opcode_budget() < buffered_budget).Then(
                 Seq(
                     self._create_app(),
-                    self._opup_expr(required_budget),
-                    self._delete_app(),
+                    self._ensure_budget_expr(buffered_budget),
+                    self._delete_app(self.target_app_id),
                 ))
 
-        return self._opup_expr(required_budget)
+        return self._ensure_budget_expr(buffered_budget)
+
+    def _maximize_budget_expr(self, fee: Expr) -> Expr:
+        i = ScratchVar(TealType.uint64)
+        n = fee / Int(1000)
+        return For(i.store(Int(0)), i.load() < n, i.store(i.load() + Int(1))).Do(
+            Seq(
+                InnerTxnBuilder.Begin(),
+                InnerTxnBuilder.SetFields(
+                    {
+                        TxnField.type_enum: TxnType.ApplicationCall,
+                        TxnField.application_id: self.target_app_id,
+                    }
+                ),
+                InnerTxnBuilder.Submit(),
+            )
+        )
+
+    def maximize_budget(self, fee: Expr) -> Expr:
+        require_type(fee, TealType.uint64)
+
+        if self.mode == OpUpMode.OnCall:
+            return Seq(
+                self._create_app(),
+                self._maximize_budget_expr(fee),
+                self._delete_app(self.target_app_id),
+            )
+
+        return self._maximize_budget_expr(fee)
+
+OpUp.__module__ = "pyteal"

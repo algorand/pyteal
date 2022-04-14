@@ -130,6 +130,7 @@ from .scratch import (
 from .scratchvar import DynamicScratchVar, ScratchVar
 from .maybe import MaybeValue
 from .multi import MultiValue
+from .opup import OpUp, OpUpMode
 
 __all__ = [
     "Expr",
@@ -240,6 +241,8 @@ __all__ = [
     "ScratchVar",
     "MaybeValue",
     "MultiValue",
+    "OpUp",
+    "OpUpMode",
     "BytesAdd",
     "BytesMinus",
     "BytesDiv",
