@@ -1,13 +1,17 @@
 from .array_static import StaticArray, StaticArrayTypeSpec
 from .array_dynamic import DynamicArray, DynamicArrayTypeSpec
 from .uint import ByteTypeSpec
+from .util import substringForDecoding
+
+from ..int import Int
+from ..expr import Expr
 
 address_length = 32
 
 
 class AddressTypeSpec(StaticArrayTypeSpec):
     def __init__(self) -> None:
-        super().__init__(ByteTypeSpec, address_length)
+        super().__init__(ByteTypeSpec(), address_length)
 
     def new_instance(self) -> "Address":
         return Address()
@@ -26,13 +30,16 @@ class Address(StaticArray):
     def type_spec(self) -> AddressTypeSpec:
         return AddressTypeSpec()
 
+    def get(self) -> Expr:
+        return self.stored_value.load()
+
 
 Address.__module__ = "pyteal"
 
 
 class StringTypeSpec(DynamicArrayTypeSpec):
     def __init__(self) -> None:
-        super().__init__(ByteTypeSpec)
+        super().__init__(ByteTypeSpec())
 
     def new_instance(self) -> "String":
         return String()
@@ -50,6 +57,9 @@ class String(DynamicArray):
 
     def type_spec(self) -> StringTypeSpec:
         return StringTypeSpec()
+
+    def get(self) -> Expr:
+        return substringForDecoding(self.stored_value.load(), startIndex=Int(2))
 
 
 String.__module__ = "pyteal"
