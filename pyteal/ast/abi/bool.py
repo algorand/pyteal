@@ -9,7 +9,7 @@ from ..int import Int
 from ..bytes import Bytes
 from ..binaryexpr import GetBit
 from ..ternaryexpr import SetBit
-from .type import TypeSpec, BaseType
+from .type import ComputedValue, TypeSpec, BaseType
 from .uint import NUM_BITS_IN_BYTE
 
 
@@ -44,7 +44,12 @@ class Bool(BaseType):
     def get(self) -> Expr:
         return self.stored_value.load()
 
-    def set(self, value: Union[bool, Expr, "Bool"]) -> Expr:
+    def set(self, value: Union[bool, Expr, "Bool", ComputedValue["Bool"]]) -> Expr:
+        if isinstance(value, ComputedValue):
+            return self._set_with_computed_type(value)
+
+        value = cast(Union[bool, Expr, "Bool"], value)
+
         checked = False
         if type(value) is bool:
             value = Int(1 if value else 0)

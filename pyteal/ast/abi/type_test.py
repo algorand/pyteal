@@ -1,25 +1,27 @@
-import pytest
-
 from ... import *
 
 options = CompileOptions(version=5)
 
 
-class DummyComputedType(abi.ComputedType[abi.Uint64]):
-    def __init__(self, value: int) -> None:
-        super().__init__()
-        self._value = value
+class ContainerType(abi.ComputedValue):
+    def __init__(self, type_spec: abi.TypeSpec, encodings: Expr):
+        self.type_spec = type_spec
+        self.encodings = encodings
 
-    def produced_type_spec(self) -> abi.Uint64TypeSpec:
-        return abi.Uint64TypeSpec()
+    def produced_type_spec(self) -> abi.TypeSpec:
+        return self.type_spec
 
-    def store_into(self, output: abi.Uint64) -> Expr:
-        return output.set(self._value)
+    def store_into(self, output: abi.BaseType) -> Expr:
+        if output.type_spec() != self.type_spec:
+            raise TealInputError(
+                f"expected type_spec {self.type_spec} but get {output.type_spec()}"
+            )
+        return output.stored_value.store(self.encodings)
 
 
 def test_ComputedType_use():
     for value in (0, 1, 2, 3, 12345):
-        dummyComputedType = DummyComputedType(value)
+        dummyComputedType = ContainerType(abi.Uint64TypeSpec(), Int(value))
         expr = dummyComputedType.use(lambda output: Int(2) * output.get())
         assert expr.type_of() == TealType.uint64
         assert not expr.has_return()

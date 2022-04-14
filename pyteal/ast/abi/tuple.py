@@ -1,4 +1,14 @@
-from typing import List, Sequence, Dict, Generic, TypeVar, cast
+from typing import (
+    List,
+    Sequence,
+    Dict,
+    Generic,
+    TypeVar,
+    Union,
+    cast,
+    Tuple as TypingTuple,
+    overload,
+)
 
 from ...types import TealType
 from ...errors import TealInputError
@@ -11,7 +21,7 @@ from ..binaryexpr import ExtractUint16
 from ..naryexpr import Concat
 from ..scratchvar import ScratchVar
 
-from .type import TypeSpec, BaseType, ComputedType
+from .type import TypeSpec, BaseType, ComputedValue
 from .bool import (
     Bool,
     BoolTypeSpec,
@@ -236,6 +246,9 @@ class TupleTypeSpec(TypeSpec):
 TupleTypeSpec.__module__ = "pyteal"
 
 
+T = TypeVar("T", bound="Tuple")
+
+
 class Tuple(BaseType):
     def __init__(self, *value_type_specs: TypeSpec) -> None:
         super().__init__(TupleTypeSpec(*value_type_specs))
@@ -249,20 +262,33 @@ class Tuple(BaseType):
         *,
         startIndex: Expr = None,
         endIndex: Expr = None,
-        length: Expr = None
+        length: Expr = None,
     ) -> Expr:
         extracted = substringForDecoding(
             encoded, startIndex=startIndex, endIndex=endIndex, length=length
         )
         return self.stored_value.store(extracted)
 
+    @overload
     def set(self, *values: BaseType) -> Expr:
+        ...
+
+    @overload
+    def set(self: T, value: ComputedValue[T]) -> Expr:
+        ...
+
+    def set(self, *values):
+        if len(values) == 1 and isinstance(values[0], ComputedValue):
+            return self._set_with_computed_type(values[0])
+
+        for value in values:
+            if not isinstance(value, BaseType):
+                raise TealInputError(f"Expected BaseType, got {value}")
+
         myTypes = self.type_spec().value_type_specs()
         if len(myTypes) != len(values):
             raise TealInputError(
-                "Incorrect length for values. Expected {}, got {}".format(
-                    len(myTypes), len(values)
-                )
+                f"Incorrect length for values. Expected {len(myTypes)}, got {len(values)}"
             )
         if not all(myTypes[i] == values[i].type_spec() for i in range(len(myTypes))):
             raise TealInputError("Input values do not match type")
@@ -284,7 +310,7 @@ class Tuple(BaseType):
 Tuple.__module__ = "pyteal"
 
 
-class TupleElement(ComputedType[BaseType]):
+class TupleElement(ComputedValue[BaseType]):
     """Represents the extraction of a specific element from a Tuple."""
 
     def __init__(self, tuple: Tuple, index: int) -> None:

@@ -1,6 +1,7 @@
 from typing import TypeVar, Generic, Callable, Final, cast
 from abc import ABC, abstractmethod
 
+from ...errors import TealInputError
 from ...types import TealType
 from ..expr import Expr
 from ..scratchvar import ScratchVar
@@ -128,13 +129,21 @@ class BaseType(ABC):
         """
         pass
 
+    def _set_with_computed_type(self, value: "ComputedValue") -> Expr:
+        target_type_spec = value.produced_type_spec()
+        if self.type_spec() != target_type_spec:
+            raise TealInputError(
+                f"Cannot set {self.type_spec()} with ComputedType of {target_type_spec}"
+            )
+        return value.store_into(self)
+
 
 BaseType.__module__ = "pyteal"
 
 T = TypeVar("T", bound=BaseType)
 
 
-class ComputedType(ABC, Generic[T]):
+class ComputedValue(ABC, Generic[T]):
     """Represents an ABI Type whose value must be computed by an expression."""
 
     @abstractmethod
@@ -172,4 +181,4 @@ class ComputedType(ABC, Generic[T]):
         return Seq(self.store_into(newInstance), action(newInstance))
 
 
-ComputedType.__module__ = "pyteal"
+ComputedValue.__module__ = "pyteal"

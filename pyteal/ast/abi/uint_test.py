@@ -1,9 +1,8 @@
 from typing import List, Tuple, NamedTuple, Callable, Union, Optional
-import pytest
-
-from pyteal.ast.abi.uint import UintTypeSpec
-
+from .type_test import ContainerType
 from ... import *
+
+import pytest
 
 options = CompileOptions(version=5)
 
@@ -215,6 +214,34 @@ def test_Uint_set_copy():
             value.set(abi.Bool())
 
 
+def test_Uint_set_computed():
+    byte_computed_value = ContainerType(abi.ByteTypeSpec(), Int(0x22))
+
+    for test in testData:
+        computed_value = ContainerType(test.uintType, Int(0x44))
+        value = test.uintType.new_instance()
+        expr = value.set(computed_value)
+        assert expr.type_of() == TealType.none
+        assert not expr.has_return()
+
+        expected = TealSimpleBlock(
+            [
+                TealOp(None, Op.int, 0x44),
+                TealOp(None, Op.store, value.stored_value.slot),
+            ]
+        )
+
+        actual, _ = expr.__teal__(options)
+        actual.addIncoming()
+        actual = TealBlock.NormalizeBlocks(actual)
+
+        with TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
+
+        with pytest.raises(TealInputError):
+            value.set(byte_computed_value)
+
+
 def test_Uint_get():
     for test in testData:
         value = test.uintType.new_instance()
@@ -277,7 +304,7 @@ def test_Uint_encode():
 
 
 def test_ByteUint8_mutual_conversion():
-    cases: List[Tuple[UintTypeSpec, UintTypeSpec]] = [
+    cases: List[Tuple[abi.UintTypeSpec, abi.UintTypeSpec]] = [
         (abi.Uint8TypeSpec(), abi.ByteTypeSpec()),
         (abi.ByteTypeSpec(), abi.Uint8TypeSpec()),
     ]
