@@ -386,6 +386,10 @@ class ABIReturnSubroutineFnWrapper:
         fn_implementation: Callable[..., Expr],
         name: Optional[str] = None,
     ) -> None:
+        self.abi_type = "void"
+        pass
+
+    """
         annos = getattr(fn_implementation, "__annotations__")
         type_spec_or_void = annos.get("return", None)
         self.abi_type = abi.type_spec_from_computed_type_annotation(type_spec_or_void)
@@ -400,10 +404,12 @@ class ABIReturnSubroutineFnWrapper:
             return_type=stack_type,
             name_str=name,
         )
+    """
 
     def __call__(
         self, *args: Union[Expr, ScratchVar, abi.BaseType], **kwargs
     ) -> Union[abi.ReturnedValue, Expr]:
+        """
         if len(kwargs) != 0:
             raise TealInputError(
                 f"Subroutine cannot be called with keyword arguments. "
@@ -416,15 +422,20 @@ class ABIReturnSubroutineFnWrapper:
             return invoked
         else:
             return abi.ReturnedValue(cast(abi.TypeSpec, self.abi_type), invoked)
+        """
+        return Seq()
 
     def name(self) -> str:
-        return self.subroutine.name()
+        # return self.subroutine.name()
+        return "TODO"
 
     def type_of(self) -> Union[str, abi.TypeSpec]:
         return self.abi_type
 
     def is_registrable(self) -> bool:
-        return len(self.subroutine.abi_args) == self.subroutine.argumentCount()
+        # return len(self.subroutine.abi_args) == self.subroutine.argumentCount()
+        # TODO
+        return False
 
 
 ABIReturnSubroutineFnWrapper.__module__ = "pyteal"

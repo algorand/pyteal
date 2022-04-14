@@ -1,10 +1,10 @@
-from typing import Any, Literal, get_origin, get_args, Union
+from typing import Any, Literal, get_origin, get_args
 
 from ...errors import TealInputError
 from ..expr import Expr
 from ..int import Int
 from ..substring import Extract, Substring, Suffix
-from .type import TypeSpec, ComputedValue
+from .type import TypeSpec
 
 
 def substringForDecoding(
@@ -193,19 +193,3 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
         return TupleTypeSpec(*(type_spec_from_annotation(arg) for arg in args))
 
     raise TypeError("Unknown annotation origin: {}".format(origin))
-
-
-def type_spec_from_computed_type_annotation(annotation: Any) -> Union[TypeSpec, str]:
-    if annotation is None:
-        return "void"
-
-    if get_origin(annotation) is not ComputedValue:
-        raise TealInputError(
-            f"expected type annotation ComputedType[...] but get {get_origin(annotation)}"
-        )
-    args = get_args(annotation)
-    if len(args) != 1:
-        raise TealInputError(
-            f"expected ComputedType[...] has 1 argument annotation but get {len(args)}"
-        )
-    return type_spec_from_annotation(args[0])
