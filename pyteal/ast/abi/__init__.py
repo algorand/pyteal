@@ -1,3 +1,4 @@
+from .string import String, Address, StringTypeSpec, AddressTypeSpec
 from .type import TypeSpec, BaseType, ComputedValue
 from .bool import BoolTypeSpec, Bool
 from .uint import (
@@ -32,6 +33,10 @@ from .util import type_spec_from_annotation
 from .method_return import MethodReturn
 
 __all__ = [
+    "String",
+    "StringTypeSpec",
+    "Address",
+    "AddressTypeSpec",
     "TypeSpec",
     "BaseType",
     "ComputedValue",
