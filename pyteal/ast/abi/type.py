@@ -184,7 +184,7 @@ class ComputedValue(ABC, Generic[T]):
 ComputedValue.__module__ = "pyteal"
 
 
-class ReturnedType(ComputedValue):
+class ReturnedValue(ComputedValue):
     def __init__(self, type_spec: TypeSpec, encodings: Expr):
         self.type_spec = type_spec
         self.encodings = encodings
@@ -200,4 +200,4 @@ class ReturnedType(ComputedValue):
         return output.stored_value.store(self.encodings)
 
 
-ReturnedType.__module__ = "pyteal"
+ReturnedValue.__module__ = "pyteal"

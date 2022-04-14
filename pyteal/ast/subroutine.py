@@ -403,7 +403,7 @@ class ABIReturnSubroutineFnWrapper:
 
     def __call__(
         self, *args: Union[Expr, ScratchVar, abi.BaseType], **kwargs
-    ) -> Union[abi.ReturnedType, Expr]:
+    ) -> Union[abi.ReturnedValue, Expr]:
         if len(kwargs) != 0:
             raise TealInputError(
                 f"Subroutine cannot be called with keyword arguments. "
@@ -415,7 +415,7 @@ class ABIReturnSubroutineFnWrapper:
         if self.type_of() == "void":
             return invoked
         else:
-            return abi.ReturnedType(cast(abi.TypeSpec, self.abi_type), invoked)
+            return abi.ReturnedValue(cast(abi.TypeSpec, self.abi_type), invoked)
 
     def name(self) -> str:
         return self.subroutine.name()

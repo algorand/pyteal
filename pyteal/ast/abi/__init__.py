@@ -1,4 +1,4 @@
-from .type import TypeSpec, BaseType, ComputedValue, ReturnedType
+from .type import TypeSpec, BaseType, ComputedValue, ReturnedValue
 from .bool import BoolTypeSpec, Bool
 from .uint import (
     UintTypeSpec,
@@ -35,7 +35,7 @@ __all__ = [
     "TypeSpec",
     "BaseType",
     "ComputedValue",
-    "ReturnedType",
+    "ReturnedValue",
     "BoolTypeSpec",
     "Bool",
     "UintTypeSpec",
