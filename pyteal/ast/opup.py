@@ -36,6 +36,8 @@ ON_CALL_APP = Bytes("base16", "06810143")  # v6 pyteal program "Int(1)"
 
 class OpUp:
     """Utility for increasing opcode budget during app execution.
+    Note: the available budget must be high enough to execute the budget
+    increase code prior to invoking ensure_budget() or maximize_budget().
 
     Example:
         .. code-block:: python
