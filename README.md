@@ -59,7 +59,7 @@ Pip install PyTeal in editable state with dependencies:
 
 Type checking using mypy:
 
-* `mypy .`
+* `mypy pyteal`
 
 Run tests:
 
