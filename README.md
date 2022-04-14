@@ -55,7 +55,8 @@ Active venv:
 
 Pip install PyTeal in editable state with dependencies:
 
-* `pip install -e.[development]`
+* `make setup-development`
+* OR if you don't have `make` installed:  `pip install -e.[development]`(Note, that if you're using `zsh` you'll need to escape the brackets: `pip install -e.\[development\]`)
 
 Type checking using mypy:
 
