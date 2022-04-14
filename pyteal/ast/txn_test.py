@@ -4,9 +4,6 @@ import pytest
 
 from .. import *
 
-# this is not necessary but mypy complains if it's not included
-from .. import Expr, TxnField, TxnObject, TxnArray, CompileOptions
-
 fieldToMethod: Dict[TxnField, Callable[[TxnObject], Expr]] = {
     TxnField.sender: lambda txn: txn.sender(),
     TxnField.fee: lambda txn: txn.fee(),

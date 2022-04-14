@@ -1,8 +1,5 @@
 from .. import *
 
-# this is not necessary but mypy complains if it's not included
-from .. import CompileOptions
-
 options = CompileOptions()
 teal4Options = CompileOptions(version=4)
 teal5Options = CompileOptions(version=5)
