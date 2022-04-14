@@ -19,9 +19,9 @@ from enum import Enum
 
 class OpUpMode(Enum):
     """An Enum object that defines the mode used for the OpUp utility.
-       
-       Note: the Explicit mode requires the app id to be provided
-       through the foreign apps array.
+
+    Note: the Explicit mode requires the app id to be provided
+    through the foreign apps array.
     """
 
     """The app to call must be provided by the user."""
@@ -31,11 +31,12 @@ class OpUpMode(Enum):
     OnCall = 1
 
 
-ON_CALL_APP = Bytes("base16", "06810143") # v6 pyteal program "Int(1)"
+ON_CALL_APP = Bytes("base16", "06810143")  # v6 pyteal program "Int(1)"
 
-class OpUp():
+
+class OpUp:
     """Utility for increasing opcode budget during app execution.
-    
+
     Example:
         .. code-block:: python
 
@@ -50,7 +51,9 @@ class OpUp():
     def __init__(self, mode: OpUpMode, target_app_id: Expr = None):
         if mode == OpUpMode.Explicit:
             if target_app_id is None:
-                raise TealInputError("target_app_id must be specified in Explicit OpUp mode")
+                raise TealInputError(
+                    "target_app_id must be specified in Explicit OpUp mode"
+                )
             require_type(target_app_id, TealType.uint64)
             self.target_app_id = target_app_id
         elif mode == OpUpMode.OnCall:
@@ -61,7 +64,7 @@ class OpUp():
         self.mode = mode
 
         # A budget buffer is necessary to deal with an edge case of ensure_budget():
-        #   if the current budget is equal to or only slightly higher than the 
+        #   if the current budget is equal to or only slightly higher than the
         #   required budget then it's possible for ensure_budget() to return with a
         #   current budget less than the required budget. The buffer prevents this
         #   from being the case.
@@ -79,9 +82,7 @@ class OpUp():
                 }
             ),
             InnerTxnBuilder.Submit(),
-            self.target_app_id_slot.store(
-                Gitxn[0].created_application_id()
-            ),
+            self.target_app_id_slot.store(Gitxn[0].created_application_id()),
         )
 
     def _delete_app(self, app_id: Expr) -> Expr:
@@ -121,7 +122,8 @@ class OpUp():
                     self._create_app(),
                     self._ensure_budget_expr(buffered_budget),
                     self._delete_app(self.target_app_id),
-                ))
+                )
+            )
 
         return self._ensure_budget_expr(buffered_budget)
 
@@ -152,5 +154,6 @@ class OpUp():
             )
 
         return self._maximize_budget_expr(fee)
+
 
 OpUp.__module__ = "pyteal"
