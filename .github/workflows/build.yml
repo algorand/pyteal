@@ -20,8 +20,8 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Install pip dependencies
-        run: make pip-development
+      - name: Install python dependencies
+        run: make setup-development
       - name: Build and Test
         run: make build-and-test
 
@@ -33,10 +33,10 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Install pip dependencies
-        run: make pip-docs
+      - name: Install python dependencies
+        run: make setup-docs
       - name: Make docs
-        run: make docs
+        run: make bundle-docs
       - name: Archive docset
         uses: actions/upload-artifact@v2
         with:
@@ -54,7 +54,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install dependencies
-        run: make pip-wheel
+        run: make setup-wheel
       - name: Build package
         run: make bdist-wheel
       - name: Release
