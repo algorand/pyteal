@@ -1,7 +1,7 @@
 import os
 import pytest
 
-from pyteal import *
+import pyteal as pt
 
 
 def test_basic_bank():
@@ -16,7 +16,7 @@ def test_basic_bank():
     )
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
-        assert compileTeal(program, mode=Mode.Signature, version=3) == target
+        assert pt.compileTeal(program, mode=pt.Mode.Signature, version=3) == target
 
 
 def test_atomic_swap():
@@ -29,7 +29,7 @@ def test_atomic_swap():
     )
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
-        assert compileTeal(program, mode=Mode.Signature, version=2) == target
+        assert pt.compileTeal(program, mode=pt.Mode.Signature, version=2) == target
 
 
 def test_periodic_payment():
@@ -42,7 +42,7 @@ def test_periodic_payment():
     )
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
-        assert compileTeal(program, mode=Mode.Signature, version=2) == target
+        assert pt.compileTeal(program, mode=pt.Mode.Signature, version=2) == target
 
 
 def test_split():
@@ -55,7 +55,7 @@ def test_split():
     )
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
-        assert compileTeal(program, mode=Mode.Signature, version=2) == target
+        assert pt.compileTeal(program, mode=pt.Mode.Signature, version=2) == target
 
 
 def test_dutch_auction():
@@ -68,7 +68,7 @@ def test_dutch_auction():
     )
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
-        assert compileTeal(program, mode=Mode.Signature, version=2) == target
+        assert pt.compileTeal(program, mode=pt.Mode.Signature, version=2) == target
 
 
 def test_recurring_swap():
@@ -81,7 +81,7 @@ def test_recurring_swap():
     )
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
-        assert compileTeal(program, mode=Mode.Signature, version=2) == target
+        assert pt.compileTeal(program, mode=pt.Mode.Signature, version=2) == target
 
 
 def test_asset():
@@ -91,8 +91,8 @@ def test_asset():
     clear_state = clear_state_program()
 
     # only checking for successful compilation for now
-    compileTeal(approval, mode=Mode.Application, version=2)
-    compileTeal(clear_state, mode=Mode.Application, version=2)
+    pt.compileTeal(approval, mode=pt.Mode.Application, version=2)
+    pt.compileTeal(clear_state, mode=pt.Mode.Application, version=2)
 
 
 def test_security_token():
@@ -105,8 +105,8 @@ def test_security_token():
     clear_state = clear_state_program()
 
     # only checking for successful compilation for now
-    compileTeal(approval, mode=Mode.Application, version=2)
-    compileTeal(clear_state, mode=Mode.Application, version=2)
+    pt.compileTeal(approval, mode=pt.Mode.Application, version=2)
+    pt.compileTeal(clear_state, mode=pt.Mode.Application, version=2)
 
 
 def test_vote():
@@ -116,40 +116,40 @@ def test_vote():
     clear_state = clear_state_program()
 
     # only checking for successful compilation for now
-    compileTeal(approval, mode=Mode.Application, version=2)
-    compileTeal(clear_state, mode=Mode.Application, version=2)
+    pt.compileTeal(approval, mode=pt.Mode.Application, version=2)
+    pt.compileTeal(clear_state, mode=pt.Mode.Application, version=2)
 
 
 def test_cond():
-    cond1 = Txn.fee() < Int(2000)
-    cond2 = Txn.amount() > Int(5000)
-    cond3 = Txn.receiver() == Txn.sender()
-    core = Cond(
-        [Global.group_size() == Int(2), cond1],
-        [Global.group_size() == Int(3), cond2],
-        [Global.group_size() == Int(4), cond3],
+    cond1 = pt.Txn.fee() < pt.Int(2000)
+    cond2 = pt.Txn.amount() > pt.Int(5000)
+    cond3 = pt.Txn.receiver() == pt.Txn.sender()
+    core = pt.Cond(
+        [pt.Global.group_size() == pt.Int(2), cond1],
+        [pt.Global.group_size() == pt.Int(3), cond2],
+        [pt.Global.group_size() == pt.Int(4), cond3],
     )
-    compileTeal(core, mode=Mode.Signature, version=2)
+    pt.compileTeal(core, mode=pt.Mode.Signature, version=2)
 
 
 @pytest.mark.timeout(2)
 def test_many_ifs():
     """
-    Test with many If statements to trigger potential corner cases in code generation.
+    Test with many pt.If statements to trigger potential corner cases in code generation.
     Previous versions of PyTeal took an exponential time to generate the TEAL code for this PyTEAL.
     """
 
-    sv = ScratchVar(TealType.uint64)
-    s = Seq(
+    sv = pt.ScratchVar(pt.TealType.uint64)
+    s = pt.Seq(
         [
-            If(
-                Int(3 * i) == Int(3 * i),
-                sv.store(Int(3 * i + 1)),
-                sv.store(Int(3 * i + 2)),
+            pt.If(
+                pt.Int(3 * i) == pt.Int(3 * i),
+                sv.store(pt.Int(3 * i + 1)),
+                sv.store(pt.Int(3 * i + 2)),
             )
             for i in range(30)
         ]
-        + [Return(sv.load())]
+        + [pt.Return(sv.load())]
     )
 
-    compileTeal(s, mode=Mode.Signature, version=2)
+    pt.compileTeal(s, mode=pt.Mode.Signature, version=2)
