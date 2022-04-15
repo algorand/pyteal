@@ -7,36 +7,6 @@ from .util import substringForDecoding
 from ..int import Int
 from ..expr import Expr
 
-address_length = 32
-
-
-class AddressTypeSpec(StaticArrayTypeSpec):
-    def __init__(self) -> None:
-        super().__init__(ByteTypeSpec(), address_length)
-
-    def new_instance(self) -> "Address":
-        return Address()
-
-    def __str__(self) -> str:
-        return "address"
-
-
-AddressTypeSpec.__module__ = "pyteal"
-
-
-class Address(StaticArray):
-    def __init__(self) -> None:
-        super().__init__(AddressTypeSpec(), address_length)
-
-    def type_spec(self) -> AddressTypeSpec:
-        return AddressTypeSpec()
-
-    def get(self) -> Expr:
-        return self.stored_value.load()
-
-
-Address.__module__ = "pyteal"
-
 
 class StringTypeSpec(DynamicArrayTypeSpec):
     def __init__(self) -> None:
@@ -74,9 +44,9 @@ class String(DynamicArray):
         if not isinstance(high, Int):
             raise TypeError("high expected int or Int, got {high}")
 
-        
-        return substringForDecoding(self.stored_value.load(), startIndex=Int(2)+low, endIndex=Int(2)+high)
-
+        return substringForDecoding(
+            self.stored_value.load(), startIndex=Int(2) + low, endIndex=Int(2) + high
+        )
 
 
 String.__module__ = "pyteal"

@@ -1,33 +1,89 @@
-from .type_test import ContainerType
-from os import urandom
-
 from ... import *
-
-import pytest
 
 options = CompileOptions(version=5)
 
 
+def test_StringTypeSpec_str():
+    assert str(abi.StringTypeSpec()) == "string"
+
+
+def test_StringTypeSpec_is_dynamic():
+    assert (abi.StringTypeSpec()).is_dynamic()
+
+
+def test_StringTypeSpec_new_instance():
+    assert isinstance(abi.StringTypeSpec().new_instance(), abi.String)
+
+
+def test_StringTypeSpec_eq():
+    assert abi.StringTypeSpec() == abi.StringTypeSpec()
+
+    for otherType in (
+        abi.ByteTypeSpec,
+        abi.StaticArrayTypeSpec(abi.ByteTypeSpec(), 1),
+        abi.DynamicArrayTypeSpec(abi.Uint8TypeSpec()),
+    ):
+        assert abi.StringTypeSpec() != otherType
+
+
 def test_String_encode():
     value = abi.String()
-
-    tspec = value.type_spec() 
-    assert tspec.is_dynamic()
-    assert str(tspec) == "string"
-
     expr = value.encode()
     assert expr.type_of() == TealType.bytes
     assert not expr.has_return()
-    
 
     expected = TealSimpleBlock([TealOp(expr, Op.load, value.stored_value.slot)])
     actual, _ = expr.__teal__(options)
     assert actual == expected
-    assert expr == value.get()
 
 
 def test_String_decode():
-    pass
+    import random
+    from os import urandom
+
+    value = abi.String()
+    for value_to_set in [urandom(random.randint(0, 50)) for x in range(10)]:
+        expr = value.decode(Bytes(value_to_set))
+
+        assert expr.type_of() == TealType.none
+        assert not expr.has_return()
+
+        expected = TealSimpleBlock(
+            [
+                TealOp(None, Op.byte, f"0x{value_to_set.hex()}"),
+                TealOp(None, Op.store, value.stored_value.slot),
+            ]
+        )
+        actual, _ = expr.__teal__(options)
+        actual.addIncoming()
+        actual = TealBlock.NormalizeBlocks(actual)
+
+        with TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
+
 
 def test_String_get():
-    pass
+    value = abi.String()
+    expr = value.get()
+    assert expr.type_of() == TealType.bytes
+    assert not expr.has_return()
+
+    expected = TealSimpleBlock(
+        [TealOp(expr, Op.load, value.stored_value.slot), TealOp(None, Op.extract, 2, 0)]
+    )
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
+
+    with TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
+# def test_String_set_static():
+#    value = abi.String()
+#    for value_to_set in [urandom(32) for x in range(10)]:
+#        print(value_to_set)
+#        expr = value.set(Bytes(value_to_set))
+#
+#        assert expr.type_of() == TealType.none
+#        assert not expr.has_return()
