@@ -1,5 +1,3 @@
-from .type_test import ContainerType
-
 from ... import *
 
 options = CompileOptions(version=5)
@@ -14,7 +12,7 @@ def test_AddressTypeSpec_is_dynamic():
 
 
 def test_AddressTypeSpec_byte_length_static():
-    assert (abi.AddressTypeSpec()).byte_length_static() == 32
+    assert (abi.AddressTypeSpec()).byte_length_static() == abi.ADDRESS_LENGTH
 
 
 def test_AddressTypeSpec_new_instance():
@@ -47,7 +45,7 @@ def test_Address_decode():
     from os import urandom
 
     value = abi.Address()
-    for value_to_set in [urandom(32) for x in range(10)]:
+    for value_to_set in [urandom(abi.ADDRESS_LENGTH) for x in range(10)]:
         expr = value.decode(Bytes(value_to_set))
 
         assert expr.type_of() == TealType.none
