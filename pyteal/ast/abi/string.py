@@ -1,7 +1,5 @@
-from typing import Union
-from .array_static import StaticArray, StaticArrayTypeSpec
 from .array_dynamic import DynamicArray, DynamicArrayTypeSpec
-from .uint import ByteTypeSpec
+from .uint import ByteTypeSpec, Uint16TypeSpec
 from .util import substringForDecoding
 
 from ..int import Int
@@ -30,22 +28,9 @@ class String(DynamicArray):
         return StringTypeSpec()
 
     def get(self) -> Expr:
-        return substringForDecoding(self.stored_value.load(), startIndex=Int(2))
-
-    def __getslice__(self, low: Union[int, Int], high: Union[int, Int]):
-        if type(low) is int:
-            low = Int(low)
-
-        if type(high) is int:
-            high = Int(high)
-
-        if not isinstance(low, Int):
-            raise TypeError("low expected int or Int, got {low}")
-        if not isinstance(high, Int):
-            raise TypeError("high expected int or Int, got {high}")
-
         return substringForDecoding(
-            self.stored_value.load(), startIndex=Int(2) + low, endIndex=Int(2) + high
+            self.stored_value.load(),
+            startIndex=Int(Uint16TypeSpec().byte_length_static()),
         )
 
 

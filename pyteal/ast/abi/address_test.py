@@ -76,13 +76,3 @@ def test_Address_get():
     expected = TealSimpleBlock([TealOp(expr, Op.load, value.stored_value.slot)])
     actual, _ = expr.__teal__(options)
     assert actual == expected
-
-
-# def test_Address_set_static():
-#    value = abi.Address()
-#    for value_to_set in [urandom(32) for x in range(10)]:
-#        print(value_to_set)
-#        expr = value.set(Bytes(value_to_set))
-#
-#        assert expr.type_of() == TealType.none
-#        assert not expr.has_return()
