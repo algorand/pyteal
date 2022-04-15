@@ -1,9 +1,12 @@
+<<<<<<< HEAD
 from typing import Union
 
 from .type import ComputedValue, TypeSpec
 from pyteal.types import require_type
+=======
+>>>>>>> strings
 from .array_dynamic import DynamicArray, DynamicArrayTypeSpec
-from .uint import ByteTypeSpec
+from .uint import ByteTypeSpec, Uint16TypeSpec
 from .util import substringForDecoding
 
 from ..bytes import Bytes
@@ -39,6 +42,7 @@ class String(DynamicArray):
         return StringTypeSpec()
 
     def get(self) -> Expr:
+<<<<<<< HEAD
         return substringForDecoding(self.stored_value.load(), startIndex=Int(2))
 
     def set(self, value: Union[str, "String", ComputedValue["String"], Expr]):
@@ -94,6 +98,12 @@ class String(DynamicArray):
             start = Int(start)
 
         return SubstringValue(self, start, stop)
+=======
+        return substringForDecoding(
+            self.stored_value.load(),
+            startIndex=Int(Uint16TypeSpec().byte_length_static()),
+        )
+>>>>>>> strings
 
 
 String.__module__ = "pyteal"

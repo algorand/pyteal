@@ -77,13 +77,3 @@ def test_String_get():
 
     with TealComponent.Context.ignoreExprEquality():
         assert actual == expected
-
-
-# def test_String_set_static():
-#    value = abi.String()
-#    for value_to_set in [urandom(32) for x in range(10)]:
-#        print(value_to_set)
-#        expr = value.set(Bytes(value_to_set))
-#
-#        assert expr.type_of() == TealType.none
-#        assert not expr.has_return()
