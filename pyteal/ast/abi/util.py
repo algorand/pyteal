@@ -107,7 +107,8 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
         Tuple4,
         Tuple5,
     )
-    from .string import String, Address, StringTypeSpec, AddressTypeSpec
+    from .string import StringTypeSpec, String
+    from .address import AddressTypeSpec, Address 
 
     origin = get_origin(annotation)
     if origin is None:

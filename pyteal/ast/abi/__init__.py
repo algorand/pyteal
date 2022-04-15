@@ -1,4 +1,5 @@
-from .string import String, Address, StringTypeSpec, AddressTypeSpec
+from .string import String, StringTypeSpec
+from .address import AddressTypeSpec, Address
 from .type import TypeSpec, BaseType, ComputedValue
 from .bool import BoolTypeSpec, Bool
 from .uint import (
