@@ -384,16 +384,19 @@ class ABIReturnSubroutineFnWrapper:
     def __init__(
         self,
         fn_implementation: Callable[..., Expr],
-        name: Optional[str] = None,
     ) -> None:
-        self.abi_type = "void"
-        pass
+        self.output_name: Union[None, str]
+        self.abi_type: Union[str, abi.TypeSpec]
+
+        self.output_name, self.abi_type = self._output_type_from_fn(fn_implementation)
+
+        self.output_arg: Union[None, abi.BaseType] = (
+            None
+            if self.abi_type is str
+            else cast(abi.TypeSpec, self.abi_type).new_instance()
+        )
 
     """
-        annos = getattr(fn_implementation, "__annotations__")
-        type_spec_or_void = annos.get("return", None)
-        self.abi_type = abi.type_spec_from_computed_type_annotation(type_spec_or_void)
-
         stack_type: TealType = (
             TealType.none
             if type_spec_or_void == "void"
@@ -406,18 +409,46 @@ class ABIReturnSubroutineFnWrapper:
         )
     """
 
+    @staticmethod
+    def _output_type_from_fn(
+        fn_implementation: Callable[..., Expr]
+    ) -> Union[Tuple[None, str], Tuple[str, abi.TypeSpec]]:
+        sig = signature(fn_implementation)
+        fn_annotations = getattr(fn_implementation, "__annotations__", OrderedDict())
+
+        potential_abi_arg_names = list(
+            filter(
+                lambda key: sig.parameters[key].kind == Parameter.KEYWORD_ONLY,
+                sig.parameters.keys(),
+            )
+        )
+        if len(potential_abi_arg_names) == 0:
+            return None, "void"
+        elif len(potential_abi_arg_names) == 0:
+            name = potential_abi_arg_names[0]
+            annotation = fn_annotations.get(name, None)
+            if annotation is None:
+                raise TealInputError(
+                    f"abi subroutine output {name} must specify ABI type"
+                )
+            return name, abi.type_spec_from_annotation(annotation)
+        else:
+            raise TealInputError(
+                f"multiple output arguments with type annotations {potential_abi_arg_names}"
+            )
+
     def __call__(
         self, *args: Union[Expr, ScratchVar, abi.BaseType], **kwargs
     ) -> Union[abi.ReturnedValue, Expr]:
-        """
         if len(kwargs) != 0:
             raise TealInputError(
                 f"Subroutine cannot be called with keyword arguments. "
                 f"Received keyword arguments: {','.join(kwargs.keys())}"
             )
 
-        invoked = self.subroutine.invoke(list(args))
+        # invoked = self.subroutine.invoke(list(args))
 
+        """
         if self.type_of() == "void":
             return invoked
         else:
