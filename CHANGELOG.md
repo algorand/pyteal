@@ -1,3 +1,8 @@
+# 0.11.1
+
+## Fixed
+* Fix readthedocs build issue introduced in v0.11.0 ([#276](https://github.com/algorand/pyteal/pull/276), [#279](https://github.com/algorand/pyteal/pull/279)).
+
 # 0.11.0
 
 ## Added
