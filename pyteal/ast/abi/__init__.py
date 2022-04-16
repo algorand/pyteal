@@ -1,5 +1,5 @@
 from .string import String, StringTypeSpec
-from .address import AddressTypeSpec, Address
+from .address import AddressTypeSpec, Address, ADDRESS_LENGTH
 from .type import TypeSpec, BaseType, ComputedValue
 from .bool import BoolTypeSpec, Bool
 from .uint import (
@@ -38,6 +38,7 @@ __all__ = [
     "StringTypeSpec",
     "Address",
     "AddressTypeSpec",
+    "ADDRESS_LENGTH",
     "TypeSpec",
     "BaseType",
     "ComputedValue",

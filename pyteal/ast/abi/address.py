@@ -2,12 +2,12 @@ from .array_static import StaticArray, StaticArrayTypeSpec
 from .uint import ByteTypeSpec
 from ..expr import Expr
 
-address_length = 32
+ADDRESS_LENGTH = 32
 
 
 class AddressTypeSpec(StaticArrayTypeSpec):
     def __init__(self) -> None:
-        super().__init__(ByteTypeSpec(), address_length)
+        super().__init__(ByteTypeSpec(), ADDRESS_LENGTH)
 
     def new_instance(self) -> "Address":
         return Address()
@@ -21,7 +21,7 @@ AddressTypeSpec.__module__ = "pyteal"
 
 class Address(StaticArray):
     def __init__(self) -> None:
-        super().__init__(AddressTypeSpec(), address_length)
+        super().__init__(AddressTypeSpec(), ADDRESS_LENGTH)
 
     def type_spec(self) -> AddressTypeSpec:
         return AddressTypeSpec()
