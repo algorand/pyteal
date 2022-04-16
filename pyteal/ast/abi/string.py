@@ -7,7 +7,7 @@ from .uint import ByteTypeSpec, Uint16TypeSpec
 from .util import substringForDecoding
 
 from ..bytes import Bytes
-from ..unaryexpr import Itob
+from ..unaryexpr import Itob, Len
 from ..substring import Suffix
 from ...types import TealType, require_type
 from ...errors import TealInputError
@@ -16,6 +16,8 @@ from ..expr import Expr
 from ..seq import Seq
 from ..naryexpr import Concat
 
+def encoded_string(s: Expr):
+    return Concat(Suffix(Itob(Len(s)), Int(6)), s)
 
 class StringTypeSpec(DynamicArrayTypeSpec):
     def __init__(self) -> None:
@@ -42,24 +44,22 @@ class String(DynamicArray):
         return substringForDecoding(self.stored_value.load(), startIndex=Int(2))
 
     def set(self, value: Union[str, "String", ComputedValue["String"], Expr]):
+
+        # Assume length prefixed
         if isinstance(value, ComputedValue):
             return value.store_into(self)
 
         if isinstance(value, String):
             return self.decode(value.encode())
 
+        # Assume not length prefixed
         if type(value) is str:
-            # Assume not prefixed with length
-            value = Concat(
-                Suffix(Itob(Int(len(value))), Int(6)),
-                Bytes(value)
-            )
+            return self.stored_value.store(encoded_string(Bytes(value)) )
 
         if not isinstance(value, Expr):
             raise TealInputError("Expected Expr, got {}".format(value))
 
-        # TODO: should we prefix this with length?
-        return self.stored_value.store(value)
+        return self.stored_value.store(encoded_string(value))
 
     def __getitem__(self, index: Union[int, slice, Expr]) -> "ComputedValue[String]":
 
