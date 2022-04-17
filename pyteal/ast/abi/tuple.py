@@ -303,7 +303,7 @@ class Tuple(BaseType):
 
     def __getitem__(self, index: int) -> "TupleElement":
         if not (0 <= index < self.type_spec().length_static()):
-            raise TealInputError("Index out of bounds")
+            raise TealInputError(f"Index out of bounds: {index}")
         return TupleElement(self, index)
 
 

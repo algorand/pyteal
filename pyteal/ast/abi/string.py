@@ -3,7 +3,7 @@ from typing import Union
 from .type import ComputedValue, TypeSpec
 from pyteal.types import require_type
 from .array_dynamic import DynamicArray, DynamicArrayTypeSpec
-from .uint import ByteTypeSpec, Uint16TypeSpec
+from .uint import ByteTypeSpec
 from .util import substringForDecoding
 
 from ..bytes import Bytes
@@ -16,8 +16,10 @@ from ..expr import Expr
 from ..seq import Seq
 from ..naryexpr import Concat
 
+
 def encoded_string(s: Expr):
     return Concat(Suffix(Itob(Len(s)), Int(6)), s)
+
 
 class StringTypeSpec(DynamicArrayTypeSpec):
     def __init__(self) -> None:
@@ -43,7 +45,7 @@ class String(DynamicArray):
     def get(self) -> Expr:
         return substringForDecoding(self.stored_value.load(), startIndex=Int(2))
 
-    def set(self, value: Union[str, "String", ComputedValue["String"], Expr]):
+    def set(self, value: Union[str, "String", ComputedValue["String"], Expr]) -> Expr:
 
         # Assume length prefixed
         if isinstance(value, ComputedValue):
@@ -54,7 +56,7 @@ class String(DynamicArray):
 
         # Assume not length prefixed
         if type(value) is str:
-            return self.stored_value.store(encoded_string(Bytes(value)) )
+            return self.stored_value.store(encoded_string(Bytes(value)))
 
         if not isinstance(value, Expr):
             raise TealInputError("Expected Expr, got {}".format(value))
