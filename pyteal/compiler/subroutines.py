@@ -1,7 +1,6 @@
 import re
 from typing import List, Dict, Set, Optional, TypeVar
 from collections import OrderedDict
-from itertools import chain
 
 from ..errors import TealInputError
 from ..types import TealType

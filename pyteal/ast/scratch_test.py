@@ -1,42 +1,40 @@
 import pytest
 
-from .. import *
+import pyteal as pt
 
-# this is not necessary but mypy complains if it's not included
-from .. import CompileOptions
-
-options = CompileOptions()
+options = pt.CompileOptions()
 
 
 def test_scratch_slot():
-    slot = ScratchSlot()
+    slot = pt.ScratchSlot()
     assert slot == slot
     assert slot.__hash__() == slot.__hash__()
-    assert slot != ScratchSlot()
+    assert slot != pt.ScratchSlot()
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert (
             slot.store().__teal__(options)[0]
-            == ScratchStackStore(slot).__teal__(options)[0]
+            == pt.ScratchStackStore(slot).__teal__(options)[0]
         )
         assert (
-            slot.store(Int(1)).__teal__(options)[0]
-            == ScratchStore(slot, Int(1)).__teal__(options)[0]
+            slot.store(pt.Int(1)).__teal__(options)[0]
+            == pt.ScratchStore(slot, pt.Int(1)).__teal__(options)[0]
         )
 
-        assert slot.load().type_of() == TealType.anytype
-        assert slot.load(TealType.uint64).type_of() == TealType.uint64
+        assert slot.load().type_of() == pt.TealType.anytype
+        assert slot.load(pt.TealType.uint64).type_of() == pt.TealType.uint64
         assert (
-            slot.load().__teal__(options)[0] == ScratchLoad(slot).__teal__(options)[0]
+            slot.load().__teal__(options)[0]
+            == pt.ScratchLoad(slot).__teal__(options)[0]
         )
 
 
 def test_scratch_load_default():
-    slot = ScratchSlot()
-    expr = ScratchLoad(slot)
-    assert expr.type_of() == TealType.anytype
+    slot = pt.ScratchSlot()
+    expr = pt.ScratchLoad(slot)
+    assert expr.type_of() == pt.TealType.anytype
 
-    expected = TealSimpleBlock([TealOp(expr, Op.load, slot)])
+    expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.load, slot)])
 
     actual, _ = expr.__teal__(options)
 
@@ -44,25 +42,25 @@ def test_scratch_load_default():
 
 
 def test_scratch_load_index_expression():
-    expr = ScratchLoad(slot=None, index_expression=Int(1337))
-    assert expr.type_of() == TealType.anytype
+    expr = pt.ScratchLoad(slot=None, index_expression=pt.Int(1337))
+    assert expr.type_of() == pt.TealType.anytype
 
-    expected = TealSimpleBlock([TealOp(Int(1337), Op.int, 1337)])
-    expected.setNextBlock(TealSimpleBlock([TealOp(None, Op.loads)]))
+    expected = pt.TealSimpleBlock([pt.TealOp(pt.Int(1337), pt.Op.int, 1337)])
+    expected.setNextBlock(pt.TealSimpleBlock([pt.TealOp(None, pt.Op.loads)]))
 
     actual, _ = expr.__teal__(options)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
 
 def test_scratch_load_type():
-    for type in (TealType.uint64, TealType.bytes, TealType.anytype):
-        slot = ScratchSlot()
-        expr = ScratchLoad(slot, type)
+    for type in (pt.TealType.uint64, pt.TealType.bytes, pt.TealType.anytype):
+        slot = pt.ScratchSlot()
+        expr = pt.ScratchLoad(slot, type)
         assert expr.type_of() == type
 
-        expected = TealSimpleBlock([TealOp(expr, Op.load, slot)])
+        expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.load, slot)])
 
         actual, _ = expr.__teal__(options)
 
@@ -71,17 +69,17 @@ def test_scratch_load_type():
 
 def test_scratch_store():
     for value in (
-        Int(1),
-        Bytes("test"),
-        App.globalGet(Bytes("key")),
-        If(Int(1), Int(2), Int(3)),
+        pt.Int(1),
+        pt.Bytes("test"),
+        pt.App.globalGet(pt.Bytes("key")),
+        pt.If(pt.Int(1), pt.Int(2), pt.Int(3)),
     ):
-        slot = ScratchSlot()
-        expr = ScratchStore(slot, value)
-        assert expr.type_of() == TealType.none
+        slot = pt.ScratchSlot()
+        expr = pt.ScratchStore(slot, value)
+        assert expr.type_of() == pt.TealType.none
 
         expected, valueEnd = value.__teal__(options)
-        storeBlock = TealSimpleBlock([TealOp(expr, Op.store, slot)])
+        storeBlock = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.store, slot)])
         valueEnd.setNextBlock(storeBlock)
 
         actual, _ = expr.__teal__(options)
@@ -91,33 +89,33 @@ def test_scratch_store():
 
 def test_scratch_store_index_expression():
     for value in (
-        Int(1),
-        Bytes("test"),
-        App.globalGet(Bytes("key")),
-        If(Int(1), Int(2), Int(3)),
+        pt.Int(1),
+        pt.Bytes("test"),
+        pt.App.globalGet(pt.Bytes("key")),
+        pt.If(pt.Int(1), pt.Int(2), pt.Int(3)),
     ):
-        expr = ScratchStore(slot=None, value=value, index_expression=Int(1337))
-        assert expr.type_of() == TealType.none
+        expr = pt.ScratchStore(slot=None, value=value, index_expression=pt.Int(1337))
+        assert expr.type_of() == pt.TealType.none
 
-        expected = TealSimpleBlock([TealOp(None, Op.int, 1337)])
+        expected = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.int, 1337)])
         valueStart, valueEnd = value.__teal__(options)
         expected.setNextBlock(valueStart)
 
-        storeBlock = TealSimpleBlock([TealOp(expr, Op.stores)])
+        storeBlock = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.stores)])
         valueEnd.setNextBlock(storeBlock)
 
         actual, _ = expr.__teal__(options)
 
-        with TealComponent.Context.ignoreExprEquality():
+        with pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected
 
 
 def test_scratch_stack_store():
-    slot = ScratchSlot()
-    expr = ScratchStackStore(slot)
-    assert expr.type_of() == TealType.none
+    slot = pt.ScratchSlot()
+    expr = pt.ScratchStackStore(slot)
+    assert expr.type_of() == pt.TealType.none
 
-    expected = TealSimpleBlock([TealOp(expr, Op.store, slot)])
+    expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.store, slot)])
 
     actual, _ = expr.__teal__(options)
 
@@ -125,11 +123,11 @@ def test_scratch_stack_store():
 
 
 def test_scratch_assign_id():
-    slot = ScratchSlot(255)
-    expr = ScratchStackStore(slot)
-    assert expr.type_of() == TealType.none
+    slot = pt.ScratchSlot(255)
+    expr = pt.ScratchStackStore(slot)
+    assert expr.type_of() == pt.TealType.none
 
-    expected = TealSimpleBlock([TealOp(expr, Op.store, slot)])
+    expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.store, slot)])
 
     actual, _ = expr.__teal__(options)
 
@@ -137,26 +135,26 @@ def test_scratch_assign_id():
 
 
 def test_scratch_assign_id_invalid():
-    with pytest.raises(TealInputError):
-        slot = ScratchSlot(-1)
+    with pytest.raises(pt.TealInputError):
+        pt.ScratchSlot(-1)
 
-    with pytest.raises(TealInputError):
-        slot = ScratchSlot(NUM_SLOTS)
+    with pytest.raises(pt.TealInputError):
+        pt.ScratchSlot(pt.NUM_SLOTS)
 
 
 def test_scratch_index():
-    slot = ScratchSlot()
+    slot = pt.ScratchSlot()
 
-    index = ScratchIndex(slot)
+    index = pt.ScratchIndex(slot)
     assert index.slot is slot
 
     assert str(index) == "(ScratchIndex " + str(slot) + ")"
 
-    assert index.type_of() == TealType.uint64
+    assert index.type_of() == pt.TealType.uint64
 
     assert not index.has_return()
 
-    expected = TealSimpleBlock([TealOp(index, Op.int, slot)])
+    expected = pt.TealSimpleBlock([pt.TealOp(index, pt.Op.int, slot)])
     actual, _ = index.__teal__(options)
 
     assert actual == expected

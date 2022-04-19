@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 import pytest
 
-from .. import *
+import pyteal as pt
 
 from .subroutines import (
     findRecursionPoints,
@@ -29,9 +29,9 @@ def test_findRecursionPoints_none():
     def sub3Impl(a1, a2, a3):
         return None
 
-    subroutine1 = SubroutineDefinition(sub1Impl, TealType.uint64)
-    subroutine2 = SubroutineDefinition(sub2Impl, TealType.bytes)
-    subroutine3 = SubroutineDefinition(sub3Impl, TealType.none)
+    subroutine1 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+    subroutine2 = pt.SubroutineDefinition(sub2Impl, pt.TealType.bytes)
+    subroutine3 = pt.SubroutineDefinition(sub3Impl, pt.TealType.none)
 
     subroutines = {
         subroutine1: {subroutine2, subroutine3},
@@ -59,9 +59,9 @@ def test_findRecursionPoints_direct_recursion():
     def sub3Impl(a1, a2, a3):
         return None
 
-    subroutine1 = SubroutineDefinition(sub1Impl, TealType.uint64)
-    subroutine2 = SubroutineDefinition(sub2Impl, TealType.bytes)
-    subroutine3 = SubroutineDefinition(sub3Impl, TealType.none)
+    subroutine1 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+    subroutine2 = pt.SubroutineDefinition(sub2Impl, pt.TealType.bytes)
+    subroutine3 = pt.SubroutineDefinition(sub3Impl, pt.TealType.none)
 
     subroutines = {
         subroutine1: {subroutine2, subroutine3},
@@ -89,9 +89,9 @@ def test_findRecursionPoints_mutual_recursion():
     def sub3Impl(a1, a2, a3):
         return None
 
-    subroutine1 = SubroutineDefinition(sub1Impl, TealType.uint64)
-    subroutine2 = SubroutineDefinition(sub2Impl, TealType.bytes)
-    subroutine3 = SubroutineDefinition(sub3Impl, TealType.none)
+    subroutine1 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+    subroutine2 = pt.SubroutineDefinition(sub2Impl, pt.TealType.bytes)
+    subroutine3 = pt.SubroutineDefinition(sub3Impl, pt.TealType.none)
 
     subroutines = {
         subroutine1: {subroutine2, subroutine3},
@@ -119,9 +119,9 @@ def test_findRecursionPoints_direct_and_mutual_recursion():
     def sub3Impl(a1, a2, a3):
         return None
 
-    subroutine1 = SubroutineDefinition(sub1Impl, TealType.uint64)
-    subroutine2 = SubroutineDefinition(sub2Impl, TealType.bytes)
-    subroutine3 = SubroutineDefinition(sub3Impl, TealType.none)
+    subroutine1 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+    subroutine2 = pt.SubroutineDefinition(sub2Impl, pt.TealType.bytes)
+    subroutine3 = pt.SubroutineDefinition(sub3Impl, pt.TealType.none)
 
     subroutines = {
         subroutine1: {subroutine2, subroutine3},
@@ -141,17 +141,17 @@ def test_findRecursionPoints_direct_and_mutual_recursion():
 
 def test_spillLocalSlotsDuringRecursion_no_subroutines():
     for version in (4, 5):
-        l1Label = LabelReference("l1")
+        l1Label = pt.LabelReference("l1")
         mainOps = [
-            TealOp(None, Op.txn, "Fee"),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.eq),
-            TealOp(None, Op.bz, l1Label),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.return_),
-            TealLabel(None, l1Label),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.return_),
+            pt.TealOp(None, pt.Op.txn, "Fee"),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.eq),
+            pt.TealOp(None, pt.Op.bz, l1Label),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.return_),
+            pt.TealLabel(None, l1Label),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.return_),
         ]
 
         subroutineMapping = {None: mainOps}
@@ -165,47 +165,47 @@ def test_spillLocalSlotsDuringRecursion_no_subroutines():
         )
 
         assert mainOps == [
-            TealOp(None, Op.txn, "Fee"),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.eq),
-            TealOp(None, Op.bz, l1Label),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.return_),
-            TealLabel(None, l1Label),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.return_),
+            pt.TealOp(None, pt.Op.txn, "Fee"),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.eq),
+            pt.TealOp(None, pt.Op.bz, l1Label),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.return_),
+            pt.TealLabel(None, l1Label),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.return_),
         ]
 
 
 def test_spillLocalSlotsDuringRecursion_1_subroutine_no_recursion():
     for version in (4, 5):
-        subroutine = SubroutineDefinition(lambda: None, TealType.uint64)
+        subroutine = pt.SubroutineDefinition(lambda: None, pt.TealType.uint64)
 
-        subroutineL1Label = LabelReference("l1")
+        subroutineL1Label = pt.LabelReference("l1")
         subroutineOps = [
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.eq),
-            TealOp(None, Op.bnz, subroutineL1Label),
-            TealOp(None, Op.err),
-            TealLabel(None, subroutineL1Label),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.retsub),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.eq),
+            pt.TealOp(None, pt.Op.bnz, subroutineL1Label),
+            pt.TealOp(None, pt.Op.err),
+            pt.TealLabel(None, subroutineL1Label),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.retsub),
         ]
 
-        l1Label = LabelReference("l1")
+        l1Label = pt.LabelReference("l1")
         mainOps = [
-            TealOp(None, Op.txn, "Fee"),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.eq),
-            TealOp(None, Op.bz, l1Label),
-            TealOp(None, Op.int, 100),
-            TealOp(None, Op.callsub, subroutine),
-            TealOp(None, Op.return_),
-            TealLabel(None, l1Label),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.return_),
+            pt.TealOp(None, pt.Op.txn, "Fee"),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.eq),
+            pt.TealOp(None, pt.Op.bz, l1Label),
+            pt.TealOp(None, pt.Op.int, 100),
+            pt.TealOp(None, pt.Op.callsub, subroutine),
+            pt.TealOp(None, pt.Op.return_),
+            pt.TealLabel(None, l1Label),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.return_),
         ]
 
         subroutineMapping = {None: mainOps, subroutine: subroutineOps}
@@ -220,27 +220,27 @@ def test_spillLocalSlotsDuringRecursion_1_subroutine_no_recursion():
 
         assert subroutineMapping == {
             None: [
-                TealOp(None, Op.txn, "Fee"),
-                TealOp(None, Op.int, 0),
-                TealOp(None, Op.eq),
-                TealOp(None, Op.bz, l1Label),
-                TealOp(None, Op.int, 100),
-                TealOp(None, Op.callsub, subroutine),
-                TealOp(None, Op.return_),
-                TealLabel(None, l1Label),
-                TealOp(None, Op.int, 0),
-                TealOp(None, Op.return_),
+                pt.TealOp(None, pt.Op.txn, "Fee"),
+                pt.TealOp(None, pt.Op.int, 0),
+                pt.TealOp(None, pt.Op.eq),
+                pt.TealOp(None, pt.Op.bz, l1Label),
+                pt.TealOp(None, pt.Op.int, 100),
+                pt.TealOp(None, pt.Op.callsub, subroutine),
+                pt.TealOp(None, pt.Op.return_),
+                pt.TealLabel(None, l1Label),
+                pt.TealOp(None, pt.Op.int, 0),
+                pt.TealOp(None, pt.Op.return_),
             ],
             subroutine: [
-                TealOp(None, Op.store, 0),
-                TealOp(None, Op.load, 0),
-                TealOp(None, Op.int, 0),
-                TealOp(None, Op.eq),
-                TealOp(None, Op.bnz, subroutineL1Label),
-                TealOp(None, Op.err),
-                TealLabel(None, subroutineL1Label),
-                TealOp(None, Op.int, 1),
-                TealOp(None, Op.retsub),
+                pt.TealOp(None, pt.Op.store, 0),
+                pt.TealOp(None, pt.Op.load, 0),
+                pt.TealOp(None, pt.Op.int, 0),
+                pt.TealOp(None, pt.Op.eq),
+                pt.TealOp(None, pt.Op.bnz, subroutineL1Label),
+                pt.TealOp(None, pt.Op.err),
+                pt.TealLabel(None, subroutineL1Label),
+                pt.TealOp(None, pt.Op.int, 1),
+                pt.TealOp(None, pt.Op.retsub),
             ],
         }
 
@@ -249,39 +249,39 @@ def test_spillLocalSlotsDuringRecursion_1_subroutine_recursion_v4():
     def sub1Impl(a1):
         return None
 
-    subroutine = SubroutineDefinition(sub1Impl, TealType.uint64)
+    subroutine = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
 
-    subroutineL1Label = LabelReference("l1")
+    subroutineL1Label = pt.LabelReference("l1")
     subroutineOps = [
-        TealOp(None, Op.store, 0),
-        TealOp(None, Op.load, 0),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.eq),
-        TealOp(None, Op.bnz, subroutineL1Label),
-        TealOp(None, Op.load, 0),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.minus),
-        TealOp(None, Op.callsub, subroutine),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.add),
-        TealOp(None, Op.retsub),
-        TealLabel(None, subroutineL1Label),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.store, 0),
+        pt.TealOp(None, pt.Op.load, 0),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.eq),
+        pt.TealOp(None, pt.Op.bnz, subroutineL1Label),
+        pt.TealOp(None, pt.Op.load, 0),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.minus),
+        pt.TealOp(None, pt.Op.callsub, subroutine),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.add),
+        pt.TealOp(None, pt.Op.retsub),
+        pt.TealLabel(None, subroutineL1Label),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    l1Label = LabelReference("l1")
+    l1Label = pt.LabelReference("l1")
     mainOps = [
-        TealOp(None, Op.txn, "Fee"),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.eq),
-        TealOp(None, Op.bz, l1Label),
-        TealOp(None, Op.int, 100),
-        TealOp(None, Op.callsub, subroutine),
-        TealOp(None, Op.return_),
-        TealLabel(None, l1Label),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.return_),
+        pt.TealOp(None, pt.Op.txn, "Fee"),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.eq),
+        pt.TealOp(None, pt.Op.bz, l1Label),
+        pt.TealOp(None, pt.Op.int, 100),
+        pt.TealOp(None, pt.Op.callsub, subroutine),
+        pt.TealOp(None, pt.Op.return_),
+        pt.TealLabel(None, l1Label),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.return_),
     ]
 
     subroutineMapping = {None: mainOps, subroutine: subroutineOps}
@@ -294,39 +294,39 @@ def test_spillLocalSlotsDuringRecursion_1_subroutine_recursion_v4():
 
     assert subroutineMapping == {
         None: [
-            TealOp(None, Op.txn, "Fee"),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.eq),
-            TealOp(None, Op.bz, l1Label),
-            TealOp(None, Op.int, 100),
-            TealOp(None, Op.callsub, subroutine),
-            TealOp(None, Op.return_),
-            TealLabel(None, l1Label),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.return_),
+            pt.TealOp(None, pt.Op.txn, "Fee"),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.eq),
+            pt.TealOp(None, pt.Op.bz, l1Label),
+            pt.TealOp(None, pt.Op.int, 100),
+            pt.TealOp(None, pt.Op.callsub, subroutine),
+            pt.TealOp(None, pt.Op.return_),
+            pt.TealLabel(None, l1Label),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.return_),
         ],
         subroutine: [
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.eq),
-            TealOp(None, Op.bnz, subroutineL1Label),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.minus),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.dig, 1),
-            TealOp(None, Op.callsub, subroutine),
-            TealOp(None, Op.swap),
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.swap),
-            TealOp(None, Op.pop),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.add),
-            TealOp(None, Op.retsub),
-            TealLabel(None, subroutineL1Label),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.retsub),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.eq),
+            pt.TealOp(None, pt.Op.bnz, subroutineL1Label),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.minus),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.dig, 1),
+            pt.TealOp(None, pt.Op.callsub, subroutine),
+            pt.TealOp(None, pt.Op.swap),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.swap),
+            pt.TealOp(None, pt.Op.pop),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.add),
+            pt.TealOp(None, pt.Op.retsub),
+            pt.TealLabel(None, subroutineL1Label),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.retsub),
         ],
     }
 
@@ -335,39 +335,39 @@ def test_spillLocalSlotsDuringRecursion_1_subroutine_recursion_v5():
     def sub1Impl(a1):
         return None
 
-    subroutine = SubroutineDefinition(sub1Impl, TealType.uint64)
+    subroutine = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
 
-    subroutineL1Label = LabelReference("l1")
+    subroutineL1Label = pt.LabelReference("l1")
     subroutineOps = [
-        TealOp(None, Op.store, 0),
-        TealOp(None, Op.load, 0),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.eq),
-        TealOp(None, Op.bnz, subroutineL1Label),
-        TealOp(None, Op.load, 0),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.minus),
-        TealOp(None, Op.callsub, subroutine),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.add),
-        TealOp(None, Op.retsub),
-        TealLabel(None, subroutineL1Label),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.store, 0),
+        pt.TealOp(None, pt.Op.load, 0),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.eq),
+        pt.TealOp(None, pt.Op.bnz, subroutineL1Label),
+        pt.TealOp(None, pt.Op.load, 0),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.minus),
+        pt.TealOp(None, pt.Op.callsub, subroutine),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.add),
+        pt.TealOp(None, pt.Op.retsub),
+        pt.TealLabel(None, subroutineL1Label),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    l1Label = LabelReference("l1")
+    l1Label = pt.LabelReference("l1")
     mainOps = [
-        TealOp(None, Op.txn, "Fee"),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.eq),
-        TealOp(None, Op.bz, l1Label),
-        TealOp(None, Op.int, 100),
-        TealOp(None, Op.callsub, subroutine),
-        TealOp(None, Op.return_),
-        TealLabel(None, l1Label),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.return_),
+        pt.TealOp(None, pt.Op.txn, "Fee"),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.eq),
+        pt.TealOp(None, pt.Op.bz, l1Label),
+        pt.TealOp(None, pt.Op.int, 100),
+        pt.TealOp(None, pt.Op.callsub, subroutine),
+        pt.TealOp(None, pt.Op.return_),
+        pt.TealLabel(None, l1Label),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.return_),
     ]
 
     subroutineMapping = {None: mainOps, subroutine: subroutineOps}
@@ -380,37 +380,37 @@ def test_spillLocalSlotsDuringRecursion_1_subroutine_recursion_v5():
 
     assert subroutineMapping == {
         None: [
-            TealOp(None, Op.txn, "Fee"),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.eq),
-            TealOp(None, Op.bz, l1Label),
-            TealOp(None, Op.int, 100),
-            TealOp(None, Op.callsub, subroutine),
-            TealOp(None, Op.return_),
-            TealLabel(None, l1Label),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.return_),
+            pt.TealOp(None, pt.Op.txn, "Fee"),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.eq),
+            pt.TealOp(None, pt.Op.bz, l1Label),
+            pt.TealOp(None, pt.Op.int, 100),
+            pt.TealOp(None, pt.Op.callsub, subroutine),
+            pt.TealOp(None, pt.Op.return_),
+            pt.TealLabel(None, l1Label),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.return_),
         ],
         subroutine: [
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.eq),
-            TealOp(None, Op.bnz, subroutineL1Label),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.minus),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.swap),
-            TealOp(None, Op.callsub, subroutine),
-            TealOp(None, Op.swap),
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.add),
-            TealOp(None, Op.retsub),
-            TealLabel(None, subroutineL1Label),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.retsub),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.eq),
+            pt.TealOp(None, pt.Op.bnz, subroutineL1Label),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.minus),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.swap),
+            pt.TealOp(None, pt.Op.callsub, subroutine),
+            pt.TealOp(None, pt.Op.swap),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.add),
+            pt.TealOp(None, pt.Op.retsub),
+            pt.TealLabel(None, subroutineL1Label),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.retsub),
         ],
     }
 
@@ -427,54 +427,54 @@ def test_spillLocalSlotsDuringRecursion_multiple_subroutines_no_recursion():
         def sub3Impl(a1, a2, a3):
             return None
 
-        subroutine1 = SubroutineDefinition(sub1Impl, TealType.uint64)
-        subroutine2 = SubroutineDefinition(sub1Impl, TealType.uint64)
-        subroutine3 = SubroutineDefinition(sub1Impl, TealType.none)
+        subroutine1 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+        subroutine2 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+        subroutine3 = pt.SubroutineDefinition(sub1Impl, pt.TealType.none)
 
-        subroutine1L1Label = LabelReference("l1")
+        subroutine1L1Label = pt.LabelReference("l1")
         subroutine1Ops = [
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.eq),
-            TealOp(None, Op.bnz, subroutine1L1Label),
-            TealOp(None, Op.err),
-            TealLabel(None, subroutine1L1Label),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.callsub, subroutine3),
-            TealOp(None, Op.retsub),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.eq),
+            pt.TealOp(None, pt.Op.bnz, subroutine1L1Label),
+            pt.TealOp(None, pt.Op.err),
+            pt.TealLabel(None, subroutine1L1Label),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.callsub, subroutine3),
+            pt.TealOp(None, pt.Op.retsub),
         ]
 
-        subroutine2L1Label = LabelReference("l1")
+        subroutine2L1Label = pt.LabelReference("l1")
         subroutine2Ops = [
-            TealOp(None, Op.store, 1),
-            TealOp(None, Op.load, 1),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.eq),
-            TealOp(None, Op.bnz, subroutine2L1Label),
-            TealOp(None, Op.err),
-            TealLabel(None, subroutine2L1Label),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.retsub),
+            pt.TealOp(None, pt.Op.store, 1),
+            pt.TealOp(None, pt.Op.load, 1),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.eq),
+            pt.TealOp(None, pt.Op.bnz, subroutine2L1Label),
+            pt.TealOp(None, pt.Op.err),
+            pt.TealLabel(None, subroutine2L1Label),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.retsub),
         ]
 
         subroutine3Ops = [
-            TealOp(None, Op.retsub),
+            pt.TealOp(None, pt.Op.retsub),
         ]
 
-        l1Label = LabelReference("l1")
+        l1Label = pt.LabelReference("l1")
         mainOps = [
-            TealOp(None, Op.txn, "Fee"),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.eq),
-            TealOp(None, Op.bz, l1Label),
-            TealOp(None, Op.int, 100),
-            TealOp(None, Op.callsub, subroutine1),
-            TealOp(None, Op.return_),
-            TealLabel(None, l1Label),
-            TealOp(None, Op.int, 101),
-            TealOp(None, Op.callsub, subroutine2),
-            TealOp(None, Op.return_),
+            pt.TealOp(None, pt.Op.txn, "Fee"),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.eq),
+            pt.TealOp(None, pt.Op.bz, l1Label),
+            pt.TealOp(None, pt.Op.int, 100),
+            pt.TealOp(None, pt.Op.callsub, subroutine1),
+            pt.TealOp(None, pt.Op.return_),
+            pt.TealLabel(None, l1Label),
+            pt.TealOp(None, pt.Op.int, 101),
+            pt.TealOp(None, pt.Op.callsub, subroutine2),
+            pt.TealOp(None, pt.Op.return_),
         ]
 
         subroutineMapping = {
@@ -498,43 +498,43 @@ def test_spillLocalSlotsDuringRecursion_multiple_subroutines_no_recursion():
 
         assert subroutineMapping == {
             None: [
-                TealOp(None, Op.txn, "Fee"),
-                TealOp(None, Op.int, 0),
-                TealOp(None, Op.eq),
-                TealOp(None, Op.bz, l1Label),
-                TealOp(None, Op.int, 100),
-                TealOp(None, Op.callsub, subroutine1),
-                TealOp(None, Op.return_),
-                TealLabel(None, l1Label),
-                TealOp(None, Op.int, 101),
-                TealOp(None, Op.callsub, subroutine2),
-                TealOp(None, Op.return_),
+                pt.TealOp(None, pt.Op.txn, "Fee"),
+                pt.TealOp(None, pt.Op.int, 0),
+                pt.TealOp(None, pt.Op.eq),
+                pt.TealOp(None, pt.Op.bz, l1Label),
+                pt.TealOp(None, pt.Op.int, 100),
+                pt.TealOp(None, pt.Op.callsub, subroutine1),
+                pt.TealOp(None, pt.Op.return_),
+                pt.TealLabel(None, l1Label),
+                pt.TealOp(None, pt.Op.int, 101),
+                pt.TealOp(None, pt.Op.callsub, subroutine2),
+                pt.TealOp(None, pt.Op.return_),
             ],
             subroutine1: [
-                TealOp(None, Op.store, 0),
-                TealOp(None, Op.load, 0),
-                TealOp(None, Op.int, 0),
-                TealOp(None, Op.eq),
-                TealOp(None, Op.bnz, subroutine1L1Label),
-                TealOp(None, Op.err),
-                TealLabel(None, subroutine1L1Label),
-                TealOp(None, Op.int, 1),
-                TealOp(None, Op.callsub, subroutine3),
-                TealOp(None, Op.retsub),
+                pt.TealOp(None, pt.Op.store, 0),
+                pt.TealOp(None, pt.Op.load, 0),
+                pt.TealOp(None, pt.Op.int, 0),
+                pt.TealOp(None, pt.Op.eq),
+                pt.TealOp(None, pt.Op.bnz, subroutine1L1Label),
+                pt.TealOp(None, pt.Op.err),
+                pt.TealLabel(None, subroutine1L1Label),
+                pt.TealOp(None, pt.Op.int, 1),
+                pt.TealOp(None, pt.Op.callsub, subroutine3),
+                pt.TealOp(None, pt.Op.retsub),
             ],
             subroutine2: [
-                TealOp(None, Op.store, 1),
-                TealOp(None, Op.load, 1),
-                TealOp(None, Op.int, 0),
-                TealOp(None, Op.eq),
-                TealOp(None, Op.bnz, subroutine2L1Label),
-                TealOp(None, Op.err),
-                TealLabel(None, subroutine2L1Label),
-                TealOp(None, Op.int, 1),
-                TealOp(None, Op.retsub),
+                pt.TealOp(None, pt.Op.store, 1),
+                pt.TealOp(None, pt.Op.load, 1),
+                pt.TealOp(None, pt.Op.int, 0),
+                pt.TealOp(None, pt.Op.eq),
+                pt.TealOp(None, pt.Op.bnz, subroutine2L1Label),
+                pt.TealOp(None, pt.Op.err),
+                pt.TealLabel(None, subroutine2L1Label),
+                pt.TealOp(None, pt.Op.int, 1),
+                pt.TealOp(None, pt.Op.retsub),
             ],
             subroutine3: [
-                TealOp(None, Op.retsub),
+                pt.TealOp(None, pt.Op.retsub),
             ],
         }
 
@@ -549,69 +549,69 @@ def test_spillLocalSlotsDuringRecursion_multiple_subroutines_recursion_v4():
     def sub3Impl(a1, a2, a3):
         return None
 
-    subroutine1 = SubroutineDefinition(sub1Impl, TealType.uint64)
-    subroutine2 = SubroutineDefinition(sub1Impl, TealType.uint64)
-    subroutine3 = SubroutineDefinition(sub1Impl, TealType.none)
+    subroutine1 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+    subroutine2 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+    subroutine3 = pt.SubroutineDefinition(sub1Impl, pt.TealType.none)
 
-    subroutine1L1Label = LabelReference("l1")
+    subroutine1L1Label = pt.LabelReference("l1")
     subroutine1Ops = [
-        TealOp(None, Op.store, 0),
-        TealOp(None, Op.load, 0),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.eq),
-        TealOp(None, Op.bnz, subroutine1L1Label),
-        TealOp(None, Op.load, 0),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.minus),
-        TealOp(None, Op.callsub, subroutine1),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.add),
-        TealOp(None, Op.retsub),
-        TealLabel(None, subroutine1L1Label),
-        TealOp(None, Op.load, 255),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.store, 0),
+        pt.TealOp(None, pt.Op.load, 0),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.eq),
+        pt.TealOp(None, pt.Op.bnz, subroutine1L1Label),
+        pt.TealOp(None, pt.Op.load, 0),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.minus),
+        pt.TealOp(None, pt.Op.callsub, subroutine1),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.add),
+        pt.TealOp(None, pt.Op.retsub),
+        pt.TealLabel(None, subroutine1L1Label),
+        pt.TealOp(None, pt.Op.load, 255),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    subroutine2L1Label = LabelReference("l1")
+    subroutine2L1Label = pt.LabelReference("l1")
     subroutine2Ops = [
-        TealOp(None, Op.store, 1),
-        TealOp(None, Op.load, 1),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.eq),
-        TealOp(None, Op.bnz, subroutine2L1Label),
-        TealOp(None, Op.load, 0),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.minus),
-        TealOp(None, Op.callsub, subroutine1),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.add),
-        TealOp(None, Op.retsub),
-        TealLabel(None, subroutine2L1Label),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.store, 1),
+        pt.TealOp(None, pt.Op.load, 1),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.eq),
+        pt.TealOp(None, pt.Op.bnz, subroutine2L1Label),
+        pt.TealOp(None, pt.Op.load, 0),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.minus),
+        pt.TealOp(None, pt.Op.callsub, subroutine1),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.add),
+        pt.TealOp(None, pt.Op.retsub),
+        pt.TealLabel(None, subroutine2L1Label),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     subroutine3Ops = [
-        TealOp(None, Op.callsub, subroutine3),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.callsub, subroutine3),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    l1Label = LabelReference("l1")
+    l1Label = pt.LabelReference("l1")
     mainOps = [
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.store, 255),
-        TealOp(None, Op.txn, "Fee"),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.eq),
-        TealOp(None, Op.bz, l1Label),
-        TealOp(None, Op.int, 100),
-        TealOp(None, Op.callsub, subroutine1),
-        TealOp(None, Op.return_),
-        TealLabel(None, l1Label),
-        TealOp(None, Op.int, 101),
-        TealOp(None, Op.callsub, subroutine2),
-        TealOp(None, Op.return_),
-        TealOp(None, Op.callsub, subroutine3),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.store, 255),
+        pt.TealOp(None, pt.Op.txn, "Fee"),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.eq),
+        pt.TealOp(None, pt.Op.bz, l1Label),
+        pt.TealOp(None, pt.Op.int, 100),
+        pt.TealOp(None, pt.Op.callsub, subroutine1),
+        pt.TealOp(None, pt.Op.return_),
+        pt.TealLabel(None, l1Label),
+        pt.TealOp(None, pt.Op.int, 101),
+        pt.TealOp(None, pt.Op.callsub, subroutine2),
+        pt.TealOp(None, pt.Op.return_),
+        pt.TealOp(None, pt.Op.callsub, subroutine3),
     ]
 
     subroutineMapping = {
@@ -633,64 +633,64 @@ def test_spillLocalSlotsDuringRecursion_multiple_subroutines_recursion_v4():
 
     assert subroutineMapping == {
         None: [
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.store, 255),
-            TealOp(None, Op.txn, "Fee"),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.eq),
-            TealOp(None, Op.bz, l1Label),
-            TealOp(None, Op.int, 100),
-            TealOp(None, Op.callsub, subroutine1),
-            TealOp(None, Op.return_),
-            TealLabel(None, l1Label),
-            TealOp(None, Op.int, 101),
-            TealOp(None, Op.callsub, subroutine2),
-            TealOp(None, Op.return_),
-            TealOp(None, Op.callsub, subroutine3),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.store, 255),
+            pt.TealOp(None, pt.Op.txn, "Fee"),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.eq),
+            pt.TealOp(None, pt.Op.bz, l1Label),
+            pt.TealOp(None, pt.Op.int, 100),
+            pt.TealOp(None, pt.Op.callsub, subroutine1),
+            pt.TealOp(None, pt.Op.return_),
+            pt.TealLabel(None, l1Label),
+            pt.TealOp(None, pt.Op.int, 101),
+            pt.TealOp(None, pt.Op.callsub, subroutine2),
+            pt.TealOp(None, pt.Op.return_),
+            pt.TealOp(None, pt.Op.callsub, subroutine3),
         ],
         subroutine1: [
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.eq),
-            TealOp(None, Op.bnz, subroutine1L1Label),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.minus),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.dig, 1),
-            TealOp(None, Op.callsub, subroutine1),
-            TealOp(None, Op.swap),
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.swap),
-            TealOp(None, Op.pop),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.add),
-            TealOp(None, Op.retsub),
-            TealLabel(None, subroutine1L1Label),
-            TealOp(None, Op.load, 255),
-            TealOp(None, Op.retsub),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.eq),
+            pt.TealOp(None, pt.Op.bnz, subroutine1L1Label),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.minus),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.dig, 1),
+            pt.TealOp(None, pt.Op.callsub, subroutine1),
+            pt.TealOp(None, pt.Op.swap),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.swap),
+            pt.TealOp(None, pt.Op.pop),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.add),
+            pt.TealOp(None, pt.Op.retsub),
+            pt.TealLabel(None, subroutine1L1Label),
+            pt.TealOp(None, pt.Op.load, 255),
+            pt.TealOp(None, pt.Op.retsub),
         ],
         subroutine2: [
-            TealOp(None, Op.store, 1),
-            TealOp(None, Op.load, 1),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.eq),
-            TealOp(None, Op.bnz, subroutine2L1Label),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.minus),
-            TealOp(None, Op.callsub, subroutine1),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.add),
-            TealOp(None, Op.retsub),
-            TealLabel(None, subroutine2L1Label),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.retsub),
+            pt.TealOp(None, pt.Op.store, 1),
+            pt.TealOp(None, pt.Op.load, 1),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.eq),
+            pt.TealOp(None, pt.Op.bnz, subroutine2L1Label),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.minus),
+            pt.TealOp(None, pt.Op.callsub, subroutine1),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.add),
+            pt.TealOp(None, pt.Op.retsub),
+            pt.TealLabel(None, subroutine2L1Label),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.retsub),
         ],
         subroutine3: [
-            TealOp(None, Op.callsub, subroutine3),
-            TealOp(None, Op.retsub),
+            pt.TealOp(None, pt.Op.callsub, subroutine3),
+            pt.TealOp(None, pt.Op.retsub),
         ],
     }
 
@@ -705,69 +705,69 @@ def test_spillLocalSlotsDuringRecursion_multiple_subroutines_recursion_v5():
     def sub3Impl(a1, a2, a3):
         return None
 
-    subroutine1 = SubroutineDefinition(sub1Impl, TealType.uint64)
-    subroutine2 = SubroutineDefinition(sub1Impl, TealType.uint64)
-    subroutine3 = SubroutineDefinition(sub1Impl, TealType.none)
+    subroutine1 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+    subroutine2 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+    subroutine3 = pt.SubroutineDefinition(sub1Impl, pt.TealType.none)
 
-    subroutine1L1Label = LabelReference("l1")
+    subroutine1L1Label = pt.LabelReference("l1")
     subroutine1Ops = [
-        TealOp(None, Op.store, 0),
-        TealOp(None, Op.load, 0),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.eq),
-        TealOp(None, Op.bnz, subroutine1L1Label),
-        TealOp(None, Op.load, 0),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.minus),
-        TealOp(None, Op.callsub, subroutine1),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.add),
-        TealOp(None, Op.retsub),
-        TealLabel(None, subroutine1L1Label),
-        TealOp(None, Op.load, 255),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.store, 0),
+        pt.TealOp(None, pt.Op.load, 0),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.eq),
+        pt.TealOp(None, pt.Op.bnz, subroutine1L1Label),
+        pt.TealOp(None, pt.Op.load, 0),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.minus),
+        pt.TealOp(None, pt.Op.callsub, subroutine1),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.add),
+        pt.TealOp(None, pt.Op.retsub),
+        pt.TealLabel(None, subroutine1L1Label),
+        pt.TealOp(None, pt.Op.load, 255),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    subroutine2L1Label = LabelReference("l1")
+    subroutine2L1Label = pt.LabelReference("l1")
     subroutine2Ops = [
-        TealOp(None, Op.store, 1),
-        TealOp(None, Op.load, 1),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.eq),
-        TealOp(None, Op.bnz, subroutine2L1Label),
-        TealOp(None, Op.load, 0),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.minus),
-        TealOp(None, Op.callsub, subroutine1),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.add),
-        TealOp(None, Op.retsub),
-        TealLabel(None, subroutine2L1Label),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.store, 1),
+        pt.TealOp(None, pt.Op.load, 1),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.eq),
+        pt.TealOp(None, pt.Op.bnz, subroutine2L1Label),
+        pt.TealOp(None, pt.Op.load, 0),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.minus),
+        pt.TealOp(None, pt.Op.callsub, subroutine1),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.add),
+        pt.TealOp(None, pt.Op.retsub),
+        pt.TealLabel(None, subroutine2L1Label),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     subroutine3Ops = [
-        TealOp(None, Op.callsub, subroutine3),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.callsub, subroutine3),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    l1Label = LabelReference("l1")
+    l1Label = pt.LabelReference("l1")
     mainOps = [
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.store, 255),
-        TealOp(None, Op.txn, "Fee"),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.eq),
-        TealOp(None, Op.bz, l1Label),
-        TealOp(None, Op.int, 100),
-        TealOp(None, Op.callsub, subroutine1),
-        TealOp(None, Op.return_),
-        TealLabel(None, l1Label),
-        TealOp(None, Op.int, 101),
-        TealOp(None, Op.callsub, subroutine2),
-        TealOp(None, Op.return_),
-        TealOp(None, Op.callsub, subroutine3),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.store, 255),
+        pt.TealOp(None, pt.Op.txn, "Fee"),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.eq),
+        pt.TealOp(None, pt.Op.bz, l1Label),
+        pt.TealOp(None, pt.Op.int, 100),
+        pt.TealOp(None, pt.Op.callsub, subroutine1),
+        pt.TealOp(None, pt.Op.return_),
+        pt.TealLabel(None, l1Label),
+        pt.TealOp(None, pt.Op.int, 101),
+        pt.TealOp(None, pt.Op.callsub, subroutine2),
+        pt.TealOp(None, pt.Op.return_),
+        pt.TealOp(None, pt.Op.callsub, subroutine3),
     ]
 
     subroutineMapping = {
@@ -789,62 +789,62 @@ def test_spillLocalSlotsDuringRecursion_multiple_subroutines_recursion_v5():
 
     assert subroutineMapping == {
         None: [
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.store, 255),
-            TealOp(None, Op.txn, "Fee"),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.eq),
-            TealOp(None, Op.bz, l1Label),
-            TealOp(None, Op.int, 100),
-            TealOp(None, Op.callsub, subroutine1),
-            TealOp(None, Op.return_),
-            TealLabel(None, l1Label),
-            TealOp(None, Op.int, 101),
-            TealOp(None, Op.callsub, subroutine2),
-            TealOp(None, Op.return_),
-            TealOp(None, Op.callsub, subroutine3),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.store, 255),
+            pt.TealOp(None, pt.Op.txn, "Fee"),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.eq),
+            pt.TealOp(None, pt.Op.bz, l1Label),
+            pt.TealOp(None, pt.Op.int, 100),
+            pt.TealOp(None, pt.Op.callsub, subroutine1),
+            pt.TealOp(None, pt.Op.return_),
+            pt.TealLabel(None, l1Label),
+            pt.TealOp(None, pt.Op.int, 101),
+            pt.TealOp(None, pt.Op.callsub, subroutine2),
+            pt.TealOp(None, pt.Op.return_),
+            pt.TealOp(None, pt.Op.callsub, subroutine3),
         ],
         subroutine1: [
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.eq),
-            TealOp(None, Op.bnz, subroutine1L1Label),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.minus),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.swap),
-            TealOp(None, Op.callsub, subroutine1),
-            TealOp(None, Op.swap),
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.add),
-            TealOp(None, Op.retsub),
-            TealLabel(None, subroutine1L1Label),
-            TealOp(None, Op.load, 255),
-            TealOp(None, Op.retsub),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.eq),
+            pt.TealOp(None, pt.Op.bnz, subroutine1L1Label),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.minus),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.swap),
+            pt.TealOp(None, pt.Op.callsub, subroutine1),
+            pt.TealOp(None, pt.Op.swap),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.add),
+            pt.TealOp(None, pt.Op.retsub),
+            pt.TealLabel(None, subroutine1L1Label),
+            pt.TealOp(None, pt.Op.load, 255),
+            pt.TealOp(None, pt.Op.retsub),
         ],
         subroutine2: [
-            TealOp(None, Op.store, 1),
-            TealOp(None, Op.load, 1),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.eq),
-            TealOp(None, Op.bnz, subroutine2L1Label),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.minus),
-            TealOp(None, Op.callsub, subroutine1),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.add),
-            TealOp(None, Op.retsub),
-            TealLabel(None, subroutine2L1Label),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.retsub),
+            pt.TealOp(None, pt.Op.store, 1),
+            pt.TealOp(None, pt.Op.load, 1),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.eq),
+            pt.TealOp(None, pt.Op.bnz, subroutine2L1Label),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.minus),
+            pt.TealOp(None, pt.Op.callsub, subroutine1),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.add),
+            pt.TealOp(None, pt.Op.retsub),
+            pt.TealLabel(None, subroutine2L1Label),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.retsub),
         ],
         subroutine3: [
-            TealOp(None, Op.callsub, subroutine3),
-            TealOp(None, Op.retsub),
+            pt.TealOp(None, pt.Op.callsub, subroutine3),
+            pt.TealOp(None, pt.Op.retsub),
         ],
     }
 
@@ -853,26 +853,26 @@ def test_spillLocalSlotsDuringRecursion_recursive_many_args_no_return_v4():
     def subImpl(a1, a2, a3):
         return None
 
-    subroutine = SubroutineDefinition(subImpl, TealType.none)
+    subroutine = pt.SubroutineDefinition(subImpl, pt.TealType.none)
 
     subroutineOps = [
-        TealOp(None, Op.store, 0),
-        TealOp(None, Op.store, 1),
-        TealOp(None, Op.store, 2),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.callsub, subroutine),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.store, 0),
+        pt.TealOp(None, pt.Op.store, 1),
+        pt.TealOp(None, pt.Op.store, 2),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.int, 2),
+        pt.TealOp(None, pt.Op.int, 3),
+        pt.TealOp(None, pt.Op.callsub, subroutine),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     mainOps = [
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.callsub, subroutine),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.return_),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.int, 2),
+        pt.TealOp(None, pt.Op.int, 3),
+        pt.TealOp(None, pt.Op.callsub, subroutine),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.return_),
     ]
 
     subroutineMapping = {
@@ -890,34 +890,34 @@ def test_spillLocalSlotsDuringRecursion_recursive_many_args_no_return_v4():
 
     assert subroutineMapping == {
         None: [
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.int, 2),
-            TealOp(None, Op.int, 3),
-            TealOp(None, Op.callsub, subroutine),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.return_),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.int, 2),
+            pt.TealOp(None, pt.Op.int, 3),
+            pt.TealOp(None, pt.Op.callsub, subroutine),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.return_),
         ],
         subroutine: [
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.store, 1),
-            TealOp(None, Op.store, 2),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.int, 2),
-            TealOp(None, Op.int, 3),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.load, 1),
-            TealOp(None, Op.load, 2),
-            TealOp(None, Op.dig, 5),
-            TealOp(None, Op.dig, 5),
-            TealOp(None, Op.dig, 5),
-            TealOp(None, Op.callsub, subroutine),
-            TealOp(None, Op.store, 2),
-            TealOp(None, Op.store, 1),
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.pop),
-            TealOp(None, Op.pop),
-            TealOp(None, Op.pop),
-            TealOp(None, Op.retsub),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.store, 1),
+            pt.TealOp(None, pt.Op.store, 2),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.int, 2),
+            pt.TealOp(None, pt.Op.int, 3),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.load, 1),
+            pt.TealOp(None, pt.Op.load, 2),
+            pt.TealOp(None, pt.Op.dig, 5),
+            pt.TealOp(None, pt.Op.dig, 5),
+            pt.TealOp(None, pt.Op.dig, 5),
+            pt.TealOp(None, pt.Op.callsub, subroutine),
+            pt.TealOp(None, pt.Op.store, 2),
+            pt.TealOp(None, pt.Op.store, 1),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.pop),
+            pt.TealOp(None, pt.Op.pop),
+            pt.TealOp(None, pt.Op.pop),
+            pt.TealOp(None, pt.Op.retsub),
         ],
     }
 
@@ -926,26 +926,26 @@ def test_spillLocalSlotsDuringRecursion_recursive_many_args_no_return_v5():
     def subImpl(a1, a2, a3):
         return None
 
-    subroutine = SubroutineDefinition(subImpl, TealType.none)
+    subroutine = pt.SubroutineDefinition(subImpl, pt.TealType.none)
 
     subroutineOps = [
-        TealOp(None, Op.store, 0),
-        TealOp(None, Op.store, 1),
-        TealOp(None, Op.store, 2),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.callsub, subroutine),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.store, 0),
+        pt.TealOp(None, pt.Op.store, 1),
+        pt.TealOp(None, pt.Op.store, 2),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.int, 2),
+        pt.TealOp(None, pt.Op.int, 3),
+        pt.TealOp(None, pt.Op.callsub, subroutine),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     mainOps = [
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.callsub, subroutine),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.return_),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.int, 2),
+        pt.TealOp(None, pt.Op.int, 3),
+        pt.TealOp(None, pt.Op.callsub, subroutine),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.return_),
     ]
 
     subroutineMapping = {
@@ -963,31 +963,31 @@ def test_spillLocalSlotsDuringRecursion_recursive_many_args_no_return_v5():
 
     assert subroutineMapping == {
         None: [
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.int, 2),
-            TealOp(None, Op.int, 3),
-            TealOp(None, Op.callsub, subroutine),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.return_),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.int, 2),
+            pt.TealOp(None, pt.Op.int, 3),
+            pt.TealOp(None, pt.Op.callsub, subroutine),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.return_),
         ],
         subroutine: [
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.store, 1),
-            TealOp(None, Op.store, 2),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.int, 2),
-            TealOp(None, Op.int, 3),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.load, 1),
-            TealOp(None, Op.load, 2),
-            TealOp(None, Op.uncover, 5),
-            TealOp(None, Op.uncover, 5),
-            TealOp(None, Op.uncover, 5),
-            TealOp(None, Op.callsub, subroutine),
-            TealOp(None, Op.store, 2),
-            TealOp(None, Op.store, 1),
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.retsub),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.store, 1),
+            pt.TealOp(None, pt.Op.store, 2),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.int, 2),
+            pt.TealOp(None, pt.Op.int, 3),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.load, 1),
+            pt.TealOp(None, pt.Op.load, 2),
+            pt.TealOp(None, pt.Op.uncover, 5),
+            pt.TealOp(None, pt.Op.uncover, 5),
+            pt.TealOp(None, pt.Op.uncover, 5),
+            pt.TealOp(None, pt.Op.callsub, subroutine),
+            pt.TealOp(None, pt.Op.store, 2),
+            pt.TealOp(None, pt.Op.store, 1),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.retsub),
         ],
     }
 
@@ -996,25 +996,25 @@ def test_spillLocalSlotsDuringRecursion_recursive_many_args_return_v4():
     def subImpl(a1, a2, a3):
         return None
 
-    subroutine = SubroutineDefinition(subImpl, TealType.uint64)
+    subroutine = pt.SubroutineDefinition(subImpl, pt.TealType.uint64)
 
     subroutineOps = [
-        TealOp(None, Op.store, 0),
-        TealOp(None, Op.store, 1),
-        TealOp(None, Op.store, 2),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.callsub, subroutine),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.store, 0),
+        pt.TealOp(None, pt.Op.store, 1),
+        pt.TealOp(None, pt.Op.store, 2),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.int, 2),
+        pt.TealOp(None, pt.Op.int, 3),
+        pt.TealOp(None, pt.Op.callsub, subroutine),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     mainOps = [
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.callsub, subroutine),
-        TealOp(None, Op.return_),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.int, 2),
+        pt.TealOp(None, pt.Op.int, 3),
+        pt.TealOp(None, pt.Op.callsub, subroutine),
+        pt.TealOp(None, pt.Op.return_),
     ]
 
     subroutineMapping = {
@@ -1032,39 +1032,39 @@ def test_spillLocalSlotsDuringRecursion_recursive_many_args_return_v4():
 
     assert subroutineMapping == {
         None: [
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.int, 2),
-            TealOp(None, Op.int, 3),
-            TealOp(None, Op.callsub, subroutine),
-            TealOp(None, Op.return_),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.int, 2),
+            pt.TealOp(None, pt.Op.int, 3),
+            pt.TealOp(None, pt.Op.callsub, subroutine),
+            pt.TealOp(None, pt.Op.return_),
         ],
         subroutine: [
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.store, 1),
-            TealOp(None, Op.store, 2),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.int, 2),
-            TealOp(None, Op.int, 3),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.load, 1),
-            TealOp(None, Op.load, 2),
-            TealOp(None, Op.dig, 5),
-            TealOp(None, Op.dig, 5),
-            TealOp(None, Op.dig, 5),
-            TealOp(None, Op.callsub, subroutine),
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.store, 2),
-            TealOp(None, Op.store, 1),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.swap),
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.swap),
-            TealOp(None, Op.pop),
-            TealOp(None, Op.swap),
-            TealOp(None, Op.pop),
-            TealOp(None, Op.swap),
-            TealOp(None, Op.pop),
-            TealOp(None, Op.retsub),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.store, 1),
+            pt.TealOp(None, pt.Op.store, 2),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.int, 2),
+            pt.TealOp(None, pt.Op.int, 3),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.load, 1),
+            pt.TealOp(None, pt.Op.load, 2),
+            pt.TealOp(None, pt.Op.dig, 5),
+            pt.TealOp(None, pt.Op.dig, 5),
+            pt.TealOp(None, pt.Op.dig, 5),
+            pt.TealOp(None, pt.Op.callsub, subroutine),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.store, 2),
+            pt.TealOp(None, pt.Op.store, 1),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.swap),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.swap),
+            pt.TealOp(None, pt.Op.pop),
+            pt.TealOp(None, pt.Op.swap),
+            pt.TealOp(None, pt.Op.pop),
+            pt.TealOp(None, pt.Op.swap),
+            pt.TealOp(None, pt.Op.pop),
+            pt.TealOp(None, pt.Op.retsub),
         ],
     }
 
@@ -1073,25 +1073,25 @@ def test_spillLocalSlotsDuringRecursion_recursive_many_args_return_v5():
     def subImpl(a1, a2, a3):
         return None
 
-    subroutine = SubroutineDefinition(subImpl, TealType.uint64)
+    subroutine = pt.SubroutineDefinition(subImpl, pt.TealType.uint64)
 
     subroutineOps = [
-        TealOp(None, Op.store, 0),
-        TealOp(None, Op.store, 1),
-        TealOp(None, Op.store, 2),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.callsub, subroutine),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.store, 0),
+        pt.TealOp(None, pt.Op.store, 1),
+        pt.TealOp(None, pt.Op.store, 2),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.int, 2),
+        pt.TealOp(None, pt.Op.int, 3),
+        pt.TealOp(None, pt.Op.callsub, subroutine),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     mainOps = [
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.callsub, subroutine),
-        TealOp(None, Op.return_),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.int, 2),
+        pt.TealOp(None, pt.Op.int, 3),
+        pt.TealOp(None, pt.Op.callsub, subroutine),
+        pt.TealOp(None, pt.Op.return_),
     ]
 
     subroutineMapping = {
@@ -1109,31 +1109,31 @@ def test_spillLocalSlotsDuringRecursion_recursive_many_args_return_v5():
 
     assert subroutineMapping == {
         None: [
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.int, 2),
-            TealOp(None, Op.int, 3),
-            TealOp(None, Op.callsub, subroutine),
-            TealOp(None, Op.return_),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.int, 2),
+            pt.TealOp(None, pt.Op.int, 3),
+            pt.TealOp(None, pt.Op.callsub, subroutine),
+            pt.TealOp(None, pt.Op.return_),
         ],
         subroutine: [
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.store, 1),
-            TealOp(None, Op.store, 2),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.int, 2),
-            TealOp(None, Op.int, 3),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.load, 1),
-            TealOp(None, Op.load, 2),
-            TealOp(None, Op.uncover, 5),
-            TealOp(None, Op.uncover, 5),
-            TealOp(None, Op.uncover, 5),
-            TealOp(None, Op.callsub, subroutine),
-            TealOp(None, Op.cover, 3),
-            TealOp(None, Op.store, 2),
-            TealOp(None, Op.store, 1),
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.retsub),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.store, 1),
+            pt.TealOp(None, pt.Op.store, 2),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.int, 2),
+            pt.TealOp(None, pt.Op.int, 3),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.load, 1),
+            pt.TealOp(None, pt.Op.load, 2),
+            pt.TealOp(None, pt.Op.uncover, 5),
+            pt.TealOp(None, pt.Op.uncover, 5),
+            pt.TealOp(None, pt.Op.uncover, 5),
+            pt.TealOp(None, pt.Op.callsub, subroutine),
+            pt.TealOp(None, pt.Op.cover, 3),
+            pt.TealOp(None, pt.Op.store, 2),
+            pt.TealOp(None, pt.Op.store, 1),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.retsub),
         ],
     }
 
@@ -1142,25 +1142,25 @@ def test_spillLocalSlotsDuringRecursion_recursive_more_args_than_slots_v5():
     def subImpl(a1, a2, a3):
         return None
 
-    subroutine = SubroutineDefinition(subImpl, TealType.uint64)
+    subroutine = pt.SubroutineDefinition(subImpl, pt.TealType.uint64)
 
     subroutineOps = [
-        TealOp(None, Op.store, 0),
-        TealOp(None, Op.store, 1),
-        TealOp(None, Op.pop),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.callsub, subroutine),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.store, 0),
+        pt.TealOp(None, pt.Op.store, 1),
+        pt.TealOp(None, pt.Op.pop),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.int, 2),
+        pt.TealOp(None, pt.Op.int, 3),
+        pt.TealOp(None, pt.Op.callsub, subroutine),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     mainOps = [
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.callsub, subroutine),
-        TealOp(None, Op.return_),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.int, 2),
+        pt.TealOp(None, pt.Op.int, 3),
+        pt.TealOp(None, pt.Op.callsub, subroutine),
+        pt.TealOp(None, pt.Op.return_),
     ]
 
     subroutineMapping = {
@@ -1178,28 +1178,28 @@ def test_spillLocalSlotsDuringRecursion_recursive_more_args_than_slots_v5():
 
     assert subroutineMapping == {
         None: [
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.int, 2),
-            TealOp(None, Op.int, 3),
-            TealOp(None, Op.callsub, subroutine),
-            TealOp(None, Op.return_),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.int, 2),
+            pt.TealOp(None, pt.Op.int, 3),
+            pt.TealOp(None, pt.Op.callsub, subroutine),
+            pt.TealOp(None, pt.Op.return_),
         ],
         subroutine: [
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.store, 1),
-            TealOp(None, Op.pop),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.int, 2),
-            TealOp(None, Op.int, 3),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.cover, 3),
-            TealOp(None, Op.load, 1),
-            TealOp(None, Op.cover, 3),
-            TealOp(None, Op.callsub, subroutine),
-            TealOp(None, Op.cover, 2),
-            TealOp(None, Op.store, 1),
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.retsub),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.store, 1),
+            pt.TealOp(None, pt.Op.pop),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.int, 2),
+            pt.TealOp(None, pt.Op.int, 3),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.cover, 3),
+            pt.TealOp(None, pt.Op.load, 1),
+            pt.TealOp(None, pt.Op.cover, 3),
+            pt.TealOp(None, pt.Op.callsub, subroutine),
+            pt.TealOp(None, pt.Op.cover, 2),
+            pt.TealOp(None, pt.Op.store, 1),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.retsub),
         ],
     }
 
@@ -1208,27 +1208,27 @@ def test_spillLocalSlotsDuringRecursion_recursive_more_slots_than_args_v5():
     def subImpl(a1, a2, a3):
         return None
 
-    subroutine = SubroutineDefinition(subImpl, TealType.uint64)
+    subroutine = pt.SubroutineDefinition(subImpl, pt.TealType.uint64)
 
     subroutineOps = [
-        TealOp(None, Op.store, 0),
-        TealOp(None, Op.store, 1),
-        TealOp(None, Op.store, 2),
-        TealOp(None, Op.int, 10),
-        TealOp(None, Op.store, 3),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.callsub, subroutine),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.store, 0),
+        pt.TealOp(None, pt.Op.store, 1),
+        pt.TealOp(None, pt.Op.store, 2),
+        pt.TealOp(None, pt.Op.int, 10),
+        pt.TealOp(None, pt.Op.store, 3),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.int, 2),
+        pt.TealOp(None, pt.Op.int, 3),
+        pt.TealOp(None, pt.Op.callsub, subroutine),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     mainOps = [
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.callsub, subroutine),
-        TealOp(None, Op.return_),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.int, 2),
+        pt.TealOp(None, pt.Op.int, 3),
+        pt.TealOp(None, pt.Op.callsub, subroutine),
+        pt.TealOp(None, pt.Op.return_),
     ]
 
     subroutineMapping = {
@@ -1246,35 +1246,35 @@ def test_spillLocalSlotsDuringRecursion_recursive_more_slots_than_args_v5():
 
     assert subroutineMapping == {
         None: [
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.int, 2),
-            TealOp(None, Op.int, 3),
-            TealOp(None, Op.callsub, subroutine),
-            TealOp(None, Op.return_),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.int, 2),
+            pt.TealOp(None, pt.Op.int, 3),
+            pt.TealOp(None, pt.Op.callsub, subroutine),
+            pt.TealOp(None, pt.Op.return_),
         ],
         subroutine: [
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.store, 1),
-            TealOp(None, Op.store, 2),
-            TealOp(None, Op.int, 10),
-            TealOp(None, Op.store, 3),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.int, 2),
-            TealOp(None, Op.int, 3),
-            TealOp(None, Op.load, 0),
-            TealOp(None, Op.load, 1),
-            TealOp(None, Op.load, 2),
-            TealOp(None, Op.load, 3),
-            TealOp(None, Op.uncover, 6),
-            TealOp(None, Op.uncover, 6),
-            TealOp(None, Op.uncover, 6),
-            TealOp(None, Op.callsub, subroutine),
-            TealOp(None, Op.cover, 4),
-            TealOp(None, Op.store, 3),
-            TealOp(None, Op.store, 2),
-            TealOp(None, Op.store, 1),
-            TealOp(None, Op.store, 0),
-            TealOp(None, Op.retsub),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.store, 1),
+            pt.TealOp(None, pt.Op.store, 2),
+            pt.TealOp(None, pt.Op.int, 10),
+            pt.TealOp(None, pt.Op.store, 3),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.int, 2),
+            pt.TealOp(None, pt.Op.int, 3),
+            pt.TealOp(None, pt.Op.load, 0),
+            pt.TealOp(None, pt.Op.load, 1),
+            pt.TealOp(None, pt.Op.load, 2),
+            pt.TealOp(None, pt.Op.load, 3),
+            pt.TealOp(None, pt.Op.uncover, 6),
+            pt.TealOp(None, pt.Op.uncover, 6),
+            pt.TealOp(None, pt.Op.uncover, 6),
+            pt.TealOp(None, pt.Op.callsub, subroutine),
+            pt.TealOp(None, pt.Op.cover, 4),
+            pt.TealOp(None, pt.Op.store, 3),
+            pt.TealOp(None, pt.Op.store, 2),
+            pt.TealOp(None, pt.Op.store, 1),
+            pt.TealOp(None, pt.Op.store, 0),
+            pt.TealOp(None, pt.Op.retsub),
         ],
     }
 
@@ -1285,60 +1285,60 @@ def test_spillLocalSlotsDuringRecursion_recursive_with_scratchvar():
     def sub1Impl(a1):
         return None
 
-    def sub2Impl(a1, a2: ScratchVar):
+    def sub2Impl(a1, a2: pt.ScratchVar):
         return None
 
     def sub3Impl(a1, a2, a3):
         return None
 
-    subroutine1 = SubroutineDefinition(sub1Impl, TealType.uint64)
-    subroutine2 = SubroutineDefinition(sub2Impl, TealType.uint64)
-    subroutine3 = SubroutineDefinition(sub3Impl, TealType.none)
+    subroutine1 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+    subroutine2 = pt.SubroutineDefinition(sub2Impl, pt.TealType.uint64)
+    subroutine3 = pt.SubroutineDefinition(sub3Impl, pt.TealType.none)
 
-    subroutine1L1Label = LabelReference("l1")
+    subroutine1L1Label = pt.LabelReference("l1")
     subroutine1Ops = [
-        TealOp(None, Op.store, 0),
-        TealOp(None, Op.load, 0),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.eq),
-        TealOp(None, Op.bnz, subroutine1L1Label),
-        TealOp(None, Op.err),
-        TealLabel(None, subroutine1L1Label),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.callsub, subroutine3),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.store, 0),
+        pt.TealOp(None, pt.Op.load, 0),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.eq),
+        pt.TealOp(None, pt.Op.bnz, subroutine1L1Label),
+        pt.TealOp(None, pt.Op.err),
+        pt.TealLabel(None, subroutine1L1Label),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.callsub, subroutine3),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    subroutine2L1Label = LabelReference("l1")
+    subroutine2L1Label = pt.LabelReference("l1")
     subroutine2Ops = [
-        TealOp(None, Op.store, 1),
-        TealOp(None, Op.load, 1),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.eq),
-        TealOp(None, Op.bnz, subroutine2L1Label),
-        TealOp(None, Op.err),
-        TealLabel(None, subroutine2L1Label),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.store, 1),
+        pt.TealOp(None, pt.Op.load, 1),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.eq),
+        pt.TealOp(None, pt.Op.bnz, subroutine2L1Label),
+        pt.TealOp(None, pt.Op.err),
+        pt.TealLabel(None, subroutine2L1Label),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     subroutine3Ops = [
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    l1Label = LabelReference("l1")
+    l1Label = pt.LabelReference("l1")
     mainOps = [
-        TealOp(None, Op.txn, "Fee"),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.eq),
-        TealOp(None, Op.bz, l1Label),
-        TealOp(None, Op.int, 100),
-        TealOp(None, Op.callsub, subroutine1),
-        TealOp(None, Op.return_),
-        TealLabel(None, l1Label),
-        TealOp(None, Op.int, 101),
-        TealOp(None, Op.callsub, subroutine2),
-        TealOp(None, Op.return_),
+        pt.TealOp(None, pt.Op.txn, "Fee"),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.eq),
+        pt.TealOp(None, pt.Op.bz, l1Label),
+        pt.TealOp(None, pt.Op.int, 100),
+        pt.TealOp(None, pt.Op.callsub, subroutine1),
+        pt.TealOp(None, pt.Op.return_),
+        pt.TealLabel(None, l1Label),
+        pt.TealOp(None, pt.Op.int, 101),
+        pt.TealOp(None, pt.Op.callsub, subroutine2),
+        pt.TealOp(None, pt.Op.return_),
     ]
 
     subroutineMapping = {
@@ -1356,7 +1356,7 @@ def test_spillLocalSlotsDuringRecursion_recursive_with_scratchvar():
 
     localSlots = {None: set(), subroutine1: {0}, subroutine2: {1}, subroutine3: {}}
 
-    with pytest.raises(TealInputError) as tie:
+    with pytest.raises(pt.TealInputError) as tie:
         spillLocalSlotsDuringRecursion(
             5, subroutineMapping, subroutineGraph, localSlots
         )
@@ -1377,75 +1377,75 @@ def test_resolveSubroutines():
     def sub3Impl(a1, a2, a3):
         return None
 
-    subroutine1 = SubroutineDefinition(sub1Impl, TealType.uint64)
-    subroutine2 = SubroutineDefinition(sub2Impl, TealType.uint64)
-    subroutine3 = SubroutineDefinition(sub3Impl, TealType.none)
+    subroutine1 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+    subroutine2 = pt.SubroutineDefinition(sub2Impl, pt.TealType.uint64)
+    subroutine3 = pt.SubroutineDefinition(sub3Impl, pt.TealType.none)
 
-    subroutine1L1Label = LabelReference("l1")
+    subroutine1L1Label = pt.LabelReference("l1")
     subroutine1Ops = [
-        TealOp(None, Op.store, 0),
-        TealOp(None, Op.load, 0),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.eq),
-        TealOp(None, Op.bnz, subroutine1L1Label),
-        TealOp(None, Op.load, 0),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.minus),
-        TealOp(None, Op.load, 0),
-        TealOp(None, Op.dig, 1),
-        TealOp(None, Op.callsub, subroutine1),
-        TealOp(None, Op.swap),
-        TealOp(None, Op.store, 0),
-        TealOp(None, Op.swap),
-        TealOp(None, Op.pop),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.add),
-        TealOp(None, Op.retsub),
-        TealLabel(None, subroutine1L1Label),
-        TealOp(None, Op.load, 255),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.store, 0),
+        pt.TealOp(None, pt.Op.load, 0),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.eq),
+        pt.TealOp(None, pt.Op.bnz, subroutine1L1Label),
+        pt.TealOp(None, pt.Op.load, 0),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.minus),
+        pt.TealOp(None, pt.Op.load, 0),
+        pt.TealOp(None, pt.Op.dig, 1),
+        pt.TealOp(None, pt.Op.callsub, subroutine1),
+        pt.TealOp(None, pt.Op.swap),
+        pt.TealOp(None, pt.Op.store, 0),
+        pt.TealOp(None, pt.Op.swap),
+        pt.TealOp(None, pt.Op.pop),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.add),
+        pt.TealOp(None, pt.Op.retsub),
+        pt.TealLabel(None, subroutine1L1Label),
+        pt.TealOp(None, pt.Op.load, 255),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    subroutine2L1Label = LabelReference("l1")
+    subroutine2L1Label = pt.LabelReference("l1")
     subroutine2Ops = [
-        TealOp(None, Op.store, 1),
-        TealOp(None, Op.load, 1),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.eq),
-        TealOp(None, Op.bnz, subroutine2L1Label),
-        TealOp(None, Op.load, 0),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.minus),
-        TealOp(None, Op.callsub, subroutine1),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.add),
-        TealOp(None, Op.retsub),
-        TealLabel(None, subroutine2L1Label),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.store, 1),
+        pt.TealOp(None, pt.Op.load, 1),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.eq),
+        pt.TealOp(None, pt.Op.bnz, subroutine2L1Label),
+        pt.TealOp(None, pt.Op.load, 0),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.minus),
+        pt.TealOp(None, pt.Op.callsub, subroutine1),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.add),
+        pt.TealOp(None, pt.Op.retsub),
+        pt.TealLabel(None, subroutine2L1Label),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     subroutine3Ops = [
-        TealOp(None, Op.callsub, subroutine3),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.callsub, subroutine3),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    l1Label = LabelReference("l1")
+    l1Label = pt.LabelReference("l1")
     mainOps = [
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.store, 255),
-        TealOp(None, Op.txn, "Fee"),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.eq),
-        TealOp(None, Op.bz, l1Label),
-        TealOp(None, Op.int, 100),
-        TealOp(None, Op.callsub, subroutine1),
-        TealOp(None, Op.return_),
-        TealLabel(None, l1Label),
-        TealOp(None, Op.int, 101),
-        TealOp(None, Op.callsub, subroutine2),
-        TealOp(None, Op.return_),
-        TealOp(None, Op.callsub, subroutine3),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.store, 255),
+        pt.TealOp(None, pt.Op.txn, "Fee"),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.eq),
+        pt.TealOp(None, pt.Op.bz, l1Label),
+        pt.TealOp(None, pt.Op.int, 100),
+        pt.TealOp(None, pt.Op.callsub, subroutine1),
+        pt.TealOp(None, pt.Op.return_),
+        pt.TealLabel(None, l1Label),
+        pt.TealOp(None, pt.Op.int, 101),
+        pt.TealOp(None, pt.Op.callsub, subroutine2),
+        pt.TealOp(None, pt.Op.return_),
+        pt.TealOp(None, pt.Op.callsub, subroutine3),
     ]
 
     subroutineMapping = {
@@ -1464,65 +1464,65 @@ def test_resolveSubroutines():
     assert actual == expected
 
     assert mainOps == [
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.store, 255),
-        TealOp(None, Op.txn, "Fee"),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.eq),
-        TealOp(None, Op.bz, l1Label),
-        TealOp(None, Op.int, 100),
-        TealOp(None, Op.callsub, expected[subroutine1]),
-        TealOp(None, Op.return_),
-        TealLabel(None, l1Label),
-        TealOp(None, Op.int, 101),
-        TealOp(None, Op.callsub, expected[subroutine2]),
-        TealOp(None, Op.return_),
-        TealOp(None, Op.callsub, expected[subroutine3]),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.store, 255),
+        pt.TealOp(None, pt.Op.txn, "Fee"),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.eq),
+        pt.TealOp(None, pt.Op.bz, l1Label),
+        pt.TealOp(None, pt.Op.int, 100),
+        pt.TealOp(None, pt.Op.callsub, expected[subroutine1]),
+        pt.TealOp(None, pt.Op.return_),
+        pt.TealLabel(None, l1Label),
+        pt.TealOp(None, pt.Op.int, 101),
+        pt.TealOp(None, pt.Op.callsub, expected[subroutine2]),
+        pt.TealOp(None, pt.Op.return_),
+        pt.TealOp(None, pt.Op.callsub, expected[subroutine3]),
     ]
 
     assert subroutine1Ops == [
-        TealOp(None, Op.store, 0),
-        TealOp(None, Op.load, 0),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.eq),
-        TealOp(None, Op.bnz, subroutine1L1Label),
-        TealOp(None, Op.load, 0),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.minus),
-        TealOp(None, Op.load, 0),
-        TealOp(None, Op.dig, 1),
-        TealOp(None, Op.callsub, expected[subroutine1]),
-        TealOp(None, Op.swap),
-        TealOp(None, Op.store, 0),
-        TealOp(None, Op.swap),
-        TealOp(None, Op.pop),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.add),
-        TealOp(None, Op.retsub),
-        TealLabel(None, subroutine1L1Label),
-        TealOp(None, Op.load, 255),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.store, 0),
+        pt.TealOp(None, pt.Op.load, 0),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.eq),
+        pt.TealOp(None, pt.Op.bnz, subroutine1L1Label),
+        pt.TealOp(None, pt.Op.load, 0),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.minus),
+        pt.TealOp(None, pt.Op.load, 0),
+        pt.TealOp(None, pt.Op.dig, 1),
+        pt.TealOp(None, pt.Op.callsub, expected[subroutine1]),
+        pt.TealOp(None, pt.Op.swap),
+        pt.TealOp(None, pt.Op.store, 0),
+        pt.TealOp(None, pt.Op.swap),
+        pt.TealOp(None, pt.Op.pop),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.add),
+        pt.TealOp(None, pt.Op.retsub),
+        pt.TealLabel(None, subroutine1L1Label),
+        pt.TealOp(None, pt.Op.load, 255),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     assert subroutine2Ops == [
-        TealOp(None, Op.store, 1),
-        TealOp(None, Op.load, 1),
-        TealOp(None, Op.int, 0),
-        TealOp(None, Op.eq),
-        TealOp(None, Op.bnz, subroutine2L1Label),
-        TealOp(None, Op.load, 0),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.minus),
-        TealOp(None, Op.callsub, expected[subroutine1]),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.add),
-        TealOp(None, Op.retsub),
-        TealLabel(None, subroutine2L1Label),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.store, 1),
+        pt.TealOp(None, pt.Op.load, 1),
+        pt.TealOp(None, pt.Op.int, 0),
+        pt.TealOp(None, pt.Op.eq),
+        pt.TealOp(None, pt.Op.bnz, subroutine2L1Label),
+        pt.TealOp(None, pt.Op.load, 0),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.minus),
+        pt.TealOp(None, pt.Op.callsub, expected[subroutine1]),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.add),
+        pt.TealOp(None, pt.Op.retsub),
+        pt.TealLabel(None, subroutine2L1Label),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     assert subroutine3Ops == [
-        TealOp(None, Op.callsub, expected[subroutine3]),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.callsub, expected[subroutine3]),
+        pt.TealOp(None, pt.Op.retsub),
     ]

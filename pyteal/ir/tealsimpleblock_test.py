@@ -1,28 +1,28 @@
-from .. import *
+import pyteal as pt
 
 
 def test_constructor():
-    block1 = TealSimpleBlock([])
+    block1 = pt.TealSimpleBlock([])
     assert block1.ops == []
     assert block1.nextBlock is None
 
-    block2 = TealSimpleBlock([TealOp(None, Op.int, 1)])
-    assert block2.ops == [TealOp(None, Op.int, 1)]
+    block2 = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.int, 1)])
+    assert block2.ops == [pt.TealOp(None, pt.Op.int, 1)]
     assert block2.nextBlock is None
 
 
 def test_next_block():
-    block = TealSimpleBlock([])
-    block.setNextBlock(TealSimpleBlock([TealOp(None, Op.substring3)]))
-    assert block.nextBlock == TealSimpleBlock([TealOp(None, Op.substring3)])
+    block = pt.TealSimpleBlock([])
+    block.setNextBlock(pt.TealSimpleBlock([pt.TealOp(None, pt.Op.substring3)]))
+    assert block.nextBlock == pt.TealSimpleBlock([pt.TealOp(None, pt.Op.substring3)])
 
 
 def test_outgoing():
-    emptyBlock = TealSimpleBlock([])
+    emptyBlock = pt.TealSimpleBlock([])
     assert emptyBlock.getOutgoing() == []
 
-    block = TealSimpleBlock([])
-    block.setNextBlock(TealSimpleBlock([TealOp(None, Op.byte, '"nextBlock"')]))
+    block = pt.TealSimpleBlock([])
+    block.setNextBlock(pt.TealSimpleBlock([pt.TealOp(None, pt.Op.byte, '"nextBlock"')]))
     assert block.getOutgoing() == [
-        TealSimpleBlock([TealOp(None, Op.byte, '"nextBlock"')])
+        pt.TealSimpleBlock([pt.TealOp(None, pt.Op.byte, '"nextBlock"')])
     ]

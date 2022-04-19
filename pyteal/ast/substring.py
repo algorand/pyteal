@@ -1,5 +1,4 @@
-from enum import Enum
-from typing import cast, Tuple, TYPE_CHECKING
+from typing import cast, TYPE_CHECKING
 
 from ..types import TealType, require_type
 from ..errors import TealCompileError, verifyTealVersion

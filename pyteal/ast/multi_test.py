@@ -1,48 +1,50 @@
 from typing import List
 
-from .. import *
+import pyteal as pt
 
-options = CompileOptions()
+options = pt.CompileOptions()
 
 
-def __test_single(expr: MultiValue):
+def __test_single(expr: pt.MultiValue):
     assert expr.output_slots[0] != expr.output_slots[1]
 
-    with TealComponent.Context.ignoreExprEquality():
-        assert expr.output_slots[0].load().__teal__(options) == ScratchLoad(
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert expr.output_slots[0].load().__teal__(options) == pt.ScratchLoad(
             expr.output_slots[0]
         ).__teal__(options)
 
-    with TealComponent.Context.ignoreExprEquality():
-        assert expr.output_slots[1].load().__teal__(options) == ScratchLoad(
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert expr.output_slots[1].load().__teal__(options) == pt.ScratchLoad(
             expr.output_slots[1]
         ).__teal__(options)
 
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
 
 
-def __test_single_conditional(expr: MultiValue, op, args: List[Expr], iargs, reducer):
+def __test_single_conditional(
+    expr: pt.MultiValue, op, args: List[pt.Expr], iargs, reducer
+):
     __test_single(expr)
 
-    expected_call = TealSimpleBlock(
+    expected_call = pt.TealSimpleBlock(
         [
-            TealOp(expr, op, *iargs),
-            TealOp(expr.output_slots[1].store(), Op.store, expr.output_slots[1]),
-            TealOp(expr.output_slots[0].store(), Op.store, expr.output_slots[0]),
+            pt.TealOp(expr, op, *iargs),
+            pt.TealOp(expr.output_slots[1].store(), pt.Op.store, expr.output_slots[1]),
+            pt.TealOp(expr.output_slots[0].store(), pt.Op.store, expr.output_slots[0]),
         ]
     )
 
     ifExpr = (
-        If(expr.output_slots[1].load())
+        pt.If(expr.output_slots[1].load())
         .Then(expr.output_slots[0].load())
-        .Else(Bytes("None"))
+        .Else(pt.Bytes("None"))
     )
     ifBlockStart, _ = ifExpr.__teal__(options)
 
     expected_call.setNextBlock(ifBlockStart)
 
     if len(args) == 0:
-        expected: TealBlock = expected_call
+        expected: pt.TealBlock = expected_call
     elif len(args) == 1:
         expected, after_arg = args[0].__teal__(options)
         after_arg.setNextBlock(expected_call)
@@ -53,34 +55,36 @@ def __test_single_conditional(expr: MultiValue, op, args: List[Expr], iargs, red
         after_arg_2.setNextBlock(expected_call)
 
     expected.addIncoming()
-    expected = TealBlock.NormalizeBlocks(expected)
+    expected = pt.TealBlock.NormalizeBlocks(expected)
 
     actual, _ = expr.outputReducer(reducer).__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
 
-def __test_single_assert(expr: MultiValue, op, args: List[Expr], iargs, reducer):
+def __test_single_assert(expr: pt.MultiValue, op, args: List[pt.Expr], iargs, reducer):
     __test_single(expr)
 
-    expected_call = TealSimpleBlock(
+    expected_call = pt.TealSimpleBlock(
         [
-            TealOp(expr, op, *iargs),
-            TealOp(expr.output_slots[1].store(), Op.store, expr.output_slots[1]),
-            TealOp(expr.output_slots[0].store(), Op.store, expr.output_slots[0]),
+            pt.TealOp(expr, op, *iargs),
+            pt.TealOp(expr.output_slots[1].store(), pt.Op.store, expr.output_slots[1]),
+            pt.TealOp(expr.output_slots[0].store(), pt.Op.store, expr.output_slots[0]),
         ]
     )
 
-    assertExpr = Seq(Assert(expr.output_slots[1].load()), expr.output_slots[0].load())
+    assertExpr = pt.Seq(
+        pt.Assert(expr.output_slots[1].load()), expr.output_slots[0].load()
+    )
     assertBlockStart, _ = assertExpr.__teal__(options)
 
     expected_call.setNextBlock(assertBlockStart)
 
     if len(args) == 0:
-        expected: TealBlock = expected_call
+        expected: pt.TealBlock = expected_call
     elif len(args) == 1:
         expected, after_arg = args[0].__teal__(options)
         after_arg.setNextBlock(expected_call)
@@ -91,30 +95,30 @@ def __test_single_assert(expr: MultiValue, op, args: List[Expr], iargs, reducer)
         after_arg_2.setNextBlock(expected_call)
 
     expected.addIncoming()
-    expected = TealBlock.NormalizeBlocks(expected)
+    expected = pt.TealBlock.NormalizeBlocks(expected)
 
     actual, _ = expr.outputReducer(reducer).__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
 
 def __test_single_with_vars(
-    expr: MultiValue, op, args: List[Expr], iargs, var1, var2, reducer
+    expr: pt.MultiValue, op, args: List[pt.Expr], iargs, var1, var2, reducer
 ):
     __test_single(expr)
 
-    expected_call = TealSimpleBlock(
+    expected_call = pt.TealSimpleBlock(
         [
-            TealOp(expr, op, *iargs),
-            TealOp(expr.output_slots[1].store(), Op.store, expr.output_slots[1]),
-            TealOp(expr.output_slots[0].store(), Op.store, expr.output_slots[0]),
+            pt.TealOp(expr, op, *iargs),
+            pt.TealOp(expr.output_slots[1].store(), pt.Op.store, expr.output_slots[1]),
+            pt.TealOp(expr.output_slots[0].store(), pt.Op.store, expr.output_slots[0]),
         ]
     )
 
-    varExpr = Seq(
+    varExpr = pt.Seq(
         var1.store(expr.output_slots[1].load()), var2.store(expr.output_slots[0].load())
     )
     varBlockStart, _ = varExpr.__teal__(options)
@@ -122,7 +126,7 @@ def __test_single_with_vars(
     expected_call.setNextBlock(varBlockStart)
 
     if len(args) == 0:
-        expected: TealBlock = expected_call
+        expected: pt.TealBlock = expected_call
     elif len(args) == 1:
         expected, after_arg = args[0].__teal__(options)
         after_arg.setNextBlock(expected_call)
@@ -133,54 +137,56 @@ def __test_single_with_vars(
         after_arg_2.setNextBlock(expected_call)
 
     expected.addIncoming()
-    expected = TealBlock.NormalizeBlocks(expected)
+    expected = pt.TealBlock.NormalizeBlocks(expected)
 
     actual, _ = expr.outputReducer(reducer).__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
 
 def test_multi_value():
     ops = (
-        Op.app_global_get_ex,
-        Op.app_local_get_ex,
-        Op.asset_holding_get,
-        Op.asset_params_get,
+        pt.Op.app_global_get_ex,
+        pt.Op.app_local_get_ex,
+        pt.Op.asset_holding_get,
+        pt.Op.asset_params_get,
     )
-    types = (TealType.uint64, TealType.bytes, TealType.anytype)
+    types = (pt.TealType.uint64, pt.TealType.bytes, pt.TealType.anytype)
     immedate_argv = ([], ["AssetFrozen"])
-    argv = ([], [Int(0)], [Int(1), Int(2)])
+    argv = ([], [pt.Int(0)], [pt.Int(1), pt.Int(2)])
 
     for op in ops:
         for type in types:
             for iargs in immedate_argv:
                 for args in argv:
                     reducer = (
-                        lambda value, hasValue: If(hasValue)
+                        lambda value, hasValue: pt.If(hasValue)
                         .Then(value)
-                        .Else(Bytes("None"))
+                        .Else(pt.Bytes("None"))
                     )
-                    expr = MultiValue(
-                        op, [type, TealType.uint64], immediate_args=iargs, args=args
+                    expr = pt.MultiValue(
+                        op, [type, pt.TealType.uint64], immediate_args=iargs, args=args
                     )
                     __test_single_conditional(expr, op, args, iargs, reducer)
 
-                    reducer = lambda value, hasValue: Seq(Assert(hasValue), value)
-                    expr = MultiValue(
-                        op, [type, TealType.uint64], immediate_args=iargs, args=args
+                    reducer = lambda value, hasValue: pt.Seq(  # noqa: E731
+                        pt.Assert(hasValue), value
+                    )
+                    expr = pt.MultiValue(
+                        op, [type, pt.TealType.uint64], immediate_args=iargs, args=args
                     )
                     __test_single_assert(expr, op, args, iargs, reducer)
 
-                    hasValueVar = ScratchVar(TealType.uint64)
-                    valueVar = ScratchVar(type)
-                    reducer = lambda value, hasValue: Seq(
+                    hasValueVar = pt.ScratchVar(pt.TealType.uint64)
+                    valueVar = pt.ScratchVar(type)
+                    reducer = lambda value, hasValue: pt.Seq(  # noqa: E731
                         hasValueVar.store(hasValue), valueVar.store(value)
                     )
-                    expr = MultiValue(
-                        op, [type, TealType.uint64], immediate_args=iargs, args=args
+                    expr = pt.MultiValue(
+                        op, [type, pt.TealType.uint64], immediate_args=iargs, args=args
                     )
                     __test_single_with_vars(
                         expr, op, args, iargs, hasValueVar, valueVar, reducer

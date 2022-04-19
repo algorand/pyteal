@@ -1,173 +1,170 @@
 import pytest
 
-from .. import *
+import pyteal as pt
 
-# this is not necessary but mypy complains if it's not included
-from .. import CompileOptions
-
-teal2Options = CompileOptions(version=2)
-teal3Options = CompileOptions(version=3)
-teal4Options = CompileOptions(version=4)
-teal5Options = CompileOptions(version=5)
-teal6Options = CompileOptions(version=6)
+teal2Options = pt.CompileOptions(version=2)
+teal3Options = pt.CompileOptions(version=3)
+teal4Options = pt.CompileOptions(version=4)
+teal5Options = pt.CompileOptions(version=5)
+teal6Options = pt.CompileOptions(version=6)
 
 
 def test_ed25519verify():
-    args = [Bytes("data"), Bytes("sig"), Bytes("key")]
-    expr = Ed25519Verify(args[0], args[1], args[2])
-    assert expr.type_of() == TealType.uint64
+    args = [pt.Bytes("data"), pt.Bytes("sig"), pt.Bytes("key")]
+    expr = pt.Ed25519Verify(args[0], args[1], args[2])
+    assert expr.type_of() == pt.TealType.uint64
 
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(args[0], Op.byte, '"data"'),
-            TealOp(args[1], Op.byte, '"sig"'),
-            TealOp(args[2], Op.byte, '"key"'),
-            TealOp(expr, Op.ed25519verify),
+            pt.TealOp(args[0], pt.Op.byte, '"data"'),
+            pt.TealOp(args[1], pt.Op.byte, '"sig"'),
+            pt.TealOp(args[2], pt.Op.byte, '"key"'),
+            pt.TealOp(expr, pt.Op.ed25519verify),
         ]
     )
 
     actual, _ = expr.__teal__(teal2Options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
 
 def test_ed25519verify_invalid():
-    with pytest.raises(TealTypeError):
-        Ed25519Verify(Int(0), Bytes("sig"), Bytes("key"))
+    with pytest.raises(pt.TealTypeError):
+        pt.Ed25519Verify(pt.Int(0), pt.Bytes("sig"), pt.Bytes("key"))
 
-    with pytest.raises(TealTypeError):
-        Ed25519Verify(Bytes("data"), Int(0), Bytes("key"))
+    with pytest.raises(pt.TealTypeError):
+        pt.Ed25519Verify(pt.Bytes("data"), pt.Int(0), pt.Bytes("key"))
 
-    with pytest.raises(TealTypeError):
-        Ed25519Verify(Bytes("data"), Bytes("sig"), Int(0))
+    with pytest.raises(pt.TealTypeError):
+        pt.Ed25519Verify(pt.Bytes("data"), pt.Bytes("sig"), pt.Int(0))
 
 
 def test_set_bit_int():
-    args = [Int(0), Int(2), Int(1)]
-    expr = SetBit(args[0], args[1], args[2])
-    assert expr.type_of() == TealType.uint64
+    args = [pt.Int(0), pt.Int(2), pt.Int(1)]
+    expr = pt.SetBit(args[0], args[1], args[2])
+    assert expr.type_of() == pt.TealType.uint64
 
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(args[0], Op.int, 0),
-            TealOp(args[1], Op.int, 2),
-            TealOp(args[2], Op.int, 1),
-            TealOp(expr, Op.setbit),
+            pt.TealOp(args[0], pt.Op.int, 0),
+            pt.TealOp(args[1], pt.Op.int, 2),
+            pt.TealOp(args[2], pt.Op.int, 1),
+            pt.TealOp(expr, pt.Op.setbit),
         ]
     )
 
     actual, _ = expr.__teal__(teal3Options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         expr.__teal__(teal2Options)
 
 
 def test_set_bit_bytes():
-    args = [Bytes("base16", "0x0000"), Int(0), Int(1)]
-    expr = SetBit(args[0], args[1], args[2])
-    assert expr.type_of() == TealType.bytes
+    args = [pt.Bytes("base16", "0x0000"), pt.Int(0), pt.Int(1)]
+    expr = pt.SetBit(args[0], args[1], args[2])
+    assert expr.type_of() == pt.TealType.bytes
 
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(args[0], Op.byte, "0x0000"),
-            TealOp(args[1], Op.int, 0),
-            TealOp(args[2], Op.int, 1),
-            TealOp(expr, Op.setbit),
+            pt.TealOp(args[0], pt.Op.byte, "0x0000"),
+            pt.TealOp(args[1], pt.Op.int, 0),
+            pt.TealOp(args[2], pt.Op.int, 1),
+            pt.TealOp(expr, pt.Op.setbit),
         ]
     )
 
     actual, _ = expr.__teal__(teal3Options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         expr.__teal__(teal2Options)
 
 
 def test_set_bit_invalid():
-    with pytest.raises(TealTypeError):
-        SetBit(Int(3), Bytes("index"), Int(1))
+    with pytest.raises(pt.TealTypeError):
+        pt.SetBit(pt.Int(3), pt.Bytes("index"), pt.Int(1))
 
-    with pytest.raises(TealTypeError):
-        SetBit(Int(3), Int(0), Bytes("one"))
+    with pytest.raises(pt.TealTypeError):
+        pt.SetBit(pt.Int(3), pt.Int(0), pt.Bytes("one"))
 
-    with pytest.raises(TealTypeError):
-        SetBit(Bytes("base16", "0xFF"), Bytes("index"), Int(1))
+    with pytest.raises(pt.TealTypeError):
+        pt.SetBit(pt.Bytes("base16", "0xFF"), pt.Bytes("index"), pt.Int(1))
 
-    with pytest.raises(TealTypeError):
-        SetBit(Bytes("base16", "0xFF"), Int(0), Bytes("one"))
+    with pytest.raises(pt.TealTypeError):
+        pt.SetBit(pt.Bytes("base16", "0xFF"), pt.Int(0), pt.Bytes("one"))
 
 
 def test_set_byte():
-    args = [Bytes("base16", "0xFF"), Int(0), Int(3)]
-    expr = SetByte(args[0], args[1], args[2])
-    assert expr.type_of() == TealType.bytes
+    args = [pt.Bytes("base16", "0xFF"), pt.Int(0), pt.Int(3)]
+    expr = pt.SetByte(args[0], args[1], args[2])
+    assert expr.type_of() == pt.TealType.bytes
 
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(args[0], Op.byte, "0xFF"),
-            TealOp(args[1], Op.int, 0),
-            TealOp(args[2], Op.int, 3),
-            TealOp(expr, Op.setbyte),
+            pt.TealOp(args[0], pt.Op.byte, "0xFF"),
+            pt.TealOp(args[1], pt.Op.int, 0),
+            pt.TealOp(args[2], pt.Op.int, 3),
+            pt.TealOp(expr, pt.Op.setbyte),
         ]
     )
 
     actual, _ = expr.__teal__(teal3Options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         expr.__teal__(teal2Options)
 
 
 def test_set_byte_invalid():
-    with pytest.raises(TealTypeError):
-        SetByte(Int(3), Int(0), Int(1))
+    with pytest.raises(pt.TealTypeError):
+        pt.SetByte(pt.Int(3), pt.Int(0), pt.Int(1))
 
-    with pytest.raises(TealTypeError):
-        SetByte(Bytes("base16", "0xFF"), Bytes("index"), Int(1))
+    with pytest.raises(pt.TealTypeError):
+        pt.SetByte(pt.Bytes("base16", "0xFF"), pt.Bytes("index"), pt.Int(1))
 
-    with pytest.raises(TealTypeError):
-        SetByte(Bytes("base16", "0xFF"), Int(0), Bytes("one"))
+    with pytest.raises(pt.TealTypeError):
+        pt.SetByte(pt.Bytes("base16", "0xFF"), pt.Int(0), pt.Bytes("one"))
 
 
 def test_divw():
-    args = [Int(0), Int(90), Int(30)]
-    expr = Divw(args[0], args[1], args[2])
-    assert expr.type_of() == TealType.uint64
+    args = [pt.Int(0), pt.Int(90), pt.Int(30)]
+    expr = pt.Divw(args[0], args[1], args[2])
+    assert expr.type_of() == pt.TealType.uint64
 
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(args[0], Op.int, args[0].value),
-            TealOp(args[1], Op.int, args[1].value),
-            TealOp(args[2], Op.int, args[2].value),
-            TealOp(expr, Op.divw),
+            pt.TealOp(args[0], pt.Op.int, args[0].value),
+            pt.TealOp(args[1], pt.Op.int, args[1].value),
+            pt.TealOp(args[2], pt.Op.int, args[2].value),
+            pt.TealOp(expr, pt.Op.divw),
         ]
     )
 
     actual, _ = expr.__teal__(teal6Options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
 
 def test_divw_invalid():
-    with pytest.raises(TealTypeError):
-        Divw(Bytes("10"), Int(0), Int(1))
+    with pytest.raises(pt.TealTypeError):
+        pt.Divw(pt.Bytes("10"), pt.Int(0), pt.Int(1))
 
-    with pytest.raises(TealTypeError):
-        Divw(Int(10), Bytes("0"), Int(1))
+    with pytest.raises(pt.TealTypeError):
+        pt.Divw(pt.Int(10), pt.Bytes("0"), pt.Int(1))
 
-    with pytest.raises(TealTypeError):
-        Divw(Int(10), Int(0), Bytes("1"))
+    with pytest.raises(pt.TealTypeError):
+        pt.Divw(pt.Int(10), pt.Int(0), pt.Bytes("1"))

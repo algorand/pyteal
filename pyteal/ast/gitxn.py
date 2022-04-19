@@ -6,7 +6,6 @@ from ..errors import TealInputError, verifyFieldVersion, verifyTealVersion
 from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
 from .txn import TxnExpr, TxnField, TxnObject, TxnaExpr
-from ..types import require_type, TealType
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions

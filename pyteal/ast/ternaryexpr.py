@@ -4,8 +4,6 @@ from ..types import TealType, require_type
 from ..errors import verifyTealVersion
 from ..ir import TealOp, Op, TealBlock
 from .expr import Expr
-from .int import Int
-from .unaryexpr import Len
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
