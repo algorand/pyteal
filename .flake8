@@ -24,3 +24,7 @@ per-file-ignores =
     pyteal/__init__.py:                             F401, F403
     pyteal/ir/ops.py:                               E221
     tests/module_test.py:                           F401, F403
+    tests/*.py:                                     I252
+
+# from flake8-tidy-imports
+ban-relative-imports = true
