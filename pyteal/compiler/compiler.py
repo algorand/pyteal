@@ -1,6 +1,6 @@
 from typing import List, Tuple, Set, Dict, Optional, cast
 
-from .optimizer.optimizer import OptimizeOptions, apply_global_optimizations
+from .optimizer import OptimizeOptions, apply_global_optimizations
 
 from ..types import TealType
 from ..ast import (
