@@ -32,6 +32,7 @@ class OpUpMode(Enum):
 
 
 ON_CALL_APP = Bytes("base16", "06810143")  # v6 pyteal program "Int(1)"
+MIN_TXN_FEE = Int(1000)
 
 
 class OpUp:
@@ -101,7 +102,7 @@ class OpUp:
         )
 
     def _ensure_budget_expr(self, required_budget: Expr) -> Expr:
-        return While(Global.opcode_budget() < required_budget).Do(
+        return While(required_budget < Global.opcode_budget()).Do(
             Seq(
                 InnerTxnBuilder.Begin(),
                 InnerTxnBuilder.SetFields(
@@ -120,7 +121,7 @@ class OpUp:
 
         buffered_budget = required_budget + self.buffer
         if self.mode == OpUpMode.OnCall:
-            return If(Global.opcode_budget() < buffered_budget).Then(
+            return If(buffered_budget < Global.opcode_budget()).Then(
                 Seq(
                     self._create_app(),
                     self._ensure_budget_expr(buffered_budget),
@@ -132,7 +133,7 @@ class OpUp:
 
     def _maximize_budget_expr(self, fee: Expr) -> Expr:
         i = ScratchVar(TealType.uint64)
-        n = fee / Int(1000)
+        n = fee / MIN_TXN_FEE
         return For(i.store(Int(0)), i.load() < n, i.store(i.load() + Int(1))).Do(
             Seq(
                 InnerTxnBuilder.Begin(),
