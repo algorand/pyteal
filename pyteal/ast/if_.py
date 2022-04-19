@@ -1,12 +1,12 @@
 from typing import TYPE_CHECKING
 
-from ..errors import TealCompileError, TealInputError
-from ..types import TealType, require_type
-from ..ir import TealSimpleBlock, TealConditionalBlock
-from .expr import Expr
+from pyteal.errors import TealCompileError, TealInputError
+from pyteal.types import TealType, require_type
+from pyteal.ir import TealSimpleBlock, TealConditionalBlock
+from pyteal.ast.expr import Expr
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class If(Expr):

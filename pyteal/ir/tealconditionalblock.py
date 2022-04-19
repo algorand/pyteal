@@ -1,7 +1,7 @@
 from typing import Optional, List
 
-from .tealop import TealOp
-from .tealblock import TealBlock
+from pyteal.ir.tealop import TealOp
+from pyteal.ir.tealblock import TealBlock
 
 
 class TealConditionalBlock(TealBlock):

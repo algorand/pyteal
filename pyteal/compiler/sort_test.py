@@ -1,6 +1,6 @@
 import pyteal as pt
 
-from .sort import sortBlocks
+from pyteal.compiler.sort import sortBlocks
 
 
 def test_sort_single():

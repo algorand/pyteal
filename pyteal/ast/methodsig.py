@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING
 
-from ..errors import TealInputError
-from ..types import TealType
-from ..ir import TealOp, Op, TealBlock
+from pyteal.errors import TealInputError
+from pyteal.types import TealType
+from pyteal.ir import TealOp, Op, TealBlock
 
-from .leafexpr import LeafExpr
+from pyteal.ast.leafexpr import LeafExpr
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class MethodSignature(LeafExpr):

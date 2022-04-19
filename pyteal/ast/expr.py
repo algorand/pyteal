@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 from typing import Tuple, List, TYPE_CHECKING
 
-from ..types import TealType
-from ..ir import TealBlock, TealSimpleBlock
+from pyteal.types import TealType
+from pyteal.ir import TealBlock, TealSimpleBlock
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class Expr(ABC):
@@ -40,92 +40,92 @@ class Expr(ABC):
         pass
 
     def __lt__(self, other):
-        from .binaryexpr import Lt
+        from pyteal.ast.binaryexpr import Lt
 
         return Lt(self, other)
 
     def __gt__(self, other):
-        from .binaryexpr import Gt
+        from pyteal.ast.binaryexpr import Gt
 
         return Gt(self, other)
 
     def __le__(self, other):
-        from .binaryexpr import Le
+        from pyteal.ast.binaryexpr import Le
 
         return Le(self, other)
 
     def __ge__(self, other):
-        from .binaryexpr import Ge
+        from pyteal.ast.binaryexpr import Ge
 
         return Ge(self, other)
 
     def __eq__(self, other):
-        from .binaryexpr import Eq
+        from pyteal.ast.binaryexpr import Eq
 
         return Eq(self, other)
 
     def __ne__(self, other):
-        from .binaryexpr import Neq
+        from pyteal.ast.binaryexpr import Neq
 
         return Neq(self, other)
 
     def __add__(self, other):
-        from .binaryexpr import Add
+        from pyteal.ast.binaryexpr import Add
 
         return Add(self, other)
 
     def __sub__(self, other):
-        from .binaryexpr import Minus
+        from pyteal.ast.binaryexpr import Minus
 
         return Minus(self, other)
 
     def __mul__(self, other):
-        from .binaryexpr import Mul
+        from pyteal.ast.binaryexpr import Mul
 
         return Mul(self, other)
 
     def __truediv__(self, other):
-        from .binaryexpr import Div
+        from pyteal.ast.binaryexpr import Div
 
         return Div(self, other)
 
     def __mod__(self, other):
-        from .binaryexpr import Mod
+        from pyteal.ast.binaryexpr import Mod
 
         return Mod(self, other)
 
     def __pow__(self, other):
-        from .binaryexpr import Exp
+        from pyteal.ast.binaryexpr import Exp
 
         return Exp(self, other)
 
     def __invert__(self):
-        from .unaryexpr import BitwiseNot
+        from pyteal.ast.unaryexpr import BitwiseNot
 
         return BitwiseNot(self)
 
     def __and__(self, other):
-        from .binaryexpr import BitwiseAnd
+        from pyteal.ast.binaryexpr import BitwiseAnd
 
         return BitwiseAnd(self, other)
 
     def __or__(self, other):
-        from .binaryexpr import BitwiseOr
+        from pyteal.ast.binaryexpr import BitwiseOr
 
         return BitwiseOr(self, other)
 
     def __xor__(self, other):
-        from .binaryexpr import BitwiseXor
+        from pyteal.ast.binaryexpr import BitwiseXor
 
         return BitwiseXor(self, other)
 
     def __lshift__(self, other):
-        from .binaryexpr import ShiftLeft
+        from pyteal.ast.binaryexpr import ShiftLeft
 
         return ShiftLeft(self, other)
 
     def __rshift__(self, other):
-        from .binaryexpr import ShiftRight
+        from pyteal.ast.binaryexpr import ShiftRight
 
         return ShiftRight(self, other)
 
@@ -136,7 +136,7 @@ class Expr(ABC):
 
         This is the same as using :func:`And()` with two arguments.
         """
-        from .naryexpr import And
+        from pyteal.ast.naryexpr import And
 
         return And(self, other)
 
@@ -147,7 +147,7 @@ class Expr(ABC):
 
         This is the same as using :func:`Or()` with two arguments.
         """
-        from .naryexpr import Or
+        from pyteal.ast.naryexpr import Or
 
         return Or(self, other)
 

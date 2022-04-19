@@ -1,12 +1,12 @@
 from typing import List, Tuple, TYPE_CHECKING
 
-from ..types import TealType
-from ..errors import TealInternalError, TealCompileError
-from ..ir import TealOp, Op, TealSimpleBlock
-from .expr import Expr
+from pyteal.types import TealType
+from pyteal.errors import TealInternalError, TealCompileError
+from pyteal.ir import TealOp, Op, TealSimpleBlock
+from pyteal.ast.expr import Expr
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 def multiplyFactors(
