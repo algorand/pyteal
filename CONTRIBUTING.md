@@ -33,11 +33,11 @@ Since it's challenging to enforce these exceptions with a linter, we rely on PR 
 
 ### Module Guidelines
 
-Every directory containing source code should be a Python module, meaning it should have an `__init__.py` file. This `__init__.py` file is responsible for exporting all public objects (i.e.  classes, functions, and constants) for use outside of that module.
+Every directory containing source code should be a Python module, meaning it should have an `__init__.py` file. This `__init__.py` file is responsible for exporting all public objects (i.e. classes, functions, and constants) for use outside of that module.
 
 Modules may be created inside of other modules, in which case the deeper module is called a submodule or child module, and the module that contains it is called the parent module. For example, `pyteal` is the parent module to `pyteal.ast`.
 
-A sibling module is defined as a different child module of the parent module. For example, `pyteal.ast` and `pyteal.ir` as sibling modules.
+A sibling module is defined as a different child module of the parent module. For example, `pyteal.ast` and `pyteal.ir` are sibling modules.
 
 ### Import Guidelines
 
