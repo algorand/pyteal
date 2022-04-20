@@ -62,7 +62,8 @@ build-and-test: check-generate-init lint test-unit
 coverage:
 	pytest --cov-report html --cov=pyteal
 
-# The following depends on [Graviton PR #9](https://github.com/algorand/graviton/pull/9)
+# The following depends on [Graviton PR #9](https://github.com/algorand/graviton/pull/9):
+#
 # A = 3
 # P = 13
 # Q = 13
