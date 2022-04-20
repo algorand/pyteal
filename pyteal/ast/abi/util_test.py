@@ -36,7 +36,10 @@ def test_substringForDecoding():
             expected=pt.Substring(encoded, pt.Int(0), pt.Int(4)),
         ),
         SubstringTest(
-            startIndex=None, endIndex=pt.Int(4), length=pt.Int(5), expected=pt.TealInputError
+            startIndex=None,
+            endIndex=pt.Int(4),
+            length=pt.Int(5),
+            expected=pt.TealInputError,
         ),
         SubstringTest(
             startIndex=pt.Int(4),
@@ -57,7 +60,10 @@ def test_substringForDecoding():
             expected=pt.Substring(encoded, pt.Int(4), pt.Int(5)),
         ),
         SubstringTest(
-            startIndex=pt.Int(4), endIndex=pt.Int(5), length=pt.Int(6), expected=pt.TealInputError
+            startIndex=pt.Int(4),
+            endIndex=pt.Int(5),
+            length=pt.Int(6),
+            expected=pt.TealInputError,
         ),
     ]
 
@@ -185,7 +191,9 @@ def test_type_spec_from_annotation():
             ),
         ),
         TypeAnnotationTest(
-            annotation=pt.abi.DynamicArray[pt.abi.StaticArray[pt.abi.Bool, Literal[500]]],
+            annotation=pt.abi.DynamicArray[
+                pt.abi.StaticArray[pt.abi.Bool, Literal[500]]
+            ],
             expected=pt.abi.DynamicArrayTypeSpec(
                 pt.abi.StaticArrayTypeSpec(pt.abi.BoolTypeSpec(), 500)
             ),
@@ -202,7 +210,9 @@ def test_type_spec_from_annotation():
         ),
         TypeAnnotationTest(
             annotation=pt.abi.Tuple2[pt.abi.Uint32, pt.abi.Uint16],
-            expected=pt.abi.TupleTypeSpec(pt.abi.Uint32TypeSpec(), pt.abi.Uint16TypeSpec()),
+            expected=pt.abi.TupleTypeSpec(
+                pt.abi.Uint32TypeSpec(), pt.abi.Uint16TypeSpec()
+            ),
         ),
         TypeAnnotationTest(
             annotation=pt.abi.Tuple2,
@@ -231,7 +241,9 @@ def test_type_spec_from_annotation():
             ),
         ),
         TypeAnnotationTest(
-            annotation=pt.abi.Tuple4[pt.abi.Uint32, pt.abi.Uint16, pt.abi.Byte, pt.abi.Bool],
+            annotation=pt.abi.Tuple4[
+                pt.abi.Uint32, pt.abi.Uint16, pt.abi.Byte, pt.abi.Bool
+            ],
             expected=pt.abi.TupleTypeSpec(
                 pt.abi.Uint32TypeSpec(),
                 pt.abi.Uint16TypeSpec(),

@@ -147,7 +147,9 @@ def test_Bool_get():
     assert expr.type_of() == pt.TealType.uint64
     assert not expr.has_return()
 
-    expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.load, value.stored_value.slot)])
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(expr, pt.Op.load, value.stored_value.slot)]
+    )
 
     actual, _ = expr.__teal__(options)
 

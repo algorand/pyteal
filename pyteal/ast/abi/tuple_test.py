@@ -138,7 +138,9 @@ def test_encodeTuple():
                 uint64_b.encode(),
                 pt.Seq(
                     encoded_tail.store(dynamic_array_b.encode()),
-                    tail_holder.store(pt.Concat(tail_holder.load(), encoded_tail.load())),
+                    tail_holder.store(
+                        pt.Concat(tail_holder.load(), encoded_tail.load())
+                    ),
                     uint16_a.set(uint16_b),
                     uint16_a.encode(),
                 ),
@@ -167,7 +169,9 @@ def test_encodeTuple():
                 uint64_b.encode(),
                 pt.Seq(
                     encoded_tail.store(dynamic_array_b.encode()),
-                    tail_holder.store(pt.Concat(tail_holder.load(), encoded_tail.load())),
+                    tail_holder.store(
+                        pt.Concat(tail_holder.load(), encoded_tail.load())
+                    ),
                     uint16_a.set(uint16_b),
                     uint16_b.set(uint16_a.get() + pt.Len(encoded_tail.load())),
                     uint16_a.encode(),
@@ -175,7 +179,9 @@ def test_encodeTuple():
                 encodeBoolSequence([bool_a, bool_b]),
                 pt.Seq(
                     encoded_tail.store(dynamic_array_c.encode()),
-                    tail_holder.store(pt.Concat(tail_holder.load(), encoded_tail.load())),
+                    tail_holder.store(
+                        pt.Concat(tail_holder.load(), encoded_tail.load())
+                    ),
                     uint16_a.set(uint16_b),
                     uint16_a.encode(),
                 ),
@@ -325,14 +331,18 @@ def test_indexTuple():
             types=[tuple_t, byte_t],
             typeIndex=0,
             expected=lambda output: output.decode(
-                encoded, startIndex=pt.Int(0), length=pt.Int(tuple_t.byte_length_static())
+                encoded,
+                startIndex=pt.Int(0),
+                length=pt.Int(tuple_t.byte_length_static()),
             ),
         ),
         IndexTest(
             types=[byte_t, tuple_t, byte_t],
             typeIndex=1,
             expected=lambda output: output.decode(
-                encoded, startIndex=pt.Int(1), length=pt.Int(tuple_t.byte_length_static())
+                encoded,
+                startIndex=pt.Int(1),
+                length=pt.Int(tuple_t.byte_length_static()),
             ),
         ),
         IndexTest(
@@ -508,7 +518,10 @@ def test_TupleTypeSpec_is_dynamic():
 def test_TupleTypeSpec_str():
     assert str(pt.abi.TupleTypeSpec()) == "()"
     assert str(pt.abi.TupleTypeSpec(pt.abi.TupleTypeSpec())) == "(())"
-    assert str(pt.abi.TupleTypeSpec(pt.abi.TupleTypeSpec(), pt.abi.TupleTypeSpec())) == "((),())"
+    assert (
+        str(pt.abi.TupleTypeSpec(pt.abi.TupleTypeSpec(), pt.abi.TupleTypeSpec()))
+        == "((),())"
+    )
     assert (
         str(
             pt.abi.TupleTypeSpec(
@@ -528,7 +541,8 @@ def test_TupleTypeSpec_str():
     assert (
         str(
             pt.abi.TupleTypeSpec(
-                pt.abi.Uint16TypeSpec(), pt.abi.DynamicArrayTypeSpec(pt.abi.Uint8TypeSpec())
+                pt.abi.Uint16TypeSpec(),
+                pt.abi.DynamicArrayTypeSpec(pt.abi.Uint8TypeSpec()),
             )
         )
         == "(uint16,uint8[])"
@@ -539,7 +553,9 @@ def test_TupleTypeSpec_byte_length_static():
     assert pt.abi.TupleTypeSpec().byte_length_static() == 0
     assert pt.abi.TupleTypeSpec(pt.abi.TupleTypeSpec()).byte_length_static() == 0
     assert (
-        pt.abi.TupleTypeSpec(pt.abi.TupleTypeSpec(), pt.abi.TupleTypeSpec()).byte_length_static()
+        pt.abi.TupleTypeSpec(
+            pt.abi.TupleTypeSpec(), pt.abi.TupleTypeSpec()
+        ).byte_length_static()
         == 0
     )
     assert (
@@ -669,7 +685,9 @@ def test_Tuple_set_Computed():
     tupleValue = pt.abi.Tuple(
         pt.abi.Uint8TypeSpec(), pt.abi.Uint16TypeSpec(), pt.abi.Uint32TypeSpec()
     )
-    computed = ContainerType(tupleValue.type_spec(), pt.Bytes("internal representation"))
+    computed = ContainerType(
+        tupleValue.type_spec(), pt.Bytes("internal representation")
+    )
     expr = tupleValue.set(computed)
     assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
@@ -702,7 +720,9 @@ def test_Tuple_encode():
     assert expr.type_of() == pt.TealType.bytes
     assert not expr.has_return()
 
-    expected = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.load, tupleValue.stored_value.slot)])
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(None, pt.Op.load, tupleValue.stored_value.slot)]
+    )
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()

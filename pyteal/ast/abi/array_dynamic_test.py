@@ -144,7 +144,9 @@ def test_DynamicArray_set_copy():
     otherArray = dynamicArrayType.new_instance()
 
     with pytest.raises(pt.TealInputError):
-        value.set(pt.abi.DynamicArray(pt.abi.DynamicArrayTypeSpec(pt.abi.Uint8TypeSpec())))
+        value.set(
+            pt.abi.DynamicArray(pt.abi.DynamicArrayTypeSpec(pt.abi.Uint8TypeSpec()))
+        )
 
     with pytest.raises(pt.TealInputError):
         value.set(pt.abi.Uint64())
@@ -170,7 +172,9 @@ def test_DynamicArray_set_copy():
 
 def test_DynamicArray_set_computed():
     value = pt.abi.DynamicArray(pt.abi.ByteTypeSpec())
-    computed = ContainerType(value.type_spec(), pt.Bytes("this should be a dynamic array"))
+    computed = ContainerType(
+        value.type_spec(), pt.Bytes("this should be a dynamic array")
+    )
     expr = value.set(computed)
     assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
@@ -204,7 +208,9 @@ def test_DynamicArray_encode():
     assert expr.type_of() == pt.TealType.bytes
     assert not expr.has_return()
 
-    expected = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.load, value.stored_value.slot)])
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(None, pt.Op.load, value.stored_value.slot)]
+    )
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()

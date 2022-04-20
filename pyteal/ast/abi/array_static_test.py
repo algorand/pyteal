@@ -58,7 +58,9 @@ def test_StaticArrayTypeSpec_eq():
         for length in range(256):
             staticArrayType = pt.abi.StaticArrayTypeSpec(elementType, length)
             assert staticArrayType == staticArrayType
-            assert staticArrayType != pt.abi.StaticArrayTypeSpec(elementType, length + 1)
+            assert staticArrayType != pt.abi.StaticArrayTypeSpec(
+                elementType, length + 1
+            )
             assert staticArrayType != pt.abi.StaticArrayTypeSpec(
                 pt.abi.TupleTypeSpec(elementType), length
             )
@@ -243,7 +245,9 @@ def test_StaticArray_encode():
     assert expr.type_of() == pt.TealType.bytes
     assert not expr.has_return()
 
-    expected = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.load, value.stored_value.slot)])
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(None, pt.Op.load, value.stored_value.slot)]
+    )
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
