@@ -2,67 +2,74 @@ from typing import NamedTuple, List, Literal, Optional, Union, Any, cast
 from inspect import isabstract
 import pytest
 
-from ... import *
+import pyteal as pt
+from pyteal import abi
 from .util import (
     substringForDecoding,
     int_literal_from_annotation,
     type_spec_from_annotation,
 )
 
-options = CompileOptions(version=5)
+options = pt.CompileOptions(version=5)
 
 
 def test_substringForDecoding():
     class SubstringTest(NamedTuple):
-        startIndex: Optional[Expr]
-        endIndex: Optional[Expr]
-        length: Optional[Expr]
-        expected: Union[Expr, Any]
+        startIndex: Optional[pt.Expr]
+        endIndex: Optional[pt.Expr]
+        length: Optional[pt.Expr]
+        expected: Union[pt.Expr, Any]
 
-    encoded = Bytes("encoded")
+    encoded = pt.Bytes("encoded")
 
     tests: List[SubstringTest] = [
         SubstringTest(startIndex=None, endIndex=None, length=None, expected=encoded),
         SubstringTest(
             startIndex=None,
             endIndex=None,
-            length=Int(4),
-            expected=Extract(encoded, Int(0), Int(4)),
+            length=pt.Int(4),
+            expected=pt.Extract(encoded, pt.Int(0), pt.Int(4)),
         ),
         SubstringTest(
             startIndex=None,
-            endIndex=Int(4),
+            endIndex=pt.Int(4),
             length=None,
-            expected=Substring(encoded, Int(0), Int(4)),
+            expected=pt.Substring(encoded, pt.Int(0), pt.Int(4)),
         ),
         SubstringTest(
-            startIndex=None, endIndex=Int(4), length=Int(5), expected=TealInputError
+            startIndex=None,
+            endIndex=pt.Int(4),
+            length=pt.Int(5),
+            expected=pt.TealInputError,
         ),
         SubstringTest(
-            startIndex=Int(4),
+            startIndex=pt.Int(4),
             endIndex=None,
             length=None,
-            expected=Suffix(encoded, Int(4)),
+            expected=pt.Suffix(encoded, pt.Int(4)),
         ),
         SubstringTest(
-            startIndex=Int(4),
+            startIndex=pt.Int(4),
             endIndex=None,
-            length=Int(5),
-            expected=Extract(encoded, Int(4), Int(5)),
+            length=pt.Int(5),
+            expected=pt.Extract(encoded, pt.Int(4), pt.Int(5)),
         ),
         SubstringTest(
-            startIndex=Int(4),
-            endIndex=Int(5),
+            startIndex=pt.Int(4),
+            endIndex=pt.Int(5),
             length=None,
-            expected=Substring(encoded, Int(4), Int(5)),
+            expected=pt.Substring(encoded, pt.Int(4), pt.Int(5)),
         ),
         SubstringTest(
-            startIndex=Int(4), endIndex=Int(5), length=Int(6), expected=TealInputError
+            startIndex=pt.Int(4),
+            endIndex=pt.Int(5),
+            length=pt.Int(6),
+            expected=pt.TealInputError,
         ),
     ]
 
     for i, test in enumerate(tests):
-        if not isinstance(test.expected, Expr):
+        if not isinstance(test.expected, pt.Expr):
             with pytest.raises(test.expected):
                 substringForDecoding(
                     encoded,
@@ -78,18 +85,18 @@ def test_substringForDecoding():
             endIndex=test.endIndex,
             length=test.length,
         )
-        assert expr.type_of() == TealType.bytes
+        assert expr.type_of() == pt.TealType.bytes
         assert not expr.has_return()
 
-        expected, _ = cast(Expr, test.expected).__teal__(options)
+        expected, _ = cast(pt.Expr, test.expected).__teal__(options)
         expected.addIncoming()
-        expected = TealBlock.NormalizeBlocks(expected)
+        expected = pt.TealBlock.NormalizeBlocks(expected)
 
         actual, _ = expr.__teal__(options)
         actual.addIncoming()
-        actual = TealBlock.NormalizeBlocks(actual)
+        actual = pt.TealBlock.NormalizeBlocks(actual)
 
-        with TealComponent.Context.ignoreExprEquality():
+        with pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected, "Test at index {} failed".format(i)
 
 

@@ -24,14 +24,4 @@ per-file-ignores =
     pyteal/__init__.py:                             F401, F403
     pyteal/ir/ops.py:                               E221
     tests/module_test.py:                           F401, F403
-    # Temporary ignores while merging
-    pyteal/ast/abi/array_base_test.py:              F403, F405
-    pyteal/ast/abi/array_dynamic_test.py:           F403, F405
-    pyteal/ast/abi/array_static_test.py:            F403, F405
-    pyteal/ast/abi/bool_test.py:                    F403, F405
-    pyteal/ast/abi/method_return_test.py:           F403, F405
-    pyteal/ast/abi/tuple_test.py:                   F403, F405
-    pyteal/ast/abi/type_test.py:                    F403, F405
-    pyteal/ast/abi/uint_test.py:                    F403, F405
-    pyteal/ast/abi/util_test.py:                    F403, F405
-    # End temporary ignores while merging
+
