@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from ..errors import TealCompileError, TealInputError
-from ..types import TealType, require_type, types_match
+from ..types import TealType, require_type
 from ..ir import TealSimpleBlock, TealConditionalBlock
 from .expr import Expr
 

@@ -1,79 +1,79 @@
 from .optimizer import OptimizeOptions, _apply_slot_to_stack
 
-from ... import *
-
-import pytest
+import pyteal as pt
 
 
 def test_optimize_single_block():
-    slot1 = ScratchSlot(1)
-    slot2 = ScratchSlot(2)
+    slot1 = pt.ScratchSlot(1)
+    slot2 = pt.ScratchSlot(2)
 
     # empty check
-    empty_block = TealSimpleBlock([])
+    empty_block = pt.TealSimpleBlock([])
     _apply_slot_to_stack(empty_block, empty_block, {})
 
-    expected = TealSimpleBlock([])
+    expected = pt.TealSimpleBlock([])
     assert empty_block == expected
 
     # basic optimization
-    block = TealSimpleBlock(
+    block = pt.TealSimpleBlock(
         [
-            TealOp(None, Op.store, slot1),
-            TealOp(None, Op.load, slot1),
+            pt.TealOp(None, pt.Op.store, slot1),
+            pt.TealOp(None, pt.Op.load, slot1),
         ]
     )
     _apply_slot_to_stack(block, block, {})
 
-    expected = TealSimpleBlock([])
+    expected = pt.TealSimpleBlock([])
     assert block == expected
 
     # iterate optimization
-    block = TealSimpleBlock(
+    block = pt.TealSimpleBlock(
         [
-            TealOp(None, Op.store, slot1),
-            TealOp(None, Op.store, slot2),
-            TealOp(None, Op.load, slot2),
-            TealOp(None, Op.load, slot1),
+            pt.TealOp(None, pt.Op.store, slot1),
+            pt.TealOp(None, pt.Op.store, slot2),
+            pt.TealOp(None, pt.Op.load, slot2),
+            pt.TealOp(None, pt.Op.load, slot1),
         ]
     )
     _apply_slot_to_stack(block, block, {})
 
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(None, Op.store, slot1),
-            TealOp(None, Op.load, slot1),
+            pt.TealOp(None, pt.Op.store, slot1),
+            pt.TealOp(None, pt.Op.load, slot1),
         ]
     )
     assert block == expected
 
     _apply_slot_to_stack(block, block, {})
-    expected = TealSimpleBlock([])
+    expected = pt.TealSimpleBlock([])
     assert block == expected
 
     # remove extraneous stores
-    block = TealSimpleBlock(
+    block = pt.TealSimpleBlock(
         [
-            TealOp(None, Op.store, slot1),
-            TealOp(None, Op.load, slot1),
-            TealOp(None, Op.store, slot1),
+            pt.TealOp(None, pt.Op.store, slot1),
+            pt.TealOp(None, pt.Op.load, slot1),
+            pt.TealOp(None, pt.Op.store, slot1),
         ]
     )
     _apply_slot_to_stack(block, block, {})
 
-    expected = TealSimpleBlock([])
+    expected = pt.TealSimpleBlock([])
     assert block == expected
 
 
 def test_optimize_subroutine():
-    @Subroutine(TealType.uint64)
-    def add(a1: Expr, a2: Expr) -> Expr:
+    @pt.Subroutine(pt.TealType.uint64)
+    def add(a1: pt.Expr, a2: pt.Expr) -> pt.Expr:
         return a1 + a2
 
-    program = Seq(
+    program = pt.Seq(
         [
-            If(Txn.sender() == Global.creator_address()).Then(Pop(add(Int(1), Int(2)))),
-            Approve(),
+            pt.If(pt.Txn.sender() == pt.Global.creator_address()).Then(
+                pt.Pop(add(pt.Int(1), pt.Int(2)))
+            ),
+            pt.Approve(),
         ]
     )
 
@@ -102,8 +102,8 @@ load 1
 +
 retsub
     """.strip()
-    actual = compileTeal(
-        program, version=4, mode=Mode.Application, optimize=optimize_options
+    actual = pt.compileTeal(
+        program, version=4, mode=pt.Mode.Application, optimize=optimize_options
     )
     assert actual == expected
 
@@ -127,24 +127,26 @@ add_0:
 retsub
     """.strip()
     optimize_options = OptimizeOptions(scratch_slots=True)
-    actual = compileTeal(
-        program, version=4, mode=Mode.Application, optimize=optimize_options
+    actual = pt.compileTeal(
+        program, version=4, mode=pt.Mode.Application, optimize=optimize_options
     )
     assert actual == expected
 
 
 def test_optimize_subroutine_with_scratchvar_arg():
-    @Subroutine(TealType.uint64)
-    def add(a1: ScratchVar, a2: Expr) -> Expr:
+    @pt.Subroutine(pt.TealType.uint64)
+    def add(a1: pt.ScratchVar, a2: pt.Expr) -> pt.Expr:
         return a1.load() + a2
 
-    arg = ScratchVar(TealType.uint64)
+    arg = pt.ScratchVar(pt.TealType.uint64)
 
-    program = Seq(
+    program = pt.Seq(
         [
-            arg.store(Int(1)),
-            If(Txn.sender() == Global.creator_address()).Then(Pop(add(arg, Int(2)))),
-            Approve(),
+            arg.store(pt.Int(1)),
+            pt.If(pt.Txn.sender() == pt.Global.creator_address()).Then(
+                pt.Pop(add(arg, pt.Int(2)))
+            ),
+            pt.Approve(),
         ]
     )
 
@@ -175,8 +177,8 @@ loads
 load 2
 +
 retsub""".strip()
-    actual = compileTeal(
-        program, version=5, mode=Mode.Application, optimize=optimize_options
+    actual = pt.compileTeal(
+        program, version=5, mode=pt.Mode.Application, optimize=optimize_options
     )
     assert actual == expected
 
@@ -204,23 +206,25 @@ load 1
 +
 retsub""".strip()
     optimize_options = OptimizeOptions(scratch_slots=True)
-    actual = compileTeal(
-        program, version=5, mode=Mode.Application, optimize=optimize_options
+    actual = pt.compileTeal(
+        program, version=5, mode=pt.Mode.Application, optimize=optimize_options
     )
     assert actual == expected
 
 
 def test_optimize_subroutine_with_local_var():
-    local_var = ScratchVar(TealType.uint64)
+    local_var = pt.ScratchVar(pt.TealType.uint64)
 
-    @Subroutine(TealType.uint64)
-    def add(a1: Expr) -> Expr:
-        return Seq(local_var.store(Int(2)), local_var.load() + a1)
+    @pt.Subroutine(pt.TealType.uint64)
+    def add(a1: pt.Expr) -> pt.Expr:
+        return pt.Seq(local_var.store(pt.Int(2)), local_var.load() + a1)
 
-    program = Seq(
+    program = pt.Seq(
         [
-            If(Txn.sender() == Global.creator_address()).Then(Pop(add(Int(1)))),
-            Approve(),
+            pt.If(pt.Txn.sender() == pt.Global.creator_address()).Then(
+                pt.Pop(add(pt.Int(1)))
+            ),
+            pt.Approve(),
         ]
     )
 
@@ -249,8 +253,8 @@ load 1
 +
 retsub
     """.strip()
-    actual = compileTeal(
-        program, version=4, mode=Mode.Application, optimize=optimize_options
+    actual = pt.compileTeal(
+        program, version=4, mode=pt.Mode.Application, optimize=optimize_options
     )
     assert actual == expected
 
@@ -276,24 +280,26 @@ load 0
 retsub
     """.strip()
     optimize_options = OptimizeOptions(scratch_slots=True)
-    actual = compileTeal(
-        program, version=4, mode=Mode.Application, optimize=optimize_options
+    actual = pt.compileTeal(
+        program, version=4, mode=pt.Mode.Application, optimize=optimize_options
     )
     assert actual == expected
 
 
 def test_optimize_subroutine_with_global_var():
-    global_var = ScratchVar(TealType.uint64)
+    global_var = pt.ScratchVar(pt.TealType.uint64)
 
-    @Subroutine(TealType.uint64)
-    def add(a1: Expr) -> Expr:
-        return Seq(global_var.store(Int(2)), global_var.load() + a1)
+    @pt.Subroutine(pt.TealType.uint64)
+    def add(a1: pt.Expr) -> pt.Expr:
+        return pt.Seq(global_var.store(pt.Int(2)), global_var.load() + a1)
 
-    program = Seq(
+    program = pt.Seq(
         [
-            If(Txn.sender() == Global.creator_address()).Then(Pop(add(Int(1)))),
-            global_var.store(Int(5)),
-            Approve(),
+            pt.If(pt.Txn.sender() == pt.Global.creator_address()).Then(
+                pt.Pop(add(pt.Int(1)))
+            ),
+            global_var.store(pt.Int(5)),
+            pt.Approve(),
         ]
     )
 
@@ -324,30 +330,32 @@ load 1
 +
 retsub
     """.strip()
-    actual = compileTeal(
-        program, version=4, mode=Mode.Application, optimize=optimize_options
+    actual = pt.compileTeal(
+        program, version=4, mode=pt.Mode.Application, optimize=optimize_options
     )
     assert actual == expected
 
     # optimization should not apply to global vars
     optimize_options = OptimizeOptions(scratch_slots=True)
-    actual = compileTeal(
-        program, version=4, mode=Mode.Application, optimize=optimize_options
+    actual = pt.compileTeal(
+        program, version=4, mode=pt.Mode.Application, optimize=optimize_options
     )
     assert actual == expected
 
 
 def test_optimize_subroutine_with_reserved_local_var():
-    local_var = ScratchVar(TealType.uint64, 0)
+    local_var = pt.ScratchVar(pt.TealType.uint64, 0)
 
-    @Subroutine(TealType.uint64)
-    def add(a1: Expr) -> Expr:
-        return Seq(local_var.store(Int(2)), local_var.load() + a1)
+    @pt.Subroutine(pt.TealType.uint64)
+    def add(a1: pt.Expr) -> pt.Expr:
+        return pt.Seq(local_var.store(pt.Int(2)), local_var.load() + a1)
 
-    program = Seq(
+    program = pt.Seq(
         [
-            If(Txn.sender() == Global.creator_address()).Then(Pop(add(Int(1)))),
-            Approve(),
+            pt.If(pt.Txn.sender() == pt.Global.creator_address()).Then(
+                pt.Pop(add(pt.Int(1)))
+            ),
+            pt.Approve(),
         ]
     )
 
@@ -376,29 +384,31 @@ load 1
 +
 retsub
     """.strip()
-    actual = compileTeal(
-        program, version=4, mode=Mode.Application, optimize=optimize_options
+    actual = pt.compileTeal(
+        program, version=4, mode=pt.Mode.Application, optimize=optimize_options
     )
     assert actual == expected
 
     # The optimization must skip over the reserved slot id so the expected result
     # hasn't changed.
     optimize_options = OptimizeOptions(scratch_slots=True)
-    actual = compileTeal(
-        program, version=4, mode=Mode.Application, optimize=optimize_options
+    actual = pt.compileTeal(
+        program, version=4, mode=pt.Mode.Application, optimize=optimize_options
     )
     assert actual == expected
 
 
 def test_optimize_subroutine_with_load_dependency():
-    @Subroutine(TealType.uint64)
-    def add(a1: Expr, a2: Expr) -> Expr:
-        return Seq(Pop(a1 + a2), a2)
+    @pt.Subroutine(pt.TealType.uint64)
+    def add(a1: pt.Expr, a2: pt.Expr) -> pt.Expr:
+        return pt.Seq(pt.Pop(a1 + a2), a2)
 
-    program = Seq(
+    program = pt.Seq(
         [
-            If(Txn.sender() == Global.creator_address()).Then(Pop(add(Int(1), Int(2)))),
-            Approve(),
+            pt.If(pt.Txn.sender() == pt.Global.creator_address()).Then(
+                pt.Pop(add(pt.Int(1), pt.Int(2)))
+            ),
+            pt.Approve(),
         ]
     )
 
@@ -428,8 +438,8 @@ load 1
 pop
 load 1
 retsub""".strip()
-    actual = compileTeal(
-        program, version=4, mode=Mode.Application, optimize=optimize_options
+    actual = pt.compileTeal(
+        program, version=4, mode=pt.Mode.Application, optimize=optimize_options
     )
     assert actual == expected
 
@@ -457,22 +467,22 @@ pop
 load 0
 retsub""".strip()
     optimize_options = OptimizeOptions(scratch_slots=True)
-    actual = compileTeal(
-        program, version=4, mode=Mode.Application, optimize=optimize_options
+    actual = pt.compileTeal(
+        program, version=4, mode=pt.Mode.Application, optimize=optimize_options
     )
     assert actual == expected
 
 
 def test_optimize_multi_value():
     # note: this is incorrect usage of the app_global_get_ex opcode
-    program = Seq(
-        MultiValue(
-            Op.app_global_get_ex,
-            [TealType.uint64, TealType.uint64],
+    program = pt.Seq(
+        pt.MultiValue(
+            pt.Op.app_global_get_ex,
+            [pt.TealType.uint64, pt.TealType.uint64],
             immediate_args=[],
-            args=[Int(0), Int(1)],
-        ).outputReducer(lambda value, hasValue: Pop(value + hasValue)),
-        Approve(),
+            args=[pt.Int(0), pt.Int(1)],
+        ).outputReducer(lambda value, hasValue: pt.Pop(value + hasValue)),
+        pt.Approve(),
     )
 
     optimize_options = OptimizeOptions()
@@ -490,8 +500,8 @@ load 1
 pop
 int 1
 return""".strip()
-    actual = compileTeal(
-        program, version=4, mode=Mode.Application, optimize=optimize_options
+    actual = pt.compileTeal(
+        program, version=4, mode=pt.Mode.Application, optimize=optimize_options
     )
     assert actual == expected
 
@@ -505,21 +515,21 @@ pop
 int 1
 return""".strip()
     optimize_options = OptimizeOptions(scratch_slots=True)
-    actual = compileTeal(
-        program, version=4, mode=Mode.Application, optimize=optimize_options
+    actual = pt.compileTeal(
+        program, version=4, mode=pt.Mode.Application, optimize=optimize_options
     )
     assert actual == expected
 
 
 def test_optimize_dynamic_var():
-    myvar = DynamicScratchVar()
-    regvar = ScratchVar()
-    program = Seq(
-        regvar.store(Int(1)),
+    myvar = pt.DynamicScratchVar()
+    regvar = pt.ScratchVar()
+    program = pt.Seq(
+        regvar.store(pt.Int(1)),
         myvar.set_index(regvar),
-        regvar.store(Int(2)),
-        Pop(regvar.load()),
-        Approve(),
+        regvar.store(pt.Int(2)),
+        pt.Pop(regvar.load()),
+        pt.Approve(),
     )
 
     optimize_options = OptimizeOptions()
@@ -536,15 +546,15 @@ load 1
 pop
 int 1
 return""".strip()
-    actual = compileTeal(
-        program, version=4, mode=Mode.Application, optimize=optimize_options
+    actual = pt.compileTeal(
+        program, version=4, mode=pt.Mode.Application, optimize=optimize_options
     )
     assert actual == expected
 
     # optimization should not change the code because the candidate slot
     # is used by the dynamic slot variable.
     optimize_options = OptimizeOptions(scratch_slots=True)
-    actual = compileTeal(
-        program, version=4, mode=Mode.Application, optimize=optimize_options
+    actual = pt.compileTeal(
+        program, version=4, mode=pt.Mode.Application, optimize=optimize_options
     )
     assert actual == expected

@@ -1,68 +1,65 @@
 import pytest
 
-from .. import *
+import pyteal as pt
 
-# this is not necessary but mypy complains if it's not included
-from .. import CompileOptions
-
-options = CompileOptions()
+options = pt.CompileOptions()
 
 
 def test_for_compiles():
-    i = ScratchVar()
+    i = pt.ScratchVar()
 
-    expr = For(i.store(Int(0)), Int(1), i.store(i.load() + Int(1))).Do(
-        App.globalPut(Itob(Int(0)), Itob(Int(2)))
+    expr = pt.For(i.store(pt.Int(0)), pt.Int(1), i.store(i.load() + pt.Int(1))).Do(
+        pt.App.globalPut(pt.Itob(pt.Int(0)), pt.Itob(pt.Int(2)))
     )
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
     expr.__teal__(options)
 
 
 def test_nested_for_compiles():
-    i = ScratchVar()
-    expr = For(i.store(Int(0)), Int(1), i.store(i.load() + Int(1))).Do(
-        Seq(
+    i = pt.ScratchVar()
+    expr = pt.For(i.store(pt.Int(0)), pt.Int(1), i.store(i.load() + pt.Int(1))).Do(
+        pt.Seq(
             [
-                For(i.store(Int(0)), Int(1), i.store(i.load() + Int(1))).Do(
-                    Seq([i.store(Int(0))])
+                pt.For(i.store(pt.Int(0)), pt.Int(1), i.store(i.load() + pt.Int(1))).Do(
+                    pt.Seq([i.store(pt.Int(0))])
                 )
             ]
         )
     )
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
 
 def test_continue_break():
-    i = ScratchVar()
-    expr = For(i.store(Int(0)), Int(1), i.store(i.load() + Int(1))).Do(
-        Seq([If(Int(1), Break(), Continue())])
+    i = pt.ScratchVar()
+    expr = pt.For(i.store(pt.Int(0)), pt.Int(1), i.store(i.load() + pt.Int(1))).Do(
+        pt.Seq([pt.If(pt.Int(1), pt.Break(), pt.Continue())])
     )
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
     expr.__teal__(options)
 
 
 def test_for():
-    i = ScratchVar()
+    i = pt.ScratchVar()
     items = [
-        (i.store(Int(0))),
-        i.load() < Int(10),
-        i.store(i.load() + Int(1)),
-        App.globalPut(Itob(i.load()), i.load() * Int(2)),
+        (i.store(pt.Int(0))),
+        i.load() < pt.Int(10),
+        i.store(i.load() + pt.Int(1)),
+        pt.App.globalPut(pt.Itob(i.load()), i.load() * pt.Int(2)),
     ]
-    expr = For(items[0], items[1], items[2]).Do(Seq([items[3]]))
+    expr = pt.For(items[0], items[1], items[2]).Do(pt.Seq([items[3]]))
 
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
     expected, varEnd = items[0].__teal__(options)
     condStart, condEnd = items[1].__teal__(options)
     stepStart, stepEnd = items[2].__teal__(options)
-    do, doEnd = Seq([items[3]]).__teal__(options)
-    expectedBranch = TealConditionalBlock([])
-    end = TealSimpleBlock([])
+    do, doEnd = pt.Seq([items[3]]).__teal__(options)
+    expectedBranch = pt.TealConditionalBlock([])
+    end = pt.TealSimpleBlock([])
 
     varEnd.setNextBlock(condStart)
     doEnd.setNextBlock(stepStart)
@@ -78,17 +75,17 @@ def test_for():
 
 
 def test_for_continue():
-    i = ScratchVar()
+    i = pt.ScratchVar()
     items = [
-        (i.store(Int(0))),
-        i.load() < Int(10),
-        i.store(i.load() + Int(1)),
-        If(i.load() < Int(4), Continue()),
-        App.globalPut(Itob(i.load()), i.load() * Int(2)),
+        (i.store(pt.Int(0))),
+        i.load() < pt.Int(10),
+        i.store(i.load() + pt.Int(1)),
+        pt.If(i.load() < pt.Int(4), pt.Continue()),
+        pt.App.globalPut(pt.Itob(i.load()), i.load() * pt.Int(2)),
     ]
-    expr = For(items[0], items[1], items[2]).Do(Seq([items[3], items[4]]))
+    expr = pt.For(items[0], items[1], items[2]).Do(pt.Seq([items[3], items[4]]))
 
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
     options.enterLoop()
@@ -96,9 +93,9 @@ def test_for_continue():
     expected, varEnd = items[0].__teal__(options)
     condStart, condEnd = items[1].__teal__(options)
     stepStart, stepEnd = items[2].__teal__(options)
-    do, doEnd = Seq([items[3], items[4]]).__teal__(options)
-    expectedBranch = TealConditionalBlock([])
-    end = TealSimpleBlock([])
+    do, doEnd = pt.Seq([items[3], items[4]]).__teal__(options)
+    expectedBranch = pt.TealConditionalBlock([])
+    end = pt.TealSimpleBlock([])
 
     doEnd.setNextBlock(stepStart)
     stepEnd.setNextBlock(condStart)
@@ -119,17 +116,17 @@ def test_for_continue():
 
 
 def test_for_break():
-    i = ScratchVar()
+    i = pt.ScratchVar()
     items = [
-        (i.store(Int(0))),
-        i.load() < Int(10),
-        i.store(i.load() + Int(1)),
-        If(i.load() == Int(6), Break()),
-        App.globalPut(Itob(i.load()), i.load() * Int(2)),
+        (i.store(pt.Int(0))),
+        i.load() < pt.Int(10),
+        i.store(i.load() + pt.Int(1)),
+        pt.If(i.load() == pt.Int(6), pt.Break()),
+        pt.App.globalPut(pt.Itob(i.load()), i.load() * pt.Int(2)),
     ]
-    expr = For(items[0], items[1], items[2]).Do(Seq([items[3], items[4]]))
+    expr = pt.For(items[0], items[1], items[2]).Do(pt.Seq([items[3], items[4]]))
 
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
     options.enterLoop()
@@ -137,9 +134,9 @@ def test_for_break():
     expected, varEnd = items[0].__teal__(options)
     condStart, condEnd = items[1].__teal__(options)
     stepStart, stepEnd = items[2].__teal__(options)
-    do, doEnd = Seq([items[3], items[4]]).__teal__(options)
-    expectedBranch = TealConditionalBlock([])
-    end = TealSimpleBlock([])
+    do, doEnd = pt.Seq([items[3], items[4]]).__teal__(options)
+    expectedBranch = pt.TealConditionalBlock([])
+    end = pt.TealSimpleBlock([])
 
     doEnd.setNextBlock(stepStart)
     stepEnd.setNextBlock(condStart)
@@ -161,37 +158,39 @@ def test_for_break():
 
 def test_invalid_for():
     with pytest.raises(TypeError):
-        expr = For()
+        expr = pt.For()
 
     with pytest.raises(TypeError):
-        expr = For(Int(2))
+        expr = pt.For(pt.Int(2))
 
     with pytest.raises(TypeError):
-        expr = For(Int(1), Int(2))
+        expr = pt.For(pt.Int(1), pt.Int(2))
 
-    with pytest.raises(TealTypeError):
-        i = ScratchVar()
-        expr = For(i.store(Int(0)), Int(1), Int(2))
+    with pytest.raises(pt.TealTypeError):
+        i = pt.ScratchVar()
+        expr = pt.For(i.store(pt.Int(0)), pt.Int(1), pt.Int(2))
         expr.__teal__(options)
 
-    with pytest.raises(TealCompileError):
-        i = ScratchVar()
-        expr = For(i.store(Int(0)), Int(1), i.store(i.load() + Int(1)))
+    with pytest.raises(pt.TealCompileError):
+        i = pt.ScratchVar()
+        expr = pt.For(i.store(pt.Int(0)), pt.Int(1), i.store(i.load() + pt.Int(1)))
         expr.type_of()
 
-    with pytest.raises(TealCompileError):
-        i = ScratchVar()
-        expr = For(i.store(Int(0)), Int(1), i.store(i.load() + Int(1)))
+    with pytest.raises(pt.TealCompileError):
+        i = pt.ScratchVar()
+        expr = pt.For(i.store(pt.Int(0)), pt.Int(1), i.store(i.load() + pt.Int(1)))
         expr.__str__()
 
-    with pytest.raises(TealTypeError):
-        i = ScratchVar()
-        expr = For(i.store(Int(0)), Int(1), i.store(i.load() + Int(1))).Do(Int(0))
+    with pytest.raises(pt.TealTypeError):
+        i = pt.ScratchVar()
+        expr = pt.For(i.store(pt.Int(0)), pt.Int(1), i.store(i.load() + pt.Int(1))).Do(
+            pt.Int(0)
+        )
 
-    with pytest.raises(TealCompileError):
+    with pytest.raises(pt.TealCompileError):
         expr = (
-            For(i.store(Int(0)), Int(1), i.store(i.load() + Int(1)))
-            .Do(Continue())
-            .Do(Continue())
+            pt.For(i.store(pt.Int(0)), pt.Int(1), i.store(i.load() + pt.Int(1)))
+            .Do(pt.Continue())
+            .Do(pt.Continue())
         )
         expr.__str__()

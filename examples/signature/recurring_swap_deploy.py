@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
 
-from pyteal import *
+import base64
 from nacl import encoding, hash
-from recurring_swap import recurring_swap, tmpl_provider
-from algosdk import algod, account
+import params
+import re
+import time
+import uuid
+
+from algosdk import algod
 from algosdk.future import transaction
-import uuid, params, re, base64, time
+
+from pyteal import *
+
+from recurring_swap import recurring_swap
+
 
 # ------- generate provider's account -----------------------------------------------
 key_fn = str(uuid.uuid4()) + ".key"
