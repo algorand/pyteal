@@ -1,5 +1,3 @@
-.DS_Store
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -54,8 +52,8 @@ coverage.xml
 .pytest_cache/
 
 # Tests generating TEAL output to compared against an expected example.
-tests/teal/*.teal
-!tests/teal/*_expected.teal
+tests/**/*.teal
+!tests/**/*_expected.teal
 
 # Translations
 *.mo
@@ -76,6 +74,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+pyteal.docset*
 
 # PyBuilder
 target/
@@ -133,3 +132,6 @@ dmypy.json
 # IDE
 .idea
 .vscode
+
+# mac OS
+.DS_Store

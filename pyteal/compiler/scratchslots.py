@@ -1,8 +1,8 @@
 from typing import Tuple, Set, Dict, Optional, cast
 
 from ..ast import ScratchSlot, SubroutineDefinition
-from ..ir import Mode, TealComponent, TealBlock, Op
-from ..errors import TealInputError, TealInternalError
+from ..ir import TealBlock, Op
+from ..errors import TealInternalError
 from ..config import NUM_SLOTS
 
 

@@ -1,51 +1,50 @@
 import pytest
 
-from .. import *
+import pyteal as pt
 
-# this is not necessary but mypy complains if it's not included
-from .. import CompileOptions
-
-teal2Options = CompileOptions(version=2)
-teal4Options = CompileOptions(version=4)
-teal5Options = CompileOptions(version=5)
+teal2Options = pt.CompileOptions(version=2)
+teal4Options = pt.CompileOptions(version=4)
+teal5Options = pt.CompileOptions(version=5)
 
 
 def test_arg_static():
     for i in range(256):
-        expr = Arg(i)
-        assert expr.type_of() == TealType.bytes
+        expr = pt.Arg(i)
+        assert expr.type_of() == pt.TealType.bytes
         assert not expr.has_return()
 
-        expected = TealSimpleBlock([TealOp(expr, Op.arg, i)])
+        expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.arg, i)])
 
         actual, _ = expr.__teal__(teal2Options)
         assert actual == expected
 
 
 def test_arg_dynamic():
-    i = Int(7)
-    expr = Arg(i)
-    assert expr.type_of() == TealType.bytes
+    i = pt.Int(7)
+    expr = pt.Arg(i)
+    assert expr.type_of() == pt.TealType.bytes
     assert not expr.has_return()
 
-    expected = TealSimpleBlock([TealOp(i, Op.int, 7), TealOp(expr, Op.args)])
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(i, pt.Op.int, 7), pt.TealOp(expr, pt.Op.args)]
+    )
 
     actual, _ = expr.__teal__(teal5Options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         expr.__teal__(teal4Options)
 
 
 def test_arg_invalid():
-    with pytest.raises(TealTypeError):
-        Arg(Bytes("k"))
+    with pytest.raises(pt.TealTypeError):
+        pt.Arg(pt.Bytes("k"))
 
-    with pytest.raises(TealInputError):
-        Arg(-1)
+    with pytest.raises(pt.TealInputError):
+        pt.Arg(-1)
 
-    with pytest.raises(TealInputError):
-        Arg(256)
+    with pytest.raises(pt.TealInputError):
+        pt.Arg(256)

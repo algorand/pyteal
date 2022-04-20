@@ -1,9 +1,6 @@
-from enum import Enum
-
 from ..types import TealType, require_type
 from ..ir import Op
 from .expr import Expr
-from .leafexpr import LeafExpr
 from .maybe import MaybeValue
 
 
