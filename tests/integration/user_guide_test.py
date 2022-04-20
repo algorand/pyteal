@@ -1,16 +1,14 @@
 import pytest
 
-
-from pyteal import *
-
-
+import pyteal as pt
 from ..compile_asserts import assert_new_v_old
 
 
-def user_guide_snippet_dynamic_scratch_var() -> Expr:
+def user_guide_snippet_dynamic_scratch_var() -> pt.Expr:
     """
     The user guide docs use the test to illustrate `DynamicScratchVar` usage.  If the test breaks, then the user guide docs must be updated along with the test.
     """
+    from pyteal import Assert, Int, DynamicScratchVar, ScratchVar, Seq, TealType
 
     s = ScratchVar(TealType.uint64)
     d = DynamicScratchVar(TealType.uint64)
@@ -30,6 +28,8 @@ def test_user_guide_snippets(snippet):
 
 
 def user_guide_snippet_recursiveIsEven():
+    from pyteal import If, Int, Subroutine, TealType
+
     @Subroutine(TealType.uint64)
     def recursiveIsEven(i):
         return (
@@ -44,6 +44,8 @@ def user_guide_snippet_recursiveIsEven():
 
 
 def user_guide_snippet_ILLEGAL_recursion():
+    from pyteal import If, Int, ScratchVar, Seq, Subroutine, TealType
+
     @Subroutine(TealType.none)
     def ILLEGAL_recursion(i: ScratchVar):
         return (
@@ -71,7 +73,7 @@ def test_user_guide_snippets_good(snippet):
 
 USER_GUIDE_SNIPPETS_ERRORING = {
     user_guide_snippet_ILLEGAL_recursion: (
-        TealInputError,
+        pt.TealInputError,
         "ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: ILLEGAL_recursion()-->ILLEGAL_recursion()",
     )
 }
@@ -86,7 +88,7 @@ def test_user_guide_snippets_bad(snippet_etype_e):
         f"Test case function=[{snippet.__name__}]. Expecting error of type {etype} with message <{e}>"
     )
     with pytest.raises(etype) as tie:
-        compileTeal(snippet(), mode=Mode.Application, version=6)
+        pt.compileTeal(snippet(), mode=pt.Mode.Application, version=6)
 
     assert e in str(tie)
 
@@ -94,6 +96,8 @@ def test_user_guide_snippets_bad(snippet_etype_e):
 def blackbox_pyteal_example1():
     # Example 1: Using blackbox_pyteal for a simple test of both an app and logic sig:
     from graviton.blackbox import DryRunEncoder, DryRunExecutor
+
+    from pyteal import compileTeal, Int, Mode, Subroutine, TealType
 
     from tests.blackbox_asserts import algod_with_assertion, blackbox_pyteal
 
@@ -140,6 +144,18 @@ def blackbox_pyteal_example2():
     import random
 
     from graviton.blackbox import DryRunExecutor, DryRunInspector
+
+    from pyteal import (
+        compileTeal,
+        For,
+        If,
+        Int,
+        Mod,
+        ScratchVar,
+        Seq,
+        Subroutine,
+        TealType,
+    )
 
     from tests.blackbox_asserts import algod_with_assertion, blackbox_pyteal
 
@@ -201,6 +217,8 @@ def blackbox_pyteal_example3():
         DryRunProperty as DRProp,
     )
     from graviton.invariant import Invariant
+
+    from pyteal import compileTeal, If, Int, Mode, Subroutine, TealType
 
     from tests.blackbox_asserts import (
         algod_with_assertion,
