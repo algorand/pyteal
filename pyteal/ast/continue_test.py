@@ -1,35 +1,32 @@
 import pytest
 
-from .. import *
+import pyteal as pt
 
-# this is not necessary but mypy complains if it's not included
-from .. import CompileOptions
-
-options = CompileOptions()
+options = pt.CompileOptions()
 
 
 def test_continue_fail():
-    with pytest.raises(TealCompileError):
-        Continue().__teal__(options)
+    with pytest.raises(pt.TealCompileError):
+        pt.Continue().__teal__(options)
 
-    with pytest.raises(TealCompileError):
-        If(Int(1), Continue()).__teal__(options)
+    with pytest.raises(pt.TealCompileError):
+        pt.If(pt.Int(1), pt.Continue()).__teal__(options)
 
-    with pytest.raises(TealCompileError):
-        Seq([Continue()]).__teal__(options)
+    with pytest.raises(pt.TealCompileError):
+        pt.Seq([pt.Continue()]).__teal__(options)
 
     with pytest.raises(TypeError):
-        Continue(Int(1))
+        pt.Continue(pt.Int(1))
 
 
 def test_continue():
 
-    expr = Continue()
+    expr = pt.Continue()
 
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expected = TealSimpleBlock([])
+    expected = pt.TealSimpleBlock([])
 
     options.enterLoop()
     actual, _ = expr.__teal__(options)

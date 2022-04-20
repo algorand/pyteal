@@ -1,36 +1,33 @@
 import pytest
 
-from .. import *
+import pyteal as pt
 
-# this is not necessary but mypy complains if it's not included
-from .. import CompileOptions
-
-options = CompileOptions()
+options = pt.CompileOptions()
 
 
 def test_break_fail():
 
-    with pytest.raises(TealCompileError):
-        Break().__teal__(options)
+    with pytest.raises(pt.TealCompileError):
+        pt.Break().__teal__(options)
 
-    with pytest.raises(TealCompileError):
-        If(Int(1), Break()).__teal__(options)
+    with pytest.raises(pt.TealCompileError):
+        pt.If(pt.Int(1), pt.Break()).__teal__(options)
 
-    with pytest.raises(TealCompileError):
-        Seq([Break()]).__teal__(options)
+    with pytest.raises(pt.TealCompileError):
+        pt.Seq([pt.Break()]).__teal__(options)
 
     with pytest.raises(TypeError):
-        Break(Int(1))
+        pt.Break(pt.Int(1))
 
 
 def test_break():
 
-    expr = Break()
+    expr = pt.Break()
 
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expected = TealSimpleBlock([])
+    expected = pt.TealSimpleBlock([])
 
     options.enterLoop()
     actual, _ = expr.__teal__(options)

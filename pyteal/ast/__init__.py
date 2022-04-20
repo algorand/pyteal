@@ -1,35 +1,43 @@
 # abstract types
-from .expr import Expr
+from pyteal.ast.expr import Expr
 
 # basic types
-from .leafexpr import LeafExpr
-from .addr import Addr
-from .bytes import Bytes
-from .int import Int, EnumInt
-from .methodsig import MethodSignature
+from pyteal.ast.leafexpr import LeafExpr
+from pyteal.ast.addr import Addr
+from pyteal.ast.bytes import Bytes
+from pyteal.ast.int import Int, EnumInt
+from pyteal.ast.methodsig import MethodSignature
 
 # properties
-from .arg import Arg
-from .txn import TxnType, TxnField, TxnExpr, TxnaExpr, TxnArray, TxnObject, Txn
-from .gtxn import GtxnExpr, GtxnaExpr, TxnGroup, Gtxn
-from .gaid import GeneratedID
-from .gitxn import Gitxn, GitxnExpr, GitxnaExpr, InnerTxnGroup
-from .gload import ImportScratchValue
-from .global_ import Global, GlobalField
-from .app import App, AppField, OnComplete, AppParam
-from .asset import AssetHolding, AssetParam
-from .acct import AccountParam
+from pyteal.ast.arg import Arg
+from pyteal.ast.txn import (
+    TxnType,
+    TxnField,
+    TxnExpr,
+    TxnaExpr,
+    TxnArray,
+    TxnObject,
+    Txn,
+)
+from pyteal.ast.gtxn import GtxnExpr, GtxnaExpr, TxnGroup, Gtxn
+from pyteal.ast.gaid import GeneratedID
+from pyteal.ast.gitxn import Gitxn, GitxnExpr, GitxnaExpr, InnerTxnGroup
+from pyteal.ast.gload import ImportScratchValue
+from pyteal.ast.global_ import Global, GlobalField
+from pyteal.ast.app import App, AppField, OnComplete, AppParam
+from pyteal.ast.asset import AssetHolding, AssetParam
+from pyteal.ast.acct import AccountParam
 
 # inner txns
-from .itxn import InnerTxnBuilder, InnerTxn, InnerTxnAction
+from pyteal.ast.itxn import InnerTxnBuilder, InnerTxn, InnerTxnAction
 
 # meta
-from .array import Array
-from .tmpl import Tmpl
-from .nonce import Nonce
+from pyteal.ast.array import Array
+from pyteal.ast.tmpl import Tmpl
+from pyteal.ast.nonce import Nonce
 
 # unary ops
-from .unaryexpr import (
+from pyteal.ast.unaryexpr import (
     UnaryExpr,
     Btoi,
     Itob,
@@ -51,7 +59,7 @@ from .unaryexpr import (
 )
 
 # binary ops
-from .binaryexpr import (
+from pyteal.ast.binaryexpr import (
     BinaryExpr,
     Add,
     Minus,
@@ -92,44 +100,44 @@ from .binaryexpr import (
 )
 
 # ternary ops
-from .ternaryexpr import Divw, Ed25519Verify, SetBit, SetByte
-from .substring import Substring, Extract, Suffix
+from pyteal.ast.ternaryexpr import Divw, Ed25519Verify, SetBit, SetByte
+from pyteal.ast.substring import Substring, Extract, Suffix
 
 # more ops
-from .naryexpr import NaryExpr, And, Or, Concat
-from .widemath import WideRatio
+from pyteal.ast.naryexpr import NaryExpr, And, Or, Concat
+from pyteal.ast.widemath import WideRatio
 
 # control flow
-from .if_ import If
-from .cond import Cond
-from .seq import Seq
-from .assert_ import Assert
-from .err import Err
-from .return_ import Return, Approve, Reject
-from .subroutine import (
+from pyteal.ast.if_ import If
+from pyteal.ast.cond import Cond
+from pyteal.ast.seq import Seq
+from pyteal.ast.assert_ import Assert
+from pyteal.ast.err import Err
+from pyteal.ast.return_ import Return, Approve, Reject
+from pyteal.ast.subroutine import (
     Subroutine,
     SubroutineDefinition,
     SubroutineDeclaration,
     SubroutineCall,
     SubroutineFnWrapper,
 )
-from .while_ import While
-from .for_ import For
-from .break_ import Break
-from .continue_ import Continue
+from pyteal.ast.while_ import While
+from pyteal.ast.for_ import For
+from pyteal.ast.break_ import Break
+from pyteal.ast.continue_ import Continue
 
 
 # misc
-from .scratch import (
+from pyteal.ast.scratch import (
     ScratchIndex,
     ScratchLoad,
     ScratchSlot,
     ScratchStackStore,
     ScratchStore,
 )
-from .scratchvar import DynamicScratchVar, ScratchVar
-from .maybe import MaybeValue
-from .multi import MultiValue
+from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
+from pyteal.ast.maybe import MaybeValue
+from pyteal.ast.multi import MultiValue
 
 __all__ = [
     "Expr",

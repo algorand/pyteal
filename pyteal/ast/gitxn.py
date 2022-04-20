@@ -1,14 +1,13 @@
 from typing import TYPE_CHECKING, cast, Union
 
+from pyteal.ast.expr import Expr
+from pyteal.ast.txn import TxnExpr, TxnField, TxnObject, TxnaExpr
 from pyteal.config import MAX_GROUP_SIZE
-
-from ..errors import TealInputError, verifyFieldVersion, verifyTealVersion
-from ..ir import TealOp, Op, TealBlock
-from .expr import Expr
-from .txn import TxnExpr, TxnField, TxnObject, TxnaExpr
+from pyteal.errors import TealInputError, verifyFieldVersion, verifyTealVersion
+from pyteal.ir import TealOp, Op, TealBlock
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class GitxnExpr(TxnExpr):

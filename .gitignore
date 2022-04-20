@@ -137,6 +137,5 @@ dmypy.json
 *.csv
 !tests/**/*_example.csv
 
-
 # mac OS
 .DS_Store

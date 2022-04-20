@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING
 
-from ..types import TealType, require_type, types_match
-from ..errors import verifyTealVersion, TealCompileError
-from ..ir import TealOp, Op, TealBlock
-from .expr import Expr
-from .int import Int
+from pyteal.types import TealType, require_type, types_match
+from pyteal.errors import verifyTealVersion, TealCompileError
+from pyteal.ir import TealOp, Op, TealBlock
+from pyteal.ast.expr import Expr
+from pyteal.ast.int import Int
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class Return(Expr):

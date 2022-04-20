@@ -3,7 +3,7 @@ from typing import List, Optional, TYPE_CHECKING
 from contextlib import AbstractContextManager
 
 if TYPE_CHECKING:
-    from ..ast import Expr, ScratchSlot, SubroutineDefinition
+    from pyteal.ast import Expr, ScratchSlot, SubroutineDefinition
 
 
 class TealComponent(ABC):

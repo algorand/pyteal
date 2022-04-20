@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING
 
-from ..types import TealType, valid_address
-from ..ir import TealOp, Op, TealBlock
-from .leafexpr import LeafExpr
+from pyteal.types import TealType, valid_address
+from pyteal.ir import TealOp, Op, TealBlock
+from pyteal.ast.leafexpr import LeafExpr
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class Addr(LeafExpr):

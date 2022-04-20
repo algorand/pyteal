@@ -1,7 +1,8 @@
 from typing import Set
-from ..ast import ScratchSlot
-from ..ir import TealBlock, TealOp, Op
-from ..errors import TealInternalError
+
+from pyteal.ast import ScratchSlot
+from pyteal.errors import TealInternalError
+from pyteal.ir import TealBlock, TealOp, Op
 
 
 class OptimizeOptions:
@@ -100,3 +101,6 @@ def apply_global_optimizations(start: TealBlock, options: OptimizeOptions) -> Te
                 break
 
     return start
+
+
+OptimizeOptions.__module__ = "pyteal"

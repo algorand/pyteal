@@ -1,12 +1,12 @@
 from typing import Union, List, Optional, TYPE_CHECKING
 
-from .tealcomponent import TealComponent
-from .labelref import LabelReference
-from .ops import Op
-from ..errors import TealInternalError
+from pyteal.ir.tealcomponent import TealComponent
+from pyteal.ir.labelref import LabelReference
+from pyteal.ir.ops import Op
+from pyteal.errors import TealInternalError
 
 if TYPE_CHECKING:
-    from ..ast import Expr, ScratchSlot, SubroutineDefinition
+    from pyteal.ast import Expr, ScratchSlot, SubroutineDefinition
 
 
 class TealOp(TealComponent):
@@ -24,7 +24,7 @@ class TealOp(TealComponent):
         return self.op
 
     def getSlots(self) -> List["ScratchSlot"]:
-        from ..ast import ScratchSlot
+        from pyteal.ast import ScratchSlot
 
         return [arg for arg in self.args if isinstance(arg, ScratchSlot)]
 
@@ -34,7 +34,7 @@ class TealOp(TealComponent):
                 self.args[i] = location
 
     def getSubroutines(self) -> List["SubroutineDefinition"]:
-        from ..ast import SubroutineDefinition
+        from pyteal.ast import SubroutineDefinition
 
         return [arg for arg in self.args if isinstance(arg, SubroutineDefinition)]
 
@@ -44,7 +44,7 @@ class TealOp(TealComponent):
                 self.args[i] = label
 
     def assemble(self) -> str:
-        from ..ast import ScratchSlot, SubroutineDefinition
+        from pyteal.ast import ScratchSlot, SubroutineDefinition
 
         parts = [str(self.op)]
         for arg in self.args:

@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pyteal",
-    version="0.10.1",
+    version="0.11.1",
     author="Algorand",
     author_email="pypiservice@algorand.com",
     description="Algorand Smart Contracts in Python",
@@ -20,11 +20,12 @@ setuptools.setup(
         "development": [
             "black==22.3.0",
             "flake8==4.0.1",
+            "flake8-tidy-imports==4.6.0",
             "mypy==0.942",
             "py-algorand-sdk",
             "pytest==7.1.1",
-            "pytest-cov",
-            "pytest-timeout",
+            "pytest-cov==3.0.0",
+            "pytest-timeout==2.1.0",
         ],
         "integration": [
             "graviton@git+https://github.com/algorand/graviton@fuzz",

@@ -1,12 +1,12 @@
 from typing import cast, TYPE_CHECKING, Optional
 
-from ..types import TealType, require_type
-from ..config import NUM_SLOTS
-from ..errors import TealInputError, TealInternalError
-from .expr import Expr
+from pyteal.types import TealType, require_type
+from pyteal.config import NUM_SLOTS
+from pyteal.errors import TealInputError, TealInternalError
+from pyteal.ast.expr import Expr
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class ScratchSlot:
@@ -87,7 +87,7 @@ class ScratchIndex(Expr):
         return False
 
     def __teal__(self, options: "CompileOptions"):
-        from ..ir import TealOp, Op, TealBlock
+        from pyteal.ir import TealOp, Op, TealBlock
 
         op = TealOp(self, Op.int, self.slot)
         return TealBlock.FromOp(options, op)
@@ -143,7 +143,7 @@ class ScratchLoad(Expr):
         return "(Load {})".format(self.slot if self.slot else self.index_expression)
 
     def __teal__(self, options: "CompileOptions"):
-        from ..ir import TealOp, Op, TealBlock
+        from pyteal.ir import TealOp, Op, TealBlock
 
         if self.index_expression is not None:
             op = TealOp(self, Op.loads)
@@ -203,7 +203,7 @@ class ScratchStore(Expr):
         )
 
     def __teal__(self, options: "CompileOptions"):
-        from ..ir import TealOp, Op, TealBlock
+        from pyteal.ir import TealOp, Op, TealBlock
 
         if self.index_expression is not None:
             op = TealOp(self, Op.stores)
@@ -246,7 +246,7 @@ class ScratchStackStore(Expr):
         return "(StackStore {})".format(self.slot)
 
     def __teal__(self, options: "CompileOptions"):
-        from ..ir import TealOp, Op, TealBlock
+        from pyteal.ir import TealOp, Op, TealBlock
 
         op = TealOp(self, Op.store, self.slot)
         return TealBlock.FromOp(options, op)
