@@ -27,9 +27,7 @@ def test_opup_explicit():
     # verify correct usage doesn't cause an error
     _ = pt.Seq(opup.ensure_budget(pt.Int(500) + pt.Int(1000)), pt.Return(pt.Int(1)))
 
-    _ = pt.Seq(
-        opup.maximize_budget(pt.Txn.fee() - pt.Int(100)), pt.Return(pt.Int(1))
-    )
+    _ = pt.Seq(opup.maximize_budget(pt.Txn.fee() - pt.Int(100)), pt.Return(pt.Int(1)))
 
 
 def test_opup_oncall():
@@ -48,6 +46,4 @@ def test_opup_oncall():
     assert opup.target_app_id is not None
     assert opup.target_app_id_slot is not None
 
-    _ = pt.Seq(
-        opup.maximize_budget(pt.Txn.fee() - pt.Int(100)), pt.Return(pt.Int(1))
-    )
+    _ = pt.Seq(opup.maximize_budget(pt.Txn.fee() - pt.Int(100)), pt.Return(pt.Int(1)))
