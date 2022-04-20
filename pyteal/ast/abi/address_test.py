@@ -8,7 +8,7 @@ def test_AddressTypeSpec_str():
 
 
 def test_AddressTypeSpec_is_dynamic():
-    assert not (abi.AddressTypeSpec()).is_dynamic()
+    assert (abi.AddressTypeSpec()).is_dynamic() is False
 
 
 def test_AddressTypeSpec_byte_length_static():
