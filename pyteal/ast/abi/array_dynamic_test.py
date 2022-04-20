@@ -1,13 +1,14 @@
 from typing import List
 import pytest
 
-from ... import *
+import pyteal as pt
+from pyteal import abi
 from .util import substringForDecoding
 from .tuple import encodeTuple
 from .array_base_test import STATIC_TYPES, DYNAMIC_TYPES
 from .type_test import ContainerType
 
-options = CompileOptions(version=5)
+options = pt.CompileOptions(version=5)
 
 
 def test_DynamicArrayTypeSpec_init():
@@ -59,15 +60,15 @@ def test_DynamicArrayTypeSpec_byte_length_static():
 
 
 def test_DynamicArray_decode():
-    encoded = Bytes("encoded")
+    encoded = pt.Bytes("encoded")
     dynamicArrayType = abi.DynamicArrayTypeSpec(abi.Uint64TypeSpec())
-    for startIndex in (None, Int(1)):
-        for endIndex in (None, Int(2)):
-            for length in (None, Int(3)):
+    for startIndex in (None, pt.Int(1)):
+        for endIndex in (None, pt.Int(2)):
+            for length in (None, pt.Int(3)):
                 value = dynamicArrayType.new_instance()
 
                 if endIndex is not None and length is not None:
-                    with pytest.raises(TealInputError):
+                    with pytest.raises(pt.TealInputError):
                         value.decode(
                             encoded,
                             startIndex=startIndex,
@@ -79,7 +80,7 @@ def test_DynamicArray_decode():
                 expr = value.decode(
                     encoded, startIndex=startIndex, endIndex=endIndex, length=length
                 )
-                assert expr.type_of() == TealType.none
+                assert expr.type_of() == pt.TealType.none
                 assert not expr.has_return()
 
                 expectedExpr = value.stored_value.store(
@@ -89,13 +90,13 @@ def test_DynamicArray_decode():
                 )
                 expected, _ = expectedExpr.__teal__(options)
                 expected.addIncoming()
-                expected = TealBlock.NormalizeBlocks(expected)
+                expected = pt.TealBlock.NormalizeBlocks(expected)
 
                 actual, _ = expr.__teal__(options)
                 actual.addIncoming()
-                actual = TealBlock.NormalizeBlocks(actual)
+                actual = pt.TealBlock.NormalizeBlocks(actual)
 
-                with TealComponent.Context.ignoreExprEquality():
+                with pt.TealComponent.Context.ignoreExprEquality():
                     assert actual == expected
 
 
@@ -110,31 +111,31 @@ def test_DynamicArray_set_values():
     for values in valuesToSet:
         value = dynamicArrayType.new_instance()
         expr = value.set(values)
-        assert expr.type_of() == TealType.none
+        assert expr.type_of() == pt.TealType.none
         assert not expr.has_return()
 
         length_tmp = abi.Uint16()
         expectedExpr = value.stored_value.store(
-            Concat(
-                Seq(length_tmp.set(len(values)), length_tmp.encode()),
+            pt.Concat(
+                pt.Seq(length_tmp.set(len(values)), length_tmp.encode()),
                 encodeTuple(values),
             )
         )
         expected, _ = expectedExpr.__teal__(options)
         expected.addIncoming()
-        expected = TealBlock.NormalizeBlocks(expected)
+        expected = pt.TealBlock.NormalizeBlocks(expected)
 
         actual, _ = expr.__teal__(options)
         actual.addIncoming()
-        actual = TealBlock.NormalizeBlocks(actual)
+        actual = pt.TealBlock.NormalizeBlocks(actual)
 
-        with TealComponent.Context.ignoreExprEquality():
-            with TealComponent.Context.ignoreScratchSlotEquality():
+        with pt.TealComponent.Context.ignoreExprEquality():
+            with pt.TealComponent.Context.ignoreScratchSlotEquality():
                 assert actual == expected
 
-        assert TealBlock.MatchScratchSlotReferences(
-            TealBlock.GetReferencedScratchSlots(actual),
-            TealBlock.GetReferencedScratchSlots(expected),
+        assert pt.TealBlock.MatchScratchSlotReferences(
+            pt.TealBlock.GetReferencedScratchSlots(actual),
+            pt.TealBlock.GetReferencedScratchSlots(expected),
         )
 
 
@@ -143,56 +144,58 @@ def test_DynamicArray_set_copy():
     value = dynamicArrayType.new_instance()
     otherArray = dynamicArrayType.new_instance()
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         value.set(abi.DynamicArray(abi.DynamicArrayTypeSpec(abi.Uint8TypeSpec())))
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         value.set(abi.Uint64())
 
     expr = value.set(otherArray)
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(None, Op.load, otherArray.stored_value.slot),
-            TealOp(None, Op.store, value.stored_value.slot),
+            pt.TealOp(None, pt.Op.load, otherArray.stored_value.slot),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
         ]
     )
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
 
 def test_DynamicArray_set_computed():
     value = abi.DynamicArray(abi.ByteTypeSpec())
-    computed = ContainerType(value.type_spec(), Bytes("this should be a dynamic array"))
+    computed = ContainerType(
+        value.type_spec(), pt.Bytes("this should be a dynamic array")
+    )
     expr = value.set(computed)
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(None, Op.byte, '"this should be a dynamic array"'),
-            TealOp(None, Op.store, value.stored_value.slot),
+            pt.TealOp(None, pt.Op.byte, '"this should be a dynamic array"'),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
         ]
     )
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = actual.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         value.set(
             ContainerType(
                 abi.DynamicArrayTypeSpec(abi.Uint16TypeSpec()),
-                Bytes("well i am trolling again"),
+                pt.Bytes("well i am trolling again"),
             )
         )
 
@@ -201,16 +204,18 @@ def test_DynamicArray_encode():
     dynamicArrayType = abi.DynamicArrayTypeSpec(abi.Uint64TypeSpec())
     value = dynamicArrayType.new_instance()
     expr = value.encode()
-    assert expr.type_of() == TealType.bytes
+    assert expr.type_of() == pt.TealType.bytes
     assert not expr.has_return()
 
-    expected = TealSimpleBlock([TealOp(None, Op.load, value.stored_value.slot)])
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(None, pt.Op.load, value.stored_value.slot)]
+    )
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
 
@@ -218,26 +223,26 @@ def test_DynamicArray_length():
     dynamicArrayType = abi.DynamicArrayTypeSpec(abi.Uint64TypeSpec())
     value = dynamicArrayType.new_instance()
     expr = value.length()
-    assert expr.type_of() == TealType.uint64
+    assert expr.type_of() == pt.TealType.uint64
     assert not expr.has_return()
 
     length_tmp = abi.Uint16()
-    expectedExpr = Seq(length_tmp.decode(value.encode()), length_tmp.get())
+    expectedExpr = pt.Seq(length_tmp.decode(value.encode()), length_tmp.get())
     expected, _ = expectedExpr.__teal__(options)
     expected.addIncoming()
-    expected = TealBlock.NormalizeBlocks(expected)
+    expected = pt.TealBlock.NormalizeBlocks(expected)
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
-        with TealComponent.Context.ignoreScratchSlotEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
+        with pt.TealComponent.Context.ignoreScratchSlotEquality():
             assert actual == expected
 
-    assert TealBlock.MatchScratchSlotReferences(
-        TealBlock.GetReferencedScratchSlots(actual),
-        TealBlock.GetReferencedScratchSlots(expected),
+    assert pt.TealBlock.MatchScratchSlotReferences(
+        pt.TealBlock.GetReferencedScratchSlots(actual),
+        pt.TealBlock.GetReferencedScratchSlots(expected),
     )
 
 
@@ -247,7 +252,7 @@ def test_DynamicArray_getitem():
 
     for index in (0, 1, 2, 3, 1000):
         # dynamic indexes
-        indexExpr = Int(index)
+        indexExpr = pt.Int(index)
         element = value[indexExpr]
         assert type(element) is abi.ArrayElement
         assert element.array is value
@@ -258,8 +263,8 @@ def test_DynamicArray_getitem():
         element = value[index]
         assert type(element) is abi.ArrayElement
         assert element.array is value
-        assert type(element.index) is Int
+        assert type(element.index) is pt.Int
         assert element.index.value == index
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         value[-1]
