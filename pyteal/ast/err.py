@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING
 
-from ..types import TealType
-from ..ir import TealOp, Op, TealBlock
-from .expr import Expr
+from pyteal.types import TealType
+from pyteal.ir import TealOp, Op, TealBlock
+from pyteal.ast.expr import Expr
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class Err(Expr):

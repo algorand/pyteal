@@ -1,8 +1,8 @@
 from typing import List, Dict, DefaultDict, Optional
 from collections import defaultdict
 
-from ..ast import SubroutineDefinition
-from ..ir import (
+from pyteal.ast import SubroutineDefinition
+from pyteal.ir import (
     Op,
     TealOp,
     TealLabel,
@@ -12,7 +12,7 @@ from ..ir import (
     TealConditionalBlock,
     LabelReference,
 )
-from ..errors import TealInternalError
+from pyteal.errors import TealInternalError
 
 
 def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:

@@ -2,7 +2,7 @@ from typing import List
 import pytest
 
 import pyteal as pt
-from .subroutine import evaluateSubroutine
+from pyteal.ast.subroutine import evaluateSubroutine
 
 options = pt.CompileOptions(version=4)
 

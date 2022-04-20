@@ -1,10 +1,10 @@
 from typing import Optional, TYPE_CHECKING
 
-from .tealcomponent import TealComponent
-from .labelref import LabelReference
+from pyteal.ir.tealcomponent import TealComponent
+from pyteal.ir.labelref import LabelReference
 
 if TYPE_CHECKING:
-    from ..ast import Expr
+    from pyteal.ast import Expr
 
 
 class TealLabel(TealComponent):
