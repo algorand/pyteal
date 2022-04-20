@@ -30,7 +30,7 @@ def test_String_encode():
     value = abi.String()
     expr = value.encode()
     assert expr.type_of() == TealType.bytes
-    assert not expr.has_return()
+    assert expr.has_return() is False
 
     expected = TealSimpleBlock([TealOp(expr, Op.load, value.stored_value.slot)])
     actual, _ = expr.__teal__(options)
@@ -46,7 +46,7 @@ def test_String_decode():
         expr = value.decode(Bytes(value_to_set))
 
         assert expr.type_of() == TealType.none
-        assert not expr.has_return()
+        assert expr.has_return() is False
 
         expected = TealSimpleBlock(
             [
@@ -66,7 +66,7 @@ def test_String_get():
     value = abi.String()
     expr = value.get()
     assert expr.type_of() == TealType.bytes
-    assert not expr.has_return()
+    assert expr.has_return() is False
 
     expected = TealSimpleBlock(
         [TealOp(expr, Op.load, value.stored_value.slot), TealOp(None, Op.extract, 2, 0)]
