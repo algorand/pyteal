@@ -2,67 +2,67 @@ from typing import NamedTuple, List, Literal, Optional, Union, Any, cast
 from inspect import isabstract
 import pytest
 
-from ... import *
+import pyteal as pt
 from .util import (
     substringForDecoding,
     int_literal_from_annotation,
     type_spec_from_annotation,
 )
 
-options = CompileOptions(version=5)
+options = pt.CompileOptions(version=5)
 
 
 def test_substringForDecoding():
     class SubstringTest(NamedTuple):
-        startIndex: Optional[Expr]
-        endIndex: Optional[Expr]
-        length: Optional[Expr]
-        expected: Union[Expr, Any]
+        startIndex: Optional[pt.Expr]
+        endIndex: Optional[pt.Expr]
+        length: Optional[pt.Expr]
+        expected: Union[pt.Expr, Any]
 
-    encoded = Bytes("encoded")
+    encoded = pt.Bytes("encoded")
 
     tests: List[SubstringTest] = [
         SubstringTest(startIndex=None, endIndex=None, length=None, expected=encoded),
         SubstringTest(
             startIndex=None,
             endIndex=None,
-            length=Int(4),
-            expected=Extract(encoded, Int(0), Int(4)),
+            length=pt.Int(4),
+            expected=pt.Extract(encoded, pt.Int(0), pt.Int(4)),
         ),
         SubstringTest(
             startIndex=None,
-            endIndex=Int(4),
+            endIndex=pt.Int(4),
             length=None,
-            expected=Substring(encoded, Int(0), Int(4)),
+            expected=pt.Substring(encoded, pt.Int(0), pt.Int(4)),
         ),
         SubstringTest(
-            startIndex=None, endIndex=Int(4), length=Int(5), expected=TealInputError
+            startIndex=None, endIndex=pt.Int(4), length=pt.Int(5), expected=pt.TealInputError
         ),
         SubstringTest(
-            startIndex=Int(4),
+            startIndex=pt.Int(4),
             endIndex=None,
             length=None,
-            expected=Suffix(encoded, Int(4)),
+            expected=pt.Suffix(encoded, pt.Int(4)),
         ),
         SubstringTest(
-            startIndex=Int(4),
+            startIndex=pt.Int(4),
             endIndex=None,
-            length=Int(5),
-            expected=Extract(encoded, Int(4), Int(5)),
+            length=pt.Int(5),
+            expected=pt.Extract(encoded, pt.Int(4), pt.Int(5)),
         ),
         SubstringTest(
-            startIndex=Int(4),
-            endIndex=Int(5),
+            startIndex=pt.Int(4),
+            endIndex=pt.Int(5),
             length=None,
-            expected=Substring(encoded, Int(4), Int(5)),
+            expected=pt.Substring(encoded, pt.Int(4), pt.Int(5)),
         ),
         SubstringTest(
-            startIndex=Int(4), endIndex=Int(5), length=Int(6), expected=TealInputError
+            startIndex=pt.Int(4), endIndex=pt.Int(5), length=pt.Int(6), expected=pt.TealInputError
         ),
     ]
 
     for i, test in enumerate(tests):
-        if not isinstance(test.expected, Expr):
+        if not isinstance(test.expected, pt.Expr):
             with pytest.raises(test.expected):
                 substringForDecoding(
                     encoded,
@@ -78,18 +78,18 @@ def test_substringForDecoding():
             endIndex=test.endIndex,
             length=test.length,
         )
-        assert expr.type_of() == TealType.bytes
+        assert expr.type_of() == pt.TealType.bytes
         assert not expr.has_return()
 
-        expected, _ = cast(Expr, test.expected).__teal__(options)
+        expected, _ = cast(pt.Expr, test.expected).__teal__(options)
         expected.addIncoming()
-        expected = TealBlock.NormalizeBlocks(expected)
+        expected = pt.TealBlock.NormalizeBlocks(expected)
 
         actual, _ = expr.__teal__(options)
         actual.addIncoming()
-        actual = TealBlock.NormalizeBlocks(actual)
+        actual = pt.TealBlock.NormalizeBlocks(actual)
 
-        with TealComponent.Context.ignoreExprEquality():
+        with pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected, "Test at index {} failed".format(i)
 
 
@@ -125,148 +125,148 @@ def test_int_literal_from_annotation():
 def test_type_spec_from_annotation():
     class TypeAnnotationTest(NamedTuple):
         annotation: Any
-        expected: Union[abi.TypeSpec, Any]
+        expected: Union[pt.abi.TypeSpec, Any]
 
     tests: List[TypeAnnotationTest] = [
-        TypeAnnotationTest(annotation=abi.Bool, expected=abi.BoolTypeSpec()),
-        TypeAnnotationTest(annotation=abi.Byte, expected=abi.ByteTypeSpec()),
-        TypeAnnotationTest(annotation=abi.Uint8, expected=abi.Uint8TypeSpec()),
-        TypeAnnotationTest(annotation=abi.Uint16, expected=abi.Uint16TypeSpec()),
-        TypeAnnotationTest(annotation=abi.Uint32, expected=abi.Uint32TypeSpec()),
-        TypeAnnotationTest(annotation=abi.Uint64, expected=abi.Uint64TypeSpec()),
+        TypeAnnotationTest(annotation=pt.abi.Bool, expected=pt.abi.BoolTypeSpec()),
+        TypeAnnotationTest(annotation=pt.abi.Byte, expected=pt.abi.ByteTypeSpec()),
+        TypeAnnotationTest(annotation=pt.abi.Uint8, expected=pt.abi.Uint8TypeSpec()),
+        TypeAnnotationTest(annotation=pt.abi.Uint16, expected=pt.abi.Uint16TypeSpec()),
+        TypeAnnotationTest(annotation=pt.abi.Uint32, expected=pt.abi.Uint32TypeSpec()),
+        TypeAnnotationTest(annotation=pt.abi.Uint64, expected=pt.abi.Uint64TypeSpec()),
         TypeAnnotationTest(
-            annotation=abi.DynamicArray[abi.Uint32],
-            expected=abi.DynamicArrayTypeSpec(abi.Uint32TypeSpec()),
+            annotation=pt.abi.DynamicArray[pt.abi.Uint32],
+            expected=pt.abi.DynamicArrayTypeSpec(pt.abi.Uint32TypeSpec()),
         ),
         TypeAnnotationTest(
-            annotation=abi.DynamicArray[abi.Uint64],
-            expected=abi.DynamicArrayTypeSpec(abi.Uint64TypeSpec()),
+            annotation=pt.abi.DynamicArray[pt.abi.Uint64],
+            expected=pt.abi.DynamicArrayTypeSpec(pt.abi.Uint64TypeSpec()),
         ),
         TypeAnnotationTest(
-            annotation=abi.DynamicArray[abi.DynamicArray[abi.Uint32]],
-            expected=abi.DynamicArrayTypeSpec(
-                abi.DynamicArrayTypeSpec(abi.Uint32TypeSpec())
+            annotation=pt.abi.DynamicArray[pt.abi.DynamicArray[pt.abi.Uint32]],
+            expected=pt.abi.DynamicArrayTypeSpec(
+                pt.abi.DynamicArrayTypeSpec(pt.abi.Uint32TypeSpec())
             ),
         ),
         TypeAnnotationTest(
-            annotation=abi.DynamicArray,
+            annotation=pt.abi.DynamicArray,
             expected=TypeError,
         ),
         TypeAnnotationTest(
-            annotation=abi.StaticArray[abi.Uint32, Literal[0]],
-            expected=abi.StaticArrayTypeSpec(abi.Uint32TypeSpec(), 0),
+            annotation=pt.abi.StaticArray[pt.abi.Uint32, Literal[0]],
+            expected=pt.abi.StaticArrayTypeSpec(pt.abi.Uint32TypeSpec(), 0),
         ),
         TypeAnnotationTest(
-            annotation=abi.StaticArray[abi.Uint32, Literal[10]],
-            expected=abi.StaticArrayTypeSpec(abi.Uint32TypeSpec(), 10),
+            annotation=pt.abi.StaticArray[pt.abi.Uint32, Literal[10]],
+            expected=pt.abi.StaticArrayTypeSpec(pt.abi.Uint32TypeSpec(), 10),
         ),
         TypeAnnotationTest(
-            annotation=abi.StaticArray[abi.Bool, Literal[500]],
-            expected=abi.StaticArrayTypeSpec(abi.BoolTypeSpec(), 500),
+            annotation=pt.abi.StaticArray[pt.abi.Bool, Literal[500]],
+            expected=pt.abi.StaticArrayTypeSpec(pt.abi.BoolTypeSpec(), 500),
         ),
         TypeAnnotationTest(
-            annotation=abi.StaticArray[abi.Bool, Literal[-1]],
+            annotation=pt.abi.StaticArray[pt.abi.Bool, Literal[-1]],
             expected=TypeError,
         ),
         TypeAnnotationTest(
-            annotation=abi.StaticArray[abi.Bool, int],
+            annotation=pt.abi.StaticArray[pt.abi.Bool, int],
             expected=TypeError,
         ),
         TypeAnnotationTest(
-            annotation=abi.StaticArray,
+            annotation=pt.abi.StaticArray,
             expected=TypeError,
         ),
         TypeAnnotationTest(
-            annotation=abi.StaticArray[
-                abi.StaticArray[abi.Bool, Literal[500]], Literal[5]
+            annotation=pt.abi.StaticArray[
+                pt.abi.StaticArray[pt.abi.Bool, Literal[500]], Literal[5]
             ],
-            expected=abi.StaticArrayTypeSpec(
-                abi.StaticArrayTypeSpec(abi.BoolTypeSpec(), 500), 5
+            expected=pt.abi.StaticArrayTypeSpec(
+                pt.abi.StaticArrayTypeSpec(pt.abi.BoolTypeSpec(), 500), 5
             ),
         ),
         TypeAnnotationTest(
-            annotation=abi.DynamicArray[abi.StaticArray[abi.Bool, Literal[500]]],
-            expected=abi.DynamicArrayTypeSpec(
-                abi.StaticArrayTypeSpec(abi.BoolTypeSpec(), 500)
+            annotation=pt.abi.DynamicArray[pt.abi.StaticArray[pt.abi.Bool, Literal[500]]],
+            expected=pt.abi.DynamicArrayTypeSpec(
+                pt.abi.StaticArrayTypeSpec(pt.abi.BoolTypeSpec(), 500)
             ),
         ),
-        TypeAnnotationTest(annotation=abi.Tuple, expected=abi.TupleTypeSpec()),
-        TypeAnnotationTest(annotation=abi.Tuple0, expected=abi.TupleTypeSpec()),
+        TypeAnnotationTest(annotation=pt.abi.Tuple, expected=pt.abi.TupleTypeSpec()),
+        TypeAnnotationTest(annotation=pt.abi.Tuple0, expected=pt.abi.TupleTypeSpec()),
         TypeAnnotationTest(
-            annotation=abi.Tuple1[abi.Uint32],
-            expected=abi.TupleTypeSpec(abi.Uint32TypeSpec()),
+            annotation=pt.abi.Tuple1[pt.abi.Uint32],
+            expected=pt.abi.TupleTypeSpec(pt.abi.Uint32TypeSpec()),
         ),
         TypeAnnotationTest(
-            annotation=abi.Tuple1,
+            annotation=pt.abi.Tuple1,
             expected=TypeError,
         ),
         TypeAnnotationTest(
-            annotation=abi.Tuple2[abi.Uint32, abi.Uint16],
-            expected=abi.TupleTypeSpec(abi.Uint32TypeSpec(), abi.Uint16TypeSpec()),
+            annotation=pt.abi.Tuple2[pt.abi.Uint32, pt.abi.Uint16],
+            expected=pt.abi.TupleTypeSpec(pt.abi.Uint32TypeSpec(), pt.abi.Uint16TypeSpec()),
         ),
         TypeAnnotationTest(
-            annotation=abi.Tuple2,
+            annotation=pt.abi.Tuple2,
             expected=TypeError,
         ),
         TypeAnnotationTest(
-            annotation=abi.Tuple3[abi.Uint32, abi.Uint16, abi.Byte],
-            expected=abi.TupleTypeSpec(
-                abi.Uint32TypeSpec(), abi.Uint16TypeSpec(), abi.ByteTypeSpec()
+            annotation=pt.abi.Tuple3[pt.abi.Uint32, pt.abi.Uint16, pt.abi.Byte],
+            expected=pt.abi.TupleTypeSpec(
+                pt.abi.Uint32TypeSpec(), pt.abi.Uint16TypeSpec(), pt.abi.ByteTypeSpec()
             ),
         ),
         TypeAnnotationTest(
-            annotation=abi.Tuple3,
+            annotation=pt.abi.Tuple3,
             expected=TypeError,
         ),
         TypeAnnotationTest(
-            annotation=abi.Tuple3[
-                abi.Tuple1[abi.Uint32],
-                abi.StaticArray[abi.Bool, Literal[55]],
-                abi.Tuple2[abi.Uint32, abi.Uint16],
+            annotation=pt.abi.Tuple3[
+                pt.abi.Tuple1[pt.abi.Uint32],
+                pt.abi.StaticArray[pt.abi.Bool, Literal[55]],
+                pt.abi.Tuple2[pt.abi.Uint32, pt.abi.Uint16],
             ],
-            expected=abi.TupleTypeSpec(
-                abi.TupleTypeSpec(abi.Uint32TypeSpec()),
-                abi.StaticArrayTypeSpec(abi.BoolTypeSpec(), 55),
-                abi.TupleTypeSpec(abi.Uint32TypeSpec(), abi.Uint16TypeSpec()),
+            expected=pt.abi.TupleTypeSpec(
+                pt.abi.TupleTypeSpec(pt.abi.Uint32TypeSpec()),
+                pt.abi.StaticArrayTypeSpec(pt.abi.BoolTypeSpec(), 55),
+                pt.abi.TupleTypeSpec(pt.abi.Uint32TypeSpec(), pt.abi.Uint16TypeSpec()),
             ),
         ),
         TypeAnnotationTest(
-            annotation=abi.Tuple4[abi.Uint32, abi.Uint16, abi.Byte, abi.Bool],
-            expected=abi.TupleTypeSpec(
-                abi.Uint32TypeSpec(),
-                abi.Uint16TypeSpec(),
-                abi.ByteTypeSpec(),
-                abi.BoolTypeSpec(),
+            annotation=pt.abi.Tuple4[pt.abi.Uint32, pt.abi.Uint16, pt.abi.Byte, pt.abi.Bool],
+            expected=pt.abi.TupleTypeSpec(
+                pt.abi.Uint32TypeSpec(),
+                pt.abi.Uint16TypeSpec(),
+                pt.abi.ByteTypeSpec(),
+                pt.abi.BoolTypeSpec(),
             ),
         ),
         TypeAnnotationTest(
-            annotation=abi.Tuple4,
+            annotation=pt.abi.Tuple4,
             expected=TypeError,
         ),
         TypeAnnotationTest(
-            annotation=abi.Tuple5[
-                abi.Uint32, abi.Uint16, abi.Byte, abi.Bool, abi.Tuple0
+            annotation=pt.abi.Tuple5[
+                pt.abi.Uint32, pt.abi.Uint16, pt.abi.Byte, pt.abi.Bool, pt.abi.Tuple0
             ],
-            expected=abi.TupleTypeSpec(
-                abi.Uint32TypeSpec(),
-                abi.Uint16TypeSpec(),
-                abi.ByteTypeSpec(),
-                abi.BoolTypeSpec(),
-                abi.TupleTypeSpec(),
+            expected=pt.abi.TupleTypeSpec(
+                pt.abi.Uint32TypeSpec(),
+                pt.abi.Uint16TypeSpec(),
+                pt.abi.ByteTypeSpec(),
+                pt.abi.BoolTypeSpec(),
+                pt.abi.TupleTypeSpec(),
             ),
         ),
         TypeAnnotationTest(
-            annotation=abi.Tuple5,
+            annotation=pt.abi.Tuple5,
             expected=TypeError,
         ),
         TypeAnnotationTest(
-            annotation=List[abi.Uint16],
+            annotation=List[pt.abi.Uint16],
             expected=TypeError,
         ),
     ]
 
     for i, test in enumerate(tests):
-        if not isinstance(test.expected, abi.TypeSpec):
+        if not isinstance(test.expected, pt.abi.TypeSpec):
             with pytest.raises(test.expected):
                 type_spec_from_annotation(test.annotation)
             continue
@@ -279,7 +279,7 @@ def test_type_spec_from_annotation_is_exhaustive():
     # This test is to make sure there are no new subclasses of BaseType that type_spec_from_annotation
     # is not aware of.
 
-    subclasses = abi.BaseType.__subclasses__()
+    subclasses = pt.abi.BaseType.__subclasses__()
     while len(subclasses) > 0:
         subclass = subclasses.pop()
         subclasses += subclass.__subclasses__()

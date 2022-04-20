@@ -1,40 +1,40 @@
 from typing import NamedTuple, List, Callable
 import pytest
 
-from ... import *
+import pyteal as pt
 from .tuple import encodeTuple, indexTuple, TupleElement
 from .bool import encodeBoolSequence
 from .util import substringForDecoding
 from .type_test import ContainerType
 
-options = CompileOptions(version=5)
+options = pt.CompileOptions(version=5)
 
 
 def test_encodeTuple():
     class EncodeTest(NamedTuple):
-        types: List[abi.BaseType]
-        expected: Expr
+        types: List[pt.abi.BaseType]
+        expected: pt.Expr
 
     # variables used to construct the tests
-    uint64_a = abi.Uint64()
-    uint64_b = abi.Uint64()
-    uint16_a = abi.Uint16()
-    uint16_b = abi.Uint16()
-    bool_a = abi.Bool()
-    bool_b = abi.Bool()
-    tuple_a = abi.Tuple(abi.BoolTypeSpec(), abi.BoolTypeSpec())
-    dynamic_array_a = abi.DynamicArray(abi.Uint64TypeSpec())
-    dynamic_array_b = abi.DynamicArray(abi.Uint16TypeSpec())
-    dynamic_array_c = abi.DynamicArray(abi.BoolTypeSpec())
-    tail_holder = ScratchVar()
-    encoded_tail = ScratchVar()
+    uint64_a = pt.abi.Uint64()
+    uint64_b = pt.abi.Uint64()
+    uint16_a = pt.abi.Uint16()
+    uint16_b = pt.abi.Uint16()
+    bool_a = pt.abi.Bool()
+    bool_b = pt.abi.Bool()
+    tuple_a = pt.abi.Tuple(pt.abi.BoolTypeSpec(), pt.abi.BoolTypeSpec())
+    dynamic_array_a = pt.abi.DynamicArray(pt.abi.Uint64TypeSpec())
+    dynamic_array_b = pt.abi.DynamicArray(pt.abi.Uint16TypeSpec())
+    dynamic_array_c = pt.abi.DynamicArray(pt.abi.BoolTypeSpec())
+    tail_holder = pt.ScratchVar()
+    encoded_tail = pt.ScratchVar()
 
     tests: List[EncodeTest] = [
-        EncodeTest(types=[], expected=Bytes("")),
+        EncodeTest(types=[], expected=pt.Bytes("")),
         EncodeTest(types=[uint64_a], expected=uint64_a.encode()),
         EncodeTest(
             types=[uint64_a, uint64_b],
-            expected=Concat(uint64_a.encode(), uint64_b.encode()),
+            expected=pt.Concat(uint64_a.encode(), uint64_b.encode()),
         ),
         EncodeTest(types=[bool_a], expected=bool_a.encode()),
         EncodeTest(
@@ -42,15 +42,15 @@ def test_encodeTuple():
         ),
         EncodeTest(
             types=[bool_a, bool_b, uint64_a],
-            expected=Concat(encodeBoolSequence([bool_a, bool_b]), uint64_a.encode()),
+            expected=pt.Concat(encodeBoolSequence([bool_a, bool_b]), uint64_a.encode()),
         ),
         EncodeTest(
             types=[uint64_a, bool_a, bool_b],
-            expected=Concat(uint64_a.encode(), encodeBoolSequence([bool_a, bool_b])),
+            expected=pt.Concat(uint64_a.encode(), encodeBoolSequence([bool_a, bool_b])),
         ),
         EncodeTest(
             types=[uint64_a, bool_a, bool_b, uint64_b],
-            expected=Concat(
+            expected=pt.Concat(
                 uint64_a.encode(),
                 encodeBoolSequence([bool_a, bool_b]),
                 uint64_b.encode(),
@@ -58,14 +58,14 @@ def test_encodeTuple():
         ),
         EncodeTest(
             types=[uint64_a, bool_a, uint64_b, bool_b],
-            expected=Concat(
+            expected=pt.Concat(
                 uint64_a.encode(), bool_a.encode(), uint64_b.encode(), bool_b.encode()
             ),
         ),
         EncodeTest(types=[tuple_a], expected=tuple_a.encode()),
         EncodeTest(
             types=[uint64_a, tuple_a, bool_a, bool_b],
-            expected=Concat(
+            expected=pt.Concat(
                 uint64_a.encode(),
                 tuple_a.encode(),
                 encodeBoolSequence([bool_a, bool_b]),
@@ -73,8 +73,8 @@ def test_encodeTuple():
         ),
         EncodeTest(
             types=[dynamic_array_a],
-            expected=Concat(
-                Seq(
+            expected=pt.Concat(
+                pt.Seq(
                     encoded_tail.store(dynamic_array_a.encode()),
                     tail_holder.store(encoded_tail.load()),
                     uint16_a.set(2),
@@ -85,9 +85,9 @@ def test_encodeTuple():
         ),
         EncodeTest(
             types=[uint64_a, dynamic_array_a],
-            expected=Concat(
+            expected=pt.Concat(
                 uint64_a.encode(),
-                Seq(
+                pt.Seq(
                     encoded_tail.store(dynamic_array_a.encode()),
                     tail_holder.store(encoded_tail.load()),
                     uint16_a.set(8 + 2),
@@ -98,9 +98,9 @@ def test_encodeTuple():
         ),
         EncodeTest(
             types=[uint64_a, dynamic_array_a, uint64_b],
-            expected=Concat(
+            expected=pt.Concat(
                 uint64_a.encode(),
-                Seq(
+                pt.Seq(
                     encoded_tail.store(dynamic_array_a.encode()),
                     tail_holder.store(encoded_tail.load()),
                     uint16_a.set(8 + 2 + 8),
@@ -112,9 +112,9 @@ def test_encodeTuple():
         ),
         EncodeTest(
             types=[uint64_a, dynamic_array_a, bool_a, bool_b],
-            expected=Concat(
+            expected=pt.Concat(
                 uint64_a.encode(),
-                Seq(
+                pt.Seq(
                     encoded_tail.store(dynamic_array_a.encode()),
                     tail_holder.store(encoded_tail.load()),
                     uint16_a.set(8 + 2 + 1),
@@ -126,19 +126,19 @@ def test_encodeTuple():
         ),
         EncodeTest(
             types=[uint64_a, dynamic_array_a, uint64_b, dynamic_array_b],
-            expected=Concat(
+            expected=pt.Concat(
                 uint64_a.encode(),
-                Seq(
+                pt.Seq(
                     encoded_tail.store(dynamic_array_a.encode()),
                     tail_holder.store(encoded_tail.load()),
                     uint16_a.set(8 + 2 + 8 + 2),
-                    uint16_b.set(uint16_a.get() + Len(encoded_tail.load())),
+                    uint16_b.set(uint16_a.get() + pt.Len(encoded_tail.load())),
                     uint16_a.encode(),
                 ),
                 uint64_b.encode(),
-                Seq(
+                pt.Seq(
                     encoded_tail.store(dynamic_array_b.encode()),
-                    tail_holder.store(Concat(tail_holder.load(), encoded_tail.load())),
+                    tail_holder.store(pt.Concat(tail_holder.load(), encoded_tail.load())),
                     uint16_a.set(uint16_b),
                     uint16_a.encode(),
                 ),
@@ -155,27 +155,27 @@ def test_encodeTuple():
                 bool_b,
                 dynamic_array_c,
             ],
-            expected=Concat(
+            expected=pt.Concat(
                 uint64_a.encode(),
-                Seq(
+                pt.Seq(
                     encoded_tail.store(dynamic_array_a.encode()),
                     tail_holder.store(encoded_tail.load()),
                     uint16_a.set(8 + 2 + 8 + 2 + 1 + 2),
-                    uint16_b.set(uint16_a.get() + Len(encoded_tail.load())),
+                    uint16_b.set(uint16_a.get() + pt.Len(encoded_tail.load())),
                     uint16_a.encode(),
                 ),
                 uint64_b.encode(),
-                Seq(
+                pt.Seq(
                     encoded_tail.store(dynamic_array_b.encode()),
-                    tail_holder.store(Concat(tail_holder.load(), encoded_tail.load())),
+                    tail_holder.store(pt.Concat(tail_holder.load(), encoded_tail.load())),
                     uint16_a.set(uint16_b),
-                    uint16_b.set(uint16_a.get() + Len(encoded_tail.load())),
+                    uint16_b.set(uint16_a.get() + pt.Len(encoded_tail.load())),
                     uint16_a.encode(),
                 ),
                 encodeBoolSequence([bool_a, bool_b]),
-                Seq(
+                pt.Seq(
                     encoded_tail.store(dynamic_array_c.encode()),
-                    tail_holder.store(Concat(tail_holder.load(), encoded_tail.load())),
+                    tail_holder.store(pt.Concat(tail_holder.load(), encoded_tail.load())),
                     uint16_a.set(uint16_b),
                     uint16_a.encode(),
                 ),
@@ -186,47 +186,47 @@ def test_encodeTuple():
 
     for i, test in enumerate(tests):
         expr = encodeTuple(test.types)
-        assert expr.type_of() == TealType.bytes
+        assert expr.type_of() == pt.TealType.bytes
         assert not expr.has_return()
 
         expected, _ = test.expected.__teal__(options)
         expected.addIncoming()
-        expected = TealBlock.NormalizeBlocks(expected)
+        expected = pt.TealBlock.NormalizeBlocks(expected)
 
         actual, _ = expr.__teal__(options)
         actual.addIncoming()
-        actual = TealBlock.NormalizeBlocks(actual)
+        actual = pt.TealBlock.NormalizeBlocks(actual)
 
         if any(t.type_spec().is_dynamic() for t in test.types):
-            with TealComponent.Context.ignoreExprEquality():
-                with TealComponent.Context.ignoreScratchSlotEquality():
+            with pt.TealComponent.Context.ignoreExprEquality():
+                with pt.TealComponent.Context.ignoreScratchSlotEquality():
                     assert actual == expected, "Test at index {} failed".format(i)
 
-            assert TealBlock.MatchScratchSlotReferences(
-                TealBlock.GetReferencedScratchSlots(actual),
-                TealBlock.GetReferencedScratchSlots(expected),
+            assert pt.TealBlock.MatchScratchSlotReferences(
+                pt.TealBlock.GetReferencedScratchSlots(actual),
+                pt.TealBlock.GetReferencedScratchSlots(expected),
             )
             continue
 
-        with TealComponent.Context.ignoreExprEquality():
+        with pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected, "Test at index {} failed".format(i)
 
 
 def test_indexTuple():
     class IndexTest(NamedTuple):
-        types: List[abi.TypeSpec]
+        types: List[pt.abi.TypeSpec]
         typeIndex: int
-        expected: Callable[[abi.BaseType], Expr]
+        expected: Callable[[pt.abi.BaseType], pt.Expr]
 
     # variables used to construct the tests
-    uint64_t = abi.Uint64TypeSpec()
-    byte_t = abi.ByteTypeSpec()
-    bool_t = abi.BoolTypeSpec()
-    tuple_t = abi.TupleTypeSpec(abi.BoolTypeSpec(), abi.BoolTypeSpec())
-    dynamic_array_t1 = abi.DynamicArrayTypeSpec(abi.Uint64TypeSpec())
-    dynamic_array_t2 = abi.DynamicArrayTypeSpec(abi.Uint16TypeSpec())
+    uint64_t = pt.abi.Uint64TypeSpec()
+    byte_t = pt.abi.ByteTypeSpec()
+    bool_t = pt.abi.BoolTypeSpec()
+    tuple_t = pt.abi.TupleTypeSpec(pt.abi.BoolTypeSpec(), pt.abi.BoolTypeSpec())
+    dynamic_array_t1 = pt.abi.DynamicArrayTypeSpec(pt.abi.Uint64TypeSpec())
+    dynamic_array_t2 = pt.abi.DynamicArrayTypeSpec(pt.abi.Uint16TypeSpec())
 
-    encoded = Bytes("encoded")
+    encoded = pt.Bytes("encoded")
 
     tests: List[IndexTest] = [
         IndexTest(
@@ -237,81 +237,81 @@ def test_indexTuple():
         IndexTest(
             types=[uint64_t, uint64_t],
             typeIndex=0,
-            expected=lambda output: output.decode(encoded, length=Int(8)),
+            expected=lambda output: output.decode(encoded, length=pt.Int(8)),
         ),
         IndexTest(
             types=[uint64_t, uint64_t],
             typeIndex=1,
-            expected=lambda output: output.decode(encoded, startIndex=Int(8)),
+            expected=lambda output: output.decode(encoded, startIndex=pt.Int(8)),
         ),
         IndexTest(
             types=[uint64_t, byte_t, uint64_t],
             typeIndex=1,
             expected=lambda output: output.decode(
-                encoded, startIndex=Int(8), length=Int(1)
+                encoded, startIndex=pt.Int(8), length=pt.Int(1)
             ),
         ),
         IndexTest(
             types=[uint64_t, byte_t, uint64_t],
             typeIndex=2,
             expected=lambda output: output.decode(
-                encoded, startIndex=Int(9), length=Int(8)
+                encoded, startIndex=pt.Int(9), length=pt.Int(8)
             ),
         ),
         IndexTest(
             types=[bool_t],
             typeIndex=0,
-            expected=lambda output: output.decodeBit(encoded, Int(0)),
+            expected=lambda output: output.decodeBit(encoded, pt.Int(0)),
         ),
         IndexTest(
             types=[bool_t, bool_t],
             typeIndex=0,
-            expected=lambda output: output.decodeBit(encoded, Int(0)),
+            expected=lambda output: output.decodeBit(encoded, pt.Int(0)),
         ),
         IndexTest(
             types=[bool_t, bool_t],
             typeIndex=1,
-            expected=lambda output: output.decodeBit(encoded, Int(1)),
+            expected=lambda output: output.decodeBit(encoded, pt.Int(1)),
         ),
         IndexTest(
             types=[uint64_t, bool_t],
             typeIndex=1,
-            expected=lambda output: output.decodeBit(encoded, Int(8 * 8)),
+            expected=lambda output: output.decodeBit(encoded, pt.Int(8 * 8)),
         ),
         IndexTest(
             types=[uint64_t, bool_t, bool_t],
             typeIndex=1,
-            expected=lambda output: output.decodeBit(encoded, Int(8 * 8)),
+            expected=lambda output: output.decodeBit(encoded, pt.Int(8 * 8)),
         ),
         IndexTest(
             types=[uint64_t, bool_t, bool_t],
             typeIndex=2,
-            expected=lambda output: output.decodeBit(encoded, Int(8 * 8 + 1)),
+            expected=lambda output: output.decodeBit(encoded, pt.Int(8 * 8 + 1)),
         ),
         IndexTest(
             types=[bool_t, uint64_t],
             typeIndex=0,
-            expected=lambda output: output.decodeBit(encoded, Int(0)),
+            expected=lambda output: output.decodeBit(encoded, pt.Int(0)),
         ),
         IndexTest(
             types=[bool_t, uint64_t],
             typeIndex=1,
-            expected=lambda output: output.decode(encoded, startIndex=Int(1)),
+            expected=lambda output: output.decode(encoded, startIndex=pt.Int(1)),
         ),
         IndexTest(
             types=[bool_t, bool_t, uint64_t],
             typeIndex=0,
-            expected=lambda output: output.decodeBit(encoded, Int(0)),
+            expected=lambda output: output.decodeBit(encoded, pt.Int(0)),
         ),
         IndexTest(
             types=[bool_t, bool_t, uint64_t],
             typeIndex=1,
-            expected=lambda output: output.decodeBit(encoded, Int(1)),
+            expected=lambda output: output.decodeBit(encoded, pt.Int(1)),
         ),
         IndexTest(
             types=[bool_t, bool_t, uint64_t],
             typeIndex=2,
-            expected=lambda output: output.decode(encoded, startIndex=Int(1)),
+            expected=lambda output: output.decode(encoded, startIndex=pt.Int(1)),
         ),
         IndexTest(
             types=[tuple_t], typeIndex=0, expected=lambda output: output.decode(encoded)
@@ -319,48 +319,48 @@ def test_indexTuple():
         IndexTest(
             types=[byte_t, tuple_t],
             typeIndex=1,
-            expected=lambda output: output.decode(encoded, startIndex=Int(1)),
+            expected=lambda output: output.decode(encoded, startIndex=pt.Int(1)),
         ),
         IndexTest(
             types=[tuple_t, byte_t],
             typeIndex=0,
             expected=lambda output: output.decode(
-                encoded, startIndex=Int(0), length=Int(tuple_t.byte_length_static())
+                encoded, startIndex=pt.Int(0), length=pt.Int(tuple_t.byte_length_static())
             ),
         ),
         IndexTest(
             types=[byte_t, tuple_t, byte_t],
             typeIndex=1,
             expected=lambda output: output.decode(
-                encoded, startIndex=Int(1), length=Int(tuple_t.byte_length_static())
+                encoded, startIndex=pt.Int(1), length=pt.Int(tuple_t.byte_length_static())
             ),
         ),
         IndexTest(
             types=[dynamic_array_t1],
             typeIndex=0,
             expected=lambda output: output.decode(
-                encoded, startIndex=ExtractUint16(encoded, Int(0))
+                encoded, startIndex=pt.ExtractUint16(encoded, pt.Int(0))
             ),
         ),
         IndexTest(
             types=[byte_t, dynamic_array_t1],
             typeIndex=1,
             expected=lambda output: output.decode(
-                encoded, startIndex=ExtractUint16(encoded, Int(1))
+                encoded, startIndex=pt.ExtractUint16(encoded, pt.Int(1))
             ),
         ),
         IndexTest(
             types=[dynamic_array_t1, byte_t],
             typeIndex=0,
             expected=lambda output: output.decode(
-                encoded, startIndex=ExtractUint16(encoded, Int(0))
+                encoded, startIndex=pt.ExtractUint16(encoded, pt.Int(0))
             ),
         ),
         IndexTest(
             types=[byte_t, dynamic_array_t1, byte_t],
             typeIndex=1,
             expected=lambda output: output.decode(
-                encoded, startIndex=ExtractUint16(encoded, Int(1))
+                encoded, startIndex=pt.ExtractUint16(encoded, pt.Int(1))
             ),
         ),
         IndexTest(
@@ -368,15 +368,15 @@ def test_indexTuple():
             typeIndex=1,
             expected=lambda output: output.decode(
                 encoded,
-                startIndex=ExtractUint16(encoded, Int(1)),
-                endIndex=ExtractUint16(encoded, Int(4)),
+                startIndex=pt.ExtractUint16(encoded, pt.Int(1)),
+                endIndex=pt.ExtractUint16(encoded, pt.Int(4)),
             ),
         ),
         IndexTest(
             types=[byte_t, dynamic_array_t1, byte_t, dynamic_array_t2],
             typeIndex=3,
             expected=lambda output: output.decode(
-                encoded, startIndex=ExtractUint16(encoded, Int(4))
+                encoded, startIndex=pt.ExtractUint16(encoded, pt.Int(4))
             ),
         ),
         IndexTest(
@@ -384,15 +384,15 @@ def test_indexTuple():
             typeIndex=1,
             expected=lambda output: output.decode(
                 encoded,
-                startIndex=ExtractUint16(encoded, Int(1)),
-                endIndex=ExtractUint16(encoded, Int(4)),
+                startIndex=pt.ExtractUint16(encoded, pt.Int(1)),
+                endIndex=pt.ExtractUint16(encoded, pt.Int(4)),
             ),
         ),
         IndexTest(
             types=[byte_t, dynamic_array_t1, tuple_t, dynamic_array_t2],
             typeIndex=3,
             expected=lambda output: output.decode(
-                encoded, startIndex=ExtractUint16(encoded, Int(4))
+                encoded, startIndex=pt.ExtractUint16(encoded, pt.Int(4))
             ),
         ),
         IndexTest(
@@ -400,15 +400,15 @@ def test_indexTuple():
             typeIndex=1,
             expected=lambda output: output.decode(
                 encoded,
-                startIndex=ExtractUint16(encoded, Int(1)),
-                endIndex=ExtractUint16(encoded, Int(4)),
+                startIndex=pt.ExtractUint16(encoded, pt.Int(1)),
+                endIndex=pt.ExtractUint16(encoded, pt.Int(4)),
             ),
         ),
         IndexTest(
             types=[byte_t, dynamic_array_t1, bool_t, bool_t, dynamic_array_t2],
             typeIndex=4,
             expected=lambda output: output.decode(
-                encoded, startIndex=ExtractUint16(encoded, Int(4))
+                encoded, startIndex=pt.ExtractUint16(encoded, pt.Int(4))
             ),
         ),
     ]
@@ -416,18 +416,18 @@ def test_indexTuple():
     for i, test in enumerate(tests):
         output = test.types[test.typeIndex].new_instance()
         expr = indexTuple(test.types, encoded, test.typeIndex, output)
-        assert expr.type_of() == TealType.none
+        assert expr.type_of() == pt.TealType.none
         assert not expr.has_return()
 
         expected, _ = test.expected(output).__teal__(options)
         expected.addIncoming()
-        expected = TealBlock.NormalizeBlocks(expected)
+        expected = pt.TealBlock.NormalizeBlocks(expected)
 
         actual, _ = expr.__teal__(options)
         actual.addIncoming()
-        actual = TealBlock.NormalizeBlocks(actual)
+        actual = pt.TealBlock.NormalizeBlocks(actual)
 
-        with TealComponent.Context.ignoreExprEquality():
+        with pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected, "Test at index {} failed".format(i)
 
         with pytest.raises(ValueError):
@@ -436,23 +436,23 @@ def test_indexTuple():
         with pytest.raises(ValueError):
             indexTuple(test.types, encoded, -1, output)
 
-        otherType = abi.Uint64()
+        otherType = pt.abi.Uint64()
         if output.type_spec() == otherType.type_spec():
-            otherType = abi.Uint16()
+            otherType = pt.abi.Uint16()
 
         with pytest.raises(TypeError):
             indexTuple(test.types, encoded, test.typeIndex, otherType)
 
 
 def test_TupleTypeSpec_eq():
-    tupleA = abi.TupleTypeSpec(
-        abi.Uint64TypeSpec(), abi.Uint32TypeSpec(), abi.BoolTypeSpec()
+    tupleA = pt.abi.TupleTypeSpec(
+        pt.abi.Uint64TypeSpec(), pt.abi.Uint32TypeSpec(), pt.abi.BoolTypeSpec()
     )
-    tupleB = abi.TupleTypeSpec(
-        abi.Uint64TypeSpec(), abi.Uint32TypeSpec(), abi.BoolTypeSpec()
+    tupleB = pt.abi.TupleTypeSpec(
+        pt.abi.Uint64TypeSpec(), pt.abi.Uint32TypeSpec(), pt.abi.BoolTypeSpec()
     )
-    tupleC = abi.TupleTypeSpec(
-        abi.BoolTypeSpec(), abi.Uint64TypeSpec(), abi.Uint32TypeSpec()
+    tupleC = pt.abi.TupleTypeSpec(
+        pt.abi.BoolTypeSpec(), pt.abi.Uint64TypeSpec(), pt.abi.Uint32TypeSpec()
     )
     assert tupleA == tupleA
     assert tupleA == tupleB
@@ -460,75 +460,75 @@ def test_TupleTypeSpec_eq():
 
 
 def test_TupleTypeSpec_value_type_specs():
-    assert abi.TupleTypeSpec(
-        abi.Uint64TypeSpec(), abi.Uint32TypeSpec(), abi.BoolTypeSpec()
+    assert pt.abi.TupleTypeSpec(
+        pt.abi.Uint64TypeSpec(), pt.abi.Uint32TypeSpec(), pt.abi.BoolTypeSpec()
     ).value_type_specs() == [
-        abi.Uint64TypeSpec(),
-        abi.Uint32TypeSpec(),
-        abi.BoolTypeSpec(),
+        pt.abi.Uint64TypeSpec(),
+        pt.abi.Uint32TypeSpec(),
+        pt.abi.BoolTypeSpec(),
     ]
 
 
 def test_TupleTypeSpec_length_static():
-    tests: List[List[abi.TypeSpec]] = [
+    tests: List[List[pt.abi.TypeSpec]] = [
         [],
-        [abi.Uint64TypeSpec()],
+        [pt.abi.Uint64TypeSpec()],
         [
-            abi.TupleTypeSpec(abi.Uint64TypeSpec(), abi.Uint64TypeSpec()),
-            abi.Uint64TypeSpec(),
+            pt.abi.TupleTypeSpec(pt.abi.Uint64TypeSpec(), pt.abi.Uint64TypeSpec()),
+            pt.abi.Uint64TypeSpec(),
         ],
-        [abi.BoolTypeSpec()] * 8,
+        [pt.abi.BoolTypeSpec()] * 8,
     ]
 
     for i, test in enumerate(tests):
-        actual = abi.TupleTypeSpec(*test).length_static()
+        actual = pt.abi.TupleTypeSpec(*test).length_static()
         expected = len(test)
         assert actual == expected, "Test at index {} failed".format(i)
 
 
 def test_TupleTypeSpec_new_instance():
     assert isinstance(
-        abi.TupleTypeSpec(
-            abi.Uint64TypeSpec(), abi.Uint32TypeSpec(), abi.BoolTypeSpec()
+        pt.abi.TupleTypeSpec(
+            pt.abi.Uint64TypeSpec(), pt.abi.Uint32TypeSpec(), pt.abi.BoolTypeSpec()
         ).new_instance(),
-        abi.Tuple,
+        pt.abi.Tuple,
     )
 
 
 def test_TupleTypeSpec_is_dynamic():
-    assert not abi.TupleTypeSpec().is_dynamic()
-    assert not abi.TupleTypeSpec(
-        abi.Uint64TypeSpec(), abi.Uint32TypeSpec(), abi.BoolTypeSpec()
+    assert not pt.abi.TupleTypeSpec().is_dynamic()
+    assert not pt.abi.TupleTypeSpec(
+        pt.abi.Uint64TypeSpec(), pt.abi.Uint32TypeSpec(), pt.abi.BoolTypeSpec()
     ).is_dynamic()
-    assert abi.TupleTypeSpec(
-        abi.Uint16TypeSpec(), abi.DynamicArrayTypeSpec(abi.Uint8TypeSpec())
+    assert pt.abi.TupleTypeSpec(
+        pt.abi.Uint16TypeSpec(), pt.abi.DynamicArrayTypeSpec(pt.abi.Uint8TypeSpec())
     ).is_dynamic()
 
 
 def test_TupleTypeSpec_str():
-    assert str(abi.TupleTypeSpec()) == "()"
-    assert str(abi.TupleTypeSpec(abi.TupleTypeSpec())) == "(())"
-    assert str(abi.TupleTypeSpec(abi.TupleTypeSpec(), abi.TupleTypeSpec())) == "((),())"
+    assert str(pt.abi.TupleTypeSpec()) == "()"
+    assert str(pt.abi.TupleTypeSpec(pt.abi.TupleTypeSpec())) == "(())"
+    assert str(pt.abi.TupleTypeSpec(pt.abi.TupleTypeSpec(), pt.abi.TupleTypeSpec())) == "((),())"
     assert (
         str(
-            abi.TupleTypeSpec(
-                abi.Uint64TypeSpec(), abi.Uint32TypeSpec(), abi.BoolTypeSpec()
+            pt.abi.TupleTypeSpec(
+                pt.abi.Uint64TypeSpec(), pt.abi.Uint32TypeSpec(), pt.abi.BoolTypeSpec()
             )
         )
         == "(uint64,uint32,bool)"
     )
     assert (
         str(
-            abi.TupleTypeSpec(
-                abi.BoolTypeSpec(), abi.Uint64TypeSpec(), abi.Uint32TypeSpec()
+            pt.abi.TupleTypeSpec(
+                pt.abi.BoolTypeSpec(), pt.abi.Uint64TypeSpec(), pt.abi.Uint32TypeSpec()
             )
         )
         == "(bool,uint64,uint32)"
     )
     assert (
         str(
-            abi.TupleTypeSpec(
-                abi.Uint16TypeSpec(), abi.DynamicArrayTypeSpec(abi.Uint8TypeSpec())
+            pt.abi.TupleTypeSpec(
+                pt.abi.Uint16TypeSpec(), pt.abi.DynamicArrayTypeSpec(pt.abi.Uint8TypeSpec())
             )
         )
         == "(uint16,uint8[])"
@@ -536,64 +536,64 @@ def test_TupleTypeSpec_str():
 
 
 def test_TupleTypeSpec_byte_length_static():
-    assert abi.TupleTypeSpec().byte_length_static() == 0
-    assert abi.TupleTypeSpec(abi.TupleTypeSpec()).byte_length_static() == 0
+    assert pt.abi.TupleTypeSpec().byte_length_static() == 0
+    assert pt.abi.TupleTypeSpec(pt.abi.TupleTypeSpec()).byte_length_static() == 0
     assert (
-        abi.TupleTypeSpec(abi.TupleTypeSpec(), abi.TupleTypeSpec()).byte_length_static()
+        pt.abi.TupleTypeSpec(pt.abi.TupleTypeSpec(), pt.abi.TupleTypeSpec()).byte_length_static()
         == 0
     )
     assert (
-        abi.TupleTypeSpec(
-            abi.Uint64TypeSpec(), abi.Uint32TypeSpec(), abi.BoolTypeSpec()
+        pt.abi.TupleTypeSpec(
+            pt.abi.Uint64TypeSpec(), pt.abi.Uint32TypeSpec(), pt.abi.BoolTypeSpec()
         ).byte_length_static()
         == 8 + 4 + 1
     )
     assert (
-        abi.TupleTypeSpec(
-            abi.Uint64TypeSpec(),
-            abi.Uint32TypeSpec(),
-            abi.BoolTypeSpec(),
-            abi.BoolTypeSpec(),
-            abi.BoolTypeSpec(),
-            abi.BoolTypeSpec(),
-            abi.BoolTypeSpec(),
-            abi.BoolTypeSpec(),
-            abi.BoolTypeSpec(),
-            abi.BoolTypeSpec(),
+        pt.abi.TupleTypeSpec(
+            pt.abi.Uint64TypeSpec(),
+            pt.abi.Uint32TypeSpec(),
+            pt.abi.BoolTypeSpec(),
+            pt.abi.BoolTypeSpec(),
+            pt.abi.BoolTypeSpec(),
+            pt.abi.BoolTypeSpec(),
+            pt.abi.BoolTypeSpec(),
+            pt.abi.BoolTypeSpec(),
+            pt.abi.BoolTypeSpec(),
+            pt.abi.BoolTypeSpec(),
         ).byte_length_static()
         == 8 + 4 + 1
     )
     assert (
-        abi.TupleTypeSpec(
-            abi.Uint64TypeSpec(),
-            abi.Uint32TypeSpec(),
-            abi.BoolTypeSpec(),
-            abi.BoolTypeSpec(),
-            abi.BoolTypeSpec(),
-            abi.BoolTypeSpec(),
-            abi.BoolTypeSpec(),
-            abi.BoolTypeSpec(),
-            abi.BoolTypeSpec(),
-            abi.BoolTypeSpec(),
-            abi.BoolTypeSpec(),
+        pt.abi.TupleTypeSpec(
+            pt.abi.Uint64TypeSpec(),
+            pt.abi.Uint32TypeSpec(),
+            pt.abi.BoolTypeSpec(),
+            pt.abi.BoolTypeSpec(),
+            pt.abi.BoolTypeSpec(),
+            pt.abi.BoolTypeSpec(),
+            pt.abi.BoolTypeSpec(),
+            pt.abi.BoolTypeSpec(),
+            pt.abi.BoolTypeSpec(),
+            pt.abi.BoolTypeSpec(),
+            pt.abi.BoolTypeSpec(),
         ).byte_length_static()
         == 8 + 4 + 2
     )
 
     with pytest.raises(ValueError):
-        abi.TupleTypeSpec(
-            abi.Uint16TypeSpec(), abi.DynamicArrayTypeSpec(abi.Uint8TypeSpec())
+        pt.abi.TupleTypeSpec(
+            pt.abi.Uint16TypeSpec(), pt.abi.DynamicArrayTypeSpec(pt.abi.Uint8TypeSpec())
         ).byte_length_static()
 
 
 def test_Tuple_decode():
-    encoded = Bytes("encoded")
-    tupleValue = abi.Tuple(abi.Uint64TypeSpec())
-    for startIndex in (None, Int(1)):
-        for endIndex in (None, Int(2)):
-            for length in (None, Int(3)):
+    encoded = pt.Bytes("encoded")
+    tupleValue = pt.abi.Tuple(pt.abi.Uint64TypeSpec())
+    for startIndex in (None, pt.Int(1)):
+        for endIndex in (None, pt.Int(2)):
+            for length in (None, pt.Int(3)):
                 if endIndex is not None and length is not None:
-                    with pytest.raises(TealInputError):
+                    with pytest.raises(pt.TealInputError):
                         tupleValue.decode(
                             encoded,
                             startIndex=startIndex,
@@ -605,7 +605,7 @@ def test_Tuple_decode():
                 expr = tupleValue.decode(
                     encoded, startIndex=startIndex, endIndex=endIndex, length=length
                 )
-                assert expr.type_of() == TealType.none
+                assert expr.type_of() == pt.TealType.none
                 assert not expr.has_return()
 
                 expectedExpr = tupleValue.stored_value.store(
@@ -615,186 +615,186 @@ def test_Tuple_decode():
                 )
                 expected, _ = expectedExpr.__teal__(options)
                 expected.addIncoming()
-                expected = TealBlock.NormalizeBlocks(expected)
+                expected = pt.TealBlock.NormalizeBlocks(expected)
 
                 actual, _ = expr.__teal__(options)
                 actual.addIncoming()
-                actual = TealBlock.NormalizeBlocks(actual)
+                actual = pt.TealBlock.NormalizeBlocks(actual)
 
-                with TealComponent.Context.ignoreExprEquality():
+                with pt.TealComponent.Context.ignoreExprEquality():
                     assert actual == expected
 
 
 def test_Tuple_set():
-    tupleValue = abi.Tuple(
-        abi.Uint8TypeSpec(), abi.Uint16TypeSpec(), abi.Uint32TypeSpec()
+    tupleValue = pt.abi.Tuple(
+        pt.abi.Uint8TypeSpec(), pt.abi.Uint16TypeSpec(), pt.abi.Uint32TypeSpec()
     )
-    uint8 = abi.Uint8()
-    uint16 = abi.Uint16()
-    uint32 = abi.Uint32()
+    uint8 = pt.abi.Uint8()
+    uint16 = pt.abi.Uint16()
+    uint32 = pt.abi.Uint32()
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         tupleValue.set()
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         tupleValue.set(uint8, uint16)
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         tupleValue.set(uint8, uint16, uint32, uint32)
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         tupleValue.set(uint8, uint32, uint16)
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         tupleValue.set(uint8, uint16, uint16)
 
     expr = tupleValue.set(uint8, uint16, uint32)
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
     expectedExpr = tupleValue.stored_value.store(encodeTuple([uint8, uint16, uint32]))
     expected, _ = expectedExpr.__teal__(options)
     expected.addIncoming()
-    expected = TealBlock.NormalizeBlocks(expected)
+    expected = pt.TealBlock.NormalizeBlocks(expected)
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
 
 def test_Tuple_set_Computed():
-    tupleValue = abi.Tuple(
-        abi.Uint8TypeSpec(), abi.Uint16TypeSpec(), abi.Uint32TypeSpec()
+    tupleValue = pt.abi.Tuple(
+        pt.abi.Uint8TypeSpec(), pt.abi.Uint16TypeSpec(), pt.abi.Uint32TypeSpec()
     )
-    computed = ContainerType(tupleValue.type_spec(), Bytes("internal representation"))
+    computed = ContainerType(tupleValue.type_spec(), pt.Bytes("internal representation"))
     expr = tupleValue.set(computed)
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(None, Op.byte, '"internal representation"'),
-            TealOp(None, Op.store, tupleValue.stored_value.slot),
+            pt.TealOp(None, pt.Op.byte, '"internal representation"'),
+            pt.TealOp(None, pt.Op.store, tupleValue.stored_value.slot),
         ]
     )
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         tupleValue.set(computed, computed)
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         tupleValue.set(
-            ContainerType(abi.TupleTypeSpec(abi.ByteTypeSpec()), Bytes(b"a"))
+            ContainerType(pt.abi.TupleTypeSpec(pt.abi.ByteTypeSpec()), pt.Bytes(b"a"))
         )
 
 
 def test_Tuple_encode():
-    tupleValue = abi.Tuple(abi.Uint64TypeSpec())
+    tupleValue = pt.abi.Tuple(pt.abi.Uint64TypeSpec())
     expr = tupleValue.encode()
-    assert expr.type_of() == TealType.bytes
+    assert expr.type_of() == pt.TealType.bytes
     assert not expr.has_return()
 
-    expected = TealSimpleBlock([TealOp(None, Op.load, tupleValue.stored_value.slot)])
+    expected = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.load, tupleValue.stored_value.slot)])
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
 
 def test_Tuple_length():
-    tests: List[List[abi.TypeSpec]] = [
+    tests: List[List[pt.abi.TypeSpec]] = [
         [],
-        [abi.Uint64TypeSpec()],
+        [pt.abi.Uint64TypeSpec()],
         [
-            abi.TupleTypeSpec(abi.Uint64TypeSpec(), abi.Uint64TypeSpec()),
-            abi.Uint64TypeSpec(),
+            pt.abi.TupleTypeSpec(pt.abi.Uint64TypeSpec(), pt.abi.Uint64TypeSpec()),
+            pt.abi.Uint64TypeSpec(),
         ],
-        [abi.BoolTypeSpec()] * 8,
+        [pt.abi.BoolTypeSpec()] * 8,
     ]
 
     for i, test in enumerate(tests):
-        tupleValue = abi.Tuple(*test)
+        tupleValue = pt.abi.Tuple(*test)
         expr = tupleValue.length()
-        assert expr.type_of() == TealType.uint64
+        assert expr.type_of() == pt.TealType.uint64
         assert not expr.has_return()
 
         expectedLength = len(test)
-        expected = TealSimpleBlock([TealOp(None, Op.int, expectedLength)])
+        expected = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.int, expectedLength)])
 
         actual, _ = expr.__teal__(options)
         actual.addIncoming()
-        actual = TealBlock.NormalizeBlocks(actual)
+        actual = pt.TealBlock.NormalizeBlocks(actual)
 
-        with TealComponent.Context.ignoreExprEquality():
+        with pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected, "Test at index {} failed".format(i)
 
 
 def test_Tuple_getitem():
-    tests: List[List[abi.TypeSpec]] = [
+    tests: List[List[pt.abi.TypeSpec]] = [
         [],
-        [abi.Uint64TypeSpec()],
+        [pt.abi.Uint64TypeSpec()],
         [
-            abi.TupleTypeSpec(abi.Uint64TypeSpec(), abi.Uint64TypeSpec()),
-            abi.Uint64TypeSpec(),
+            pt.abi.TupleTypeSpec(pt.abi.Uint64TypeSpec(), pt.abi.Uint64TypeSpec()),
+            pt.abi.Uint64TypeSpec(),
         ],
-        [abi.BoolTypeSpec()] * 8,
+        [pt.abi.BoolTypeSpec()] * 8,
     ]
 
     for i, test in enumerate(tests):
-        tupleValue = abi.Tuple(*test)
+        tupleValue = pt.abi.Tuple(*test)
         for j in range(len(test)):
             element = tupleValue[j]
             assert type(element) is TupleElement, "Test at index {} failed".format(i)
             assert element.tuple is tupleValue, "Test at index {} failed".format(i)
             assert element.index == j, "Test at index {} failed".format(i)
 
-        with pytest.raises(TealInputError):
+        with pytest.raises(pt.TealInputError):
             tupleValue[-1]
 
-        with pytest.raises(TealInputError):
+        with pytest.raises(pt.TealInputError):
             tupleValue[len(test)]
 
 
 def test_TupleElement_store_into():
-    tests: List[List[abi.TypeSpec]] = [
+    tests: List[List[pt.abi.TypeSpec]] = [
         [],
-        [abi.Uint64TypeSpec()],
+        [pt.abi.Uint64TypeSpec()],
         [
-            abi.TupleTypeSpec(abi.Uint64TypeSpec(), abi.Uint64TypeSpec()),
-            abi.Uint64TypeSpec(),
+            pt.abi.TupleTypeSpec(pt.abi.Uint64TypeSpec(), pt.abi.Uint64TypeSpec()),
+            pt.abi.Uint64TypeSpec(),
         ],
-        [abi.BoolTypeSpec()] * 8,
+        [pt.abi.BoolTypeSpec()] * 8,
     ]
 
     for i, test in enumerate(tests):
-        tupleValue = abi.Tuple(*test)
+        tupleValue = pt.abi.Tuple(*test)
         for j in range(len(test)):
             element = TupleElement(tupleValue, j)
             output = test[j].new_instance()
 
             expr = element.store_into(output)
-            assert expr.type_of() == TealType.none
+            assert expr.type_of() == pt.TealType.none
             assert not expr.has_return()
 
             expectedExpr = indexTuple(test, tupleValue.encode(), j, output)
             expected, _ = expectedExpr.__teal__(options)
             expected.addIncoming()
-            expected = TealBlock.NormalizeBlocks(expected)
+            expected = pt.TealBlock.NormalizeBlocks(expected)
 
             actual, _ = expr.__teal__(options)
             actual.addIncoming()
-            actual = TealBlock.NormalizeBlocks(actual)
+            actual = pt.TealBlock.NormalizeBlocks(actual)
 
-            with TealComponent.Context.ignoreExprEquality():
+            with pt.TealComponent.Context.ignoreExprEquality():
                 assert actual == expected, "Test at index {} failed".format(i)

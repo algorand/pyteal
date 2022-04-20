@@ -1,19 +1,19 @@
-from ... import *
+import pyteal as pt
 
-options = CompileOptions(version=5)
+options = pt.CompileOptions(version=5)
 
 
-class ContainerType(abi.ComputedValue):
-    def __init__(self, type_spec: abi.TypeSpec, encodings: Expr):
+class ContainerType(pt.abi.ComputedValue):
+    def __init__(self, type_spec: pt.abi.TypeSpec, encodings: pt.Expr):
         self.type_spec = type_spec
         self.encodings = encodings
 
-    def produced_type_spec(self) -> abi.TypeSpec:
+    def produced_type_spec(self) -> pt.abi.TypeSpec:
         return self.type_spec
 
-    def store_into(self, output: abi.BaseType) -> Expr:
+    def store_into(self, output: pt.abi.BaseType) -> pt.Expr:
         if output.type_spec() != self.type_spec:
-            raise TealInputError(
+            raise pt.TealInputError(
                 f"expected type_spec {self.type_spec} but get {output.type_spec()}"
             )
         return output.stored_value.store(self.encodings)
@@ -21,29 +21,29 @@ class ContainerType(abi.ComputedValue):
 
 def test_ComputedType_use():
     for value in (0, 1, 2, 3, 12345):
-        dummyComputedType = ContainerType(abi.Uint64TypeSpec(), Int(value))
-        expr = dummyComputedType.use(lambda output: Int(2) * output.get())
-        assert expr.type_of() == TealType.uint64
+        dummyComputedType = ContainerType(pt.abi.Uint64TypeSpec(), pt.Int(value))
+        expr = dummyComputedType.use(lambda output: pt.Int(2) * output.get())
+        assert expr.type_of() == pt.TealType.uint64
         assert not expr.has_return()
 
         actual, _ = expr.__teal__(options)
         actual.addIncoming()
-        actual = TealBlock.NormalizeBlocks(actual)
+        actual = pt.TealBlock.NormalizeBlocks(actual)
 
-        assert type(actual) is TealSimpleBlock
-        assert actual.ops[1].op == Op.store
-        assert type(actual.ops[1].args[0]) is ScratchSlot
+        assert type(actual) is pt.TealSimpleBlock
+        assert actual.ops[1].op == pt.Op.store
+        assert type(actual.ops[1].args[0]) is pt.ScratchSlot
         actualSlot = actual.ops[1].args[0]
 
-        expected = TealSimpleBlock(
+        expected = pt.TealSimpleBlock(
             [
-                TealOp(None, Op.int, value),
-                TealOp(None, Op.store, actualSlot),
-                TealOp(None, Op.int, 2),
-                TealOp(None, Op.load, actualSlot),
-                TealOp(None, Op.mul),
+                pt.TealOp(None, pt.Op.int, value),
+                pt.TealOp(None, pt.Op.store, actualSlot),
+                pt.TealOp(None, pt.Op.int, 2),
+                pt.TealOp(None, pt.Op.load, actualSlot),
+                pt.TealOp(None, pt.Op.mul),
             ]
         )
 
-        with TealComponent.Context.ignoreExprEquality():
+        with pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected
