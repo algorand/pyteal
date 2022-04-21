@@ -1,14 +1,14 @@
 from typing import Callable, List, Union, TYPE_CHECKING
 
-from ..types import TealType
-from ..ir import TealOp, Op, TealBlock
-from .expr import Expr
-from .leafexpr import LeafExpr
-from .scratch import ScratchSlot
-from .seq import Seq
+from pyteal.types import TealType
+from pyteal.ir import TealOp, Op, TealBlock
+from pyteal.ast.expr import Expr
+from pyteal.ast.leafexpr import LeafExpr
+from pyteal.ast.scratch import ScratchSlot
+from pyteal.ast.seq import Seq
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class MultiValue(LeafExpr):

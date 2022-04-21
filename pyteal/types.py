@@ -2,7 +2,7 @@ import re
 from enum import Enum
 from typing import Any
 
-from .errors import TealTypeError, TealInputError
+from pyteal.errors import TealTypeError, TealInputError
 
 
 class TealType(Enum):

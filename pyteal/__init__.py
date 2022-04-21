@@ -1,8 +1,8 @@
-from .ast import *
-from .ast import __all__ as ast_all
-from .ir import *
-from .ir import __all__ as ir_all
-from .compiler import (
+from pyteal.ast import *
+from pyteal.ast import __all__ as ast_all
+from pyteal.ir import *
+from pyteal.ir import __all__ as ir_all
+from pyteal.compiler import (
     MAX_TEAL_VERSION,
     MIN_TEAL_VERSION,
     DEFAULT_TEAL_VERSION,
@@ -10,9 +10,14 @@ from .compiler import (
     compileTeal,
     OptimizeOptions,
 )
-from .types import TealType
-from .errors import TealInternalError, TealTypeError, TealInputError, TealCompileError
-from .config import MAX_GROUP_SIZE, NUM_SLOTS
+from pyteal.types import TealType
+from pyteal.errors import (
+    TealInternalError,
+    TealTypeError,
+    TealInputError,
+    TealCompileError,
+)
+from pyteal.config import MAX_GROUP_SIZE, NUM_SLOTS
 
 # begin __all__
 __all__ = (
