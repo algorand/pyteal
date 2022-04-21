@@ -1,12 +1,12 @@
 from typing import List, cast, TYPE_CHECKING
 
-from ..types import TealType, require_type
-from ..ir import TealOp, Op, TealSimpleBlock, TealConditionalBlock
-from ..errors import TealInputError
-from .expr import Expr
+from pyteal.types import TealType, require_type
+from pyteal.ir import TealOp, Op, TealSimpleBlock, TealConditionalBlock
+from pyteal.errors import TealInputError
+from pyteal.ast.expr import Expr
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class Cond(Expr):

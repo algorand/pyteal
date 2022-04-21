@@ -1,7 +1,7 @@
-from ..types import TealType, require_type
-from ..ir import Op
-from .expr import Expr
-from .maybe import MaybeValue
+from pyteal.types import TealType, require_type
+from pyteal.ir import Op
+from pyteal.ast.expr import Expr
+from pyteal.ast.maybe import MaybeValue
 
 
 class AssetHolding:

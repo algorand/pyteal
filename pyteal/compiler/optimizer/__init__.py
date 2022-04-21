@@ -1,1 +1,4 @@
-from .optimizer import OptimizeOptions, apply_global_optimizations
+from pyteal.compiler.optimizer.optimizer import (
+    OptimizeOptions,
+    apply_global_optimizations,
+)

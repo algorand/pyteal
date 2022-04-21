@@ -14,17 +14,17 @@ from typing import (
     Any,
 )
 
-from ..errors import TealInputError, verifyTealVersion
-from ..ir import TealOp, Op, TealBlock
-from ..types import TealType
+from pyteal.errors import TealInputError, verifyTealVersion
+from pyteal.ir import TealOp, Op, TealBlock
+from pyteal.types import TealType
 
-from .expr import Expr
-from .seq import Seq
-from .scratchvar import DynamicScratchVar, ScratchVar
-from . import abi
+from pyteal.ast import abi
+from pyteal.ast.expr import Expr
+from pyteal.ast.seq import Seq
+from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class SubroutineDefinition:

@@ -1,7 +1,7 @@
 from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .ast import Expr
+    from pyteal.ast import Expr
 
 
 class TealInternalError(Exception):

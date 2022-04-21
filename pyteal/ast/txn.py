@@ -1,21 +1,21 @@
 from enum import Enum
 from typing import Callable, Optional, Union, cast, TYPE_CHECKING
 
-from ..types import TealType, require_type
-from ..errors import (
+from pyteal.types import TealType, require_type
+from pyteal.errors import (
     TealInputError,
     TealCompileError,
     verifyFieldVersion,
     verifyTealVersion,
 )
-from ..ir import TealOp, Op, TealBlock
-from .leafexpr import LeafExpr
-from .expr import Expr
-from .int import EnumInt
-from .array import Array
+from pyteal.ir import TealOp, Op, TealBlock
+from pyteal.ast.leafexpr import LeafExpr
+from pyteal.ast.expr import Expr
+from pyteal.ast.int import EnumInt
+from pyteal.ast.array import Array
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class TxnType:

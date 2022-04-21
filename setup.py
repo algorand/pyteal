@@ -20,6 +20,7 @@ setuptools.setup(
         "development": [
             "black==22.3.0",
             "flake8==4.0.1",
+            "flake8-tidy-imports==4.6.0",
             "mypy==0.942",
             "pytest==7.1.1",
             "pytest-cov==3.0.0",

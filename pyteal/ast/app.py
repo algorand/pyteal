@@ -1,16 +1,16 @@
 from typing import TYPE_CHECKING
 from enum import Enum
 
-from ..types import TealType, require_type
-from ..ir import TealOp, Op, TealBlock
-from .leafexpr import LeafExpr
-from .expr import Expr
-from .maybe import MaybeValue
-from .int import EnumInt
-from .global_ import Global
+from pyteal.types import TealType, require_type
+from pyteal.ir import TealOp, Op, TealBlock
+from pyteal.ast.leafexpr import LeafExpr
+from pyteal.ast.expr import Expr
+from pyteal.ast.maybe import MaybeValue
+from pyteal.ast.int import EnumInt
+from pyteal.ast.global_ import Global
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class OnComplete:

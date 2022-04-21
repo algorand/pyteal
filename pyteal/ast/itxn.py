@@ -1,15 +1,15 @@
 from enum import Enum
 from typing import Dict, TYPE_CHECKING, List, Union, cast
 
-from ..types import TealType, require_type
-from ..errors import TealInputError, verifyTealVersion
-from ..ir import TealOp, Op, TealBlock
-from .expr import Expr
-from .txn import TxnField, TxnExprBuilder, TxnaExprBuilder, TxnObject
-from .seq import Seq
+from pyteal.types import TealType, require_type
+from pyteal.errors import TealInputError, verifyTealVersion
+from pyteal.ir import TealOp, Op, TealBlock
+from pyteal.ast.expr import Expr
+from pyteal.ast.txn import TxnField, TxnExprBuilder, TxnaExprBuilder, TxnObject
+from pyteal.ast.seq import Seq
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class InnerTxnAction(Enum):

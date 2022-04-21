@@ -2,14 +2,13 @@ from abc import ABC, abstractmethod
 
 from typing import Dict, List, Tuple, Set, Iterator, cast, TYPE_CHECKING
 
-
-from .tealop import TealOp, Op
-from ..errors import TealCompileError
+from pyteal.ir.tealop import TealOp, Op
+from pyteal.errors import TealCompileError
 
 if TYPE_CHECKING:
-    from ..ast import Expr, ScratchSlot
-    from ..compiler import CompileOptions
-    from .tealsimpleblock import TealSimpleBlock
+    from pyteal.ast import Expr, ScratchSlot
+    from pyteal.compiler import CompileOptions
+    from pyteal.ir.tealsimpleblock import TealSimpleBlock
 
 
 class TealBlock(ABC):
@@ -142,7 +141,7 @@ class TealBlock(ABC):
         Returns:
             The starting and ending block of the path that encodes the given TealOp and arguments.
         """
-        from .tealsimpleblock import TealSimpleBlock
+        from pyteal.ir.tealsimpleblock import TealSimpleBlock
 
         opBlock = TealSimpleBlock([op])
 
