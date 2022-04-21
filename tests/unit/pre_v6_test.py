@@ -1,5 +1,7 @@
 from typing import List
 
+import pytest
+
 import pyteal as pt
 
 from ..compile_asserts import assert_new_v_old
@@ -77,16 +79,9 @@ def sub_even():
     )
 
 
-CASES_5 = (sub_logcat, sub_slowfib, sub_fastfib, sub_even)
-CASES_6: List[str] = []
+PT_CASES = (sub_logcat, sub_slowfib, sub_fastfib, sub_even)
 
 
-def test_old():
-    for pt_case in CASES_5:
-        assert_new_v_old(pt_case, 5)
-    for pt_case in CASES_6:
-        assert_new_v_old(pt_case, 6)
-
-
-if __name__ == "__main__":
-    test_old()
+@pytest.mark.parametrize("pt_case", PT_CASES)
+def test_old(pt_case):
+    assert_new_v_old(pt_case, 5)
