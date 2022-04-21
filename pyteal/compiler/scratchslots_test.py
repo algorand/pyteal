@@ -2,7 +2,10 @@ import pytest
 
 import pyteal as pt
 
-from .scratchslots import collectScratchSlots, assignScratchSlotsToSubroutines
+from pyteal.compiler.scratchslots import (
+    collectScratchSlots,
+    assignScratchSlotsToSubroutines,
+)
 
 
 def test_collectScratchSlots():

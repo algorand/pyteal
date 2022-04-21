@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING
 
-from ..errors import TealInputError
-from .expr import Expr
-from .seq import Seq
-from .bytes import Bytes
-from .unaryexpr import Pop
+from pyteal.errors import TealInputError
+from pyteal.ast.expr import Expr
+from pyteal.ast.seq import Seq
+from pyteal.ast.bytes import Bytes
+from pyteal.ast.unaryexpr import Pop
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class Nonce(Expr):

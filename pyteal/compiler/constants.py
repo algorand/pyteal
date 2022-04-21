@@ -4,13 +4,13 @@ from typing import Union, List, Dict, cast
 from collections import OrderedDict
 from algosdk import encoding
 
-from ..ir import (
+from pyteal.ir import (
     Op,
     TealOp,
     TealComponent,
 )
-from ..util import unescapeStr, correctBase32Padding
-from ..errors import TealInternalError
+from pyteal.util import unescapeStr, correctBase32Padding
+from pyteal.errors import TealInternalError
 
 intEnumValues = {
     # OnComplete values
