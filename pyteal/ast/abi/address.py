@@ -5,10 +5,7 @@ from pyteal.errors import TealInputError
 from .type import ComputedValue
 from .array_static import StaticArray, StaticArrayTypeSpec
 from .uint import ByteTypeSpec
-
 from ..bytes import Bytes
-from .array_static import StaticArray, StaticArrayTypeSpec
-from .uint import ByteTypeSpec
 from ..expr import Expr
 
 ADDRESS_LENGTH = 32

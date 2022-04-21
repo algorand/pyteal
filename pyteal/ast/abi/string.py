@@ -1,9 +1,8 @@
 from typing import Union
 
 from .type import ComputedValue, TypeSpec
-from pyteal.types import require_type
 from .array_dynamic import DynamicArray, DynamicArrayTypeSpec
-from .uint import ByteTypeSpec
+from .uint import ByteTypeSpec, Uint16TypeSpec
 from .util import substringForDecoding
 
 from ..bytes import Bytes
@@ -13,21 +12,11 @@ from ...types import TealType, require_type
 from ...errors import TealInputError
 from ..int import Int
 from ..expr import Expr
-from ..seq import Seq
 from ..naryexpr import Concat
 
 
 def encoded_string(s: Expr):
     return Concat(Suffix(Itob(Len(s)), Int(6)), s)
-
-
-from .array_dynamic import DynamicArray, DynamicArrayTypeSpec
-from .uint import ByteTypeSpec, Uint16TypeSpec
-from .util import substringForDecoding
-
-from ..substring import Suffix
-from ..int import Int
-from ..expr import Expr
 
 
 class StringTypeSpec(DynamicArrayTypeSpec):
