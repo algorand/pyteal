@@ -1,19 +1,16 @@
 import pytest
 
-from .. import *
+import pyteal as pt
 
-# this is not necessary but mypy complains if it's not included
-from .. import CompileOptions
-
-options = CompileOptions()
+options = pt.CompileOptions()
 
 
 def test_seq_zero():
-    for expr in (Seq(), Seq([])):
-        assert expr.type_of() == TealType.none
+    for expr in (pt.Seq(), pt.Seq([])):
+        assert expr.type_of() == pt.TealType.none
         assert not expr.has_return()
 
-        expected = TealSimpleBlock([])
+        expected = pt.TealSimpleBlock([])
 
         actual, _ = expr.__teal__(options)
 
@@ -21,43 +18,43 @@ def test_seq_zero():
 
 
 def test_seq_one():
-    items = [Int(0)]
-    expr = Seq(items)
-    assert expr.type_of() == TealType.uint64
+    items = [pt.Int(0)]
+    expr = pt.Seq(items)
+    assert expr.type_of() == pt.TealType.uint64
 
     expected, _ = items[0].__teal__(options)
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
 
 def test_seq_two():
-    items = [App.localPut(Int(0), Bytes("key"), Int(1)), Int(7)]
-    expr = Seq(items)
+    items = [pt.App.localPut(pt.Int(0), pt.Bytes("key"), pt.Int(1)), pt.Int(7)]
+    expr = pt.Seq(items)
     assert expr.type_of() == items[-1].type_of()
 
     expected, first_end = items[0].__teal__(options)
     first_end.setNextBlock(items[1].__teal__(options)[0])
     expected.addIncoming()
-    expected = TealBlock.NormalizeBlocks(expected)
+    expected = pt.TealBlock.NormalizeBlocks(expected)
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
 
 def test_seq_three():
     items = [
-        App.localPut(Int(0), Bytes("key1"), Int(1)),
-        App.localPut(Int(1), Bytes("key2"), Bytes("value2")),
-        Pop(Bytes("end")),
+        pt.App.localPut(pt.Int(0), pt.Bytes("key1"), pt.Int(1)),
+        pt.App.localPut(pt.Int(1), pt.Bytes("key2"), pt.Bytes("value2")),
+        pt.Pop(pt.Bytes("end")),
     ]
-    expr = Seq(items)
+    expr = pt.Seq(items)
     assert expr.type_of() == items[-1].type_of()
 
     expected, first_end = items[0].__teal__(options)
@@ -67,42 +64,49 @@ def test_seq_three():
     second_end.setNextBlock(third_start)
 
     expected.addIncoming()
-    expected = TealBlock.NormalizeBlocks(expected)
+    expected = pt.TealBlock.NormalizeBlocks(expected)
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
 
 def test_seq_has_return():
-    exprWithReturn = Seq([App.localPut(Int(0), Bytes("key1"), Int(1)), Return(Int(1))])
+    exprWithReturn = pt.Seq(
+        [
+            pt.App.localPut(pt.Int(0), pt.Bytes("key1"), pt.Int(1)),
+            pt.Return(pt.Int(1)),
+        ]
+    )
     assert exprWithReturn.has_return()
 
-    exprWithoutReturn = Seq([App.localPut(Int(0), Bytes("key1"), Int(1)), Int(1)])
+    exprWithoutReturn = pt.Seq(
+        [pt.App.localPut(pt.Int(0), pt.Bytes("key1"), pt.Int(1)), pt.Int(1)]
+    )
     assert not exprWithoutReturn.has_return()
 
 
 def test_seq_invalid():
-    with pytest.raises(TealTypeError):
-        Seq([Int(1), Pop(Int(2))])
+    with pytest.raises(pt.TealTypeError):
+        pt.Seq([pt.Int(1), pt.Pop(pt.Int(2))])
 
-    with pytest.raises(TealTypeError):
-        Seq([Int(1), Int(2)])
+    with pytest.raises(pt.TealTypeError):
+        pt.Seq([pt.Int(1), pt.Int(2)])
 
-    with pytest.raises(TealTypeError):
-        Seq([Seq([Pop(Int(1)), Int(2)]), Int(3)])
+    with pytest.raises(pt.TealTypeError):
+        pt.Seq([pt.Seq([pt.Pop(pt.Int(1)), pt.Int(2)]), pt.Int(3)])
 
 
 def test_seq_overloads_equivalence():
     items = [
-        App.localPut(Int(0), Bytes("key1"), Int(1)),
-        App.localPut(Int(1), Bytes("key2"), Bytes("value2")),
-        Pop(Bytes("end")),
+        pt.App.localPut(pt.Int(0), pt.Bytes("key1"), pt.Int(1)),
+        pt.App.localPut(pt.Int(1), pt.Bytes("key2"), pt.Bytes("value2")),
+        pt.Pop(pt.Bytes("end")),
     ]
-    expr1 = Seq(items)
-    expr2 = Seq(*items)
+    expr1 = pt.Seq(items)
+    expr2 = pt.Seq(*items)
 
     expected = expr1.__teal__(options)
     actual = expr2.__teal__(options)

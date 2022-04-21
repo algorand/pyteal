@@ -21,6 +21,14 @@ def encoded_string(s: Expr):
     return Concat(Suffix(Itob(Len(s)), Int(6)), s)
 
 
+from .array_dynamic import DynamicArray, DynamicArrayTypeSpec
+from .uint import ByteTypeSpec, Uint16TypeSpec
+from .util import substringForDecoding
+
+from ..int import Int
+from ..expr import Expr
+
+
 class StringTypeSpec(DynamicArrayTypeSpec):
     def __init__(self) -> None:
         super().__init__(ByteTypeSpec())

@@ -8,7 +8,7 @@ def test_AddressTypeSpec_str():
 
 
 def test_AddressTypeSpec_is_dynamic():
-    assert not (abi.AddressTypeSpec()).is_dynamic()
+    assert (abi.AddressTypeSpec()).is_dynamic() is False
 
 
 def test_AddressTypeSpec_byte_length_static():
@@ -34,7 +34,7 @@ def test_Address_encode():
     value = abi.Address()
     expr = value.encode()
     assert expr.type_of() == TealType.bytes
-    assert not expr.has_return()
+    assert expr.has_return() is False
 
     expected = TealSimpleBlock([TealOp(expr, Op.load, value.stored_value.slot)])
     actual, _ = expr.__teal__(options)
@@ -49,7 +49,7 @@ def test_Address_decode():
         expr = value.decode(Bytes(value_to_set))
 
         assert expr.type_of() == TealType.none
-        assert not expr.has_return()
+        assert expr.has_return() is False
 
         expected = TealSimpleBlock(
             [
@@ -69,7 +69,7 @@ def test_Address_get():
     value = abi.Address()
     expr = value.get()
     assert expr.type_of() == TealType.bytes
-    assert not expr.has_return()
+    assert expr.has_return() is False
 
     expected = TealSimpleBlock([TealOp(expr, Op.load, value.stored_value.slot)])
     actual, _ = expr.__teal__(options)

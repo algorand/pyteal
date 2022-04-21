@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING
 
 from ..types import TealType, valid_tmpl
 from ..ir import TealOp, Op, TealBlock
-from ..errors import TealInternalError
 from .leafexpr import LeafExpr
 
 if TYPE_CHECKING:
