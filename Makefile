@@ -51,6 +51,8 @@ integration-run:
 
 integration-test: integration-run # graviton-demo-run
 
+all-tests: build-and-and-test integration-test
+
 # Extras:
 coverage:
 	pytest --cov-report html --cov=pyteal

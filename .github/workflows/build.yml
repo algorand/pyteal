@@ -77,10 +77,8 @@ jobs:
           config: ${{ env.SANDBOX_CONFIG }}
       - name: Install python dependencies
         run: make setup-development
-      - name: Build and Test
-        run: make build-and-test
-      - name: Run integration tests
-        run: make integration-test
+      - name: Build, Unit Tests and Integration Tests
+        run: make all-tests
 
   build-docset:
     runs-on: ubuntu-20.04
