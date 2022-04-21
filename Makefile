@@ -62,7 +62,7 @@ local-gh-simulate:
 	act
 
 # The following depends on [Graviton PR #9](https://github.com/algorand/graviton/pull/9):
-#
+# TODO: Delete the below before merging:
 # A = 3
 # P = 13
 # Q = 13
