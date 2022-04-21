@@ -25,9 +25,6 @@ per-file-ignores =
     pyteal/ir/ops.py:                               E221
     tests/module_test.py:                           F401, F403
     tests/*.py:                                     I252
-    # Temporarily ignore until merge completes
-    pyteal/ast/abi/*.py:			    I252
-    # End temporarty ignore
 
 # from flake8-tidy-imports
 ban-relative-imports = true
