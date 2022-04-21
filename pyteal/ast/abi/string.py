@@ -25,6 +25,7 @@ from .array_dynamic import DynamicArray, DynamicArrayTypeSpec
 from .uint import ByteTypeSpec, Uint16TypeSpec
 from .util import substringForDecoding
 
+from ..substring import Suffix
 from ..int import Int
 from ..expr import Expr
 
@@ -39,6 +40,9 @@ class StringTypeSpec(DynamicArrayTypeSpec):
     def __str__(self) -> str:
         return "string"
 
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, StringTypeSpec)
+
 
 StringTypeSpec.__module__ = "pyteal"
 
@@ -51,7 +55,9 @@ class String(DynamicArray):
         return StringTypeSpec()
 
     def get(self) -> Expr:
-        return substringForDecoding(self.stored_value.load(), startIndex=Int(2))
+        return Suffix(
+            self.stored_value.load(), Int(Uint16TypeSpec().byte_length_static())
+        )
 
     def set(self, value: Union[str, "String", ComputedValue["String"], Expr]) -> Expr:
 

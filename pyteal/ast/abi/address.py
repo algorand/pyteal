@@ -24,6 +24,9 @@ class AddressTypeSpec(StaticArrayTypeSpec):
     def __str__(self) -> str:
         return "address"
 
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, AddressTypeSpec)
+
 
 AddressTypeSpec.__module__ = "pyteal"
 

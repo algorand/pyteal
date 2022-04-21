@@ -1,6 +1,10 @@
-from ... import *
+import pytest
 
-options = CompileOptions(version=5)
+import pyteal as pt
+from pyteal import abi
+from .util import substringForDecoding
+
+options = pt.CompileOptions(version=5)
 
 
 def test_AddressTypeSpec_str():
@@ -23,8 +27,8 @@ def test_AddressTypeSpec_eq():
     assert abi.AddressTypeSpec() == abi.AddressTypeSpec()
 
     for otherType in (
-        abi.ByteTypeSpec,
-        abi.StaticArrayTypeSpec(abi.ByteTypeSpec(), 31),
+        abi.ByteTypeSpec(),
+        abi.StaticArrayTypeSpec(abi.ByteTypeSpec(), 32),
         abi.DynamicArrayTypeSpec(abi.ByteTypeSpec()),
     ):
         assert abi.AddressTypeSpec() != otherType
@@ -33,44 +37,66 @@ def test_AddressTypeSpec_eq():
 def test_Address_encode():
     value = abi.Address()
     expr = value.encode()
-    assert expr.type_of() == TealType.bytes
+    assert expr.type_of() == pt.TealType.bytes
     assert expr.has_return() is False
 
-    expected = TealSimpleBlock([TealOp(expr, Op.load, value.stored_value.slot)])
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(expr, pt.Op.load, value.stored_value.slot)]
+    )
     actual, _ = expr.__teal__(options)
     assert actual == expected
 
 
 def test_Address_decode():
-    from os import urandom
+    address = bytes([0] * abi.ADDRESS_LENGTH)
+    encoded = pt.Bytes(address)
 
-    value = abi.Address()
-    for value_to_set in [urandom(abi.ADDRESS_LENGTH) for x in range(10)]:
-        expr = value.decode(Bytes(value_to_set))
+    for startIndex in (None, pt.Int(0)):
+        for endIndex in (None, pt.Int(1)):
+            for length in (None, pt.Int(2)):
+                value = abi.Address()
 
-        assert expr.type_of() == TealType.none
-        assert expr.has_return() is False
+                if endIndex is not None and length is not None:
+                    with pytest.raises(pt.TealInputError):
+                        value.decode(
+                            encoded,
+                            startIndex=startIndex,
+                            endIndex=endIndex,
+                            length=length,
+                        )
+                    continue
 
-        expected = TealSimpleBlock(
-            [
-                TealOp(None, Op.byte, f"0x{value_to_set.hex()}"),
-                TealOp(None, Op.store, value.stored_value.slot),
-            ]
-        )
-        actual, _ = expr.__teal__(options)
-        actual.addIncoming()
-        actual = TealBlock.NormalizeBlocks(actual)
+                expr = value.decode(
+                    encoded, startIndex=startIndex, endIndex=endIndex, length=length
+                )
+                assert expr.type_of() == pt.TealType.none
+                assert expr.has_return() is False
 
-        with TealComponent.Context.ignoreExprEquality():
-            assert actual == expected
+                expectedExpr = value.stored_value.store(
+                    substringForDecoding(
+                        encoded, startIndex=startIndex, endIndex=endIndex, length=length
+                    )
+                )
+                expected, _ = expectedExpr.__teal__(options)
+                expected.addIncoming()
+                expected = pt.TealBlock.NormalizeBlocks(expected)
+
+                actual, _ = expr.__teal__(options)
+                actual.addIncoming()
+                actual = pt.TealBlock.NormalizeBlocks(actual)
+
+                with pt.TealComponent.Context.ignoreExprEquality():
+                    assert actual == expected
 
 
 def test_Address_get():
     value = abi.Address()
     expr = value.get()
-    assert expr.type_of() == TealType.bytes
+    assert expr.type_of() == pt.TealType.bytes
     assert expr.has_return() is False
 
-    expected = TealSimpleBlock([TealOp(expr, Op.load, value.stored_value.slot)])
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(expr, pt.Op.load, value.stored_value.slot)]
+    )
     actual, _ = expr.__teal__(options)
     assert actual == expected
