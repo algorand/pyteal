@@ -92,6 +92,6 @@ def approval_program_oncall_maximize():
 if __name__ == "__main__":
     with open("program.teal", "w") as f:
         compiled = compileTeal(
-            approval_program_explicit_ensure(), mode=Mode.Application, version=6
+            approval_program_oncall_maximize(), mode=Mode.Application, version=6
         )
         f.write(compiled)
