@@ -609,12 +609,12 @@ ILLEGAL_APPROVALS = {
     approval_not_ok: "not_ok()-->not_ok()",
     approval_not_ok_indirect: "not_ok_indirect1()-->not_ok_indirect2()-->not_ok_indirect1()",
     approval_its_complicated: "c()-->g()-->a()-->c()",
-    tallygo: "tally()-->tally()",
-    string_mult: "subr_string_mult()-->subr_string_mult()",
     fac_by_ref: "factorial()-->factorial()",
-    fac_by_ref_BAD: "factorial_BAD()-->factorial_BAD()",
     fac_by_ref_args: "factorial()-->factorial()",
+    fac_by_ref_BAD: "factorial_BAD()-->factorial_BAD()",
     increment: "plus_one()-->plus_one()",
+    string_mult: "subr_string_mult()-->subr_string_mult()",
+    tallygo: "tally()-->tally()",
 }
 
 
@@ -623,11 +623,10 @@ def test_pass_by_ref_guardrails_COPACETIC(approval):
     assert pt.compileTeal(approval, pt.Mode.Application, version=6)
 
 
-@pytest.mark.parametrize("approval_func_n_suffix", ILLEGAL_APPROVALS.items())
-def test_pass_by_ref_guardrails_BANNED(approval_func_n_suffix):
-    approval, suffix = approval_func_n_suffix
+@pytest.mark.parametrize("approval_func, suffix", ILLEGAL_APPROVALS.items())
+def test_pass_by_ref_guardrails_BANNED(approval_func, suffix):
     with pytest.raises(pt.TealInputError) as err:
-        pt.compileTeal(approval(), pt.Mode.Application, version=6)
+        pt.compileTeal(approval_func(), pt.Mode.Application, version=6)
 
     prefix = "ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: "
     assert f"{prefix}{suffix}" in str(err)
