@@ -12,9 +12,9 @@ def test_opup_explicit():
     assert "target_app_id must be specified in Explicit OpUp mode" in str(err.value)
 
     with pytest.raises(pt.TealTypeError):
-        opup = OpUp(mode, pt.Bytes("appid"))
+        opup = OpUp(mode, target_app_id=pt.Bytes("appid"))
 
-    opup = OpUp(mode, pt.Int(1))
+    opup = OpUp(mode, target_app_id=pt.Int(1))
 
     with pytest.raises(pt.TealTypeError):
         opup.ensure_budget(pt.Bytes("budget"))

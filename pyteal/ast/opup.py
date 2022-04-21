@@ -58,7 +58,7 @@ class OpUp:
             )
     """
 
-    def __init__(self, mode: OpUpMode, target_app_id: Expr = None):
+    def __init__(self, mode: OpUpMode, *, target_app_id: Expr = None, buffer: int = 20):
         """Create a new OpUp object.
 
         Args:
@@ -67,6 +67,10 @@ class OpUp:
             target_app_id (optional): In Explicit mode, the OpUp utility
                 requires the app_id to target for inner app calls. Defaults
                 to None.
+            buffer (optional): Value to add to the target budget. The OpUp
+                code for increasing budget has overhead that may prevent the
+                correct budget from being reached. The buffer prevents this.
+                Defaults to 20.
         """
 
         # With only OnCall and Explicit modes supported, the mode argument
@@ -92,7 +96,7 @@ class OpUp:
         #   required budget then it's possible for ensure_budget() to return with a
         #   current budget less than the required budget. The buffer prevents this
         #   from being the case.
-        self.buffer = Int(20)
+        self.buffer = Int(buffer)
 
     def _construct_itxn(self) -> Expr:
         if self.mode == OpUpMode.Explicit:
