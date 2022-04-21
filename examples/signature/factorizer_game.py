@@ -1,6 +1,22 @@
 # WARNING: this logic sig is for demo purposes only
 
-from pyteal import *
+from pyteal import (
+    And,
+    Arg,
+    Btoi,
+    Bytes,
+    Expr,
+    Global,
+    If,
+    Int,
+    Pop,
+    ScratchVar,
+    Seq,
+    Subroutine,
+    TealType,
+    Txn,
+    TxnType,
+)
 
 ONE_ALGO = Int(1_000_000)
 

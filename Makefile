@@ -42,21 +42,14 @@ lint: black flake8 mypy
 test-unit:
 	pytest pyteal tests/unit
 
-build-and-test: build lint test-unit
+build-and-test: check-generate-init lint test-unit
 
 # set NUM_PROCS = auto when the following issue has been fixed https://github.com/algorand/pyteal/issues/199
 NUM_PROCS = 1 
-integration-setup: pip-integration build
-	black --check tests $(ALLPY)
-	flake8 tests $(ALLPY)
-	mypy tests
-
 integration-run:
 	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration
 
-integration-test: integration-setup integration-run graviton-demo-run
-
-build-and-test: check-generate-init lint test-unit
+integration-test: integration-run # graviton-demo-run
 
 # Extras:
 coverage:

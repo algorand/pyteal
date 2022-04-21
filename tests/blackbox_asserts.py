@@ -4,9 +4,24 @@ from algosdk.v2client import algod
 
 from graviton import blackbox
 
-from pyteal import *
+from pyteal import (
+    Arg,
+    Btoi,
+    Bytes,
+    Expr,
+    Int,
+    Itob,
+    Len,
+    Log,
+    Mode,
+    ScratchVar,
+    Seq,
+    SubroutineFnWrapper,
+    TealType,
+    Txn,
+)
 
-## Clients
+# ---- Clients ---- #
 
 
 def _algod_client(
@@ -20,6 +35,9 @@ def algod_with_assertion():
     algod = _algod_client()
     assert algod.status(), "algod.status() did not produce any results"
     return algod
+
+
+# ---- API ---- #
 
 
 def mode_to_execution_mode(mode: Mode) -> blackbox.ExecutionMode:

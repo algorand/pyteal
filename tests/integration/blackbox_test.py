@@ -5,6 +5,22 @@ from typing import Any, Dict
 
 import pytest
 
+from pyteal import (
+    Bytes,
+    Concat,
+    For,
+    If,
+    Int,
+    Mode,
+    Pop,
+    ScratchVar,
+    Seq,
+    Subroutine,
+    SubroutineFnWrapper,
+    TealType,
+    compileTeal,
+)
+
 from tests.compile_asserts import assert_teal_as_expected
 from tests.blackbox_asserts import (
     algod_with_assertion,
@@ -26,8 +42,6 @@ from graviton.blackbox import (
 
 from graviton.invariant import Invariant
 
-from pyteal import *
-
 # TODO: get tests working on github and set this to True
 BLACKBOX_TESTING = os.environ.get("HAS_ALGOD") == "TRUE"
 # TODO: remove these skips after the following issue has been fixed https://github.com/algorand/pyteal/issues/199
@@ -35,7 +49,9 @@ STABLE_SLOT_GENERATION = False
 SKIP_SCRATCH_ASSERTIONS = not STABLE_SLOT_GENERATION
 
 
-####### Unit Test Subroutines #######
+# ---- Unit Test Subroutines ---- #
+
+
 @Subroutine(TealType.none, input_types=[])
 def utest_noop():
     return Pop(Int(0))
@@ -86,7 +102,9 @@ def utest_any_args(x, y, z):
     return Seq(x.store(Int(0)), x.load())
 
 
-####### Subroutine Definitions for Blackbox Testing ########
+# ---- Subroutine Definitions for Blackbox Testing ---- #
+
+
 @Subroutine(TealType.uint64, input_types=[])
 def exp():
     return Int(2) ** Int(10)
@@ -138,7 +156,7 @@ def slow_fibonacci(n):
     )
 
 
-####### Unit Testing ########
+# ---- Unit Testing ---- #
 UNITS = [
     utest_noop,
     utest_noop_args,
@@ -171,7 +189,7 @@ def test_blackbox_pyteal(subr, mode):
     assert_teal_as_expected(save_to, path / (name + "_expected.teal"))
 
 
-####### Blackbox Testing ########
+# ---- Blackbox Testing ---- #
 
 
 def fac_with_overflow(n):

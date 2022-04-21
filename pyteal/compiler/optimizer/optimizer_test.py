@@ -1,4 +1,4 @@
-from pyteal.compiler.optimizer import OptimizeOptions, _apply_slot_to_stack
+from pyteal.compiler.optimizer.optimizer import OptimizeOptions, _apply_slot_to_stack
 import pyteal as pt
 
 

@@ -151,6 +151,7 @@ def blackbox_pyteal_example2():
         If,
         Int,
         Mod,
+        Mode,
         ScratchVar,
         Seq,
         Subroutine,
@@ -218,7 +219,7 @@ def blackbox_pyteal_example3():
     )
     from graviton.invariant import Invariant
 
-    from pyteal import compileTeal, If, Int, Mode, Subroutine, TealType
+    from pyteal import compileTeal, If, Int, Mod, Mode, Subroutine, TealType
 
     from tests.blackbox_asserts import (
         algod_with_assertion,

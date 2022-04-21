@@ -26,8 +26,6 @@ setuptools.setup(
             "pytest==7.1.1",
             "pytest-cov==3.0.0",
             "pytest-timeout==2.1.0",
-        ],
-        "integration": [
             "graviton@git+https://github.com/algorand/graviton@🦙",
             # "graviton@git+https://github.com/algorand/graviton@fuzz",
             "pytest-xdist==2.5.0",

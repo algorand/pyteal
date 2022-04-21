@@ -1,3 +1,5 @@
+import pytest
+
 import pyteal as pt
 
 from ..compile_asserts import assert_new_v_old
@@ -426,25 +428,27 @@ def make_creatable_factory(approval):
     """
 
     def func():
-        return If(Txn.application_id() == Int(0)).Then(Int(1)).Else(approval())
+        return (
+            pt.If(pt.Txn.application_id() == pt.Int(0)).Then(pt.Int(1)).Else(approval())
+        )
 
     func.__name__ = approval.__name__
     return func
 
 
 def fac_by_ref():
-    n = ScratchVar(TealType.uint64)
-    return Seq(
-        n.store(Int(10)),
+    n = pt.ScratchVar(pt.TealType.uint64)
+    return pt.Seq(
+        n.store(pt.Int(10)),
         factorial(n),
         n.load(),
     )
 
 
 def fac_by_ref_BAD():
-    n = ScratchVar(TealType.uint64)
-    return Seq(
-        n.store(Int(10)),
+    n = pt.ScratchVar(pt.TealType.uint64)
+    return pt.Seq(
+        n.store(pt.Int(10)),
         factorial_BAD(n),
         n.load(),
     )
@@ -452,13 +456,18 @@ def fac_by_ref_BAD():
 
 # Proved correct via blackbox testing, but BANNING for now
 def fac_by_ref_args():
-    n = ScratchVar(TealType.uint64)
-    return Seq(
-        If(Or(App.id() == Int(0), Txn.application_args.length() == Int(0)))
-        .Then(Int(1))
+    n = pt.ScratchVar(pt.TealType.uint64)
+    return pt.Seq(
+        pt.If(
+            pt.Or(
+                pt.App.id() == pt.Int(0),
+                pt.Txn.application_args.length() == pt.Int(0),
+            )
+        )
+        .Then(pt.Int(1))
         .Else(
-            Seq(
-                n.store(Btoi(Txn.application_args[0])),
+            pt.Seq(
+                n.store(pt.Btoi(pt.Txn.application_args[0])),
                 factorial(n),
                 n.load(),
             )
@@ -486,17 +495,17 @@ def tallygo():
     )
 
 
-@Subroutine(TealType.none)
-def subr_string_mult(s: ScratchVar, n):
-    tmp = ScratchVar(TealType.bytes)
+@pt.Subroutine(pt.TealType.none)
+def subr_string_mult(s: pt.ScratchVar, n):
+    tmp = pt.ScratchVar(pt.TealType.bytes)
     return (
-        If(n == Int(0))
-        .Then(s.store(Bytes("")))
+        pt.If(n == pt.Int(0))
+        .Then(s.store(pt.Bytes("")))
         .Else(
-            Seq(
+            pt.Seq(
                 tmp.store(s.load()),
-                subr_string_mult(s, n - Int(1)),
-                s.store(Concat(s.load(), tmp.load())),
+                subr_string_mult(s, n - pt.Int(1)),
+                s.store(pt.Concat(s.load(), tmp.load())),
             )
         )
     )
@@ -512,7 +521,7 @@ def string_mult():
     )
 
 
-TESTABLE_CASES = [(oldfac, [TealType.uint64])]
+TESTABLE_CASES = [(oldfac, [pt.TealType.uint64])]
 
 
 # def wrap_for_blackbox(
@@ -564,29 +573,29 @@ def test_deprecated(pt):
     assert_new_v_old(pt, 6)
 
 
-##### Approval PyTEAL Expressions (COPACETIC) #####
+# ---- Approval PyTEAL Expressions (COPACETIC) ---- #
 
-approval_ok = ok(Int(42))
+approval_ok = ok(pt.Int(42))
 
-x_scratchvar = ScratchVar(TealType.uint64)
+x_scratchvar = pt.ScratchVar(pt.TealType.uint64)
 
-approval_ok_byref = Seq(x_scratchvar.store(Int(42)), ok_byref(x_scratchvar))
+approval_ok_byref = pt.Seq(x_scratchvar.store(pt.Int(42)), ok_byref(x_scratchvar))
 
-approval_ok_indirect = ok_indirect1(Int(42))
+approval_ok_indirect = ok_indirect1(pt.Int(42))
 
-##### BANNED Approval PyTEAL Expressions (wrapped in a function) #####
+# ---- BANNED Approval PyTEAL Expressions (wrapped in a function) ---- #
 
 
 def approval_not_ok():
-    return Seq(x_scratchvar.store(Int(42)), not_ok(x_scratchvar))
+    return pt.Seq(x_scratchvar.store(pt.Int(42)), not_ok(x_scratchvar))
 
 
 def approval_not_ok_indirect():
-    return Seq(x_scratchvar.store(Int(42)), not_ok_indirect1(x_scratchvar))
+    return pt.Seq(x_scratchvar.store(pt.Int(42)), not_ok_indirect1(x_scratchvar))
 
 
 def approval_its_complicated():
-    return a(Int(42))
+    return a(pt.Int(42))
 
 
 def increment():
