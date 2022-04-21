@@ -44,7 +44,7 @@ If needed, it's possible to install directly from the latest commit on master to
 
 ## Development Setup
 
-Setup venv (one time):
+Setup venv (one-time):
 
 * `python3 -m venv venv`
 
