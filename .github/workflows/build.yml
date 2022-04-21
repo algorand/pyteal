@@ -70,7 +70,7 @@ jobs:
         continue-on-error: true
         with:
           key: docker-layer-caching-${{ github.workflow }}-${{ hashFiles(env.SANDBOX_CONFIG, env.SANDBOX_GENESIS) }}-{hash}
-          # restore-keys: docker-layer-caching-${{ github.workflow }}-${{ hashFiles(env.CONFIG, env.SANDBOX_GENESIS) }}-
+          restore-keys: docker-layer-caching-${{ github.workflow }}-${{ hashFiles(env.SANDBOX_CONFIG, env.SANDBOX_GENESIS) }}-
       - name: Create sandbox
         uses: lucasvanmol/algorand-sandbox-action@v1
         with:
