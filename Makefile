@@ -57,6 +57,9 @@ all-tests: build-and-test integration-test
 coverage:
 	pytest --cov-report html --cov=pyteal
 
+# assumes act is installed, e.g. via `brew install act`:
+local-gh-simulate:
+	act
 
 # The following depends on [Graviton PR #9](https://github.com/algorand/graviton/pull/9):
 #
