@@ -107,6 +107,8 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
         Tuple4,
         Tuple5,
     )
+    from .string import StringTypeSpec, String
+    from .address import AddressTypeSpec, Address
 
     origin = get_origin(annotation)
     if origin is None:
@@ -143,6 +145,16 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
         if len(args) != 0:
             raise TypeError("Uint64 expects 0 type arguments. Got: {}".format(args))
         return Uint64TypeSpec()
+
+    if origin is String:
+        if len(args) != 0:
+            raise TypeError("String expects 0 arguments. Got: {}".format(args))
+        return StringTypeSpec()
+
+    if origin is Address:
+        if len(args) != 0:
+            raise TypeError("Address expects 0 arguments. Got: {}".format(args))
+        return AddressTypeSpec()
 
     if origin is DynamicArray:
         if len(args) != 1:
