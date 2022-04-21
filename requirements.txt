@@ -1,5 +1,0 @@
-black==22.3.0
-mypy==0.931
-pytest
-pytest-timeout
-py-algorand-sdk

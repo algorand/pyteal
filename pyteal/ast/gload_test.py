@@ -1,36 +1,33 @@
 import pytest
 
-from .. import *
+import pyteal as pt
 
-# this is not necessary but mypy complains if it's not included
-from .. import MAX_GROUP_SIZE, NUM_SLOTS, CompileOptions
-
-teal3Options = CompileOptions(version=3)
-teal4Options = CompileOptions(version=4)
-teal6Options = CompileOptions(version=6)
+teal3Options = pt.CompileOptions(version=3)
+teal4Options = pt.CompileOptions(version=4)
+teal6Options = pt.CompileOptions(version=6)
 
 
 def test_gload_teal_3():
-    with pytest.raises(TealInputError):
-        ImportScratchValue(0, 1).__teal__(teal3Options)
+    with pytest.raises(pt.TealInputError):
+        pt.ImportScratchValue(0, 1).__teal__(teal3Options)
 
-    with pytest.raises(TealInputError):
-        ImportScratchValue(Int(0), 1).__teal__(teal3Options)
+    with pytest.raises(pt.TealInputError):
+        pt.ImportScratchValue(pt.Int(0), 1).__teal__(teal3Options)
 
-    with pytest.raises(TealInputError):
-        ImportScratchValue(Int(0), Int(1)).__teal__(teal3Options)
+    with pytest.raises(pt.TealInputError):
+        pt.ImportScratchValue(pt.Int(0), pt.Int(1)).__teal__(teal3Options)
 
 
 def test_gload_teal_4():
-    with pytest.raises(TealInputError):
-        ImportScratchValue(Int(0), Int(2)).__teal__(teal4Options)
+    with pytest.raises(pt.TealInputError):
+        pt.ImportScratchValue(pt.Int(0), pt.Int(2)).__teal__(teal4Options)
 
 
 def test_gload():
-    expr = ImportScratchValue(0, 1)
-    assert expr.type_of() == TealType.anytype
+    expr = pt.ImportScratchValue(0, 1)
+    assert expr.type_of() == pt.TealType.anytype
 
-    expected = TealSimpleBlock([TealOp(expr, Op.gload, 0, 1)])
+    expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.gload, 0, 1)])
 
     actual, _ = expr.__teal__(teal4Options)
 
@@ -38,51 +35,57 @@ def test_gload():
 
 
 def test_gloads():
-    arg = Int(1)
-    expr = ImportScratchValue(arg, 0)
-    assert expr.type_of() == TealType.anytype
+    arg = pt.Int(1)
+    expr = pt.ImportScratchValue(arg, 0)
+    assert expr.type_of() == pt.TealType.anytype
 
-    expected = TealSimpleBlock([TealOp(arg, Op.int, 1), TealOp(expr, Op.gloads, 0)])
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(arg, pt.Op.int, 1), pt.TealOp(expr, pt.Op.gloads, 0)]
+    )
 
     actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
 
 def test_gloadss():
-    txID = Int(1)
-    slotID = Int(0)
-    expr = ImportScratchValue(txID, slotID)
-    assert expr.type_of() == TealType.anytype
+    txID = pt.Int(1)
+    slotID = pt.Int(0)
+    expr = pt.ImportScratchValue(txID, slotID)
+    assert expr.type_of() == pt.TealType.anytype
 
-    expected = TealSimpleBlock(
-        [TealOp(txID, Op.int, 1), TealOp(slotID, Op.int, 0), TealOp(expr, Op.gloadss)]
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(txID, pt.Op.int, 1),
+            pt.TealOp(slotID, pt.Op.int, 0),
+            pt.TealOp(expr, pt.Op.gloadss),
+        ]
     )
 
     actual, _ = expr.__teal__(teal6Options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
 
 def test_gload_invalid():
-    with pytest.raises(TealInputError):
-        ImportScratchValue(-1, 0)
+    with pytest.raises(pt.TealInputError):
+        pt.ImportScratchValue(-1, 0)
 
-    with pytest.raises(TealInputError):
-        ImportScratchValue(MAX_GROUP_SIZE, 0)
+    with pytest.raises(pt.TealInputError):
+        pt.ImportScratchValue(pt.MAX_GROUP_SIZE, 0)
 
-    with pytest.raises(TealInputError):
-        ImportScratchValue(0, -1)
+    with pytest.raises(pt.TealInputError):
+        pt.ImportScratchValue(0, -1)
 
-    with pytest.raises(TealInputError):
-        ImportScratchValue(0, NUM_SLOTS)
+    with pytest.raises(pt.TealInputError):
+        pt.ImportScratchValue(0, pt.NUM_SLOTS)
 
-    with pytest.raises(TealInputError):
-        ImportScratchValue(0, Int(0))
+    with pytest.raises(pt.TealInputError):
+        pt.ImportScratchValue(0, pt.Int(0))
 
-    with pytest.raises(TealTypeError):
-        ImportScratchValue(Bytes("AQID"), 0)  # byte encoding of [1, 2, 3]
+    with pytest.raises(pt.TealTypeError):
+        pt.ImportScratchValue(pt.Bytes("AQID"), 0)  # byte encoding of [1, 2, 3]

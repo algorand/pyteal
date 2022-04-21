@@ -1,10 +1,10 @@
-from .. import *
+import pyteal as pt
 
 from .sort import sortBlocks
 
 
 def test_sort_single():
-    block = TealSimpleBlock([TealOp(None, Op.int, 1)])
+    block = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.int, 1)])
     block.addIncoming()
     block.validateTree()
 
@@ -15,14 +15,14 @@ def test_sort_single():
 
 
 def test_sort_sequence():
-    block5 = TealSimpleBlock([TealOp(None, Op.int, 5)])
-    block4 = TealSimpleBlock([TealOp(None, Op.int, 4)])
+    block5 = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.int, 5)])
+    block4 = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.int, 4)])
     block4.setNextBlock(block5)
-    block3 = TealSimpleBlock([TealOp(None, Op.int, 3)])
+    block3 = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.int, 3)])
     block3.setNextBlock(block4)
-    block2 = TealSimpleBlock([TealOp(None, Op.int, 2)])
+    block2 = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.int, 2)])
     block2.setNextBlock(block3)
-    block1 = TealSimpleBlock([TealOp(None, Op.int, 1)])
+    block1 = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.int, 1)])
     block1.setNextBlock(block2)
     block1.addIncoming()
     block1.validateTree()
@@ -34,9 +34,9 @@ def test_sort_sequence():
 
 
 def test_sort_branch():
-    blockTrue = TealSimpleBlock([TealOp(None, Op.byte, '"true"')])
-    blockFalse = TealSimpleBlock([TealOp(None, Op.byte, '"false"')])
-    block = TealConditionalBlock([TealOp(None, Op.int, 1)])
+    blockTrue = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.byte, '"true"')])
+    blockFalse = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.byte, '"false"')])
+    block = pt.TealConditionalBlock([pt.TealOp(None, pt.Op.int, 1)])
     block.setTrueBlock(blockTrue)
     block.setFalseBlock(blockFalse)
     block.addIncoming()
@@ -49,15 +49,15 @@ def test_sort_branch():
 
 
 def test_sort_multiple_branch():
-    blockTrueTrue = TealSimpleBlock([TealOp(None, Op.byte, '"true true"')])
-    blockTrueFalse = TealSimpleBlock([TealOp(None, Op.byte, '"true false"')])
-    blockTrueBranch = TealConditionalBlock([])
+    blockTrueTrue = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.byte, '"true true"')])
+    blockTrueFalse = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.byte, '"true false"')])
+    blockTrueBranch = pt.TealConditionalBlock([])
     blockTrueBranch.setTrueBlock(blockTrueTrue)
     blockTrueBranch.setFalseBlock(blockTrueFalse)
-    blockTrue = TealSimpleBlock([TealOp(None, Op.byte, '"true"')])
+    blockTrue = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.byte, '"true"')])
     blockTrue.setNextBlock(blockTrueBranch)
-    blockFalse = TealSimpleBlock([TealOp(None, Op.byte, '"false"')])
-    block = TealConditionalBlock([TealOp(None, Op.int, 1)])
+    blockFalse = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.byte, '"false"')])
+    block = pt.TealConditionalBlock([pt.TealOp(None, pt.Op.int, 1)])
     block.setTrueBlock(blockTrue)
     block.setFalseBlock(blockFalse)
     block.addIncoming()
@@ -77,12 +77,12 @@ def test_sort_multiple_branch():
 
 
 def test_sort_branch_converge():
-    blockEnd = TealSimpleBlock([TealOp(None, Op.return_)])
-    blockTrue = TealSimpleBlock([TealOp(None, Op.byte, '"true"')])
+    blockEnd = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.return_)])
+    blockTrue = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.byte, '"true"')])
     blockTrue.setNextBlock(blockEnd)
-    blockFalse = TealSimpleBlock([TealOp(None, Op.byte, '"false"')])
+    blockFalse = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.byte, '"false"')])
     blockFalse.setNextBlock(blockEnd)
-    block = TealConditionalBlock([TealOp(None, Op.int, 1)])
+    block = pt.TealConditionalBlock([pt.TealOp(None, pt.Op.int, 1)])
     block.setTrueBlock(blockTrue)
     block.setFalseBlock(blockFalse)
     block.addIncoming()

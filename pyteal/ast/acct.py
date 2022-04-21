@@ -1,12 +1,7 @@
-from typing import TYPE_CHECKING
-
 from ..types import TealType, require_type
 from ..ir import Op
 from .expr import Expr
 from .maybe import MaybeValue
-
-if TYPE_CHECKING:
-    from ..compiler import CompileOptions
 
 
 class AccountParam:

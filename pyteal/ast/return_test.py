@@ -1,57 +1,56 @@
 import pytest
 
-from .. import *
+import pyteal as pt
 
-# this is not necessary but mypy complains if it's not included
-from .. import CompileOptions
-
-options = CompileOptions(version=4)
+options = pt.CompileOptions(version=4)
 
 
 def test_main_return():
-    arg = Int(1)
-    expr = Return(arg)
-    assert expr.type_of() == TealType.none
+    arg = pt.Int(1)
+    expr = pt.Return(arg)
+    assert expr.type_of() == pt.TealType.none
     assert expr.has_return()
 
-    expected = TealSimpleBlock([TealOp(arg, Op.int, 1), TealOp(expr, Op.return_)])
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(arg, pt.Op.int, 1), pt.TealOp(expr, pt.Op.return_)]
+    )
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
 
 def test_main_return_invalid():
-    with pytest.raises(TealCompileError):
-        Return(Txn.receiver()).__teal__(options)
+    with pytest.raises(pt.TealCompileError):
+        pt.Return(pt.Txn.receiver()).__teal__(options)
 
-    with pytest.raises(TealCompileError):
-        Return().__teal__(options)
+    with pytest.raises(pt.TealCompileError):
+        pt.Return().__teal__(options)
 
 
 def test_subroutine_return_value():
     cases = (
-        (TealType.uint64, Int(1), Op.int, 1),
-        (TealType.bytes, Bytes("value"), Op.byte, '"value"'),
-        (TealType.anytype, Int(1), Op.int, 1),
-        (TealType.anytype, Bytes("value"), Op.byte, '"value"'),
+        (pt.TealType.uint64, pt.Int(1), pt.Op.int, 1),
+        (pt.TealType.bytes, pt.Bytes("value"), pt.Op.byte, '"value"'),
+        (pt.TealType.anytype, pt.Int(1), pt.Op.int, 1),
+        (pt.TealType.anytype, pt.Bytes("value"), pt.Op.byte, '"value"'),
     )
 
     for (tealType, value, op, opValue) in cases:
-        expr = Return(value)
+        expr = pt.Return(value)
 
         def mySubroutine():
             return expr
 
-        subroutine = SubroutineDefinition(mySubroutine, tealType)
+        subroutine = pt.SubroutineDefinition(mySubroutine, tealType)
 
-        assert expr.type_of() == TealType.none
+        assert expr.type_of() == pt.TealType.none
         assert expr.has_return()
 
-        expected = TealSimpleBlock(
-            [TealOp(value, op, opValue), TealOp(expr, Op.retsub)]
+        expected = pt.TealSimpleBlock(
+            [pt.TealOp(value, op, opValue), pt.TealOp(expr, pt.Op.retsub)]
         )
 
         options.setSubroutine(subroutine)
@@ -59,64 +58,64 @@ def test_subroutine_return_value():
         options.setSubroutine(None)
 
         actual.addIncoming()
-        actual = TealBlock.NormalizeBlocks(actual)
+        actual = pt.TealBlock.NormalizeBlocks(actual)
 
         assert actual == expected
 
 
 def test_subroutine_return_value_invalid():
     cases = (
-        (TealType.bytes, Int(1)),
-        (TealType.uint64, Bytes("value")),
+        (pt.TealType.bytes, pt.Int(1)),
+        (pt.TealType.uint64, pt.Bytes("value")),
     )
 
     for (tealType, value) in cases:
-        expr = Return(value)
+        expr = pt.Return(value)
 
         def mySubroutine():
             return expr
 
-        subroutine = SubroutineDefinition(mySubroutine, tealType)
+        subroutine = pt.SubroutineDefinition(mySubroutine, tealType)
 
         options.setSubroutine(subroutine)
-        with pytest.raises(TealCompileError):
+        with pytest.raises(pt.TealCompileError):
             expr.__teal__(options)
         options.setSubroutine(None)
 
 
 def test_subroutine_return_none():
-    expr = Return()
+    expr = pt.Return()
 
     def mySubroutine():
         return expr
 
-    subroutine = SubroutineDefinition(mySubroutine, TealType.none)
+    subroutine = pt.SubroutineDefinition(mySubroutine, pt.TealType.none)
 
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
     assert expr.has_return()
 
-    expected = TealSimpleBlock([TealOp(expr, Op.retsub)])
+    expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.retsub)])
 
     options.setSubroutine(subroutine)
     actual, _ = expr.__teal__(options)
     options.setSubroutine(None)
 
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
 
 def test_subroutine_return_none_invalid():
-    for value in (Int(1), Bytes("value")):
-        expr = Return(value)
+    for value in (pt.Int(1), pt.Bytes("value")):
+        expr = pt.Return(value)
 
         def mySubroutine():
             return expr
 
-        subroutine = SubroutineDefinition(mySubroutine, TealType.none)
+        subroutine = pt.SubroutineDefinition(mySubroutine, pt.TealType.none)
 
         options.setSubroutine(subroutine)
-        with pytest.raises(TealCompileError):
+        with pytest.raises(pt.TealCompileError):
             expr.__teal__(options)
         options.setSubroutine(None)

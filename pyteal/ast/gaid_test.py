@@ -1,24 +1,21 @@
 import pytest
 
-from .. import *
+import pyteal as pt
 
-# this is not necessary but mypy complains if it's not included
-from .. import MAX_GROUP_SIZE, CompileOptions
-
-teal3Options = CompileOptions(version=3)
-teal4Options = CompileOptions(version=4)
+teal3Options = pt.CompileOptions(version=3)
+teal4Options = pt.CompileOptions(version=4)
 
 
 def test_gaid_teal_3():
-    with pytest.raises(TealInputError):
-        GeneratedID(0).__teal__(teal3Options)
+    with pytest.raises(pt.TealInputError):
+        pt.GeneratedID(0).__teal__(teal3Options)
 
 
 def test_gaid():
-    expr = GeneratedID(0)
-    assert expr.type_of() == TealType.uint64
+    expr = pt.GeneratedID(0)
+    assert expr.type_of() == pt.TealType.uint64
 
-    expected = TealSimpleBlock([TealOp(expr, Op.gaid, 0)])
+    expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.gaid, 0)])
 
     actual, _ = expr.__teal__(teal4Options)
 
@@ -26,32 +23,34 @@ def test_gaid():
 
 
 def test_gaid_invalid():
-    with pytest.raises(TealInputError):
-        GeneratedID(-1)
+    with pytest.raises(pt.TealInputError):
+        pt.GeneratedID(-1)
 
-    with pytest.raises(TealInputError):
-        GeneratedID(MAX_GROUP_SIZE)
+    with pytest.raises(pt.TealInputError):
+        pt.GeneratedID(pt.MAX_GROUP_SIZE)
 
 
 def test_gaid_dynamic_teal_3():
-    with pytest.raises(TealInputError):
-        GeneratedID(Int(0)).__teal__(teal3Options)
+    with pytest.raises(pt.TealInputError):
+        pt.GeneratedID(pt.Int(0)).__teal__(teal3Options)
 
 
 def test_gaid_dynamic():
-    arg = Int(0)
-    expr = GeneratedID(arg)
-    assert expr.type_of() == TealType.uint64
+    arg = pt.Int(0)
+    expr = pt.GeneratedID(arg)
+    assert expr.type_of() == pt.TealType.uint64
 
-    expected = TealSimpleBlock([TealOp(arg, Op.int, 0), TealOp(expr, Op.gaids)])
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(arg, pt.Op.int, 0), pt.TealOp(expr, pt.Op.gaids)]
+    )
 
     actual, _ = expr.__teal__(teal4Options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
 
 def test_gaid_dynamic_invalid():
-    with pytest.raises(TealTypeError):
-        GeneratedID(Bytes("index"))
+    with pytest.raises(pt.TealTypeError):
+        pt.GeneratedID(pt.Bytes("index"))

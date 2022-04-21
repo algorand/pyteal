@@ -1,8 +1,8 @@
 from typing import List, Tuple, TYPE_CHECKING
 
-from ..types import TealType, require_type
-from ..errors import TealInputError, TealInternalError, TealCompileError
-from ..ir import TealOp, Op, TealSimpleBlock, TealBlock
+from ..types import TealType
+from ..errors import TealInternalError, TealCompileError
+from ..ir import TealOp, Op, TealSimpleBlock
 from .expr import Expr
 
 if TYPE_CHECKING:

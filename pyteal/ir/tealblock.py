@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+
 from typing import Dict, List, Tuple, Set, Iterator, cast, TYPE_CHECKING
+
 
 from .tealop import TealOp, Op
 from ..errors import TealCompileError
@@ -272,7 +274,7 @@ class TealBlock(ABC):
         }
 
         for actualSlot, expectedSlot in zip(actual, expected):
-            if not actualSlot in mapFromActualToExpected:
+            if actualSlot not in mapFromActualToExpected:
                 if expectedSlot in mapFromActualToExpected.values():
                     # this value was already seen
                     return False

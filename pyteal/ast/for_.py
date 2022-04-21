@@ -4,8 +4,6 @@ from ..types import TealType, require_type
 from ..ir import TealSimpleBlock, TealConditionalBlock
 from ..errors import TealCompileError
 from .expr import Expr
-from .seq import Seq
-from .int import Int
 
 if TYPE_CHECKING:
     from ..compiler import CompileOptions
