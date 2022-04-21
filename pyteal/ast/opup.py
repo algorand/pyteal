@@ -1,16 +1,16 @@
 from pyteal.ast.app import OnComplete
 from pyteal.errors import TealInputError
-from .while_ import While
-from .expr import Expr
-from .global_ import Global
-from .seq import Seq
-from .int import Int
-from .bytes import Bytes
-from .itxn import InnerTxnBuilder
-from .scratchvar import ScratchVar
-from .txn import TxnField, TxnType
-from .for_ import For
-from ..types import TealType, require_type
+from pyteal.ast.while_ import While
+from pyteal.ast.expr import Expr
+from pyteal.ast.global_ import Global
+from pyteal.ast.seq import Seq
+from pyteal.ast.int import Int
+from pyteal.ast.bytes import Bytes
+from pyteal.ast.itxn import InnerTxnBuilder
+from pyteal.ast.scratchvar import ScratchVar
+from pyteal.ast.txn import TxnField, TxnType
+from pyteal.ast.for_ import For
+from pyteal.types import TealType, require_type
 from enum import Enum
 
 
