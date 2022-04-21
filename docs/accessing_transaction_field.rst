@@ -223,7 +223,7 @@ Information about the current state of the blockchain can be obtained using the 
 Operator                                    Type                    Min TEAL Version Notes
 =========================================== ======================= ================ =============================================================
 :any:`Global.min_txn_fee()`                 :code:`TealType.uint64` 2                in microAlgos
-:any:`Global.min_balance()`                 :code:`TealType.uint64` 2                in mircoAlgos
+:any:`Global.min_balance()`                 :code:`TealType.uint64` 2                in microAlgos
 :any:`Global.max_txn_life()`                :code:`TealType.uint64` 2                number of rounds
 :any:`Global.zero_address()`                :code:`TealType.bytes`  2                32 byte address of all zero bytes
 :any:`Global.group_size()`                  :code:`TealType.uint64` 2                number of txns in this atomic transaction group, at least 1
