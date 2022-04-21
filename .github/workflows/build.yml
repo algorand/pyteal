@@ -69,8 +69,8 @@ jobs:
         # Ignore the failure of a step and avoid terminating the job.
         continue-on-error: true
         with:
-          key: pyteal-docker-layer-caching-${{ github.workflow }}-${{ hashFiles(env.SANDBOX_CONFIG, env.SANDBOX_GENESIS) }}-{hash}
-          restore-keys: pyteal-docker-layer-caching-${{ github.workflow }}-${{ hashFiles(env.CONFIG, env.SANDBOX_GENESIS) }}-
+          key: layer-docker-layer-caching-${{ github.workflow }}-${{ hashFiles(env.SANDBOX_CONFIG, env.SANDBOX_GENESIS) }}-{hash}
+          restore-keys: layer-docker-layer-caching-${{ github.workflow }}-${{ hashFiles(env.CONFIG, env.SANDBOX_GENESIS) }}-
       - name: Create sandbox
         uses: lucasvanmol/algorand-sandbox-action@v1
         with:
