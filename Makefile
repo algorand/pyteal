@@ -51,7 +51,7 @@ integration-run:
 
 integration-test: integration-run # graviton-demo-run
 
-all-tests: build-and-and-test integration-test
+all-tests: build-and-test integration-test
 
 # Extras:
 coverage:
