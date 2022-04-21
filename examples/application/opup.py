@@ -14,7 +14,7 @@ def approval_program_explicit_ensure():
         ),
         Addr("7JOPVEP3ABJUW5YZ5WFIONLPWTZ5MYX5HFK4K7JLGSIAG7RRB42MNLQ224"),
     ]
-    opup = OpUp(OpUpMode.Explicit, target_app_id=Int(1))
+    opup = OpUp(OpUpMode.Explicit, Int(1))
     return Seq(
         If(Txn.application_id() != Int(0)).Then(
             Seq(
@@ -56,7 +56,7 @@ def approval_program_explicit_maximize():
         ),
         Addr("7JOPVEP3ABJUW5YZ5WFIONLPWTZ5MYX5HFK4K7JLGSIAG7RRB42MNLQ224"),
     ]
-    opup = OpUp(OpUpMode.Explicit, target_app_id=Int(1))
+    opup = OpUp(OpUpMode.Explicit, Int(1))
     return Seq(
         If(Txn.application_id() != Int(0)).Then(
             Seq(

@@ -22,10 +22,10 @@ class OpUpMode(Enum):
     during evaluation.
     """
 
-    """The app to call must be provided by the user."""
+    # The app to call must be provided by the user.
     Explicit = 0
 
-    """The app to call is created then deleted for each request to increase budget."""
+    # The app to call is created then deleted for each request to increase budget.
     OnCall = 1
 
 
@@ -58,7 +58,7 @@ class OpUp:
             )
     """
 
-    def __init__(self, mode: OpUpMode, *, target_app_id: Expr = None, buffer: int = 20):
+    def __init__(self, mode: OpUpMode, target_app_id: Expr = None):
         """Create a new OpUp object.
 
         Args:
@@ -67,10 +67,6 @@ class OpUp:
             target_app_id (optional): In Explicit mode, the OpUp utility
                 requires the app_id to target for inner app calls. Defaults
                 to None.
-            buffer (optional): Value to add to the target budget. The OpUp
-                code for increasing budget has overhead that may prevent the
-                correct budget from being reached. The buffer prevents this.
-                Defaults to 20.
         """
 
         # With only OnCall and Explicit modes supported, the mode argument
@@ -90,13 +86,6 @@ class OpUp:
             raise TealInputError("Invalid OpUp mode provided")
 
         self.mode = mode
-
-        # A budget buffer is necessary to deal with an edge case of ensure_budget():
-        #   if the current budget is equal to or only slightly higher than the
-        #   required budget then it's possible for ensure_budget() to return with a
-        #   current budget less than the required budget. The buffer prevents this
-        #   from being the case.
-        self.buffer = Int(buffer)
 
     def _construct_itxn(self) -> Expr:
         if self.mode == OpUpMode.Explicit:
@@ -134,9 +123,15 @@ class OpUp:
         consider moving the call to ensure_budget() earlier in the pyteal program."""
         require_type(required_budget, TealType.uint64)
 
+        # A budget buffer is necessary to deal with an edge case of ensure_budget():
+        #   if the current budget is equal to or only slightly higher than the
+        #   required budget then it's possible for ensure_budget() to return with a
+        #   current budget less than the required budget. The buffer prevents this
+        #   from being the case.
+        buffer = Int(10)
         buffered_budget = ScratchVar(TealType.uint64)
         return Seq(
-            buffered_budget.store(required_budget + self.buffer),
+            buffered_budget.store(required_budget + buffer),
             While(buffered_budget.load() > Global.opcode_budget()).Do(
                 self._construct_itxn()
             ),
