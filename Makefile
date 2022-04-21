@@ -57,6 +57,7 @@ all-tests: build-and-test integration-test
 coverage:
 	pytest --cov-report html --cov=pyteal
 
+
 # The following depends on [Graviton PR #9](https://github.com/algorand/graviton/pull/9):
 #
 # A = 3
