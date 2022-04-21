@@ -1,9 +1,9 @@
-from .array_dynamic import DynamicArray, DynamicArrayTypeSpec
-from .uint import ByteTypeSpec, Uint16TypeSpec
-from .util import substringForDecoding
+from pyteal.ast.abi.array_dynamic import DynamicArray, DynamicArrayTypeSpec
+from pyteal.ast.abi.uint import ByteTypeSpec, Uint16TypeSpec
+from pyteal.ast.abi.util import substringForDecoding
 
-from ..int import Int
-from ..expr import Expr
+from pyteal.ast.int import Int
+from pyteal.ast.expr import Expr
 
 
 class StringTypeSpec(DynamicArrayTypeSpec):

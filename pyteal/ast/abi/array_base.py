@@ -8,21 +8,21 @@ from typing import (
 )
 from abc import abstractmethod
 
-from ...types import TealType, require_type
-from ...errors import TealInputError
-from ..expr import Expr
-from ..seq import Seq
-from ..int import Int
-from ..if_ import If
-from ..unaryexpr import Len
-from ..binaryexpr import ExtractUint16
-from ..naryexpr import Concat
+from pyteal.types import TealType, require_type
+from pyteal.errors import TealInputError
+from pyteal.ast.expr import Expr
+from pyteal.ast.seq import Seq
+from pyteal.ast.int import Int
+from pyteal.ast.if_ import If
+from pyteal.ast.unaryexpr import Len
+from pyteal.ast.binaryexpr import ExtractUint16
+from pyteal.ast.naryexpr import Concat
 
-from .type import TypeSpec, BaseType, ComputedValue
-from .tuple import encodeTuple
-from .bool import Bool, BoolTypeSpec
-from .uint import Uint16, Uint16TypeSpec
-from .util import substringForDecoding
+from pyteal.ast.abi.type import TypeSpec, BaseType, ComputedValue
+from pyteal.ast.abi.tuple import encodeTuple
+from pyteal.ast.abi.bool import Bool, BoolTypeSpec
+from pyteal.ast.abi.uint import Uint16, Uint16TypeSpec
+from pyteal.ast.abi.util import substringForDecoding
 
 T = TypeVar("T", bound=BaseType)
 

@@ -1,16 +1,16 @@
 from typing import TypeVar, Union, cast, Sequence, Callable
 
-from ...types import TealType
-from ...errors import TealInputError
-from ..expr import Expr
-from ..seq import Seq
-from ..assert_ import Assert
-from ..int import Int
-from ..bytes import Bytes
-from ..binaryexpr import GetBit
-from ..ternaryexpr import SetBit
-from .type import ComputedValue, TypeSpec, BaseType
-from .uint import NUM_BITS_IN_BYTE
+from pyteal.types import TealType
+from pyteal.errors import TealInputError
+from pyteal.ast.expr import Expr
+from pyteal.ast.seq import Seq
+from pyteal.ast.assert_ import Assert
+from pyteal.ast.int import Int
+from pyteal.ast.bytes import Bytes
+from pyteal.ast.binaryexpr import GetBit
+from pyteal.ast.ternaryexpr import SetBit
+from pyteal.ast.abi.type import ComputedValue, TypeSpec, BaseType
+from pyteal.ast.abi.uint import NUM_BITS_IN_BYTE
 
 
 class BoolTypeSpec(TypeSpec):

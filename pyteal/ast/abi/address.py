@@ -1,6 +1,6 @@
-from .array_static import StaticArray, StaticArrayTypeSpec
-from .uint import ByteTypeSpec
-from ..expr import Expr
+from pyteal.ast.abi.array_static import StaticArray, StaticArrayTypeSpec
+from pyteal.ast.abi.uint import ByteTypeSpec
+from pyteal.ast.expr import Expr
 
 ADDRESS_LENGTH = 32
 
