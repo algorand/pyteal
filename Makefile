@@ -42,6 +42,12 @@ lint: black flake8 mypy
 test-unit:
 	pytest pyteal tests/unit
 
+sandbox-dev-up:
+	docker-compose up -d algod
+
+sandbox-dev-stop:
+	docker-compose stop algod
+
 build-and-test: check-generate-init lint test-unit
 
 # set NUM_PROCS = auto when the following issue has been fixed https://github.com/algorand/pyteal/issues/199

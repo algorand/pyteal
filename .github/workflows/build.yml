@@ -70,16 +70,18 @@ jobs:
         continue-on-error: true
         with:
           key: docker-layer-caching-${{ github.workflow }}-${{ hashFiles(env.SANDBOX_CONFIG, env.SANDBOX_GENESIS) }}-{hash}
-          restore-keys: docker-layer-caching-${{ github.workflow }}-${{ hashFiles(env.SANDBOX_CONFIG, env.SANDBOX_GENESIS) }}-
-          path: ~/.dcache
+          restore-keys: docker-layer-caching-${{ github.workflow }}-${{ hashFiles(env.CONFIG, env.SANDBOX_GENESIS) }}-
       - name: Create sandbox
-        uses: lucasvanmol/algorand-sandbox-action@v1
-        with:
-          config: ${{ env.SANDBOX_CONFIG }}
+        run: make sandbox-dev-up
+        # uses: lucasvanmol/algorand-sandbox-action@v1
+        # with:
+        #   config: ${{ env.SANDBOX_CONFIG }}
       - name: Install python dependencies
         run: make setup-development
       - name: Build, Unit Tests and Integration Tests
         run: make all-tests
+      - name: Stop running images
+        run: make sandbox-dev-stop
 
   build-docset:
     runs-on: ubuntu-20.04
