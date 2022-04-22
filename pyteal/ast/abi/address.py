@@ -2,11 +2,11 @@ from typing import Union
 
 from pyteal.errors import TealInputError
 
-from .type import ComputedValue
-from .array_static import StaticArray, StaticArrayTypeSpec
-from .uint import ByteTypeSpec
-from ..bytes import Bytes
-from ..expr import Expr
+from pyteal.ast.abi.type import ComputedValue
+from pyteal.ast.abi.array_static import StaticArray, StaticArrayTypeSpec
+from pyteal.ast.abi.uint import ByteTypeSpec
+from pyteal.ast.expr import Expr
+from pyteal.ast.bytes import Bytes
 
 ADDRESS_LENGTH = 32
 

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from .expr import Expr
+from pyteal.ast.expr import Expr
 
 
 class Array(ABC):

@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 import pyteal as pt
 
-from .flatten import flattenBlocks, flattenSubroutines
+from pyteal.compiler.flatten import flattenBlocks, flattenSubroutines
 
 
 def test_flattenBlocks_none():

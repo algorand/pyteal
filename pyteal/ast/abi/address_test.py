@@ -1,7 +1,7 @@
 import pytest
-
 import pyteal as pt
 from pyteal import abi
+
 from .util import substringForDecoding
 
 options = pt.CompileOptions(version=5)

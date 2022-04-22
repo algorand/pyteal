@@ -7,13 +7,13 @@ from typing import (
     cast,
 )
 
-from ...errors import TealInputError
-from ..expr import Expr
-from ..int import Int
+from pyteal.errors import TealInputError
+from pyteal.ast.expr import Expr
+from pyteal.ast.int import Int
 
-from .type import ComputedValue, TypeSpec, BaseType
-from .bool import BoolTypeSpec, boolSequenceLength
-from .array_base import ArrayTypeSpec, Array, ArrayElement
+from pyteal.ast.abi.type import ComputedValue, TypeSpec, BaseType
+from pyteal.ast.abi.bool import BoolTypeSpec, boolSequenceLength
+from pyteal.ast.abi.array_base import ArrayTypeSpec, Array, ArrayElement
 
 
 T = TypeVar("T", bound=BaseType)

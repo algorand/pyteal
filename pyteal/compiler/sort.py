@@ -1,7 +1,7 @@
 from typing import List
 
-from ..ir import TealBlock
-from ..errors import TealInternalError
+from pyteal.ir import TealBlock
+from pyteal.errors import TealInternalError
 
 
 def sortBlocks(start: TealBlock, end: TealBlock) -> List[TealBlock]:

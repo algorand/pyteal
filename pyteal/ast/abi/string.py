@@ -1,19 +1,22 @@
 from typing import Union
 
-from .type import ComputedValue, TypeSpec
-from .array_base import ArrayElement
-from .array_dynamic import DynamicArray, DynamicArrayTypeSpec
-from .uint import ByteTypeSpec, Uint16TypeSpec
-from .util import substringForDecoding
+from pyteal.ast.abi.type import ComputedValue, TypeSpec
+from pyteal.ast.abi.array_base import ArrayElement
+from pyteal.ast.abi.array_dynamic import DynamicArray, DynamicArrayTypeSpec
+from pyteal.ast.abi.uint import ByteTypeSpec, Uint16TypeSpec
+from pyteal.ast.abi.util import substringForDecoding
 
-from ..bytes import Bytes
-from ..unaryexpr import Itob, Len
-from ..substring import Suffix
-from ...types import TealType, require_type
-from ...errors import TealInputError
-from ..int import Int
-from ..expr import Expr
-from ..naryexpr import Concat
+from pyteal.ast.int import Int
+from pyteal.ast.expr import Expr
+from pyteal.ast.bytes import Bytes
+from pyteal.ast.unaryexpr import Itob, Len
+from pyteal.ast.substring import Suffix
+from pyteal.ast.int import Int
+from pyteal.ast.expr import Expr
+from pyteal.ast.naryexpr import Concat
+
+from pyteal.types import TealType, require_type
+from pyteal.errors import TealInputError
 
 
 def encoded_string(s: Expr):

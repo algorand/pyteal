@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING
 from enum import Enum
 
-from ..types import TealType
-from ..errors import verifyFieldVersion
-from ..ir import TealOp, Op, TealBlock
-from .leafexpr import LeafExpr
+from pyteal.types import TealType
+from pyteal.errors import verifyFieldVersion
+from pyteal.ir import TealOp, Op, TealBlock
+from pyteal.ast.leafexpr import LeafExpr
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class GlobalField(Enum):

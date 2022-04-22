@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING, Tuple
-from . import BaseType
-from ...types import TealType
-from ...errors import TealInputError
-from .. import Expr, Log, Concat, Bytes
-from ...ir import TealBlock, TealSimpleBlock, Op
-from ...config import RETURN_METHOD_SELECTOR
+from pyteal.ast.abi import BaseType
+from pyteal.types import TealType
+from pyteal.errors import TealInputError
+from pyteal.ast import Expr, Log, Concat, Bytes
+from pyteal.ir import TealBlock, TealSimpleBlock, Op
+from pyteal.config import RETURN_METHOD_SELECTOR
 
 if TYPE_CHECKING:
-    from ...compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class MethodReturn(Expr):

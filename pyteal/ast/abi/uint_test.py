@@ -1,5 +1,5 @@
 from typing import List, Tuple, NamedTuple, Callable, Union, Optional
-from .type_test import ContainerType
+from pyteal.ast.abi.type_test import ContainerType
 import pyteal as pt
 from pyteal import abi
 

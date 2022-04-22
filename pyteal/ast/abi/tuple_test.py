@@ -3,10 +3,10 @@ import pytest
 
 import pyteal as pt
 from pyteal import abi
-from .tuple import encodeTuple, indexTuple, TupleElement
-from .bool import encodeBoolSequence
-from .util import substringForDecoding
-from .type_test import ContainerType
+from pyteal.ast.abi.tuple import encodeTuple, indexTuple, TupleElement
+from pyteal.ast.abi.bool import encodeBoolSequence
+from pyteal.ast.abi.util import substringForDecoding
+from pyteal.ast.abi.type_test import ContainerType
 
 options = pt.CompileOptions(version=5)
 

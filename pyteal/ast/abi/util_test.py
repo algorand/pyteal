@@ -4,7 +4,7 @@ import pytest
 
 import pyteal as pt
 from pyteal import abi
-from .util import (
+from pyteal.ast.abi.util import (
     substringForDecoding,
     int_literal_from_annotation,
     type_spec_from_annotation,
