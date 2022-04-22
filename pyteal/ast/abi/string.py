@@ -1,6 +1,6 @@
-from typing import Union
+from typing import Union, TypeVar, cast, Sequence
 
-from pyteal.ast.abi.type import ComputedValue, TypeSpec
+from pyteal.ast.abi.type import ComputedValue, TypeSpec, BaseType
 from pyteal.ast.abi.array_base import ArrayElement
 from pyteal.ast.abi.array_dynamic import DynamicArray, DynamicArrayTypeSpec
 from pyteal.ast.abi.uint import ByteTypeSpec, Uint16TypeSpec
@@ -22,6 +22,7 @@ from pyteal.errors import TealInputError
 def encoded_string(s: Expr):
     return Concat(Suffix(Itob(Len(s)), Int(6)), s)
 
+T = TypeVar("T", bound=BaseType)
 
 class StringTypeSpec(DynamicArrayTypeSpec):
     def __init__(self) -> None:
@@ -52,14 +53,18 @@ class String(DynamicArray):
             self.stored_value.load(), Int(Uint16TypeSpec().byte_length_static())
         )
 
-    def set(self, value: Union[str, "String", ComputedValue["String"], Expr]) -> Expr:
+    def set(self, value: Union[Sequence[T], DynamicArray[T], ComputedValue[DynamicArray[T]], "String", str, Expr]) -> Expr:
 
         # Assume length prefixed
         if isinstance(value, ComputedValue):
+            if value.produced_type_spec() is not StringTypeSpec():
+                raise TealInputError(f"Got ComputedValue with type spec {value.produced_type_spec()}, expected StringTypeSpec")
             return value.store_into(self)
 
-        if isinstance(value, String):
-            return self.decode(value.encode())
+        if isinstance(value, BaseType):
+            if value.type_spec() is not StringTypeSpec():
+                raise TealInputError(f"Got {value.__class__} with type spec {value.type_spec()}, expected StringTypeSpec")
+            return value.decode(value.encode())
 
         # Assume not length prefixed
         if type(value) is str:
@@ -70,7 +75,7 @@ class String(DynamicArray):
 
         return self.stored_value.store(encoded_string(value))
 
-    def __getitem__(self, index: Union[int, slice, Expr]) -> "ArrayElement[String]":
+    def __getitem__(self, index: Union[int, slice, Expr]) -> "ArrayElement[T]":
 
         if type(index) is int or isinstance(index, Expr):
             return super().__getitem__(index)
@@ -102,7 +107,8 @@ class String(DynamicArray):
         if type(start) is int:
             start = Int(start)
 
-        return SubstringValue(self, start, stop)
+        # TODO: ?????
+        return ArrayElement(self, cast(Expr, SubstringValue(self, start, stop)))
 
 
 String.__module__ = "pyteal"
