@@ -1,6 +1,6 @@
 .. _opup:
 
-Budget Increase Utility
+OpUp:  Budget Increase Utility
 ========================
 
 Some opcode budget is consumed during execution of every Algorand Smart Contract because every teal
