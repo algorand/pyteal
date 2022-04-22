@@ -25,9 +25,9 @@ OpUp Mode         Description
 ================= ================================================================================
 
 
-:any:`Explicit` has the benefit of constructing more lightweight inner transactions but requires the
+:any:`Explicit` has the benefit of constructing more lightweight inner transactions, but requires the
 target app ID to be provided in the foreign apps array field of the transaction and the :any:`pyteal.OpUp`
-constructor in order for it to be accessible. :any:`OnCall` is easier to use but has slightly more overhead
+constructor in order for it to be accessible. :any:`OnCall` is easier to use, but has slightly more overhead
 because the target app must be created and deleted during the evaluation of an app call.
 
 :any:`pyteal.OpUp.ensure_budget` attempts to ensure that the available budget is at least the budget requested by
