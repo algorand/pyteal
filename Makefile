@@ -55,7 +55,17 @@ NUM_PROCS = 1
 integration-run:
 	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration
 
-integration-test: integration-run # graviton-demo-run
+A = 3
+P = 13
+Q = 13
+M = 10
+N = 10
+DEMO_PROCS=auto
+graviton-demo-run:
+	A=$(A) P=$(P) Q=$(Q) M=$(M) N=$(N) pytest -sv -n $(DEMO_PROCS) --durations=10 tests/demo/logicsigs_test.py::test_many_factorizer_games
+
+
+integration-test: integration-run graviton-demo-run
 
 all-tests: build-and-test integration-test
 
@@ -66,14 +76,3 @@ coverage:
 # assumes act is installed, e.g. via `brew install act`:
 local-gh-simulate:
 	act
-
-# The following depends on [Graviton PR #9](https://github.com/algorand/graviton/pull/9):
-# TODO: Delete the below before merging:
-# A = 3
-# P = 13
-# Q = 13
-# M = 10
-# N = 10
-# DEMO_PROCS=auto
-# graviton-demo-run:
-# 	A=$(A) P=$(P) Q=$(Q) M=$(M) N=$(N) pytest -sv -n $(DEMO_PROCS) --durations=10 tests/demo/logicsigs_test.py::test_many_factorizer_games
