@@ -2,7 +2,8 @@ import pytest
 import pyteal as pt
 from pyteal import abi
 
-from .util import substringForDecoding
+from pyteal.ast.abi.util import substringForDecoding
+
 
 options = pt.CompileOptions(version=5)
 

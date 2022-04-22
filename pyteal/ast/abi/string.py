@@ -11,8 +11,6 @@ from pyteal.ast.expr import Expr
 from pyteal.ast.bytes import Bytes
 from pyteal.ast.unaryexpr import Itob, Len
 from pyteal.ast.substring import Suffix
-from pyteal.ast.int import Int
-from pyteal.ast.expr import Expr
 from pyteal.ast.naryexpr import Concat
 
 from pyteal.types import TealType, require_type
@@ -22,7 +20,9 @@ from pyteal.errors import TealInputError
 def encoded_string(s: Expr):
     return Concat(Suffix(Itob(Len(s)), Int(6)), s)
 
+
 T = TypeVar("T", bound=BaseType)
+
 
 class StringTypeSpec(DynamicArrayTypeSpec):
     def __init__(self) -> None:
@@ -53,17 +53,31 @@ class String(DynamicArray):
             self.stored_value.load(), Int(Uint16TypeSpec().byte_length_static())
         )
 
-    def set(self, value: Union[Sequence[T], DynamicArray[T], ComputedValue[DynamicArray[T]], "String", str, Expr]) -> Expr:
+    def set(
+        self,
+        value: Union[
+            Sequence[T],
+            DynamicArray[T],
+            ComputedValue[DynamicArray[T]],
+            "String",
+            str,
+            Expr,
+        ],
+    ) -> Expr:
 
         # Assume length prefixed
         if isinstance(value, ComputedValue):
             if value.produced_type_spec() is not StringTypeSpec():
-                raise TealInputError(f"Got ComputedValue with type spec {value.produced_type_spec()}, expected StringTypeSpec")
+                raise TealInputError(
+                    f"Got ComputedValue with type spec {value.produced_type_spec()}, expected StringTypeSpec"
+                )
             return value.store_into(self)
 
         if isinstance(value, BaseType):
             if value.type_spec() is not StringTypeSpec():
-                raise TealInputError(f"Got {value.__class__} with type spec {value.type_spec()}, expected StringTypeSpec")
+                raise TealInputError(
+                    f"Got {value.__class__} with type spec {value.type_spec()}, expected StringTypeSpec"
+                )
             return value.decode(value.encode())
 
         # Assume not length prefixed

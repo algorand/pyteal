@@ -10,7 +10,7 @@ from pyteal.errors import TealInputError
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 
-from pyteal.ast.abi.type import ComputedValue, TypeSpec, BaseType
+from pyteal.ast.abi.type import ComputedValue, BaseType
 from pyteal.ast.abi.uint import Uint16
 from pyteal.ast.abi.array_base import ArrayTypeSpec, Array
 

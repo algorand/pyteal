@@ -13,6 +13,7 @@ ADDRESS_LENGTH = 32
 T = TypeVar("T", bound=BaseType)
 N = TypeVar("N", bound=int)
 
+
 class AddressTypeSpec(StaticArrayTypeSpec):
     def __init__(self) -> None:
         super().__init__(ByteTypeSpec(), ADDRESS_LENGTH)
@@ -40,16 +41,30 @@ class Address(StaticArray):
     def get(self) -> Expr:
         return self.stored_value.load()
 
-    def set(self, value: Union[Sequence[T], StaticArray[T, N], ComputedValue[StaticArray[T, N]], "Address", str, Expr]):
-        
+    def set(
+        self,
+        value: Union[
+            Sequence[T],
+            StaticArray[T, N],
+            ComputedValue[StaticArray[T, N]],
+            "Address",
+            str,
+            Expr,
+        ],
+    ):
+
         if isinstance(value, ComputedValue):
             if value.produced_type_spec() is not AddressTypeSpec():
-                raise TealInputError(f"Got ComputedValue with type spec {value.produced_type_spec()}, expected AddressTypeSpec")
+                raise TealInputError(
+                    f"Got ComputedValue with type spec {value.produced_type_spec()}, expected AddressTypeSpec"
+                )
             return value.store_into(self)
 
         if isinstance(value, BaseType):
             if value.type_spec() is not AddressTypeSpec():
-                raise TealInputError(f"Got {value.__class__} with type spec {value.type_spec()}, expected AddressTypeSpec")
+                raise TealInputError(
+                    f"Got {value.__class__} with type spec {value.type_spec()}, expected AddressTypeSpec"
+                )
             return self.decode(self.encode())
 
         if isinstance(value, str):
