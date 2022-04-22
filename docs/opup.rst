@@ -37,7 +37,7 @@ call just before a particularly heavyweight subroutine or expression. Keep in mi
 expression will be evaluated before the inner transactions are issued so it may be prudent to avoid expensive
 expressions, which may exhaust the budget before it can be increased.
 
-In the example below, the Ed25519Verify expression is used, which costs 1900.
+In the example below, the :py:meth:`pyteal.Ed25519Verify` expression is used, which costs 1,900.
 
 .. code-block:: python
 
