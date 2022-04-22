@@ -76,11 +76,11 @@ Run unit tests:
 
 * `pytest pyteal tests/unit`
 
-Run integration tests (assumes a devoloper-mode `algod` is available on port 4001):
+Run integration tests (assumes a developer-mode `algod` is available on port 4001):
 
 * `pytest tests/integration`
 
-Stand up developer-mode algod on ports 4001, 4002 and 9392 for `tealdbg` (assumes Docker is available on system):
+Stand up developer-mode algod on ports 4001, 4002 and 9392 for `tealdbg` (assumes [Docker](https://www.docker.com/) is available on your system):
 
 * `docker-compose up -d`
 
