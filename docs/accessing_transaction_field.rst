@@ -47,8 +47,8 @@ Operator                                                                        
 :any:`Txn.global_num_byte_slices() <TxnObject.global_num_byte_slices>`           :code:`TealType.uint64`   3                Maximum global byte strings in app schema
 :any:`Txn.local_num_uints() <TxnObject.local_num_uints>`                         :code:`TealType.uint64`   3                Maximum local integers in app schema
 :any:`Txn.local_num_byte_slices() <TxnObject.local_num_byte_slices>`             :code:`TealType.uint64`   3                Maximum local byte strings in app schema
-:any:`Txn.accounts <TxnObject.accounts>`                                         :code:`TealType.bytes[]`  2                Array of application accounts
-:any:`Txn.assets <TxnObject.assets>`                                             :code:`TealType.uint64[]` 3                Array of application assets
+:any:`Txn.accounts <TxnObject.accounts>`                                         :code:`TealType.bytes[]`  2                Array of accounts available to the application
+:any:`Txn.assets <TxnObject.assets>`                                             :code:`TealType.uint64[]` 3                Array of assets available to the application
 :any:`Txn.applications <TxnObject.applications>`                                 :code:`TealType.uint64[]` 3                Array of applications
 :any:`Txn.clear_state_program() <TxnObject.clear_state_program>`                 :code:`TealType.bytes`    2
 :any:`Txn.extra_program_pages() <TxnObject.extra_program_pages>`                 :code:`TealType.uint64`   4                Number of extra program pages for app
