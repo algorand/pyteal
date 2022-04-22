@@ -62,7 +62,7 @@ inner transactions or the inner transaction limit is exceeded. This method may b
 :any:`pyteal.OpUp.ensure_budget` when the fee spent on increasing budget needs to be capped or if the developer
 would rather just maximize the available budget instead of doing in depth cost analysis on the program.
 
-In the example below, the fee is capped at 3000 for increasing the budget. This works out to 3 inner
+In the example below, the fee is capped at 3,000 microAlgos for increasing the budget. This works out to 3 inner
 transactions being issued, each increasing the available budget by 700.
 
 .. code-block:: python
