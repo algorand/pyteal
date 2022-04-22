@@ -26,21 +26,24 @@ generate-init:
 check-generate-init:
 	python -m scripts.generate_init --check
 
-ALLPY = docs examples pyteal scripts tests *.py
+ALLPY = docs examples pyteal scripts tests utils *.py
 black:
 	black --check $(ALLPY)
 
 flake8:
 	flake8 $(ALLPY)
 
+# TODO: add `tests` and `utils` to $MYPY when graviton respects mypy (version 🐗) 
 MYPY = pyteal scripts
 mypy:
 	mypy $(MYPY)
 
 lint: black flake8 mypy
 
+
+UNIT = pyteal tests/unit utils
 test-unit:
-	pytest pyteal tests/unit
+	pytest $(UNIT)
 
 sandbox-dev-up:
 	docker-compose up -d algod

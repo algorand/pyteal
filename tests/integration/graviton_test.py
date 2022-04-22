@@ -12,7 +12,6 @@ from pyteal import (
     If,
     Int,
     Mode,
-    Pop,
     ScratchVar,
     Seq,
     Subroutine,
@@ -38,67 +37,13 @@ from graviton.blackbox import (
 
 from graviton.invariant import Invariant
 
-# TODO: get tests working on github and set this to True
-BLACKBOX_TESTING = os.environ.get("HAS_ALGOD") == "TRUE"
 # TODO: remove these skips after the following issue has been fixed https://github.com/algorand/pyteal/issues/199
 STABLE_SLOT_GENERATION = False
 SKIP_SCRATCH_ASSERTIONS = not STABLE_SLOT_GENERATION
 
 
-# ---- Unit Test Subroutines ---- #
-
-
-@Subroutine(TealType.none, input_types=[])
-def utest_noop():
-    return Pop(Int(0))
-
-
-@Subroutine(
-    TealType.none, input_types=[TealType.uint64, TealType.bytes, TealType.anytype]
-)
-def utest_noop_args(x, y, z):
-    return Pop(Int(0))
-
-
-@Subroutine(TealType.uint64, input_types=[])
-def utest_int():
-    return Int(0)
-
-
-@Subroutine(
-    TealType.uint64, input_types=[TealType.uint64, TealType.bytes, TealType.anytype]
-)
-def utest_int_args(x, y, z):
-    return Int(0)
-
-
-@Subroutine(TealType.bytes, input_types=[])
-def utest_bytes():
-    return Bytes("")
-
-
-@Subroutine(
-    TealType.bytes, input_types=[TealType.uint64, TealType.bytes, TealType.anytype]
-)
-def utest_bytes_args(x, y, z):
-    return Bytes("")
-
-
-@Subroutine(TealType.anytype, input_types=[])
-def utest_any():
-    x = ScratchVar(TealType.anytype)
-    return Seq(x.store(Int(0)), x.load())
-
-
-@Subroutine(
-    TealType.anytype, input_types=[TealType.uint64, TealType.bytes, TealType.anytype]
-)
-def utest_any_args(x, y, z):
-    x = ScratchVar(TealType.anytype)
-    return Seq(x.store(Int(0)), x.load())
-
-
-# ---- Subroutine Definitions for Blackbox Testing ---- #
+def test_is_integration_test_environment():
+    algod_with_assertion()
 
 
 @Subroutine(TealType.uint64, input_types=[])
@@ -152,42 +97,6 @@ def slow_fibonacci(n):
     )
 
 
-# ---- Unit Testing ---- #
-UNITS = [
-    utest_noop,
-    utest_noop_args,
-    utest_int,
-    utest_int_args,
-    utest_bytes,
-    utest_bytes_args,
-    utest_any,
-    utest_any_args,
-]
-
-
-@pytest.mark.parametrize("subr, mode", product(UNITS, Mode))
-def test_blackbox_pyteal(subr, mode):
-    """
-    compare the following!
-    % pytest -n 2 tests/integration/blackbox_test.py::test_blackbox_pyteal
-    vs
-    % pytest -n 1 tests/integration/blackbox_test.py::test_blackbox_pyteal
-    """
-    path = Path.cwd() / "tests" / "teal" / "blackbox" / "unit"
-    is_app = mode == Mode.Application
-    name = f"{'app' if is_app else 'lsig'}_{subr.name()}"
-
-    compiled = compileTeal(blackbox_pyteal(subr, mode)(), mode, version=6)
-    save_to = path / (name + ".teal")
-    with open(save_to, "w") as f:
-        f.write(compiled)
-
-    assert_teal_as_expected(save_to, path / (name + "_expected.teal"))
-
-
-# ---- Blackbox Testing ---- #
-
-
 def fac_with_overflow(n):
     if n < 2:
         return 1
@@ -208,6 +117,31 @@ def fib_cost(args):
     for n in range(1, args[0] + 1):
         cost += 31 * fib(n - 1)
     return cost
+
+
+# ---- Blackbox pure unit tests (Skipping for now due to flakiness) ---- #
+
+
+@pytest.mark.skipif(not STABLE_SLOT_GENERATION, reason="cf. #199")
+@pytest.mark.parametrize(
+    "subr, mode",
+    product(
+        [exp, square_byref, square, swap, string_mult, oldfac, slow_fibonacci],
+        [Mode.Application, Mode.Signature],
+    ),
+)
+def test_stable_teal_generation(subr, mode):
+    """
+    TODO: here's an example of issue #199 at play - need to run a dynamic version of `git bisect`
+    to figure out what is driving this
+    """
+    case_name = subr.name()
+    print(f"stable TEAL generation test for {case_name} in mode {mode}")
+
+    _, _, path, filebase = wrap_compile_and_save(subr, mode, 6, True, case_name)
+    path2actual = path / f"{filebase}.teal"
+    path2expected = path / f"{filebase}_expected.teal"
+    assert_teal_as_expected(path2actual, path2expected)
 
 
 APP_SCENARIOS = {
@@ -574,11 +508,6 @@ def blackbox_test_runner(
         subr, mode, version, assemble_constants, case_name
     )
 
-    if not BLACKBOX_TESTING:
-        print(
-            "Exiting early without conducting end-to-end dry run testing. Sayonara!!!!!"
-        )
-        return
     # Fail fast in case algod is not configured:
     algod = algod_with_assertion()
 
@@ -613,27 +542,7 @@ def blackbox_test_runner(
         invariant.validates(dr_prop, inputs, inspectors)
 
 
-@pytest.mark.skipif(not STABLE_SLOT_GENERATION, reason="cf. #199")
-def test_stable_teal_generation():
-    """
-    Expecting this to become a flaky test very soon, and I'll turn it off at that point, happy
-    knowing that can pin down an example of flakiness - Zeph 3/17/2021
-    """
-    if not STABLE_SLOT_GENERATION:
-        print("skipping because slot generation isn't stable")
-        return
-
-    for subr, mode in product(
-        [exp, square_byref, square, swap, string_mult, oldfac, slow_fibonacci],
-        [Mode.Application, Mode.Signature],
-    ):
-        case_name = subr.name()
-        print(f"stable TEAL generation test for {case_name} in mode {mode}")
-
-        _, _, path, filebase = wrap_compile_and_save(subr, mode, 6, True, case_name)
-        path2actual = path / f"{filebase}.teal"
-        path2expected = path / f"{filebase}_expected.teal"
-        assert_teal_as_expected(path2actual, path2expected)
+# ---- Graviton / Blackbox tests ---- #
 
 
 @pytest.mark.parametrize("subr, scenario", APP_SCENARIOS.items())

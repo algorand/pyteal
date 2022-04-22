@@ -2,9 +2,9 @@ import pytest
 
 import pyteal as pt
 
-from ..compile_asserts import assert_new_v_old
+from tests.compile_asserts import assert_new_v_old
 
-# ---- TESTS FOR PyTEAL THAT PREDATE PASS-BY-REF ---- #
+# ---- TESTS FOR PyTEAL THAT PREDATE PASS-BY-REF - assert that changes to compiler don't affect the generated TEAL ---- #
 
 
 @pt.Subroutine(pt.TealType.bytes)

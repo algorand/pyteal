@@ -2,7 +2,7 @@ import pytest
 
 import pyteal as pt
 
-from ..compile_asserts import assert_new_v_old
+from tests.compile_asserts import assert_new_v_old
 
 # TODO: remove these skips when the following is fixed: https://github.com/algorand/pyteal/issues/199
 STABLE_SLOT_GENERATION = False
@@ -209,7 +209,7 @@ def oldfac(n):
     return pt.If(n < pt.Int(2)).Then(pt.Int(1)).Else(n * oldfac(n - pt.Int(1)))
 
 
-CASES = (
+ISSUE_199_CASES = (
     sub_logcat_dynamic,
     swapper,
     wilt_the_stilt,
@@ -220,7 +220,7 @@ CASES = (
 
 
 @pytest.mark.skipif(not STABLE_SLOT_GENERATION, reason="cf. #199")
-@pytest.mark.parametrize("pt", CASES)
+@pytest.mark.parametrize("pt", ISSUE_199_CASES)
 def test_teal_output_is_unchanged(pt):
     assert_new_v_old(pt, 6)
 
@@ -394,32 +394,6 @@ def plus_one(n: pt.ScratchVar):
     )
 
 
-def should_it_work() -> pt.Expr:
-    xs = [
-        pt.ScratchVar(pt.TealType.uint64),
-        pt.ScratchVar(pt.TealType.uint64),
-    ]
-
-    def store_initial_values():
-        return [s.store(pt.Int(i + 1)) for i, s in enumerate(xs)]
-
-    d = pt.DynamicScratchVar(pt.TealType.uint64)
-
-    @pt.Subroutine(pt.TealType.none)
-    def retrieve_and_increment(s: pt.ScratchVar):
-        return pt.Seq(d.set_index(s), d.store(d.load() + pt.Int(1)))
-
-    def asserts():
-        return [pt.Assert(x.load() == pt.Int(i + 2)) for i, x in enumerate(xs)]
-
-    return pt.Seq(
-        pt.Seq(store_initial_values()),
-        pt.Seq([retrieve_and_increment(x) for x in xs]),
-        pt.Seq(asserts()),
-        pt.Int(1),
-    )
-
-
 def make_creatable_factory(approval):
     """
     Wrap a pyteal program with code that:
@@ -495,32 +469,6 @@ def tallygo():
     )
 
 
-@pt.Subroutine(pt.TealType.none)
-def subr_string_mult(s: pt.ScratchVar, n):
-    tmp = pt.ScratchVar(pt.TealType.bytes)
-    return (
-        pt.If(n == pt.Int(0))
-        .Then(s.store(pt.Bytes("")))
-        .Else(
-            pt.Seq(
-                tmp.store(s.load()),
-                subr_string_mult(s, n - pt.Int(1)),
-                s.store(pt.Concat(s.load(), tmp.load())),
-            )
-        )
-    )
-
-
-def string_mult():
-    s = pt.ScratchVar(pt.TealType.bytes)
-    return pt.Seq(
-        s.store(pt.Txn.application_args[0]),
-        subr_string_mult(s, pt.Btoi(pt.Txn.application_args[1])),
-        pt.Log(s.load()),
-        pt.Int(100),
-    )
-
-
 TESTABLE_CASES = [(oldfac, [pt.TealType.uint64])]
 
 
@@ -549,29 +497,7 @@ TESTABLE_CASES = [(oldfac, [pt.TealType.uint64])]
 #     assert_new_v_old(pt, 6)
 
 
-# CASES = (
-#     sub_logcat_dynamic,
-#     swapper,
-#     wilt_the_stilt,
-#     fac_by_ref,
-#     fac_by_ref_BAD,
-#     fac_by_ref_args,
-#     sub_mixed,
-#     lots_o_vars,
-#     tallygo,
-#     empty_scratches,
-#     should_it_work,
-# )
-
-
-DEPRECATED_CASES = (string_mult, should_it_work)
-
-
-@pytest.mark.skipif(not STABLE_SLOT_GENERATION, reason="cf. #199")
-@pytest.mark.parametrize("pt", map(make_creatable_factory, DEPRECATED_CASES))
-def test_deprecated(pt):
-    assert_new_v_old(pt, 6)
-
+# ####---- Test the exclusion of recursive pass-by-ref variables: ---#### #
 
 # ---- Approval PyTEAL Expressions (COPACETIC) ---- #
 
@@ -584,6 +510,32 @@ approval_ok_byref = pt.Seq(x_scratchvar.store(pt.Int(42)), ok_byref(x_scratchvar
 approval_ok_indirect = ok_indirect1(pt.Int(42))
 
 # ---- BANNED Approval PyTEAL Expressions (wrapped in a function) ---- #
+
+
+@pt.Subroutine(pt.TealType.none)
+def subr_string_mult(s: pt.ScratchVar, n):
+    tmp = pt.ScratchVar(pt.TealType.bytes)
+    return (
+        pt.If(n == pt.Int(0))
+        .Then(s.store(pt.Bytes("")))
+        .Else(
+            pt.Seq(
+                tmp.store(s.load()),
+                subr_string_mult(s, n - pt.Int(1)),
+                s.store(pt.Concat(s.load(), tmp.load())),
+            )
+        )
+    )
+
+
+def string_mult():
+    s = pt.ScratchVar(pt.TealType.bytes)
+    return pt.Seq(
+        s.store(pt.Txn.application_args[0]),
+        subr_string_mult(s, pt.Btoi(pt.Txn.application_args[1])),
+        pt.Log(s.load()),
+        pt.Int(100),
+    )
 
 
 def approval_not_ok():
@@ -605,6 +557,12 @@ def increment():
 
 COPACETIC_APPROVALS = [approval_ok, approval_ok_byref, approval_ok_indirect]
 
+
+@pytest.mark.parametrize("approval", COPACETIC_APPROVALS)
+def test_pass_by_ref_guardrails_COPACETIC(approval):
+    assert pt.compileTeal(approval, pt.Mode.Application, version=6)
+
+
 ILLEGAL_APPROVALS = {
     approval_not_ok: "not_ok()-->not_ok()",
     approval_not_ok_indirect: "not_ok_indirect1()-->not_ok_indirect2()-->not_ok_indirect1()",
@@ -618,11 +576,6 @@ ILLEGAL_APPROVALS = {
 }
 
 
-@pytest.mark.parametrize("approval", COPACETIC_APPROVALS)
-def test_pass_by_ref_guardrails_COPACETIC(approval):
-    assert pt.compileTeal(approval, pt.Mode.Application, version=6)
-
-
 @pytest.mark.parametrize("approval_func, suffix", ILLEGAL_APPROVALS.items())
 def test_pass_by_ref_guardrails_BANNED(approval_func, suffix):
     with pytest.raises(pt.TealInputError) as err:
@@ -630,3 +583,39 @@ def test_pass_by_ref_guardrails_BANNED(approval_func, suffix):
 
     prefix = "ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: "
     assert f"{prefix}{suffix}" in str(err)
+
+
+def should_it_work() -> pt.Expr:
+    xs = [
+        pt.ScratchVar(pt.TealType.uint64),
+        pt.ScratchVar(pt.TealType.uint64),
+    ]
+
+    def store_initial_values():
+        return [s.store(pt.Int(i + 1)) for i, s in enumerate(xs)]
+
+    d = pt.DynamicScratchVar(pt.TealType.uint64)
+
+    @pt.Subroutine(pt.TealType.none)
+    def retrieve_and_increment(s: pt.ScratchVar):
+        return pt.Seq(d.set_index(s), d.store(d.load() + pt.Int(1)))
+
+    def asserts():
+        return [pt.Assert(x.load() == pt.Int(i + 2)) for i, x in enumerate(xs)]
+
+    return pt.Seq(
+        pt.Seq(store_initial_values()),
+        pt.Seq([retrieve_and_increment(x) for x in xs]),
+        pt.Seq(asserts()),
+        pt.Int(1),
+    )
+
+
+def test_cannot_set_index_with_dynamic():
+    with pytest.raises(pt.TealInputError) as tie:
+        pt.compileTeal(should_it_work(), pt.Mode.Application, version=6)
+
+    assert (
+        "Only allowed to use ScratchVar objects for setting indices, but was given a"
+        in str(tie)
+    )
