@@ -1,5 +1,5 @@
 setup-development:
-	pip install -e.[development]
+	pip install -e .[development]
 
 setup-docs: setup-development
 	pip install -r docs/requirements.txt

@@ -99,7 +99,7 @@ def blackbox_pyteal_example1():
 
     from pyteal import compileTeal, Int, Mode, Subroutine, TealType
 
-    from tests.blackbox_asserts import algod_with_assertion, blackbox_pyteal
+    from utils.blackbox import algod_with_assertion, blackbox_pyteal
 
     @Subroutine(TealType.uint64, input_types=[TealType.uint64])
     def square(x):
@@ -158,7 +158,7 @@ def blackbox_pyteal_example2():
         TealType,
     )
 
-    from tests.blackbox_asserts import algod_with_assertion, blackbox_pyteal
+    from utils.blackbox import algod_with_assertion, blackbox_pyteal
 
     # GCD via the Euclidean Algorithm (iterative version):
     @Subroutine(TealType.uint64, input_types=[TealType.uint64, TealType.uint64])
@@ -221,7 +221,7 @@ def blackbox_pyteal_example3():
 
     from pyteal import compileTeal, If, Int, Mod, Mode, Subroutine, TealType
 
-    from tests.blackbox_asserts import (
+    from utils.blackbox import (
         algod_with_assertion,
         blackbox_pyteal,
     )

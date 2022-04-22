@@ -22,16 +22,12 @@ from pyteal import (
 )
 
 from tests.compile_asserts import assert_teal_as_expected
-from tests.blackbox_asserts import (
+from utils.blackbox import (
     algod_with_assertion,
     blackbox_pyteal,
     mode_to_execution_mode,
 )
 
-# TODO: remove this comment before merging
-# why did I need to make a symbolic link like this?
-# ❯ cd py39-pyteal/lib/python3.9/site-packages
-# ❯ ln -s ~/github/algorand/graviton graviton
 from graviton.blackbox import (
     DryRunProperty as DRProp,
     DryRunEncoder as Encoder,

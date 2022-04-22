@@ -24,7 +24,7 @@ from pyteal import (
 # ---- Clients ---- #
 
 
-def _algod_client(
+def algod_client(
     algod_address="http://localhost:4001", algod_token="a" * 64
 ) -> algod.AlgodClient:
     """Instantiate and return Algod client object."""
@@ -32,7 +32,7 @@ def _algod_client(
 
 
 def algod_with_assertion():
-    algod = _algod_client()
+    algod = algod_client()
     assert algod.status(), "algod.status() did not produce any results"
     return algod
 
@@ -107,7 +107,7 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
         .. code-block:: python
             from graviton import DryRunEncoder, DryRunExecutor
 
-            from tests.blackbox_asserts import algod_with_assertion, blackbox_pyteal
+            from utils.blackbox import algod_with_assertion, blackbox_pyteal
 
             @Subroutine(TealType.uint64, input_types=[TealType.uint64])
             def square(x):
@@ -153,7 +153,7 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
 
             from graviton import DryRunExecutor, DryRunInspector
 
-            from tests.blackbox_asserts import algod_with_assertion, blackbox_pyteal
+            from utils.blackbox import algod_with_assertion, blackbox_pyteal
 
             # GCD via the Euclidean Algorithm (iterative version):
             @Subroutine(TealType.uint64, input_types=[TealType.uint64, TealType.uint64])
@@ -214,7 +214,7 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
             )
             from graviton.invariant import Invariant
 
-            from tests.blackbox_asserts import (
+            from utils.blackbox import (
                 algod_with_assertion,
                 blackbox_pyteal,
                 mode_to_execution_mode,
