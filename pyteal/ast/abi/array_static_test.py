@@ -104,7 +104,9 @@ def test_StaticArray_decode():
     for startIndex in (None, pt.Int(1)):
         for endIndex in (None, pt.Int(2)):
             for length in (None, pt.Int(3)):
-                value = abi.StaticArray(abi.Uint64TypeSpec(), 10)
+                value = abi.StaticArray(
+                    abi.StaticArrayTypeSpec(abi.Uint64TypeSpec(), 10)
+                )
 
                 if endIndex is not None and length is not None:
                     with pytest.raises(pt.TealInputError):
@@ -140,7 +142,7 @@ def test_StaticArray_decode():
 
 
 def test_StaticArray_set_values():
-    value = abi.StaticArray(abi.Uint64TypeSpec(), 10)
+    value = abi.StaticArray(abi.StaticArrayTypeSpec(abi.Uint64TypeSpec(), 10))
 
     with pytest.raises(pt.TealInputError):
         value.set([])
@@ -176,14 +178,14 @@ def test_StaticArray_set_values():
 
 
 def test_StaticArray_set_copy():
-    value = abi.StaticArray(abi.Uint64TypeSpec(), 10)
-    otherArray = abi.StaticArray(abi.Uint64TypeSpec(), 10)
+    value = abi.StaticArray(abi.StaticArrayTypeSpec(abi.Uint64TypeSpec(), 10))
+    otherArray = abi.StaticArray(abi.StaticArrayTypeSpec(abi.Uint64TypeSpec(), 10))
 
     with pytest.raises(pt.TealInputError):
-        value.set(abi.StaticArray(abi.Uint64TypeSpec(), 11))
+        value.set(abi.StaticArray(abi.StaticArrayTypeSpec(abi.Uint64TypeSpec(), 11)))
 
     with pytest.raises(pt.TealInputError):
-        value.set(abi.StaticArray(abi.Uint8TypeSpec(), 10))
+        value.set(abi.StaticArray(abi.StaticArrayTypeSpec(abi.Uint8TypeSpec(), 10)))
 
     with pytest.raises(pt.TealInputError):
         value.set(abi.Uint64())
@@ -208,7 +210,7 @@ def test_StaticArray_set_copy():
 
 
 def test_StaticArray_set_computed():
-    value = abi.StaticArray(abi.Uint64TypeSpec(), 10)
+    value = abi.StaticArray(abi.StaticArrayTypeSpec(abi.Uint64TypeSpec(), 10))
     computed = ContainerType(
         value.type_spec(), pt.Bytes("indeed this is hard to simulate")
     )
@@ -239,7 +241,7 @@ def test_StaticArray_set_computed():
 
 
 def test_StaticArray_encode():
-    value = abi.StaticArray(abi.Uint64TypeSpec(), 10)
+    value = abi.StaticArray(abi.StaticArrayTypeSpec(abi.Uint64TypeSpec(), 10))
     expr = value.encode()
     assert expr.type_of() == pt.TealType.bytes
     assert not expr.has_return()
@@ -258,7 +260,7 @@ def test_StaticArray_encode():
 
 def test_StaticArray_length():
     for length in (0, 1, 2, 3, 1000):
-        value = abi.StaticArray(abi.Uint64TypeSpec(), length)
+        value = abi.StaticArray(abi.StaticArrayTypeSpec(abi.Uint64TypeSpec(), length))
         expr = value.length()
         assert expr.type_of() == pt.TealType.uint64
         assert not expr.has_return()
@@ -275,7 +277,7 @@ def test_StaticArray_length():
 
 def test_StaticArray_getitem():
     for length in (0, 1, 2, 3, 1000):
-        value = abi.StaticArray(abi.Uint64TypeSpec(), length)
+        value = abi.StaticArray(abi.StaticArrayTypeSpec(abi.Uint64TypeSpec(), length))
 
         for index in range(length):
             # dynamic indexes

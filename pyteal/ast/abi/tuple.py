@@ -218,7 +218,7 @@ class TupleTypeSpec(TypeSpec):
         return len(self.value_specs)
 
     def new_instance(self) -> "Tuple":
-        return Tuple(*self.value_specs)
+        return Tuple(TupleTypeSpec(*self.value_specs))
 
     def is_dynamic(self) -> bool:
         return any(type_spec.is_dynamic() for type_spec in self.value_type_specs())
@@ -248,8 +248,8 @@ T = TypeVar("T", bound="Tuple")
 
 
 class Tuple(BaseType):
-    def __init__(self, *value_type_specs: TypeSpec) -> None:
-        super().__init__(TupleTypeSpec(*value_type_specs))
+    def __init__(self, tuple_type_spec: TupleTypeSpec) -> None:
+        super().__init__(tuple_type_spec)
 
     def type_spec(self) -> TupleTypeSpec:
         return cast(TupleTypeSpec, super().type_spec())
@@ -340,7 +340,7 @@ class Tuple0(Tuple):
     """A Tuple with 0 values."""
 
     def __init__(self) -> None:
-        super().__init__()
+        super().__init__(TupleTypeSpec())
 
 
 Tuple0.__module__ = "pyteal"
@@ -352,7 +352,7 @@ class Tuple1(Tuple, Generic[T1]):
     """A Tuple with 1 value."""
 
     def __init__(self, value1_type_spec: TypeSpec) -> None:
-        super().__init__(value1_type_spec)
+        super().__init__(TupleTypeSpec(value1_type_spec))
 
 
 Tuple1.__module__ = "pyteal"
@@ -364,7 +364,7 @@ class Tuple2(Tuple, Generic[T1, T2]):
     """A Tuple with 2 values."""
 
     def __init__(self, value1_type_spec: TypeSpec, value2_type_spec: TypeSpec) -> None:
-        super().__init__(value1_type_spec, value2_type_spec)
+        super().__init__(TupleTypeSpec(value1_type_spec, value2_type_spec))
 
 
 Tuple2.__module__ = "pyteal"
@@ -381,7 +381,9 @@ class Tuple3(Tuple, Generic[T1, T2, T3]):
         value2_type_spec: TypeSpec,
         value3_type_spec: TypeSpec,
     ) -> None:
-        super().__init__(value1_type_spec, value2_type_spec, value3_type_spec)
+        super().__init__(
+            TupleTypeSpec(value1_type_spec, value2_type_spec, value3_type_spec)
+        )
 
 
 Tuple3.__module__ = "pyteal"
@@ -400,7 +402,9 @@ class Tuple4(Tuple, Generic[T1, T2, T3, T4]):
         value4_type_spec: TypeSpec,
     ) -> None:
         super().__init__(
-            value1_type_spec, value2_type_spec, value3_type_spec, value4_type_spec
+            TupleTypeSpec(
+                value1_type_spec, value2_type_spec, value3_type_spec, value4_type_spec
+            )
         )
 
 
@@ -421,11 +425,13 @@ class Tuple5(Tuple, Generic[T1, T2, T3, T4, T5]):
         value5_type_spec: TypeSpec,
     ) -> None:
         super().__init__(
-            value1_type_spec,
-            value2_type_spec,
-            value3_type_spec,
-            value4_type_spec,
-            value5_type_spec,
+            TupleTypeSpec(
+                value1_type_spec,
+                value2_type_spec,
+                value3_type_spec,
+                value4_type_spec,
+                value5_type_spec,
+            )
         )
 
 

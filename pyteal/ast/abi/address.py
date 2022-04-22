@@ -30,7 +30,7 @@ AddressTypeSpec.__module__ = "pyteal"
 
 class Address(StaticArray):
     def __init__(self) -> None:
-        super().__init__(AddressTypeSpec(), ADDRESS_LENGTH)
+        super().__init__(AddressTypeSpec())
 
     def type_spec(self) -> AddressTypeSpec:
         return AddressTypeSpec()

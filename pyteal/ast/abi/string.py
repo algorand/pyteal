@@ -1,6 +1,7 @@
 from typing import Union
 
 from .type import ComputedValue, TypeSpec
+from .array_base import ArrayElement
 from .array_dynamic import DynamicArray, DynamicArrayTypeSpec
 from .uint import ByteTypeSpec, Uint16TypeSpec
 from .util import substringForDecoding
@@ -66,7 +67,7 @@ class String(DynamicArray):
 
         return self.stored_value.store(encoded_string(value))
 
-    def __getitem__(self, index: Union[int, slice, Expr]) -> "ComputedValue[String]":
+    def __getitem__(self, index: Union[int, slice, Expr]) -> "ArrayElement[String]":
 
         if type(index) is int or isinstance(index, Expr):
             return super().__getitem__(index)
