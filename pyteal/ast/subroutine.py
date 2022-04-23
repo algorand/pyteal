@@ -1,18 +1,16 @@
 from collections import OrderedDict
+from dataclasses import dataclass
 from inspect import isclass, Parameter, signature, Signature
 from typing import (
     Callable,
-    Dict,
-    List,
     Optional,
-    Set,
     Type,
-    Union,
     TYPE_CHECKING,
-    Tuple,
     cast,
     Any,
 )
+
+from pyteal.ast.abi.type import ReturnedValue
 
 from ..errors import TealInputError, verifyTealVersion
 from ..ir import TealOp, Op, TealBlock
@@ -35,6 +33,7 @@ class SubroutineDefinition:
         implementation: Callable[..., Expr],
         return_type: TealType,
         name_str: Optional[str] = None,
+        abi_output_arg_name: Optional[str] = None,
     ) -> None:
         super().__init__()
         self.id = SubroutineDefinition.nextSubroutineId
@@ -57,17 +56,22 @@ class SubroutineDefinition:
         #    NOTE: it contains all the arguments, we get type annotations from `annotations`.
         # - `annotations`, which contains all available argument type annotations and return type annotation.
         #    NOTE: `annotations` does not contain all the arguments,
-        #          an argument is not included in `annotations` if its type annotation is not available.
+        #          an argument is not included in `annotations` if its type
+        # annotation is not available.
         (
             expected_arg_types,
             by_ref_args,
             abi_args,
-        ) = SubroutineDefinition._arg_types_and_by_refs(sig, annotations)
-        self.expected_arg_types: List[
-            Union[Type[Expr], Type[ScratchVar], abi.TypeSpec]
+            abi_output_kwarg,
+        ) = SubroutineDefinition._arg_types_and_by_refs(
+            sig, annotations, abi_output_arg_name
+        )
+        self.expected_arg_types: list[
+            Type[Expr] | Type[ScratchVar] | abi.TypeSpec
         ] = expected_arg_types
-        self.by_ref_args: Set[str] = by_ref_args
-        self.abi_args: Dict[str, abi.TypeSpec] = abi_args
+        self.by_ref_args: set[str] = by_ref_args
+        self.abi_args: dict[str, abi.TypeSpec] = abi_args
+        self.abi_output_kwarg: dict[str, abi.TypeSpec] = abi_output_kwarg
 
         self.implementation = implementation
         self.implementation_params = sig.parameters
@@ -86,8 +90,8 @@ class SubroutineDefinition:
 
     @staticmethod
     def _validate_parameter_type(
-        user_defined_annotations: dict, parameter_name: str
-    ) -> Union[Type[Expr], Type[ScratchVar], abi.TypeSpec]:
+        user_defined_annotations: dict[str, Any], parameter_name: str
+    ) -> Type[Expr] | Type[ScratchVar] | abi.TypeSpec:
         ptype = user_defined_annotations.get(parameter_name, None)
 
         if ptype is None:
@@ -121,11 +125,13 @@ class SubroutineDefinition:
     @staticmethod
     def _arg_types_and_by_refs(
         sig: Signature,
-        annotations: Dict[str, type],
-    ) -> Tuple[
-        List[Union[Type[Expr], Type[ScratchVar], abi.TypeSpec]],
-        Set[str],
-        Dict[str, abi.TypeSpec],
+        annotations: dict[str, type],
+        abi_output_arg_name: Optional[str] = None,
+    ) -> tuple[
+        list[Type[Expr] | Type[ScratchVar] | abi.TypeSpec],
+        set[str],
+        dict[str, abi.TypeSpec],
+        dict[str, abi.TypeSpec],
     ]:
         """Validate the full function signature and annotations for subroutine definition.
 
@@ -155,17 +161,23 @@ class SubroutineDefinition:
                 an argument is not included in `annotations` if its type annotation is not available.
         """
         expected_arg_types = []
-        by_ref_args: Set[str] = set()
-        abi_args: Dict[str, abi.TypeSpec] = {}
+        by_ref_args: set[str] = set()
+        abi_args: dict[str, abi.TypeSpec] = {}
+        abi_output_kwarg: dict[str, abi.TypeSpec] = {}
         for name, param in sig.parameters.items():
             if param.kind not in (
                 Parameter.POSITIONAL_ONLY,
                 Parameter.POSITIONAL_OR_KEYWORD,
+            ) and not (
+                param.kind is Parameter.KEYWORD_ONLY
+                and abi_output_arg_name is not None
+                and name == abi_output_arg_name
             ):
                 raise TealInputError(
                     f"Function has a parameter type that is not allowed in a subroutine: "
                     f"parameter {name} with type {param.kind}"
                 )
+
             if param.default != Parameter.empty:
                 raise TealInputError(
                     f"Function has a parameter with a default value, which is not allowed in a subroutine: {name}"
@@ -174,13 +186,24 @@ class SubroutineDefinition:
             expected_arg_type = SubroutineDefinition._validate_parameter_type(
                 annotations, name
             )
-            expected_arg_types.append(expected_arg_type)
+
+            if param.kind is Parameter.KEYWORD_ONLY:
+                if not isinstance(expected_arg_type, abi.TypeSpec):
+                    raise TealInputError(
+                        f"Function keyword parameter {name} has type {expected_arg_type}"
+                    )
+                # TODO not sure if I should put this in by_ref_args, since compiler will use this to disallow recursion
+                abi_output_kwarg[name] = expected_arg_type
+                continue
+            else:
+                expected_arg_types.append(expected_arg_type)
+
             if expected_arg_type is ScratchVar:
                 by_ref_args.add(name)
             if isinstance(expected_arg_type, abi.TypeSpec):
                 abi_args[name] = expected_arg_type
 
-        return expected_arg_types, by_ref_args, abi_args
+        return expected_arg_types, by_ref_args, abi_args, abi_output_kwarg
 
     def getDeclaration(self) -> "SubroutineDeclaration":
         if self.declaration is None:
@@ -194,11 +217,15 @@ class SubroutineDefinition:
     def argumentCount(self) -> int:
         return len(self.implementation_params)
 
-    def arguments(self) -> List[str]:
+    def arguments(self) -> list[str]:
         return list(self.implementation_params.keys())
 
+    # TODO need to support keyword invoke
     def invoke(
-        self, args: List[Union[Expr, ScratchVar, abi.BaseType]]
+        self,
+        args: list[Expr | ScratchVar | abi.BaseType],
+        *,
+        output_kwargs: Optional[dict[str, abi.BaseType]] = None,
     ) -> "SubroutineCall":
         if len(args) != self.argumentCount():
             raise TealInputError(
@@ -266,11 +293,12 @@ class SubroutineDeclaration(Expr):
 SubroutineDeclaration.__module__ = "pyteal"
 
 
+# TODO support keyword argument
 class SubroutineCall(Expr):
     def __init__(
         self,
         subroutine: SubroutineDefinition,
-        args: List[Union[Expr, ScratchVar, abi.BaseType]],
+        args: list[Expr | ScratchVar | abi.BaseType],
     ) -> None:
         super().__init__()
         self.subroutine = subroutine
@@ -314,7 +342,7 @@ class SubroutineCall(Expr):
             "TEAL version too low to use SubroutineCall expression",
         )
 
-        def handle_arg(arg: Union[Expr, ScratchVar, abi.BaseType]) -> Expr:
+        def handle_arg(arg: Expr | ScratchVar | abi.BaseType) -> Expr:
             if isinstance(arg, ScratchVar):
                 return arg.index()
             elif isinstance(arg, Expr):
@@ -359,7 +387,7 @@ class SubroutineFnWrapper:
             name_str=name,
         )
 
-    def __call__(self, *args: Union[Expr, ScratchVar, abi.BaseType], **kwargs) -> Expr:
+    def __call__(self, *args: Expr | ScratchVar | abi.BaseType, **kwargs) -> Expr:
         if len(kwargs) != 0:
             raise TealInputError(
                 f"Subroutine cannot be called with keyword arguments. "
@@ -380,39 +408,36 @@ class SubroutineFnWrapper:
 SubroutineFnWrapper.__module__ = "pyteal"
 
 
+@dataclass
+class _OutputKwArgInfo:
+    name: str
+    abi_type: abi.TypeSpec
+    abi_instance: abi.BaseType
+
+
 class ABIReturnSubroutineFnWrapper:
     def __init__(
         self,
         fn_implementation: Callable[..., Expr],
     ) -> None:
-        self.output_name: Union[None, str]
-        self.abi_type: Union[str, abi.TypeSpec]
-
-        self.output_name, self.abi_type = self._output_type_from_fn(fn_implementation)
-
-        self.output_arg: Union[None, abi.BaseType] = (
-            None
-            if self.abi_type is str
-            else cast(abi.TypeSpec, self.abi_type).new_instance()
+        self.output_kwarg_info: None | _OutputKwArgInfo = (
+            self._output_name_type_from_fn(fn_implementation)
+        )
+        output_kwarg_name = (
+            None if self.output_kwarg_info is None else self.output_kwarg_info.name
         )
 
-    """
-        stack_type: TealType = (
-            TealType.none
-            if type_spec_or_void == "void"
-            else cast(abi.TypeSpec, type_spec_or_void).storage_type()
-        )
+        # no matter what, output is void or abiType, stack type is TealType.none
         self.subroutine = SubroutineDefinition(
             fn_implementation,
-            return_type=stack_type,
-            name_str=name,
+            return_type=TealType.none,
+            abi_output_arg_name=output_kwarg_name,
         )
-    """
 
     @staticmethod
-    def _output_type_from_fn(
+    def _output_name_type_from_fn(
         fn_implementation: Callable[..., Expr]
-    ) -> Union[Tuple[None, str], Tuple[str, abi.TypeSpec]]:
+    ) -> None | _OutputKwArgInfo:
         sig = signature(fn_implementation)
         fn_annotations = getattr(fn_implementation, "__annotations__", OrderedDict())
 
@@ -423,45 +448,60 @@ class ABIReturnSubroutineFnWrapper:
             )
         )
         if len(potential_abi_arg_names) == 0:
-            return None, "void"
-        elif len(potential_abi_arg_names) == 0:
+            return None
+        elif len(potential_abi_arg_names) == 1:
             name = potential_abi_arg_names[0]
             annotation = fn_annotations.get(name, None)
             if annotation is None:
                 raise TealInputError(
-                    f"abi subroutine output {name} must specify ABI type"
+                    f"ABI subroutine output-kwarg {name} must specify ABI type"
                 )
-            return name, abi.type_spec_from_annotation(annotation)
+            type_spec = abi.type_spec_from_annotation(annotation)
+            type_instance = type_spec.new_instance()
+            return _OutputKwArgInfo(name, type_spec, type_instance)
         else:
             raise TealInputError(
                 f"multiple output arguments with type annotations {potential_abi_arg_names}"
             )
 
     def __call__(
-        self, *args: Union[Expr, ScratchVar, abi.BaseType], **kwargs
-    ) -> Union[abi.ReturnedValue, Expr]:
-        if len(kwargs) != 0:
+        self, *args: Expr | ScratchVar | abi.BaseType, **kwargs: abi.BaseType
+    ) -> abi.ReturnedValue | Expr:
+        if self.output_kwarg_info is None:
+            if len(kwargs) != 0:
+                raise TealInputError(
+                    f"Subroutine cannot be called with keyword arguments. "
+                    f"Received keyword arguments: {','.join(kwargs.keys())}"
+                )
+            return self.subroutine.invoke(list(args))
+
+        if len(kwargs) != 1:
             raise TealInputError(
-                f"Subroutine cannot be called with keyword arguments. "
-                f"Received keyword arguments: {','.join(kwargs.keys())}"
+                f"Subroutine should have provided output keyword argument with name {self.output_kwarg_info.name}, "
+                f"while the kwargs are {kwargs}."
             )
-
-        # invoked = self.subroutine.invoke(list(args))
-
-        """
-        if self.type_of() == "void":
-            return invoked
-        else:
-            return abi.ReturnedValue(cast(abi.TypeSpec, self.abi_type), invoked)
-        """
-        return Seq()
+        if self.output_kwarg_info.name not in kwargs:
+            raise TealInputError(
+                f"Subroutine should have provided output keyword argument with name {self.output_kwarg_info.name}, "
+                f"while provided kwarg is {list(kwargs.keys())}"
+            )
+        invoked = self.subroutine.invoke(
+            list(args),
+            output_kwargs={
+                self.output_kwarg_info.name: self.output_kwarg_info.abi_instance
+            },
+        )
+        return ReturnedValue(self.output_kwarg_info.abi_instance, invoked)
 
     def name(self) -> str:
-        # return self.subroutine.name()
-        return "TODO"
+        return self.subroutine.name()
 
-    def type_of(self) -> Union[str, abi.TypeSpec]:
-        return self.abi_type
+    def type_of(self) -> str | abi.TypeSpec:
+        return (
+            "void"
+            if self.output_kwarg_info is None
+            else self.output_kwarg_info.abi_type
+        )
 
     def is_registrable(self) -> bool:
         # return len(self.subroutine.abi_args) == self.subroutine.argumentCount()
@@ -541,44 +581,75 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
     Type 1 (by-value): these have python type Expr
     Type 2 (by-reference): these have python type ScratchVar
     Type 3 (ABI): these are ABI typed variables with scratch space storage, and still pass by value
+    Type 4 (ABI-output-arg): ABI typed variables with scractch space, but pass by ref to allow for changes
 
     Usage (A) "argumentVars" - Storing pre-placed stack variables into local scratch space:
         Type 1. (by-value) use ScratchVar.store() to pick the actual value into a local scratch space
         Type 2. (by-reference) ALSO use ScratchVar.store() to pick up from the stack
             NOTE: SubroutineCall.__teal__() has placed the _SLOT INDEX_ on the stack so this is stored into the local scratch space
         Type 3. (ABI) abi_value.stored_value.store() to pick from the stack
+        Type 4. (ABI-output-arg) use ScratchVar.store() to pick up from the stack
+            NOTE: SubroutineCall.__teal__() has placed the ABI value's _SLOT INDEX_ on the stack, pass-by-ref is similarly achieved
 
     Usage (B) "loadedArgs" - Passing through to an invoked PyTEAL subroutine AST:
         Type 1. (by-value) use ScratchVar.load() to have an Expr that can be compiled in python by the PyTEAL subroutine
         Type 2. (by-reference) use a DynamicScratchVar as the user will have written the PyTEAL in a way that satisfies
             the ScratchVar API. I.e., the user will write `x.load()` and `x.store(val)` as opposed to just `x`.
         Type 3. (ABI) use abi_value itself after storing stack value into scratch space.
+        Type 4. (ABI-output-arg) use a DynamicScratchVar to "point to" the output ABI value's scratch variable
+            all the ABI operations are passed through DynamicScratchVar to original ScratchVar, which is pass-by-ref behavior
     """
 
     def var_n_loaded(
         param: str,
-    ) -> Tuple[ScratchVar, Union[ScratchVar, abi.BaseType, Expr]]:
-        loaded: Union[ScratchVar, abi.BaseType, Expr]
-        argVar: ScratchVar
+    ) -> tuple[ScratchVar, ScratchVar | abi.BaseType | Expr]:
+        loaded: ScratchVar | abi.BaseType | Expr
+        arg_var: ScratchVar
 
         if param in subroutine.by_ref_args:
-            argVar = DynamicScratchVar(TealType.anytype)
-            loaded = argVar
+            arg_var = DynamicScratchVar(TealType.anytype)
+            loaded = arg_var
+        elif param in subroutine.abi_output_kwarg:
+            arg_var = DynamicScratchVar(TealType.anytype)
+            internal_abi_var = subroutine.abi_output_kwarg[param].new_instance()
+            internal_abi_var.stored_value = arg_var
+            loaded = internal_abi_var
         elif param in subroutine.abi_args:
             internal_abi_var = subroutine.abi_args[param].new_instance()
-            argVar = internal_abi_var.stored_value
+            arg_var = internal_abi_var.stored_value
             loaded = internal_abi_var
         else:
-            argVar = ScratchVar(TealType.anytype)
-            loaded = argVar.load()
+            arg_var = ScratchVar(TealType.anytype)
+            loaded = arg_var.load()
 
-        return argVar, loaded
+        return arg_var, loaded
 
     args = subroutine.arguments()
-    argumentVars, loadedArgs = zip(*map(var_n_loaded, args)) if args else ([], [])
+    args = [arg for arg in args if arg not in subroutine.abi_output_kwarg]
+
+    argument_vars, loaded_args = (
+        cast(
+            tuple[list[ScratchVar], list[ScratchVar | Expr | abi.BaseType]],
+            zip(*map(var_n_loaded, args)),
+        )
+        if args
+        else ([], [])
+    )
+
+    abi_output_kwargs = {}
+    assert len(subroutine.abi_output_kwarg) <= 1, "exceeding "
+    if len(subroutine.abi_output_kwarg) > 1:
+        raise TealInputError(
+            f"ABI keyword argument num: {len(subroutine.abi_output_kwarg)}. "
+            f"Exceeding abi output keyword argument max number 1."
+        )
+    for name in subroutine.abi_output_kwarg:
+        arg_var, loaded = var_n_loaded(name)
+        abi_output_kwargs[name] = loaded
+        argument_vars.append(arg_var)
 
     # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:
-    subroutineBody = subroutine.implementation(*loadedArgs)
+    subroutineBody = subroutine.implementation(*loaded_args, **abi_output_kwargs)
 
     if not isinstance(subroutineBody, Expr):
         raise TealInputError(
@@ -587,7 +658,7 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
 
     # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
     # need to reverse order of argumentVars because the last argument will be on top of the stack
-    bodyOps = [var.slot.store() for var in argumentVars[::-1]]
+    bodyOps = [var.slot.store() for var in argument_vars[::-1]]
     bodyOps.append(subroutineBody)
 
     return SubroutineDeclaration(subroutine, Seq(bodyOps))

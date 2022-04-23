@@ -72,7 +72,7 @@ class BaseType(ABC):
         """Create a new BaseType."""
         super().__init__()
         self._type_spec: Final = spec
-        self.stored_value: Final = ScratchVar(spec.storage_type())
+        self.stored_value = ScratchVar(spec.storage_type())
 
     def type_spec(self) -> TypeSpec:
         """Get the TypeSpec for this ABI type instance."""
@@ -185,19 +185,22 @@ ComputedValue.__module__ = "pyteal"
 
 
 class ReturnedValue(ComputedValue):
-    def __init__(self, type_spec: TypeSpec, encodings: Expr):
-        self.type_spec = type_spec
-        self.encodings = encodings
+    def __init__(self, abi_return: BaseType, computation_expr: Expr):
+        self.abi_return = abi_return
+        self.computation = computation_expr
 
     def produced_type_spec(self) -> TypeSpec:
-        return self.type_spec
+        return self.abi_return.type_spec()
 
     def store_into(self, output: BaseType) -> Expr:
-        if output.type_spec() != self.type_spec:
+        if output.type_spec() != self.abi_return:
             raise TealInputError(
-                f"expected type_spec {self.type_spec} but get {output.type_spec()}"
+                f"expected type_spec {self.produced_type_spec()} but get {output.type_spec()}"
             )
-        return output.stored_value.store(self.encodings)
+        return Seq(
+            self.computation,
+            output.stored_value.store(self.abi_return.stored_value.load()),
+        )
 
 
 ReturnedValue.__module__ = "pyteal"
