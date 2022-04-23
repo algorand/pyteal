@@ -40,34 +40,46 @@ class SubroutineDefinition:
         super().__init__()
         self.id = SubroutineDefinition.nextSubroutineId
         SubroutineDefinition.nextSubroutineId += 1
-        self.input_types = input_types
-        self.by_ref_args: Set[str] = set()
 
-        self.expected_arg_types: List[Type[Union[Expr, ScratchVar]]] = []
+        self.annotations = getattr(implementation, "__annotations__", OrderedDict())
+        self.input_types = input_types
+        self.returnType = returnType
+        self.declaration: Optional["SubroutineDeclaration"] = None
 
         if not callable(implementation):
             raise TealInputError("Input to SubroutineDefinition is not callable")
 
-        sig = signature(implementation)
-        self.implementationParams = sig_params = sig.parameters
+        self.implementationParams = signature(implementation).parameters
 
-        if input_types is not None and len(input_types) != len(sig_params):
+        # the following are set inside _validate_and_set_param_info():
+        self.expected_arg_types: List[Type[Union[Expr, ScratchVar]]]
+        self.by_ref_args: Set[str]
+        self._validate_and_set_param_info()
+
+        # got all the way here? implementation probly makes sense, so set the field:
+        self.implementation = implementation
+        self.__name = self.implementation.__name__ if nameStr is None else nameStr
+
+    def _validate_and_set_param_info(self):
+        sig_params = self.implementationParams
+        if self.input_types is not None and len(self.input_types) != len(sig_params):
             raise TealInputError(
                 "Provided number of input_types ({}) does not match detected number of parameters ({})".format(
-                    len(input_types), len(sig_params)
+                    len(self.input_types), len(sig_params)
                 )
             )
 
-        annotations = getattr(implementation, "__annotations__", OrderedDict())
-
-        if "return" in annotations and annotations["return"] is not Expr:
+        anns = self.annotations
+        if "return" in anns and anns["return"] is not Expr:
             raise TealInputError(
                 "Function has return of disallowed type {}. Only Expr is allowed".format(
-                    annotations["return"]
+                    anns["return"]
                 )
             )
 
-        for i, (name, param) in enumerate(sig_params.items()):
+        self.expected_arg_types = []
+        self.by_ref_args = set()
+        for i, (name, param) in enumerate(self.implementationParams.items()):
             if param.kind not in (
                 Parameter.POSITIONAL_ONLY,
                 Parameter.POSITIONAL_OR_KEYWORD,
@@ -86,19 +98,15 @@ class SubroutineDefinition:
                 )
 
             intype = None
-            if input_types:
-                intype = input_types[i]
-            expected_arg_type = self._validate_parameter_type(annotations, name, intype)
+            if self.input_types:
+                intype = self.input_types[i]
+            expected_arg_type = self._validate_parameter_type(
+                self.annotations, name, intype
+            )
 
             self.expected_arg_types.append(expected_arg_type)
             if expected_arg_type is ScratchVar:
                 self.by_ref_args.add(name)
-
-        self.implementation = implementation
-        self.returnType = returnType
-
-        self.declaration: Optional["SubroutineDeclaration"] = None
-        self.__name = self.implementation.__name__ if nameStr is None else nameStr
 
     @staticmethod
     def _validate_parameter_type(
