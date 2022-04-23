@@ -2,11 +2,11 @@ import pytest
 
 import pyteal as pt
 from pyteal import abi
-from .util import substringForDecoding
-from .tuple import encodeTuple
-from .bool import boolSequenceLength
-from .type_test import ContainerType
-from .array_base_test import STATIC_TYPES, DYNAMIC_TYPES
+from pyteal.ast.abi.util import substringForDecoding
+from pyteal.ast.abi.tuple import encodeTuple
+from pyteal.ast.abi.bool import boolSequenceLength
+from pyteal.ast.abi.type_test import ContainerType
+from pyteal.ast.abi.array_base_test import STATIC_TYPES, DYNAMIC_TYPES
 
 options = pt.CompileOptions(version=5)
 

@@ -1,11 +1,11 @@
 from typing import TypeVar, Generic, Callable, Final, cast
 from abc import ABC, abstractmethod
 
-from ...types import TealType
-from ..expr import Expr
-from ..scratchvar import ScratchVar
-from ..seq import Seq
-from ...errors import TealInputError
+from pyteal.errors import TealInputError
+from pyteal.types import TealType
+from pyteal.ast.expr import Expr
+from pyteal.ast.scratchvar import ScratchVar
+from pyteal.ast.seq import Seq
 
 
 class TypeSpec(ABC):

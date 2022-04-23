@@ -1,7 +1,7 @@
 import pytest
 
 import pyteal as pt
-from ..types import types_match
+from pyteal.types import types_match
 
 teal4Options = pt.CompileOptions(version=4)
 teal5Options = pt.CompileOptions(version=5)

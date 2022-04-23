@@ -4,7 +4,7 @@ import pytest
 
 import pyteal as pt
 
-from .subroutines import (
+from pyteal.compiler.subroutines import (
     findRecursionPoints,
     spillLocalSlotsDuringRecursion,
     resolveSubroutines,

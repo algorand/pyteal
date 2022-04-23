@@ -1,14 +1,14 @@
 from typing import cast, TYPE_CHECKING
 
-from ..types import TealType, require_type
-from ..errors import TealCompileError, verifyTealVersion
-from ..ir import TealOp, Op, TealBlock, TealSimpleBlock
-from .expr import Expr
-from .int import Int
-from .ternaryexpr import TernaryExpr
+from pyteal.types import TealType, require_type
+from pyteal.errors import TealCompileError, verifyTealVersion
+from pyteal.ir import TealOp, Op, TealBlock, TealSimpleBlock
+from pyteal.ast.expr import Expr
+from pyteal.ast.int import Int
+from pyteal.ast.ternaryexpr import TernaryExpr
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class SubstringExpr(Expr):

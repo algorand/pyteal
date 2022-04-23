@@ -1,4 +1,4 @@
-from .expr import Expr
+from pyteal.ast.expr import Expr
 
 
 class LeafExpr(Expr):

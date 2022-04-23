@@ -1,10 +1,10 @@
 from typing import Any, Literal, get_origin, get_args
 
-from ...errors import TealInputError
-from ..expr import Expr
-from ..int import Int
-from ..substring import Extract, Substring, Suffix
-from .type import TypeSpec
+from pyteal.errors import TealInputError
+from pyteal.ast.expr import Expr
+from pyteal.ast.int import Int
+from pyteal.ast.substring import Extract, Substring, Suffix
+from pyteal.ast.abi.type import TypeSpec
 
 
 def substringForDecoding(
@@ -82,8 +82,8 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
     Returns:
         The TypeSpec that corresponds to the input annotation.
     """
-    from .bool import BoolTypeSpec, Bool
-    from .uint import (
+    from pyteal.ast.abi.bool import BoolTypeSpec, Bool
+    from pyteal.ast.abi.uint import (
         ByteTypeSpec,
         Byte,
         Uint8TypeSpec,
@@ -95,9 +95,9 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
         Uint64TypeSpec,
         Uint64,
     )
-    from .array_dynamic import DynamicArrayTypeSpec, DynamicArray
-    from .array_static import StaticArrayTypeSpec, StaticArray
-    from .tuple import (
+    from pyteal.ast.abi.array_dynamic import DynamicArrayTypeSpec, DynamicArray
+    from pyteal.ast.abi.array_static import StaticArrayTypeSpec, StaticArray
+    from pyteal.ast.abi.tuple import (
         TupleTypeSpec,
         Tuple,
         Tuple0,
@@ -107,6 +107,8 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
         Tuple4,
         Tuple5,
     )
+    from pyteal.ast.abi.string import StringTypeSpec, String
+    from pyteal.ast.abi.address import AddressTypeSpec, Address
 
     origin = get_origin(annotation)
     if origin is None:
@@ -143,6 +145,16 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
         if len(args) != 0:
             raise TypeError("Uint64 expects 0 type arguments. Got: {}".format(args))
         return Uint64TypeSpec()
+
+    if origin is String:
+        if len(args) != 0:
+            raise TypeError("String expects 0 arguments. Got: {}".format(args))
+        return StringTypeSpec()
+
+    if origin is Address:
+        if len(args) != 0:
+            raise TypeError("Address expects 0 arguments. Got: {}".format(args))
+        return AddressTypeSpec()
 
     if origin is DynamicArray:
         if len(args) != 1:

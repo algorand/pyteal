@@ -2,10 +2,10 @@ import re
 from typing import List, Dict, Set, Optional, TypeVar
 from collections import OrderedDict
 
-from ..errors import TealInputError
-from ..types import TealType
-from ..ast import SubroutineDefinition
-from ..ir import TealComponent, TealOp, Op
+from pyteal.errors import TealInputError
+from pyteal.types import TealType
+from pyteal.ast import SubroutineDefinition
+from pyteal.ir import TealComponent, TealOp, Op
 
 # generic type variable
 Node = TypeVar("Node")

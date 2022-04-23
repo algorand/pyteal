@@ -3,8 +3,8 @@ import pytest
 
 import pyteal as pt
 from pyteal import abi
-from .type_test import ContainerType
-from .bool import (
+from pyteal.ast.abi.type_test import ContainerType
+from pyteal.ast.abi.bool import (
     boolAwareStaticByteLength,
     consecutiveBoolInstanceNum,
     consecutiveBoolTypeSpecNum,

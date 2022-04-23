@@ -1,7 +1,7 @@
 import pytest
 
 import pyteal as pt
-from .types import require_type
+from pyteal.types import require_type
 
 
 def test_require_type():

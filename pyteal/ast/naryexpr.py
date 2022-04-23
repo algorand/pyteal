@@ -1,12 +1,12 @@
 from typing import Sequence, cast, TYPE_CHECKING
 
-from ..types import TealType, require_type
-from ..errors import TealInputError
-from ..ir import TealOp, Op, TealSimpleBlock
-from .expr import Expr
+from pyteal.types import TealType, require_type
+from pyteal.errors import TealInputError
+from pyteal.ir import TealOp, Op, TealSimpleBlock
+from pyteal.ast.expr import Expr
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class NaryExpr(Expr):

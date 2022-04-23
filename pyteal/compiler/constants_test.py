@@ -1,6 +1,6 @@
 import pyteal as pt
 
-from .constants import (
+from pyteal.compiler.constants import (
     extractIntValue,
     extractBytesValue,
     extractAddrValue,
