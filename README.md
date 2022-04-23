@@ -80,7 +80,7 @@ Run integration tests (assumes a developer-mode `algod` is available on port 400
 
 * `pytest tests/integration`
 
-Stand up developer-mode algod on ports 4001, 4002 and 9392 for `tealdbg` (assumes [Docker](https://www.docker.com/) is available on your system):
+Stand up developer-mode algod on ports 4001, 4002 and `tealdbg` on port 9392 (assumes [Docker](https://www.docker.com/) is available on your system):
 
 * `docker-compose up -d`
 
