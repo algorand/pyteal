@@ -1,6 +1,6 @@
 from collections import OrderedDict
-from inspect import isclass, Parameter, signature
-from typing import Callable, List, Optional, Set, Type, Union, TYPE_CHECKING
+from inspect import Parameter, get_annotations, isclass, signature
+from typing import Callable, Dict, List, Optional, Set, Type, Union, TYPE_CHECKING
 
 from pyteal.errors import TealInputError, verifyTealVersion
 from pyteal.ir import TealOp, Op, TealBlock
@@ -41,26 +41,29 @@ class SubroutineDefinition:
         self.id = SubroutineDefinition.nextSubroutineId
         SubroutineDefinition.nextSubroutineId += 1
 
-        self.annotations = getattr(implementation, "__annotations__", OrderedDict())
         self.input_types = input_types
         self.returnType = returnType
         self.declaration: Optional["SubroutineDeclaration"] = None
 
+        # the following are set inside _validate_and_set_param_info():
+        self.implementationParams: OrderedDict[str, Parameter]
+        self.annotations: Dict[str, Expr | ScratchVar]
+        self.expected_arg_types: List[Type[Union[Expr, ScratchVar]]]
+        self.by_ref_args: Set[str]
+
+        self._validate_and_set_param_info(implementation)
+
+        # got all the way here? implementation probly makes sense, so set the field:
+        self.implementation: Callable = implementation
+        self.__name: str = nameStr if nameStr else self.implementation.__name__
+
+    def _validate_and_set_param_info(self, implementation):
         if not callable(implementation):
             raise TealInputError("Input to SubroutineDefinition is not callable")
 
         self.implementationParams = signature(implementation).parameters
+        self.annotations = get_annotations(implementation)
 
-        # the following are set inside _validate_and_set_param_info():
-        self.expected_arg_types: List[Type[Union[Expr, ScratchVar]]]
-        self.by_ref_args: Set[str]
-        self._validate_and_set_param_info()
-
-        # got all the way here? implementation probly makes sense, so set the field:
-        self.implementation = implementation
-        self.__name = self.implementation.__name__ if nameStr is None else nameStr
-
-    def _validate_and_set_param_info(self):
         sig_params = self.implementationParams
         if self.input_types is not None and len(self.input_types) != len(sig_params):
             raise TealInputError(
