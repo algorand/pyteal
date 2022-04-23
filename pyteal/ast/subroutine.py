@@ -28,19 +28,14 @@ class SubroutineDefinition:
     ) -> None:
         """
         Args:
-            implementation: The python function that was used to define the subroutine
-            returnType: the TealType the the subroutine should return
+            implementation: The python function defining the subroutine
+            returnType: the TealType to be returned by teh subroutine
             nameStr (optional): the name that is used to identify the subroutine.
                 If omitted, the name defaults to the implementation's __name__ attribute
-            input_types (optional): list of TealTypes of the arguments of the subroutine.
+            input_types (optional): list of TealType's for the subroutine's parameters.
                 If omitted, the types cannot be discerned at compile time, but compilation
-                will generally still succeed and the program will be correct if the author
-                is careful to pass types that are handled inside the function as expected.
-
-            Historical node: `input_types` was added as part of the Blackbox PR #249: In particular,
-                input types are needed for generating an end-to-end pyteal program for a subroutine.
-                This is because Btoi() needs to be applied to some external args that are converted
-                to the appropriate type of the subroutine parameter.
+                proceeds without any parameter type checks.
+                Input_types must be supplied when supplying a subroutine to the dry-run prep-wrapper `blackbox_pyteal()`.
         """
         super().__init__()
         self.id = SubroutineDefinition.nextSubroutineId
