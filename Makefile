@@ -1,3 +1,5 @@
+# ---- Setup ---- #
+
 setup-development:
 	pip install -e .[development]
 
@@ -7,6 +9,8 @@ setup-docs: setup-development
 
 setup-wheel:
 	pip install wheel
+
+# ---- Docs and Distribution ---- #
 
 bdist-wheel:
 	python setup.py sdist bdist_wheel
@@ -19,6 +23,8 @@ bundle-docs: bundle-docs-clean
 	make html && \
 	doc2dash --name pyteal --index-page index.html --online-redirect-url https://pyteal.readthedocs.io/en/ _build/html && \
 	tar -czvf pyteal.docset.tar.gz pyteal.docset
+
+# ---- Code Quality ---- #
 
 generate-init:
 	python -m scripts.generate_init
@@ -40,18 +46,21 @@ mypy:
 
 lint: black flake8 mypy
 
+# ---- Unit Tests (no algod) ---- #
 
 UNIT = pyteal tests/unit utils
 test-unit:
 	pytest $(UNIT)
+
+build-and-test: check-generate-init lint test-unit
+
+# ---- Integration Test (algod required) ---- #
 
 sandbox-dev-up:
 	docker-compose up -d algod
 
 sandbox-dev-stop:
 	docker-compose stop algod
-
-build-and-test: check-generate-init lint test-unit
 
 # TODO: set NUM_PROCS = auto when the following issue has been fixed https://github.com/algorand/pyteal/issues/199
 NUM_PROCS = 1 
@@ -62,7 +71,8 @@ integration-test: integration-run
 
 all-tests: build-and-test integration-test
 
-# Extras:
+# ---- Extras ---- #
+
 coverage:
 	pytest --cov-report html --cov=pyteal
 

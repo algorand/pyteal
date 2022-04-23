@@ -66,15 +66,15 @@ Format code:
 
 Lint using flake8:
 
-* `flake8 docs examples pyteal scripts tests *.py`
+* `flake8 docs examples pyteal scripts tests utils *.py`
 
 Type checking using mypy:
 
-* `mypy pyteal`
+* `mypy pyteal scripts`
 
 Run unit tests:
 
-* `pytest pyteal tests/unit`
+* `pytest pyteal tests/unit utils`
 
 Run integration tests (assumes a developer-mode `algod` is available on port 4001):
 
