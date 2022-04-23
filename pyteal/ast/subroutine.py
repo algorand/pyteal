@@ -54,7 +54,7 @@ class SubroutineDefinition:
             raise TealInputError("Input to SubroutineDefinition is not callable")
 
         sig = signature(implementation)
-        sig_params = sig.parameters
+        self.implementationParams = sig_params = sig.parameters
 
         if input_types is not None and len(input_types) != len(sig_params):
             raise TealInputError(
@@ -72,8 +72,7 @@ class SubroutineDefinition:
                 )
             )
 
-        for i, name_param in enumerate(sig_params.items()):
-            name, param = name_param
+        for i, (name, param) in enumerate(sig_params.items()):
             if param.kind not in (
                 Parameter.POSITIONAL_ONLY,
                 Parameter.POSITIONAL_OR_KEYWORD,
@@ -91,19 +90,16 @@ class SubroutineDefinition:
                     )
                 )
 
-            input_type = None
-            if input_type:
-                input_type = input_types[i]
-            expected_arg_type = self._validate_parameter_type(
-                annotations, name, input_type
-            )
+            intype = None
+            if input_types:
+                intype = input_types[i]
+            expected_arg_type = self._validate_parameter_type(annotations, name, intype)
 
             self.expected_arg_types.append(expected_arg_type)
             if expected_arg_type is ScratchVar:
                 self.by_ref_args.add(name)
 
         self.implementation = implementation
-        self.implementationParams = sig_params
         self.returnType = returnType
 
         self.declaration: Optional["SubroutineDeclaration"] = None
