@@ -55,8 +55,7 @@ class SubroutineDefinition:
         #    NOTE: it contains all the arguments, we get type annotations from `annotations`.
         # - `annotations`, which contains all available argument type annotations and return type annotation.
         #    NOTE: `annotations` does not contain all the arguments,
-        #          an argument is not included in `annotations` if its type
-        # annotation is not available.
+        #          an argument is not included in `annotations` if its type annotation is not available.
         (
             expected_arg_types,
             by_ref_args,
@@ -225,10 +224,13 @@ class SubroutineDefinition:
         *,
         output_kwarg: Optional[dict[str, abi.BaseType]] = None,
     ) -> "SubroutineCall":
-        if len(args) != self.argument_count():
+        argument_only = (
+            set(self.arguments()) - set(output_kwarg.keys()) if output_kwarg else set()
+        )
+        if len(args) != len(argument_only):
             raise TealInputError(
                 f"Incorrect number of arguments for subroutine call. "
-                f"Expected {self.argument_count()} arguments, got {len(args)}"
+                f"Expected {self.argument_count()} arguments, got {len(args)} arguments"
             )
 
         for i, arg in enumerate(args):
@@ -614,7 +616,7 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
     Type 1 (by-value): these have python type Expr
     Type 2 (by-reference): these have python type ScratchVar
     Type 3 (ABI): these are ABI typed variables with scratch space storage, and still pass by value
-    Type 4 (ABI-output-arg): ABI typed variables with scractch space, but pass by ref to allow for changes
+    Type 4 (ABI-output-arg): ABI typed variables with scratch space, but pass by ref to allow for changes
 
     Usage (A) "argumentVars" - Storing pre-placed stack variables into local scratch space:
         Type 1. (by-value) use ScratchVar.store() to pick the actual value into a local scratch space
@@ -636,26 +638,26 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
     def var_n_loaded(
         param: str,
     ) -> tuple[ScratchVar, ScratchVar | abi.BaseType | Expr]:
-        loaded: ScratchVar | abi.BaseType | Expr
-        arg_var: ScratchVar
+        loaded_var: ScratchVar | abi.BaseType | Expr
+        argument_var: ScratchVar
 
         if param in subroutine.by_ref_args:
-            arg_var = DynamicScratchVar(TealType.anytype)
-            loaded = arg_var
+            argument_var = DynamicScratchVar(TealType.anytype)
+            loaded_var = argument_var
         elif param in subroutine.output_kwarg:
-            arg_var = DynamicScratchVar(TealType.anytype)
+            argument_var = DynamicScratchVar(TealType.anytype)
             internal_abi_var = subroutine.output_kwarg[param].new_instance()
-            internal_abi_var.stored_value = arg_var
-            loaded = internal_abi_var
+            internal_abi_var.stored_value = argument_var
+            loaded_var = internal_abi_var
         elif param in subroutine.abi_args:
             internal_abi_var = subroutine.abi_args[param].new_instance()
-            arg_var = internal_abi_var.stored_value
-            loaded = internal_abi_var
+            argument_var = internal_abi_var.stored_value
+            loaded_var = internal_abi_var
         else:
-            arg_var = ScratchVar(TealType.anytype)
-            loaded = arg_var.load()
+            argument_var = ScratchVar(TealType.anytype)
+            loaded_var = argument_var.load()
 
-        return arg_var, loaded
+        return argument_var, loaded_var
 
     args = subroutine.arguments()
     args = [arg for arg in args if arg not in subroutine.output_kwarg]
