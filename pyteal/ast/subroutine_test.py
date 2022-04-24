@@ -2,7 +2,7 @@ from typing import List, Literal
 import pytest
 
 import pyteal as pt
-from pyteal.ast.subroutine import evaluateSubroutine
+from pyteal.ast.subroutine import evaluate_subroutine
 
 options = pt.CompileOptions(version=4)
 
@@ -58,7 +58,7 @@ def test_subroutine_definition():
 
     for (fn, numArgs, name) in cases:
         definition = pt.SubroutineDefinition(fn, pt.TealType.none)
-        assert definition.argumentCount() == numArgs
+        assert definition.argument_count() == numArgs
         assert definition.name() == name
 
         if numArgs > 0:
@@ -215,7 +215,7 @@ def test_subroutine_invocation_param_types():
     ]
     for case_name, fn, args, err in cases:
         definition = pt.SubroutineDefinition(fn, pt.TealType.none)
-        assert definition.argumentCount() == len(args), case_name
+        assert definition.argument_count() == len(args), case_name
         assert definition.name() == fn.__name__, case_name
 
         if err is None:
@@ -433,7 +433,7 @@ def test_evaluate_subroutine_no_args():
 
         definition = pt.SubroutineDefinition(mySubroutine, returnType)
 
-        declaration = evaluateSubroutine(definition)
+        declaration = evaluate_subroutine(definition)
         assert isinstance(declaration, pt.SubroutineDeclaration)
         assert declaration.subroutine is definition
 
@@ -467,7 +467,7 @@ def test_evaluate_subroutine_1_arg():
 
         definition = pt.SubroutineDefinition(mySubroutine, returnType)
 
-        declaration = evaluateSubroutine(definition)
+        declaration = evaluate_subroutine(definition)
         assert isinstance(declaration, pt.SubroutineDeclaration)
         assert declaration.subroutine is definition
 
@@ -510,7 +510,7 @@ def test_evaluate_subroutine_2_args():
 
         definition = pt.SubroutineDefinition(mySubroutine, returnType)
 
-        declaration = evaluateSubroutine(definition)
+        declaration = evaluate_subroutine(definition)
         assert isinstance(declaration, pt.SubroutineDeclaration)
         assert declaration.subroutine is definition
 
@@ -556,7 +556,7 @@ def test_evaluate_subroutine_10_args():
 
         definition = pt.SubroutineDefinition(mySubroutine, returnType)
 
-        declaration = evaluateSubroutine(definition)
+        declaration = evaluate_subroutine(definition)
         assert isinstance(declaration, pt.SubroutineDeclaration)
         assert declaration.subroutine is definition
 
