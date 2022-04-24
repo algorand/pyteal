@@ -224,13 +224,13 @@ class SubroutineDefinition:
         *,
         output_kwarg: Optional[dict[str, abi.BaseType]] = None,
     ) -> "SubroutineCall":
-        argument_only = (
-            set(self.arguments()) - set(output_kwarg.keys()) if output_kwarg else set()
+        argument_only = set(self.arguments()) - (
+            set(output_kwarg.keys()) if output_kwarg else set()
         )
         if len(args) != len(argument_only):
             raise TealInputError(
                 f"Incorrect number of arguments for subroutine call. "
-                f"Expected {self.argument_count()} arguments, got {len(args)} arguments"
+                f"Expected {len(argument_only)} arguments, got {len(args)} arguments"
             )
 
         for i, arg in enumerate(args):
