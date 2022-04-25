@@ -472,33 +472,6 @@ def tallygo():
 TESTABLE_CASES = [(oldfac, [pt.TealType.uint64])]
 
 
-# def wrap_for_blackbox(
-#     subr_with_params: Tuple[SubroutineDefinition, List[TealType]]
-# ) -> Callable[..., Expr]:
-#     subr, params = subr_with_params
-
-#     def arg(i, p):
-#         arg = Txn.application_args[i]
-#         if p == TealType.uint64:
-#             arg = Btoi(arg)
-#         return arg
-
-#     def approval():
-#         return subr(*(arg(i, p) for i, p in enumerate(params)))
-
-#     setattr(approval, "__name__", f"sem_{subr.name()}")
-
-#     return approval
-
-
-# @pytest.mark.skipif(not STABLE_SLOT_GENERATION, reason="cf. #199")
-# @pytest.mark.parametrize("pt", map(wrap_for_blackbox, TESTABLE_CASES))
-# def test_blackbox_unchanged(pt):
-#     assert_new_v_old(pt, 6)
-
-
-# ####---- Test the exclusion of recursive pass-by-ref variables: ---#### #
-
 # ---- Approval PyTEAL Expressions (COPACETIC) ---- #
 
 approval_ok = ok(pt.Int(42))
