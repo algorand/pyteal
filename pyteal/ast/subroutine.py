@@ -443,15 +443,26 @@ class ABIReturnSubroutine:
         .. code-block:: python
 
             @ABIReturnSubroutine
-            def an_abi_subroutine(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64) -> Expr:
-                return output.set(a.get() * b.get())
+            def abi_sum(toSum: abi.DynamicArray[abi.Uint64], *, output: abi.Uint64) -> Expr:
+                i = ScratchVar(TealType.uint64)
+                valueAtIndex = abi.Uint64()
+                return Seq(
+                    output.set(0),
+                    For(i.store(Int(0)), i.load() < toSum.length(), i.store(i.load() + Int(1))).Do(
+                        Seq(
+                            toSum[i.load()].store_into(valueAtIndex),
+                            output.set(output.get() + valueAtIndex.get()),
+                        )
+                    ),
+                )
 
             program = Seq(
-                (a := abi.Uint64()).decode(Txn.application_args[1]),
-                (b := abi.Uint64()).decode(Txn.application_args[2]),
-                (c := abi.Uint64()).set(an_abi_subroutine(a, b)),
-                MethodReturn(c),
-                Approve(),
+                (to_sum_arr := abi.DynamicArray(abi.Uint64TypeSpec())).decode(
+                    Txn.application_args[1]
+                ),
+                (res := abi.Uint64()).set(abi_sum(to_sum_arr)),
+                abi.MethodReturn(res),
+                Int(1),
             )
     """
 
