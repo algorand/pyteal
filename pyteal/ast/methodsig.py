@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING
 
-from pyteal.ast.leafexpr import LeafExpr
 from pyteal.errors import TealInputError
-from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.types import TealType
+from pyteal.ir import TealOp, Op, TealBlock
+
+from pyteal.ast.leafexpr import LeafExpr
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions

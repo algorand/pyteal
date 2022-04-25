@@ -1,10 +1,11 @@
 from typing import List, Union
 
-from pyteal.ast.expr import Expr
 from pyteal.ast.multi import MultiValue
-from pyteal.ast.scratch import ScratchLoad, ScratchSlot
-from pyteal.ir import Op
+
 from pyteal.types import TealType
+from pyteal.ir import Op
+from pyteal.ast.expr import Expr
+from pyteal.ast.scratch import ScratchLoad, ScratchSlot
 
 
 class MaybeValue(MultiValue):
