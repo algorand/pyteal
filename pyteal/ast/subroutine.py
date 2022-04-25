@@ -519,6 +519,10 @@ class ABIReturnSubroutine:
 
         invoked = self.subroutine.invoke(list(args))
         if self.output_kwarg_info is None:
+            if invoked.type_of() != TealType.none:
+                raise TealInputError(
+                    "ABI subroutine with void type should be evaluated to TealType.none"
+                )
             return invoked
 
         return ReturnedValue(self.output_kwarg_info.abi_type, invoked)
