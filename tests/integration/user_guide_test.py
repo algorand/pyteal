@@ -272,7 +272,7 @@ def blackbox_pyteal_example3():
             .Else(If(y == Int(0)).Then(x).Else(euclid(y, Mod(x, y))))
         )
 
-    # Generate PyTeal and TEAL for the recurive Euclidean algorithm:
+    # Generate PyTeal and TEAL for the recursive Euclidean algorithm:
     euclid_app = blackbox_pyteal(euclid, Mode.Application)
     euclid_app_teal = compileTeal(euclid_app(), Mode.Application, version=6)
 
