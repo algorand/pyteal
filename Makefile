@@ -10,6 +10,9 @@ setup-docs: setup-development
 setup-wheel:
 	pip install wheel
 
+generate-init:
+	python -m scripts.generate_init
+
 # ---- Docs and Distribution ---- #
 
 bdist-wheel:
@@ -25,9 +28,6 @@ bundle-docs: bundle-docs-clean
 	tar -czvf pyteal.docset.tar.gz pyteal.docset
 
 # ---- Code Quality ---- #
-
-generate-init:
-	python -m scripts.generate_init
 
 check-generate-init:
 	python -m scripts.generate_init --check
