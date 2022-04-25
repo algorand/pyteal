@@ -61,7 +61,7 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
         a function that called with no parameters -e.g. result()-
         returns a PyTeal expression compiling to a ready-to-test TEAL program.
 
-    The return type is callable in order to adhere to the API of end-to-end unit tests.
+    The return type is callable in order to adhere to the API of blackbox tests.
 
     Generated TEAL code depends on the mode, subroutine input types, and subroutine output types.
     * logic sigs:
