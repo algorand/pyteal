@@ -40,9 +40,37 @@ from graviton.invariant import Invariant
 STABLE_SLOT_GENERATION = False
 SKIP_SCRATCH_ASSERTIONS = not STABLE_SLOT_GENERATION
 
+# ---- Helper ---- #
 
-def test_is_integration_test_environment():
-    algod_with_assertion()
+
+def wrap_compile_and_save(subr, mode, version, assemble_constants, case_name):
+    is_app = mode == Mode.Application
+
+    # 1. PyTeal program Expr generation
+    approval = blackbox_pyteal(subr, mode)
+
+    # 2. TEAL generation
+    path = Path.cwd() / "tests" / "teal"
+    teal = compileTeal(
+        approval(), mode, version=version, assembleConstants=assemble_constants
+    )
+    filebase = f'{"app" if is_app else "lsig"}_{case_name}'
+    tealpath = path / f"{filebase}.teal"
+    with open(tealpath, "w") as f:
+        f.write(teal)
+
+    print(
+        f"""subroutine {case_name}@{mode} generated TEAL. 
+saved to {tealpath}:
+-------
+{teal}
+-------"""
+    )
+
+    return teal, is_app, path, filebase
+
+
+# ---- Subroutines for Blackbox Testing ---- #
 
 
 @Subroutine(TealType.uint64, input_types=[])
@@ -458,33 +486,6 @@ LOGICSIG_SCENARIOS = {
         },
     },
 }
-
-
-def wrap_compile_and_save(subr, mode, version, assemble_constants, case_name):
-    is_app = mode == Mode.Application
-
-    # 1. PyTeal program Expr generation
-    approval = blackbox_pyteal(subr, mode)
-
-    # 2. TEAL generation
-    path = Path.cwd() / "tests" / "teal"
-    teal = compileTeal(
-        approval(), mode, version=version, assembleConstants=assemble_constants
-    )
-    filebase = f'{"app" if is_app else "lsig"}_{case_name}'
-    tealpath = path / f"{filebase}.teal"
-    with open(tealpath, "w") as f:
-        f.write(teal)
-
-    print(
-        f"""subroutine {case_name}@{mode} generated TEAL. 
-saved to {tealpath}:
--------
-{teal}
--------"""
-    )
-
-    return teal, is_app, path, filebase
 
 
 def blackbox_test_runner(
