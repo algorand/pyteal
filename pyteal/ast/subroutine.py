@@ -29,7 +29,7 @@ class SubroutineDefinition:
         """
         Args:
             implementation: The python function defining the subroutine
-            returnType: the TealType to be returned by teh subroutine
+            returnType: the TealType to be returned by the subroutine
             nameStr (optional): the name that is used to identify the subroutine.
                 If omitted, the name defaults to the implementation's __name__ attribute
             input_types (optional): list of TealType's for the subroutine's parameters.
