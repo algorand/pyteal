@@ -118,6 +118,7 @@ from pyteal.ast.subroutine import (
     SubroutineDeclaration,
     SubroutineCall,
     SubroutineFnWrapper,
+    ABIReturnSubroutine,
 )
 from pyteal.ast.while_ import While
 from pyteal.ast.for_ import For
@@ -240,6 +241,7 @@ __all__ = [
     "SubroutineDeclaration",
     "SubroutineCall",
     "SubroutineFnWrapper",
+    "ABIReturnSubroutine",
     "ScratchIndex",
     "ScratchLoad",
     "ScratchSlot",

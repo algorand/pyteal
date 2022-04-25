@@ -23,6 +23,7 @@ from pyteal.errors import (
 from pyteal.config import MAX_GROUP_SIZE, NUM_SLOTS
 
 __all__ = [
+    "ABIReturnSubroutine",
     "AccountParam",
     "Add",
     "Addr",
