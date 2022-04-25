@@ -24,17 +24,17 @@ from pyteal import (
 # ---- Clients ---- #
 
 
-def algod_client(
+def algod_with_assertion():
+    algod = _algod_client()
+    assert algod.status(), "algod.status() did not produce any results"
+    return algod
+
+
+def _algod_client(
     algod_address="http://localhost:4001", algod_token="a" * 64
 ) -> algod.AlgodClient:
     """Instantiate and return Algod client object."""
     return algod.AlgodClient(algod_token, algod_address)
-
-
-def algod_with_assertion():
-    algod = algod_client()
-    assert algod.status(), "algod.status() did not produce any results"
-    return algod
 
 
 # ---- API ---- #
