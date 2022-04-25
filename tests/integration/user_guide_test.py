@@ -250,7 +250,7 @@ def blackbox_pyteal_example3():
         DRProp.status: lambda args: "PASS" if math.gcd(*args) else "REJECT",
         DRProp.passed: lambda args: bool(math.gcd(*args)),
         DRProp.rejected: lambda args: not bool(math.gcd(*args)),
-        # the program never erors:
+        # the program never errors:
         DRProp.errorMessage: None,
     }
 
