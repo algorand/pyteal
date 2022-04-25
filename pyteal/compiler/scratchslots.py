@@ -1,9 +1,9 @@
 from typing import Tuple, Set, Dict, Optional, cast
 
 from pyteal.ast import ScratchSlot, SubroutineDefinition
-from pyteal.ir import TealBlock, Op
-from pyteal.errors import TealInternalError
 from pyteal.config import NUM_SLOTS
+from pyteal.errors import TealInternalError
+from pyteal.ir import TealBlock, Op
 
 
 def collect_unoptimized_slots(

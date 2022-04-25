@@ -1,9 +1,9 @@
 from typing import List, Tuple, TYPE_CHECKING
 
-from pyteal.types import TealType
+from pyteal.ast.expr import Expr
 from pyteal.errors import TealInternalError, TealCompileError
 from pyteal.ir import TealOp, Op, TealSimpleBlock
-from pyteal.ast.expr import Expr
+from pyteal.types import TealType
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions

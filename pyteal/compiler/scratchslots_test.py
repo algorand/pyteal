@@ -1,7 +1,6 @@
 import pytest
 
 import pyteal as pt
-
 from pyteal.compiler.scratchslots import (
     collectScratchSlots,
     assignScratchSlotsToSubroutines,

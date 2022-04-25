@@ -1,11 +1,10 @@
 from typing import TYPE_CHECKING, cast, Union
 
-from pyteal.config import MAX_GROUP_SIZE
-
-from pyteal.errors import TealInputError, verifyFieldVersion, verifyTealVersion
-from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
 from pyteal.ast.txn import TxnExpr, TxnField, TxnObject, TxnaExpr
+from pyteal.config import MAX_GROUP_SIZE
+from pyteal.errors import TealInputError, verifyFieldVersion, verifyTealVersion
+from pyteal.ir import TealOp, Op, TealBlock
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
