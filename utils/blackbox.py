@@ -61,7 +61,7 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
         a function that called with no parameters -e.g. result()-
         returns a PyTeal expression compiling to a ready-to-test TEAL program.
 
-    The return type is callable in order to adhere to the API of end-to-end unit tests.
+    The return type is callable in order to adhere to the API of blackbox tests.
 
     Generated TEAL code depends on the mode, subroutine input types, and subroutine output types.
     * logic sigs:
@@ -141,7 +141,7 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
 
             # check to see that itob of x^2 has been logged (only for the app case)
             assert app_result.last_log() == DryRunEncoder.hex(x**2), app_result.report(
-                args, "last_log() gave unexprected results from app"
+                args, "last_log() gave unexpected results from app"
             )
 
 
@@ -282,7 +282,7 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
                     .Else(If(y == Int(0)).Then(x).Else(euclid(y, Mod(x, y))))
                 )
 
-            # Generate PyTeal and TEAL for the recurive Euclidean algorithm:
+            # Generate PyTeal and TEAL for the recursive Euclidean algorithm:
             euclid_app = blackbox_pyteal(euclid, Mode.Application)
             euclid_app_teal = compileTeal(euclid_app(), Mode.Application, version=6)
 

@@ -131,7 +131,7 @@ def blackbox_pyteal_example1():
 
     # check to see that itob of x^2 has been logged (only for the app case)
     assert app_result.last_log() == DryRunEncoder.hex(x**2), app_result.report(
-        args, "last_log() gave unexprected results from app"
+        args, "last_log() gave unexpected results from app"
     )
 
 
@@ -250,7 +250,7 @@ def blackbox_pyteal_example3():
         DRProp.status: lambda args: "PASS" if math.gcd(*args) else "REJECT",
         DRProp.passed: lambda args: bool(math.gcd(*args)),
         DRProp.rejected: lambda args: not bool(math.gcd(*args)),
-        # the program never erors:
+        # the program never errors:
         DRProp.errorMessage: None,
     }
 
@@ -272,7 +272,7 @@ def blackbox_pyteal_example3():
             .Else(If(y == Int(0)).Then(x).Else(euclid(y, Mod(x, y))))
         )
 
-    # Generate PyTeal and TEAL for the recurive Euclidean algorithm:
+    # Generate PyTeal and TEAL for the recursive Euclidean algorithm:
     euclid_app = blackbox_pyteal(euclid, Mode.Application)
     euclid_app_teal = compileTeal(euclid_app(), Mode.Application, version=6)
 
@@ -280,7 +280,7 @@ def blackbox_pyteal_example3():
     algod = algod_with_assertion()
     inspectors = DryRunExecutor.dryrun_app_on_sequence(algod, euclid_app_teal, inputs)
 
-    # Assert that each invarient holds on the sequences of inputs and dry-runs:
+    # Assert that each invariant holds on the sequences of inputs and dry-runs:
     for property, predicate in predicates.items():
         Invariant(predicate).validates(property, inputs, inspectors)
 
