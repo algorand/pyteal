@@ -2,7 +2,7 @@ version: '3'
 
 services:
   algod:
-    image: makerxau/algorand-sandbox-dev:latest
+    image: tzaffi/algod:24apr2022
     ports:
       - "4001:4001"
       - "4002:4002"
