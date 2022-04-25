@@ -8,6 +8,8 @@ from utils.blackbox import blackbox_pyteal
 
 from tests.compile_asserts import assert_teal_as_expected
 
+TEAL_PATH = Path.cwd() / "utils" / "test" / "teal"
+
 
 @pt.Subroutine(pt.TealType.none, input_types=[])
 def utest_noop():
@@ -84,13 +86,12 @@ def test_blackbox_pyteal(subr, mode):
     vs
     % pytest -n 1 tests/integration/graviton_test.py::test_blackbox_pyteal
     """
-    path = Path.cwd() / "tests" / "teal" / "blackbox" / "unit"
     is_app = mode == pt.Mode.Application
     name = f"{'app' if is_app else 'lsig'}_{subr.name()}"
 
     compiled = pt.compileTeal(blackbox_pyteal(subr, mode)(), mode, version=6)
-    save_to = path / (name + ".teal")
+    save_to = TEAL_PATH / (name + ".teal")
     with open(save_to, "w") as f:
         f.write(compiled)
 
-    assert_teal_as_expected(save_to, path / (name + "_expected.teal"))
+    assert_teal_as_expected(save_to, TEAL_PATH / (name + "_expected.teal"))
