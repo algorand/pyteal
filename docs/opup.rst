@@ -1,6 +1,6 @@
 .. _opup:
 
-Budget Increase Utility
+OpUp:  Budget Increase Utility
 ========================
 
 Some opcode budget is consumed during execution of every Algorand Smart Contract because every TEAL
@@ -27,9 +27,9 @@ OpUp Mode         Description
 ================= ===================================================================================
 
 
-:any:`Explicit` has the benefit of constructing more lightweight inner transactions but requires the
+:any:`Explicit` has the benefit of constructing more lightweight inner transactions, but requires the
 target app ID to be provided in the foreign apps array field of the transaction and the :any:`pyteal.OpUp`
-constructor in order for it to be accessible. :any:`OnCall` is easier to use but has slightly more overhead
+constructor in order for it to be accessible. :any:`OnCall` is easier to use, but has slightly more overhead
 because the target app must be created and deleted during the evaluation of an app call.
 
 Ensure Budget
@@ -42,7 +42,7 @@ call just before a particularly heavyweight subroutine or expression. Keep in mi
 expression will be evaluated before the inner transactions are issued so it may be prudent to avoid expensive
 expressions, which may exhaust the budget before it can be increased.
 
-In the example below, the Ed25519Verify expression is used, which costs 1900.
+In the example below, the :py:meth:`pyteal.Ed25519Verify` expression is used, which costs 1,900.
 
 .. code-block:: python
 
@@ -72,7 +72,7 @@ inner transactions or the inner transaction limit is exceeded. This method may b
 :any:`pyteal.OpUp.ensure_budget` when the fee spent on increasing budget needs to be capped or if the developer
 would rather just maximize the available budget instead of doing in depth cost analysis on the program.
 
-In the example below, the fee is capped at 3000 for increasing the budget. This works out to 3 inner
+In the example below, the fee is capped at 3,000 microAlgos for increasing the budget. This works out to 3 inner
 transactions being issued, each increasing the available budget by ~700.
 
 .. code-block:: python
