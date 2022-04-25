@@ -482,7 +482,8 @@ class ABIReturnSubroutine:
             None if self.output_kwarg_info is None else self.output_kwarg_info.name
         )
 
-        # no matter what, output is void or abiType, stack type is TealType.none
+        # output ABI type is void, return_type = TealType.none
+        # otherwise, return_type = ABI value's storage_type()
         self.subroutine = SubroutineDefinition(
             fn_implementation,
             return_type=internal_subroutine_ret_type,
@@ -688,6 +689,15 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
         )
     # if there is an output keyword argument for ABI, place the storing on the stack
     if output_carrying_abi:
+        if subroutine_body.has_return():
+            raise TealInputError(
+                "ABI returning subroutine definition should have no return"
+            )
+        if subroutine_body.type_of() != TealType.none:
+            raise TealInputError(
+                f"ABI returning subroutine definition should evaluate to TealType.none, "
+                f"while evaluate to {subroutine_body.type_of()}."
+            )
         subroutine_body = Seq(
             subroutine_body, Return(output_carrying_abi.stored_value.load())
         )
