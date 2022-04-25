@@ -131,7 +131,7 @@ def blackbox_pyteal_example1():
 
     # check to see that itob of x^2 has been logged (only for the app case)
     assert app_result.last_log() == DryRunEncoder.hex(x**2), app_result.report(
-        args, "last_log() gave unexprected results from app"
+        args, "last_log() gave unexpected results from app"
     )
 
 
