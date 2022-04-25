@@ -280,7 +280,7 @@ def blackbox_pyteal_example3():
     algod = algod_with_assertion()
     inspectors = DryRunExecutor.dryrun_app_on_sequence(algod, euclid_app_teal, inputs)
 
-    # Assert that each invarient holds on the sequences of inputs and dry-runs:
+    # Assert that each invariant holds on the sequences of inputs and dry-runs:
     for property, predicate in predicates.items():
         Invariant(predicate).validates(property, inputs, inspectors)
 
