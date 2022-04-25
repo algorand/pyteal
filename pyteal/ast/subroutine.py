@@ -10,8 +10,7 @@ from typing import (
     Any,
 )
 
-from pyteal.ast import Return
-from pyteal.ast.abi.type import ReturnedValue
+from pyteal.ast.return_ import Return
 from pyteal.errors import TealInputError, verifyTealVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.types import TealType
@@ -536,7 +535,7 @@ class ABIReturnSubroutine:
                 )
             return invoked
 
-        return ReturnedValue(self.output_kwarg_info.abi_type, invoked)
+        return abi.ReturnedValue(self.output_kwarg_info.abi_type, invoked)
 
     def name(self) -> str:
         return self.subroutine.name()
@@ -618,7 +617,8 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
     Type 1 (by-value): these have python type Expr
     Type 2 (by-reference): these have python type ScratchVar
     Type 3 (ABI): these are ABI typed variables with scratch space storage, and still pass by value
-    Type 4 (ABI-output-arg): ABI typed variables with scratch space, but pass by ref to allow for changes
+    Type 4 (ABI-output-arg): ABI typed variables with scratch space, a new ABI instance is generated inside function body,
+        not one of the cases in the previous three options
 
     Usage (A) "argumentVars" - Storing pre-placed stack variables into local scratch space:
         Type 1. (by-value) use ScratchVar.store() to pick the actual value into a local scratch space
