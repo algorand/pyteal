@@ -105,8 +105,9 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
 
     Example 1: Using blackbox_pyteal for a simple test of both an app and logic sig:
         .. code-block:: python
-            from graviton import DryRunEncoder, DryRunExecutor
+            from graviton.blackbox import DryRunEncoder, DryRunExecutor
 
+            from pyteal import compileTeal, Int, Mode, Subroutine, TealType
             from utils.blackbox import algod_with_assertion, blackbox_pyteal
 
             @Subroutine(TealType.uint64, input_types=[TealType.uint64])
@@ -131,15 +132,15 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
             lsig_result = DryRunExecutor.dryrun_logicsig(algod, lsig_teal, args)
 
             # check to see that x^2 is at the top of the stack as expected
-            assert app_result.stack_top() == x ** 2, app_result.report(
+            assert app_result.stack_top() == x**2, app_result.report(
                 args, "stack_top() gave unexpected results for app"
             )
-            assert lsig_result.stack_top() == x ** 2, lsig_result.report(
+            assert lsig_result.stack_top() == x**2, lsig_result.report(
                 args, "stack_top() gave unexpected results for lsig"
             )
 
             # check to see that itob of x^2 has been logged (only for the app case)
-            assert app_result.last_log() == DryRunEncoder.hex(x ** 2), app_result.report(
+            assert app_result.last_log() == DryRunEncoder.hex(x**2), app_result.report(
                 args, "last_log() gave unexprected results from app"
             )
 
@@ -151,7 +152,20 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
             from pathlib import Path
             import random
 
-            from graviton import DryRunExecutor, DryRunInspector
+            from graviton.blackbox import DryRunExecutor, DryRunInspector
+
+            from pyteal import (
+                compileTeal,
+                For,
+                If,
+                Int,
+                Mod,
+                Mode,
+                ScratchVar,
+                Seq,
+                Subroutine,
+                TealType,
+            )
 
             from utils.blackbox import algod_with_assertion, blackbox_pyteal
 
@@ -207,17 +221,18 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
             # avoid flaky tests just in case I was wrong about the stack height invariant...
             random.seed(42)
 
-            from graviton import (
+            from graviton.blackbox import (
                 DryRunEncoder,
                 DryRunExecutor,
                 DryRunProperty as DRProp,
             )
             from graviton.invariant import Invariant
 
+            from pyteal import compileTeal, If, Int, Mod, Mode, Subroutine, TealType
+
             from utils.blackbox import (
                 algod_with_assertion,
                 blackbox_pyteal,
-                mode_to_execution_mode,
             )
 
             # helper that will be used for scratch-slots invariant:
@@ -245,7 +260,7 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
                 DRProp.status: lambda args: "PASS" if math.gcd(*args) else "REJECT",
                 DRProp.passed: lambda args: bool(math.gcd(*args)),
                 DRProp.rejected: lambda args: not bool(math.gcd(*args)),
-                # the program never errors:
+                # the program never erors:
                 DRProp.errorMessage: None,
             }
 

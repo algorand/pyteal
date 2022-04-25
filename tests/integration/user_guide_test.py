@@ -1,7 +1,7 @@
 import pytest
 
 import pyteal as pt
-from ..compile_asserts import assert_new_v_old
+from tests.compile_asserts import assert_new_v_old
 
 
 def user_guide_snippet_dynamic_scratch_var() -> pt.Expr:
@@ -98,7 +98,6 @@ def blackbox_pyteal_example1():
     from graviton.blackbox import DryRunEncoder, DryRunExecutor
 
     from pyteal import compileTeal, Int, Mode, Subroutine, TealType
-
     from utils.blackbox import algod_with_assertion, blackbox_pyteal
 
     @Subroutine(TealType.uint64, input_types=[TealType.uint64])
