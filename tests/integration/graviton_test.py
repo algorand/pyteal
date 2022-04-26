@@ -575,9 +575,10 @@ def blackbox_pyteal_example1():
     from graviton.blackbox import DryRunEncoder, DryRunExecutor
 
     from pyteal import compileTeal, Int, Mode, Subroutine, TealType
-    from utils.blackbox import algod_with_assertion, blackbox_pyteal
+    from utils.blackbox import Blackbox, algod_with_assertion, blackbox_pyteal
 
-    @Subroutine(TealType.uint64, input_types=[TealType.uint64])
+    @Blackbox(input_types=[TealType.uint64])
+    @Subroutine(TealType.uint64)
     def square(x):
         return x ** Int(2)
 
@@ -634,10 +635,11 @@ def blackbox_pyteal_example2():
         TealType,
     )
 
-    from utils.blackbox import algod_with_assertion, blackbox_pyteal
+    from utils.blackbox import Blackbox, algod_with_assertion, blackbox_pyteal
 
     # GCD via the Euclidean Algorithm (iterative version):
-    @Subroutine(TealType.uint64, input_types=[TealType.uint64, TealType.uint64])
+    @Blackbox(input_types=[TealType.uint64, TealType.uint64])
+    @Subroutine(TealType.uint64)
     def euclid(x, y):
         a = ScratchVar(TealType.uint64)
         b = ScratchVar(TealType.uint64)
@@ -685,9 +687,6 @@ def blackbox_pyteal_example3():
     import math
     import random
 
-    # avoid flaky tests just in case I was wrong about the stack height invariant...
-    random.seed(42)
-
     from graviton.blackbox import (
         DryRunEncoder,
         DryRunExecutor,
@@ -697,10 +696,10 @@ def blackbox_pyteal_example3():
 
     from pyteal import compileTeal, If, Int, Mod, Mode, Subroutine, TealType
 
-    from utils.blackbox import (
-        algod_with_assertion,
-        blackbox_pyteal,
-    )
+    from utils.blackbox import Blackbox, algod_with_assertion, blackbox_pyteal
+
+    # avoid flaky tests just in case I was wrong about the stack height invariant...
+    random.seed(42)
 
     # helper that will be used for scratch-slots invariant:
     def is_subdict(x, y):
@@ -741,7 +740,8 @@ def blackbox_pyteal_example3():
     )
 
     # GCD via the Euclidean Algorithm (recursive version):
-    @Subroutine(TealType.uint64, input_types=[TealType.uint64, TealType.uint64])
+    @Blackbox(input_types=[TealType.uint64, TealType.uint64])
+    @Subroutine(TealType.uint64)
     def euclid(x, y):
         return (
             If(x < y)
