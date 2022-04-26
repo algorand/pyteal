@@ -49,6 +49,7 @@ jobs:
           echo $installed
           [[ $installed =~ "Python ${expected}" ]] && echo "Configured Python" || (echo "Failed to configure Python" && exit 1)
       - name: Install required os level applications
+        if: ${{ env.ACT }}
         run: |
           sudo apt update -y
           sudo apt install -y curl
@@ -59,6 +60,7 @@ jobs:
           sudo apt update
           sudo apt -y install docker-ce docker-ce-cli containerd.io
       - name: Setup docker compose
+        if: ${{ env.ACT }}
         run: |
            sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
            sudo chmod +x /usr/local/bin/docker-compose
