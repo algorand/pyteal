@@ -21,6 +21,8 @@ from pyteal import (
 
 from tests.compile_asserts import assert_teal_as_expected
 from utils.blackbox import (
+    Blackbox,
+    BlackboxWrapper,
     algod_with_assertion,
     blackbox_pyteal,
     mode_to_execution_mode,
@@ -73,22 +75,26 @@ saved to {tealpath}:
 # ---- Subroutines for Blackbox Testing ---- #
 
 
-@Subroutine(TealType.uint64, input_types=[])
+@Blackbox(input_types=[])
+@Subroutine(TealType.uint64)
 def exp():
     return Int(2) ** Int(10)
 
 
-@Subroutine(TealType.none, input_types=[TealType.uint64])
+@Blackbox(input_types=[TealType.uint64])
+@Subroutine(TealType.none)
 def square_byref(x: ScratchVar):
     return x.store(x.load() * x.load())
 
 
-@Subroutine(TealType.uint64, input_types=[TealType.uint64])
+@Blackbox(input_types=[TealType.uint64])
+@Subroutine(TealType.uint64)
 def square(x):
     return x ** Int(2)
 
 
-@Subroutine(TealType.none, input_types=[TealType.anytype, TealType.anytype])
+@Blackbox(input_types=[TealType.anytype, TealType.anytype])
+@Subroutine(TealType.none)
 def swap(x: ScratchVar, y: ScratchVar):
     z = ScratchVar(TealType.anytype)
     return Seq(
@@ -98,7 +104,8 @@ def swap(x: ScratchVar, y: ScratchVar):
     )
 
 
-@Subroutine(TealType.bytes, input_types=[TealType.bytes, TealType.uint64])
+@Blackbox(input_types=[TealType.bytes, TealType.uint64])
+@Subroutine(TealType.bytes)
 def string_mult(s: ScratchVar, n):
     i = ScratchVar(TealType.uint64)
     tmp = ScratchVar(TealType.bytes)
@@ -110,12 +117,14 @@ def string_mult(s: ScratchVar, n):
     )
 
 
-@Subroutine(TealType.uint64, input_types=[TealType.uint64])
+@Blackbox(input_types=[TealType.uint64])
+@Subroutine(TealType.uint64)
 def oldfac(n):
     return If(n < Int(2)).Then(Int(1)).Else(n * oldfac(n - Int(1)))
 
 
-@Subroutine(TealType.uint64, input_types=[TealType.uint64])
+@Blackbox(input_types=[TealType.uint64])
+@Subroutine(TealType.uint64)
 def slow_fibonacci(n):
     return (
         If(n <= Int(1))
@@ -500,7 +509,7 @@ def blackbox_test_runner(
     exec_mode = mode_to_execution_mode(mode)
 
     # 0. Validations
-    assert isinstance(subr, SubroutineFnWrapper), f"unexpected subr type {type(subr)}"
+    assert isinstance(subr, BlackboxWrapper), f"unexpected subr type {type(subr)}"
     assert isinstance(mode, Mode)
 
     # 1. Compile to TEAL

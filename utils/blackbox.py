@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 import functools
 from typing import Callable
 
@@ -40,13 +39,16 @@ def _algod_client(
 
 
 # ---- Decorator ---- #
-@dataclass
 class BlackboxWrapper:
-    subroutine: SubroutineFnWrapper
-    input_types: list[TealType]
+    def __init__(self, subroutine: SubroutineFnWrapper, input_types: list[TealType]):
+        self.subroutine = subroutine
+        self.input_types = input_types
 
     def __call__(self, *args: Expr | ScratchVar, **kwargs) -> Expr:
         return self.subroutine(*args, **kwargs)
+
+    def name(self) -> str:
+        return self.subroutine.name()
 
 
 def Blackbox(input_types: list[TealType]):

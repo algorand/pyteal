@@ -83,7 +83,7 @@ def test_blackbox_pyteal(subr, mode):
     % pytest -n 1 tests/integration/graviton_test.py::test_blackbox_pyteal
     """
     is_app = mode == pt.Mode.Application
-    name = f"{'app' if is_app else 'lsig'}_{subr.subroutine.name()}"
+    name = f"{'app' if is_app else 'lsig'}_{subr.name()}"
 
     compiled = pt.compileTeal(blackbox_pyteal(subr, mode)(), mode, version=6)
     save_to = TEAL_PATH / (name + ".teal")
