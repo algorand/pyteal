@@ -37,6 +37,29 @@ def _algod_client(
     return algod.AlgodClient(algod_token, algod_address)
 
 
+# ---- Decorator ---- #
+
+
+class BlackboxWrapper:
+    def __init__(self, subr: SubroutineFnWrapper, input_types: list[TealType]):
+        subr.subroutine.validate(input_types=input_types)
+        self.subroutine = subr
+        self.input_types = input_types
+
+    def __call__(self, *args: Expr | ScratchVar, **kwargs) -> Expr:
+        return self.subroutine(*args, **kwargs)
+
+    def name(self) -> str:
+        return self.subroutine.name()
+
+
+def Blackbox(input_types: list[TealType]):
+    def decorator_blackbox(func: SubroutineFnWrapper):
+        return BlackboxWrapper(func, input_types)
+
+    return decorator_blackbox
+
+
 # ---- API ---- #
 
 
@@ -49,7 +72,7 @@ def mode_to_execution_mode(mode: Mode) -> blackbox.ExecutionMode:
     raise Exception(f"Unknown mode {mode} of type {type(mode)}")
 
 
-def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
+def blackbox_pyteal(subr: BlackboxWrapper, mode: Mode) -> Callable[..., Expr]:
     """Functor producing ready-to-compile PyTeal programs from annotated subroutines
 
     Args:
@@ -108,16 +131,17 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
     * `blackbox_pyteal_example2()`: Using blackbox_pyteal() to make 400 assertions and generate a CSV report with 400 dryrun rows
     * `blackbox_pyteal_example3()`: declarative Test Driven Development approach through Invariant's
     """
-    input_types = subr.subroutine.input_types
+    input_types = subr.input_types
     assert (
         input_types is not None
     ), "please provide input_types in your @Subroutine annotation (crucial for generating proper end-to-end testable PyTeal)"
 
-    arg_names = subr.subroutine.arguments()
+    subdef = subr.subroutine.subroutine
+    arg_names = subdef.arguments()
 
     def arg_prep_n_call(i, p):
         name = arg_names[i]
-        by_ref = name in subr.subroutine.by_ref_args
+        by_ref = name in subdef.by_ref_args
         arg_expr = Txn.application_args[i] if mode == Mode.Application else Arg(i)
         if p == TealType.uint64:
             arg_expr = Btoi(arg_expr)
@@ -163,11 +187,11 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
     else:
 
         def approval():
-            if subr.subroutine.returnType == TealType.none:
+            if subdef.returnType == TealType.none:
                 result = ScratchVar(TealType.uint64)
                 part1 = [subr_caller(), result.store(Int(1337))]
             else:
-                result = ScratchVar(subr.subroutine.returnType)
+                result = ScratchVar(subdef.returnType)
                 part1 = [result.store(subr_caller())]
 
             part2 = [make_log(result.load()), make_return(result.load())]
