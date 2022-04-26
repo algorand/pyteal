@@ -1,10 +1,11 @@
-from typing import List, Literal
+from typing import List, Literal, Callable
 import pytest
+from dataclasses import dataclass
 
 import pyteal as pt
 from pyteal.ast.subroutine import evaluate_subroutine
 
-options = pt.CompileOptions(version=4)
+options = pt.CompileOptions(version=5)
 
 
 def test_subroutine_definition():
@@ -75,6 +76,99 @@ def test_subroutine_definition():
         assert isinstance(invocation, pt.SubroutineCall)
         assert invocation.subroutine is definition
         assert invocation.args == args
+
+
+@dataclass
+class ABISubroutineTC:
+    impl: Callable[..., pt.Expr]
+    arg_instances: list[pt.Expr | pt.abi.BaseType]
+    name: str
+    ret_type: str | pt.abi.TypeSpec
+
+
+def test_abi_subroutine_definition():
+    def fn_0arg_0ret() -> pt.Expr:
+        return pt.Return()
+
+    def fn_0arg_uint64_ret(*, res: pt.abi.Uint64) -> pt.Expr:
+        return res.set(1)
+
+    def fn_1arg_0ret(a: pt.abi.Uint64) -> pt.Expr:
+        return pt.Return()
+
+    def fn_1arg_1ret(a: pt.abi.Uint64, *, out: pt.abi.Uint64) -> pt.Expr:
+        return out.set(a)
+
+    def fn_2arg_0ret(
+        a: pt.abi.Uint64, b: pt.abi.StaticArray[pt.abi.Byte, Literal[10]]
+    ) -> pt.Expr:
+        return pt.Return()
+
+    def fn_2arg_1ret(
+        a: pt.abi.Uint64,
+        b: pt.abi.StaticArray[pt.abi.Byte, Literal[10]],
+        *,
+        out: pt.abi.Byte,
+    ) -> pt.Expr:
+        return out.set(b[a.get() % pt.Int(10)])
+
+    def fn_2arg_1ret_with_expr(
+        a: pt.Expr,
+        b: pt.abi.StaticArray[pt.abi.Byte, Literal[10]],
+        *,
+        out: pt.abi.Byte,
+    ) -> pt.Expr:
+        return out.set(b[a % pt.Int(10)])
+
+    cases = (
+        ABISubroutineTC(fn_0arg_0ret, [], "fn_0arg_0ret", "void"),
+        ABISubroutineTC(
+            fn_0arg_uint64_ret, [], "fn_0arg_uint64_ret", pt.abi.Uint64TypeSpec()
+        ),
+        ABISubroutineTC(fn_1arg_0ret, [pt.abi.Uint64()], "fn_1arg_0ret", "void"),
+        ABISubroutineTC(
+            fn_1arg_1ret, [pt.abi.Uint64()], "fn_1arg_1ret", pt.abi.Uint64TypeSpec()
+        ),
+        ABISubroutineTC(
+            fn_2arg_0ret,
+            [pt.abi.Uint64(), pt.abi.StaticArray(pt.abi.ByteTypeSpec(), 10)],
+            "fn_2arg_0ret",
+            "void",
+        ),
+        ABISubroutineTC(
+            fn_2arg_1ret,
+            [pt.abi.Uint64(), pt.abi.StaticArray(pt.abi.ByteTypeSpec(), 10)],
+            "fn_2arg_1ret",
+            pt.abi.ByteTypeSpec(),
+        ),
+        ABISubroutineTC(
+            fn_2arg_1ret_with_expr,
+            [pt.Int(5), pt.abi.StaticArray(pt.abi.ByteTypeSpec(), 10)],
+            "fn_2arg_1ret_with_expr",
+            pt.abi.ByteTypeSpec(),
+        ),
+    )
+
+    for case in cases:
+        definition = pt.ABIReturnSubroutine(case.impl)
+        assert definition.subroutine.argument_count() == len(case.arg_instances)
+        assert definition.name() == case.name
+
+        if len(case.arg_instances) > 0:
+            with pytest.raises(pt.TealInputError):
+                definition(*case.arg_instances[:-1])
+
+        with pytest.raises(pt.TealInputError):
+            definition(*(case.arg_instances + [pt.abi.Uint64()]))
+
+        assert definition.type_of() == case.ret_type
+        invoked = definition(*case.arg_instances)
+        assert isinstance(
+            invoked, (pt.Expr if case.ret_type == "void" else pt.abi.ReturnedValue)
+        )
+        assert definition.is_registrable() == all(
+            map(lambda x: isinstance(x, pt.abi.BaseType), case.arg_instances)
+        )
 
 
 def test_subroutine_invocation_param_types():
@@ -237,6 +331,194 @@ def test_subroutine_invocation_param_types():
                 ), f"EXPECTED ERROR of type {err}. encountered unexpected error during invocation case <{case_name}>: {e}"
 
 
+def test_abi_subroutine_calling_param_types():
+    def fn_log_add(a: pt.abi.Uint64, b: pt.abi.Uint32) -> pt.Expr:
+        return pt.Seq(pt.Log(pt.Itob(a.get() + b.get())), pt.Return())
+
+    def fn_ret_add(a: pt.abi.Uint64, b: pt.abi.Uint32, *, c: pt.abi.Uint64) -> pt.Expr:
+        return c.set(a.get() + b.get() + pt.Int(0xA190))
+
+    def fn_abi_annotations_0(
+        a: pt.abi.Byte,
+        b: pt.abi.StaticArray[pt.abi.Uint32, Literal[10]],
+        c: pt.abi.DynamicArray[pt.abi.Bool],
+    ) -> pt.Expr:
+        return pt.Return()
+
+    def fn_abi_annotations_0_with_ret(
+        a: pt.abi.Byte,
+        b: pt.abi.StaticArray[pt.abi.Uint32, Literal[10]],
+        c: pt.abi.DynamicArray[pt.abi.Bool],
+        *,
+        out: pt.abi.Byte,
+    ):
+        return out.set(a)
+
+    def fn_mixed_annotations_0(a: pt.ScratchVar, b: pt.Expr, c: pt.abi.Byte) -> pt.Expr:
+        return pt.Seq(
+            a.store(c.get() * pt.Int(0x0FF1CE) * b),
+            pt.Return(),
+        )
+
+    def fn_mixed_annotations_0_with_ret(
+        a: pt.ScratchVar, b: pt.Expr, c: pt.abi.Byte, *, out: pt.abi.Uint64
+    ) -> pt.Expr:
+        return pt.Seq(
+            a.store(c.get() * pt.Int(0x0FF1CE) * b),
+            out.set(a.load()),
+        )
+
+    def fn_mixed_annotation_1(
+        a: pt.ScratchVar, b: pt.abi.StaticArray[pt.abi.Uint32, Literal[10]]
+    ) -> pt.Expr:
+        return pt.Seq(
+            (intermediate := pt.abi.Uint32()).set(b[a.load() % pt.Int(10)]),
+            a.store(intermediate.get()),
+            pt.Return(),
+        )
+
+    def fn_mixed_annotation_1_with_ret(
+        a: pt.ScratchVar, b: pt.abi.Uint64, *, c: pt.abi.Bool
+    ) -> pt.Expr:
+        return c.set((a.load() + b.get()) % pt.Int(2))
+
+    abi_u64 = pt.abi.Uint64()
+    abi_u32 = pt.abi.Uint32()
+    abi_byte = pt.abi.Byte()
+    abi_static_u32_10 = pt.abi.StaticArray(pt.abi.Uint32TypeSpec(), 10)
+    abi_dynamic_bool = pt.abi.DynamicArray(pt.abi.BoolTypeSpec())
+    sv = pt.ScratchVar()
+    expr_int = pt.Int(1)
+
+    cases = [
+        ("vanilla 1", fn_log_add, [abi_u64, abi_u32], "void", None),
+        (
+            "vanilla 1 with wrong ABI type",
+            fn_log_add,
+            [abi_u64, abi_u64],
+            None,
+            pt.TealInputError,
+        ),
+        (
+            "vanilla 1 with ABI return",
+            fn_ret_add,
+            [abi_u64, abi_u32],
+            pt.abi.Uint64TypeSpec(),
+            None,
+        ),
+        (
+            "vanilla 1 with ABI return wrong typed",
+            fn_ret_add,
+            [abi_u32, abi_u64],
+            None,
+            pt.TealInputError,
+        ),
+        (
+            "full ABI annotations no return",
+            fn_abi_annotations_0,
+            [abi_byte, abi_static_u32_10, abi_dynamic_bool],
+            "void",
+            None,
+        ),
+        (
+            "full ABI annotations wrong input 0",
+            fn_abi_annotations_0,
+            [abi_u64, abi_static_u32_10, abi_dynamic_bool],
+            None,
+            pt.TealInputError,
+        ),
+        (
+            "full ABI annotations with ABI return",
+            fn_abi_annotations_0_with_ret,
+            [abi_byte, abi_static_u32_10, abi_dynamic_bool],
+            pt.abi.ByteTypeSpec(),
+            None,
+        ),
+        (
+            "full ABI annotations with ABI return wrong inputs",
+            fn_abi_annotations_0_with_ret,
+            [abi_byte, abi_dynamic_bool, abi_static_u32_10],
+            None,
+            pt.TealInputError,
+        ),
+        (
+            "mixed with ABI annotations 0",
+            fn_mixed_annotations_0,
+            [sv, expr_int, abi_byte],
+            "void",
+            None,
+        ),
+        (
+            "mixed with ABI annotations 0 wrong inputs",
+            fn_mixed_annotations_0,
+            [abi_u64, expr_int, abi_byte],
+            None,
+            pt.TealInputError,
+        ),
+        (
+            "mixed with ABI annotations 0 with ABI return",
+            fn_mixed_annotations_0_with_ret,
+            [sv, expr_int, abi_byte],
+            pt.abi.Uint64TypeSpec(),
+            None,
+        ),
+        (
+            "mixed with ABI annotations 0 with ABI return wrong inputs",
+            fn_mixed_annotations_0_with_ret,
+            [sv, expr_int, sv],
+            None,
+            pt.TealInputError,
+        ),
+        (
+            "mixed with ABI annotations 1",
+            fn_mixed_annotation_1,
+            [sv, abi_static_u32_10],
+            "void",
+            None,
+        ),
+        (
+            "mixed with ABI annotations 1 with ABI return",
+            fn_mixed_annotation_1_with_ret,
+            [sv, abi_u64],
+            pt.abi.BoolTypeSpec(),
+            None,
+        ),
+        (
+            "mixed with ABI annotations 1 with ABI return wrong inputs",
+            fn_mixed_annotation_1_with_ret,
+            [expr_int, abi_static_u32_10],
+            None,
+            pt.TealInputError,
+        ),
+    ]
+
+    for case_name, impl, args, ret_type, err in cases:
+        definition = pt.ABIReturnSubroutine(impl)
+        assert definition.subroutine.argument_count() == len(args), case_name
+        assert definition.name() == impl.__name__, case_name
+
+        if err is None:
+            invocation = definition(*args)
+            if ret_type == "void":
+                assert isinstance(invocation, pt.SubroutineCall), case_name
+                assert not invocation.has_return(), case_name
+                assert invocation.args == args, case_name
+            else:
+                assert isinstance(invocation, pt.abi.ReturnedValue), case_name
+                assert invocation.type_spec == ret_type
+                assert isinstance(invocation.computation, pt.SubroutineCall), case_name
+                assert not invocation.computation.has_return(), case_name
+                assert invocation.computation.args == args, case_name
+        else:
+            try:
+                with pytest.raises(err):
+                    definition(*args)
+            except Exception as e:
+                assert (
+                    not e
+                ), f"EXPECTED ERROR of type {err}. encountered unexpected error during invocation case <{case_name}>: {e}"
+
+
 def test_subroutine_definition_invalid():
     def fnWithDefaults(a, b=None):
         return pt.Return()
@@ -323,7 +605,7 @@ def test_subroutine_definition_invalid():
             print(f"case=[{msg}]")
             pt.SubroutineDefinition(fn, pt.TealType.none)
 
-        assert msg in str(e), "failed for case [{}]".format(fn.__name__)
+        assert msg in str(e), f"failed for case [{fn.__name__}]"
 
 
 def test_subroutine_declaration():
