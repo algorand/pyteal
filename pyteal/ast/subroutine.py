@@ -15,7 +15,9 @@ if TYPE_CHECKING:
 
 
 class SubroutineDefinition:
-    """Class that lifts TEAL's `subr` opcode into a first-class PyTeal citizen"""
+    """Class that leverages TEAL's `callsub` and `retsub` opcode-pair
+    to allow writing functions and subroutines.
+    """
 
     nextSubroutineId = 0
 
