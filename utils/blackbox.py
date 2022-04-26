@@ -1,4 +1,3 @@
-import functools
 from typing import Callable
 
 from algosdk.v2client import algod
@@ -40,8 +39,9 @@ def _algod_client(
 
 # ---- Decorator ---- #
 class BlackboxWrapper:
-    def __init__(self, subroutine: SubroutineFnWrapper, input_types: list[TealType]):
-        self.subroutine = subroutine
+    def __init__(self, subr: SubroutineFnWrapper, input_types: list[TealType]):
+        subr.subroutine.validate(input_types=input_types)
+        self.subroutine = subr
         self.input_types = input_types
 
     def __call__(self, *args: Expr | ScratchVar, **kwargs) -> Expr:
@@ -53,10 +53,6 @@ class BlackboxWrapper:
 
 def Blackbox(input_types: list[TealType]):
     def decorator_blackbox(func: SubroutineFnWrapper):
-        @functools.wraps(func)
-        def wrapper_blackbox(*args, **kwargs):
-            return func(*args, **kwargs)
-
         return BlackboxWrapper(func, input_types)
 
     return decorator_blackbox
