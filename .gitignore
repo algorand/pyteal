@@ -53,7 +53,9 @@ coverage.xml
 
 # Tests generating TEAL output to compared against an expected example.
 tests/**/*.teal
-!tests/**/*_expected.teal
+utils/test/teal/*.teal
+!**/*_expected.teal
+
 
 # Translations
 *.mo

@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+import functools
 from typing import Callable
 
 from algosdk.v2client import algod
@@ -37,6 +39,27 @@ def _algod_client(
     return algod.AlgodClient(algod_token, algod_address)
 
 
+# ---- Decorator ---- #
+@dataclass
+class BlackboxWrapper:
+    subroutine: SubroutineFnWrapper
+    input_types: list[TealType]
+
+    def __call__(self, *args: Expr | ScratchVar, **kwargs) -> Expr:
+        return self.subroutine(*args, **kwargs)
+
+
+def Blackbox(input_types: list[TealType]):
+    def decorator_blackbox(func: SubroutineFnWrapper):
+        @functools.wraps(func)
+        def wrapper_blackbox(*args, **kwargs):
+            return func(*args, **kwargs)
+
+        return BlackboxWrapper(func, input_types)
+
+    return decorator_blackbox
+
+
 # ---- API ---- #
 
 
@@ -49,7 +72,7 @@ def mode_to_execution_mode(mode: Mode) -> blackbox.ExecutionMode:
     raise Exception(f"Unknown mode {mode} of type {type(mode)}")
 
 
-def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr]:
+def blackbox_pyteal(subr: BlackboxWrapper, mode: Mode) -> Callable[..., Expr]:
     """Functor producing ready-to-compile PyTeal programs from annotated subroutines
 
     Args:
@@ -294,16 +317,17 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
             for property, predicate in predicates.items():
                 Invariant(predicate).validates(property, inputs, inspectors)
     """
-    input_types = subr.subroutine.input_types
+    input_types = subr.input_types
     assert (
         input_types is not None
     ), "please provide input_types in your @Subroutine annotation (crucial for generating proper end-to-end testable PyTeal)"
 
-    arg_names = subr.subroutine.arguments()
+    subdef = subr.subroutine.subroutine
+    arg_names = subdef.arguments()
 
     def arg_prep_n_call(i, p):
         name = arg_names[i]
-        by_ref = name in subr.subroutine.by_ref_args
+        by_ref = name in subdef.by_ref_args
         arg_expr = Txn.application_args[i] if mode == Mode.Application else Arg(i)
         if p == TealType.uint64:
             arg_expr = Btoi(arg_expr)
@@ -349,15 +373,15 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
     else:
 
         def approval():
-            if subr.subroutine.returnType == TealType.none:
+            if subdef.returnType == TealType.none:
                 result = ScratchVar(TealType.uint64)
                 part1 = [subr_caller(), result.store(Int(1337))]
             else:
-                result = ScratchVar(subr.subroutine.returnType)
+                result = ScratchVar(subdef.returnType)
                 part1 = [result.store(subr_caller())]
 
             part2 = [make_log(result.load()), make_return(result.load())]
             return Seq(*(part1 + part2))
 
-    setattr(approval, "__name__", f"sem_{mode}_{subr.name()}")
+    setattr(approval, "__name__", f"sem_{mode}_{subr.subroutine.name()}")
     return approval
