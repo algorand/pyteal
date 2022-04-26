@@ -2,8 +2,6 @@
 
 from pyteal import *
 
-from pyteal.ast.opup import OpUp, OpUpMode
-
 
 def approval_program_explicit_ensure():
     args = [

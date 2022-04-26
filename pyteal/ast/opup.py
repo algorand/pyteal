@@ -148,7 +148,7 @@ class OpUp:
         require_type(fee, TealType.uint64)
 
         i = ScratchVar(TealType.uint64)
-        n = fee / MIN_TXN_FEE
+        n = fee / Global.min_txn_fee()
         return For(i.store(Int(0)), i.load() < n, i.store(i.load() + Int(1))).Do(
             self._construct_itxn()
         )
