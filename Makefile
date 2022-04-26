@@ -88,6 +88,10 @@ act-apps-install:
 
 
 # assumes act is installed, e.g. via `brew install act`:
+ACT_JOB = run-integration-tests
+local-gh-job:
+	act -j $(ACT_JOB)
+
 local-gh-simulate:
 	act
 
