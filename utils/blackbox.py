@@ -38,6 +38,8 @@ def _algod_client(
 
 
 # ---- Decorator ---- #
+
+
 class BlackboxWrapper:
     def __init__(self, subr: SubroutineFnWrapper, input_types: list[TealType]):
         subr.subroutine.validate(input_types=input_types)
@@ -381,5 +383,5 @@ def blackbox_pyteal(subr: BlackboxWrapper, mode: Mode) -> Callable[..., Expr]:
             part2 = [make_log(result.load()), make_return(result.load())]
             return Seq(*(part1 + part2))
 
-    setattr(approval, "__name__", f"sem_{mode}_{subr.subroutine.name()}")
+    setattr(approval, "__name__", f"sem_{mode}_{subr.name()}")
     return approval
