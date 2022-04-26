@@ -67,9 +67,9 @@ NUM_PROCS = 1
 integration-run:
 	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration
 
-integration-test: integration-run
+test-integration: integration-run
 
-all-tests: build-and-test integration-test
+all-tests: build-and-test test-integration
 
 # ---- Extras ---- #
 
