@@ -102,11 +102,11 @@ def blackbox_pyteal(subr: SubroutineFnWrapper, mode: Mode) -> Callable[..., Expr
             log Itob(Int(1337)) as it is either impossible (TealType.none),
             or unknown at compile time (TealType.anytype) how to convert to Bytes
 
-    For illustrative examples of how to use this function please refer to [graviton_test.py](../tests/integration/graviton_test.py) end especially:
+    For illustrative examples of how to use this function please refer to the integration test file `graviton_test.py` and especially:
 
-    * `blackbox_pyteal_example1()` - **Example 1**: Using blackbox_pyteal for a simple test of both an app and logic sig
-    * `blackbox_pyteal_example2()` - **Example 2**: Using blackbox_pyteal to make 400 assertions and generate a CSV report with 400 dryrun rows
-    * `blackbox_pyteal_example3()` - **Example 3**: declarative Test Driven Development approach through Invariant's
+    * `blackbox_pyteal_example1()` - Example 1: Using blackbox_pyteal() for a simple test of both an app and logic sig
+    * `blackbox_pyteal_example2()` - Example 2: Using blackbox_pyteal() to make 400 assertions and generate a CSV report with 400 dryrun rows
+    * `blackbox_pyteal_example3()` - Example 3: declarative Test Driven Development approach through Invariant's
     """
     input_types = subr.subroutine.input_types
     assert (
