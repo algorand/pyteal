@@ -138,6 +138,7 @@ from pyteal.ast.scratch import (
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
 from pyteal.ast.maybe import MaybeValue
 from pyteal.ast.multi import MultiValue
+from pyteal.ast.opup import OpUp, OpUpMode
 
 __all__ = [
     "Expr",
@@ -248,6 +249,8 @@ __all__ = [
     "ScratchVar",
     "MaybeValue",
     "MultiValue",
+    "OpUp",
+    "OpUpMode",
     "BytesAdd",
     "BytesMinus",
     "BytesDiv",
