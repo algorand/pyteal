@@ -4,62 +4,58 @@ import pytest
 
 import pyteal as pt
 
-from utils.blackbox import blackbox_pyteal
+from utils.blackbox import Blackbox, blackbox_pyteal
 
 from tests.compile_asserts import assert_teal_as_expected
 
 TEAL_PATH = Path.cwd() / "utils" / "test" / "teal"
 
 
-@pt.Subroutine(pt.TealType.none, input_types=[])
+@Blackbox(input_types=[])
+@pt.Subroutine(pt.TealType.none)
 def utest_noop():
     return pt.Pop(pt.Int(0))
 
 
-@pt.Subroutine(
-    pt.TealType.none,
-    input_types=[pt.TealType.uint64, pt.TealType.bytes, pt.TealType.anytype],
-)
+@Blackbox(input_types=[pt.TealType.uint64, pt.TealType.bytes, pt.TealType.anytype])
+@pt.Subroutine(pt.TealType.none)
 def utest_noop_args(x, y, z):
     return pt.Pop(pt.Int(0))
 
 
-@pt.Subroutine(pt.TealType.uint64, input_types=[])
+@Blackbox(input_types=[])
+@pt.Subroutine(pt.TealType.uint64)
 def utest_int():
     return pt.Int(0)
 
 
-@pt.Subroutine(
-    pt.TealType.uint64,
-    input_types=[pt.TealType.uint64, pt.TealType.bytes, pt.TealType.anytype],
-)
+@Blackbox(input_types=[pt.TealType.uint64, pt.TealType.bytes, pt.TealType.anytype])
+@pt.Subroutine(pt.TealType.uint64)
 def utest_int_args(x, y, z):
     return pt.Int(0)
 
 
-@pt.Subroutine(pt.TealType.bytes, input_types=[])
+@Blackbox(input_types=[])
+@pt.Subroutine(pt.TealType.bytes)
 def utest_bytes():
     return pt.Bytes("")
 
 
-@pt.Subroutine(
-    pt.TealType.bytes,
-    input_types=[pt.TealType.uint64, pt.TealType.bytes, pt.TealType.anytype],
-)
+@Blackbox(input_types=[pt.TealType.uint64, pt.TealType.bytes, pt.TealType.anytype])
+@pt.Subroutine(pt.TealType.bytes)
 def utest_bytes_args(x, y, z):
     return pt.Bytes("")
 
 
-@pt.Subroutine(pt.TealType.anytype, input_types=[])
+@Blackbox(input_types=[])
+@pt.Subroutine(pt.TealType.anytype)
 def utest_any():
     x = pt.ScratchVar(pt.TealType.anytype)
     return pt.Seq(x.store(pt.Int(0)), x.load())
 
 
-@pt.Subroutine(
-    pt.TealType.anytype,
-    input_types=[pt.TealType.uint64, pt.TealType.bytes, pt.TealType.anytype],
-)
+@Blackbox(input_types=[pt.TealType.uint64, pt.TealType.bytes, pt.TealType.anytype])
+@pt.Subroutine(pt.TealType.anytype)
 def utest_any_args(x, y, z):
     x = pt.ScratchVar(pt.TealType.anytype)
     return pt.Seq(x.store(pt.Int(0)), x.load())
