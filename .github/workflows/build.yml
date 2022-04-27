@@ -85,12 +85,8 @@ jobs:
         run: make setup-docs
       - name: Make docs
         run: make bundle-docs
-      - name: Local ACT Only - Install nodejs
-        if: ${{ env.ACT }}
-        run: |
-          sudo apt update -y
-          sudo apt install -y nodejs
       - name: Archive docset
+        if: ${{ !env.ACT }}
         uses: actions/upload-artifact@v2
         with:
           name: pyteal.docset

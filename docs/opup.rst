@@ -1,7 +1,7 @@
 .. _opup:
 
 OpUp:  Budget Increase Utility
-========================
+=================================
 
 Some opcode budget is consumed during execution of every Algorand Smart Contract because every TEAL
 instruction has a corresponding cost. In order for the evaluation to succeed, the budget consumed must not
