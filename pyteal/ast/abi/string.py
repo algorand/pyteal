@@ -122,7 +122,8 @@ class String(DynamicArray):
             start = Int(start)
 
         # TODO: ?????
-        return ArrayElement(self, cast(Expr, SubstringValue(self, start, stop)))
+        # return ArrayElement(self, cast(Expr, SubstringValue(self, start, stop)))
+        return SubstringValue(self, start, stop)
 
 
 String.__module__ = "pyteal"
