@@ -101,11 +101,16 @@ class SubroutineDefinition:
                     )
                 )
 
-            intype = None
             if input_types:
                 intype = input_types[i]
+                if not isinstance(intype, TealType):
+                    raise TealInputError(
+                        "Function has input type {} for parameter {} which is not a TealType".format(
+                            intype, name
+                        )
+                    )
 
-            expected_arg_type = self._validate_parameter_type(anns, name, intype)
+            expected_arg_type = self._validate_parameter_type(anns, name)
 
             arg_types.append(expected_arg_type)
             if expected_arg_type is ScratchVar:
@@ -114,9 +119,7 @@ class SubroutineDefinition:
 
     @staticmethod
     def _validate_parameter_type(
-        user_defined_annotations: dict,
-        parameter_name: str,
-        input_type: Optional[TealType],
+        user_defined_annotations: dict, parameter_name: str
     ) -> Type[Union[Expr, ScratchVar]]:
         ptype = user_defined_annotations.get(parameter_name, None)
         if ptype is None:
@@ -141,19 +144,6 @@ class SubroutineDefinition:
                 raise TealInputError(
                     "Function has parameter {} of disallowed type {}. Only the types {} are allowed".format(
                         parameter_name, ptype, (Expr, ScratchVar)
-                    )
-                )
-
-            if (
-                ptype is Expr
-                and input_type is not None
-                and ptype.type_of() != input_type
-            ):
-                raise TealInputError(
-                    "Function has Expr parameter {} of type {} which contradicts declared input_type {}".format(
-                        parameter_name,
-                        ptype.type_of(),
-                        input_type,
                     )
                 )
 

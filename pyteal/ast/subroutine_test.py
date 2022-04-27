@@ -3,6 +3,7 @@ from typing import List
 
 import pyteal as pt
 from pyteal.ast.subroutine import SubroutineDefinition, evaluateSubroutine
+from pyteal.errors import TealInputError
 
 options = pt.CompileOptions(version=4)
 
@@ -154,7 +155,16 @@ def test_subroutine_definition_validate():
         "Function has a parameter with a default value, which is not allowed in a subroutine: x"
     )
 
-    # Now we got to _validate_parameter_type():
+    with pytest.raises(TealInputError) as tie:
+        three_params.validate(
+            input_types=[pt.TealType.uint64, pt.Expr, pt.TealType.anytype]
+        )
+
+    assert tie.value == pt.TealInputError(
+        "Function has input type <class 'pyteal.Expr'> for parameter y which is not a TealType"
+    )
+
+    # Now we get to _validate_parameter_type():
     one_vanilla = mock_subroutine_definition(lambda x: pt.Return(pt.Int(1)))
 
     params, anns, arg_types, byrefs = one_vanilla.validate()
@@ -182,6 +192,28 @@ def test_subroutine_definition_validate():
     assert anns == {"x": pt.ScratchVar}
     assert all(at is pt.ScratchVar for at in arg_types)
     assert byrefs == {"x"}
+
+    def one_nontype_impl(x: "blahBlah"):  # type: ignore # noqa: F821
+        return pt.Return(pt.Int(1))
+
+    one_nontype = mock_subroutine_definition(one_nontype_impl)
+    with pytest.raises(TealInputError) as tie:
+        one_nontype.validate()
+
+    assert tie.value == pt.TealInputError(
+        "Function has parameter x of declared type blahBlah which is not a class"
+    )
+
+    def one_dynscratchvar_impl(x: pt.DynamicScratchVar):
+        return pt.Return(pt.Int(1))
+
+    one_dynscratchvar = mock_subroutine_definition(one_dynscratchvar_impl)
+    with pytest.raises(TealInputError) as tie:
+        one_dynscratchvar.validate()
+
+    assert tie.value == pt.TealInputError(
+        "Function has parameter x of disallowed type <class 'pyteal.DynamicScratchVar'>. Only the types (<class 'pyteal.Expr'>, <class 'pyteal.ScratchVar'>) are allowed"
+    )
 
 
 def test_subroutine_invocation_param_types():
