@@ -33,6 +33,9 @@ class TealInputError(Exception):
     def __str__(self) -> str:
         return self.message
 
+    def __eq__(self, other: "TealInputError") -> bool:
+        return type(other) is TealInputError and self.message == other.message
+
 
 TealInputError.__module__ = "pyteal"
 

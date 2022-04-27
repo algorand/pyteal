@@ -1,8 +1,8 @@
-from typing import List
 import pytest
+from typing import List
 
 import pyteal as pt
-from pyteal.ast.subroutine import evaluateSubroutine
+from pyteal.ast.subroutine import SubroutineDefinition, evaluateSubroutine
 
 options = pt.CompileOptions(version=4)
 
@@ -75,6 +75,22 @@ def test_subroutine_definition():
         assert isinstance(invocation, pt.SubroutineCall)
         assert invocation.subroutine is definition
         assert invocation.args == args
+
+
+def test_subroutine_definition_validate():
+    def mock_subroutine_definition(implementation):
+        mock = SubroutineDefinition(lambda: pt.Return(pt.Int(1)), pt.TealType.uint64)
+        mock.validate()  # haven't failed with dummy implementation
+        mock.implementation = implementation
+        return mock
+
+    not_callable = mock_subroutine_definition("I'm not callable")
+    with pytest.raises(pt.TealInputError) as tie:
+        not_callable.validate()
+
+    assert tie.value == pt.TealInputError(
+        "Input to SubroutineDefinition is not callable"
+    )
 
 
 def test_subroutine_invocation_param_types():
