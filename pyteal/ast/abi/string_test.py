@@ -216,36 +216,3 @@ def test_String_set_computed():
 
     with pytest.raises(pt.TealInputError):
         value.set(ContainerType(abi.ByteTypeSpec(), pt.Int(0x01)))
-
-
-def test_String_slice():
-    test_vals = [
-        "this is a long string but its not really that long but its not super short either so lets just stick with it",
-        "",
-        "medium string",
-    ]
-
-    for val_to_set in test_vals:
-        value = abi.String()
-        value.set(val_to_set)
-
-        substr = value[1:]
-        assert isinstance(substr, abi.SubstringValue)
-
-        substr = value[:1]
-        assert isinstance(substr, abi.SubstringValue)
-
-        substr = value[:]
-        assert isinstance(substr, abi.SubstringValue)
-
-
-def test_SubstringValue_type_spec():
-    pass
-
-
-def test_SubstringValue_store_into():
-    pass
-
-
-def test_SubstringValue_use():
-    pass
