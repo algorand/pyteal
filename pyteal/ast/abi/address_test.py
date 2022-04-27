@@ -2,6 +2,9 @@ import pytest
 import pyteal as pt
 from pyteal import abi
 
+from pyteal.ast.global_ import Global, GlobalField
+from pyteal.ast.abi.type_test import ContainerType
+from pyteal.util import escapeStr
 from pyteal.ast.abi.util import substringForDecoding
 
 
@@ -101,3 +104,104 @@ def test_Address_get():
     )
     actual, _ = expr.__teal__(options)
     assert actual == expected
+
+
+def test_Address_set_static():
+    for value_to_set in ("CEZZTYHNTVIZFZWT6X2R474Z2P3Q2DAZAKIRTPBAHL3LZ7W4O6VBROVRQA",):
+        value = abi.Address()
+        expr = value.set(value_to_set)
+        assert expr.type_of() == pt.TealType.none
+        assert not expr.has_return()
+
+        expected = pt.TealSimpleBlock(
+            [
+                pt.TealOp(None, pt.Op.addr, value_to_set),
+                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            ]
+        )
+
+        actual, _ = expr.__teal__(options)
+        actual.addIncoming()
+        actual = pt.TealBlock.NormalizeBlocks(actual)
+
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
+
+        with pytest.raises(pt.TealInputError):
+            value.set(bytes(32))
+
+
+def test_Address_set_expr():
+    for value_to_set in [Global(GlobalField.zero_address)]:
+        value = abi.Address()
+        expr = value.set(value_to_set)
+        assert expr.type_of() == pt.TealType.none
+        assert not expr.has_return()
+
+        vts, _ = value_to_set.__teal__(options)
+        expected = pt.TealSimpleBlock(
+            [
+                vts.ops[0],
+                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            ]
+        )
+
+        actual, _ = expr.__teal__(options)
+        actual.addIncoming()
+        actual = pt.TealBlock.NormalizeBlocks(actual)
+
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
+
+
+def test_Address_set_copy():
+    value = abi.Address()
+    other = abi.Address()
+    expr = value.set(other)
+    assert expr.type_of() == pt.TealType.none
+    assert not expr.has_return()
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.load, other.stored_value.slot),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+        ]
+    )
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    with pytest.raises(pt.TealInputError):
+        value.set(abi.String())
+
+
+def test_Address_set_computed():
+    av = pt.Addr("MDDKJUCTY57KA2PBFI44CLTJ5YHY5YVS4SVQUPZAWSRV2ZAVFKI33O6YPE")
+    computed_value = ContainerType(abi.AddressTypeSpec(), av)
+
+    value = abi.Address()
+    expr = value.set(computed_value)
+    assert expr.type_of() == pt.TealType.none
+    assert not expr.has_return()
+
+    _, byte_ops = av.__teal__(options)
+    expected = pt.TealSimpleBlock(
+        [
+            byte_ops.ops[0],
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+        ]
+    )
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    with pytest.raises(pt.TealInputError):
+        value.set(ContainerType(abi.ByteTypeSpec(), pt.Int(0x01)))

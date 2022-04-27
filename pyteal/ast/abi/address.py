@@ -2,6 +2,7 @@ from typing import Union, Sequence, TypeVar
 
 from pyteal.errors import TealInputError
 
+from pyteal.ast.addr import Addr
 from pyteal.ast.abi.type import ComputedValue, BaseType
 from pyteal.ast.abi.array_static import StaticArray, StaticArrayTypeSpec
 from pyteal.ast.abi.uint import ByteTypeSpec
@@ -54,21 +55,21 @@ class Address(StaticArray):
     ):
 
         if isinstance(value, ComputedValue):
-            if value.produced_type_spec() is not AddressTypeSpec():
+            if not isinstance(value.produced_type_spec(), AddressTypeSpec):
                 raise TealInputError(
                     f"Got ComputedValue with type spec {value.produced_type_spec()}, expected AddressTypeSpec"
                 )
             return value.store_into(self)
 
         if isinstance(value, BaseType):
-            if value.type_spec() is not AddressTypeSpec():
+            if not isinstance(value.type_spec(), AddressTypeSpec):
                 raise TealInputError(
-                    f"Got {value.__class__} with type spec {value.type_spec()}, expected AddressTypeSpec"
+                    f"Got {value} with type spec {value.type_spec()}, expected AddressTypeSpec"
                 )
-            return self.decode(self.encode())
+            return self.decode(value.encode())
 
         if isinstance(value, str):
-            return self.stored_value.store(Bytes(value))
+            return self.stored_value.store(Addr(value))
 
         if isinstance(value, Expr):
             return self.stored_value.store(value)

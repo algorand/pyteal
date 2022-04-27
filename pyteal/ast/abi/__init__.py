@@ -36,7 +36,6 @@ from pyteal.ast.abi.method_return import MethodReturn
 __all__ = [
     "String",
     "StringTypeSpec",
-    "SubstringValue",
     "Address",
     "AddressTypeSpec",
     "ADDRESS_LENGTH",
