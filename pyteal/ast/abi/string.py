@@ -67,18 +67,18 @@ class String(DynamicArray):
 
         # Assume length prefixed
         if isinstance(value, ComputedValue):
-            if value.produced_type_spec() is not StringTypeSpec():
+            if not isinstance(value.produced_type_spec(), StringTypeSpec):
                 raise TealInputError(
                     f"Got ComputedValue with type spec {value.produced_type_spec()}, expected StringTypeSpec"
                 )
             return value.store_into(self)
 
         if isinstance(value, BaseType):
-            if value.type_spec() is not StringTypeSpec():
+            if not isinstance(value.type_spec(), StringTypeSpec):
                 raise TealInputError(
-                    f"Got {value.__class__} with type spec {value.type_spec()}, expected StringTypeSpec"
+                    f"Got {value} with type spec {value.type_spec()}, expected {StringTypeSpec}"
                 )
-            return value.decode(value.encode())
+            return self.decode(value.encode())
 
         # Assume not length prefixed
         if type(value) is str:

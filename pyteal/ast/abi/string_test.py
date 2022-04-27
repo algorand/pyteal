@@ -3,6 +3,8 @@ import pytest
 import pyteal as pt
 from pyteal import abi
 from pyteal.ast.abi.util import substringForDecoding
+from pyteal.ast.abi.type_test import ContainerType
+from pyteal.util import escapeStr
 
 options = pt.CompileOptions(version=5)
 
@@ -103,3 +105,114 @@ def test_String_get():
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+
+def test_String_set_static():
+    for value_to_set in ("stringy", "😀", "0xDEADBEEF"):
+        value = abi.String()
+        expr = value.set(value_to_set)
+        assert expr.type_of() == pt.TealType.none
+        assert not expr.has_return()
+
+        expected = pt.TealSimpleBlock(
+            [
+                pt.TealOp(None, pt.Op.byte, escapeStr(value_to_set)),
+                pt.TealOp(None, pt.Op.len),
+                pt.TealOp(None, pt.Op.itob),
+                pt.TealOp(None, pt.Op.extract, 6, 0),
+                pt.TealOp(None, pt.Op.byte, escapeStr(value_to_set)),
+                pt.TealOp(None, pt.Op.concat),
+                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            ]
+        )
+
+        actual, _ = expr.__teal__(options)
+        actual.addIncoming()
+        actual = pt.TealBlock.NormalizeBlocks(actual)
+
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
+
+        with pytest.raises(pt.TealInputError):
+            value.set(bytes(32))
+
+
+def test_String_set_expr():
+    for value_to_set in (pt.Bytes("hi"), pt.Bytes("base16", "0xdeadbeef")):
+        value = abi.String()
+        expr = value.set(value_to_set)
+        assert expr.type_of() == pt.TealType.none
+        assert not expr.has_return()
+
+        vts, _ = value_to_set.__teal__(options)
+        expected = pt.TealSimpleBlock(
+            [
+                vts.ops[0],
+                pt.TealOp(None, pt.Op.len),
+                pt.TealOp(None, pt.Op.itob),
+                pt.TealOp(None, pt.Op.extract, 6, 0),
+                vts.ops[0],
+                pt.TealOp(None, pt.Op.concat),
+                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            ]
+        )
+
+        actual, _ = expr.__teal__(options)
+        actual.addIncoming()
+        actual = pt.TealBlock.NormalizeBlocks(actual)
+
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
+
+
+def test_String_set_copy():
+    value = abi.String()
+    other = abi.String()
+    expr = value.set(other)
+    assert expr.type_of() == pt.TealType.none
+    assert not expr.has_return()
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.load, other.stored_value.slot),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+        ]
+    )
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    with pytest.raises(pt.TealInputError):
+        value.set(abi.Address())
+
+
+def test_String_set_computed():
+    bv = pt.Bytes("base16", "0x0004DEADBEEF")
+    computed_value = ContainerType(abi.StringTypeSpec(), bv)
+
+    value = abi.String()
+    expr = value.set(computed_value)
+    assert expr.type_of() == pt.TealType.none
+    assert not expr.has_return()
+
+    _, byte_ops = bv.__teal__(options)
+    expected = pt.TealSimpleBlock(
+        [
+            byte_ops.ops[0],
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+        ]
+    )
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    with pytest.raises(pt.TealInputError):
+        value.set(ContainerType(abi.ByteTypeSpec(), pt.Int(0x01)))
