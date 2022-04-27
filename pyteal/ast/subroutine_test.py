@@ -1,3 +1,4 @@
+from itertools import product
 import pytest
 from typing import List
 
@@ -214,6 +215,14 @@ def test_subroutine_definition_validate():
     assert tie.value == pt.TealInputError(
         "Function has parameter x of disallowed type <class 'pyteal.DynamicScratchVar'>. Only the types (<class 'pyteal.Expr'>, <class 'pyteal.ScratchVar'>) are allowed"
     )
+
+    # Now we're back to validate() and everything should be copacetic
+    for x, y, z in product(pt.TealType, pt.TealType, pt.TealType):
+        params, anns, arg_types, byrefs = three_params.validate(input_types=[x, y, z])
+        assert len(params) == 3
+        assert anns == {}
+        assert all(at is pt.Expr for at in arg_types)
+        assert byrefs == set()
 
 
 def test_subroutine_invocation_param_types():
