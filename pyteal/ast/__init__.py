@@ -138,7 +138,7 @@ from pyteal.ast.maybe import MaybeValue
 from pyteal.ast.multi import MultiValue
 
 # abi
-import pyteal.ast.abi as abi
+import pyteal.ast.abi as abi  # noqa: I250
 
 __all__ = [
     "Expr",
