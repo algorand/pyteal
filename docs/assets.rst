@@ -126,6 +126,7 @@ Expression                        Type                    Description
 :any:`AssetParam.name()`          :code:`TealType.bytes`  The name of the asset.
 :any:`AssetParam.url()`           :code:`TealType.bytes`  A URL associated with the asset.
 :any:`AssetParam.metadataHash()`  :code:`TealType.bytes`  A 32-byte hash associated with the asset.
+:any:`AssetParam.creator()`       :code:`TealType.bytes`  The address of the asset's creator account.
 :any:`AssetParam.manager()`       :code:`TealType.bytes`  The address of the asset's manager account.
 :any:`AssetParam.reserve()`       :code:`TealType.bytes`  The address of the asset's reserve account.
 :any:`AssetParam.freeze()`        :code:`TealType.bytes`  The address of the asset's freeze account.
