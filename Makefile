@@ -71,11 +71,18 @@ test-integration: integration-run
 
 all-tests: build-and-test test-integration
 
+# ---- Local Github Actions Simulation via `act` ---- #
+# assumes act is installed, e.g. via `brew install act`
+
+ACT_JOB = run-integration-tests
+local-gh-job:
+	act -j $(ACT_JOB)
+
+local-gh-simulate:
+	act
+
+
 # ---- Extras ---- #
 
 coverage:
 	pytest --cov-report html --cov=pyteal
-
-# assumes act is installed, e.g. via `brew install act`:
-local-gh-simulate:
-	act

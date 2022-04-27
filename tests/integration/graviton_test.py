@@ -38,6 +38,10 @@ from graviton.blackbox import (
 
 from graviton.invariant import Invariant
 
+PATH = Path.cwd() / "tests" / "integration"
+FIXTURES = PATH / "teal"
+GENERATED = PATH / "generated"
+
 # TODO: remove these skips after the following issue has been fixed https://github.com/algorand/pyteal/issues/199
 STABLE_SLOT_GENERATION = False
 SKIP_SCRATCH_ASSERTIONS = not STABLE_SLOT_GENERATION
@@ -45,19 +49,23 @@ SKIP_SCRATCH_ASSERTIONS = not STABLE_SLOT_GENERATION
 # ---- Helper ---- #
 
 
-def wrap_compile_and_save(subr, mode, version, assemble_constants, case_name):
+def wrap_compile_and_save(
+    subr, mode, version, assemble_constants, test_name, case_name
+):
     is_app = mode == Mode.Application
 
     # 1. PyTeal program Expr generation
     approval = blackbox_pyteal(subr, mode)
 
     # 2. TEAL generation
-    path = Path.cwd() / "tests" / "teal"
     teal = compileTeal(
         approval(), mode, version=version, assembleConstants=assemble_constants
     )
-    filebase = f'{"app" if is_app else "lsig"}_{case_name}'
-    tealpath = path / f"{filebase}.teal"
+    tealfile = f'{"app" if is_app else "lsig"}_{case_name}.teal'
+
+    tealdir = GENERATED / test_name
+    tealdir.mkdir(parents=True, exist_ok=True)
+    tealpath = tealdir / tealfile
     with open(tealpath, "w") as f:
         f.write(teal)
 
@@ -69,7 +77,7 @@ saved to {tealpath}:
 -------"""
     )
 
-    return teal, is_app, path, filebase
+    return teal, is_app, tealfile
 
 
 # ---- Subroutines for Blackbox Testing ---- #
@@ -174,9 +182,9 @@ def test_stable_teal_generation(subr, mode):
     case_name = subr.name()
     print(f"stable TEAL generation test for {case_name} in mode {mode}")
 
-    _, _, path, filebase = wrap_compile_and_save(subr, mode, 6, True, case_name)
-    path2actual = path / f"{filebase}.teal"
-    path2expected = path / f"{filebase}_expected.teal"
+    _, _, tealfile = wrap_compile_and_save(subr, mode, 6, True, "stability", case_name)
+    path2actual = GENERATED / "stability" / tealfile
+    path2expected = FIXTURES / "stability" / tealfile
     assert_teal_as_expected(path2actual, path2expected)
 
 
@@ -513,8 +521,8 @@ def blackbox_test_runner(
     assert isinstance(mode, Mode)
 
     # 1. Compile to TEAL
-    teal, _, path, filebase = wrap_compile_and_save(
-        subr, mode, version, assemble_constants, case_name
+    teal, _, tealfile = wrap_compile_and_save(
+        subr, mode, version, assemble_constants, "blackbox", case_name
     )
 
     # Fail fast in case algod is not configured:
@@ -530,7 +538,7 @@ def blackbox_test_runner(
     inspectors = list(map(lambda a: execute(algod, teal, a, exec_mode), inputs))
 
     # 4. Statistical report:
-    csvpath = path / f"{filebase}.csv"
+    csvpath = GENERATED / "blackbox" / f"{tealfile}.csv"
     with open(csvpath, "w") as f:
         f.write(DryRunInspector.csv_report(inputs, inspectors))
 

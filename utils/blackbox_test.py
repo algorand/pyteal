@@ -8,7 +8,9 @@ from utils.blackbox import Blackbox, blackbox_pyteal
 
 from tests.compile_asserts import assert_teal_as_expected
 
-TEAL_PATH = Path.cwd() / "utils" / "test" / "teal"
+PATH = Path.cwd() / "utils" / "test"
+FIXTURES = PATH / "teal"
+GENERATED = PATH / "generated"
 
 
 @Blackbox(input_types=[])
@@ -86,8 +88,10 @@ def test_blackbox_pyteal(subr, mode):
     name = f"{'app' if is_app else 'lsig'}_{subr.name()}"
 
     compiled = pt.compileTeal(blackbox_pyteal(subr, mode)(), mode, version=6)
-    save_to = TEAL_PATH / (name + ".teal")
+    tealdir = GENERATED / "blackbox"
+    tealdir.mkdir(parents=True, exist_ok=True)
+    save_to = tealdir / (name + ".teal")
     with open(save_to, "w") as f:
         f.write(compiled)
 
-    assert_teal_as_expected(save_to, TEAL_PATH / (name + "_expected.teal"))
+    assert_teal_as_expected(save_to, FIXTURES / "blackbox" / (name + ".teal"))

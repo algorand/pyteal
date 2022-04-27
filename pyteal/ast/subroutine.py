@@ -46,7 +46,7 @@ class SubroutineDefinition:
         impl_params, anns, arg_types, byrefs = self.validate()
         self.implementationParams: MappingProxyType[str, Parameter] = impl_params
         self.annotations: dict[str, Expr | ScratchVar] = anns
-        self.expected_arg_types: list[Type[Union[Expr, ScratchVar]]] = arg_types
+        self.expected_arg_types: list[type[Expr | ScratchVar]] = arg_types
         self.by_ref_args: set[str] = byrefs
 
         self.__name: str = nameStr if nameStr else self.implementation.__name__
@@ -56,7 +56,7 @@ class SubroutineDefinition:
     ) -> tuple[
         MappingProxyType[str, Parameter],
         dict[str, Expr | ScratchVar],
-        list[Type[Union[Expr, ScratchVar]]],
+        list[type[Expr | ScratchVar]],
         set[str],
     ]:
         implementation = self.implementation

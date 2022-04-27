@@ -82,4 +82,4 @@ PT_CASES = (sub_logcat, sub_slowfib, sub_fastfib, sub_even)
 
 @pytest.mark.parametrize("pt_case", PT_CASES)
 def test_old(pt_case):
-    assert_new_v_old(pt_case, 5)
+    assert_new_v_old(pt_case, 5, "pre_v6")

@@ -1,0 +1,25 @@
+#pragma version 6
+txna ApplicationArgs 0
+btoi
+store 1
+pushint 1 // 1
+callsub squarebyref_0
+pushint 1337 // 1337
+store 0
+load 0
+itob
+log
+load 0
+return
+
+// square_byref
+squarebyref_0:
+store 2
+load 2
+load 2
+loads
+load 2
+loads
+*
+stores
+retsub

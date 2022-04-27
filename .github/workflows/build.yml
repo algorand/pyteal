@@ -7,17 +7,13 @@ on:
     branches:
       - master
 
-env:
-  SANDBOX_CONFIG: dev
-  SANDBOX_GENESIS: genesis/dev/genesis.json
-
 jobs:
   build-test:
     runs-on: ubuntu-20.04
     container: python:${{ matrix.python }}
     strategy:
       matrix:
-        python: ['3.10']
+        python: ["3.10"]
     steps:
       - run: python3 --version
       - name: Check out code
@@ -48,7 +44,8 @@ jobs:
           expected="${{ matrix.python }}"
           echo $installed
           [[ $installed =~ "Python ${expected}" ]] && echo "Configured Python" || (echo "Failed to configure Python" && exit 1)
-      - name: Install required os level applications
+      - name: Local ACT Only - Install required os level applications
+        if: ${{ env.ACT }}
         run: |
           sudo apt update -y
           sudo apt install -y curl
@@ -58,12 +55,10 @@ jobs:
             $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
           sudo apt update
           sudo apt -y install docker-ce docker-ce-cli containerd.io
-      - name: Setup docker compose
-        run: |
-           sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-           sudo chmod +x /usr/local/bin/docker-compose
-           sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
-           docker-compose --version
+          sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+          docker-compose --version
       - name: Create sandbox
         run: make sandbox-dev-up
       - name: Install python dependencies
@@ -75,16 +70,26 @@ jobs:
 
   build-docset:
     runs-on: ubuntu-20.04
-    container: python:3.10  # Needs `make`, can't be slim
+    strategy:
+      matrix:
+        python: [ "3.10" ]
     steps:
       - name: Check out code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "${{ matrix.python }}"
       - name: Install python dependencies
         run: make setup-docs
       - name: Make docs
         run: make bundle-docs
+      - name: Local ACT Only - Install nodejs
+        if: ${{ env.ACT }}
+        run: |
+          sudo apt update -y
+          sudo apt install -y nodejs
       - name: Archive docset
         uses: actions/upload-artifact@v2
         with:

@@ -24,7 +24,7 @@ def user_guide_snippet_dynamic_scratch_var() -> pt.Expr:
 
 @pytest.mark.parametrize("snippet", [user_guide_snippet_dynamic_scratch_var])
 def test_user_guide_snippets(snippet):
-    assert_new_v_old(snippet, version=6)
+    assert_new_v_old(snippet, 6, "user_guide")
 
 
 def user_guide_snippet_recursiveIsEven():
@@ -68,7 +68,7 @@ USER_GUIDE_SNIPPETS_COPACETIC = [
 
 @pytest.mark.parametrize("snippet", USER_GUIDE_SNIPPETS_COPACETIC)
 def test_user_guide_snippets_good(snippet):
-    assert_new_v_old(snippet, 6)
+    assert_new_v_old(snippet, 6, "user_guide")
 
 
 USER_GUIDE_SNIPPETS_ERRORING = {
