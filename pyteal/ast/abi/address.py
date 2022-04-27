@@ -7,7 +7,6 @@ from pyteal.ast.abi.type import ComputedValue, BaseType
 from pyteal.ast.abi.array_static import StaticArray, StaticArrayTypeSpec
 from pyteal.ast.abi.uint import ByteTypeSpec
 from pyteal.ast.expr import Expr
-from pyteal.ast.bytes import Bytes
 
 ADDRESS_LENGTH = 32
 

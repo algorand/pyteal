@@ -4,7 +4,6 @@ from pyteal import abi
 
 from pyteal.ast.global_ import Global, GlobalField
 from pyteal.ast.abi.type_test import ContainerType
-from pyteal.util import escapeStr
 from pyteal.ast.abi.util import substringForDecoding
 
 
