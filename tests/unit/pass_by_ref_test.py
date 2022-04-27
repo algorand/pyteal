@@ -222,7 +222,7 @@ ISSUE_199_CASES = (
 @pytest.mark.skipif(not STABLE_SLOT_GENERATION, reason="cf. #199")
 @pytest.mark.parametrize("pt", ISSUE_199_CASES)
 def test_teal_output_is_unchanged(pt):
-    assert_new_v_old(pt, 6)
+    assert_new_v_old(pt, 6, "unchanged")
 
 
 # #### pt.Subroutine Definitions for pass-by-ref guardrails testing #####
