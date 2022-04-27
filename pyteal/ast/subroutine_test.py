@@ -78,6 +78,10 @@ def test_subroutine_definition():
 
 
 def test_subroutine_definition_validate():
+    """
+    DFS through SubroutineDefinition.validate()'s logic
+    """
+
     def mock_subroutine_definition(implementation):
         mock = SubroutineDefinition(lambda: pt.Return(pt.Int(1)), pt.TealType.uint64)
         mock.validate()  # haven't failed with dummy implementation
@@ -91,6 +95,93 @@ def test_subroutine_definition_validate():
     assert tie.value == pt.TealInputError(
         "Input to SubroutineDefinition is not callable"
     )
+
+    three_params = mock_subroutine_definition(lambda x, y, z: pt.Return(pt.Int(1)))
+    two_inputs = [pt.TealType.uint64, pt.TealType.bytes]
+    with pytest.raises(pt.TealInputError) as tie:
+        three_params.validate(input_types=two_inputs)
+
+    assert tie.value == pt.TealInputError(
+        "Provided number of input_types (2) does not match detected number of parameters (3)"
+    )
+
+    params, anns, arg_types, byrefs = three_params.validate()
+    assert len(params) == 3
+    assert anns == {}
+    assert all(at is pt.Expr for at in arg_types)
+    assert byrefs == set()
+
+    def bad_return_impl() -> str:
+        return pt.Return(pt.Int(1))  # type: ignore
+
+    bad_return = mock_subroutine_definition(bad_return_impl)
+    with pytest.raises(pt.TealInputError) as tie:
+        bad_return.validate()
+
+    assert tie.value == pt.TealInputError(
+        "Function has return of disallowed type <class 'str'>. Only Expr is allowed"
+    )
+
+    var_positional = mock_subroutine_definition(lambda *args: pt.Return(pt.Int(1)))
+    with pytest.raises(pt.TealInputError) as tie:
+        var_positional.validate()
+
+    assert tie.value == pt.TealInputError(
+        "Function has a parameter type that is not allowed in a subroutine: parameter args with type VAR_POSITIONAL"
+    )
+
+    kw_only = mock_subroutine_definition(lambda *, kw: pt.Return(pt.Int(1)))
+    with pytest.raises(pt.TealInputError) as tie:
+        kw_only.validate()
+
+    assert tie.value == pt.TealInputError(
+        "Function has a parameter type that is not allowed in a subroutine: parameter kw with type KEYWORD_ONLY"
+    )
+
+    var_keyword = mock_subroutine_definition(lambda **kw: pt.Return(pt.Int(1)))
+    with pytest.raises(pt.TealInputError) as tie:
+        var_keyword.validate()
+
+    assert tie.value == pt.TealInputError(
+        "Function has a parameter type that is not allowed in a subroutine: parameter kw with type VAR_KEYWORD"
+    )
+
+    param_default = mock_subroutine_definition(lambda x="niiiice": pt.Return(pt.Int(1)))
+    with pytest.raises(pt.TealInputError) as tie:
+        param_default.validate()
+
+    assert tie.value == pt.TealInputError(
+        "Function has a parameter with a default value, which is not allowed in a subroutine: x"
+    )
+
+    # Now we got to _validate_parameter_type():
+    one_vanilla = mock_subroutine_definition(lambda x: pt.Return(pt.Int(1)))
+
+    params, anns, arg_types, byrefs = one_vanilla.validate()
+    assert len(params) == 1
+    assert anns == {}
+    assert all(at is pt.Expr for at in arg_types)
+    assert byrefs == set()
+
+    def one_expr_impl(x: pt.Expr):
+        return pt.Return(pt.Int(1))
+
+    one_expr = mock_subroutine_definition(one_expr_impl)
+    params, anns, arg_types, byrefs = one_expr.validate()
+    assert len(params) == 1
+    assert anns == {"x": pt.Expr}
+    assert all(at is pt.Expr for at in arg_types)
+    assert byrefs == set()
+
+    def one_scratchvar_impl(x: pt.ScratchVar):
+        return pt.Return(pt.Int(1))
+
+    one_scratchvar = mock_subroutine_definition(one_scratchvar_impl)
+    params, anns, arg_types, byrefs = one_scratchvar.validate()
+    assert len(params) == 1
+    assert anns == {"x": pt.ScratchVar}
+    assert all(at is pt.ScratchVar for at in arg_types)
+    assert byrefs == {"x"}
 
 
 def test_subroutine_invocation_param_types():
