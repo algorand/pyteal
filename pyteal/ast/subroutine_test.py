@@ -526,6 +526,9 @@ def test_subroutine_definition_invalid():
     def fnWithKeywordArgs(a, *, b):
         return pt.Return()
 
+    def fnWithMultipleABIKeywordArgs(a, *, b: pt.abi.Byte, c: pt.abi.Bool):
+        return pt.Return()
+
     def fnWithVariableArgs(a, *b):
         return pt.Return()
 
@@ -555,57 +558,85 @@ def test_subroutine_definition_invalid():
         return pt.abi.Uint64()
 
     cases = (
-        (1, "TealInputError('Input to SubroutineDefinition is not callable'"),
-        (None, "TealInputError('Input to SubroutineDefinition is not callable'"),
+        (
+            1,
+            "TealInputError('Input to SubroutineDefinition is not callable'",
+            "TealInputError('Input to ABIReturnSubroutine is not callable'",
+        ),
+        (
+            None,
+            "TealInputError('Input to SubroutineDefinition is not callable'",
+            "TealInputError('Input to ABIReturnSubroutine is not callable'",
+        ),
         (
             fnWithDefaults,
+            "TealInputError('Function has a parameter with a default value, which is not allowed in a subroutine: b'",
             "TealInputError('Function has a parameter with a default value, which is not allowed in a subroutine: b'",
         ),
         (
             fnWithKeywordArgs,
             "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type",
+            "TealInputError('ABI subroutine output-kwarg b must specify ABI type')",
+        ),
+        (
+            fnWithMultipleABIKeywordArgs,
+            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type",
+            "TealInputError('multiple output arguments with type annotations",
         ),
         (
             fnWithVariableArgs,
             "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type",
+            "Function has a parameter type that is not allowed in a subroutine: parameter b with type VAR_POSITIONAL",
         ),
         (
             fnWithNonExprReturnAnnotation,
+            "Function has return of disallowed type TealType.uint64. Only Expr is allowed",
             "Function has return of disallowed type TealType.uint64. Only Expr is allowed",
         ),
         (
             fnWithNonExprParamAnnotation,
             "Function has parameter b of declared type TealType.uint64 which is not a class",
+            "Function has parameter b of declared type TealType.uint64 which is not a class",
         ),
         (
             fnWithScratchVarSubclass,
+            "Function has parameter b of disallowed type <class 'pyteal.DynamicScratchVar'>",
             "Function has parameter b of disallowed type <class 'pyteal.DynamicScratchVar'>",
         ),
         (
             fnReturningExprSubclass,
             "Function has return of disallowed type <class 'pyteal.Return'>",
+            "Function has return of disallowed type <class 'pyteal.Return'>. Only Expr is allowed",
         ),
         (
             fnWithMixedAnns4AndBytesReturn,
             "Function has return of disallowed type <class 'pyteal.Bytes'>",
+            "Function has return of disallowed type <class 'pyteal.Bytes'>. Only Expr is allowed",
         ),
         (
             fnWithMixedAnnsABIRet1,
+            "Function has return of disallowed type pyteal.StaticArray[pyteal.Uint32, typing.Literal[10]]. "
+            "Only Expr is allowed",
             "Function has return of disallowed type pyteal.StaticArray[pyteal.Uint32, typing.Literal[10]]. "
             "Only Expr is allowed",
         ),
         (
             fnWithMixedAnnsABIRet2,
             "Function has return of disallowed type <class 'pyteal.Uint64'>. Only Expr is allowed",
+            "Function has return of disallowed type <class 'pyteal.Uint64'>. Only Expr is allowed",
         ),
     )
 
-    for fn, msg in cases:
+    for fn, sub_def_msg, abi_sub_def_msg in cases:
         with pytest.raises(pt.TealInputError) as e:
-            print(f"case=[{msg}]")
+            print(f"case=[{sub_def_msg}]")
             pt.SubroutineDefinition(fn, pt.TealType.none)
 
-        assert msg in str(e), f"failed for case [{fn.__name__}]"
+        assert sub_def_msg in str(e), f"failed for case [{fn.__name__}]"
+
+        with pytest.raises(pt.TealInputError) as e:
+            print(f"case=[{abi_sub_def_msg}]")
+            pt.ABIReturnSubroutine(fn)
 
 
 def test_subroutine_declaration():

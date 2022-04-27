@@ -494,6 +494,8 @@ class ABIReturnSubroutine:
     def _output_name_type_from_fn(
         fn_implementation: Callable[..., Expr]
     ) -> Optional[_OutputKwArgInfo]:
+        if not callable(fn_implementation):
+            raise TealInputError("Input to ABIReturnSubroutine is not callable")
         sig = signature(fn_implementation)
         fn_annotations = getattr(fn_implementation, "__annotations__", OrderedDict())
 
