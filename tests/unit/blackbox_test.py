@@ -4,11 +4,11 @@ import pytest
 
 import pyteal as pt
 
-from utils.blackbox import Blackbox, blackbox_pyteal
+from tests.blackbox import Blackbox, blackbox_pyteal
 
 from tests.compile_asserts import assert_teal_as_expected
 
-PATH = Path.cwd() / "utils" / "test"
+PATH = Path.cwd() / "tests" / "unit"
 FIXTURES = PATH / "teal"
 GENERATED = PATH / "generated"
 

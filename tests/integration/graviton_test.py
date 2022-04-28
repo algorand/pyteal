@@ -20,7 +20,7 @@ from pyteal import (
 )
 
 from tests.compile_asserts import assert_teal_as_expected
-from utils.blackbox import (
+from tests.blackbox import (
     Blackbox,
     BlackboxWrapper,
     algod_with_assertion,
@@ -583,7 +583,7 @@ def blackbox_pyteal_example1():
     from graviton.blackbox import DryRunEncoder, DryRunExecutor
 
     from pyteal import compileTeal, Int, Mode, Subroutine, TealType
-    from utils.blackbox import Blackbox, algod_with_assertion, blackbox_pyteal
+    from tests.blackbox import Blackbox, algod_with_assertion, blackbox_pyteal
 
     @Blackbox(input_types=[TealType.uint64])
     @Subroutine(TealType.uint64)
@@ -643,7 +643,7 @@ def blackbox_pyteal_example2():
         TealType,
     )
 
-    from utils.blackbox import Blackbox, algod_with_assertion, blackbox_pyteal
+    from tests.blackbox import Blackbox, algod_with_assertion, blackbox_pyteal
 
     # GCD via the Euclidean Algorithm (iterative version):
     @Blackbox(input_types=[TealType.uint64, TealType.uint64])
@@ -704,7 +704,7 @@ def blackbox_pyteal_example3():
 
     from pyteal import compileTeal, If, Int, Mod, Mode, Subroutine, TealType
 
-    from utils.blackbox import Blackbox, algod_with_assertion, blackbox_pyteal
+    from tests.blackbox import Blackbox, algod_with_assertion, blackbox_pyteal
 
     # avoid flaky tests just in case I was wrong about the stack height invariant...
     random.seed(42)
