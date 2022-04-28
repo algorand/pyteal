@@ -57,23 +57,20 @@ class Address(StaticArray):
     ):
 
         if isinstance(value, ComputedValue):
-            if not isinstance(value.produced_type_spec(), AddressTypeSpec):
-                raise TealInputError(
-                    f"Got ComputedValue with type spec {value.produced_type_spec()}, expected AddressTypeSpec"
-                )
-            return value.store_into(self)
+            if value.produced_type_spec() == AddressTypeSpec():
+                return value.store_into(self)
+
+            raise TealInputError(
+                f"Got ComputedValue with type spec {value.produced_type_spec()}, expected AddressTypeSpec"
+            )
 
         elif isinstance(value, BaseType):
-
-            if isinstance(value.type_spec(), AddressTypeSpec):
-                return self.decode(value.encode())
-
             if (
-                isinstance(value.type_spec(), StaticArrayTypeSpec)
-                and isinstance(value.type_spec().value_type_spec(), ByteTypeSpec)
-                and value.type_spec().length_static() == ADDRESS_LENGTH_BYTES
+                value.type_spec() == AddressTypeSpec()
+                or value.type_spec()
+                == StaticArrayTypeSpec(ByteTypeSpec(), ADDRESS_LENGTH_BYTES)
             ):
-                return self.decode(value.encode())
+                return self.stored_value.store(value.stored_value.load())
 
             raise TealInputError(
                 f"Got {value} with type spec {value.type_spec()}, expected AddressTypeSpec"
