@@ -15,8 +15,8 @@ if TYPE_CHECKING:
 
 
 class SubroutineDefinition:
-    """Class that leverages TEAL's `callsub` and `retsub` opcode-pair
-    to allow writing functions and subroutines.
+    """
+    Class that leverages TEAL's `callsub` and `retsub` opcode-pair for subroutines
     """
 
     nextSubroutineId = 0
@@ -43,7 +43,7 @@ class SubroutineDefinition:
 
         self.implementation: Callable = implementation
 
-        impl_params, anns, arg_types, byrefs = self.validate()
+        impl_params, anns, arg_types, byrefs = self._validate()
         self.implementationParams: MappingProxyType[str, Parameter] = impl_params
         self.annotations: dict[str, Expr | ScratchVar] = anns
         self.expected_arg_types: list[type[Expr | ScratchVar]] = arg_types
@@ -51,7 +51,7 @@ class SubroutineDefinition:
 
         self.__name: str = nameStr if nameStr else self.implementation.__name__
 
-    def validate(
+    def _validate(
         self, input_types: list[TealType] = None
     ) -> tuple[
         MappingProxyType[str, Parameter],
@@ -63,10 +63,12 @@ class SubroutineDefinition:
         if not callable(implementation):
             raise TealInputError("Input to SubroutineDefinition is not callable")
 
-        impl_params = signature(implementation).parameters
-        anns = get_annotations(implementation)
-        arg_types = []
-        byrefs = set()
+        impl_params: MappingProxyType[str, Parameter] = signature(
+            implementation
+        ).parameters
+        anns: dict[str, Expr | ScratchVar] = get_annotations(implementation)
+        arg_types: list[type[Expr | ScratchVar]] = []
+        byrefs: set[str] = set()
 
         sig_params = impl_params
         if input_types is not None and len(input_types) != len(sig_params):

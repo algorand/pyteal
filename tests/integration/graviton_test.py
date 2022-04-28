@@ -22,7 +22,7 @@ from pyteal import (
 from tests.compile_asserts import assert_teal_as_expected
 from tests.blackbox import (
     Blackbox,
-    BlackboxWrapper,
+    _BlackboxWrapper,
     algod_with_assertion,
     blackbox_pyteal,
     mode_to_execution_mode,
@@ -517,7 +517,7 @@ def blackbox_test_runner(
     exec_mode = mode_to_execution_mode(mode)
 
     # 0. Validations
-    assert isinstance(subr, BlackboxWrapper), f"unexpected subr type {type(subr)}"
+    assert isinstance(subr, _BlackboxWrapper), f"unexpected subr type {type(subr)}"
     assert isinstance(mode, Mode)
 
     # 1. Compile to TEAL
