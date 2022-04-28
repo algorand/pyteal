@@ -3,8 +3,7 @@ import pytest
 from typing import List
 
 import pyteal as pt
-from pyteal.ast.subroutine import SubroutineDefinition, evaluateSubroutine
-from pyteal.errors import TealInputError
+from pyteal.ast.subroutine import evaluateSubroutine
 
 options = pt.CompileOptions(version=4)
 
@@ -85,7 +84,7 @@ def test_subroutine_definition_validate():
     """
 
     def mock_subroutine_definition(implementation):
-        mock = SubroutineDefinition(lambda: pt.Return(pt.Int(1)), pt.TealType.uint64)
+        mock = pt.SubroutineDefinition(lambda: pt.Return(pt.Int(1)), pt.TealType.uint64)
         mock.validate()  # haven't failed with dummy implementation
         mock.implementation = implementation
         return mock
@@ -156,7 +155,7 @@ def test_subroutine_definition_validate():
         "Function has a parameter with a default value, which is not allowed in a subroutine: x"
     )
 
-    with pytest.raises(TealInputError) as tie:
+    with pytest.raises(pt.TealInputError) as tie:
         three_params.validate(
             input_types=[pt.TealType.uint64, pt.Expr, pt.TealType.anytype]
         )
@@ -198,7 +197,7 @@ def test_subroutine_definition_validate():
         return pt.Return(pt.Int(1))
 
     one_nontype = mock_subroutine_definition(one_nontype_impl)
-    with pytest.raises(TealInputError) as tie:
+    with pytest.raises(pt.TealInputError) as tie:
         one_nontype.validate()
 
     assert tie.value == pt.TealInputError(
@@ -209,7 +208,7 @@ def test_subroutine_definition_validate():
         return pt.Return(pt.Int(1))
 
     one_dynscratchvar = mock_subroutine_definition(one_dynscratchvar_impl)
-    with pytest.raises(TealInputError) as tie:
+    with pytest.raises(pt.TealInputError) as tie:
         one_dynscratchvar.validate()
 
     assert tie.value == pt.TealInputError(
