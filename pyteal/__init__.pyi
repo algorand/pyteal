@@ -13,16 +13,6 @@ from pyteal.compiler import (
     compileTeal,
     OptimizeOptions,
 )
-<<<<<<< HEAD
-from .types import TealType
-from .errors import TealInternalError, TealTypeError, TealInputError, TealCompileError
-from .config import (
-    MAX_GROUP_SIZE,
-    NUM_SLOTS,
-    RETURN_METHOD_SELECTOR,
-    METHOD_ARG_NUM_LIMIT,
-)
-=======
 from pyteal.types import TealType
 from pyteal.errors import (
     TealInternalError,
@@ -31,7 +21,6 @@ from pyteal.errors import (
     TealCompileError,
 )
 from pyteal.config import MAX_GROUP_SIZE, NUM_SLOTS
->>>>>>> feature/abi
 
 __all__ = [
     "AccountParam",
