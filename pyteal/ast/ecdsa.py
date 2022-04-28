@@ -69,7 +69,7 @@ def EcdsaVerify(
     data: Expr,
     sigA: Expr,
     sigB: Expr,
-    pubkey: Union[Tuple[Expr, Expr], MultiValue],
+    pubkey: Tuple[Expr, Expr] | MultiValue,
 ) -> Expr:
     """Verify an ECDSA signature.
 
