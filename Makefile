@@ -64,6 +64,7 @@ sandbox-dev-up:
 
 sandbox-dev-stop:
 	docker-compose stop algod
+	
 integration-run:
 	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration
 
