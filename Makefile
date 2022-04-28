@@ -63,7 +63,7 @@ sandbox-dev-stop:
 	docker-compose stop algod
 
 # TODO: set NUM_PROCS = auto when the following issue has been fixed https://github.com/algorand/pyteal/issues/199
-NUM_PROCS = 1 
+NUM_PROCS = auto
 integration-run:
 	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration
 

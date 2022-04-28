@@ -83,4 +83,4 @@ def logicsig(a: int, p: int, q: int) -> Expr:
 
 
 def create(a, b, c):
-    return logicsig(*map(lambda x: int(str(x)), (a, b, c)))
+    return logicsig(*map(lambda x: int(x), (a, b, c)))
