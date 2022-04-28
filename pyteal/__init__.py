@@ -24,7 +24,6 @@ from pyteal.config import (
     METHOD_ARG_NUM_LIMIT,
 )
 
-
 # begin __all__
 __all__ = (
     ast_all
