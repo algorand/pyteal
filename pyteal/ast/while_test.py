@@ -1,48 +1,47 @@
 import pytest
 
-from .. import *
+import pyteal as pt
 
-# this is not necessary but mypy complains if it's not included
-from .. import CompileOptions
-
-options = CompileOptions()
+options = pt.CompileOptions()
 
 
 def test_while_compiles():
 
-    i = ScratchVar()
-    expr = While(Int(2)).Do(Seq([i.store(Int(0))]))
-    assert expr.type_of() == TealType.none
+    i = pt.ScratchVar()
+    expr = pt.While(pt.Int(2)).Do(pt.Seq([i.store(pt.Int(0))]))
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
     expr.__teal__(options)
 
 
 def test_nested_whiles_compile():
-    i = ScratchVar()
-    expr = While(Int(2)).Do(Seq([While(Int(2)).Do(Seq([i.store(Int(0))]))]))
-    assert expr.type_of() == TealType.none
+    i = pt.ScratchVar()
+    expr = pt.While(pt.Int(2)).Do(
+        pt.Seq([pt.While(pt.Int(2)).Do(pt.Seq([i.store(pt.Int(0))]))])
+    )
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
 
 def test_continue_break():
-    expr = While(Int(0)).Do(Seq([If(Int(1), Break(), Continue())]))
-    assert expr.type_of() == TealType.none
+    expr = pt.While(pt.Int(0)).Do(pt.Seq([pt.If(pt.Int(1), pt.Break(), pt.Continue())]))
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
     expr.__teal__(options)
 
 
 def test_while():
-    i = ScratchVar()
-    i.store(Int(0))
-    items = [i.load() < Int(2), [i.store(i.load() + Int(1))]]
-    expr = While(items[0]).Do(Seq(items[1]))
-    assert expr.type_of() == TealType.none
+    i = pt.ScratchVar()
+    i.store(pt.Int(0))
+    items = [i.load() < pt.Int(2), [i.store(i.load() + pt.Int(1))]]
+    expr = pt.While(items[0]).Do(pt.Seq(items[1]))
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
     expected, condEnd = items[0].__teal__(options)
-    do, doEnd = Seq(items[1]).__teal__(options)
-    expectedBranch = TealConditionalBlock([])
-    end = TealSimpleBlock([])
+    do, doEnd = pt.Seq(items[1]).__teal__(options)
+    expectedBranch = pt.TealConditionalBlock([])
+    end = pt.TealSimpleBlock([])
 
     expectedBranch.setTrueBlock(do)
     expectedBranch.setFalseBlock(end)
@@ -54,23 +53,23 @@ def test_while():
 
 
 def test_while_continue():
-    i = ScratchVar()
-    i.store(Int(0))
+    i = pt.ScratchVar()
+    i.store(pt.Int(0))
     items = [
-        i.load() < Int(2),
-        i.store(i.load() + Int(1)),
-        If(i.load() == Int(1), Continue()),
+        i.load() < pt.Int(2),
+        i.store(i.load() + pt.Int(1)),
+        pt.If(i.load() == pt.Int(1), pt.Continue()),
     ]
-    expr = While(items[0]).Do(Seq(items[1], items[2]))
-    assert expr.type_of() == TealType.none
+    expr = pt.While(items[0]).Do(pt.Seq(items[1], items[2]))
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
     options.enterLoop()
 
     expected, condEnd = items[0].__teal__(options)
-    do, doEnd = Seq([items[1], items[2]]).__teal__(options)
-    expectedBranch = TealConditionalBlock([])
-    end = TealSimpleBlock([])
+    do, doEnd = pt.Seq([items[1], items[2]]).__teal__(options)
+    expectedBranch = pt.TealConditionalBlock([])
+    end = pt.TealSimpleBlock([])
 
     expectedBranch.setTrueBlock(do)
     expectedBranch.setFalseBlock(end)
@@ -88,23 +87,23 @@ def test_while_continue():
 
 
 def test_while_break():
-    i = ScratchVar()
-    i.store(Int(0))
+    i = pt.ScratchVar()
+    i.store(pt.Int(0))
     items = [
-        i.load() < Int(2),
-        i.store(i.load() + Int(1)),
-        If(i.load() == Int(1), Break()),
+        i.load() < pt.Int(2),
+        i.store(i.load() + pt.Int(1)),
+        pt.If(i.load() == pt.Int(1), pt.Break()),
     ]
-    expr = While(items[0]).Do(Seq(items[1], items[2]))
-    assert expr.type_of() == TealType.none
+    expr = pt.While(items[0]).Do(pt.Seq(items[1], items[2]))
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
     options.enterLoop()
 
     expected, condEnd = items[0].__teal__(options)
-    do, doEnd = Seq([items[1], items[2]]).__teal__(options)
-    expectedBranch = TealConditionalBlock([])
-    end = TealSimpleBlock([])
+    do, doEnd = pt.Seq([items[1], items[2]]).__teal__(options)
+    expectedBranch = pt.TealConditionalBlock([])
+    end = pt.TealSimpleBlock([])
 
     expectedBranch.setTrueBlock(do)
     expectedBranch.setFalseBlock(end)
@@ -124,28 +123,28 @@ def test_while_break():
 def test_while_invalid():
 
     with pytest.raises(TypeError):
-        expr = While()
+        expr = pt.While()
 
-    with pytest.raises(TealCompileError):
-        expr = While(Int(2))
+    with pytest.raises(pt.TealCompileError):
+        expr = pt.While(pt.Int(2))
         expr.type_of()
 
-    with pytest.raises(TealCompileError):
-        expr = While(Int(2))
+    with pytest.raises(pt.TealCompileError):
+        expr = pt.While(pt.Int(2))
         expr.__teal__(options)
 
-    with pytest.raises(TealCompileError):
-        expr = While(Int(2))
+    with pytest.raises(pt.TealCompileError):
+        expr = pt.While(pt.Int(2))
         expr.type_of()
 
-    with pytest.raises(TealCompileError):
-        expr = While(Int(2))
+    with pytest.raises(pt.TealCompileError):
+        expr = pt.While(pt.Int(2))
         expr.__str__()
 
-    with pytest.raises(TealTypeError):
-        expr = While(Int(2)).Do(Int(2))
+    with pytest.raises(pt.TealTypeError):
+        expr = pt.While(pt.Int(2)).Do(pt.Int(2))
         expr.__str__()
 
-    with pytest.raises(TealCompileError):
-        expr = While(Int(0)).Do(Continue()).Do(Continue())
+    with pytest.raises(pt.TealCompileError):
+        expr = pt.While(pt.Int(0)).Do(pt.Continue()).Do(pt.Continue())
         expr.__str__()

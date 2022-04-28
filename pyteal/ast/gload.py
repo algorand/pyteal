@@ -1,14 +1,14 @@
 from typing import cast, Union, TYPE_CHECKING
 
-from ..types import TealType, require_type
-from ..ir import TealOp, Op, TealBlock
-from ..errors import TealInputError, verifyTealVersion
-from ..config import MAX_GROUP_SIZE, NUM_SLOTS
-from .expr import Expr
-from .leafexpr import LeafExpr
+from pyteal.types import TealType, require_type
+from pyteal.ir import TealOp, Op, TealBlock
+from pyteal.errors import TealInputError, verifyTealVersion
+from pyteal.config import MAX_GROUP_SIZE, NUM_SLOTS
+from pyteal.ast.expr import Expr
+from pyteal.ast.leafexpr import LeafExpr
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class ImportScratchValue(LeafExpr):

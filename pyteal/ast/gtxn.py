@@ -1,14 +1,14 @@
 from typing import Union, cast, TYPE_CHECKING
 
-from ..types import TealType, require_type
-from ..ir import TealOp, Op, TealBlock
-from ..errors import TealInputError, verifyFieldVersion, verifyTealVersion
-from ..config import MAX_GROUP_SIZE
-from .expr import Expr
-from .txn import TxnField, TxnExpr, TxnaExpr, TxnObject
+from pyteal.types import TealType, require_type
+from pyteal.ir import TealOp, Op, TealBlock
+from pyteal.errors import TealInputError, verifyFieldVersion, verifyTealVersion
+from pyteal.config import MAX_GROUP_SIZE
+from pyteal.ast.expr import Expr
+from pyteal.ast.txn import TxnField, TxnExpr, TxnaExpr, TxnObject
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 def validate_txn_index_or_throw(txnIndex: Union[int, Expr]):

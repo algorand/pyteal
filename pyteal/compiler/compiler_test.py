@@ -1,28 +1,25 @@
 import pytest
 
-from .. import *
-
-# this is not necessary but mypy complains if it's not included
-from ..ast import *
+import pyteal as pt
 
 
 def test_compile_single():
-    expr = Int(1)
+    expr = pt.Int(1)
 
     expected = """
 #pragma version 2
 int 1
 return
 """.strip()
-    actual_application = compileTeal(expr, Mode.Application)
-    actual_signature = compileTeal(expr, Mode.Signature)
+    actual_application = pt.compileTeal(expr, pt.Mode.Application)
+    actual_signature = pt.compileTeal(expr, pt.Mode.Signature)
 
     assert actual_application == actual_signature
     assert actual_application == expected
 
 
 def test_compile_sequence():
-    expr = Seq([Pop(Int(1)), Pop(Int(2)), Int(3) + Int(4)])
+    expr = pt.Seq([pt.Pop(pt.Int(1)), pt.Pop(pt.Int(2)), pt.Int(3) + pt.Int(4)])
 
     expected = """
 #pragma version 2
@@ -35,15 +32,15 @@ int 4
 +
 return
 """.strip()
-    actual_application = compileTeal(expr, Mode.Application)
-    actual_signature = compileTeal(expr, Mode.Signature)
+    actual_application = pt.compileTeal(expr, pt.Mode.Application)
+    actual_signature = pt.compileTeal(expr, pt.Mode.Signature)
 
     assert actual_application == actual_signature
     assert actual_application == expected
 
 
 def test_compile_branch():
-    expr = If(Int(1)).Then(Int(2)).Else(Int(3))
+    expr = pt.If(pt.Int(1)).Then(pt.Int(2)).Else(pt.Int(3))
 
     expected = """
 #pragma version 2
@@ -56,15 +53,21 @@ int 2
 main_l3:
 return
 """.strip()
-    actual_application = compileTeal(expr, Mode.Application)
-    actual_signature = compileTeal(expr, Mode.Signature)
+    actual_application = pt.compileTeal(expr, pt.Mode.Application)
+    actual_signature = pt.compileTeal(expr, pt.Mode.Signature)
 
     assert actual_application == actual_signature
     assert actual_application == expected
 
 
 def test_compile_branch_multiple():
-    expr = If(Int(1)).Then(Int(2)).ElseIf(Int(3)).Then(Int(4)).Else(Int(5))
+    expr = (
+        pt.If(pt.Int(1))
+        .Then(pt.Int(2))
+        .ElseIf(pt.Int(3))
+        .Then(pt.Int(4))
+        .Else(pt.Int(5))
+    )
 
     expected = """
 #pragma version 2
@@ -82,18 +85,18 @@ int 2
 main_l5:
 return
 """.strip()
-    actual_application = compileTeal(expr, Mode.Application)
-    actual_signature = compileTeal(expr, Mode.Signature)
+    actual_application = pt.compileTeal(expr, pt.Mode.Application)
+    actual_signature = pt.compileTeal(expr, pt.Mode.Signature)
 
     assert actual_application == actual_signature
     assert actual_application == expected
 
 
 def test_empty_branch():
-    program = Seq(
+    program = pt.Seq(
         [
-            If(Txn.application_id() == Int(0)).Then(Seq()),
-            Approve(),
+            pt.If(pt.Txn.application_id() == pt.Int(0)).Then(pt.Seq()),
+            pt.Approve(),
         ]
     )
 
@@ -106,12 +109,14 @@ main_l1:
 int 1
 return
     """.strip()
-    actual = compileTeal(program, Mode.Application, version=5, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=5, assembleConstants=False
+    )
     assert actual == expected
 
 
 def test_compile_mode():
-    expr = App.globalGet(Bytes("key"))
+    expr = pt.App.globalGet(pt.Bytes("key"))
 
     expected = """
 #pragma version 2
@@ -119,128 +124,128 @@ byte "key"
 app_global_get
 return
 """.strip()
-    actual_application = compileTeal(expr, Mode.Application)
+    actual_application = pt.compileTeal(expr, pt.Mode.Application)
 
     assert actual_application == expected
 
-    with pytest.raises(TealInputError):
-        compileTeal(expr, Mode.Signature)
+    with pytest.raises(pt.TealInputError):
+        pt.compileTeal(expr, pt.Mode.Signature)
 
 
 def test_compile_version_invalid():
-    expr = Int(1)
+    expr = pt.Int(1)
 
-    with pytest.raises(TealInputError):
-        compileTeal(expr, Mode.Signature, version=1)  # too small
+    with pytest.raises(pt.TealInputError):
+        pt.compileTeal(expr, pt.Mode.Signature, version=1)  # too small
 
-    with pytest.raises(TealInputError):
-        compileTeal(expr, Mode.Signature, version=7)  # too large
+    with pytest.raises(pt.TealInputError):
+        pt.compileTeal(expr, pt.Mode.Signature, version=7)  # too large
 
-    with pytest.raises(TealInputError):
-        compileTeal(expr, Mode.Signature, version=2.0)  # decimal
+    with pytest.raises(pt.TealInputError):
+        pt.compileTeal(expr, pt.Mode.Signature, version=2.0)  # decimal
 
 
 def test_compile_version_2():
-    expr = Int(1)
+    expr = pt.Int(1)
 
     expected = """
 #pragma version 2
 int 1
 return
 """.strip()
-    actual = compileTeal(expr, Mode.Signature, version=2)
+    actual = pt.compileTeal(expr, pt.Mode.Signature, version=2)
     assert actual == expected
 
 
 def test_compile_version_default():
-    expr = Int(1)
+    expr = pt.Int(1)
 
-    actual_default = compileTeal(expr, Mode.Signature)
-    actual_version_2 = compileTeal(expr, Mode.Signature, version=2)
+    actual_default = pt.compileTeal(expr, pt.Mode.Signature)
+    actual_version_2 = pt.compileTeal(expr, pt.Mode.Signature, version=2)
     assert actual_default == actual_version_2
 
 
 def test_compile_version_3():
-    expr = Int(1)
+    expr = pt.Int(1)
 
     expected = """
 #pragma version 3
 int 1
 return
 """.strip()
-    actual = compileTeal(expr, Mode.Signature, version=3)
+    actual = pt.compileTeal(expr, pt.Mode.Signature, version=3)
     assert actual == expected
 
 
 def test_compile_version_4():
-    expr = Int(1)
+    expr = pt.Int(1)
 
     expected = """
 #pragma version 4
 int 1
 return
 """.strip()
-    actual = compileTeal(expr, Mode.Signature, version=4)
+    actual = pt.compileTeal(expr, pt.Mode.Signature, version=4)
     assert actual == expected
 
 
 def test_compile_version_5():
-    expr = Int(1)
+    expr = pt.Int(1)
     expected = """
 #pragma version 5
 int 1
 return
 """.strip()
-    actual = compileTeal(expr, Mode.Signature, version=5)
+    actual = pt.compileTeal(expr, pt.Mode.Signature, version=5)
     assert actual == expected
 
 
 def test_compile_version_6():
-    expr = Int(1)
+    expr = pt.Int(1)
     expected = """
 #pragma version 6
 int 1
 return
 """.strip()
-    actual = compileTeal(expr, Mode.Signature, version=6)
+    actual = pt.compileTeal(expr, pt.Mode.Signature, version=6)
     assert actual == expected
 
 
 def test_slot_load_before_store():
 
-    program = AssetHolding.balance(Int(0), Int(0)).value()
-    with pytest.raises(TealInternalError):
-        compileTeal(program, Mode.Application, version=2)
+    program = pt.AssetHolding.balance(pt.Int(0), pt.Int(0)).value()
+    with pytest.raises(pt.TealInternalError):
+        pt.compileTeal(program, pt.Mode.Application, version=2)
 
-    program = AssetHolding.balance(Int(0), Int(0)).hasValue()
-    with pytest.raises(TealInternalError):
-        compileTeal(program, Mode.Application, version=2)
+    program = pt.AssetHolding.balance(pt.Int(0), pt.Int(0)).hasValue()
+    with pytest.raises(pt.TealInternalError):
+        pt.compileTeal(program, pt.Mode.Application, version=2)
 
-    program = App.globalGetEx(Int(0), Bytes("key")).value()
-    with pytest.raises(TealInternalError):
-        compileTeal(program, Mode.Application, version=2)
+    program = pt.App.globalGetEx(pt.Int(0), pt.Bytes("key")).value()
+    with pytest.raises(pt.TealInternalError):
+        pt.compileTeal(program, pt.Mode.Application, version=2)
 
-    program = App.globalGetEx(Int(0), Bytes("key")).hasValue()
-    with pytest.raises(TealInternalError):
-        compileTeal(program, Mode.Application, version=2)
+    program = pt.App.globalGetEx(pt.Int(0), pt.Bytes("key")).hasValue()
+    with pytest.raises(pt.TealInternalError):
+        pt.compileTeal(program, pt.Mode.Application, version=2)
 
-    program = ScratchVar().load()
-    with pytest.raises(TealInternalError):
-        compileTeal(program, Mode.Application, version=2)
+    program = pt.ScratchVar().load()
+    with pytest.raises(pt.TealInternalError):
+        pt.compileTeal(program, pt.Mode.Application, version=2)
 
 
 def test_assign_scratch_slots():
-    myScratch = ScratchVar(TealType.uint64)
-    otherScratch = ScratchVar(TealType.uint64, 1)
-    anotherScratch = ScratchVar(TealType.uint64, 0)
-    lastScratch = ScratchVar(TealType.uint64)
-    prog = Seq(
+    myScratch = pt.ScratchVar(pt.TealType.uint64)
+    otherScratch = pt.ScratchVar(pt.TealType.uint64, 1)
+    anotherScratch = pt.ScratchVar(pt.TealType.uint64, 0)
+    lastScratch = pt.ScratchVar(pt.TealType.uint64)
+    prog = pt.Seq(
         [
-            myScratch.store(Int(5)),  # Slot 2
-            otherScratch.store(Int(0)),  # Slot 1
-            anotherScratch.store(Int(7)),  # Slot 0
-            lastScratch.store(Int(9)),  # Slot 3
-            Approve(),
+            myScratch.store(pt.Int(5)),  # Slot 2
+            otherScratch.store(pt.Int(0)),  # Slot 1
+            anotherScratch.store(pt.Int(7)),  # Slot 0
+            lastScratch.store(pt.Int(9)),  # Slot 3
+            pt.Approve(),
         ]
     )
 
@@ -257,21 +262,21 @@ store 3
 int 1
 return
 """.strip()
-    actual = compileTeal(prog, mode=Mode.Signature, version=4)
+    actual = pt.compileTeal(prog, mode=pt.Mode.Signature, version=4)
     assert actual == expected
 
 
 def test_scratchvar_double_assign_invalid():
-    myvar = ScratchVar(TealType.uint64, 10)
-    otherVar = ScratchVar(TealType.uint64, 10)
-    prog = Seq([myvar.store(Int(5)), otherVar.store(Int(0)), Approve()])
-    with pytest.raises(TealInternalError):
-        compileTeal(prog, mode=Mode.Signature, version=4)
+    myvar = pt.ScratchVar(pt.TealType.uint64, 10)
+    otherVar = pt.ScratchVar(pt.TealType.uint64, 10)
+    prog = pt.Seq([myvar.store(pt.Int(5)), otherVar.store(pt.Int(0)), pt.Approve()])
+    with pytest.raises(pt.TealInternalError):
+        pt.compileTeal(prog, mode=pt.Mode.Signature, version=4)
 
 
 def test_assembleConstants():
-    program = Itob(Int(1) + Int(1) + Tmpl.Int("TMPL_VAR")) == Concat(
-        Bytes("test"), Bytes("test"), Bytes("test2")
+    program = pt.Itob(pt.Int(1) + pt.Int(1) + pt.Tmpl.Int("TMPL_VAR")) == pt.Concat(
+        pt.Bytes("test"), pt.Bytes("test"), pt.Bytes("test2")
     )
 
     expectedNoAssemble = """
@@ -290,8 +295,8 @@ concat
 ==
 return
 """.strip()
-    actualNoAssemble = compileTeal(
-        program, Mode.Application, version=3, assembleConstants=False
+    actualNoAssemble = pt.compileTeal(
+        program, pt.Mode.Application, version=3, assembleConstants=False
     )
     assert expectedNoAssemble == actualNoAssemble
 
@@ -313,22 +318,22 @@ concat
 ==
 return
 """.strip()
-    actualAssemble = compileTeal(
-        program, Mode.Application, version=3, assembleConstants=True
+    actualAssemble = pt.compileTeal(
+        program, pt.Mode.Application, version=3, assembleConstants=True
     )
     assert expectedAssemble == actualAssemble
 
-    with pytest.raises(TealInternalError):
-        compileTeal(program, Mode.Application, version=2, assembleConstants=True)
+    with pytest.raises(pt.TealInternalError):
+        pt.compileTeal(program, pt.Mode.Application, version=2, assembleConstants=True)
 
 
 def test_compile_while():
-    i = ScratchVar()
-    program = Seq(
+    i = pt.ScratchVar()
+    program = pt.Seq(
         [
-            i.store(Int(0)),
-            While(i.load() < Int(2)).Do(Seq([i.store(i.load() + Int(1))])),
-            Approve(),
+            i.store(pt.Int(0)),
+            pt.While(i.load() < pt.Int(2)).Do(pt.Seq([i.store(i.load() + pt.Int(1))])),
+            pt.Approve(),
         ]
     )
 
@@ -350,26 +355,30 @@ main_l3:
 int 1
 return
     """.strip()
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
     assert expected == actual
 
     # nested
-    i = ScratchVar()
-    j = ScratchVar()
+    i = pt.ScratchVar()
+    j = pt.ScratchVar()
 
-    program = Seq(
+    program = pt.Seq(
         [
-            i.store(Int(0)),
-            While(i.load() < Int(2)).Do(
-                Seq(
+            i.store(pt.Int(0)),
+            pt.While(i.load() < pt.Int(2)).Do(
+                pt.Seq(
                     [
-                        j.store(Int(0)),
-                        While(j.load() < Int(5)).Do(Seq([j.store(j.load() + Int(1))])),
-                        i.store(i.load() + Int(1)),
+                        j.store(pt.Int(0)),
+                        pt.While(j.load() < pt.Int(5)).Do(
+                            pt.Seq([j.store(j.load() + pt.Int(1))])
+                        ),
+                        i.store(i.load() + pt.Int(1)),
                     ]
                 )
             ),
-            Approve(),
+            pt.Approve(),
         ]
     )
 
@@ -404,18 +413,20 @@ int 1
 return
     """.strip()
 
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
     assert expected == actual
 
 
 def test_compile_for():
-    i = ScratchVar()
-    program = Seq(
+    i = pt.ScratchVar()
+    program = pt.Seq(
         [
-            For(i.store(Int(0)), i.load() < Int(10), i.store(i.load() + Int(1))).Do(
-                Seq([App.globalPut(Itob(i.load()), i.load() * Int(2))])
-            ),
-            Approve(),
+            pt.For(
+                i.store(pt.Int(0)), i.load() < pt.Int(10), i.store(i.load() + pt.Int(1))
+            ).Do(pt.Seq([pt.App.globalPut(pt.Itob(i.load()), i.load() * pt.Int(2))])),
+            pt.Approve(),
         ]
     )
 
@@ -442,26 +453,38 @@ main_l3:
 int 1
 return
     """.strip()
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
     assert expected == actual
 
     # nested
-    i = ScratchVar()
-    j = ScratchVar()
-    program = Seq(
+    i = pt.ScratchVar()
+    j = pt.ScratchVar()
+    program = pt.Seq(
         [
-            For(i.store(Int(0)), i.load() < Int(10), i.store(i.load() + Int(1))).Do(
-                Seq(
+            pt.For(
+                i.store(pt.Int(0)), i.load() < pt.Int(10), i.store(i.load() + pt.Int(1))
+            ).Do(
+                pt.Seq(
                     [
-                        For(
-                            j.store(Int(0)),
-                            j.load() < Int(4),
-                            j.store(j.load() + Int(2)),
-                        ).Do(Seq([App.globalPut(Itob(j.load()), j.load() * Int(2))]))
+                        pt.For(
+                            j.store(pt.Int(0)),
+                            j.load() < pt.Int(4),
+                            j.store(j.load() + pt.Int(2)),
+                        ).Do(
+                            pt.Seq(
+                                [
+                                    pt.App.globalPut(
+                                        pt.Itob(j.load()), j.load() * pt.Int(2)
+                                    )
+                                ]
+                            )
+                        )
                     ]
                 )
             ),
-            Approve(),
+            pt.Approve(),
         ]
     )
 
@@ -501,21 +524,28 @@ main_l6:
 int 1
 return
     """.strip()
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
     assert expected == actual
 
 
 def test_compile_break():
 
-    # While
-    i = ScratchVar()
-    program = Seq(
+    # pt.While
+    i = pt.ScratchVar()
+    program = pt.Seq(
         [
-            i.store(Int(0)),
-            While(i.load() < Int(3)).Do(
-                Seq([If(i.load() == Int(2), Break()), i.store(i.load() + Int(1))])
+            i.store(pt.Int(0)),
+            pt.While(i.load() < pt.Int(3)).Do(
+                pt.Seq(
+                    [
+                        pt.If(i.load() == pt.Int(2), pt.Break()),
+                        i.store(i.load() + pt.Int(1)),
+                    ]
+                )
             ),
-            Approve(),
+            pt.Approve(),
         ]
     )
 
@@ -540,22 +570,26 @@ main_l4:
 int 1
 return
             """.strip()
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
     assert expected == actual
 
-    # For
-    i = ScratchVar()
-    program = Seq(
+    # pt.For
+    i = pt.ScratchVar()
+    program = pt.Seq(
         [
-            For(i.store(Int(0)), i.load() < Int(10), i.store(i.load() + Int(1))).Do(
-                Seq(
+            pt.For(
+                i.store(pt.Int(0)), i.load() < pt.Int(10), i.store(i.load() + pt.Int(1))
+            ).Do(
+                pt.Seq(
                     [
-                        If(i.load() == Int(4), Break()),
-                        App.globalPut(Itob(i.load()), i.load() * Int(2)),
+                        pt.If(i.load() == pt.Int(4), pt.Break()),
+                        pt.App.globalPut(pt.Itob(i.load()), i.load() * pt.Int(2)),
                     ]
                 )
             ),
-            Approve(),
+            pt.Approve(),
         ]
     )
 
@@ -586,20 +620,27 @@ main_l4:
 int 1
 return
         """.strip()
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
     assert expected == actual
 
 
 def test_compile_continue():
-    # While
-    i = ScratchVar()
-    program = Seq(
+    # pt.While
+    i = pt.ScratchVar()
+    program = pt.Seq(
         [
-            i.store(Int(0)),
-            While(i.load() < Int(3)).Do(
-                Seq([If(i.load() == Int(2), Continue()), i.store(i.load() + Int(1))])
+            i.store(pt.Int(0)),
+            pt.While(i.load() < pt.Int(3)).Do(
+                pt.Seq(
+                    [
+                        pt.If(i.load() == pt.Int(2), pt.Continue()),
+                        i.store(i.load() + pt.Int(1)),
+                    ]
+                )
             ),
-            Approve(),
+            pt.Approve(),
         ]
     )
 
@@ -625,22 +666,26 @@ main_l4:
 int 1
 return
                 """.strip()
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
     assert expected == actual
 
-    # For
-    i = ScratchVar()
-    program = Seq(
+    # pt.For
+    i = pt.ScratchVar()
+    program = pt.Seq(
         [
-            For(i.store(Int(0)), i.load() < Int(10), i.store(i.load() + Int(1))).Do(
-                Seq(
+            pt.For(
+                i.store(pt.Int(0)), i.load() < pt.Int(10), i.store(i.load() + pt.Int(1))
+            ).Do(
+                pt.Seq(
                     [
-                        If(i.load() == Int(4), Continue()),
-                        App.globalPut(Itob(i.load()), i.load() * Int(2)),
+                        pt.If(i.load() == pt.Int(4), pt.Continue()),
+                        pt.App.globalPut(pt.Itob(i.load()), i.load() * pt.Int(2)),
                     ]
                 )
             ),
-            Approve(),
+            pt.Approve(),
         ]
     )
 
@@ -672,25 +717,27 @@ main_l5:
 int 1
 return
             """.strip()
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
     assert expected == actual
 
 
 def test_compile_continue_break_nested():
 
-    i = ScratchVar()
-    program = Seq(
+    i = pt.ScratchVar()
+    program = pt.Seq(
         [
-            i.store(Int(0)),
-            While(i.load() < Int(10)).Do(
-                Seq(
+            i.store(pt.Int(0)),
+            pt.While(i.load() < pt.Int(10)).Do(
+                pt.Seq(
                     [
-                        i.store(i.load() + Int(1)),
-                        If(i.load() < Int(4), Continue(), Break()),
+                        i.store(i.load() + pt.Int(1)),
+                        pt.If(i.load() < pt.Int(4), pt.Continue(), pt.Break()),
                     ]
                 )
             ),
-            Approve(),
+            pt.Approve(),
         ]
     )
 
@@ -714,31 +761,33 @@ main_l2:
 int 1
 return
     """.strip()
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
     assert expected == actual
 
-    i = ScratchVar()
-    program = Seq(
+    i = pt.ScratchVar()
+    program = pt.Seq(
         [
-            i.store(Int(0)),
-            While(i.load() < Int(10)).Do(
-                Seq(
+            i.store(pt.Int(0)),
+            pt.While(i.load() < pt.Int(10)).Do(
+                pt.Seq(
                     [
-                        If(i.load() == Int(8), Break()),
-                        While(i.load() < Int(6)).Do(
-                            Seq(
+                        pt.If(i.load() == pt.Int(8), pt.Break()),
+                        pt.While(i.load() < pt.Int(6)).Do(
+                            pt.Seq(
                                 [
-                                    If(i.load() == Int(3), Break()),
-                                    i.store(i.load() + Int(1)),
+                                    pt.If(i.load() == pt.Int(3), pt.Break()),
+                                    i.store(i.load() + pt.Int(1)),
                                 ]
                             )
                         ),
-                        If(i.load() < Int(5), Continue()),
-                        i.store(i.load() + Int(1)),
+                        pt.If(i.load() < pt.Int(5), pt.Continue()),
+                        i.store(i.load() + pt.Int(1)),
                     ]
                 )
             ),
-            Approve(),
+            pt.Approve(),
         ]
     )
 
@@ -784,39 +833,41 @@ main_l8:
 int 1
 return
 """.strip()
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
     assert expected == actual
 
 
 def test_compile_subroutine_unsupported():
-    @Subroutine(TealType.none)
-    def storeValue(value: Expr) -> Expr:
-        return App.globalPut(Bytes("key"), value)
+    @pt.Subroutine(pt.TealType.none)
+    def storeValue(value: pt.Expr) -> pt.Expr:
+        return pt.App.globalPut(pt.Bytes("key"), value)
 
-    program = Seq(
+    program = pt.Seq(
         [
-            If(Txn.sender() == Global.creator_address()).Then(
-                storeValue(Txn.application_args[0])
+            pt.If(pt.Txn.sender() == pt.Global.creator_address()).Then(
+                storeValue(pt.Txn.application_args[0])
             ),
-            Approve(),
+            pt.Approve(),
         ]
     )
 
-    with pytest.raises(TealInputError):
-        compileTeal(program, Mode.Application, version=3)
+    with pytest.raises(pt.TealInputError):
+        pt.compileTeal(program, pt.Mode.Application, version=3)
 
 
 def test_compile_subroutine_no_return():
-    @Subroutine(TealType.none)
-    def storeValue(value: Expr) -> Expr:
-        return App.globalPut(Bytes("key"), value)
+    @pt.Subroutine(pt.TealType.none)
+    def storeValue(value: pt.Expr) -> pt.Expr:
+        return pt.App.globalPut(pt.Bytes("key"), value)
 
-    program = Seq(
+    program = pt.Seq(
         [
-            If(Txn.sender() == Global.creator_address()).Then(
-                storeValue(Txn.application_args[0])
+            pt.If(pt.Txn.sender() == pt.Global.creator_address()).Then(
+                storeValue(pt.Txn.application_args[0])
             ),
-            Approve(),
+            pt.Approve(),
         ]
     )
 
@@ -839,26 +890,28 @@ load 0
 app_global_put
 retsub
     """.strip()
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
     assert actual == expected
 
 
 def test_compile_subroutine_with_return():
-    @Subroutine(TealType.none)
-    def storeValue(value: Expr) -> Expr:
-        return App.globalPut(Bytes("key"), value)
+    @pt.Subroutine(pt.TealType.none)
+    def storeValue(value: pt.Expr) -> pt.Expr:
+        return pt.App.globalPut(pt.Bytes("key"), value)
 
-    @Subroutine(TealType.bytes)
-    def getValue() -> Expr:
-        return App.globalGet(Bytes("key"))
+    @pt.Subroutine(pt.TealType.bytes)
+    def getValue() -> pt.Expr:
+        return pt.App.globalGet(pt.Bytes("key"))
 
-    program = Seq(
+    program = pt.Seq(
         [
-            If(Txn.sender() == Global.creator_address()).Then(
-                storeValue(Txn.application_args[0])
+            pt.If(pt.Txn.sender() == pt.Global.creator_address()).Then(
+                storeValue(pt.Txn.application_args[0])
             ),
-            If(getValue() == Bytes("fail")).Then(Reject()),
-            Approve(),
+            pt.If(getValue() == pt.Bytes("fail")).Then(pt.Reject()),
+            pt.Approve(),
         ]
     )
 
@@ -896,20 +949,22 @@ byte "key"
 app_global_get
 retsub
     """.strip()
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
     assert actual == expected
 
 
 def test_compile_subroutine_many_args():
-    @Subroutine(TealType.uint64)
+    @pt.Subroutine(pt.TealType.uint64)
     def calculateSum(
-        a1: Expr, a2: Expr, a3: Expr, a4: Expr, a5: Expr, a6: Expr
-    ) -> Expr:
+        a1: pt.Expr, a2: pt.Expr, a3: pt.Expr, a4: pt.Expr, a5: pt.Expr, a6: pt.Expr
+    ) -> pt.Expr:
         return a1 + a2 + a3 + a4 + a5 + a6
 
-    program = Return(
-        calculateSum(Int(1), Int(2), Int(3), Int(4), Int(5), Int(6))
-        == Int(1 + 2 + 3 + 4 + 5 + 6)
+    program = pt.Return(
+        calculateSum(pt.Int(1), pt.Int(2), pt.Int(3), pt.Int(4), pt.Int(5), pt.Int(6))
+        == pt.Int(1 + 2 + 3 + 4 + 5 + 6)
     )
 
     expected = """#pragma version 4
@@ -945,22 +1000,24 @@ load 5
 +
 retsub
     """.strip()
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
     assert actual == expected
 
 
 def test_compile_subroutine_recursive():
-    @Subroutine(TealType.uint64)
-    def isEven(i: Expr) -> Expr:
+    @pt.Subroutine(pt.TealType.uint64)
+    def isEven(i: pt.Expr) -> pt.Expr:
         return (
-            If(i == Int(0))
-            .Then(Int(1))
-            .ElseIf(i == Int(1))
-            .Then(Int(0))
-            .Else(isEven(i - Int(2)))
+            pt.If(i == pt.Int(0))
+            .Then(pt.Int(1))
+            .ElseIf(i == pt.Int(1))
+            .Then(pt.Int(0))
+            .Else(isEven(i - pt.Int(2)))
         )
 
-    program = Return(isEven(Int(6)))
+    program = pt.Return(isEven(pt.Int(6)))
 
     expected = """#pragma version 4
 int 6
@@ -997,22 +1054,24 @@ int 1
 isEven_0_l5:
 retsub
     """.strip()
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
     assert actual == expected
 
 
 def test_compile_subroutine_recursive_5():
-    @Subroutine(TealType.uint64)
-    def isEven(i: Expr) -> Expr:
+    @pt.Subroutine(pt.TealType.uint64)
+    def isEven(i: pt.Expr) -> pt.Expr:
         return (
-            If(i == Int(0))
-            .Then(Int(1))
-            .ElseIf(i == Int(1))
-            .Then(Int(0))
-            .Else(isEven(i - Int(2)))
+            pt.If(i == pt.Int(0))
+            .Then(pt.Int(1))
+            .ElseIf(i == pt.Int(1))
+            .Then(pt.Int(0))
+            .Else(isEven(i - pt.Int(2)))
         )
 
-    program = Return(isEven(Int(6)))
+    program = pt.Return(isEven(pt.Int(6)))
 
     expected = """#pragma version 5
 int 6
@@ -1047,20 +1106,22 @@ int 1
 isEven_0_l5:
 retsub
     """.strip()
-    actual = compileTeal(program, Mode.Application, version=5, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=5, assembleConstants=False
+    )
     assert actual == expected
 
 
 def test_compile_subroutine_recursive_multiple_args():
-    @Subroutine(TealType.uint64)
+    @pt.Subroutine(pt.TealType.uint64)
     def multiplyByAdding(a, b):
         return (
-            If(a == Int(0))
-            .Then(Return(Int(0)))
-            .Else(Return(b + multiplyByAdding(a - Int(1), b)))
+            pt.If(a == pt.Int(0))
+            .Then(pt.Return(pt.Int(0)))
+            .Else(pt.Return(b + multiplyByAdding(a - pt.Int(1), b)))
         )
 
-    program = Return(multiplyByAdding(Int(3), Int(5)))
+    program = pt.Return(multiplyByAdding(pt.Int(3), pt.Int(5)))
 
     expected = """#pragma version 4
 int 3
@@ -1101,20 +1162,22 @@ multiplyByAdding_0_l2:
 int 0
 retsub
     """.strip()
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
     assert actual == expected
 
 
 def test_compile_subroutine_recursive_multiple_args_5():
-    @Subroutine(TealType.uint64)
+    @pt.Subroutine(pt.TealType.uint64)
     def multiplyByAdding(a, b):
         return (
-            If(a == Int(0))
-            .Then(Return(Int(0)))
-            .Else(Return(b + multiplyByAdding(a - Int(1), b)))
+            pt.If(a == pt.Int(0))
+            .Then(pt.Return(pt.Int(0)))
+            .Else(pt.Return(b + multiplyByAdding(a - pt.Int(1), b)))
         )
 
-    program = Return(multiplyByAdding(Int(3), Int(5)))
+    program = pt.Return(multiplyByAdding(pt.Int(3), pt.Int(5)))
 
     expected = """#pragma version 5
 int 3
@@ -1149,20 +1212,22 @@ multiplyByAdding_0_l2:
 int 0
 retsub
     """.strip()
-    actual = compileTeal(program, Mode.Application, version=5, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=5, assembleConstants=False
+    )
     assert actual == expected
 
 
 def test_compile_subroutine_mutually_recursive_4():
-    @Subroutine(TealType.uint64)
-    def isEven(i: Expr) -> Expr:
-        return If(i == Int(0), Int(1), Not(isOdd(i - Int(1))))
+    @pt.Subroutine(pt.TealType.uint64)
+    def isEven(i: pt.Expr) -> pt.Expr:
+        return pt.If(i == pt.Int(0), pt.Int(1), pt.Not(isOdd(i - pt.Int(1))))
 
-    @Subroutine(TealType.uint64)
-    def isOdd(i: Expr) -> Expr:
-        return If(i == Int(0), Int(0), Not(isEven(i - Int(1))))
+    @pt.Subroutine(pt.TealType.uint64)
+    def isOdd(i: pt.Expr) -> pt.Expr:
+        return pt.If(i == pt.Int(0), pt.Int(0), pt.Not(isEven(i - pt.Int(1))))
 
-    program = Return(isEven(Int(6)))
+    program = pt.Return(isEven(pt.Int(6)))
 
     expected = """#pragma version 4
 int 6
@@ -1217,20 +1282,22 @@ int 0
 isOdd_1_l3:
 retsub
     """.strip()
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
     assert actual == expected
 
 
 def test_compile_subroutine_mutually_recursive_5():
-    @Subroutine(TealType.uint64)
-    def isEven(i: Expr) -> Expr:
-        return If(i == Int(0), Int(1), Not(isOdd(i - Int(1))))
+    @pt.Subroutine(pt.TealType.uint64)
+    def isEven(i: pt.Expr) -> pt.Expr:
+        return pt.If(i == pt.Int(0), pt.Int(1), pt.Not(isOdd(i - pt.Int(1))))
 
-    @Subroutine(TealType.uint64)
-    def isOdd(i: Expr) -> Expr:
-        return If(i == Int(0), Int(0), Not(isEven(i - Int(1))))
+    @pt.Subroutine(pt.TealType.uint64)
+    def isOdd(i: pt.Expr) -> pt.Expr:
+        return pt.If(i == pt.Int(0), pt.Int(0), pt.Not(isEven(i - pt.Int(1))))
 
-    program = Return(isEven(Int(6)))
+    program = pt.Return(isEven(pt.Int(6)))
 
     expected = """#pragma version 5
 int 6
@@ -1281,24 +1348,26 @@ int 0
 isOdd_1_l3:
 retsub
     """.strip()
-    actual = compileTeal(program, Mode.Application, version=5, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=5, assembleConstants=False
+    )
     assert actual == expected
 
 
 def test_compile_subroutine_mutually_recursive_different_arg_count_4():
-    @Subroutine(TealType.uint64)
-    def factorial(i: Expr) -> Expr:
-        return If(
-            i <= Int(1),
-            Int(1),
-            factorial_intermediate(i - Int(1), Bytes("inconsequential")) * i,
+    @pt.Subroutine(pt.TealType.uint64)
+    def factorial(i: pt.Expr) -> pt.Expr:
+        return pt.If(
+            i <= pt.Int(1),
+            pt.Int(1),
+            factorial_intermediate(i - pt.Int(1), pt.Bytes("inconsequential")) * i,
         )
 
-    @Subroutine(TealType.uint64)
-    def factorial_intermediate(i: Expr, j: Expr) -> Expr:
-        return Seq(Pop(j), factorial(i))
+    @pt.Subroutine(pt.TealType.uint64)
+    def factorial_intermediate(i: pt.Expr, j: pt.Expr) -> pt.Expr:
+        return pt.Seq(pt.Pop(j), factorial(i))
 
-    program = Return(factorial(Int(4)) == Int(24))
+    program = pt.Return(factorial(pt.Int(4)) == pt.Int(24))
 
     expected = """#pragma version 4
 int 4
@@ -1356,24 +1425,26 @@ swap
 pop
 retsub
     """.strip()
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
     assert actual == expected
 
 
 def test_compile_subroutine_mutually_recursive_different_arg_count_5():
-    @Subroutine(TealType.uint64)
-    def factorial(i: Expr) -> Expr:
-        return If(
-            i <= Int(1),
-            Int(1),
-            factorial_intermediate(i - Int(1), Bytes("inconsequential")) * i,
+    @pt.Subroutine(pt.TealType.uint64)
+    def factorial(i: pt.Expr) -> pt.Expr:
+        return pt.If(
+            i <= pt.Int(1),
+            pt.Int(1),
+            factorial_intermediate(i - pt.Int(1), pt.Bytes("inconsequential")) * i,
         )
 
-    @Subroutine(TealType.uint64)
-    def factorial_intermediate(i: Expr, j: Expr) -> Expr:
-        return Seq(Log(j), factorial(i))
+    @pt.Subroutine(pt.TealType.uint64)
+    def factorial_intermediate(i: pt.Expr, j: pt.Expr) -> pt.Expr:
+        return pt.Seq(pt.Log(j), factorial(i))
 
-    program = Return(factorial(Int(4)) == Int(24))
+    program = pt.Return(factorial(pt.Int(4)) == pt.Int(24))
 
     expected = """#pragma version 5
 int 4
@@ -1422,19 +1493,21 @@ store 2
 store 1
 retsub
     """.strip()
-    actual = compileTeal(program, Mode.Application, version=5, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=5, assembleConstants=False
+    )
     assert actual == expected
 
 
 def test_compile_loop_in_subroutine():
-    @Subroutine(TealType.none)
-    def setState(value: Expr) -> Expr:
-        i = ScratchVar()
-        return For(i.store(Int(0)), i.load() < Int(10), i.store(i.load() + Int(1))).Do(
-            App.globalPut(Itob(i.load()), value)
-        )
+    @pt.Subroutine(pt.TealType.none)
+    def setState(value: pt.Expr) -> pt.Expr:
+        i = pt.ScratchVar()
+        return pt.For(
+            i.store(pt.Int(0)), i.load() < pt.Int(10), i.store(i.load() + pt.Int(1))
+        ).Do(pt.App.globalPut(pt.Itob(i.load()), value))
 
-    program = Seq([setState(Bytes("value")), Approve()])
+    program = pt.Seq([setState(pt.Bytes("value")), pt.Approve()])
 
     expected = """#pragma version 4
 byte "value"
@@ -1464,17 +1537,19 @@ b setState_0_l1
 setState_0_l3:
 retsub
     """.strip()
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
     assert actual == expected
 
 
 def test_compile_subroutine_invalid_name():
-    def tmp() -> Expr:
-        return Int(1)
+    def tmp() -> pt.Expr:
+        return pt.Int(1)
 
     tmp.__name__ = "invalid-;)"
 
-    program = Subroutine(TealType.uint64)(tmp)()
+    program = pt.Subroutine(pt.TealType.uint64)(tmp)()
     expected = """#pragma version 4
 callsub invalid_0
 return
@@ -1484,26 +1559,28 @@ invalid_0:
 int 1
 retsub
     """.strip()
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=False)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
     assert actual == expected
 
 
 def test_compile_subroutine_assemble_constants():
-    @Subroutine(TealType.none)
-    def storeValue(key: Expr, t1: Expr, t2: Expr, t3: Expr) -> Expr:
-        return App.globalPut(key, t1 + t2 + t3 + Int(10))
+    @pt.Subroutine(pt.TealType.none)
+    def storeValue(key: pt.Expr, t1: pt.Expr, t2: pt.Expr, t3: pt.Expr) -> pt.Expr:
+        return pt.App.globalPut(key, t1 + t2 + t3 + pt.Int(10))
 
-    program = Seq(
+    program = pt.Seq(
         [
-            If(Txn.application_id() == Int(0)).Then(
+            pt.If(pt.Txn.application_id() == pt.Int(0)).Then(
                 storeValue(
-                    Concat(Bytes("test"), Bytes("test"), Bytes("a")),
-                    Int(1),
-                    Int(1),
-                    Int(3),
+                    pt.Concat(pt.Bytes("test"), pt.Bytes("test"), pt.Bytes("a")),
+                    pt.Int(1),
+                    pt.Int(1),
+                    pt.Int(3),
                 )
             ),
-            Approve(),
+            pt.Approve(),
         ]
     )
 
@@ -1544,14 +1621,16 @@ pushint 10 // 10
 app_global_put
 retsub
     """.strip()
-    actual = compileTeal(program, Mode.Application, version=4, assembleConstants=True)
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=True
+    )
     assert actual == expected
 
 
 def test_compile_wide_ratio():
     cases = (
         (
-            WideRatio([Int(2), Int(100)], [Int(5)]),
+            pt.WideRatio([pt.Int(2), pt.Int(100)], [pt.Int(5)]),
             """#pragma version 5
 int 2
 int 100
@@ -1568,7 +1647,7 @@ return
 """,
         ),
         (
-            WideRatio([Int(2), Int(100)], [Int(10), Int(5)]),
+            pt.WideRatio([pt.Int(2), pt.Int(100)], [pt.Int(10), pt.Int(5)]),
             """#pragma version 5
 int 2
 int 100
@@ -1586,7 +1665,7 @@ return
 """,
         ),
         (
-            WideRatio([Int(2), Int(100), Int(3)], [Int(10), Int(5)]),
+            pt.WideRatio([pt.Int(2), pt.Int(100), pt.Int(3)], [pt.Int(10), pt.Int(5)]),
             """#pragma version 5
 int 2
 int 100
@@ -1613,7 +1692,9 @@ return
 """,
         ),
         (
-            WideRatio([Int(2), Int(100), Int(3)], [Int(10), Int(5), Int(6)]),
+            pt.WideRatio(
+                [pt.Int(2), pt.Int(100), pt.Int(3)], [pt.Int(10), pt.Int(5), pt.Int(6)]
+            ),
             """#pragma version 5
 int 2
 int 100
@@ -1649,7 +1730,10 @@ return
 """,
         ),
         (
-            WideRatio([Int(2), Int(100), Int(3), Int(4)], [Int(10), Int(5), Int(6)]),
+            pt.WideRatio(
+                [pt.Int(2), pt.Int(100), pt.Int(3), pt.Int(4)],
+                [pt.Int(10), pt.Int(5), pt.Int(6)],
+            ),
             """#pragma version 5
 int 2
 int 100
@@ -1696,7 +1780,7 @@ return
     )
 
     for program, expected in cases:
-        actual = compileTeal(
-            program, Mode.Application, version=5, assembleConstants=False
+        actual = pt.compileTeal(
+            program, pt.Mode.Application, version=5, assembleConstants=False
         )
         assert actual == expected.strip()

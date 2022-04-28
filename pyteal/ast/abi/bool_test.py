@@ -1,9 +1,10 @@
 from typing import NamedTuple, List
 import pytest
 
-from ... import *
-from .type_test import ContainerType
-from .bool import (
+import pyteal as pt
+from pyteal import abi
+from pyteal.ast.abi.type_test import ContainerType
+from pyteal.ast.abi.bool import (
     boolAwareStaticByteLength,
     consecutiveBoolInstanceNum,
     consecutiveBoolTypeSpecNum,
@@ -11,10 +12,7 @@ from .bool import (
     encodeBoolSequence,
 )
 
-# this is not necessary but mypy complains if it's not included
-from ... import CompileOptions
-
-options = CompileOptions(version=5)
+options = pt.CompileOptions(version=5)
 
 
 def test_BoolTypeSpec_str():
@@ -49,48 +47,48 @@ def test_Bool_set_static():
     value = abi.Bool()
     for value_to_set in (True, False):
         expr = value.set(value_to_set)
-        assert expr.type_of() == TealType.none
+        assert expr.type_of() == pt.TealType.none
         assert not expr.has_return()
 
-        expected = TealSimpleBlock(
+        expected = pt.TealSimpleBlock(
             [
-                TealOp(None, Op.int, 1 if value_to_set else 0),
-                TealOp(None, Op.store, value.stored_value.slot),
+                pt.TealOp(None, pt.Op.int, 1 if value_to_set else 0),
+                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
             ]
         )
 
         actual, _ = expr.__teal__(options)
         actual.addIncoming()
-        actual = TealBlock.NormalizeBlocks(actual)
+        actual = pt.TealBlock.NormalizeBlocks(actual)
 
-        with TealComponent.Context.ignoreExprEquality():
+        with pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected
 
 
 def test_Bool_set_expr():
     value = abi.Bool()
-    expr = value.set(Int(0).Or(Int(1)))
-    assert expr.type_of() == TealType.none
+    expr = value.set(pt.Int(0).Or(pt.Int(1)))
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.int, 1),
-            TealOp(None, Op.logic_or),
-            TealOp(None, Op.store, value.stored_value.slot),
-            TealOp(None, Op.load, value.stored_value.slot),
-            TealOp(None, Op.int, 2),
-            TealOp(None, Op.lt),
-            TealOp(None, Op.assert_),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.logic_or),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+            pt.TealOp(None, pt.Op.int, 2),
+            pt.TealOp(None, pt.Op.lt),
+            pt.TealOp(None, pt.Op.assert_),
         ]
     )
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
 
@@ -98,59 +96,61 @@ def test_Bool_set_copy():
     other = abi.Bool()
     value = abi.Bool()
     expr = value.set(other)
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(None, Op.load, other.stored_value.slot),
-            TealOp(None, Op.store, value.stored_value.slot),
+            pt.TealOp(None, pt.Op.load, other.stored_value.slot),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
         ]
     )
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         value.set(abi.Uint16())
 
 
 def test_Bool_set_computed():
     value = abi.Bool()
-    computed = ContainerType(abi.BoolTypeSpec(), Int(0x80))
+    computed = ContainerType(abi.BoolTypeSpec(), pt.Int(0x80))
     expr = value.set(computed)
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(None, Op.int, 0x80),
-            TealOp(None, Op.store, value.stored_value.slot),
+            pt.TealOp(None, pt.Op.int, 0x80),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
         ]
     )
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
-    with pytest.raises(TealInputError):
-        value.set(ContainerType(abi.Uint32TypeSpec(), Int(65537)))
+    with pytest.raises(pt.TealInputError):
+        value.set(ContainerType(abi.Uint32TypeSpec(), pt.Int(65537)))
 
 
 def test_Bool_get():
     value = abi.Bool()
     expr = value.get()
-    assert expr.type_of() == TealType.uint64
+    assert expr.type_of() == pt.TealType.uint64
     assert not expr.has_return()
 
-    expected = TealSimpleBlock([TealOp(expr, Op.load, value.stored_value.slot)])
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(expr, pt.Op.load, value.stored_value.slot)]
+    )
 
     actual, _ = expr.__teal__(options)
 
@@ -159,80 +159,80 @@ def test_Bool_get():
 
 def test_Bool_decode():
     value = abi.Bool()
-    encoded = Bytes("encoded")
-    for startIndex in (None, Int(1)):
-        for endIndex in (None, Int(2)):
-            for length in (None, Int(3)):
+    encoded = pt.Bytes("encoded")
+    for startIndex in (None, pt.Int(1)):
+        for endIndex in (None, pt.Int(2)):
+            for length in (None, pt.Int(3)):
                 expr = value.decode(
                     encoded, startIndex=startIndex, endIndex=endIndex, length=length
                 )
-                assert expr.type_of() == TealType.none
+                assert expr.type_of() == pt.TealType.none
                 assert not expr.has_return()
 
-                expected = TealSimpleBlock(
+                expected = pt.TealSimpleBlock(
                     [
-                        TealOp(None, Op.byte, '"encoded"'),
-                        TealOp(None, Op.int, 0 if startIndex is None else 1),
-                        TealOp(None, Op.int, 8),
-                        TealOp(None, Op.mul),
-                        TealOp(None, Op.getbit),
-                        TealOp(None, Op.store, value.stored_value.slot),
+                        pt.TealOp(None, pt.Op.byte, '"encoded"'),
+                        pt.TealOp(None, pt.Op.int, 0 if startIndex is None else 1),
+                        pt.TealOp(None, pt.Op.int, 8),
+                        pt.TealOp(None, pt.Op.mul),
+                        pt.TealOp(None, pt.Op.getbit),
+                        pt.TealOp(None, pt.Op.store, value.stored_value.slot),
                     ]
                 )
 
                 actual, _ = expr.__teal__(options)
                 actual.addIncoming()
-                actual = TealBlock.NormalizeBlocks(actual)
+                actual = pt.TealBlock.NormalizeBlocks(actual)
 
-                with TealComponent.Context.ignoreExprEquality():
+                with pt.TealComponent.Context.ignoreExprEquality():
                     assert actual == expected
 
 
 def test_Bool_decodeBit():
     value = abi.Bool()
-    bitIndex = Int(17)
-    encoded = Bytes("encoded")
+    bitIndex = pt.Int(17)
+    encoded = pt.Bytes("encoded")
     expr = value.decodeBit(encoded, bitIndex)
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(None, Op.byte, '"encoded"'),
-            TealOp(None, Op.int, 17),
-            TealOp(None, Op.getbit),
-            TealOp(None, Op.store, value.stored_value.slot),
+            pt.TealOp(None, pt.Op.byte, '"encoded"'),
+            pt.TealOp(None, pt.Op.int, 17),
+            pt.TealOp(None, pt.Op.getbit),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
         ]
     )
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
 
 def test_Bool_encode():
     value = abi.Bool()
     expr = value.encode()
-    assert expr.type_of() == TealType.bytes
+    assert expr.type_of() == pt.TealType.bytes
     assert not expr.has_return()
 
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(None, Op.byte, "0x00"),
-            TealOp(None, Op.int, 0),
-            TealOp(None, Op.load, value.stored_value.slot),
-            TealOp(None, Op.setbit),
+            pt.TealOp(None, pt.Op.byte, "0x00"),
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+            pt.TealOp(None, pt.Op.setbit),
         ]
     )
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
 
@@ -397,28 +397,28 @@ def test_encodeBoolSequence():
 
     for i, test in enumerate(tests):
         expr = encodeBoolSequence(test.types)
-        assert expr.type_of() == TealType.bytes
+        assert expr.type_of() == pt.TealType.bytes
         assert not expr.has_return()
 
         setBits = [
             [
-                TealOp(None, Op.int, j),
-                TealOp(None, Op.load, testType.stored_value.slot),
-                TealOp(None, Op.setbit),
+                pt.TealOp(None, pt.Op.int, j),
+                pt.TealOp(None, pt.Op.load, testType.stored_value.slot),
+                pt.TealOp(None, pt.Op.setbit),
             ]
             for j, testType in enumerate(test.types)
         ]
 
-        expected = TealSimpleBlock(
+        expected = pt.TealSimpleBlock(
             [
-                TealOp(None, Op.byte, "0x" + ("00" * test.expectedLength)),
+                pt.TealOp(None, pt.Op.byte, "0x" + ("00" * test.expectedLength)),
             ]
             + [expr for setBit in setBits for expr in setBit]
         )
 
         actual, _ = expr.__teal__(options)
         actual.addIncoming()
-        actual = TealBlock.NormalizeBlocks(actual)
+        actual = pt.TealBlock.NormalizeBlocks(actual)
 
-        with TealComponent.Context.ignoreExprEquality():
+        with pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected, "Test at index {} failed".format(i)
