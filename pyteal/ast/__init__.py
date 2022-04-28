@@ -139,6 +139,7 @@ from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
 from pyteal.ast.maybe import MaybeValue
 from pyteal.ast.multi import MultiValue
 from pyteal.ast.opup import OpUp, OpUpMode
+from pyteal.ast.ecdsa import EcdsaCurve, EcdsaVerify, EcdsaDecompress, EcdsaRecover
 
 __all__ = [
     "Expr",
@@ -276,4 +277,8 @@ __all__ = [
     "For",
     "Break",
     "Continue",
+    "EcdsaCurve",
+    "EcdsaVerify",
+    "EcdsaDecompress",
+    "EcdsaRecover",
 ]
