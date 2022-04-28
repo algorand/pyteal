@@ -48,7 +48,7 @@ lint: black flake8 mypy
 
 # ---- Unit Tests (no algod) ---- #
 
-# TODO: add utils to multithreaded tests when following issue has been fixed https://github.com/algorand/pyteal/issues/199
+# TODO: add blackbox_test.py to multithreaded tests when following issue has been fixed https://github.com/algorand/pyteal/issues/199
 NUM_PROCS = auto
 test-unit:
 	pytest -n $(NUM_PROCS) --durations=10 -sv pyteal tests/unit --ignore tests/unit/blackbox_test.py
