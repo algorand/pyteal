@@ -17,7 +17,12 @@ from pyteal.errors import (
     TealInputError,
     TealCompileError,
 )
-from pyteal.config import MAX_GROUP_SIZE, NUM_SLOTS
+from pyteal.config import (
+    MAX_GROUP_SIZE,
+    NUM_SLOTS,
+    RETURN_METHOD_SELECTOR,
+    METHOD_ARG_NUM_LIMIT,
+)
 
 # begin __all__
 __all__ = (

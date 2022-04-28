@@ -15,7 +15,7 @@ from pyteal.ast.naryexpr import And, Or
 from pyteal.ast.txn import Txn
 from pyteal.ast.return_ import Approve
 
-from pyteal.ast.abi.method_return import MethodReturn
+# from pyteal.ast.abi.method_return import MethodReturn
 
 # NOTE this should sit in `abi` directory, still waiting on abi to be merged in
 
@@ -136,7 +136,7 @@ class Router:
         else:
             if isinstance(branch, SubroutineFnWrapper) and branch.has_return():
                 # TODO need to encode/decode things
-                execBranchArgs: List[Expr] = []
+                # execBranchArgs: List[Expr] = []
                 if branch.subroutine.argumentCount() >= METHOD_ARG_NUM_LIMIT:
                     # NOTE decode (if arg num > 15 need to de-tuple 15th (last) argument)
                     pass
