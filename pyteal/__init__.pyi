@@ -27,6 +27,7 @@ from pyteal.config import (
     METHOD_ARG_NUM_LIMIT,
 )
 
+
 __all__ = [
     "AccountParam",
     "Add",
