@@ -1,13 +1,13 @@
-from .ops import Op, Mode
+from pyteal.ir.ops import Op, Mode
 
-from .tealcomponent import TealComponent
-from .tealop import TealOp
-from .teallabel import TealLabel
-from .tealblock import TealBlock
-from .tealsimpleblock import TealSimpleBlock
-from .tealconditionalblock import TealConditionalBlock
+from pyteal.ir.tealcomponent import TealComponent
+from pyteal.ir.tealop import TealOp
+from pyteal.ir.teallabel import TealLabel
+from pyteal.ir.tealblock import TealBlock
+from pyteal.ir.tealsimpleblock import TealSimpleBlock
+from pyteal.ir.tealconditionalblock import TealConditionalBlock
 
-from .labelref import LabelReference
+from pyteal.ir.labelref import LabelReference
 
 __all__ = [
     "Op",

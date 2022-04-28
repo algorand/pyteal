@@ -1,7 +1,6 @@
 # based off https://github.com/algorand/docs/blob/cdf11d48a4b1168752e6ccaf77c8b9e8e599713a/examples/smart_contracts/v2/python/stateful_smart_contracts.py
 
 import base64
-import datetime
 
 from algosdk.future import transaction
 from algosdk import account, mnemonic

@@ -1,13 +1,14 @@
 import pytest
 
-from ... import *
-from .util import substringForDecoding
-from .tuple import encodeTuple
-from .bool import boolSequenceLength
-from .type_test import ContainerType
-from .array_base_test import STATIC_TYPES, DYNAMIC_TYPES
+import pyteal as pt
+from pyteal import abi
+from pyteal.ast.abi.util import substringForDecoding
+from pyteal.ast.abi.tuple import encodeTuple
+from pyteal.ast.abi.bool import boolSequenceLength
+from pyteal.ast.abi.type_test import ContainerType
+from pyteal.ast.abi.array_base_test import STATIC_TYPES, DYNAMIC_TYPES
 
-options = CompileOptions(version=5)
+options = pt.CompileOptions(version=5)
 
 
 def test_StaticArrayTypeSpec_init():
@@ -99,14 +100,14 @@ def test_StaticArrayTypeSpec_byte_length_static():
 
 
 def test_StaticArray_decode():
-    encoded = Bytes("encoded")
-    for startIndex in (None, Int(1)):
-        for endIndex in (None, Int(2)):
-            for length in (None, Int(3)):
+    encoded = pt.Bytes("encoded")
+    for startIndex in (None, pt.Int(1)):
+        for endIndex in (None, pt.Int(2)):
+            for length in (None, pt.Int(3)):
                 value = abi.StaticArray(abi.Uint64TypeSpec(), 10)
 
                 if endIndex is not None and length is not None:
-                    with pytest.raises(TealInputError):
+                    with pytest.raises(pt.TealInputError):
                         value.decode(
                             encoded,
                             startIndex=startIndex,
@@ -118,7 +119,7 @@ def test_StaticArray_decode():
                 expr = value.decode(
                     encoded, startIndex=startIndex, endIndex=endIndex, length=length
                 )
-                assert expr.type_of() == TealType.none
+                assert expr.type_of() == pt.TealType.none
                 assert not expr.has_return()
 
                 expectedExpr = value.stored_value.store(
@@ -128,49 +129,49 @@ def test_StaticArray_decode():
                 )
                 expected, _ = expectedExpr.__teal__(options)
                 expected.addIncoming()
-                expected = TealBlock.NormalizeBlocks(expected)
+                expected = pt.TealBlock.NormalizeBlocks(expected)
 
                 actual, _ = expr.__teal__(options)
                 actual.addIncoming()
-                actual = TealBlock.NormalizeBlocks(actual)
+                actual = pt.TealBlock.NormalizeBlocks(actual)
 
-                with TealComponent.Context.ignoreExprEquality():
+                with pt.TealComponent.Context.ignoreExprEquality():
                     assert actual == expected
 
 
 def test_StaticArray_set_values():
     value = abi.StaticArray(abi.Uint64TypeSpec(), 10)
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         value.set([])
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         value.set([abi.Uint64()] * 9)
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         value.set([abi.Uint64()] * 11)
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         value.set([abi.Uint16()] * 10)
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         value.set([abi.Uint64()] * 9 + [abi.Uint16()])
 
     values = [abi.Uint64() for _ in range(10)]
     expr = value.set(values)
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
     expectedExpr = value.stored_value.store(encodeTuple(values))
     expected, _ = expectedExpr.__teal__(options)
     expected.addIncoming()
-    expected = TealBlock.NormalizeBlocks(expected)
+    expected = pt.TealBlock.NormalizeBlocks(expected)
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
 
@@ -178,61 +179,61 @@ def test_StaticArray_set_copy():
     value = abi.StaticArray(abi.Uint64TypeSpec(), 10)
     otherArray = abi.StaticArray(abi.Uint64TypeSpec(), 10)
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         value.set(abi.StaticArray(abi.Uint64TypeSpec(), 11))
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         value.set(abi.StaticArray(abi.Uint8TypeSpec(), 10))
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         value.set(abi.Uint64())
 
     expr = value.set(otherArray)
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(None, Op.load, otherArray.stored_value.slot),
-            TealOp(None, Op.store, value.stored_value.slot),
+            pt.TealOp(None, pt.Op.load, otherArray.stored_value.slot),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
         ]
     )
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
 
 def test_StaticArray_set_computed():
     value = abi.StaticArray(abi.Uint64TypeSpec(), 10)
     computed = ContainerType(
-        value.type_spec(), Bytes("indeed this is hard to simulate")
+        value.type_spec(), pt.Bytes("indeed this is hard to simulate")
     )
     expr = value.set(computed)
-    assert expr.type_of() == TealType.none
+    assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(None, Op.byte, '"indeed this is hard to simulate"'),
-            TealOp(None, Op.store, value.stored_value.slot),
+            pt.TealOp(None, pt.Op.byte, '"indeed this is hard to simulate"'),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
         ]
     )
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
     actual = actual.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
-    with pytest.raises(TealInputError):
+    with pytest.raises(pt.TealInputError):
         value.set(
             ContainerType(
                 abi.StaticArrayTypeSpec(abi.Uint16TypeSpec(), 40),
-                Bytes("well i am trolling"),
+                pt.Bytes("well i am trolling"),
             )
         )
 
@@ -240,16 +241,18 @@ def test_StaticArray_set_computed():
 def test_StaticArray_encode():
     value = abi.StaticArray(abi.Uint64TypeSpec(), 10)
     expr = value.encode()
-    assert expr.type_of() == TealType.bytes
+    assert expr.type_of() == pt.TealType.bytes
     assert not expr.has_return()
 
-    expected = TealSimpleBlock([TealOp(None, Op.load, value.stored_value.slot)])
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(None, pt.Op.load, value.stored_value.slot)]
+    )
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
 
@@ -257,16 +260,16 @@ def test_StaticArray_length():
     for length in (0, 1, 2, 3, 1000):
         value = abi.StaticArray(abi.Uint64TypeSpec(), length)
         expr = value.length()
-        assert expr.type_of() == TealType.uint64
+        assert expr.type_of() == pt.TealType.uint64
         assert not expr.has_return()
 
-        expected = TealSimpleBlock([TealOp(None, Op.int, length)])
+        expected = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.int, length)])
 
         actual, _ = expr.__teal__(options)
         actual.addIncoming()
-        actual = TealBlock.NormalizeBlocks(actual)
+        actual = pt.TealBlock.NormalizeBlocks(actual)
 
-        with TealComponent.Context.ignoreExprEquality():
+        with pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected
 
 
@@ -276,7 +279,7 @@ def test_StaticArray_getitem():
 
         for index in range(length):
             # dynamic indexes
-            indexExpr = Int(index)
+            indexExpr = pt.Int(index)
             element = value[indexExpr]
             assert type(element) is abi.ArrayElement
             assert element.array is value
@@ -287,11 +290,11 @@ def test_StaticArray_getitem():
             element = value[index]
             assert type(element) is abi.ArrayElement
             assert element.array is value
-            assert type(element.index) is Int
+            assert type(element.index) is pt.Int
             assert element.index.value == index
 
-        with pytest.raises(TealInputError):
+        with pytest.raises(pt.TealInputError):
             value[-1]
 
-        with pytest.raises(TealInputError):
+        with pytest.raises(pt.TealInputError):
             value[length]

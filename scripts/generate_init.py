@@ -1,5 +1,8 @@
-import argparse, os, sys, difflib
+import argparse
 from collections import Counter
+import difflib
+import os
+import sys
 
 from pyteal import __all__ as static_all
 

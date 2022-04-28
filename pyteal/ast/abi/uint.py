@@ -7,19 +7,19 @@ from typing import (
 )
 from abc import abstractmethod
 
-from ...types import TealType
-from ...errors import TealInputError
-from ..scratchvar import ScratchVar
-from ..expr import Expr
-from ..seq import Seq
-from ..assert_ import Assert
-from ..substring import Suffix
-from ..int import Int
-from ..bytes import Bytes
-from ..unaryexpr import Itob, Btoi
-from ..binaryexpr import GetByte, ExtractUint16, ExtractUint32, ExtractUint64
-from ..ternaryexpr import SetByte
-from .type import ComputedValue, TypeSpec, BaseType
+from pyteal.types import TealType
+from pyteal.errors import TealInputError
+from pyteal.ast.scratchvar import ScratchVar
+from pyteal.ast.expr import Expr
+from pyteal.ast.seq import Seq
+from pyteal.ast.assert_ import Assert
+from pyteal.ast.substring import Suffix
+from pyteal.ast.int import Int
+from pyteal.ast.bytes import Bytes
+from pyteal.ast.unaryexpr import Itob, Btoi
+from pyteal.ast.binaryexpr import GetByte, ExtractUint16, ExtractUint32, ExtractUint64
+from pyteal.ast.ternaryexpr import SetByte
+from pyteal.ast.abi.type import ComputedValue, TypeSpec, BaseType
 
 NUM_BITS_IN_BYTE = 8
 

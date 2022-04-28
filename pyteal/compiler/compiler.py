@@ -1,29 +1,29 @@
 from typing import List, Tuple, Set, Dict, Optional, cast
 
-from .optimizer import OptimizeOptions, apply_global_optimizations
+from pyteal.compiler.optimizer import OptimizeOptions, apply_global_optimizations
 
-from ..types import TealType
-from ..ast import (
+from pyteal.types import TealType
+from pyteal.ast import (
     Expr,
     Return,
     Seq,
     SubroutineDefinition,
     SubroutineDeclaration,
 )
-from ..ir import Mode, TealComponent, TealOp, TealBlock, TealSimpleBlock
-from ..errors import TealInputError, TealInternalError
+from pyteal.ir import Mode, TealComponent, TealOp, TealBlock, TealSimpleBlock
+from pyteal.errors import TealInputError, TealInternalError
 
-from .sort import sortBlocks
-from .flatten import flattenBlocks, flattenSubroutines
-from .scratchslots import (
+from pyteal.compiler.sort import sortBlocks
+from pyteal.compiler.flatten import flattenBlocks, flattenSubroutines
+from pyteal.compiler.scratchslots import (
     assignScratchSlotsToSubroutines,
     collect_unoptimized_slots,
 )
-from .subroutines import (
+from pyteal.compiler.subroutines import (
     spillLocalSlotsDuringRecursion,
     resolveSubroutines,
 )
-from .constants import createConstantBlocks
+from pyteal.compiler.constants import createConstantBlocks
 
 MAX_TEAL_VERSION = 6
 MIN_TEAL_VERSION = 2

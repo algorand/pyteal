@@ -1,4 +1,4 @@
-from .compiler import (
+from pyteal.compiler.compiler import (
     MAX_TEAL_VERSION,
     MIN_TEAL_VERSION,
     DEFAULT_TEAL_VERSION,
@@ -6,7 +6,7 @@ from .compiler import (
     compileTeal,
 )
 
-from .optimizer import OptimizeOptions
+from pyteal.compiler.optimizer import OptimizeOptions
 
 __all__ = [
     "MAX_TEAL_VERSION",

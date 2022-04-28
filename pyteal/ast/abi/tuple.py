@@ -4,25 +4,23 @@ from typing import (
     Dict,
     Generic,
     TypeVar,
-    Union,
     cast,
-    Tuple as TypingTuple,
     overload,
 )
 
-from ...types import TealType
-from ...errors import TealInputError
-from ..expr import Expr
-from ..seq import Seq
-from ..int import Int
-from ..bytes import Bytes
-from ..unaryexpr import Len
-from ..binaryexpr import ExtractUint16
-from ..naryexpr import Concat
-from ..scratchvar import ScratchVar
+from pyteal.types import TealType
+from pyteal.errors import TealInputError
+from pyteal.ast.expr import Expr
+from pyteal.ast.seq import Seq
+from pyteal.ast.int import Int
+from pyteal.ast.bytes import Bytes
+from pyteal.ast.unaryexpr import Len
+from pyteal.ast.binaryexpr import ExtractUint16
+from pyteal.ast.naryexpr import Concat
+from pyteal.ast.scratchvar import ScratchVar
 
-from .type import TypeSpec, BaseType, ComputedValue
-from .bool import (
+from pyteal.ast.abi.type import TypeSpec, BaseType, ComputedValue
+from pyteal.ast.abi.bool import (
     Bool,
     BoolTypeSpec,
     consecutiveBoolInstanceNum,
@@ -31,8 +29,8 @@ from .bool import (
     encodeBoolSequence,
     boolAwareStaticByteLength,
 )
-from .uint import NUM_BITS_IN_BYTE, Uint16
-from .util import substringForDecoding
+from pyteal.ast.abi.uint import NUM_BITS_IN_BYTE, Uint16
+from pyteal.ast.abi.util import substringForDecoding
 
 
 def encodeTuple(values: Sequence[BaseType]) -> Expr:

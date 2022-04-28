@@ -1,10 +1,11 @@
 from typing import List, Tuple, NamedTuple, Callable, Union, Optional
-from .type_test import ContainerType
-from ... import *
+from pyteal.ast.abi.type_test import ContainerType
+import pyteal as pt
+from pyteal import abi
 
 import pytest
 
-options = CompileOptions(version=5)
+options = pt.CompileOptions(version=5)
 
 
 class UintTestData(NamedTuple):
@@ -14,14 +15,14 @@ class UintTestData(NamedTuple):
     maxValue: int
     checkUpperBound: bool
     expectedDecoding: Callable[
-        [Expr, Optional[Expr], Optional[Expr], Optional[Expr]], Expr
+        [pt.Expr, Optional[pt.Expr], Optional[pt.Expr], Optional[pt.Expr]], pt.Expr
     ]
-    expectedEncoding: Callable[[abi.Uint], Expr]
+    expectedEncoding: Callable[[abi.Uint], pt.Expr]
 
 
-def noneToInt0(value: Union[None, Expr]):
+def noneToInt0(value: Union[None, pt.Expr]):
     if value is None:
-        return Int(0)
+        return pt.Int(0)
     return value
 
 
@@ -32,11 +33,11 @@ testData = [
         expectedBits=8,
         maxValue=2**8 - 1,
         checkUpperBound=True,
-        expectedDecoding=lambda encoded, startIndex, endIndex, length: GetByte(
+        expectedDecoding=lambda encoded, startIndex, endIndex, length: pt.GetByte(
             encoded, noneToInt0(startIndex)
         ),
-        expectedEncoding=lambda uintType: SetByte(
-            Bytes(b"\x00"), Int(0), uintType.get()
+        expectedEncoding=lambda uintType: pt.SetByte(
+            pt.Bytes(b"\x00"), pt.Int(0), uintType.get()
         ),
     ),
     UintTestData(
@@ -45,10 +46,10 @@ testData = [
         expectedBits=16,
         maxValue=2**16 - 1,
         checkUpperBound=True,
-        expectedDecoding=lambda encoded, startIndex, endIndex, length: ExtractUint16(
+        expectedDecoding=lambda encoded, startIndex, endIndex, length: pt.ExtractUint16(
             encoded, noneToInt0(startIndex)
         ),
-        expectedEncoding=lambda uintType: Suffix(Itob(uintType.get()), Int(6)),
+        expectedEncoding=lambda uintType: pt.Suffix(pt.Itob(uintType.get()), pt.Int(6)),
     ),
     UintTestData(
         uintType=abi.Uint32TypeSpec(),
@@ -56,10 +57,10 @@ testData = [
         expectedBits=32,
         maxValue=2**32 - 1,
         checkUpperBound=True,
-        expectedDecoding=lambda encoded, startIndex, endIndex, length: ExtractUint32(
+        expectedDecoding=lambda encoded, startIndex, endIndex, length: pt.ExtractUint32(
             encoded, noneToInt0(startIndex)
         ),
-        expectedEncoding=lambda uintType: Suffix(Itob(uintType.get()), Int(4)),
+        expectedEncoding=lambda uintType: pt.Suffix(pt.Itob(uintType.get()), pt.Int(4)),
     ),
     UintTestData(
         uintType=abi.Uint64TypeSpec(),
@@ -67,10 +68,10 @@ testData = [
         expectedBits=64,
         maxValue=2**64 - 1,
         checkUpperBound=False,
-        expectedDecoding=lambda encoded, startIndex, endIndex, length: Btoi(encoded)
+        expectedDecoding=lambda encoded, startIndex, endIndex, length: pt.Btoi(encoded)
         if startIndex is None and endIndex is None and length is None
-        else ExtractUint64(encoded, noneToInt0(startIndex)),
-        expectedEncoding=lambda uintType: Itob(uintType.get()),
+        else pt.ExtractUint64(encoded, noneToInt0(startIndex)),
+        expectedEncoding=lambda uintType: pt.Itob(uintType.get()),
     ),
 ]
 
@@ -115,8 +116,8 @@ def test_UintTypeSpec_eq():
 
 def test_UintTypeSpec_storage_type():
     for test in testData:
-        assert test.uintType.storage_type() == TealType.uint64
-    assert abi.BoolTypeSpec().storage_type() == TealType.uint64
+        assert test.uintType.storage_type() == pt.TealType.uint64
+    assert abi.BoolTypeSpec().storage_type() == pt.TealType.uint64
 
 
 def test_UintTypeSpec_new_instance():
@@ -130,61 +131,61 @@ def test_Uint_set_static():
         for value_to_set in (0, 1, 100, test.maxValue):
             value = test.uintType.new_instance()
             expr = value.set(value_to_set)
-            assert expr.type_of() == TealType.none
+            assert expr.type_of() == pt.TealType.none
             assert not expr.has_return()
 
-            expected = TealSimpleBlock(
+            expected = pt.TealSimpleBlock(
                 [
-                    TealOp(None, Op.int, value_to_set),
-                    TealOp(None, Op.store, value.stored_value.slot),
+                    pt.TealOp(None, pt.Op.int, value_to_set),
+                    pt.TealOp(None, pt.Op.store, value.stored_value.slot),
                 ]
             )
 
             actual, _ = expr.__teal__(options)
             actual.addIncoming()
-            actual = TealBlock.NormalizeBlocks(actual)
+            actual = pt.TealBlock.NormalizeBlocks(actual)
 
-            with TealComponent.Context.ignoreExprEquality():
+            with pt.TealComponent.Context.ignoreExprEquality():
                 assert actual == expected
 
-        with pytest.raises(TealInputError):
+        with pytest.raises(pt.TealInputError):
             value.set(test.maxValue + 1)
 
-        with pytest.raises(TealInputError):
+        with pytest.raises(pt.TealInputError):
             value.set(-1)
 
 
 def test_Uint_set_expr():
     for test in testData:
         value = test.uintType.new_instance()
-        expr = value.set(Int(10) + Int(1))
-        assert expr.type_of() == TealType.none
+        expr = value.set(pt.Int(10) + pt.Int(1))
+        assert expr.type_of() == pt.TealType.none
         assert not expr.has_return()
 
         upperBoundCheck = []
         if test.checkUpperBound:
             upperBoundCheck = [
-                TealOp(None, Op.load, value.stored_value.slot),
-                TealOp(None, Op.int, test.maxValue + 1),
-                TealOp(None, Op.lt),
-                TealOp(None, Op.assert_),
+                pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+                pt.TealOp(None, pt.Op.int, test.maxValue + 1),
+                pt.TealOp(None, pt.Op.lt),
+                pt.TealOp(None, pt.Op.assert_),
             ]
 
-        expected = TealSimpleBlock(
+        expected = pt.TealSimpleBlock(
             [
-                TealOp(None, Op.int, 10),
-                TealOp(None, Op.int, 1),
-                TealOp(None, Op.add),
-                TealOp(None, Op.store, value.stored_value.slot),
+                pt.TealOp(None, pt.Op.int, 10),
+                pt.TealOp(None, pt.Op.int, 1),
+                pt.TealOp(None, pt.Op.add),
+                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
             ]
             + upperBoundCheck
         )
 
         actual, _ = expr.__teal__(options)
         actual.addIncoming()
-        actual = TealBlock.NormalizeBlocks(actual)
+        actual = pt.TealBlock.NormalizeBlocks(actual)
 
-        with TealComponent.Context.ignoreExprEquality():
+        with pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected
 
 
@@ -193,52 +194,52 @@ def test_Uint_set_copy():
         value = test.uintType.new_instance()
         other = test.uintType.new_instance()
         expr = value.set(other)
-        assert expr.type_of() == TealType.none
+        assert expr.type_of() == pt.TealType.none
         assert not expr.has_return()
 
-        expected = TealSimpleBlock(
+        expected = pt.TealSimpleBlock(
             [
-                TealOp(None, Op.load, other.stored_value.slot),
-                TealOp(None, Op.store, value.stored_value.slot),
+                pt.TealOp(None, pt.Op.load, other.stored_value.slot),
+                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
             ]
         )
 
         actual, _ = expr.__teal__(options)
         actual.addIncoming()
-        actual = TealBlock.NormalizeBlocks(actual)
+        actual = pt.TealBlock.NormalizeBlocks(actual)
 
-        with TealComponent.Context.ignoreExprEquality():
+        with pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected
 
-        with pytest.raises(TealInputError):
+        with pytest.raises(pt.TealInputError):
             value.set(abi.Bool())
 
 
 def test_Uint_set_computed():
-    byte_computed_value = ContainerType(abi.ByteTypeSpec(), Int(0x22))
+    byte_computed_value = ContainerType(abi.ByteTypeSpec(), pt.Int(0x22))
 
     for test in testData:
-        computed_value = ContainerType(test.uintType, Int(0x44))
+        computed_value = ContainerType(test.uintType, pt.Int(0x44))
         value = test.uintType.new_instance()
         expr = value.set(computed_value)
-        assert expr.type_of() == TealType.none
+        assert expr.type_of() == pt.TealType.none
         assert not expr.has_return()
 
-        expected = TealSimpleBlock(
+        expected = pt.TealSimpleBlock(
             [
-                TealOp(None, Op.int, 0x44),
-                TealOp(None, Op.store, value.stored_value.slot),
+                pt.TealOp(None, pt.Op.int, 0x44),
+                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
             ]
         )
 
         actual, _ = expr.__teal__(options)
         actual.addIncoming()
-        actual = TealBlock.NormalizeBlocks(actual)
+        actual = pt.TealBlock.NormalizeBlocks(actual)
 
-        with TealComponent.Context.ignoreExprEquality():
+        with pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected
 
-        with pytest.raises(TealInputError):
+        with pytest.raises(pt.TealInputError):
             value.set(byte_computed_value)
 
 
@@ -246,10 +247,12 @@ def test_Uint_get():
     for test in testData:
         value = test.uintType.new_instance()
         expr = value.get()
-        assert expr.type_of() == TealType.uint64
+        assert expr.type_of() == pt.TealType.uint64
         assert not expr.has_return()
 
-        expected = TealSimpleBlock([TealOp(expr, Op.load, value.stored_value.slot)])
+        expected = pt.TealSimpleBlock(
+            [pt.TealOp(expr, pt.Op.load, value.stored_value.slot)]
+        )
 
         actual, _ = expr.__teal__(options)
 
@@ -257,16 +260,16 @@ def test_Uint_get():
 
 
 def test_Uint_decode():
-    encoded = Bytes("encoded")
+    encoded = pt.Bytes("encoded")
     for test in testData:
-        for startIndex in (None, Int(1)):
-            for endIndex in (None, Int(2)):
-                for length in (None, Int(3)):
+        for startIndex in (None, pt.Int(1)):
+            for endIndex in (None, pt.Int(2)):
+                for length in (None, pt.Int(3)):
                     value = test.uintType.new_instance()
                     expr = value.decode(
                         encoded, startIndex=startIndex, endIndex=endIndex, length=length
                     )
-                    assert expr.type_of() == TealType.none
+                    assert expr.type_of() == pt.TealType.none
                     assert not expr.has_return()
 
                     expectedDecoding = value.stored_value.store(
@@ -274,13 +277,13 @@ def test_Uint_decode():
                     )
                     expected, _ = expectedDecoding.__teal__(options)
                     expected.addIncoming()
-                    expected = TealBlock.NormalizeBlocks(expected)
+                    expected = pt.TealBlock.NormalizeBlocks(expected)
 
                     actual, _ = expr.__teal__(options)
                     actual.addIncoming()
-                    actual = TealBlock.NormalizeBlocks(actual)
+                    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-                    with TealComponent.Context.ignoreExprEquality():
+                    with pt.TealComponent.Context.ignoreExprEquality():
                         assert actual == expected
 
 
@@ -288,18 +291,18 @@ def test_Uint_encode():
     for test in testData:
         value = test.uintType.new_instance()
         expr = value.encode()
-        assert expr.type_of() == TealType.bytes
+        assert expr.type_of() == pt.TealType.bytes
         assert not expr.has_return()
 
         expected, _ = test.expectedEncoding(value).__teal__(options)
         expected.addIncoming()
-        expected = TealBlock.NormalizeBlocks(expected)
+        expected = pt.TealBlock.NormalizeBlocks(expected)
 
         actual, _ = expr.__teal__(options)
         actual.addIncoming()
-        actual = TealBlock.NormalizeBlocks(actual)
+        actual = pt.TealBlock.NormalizeBlocks(actual)
 
-        with TealComponent.Context.ignoreExprEquality():
+        with pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected
 
 
@@ -313,19 +316,19 @@ def test_ByteUint8_mutual_conversion():
         other = type_a.new_instance()
         expr = type_b_instance.set(other)
 
-        assert expr.type_of() == TealType.none
+        assert expr.type_of() == pt.TealType.none
         assert not expr.has_return()
 
-        expected = TealSimpleBlock(
+        expected = pt.TealSimpleBlock(
             [
-                TealOp(None, Op.load, other.stored_value.slot),
-                TealOp(None, Op.store, type_b_instance.stored_value.slot),
+                pt.TealOp(None, pt.Op.load, other.stored_value.slot),
+                pt.TealOp(None, pt.Op.store, type_b_instance.stored_value.slot),
             ]
         )
 
         actual, _ = expr.__teal__(options)
         actual.addIncoming()
-        actual = TealBlock.NormalizeBlocks(actual)
+        actual = pt.TealBlock.NormalizeBlocks(actual)
 
-        with TealComponent.Context.ignoreExprEquality():
+        with pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected

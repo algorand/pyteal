@@ -1,48 +1,47 @@
 import pytest
 
-from .. import *
+import pyteal as pt
 
-# this is not necessary but mypy complains if it's not included
-from .. import CompileOptions
-
-options = CompileOptions()
+options = pt.CompileOptions()
 
 
 def test_nonce_has_return():
-    exprWithReturn = Nonce(
+    exprWithReturn = pt.Nonce(
         "base32",
         "7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M",
-        Return(Int(1)),
+        pt.Return(pt.Int(1)),
     )
     assert exprWithReturn.has_return()
 
-    exprWithoutReturn = Nonce(
-        "base32", "7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M", Int(1)
+    exprWithoutReturn = pt.Nonce(
+        "base32",
+        "7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M",
+        pt.Int(1),
     )
     assert not exprWithoutReturn.has_return()
 
 
 def test_nonce_base32():
-    arg = Int(1)
-    expr = Nonce(
+    arg = pt.Int(1)
+    expr = pt.Nonce(
         "base32", "7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M", arg
     )
-    assert expr.type_of() == TealType.uint64
+    assert expr.type_of() == pt.TealType.uint64
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     # copying expr from actual.ops[0] and actual.ops[1] because they can't be determined from outside code.
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(
+            pt.TealOp(
                 actual.ops[0].expr,
-                Op.byte,
+                pt.Op.byte,
                 "base32(7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M)",
             ),
-            TealOp(actual.ops[1].expr, Op.pop),
-            TealOp(arg, Op.int, 1),
+            pt.TealOp(actual.ops[1].expr, pt.Op.pop),
+            pt.TealOp(arg, pt.Op.int, 1),
         ]
     )
 
@@ -50,20 +49,20 @@ def test_nonce_base32():
 
 
 def test_nonce_base32_empty():
-    arg = Int(1)
-    expr = Nonce("base32", "", arg)
-    assert expr.type_of() == TealType.uint64
+    arg = pt.Int(1)
+    expr = pt.Nonce("base32", "", arg)
+    assert expr.type_of() == pt.TealType.uint64
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     # copying expr from actual.ops[0] and actual.ops[1] because they can't be determined from outside code.
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(actual.ops[0].expr, Op.byte, "base32()"),
-            TealOp(actual.ops[1].expr, Op.pop),
-            TealOp(arg, Op.int, 1),
+            pt.TealOp(actual.ops[0].expr, pt.Op.byte, "base32()"),
+            pt.TealOp(actual.ops[1].expr, pt.Op.pop),
+            pt.TealOp(arg, pt.Op.int, 1),
         ]
     )
 
@@ -71,20 +70,20 @@ def test_nonce_base32_empty():
 
 
 def test_nonce_base64():
-    arg = Txn.sender()
-    expr = Nonce("base64", "Zm9vYmE=", arg)
-    assert expr.type_of() == TealType.bytes
+    arg = pt.Txn.sender()
+    expr = pt.Nonce("base64", "Zm9vYmE=", arg)
+    assert expr.type_of() == pt.TealType.bytes
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     # copying expr from actual.ops[0] and actual.ops[1] because they can't be determined from outside code.
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(actual.ops[0].expr, Op.byte, "base64(Zm9vYmE=)"),
-            TealOp(actual.ops[1].expr, Op.pop),
-            TealOp(arg, Op.txn, "Sender"),
+            pt.TealOp(actual.ops[0].expr, pt.Op.byte, "base64(Zm9vYmE=)"),
+            pt.TealOp(actual.ops[1].expr, pt.Op.pop),
+            pt.TealOp(arg, pt.Op.txn, "Sender"),
         ]
     )
 
@@ -92,20 +91,20 @@ def test_nonce_base64():
 
 
 def test_nonce_base64_empty():
-    arg = Int(1)
-    expr = Nonce("base64", "", arg)
-    assert expr.type_of() == TealType.uint64
+    arg = pt.Int(1)
+    expr = pt.Nonce("base64", "", arg)
+    assert expr.type_of() == pt.TealType.uint64
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     # copying expr from actual.ops[0] and actual.ops[1] because they can't be determined from outside code.
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(actual.ops[0].expr, Op.byte, "base64()"),
-            TealOp(actual.ops[1].expr, Op.pop),
-            TealOp(arg, Op.int, 1),
+            pt.TealOp(actual.ops[0].expr, pt.Op.byte, "base64()"),
+            pt.TealOp(actual.ops[1].expr, pt.Op.pop),
+            pt.TealOp(arg, pt.Op.int, 1),
         ]
     )
 
@@ -113,20 +112,20 @@ def test_nonce_base64_empty():
 
 
 def test_nonce_base16():
-    arg = Int(1)
-    expr = Nonce("base16", "A21212EF", arg)
-    assert expr.type_of() == TealType.uint64
+    arg = pt.Int(1)
+    expr = pt.Nonce("base16", "A21212EF", arg)
+    assert expr.type_of() == pt.TealType.uint64
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     # copying expr from actual.ops[0] and actual.ops[1] because they can't be determined from outside code.
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(actual.ops[0].expr, Op.byte, "0xA21212EF"),
-            TealOp(actual.ops[1].expr, Op.pop),
-            TealOp(arg, Op.int, 1),
+            pt.TealOp(actual.ops[0].expr, pt.Op.byte, "0xA21212EF"),
+            pt.TealOp(actual.ops[1].expr, pt.Op.pop),
+            pt.TealOp(arg, pt.Op.int, 1),
         ]
     )
 
@@ -134,20 +133,20 @@ def test_nonce_base16():
 
 
 def test_nonce_base16_prefix():
-    arg = Int(1)
-    expr = Nonce("base16", "0xA21212EF", arg)
-    assert expr.type_of() == TealType.uint64
+    arg = pt.Int(1)
+    expr = pt.Nonce("base16", "0xA21212EF", arg)
+    assert expr.type_of() == pt.TealType.uint64
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     # copying expr from actual.ops[0] and actual.ops[1] because they can't be determined from outside code.
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(actual.ops[0].expr, Op.byte, "0xA21212EF"),
-            TealOp(actual.ops[1].expr, Op.pop),
-            TealOp(arg, Op.int, 1),
+            pt.TealOp(actual.ops[0].expr, pt.Op.byte, "0xA21212EF"),
+            pt.TealOp(actual.ops[1].expr, pt.Op.pop),
+            pt.TealOp(arg, pt.Op.int, 1),
         ]
     )
 
@@ -155,20 +154,20 @@ def test_nonce_base16_prefix():
 
 
 def test_nonce_base16_empty():
-    arg = Int(6)
-    expr = Nonce("base16", "", arg)
-    assert expr.type_of() == TealType.uint64
+    arg = pt.Int(6)
+    expr = pt.Nonce("base16", "", arg)
+    assert expr.type_of() == pt.TealType.uint64
 
     actual, _ = expr.__teal__(options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     # copying expr from actual.ops[0] and actual.ops[1] because they can't be determined from outside code.
-    expected = TealSimpleBlock(
+    expected = pt.TealSimpleBlock(
         [
-            TealOp(actual.ops[0].expr, Op.byte, "0x"),
-            TealOp(actual.ops[1].expr, Op.pop),
-            TealOp(arg, Op.int, 6),
+            pt.TealOp(actual.ops[0].expr, pt.Op.byte, "0x"),
+            pt.TealOp(actual.ops[1].expr, pt.Op.pop),
+            pt.TealOp(arg, pt.Op.int, 6),
         ]
     )
 
@@ -176,18 +175,18 @@ def test_nonce_base16_empty():
 
 
 def test_nonce_invalid():
-    with pytest.raises(TealInputError):
-        Nonce("base23", "", Int(1))
+    with pytest.raises(pt.TealInputError):
+        pt.Nonce("base23", "", pt.Int(1))
 
-    with pytest.raises(TealInputError):
-        Nonce("base32", "Zm9vYmE=", Int(1))
+    with pytest.raises(pt.TealInputError):
+        pt.Nonce("base32", "Zm9vYmE=", pt.Int(1))
 
-    with pytest.raises(TealInputError):
-        Nonce("base64", "?????", Int(1))
+    with pytest.raises(pt.TealInputError):
+        pt.Nonce("base64", "?????", pt.Int(1))
 
-    with pytest.raises(TealInputError):
-        Nonce(
+    with pytest.raises(pt.TealInputError):
+        pt.Nonce(
             "base16",
             "7Z5PWO2C6LFNQFGHWKSK5H47IQP5OJW2M3HA2QPXTY3WTNP5NU2MHBW27M",
-            Int(1),
+            pt.Int(1),
         )
