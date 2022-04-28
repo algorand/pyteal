@@ -40,7 +40,7 @@ def _algod_client(
 # ---- Decorator ---- #
 
 
-class _BlackboxWrapper:
+class BlackboxWrapper:
     def __init__(self, subr: SubroutineFnWrapper, input_types: list[TealType]):
         subr.subroutine._validate(input_types=input_types)
         self.subroutine = subr
@@ -55,7 +55,7 @@ class _BlackboxWrapper:
 
 def Blackbox(input_types: list[TealType]):
     def decorator_blackbox(func: SubroutineFnWrapper):
-        return _BlackboxWrapper(func, input_types)
+        return BlackboxWrapper(func, input_types)
 
     return decorator_blackbox
 
@@ -72,7 +72,7 @@ def mode_to_execution_mode(mode: Mode) -> blackbox.ExecutionMode:
     raise Exception(f"Unknown mode {mode} of type {type(mode)}")
 
 
-def blackbox_pyteal(subr: _BlackboxWrapper, mode: Mode) -> Callable[..., Expr]:
+def blackbox_pyteal(subr: BlackboxWrapper, mode: Mode) -> Callable[..., Expr]:
     """Functor producing ready-to-compile PyTeal programs from annotated subroutines
 
     Args:
