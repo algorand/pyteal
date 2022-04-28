@@ -140,8 +140,6 @@ from pyteal.ast.multi import MultiValue
 # abi
 import pyteal.ast.abi as abi  # noqa: I250
 
-# from pyteal.ast.abi import *
-
 __all__ = [
     "Expr",
     "LeafExpr",

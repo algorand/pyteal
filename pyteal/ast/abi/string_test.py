@@ -108,6 +108,7 @@ def test_String_get():
 
 
 def test_String_set_static():
+
     for value_to_set in ("stringy", "😀", "0xDEADBEEF"):
         value = abi.String()
         expr = value.set(value_to_set)
@@ -133,8 +134,35 @@ def test_String_set_static():
         with pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected
 
-        with pytest.raises(pt.TealInputError):
-            value.set(bytes(32))
+    for value_to_set in (bytes(32), b"alphabet_soup"):
+        value = abi.String()
+        expr = value.set(value_to_set)
+        assert expr.type_of() == pt.TealType.none
+        assert not expr.has_return()
+
+        teal_val = f"0x{value_to_set.hex()}"
+
+        expected = pt.TealSimpleBlock(
+            [
+                pt.TealOp(None, pt.Op.byte, teal_val),
+                pt.TealOp(None, pt.Op.len),
+                pt.TealOp(None, pt.Op.itob),
+                pt.TealOp(None, pt.Op.extract, 6, 0),
+                pt.TealOp(None, pt.Op.byte, teal_val),
+                pt.TealOp(None, pt.Op.concat),
+                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            ]
+        )
+
+        actual, _ = expr.__teal__(options)
+        actual.addIncoming()
+        actual = pt.TealBlock.NormalizeBlocks(actual)
+
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
+
+    with pytest.raises(pt.TealInputError):
+        value.set(42)
 
 
 def test_String_set_expr():

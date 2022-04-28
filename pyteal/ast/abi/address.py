@@ -2,13 +2,15 @@ from typing import Union, Sequence, TypeVar
 
 from pyteal.errors import TealInputError
 
+from pyteal.ast.bytes import Bytes
 from pyteal.ast.addr import Addr
 from pyteal.ast.abi.type import ComputedValue, BaseType
 from pyteal.ast.abi.array_static import StaticArray, StaticArrayTypeSpec
 from pyteal.ast.abi.uint import ByteTypeSpec
 from pyteal.ast.expr import Expr
 
-ADDRESS_LENGTH = 32
+ADDRESS_LENGTH_STR = 58
+ADDRESS_LENGTH_BYTES = 32
 
 T = TypeVar("T", bound=BaseType)
 N = TypeVar("N", bound=int)
@@ -16,7 +18,7 @@ N = TypeVar("N", bound=int)
 
 class AddressTypeSpec(StaticArrayTypeSpec):
     def __init__(self) -> None:
-        super().__init__(ByteTypeSpec(), ADDRESS_LENGTH)
+        super().__init__(ByteTypeSpec(), ADDRESS_LENGTH_BYTES)
 
     def new_instance(self) -> "Address":
         return Address()
@@ -49,6 +51,7 @@ class Address(StaticArray):
             ComputedValue[StaticArray[T, N]],
             "Address",
             str,
+            bytes,
             Expr,
         ],
     ):
@@ -60,20 +63,37 @@ class Address(StaticArray):
                 )
             return value.store_into(self)
 
-        if isinstance(value, BaseType):
-            if not isinstance(value.type_spec(), AddressTypeSpec):
-                raise TealInputError(
-                    f"Got {value} with type spec {value.type_spec()}, expected AddressTypeSpec"
-                )
-            return self.decode(value.encode())
+        elif isinstance(value, BaseType):
 
-        if isinstance(value, str):
+            if isinstance(value.type_spec(), AddressTypeSpec):
+                return self.decode(value.encode())
+
+            if (
+                isinstance(value.type_spec(), StaticArrayTypeSpec)
+                and isinstance(value.type_spec().value_type_spec(), ByteTypeSpec)
+                and value.type_spec().length_static() == ADDRESS_LENGTH_BYTES
+            ):
+                return self.decode(value.encode())
+
+            raise TealInputError(
+                f"Got {value} with type spec {value.type_spec()}, expected AddressTypeSpec"
+            )
+
+        elif isinstance(value, str) and len(value) == ADDRESS_LENGTH_STR:
             return self.stored_value.store(Addr(value))
 
-        if isinstance(value, Expr):
+        elif isinstance(value, bytes) and len(value) == ADDRESS_LENGTH_BYTES:
+            return self.stored_value.store(Bytes(value))
+
+        elif isinstance(value, Expr):
             return self.stored_value.store(value)
 
-        raise TealInputError(f"Expected str, Address or Expr got {value}")
+        elif isinstance(value, Sequence):
+            return super().set(value)
+
+        raise TealInputError(
+            f"Got {value}, expected str, bytes, Expr, Sequence, Address, or ComputedType"
+        )
 
 
 Address.__module__ = "pyteal"

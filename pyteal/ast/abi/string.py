@@ -58,6 +58,7 @@ class String(DynamicArray):
             ComputedValue[DynamicArray[T]],
             "String",
             str,
+            bytes,
             Expr,
         ],
     ) -> Expr:
@@ -71,20 +72,31 @@ class String(DynamicArray):
             return value.store_into(self)
 
         if isinstance(value, BaseType):
-            if not isinstance(value.type_spec(), StringTypeSpec):
-                raise TealInputError(
-                    f"Got {value} with type spec {value.type_spec()}, expected {StringTypeSpec}"
-                )
-            return self.decode(value.encode())
+            if isinstance(value.type_spec(), StringTypeSpec):
+                return self.decode(value.encode())
+
+            if isinstance(value.type_spec(), DynamicArrayTypeSpec) and isinstance(
+                value.type_spec().value_type_spec(), ByteTypeSpec
+            ):
+                return self.decode(value.encode())
+
+            raise TealInputError(
+                f"Got {value} with type spec {value.type_spec()}, expected {StringTypeSpec}"
+            )
 
         # Assume not length prefixed
-        if type(value) is str:
+        if isinstance(value, str) or isinstance(value, bytes):
             return self.stored_value.store(encoded_string(Bytes(value)))
 
-        if not isinstance(value, Expr):
-            raise TealInputError("Expected Expr, got {}".format(value))
+        if isinstance(value, Expr):
+            return self.stored_value.store(encoded_string(value))
 
-        return self.stored_value.store(encoded_string(value))
+        if isinstance(value, Sequence):
+            return super().set(value)
+
+        raise TealInputError(
+            f"Got {value}, expected Sequence, DynamicArray, ComputedValue, String, str, bytes, Expr"
+        )
 
 
 String.__module__ = "pyteal"

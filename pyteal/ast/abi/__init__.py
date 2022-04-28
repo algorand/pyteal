@@ -1,5 +1,10 @@
 from pyteal.ast.abi.string import String, StringTypeSpec
-from pyteal.ast.abi.address import AddressTypeSpec, Address, ADDRESS_LENGTH
+from pyteal.ast.abi.address import (
+    AddressTypeSpec,
+    Address,
+    ADDRESS_LENGTH_BYTES,
+    ADDRESS_LENGTH_STR,
+)
 from pyteal.ast.abi.type import TypeSpec, BaseType, ComputedValue
 from pyteal.ast.abi.bool import BoolTypeSpec, Bool
 from pyteal.ast.abi.uint import (
@@ -38,7 +43,8 @@ __all__ = [
     "StringTypeSpec",
     "Address",
     "AddressTypeSpec",
-    "ADDRESS_LENGTH",
+    "ADDRESS_LENGTH_BYTES",
+    "ADDRESS_LENGTH_STR",
     "TypeSpec",
     "BaseType",
     "ComputedValue",
