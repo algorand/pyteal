@@ -138,7 +138,7 @@ from pyteal.ast.maybe import MaybeValue
 from pyteal.ast.multi import MultiValue
 
 # abi
-from pyteal.ast import abi
+import pyteal.ast.abi as abi  # noqa: I250
 
 # from pyteal.ast.abi import *
 
