@@ -1,0 +1,23 @@
+#pragma version 6
+txna ApplicationArgs 0
+btoi
+txna ApplicationArgs 1
+txna ApplicationArgs 2
+callsub utestanyargs_0
+store 4
+byte "nada"
+log
+load 4
+store 5
+int 1337
+return
+
+// utest_any_args
+utestanyargs_0:
+store 2
+store 1
+store 0
+int 0
+store 3
+load 3
+retsub

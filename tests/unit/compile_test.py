@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 import pytest
 
 import pyteal as pt
@@ -11,9 +11,8 @@ def test_basic_bank():
         "ZZAF5ARA4MEC5PVDOP64JM5O5MQST63Q2KOY2FLYFLXXD3PFSNJJBYAFZM"
     )
 
-    target_path = os.path.join(
-        os.path.dirname(__file__), "../examples/signature/basic.teal"
-    )
+    target_path = Path.cwd() / "examples" / "signature" / "basic.teal"
+
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
         assert pt.compileTeal(program, mode=pt.Mode.Signature, version=3) == target
@@ -24,9 +23,8 @@ def test_atomic_swap():
 
     program = htlc()
 
-    target_path = os.path.join(
-        os.path.dirname(__file__), "../examples/signature/atomic_swap.teal"
-    )
+    target_path = Path.cwd() / "examples" / "signature" / "atomic_swap.teal"
+
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
         assert pt.compileTeal(program, mode=pt.Mode.Signature, version=2) == target
@@ -37,9 +35,7 @@ def test_periodic_payment():
 
     program = periodic_payment()
 
-    target_path = os.path.join(
-        os.path.dirname(__file__), "../examples/signature/periodic_payment.teal"
-    )
+    target_path = Path.cwd() / "examples" / "signature" / "periodic_payment.teal"
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
         assert pt.compileTeal(program, mode=pt.Mode.Signature, version=2) == target
@@ -50,9 +46,8 @@ def test_split():
 
     program = split()
 
-    target_path = os.path.join(
-        os.path.dirname(__file__), "../examples/signature/split.teal"
-    )
+    target_path = Path.cwd() / "examples" / "signature" / "split.teal"
+
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
         assert pt.compileTeal(program, mode=pt.Mode.Signature, version=2) == target
@@ -63,9 +58,8 @@ def test_dutch_auction():
 
     program = dutch_auction()
 
-    target_path = os.path.join(
-        os.path.dirname(__file__), "../examples/signature/dutch_auction.teal"
-    )
+    target_path = Path.cwd() / "examples" / "signature" / "dutch_auction.teal"
+
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
         assert pt.compileTeal(program, mode=pt.Mode.Signature, version=2) == target
@@ -76,9 +70,8 @@ def test_recurring_swap():
 
     program = recurring_swap()
 
-    target_path = os.path.join(
-        os.path.dirname(__file__), "../examples/signature/recurring_swap.teal"
-    )
+    target_path = Path.cwd() / "examples" / "signature" / "recurring_swap.teal"
+
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
         assert pt.compileTeal(program, mode=pt.Mode.Signature, version=2) == target

@@ -3,20 +3,25 @@ from pathlib import Path
 from pyteal.compiler import compileTeal
 from pyteal.ir import Mode
 
+PATH = Path.cwd() / "tests" / "unit"
+FIXTURES = PATH / "teal"
+GENERATED = PATH / "generated"
 
-def compile_and_save(approval, version):
-    teal = Path.cwd() / "tests" / "teal"
+
+def compile_and_save(approval, version, test_name):
     compiled = compileTeal(approval(), mode=Mode.Application, version=version)
     name = approval.__name__
-    with open(teal / (name + ".teal"), "w") as f:
+    tealdir = GENERATED / test_name
+    tealdir.mkdir(parents=True, exist_ok=True)
+    with open(tealdir / (name + ".teal"), "w") as f:
         f.write(compiled)
     print(
         f"""Successfuly tested approval program <<{name}>> having 
 compiled it into {len(compiled)} characters. See the results in:
-{teal}
+{tealdir}
 """
     )
-    return teal, name, compiled
+    return tealdir, name, compiled
 
 
 def mismatch_ligature(expected, actual):
@@ -55,15 +60,15 @@ LINE{i+1}:
 """
 
 
-def assert_new_v_old(approve_func, version):
-    teal_dir, name, compiled = compile_and_save(approve_func, version)
+def assert_new_v_old(approve_func, version, test_name):
+    tealdir, name, compiled = compile_and_save(approve_func, version, test_name)
 
     print(
         f"""Compilation resulted in TEAL program of length {len(compiled)}. 
-To view output SEE <{name}.teal> in ({teal_dir})
+To view output SEE <{name}.teal> in ({tealdir})
 --------------"""
     )
 
-    path2actual = teal_dir / (name + ".teal")
-    path2expected = teal_dir / (name + "_expected.teal")
+    path2actual = tealdir / (name + ".teal")
+    path2expected = FIXTURES / test_name / (name + ".teal")
     assert_teal_as_expected(path2actual, path2expected)

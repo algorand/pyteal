@@ -1,0 +1,12 @@
+#pragma version 6
+callsub utestany_0
+store 0
+int 1337
+return
+
+// utest_any
+utestany_0:
+int 0
+store 1
+load 1
+retsub
