@@ -136,6 +136,8 @@ from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
 from pyteal.ast.maybe import MaybeValue
 from pyteal.ast.multi import MultiValue
 
+from pyteal.ast.router import Router
+
 # abi
 import pyteal.ast.abi as abi  # noqa: I250
 
@@ -273,5 +275,6 @@ __all__ = [
     "For",
     "Break",
     "Continue",
+    "Router",
     "abi",
 ]

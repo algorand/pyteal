@@ -4,12 +4,12 @@ from dataclasses import dataclass
 from pyteal.config import METHOD_ARG_NUM_LIMIT
 from pyteal.errors import TealInputError
 from pyteal.types import TealType
+from pyteal.ast.subroutine import SubroutineFnWrapper
 from pyteal.ast.cond import Cond
 from pyteal.ast.expr import Expr
 from pyteal.ast.app import OnComplete, EnumInt
 from pyteal.ast.int import Int
 from pyteal.ast.seq import Seq
-from pyteal.ast.subroutine import SubroutineFnWrapper
 from pyteal.ast.methodsig import MethodSignature
 from pyteal.ast.naryexpr import And, Or
 from pyteal.ast.txn import Txn

@@ -140,6 +140,7 @@ __all__ = [
     "RETURN_METHOD_SELECTOR",
     "Reject",
     "Return",
+    "Router",
     "ScratchIndex",
     "ScratchLoad",
     "ScratchSlot",
