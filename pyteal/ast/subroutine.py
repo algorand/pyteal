@@ -253,9 +253,7 @@ class SubroutineDefinition:
                         f"should have ABI typespec {arg_type} but got {arg.type_spec()}"
                     )
 
-        return SubroutineCall(
-            self, args, output_kwarg=_OutputKwArgInfo.from_dict(self.output_kwarg)
-        )
+        return SubroutineCall(self, args)
 
     def __str__(self):
         return f"subroutine#{self.id}"
@@ -320,13 +318,10 @@ class SubroutineCall(Expr):
         self,
         subroutine: SubroutineDefinition,
         args: list[Expr | ScratchVar | abi.BaseType],
-        *,
-        output_kwarg: Optional[_OutputKwArgInfo] = None,
     ) -> None:
         super().__init__()
         self.subroutine = subroutine
         self.args = args
-        self.output_kwarg = output_kwarg
 
         for i, arg in enumerate(args):
             if isinstance(arg, Expr):
@@ -386,10 +381,6 @@ class SubroutineCall(Expr):
 
     def __str__(self):
         arg_str_list = list(map(str, self.args))
-        if self.output_kwarg:
-            arg_str_list.append(
-                f"{self.output_kwarg.name}={str(self.output_kwarg.abi_type)}"
-            )
         return f'(SubroutineCall {self.subroutine.name()} ({" ".join(arg_str_list)}))'
 
     def type_of(self):
