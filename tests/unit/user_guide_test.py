@@ -1,24 +1,24 @@
 import pytest
 
 import pyteal as pt
-
 from tests.compile_asserts import assert_new_v_old
+
 
 def user_guide_snippet_dynamic_scratch_var() -> pt.Expr:
     """
-    The user guide docs use the test to illustrate `pt.DynamicScratchVar` usage.  pt.If the test breaks, then the user guide docs must be updated along with the test.
+    The user guide docs use the test to illustrate `DynamicScratchVar` usage.  If the test breaks, then the user guide docs must be updated along with the test.
     """
     from pyteal import Assert, Int, DynamicScratchVar, ScratchVar, Seq, TealType
 
-    s = pt.ScratchVar(pt.TealType.uint64)
-    d = pt.DynamicScratchVar(pt.TealType.uint64)
+    s = ScratchVar(TealType.uint64)
+    d = DynamicScratchVar(TealType.uint64)
 
-    return pt.Seq(
+    return Seq(
         d.set_index(s),
-        s.store(pt.Int(7)),
-        d.store(d.load() + pt.Int(3)),
-        pt.Assert(s.load() == pt.Int(10)),
-        pt.Int(1),
+        s.store(Int(7)),
+        d.store(d.load() + Int(3)),
+        Assert(s.load() == Int(10)),
+        Int(1),
     )
 
 
@@ -28,36 +28,36 @@ def test_user_guide_snippets(snippet):
 
 
 def user_guide_snippet_recursiveIsEven():
-    from pyteal import Subroutine, TealType
+    from pyteal import If, Int, Subroutine, TealType
 
     @Subroutine(TealType.uint64)
     def recursiveIsEven(i):
         return (
-            pt.If(i == pt.Int(0))
-            .Then(pt.Int(1))
-            .ElseIf(i == pt.Int(1))
-            .Then(pt.Int(0))
-            .Else(recursiveIsEven(i - pt.Int(2)))
+            If(i == Int(0))
+            .Then(Int(1))
+            .ElseIf(i == Int(1))
+            .Then(Int(0))
+            .Else(recursiveIsEven(i - Int(2)))
         )
 
-    return recursiveIsEven(pt.Int(15))
+    return recursiveIsEven(Int(15))
 
 
 def user_guide_snippet_ILLEGAL_recursion():
-    from pyteal import ScratchVar, Subroutine, TealType
+    from pyteal import If, Int, ScratchVar, Seq, Subroutine, TealType
 
     @Subroutine(TealType.none)
     def ILLEGAL_recursion(i: ScratchVar):
         return (
-            pt.If(i.load() == pt.Int(0))
-            .Then(i.store(pt.Int(1)))
-            .ElseIf(i.load() == pt.Int(1))
-            .Then(i.store(pt.Int(0)))
-            .Else(pt.Seq(i.store(i.load() - pt.Int(2)), ILLEGAL_recursion(i)))
+            If(i.load() == Int(0))
+            .Then(i.store(Int(1)))
+            .ElseIf(i.load() == Int(1))
+            .Then(i.store(Int(0)))
+            .Else(Seq(i.store(i.load() - Int(2)), ILLEGAL_recursion(i)))
         )
 
-    i = pt.ScratchVar(pt.TealType.uint64)
-    return pt.Seq(i.store(pt.Int(15)), ILLEGAL_recursion(i), pt.Int(1))
+    i = ScratchVar(TealType.uint64)
+    return Seq(i.store(Int(15)), ILLEGAL_recursion(i), Int(1))
 
 
 USER_GUIDE_SNIPPETS_COPACETIC = [

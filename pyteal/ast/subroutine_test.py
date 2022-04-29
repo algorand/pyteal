@@ -2,7 +2,6 @@ from typing import List, Literal
 from itertools import product
 
 import pytest
-from typing import List
 
 import pyteal as pt
 from pyteal.ast.subroutine import evaluateSubroutine

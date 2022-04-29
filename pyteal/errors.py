@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-from typing import Optional, TYPE_CHECKING
-=======
 from typing import Any, Optional, TYPE_CHECKING
->>>>>>> master
 
 if TYPE_CHECKING:
     from pyteal.ast import Expr
