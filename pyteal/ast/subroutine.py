@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from dataclasses import dataclass
-from inspect import isclass, Parameter, signature, Signature
+from inspect import Parameter, signature, Signature
 from typing import (
     Callable,
     Optional,
@@ -105,13 +105,6 @@ class SubroutineDefinition:
             # * `invoke` type checks provided arguments against parameter types to catch mismatches.
             return Expr
         else:
-            if not isclass(ptype) and not SubroutineDefinition._is_abi_annotation(
-                ptype
-            ):
-                raise TealInputError(
-                    f"Function has parameter {parameter_name} of declared type {ptype} which is not a class"
-                )
-
             if ptype in (Expr, ScratchVar):
                 return ptype
             elif SubroutineDefinition._is_abi_annotation(ptype):
