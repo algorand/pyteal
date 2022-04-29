@@ -1,4 +1,5 @@
-from typing import Iterable, Union, TypeVar, Sequence, get_type_hints
+from typing import Union, TypeVar, Sequence
+from collections.abc import Sequence as CollectionSequence
 
 from pyteal.ast.abi.type import ComputedValue, BaseType
 from pyteal.ast.abi.array_dynamic import DynamicArray, DynamicArrayTypeSpec
@@ -84,6 +85,8 @@ class String(DynamicArray):
                 return self.stored_value.store(encoded_string(Bytes(value)))
             case Expr():
                 return self.stored_value.store(encoded_string(value))
+            case CollectionSequence():
+                return super().set(value)
 
         raise TealInputError(
             f"Got {type(value)}, expected DynamicArray, ComputedValue, String, str, bytes, Expr"

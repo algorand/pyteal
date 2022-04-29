@@ -1,4 +1,5 @@
 from typing import Union, Sequence, TypeVar
+from collections.abc import Sequence as CollectionSequence
 
 from pyteal.errors import TealInputError
 
@@ -89,6 +90,8 @@ class Address(StaticArray):
                 )
             case Expr():
                 return self.stored_value.store(value)
+            case CollectionSequence():
+                return super().set(value)
 
         raise TealInputError(
             f"Got {type(value)}, expected StaticArray, ComputedValue, String, str, bytes, Expr"
