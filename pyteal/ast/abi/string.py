@@ -1,4 +1,4 @@
-from typing import Union, TypeVar, Sequence
+from typing import Iterable, Union, TypeVar, Sequence, get_type_hints
 
 from pyteal.ast.abi.type import ComputedValue, BaseType
 from pyteal.ast.abi.array_dynamic import DynamicArray, DynamicArrayTypeSpec
@@ -63,38 +63,30 @@ class String(DynamicArray):
         ],
     ) -> Expr:
 
-        # Assume length prefixed
-        if isinstance(value, ComputedValue):
-            if value.produced_type_spec() == StringTypeSpec():
-                return value.store_into(self)
+        match value:
+            case ComputedValue():
+                if value.produced_type_spec() == StringTypeSpec():
+                    return value.store_into(self)
 
-            raise TealInputError(
-                f"Got ComputedValue with type spec {value.produced_type_spec()}, expected StringTypeSpec"
-            )
+                raise TealInputError(
+                    f"Got ComputedValue with type spec {value.produced_type_spec()}, expected StringTypeSpec"
+                )
+            case BaseType():
+                if value.type_spec() == StringTypeSpec() or (
+                    value.type_spec() == DynamicArrayTypeSpec(ByteTypeSpec())
+                ):
+                    return self.stored_value.store(value.stored_value.load())
 
-        if isinstance(value, BaseType):
-
-            if value.type_spec() == StringTypeSpec() or (
-                value.type_spec() == DynamicArrayTypeSpec(ByteTypeSpec())
-            ):
-                return self.stored_value.store(value.stored_value.load())
-
-            raise TealInputError(
-                f"Got {value} with type spec {value.type_spec()}, expected {StringTypeSpec}"
-            )
-
-        # Assume not length prefixed
-        if isinstance(value, str) or isinstance(value, bytes):
-            return self.stored_value.store(encoded_string(Bytes(value)))
-
-        if isinstance(value, Expr):
-            return self.stored_value.store(encoded_string(value))
-
-        if isinstance(value, Sequence):
-            return super().set(value)
+                raise TealInputError(
+                    f"Got {value} with type spec {value.type_spec()}, expected {StringTypeSpec}"
+                )
+            case str() | bytes():
+                return self.stored_value.store(encoded_string(Bytes(value)))
+            case Expr():
+                return self.stored_value.store(encoded_string(value))
 
         raise TealInputError(
-            f"Got {value}, expected Sequence, DynamicArray, ComputedValue, String, str, bytes, Expr"
+            f"Got {type(value)}, expected DynamicArray, ComputedValue, String, str, bytes, Expr"
         )
 
 

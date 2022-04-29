@@ -56,40 +56,42 @@ class Address(StaticArray):
         ],
     ):
 
-        if isinstance(value, ComputedValue):
-            if value.produced_type_spec() == AddressTypeSpec():
-                return value.store_into(self)
+        match value:
+            case ComputedValue():
+                if value.produced_type_spec() == AddressTypeSpec():
+                    return value.store_into(self)
 
-            raise TealInputError(
-                f"Got ComputedValue with type spec {value.produced_type_spec()}, expected AddressTypeSpec"
-            )
+                raise TealInputError(
+                    f"Got ComputedValue with type spec {value.produced_type_spec()}, expected AddressTypeSpec"
+                )
+            case BaseType():
+                if (
+                    value.type_spec() == AddressTypeSpec()
+                    or value.type_spec()
+                    == StaticArrayTypeSpec(ByteTypeSpec(), ADDRESS_LENGTH_BYTES)
+                ):
+                    return self.stored_value.store(value.stored_value.load())
 
-        elif isinstance(value, BaseType):
-            if (
-                value.type_spec() == AddressTypeSpec()
-                or value.type_spec()
-                == StaticArrayTypeSpec(ByteTypeSpec(), ADDRESS_LENGTH_BYTES)
-            ):
-                return self.stored_value.store(value.stored_value.load())
-
-            raise TealInputError(
-                f"Got {value} with type spec {value.type_spec()}, expected AddressTypeSpec"
-            )
-
-        elif isinstance(value, str) and len(value) == ADDRESS_LENGTH_STR:
-            return self.stored_value.store(Addr(value))
-
-        elif isinstance(value, bytes) and len(value) == ADDRESS_LENGTH_BYTES:
-            return self.stored_value.store(Bytes(value))
-
-        elif isinstance(value, Expr):
-            return self.stored_value.store(value)
-
-        elif isinstance(value, Sequence):
-            return super().set(value)
+                raise TealInputError(
+                    f"Got {value} with type spec {value.type_spec()}, expected AddressTypeSpec"
+                )
+            case str():
+                if len(value) == ADDRESS_LENGTH_STR:
+                    return self.stored_value.store(Addr(value))
+                raise TealInputError(
+                    f"Got string with length {len(value)}, expected {ADDRESS_LENGTH_STR}"
+                )
+            case bytes():
+                if len(value) == ADDRESS_LENGTH_BYTES:
+                    return self.stored_value.store(Bytes(value))
+                raise TealInputError(
+                    f"Got bytes with length {len(value)}, expected {ADDRESS_LENGTH_BYTES}"
+                )
+            case Expr():
+                return self.stored_value.store(value)
 
         raise TealInputError(
-            f"Got {value}, expected str, bytes, Expr, Sequence, Address, or ComputedType"
+            f"Got {type(value)}, expected StaticArray, ComputedValue, String, str, bytes, Expr"
         )
 
 
