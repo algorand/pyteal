@@ -193,13 +193,14 @@ class SubroutineDefinition:
                         f"Function keyword parameter {name} has type {expected_arg_type}"
                     )
                 abi_output_kwarg[name] = expected_arg_type
-            else:
-                expected_arg_types.append(expected_arg_type)
+                continue
 
-                if expected_arg_type is ScratchVar:
-                    by_ref_args.add(name)
-                if isinstance(expected_arg_type, abi.TypeSpec):
-                    abi_args[name] = expected_arg_type
+            expected_arg_types.append(expected_arg_type)
+
+            if expected_arg_type is ScratchVar:
+                by_ref_args.add(name)
+            if isinstance(expected_arg_type, abi.TypeSpec):
+                abi_args[name] = expected_arg_type
 
         return expected_arg_types, by_ref_args, abi_args, abi_output_kwarg
 
