@@ -1,12 +1,9 @@
-from collections import OrderedDict
-from inspect import get_annotations, isclass, Parameter, signature, Signature
+from inspect import get_annotations, isclass, Parameter, signature
 from typing import (
     Callable,
     Dict,
     List,
     Optional,
-    Set,
-    Type,
     Union,
     TYPE_CHECKING,
     Tuple,
@@ -14,6 +11,7 @@ from typing import (
     Any,
 )
 from types import MappingProxyType
+from pyteal.ast.abi.type import TypeSpec
 
 from pyteal.errors import TealInputError, verifyTealVersion
 from pyteal.ir import TealOp, Op, TealBlock
@@ -57,29 +55,14 @@ class SubroutineDefinition:
 
         self.implementation: Callable = implementation
 
-        impl_params, anns, arg_types, byrefs = self._validate()
+        impl_params, anns, expected_arg_types, by_ref_args, abi_args = self._validate()
         self.implementation_params: MappingProxyType[str, Parameter] = impl_params
         self.annotations: dict[str, Expr | ScratchVar] = anns
-        self.expected_arg_types: list[type[Expr | ScratchVar]] = arg_types
-        self.by_ref_args: set[str] = byrefs
+        self.expected_arg_types: list[type | TypeSpec] = expected_arg_types
+        self.by_ref_args: set[str] = by_ref_args
+        self.abi_args: Dict[str, abi.TypeSpec] = abi_args
 
         self.__name: str = name_str if name_str else self.implementation.__name__
-
-        # validate full signature takes following two arguments:
-        # - `signature`, which contains the signature of the python function.
-        #    NOTE: it contains all the arguments, we get type annotations from `annotations`.
-        # - `annotations`, which contains all available argument type annotations and return type annotation.
-        #    NOTE: `annotations` does not contain all the arguments,
-        #          an argument is not included in `annotations` if its type annotation is not available.
-
-        # MD - Needs to be merged with above logic to support setting abi_args.
-        # After merging, delete _arg_types_and_by_refs or _validate.  Whichever is not merged into.
-        (_, _, abi_args,) = SubroutineDefinition._arg_types_and_by_refs(
-            signature(implementation),
-            getattr(implementation, "__annotations__", OrderedDict()),
-        )
-        self.abi_args: Dict[str, abi.TypeSpec] = abi_args
-        # MD end
 
     @staticmethod
     def is_abi_annotation(obj: Any) -> bool:
@@ -94,36 +77,65 @@ class SubroutineDefinition:
     ) -> tuple[
         MappingProxyType[str, Parameter],
         dict[str, Expr | ScratchVar],
-        list[type[Expr | ScratchVar]],
+        list[type | TypeSpec],
         set[str],
+        Dict[str, abi.TypeSpec],
     ]:
+        """Validate the full function signature and annotations for subroutine definition.
+
+        This function iterates through `sig.parameters.items()`, and checks each of subroutine arguments.
+        On each of the subroutine arguments, the following checks are performed:
+        - If argument is not POSITION_ONLY or not POSITIONAL_OR_KEYWORD, error
+        - If argument has default value, error
+
+        After the previous checks, the function signature is correct in structure,
+        but we still need to check the argument types are matching requirements
+        (i.e., in {Expr, ScratchVar, inheritances of abi.BaseType}).
+
+        Finally, this function outputs:
+        - `implementation_params` - ordered map from parameter name to inspect.Parameter
+        - `annotations` - map from parameter name to annotation (if available)
+        - `expected_arg_types` - an array of elements of Type[Expr], Type[ScratchVar] or abi.TypeSpec instances
+          It helps type-checking on SubroutineCall from `invoke` method.
+        - `by_ref_args` - a set of argument names, which are type annotated by ScratchVar.
+        We put the scratch slot id on the stack, rather than the value itself.
+        - `abi_args` - a set of argument names, which are type annotated by ABI types.
+        We load the ABI scratch space stored value to stack, and store them later in subroutine's local ABI values.
+
+        Args:
+            sig: containing the signature of the python function for subroutine definition.
+                NOTE: it contains all the arguments, we obtain type annotations from `annotations`.
+            annotations: all available argument type annotations and return type annotation.
+                NOTE: `annotations` does not contain all the arguments,
+                an argument is not included in `annotations` if its type annotation is not available.
+        """
         implementation = self.implementation
         if not callable(implementation):
             raise TealInputError("Input to SubroutineDefinition is not callable")
 
-        impl_params: MappingProxyType[str, Parameter] = signature(
+        implementation_params: MappingProxyType[str, Parameter] = signature(
             implementation
         ).parameters
-        anns: dict[str, Expr | ScratchVar] = get_annotations(implementation)
-        arg_types: list[type[Expr | ScratchVar]] = []
-        byrefs: set[str] = set()
+        annotations: dict[str, Expr | ScratchVar] = get_annotations(implementation)
+        expected_arg_types: list[type | TypeSpec] = []
+        by_ref_args: set[str] = set()
+        abi_args: dict[str, abi.TypeSpec] = {}
 
-        sig_params = impl_params
-        if input_types is not None and len(input_types) != len(sig_params):
+        if input_types is not None and len(input_types) != len(implementation_params):
             raise TealInputError(
                 "Provided number of input_types ({}) does not match detected number of parameters ({})".format(
-                    len(input_types), len(sig_params)
+                    len(input_types), len(implementation_params)
                 )
             )
 
-        if "return" in anns and anns["return"] is not Expr:
+        if "return" in annotations and annotations["return"] is not Expr:
             raise TealInputError(
                 "Function has return of disallowed type {}. Only Expr is allowed".format(
-                    anns["return"]
+                    annotations["return"]
                 )
             )
 
-        for i, (name, param) in enumerate(impl_params.items()):
+        for i, (name, param) in enumerate(implementation_params.items()):
             if param.kind not in (
                 Parameter.POSITIONAL_ONLY,
                 Parameter.POSITIONAL_OR_KEYWORD,
@@ -150,17 +162,26 @@ class SubroutineDefinition:
                         )
                     )
 
-            expected_arg_type = self._validate_parameter_type(anns, name)
+            expected_arg_type = self._validate_parameter_type(annotations, name)
 
-            arg_types.append(expected_arg_type)
+            expected_arg_types.append(expected_arg_type)
             if expected_arg_type is ScratchVar:
-                byrefs.add(name)
-        return impl_params, anns, arg_types, byrefs
+                by_ref_args.add(name)
+            if isinstance(expected_arg_type, abi.TypeSpec):
+                abi_args[name] = expected_arg_type
+
+        return (
+            implementation_params,
+            annotations,
+            expected_arg_types,
+            by_ref_args,
+            abi_args,
+        )
 
     @staticmethod
     def _validate_parameter_type(
         user_defined_annotations: dict, parameter_name: str
-    ) -> Union[Type[Expr], Type[ScratchVar], abi.TypeSpec]:
+    ) -> type | TypeSpec:
         ptype = user_defined_annotations.get(parameter_name, None)
 
         if ptype is None:
@@ -193,70 +214,6 @@ class SubroutineDefinition:
                         parameter_name, ptype, (Expr, ScratchVar, "ABI")
                     )
                 )
-
-    @staticmethod
-    def _arg_types_and_by_refs(
-        sig: Signature,
-        annotations: Dict[str, type],
-    ) -> Tuple[
-        List[Union[Type[Expr], Type[ScratchVar], abi.TypeSpec]],
-        Set[str],
-        Dict[str, abi.TypeSpec],
-    ]:
-        """Validate the full function signature and annotations for subroutine definition.
-
-        This function iterates through `sig.parameters.items()`, and checks each of subroutine arguments.
-        On each of the subroutine arguments, the following checks are performed:
-        - If argument is not POSITION_ONLY or not POSITIONAL_OR_KEYWORD, error
-        - If argument has default value, error
-
-        After the previous checks, the function signature is correct in structure,
-        but we still need to check the argument types are matching requirements
-        (i.e., in {Expr, ScratchVar, inheritances of abi.BaseType}).
-
-        Finally, this function outputs `expected_arg_types` for type-checking, `by_ref_args` for compilation,
-        and `abi_args` for compilation.
-        - `expected_arg_types` is an array of elements of Type[Expr], Type[ScratchVar] or abi.TypeSpec instances.
-          It helps type-checking on SubroutineCall from `invoke` method.
-        - `by_ref_args` is a set of argument names, which are type annotated by ScratchVar.
-          We put the scratch slot id on stack, rather than value itself.
-        - `abi_args` is a set of argument names, which are type annotated by ABI types.
-          We load the ABI scratch space stored value to stack, and store them later in subroutine's local ABI values.
-
-        Args:
-            sig: containing the signature of the python function for subroutine definition.
-                NOTE: it contains all the arguments, we obtain type annotations from `annotations`.
-            annotations: all available argument type annotations and return type annotation.
-                NOTE: `annotations` does not contain all the arguments,
-                an argument is not included in `annotations` if its type annotation is not available.
-        """
-        expected_arg_types = []
-        by_ref_args: Set[str] = set()
-        abi_args: Dict[str, abi.TypeSpec] = {}
-        for name, param in sig.parameters.items():
-            if param.kind not in (
-                Parameter.POSITIONAL_ONLY,
-                Parameter.POSITIONAL_OR_KEYWORD,
-            ):
-                raise TealInputError(
-                    f"Function has a parameter type that is not allowed in a subroutine: "
-                    f"parameter {name} with type {param.kind}"
-                )
-            if param.default != Parameter.empty:
-                raise TealInputError(
-                    f"Function has a parameter with a default value, which is not allowed in a subroutine: {name}"
-                )
-
-            expected_arg_type = SubroutineDefinition._validate_parameter_type(
-                annotations, name
-            )
-            expected_arg_types.append(expected_arg_type)
-            if expected_arg_type is ScratchVar:
-                by_ref_args.add(name)
-            if isinstance(expected_arg_type, abi.TypeSpec):
-                abi_args[name] = expected_arg_type
-
-        return expected_arg_types, by_ref_args, abi_args
 
     def getDeclaration(self) -> "SubroutineDeclaration":
         if self.declaration is None:

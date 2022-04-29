@@ -107,11 +107,12 @@ def test_subroutine_definition_validate():
         "Provided number of input_types (2) does not match detected number of parameters (3)"
     )
 
-    params, anns, arg_types, byrefs = three_params._validate()
+    params, anns, arg_types, byrefs, abis = three_params._validate()
     assert len(params) == 3
     assert anns == {}
     assert all(at is pt.Expr for at in arg_types)
     assert byrefs == set()
+    assert abis == {}
 
     def bad_return_impl() -> str:
         return pt.Return(pt.Int(1))  # type: ignore
@@ -168,31 +169,34 @@ def test_subroutine_definition_validate():
     # Now we get to _validate_parameter_type():
     one_vanilla = mock_subroutine_definition(lambda x: pt.Return(pt.Int(1)))
 
-    params, anns, arg_types, byrefs = one_vanilla._validate()
+    params, anns, arg_types, byrefs, abis = one_vanilla._validate()
     assert len(params) == 1
     assert anns == {}
     assert all(at is pt.Expr for at in arg_types)
     assert byrefs == set()
+    assert abis == {}
 
     def one_expr_impl(x: pt.Expr):
         return pt.Return(pt.Int(1))
 
     one_expr = mock_subroutine_definition(one_expr_impl)
-    params, anns, arg_types, byrefs = one_expr._validate()
+    params, anns, arg_types, byrefs, abis = one_expr._validate()
     assert len(params) == 1
     assert anns == {"x": pt.Expr}
     assert all(at is pt.Expr for at in arg_types)
     assert byrefs == set()
+    assert abis == {}
 
     def one_scratchvar_impl(x: pt.ScratchVar):
         return pt.Return(pt.Int(1))
 
     one_scratchvar = mock_subroutine_definition(one_scratchvar_impl)
-    params, anns, arg_types, byrefs = one_scratchvar._validate()
+    params, anns, arg_types, byrefs, abis = one_scratchvar._validate()
     assert len(params) == 1
     assert anns == {"x": pt.ScratchVar}
     assert all(at is pt.ScratchVar for at in arg_types)
     assert byrefs == {"x"}
+    assert abis == {}
 
     def one_nontype_impl(x: "blahBlah"):  # type: ignore # noqa: F821
         return pt.Return(pt.Int(1))
@@ -213,16 +217,19 @@ def test_subroutine_definition_validate():
         one_dynscratchvar._validate()
 
     assert tie.value == pt.TealInputError(
-        "Function has parameter x of disallowed type <class 'pyteal.DynamicScratchVar'>. Only the types (<class 'pyteal.Expr'>, <class 'pyteal.ScratchVar'>) are allowed"
+        "Function has parameter x of disallowed type <class 'pyteal.DynamicScratchVar'>. Only the types (<class 'pyteal.Expr'>, <class 'pyteal.ScratchVar'>, 'ABI') are allowed"
     )
 
     # Now we're back to validate() and everything should be copacetic
     for x, y, z in product(pt.TealType, pt.TealType, pt.TealType):
-        params, anns, arg_types, byrefs = three_params._validate(input_types=[x, y, z])
+        params, anns, arg_types, byrefs, abis = three_params._validate(
+            input_types=[x, y, z]
+        )
         assert len(params) == 3
         assert anns == {}
         assert all(at is pt.Expr for at in arg_types)
         assert byrefs == set()
+        assert abis == {}
 
 
 def test_subroutine_invocation_param_types():
