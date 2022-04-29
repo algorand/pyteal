@@ -1,3 +1,13 @@
+# 0.12.0
+
+## Added
+* Introduce a utility for increasing opcode budget referred to as OpUp ([#274](https://github.com/algorand/pyteal/pull/274)).
+* Introduce dryrun testing facilities referred to as blackbox testing ([#249](https://github.com/algorand/pyteal/pull/249)). 
+
+## Changed
+* Make various user guide updates/corrections ([#291](https://github.com/algorand/pyteal/pull/291), [#295](https://github.com/algorand/pyteal/pull/295), [#301](https://github.com/algorand/pyteal/pull/301)).
+* Install flake8 linter ([#273](https://github.com/algorand/pyteal/pull/273), [#283](https://github.com/algorand/pyteal/pull/283)).
+
 # 0.11.1
 
 ## Fixed
