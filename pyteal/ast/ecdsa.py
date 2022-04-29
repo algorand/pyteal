@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Tuple, TYPE_CHECKING, Union, cast
+from typing import Tuple, TYPE_CHECKING, cast
 
 from pyteal.ast import Expr, MultiValue
 from pyteal.errors import TealTypeError, verifyTealVersion
