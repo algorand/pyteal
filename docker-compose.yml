@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  algod:
+    image: makerxau/algorand-sandbox-dev:latest
+    ports:
+      - "4001:4001"
+      - "4002:4002"
+      - "9392:9392"

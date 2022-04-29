@@ -1,5 +1,7 @@
 #pragma version 6
-int 3
+intcblock 1
+arg 0
+btoi
 callsub slowfibonacci_0
 return
 
@@ -7,11 +9,11 @@ return
 slowfibonacci_0:
 store 0
 load 0
-int 1
+intc_0 // 1
 <=
 bnz slowfibonacci_0_l2
 load 0
-int 2
+pushint 2 // 2
 -
 load 0
 swap
@@ -19,7 +21,7 @@ callsub slowfibonacci_0
 swap
 store 0
 load 0
-int 1
+intc_0 // 1
 -
 load 0
 swap

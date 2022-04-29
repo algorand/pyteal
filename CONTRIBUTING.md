@@ -43,7 +43,7 @@ A sibling module is defined as a different child module of the parent module. Fo
 
 #### In Runtime Code
 
-A file in this codebase that requires another module/file in this codebase, should import the absolute path of the module/file, not the relative one, using the `from X import Y` method.
+When a runtime file in this codebase needs to import another module/file in this codebase, you should import the absolute path of the module/file, not the relative one, using the `from X import Y` method.
 
 With regard to modules, there are two ways to import an object from this codebase:
 

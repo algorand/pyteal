@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 from typing import Optional, TYPE_CHECKING
+=======
+from typing import Any, Optional, TYPE_CHECKING
+>>>>>>> master
 
 if TYPE_CHECKING:
     from pyteal.ast import Expr
@@ -32,6 +36,9 @@ class TealInputError(Exception):
 
     def __str__(self) -> str:
         return self.message
+
+    def __eq__(self, other: Any) -> bool:
+        return type(other) is TealInputError and self.message == other.message
 
 
 TealInputError.__module__ = "pyteal"

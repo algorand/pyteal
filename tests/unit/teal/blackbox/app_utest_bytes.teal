@@ -1,0 +1,13 @@
+#pragma version 6
+callsub utestbytes_0
+store 0
+load 0
+log
+load 0
+len
+return
+
+// utest_bytes
+utestbytes_0:
+byte ""
+retsub

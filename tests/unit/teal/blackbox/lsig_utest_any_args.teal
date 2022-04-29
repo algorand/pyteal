@@ -1,0 +1,19 @@
+#pragma version 6
+arg 0
+btoi
+arg 1
+arg 2
+callsub utestanyargs_0
+store 0
+int 1337
+return
+
+// utest_any_args
+utestanyargs_0:
+store 3
+store 2
+store 1
+int 0
+store 4
+load 4
+retsub

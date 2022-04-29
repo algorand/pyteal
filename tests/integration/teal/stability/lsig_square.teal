@@ -1,0 +1,13 @@
+#pragma version 6
+arg 0
+btoi
+callsub square_0
+return
+
+// square
+square_0:
+store 0
+load 0
+pushint 2 // 2
+exp
+retsub

@@ -1,0 +1,29 @@
+#pragma version 6
+intcblock 1
+arg 0
+btoi
+callsub oldfac_0
+return
+
+// oldfac
+oldfac_0:
+store 0
+load 0
+pushint 2 // 2
+<
+bnz oldfac_0_l2
+load 0
+load 0
+intc_0 // 1
+-
+load 0
+swap
+callsub oldfac_0
+swap
+store 0
+*
+b oldfac_0_l3
+oldfac_0_l2:
+intc_0 // 1
+oldfac_0_l3:
+retsub

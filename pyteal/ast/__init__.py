@@ -139,6 +139,7 @@ from pyteal.ast.multi import MultiValue
 
 # abi
 from pyteal.ast import abi
+from pyteal.ast.opup import OpUp, OpUpMode
 
 __all__ = [
     "Expr",
@@ -249,6 +250,8 @@ __all__ = [
     "ScratchVar",
     "MaybeValue",
     "MultiValue",
+    "OpUp",
+    "OpUpMode",
     "BytesAdd",
     "BytesMinus",
     "BytesDiv",
