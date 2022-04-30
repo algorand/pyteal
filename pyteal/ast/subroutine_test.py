@@ -528,7 +528,7 @@ def test_subroutine_definition_invalid():
         ),
         (
             fnWithNonExprParamAnnotation,
-            "Function has parameter b of declared type TealType.uint64 which is not a class",
+            "Function has parameter b of disallowed type TealType.uint64. Only the types",
         ),
         (
             fnWithScratchVarSubclass,
