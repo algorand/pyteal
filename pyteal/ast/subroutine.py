@@ -42,8 +42,8 @@ class SubroutineDefinition:
         """
         Args:
             implementation: The python function defining the subroutine
-            returnType: the TealType to be returned by the subroutine
-            nameStr (optional): the name that is used to identify the subroutine.
+            return_type: the TealType to be returned by the subroutine
+            name_str (optional): the name that is used to identify the subroutine.
                 If omitted, the name defaults to the implementation's __name__ attribute
         """
         super().__init__()
@@ -197,23 +197,17 @@ class SubroutineDefinition:
             # * `invoke` type checks provided arguments against parameter types to catch mismatches.
             return Expr
         else:
-            if not isclass(ptype) and not SubroutineDefinition.is_abi_annotation(ptype):
-                raise TealInputError(
-                    "Function has parameter {} of declared type {} which is not a class".format(
-                        parameter_name, ptype
-                    )
-                )
-
             if ptype in (Expr, ScratchVar):
                 return ptype
-            elif SubroutineDefinition.is_abi_annotation(ptype):
+
+            if SubroutineDefinition.is_abi_annotation(ptype):
                 return abi.type_spec_from_annotation(ptype)
-            else:
-                raise TealInputError(
-                    "Function has parameter {} of disallowed type {}. Only the types {} are allowed".format(
-                        parameter_name, ptype, (Expr, ScratchVar, "ABI")
-                    )
+
+            raise TealInputError(
+                "Function has parameter {} of disallowed type {}. Only the types {} are allowed".format(
+                    parameter_name, ptype, (Expr, ScratchVar, "ABI")
                 )
+            )
 
     def getDeclaration(self) -> "SubroutineDeclaration":
         if self.declaration is None:

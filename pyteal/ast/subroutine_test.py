@@ -4,9 +4,31 @@ from itertools import product
 import pytest
 
 import pyteal as pt
+from pyteal.ast.scratchvar import ScratchVar
 from pyteal.ast.subroutine import evaluateSubroutine
 
 options = pt.CompileOptions(version=4)
+
+
+ABI_ANNOTATION_EXAMPLES = {
+    pt.abi.Address: pt.abi.AddressTypeSpec(),
+    pt.abi.Bool: pt.abi.BoolTypeSpec(),
+    pt.abi.Byte: pt.abi.ByteTypeSpec(),
+    pt.abi.DynamicArray[pt.abi.Bool]: pt.abi.DynamicArrayTypeSpec(
+        pt.abi.BoolTypeSpec()
+    ),
+    pt.abi.StaticArray[pt.abi.Uint32, Literal[10]]: pt.abi.StaticArrayTypeSpec(
+        pt.abi.Uint32TypeSpec(), 10
+    ),
+    pt.abi.String: pt.abi.StringTypeSpec(),
+    pt.abi.Tuple2[pt.abi.Bool, pt.abi.Uint32]: pt.abi.TupleTypeSpec(
+        pt.abi.BoolTypeSpec(), pt.abi.Uint32TypeSpec()
+    ),
+    pt.abi.Uint8: pt.abi.Uint8TypeSpec(),
+    pt.abi.Uint16: pt.abi.Uint16TypeSpec(),
+    pt.abi.Uint32: pt.abi.Uint32TypeSpec(),
+    pt.abi.Uint64: pt.abi.Uint64TypeSpec(),
+}
 
 
 def test_subroutine_definition():
@@ -114,6 +136,8 @@ def test_subroutine_definition_validate():
     assert byrefs == set()
     assert abis == {}
 
+    # return validation:
+
     def bad_return_impl() -> str:
         return pt.Return(pt.Int(1))  # type: ignore
 
@@ -124,6 +148,26 @@ def test_subroutine_definition_validate():
     assert tie.value == pt.TealInputError(
         "Function has return of disallowed type <class 'str'>. Only Expr is allowed"
     )
+
+    # param validation:
+
+    var_positional_or_kw = three_params
+    params, anns, arg_types, byrefs, abis = var_positional_or_kw._validate()
+    assert len(params) == 3
+    assert anns == {}
+    assert all(at is pt.Expr for at in arg_types)
+    assert byrefs == set()
+    assert abis == {}
+
+    var_positional_only = mock_subroutine_definition(
+        lambda x, y, /, z: pt.Return(pt.Int(1))
+    )
+    params, anns, arg_types, byrefs, abis = var_positional_only._validate()
+    assert len(params) == 3
+    assert anns == {}
+    assert all(at is pt.Expr for at in arg_types)
+    assert byrefs == set()
+    assert abis == {}
 
     var_positional = mock_subroutine_definition(lambda *args: pt.Return(pt.Int(1)))
     with pytest.raises(pt.TealInputError) as tie:
@@ -206,7 +250,7 @@ def test_subroutine_definition_validate():
         one_nontype._validate()
 
     assert tie.value == pt.TealInputError(
-        "Function has parameter x of declared type blahBlah which is not a class"
+        "Function has parameter x of disallowed type blahBlah. Only the types (<class 'pyteal.Expr'>, <class 'pyteal.ScratchVar'>, 'ABI') are allowed"
     )
 
     def one_dynscratchvar_impl(x: pt.DynamicScratchVar):
@@ -221,6 +265,8 @@ def test_subroutine_definition_validate():
     )
 
     # Now we're back to validate() and everything should be copacetic
+
+    # input type handling:
     for x, y, z in product(pt.TealType, pt.TealType, pt.TealType):
         params, anns, arg_types, byrefs, abis = three_params._validate(
             input_types=[x, y, z]
@@ -230,6 +276,41 @@ def test_subroutine_definition_validate():
         assert all(at is pt.Expr for at in arg_types)
         assert byrefs == set()
         assert abis == {}
+
+    # annotation / abi type handling:
+    anns = (pt.Expr, pt.ScratchVar) + tuple(ABI_ANNOTATION_EXAMPLES.keys())
+    for x_ann, z_ann in product(anns, anns):
+
+        def mocker_impl(x: x_ann, y, z: z_ann):
+            return pt.Return(pt.Int(1))
+
+        mocker = mock_subroutine_definition(mocker_impl)
+        params, anns, arg_types, byrefs, abis = mocker._validate()
+        print(
+            f"{x_ann=}, {z_ann=}, {params=}, {anns=}, {arg_types=}, {byrefs=}, {abis=}"
+        )
+
+        assert len(params) == 3
+
+        assert anns == {"x": x_ann, "z": z_ann}
+
+        assert (
+            (arg_types[0] is x_ann or arg_types[0] == ABI_ANNOTATION_EXAMPLES[x_ann])
+            and arg_types[1] is pt.Expr
+            and (
+                arg_types[2] is z_ann or arg_types[2] == ABI_ANNOTATION_EXAMPLES[z_ann]
+            )
+        ), f"{arg_types[0]} -> {x_ann} and {arg_types[1]} -> {pt.Expr} and {arg_types[2]} -> {z_ann}"
+
+        assert byrefs == set(["x"] if x_ann is pt.ScratchVar else []) | set(
+            ["z"] if z_ann is pt.ScratchVar else []
+        )
+        expected_abis = {}
+        if x_ann not in (pt.Expr, pt.ScratchVar):
+            expected_abis["x"] = ABI_ANNOTATION_EXAMPLES[x_ann]
+        if z_ann not in (pt.Expr, pt.ScratchVar):
+            expected_abis["z"] = ABI_ANNOTATION_EXAMPLES[z_ann]
+        assert abis == expected_abis
 
 
 def test_subroutine_invocation_param_types():
