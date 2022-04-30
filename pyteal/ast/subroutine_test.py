@@ -9,27 +9,6 @@ from pyteal.ast.subroutine import evaluateSubroutine
 options = pt.CompileOptions(version=4)
 
 
-ABI_ANNOTATION_EXAMPLES = {
-    pt.abi.Address: pt.abi.AddressTypeSpec(),
-    pt.abi.Bool: pt.abi.BoolTypeSpec(),
-    pt.abi.Byte: pt.abi.ByteTypeSpec(),
-    pt.abi.DynamicArray[pt.abi.Bool]: pt.abi.DynamicArrayTypeSpec(
-        pt.abi.BoolTypeSpec()
-    ),
-    pt.abi.StaticArray[pt.abi.Uint32, Literal[10]]: pt.abi.StaticArrayTypeSpec(
-        pt.abi.Uint32TypeSpec(), 10
-    ),
-    pt.abi.String: pt.abi.StringTypeSpec(),
-    pt.abi.Tuple2[pt.abi.Bool, pt.abi.Uint32]: pt.abi.TupleTypeSpec(
-        pt.abi.BoolTypeSpec(), pt.abi.Uint32TypeSpec()
-    ),
-    pt.abi.Uint8: pt.abi.Uint8TypeSpec(),
-    pt.abi.Uint16: pt.abi.Uint16TypeSpec(),
-    pt.abi.Uint32: pt.abi.Uint32TypeSpec(),
-    pt.abi.Uint64: pt.abi.Uint64TypeSpec(),
-}
-
-
 def test_subroutine_definition():
     def fn0Args():
         return pt.Return()
@@ -277,7 +256,27 @@ def test_subroutine_definition_validate():
         assert abis == {}
 
     # annotation / abi type handling:
-    anns = (pt.Expr, pt.ScratchVar) + tuple(ABI_ANNOTATION_EXAMPLES.keys())
+    abi_annotation_examples = {
+        pt.abi.Address: pt.abi.AddressTypeSpec(),
+        pt.abi.Bool: pt.abi.BoolTypeSpec(),
+        pt.abi.Byte: pt.abi.ByteTypeSpec(),
+        pt.abi.DynamicArray[pt.abi.Bool]: pt.abi.DynamicArrayTypeSpec(
+            pt.abi.BoolTypeSpec()
+        ),
+        pt.abi.StaticArray[pt.abi.Uint32, Literal[10]]: pt.abi.StaticArrayTypeSpec(
+            pt.abi.Uint32TypeSpec(), 10
+        ),
+        pt.abi.String: pt.abi.StringTypeSpec(),
+        pt.abi.Tuple2[pt.abi.Bool, pt.abi.Uint32]: pt.abi.TupleTypeSpec(
+            pt.abi.BoolTypeSpec(), pt.abi.Uint32TypeSpec()
+        ),
+        pt.abi.Uint8: pt.abi.Uint8TypeSpec(),
+        pt.abi.Uint16: pt.abi.Uint16TypeSpec(),
+        pt.abi.Uint32: pt.abi.Uint32TypeSpec(),
+        pt.abi.Uint64: pt.abi.Uint64TypeSpec(),
+    }
+
+    anns = (pt.Expr, pt.ScratchVar) + tuple(abi_annotation_examples.keys())
     for x_ann, z_ann in product(anns, anns):
 
         def mocker_impl(x: x_ann, y, z: z_ann):
@@ -294,10 +293,10 @@ def test_subroutine_definition_validate():
         assert anns == {"x": x_ann, "z": z_ann}
 
         assert (
-            (arg_types[0] is x_ann or arg_types[0] == ABI_ANNOTATION_EXAMPLES[x_ann])
+            (arg_types[0] is x_ann or arg_types[0] == abi_annotation_examples[x_ann])
             and arg_types[1] is pt.Expr
             and (
-                arg_types[2] is z_ann or arg_types[2] == ABI_ANNOTATION_EXAMPLES[z_ann]
+                arg_types[2] is z_ann or arg_types[2] == abi_annotation_examples[z_ann]
             )
         ), f"{arg_types[0]} -> {x_ann} and {arg_types[1]} -> {pt.Expr} and {arg_types[2]} -> {z_ann}"
 
@@ -306,9 +305,9 @@ def test_subroutine_definition_validate():
         )
         expected_abis = {}
         if x_ann not in (pt.Expr, pt.ScratchVar):
-            expected_abis["x"] = ABI_ANNOTATION_EXAMPLES[x_ann]
+            expected_abis["x"] = abi_annotation_examples[x_ann]
         if z_ann not in (pt.Expr, pt.ScratchVar):
-            expected_abis["z"] = ABI_ANNOTATION_EXAMPLES[z_ann]
+            expected_abis["z"] = abi_annotation_examples[z_ann]
         assert abis == expected_abis
 
 
