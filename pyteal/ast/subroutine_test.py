@@ -4,7 +4,6 @@ from itertools import product
 import pytest
 
 import pyteal as pt
-from pyteal.ast.scratchvar import ScratchVar
 from pyteal.ast.subroutine import evaluateSubroutine
 
 options = pt.CompileOptions(version=4)

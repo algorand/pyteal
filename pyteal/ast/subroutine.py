@@ -1,4 +1,4 @@
-from inspect import get_annotations, isclass, Parameter, signature
+from inspect import get_annotations, Parameter, signature
 from typing import (
     Callable,
     Dict,
