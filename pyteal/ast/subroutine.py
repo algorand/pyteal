@@ -55,9 +55,15 @@ class SubroutineDefinition:
 
         self.implementation: Callable = implementation
 
-        impl_params, anns, expected_arg_types, by_ref_args, abi_args = self._validate()
+        (
+            impl_params,
+            annotations,
+            expected_arg_types,
+            by_ref_args,
+            abi_args,
+        ) = self._validate()
         self.implementation_params: MappingProxyType[str, Parameter] = impl_params
-        self.annotations: dict[str, Expr | ScratchVar] = anns
+        self.annotations: dict[str, Expr | ScratchVar] = annotations
         self.expected_arg_types: list[type | TypeSpec] = expected_arg_types
         self.by_ref_args: set[str] = by_ref_args
         self.abi_args: Dict[str, abi.TypeSpec] = abi_args
@@ -123,7 +129,7 @@ class SubroutineDefinition:
                 f"does not match detected number of parameters ({len(implementation_params)})"
             )
 
-        if "return" in anns and anns["return"] is not Expr:
+        if "return" in annotations and annotations["return"] is not Expr:
             raise TealInputError(
                 f"Function has return of disallowed type {annotations['return']}. Only Expr is allowed"
             )
