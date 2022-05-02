@@ -1,5 +1,5 @@
-from typing import List, Literal
 from itertools import product
+from typing import List, Literal
 
 import pytest
 

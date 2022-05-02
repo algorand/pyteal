@@ -187,11 +187,11 @@ def blackbox_pyteal(subr: BlackboxWrapper, mode: Mode) -> Callable[..., Expr]:
     else:
 
         def approval():
-            if subdef.return_type == TealType.none:
+            if subdef.returnType == TealType.none:
                 result = ScratchVar(TealType.uint64)
                 part1 = [subr_caller(), result.store(Int(1337))]
             else:
-                result = ScratchVar(subdef.return_type)
+                result = ScratchVar(subdef.returnType)
                 part1 = [result.store(subr_caller())]
 
             part2 = [make_log(result.load()), make_return(result.load())]

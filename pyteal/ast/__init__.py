@@ -102,7 +102,7 @@ from pyteal.ast.ternaryexpr import Divw, Ed25519Verify, SetBit, SetByte
 from pyteal.ast.substring import Substring, Extract, Suffix
 
 # more ops
-from pyteal.ast.naryexpr import NaryExpr, Add, Mul, And, Or, Concat
+from pyteal.ast.naryexpr import NaryExpr, Add, Mul, Or, Concat
 from pyteal.ast.widemath import WideRatio
 
 # control flow

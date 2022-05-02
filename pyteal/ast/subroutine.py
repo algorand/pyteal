@@ -11,16 +11,15 @@ from typing import (
     Any,
 )
 from types import MappingProxyType
-from pyteal.ast.abi.type import TypeSpec
-
-from pyteal.errors import TealInputError, verifyTealVersion
-from pyteal.ir import TealOp, Op, TealBlock
-from pyteal.types import TealType
 
 from pyteal.ast import abi
+from pyteal.ast.abi.type import TypeSpec
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
+from pyteal.errors import TealInputError, verifyTealVersion
+from pyteal.ir import TealOp, Op, TealBlock
+from pyteal.types import TealType
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
