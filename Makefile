@@ -32,14 +32,14 @@ bundle-docs: bundle-docs-clean
 check-generate-init:
 	python -m scripts.generate_init --check
 
-ALLPY = docs examples pyteal scripts tests utils *.py
+ALLPY = docs examples pyteal scripts tests *.py
 black:
 	black --check $(ALLPY)
 
 flake8:
 	flake8 $(ALLPY)
 
-# TODO: add `tests` and `utils` to $MYPY when graviton respects mypy (version 🐗) 
+# TODO: add `tests` and to $MYPY when graviton respects mypy (version 🐗) 
 MYPY = pyteal scripts
 mypy:
 	mypy $(MYPY)
