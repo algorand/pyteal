@@ -4,7 +4,6 @@ from inspect import isclass, Parameter, signature, Signature
 from typing import (
     Callable,
     Optional,
-    Type,
     TYPE_CHECKING,
     cast,
     Any,
@@ -61,11 +60,9 @@ class SubroutineDefinition:
             by_ref_args,
             abi_args,
             abi_output_kwarg,
-        ) = SubroutineDefinition._arg_types_and_by_refs(
-            sig, annotations, abi_output_arg_name
-        )
+        ) = self._arg_types_and_by_refs(sig, annotations, abi_output_arg_name)
         self.expected_arg_types: list[
-            Type[Expr] | Type[ScratchVar] | abi.TypeSpec
+            type[Expr] | type[ScratchVar] | abi.TypeSpec
         ] = expected_arg_types
         self.by_ref_args: set[str] = by_ref_args
         self.abi_args: dict[str, abi.TypeSpec] = abi_args
@@ -79,7 +76,7 @@ class SubroutineDefinition:
         self.__name = self.implementation.__name__ if name_str is None else name_str
 
     @staticmethod
-    def is_abi_annotation(obj: Any) -> bool:
+    def _is_abi_annotation(obj: Any) -> bool:
         try:
             abi.type_spec_from_annotation(obj)
             return True
@@ -87,9 +84,9 @@ class SubroutineDefinition:
             return False
 
     @staticmethod
-    def _validate_parameter_type(
+    def _validate_annotation(
         user_defined_annotations: dict[str, Any], parameter_name: str
-    ) -> Type[Expr] | Type[ScratchVar] | abi.TypeSpec:
+    ) -> type[Expr] | type[ScratchVar] | abi.TypeSpec:
         ptype = user_defined_annotations.get(parameter_name, None)
 
         if ptype is None:
@@ -104,29 +101,28 @@ class SubroutineDefinition:
             #     when `Expr` is the only supported annotation type.
             # * `invoke` type checks provided arguments against parameter types to catch mismatches.
             return Expr
+        elif ptype in (Expr, ScratchVar):
+            return ptype
+        elif SubroutineDefinition._is_abi_annotation(ptype):
+            return abi.type_spec_from_annotation(ptype)
         else:
-            if not isclass(ptype) and not SubroutineDefinition.is_abi_annotation(ptype):
+            if not isclass(ptype):
                 raise TealInputError(
                     f"Function has parameter {parameter_name} of declared type {ptype} which is not a class"
                 )
+            raise TealInputError(
+                f"Function has parameter {parameter_name} of disallowed type {ptype}. "
+                f"Only the types {(Expr, ScratchVar, 'ABI')} are allowed"
+            )
 
-            if ptype in (Expr, ScratchVar):
-                return ptype
-            elif SubroutineDefinition.is_abi_annotation(ptype):
-                return abi.type_spec_from_annotation(ptype)
-            else:
-                raise TealInputError(
-                    f"Function has parameter {parameter_name} of disallowed type {ptype}. "
-                    f"Only the types {(Expr, ScratchVar, 'ABI')} are allowed"
-                )
-
-    @staticmethod
+    @classmethod
     def _arg_types_and_by_refs(
+        cls,
         sig: Signature,
         annotations: dict[str, type],
         abi_output_arg_name: Optional[str] = None,
     ) -> tuple[
-        list[Type[Expr] | Type[ScratchVar] | abi.TypeSpec],
+        list[type[Expr] | type[ScratchVar] | abi.TypeSpec],
         set[str],
         dict[str, abi.TypeSpec],
         dict[str, abi.TypeSpec],
@@ -181,7 +177,7 @@ class SubroutineDefinition:
                     f"Function has a parameter with a default value, which is not allowed in a subroutine: {name}"
                 )
 
-            expected_arg_type = SubroutineDefinition._validate_parameter_type(
+            expected_arg_type = SubroutineDefinition._validate_annotation(
                 annotations, name
             )
 
@@ -252,7 +248,7 @@ class SubroutineDefinition:
                     )
 
         return SubroutineCall(
-            self, args, output_kwarg=_OutputKwArgInfo.from_dict(self.output_kwarg)
+            self, args, output_kwarg=OutputKwArgInfo.from_dict(self.output_kwarg)
         )
 
     def __str__(self):
@@ -293,24 +289,24 @@ SubroutineDeclaration.__module__ = "pyteal"
 
 
 @dataclass
-class _OutputKwArgInfo:
+class OutputKwArgInfo:
     name: str
     abi_type: abi.TypeSpec
 
     @staticmethod
-    def from_dict(kwarg_info: dict[str, abi.TypeSpec]) -> Optional["_OutputKwArgInfo"]:
-        if kwarg_info is None or len(kwarg_info) == 0:
+    def from_dict(kwarg_info: dict[str, abi.TypeSpec]) -> Optional["OutputKwArgInfo"]:
+        if not kwarg_info:
             return None
         elif len(kwarg_info) == 1:
-            key = list(kwarg_info.keys())[0]
-            return _OutputKwArgInfo(key, kwarg_info[key])
+            (key,) = [*kwarg_info.keys()]
+            return OutputKwArgInfo(key, kwarg_info[key])
         else:
             raise TealInputError(
                 f"illegal conversion kwarg_info length {len(kwarg_info)}."
             )
 
 
-_OutputKwArgInfo.__module__ = "pyteal"
+OutputKwArgInfo.__module__ = "pyteal"
 
 
 class SubroutineCall(Expr):
@@ -319,7 +315,7 @@ class SubroutineCall(Expr):
         subroutine: SubroutineDefinition,
         args: list[Expr | ScratchVar | abi.BaseType],
         *,
-        output_kwarg: Optional[_OutputKwArgInfo] = None,
+        output_kwarg: OutputKwArgInfo = None,
     ) -> None:
         super().__init__()
         self.subroutine = subroutine
@@ -470,17 +466,18 @@ class ABIReturnSubroutine:
         fn_implementation: Callable[..., Expr],
     ) -> None:
         self.output_kwarg_info: Optional[
-            _OutputKwArgInfo
+            OutputKwArgInfo
         ] = self._output_name_type_from_fn(fn_implementation)
 
-        internal_subroutine_ret_type = (
-            TealType.none
-            if self.output_kwarg_info is None
-            else self.output_kwarg_info.abi_type.storage_type()
-        )
-        output_kwarg_name = (
-            None if self.output_kwarg_info is None else self.output_kwarg_info.name
-        )
+        internal_subroutine_ret_type = TealType.none
+        if self.output_kwarg_info:
+            internal_subroutine_ret_type = (
+                self.output_kwarg_info.abi_type.storage_type()
+            )
+
+        output_kwarg_name = None
+        if self.output_kwarg_info:
+            output_kwarg_name = self.output_kwarg_info.name
 
         # output ABI type is void, return_type = TealType.none
         # otherwise, return_type = ABI value's storage_type()
@@ -493,7 +490,7 @@ class ABIReturnSubroutine:
     @staticmethod
     def _output_name_type_from_fn(
         fn_implementation: Callable[..., Expr]
-    ) -> Optional[_OutputKwArgInfo]:
+    ) -> Optional[OutputKwArgInfo]:
         if not callable(fn_implementation):
             raise TealInputError("Input to ABIReturnSubroutine is not callable")
         sig = signature(fn_implementation)
@@ -505,21 +502,21 @@ class ABIReturnSubroutine:
                 sig.parameters.keys(),
             )
         )
-        if len(potential_abi_arg_names) == 0:
-            return None
-        elif len(potential_abi_arg_names) == 1:
-            name = potential_abi_arg_names[0]
-            annotation = fn_annotations.get(name, None)
-            if annotation is None:
+        match potential_abi_arg_names:
+            case []:
+                return None
+            case [name]:
+                annotation = fn_annotations.get(name, None)
+                if annotation is None:
+                    raise TealInputError(
+                        f"ABI subroutine output-kwarg {name} must specify ABI type"
+                    )
+                type_spec = abi.type_spec_from_annotation(annotation)
+                return OutputKwArgInfo(name, type_spec)
+            case _:
                 raise TealInputError(
-                    f"ABI subroutine output-kwarg {name} must specify ABI type"
+                    f"multiple output arguments ({len(potential_abi_arg_names)}) with type annotations {potential_abi_arg_names}"
                 )
-            type_spec = abi.type_spec_from_annotation(annotation)
-            return _OutputKwArgInfo(name, type_spec)
-        else:
-            raise TealInputError(
-                f"multiple output arguments with type annotations {potential_abi_arg_names}"
-            )
 
     def __call__(
         self, *args: Expr | ScratchVar | abi.BaseType, **kwargs
@@ -675,7 +672,7 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
             f"Exceeding abi output keyword argument max number 1."
         )
 
-    output_kwarg_info = _OutputKwArgInfo.from_dict(subroutine.output_kwarg)
+    output_kwarg_info = OutputKwArgInfo.from_dict(subroutine.output_kwarg)
     output_carrying_abi: Optional[abi.BaseType] = None
 
     if output_kwarg_info:
