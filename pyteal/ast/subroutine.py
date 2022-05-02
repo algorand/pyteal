@@ -512,7 +512,8 @@ class ABIReturnSubroutine:
                 return OutputKwArgInfo(name, type_spec)
             case _:
                 raise TealInputError(
-                    f"multiple output arguments ({len(potential_abi_arg_names)}) with type annotations {potential_abi_arg_names}"
+                    f"multiple output arguments ({len(potential_abi_arg_names)}) "
+                    f"with type annotations {potential_abi_arg_names}"
                 )
 
     def __call__(
@@ -636,39 +637,39 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
     def var_n_loaded(
         param: str,
     ) -> tuple[ScratchVar, ScratchVar | abi.BaseType | Expr]:
-        _loaded_var: ScratchVar | abi.BaseType | Expr
-        _argument_var: ScratchVar
+        loaded_var: ScratchVar | abi.BaseType | Expr
+        argument_var: ScratchVar
 
         if param in subroutine.by_ref_args:
-            _argument_var = DynamicScratchVar(TealType.anytype)
-            _loaded_var = _argument_var
+            argument_var = DynamicScratchVar(TealType.anytype)
+            loaded_var = argument_var
         elif param in subroutine.abi_args:
             internal_abi_var = subroutine.abi_args[param].new_instance()
-            _argument_var = internal_abi_var.stored_value
-            _loaded_var = internal_abi_var
+            argument_var = internal_abi_var.stored_value
+            loaded_var = internal_abi_var
         else:
-            _argument_var = ScratchVar(TealType.anytype)
-            _loaded_var = _argument_var.load()
+            argument_var = ScratchVar(TealType.anytype)
+            loaded_var = argument_var.load()
 
-        return _argument_var, _loaded_var
+        return argument_var, loaded_var
 
-    args = subroutine.arguments()
-    args = [arg for arg in args if arg not in subroutine.output_kwarg]
-
-    argument_vars: list[ScratchVar] = []
-    loaded_args: list[ScratchVar | Expr | abi.BaseType] = []
-    for arg in args:
-        argument_var, loaded_arg = var_n_loaded(arg)
-        argument_vars.append(argument_var)
-        loaded_args.append(loaded_arg)
-
-    abi_output_kwargs: dict[str, abi.BaseType] = {}
     if len(subroutine.output_kwarg) > 1:
         raise TealInputError(
             f"ABI keyword argument num: {len(subroutine.output_kwarg)}. "
             f"Exceeding abi output keyword argument max number 1."
         )
 
+    args = subroutine.arguments()
+    args = [arg for arg in args if arg not in subroutine.output_kwarg]
+
+    arg_vars: list[ScratchVar] = []
+    loaded_args: list[ScratchVar | Expr | abi.BaseType] = []
+    for arg in args:
+        arg_var, loaded_arg = var_n_loaded(arg)
+        arg_vars.append(arg_var)
+        loaded_args.append(loaded_arg)
+
+    abi_output_kwargs: dict[str, abi.BaseType] = {}
     output_kwarg_info = OutputKwArgInfo.from_dict(subroutine.output_kwarg)
     output_carrying_abi: Optional[abi.BaseType] = None
 
@@ -700,7 +701,7 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
 
     # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
     # need to reverse order of argumentVars because the last argument will be on top of the stack
-    body_ops = [var.slot.store() for var in argument_vars[::-1]]
+    body_ops = [var.slot.store() for var in arg_vars[::-1]]
     body_ops.append(subroutine_body)
 
     return SubroutineDeclaration(subroutine, Seq(body_ops))
