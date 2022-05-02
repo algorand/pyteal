@@ -1,3 +1,4 @@
+from pyteal.ir.ops import Mode
 import pytest
 
 import pyteal as pt
@@ -14,7 +15,9 @@ def test_ecdsa_decompress():
     expected = pt.TealSimpleBlock(
         [
             pt.TealOp(compressed_pubkey, pt.Op.byte, '"XY"'),
-            pt.TealOp(pubkey, pt.Op.ecdsa_pk_decompress, pt.EcdsaCurve.Secp256k1),
+            pt.TealOp(
+                pubkey, pt.Op.ecdsa_pk_decompress, pt.EcdsaCurve.Secp256k1.arg_name
+            ),
             pt.TealOp(
                 pubkey.output_slots[1].store(), pt.Op.store, pubkey.output_slots[1]
             ),
@@ -30,6 +33,9 @@ def test_ecdsa_decompress():
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+    # compile without errors this is necessary so assembly is also tested
+    pt.compileTeal(pt.Seq(pubkey, pt.Approve()), Mode.Application, version=5)
 
 
 def test_ecdsa_recover():
@@ -45,7 +51,7 @@ def test_ecdsa_recover():
             pt.TealOp(args[1], pt.Op.int, 1),
             pt.TealOp(args[2], pt.Op.byte, '"sigA"'),
             pt.TealOp(args[3], pt.Op.byte, '"sigB"'),
-            pt.TealOp(pubkey, pt.Op.ecdsa_pk_recover, pt.EcdsaCurve.Secp256k1),
+            pt.TealOp(pubkey, pt.Op.ecdsa_pk_recover, pt.EcdsaCurve.Secp256k1.arg_name),
             pt.TealOp(
                 pubkey.output_slots[1].store(), pt.Op.store, pubkey.output_slots[1]
             ),
@@ -62,6 +68,9 @@ def test_ecdsa_recover():
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+    # compile without errors this is necessary so assembly is also tested
+    pt.compileTeal(pt.Seq(pubkey, pt.Approve()), Mode.Application, version=5)
+
 
 def test_ecdsa_verify_basic():
     args = [pt.Bytes("data"), pt.Bytes("sigA"), pt.Bytes("sigB")]
@@ -76,7 +85,7 @@ def test_ecdsa_verify_basic():
             pt.TealOp(args[2], pt.Op.byte, '"sigB"'),
             pt.TealOp(pubkey[0], pt.Op.byte, '"X"'),
             pt.TealOp(pubkey[1], pt.Op.byte, '"Y"'),
-            pt.TealOp(expr, pt.Op.ecdsa_verify, pt.EcdsaCurve.Secp256k1),
+            pt.TealOp(expr, pt.Op.ecdsa_verify, pt.EcdsaCurve.Secp256k1.arg_name),
         ]
     )
 
@@ -85,6 +94,9 @@ def test_ecdsa_verify_basic():
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
+
+    # compile without errors this is necessary so assembly is also tested
+    pt.compileTeal(pt.Seq(pt.Pop(expr), pt.Approve()), Mode.Application, version=5)
 
 
 def test_ecdsa_verify_compressed_pk():
@@ -97,7 +109,9 @@ def test_ecdsa_verify_compressed_pk():
     expected = pt.TealSimpleBlock(
         [
             pt.TealOp(compressed_pubkey, pt.Op.byte, '"XY"'),
-            pt.TealOp(pubkey, pt.Op.ecdsa_pk_decompress, pt.EcdsaCurve.Secp256k1),
+            pt.TealOp(
+                pubkey, pt.Op.ecdsa_pk_decompress, pt.EcdsaCurve.Secp256k1.arg_name
+            ),
             pt.TealOp(
                 pubkey.output_slots[1].store(), pt.Op.store, pubkey.output_slots[1]
             ),
@@ -113,7 +127,7 @@ def test_ecdsa_verify_compressed_pk():
             pt.TealOp(
                 pubkey.output_slots[1].load(), pt.Op.load, pubkey.output_slots[1]
             ),
-            pt.TealOp(expr, pt.Op.ecdsa_verify, pt.EcdsaCurve.Secp256k1),
+            pt.TealOp(expr, pt.Op.ecdsa_verify, pt.EcdsaCurve.Secp256k1.arg_name),
         ]
     )
 
@@ -123,6 +137,9 @@ def test_ecdsa_verify_compressed_pk():
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+    # compile without errors this is necessary so assembly is also tested
+    pt.compileTeal(pt.Seq(pt.Pop(expr), pt.Approve()), Mode.Application, version=5)
 
 
 def test_ecdsa_verify_recovered_pk():
@@ -139,7 +156,7 @@ def test_ecdsa_verify_recovered_pk():
             pt.TealOp(args[1], pt.Op.int, 1),
             pt.TealOp(args[2], pt.Op.byte, '"sigA"'),
             pt.TealOp(args[3], pt.Op.byte, '"sigB"'),
-            pt.TealOp(pubkey, pt.Op.ecdsa_pk_recover, pt.EcdsaCurve.Secp256k1),
+            pt.TealOp(pubkey, pt.Op.ecdsa_pk_recover, pt.EcdsaCurve.Secp256k1.arg_name),
             pt.TealOp(
                 pubkey.output_slots[1].store(), pt.Op.store, pubkey.output_slots[1]
             ),
@@ -155,7 +172,7 @@ def test_ecdsa_verify_recovered_pk():
             pt.TealOp(
                 pubkey.output_slots[1].load(), pt.Op.load, pubkey.output_slots[1]
             ),
-            pt.TealOp(expr, pt.Op.ecdsa_verify, pt.EcdsaCurve.Secp256k1),
+            pt.TealOp(expr, pt.Op.ecdsa_verify, pt.EcdsaCurve.Secp256k1.arg_name),
         ]
     )
 
@@ -165,6 +182,9 @@ def test_ecdsa_verify_recovered_pk():
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+    # compile without errors this is necessary so assembly is also tested
+    pt.compileTeal(pt.Seq(pt.Pop(expr), pt.Approve()), Mode.Application, version=5)
 
 
 def test_ecdsa_invalid():
