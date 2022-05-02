@@ -51,9 +51,8 @@ lint: black flake8 mypy
 # TODO: add blackbox_test.py to multithreaded tests when following issue has been fixed https://github.com/algorand/pyteal/issues/199
 NUM_PROCS = auto
 test-unit:
-	pytest -n $(NUM_PROCS) --durations=10 -sv pyteal tests/unit --ignore tests/unit/blackbox_test.py
-	pytest -n 1 -sv tests/unit/blackbox_test.py
-
+	pytest -n $(NUM_PROCS) --durations=10 -sv pyteal tests/unit --ignore tests/unit/blackbox_test.py --ignore tests/unit/user_guide_test.py
+	pytest -n 1 -sv tests/unit/blackbox_test.py tests/unit/user_guide_test.py
 
 build-and-test: check-generate-init lint test-unit
 
