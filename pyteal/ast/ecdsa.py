@@ -14,6 +14,8 @@ EcdsaPubkey = [TealType.bytes, TealType.bytes]
 
 
 class EcdsaCurve(Enum):
+    """Enum representing an elliptic curve specification used in ECDSA."""
+
     Secp256k1 = 0
 
 
@@ -90,6 +92,9 @@ def EcdsaVerify(
         An expression evaluating to either 0 or 1 representing the success of verification
     """
 
+    if not isinstance(curve, EcdsaCurve):
+        raise TealTypeError(curve, EcdsaCurve)
+
     if isinstance(pubkey, MultiValue):
         if pubkey.types != EcdsaPubkey:
             raise TealTypeError(pubkey.types, EcdsaPubkey)
@@ -112,6 +117,9 @@ def EcdsaDecompress(curve: EcdsaCurve, compressed_pk: Expr) -> MultiValue:
         A MultiValue expression representing the two components of the public key, big endian
         encoded.
     """
+
+    if not isinstance(curve, EcdsaCurve):
+        raise TealTypeError(curve, EcdsaCurve)
 
     require_type(compressed_pk, TealType.bytes)
     return MultiValue(
@@ -140,6 +148,9 @@ def EcdsaRecover(
         A MultiValue expression representing the two components of the public key, big endian
         encoded.
     """
+
+    if not isinstance(curve, EcdsaCurve):
+        raise TealTypeError(curve, EcdsaCurve)
 
     require_type(data, TealType.bytes)
     require_type(recovery_id, TealType.uint64)

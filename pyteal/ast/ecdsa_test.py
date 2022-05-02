@@ -2,8 +2,8 @@ import pytest
 
 import pyteal as pt
 
+teal4Options = pt.CompileOptions(version=4)
 teal5Options = pt.CompileOptions(version=5)
-teal6Options = pt.CompileOptions(version=6)
 
 
 def test_ecdsa_decompress():
@@ -195,3 +195,17 @@ def test_ecdsa_invalid():
             args=[compressed_pk],
         )
         pt.EcdsaVerify(pt.EcdsaCurve.Secp256k1, args[0], args[1], args[2], pubkey)
+
+    with pytest.raises(pt.TealInputError):
+        args = [pt.Bytes("data"), pt.Bytes("sigA"), pt.Bytes("sigB")]
+        pubkey = (pt.Bytes("X"), pt.Bytes("Y"))
+        expr = pt.EcdsaVerify(
+            pt.EcdsaCurve.Secp256k1, args[0], args[1], args[2], pubkey
+        )
+
+        expr.__teal__(teal4Options)
+
+    with pytest.raises(pt.TealTypeError):
+        args = [pt.Bytes("data"), pt.Bytes("sigA"), pt.Bytes("sigB")]
+        pubkey = (pt.Bytes("X"), pt.Bytes("Y"))
+        expr = pt.EcdsaVerify(5, args[0], args[1], args[2], pubkey)
