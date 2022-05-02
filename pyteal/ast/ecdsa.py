@@ -1,5 +1,5 @@
-from enum import Enum
-from typing import Tuple, TYPE_CHECKING, cast
+from enum import IntEnum
+from typing import Tuple, TYPE_CHECKING
 
 from pyteal.ast import Expr, MultiValue
 from pyteal.errors import TealTypeError, verifyTealVersion
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 EcdsaPubkey = [TealType.bytes, TealType.bytes]
 
 
-class EcdsaCurve(Enum):
+class EcdsaCurve(IntEnum):
     """Enum representing an elliptic curve specification used in ECDSA."""
 
     Secp256k1 = 0
@@ -53,7 +53,7 @@ class EcdsaVerifyExpr(Expr):
         )
 
         return TealBlock.FromOp(
-            options, TealOp(self, self.op, cast(int, self.curve)), *self.args
+            options, TealOp(self, self.op, int(self.curve)), *self.args
         )
 
     def __str__(self):
@@ -125,7 +125,7 @@ def EcdsaDecompress(curve: EcdsaCurve, compressed_pk: Expr) -> MultiValue:
     return MultiValue(
         Op.ecdsa_pk_decompress,
         EcdsaPubkey,
-        immediate_args=[cast(int, curve)],
+        immediate_args=[int(curve)],
         args=[compressed_pk],
     )
 
@@ -159,6 +159,6 @@ def EcdsaRecover(
     return MultiValue(
         Op.ecdsa_pk_recover,
         EcdsaPubkey,
-        immediate_args=[cast(int, curve)],
+        immediate_args=[int(curve)],
         args=[data, recovery_id, sigA, sigB],
     )
