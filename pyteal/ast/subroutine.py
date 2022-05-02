@@ -1,6 +1,5 @@
-from collections import OrderedDict
 from dataclasses import dataclass
-from inspect import isclass, Parameter, signature, Signature
+from inspect import isclass, Parameter, signature, Signature, get_annotations
 from typing import (
     Callable,
     Optional,
@@ -42,7 +41,7 @@ class SubroutineDefinition:
 
         sig = signature(implementation)
 
-        annotations = getattr(implementation, "__annotations__", OrderedDict())
+        annotations = get_annotations(implementation)
 
         if "return" in annotations and annotations["return"] is not Expr:
             raise TealInputError(
@@ -494,14 +493,12 @@ class ABIReturnSubroutine:
         if not callable(fn_implementation):
             raise TealInputError("Input to ABIReturnSubroutine is not callable")
         sig = signature(fn_implementation)
-        fn_annotations = getattr(fn_implementation, "__annotations__", OrderedDict())
+        fn_annotations = get_annotations(fn_implementation)
 
-        potential_abi_arg_names = list(
-            filter(
-                lambda key: sig.parameters[key].kind == Parameter.KEYWORD_ONLY,
-                sig.parameters.keys(),
-            )
-        )
+        potential_abi_arg_names = [
+            k for k, v in sig.parameters.items() if v.kind == Parameter.KEYWORD_ONLY
+        ]
+
         match potential_abi_arg_names:
             case []:
                 return None
