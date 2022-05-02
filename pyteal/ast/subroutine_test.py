@@ -1,4 +1,4 @@
-from typing import List, Literal, Callable
+from typing import List, Literal
 import pytest
 from dataclasses import dataclass
 
@@ -80,30 +80,36 @@ def test_subroutine_definition():
 
 @dataclass
 class ABISubroutineTC:
-    impl: Callable[..., pt.Expr]
+    definition: pt.ABIReturnSubroutine
     arg_instances: list[pt.Expr | pt.abi.BaseType]
     name: str
     ret_type: str | pt.abi.TypeSpec
 
 
 def test_abi_subroutine_definition():
+    @pt.ABIReturnSubroutine
     def fn_0arg_0ret() -> pt.Expr:
         return pt.Return()
 
+    @pt.ABIReturnSubroutine
     def fn_0arg_uint64_ret(*, res: pt.abi.Uint64) -> pt.Expr:
         return res.set(1)
 
+    @pt.ABIReturnSubroutine
     def fn_1arg_0ret(a: pt.abi.Uint64) -> pt.Expr:
         return pt.Return()
 
+    @pt.ABIReturnSubroutine
     def fn_1arg_1ret(a: pt.abi.Uint64, *, out: pt.abi.Uint64) -> pt.Expr:
         return out.set(a)
 
+    @pt.ABIReturnSubroutine
     def fn_2arg_0ret(
         a: pt.abi.Uint64, b: pt.abi.StaticArray[pt.abi.Byte, Literal[10]]
     ) -> pt.Expr:
         return pt.Return()
 
+    @pt.ABIReturnSubroutine
     def fn_2arg_1ret(
         a: pt.abi.Uint64,
         b: pt.abi.StaticArray[pt.abi.Byte, Literal[10]],
@@ -112,6 +118,7 @@ def test_abi_subroutine_definition():
     ) -> pt.Expr:
         return out.set(b[a.get() % pt.Int(10)])
 
+    @pt.ABIReturnSubroutine
     def fn_2arg_1ret_with_expr(
         a: pt.Expr,
         b: pt.abi.StaticArray[pt.abi.Byte, Literal[10]],
@@ -150,23 +157,22 @@ def test_abi_subroutine_definition():
     )
 
     for case in cases:
-        definition = pt.ABIReturnSubroutine(case.impl)
-        assert definition.subroutine.argument_count() == len(case.arg_instances)
-        assert definition.name() == case.name
+        assert case.definition.subroutine.argument_count() == len(case.arg_instances)
+        assert case.definition.name() == case.name
 
         if len(case.arg_instances) > 0:
             with pytest.raises(pt.TealInputError):
-                definition(*case.arg_instances[:-1])
+                case.definition(*case.arg_instances[:-1])
 
         with pytest.raises(pt.TealInputError):
-            definition(*(case.arg_instances + [pt.abi.Uint64()]))
+            case.definition(*(case.arg_instances + [pt.abi.Uint64()]))
 
-        assert definition.type_of() == case.ret_type
-        invoked = definition(*case.arg_instances)
+        assert case.definition.type_of() == case.ret_type
+        invoked = case.definition(*case.arg_instances)
         assert isinstance(
             invoked, (pt.Expr if case.ret_type == "void" else pt.abi.ReturnedValue)
         )
-        assert definition.is_registrable() == all(
+        assert case.definition.is_registrable() == all(
             map(lambda x: isinstance(x, pt.abi.BaseType), case.arg_instances)
         )
 
@@ -332,12 +338,15 @@ def test_subroutine_invocation_param_types():
 
 
 def test_abi_subroutine_calling_param_types():
+    @pt.ABIReturnSubroutine
     def fn_log_add(a: pt.abi.Uint64, b: pt.abi.Uint32) -> pt.Expr:
         return pt.Seq(pt.Log(pt.Itob(a.get() + b.get())), pt.Return())
 
+    @pt.ABIReturnSubroutine
     def fn_ret_add(a: pt.abi.Uint64, b: pt.abi.Uint32, *, c: pt.abi.Uint64) -> pt.Expr:
         return c.set(a.get() + b.get() + pt.Int(0xA190))
 
+    @pt.ABIReturnSubroutine
     def fn_abi_annotations_0(
         a: pt.abi.Byte,
         b: pt.abi.StaticArray[pt.abi.Uint32, Literal[10]],
@@ -345,6 +354,7 @@ def test_abi_subroutine_calling_param_types():
     ) -> pt.Expr:
         return pt.Return()
 
+    @pt.ABIReturnSubroutine
     def fn_abi_annotations_0_with_ret(
         a: pt.abi.Byte,
         b: pt.abi.StaticArray[pt.abi.Uint32, Literal[10]],
@@ -354,12 +364,14 @@ def test_abi_subroutine_calling_param_types():
     ):
         return out.set(a)
 
+    @pt.ABIReturnSubroutine
     def fn_mixed_annotations_0(a: pt.ScratchVar, b: pt.Expr, c: pt.abi.Byte) -> pt.Expr:
         return pt.Seq(
             a.store(c.get() * pt.Int(0x0FF1CE) * b),
             pt.Return(),
         )
 
+    @pt.ABIReturnSubroutine
     def fn_mixed_annotations_0_with_ret(
         a: pt.ScratchVar, b: pt.Expr, c: pt.abi.Byte, *, out: pt.abi.Uint64
     ) -> pt.Expr:
@@ -368,6 +380,7 @@ def test_abi_subroutine_calling_param_types():
             out.set(a.load()),
         )
 
+    @pt.ABIReturnSubroutine
     def fn_mixed_annotation_1(
         a: pt.ScratchVar, b: pt.abi.StaticArray[pt.abi.Uint32, Literal[10]]
     ) -> pt.Expr:
@@ -377,6 +390,7 @@ def test_abi_subroutine_calling_param_types():
             pt.Return(),
         )
 
+    @pt.ABIReturnSubroutine
     def fn_mixed_annotation_1_with_ret(
         a: pt.ScratchVar, b: pt.abi.Uint64, *, c: pt.abi.Bool
     ) -> pt.Expr:
@@ -492,10 +506,11 @@ def test_abi_subroutine_calling_param_types():
         ),
     ]
 
-    for case_name, impl, args, ret_type, err in cases:
-        definition = pt.ABIReturnSubroutine(impl)
+    for case_name, definition, args, ret_type, err in cases:
         assert definition.subroutine.argument_count() == len(args), case_name
-        assert definition.name() == impl.__name__, case_name
+        assert (
+            definition.name() == definition.subroutine.implementation.__name__
+        ), case_name
 
         if err is None:
             invocation = definition(*args)
