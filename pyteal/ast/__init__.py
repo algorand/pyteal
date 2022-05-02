@@ -102,7 +102,7 @@ from pyteal.ast.ternaryexpr import Divw, Ed25519Verify, SetBit, SetByte
 from pyteal.ast.substring import Substring, Extract, Suffix
 
 # more ops
-from pyteal.ast.naryexpr import NaryExpr, Add, Mul, And, Or, Concat
+from pyteal.ast.naryexpr import Add, Concat, Mul, NaryExpr, Or
 from pyteal.ast.widemath import WideRatio
 
 # control flow
@@ -137,6 +137,7 @@ from pyteal.ast.scratch import (
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
 from pyteal.ast.maybe import MaybeValue
 from pyteal.ast.multi import MultiValue
+from pyteal.ast.opup import OpUp, OpUpMode
 
 # abi
 from pyteal.ast import abi
@@ -251,6 +252,8 @@ __all__ = [
     "ScratchVar",
     "MaybeValue",
     "MultiValue",
+    "OpUp",
+    "OpUpMode",
     "BytesAdd",
     "BytesMinus",
     "BytesDiv",

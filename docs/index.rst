@@ -44,6 +44,7 @@ PyTeal **hasn't been security audited**. Use it at your own risk.
    assets
    versions
    compiler_optimization
+   opup
 
 .. toctree::
    :maxdepth: 3

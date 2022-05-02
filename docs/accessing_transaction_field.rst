@@ -47,8 +47,8 @@ Operator                                                                        
 :any:`Txn.global_num_byte_slices() <TxnObject.global_num_byte_slices>`           :code:`TealType.uint64`   3                Maximum global byte strings in app schema
 :any:`Txn.local_num_uints() <TxnObject.local_num_uints>`                         :code:`TealType.uint64`   3                Maximum local integers in app schema
 :any:`Txn.local_num_byte_slices() <TxnObject.local_num_byte_slices>`             :code:`TealType.uint64`   3                Maximum local byte strings in app schema
-:any:`Txn.accounts <TxnObject.accounts>`                                         :code:`TealType.bytes[]`  2                Array of application accounts
-:any:`Txn.assets <TxnObject.assets>`                                             :code:`TealType.uint64[]` 3                Array of application assets
+:any:`Txn.accounts <TxnObject.accounts>`                                         :code:`TealType.bytes[]`  2                Array of accounts available to the application
+:any:`Txn.assets <TxnObject.assets>`                                             :code:`TealType.uint64[]` 3                Array of assets available to the application
 :any:`Txn.applications <TxnObject.applications>`                                 :code:`TealType.uint64[]` 3                Array of applications
 :any:`Txn.clear_state_program() <TxnObject.clear_state_program>`                 :code:`TealType.bytes`    2
 :any:`Txn.extra_program_pages() <TxnObject.extra_program_pages>`                 :code:`TealType.uint64`   4                Number of extra program pages for app
@@ -223,7 +223,7 @@ Information about the current state of the blockchain can be obtained using the 
 Operator                                    Type                    Min TEAL Version Notes
 =========================================== ======================= ================ =============================================================
 :any:`Global.min_txn_fee()`                 :code:`TealType.uint64` 2                in microAlgos
-:any:`Global.min_balance()`                 :code:`TealType.uint64` 2                in mircoAlgos
+:any:`Global.min_balance()`                 :code:`TealType.uint64` 2                in microAlgos
 :any:`Global.max_txn_life()`                :code:`TealType.uint64` 2                number of rounds
 :any:`Global.zero_address()`                :code:`TealType.bytes`  2                32 byte address of all zero bytes
 :any:`Global.group_size()`                  :code:`TealType.uint64` 2                number of txns in this atomic transaction group, at least 1

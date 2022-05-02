@@ -1,0 +1,34 @@
+#pragma version 6
+intcblock 1
+txna ApplicationArgs 0
+btoi
+callsub oldfac_0
+store 0
+load 0
+itob
+log
+load 0
+return
+
+// oldfac
+oldfac_0:
+store 1
+load 1
+pushint 2 // 2
+<
+bnz oldfac_0_l2
+load 1
+load 1
+intc_0 // 1
+-
+load 1
+swap
+callsub oldfac_0
+swap
+store 1
+*
+b oldfac_0_l3
+oldfac_0_l2:
+intc_0 // 1
+oldfac_0_l3:
+retsub
