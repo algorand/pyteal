@@ -188,8 +188,8 @@ class SubroutineDefinition:
                     )
                 abi_output_kwarg[name] = expected_arg_type
                 continue
-            else:
-                expected_arg_types.append(expected_arg_type)
+
+            expected_arg_types.append(expected_arg_type)
 
             if expected_arg_type is ScratchVar:
                 by_ref_args.add(name)
@@ -295,15 +295,15 @@ class OutputKwArgInfo:
 
     @staticmethod
     def from_dict(kwarg_info: dict[str, abi.TypeSpec]) -> Optional["OutputKwArgInfo"]:
-        if not kwarg_info:
-            return None
-        elif len(kwarg_info) == 1:
-            (key,) = [*kwarg_info.keys()]
-            return OutputKwArgInfo(key, kwarg_info[key])
-        else:
-            raise TealInputError(
-                f"illegal conversion kwarg_info length {len(kwarg_info)}."
-            )
+        match list(kwarg_info.keys()):
+            case []:
+                return None
+            case [k]:
+                return OutputKwArgInfo(k, kwarg_info[k])
+            case _:
+                raise TealInputError(
+                    f"illegal conversion kwarg_info length {len(kwarg_info)}."
+                )
 
 
 OutputKwArgInfo.__module__ = "pyteal"
