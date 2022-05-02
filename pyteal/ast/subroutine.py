@@ -103,11 +103,7 @@ class SubroutineDefinition:
         We load the ABI scratch space stored value to stack, and store them later in subroutine's local ABI values.
 
         Args:
-            sig: containing the signature of the python function for subroutine definition.
-                NOTE: it contains all the arguments, we obtain type annotations from `annotations`.
-            annotations: all available argument type annotations and return type annotation.
-                NOTE: `annotations` does not contain all the arguments,
-                an argument is not included in `annotations` if its type annotation is not available.
+            input_types: optional, containing the TealType of input expression.
         """
         implementation = self.implementation
         if not callable(implementation):
@@ -123,16 +119,13 @@ class SubroutineDefinition:
 
         if input_types is not None and len(input_types) != len(implementation_params):
             raise TealInputError(
-                "Provided number of input_types ({}) does not match detected number of parameters ({})".format(
-                    len(input_types), len(implementation_params)
-                )
+                f"Provided number of input_types ({len(input_types)}) "
+                f"does not match detected number of parameters ({len(implementation_params)})"
             )
 
         if "return" in annotations and annotations["return"] is not Expr:
             raise TealInputError(
-                "Function has return of disallowed type {}. Only Expr is allowed".format(
-                    annotations["return"]
-                )
+                f"Function has return of disallowed type {annotations['return']}. Only Expr is allowed"
             )
 
         for i, (name, param) in enumerate(implementation_params.items()):
@@ -141,25 +134,19 @@ class SubroutineDefinition:
                 Parameter.POSITIONAL_OR_KEYWORD,
             ):
                 raise TealInputError(
-                    "Function has a parameter type that is not allowed in a subroutine: parameter {} with type {}".format(
-                        name, param.kind
-                    )
+                    f"Function has a parameter type that is not allowed in a subroutine: parameter {name} with type {param.kind}"
                 )
 
             if param.default != Parameter.empty:
                 raise TealInputError(
-                    "Function has a parameter with a default value, which is not allowed in a subroutine: {}".format(
-                        name
-                    )
+                    f"Function has a parameter with a default value, which is not allowed in a subroutine: {name}"
                 )
 
             if input_types:
                 intype = input_types[i]
                 if not isinstance(intype, TealType):
                     raise TealInputError(
-                        "Function has input type {} for parameter {} which is not a TealType".format(
-                            intype, name
-                        )
+                        f"Function has input type {intype} for parameter {name} which is not a TealType"
                     )
 
             expected_arg_type = self._validate_parameter_type(annotations, name)
@@ -204,9 +191,8 @@ class SubroutineDefinition:
                 return abi.type_spec_from_annotation(ptype)
 
             raise TealInputError(
-                "Function has parameter {} of disallowed type {}. Only the types {} are allowed".format(
-                    parameter_name, ptype, (Expr, ScratchVar, "ABI")
-                )
+                f"Function has parameter {parameter_name} of disallowed type {ptype}. "
+                f"Only the types {(Expr, ScratchVar, 'ABI')} are allowed"
             )
 
     def getDeclaration(self) -> "SubroutineDeclaration":
