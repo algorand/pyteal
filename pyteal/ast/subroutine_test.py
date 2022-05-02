@@ -1,5 +1,6 @@
-from typing import List
+from itertools import product
 import pytest
+from typing import List
 
 import pyteal as pt
 from pyteal.ast.subroutine import evaluateSubroutine
@@ -75,6 +76,152 @@ def test_subroutine_definition():
         assert isinstance(invocation, pt.SubroutineCall)
         assert invocation.subroutine is definition
         assert invocation.args == args
+
+
+def test_subroutine_definition_validate():
+    """
+    DFS through SubroutineDefinition.validate()'s logic
+    """
+
+    def mock_subroutine_definition(implementation):
+        mock = pt.SubroutineDefinition(lambda: pt.Return(pt.Int(1)), pt.TealType.uint64)
+        mock._validate()  # haven't failed with dummy implementation
+        mock.implementation = implementation
+        return mock
+
+    not_callable = mock_subroutine_definition("I'm not callable")
+    with pytest.raises(pt.TealInputError) as tie:
+        not_callable._validate()
+
+    assert tie.value == pt.TealInputError(
+        "Input to SubroutineDefinition is not callable"
+    )
+
+    three_params = mock_subroutine_definition(lambda x, y, z: pt.Return(pt.Int(1)))
+    two_inputs = [pt.TealType.uint64, pt.TealType.bytes]
+    with pytest.raises(pt.TealInputError) as tie:
+        three_params._validate(input_types=two_inputs)
+
+    assert tie.value == pt.TealInputError(
+        "Provided number of input_types (2) does not match detected number of parameters (3)"
+    )
+
+    params, anns, arg_types, byrefs = three_params._validate()
+    assert len(params) == 3
+    assert anns == {}
+    assert all(at is pt.Expr for at in arg_types)
+    assert byrefs == set()
+
+    def bad_return_impl() -> str:
+        return pt.Return(pt.Int(1))  # type: ignore
+
+    bad_return = mock_subroutine_definition(bad_return_impl)
+    with pytest.raises(pt.TealInputError) as tie:
+        bad_return._validate()
+
+    assert tie.value == pt.TealInputError(
+        "Function has return of disallowed type <class 'str'>. Only Expr is allowed"
+    )
+
+    var_positional = mock_subroutine_definition(lambda *args: pt.Return(pt.Int(1)))
+    with pytest.raises(pt.TealInputError) as tie:
+        var_positional._validate()
+
+    assert tie.value == pt.TealInputError(
+        "Function has a parameter type that is not allowed in a subroutine: parameter args with type VAR_POSITIONAL"
+    )
+
+    kw_only = mock_subroutine_definition(lambda *, kw: pt.Return(pt.Int(1)))
+    with pytest.raises(pt.TealInputError) as tie:
+        kw_only._validate()
+
+    assert tie.value == pt.TealInputError(
+        "Function has a parameter type that is not allowed in a subroutine: parameter kw with type KEYWORD_ONLY"
+    )
+
+    var_keyword = mock_subroutine_definition(lambda **kw: pt.Return(pt.Int(1)))
+    with pytest.raises(pt.TealInputError) as tie:
+        var_keyword._validate()
+
+    assert tie.value == pt.TealInputError(
+        "Function has a parameter type that is not allowed in a subroutine: parameter kw with type VAR_KEYWORD"
+    )
+
+    param_default = mock_subroutine_definition(lambda x="niiiice": pt.Return(pt.Int(1)))
+    with pytest.raises(pt.TealInputError) as tie:
+        param_default._validate()
+
+    assert tie.value == pt.TealInputError(
+        "Function has a parameter with a default value, which is not allowed in a subroutine: x"
+    )
+
+    with pytest.raises(pt.TealInputError) as tie:
+        three_params._validate(
+            input_types=[pt.TealType.uint64, pt.Expr, pt.TealType.anytype]
+        )
+
+    assert tie.value == pt.TealInputError(
+        "Function has input type <class 'pyteal.Expr'> for parameter y which is not a TealType"
+    )
+
+    # Now we get to _validate_parameter_type():
+    one_vanilla = mock_subroutine_definition(lambda x: pt.Return(pt.Int(1)))
+
+    params, anns, arg_types, byrefs = one_vanilla._validate()
+    assert len(params) == 1
+    assert anns == {}
+    assert all(at is pt.Expr for at in arg_types)
+    assert byrefs == set()
+
+    def one_expr_impl(x: pt.Expr):
+        return pt.Return(pt.Int(1))
+
+    one_expr = mock_subroutine_definition(one_expr_impl)
+    params, anns, arg_types, byrefs = one_expr._validate()
+    assert len(params) == 1
+    assert anns == {"x": pt.Expr}
+    assert all(at is pt.Expr for at in arg_types)
+    assert byrefs == set()
+
+    def one_scratchvar_impl(x: pt.ScratchVar):
+        return pt.Return(pt.Int(1))
+
+    one_scratchvar = mock_subroutine_definition(one_scratchvar_impl)
+    params, anns, arg_types, byrefs = one_scratchvar._validate()
+    assert len(params) == 1
+    assert anns == {"x": pt.ScratchVar}
+    assert all(at is pt.ScratchVar for at in arg_types)
+    assert byrefs == {"x"}
+
+    def one_nontype_impl(x: "blahBlah"):  # type: ignore # noqa: F821
+        return pt.Return(pt.Int(1))
+
+    one_nontype = mock_subroutine_definition(one_nontype_impl)
+    with pytest.raises(pt.TealInputError) as tie:
+        one_nontype._validate()
+
+    assert tie.value == pt.TealInputError(
+        "Function has parameter x of declared type blahBlah which is not a class"
+    )
+
+    def one_dynscratchvar_impl(x: pt.DynamicScratchVar):
+        return pt.Return(pt.Int(1))
+
+    one_dynscratchvar = mock_subroutine_definition(one_dynscratchvar_impl)
+    with pytest.raises(pt.TealInputError) as tie:
+        one_dynscratchvar._validate()
+
+    assert tie.value == pt.TealInputError(
+        "Function has parameter x of disallowed type <class 'pyteal.DynamicScratchVar'>. Only the types (<class 'pyteal.Expr'>, <class 'pyteal.ScratchVar'>) are allowed"
+    )
+
+    # Now we're back to validate() and everything should be copacetic
+    for x, y, z in product(pt.TealType, pt.TealType, pt.TealType):
+        params, anns, arg_types, byrefs = three_params._validate(input_types=[x, y, z])
+        assert len(params) == 3
+        assert anns == {}
+        assert all(at is pt.Expr for at in arg_types)
+        assert byrefs == set()
 
 
 def test_subroutine_invocation_param_types():

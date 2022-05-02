@@ -13,7 +13,7 @@ jobs:
     container: python:${{ matrix.python }}
     strategy:
       matrix:
-        python: ['3.10']
+        python: ["3.10"]
     steps:
       - run: python3 --version
       - name: Check out code
@@ -25,19 +25,68 @@ jobs:
       - name: Build and Test
         run: make build-and-test
 
-  build-docset:
+  run-integration-tests:
     runs-on: ubuntu-20.04
-    container: python:3.10  # Needs `make`, can't be slim
+    strategy:
+      matrix:
+        python: [ "3.10" ]
     steps:
       - name: Check out code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "${{ matrix.python }}"
+      - name: Test Python version
+        run: |
+          installed="$(python --version)"
+          expected="${{ matrix.python }}"
+          echo $installed
+          [[ $installed =~ "Python ${expected}" ]] && echo "Configured Python" || (echo "Failed to configure Python" && exit 1)
+      - name: Local ACT Only - Install required os level applications
+        if: ${{ env.ACT }}
+        run: |
+          sudo apt update -y
+          sudo apt install -y curl
+          sudo apt -y install ca-certificates curl gnupg lsb-release
+          sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+          sudo echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+            $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+          sudo apt update
+          sudo apt -y install docker-ce docker-ce-cli containerd.io
+          sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+          docker-compose --version
+      - name: Create sandbox
+        run: make sandbox-dev-up
+      - name: Install python dependencies
+        run: make setup-development
+      - name: Build, Unit Tests and Integration Tests
+        run: make all-tests
+      - name: Stop running images
+        run: make sandbox-dev-stop
+
+  build-docset:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python: [ "3.10" ]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "${{ matrix.python }}"
       - name: Install python dependencies
         run: make setup-docs
       - name: Make docs
         run: make bundle-docs
       - name: Archive docset
+        if: ${{ !env.ACT }}
         uses: actions/upload-artifact@v2
         with:
           name: pyteal.docset

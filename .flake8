@@ -24,8 +24,7 @@ per-file-ignores =
     examples/signature/recurring_swap_deploy.py:    F403, F405
     pyteal/__init__.py:                             F401, F403
     pyteal/ir/ops.py:                               E221
-    tests/module_test.py:                           F401, F403
-    tests/*.py:                                     I252
+    tests/unit/module_test.py:                      F401, F403
 
 # from flake8-tidy-imports
 ban-relative-imports = true

@@ -1,6 +1,6 @@
-from collections import OrderedDict
-from inspect import isclass, Parameter, signature
-from typing import Callable, List, Optional, Set, Type, Union, TYPE_CHECKING
+from inspect import Parameter, get_annotations, isclass, signature
+from types import MappingProxyType
+from typing import Callable, List, Optional, Type, Union, TYPE_CHECKING
 
 from pyteal.errors import TealInputError, verifyTealVersion
 from pyteal.ir import TealOp, Op, TealBlock
@@ -15,6 +15,10 @@ if TYPE_CHECKING:
 
 
 class SubroutineDefinition:
+    """
+    Class that leverages TEAL's `callsub` and `retsub` opcode-pair for subroutines
+    """
+
     nextSubroutineId = 0
 
     def __init__(
@@ -23,29 +27,65 @@ class SubroutineDefinition:
         returnType: TealType,
         nameStr: str = None,
     ) -> None:
+        """
+        Args:
+            implementation: The python function defining the subroutine
+            returnType: the TealType to be returned by the subroutine
+            nameStr (optional): the name that is used to identify the subroutine.
+                If omitted, the name defaults to the implementation's __name__ attribute
+        """
         super().__init__()
         self.id = SubroutineDefinition.nextSubroutineId
         SubroutineDefinition.nextSubroutineId += 1
 
-        self.by_ref_args: Set[str] = set()
+        self.returnType = returnType
+        self.declaration: Optional["SubroutineDeclaration"] = None
 
-        self.expected_arg_types: List[Type[Union[Expr, ScratchVar]]] = []
+        self.implementation: Callable = implementation
 
+        impl_params, anns, arg_types, byrefs = self._validate()
+        self.implementationParams: MappingProxyType[str, Parameter] = impl_params
+        self.annotations: dict[str, Expr | ScratchVar] = anns
+        self.expected_arg_types: list[type[Expr | ScratchVar]] = arg_types
+        self.by_ref_args: set[str] = byrefs
+
+        self.__name: str = nameStr if nameStr else self.implementation.__name__
+
+    def _validate(
+        self, input_types: list[TealType] = None
+    ) -> tuple[
+        MappingProxyType[str, Parameter],
+        dict[str, Expr | ScratchVar],
+        list[type[Expr | ScratchVar]],
+        set[str],
+    ]:
+        implementation = self.implementation
         if not callable(implementation):
             raise TealInputError("Input to SubroutineDefinition is not callable")
 
-        sig = signature(implementation)
+        impl_params: MappingProxyType[str, Parameter] = signature(
+            implementation
+        ).parameters
+        anns: dict[str, Expr | ScratchVar] = get_annotations(implementation)
+        arg_types: list[type[Expr | ScratchVar]] = []
+        byrefs: set[str] = set()
 
-        annotations = getattr(implementation, "__annotations__", OrderedDict())
-
-        if "return" in annotations and annotations["return"] is not Expr:
+        sig_params = impl_params
+        if input_types is not None and len(input_types) != len(sig_params):
             raise TealInputError(
-                "Function has return of disallowed type {}. Only Expr is allowed".format(
-                    annotations["return"]
+                "Provided number of input_types ({}) does not match detected number of parameters ({})".format(
+                    len(input_types), len(sig_params)
                 )
             )
 
-        for name, param in sig.parameters.items():
+        if "return" in anns and anns["return"] is not Expr:
+            raise TealInputError(
+                "Function has return of disallowed type {}. Only Expr is allowed".format(
+                    anns["return"]
+                )
+            )
+
+        for i, (name, param) in enumerate(impl_params.items()):
             if param.kind not in (
                 Parameter.POSITIONAL_ONLY,
                 Parameter.POSITIONAL_OR_KEYWORD,
@@ -63,18 +103,21 @@ class SubroutineDefinition:
                     )
                 )
 
-            expected_arg_type = self._validate_parameter_type(annotations, name)
+            if input_types:
+                intype = input_types[i]
+                if not isinstance(intype, TealType):
+                    raise TealInputError(
+                        "Function has input type {} for parameter {} which is not a TealType".format(
+                            intype, name
+                        )
+                    )
 
-            self.expected_arg_types.append(expected_arg_type)
+            expected_arg_type = self._validate_parameter_type(anns, name)
+
+            arg_types.append(expected_arg_type)
             if expected_arg_type is ScratchVar:
-                self.by_ref_args.add(name)
-
-        self.implementation = implementation
-        self.implementationParams = sig.parameters
-        self.returnType = returnType
-
-        self.declaration: Optional["SubroutineDeclaration"] = None
-        self.__name = self.implementation.__name__ if nameStr is None else nameStr
+                byrefs.add(name)
+        return impl_params, anns, arg_types, byrefs
 
     @staticmethod
     def _validate_parameter_type(
@@ -260,7 +303,7 @@ class SubroutineFnWrapper:
             fnImplementation, returnType=returnType, nameStr=name
         )
 
-    def __call__(self, *args: Expr, **kwargs) -> Expr:
+    def __call__(self, *args: Expr | ScratchVar, **kwargs) -> Expr:
         if len(kwargs) != 0:
             raise TealInputError(
                 "Subroutine cannot be called with keyword arguments. Received keyword arguments: {}".format(

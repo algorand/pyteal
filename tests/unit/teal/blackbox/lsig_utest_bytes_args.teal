@@ -1,0 +1,16 @@
+#pragma version 6
+arg 0
+btoi
+arg 1
+arg 2
+callsub utestbytesargs_0
+len
+return
+
+// utest_bytes_args
+utestbytesargs_0:
+store 2
+store 1
+store 0
+byte ""
+retsub
