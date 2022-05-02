@@ -1,4 +1,6 @@
+from pyteal.ast import *
 from pyteal.ast import __all__ as ast_all
+from pyteal.ir import *
 from pyteal.ir import __all__ as ir_all
 from pyteal.compiler import (
     MAX_TEAL_VERSION,
