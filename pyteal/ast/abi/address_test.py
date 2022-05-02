@@ -1,9 +1,7 @@
 import pytest
 import pyteal as pt
 from pyteal import abi
-from pyteal.ast.abi.address import ADDRESS_LENGTH_BYTES
 
-from pyteal.ast.global_ import Global, GlobalField
 from pyteal.ast.abi.type_test import ContainerType
 from pyteal.ast.abi.util import substringForDecoding
 
@@ -20,7 +18,7 @@ def test_AddressTypeSpec_is_dynamic():
 
 
 def test_AddressTypeSpec_byte_length_static():
-    assert (abi.AddressTypeSpec()).byte_length_static() == ADDRESS_LENGTH_BYTES
+    assert (abi.AddressTypeSpec()).byte_length_static() == abi.AddressLength.Bytes.value
 
 
 def test_AddressTypeSpec_new_instance():
@@ -52,7 +50,7 @@ def test_Address_encode():
 
 
 def test_Address_decode():
-    address = bytes([0] * ADDRESS_LENGTH_BYTES)
+    address = bytes([0] * abi.AddressLength.Bytes.value)
     encoded = pt.Bytes(address)
 
     for startIndex in (None, pt.Int(0)):
@@ -107,32 +105,31 @@ def test_Address_get():
 
 
 def test_Address_set_StaticArray():
-    sa = abi.StaticArray(
-        abi.StaticArrayTypeSpec(abi.ByteTypeSpec(), ADDRESS_LENGTH_BYTES)
+    value_to_set = abi.StaticArray(
+        abi.StaticArrayTypeSpec(abi.ByteTypeSpec(), abi.AddressLength.Bytes.value)
     )
-    for value_to_set in (sa,):
-        value = abi.Address()
-        expr = value.set(value_to_set)
-        assert expr.type_of() == pt.TealType.none
-        assert not expr.has_return()
+    value = abi.Address()
+    expr = value.set(value_to_set)
+    assert expr.type_of() == pt.TealType.none
+    assert not expr.has_return()
 
-        expected = pt.TealSimpleBlock(
-            [
-                pt.TealOp(None, pt.Op.load, value_to_set.stored_value.slot),
-                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
-            ]
-        )
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.load, value_to_set.stored_value.slot),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+        ]
+    )
 
-        actual, _ = expr.__teal__(options)
-        actual.addIncoming()
-        actual = pt.TealBlock.NormalizeBlocks(actual)
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-        with pt.TealComponent.Context.ignoreExprEquality():
-            assert actual == expected
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
 
-        with pytest.raises(pt.TealInputError):
-            bogus = abi.StaticArray(abi.StaticArrayTypeSpec(abi.ByteTypeSpec(), 10))
-            value.set(bogus)
+    with pytest.raises(pt.TealInputError):
+        bogus = abi.StaticArray(abi.StaticArrayTypeSpec(abi.ByteTypeSpec(), 10))
+        value.set(bogus)
 
 
 def test_Address_set_str():
@@ -184,9 +181,12 @@ def test_Address_set_bytes():
         with pytest.raises(pt.TealInputError):
             value.set(bytes(16))
 
+        with pytest.raises(pt.TealInputError):
+            value.set(16)
+
 
 def test_Address_set_expr():
-    for value_to_set in [Global(GlobalField.zero_address)]:
+    for value_to_set in [pt.Global(pt.GlobalField.zero_address)]:
         value = abi.Address()
         expr = value.set(value_to_set)
         assert expr.type_of() == pt.TealType.none

@@ -28,9 +28,7 @@ class StaticArrayTypeSpec(ArrayTypeSpec[T], Generic[T, N]):
         self.array_length: Final = array_length
 
     def new_instance(self) -> "StaticArray[T, N]":
-        return StaticArray(
-            StaticArrayTypeSpec(self.value_type_spec(), self.length_static())
-        )
+        return StaticArray(self)
 
     def length_static(self) -> int:
         """Get the size of this static array type.
@@ -74,7 +72,7 @@ StaticArrayTypeSpec.__module__ = "pyteal"
 class StaticArray(Array[T], Generic[T, N]):
     """The class that represents ABI static array type."""
 
-    def __init__(self, array_type_spec: StaticArrayTypeSpec) -> None:
+    def __init__(self, array_type_spec: StaticArrayTypeSpec[T, N]) -> None:
         super().__init__(array_type_spec)
 
     def type_spec(self) -> StaticArrayTypeSpec[T, N]:
