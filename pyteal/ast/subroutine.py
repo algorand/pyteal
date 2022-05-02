@@ -123,7 +123,7 @@ class SubroutineDefinition:
                 f"does not match detected number of parameters ({len(implementation_params)})"
             )
 
-        if "return" in annotations and annotations["return"] is not Expr:
+        if "return" in anns and anns["return"] is not Expr:
             raise TealInputError(
                 f"Function has return of disallowed type {annotations['return']}. Only Expr is allowed"
             )
