@@ -128,6 +128,8 @@ __all__ = [
     "Not",
     "OnComplete",
     "Op",
+    "OpUp",
+    "OpUpMode",
     "OptimizeOptions",
     "Or",
     "Pop",

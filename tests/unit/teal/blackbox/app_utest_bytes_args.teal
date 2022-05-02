@@ -1,0 +1,20 @@
+#pragma version 6
+txna ApplicationArgs 0
+btoi
+txna ApplicationArgs 1
+txna ApplicationArgs 2
+callsub utestbytesargs_0
+store 3
+load 3
+log
+load 3
+len
+return
+
+// utest_bytes_args
+utestbytesargs_0:
+store 2
+store 1
+store 0
+byte ""
+retsub

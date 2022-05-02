@@ -1,0 +1,34 @@
+#pragma version 5
+int 3
+callsub slowfibonacci_0
+return
+
+// slow_fibonacci
+slowfibonacci_0:
+store 0
+load 0
+int 1
+<=
+bnz slowfibonacci_0_l2
+load 0
+int 2
+-
+load 0
+swap
+callsub slowfibonacci_0
+swap
+store 0
+load 0
+int 1
+-
+load 0
+swap
+callsub slowfibonacci_0
+swap
+store 0
++
+b slowfibonacci_0_l3
+slowfibonacci_0_l2:
+load 0
+slowfibonacci_0_l3:
+retsub

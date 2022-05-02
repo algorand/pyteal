@@ -1,0 +1,20 @@
+#pragma version 6
+arg 0
+btoi
+store 1
+pushint 1 // 1
+callsub squarebyref_0
+pushint 1337 // 1337
+return
+
+// square_byref
+squarebyref_0:
+store 0
+load 0
+load 0
+loads
+load 0
+loads
+*
+stores
+retsub
