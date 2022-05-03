@@ -8,10 +8,8 @@ from typing import (
     cast,
     Any,
 )
-from types import MappingProxyType
 
 from pyteal.ast import abi
-from pyteal.ast.abi.type import TypeSpec
 from pyteal.ast.expr import Expr
 from pyteal.ast.return_ import Return
 from pyteal.ast.seq import Seq
@@ -145,7 +143,7 @@ class SubroutineDefinition:
                         f"Function has input type {in_type} for parameter {name} which is not a TealType"
                     )
 
-        if "return" in anns and anns["return"] is not Expr:
+        if "return" in annotations and annotations["return"] is not Expr:
             raise TealInputError(
                 f"Function has return of disallowed type {annotations['return']}. Only Expr is allowed"
             )
