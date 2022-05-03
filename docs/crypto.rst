@@ -3,12 +3,11 @@
 Cryptographic Primitives
 ========================
 
-Algorand Smart Contracts support 4 cryptographic primitives, including 3 cryptographic
-hash functions and 1 digital signature verification. Each of these cryptographic
-primitives is associated with a cost, which is a number indicating its relative performance
-overhead comparing with simple TEAL operations such as addition and substraction.
-Simple TEAL opcodes have cost `1`, and more advanced cryptographic operations have a larger
-cost. Below is how you express cryptographic primitives in PyTeal:
+Algorand Smart Contracts support the set of cryptographic primitives described in the table below.
+Each of these cryptographic primitives is associated with a cost, which is a number indicating its
+relative performance overhead compared with simple TEAL operations such as addition and substraction.
+Simple TEAL opcodes have cost `1`, and more advanced cryptographic operations have a larger cost.
+Below is how you express cryptographic primitives in PyTeal:
 
 
 ==================================== ========= ==================================================================================================================
