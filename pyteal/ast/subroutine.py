@@ -103,6 +103,8 @@ class SubroutineDefinition:
         - `abi_args` is a set of argument names, which are type annotated by ABI types.
           We load the ABI scratch space stored value to stack, and store them later in subroutine's local ABI values.
 
+        Args:
+            input_types (optional): for testing purposes - expected `TealType`s of each parameter
         Returns:
             impl_params: a map from python function implementation's argument name, to argument's parameter.
             annotations: a dict whose keys are names of type-annotated arguments,
