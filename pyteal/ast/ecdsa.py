@@ -91,7 +91,7 @@ def EcdsaVerify(
         sigA: First component of the signature. Must evaluate to bytes.
         sigB: Second component of the signature. Must evaluate to bytes.
         pubkey: Public key used to verify signature. Represented as either a tuple of expressions
-            that must evaluate to bytes of as a MultiValue expression the returns two byte values.
+            that must evaluate to bytes or as a MultiValue expression that returns two byte values.
 
     Returns:
         An expression evaluating to either 0 or 1 representing the success of verification
