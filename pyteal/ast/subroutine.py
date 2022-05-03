@@ -127,7 +127,7 @@ class SubroutineDefinition:
         arg_types: list[type[Expr] | type[ScratchVar] | abi.TypeSpec] = []
         by_ref_args: set[str] = set()
         abi_args: dict[str, abi.TypeSpec] = {}
-        abi_output_kwarg: dict[str, abi.TypeSpec] = dict()
+        abi_output_kwarg: dict[str, abi.TypeSpec] = {}
 
         if input_types:
             if len(input_types) != len(impl_params):
