@@ -217,19 +217,18 @@ class SubroutineDefinition:
             #     when `Expr` is the only supported annotation type.
             # * `invoke` type checks provided arguments against parameter types to catch mismatches.
             return Expr
-        elif ptype in (Expr, ScratchVar):
+        if ptype in (Expr, ScratchVar):
             return ptype
-        elif SubroutineDefinition._is_abi_annotation(ptype):
+        if SubroutineDefinition._is_abi_annotation(ptype):
             return abi.type_spec_from_annotation(ptype)
-        else:
-            if not isclass(ptype):
-                raise TealInputError(
-                    f"Function has parameter {parameter_name} of declared type {ptype} which is not a class"
-                )
+        if not isclass(ptype):
             raise TealInputError(
-                f"Function has parameter {parameter_name} of disallowed type {ptype}. "
-                f"Only the types {(Expr, ScratchVar, 'ABI')} are allowed"
+                f"Function has parameter {parameter_name} of declared type {ptype} which is not a class"
             )
+        raise TealInputError(
+            f"Function has parameter {parameter_name} of disallowed type {ptype}. "
+            f"Only the types {(Expr, ScratchVar, 'ABI')} are allowed"
+        )
 
     def get_declaration(self) -> "SubroutineDeclaration":
         if self.declaration is None:
