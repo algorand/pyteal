@@ -8,10 +8,8 @@ from typing import (
     cast,
     Any,
 )
-from types import MappingProxyType
 
 from pyteal.ast import abi
-from pyteal.ast.abi.type import TypeSpec
 from pyteal.ast.expr import Expr
 from pyteal.ast.return_ import Return
 from pyteal.ast.seq import Seq
