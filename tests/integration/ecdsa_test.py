@@ -84,5 +84,5 @@ def test_verify():
     app_result = DryRunExecutor.dryrun_app(algod, app_teal, args)
 
     assert app_result.stack_top() == 0, app_result.report(
-        args, "stack_top() is not equal to 1, indicating ecdsa verification failed."
+        args, "stack_top() is not equal to 0, indicating ecdsa verification succeeded when a failure was expected."
     )
