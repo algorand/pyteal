@@ -183,10 +183,11 @@ def test_subroutine_definition_validate():
     DFS through SubroutineDefinition.validate()'s logic
     """
 
-    def mock_subroutine_definition(implementation):
+    def mock_subroutine_definition(implementation, abi_output_arg_name=None):
         mock = pt.SubroutineDefinition(lambda: pt.Return(pt.Int(1)), pt.TealType.uint64)
         mock._validate()  # haven't failed with dummy implementation
         mock.implementation = implementation
+        mock.abi_output_arg_name = abi_output_arg_name
         return mock
 
     not_callable = mock_subroutine_definition("I'm not callable")
@@ -197,6 +198,8 @@ def test_subroutine_definition_validate():
         "Input to SubroutineDefinition is not callable"
     )
 
+    # input_types:
+
     three_params = mock_subroutine_definition(lambda x, y, z: pt.Return(pt.Int(1)))
     two_inputs = [pt.TealType.uint64, pt.TealType.bytes]
     with pytest.raises(pt.TealInputError) as tie:
@@ -206,11 +209,22 @@ def test_subroutine_definition_validate():
         "Provided number of input_types (2) does not match detected number of parameters (3)"
     )
 
-    params, anns, arg_types, byrefs, _, _ = three_params._validate()
+    three_inputs_with_a_wrong_type = [pt.TealType.uint64, pt.Expr, pt.TealType.bytes]
+
+    with pytest.raises(pt.TealInputError) as tie:
+        three_params._validate(input_types=three_inputs_with_a_wrong_type)
+
+    assert tie.value == pt.TealInputError(
+        "Function has input type <class 'pyteal.Expr'> for parameter y which is not a TealType"
+    )
+
+    params, anns, arg_types, byrefs, abi_args, output_kwarg = three_params._validate()
     assert len(params) == 3
     assert anns == {}
     assert all(at is pt.Expr for at in arg_types)
     assert byrefs == set()
+    assert abi_args == {}
+    assert output_kwarg == {}
 
     def bad_return_impl() -> str:
         return pt.Return(pt.Int(1))  # type: ignore
@@ -222,6 +236,43 @@ def test_subroutine_definition_validate():
     assert tie.value == pt.TealInputError(
         "Function has return of disallowed type <class 'str'>. Only Expr is allowed"
     )
+
+    # now we iterate through the implementation params validating each as we go
+
+    def var_abi_output_impl(*, z: pt.abi.Uint16):
+        pt.Return(pt.Int(1))  # this is wrong but ignored
+
+    # raises without abi_output_arg_name:
+    var_abi_output_noname = mock_subroutine_definition(var_abi_output_impl)
+    with pytest.raises(pt.TealInputError) as tie:
+        var_abi_output_noname._validate()
+
+    assert tie.value == pt.TealInputError(
+        "Function has a parameter type that is not allowed in a subroutine: parameter z with type KEYWORD_ONLY"
+    )
+
+    # raises with wrong name
+    var_abi_output = mock_subroutine_definition(
+        var_abi_output_impl, abi_output_arg_name="foo"
+    )
+    with pytest.raises(pt.TealInputError) as tie:
+        var_abi_output._validate()
+
+    assert tie.value == pt.TealInputError(
+        "Function has a parameter type that is not allowed in a subroutine: parameter z with type KEYWORD_ONLY"
+    )
+
+    # copacetic abi output:
+    var_abi_output = mock_subroutine_definition(
+        var_abi_output_impl, abi_output_arg_name="z"
+    )
+    params, anns, arg_types, byrefs, abi_args, output_kwarg = var_abi_output._validate()
+    assert len(params) == 1
+    assert anns == {"z": pt.abi.Uint16}
+    assert all(at is pt.Expr for at in arg_types)
+    assert byrefs == set()
+    assert abi_args == {}
+    assert output_kwarg == {"z": pt.abi.Uint16TypeSpec()}
 
     var_positional = mock_subroutine_definition(lambda *args: pt.Return(pt.Int(1)))
     with pytest.raises(pt.TealInputError) as tie:
@@ -264,35 +315,44 @@ def test_subroutine_definition_validate():
         "Function has input type <class 'pyteal.Expr'> for parameter y which is not a TealType"
     )
 
-    # Now we get to _validate_parameter_type():
+    # Now we get to _validate_annotation():
     one_vanilla = mock_subroutine_definition(lambda x: pt.Return(pt.Int(1)))
 
-    params, anns, arg_types, byrefs, _, _ = one_vanilla._validate()
+    params, anns, arg_types, byrefs, abi_args, output_kwarg = one_vanilla._validate()
     assert len(params) == 1
     assert anns == {}
     assert all(at is pt.Expr for at in arg_types)
     assert byrefs == set()
+    assert abi_args == {}
+    assert output_kwarg == {}
 
     def one_expr_impl(x: pt.Expr):
         return pt.Return(pt.Int(1))
 
     one_expr = mock_subroutine_definition(one_expr_impl)
-    params, anns, arg_types, byrefs, _, _ = one_expr._validate()
+    params, anns, arg_types, byrefs, abi_args, output_kwarg = one_expr._validate()
     assert len(params) == 1
     assert anns == {"x": pt.Expr}
     assert all(at is pt.Expr for at in arg_types)
     assert byrefs == set()
+    assert abi_args == {}
+    assert output_kwarg == {}
 
     def one_scratchvar_impl(x: pt.ScratchVar):
         return pt.Return(pt.Int(1))
 
     one_scratchvar = mock_subroutine_definition(one_scratchvar_impl)
-    params, anns, arg_types, byrefs, _, _ = one_scratchvar._validate()
+    params, anns, arg_types, byrefs, abi_args, output_kwarg = one_scratchvar._validate()
     assert len(params) == 1
     assert anns == {"x": pt.ScratchVar}
     assert all(at is pt.ScratchVar for at in arg_types)
     assert byrefs == {"x"}
+    assert abi_args == {}
+    assert output_kwarg == {}
 
+    # for _is_abi_annotation() cf. copacetic x,y,z product below
+
+    # not is_class()
     def one_nontype_impl(x: "blahBlah"):  # type: ignore # noqa: F821
         return pt.Return(pt.Int(1))
 
@@ -317,13 +377,20 @@ def test_subroutine_definition_validate():
 
     # Now we're back to validate() and everything should be copacetic
     for x, y, z in product(pt.TealType, pt.TealType, pt.TealType):
-        params, anns, arg_types, byrefs, _, _ = three_params._validate(
-            input_types=[x, y, z]
-        )
+        (
+            params,
+            anns,
+            arg_types,
+            byrefs,
+            abi_args,
+            output_kwarg,
+        ) = three_params._validate(input_types=[x, y, z])
         assert len(params) == 3
         assert anns == {}
         assert all(at is pt.Expr for at in arg_types)
         assert byrefs == set()
+        assert abi_args == {}
+        assert output_kwarg == {}
 
 
 def test_subroutine_invocation_param_types():
