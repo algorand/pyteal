@@ -1,3 +1,8 @@
+# 0.12.1
+
+## Fixed
+* Resolve PyPi upload issue introduced in v0.12.0 ([#317](https://github.com/algorand/pyteal/pull/317)).
+
 # 0.12.0
 
 ## Added

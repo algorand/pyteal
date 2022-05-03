@@ -143,7 +143,7 @@ class SubroutineDefinition:
                         f"Function has input type {in_type} for parameter {name} which is not a TealType"
                     )
 
-        if "return" in annotations and annotations["return"] is not Expr:
+        if "return" in anns and anns["return"] is not Expr:
             raise TealInputError(
                 f"Function has return of disallowed type {annotations['return']}. Only Expr is allowed"
             )
