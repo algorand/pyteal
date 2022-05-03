@@ -79,7 +79,6 @@ def test_subroutine_definition():
         assert invocation.args == args
 
 
-<<<<<<< HEAD
 @dataclass
 class ABISubroutineTC:
     definition: pt.ABIReturnSubroutine
@@ -178,7 +177,7 @@ def test_abi_subroutine_definition():
             map(lambda x: isinstance(x, pt.abi.BaseType), case.arg_instances)
         )
 
-=======
+
 def test_subroutine_definition_validate():
     """
     DFS through SubroutineDefinition.validate()'s logic
@@ -207,7 +206,7 @@ def test_subroutine_definition_validate():
         "Provided number of input_types (2) does not match detected number of parameters (3)"
     )
 
-    params, anns, arg_types, byrefs = three_params._validate()
+    params, anns, arg_types, byrefs, _, _ = three_params._validate()
     assert len(params) == 3
     assert anns == {}
     assert all(at is pt.Expr for at in arg_types)
@@ -268,7 +267,7 @@ def test_subroutine_definition_validate():
     # Now we get to _validate_parameter_type():
     one_vanilla = mock_subroutine_definition(lambda x: pt.Return(pt.Int(1)))
 
-    params, anns, arg_types, byrefs = one_vanilla._validate()
+    params, anns, arg_types, byrefs, _, _ = one_vanilla._validate()
     assert len(params) == 1
     assert anns == {}
     assert all(at is pt.Expr for at in arg_types)
@@ -278,7 +277,7 @@ def test_subroutine_definition_validate():
         return pt.Return(pt.Int(1))
 
     one_expr = mock_subroutine_definition(one_expr_impl)
-    params, anns, arg_types, byrefs = one_expr._validate()
+    params, anns, arg_types, byrefs, _, _ = one_expr._validate()
     assert len(params) == 1
     assert anns == {"x": pt.Expr}
     assert all(at is pt.Expr for at in arg_types)
@@ -288,7 +287,7 @@ def test_subroutine_definition_validate():
         return pt.Return(pt.Int(1))
 
     one_scratchvar = mock_subroutine_definition(one_scratchvar_impl)
-    params, anns, arg_types, byrefs = one_scratchvar._validate()
+    params, anns, arg_types, byrefs, _, _ = one_scratchvar._validate()
     assert len(params) == 1
     assert anns == {"x": pt.ScratchVar}
     assert all(at is pt.ScratchVar for at in arg_types)
@@ -313,23 +312,23 @@ def test_subroutine_definition_validate():
         one_dynscratchvar._validate()
 
     assert tie.value == pt.TealInputError(
-        "Function has parameter x of disallowed type <class 'pyteal.DynamicScratchVar'>. Only the types (<class 'pyteal.Expr'>, <class 'pyteal.ScratchVar'>) are allowed"
+        "Function has parameter x of disallowed type <class 'pyteal.DynamicScratchVar'>. Only the types (<class 'pyteal.Expr'>, <class 'pyteal.ScratchVar'>, 'ABI') are allowed"
     )
 
     # Now we're back to validate() and everything should be copacetic
     for x, y, z in product(pt.TealType, pt.TealType, pt.TealType):
-        params, anns, arg_types, byrefs = three_params._validate(input_types=[x, y, z])
+        params, anns, arg_types, byrefs, _, _ = three_params._validate(
+            input_types=[x, y, z]
+        )
         assert len(params) == 3
         assert anns == {}
         assert all(at is pt.Expr for at in arg_types)
         assert byrefs == set()
 
->>>>>>> origin
 
 def test_subroutine_invocation_param_types():
     def fnWithNoAnnotations(a, b):
         return pt.Return()
-<<<<<<< HEAD
 
     def fnWithExprAnnotations(a: pt.Expr, b: pt.Expr) -> pt.Expr:
         return pt.Return()
@@ -365,27 +364,6 @@ def test_subroutine_invocation_param_types():
     av_bool = pt.abi.Bool()
     av_byte = pt.abi.Byte()
 
-=======
-
-    def fnWithExprAnnotations(a: pt.Expr, b: pt.Expr) -> pt.Expr:
-        return pt.Return()
-
-    def fnWithSVAnnotations(a: pt.ScratchVar, b: pt.ScratchVar):
-        return pt.Return()
-
-    def fnWithMixedAnns1(a: pt.ScratchVar, b: pt.Expr) -> pt.Expr:
-        return pt.Return()
-
-    def fnWithMixedAnns2(a: pt.ScratchVar, b) -> pt.Expr:
-        return pt.Return()
-
-    def fnWithMixedAnns3(a: pt.Expr, b: pt.ScratchVar):
-        return pt.Return()
-
-    sv = pt.ScratchVar()
-    x = pt.Int(42)
-    s = pt.Bytes("hello")
->>>>>>> origin
     cases = [
         ("vanilla 1", fnWithNoAnnotations, [x, s], None),
         ("vanilla 2", fnWithNoAnnotations, [x, x], None),
@@ -396,7 +374,6 @@ def test_subroutine_invocation_param_types():
         ("all sv's 1", fnWithSVAnnotations, [sv, sv], None),
         ("all sv's but strings", fnWithSVAnnotations, [s, s], pt.TealInputError),
         ("all sv's but ints", fnWithSVAnnotations, [x, x], pt.TealInputError),
-<<<<<<< HEAD
         (
             "all abi's 1",
             fnWithABIAnnotations,
@@ -452,8 +429,6 @@ def test_subroutine_invocation_param_types():
             [av_u16, av_bool, av_byte],
             pt.TealInputError,
         ),
-=======
->>>>>>> origin
         ("mixed1 copacetic", fnWithMixedAnns1, [sv, x], None),
         ("mixed1 flipped", fnWithMixedAnns1, [x, sv], pt.TealInputError),
         ("mixed1 missing the sv", fnWithMixedAnns1, [x, s], pt.TealInputError),
@@ -465,7 +440,6 @@ def test_subroutine_invocation_param_types():
         ("mixed3 copacetic", fnWithMixedAnns3, [s, sv], None),
         ("mixed3 flipped", fnWithMixedAnns3, [sv, x], pt.TealInputError),
         ("mixed3 missing the sv", fnWithMixedAnns3, [x, s], pt.TealInputError),
-<<<<<<< HEAD
         ("mixed anno", fnWithMixedAnns4, [sv, x, av_u16], None),
         (
             "mixed anno but wrong typed 1",
@@ -489,12 +463,6 @@ def test_subroutine_invocation_param_types():
     for case_name, fn, args, err in cases:
         definition = pt.SubroutineDefinition(fn, pt.TealType.none)
         assert definition.argument_count() == len(args), case_name
-=======
-    ]
-    for case_name, fn, args, err in cases:
-        definition = pt.SubroutineDefinition(fn, pt.TealType.none)
-        assert definition.argumentCount() == len(args), case_name
->>>>>>> origin
         assert definition.name() == fn.__name__, case_name
 
         if err is None:
@@ -721,12 +689,9 @@ def test_subroutine_definition_invalid():
 
     def fnWithKeywordArgs(a, *, b):
         return pt.Return()
-<<<<<<< HEAD
 
     def fnWithMultipleABIKeywordArgs(a, *, b: pt.abi.Byte, c: pt.abi.Bool):
         return pt.Return()
-=======
->>>>>>> origin
 
     def fnWithVariableArgs(a, *b):
         return pt.Return()
@@ -744,7 +709,6 @@ def test_subroutine_definition_invalid():
         return pt.Return()
 
     def fnWithMixedAnns4AndBytesReturn(a: pt.Expr, b: pt.ScratchVar) -> pt.Bytes:
-<<<<<<< HEAD
         return pt.Bytes("hello uwu")
 
     def fnWithMixedAnnsABIRet1(
@@ -756,9 +720,6 @@ def test_subroutine_definition_invalid():
         a: pt.Expr, b: pt.abi.Byte, c: pt.ScratchVar
     ) -> pt.abi.Uint64:
         return pt.abi.Uint64()
-=======
-        return pt.Bytes("helo")
->>>>>>> origin
 
     cases = (
         (
@@ -830,19 +791,12 @@ def test_subroutine_definition_invalid():
         ),
     )
 
-<<<<<<< HEAD
     for fn, sub_def_msg, abi_sub_def_msg in cases:
         with pytest.raises(pt.TealInputError) as e:
             print(f"case=[{sub_def_msg}]")
             pt.SubroutineDefinition(fn, pt.TealType.none)
 
         assert sub_def_msg in str(e), f"failed for case [{fn.__name__}]"
-=======
-    for fn, msg in cases:
-        with pytest.raises(pt.TealInputError) as e:
-            print(f"case=[{msg}]")
-            pt.SubroutineDefinition(fn, pt.TealType.none)
->>>>>>> origin
 
         with pytest.raises(pt.TealInputError) as e:
             print(f"case=[{abi_sub_def_msg}]")
@@ -953,12 +907,8 @@ def test_evaluate_subroutine_no_args():
             return returnValue
 
         definition = pt.SubroutineDefinition(mySubroutine, returnType)
-
-<<<<<<< HEAD
         declaration = evaluate_subroutine(definition)
-=======
-        declaration = evaluateSubroutine(definition)
->>>>>>> origin
+
         assert isinstance(declaration, pt.SubroutineDeclaration)
         assert declaration.subroutine is definition
 
@@ -991,12 +941,8 @@ def test_evaluate_subroutine_1_arg():
             return returnValue
 
         definition = pt.SubroutineDefinition(mySubroutine, returnType)
-
-<<<<<<< HEAD
         declaration = evaluate_subroutine(definition)
-=======
-        declaration = evaluateSubroutine(definition)
->>>>>>> origin
+
         assert isinstance(declaration, pt.SubroutineDeclaration)
         assert declaration.subroutine is definition
 
@@ -1039,11 +985,8 @@ def test_evaluate_subroutine_2_args():
 
         definition = pt.SubroutineDefinition(mySubroutine, returnType)
 
-<<<<<<< HEAD
         declaration = evaluate_subroutine(definition)
-=======
-        declaration = evaluateSubroutine(definition)
->>>>>>> origin
+
         assert isinstance(declaration, pt.SubroutineDeclaration)
         assert declaration.subroutine is definition
 
@@ -1088,12 +1031,8 @@ def test_evaluate_subroutine_10_args():
             return returnValue
 
         definition = pt.SubroutineDefinition(mySubroutine, returnType)
-
-<<<<<<< HEAD
         declaration = evaluate_subroutine(definition)
-=======
-        declaration = evaluateSubroutine(definition)
->>>>>>> origin
+
         assert isinstance(declaration, pt.SubroutineDeclaration)
         assert declaration.subroutine is definition
 

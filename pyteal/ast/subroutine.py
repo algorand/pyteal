@@ -1,6 +1,6 @@
-<<<<<<< HEAD
 from dataclasses import dataclass
-from inspect import isclass, Parameter, signature, Signature, get_annotations
+from inspect import isclass, Parameter, signature, get_annotations
+from types import MappingProxyType
 from typing import (
     Callable,
     Optional,
@@ -10,20 +10,11 @@ from typing import (
 )
 
 from pyteal.ast.return_ import Return
-=======
-from inspect import Parameter, get_annotations, isclass, signature
-from types import MappingProxyType
-from typing import Callable, List, Optional, Type, Union, TYPE_CHECKING
-
->>>>>>> origin
 from pyteal.errors import TealInputError, verifyTealVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.types import TealType
 
-<<<<<<< HEAD
 from pyteal.ast import abi
-=======
->>>>>>> origin
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
@@ -49,114 +40,118 @@ class SubroutineDefinition:
         """
         Args:
             implementation: The python function defining the subroutine
-            returnType: the TealType to be returned by the subroutine
-            nameStr (optional): the name that is used to identify the subroutine.
+            return_type: the TealType to be returned by the subroutine
+            name_str (optional): the name that is used to identify the subroutine.
                 If omitted, the name defaults to the implementation's __name__ attribute
+            abi_output_arg_name (optional): the name that is used to identify ABI output kwarg for subroutine.
         """
         super().__init__()
         self.id = SubroutineDefinition.nextSubroutineId
         SubroutineDefinition.nextSubroutineId += 1
 
-<<<<<<< HEAD
-=======
-        self.returnType = returnType
+        self.return_type = return_type
         self.declaration: Optional["SubroutineDeclaration"] = None
 
         self.implementation: Callable = implementation
+        self.abi_output_arg_name: Optional[str] = abi_output_arg_name
 
-        impl_params, anns, arg_types, byrefs = self._validate()
-        self.implementationParams: MappingProxyType[str, Parameter] = impl_params
-        self.annotations: dict[str, Expr | ScratchVar] = anns
-        self.expected_arg_types: list[type[Expr | ScratchVar]] = arg_types
-        self.by_ref_args: set[str] = byrefs
+        self.implementation_params: MappingProxyType[str, Parameter]
+        self.annotations: dict[str, Expr | ScratchVar]
+        self.expected_arg_types: list[type[Expr] | type[ScratchVar] | abi.TypeSpec]
+        self.by_ref_args: set[str]
+        self.abi_args: dict[str, abi.TypeSpec]
+        self.output_kwarg: dict[str, abi.TypeSpec]
 
-        self.__name: str = nameStr if nameStr else self.implementation.__name__
+        (
+            self.implementation_params,
+            self.annotations,
+            self.expected_arg_types,
+            self.by_ref_args,
+            self.abi_args,
+            self.output_kwarg,
+        ) = self._validate()
+
+        self.__name: str = name_str if name_str else self.implementation.__name__
 
     def _validate(
         self, input_types: list[TealType] = None
     ) -> tuple[
         MappingProxyType[str, Parameter],
         dict[str, Expr | ScratchVar],
-        list[type[Expr | ScratchVar]],
+        list[type[Expr] | type[ScratchVar] | abi.TypeSpec],
         set[str],
+        dict[str, abi.TypeSpec],
+        dict[str, abi.TypeSpec],
     ]:
+        """Validate the full function signature and annotations for subroutine definition.
+
+        This function iterates through `sig.parameters.items()`, and checks each of subroutine arguments.
+        On each of the subroutine arguments, the following checks are performed:
+        - If argument is not POSITION_ONLY or not POSITIONAL_OR_KEYWORD, error
+        - If argument has default value, error
+
+        After the previous checks, the function signature is correct in structure,
+        but we still need to check the argument types are matching requirements
+        (i.e., in {Expr, ScratchVar, inheritances of abi.BaseType}).
+
+        Finally, this function outputs `expected_arg_types` for type-checking, `by_ref_args` for compilation,
+        and `abi_args` for compilation.
+        - `expected_arg_types` is an array of elements of Type[Expr], Type[ScratchVar] or abi.TypeSpec instances.
+          It helps type-checking on SubroutineCall from `invoke` method.
+        - `by_ref_args` is a set of argument names, which are type annotated by ScratchVar.
+          We put the scratch slot id on stack, rather than value itself.
+        - `abi_args` is a set of argument names, which are type annotated by ABI types.
+          We load the ABI scratch space stored value to stack, and store them later in subroutine's local ABI values.
+
+        Returns:
+            sig: containing the signature of the python function for subroutine definition.
+                NOTE: it contains all the arguments, we obtain type annotations from `annotations`.
+            annotations: all available argument type annotations and return type annotation.
+                NOTE: `annotations` does not contain all the arguments,
+                an argument is not included in `annotations` if its type annotation is not available.
+        """
+
         implementation = self.implementation
->>>>>>> origin
         if not callable(implementation):
             raise TealInputError("Input to SubroutineDefinition is not callable")
 
         impl_params: MappingProxyType[str, Parameter] = signature(
             implementation
         ).parameters
-        anns: dict[str, Expr | ScratchVar] = get_annotations(implementation)
-        arg_types: list[type[Expr | ScratchVar]] = []
-        byrefs: set[str] = set()
+        annotations: dict[str, Expr | ScratchVar] = get_annotations(implementation)
+        arg_types: list[type[Expr] | type[ScratchVar] | abi.TypeSpec] = []
+        by_ref_args: set[str] = set()
+        abi_args: dict[str, abi.TypeSpec] = {}
+        abi_output_kwarg: dict[str, abi.TypeSpec] = {}
 
-<<<<<<< HEAD
-        annotations = get_annotations(implementation)
-=======
-        sig_params = impl_params
-        if input_types is not None and len(input_types) != len(sig_params):
+        if input_types is not None and len(input_types) != len(impl_params):
             raise TealInputError(
-                "Provided number of input_types ({}) does not match detected number of parameters ({})".format(
-                    len(input_types), len(sig_params)
-                )
+                f"Provided number of input_types ({len(input_types)}) "
+                f"does not match detected number of parameters ({len(impl_params)})"
             )
->>>>>>> origin
 
-        if "return" in anns and anns["return"] is not Expr:
+        if "return" in annotations and annotations["return"] is not Expr:
             raise TealInputError(
-<<<<<<< HEAD
                 f"Function has return of disallowed type {annotations['return']}. Only Expr is allowed"
-            )
-
-        # validate full signature takes following two arguments:
-        # - `signature`, which contains the signature of the python function.
-        #    NOTE: it contains all the arguments, we get type annotations from `annotations`.
-        # - `annotations`, which contains all available argument type annotations and return type annotation.
-        #    NOTE: `annotations` does not contain all the arguments,
-        #          an argument is not included in `annotations` if its type annotation is not available.
-        (
-            expected_arg_types,
-            by_ref_args,
-            abi_args,
-            abi_output_kwarg,
-        ) = self._arg_types_and_by_refs(sig, annotations, abi_output_arg_name)
-        self.expected_arg_types: list[
-            type[Expr] | type[ScratchVar] | abi.TypeSpec
-        ] = expected_arg_types
-        self.by_ref_args: set[str] = by_ref_args
-        self.abi_args: dict[str, abi.TypeSpec] = abi_args
-        self.output_kwarg: dict[str, abi.TypeSpec] = abi_output_kwarg
-
-        self.implementation = implementation
-        self.implementation_params = sig.parameters
-        self.return_type = return_type
-
-        self.declaration: Optional["SubroutineDeclaration"] = None
-        self.__name = self.implementation.__name__ if name_str is None else name_str
-=======
-                "Function has return of disallowed type {}. Only Expr is allowed".format(
-                    anns["return"]
-                )
             )
 
         for i, (name, param) in enumerate(impl_params.items()):
             if param.kind not in (
                 Parameter.POSITIONAL_ONLY,
                 Parameter.POSITIONAL_OR_KEYWORD,
+            ) and not (
+                param.kind is Parameter.KEYWORD_ONLY
+                and self.abi_output_arg_name is not None
+                and name == self.abi_output_arg_name
             ):
                 raise TealInputError(
-                    "Function has a parameter type that is not allowed in a subroutine: parameter {} with type {}".format(
-                        name, param.kind
-                    )
+                    f"Function has a parameter type that is not allowed in a subroutine: "
+                    f"parameter {name} with type {param.kind}"
                 )
 
             if param.default != Parameter.empty:
                 raise TealInputError(
-                    "Function has a parameter with a default value, which is not allowed in a subroutine: {}".format(
-                        name
-                    )
+                    f"Function has a parameter with a default value, which is not allowed in a subroutine: {name}"
                 )
 
             if input_types:
@@ -168,13 +163,30 @@ class SubroutineDefinition:
                         )
                     )
 
-            expected_arg_type = self._validate_parameter_type(anns, name)
+            expected_arg_type = self._validate_annotation(annotations, name)
+
+            if param.kind is Parameter.KEYWORD_ONLY:
+                if not isinstance(expected_arg_type, abi.TypeSpec):
+                    raise TealInputError(
+                        f"Function keyword parameter {name} has type {expected_arg_type}"
+                    )
+                abi_output_kwarg[name] = expected_arg_type
+                continue
 
             arg_types.append(expected_arg_type)
             if expected_arg_type is ScratchVar:
-                byrefs.add(name)
-        return impl_params, anns, arg_types, byrefs
->>>>>>> origin
+                by_ref_args.add(name)
+            if isinstance(expected_arg_type, abi.TypeSpec):
+                abi_args[name] = expected_arg_type
+
+        return (
+            impl_params,
+            annotations,
+            arg_types,
+            by_ref_args,
+            abi_args,
+            abi_output_kwarg,
+        )
 
     @staticmethod
     def _is_abi_annotation(obj: Any) -> bool:
@@ -189,7 +201,6 @@ class SubroutineDefinition:
         user_defined_annotations: dict[str, Any], parameter_name: str
     ) -> type[Expr] | type[ScratchVar] | abi.TypeSpec:
         ptype = user_defined_annotations.get(parameter_name, None)
-
         if ptype is None:
             # Without a type annotation, `SubroutineDefinition` presumes an implicit `Expr` declaration
             # rather than these alternatives:
@@ -216,89 +227,6 @@ class SubroutineDefinition:
                 f"Only the types {(Expr, ScratchVar, 'ABI')} are allowed"
             )
 
-    @classmethod
-    def _arg_types_and_by_refs(
-        cls,
-        sig: Signature,
-        annotations: dict[str, type],
-        abi_output_arg_name: Optional[str] = None,
-    ) -> tuple[
-        list[type[Expr] | type[ScratchVar] | abi.TypeSpec],
-        set[str],
-        dict[str, abi.TypeSpec],
-        dict[str, abi.TypeSpec],
-    ]:
-        """Validate the full function signature and annotations for subroutine definition.
-
-        This function iterates through `sig.parameters.items()`, and checks each of subroutine arguments.
-        On each of the subroutine arguments, the following checks are performed:
-        - If argument is not POSITION_ONLY or not POSITIONAL_OR_KEYWORD, error
-        - If argument has default value, error
-
-        After the previous checks, the function signature is correct in structure,
-        but we still need to check the argument types are matching requirements
-        (i.e., in {Expr, ScratchVar, inheritances of abi.BaseType}).
-
-        Finally, this function outputs `expected_arg_types` for type-checking, `by_ref_args` for compilation,
-        and `abi_args` for compilation.
-        - `expected_arg_types` is an array of elements of Type[Expr], Type[ScratchVar] or abi.TypeSpec instances.
-          It helps type-checking on SubroutineCall from `invoke` method.
-        - `by_ref_args` is a set of argument names, which are type annotated by ScratchVar.
-          We put the scratch slot id on stack, rather than value itself.
-        - `abi_args` is a set of argument names, which are type annotated by ABI types.
-          We load the ABI scratch space stored value to stack, and store them later in subroutine's local ABI values.
-
-        Args:
-            sig: containing the signature of the python function for subroutine definition.
-                NOTE: it contains all the arguments, we obtain type annotations from `annotations`.
-            annotations: all available argument type annotations and return type annotation.
-                NOTE: `annotations` does not contain all the arguments,
-                an argument is not included in `annotations` if its type annotation is not available.
-        """
-        expected_arg_types = []
-        by_ref_args: set[str] = set()
-        abi_args: dict[str, abi.TypeSpec] = {}
-        abi_output_kwarg: dict[str, abi.TypeSpec] = {}
-        for name, param in sig.parameters.items():
-            if param.kind not in (
-                Parameter.POSITIONAL_ONLY,
-                Parameter.POSITIONAL_OR_KEYWORD,
-            ) and not (
-                param.kind is Parameter.KEYWORD_ONLY
-                and abi_output_arg_name is not None
-                and name == abi_output_arg_name
-            ):
-                raise TealInputError(
-                    f"Function has a parameter type that is not allowed in a subroutine: "
-                    f"parameter {name} with type {param.kind}"
-                )
-
-            if param.default != Parameter.empty:
-                raise TealInputError(
-                    f"Function has a parameter with a default value, which is not allowed in a subroutine: {name}"
-                )
-
-            expected_arg_type = SubroutineDefinition._validate_annotation(
-                annotations, name
-            )
-
-            if param.kind is Parameter.KEYWORD_ONLY:
-                if not isinstance(expected_arg_type, abi.TypeSpec):
-                    raise TealInputError(
-                        f"Function keyword parameter {name} has type {expected_arg_type}"
-                    )
-                abi_output_kwarg[name] = expected_arg_type
-                continue
-
-            expected_arg_types.append(expected_arg_type)
-
-            if expected_arg_type is ScratchVar:
-                by_ref_args.add(name)
-            if isinstance(expected_arg_type, abi.TypeSpec):
-                abi_args[name] = expected_arg_type
-
-        return expected_arg_types, by_ref_args, abi_args, abi_output_kwarg
-
     def get_declaration(self) -> "SubroutineDeclaration":
         if self.declaration is None:
             # lazy evaluate subroutine
@@ -313,8 +241,9 @@ class SubroutineDefinition:
 
     def arguments(self) -> list[str]:
         syntax_args = list(self.implementation_params.keys())
-        for key in self.output_kwarg:
-            syntax_args.remove(key)
+        syntax_args = [
+            arg_name for arg_name in syntax_args if arg_name not in self.output_kwarg
+        ]
         return syntax_args
 
     def invoke(
@@ -510,11 +439,7 @@ class SubroutineFnWrapper:
             name_str=name,
         )
 
-<<<<<<< HEAD
     def __call__(self, *args: Expr | ScratchVar | abi.BaseType, **kwargs: Any) -> Expr:
-=======
-    def __call__(self, *args: Expr | ScratchVar, **kwargs) -> Expr:
->>>>>>> origin
         if len(kwargs) != 0:
             raise TealInputError(
                 f"Subroutine cannot be called with keyword arguments. "
