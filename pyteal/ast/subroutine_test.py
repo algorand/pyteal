@@ -1,5 +1,6 @@
 from itertools import product
 from typing import List, Literal
+
 import pytest
 from dataclasses import dataclass
 

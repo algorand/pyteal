@@ -8,16 +8,17 @@ from typing import (
     cast,
     Any,
 )
-
-from pyteal.errors import TealInputError, verifyTealVersion
-from pyteal.ir import TealOp, Op, TealBlock
-from pyteal.types import TealType
+from types import MappingProxyType
 
 from pyteal.ast import abi
+from pyteal.ast.abi.type import TypeSpec
 from pyteal.ast.expr import Expr
 from pyteal.ast.return_ import Return
 from pyteal.ast.seq import Seq
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
+from pyteal.errors import TealInputError, verifyTealVersion
+from pyteal.ir import TealOp, Op, TealBlock
+from pyteal.types import TealType
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
@@ -94,14 +95,15 @@ class SubroutineDefinition:
         but we still need to check the argument types are matching requirements
         (i.e., in {Expr, ScratchVar, inheritances of abi.BaseType}).
 
-        Finally, this function outputs `expected_arg_types` for type-checking, `by_ref_args` for compilation,
-        and `abi_args` for compilation.
-        - `expected_arg_types` is an array of elements of Type[Expr], Type[ScratchVar] or abi.TypeSpec instances.
+        Finally, this function outputs:
+        - `implementation_params` - ordered map from parameter name to inspect.Parameter
+        - `annotations` - map from parameter name to annotation (if available)
+        - `expected_arg_types` - an array of elements of Type[Expr], Type[ScratchVar] or abi.TypeSpec instances
           It helps type-checking on SubroutineCall from `invoke` method.
-        - `by_ref_args` is a set of argument names, which are type annotated by ScratchVar.
-          We put the scratch slot id on stack, rather than value itself.
-        - `abi_args` is a set of argument names, which are type annotated by ABI types.
-          We load the ABI scratch space stored value to stack, and store them later in subroutine's local ABI values.
+        - `by_ref_args` - a set of argument names, which are type annotated by ScratchVar.
+        We put the scratch slot id on the stack, rather than the value itself.
+        - `abi_args` - a set of argument names, which are type annotated by ABI types.
+        We load the ABI scratch space stored value to stack, and store them later in subroutine's local ABI values.
 
         Args:
             input_types (optional): for testing purposes - expected `TealType`s of each parameter
@@ -158,8 +160,7 @@ class SubroutineDefinition:
                 and name == self.abi_output_arg_name
             ):
                 raise TealInputError(
-                    f"Function has a parameter type that is not allowed in a subroutine: "
-                    f"parameter {name} with type {param.kind}"
+                    f"Function has a parameter type that is not allowed in a subroutine: parameter {name} with type {param.kind}"
                 )
 
             if param.default != Parameter.empty:
