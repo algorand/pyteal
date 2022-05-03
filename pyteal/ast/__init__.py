@@ -140,7 +140,7 @@ from pyteal.ast.multi import MultiValue
 from pyteal.ast.opup import OpUp, OpUpMode
 
 # abi
-from pyteal.ast import abi
+import pyteal.ast.abi as abi  # noqa: I250
 
 __all__ = [
     "Expr",

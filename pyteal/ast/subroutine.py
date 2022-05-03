@@ -9,13 +9,13 @@ from typing import (
     Any,
 )
 
-from pyteal.ast.return_ import Return
 from pyteal.errors import TealInputError, verifyTealVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.types import TealType
 
 from pyteal.ast import abi
 from pyteal.ast.expr import Expr
+from pyteal.ast.return_ import Return
 from pyteal.ast.seq import Seq
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
 
@@ -158,9 +158,7 @@ class SubroutineDefinition:
                 intype = input_types[i]
                 if not isinstance(intype, TealType):
                     raise TealInputError(
-                        "Function has input type {} for parameter {} which is not a TealType".format(
-                            intype, name
-                        )
+                        f"Function has input type {intype} for parameter {name} which is not a TealType"
                     )
 
             expected_arg_type = self._validate_annotation(annotations, name)
