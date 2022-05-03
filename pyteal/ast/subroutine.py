@@ -135,8 +135,7 @@ class SubroutineDefinition:
                     f"Provided number of input_types ({len(input_types)}) "
                     f"does not match detected number of parameters ({len(impl_params)})"
                 )
-            for i, name in enumerate(impl_params):
-                in_type = input_types[i]
+            for in_type, name in zip(input_types, impl_params):
                 if not isinstance(in_type, TealType):
                     raise TealInputError(
                         f"Function has input type {in_type} for parameter {name} which is not a TealType"
