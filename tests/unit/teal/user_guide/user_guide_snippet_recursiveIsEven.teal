@@ -1,0 +1,32 @@
+#pragma version 6
+int 15
+callsub recursiveIsEven_0
+return
+
+// recursiveIsEven
+recursiveIsEven_0:
+store 0
+load 0
+int 0
+==
+bnz recursiveIsEven_0_l4
+load 0
+int 1
+==
+bnz recursiveIsEven_0_l3
+load 0
+int 2
+-
+load 0
+swap
+callsub recursiveIsEven_0
+swap
+store 0
+b recursiveIsEven_0_l5
+recursiveIsEven_0_l3:
+int 0
+b recursiveIsEven_0_l5
+recursiveIsEven_0_l4:
+int 1
+recursiveIsEven_0_l5:
+retsub
