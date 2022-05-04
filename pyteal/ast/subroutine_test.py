@@ -344,8 +344,12 @@ def test_subroutine_invocation_param_types():
     x = pt.Int(42)
     s = pt.Bytes("hello")
     av_u16 = pt.abi.Uint16()
-    av_bool_dym_arr = pt.abi.DynamicArray(pt.abi.BoolTypeSpec())
-    av_u32_static_arr = pt.abi.StaticArray(pt.abi.Uint32TypeSpec(), 10)
+    av_bool_dym_arr = pt.abi.DynamicArray(
+        pt.abi.DynamicArrayTypeSpec(pt.abi.BoolTypeSpec())
+    )
+    av_u32_static_arr = pt.abi.StaticArray(
+        pt.abi.StaticArrayTypeSpec(pt.abi.Uint32TypeSpec(), 10)
+    )
     av_bool = pt.abi.Bool()
     av_byte = pt.abi.Byte()
 
@@ -499,7 +503,9 @@ def test_subroutine_definition_invalid():
     def fnWithMixedAnnsABIRet1(
         a: pt.Expr, b: pt.ScratchVar, c: pt.abi.Uint16
     ) -> pt.abi.StaticArray[pt.abi.Uint32, Literal[10]]:
-        return pt.abi.StaticArray(pt.abi.Uint32TypeSpec(), 10)
+        return pt.abi.StaticArray(
+            pt.abi.StaticArrayTypeSpec(pt.abi.Uint32TypeSpec(), 10)
+        )
 
     def fnWithMixedAnnsABIRet2(
         a: pt.Expr, b: pt.abi.Byte, c: pt.ScratchVar
