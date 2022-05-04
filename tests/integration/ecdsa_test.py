@@ -1,6 +1,8 @@
 from graviton.blackbox import DryRunExecutor
 from pyteal.ast.bytes import Bytes
-from pyteal.ast.ecdsa import EcdsaCurve, EcdsaVerify
+from pyteal.ast.ecdsa import EcdsaCurve, EcdsaDecompress, EcdsaRecover, EcdsaVerify
+from pyteal.ast.int import Int
+from pyteal.ast.naryexpr import And
 from pyteal.ast.subroutine import Subroutine
 from pyteal.ast.unaryexpr import Sha512_256
 from pyteal.compiler.compiler import compileTeal
@@ -86,4 +88,82 @@ def test_verify():
     assert app_result.stack_top() == 0, app_result.report(
         args,
         "stack_top() is not equal to 0, indicating ecdsa verification succeeded when a failure was expected.",
+    )
+
+
+def test_decompress():
+    @Blackbox(input_types=[])
+    @Subroutine(TealType.uint64)
+    def decompress():
+        return EcdsaDecompress(
+            EcdsaCurve.Secp256k1,
+            Bytes(
+                "base16",
+                "03bd83d54f6a799d05b496653b64bc933e17a898cda4793fe662d50645ecc977d1",
+            ),
+        ).outputReducer(
+            lambda x, y: And(
+                x
+                == Bytes(
+                    "base16",
+                    "bd83d54f6a799d05b496653b64bc933e17a898cda4793fe662d50645ecc977d1",
+                ),
+                y
+                == Bytes(
+                    "base16",
+                    "d4f3063a1ffca4139ea921b5696a6597640289175afece3bc38217a29d6270f9",
+                ),
+            )
+        )
+
+    approval_app = blackbox_pyteal(decompress, Mode.Application)
+    app_teal = compileTeal(approval_app(), Mode.Application, version=5)
+    args = []
+    algod = algod_with_assertion()
+    app_result = DryRunExecutor.dryrun_app(algod, app_teal, args)
+
+    assert app_result.stack_top() == 1, app_result.report(
+        args, "stack_top() is not equal to 1, indicating ecdsa verification failed."
+    )
+
+
+def test_recover():
+    @Blackbox(input_types=[])
+    @Subroutine(TealType.uint64)
+    def recover():
+        return EcdsaRecover(
+            EcdsaCurve.Secp256k1,
+            Sha512_256(Bytes("testdata")),
+            Int(1),
+            Bytes(
+                "base16",
+                "cabed943e1403fb93b388174c59a52c759b321855f2d7c4fcc23c99a8a6dce79",
+            ),
+            Bytes(
+                "base16",
+                "56192820dde344c32f81450db05e51c6a6f45a2a2db229f657d2c040baf31537",
+            ),
+        ).outputReducer(
+            lambda x, y: And(
+                x
+                == Bytes(
+                    "base16",
+                    "71539e0c7a6902a3f5413d6e28a455b2a14316fcf0f6b21193343b3b9d455053",
+                ),
+                y
+                == Bytes(
+                    "base16",
+                    "fa49ccd95795c7c9a447fdeee83a2193472507a4e41a47e0d50eeeb547b74c51",
+                ),
+            )
+        )
+
+    approval_app = blackbox_pyteal(recover, Mode.Application)
+    app_teal = compileTeal(approval_app(), Mode.Application, version=5)
+    args = []
+    algod = algod_with_assertion()
+    app_result = DryRunExecutor.dryrun_app(algod, app_teal, args)
+
+    assert app_result.stack_top() == 1, app_result.report(
+        args, "stack_top() is not equal to 1, indicating ecdsa verification failed."
     )
