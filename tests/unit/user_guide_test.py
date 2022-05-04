@@ -90,6 +90,11 @@ def user_guide_snippet_ABIReturnSubroutine():
         )
 
     program = Seq(
+        # (
+        #     to_sum_arr := abi.DynamicArray(
+        #         abi.DynamicArrayTypeSpec(abi.Uint64TypeSpec())
+        #     ).decode(Txn.application_args[1])
+        # ),
         (to_sum_arr := abi.DynamicArray(abi.Uint64TypeSpec())).decode(
             Txn.application_args[1]
         ),
