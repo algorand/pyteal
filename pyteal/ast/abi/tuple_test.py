@@ -23,10 +23,10 @@ def test_encodeTuple():
     uint16_b = abi.Uint16()
     bool_a = abi.Bool()
     bool_b = abi.Bool()
-    tuple_a = abi.Tuple(abi.BoolTypeSpec(), abi.BoolTypeSpec())
-    dynamic_array_a = abi.DynamicArray(abi.Uint64TypeSpec())
-    dynamic_array_b = abi.DynamicArray(abi.Uint16TypeSpec())
-    dynamic_array_c = abi.DynamicArray(abi.BoolTypeSpec())
+    tuple_a = abi.Tuple(abi.TupleTypeSpec(abi.BoolTypeSpec(), abi.BoolTypeSpec()))
+    dynamic_array_a = abi.DynamicArray(abi.DynamicArrayTypeSpec(abi.Uint64TypeSpec()))
+    dynamic_array_b = abi.DynamicArray(abi.DynamicArrayTypeSpec(abi.Uint16TypeSpec()))
+    dynamic_array_c = abi.DynamicArray(abi.DynamicArrayTypeSpec(abi.BoolTypeSpec()))
     tail_holder = pt.ScratchVar()
     encoded_tail = pt.ScratchVar()
 
@@ -599,7 +599,7 @@ def test_TupleTypeSpec_byte_length_static():
 
 def test_Tuple_decode():
     encoded = pt.Bytes("encoded")
-    tupleValue = abi.Tuple(abi.Uint64TypeSpec())
+    tupleValue = abi.Tuple(abi.TupleTypeSpec(abi.Uint64TypeSpec()))
     for startIndex in (None, pt.Int(1)):
         for endIndex in (None, pt.Int(2)):
             for length in (None, pt.Int(3)):
@@ -638,7 +638,9 @@ def test_Tuple_decode():
 
 def test_Tuple_set():
     tupleValue = abi.Tuple(
-        abi.Uint8TypeSpec(), abi.Uint16TypeSpec(), abi.Uint32TypeSpec()
+        abi.TupleTypeSpec(
+            abi.Uint8TypeSpec(), abi.Uint16TypeSpec(), abi.Uint32TypeSpec()
+        )
     )
     uint8 = abi.Uint8()
     uint16 = abi.Uint16()
@@ -678,7 +680,9 @@ def test_Tuple_set():
 
 def test_Tuple_set_Computed():
     tupleValue = abi.Tuple(
-        abi.Uint8TypeSpec(), abi.Uint16TypeSpec(), abi.Uint32TypeSpec()
+        abi.TupleTypeSpec(
+            abi.Uint8TypeSpec(), abi.Uint16TypeSpec(), abi.Uint32TypeSpec()
+        )
     )
     computed = ContainerType(
         tupleValue.type_spec(), pt.Bytes("internal representation")
@@ -710,7 +714,7 @@ def test_Tuple_set_Computed():
 
 
 def test_Tuple_encode():
-    tupleValue = abi.Tuple(abi.Uint64TypeSpec())
+    tupleValue = abi.Tuple(abi.TupleTypeSpec(abi.Uint64TypeSpec()))
     expr = tupleValue.encode()
     assert expr.type_of() == pt.TealType.bytes
     assert not expr.has_return()
@@ -739,7 +743,7 @@ def test_Tuple_length():
     ]
 
     for i, test in enumerate(tests):
-        tupleValue = abi.Tuple(*test)
+        tupleValue = abi.Tuple(abi.TupleTypeSpec(*test))
         expr = tupleValue.length()
         assert expr.type_of() == pt.TealType.uint64
         assert not expr.has_return()
@@ -767,7 +771,7 @@ def test_Tuple_getitem():
     ]
 
     for i, test in enumerate(tests):
-        tupleValue = abi.Tuple(*test)
+        tupleValue = abi.Tuple(abi.TupleTypeSpec(*test))
         for j in range(len(test)):
             element = tupleValue[j]
             assert type(element) is TupleElement, "Test at index {} failed".format(i)
@@ -793,7 +797,7 @@ def test_TupleElement_store_into():
     ]
 
     for i, test in enumerate(tests):
-        tupleValue = abi.Tuple(*test)
+        tupleValue = abi.Tuple(abi.TupleTypeSpec(*test))
         for j in range(len(test)):
             element = TupleElement(tupleValue, j)
             output = test[j].new_instance()

@@ -218,7 +218,7 @@ class TupleTypeSpec(TypeSpec):
         return len(self.value_specs)
 
     def new_instance(self) -> "Tuple":
-        return Tuple(*self.value_specs)
+        return Tuple(self)
 
     def is_dynamic(self) -> bool:
         return any(type_spec.is_dynamic() for type_spec in self.value_type_specs())
@@ -248,8 +248,8 @@ T = TypeVar("T", bound="Tuple")
 
 
 class Tuple(BaseType):
-    def __init__(self, *value_type_specs: TypeSpec) -> None:
-        super().__init__(TupleTypeSpec(*value_type_specs))
+    def __init__(self, tuple_type_spec: TupleTypeSpec) -> None:
+        super().__init__(tuple_type_spec)
 
     def type_spec(self) -> TupleTypeSpec:
         return cast(TupleTypeSpec, super().type_spec())
@@ -301,7 +301,7 @@ class Tuple(BaseType):
 
     def __getitem__(self, index: int) -> "TupleElement":
         if not (0 <= index < self.type_spec().length_static()):
-            raise TealInputError("Index out of bounds")
+            raise TealInputError(f"Index out of bounds: {index}")
         return TupleElement(self, index)
 
 
@@ -336,11 +336,18 @@ TupleElement.__module__ = "pyteal"
 # sizes.
 
 
+def _tuple_raise_arg_mismatch(expected: int, typespec: TupleTypeSpec):
+    if len(typespec.value_specs) != expected:
+        raise TealInputError(
+            f"Expected TupleTypeSpec with {expected} elements, Got {len(typespec.value_specs)}"
+        )
+
+
 class Tuple0(Tuple):
     """A Tuple with 0 values."""
 
     def __init__(self) -> None:
-        super().__init__()
+        super().__init__(TupleTypeSpec())
 
 
 Tuple0.__module__ = "pyteal"
@@ -351,8 +358,9 @@ T1 = TypeVar("T1", bound=BaseType)
 class Tuple1(Tuple, Generic[T1]):
     """A Tuple with 1 value."""
 
-    def __init__(self, value1_type_spec: TypeSpec) -> None:
-        super().__init__(value1_type_spec)
+    def __init__(self, value_type_spec: TupleTypeSpec) -> None:
+        _tuple_raise_arg_mismatch(1, value_type_spec)
+        super().__init__(value_type_spec)
 
 
 Tuple1.__module__ = "pyteal"
@@ -363,8 +371,9 @@ T2 = TypeVar("T2", bound=BaseType)
 class Tuple2(Tuple, Generic[T1, T2]):
     """A Tuple with 2 values."""
 
-    def __init__(self, value1_type_spec: TypeSpec, value2_type_spec: TypeSpec) -> None:
-        super().__init__(value1_type_spec, value2_type_spec)
+    def __init__(self, value_type_spec: TupleTypeSpec) -> None:
+        _tuple_raise_arg_mismatch(2, value_type_spec)
+        super().__init__(value_type_spec)
 
 
 Tuple2.__module__ = "pyteal"
@@ -377,11 +386,10 @@ class Tuple3(Tuple, Generic[T1, T2, T3]):
 
     def __init__(
         self,
-        value1_type_spec: TypeSpec,
-        value2_type_spec: TypeSpec,
-        value3_type_spec: TypeSpec,
+        value_type_spec: TupleTypeSpec,
     ) -> None:
-        super().__init__(value1_type_spec, value2_type_spec, value3_type_spec)
+        _tuple_raise_arg_mismatch(3, value_type_spec)
+        super().__init__(value_type_spec)
 
 
 Tuple3.__module__ = "pyteal"
@@ -394,14 +402,10 @@ class Tuple4(Tuple, Generic[T1, T2, T3, T4]):
 
     def __init__(
         self,
-        value1_type_spec: TypeSpec,
-        value2_type_spec: TypeSpec,
-        value3_type_spec: TypeSpec,
-        value4_type_spec: TypeSpec,
+        value_type_spec: TupleTypeSpec,
     ) -> None:
-        super().__init__(
-            value1_type_spec, value2_type_spec, value3_type_spec, value4_type_spec
-        )
+        _tuple_raise_arg_mismatch(4, value_type_spec)
+        super().__init__(value_type_spec)
 
 
 Tuple4.__module__ = "pyteal"
@@ -414,19 +418,10 @@ class Tuple5(Tuple, Generic[T1, T2, T3, T4, T5]):
 
     def __init__(
         self,
-        value1_type_spec: TypeSpec,
-        value2_type_spec: TypeSpec,
-        value3_type_spec: TypeSpec,
-        value4_type_spec: TypeSpec,
-        value5_type_spec: TypeSpec,
+        value_type_spec: TupleTypeSpec,
     ) -> None:
-        super().__init__(
-            value1_type_spec,
-            value2_type_spec,
-            value3_type_spec,
-            value4_type_spec,
-            value5_type_spec,
-        )
+        _tuple_raise_arg_mismatch(5, value_type_spec)
+        super().__init__(value_type_spec)
 
 
 Tuple5.__module__ = "pyteal"

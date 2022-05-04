@@ -170,7 +170,7 @@ def test_DynamicArray_set_copy():
 
 
 def test_DynamicArray_set_computed():
-    value = abi.DynamicArray(abi.ByteTypeSpec())
+    value = abi.DynamicArray(abi.DynamicArrayTypeSpec(abi.ByteTypeSpec()))
     computed = ContainerType(
         value.type_spec(), pt.Bytes("this should be a dynamic array")
     )
