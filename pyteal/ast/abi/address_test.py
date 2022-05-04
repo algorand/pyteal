@@ -18,7 +18,7 @@ def test_AddressTypeSpec_is_dynamic():
 
 
 def test_AddressTypeSpec_byte_length_static():
-    assert (abi.AddressTypeSpec()).byte_length_static() == abi.AddressLength.Bytes.value
+    assert (abi.AddressTypeSpec()).byte_length_static() == abi.AddressLength.Bytes
 
 
 def test_AddressTypeSpec_new_instance():
@@ -50,7 +50,7 @@ def test_Address_encode():
 
 
 def test_Address_decode():
-    address = bytes([0] * abi.AddressLength.Bytes.value)
+    address = bytes([0] * abi.AddressLength.Bytes)
     encoded = pt.Bytes(address)
 
     for startIndex in (None, pt.Int(0)):
@@ -106,7 +106,7 @@ def test_Address_get():
 
 def test_Address_set_StaticArray():
     value_to_set = abi.StaticArray(
-        abi.StaticArrayTypeSpec(abi.ByteTypeSpec(), abi.AddressLength.Bytes.value)
+        abi.StaticArrayTypeSpec(abi.ByteTypeSpec(), abi.AddressLength.Bytes)
     )
     value = abi.Address()
     expr = value.set(value_to_set)

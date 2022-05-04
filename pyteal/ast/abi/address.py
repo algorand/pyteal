@@ -1,5 +1,5 @@
-from enum import Enum
-from typing import Union, Sequence, Literal
+from enum import IntEnum
+from typing import Union, Sequence, Literal, cast
 from collections.abc import Sequence as CollectionSequence
 
 from pyteal.errors import TealInputError
@@ -12,7 +12,7 @@ from pyteal.ast.abi.uint import ByteTypeSpec, Byte
 from pyteal.ast.expr import Expr
 
 
-class AddressLength(Enum):
+class AddressLength(IntEnum):
     String = 58
     Bytes = 32
 
@@ -22,7 +22,7 @@ AddressLength.__module__ = "pyteal"
 
 class AddressTypeSpec(StaticArrayTypeSpec):
     def __init__(self) -> None:
-        super().__init__(ByteTypeSpec(), AddressLength.Bytes.value)
+        super().__init__(ByteTypeSpec(), AddressLength.Bytes)
 
     def new_instance(self) -> "Address":
         return Address()
@@ -37,7 +37,7 @@ class AddressTypeSpec(StaticArrayTypeSpec):
 AddressTypeSpec.__module__ = "pyteal"
 
 
-class Address(StaticArray[Byte, Literal[32]]):
+class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
     def __init__(self) -> None:
         super().__init__(AddressTypeSpec())
 
@@ -51,8 +51,8 @@ class Address(StaticArray[Byte, Literal[32]]):
         self,
         value: Union[
             Sequence[Byte],
-            StaticArray[Byte, Literal[32]],
-            ComputedValue[StaticArray[Byte, Literal[32]]],
+            StaticArray[Byte, Literal[AddressLength.Bytes]],
+            ComputedValue[StaticArray[Byte, Literal[AddressLength.Bytes]]],
             "Address",
             str,
             bytes,
@@ -64,18 +64,18 @@ class Address(StaticArray[Byte, Literal[32]]):
             case ComputedValue():
                 pts = value.produced_type_spec()
                 if pts == AddressTypeSpec() or pts == StaticArrayTypeSpec(
-                    ByteTypeSpec(), AddressLength.Bytes.value
+                    ByteTypeSpec(), AddressLength.Bytes
                 ):
                     return value.store_into(self)
 
                 raise TealInputError(
-                    f"Got ComputedValue with type spec {pts}, expected AddressTypeSpec or StaticArray[Byte, Literal[32]]"
+                    f"Got ComputedValue with type spec {pts}, expected AddressTypeSpec or StaticArray[Byte, Literal[AddressLength.Bytes]]"
                 )
             case BaseType():
                 if (
                     value.type_spec() == AddressTypeSpec()
                     or value.type_spec()
-                    == StaticArrayTypeSpec(ByteTypeSpec(), AddressLength.Bytes.value)
+                    == StaticArrayTypeSpec(ByteTypeSpec(), AddressLength.Bytes)
                 ):
                     return self.stored_value.store(value.stored_value.load())
 
@@ -83,34 +83,18 @@ class Address(StaticArray[Byte, Literal[32]]):
                     f"Got {value} with type spec {value.type_spec()}, expected AddressTypeSpec"
                 )
             case str():
-                if len(value) == AddressLength.String.value:
-                    return self.stored_value.store(Addr(value))
-                raise TealInputError(
-                    f"Got string with length {len(value)}, expected {AddressLength.String.value}"
-                )
+                # Addr throws if value is invalid address
+                return self.stored_value.store(Addr(value))
             case bytes():
-                if len(value) == AddressLength.Bytes.value:
+                if len(value) == AddressLength.Bytes:
                     return self.stored_value.store(Bytes(value))
                 raise TealInputError(
-                    f"Got bytes with length {len(value)}, expected {AddressLength.Bytes.value}"
+                    f"Got bytes with length {len(value)}, expected {AddressLength.Bytes}"
                 )
             case Expr():
                 return self.stored_value.store(value)
             case CollectionSequence():
-                # TODO: mypy thinks its possible for the type of `value` here to be
-                # Union[Sequence[Byte], str, bytes] even though we check above?
-                if isinstance(value, str) or isinstance(value, bytes):
-                    return
-                return super().set(value)
-
-        # TODO: wdyt? something like this maybe should be in utils? or just manually update the args each time?
-        # from inspect import signature
-        # from typing import get_args
-        # sig = signature(self.set)
-        # expected = ", ".join([repr(a) for a in get_args(sig.parameters['value'].annotation)])
-        # raise TealInputError(
-        #     f"Got {type(value)}, expected {expected}"
-        # )
+                return super().set(cast(Sequence[Byte], value))
 
         raise TealInputError(
             f"Got {type(value)}, expected Sequence, StaticArray, ComputedValue, Address, str, bytes, Expr"
