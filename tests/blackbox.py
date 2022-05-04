@@ -41,6 +41,7 @@ def _algod_client(
 
 
 class BlackboxWrapper:
+    # TODO: this is clearly wrong... need to handle ABIReturnSubroutine as well
     def __init__(self, subr: SubroutineFnWrapper, input_types: list[TealType]):
         subr.subroutine._validate(input_types=input_types)
         self.subroutine = subr

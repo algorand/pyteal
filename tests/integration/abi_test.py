@@ -5,7 +5,7 @@ from typing import Literal
 
 import pyteal as pt
 
-from tests.blackbox import Blackbox
+from tests.blackbox import Blackbox, blackbox_pyteal
 
 # ---- Simple Examples ---- #
 
@@ -60,28 +60,30 @@ def fn_2arg_1ret_with_expr(
 # ---- doc test (in our user_guide_test.py as well)
 
 
-@Blackbox()
-@pt.ABIReturnSubroutine
-def abi_sum(
-    toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64
-) -> pt.Expr:
-    i = pt.ScratchVar(pt.TealType.uint64)
-    valueAtIndex = pt.abi.Uint64()
-    return pt.Seq(
-        output.set(0),
-        pt.For(
-            i.store(pt.Int(0)), i.load() < toSum.length(), i.store(i.load() + pt.Int(1))
-        ).Do(
-            pt.Seq(
-                toSum[i.load()].store_into(valueAtIndex),
-                output.set(output.get() + valueAtIndex.get()),
-            )
-        ),
-    )
-
-
 def test_abi_sum():
-    pass
+    @Blackbox(input_types=[None])
+    @pt.ABIReturnSubroutine
+    def abi_sum(
+        toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64
+    ) -> pt.Expr:
+        i = pt.ScratchVar(pt.TealType.uint64)
+        valueAtIndex = pt.abi.Uint64()
+        return pt.Seq(
+            output.set(0),
+            pt.For(
+                i.store(pt.Int(0)),
+                i.load() < toSum.length(),
+                i.store(i.load() + pt.Int(1)),
+            ).Do(
+                pt.Seq(
+                    toSum[i.load()].store_into(valueAtIndex),
+                    output.set(output.get() + valueAtIndex.get()),
+                )
+            ),
+        )
+
+    abi_sum_pt = blackbox_pyteal(abi_sum, pt.Mode.Application)
+    x = 42
 
 
 # ---- subtraction example ---- #
