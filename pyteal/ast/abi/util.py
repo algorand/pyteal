@@ -1,10 +1,10 @@
-from typing import Any, Literal, get_origin, get_args
+from typing import TypeVar, Any, Literal, get_origin, get_args, cast
 
 from pyteal.errors import TealInputError
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
 from pyteal.ast.substring import Extract, Substring, Suffix
-from pyteal.ast.abi.type import TypeSpec
+from pyteal.ast.abi.type import TypeSpec, BaseType
 
 
 def substringForDecoding(
@@ -205,3 +205,30 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
         return TupleTypeSpec(*(type_spec_from_annotation(arg) for arg in args))
 
     raise TypeError("Unknown annotation origin: {}".format(origin))
+
+
+T = TypeVar("T", bound=BaseType)
+
+
+def make(t: type[T]) -> T:
+    """Create a new instance of an ABI type. The type to create is determined by the input argument,
+    which must be a fully-specified annotation of type's class.
+
+    For example:
+        .. code-block:: python
+
+                # both of these are equivalent
+                myTuple = abi.make(abi.Tuple2[abi.Uint64, abi.DynamicArray[abi.Bool]])
+                myTuple = abi.Tuple(abi.TupleTypeSpec(abi.Uint64TypeSpec(), abi.DynamicArrayTypeSpec(abi.BoolTypeSpec())))
+
+    This is purely a convenience method over instantiating the type directly, which can be cumbersome
+    due to the lengthy TypeSpec class names.
+
+    Args:
+        t: A fully-specified annotation of a subclass of abi.BaseType, meaning all generic parameters
+            must be given values.
+
+    Returns:
+        A new instance of the given type class.
+    """
+    return cast(T, type_spec_from_annotation(t).new_instance())

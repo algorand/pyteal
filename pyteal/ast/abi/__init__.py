@@ -34,7 +34,8 @@ from pyteal.ast.abi.tuple import (
 from pyteal.ast.abi.array_base import ArrayTypeSpec, Array, ArrayElement
 from pyteal.ast.abi.array_static import StaticArrayTypeSpec, StaticArray
 from pyteal.ast.abi.array_dynamic import DynamicArrayTypeSpec, DynamicArray
-from pyteal.ast.abi.util import type_spec_from_annotation
+
+from pyteal.ast.abi.util import type_spec_from_annotation, make
 from pyteal.ast.abi.method_return import MethodReturn
 
 __all__ = [
@@ -77,5 +78,6 @@ __all__ = [
     "DynamicArrayTypeSpec",
     "DynamicArray",
     "type_spec_from_annotation",
+    "make",
     "MethodReturn",
 ]

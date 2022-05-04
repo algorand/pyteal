@@ -303,3 +303,13 @@ def test_type_spec_from_annotation_is_exhaustive():
         except TypeError as e:
             # if subclass is generic, we should get an error that is NOT "Unknown annotation origin"
             assert "Unknown annotation origin" not in str(e)
+
+
+def test_make():
+    actual = abi.make(abi.Tuple2[abi.Uint64, abi.StaticArray[abi.Bool, Literal[8]]])
+    expected_type_spec = abi.TupleTypeSpec(
+        abi.Uint64TypeSpec(), abi.StaticArrayTypeSpec(abi.BoolTypeSpec(), 8)
+    )
+
+    assert actual.type_spec() == expected_type_spec
+    assert type(actual) is abi.Tuple
