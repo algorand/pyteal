@@ -212,21 +212,21 @@ T = TypeVar("T", bound=BaseType)
 
 def make(t: type[T]) -> T:
     """Create a new instance of an ABI type. The type to create is determined by the input argument,
-    which must be a fully-specified annotation of type's class.
+    which must be a fully-specified type's class. Fully-specified means that every generic argument
+    is given a value.
 
     For example:
         .. code-block:: python
 
                 # both of these are equivalent
-                myTuple = abi.make(abi.Tuple2[abi.Uint64, abi.DynamicArray[abi.Bool]])
-                myTuple = abi.Tuple(abi.TupleTypeSpec(abi.Uint64TypeSpec(), abi.DynamicArrayTypeSpec(abi.BoolTypeSpec())))
+                a = abi.make(abi.Tuple2[abi.Uint64, abi.StaticArray[abi.Bool, Literal[8]]])
+                b = abi.TupleTypeSpec(abi.Uint64TypeSpec(), abi.StaticArrayTypeSpec(abi.BoolTypeSpec(), 8))
 
     This is purely a convenience method over instantiating the type directly, which can be cumbersome
     due to the lengthy TypeSpec class names.
 
     Args:
-        t: A fully-specified annotation of a subclass of abi.BaseType, meaning all generic parameters
-            must be given values.
+        t: A fully-specified subclass of abi.BaseType.
 
     Returns:
         A new instance of the given type class.
