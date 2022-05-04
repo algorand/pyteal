@@ -140,19 +140,34 @@ def test_abi_subroutine_definition():
         ),
         ABISubroutineTC(
             fn_2arg_0ret,
-            [pt.abi.Uint64(), pt.abi.StaticArray(pt.abi.ByteTypeSpec(), 10)],
+            [
+                pt.abi.Uint64(),
+                pt.abi.StaticArray(
+                    pt.abi.StaticArrayTypeSpec(pt.abi.ByteTypeSpec(), 10)
+                ),
+            ],
             "fn_2arg_0ret",
             "void",
         ),
         ABISubroutineTC(
             fn_2arg_1ret,
-            [pt.abi.Uint64(), pt.abi.StaticArray(pt.abi.ByteTypeSpec(), 10)],
+            [
+                pt.abi.Uint64(),
+                pt.abi.StaticArray(
+                    pt.abi.StaticArrayTypeSpec(pt.abi.ByteTypeSpec(), 10)
+                ),
+            ],
             "fn_2arg_1ret",
             pt.abi.ByteTypeSpec(),
         ),
         ABISubroutineTC(
             fn_2arg_1ret_with_expr,
-            [pt.Int(5), pt.abi.StaticArray(pt.abi.ByteTypeSpec(), 10)],
+            [
+                pt.Int(5),
+                pt.abi.StaticArray(
+                    pt.abi.StaticArrayTypeSpec(pt.abi.ByteTypeSpec(), 10)
+                ),
+            ],
             "fn_2arg_1ret_with_expr",
             pt.abi.ByteTypeSpec(),
         ),
@@ -620,8 +635,12 @@ def test_abi_subroutine_calling_param_types():
     abi_u64 = pt.abi.Uint64()
     abi_u32 = pt.abi.Uint32()
     abi_byte = pt.abi.Byte()
-    abi_static_u32_10 = pt.abi.StaticArray(pt.abi.Uint32TypeSpec(), 10)
-    abi_dynamic_bool = pt.abi.DynamicArray(pt.abi.BoolTypeSpec())
+    abi_static_u32_10 = pt.abi.StaticArray(
+        pt.abi.StaticArrayTypeSpec(pt.abi.Uint32TypeSpec(), 10)
+    )
+    abi_dynamic_bool = pt.abi.DynamicArray(
+        pt.abi.DynamicArrayTypeSpec(pt.abi.BoolTypeSpec())
+    )
     sv = pt.ScratchVar()
     expr_int = pt.Int(1)
 
