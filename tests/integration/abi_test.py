@@ -5,6 +5,8 @@ from typing import Literal
 
 import pyteal as pt
 
+from tests.blackbox import Blackbox
+
 # ---- Simple Examples ---- #
 
 
@@ -55,9 +57,10 @@ def fn_2arg_1ret_with_expr(
     return out.set(b[a % pt.Int(10)])
 
 
-# ---- doc test (headed into user_guide_test.py)
+# ---- doc test (in our user_guide_test.py as well)
 
 
+@Blackbox()
 @pt.ABIReturnSubroutine
 def abi_sum(
     toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64
@@ -77,10 +80,12 @@ def abi_sum(
     )
 
 
+def test_abi_sum():
+    pass
+
+
 # ---- subtraction example ---- #
 
-
-import pyteal as pt
 
 Int65 = pt.abi.Tuple2[pt.abi.Bool, pt.abi.Uint64]
 
@@ -130,19 +135,19 @@ def minus(x: Int65, y: Int65, *, z: Int65):
     )
 
 
-def test_minus():
-    program = Seq(
-        (to_sum_arr := abi.DynamicArray(abi.Uint64TypeSpec())).decode(
-            Txn.application_args[1]
-        ),
-        (res := abi.Uint64()).set(abi_sum(to_sum_arr)),
-        abi.MethodReturn(res),
-        Int(1),
-    )
+# def test_minus():
+#     program = Seq(
+#         (to_sum_arr := abi.DynamicArray(abi.Uint64TypeSpec())).decode(
+#             Txn.application_args[1]
+#         ),
+#         (res := abi.Uint64()).set(abi_sum(to_sum_arr)),
+#         abi.MethodReturn(res),
+#         Int(1),
+#     )
 
-    teal = pt.compileTeal(minus, pt.Mode.Application, version=6)
+#     teal = pt.compileTeal(minus, pt.Mode.Application, version=6)
 
-    x = 42
+#     x = 42
 
 
 """
