@@ -60,9 +60,51 @@ def user_guide_snippet_ILLEGAL_recursion():
     return Seq(i.store(Int(15)), ILLEGAL_recursion(i), Int(1))
 
 
+def user_guide_snippet_ABIReturnSubroutine():
+    from pyteal import (
+        ABIReturnSubroutine,
+        Expr,
+        For,
+        Int,
+        ScratchVar,
+        Seq,
+        Txn,
+        TealType,
+    )
+    from pyteal import abi
+
+    @ABIReturnSubroutine
+    def abi_sum(toSum: abi.DynamicArray[abi.Uint64], *, output: abi.Uint64) -> Expr:
+        i = ScratchVar(TealType.uint64)
+        valueAtIndex = abi.Uint64()
+        return Seq(
+            output.set(0),
+            For(
+                i.store(Int(0)), i.load() < toSum.length(), i.store(i.load() + Int(1))
+            ).Do(
+                Seq(
+                    toSum[i.load()].store_into(valueAtIndex),
+                    output.set(output.get() + valueAtIndex.get()),
+                )
+            ),
+        )
+
+    program = Seq(
+        (to_sum_arr := abi.DynamicArray(abi.Uint64TypeSpec())).decode(
+            Txn.application_args[1]
+        ),
+        (res := abi.Uint64()).set(abi_sum(to_sum_arr)),
+        abi.MethodReturn(res),
+        Int(1),
+    )
+
+    return program
+
+
 USER_GUIDE_SNIPPETS_COPACETIC = [
     user_guide_snippet_dynamic_scratch_var,
     user_guide_snippet_recursiveIsEven,
+    user_guide_snippet_ABIReturnSubroutine,
 ]
 
 
