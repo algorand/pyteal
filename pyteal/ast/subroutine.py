@@ -484,7 +484,7 @@ class ABIReturnSubroutine:
                 )
 
             program = Seq(
-                (to_sum_arr := abi.DynamicArray(abi.Uint64TypeSpec())).decode(
+                (to_sum_arr := abi.make(abi.DynamicArray[abi.Uint64])).decode(
                     Txn.application_args[1]
                 ),
                 (res := abi.Uint64()).set(abi_sum(to_sum_arr)),
