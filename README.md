@@ -57,8 +57,7 @@ Pip install PyTeal in editable state with dependencies:
 
 * `make setup-development`
 * OR if you don't have `make` installed:
-  * `pip install -e.[development]`
-  * Note, that if you're using `zsh` you'll need to escape the brackets: `pip install -e.\[development\]`
+  * `pip install -e . && pip install -r requirements.txt`
 
 Format code:
 
