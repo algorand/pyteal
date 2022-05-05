@@ -2,7 +2,10 @@ from graviton.blackbox import DryRunExecutor
 
 from pyteal import (
     Bytes,
-    EcdsaCurve, EcdsaDecompress, EcdsaRecover, EcdsaVerify,
+    EcdsaCurve,
+    EcdsaDecompress,
+    EcdsaRecover,
+    EcdsaVerify,
     Int,
     And,
     Subroutine,

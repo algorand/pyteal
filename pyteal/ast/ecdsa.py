@@ -52,7 +52,7 @@ class EcdsaVerifyExpr(Expr):
 
     def __teal__(self, options: "CompileOptions"):
         verifyTealVersion(
-            self.op.min_version,
+            max(self.op.min_version, self.curve.min_version),
             options.version,
             "TEAL version too low to use op {}".format(self.op),
         )
