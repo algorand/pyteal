@@ -169,6 +169,9 @@ class SubroutineDefinition:
             expected_arg_type = self._validate_annotation(annotations, name)
 
             if param.kind is Parameter.KEYWORD_ONLY:
+                # this case is only entered when
+                # - `self.abi_output_arg_name is not None`
+                # - `name == self.abi_output_arg_name`
                 if not isinstance(expected_arg_type, abi.TypeSpec):
                     raise TealInputError(
                         f"Function keyword parameter {name} has type {expected_arg_type}"
