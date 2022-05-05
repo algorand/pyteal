@@ -17,7 +17,7 @@ Operator                        Cost      Description
 :code:`Sha256(e)`               `35`      `SHA-256` hash function, produces 32 bytes
 :code:`Keccak256(e)`            `130`     `Keccak-256` hash funciton, produces 32 bytes
 :code:`Sha512_256(e)`           `45`      `SHA-512/256` hash function, produces 32 bytes
-:code:`Ed25519Verify(d, s, p)`  `1900`\*  `1` if :code:`s` is the signature of :code:`d` signed by private key :code:`p`, else `0`
+:code:`Ed25519Verify(d, s, p)`  `1900`\*  `1` if :code:`s` is the signature of :code:`d` signed by the private key corresponding to the public key :code:`p`, else `0`
 =============================== ========= ========================================================================================
 
 \* :code:`Ed25519Verify` is only available in signature mode up to version 4 of TEAL. From version 5 upwards, `Ed25519Verify` can be used in any mode.
@@ -25,5 +25,5 @@ Operator                        Cost      Description
 Note the cost amount is accurate for version 2 of TEAL and higher.
 
 These cryptographic primitives cover the most used ones in blockchains and cryptocurrencies. For example, Bitcoin uses `SHA-256` for creating Bitcoin addresses;
-Alogrand uses `ed25519` signature scheme for authorization and uses `SHA-512/256` hash function for
+Algorand uses `ed25519` signature scheme for authorization and uses `SHA-512/256` hash function for
 creating contract account addresses from TEAL bytecode.
