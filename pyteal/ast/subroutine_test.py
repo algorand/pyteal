@@ -222,7 +222,7 @@ def test_subroutine_definition_validate():
         three_params._validate(input_types=two_inputs)
 
     assert tie.value == pt.TealInputError(
-        "Provided number of input_types (2) does not match detected number of parameters (3)"
+        "Provided number of input_types (2) does not match detected number of input parameters (3)"
     )
 
     three_inputs_with_a_wrong_type = [pt.TealType.uint64, pt.Expr, pt.TealType.bytes]
