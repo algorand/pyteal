@@ -4,20 +4,7 @@ from typing import Any, Dict
 
 import pytest
 
-from pyteal import (
-    Bytes,
-    Concat,
-    For,
-    If,
-    Int,
-    Mode,
-    ScratchVar,
-    Seq,
-    Subroutine,
-    SubroutineFnWrapper,
-    TealType,
-    compileTeal,
-)
+import pyteal as pt
 
 from tests.compile_asserts import assert_teal_as_expected
 from tests.blackbox import (
@@ -52,13 +39,13 @@ SKIP_SCRATCH_ASSERTIONS = not STABLE_SLOT_GENERATION
 def wrap_compile_and_save(
     subr, mode, version, assemble_constants, test_name, case_name
 ):
-    is_app = mode == Mode.Application
+    is_app = mode == pt.Mode.Application
 
     # 1. PyTeal program Expr generation
     approval = blackbox_pyteal(subr, mode)
 
     # 2. TEAL generation
-    teal = compileTeal(
+    teal = pt.compileTeal(
         approval(), mode, version=version, assembleConstants=assemble_constants
     )
     tealfile = f'{"app" if is_app else "lsig"}_{case_name}.teal'
@@ -70,7 +57,7 @@ def wrap_compile_and_save(
         f.write(teal)
 
     print(
-        f"""subroutine {case_name}@{mode} generated TEAL. 
+        f"""Subroutine {case_name}@{mode} generated TEAL. 
 saved to {tealpath}:
 -------
 {teal}
@@ -84,60 +71,60 @@ saved to {tealpath}:
 
 
 @Blackbox(input_types=[])
-@Subroutine(TealType.uint64)
+@pt.Subroutine(pt.TealType.uint64)
 def exp():
-    return Int(2) ** Int(10)
+    return pt.Int(2) ** pt.Int(10)
 
 
-@Blackbox(input_types=[TealType.uint64])
-@Subroutine(TealType.none)
-def square_byref(x: ScratchVar):
+@Blackbox(input_types=[pt.TealType.uint64])
+@pt.Subroutine(pt.TealType.none)
+def square_byref(x: pt.ScratchVar):
     return x.store(x.load() * x.load())
 
 
-@Blackbox(input_types=[TealType.uint64])
-@Subroutine(TealType.uint64)
+@Blackbox(input_types=[pt.TealType.uint64])
+@pt.Subroutine(pt.TealType.uint64)
 def square(x):
-    return x ** Int(2)
+    return x ** pt.Int(2)
 
 
-@Blackbox(input_types=[TealType.anytype, TealType.anytype])
-@Subroutine(TealType.none)
-def swap(x: ScratchVar, y: ScratchVar):
-    z = ScratchVar(TealType.anytype)
-    return Seq(
+@Blackbox(input_types=[pt.TealType.anytype, pt.TealType.anytype])
+@pt.Subroutine(pt.TealType.none)
+def swap(x: pt.ScratchVar, y: pt.ScratchVar):
+    z = pt.ScratchVar(pt.TealType.anytype)
+    return pt.Seq(
         z.store(x.load()),
         x.store(y.load()),
         y.store(z.load()),
     )
 
 
-@Blackbox(input_types=[TealType.bytes, TealType.uint64])
-@Subroutine(TealType.bytes)
-def string_mult(s: ScratchVar, n):
-    i = ScratchVar(TealType.uint64)
-    tmp = ScratchVar(TealType.bytes)
-    start = Seq(i.store(Int(1)), tmp.store(s.load()), s.store(Bytes("")))
-    step = i.store(i.load() + Int(1))
-    return Seq(
-        For(start, i.load() <= n, step).Do(s.store(Concat(s.load(), tmp.load()))),
+@Blackbox(input_types=[pt.TealType.bytes, pt.TealType.uint64])
+@pt.Subroutine(pt.TealType.bytes)
+def string_mult(s: pt.ScratchVar, n):
+    i = pt.ScratchVar(pt.TealType.uint64)
+    tmp = pt.ScratchVar(pt.TealType.bytes)
+    start = pt.Seq(i.store(pt.Int(1)), tmp.store(s.load()), s.store(pt.Bytes("")))
+    step = i.store(i.load() + pt.Int(1))
+    return pt.Seq(
+        pt.For(start, i.load() <= n, step).Do(s.store(pt.Concat(s.load(), tmp.load()))),
         s.load(),
     )
 
 
-@Blackbox(input_types=[TealType.uint64])
-@Subroutine(TealType.uint64)
+@Blackbox(input_types=[pt.TealType.uint64])
+@pt.Subroutine(pt.TealType.uint64)
 def oldfac(n):
-    return If(n < Int(2)).Then(Int(1)).Else(n * oldfac(n - Int(1)))
+    return pt.If(n < pt.Int(2)).Then(pt.Int(1)).Else(n * oldfac(n - pt.Int(1)))
 
 
-@Blackbox(input_types=[TealType.uint64])
-@Subroutine(TealType.uint64)
+@Blackbox(input_types=[pt.TealType.uint64])
+@pt.Subroutine(pt.TealType.uint64)
 def slow_fibonacci(n):
     return (
-        If(n <= Int(1))
+        pt.If(n <= pt.Int(1))
         .Then(n)
-        .Else(slow_fibonacci(n - Int(2)) + slow_fibonacci(n - Int(1)))
+        .Else(slow_fibonacci(n - pt.Int(2)) + slow_fibonacci(n - pt.Int(1)))
     )
 
 
@@ -171,7 +158,7 @@ def fib_cost(args):
     "subr, mode",
     product(
         [exp, square_byref, square, swap, string_mult, oldfac, slow_fibonacci],
-        [Mode.Application, Mode.Signature],
+        [pt.Mode.Application, pt.Mode.Signature],
     ),
 )
 def test_stable_teal_generation(subr, mode):
@@ -506,8 +493,8 @@ LOGICSIG_SCENARIOS = {
 
 
 def blackbox_test_runner(
-    subr: SubroutineFnWrapper,
-    mode: Mode,
+    subr: pt.SubroutineFnWrapper,
+    mode: pt.Mode,
     scenario: Dict[str, Any],
     version: int,
     assemble_constants: bool = True,
@@ -518,7 +505,7 @@ def blackbox_test_runner(
 
     # 0. Validations
     assert isinstance(subr, BlackboxWrapper), f"unexpected subr type {type(subr)}"
-    assert isinstance(mode, Mode)
+    assert isinstance(mode, pt.Mode)
 
     # 1. Compile to TEAL
     teal, _, tealfile = wrap_compile_and_save(
@@ -563,19 +550,19 @@ def blackbox_test_runner(
 
 
 @pytest.mark.parametrize("subr, scenario", APP_SCENARIOS.items())
-def test_blackbox_subroutines_as_apps(
-    subr: SubroutineFnWrapper,
+def test_blackbox_Subroutines_as_apps(
+    subr: pt.SubroutineFnWrapper,
     scenario: Dict[str, Any],
 ):
-    blackbox_test_runner(subr, Mode.Application, scenario, 6)
+    blackbox_test_runner(subr, pt.Mode.Application, scenario, 6)
 
 
 @pytest.mark.parametrize("subr, scenario", LOGICSIG_SCENARIOS.items())
-def test_blackbox_subroutines_as_logic_sigs(
-    subr: SubroutineFnWrapper,
+def test_blackbox_Subroutines_as_logic_sigs(
+    subr: pt.SubroutineFnWrapper,
     scenario: Dict[str, Any],
 ):
-    blackbox_test_runner(subr, Mode.Signature, scenario, 6)
+    blackbox_test_runner(subr, pt.Mode.Signature, scenario, 6)
 
 
 def blackbox_pyteal_example1():
@@ -768,6 +755,38 @@ def blackbox_pyteal_example3():
     # Assert that each invariant holds on the sequences of inputs and dry-runs:
     for property, predicate in predicates.items():
         Invariant(predicate).validates(property, inputs, inspectors)
+
+
+def test_abi_sum():
+    @Blackbox(input_types=[None])
+    @pt.ABIReturnSubroutine
+    def abi_sum(
+        toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64
+    ) -> pt.Expr:
+        i = pt.ScratchVar(pt.TealType.uint64)
+        valueAtIndex = pt.abi.Uint64()
+        return pt.Seq(
+            output.set(0),
+            pt.For(
+                i.store(pt.Int(0)),
+                i.load() < toSum.length(),
+                i.store(i.load() + pt.Int(1)),
+            ).Do(
+                pt.Seq(
+                    toSum[i.load()].store_into(valueAtIndex),
+                    output.set(output.get() + valueAtIndex.get()),
+                )
+            ),
+        )
+
+    abi_sum_app_pt = blackbox_pyteal(abi_sum, pt.Mode.Application)
+    abi_sum_app_tl = pt.compileTeal(abi_sum_app_pt(), pt.Mode.Application, version=6)
+    abi_sum_lsig_pt = blackbox_pyteal(abi_sum, pt.Mode.Signature)
+    abi_sum_lsig_tl = pt.compileTeal(abi_sum_lsig_pt(), pt.Mode.Signature, version=6)
+
+    todo_use_these_guys = abi_sum_app_tl
+    todo_use_these_guys = abi_sum_lsig_tl
+    _ = todo_use_these_guys
 
 
 @pytest.mark.parametrize(

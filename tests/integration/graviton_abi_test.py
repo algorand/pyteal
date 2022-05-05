@@ -61,6 +61,7 @@ def fn_2arg_1ret_with_expr(
 
 
 def test_abi_sum():
+    # TODO: move the pure pyteal generative version of this to user_docs_test.py
     @Blackbox(input_types=[None])
     @pt.ABIReturnSubroutine
     def abi_sum(
@@ -86,7 +87,10 @@ def test_abi_sum():
     abi_sum_app_tl = pt.compileTeal(abi_sum_app_pt(), pt.Mode.Application, version=6)
     abi_sum_lsig_pt = blackbox_pyteal(abi_sum, pt.Mode.Signature)
     abi_sum_lsig_tl = pt.compileTeal(abi_sum_lsig_pt(), pt.Mode.Signature, version=6)
-    x = 42
+
+    todo_use_these_guys = abi_sum_app_tl
+    todo_use_these_guys = abi_sum_lsig_tl
+    _ = todo_use_these_guys
 
 
 # ---- subtraction example ---- #
