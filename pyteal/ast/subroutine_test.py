@@ -408,6 +408,61 @@ def test_subroutine_definition_validate():
         assert abi_args == {}
         assert output_kwarg == {}
 
+    # annotation / abi type handling:
+    abi_annotation_examples = {
+        pt.abi.Address: pt.abi.AddressTypeSpec(),
+        pt.abi.Bool: pt.abi.BoolTypeSpec(),
+        pt.abi.Byte: pt.abi.ByteTypeSpec(),
+        pt.abi.DynamicArray[pt.abi.Bool]: pt.abi.DynamicArrayTypeSpec(
+            pt.abi.BoolTypeSpec()
+        ),
+        pt.abi.StaticArray[pt.abi.Uint32, Literal[10]]: pt.abi.StaticArrayTypeSpec(
+            pt.abi.Uint32TypeSpec(), 10
+        ),
+        pt.abi.String: pt.abi.StringTypeSpec(),
+        pt.abi.Tuple2[pt.abi.Bool, pt.abi.Uint32]: pt.abi.TupleTypeSpec(
+            pt.abi.BoolTypeSpec(), pt.abi.Uint32TypeSpec()
+        ),
+        pt.abi.Uint8: pt.abi.Uint8TypeSpec(),
+        pt.abi.Uint16: pt.abi.Uint16TypeSpec(),
+        pt.abi.Uint32: pt.abi.Uint32TypeSpec(),
+        pt.abi.Uint64: pt.abi.Uint64TypeSpec(),
+    }
+
+    anns = (pt.Expr, pt.ScratchVar) + tuple(abi_annotation_examples.keys())
+    for x_ann, z_ann in product(anns, anns):
+
+        def mocker_impl(x: x_ann, y, z: z_ann):
+            return pt.Return(pt.Int(1))
+
+        mocker = mock_subroutine_definition(mocker_impl)
+        params, anns, arg_types, byrefs, abis, output_kwarg = mocker._validate()
+        print(
+            f"{x_ann=}, {z_ann=}, {params=}, {anns=}, {arg_types=}, {byrefs=}, {abis=}, {output_kwarg=}"
+        )
+
+        assert len(params) == 3
+
+        assert anns == {"x": x_ann, "z": z_ann}
+
+        assert (
+            (arg_types[0] is x_ann or arg_types[0] == abi_annotation_examples[x_ann])
+            and arg_types[1] is pt.Expr
+            and (
+                arg_types[2] is z_ann or arg_types[2] == abi_annotation_examples[z_ann]
+            )
+        ), f"{arg_types[0]} -> {x_ann} and {arg_types[1]} -> {pt.Expr} and {arg_types[2]} -> {z_ann}"
+
+        assert byrefs == set(["x"] if x_ann is pt.ScratchVar else []) | set(
+            ["z"] if z_ann is pt.ScratchVar else []
+        )
+        expected_abis = {}
+        if x_ann not in (pt.Expr, pt.ScratchVar):
+            expected_abis["x"] = abi_annotation_examples[x_ann]
+        if z_ann not in (pt.Expr, pt.ScratchVar):
+            expected_abis["z"] = abi_annotation_examples[z_ann]
+        assert abis == expected_abis
+
 
 def test_subroutine_invocation_param_types():
     def fnWithNoAnnotations(a, b):
