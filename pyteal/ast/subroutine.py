@@ -392,8 +392,9 @@ class SubroutineCall(Expr):
         3. (ABI, or a special case in by-value) In this case, the storage of an ABI value are loaded
             to the stack and will be stored in a local ABI value for subroutine evaluation
 
-        4. (ABI output keyword argument, or by-ref ABI value) In this case of returning ABI values, we do not place
-            ABI values on the stack, while in `evaluate_subroutine` we use an ABI typed instance for subroutine evaluation
+        4. (ABI output keyword argument) In this case, we do not place ABI values (encoding) on the stack.
+            This is an *output-only* argument: in `evaluate_subroutine` an ABI typed instance for subroutine evaluation
+            will be generated, and gets in to construct the subroutine implementation.
         """
         verifyTealVersion(
             Op.callsub.min_version,
@@ -699,7 +700,6 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
         )
 
     args = subroutine.arguments()
-    args = [arg for arg in args if arg not in subroutine.output_kwarg]
 
     arg_vars: list[ScratchVar] = []
     loaded_args: list[ScratchVar | Expr | abi.BaseType] = []

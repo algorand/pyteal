@@ -838,7 +838,7 @@ def test_subroutine_definition_invalid():
         (
             fnWithMultipleABIKeywordArgs,
             "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type",
-            "TealInputError('multiple output arguments with type annotations",
+            "multiple output arguments (2) with type annotations",
         ),
         (
             fnWithVariableArgs,
@@ -894,6 +894,8 @@ def test_subroutine_definition_invalid():
         with pytest.raises(pt.TealInputError) as e:
             print(f"case=[{abi_sub_def_msg}]")
             pt.ABIReturnSubroutine(fn)
+
+        assert abi_sub_def_msg in str(e), f"failed for case[{fn.__name__}]"
 
 
 def test_subroutine_declaration():
