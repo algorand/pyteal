@@ -10,7 +10,7 @@ from pyteal.ast import (
     SubroutineDefinition,
     SubroutineDeclaration,
 )
-from pyteal.ir import Mode, TealComponent, TealOp, TealBlock, TealSimpleBlock
+from pyteal.ir import Mode, Op, TealComponent, TealOp, TealBlock, TealSimpleBlock
 from pyteal.errors import TealInputError, TealInternalError
 
 from pyteal.compiler.sort import sortBlocks
@@ -133,26 +133,45 @@ def compileSubroutine(
             ast = Return(ast)
 
     options.setSubroutine(currentSubroutine)
-    start, end = ast.__teal__(options)
+    start, _ = ast.__teal__(options)
     start.addIncoming()
     start.validateTree()
 
     start = TealBlock.NormalizeBlocks(start)
     start.validateTree()
 
-    order = sortBlocks(start, end)
-    teal = flattenBlocks(order)
-
-    verifyOpsForVersion(teal, options.version)
-    verifyOpsForMode(teal, options.mode)
-
-    subroutine_start_blocks[currentSubroutine] = start
-    subroutine_end_blocks[currentSubroutine] = end
+    deferred_ops: list[TealOp] = []
+    if (
+        currentSubroutine is not None
+        and currentSubroutine.get_declaration().deferred_expr is not None
+    ):
+        deferred_expr = cast(Expr, currentSubroutine.get_declaration().deferred_expr)
+        deferred_start, deferred_end = deferred_expr.__teal__(options)
+        if deferred_start is not deferred_end:
+            # if necessary, we could support multiple blocks, it's just not needed currently
+            raise TealInternalError("Expected deferred expression to be a single block")
+        deferred_ops = cast(TealSimpleBlock, deferred_start).ops
 
     referencedSubroutines: Set[SubroutineDefinition] = set()
-    for stmt in teal:
-        for subroutine in stmt.getSubroutines():
-            referencedSubroutines.add(subroutine)
+    for block in TealBlock.Iterate(start):
+        has_return = False
+
+        for stmt in block.ops:
+            for subroutine in stmt.getSubroutines():
+                referencedSubroutines.add(subroutine)
+
+            if not has_return and stmt.getOp() == Op.retsub:
+                has_return = True
+
+        if has_return and deferred_ops:
+            new_ops: List[TealOp] = []
+
+            for stmt in block.ops:
+                if stmt.getOp() == Op.retsub:
+                    new_ops.extend(deferred_ops)
+                new_ops.append(stmt)
+
+            block.ops = new_ops
 
     if currentSubroutine is not None:
         subroutineGraph[currentSubroutine] = referencedSubroutines
@@ -255,6 +274,9 @@ def compileTeal(
 
     subroutineLabels = resolveSubroutines(subroutineMapping)
     teal = flattenSubroutines(subroutineMapping, subroutineLabels)
+
+    verifyOpsForVersion(teal, options.version)
+    verifyOpsForMode(teal, options.mode)
 
     if assembleConstants:
         if version < 3:
