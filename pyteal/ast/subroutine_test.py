@@ -898,7 +898,7 @@ def test_subroutine_definition_invalid():
         (
             fnWithKeywordArgsWrongKWName,
             "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type",
-            "TealInputError('ABI return subroutine output-kwarg name must be `output` at this moment"
+            "TealInputError('ABI return subroutine output-kwarg name must be `output` at this moment",
         ),
         (
             fnWithMultipleABIKeywordArgs,
