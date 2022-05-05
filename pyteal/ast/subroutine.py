@@ -540,10 +540,15 @@ class ABIReturnSubroutine:
             case []:
                 return None
             case [name]:
+                if name != "output":
+                    raise TealInputError(
+                        f"ABI return subroutine output-kwarg name must be `output` at this moment, "
+                        f"while {name} is the keyword."
+                    )
                 annotation = fn_annotations.get(name, None)
                 if annotation is None:
                     raise TealInputError(
-                        f"ABI subroutine output-kwarg {name} must specify ABI type"
+                        f"ABI return subroutine output-kwarg {name} must specify ABI type"
                     )
                 type_spec = abi.type_spec_from_annotation(annotation)
                 return OutputKwArgInfo(name, type_spec)

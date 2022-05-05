@@ -94,16 +94,16 @@ def test_abi_subroutine_definition():
         return pt.Return()
 
     @pt.ABIReturnSubroutine
-    def fn_0arg_uint64_ret(*, res: pt.abi.Uint64) -> pt.Expr:
-        return res.set(1)
+    def fn_0arg_uint64_ret(*, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(1)
 
     @pt.ABIReturnSubroutine
     def fn_1arg_0ret(a: pt.abi.Uint64) -> pt.Expr:
         return pt.Return()
 
     @pt.ABIReturnSubroutine
-    def fn_1arg_1ret(a: pt.abi.Uint64, *, out: pt.abi.Uint64) -> pt.Expr:
-        return out.set(a)
+    def fn_1arg_1ret(a: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(a)
 
     @pt.ABIReturnSubroutine
     def fn_2arg_0ret(
@@ -116,18 +116,18 @@ def test_abi_subroutine_definition():
         a: pt.abi.Uint64,
         b: pt.abi.StaticArray[pt.abi.Byte, Literal[10]],
         *,
-        out: pt.abi.Byte,
+        output: pt.abi.Byte,
     ) -> pt.Expr:
-        return out.set(b[a.get() % pt.Int(10)])
+        return output.set(b[a.get() % pt.Int(10)])
 
     @pt.ABIReturnSubroutine
     def fn_2arg_1ret_with_expr(
         a: pt.Expr,
         b: pt.abi.StaticArray[pt.abi.Byte, Literal[10]],
         *,
-        out: pt.abi.Byte,
+        output: pt.abi.Byte,
     ) -> pt.Expr:
-        return out.set(b[a % pt.Int(10)])
+        return output.set(b[a % pt.Int(10)])
 
     cases = (
         ABISubroutineTC(fn_0arg_0ret, [], "fn_0arg_0ret", "void"),
@@ -634,8 +634,10 @@ def test_abi_subroutine_calling_param_types():
         return pt.Seq(pt.Log(pt.Itob(a.get() + b.get())), pt.Return())
 
     @pt.ABIReturnSubroutine
-    def fn_ret_add(a: pt.abi.Uint64, b: pt.abi.Uint32, *, c: pt.abi.Uint64) -> pt.Expr:
-        return c.set(a.get() + b.get() + pt.Int(0xA190))
+    def fn_ret_add(
+        a: pt.abi.Uint64, b: pt.abi.Uint32, *, output: pt.abi.Uint64
+    ) -> pt.Expr:
+        return output.set(a.get() + b.get() + pt.Int(0xA190))
 
     @pt.ABIReturnSubroutine
     def fn_abi_annotations_0(
@@ -651,9 +653,9 @@ def test_abi_subroutine_calling_param_types():
         b: pt.abi.StaticArray[pt.abi.Uint32, Literal[10]],
         c: pt.abi.DynamicArray[pt.abi.Bool],
         *,
-        out: pt.abi.Byte,
+        output: pt.abi.Byte,
     ):
-        return out.set(a)
+        return output.set(a)
 
     @pt.ABIReturnSubroutine
     def fn_mixed_annotations_0(a: pt.ScratchVar, b: pt.Expr, c: pt.abi.Byte) -> pt.Expr:
@@ -664,11 +666,11 @@ def test_abi_subroutine_calling_param_types():
 
     @pt.ABIReturnSubroutine
     def fn_mixed_annotations_0_with_ret(
-        a: pt.ScratchVar, b: pt.Expr, c: pt.abi.Byte, *, out: pt.abi.Uint64
+        a: pt.ScratchVar, b: pt.Expr, c: pt.abi.Byte, *, output: pt.abi.Uint64
     ) -> pt.Expr:
         return pt.Seq(
             a.store(c.get() * pt.Int(0x0FF1CE) * b),
-            out.set(a.load()),
+            output.set(a.load()),
         )
 
     @pt.ABIReturnSubroutine
@@ -683,9 +685,9 @@ def test_abi_subroutine_calling_param_types():
 
     @pt.ABIReturnSubroutine
     def fn_mixed_annotation_1_with_ret(
-        a: pt.ScratchVar, b: pt.abi.Uint64, *, c: pt.abi.Bool
+        a: pt.ScratchVar, b: pt.abi.Uint64, *, output: pt.abi.Bool
     ) -> pt.Expr:
-        return c.set((a.load() + b.get()) % pt.Int(2))
+        return output.set((a.load() + b.get()) % pt.Int(2))
 
     abi_u64 = pt.abi.Uint64()
     abi_u32 = pt.abi.Uint32()
@@ -833,7 +835,10 @@ def test_subroutine_definition_invalid():
     def fnWithDefaults(a, b=None):
         return pt.Return()
 
-    def fnWithKeywordArgs(a, *, b):
+    def fnWithKeywordArgs(a, *, output):
+        return pt.Return()
+
+    def fnWithKeywordArgsWrongKWName(a, *, b: pt.abi.Uint64):
         return pt.Return()
 
     def fnWithMultipleABIKeywordArgs(a, *, b: pt.abi.Byte, c: pt.abi.Bool):
@@ -887,8 +892,13 @@ def test_subroutine_definition_invalid():
         ),
         (
             fnWithKeywordArgs,
+            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter output with type",
+            "TealInputError('ABI return subroutine output-kwarg output must specify ABI type')",
+        ),
+        (
+            fnWithKeywordArgsWrongKWName,
             "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type",
-            "TealInputError('ABI subroutine output-kwarg b must specify ABI type')",
+            "TealInputError('ABI return subroutine output-kwarg name must be `output` at this moment"
         ),
         (
             fnWithMultipleABIKeywordArgs,
