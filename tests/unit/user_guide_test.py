@@ -89,13 +89,16 @@ def user_guide_snippet_ABIReturnSubroutine():
             ),
         )
 
+    to_sum_arr = abi.make(abi.DynamicArray[abi.Uint64])
+    res = abi.Uint64()
+
     program = Seq(
-        (
-            to_sum_arr := abi.DynamicArray(
-                abi.DynamicArrayTypeSpec(abi.Uint64TypeSpec())
-            )
-        ).decode(Txn.application_args[1]),
-        (res := abi.Uint64()).set(abi_sum(to_sum_arr)),
+        # (to_sum_arr := abi.make(abi.DynamicArray[abi.Uint64])).decode(
+        #     Txn.application_args[1]
+        # ),
+        to_sum_arr.decode(Txn.application_args[1]),
+        # (res := abi.Uint64()).set(abi_sum(to_sum_arr)),
+        res.set(abi_sum(to_sum_arr)),
         abi.MethodReturn(res),
         Int(1),
     )

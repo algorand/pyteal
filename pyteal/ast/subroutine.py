@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from inspect import isclass, Parameter, signature, get_annotations
-from types import MappingProxyType
+from types import MappingProxyType, NoneType
 from typing import (
     Callable,
     Optional,
@@ -131,18 +131,6 @@ class SubroutineDefinition:
         abi_args: dict[str, abi.TypeSpec] = {}
         abi_output_kwarg: dict[str, abi.TypeSpec] = {}
 
-        if input_types:
-            if len(input_types) != len(impl_params):
-                raise TealInputError(
-                    f"Provided number of input_types ({len(input_types)}) "
-                    f"does not match detected number of parameters ({len(impl_params)})"
-                )
-            for in_type, name in zip(input_types, impl_params):
-                if not isinstance(in_type, TealType):
-                    raise TealInputError(
-                        f"Function has input type {in_type} for parameter {name} which is not a TealType"
-                    )
-
         if "return" in annotations and annotations["return"] is not Expr:
             raise TealInputError(
                 f"Function has return of disallowed type {annotations['return']}. Only Expr is allowed"
@@ -181,6 +169,24 @@ class SubroutineDefinition:
                 by_ref_args.add(name)
             if isinstance(expected_arg_type, abi.TypeSpec):
                 abi_args[name] = expected_arg_type
+
+        if input_types:
+            input_arg_count = len(impl_params) - len(abi_output_kwarg)
+            if len(input_types) != input_arg_count:
+                raise TealInputError(
+                    f"Provided number of input_types ({len(input_types)}) "
+                    f"does not match detected number of input parameters ({input_arg_count})"
+                )
+            for in_type, name in zip(input_types, impl_params):
+                if not isinstance(in_type, (TealType, NoneType)):
+                    raise TealInputError(
+                        f"Function has input type {in_type} for parameter {name} which is not a TealType"
+                    )
+                if in_type is None and name not in abi_args:
+                    raise TealInputError(
+                        f"input_type for {name} is unspecified i.e. None "
+                        f"but this is only allowed for ABI arguments"
+                    )
 
         return (
             impl_params,

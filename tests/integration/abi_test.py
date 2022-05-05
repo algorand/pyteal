@@ -82,7 +82,10 @@ def test_abi_sum():
             ),
         )
 
-    abi_sum_pt = blackbox_pyteal(abi_sum, pt.Mode.Application)
+    abi_sum_app_pt = blackbox_pyteal(abi_sum, pt.Mode.Application)
+    abi_sum_app_tl = pt.compileTeal(abi_sum_app_pt(), pt.Mode.Application, version=6)
+    abi_sum_lsig_pt = blackbox_pyteal(abi_sum, pt.Mode.Signature)
+    abi_sum_lsig_tl = pt.compileTeal(abi_sum_lsig_pt(), pt.Mode.Signature, version=6)
     x = 42
 
 

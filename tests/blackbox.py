@@ -5,6 +5,7 @@ from algosdk.v2client import algod
 from graviton import blackbox
 
 from pyteal import (
+    abi,
     Arg,
     Btoi,
     Bytes,
@@ -14,12 +15,15 @@ from pyteal import (
     Len,
     Log,
     Mode,
+    Pop,
     ScratchVar,
     Seq,
     SubroutineFnWrapper,
     TealType,
     Txn,
 )
+
+from pyteal.ast.subroutine import ABIReturnSubroutine
 
 # ---- Clients ---- #
 
@@ -41,17 +45,35 @@ def _algod_client(
 
 
 class BlackboxWrapper:
-    # TODO: this is clearly wrong... need to handle ABIReturnSubroutine as well
-    def __init__(self, subr: SubroutineFnWrapper, input_types: list[TealType]):
+    def __init__(
+        self,
+        subr: SubroutineFnWrapper | ABIReturnSubroutine,
+        input_types: list[TealType | None],
+    ):
         subr.subroutine._validate(input_types=input_types)
-        self.subroutine = subr
-        self.input_types = input_types
+        self.subroutine: SubroutineFnWrapper | ABIReturnSubroutine = subr
+        self.input_types: list[TealType | None] = self._fill(input_types)
 
     def __call__(self, *args: Expr | ScratchVar, **kwargs) -> Expr:
         return self.subroutine(*args, **kwargs)
 
     def name(self) -> str:
         return self.subroutine.name()
+
+    def _fill(
+        self, input_types: list[TealType | None]
+    ) -> list[TealType | abi.TypeSpec]:
+        match self.subroutine:
+            case SubroutineFnWrapper():
+                return input_types
+            case ABIReturnSubroutine():
+                args = self.subroutine.subroutine.arguments()
+                abis = self.subroutine.subroutine.abi_args
+                return [(x if x else abis[args[i]]) for i, x in enumerate(input_types)]
+            case _:
+                raise AssertionError(
+                    f"Cannot produce handle subroutine of type {type(self.subroutine)}"
+                )
 
 
 def Blackbox(input_types: list[TealType]):
@@ -77,8 +99,8 @@ def blackbox_pyteal(subr: BlackboxWrapper, mode: Mode) -> Callable[..., Expr]:
     """Functor producing ready-to-compile PyTeal programs from annotated subroutines
 
     Args:
-        subr: annotated subroutine to wrap inside program.
-            Note: the `input_types` parameters should be supplied to @Subroutine() annotation
+        subr: a Subroutine or ABIReturnSubroutine which has been decorated with @Blackbox.
+            Note: the `input_types` parameters should be supplied to the @Blackbox() decorator
         mode: type of program to produce: logic sig (Mode.Signature) or app (Mode.Application)
 
     Returns:
@@ -131,12 +153,28 @@ def blackbox_pyteal(subr: BlackboxWrapper, mode: Mode) -> Callable[..., Expr]:
     * `blackbox_pyteal_example1()`: Using blackbox_pyteal() for a simple test of both an app and logic sig
     * `blackbox_pyteal_example2()`: Using blackbox_pyteal() to make 400 assertions and generate a CSV report with 400 dryrun rows
     * `blackbox_pyteal_example3()`: declarative Test Driven Development approach through Invariant's
+    * `blackbox_pyteal_example4()`: Using blackbox_pyteal() to debug an ABIReturnSubroutine
     """
     input_types = subr.input_types
     assert (
         input_types is not None
     ), "please provide input_types in your @Subroutine annotation (crucial for generating proper end-to-end testable PyTeal)"
 
+    match subr.subroutine:
+        case SubroutineFnWrapper():
+            approval = _handle_SubroutineFnWrapper(subr, mode, input_types)
+        case ABIReturnSubroutine():
+            approval = _handle_ABIReturnSubroutine(subr, mode, input_types)
+        case _:
+            raise AssertionError(
+                f"Cannot produce Blackbox pyteal for provided subroutine of type {type(subr.subroutine)}"
+            )
+
+    setattr(approval, "__name__", f"sem_{mode}_{subr.name()}")
+    return approval
+
+
+def _handle_SubroutineFnWrapper(subr, mode, input_types):
     subdef = subr.subroutine.subroutine
     arg_names = subdef.arguments()
 
@@ -198,5 +236,53 @@ def blackbox_pyteal(subr: BlackboxWrapper, mode: Mode) -> Callable[..., Expr]:
             part2 = [make_log(result.load()), make_return(result.load())]
             return Seq(*(part1 + part2))
 
-    setattr(approval, "__name__", f"sem_{mode}_{subr.name()}")
+    return approval
+
+
+def _handle_ABIReturnSubroutine(subr, mode, input_types):
+    subdef = subr.subroutine.subroutine
+    arg_names = subdef.arguments()
+
+    def arg_prep_n_call(i, p):
+        name = arg_names[i]
+        arg_expr = Txn.application_args[i] if mode == Mode.Application else Arg(i)
+        if p == TealType.uint64:
+            arg_expr = Btoi(arg_expr)
+        prep = None
+        arg_var = arg_expr
+        if name in subdef.by_ref_args:
+            arg_var = ScratchVar(p)
+            prep = arg_var.store(arg_expr)
+        elif name in subdef.abi_args:
+            arg_var = p.new_instance()
+            prep = arg_var.decode(arg_expr)
+        return prep, arg_var
+
+    output = None
+    if subr.subroutine.output_kwarg_info:
+        output = subr.subroutine.output_kwarg_info.abi_type.new_instance()
+
+    def approval():
+        preps_n_calls = [*(arg_prep_n_call(i, p) for i, p in enumerate(input_types))]
+        preps, calls = zip(*preps_n_calls) if preps_n_calls else ([], [])
+        preps = [p for p in preps if p]
+
+        # when @ABIReturnSubroutine is void:
+        #   invocation is an Expr of TealType.none
+        # otherwise:
+        #   it is a ComputedValue
+        invocation = subr(*calls)
+        if output:
+            invocation = output.set(invocation)
+            if mode == Mode.Signature:
+                results = [invocation, Pop(output.encode()), Int(1)]
+            else:
+                results = [invocation, abi.MethodReturn(output), Int(1)]
+        else:
+            results = [invocation, Int(1)]
+
+        if preps:
+            return Seq(*(preps + results))
+        return results
+
     return approval
