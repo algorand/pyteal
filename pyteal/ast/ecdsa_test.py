@@ -1,4 +1,3 @@
-from pyteal.ir.ops import Mode
 import pytest
 
 import pyteal as pt
@@ -35,7 +34,7 @@ def test_ecdsa_decompress():
         assert actual == expected
 
     # compile without errors this is necessary so assembly is also tested
-    pt.compileTeal(pt.Seq(pubkey, pt.Approve()), Mode.Application, version=5)
+    pt.compileTeal(pt.Seq(pubkey, pt.Approve()), pt.Mode.Application, version=5)
 
 
 def test_ecdsa_recover():
@@ -69,7 +68,7 @@ def test_ecdsa_recover():
         assert actual == expected
 
     # compile without errors this is necessary so assembly is also tested
-    pt.compileTeal(pt.Seq(pubkey, pt.Approve()), Mode.Application, version=5)
+    pt.compileTeal(pt.Seq(pubkey, pt.Approve()), pt.Mode.Application, version=5)
 
 
 def test_ecdsa_verify_basic():
@@ -96,7 +95,7 @@ def test_ecdsa_verify_basic():
     assert actual == expected
 
     # compile without errors this is necessary so assembly is also tested
-    pt.compileTeal(pt.Seq(pt.Pop(expr), pt.Approve()), Mode.Application, version=5)
+    pt.compileTeal(pt.Seq(pt.Pop(expr), pt.Approve()), pt.Mode.Application, version=5)
 
 
 def test_ecdsa_verify_compressed_pk():
@@ -139,7 +138,7 @@ def test_ecdsa_verify_compressed_pk():
         assert actual == expected
 
     # compile without errors this is necessary so assembly is also tested
-    pt.compileTeal(pt.Seq(pt.Pop(expr), pt.Approve()), Mode.Application, version=5)
+    pt.compileTeal(pt.Seq(pt.Pop(expr), pt.Approve()), pt.Mode.Application, version=5)
 
 
 def test_ecdsa_verify_recovered_pk():
@@ -184,7 +183,7 @@ def test_ecdsa_verify_recovered_pk():
         assert actual == expected
 
     # compile without errors this is necessary so assembly is also tested
-    pt.compileTeal(pt.Seq(pt.Pop(expr), pt.Approve()), Mode.Application, version=5)
+    pt.compileTeal(pt.Seq(pt.Pop(expr), pt.Approve()), pt.Mode.Application, version=5)
 
 
 def test_ecdsa_invalid():
