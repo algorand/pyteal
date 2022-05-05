@@ -814,11 +814,6 @@ def test_subroutine_definition_invalid():
     ) -> pt.abi.Uint64:
         return pt.abi.Uint64()
 
-    def fnWithTooManyABIOutputs(
-        a: pt.ScratchVar, b: pt.abi.Uint64, *, c: pt.abi.Bool, d: pt.abi.Bool
-    ) -> pt.Expr:
-        return pt.Int(1)
-
     cases = (
         (
             1,
