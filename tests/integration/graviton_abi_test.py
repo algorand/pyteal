@@ -113,54 +113,37 @@ def minus(x: Int65, y: Int65, *, output: Int65):
     x1 = pt.abi.Uint64()
     y0 = pt.abi.Bool()
     y1 = pt.abi.Uint64()
-    t, f = pt.abi.Bool(), pt.abi.Bool()
-    # z0 = pt.abi.Bool()
-    # z1 = pt.abi.Uint64()
+    z0 = pt.abi.Bool()
+    z1 = pt.abi.Uint64()
     return pt.Seq(
-        t.set(True),
-        f.set(False),
         x0.set(x[0]),
         x1.set(x[1]),
         y0.set(y[0]),
         y1.set(y[1]),
-        # z0.set(pt.Int(0)),
-        # z1.set(0),
         # Case I. x, y positive
         pt.If(pt.And(x0.get(), y0.get())).Then(
             pt.If(x1.get() >= y1.get())
-            # .Then(pt.Seq(z0.set(True), z1.set(x1.get() - y1.get())))  # +(x1 - y1)
-            # .Else(pt.Seq(z0.set(False), z1.set(y1.get() - x1.get())))  # -(y1 - x1)
-            .Then(output.set(t, x1.get() - y1.get())).Else(  # +(x1 - y1)
-                output.set(f, y1.get() - x1.get())
-            )  # -(y1 - x1)
+            .Then(pt.Seq(z0.set(True), z1.set(x1.get() - y1.get())))  # +(x1 - y1)
+            .Else(pt.Seq(z0.set(False), z1.set(y1.get() - x1.get())))  # -(y1 - x1)
         )
         # Case II. x positive, y negative
         .ElseIf(pt.And(x0.get(), pt.Not(y0.get()))).Then(
-            # pt.Seq(z0.set(True), z1.set(x1.get() + y1.get()))
-            output.set(t, x1.get() + y1.get())
+            pt.Seq(z0.set(True), z1.set(x1.get() + y1.get()))
         )  # x1 + y1
         # Case III. x negative, y positive
         .ElseIf(pt.And(pt.Not(x0.get()), y0.get())).Then(
-            # pt.Seq(z0.set(False), z1.set(x1.get() + y1.get()))
-            output.set(f, set(x1.get() + y1.get()))
+            pt.Seq(z0.set(False), z1.set(x1.get() + y1.get()))
         )  # -(x1 + y1)
         # Case IV. x, y negative
         .Else(
             pt.If(x1.get() >= y1.get())
-            # .Then(pt.Seq(z0.set(False), z1.set(x1.get() - y1.get())))  # -(x1 - y1)
-            # .Else(pt.Seq(z0.set(True), z1.set(y1.get() - x1.get())))  # +(y1 - x1)
-            .Then(output.set(f, x1.get() - y1.get())).Else(  # -(x1 - y1)
-                output.set(t, y1.get() - x1.get())
-            )  # +(y1 - x1)
+            .Then(pt.Seq(z0.set(False), z1.set(x1.get() - y1.get())))  # -(x1 - y1)
+            .Else(pt.Seq(z0.set(True), z1.set(y1.get() - x1.get())))  # +(y1 - x1)
         ),
-        # output.set(
-        #     z0.get(),
-        #     z1.get(),
-        # ),
+        output.set(z0, z1),
     )
 
 
-# @pytest.mark.skip("problem on line 143")
 def test_minus():
     bbpt = BlackboxPyTealer(minus, pt.Mode.Application)
     approval = bbpt.program()
@@ -168,14 +151,18 @@ def test_minus():
     abi_argument_types = bbpt.abi_argument_types()
     abi_return_type = bbpt.abi_return_type()
 
-    def pynum_to_tuple_rep(n):
+    def pynum_to_tuple(n):
         return (n > 0, abs(n))
+
+    def pytuple_to_num(t):
+        s, x = t
+        return x if s else -x
 
     N = 100
     random.seed(42)
     choices = range(-9_999, 10_000)
     inputs = [
-        (pynum_to_tuple_rep(x), pynum_to_tuple_rep(y))
+        (pynum_to_tuple(x), pynum_to_tuple(y))
         for x, y in zip(random.sample(choices, N), random.sample(choices, N))
     ]
 
@@ -184,7 +171,10 @@ def test_minus():
         algod, teal, inputs, abi_argument_types, abi_return_type
     )
 
-    _ = inspectors
+    for i, inspector in enumerate(inspectors):
+        args = inputs[i]
+        x, y = tuple(map(pytuple_to_num, args))
+        assert x - y == pytuple_to_num(inspector.last_log())
 
 
 """
