@@ -275,6 +275,12 @@ def complex130_add(x: Complex130, y: Complex130, *, output: Complex130):
     )
 
 
+@Blackbox(input_types=[None])
+@ABIReturnSubroutine
+def complex130_real(x: Complex130, *, output: Int65):
+    return output.set(x[0])
+
+
 def test_integer65():
     bbpt_subtract_slick = BlackboxPyTealer(int65_sub, pt.Mode.Application)
     approval_subtract_slick = bbpt_subtract_slick.program()
@@ -423,6 +429,7 @@ def test_complex130():
         pycomplex_to_tuple(complex(x, y))
         for x, y in zip(random.sample(choices, N), random.sample(choices, N))
     ]
+    _ = unary_inputs
 
     binary_inputs = [
         (pycomplex_to_tuple(complex(x, y)), pycomplex_to_tuple(complex(z, w)))
