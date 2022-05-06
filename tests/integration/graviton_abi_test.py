@@ -113,9 +113,12 @@ def minus(x: Int65, y: Int65, *, output: Int65):
     x1 = pt.abi.Uint64()
     y0 = pt.abi.Bool()
     y1 = pt.abi.Uint64()
-    z0 = pt.abi.Bool()
-    z1 = pt.abi.Uint64()
+    t, f = pt.abi.Bool(), pt.abi.Bool()
+    # z0 = pt.abi.Bool()
+    # z1 = pt.abi.Uint64()
     return pt.Seq(
+        t.set(True),
+        f.set(False),
         x0.set(x[0]),
         x1.set(x[1]),
         y0.set(y[0]),
@@ -125,28 +128,39 @@ def minus(x: Int65, y: Int65, *, output: Int65):
         # Case I. x, y positive
         pt.If(pt.And(x0.get(), y0.get())).Then(
             pt.If(x1.get() >= y1.get())
-            .Then(pt.Seq(z0.set(pt.Int(1)), z1.set(x1.get() - y1.get())))  # +(x1 - y1)
-            .Else(pt.Seq(z0.set(pt.Int(0)), z1.set(y1.get() - x1.get())))  # -(y1 - x1)
+            # .Then(pt.Seq(z0.set(True), z1.set(x1.get() - y1.get())))  # +(x1 - y1)
+            # .Else(pt.Seq(z0.set(False), z1.set(y1.get() - x1.get())))  # -(y1 - x1)
+            .Then(output.set(t, x1.get() - y1.get())).Else(  # +(x1 - y1)
+                output.set(f, y1.get() - x1.get())
+            )  # -(y1 - x1)
         )
         # Case II. x positive, y negative
         .ElseIf(pt.And(x0.get(), pt.Not(y0.get()))).Then(
-            pt.Seq(z0.set(pt.Int(1)), z1.set(x1.get() + y1.get()))
+            # pt.Seq(z0.set(True), z1.set(x1.get() + y1.get()))
+            output.set(t, x1.get() + y1.get())
         )  # x1 + y1
         # Case III. x negative, y positive
         .ElseIf(pt.And(pt.Not(x0.get()), y0.get())).Then(
-            pt.Seq(z0.set(pt.Int(0)), z1.set(x1.get() + y1.get()))
+            # pt.Seq(z0.set(False), z1.set(x1.get() + y1.get()))
+            output.set(f, set(x1.get() + y1.get()))
         )  # -(x1 + y1)
         # Case IV. x, y negative
         .Else(
             pt.If(x1.get() >= y1.get())
-            .Then(pt.Seq(z0.set(pt.Int(0)), z1.set(x1.get() - y1.get())))  # -(x1 - y1)
-            .Else(pt.Seq(z0.set(pt.Int(1)), z1.set(y1.get() - x1.get())))  # +(y1 - x1)
+            # .Then(pt.Seq(z0.set(False), z1.set(x1.get() - y1.get())))  # -(x1 - y1)
+            # .Else(pt.Seq(z0.set(True), z1.set(y1.get() - x1.get())))  # +(y1 - x1)
+            .Then(output.set(f, x1.get() - y1.get())).Else(  # -(x1 - y1)
+                output.set(t, y1.get() - x1.get())
+            )  # +(y1 - x1)
         ),
-        output.set(z0.get(), z1.get()),
+        # output.set(
+        #     z0.get(),
+        #     z1.get(),
+        # ),
     )
 
 
-@pytest.mark.skip("problem on line 143")
+# @pytest.mark.skip("problem on line 143")
 def test_minus():
     bbpt = BlackboxPyTealer(minus, pt.Mode.Application)
     approval = bbpt.program()
