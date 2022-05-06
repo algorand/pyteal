@@ -331,6 +331,17 @@ def complex130_conjugate(x: Complex130, *, output: Complex130):
     )
 
 
+@Blackbox(input_types=[None])
+@ABIReturnSubroutine
+def complex130_norm_squared(x: Complex130, *, output: Int65):
+    t = pt.abi.make(Complex130)
+    return pt.Seq(
+        t.set(complex130_conjugate(x)),
+        t.set(complex130_mult(t, x)),
+        output.set(complex130_real(t)),
+    )
+
+
 def test_integer65():
     bbpt_subtract_slick = BlackboxPyTealer(int65_sub, pt.Mode.Application)
     approval_subtract_slick = bbpt_subtract_slick.program()
@@ -480,6 +491,14 @@ def test_complex130():
         approval_cplx_conjugate(), pt.Mode.Application, version=6
     )
 
+    bbpt_complex_norm_squared = BlackboxPyTealer(
+        complex130_norm_squared, pt.Mode.Application
+    )
+    approval_cplx_norm_squared = bbpt_complex_norm_squared.program()
+    teal_cplx_norm_squared = pt.compileTeal(
+        approval_cplx_norm_squared(), pt.Mode.Application, version=6
+    )
+
     unary_abi_argument_types = bbpt_complex_real.abi_argument_types()
     binary_abi_argument_types = bbpt_cplx_add.abi_argument_types()
 
@@ -564,6 +583,14 @@ def test_complex130():
         complex_abi_return_type,
     )
 
+    inspectors_cplx_norm_squared = DryRunExecutor.dryrun_app_on_sequence(
+        algod,
+        teal_cplx_norm_squared,
+        unary_inputs,
+        unary_abi_argument_types,
+        real_abi_return_type,
+    )
+
     for i in range(N):
         binary_args = binary_inputs[i]
         x, y = tuple(map(pytuple_to_complex, binary_args))
@@ -585,6 +612,8 @@ def test_complex130():
 
         inspector_cplx_conjugate = inspectors_cplx_conjugate[i]
 
+        inspector_cplx_norm_squared = inspectors_cplx_norm_squared[i]
+
         assert x + y == pytuple_to_complex(
             inspector_cplx_add.last_log()
         ), inspector_cplx_add.report(binary_args, f"failed for {binary_args}", row=i)
@@ -604,5 +633,11 @@ def test_complex130():
         assert u.conjugate() == pytuple_to_complex(
             inspector_cplx_conjugate.last_log()
         ), inspector_cplx_conjugate.report(
+            unary_args, f"failed for {unary_args}", row=i
+        )
+
+        assert u * u.conjugate() == pytuple_to_int(
+            inspector_cplx_norm_squared.last_log()
+        ), inspector_cplx_norm_squared.report(
             unary_args, f"failed for {unary_args}", row=i
         )
