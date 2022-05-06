@@ -1,9 +1,11 @@
+from pydoc import ispackage
 import random
 from typing import Literal
 
 from graviton.blackbox import DryRunExecutor
 
 import pyteal as pt
+from pyteal.ast.subroutine import ABIReturnSubroutine
 
 from tests.blackbox import (
     Blackbox,
@@ -98,10 +100,11 @@ def test_abi_sum():
     _ = todo_use_these_guys
 
 
-# ---- subtraction example ---- #
+# ---- Integers and Complex Integral Numbers (aka Gaussian Integers) ---- #
 
 
 Int65 = pt.abi.Tuple2[pt.abi.Bool, pt.abi.Uint64]
+Complex130 = pt.abi.Tuple2[Int65, Int65]
 
 
 @Blackbox(input_types=[None, None])
@@ -211,6 +214,7 @@ def mult(x: Int65, y: Int65, *, output: Int65):
     and NOT the recommended approach for implementing integers.
     A better appraoch would stick to `Uint64` as the base type and use 2's complement arithmetic.
     """
+    # TODO: can we get something like the following one-liner working?
     # return output.set(pt.Not(x[0].get() ^ y[0].get()), x[1].get() * y[1].get())
     x0 = pt.abi.Bool()
     x1 = pt.abi.Uint64()
@@ -225,6 +229,23 @@ def mult(x: Int65, y: Int65, *, output: Int65):
         y1.set(y[1]),
         z0.set(pt.Not(x0.get() ^ y0.get())),
         z1.set(x1.get() * y1.get()),
+        output.set(z0, z1),
+    )
+
+
+@Blackbox(input_types=[None])
+@ABIReturnSubroutine
+def negate(x: Int65, *, output: Int65):
+    # TODO: can I haz a one-liner pls????
+    x0 = pt.abi.Bool()
+    x1 = pt.abi.Uint64()
+    z0 = pt.abi.Bool()
+    z1 = pt.abi.Uint64()
+    return pt.Seq(
+        x0.set(x[0]),
+        x1.set(x[1]),
+        z0.set(pt.Not(x0.get())),
+        z1.set(x1.get()),
         output.set(z0, z1),
     )
 
@@ -246,8 +267,13 @@ def test_integer65():
     approval_mult = bbpt_mult.program()
     teal_mult = pt.compileTeal(approval_mult(), pt.Mode.Application, version=6)
 
+    bbpt_negate = BlackboxPyTealer(negate, pt.Mode.Application)
+    approval_negate = bbpt_negate.program()
+    teal_negate = pt.compileTeal(approval_negate(), pt.Mode.Application, version=6)
+
     # same types, so no need to dupe:
-    abi_argument_types = bbpt_subtract_slick.abi_argument_types()
+    unary_abi_argument_types = bbpt_negate.abi_argument_types()
+    binary_abi_argument_types = bbpt_subtract_slick.abi_argument_types()
     abi_return_type = bbpt_subtract_slick.abi_return_type()
 
     def pynum_to_tuple(n):
@@ -259,41 +285,69 @@ def test_integer65():
 
     N = 100
     random.seed(42)
+
     choices = range(-9_999, 10_000)
-    inputs = [
+    unary_inputs = [(pynum_to_tuple(x),) for x in random.sample(choices, N)]
+
+    binary_inputs = [
         (pynum_to_tuple(x), pynum_to_tuple(y))
         for x, y in zip(random.sample(choices, N), random.sample(choices, N))
     ]
 
     algod = algod_with_assertion()
+
     inspectors_subtract_slick = DryRunExecutor.dryrun_app_on_sequence(
-        algod, teal_subtract_slick, inputs, abi_argument_types, abi_return_type
+        algod,
+        teal_subtract_slick,
+        binary_inputs,
+        binary_abi_argument_types,
+        abi_return_type,
     )
     inspectors_subtract_cond = DryRunExecutor.dryrun_app_on_sequence(
-        algod, teal_subtract_cond, inputs, abi_argument_types, abi_return_type
+        algod,
+        teal_subtract_cond,
+        binary_inputs,
+        binary_abi_argument_types,
+        abi_return_type,
     )
     inspectors_mult = DryRunExecutor.dryrun_app_on_sequence(
-        algod, teal_mult, inputs, abi_argument_types, abi_return_type
+        algod, teal_mult, binary_inputs, binary_abi_argument_types, abi_return_type
+    )
+    inspectors_negate = DryRunExecutor.dryrun_app_on_sequence(
+        algod, teal_negate, unary_inputs, unary_abi_argument_types, abi_return_type
     )
 
-    for i, inspector_subtract_slick in enumerate(inspectors_subtract_slick):
+    for i in range(N):
+        inspector_subtract_slick = inspectors_subtract_slick[i]
         inspector_subtract_cond = inspectors_subtract_cond[i]
         inspector_mult = inspectors_mult[i]
+        inspector_negate = inspectors_negate[i]
 
-        args = inputs[i]
-        x, y = tuple(map(pytuple_to_num, args))
+        binary_args = binary_inputs[i]
+        x, y = tuple(map(pytuple_to_num, binary_args))
+
+        unary_args = unary_inputs[i]
+        u = pytuple_to_num(unary_args[0])
 
         assert x - y == pytuple_to_num(
             inspector_subtract_slick.last_log()
-        ), inspector_subtract_slick.report(args, f"failed for {args}", row=i)
+        ), inspector_subtract_slick.report(
+            binary_args, f"failed for {binary_args}", row=i
+        )
 
         assert x - y == pytuple_to_num(
             inspector_subtract_cond.last_log()
-        ), inspector_subtract_cond.report(args, f"failed for {args}", row=i)
+        ), inspector_subtract_cond.report(
+            binary_args, f"failed for {binary_args}", row=i
+        )
 
         assert x * y == pytuple_to_num(
             inspector_mult.last_log()
-        ), inspectors_mult.report(args, f"failed for {args}", row=i)
+        ), inspector_mult.report(binary_args, f"failed for {binary_args}", row=i)
+
+        assert -u == pytuple_to_num(
+            inspector_negate.last_log()
+        ), inspector_negate.report(unary_args, f"failed for {unary_args}", row=i)
 
 
 """
