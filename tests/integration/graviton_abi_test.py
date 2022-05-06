@@ -1,11 +1,18 @@
-"""
-Placeholder for upcoming unit test
-"""
+import random
 from typing import Literal
+
+import pytest
+
+from graviton.blackbox import DryRunExecutor
 
 import pyteal as pt
 
-from tests.blackbox import Blackbox, blackbox_pyteal
+from tests.blackbox import (
+    Blackbox,
+    BlackboxPyTealer,
+    algod_with_assertion,
+    blackbox_pyteal,
+)
 
 # ---- Simple Examples ---- #
 
@@ -106,48 +113,64 @@ def minus(x: Int65, y: Int65, *, output: Int65):
     x1 = pt.abi.Uint64()
     y0 = pt.abi.Bool()
     y1 = pt.abi.Uint64()
-    z0 = pt.ScratchVar(pt.TealType.uint64)
-    z1 = pt.ScratchVar(pt.TealType.uint64)
+    z0 = pt.abi.Bool()
+    z1 = pt.abi.Uint64()
     return pt.Seq(
         x0.set(x[0]),
         x1.set(x[1]),
         y0.set(y[0]),
         y1.set(y[1]),
+        # z0.set(pt.Int(0)),
+        # z1.set(0),
         # Case I. x, y positive
         pt.If(pt.And(x0.get(), y0.get())).Then(
             pt.If(x1.get() >= y1.get())
-            .Then(  # +(x1 - y1)
-                pt.Seq(z0.store(pt.Int(1)), z1.Store(x1.get() - y1.get()))
-            )
-            .Else(  # -(y1 - x1)
-                pt.Seq(z0.store(pt.Int(0)), z1.Store(y1.get() - x1.get()))
-            )
+            .Then(pt.Seq(z0.set(pt.Int(1)), z1.set(x1.get() - y1.get())))  # +(x1 - y1)
+            .Else(pt.Seq(z0.set(pt.Int(0)), z1.set(y1.get() - x1.get())))  # -(y1 - x1)
         )
         # Case II. x positive, y negative
         .ElseIf(pt.And(x0.get(), pt.Not(y0.get()))).Then(
-            pt.Seq(z0.store(pt.Int(1)), z1.Store(x1.get() + y1.get()))
+            pt.Seq(z0.set(pt.Int(1)), z1.set(x1.get() + y1.get()))
         )  # x1 + y1
         # Case III. x negative, y positive
         .ElseIf(pt.And(pt.Not(x0.get()), y0.get())).Then(
-            pt.Seq(z0.store(pt.Int(0)), z1.Store(x1.get() + y1.get()))
+            pt.Seq(z0.set(pt.Int(0)), z1.set(x1.get() + y1.get()))
         )  # -(x1 + y1)
         # Case IV. x, y negative
         .Else(
             pt.If(x1.get() >= y1.get())
-            .Then(  # -(x1 - y1)
-                pt.Seq(z0.store(pt.Int(0)), z1.Store(x1.get() - y1.get()))
-            )
-            .Else(  # +(y1 - x1)
-                pt.Seq(z0.store(pt.Int(1)), z1.Store(y1.get() - x1.get()))
-            )
+            .Then(pt.Seq(z0.set(pt.Int(0)), z1.set(x1.get() - y1.get())))  # -(x1 - y1)
+            .Else(pt.Seq(z0.set(pt.Int(1)), z1.set(y1.get() - x1.get())))  # +(y1 - x1)
         ),
-        pt.Return(output.set(z0.load(), z1.load())),
+        output.set(z0.get(), z1.get()),
     )
 
 
+@pytest.mark.skip("problem on line 143")
 def test_minus():
-    teal = pt.compileTeal(minus(), pt.Mode.Application, version=6)
-    _ = teal
+    bbpt = BlackboxPyTealer(minus, pt.Mode.Application)
+    approval = bbpt.program()
+    teal = pt.compileTeal(approval(), pt.Mode.Application, version=6)
+    abi_argument_types = bbpt.abi_argument_types()
+    abi_return_type = bbpt.abi_return_type()
+
+    def pynum_to_tuple_rep(n):
+        return (n > 0, abs(n))
+
+    N = 100
+    random.seed(42)
+    choices = range(-9_999, 10_000)
+    inputs = [
+        (pynum_to_tuple_rep(x), pynum_to_tuple_rep(y))
+        for x, y in zip(random.sample(choices, N), random.sample(choices, N))
+    ]
+
+    algod = algod_with_assertion()
+    inspectors = DryRunExecutor.dryrun_app_on_sequence(
+        algod, teal, inputs, abi_argument_types, abi_return_type
+    )
+
+    x = 42
 
 
 """
