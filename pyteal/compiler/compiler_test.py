@@ -1732,6 +1732,48 @@ retsub
     assert actual_deferred == expected_deferred
 
 
+def test_compile_subroutine_deferred_expr_empty():
+    @pt.Subroutine(pt.TealType.none)
+    def empty() -> pt.Expr:
+        return pt.Return()
+
+    program = pt.Seq(empty(), pt.Approve())
+
+    expected_no_deferred = """#pragma version 6
+callsub empty_0
+int 1
+return
+
+// empty
+empty_0:
+retsub
+    """.strip()
+    actual_no_deferred = pt.compileTeal(
+        program, pt.Mode.Application, version=6, assembleConstants=False
+    )
+    assert actual_no_deferred == expected_no_deferred
+
+    # manually add deferred expression to SubroutineDefinition
+    declaration = empty.subroutine.get_declaration()
+    declaration.deferred_expr = pt.Pop(pt.Bytes("deferred"))
+
+    expected_deferred = """#pragma version 6
+callsub empty_0
+int 1
+return
+
+// empty
+empty_0:
+byte "deferred"
+pop
+retsub
+    """.strip()
+    actual_deferred = pt.compileTeal(
+        program, pt.Mode.Application, version=6, assembleConstants=False
+    )
+    assert actual_deferred == expected_deferred
+
+
 def test_compile_wide_ratio():
     cases = (
         (
