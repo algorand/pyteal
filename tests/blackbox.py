@@ -184,14 +184,26 @@ class BlackboxPyTealer:
         return isinstance(self.subr.subroutine, ABIReturnSubroutine)
 
     def abi_argument_types(self) -> list[None | algosdk.abi.ABIType]:
-        assert self.is_abi(), f"this {type(self)} is not A.B.I. compatible"
+        if not self.is_abi():
+            raise NotImplementedError("this {type(self)} is not A.B.I. compatible")
 
         def handle_arg(arg):
             if isinstance(arg, abi.TypeSpec):
-                return arg.new_instance()
+                return abi.algosdk_from_type_spec(arg)
             return None
 
         return [handle_arg(arg) for arg in self.input_types]
+
+    def abi_return_type(self) -> None | algosdk.abi.ABIType:
+        if not self.is_abi():
+            raise NotImplementedError("this {type(self)} is not A.B.I. compatible")
+
+        if not self.subr.subroutine.output_kwarg_info:
+            return None
+
+        return abi.algosdk_from_type_spec(
+            self.subr.subroutine.output_kwarg_info.abi_type
+        )
 
     def program(self) -> Callable[..., Expr]:
         return self._pyteal_getter

@@ -81,4 +81,5 @@ __all__ = [
     "MethodReturn",
     "type_spec_from_annotation",
     "make",
+    "algosdk_from_type_spec",
 ]

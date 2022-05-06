@@ -813,29 +813,61 @@ def blackbox_pyteal_example4():
 
     # infer the abi types for encoding/decoding dry runs:
     abi_argument_types = app_pytealer.abi_argument_types()
-
+    abi_return_type = app_pytealer.abi_return_type()
     # generate reports with the same random inputs (fix the randomness with a seed):
     random.seed(42)
 
+    N = 50  # the number of dry runs for each experiment
     choices = range(10_000)
     inputs = []
-    for n in range(100):
-        inputs.append(tuple(random.sample(choices, n)))
+    for n in range(N):
+        inputs.append(tuple([random.sample(choices, n)]))
 
     # execute the dry-run sequence:
     algod = algod_with_assertion()
 
-    # abi_arg_types =
     app_inspectors = DryRunExecutor.dryrun_app_on_sequence(
-        algod,
-        teal_abi_sum_app,
-        inputs,
+        algod, teal_abi_sum_app, inputs, abi_argument_types, abi_return_type
     )
-    todo_use_these_guys = teal_abi_sum_app
-    todo_use_these_guys = teal_abi_sum_lsig
+    lsig_inspectors = DryRunExecutor.dryrun_logicsig_on_sequence(
+        algod, teal_abi_sum_lsig, inputs, abi_argument_types, abi_return_type
+    )
+    for i in range(N):
+        app_inspector = app_inspectors[i]
+        lsig_inspector = lsig_inspectors[i]
+        args = inputs[i]
 
-    def report():
-        pass
+        def message(insp):
+            return insp.report(args, f"failed for {args}", row=i)
+
+        # the app should pass exactly when it's cost was within the 700 budget:
+        assert app_inspector.passed() == (app_inspector.cost() <= 700), message(
+            app_inspector
+        )
+        # the lsig always passes (never goes over budget):
+        assert lsig_inspector.passed(), message(lsig_inspector)
+
+        expected = sum(args[0])
+        actual4app = app_inspector.last_log()
+        assert expected == actual4app, message(app_inspector)
+
+        if i > 0:
+            assert expected in app_inspector.final_scratch().values(), message(
+                app_inspector
+            )
+            assert expected in lsig_inspector.final_scratch().values(), message(
+                lsig_inspector
+            )
+
+    def report(kind):
+        assert kind in ("app", "lsig")
+        insps = app_inspectors if kind == "app" else lsig_inspectors
+        csv_report = DryRunInspector.csv_report(inputs, insps)
+        with open(Path.cwd() / f"abi_sum_{kind}.csv", "w") as f:
+            f.write(csv_report)
+
+    report("app")
+    report("lsig")
 
 
 @pytest.mark.parametrize(
