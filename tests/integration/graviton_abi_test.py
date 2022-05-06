@@ -108,7 +108,7 @@ Complex130 = pt.abi.Tuple2[Int65, Int65]
 
 @Blackbox(input_types=[None, None])
 @pt.ABIReturnSubroutine
-def minus_cond(x: Int65, y: Int65, *, output: Int65):
+def int65_minus_cond(x: Int65, y: Int65, *, output: Int65):
     """
     WARNING: this example is ONLY for the purpose of demo'ing ABISubroutine + Gravitons's capabilities
     and NOT the recommended approach for implementing integers.
@@ -167,7 +167,7 @@ def minus_cond(x: Int65, y: Int65, *, output: Int65):
 
 @Blackbox(input_types=[None, None])
 @pt.ABIReturnSubroutine
-def subtract(x: Int65, y: Int65, *, output: Int65):
+def int65_sub(x: Int65, y: Int65, *, output: Int65):
     """
     WARNING: this example is ONLY for the purpose of demo'ing ABISubroutine + Gravitons's capabilities
     and NOT the recommended approach for implementing integers.
@@ -207,7 +207,7 @@ def subtract(x: Int65, y: Int65, *, output: Int65):
 
 @Blackbox(input_types=[None, None])
 @pt.ABIReturnSubroutine
-def mult(x: Int65, y: Int65, *, output: Int65):
+def int65_mult(x: Int65, y: Int65, *, output: Int65):
     """
     WARNING: this example is ONLY for the purpose of demo'ing ABISubroutine + Gravitons's capabilities
     and NOT the recommended approach for implementing integers.
@@ -234,7 +234,7 @@ def mult(x: Int65, y: Int65, *, output: Int65):
 
 @Blackbox(input_types=[None])
 @ABIReturnSubroutine
-def negate(x: Int65, *, output: Int65):
+def int65_negate(x: Int65, *, output: Int65):
     # TODO: can I haz a one-liner pls????
     x0 = pt.abi.Bool()
     x1 = pt.abi.Uint64()
@@ -251,32 +251,52 @@ def negate(x: Int65, *, output: Int65):
 
 @Blackbox(input_types=[None, None])
 @ABIReturnSubroutine
-def add(x: Int65, y: Int65, *, output: Int65):
-    return pt.Seq(y.set(negate(y)), output.set(subtract(x, y)))
+def int65_add(x: Int65, y: Int65, *, output: Int65):
+    return pt.Seq(y.set(int65_negate(y)), output.set(int65_sub(x, y)))
+
+
+@Blackbox(input_types=[None, None])
+@ABIReturnSubroutine
+def complex130_add(x: Complex130, y: Complex130, *, output: Complex130):
+    x0 = pt.abi.make(Int65)
+    x1 = pt.abi.make(Int65)
+    y0 = pt.abi.make(Int65)
+    y1 = pt.abi.make(Int65)
+    z0 = pt.abi.make(Int65)
+    z1 = pt.abi.make(Int65)
+    return pt.Seq(
+        x0.set(x[0]),
+        x1.set(x[1]),
+        y0.set(y[0]),
+        y1.set(y[1]),
+        z0.set(int65_add(x0, y0)),
+        z1.set(int65_add(x1, y1)),
+        output.set(z0, z1),
+    )
 
 
 def test_integer65():
-    bbpt_subtract_slick = BlackboxPyTealer(subtract, pt.Mode.Application)
+    bbpt_subtract_slick = BlackboxPyTealer(int65_sub, pt.Mode.Application)
     approval_subtract_slick = bbpt_subtract_slick.program()
     teal_subtract_slick = pt.compileTeal(
         approval_subtract_slick(), pt.Mode.Application, version=6
     )
 
-    bbpt_subtract_cond = BlackboxPyTealer(minus_cond, pt.Mode.Application)
+    bbpt_subtract_cond = BlackboxPyTealer(int65_minus_cond, pt.Mode.Application)
     approval_subtract_cond = bbpt_subtract_cond.program()
     teal_subtract_cond = pt.compileTeal(
         approval_subtract_cond(), pt.Mode.Application, version=6
     )
 
-    bbpt_mult = BlackboxPyTealer(mult, pt.Mode.Application)
+    bbpt_mult = BlackboxPyTealer(int65_mult, pt.Mode.Application)
     approval_mult = bbpt_mult.program()
     teal_mult = pt.compileTeal(approval_mult(), pt.Mode.Application, version=6)
 
-    bbpt_negate = BlackboxPyTealer(negate, pt.Mode.Application)
+    bbpt_negate = BlackboxPyTealer(int65_negate, pt.Mode.Application)
     approval_negate = bbpt_negate.program()
     teal_negate = pt.compileTeal(approval_negate(), pt.Mode.Application, version=6)
 
-    bbpt_add = BlackboxPyTealer(add, pt.Mode.Application)
+    bbpt_add = BlackboxPyTealer(int65_add, pt.Mode.Application)
     approval_add = bbpt_add.program()
     teal_add = pt.compileTeal(approval_add(), pt.Mode.Application, version=6)
 
@@ -333,18 +353,18 @@ def test_integer65():
     )
 
     for i in range(N):
+        binary_args = binary_inputs[i]
+        x, y = tuple(map(pytuple_to_num, binary_args))
+
+        unary_args = unary_inputs[i]
+        u = pytuple_to_num(unary_args[0])
+
         inspector_subtract_slick = inspectors_subtract_slick[i]
         inspector_subtract_cond = inspectors_subtract_cond[i]
         inspector_mult = inspectors_mult[i]
         inspector_add = inspectors_add[i]
 
         inspector_negate = inspectors_negate[i]
-
-        binary_args = binary_inputs[i]
-        x, y = tuple(map(pytuple_to_num, binary_args))
-
-        unary_args = unary_inputs[i]
-        u = pytuple_to_num(unary_args[0])
 
         assert x - y == pytuple_to_num(
             inspector_subtract_slick.last_log()
@@ -371,25 +391,65 @@ def test_integer65():
         ), inspector_negate.report(unary_args, f"failed for {unary_args}", row=i)
 
 
-"""
-so what does tests/blackbox.py::blackbox_abi() need to do?
+def test_complex130():
+    bbpt_cplx_add = BlackboxPyTealer(complex130_add, pt.Mode.Application)
+    approval_cplx_add = bbpt_cplx_add.program()
+    teal_cplx_add = pt.compileTeal(approval_cplx_add(), pt.Mode.Application, version=6)
 
-First decision points:
-A) what happens when @Blackbox(input_types=...) is slapped on top of a @Subroutine with abi annotations?
-B) do we need to allow (A), or do we just insist that user provides @ABIReturnSubroutine?
-C) if we allow (A) [and even if not] should we still require input_types for the Expr's and ScratchVar's?
-D) should we attempt to integrate Atomic Transaction Composer
-.... leaning towards disallowing (A) for the lowest hanging fruit approach
-.... leaning towards "No" to (D) because ATC doesn't play nice with Dry Run and we're only wrapping one 
-    function at a time (not an app with several methods)
+    # unary_abi
+    binary_abi_arguments = bbpt_cplx_add.abi_argument_types()
+    abi_return_type = bbpt_cplx_add.abi_return_type()
 
-Clear requirements. blackbox_abi() should:
-1) handle apps and lsigs
-2) handle Expr/ScratchVar/abi inputs (with the first two defined in input_types=...)
-3) should handle output coming from the output_kwarg (but I believe this is automatic already)
+    def pyint_to_tuple(n):
+        return (n > 0, abs(n))
 
-Convincing examples:
-* matrix multiplication with very large number of bits to avoid overflow
-* infinite precision signed integer that can handle addition, subtraction and multiplication
-* complex/rational numbers with multiplication and addition, subtraction, multiplication and division
-"""
+    def pycomplex_to_tuple(z):
+        return (pyint_to_tuple(int(z.real)), pyint_to_tuple(int(z.imag)))
+
+    def pytuple_to_int(t):
+        s, x = t
+        return x if s else -x
+
+    def pytuple_to_complex(tt):
+        tx, ty = tt
+        return complex(pytuple_to_int(tx), pytuple_to_int(ty))
+
+    N = 100
+    # just for fun - no random seed - but this shouldn't be flakey
+
+    choices = range(-999_999, 1_000_000)
+
+    unary_inputs = [
+        pycomplex_to_tuple(complex(x, y))
+        for x, y in zip(random.sample(choices, N), random.sample(choices, N))
+    ]
+
+    binary_inputs = [
+        (pycomplex_to_tuple(complex(x, y)), pycomplex_to_tuple(complex(z, w)))
+        for x, y, z, w in zip(
+            random.sample(choices, N),
+            random.sample(choices, N),
+            random.sample(choices, N),
+            random.sample(choices, N),
+        )
+    ]
+
+    algod = algod_with_assertion()
+
+    # Binary:
+    inspectors_cplx_add = DryRunExecutor.dryrun_app_on_sequence(
+        algod, teal_cplx_add, binary_inputs, binary_abi_arguments, abi_return_type
+    )
+
+    for i in range(N):
+        binary_args = binary_inputs[i]
+        x, y = tuple(map(pytuple_to_complex, binary_args))
+
+        # unary_args = unary_inputs[i]
+        # u = pytuple_to_num(unary_args[0])
+
+        inspector_cplx_add = inspectors_cplx_add[i]
+
+        assert x + y == pytuple_to_complex(
+            inspector_cplx_add.last_log()
+        ), inspector_cplx_add.report(binary_args, f"failed for {binary_args}", row=i)
