@@ -1,8 +1,6 @@
 import random
 from typing import Literal
 
-import pytest
-
 from graviton.blackbox import DryRunExecutor
 
 import pyteal as pt
@@ -109,6 +107,11 @@ Int65 = pt.abi.Tuple2[pt.abi.Bool, pt.abi.Uint64]
 @Blackbox(input_types=[None, None])
 @pt.ABIReturnSubroutine
 def minus(x: Int65, y: Int65, *, output: Int65):
+    """
+    NOTE: this is example ONLY for the purpose of demo'ing ABISubroutine + Gravitons's capabilities
+    and not the recommended approach for implementing integers.
+    A better appraoch would stick to `Uint64` as the base type and use 2's complement arithmetic.
+    """
     x0 = pt.abi.Bool()
     x1 = pt.abi.Uint64()
     y0 = pt.abi.Bool()
