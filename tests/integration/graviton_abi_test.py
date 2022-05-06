@@ -165,7 +165,7 @@ def minus_cond(x: Int65, y: Int65, *, output: Int65):
 
 @Blackbox(input_types=[None, None])
 @pt.ABIReturnSubroutine
-def minus_slick(x: Int65, y: Int65, *, output: Int65):
+def subtract(x: Int65, y: Int65, *, output: Int65):
     """
     WARNING: this example is ONLY for the purpose of demo'ing ABISubroutine + Gravitons's capabilities
     and NOT the recommended approach for implementing integers.
@@ -203,18 +203,52 @@ def minus_slick(x: Int65, y: Int65, *, output: Int65):
     )
 
 
-def test_minus():
-    bbpt_slick = BlackboxPyTealer(minus_slick, pt.Mode.Application)
-    approval_slick = bbpt_slick.program()
-    teal_slick = pt.compileTeal(approval_slick(), pt.Mode.Application, version=6)
+@Blackbox(input_types=[None, None])
+@pt.ABIReturnSubroutine
+def mult(x: Int65, y: Int65, *, output: Int65):
+    """
+    WARNING: this example is ONLY for the purpose of demo'ing ABISubroutine + Gravitons's capabilities
+    and NOT the recommended approach for implementing integers.
+    A better appraoch would stick to `Uint64` as the base type and use 2's complement arithmetic.
+    """
+    # return output.set(pt.Not(x[0].get() ^ y[0].get()), x[1].get() * y[1].get())
+    x0 = pt.abi.Bool()
+    x1 = pt.abi.Uint64()
+    y0 = pt.abi.Bool()
+    y1 = pt.abi.Uint64()
+    z0 = pt.abi.Bool()
+    z1 = pt.abi.Uint64()
+    return pt.Seq(
+        x0.set(x[0]),
+        x1.set(x[1]),
+        y0.set(y[0]),
+        y1.set(y[1]),
+        z0.set(pt.Not(x0.get() ^ y0.get())),
+        z1.set(x1.get() * y1.get()),
+        output.set(z0, z1),
+    )
 
-    bbpt_cond = BlackboxPyTealer(minus_cond, pt.Mode.Application)
-    approval_cond = bbpt_cond.program()
-    teal_cond = pt.compileTeal(approval_cond(), pt.Mode.Application, version=6)
+
+def test_integer65():
+    bbpt_subtract_slick = BlackboxPyTealer(subtract, pt.Mode.Application)
+    approval_subtract_slick = bbpt_subtract_slick.program()
+    teal_subtract_slick = pt.compileTeal(
+        approval_subtract_slick(), pt.Mode.Application, version=6
+    )
+
+    bbpt_subtract_cond = BlackboxPyTealer(minus_cond, pt.Mode.Application)
+    approval_subtract_cond = bbpt_subtract_cond.program()
+    teal_subtract_cond = pt.compileTeal(
+        approval_subtract_cond(), pt.Mode.Application, version=6
+    )
+
+    bbpt_mult = BlackboxPyTealer(mult, pt.Mode.Application)
+    approval_mult = bbpt_mult.program()
+    teal_mult = pt.compileTeal(approval_mult(), pt.Mode.Application, version=6)
 
     # same types, so no need to dupe:
-    abi_argument_types = bbpt_slick.abi_argument_types()
-    abi_return_type = bbpt_slick.abi_return_type()
+    abi_argument_types = bbpt_subtract_slick.abi_argument_types()
+    abi_return_type = bbpt_subtract_slick.abi_return_type()
 
     def pynum_to_tuple(n):
         return (n > 0, abs(n))
@@ -232,26 +266,34 @@ def test_minus():
     ]
 
     algod = algod_with_assertion()
-    inspectors_slick = DryRunExecutor.dryrun_app_on_sequence(
-        algod, teal_slick, inputs, abi_argument_types, abi_return_type
+    inspectors_subtract_slick = DryRunExecutor.dryrun_app_on_sequence(
+        algod, teal_subtract_slick, inputs, abi_argument_types, abi_return_type
     )
-    inspectors_cond = DryRunExecutor.dryrun_app_on_sequence(
-        algod, teal_cond, inputs, abi_argument_types, abi_return_type
+    inspectors_subtract_cond = DryRunExecutor.dryrun_app_on_sequence(
+        algod, teal_subtract_cond, inputs, abi_argument_types, abi_return_type
+    )
+    inspectors_mult = DryRunExecutor.dryrun_app_on_sequence(
+        algod, teal_mult, inputs, abi_argument_types, abi_return_type
     )
 
-    for i, inspector_slick in enumerate(inspectors_slick):
-        inspector_cond = inspectors_cond[i]
+    for i, inspector_subtract_slick in enumerate(inspectors_subtract_slick):
+        inspector_subtract_cond = inspectors_subtract_cond[i]
+        inspector_mult = inspectors_mult[i]
 
         args = inputs[i]
         x, y = tuple(map(pytuple_to_num, args))
 
         assert x - y == pytuple_to_num(
-            inspector_slick.last_log()
-        ), inspector_slick.report(args, f"failed for {args}", row=i)
+            inspector_subtract_slick.last_log()
+        ), inspector_subtract_slick.report(args, f"failed for {args}", row=i)
 
         assert x - y == pytuple_to_num(
-            inspector_cond.last_log()
-        ), inspector_cond.report(args, f"failed for {args}", row=i)
+            inspector_subtract_cond.last_log()
+        ), inspector_subtract_cond.report(args, f"failed for {args}", row=i)
+
+        assert x * y == pytuple_to_num(
+            inspector_mult.last_log()
+        ), inspectors_mult.report(args, f"failed for {args}", row=i)
 
 
 """
