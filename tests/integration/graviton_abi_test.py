@@ -1,4 +1,3 @@
-from pydoc import ispackage
 import random
 from typing import Literal
 
