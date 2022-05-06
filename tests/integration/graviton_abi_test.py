@@ -275,10 +275,47 @@ def complex130_add(x: Complex130, y: Complex130, *, output: Complex130):
     )
 
 
+@Blackbox(input_types=[None, None])
+@ABIReturnSubroutine
+def complex130_mult(x: Complex130, y: Complex130, *, output: Complex130):
+    x0 = pt.abi.make(Int65)
+    x1 = pt.abi.make(Int65)
+    y0 = pt.abi.make(Int65)
+    y1 = pt.abi.make(Int65)
+    t1 = pt.abi.make(Int65)
+    t2 = pt.abi.make(Int65)
+    t3 = pt.abi.make(Int65)
+    t4 = pt.abi.make(Int65)
+    z0 = pt.abi.make(Int65)
+    z1 = pt.abi.make(Int65)
+    return pt.Seq(
+        x0.set(x[0]),
+        x1.set(x[1]),
+        y0.set(y[0]),
+        y1.set(y[1]),
+        # TODO: why can't I chain ABI calls?
+        # z0.set(int65_sub(int65_mult(x0, y0), int65_mult(x1, y1))),
+        # z1.set(int65_add(int65_mult(x0, y1), int65_mult(x1, y0))),
+        t1.set(int65_mult(x0, y0)),
+        t2.set(int65_mult(x1, y1)),
+        t3.set(int65_mult(x0, y1)),
+        t4.set(int65_mult(x1, y0)),
+        z0.set(int65_sub(t1, t2)),
+        z1.set(int65_add(t3, t4)),
+        output.set(z0, z1),
+    )
+
+
 @Blackbox(input_types=[None])
 @ABIReturnSubroutine
 def complex130_real(x: Complex130, *, output: Int65):
     return output.set(x[0])
+
+
+@Blackbox(input_types=[None])
+@ABIReturnSubroutine
+def complex130_imag(x: Complex130, *, output: Int65):
+    return output.set(x[1])
 
 
 def test_integer65():
@@ -398,14 +435,30 @@ def test_integer65():
 
 
 def test_complex130():
+    # Binary:
+
     bbpt_cplx_add = BlackboxPyTealer(complex130_add, pt.Mode.Application)
     approval_cplx_add = bbpt_cplx_add.program()
     teal_cplx_add = pt.compileTeal(approval_cplx_add(), pt.Mode.Application, version=6)
+
+    bbpt_cplx_mult = BlackboxPyTealer(complex130_mult, pt.Mode.Application)
+    approval_cplx_mult = bbpt_cplx_mult.program()
+    teal_cplx_mult = pt.compileTeal(
+        approval_cplx_mult(), pt.Mode.Application, version=6
+    )
+
+    # Unary:
 
     bbpt_complex_real = BlackboxPyTealer(complex130_real, pt.Mode.Application)
     approval_cplx_real = bbpt_complex_real.program()
     teal_cplx_real = pt.compileTeal(
         approval_cplx_real(), pt.Mode.Application, version=6
+    )
+
+    bbpt_complex_imag = BlackboxPyTealer(complex130_imag, pt.Mode.Application)
+    approval_cplx_imag = bbpt_complex_imag.program()
+    teal_cplx_imag = pt.compileTeal(
+        approval_cplx_imag(), pt.Mode.Application, version=6
     )
 
     unary_abi_argument_types = bbpt_complex_real.abi_argument_types()
@@ -459,10 +512,26 @@ def test_complex130():
         complex_abi_return_type,
     )
 
+    inspectors_cplx_mult = DryRunExecutor.dryrun_app_on_sequence(
+        algod,
+        teal_cplx_mult,
+        binary_inputs,
+        binary_abi_argument_types,
+        complex_abi_return_type,
+    )
+
     # Unary:
     inspectors_cplx_real = DryRunExecutor.dryrun_app_on_sequence(
         algod,
         teal_cplx_real,
+        unary_inputs,
+        unary_abi_argument_types,
+        real_abi_return_type,
+    )
+
+    inspectors_cplx_imag = DryRunExecutor.dryrun_app_on_sequence(
+        algod,
+        teal_cplx_imag,
         unary_inputs,
         unary_abi_argument_types,
         real_abi_return_type,
@@ -475,14 +544,30 @@ def test_complex130():
         unary_args = unary_inputs[i]
         u = pytuple_to_complex(unary_args[0])
 
+        # Binary:
+
         inspector_cplx_add = inspectors_cplx_add[i]
 
+        inspector_cplx_mult = inspectors_cplx_mult[i]
+
+        # Unary:
+
         inspector_cplx_real = inspectors_cplx_real[i]
+
+        inspector_cplx_imag = inspectors_cplx_imag[i]
 
         assert x + y == pytuple_to_complex(
             inspector_cplx_add.last_log()
         ), inspector_cplx_add.report(binary_args, f"failed for {binary_args}", row=i)
 
+        assert x * y == pytuple_to_complex(
+            inspector_cplx_mult.last_log()
+        ), inspector_cplx_mult.report(binary_args, f"failed for {binary_args}", row=i)
+
         assert u.real == pytuple_to_int(
             inspector_cplx_real.last_log()
         ), inspector_cplx_real.report(unary_args, f"failed for {unary_args}", row=i)
+
+        assert u.imag == pytuple_to_int(
+            inspector_cplx_imag.last_log()
+        ), inspector_cplx_imag.report(unary_args, f"failed for {unary_args}", row=i)
