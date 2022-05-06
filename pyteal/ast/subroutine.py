@@ -11,7 +11,6 @@ from typing import (
 
 from pyteal.ast import abi
 from pyteal.ast.expr import Expr
-from pyteal.ast.return_ import Return
 from pyteal.ast.seq import Seq
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
 from pyteal.errors import TealInputError, verifyTealVersion

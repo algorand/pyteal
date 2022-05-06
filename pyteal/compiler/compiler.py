@@ -1,4 +1,4 @@
-from typing import Callable, List, Tuple, Set, Dict, Optional, cast
+from typing import List, Tuple, Set, Dict, Optional, cast
 
 from pyteal.compiler.optimizer import OptimizeOptions, apply_global_optimizations
 
@@ -144,7 +144,7 @@ def compileSubroutine(
     ):
         deferred_expr = cast(Expr, currentSubroutine.get_declaration().deferred_expr)
         # these blocks represent a path of code that should be inserted before each retsub op
-        get_deferred_blocks = lambda: deferred_expr.__teal__(options)
+        get_deferred_blocks = lambda: deferred_expr.__teal__(options)  # noqa: E731
 
         # insert deferred blocks where needed
         for block in TealBlock.Iterate(start):
