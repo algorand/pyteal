@@ -108,8 +108,8 @@ Int65 = pt.abi.Tuple2[pt.abi.Bool, pt.abi.Uint64]
 @pt.ABIReturnSubroutine
 def minus(x: Int65, y: Int65, *, output: Int65):
     """
-    NOTE: this is example ONLY for the purpose of demo'ing ABISubroutine + Gravitons's capabilities
-    and not the recommended approach for implementing integers.
+    WARNING: this example is ONLY for the purpose of demo'ing ABISubroutine + Gravitons's capabilities
+    and NOT the recommended approach for implementing integers.
     A better appraoch would stick to `Uint64` as the base type and use 2's complement arithmetic.
     """
     x0 = pt.abi.Bool()
