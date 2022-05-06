@@ -1627,6 +1627,109 @@ retsub
     assert actual == expected
 
 
+def test_compile_subroutine_deferred_expr():
+    @pt.Subroutine(pt.TealType.none)
+    def deferredExample(value: pt.Expr) -> pt.Expr:
+        return pt.Seq(
+            pt.If(value == pt.Int(0)).Then(pt.Return()),
+            pt.If(value == pt.Int(1)).Then(pt.Approve()),
+            pt.If(value == pt.Int(2)).Then(pt.Reject()),
+            pt.If(value == pt.Int(3)).Then(pt.Err()),
+        )
+
+    program = pt.Seq(deferredExample(pt.Int(10)), pt.Approve())
+
+    expected_no_deferred = """#pragma version 6
+int 10
+callsub deferredExample_0
+int 1
+return
+
+// deferredExample
+deferredExample_0:
+store 0
+load 0
+int 0
+==
+bnz deferredExample_0_l7
+load 0
+int 1
+==
+bnz deferredExample_0_l6
+load 0
+int 2
+==
+bnz deferredExample_0_l5
+load 0
+int 3
+==
+bz deferredExample_0_l8
+err
+deferredExample_0_l5:
+int 0
+return
+deferredExample_0_l6:
+int 1
+return
+deferredExample_0_l7:
+retsub
+deferredExample_0_l8:
+retsub
+    """.strip()
+    actual_no_deferred = pt.compileTeal(
+        program, pt.Mode.Application, version=6, assembleConstants=False
+    )
+    assert actual_no_deferred == expected_no_deferred
+
+    # manually add deferred expression to SubroutineDefinition
+    declaration = deferredExample.subroutine.get_declaration()
+    declaration.deferred_expr = pt.Bytes("deferred")
+
+    expected_deferred = """#pragma version 6
+int 10
+callsub deferredExample_0
+int 1
+return
+
+// deferredExample
+deferredExample_0:
+store 0
+load 0
+int 0
+==
+bnz deferredExample_0_l7
+load 0
+int 1
+==
+bnz deferredExample_0_l6
+load 0
+int 2
+==
+bnz deferredExample_0_l5
+load 0
+int 3
+==
+bz deferredExample_0_l8
+err
+deferredExample_0_l5:
+int 0
+return
+deferredExample_0_l6:
+int 1
+return
+deferredExample_0_l7:
+byte "deferred"
+retsub
+deferredExample_0_l8:
+byte "deferred"
+retsub
+    """.strip()
+    actual_deferred = pt.compileTeal(
+        program, pt.Mode.Application, version=6, assembleConstants=False
+    )
+    assert actual_deferred == expected_deferred
+
+
 def test_compile_wide_ratio():
     cases = (
         (

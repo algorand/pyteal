@@ -1,4 +1,4 @@
-from typing import List, Tuple, Set, Dict, Optional, cast
+from typing import Callable, List, Tuple, Set, Dict, Optional, cast
 
 from pyteal.compiler.optimizer import OptimizeOptions, apply_global_optimizations
 
@@ -133,45 +133,62 @@ def compileSubroutine(
             ast = Return(ast)
 
     options.setSubroutine(currentSubroutine)
-    start, _ = ast.__teal__(options)
+
+    start, end = ast.__teal__(options)
     start.addIncoming()
     start.validateTree()
 
-    start = TealBlock.NormalizeBlocks(start)
-    start.validateTree()
-
-    deferred_ops: list[TealOp] = []
     if (
         currentSubroutine is not None
         and currentSubroutine.get_declaration().deferred_expr is not None
     ):
         deferred_expr = cast(Expr, currentSubroutine.get_declaration().deferred_expr)
-        deferred_start, deferred_end = deferred_expr.__teal__(options)
-        if deferred_start is not deferred_end:
-            # if necessary, we could support multiple blocks, it's just not needed currently
-            raise TealInternalError("Expected deferred expression to be a single block")
-        deferred_ops = cast(TealSimpleBlock, deferred_start).ops
+        # these blocks represent a path of code that should be inserted before each retsub op
+        get_deferred_blocks = lambda: deferred_expr.__teal__(options)
+
+        # insert deferred blocks where needed
+        for block in TealBlock.Iterate(start):
+            if not isinstance(block, TealSimpleBlock):
+                continue
+
+            if not any(op.getOp() == Op.retsub for op in block.ops):
+                continue
+
+            if len(block.ops) != 1:
+                # we expect all retsub ops to be in their own block at this point
+                raise TealInternalError(
+                    f"Expected retsub to be the only op in the block, but there are {len(block.ops)} ops"
+                )
+
+            # insert deferred blocks between the previous block(s) and this one
+            deferred_start, deferred_end = get_deferred_blocks()
+            deferred_start.addIncoming()
+            deferred_start.validateTree()
+
+            deferred_start.incoming = block.incoming
+            block.incoming = [deferred_end]
+            deferred_end.nextBlock = block
+
+            for prev in deferred_start.incoming:
+                prev.replaceOutgoing(block, deferred_start)
+
+            if block is start:
+                # this is the start block, replace start
+                start = deferred_start
+
+    start.validateTree()
+
+    start = TealBlock.NormalizeBlocks(start)
+    start.validateTree()
+
+    subroutine_start_blocks[currentSubroutine] = start
+    subroutine_end_blocks[currentSubroutine] = end
 
     referencedSubroutines: Set[SubroutineDefinition] = set()
     for block in TealBlock.Iterate(start):
-        has_return = False
-
         for stmt in block.ops:
             for subroutine in stmt.getSubroutines():
                 referencedSubroutines.add(subroutine)
-
-            if not has_return and stmt.getOp() == Op.retsub:
-                has_return = True
-
-        if has_return and deferred_ops:
-            new_ops: List[TealOp] = []
-
-            for stmt in block.ops:
-                if stmt.getOp() == Op.retsub:
-                    new_ops.extend(deferred_ops)
-                new_ops.append(stmt)
-
-            block.ops = new_ops
 
     if currentSubroutine is not None:
         subroutineGraph[currentSubroutine] = referencedSubroutines
