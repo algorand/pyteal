@@ -1,10 +1,12 @@
-from typing import List, Tuple, Union, cast
+from typing import cast
 from dataclasses import dataclass
 
 from pyteal.config import METHOD_ARG_NUM_LIMIT
 from pyteal.errors import TealInputError
 from pyteal.types import TealType
 from pyteal.ast.subroutine import SubroutineFnWrapper
+
+# from pyteal.ast import abi
 from pyteal.ast.cond import Cond
 from pyteal.ast.expr import Expr
 from pyteal.ast.app import OnComplete, EnumInt
@@ -15,9 +17,6 @@ from pyteal.ast.naryexpr import And, Or
 from pyteal.ast.txn import Txn
 from pyteal.ast.return_ import Approve
 
-# from pyteal.ast.abi.method_return import MethodReturn
-
-# NOTE this should sit in `abi` directory, still waiting on abi to be merged in
 
 """
 Notes:
@@ -50,72 +49,83 @@ class ProgramNode:
     branch: Expr
 
 
+ProgramNode.__module__ = "pyteal"
+
+
 class Router:
     """ """
 
     def __init__(self) -> None:
-        self.approvalIfThen: List[ProgramNode] = []
-        self.clearStateIfThen: List[ProgramNode] = []
+        self.approval_if_then: list[ProgramNode] = []
+        self.clear_state_if_then: list[ProgramNode] = []
 
     @staticmethod
-    def __parseConditions(
-        mReg: Union[SubroutineFnWrapper, None],
-        onCompletes: List[EnumInt],
+    def __parse_conditions(
+        method_to_register: SubroutineFnWrapper | None,
+        on_completes: list[EnumInt],
         creation: bool,
-    ) -> Tuple[List[Expr], List[Expr]]:
+    ) -> tuple[list[Expr], list[Expr]]:
         """ """
         # Check if it is a *CREATION*
-        approvalConds: List[Expr] = [Txn.application_id() == Int(0)] if creation else []
-        clearStateConds: List[Expr] = []
+        approval_conds: list[Expr] = (
+            [Txn.application_id() == Int(0)] if creation else []
+        )
+        clear_state_conds: list[Expr] = []
 
         # Check:
         # - if current condition is for *ABI METHOD*
         #   (method selector && numAppArg == max(METHOD_APP_ARG_NUM_LIMIT, 1 + subroutineSyntaxArgNum))
         # - or *BARE APP CALL* (numAppArg == 0)
-        methodOrBareCondition = (
+        method_or_bare_condition = (
             And(
-                Txn.application_args[0] == MethodSignature(mReg.name()),
+                Txn.application_args[0] == MethodSignature(method_to_register.name()),
                 Txn.application_args.length()
-                == Int(1 + max(mReg.subroutine.argument_count(), METHOD_ARG_NUM_LIMIT)),
+                == Int(
+                    1
+                    + max(
+                        method_to_register.subroutine.argument_count(),
+                        METHOD_ARG_NUM_LIMIT,
+                    )
+                ),
             )
-            if mReg is not None
+            if method_to_register is not None
             else Txn.application_args.length() == Int(0)
         )
-        approvalConds.append(methodOrBareCondition)
+        approval_conds.append(method_or_bare_condition)
 
         # Check the existence of OC.CloseOut
-        closeOutExist = any(map(lambda x: x == OnComplete.CloseOut, onCompletes))
+        close_out_exist = any(map(lambda x: x == OnComplete.CloseOut, on_completes))
         # Check the existence of OC.ClearState (needed later)
-        clearStateExist = any(map(lambda x: x == OnComplete.ClearState, onCompletes))
+        clear_state_exist = any(map(lambda x: x == OnComplete.ClearState, on_completes))
         # Ill formed report if app create with existence of OC.CloseOut or OC.ClearState
-        if creation and (closeOutExist or clearStateExist):
+        if creation and (close_out_exist or clear_state_exist):
             raise TealInputError(
                 "OnComplete ClearState/CloseOut may be ill-formed with app creation"
             )
         # if OC.ClearState exists, add method-or-bare-condition since it is only needed in ClearStateProgram
-        if clearStateExist:
-            clearStateConds.append(methodOrBareCondition)
+        if clear_state_exist:
+            clear_state_conds.append(method_or_bare_condition)
 
-        # Check onComplete conditions for approvalConds, filter out *ClearState*
-        approvalOcConds: List[Expr] = [
+        # Check onComplete conditions for approval_conds, filter out *ClearState*
+        approval_oc_conds: list[Expr] = [
             Txn.on_completion() == oc
-            for oc in onCompletes
+            for oc in on_completes
             if oc != OnComplete.ClearState
         ]
 
-        # if approval OC condition is not empty, append Or to approvalConds
-        if len(approvalOcConds) > 0:
-            approvalConds.append(Or(*approvalOcConds))
+        # if approval OC condition is not empty, append Or to approval_conds
+        if len(approval_oc_conds) > 0:
+            approval_conds.append(Or(*approval_oc_conds))
 
         # what we have here is:
         # list of conds for approval program on one branch: creation?, method/bare, Or[OCs]
         # list of conds for clearState program on one branch: method/bare
-        return approvalConds, clearStateConds
+        return approval_conds, clear_state_conds
 
     @staticmethod
-    def __wrapHandler(isMethod: bool, branch: Union[SubroutineFnWrapper, Expr]) -> Expr:
+    def __wrap_handler(isMethod: bool, branch: SubroutineFnWrapper | Expr) -> Expr:
         """"""
-        exprList: List[Expr] = []
+        exprList: list[Expr] = []
         if not isMethod:
             if (
                 isinstance(branch, Seq)
@@ -156,76 +166,82 @@ class Router:
         exprList.append(Approve())
         return Seq(*exprList)
 
-    def __appendToAST(
-        self, approvalConds: List[Expr], clearConds: List[Expr], branch: Expr
+    def __append_to_ast(
+        self, approval_conds: list[Expr], clear_state_conds: list[Expr], branch: Expr
     ) -> None:
         """ """
-        if len(approvalConds) > 0:
-            self.approvalIfThen.append(
+        if len(approval_conds) > 0:
+            self.approval_if_then.append(
                 ProgramNode(
-                    And(*approvalConds) if len(approvalConds) > 1 else approvalConds[0],
+                    And(*approval_conds)
+                    if len(approval_conds) > 1
+                    else approval_conds[0],
                     branch,
                 )
             )
-        if len(clearConds) > 0:
-            self.clearStateIfThen.append(
+        if len(clear_state_conds) > 0:
+            self.clear_state_if_then.append(
                 ProgramNode(
-                    And(*clearConds) if len(clearConds) > 1 else clearConds[0],
+                    And(*clear_state_conds)
+                    if len(clear_state_conds) > 1
+                    else clear_state_conds[0],
                     branch,
                 )
             )
 
-    def onBareAppCall(
+    def on_bare_app_call(
         self,
-        bareAppCall: Union[SubroutineFnWrapper, Expr],
-        onCompletes: Union[EnumInt, List[EnumInt]],
+        bare_app_call: SubroutineFnWrapper | Expr,
+        on_completes: EnumInt | list[EnumInt],
         *,
         creation: bool = False,
     ) -> None:
         """ """
-        ocList: List[EnumInt] = (
-            cast(List[EnumInt], onCompletes)
-            if isinstance(onCompletes, list)
-            else [cast(EnumInt, onCompletes)]
+        ocList: list[EnumInt] = (
+            cast(list[EnumInt], on_completes)
+            if isinstance(on_completes, list)
+            else [cast(EnumInt, on_completes)]
         )
-        approvalConds, clearConds = Router.__parseConditions(
-            mReg=None, onCompletes=ocList, creation=creation
+        approval_conds, clear_state_conds = Router.__parse_conditions(
+            method_to_register=None, on_completes=ocList, creation=creation
         )
-        branch = Router.__wrapHandler(False, bareAppCall)
-        self.__appendToAST(approvalConds, clearConds, branch)
+        branch = Router.__wrap_handler(False, bare_app_call)
+        self.__append_to_ast(approval_conds, clear_state_conds, branch)
 
-    def onMethodCall(
+    def on_method_call(
         self,
-        methodAppCall: SubroutineFnWrapper,
+        method_signature: str,
+        method_app_call: SubroutineFnWrapper,
         *,
-        onComplete: EnumInt = OnComplete.NoOp,
+        on_complete: EnumInt = OnComplete.NoOp,
         creation: bool = False,
     ) -> None:
         """ """
-        ocList: List[EnumInt] = [cast(EnumInt, onComplete)]
-        approvalConds, clearConds = Router.__parseConditions(
-            mReg=methodAppCall, onCompletes=ocList, creation=creation
+        oc_list: list[EnumInt] = [cast(EnumInt, on_complete)]
+        approval_conds, clear_state_conds = Router.__parse_conditions(
+            method_to_register=method_app_call, on_completes=oc_list, creation=creation
         )
-        branch = Router.__wrapHandler(True, methodAppCall)
-        self.__appendToAST(approvalConds, clearConds, branch)
+        branch = Router.__wrap_handler(True, method_app_call)
+        self.__append_to_ast(approval_conds, clear_state_conds, branch)
 
     @staticmethod
-    def __astConstruct(
-        astList: List[ProgramNode],
+    def __ast_construct(
+        ast_list: list[ProgramNode],
     ) -> Expr:
         """ """
-        if len(astList) == 0:
+        if len(ast_list) == 0:
             raise TealInputError("ABIRouter: Cannot build program with an empty AST")
 
-        program: Cond = Cond(*[[node.condition, node.branch] for node in astList])
+        program: Cond = Cond(*[[node.condition, node.branch] for node in ast_list])
 
         return program
 
-    def buildProgram(self) -> Tuple[Expr, Expr]:
+    def build_program(self) -> tuple[Expr, Expr]:
+        # TODO need JSON object
         """ """
         return (
-            Router.__astConstruct(self.approvalIfThen),
-            Router.__astConstruct(self.clearStateIfThen),
+            Router.__ast_construct(self.approval_if_then),
+            Router.__ast_construct(self.clear_state_if_then),
         )
 
 
