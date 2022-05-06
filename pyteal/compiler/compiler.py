@@ -145,12 +145,6 @@ def compileSubroutine(
         # this represents code that should be inserted before each retsub op
         deferred_expr = cast(Expr, currentSubroutine.get_declaration().deferred_expr)
 
-        # creating a function so that we can have a new copy of the blocks every time we want to
-        # insert them -- you cannot have the same block in two different places in the control flow
-        # graph
-        def get_deferred_blocks():
-            return deferred_expr.__teal__(options)
-
         for block in TealBlock.Iterate(start):
             if not any(op.getOp() == Op.retsub for op in block.ops):
                 continue
@@ -162,7 +156,9 @@ def compileSubroutine(
                     f"Expected retsub to be the only op in the block, but there are {len(block.ops)} ops"
                 )
 
-            deferred_start, deferred_end = get_deferred_blocks()
+            # we invoke __teal__ here and not outside of this loop because the same block cannot be
+            # added in multiple places to the control flow graph
+            deferred_start, deferred_end = deferred_expr.__teal__(options)
             deferred_start.addIncoming()
             deferred_start.validateTree()
 
