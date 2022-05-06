@@ -36,7 +36,7 @@ from pyteal.ast.abi.array_static import StaticArrayTypeSpec, StaticArray
 from pyteal.ast.abi.array_dynamic import DynamicArrayTypeSpec, DynamicArray
 
 from pyteal.ast.abi.method_return import MethodReturn
-from pyteal.ast.abi.util import type_spec_from_annotation, make
+from pyteal.ast.abi.util import algosdk_from_type_spec, make, type_spec_from_annotation
 
 __all__ = [
     "String",

@@ -2,6 +2,8 @@ from typing import NamedTuple, List, Literal, Optional, Union, Any, cast
 from inspect import isabstract
 import pytest
 
+import algosdk.abi
+
 import pyteal as pt
 from pyteal import abi
 from pyteal.ast.abi.util import (
@@ -313,3 +315,150 @@ def test_make():
 
     assert actual.type_spec() == expected_type_spec
     assert type(actual) is abi.Tuple
+
+
+def test_abi_type_translation():
+    test_cases = [
+        # Test for byte/bool/address/strings
+        (algosdk.abi.ByteType(), "byte", abi.ByteTypeSpec()),
+        (algosdk.abi.BoolType(), "bool", abi.BoolTypeSpec()),
+        (algosdk.abi.AddressType(), "address", abi.AddressTypeSpec()),
+        (algosdk.abi.StringType(), "string", abi.StringTypeSpec()),
+        # Test for dynamic array type
+        (
+            algosdk.abi.ArrayDynamicType(algosdk.abi.UintType(32)),
+            "uint32[]",
+            abi.DynamicArrayTypeSpec(abi.Uint32TypeSpec()),
+        ),
+        (
+            algosdk.abi.ArrayDynamicType(
+                algosdk.abi.ArrayDynamicType(algosdk.abi.ByteType())
+            ),
+            "byte[][]",
+            abi.DynamicArrayTypeSpec(abi.DynamicArrayTypeSpec(abi.ByteTypeSpec())),
+        ),
+        # TODO: Turn these tests on when PyTeal supports ufixed<N>x<M>
+        # cf https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0004.md#types
+        # (
+        #     algosdk.abi.ArrayDynamicType(algosdk.abi.UfixedType(256, 64)),
+        #     "ufixed256x64[]",
+        #     abi.DynamicArrayTypeSpec(abi.UfixedTypeSpec(256, 64)),
+        # ),
+        # # Test for static array type
+        # (
+        #     algosdk.abi.ArrayStaticType(algosdk.abi.UfixedType(128, 10), 100),
+        #     "ufixed128x10[100]",
+        #     abi.ArrayStaticTypeSpec(abi.UfixedTypeSpec(128, 10), 100),
+        # ),
+        (
+            algosdk.abi.ArrayStaticType(
+                algosdk.abi.ArrayStaticType(algosdk.abi.BoolType(), 256),
+                100,
+            ),
+            "bool[256][100]",
+            abi.StaticArrayTypeSpec(
+                abi.StaticArrayTypeSpec(abi.BoolTypeSpec(), 256),
+                100,
+            ),
+        ),
+        # Test for tuple
+        (algosdk.abi.TupleType([]), "()", abi.TupleTypeSpec()),
+        (
+            algosdk.abi.TupleType(
+                [
+                    algosdk.abi.UintType(16),
+                    algosdk.abi.TupleType(
+                        [
+                            algosdk.abi.ByteType(),
+                            algosdk.abi.ArrayStaticType(algosdk.abi.AddressType(), 10),
+                        ]
+                    ),
+                ]
+            ),
+            "(uint16,(byte,address[10]))",
+            abi.TupleTypeSpec(
+                abi.Uint16TypeSpec(),
+                abi.TupleTypeSpec(
+                    abi.ByteTypeSpec(),
+                    abi.StaticArrayTypeSpec(abi.AddressTypeSpec(), 10),
+                ),
+            ),
+        ),
+        (
+            algosdk.abi.TupleType(
+                [
+                    algosdk.abi.UintType(64),
+                    algosdk.abi.TupleType(
+                        [
+                            algosdk.abi.ByteType(),
+                            algosdk.abi.ArrayStaticType(algosdk.abi.AddressType(), 10),
+                        ]
+                    ),
+                    algosdk.abi.TupleType([]),
+                    algosdk.abi.BoolType(),
+                ]
+            ),
+            "(uint64,(byte,address[10]),(),bool)",
+            abi.TupleTypeSpec(
+                abi.Uint64TypeSpec(),
+                abi.TupleTypeSpec(
+                    abi.ByteTypeSpec(),
+                    abi.StaticArrayTypeSpec(abi.AddressTypeSpec(), 10),
+                ),
+                abi.TupleTypeSpec(),
+                abi.BoolTypeSpec(),
+            ),
+        ),
+        # (
+        #     algosdk.abi.TupleType(
+        #         [
+        #             algosdk.abi.UfixedType(256, 16),
+        #             algosdk.abi.TupleType(
+        #                 [
+        #                     algosdk.abi.TupleType(
+        #                         [
+        #                             algosdk.abi.StringType(),
+        #                         ]
+        #                     ),
+        #                     algosdk.abi.BoolType(),
+        #                     algosdk.abi.TupleType(
+        #                         [
+        #                             algosdk.abi.AddressType(),
+        #                             algosdk.abi.UintType(8),
+        #                         ]
+        #                     ),
+        #                 ]
+        #             ),
+        #         ]
+        #     ),
+        #     "(ufixed256x16,((string),bool,(address,uint8)))",
+        #     abi.TupleType(
+        #         [
+        #             abi.UfixedType(256, 16),
+        #             abi.TupleType(
+        #                 [
+        #                     abi.TupleType(
+        #                         [
+        #                             abi.StringType(),
+        #                         ]
+        #                     ),
+        #                     abi.BoolType(),
+        #                     abi.TupleType(
+        #                         [
+        #                             abi.AddressType(),
+        #                             abi.UintType(8),
+        #                         ]
+        #                     ),
+        #                 ]
+        #             ),
+        #         ]
+        #     ),
+        # ),
+    ]
+
+    for algosdk_abi, abi_string, pyteal_abi_ts in test_cases:
+        print(f"({algosdk_abi}, {abi_string}, {pyteal_abi_ts}),")
+        assert str(algosdk_abi) == abi_string == str(pyteal_abi_ts)
+        assert algosdk_abi == algosdk.abi.ABIType.from_string(abi_string)
+        assert algosdk_abi == algosdk.abi.ABIType.from_string(str(pyteal_abi_ts))
+        assert algosdk_abi == abi.algosdk_from_type_spec(pyteal_abi_ts)
