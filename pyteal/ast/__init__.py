@@ -102,7 +102,7 @@ from pyteal.ast.ternaryexpr import Divw, Ed25519Verify, SetBit, SetByte
 from pyteal.ast.substring import Substring, Extract, Suffix
 
 # more ops
-from pyteal.ast.naryexpr import NaryExpr, And, Add, Mul, Or, Concat
+from pyteal.ast.naryexpr import NaryExpr, Add, And, Mul, Or, Concat
 from pyteal.ast.widemath import WideRatio
 
 # control flow
@@ -118,6 +118,7 @@ from pyteal.ast.subroutine import (
     SubroutineDeclaration,
     SubroutineCall,
     SubroutineFnWrapper,
+    ABIReturnSubroutine,
 )
 from pyteal.ast.while_ import While
 from pyteal.ast.for_ import For
@@ -242,6 +243,7 @@ __all__ = [
     "SubroutineDeclaration",
     "SubroutineCall",
     "SubroutineFnWrapper",
+    "ABIReturnSubroutine",
     "ScratchIndex",
     "ScratchLoad",
     "ScratchSlot",

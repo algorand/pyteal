@@ -147,7 +147,7 @@ class ComputedValue(ABC, Generic[T]):
     """Represents an ABI Type whose value must be computed by an expression."""
 
     @abstractmethod
-    def produced_type_spec(cls) -> TypeSpec:
+    def produced_type_spec(self) -> TypeSpec:
         """Get the ABI TypeSpec that this object produces."""
         pass
 
@@ -182,3 +182,22 @@ class ComputedValue(ABC, Generic[T]):
 
 
 ComputedValue.__module__ = "pyteal"
+
+
+class ReturnedValue(ComputedValue):
+    def __init__(self, type_spec: TypeSpec, computation_expr: Expr):
+        self.type_spec = type_spec
+        self.computation = computation_expr
+
+    def produced_type_spec(self) -> TypeSpec:
+        return self.type_spec
+
+    def store_into(self, output: BaseType) -> Expr:
+        if output.type_spec() != self.produced_type_spec():
+            raise TealInputError(
+                f"expected type_spec {self.produced_type_spec()} but get {output.type_spec()}"
+            )
+        return output.stored_value.store(self.computation)
+
+
+ReturnedValue.__module__ = "pyteal"

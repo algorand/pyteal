@@ -160,7 +160,7 @@ def compileSubroutine(
     newSubroutines = referencedSubroutines - subroutine_start_blocks.keys()
     for subroutine in sorted(newSubroutines, key=lambda subroutine: subroutine.id):
         compileSubroutine(
-            subroutine.getDeclaration(),
+            subroutine.get_declaration(),
             options,
             subroutineGraph,
             subroutine_start_blocks,

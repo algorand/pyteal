@@ -28,6 +28,7 @@ from pyteal.config import (
 )
 
 __all__ = [
+    "ABIReturnSubroutine",
     "AccountParam",
     "Add",
     "Addr",

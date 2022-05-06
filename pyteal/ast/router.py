@@ -76,7 +76,7 @@ class Router:
             And(
                 Txn.application_args[0] == MethodSignature(mReg.name()),
                 Txn.application_args.length()
-                == Int(1 + max(mReg.subroutine.argumentCount(), METHOD_ARG_NUM_LIMIT)),
+                == Int(1 + max(mReg.subroutine.argument_count(), METHOD_ARG_NUM_LIMIT)),
             )
             if mReg is not None
             else Txn.application_args.length() == Int(0)
@@ -137,7 +137,7 @@ class Router:
             if isinstance(branch, SubroutineFnWrapper) and branch.has_return():
                 # TODO need to encode/decode things
                 # execBranchArgs: List[Expr] = []
-                if branch.subroutine.argumentCount() >= METHOD_ARG_NUM_LIMIT:
+                if branch.subroutine.argument_count() >= METHOD_ARG_NUM_LIMIT:
                     # NOTE decode (if arg num > 15 need to de-tuple 15th (last) argument)
                     pass
                 else:

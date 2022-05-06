@@ -2,11 +2,12 @@ from itertools import product
 from typing import List, Literal
 
 import pytest
+from dataclasses import dataclass
 
 import pyteal as pt
-from pyteal.ast.subroutine import evaluateSubroutine
+from pyteal.ast.subroutine import evaluate_subroutine
 
-options = pt.CompileOptions(version=4)
+options = pt.CompileOptions(version=5)
 
 
 def test_subroutine_definition():
@@ -58,7 +59,7 @@ def test_subroutine_definition():
 
     for (fn, numArgs, name) in cases:
         definition = pt.SubroutineDefinition(fn, pt.TealType.none)
-        assert definition.argumentCount() == numArgs
+        assert definition.argument_count() == numArgs
         assert definition.name() == name
 
         if numArgs > 0:
@@ -79,15 +80,130 @@ def test_subroutine_definition():
         assert invocation.args == args
 
 
+@dataclass
+class ABISubroutineTC:
+    definition: pt.ABIReturnSubroutine
+    arg_instances: list[pt.Expr | pt.abi.BaseType]
+    name: str
+    ret_type: str | pt.abi.TypeSpec
+
+
+def test_abi_subroutine_definition():
+    @pt.ABIReturnSubroutine
+    def fn_0arg_0ret() -> pt.Expr:
+        return pt.Return()
+
+    @pt.ABIReturnSubroutine
+    def fn_0arg_uint64_ret(*, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(1)
+
+    @pt.ABIReturnSubroutine
+    def fn_1arg_0ret(a: pt.abi.Uint64) -> pt.Expr:
+        return pt.Return()
+
+    @pt.ABIReturnSubroutine
+    def fn_1arg_1ret(a: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(a)
+
+    @pt.ABIReturnSubroutine
+    def fn_2arg_0ret(
+        a: pt.abi.Uint64, b: pt.abi.StaticArray[pt.abi.Byte, Literal[10]]
+    ) -> pt.Expr:
+        return pt.Return()
+
+    @pt.ABIReturnSubroutine
+    def fn_2arg_1ret(
+        a: pt.abi.Uint64,
+        b: pt.abi.StaticArray[pt.abi.Byte, Literal[10]],
+        *,
+        output: pt.abi.Byte,
+    ) -> pt.Expr:
+        return output.set(b[a.get() % pt.Int(10)])
+
+    @pt.ABIReturnSubroutine
+    def fn_2arg_1ret_with_expr(
+        a: pt.Expr,
+        b: pt.abi.StaticArray[pt.abi.Byte, Literal[10]],
+        *,
+        output: pt.abi.Byte,
+    ) -> pt.Expr:
+        return output.set(b[a % pt.Int(10)])
+
+    cases = (
+        ABISubroutineTC(fn_0arg_0ret, [], "fn_0arg_0ret", "void"),
+        ABISubroutineTC(
+            fn_0arg_uint64_ret, [], "fn_0arg_uint64_ret", pt.abi.Uint64TypeSpec()
+        ),
+        ABISubroutineTC(fn_1arg_0ret, [pt.abi.Uint64()], "fn_1arg_0ret", "void"),
+        ABISubroutineTC(
+            fn_1arg_1ret, [pt.abi.Uint64()], "fn_1arg_1ret", pt.abi.Uint64TypeSpec()
+        ),
+        ABISubroutineTC(
+            fn_2arg_0ret,
+            [
+                pt.abi.Uint64(),
+                pt.abi.StaticArray(
+                    pt.abi.StaticArrayTypeSpec(pt.abi.ByteTypeSpec(), 10)
+                ),
+            ],
+            "fn_2arg_0ret",
+            "void",
+        ),
+        ABISubroutineTC(
+            fn_2arg_1ret,
+            [
+                pt.abi.Uint64(),
+                pt.abi.StaticArray(
+                    pt.abi.StaticArrayTypeSpec(pt.abi.ByteTypeSpec(), 10)
+                ),
+            ],
+            "fn_2arg_1ret",
+            pt.abi.ByteTypeSpec(),
+        ),
+        ABISubroutineTC(
+            fn_2arg_1ret_with_expr,
+            [
+                pt.Int(5),
+                pt.abi.StaticArray(
+                    pt.abi.StaticArrayTypeSpec(pt.abi.ByteTypeSpec(), 10)
+                ),
+            ],
+            "fn_2arg_1ret_with_expr",
+            pt.abi.ByteTypeSpec(),
+        ),
+    )
+
+    for case in cases:
+        assert case.definition.subroutine.argument_count() == len(case.arg_instances)
+        assert case.definition.name() == case.name
+
+        if len(case.arg_instances) > 0:
+            with pytest.raises(pt.TealInputError):
+                case.definition(*case.arg_instances[:-1])
+
+        with pytest.raises(pt.TealInputError):
+            case.definition(*(case.arg_instances + [pt.abi.Uint64()]))
+
+        assert case.definition.type_of() == case.ret_type
+        invoked = case.definition(*case.arg_instances)
+        assert isinstance(
+            invoked, (pt.Expr if case.ret_type == "void" else pt.abi.ReturnedValue)
+        )
+        assert case.definition.is_registrable() == all(
+            map(lambda x: isinstance(x, pt.abi.BaseType), case.arg_instances)
+        )
+
+
 def test_subroutine_definition_validate():
     """
     DFS through SubroutineDefinition.validate()'s logic
     """
 
-    def mock_subroutine_definition(implementation):
+    def mock_subroutine_definition(implementation, abi_output_arg_name=None):
         mock = pt.SubroutineDefinition(lambda: pt.Return(pt.Int(1)), pt.TealType.uint64)
         mock._validate()  # haven't failed with dummy implementation
         mock.implementation = implementation
+        mock.abi_output_arg_name = abi_output_arg_name
         return mock
 
     not_callable = mock_subroutine_definition("I'm not callable")
@@ -98,6 +214,8 @@ def test_subroutine_definition_validate():
         "Input to SubroutineDefinition is not callable"
     )
 
+    # input_types:
+
     three_params = mock_subroutine_definition(lambda x, y, z: pt.Return(pt.Int(1)))
     two_inputs = [pt.TealType.uint64, pt.TealType.bytes]
     with pytest.raises(pt.TealInputError) as tie:
@@ -107,14 +225,22 @@ def test_subroutine_definition_validate():
         "Provided number of input_types (2) does not match detected number of parameters (3)"
     )
 
-    params, anns, arg_types, byrefs, abis = three_params._validate()
+    three_inputs_with_a_wrong_type = [pt.TealType.uint64, pt.Expr, pt.TealType.bytes]
+
+    with pytest.raises(pt.TealInputError) as tie:
+        three_params._validate(input_types=three_inputs_with_a_wrong_type)
+
+    assert tie.value == pt.TealInputError(
+        "Function has input type <class 'pyteal.Expr'> for parameter y which is not a TealType"
+    )
+
+    params, anns, arg_types, byrefs, abi_args, output_kwarg = three_params._validate()
     assert len(params) == 3
     assert anns == {}
     assert all(at is pt.Expr for at in arg_types)
     assert byrefs == set()
-    assert abis == {}
-
-    # return validation:
+    assert abi_args == {}
+    assert output_kwarg == {}
 
     def bad_return_impl() -> str:
         return pt.Return(pt.Int(1))  # type: ignore
@@ -127,25 +253,42 @@ def test_subroutine_definition_validate():
         "Function has return of disallowed type <class 'str'>. Only Expr is allowed"
     )
 
-    # param validation:
+    # now we iterate through the implementation params validating each as we go
 
-    var_positional_or_kw = three_params
-    params, anns, arg_types, byrefs, abis = var_positional_or_kw._validate()
-    assert len(params) == 3
-    assert anns == {}
-    assert all(at is pt.Expr for at in arg_types)
-    assert byrefs == set()
-    assert abis == {}
+    def var_abi_output_impl(*, z: pt.abi.Uint16):
+        pt.Return(pt.Int(1))  # this is wrong but ignored
 
-    var_positional_only = mock_subroutine_definition(
-        lambda x, y, /, z: pt.Return(pt.Int(1))
+    # raises without abi_output_arg_name:
+    var_abi_output_noname = mock_subroutine_definition(var_abi_output_impl)
+    with pytest.raises(pt.TealInputError) as tie:
+        var_abi_output_noname._validate()
+
+    assert tie.value == pt.TealInputError(
+        "Function has a parameter type that is not allowed in a subroutine: parameter z with type KEYWORD_ONLY"
     )
-    params, anns, arg_types, byrefs, abis = var_positional_only._validate()
-    assert len(params) == 3
-    assert anns == {}
+
+    # raises with wrong name
+    var_abi_output = mock_subroutine_definition(
+        var_abi_output_impl, abi_output_arg_name="foo"
+    )
+    with pytest.raises(pt.TealInputError) as tie:
+        var_abi_output._validate()
+
+    assert tie.value == pt.TealInputError(
+        "Function has a parameter type that is not allowed in a subroutine: parameter z with type KEYWORD_ONLY"
+    )
+
+    # copacetic abi output:
+    var_abi_output = mock_subroutine_definition(
+        var_abi_output_impl, abi_output_arg_name="z"
+    )
+    params, anns, arg_types, byrefs, abi_args, output_kwarg = var_abi_output._validate()
+    assert len(params) == 1
+    assert anns == {"z": pt.abi.Uint16}
     assert all(at is pt.Expr for at in arg_types)
     assert byrefs == set()
-    assert abis == {}
+    assert abi_args == {}
+    assert output_kwarg == {"z": pt.abi.Uint16TypeSpec()}
 
     var_positional = mock_subroutine_definition(lambda *args: pt.Return(pt.Int(1)))
     with pytest.raises(pt.TealInputError) as tie:
@@ -188,38 +331,44 @@ def test_subroutine_definition_validate():
         "Function has input type <class 'pyteal.Expr'> for parameter y which is not a TealType"
     )
 
-    # Now we get to _validate_parameter_type():
+    # Now we get to _validate_annotation():
     one_vanilla = mock_subroutine_definition(lambda x: pt.Return(pt.Int(1)))
 
-    params, anns, arg_types, byrefs, abis = one_vanilla._validate()
+    params, anns, arg_types, byrefs, abi_args, output_kwarg = one_vanilla._validate()
     assert len(params) == 1
     assert anns == {}
     assert all(at is pt.Expr for at in arg_types)
     assert byrefs == set()
-    assert abis == {}
+    assert abi_args == {}
+    assert output_kwarg == {}
 
     def one_expr_impl(x: pt.Expr):
         return pt.Return(pt.Int(1))
 
     one_expr = mock_subroutine_definition(one_expr_impl)
-    params, anns, arg_types, byrefs, abis = one_expr._validate()
+    params, anns, arg_types, byrefs, abi_args, output_kwarg = one_expr._validate()
     assert len(params) == 1
     assert anns == {"x": pt.Expr}
     assert all(at is pt.Expr for at in arg_types)
     assert byrefs == set()
-    assert abis == {}
+    assert abi_args == {}
+    assert output_kwarg == {}
 
     def one_scratchvar_impl(x: pt.ScratchVar):
         return pt.Return(pt.Int(1))
 
     one_scratchvar = mock_subroutine_definition(one_scratchvar_impl)
-    params, anns, arg_types, byrefs, abis = one_scratchvar._validate()
+    params, anns, arg_types, byrefs, abi_args, output_kwarg = one_scratchvar._validate()
     assert len(params) == 1
     assert anns == {"x": pt.ScratchVar}
     assert all(at is pt.ScratchVar for at in arg_types)
     assert byrefs == {"x"}
-    assert abis == {}
+    assert abi_args == {}
+    assert output_kwarg == {}
 
+    # for _is_abi_annotation() cf. copacetic x,y,z product below
+
+    # not is_class()
     def one_nontype_impl(x: "blahBlah"):  # type: ignore # noqa: F821
         return pt.Return(pt.Int(1))
 
@@ -228,7 +377,7 @@ def test_subroutine_definition_validate():
         one_nontype._validate()
 
     assert tie.value == pt.TealInputError(
-        "Function has parameter x of disallowed type blahBlah. Only the types (<class 'pyteal.Expr'>, <class 'pyteal.ScratchVar'>, 'ABI') are allowed"
+        "Function has parameter x of declared type blahBlah which is not a class"
     )
 
     def one_dynscratchvar_impl(x: pt.DynamicScratchVar):
@@ -243,17 +392,21 @@ def test_subroutine_definition_validate():
     )
 
     # Now we're back to validate() and everything should be copacetic
-
-    # input type handling:
     for x, y, z in product(pt.TealType, pt.TealType, pt.TealType):
-        params, anns, arg_types, byrefs, abis = three_params._validate(
-            input_types=[x, y, z]
-        )
+        (
+            params,
+            anns,
+            arg_types,
+            byrefs,
+            abi_args,
+            output_kwarg,
+        ) = three_params._validate(input_types=[x, y, z])
         assert len(params) == 3
         assert anns == {}
         assert all(at is pt.Expr for at in arg_types)
         assert byrefs == set()
-        assert abis == {}
+        assert abi_args == {}
+        assert output_kwarg == {}
 
     # annotation / abi type handling:
     abi_annotation_examples = {
@@ -283,9 +436,9 @@ def test_subroutine_definition_validate():
             return pt.Return(pt.Int(1))
 
         mocker = mock_subroutine_definition(mocker_impl)
-        params, anns, arg_types, byrefs, abis = mocker._validate()
+        params, anns, arg_types, byrefs, abis, output_kwarg = mocker._validate()
         print(
-            f"{x_ann=}, {z_ann=}, {params=}, {anns=}, {arg_types=}, {byrefs=}, {abis=}"
+            f"{x_ann=}, {z_ann=}, {params=}, {anns=}, {arg_types=}, {byrefs=}, {abis=}, {output_kwarg=}"
         )
 
         assert len(params) == 3
@@ -451,7 +604,7 @@ def test_subroutine_invocation_param_types():
     ]
     for case_name, fn, args, err in cases:
         definition = pt.SubroutineDefinition(fn, pt.TealType.none)
-        assert definition.argumentCount() == len(args), case_name
+        assert definition.argument_count() == len(args), case_name
         assert definition.name() == fn.__name__, case_name
 
         if err is None:
@@ -475,11 +628,220 @@ def test_subroutine_invocation_param_types():
                 ), f"EXPECTED ERROR of type {err}. encountered unexpected error during invocation case <{case_name}>: {e}"
 
 
+def test_abi_subroutine_calling_param_types():
+    @pt.ABIReturnSubroutine
+    def fn_log_add(a: pt.abi.Uint64, b: pt.abi.Uint32) -> pt.Expr:
+        return pt.Seq(pt.Log(pt.Itob(a.get() + b.get())), pt.Return())
+
+    @pt.ABIReturnSubroutine
+    def fn_ret_add(
+        a: pt.abi.Uint64, b: pt.abi.Uint32, *, output: pt.abi.Uint64
+    ) -> pt.Expr:
+        return output.set(a.get() + b.get() + pt.Int(0xA190))
+
+    @pt.ABIReturnSubroutine
+    def fn_abi_annotations_0(
+        a: pt.abi.Byte,
+        b: pt.abi.StaticArray[pt.abi.Uint32, Literal[10]],
+        c: pt.abi.DynamicArray[pt.abi.Bool],
+    ) -> pt.Expr:
+        return pt.Return()
+
+    @pt.ABIReturnSubroutine
+    def fn_abi_annotations_0_with_ret(
+        a: pt.abi.Byte,
+        b: pt.abi.StaticArray[pt.abi.Uint32, Literal[10]],
+        c: pt.abi.DynamicArray[pt.abi.Bool],
+        *,
+        output: pt.abi.Byte,
+    ):
+        return output.set(a)
+
+    @pt.ABIReturnSubroutine
+    def fn_mixed_annotations_0(a: pt.ScratchVar, b: pt.Expr, c: pt.abi.Byte) -> pt.Expr:
+        return pt.Seq(
+            a.store(c.get() * pt.Int(0x0FF1CE) * b),
+            pt.Return(),
+        )
+
+    @pt.ABIReturnSubroutine
+    def fn_mixed_annotations_0_with_ret(
+        a: pt.ScratchVar, b: pt.Expr, c: pt.abi.Byte, *, output: pt.abi.Uint64
+    ) -> pt.Expr:
+        return pt.Seq(
+            a.store(c.get() * pt.Int(0x0FF1CE) * b),
+            output.set(a.load()),
+        )
+
+    @pt.ABIReturnSubroutine
+    def fn_mixed_annotation_1(
+        a: pt.ScratchVar, b: pt.abi.StaticArray[pt.abi.Uint32, Literal[10]]
+    ) -> pt.Expr:
+        return pt.Seq(
+            (intermediate := pt.abi.Uint32()).set(b[a.load() % pt.Int(10)]),
+            a.store(intermediate.get()),
+            pt.Return(),
+        )
+
+    @pt.ABIReturnSubroutine
+    def fn_mixed_annotation_1_with_ret(
+        a: pt.ScratchVar, b: pt.abi.Uint64, *, output: pt.abi.Bool
+    ) -> pt.Expr:
+        return output.set((a.load() + b.get()) % pt.Int(2))
+
+    abi_u64 = pt.abi.Uint64()
+    abi_u32 = pt.abi.Uint32()
+    abi_byte = pt.abi.Byte()
+    abi_static_u32_10 = pt.abi.StaticArray(
+        pt.abi.StaticArrayTypeSpec(pt.abi.Uint32TypeSpec(), 10)
+    )
+    abi_dynamic_bool = pt.abi.DynamicArray(
+        pt.abi.DynamicArrayTypeSpec(pt.abi.BoolTypeSpec())
+    )
+    sv = pt.ScratchVar()
+    expr_int = pt.Int(1)
+
+    cases = [
+        ("vanilla 1", fn_log_add, [abi_u64, abi_u32], "void", None),
+        (
+            "vanilla 1 with wrong ABI type",
+            fn_log_add,
+            [abi_u64, abi_u64],
+            None,
+            pt.TealInputError,
+        ),
+        (
+            "vanilla 1 with ABI return",
+            fn_ret_add,
+            [abi_u64, abi_u32],
+            pt.abi.Uint64TypeSpec(),
+            None,
+        ),
+        (
+            "vanilla 1 with ABI return wrong typed",
+            fn_ret_add,
+            [abi_u32, abi_u64],
+            None,
+            pt.TealInputError,
+        ),
+        (
+            "full ABI annotations no return",
+            fn_abi_annotations_0,
+            [abi_byte, abi_static_u32_10, abi_dynamic_bool],
+            "void",
+            None,
+        ),
+        (
+            "full ABI annotations wrong input 0",
+            fn_abi_annotations_0,
+            [abi_u64, abi_static_u32_10, abi_dynamic_bool],
+            None,
+            pt.TealInputError,
+        ),
+        (
+            "full ABI annotations with ABI return",
+            fn_abi_annotations_0_with_ret,
+            [abi_byte, abi_static_u32_10, abi_dynamic_bool],
+            pt.abi.ByteTypeSpec(),
+            None,
+        ),
+        (
+            "full ABI annotations with ABI return wrong inputs",
+            fn_abi_annotations_0_with_ret,
+            [abi_byte, abi_dynamic_bool, abi_static_u32_10],
+            None,
+            pt.TealInputError,
+        ),
+        (
+            "mixed with ABI annotations 0",
+            fn_mixed_annotations_0,
+            [sv, expr_int, abi_byte],
+            "void",
+            None,
+        ),
+        (
+            "mixed with ABI annotations 0 wrong inputs",
+            fn_mixed_annotations_0,
+            [abi_u64, expr_int, abi_byte],
+            None,
+            pt.TealInputError,
+        ),
+        (
+            "mixed with ABI annotations 0 with ABI return",
+            fn_mixed_annotations_0_with_ret,
+            [sv, expr_int, abi_byte],
+            pt.abi.Uint64TypeSpec(),
+            None,
+        ),
+        (
+            "mixed with ABI annotations 0 with ABI return wrong inputs",
+            fn_mixed_annotations_0_with_ret,
+            [sv, expr_int, sv],
+            None,
+            pt.TealInputError,
+        ),
+        (
+            "mixed with ABI annotations 1",
+            fn_mixed_annotation_1,
+            [sv, abi_static_u32_10],
+            "void",
+            None,
+        ),
+        (
+            "mixed with ABI annotations 1 with ABI return",
+            fn_mixed_annotation_1_with_ret,
+            [sv, abi_u64],
+            pt.abi.BoolTypeSpec(),
+            None,
+        ),
+        (
+            "mixed with ABI annotations 1 with ABI return wrong inputs",
+            fn_mixed_annotation_1_with_ret,
+            [expr_int, abi_static_u32_10],
+            None,
+            pt.TealInputError,
+        ),
+    ]
+
+    for case_name, definition, args, ret_type, err in cases:
+        assert definition.subroutine.argument_count() == len(args), case_name
+        assert (
+            definition.name() == definition.subroutine.implementation.__name__
+        ), case_name
+
+        if err is None:
+            invocation = definition(*args)
+            if ret_type == "void":
+                assert isinstance(invocation, pt.SubroutineCall), case_name
+                assert not invocation.has_return(), case_name
+                assert invocation.args == args, case_name
+            else:
+                assert isinstance(invocation, pt.abi.ReturnedValue), case_name
+                assert invocation.type_spec == ret_type
+                assert isinstance(invocation.computation, pt.SubroutineCall), case_name
+                assert not invocation.computation.has_return(), case_name
+                assert invocation.computation.args == args, case_name
+        else:
+            try:
+                with pytest.raises(err):
+                    definition(*args)
+            except Exception as e:
+                assert (
+                    not e
+                ), f"EXPECTED ERROR of type {err}. encountered unexpected error during invocation case <{case_name}>: {e}"
+
+
 def test_subroutine_definition_invalid():
     def fnWithDefaults(a, b=None):
         return pt.Return()
 
-    def fnWithKeywordArgs(a, *, b):
+    def fnWithKeywordArgs(a, *, output):
+        return pt.Return()
+
+    def fnWithKeywordArgsWrongKWName(a, *, b: pt.abi.Uint64):
+        return pt.Return()
+
+    def fnWithMultipleABIKeywordArgs(a, *, b: pt.abi.Byte, c: pt.abi.Bool):
         return pt.Return()
 
     def fnWithVariableArgs(a, *b):
@@ -513,57 +875,92 @@ def test_subroutine_definition_invalid():
         return pt.abi.Uint64()
 
     cases = (
-        (1, "TealInputError('Input to SubroutineDefinition is not callable'"),
-        (None, "TealInputError('Input to SubroutineDefinition is not callable'"),
+        (
+            1,
+            "TealInputError('Input to SubroutineDefinition is not callable'",
+            "TealInputError('Input to ABIReturnSubroutine is not callable'",
+        ),
+        (
+            None,
+            "TealInputError('Input to SubroutineDefinition is not callable'",
+            "TealInputError('Input to ABIReturnSubroutine is not callable'",
+        ),
         (
             fnWithDefaults,
+            "TealInputError('Function has a parameter with a default value, which is not allowed in a subroutine: b'",
             "TealInputError('Function has a parameter with a default value, which is not allowed in a subroutine: b'",
         ),
         (
             fnWithKeywordArgs,
+            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter output with type",
+            "TealInputError('ABI return subroutine output-kwarg output must specify ABI type')",
+        ),
+        (
+            fnWithKeywordArgsWrongKWName,
             "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type",
+            "TealInputError('ABI return subroutine output-kwarg name must be `output` at this moment",
+        ),
+        (
+            fnWithMultipleABIKeywordArgs,
+            "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type",
+            "multiple output arguments (2) with type annotations",
         ),
         (
             fnWithVariableArgs,
             "TealInputError('Function has a parameter type that is not allowed in a subroutine: parameter b with type",
+            "Function has a parameter type that is not allowed in a subroutine: parameter b with type VAR_POSITIONAL",
         ),
         (
             fnWithNonExprReturnAnnotation,
             "Function has return of disallowed type TealType.uint64. Only Expr is allowed",
+            "Function has return of disallowed type TealType.uint64. Only Expr is allowed",
         ),
         (
             fnWithNonExprParamAnnotation,
-            "Function has parameter b of disallowed type TealType.uint64. Only the types",
+            "Function has parameter b of declared type TealType.uint64 which is not a class",
+            "Function has parameter b of declared type TealType.uint64 which is not a class",
         ),
         (
             fnWithScratchVarSubclass,
+            "Function has parameter b of disallowed type <class 'pyteal.DynamicScratchVar'>",
             "Function has parameter b of disallowed type <class 'pyteal.DynamicScratchVar'>",
         ),
         (
             fnReturningExprSubclass,
             "Function has return of disallowed type <class 'pyteal.Return'>",
+            "Function has return of disallowed type <class 'pyteal.Return'>. Only Expr is allowed",
         ),
         (
             fnWithMixedAnns4AndBytesReturn,
             "Function has return of disallowed type <class 'pyteal.Bytes'>",
+            "Function has return of disallowed type <class 'pyteal.Bytes'>. Only Expr is allowed",
         ),
         (
             fnWithMixedAnnsABIRet1,
+            "Function has return of disallowed type pyteal.StaticArray[pyteal.Uint32, typing.Literal[10]]. "
+            "Only Expr is allowed",
             "Function has return of disallowed type pyteal.StaticArray[pyteal.Uint32, typing.Literal[10]]. "
             "Only Expr is allowed",
         ),
         (
             fnWithMixedAnnsABIRet2,
             "Function has return of disallowed type <class 'pyteal.Uint64'>. Only Expr is allowed",
+            "Function has return of disallowed type <class 'pyteal.Uint64'>. Only Expr is allowed",
         ),
     )
 
-    for fn, msg in cases:
+    for fn, sub_def_msg, abi_sub_def_msg in cases:
         with pytest.raises(pt.TealInputError) as e:
-            print(f"case=[{msg}]")
+            print(f"case=[{sub_def_msg}]")
             pt.SubroutineDefinition(fn, pt.TealType.none)
 
-        assert msg in str(e), "failed for case [{}]".format(fn.__name__)
+        assert sub_def_msg in str(e), f"failed for case [{fn.__name__}]"
+
+        with pytest.raises(pt.TealInputError) as e:
+            print(f"case=[{abi_sub_def_msg}]")
+            pt.ABIReturnSubroutine(fn)
+
+        assert abi_sub_def_msg in str(e), f"failed for case[{fn.__name__}]"
 
 
 def test_subroutine_declaration():
@@ -670,8 +1067,8 @@ def test_evaluate_subroutine_no_args():
             return returnValue
 
         definition = pt.SubroutineDefinition(mySubroutine, returnType)
+        declaration = evaluate_subroutine(definition)
 
-        declaration = evaluateSubroutine(definition)
         assert isinstance(declaration, pt.SubroutineDeclaration)
         assert declaration.subroutine is definition
 
@@ -704,8 +1101,8 @@ def test_evaluate_subroutine_1_arg():
             return returnValue
 
         definition = pt.SubroutineDefinition(mySubroutine, returnType)
+        declaration = evaluate_subroutine(definition)
 
-        declaration = evaluateSubroutine(definition)
         assert isinstance(declaration, pt.SubroutineDeclaration)
         assert declaration.subroutine is definition
 
@@ -748,7 +1145,8 @@ def test_evaluate_subroutine_2_args():
 
         definition = pt.SubroutineDefinition(mySubroutine, returnType)
 
-        declaration = evaluateSubroutine(definition)
+        declaration = evaluate_subroutine(definition)
+
         assert isinstance(declaration, pt.SubroutineDeclaration)
         assert declaration.subroutine is definition
 
@@ -793,8 +1191,8 @@ def test_evaluate_subroutine_10_args():
             return returnValue
 
         definition = pt.SubroutineDefinition(mySubroutine, returnType)
+        declaration = evaluate_subroutine(definition)
 
-        declaration = evaluateSubroutine(definition)
         assert isinstance(declaration, pt.SubroutineDeclaration)
         assert declaration.subroutine is definition
 
