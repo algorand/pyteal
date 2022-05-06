@@ -17,7 +17,7 @@ def fn_0arg_0ret() -> pt.Expr:
 
 @pt.ABIReturnSubroutine
 def fn_0arg_uint64_ret(*, output: pt.abi.Uint64) -> pt.Expr:
-    return res.set(1)
+    return output.set(1)
 
 
 @pt.ABIReturnSubroutine
@@ -99,6 +99,7 @@ def test_abi_sum():
 Int65 = pt.abi.Tuple2[pt.abi.Bool, pt.abi.Uint64]
 
 
+@Blackbox(input_types=[None, None])
 @pt.ABIReturnSubroutine
 def minus(x: Int65, y: Int65, *, output: Int65):
     x0 = pt.abi.Bool()
@@ -140,23 +141,13 @@ def minus(x: Int65, y: Int65, *, output: Int65):
                 pt.Seq(z0.store(pt.Int(1)), z1.Store(y1.get() - x1.get()))
             )
         ),
-        output.set(z0.load(), z1.load()),
+        pt.Return(output.set(z0.load(), z1.load())),
     )
 
 
-# def test_minus():
-#     program = Seq(
-#         (to_sum_arr := abi.DynamicArray(abi.Uint64TypeSpec())).decode(
-#             Txn.application_args[1]
-#         ),
-#         (res := abi.Uint64()).set(abi_sum(to_sum_arr)),
-#         abi.MethodReturn(res),
-#         Int(1),
-#     )
-
-#     teal = pt.compileTeal(minus, pt.Mode.Application, version=6)
-
-#     x = 42
+def test_minus():
+    teal = pt.compileTeal(minus(), pt.Mode.Application, version=6)
+    _ = teal
 
 
 """
