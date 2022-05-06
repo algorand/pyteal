@@ -123,25 +123,41 @@ def minus(x: Int65, y: Int65, *, output: Int65):
         x1.set(x[1]),
         y0.set(y[0]),
         y1.set(y[1]),
-        # Case I. x, y positive
-        pt.If(pt.And(x0.get(), y0.get())).Then(
-            pt.If(x1.get() >= y1.get())
-            .Then(pt.Seq(z0.set(True), z1.set(x1.get() - y1.get())))  # +(x1 - y1)
-            .Else(pt.Seq(z0.set(False), z1.set(y1.get() - x1.get())))  # -(y1 - x1)
-        )
-        # Case II. x positive, y negative
-        .ElseIf(pt.And(x0.get(), pt.Not(y0.get()))).Then(
-            pt.Seq(z0.set(True), z1.set(x1.get() + y1.get()))
-        )  # x1 + y1
-        # Case III. x negative, y positive
-        .ElseIf(pt.And(pt.Not(x0.get()), y0.get())).Then(
-            pt.Seq(z0.set(False), z1.set(x1.get() + y1.get()))
-        )  # -(x1 + y1)
-        # Case IV. x, y negative
-        .Else(
-            pt.If(x1.get() >= y1.get())
-            .Then(pt.Seq(z0.set(False), z1.set(x1.get() - y1.get())))  # -(x1 - y1)
-            .Else(pt.Seq(z0.set(True), z1.set(y1.get() - x1.get())))  # +(y1 - x1)
+        pt.Cond(
+            # Case I. x, y positive
+            [
+                pt.And(x0.get(), y0.get()),
+                pt.Seq(
+                    z0.set(x1.get() >= y1.get()),
+                    z1.set(
+                        pt.If(x1.get() <= y1.get())
+                        .Then(y1.get() - x1.get())
+                        .Else(x1.get() - y1.get())
+                    ),
+                ),
+            ],
+            # Case II. x positive, y negative
+            [
+                pt.And(x0.get(), pt.Not(y0.get())),
+                pt.Seq(z0.set(True), z1.set(x1.get() + y1.get())),
+            ],
+            # Case III. x negative, y positive
+            [
+                pt.And(pt.Not(x0.get()), y0.get()),
+                pt.Seq(z0.set(False), z1.set(x1.get() + y1.get())),
+            ],
+            # Case IV. x, y negative
+            [
+                pt.Int(1),
+                pt.Seq(
+                    z0.set(x1.get() <= y1.get()),
+                    z1.set(
+                        pt.If(x1.get() <= y1.get())
+                        .Then(y1.get() - x1.get())
+                        .Else(x1.get() - y1.get())
+                    ),
+                ),
+            ],
         ),
         output.set(z0, z1),
     )
@@ -177,7 +193,9 @@ def test_minus():
     for i, inspector in enumerate(inspectors):
         args = inputs[i]
         x, y = tuple(map(pytuple_to_num, args))
-        assert x - y == pytuple_to_num(inspector.last_log())
+        assert x - y == pytuple_to_num(inspector.last_log()), inspector.report(
+            args, f"failed for {args}", row=i
+        )
 
 
 """
