@@ -16,7 +16,7 @@ def fn_0arg_0ret() -> pt.Expr:
 
 
 @pt.ABIReturnSubroutine
-def fn_0arg_uint64_ret(*, res: pt.abi.Uint64) -> pt.Expr:
+def fn_0arg_uint64_ret(*, output: pt.abi.Uint64) -> pt.Expr:
     return res.set(1)
 
 
@@ -26,8 +26,8 @@ def fn_1arg_0ret(a: pt.abi.Uint64) -> pt.Expr:
 
 
 @pt.ABIReturnSubroutine
-def fn_1arg_1ret(a: pt.abi.Uint64, *, out: pt.abi.Uint64) -> pt.Expr:
-    return out.set(a)
+def fn_1arg_1ret(a: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+    return output.set(a)
 
 
 @pt.ABIReturnSubroutine
@@ -42,9 +42,9 @@ def fn_2arg_1ret(
     a: pt.abi.Uint64,
     b: pt.abi.StaticArray[pt.abi.Byte, Literal[10]],
     *,
-    out: pt.abi.Byte,
+    output: pt.abi.Byte,
 ) -> pt.Expr:
-    return out.set(b[a.get() % pt.Int(10)])
+    return output.set(b[a.get() % pt.Int(10)])
 
 
 @pt.ABIReturnSubroutine
@@ -52,9 +52,9 @@ def fn_2arg_1ret_with_expr(
     a: pt.Expr,
     b: pt.abi.StaticArray[pt.abi.Byte, Literal[10]],
     *,
-    out: pt.abi.Byte,
+    output: pt.abi.Byte,
 ) -> pt.Expr:
-    return out.set(b[a % pt.Int(10)])
+    return output.set(b[a % pt.Int(10)])
 
 
 # ---- doc test (in our user_guide_test.py as well)
@@ -100,7 +100,7 @@ Int65 = pt.abi.Tuple2[pt.abi.Bool, pt.abi.Uint64]
 
 
 @pt.ABIReturnSubroutine
-def minus(x: Int65, y: Int65, *, z: Int65):
+def minus(x: Int65, y: Int65, *, output: Int65):
     x0 = pt.abi.Bool()
     x1 = pt.abi.Uint64()
     y0 = pt.abi.Bool()
@@ -140,7 +140,7 @@ def minus(x: Int65, y: Int65, *, z: Int65):
                 pt.Seq(z0.store(pt.Int(1)), z1.Store(y1.get() - x1.get()))
             )
         ),
-        z.set(z0.load(), z1.load()),
+        output.set(z0.load(), z1.load()),
     )
 
 
