@@ -106,7 +106,7 @@ Int65 = pt.abi.Tuple2[pt.abi.Bool, pt.abi.Uint64]
 
 @Blackbox(input_types=[None, None])
 @pt.ABIReturnSubroutine
-def minus(x: Int65, y: Int65, *, output: Int65):
+def minus_cond(x: Int65, y: Int65, *, output: Int65):
     """
     WARNING: this example is ONLY for the purpose of demo'ing ABISubroutine + Gravitons's capabilities
     and NOT the recommended approach for implementing integers.
@@ -163,12 +163,58 @@ def minus(x: Int65, y: Int65, *, output: Int65):
     )
 
 
+@Blackbox(input_types=[None, None])
+@pt.ABIReturnSubroutine
+def minus_slick(x: Int65, y: Int65, *, output: Int65):
+    """
+    WARNING: this example is ONLY for the purpose of demo'ing ABISubroutine + Gravitons's capabilities
+    and NOT the recommended approach for implementing integers.
+    A better appraoch would stick to `Uint64` as the base type and use 2's complement arithmetic.
+    """
+    x0 = pt.abi.Bool()
+    x1 = pt.abi.Uint64()
+    y0 = pt.abi.Bool()
+    y1 = pt.abi.Uint64()
+    z0 = pt.abi.Bool()
+    z1 = pt.abi.Uint64()
+    return pt.Seq(
+        x0.set(x[0]),
+        x1.set(x[1]),
+        y0.set(y[0]),
+        y1.set(y[1]),
+        pt.If(x0.get() == y0.get())
+        .Then(  # Case I. x, y same signature
+            pt.Seq(
+                z0.set(pt.Not(x0.get()) ^ (x1.get() >= y1.get())),
+                z1.set(
+                    pt.If(x1.get() <= y1.get())
+                    .Then(y1.get() - x1.get())
+                    .Else(x1.get() - y1.get())
+                ),
+            )
+        )
+        .Else(  # Case II. x, y opposite signatures
+            pt.Seq(
+                z0.set(x0.get()),
+                z1.set(x1.get() + y1.get()),
+            ),
+        ),
+        output.set(z0, z1),
+    )
+
+
 def test_minus():
-    bbpt = BlackboxPyTealer(minus, pt.Mode.Application)
-    approval = bbpt.program()
-    teal = pt.compileTeal(approval(), pt.Mode.Application, version=6)
-    abi_argument_types = bbpt.abi_argument_types()
-    abi_return_type = bbpt.abi_return_type()
+    bbpt_slick = BlackboxPyTealer(minus_slick, pt.Mode.Application)
+    approval_slick = bbpt_slick.program()
+    teal_slick = pt.compileTeal(approval_slick(), pt.Mode.Application, version=6)
+
+    bbpt_cond = BlackboxPyTealer(minus_cond, pt.Mode.Application)
+    approval_cond = bbpt_cond.program()
+    teal_cond = pt.compileTeal(approval_cond(), pt.Mode.Application, version=6)
+
+    # same types, so no need to dupe:
+    abi_argument_types = bbpt_slick.abi_argument_types()
+    abi_return_type = bbpt_slick.abi_return_type()
 
     def pynum_to_tuple(n):
         return (n > 0, abs(n))
@@ -186,16 +232,26 @@ def test_minus():
     ]
 
     algod = algod_with_assertion()
-    inspectors = DryRunExecutor.dryrun_app_on_sequence(
-        algod, teal, inputs, abi_argument_types, abi_return_type
+    inspectors_slick = DryRunExecutor.dryrun_app_on_sequence(
+        algod, teal_slick, inputs, abi_argument_types, abi_return_type
+    )
+    inspectors_cond = DryRunExecutor.dryrun_app_on_sequence(
+        algod, teal_cond, inputs, abi_argument_types, abi_return_type
     )
 
-    for i, inspector in enumerate(inspectors):
+    for i, inspector_slick in enumerate(inspectors_slick):
+        inspector_cond = inspectors_cond[i]
+
         args = inputs[i]
         x, y = tuple(map(pytuple_to_num, args))
-        assert x - y == pytuple_to_num(inspector.last_log()), inspector.report(
-            args, f"failed for {args}", row=i
-        )
+
+        assert x - y == pytuple_to_num(
+            inspector_slick.last_log()
+        ), inspector_slick.report(args, f"failed for {args}", row=i)
+
+        assert x - y == pytuple_to_num(
+            inspector_cond.last_log()
+        ), inspector_cond.report(args, f"failed for {args}", row=i)
 
 
 """
