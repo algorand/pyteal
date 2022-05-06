@@ -1683,7 +1683,7 @@ retsub
 
     # manually add deferred expression to SubroutineDefinition
     declaration = deferredExample.subroutine.get_declaration()
-    declaration.deferred_expr = pt.Bytes("deferred")
+    declaration.deferred_expr = pt.Pop(pt.Bytes("deferred"))
 
     expected_deferred = """#pragma version 6
 int 10
@@ -1719,9 +1719,11 @@ int 1
 return
 deferredExample_0_l7:
 byte "deferred"
+pop
 retsub
 deferredExample_0_l8:
 byte "deferred"
+pop
 retsub
     """.strip()
     actual_deferred = pt.compileTeal(
