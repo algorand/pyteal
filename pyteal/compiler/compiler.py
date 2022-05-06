@@ -142,29 +142,31 @@ def compileSubroutine(
         currentSubroutine is not None
         and currentSubroutine.get_declaration().deferred_expr is not None
     ):
+        # this represents code that should be inserted before each retsub op
         deferred_expr = cast(Expr, currentSubroutine.get_declaration().deferred_expr)
-        # these blocks represent a path of code that should be inserted before each retsub op
-        get_deferred_blocks = lambda: deferred_expr.__teal__(options)  # noqa: E731
 
-        # insert deferred blocks where needed
+        # creating a function so that we can have a new copy of the blocks every time we want to
+        # insert them -- you cannot have the same block in two different places in the control flow
+        # graph
+        def get_deferred_blocks():
+            return deferred_expr.__teal__(options)
+
         for block in TealBlock.Iterate(start):
-            if not isinstance(block, TealSimpleBlock):
-                continue
-
             if not any(op.getOp() == Op.retsub for op in block.ops):
                 continue
 
             if len(block.ops) != 1:
-                # we expect all retsub ops to be in their own block at this point
+                # we expect all retsub ops to be in their own block at this point since
+                # TealBlock.NormalizeBlocks has not yet been used
                 raise TealInternalError(
                     f"Expected retsub to be the only op in the block, but there are {len(block.ops)} ops"
                 )
 
-            # insert deferred blocks between the previous block(s) and this one
             deferred_start, deferred_end = get_deferred_blocks()
             deferred_start.addIncoming()
             deferred_start.validateTree()
 
+            # insert deferred blocks between the previous block(s) and this one
             deferred_start.incoming = block.incoming
             block.incoming = [deferred_end]
             deferred_end.nextBlock = block
