@@ -170,7 +170,7 @@ def test_minus():
         algod, teal, inputs, abi_argument_types, abi_return_type
     )
 
-    x = 42
+    _ = inspectors
 
 
 """
