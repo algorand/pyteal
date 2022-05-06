@@ -1,0 +1,13 @@
+#pragma version 6
+callsub utestint_0
+store 0
+load 0
+itob
+log
+load 0
+return
+
+// utest_int
+utestint_0:
+int 0
+retsub

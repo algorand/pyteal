@@ -1,4 +1,4 @@
-#pragma version 6
+#pragma version 5
 int 1000
 callsub recursiveIsEven_0
 pop

@@ -10,7 +10,7 @@ from pyteal.errors import TealInputError
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 
-from pyteal.ast.abi.type import ComputedValue, TypeSpec, BaseType
+from pyteal.ast.abi.type import ComputedValue, BaseType
 from pyteal.ast.abi.uint import Uint16
 from pyteal.ast.abi.array_base import ArrayTypeSpec, Array
 
@@ -20,7 +20,7 @@ T = TypeVar("T", bound=BaseType)
 
 class DynamicArrayTypeSpec(ArrayTypeSpec[T]):
     def new_instance(self) -> "DynamicArray[T]":
-        return DynamicArray(self.value_type_spec())
+        return DynamicArray(self)
 
     def is_length_dynamic(self) -> bool:
         return True
@@ -47,8 +47,8 @@ DynamicArrayTypeSpec.__module__ = "pyteal"
 class DynamicArray(Array[T]):
     """The class that represents ABI dynamic array type."""
 
-    def __init__(self, value_type_spec: TypeSpec) -> None:
-        super().__init__(DynamicArrayTypeSpec(value_type_spec))
+    def __init__(self, array_type_spec: DynamicArrayTypeSpec[T]) -> None:
+        super().__init__(array_type_spec)
 
     def type_spec(self) -> DynamicArrayTypeSpec[T]:
         return cast(DynamicArrayTypeSpec[T], super().type_spec())

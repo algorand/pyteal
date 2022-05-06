@@ -7,7 +7,7 @@ from pyteal import abi
 POSITIVE_CASES = [
     abi.Uint16(),
     abi.Uint32(),
-    abi.StaticArray(abi.BoolTypeSpec(), 12),
+    abi.StaticArray(abi.StaticArrayTypeSpec(abi.BoolTypeSpec(), 12)),
 ]
 
 

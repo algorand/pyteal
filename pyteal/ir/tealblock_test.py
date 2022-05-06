@@ -1,4 +1,5 @@
 from typing import NamedTuple, List
+
 import pyteal as pt
 
 options = pt.CompileOptions()

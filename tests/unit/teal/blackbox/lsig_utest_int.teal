@@ -1,0 +1,8 @@
+#pragma version 6
+callsub utestint_0
+return
+
+// utest_int
+utestint_0:
+int 0
+retsub

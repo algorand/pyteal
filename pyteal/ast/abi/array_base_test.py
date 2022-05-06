@@ -107,7 +107,7 @@ def test_ArrayElement_store_into():
             assert actual == expected
 
         with pytest.raises(pt.TealInputError):
-            element.store_into(abi.Tuple(elementType))
+            element.store_into(abi.Tuple(abi.TupleTypeSpec(elementType)))
 
     for elementType in STATIC_TYPES + DYNAMIC_TYPES:
         dynamicArrayType = abi.DynamicArrayTypeSpec(elementType)
@@ -158,4 +158,4 @@ def test_ArrayElement_store_into():
         )
 
         with pytest.raises(pt.TealInputError):
-            element.store_into(abi.Tuple(elementType))
+            element.store_into(abi.Tuple(abi.TupleTypeSpec(elementType)))

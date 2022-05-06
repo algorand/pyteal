@@ -57,16 +57,7 @@ Pip install PyTeal in editable state with dependencies:
 
 * `make setup-development`
 * OR if you don't have `make` installed:
-  * `pip install -e.[development]`
-  * Note, that if you're using `zsh` you'll need to escape the brackets: `pip install -e.\[development\]`
-
-Type checking using mypy:
-
-* `mypy pyteal`
-
-Run tests:
-
-* `pytest`
+  * `pip install -e . && pip install -r requirements.txt`
 
 Format code:
 
@@ -75,3 +66,23 @@ Format code:
 Lint using flake8:
 
 * `flake8 docs examples pyteal scripts tests *.py`
+
+Type checking using mypy:
+
+* `mypy pyteal scripts`
+
+Run unit tests:
+
+* `pytest pyteal tests/unit`
+
+Run integration tests (assumes a developer-mode `algod` is available on port 4001):
+
+* `pytest tests/integration`
+
+Stand up developer-mode algod on ports 4001, 4002 and `tealdbg` on port 9392 (assumes [Docker](https://www.docker.com/) is available on your system):
+
+* `docker-compose up -d`
+
+Tear down and clean up resources for the developer-mode algod stood up above:
+
+* `docker-compose down`

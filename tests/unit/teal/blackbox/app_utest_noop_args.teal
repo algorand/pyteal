@@ -1,0 +1,22 @@
+#pragma version 6
+txna ApplicationArgs 0
+btoi
+txna ApplicationArgs 1
+txna ApplicationArgs 2
+callsub utestnoopargs_0
+int 1337
+store 3
+load 3
+itob
+log
+load 3
+return
+
+// utest_noop_args
+utestnoopargs_0:
+store 2
+store 1
+store 0
+int 0
+pop
+retsub

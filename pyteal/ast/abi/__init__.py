@@ -1,5 +1,9 @@
 from pyteal.ast.abi.string import String, StringTypeSpec
-from pyteal.ast.abi.address import AddressTypeSpec, Address, ADDRESS_LENGTH
+from pyteal.ast.abi.address import (
+    AddressTypeSpec,
+    Address,
+    AddressLength,
+)
 from pyteal.ast.abi.type import TypeSpec, BaseType, ComputedValue
 from pyteal.ast.abi.bool import BoolTypeSpec, Bool
 from pyteal.ast.abi.uint import (
@@ -30,15 +34,16 @@ from pyteal.ast.abi.tuple import (
 from pyteal.ast.abi.array_base import ArrayTypeSpec, Array, ArrayElement
 from pyteal.ast.abi.array_static import StaticArrayTypeSpec, StaticArray
 from pyteal.ast.abi.array_dynamic import DynamicArrayTypeSpec, DynamicArray
-from pyteal.ast.abi.util import type_spec_from_annotation
+
 from pyteal.ast.abi.method_return import MethodReturn
+from pyteal.ast.abi.util import type_spec_from_annotation, make
 
 __all__ = [
     "String",
     "StringTypeSpec",
     "Address",
     "AddressTypeSpec",
-    "ADDRESS_LENGTH",
+    "AddressLength",
     "TypeSpec",
     "BaseType",
     "ComputedValue",
@@ -72,6 +77,7 @@ __all__ = [
     "StaticArray",
     "DynamicArrayTypeSpec",
     "DynamicArray",
-    "type_spec_from_annotation",
     "MethodReturn",
+    "type_spec_from_annotation",
+    "make",
 ]
