@@ -249,6 +249,12 @@ def negate(x: Int65, *, output: Int65):
     )
 
 
+@Blackbox(input_types=[None, None])
+@ABIReturnSubroutine
+def add(x: Int65, y: Int65, *, output: Int65):
+    return pt.Seq(y.set(negate(y)), output.set(subtract(x, y)))
+
+
 def test_integer65():
     bbpt_subtract_slick = BlackboxPyTealer(subtract, pt.Mode.Application)
     approval_subtract_slick = bbpt_subtract_slick.program()
@@ -269,6 +275,10 @@ def test_integer65():
     bbpt_negate = BlackboxPyTealer(negate, pt.Mode.Application)
     approval_negate = bbpt_negate.program()
     teal_negate = pt.compileTeal(approval_negate(), pt.Mode.Application, version=6)
+
+    bbpt_add = BlackboxPyTealer(add, pt.Mode.Application)
+    approval_add = bbpt_add.program()
+    teal_add = pt.compileTeal(approval_add(), pt.Mode.Application, version=6)
 
     # same types, so no need to dupe:
     unary_abi_argument_types = bbpt_negate.abi_argument_types()
@@ -295,6 +305,7 @@ def test_integer65():
 
     algod = algod_with_assertion()
 
+    # Binary:
     inspectors_subtract_slick = DryRunExecutor.dryrun_app_on_sequence(
         algod,
         teal_subtract_slick,
@@ -312,6 +323,11 @@ def test_integer65():
     inspectors_mult = DryRunExecutor.dryrun_app_on_sequence(
         algod, teal_mult, binary_inputs, binary_abi_argument_types, abi_return_type
     )
+    inspectors_add = DryRunExecutor.dryrun_app_on_sequence(
+        algod, teal_add, binary_inputs, binary_abi_argument_types, abi_return_type
+    )
+
+    # Unary:
     inspectors_negate = DryRunExecutor.dryrun_app_on_sequence(
         algod, teal_negate, unary_inputs, unary_abi_argument_types, abi_return_type
     )
@@ -320,6 +336,8 @@ def test_integer65():
         inspector_subtract_slick = inspectors_subtract_slick[i]
         inspector_subtract_cond = inspectors_subtract_cond[i]
         inspector_mult = inspectors_mult[i]
+        inspector_add = inspectors_add[i]
+
         inspector_negate = inspectors_negate[i]
 
         binary_args = binary_inputs[i]
@@ -343,6 +361,10 @@ def test_integer65():
         assert x * y == pytuple_to_num(
             inspector_mult.last_log()
         ), inspector_mult.report(binary_args, f"failed for {binary_args}", row=i)
+
+        assert x + y == pytuple_to_num(inspector_add.last_log()), inspector_add.report(
+            binary_args, f"failed for {binary_args}", row=i
+        )
 
         assert -u == pytuple_to_num(
             inspector_negate.last_log()
