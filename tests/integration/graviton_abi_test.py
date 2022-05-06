@@ -402,9 +402,17 @@ def test_complex130():
     approval_cplx_add = bbpt_cplx_add.program()
     teal_cplx_add = pt.compileTeal(approval_cplx_add(), pt.Mode.Application, version=6)
 
-    # unary_abi
-    binary_abi_arguments = bbpt_cplx_add.abi_argument_types()
-    abi_return_type = bbpt_cplx_add.abi_return_type()
+    bbpt_complex_real = BlackboxPyTealer(complex130_real, pt.Mode.Application)
+    approval_cplx_real = bbpt_complex_real.program()
+    teal_cplx_real = pt.compileTeal(
+        approval_cplx_real(), pt.Mode.Application, version=6
+    )
+
+    unary_abi_argument_types = bbpt_complex_real.abi_argument_types()
+    binary_abi_argument_types = bbpt_cplx_add.abi_argument_types()
+
+    real_abi_return_type = bbpt_complex_real.abi_return_type()
+    complex_abi_return_type = bbpt_cplx_add.abi_return_type()
 
     def pyint_to_tuple(n):
         return (n > 0, abs(n))
@@ -426,10 +434,9 @@ def test_complex130():
     choices = range(-999_999, 1_000_000)
 
     unary_inputs = [
-        pycomplex_to_tuple(complex(x, y))
+        (pycomplex_to_tuple(complex(x, y)),)
         for x, y in zip(random.sample(choices, N), random.sample(choices, N))
     ]
-    _ = unary_inputs
 
     binary_inputs = [
         (pycomplex_to_tuple(complex(x, y)), pycomplex_to_tuple(complex(z, w)))
@@ -445,18 +452,37 @@ def test_complex130():
 
     # Binary:
     inspectors_cplx_add = DryRunExecutor.dryrun_app_on_sequence(
-        algod, teal_cplx_add, binary_inputs, binary_abi_arguments, abi_return_type
+        algod,
+        teal_cplx_add,
+        binary_inputs,
+        binary_abi_argument_types,
+        complex_abi_return_type,
+    )
+
+    # Unary:
+    inspectors_cplx_real = DryRunExecutor.dryrun_app_on_sequence(
+        algod,
+        teal_cplx_real,
+        unary_inputs,
+        unary_abi_argument_types,
+        real_abi_return_type,
     )
 
     for i in range(N):
         binary_args = binary_inputs[i]
         x, y = tuple(map(pytuple_to_complex, binary_args))
 
-        # unary_args = unary_inputs[i]
-        # u = pytuple_to_num(unary_args[0])
+        unary_args = unary_inputs[i]
+        u = pytuple_to_complex(unary_args[0])
 
         inspector_cplx_add = inspectors_cplx_add[i]
+
+        inspector_cplx_real = inspectors_cplx_real[i]
 
         assert x + y == pytuple_to_complex(
             inspector_cplx_add.last_log()
         ), inspector_cplx_add.report(binary_args, f"failed for {binary_args}", row=i)
+
+        assert u.real == pytuple_to_int(
+            inspector_cplx_real.last_log()
+        ), inspector_cplx_real.report(unary_args, f"failed for {unary_args}", row=i)
