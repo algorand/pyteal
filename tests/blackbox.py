@@ -1,5 +1,6 @@
 from typing import Callable
 
+import algosdk.abi
 from algosdk.v2client import algod
 
 from graviton import blackbox
@@ -153,136 +154,164 @@ def blackbox_pyteal(subr: BlackboxWrapper, mode: Mode) -> Callable[..., Expr]:
     * `blackbox_pyteal_example1()`: Using blackbox_pyteal() for a simple test of both an app and logic sig
     * `blackbox_pyteal_example2()`: Using blackbox_pyteal() to make 400 assertions and generate a CSV report with 400 dryrun rows
     * `blackbox_pyteal_example3()`: declarative Test Driven Development approach through Invariant's
-    * `blackbox_pyteal_example4()`: Using blackbox_pyteal() to debug an ABIReturnSubroutine
+    * `blackbox_pyteal_example4()`: Using BlackboxPyTealer.program() to debug an ABIReturnSubroutine with an app, logic sig and csv report
     """
-    input_types = subr.input_types
-    assert (
-        input_types is not None
-    ), "please provide input_types in your @Subroutine annotation (crucial for generating proper end-to-end testable PyTeal)"
+    return BlackboxPyTealer(subr, mode).program()
 
-    match subr.subroutine:
-        case SubroutineFnWrapper():
-            approval = _handle_SubroutineFnWrapper(subr, mode, input_types)
-        case ABIReturnSubroutine():
-            approval = _handle_ABIReturnSubroutine(subr, mode, input_types)
-        case _:
-            raise AssertionError(
-                f"Cannot produce Blackbox pyteal for provided subroutine of type {type(subr.subroutine)}"
+
+class BlackboxPyTealer:
+    def __init__(self, subr: BlackboxWrapper, mode: Mode):
+        input_types = subr.input_types
+        assert (
+            input_types is not None
+        ), "please provide input_types in your @Subroutine annotation (crucial for generating proper end-to-end testable PyTeal)"
+
+        self.subr, self.mode, self.input_types = subr, mode, input_types
+        match subr.subroutine:
+            case SubroutineFnWrapper():
+                approval = self._handle_SubroutineFnWrapper()
+            case ABIReturnSubroutine():
+                approval = self._handle_ABIReturnSubroutine()
+            case _:
+                raise AssertionError(
+                    f"Cannot produce Blackbox pyteal for provided subroutine of type {type(subr.subroutine)}"
+                )
+
+        setattr(approval, "__name__", f"sem_{mode}_{subr.name()}")
+        self._pyteal_getter: Callable[..., Expr] = approval
+
+    def is_abi(self) -> bool:
+        return isinstance(self.subr.subroutine, ABIReturnSubroutine)
+
+    def abi_argument_types(self) -> list[None | algosdk.abi.ABIType]:
+        assert self.is_abi(), f"this {type(self)} is not A.B.I. compatible"
+
+        def handle_arg(arg):
+            if isinstance(arg, abi.TypeSpec):
+                return arg.new_instance()
+            return None
+
+        return [handle_arg(arg) for arg in self.input_types]
+
+    def program(self) -> Callable[..., Expr]:
+        return self._pyteal_getter
+
+    def _handle_SubroutineFnWrapper(self):
+        subdef = self.subr.subroutine.subroutine
+        arg_names = subdef.arguments()
+
+        def arg_prep_n_call(i, p):
+            name = arg_names[i]
+            by_ref = name in subdef.by_ref_args
+            arg_expr = (
+                Txn.application_args[i] if self.mode == Mode.Application else Arg(i)
             )
+            if p == TealType.uint64:
+                arg_expr = Btoi(arg_expr)
+            prep = None
+            arg_var = arg_expr
+            if by_ref:
+                arg_var = ScratchVar(p)
+                prep = arg_var.store(arg_expr)
+            return prep, arg_var
 
-    setattr(approval, "__name__", f"sem_{mode}_{subr.name()}")
-    return approval
+        def subr_caller():
+            preps_n_calls = [
+                *(arg_prep_n_call(i, p) for i, p in enumerate(self.input_types))
+            ]
+            preps, calls = zip(*preps_n_calls) if preps_n_calls else ([], [])
+            preps = [p for p in preps if p]
+            invocation = self.subr(*calls)
+            if preps:
+                return Seq(*(preps + [invocation]))
+            return invocation
 
+        def make_return(e):
+            if e.type_of() == TealType.uint64:
+                return e
+            if e.type_of() == TealType.bytes:
+                return Len(e)
+            if e.type_of() == TealType.anytype:
+                x = ScratchVar(TealType.anytype)
+                return Seq(x.store(e), Int(1337))
+            # TealType.none:
+            return Seq(e, Int(1337))
 
-def _handle_SubroutineFnWrapper(subr, mode, input_types):
-    subdef = subr.subroutine.subroutine
-    arg_names = subdef.arguments()
+        def make_log(e):
+            if e.type_of() == TealType.uint64:
+                return Log(Itob(e))
+            if e.type_of() == TealType.bytes:
+                return Log(e)
+            return Log(Bytes("nada"))
 
-    def arg_prep_n_call(i, p):
-        name = arg_names[i]
-        by_ref = name in subdef.by_ref_args
-        arg_expr = Txn.application_args[i] if mode == Mode.Application else Arg(i)
-        if p == TealType.uint64:
-            arg_expr = Btoi(arg_expr)
-        prep = None
-        arg_var = arg_expr
-        if by_ref:
-            arg_var = ScratchVar(p)
-            prep = arg_var.store(arg_expr)
-        return prep, arg_var
+        if self.mode == Mode.Signature:
 
-    def subr_caller():
-        preps_n_calls = [*(arg_prep_n_call(i, p) for i, p in enumerate(input_types))]
-        preps, calls = zip(*preps_n_calls) if preps_n_calls else ([], [])
-        preps = [p for p in preps if p]
-        invocation = subr(*calls)
-        if preps:
-            return Seq(*(preps + [invocation]))
-        return invocation
+            def approval():
+                return make_return(subr_caller())
 
-    def make_return(e):
-        if e.type_of() == TealType.uint64:
-            return e
-        if e.type_of() == TealType.bytes:
-            return Len(e)
-        if e.type_of() == TealType.anytype:
-            x = ScratchVar(TealType.anytype)
-            return Seq(x.store(e), Int(1337))
-        # TealType.none:
-        return Seq(e, Int(1337))
-
-    def make_log(e):
-        if e.type_of() == TealType.uint64:
-            return Log(Itob(e))
-        if e.type_of() == TealType.bytes:
-            return Log(e)
-        return Log(Bytes("nada"))
-
-    if mode == Mode.Signature:
-
-        def approval():
-            return make_return(subr_caller())
-
-    else:
-
-        def approval():
-            if subdef.return_type == TealType.none:
-                result = ScratchVar(TealType.uint64)
-                part1 = [subr_caller(), result.store(Int(1337))]
-            else:
-                result = ScratchVar(subdef.return_type)
-                part1 = [result.store(subr_caller())]
-
-            part2 = [make_log(result.load()), make_return(result.load())]
-            return Seq(*(part1 + part2))
-
-    return approval
-
-
-def _handle_ABIReturnSubroutine(subr, mode, input_types):
-    subdef = subr.subroutine.subroutine
-    arg_names = subdef.arguments()
-
-    def arg_prep_n_call(i, p):
-        name = arg_names[i]
-        arg_expr = Txn.application_args[i] if mode == Mode.Application else Arg(i)
-        if p == TealType.uint64:
-            arg_expr = Btoi(arg_expr)
-        prep = None
-        arg_var = arg_expr
-        if name in subdef.by_ref_args:
-            arg_var = ScratchVar(p)
-            prep = arg_var.store(arg_expr)
-        elif name in subdef.abi_args:
-            arg_var = p.new_instance()
-            prep = arg_var.decode(arg_expr)
-        return prep, arg_var
-
-    output = None
-    if subr.subroutine.output_kwarg_info:
-        output = subr.subroutine.output_kwarg_info.abi_type.new_instance()
-
-    def approval():
-        preps_n_calls = [*(arg_prep_n_call(i, p) for i, p in enumerate(input_types))]
-        preps, calls = zip(*preps_n_calls) if preps_n_calls else ([], [])
-        preps = [p for p in preps if p]
-
-        # when @ABIReturnSubroutine is void:
-        #   invocation is an Expr of TealType.none
-        # otherwise:
-        #   it is a ComputedValue
-        invocation = subr(*calls)
-        if output:
-            invocation = output.set(invocation)
-            if mode == Mode.Signature:
-                results = [invocation, Pop(output.encode()), Int(1)]
-            else:
-                results = [invocation, abi.MethodReturn(output), Int(1)]
         else:
-            results = [invocation, Int(1)]
 
-        if preps:
-            return Seq(*(preps + results))
-        return results
+            def approval():
+                if subdef.return_type == TealType.none:
+                    result = ScratchVar(TealType.uint64)
+                    part1 = [subr_caller(), result.store(Int(1337))]
+                else:
+                    result = ScratchVar(subdef.return_type)
+                    part1 = [result.store(subr_caller())]
 
-    return approval
+                part2 = [make_log(result.load()), make_return(result.load())]
+                return Seq(*(part1 + part2))
+
+        return approval
+
+    def _handle_ABIReturnSubroutine(self):
+        subdef = self.subr.subroutine.subroutine
+        arg_names = subdef.arguments()
+
+        def arg_prep_n_call(i, p):
+            name = arg_names[i]
+            arg_expr = (
+                Txn.application_args[i] if self.mode == Mode.Application else Arg(i)
+            )
+            if p == TealType.uint64:
+                arg_expr = Btoi(arg_expr)
+            prep = None
+            arg_var = arg_expr
+            if name in subdef.by_ref_args:
+                arg_var = ScratchVar(p)
+                prep = arg_var.store(arg_expr)
+            elif name in subdef.abi_args:
+                arg_var = p.new_instance()
+                prep = arg_var.decode(arg_expr)
+            return prep, arg_var
+
+        output = None
+        if self.subr.subroutine.output_kwarg_info:
+            output = self.subr.subroutine.output_kwarg_info.abi_type.new_instance()
+
+        def approval():
+            preps_n_calls = [
+                *(arg_prep_n_call(i, p) for i, p in enumerate(self.input_types))
+            ]
+            preps, calls = zip(*preps_n_calls) if preps_n_calls else ([], [])
+            preps = [p for p in preps if p]
+
+            # when @ABIReturnSubroutine is void:
+            #   invocation is an Expr of TealType.none
+            # otherwise:
+            #   it is a ComputedValue
+            invocation = self.subr(*calls)
+            if output:
+                invocation = output.set(invocation)
+                if self.mode == Mode.Signature:
+                    results = [invocation, Pop(output.encode()), Int(1)]
+                else:
+                    results = [invocation, abi.MethodReturn(output), Int(1)]
+            else:
+                results = [invocation, Int(1)]
+
+            if preps:
+                return Seq(*(preps + results))
+            return results
+
+        return approval

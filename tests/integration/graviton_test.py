@@ -757,41 +757,95 @@ def blackbox_pyteal_example3():
         Invariant(predicate).validates(property, inputs, inspectors)
 
 
-def test_abi_sum():
+def blackbox_pyteal_example4():
+    # Example 4: Using BlackboxPyTealer.program() to debug an ABIReturnSubroutine with an app, logic sig and csv report
+    from pathlib import Path
+    import random
+
+    from graviton.blackbox import DryRunExecutor, DryRunInspector
+
+    from pyteal import (
+        abi,
+        compileTeal,
+        ABIReturnSubroutine,
+        Expr,
+        For,
+        Int,
+        Mode,
+        ScratchVar,
+        Seq,
+        TealType,
+    )
+
+    from tests.blackbox import Blackbox, BlackboxPyTealer, algod_with_assertion
+
+    # Sum a dynamic uint64 array
     @Blackbox(input_types=[None])
-    @pt.ABIReturnSubroutine
-    def abi_sum(
-        toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64
-    ) -> pt.Expr:
-        i = pt.ScratchVar(pt.TealType.uint64)
-        valueAtIndex = pt.abi.Uint64()
-        return pt.Seq(
+    @ABIReturnSubroutine
+    def abi_sum(toSum: abi.DynamicArray[abi.Uint64], *, output: abi.Uint64) -> Expr:
+        i = ScratchVar(TealType.uint64)
+        valueAtIndex = abi.Uint64()
+        return Seq(
             output.set(0),
-            pt.For(
-                i.store(pt.Int(0)),
+            For(
+                i.store(Int(0)),
                 i.load() < toSum.length(),
-                i.store(i.load() + pt.Int(1)),
+                i.store(i.load() + Int(1)),
             ).Do(
-                pt.Seq(
+                Seq(
                     toSum[i.load()].store_into(valueAtIndex),
                     output.set(output.get() + valueAtIndex.get()),
                 )
             ),
         )
 
-    abi_sum_app_pt = blackbox_pyteal(abi_sum, pt.Mode.Application)
-    abi_sum_app_tl = pt.compileTeal(abi_sum_app_pt(), pt.Mode.Application, version=6)
-    abi_sum_lsig_pt = blackbox_pyteal(abi_sum, pt.Mode.Signature)
-    abi_sum_lsig_tl = pt.compileTeal(abi_sum_lsig_pt(), pt.Mode.Signature, version=6)
+    # instantiate BlackboxPyTealer objects for the app and lsig:
+    app_pytealer = BlackboxPyTealer(abi_sum, Mode.Application)
+    lsig_pytealer = BlackboxPyTealer(abi_sum, Mode.Signature)
 
-    todo_use_these_guys = abi_sum_app_tl
-    todo_use_these_guys = abi_sum_lsig_tl
-    _ = todo_use_these_guys
+    # create approval PyTeal app and lsig:
+    pyteal_abi_sum_app = app_pytealer.program()
+    pyteal_abi_sum_lsig = lsig_pytealer.program()
+
+    # compile the PyTeal's to Teal's:
+    teal_abi_sum_app = compileTeal(pyteal_abi_sum_app(), Mode.Application, version=6)
+    teal_abi_sum_lsig = compileTeal(pyteal_abi_sum_lsig(), Mode.Signature, version=6)
+
+    # infer the abi types for encoding/decoding dry runs:
+    abi_argument_types = app_pytealer.abi_argument_types()
+
+    # generate reports with the same random inputs (fix the randomness with a seed):
+    random.seed(42)
+
+    choices = range(10_000)
+    inputs = []
+    for n in range(100):
+        inputs.append(tuple(random.sample(choices, n)))
+
+    # execute the dry-run sequence:
+    algod = algod_with_assertion()
+
+    # abi_arg_types =
+    app_inspectors = DryRunExecutor.dryrun_app_on_sequence(
+        algod,
+        teal_abi_sum_app,
+        inputs,
+    )
+    todo_use_these_guys = teal_abi_sum_app
+    todo_use_these_guys = teal_abi_sum_lsig
+
+    def report():
+        pass
 
 
 @pytest.mark.parametrize(
     "example",
-    [blackbox_pyteal_example1, blackbox_pyteal_example2, blackbox_pyteal_example3],
+    [
+        blackbox_pyteal_example1,
+        blackbox_pyteal_example2,
+        blackbox_pyteal_example3,
+        blackbox_pyteal_example4,
+    ],
 )
 def test_blackbox_pyteal_examples(example):
     example()
