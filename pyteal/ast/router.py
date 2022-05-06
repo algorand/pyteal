@@ -1,12 +1,13 @@
-from typing import cast
+from algosdk.abi import Contract, Method
 from dataclasses import dataclass
+from typing import Any, cast, Optional
 
 from pyteal.config import METHOD_ARG_NUM_LIMIT
 from pyteal.errors import TealInputError
 from pyteal.types import TealType
-from pyteal.ast.subroutine import SubroutineFnWrapper
 
 # from pyteal.ast import abi
+from pyteal.ast.subroutine import SubroutineFnWrapper
 from pyteal.ast.cond import Cond
 from pyteal.ast.expr import Expr
 from pyteal.ast.app import OnComplete, EnumInt
@@ -47,6 +48,7 @@ Notes for OC:
 class ProgramNode:
     condition: Expr
     branch: Expr
+    method_info: Optional[Method]
 
 
 ProgramNode.__module__ = "pyteal"
@@ -55,7 +57,8 @@ ProgramNode.__module__ = "pyteal"
 class Router:
     """ """
 
-    def __init__(self) -> None:
+    def __init__(self, name: str = None) -> None:
+        self.name = "Contract" if name is None else name
         self.approval_if_then: list[ProgramNode] = []
         self.clear_state_if_then: list[ProgramNode] = []
 
@@ -167,25 +170,31 @@ class Router:
         return Seq(*exprList)
 
     def __append_to_ast(
-        self, approval_conds: list[Expr], clear_state_conds: list[Expr], branch: Expr
+        self,
+        approval_conditions: list[Expr],
+        clear_state_conditions: list[Expr],
+        branch: Expr,
+        method_obj: Optional[Method] = None,
     ) -> None:
         """ """
-        if len(approval_conds) > 0:
+        if len(approval_conditions) > 0:
             self.approval_if_then.append(
                 ProgramNode(
-                    And(*approval_conds)
-                    if len(approval_conds) > 1
-                    else approval_conds[0],
+                    And(*approval_conditions)
+                    if len(approval_conditions) > 1
+                    else approval_conditions[0],
                     branch,
+                    method_obj,
                 )
             )
-        if len(clear_state_conds) > 0:
+        if len(clear_state_conditions) > 0:
             self.clear_state_if_then.append(
                 ProgramNode(
-                    And(*clear_state_conds)
-                    if len(clear_state_conds) > 1
-                    else clear_state_conds[0],
+                    And(*clear_state_conditions)
+                    if len(clear_state_conditions) > 1
+                    else clear_state_conditions[0],
                     branch,
+                    method_obj,
                 )
             )
 
@@ -206,7 +215,7 @@ class Router:
             method_to_register=None, on_completes=ocList, creation=creation
         )
         branch = Router.__wrap_handler(False, bare_app_call)
-        self.__append_to_ast(approval_conds, clear_state_conds, branch)
+        self.__append_to_ast(approval_conds, clear_state_conds, branch, None)
 
     def on_method_call(
         self,
@@ -222,7 +231,12 @@ class Router:
             method_to_register=method_app_call, on_completes=oc_list, creation=creation
         )
         branch = Router.__wrap_handler(True, method_app_call)
-        self.__append_to_ast(approval_conds, clear_state_conds, branch)
+        self.__append_to_ast(
+            approval_conds,
+            clear_state_conds,
+            branch,
+            Method.from_signature(method_signature),
+        )
 
     @staticmethod
     def __ast_construct(
@@ -236,12 +250,18 @@ class Router:
 
         return program
 
-    def build_program(self) -> tuple[Expr, Expr]:
-        # TODO need JSON object
+    def __contract_construct(self) -> dict[str, Any]:
+        method_collections = [
+            node.method_info for node in self.approval_if_then if node.method_info
+        ]
+        return Contract(self.name, method_collections).dictify()
+
+    def build_program(self) -> tuple[Expr, Expr, dict[str, Any]]:
         """ """
         return (
             Router.__ast_construct(self.approval_if_then),
             Router.__ast_construct(self.clear_state_if_then),
+            self.__contract_construct(),
         )
 
 
