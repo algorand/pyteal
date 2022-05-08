@@ -733,10 +733,10 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
         )
     # if there is an output keyword argument for ABI, place the storing on the stack
     if output_carrying_abi:
-        # if subroutine_body.has_return():
-        #     raise TealInputError(
-        #         "ABI returning subroutine definition should have no return"
-        #     )
+        if subroutine_body.has_return():
+            raise TealInputError(
+                "ABI returning subroutine definition should have no return"
+            )
         if subroutine_body.type_of() != TealType.none:
             raise TealInputError(
                 f"ABI returning subroutine definition should evaluate to TealType.none, "
