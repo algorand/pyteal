@@ -459,6 +459,5 @@ def test_abi_type_translation():
     for algosdk_abi, abi_string, pyteal_abi_ts in test_cases:
         print(f"({algosdk_abi}, {abi_string}, {pyteal_abi_ts}),")
         assert str(algosdk_abi) == abi_string == str(pyteal_abi_ts)
-        assert algosdk_abi == algosdk.abi.ABIType.from_string(abi_string)
-        assert algosdk_abi == algosdk.abi.ABIType.from_string(str(pyteal_abi_ts))
+        assert algosdk_abi == algosdk.abi.ABIType.from_string(abi_string) == algosdk.abi.ABIType.from_string(str(pyteal_abi_ts))
         assert algosdk_abi == abi.algosdk_from_type_spec(pyteal_abi_ts)
