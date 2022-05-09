@@ -526,10 +526,6 @@ class ABIReturnSubroutine:
     def _get_output_kwarg_info(
         cls, fn_implementation: Callable[..., Expr]
     ) -> Optional[OutputKwArgInfo]:
-        """
-        TODO: This probably should become _output_info()
-        and if there is a kw-only arg it is unique and its name is "output"
-        """
         if not callable(fn_implementation):
             raise TealInputError("Input to ABIReturnSubroutine is not callable")
         sig = signature(fn_implementation)
