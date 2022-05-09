@@ -77,7 +77,7 @@ class BlackboxWrapper:
                 )
 
 
-def Blackbox(input_types: list[TealType]):
+def Blackbox(input_types: list[TealType | None]):
     """
     Decorator for trasforming @Subroutine and @ABIReturnSubroutine wrapped functions
     into executable pyteal programs.
@@ -90,7 +90,7 @@ def Blackbox(input_types: list[TealType]):
             * if the subroutine argument is an Expr or a ScratchVar, the shadowing input_type
                 must be a TealType of the same kind as expected in the argument
 
-    Some Correct Examples:
+    Some _Correct_ Examples:
 
     @Blackbox(input_types=[TealType.bytes, TealType.uint64])
     @Subroutine(TealType.bytes)
@@ -120,7 +120,7 @@ def Blackbox(input_types: list[TealType]):
 
     """
 
-    def decorator_blackbox(func: SubroutineFnWrapper):
+    def decorator_blackbox(func: SubroutineFnWrapper | ABIReturnSubroutine):
         return BlackboxWrapper(func, input_types)
 
     return decorator_blackbox

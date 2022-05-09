@@ -84,6 +84,12 @@ class SubroutineDefinition:
     ]:
         """Validate the full function signature and annotations for subroutine definition.
 
+        TODO: does this doc-comment still make sense after all the refactoring in this branch,
+            `abi-subroutine` and `feature/abi` is complete?
+
+        NOTE: `self.implementation` and `self.abi_output_arg_name` should have been properly set
+            before calling `_validate()`
+
         This function iterates through `sig.parameters.items()`, and checks each of subroutine arguments.
         On each of the subroutine arguments, the following checks are performed:
         - If argument is not POSITION_ONLY or not POSITIONAL_OR_KEYWORD, error
@@ -104,8 +110,7 @@ class SubroutineDefinition:
         We load the ABI scratch space stored value to stack, and store them later in subroutine's local ABI values.
 
         Args:
-            input_types (optional): for testing purposes - expected `TealType`s of each parameter
-        Returns:
+            Returns:
             impl_params: a map from python function implementation's argument name, to argument's parameter.
             annotations: a dict whose keys are names of type-annotated arguments,
                 and values are appearing type-annotations.
@@ -173,7 +178,7 @@ class SubroutineDefinition:
             if isinstance(expected_arg_type, abi.TypeSpec):
                 abi_args[name] = expected_arg_type
 
-        if input_types:
+        if input_types is not None:
             input_arg_count = len(impl_params) - len(abi_output_kwarg)
             if len(input_types) != input_arg_count:
                 raise TealInputError(
@@ -507,6 +512,7 @@ class ABIReturnSubroutine:
         self,
         fn_implementation: Callable[..., Expr],
     ) -> None:
+        # TODO: this should become _output_info()
         self.output_kwarg_info: Optional[
             OutputKwArgInfo
         ] = self._output_name_type_from_fn(fn_implementation)
@@ -517,6 +523,7 @@ class ABIReturnSubroutine:
                 self.output_kwarg_info.abi_type.storage_type()
             )
 
+        # TODO: this should be simplified
         output_kwarg_name = None
         if self.output_kwarg_info:
             output_kwarg_name = self.output_kwarg_info.name
@@ -533,6 +540,10 @@ class ABIReturnSubroutine:
     def _output_name_type_from_fn(
         fn_implementation: Callable[..., Expr]
     ) -> Optional[OutputKwArgInfo]:
+        """
+        TODO: This probably should become _output_info()
+        and if there is a kw-only arg it is unique and its name is "output"
+        """
         if not callable(fn_implementation):
             raise TealInputError("Input to ABIReturnSubroutine is not callable")
         sig = signature(fn_implementation)
@@ -546,6 +557,7 @@ class ABIReturnSubroutine:
             case []:
                 return None
             case [name]:
+                # TODO: should be class variable OUTPUT_KEYWORD_ARG_NAME = "output"
                 if name != "output":
                     raise TealInputError(
                         f"ABI return subroutine output-kwarg name must be `output` at this moment, "

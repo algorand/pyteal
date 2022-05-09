@@ -199,6 +199,8 @@ def test_subroutine_definition_validate():
     DFS through SubroutineDefinition.validate()'s logic
     """
 
+    # TODO: shouldn't really have abi_output_arg_name optionality. Remove
+    # this when the optionality in the the codebase is removed
     def mock_subroutine_definition(implementation, abi_output_arg_name=None):
         mock = pt.SubroutineDefinition(lambda: pt.Return(pt.Int(1)), pt.TealType.uint64)
         mock._validate()  # haven't failed with dummy implementation
@@ -214,25 +216,7 @@ def test_subroutine_definition_validate():
         "Input to SubroutineDefinition is not callable"
     )
 
-    # input_types:
-
     three_params = mock_subroutine_definition(lambda x, y, z: pt.Return(pt.Int(1)))
-    two_inputs = [pt.TealType.uint64, pt.TealType.bytes]
-    with pytest.raises(pt.TealInputError) as tie:
-        three_params._validate(input_types=two_inputs)
-
-    assert tie.value == pt.TealInputError(
-        "Provided number of input_types (2) does not match detected number of input parameters (3)"
-    )
-
-    three_inputs_with_a_wrong_type = [pt.TealType.uint64, pt.Expr, pt.TealType.bytes]
-
-    with pytest.raises(pt.TealInputError) as tie:
-        three_params._validate(input_types=three_inputs_with_a_wrong_type)
-
-    assert tie.value == pt.TealInputError(
-        "Function has input type <class 'pyteal.Expr'> for parameter y which is not a TealType"
-    )
 
     params, anns, arg_types, byrefs, abi_args, output_kwarg = three_params._validate()
     assert len(params) == 3
@@ -255,6 +239,8 @@ def test_subroutine_definition_validate():
 
     # now we iterate through the implementation params validating each as we go
 
+    # TODO: what's going on? output_kwarg_name must be "output"!!!!
+    # We shouldn't even have to deal with this here!!!
     def var_abi_output_impl(*, z: pt.abi.Uint16):
         pt.Return(pt.Int(1))  # this is wrong but ignored
 
@@ -322,15 +308,6 @@ def test_subroutine_definition_validate():
         "Function has a parameter with a default value, which is not allowed in a subroutine: x"
     )
 
-    with pytest.raises(pt.TealInputError) as tie:
-        three_params._validate(
-            input_types=[pt.TealType.uint64, pt.Expr, pt.TealType.anytype]
-        )
-
-    assert tie.value == pt.TealInputError(
-        "Function has input type <class 'pyteal.Expr'> for parameter y which is not a TealType"
-    )
-
     # Now we get to _validate_annotation():
     one_vanilla = mock_subroutine_definition(lambda x: pt.Return(pt.Int(1)))
 
@@ -366,8 +343,6 @@ def test_subroutine_definition_validate():
     assert abi_args == {}
     assert output_kwarg == {}
 
-    # for _is_abi_annotation() cf. copacetic x,y,z product below
-
     # not is_class()
     def one_nontype_impl(x: "blahBlah"):  # type: ignore # noqa: F821
         return pt.Return(pt.Int(1))
@@ -391,7 +366,57 @@ def test_subroutine_definition_validate():
         "Function has parameter x of disallowed type <class 'pyteal.DynamicScratchVar'>. Only the types (<class 'pyteal.Expr'>, <class 'pyteal.ScratchVar'>, 'ABI') are allowed"
     )
 
-    # Now we're back to validate() and everything should be copacetic
+    # Now we're back to _validate() main body and looking at input_types
+
+    three_params_with_output = mock_subroutine_definition(
+        lambda x, y, z, *, output: pt.Return(pt.Int(1)), abi_output_arg_name="output"
+    )
+    four_inputs = [
+        pt.TealType.uint64,
+        pt.TealType.uint64,
+        pt.TealType.bytes,
+        pt.TealType.uint64,
+    ]
+
+    two_inputs = [pt.TealType.uint64, pt.TealType.bytes]
+    with pytest.raises(pt.TealInputError) as tie:
+        three_params._validate(input_types=two_inputs)
+
+    assert tie.value == pt.TealInputError(
+        "Provided number of input_types (2) does not match detected number of input parameters (3)"
+    )
+
+    three_inputs_with_a_wrong_type = [pt.TealType.uint64, pt.Expr, pt.TealType.bytes]
+
+    with pytest.raises(pt.TealInputError) as tie:
+        three_params._validate(input_types=three_inputs_with_a_wrong_type)
+
+    assert tie.value == pt.TealInputError(
+        "Function has input type <class 'pyteal.Expr'> for parameter y which is not a TealType"
+    )
+
+    with pytest.raises(pt.TealInputError) as tie:
+        three_params._validate(
+            input_types=[pt.TealType.uint64, pt.Expr, pt.TealType.anytype]
+        )
+
+    assert tie.value == pt.TealInputError(
+        "Function has input type <class 'pyteal.Expr'> for parameter y which is not a TealType"
+    )
+
+    with pytest.raises(pt.TealInputError) as tie:
+        three_params._validate(
+            input_types=[pt.TealType.uint64, None, pt.TealType.anytype]
+        )
+    assert tie.value == pt.TealInputError(
+        "input_type for y is unspecified i.e. None but this is only allowed for ABI arguments"
+    )
+
+    # this one gets caught inside of _validate_annotation()
+    with pytest.raises(pt.TealInputError) as tie:
+        three_params_with_output._validate(input_types=four_inputs)
+
+    # everything should be copacetic
     for x, y, z in product(pt.TealType, pt.TealType, pt.TealType):
         (
             params,

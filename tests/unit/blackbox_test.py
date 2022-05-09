@@ -77,13 +77,6 @@ UNITS = [
 
 @pytest.mark.parametrize("subr, mode", product(UNITS, pt.Mode))
 def test_blackbox_pyteal(subr, mode):
-    """
-    TODO: here's an example of issue #199 at play - (the thread-safety aspect):
-    compare the following!
-    % pytest -n 2 tests/unit/blackbox_test.py::test_blackbox_pyteal
-    vs
-    % pytest -n 1 tests/unit/blackbox_test.py::test_blackbox_pyteal
-    """
     is_app = mode == pt.Mode.Application
     name = f"{'app' if is_app else 'lsig'}_{subr.name()}"
 
