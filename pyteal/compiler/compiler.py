@@ -10,7 +10,7 @@ from pyteal.ast import (
     SubroutineDefinition,
     SubroutineDeclaration,
 )
-from pyteal.ir import Mode, TealComponent, TealOp, TealBlock, TealSimpleBlock
+from pyteal.ir import Mode, Op, TealComponent, TealOp, TealBlock, TealSimpleBlock
 from pyteal.errors import TealInputError, TealInternalError
 
 from pyteal.compiler.sort import sortBlocks
@@ -133,26 +133,60 @@ def compileSubroutine(
             ast = Return(ast)
 
     options.setSubroutine(currentSubroutine)
+
     start, end = ast.__teal__(options)
     start.addIncoming()
+    start.validateTree()
+
+    if (
+        currentSubroutine is not None
+        and currentSubroutine.get_declaration().deferred_expr is not None
+    ):
+        # this represents code that should be inserted before each retsub op
+        deferred_expr = cast(Expr, currentSubroutine.get_declaration().deferred_expr)
+
+        for block in TealBlock.Iterate(start):
+            if not any(op.getOp() == Op.retsub for op in block.ops):
+                continue
+
+            if len(block.ops) != 1:
+                # we expect all retsub ops to be in their own block at this point since
+                # TealBlock.NormalizeBlocks has not yet been used
+                raise TealInternalError(
+                    f"Expected retsub to be the only op in the block, but there are {len(block.ops)} ops"
+                )
+
+            # we invoke __teal__ here and not outside of this loop because the same block cannot be
+            # added in multiple places to the control flow graph
+            deferred_start, deferred_end = deferred_expr.__teal__(options)
+            deferred_start.addIncoming()
+            deferred_start.validateTree()
+
+            # insert deferred blocks between the previous block(s) and this one
+            deferred_start.incoming = block.incoming
+            block.incoming = [deferred_end]
+            deferred_end.nextBlock = block
+
+            for prev in deferred_start.incoming:
+                prev.replaceOutgoing(block, deferred_start)
+
+            if block is start:
+                # this is the start block, replace start
+                start = deferred_start
+
     start.validateTree()
 
     start = TealBlock.NormalizeBlocks(start)
     start.validateTree()
 
-    order = sortBlocks(start, end)
-    teal = flattenBlocks(order)
-
-    verifyOpsForVersion(teal, options.version)
-    verifyOpsForMode(teal, options.mode)
-
     subroutine_start_blocks[currentSubroutine] = start
     subroutine_end_blocks[currentSubroutine] = end
 
     referencedSubroutines: Set[SubroutineDefinition] = set()
-    for stmt in teal:
-        for subroutine in stmt.getSubroutines():
-            referencedSubroutines.add(subroutine)
+    for block in TealBlock.Iterate(start):
+        for stmt in block.ops:
+            for subroutine in stmt.getSubroutines():
+                referencedSubroutines.add(subroutine)
 
     if currentSubroutine is not None:
         subroutineGraph[currentSubroutine] = referencedSubroutines
@@ -255,6 +289,9 @@ def compileTeal(
 
     subroutineLabels = resolveSubroutines(subroutineMapping)
     teal = flattenSubroutines(subroutineMapping, subroutineLabels)
+
+    verifyOpsForVersion(teal, options.version)
+    verifyOpsForMode(teal, options.mode)
 
     if assembleConstants:
         if version < 3:

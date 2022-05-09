@@ -5,7 +5,6 @@ from typing import Any, Callable, Final, Optional, TYPE_CHECKING, cast
 
 from pyteal.ast import abi
 from pyteal.ast.expr import Expr
-from pyteal.ast.return_ import Return
 from pyteal.ast.seq import Seq
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
 from pyteal.errors import TealInputError, verifyTealVersion
@@ -307,10 +306,16 @@ SubroutineDefinition.__module__ = "pyteal"
 
 
 class SubroutineDeclaration(Expr):
-    def __init__(self, subroutine: SubroutineDefinition, body: Expr) -> None:
+    def __init__(
+        self,
+        subroutine: SubroutineDefinition,
+        body: Expr,
+        deferred_expr: Optional[Expr] = None,
+    ) -> None:
         super().__init__()
         self.subroutine = subroutine
         self.body = body
+        self.deferred_expr = deferred_expr
 
     def __teal__(self, options: "CompileOptions"):
         return self.body.__teal__(options)
@@ -723,24 +728,21 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
         raise TealInputError(
             f"Subroutine function does not return a PyTeal expression. Got type {type(subroutine_body)}."
         )
+
+    deferred_expr: Optional[Expr] = None
+
     # if there is an output keyword argument for ABI, place the storing on the stack
     if output_carrying_abi:
-        if subroutine_body.has_return():
-            raise TealInputError(
-                "ABI returning subroutine definition should have no return"
-            )
         if subroutine_body.type_of() != TealType.none:
             raise TealInputError(
                 f"ABI returning subroutine definition should evaluate to TealType.none, "
                 f"while evaluate to {subroutine_body.type_of()}."
             )
-        subroutine_body = Seq(
-            subroutine_body, Return(output_carrying_abi.stored_value.load())
-        )
+        deferred_expr = output_carrying_abi.stored_value.load()
 
     # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
     # need to reverse order of argumentVars because the last argument will be on top of the stack
     body_ops = [var.slot.store() for var in arg_vars[::-1]]
     body_ops.append(subroutine_body)
 
-    return SubroutineDeclaration(subroutine, Seq(body_ops))
+    return SubroutineDeclaration(subroutine, Seq(body_ops), deferred_expr)
