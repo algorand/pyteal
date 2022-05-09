@@ -199,11 +199,11 @@ def test_subroutine_definition_validate():
     DFS through SubroutineDefinition.validate()'s logic
     """
 
-    def mock_subroutine_definition(implementation, abi_output_arg_name=None):
+    def mock_subroutine_definition(implementation, has_abi_output=False):
         mock = pt.SubroutineDefinition(lambda: pt.Return(pt.Int(1)), pt.TealType.uint64)
         mock._validate()  # haven't failed with dummy implementation
         mock.implementation = implementation
-        mock.abi_output_arg_name = abi_output_arg_name
+        mock.has_abi_output = has_abi_output
         return mock
 
     not_callable = mock_subroutine_definition("I'm not callable")
@@ -255,7 +255,7 @@ def test_subroutine_definition_validate():
 
     # now we iterate through the implementation params validating each as we go
 
-    def var_abi_output_impl(*, z: pt.abi.Uint16):
+    def var_abi_output_impl(*, output: pt.abi.Uint16):
         pt.Return(pt.Int(1))  # this is wrong but ignored
 
     # raises without abi_output_arg_name:
@@ -264,31 +264,20 @@ def test_subroutine_definition_validate():
         var_abi_output_noname._validate()
 
     assert tie.value == pt.TealInputError(
-        "Function has a parameter type that is not allowed in a subroutine: parameter z with type KEYWORD_ONLY"
-    )
-
-    # raises with wrong name
-    var_abi_output = mock_subroutine_definition(
-        var_abi_output_impl, abi_output_arg_name="foo"
-    )
-    with pytest.raises(pt.TealInputError) as tie:
-        var_abi_output._validate()
-
-    assert tie.value == pt.TealInputError(
-        "Function has a parameter type that is not allowed in a subroutine: parameter z with type KEYWORD_ONLY"
+        "Function has a parameter type that is not allowed in a subroutine: parameter output with type KEYWORD_ONLY"
     )
 
     # copacetic abi output:
     var_abi_output = mock_subroutine_definition(
-        var_abi_output_impl, abi_output_arg_name="z"
+        var_abi_output_impl, has_abi_output=True
     )
     params, anns, arg_types, byrefs, abi_args, output_kwarg = var_abi_output._validate()
     assert len(params) == 1
-    assert anns == {"z": pt.abi.Uint16}
+    assert anns == {"output": pt.abi.Uint16}
     assert all(at is pt.Expr for at in arg_types)
     assert byrefs == set()
     assert abi_args == {}
-    assert output_kwarg == {"z": pt.abi.Uint16TypeSpec()}
+    assert output_kwarg == {"output": pt.abi.Uint16TypeSpec()}
 
     var_positional = mock_subroutine_definition(lambda *args: pt.Return(pt.Int(1)))
     with pytest.raises(pt.TealInputError) as tie:

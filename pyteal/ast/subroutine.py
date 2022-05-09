@@ -1,17 +1,10 @@
 from dataclasses import dataclass
 from inspect import isclass, Parameter, signature, get_annotations
 from types import MappingProxyType
-from typing import (
-    Callable,
-    Optional,
-    TYPE_CHECKING,
-    cast,
-    Any,
-)
+from typing import Callable, Optional, TYPE_CHECKING, cast, Any, Final
 
 from pyteal.ast import abi
 from pyteal.ast.expr import Expr
-from pyteal.ast.return_ import Return
 from pyteal.ast.seq import Seq
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
 from pyteal.errors import TealInputError, verifyTealVersion
@@ -34,7 +27,7 @@ class SubroutineDefinition:
         implementation: Callable[..., Expr],
         return_type: TealType,
         name_str: Optional[str] = None,
-        abi_output_arg_name: Optional[str] = None,
+        has_abi_output: bool = False,
     ) -> None:
         """
         Args:
@@ -42,7 +35,7 @@ class SubroutineDefinition:
             return_type: the TealType to be returned by the subroutine
             name_str (optional): the name that is used to identify the subroutine.
                 If omitted, the name defaults to the implementation's __name__ attribute
-            abi_output_arg_name (optional): the name that is used to identify ABI output kwarg for subroutine.
+            has_abi_output (optional): the boolean that tells if ABI output kwarg for subroutine is used.
         """
         super().__init__()
         self.id = SubroutineDefinition.nextSubroutineId
@@ -52,7 +45,7 @@ class SubroutineDefinition:
         self.declaration: Optional["SubroutineDeclaration"] = None
 
         self.implementation: Callable = implementation
-        self.abi_output_arg_name: Optional[str] = abi_output_arg_name
+        self.has_abi_output: bool = has_abi_output
 
         self.implementation_params: MappingProxyType[str, Parameter]
         self.annotations: dict[str, type]
@@ -154,8 +147,8 @@ class SubroutineDefinition:
                 Parameter.POSITIONAL_OR_KEYWORD,
             ) and not (
                 param.kind is Parameter.KEYWORD_ONLY
-                and self.abi_output_arg_name is not None
-                and name == self.abi_output_arg_name
+                and self.has_abi_output
+                and name == ABIReturnSubroutine.OUTPUT_ARG_NAME
             ):
                 raise TealInputError(
                     f"Function has a parameter type that is not allowed in a subroutine: parameter {name} with type {param.kind}"
@@ -302,10 +295,16 @@ SubroutineDefinition.__module__ = "pyteal"
 
 
 class SubroutineDeclaration(Expr):
-    def __init__(self, subroutine: SubroutineDefinition, body: Expr) -> None:
+    def __init__(
+        self,
+        subroutine: SubroutineDefinition,
+        body: Expr,
+        deferred_expr: Optional[Expr] = None,
+    ) -> None:
         super().__init__()
         self.subroutine = subroutine
         self.body = body
+        self.deferred_expr = deferred_expr
 
     def __teal__(self, options: "CompileOptions"):
         return self.body.__teal__(options)
@@ -497,35 +496,24 @@ class ABIReturnSubroutine:
             )
     """
 
+    OUTPUT_ARG_NAME: Final[str] = "output"
+
     def __init__(
         self,
         fn_implementation: Callable[..., Expr],
     ) -> None:
-        self.output_kwarg_info: Optional[
-            OutputKwArgInfo
-        ] = self._output_name_type_from_fn(fn_implementation)
-
-        internal_subroutine_ret_type = TealType.none
-        if self.output_kwarg_info:
-            internal_subroutine_ret_type = (
-                self.output_kwarg_info.abi_type.storage_type()
-            )
-
-        output_kwarg_name = None
-        if self.output_kwarg_info:
-            output_kwarg_name = self.output_kwarg_info.name
-
-        # output ABI type is void, return_type = TealType.none
-        # otherwise, return_type = ABI value's storage_type()
+        self.output_kwarg_info: Optional[OutputKwArgInfo] = self._get_output_kwarg_info(
+            fn_implementation
+        )
         self.subroutine = SubroutineDefinition(
             fn_implementation,
-            return_type=internal_subroutine_ret_type,
-            abi_output_arg_name=output_kwarg_name,
+            return_type=TealType.none,
+            has_abi_output=self.output_kwarg_info is not None,
         )
 
-    @staticmethod
-    def _output_name_type_from_fn(
-        fn_implementation: Callable[..., Expr]
+    @classmethod
+    def _get_output_kwarg_info(
+        cls, fn_implementation: Callable[..., Expr]
     ) -> Optional[OutputKwArgInfo]:
         if not callable(fn_implementation):
             raise TealInputError("Input to ABIReturnSubroutine is not callable")
@@ -540,7 +528,7 @@ class ABIReturnSubroutine:
             case []:
                 return None
             case [name]:
-                if name != "output":
+                if name != cls.OUTPUT_ARG_NAME:
                     raise TealInputError(
                         f"ABI return subroutine output-kwarg name must be `output` at this moment, "
                         f"while {name} is the keyword."
@@ -725,24 +713,21 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
         raise TealInputError(
             f"Subroutine function does not return a PyTeal expression. Got type {type(subroutine_body)}."
         )
+
+    deferred_expr: Optional[Expr] = None
+
     # if there is an output keyword argument for ABI, place the storing on the stack
     if output_carrying_abi:
-        if subroutine_body.has_return():
-            raise TealInputError(
-                "ABI returning subroutine definition should have no return"
-            )
         if subroutine_body.type_of() != TealType.none:
             raise TealInputError(
                 f"ABI returning subroutine definition should evaluate to TealType.none, "
                 f"while evaluate to {subroutine_body.type_of()}."
             )
-        subroutine_body = Seq(
-            subroutine_body, Return(output_carrying_abi.stored_value.load())
-        )
+        deferred_expr = output_carrying_abi.stored_value.load()
 
     # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
     # need to reverse order of argumentVars because the last argument will be on top of the stack
     body_ops = [var.slot.store() for var in arg_vars[::-1]]
     body_ops.append(subroutine_body)
 
-    return SubroutineDeclaration(subroutine, Seq(body_ops))
+    return SubroutineDeclaration(subroutine, Seq(body_ops), deferred_expr)

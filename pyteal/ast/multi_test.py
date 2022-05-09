@@ -37,7 +37,7 @@ def __test_single_conditional(
     ifExpr = (
         pt.If(expr.output_slots[1].load())
         .Then(expr.output_slots[0].load())
-        .Else(pt.Bytes("None"))
+        .Else(pt.App.globalGet(pt.Bytes("None")))
     )
     ifBlockStart, _ = ifExpr.__teal__(options)
 
@@ -165,7 +165,7 @@ def test_multi_value():
                     reducer = (
                         lambda value, hasValue: pt.If(hasValue)
                         .Then(value)
-                        .Else(pt.Bytes("None"))
+                        .Else(pt.App.globalGet(pt.Bytes("None")))
                     )
                     expr = pt.MultiValue(
                         op, [type, pt.TealType.uint64], immediate_args=iargs, args=args
