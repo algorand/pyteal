@@ -354,7 +354,7 @@ def test_subroutine_definition_validate():
     # Now we're back to _validate() main body and looking at input_types
 
     three_params_with_output = mock_subroutine_definition(
-        lambda x, y, z, *, output: pt.Return(pt.Int(1)), abi_output_arg_name="output"
+        lambda x, y, z, *, output: pt.Return(pt.Int(1)), has_abi_output=True
     )
     four_inputs = [
         pt.TealType.uint64,
