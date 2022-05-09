@@ -73,7 +73,7 @@ class BlackboxWrapper:
                 return [(x if x else abis[args[i]]) for i, x in enumerate(input_types)]
             case _:
                 raise AssertionError(
-                    f"Cannot produce handle subroutine of type {type(self.subroutine)}"
+                    f"Cannot handle subroutine of type {type(self.subroutine)}"
                 )
 
 
