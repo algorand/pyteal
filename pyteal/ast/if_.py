@@ -1,6 +1,9 @@
 from typing import TYPE_CHECKING
 
-from pyteal.errors import TealCompileError, TealInputError
+from pyteal.errors import (
+    TealCompileError,
+    TealInputError,
+)
 from pyteal.types import TealType, require_type
 from pyteal.ir import TealSimpleBlock, TealConditionalBlock
 from pyteal.ast.expr import Expr
@@ -78,6 +81,11 @@ class If(Expr):
     def type_of(self):
         if self.thenBranch is None:
             raise TealCompileError("If expression must have a thenBranch", self)
+
+        if self.elseBranch is None:
+            # if there is only a thenBranch, it must evaluate to TealType.none
+            require_type(self.thenBranch, TealType.none)
+
         return self.thenBranch.type_of()
 
     def has_return(self):
@@ -119,7 +127,11 @@ class If(Expr):
         if not self.alternateSyntaxFlag:
             raise TealInputError("Cannot mix two different If syntax styles")
 
+        if not self.thenBranch:
+            raise TealInputError("Must set Then branch before Else branch")
+
         if not self.elseBranch:
+            require_type(elseBranch, self.thenBranch.type_of())
             self.elseBranch = elseBranch
         else:
             if not isinstance(self.elseBranch, If):
