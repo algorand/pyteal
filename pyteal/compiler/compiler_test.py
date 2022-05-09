@@ -1774,6 +1774,47 @@ retsub
     assert actual_deferred == expected_deferred
 
 
+def test_compileSubroutine_deferred_block_malformed():
+    class BadRetsub(pt.Expr):
+        def type_of(self) -> pt.TealType:
+            return pt.TealType.none
+
+        def has_return(self) -> bool:
+            return True
+
+        def __str__(self) -> str:
+            return "(BadRetsub)"
+
+        def __teal__(
+            self, options: pt.CompileOptions
+        ) -> tuple[pt.TealBlock, pt.TealSimpleBlock]:
+            block = pt.TealSimpleBlock(
+                [
+                    pt.TealOp(self, pt.Op.int, 1),
+                    pt.TealOp(self, pt.Op.pop),
+                    pt.TealOp(self, pt.Op.retsub),
+                ]
+            )
+
+            return block, block
+
+    @pt.Subroutine(pt.TealType.none)
+    def bad() -> pt.Expr:
+        return BadRetsub()
+
+    program = pt.Seq(bad(), pt.Approve())
+
+    # manually add deferred expression to SubroutineDefinition
+    declaration = bad.subroutine.get_declaration()
+    declaration.deferred_expr = pt.Pop(pt.Bytes("deferred"))
+
+    with pytest.raises(
+        pt.TealInternalError,
+        match=r"^Expected retsub to be the only op in the block, but there are 3 ops$",
+    ):
+        pt.compileTeal(program, pt.Mode.Application, version=6, assembleConstants=False)
+
+
 def test_compile_wide_ratio():
     cases = (
         (
