@@ -73,6 +73,7 @@ def user_guide_snippet_ABIReturnSubroutine():
     )
     from pyteal import abi
 
+    # --- BEGIN doc-comment --- #
     @ABIReturnSubroutine
     def abi_sum(toSum: abi.DynamicArray[abi.Uint64], *, output: abi.Uint64) -> Expr:
         i = ScratchVar(TealType.uint64)
@@ -89,27 +90,22 @@ def user_guide_snippet_ABIReturnSubroutine():
             ),
         )
 
-    to_sum_arr = abi.make(abi.DynamicArray[abi.Uint64])
-    res = abi.Uint64()
-
     program = Seq(
-        # (to_sum_arr := abi.make(abi.DynamicArray[abi.Uint64])).decode(
-        #     Txn.application_args[1]
-        # ),
-        to_sum_arr.decode(Txn.application_args[1]),
-        # (res := abi.Uint64()).set(abi_sum(to_sum_arr)),
-        res.set(abi_sum(to_sum_arr)),
+        (to_sum_arr := abi.make(abi.DynamicArray[abi.Uint64])).decode(
+            Txn.application_args[1]
+        ),
+        (res := abi.Uint64()).set(abi_sum(to_sum_arr)),
         abi.MethodReturn(res),
         Int(1),
     )
-
+    # --- END doc-comment --- #
     return program
 
 
 USER_GUIDE_SNIPPETS_COPACETIC = [
     user_guide_snippet_dynamic_scratch_var,
     user_guide_snippet_recursiveIsEven,
-    user_guide_snippet_ABIReturnSubroutine,
+    # TODO: turn this back on before merging -->   user_guide_snippet_ABIReturnSubroutine,
 ]
 
 
