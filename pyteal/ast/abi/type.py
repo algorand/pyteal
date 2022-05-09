@@ -185,9 +185,12 @@ ComputedValue.__module__ = "pyteal"
 
 
 class ReturnedValue(ComputedValue):
-    def __init__(self, type_spec: TypeSpec, computation_expr: Expr):
+    def __init__(
+        self, type_spec: TypeSpec, computation_expr: Expr, deferred_expr: Expr
+    ):
         self.type_spec = type_spec
         self.computation = computation_expr
+        self.deferred = deferred_expr
 
     def produced_type_spec(self) -> TypeSpec:
         return self.type_spec
@@ -197,7 +200,7 @@ class ReturnedValue(ComputedValue):
             raise TealInputError(
                 f"expected type_spec {self.produced_type_spec()} but get {output.type_spec()}"
             )
-        return output.stored_value.store(self.computation)
+        return Seq(self.computation, output.stored_value.store(self.deferred))
 
 
 ReturnedValue.__module__ = "pyteal"

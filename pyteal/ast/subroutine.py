@@ -563,7 +563,18 @@ class ABIReturnSubroutine:
                 )
             return invoked
 
-        return abi.ReturnedValue(self.output_kwarg_info.abi_type, invoked)
+        self.subroutine.get_declaration()
+
+        return abi.ReturnedValue(
+            self.output_kwarg_info.abi_type,
+            invoked,
+            cast(
+                Expr,
+                cast(
+                    SubroutineDeclaration, invoked.subroutine.declaration
+                ).deferred_expr,
+            ),
+        )
 
     def name(self) -> str:
         return self.subroutine.name()
