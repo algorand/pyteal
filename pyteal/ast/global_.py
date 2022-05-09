@@ -61,12 +61,12 @@ class Global(LeafExpr):
 
     @classmethod
     def min_txn_fee(cls) -> "Global":
-        """Get the minumum transaction fee in micro Algos."""
+        """Get the minimum transaction fee in micro Algos."""
         return cls(GlobalField.min_txn_fee)
 
     @classmethod
     def min_balance(cls) -> "Global":
-        """Get the minumum balance in micro Algos."""
+        """Get the minimum balance in micro Algos."""
         return cls(GlobalField.min_balance)
 
     @classmethod
