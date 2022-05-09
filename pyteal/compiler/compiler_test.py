@@ -1627,6 +1627,194 @@ retsub
     assert actual == expected
 
 
+def test_compile_subroutine_deferred_expr():
+    @pt.Subroutine(pt.TealType.none)
+    def deferredExample(value: pt.Expr) -> pt.Expr:
+        return pt.Seq(
+            pt.If(value == pt.Int(0)).Then(pt.Return()),
+            pt.If(value == pt.Int(1)).Then(pt.Approve()),
+            pt.If(value == pt.Int(2)).Then(pt.Reject()),
+            pt.If(value == pt.Int(3)).Then(pt.Err()),
+        )
+
+    program = pt.Seq(deferredExample(pt.Int(10)), pt.Approve())
+
+    expected_no_deferred = """#pragma version 6
+int 10
+callsub deferredExample_0
+int 1
+return
+
+// deferredExample
+deferredExample_0:
+store 0
+load 0
+int 0
+==
+bnz deferredExample_0_l7
+load 0
+int 1
+==
+bnz deferredExample_0_l6
+load 0
+int 2
+==
+bnz deferredExample_0_l5
+load 0
+int 3
+==
+bz deferredExample_0_l8
+err
+deferredExample_0_l5:
+int 0
+return
+deferredExample_0_l6:
+int 1
+return
+deferredExample_0_l7:
+retsub
+deferredExample_0_l8:
+retsub
+    """.strip()
+    actual_no_deferred = pt.compileTeal(
+        program, pt.Mode.Application, version=6, assembleConstants=False
+    )
+    assert actual_no_deferred == expected_no_deferred
+
+    # manually add deferred expression to SubroutineDefinition
+    declaration = deferredExample.subroutine.get_declaration()
+    declaration.deferred_expr = pt.Pop(pt.Bytes("deferred"))
+
+    expected_deferred = """#pragma version 6
+int 10
+callsub deferredExample_0
+int 1
+return
+
+// deferredExample
+deferredExample_0:
+store 0
+load 0
+int 0
+==
+bnz deferredExample_0_l7
+load 0
+int 1
+==
+bnz deferredExample_0_l6
+load 0
+int 2
+==
+bnz deferredExample_0_l5
+load 0
+int 3
+==
+bz deferredExample_0_l8
+err
+deferredExample_0_l5:
+int 0
+return
+deferredExample_0_l6:
+int 1
+return
+deferredExample_0_l7:
+byte "deferred"
+pop
+retsub
+deferredExample_0_l8:
+byte "deferred"
+pop
+retsub
+    """.strip()
+    actual_deferred = pt.compileTeal(
+        program, pt.Mode.Application, version=6, assembleConstants=False
+    )
+    assert actual_deferred == expected_deferred
+
+
+def test_compile_subroutine_deferred_expr_empty():
+    @pt.Subroutine(pt.TealType.none)
+    def empty() -> pt.Expr:
+        return pt.Return()
+
+    program = pt.Seq(empty(), pt.Approve())
+
+    expected_no_deferred = """#pragma version 6
+callsub empty_0
+int 1
+return
+
+// empty
+empty_0:
+retsub
+    """.strip()
+    actual_no_deferred = pt.compileTeal(
+        program, pt.Mode.Application, version=6, assembleConstants=False
+    )
+    assert actual_no_deferred == expected_no_deferred
+
+    # manually add deferred expression to SubroutineDefinition
+    declaration = empty.subroutine.get_declaration()
+    declaration.deferred_expr = pt.Pop(pt.Bytes("deferred"))
+
+    expected_deferred = """#pragma version 6
+callsub empty_0
+int 1
+return
+
+// empty
+empty_0:
+byte "deferred"
+pop
+retsub
+    """.strip()
+    actual_deferred = pt.compileTeal(
+        program, pt.Mode.Application, version=6, assembleConstants=False
+    )
+    assert actual_deferred == expected_deferred
+
+
+def test_compileSubroutine_deferred_block_malformed():
+    class BadRetsub(pt.Expr):
+        def type_of(self) -> pt.TealType:
+            return pt.TealType.none
+
+        def has_return(self) -> bool:
+            return True
+
+        def __str__(self) -> str:
+            return "(BadRetsub)"
+
+        def __teal__(
+            self, options: pt.CompileOptions
+        ) -> tuple[pt.TealBlock, pt.TealSimpleBlock]:
+            block = pt.TealSimpleBlock(
+                [
+                    pt.TealOp(self, pt.Op.int, 1),
+                    pt.TealOp(self, pt.Op.pop),
+                    pt.TealOp(self, pt.Op.retsub),
+                ]
+            )
+
+            return block, block
+
+    @pt.Subroutine(pt.TealType.none)
+    def bad() -> pt.Expr:
+        return BadRetsub()
+
+    program = pt.Seq(bad(), pt.Approve())
+
+    # manually add deferred expression to SubroutineDefinition
+    declaration = bad.subroutine.get_declaration()
+    declaration.deferred_expr = pt.Pop(pt.Bytes("deferred"))
+
+    with pytest.raises(
+        pt.TealInternalError,
+        match=r"^Expected retsub to be the only op in the block, but there are 3 ops$",
+    ):
+        pt.compileTeal(program, pt.Mode.Application, version=6, assembleConstants=False)
+
+
 def test_compile_wide_ratio():
     cases = (
         (
