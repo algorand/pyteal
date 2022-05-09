@@ -199,17 +199,12 @@ class ReturnedValue(ComputedValue):
         return self.type_spec
 
     def store_into(self, output: BaseType) -> Expr:
-        from pyteal.ast.subroutine import SubroutineDeclaration
-
         if output.type_spec() != self.produced_type_spec():
             raise TealInputError(
                 f"expected type_spec {self.produced_type_spec()} but get {output.type_spec()}"
             )
 
-        self.computation.subroutine.get_declaration()
-        declaration = cast(
-            SubroutineDeclaration, self.computation.subroutine.declaration
-        )
+        declaration = self.computation.subroutine.get_declaration()
 
         if declaration.deferred_expr is None:
             raise TealInputError(
