@@ -1,13 +1,7 @@
 from dataclasses import dataclass
 from inspect import isclass, Parameter, signature, get_annotations
 from types import MappingProxyType, NoneType
-from typing import (
-    Callable,
-    Optional,
-    TYPE_CHECKING,
-    cast,
-    Any,
-)
+from typing import Any, Callable, Final, Optional, TYPE_CHECKING, cast
 
 from pyteal.ast import abi
 from pyteal.ast.expr import Expr
@@ -34,7 +28,7 @@ class SubroutineDefinition:
         implementation: Callable[..., Expr],
         return_type: TealType,
         name_str: Optional[str] = None,
-        abi_output_arg_name: Optional[str] = None,
+        has_abi_output: bool = False,
     ) -> None:
         """
         Args:
@@ -42,7 +36,7 @@ class SubroutineDefinition:
             return_type: the TealType to be returned by the subroutine
             name_str (optional): the name that is used to identify the subroutine.
                 If omitted, the name defaults to the implementation's __name__ attribute
-            abi_output_arg_name (optional): the name that is used to identify ABI output kwarg for subroutine.
+            has_abi_output (optional): the boolean that tells if ABI output kwarg for subroutine is used.
         """
         super().__init__()
         self.id = SubroutineDefinition.nextSubroutineId
@@ -52,7 +46,7 @@ class SubroutineDefinition:
         self.declaration: Optional["SubroutineDeclaration"] = None
 
         self.implementation: Callable = implementation
-        self.abi_output_arg_name: Optional[str] = abi_output_arg_name
+        self.has_abi_output: bool = has_abi_output
 
         self.implementation_params: MappingProxyType[str, Parameter]
         self.annotations: dict[str, type]
@@ -147,8 +141,8 @@ class SubroutineDefinition:
                 Parameter.POSITIONAL_OR_KEYWORD,
             ) and not (
                 param.kind is Parameter.KEYWORD_ONLY
-                and self.abi_output_arg_name is not None
-                and name == self.abi_output_arg_name
+                and self.has_abi_output
+                and name == ABIReturnSubroutine.OUTPUT_ARG_NAME
             ):
                 raise TealInputError(
                     f"Function has a parameter type that is not allowed in a subroutine: parameter {name} with type {param.kind}"
@@ -508,37 +502,24 @@ class ABIReturnSubroutine:
             )
     """
 
+    OUTPUT_ARG_NAME: Final[str] = "output"
+
     def __init__(
         self,
         fn_implementation: Callable[..., Expr],
     ) -> None:
-        # TODO: this should become _output_info()
-        self.output_kwarg_info: Optional[
-            OutputKwArgInfo
-        ] = self._output_name_type_from_fn(fn_implementation)
-
-        internal_subroutine_ret_type = TealType.none
-        if self.output_kwarg_info:
-            internal_subroutine_ret_type = (
-                self.output_kwarg_info.abi_type.storage_type()
-            )
-
-        # TODO: this should be simplified
-        output_kwarg_name = None
-        if self.output_kwarg_info:
-            output_kwarg_name = self.output_kwarg_info.name
-
-        # output ABI type is void, return_type = TealType.none
-        # otherwise, return_type = ABI value's storage_type()
+        self.output_kwarg_info: Optional[OutputKwArgInfo] = self._get_output_kwarg_info(
+            fn_implementation
+        )
         self.subroutine = SubroutineDefinition(
             fn_implementation,
-            return_type=internal_subroutine_ret_type,
-            abi_output_arg_name=output_kwarg_name,
+            return_type=TealType.none,
+            has_abi_output=self.output_kwarg_info is not None,
         )
 
-    @staticmethod
-    def _output_name_type_from_fn(
-        fn_implementation: Callable[..., Expr]
+    @classmethod
+    def _get_output_kwarg_info(
+        cls, fn_implementation: Callable[..., Expr]
     ) -> Optional[OutputKwArgInfo]:
         """
         TODO: This probably should become _output_info()
@@ -557,8 +538,7 @@ class ABIReturnSubroutine:
             case []:
                 return None
             case [name]:
-                # TODO: should be class variable OUTPUT_KEYWORD_ARG_NAME = "output"
-                if name != "output":
+                if name != cls.OUTPUT_ARG_NAME:
                     raise TealInputError(
                         f"ABI return subroutine output-kwarg name must be `output` at this moment, "
                         f"while {name} is the keyword."
