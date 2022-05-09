@@ -491,7 +491,7 @@ class ABIReturnSubroutine:
             )
     """
 
-    OUTPUT_ARG_NAME: Final = "output"
+    OUTPUT_ARG_NAME: Final[str] = "output"
 
     def __init__(
         self,
