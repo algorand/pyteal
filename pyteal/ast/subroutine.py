@@ -80,8 +80,7 @@ class SubroutineDefinition:
         TODO: does this doc-comment still make sense after all the refactoring in this branch,
             `abi-subroutine` and `feature/abi` is complete?
 
-        NOTE: `self.implementation` and `self.abi_output_arg_name` should have been properly set
-            before calling `_validate()`
+        NOTE: `self.implementation` should be set before calling `_validate()`
 
         This function iterates through `sig.parameters.items()`, and checks each of subroutine arguments.
         On each of the subroutine arguments, the following checks are performed:
