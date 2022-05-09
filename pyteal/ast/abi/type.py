@@ -197,7 +197,7 @@ class ReturnedValue(ComputedValue):
             raise TealInputError(
                 f"expected type_spec {self.produced_type_spec()} but get {output.type_spec()}"
             )
-        return output.stored_value.store(self.computation)
+        return output.stored_value.slot.store(self.computation)
 
 
 ReturnedValue.__module__ = "pyteal"
