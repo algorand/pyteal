@@ -105,6 +105,7 @@ def user_guide_snippet_ABIReturnSubroutine():
 USER_GUIDE_SNIPPETS_COPACETIC = [
     user_guide_snippet_dynamic_scratch_var,
     user_guide_snippet_recursiveIsEven,
+    user_guide_snippet_ABIReturnSubroutine,
     # TODO: turn this back on before merging -->   user_guide_snippet_ABIReturnSubroutine,
 ]
 
