@@ -53,7 +53,7 @@ class BlackboxWrapper:
     ):
         subr.subroutine._validate(input_types=input_types)
         self.subroutine: SubroutineFnWrapper | ABIReturnSubroutine = subr
-        self.input_types: list[TealType | None] = self._fill(input_types)
+        self.input_types: list[TealType | abi.TypeSpec] = self._fill(input_types)
 
     def __call__(self, *args: Expr | ScratchVar, **kwargs) -> Expr:
         return self.subroutine(*args, **kwargs)
