@@ -679,7 +679,7 @@ return
                 pt.Continue(),
             )
         ),
-        pt.Return(pt.Int(1))
+        pt.Return(pt.Int(1)),
     )
 
     expected = """#pragma version 4
