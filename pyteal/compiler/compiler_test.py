@@ -652,11 +652,10 @@ load 0
 int 3
 <
 bz main_l4
-main_l2:
 load 0
 int 2
 ==
-bnz main_l2
+bnz main_l1
 load 0
 int 1
 +
@@ -665,7 +664,41 @@ b main_l1
 main_l4:
 int 1
 return
-                """.strip()
+    """.strip()
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
+    assert expected == actual
+
+    # pt.While
+    program = pt.Seq(
+        i.store(pt.Int(0)),
+        pt.While(i.load() < pt.Int(30)).Do(
+            pt.Seq(
+                i.store(i.load() + pt.Int(1)),
+                pt.Continue(),
+            )
+        ),
+        pt.Return(pt.Int(1)),
+    )
+
+    expected = """#pragma version 4
+int 0
+store 0
+main_l1:
+load 0
+int 30
+<
+bz main_l3
+load 0
+int 1
++
+store 0
+b main_l1
+main_l3:
+int 1
+return
+    """.strip()
     actual = pt.compileTeal(
         program, pt.Mode.Application, version=4, assembleConstants=False
     )
@@ -744,11 +777,11 @@ def test_compile_continue_break_nested():
     expected = """#pragma version 4
 int 0
 store 0
+main_l1:
 load 0
 int 10
 <
-bz main_l2
-main_l1:
+bz main_l3
 load 0
 int 1
 +
@@ -757,7 +790,7 @@ load 0
 int 4
 <
 bnz main_l1
-main_l2:
+main_l3:
 int 1
 return
     """.strip()
@@ -799,7 +832,6 @@ load 0
 int 10
 <
 bz main_l8
-main_l2:
 load 0
 int 8
 ==
@@ -813,7 +845,7 @@ main_l4:
 load 0
 int 5
 <
-bnz main_l2
+bnz main_l1
 load 0
 int 1
 +
