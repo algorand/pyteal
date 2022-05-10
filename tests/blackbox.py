@@ -1,5 +1,3 @@
-from typing import Callable
-
 import algosdk.abi
 from algosdk.v2client import algod
 
@@ -138,7 +136,7 @@ def mode_to_execution_mode(mode: Mode) -> blackbox.ExecutionMode:
     raise Exception(f"Unknown mode {mode} of type {type(mode)}")
 
 
-def blackbox_pyteal(subr: BlackboxWrapper, mode: Mode) -> Callable[..., Expr]:
+def blackbox_pyteal(subr: BlackboxWrapper, mode: Mode) -> Expr:
     """Functor producing ready-to-compile PyTeal programs from annotated subroutines
 
     Args:
@@ -247,7 +245,7 @@ class BlackboxPyTealer:
             self.subr.subroutine.output_kwarg_info.abi_type
         )
 
-    def program(self) -> Callable[..., Expr]:
+    def program(self) -> Expr:
         return self._pyteal
 
     def _handle_SubroutineFnWrapper(self):
