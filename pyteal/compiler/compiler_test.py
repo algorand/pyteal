@@ -664,7 +664,41 @@ b main_l1
 main_l4:
 int 1
 return
-                """.strip()
+    """.strip()
+    actual = pt.compileTeal(
+        program, pt.Mode.Application, version=4, assembleConstants=False
+    )
+    assert expected == actual
+
+    # pt.While
+    program = pt.Seq(
+        i.store(pt.Int(0)),
+        pt.While(i.load() < pt.Int(30)).Do(
+            pt.Seq(
+                i.store(i.load() + pt.Int(1)),
+                pt.Continue(),
+            )
+        ),
+        pt.Return(pt.Int(1))
+    )
+
+    expected = """#pragma version 4
+int 0
+store 0
+main_l1:
+load 0
+int 30
+<
+bz main_l3
+load 0
+int 1
++
+store 0
+b main_l1
+main_l3:
+int 1
+return
+    """.strip()
     actual = pt.compileTeal(
         program, pt.Mode.Application, version=4, assembleConstants=False
     )
