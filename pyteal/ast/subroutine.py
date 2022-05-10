@@ -80,8 +80,7 @@ class SubroutineDefinition:
         TODO: does this doc-comment still make sense after all the refactoring in this branch,
             `abi-subroutine` and `feature/abi` is complete?
 
-        NOTE: `self.implementation` and `self.abi_output_arg_name` should have been properly set
-            before calling `_validate()`
+        NOTE: `self.implementation` should be set before calling `_validate()`
 
         This function iterates through `sig.parameters.items()`, and checks each of subroutine arguments.
         On each of the subroutine arguments, the following checks are performed:
@@ -103,7 +102,9 @@ class SubroutineDefinition:
         We load the ABI scratch space stored value to stack, and store them later in subroutine's local ABI values.
 
         Args:
-            Returns:
+            input_types (optional): for testing purposes - expected `TealType`s of each parameter
+
+        Returns:
             impl_params: a map from python function implementation's argument name, to argument's parameter.
             annotations: a dict whose keys are names of type-annotated arguments,
                 and values are appearing type-annotations.
@@ -526,10 +527,6 @@ class ABIReturnSubroutine:
     def _get_output_kwarg_info(
         cls, fn_implementation: Callable[..., Expr]
     ) -> Optional[OutputKwArgInfo]:
-        """
-        TODO: This probably should become _output_info()
-        and if there is a kw-only arg it is unique and its name is "output"
-        """
         if not callable(fn_implementation):
             raise TealInputError("Input to ABIReturnSubroutine is not callable")
         sig = signature(fn_implementation)
