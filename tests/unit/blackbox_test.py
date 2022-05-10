@@ -5,7 +5,7 @@ from typing import Literal
 
 import pyteal as pt
 
-from tests.blackbox import Blackbox, blackbox_pyteal
+from tests.blackbox import Blackbox, BlackboxPyTealer, blackbox_pyteal
 
 from tests.compile_asserts import assert_teal_as_expected
 
@@ -101,12 +101,26 @@ def fn_2arg_0ret(
     return pt.Return()
 
 
+@Blackbox(input_types=[pt.TealType.bytes])
+@pt.ABIReturnSubroutine
+def fn_1tt_arg_uint64_ret(x, *, output: pt.abi.Uint64) -> pt.Expr:
+    return output.set(1)
+
+
 @Blackbox(input_types=[None, pt.TealType.uint64, None])
 @pt.ABIReturnSubroutine
 def fn_3mixed_args_0ret(
     a: pt.abi.Uint64, b: pt.ScratchVar, C: pt.abi.StaticArray[pt.abi.Byte, Literal[10]]
 ) -> pt.Expr:
     return pt.Return()
+
+
+@Blackbox(input_types=[None, pt.TealType.bytes])
+@pt.ABIReturnSubroutine
+def fn_2mixed_arg_1ret(
+    a: pt.abi.Uint64, b: pt.ScratchVar, *, output: pt.abi.Uint64
+) -> pt.Expr:
+    return pt.Seq(b.store(a.encode()), output.set(a))
 
 
 UNITS = [
@@ -122,12 +136,14 @@ UNITS = [
 
 
 ABI_UNITS = [
-    fn_0arg_0ret,
-    fn_0arg_uint64_ret,
-    fn_1arg_0ret,
-    fn_1arg_1ret,
-    fn_2arg_0ret,
-    fn_3mixed_args_0ret,
+    (fn_0arg_0ret, None),
+    (fn_0arg_uint64_ret, pt.abi.Uint64()),
+    (fn_1arg_0ret, None),
+    (fn_1arg_1ret, pt.abi.Uint64()),
+    (fn_2arg_0ret, None),
+    (fn_1tt_arg_uint64_ret, pt.abi.Uint64()),
+    (fn_3mixed_args_0ret, None),
+    (fn_2mixed_arg_1ret, pt.abi.Uint64()),
 ]
 
 
@@ -146,16 +162,34 @@ def test_blackbox_pyteal(subr, mode):
     assert_teal_as_expected(save_to, FIXTURES / "blackbox" / (name + ".teal"))
 
 
-# @pytest.mark.parametrize("subr, mode", product(UNITS, pt.Mode))
-# def test_abi_blackbox_pyteal(subr, mode):
-#     is_app = mode == pt.Mode.Application
-#     name = f"{'app' if is_app else 'lsig'}_{subr.name()}"
+@pytest.mark.parametrize("subr_abi, mode", product(ABI_UNITS, pt.Mode))
+def test_abi_blackbox_pyteal(subr_abi, mode):
+    subr, abi_return_type = subr_abi
+    name = f"{'app' if mode == pt.Mode.Application else 'lsig'}_{subr.name()}"
+    print(f"Case {subr.name()=}, {abi_return_type=}, {mode=} ------> {name=}")
 
-#     compiled = pt.compileTeal(blackbox_pyteal(subr, mode)(), mode, version=6)
-#     tealdir = GENERATED / "blackbox"
-#     tealdir.mkdir(parents=True, exist_ok=True)
-#     save_to = tealdir / (name + ".teal")
-#     with open(save_to, "w") as f:
-#         f.write(compiled)
+    pytealer = BlackboxPyTealer(subr, mode)
+    assert pytealer.is_abi(), "should be an ABI subroutine"
 
-#     assert_teal_as_expected(save_to, FIXTURES / "blackbox" / (name + ".teal"))
+    arg_types = pytealer.abi_argument_types()
+    if subr.name() != "fn_1tt_arg_uint64_ret":
+        assert not arg_types or any(
+            arg_types
+        ), "abi_argument_types() should have had some abi info"
+
+    if abi_return_type:
+        expected_sdk_return_type = pt.abi.algosdk_from_type_spec(
+            abi_return_type.type_spec()
+        )
+        assert expected_sdk_return_type == pytealer.abi_return_type()
+    else:
+        assert pytealer.abi_return_type() is None
+
+    compiled = pt.compileTeal(blackbox_pyteal(subr, mode), mode, version=6)
+    tealdir = GENERATED / "abi"
+    tealdir.mkdir(parents=True, exist_ok=True)
+    save_to = tealdir / (name + ".teal")
+    with open(save_to, "w") as f:
+        f.write(compiled)
+
+    assert_teal_as_expected(save_to, FIXTURES / "abi" / (name + ".teal"))

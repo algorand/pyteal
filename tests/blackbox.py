@@ -139,74 +139,26 @@ def mode_to_execution_mode(mode: Mode) -> blackbox.ExecutionMode:
 
 
 def blackbox_pyteal(subr: BlackboxWrapper, mode: Mode) -> Expr:
-    """Functor producing ready-to-compile PyTeal programs from annotated subroutines
-
-    Args:
-        subr: a Subroutine or ABIReturnSubroutine which has been decorated with @Blackbox.
-            Note: the `input_types` parameters should be supplied to the @Blackbox() decorator
-        mode: type of program to produce: logic sig (Mode.Signature) or app (Mode.Application)
-
-    Returns:
-        a function that called with no parameters -e.g. result()-
-        returns a PyTeal expression compiling to a ready-to-test TEAL program.
-
-    The return type is callable in order to adhere to the API of blackbox tests.
-
-    Generated TEAL code depends on the mode, subroutine input types, and subroutine output types.
-    * logic sigs:
-        * input received via `arg i`
-        * args are converted (cf. "input conversion" below) and passed to the subroutine
-        * subroutine output is not logged (log is not available)
-        * subroutine output is converted (cf "output conversion" below)
-    * apps:
-        * input received via `txna ApplicationArgs i`
-        * args are converted (cf. "input conversion" below) and passed to the subroutine
-        * subroutine output is logged after possible conversion (cf. "logging conversion")
-        * subroutine output is converted (cf "output conversion" below)
-    * input conversion:
-        * Empty input array:
-            do not read any args and call subroutine immediately
-        * arg of TealType.bytes and TealType.anytype:
-            read arg and pass to subroutine as is
-        * arg of TealType.uint64:
-            convert arg to int using Btoi() when received
-        * pass-by-ref ScratchVar arguments:
-            in addition to the above -
-                o store the arg (or converted arg) in a ScratchVar
-                o invoke the subroutine using this ScratchVar instead of the arg (or converted arg)
-    * output conversion:
-        * TealType.uint64:
-            provide subroutine's result to the top of the stack when exiting program
-        * TealType.bytes:
-            convert subroutine's result to the top of the stack to its length and then exit
-        * TealType.none or TealType.anytype:
-            push Int(1337) to the stack as it is either impossible (TealType.none),
-            or unknown at compile time (TealType.anytype) to convert to an Int
-    * logging conversion:
-        * TealType.uint64:
-            convert subroutine's output using Itob() and log the result
-        * TealType.bytes:
-            log the subroutine's result
-        * TealType.none or TealType.anytype:
-            log Itob(Int(1337)) as it is either impossible (TealType.none),
-            or unknown at compile time (TealType.anytype) how to convert to Bytes
-
-    For illustrative examples of how to use this function please refer to the integration test file `graviton_test.py` and especially:
-
-    * `blackbox_pyteal_example1()`: Using blackbox_pyteal() for a simple test of both an app and logic sig
-    * `blackbox_pyteal_example2()`: Using blackbox_pyteal() to make 400 assertions and generate a CSV report with 400 dryrun rows
-    * `blackbox_pyteal_example3()`: declarative Test Driven Development approach through Invariant's
-    * `blackbox_pyteal_example4()`: Using BlackboxPyTealer.program() to debug an ABIReturnSubroutine with an app, logic sig and csv report
+    """
+    cf. BlackboxPyTealer.program() for futher details
     """
     return BlackboxPyTealer(subr, mode).program()
 
 
 class BlackboxPyTealer:
     def __init__(self, subr: BlackboxWrapper, mode: Mode):
+        """
+        Args:
+            subr: a Subroutine or ABIReturnSubroutine which has been decorated with @Blackbox.
+                Note: the `input_types` parameters should be supplied to the @Blackbox() decorator
+                    cf. the Blackbox class for futher details about acceptable `input_types`
+
+            mode: type of program to produce: logic sig (Mode.Signature) or app (Mode.Application)
+        """
         input_types = subr.input_types
         assert (
             input_types is not None
-        ), "please provide input_types in your @Subroutine annotation (crucial for generating proper end-to-end testable PyTeal)"
+        ), "please provide input_types in your @Subroutine or @ABIReturnSubroutine annotation (this is crucial for generating proper end-to-end testable PyTeal)"
 
         self.subr, self.mode, self.input_types = subr, mode, input_types
         match subr.subroutine:
@@ -219,7 +171,6 @@ class BlackboxPyTealer:
                     f"Cannot produce Blackbox pyteal for provided subroutine of type {type(subr.subroutine)}"
                 )
 
-        setattr(approval, "__name__", f"sem_{mode}_{subr.name()}")
         self._pyteal_lambda: Callable[..., Expr] = approval
 
     def is_abi(self) -> bool:
@@ -248,6 +199,61 @@ class BlackboxPyTealer:
         )
 
     def program(self) -> Expr:
+        """Functor producing ready-to-compile PyTeal programs from annotated subroutines
+
+        Returns:
+            a function that called with no parameters -e.g. result()-
+            returns a PyTeal expression compiling to a ready-to-test TEAL program.
+
+        The return type is callable in order to adhere to the API of blackbox tests.
+
+        Generated TEAL code depends on the mode, subroutine input types, and subroutine output types.
+        * logic sigs:
+            * input received via `arg i`
+            * args are converted (cf. "input conversion" below) and passed to the subroutine
+            * subroutine output is not logged (log is not available)
+            * subroutine output is converted (cf "output conversion" below)
+        * apps:
+            * input received via `txna ApplicationArgs i`
+            * args are converted (cf. "input conversion" below) and passed to the subroutine
+            * subroutine output is logged after possible conversion (cf. "logging conversion")
+            * subroutine output is converted (cf "output conversion" below)
+        * input conversion:
+            * Empty input array:
+                do not read any args and call subroutine immediately
+            * arg of TealType.bytes and TealType.anytype:
+                read arg and pass to subroutine as is
+            * arg of TealType.uint64:
+                convert arg to int using Btoi() when received
+            * pass-by-ref ScratchVar arguments:
+                in addition to the above -
+                    o store the arg (or converted arg) in a ScratchVar
+                    o invoke the subroutine using this ScratchVar instead of the arg (or converted arg)
+        * output conversion:
+            * TealType.uint64:
+                provide subroutine's result to the top of the stack when exiting program
+            * TealType.bytes:
+                convert subroutine's result to the top of the stack to its length and then exit
+            * TealType.none or TealType.anytype:
+                push Int(1337) to the stack as it is either impossible (TealType.none),
+                or unknown at compile time (TealType.anytype) to convert to an Int
+        * logging conversion:
+            * TealType.uint64:
+                convert subroutine's output using Itob() and log the result
+            * TealType.bytes:
+                log the subroutine's result
+            * TealType.none or TealType.anytype:
+                log Itob(Int(1337)) as it is either impossible (TealType.none),
+                or unknown at compile time (TealType.anytype) how to convert to Bytes
+
+        For illustrative examples of how to use this function please refer to the integration test file `graviton_test.py` and especially:
+
+        * `blackbox_pyteal_example1()`: Using blackbox_pyteal() for a simple test of both an app and logic sig
+        * `blackbox_pyteal_example2()`: Using blackbox_pyteal() to make 400 assertions and generate a CSV report with 400 dryrun rows
+        * `blackbox_pyteal_example3()`: declarative Test Driven Development approach through Invariant's
+        * `blackbox_pyteal_example4()`: Using BlackboxPyTealer.program() to debug an ABIReturnSubroutine with an app, logic sig and csv report
+        """
+
         return self._pyteal_lambda()
 
     def _handle_SubroutineFnWrapper(self):
@@ -364,8 +370,6 @@ class BlackboxPyTealer:
             else:
                 results = [invocation, Int(1)]
 
-            if preps:
-                return Seq(*(preps + results))
-            return results
+            return Seq(*(preps + results))
 
         return approval
