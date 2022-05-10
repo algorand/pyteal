@@ -2004,3 +2004,192 @@ return
             program, pt.Mode.Application, version=5, assembleConstants=False
         )
         assert actual == expected.strip()
+
+
+def test_compile_abi_subroutine_return():
+    @pt.ABIReturnSubroutine
+    def abi_sum(
+        toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64
+    ) -> pt.Expr:
+        i = pt.ScratchVar(pt.TealType.uint64)
+        valueAtIndex = pt.abi.Uint64()
+        return pt.Seq(
+            output.set(0),
+            pt.For(
+                i.store(pt.Int(0)),
+                i.load() < toSum.length(),
+                i.store(i.load() + pt.Int(1)),
+            ).Do(
+                pt.Seq(
+                    toSum[i.load()].store_into(valueAtIndex),
+                    output.set(output.get() + valueAtIndex.get()),
+                )
+            ),
+        )
+
+    program = pt.Seq(
+        (to_sum_arr := pt.abi.make(pt.abi.DynamicArray[pt.abi.Uint64])).decode(
+            pt.Txn.application_args[1]
+        ),
+        (res := pt.abi.Uint64()).set(abi_sum(to_sum_arr)),
+        pt.abi.MethodReturn(res),
+        pt.Approve(),
+    )
+
+    expected_sum = """#pragma version 6
+txna ApplicationArgs 1
+store 0
+load 0
+callsub abisum_0
+store 1
+byte 0x151F7C75
+load 1
+itob
+concat
+log
+int 1
+return
+
+// abi_sum
+abisum_0:
+store 2
+int 0
+store 3
+int 0
+store 4
+abisum_0_l1:
+load 4
+load 2
+int 0
+extract_uint16
+store 6
+load 6
+<
+bz abisum_0_l3
+load 2
+int 8
+load 4
+*
+int 2
++
+extract_uint64
+store 5
+load 3
+load 5
++
+store 3
+load 4
+int 1
++
+store 4
+b abisum_0_l1
+abisum_0_l3:
+load 3
+retsub
+    """.strip()
+
+    actual_sum = pt.compileTeal(program, pt.Mode.Application, version=6)
+    assert expected_sum == actual_sum
+
+    @pt.ABIReturnSubroutine
+    def conditional_factorial(
+        _factor: pt.abi.Uint64, *, output: pt.abi.Uint64
+    ) -> pt.Expr:
+        i = pt.ScratchVar(pt.TealType.uint64)
+
+        return pt.Seq(
+            output.set(1),
+            pt.If(_factor.get() <= pt.Int(1))
+            .Then(pt.Return())
+            .Else(
+                pt.For(
+                    i.store(_factor.get()),
+                    i.load() > pt.Int(1),
+                    i.store(i.load() - pt.Int(1)),
+                ).Do(output.set(output.get() * i.load())),
+            ),
+        )
+
+    program_cond_factorial = pt.Seq(
+        (factor := pt.abi.Uint64()).decode(pt.Txn.application_args[1]),
+        (res := pt.abi.Uint64()).set(conditional_factorial(factor)),
+        pt.abi.MethodReturn(res),
+        pt.Approve(),
+    )
+
+    expected_conditional_factorial = """#pragma version 6
+txna ApplicationArgs 1
+btoi
+store 0
+load 0
+callsub conditionalfactorial_0
+store 1
+byte 0x151F7C75
+load 1
+itob
+concat
+log
+int 1
+return
+
+// conditional_factorial
+conditionalfactorial_0:
+store 2
+int 1
+store 3
+load 2
+int 1
+<=
+bnz conditionalfactorial_0_l4
+load 2
+store 4
+conditionalfactorial_0_l2:
+load 4
+int 1
+>
+bz conditionalfactorial_0_l5
+load 3
+load 4
+*
+store 3
+load 4
+int 1
+-
+store 4
+b conditionalfactorial_0_l2
+conditionalfactorial_0_l4:
+load 3
+retsub
+conditionalfactorial_0_l5:
+load 3
+retsub
+    """.strip()
+
+    actual_conditional_factorial = pt.compileTeal(
+        program_cond_factorial, pt.Mode.Application, version=6
+    )
+    assert actual_conditional_factorial == expected_conditional_factorial
+
+    @pt.ABIReturnSubroutine
+    def load_b4_set(*, output: pt.abi.Bool):
+        return pt.Return()
+
+    program_load_b4_set_broken = pt.Seq(
+        (pseudo_rand := pt.abi.Bool()).set(load_b4_set()), pt.Approve()
+    )
+
+    with pytest.raises(pt.TealInternalError):
+        pt.compileTeal(program_load_b4_set_broken, pt.Mode.Application, version=6)
+
+    @pt.ABIReturnSubroutine
+    def access_b4_store(magic_num: pt.abi.Uint64, *, output: pt.abi.Uint64):
+        return pt.Seq(output.set(output.get() ^ magic_num.get()))
+
+    program_access_b4_store_broken = pt.Seq(
+        (other_party_magic := pt.abi.Uint64()).decode(pt.Txn.application_args[1]),
+        (pseudo_rand := pt.abi.Uint64()).set(access_b4_store(other_party_magic)),
+        pt.Approve(),
+    )
+
+    with pytest.raises(pt.TealInternalError):
+        pt.compileTeal(program_access_b4_store_broken, pt.Mode.Application, version=6)
