@@ -1,6 +1,7 @@
 from itertools import product
 from pathlib import Path
 import pytest
+from typing import Literal
 
 import pyteal as pt
 
@@ -11,6 +12,8 @@ from tests.compile_asserts import assert_teal_as_expected
 PATH = Path.cwd() / "tests" / "unit"
 FIXTURES = PATH / "teal"
 GENERATED = PATH / "generated"
+
+# ---- Subroutine Unit Test Examples ---- #
 
 
 @Blackbox(input_types=[])
@@ -63,6 +66,49 @@ def utest_any_args(x, y, z):
     return pt.Seq(x.store(pt.Int(0)), x.load())
 
 
+# ---- ABI Return Subroutine Unit Test Examples ---- #
+
+
+@Blackbox(input_types=[])
+@pt.ABIReturnSubroutine
+def fn_0arg_0ret() -> pt.Expr:
+    return pt.Return()
+
+
+@Blackbox(input_types=[])
+@pt.ABIReturnSubroutine
+def fn_0arg_uint64_ret(*, output: pt.abi.Uint64) -> pt.Expr:
+    return output.set(1)
+
+
+@Blackbox(input_types=[None])
+@pt.ABIReturnSubroutine
+def fn_1arg_0ret(a: pt.abi.Uint64) -> pt.Expr:
+    return pt.Return()
+
+
+@Blackbox(input_types=[None])
+@pt.ABIReturnSubroutine
+def fn_1arg_1ret(a: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+    return output.set(a)
+
+
+@Blackbox(input_types=[None, None])
+@pt.ABIReturnSubroutine
+def fn_2arg_0ret(
+    a: pt.abi.Uint64, b: pt.abi.StaticArray[pt.abi.Byte, Literal[10]]
+) -> pt.Expr:
+    return pt.Return()
+
+
+@Blackbox(input_types=[None, None])
+@pt.ABIReturnSubroutine
+def fn_3mixed_args_0ret(
+    a: pt.abi.Uint64, b: pt.ScratchVar, C: pt.abi.StaticArray[pt.abi.Byte, Literal[10]]
+) -> pt.Expr:
+    return pt.Return()
+
+
 UNITS = [
     utest_noop,
     utest_noop_args,
@@ -72,6 +118,16 @@ UNITS = [
     utest_bytes_args,
     utest_any,
     utest_any_args,
+]
+
+
+ABI_UNITS = [
+    fn_0arg_0ret,
+    fn_0arg_uint64_ret,
+    fn_1arg_0ret,
+    fn_1arg_1ret,
+    fn_2arg_0ret,
+    fn_3mixed_args_0ret,
 ]
 
 
