@@ -144,3 +144,18 @@ def test_blackbox_pyteal(subr, mode):
         f.write(compiled)
 
     assert_teal_as_expected(save_to, FIXTURES / "blackbox" / (name + ".teal"))
+
+
+@pytest.mark.parametrize("subr, mode", product(UNITS, pt.Mode))
+def test_abi_blackbox_pyteal(subr, mode):
+    is_app = mode == pt.Mode.Application
+    name = f"{'app' if is_app else 'lsig'}_{subr.name()}"
+
+    compiled = pt.compileTeal(blackbox_pyteal(subr, mode)(), mode, version=6)
+    tealdir = GENERATED / "blackbox"
+    tealdir.mkdir(parents=True, exist_ok=True)
+    save_to = tealdir / (name + ".teal")
+    with open(save_to, "w") as f:
+        f.write(compiled)
+
+    assert_teal_as_expected(save_to, FIXTURES / "blackbox" / (name + ".teal"))
