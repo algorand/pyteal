@@ -409,6 +409,8 @@ def test_abi_type_translation():
                 abi.BoolTypeSpec(),
             ),
         ),
+        # TODO: Turn these tests on when PyTeal supports ufixed<N>x<M>
+        # cf https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0004.md#types
         # (
         #     algosdk.abi.TupleType(
         #         [
