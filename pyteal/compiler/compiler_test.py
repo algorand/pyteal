@@ -652,11 +652,10 @@ load 0
 int 3
 <
 bz main_l4
-main_l2:
 load 0
 int 2
 ==
-bnz main_l2
+bnz main_l1
 load 0
 int 1
 +
@@ -744,11 +743,11 @@ def test_compile_continue_break_nested():
     expected = """#pragma version 4
 int 0
 store 0
+main_l1:
 load 0
 int 10
 <
-bz main_l2
-main_l1:
+bz main_l3
 load 0
 int 1
 +
@@ -757,7 +756,7 @@ load 0
 int 4
 <
 bnz main_l1
-main_l2:
+main_l3:
 int 1
 return
     """.strip()
@@ -799,7 +798,6 @@ load 0
 int 10
 <
 bz main_l8
-main_l2:
 load 0
 int 8
 ==
@@ -813,7 +811,7 @@ main_l4:
 load 0
 int 5
 <
-bnz main_l2
+bnz main_l1
 load 0
 int 1
 +
