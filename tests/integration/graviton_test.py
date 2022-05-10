@@ -46,7 +46,7 @@ def wrap_compile_and_save(
 
     # 2. TEAL generation
     teal = pt.compileTeal(
-        approval(), mode, version=version, assembleConstants=assemble_constants
+        approval, mode, version=version, assembleConstants=assemble_constants
     )
     tealfile = f'{"app" if is_app else "lsig"}_{case_name}.teal'
 
@@ -582,8 +582,8 @@ def blackbox_pyteal_example1():
     approval_lsig = blackbox_pyteal(square, Mode.Signature)
 
     # compile the evaluated approvals to generate TEAL:
-    app_teal = compileTeal(approval_app(), Mode.Application, version=6)
-    lsig_teal = compileTeal(approval_lsig(), Mode.Signature, version=6)
+    app_teal = compileTeal(approval_app, Mode.Application, version=6)
+    lsig_teal = compileTeal(approval_lsig, Mode.Signature, version=6)
 
     # provide args for evaluation (will compute x^2)
     x = 9
@@ -648,7 +648,7 @@ def blackbox_pyteal_example2():
 
     # create approval PyTeal and compile it to TEAL:
     euclid_app = blackbox_pyteal(euclid, Mode.Application)
-    euclid_app_teal = compileTeal(euclid_app(), Mode.Application, version=6)
+    euclid_app_teal = compileTeal(euclid_app, Mode.Application, version=6)
 
     # generate a report with 400 = 20*20 dry run rows:
     N = 20
@@ -746,7 +746,7 @@ def blackbox_pyteal_example3():
 
     # Generate PyTeal and TEAL for the recursive Euclidean algorithm:
     euclid_app = blackbox_pyteal(euclid, Mode.Application)
-    euclid_app_teal = compileTeal(euclid_app(), Mode.Application, version=6)
+    euclid_app_teal = compileTeal(euclid_app, Mode.Application, version=6)
 
     # Execute on the input sequence to get a dry-run inspectors:
     algod = algod_with_assertion()
@@ -808,8 +808,8 @@ def blackbox_pyteal_example4():
     pyteal_abi_sum_lsig = lsig_pytealer.program()
 
     # compile the PyTeal's to Teal's:
-    teal_abi_sum_app = compileTeal(pyteal_abi_sum_app(), Mode.Application, version=6)
-    teal_abi_sum_lsig = compileTeal(pyteal_abi_sum_lsig(), Mode.Signature, version=6)
+    teal_abi_sum_app = compileTeal(pyteal_abi_sum_app, Mode.Application, version=6)
+    teal_abi_sum_lsig = compileTeal(pyteal_abi_sum_lsig, Mode.Signature, version=6)
 
     # infer the abi types for encoding/decoding dry runs:
     abi_argument_types = app_pytealer.abi_argument_types()

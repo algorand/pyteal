@@ -50,7 +50,7 @@ def test_verify():
         )
 
     approval_app = blackbox_pyteal(verify, Mode.Application)
-    app_teal = compileTeal(approval_app(), Mode.Application, version=5)
+    app_teal = compileTeal(approval_app, Mode.Application, version=5)
     args = []
     algod = algod_with_assertion()
     app_result = DryRunExecutor.dryrun_app(algod, app_teal, args)
@@ -86,7 +86,7 @@ def test_verify():
         )
 
     approval_app = blackbox_pyteal(verify_fail, Mode.Application)
-    app_teal = compileTeal(approval_app(), Mode.Application, version=5)
+    app_teal = compileTeal(approval_app, Mode.Application, version=5)
     args = []
     algod = algod_with_assertion()
     app_result = DryRunExecutor.dryrun_app(algod, app_teal, args)
@@ -123,7 +123,7 @@ def test_decompress():
         )
 
     approval_app = blackbox_pyteal(decompress, Mode.Application)
-    app_teal = compileTeal(approval_app(), Mode.Application, version=5)
+    app_teal = compileTeal(approval_app, Mode.Application, version=5)
     args = []
     algod = algod_with_assertion()
     app_result = DryRunExecutor.dryrun_app(algod, app_teal, args)
@@ -165,7 +165,7 @@ def test_recover():
         )
 
     approval_app = blackbox_pyteal(recover, Mode.Application)
-    app_teal = compileTeal(approval_app(), Mode.Application, version=5)
+    app_teal = compileTeal(approval_app, Mode.Application, version=5)
     args = []
     algod = algod_with_assertion()
     app_result = DryRunExecutor.dryrun_app(algod, app_teal, args)

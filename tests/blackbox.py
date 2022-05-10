@@ -220,7 +220,7 @@ class BlackboxPyTealer:
                 )
 
         setattr(approval, "__name__", f"sem_{mode}_{subr.name()}")
-        self._pyteal_getter: Callable[..., Expr] = approval
+        self._pyteal: Expr = approval()
 
     def is_abi(self) -> bool:
         return isinstance(self.subr.subroutine, ABIReturnSubroutine)
@@ -248,7 +248,7 @@ class BlackboxPyTealer:
         )
 
     def program(self) -> Callable[..., Expr]:
-        return self._pyteal_getter
+        return self._pyteal
 
     def _handle_SubroutineFnWrapper(self):
         subdef = self.subr.subroutine.subroutine

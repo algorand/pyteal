@@ -90,9 +90,9 @@ def test_abi_sum():
         )
 
     abi_sum_app_pt = blackbox_pyteal(abi_sum, pt.Mode.Application)
-    abi_sum_app_tl = pt.compileTeal(abi_sum_app_pt(), pt.Mode.Application, version=6)
+    abi_sum_app_tl = pt.compileTeal(abi_sum_app_pt, pt.Mode.Application, version=6)
     abi_sum_lsig_pt = blackbox_pyteal(abi_sum, pt.Mode.Signature)
-    abi_sum_lsig_tl = pt.compileTeal(abi_sum_lsig_pt(), pt.Mode.Signature, version=6)
+    abi_sum_lsig_tl = pt.compileTeal(abi_sum_lsig_pt, pt.Mode.Signature, version=6)
 
     todo_use_these_guys = abi_sum_app_tl
     todo_use_these_guys = abi_sum_lsig_tl
@@ -344,27 +344,27 @@ def complex130_norm_squared(x: Complex130, *, output: Int65):
 
 def test_integer65():
     bbpt_subtract_slick = BlackboxPyTealer(int65_sub, pt.Mode.Application)
-    approval_subtract_slick = bbpt_subtract_slick.program()
+    approval_subtract_slick = bbpt_subtract_slick.program
     teal_subtract_slick = pt.compileTeal(
         approval_subtract_slick(), pt.Mode.Application, version=6
     )
 
     bbpt_subtract_cond = BlackboxPyTealer(int65_minus_cond, pt.Mode.Application)
-    approval_subtract_cond = bbpt_subtract_cond.program()
+    approval_subtract_cond = bbpt_subtract_cond.program
     teal_subtract_cond = pt.compileTeal(
         approval_subtract_cond(), pt.Mode.Application, version=6
     )
 
     bbpt_mult = BlackboxPyTealer(int65_mult, pt.Mode.Application)
-    approval_mult = bbpt_mult.program()
+    approval_mult = bbpt_mult.program
     teal_mult = pt.compileTeal(approval_mult(), pt.Mode.Application, version=6)
 
     bbpt_negate = BlackboxPyTealer(int65_negate, pt.Mode.Application)
-    approval_negate = bbpt_negate.program()
+    approval_negate = bbpt_negate.program
     teal_negate = pt.compileTeal(approval_negate(), pt.Mode.Application, version=6)
 
     bbpt_add = BlackboxPyTealer(int65_add, pt.Mode.Application)
-    approval_add = bbpt_add.program()
+    approval_add = bbpt_add.program
     teal_add = pt.compileTeal(approval_add(), pt.Mode.Application, version=6)
 
     # same types, so no need to dupe:
@@ -462,11 +462,11 @@ def test_complex130():
     # Binary:
 
     bbpt_cplx_add = BlackboxPyTealer(complex130_add, pt.Mode.Application)
-    approval_cplx_add = bbpt_cplx_add.program()
+    approval_cplx_add = bbpt_cplx_add.program
     teal_cplx_add = pt.compileTeal(approval_cplx_add(), pt.Mode.Application, version=6)
 
     bbpt_cplx_mult = BlackboxPyTealer(complex130_mult, pt.Mode.Application)
-    approval_cplx_mult = bbpt_cplx_mult.program()
+    approval_cplx_mult = bbpt_cplx_mult.program
     teal_cplx_mult = pt.compileTeal(
         approval_cplx_mult(), pt.Mode.Application, version=6
     )
@@ -474,19 +474,19 @@ def test_complex130():
     # Unary:
 
     bbpt_complex_real = BlackboxPyTealer(complex130_real, pt.Mode.Application)
-    approval_cplx_real = bbpt_complex_real.program()
+    approval_cplx_real = bbpt_complex_real.program
     teal_cplx_real = pt.compileTeal(
         approval_cplx_real(), pt.Mode.Application, version=6
     )
 
     bbpt_complex_imag = BlackboxPyTealer(complex130_imag, pt.Mode.Application)
-    approval_cplx_imag = bbpt_complex_imag.program()
+    approval_cplx_imag = bbpt_complex_imag.program
     teal_cplx_imag = pt.compileTeal(
         approval_cplx_imag(), pt.Mode.Application, version=6
     )
 
     bbpt_complex_conjugate = BlackboxPyTealer(complex130_conjugate, pt.Mode.Application)
-    approval_cplx_conjugate = bbpt_complex_conjugate.program()
+    approval_cplx_conjugate = bbpt_complex_conjugate.program
     teal_cplx_conjugate = pt.compileTeal(
         approval_cplx_conjugate(), pt.Mode.Application, version=6
     )
@@ -494,7 +494,7 @@ def test_complex130():
     bbpt_complex_norm_squared = BlackboxPyTealer(
         complex130_norm_squared, pt.Mode.Application
     )
-    approval_cplx_norm_squared = bbpt_complex_norm_squared.program()
+    approval_cplx_norm_squared = bbpt_complex_norm_squared.program
     teal_cplx_norm_squared = pt.compileTeal(
         approval_cplx_norm_squared(), pt.Mode.Application, version=6
     )
