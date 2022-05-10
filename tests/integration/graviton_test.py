@@ -870,6 +870,53 @@ def blackbox_pyteal_example4():
     report("lsig")
 
 
+def blackbox_pyteal_while_continue_test():
+    from tests.blackbox import Blackbox
+    from pyteal import (
+        compileTeal,
+        Continue,
+        Int,
+        Mode,
+        Return,
+        ScratchVar,
+        Seq,
+        Subroutine,
+        TealType,
+        While,
+    )
+
+    @Blackbox(input_types=[TealType.uint64])
+    @Subroutine(TealType.uint64)
+    def while_continue_accumulation(n):
+        i = ScratchVar(TealType.uint64)
+        return Seq(
+            i.store(Int(0)),
+            While(i.load() < n).Do(
+                Seq(
+                    i.store(i.load() + Int(1)),
+                    Continue(),
+                )
+            ),
+            Return(i.load()),
+        )
+
+    approval_lsig = blackbox_pyteal(while_continue_accumulation, Mode.Signature)
+    lsig_teal = compileTeal(approval_lsig, Mode.Signature, version=6)
+    algod = algod_with_assertion()
+
+    for x in range(30):
+        args = [x]
+        lsig_result = DryRunExecutor.dryrun_logicsig(algod, lsig_teal, args)
+        if x == 0:
+            assert not lsig_result.passed()
+        else:
+            assert lsig_result.passed()
+
+        assert lsig_result.stack_top() == x, lsig_result.report(
+            args, "stack_top() gave unexpected results for lsig"
+        )
+
+
 @pytest.mark.parametrize(
     "example",
     [
@@ -877,6 +924,7 @@ def blackbox_pyteal_example4():
         blackbox_pyteal_example2,
         blackbox_pyteal_example3,
         blackbox_pyteal_example4,
+        blackbox_pyteal_while_continue_test,
     ],
 )
 def test_blackbox_pyteal_examples(example):
