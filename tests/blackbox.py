@@ -178,7 +178,7 @@ class BlackboxPyTealer:
 
     def abi_argument_types(self) -> list[None | algosdk.abi.ABIType]:
         if not self.is_abi():
-            raise NotImplementedError("this {type(self)} is not A.B.I. compatible")
+            raise NotImplementedError(f"this {type(self)} is not A.B.I. compatible")
 
         def handle_arg(arg):
             if isinstance(arg, abi.TypeSpec):
