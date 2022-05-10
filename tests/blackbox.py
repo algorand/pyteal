@@ -1,3 +1,5 @@
+from typing import Callable
+
 import algosdk.abi
 from algosdk.v2client import algod
 
@@ -218,7 +220,7 @@ class BlackboxPyTealer:
                 )
 
         setattr(approval, "__name__", f"sem_{mode}_{subr.name()}")
-        self._pyteal: Expr = approval()
+        self._pyteal_lambda: Callable[..., Expr] = approval
 
     def is_abi(self) -> bool:
         return isinstance(self.subr.subroutine, ABIReturnSubroutine)
@@ -246,7 +248,7 @@ class BlackboxPyTealer:
         )
 
     def program(self) -> Expr:
-        return self._pyteal
+        return self._pyteal_lambda()
 
     def _handle_SubroutineFnWrapper(self):
         subdef = self.subr.subroutine.subroutine
