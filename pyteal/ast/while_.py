@@ -52,7 +52,7 @@ class While(Expr):
             block.setNextBlock(end)
 
         for block in continueBlocks:
-            block.setNextBlock(doStart)
+            block.setNextBlock(condStart)
 
         return condStart, end
 
