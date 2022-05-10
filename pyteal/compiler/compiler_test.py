@@ -2175,7 +2175,7 @@ retsub
         return pt.Return()
 
     program_load_b4_set_broken = pt.Seq(
-        (pseudo_rand := pt.abi.Bool()).set(load_b4_set()), pt.Approve()
+        (_ := pt.abi.Bool()).set(load_b4_set()), pt.Approve()
     )
 
     with pytest.raises(pt.TealInternalError):
@@ -2187,7 +2187,7 @@ retsub
 
     program_access_b4_store_broken = pt.Seq(
         (other_party_magic := pt.abi.Uint64()).decode(pt.Txn.application_args[1]),
-        (pseudo_rand := pt.abi.Uint64()).set(access_b4_store(other_party_magic)),
+        (_ := pt.abi.Uint64()).set(access_b4_store(other_party_magic)),
         pt.Approve(),
     )
 
