@@ -377,23 +377,34 @@ class BlackboxPyTealer:
 
         return approval
 
-    def dryrun_on_sequence(self, inputs: List[Sequence[Union[str, int]]], compiler_version=6, sender: str = ZERO_ADDRESS) -> List[DryRunInspector]:
+    def dryrun_on_sequence(
+        self,
+        inputs: List[Sequence[Union[str, int]]],
+        compiler_version=6,
+        sender: str = ZERO_ADDRESS,
+    ) -> List[DryRunInspector]:
         match self.mode:
             case Mode.Application:
                 return DryRunExecutor.dryrun_app_on_sequence(
                     algod_with_assertion(),
-                    compileTeal(self.program(), Mode.Application,version=compiler_version),
+                    compileTeal(
+                        self.program(), Mode.Application, version=compiler_version
+                    ),
                     inputs,
                     self.abi_argument_types(),
                     self.abi_return_type(),
-                    sender)
+                    sender,
+                )
             case Mode.Signature:
                 return DryRunExecutor.dryrun_logicsig_on_sequence(
                     algod_with_assertion(),
-                    compileTeal(self.program(), Mode.Signature,version=compiler_version),
+                    compileTeal(
+                        self.program(), Mode.Signature, version=compiler_version
+                    ),
                     inputs,
                     self.abi_argument_types(),
                     self.abi_return_type(),
-                    sender)
+                    sender,
+                )
             case _:
                 raise Exception(f"Unknown mode {self.mode} of type {type(self.mode)}")
