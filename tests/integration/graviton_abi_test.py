@@ -279,7 +279,7 @@ def test_integer65():
     abi_return_type = bbpt_subtract_slick.abi_return_type()
 
     def pynum_to_tuple(n):
-        return (n > 0, abs(n))
+        return (n >= 0, abs(n))
 
     def pytuple_to_num(t):
         s, x = t
