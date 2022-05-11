@@ -138,3 +138,6 @@ dmypy.json
 
 # mac OS
 .DS_Store
+
+# asdf
+.tool-versions

@@ -66,6 +66,18 @@ def utest_any_args(x, y, z):
     return pt.Seq(x.store(pt.Int(0)), x.load())
 
 
+UNITS = [
+    utest_noop,
+    utest_noop_args,
+    utest_int,
+    utest_int_args,
+    utest_bytes,
+    utest_bytes_args,
+    utest_any,
+    utest_any_args,
+]
+
+
 # ---- ABI Return Subroutine Unit Test Examples ---- #
 
 
@@ -123,16 +135,20 @@ def fn_2mixed_arg_1ret(
     return pt.Seq(b.store(a.encode()), output.set(a))
 
 
-UNITS = [
-    utest_noop,
-    utest_noop_args,
-    utest_int,
-    utest_int_args,
-    utest_bytes,
-    utest_bytes_args,
-    utest_any,
-    utest_any_args,
+CompoundType = pt.abi.Tuple4[
+    pt.abi.Uint64,
+    pt.abi.Tuple2[pt.abi.Byte, pt.abi.StaticArray[pt.abi.Address, 10]],
+    pt.abi.Tuple0,
+    pt.abi.Bool,
 ]
+
+
+# @Blackbox(input_types=[None])
+# @pt.ABIReturnSubroutine
+# def complicated_abi_round_trip(
+#     x: CompoundType, *, output: pt.abi.Tuple2[CompoundType, CompoundType]
+# ):
+#     return pt.Seq
 
 
 ABI_UNITS = [
@@ -145,6 +161,9 @@ ABI_UNITS = [
     (fn_3mixed_args_0ret, None),
     (fn_2mixed_arg_1ret, pt.abi.Uint64()),
 ]
+
+
+# ---- test functions ---- #
 
 
 @pytest.mark.parametrize("subr, mode", product(UNITS, pt.Mode))
