@@ -1,15 +1,18 @@
-from typing import Callable
+from typing import Callable, List, Sequence, Union
 
 import algosdk.abi
 from algosdk.v2client import algod
 
 from graviton import blackbox
+from graviton.blackbox import DryRunInspector, DryRunExecutor
+from graviton.dryrun import ZERO_ADDRESS
 
 from pyteal import (
     abi,
     Arg,
     Btoi,
     Bytes,
+    compileTeal,
     Expr,
     Int,
     Itob,
@@ -373,3 +376,24 @@ class BlackboxPyTealer:
             return Seq(*(preps + results))
 
         return approval
+
+    def dryrun_on_sequence(self, inputs: List[Sequence[Union[str, int]]], compiler_version=6, sender: str = ZERO_ADDRESS) -> List[DryRunInspector]:
+        match self.mode:
+            case Mode.Application:
+                return DryRunExecutor.dryrun_app_on_sequence(
+                    algod_with_assertion(),
+                    compileTeal(self.program(), Mode.Application,version=compiler_version),
+                    inputs,
+                    self.abi_argument_types(),
+                    self.abi_return_type(),
+                    sender)
+            case Mode.Signature:
+                return DryRunExecutor.dryrun_logicsig_on_sequence(
+                    algod_with_assertion(),
+                    compileTeal(self.program(), Mode.Signature,version=compiler_version),
+                    inputs,
+                    self.abi_argument_types(),
+                    self.abi_return_type(),
+                    sender)
+            case _:
+                raise Exception(f"Unknown mode {self.mode} of type {type(self.mode)}")

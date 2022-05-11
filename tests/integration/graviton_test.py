@@ -762,11 +762,10 @@ def blackbox_pyteal_example4():
     from pathlib import Path
     import random
 
-    from graviton.blackbox import DryRunExecutor, DryRunInspector
+    from graviton.blackbox import DryRunInspector
 
     from pyteal import (
         abi,
-        compileTeal,
         ABIReturnSubroutine,
         Expr,
         For,
@@ -777,7 +776,7 @@ def blackbox_pyteal_example4():
         TealType,
     )
 
-    from tests.blackbox import Blackbox, BlackboxPyTealer, algod_with_assertion
+    from tests.blackbox import Blackbox, BlackboxPyTealer
 
     # Sum a dynamic uint64 array
     @Blackbox(input_types=[None])
@@ -803,17 +802,6 @@ def blackbox_pyteal_example4():
     app_pytealer = BlackboxPyTealer(abi_sum, Mode.Application)
     lsig_pytealer = BlackboxPyTealer(abi_sum, Mode.Signature)
 
-    # create approval PyTeal app and lsig:
-    pyteal_abi_sum_app = app_pytealer.program()
-    pyteal_abi_sum_lsig = lsig_pytealer.program()
-
-    # compile the PyTeal's to Teal's:
-    teal_abi_sum_app = compileTeal(pyteal_abi_sum_app, Mode.Application, version=6)
-    teal_abi_sum_lsig = compileTeal(pyteal_abi_sum_lsig, Mode.Signature, version=6)
-
-    # infer the abi types for encoding/decoding dry runs:
-    abi_argument_types = app_pytealer.abi_argument_types()
-    abi_return_type = app_pytealer.abi_return_type()
     # generate reports with the same random inputs (fix the randomness with a seed):
     random.seed(42)
 
@@ -823,15 +811,11 @@ def blackbox_pyteal_example4():
     for n in range(N):
         inputs.append(tuple([random.sample(choices, n)]))
 
-    # execute the dry-run sequence:
-    algod = algod_with_assertion()
 
-    app_inspectors = DryRunExecutor.dryrun_app_on_sequence(
-        algod, teal_abi_sum_app, inputs, abi_argument_types, abi_return_type
-    )
-    lsig_inspectors = DryRunExecutor.dryrun_logicsig_on_sequence(
-        algod, teal_abi_sum_lsig, inputs, abi_argument_types, abi_return_type
-    )
+    app_inspectors = app_pytealer.dryrun_on_sequence(inputs)
+
+    lsig_inspectors = lsig_pytealer.dryrun_on_sequence(inputs)
+
     for i in range(N):
         app_inspector = app_inspectors[i]
         lsig_inspector = lsig_inspectors[i]
