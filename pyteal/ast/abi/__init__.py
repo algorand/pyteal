@@ -4,7 +4,7 @@ from pyteal.ast.abi.address import (
     Address,
     AddressLength,
 )
-from pyteal.ast.abi.type import TypeSpec, BaseType, ComputedValue
+from pyteal.ast.abi.type import TypeSpec, BaseType, ComputedValue, ReturnedValue
 from pyteal.ast.abi.bool import BoolTypeSpec, Bool
 from pyteal.ast.abi.uint import (
     UintTypeSpec,
@@ -47,6 +47,7 @@ __all__ = [
     "TypeSpec",
     "BaseType",
     "ComputedValue",
+    "ReturnedValue",
     "BoolTypeSpec",
     "Bool",
     "UintTypeSpec",

@@ -167,7 +167,7 @@ def spillLocalSlotsDuringRecursion(
                 # reentrySubroutineCalls should have a length of 1, since calledSubroutines has a
                 # maximum length of 1
                 reentrySubroutineCall = reentrySubroutineCalls[0]
-                numArgs = reentrySubroutineCall.argumentCount()
+                numArgs = reentrySubroutineCall.argument_count()
 
                 digArgs = True
                 coverSpilledSlots = False

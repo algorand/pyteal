@@ -12,7 +12,7 @@ def substringForDecoding(
     *,
     startIndex: Expr = None,
     endIndex: Expr = None,
-    length: Expr = None
+    length: Expr = None,
 ) -> Expr:
     """A helper function for getting the substring to decode according to the rules of BaseType.decode."""
     if length is not None and endIndex is not None:
