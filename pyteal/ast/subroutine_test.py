@@ -214,6 +214,8 @@ def test_subroutine_definition_validate():
         "Input to SubroutineDefinition is not callable"
     )
 
+    # input_types:
+
     three_params = mock_subroutine_definition(lambda x, y, z: pt.Return(pt.Int(1)))
 
     params, anns, arg_types, byrefs, abi_args, output_kwarg = three_params._validate()
