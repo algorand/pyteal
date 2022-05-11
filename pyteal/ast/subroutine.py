@@ -163,8 +163,8 @@ class SubroutineDefinition:
 
             if param.kind is Parameter.KEYWORD_ONLY:
                 # this case is only entered when
-                # - `self.abi_output_arg_name is not None`
-                # - `name == self.abi_output_arg_name`
+                # - `self.has_abi_output is True`
+                # - `name == ABIReturnSubroutine.OUTPUT_ARG_NAME`
                 if not isinstance(expected_arg_type, abi.TypeSpec):
                     raise TealInputError(
                         f"Function keyword parameter {name} has type {expected_arg_type}"
@@ -563,7 +563,12 @@ class ABIReturnSubroutine:
                 )
             return invoked
 
-        return abi.ReturnedValue(self.output_kwarg_info.abi_type, invoked)
+        self.subroutine.get_declaration()
+
+        return abi.ReturnedValue(
+            self.output_kwarg_info.abi_type,
+            invoked,
+        )
 
     def name(self) -> str:
         return self.subroutine.name()

@@ -186,7 +186,13 @@ ComputedValue.__module__ = "pyteal"
 
 class ReturnedValue(ComputedValue):
     def __init__(self, type_spec: TypeSpec, computation_expr: Expr):
+        from pyteal.ast.subroutine import SubroutineCall
+
         self.type_spec = type_spec
+        if not isinstance(computation_expr, SubroutineCall):
+            raise TealInputError(
+                f"Expecting computation_expr to be SubroutineCall but get {type(computation_expr)}"
+            )
         self.computation = computation_expr
 
     def produced_type_spec(self) -> TypeSpec:
@@ -197,7 +203,19 @@ class ReturnedValue(ComputedValue):
             raise TealInputError(
                 f"expected type_spec {self.produced_type_spec()} but get {output.type_spec()}"
             )
-        return output.stored_value.store(self.computation)
+
+        declaration = self.computation.subroutine.get_declaration()
+
+        if declaration.deferred_expr is None:
+            raise TealInputError(
+                "ABI return subroutine must have deferred_expr to be not-None."
+            )
+        if declaration.deferred_expr.type_of() != output.type_spec().storage_type():
+            raise TealInputError(
+                f"ABI return subroutine deferred_expr is expected to be typed {output.type_spec().storage_type()}, "
+                f"but has type {declaration.deferred_expr.type_of()}."
+            )
+        return output.stored_value.slot.store(self.computation)
 
 
 ReturnedValue.__module__ = "pyteal"
