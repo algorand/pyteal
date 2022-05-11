@@ -164,7 +164,7 @@ class SubroutineDefinition:
             if param.kind is Parameter.KEYWORD_ONLY:
                 # this case is only entered when
                 # - `self.has_abi_output is True`
-                # - `name == self.abi_output_arg_name`
+                # - `name == ABIReturnSubroutine.OUTPUT_ARG_NAME`
                 if not isinstance(expected_arg_type, abi.TypeSpec):
                     raise TealInputError(
                         f"Function keyword parameter {name} has type {expected_arg_type}"
