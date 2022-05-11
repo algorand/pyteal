@@ -406,7 +406,7 @@ def test_complex130():
     complex_abi_return_type = bbpt_cplx_add.abi_return_type()
 
     def pyint_to_tuple(n):
-        return (n > 0, abs(n))
+        return (n >= 0, abs(n))
 
     def pycomplex_to_tuple(z):
         return (pyint_to_tuple(int(z.real)), pyint_to_tuple(int(z.imag)))
