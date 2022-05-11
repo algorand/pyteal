@@ -558,7 +558,7 @@ def test_blackbox_subroutines_as_apps(
 
 
 @pytest.mark.parametrize("subr, scenario", LOGICSIG_SCENARIOS.items())
-def test_blackbox_Subroutines_as_logic_sigs(
+def test_blackbox_subroutines_as_logic_sigs(
     subr: pt.SubroutineFnWrapper,
     scenario: Dict[str, Any],
 ):
