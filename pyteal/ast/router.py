@@ -81,7 +81,7 @@ class Router:
 
         # Check:
         # - if current condition is for *ABI METHOD*
-        #   (method selector && numAppArg == max(METHOD_APP_ARG_NUM_LIMIT, 1 + subroutineSyntaxArgNum))
+        #   (method selector && numAppArg == 1 + min(METHOD_APP_ARG_NUM_LIMIT, subroutineSyntaxArgNum))
         # - or *BARE APP CALL* (numAppArg == 0)
         method_or_bare_condition = (
             And(
@@ -101,9 +101,13 @@ class Router:
         approval_conds.append(method_or_bare_condition)
 
         # Check the existence of OC.CloseOut
-        close_out_exist = any(map(lambda x: x == OnComplete.CloseOut, on_completes))
+        close_out_exist = any(
+            map(lambda x: str(x) == str(OnComplete.CloseOut), on_completes)
+        )
         # Check the existence of OC.ClearState (needed later)
-        clear_state_exist = any(map(lambda x: x == OnComplete.ClearState, on_completes))
+        clear_state_exist = any(
+            map(lambda x: str(x) == str(OnComplete.ClearState), on_completes)
+        )
         # Ill formed report if app create with existence of OC.CloseOut or OC.ClearState
         if creation and (close_out_exist or clear_state_exist):
             raise TealInputError(
@@ -117,7 +121,7 @@ class Router:
         approval_oc_conds: list[Expr] = [
             Txn.on_completion() == oc
             for oc in on_completes
-            if oc != OnComplete.ClearState
+            if str(oc) != str(OnComplete.ClearState)
         ]
 
         # if approval OC condition is not empty, append Or to approval_conds
@@ -328,7 +332,9 @@ class Router:
         """
         return (
             Router.__ast_construct(self.approval_if_then),
-            Router.__ast_construct(self.clear_state_if_then),
+            Router.__ast_construct(self.clear_state_if_then)
+            if self.clear_state_if_then
+            else Approve(),
             self.__contract_construct(),
         )
 
