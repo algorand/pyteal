@@ -143,12 +143,12 @@ def mode_to_execution_mode(mode: Mode) -> blackbox.ExecutionMode:
 
 def blackbox_pyteal(subr: BlackboxWrapper, mode: Mode) -> Expr:
     """
-    cf. BlackboxPyTealer.program() for futher details
+    cf. PyTealDryRunExecutor.program() for futher details
     """
-    return BlackboxPyTealer(subr, mode).program()
+    return PyTealDryRunExecutor(subr, mode).program()
 
 
-class BlackboxPyTealer:
+class PyTealDryRunExecutor:
     def __init__(self, subr: BlackboxWrapper, mode: Mode):
         """
         Args:
@@ -255,7 +255,7 @@ class BlackboxPyTealer:
         * `blackbox_pyteal_example1()`: Using blackbox_pyteal() for a simple test of both an app and logic sig
         * `blackbox_pyteal_example2()`: Using blackbox_pyteal() to make 400 assertions and generate a CSV report with 400 dryrun rows
         * `blackbox_pyteal_example3()`: declarative Test Driven Development approach through Invariant's
-        * `blackbox_pyteal_example4()`: Using BlackboxPyTealer.program() to debug an ABIReturnSubroutine with an app, logic sig and csv report
+        * `blackbox_pyteal_example4()`: Using PyTealDryRunExecutor to debug an ABIReturnSubroutine with an app, logic sig and csv report
         """
 
         return self._pyteal_lambda()

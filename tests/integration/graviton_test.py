@@ -758,7 +758,7 @@ def blackbox_pyteal_example3():
 
 
 def blackbox_pyteal_example4():
-    # Example 4: Using BlackboxPyTealer.program() to debug an ABIReturnSubroutine with an app, logic sig and csv report
+    # Example 4: Using PyTealDryRunExecutor to debug an ABIReturnSubroutine with an app, logic sig and csv report
     from pathlib import Path
     import random
 
@@ -776,7 +776,7 @@ def blackbox_pyteal_example4():
         TealType,
     )
 
-    from tests.blackbox import Blackbox, BlackboxPyTealer
+    from tests.blackbox import Blackbox, PyTealDryRunExecutor
 
     # Sum a dynamic uint64 array
     @Blackbox(input_types=[None])
@@ -798,9 +798,9 @@ def blackbox_pyteal_example4():
             ),
         )
 
-    # instantiate BlackboxPyTealer objects for the app and lsig:
-    app_pytealer = BlackboxPyTealer(abi_sum, Mode.Application)
-    lsig_pytealer = BlackboxPyTealer(abi_sum, Mode.Signature)
+    # instantiate PyTealDryRunExecutor objects for the app and lsig:
+    app_pytealer = PyTealDryRunExecutor(abi_sum, Mode.Application)
+    lsig_pytealer = PyTealDryRunExecutor(abi_sum, Mode.Signature)
 
     # generate reports with the same random inputs (fix the randomness with a seed):
     random.seed(42)

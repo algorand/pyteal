@@ -5,7 +5,7 @@ from typing import Literal
 
 import pyteal as pt
 
-from tests.blackbox import Blackbox, BlackboxPyTealer, blackbox_pyteal
+from tests.blackbox import Blackbox, PyTealDryRunExecutor, blackbox_pyteal
 
 from tests.compile_asserts import assert_teal_as_expected
 
@@ -187,7 +187,7 @@ def test_abi_blackbox_pyteal(subr_abi, mode):
     name = f"{'app' if mode == pt.Mode.Application else 'lsig'}_{subr.name()}"
     print(f"Case {subr.name()=}, {abi_return_type=}, {mode=} ------> {name=}")
 
-    pytealer = BlackboxPyTealer(subr, mode)
+    pytealer = PyTealDryRunExecutor(subr, mode)
     assert pytealer.is_abi(), "should be an ABI subroutine"
 
     arg_types = pytealer.abi_argument_types()
