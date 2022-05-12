@@ -5,7 +5,7 @@ from typing import Literal
 
 import pyteal as pt
 
-from tests.blackbox import Blackbox, PyTealDryRunExecutor, blackbox_pyteal
+from tests.blackbox import Blackbox, PyTealDryRunExecutor
 
 from tests.compile_asserts import assert_teal_as_expected
 
@@ -171,7 +171,7 @@ def test_blackbox_pyteal(subr, mode):
     is_app = mode == pt.Mode.Application
     name = f"{'app' if is_app else 'lsig'}_{subr.name()}"
 
-    compiled = pt.compileTeal(blackbox_pyteal(subr, mode), mode, version=6)
+    compiled = PyTealDryRunExecutor(subr, mode).compile(version=6)
     tealdir = GENERATED / "blackbox"
     tealdir.mkdir(parents=True, exist_ok=True)
     save_to = tealdir / (name + ".teal")
@@ -187,10 +187,10 @@ def test_abi_blackbox_pyteal(subr_abi, mode):
     name = f"{'app' if mode == pt.Mode.Application else 'lsig'}_{subr.name()}"
     print(f"Case {subr.name()=}, {abi_return_type=}, {mode=} ------> {name=}")
 
-    pytealer = PyTealDryRunExecutor(subr, mode)
-    assert pytealer.is_abi(), "should be an ABI subroutine"
+    pdre = PyTealDryRunExecutor(subr, mode)
+    assert pdre.is_abi(), "should be an ABI subroutine"
 
-    arg_types = pytealer.abi_argument_types()
+    arg_types = pdre.abi_argument_types()
     if subr.name() != "fn_1tt_arg_uint64_ret":
         assert not arg_types or any(
             arg_types
@@ -200,11 +200,11 @@ def test_abi_blackbox_pyteal(subr_abi, mode):
         expected_sdk_return_type = pt.abi.algosdk_from_type_spec(
             abi_return_type.type_spec()
         )
-        assert expected_sdk_return_type == pytealer.abi_return_type()
+        assert expected_sdk_return_type == pdre.abi_return_type()
     else:
-        assert pytealer.abi_return_type() is None
+        assert pdre.abi_return_type() is None
 
-    compiled = pt.compileTeal(blackbox_pyteal(subr, mode), mode, version=6)
+    compiled = pdre.compile(version=6)
     tealdir = GENERATED / "abi"
     tealdir.mkdir(parents=True, exist_ok=True)
     save_to = tealdir / (name + ".teal")
