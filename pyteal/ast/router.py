@@ -89,7 +89,7 @@ class Router:
                 Txn.application_args.length()
                 == Int(
                     1
-                    + max(
+                    + min(
                         method_to_register.subroutine.argument_count(),
                         METHOD_ARG_NUM_LIMIT,
                     )
