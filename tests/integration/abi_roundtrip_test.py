@@ -78,6 +78,19 @@ ABI_TYPES = [
     abi.Uint16,
     abi.Uint32,
     abi.Uint64,
+    abi.Tuple0,
+    abi.Tuple1[abi.Bool],
+    abi.Tuple1[abi.Byte],
+    abi.Tuple1[abi.Uint8],
+    abi.Tuple1[abi.Uint16],
+    abi.Tuple1[abi.Uint32],
+    abi.Tuple1[abi.Uint64],
+    abi.Tuple3[abi.Bool, abi.Uint64, abi.Uint32],
+    abi.Tuple3[abi.Byte, abi.Bool, abi.Uint64],
+    abi.Tuple3[abi.Uint8, abi.Byte, abi.Bool],
+    abi.Tuple3[abi.Uint16, abi.Uint8, abi.Byte],
+    abi.Tuple3[abi.Uint32, abi.Uint16, abi.Uint8],
+    abi.Tuple3[abi.Uint64, abi.Uint32, abi.Uint16],
 ]
 
 
