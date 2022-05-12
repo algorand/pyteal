@@ -1,4 +1,5 @@
 from typing import (
+    Callable,
     Union,
     Sequence,
     TypeVar,
@@ -106,7 +107,7 @@ class Array(BaseType, Generic[T]):
         )
         return self.stored_value.store(extracted)
 
-    def set(self, values: Sequence[T]) -> Expr:
+    def set(self, values: Sequence[T], abi_subr: Callable[..., Expr] = None) -> Expr:
         """Set the ABI array with a sequence of ABI type variables.
 
         The function first type-check the argument `values` to make sure the sequence of ABI type
@@ -135,7 +136,7 @@ class Array(BaseType, Generic[T]):
                     )
                 )
 
-        encoded = encodeTuple(values)
+        encoded = encodeTuple(values, abi_subr=abi_subr)
 
         if self.type_spec().is_length_dynamic():
             length_tmp = Uint16()

@@ -320,15 +320,16 @@ def test_make():
 def test_abi_type_translation():
     test_cases = [
         # Test for byte/bool/address/strings
-        (algosdk.abi.ByteType(), "byte", abi.ByteTypeSpec()),
-        (algosdk.abi.BoolType(), "bool", abi.BoolTypeSpec()),
-        (algosdk.abi.AddressType(), "address", abi.AddressTypeSpec()),
-        (algosdk.abi.StringType(), "string", abi.StringTypeSpec()),
+        (algosdk.abi.ByteType(), "byte", abi.ByteTypeSpec(), abi.Byte),
+        (algosdk.abi.BoolType(), "bool", abi.BoolTypeSpec(), abi.Bool),
+        (algosdk.abi.AddressType(), "address", abi.AddressTypeSpec(), abi.Address),
+        (algosdk.abi.StringType(), "string", abi.StringTypeSpec(), abi.String),
         # Test for dynamic array type
         (
             algosdk.abi.ArrayDynamicType(algosdk.abi.UintType(32)),
             "uint32[]",
             abi.DynamicArrayTypeSpec(abi.Uint32TypeSpec()),
+            abi.DynamicArray[abi.Uint32],
         ),
         (
             algosdk.abi.ArrayDynamicType(
@@ -336,6 +337,7 @@ def test_abi_type_translation():
             ),
             "byte[][]",
             abi.DynamicArrayTypeSpec(abi.DynamicArrayTypeSpec(abi.ByteTypeSpec())),
+            abi.DynamicArray[abi.DynamicArray[abi.Byte]],
         ),
         # TODO: Turn these tests on when PyTeal supports ufixed<N>x<M>
         # cf https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0004.md#types
@@ -360,9 +362,10 @@ def test_abi_type_translation():
                 abi.StaticArrayTypeSpec(abi.BoolTypeSpec(), 256),
                 100,
             ),
+            abi.StaticArray[abi.StaticArray[abi.Bool, Literal[256]], Literal[100]],
         ),
         # Test for tuple
-        (algosdk.abi.TupleType([]), "()", abi.TupleTypeSpec()),
+        (algosdk.abi.TupleType([]), "()", abi.TupleTypeSpec(), abi.Tuple0),
         (
             algosdk.abi.TupleType(
                 [
@@ -383,6 +386,13 @@ def test_abi_type_translation():
                     abi.StaticArrayTypeSpec(abi.AddressTypeSpec(), 10),
                 ),
             ),
+            abi.Tuple2[
+                abi.Uint16,
+                abi.Tuple2[
+                    abi.Byte,
+                    abi.StaticArray[abi.Address, Literal[10]],
+                ],
+            ],
         ),
         (
             algosdk.abi.TupleType(
@@ -408,6 +418,15 @@ def test_abi_type_translation():
                 abi.TupleTypeSpec(),
                 abi.BoolTypeSpec(),
             ),
+            abi.Tuple4[
+                abi.Uint64,
+                abi.Tuple2[
+                    abi.Byte,
+                    abi.StaticArray[abi.Address, Literal[10]],
+                ],
+                abi.Tuple,
+                abi.Bool,
+            ],
         ),
         # TODO: Turn these tests on when PyTeal supports ufixed<N>x<M>
         # cf https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0004.md#types
@@ -458,7 +477,7 @@ def test_abi_type_translation():
         # ),
     ]
 
-    for algosdk_abi, abi_string, pyteal_abi_ts in test_cases:
+    for algosdk_abi, abi_string, pyteal_abi_ts, pyteal_abi in test_cases:
         print(f"({algosdk_abi}, {abi_string}, {pyteal_abi_ts}),")
         assert str(algosdk_abi) == abi_string == str(pyteal_abi_ts)
         assert (
@@ -467,3 +486,5 @@ def test_abi_type_translation():
             == algosdk.abi.ABIType.from_string(str(pyteal_abi_ts))
         )
         assert algosdk_abi == abi.algosdk_from_type_spec(pyteal_abi_ts)
+        assert pyteal_abi_ts == abi.type_spec_from_annotation(pyteal_abi)
+        assert algosdk_abi == abi.algosdk_from_annotation(pyteal_abi)

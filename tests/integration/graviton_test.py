@@ -550,7 +550,7 @@ def blackbox_test_runner(
 
 
 @pytest.mark.parametrize("subr, scenario", APP_SCENARIOS.items())
-def test_blackbox_Subroutines_as_apps(
+def test_blackbox_subroutines_as_apps(
     subr: pt.SubroutineFnWrapper,
     scenario: Dict[str, Any],
 ):
@@ -558,7 +558,7 @@ def test_blackbox_Subroutines_as_apps(
 
 
 @pytest.mark.parametrize("subr, scenario", LOGICSIG_SCENARIOS.items())
-def test_blackbox_Subroutines_as_logic_sigs(
+def test_blackbox_subroutines_as_logic_sigs(
     subr: pt.SubroutineFnWrapper,
     scenario: Dict[str, Any],
 ):

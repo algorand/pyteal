@@ -236,5 +236,9 @@ def make(t: type[T]) -> T:
     return cast(T, type_spec_from_annotation(t).new_instance())
 
 
-def algosdk_from_type_spec(t: type[T]) -> algosdk.abi.ABIType:
+def algosdk_from_type_spec(t: TypeSpec) -> algosdk.abi.ABIType:
     return algosdk.abi.ABIType.from_string(str(t))
+
+
+def algosdk_from_annotation(t: type[T]) -> algosdk.abi.ABIType:
+    return algosdk_from_type_spec(type_spec_from_annotation(t))
