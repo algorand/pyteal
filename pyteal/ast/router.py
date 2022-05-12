@@ -7,7 +7,7 @@ from pyteal.errors import TealInputError
 from pyteal.types import TealType
 
 # from pyteal.ast import abi
-from pyteal.ast.subroutine import SubroutineFnWrapper
+from pyteal.ast.subroutine import SubroutineFnWrapper, ABIReturnSubroutine
 from pyteal.ast.cond import Cond
 from pyteal.ast.expr import Expr
 from pyteal.ast.app import OnComplete, EnumInt
@@ -57,14 +57,14 @@ ProgramNode.__module__ = "pyteal"
 class Router:
     """ """
 
-    def __init__(self, name: str = None) -> None:
-        self.name = "Contract" if name is None else name
+    def __init__(self, name: Optional[str] = None) -> None:
+        self.name: str = "Contract" if name is None else name
         self.approval_if_then: list[ProgramNode] = []
         self.clear_state_if_then: list[ProgramNode] = []
 
     @staticmethod
     def __parse_conditions(
-        method_to_register: SubroutineFnWrapper | None,
+        method_to_register: ABIReturnSubroutine | None,
         on_completes: list[EnumInt],
         creation: bool,
     ) -> tuple[list[Expr], list[Expr]]:
@@ -126,31 +126,61 @@ class Router:
         return approval_conds, clear_state_conds
 
     @staticmethod
-    def __wrap_handler(isMethod: bool, branch: SubroutineFnWrapper | Expr) -> Expr:
+    def __wrap_handler(
+        is_abi_method: bool, handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr
+    ) -> Expr:
         """"""
-        exprList: list[Expr] = []
-        if not isMethod:
-            if (
-                isinstance(branch, Seq)
-                and not branch.has_return()
-                and branch.type_of() == TealType.none
-            ):
-                exprList.append(branch)
-            elif (
-                isinstance(branch, SubroutineFnWrapper)
-                and branch.has_return()
-                and branch.type_of() == TealType.none
-            ):
-                exprList.append(branch())
-            else:
-                raise TealInputError(
-                    "bare appcall can only accept: none type + Seq (no ret) or Subroutine (with ret)"
-                )
+        expr_list: list[Expr] = []
+        if not is_abi_method:
+            match handler:
+                case Expr():
+                    if handler.type_of() != TealType.none:
+                        raise TealInputError(
+                            "bare appcall handler should have type to be none."
+                        )
+                    return handler if handler.has_return() else Seq(handler, Approve())
+                case SubroutineFnWrapper():
+                    if handler.type_of() != TealType.none:
+                        raise TealInputError(
+                            f"subroutine call should be returning none not {handler.type_of()}."
+                        )
+                    if handler.subroutine.argument_count() != 0:
+                        raise TealInputError(
+                            f"subroutine call should take 0 arg for bare-app call. "
+                            f"this subroutine takes {handler.subroutine.argument_count()}."
+                        )
+                    return Seq(handler(), Approve())
+                case ABIReturnSubroutine():
+                    if handler.type_of() != "void":
+                        raise TealInputError(
+                            f"abi-returning subroutine call should be returning void not {handler.type_of()}."
+                        )
+                    if handler.subroutine.argument_count() != 0:
+                        raise TealInputError(
+                            f"abi-returning subroutine call should take 0 arg for bare-app call. "
+                            f"this abi-returning subroutine takes {handler.subroutine.argument_count()}."
+                        )
+                    return Seq(cast(Expr, handler()), Approve())
+                case _:
+                    raise TealInputError(
+                        "bare appcall can only accept: none type + Seq (no ret) or Subroutine (with ret)"
+                    )
         else:
-            if isinstance(branch, SubroutineFnWrapper) and branch.has_return():
+            match handler:
+                case Expr():
+                    pass
+                case SubroutineFnWrapper():
+                    pass
+                case ABIReturnSubroutine():
+                    pass
+                case _:
+                    raise TealInputError(
+                        "For method call: should only register Subroutine with return"
+                    )
+            if isinstance(handler, SubroutineFnWrapper) and handler.has_return():
                 # TODO need to encode/decode things
                 # execBranchArgs: List[Expr] = []
-                if branch.subroutine.argument_count() >= METHOD_ARG_NUM_LIMIT:
+                if handler.subroutine.argument_count() >= METHOD_ARG_NUM_LIMIT:
                     # NOTE decode (if arg num > 15 need to de-tuple 15th (last) argument)
                     pass
                 else:
@@ -162,12 +192,7 @@ class Router:
                 # if branch.type_of() != TealType.none
                 # else branch(*execBranchArgs)
                 # )
-            else:
-                raise TealInputError(
-                    "For method call: should only register Subroutine with return"
-                )
-        exprList.append(Approve())
-        return Seq(*exprList)
+        return Seq(*expr_list)
 
     def __append_to_ast(
         self,
@@ -200,7 +225,7 @@ class Router:
 
     def on_bare_app_call(
         self,
-        bare_app_call: SubroutineFnWrapper | Expr,
+        bare_app_call: ABIReturnSubroutine | SubroutineFnWrapper | Expr,
         on_completes: EnumInt | list[EnumInt],
         *,
         creation: bool = False,
@@ -220,7 +245,7 @@ class Router:
     def on_method_call(
         self,
         method_signature: str,
-        method_app_call: SubroutineFnWrapper,
+        method_app_call: ABIReturnSubroutine,
         *,
         on_complete: EnumInt = OnComplete.NoOp,
         creation: bool = False,
@@ -257,7 +282,10 @@ class Router:
         return Contract(self.name, method_collections).dictify()
 
     def build_program(self) -> tuple[Expr, Expr, dict[str, Any]]:
-        """ """
+        """This method construct ASTs for both the approval and clear programs based on the inputs to the router,
+        also dump a JSON object of contract to allow client read and call the methods easily.
+
+        """
         return (
             Router.__ast_construct(self.approval_if_then),
             Router.__ast_construct(self.clear_state_if_then),
