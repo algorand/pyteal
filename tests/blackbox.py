@@ -382,7 +382,7 @@ class PyTealDryRunExecutor:
 
         return approval
 
-    def compile(self, version: int, assemble_constants: bool = True) -> str:
+    def compile(self, version: int, assemble_constants: bool = False) -> str:
         return _match_mode(
             self.mode,
             app=lambda: compileTeal(
