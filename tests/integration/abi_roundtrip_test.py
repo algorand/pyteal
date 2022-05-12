@@ -34,15 +34,21 @@ def tuple_comp_factory(t: type[T], value_type_specs: list[abi.TypeSpec]) -> Call
     def tuple_complement(x: t, *, output: t):
         value_types = [vts.new_instance() for vts in value_type_specs]
         setters = [vts.set(x[i]) for i, vts in enumerate(value_types)]
-        comp_funcs = [complement_factory(type(vts)) for vts in value_types]
+        comp_funcs = [complement_factory(type(vts), -1) for vts in value_types]
         compers = [vts.set(comp_funcs[i](vts)) for i, vts in enumerate(value_types)]
         return pt.Seq(*(setters + compers + [output.set(*value_types)]))
 
     return tuple_complement
 
 
-def array_comp_factory(t: type[T], value_type_spec: abi.TypeSpec) -> Callable:
-    comp_func = complement_factory(type(value_type_spec.new_instance()))
+def array_comp_factory(
+    t: type[T], value_type_spec: abi.TypeSpec, length: int
+) -> Callable:
+    comp_func = complement_factory(type(value_type_spec.new_instance()), -1)
+    if length != -1:
+        assert t.type_spec().is_length_dynamic()
+    else:
+        length = t.length_static()
 
     @pt.ABIReturnSubroutine
     def array_complement(arr: t, *, output: t):
@@ -55,14 +61,14 @@ def array_comp_factory(t: type[T], value_type_spec: abi.TypeSpec) -> Callable:
         ).Do(
             pt.Seq(
                 arr[i.load()].store_into(val),
-                output[i.load()].store_into(comp_func(val)),
+                output.set()[i.load()].store_into(comp_func(val)),
             )
         )
 
     return array_complement
 
 
-def complement_factory(t: T) -> Callable:
+def complement_factory(t: T, dynamic_length: int) -> Callable:
     ts = abi.type_spec_from_annotation(t)
     if isinstance(ts, abi.BoolTypeSpec):
         return bool_comp
@@ -71,13 +77,13 @@ def complement_factory(t: T) -> Callable:
     if isinstance(ts, abi.TupleTypeSpec):
         return tuple_comp_factory(t, ts.value_type_specs())
     if isinstance(ts, abi.ArrayTypeSpec):
-        return array_comp_factory(t, ts.value_type_spec())
+        return array_comp_factory(t, ts.value_type_spec(), dynamic_length)
 
     raise ValueError(f"uh-oh!!! didn't handle type {t}")
 
 
-def roundtrip_factory(t: type[T]) -> Callable:
-    comp = complement_factory(t)
+def roundtrip_factory(t: type[T], dynamic_length: int) -> Callable:
+    comp = complement_factory(t, dynamic_length)
 
     @Blackbox(input_types=[None])
     @pt.ABIReturnSubroutine
@@ -89,8 +95,8 @@ def roundtrip_factory(t: type[T]) -> Callable:
     return round_tripper
 
 
-def roundtrip_pytealer(t: type[T]):
-    roundtrip = roundtrip_factory(t)
+def roundtrip_pytealer(t: type[T], dynamic_length: int):
+    roundtrip = roundtrip_factory(t, dynamic_length)
     return BlackboxPyTealer(roundtrip, pt.Mode.Application)
 
 
@@ -114,16 +120,24 @@ ABI_TYPES = [
     abi.Tuple3[abi.Uint16, abi.Uint8, abi.Byte],
     abi.Tuple3[abi.Uint32, abi.Uint16, abi.Uint8],
     abi.Tuple3[abi.Uint64, abi.Uint32, abi.Uint16],
-    abi.StaticArray[abi.Bool, Literal[1337]],
+    abi.StaticArray[abi.Bool, Literal[0]],
+    abi.StaticArray[abi.Bool, Literal[42]],
+    (abi.DynamicArray[abi.Bool], 0),
+    (abi.DynamicArray[abi.Bool], 42),
 ]
 
 
+@pytest.mark.skip("not ready")
 @pytest.mark.parametrize("abi_type", ABI_TYPES)
 def test_pure_compilation(abi_type):
     print(f"Testing {abi_type=}")
+    dynamic_length = -1
+    if isinstance(abi_type, tuple):
+        abi_type, dynamic_length = abi_type
+
     sdk_abi_type = abi.algosdk_from_annotation(abi_type)
 
-    roundtripper = roundtrip_pytealer(abi_type)
+    roundtripper = roundtrip_pytealer(abi_type, dynamic_length)
 
     teal = roundtripper.program()
 
