@@ -6,7 +6,7 @@ import algosdk.abi
 from pyteal import abi
 import pyteal as pt
 
-from tests.blackbox import Blackbox, BlackboxPyTealer
+from tests.blackbox import Blackbox, PyTealDryRunExecutor
 
 T = TypeVar("T", bound=abi.BaseType)
 
@@ -95,9 +95,9 @@ def roundtrip_factory(t: type[T], dynamic_length: int) -> Callable:
     return round_tripper
 
 
-def roundtrip_pytealer(t: type[T], dynamic_length: int):
-    roundtrip = roundtrip_factory(t, dynamic_length)
-    return BlackboxPyTealer(roundtrip, pt.Mode.Application)
+def roundtrip_pytealer(t: type[T]):
+    roundtrip = roundtrip_factory(t)
+    return PyTealDryRunExecutor(roundtrip, pt.Mode.Application)
 
 
 ABI_TYPES = [

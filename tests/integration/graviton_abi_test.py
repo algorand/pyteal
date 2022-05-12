@@ -1,14 +1,13 @@
 import random
 
-from graviton.blackbox import DryRunExecutor
+from graviton.blackbox import DryRunInspector
 
 import pyteal as pt
 from pyteal.ast.subroutine import ABIReturnSubroutine
 
 from tests.blackbox import (
     Blackbox,
-    BlackboxPyTealer,
-    algod_with_assertion,
+    PyTealDryRunExecutor,
 )
 
 
@@ -249,34 +248,15 @@ def complex130_norm_squared(x: Complex130, *, output: Int65):
 
 
 def test_integer65():
-    bbpt_subtract_slick = BlackboxPyTealer(int65_sub, pt.Mode.Application)
-    approval_subtract_slick = bbpt_subtract_slick.program()
-    teal_subtract_slick = pt.compileTeal(
-        approval_subtract_slick, pt.Mode.Application, version=6
-    )
+    bbpt_subtract_slick = PyTealDryRunExecutor(int65_sub, pt.Mode.Application)
 
-    bbpt_subtract_cond = BlackboxPyTealer(int65_minus_cond, pt.Mode.Application)
-    approval_subtract_cond = bbpt_subtract_cond.program()
-    teal_subtract_cond = pt.compileTeal(
-        approval_subtract_cond, pt.Mode.Application, version=6
-    )
+    bbpt_subtract_cond = PyTealDryRunExecutor(int65_minus_cond, pt.Mode.Application)
 
-    bbpt_mult = BlackboxPyTealer(int65_mult, pt.Mode.Application)
-    approval_mult = bbpt_mult.program()
-    teal_mult = pt.compileTeal(approval_mult, pt.Mode.Application, version=6)
+    bbpt_mult = PyTealDryRunExecutor(int65_mult, pt.Mode.Application)
 
-    bbpt_negate = BlackboxPyTealer(int65_negate, pt.Mode.Application)
-    approval_negate = bbpt_negate.program()
-    teal_negate = pt.compileTeal(approval_negate, pt.Mode.Application, version=6)
+    bbpt_negate = PyTealDryRunExecutor(int65_negate, pt.Mode.Application)
 
-    bbpt_add = BlackboxPyTealer(int65_add, pt.Mode.Application)
-    approval_add = bbpt_add.program()
-    teal_add = pt.compileTeal(approval_add, pt.Mode.Application, version=6)
-
-    # same types, so no need to dupe:
-    unary_abi_argument_types = bbpt_negate.abi_argument_types()
-    binary_abi_argument_types = bbpt_subtract_slick.abi_argument_types()
-    abi_return_type = bbpt_subtract_slick.abi_return_type()
+    bbpt_add = PyTealDryRunExecutor(int65_add, pt.Mode.Application)
 
     def pynum_to_tuple(n):
         return (n >= 0, abs(n))
@@ -296,34 +276,20 @@ def test_integer65():
         for x, y in zip(random.sample(choices, N), random.sample(choices, N))
     ]
 
-    algod = algod_with_assertion()
+    def binary_dryrun(p: PyTealDryRunExecutor) -> list[DryRunInspector]:
+        return p.dryrun_on_sequence(binary_inputs)
 
     # Binary:
-    inspectors_subtract_slick = DryRunExecutor.dryrun_app_on_sequence(
-        algod,
-        teal_subtract_slick,
-        binary_inputs,
-        binary_abi_argument_types,
-        abi_return_type,
-    )
-    inspectors_subtract_cond = DryRunExecutor.dryrun_app_on_sequence(
-        algod,
-        teal_subtract_cond,
-        binary_inputs,
-        binary_abi_argument_types,
-        abi_return_type,
-    )
-    inspectors_mult = DryRunExecutor.dryrun_app_on_sequence(
-        algod, teal_mult, binary_inputs, binary_abi_argument_types, abi_return_type
-    )
-    inspectors_add = DryRunExecutor.dryrun_app_on_sequence(
-        algod, teal_add, binary_inputs, binary_abi_argument_types, abi_return_type
-    )
+    inspectors_subtract_slick = binary_dryrun(bbpt_subtract_slick)
+
+    inspectors_subtract_cond = binary_dryrun(bbpt_subtract_cond)
+
+    inspectors_mult = binary_dryrun(bbpt_mult)
+
+    inspectors_add = binary_dryrun(bbpt_add)
 
     # Unary:
-    inspectors_negate = DryRunExecutor.dryrun_app_on_sequence(
-        algod, teal_negate, unary_inputs, unary_abi_argument_types, abi_return_type
-    )
+    inspectors_negate = bbpt_negate.dryrun_on_sequence(unary_inputs)
 
     for i in range(N):
         binary_args = binary_inputs[i]
@@ -367,43 +333,23 @@ def test_integer65():
 def test_complex130():
     # Binary:
 
-    bbpt_cplx_add = BlackboxPyTealer(complex130_add, pt.Mode.Application)
-    approval_cplx_add = bbpt_cplx_add.program()
-    teal_cplx_add = pt.compileTeal(approval_cplx_add, pt.Mode.Application, version=6)
+    bbpt_cplx_add = PyTealDryRunExecutor(complex130_add, pt.Mode.Application)
 
-    bbpt_cplx_mult = BlackboxPyTealer(complex130_mult, pt.Mode.Application)
-    approval_cplx_mult = bbpt_cplx_mult.program()
-    teal_cplx_mult = pt.compileTeal(approval_cplx_mult, pt.Mode.Application, version=6)
+    bbpt_cplx_mult = PyTealDryRunExecutor(complex130_mult, pt.Mode.Application)
 
     # Unary:
 
-    bbpt_complex_real = BlackboxPyTealer(complex130_real, pt.Mode.Application)
-    approval_cplx_real = bbpt_complex_real.program()
-    teal_cplx_real = pt.compileTeal(approval_cplx_real, pt.Mode.Application, version=6)
+    bbpt_complex_real = PyTealDryRunExecutor(complex130_real, pt.Mode.Application)
 
-    bbpt_complex_imag = BlackboxPyTealer(complex130_imag, pt.Mode.Application)
-    approval_cplx_imag = bbpt_complex_imag.program()
-    teal_cplx_imag = pt.compileTeal(approval_cplx_imag, pt.Mode.Application, version=6)
+    bbpt_complex_imag = PyTealDryRunExecutor(complex130_imag, pt.Mode.Application)
 
-    bbpt_complex_conjugate = BlackboxPyTealer(complex130_conjugate, pt.Mode.Application)
-    approval_cplx_conjugate = bbpt_complex_conjugate.program()
-    teal_cplx_conjugate = pt.compileTeal(
-        approval_cplx_conjugate, pt.Mode.Application, version=6
+    bbpt_complex_conjugate = PyTealDryRunExecutor(
+        complex130_conjugate, pt.Mode.Application
     )
 
-    bbpt_complex_norm_squared = BlackboxPyTealer(
+    bbpt_complex_norm_squared = PyTealDryRunExecutor(
         complex130_norm_squared, pt.Mode.Application
     )
-    approval_cplx_norm_squared = bbpt_complex_norm_squared.program()
-    teal_cplx_norm_squared = pt.compileTeal(
-        approval_cplx_norm_squared, pt.Mode.Application, version=6
-    )
-
-    unary_abi_argument_types = bbpt_complex_real.abi_argument_types()
-    binary_abi_argument_types = bbpt_cplx_add.abi_argument_types()
-
-    real_abi_return_type = bbpt_complex_real.abi_return_type()
-    complex_abi_return_type = bbpt_cplx_add.abi_return_type()
 
     def pyint_to_tuple(n):
         return (n >= 0, abs(n))
@@ -439,57 +385,25 @@ def test_complex130():
         )
     ]
 
-    algod = algod_with_assertion()
+    def binary_dryrun(p: PyTealDryRunExecutor) -> list[DryRunInspector]:
+        return p.dryrun_on_sequence(binary_inputs)
 
     # Binary:
-    inspectors_cplx_add = DryRunExecutor.dryrun_app_on_sequence(
-        algod,
-        teal_cplx_add,
-        binary_inputs,
-        binary_abi_argument_types,
-        complex_abi_return_type,
-    )
+    inspectors_cplx_add = binary_dryrun(bbpt_cplx_add)
 
-    inspectors_cplx_mult = DryRunExecutor.dryrun_app_on_sequence(
-        algod,
-        teal_cplx_mult,
-        binary_inputs,
-        binary_abi_argument_types,
-        complex_abi_return_type,
-    )
+    inspectors_cplx_mult = binary_dryrun(bbpt_cplx_mult)
+
+    def unary_dryrun(p: PyTealDryRunExecutor) -> list[DryRunInspector]:
+        return p.dryrun_on_sequence(unary_inputs)
 
     # Unary:
-    inspectors_cplx_real = DryRunExecutor.dryrun_app_on_sequence(
-        algod,
-        teal_cplx_real,
-        unary_inputs,
-        unary_abi_argument_types,
-        real_abi_return_type,
-    )
+    inspectors_cplx_real = unary_dryrun(bbpt_complex_real)
 
-    inspectors_cplx_imag = DryRunExecutor.dryrun_app_on_sequence(
-        algod,
-        teal_cplx_imag,
-        unary_inputs,
-        unary_abi_argument_types,
-        real_abi_return_type,
-    )
+    inspectors_cplx_imag = unary_dryrun(bbpt_complex_imag)
 
-    inspectors_cplx_conjugate = DryRunExecutor.dryrun_app_on_sequence(
-        algod,
-        teal_cplx_conjugate,
-        unary_inputs,
-        unary_abi_argument_types,
-        complex_abi_return_type,
-    )
+    inspectors_cplx_conjugate = unary_dryrun(bbpt_complex_conjugate)
 
-    inspectors_cplx_norm_squared = DryRunExecutor.dryrun_app_on_sequence(
-        algod,
-        teal_cplx_norm_squared,
-        unary_inputs,
-        unary_abi_argument_types,
-        real_abi_return_type,
-    )
+    inspectors_cplx_norm_squared = unary_dryrun(bbpt_complex_norm_squared)
 
     for i in range(N):
         binary_args = binary_inputs[i]

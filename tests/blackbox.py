@@ -1,15 +1,18 @@
-from typing import Callable
+from typing import Callable, Sequence
 
 import algosdk.abi
 from algosdk.v2client import algod
 
 from graviton import blackbox
+from graviton.blackbox import DryRunInspector, DryRunExecutor
+from graviton.dryrun import ZERO_ADDRESS
 
 from pyteal import (
     abi,
     Arg,
     Btoi,
     Bytes,
+    compileTeal,
     Expr,
     Int,
     Itob,
@@ -140,12 +143,12 @@ def mode_to_execution_mode(mode: Mode) -> blackbox.ExecutionMode:
 
 def blackbox_pyteal(subr: BlackboxWrapper, mode: Mode) -> Expr:
     """
-    cf. BlackboxPyTealer.program() for futher details
+    cf. PyTealDryRunExecutor.program() for futher details
     """
-    return BlackboxPyTealer(subr, mode).program()
+    return PyTealDryRunExecutor(subr, mode).program()
 
 
-class BlackboxPyTealer:
+class PyTealDryRunExecutor:
     def __init__(self, subr: BlackboxWrapper, mode: Mode):
         """
         Args:
@@ -252,7 +255,7 @@ class BlackboxPyTealer:
         * `blackbox_pyteal_example1()`: Using blackbox_pyteal() for a simple test of both an app and logic sig
         * `blackbox_pyteal_example2()`: Using blackbox_pyteal() to make 400 assertions and generate a CSV report with 400 dryrun rows
         * `blackbox_pyteal_example3()`: declarative Test Driven Development approach through Invariant's
-        * `blackbox_pyteal_example4()`: Using BlackboxPyTealer.program() to debug an ABIReturnSubroutine with an app, logic sig and csv report
+        * `blackbox_pyteal_example4()`: Using PyTealDryRunExecutor to debug an ABIReturnSubroutine with an app, logic sig and csv report
         """
 
         return self._pyteal_lambda()
@@ -374,3 +377,35 @@ class BlackboxPyTealer:
             return Seq(*(preps + results))
 
         return approval
+
+    def dryrun_on_sequence(
+        self,
+        inputs: list[Sequence[str | int]],
+        compiler_version=6,
+        sender: str = ZERO_ADDRESS,
+    ) -> list[DryRunInspector]:
+        match self.mode:
+            case Mode.Application:
+                return DryRunExecutor.dryrun_app_on_sequence(
+                    algod_with_assertion(),
+                    compileTeal(
+                        self.program(), Mode.Application, version=compiler_version
+                    ),
+                    inputs,
+                    self.abi_argument_types(),
+                    self.abi_return_type(),
+                    sender,
+                )
+            case Mode.Signature:
+                return DryRunExecutor.dryrun_logicsig_on_sequence(
+                    algod_with_assertion(),
+                    compileTeal(
+                        self.program(), Mode.Signature, version=compiler_version
+                    ),
+                    inputs,
+                    self.abi_argument_types(),
+                    self.abi_return_type(),
+                    sender,
+                )
+            case _:
+                raise Exception(f"Unknown mode {self.mode} of type {type(self.mode)}")
