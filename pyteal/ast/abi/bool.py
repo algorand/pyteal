@@ -141,9 +141,7 @@ def boolSequenceLength(num_bools: int) -> int:
     return (num_bools + NUM_BITS_IN_BYTE - 1) // NUM_BITS_IN_BYTE
 
 
-def encodeBoolSequence(
-    values: Sequence[Bool], abi_subr: Callable[..., Expr] = None
-) -> Expr:
+def encodeBoolSequence(values: Sequence[Bool]) -> Expr:
     """Encoding a sequences of boolean values into a byte string.
 
     Args:
@@ -156,6 +154,6 @@ def encodeBoolSequence(
     expr: Expr = Bytes(b"\x00" * length)
 
     for i, value in enumerate(values):
-        expr = SetBit(expr, Int(i), abi_subr(value) if abi_subr else value.get())
+        expr = SetBit(expr, Int(i), value.get())
 
     return expr

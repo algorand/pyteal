@@ -1,5 +1,4 @@
 from typing import (
-    Callable,
     List,
     Sequence,
     Dict,
@@ -34,9 +33,7 @@ from pyteal.ast.abi.uint import NUM_BITS_IN_BYTE, Uint16
 from pyteal.ast.abi.util import substringForDecoding
 
 
-def encodeTuple(
-    values: Sequence[BaseType], abi_subr: Callable[..., Expr] = None
-) -> Expr:
+def encodeTuple(values: Sequence[BaseType]) -> Expr:
     heads: List[Expr] = []
     head_length_static: int = 0
 
@@ -54,9 +51,7 @@ def encodeTuple(
             ignoreNext = numBools - 1
             head_length_static += boolSequenceLength(numBools)
             heads.append(
-                encodeBoolSequence(
-                    cast(Sequence[Bool], values[i : i + numBools]), abi_subr=abi_subr
-                )
+                encodeBoolSequence(cast(Sequence[Bool], values[i : i + numBools]))
             )
             continue
 
@@ -67,7 +62,7 @@ def encodeTuple(
             continue
 
         head_length_static += elemType.byte_length_static()
-        heads.append((abi_subr(elem) if abi_subr else elem).encode())
+        heads.append(elem.encode())
 
     tail_offset = Uint16()
     tail_offset_accumulator = Uint16()
@@ -100,7 +95,7 @@ def encodeTuple(
                 updateAccumulator = Seq()
 
             heads[dynamicValueIndexToHeadIndex[i]] = Seq(
-                encoded_tail.store((abi_subr(elem) if abi_subr else elem).encode()),
+                encoded_tail.store(elem.encode()),
                 updateVars,
                 updateAccumulator,
                 tail_offset.encode(),
@@ -280,7 +275,7 @@ class Tuple(BaseType):
     def set(self: T, value: ComputedValue[T]) -> Expr:
         ...
 
-    def set(self, *values, abi_subr: Callable[..., Expr] = None):
+    def set(self, *values):
         if len(values) == 1 and isinstance(values[0], ComputedValue):
             return self._set_with_computed_type(values[0])
 
@@ -295,7 +290,7 @@ class Tuple(BaseType):
             )
         if not all(myTypes[i] == values[i].type_spec() for i in range(len(myTypes))):
             raise TealInputError("Input values do not match type")
-        return self.stored_value.store(encodeTuple(values, abi_subr=abi_subr))
+        return self.stored_value.store(encodeTuple(values))
 
     def encode(self) -> Expr:
         return self.stored_value.load()
