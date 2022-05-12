@@ -408,3 +408,38 @@ class BlackboxPyTealer:
                 )
             case _:
                 raise Exception(f"Unknown mode {self.mode} of type {type(self.mode)}")
+
+    # Does not work - provided for illustration.  Error is:
+    # E       TypeError: DryRunExecutor.dryrun_app_on_sequence() got multiple values for argument 'cls'
+    #
+    # Relates to https://stackoverflow.com/questions/16626789/functools-partial-on-class-method.
+    def dryrun_on_sequence_partial(
+        self,
+        compiler_version=6,
+    ) -> Callable[[List[Sequence[Union[str, int]]]], List[DryRunInspector]]:
+        from functools import partial
+
+        match self.mode:
+            case Mode.Application:
+                return partial(
+                    DryRunExecutor.dryrun_app_on_sequence,
+                    algod=algod_with_assertion(),
+                    teal=compileTeal(
+                        self.program(), Mode.Application, version=compiler_version
+                    ),
+                    abi_argument_types=self.abi_argument_types(),
+                    abi_return_type=self.abi_return_type(),
+                    sender=ZERO_ADDRESS,
+                )
+
+            case Mode.Signature:
+                return partial(
+                    DryRunExecutor.dryrun_app_on_sequence,
+                    algod=algod_with_assertion(),
+                    teal=compileTeal(
+                        self.program(), Mode.Signature, version=compiler_version
+                    ),
+                    abi_argument_types=self.abi_argument_types(),
+                    abi_return_type=self.abi_return_type(),
+                    sender=ZERO_ADDRESS,
+                )
