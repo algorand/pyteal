@@ -200,6 +200,7 @@ class BlackboxPyTealer:
 
     def program(self) -> Expr:
         """Functor producing ready-to-compile PyTeal programs from annotated subroutines
+        TODO: add explanation for ABI var's/output as well
 
         Returns:
             a function that called with no parameters -e.g. result()-
@@ -246,7 +247,7 @@ class BlackboxPyTealer:
                 log Itob(Int(1337)) as it is either impossible (TealType.none),
                 or unknown at compile time (TealType.anytype) how to convert to Bytes
 
-        For illustrative examples of how to use this function please refer to the integration test file `graviton_test.py` and especially:
+        For illustrative examples of how to use this method please refer to the integration test file `graviton_test.py` and especially:
 
         * `blackbox_pyteal_example1()`: Using blackbox_pyteal() for a simple test of both an app and logic sig
         * `blackbox_pyteal_example2()`: Using blackbox_pyteal() to make 400 assertions and generate a CSV report with 400 dryrun rows
