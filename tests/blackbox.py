@@ -1,4 +1,4 @@
-from typing import Callable, List, Sequence, Union
+from typing import Callable, Sequence
 
 import algosdk.abi
 from algosdk.v2client import algod
@@ -379,10 +379,10 @@ class BlackboxPyTealer:
 
     def dryrun_on_sequence(
         self,
-        inputs: List[Sequence[Union[str, int]]],
+        inputs: list[Sequence[str | int]],
         compiler_version=6,
         sender: str = ZERO_ADDRESS,
-    ) -> List[DryRunInspector]:
+    ) -> list[DryRunInspector]:
         match self.mode:
             case Mode.Application:
                 return DryRunExecutor.dryrun_app_on_sequence(
