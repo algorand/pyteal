@@ -33,12 +33,12 @@ Notes:
 - On Method Call, check
   - [x] txna ApplicationArgs 0 == method "method-signature"
   - [x] On-Completion should match (only one On-Completion specified here?)
-  - [?] non void method call should log with 0x151f7c75 return-method-specifier
+  - [x] non void method call should log with 0x151f7c75 return-method-specifier
         (kinda done in another PR to ABI-Type)
-  - [?] redirect the method arguments and pass them to handler function
+  - [x] redirect the method arguments and pass them to handler function
         (kinda done, but need to do with extraction and (en/de)-code)
-  - [ ] Must execute actions required to invoke the method
-  - [ ] extract arguments if needed
+  - [x] Must execute actions required to invoke the method
+  - [x] extract arguments if needed
         (decode txna ApplicationArgs 15 if there exists, and extract arguments to feed method)
 
 Notes for OC:
