@@ -1,5 +1,5 @@
 import pytest
-from typing import Callable, TypeVar
+from typing import Callable, Literal, TypeVar
 
 import algosdk.abi
 
@@ -41,6 +41,27 @@ def tuple_comp_factory(t: type[T], value_type_specs: list[abi.TypeSpec]) -> Call
     return tuple_complement
 
 
+def array_comp_factory(t: type[T], value_type_spec: abi.TypeSpec) -> Callable:
+    comp_func = complement_factory(type(value_type_spec.new_instance()))
+
+    @pt.ABIReturnSubroutine
+    def array_complement(arr: t, *, output: t):
+        i = pt.ScratchVar(pt.TealType.uint64)
+        val = value_type_spec.new_instance()
+        return pt.For(
+            i.store(pt.Int(0)),
+            i.load() < arr.length(),
+            i.store(i.load() + pt.Int(1)),
+        ).Do(
+            pt.Seq(
+                arr[i.load()].store_into(val),
+                output[i.load()].store_into(comp_func(val)),
+            )
+        )
+
+    return array_complement
+
+
 def complement_factory(t: T) -> Callable:
     ts = abi.type_spec_from_annotation(t)
     if isinstance(ts, abi.BoolTypeSpec):
@@ -49,6 +70,8 @@ def complement_factory(t: T) -> Callable:
         return numerical_comp_factory(t, ts.bit_size())
     if isinstance(ts, abi.TupleTypeSpec):
         return tuple_comp_factory(t, ts.value_type_specs())
+    if isinstance(ts, abi.ArrayTypeSpec):
+        return array_comp_factory(t, ts.value_type_spec())
 
     raise ValueError(f"uh-oh!!! didn't handle type {t}")
 
@@ -91,6 +114,7 @@ ABI_TYPES = [
     abi.Tuple3[abi.Uint16, abi.Uint8, abi.Byte],
     abi.Tuple3[abi.Uint32, abi.Uint16, abi.Uint8],
     abi.Tuple3[abi.Uint64, abi.Uint32, abi.Uint16],
+    abi.StaticArray[abi.Bool, Literal[1337]],
 ]
 
 
