@@ -1,6 +1,7 @@
 from typing import Union, TypeVar, Sequence
 from collections.abc import Sequence as CollectionSequence
 
+from pyteal.ast.abi.uint import Byte
 from pyteal.ast.abi.type import ComputedValue, BaseType
 from pyteal.ast.abi.array_dynamic import DynamicArray, DynamicArrayTypeSpec
 from pyteal.ast.abi.uint import ByteTypeSpec, Uint16TypeSpec
@@ -39,7 +40,7 @@ class StringTypeSpec(DynamicArrayTypeSpec):
 StringTypeSpec.__module__ = "pyteal"
 
 
-class String(DynamicArray):
+class String(DynamicArray[Byte]):
     def __init__(self) -> None:
         super().__init__(StringTypeSpec())
 
