@@ -1,6 +1,6 @@
 import random
 
-from graviton.blackbox import DryRunExecutor, DryRunInspector
+from graviton.blackbox import DryRunInspector
 
 import pyteal as pt
 from pyteal.ast.subroutine import ABIReturnSubroutine
@@ -8,7 +8,6 @@ from pyteal.ast.subroutine import ABIReturnSubroutine
 from tests.blackbox import (
     Blackbox,
     PyTealDryRunExecutor,
-    algod_with_assertion,
 )
 
 
