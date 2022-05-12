@@ -6,8 +6,12 @@ from pyteal.config import METHOD_ARG_NUM_LIMIT
 from pyteal.errors import TealInputError
 from pyteal.types import TealType
 
-# from pyteal.ast import abi
-from pyteal.ast.subroutine import SubroutineFnWrapper, ABIReturnSubroutine
+from pyteal.ast import abi
+from pyteal.ast.subroutine import (
+    OutputKwArgInfo,
+    SubroutineFnWrapper,
+    ABIReturnSubroutine,
+)
 from pyteal.ast.cond import Cond
 from pyteal.ast.expr import Expr
 from pyteal.ast.app import OnComplete, EnumInt
@@ -130,7 +134,6 @@ class Router:
         is_abi_method: bool, handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr
     ) -> Expr:
         """"""
-        expr_list: list[Expr] = []
         if not is_abi_method:
             match handler:
                 case Expr():
@@ -166,33 +169,70 @@ class Router:
                         "bare appcall can only accept: none type + Seq (no ret) or Subroutine (with ret)"
                     )
         else:
-            match handler:
-                case Expr():
-                    pass
-                case SubroutineFnWrapper():
-                    pass
-                case ABIReturnSubroutine():
-                    pass
-                case _:
-                    raise TealInputError(
-                        "For method call: should only register Subroutine with return"
-                    )
-            if isinstance(handler, SubroutineFnWrapper) and handler.has_return():
-                # TODO need to encode/decode things
-                # execBranchArgs: List[Expr] = []
-                if handler.subroutine.argument_count() >= METHOD_ARG_NUM_LIMIT:
-                    # NOTE decode (if arg num > 15 need to de-tuple 15th (last) argument)
-                    pass
-                else:
-                    pass
+            if not isinstance(handler, ABIReturnSubroutine):
+                raise TealInputError(
+                    f"method call should be only registering ABIReturnSubroutine, got {type(handler)}."
+                )
+            if not handler.is_registrable():
+                raise TealInputError(
+                    f"method call ABIReturnSubroutine is not registable"
+                    f"got {handler.subroutine.argument_count()} args with {len(handler.subroutine.abi_args)} ABI args."
+                )
 
-                # exprList.append(
-                # TODO this line can be changed to method-return in ABI side
-                # MethodReturn(branch(*execBranchArgs))
-                # if branch.type_of() != TealType.none
-                # else branch(*execBranchArgs)
-                # )
-        return Seq(*expr_list)
+            arg_type_specs: list[abi.TypeSpec] = cast(
+                list[abi.TypeSpec], handler.subroutine.expected_arg_types
+            )
+            if handler.subroutine.argument_count() > METHOD_ARG_NUM_LIMIT:
+                to_be_tupled_specs = arg_type_specs[METHOD_ARG_NUM_LIMIT - 1 :]
+                arg_type_specs = arg_type_specs[: METHOD_ARG_NUM_LIMIT - 1]
+                tupled_spec = abi.TupleTypeSpec(*to_be_tupled_specs)
+                arg_type_specs.append(tupled_spec)
+
+            arg_abi_vars: list[abi.BaseType] = [
+                arg_type_specs[i].new_instance()
+                for i in range(handler.subroutine.argument_count())
+            ]
+            decode_instructions: list[Expr] = [
+                arg_abi_vars[i].decode(Txn.application_args[i + 1])
+                for i in range(handler.subroutine.argument_count())
+            ]
+
+            if handler.subroutine.argument_count() > METHOD_ARG_NUM_LIMIT:
+                tuple_arg_type_specs: list[abi.TypeSpec] = cast(
+                    list[abi.TypeSpec],
+                    handler.subroutine.expected_arg_types[METHOD_ARG_NUM_LIMIT - 1 :],
+                )
+                tuple_abi_args: list[abi.BaseType] = [
+                    t_arg_ts.new_instance() for t_arg_ts in tuple_arg_type_specs
+                ]
+                tupled_arg: abi.Tuple = cast(abi.Tuple, arg_abi_vars[-1])
+                de_tuple_instructions: list[Expr] = [
+                    tupled_arg[i].store_into(tuple_abi_args[i])
+                    for i in range(len(tuple_arg_type_specs))
+                ]
+                decode_instructions += de_tuple_instructions
+                arg_abi_vars = arg_abi_vars[:-1] + tuple_abi_args
+
+            # NOTE: does not have to have return, can be void method
+            if handler.type_of() == "void":
+                return Seq(
+                    *decode_instructions,
+                    cast(Expr, handler(*arg_abi_vars)),
+                    Approve(),
+                )
+            else:
+                output_temp: abi.BaseType = cast(
+                    OutputKwArgInfo, handler.output_kwarg_info
+                ).abi_type.new_instance()
+                subroutine_call: abi.ReturnedValue = cast(
+                    abi.ReturnedValue, handler(*arg_abi_vars)
+                )
+                return Seq(
+                    *decode_instructions,
+                    subroutine_call.store_into(output_temp),
+                    abi.MethodReturn(output_temp),
+                    Approve(),
+                )
 
     def __append_to_ast(
         self,
