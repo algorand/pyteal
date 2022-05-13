@@ -34,13 +34,15 @@ from pyteal.ast.abi.tuple import (
 from pyteal.ast.abi.array_base import ArrayTypeSpec, Array, ArrayElement
 from pyteal.ast.abi.array_static import StaticArrayTypeSpec, StaticArray
 from pyteal.ast.abi.array_dynamic import DynamicArrayTypeSpec, DynamicArray
-
+from pyteal.ast.abi.reference_args import Account, AccountTypeSpec
 from pyteal.ast.abi.method_return import MethodReturn
 from pyteal.ast.abi.util import type_spec_from_annotation, make
 
 __all__ = [
     "String",
     "StringTypeSpec",
+    "Account",
+    "AccountTypeSpec",
     "Address",
     "AddressTypeSpec",
     "AddressLength",
