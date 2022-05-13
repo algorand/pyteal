@@ -86,6 +86,7 @@ class ABISubroutineTC:
     arg_instances: list[pt.Expr | pt.abi.BaseType]
     name: str
     ret_type: str | pt.abi.TypeSpec
+    signature: str
 
 
 def test_abi_subroutine_definition():
@@ -130,13 +131,27 @@ def test_abi_subroutine_definition():
         return output.set(b[a % pt.Int(10)])
 
     cases = (
-        ABISubroutineTC(fn_0arg_0ret, [], "fn_0arg_0ret", "void"),
+        ABISubroutineTC(fn_0arg_0ret, [], "fn_0arg_0ret", "void", "fn_0arg_0ret()void"),
         ABISubroutineTC(
-            fn_0arg_uint64_ret, [], "fn_0arg_uint64_ret", pt.abi.Uint64TypeSpec()
+            fn_0arg_uint64_ret,
+            [],
+            "fn_0arg_uint64_ret",
+            pt.abi.Uint64TypeSpec(),
+            "fn_0arg_uint64_ret()uint64",
         ),
-        ABISubroutineTC(fn_1arg_0ret, [pt.abi.Uint64()], "fn_1arg_0ret", "void"),
         ABISubroutineTC(
-            fn_1arg_1ret, [pt.abi.Uint64()], "fn_1arg_1ret", pt.abi.Uint64TypeSpec()
+            fn_1arg_0ret,
+            [pt.abi.Uint64()],
+            "fn_1arg_0ret",
+            "void",
+            "fn_1arg_0ret(uint64)void",
+        ),
+        ABISubroutineTC(
+            fn_1arg_1ret,
+            [pt.abi.Uint64()],
+            "fn_1arg_1ret",
+            pt.abi.Uint64TypeSpec(),
+            "fn_1arg_1ret(uint64)uint64",
         ),
         ABISubroutineTC(
             fn_2arg_0ret,
@@ -148,6 +163,7 @@ def test_abi_subroutine_definition():
             ],
             "fn_2arg_0ret",
             "void",
+            "fn_2arg_0ret(uint64,byte[10])void",
         ),
         ABISubroutineTC(
             fn_2arg_1ret,
@@ -159,6 +175,7 @@ def test_abi_subroutine_definition():
             ],
             "fn_2arg_1ret",
             pt.abi.ByteTypeSpec(),
+            "fn_2arg_1ret(uint64,byte[10])byte",
         ),
         ABISubroutineTC(
             fn_2arg_1ret_with_expr,
@@ -170,6 +187,7 @@ def test_abi_subroutine_definition():
             ],
             "fn_2arg_1ret_with_expr",
             pt.abi.ByteTypeSpec(),
+            "fn_2arg_1ret_with_expr(byte[10])byte",  # TODO: this seems wrong, no?
         ),
     )
 
@@ -192,6 +210,8 @@ def test_abi_subroutine_definition():
         assert case.definition.is_registrable() == all(
             map(lambda x: isinstance(x, pt.abi.BaseType), case.arg_instances)
         )
+
+        assert case.definition.method_signature() == case.signature
 
 
 def test_subroutine_definition_validate():
