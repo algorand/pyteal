@@ -12,7 +12,7 @@ from tests.compile_asserts import assert_teal_as_expected
 
 T = TypeVar("T", bound=abi.BaseType)
 
-PATH = Path.cwd() / "tests" / "unit"
+PATH = Path.cwd() / "tests" / "integration"
 FIXTURES = PATH / "teal"
 GENERATED = PATH / "generated"
 
@@ -100,8 +100,12 @@ def roundtrip_pytealer(t: type[T], dynamic_length: int):
 
 
 ABI_TYPES = [
+    abi.Address,
     abi.Bool,
     abi.Byte,
+    (abi.String, 0),
+    (abi.String, 1),
+    (abi.String, 13),
     abi.Uint8,
     abi.Uint16,
     abi.Uint32,
@@ -121,13 +125,17 @@ ABI_TYPES = [
     abi.Tuple3[abi.Uint64, abi.Uint32, abi.Uint16],
     abi.StaticArray[abi.Bool, Literal[1]],
     abi.StaticArray[abi.Bool, Literal[42]],
+    abi.StaticArray[abi.Uint64, Literal[1]],
+    abi.StaticArray[abi.Uint64, Literal[42]],
     (abi.DynamicArray[abi.Bool], 0),
     (abi.DynamicArray[abi.Bool], 1),
     (abi.DynamicArray[abi.Bool], 42),
+    (abi.DynamicArray[abi.Uint64], 0),
+    (abi.DynamicArray[abi.Uint64], 1),
+    (abi.DynamicArray[abi.Uint64], 42),
 ]
 
 
-# @pytest.mark.skip("not ready")
 @pytest.mark.parametrize("abi_type", ABI_TYPES)
 def test_pure_compilation(abi_type):
     print(f"Testing {abi_type=}")
@@ -147,13 +155,18 @@ def test_pure_compilation(abi_type):
     assert algosdk.abi.TupleType([sdk_abi_type] * 2) == abi_ret_type
 
     program = roundtripper.program()
+    teal = pt.compileTeal(program, pt.Mode.Application, version=6)
 
-    filename = f"app_roundtrip_{sdk_abi_type}.teal"
+    filename = (
+        f"app_roundtrip_{sdk_abi_type}"
+        + (f"_<{dynamic_length}>" if dynamic_length >= 0 else "")
+        + ".teal"
+    )
     tealdir = GENERATED / "roundtrip"
     tealdir.mkdir(parents=True, exist_ok=True)
 
     save_to = tealdir / filename
     with open(save_to, "w") as f:
-        f.write()
+        f.write(teal)
 
     assert_teal_as_expected(save_to, FIXTURES / "roundtrip" / filename)

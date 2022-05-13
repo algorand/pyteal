@@ -202,7 +202,7 @@ class PyTealDryRunExecutor:
         )
 
     def program(self) -> Expr:
-        """Functor producing ready-to-compile PyTeal programs from annotated subroutines
+        """Get ready-to-compile PyTeal program from Subroutines and ABIReturnSubroutines
         TODO: add explanation for ABI var's/output as well
 
         Returns:
