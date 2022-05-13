@@ -1,4 +1,4 @@
-from typing import Union, TypeVar, Sequence, cast
+from typing import Union, Sequence, cast
 from collections.abc import Sequence as CollectionSequence
 
 from pyteal.ast.abi.uint import Byte
@@ -18,9 +18,6 @@ from pyteal.errors import TealInputError
 
 def encoded_string(s: Expr):
     return Concat(Suffix(Itob(Len(s)), Int(6)), s)
-
-
-T = TypeVar("T", bound=BaseType)
 
 
 class StringTypeSpec(DynamicArrayTypeSpec):
@@ -67,12 +64,7 @@ class String(DynamicArray[Byte]):
 
         match value:
             case ComputedValue():
-                if value.produced_type_spec() == StringTypeSpec():
-                    return value.store_into(self)
-
-                raise TealInputError(
-                    f"Got ComputedValue with type spec {value.produced_type_spec()}, expected StringTypeSpec"
-                )
+                return self._set_with_computed_type(value)
             case BaseType():
                 if value.type_spec() == StringTypeSpec() or (
                     value.type_spec() == DynamicArrayTypeSpec(ByteTypeSpec())
