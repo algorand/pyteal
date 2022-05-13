@@ -136,7 +136,7 @@ def test_abi_subroutine_definition():
         *,
         output: pt.abi.Byte,
     ) -> pt.Expr:
-        return output.set(b[a % pt.Int(10)])
+        return output.set(pt.Int(1))
 
     cases = (
         # ABISubroutineTC(fn_0arg_0ret, [], "fn_0arg_0ret", "void"),
@@ -184,7 +184,7 @@ def test_abi_subroutine_definition():
             fn_w_tuple1arg,
             [
                 pt.Int(5),
-                pt.abi.TupleTypeSpec(pt.abi.ByteTypeSpec()),
+                pt.abi.make(pt.abi.Tuple1[pt.abi.Byte]),
             ],
             "fn_w_tuple1arg",
             pt.abi.ByteTypeSpec(),
