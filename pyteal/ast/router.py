@@ -198,12 +198,11 @@ class Router:
                 arg_type_specs.append(tupled_spec)
 
             arg_abi_vars: list[abi.BaseType] = [
-                arg_type_specs[i].new_instance()
-                for i in range(handler.subroutine.argument_count())
+                type_spec.new_instance() for type_spec in arg_type_specs
             ]
             decode_instructions: list[Expr] = [
                 arg_abi_vars[i].decode(Txn.application_args[i + 1])
-                for i in range(handler.subroutine.argument_count())
+                for i in range(len(arg_type_specs))
             ]
 
             if handler.subroutine.argument_count() > METHOD_ARG_NUM_LIMIT:

@@ -2193,3 +2193,444 @@ retsub
 
     with pytest.raises(pt.TealInternalError):
         pt.compileTeal(program_access_b4_store_broken, pt.Mode.Application, version=6)
+
+
+def test_router_app():
+    router = pt.Router()
+
+    @router.add_method_handler
+    @pt.ABIReturnSubroutine
+    def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(a.get() + b.get())
+
+    @router.add_method_handler
+    @pt.ABIReturnSubroutine
+    def sub(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(a.get() - b.get())
+
+    @router.add_method_handler
+    @pt.ABIReturnSubroutine
+    def mul(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(a.get() * b.get())
+
+    @router.add_method_handler
+    @pt.ABIReturnSubroutine
+    def div(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(a.get() / b.get())
+
+    @router.add_method_handler
+    @pt.ABIReturnSubroutine
+    def mod(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(a.get() % b.get())
+
+    @router.add_method_handler
+    @pt.ABIReturnSubroutine
+    def all_laid_to_args(
+        _a: pt.abi.Uint64,
+        _b: pt.abi.Uint64,
+        _c: pt.abi.Uint64,
+        _d: pt.abi.Uint64,
+        _e: pt.abi.Uint64,
+        _f: pt.abi.Uint64,
+        _g: pt.abi.Uint64,
+        _h: pt.abi.Uint64,
+        _i: pt.abi.Uint64,
+        _j: pt.abi.Uint64,
+        _k: pt.abi.Uint64,
+        _l: pt.abi.Uint64,
+        _m: pt.abi.Uint64,
+        _n: pt.abi.Uint64,
+        _o: pt.abi.Uint64,
+        _p: pt.abi.Uint64,
+        *,
+        output: pt.abi.Uint64,
+    ):
+        return output.set(
+            _a.get()
+            + _b.get()
+            + _c.get()
+            + _d.get()
+            + _e.get()
+            + _f.get()
+            + _g.get()
+            + _h.get()
+            + _i.get()
+            + _j.get()
+            + _k.get()
+            + _l.get()
+            + _m.get()
+            + _n.get()
+            + _o.get()
+            + _p.get()
+        )
+
+    router.add_bare_call(pt.Approve(), pt.OnComplete.ClearState)
+
+    ap, csp, contract = router.build_program()
+    actual_ap_compiled = pt.compileTeal(
+        ap, pt.Mode.Application, version=6, assembleConstants=True
+    )
+    _ = pt.compileTeal(csp, pt.Mode.Application, version=6, assembleConstants=True)
+
+    expected_ap = """#pragma version 6
+intcblock 0 1 3
+bytecblock 0x151f7c75
+txna ApplicationArgs 0
+pushbytes 0xfe6bdf69 // "add(uint64,uint64)uint64"
+==
+txn NumAppArgs
+intc_2 // 3
+==
+&&
+txn OnCompletion
+intc_0 // NoOp
+==
+&&
+bnz main_l14
+txna ApplicationArgs 0
+pushbytes 0x78b488b7 // "sub(uint64,uint64)uint64"
+==
+txn NumAppArgs
+intc_2 // 3
+==
+&&
+txn OnCompletion
+intc_0 // NoOp
+==
+&&
+bnz main_l13
+txna ApplicationArgs 0
+pushbytes 0xe2f188c5 // "mul(uint64,uint64)uint64"
+==
+txn NumAppArgs
+intc_2 // 3
+==
+&&
+txn OnCompletion
+intc_0 // NoOp
+==
+&&
+bnz main_l12
+txna ApplicationArgs 0
+pushbytes 0x16e80f08 // "div(uint64,uint64)uint64"
+==
+txn NumAppArgs
+intc_2 // 3
+==
+&&
+txn OnCompletion
+intc_0 // NoOp
+==
+&&
+bnz main_l11
+txna ApplicationArgs 0
+pushbytes 0x4dfc58ae // "mod(uint64,uint64)uint64"
+==
+txn NumAppArgs
+intc_2 // 3
+==
+&&
+txn OnCompletion
+intc_0 // NoOp
+==
+&&
+bnz main_l10
+txna ApplicationArgs 0
+pushbytes 0x487ce2fd // "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
+==
+txn NumAppArgs
+pushint 16 // 16
+==
+&&
+txn OnCompletion
+intc_0 // NoOp
+==
+&&
+bnz main_l9
+txn NumAppArgs
+intc_0 // 0
+==
+bnz main_l8
+err
+main_l8:
+intc_1 // 1
+return
+main_l9:
+txna ApplicationArgs 1
+btoi
+store 30
+txna ApplicationArgs 2
+btoi
+store 31
+txna ApplicationArgs 3
+btoi
+store 32
+txna ApplicationArgs 4
+btoi
+store 33
+txna ApplicationArgs 5
+btoi
+store 34
+txna ApplicationArgs 6
+btoi
+store 35
+txna ApplicationArgs 7
+btoi
+store 36
+txna ApplicationArgs 8
+btoi
+store 37
+txna ApplicationArgs 9
+btoi
+store 38
+txna ApplicationArgs 10
+btoi
+store 39
+txna ApplicationArgs 11
+btoi
+store 40
+txna ApplicationArgs 12
+btoi
+store 41
+txna ApplicationArgs 13
+btoi
+store 42
+txna ApplicationArgs 14
+btoi
+store 43
+txna ApplicationArgs 15
+store 44
+load 44
+intc_0 // 0
+extract_uint64
+store 45
+load 44
+pushint 8 // 8
+extract_uint64
+store 46
+load 30
+load 31
+load 32
+load 33
+load 34
+load 35
+load 36
+load 37
+load 38
+load 39
+load 40
+load 41
+load 42
+load 43
+load 45
+load 46
+callsub alllaidtoargs_5
+store 47
+bytec_0 // 0x151F7C75
+load 47
+itob
+concat
+log
+intc_1 // 1
+return
+main_l10:
+txna ApplicationArgs 1
+btoi
+store 24
+txna ApplicationArgs 2
+btoi
+store 25
+load 24
+load 25
+callsub mod_4
+store 26
+bytec_0 // 0x151F7C75
+load 26
+itob
+concat
+log
+intc_1 // 1
+return
+main_l11:
+txna ApplicationArgs 1
+btoi
+store 18
+txna ApplicationArgs 2
+btoi
+store 19
+load 18
+load 19
+callsub div_3
+store 20
+bytec_0 // 0x151F7C75
+load 20
+itob
+concat
+log
+intc_1 // 1
+return
+main_l12:
+txna ApplicationArgs 1
+btoi
+store 12
+txna ApplicationArgs 2
+btoi
+store 13
+load 12
+load 13
+callsub mul_2
+store 14
+bytec_0 // 0x151F7C75
+load 14
+itob
+concat
+log
+intc_1 // 1
+return
+main_l13:
+txna ApplicationArgs 1
+btoi
+store 6
+txna ApplicationArgs 2
+btoi
+store 7
+load 6
+load 7
+callsub sub_1
+store 8
+bytec_0 // 0x151F7C75
+load 8
+itob
+concat
+log
+intc_1 // 1
+return
+main_l14:
+txna ApplicationArgs 1
+btoi
+store 0
+txna ApplicationArgs 2
+btoi
+store 1
+load 0
+load 1
+callsub add_0
+store 2
+bytec_0 // 0x151F7C75
+load 2
+itob
+concat
+log
+intc_1 // 1
+return
+
+// add
+add_0:
+store 4
+store 3
+load 3
+load 4
++
+store 5
+load 5
+retsub
+
+// sub
+sub_1:
+store 10
+store 9
+load 9
+load 10
+-
+store 11
+load 11
+retsub
+
+// mul
+mul_2:
+store 16
+store 15
+load 15
+load 16
+*
+store 17
+load 17
+retsub
+
+// div
+div_3:
+store 22
+store 21
+load 21
+load 22
+/
+store 23
+load 23
+retsub
+
+// mod
+mod_4:
+store 28
+store 27
+load 27
+load 28
+%
+store 29
+load 29
+retsub
+
+// all_laid_to_args
+alllaidtoargs_5:
+store 63
+store 62
+store 61
+store 60
+store 59
+store 58
+store 57
+store 56
+store 55
+store 54
+store 53
+store 52
+store 51
+store 50
+store 49
+store 48
+load 48
+load 49
++
+load 50
++
+load 51
++
+load 52
++
+load 53
++
+load 54
++
+load 55
++
+load 56
++
+load 57
++
+load 58
++
+load 59
++
+load 60
++
+load 61
++
+load 62
++
+load 63
++
+store 64
+load 64
+retsub""".strip()
+    assert expected_ap == actual_ap_compiled
+
+    # TODO in construction
