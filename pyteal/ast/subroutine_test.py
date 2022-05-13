@@ -187,7 +187,7 @@ def test_abi_subroutine_definition():
             ],
             "fn_2arg_1ret_with_expr",
             pt.abi.ByteTypeSpec(),
-            "fn_2arg_1ret_with_expr(byte[10])byte",  # TODO: this seems wrong, no?
+            None,
         ),
     )
 
@@ -211,7 +211,11 @@ def test_abi_subroutine_definition():
             map(lambda x: isinstance(x, pt.abi.BaseType), case.arg_instances)
         )
 
-        assert case.definition.method_signature() == case.signature
+        if case.definition.is_registrable():
+            assert case.definition.method_signature() == case.signature
+        else:
+            with pytest.raises(pt.TealInputError):
+                case.definition.method_signature()
 
 
 def test_subroutine_definition_validate():

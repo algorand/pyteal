@@ -80,6 +80,11 @@ class Router:
         )
         clear_state_conds: list[Expr] = []
 
+        if method_signature == "" and method_to_register is not None:
+            raise TealInputError(
+                "A method_signature must only be provided if method_to_register is not None"
+            )
+
         # Check:
         # - if current condition is for *ABI METHOD*
         #   (method selector && numAppArg == 1 + min(METHOD_APP_ARG_NUM_LIMIT, subroutineSyntaxArgNum))
