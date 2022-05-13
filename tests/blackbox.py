@@ -1,4 +1,5 @@
-from typing import Callable, Sequence, TypeVar
+from typing import Callable, Generic, Sequence, TypeVar
+from dataclasses import dataclass
 
 import algosdk.abi
 from algosdk.v2client import algod
@@ -131,25 +132,34 @@ def Blackbox(input_types: list[TealType | None]):
 
 # ---- API ---- #
 
-O = TypeVar("O")
+
+def _unknown_mode_exception(mode: Mode) -> Exception:
+    return Exception(f"Unknown mode {mode} of type {type(mode)}")
 
 
-def _match_mode(mode: Mode, app: Callable[[], O], signature: Callable[[], O]) -> O:
-    match mode:
-        case Mode.Application:
-            return app()
-        case Mode.Signature:
-            return signature()
-        case _:
-            raise Exception(f"Unknown mode {mode} of type {type(mode)}")
+Output = TypeVar("Output")
+
+
+@dataclass(frozen=True)
+class _match_mode(Generic[Output]):
+    app_case: Callable[[], Output]
+    signature_case: Callable[[], Output]
+
+    def __call__(self, mode: Mode, *args, **kwargs) -> Output:
+        match mode:
+            case Mode.Application:
+                return self.app_case()
+            case Mode.Signature:
+                return self.signature_case()
+            case _:
+                raise Exception(f"Unknown mode {mode} of type {type(mode)}")
 
 
 def mode_to_execution_mode(mode: Mode) -> blackbox.ExecutionMode:
     return _match_mode(
-        mode,
-        app=lambda: blackbox.ExecutionMode.Application,
-        signature=lambda: blackbox.ExecutionMode.Signature,
-    )
+        app_case=lambda: blackbox.ExecutionMode.Application,
+        signature_case=lambda: blackbox.ExecutionMode.Signature,
+    )(mode)
 
 
 class PyTealDryRunExecutor:
@@ -384,20 +394,19 @@ class PyTealDryRunExecutor:
 
     def compile(self, version: int, assemble_constants: bool = False) -> str:
         return _match_mode(
-            self.mode,
-            app=lambda: compileTeal(
+            app_case=lambda: compileTeal(
                 self.program(),
                 self.mode,
                 version=version,
                 assembleConstants=assemble_constants,
             ),
-            signature=lambda: compileTeal(
+            signature_case=lambda: compileTeal(
                 self.program(),
                 self.mode,
                 version=version,
                 assembleConstants=assemble_constants,
             ),
-        )
+        )(self.mode)
 
     def dryrun_on_sequence(
         self,
@@ -406,8 +415,7 @@ class PyTealDryRunExecutor:
         sender: str = ZERO_ADDRESS,
     ) -> list[DryRunInspector]:
         return _match_mode(
-            self.mode,
-            app=lambda: DryRunExecutor.dryrun_app_on_sequence(
+            app_case=lambda: DryRunExecutor.dryrun_app_on_sequence(
                 algod_with_assertion(),
                 self.compile(compiler_version),
                 inputs,
@@ -415,7 +423,7 @@ class PyTealDryRunExecutor:
                 self.abi_return_type(),
                 sender,
             ),
-            signature=lambda: DryRunExecutor.dryrun_logicsig_on_sequence(
+            signature_case=lambda: DryRunExecutor.dryrun_logicsig_on_sequence(
                 algod_with_assertion(),
                 self.compile(compiler_version),
                 inputs,
@@ -423,7 +431,7 @@ class PyTealDryRunExecutor:
                 self.abi_return_type(),
                 sender,
             ),
-        )
+        )(self.mode)
 
     def dryrun(
         self,
@@ -432,8 +440,7 @@ class PyTealDryRunExecutor:
         sender: str = ZERO_ADDRESS,
     ) -> DryRunInspector:
         return _match_mode(
-            self.mode,
-            app=lambda: DryRunExecutor.dryrun_app(
+            app_case=lambda: DryRunExecutor.dryrun_app(
                 algod_with_assertion(),
                 self.compile(compiler_version),
                 inputs,
@@ -441,7 +448,7 @@ class PyTealDryRunExecutor:
                 self.abi_return_type(),
                 sender,
             ),
-            signature=lambda: DryRunExecutor.dryrun_logicsig(
+            signature_case=lambda: DryRunExecutor.dryrun_logicsig(
                 algod_with_assertion(),
                 self.compile(compiler_version),
                 inputs,
@@ -449,4 +456,4 @@ class PyTealDryRunExecutor:
                 self.abi_return_type(),
                 sender,
             ),
-        )
+        )(self.mode)
