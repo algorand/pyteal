@@ -1,6 +1,7 @@
-from typing import Union, TypeVar, Sequence
+from typing import Union, TypeVar, Sequence, cast
 from collections.abc import Sequence as CollectionSequence
 
+from pyteal.ast.abi.uint import Byte
 from pyteal.ast.abi.type import ComputedValue, BaseType
 from pyteal.ast.abi.array_dynamic import DynamicArray, DynamicArrayTypeSpec
 from pyteal.ast.abi.uint import ByteTypeSpec, Uint16TypeSpec
@@ -39,7 +40,7 @@ class StringTypeSpec(DynamicArrayTypeSpec):
 StringTypeSpec.__module__ = "pyteal"
 
 
-class String(DynamicArray):
+class String(DynamicArray[Byte]):
     def __init__(self) -> None:
         super().__init__(StringTypeSpec())
 
@@ -54,9 +55,9 @@ class String(DynamicArray):
     def set(
         self,
         value: Union[
-            Sequence[T],
-            DynamicArray[T],
-            ComputedValue[DynamicArray[T]],
+            Sequence[Byte],
+            DynamicArray[Byte],
+            ComputedValue[DynamicArray[Byte]],
             "String",
             str,
             bytes,
@@ -86,7 +87,7 @@ class String(DynamicArray):
             case Expr():
                 return self.stored_value.store(encoded_string(value))
             case CollectionSequence():
-                return super().set(value)
+                return super().set(cast(Sequence[Byte], value))
 
         raise TealInputError(
             f"Got {type(value)}, expected DynamicArray, ComputedValue, String, str, bytes, Expr"
