@@ -1,4 +1,4 @@
-from typing import Union, TypeVar, Sequence
+from typing import Union, TypeVar, Sequence, cast
 from collections.abc import Sequence as CollectionSequence
 
 from pyteal.ast.abi.uint import Byte
@@ -68,7 +68,7 @@ class String(DynamicArray[Byte]):
         match value:
             case ComputedValue():
                 if value.produced_type_spec() == StringTypeSpec():
-                    return value.store_into(self)
+                    return value.store_into(cast(DynamicArray[T], self))
 
                 raise TealInputError(
                     f"Got ComputedValue with type spec {value.produced_type_spec()}, expected StringTypeSpec"
@@ -87,7 +87,7 @@ class String(DynamicArray[Byte]):
             case Expr():
                 return self.stored_value.store(encoded_string(value))
             case CollectionSequence():
-                return super().set(value)
+                return super().set(cast(Sequence[Byte], value))
 
         raise TealInputError(
             f"Got {type(value)}, expected DynamicArray, ComputedValue, String, str, bytes, Expr"
