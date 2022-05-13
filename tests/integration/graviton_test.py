@@ -11,8 +11,8 @@ from tests.blackbox import (
     Blackbox,
     BlackboxWrapper,
     algod_with_assertion,
-    blackbox_pyteal,
     mode_to_execution_mode,
+    PyTealDryRunExecutor,
 )
 
 from graviton.blackbox import (
@@ -41,13 +41,7 @@ def wrap_compile_and_save(
 ):
     is_app = mode == pt.Mode.Application
 
-    # 1. PyTeal program Expr generation
-    approval = blackbox_pyteal(subr, mode)
-
-    # 2. TEAL generation
-    teal = pt.compileTeal(
-        approval, mode, version=version, assembleConstants=assemble_constants
-    )
+    teal = PyTealDryRunExecutor(subr, mode).compile(version, assemble_constants)
     tealfile = f'{"app" if is_app else "lsig"}_{case_name}.teal'
 
     tealdir = GENERATED / test_name
@@ -567,32 +561,23 @@ def test_blackbox_subroutines_as_logic_sigs(
 
 def blackbox_pyteal_example1():
     # Example 1: Using blackbox_pyteal for a simple test of both an app and logic sig:
-    from graviton.blackbox import DryRunEncoder, DryRunExecutor
+    from graviton.blackbox import DryRunEncoder
 
-    from pyteal import compileTeal, Int, Mode, Subroutine, TealType
-    from tests.blackbox import Blackbox, algod_with_assertion, blackbox_pyteal
+    from pyteal import Int, Mode, Subroutine, TealType
+    from tests.blackbox import Blackbox
 
     @Blackbox(input_types=[TealType.uint64])
     @Subroutine(TealType.uint64)
     def square(x):
         return x ** Int(2)
 
-    # create pyteal app and logic sig approvals:
-    approval_app = blackbox_pyteal(square, Mode.Application)
-    approval_lsig = blackbox_pyteal(square, Mode.Signature)
-
-    # compile the evaluated approvals to generate TEAL:
-    app_teal = compileTeal(approval_app, Mode.Application, version=6)
-    lsig_teal = compileTeal(approval_lsig, Mode.Signature, version=6)
-
     # provide args for evaluation (will compute x^2)
     x = 9
     args = [x]
 
     # evaluate the programs
-    algod = algod_with_assertion()
-    app_result = DryRunExecutor.dryrun_app(algod, app_teal, args)
-    lsig_result = DryRunExecutor.dryrun_logicsig(algod, lsig_teal, args)
+    app_result = PyTealDryRunExecutor(square, Mode.Application).dryrun(args)
+    lsig_result = PyTealDryRunExecutor(square, Mode.Signature).dryrun(args)
 
     # check to see that x^2 is at the top of the stack as expected
     assert app_result.stack_top() == x**2, app_result.report(
@@ -615,10 +600,9 @@ def blackbox_pyteal_example2():
     from pathlib import Path
     import random
 
-    from graviton.blackbox import DryRunExecutor, DryRunInspector
+    from graviton.blackbox import DryRunInspector
 
     from pyteal import (
-        compileTeal,
         For,
         If,
         Int,
@@ -630,7 +614,7 @@ def blackbox_pyteal_example2():
         TealType,
     )
 
-    from tests.blackbox import Blackbox, algod_with_assertion, blackbox_pyteal
+    from tests.blackbox import Blackbox
 
     # GCD via the Euclidean Algorithm (iterative version):
     @Blackbox(input_types=[TealType.uint64, TealType.uint64])
@@ -646,10 +630,6 @@ def blackbox_pyteal_example2():
         )
         return Seq(For(start, cond, step).Do(Seq()), a.load())
 
-    # create approval PyTeal and compile it to TEAL:
-    euclid_app = blackbox_pyteal(euclid, Mode.Application)
-    euclid_app_teal = compileTeal(euclid_app, Mode.Application, version=6)
-
     # generate a report with 400 = 20*20 dry run rows:
     N = 20
     inputs = list(
@@ -659,11 +639,10 @@ def blackbox_pyteal_example2():
         )
     )
 
-    # execute the dry-run sequence:
-    algod = algod_with_assertion()
-
     # assert that each result is that same as what Python's math.gcd() computes
-    inspectors = DryRunExecutor.dryrun_app_on_sequence(algod, euclid_app_teal, inputs)
+    inspectors = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_on_sequence(
+        inputs
+    )
     for i, result in enumerate(inspectors):
         args = inputs[i]
         assert result.stack_top() == math.gcd(*args), result.report(
@@ -684,14 +663,13 @@ def blackbox_pyteal_example3():
 
     from graviton.blackbox import (
         DryRunEncoder,
-        DryRunExecutor,
         DryRunProperty as DRProp,
     )
     from graviton.invariant import Invariant
 
-    from pyteal import compileTeal, If, Int, Mod, Mode, Subroutine, TealType
+    from pyteal import If, Int, Mod, Mode, Subroutine, TealType
 
-    from tests.blackbox import Blackbox, algod_with_assertion, blackbox_pyteal
+    from tests.blackbox import Blackbox
 
     # avoid flaky tests just in case I was wrong about the stack height invariant...
     random.seed(42)
@@ -744,13 +722,10 @@ def blackbox_pyteal_example3():
             .Else(If(y == Int(0)).Then(x).Else(euclid(y, Mod(x, y))))
         )
 
-    # Generate PyTeal and TEAL for the recursive Euclidean algorithm:
-    euclid_app = blackbox_pyteal(euclid, Mode.Application)
-    euclid_app_teal = compileTeal(euclid_app, Mode.Application, version=6)
-
     # Execute on the input sequence to get a dry-run inspectors:
-    algod = algod_with_assertion()
-    inspectors = DryRunExecutor.dryrun_app_on_sequence(algod, euclid_app_teal, inputs)
+    inspectors = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_on_sequence(
+        inputs
+    )
 
     # Assert that each invariant holds on the sequences of inputs and dry-runs:
     for property, predicate in predicates.items():
@@ -856,7 +831,6 @@ def blackbox_pyteal_example4():
 def blackbox_pyteal_while_continue_test():
     from tests.blackbox import Blackbox
     from pyteal import (
-        compileTeal,
         Continue,
         Int,
         Mode,
@@ -883,13 +857,11 @@ def blackbox_pyteal_while_continue_test():
             Return(i.load()),
         )
 
-    approval_lsig = blackbox_pyteal(while_continue_accumulation, Mode.Signature)
-    lsig_teal = compileTeal(approval_lsig, Mode.Signature, version=6)
-    algod = algod_with_assertion()
-
     for x in range(30):
         args = [x]
-        lsig_result = DryRunExecutor.dryrun_logicsig(algod, lsig_teal, args)
+        lsig_result = PyTealDryRunExecutor(
+            while_continue_accumulation, Mode.Signature
+        ).dryrun(args)
         if x == 0:
             assert not lsig_result.passed()
         else:
