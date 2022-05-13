@@ -22,7 +22,6 @@ from pyteal.ast.naryexpr import And, Or
 from pyteal.ast.txn import Txn
 from pyteal.ast.return_ import Approve
 
-
 """
 Notes:
 - On a BareApp Call, check
@@ -273,7 +272,7 @@ class Router:
                 )
             )
 
-    def on_bare_app_call(
+    def add_bare_call(
         self,
         bare_app_call: ABIReturnSubroutine | SubroutineFnWrapper | Expr,
         on_completes: EnumInt | list[EnumInt],
