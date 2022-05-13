@@ -295,7 +295,7 @@ class Router:
         branch = Router.__wrap_handler(False, bare_app_call)
         self.__append_to_ast(approval_conds, clear_state_conds, branch, None)
 
-    def on_method_call(
+    def add_method_handler(
         self,
         method_app_call: ABIReturnSubroutine,
         *,
