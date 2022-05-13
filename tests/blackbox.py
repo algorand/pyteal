@@ -1,4 +1,5 @@
-from typing import Callable, Sequence
+from typing import Callable, Generic, Sequence, TypeVar
+from dataclasses import dataclass
 
 import algosdk.abi
 from algosdk.v2client import algod
@@ -132,20 +133,33 @@ def Blackbox(input_types: list[TealType | None]):
 # ---- API ---- #
 
 
+def _unknown_mode_exception(mode: Mode) -> Exception:
+    return Exception(f"Unknown mode {mode} of type {type(mode)}")
+
+
+Output = TypeVar("Output")
+
+
+@dataclass(frozen=True)
+class _match_mode(Generic[Output]):
+    app_case: Callable[[], Output]
+    signature_case: Callable[[], Output]
+
+    def __call__(self, mode: Mode, *args, **kwargs) -> Output:
+        match mode:
+            case Mode.Application:
+                return self.app_case()
+            case Mode.Signature:
+                return self.signature_case()
+            case _:
+                raise Exception(f"Unknown mode {mode} of type {type(mode)}")
+
+
 def mode_to_execution_mode(mode: Mode) -> blackbox.ExecutionMode:
-    if mode == Mode.Application:
-        return blackbox.ExecutionMode.Application
-    if mode == Mode.Signature:
-        return blackbox.ExecutionMode.Signature
-
-    raise Exception(f"Unknown mode {mode} of type {type(mode)}")
-
-
-def blackbox_pyteal(subr: BlackboxWrapper, mode: Mode) -> Expr:
-    """
-    cf. PyTealDryRunExecutor.program() for futher details
-    """
-    return PyTealDryRunExecutor(subr, mode).program()
+    return _match_mode(
+        app_case=lambda: blackbox.ExecutionMode.Application,
+        signature_case=lambda: blackbox.ExecutionMode.Signature,
+    )(mode)
 
 
 class PyTealDryRunExecutor:
@@ -179,9 +193,9 @@ class PyTealDryRunExecutor:
     def is_abi(self) -> bool:
         return isinstance(self.subr.subroutine, ABIReturnSubroutine)
 
-    def abi_argument_types(self) -> list[None | algosdk.abi.ABIType]:
+    def abi_argument_types(self) -> None | list[algosdk.abi.ABIType]:
         if not self.is_abi():
-            raise NotImplementedError(f"this {type(self)} is not A.B.I. compatible")
+            return None
 
         def handle_arg(arg):
             if isinstance(arg, abi.TypeSpec):
@@ -192,7 +206,7 @@ class PyTealDryRunExecutor:
 
     def abi_return_type(self) -> None | algosdk.abi.ABIType:
         if not self.is_abi():
-            raise NotImplementedError("this {type(self)} is not A.B.I. compatible")
+            return None
 
         if not self.subr.subroutine.output_kwarg_info:
             return None
@@ -378,34 +392,68 @@ class PyTealDryRunExecutor:
 
         return approval
 
+    def compile(self, version: int, assemble_constants: bool = False) -> str:
+        return _match_mode(
+            app_case=lambda: compileTeal(
+                self.program(),
+                self.mode,
+                version=version,
+                assembleConstants=assemble_constants,
+            ),
+            signature_case=lambda: compileTeal(
+                self.program(),
+                self.mode,
+                version=version,
+                assembleConstants=assemble_constants,
+            ),
+        )(self.mode)
+
     def dryrun_on_sequence(
         self,
         inputs: list[Sequence[str | int]],
         compiler_version=6,
         sender: str = ZERO_ADDRESS,
     ) -> list[DryRunInspector]:
-        match self.mode:
-            case Mode.Application:
-                return DryRunExecutor.dryrun_app_on_sequence(
-                    algod_with_assertion(),
-                    compileTeal(
-                        self.program(), Mode.Application, version=compiler_version
-                    ),
-                    inputs,
-                    self.abi_argument_types(),
-                    self.abi_return_type(),
-                    sender,
-                )
-            case Mode.Signature:
-                return DryRunExecutor.dryrun_logicsig_on_sequence(
-                    algod_with_assertion(),
-                    compileTeal(
-                        self.program(), Mode.Signature, version=compiler_version
-                    ),
-                    inputs,
-                    self.abi_argument_types(),
-                    self.abi_return_type(),
-                    sender,
-                )
-            case _:
-                raise Exception(f"Unknown mode {self.mode} of type {type(self.mode)}")
+        return _match_mode(
+            app_case=lambda: DryRunExecutor.dryrun_app_on_sequence(
+                algod_with_assertion(),
+                self.compile(compiler_version),
+                inputs,
+                self.abi_argument_types(),
+                self.abi_return_type(),
+                sender,
+            ),
+            signature_case=lambda: DryRunExecutor.dryrun_logicsig_on_sequence(
+                algod_with_assertion(),
+                self.compile(compiler_version),
+                inputs,
+                self.abi_argument_types(),
+                self.abi_return_type(),
+                sender,
+            ),
+        )(self.mode)
+
+    def dryrun(
+        self,
+        inputs: Sequence[str | int],
+        compiler_version=6,
+        sender: str = ZERO_ADDRESS,
+    ) -> DryRunInspector:
+        return _match_mode(
+            app_case=lambda: DryRunExecutor.dryrun_app(
+                algod_with_assertion(),
+                self.compile(compiler_version),
+                inputs,
+                self.abi_argument_types(),
+                self.abi_return_type(),
+                sender,
+            ),
+            signature_case=lambda: DryRunExecutor.dryrun_logicsig(
+                algod_with_assertion(),
+                self.compile(compiler_version),
+                inputs,
+                self.abi_argument_types(),
+                self.abi_return_type(),
+                sender,
+            ),
+        )(self.mode)
