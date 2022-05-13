@@ -1,3 +1,4 @@
+from pathlib import Path
 import pytest
 from typing import Callable, Literal, TypeVar
 
@@ -7,8 +8,13 @@ from pyteal import abi
 import pyteal as pt
 
 from tests.blackbox import Blackbox, PyTealDryRunExecutor
+from tests.compile_asserts import assert_teal_as_expected
 
 T = TypeVar("T", bound=abi.BaseType)
+
+PATH = Path.cwd() / "tests" / "unit"
+FIXTURES = PATH / "teal"
+GENERATED = PATH / "generated"
 
 
 def max_int(bit_size):
@@ -45,25 +51,18 @@ def array_comp_factory(
     t: type[T], value_type_spec: abi.TypeSpec, length: int
 ) -> Callable:
     comp_func = complement_factory(type(value_type_spec.new_instance()), -1)
+    ts = abi.type_spec_from_annotation(t)
     if length != -1:
-        assert t.type_spec().is_length_dynamic()
+        assert ts.is_length_dynamic()
     else:
-        length = t.length_static()
+        length = ts.length_static()
 
     @pt.ABIReturnSubroutine
-    def array_complement(arr: t, *, output: t):
-        i = pt.ScratchVar(pt.TealType.uint64)
-        val = value_type_spec.new_instance()
-        return pt.For(
-            i.store(pt.Int(0)),
-            i.load() < arr.length(),
-            i.store(i.load() + pt.Int(1)),
-        ).Do(
-            pt.Seq(
-                arr[i.load()].store_into(val),
-                output.set()[i.load()].store_into(comp_func(val)),
-            )
-        )
+    def array_complement(x: t, *, output: t):
+        value_types = [value_type_spec.new_instance() for _ in range(length)]
+        setters = [vts.set(x[i]) for i, vts in enumerate(value_types)]
+        compers = [vts.set(comp_func(vts)) for vts in value_types]
+        return pt.Seq(*(setters + compers + [output.set(value_types)]))
 
     return array_complement
 
@@ -95,8 +94,8 @@ def roundtrip_factory(t: type[T], dynamic_length: int) -> Callable:
     return round_tripper
 
 
-def roundtrip_pytealer(t: type[T]):
-    roundtrip = roundtrip_factory(t)
+def roundtrip_pytealer(t: type[T], dynamic_length: int):
+    roundtrip = roundtrip_factory(t, dynamic_length)
     return PyTealDryRunExecutor(roundtrip, pt.Mode.Application)
 
 
@@ -120,17 +119,19 @@ ABI_TYPES = [
     abi.Tuple3[abi.Uint16, abi.Uint8, abi.Byte],
     abi.Tuple3[abi.Uint32, abi.Uint16, abi.Uint8],
     abi.Tuple3[abi.Uint64, abi.Uint32, abi.Uint16],
-    abi.StaticArray[abi.Bool, Literal[0]],
+    abi.StaticArray[abi.Bool, Literal[1]],
     abi.StaticArray[abi.Bool, Literal[42]],
     (abi.DynamicArray[abi.Bool], 0),
+    (abi.DynamicArray[abi.Bool], 1),
     (abi.DynamicArray[abi.Bool], 42),
 ]
 
 
-@pytest.mark.skip("not ready")
+# @pytest.mark.skip("not ready")
 @pytest.mark.parametrize("abi_type", ABI_TYPES)
 def test_pure_compilation(abi_type):
     print(f"Testing {abi_type=}")
+
     dynamic_length = -1
     if isinstance(abi_type, tuple):
         abi_type, dynamic_length = abi_type
@@ -139,12 +140,20 @@ def test_pure_compilation(abi_type):
 
     roundtripper = roundtrip_pytealer(abi_type, dynamic_length)
 
-    teal = roundtripper.program()
-
     abi_arg_types = roundtripper.abi_argument_types()
     assert [sdk_abi_type] == abi_arg_types
 
     abi_ret_type = roundtripper.abi_return_type()
     assert algosdk.abi.TupleType([sdk_abi_type] * 2) == abi_ret_type
 
-    _ = teal
+    program = roundtripper.program()
+
+    filename = f"app_roundtrip_{sdk_abi_type}.teal"
+    tealdir = GENERATED / "roundtrip"
+    tealdir.mkdir(parents=True, exist_ok=True)
+
+    save_to = tealdir / filename
+    with open(save_to, "w") as f:
+        f.write()
+
+    assert_teal_as_expected(save_to, FIXTURES / "roundtrip" / filename)

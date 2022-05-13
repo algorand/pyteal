@@ -143,14 +143,6 @@ CompoundType = pt.abi.Tuple4[
 ]
 
 
-# @Blackbox(input_types=[None])
-# @pt.ABIReturnSubroutine
-# def complicated_abi_round_trip(
-#     x: CompoundType, *, output: pt.abi.Tuple2[CompoundType, CompoundType]
-# ):
-#     return pt.Seq
-
-
 ABI_UNITS = [
     (fn_0arg_0ret, None),
     (fn_0arg_uint64_ret, pt.abi.Uint64()),
