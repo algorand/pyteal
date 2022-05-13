@@ -85,7 +85,7 @@ class Router:
         # - or *BARE APP CALL* (numAppArg == 0)
         method_or_bare_condition = (
             And(
-                Txn.application_args[0] == MethodSignature(method_to_register.name()),
+                Txn.application_args[0] == MethodSignature(method_to_register.method_signature()),
                 Txn.application_args.length()
                 == Int(
                     1
