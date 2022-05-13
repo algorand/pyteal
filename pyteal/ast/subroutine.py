@@ -573,6 +573,15 @@ class ABIReturnSubroutine:
     def name(self) -> str:
         return self.subroutine.name()
 
+    def method_signature(self) -> str:
+        if not self.is_registrable():
+            raise TealInputError(
+                "Only registrable methods may return a method signature"
+            )
+
+        args = [str(v) for v in self.subroutine.abi_args.values()]
+        return f"{self.name()}({','.join(args)}){self.type_of()}"
+
     def type_of(self) -> str | abi.TypeSpec:
         return (
             "void"

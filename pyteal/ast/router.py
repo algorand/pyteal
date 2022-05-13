@@ -68,6 +68,7 @@ class Router:
 
     @staticmethod
     def __parse_conditions(
+        method_signature: str,
         method_to_register: ABIReturnSubroutine | None,
         on_completes: list[EnumInt],
         creation: bool,
@@ -79,13 +80,18 @@ class Router:
         )
         clear_state_conds: list[Expr] = []
 
+        if method_signature == "" and method_to_register is not None:
+            raise TealInputError(
+                "A method_signature must only be provided if method_to_register is not None"
+            )
+
         # Check:
         # - if current condition is for *ABI METHOD*
         #   (method selector && numAppArg == 1 + min(METHOD_APP_ARG_NUM_LIMIT, subroutineSyntaxArgNum))
         # - or *BARE APP CALL* (numAppArg == 0)
         method_or_bare_condition = (
             And(
-                Txn.application_args[0] == MethodSignature(method_to_register.name()),
+                Txn.application_args[0] == MethodSignature(method_signature),
                 Txn.application_args.length()
                 == Int(
                     1
@@ -281,23 +287,33 @@ class Router:
             else [cast(EnumInt, on_completes)]
         )
         approval_conds, clear_state_conds = Router.__parse_conditions(
-            method_to_register=None, on_completes=ocList, creation=creation
+            method_signature="",
+            method_to_register=None,
+            on_completes=ocList,
+            creation=creation,
         )
         branch = Router.__wrap_handler(False, bare_app_call)
         self.__append_to_ast(approval_conds, clear_state_conds, branch, None)
 
     def on_method_call(
         self,
-        method_signature: str,
         method_app_call: ABIReturnSubroutine,
         *,
+        method_signature: str = None,
         on_complete: EnumInt = OnComplete.NoOp,
         creation: bool = False,
     ) -> None:
         """ """
         oc_list: list[EnumInt] = [cast(EnumInt, on_complete)]
+
+        if method_signature is None:
+            method_signature = method_app_call.method_signature()
+
         approval_conds, clear_state_conds = Router.__parse_conditions(
-            method_to_register=method_app_call, on_completes=oc_list, creation=creation
+            method_signature=method_signature,
+            method_to_register=method_app_call,
+            on_completes=oc_list,
+            creation=creation,
         )
         branch = Router.__wrap_handler(True, method_app_call)
         self.__append_to_ast(
