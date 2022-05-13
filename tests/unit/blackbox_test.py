@@ -5,7 +5,7 @@ from typing import Literal
 
 import pyteal as pt
 
-from tests.blackbox import Blackbox, PyTealDryRunExecutor
+from tests.blackbox import Blackbox, BlackboxWrapper, PyTealDryRunExecutor
 
 from tests.compile_asserts import assert_teal_as_expected
 
@@ -212,3 +212,59 @@ def test_abi_blackbox_pyteal(subr_abi, mode):
         f.write(compiled)
 
     assert_teal_as_expected(save_to, FIXTURES / "abi" / (name + ".teal"))
+
+
+@pytest.mark.parametrize("mode", (pt.Mode.Application, pt.Mode.Signature))
+@pytest.mark.parametrize(
+    "fn, expected_is_abi", ((utest_noop, False), (fn_0arg_uint64_ret, True))
+)
+def test_PyTealBlackboxExecutor_is_abi(
+    mode: pt.Mode, fn: BlackboxWrapper, expected_is_abi: bool
+):
+    p = PyTealDryRunExecutor(fn, mode)
+    assert p.is_abi() == expected_is_abi
+    if expected_is_abi:
+        assert p.abi_argument_types() is not None
+        assert p.abi_return_type() is not None
+    else:
+        assert p.abi_argument_types() is None
+        assert p.abi_return_type() is None
+
+
+@pytest.mark.parametrize("mode", (pt.Mode.Application, pt.Mode.Signature))
+@pytest.mark.parametrize(
+    "fn, expected_arg_count",
+    (
+        (fn_0arg_uint64_ret, 0),
+        (fn_1arg_0ret, 1),
+        (fn_1arg_1ret, 1),
+        (fn_2arg_0ret, 2),
+        (fn_2mixed_arg_1ret, 2),
+    ),
+)
+def test_PyTealBlackboxExecutor_abi_argument_types(
+    mode: pt.Mode, fn: BlackboxWrapper, expected_arg_count: int
+):
+    assert (
+        len(PyTealDryRunExecutor(fn, mode).abi_argument_types()) == expected_arg_count
+    )
+
+
+@pytest.mark.parametrize("mode", (pt.Mode.Application, pt.Mode.Signature))
+@pytest.mark.parametrize(
+    "fn, expected_does_produce_type",
+    (
+        (fn_0arg_uint64_ret, True),
+        (fn_1arg_0ret, False),
+        (fn_1arg_1ret, True),
+        (fn_2arg_0ret, False),
+        (fn_2mixed_arg_1ret, True),
+    ),
+)
+def test_PyTealBlackboxExecutor_abi_return_type(
+    mode: pt.Mode, fn: BlackboxWrapper, expected_does_produce_type: bool
+):
+    if expected_does_produce_type:
+        assert PyTealDryRunExecutor(fn, mode).abi_return_type() is not None
+    else:
+        assert PyTealDryRunExecutor(fn, mode).abi_return_type() is None

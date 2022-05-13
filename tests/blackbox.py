@@ -183,7 +183,7 @@ class PyTealDryRunExecutor:
     def is_abi(self) -> bool:
         return isinstance(self.subr.subroutine, ABIReturnSubroutine)
 
-    def abi_argument_types(self) -> list[None | algosdk.abi.ABIType]:
+    def abi_argument_types(self) -> None | list[algosdk.abi.ABIType]:
         if not self.is_abi():
             return None
 
