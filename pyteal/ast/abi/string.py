@@ -55,9 +55,9 @@ class String(DynamicArray[Byte]):
     def set(
         self,
         value: Union[
-            Sequence[T],
-            DynamicArray[T],
-            ComputedValue[DynamicArray[T]],
+            Sequence[Byte],
+            DynamicArray[Byte],
+            ComputedValue[DynamicArray[Byte]],
             "String",
             str,
             bytes,
@@ -68,7 +68,7 @@ class String(DynamicArray[Byte]):
         match value:
             case ComputedValue():
                 if value.produced_type_spec() == StringTypeSpec():
-                    return value.store_into(cast(DynamicArray[T], self))
+                    return value.store_into(self)
 
                 raise TealInputError(
                     f"Got ComputedValue with type spec {value.produced_type_spec()}, expected StringTypeSpec"
