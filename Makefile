@@ -41,7 +41,7 @@ flake8:
 	flake8 $(ALLPY)
 
 # TODO: add `tests` to $MYPY when graviton respects mypy (version 🐈) 
-MYPY = pyteal scripts
+MYPY = pyteal scripts tests
 mypy:
 	mypy $(MYPY)
 
@@ -57,7 +57,7 @@ test-unit:
 
 lint-and-test: check-generate-init lint test-unit
 
-# ---- Integration Test (algod required) ---- #
+# ---- Integration Tests (algod required) ---- #
 
 sandbox-dev-up:
 	docker-compose up -d algod

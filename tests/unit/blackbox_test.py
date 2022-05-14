@@ -137,7 +137,7 @@ def fn_2mixed_arg_1ret(
 
 CompoundType = pt.abi.Tuple4[
     pt.abi.Uint64,
-    pt.abi.Tuple2[pt.abi.Byte, pt.abi.StaticArray[pt.abi.Address, 10]],
+    pt.abi.Tuple2[pt.abi.Byte, pt.abi.StaticArray[pt.abi.Address, Literal[10]]],
     pt.abi.Tuple0,
     pt.abi.Bool,
 ]
@@ -237,9 +237,9 @@ def test_PyTealBlackboxExecutor_is_abi(
 def test_PyTealBlackboxExecutor_abi_argument_types(
     mode: pt.Mode, fn: BlackboxWrapper, expected_arg_count: int
 ):
-    assert (
-        len(PyTealDryRunExecutor(fn, mode).abi_argument_types()) == expected_arg_count
-    )
+    actual = PyTealDryRunExecutor(fn, mode).abi_argument_types()
+    assert actual is not None
+    assert len(actual) == expected_arg_count
 
 
 @pytest.mark.parametrize("mode", (pt.Mode.Application, pt.Mode.Signature))

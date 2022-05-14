@@ -66,7 +66,7 @@ class SubroutineDefinition:
         self.__name: str = name_str if name_str else self.implementation.__name__
 
     def _validate(
-        self, input_types: list[TealType] = None
+        self, input_types: list[TealType | None] = None
     ) -> tuple[
         MappingProxyType[str, Parameter],
         dict[str, type],
