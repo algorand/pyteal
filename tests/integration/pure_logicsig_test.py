@@ -93,7 +93,10 @@ def factorizer_game_check(a: int, p: int, q: int, M: int, N: int):
         f"generating a report for (a,p,q) = {a,p,q} with {M, N} dry-run calls and spreadsheet rows"
     )
     filebase = f"factorizer_game_{a}_{p}_{q}"
-    csvpath = REPORTS_DIR / f"{filebase}.csv"
+
+    reports_dir = REPORTS_DIR / "pure_logicsig"
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    csvpath = reports_dir / f"{filebase}.csv"
     with open(csvpath, "w") as f:
         f.write(Inspector.csv_report(inputs, inspectors, txns=txns))
 
