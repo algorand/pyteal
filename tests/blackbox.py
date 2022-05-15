@@ -1,4 +1,4 @@
-from typing import Callable, Generic, Sequence, TypeVar
+from typing import Callable, Generic, Sequence, TypeVar, cast
 from dataclasses import dataclass
 
 import algosdk.abi
@@ -6,7 +6,8 @@ from algosdk.v2client import algod
 
 from graviton import blackbox
 from graviton.blackbox import DryRunInspector, DryRunExecutor
-from graviton.dryrun import ZERO_ADDRESS
+
+from pyteal.ast.subroutine import OutputKwArgInfo
 
 from pyteal import (
     abi,
@@ -57,9 +58,9 @@ class BlackboxWrapper:
     ):
         subr.subroutine._validate(input_types=input_types)
         self.subroutine: SubroutineFnWrapper | ABIReturnSubroutine = subr
-        self.input_types: list[TealType | abi.TypeSpec] = self._fill(input_types)
+        self.input_types: list[TealType | abi.TypeSpec | None] = self._fill(input_types)
 
-    def __call__(self, *args: Expr | ScratchVar, **kwargs) -> Expr:
+    def __call__(self, *args: Expr | ScratchVar, **kwargs) -> Expr | abi.ReturnedValue:
         return self.subroutine(*args, **kwargs)
 
     def name(self) -> str:
@@ -67,10 +68,10 @@ class BlackboxWrapper:
 
     def _fill(
         self, input_types: list[TealType | None]
-    ) -> list[TealType | abi.TypeSpec]:
+    ) -> list[TealType | abi.TypeSpec | None]:
         match self.subroutine:
             case SubroutineFnWrapper():
-                return input_types
+                return cast(list[TealType | abi.TypeSpec | None], input_types)
             case ABIReturnSubroutine():
                 args = self.subroutine.subroutine.arguments()
                 abis = self.subroutine.subroutine.abi_args
@@ -133,17 +134,16 @@ def Blackbox(input_types: list[TealType | None]):
 # ---- API ---- #
 
 
-def _unknown_mode_exception(mode: Mode) -> Exception:
-    return Exception(f"Unknown mode {mode} of type {type(mode)}")
-
-
 Output = TypeVar("Output")
 
 
+Lazy = Callable[[], Output]
+
+
 @dataclass(frozen=True)
-class _match_mode(Generic[Output]):
-    app_case: Callable[[], Output]
-    signature_case: Callable[[], Output]
+class _MatchMode(Generic[Output]):
+    app_case: Lazy
+    signature_case: Lazy
 
     def __call__(self, mode: Mode, *args, **kwargs) -> Output:
         match mode:
@@ -156,7 +156,7 @@ class _match_mode(Generic[Output]):
 
 
 def mode_to_execution_mode(mode: Mode) -> blackbox.ExecutionMode:
-    return _match_mode(
+    return _MatchMode(
         app_case=lambda: blackbox.ExecutionMode.Application,
         signature_case=lambda: blackbox.ExecutionMode.Signature,
     )(mode)
@@ -208,12 +208,11 @@ class PyTealDryRunExecutor:
         if not self.is_abi():
             return None
 
-        if not self.subr.subroutine.output_kwarg_info:
+        out_info = getattr(self.subr.subroutine, "output_kwarg_info")
+        if not out_info:
             return None
 
-        return abi.algosdk_from_type_spec(
-            self.subr.subroutine.output_kwarg_info.abi_type
-        )
+        return abi.algosdk_from_type_spec(cast(OutputKwArgInfo, out_info).abi_type)
 
     def program(self) -> Expr:
         """Get ready-to-compile PyTeal program from Subroutines and ABIReturnSubroutines
@@ -393,7 +392,7 @@ class PyTealDryRunExecutor:
         return approval
 
     def compile(self, version: int, assemble_constants: bool = False) -> str:
-        return _match_mode(
+        return _MatchMode(
             app_case=lambda: compileTeal(
                 self.program(),
                 self.mode,
@@ -412,16 +411,14 @@ class PyTealDryRunExecutor:
         self,
         inputs: list[Sequence[str | int]],
         compiler_version=6,
-        sender: str = ZERO_ADDRESS,
     ) -> list[DryRunInspector]:
-        return _match_mode(
+        return _MatchMode(
             app_case=lambda: DryRunExecutor.dryrun_app_on_sequence(
                 algod_with_assertion(),
                 self.compile(compiler_version),
                 inputs,
                 self.abi_argument_types(),
                 self.abi_return_type(),
-                sender,
             ),
             signature_case=lambda: DryRunExecutor.dryrun_logicsig_on_sequence(
                 algod_with_assertion(),
@@ -429,7 +426,6 @@ class PyTealDryRunExecutor:
                 inputs,
                 self.abi_argument_types(),
                 self.abi_return_type(),
-                sender,
             ),
         )(self.mode)
 
@@ -437,16 +433,14 @@ class PyTealDryRunExecutor:
         self,
         inputs: Sequence[str | int],
         compiler_version=6,
-        sender: str = ZERO_ADDRESS,
     ) -> DryRunInspector:
-        return _match_mode(
+        return _MatchMode(
             app_case=lambda: DryRunExecutor.dryrun_app(
                 algod_with_assertion(),
                 self.compile(compiler_version),
                 inputs,
                 self.abi_argument_types(),
                 self.abi_return_type(),
-                sender,
             ),
             signature_case=lambda: DryRunExecutor.dryrun_logicsig(
                 algod_with_assertion(),
@@ -454,6 +448,5 @@ class PyTealDryRunExecutor:
                 inputs,
                 self.abi_argument_types(),
                 self.abi_return_type(),
-                sender,
             ),
         )(self.mode)
