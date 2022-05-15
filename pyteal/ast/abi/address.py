@@ -22,7 +22,7 @@ AddressLength.__module__ = "pyteal"
 
 class AddressTypeSpec(StaticArrayTypeSpec):
     def __init__(self) -> None:
-        super().__init__(ByteTypeSpec(), AddressLength.Bytes)
+        super().__init__(ByteTypeSpec(), int(AddressLength.Bytes))
 
     def new_instance(self) -> "Address":
         return Address()
@@ -64,7 +64,7 @@ class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
             case ComputedValue():
                 pts = value.produced_type_spec()
                 if pts == AddressTypeSpec() or pts == StaticArrayTypeSpec(
-                    ByteTypeSpec(), AddressLength.Bytes
+                    ByteTypeSpec(), int(AddressLength.Bytes)
                 ):
                     return value.store_into(self)
 
@@ -75,7 +75,7 @@ class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
                 if (
                     value.type_spec() == AddressTypeSpec()
                     or value.type_spec()
-                    == StaticArrayTypeSpec(ByteTypeSpec(), AddressLength.Bytes)
+                    == StaticArrayTypeSpec(ByteTypeSpec(), int(AddressLength.Bytes))
                 ):
                     return self.stored_value.store(value.stored_value.load())
 
