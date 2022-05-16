@@ -49,6 +49,15 @@ Notes for OC:
 
 @dataclass
 class ProgramNode:
+    """
+    This class contains a condition branch in program AST, with
+    - `condition`: logical condition of entering such AST branch
+    - `branch`: steps to execute the branch after entering
+    - `method_info` (optional): only needed in approval program node, constructed from
+        - SDK's method
+        - ABIReturnSubroutine's method signature
+    """
+
     condition: Expr
     branch: Expr
     method_info: Optional[Method]
@@ -58,9 +67,18 @@ ProgramNode.__module__ = "pyteal"
 
 
 class Router:
-    """ """
+    """
+    Class that help constructs:
+    - an ARC-4 app's approval/clear-state programs
+    - and a contract JSON object allowing for easily read and call methods in the contract
+    """
 
     def __init__(self, name: Optional[str] = None) -> None:
+        """
+        Args:
+            name (optional): the name of the smart contract, used in the JSON object.
+                Default name is `contract`
+        """
         self.name: str = "Contract" if name is None else name
         self.approval_if_then: list[ProgramNode] = []
         self.clear_state_if_then: list[ProgramNode] = []
@@ -72,16 +90,46 @@ class Router:
         on_completes: list[EnumInt],
         creation: bool,
     ) -> tuple[list[Expr], list[Expr]]:
-        """ """
-        # Check if it is a *CREATION*
-        approval_conds: list[Expr] = (
-            [Txn.application_id() == Int(0)] if creation else []
-        )
-        clear_state_conds: list[Expr] = []
+        """This is a helper function in inferring valid approval/clear-state program condition.
 
-        if method_signature == "" and method_to_register is not None:
+        It starts with some initialization check to resolve some confliction:
+        - `creation` option is contradicting with OnCompletion.CloseOut and OnCompletion.ClearState
+        - if there is `method_to_register` existing, then `method_signature` should appear
+
+        Then this function appends conditions to approval/clear-state program condition:
+        - if `creation` is true, then append `Txn.application_id() == 0` to approval conditions
+        - if it is handling abi-method, then
+          `Txn.application_arg[0] == hash(method_signature) &&
+           Txn.application_arg_num == 1 + min(METHOD_ARG_NUM_LIMIT, method's arg num)`
+          where `METHOD_ARG_NUM_LIMIT == 15`.
+        - if it is handling conditions for other cases, then `Txn.application_arg_num == 0`
+
+        Args:
+            method_signature: a string representing method signature for ABI method
+            method_to_register: an ABIReturnSubroutine if exists, or None
+            on_completes: a list of OnCompletion args
+            creation: a boolean variable indicating if this condition is triggered on creation
+        Returns:
+            approval_conds: A list of exprs for approval program's condition on: creation?, method/bare, Or[OCs]
+            clear_state_conds: A list of exprs for clear-state program's condition on: method/bare
+        """
+
+        # check that the onComplete has no duplicates
+        if len(on_completes) != len(set(on_completes)):
+            raise TealInputError(f"input {on_completes} has duplicates.")
+
+        # Check the existence of OC.CloseOut
+        close_out_exist = any(
+            map(lambda x: str(x) == str(OnComplete.CloseOut), on_completes)
+        )
+        # Check the existence of OC.ClearState (needed later)
+        clear_state_exist = any(
+            map(lambda x: str(x) == str(OnComplete.ClearState), on_completes)
+        )
+        # Ill formed report if app create with existence of OC.CloseOut or OC.ClearState
+        if creation and (close_out_exist or clear_state_exist):
             raise TealInputError(
-                "A method_signature must only be provided if method_to_register is not None"
+                "OnComplete ClearState/CloseOut may be ill-formed with app creation"
             )
 
         # Check:
@@ -103,21 +151,20 @@ class Router:
             if method_to_register is not None
             else Txn.application_args.length() == Int(0)
         )
+
+        # Check if it is a *CREATION*
+        approval_conds: list[Expr] = (
+            [Txn.application_id() == Int(0)] if creation else []
+        )
+        clear_state_conds: list[Expr] = []
+
+        if method_to_register is not None and not method_signature:
+            raise TealInputError(
+                "A method_signature must only be provided if method_to_register is not None"
+            )
+
         approval_conds.append(method_or_bare_condition)
 
-        # Check the existence of OC.CloseOut
-        close_out_exist = any(
-            map(lambda x: str(x) == str(OnComplete.CloseOut), on_completes)
-        )
-        # Check the existence of OC.ClearState (needed later)
-        clear_state_exist = any(
-            map(lambda x: str(x) == str(OnComplete.ClearState), on_completes)
-        )
-        # Ill formed report if app create with existence of OC.CloseOut or OC.ClearState
-        if creation and (close_out_exist or clear_state_exist):
-            raise TealInputError(
-                "OnComplete ClearState/CloseOut may be ill-formed with app creation"
-            )
         # if OC.ClearState exists, add method-or-bare-condition since it is only needed in ClearStateProgram
         if clear_state_exist:
             clear_state_conds.append(method_or_bare_condition)
@@ -142,7 +189,25 @@ class Router:
     def __wrap_handler(
         is_abi_method: bool, handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr
     ) -> Expr:
-        """"""
+        """This is a helper function that handles transaction arguments passing in bare-appcall/abi-method handlers.
+
+        If `is_abi_method` is True, then it can only be `ABIReturnSubroutine`,
+        otherwise:
+            - both `ABIReturnSubroutine` and `Subroutine` takes 0 argument on the stack.
+            - all three cases have none (or void) type.
+
+        On ABI method case, if the ABI method has more than 15 args, this function manages to detuple
+        the last (16-th) Txn app-arg into a list of ABI method arguments, and pass in to the the ABI method.
+
+        Args:
+            is_abi_method: a boolean value that specify if the handler is an ABI method.
+            handler: an `ABIReturnSubroutine`, or `SubroutineFnWrapper` (for `Subroutine` case), or an `Expr`.
+        Returns:
+            Expr:
+                - for bare-appcall it returns an expression that the handler takes no txn arg and Approve
+                - for abi-method it returns the txn args correctly decomposed into ABI variables,
+                  passed in ABIReturnSubroutine and logged, then approve.
+        """
         if not is_abi_method:
             match handler:
                 case Expr():
@@ -249,7 +314,15 @@ class Router:
         branch: Expr,
         method_obj: Optional[Method] = None,
     ) -> None:
-        """ """
+        """
+        A helper function that appends conditions and exeuction of branches into AST.
+
+        Args:
+            approval_conds: A list of exprs for approval program's condition on: creation?, method/bare, Or[OCs]
+            clear_state_conds: A list of exprs for clear-state program's condition on: method/bare
+            branch: A branch of contract executing the registered method
+            method_obj: SDK's Method object to construct Contract JSON object
+        """
         if len(approval_conditions) > 0:
             self.approval_if_then.append(
                 ProgramNode(
@@ -278,7 +351,15 @@ class Router:
         *,
         creation: bool = False,
     ) -> None:
-        """ """
+        """
+        Registering a bare-appcall to the router.
+
+        Args:
+            bare_app_call: either an `ABIReturnSubroutine`, or `SubroutineFnWrapper`, or `Expr`.
+                must take no arguments and evaluate to none (void).
+            on_completes: a list of OnCompletion args
+            creation: a boolean variable indicating if this condition is triggered on creation
+        """
         ocList: list[EnumInt] = (
             cast(list[EnumInt], on_completes)
             if isinstance(on_completes, list)
@@ -301,7 +382,15 @@ class Router:
         on_complete: EnumInt = OnComplete.NoOp,
         creation: bool = False,
     ) -> None:
-        """ """
+        """
+        Registering an ABI method call to the router.
+
+        Args:
+            method_app_call: an `ABIReturnSubroutine` that is registrable
+            method_signature: a method signature string
+            on_completes: a list of OnCompletion args
+            creation: a boolean variable indicating if this condition is triggered on creation
+        """
         oc_list: list[EnumInt] = [cast(EnumInt, on_complete)]
 
         if method_signature is None:
@@ -325,7 +414,19 @@ class Router:
     def __ast_construct(
         ast_list: list[ProgramNode],
     ) -> Expr:
-        """ """
+        """A helper function in constructing approval/clear-state programs.
+
+        It takes a list of `ProgramNode`s, which contains conditions of entering a condition branch
+        and the execution of the branch.
+
+        It constructs the program's AST from the list of `ProgramNode`.
+
+        Args:
+            ast_list: a non-empty list of `ProgramNode`'s containing conditions of entering such branch
+                and execution of the branch.
+        Returns:
+            program: the Cond AST of (approval/clear-state) program from the list of `ProgramNode`.
+        """
         if len(ast_list) == 0:
             raise TealInputError("ABIRouter: Cannot build program with an empty AST")
 
@@ -334,21 +435,33 @@ class Router:
         return program
 
     def __contract_construct(self) -> dict[str, Any]:
+        """A helper function in constructing contract JSON object.
+
+        It takes out the method signatures from approval program `ProgramNode`'s,
+        and constructs an `Contract` object.
+
+        Returns:
+            contract: a dictified `Contract` object constructed from
+                approval program's method signatures and `self.name`.
+        """
         method_collections = [
             node.method_info for node in self.approval_if_then if node.method_info
         ]
         return Contract(self.name, method_collections).dictify()
 
     def build_program(self) -> tuple[Expr, Expr, dict[str, Any]]:
-        """This method construct ASTs for both the approval and clear programs based on the inputs to the router,
-        also dump a JSON object of contract to allow client read and call the methods easily.
+        """
+        Connstructs ASTs for approval and clear-state programs from the registered methods in the router,
+        also generates a JSON object of contract to allow client read and call the methods easily.
 
+        Returns:
+            approval_program: AST for approval program
+            clear_state_program: AST for clear-state program
+            contract: JSON object of contract to allow client start off-chain call
         """
         return (
             Router.__ast_construct(self.approval_if_then),
-            Router.__ast_construct(self.clear_state_if_then)
-            if self.clear_state_if_then
-            else Approve(),
+            Router.__ast_construct(self.clear_state_if_then),
             self.__contract_construct(),
         )
 
