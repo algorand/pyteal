@@ -1,10 +1,5 @@
-import pytest
-
 import pyteal as pt
 from pyteal import abi
-from pyteal.ast.abi.util import substringForDecoding
-from pyteal.ast.abi.type_test import ContainerType
-from pyteal.util import escapeStr
 
 options = pt.CompileOptions(version=5)
 
