@@ -7,7 +7,6 @@ import algosdk.abi
 from pyteal import abi
 import pyteal as pt
 
-# from tests.blackbox import Blackbox, PyTealDryRunExecutor
 from tests.compile_asserts import assert_teal_as_expected
 
 from tests.abi_roundtrip import ABIRoundtrip
@@ -15,98 +14,6 @@ from tests.abi_roundtrip import ABIRoundtrip
 PATH = Path.cwd() / "tests" / "integration"
 FIXTURES = PATH / "teal"
 GENERATED = PATH / "generated"
-
-
-# def max_int(bit_size):
-#     return (1 << bit_size) - 1
-
-
-# @pt.ABIReturnSubroutine
-# def bool_comp(x: abi.Bool, *, output: abi.Bool):
-#     return output.set(pt.Not(x.get()))
-
-
-# def numerical_comp_factory(t: type[T], bit_size: int) -> Callable:
-#     @pt.ABIReturnSubroutine
-#     def func(x: t, *, output: t):  # type: ignore[valid-type]
-#         x = cast(abi.BaseType, x)
-#         max_uint = pt.Int(max_int(bit_size))
-#         return output.set(max_uint - x.get())  # type: ignore[attr-defined]
-
-#     return func
-
-
-# def tuple_comp_factory(t: type[T], value_type_specs: list[abi.TypeSpec]) -> Callable:
-#     def fix_type(e):
-#         return cast(abi.Tuple[T], e)
-
-#     @pt.ABIReturnSubroutine
-#     def tuple_complement(x: t, *, output: t):  # type: ignore[valid-type]
-#         value_types = [vts.new_instance() for vts in value_type_specs]
-#         setters = [
-#             fix_type(vts).set(fix_type(x)[i]) for i, vts in enumerate(value_types)
-#         ]
-#         comp_funcs = [
-#             complement_factory(type(fix_type(vts)), -1) for vts in value_types
-#         ]
-#         compers = [vts.set(comp_funcs[i](vts)) for i, vts in enumerate(value_types)]
-#         return pt.Seq(*(setters + compers + [output.set(*value_types)]))
-
-#     return tuple_complement
-
-
-# def array_comp_factory(
-#     t: type[T], value_type_spec: abi.TypeSpec, length: int
-# ) -> Callable:
-#     comp_func = complement_factory(type(value_type_spec.new_instance()), -1)
-#     ts = abi.type_spec_from_annotation(t)
-#     if length != -1:
-#         assert ts.is_length_dynamic()
-#     else:
-#         length = ts.length_static()
-
-#     @pt.ABIReturnSubroutine
-#     def array_complement(x: t, *, output: t):
-#         value_types = [value_type_spec.new_instance() for _ in range(length)]
-#         setters = [vts.set(x[i]) for i, vts in enumerate(value_types)]
-#         compers = [vts.set(comp_func(vts)) for vts in value_types]
-#         return pt.Seq(*(setters + compers + [output.set(value_types)]))
-
-#     return array_complement
-
-
-# def complement_factory(t: T, dynamic_length: int) -> Callable:
-#     ts = abi.type_spec_from_annotation(t)
-#     if isinstance(ts, abi.BoolTypeSpec):
-#         return bool_comp
-#     if isinstance(ts, abi.UintTypeSpec):
-#         return numerical_comp_factory(t, ts.bit_size())
-#     if isinstance(ts, abi.TupleTypeSpec):
-#         return tuple_comp_factory(t, ts.value_type_specs())
-#     if isinstance(ts, abi.ArrayTypeSpec):
-#         return array_comp_factory(t, ts.value_type_spec(), dynamic_length)
-
-#     raise ValueError(f"uh-oh!!! didn't handle type {t}")
-
-
-# def roundtrip_factory(t: type[T], dynamic_length: int) -> Callable:
-#     comp = complement_factory(t, dynamic_length)
-
-#     @Blackbox(input_types=[None])
-#     @pt.ABIReturnSubroutine
-#     def round_tripper(x: t, *, output: abi.Tuple2[t, t]):
-#         y = abi.make(t)
-#         z = abi.make(t)
-#         return pt.Seq(y.set(comp(x)), z.set(comp(y)), output.set(y, z))
-
-#     return round_tripper
-
-
-# def roundtrip_pytealer(t: type[T], dynamic_length: int):
-#     roundtrip = roundtrip_factory(t, dynamic_length)
-#     return PyTealDryRunExecutor(roundtrip, pt.Mode.Application)
-
-
 ABI_TYPES = [
     abi.Address,
     abi.Bool,
@@ -141,18 +48,20 @@ ABI_TYPES = [
     (abi.DynamicArray[abi.Uint64], 0),
     (abi.DynamicArray[abi.Uint64], 1),
     (abi.DynamicArray[abi.Uint64], 42),
-    # abi.StaticArray[abi.Tuple1[abi.Bool], Literal[10]],
-    # (
-    #     abi.DynamicArray[
-    #         abi.Tuple4[
-    #             abi.StaticArray[abi.Byte, Literal[4]],
-    #             abi.Tuple2[abi.Bool, abi.Bool],
-    #             abi.Uint64,
-    #             abi.Address,
-    #         ]
-    #     ],
-    #     13,
-    # ),
+    (abi.DynamicArray[abi.Address], 11),
+    (abi.DynamicArray[abi.StaticArray[abi.Bool, Literal[3]]], 11),
+    abi.StaticArray[abi.Tuple1[abi.Bool], Literal[10]],
+    (
+        abi.DynamicArray[
+            abi.Tuple4[
+                abi.StaticArray[abi.Byte, Literal[4]],
+                abi.Tuple2[abi.Bool, abi.Bool],
+                abi.Uint64,
+                abi.Address,
+            ]
+        ],
+        13,
+    ),
 ]
 
 

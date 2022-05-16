@@ -1,0 +1,187 @@
+#pragma version 6
+txna ApplicationArgs 0
+store 2
+load 2
+callsub roundtripper_2
+store 1
+byte 0x151F7C75
+load 1
+concat
+log
+int 1
+return
+
+// tuple_complement
+tuplecomplement_0:
+store 19
+load 19
+int 0
+getbit
+store 0
+load 0
+callsub boolcomp_3
+store 0
+byte 0x00
+int 0
+load 0
+setbit
+store 20
+load 20
+retsub
+
+// array_complement
+arraycomplement_1:
+store 7
+load 7
+int 1
+int 0
+*
+int 1
+extract3
+store 9
+load 7
+int 1
+int 1
+*
+int 1
+extract3
+store 10
+load 7
+int 1
+int 2
+*
+int 1
+extract3
+store 11
+load 7
+int 1
+int 3
+*
+int 1
+extract3
+store 12
+load 7
+int 1
+int 4
+*
+int 1
+extract3
+store 13
+load 7
+int 1
+int 5
+*
+int 1
+extract3
+store 14
+load 7
+int 1
+int 6
+*
+int 1
+extract3
+store 15
+load 7
+int 1
+int 7
+*
+int 1
+extract3
+store 16
+load 7
+int 1
+int 8
+*
+int 1
+extract3
+store 17
+load 7
+int 1
+int 9
+*
+int 1
+extract3
+store 18
+load 9
+callsub tuplecomplement_0
+store 9
+load 10
+callsub tuplecomplement_0
+store 10
+load 11
+callsub tuplecomplement_0
+store 11
+load 12
+callsub tuplecomplement_0
+store 12
+load 13
+callsub tuplecomplement_0
+store 13
+load 14
+callsub tuplecomplement_0
+store 14
+load 15
+callsub tuplecomplement_0
+store 15
+load 16
+callsub tuplecomplement_0
+store 16
+load 17
+callsub tuplecomplement_0
+store 17
+load 18
+callsub tuplecomplement_0
+store 18
+load 9
+load 10
+concat
+load 11
+concat
+load 12
+concat
+load 13
+concat
+load 14
+concat
+load 15
+concat
+load 16
+concat
+load 17
+concat
+load 18
+concat
+store 8
+load 8
+retsub
+
+// round_tripper
+roundtripper_2:
+store 3
+load 3
+callsub arraycomplement_1
+store 5
+load 5
+callsub arraycomplement_1
+store 6
+load 3
+load 5
+concat
+load 6
+concat
+store 4
+load 4
+retsub
+
+// bool_comp
+boolcomp_3:
+store 21
+load 21
+!
+store 22
+load 22
+int 2
+<
+assert
+load 22
+retsub

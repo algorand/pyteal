@@ -29,6 +29,9 @@ class StringTypeSpec(DynamicArrayTypeSpec):
     def new_instance(self) -> "String":
         return String()
 
+    def annotation_type(self) -> "type[String]":
+        return String
+
     def __str__(self) -> str:
         return "string"
 

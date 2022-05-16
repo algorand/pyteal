@@ -1,11 +1,4 @@
-from typing import (
-    Union,
-    Sequence,
-    TypeVar,
-    Generic,
-    Final,
-    cast,
-)
+from typing import Final, Generic, Literal, Sequence, TypeVar, Union, cast
 
 from pyteal.errors import TealInputError
 from pyteal.ast.expr import Expr
@@ -29,6 +22,11 @@ class StaticArrayTypeSpec(ArrayTypeSpec[T], Generic[T, N]):
 
     def new_instance(self) -> "StaticArray[T, N]":
         return StaticArray(self)
+
+    def annotation_type(self) -> "type[StaticArray[T, N]]":
+        return StaticArray[  # type: ignore[misc]
+            self.value_spec.annotation_type(), Literal[self.array_length]
+        ]
 
     def length_static(self) -> int:
         """Get the size of this static array type.

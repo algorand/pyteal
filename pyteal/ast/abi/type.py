@@ -20,6 +20,11 @@ class TypeSpec(ABC):
         pass
 
     @abstractmethod
+    def annotation_type(self) -> "type[BaseType]":
+        """Get the annotation type associated with this spec"""
+        pass
+
+    @abstractmethod
     def is_dynamic(self) -> bool:
         """Check if this ABI type is dynamic.
 
@@ -140,7 +145,7 @@ class BaseType(ABC):
 
 BaseType.__module__ = "pyteal"
 
-T = TypeVar("T", bound=BaseType)
+T = TypeVar("T", bound=BaseType, contravariant=True)
 
 
 class ComputedValue(ABC, Generic[T]):

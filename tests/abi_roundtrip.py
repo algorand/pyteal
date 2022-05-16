@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, cast
 
 import pyteal as pt
 from pyteal import abi
@@ -11,10 +11,25 @@ DEFAULT_DYNAMIC_ARRAY_LENGTH = 3
 
 
 class ABIRoundtrip(Generic[T]):
-    def __init__(self, t: type[T], length: int | None = None):
-        self.annotation: type[T] = t
-        self.type_spec: abi.TypeSpec = abi.type_spec_from_annotation(self.annotation)
-        self.instance: abi.BaseType = self.type_spec.new_instance()
+    def __init__(
+        self,
+        t: type[T] | None,
+        length: int | None = None,
+        annotation_instance: T = None,
+    ):
+        self.annotation: type[T]
+        self.type_spec: abi.TypeSpec
+        self.instance: abi.BaseType
+
+        if annotation_instance:
+            assert t is None
+            self.instance = annotation_instance
+            self.type_spec = annotation_instance.type_spec()
+            self.annotation = self.type_spec.annotation_type()
+        else:
+            self.annotation = cast(type[T], t)
+            self.type_spec = abi.type_spec_from_annotation(self.annotation)
+            self.instance = self.type_spec.new_instance()
 
         self.length: int | None = length
 
@@ -70,7 +85,9 @@ class ABIRoundtrip(Generic[T]):
     def tuple_comp_factory(self) -> pt.ABIReturnSubroutine:
         value_type_specs: list[abi.TypeSpec] = self.type_spec.value_type_specs()  # type: ignore[attr-defined]
         insts = [vts.new_instance() for vts in value_type_specs]
-        roundtrips = [ABIRoundtrip(type(inst)) for inst in insts]
+        roundtrips: list[ABIRoundtrip[T]] = [
+            ABIRoundtrip(None, annotation_instance=inst) for inst in insts  # type: ignore[arg-type]
+        ]
 
         @pt.ABIReturnSubroutine
         def tuple_complement(x: self.annotation, *, output: self.annotation):  # type: ignore[name-defined]
@@ -94,8 +111,10 @@ class ABIRoundtrip(Generic[T]):
             self.length = DEFAULT_DYNAMIC_ARRAY_LENGTH
 
         internal_type_spec = self.type_spec.value_type_spec()  # type: ignore[attr-defined]
-        internal_ann = type(internal_type_spec.new_instance())
-        comp_func = ABIRoundtrip(internal_ann).complement_factory()
+        internal_ann_inst = internal_type_spec.new_instance()
+        comp_func = ABIRoundtrip(
+            None, annotation_instance=internal_ann_inst
+        ).complement_factory()
 
         @pt.ABIReturnSubroutine
         def array_complement(x: self.annotation, *, output: self.annotation):  # type: ignore[name-defined]

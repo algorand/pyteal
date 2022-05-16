@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import (
     List,
     Sequence,
@@ -221,6 +222,33 @@ class TupleTypeSpec(TypeSpec, Generic[T]):
 
     def new_instance(self) -> "Tuple":
         return Tuple(self)
+
+    def annotation_type(self) -> type[Tuple]:
+        vtses = self.value_type_specs()
+
+        def annotater():
+            return [x.annotation_type() for x in vtses]
+
+        match len(vtses):
+            case 0:
+                return Tuple0
+            case 1:
+                v0 = annotater()[0]
+                return Tuple1[v0]  # type: ignore[valid-type]
+            case 2:
+                v0, v1 = annotater()
+                return Tuple2[v0, v1]  # type: ignore[valid-type]
+            case 3:
+                v0, v1, v2 = annotater()
+                return Tuple3[v0, v1, v2]  # type: ignore[valid-type]
+            case 4:
+                v0, v1, v2, v3 = annotater()
+                return Tuple4[v0, v1, v2, v3]  # type: ignore[valid-type]
+            case 5:
+                v0, v1, v2, v3, v4 = annotater()
+                return Tuple5[v0, v1, v2, v3, v4]  # type: ignore[valid-type]
+
+        raise TypeError(f"Cannot annotate tuple of length {len(vtses)}")
 
     def is_dynamic(self) -> bool:
         return any(type_spec.is_dynamic() for type_spec in self.value_type_specs())
