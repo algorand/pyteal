@@ -32,23 +32,23 @@ def test_AccountTypeSpec_eq():
         assert abi.StringTypeSpec() != otherType
 
 
-# def test_Account_encode():
-#    value = abi.Account()
-#    expr = value.encode()
-#    assert expr.type_of() == pt.TealType.bytes
-#    assert expr.has_return() is False
-#
-#    expected = pt.TealSimpleBlock(
-#        [
-#            pt.TealOp(expr, pt.Op.byte, "0x00"),
-#            pt.TealOp(None, pt.Op.int, 0),
-#            pt.TealOp(None, pt.Op.load, value.stored_value.slot),
-#            pt.TealOp(None, pt.Op.setbyte)
-#        ]
-#    )
-#    actual, _ = expr.__teal__(options)
-#    actual.addIncoming()
-#    assert actual == expected
+def test_Account_encode():
+    value = abi.Account()
+    expr = value.encode()
+    assert expr.type_of() == pt.TealType.bytes
+    assert expr.has_return() is False
+
+    expectEncoding = pt.SetByte(pt.Bytes(b"\x00"), pt.Int(0), value.stored_value.load())
+
+    expected, _ = expectEncoding.__teal__(options)
+    expected.addIncoming()
+    expected = pt.TealBlock.NormalizeBlocks(expected)
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
 
 
 def test_Account_get():
@@ -69,3 +69,9 @@ def test_Account_get():
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+
+def test_Account_set():
+    # TODO: do we want to support this?
+    # i think we want to just puke an error?
+    pass
