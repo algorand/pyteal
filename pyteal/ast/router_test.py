@@ -1,8 +1,6 @@
 # import pytest
 import pyteal as pt
 
-from pyteal.compiler.compiler import compileTeal
-
 options = pt.CompileOptions(version=5)
 
 
@@ -109,6 +107,15 @@ def many_args(
     return output.set(_t.get())
 
 
+@pt.Subroutine(pt.TealType.none)
+def safe_clear_state_delete():
+    return (
+        pt.If(pt.Txn.sender() == pt.Global.creator_address())
+        .Then(pt.Approve())
+        .Else(pt.Reject())
+    )
+
+
 def test_parse_conditions():
     approval_conds, clear_state_conds = pt.Router.parse_conditions(
         concat_strings.method_signature(),
@@ -135,7 +142,7 @@ def test():
     )
     ap, _, _ = router.build_program()
     print(
-        compileTeal(
+        pt.compileTeal(
             ap,
             version=6,
             mode=pt.Mode.Application,
