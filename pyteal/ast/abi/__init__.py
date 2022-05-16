@@ -34,7 +34,14 @@ from pyteal.ast.abi.tuple import (
 from pyteal.ast.abi.array_base import ArrayTypeSpec, Array, ArrayElement
 from pyteal.ast.abi.array_static import StaticArrayTypeSpec, StaticArray
 from pyteal.ast.abi.array_dynamic import DynamicArrayTypeSpec, DynamicArray
-from pyteal.ast.abi.reference_args import Account, AccountTypeSpec
+from pyteal.ast.abi.reference_types import (
+    Account,
+    AccountTypeSpec,
+    Asset,
+    AssetTypeSpec,
+    Application,
+    ApplicationTypeSpec,
+)
 from pyteal.ast.abi.method_return import MethodReturn
 from pyteal.ast.abi.util import (
     algosdk_from_annotation,
@@ -49,6 +56,10 @@ __all__ = [
     "StringTypeSpec",
     "Account",
     "AccountTypeSpec",
+    "Asset",
+    "AssetTypeSpec",
+    "Application",
+    "ApplicationTypeSpec",
     "Address",
     "AddressTypeSpec",
     "AddressLength",
