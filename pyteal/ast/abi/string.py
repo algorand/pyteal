@@ -1,6 +1,7 @@
-from typing import Union, TypeVar, Sequence
+from typing import Union, Sequence, cast
 from collections.abc import Sequence as CollectionSequence
 
+from pyteal.ast.abi.uint import Byte
 from pyteal.ast.abi.type import ComputedValue, BaseType
 from pyteal.ast.abi.array_dynamic import DynamicArray, DynamicArrayTypeSpec
 from pyteal.ast.abi.uint import ByteTypeSpec, Uint16TypeSpec
@@ -17,9 +18,6 @@ from pyteal.errors import TealInputError
 
 def encoded_string(s: Expr):
     return Concat(Suffix(Itob(Len(s)), Int(6)), s)
-
-
-T = TypeVar("T", bound=BaseType)
 
 
 class StringTypeSpec(DynamicArrayTypeSpec):
@@ -39,7 +37,7 @@ class StringTypeSpec(DynamicArrayTypeSpec):
 StringTypeSpec.__module__ = "pyteal"
 
 
-class String(DynamicArray):
+class String(DynamicArray[Byte]):
     def __init__(self) -> None:
         super().__init__(StringTypeSpec())
 
@@ -54,9 +52,9 @@ class String(DynamicArray):
     def set(
         self,
         value: Union[
-            Sequence[T],
-            DynamicArray[T],
-            ComputedValue[DynamicArray[T]],
+            Sequence[Byte],
+            DynamicArray[Byte],
+            ComputedValue[DynamicArray[Byte]],
             "String",
             str,
             bytes,
@@ -66,12 +64,7 @@ class String(DynamicArray):
 
         match value:
             case ComputedValue():
-                if value.produced_type_spec() == StringTypeSpec():
-                    return value.store_into(self)
-
-                raise TealInputError(
-                    f"Got ComputedValue with type spec {value.produced_type_spec()}, expected StringTypeSpec"
-                )
+                return self._set_with_computed_type(value)
             case BaseType():
                 if value.type_spec() == StringTypeSpec() or (
                     value.type_spec() == DynamicArrayTypeSpec(ByteTypeSpec())
@@ -86,7 +79,7 @@ class String(DynamicArray):
             case Expr():
                 return self.stored_value.store(encoded_string(value))
             case CollectionSequence():
-                return super().set(value)
+                return super().set(cast(Sequence[Byte], value))
 
         raise TealInputError(
             f"Got {type(value)}, expected DynamicArray, ComputedValue, String, str, bytes, Expr"
