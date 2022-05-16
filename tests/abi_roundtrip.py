@@ -15,9 +15,9 @@ class ABIRoundtrip(Generic[T]):
         self,
         t: type[T] | None,
         length: int | None = None,
-        annotation_instance: T = None,
+        annotation_instance: abi.BaseType = None,
     ):
-        self.annotation: type[T]
+        self.annotation: type[abi.BaseType]
         self.type_spec: abi.TypeSpec
         self.instance: abi.BaseType
 
