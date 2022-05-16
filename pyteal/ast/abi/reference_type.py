@@ -84,7 +84,7 @@ class Asset(ReferenceType):
 
     def set(self, value: Any) -> Expr:
         # TODO: should we allow this on some InnerTxnBuilder?
-        raise TealInputError("Cannot set account value")
+        raise TealInputError("Cannot set asset value")
 
 
 Asset.__module__ = "pyteal"
@@ -113,7 +113,7 @@ class Application(ReferenceType):
 
     def set(self, value: Any) -> Expr:
         # TODO: should we allow this on some InnerTxnBuilder?
-        raise TealInputError("Cannot set account value")
+        raise TealInputError("Cannot set application value")
 
 
 Application.__module__ = "pyteal"
