@@ -115,7 +115,7 @@ class Application(ReferenceType):
         super().__init__(ApplicationTypeSpec())
 
     def get(self) -> Expr:
-        return Txn.assets[self.stored_value.load()]
+        return Txn.applications[self.stored_value.load()]
 
     def set(self, value: Any) -> Expr:
         # TODO: should we allow this on some InnerTxnBuilder?
