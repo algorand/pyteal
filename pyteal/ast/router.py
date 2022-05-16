@@ -84,7 +84,7 @@ class Router:
         self.clear_state_if_then: list[ProgramNode] = []
 
     @staticmethod
-    def __parse_conditions(
+    def parse_conditions(
         method_signature: str,
         method_to_register: ABIReturnSubroutine | None,
         on_completes: list[EnumInt],
@@ -365,7 +365,7 @@ class Router:
             if isinstance(on_completes, list)
             else [cast(EnumInt, on_completes)]
         )
-        approval_conds, clear_state_conds = Router.__parse_conditions(
+        approval_conds, clear_state_conds = Router.parse_conditions(
             method_signature="",
             method_to_register=None,
             on_completes=ocList,
@@ -396,7 +396,7 @@ class Router:
         if method_signature is None:
             method_signature = method_app_call.method_signature()
 
-        approval_conds, clear_state_conds = Router.__parse_conditions(
+        approval_conds, clear_state_conds = Router.parse_conditions(
             method_signature=method_signature,
             method_to_register=method_app_call,
             on_completes=oc_list,
