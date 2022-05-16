@@ -186,7 +186,7 @@ class Router:
         return approval_conds, clear_state_conds
 
     @staticmethod
-    def __wrap_handler(
+    def wrap_handler(
         is_abi_method: bool, handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr
     ) -> Expr:
         """This is a helper function that handles transaction arguments passing in bare-appcall/abi-method handlers.
@@ -371,7 +371,7 @@ class Router:
             on_completes=ocList,
             creation=creation,
         )
-        branch = Router.__wrap_handler(False, bare_app_call)
+        branch = Router.wrap_handler(False, bare_app_call)
         self.__append_to_ast(approval_conds, clear_state_conds, branch, None)
 
     def add_method_handler(
@@ -402,7 +402,7 @@ class Router:
             on_completes=oc_list,
             creation=creation,
         )
-        branch = Router.__wrap_handler(True, method_app_call)
+        branch = Router.wrap_handler(True, method_app_call)
         self.__append_to_ast(
             approval_conds,
             clear_state_conds,

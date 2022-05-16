@@ -116,6 +116,12 @@ def safe_clear_state_delete():
     )
 
 
+# TODO test parse_condition
+
+# TODO test wrap_handler
+
+# TODO test contract JSON object
+
 def test_parse_conditions():
     approval_conds, clear_state_conds = pt.Router.parse_conditions(
         concat_strings.method_signature(),
