@@ -318,8 +318,8 @@ class Router:
         A helper function that appends conditions and exeuction of branches into AST.
 
         Args:
-            approval_conds: A list of exprs for approval program's condition on: creation?, method/bare, Or[OCs]
-            clear_state_conds: A list of exprs for clear-state program's condition on: method/bare
+            approval_conditions: A list of exprs for approval program's condition on: creation?, method/bare, Or[OCs]
+            clear_state_conditions: A list of exprs for clear-state program's condition on: method/bare
             branch: A branch of contract executing the registered method
             method_obj: SDK's Method object to construct Contract JSON object
         """
@@ -388,7 +388,7 @@ class Router:
         Args:
             method_app_call: an `ABIReturnSubroutine` that is registrable
             method_signature: a method signature string
-            on_completes: a list of OnCompletion args
+            on_complete: an OnCompletion args
             creation: a boolean variable indicating if this condition is triggered on creation
         """
         oc_list: list[EnumInt] = [cast(EnumInt, on_complete)]
