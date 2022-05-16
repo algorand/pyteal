@@ -111,7 +111,7 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
     )
     from pyteal.ast.abi.string import StringTypeSpec, String
     from pyteal.ast.abi.address import AddressTypeSpec, Address
-    from pyteal.ast.abi.reference_types import (
+    from pyteal.ast.abi.reference_type import (
         AccountTypeSpec,
         Account,
         AssetTypeSpec,
