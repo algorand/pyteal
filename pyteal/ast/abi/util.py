@@ -109,12 +109,35 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
     )
     from pyteal.ast.abi.string import StringTypeSpec, String
     from pyteal.ast.abi.address import AddressTypeSpec, Address
+    from pyteal.ast.abi.reference_types import (
+        AccountTypeSpec,
+        Account,
+        AssetTypeSpec,
+        Asset,
+        ApplicationTypeSpec,
+        Application,
+    )
 
     origin = get_origin(annotation)
     if origin is None:
         origin = annotation
 
     args = get_args(annotation)
+
+    if origin is Account:
+        if len(args) != 0:
+            raise TypeError("Account expects 0 argsuments. Got: {}".format(args))
+        return AccountTypeSpec()
+
+    if origin is Asset:
+        if len(args) != 0:
+            raise TypeError("Asset expects 0 argsuments. Got: {}".format(args))
+        return AssetTypeSpec()
+
+    if origin is Application:
+        if len(args) != 0:
+            raise TypeError("Application expects 0 argsuments. Got: {}".format(args))
+        return ApplicationTypeSpec()
 
     if origin is Bool:
         if len(args) != 0:
