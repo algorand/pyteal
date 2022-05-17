@@ -140,6 +140,11 @@ def eine_constant(*, output: pt.abi.Uint64):
     return output.set(1)
 
 
+@pt.ABIReturnSubroutine
+def take_abi_and_log(tb_logged: pt.abi.String):
+    return pt.Log(tb_logged.get())
+
+
 GOOD_SUBROUTINE_CASES: list[pt.ABIReturnSubroutine | pt.SubroutineFnWrapper] = [
     add,
     sub,
@@ -313,6 +318,14 @@ def test_wrap_handler_bare_call():
         (
             eine_constant,
             f"abi-returning subroutine call should be returning void not {pt.abi.Uint64TypeSpec()}.",
+        ),
+        (
+            take_abi_and_log,
+            "abi-returning subroutine call should take 0 arg for bare-app call. this abi-returning subroutine takes 1.",
+        ),
+        (
+            1,
+            "bare appcall can only accept: none type Expr, or Subroutine/ABIReturnSubroutine with none return and no arg",
         ),
     ]
     for error_case, error_msg in ERROR_CASES:

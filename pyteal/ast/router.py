@@ -241,7 +241,7 @@ class Router:
                     return Seq(cast(Expr, handler()), Approve())
                 case _:
                     raise TealInputError(
-                        "bare appcall can only accept: none type + Seq (no ret) or Subroutine (with ret)"
+                        "bare appcall can only accept: none type Expr, or Subroutine/ABIReturnSubroutine with none return and no arg"
                     )
         else:
             if not isinstance(handler, ABIReturnSubroutine):
