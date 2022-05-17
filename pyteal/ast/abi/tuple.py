@@ -270,6 +270,8 @@ class TupleTypeSpec(TypeSpec):
 
 TupleTypeSpec.__module__ = "pyteal"
 
+T_tuple = TypeVar("T_tuple", bound="Tuple")
+
 
 class Tuple(BaseType):
     def __init__(self, tuple_type_spec: TupleTypeSpec) -> None:
@@ -296,7 +298,7 @@ class Tuple(BaseType):
         ...
 
     @overload
-    def set(self: T, value: ComputedValue[T]) -> Expr:
+    def set(self: T_tuple, value: ComputedValue[T_tuple]) -> Expr:
         ...
 
     def set(self, *values):
