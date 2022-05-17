@@ -358,10 +358,10 @@ def test_wrap_handler_method_call():
     for abi_subroutine in ONLY_ABI_SUBROUTINE_CASES:
         wrapped: pt.Expr = pt.Router.wrap_handler(True, abi_subroutine)
         assembled_wrapped: pt.TealBlock = assemble_helper(wrapped)
-        print(assembled_wrapped)
         if abi_subroutine.subroutine.argument_count() > pt.METHOD_ARG_NUM_LIMIT:
             # TODO
             continue
+        print(assembled_wrapped)
         args: list[pt.abi.BaseType] = [
             spec.new_instance()
             for spec in typing.cast(
@@ -372,10 +372,16 @@ def test_wrap_handler_method_call():
             arg.decode(pt.Txn.application_args[index + 1])
             for index, arg in enumerate(args)
         ]
+        evaluate: pt.Expr
         if abi_subroutine.type_of() != "void":
-            # TODO
-            continue
-        actual = assemble_helper(pt.Seq(*loading, abi_subroutine(*args), pt.Approve()))
+            output_temp = abi_subroutine.output_kwarg_info.abi_type.new_instance()
+            evaluate = pt.Seq(
+                abi_subroutine(*args).store_into(output_temp),
+                pt.abi.MethodReturn(output_temp),
+            )
+        else:
+            evaluate = abi_subroutine(*args)
+        actual = assemble_helper(pt.Seq(*loading, evaluate, pt.Approve()))
         with pt.TealComponent.Context.ignoreScratchSlotEquality(), pt.TealComponent.Context.ignoreExprEquality():
             assert actual == assembled_wrapped
 
