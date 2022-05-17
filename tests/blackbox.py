@@ -214,52 +214,63 @@ class PyTealDryRunExecutor:
 
     def program(self) -> Expr:
         """Get ready-to-compile PyTeal program from Subroutines and ABIReturnSubroutines
-        TODO: add explanation for ABI var's/output as well
 
         Returns:
-            a function that called with no parameters -e.g. result()-
-            returns a PyTeal expression compiling to a ready-to-test TEAL program.
+            a PyTeal expression representing a ready-to-run TEAL program
 
-        The return type is callable in order to adhere to the API of blackbox tests.
-
-        Generated TEAL code depends on the mode, subroutine input types, and subroutine output types.
+        Generated TEAL code depends on the self.subr's type, the mode, the input types, and output type
         * logic sigs:
             * input received via `arg i`
             * args are converted (cf. "input conversion" below) and passed to the subroutine
             * subroutine output is not logged (log is not available)
+            * in the case of ABIReturnSubroutine: the output is encoded on to the stack an then popped off
             * subroutine output is converted (cf "output conversion" below)
         * apps:
             * input received via `txna ApplicationArgs i`
             * args are converted (cf. "input conversion" below) and passed to the subroutine
-            * subroutine output is logged after possible conversion (cf. "logging conversion")
-            * subroutine output is converted (cf "output conversion" below)
+            * the output is logged in the following ways:
+                * Subroutine: logged after possible conversion (cf. "logging conversion")
+                * ABIReturnSubroutine: the encoded output is concatenated to the return method selector and then logged
+            * subroutine output is converted (cf "output conversion" below) (Subroutine case only)
         * input conversion:
             * Empty input array:
                 do not read any args and call subroutine immediately
-            * arg of TealType.bytes and TealType.anytype:
+            * Expr arg of TealType.bytes and TealType.anytype:
                 read arg and pass to subroutine as is
-            * arg of TealType.uint64:
+            * Expr arg of TealType.uint64:
                 convert arg to int using Btoi() when received
-            * pass-by-ref ScratchVar arguments:
+            * pass-by-ref ScratchVar arguments (Subroutine case only):
                 in addition to the above -
                     o store the arg (or converted arg) in a ScratchVar
                     o invoke the subroutine using this ScratchVar instead of the arg (or converted arg)
+            * ABI arguments (ABIReturnSubroutine case only):
+                in addition to the above -
+                    o store the decoded arg into the ScratchVar of an ABI Type instance
+                    o invoke the subroutine using this ABI Type instead of the arg
         * output conversion:
-            * TealType.uint64:
-                provide subroutine's result to the top of the stack when exiting program
-            * TealType.bytes:
-                convert subroutine's result to the top of the stack to its length and then exit
-            * TealType.none or TealType.anytype:
-                push Int(1337) to the stack as it is either impossible (TealType.none),
-                or unknown at compile time (TealType.anytype) to convert to an Int
+            * Subroutine case:
+                * TealType.uint64:
+                    provide subroutine's result to the top of the stack when exiting program
+                * TealType.bytes:
+                    convert subroutine's result to the top of the stack to its length and then exit
+                * TealType.none or TealType.anytype:
+                    push Int(1337) to the stack as it is either impossible (TealType.none),
+                    or unknown at compile time (TealType.anytype) to convert to an Int
+            * ABIReturnSubroutine case:
+                * when present, the output is encoded as TealType.bytes which can be decoded by the receiver using
+                appropriate ABI-libraries
         * logging conversion:
-            * TealType.uint64:
-                convert subroutine's output using Itob() and log the result
-            * TealType.bytes:
-                log the subroutine's result
-            * TealType.none or TealType.anytype:
-                log Itob(Int(1337)) as it is either impossible (TealType.none),
-                or unknown at compile time (TealType.anytype) how to convert to Bytes
+            * Subroutine case:
+                * TealType.uint64:
+                    convert subroutine's output using Itob() and log the result
+                * TealType.bytes:
+                    log the subroutine's result
+                * TealType.none or TealType.anytype:
+                    log Itob(Int(1337)) as it is either impossible (TealType.none),
+                    or unknown at compile time (TealType.anytype) how to convert to Bytes
+            * ABIReturnSubroutine case:
+                * when present, the output is encoded as TealType.bytes and concatenated to the rewturn
+                method selector. This can be decoded by the receiver using appropriate ABI-libraries
 
         For illustrative examples of how to use this method please refer to the integration test file `graviton_test.py` and especially:
 
