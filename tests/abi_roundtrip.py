@@ -94,14 +94,14 @@ class ABIRoundtrip(Generic[T]):
         char_type_spec = abi.ByteTypeSpec()
 
         @pt.ABIReturnSubroutine
-        def string_reverse(x: self.annotation, *, output: self.annotation):
-            insts = [char_type_spec.new_instance() for _ in range(self.length)]
+        def string_reverse(x: self.annotation, *, output: self.annotation):  # type: ignore[name-defined]
+            insts = [char_type_spec.new_instance() for _ in range(self.length)]  # type: ignore[arg-type]
             setters = [inst.set(x[i]) for i, inst in enumerate(reversed(insts))]
             return pt.Seq(*(setters + [output.set(insts)]))
 
         return string_reverse
 
-    def tuple_comp_factory(self) -> pt.ABIReturnSubroutine:
+    def tuple_comp_factory(self) -> pt.ABIReturnSubroutine:  # type: ignore[name-defined]
         value_type_specs: list[abi.TypeSpec] = self.type_spec.value_type_specs()  # type: ignore[attr-defined]
         insts = [vts.new_instance() for vts in value_type_specs]
         roundtrips: list[ABIRoundtrip[T]] = [
