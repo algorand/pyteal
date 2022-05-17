@@ -2266,11 +2266,13 @@ def test_router_app():
 
     router.add_bare_call(pt.Approve(), pt.OnComplete.ClearState)
 
-    ap, csp, contract = router.build_program()
+    ap, csp, _ = router.build_program()
     actual_ap_compiled = pt.compileTeal(
         ap, pt.Mode.Application, version=6, assembleConstants=True
     )
-    _ = pt.compileTeal(csp, pt.Mode.Application, version=6, assembleConstants=True)
+    actual_csp_compiled = pt.compileTeal(
+        csp, pt.Mode.Application, version=6, assembleConstants=True
+    )
 
     expected_ap = """#pragma version 6
 intcblock 0 1 3
@@ -2633,4 +2635,13 @@ load 64
 retsub""".strip()
     assert expected_ap == actual_ap_compiled
 
-    # TODO in construction
+    expected_csp = """#pragma version 6
+txn NumAppArgs
+pushint 0 // 0
+==
+bnz main_l2
+err
+main_l2:
+pushint 1 // 1
+return""".strip()
+    assert expected_csp == actual_csp_compiled
