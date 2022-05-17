@@ -1,4 +1,4 @@
-from __future__ import annotations
+from lib2to3.pytree import Base
 from typing import (
     List,
     Sequence,
@@ -33,10 +33,8 @@ from pyteal.ast.abi.bool import (
 from pyteal.ast.abi.uint import NUM_BITS_IN_BYTE, Uint16
 from pyteal.ast.abi.util import substringForDecoding
 
-T = TypeVar("T", bound=BaseType)
 
-
-def encodeTuple(values: Sequence[T]) -> Expr:
+def encodeTuple(values: Sequence[BaseType]) -> Expr:
     heads: List[Expr] = []
     head_length_static: int = 0
 
@@ -115,7 +113,7 @@ def encodeTuple(values: Sequence[T]) -> Expr:
 
 
 def indexTuple(
-    valueTypes: Sequence[TypeSpec], encoded: Expr, index: int, output: T
+    valueTypes: Sequence[TypeSpec], encoded: Expr, index: int, output: BaseType
 ) -> Expr:
     if not (0 <= index < len(valueTypes)):
         raise ValueError("Index outside of range")
@@ -207,7 +205,7 @@ def indexTuple(
     return output.decode(encoded, startIndex=startIndex, length=length)
 
 
-class TupleTypeSpec(TypeSpec, Generic[T]):
+class TupleTypeSpec(TypeSpec):
     def __init__(self, *value_type_specs: TypeSpec) -> None:
         super().__init__()
         self.value_specs = list(value_type_specs)
@@ -223,7 +221,7 @@ class TupleTypeSpec(TypeSpec, Generic[T]):
     def new_instance(self) -> "Tuple":
         return Tuple(self)
 
-    def annotation_type(self) -> type[Tuple]:
+    def annotation_type(self) -> "type[Tuple]":
         vtses = self.value_type_specs()
 
         def annotater():
@@ -274,11 +272,11 @@ class TupleTypeSpec(TypeSpec, Generic[T]):
 TupleTypeSpec.__module__ = "pyteal"
 
 
-class Tuple(BaseType, Generic[T]):
+class Tuple(BaseType):
     def __init__(self, tuple_type_spec: TupleTypeSpec) -> None:
         super().__init__(tuple_type_spec)
 
-    def type_spec(self) -> TupleTypeSpec[T]:
+    def type_spec(self) -> TupleTypeSpec:
         return cast(TupleTypeSpec, super().type_spec())
 
     def decode(
@@ -295,7 +293,7 @@ class Tuple(BaseType, Generic[T]):
         return self.stored_value.store(extracted)
 
     @overload
-    def set(self, *values: T) -> Expr:
+    def set(self, *values: BaseType) -> Expr:
         ...
 
     @overload
@@ -334,11 +332,13 @@ class Tuple(BaseType, Generic[T]):
 
 Tuple.__module__ = "pyteal"
 
+T = TypeVar("T", bound=BaseType)
+
 
 class TupleElement(ComputedValue[T]):
     """Represents the extraction of a specific element from a Tuple."""
 
-    def __init__(self, tuple: Tuple[T], index: int) -> None:
+    def __init__(self, tuple: Tuple, index: int) -> None:
         super().__init__()
         self.tuple = tuple
         self.index = index
