@@ -108,7 +108,7 @@ def test_StaticArray_decode():
                     abi.StaticArrayTypeSpec(abi.Uint64TypeSpec(), 10)
                 )
 
-                if endIndex is not None or length is not None:
+                if endIndex is not None and length is not None:
                     with pytest.raises(pt.TealInputError):
                         value.decode(
                             encoded,
