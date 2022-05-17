@@ -65,7 +65,7 @@ sandbox-dev-stop:
 	docker-compose stop algod
 	
 integration-run:
-	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration
+	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration/abi_roundtrip_test.py::test_roundtrip
 
 test-integration: integration-run
 
