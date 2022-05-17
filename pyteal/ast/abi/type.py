@@ -145,7 +145,7 @@ class BaseType(ABC):
 
 BaseType.__module__ = "pyteal"
 
-T = TypeVar("T", bound=BaseType, contravariant=True)
+T = TypeVar("T", bound=BaseType)
 
 
 class ComputedValue(ABC, Generic[T]):
