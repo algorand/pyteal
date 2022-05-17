@@ -1,6 +1,7 @@
 import pytest
 import pyteal as pt
 from pyteal import abi
+from pyteal.ast.abi.address import AddressLength
 
 from pyteal.ast.abi.type_test import ContainerType
 from pyteal.ast.abi.util import substringForDecoding
@@ -68,15 +69,15 @@ def test_Address_decode():
                         )
                     continue
 
-                expr = value.decode(
-                    encoded, startIndex=startIndex, endIndex=endIndex, length=length
-                )
+                expr = value.decode(encoded, startIndex=startIndex)
                 assert expr.type_of() == pt.TealType.none
                 assert expr.has_return() is False
 
                 expectedExpr = value.stored_value.store(
                     substringForDecoding(
-                        encoded, startIndex=startIndex, endIndex=endIndex, length=length
+                        encoded,
+                        startIndex=startIndex,
+                        length=pt.Int(int(AddressLength.Bytes)),
                     )
                 )
                 expected, _ = expectedExpr.__teal__(options)

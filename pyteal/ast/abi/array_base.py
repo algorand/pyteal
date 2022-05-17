@@ -270,12 +270,7 @@ class ArrayElement(ComputedValue[T]):
 
             return output.decode(encodedArray, startIndex=valueStart, endIndex=valueEnd)
 
-        # Handling case for array elements are static:
-        # since array._stride() is element's static byte length
-        # we partition the substring for array element.
-        valueStart = byteIndex
-        valueLength = Int(arrayType._stride())
-        return output.decode(encodedArray, startIndex=valueStart, length=valueLength)
+        return output.decode(encodedArray, startIndex=byteIndex)
 
 
 ArrayElement.__module__ = "pyteal"

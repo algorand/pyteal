@@ -78,6 +78,21 @@ class StaticArray(Array[T], Generic[T, N]):
     def type_spec(self) -> StaticArrayTypeSpec[T, N]:
         return cast(StaticArrayTypeSpec[T, N], super().type_spec())
 
+    def decode(
+        self,
+        encoded: Expr,
+        *,
+        startIndex: Expr = None,
+        endIndex: Expr = None,
+        length: Expr = None,
+    ) -> Expr:
+        if endIndex is not None or length is not None:
+            raise TealInputError(
+                "Expected None for endIndex and length on static array"
+            )
+
+        return super().decode(encoded, startIndex=startIndex, length=self.length())
+
     def set(
         self,
         values: Union[
@@ -127,7 +142,7 @@ class StaticArray(Array[T], Generic[T, N]):
         Returns:
             A PyTeal expression that represents the static array length.
         """
-        return Int(self.type_spec().length_static())
+        return Int(int(self.type_spec().length_static()))
 
     def __getitem__(self, index: Union[int, Expr]) -> "ArrayElement[T]":
         if type(index) is int and index >= self.type_spec().length_static():

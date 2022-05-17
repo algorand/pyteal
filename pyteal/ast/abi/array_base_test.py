@@ -79,7 +79,6 @@ def test_ArrayElement_store_into():
 
         encoded = staticArray.encode()
         stride = pt.Int(staticArray.type_spec()._stride())
-        expectedLength = staticArray.length()
         if elementType == abi.BoolTypeSpec():
             expectedExpr = cast(abi.Bool, output).decodeBit(encoded, index)
         elif not elementType.is_dynamic():
@@ -90,9 +89,9 @@ def test_ArrayElement_store_into():
             expectedExpr = output.decode(
                 encoded,
                 startIndex=pt.ExtractUint16(encoded, stride * index),
-                endIndex=pt.If(index + pt.Int(1) == expectedLength)
-                .Then(pt.Len(encoded))
-                .Else(pt.ExtractUint16(encoded, stride * index + pt.Int(2))),
+                # endIndex=pt.If(index + pt.Int(1) == expectedLength)
+                # .Then(pt.Len(encoded))
+                # .Else(pt.ExtractUint16(encoded, stride * index + pt.Int(2))),
             )
 
         expected, _ = expectedExpr.__teal__(options)
@@ -120,7 +119,6 @@ def test_ArrayElement_store_into():
 
         encoded = dynamicArray.encode()
         stride = pt.Int(dynamicArray.type_spec()._stride())
-        expectedLength = dynamicArray.length()
         if elementType == abi.BoolTypeSpec():
             expectedExpr = cast(abi.Bool, output).decodeBit(encoded, index + pt.Int(16))
         elif not elementType.is_dynamic():
@@ -132,12 +130,12 @@ def test_ArrayElement_store_into():
                 encoded,
                 startIndex=pt.ExtractUint16(encoded, stride * index + pt.Int(2))
                 + pt.Int(2),
-                endIndex=pt.If(index + pt.Int(1) == expectedLength)
-                .Then(pt.Len(encoded))
-                .Else(
-                    pt.ExtractUint16(encoded, stride * index + pt.Int(2) + pt.Int(2))
-                    + pt.Int(2)
-                ),
+                # endIndex=pt.If(index + pt.Int(1) == expectedLength)
+                # .Then(pt.Len(encoded))
+                # .Else(
+                #    pt.ExtractUint16(encoded, stride * index + pt.Int(2) + pt.Int(2))
+                #    + pt.Int(2)
+                # ),
             )
 
         expected, _ = expectedExpr.__teal__(options)
