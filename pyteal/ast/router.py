@@ -258,10 +258,10 @@ class Router:
                 list[abi.TypeSpec], handler.subroutine.expected_arg_types
             )
             if handler.subroutine.argument_count() > METHOD_ARG_NUM_LIMIT:
-                to_be_tupled_specs = arg_type_specs[METHOD_ARG_NUM_LIMIT - 1 :]
+                last_arg_specs_grouped = arg_type_specs[METHOD_ARG_NUM_LIMIT - 1 :]
                 arg_type_specs = arg_type_specs[: METHOD_ARG_NUM_LIMIT - 1]
-                tupled_spec = abi.TupleTypeSpec(*to_be_tupled_specs)
-                arg_type_specs.append(tupled_spec)
+                last_arg_spec = abi.TupleTypeSpec(*last_arg_specs_grouped)
+                arg_type_specs.append(last_arg_spec)
 
             arg_abi_vars: list[abi.BaseType] = [
                 type_spec.new_instance() for type_spec in arg_type_specs

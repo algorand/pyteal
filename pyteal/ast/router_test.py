@@ -162,6 +162,8 @@ GOOD_SUBROUTINE_CASES: list[pt.ABIReturnSubroutine | pt.SubroutineFnWrapper] = [
     many_args,
     safe_clear_state_delete,
     dummy_doing_nothing,
+    eine_constant,
+    take_abi_and_log,
 ]
 
 ON_COMPLETE_CASES: list[pt.EnumInt] = [
@@ -182,6 +184,13 @@ def non_empty_power_set(no_dup_list: list):
 
 def is_sth_in_oc_list(sth: pt.EnumInt, oc_list: list[pt.EnumInt]):
     return any(map(lambda x: str(x) == str(sth), oc_list))
+
+
+def assemble_helper(what: pt.Expr) -> pt.TealBlock:
+    assembled, _ = what.__teal__(options)
+    assembled.addIncoming()
+    assembled = pt.TealBlock.NormalizeBlocks(assembled)
+    return assembled
 
 
 def test_parse_conditions():
@@ -233,12 +242,6 @@ def test_parse_conditions():
 
         if not is_sth_in_oc_list(pt.OnComplete.ClearState, on_completes):
             assert len(clear_state_condition_list) == 0
-
-        def assemble_helper(what: pt.Expr) -> pt.TealBlock:
-            assembled, _ = what.__teal__(options)
-            assembled.addIncoming()
-            assembled = pt.TealBlock.NormalizeBlocks(assembled)
-            return assembled
 
         assembled_ap_condition_list: list[pt.TealBlock] = [
             assemble_helper(expr) for expr in approval_condition_list
@@ -348,6 +351,33 @@ def test_wrap_handler_method_call():
     with pytest.raises(pt.TealInputError) as bug:
         pt.Router.wrap_handler(True, safe_clear_state_delete)
     assert "method call should be only registering ABIReturnSubroutine" in str(bug)
+
+    ONLY_ABI_SUBROUTINE_CASES = list(
+        filter(lambda x: isinstance(x, pt.ABIReturnSubroutine), GOOD_SUBROUTINE_CASES)
+    )
+    for abi_subroutine in ONLY_ABI_SUBROUTINE_CASES:
+        wrapped: pt.Expr = pt.Router.wrap_handler(True, abi_subroutine)
+        assembled_wrapped: pt.TealBlock = assemble_helper(wrapped)
+        print(assembled_wrapped)
+        if abi_subroutine.subroutine.argument_count() > pt.METHOD_ARG_NUM_LIMIT:
+            # TODO
+            continue
+        args: list[pt.abi.BaseType] = [
+            spec.new_instance()
+            for spec in typing.cast(
+                list[pt.abi.TypeSpec], abi_subroutine.subroutine.expected_arg_types
+            )
+        ]
+        loading: list[pt.Expr] = [
+            arg.decode(pt.Txn.application_args[index + 1])
+            for index, arg in enumerate(args)
+        ]
+        if abi_subroutine.type_of() != "void":
+            # TODO
+            continue
+        actual = assemble_helper(pt.Seq(*loading, abi_subroutine(*args), pt.Approve()))
+        with pt.TealComponent.Context.ignoreScratchSlotEquality(), pt.TealComponent.Context.ignoreExprEquality():
+            assert actual == assembled_wrapped
 
 
 def test_contract_json_obj():
