@@ -250,7 +250,7 @@ class Router:
                 )
             if not handler.is_registrable():
                 raise TealInputError(
-                    f"method call ABIReturnSubroutine is not registable"
+                    f"method call ABIReturnSubroutine is not registrable"
                     f"got {handler.subroutine.argument_count()} args with {len(handler.subroutine.abi_args)} ABI args."
                 )
 

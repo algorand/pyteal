@@ -145,6 +145,11 @@ def take_abi_and_log(tb_logged: pt.abi.String):
     return pt.Log(tb_logged.get())
 
 
+@pt.ABIReturnSubroutine
+def not_registrable(lhs: pt.abi.Uint64, rhs: pt.Expr, *, output: pt.abi.Uint64):
+    return output.set(lhs.get() * rhs)
+
+
 GOOD_SUBROUTINE_CASES: list[pt.ABIReturnSubroutine | pt.SubroutineFnWrapper] = [
     add,
     sub,
@@ -336,7 +341,13 @@ def test_wrap_handler_bare_call():
 
 # TODO test wrap_handler
 def test_wrap_handler_method_call():
-    pass
+    with pytest.raises(pt.TealInputError) as bug:
+        pt.Router.wrap_handler(True, not_registrable)
+    assert "method call ABIReturnSubroutine is not registrable" in str(bug)
+
+    with pytest.raises(pt.TealInputError) as bug:
+        pt.Router.wrap_handler(True, safe_clear_state_delete)
+    assert "method call should be only registering ABIReturnSubroutine" in str(bug)
 
 
 def test_contract_json_obj():
