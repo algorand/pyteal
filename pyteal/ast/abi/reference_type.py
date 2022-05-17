@@ -1,11 +1,4 @@
-from abc import abstractmethod
-from typing import cast, Any
-
-from pyteal.errors import TealInputError
-
-from pyteal.ast.expr import Expr
-from pyteal.ast.txn import Txn
-
+from typing import cast
 from pyteal.ast.abi.uint import Uint, UintTypeSpec
 
 
@@ -23,10 +16,6 @@ class ReferenceType(Uint):
 
     def type_spec(self) -> ReferenceTypeSpec:
         return cast(ReferenceTypeSpec, super().type_spec())
-
-    @abstractmethod
-    def get(self) -> Expr:
-        return self.stored_value.load()
 
 
 ReferenceType.__module__ = "pyteal"
@@ -50,13 +39,6 @@ class Account(ReferenceType):
     def __init__(self) -> None:
         super().__init__(AccountTypeSpec())
 
-    def get(self) -> Expr:
-        return Txn.accounts[self.stored_value.load()]
-
-    def set(self, value: Any) -> Expr:
-        # TODO: should we allow this on some InnerTxnBuilder?
-        raise TealInputError("Cannot set account value")
-
 
 Account.__module__ = "pyteal"
 
@@ -79,13 +61,6 @@ class Asset(ReferenceType):
     def __init__(self) -> None:
         super().__init__(AssetTypeSpec())
 
-    def get(self) -> Expr:
-        return Txn.assets[self.stored_value.load()]
-
-    def set(self, value: Any) -> Expr:
-        # TODO: should we allow this on some InnerTxnBuilder?
-        raise TealInputError("Cannot set asset value")
-
 
 Asset.__module__ = "pyteal"
 
@@ -107,13 +82,6 @@ ApplicationTypeSpec.__module__ = "pyteal"
 class Application(ReferenceType):
     def __init__(self) -> None:
         super().__init__(ApplicationTypeSpec())
-
-    def get(self) -> Expr:
-        return Txn.applications[self.stored_value.load()]
-
-    def set(self, value: Any) -> Expr:
-        # TODO: should we allow this on some InnerTxnBuilder?
-        raise TealInputError("Cannot set application value")
 
 
 Application.__module__ = "pyteal"
