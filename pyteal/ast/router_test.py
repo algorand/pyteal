@@ -1,5 +1,8 @@
-# import pytest
 import pyteal as pt
+import itertools
+import pytest
+import random
+import typing
 
 options = pt.CompileOptions(version=5)
 
@@ -116,29 +119,143 @@ def safe_clear_state_delete():
     )
 
 
-# TODO test parse_condition
+GOOD_SUBROUTINE_CASES: list[pt.ABIReturnSubroutine | pt.SubroutineFnWrapper] = [
+    add,
+    sub,
+    mul,
+    div,
+    mod,
+    qrem,
+    reverse,
+    concat_strings,
+    many_args,
+    safe_clear_state_delete,
+]
 
-# TODO test wrap_handler
+ON_COMPLETE_CASES: list[pt.EnumInt] = [
+    pt.OnComplete.NoOp,
+    pt.OnComplete.OptIn,
+    pt.OnComplete.ClearState,
+    pt.OnComplete.CloseOut,
+    pt.OnComplete.UpdateApplication,
+    pt.OnComplete.DeleteApplication,
+]
 
-# TODO test contract JSON object
+
+def non_empty_power_set(no_dup_list: list):
+    masks = [1 << i for i in range(len(no_dup_list))]
+    for i in range(1, 1 << len(no_dup_list)):
+        yield [elem for mask, elem in zip(masks, no_dup_list) if i & mask]
+
+
+def is_sth_in_oc_list(sth: pt.EnumInt, oc_list: list[pt.EnumInt]):
+    return any(map(lambda x: str(x) == str(sth), oc_list))
 
 
 def test_parse_conditions():
-    approval_conds, clear_state_conds = pt.Router.parse_conditions(
-        concat_strings.method_signature(),
-        concat_strings,
-        [
-            pt.OnComplete.ClearState,
-            pt.OnComplete.CloseOut,
-            pt.OnComplete.NoOp,
-            pt.OnComplete.OptIn,
-        ],
-        creation=False,
-    )
-    print()
-    print([str(x) for x in approval_conds])
-    print([str(x) for x in clear_state_conds])
-    pass
+    ON_COMPLETE_COMBINED_CASES = non_empty_power_set(ON_COMPLETE_CASES)
+
+    for subroutine, on_completes, is_creation in itertools.product(
+        GOOD_SUBROUTINE_CASES, ON_COMPLETE_COMBINED_CASES, [False, True]
+    ):
+        if not isinstance(subroutine, pt.ABIReturnSubroutine):
+            subroutine = None
+
+        method_sig = subroutine.method_signature() if subroutine else None
+
+        if is_creation and (
+            is_sth_in_oc_list(pt.OnComplete.CloseOut, on_completes)
+            or is_sth_in_oc_list(pt.OnComplete.ClearState, on_completes)
+        ):
+            with pytest.raises(pt.TealInputError) as err_conflict_conditions:
+                pt.Router.parse_conditions(
+                    method_sig, subroutine, on_completes, is_creation
+                )
+            assert (
+                "OnComplete ClearState/CloseOut may be ill-formed with app creation"
+                in str(err_conflict_conditions)
+            )
+            continue
+
+        mutated_on_completes = on_completes + [random.choice(on_completes)]
+        with pytest.raises(pt.TealInputError) as err_dup_oc:
+            pt.Router.parse_conditions(
+                method_sig, subroutine, mutated_on_completes, is_creation
+            )
+        assert "has duplicated on_complete(s)" in str(err_dup_oc)
+
+        if subroutine is not None:
+            with pytest.raises(pt.TealInputError) as err_wrong_override:
+                pt.Router.parse_conditions(None, subroutine, on_completes, is_creation)
+            assert (
+                "A method_signature must be provided if method_to_register is not None"
+                in str(err_wrong_override)
+            )
+
+        (
+            approval_condition_list,
+            clear_state_condition_list,
+        ) = pt.Router.parse_conditions(
+            method_sig, subroutine, on_completes, is_creation
+        )
+
+        if not is_sth_in_oc_list(pt.OnComplete.ClearState, on_completes):
+            assert len(clear_state_condition_list) == 0
+
+        def assemble_helper(what: pt.Expr) -> pt.TealBlock:
+            assembled, _ = what.__teal__(options)
+            assembled.addIncoming()
+            assembled = pt.TealBlock.NormalizeBlocks(assembled)
+            return assembled
+
+        assembled_ap_condition_list: list[pt.TealBlock] = [
+            assemble_helper(expr) for expr in approval_condition_list
+        ]
+        assembled_csp_condition_list: list[pt.TealBlock] = [
+            assemble_helper(expr) for expr in clear_state_condition_list
+        ]
+        if is_creation:
+            creation_condition: pt.Expr = pt.Txn.application_id() == pt.Int(0)
+            assembled_condition = assemble_helper(creation_condition)
+            with pt.TealComponent.Context.ignoreExprEquality():
+                assert assembled_condition in assembled_ap_condition_list
+
+        subroutine_arg_cond: pt.Expr
+        if subroutine:
+            max_subroutine_arg_allowed = 1 + min(
+                pt.METHOD_ARG_NUM_LIMIT, subroutine.subroutine.argument_count()
+            )
+            subroutine_arg_cond = pt.And(
+                pt.Txn.application_args[0]
+                == pt.MethodSignature(typing.cast(str, method_sig)),
+                pt.Txn.application_args.length() == pt.Int(max_subroutine_arg_allowed),
+            )
+        else:
+            subroutine_arg_cond = pt.Txn.application_args.length() == pt.Int(0)
+
+        assembled_condition = assemble_helper(subroutine_arg_cond)
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert assembled_condition in assembled_ap_condition_list
+
+        if is_sth_in_oc_list(pt.OnComplete.ClearState, on_completes):
+            with pt.TealComponent.Context.ignoreExprEquality():
+                assert assembled_condition in assembled_csp_condition_list
+
+        if len(on_completes) == 1 and is_sth_in_oc_list(
+            pt.OnComplete.ClearState, on_completes
+        ):
+            continue
+
+        on_completes_cond: pt.Expr = pt.Or(
+            *[
+                pt.Txn.on_completion() == oc
+                for oc in on_completes
+                if str(oc) != str(pt.OnComplete.ClearState)
+            ]
+        )
+        on_completes_cond_assembled = assemble_helper(on_completes_cond)
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert on_completes_cond_assembled in assembled_ap_condition_list
 
 
 def test():
@@ -156,3 +273,8 @@ def test():
             # optimize=pt.OptimizeOptions(scratch_slots=True),
         )
     )
+
+
+# TODO test wrap_handler
+
+# TODO test contract JSON object

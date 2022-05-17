@@ -85,8 +85,8 @@ class Router:
 
     @staticmethod
     def parse_conditions(
-        method_signature: str,
-        method_to_register: ABIReturnSubroutine | None,
+        method_signature: Optional[str],
+        method_to_register: Optional[ABIReturnSubroutine],
         on_completes: list[EnumInt],
         creation: bool,
     ) -> tuple[list[Expr], list[Expr]]:
@@ -116,7 +116,7 @@ class Router:
 
         # check that the onComplete has no duplicates
         if len(on_completes) != len(set(on_completes)):
-            raise TealInputError(f"input {on_completes} has duplicates.")
+            raise TealInputError(f"input {on_completes} has duplicated on_complete(s)")
 
         # Check the existence of OC.CloseOut
         close_out_exist = any(
@@ -131,6 +131,12 @@ class Router:
             raise TealInputError(
                 "OnComplete ClearState/CloseOut may be ill-formed with app creation"
             )
+        # check if there is ABI method but no method_signature is provided
+        # TODO API change to allow inferring method_signature from method_to_register?
+        if method_to_register is not None and not method_signature:
+            raise TealInputError(
+                "A method_signature must be provided if method_to_register is not None"
+            )
 
         # Check:
         # - if current condition is for *ABI METHOD*
@@ -138,7 +144,7 @@ class Router:
         # - or *BARE APP CALL* (numAppArg == 0)
         method_or_bare_condition = (
             And(
-                Txn.application_args[0] == MethodSignature(method_signature),
+                Txn.application_args[0] == MethodSignature(cast(str, method_signature)),
                 Txn.application_args.length()
                 == Int(
                     1
@@ -157,11 +163,6 @@ class Router:
             [Txn.application_id() == Int(0)] if creation else []
         )
         clear_state_conds: list[Expr] = []
-
-        if method_to_register is not None and not method_signature:
-            raise TealInputError(
-                "A method_signature must only be provided if method_to_register is not None"
-            )
 
         approval_conds.append(method_or_bare_condition)
 
@@ -278,9 +279,9 @@ class Router:
                 tuple_abi_args: list[abi.BaseType] = [
                     t_arg_ts.new_instance() for t_arg_ts in tuple_arg_type_specs
                 ]
-                tupled_arg: abi.Tuple = cast(abi.Tuple, arg_abi_vars[-1])
+                last_tuple_arg: abi.Tuple = cast(abi.Tuple, arg_abi_vars[-1])
                 de_tuple_instructions: list[Expr] = [
-                    tupled_arg[i].store_into(tuple_abi_args[i])
+                    last_tuple_arg[i].store_into(tuple_abi_args[i])
                     for i in range(len(tuple_arg_type_specs))
                 ]
                 decode_instructions += de_tuple_instructions
@@ -366,7 +367,7 @@ class Router:
             else [cast(EnumInt, on_completes)]
         )
         approval_conds, clear_state_conds = Router.parse_conditions(
-            method_signature="",
+            method_signature=None,
             method_to_register=None,
             on_completes=ocList,
             creation=creation,
@@ -374,6 +375,7 @@ class Router:
         branch = Router.wrap_handler(False, bare_app_call)
         self.__append_to_ast(approval_conds, clear_state_conds, branch, None)
 
+    # TODO API should change to allow method signature not overriding?
     def add_method_handler(
         self,
         method_app_call: ABIReturnSubroutine,
@@ -391,7 +393,7 @@ class Router:
             on_complete: an OnCompletion args
             creation: a boolean variable indicating if this condition is triggered on creation
         """
-        oc_list: list[EnumInt] = [cast(EnumInt, on_complete)]
+        oc_list: list[EnumInt] = [on_complete]
 
         if method_signature is None:
             method_signature = method_app_call.method_signature()
