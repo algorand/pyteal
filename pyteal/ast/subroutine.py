@@ -466,7 +466,12 @@ SubroutineFnWrapper.__module__ = "pyteal"
 
 
 class ABIReturnSubroutine:
-    """Used to create a PyTeal Subroutine (returning an ABI value) from a python function.
+    """Used to create a PyTeal Subroutine (returning an ABI value) from a python function.  It's primarily intended to define ARC-4 Application entry points though it can also be used more generally.
+
+    *Disclaimer*:  ABIReturnSubroutine is still taking shape and is subject to backwards incompatible changes.
+
+    * For ARC-4 Application entry point definition, feel encouraged to use ABIReturnSubroutine.  Expect a best-effort attempt to minimize backwards incompatible changes along with a migration path.
+    * For general purpose subroutine definition usage, use at your own risk.  Based on feedback, the API and usage patterns will change more freely and with less effort to provide migration paths.
 
     This class is meant to be used as a function decorator. For example:
 
