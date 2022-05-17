@@ -166,7 +166,9 @@ def test_blackbox_pyteal(subr: BlackboxWrapper, mode: pt.Mode):
 
 
 @pytest.mark.parametrize("subr_abi, mode", product(ABI_UNITS, pt.Mode))
-def test_abi_blackbox_pyteal(subr_abi: Tuple[BlackboxWrapper, Optional[pt.ast.abi.BaseType]], mode: pt.Mode):
+def test_abi_blackbox_pyteal(
+    subr_abi: Tuple[BlackboxWrapper, Optional[pt.ast.abi.BaseType]], mode: pt.Mode
+):
     subr, abi_return_type = subr_abi
     name = f"{'app' if mode == pt.Mode.Application else 'lsig'}_{subr.name()}"
     print(f"Case {subr.name()=}, {abi_return_type=}, {mode=} ------> {name=}")
