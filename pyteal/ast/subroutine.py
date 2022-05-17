@@ -77,9 +77,6 @@ class SubroutineDefinition:
     ]:
         """Validate the full function signature and annotations for subroutine definition.
 
-        TODO: does this doc-comment still make sense after all the refactoring in this branch,
-            `abi-subroutine` and `feature/abi` is complete?
-
         NOTE: `self.implementation` should be set before calling `_validate()`
 
         This function iterates through `sig.parameters.items()`, and checks each of subroutine arguments.
@@ -100,9 +97,12 @@ class SubroutineDefinition:
         We put the scratch slot id on the stack, rather than the value itself.
         - `abi_args` - a set of argument names, which are type annotated by ABI types.
         We load the ABI scratch space stored value to stack, and store them later in subroutine's local ABI values.
+        - `abi_output_kwarg` - a possibly empty dict which when non-empty contains exactly one key
+            `ABIReturnSubroutine.OUTPUT_ARG_NAME` with a value that gives abi-tye information about the output
 
         Args:
             input_types (optional): for testing purposes - expected `TealType`s of each parameter
+
         Returns:
             impl_params: a map from python function implementation's argument name, to argument's parameter.
             annotations: a dict whose keys are names of type-annotated arguments,
