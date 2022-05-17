@@ -38,7 +38,7 @@ class ABIRoundtrip(Generic[T]):
         return PyTealDryRunExecutor(roundtrip, pt.Mode.Application)
 
     def roundtrip_factory(self) -> BlackboxWrapper:
-        comp = self.complement_factory()
+        comp = self.mutator_factory()
 
         ann_out = abi.Tuple3[self.annotation, self.annotation, self.annotation]  # type: ignore[misc,name-defined]
 
@@ -51,11 +51,13 @@ class ABIRoundtrip(Generic[T]):
 
         return round_tripper
 
-    def complement_factory(self) -> pt.ABIReturnSubroutine:
+    def mutator_factory(self) -> pt.ABIReturnSubroutine:
         if isinstance(self.type_spec, abi.BoolTypeSpec):
             return self.bool_comp_factory()
         if isinstance(self.type_spec, abi.UintTypeSpec):
             return self.numerical_comp_factory()
+        if isinstance(self.type_spec, abi.StringTypeSpec):
+            return self.string_reverse_factory()
         if isinstance(self.type_spec, abi.TupleTypeSpec):
             return self.tuple_comp_factory()
         if isinstance(self.type_spec, abi.ArrayTypeSpec):
@@ -82,6 +84,23 @@ class ABIRoundtrip(Generic[T]):
 
         return numerical_comp
 
+    def string_reverse_factory(self) -> pt.ABIReturnSubroutine:
+        """
+        Assume strings are python utf-8 compliant and therefore each byte value is at most 127
+        """
+        if self.length is None:
+            self.length = DEFAULT_DYNAMIC_ARRAY_LENGTH
+
+        char_type_spec = abi.ByteTypeSpec()
+
+        @pt.ABIReturnSubroutine
+        def string_reverse(x: self.annotation, *, output: self.annotation):
+            insts = [char_type_spec.new_instance() for _ in range(self.length)]
+            setters = [inst.set(x[i]) for i, inst in enumerate(reversed(insts))]
+            return pt.Seq(*(setters + [output.set(insts)]))
+
+        return string_reverse
+
     def tuple_comp_factory(self) -> pt.ABIReturnSubroutine:
         value_type_specs: list[abi.TypeSpec] = self.type_spec.value_type_specs()  # type: ignore[attr-defined]
         insts = [vts.new_instance() for vts in value_type_specs]
@@ -92,7 +111,7 @@ class ABIRoundtrip(Generic[T]):
         @pt.ABIReturnSubroutine
         def tuple_complement(x: self.annotation, *, output: self.annotation):  # type: ignore[name-defined]
             setters = [inst.set(x[i]) for i, inst in enumerate(insts)]  # type: ignore[attr-defined]
-            comp_funcs = [rtrip.complement_factory() for rtrip in roundtrips]
+            comp_funcs = [rtrip.mutator_factory() for rtrip in roundtrips]
             compers = [inst.set(comp_funcs[i](inst)) for i, inst in enumerate(insts)]  # type: ignore[attr-defined]
             return pt.Seq(*(setters + compers + [output.set(*insts)]))
 
@@ -114,7 +133,7 @@ class ABIRoundtrip(Generic[T]):
         internal_ann_inst = internal_type_spec.new_instance()
         comp_func = ABIRoundtrip(
             None, annotation_instance=internal_ann_inst
-        ).complement_factory()
+        ).mutator_factory()
 
         @pt.ABIReturnSubroutine
         def array_complement(x: self.annotation, *, output: self.annotation):  # type: ignore[name-defined]

@@ -135,8 +135,6 @@ def Blackbox(input_types: list[TealType | None]):
 
 
 Output = TypeVar("Output")
-
-
 Lazy = Callable[[], Output]
 
 
@@ -268,7 +266,7 @@ class PyTealDryRunExecutor:
         * `blackbox_pyteal_example1()`: Using blackbox_pyteal() for a simple test of both an app and logic sig
         * `blackbox_pyteal_example2()`: Using blackbox_pyteal() to make 400 assertions and generate a CSV report with 400 dryrun rows
         * `blackbox_pyteal_example3()`: declarative Test Driven Development approach through Invariant's
-        * `blackbox_pyteal_example4()`: Using PyTealDryRunExecutor to debug an ABIReturnSubroutine with an app, logic sig and csv report
+        * `blackbox_pyteal_example4()`: Using PyTealDryRunExecutor to debug an ABIReturnSubroutine with an app, logic sig and csv reports
         """
 
         return self._pyteal_lambda()
@@ -431,21 +429,21 @@ class PyTealDryRunExecutor:
 
     def dryrun(
         self,
-        inputs: Sequence[str | int],
+        args: Sequence[bytes | str | int],
         compiler_version=6,
     ) -> DryRunInspector:
         return _MatchMode(
             app_case=lambda: DryRunExecutor.dryrun_app(
                 algod_with_assertion(),
                 self.compile(compiler_version),
-                inputs,
+                args,
                 self.abi_argument_types(),
                 self.abi_return_type(),
             ),
             signature_case=lambda: DryRunExecutor.dryrun_logicsig(
                 algod_with_assertion(),
                 self.compile(compiler_version),
-                inputs,
+                args,
                 self.abi_argument_types(),
                 self.abi_return_type(),
             ),

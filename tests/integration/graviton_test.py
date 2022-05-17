@@ -791,9 +791,10 @@ def blackbox_pyteal_example4():
     lsig_inspectors = lsig_pytealer.dryrun_on_sequence(inputs)
 
     for i in range(N):
+        args = inputs[i]
+
         app_inspector = app_inspectors[i]
         lsig_inspector = lsig_inspectors[i]
-        args = inputs[i]
 
         def message(insp):
             return insp.report(args, f"failed for {args}", row=i)

@@ -385,18 +385,18 @@ def test_complex130():
         )
     ]
 
+    # Binary:
     def binary_dryrun(p: PyTealDryRunExecutor) -> list[DryRunInspector]:
         return p.dryrun_on_sequence(binary_inputs)
 
-    # Binary:
     inspectors_cplx_add = binary_dryrun(bbpt_cplx_add)
 
     inspectors_cplx_mult = binary_dryrun(bbpt_cplx_mult)
 
+    # Unary:
     def unary_dryrun(p: PyTealDryRunExecutor) -> list[DryRunInspector]:
         return p.dryrun_on_sequence(unary_inputs)
 
-    # Unary:
     inspectors_cplx_real = unary_dryrun(bbpt_complex_real)
 
     inspectors_cplx_imag = unary_dryrun(bbpt_complex_imag)

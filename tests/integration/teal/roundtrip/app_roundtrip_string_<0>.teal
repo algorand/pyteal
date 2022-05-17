@@ -11,8 +11,8 @@ log
 int 1
 return
 
-// array_complement
-arraycomplement_0:
+// string_reverse
+stringreverse_0:
 store 6
 int 0
 store 8
@@ -29,10 +29,10 @@ retsub
 roundtripper_1:
 store 2
 load 2
-callsub arraycomplement_0
+callsub stringreverse_0
 store 4
 load 4
-callsub arraycomplement_0
+callsub stringreverse_0
 store 5
 load 2
 store 12

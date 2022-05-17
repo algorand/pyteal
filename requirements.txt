@@ -1,7 +1,7 @@
 black==22.3.0
 flake8==4.0.1
 flake8-tidy-imports==4.6.0
-graviton@git+https://github.com/algorand/graviton@adc86ee8a25ddb898a592d525b65b697030fd0a4
+graviton@git+https://github.com/algorand/graviton@482258cc0a8a8efb071502b3f5e1768bee295702
 mypy==0.950
 pytest==7.1.1
 pytest-cov==3.0.0
