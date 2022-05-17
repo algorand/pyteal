@@ -135,14 +135,6 @@ def fn_2mixed_arg_1ret(
     return pt.Seq(b.store(a.encode()), output.set(a))
 
 
-CompoundType = pt.abi.Tuple4[
-    pt.abi.Uint64,
-    pt.abi.Tuple2[pt.abi.Byte, pt.abi.StaticArray[pt.abi.Address, Literal[10]]],
-    pt.abi.Tuple0,
-    pt.abi.Bool,
-]
-
-
 ABI_UNITS = [
     (fn_0arg_0ret, None),
     (fn_0arg_uint64_ret, pt.abi.Uint64()),
