@@ -342,7 +342,6 @@ def test_wrap_handler_bare_call():
         assert error_msg in str(bug)
 
 
-# TODO test wrap_handler
 def test_wrap_handler_method_call():
     with pytest.raises(pt.TealInputError) as bug:
         pt.Router.wrap_handler(True, not_registrable)
@@ -358,20 +357,43 @@ def test_wrap_handler_method_call():
     for abi_subroutine in ONLY_ABI_SUBROUTINE_CASES:
         wrapped: pt.Expr = pt.Router.wrap_handler(True, abi_subroutine)
         assembled_wrapped: pt.TealBlock = assemble_helper(wrapped)
-        if abi_subroutine.subroutine.argument_count() > pt.METHOD_ARG_NUM_LIMIT:
-            # TODO
-            continue
-        print(assembled_wrapped)
+
         args: list[pt.abi.BaseType] = [
             spec.new_instance()
             for spec in typing.cast(
                 list[pt.abi.TypeSpec], abi_subroutine.subroutine.expected_arg_types
             )
         ]
-        loading: list[pt.Expr] = [
-            arg.decode(pt.Txn.application_args[index + 1])
-            for index, arg in enumerate(args)
-        ]
+
+        loading: list[pt.Expr]
+
+        if abi_subroutine.subroutine.argument_count() > pt.METHOD_ARG_NUM_LIMIT:
+            sdk_last_arg = pt.abi.TupleTypeSpec(
+                *[
+                    spec
+                    for spec in typing.cast(
+                        list[pt.abi.TypeSpec],
+                        abi_subroutine.subroutine.expected_arg_types,
+                    )[pt.METHOD_ARG_NUM_LIMIT - 1 :]
+                ]
+            ).new_instance()
+            loading = [
+                arg.decode(pt.Txn.application_args[index + 1])
+                for index, arg in enumerate(args[: pt.METHOD_ARG_NUM_LIMIT - 1])
+            ]
+            loading.append(
+                sdk_last_arg.decode(pt.Txn.application_args[pt.METHOD_ARG_NUM_LIMIT])
+            )
+            for i in range(pt.METHOD_ARG_NUM_LIMIT - 1, len(args)):
+                loading.append(
+                    sdk_last_arg[i - pt.METHOD_ARG_NUM_LIMIT + 1].store_into(args[i])
+                )
+        else:
+            loading = [
+                arg.decode(pt.Txn.application_args[index + 1])
+                for index, arg in enumerate(args)
+            ]
+
         evaluate: pt.Expr
         if abi_subroutine.type_of() != "void":
             output_temp = abi_subroutine.output_kwarg_info.abi_type.new_instance()
@@ -381,6 +403,7 @@ def test_wrap_handler_method_call():
             )
         else:
             evaluate = abi_subroutine(*args)
+
         actual = assemble_helper(pt.Seq(*loading, evaluate, pt.Approve()))
         with pt.TealComponent.Context.ignoreScratchSlotEquality(), pt.TealComponent.Context.ignoreExprEquality():
             assert actual == assembled_wrapped
