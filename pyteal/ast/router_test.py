@@ -125,6 +125,21 @@ def dummy_doing_nothing():
     return pt.Seq(pt.Log(pt.Bytes("a message")))
 
 
+@pt.Subroutine(pt.TealType.uint64)
+def returning_u64():
+    return pt.Int(1)
+
+
+@pt.Subroutine(pt.TealType.none)
+def mult_over_u64_and_log(a: pt.Expr, b: pt.Expr):
+    return pt.Log(pt.Itob(a * b))
+
+
+@pt.ABIReturnSubroutine
+def eine_constant(*, output: pt.abi.Uint64):
+    return output.set(1)
+
+
 GOOD_SUBROUTINE_CASES: list[pt.ABIReturnSubroutine | pt.SubroutineFnWrapper] = [
     add,
     sub,
@@ -265,24 +280,48 @@ def test_parse_conditions():
             assert on_completes_cond_assembled in assembled_ap_condition_list
 
 
+def test_wrap_handler_bare_call():
+    BARE_CALL_CASES = [
+        dummy_doing_nothing,
+        safe_clear_state_delete,
+        pt.Approve(),
+        pt.Log(pt.Bytes("message")),
+    ]
+    for bare_call in BARE_CALL_CASES:
+        wrapped: pt.Expr = pt.Router.wrap_handler(False, bare_call)
+        match bare_call:
+            case pt.Expr():
+                if bare_call.has_return():
+                    assert wrapped == bare_call
+                else:
+                    assert wrapped == pt.Seq(bare_call, pt.Approve())
+            case pt.SubroutineFnWrapper() | pt.ABIReturnSubroutine():
+                assert wrapped == pt.Seq(bare_call(), pt.Approve())
+            case _:
+                raise pt.TealInputError("how you got here?")
+
+    ERROR_CASES = [
+        (pt.Int(1), "bare appcall handler should have type to be none."),
+        (
+            returning_u64,
+            f"subroutine call should be returning none not {pt.TealType.uint64}.",
+        ),
+        (
+            mult_over_u64_and_log,
+            "subroutine call should take 0 arg for bare-app call. this subroutine takes 2.",
+        ),
+        (
+            eine_constant,
+            f"abi-returning subroutine call should be returning void not {pt.abi.Uint64TypeSpec()}.",
+        ),
+    ]
+    for error_case, error_msg in ERROR_CASES:
+        with pytest.raises(pt.TealInputError) as bug:
+            pt.Router.wrap_handler(False, error_case)
+        assert error_msg in str(bug)
+
+
 # TODO test wrap_handler
-def test_wrap_handler_not_bare_call():
-    router = pt.Router()
-    router.add_method_handler(many_args)
-    router.add_bare_call(
-        pt.Approve(), [pt.OnComplete.ClearState, pt.OnComplete.DeleteApplication]
-    )
-    ap, _, _ = router.build_program()
-    print(
-        pt.compileTeal(
-            ap,
-            version=6,
-            mode=pt.Mode.Application,
-            # optimize=pt.OptimizeOptions(scratch_slots=True),
-        )
-    )
-
-
 def test_wrap_handler_method_call():
     pass
 
@@ -291,17 +330,18 @@ def test_contract_json_obj():
     ONLY_ABI_SUBROUTINE_CASES = list(
         filter(lambda x: isinstance(x, pt.ABIReturnSubroutine), GOOD_SUBROUTINE_CASES)
     )
-    ONLY_ABI_SUBROUTINE_CASES = random.choices(ONLY_ABI_SUBROUTINE_CASES, k=6)
-    for index, case in enumerate(non_empty_power_set(ONLY_ABI_SUBROUTINE_CASES)):
-        contract_name = f"contract_{index}"
-        router = pt.Router(contract_name)
-        method_list: list[sdk_abi.contract.Method] = []
-        for subroutine in case:
-            router.add_method_handler(subroutine)
-            method_list.append(
-                sdk_abi.Method.from_signature(subroutine.method_signature())
-            )
-        router.add_bare_call(safe_clear_state_delete, pt.OnComplete.ClearState)
-        sdk_contract = sdk_abi.contract.Contract(contract_name, method_list)
-        contract = router.contract_construct()
-        assert sdk_contract.dictify() == contract
+    for _ in range(4):
+        ONLY_ABI_SUBROUTINE_CASES = random.choices(ONLY_ABI_SUBROUTINE_CASES, k=5)
+        for index, case in enumerate(non_empty_power_set(ONLY_ABI_SUBROUTINE_CASES)):
+            contract_name = f"contract_{index}"
+            router = pt.Router(contract_name)
+            method_list: list[sdk_abi.contract.Method] = []
+            for subroutine in case:
+                router.add_method_handler(subroutine)
+                method_list.append(
+                    sdk_abi.Method.from_signature(subroutine.method_signature())
+                )
+            router.add_bare_call(safe_clear_state_delete, pt.OnComplete.ClearState)
+            sdk_contract = sdk_abi.contract.Contract(contract_name, method_list)
+            contract = router.contract_construct()
+            assert sdk_contract.dictify() == contract
