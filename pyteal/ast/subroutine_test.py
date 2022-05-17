@@ -139,47 +139,47 @@ def test_abi_subroutine_definition():
         return output.set(pt.Int(1))
 
     cases = (
-        # ABISubroutineTC(fn_0arg_0ret, [], "fn_0arg_0ret", "void"),
-        # ABISubroutineTC(
-        #     fn_0arg_uint64_ret, [], "fn_0arg_uint64_ret", pt.abi.Uint64TypeSpec()
-        # ),
-        # ABISubroutineTC(fn_1arg_0ret, [pt.abi.Uint64()], "fn_1arg_0ret", "void"),
-        # ABISubroutineTC(
-        #     fn_1arg_1ret, [pt.abi.Uint64()], "fn_1arg_1ret", pt.abi.Uint64TypeSpec()
-        # ),
-        # ABISubroutineTC(
-        #     fn_2arg_0ret,
-        #     [
-        #         pt.abi.Uint64(),
-        #         pt.abi.StaticArray(
-        #             pt.abi.StaticArrayTypeSpec(pt.abi.ByteTypeSpec(), 10)
-        #         ),
-        #     ],
-        #     "fn_2arg_0ret",
-        #     "void",
-        # ),
-        # ABISubroutineTC(
-        #     fn_2arg_1ret,
-        #     [
-        #         pt.abi.Uint64(),
-        #         pt.abi.StaticArray(
-        #             pt.abi.StaticArrayTypeSpec(pt.abi.ByteTypeSpec(), 10)
-        #         ),
-        #     ],
-        #     "fn_2arg_1ret",
-        #     pt.abi.ByteTypeSpec(),
-        # ),
-        # ABISubroutineTC(
-        #     fn_2arg_1ret_with_expr,
-        #     [
-        #         pt.Int(5),
-        #         pt.abi.StaticArray(
-        #             pt.abi.StaticArrayTypeSpec(pt.abi.ByteTypeSpec(), 10)
-        #         ),
-        #     ],
-        #     "fn_2arg_1ret_with_expr",
-        #     pt.abi.ByteTypeSpec(),
-        # ),
+        ABISubroutineTC(fn_0arg_0ret, [], "fn_0arg_0ret", "void"),
+        ABISubroutineTC(
+            fn_0arg_uint64_ret, [], "fn_0arg_uint64_ret", pt.abi.Uint64TypeSpec()
+        ),
+        ABISubroutineTC(fn_1arg_0ret, [pt.abi.Uint64()], "fn_1arg_0ret", "void"),
+        ABISubroutineTC(
+            fn_1arg_1ret, [pt.abi.Uint64()], "fn_1arg_1ret", pt.abi.Uint64TypeSpec()
+        ),
+        ABISubroutineTC(
+            fn_2arg_0ret,
+            [
+                pt.abi.Uint64(),
+                pt.abi.StaticArray(
+                    pt.abi.StaticArrayTypeSpec(pt.abi.ByteTypeSpec(), 10)
+                ),
+            ],
+            "fn_2arg_0ret",
+            "void",
+        ),
+        ABISubroutineTC(
+            fn_2arg_1ret,
+            [
+                pt.abi.Uint64(),
+                pt.abi.StaticArray(
+                    pt.abi.StaticArrayTypeSpec(pt.abi.ByteTypeSpec(), 10)
+                ),
+            ],
+            "fn_2arg_1ret",
+            pt.abi.ByteTypeSpec(),
+        ),
+        ABISubroutineTC(
+            fn_2arg_1ret_with_expr,
+            [
+                pt.Int(5),
+                pt.abi.StaticArray(
+                    pt.abi.StaticArrayTypeSpec(pt.abi.ByteTypeSpec(), 10)
+                ),
+            ],
+            "fn_2arg_1ret_with_expr",
+            pt.abi.ByteTypeSpec(),
+        ),
         ABISubroutineTC(
             fn_w_tuple1arg,
             [
