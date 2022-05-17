@@ -1,7 +1,7 @@
 from itertools import product
 from pathlib import Path
 import pytest
-from typing import Literal
+from typing import Literal, Optional, Tuple
 
 import pyteal as pt
 
@@ -151,7 +151,7 @@ ABI_UNITS = [
 
 
 @pytest.mark.parametrize("subr, mode", product(UNITS, pt.Mode))
-def test_blackbox_pyteal(subr, mode):
+def test_blackbox_pyteal(subr: BlackboxWrapper, mode: pt.Mode):
     is_app = mode == pt.Mode.Application
     name = f"{'app' if is_app else 'lsig'}_{subr.name()}"
 
@@ -166,7 +166,7 @@ def test_blackbox_pyteal(subr, mode):
 
 
 @pytest.mark.parametrize("subr_abi, mode", product(ABI_UNITS, pt.Mode))
-def test_abi_blackbox_pyteal(subr_abi, mode):
+def test_abi_blackbox_pyteal(subr_abi: Tuple[BlackboxWrapper, Optional[pt.ast.abi.BaseType]], mode: pt.Mode):
     subr, abi_return_type = subr_abi
     name = f"{'app' if mode == pt.Mode.Application else 'lsig'}_{subr.name()}"
     print(f"Case {subr.name()=}, {abi_return_type=}, {mode=} ------> {name=}")
