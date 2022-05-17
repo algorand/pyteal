@@ -314,7 +314,10 @@ def test_wrap_handler_bare_call():
                 raise pt.TealInputError("how you got here?")
 
     ERROR_CASES = [
-        (pt.Int(1), "bare appcall handler should have type to be none."),
+        (
+            pt.Int(1),
+            f"bare appcall handler should be TealType.none not {pt.TealType.uint64}.",
+        ),
         (
             returning_u64,
             f"subroutine call should be returning none not {pt.TealType.uint64}.",

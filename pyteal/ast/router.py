@@ -214,7 +214,7 @@ class Router:
                 case Expr():
                     if handler.type_of() != TealType.none:
                         raise TealInputError(
-                            "bare appcall handler should have type to be none."
+                            f"bare appcall handler should be TealType.none not {handler.type_of()}."
                         )
                     return handler if handler.has_return() else Seq(handler, Approve())
                 case SubroutineFnWrapper():
