@@ -91,7 +91,7 @@ class StaticArray(Array[T], Generic[T, N]):
                 "Expected None for endIndex and length on static array"
             )
 
-        return super().decode(encoded, startIndex=startIndex, length=self.length())
+        return super().decode(encoded, startIndex=startIndex, length=self.byte_length())
 
     def set(
         self,
