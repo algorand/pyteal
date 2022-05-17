@@ -3,6 +3,7 @@ import itertools
 import pytest
 import random
 import typing
+import algosdk.abi as sdk_abi
 
 options = pt.CompileOptions(version=5)
 
@@ -119,6 +120,11 @@ def safe_clear_state_delete():
     )
 
 
+@pt.ABIReturnSubroutine
+def dummy_doing_nothing():
+    return pt.Seq(pt.Log(pt.Bytes("a message")))
+
+
 GOOD_SUBROUTINE_CASES: list[pt.ABIReturnSubroutine | pt.SubroutineFnWrapper] = [
     add,
     sub,
@@ -130,6 +136,7 @@ GOOD_SUBROUTINE_CASES: list[pt.ABIReturnSubroutine | pt.SubroutineFnWrapper] = [
     concat_strings,
     many_args,
     safe_clear_state_delete,
+    dummy_doing_nothing,
 ]
 
 ON_COMPLETE_CASES: list[pt.EnumInt] = [
@@ -258,7 +265,8 @@ def test_parse_conditions():
             assert on_completes_cond_assembled in assembled_ap_condition_list
 
 
-def test():
+# TODO test wrap_handler
+def test_wrap_handler_not_bare_call():
     router = pt.Router()
     router.add_method_handler(many_args)
     router.add_bare_call(
@@ -275,6 +283,25 @@ def test():
     )
 
 
-# TODO test wrap_handler
+def test_wrap_handler_method_call():
+    pass
 
-# TODO test contract JSON object
+
+def test_contract_json_obj():
+    ONLY_ABI_SUBROUTINE_CASES = list(
+        filter(lambda x: isinstance(x, pt.ABIReturnSubroutine), GOOD_SUBROUTINE_CASES)
+    )
+    ONLY_ABI_SUBROUTINE_CASES = random.choices(ONLY_ABI_SUBROUTINE_CASES, k=6)
+    for index, case in enumerate(non_empty_power_set(ONLY_ABI_SUBROUTINE_CASES)):
+        contract_name = f"contract_{index}"
+        router = pt.Router(contract_name)
+        method_list: list[sdk_abi.contract.Method] = []
+        for subroutine in case:
+            router.add_method_handler(subroutine)
+            method_list.append(
+                sdk_abi.Method.from_signature(subroutine.method_signature())
+            )
+        router.add_bare_call(safe_clear_state_delete, pt.OnComplete.ClearState)
+        sdk_contract = sdk_abi.contract.Contract(contract_name, method_list)
+        contract = router.contract_construct()
+        assert sdk_contract.dictify() == contract

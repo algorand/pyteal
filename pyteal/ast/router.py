@@ -188,7 +188,7 @@ class Router:
 
     @staticmethod
     def wrap_handler(
-        is_abi_method: bool, handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr
+        is_method_call: bool, handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr
     ) -> Expr:
         """This is a helper function that handles transaction arguments passing in bare-appcall/abi-method handlers.
 
@@ -201,7 +201,7 @@ class Router:
         the last (16-th) Txn app-arg into a list of ABI method arguments, and pass in to the the ABI method.
 
         Args:
-            is_abi_method: a boolean value that specify if the handler is an ABI method.
+            is_method_call: a boolean value that specify if the handler is an ABI method.
             handler: an `ABIReturnSubroutine`, or `SubroutineFnWrapper` (for `Subroutine` case), or an `Expr`.
         Returns:
             Expr:
@@ -209,7 +209,7 @@ class Router:
                 - for abi-method it returns the txn args correctly decomposed into ABI variables,
                   passed in ABIReturnSubroutine and logged, then approve.
         """
-        if not is_abi_method:
+        if not is_method_call:
             match handler:
                 case Expr():
                     if handler.type_of() != TealType.none:
@@ -436,7 +436,7 @@ class Router:
 
         return program
 
-    def __contract_construct(self) -> dict[str, Any]:
+    def contract_construct(self) -> dict[str, Any]:
         """A helper function in constructing contract JSON object.
 
         It takes out the method signatures from approval program `ProgramNode`'s,
@@ -464,7 +464,7 @@ class Router:
         return (
             Router.__ast_construct(self.approval_if_then),
             Router.__ast_construct(self.clear_state_if_then),
-            self.__contract_construct(),
+            self.contract_construct(),
         )
 
 
