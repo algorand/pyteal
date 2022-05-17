@@ -25,7 +25,7 @@ class StaticArrayTypeSpec(ArrayTypeSpec[T], Generic[T, N]):
 
     def annotation_type(self) -> "type[StaticArray[T, N]]":
         return StaticArray[  # type: ignore[misc]
-            self.value_spec.annotation_type(), Literal[self.array_length]
+            self.value_spec.annotation_type(), Literal[self.array_length]  # type: ignore
         ]
 
     def length_static(self) -> int:
