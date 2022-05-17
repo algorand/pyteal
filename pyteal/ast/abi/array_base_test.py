@@ -83,9 +83,7 @@ def test_ArrayElement_store_into():
         if elementType == abi.BoolTypeSpec():
             expectedExpr = cast(abi.Bool, output).decodeBit(encoded, index)
         elif not elementType.is_dynamic():
-            expectedExpr = output.decode(
-                encoded, startIndex=stride * index, length=stride
-            )
+            expectedExpr = output.decode(encoded, startIndex=stride * index)
         else:
             expectedExpr = output.decode(
                 encoded,
@@ -124,9 +122,7 @@ def test_ArrayElement_store_into():
         if elementType == abi.BoolTypeSpec():
             expectedExpr = cast(abi.Bool, output).decodeBit(encoded, index + pt.Int(16))
         elif not elementType.is_dynamic():
-            expectedExpr = output.decode(
-                encoded, startIndex=stride * index + pt.Int(2), length=stride
-            )
+            expectedExpr = output.decode(encoded, startIndex=stride * index + pt.Int(2))
         else:
             expectedExpr = output.decode(
                 encoded,

@@ -118,15 +118,13 @@ def test_StaticArray_decode():
                         )
                     continue
 
-                expr = value.decode(
-                    encoded, startIndex=startIndex, endIndex=endIndex, length=length
-                )
+                expr = value.decode(encoded, startIndex=startIndex)
                 assert expr.type_of() == pt.TealType.none
                 assert not expr.has_return()
 
                 expectedExpr = value.stored_value.store(
                     substringForDecoding(
-                        encoded, startIndex=startIndex, endIndex=endIndex, length=length
+                        encoded, startIndex=startIndex, length=value.length()
                     )
                 )
                 expected, _ = expectedExpr.__teal__(options)
