@@ -1,16 +1,23 @@
+from abc import abstractmethod
 from typing import cast
 from pyteal.ast.abi.uint import Uint, UintTypeSpec
 
 
 class ReferenceTypeSpec(UintTypeSpec):
+    @abstractmethod
     def __init__(self) -> None:
         return super().__init__(8)
+
+    @abstractmethod
+    def new_instance(self) -> "ReferenceType":
+        pass
 
 
 ReferenceTypeSpec.__module__ = "pyteal"
 
 
 class ReferenceType(Uint):
+    @abstractmethod
     def __init__(self, spec: ReferenceTypeSpec) -> None:
         super().__init__(spec)
 
@@ -22,6 +29,9 @@ ReferenceType.__module__ = "pyteal"
 
 
 class AccountTypeSpec(ReferenceTypeSpec):
+    def __init__(self):
+        super().__init__()
+
     def new_instance(self) -> "Account":
         return Account()
 
@@ -44,6 +54,9 @@ Account.__module__ = "pyteal"
 
 
 class AssetTypeSpec(ReferenceTypeSpec):
+    def __init__(self):
+        super().__init__()
+
     def new_instance(self) -> "Asset":
         return Asset()
 
@@ -66,6 +79,9 @@ Asset.__module__ = "pyteal"
 
 
 class ApplicationTypeSpec(ReferenceTypeSpec):
+    def __init__(self):
+        super().__init__()
+
     def new_instance(self) -> "Application":
         return Application()
 
