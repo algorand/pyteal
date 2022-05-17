@@ -254,7 +254,7 @@ class Router:
                     f"got {handler.subroutine.argument_count()} args with {len(handler.subroutine.abi_args)} ABI args."
                 )
 
-            arg_type_specs: list[abi.TypeSpec] = cast(
+            arg_type_specs = cast(
                 list[abi.TypeSpec], handler.subroutine.expected_arg_types
             )
             if handler.subroutine.argument_count() > METHOD_ARG_NUM_LIMIT:
