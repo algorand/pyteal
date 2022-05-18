@@ -152,7 +152,7 @@ class StaticArray(Array[T], Generic[T, N]):
         Returns:
             A PyTeal expression that represents the static array length.
         """
-        return Int(int(self.type_spec().length_static()))
+        return Int(self.type_spec().length_static())
 
     def __getitem__(self, index: Union[int, Expr]) -> "ArrayElement[T]":
         if type(index) is int and index >= self.type_spec().length_static():
