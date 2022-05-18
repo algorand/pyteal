@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Any, cast, Optional
+
 import algosdk.abi as sdk_abi
 
 from pyteal.config import METHOD_ARG_NUM_LIMIT
