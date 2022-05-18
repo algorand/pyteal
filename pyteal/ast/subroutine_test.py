@@ -207,11 +207,11 @@ def test_abi_subroutine_definition():
         assert isinstance(
             invoked, (pt.Expr if case.ret_type == "void" else pt.abi.ReturnedValue)
         )
-        assert case.definition.is_registrable() == all(
+        assert case.definition.is_abi_routable() == all(
             map(lambda x: isinstance(x, pt.abi.BaseType), case.arg_instances)
         )
 
-        if case.definition.is_registrable():
+        if case.definition.is_abi_routable():
             assert case.definition.method_signature() == case.signature
         else:
             with pytest.raises(pt.TealInputError):

@@ -574,7 +574,7 @@ class ABIReturnSubroutine:
         return self.subroutine.name()
 
     def method_signature(self) -> str:
-        if not self.is_registrable():
+        if not self.is_abi_routable():
             raise TealInputError(
                 "Only registrable methods may return a method signature"
             )
@@ -589,7 +589,7 @@ class ABIReturnSubroutine:
             else self.output_kwarg_info.abi_type
         )
 
-    def is_registrable(self) -> bool:
+    def is_abi_routable(self) -> bool:
         return len(self.subroutine.abi_args) == self.subroutine.argument_count()
 
 
