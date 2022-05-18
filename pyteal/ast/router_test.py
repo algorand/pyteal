@@ -199,9 +199,6 @@ def test_parse_conditions():
     for subroutine, on_completes, is_creation in itertools.product(
         GOOD_SUBROUTINE_CASES, ON_COMPLETE_COMBINED_CASES, [False, True]
     ):
-        if not isinstance(subroutine, pt.ABIReturnSubroutine):
-            subroutine = None
-
         is_abi_subroutine = isinstance(subroutine, pt.ABIReturnSubroutine)
         method_sig = subroutine.method_signature() if is_abi_subroutine else None
 
