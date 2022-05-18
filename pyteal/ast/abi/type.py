@@ -142,6 +142,9 @@ class BaseType(ABC):
             )
         return value.store_into(self)
 
+    def get(self) -> Expr:
+        self.stored_value.load()
+
 
 BaseType.__module__ = "pyteal"
 
@@ -184,6 +187,10 @@ class ComputedValue(ABC, Generic[T]):
         """
         newInstance = cast(T, self.produced_type_spec().new_instance())
         return Seq(self.store_into(newInstance), action(newInstance))
+
+    def get(self) -> Expr:
+        newInstance = cast(T, self.produced_type_spec().new_instance())
+        return Seq(self.store_into(newInstance), newInstance.get())
 
 
 ComputedValue.__module__ = "pyteal"

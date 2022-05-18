@@ -106,5 +106,8 @@ class DynamicArray(Array[T]):
             output.get(),
         )
 
+    # def get(self) -> Expr:
+    #     return Concat(*(self[i].get() for i in len(self)))
+
 
 DynamicArray.__module__ = "pyteal"

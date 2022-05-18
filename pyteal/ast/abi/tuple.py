@@ -33,7 +33,7 @@ from pyteal.ast.abi.uint import NUM_BITS_IN_BYTE, Uint16
 from pyteal.ast.abi.util import substringForDecoding
 
 
-def encodeTuple(values: Sequence[BaseType]) -> Expr:
+def encodeTuple(values: Sequence[BaseType | ComputedValue]) -> Expr:
     heads: List[Expr] = []
     head_length_static: int = 0
 
@@ -44,7 +44,13 @@ def encodeTuple(values: Sequence[BaseType]) -> Expr:
             ignoreNext -= 1
             continue
 
-        elemType = elem.type_spec()
+        elemType = (
+            elem.type_spec()
+            if isinstance(elem, BaseType)
+            else elem.produced_type_spec()
+        )
+
+        # TODO: this is too much!!!!
 
         if elemType == BoolTypeSpec():
             numBools = consecutiveBoolInstanceNum(values, i)
@@ -301,12 +307,15 @@ class Tuple(BaseType):
     def set(self: T_tuple, value: ComputedValue[T_tuple]) -> Expr:
         ...
 
+    def __len__(self) -> int:
+        return len(self.type_spec().value_type_specs())
+
     def set(self, *values):
         if len(values) == 1 and isinstance(values[0], ComputedValue):
             return self._set_with_computed_type(values[0])
 
         for value in values:
-            if not isinstance(value, BaseType):
+            if not isinstance(value, (BaseType, ComputedValue)):
                 raise TealInputError(f"Expected BaseType, got {value}")
 
         myTypes = self.type_spec().value_type_specs()
@@ -314,7 +323,15 @@ class Tuple(BaseType):
             raise TealInputError(
                 f"Incorrect length for values. Expected {len(myTypes)}, got {len(values)}"
             )
-        if not all(myTypes[i] == values[i].type_spec() for i in range(len(myTypes))):
+
+        def is_correct_type(i):
+            val = values[i]
+            if isinstance(val, BaseType):
+                return myTypes[i] == val.type_spec()
+            # ComputedValue:
+            return myTypes[i] == val.produced_type_spac()
+
+        if not all(is_correct_type(i) for i in range(len(myTypes))):
             raise TealInputError("Input values do not match type")
         return self.stored_value.store(encodeTuple(values))
 
@@ -329,6 +346,9 @@ class Tuple(BaseType):
         if not (0 <= index < self.type_spec().length_static()):
             raise TealInputError(f"Index out of bounds: {index}")
         return TupleElement(self, index)
+
+    # def get(self) -> Expr:
+    #     return Concat(*(self[i].get() for i in len(self)))
 
 
 Tuple.__module__ = "pyteal"

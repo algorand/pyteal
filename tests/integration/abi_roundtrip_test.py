@@ -25,7 +25,7 @@ ABI_TYPES = [
     abi.Uint16,
     abi.Uint32,
     abi.Uint64,
-    abi.Tuple0,
+    # abi.Tuple0,
     abi.Tuple1[abi.Bool],
     abi.Tuple1[abi.Byte],
     abi.Tuple1[abi.Uint8],

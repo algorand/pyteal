@@ -4,6 +4,7 @@ from types import MappingProxyType, NoneType
 from typing import Any, Callable, Final, Optional, TYPE_CHECKING, cast
 
 from pyteal.ast import abi
+from pyteal.ast import scratchvar
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
@@ -297,7 +298,7 @@ class SubroutineDefinition:
                             f"should have produced ABI typespec {arg_type} but got {type_spec}"
                         )
 
-            else:
+            elif not isinstance(arg, (Expr, ScratchVar)):
                 raise TealInternalError(
                     f"unhandled annotation {arg_type} for argument {arg} at index {i}"
                 )

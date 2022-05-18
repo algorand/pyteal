@@ -3,6 +3,7 @@ from typing import Final, Generic, Literal, Sequence, TypeVar, Union, cast
 from pyteal.errors import TealInputError
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
+from pyteal.ast.naryexpr import Concat
 
 from pyteal.ast.abi.type import ComputedValue, TypeSpec, BaseType
 from pyteal.ast.abi.bool import BoolTypeSpec, boolSequenceLength
@@ -121,18 +122,24 @@ class StaticArray(Array[T], Generic[T, N]):
             )
         return super().set(values)
 
+    def __len__(self) -> int:
+        return self.type_spec().length_static()
+
     def length(self) -> Expr:
         """Get the element number of this ABI static array.
 
         Returns:
             A PyTeal expression that represents the static array length.
         """
-        return Int(self.type_spec().length_static())
+        return Int(len(self))
 
     def __getitem__(self, index: Union[int, Expr]) -> "ArrayElement[T]":
         if type(index) is int and index >= self.type_spec().length_static():
             raise TealInputError(f"Index out of bounds: {index}")
         return super().__getitem__(index)
+
+    # def get(self) -> Expr:
+    #     return Concat(*(self[i].get() for i in len(self)))
 
 
 StaticArray.__module__ = "pyteal"

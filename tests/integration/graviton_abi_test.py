@@ -155,6 +155,7 @@ def int65_negate(x: Int65, *, output: Int65):
         z1.set(x1.get()),
         output.set(z0, z1),
     )
+    # output.set(pt.Not(x[0]), x[1])
 
 
 @Blackbox(input_types=[None, None])
@@ -195,31 +196,35 @@ def complex130_mult(x: Complex130, y: Complex130, *, output: Complex130):
     """
     WARNING: not an ideal implementation. See explanation in first WARNING above.
     """
-    x0 = pt.abi.make(Int65)
-    x1 = pt.abi.make(Int65)
-    y0 = pt.abi.make(Int65)
-    y1 = pt.abi.make(Int65)
-    t1 = pt.abi.make(Int65)
-    t2 = pt.abi.make(Int65)
-    t3 = pt.abi.make(Int65)
-    t4 = pt.abi.make(Int65)
-    z0 = pt.abi.make(Int65)
-    z1 = pt.abi.make(Int65)
-    return pt.Seq(
-        x0.set(x[0]),
-        x1.set(x[1]),
-        y0.set(y[0]),
-        y1.set(y[1]),
-        # TODO: why can't I chain ABI calls?
-        # z0.set(int65_sub(int65_mult(x0, y0), int65_mult(x1, y1))),
-        # z1.set(int65_add(int65_mult(x0, y1), int65_mult(x1, y0))),
-        t1.set(int65_mult(x0, y0)),
-        t2.set(int65_mult(x1, y1)),
-        t3.set(int65_mult(x0, y1)),
-        t4.set(int65_mult(x1, y0)),
-        z0.set(int65_sub(t1, t2)),
-        z1.set(int65_add(t3, t4)),
-        output.set(z0, z1),
+    # x0 = pt.abi.make(Int65)
+    # x1 = pt.abi.make(Int65)
+    # y0 = pt.abi.make(Int65)
+    # y1 = pt.abi.make(Int65)
+    # t1 = pt.abi.make(Int65)
+    # t2 = pt.abi.make(Int65)
+    # t3 = pt.abi.make(Int65)
+    # t4 = pt.abi.make(Int65)
+    # z0 = pt.abi.make(Int65)
+    # z1 = pt.abi.make(Int65)
+    # return pt.Seq(
+    #     x0.set(x[0]),
+    #     x1.set(x[1]),
+    #     y0.set(y[0]),
+    #     y1.set(y[1]),
+    #     # TODO: why can't I chain ABI calls?
+    #     # z0.set(int65_sub(int65_mult(x0, y0), int65_mult(x1, y1))),
+    #     # z1.set(int65_add(int65_mult(x0, y1), int65_mult(x1, y0))),
+    #     t1.set(int65_mult(x0, y0)),
+    #     t2.set(int65_mult(x1, y1)),
+    #     t3.set(int65_mult(x0, y1)),
+    #     t4.set(int65_mult(x1, y0)),
+    #     z0.set(int65_sub(t1, t2)),
+    #     z1.set(int65_add(t3, t4)),
+    #     output.set(z0, z1),
+    # )
+    return output.set(
+        int65_sub(int65_mult(x[0], y[0]), int65_mult(x[1], y[1])),
+        int65_add(int65_mult(x[0], y[1]), int65_mult(x[1], y[0])),
     )
 
 
