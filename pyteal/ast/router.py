@@ -118,6 +118,8 @@ class Router:
         # check that the onComplete has no duplicates
         if len(on_completes) != len(set(on_completes)):
             raise TealInputError(f"input {on_completes} has duplicated on_complete(s)")
+        if len(on_completes) == 0:
+            raise TealInputError("on complete input should be non-empty list")
 
         # Check the existence of OC.CloseOut
         close_out_exist = any(

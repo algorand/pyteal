@@ -176,9 +176,9 @@ ON_COMPLETE_CASES: list[pt.EnumInt] = [
 ]
 
 
-def non_empty_power_set(no_dup_list: list):
+def power_set(no_dup_list: list):
     masks = [1 << i for i in range(len(no_dup_list))]
-    for i in range(1, 1 << len(no_dup_list)):
+    for i in range(1 << len(no_dup_list)):
         yield [elem for mask, elem in zip(masks, no_dup_list) if i & mask]
 
 
@@ -194,13 +194,24 @@ def assemble_helper(what: pt.Expr) -> pt.TealBlock:
 
 
 def test_parse_conditions():
-    ON_COMPLETE_COMBINED_CASES = non_empty_power_set(ON_COMPLETE_CASES)
+    ON_COMPLETE_COMBINED_CASES = power_set(ON_COMPLETE_CASES)
 
     for subroutine, on_completes, is_creation in itertools.product(
         GOOD_SUBROUTINE_CASES, ON_COMPLETE_COMBINED_CASES, [False, True]
     ):
         is_abi_subroutine = isinstance(subroutine, pt.ABIReturnSubroutine)
         method_sig = subroutine.method_signature() if is_abi_subroutine else None
+
+        if len(on_completes) == 0:
+            with pytest.raises(pt.TealInputError) as err_no_oc:
+                pt.Router.parse_conditions(
+                    method_sig,
+                    subroutine if is_abi_subroutine else None,
+                    on_completes,
+                    is_creation,
+                )
+            assert "on complete input should be non-empty list" in str(err_no_oc)
+            continue
 
         if is_creation and (
             oncomplete_is_in_oc_list(pt.OnComplete.CloseOut, on_completes)
@@ -425,7 +436,7 @@ def test_contract_json_obj():
     )
     for _ in range(4):
         ONLY_ABI_SUBROUTINE_CASES = random.choices(ONLY_ABI_SUBROUTINE_CASES, k=5)
-        for index, case in enumerate(non_empty_power_set(ONLY_ABI_SUBROUTINE_CASES)):
+        for index, case in enumerate(power_set(ONLY_ABI_SUBROUTINE_CASES)):
             contract_name = f"contract_{index}"
             router = pt.Router(contract_name)
             method_list: list[sdk_abi.contract.Method] = []
