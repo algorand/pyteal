@@ -462,7 +462,10 @@ class Router:
             case Expr():
                 method_name = str(bare_app_call)
             case _:
-                raise TealInputError("...")
+                raise TealInputError(
+                    f"bare app call can only be one of three following cases: "
+                    f"{ABIReturnSubroutine, SubroutineFnWrapper, Expr}"
+                )
 
         ast_order_indicator = ConflictMapElem(False, method_name, creation)
         for oc in oc_list:
