@@ -182,7 +182,7 @@ def non_empty_power_set(no_dup_list: list):
         yield [elem for mask, elem in zip(masks, no_dup_list) if i & mask]
 
 
-def is_sth_in_oc_list(sth: pt.EnumInt, oc_list: list[pt.EnumInt]):
+def oncomplete_is_in_oc_list(sth: pt.EnumInt, oc_list: list[pt.EnumInt]):
     return any(map(lambda x: str(x) == str(sth), oc_list))
 
 
@@ -205,8 +205,8 @@ def test_parse_conditions():
         method_sig = subroutine.method_signature() if subroutine else None
 
         if is_creation and (
-            is_sth_in_oc_list(pt.OnComplete.CloseOut, on_completes)
-            or is_sth_in_oc_list(pt.OnComplete.ClearState, on_completes)
+            oncomplete_is_in_oc_list(pt.OnComplete.CloseOut, on_completes)
+            or oncomplete_is_in_oc_list(pt.OnComplete.ClearState, on_completes)
         ):
             with pytest.raises(pt.TealInputError) as err_conflict_conditions:
                 pt.Router.parse_conditions(
@@ -240,7 +240,7 @@ def test_parse_conditions():
             method_sig, subroutine, on_completes, is_creation
         )
 
-        if not is_sth_in_oc_list(pt.OnComplete.ClearState, on_completes):
+        if not oncomplete_is_in_oc_list(pt.OnComplete.ClearState, on_completes):
             assert len(clear_state_condition_list) == 0
 
         assembled_ap_condition_list: list[pt.TealBlock] = [
@@ -272,11 +272,11 @@ def test_parse_conditions():
         with pt.TealComponent.Context.ignoreExprEquality():
             assert assembled_condition in assembled_ap_condition_list
 
-        if is_sth_in_oc_list(pt.OnComplete.ClearState, on_completes):
+        if oncomplete_is_in_oc_list(pt.OnComplete.ClearState, on_completes):
             with pt.TealComponent.Context.ignoreExprEquality():
                 assert assembled_condition in assembled_csp_condition_list
 
-        if len(on_completes) == 1 and is_sth_in_oc_list(
+        if len(on_completes) == 1 and oncomplete_is_in_oc_list(
             pt.OnComplete.ClearState, on_completes
         ):
             continue
