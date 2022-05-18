@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar, cast
+from typing import Generic, TypeVar
 
 import pyteal as pt
 from pyteal import abi
@@ -13,23 +13,12 @@ DEFAULT_DYNAMIC_ARRAY_LENGTH = 3
 class ABIRoundtrip(Generic[T]):
     def __init__(
         self,
-        t: type[T] | None,
+        annotation_instance: abi.BaseType,
         length: int | None = None,
-        annotation_instance: abi.BaseType = None,
     ):
-        self.annotation: type[abi.BaseType]
-        self.type_spec: abi.TypeSpec
-        self.instance: abi.BaseType
-
-        if annotation_instance:
-            assert t is None
-            self.instance = annotation_instance
-            self.type_spec = annotation_instance.type_spec()
-            self.annotation = self.type_spec.annotation_type()
-        else:
-            self.annotation = cast(type[T], t)
-            self.type_spec = abi.type_spec_from_annotation(self.annotation)
-            self.instance = self.type_spec.new_instance()
+        self.instance: abi.BaseType = annotation_instance
+        self.type_spec: abi.TypeSpec = annotation_instance.type_spec()
+        self.annotation: type[abi.BaseType] = self.type_spec.annotation_type()
 
         self.length: int | None = length
 
@@ -105,7 +94,7 @@ class ABIRoundtrip(Generic[T]):
         value_type_specs: list[abi.TypeSpec] = self.type_spec.value_type_specs()  # type: ignore[attr-defined]
         insts = [vts.new_instance() for vts in value_type_specs]
         roundtrips: list[ABIRoundtrip[T]] = [
-            ABIRoundtrip(None, annotation_instance=inst) for inst in insts  # type: ignore[arg-type]
+            ABIRoundtrip(inst, length=None) for inst in insts  # type: ignore[arg-type]
         ]
 
         @pt.ABIReturnSubroutine
@@ -131,9 +120,7 @@ class ABIRoundtrip(Generic[T]):
 
         internal_type_spec = self.type_spec.value_type_spec()  # type: ignore[attr-defined]
         internal_ann_inst = internal_type_spec.new_instance()
-        comp_func = ABIRoundtrip(
-            None, annotation_instance=internal_ann_inst
-        ).mutator_factory()
+        comp_func = ABIRoundtrip(internal_ann_inst, length=None).mutator_factory()
 
         @pt.ABIReturnSubroutine
         def array_complement(x: self.annotation, *, output: self.annotation):  # type: ignore[name-defined]

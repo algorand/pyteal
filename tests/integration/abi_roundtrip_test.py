@@ -96,7 +96,11 @@ def roundtrip_setup(abi_type):
     if isinstance(abi_type, tuple):
         abi_type, dynamic_length = abi_type
 
-    return abi_type, dynamic_length, ABIRoundtrip(abi_type, dynamic_length).pytealer()
+    return (
+        abi_type,
+        dynamic_length,
+        ABIRoundtrip(abi.make(abi_type), length=dynamic_length).pytealer(),
+    )
 
 
 @pytest.mark.parametrize("abi_type", ABI_TYPES)
