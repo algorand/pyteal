@@ -84,6 +84,12 @@ class StaticArray(Array[T], Generic[T, N]):
         endIndex: Expr = None,
         length: Expr = None,
     ) -> Expr:
+
+        if self.type_spec().is_dynamic():
+            return super().decode(
+                encoded, startIndex=startIndex, endIndex=endIndex, length=length
+            )
+
         if endIndex is not None or length is not None:
             raise TealInputError(
                 "Expected None for endIndex and length on static array"
