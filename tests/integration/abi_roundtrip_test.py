@@ -62,6 +62,32 @@ ABI_TYPES = [
         ],
         7,
     ),
+    (
+        abi.DynamicArray[
+            abi.Tuple5[
+                abi.Bool,
+                abi.Byte,
+                abi.Address,
+                abi.String,
+                abi.Tuple4[
+                    abi.Address,
+                    abi.StaticArray[
+                        abi.Tuple5[
+                            abi.Uint32,
+                            abi.DynamicArray[abi.String],
+                            abi.StaticArray[abi.Bool, Literal[2]],
+                            abi.Tuple1[abi.Byte],
+                            abi.Uint8,
+                        ],
+                        Literal[2],
+                    ],
+                    abi.String,
+                    abi.DynamicArray[abi.Bool],
+                ],
+            ]
+        ],
+        2,
+    ),
 ]
 
 
