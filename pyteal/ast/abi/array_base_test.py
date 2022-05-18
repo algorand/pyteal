@@ -48,6 +48,8 @@ DYNAMIC_TYPES: List[abi.TypeSpec] = [
             10,
         )
     ),
+    abi.StaticArrayTypeSpec(abi.StringTypeSpec(), 10),
+    abi.StaticArrayTypeSpec(abi.DynamicArrayTypeSpec(abi.Uint64TypeSpec()), 10),
 ]
 
 
