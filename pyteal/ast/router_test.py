@@ -202,7 +202,8 @@ def test_parse_conditions():
         if not isinstance(subroutine, pt.ABIReturnSubroutine):
             subroutine = None
 
-        method_sig = subroutine.method_signature() if subroutine else None
+        is_abi_subroutine = isinstance(subroutine, pt.ABIReturnSubroutine)
+        method_sig = subroutine.method_signature() if is_abi_subroutine else None
 
         if is_creation and (
             oncomplete_is_in_oc_list(pt.OnComplete.CloseOut, on_completes)
@@ -210,7 +211,10 @@ def test_parse_conditions():
         ):
             with pytest.raises(pt.TealInputError) as err_conflict_conditions:
                 pt.Router.parse_conditions(
-                    method_sig, subroutine, on_completes, is_creation
+                    method_sig,
+                    subroutine if is_abi_subroutine else None,
+                    on_completes,
+                    is_creation,
                 )
             assert (
                 "OnComplete ClearState/CloseOut may be ill-formed with app creation"
@@ -221,11 +225,14 @@ def test_parse_conditions():
         mutated_on_completes = on_completes + [random.choice(on_completes)]
         with pytest.raises(pt.TealInputError) as err_dup_oc:
             pt.Router.parse_conditions(
-                method_sig, subroutine, mutated_on_completes, is_creation
+                method_sig,
+                subroutine if is_abi_subroutine else None,
+                mutated_on_completes,
+                is_creation,
             )
         assert "has duplicated on_complete(s)" in str(err_dup_oc)
 
-        if subroutine is not None:
+        if is_abi_subroutine:
             with pytest.raises(pt.TealInputError) as err_wrong_override:
                 pt.Router.parse_conditions(None, subroutine, on_completes, is_creation)
             assert (
@@ -237,7 +244,10 @@ def test_parse_conditions():
             approval_condition_list,
             clear_state_condition_list,
         ) = pt.Router.parse_conditions(
-            method_sig, subroutine, on_completes, is_creation
+            method_sig,
+            subroutine if is_abi_subroutine else None,
+            on_completes,
+            is_creation,
         )
 
         if not oncomplete_is_in_oc_list(pt.OnComplete.ClearState, on_completes):
@@ -256,7 +266,7 @@ def test_parse_conditions():
                 assert assembled_condition in assembled_ap_condition_list
 
         subroutine_arg_cond: pt.Expr
-        if subroutine:
+        if is_abi_subroutine:
             max_subroutine_arg_allowed = 1 + min(
                 pt.METHOD_ARG_NUM_LIMIT, subroutine.subroutine.argument_count()
             )

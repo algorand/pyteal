@@ -1,6 +1,6 @@
-from algosdk.abi import Contract, Method
 from dataclasses import dataclass
 from typing import Any, cast, Optional
+import algosdk.abi as sdk_abi
 
 from pyteal.config import METHOD_ARG_NUM_LIMIT
 from pyteal.errors import TealInputError
@@ -60,7 +60,7 @@ class ProgramNode:
 
     condition: Expr
     branch: Expr
-    method_info: Optional[Method]
+    method_info: Optional[sdk_abi.Method]
 
 
 ProgramNode.__module__ = "pyteal"
@@ -313,7 +313,7 @@ class Router:
         approval_conditions: list[Expr],
         clear_state_conditions: list[Expr],
         branch: Expr,
-        method_obj: Optional[Method] = None,
+        method_obj: Optional[sdk_abi.Method] = None,
     ) -> None:
         """
         A helper function that appends conditions and exeuction of branches into AST.
@@ -409,7 +409,7 @@ class Router:
             approval_conds,
             clear_state_conds,
             branch,
-            Method.from_signature(method_signature),
+            sdk_abi.Method.from_signature(method_signature),
         )
 
     @staticmethod
@@ -449,7 +449,7 @@ class Router:
         method_collections = [
             node.method_info for node in self.approval_if_then if node.method_info
         ]
-        return Contract(self.name, method_collections).dictify()
+        return sdk_abi.Contract(self.name, method_collections).dictify()
 
     def build_program(self) -> tuple[Expr, Expr, dict[str, Any]]:
         """
