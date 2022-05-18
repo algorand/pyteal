@@ -16,7 +16,7 @@ from tests.blackbox import (
 
 """
 WARNING: The following ABI Types Int65 and Complex130 are ONLY for the purpose of testing/demo'ing 
-ABISubroutine and Gravitons, and are NOT the recommended approach for implementing integers and 
+ABISubroutine and graviton-abi, and are NOT the recommended approach for implementing integers and 
 complex integers. A better appraoch probably leverages `Uint64` without additional types use 2's complement arithmetic.
 """
 
