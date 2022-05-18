@@ -14,6 +14,12 @@ from tests.blackbox import (
 # ---- Integers and Complex Integral Numbers (aka Gaussian Integers) ---- #
 
 
+"""
+WARNING: The following ABI Types Int65 and Complex130 are ONLY for the purpose of testing/demo'ing 
+ABISubroutine and Gravitons, and are NOT the recommended approach for implementing integers and 
+complex integers. A better appraoch probably leverages `Uint64` without additional types use 2's complement arithmetic.
+"""
+
 Int65 = pt.abi.Tuple2[pt.abi.Bool, pt.abi.Uint64]
 Complex130 = pt.abi.Tuple2[Int65, Int65]
 
@@ -22,9 +28,7 @@ Complex130 = pt.abi.Tuple2[Int65, Int65]
 @pt.ABIReturnSubroutine
 def int65_minus_cond(x: Int65, y: Int65, *, output: Int65):
     """
-    WARNING: this example is ONLY for the purpose of demo'ing ABISubroutine + Gravitons's capabilities
-    and NOT the recommended approach for implementing integers.
-    A better appraoch would stick to `Uint64` as the base type and use 2's complement arithmetic.
+    WARNING: not an ideal implementation. See explanation in first WARNING above.
     """
     x0 = pt.abi.Bool()
     x1 = pt.abi.Uint64()
@@ -81,9 +85,7 @@ def int65_minus_cond(x: Int65, y: Int65, *, output: Int65):
 @pt.ABIReturnSubroutine
 def int65_sub(x: Int65, y: Int65, *, output: Int65):
     """
-    WARNING: this example is ONLY for the purpose of demo'ing ABISubroutine + Gravitons's capabilities
-    and NOT the recommended approach for implementing integers.
-    A better appraoch would stick to `Uint64` as the base type and use 2's complement arithmetic.
+    WARNING: not an ideal implementation. See explanation in first WARNING above.
     """
     x0 = pt.abi.Bool()
     x1 = pt.abi.Uint64()
@@ -121,9 +123,7 @@ def int65_sub(x: Int65, y: Int65, *, output: Int65):
 @pt.ABIReturnSubroutine
 def int65_mult(x: Int65, y: Int65, *, output: Int65):
     """
-    WARNING: this example is ONLY for the purpose of demo'ing ABISubroutine + Gravitons's capabilities
-    and NOT the recommended approach for implementing integers.
-    A better appraoch would stick to `Uint64` as the base type and use 2's complement arithmetic.
+    WARNING: not an ideal implementation. See explanation in first WARNING above.
     """
     # TODO: can we get something like the following one-liner working?
     # return output.set(pt.Not(x[0].get() ^ y[0].get()), x[1].get() * y[1].get())
@@ -140,6 +140,9 @@ def int65_mult(x: Int65, y: Int65, *, output: Int65):
 @Blackbox(input_types=[None])
 @ABIReturnSubroutine
 def int65_negate(x: Int65, *, output: Int65):
+    """
+    WARNING: not an ideal implementation. See explanation in first WARNING above.
+    """
     # TODO: can I haz a one-liner pls????
     x0 = pt.abi.Bool()
     x1 = pt.abi.Uint64()
@@ -157,12 +160,18 @@ def int65_negate(x: Int65, *, output: Int65):
 @Blackbox(input_types=[None, None])
 @ABIReturnSubroutine
 def int65_add(x: Int65, y: Int65, *, output: Int65):
+    """
+    WARNING: not an ideal implementation. See explanation in first WARNING above.
+    """
     return pt.Seq(y.set(int65_negate(y)), output.set(int65_sub(x, y)))
 
 
 @Blackbox(input_types=[None, None])
 @ABIReturnSubroutine
 def complex130_add(x: Complex130, y: Complex130, *, output: Complex130):
+    """
+    WARNING: not an ideal implementation. See explanation in first WARNING above.
+    """
     x0 = pt.abi.make(Int65)
     x1 = pt.abi.make(Int65)
     y0 = pt.abi.make(Int65)
@@ -183,6 +192,9 @@ def complex130_add(x: Complex130, y: Complex130, *, output: Complex130):
 @Blackbox(input_types=[None, None])
 @ABIReturnSubroutine
 def complex130_mult(x: Complex130, y: Complex130, *, output: Complex130):
+    """
+    WARNING: not an ideal implementation. See explanation in first WARNING above.
+    """
     x0 = pt.abi.make(Int65)
     x1 = pt.abi.make(Int65)
     y0 = pt.abi.make(Int65)
@@ -214,18 +226,27 @@ def complex130_mult(x: Complex130, y: Complex130, *, output: Complex130):
 @Blackbox(input_types=[None])
 @ABIReturnSubroutine
 def complex130_real(x: Complex130, *, output: Int65):
+    """
+    WARNING: not an ideal implementation. See explanation in first WARNING above.
+    """
     return output.set(x[0])
 
 
 @Blackbox(input_types=[None])
 @ABIReturnSubroutine
 def complex130_imag(x: Complex130, *, output: Int65):
+    """
+    WARNING: not an ideal implementation. See explanation in first WARNING above.
+    """
     return output.set(x[1])
 
 
 @Blackbox(input_types=[None])
 @ABIReturnSubroutine
 def complex130_conjugate(x: Complex130, *, output: Complex130):
+    """
+    WARNING: not an ideal implementation. See explanation in first WARNING above.
+    """
     z0 = pt.abi.make(Int65)
     z1 = pt.abi.make(Int65)
     return pt.Seq(
@@ -239,12 +260,18 @@ def complex130_conjugate(x: Complex130, *, output: Complex130):
 @Blackbox(input_types=[None])
 @ABIReturnSubroutine
 def complex130_norm_squared(x: Complex130, *, output: Int65):
+    """
+    WARNING: not an ideal implementation. See explanation in first WARNING above.
+    """
     t = pt.abi.make(Complex130)
     return pt.Seq(
         t.set(complex130_conjugate(x)),
         t.set(complex130_mult(t, x)),
         output.set(complex130_real(t)),
     )
+
+
+# ---- integration test functions ---- #
 
 
 def test_integer65():
