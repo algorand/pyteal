@@ -76,7 +76,7 @@ def test_Address_decode():
                     substringForDecoding(
                         encoded,
                         startIndex=startIndex,
-                        length=value.length(),
+                        length=pt.Int(value.type_spec().byte_length_static()),
                     )
                 )
                 expected, _ = expectedExpr.__teal__(options)

@@ -124,7 +124,9 @@ def test_StaticArray_decode():
 
                 expectedExpr = value.stored_value.store(
                     substringForDecoding(
-                        encoded, startIndex=startIndex, length=value.length()
+                        encoded,
+                        startIndex=startIndex,
+                        length=pt.Int(value.type_spec().byte_length_static()),
                     )
                 )
                 expected, _ = expectedExpr.__teal__(options)
