@@ -62,9 +62,77 @@ class ProgramNode:
     condition: Expr
     branch: Expr
     method_info: Optional[sdk_abi.Method]
+    ast_order_indicator: "ConflictMapElem"
 
 
 ProgramNode.__module__ = "pyteal"
+
+
+@dataclass
+class ConflictMapElem:
+    is_method_call: bool
+    method_name: str
+    on_creation: bool
+
+    def __lt__(self, other: "ConflictMapElem"):
+        # compare under same oc condition
+        # can be used to order AST
+        if not isinstance(other, ConflictMapElem):
+            raise TealInputError(
+                "ConflictMapElem can only check conflict with other ConflictMapElem"
+            )
+
+        if self.is_method_call:
+            if not other.is_method_call:
+                return False
+        else:
+            if other.is_method_call:
+                return True
+
+        # either both is_method_call or not
+        # compare on_creation
+        if self.on_creation:
+            return not other.on_creation
+        else:
+            return other.on_creation
+
+    def has_conflict_with(self, other: "ConflictMapElem"):
+        if not isinstance(other, ConflictMapElem):
+            raise TealInputError(
+                "ConflictMapElem can only check conflict with other ConflictMapElem"
+            )
+        if not self.is_method_call and not other.is_method_call:
+            if self.method_name == other.method_name:
+                raise TealInputError(f"re-registering {self.method_name} under same OC")
+            else:
+                raise TealInputError(
+                    f"re-registering {self.method_name} and {other.method_name} under same OC"
+                )
+
+
+ConflictMapElem.__module__ = "pyteal"
+
+
+class ASTConflictResolver:
+    def __init__(self):
+        self.conflict_detect_map: dict[str, list[ConflictMapElem]] = {
+            name: list() for name in dir(OnComplete) if not name.startswith("__")
+        }
+
+    def add_elem_to(self, oc: str, conflict_map_elem: ConflictMapElem):
+        if oc not in self.conflict_detect_map:
+            raise TealInputError(
+                f"{oc} is not one of the element in conflict map, should be one of the OnCompletes"
+            )
+        elems_under_oc: list[ConflictMapElem] = self.conflict_detect_map[oc]
+        for elem in elems_under_oc:
+            if elem.has_conflict_with(conflict_map_elem):
+                raise TealInputError(f"{elem} has conflict with {conflict_map_elem}")
+
+        self.conflict_detect_map[oc].append(conflict_map_elem)
+
+
+ASTConflictResolver.__module__ = "pyteal"
 
 
 class Router:
@@ -83,6 +151,7 @@ class Router:
         self.name: str = "Contract" if name is None else name
         self.approval_if_then: list[ProgramNode] = []
         self.clear_state_if_then: list[ProgramNode] = []
+        self.conflict_detect_map: ASTConflictResolver = ASTConflictResolver()
 
     @staticmethod
     def parse_conditions(
@@ -134,6 +203,10 @@ class Router:
             raise TealInputError(
                 "OnComplete ClearState/CloseOut may be ill-formed with app creation"
             )
+        # Check if anything other than ClearState exists
+        oc_other_than_clear_state_exists = any(
+            map(lambda x: str(x) != str(OnComplete.ClearState), on_completes)
+        )
         # check if there is ABI method but no method_signature is provided
         # TODO API change to allow inferring method_signature from method_to_register?
         if method_to_register is not None and not method_signature:
@@ -167,7 +240,8 @@ class Router:
         )
         clear_state_conds: list[Expr] = []
 
-        approval_conds.append(method_or_bare_condition)
+        if oc_other_than_clear_state_exists:
+            approval_conds.append(method_or_bare_condition)
 
         # if OC.ClearState exists, add method-or-bare-condition since it is only needed in ClearStateProgram
         if clear_state_exist:
@@ -316,16 +390,17 @@ class Router:
         approval_conditions: list[Expr],
         clear_state_conditions: list[Expr],
         branch: Expr,
+        ast_order_indicator: ConflictMapElem,
         method_obj: Optional[sdk_abi.Method] = None,
     ) -> None:
         """
-        A helper function that appends conditions and exeuction of branches into AST.
+        A helper function that appends conditions and execution of branches into AST.
 
         Args:
             approval_conditions: A list of exprs for approval program's condition on: creation?, method/bare, Or[OCs]
             clear_state_conditions: A list of exprs for clear-state program's condition on: method/bare
             branch: A branch of contract executing the registered method
-            method_obj: SDK's Method object to construct Contract JSON object
+            method_obj: SDK's Method objects to construct Contract JSON object
         """
         if len(approval_conditions) > 0:
             self.approval_if_then.append(
@@ -335,6 +410,7 @@ class Router:
                     else approval_conditions[0],
                     branch,
                     method_obj,
+                    ast_order_indicator,
                 )
             )
         if len(clear_state_conditions) > 0:
@@ -345,6 +421,7 @@ class Router:
                     else clear_state_conditions[0],
                     branch,
                     method_obj,
+                    ast_order_indicator,
                 )
             )
 
@@ -364,7 +441,7 @@ class Router:
             on_completes: a list of OnCompletion args
             creation: a boolean variable indicating if this condition is triggered on creation
         """
-        ocList: list[EnumInt] = (
+        oc_list: list[EnumInt] = (
             cast(list[EnumInt], on_completes)
             if isinstance(on_completes, list)
             else [cast(EnumInt, on_completes)]
@@ -372,11 +449,27 @@ class Router:
         approval_conds, clear_state_conds = Router.parse_conditions(
             method_signature=None,
             method_to_register=None,
-            on_completes=ocList,
+            on_completes=oc_list,
             creation=creation,
         )
         branch = Router.wrap_handler(False, bare_app_call)
-        self.__append_to_ast(approval_conds, clear_state_conds, branch, None)
+        method_name: str
+        match bare_app_call:
+            case ABIReturnSubroutine():
+                method_name = bare_app_call.method_signature()
+            case SubroutineFnWrapper():
+                method_name = bare_app_call.name()
+            case Expr():
+                method_name = str(bare_app_call)
+            case _:
+                raise TealInputError("...")
+
+        ast_order_indicator = ConflictMapElem(False, method_name, creation)
+        for oc in oc_list:
+            self.conflict_detect_map.add_elem_to(oc.name, ast_order_indicator)
+        self.__append_to_ast(
+            approval_conds, clear_state_conds, branch, ast_order_indicator, None
+        )
 
     # TODO API should change to allow method signature not overriding?
     def add_method_handler(
@@ -408,10 +501,16 @@ class Router:
             creation=creation,
         )
         branch = Router.wrap_handler(True, method_app_call)
+        ast_order_indicator = ConflictMapElem(
+            True, method_app_call.method_signature(), creation
+        )
+        for oc in oc_list:
+            self.conflict_detect_map.add_elem_to(oc.name, ast_order_indicator)
         self.__append_to_ast(
             approval_conds,
             clear_state_conds,
             branch,
+            ast_order_indicator,
             sdk_abi.Method.from_signature(method_signature),
         )
 
@@ -434,6 +533,8 @@ class Router:
         """
         if len(ast_list) == 0:
             raise TealInputError("ABIRouter: Cannot build program with an empty AST")
+
+        sorted(ast_list, key=lambda x: x.ast_order_indicator)
 
         program: Cond = Cond(*[[node.condition, node.branch] for node in ast_list])
 

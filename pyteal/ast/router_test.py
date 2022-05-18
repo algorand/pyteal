@@ -288,7 +288,11 @@ def test_parse_conditions():
 
         assembled_condition = assemble_helper(subroutine_arg_cond)
         with pt.TealComponent.Context.ignoreExprEquality():
-            assert assembled_condition in assembled_ap_condition_list
+            if not (
+                len(on_completes) == 1
+                and oncomplete_is_in_oc_list(pt.OnComplete.ClearState, on_completes)
+            ):
+                assert assembled_condition in assembled_ap_condition_list
 
         if oncomplete_is_in_oc_list(pt.OnComplete.ClearState, on_completes):
             with pt.TealComponent.Context.ignoreExprEquality():
