@@ -90,16 +90,20 @@ class StaticArray(Array[T], Generic[T, N]):
                 encoded, startIndex=startIndex, endIndex=endIndex, length=length
             )
 
-        if endIndex is not None or length is not None:
-            raise TealInputError(
-                "Expected None for endIndex and length on static array"
+        # if endIndex is not None or length is not None:
+        #     raise TealInputError(
+        #         "Expected None for endIndex and length on static array"
+        #     )
+        if not endIndex and not length:
+            return super().decode(
+                encoded,
+                startIndex=startIndex,
+                length=Int(self.type_spec().byte_length_static()),
             )
-
-        return super().decode(
-            encoded,
-            startIndex=startIndex,
-            length=Int(self.type_spec().byte_length_static()),
-        )
+        else:
+            return super().decode(
+                encoded, startIndex=startIndex, endIndex=endIndex, length=length
+            )
 
     def set(
         self,
