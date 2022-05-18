@@ -7,7 +7,7 @@ from pyteal.ast import abi
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
-from pyteal.errors import TealInputError, verifyTealVersion
+from pyteal.errors import TealInputError, TealInternalError, verifyTealVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.types import TealType
 
@@ -257,8 +257,11 @@ class SubroutineDefinition:
 
     def invoke(
         self,
-        args: list[Expr | ScratchVar | abi.BaseType],
+        args: list[Expr | ScratchVar | abi.BaseType | abi.ComputedValue],
     ) -> "SubroutineCall":
+        """
+        NOTE: this portion of the invocation logic is mostly used for run-time validation
+        """
         if len(args) != self.argument_count():
             raise TealInputError(
                 f"Incorrect number of arguments for subroutine call. "
@@ -276,15 +279,28 @@ class SubroutineDefinition:
                     f"supplied argument {arg} at index {i} had type {type(arg)} but was expecting type {arg_type}"
                 )
             elif isinstance(arg_type, abi.TypeSpec):
-                if not isinstance(arg, abi.BaseType):
+                if not isinstance(arg, (abi.BaseType, abi.ComputedValue)):
                     raise TealInputError(
                         f"supplied argument at index {i} should be an ABI type but got {arg}"
                     )
-                if arg.type_spec() != arg_type:
-                    raise TealInputError(
-                        f"supplied argument {arg} at index {i} "
-                        f"should have ABI typespec {arg_type} but got {arg.type_spec()}"
-                    )
+                if isinstance(arg, abi.BaseType):
+                    if arg.type_spec() != arg_type:
+                        raise TealInputError(
+                            f"supplied argument {arg} at index {i} "
+                            f"should have ABI typespec {arg_type} but got {arg.type_spec()}"
+                        )
+                else:  # abi.ComputedValue
+                    type_spec = arg.produced_type_spec()
+                    if type_spec != arg_type:
+                        raise TealInputError(
+                            f"supplied argument {arg} at index {i} "
+                            f"should have produced ABI typespec {arg_type} but got {type_spec}"
+                        )
+
+            else:
+                raise TealInternalError(
+                    f"unhandled annotation {arg_type} for argument {arg} at index {i}"
+                )
 
         return SubroutineCall(
             self, args, output_kwarg=OutputKwArgInfo.from_dict(self.output_kwarg)
@@ -358,7 +374,7 @@ class SubroutineCall(Expr):
     def __init__(
         self,
         subroutine: SubroutineDefinition,
-        args: list[Expr | ScratchVar | abi.BaseType],
+        args: list[Expr | ScratchVar | abi.BaseType | abi.ComputedValue],
         *,
         output_kwarg: OutputKwArgInfo = None,
     ) -> None:
@@ -374,6 +390,8 @@ class SubroutineCall(Expr):
                 arg_type = arg.type
             elif isinstance(arg, abi.BaseType):
                 arg_type = cast(abi.BaseType, arg).stored_value.type
+            elif isinstance(arg, abi.ComputedValue):
+                arg_type = arg.produced_type_spec().new_instance().stored_value.type
             else:
                 raise TealInputError(
                     f"Subroutine argument {arg} at index {i} was of unexpected Python type {type(arg)}"
@@ -409,13 +427,17 @@ class SubroutineCall(Expr):
             "TEAL version too low to use SubroutineCall expression",
         )
 
-        def handle_arg(arg: Expr | ScratchVar | abi.BaseType) -> Expr:
+        def handle_arg(
+            arg: Expr | ScratchVar | abi.BaseType | abi.ComputedValue,
+        ) -> Expr:
             if isinstance(arg, ScratchVar):
                 return arg.index()
             elif isinstance(arg, Expr):
                 return arg
             elif isinstance(arg, abi.BaseType):
                 return arg.stored_value.load()
+            elif isinstance(arg, abi.ComputedValue):
+                return arg.use(lambda x: x.get())
             else:
                 raise TealInputError(
                     f"cannot handle current arg: {arg} to put it on stack"
@@ -558,7 +580,7 @@ class ABIReturnSubroutine:
                 )
 
     def __call__(
-        self, *args: Expr | ScratchVar | abi.BaseType, **kwargs
+        self, *args: Expr | ScratchVar | abi.BaseType | abi.ComputedValue, **kwargs
     ) -> abi.ReturnedValue | Expr:
         if len(kwargs) != 0:
             raise TealInputError(
