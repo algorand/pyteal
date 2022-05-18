@@ -75,17 +75,17 @@ def user_guide_snippet_ABIReturnSubroutine():
 
     # --- BEGIN doc-comment --- #
     @ABIReturnSubroutine
-    def abi_sum(toSum: abi.DynamicArray[abi.Uint64], *, output: abi.Uint64) -> Expr:
+    def abi_sum(to_sum: abi.DynamicArray[abi.Uint64], *, output: abi.Uint64) -> Expr:
         i = ScratchVar(TealType.uint64)
-        valueAtIndex = abi.Uint64()
+        value_at_index = abi.Uint64()
         return Seq(
             output.set(0),
             For(
-                i.store(Int(0)), i.load() < toSum.length(), i.store(i.load() + Int(1))
+                i.store(Int(0)), i.load() < to_sum.length(), i.store(i.load() + Int(1))
             ).Do(
                 Seq(
-                    toSum[i.load()].store_into(valueAtIndex),
-                    output.set(output.get() + valueAtIndex.get()),
+                    to_sum[i.load()].store_into(value_at_index),
+                    output.set(output.get() + value_at_index.get()),
                 )
             ),
         )
