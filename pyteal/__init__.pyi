@@ -49,6 +49,8 @@ __all__ = [
     "BitwiseNot",
     "BitwiseOr",
     "BitwiseXor",
+    "BoxCreate",
+    "BoxDelete",
     "Break",
     "Btoi",
     "Bytes",
