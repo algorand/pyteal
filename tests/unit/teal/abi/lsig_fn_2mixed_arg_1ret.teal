@@ -1,0 +1,28 @@
+#pragma version 6
+arg 0                           // [a]
+btoi                            // [btoi(a)]
+store 1                         // 1 -> btoi(a)
+arg 1                           // [b]
+store 2                         // 2 -> b
+load 1                          // [btoi(a)]
+int 2                           // [btoi(a), 2]
+callsub fn2mixedarg1ret_0       // [btoi(a)]
+store 0                         // 0 -> btoi(a)
+load 0                          // [btoi(a)]
+itob                            // [a]
+pop                             // []
+int 1                           // [1]
+return
+
+// fn_2mixed_arg_1ret
+fn2mixedarg1ret_0:              // [btoi(a), 2]
+store 4                         // 4 -> 2
+store 3                         // 3 -> btoi(a)
+load 4                          // [2]
+load 3                          // [2, btoi(a)]
+itob                            // [2, a]
+stores                          // 2 -> a
+load 3                          // [btoi(a)]
+store 5                         // 5 -> btoi(a)
+load 5                          // [btoi(a)]
+retsub

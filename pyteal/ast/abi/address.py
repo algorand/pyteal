@@ -27,6 +27,9 @@ class AddressTypeSpec(StaticArrayTypeSpec):
     def new_instance(self) -> "Address":
         return Address()
 
+    def annotation_type(self) -> "type[Address]":
+        return Address
+
     def __str__(self) -> str:
         return "address"
 
