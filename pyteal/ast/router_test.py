@@ -272,7 +272,7 @@ def test_parse_conditions():
                 pt.Txn.application_args.length() == pt.Int(max_subroutine_arg_allowed),
             )
         else:
-            subroutine_arg_cond = pt.Txn.application_args.length() == pt.Int(0)
+            subroutine_arg_cond = pt.Int(1)
 
         assembled_condition = assemble_helper(subroutine_arg_cond)
         with pt.TealComponent.Context.ignoreExprEquality():

@@ -2625,12 +2625,11 @@ retsub""".strip()
     assert expected_ap == actual_ap_compiled
 
     expected_csp = """#pragma version 6
-txn NumAppArgs
-pushint 0 // 0
-==
+intcblock 1
+intc_0 // 1
 bnz main_l2
 err
 main_l2:
-pushint 1 // 1
+intc_0 // 1
 return""".strip()
     assert expected_csp == actual_csp_compiled

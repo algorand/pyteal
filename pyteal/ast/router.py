@@ -228,7 +228,7 @@ class Router:
             )
             if method_to_register is not None
             # TODO the default condition for bare call need to be revised
-            else Txn.application_args.length() == Int(0)
+            else Int(1)
         )
 
         # Check if it is a *CREATION*
