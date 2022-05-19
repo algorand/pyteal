@@ -274,8 +274,8 @@ class Router:
             - both `ABIReturnSubroutine` and `Subroutine` takes 0 argument on the stack.
             - all three cases have none (or void) type.
 
-        On ABI method case, if the ABI method has more than 15 args, this function manages to detuple
-        the last (16-th) Txn app-arg into a list of ABI method arguments, and pass in to the the ABI method.
+        On ABI method case, if the ABI method has more than 15 args, this function manages to de-tuple
+        the last (16-th) Txn app-arg into a list of ABI method arguments, and pass in to the ABI method.
 
         Args:
             is_method_call: a boolean value that specify if the handler is an ABI method.

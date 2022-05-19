@@ -9,6 +9,8 @@ from pyteal.ast.subroutine import evaluate_subroutine
 
 options = pt.CompileOptions(version=5)
 
+# something here
+
 
 def test_subroutine_definition():
     def fn0Args():

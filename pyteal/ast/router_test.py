@@ -435,21 +435,16 @@ def test_wrap_handler_method_call():
 
 
 def test_contract_json_obj():
-    ONLY_ABI_SUBROUTINE_CASES = list(
+    abi_subroutines = list(
         filter(lambda x: isinstance(x, pt.ABIReturnSubroutine), GOOD_SUBROUTINE_CASES)
     )
-    for _ in range(4):
-        ONLY_ABI_SUBROUTINE_CASES = random.choices(ONLY_ABI_SUBROUTINE_CASES, k=5)
-        for index, case in enumerate(power_set(ONLY_ABI_SUBROUTINE_CASES)):
-            contract_name = f"contract_{index}"
-            router = pt.Router(contract_name)
-            method_list: list[sdk_abi.contract.Method] = []
-            for subroutine in case:
-                router.add_method_handler(subroutine)
-                method_list.append(
-                    sdk_abi.Method.from_signature(subroutine.method_signature())
-                )
-            router.add_bare_call(safe_clear_state_delete, pt.OnComplete.ClearState)
-            sdk_contract = sdk_abi.contract.Contract(contract_name, method_list)
-            contract = router.contract_construct()
-            assert sdk_contract.dictify() == contract
+    contract_name = "contract_name"
+    router = pt.Router(contract_name)
+    method_list: list[sdk_abi.contract.Method] = []
+    for subroutine in abi_subroutines:
+        router.add_method_handler(subroutine)
+        method_list.append(sdk_abi.Method.from_signature(subroutine.method_signature()))
+    router.add_bare_call(safe_clear_state_delete, pt.OnComplete.ClearState)
+    sdk_contract = sdk_abi.contract.Contract(contract_name, method_list)
+    contract = router.contract_construct()
+    assert sdk_contract.dictify() == contract
