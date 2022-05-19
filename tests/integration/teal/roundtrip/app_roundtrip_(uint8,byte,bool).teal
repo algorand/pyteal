@@ -1,0 +1,113 @@
+#pragma version 6
+txna ApplicationArgs 0      // [uint8|byte|bool]
+store 4                     // 4 -> uint8|byte|bool
+load 4                      // [uint8|byte|bool]
+callsub roundtripper_1      // [uint8|byte|bool | 255 - uint8 | 255 - byte | !bool | uint8|byte|bool]
+store 3                     // 3 -> uint8|byte|bool | 255 - uint8 | 255 - byte | !bool | uint8|byte|bool
+byte 0x151F7C75             // [0x151F7C75]
+load 3                      // [0x151F7C75, uint8|byte|bool | 255 - uint8 | 255 - byte | !bool | uint8|byte|bool]
+concat                      // [0x151F7C75 | uint8|byte|bool | 255 - uint8 | 255 - byte | !bool | uint8|byte|bool]
+log                         // log(0x151F7C75 | uint8|byte|bool | 255 - uint8 | 255 - byte | !bool | uint8|byte|bool)
+int 1                       // [1]
+return                      // PASSED
+
+// tuple_complement
+tuplecomplement_0:          // [uint8|byte|bool]
+store 9                     // 9 -> uint8|byte|bool
+load 9                      // [uint8|byte|bool]
+int 0                       // [uint8|byte|bool, 0]
+getbyte                     // [uint8]
+store 0                     // 0 -> uint8
+load 9                      // [uint8|byte|bool]
+int 1                       // [uint8|byte|bool, 1]
+getbyte                     // [byte]
+store 1                     // 1 -> byte
+load 9                      // [uint8|byte|bool]
+int 16                      // [uint8|byte|bool, 16]
+getbit                      // bool
+store 2                     // 2 -> bool
+load 0                      // [uint8]
+callsub numericalcomp_2     // [255 - uint8]
+store 0                     // 0 -> 255 - uint8
+load 1                      // [byte]
+callsub numericalcomp_3     // [255 - byte]
+store 1                     // 1 -> 255 - byte
+load 2                      // [bool]
+callsub boolcomp_4          // [!bool]
+store 2                     // 2 -> !bool
+byte 0x00                   // [0x00]
+int 0                       // [0x00, 0]
+load 0                      // [0x00, 0, 255 - uint8]
+setbyte                     // [255 - uint8]
+byte 0x00                   // [255 - uint8, 0x00]
+int 0                       // [255 - uint8, 0x00, 0]
+load 1                      // [255 - uint8, 0x00, 0, 255 - byte]
+setbyte                     // [255 - uint8, 255 - byte]
+concat                      // [255 - uint8 | 255 - byte]
+byte 0x00                   // [255 - uint8 | 255 - byte, 0x00]
+int 0                       // [255 - uint8 | 255 - byte, 0x00, 0]
+load 2                      // [255 - uint8 | 255 - byte, 0x00, 0, !bool]
+setbit                      // [255 - uint8 | 255 - byte, !bool]
+concat                      // [255 - uint8 | 255 - byte | !bool]
+store 10                    // 10 -> 255 - uint8 | 255 - byte | !bool
+load 10                     // [255 - uint8 | 255 - byte | !bool]
+retsub
+
+// round_tripper
+roundtripper_1:                 // [uint8|byte|bool]
+store 5                         // 5 -> uint8|byte|bool
+load 5                          // [uint8|byte|bool]
+callsub tuplecomplement_0       // [255 - uint8 | 255 - byte | !bool]
+store 7                         // 7 -> 255 - uint8 | 255 - byte | !bool
+load 7                          // [255 - uint8 | 255 - byte | !bool]
+callsub tuplecomplement_0       // [255 - (255 - uint8) | 255 - (255 - byte) | !!bool]
+store 8                         // 8 -> uint8|byte|bool
+load 5                          // [uint8|byte|bool]
+load 7                          // [uint8|byte|bool, 255 - uint8 | 255 - byte | !bool]
+concat                          // [uint8|byte|bool | 255 - uint8 | 255 - byte | !bool]
+load 8                          // [uint8|byte|bool | 255 - uint8 | 255 - byte | !bool, uint8|byte|bool]
+concat                          // [uint8|byte|bool | 255 - uint8 | 255 - byte | !bool | uint8|byte|bool]
+store 6                         // 6 -> uint8|byte|bool | 255 - uint8 | 255 - byte | !bool | uint8|byte|bool
+load 6                          // [uint8|byte|bool | 255 - uint8 | 255 - byte | !bool | uint8|byte|bool]
+retsub
+
+// numerical_comp
+numericalcomp_2:                // [uint8]
+store 11                        // 11 -> uint8
+int 255                         // [255]
+load 11                         // [255, uint8]
+-                               // [255 - uint8]
+store 12                        // 12 -> 255 - uint8
+load 12                         // [255 - uint8]
+int 256                         // [255 - uint8, 256]
+<                               // [1]
+assert                          // []
+load 12                         // [255 - uint8]
+retsub
+
+// numerical_comp
+numericalcomp_3:                // [byte]
+store 13                        // 13 -> byte
+int 255                         // [255]
+load 13                         // [255, byte]
+-                               // [255 - byte]
+store 14                        // 14 -> 255 - byte
+load 14                         // [255 - byte]
+int 256                         // [255 - byte, 256]
+<                               // [1]
+assert                          // []
+load 14                         // [255 - byte]
+retsub
+
+// bool_comp
+boolcomp_4:                     // [bool]
+store 15                        // 15 -> bool
+load 15                         // [bool]
+!                               // [!bool]
+store 16                        // 16 -> !bool
+load 16                         // [!bool]
+int 2                           // [!bool, 2]
+<                               // [1]
+assert                          // []
+load 16                         // [!bool]
+retsub

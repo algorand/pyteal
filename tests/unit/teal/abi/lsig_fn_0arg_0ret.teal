@@ -1,0 +1,8 @@
+#pragma version 6
+callsub fn0arg0ret_0
+int 1
+return
+
+// fn_0arg_0ret
+fn0arg0ret_0:
+retsub

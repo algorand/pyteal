@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from inspect import isclass, Parameter, signature, get_annotations
-from types import MappingProxyType
-from typing import Callable, Optional, TYPE_CHECKING, cast, Any, Final
+from types import MappingProxyType, NoneType
+from typing import Any, Callable, Final, Optional, TYPE_CHECKING, cast
 
 from pyteal.ast import abi
 from pyteal.ast.expr import Expr
@@ -66,7 +66,7 @@ class SubroutineDefinition:
         self.__name: str = name_str if name_str else self.implementation.__name__
 
     def _validate(
-        self, input_types: list[TealType] = None
+        self, input_types: list[TealType | None] = None
     ) -> tuple[
         MappingProxyType[str, Parameter],
         dict[str, type],
@@ -76,6 +76,8 @@ class SubroutineDefinition:
         dict[str, abi.TypeSpec],
     ]:
         """Validate the full function signature and annotations for subroutine definition.
+
+        NOTE: `self.implementation` should be set before calling `_validate()`
 
         This function iterates through `sig.parameters.items()`, and checks each of subroutine arguments.
         On each of the subroutine arguments, the following checks are performed:
@@ -95,9 +97,12 @@ class SubroutineDefinition:
         We put the scratch slot id on the stack, rather than the value itself.
         - `abi_args` - a set of argument names, which are type annotated by ABI types.
         We load the ABI scratch space stored value to stack, and store them later in subroutine's local ABI values.
+        - `abi_output_kwarg` - a possibly empty dict which when non-empty contains exactly one key
+            `ABIReturnSubroutine.OUTPUT_ARG_NAME` with a value that gives abi-tye information about the output
 
         Args:
             input_types (optional): for testing purposes - expected `TealType`s of each parameter
+
         Returns:
             impl_params: a map from python function implementation's argument name, to argument's parameter.
             annotations: a dict whose keys are names of type-annotated arguments,
@@ -123,18 +128,6 @@ class SubroutineDefinition:
         by_ref_args: set[str] = set()
         abi_args: dict[str, abi.TypeSpec] = {}
         abi_output_kwarg: dict[str, abi.TypeSpec] = {}
-
-        if input_types is not None:
-            if len(input_types) != len(impl_params):
-                raise TealInputError(
-                    f"Provided number of input_types ({len(input_types)}) "
-                    f"does not match detected number of parameters ({len(impl_params)})"
-                )
-            for in_type, name in zip(input_types, impl_params):
-                if not isinstance(in_type, TealType):
-                    raise TealInputError(
-                        f"Function has input type {in_type} for parameter {name} which is not a TealType"
-                    )
 
         if "return" in annotations and annotations["return"] is not Expr:
             raise TealInputError(
@@ -177,6 +170,24 @@ class SubroutineDefinition:
                 by_ref_args.add(name)
             if isinstance(expected_arg_type, abi.TypeSpec):
                 abi_args[name] = expected_arg_type
+
+        if input_types is not None:
+            input_arg_count = len(impl_params) - len(abi_output_kwarg)
+            if len(input_types) != input_arg_count:
+                raise TealInputError(
+                    f"Provided number of input_types ({len(input_types)}) "
+                    f"does not match detected number of input parameters ({input_arg_count})"
+                )
+            for in_type, name in zip(input_types, impl_params):
+                if not isinstance(in_type, (TealType, NoneType)):
+                    raise TealInputError(
+                        f"Function has input type {in_type} for parameter {name} which is not a TealType"
+                    )
+                if in_type is None and name not in abi_args:
+                    raise TealInputError(
+                        f"input_type for {name} is unspecified i.e. None "
+                        f"but this is only allowed for ABI arguments"
+                    )
 
         return (
             impl_params,
@@ -466,7 +477,12 @@ SubroutineFnWrapper.__module__ = "pyteal"
 
 
 class ABIReturnSubroutine:
-    """Used to create a PyTeal Subroutine (returning an ABI value) from a python function.
+    """Used to create a PyTeal Subroutine (returning an ABI value) from a python function.  It's primarily intended to define ARC-4 Application entry points though it can also be used more generally.
+
+    *Disclaimer*:  ABIReturnSubroutine is still taking shape and is subject to backwards incompatible changes.
+
+    * For ARC-4 Application entry point definition, feel encouraged to use ABIReturnSubroutine.  Expect a best-effort attempt to minimize backwards incompatible changes along with a migration path.
+    * For general purpose subroutine definition usage, use at your own risk.  Based on feedback, the API and usage patterns will change more freely and with less effort to provide migration paths.
 
     This class is meant to be used as a function decorator. For example:
 

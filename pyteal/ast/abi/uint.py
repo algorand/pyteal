@@ -123,6 +123,10 @@ class UintTypeSpec(TypeSpec):
     def new_instance(self) -> "Uint":
         pass
 
+    @abstractmethod
+    def annotation_type(self) -> "type[Uint]":
+        pass
+
     def bit_size(self) -> int:
         """Get the bit size of this uint type"""
         return self.size
@@ -157,6 +161,9 @@ class ByteTypeSpec(UintTypeSpec):
     def new_instance(self) -> "Byte":
         return Byte()
 
+    def annotation_type(self) -> "type[Byte]":
+        return Byte
+
     def __str__(self) -> str:
         return "byte"
 
@@ -171,6 +178,9 @@ class Uint8TypeSpec(UintTypeSpec):
     def new_instance(self) -> "Uint8":
         return Uint8()
 
+    def annotation_type(self) -> "type[Uint8]":
+        return Uint8
+
 
 Uint8TypeSpec.__module__ = "pyteal"
 
@@ -181,6 +191,9 @@ class Uint16TypeSpec(UintTypeSpec):
 
     def new_instance(self) -> "Uint16":
         return Uint16()
+
+    def annotation_type(self) -> "type[Uint16]":
+        return Uint16
 
 
 Uint16TypeSpec.__module__ = "pyteal"
@@ -193,6 +206,9 @@ class Uint32TypeSpec(UintTypeSpec):
     def new_instance(self) -> "Uint32":
         return Uint32()
 
+    def annotation_type(self) -> "type[Uint32]":
+        return Uint32
+
 
 Uint32TypeSpec.__module__ = "pyteal"
 
@@ -203,6 +219,9 @@ class Uint64TypeSpec(UintTypeSpec):
 
     def new_instance(self) -> "Uint64":
         return Uint64()
+
+    def annotation_type(self) -> "type[Uint64]":
+        return Uint64
 
 
 Uint32TypeSpec.__module__ = "pyteal"
