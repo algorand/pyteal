@@ -205,7 +205,6 @@ def test_parse_conditions():
         if len(on_completes) == 0:
             with pytest.raises(pt.TealInputError) as err_no_oc:
                 pt.Router.parse_conditions(
-                    method_sig,
                     subroutine if is_abi_subroutine else None,
                     on_completes,
                     is_creation,
@@ -219,7 +218,6 @@ def test_parse_conditions():
         ):
             with pytest.raises(pt.TealInputError) as err_conflict_conditions:
                 pt.Router.parse_conditions(
-                    method_sig,
                     subroutine if is_abi_subroutine else None,
                     on_completes,
                     is_creation,
@@ -233,26 +231,16 @@ def test_parse_conditions():
         mutated_on_completes = on_completes + [random.choice(on_completes)]
         with pytest.raises(pt.TealInputError) as err_dup_oc:
             pt.Router.parse_conditions(
-                method_sig,
                 subroutine if is_abi_subroutine else None,
                 mutated_on_completes,
                 is_creation,
             )
         assert "has duplicated on_complete(s)" in str(err_dup_oc)
 
-        if is_abi_subroutine:
-            with pytest.raises(pt.TealInputError) as err_wrong_override:
-                pt.Router.parse_conditions(None, subroutine, on_completes, is_creation)
-            assert (
-                "A method_signature must be provided if method_to_register is not None"
-                in str(err_wrong_override)
-            )
-
         (
             approval_condition_list,
             clear_state_condition_list,
         ) = pt.Router.parse_conditions(
-            method_sig,
             subroutine if is_abi_subroutine else None,
             on_completes,
             is_creation,

@@ -158,7 +158,6 @@ class Router:
 
     @staticmethod
     def parse_conditions(
-        method_signature: Optional[str],
         method_to_register: Optional[ABIReturnSubroutine],
         on_completes: list[EnumInt],
         creation: bool,
@@ -178,7 +177,6 @@ class Router:
         - if it is handling conditions for other cases, then `Txn.application_arg_num == 0`
 
         Args:
-            method_signature: a string representing method signature for ABI method
             method_to_register: an ABIReturnSubroutine if exists, or None
             on_completes: a list of OnCompletion args
             creation: a boolean variable indicating if this condition is triggered on creation
@@ -210,12 +208,6 @@ class Router:
         oc_other_than_clear_state_exists = any(
             map(lambda x: str(x) != str(OnComplete.ClearState), on_completes)
         )
-        # check if there is ABI method but no method_signature is provided
-        # TODO API change to allow inferring method_signature from method_to_register?
-        if method_to_register is not None and not method_signature:
-            raise TealInputError(
-                "A method_signature must be provided if method_to_register is not None"
-            )
 
         # Check:
         # - if current condition is for *ABI METHOD*
@@ -223,7 +215,8 @@ class Router:
         # - or *BARE APP CALL* (numAppArg == 0)
         method_or_bare_condition = (
             And(
-                Txn.application_args[0] == MethodSignature(cast(str, method_signature)),
+                Txn.application_args[0]
+                == MethodSignature(method_to_register.method_signature()),
                 Txn.application_args.length()
                 == Int(
                     1
@@ -234,6 +227,7 @@ class Router:
                 ),
             )
             if method_to_register is not None
+            # TODO the default condition for bare call need to be revised
             else Txn.application_args.length() == Int(0)
         )
 
@@ -450,7 +444,6 @@ class Router:
             else [cast(EnumInt, on_completes)]
         )
         approval_conds, clear_state_conds = Router.parse_conditions(
-            method_signature=None,
             method_to_register=None,
             on_completes=oc_list,
             creation=creation,
@@ -496,7 +489,6 @@ class Router:
         method_signature = method_app_call.method_signature()
 
         approval_conds, clear_state_conds = Router.parse_conditions(
-            method_signature=method_signature,
             method_to_register=method_app_call,
             on_completes=oc_list,
             creation=creation,
