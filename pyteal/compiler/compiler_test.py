@@ -2266,12 +2266,8 @@ def test_router_app():
             + _p.get()
         )
 
-    ap, csp, _ = router.build_program()
-    actual_ap_compiled = pt.compileTeal(
-        ap, pt.Mode.Application, version=6, assembleConstants=True
-    )
-    actual_csp_compiled = pt.compileTeal(
-        csp, pt.Mode.Application, version=6, assembleConstants=True
+    actual_ap_compiled, actual_csp_compiled, _ = router.compile_program(
+        version=6, assembleConstants=True
     )
 
     expected_ap = """#pragma version 6

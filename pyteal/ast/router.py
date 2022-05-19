@@ -23,6 +23,9 @@ from pyteal.ast.naryexpr import And, Or
 from pyteal.ast.txn import Txn
 from pyteal.ast.return_ import Approve
 
+from pyteal.compiler.compiler import compileTeal, DEFAULT_TEAL_VERSION, OptimizeOptions
+from pyteal.ir.ops import Mode
+
 """
 Notes:
 - On a BareApp Call, check
@@ -31,7 +34,7 @@ Notes:
   - [x] Must execute actions required to invoke the method
 
 - On Method Call, check
-  - [x] txna ApplicationArgs 0 == method "method-signature"
+  - [x] txn ApplicationArgs 0 == method "method-signature"
   - [x] On-Completion should match (only one On-Completion specified here?)
   - [x] non void method call should log with 0x151f7c75 return-method-specifier
         (kinda done in another PR to ABI-Type)
@@ -39,12 +42,12 @@ Notes:
         (kinda done, but need to do with extraction and (en/de)-code)
   - [x] Must execute actions required to invoke the method
   - [x] extract arguments if needed
-        (decode txna ApplicationArgs 15 if there exists, and extract arguments to feed method)
+        (decode txn ApplicationArgs 15 if there exists, and extract arguments to feed method)
 
 Notes for OC:
-- creation conflict with closeout and clearstate
+- creation conflict with closeout and clear-state
 - must check: txn ApplicationId == 0 for creation
-- clearstate AST build should be separated with other OC AST build
+- clear-state AST build should be separated with other OC AST build
 """
 
 
@@ -162,7 +165,7 @@ class Router:
     ) -> tuple[list[Expr], list[Expr]]:
         """This is a helper function in inferring valid approval/clear-state program condition.
 
-        It starts with some initialization check to resolve some confliction:
+        It starts with some initialization check to resolve some conflict:
         - `creation` option is contradicting with OnCompletion.CloseOut and OnCompletion.ClearState
         - if there is `method_to_register` existing, then `method_signature` should appear
 
@@ -267,7 +270,7 @@ class Router:
     def wrap_handler(
         is_method_call: bool, handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr
     ) -> Expr:
-        """This is a helper function that handles transaction arguments passing in bare-appcall/abi-method handlers.
+        """This is a helper function that handles transaction arguments passing in bare-app-call/abi-method handlers.
 
         If `is_abi_method` is True, then it can only be `ABIReturnSubroutine`,
         otherwise:
@@ -397,8 +400,8 @@ class Router:
         A helper function that appends conditions and execution of branches into AST.
 
         Args:
-            approval_conditions: A list of exprs for approval program's condition on: creation?, method/bare, Or[OCs]
-            clear_state_conditions: A list of exprs for clear-state program's condition on: method/bare
+            approval_conditions: A list of expressions for approval program's condition on: creation?, method/bare, Or[OCs]
+            clear_state_conditions: A list of expressions for clear-state program's condition on: method/bare
             branch: A branch of contract executing the registered method
             method_obj: SDK's Method objects to construct Contract JSON object
         """
@@ -433,7 +436,7 @@ class Router:
         creation: bool = False,
     ) -> None:
         """
-        Registering a bare-appcall to the router.
+        Registering a bare-app-call to the router.
 
         Args:
             bare_app_call: either an `ABIReturnSubroutine`, or `SubroutineFnWrapper`, or `Expr`.
@@ -560,7 +563,7 @@ class Router:
 
     def build_program(self) -> tuple[Expr, Expr, dict[str, Any]]:
         """
-        Connstructs ASTs for approval and clear-state programs from the registered methods in the router,
+        Constructs ASTs for approval and clear-state programs from the registered methods in the router,
         also generates a JSON object of contract to allow client read and call the methods easily.
 
         Returns:
@@ -573,6 +576,39 @@ class Router:
             Router.__ast_construct(self.clear_state_if_then),
             self.contract_construct(),
         )
+
+    def compile_program(
+        self,
+        *,
+        version: int = DEFAULT_TEAL_VERSION,
+        assembleConstants: bool = False,
+        optimize: OptimizeOptions = None,
+    ) -> tuple[str, str, dict[str, Any]]:
+        """
+        Combining `build_program` and `compileTeal`, compiles built Approval and ClearState programs
+        and returns Contract JSON object for off-chain calling.
+
+        Returns:
+            approval_program: compiled approval program
+            clear_state_program: compiled clear-state program
+            contract: JSON object of contract to allow client start off-chain call
+        """
+        ap, csp, contract = self.build_program()
+        ap_compiled = compileTeal(
+            ap,
+            Mode.Application,
+            version=version,
+            assembleConstants=assembleConstants,
+            optimize=optimize,
+        )
+        csp_compiled = compileTeal(
+            csp,
+            Mode.Application,
+            version=version,
+            assembleConstants=assembleConstants,
+            optimize=optimize,
+        )
+        return ap_compiled, csp_compiled, contract
 
 
 Router.__module__ = "pyteal"
