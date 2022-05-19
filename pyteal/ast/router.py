@@ -21,7 +21,8 @@ from pyteal.ast.seq import Seq
 from pyteal.ast.methodsig import MethodSignature
 from pyteal.ast.naryexpr import And, Or
 from pyteal.ast.txn import Txn
-from pyteal.ast.return_ import Approve
+from pyteal.ast.return_ import Approve, Reject, Return
+from pyteal.ast.global_ import Global
 
 from pyteal.compiler.compiler import compileTeal, DEFAULT_TEAL_VERSION, OptimizeOptions
 from pyteal.ir.ops import Mode
@@ -49,6 +50,43 @@ Notes for OC:
 - must check: txn ApplicationId == 0 for creation
 - clear-state AST build should be separated with other OC AST build
 """
+
+
+@dataclass(init=False)
+class BareCall:
+    action: ABIReturnSubroutine | SubroutineFnWrapper | Expr
+    on_complete: list[EnumInt]
+    if_creation: bool = False
+
+    def __init__(
+        self,
+        bare_app_call: ABIReturnSubroutine | SubroutineFnWrapper | Expr,
+        on_completes: EnumInt | list[EnumInt],
+        *,
+        creation: bool = False,
+    ):
+        oc_list: list[EnumInt] = (
+            cast(list[EnumInt], on_completes)
+            if isinstance(on_completes, list)
+            else [cast(EnumInt, on_completes)]
+        )
+
+        self.action = bare_app_call
+        self.on_complete = oc_list
+        self.if_creation = creation
+
+
+BareCall.__module__ = "pyteal"
+
+
+DEFAULT_BARE_CALLS: list[BareCall] = [
+    BareCall(Approve(), OnComplete.NoOp, creation=True),
+    BareCall(
+        Return(Txn.sender() == Global.creator_address()),
+        [OnComplete.DeleteApplication, OnComplete.UpdateApplication],
+    ),
+    BareCall(Reject(), [OnComplete.OptIn, OnComplete.CloseOut, OnComplete.ClearState]),
+]
 
 
 @dataclass
@@ -145,12 +183,18 @@ class Router:
     - and a contract JSON object allowing for easily read and call methods in the contract
     """
 
-    def __init__(self, name: Optional[str] = None) -> None:
+    def __init__(
+        self, name: Optional[str] = None, bare_calls: list[BareCall] = None
+    ) -> None:
         """
         Args:
             name (optional): the name of the smart contract, used in the JSON object.
                 Default name is `contract`
         """
+        if bare_calls is None:
+            bare_calls = DEFAULT_BARE_CALLS
+        # TODO need to change API to allow defining bare_call on init
+
         self.name: str = "Contract" if name is None else name
         self.approval_if_then: list[ProgramNode] = []
         self.clear_state_if_then: list[ProgramNode] = []
