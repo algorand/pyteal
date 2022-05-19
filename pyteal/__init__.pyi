@@ -51,6 +51,8 @@ __all__ = [
     "BitwiseXor",
     "BoxCreate",
     "BoxDelete",
+    "BoxExtract",
+    "BoxReplace",
     "Break",
     "Btoi",
     "Bytes",
