@@ -126,7 +126,7 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
 
     if origin is Account:
         if len(args) != 0:
-            raise TypeError("Account expects 0 argsuments. Got: {}".format(args))
+            raise TypeError("Account expects 0 arguments. Got: {}".format(args))
         return AccountTypeSpec()
 
     if origin is Asset:
