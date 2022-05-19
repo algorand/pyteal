@@ -1,5 +1,5 @@
 from itertools import product
-from typing import List, Literal
+from typing import List, Literal, Optional, cast
 
 import pytest
 from dataclasses import dataclass
@@ -86,7 +86,7 @@ class ABISubroutineTC:
     arg_instances: list[pt.Expr | pt.abi.BaseType]
     name: str
     ret_type: str | pt.abi.TypeSpec
-    signature: str
+    signature: Optional[str]
 
 
 def test_abi_subroutine_definition():
@@ -206,6 +206,7 @@ def test_abi_subroutine_definition():
             ],
             "fn_w_tuple1arg",
             pt.abi.ByteTypeSpec(),
+            None,
         ),
     )
 
@@ -230,7 +231,7 @@ def test_abi_subroutine_definition():
         )
 
         if case.definition.is_abi_routable():
-            assert case.definition.method_signature() == case.signature
+            assert case.definition.method_signature() == cast(str, case.signature)
         else:
             with pytest.raises(pt.TealInputError):
                 case.definition.method_signature()
