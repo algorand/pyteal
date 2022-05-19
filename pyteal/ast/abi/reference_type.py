@@ -1,36 +1,9 @@
-from abc import abstractmethod
-from typing import cast
 from pyteal.ast.abi.uint import Uint, UintTypeSpec
 
 
-class ReferenceTypeSpec(UintTypeSpec):
-    @abstractmethod
-    def __init__(self) -> None:
-        return super().__init__(8)
-
-    @abstractmethod
-    def new_instance(self) -> "ReferenceType":
-        pass
-
-
-ReferenceTypeSpec.__module__ = "pyteal"
-
-
-class ReferenceType(Uint):
-    @abstractmethod
-    def __init__(self, spec: ReferenceTypeSpec) -> None:
-        super().__init__(spec)
-
-    def type_spec(self) -> ReferenceTypeSpec:
-        return cast(ReferenceTypeSpec, super().type_spec())
-
-
-ReferenceType.__module__ = "pyteal"
-
-
-class AccountTypeSpec(ReferenceTypeSpec):
+class AccountTypeSpec(UintTypeSpec):
     def __init__(self):
-        super().__init__()
+        super().__init__(8)
 
     def new_instance(self) -> "Account":
         return Account()
@@ -45,7 +18,7 @@ class AccountTypeSpec(ReferenceTypeSpec):
 AccountTypeSpec.__module__ = "pyteal"
 
 
-class Account(ReferenceType):
+class Account(Uint):
     def __init__(self) -> None:
         super().__init__(AccountTypeSpec())
 
@@ -53,9 +26,9 @@ class Account(ReferenceType):
 Account.__module__ = "pyteal"
 
 
-class AssetTypeSpec(ReferenceTypeSpec):
+class AssetTypeSpec(UintTypeSpec):
     def __init__(self):
-        super().__init__()
+        super().__init__(8)
 
     def new_instance(self) -> "Asset":
         return Asset()
@@ -70,7 +43,7 @@ class AssetTypeSpec(ReferenceTypeSpec):
 AssetTypeSpec.__module__ = "pyteal"
 
 
-class Asset(ReferenceType):
+class Asset(Uint):
     def __init__(self) -> None:
         super().__init__(AssetTypeSpec())
 
@@ -78,9 +51,9 @@ class Asset(ReferenceType):
 Asset.__module__ = "pyteal"
 
 
-class ApplicationTypeSpec(ReferenceTypeSpec):
+class ApplicationTypeSpec(UintTypeSpec):
     def __init__(self):
-        super().__init__()
+        super().__init__(8)
 
     def new_instance(self) -> "Application":
         return Application()
@@ -95,7 +68,7 @@ class ApplicationTypeSpec(ReferenceTypeSpec):
 ApplicationTypeSpec.__module__ = "pyteal"
 
 
-class Application(ReferenceType):
+class Application(Uint):
     def __init__(self) -> None:
         super().__init__(ApplicationTypeSpec())
 
