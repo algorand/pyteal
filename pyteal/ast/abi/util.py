@@ -1,5 +1,7 @@
 from typing import TypeVar, Any, Literal, get_origin, get_args, cast
 
+import algosdk.abi
+
 from pyteal.errors import TealInputError
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
@@ -255,3 +257,11 @@ def make(t: type[T]) -> T:
         A new instance of the given type class.
     """
     return cast(T, type_spec_from_annotation(t).new_instance())
+
+
+def algosdk_from_type_spec(t: TypeSpec) -> algosdk.abi.ABIType:
+    return algosdk.abi.ABIType.from_string(str(t))
+
+
+def algosdk_from_annotation(t: type[T]) -> algosdk.abi.ABIType:
+    return algosdk_from_type_spec(type_spec_from_annotation(t))

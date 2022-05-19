@@ -1,5 +1,5 @@
 from itertools import product
-from typing import List, Literal
+from typing import List, Literal, Optional, cast
 
 import pytest
 from dataclasses import dataclass
@@ -86,7 +86,7 @@ class ABISubroutineTC:
     arg_instances: list[pt.Expr | pt.abi.BaseType]
     name: str
     ret_type: str | pt.abi.TypeSpec
-    signature: str
+    signature: Optional[str]
 
 
 def test_abi_subroutine_definition():
@@ -129,6 +129,15 @@ def test_abi_subroutine_definition():
         output: pt.abi.Byte,
     ) -> pt.Expr:
         return output.set(b[a % pt.Int(10)])
+
+    @pt.ABIReturnSubroutine
+    def fn_w_tuple1arg(
+        a: pt.Expr,
+        b: pt.abi.Tuple1[pt.abi.Byte],
+        *,
+        output: pt.abi.Byte,
+    ) -> pt.Expr:
+        return output.set(pt.Int(1))
 
     cases = (
         ABISubroutineTC(fn_0arg_0ret, [], "fn_0arg_0ret", "void", "fn_0arg_0ret()void"),
@@ -189,6 +198,16 @@ def test_abi_subroutine_definition():
             pt.abi.ByteTypeSpec(),
             None,
         ),
+        ABISubroutineTC(
+            fn_w_tuple1arg,
+            [
+                pt.Int(5),
+                pt.abi.make(pt.abi.Tuple1[pt.abi.Byte]),
+            ],
+            "fn_w_tuple1arg",
+            pt.abi.ByteTypeSpec(),
+            None,
+        ),
     )
 
     for case in cases:
@@ -207,12 +226,12 @@ def test_abi_subroutine_definition():
         assert isinstance(
             invoked, (pt.Expr if case.ret_type == "void" else pt.abi.ReturnedValue)
         )
-        assert case.definition.is_registrable() == all(
+        assert case.definition.is_abi_routable() == all(
             map(lambda x: isinstance(x, pt.abi.BaseType), case.arg_instances)
         )
 
-        if case.definition.is_registrable():
-            assert case.definition.method_signature() == case.signature
+        if case.definition.is_abi_routable():
+            assert case.definition.method_signature() == cast(str, case.signature)
         else:
             with pytest.raises(pt.TealInputError):
                 case.definition.method_signature()
@@ -241,22 +260,6 @@ def test_subroutine_definition_validate():
     # input_types:
 
     three_params = mock_subroutine_definition(lambda x, y, z: pt.Return(pt.Int(1)))
-    two_inputs = [pt.TealType.uint64, pt.TealType.bytes]
-    with pytest.raises(pt.TealInputError) as tie:
-        three_params._validate(input_types=two_inputs)
-
-    assert tie.value == pt.TealInputError(
-        "Provided number of input_types (2) does not match detected number of parameters (3)"
-    )
-
-    three_inputs_with_a_wrong_type = [pt.TealType.uint64, pt.Expr, pt.TealType.bytes]
-
-    with pytest.raises(pt.TealInputError) as tie:
-        three_params._validate(input_types=three_inputs_with_a_wrong_type)
-
-    assert tie.value == pt.TealInputError(
-        "Function has input type <class 'pyteal.Expr'> for parameter y which is not a TealType"
-    )
 
     params, anns, arg_types, byrefs, abi_args, output_kwarg = three_params._validate()
     assert len(params) == 3
@@ -335,15 +338,6 @@ def test_subroutine_definition_validate():
         "Function has a parameter with a default value, which is not allowed in a subroutine: x"
     )
 
-    with pytest.raises(pt.TealInputError) as tie:
-        three_params._validate(
-            input_types=[pt.TealType.uint64, pt.Expr, pt.TealType.anytype]
-        )
-
-    assert tie.value == pt.TealInputError(
-        "Function has input type <class 'pyteal.Expr'> for parameter y which is not a TealType"
-    )
-
     # Now we get to _validate_annotation():
     one_vanilla = mock_subroutine_definition(lambda x: pt.Return(pt.Int(1)))
 
@@ -379,8 +373,6 @@ def test_subroutine_definition_validate():
     assert abi_args == {}
     assert output_kwarg == {}
 
-    # for _is_abi_annotation() cf. copacetic x,y,z product below
-
     # not is_class()
     def one_nontype_impl(x: "blahBlah"):  # type: ignore # noqa: F821
         return pt.Return(pt.Int(1))
@@ -404,7 +396,57 @@ def test_subroutine_definition_validate():
         "Function has parameter x of disallowed type <class 'pyteal.DynamicScratchVar'>. Only the types (<class 'pyteal.Expr'>, <class 'pyteal.ScratchVar'>, 'ABI') are allowed"
     )
 
-    # Now we're back to validate() and everything should be copacetic
+    # Now we're back to _validate() main body and looking at input_types
+
+    three_params_with_output = mock_subroutine_definition(
+        lambda x, y, z, *, output: pt.Return(pt.Int(1)), has_abi_output=True
+    )
+    four_inputs = [
+        pt.TealType.uint64,
+        pt.TealType.uint64,
+        pt.TealType.bytes,
+        pt.TealType.uint64,
+    ]
+
+    two_inputs = [pt.TealType.uint64, pt.TealType.bytes]
+    with pytest.raises(pt.TealInputError) as tie:
+        three_params._validate(input_types=two_inputs)
+
+    assert tie.value == pt.TealInputError(
+        "Provided number of input_types (2) does not match detected number of input parameters (3)"
+    )
+
+    three_inputs_with_a_wrong_type = [pt.TealType.uint64, pt.Expr, pt.TealType.bytes]
+
+    with pytest.raises(pt.TealInputError) as tie:
+        three_params._validate(input_types=three_inputs_with_a_wrong_type)
+
+    assert tie.value == pt.TealInputError(
+        "Function has input type <class 'pyteal.Expr'> for parameter y which is not a TealType"
+    )
+
+    with pytest.raises(pt.TealInputError) as tie:
+        three_params._validate(
+            input_types=[pt.TealType.uint64, pt.Expr, pt.TealType.anytype]
+        )
+
+    assert tie.value == pt.TealInputError(
+        "Function has input type <class 'pyteal.Expr'> for parameter y which is not a TealType"
+    )
+
+    with pytest.raises(pt.TealInputError) as tie:
+        three_params._validate(
+            input_types=[pt.TealType.uint64, None, pt.TealType.anytype]
+        )
+    assert tie.value == pt.TealInputError(
+        "input_type for y is unspecified i.e. None but this is only allowed for ABI arguments"
+    )
+
+    # this one gets caught inside of _validate_annotation()
+    with pytest.raises(pt.TealInputError) as tie:
+        three_params_with_output._validate(input_types=four_inputs)
+
+    # everything should be copacetic
     for x, y, z in product(pt.TealType, pt.TealType, pt.TealType):
         (
             params,

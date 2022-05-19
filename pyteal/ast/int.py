@@ -64,5 +64,8 @@ class EnumInt(LeafExpr):
     def type_of(self):
         return TealType.uint64
 
+    def __hash__(self) -> int:
+        return hash(str(self))
+
 
 EnumInt.__module__ = "pyteal"

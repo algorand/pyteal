@@ -43,7 +43,12 @@ from pyteal.ast.abi.reference_type import (
     ApplicationTypeSpec,
 )
 from pyteal.ast.abi.method_return import MethodReturn
-from pyteal.ast.abi.util import type_spec_from_annotation, make
+from pyteal.ast.abi.util import (
+    algosdk_from_annotation,
+    algosdk_from_type_spec,
+    make,
+    type_spec_from_annotation,
+)
 
 __all__ = [
     "String",
@@ -94,4 +99,6 @@ __all__ = [
     "MethodReturn",
     "type_spec_from_annotation",
     "make",
+    "algosdk_from_annotation",
+    "algosdk_from_type_spec",
 ]

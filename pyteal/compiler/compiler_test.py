@@ -2198,6 +2198,8 @@ retsub
 def test_router_app():
     router = pt.Router()
 
+    router.add_bare_call(pt.Approve(), pt.OnComplete.ClearState)
+
     @router.add_method_handler
     @pt.ABIReturnSubroutine
     def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
@@ -2264,13 +2266,9 @@ def test_router_app():
             + _p.get()
         )
 
-    router.add_bare_call(pt.Approve(), pt.OnComplete.ClearState)
-
-    ap, csp, contract = router.build_program()
-    actual_ap_compiled = pt.compileTeal(
-        ap, pt.Mode.Application, version=6, assembleConstants=True
+    actual_ap_compiled, actual_csp_compiled, _ = router.compile_program(
+        version=6, assembleConstants=True
     )
-    _ = pt.compileTeal(csp, pt.Mode.Application, version=6, assembleConstants=True)
 
     expected_ap = """#pragma version 6
 intcblock 0 1 3
@@ -2286,7 +2284,7 @@ txn OnCompletion
 intc_0 // NoOp
 ==
 &&
-bnz main_l14
+bnz main_l12
 txna ApplicationArgs 0
 pushbytes 0x78b488b7 // "sub(uint64,uint64)uint64"
 ==
@@ -2298,7 +2296,7 @@ txn OnCompletion
 intc_0 // NoOp
 ==
 &&
-bnz main_l13
+bnz main_l11
 txna ApplicationArgs 0
 pushbytes 0xe2f188c5 // "mul(uint64,uint64)uint64"
 ==
@@ -2310,7 +2308,7 @@ txn OnCompletion
 intc_0 // NoOp
 ==
 &&
-bnz main_l12
+bnz main_l10
 txna ApplicationArgs 0
 pushbytes 0x16e80f08 // "div(uint64,uint64)uint64"
 ==
@@ -2322,7 +2320,7 @@ txn OnCompletion
 intc_0 // NoOp
 ==
 &&
-bnz main_l11
+bnz main_l9
 txna ApplicationArgs 0
 pushbytes 0x4dfc58ae // "mod(uint64,uint64)uint64"
 ==
@@ -2334,7 +2332,7 @@ txn OnCompletion
 intc_0 // NoOp
 ==
 &&
-bnz main_l10
+bnz main_l8
 txna ApplicationArgs 0
 pushbytes 0x487ce2fd // "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
 ==
@@ -2346,16 +2344,9 @@ txn OnCompletion
 intc_0 // NoOp
 ==
 &&
-bnz main_l9
-txn NumAppArgs
-intc_0 // 0
-==
-bnz main_l8
+bnz main_l7
 err
-main_l8:
-intc_1 // 1
-return
-main_l9:
+main_l7:
 txna ApplicationArgs 1
 btoi
 store 30
@@ -2433,7 +2424,7 @@ concat
 log
 intc_1 // 1
 return
-main_l10:
+main_l8:
 txna ApplicationArgs 1
 btoi
 store 24
@@ -2451,7 +2442,7 @@ concat
 log
 intc_1 // 1
 return
-main_l11:
+main_l9:
 txna ApplicationArgs 1
 btoi
 store 18
@@ -2469,7 +2460,7 @@ concat
 log
 intc_1 // 1
 return
-main_l12:
+main_l10:
 txna ApplicationArgs 1
 btoi
 store 12
@@ -2487,7 +2478,7 @@ concat
 log
 intc_1 // 1
 return
-main_l13:
+main_l11:
 txna ApplicationArgs 1
 btoi
 store 6
@@ -2505,7 +2496,7 @@ concat
 log
 intc_1 // 1
 return
-main_l14:
+main_l12:
 txna ApplicationArgs 1
 btoi
 store 0
@@ -2633,4 +2624,12 @@ load 64
 retsub""".strip()
     assert expected_ap == actual_ap_compiled
 
-    # TODO in construction
+    expected_csp = """#pragma version 6
+intcblock 1
+intc_0 // 1
+bnz main_l2
+err
+main_l2:
+intc_0 // 1
+return""".strip()
+    assert expected_csp == actual_csp_compiled

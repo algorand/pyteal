@@ -1,0 +1,113 @@
+#pragma version 6
+txna ApplicationArgs 0
+store 4
+load 4
+callsub roundtripper_1
+store 3
+byte 0x151F7C75
+load 3
+concat
+log
+int 1
+return
+
+// tuple_complement
+tuplecomplement_0:
+store 9
+load 9
+int 0
+extract_uint16
+store 0
+load 9
+int 2
+getbyte
+store 1
+load 9
+int 3
+getbyte
+store 2
+load 0
+callsub numericalcomp_2
+store 0
+load 1
+callsub numericalcomp_3
+store 1
+load 2
+callsub numericalcomp_4
+store 2
+load 0
+itob
+extract 6 0
+byte 0x00
+int 0
+load 1
+setbyte
+concat
+byte 0x00
+int 0
+load 2
+setbyte
+concat
+store 10
+load 10
+retsub
+
+// round_tripper
+roundtripper_1:
+store 5
+load 5
+callsub tuplecomplement_0
+store 7
+load 7
+callsub tuplecomplement_0
+store 8
+load 5
+load 7
+concat
+load 8
+concat
+store 6
+load 6
+retsub
+
+// numerical_comp
+numericalcomp_2:
+store 11
+int 65535
+load 11
+-
+store 12
+load 12
+int 65536
+<
+assert
+load 12
+retsub
+
+// numerical_comp
+numericalcomp_3:
+store 13
+int 255
+load 13
+-
+store 14
+load 14
+int 256
+<
+assert
+load 14
+retsub
+
+// numerical_comp
+numericalcomp_4:
+store 15
+int 255
+load 15
+-
+store 16
+load 16
+int 256
+<
+assert
+load 16
+retsub
