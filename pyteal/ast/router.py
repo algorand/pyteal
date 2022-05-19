@@ -477,12 +477,10 @@ class Router:
             approval_conds, clear_state_conds, branch, ast_order_indicator, None
         )
 
-    # TODO API should change to allow method signature not overriding?
     def add_method_handler(
         self,
         method_app_call: ABIReturnSubroutine,
         *,
-        method_signature: str = None,
         on_complete: EnumInt = OnComplete.NoOp,
         creation: bool = False,
     ) -> None:
@@ -491,14 +489,11 @@ class Router:
 
         Args:
             method_app_call: an `ABIReturnSubroutine` that is registrable
-            method_signature: a method signature string
             on_complete: an OnCompletion args
             creation: a boolean variable indicating if this condition is triggered on creation
         """
         oc_list: list[EnumInt] = [on_complete]
-
-        if method_signature is None:
-            method_signature = method_app_call.method_signature()
+        method_signature = method_app_call.method_signature()
 
         approval_conds, clear_state_conds = Router.parse_conditions(
             method_signature=method_signature,
