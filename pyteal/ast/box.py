@@ -8,11 +8,10 @@ from pyteal.ast.expr import Expr
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
 
-
 class BoxCreate(Expr):
     """"""
 
-    def __init__(self, size: Expr, name: Expr) -> None:
+    def __init__(self, name: Expr, size: Expr) -> None:
         """Create an assert statement that raises an error if the condition is false.
 
         Args:
@@ -64,7 +63,7 @@ class BoxDelete(Expr):
             )
 
         return TealBlock.FromOp(
-            options, TealOp(self, Op.box_create), self.size, self.name
+            options, TealOp(self, Op.box_del),  self.name
         )
 
     def __str__(self):
