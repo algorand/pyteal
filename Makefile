@@ -40,10 +40,9 @@ black:
 flake8:
 	flake8 $(ALLPY)
 
-# TODO: add `tests` to $MYPY when graviton respects mypy (version 🐗) 
 MYPY = pyteal scripts
 mypy:
-	mypy $(MYPY)
+	mypy --show-error-codes $(MYPY)
 
 lint: black flake8 mypy
 
