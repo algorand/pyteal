@@ -42,7 +42,7 @@ flake8:
 
 MYPY = pyteal scripts tests
 mypy:
-	mypy $(MYPY)
+	mypy --show-error-codes $(MYPY)
 
 lint: black flake8 mypy
 
