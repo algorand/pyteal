@@ -2196,37 +2196,33 @@ retsub
 
 
 def test_router_app():
-    router = pt.Router()
+    on_completion_actions = pt.OnCompleteActions().set_action(
+        pt.Approve(), pt.OnComplete.ClearState
+    )
 
-    router.add_bare_call(pt.Approve(), pt.OnComplete.ClearState)
+    router = pt.Router("Contract", on_completion_actions)
 
-    @router.add_method_handler
-    @pt.ABIReturnSubroutine
+    @router.abi_method()
     def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(a.get() + b.get())
 
-    @router.add_method_handler
-    @pt.ABIReturnSubroutine
+    @router.abi_method()
     def sub(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(a.get() - b.get())
 
-    @router.add_method_handler
-    @pt.ABIReturnSubroutine
+    @router.abi_method()
     def mul(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(a.get() * b.get())
 
-    @router.add_method_handler
-    @pt.ABIReturnSubroutine
+    @router.abi_method()
     def div(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(a.get() / b.get())
 
-    @router.add_method_handler
-    @pt.ABIReturnSubroutine
+    @router.abi_method()
     def mod(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(a.get() % b.get())
 
-    @router.add_method_handler
-    @pt.ABIReturnSubroutine
+    @router.abi_method()
     def all_laid_to_args(
         _a: pt.abi.Uint64,
         _b: pt.abi.Uint64,

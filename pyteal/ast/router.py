@@ -1,11 +1,13 @@
 from dataclasses import dataclass
-from typing import Any, cast, Optional
+from typing import Any, Callable, cast, Optional
 
 import algosdk.abi as sdk_abi
 
 from pyteal.config import METHOD_ARG_NUM_LIMIT
 from pyteal.errors import TealInputError
 from pyteal.types import TealType
+from pyteal.compiler.compiler import compileTeal, DEFAULT_TEAL_VERSION, OptimizeOptions
+from pyteal.ir.ops import Mode
 
 from pyteal.ast import abi
 from pyteal.ast.subroutine import (
@@ -24,8 +26,6 @@ from pyteal.ast.txn import Txn
 from pyteal.ast.return_ import Approve, Reject, Return
 from pyteal.ast.global_ import Global
 
-from pyteal.compiler.compiler import compileTeal, DEFAULT_TEAL_VERSION, OptimizeOptions
-from pyteal.ir.ops import Mode
 
 """
 Notes for OC:
@@ -35,43 +35,61 @@ Notes for OC:
 """
 
 
-@dataclass(init=False)
-class OnCompleteAction:
-    action: ABIReturnSubroutine | SubroutineFnWrapper | Expr
-    on_complete: list[EnumInt]
-    if_creation: bool = False
+class OnCompleteActions:
+    def __init__(self):
+        self.oc_to_action: dict[
+            EnumInt, dict[bool, Expr | SubroutineFnWrapper | ABIReturnSubroutine]
+        ] = dict()
 
-    def __init__(
+    def set_action(
         self,
-        bare_app_call: ABIReturnSubroutine | SubroutineFnWrapper | Expr,
-        on_completes: EnumInt | list[EnumInt],
+        action: Expr | SubroutineFnWrapper | ABIReturnSubroutine,
+        on_complete: EnumInt,
+        create: bool = False,
+    ) -> "OnCompleteActions":
+        if on_complete.name not in self.oc_to_action:
+            self.oc_to_action[on_complete] = dict()
+        self.oc_to_action[on_complete][create] = action
+        return self
+
+    @classmethod
+    def template(
+        cls,
         *,
-        creation: bool = False,
-    ):
-        oc_list: list[EnumInt] = (
-            cast(list[EnumInt], on_completes)
-            if isinstance(on_completes, list)
-            else [cast(EnumInt, on_completes)]
+        approve_on_noop_create: Optional[bool] = True,
+        creator_can_update: Optional[bool] = True,
+        creator_can_delete: Optional[bool] = True,
+        can_opt_in: Optional[bool] = False,
+        can_close_out: Optional[bool] = True,
+        can_clear_state: Optional[bool] = True,
+    ) -> "OnCompleteActions":
+        instance = cls()
+
+        if approve_on_noop_create:
+            instance.set_action(Approve(), OnComplete.NoOp, True)
+
+        allow_creator_expr = Return(Txn.sender() == Global.creator_address())
+        instance.set_action(
+            allow_creator_expr if creator_can_update else Reject(),
+            OnComplete.UpdateApplication,
+        )
+        instance.set_action(
+            allow_creator_expr if creator_can_delete else Reject(),
+            OnComplete.DeleteApplication,
         )
 
-        self.action = bare_app_call
-        self.on_complete = oc_list
-        self.if_creation = creation
+        instance.set_action(Approve() if can_opt_in else Reject(), OnComplete.OptIn)
+        instance.set_action(
+            Approve() if can_close_out else Reject(), OnComplete.CloseOut
+        )
+        instance.set_action(
+            Approve() if can_clear_state else Reject(), OnComplete.ClearState
+        )
+
+        return instance
 
 
-OnCompleteAction.__module__ = "pyteal"
-
-
-DEFAULT_BARE_CALLS: list[OnCompleteAction] = [
-    OnCompleteAction(Approve(), OnComplete.NoOp, creation=True),
-    OnCompleteAction(
-        Return(Txn.sender() == Global.creator_address()),
-        [OnComplete.DeleteApplication, OnComplete.UpdateApplication],
-    ),
-    OnCompleteAction(
-        Reject(), [OnComplete.OptIn, OnComplete.CloseOut, OnComplete.ClearState]
-    ),
-]
+OnCompleteActions.__module__ = "pyteal"
 
 
 @dataclass
@@ -169,21 +187,23 @@ class Router:
     """
 
     def __init__(
-        self, name: Optional[str] = None, bare_calls: list[OnCompleteAction] = None
+        self,
+        name: str,
+        bare_calls: OnCompleteActions,
     ) -> None:
         """
         Args:
             name (optional): the name of the smart contract, used in the JSON object.
                 Default name is `contract`
         """
-        if bare_calls is None:
-            bare_calls = DEFAULT_BARE_CALLS
-        # TODO need to change API to allow defining bare_call on init
 
-        self.name: str = "Contract" if name is None else name
+        self.name: str = name
         self.approval_if_then: list[ProgramNode] = []
         self.clear_state_if_then: list[ProgramNode] = []
         self.conflict_detect_map: ASTConflictResolver = ASTConflictResolver()
+        for oc, action_on_creation in bare_calls.oc_to_action.items():
+            for on_create, action in action_on_creation.items():
+                self.__add_bare_call(action, on_completes=[oc], creation=on_create)
 
     @staticmethod
     def parse_conditions(
@@ -453,7 +473,7 @@ class Router:
                 )
             )
 
-    def add_bare_call(
+    def __add_bare_call(
         self,
         bare_app_call: ABIReturnSubroutine | SubroutineFnWrapper | Expr,
         on_completes: EnumInt | list[EnumInt],
@@ -501,7 +521,7 @@ class Router:
             approval_conds, clear_state_conds, branch, ast_order_indicator, None
         )
 
-    def add_method_handler(
+    def __add_method_handler(
         self,
         method_app_call: ABIReturnSubroutine,
         *,
@@ -537,6 +557,36 @@ class Router:
             ast_order_indicator,
             sdk_abi.Method.from_signature(method_signature),
         )
+
+    def abi_method(
+        self, *, on_complete: EnumInt = OnComplete.NoOp, creation: bool = False
+    ) -> Callable[[Callable | ABIReturnSubroutine], ABIReturnSubroutine]:
+        """Decorator to register an ABI method call to router.
+
+        Allowing following syntax:
+
+        @router.abi_method(on_complete=OnComplete.OptIn, create=False)
+        @router.abi_method(on_complete=OnComplete.NoOp, create=False)
+        def echo(a: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+            ...
+
+        Args:
+            on_complete: an OnCompletion args
+            creation: a boolean variable indicating if this condition is triggered on creation
+        """
+
+        def __method(impl: Callable | ABIReturnSubroutine) -> ABIReturnSubroutine:
+            subroutine: ABIReturnSubroutine = (
+                impl
+                if isinstance(impl, ABIReturnSubroutine)
+                else ABIReturnSubroutine(impl)
+            )
+            self.__add_method_handler(
+                subroutine, on_complete=on_complete, creation=creation
+            )
+            return subroutine
+
+        return __method
 
     @staticmethod
     def __ast_construct(

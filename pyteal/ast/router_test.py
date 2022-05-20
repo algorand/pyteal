@@ -427,12 +427,14 @@ def test_contract_json_obj():
         filter(lambda x: isinstance(x, pt.ABIReturnSubroutine), GOOD_SUBROUTINE_CASES)
     )
     contract_name = "contract_name"
-    router = pt.Router(contract_name)
-    method_list: list[sdk_abi.contract.Method] = []
+    on_complete_actions = pt.OnCompleteActions().set_action(
+        safe_clear_state_delete, pt.OnComplete.ClearState
+    )
+    router = pt.Router(contract_name, on_complete_actions)
+    method_list: list[sdk_abi.Method] = []
     for subroutine in abi_subroutines:
-        router.add_method_handler(subroutine)
+        router.abi_method()(subroutine)
         method_list.append(sdk_abi.Method.from_signature(subroutine.method_signature()))
-    router.add_bare_call(safe_clear_state_delete, pt.OnComplete.ClearState)
-    sdk_contract = sdk_abi.contract.Contract(contract_name, method_list)
+    sdk_contract = sdk_abi.Contract(contract_name, method_list)
     contract = router.contract_construct()
     assert sdk_contract.dictify() == contract

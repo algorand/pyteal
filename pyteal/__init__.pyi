@@ -138,6 +138,7 @@ __all__ = [
     "Nonce",
     "Not",
     "OnComplete",
+    "OnCompleteActions",
     "Op",
     "OpUp",
     "OpUpMode",
