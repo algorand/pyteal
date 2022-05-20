@@ -28,23 +28,6 @@ from pyteal.compiler.compiler import compileTeal, DEFAULT_TEAL_VERSION, Optimize
 from pyteal.ir.ops import Mode
 
 """
-Notes:
-- On a BareApp Call, check
-  - [x] txn NumAppArgs == 0
-  - [x] On-Completion should match (can be a list of On-Completion here)
-  - [x] Must execute actions required to invoke the method
-
-- On Method Call, check
-  - [x] txn ApplicationArgs 0 == method "method-signature"
-  - [x] On-Completion should match (only one On-Completion specified here?)
-  - [x] non void method call should log with 0x151f7c75 return-method-specifier
-        (kinda done in another PR to ABI-Type)
-  - [x] redirect the method arguments and pass them to handler function
-        (kinda done, but need to do with extraction and (en/de)-code)
-  - [x] Must execute actions required to invoke the method
-  - [x] extract arguments if needed
-        (decode txn ApplicationArgs 15 if there exists, and extract arguments to feed method)
-
 Notes for OC:
 - creation conflict with closeout and clear-state
 - must check: txn ApplicationId == 0 for creation
