@@ -1,3 +1,15 @@
+# 0.13.0
+
+## Added
+* Add opcode support for ECDSA verify, decompress, and recover ([#307](https://github.com/algorand/pyteal/pull/307)).
+
+## Fixed
+* Fix bug where `Continue` skips `While` condition check ([#332](https://github.com/algorand/pyteal/pull/332)).
+* Fix `If` construction using builder syntax ([#329](https://github.com/algorand/pyteal/pull/329)).
+
+## Changed
+* Correct multiple doc typos ([#324](https://github.com/algorand/pyteal/pull/324), [#330](https://github.com/algorand/pyteal/pull/330)).
+
 # 0.12.1
 
 ## Fixed

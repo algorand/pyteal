@@ -203,7 +203,9 @@ class Router:
           `Txn.application_arg[0] == hash(method_signature) &&
            Txn.application_arg_num == 1 + min(METHOD_ARG_NUM_LIMIT, method's arg num)`
           where `METHOD_ARG_NUM_LIMIT == 15`.
-        - if it is handling conditions for other cases, then `Txn.application_arg_num == 0`
+          # TODO wonder if we need to care about arg number, if the arg number is not enough/valid
+          # we just directly fail
+        - if it is handling conditions for other cases, then `Int(1)` automatically approve
 
         Args:
             method_to_register: an ABIReturnSubroutine if exists, or None
