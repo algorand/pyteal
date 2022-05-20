@@ -53,7 +53,7 @@ Notes for OC:
 
 
 @dataclass(init=False)
-class BareCall:
+class OnCompleteAction:
     action: ABIReturnSubroutine | SubroutineFnWrapper | Expr
     on_complete: list[EnumInt]
     if_creation: bool = False
@@ -76,16 +76,18 @@ class BareCall:
         self.if_creation = creation
 
 
-BareCall.__module__ = "pyteal"
+OnCompleteAction.__module__ = "pyteal"
 
 
-DEFAULT_BARE_CALLS: list[BareCall] = [
-    BareCall(Approve(), OnComplete.NoOp, creation=True),
-    BareCall(
+DEFAULT_BARE_CALLS: list[OnCompleteAction] = [
+    OnCompleteAction(Approve(), OnComplete.NoOp, creation=True),
+    OnCompleteAction(
         Return(Txn.sender() == Global.creator_address()),
         [OnComplete.DeleteApplication, OnComplete.UpdateApplication],
     ),
-    BareCall(Reject(), [OnComplete.OptIn, OnComplete.CloseOut, OnComplete.ClearState]),
+    OnCompleteAction(
+        Reject(), [OnComplete.OptIn, OnComplete.CloseOut, OnComplete.ClearState]
+    ),
 ]
 
 
@@ -184,7 +186,7 @@ class Router:
     """
 
     def __init__(
-        self, name: Optional[str] = None, bare_calls: list[BareCall] = None
+        self, name: Optional[str] = None, bare_calls: list[OnCompleteAction] = None
     ) -> None:
         """
         Args:
