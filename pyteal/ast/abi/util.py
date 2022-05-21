@@ -211,6 +211,13 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
 
 T = TypeVar("T", bound=BaseType)
 
+def sizeof(t: type[T])->int:
+    """Get the size of an ABI type. Must be static"""
+
+    ts = type_spec_from_annotation(t)
+    if ts.is_dynamic():
+        raise TealInputError("Cannot get size of dynamic type")
+    return ts.byte_length_static()
 
 def make(t: type[T]) -> T:
     """Create a new instance of an ABI type. The type to create is determined by the input argument,
