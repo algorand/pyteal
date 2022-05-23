@@ -242,45 +242,25 @@ class Router:
         if len(on_completes) == 0:
             raise TealInputError("on complete input should be non-empty list")
 
-        # Check the existence of OC.CloseOut
-        # close_out_exist = any(
-        #     map(lambda x: str(x) == str(OnComplete.CloseOut), on_completes)
-        # )
         # Check the existence of OC.ClearState (needed later)
         clear_state_exist = any(
             map(lambda x: str(x) == str(OnComplete.ClearState), on_completes)
         )
-        # Ill formed report if app create with existence of OC.CloseOut or OC.ClearState
-        # if creation and (close_out_exist or clear_state_exist):
-        #     raise TealInputError(
-        #         "OnComplete ClearState/CloseOut may be ill-formed with app creation"
-        #     )
-        # Check if anything other than ClearState exists
         oc_other_than_clear_state_exists = any(
             map(lambda x: str(x) != str(OnComplete.ClearState), on_completes)
         )
 
         # Check:
         # - if current condition is for *ABI METHOD*
-        #   (method selector && numAppArg == 1 + min(METHOD_APP_ARG_NUM_LIMIT, subroutineSyntaxArgNum))
-        # - or *BARE APP CALL* (numAppArg == 0)
-        method_or_bare_condition = (
-            And(
-                Txn.application_args[0]
-                == MethodSignature(method_to_register.method_signature()),
-                Txn.application_args.length()
-                == Int(
-                    1
-                    + min(
-                        method_to_register.subroutine.argument_count(),
-                        METHOD_ARG_NUM_LIMIT,
-                    )
-                ),
+        # - *method selector matches* or *BARE APP CALL* (Int(1))
+        method_or_bare_condition: Expr
+        if method_to_register is not None:
+            method_or_bare_condition = (
+                MethodSignature(method_to_register.method_signature())
+                == Txn.application_args[0]
             )
-            if method_to_register is not None
-            # TODO the default condition for bare call need to be revised
-            else Int(1)
-        )
+        else:
+            method_or_bare_condition = Int(1)
 
         # Check if it is a *CREATION*
         approval_conds: list[Expr] = (

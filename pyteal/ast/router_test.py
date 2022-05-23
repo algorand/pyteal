@@ -212,22 +212,6 @@ def test_parse_conditions():
             assert "on complete input should be non-empty list" in str(err_no_oc)
             continue
 
-        # if is_creation and (
-        #     oncomplete_is_in_oc_list(pt.OnComplete.CloseOut, on_completes)
-        #     or oncomplete_is_in_oc_list(pt.OnComplete.ClearState, on_completes)
-        # ):
-        #     with pytest.raises(pt.TealInputError) as err_conflict_conditions:
-        #         pt.Router.parse_conditions(
-        #             subroutine if is_abi_subroutine else None,
-        #             on_completes,
-        #             is_creation,
-        #         )
-        #     assert (
-        #         "OnComplete ClearState/CloseOut may be ill-formed with app creation"
-        #         in str(err_conflict_conditions)
-        #     )
-        #     continue
-
         mutated_on_completes = on_completes + [random.choice(on_completes)]
         with pytest.raises(pt.TealInputError) as err_dup_oc:
             pt.Router.parse_conditions(
@@ -263,13 +247,9 @@ def test_parse_conditions():
 
         subroutine_arg_cond: pt.Expr
         if is_abi_subroutine:
-            max_subroutine_arg_allowed = 1 + min(
-                pt.METHOD_ARG_NUM_LIMIT, subroutine.subroutine.argument_count()
-            )
-            subroutine_arg_cond = pt.And(
-                pt.Txn.application_args[0]
-                == pt.MethodSignature(typing.cast(str, method_sig)),
-                pt.Txn.application_args.length() == pt.Int(max_subroutine_arg_allowed),
+            subroutine_arg_cond = (
+                pt.MethodSignature(typing.cast(str, method_sig))
+                == pt.Txn.application_args[0]
             )
         else:
             subroutine_arg_cond = pt.Int(1)

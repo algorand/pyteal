@@ -2267,75 +2267,51 @@ def test_router_app():
     )
 
     expected_ap = """#pragma version 6
-intcblock 0 1 3
+intcblock 0 1
 bytecblock 0x151f7c75
-txna ApplicationArgs 0
 pushbytes 0xfe6bdf69 // "add(uint64,uint64)uint64"
+txna ApplicationArgs 0
 ==
-txn NumAppArgs
-intc_2 // 3
-==
-&&
 txn OnCompletion
 intc_0 // NoOp
 ==
 &&
 bnz main_l12
-txna ApplicationArgs 0
 pushbytes 0x78b488b7 // "sub(uint64,uint64)uint64"
+txna ApplicationArgs 0
 ==
-txn NumAppArgs
-intc_2 // 3
-==
-&&
 txn OnCompletion
 intc_0 // NoOp
 ==
 &&
 bnz main_l11
-txna ApplicationArgs 0
 pushbytes 0xe2f188c5 // "mul(uint64,uint64)uint64"
+txna ApplicationArgs 0
 ==
-txn NumAppArgs
-intc_2 // 3
-==
-&&
 txn OnCompletion
 intc_0 // NoOp
 ==
 &&
 bnz main_l10
-txna ApplicationArgs 0
 pushbytes 0x16e80f08 // "div(uint64,uint64)uint64"
+txna ApplicationArgs 0
 ==
-txn NumAppArgs
-intc_2 // 3
-==
-&&
 txn OnCompletion
 intc_0 // NoOp
 ==
 &&
 bnz main_l9
-txna ApplicationArgs 0
 pushbytes 0x4dfc58ae // "mod(uint64,uint64)uint64"
+txna ApplicationArgs 0
 ==
-txn NumAppArgs
-intc_2 // 3
-==
-&&
 txn OnCompletion
 intc_0 // NoOp
 ==
 &&
 bnz main_l8
-txna ApplicationArgs 0
 pushbytes 0x487ce2fd // "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
+txna ApplicationArgs 0
 ==
-txn NumAppArgs
-pushint 16 // 16
-==
-&&
 txn OnCompletion
 intc_0 // NoOp
 ==
