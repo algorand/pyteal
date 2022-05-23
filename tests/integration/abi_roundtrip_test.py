@@ -32,12 +32,15 @@ ABI_TYPES = [
     abi.Tuple1[abi.Uint16],
     abi.Tuple1[abi.Uint32],
     abi.Tuple1[abi.Uint64],
+    abi.Tuple2[abi.Bool, abi.Byte],
     abi.Tuple3[abi.Bool, abi.Uint64, abi.Uint32],
     abi.Tuple3[abi.Byte, abi.Bool, abi.Uint64],
     abi.Tuple3[abi.Uint8, abi.Byte, abi.Bool],
     abi.Tuple3[abi.Uint16, abi.Uint8, abi.Byte],
     abi.Tuple3[abi.Uint32, abi.Uint16, abi.Uint8],
     abi.Tuple3[abi.Uint64, abi.Uint32, abi.Uint16],
+    abi.Tuple4[abi.Bool, abi.Byte, abi.Address, abi.String],
+    abi.Tuple5[abi.Bool, abi.Byte, abi.Address, abi.String, abi.Uint64],
     abi.StaticArray[abi.Bool, Literal[1]],
     abi.StaticArray[abi.Bool, Literal[42]],
     abi.StaticArray[abi.Uint64, Literal[1]],
@@ -101,6 +104,35 @@ def roundtrip_setup(abi_type):
         dynamic_length,
         ABIRoundtrip(abi.make(abi_type), length=dynamic_length).pytealer(),
     )
+
+
+def test_abi_types_comprehensive():
+    top_level_names = {
+        tli.split("[")[0] if tli.startswith("pyteal") else tli.split("'")[1]
+        for tli in (
+            str(x) for x in (at[0] if isinstance(at, tuple) else at for at in ABI_TYPES)
+        )
+    }
+
+    def get_subclasses(cls):
+        for subclass in cls.__subclasses__():
+            yield from get_subclasses(subclass)
+            yield subclass
+
+    all_abi_names = {
+        str(at).split("'")[1]
+        for at in (
+            cls
+            for cls in abi.__dict__.values()
+            if isinstance(cls, type)
+            and issubclass(cls, abi.BaseType)
+            and not cls.__abstractmethods__
+            and cls is not abi.Tuple
+        )
+    }
+
+    missing_cases = all_abi_names - top_level_names
+    assert not missing_cases, f"missing round trip tests for {missing_cases}"
 
 
 @pytest.mark.parametrize("abi_type", ABI_TYPES)
