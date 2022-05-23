@@ -21,6 +21,10 @@ def test_AddressTypeSpec_byte_length_static():
     assert (abi.AddressTypeSpec()).byte_length_static() == abi.AddressLength.Bytes
 
 
+def test_AddressTypeSpec_length_static():
+    assert (abi.AddressTypeSpec()).length_static() == abi.AddressLength.Bytes
+
+
 def test_AddressTypeSpec_new_instance():
     assert isinstance(abi.AddressTypeSpec().new_instance(), abi.Address)
 

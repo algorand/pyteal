@@ -17,6 +17,9 @@ class BoolTypeSpec(TypeSpec):
     def new_instance(self) -> "Bool":
         return Bool()
 
+    def annotation_type(self) -> "type[Bool]":
+        return Bool
+
     def is_dynamic(self) -> bool:
         # Only accurate if this value is alone, since up to 8 consecutive bools will fit into a single byte
         return False

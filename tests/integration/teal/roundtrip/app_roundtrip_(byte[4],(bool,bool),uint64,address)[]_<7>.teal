@@ -1,0 +1,836 @@
+#pragma version 6
+txna ApplicationArgs 0
+store 5
+load 5
+callsub roundtripper_2
+store 4
+byte 0x151F7C75
+load 4
+concat
+log
+int 1
+return
+
+// tuple_complement
+tuplecomplement_0:
+store 19
+load 19
+extract 0 4
+store 0
+load 19
+extract 4 1
+store 1
+load 19
+int 5
+extract_uint64
+store 2
+load 19
+extract 13 0
+store 3
+load 0
+callsub arraycomplement_4
+store 0
+load 1
+callsub tuplecomplement_5
+store 1
+load 2
+callsub numericalcomp_6
+store 2
+load 3
+callsub arraycomplement_8
+store 3
+load 0
+load 1
+concat
+load 2
+itob
+concat
+load 3
+concat
+store 20
+load 20
+retsub
+
+// array_complement
+arraycomplement_1:
+store 10
+load 10
+int 45
+int 0
+*
+int 2
++
+int 45
+extract3
+store 12
+load 10
+int 45
+int 1
+*
+int 2
++
+int 45
+extract3
+store 13
+load 10
+int 45
+int 2
+*
+int 2
++
+int 45
+extract3
+store 14
+load 10
+int 45
+int 3
+*
+int 2
++
+int 45
+extract3
+store 15
+load 10
+int 45
+int 4
+*
+int 2
++
+int 45
+extract3
+store 16
+load 10
+int 45
+int 5
+*
+int 2
++
+int 45
+extract3
+store 17
+load 10
+int 45
+int 6
+*
+int 2
++
+int 45
+extract3
+store 18
+load 12
+callsub tuplecomplement_0
+store 12
+load 13
+callsub tuplecomplement_0
+store 13
+load 14
+callsub tuplecomplement_0
+store 14
+load 15
+callsub tuplecomplement_0
+store 15
+load 16
+callsub tuplecomplement_0
+store 16
+load 17
+callsub tuplecomplement_0
+store 17
+load 18
+callsub tuplecomplement_0
+store 18
+int 7
+store 75
+load 75
+itob
+extract 6 0
+load 12
+load 13
+concat
+load 14
+concat
+load 15
+concat
+load 16
+concat
+load 17
+concat
+load 18
+concat
+concat
+store 11
+load 11
+retsub
+
+// round_tripper
+roundtripper_2:
+store 6
+load 6
+callsub arraycomplement_1
+store 8
+load 8
+callsub arraycomplement_1
+store 9
+load 6
+store 79
+load 79
+store 78
+int 6
+store 76
+load 76
+load 79
+len
++
+store 77
+load 77
+int 65536
+<
+assert
+load 76
+itob
+extract 6 0
+load 8
+store 79
+load 78
+load 79
+concat
+store 78
+load 77
+store 76
+load 76
+load 79
+len
++
+store 77
+load 77
+int 65536
+<
+assert
+load 76
+itob
+extract 6 0
+concat
+load 9
+store 79
+load 78
+load 79
+concat
+store 78
+load 77
+store 76
+load 76
+itob
+extract 6 0
+concat
+load 78
+concat
+store 7
+load 7
+retsub
+
+// numerical_comp
+numericalcomp_3:
+store 29
+int 255
+load 29
+-
+store 30
+load 30
+int 256
+<
+assert
+load 30
+retsub
+
+// array_complement
+arraycomplement_4:
+store 23
+load 23
+int 1
+int 0
+*
+getbyte
+store 25
+load 23
+int 1
+int 1
+*
+getbyte
+store 26
+load 23
+int 1
+int 2
+*
+getbyte
+store 27
+load 23
+int 1
+int 3
+*
+getbyte
+store 28
+load 25
+callsub numericalcomp_3
+store 25
+load 26
+callsub numericalcomp_3
+store 26
+load 27
+callsub numericalcomp_3
+store 27
+load 28
+callsub numericalcomp_3
+store 28
+byte 0x00
+int 0
+load 25
+setbyte
+byte 0x00
+int 0
+load 26
+setbyte
+concat
+byte 0x00
+int 0
+load 27
+setbyte
+concat
+byte 0x00
+int 0
+load 28
+setbyte
+concat
+store 24
+load 24
+retsub
+
+// tuple_complement
+tuplecomplement_5:
+store 31
+load 31
+int 0
+getbit
+store 21
+load 31
+int 1
+getbit
+store 22
+load 21
+callsub boolcomp_9
+store 21
+load 22
+callsub boolcomp_10
+store 22
+byte 0x00
+int 0
+load 21
+setbit
+int 1
+load 22
+setbit
+store 32
+load 32
+retsub
+
+// numerical_comp
+numericalcomp_6:
+store 37
+int 18446744073709551615
+load 37
+-
+store 38
+load 38
+retsub
+
+// numerical_comp
+numericalcomp_7:
+store 73
+int 255
+load 73
+-
+store 74
+load 74
+int 256
+<
+assert
+load 74
+retsub
+
+// array_complement
+arraycomplement_8:
+store 39
+load 39
+int 1
+int 0
+*
+getbyte
+store 41
+load 39
+int 1
+int 1
+*
+getbyte
+store 42
+load 39
+int 1
+int 2
+*
+getbyte
+store 43
+load 39
+int 1
+int 3
+*
+getbyte
+store 44
+load 39
+int 1
+int 4
+*
+getbyte
+store 45
+load 39
+int 1
+int 5
+*
+getbyte
+store 46
+load 39
+int 1
+int 6
+*
+getbyte
+store 47
+load 39
+int 1
+int 7
+*
+getbyte
+store 48
+load 39
+int 1
+int 8
+*
+getbyte
+store 49
+load 39
+int 1
+int 9
+*
+getbyte
+store 50
+load 39
+int 1
+int 10
+*
+getbyte
+store 51
+load 39
+int 1
+int 11
+*
+getbyte
+store 52
+load 39
+int 1
+int 12
+*
+getbyte
+store 53
+load 39
+int 1
+int 13
+*
+getbyte
+store 54
+load 39
+int 1
+int 14
+*
+getbyte
+store 55
+load 39
+int 1
+int 15
+*
+getbyte
+store 56
+load 39
+int 1
+int 16
+*
+getbyte
+store 57
+load 39
+int 1
+int 17
+*
+getbyte
+store 58
+load 39
+int 1
+int 18
+*
+getbyte
+store 59
+load 39
+int 1
+int 19
+*
+getbyte
+store 60
+load 39
+int 1
+int 20
+*
+getbyte
+store 61
+load 39
+int 1
+int 21
+*
+getbyte
+store 62
+load 39
+int 1
+int 22
+*
+getbyte
+store 63
+load 39
+int 1
+int 23
+*
+getbyte
+store 64
+load 39
+int 1
+int 24
+*
+getbyte
+store 65
+load 39
+int 1
+int 25
+*
+getbyte
+store 66
+load 39
+int 1
+int 26
+*
+getbyte
+store 67
+load 39
+int 1
+int 27
+*
+getbyte
+store 68
+load 39
+int 1
+int 28
+*
+getbyte
+store 69
+load 39
+int 1
+int 29
+*
+getbyte
+store 70
+load 39
+int 1
+int 30
+*
+getbyte
+store 71
+load 39
+int 1
+int 31
+*
+getbyte
+store 72
+load 41
+callsub numericalcomp_7
+store 41
+load 42
+callsub numericalcomp_7
+store 42
+load 43
+callsub numericalcomp_7
+store 43
+load 44
+callsub numericalcomp_7
+store 44
+load 45
+callsub numericalcomp_7
+store 45
+load 46
+callsub numericalcomp_7
+store 46
+load 47
+callsub numericalcomp_7
+store 47
+load 48
+callsub numericalcomp_7
+store 48
+load 49
+callsub numericalcomp_7
+store 49
+load 50
+callsub numericalcomp_7
+store 50
+load 51
+callsub numericalcomp_7
+store 51
+load 52
+callsub numericalcomp_7
+store 52
+load 53
+callsub numericalcomp_7
+store 53
+load 54
+callsub numericalcomp_7
+store 54
+load 55
+callsub numericalcomp_7
+store 55
+load 56
+callsub numericalcomp_7
+store 56
+load 57
+callsub numericalcomp_7
+store 57
+load 58
+callsub numericalcomp_7
+store 58
+load 59
+callsub numericalcomp_7
+store 59
+load 60
+callsub numericalcomp_7
+store 60
+load 61
+callsub numericalcomp_7
+store 61
+load 62
+callsub numericalcomp_7
+store 62
+load 63
+callsub numericalcomp_7
+store 63
+load 64
+callsub numericalcomp_7
+store 64
+load 65
+callsub numericalcomp_7
+store 65
+load 66
+callsub numericalcomp_7
+store 66
+load 67
+callsub numericalcomp_7
+store 67
+load 68
+callsub numericalcomp_7
+store 68
+load 69
+callsub numericalcomp_7
+store 69
+load 70
+callsub numericalcomp_7
+store 70
+load 71
+callsub numericalcomp_7
+store 71
+load 72
+callsub numericalcomp_7
+store 72
+byte 0x00
+int 0
+load 41
+setbyte
+byte 0x00
+int 0
+load 42
+setbyte
+concat
+byte 0x00
+int 0
+load 43
+setbyte
+concat
+byte 0x00
+int 0
+load 44
+setbyte
+concat
+byte 0x00
+int 0
+load 45
+setbyte
+concat
+byte 0x00
+int 0
+load 46
+setbyte
+concat
+byte 0x00
+int 0
+load 47
+setbyte
+concat
+byte 0x00
+int 0
+load 48
+setbyte
+concat
+byte 0x00
+int 0
+load 49
+setbyte
+concat
+byte 0x00
+int 0
+load 50
+setbyte
+concat
+byte 0x00
+int 0
+load 51
+setbyte
+concat
+byte 0x00
+int 0
+load 52
+setbyte
+concat
+byte 0x00
+int 0
+load 53
+setbyte
+concat
+byte 0x00
+int 0
+load 54
+setbyte
+concat
+byte 0x00
+int 0
+load 55
+setbyte
+concat
+byte 0x00
+int 0
+load 56
+setbyte
+concat
+byte 0x00
+int 0
+load 57
+setbyte
+concat
+byte 0x00
+int 0
+load 58
+setbyte
+concat
+byte 0x00
+int 0
+load 59
+setbyte
+concat
+byte 0x00
+int 0
+load 60
+setbyte
+concat
+byte 0x00
+int 0
+load 61
+setbyte
+concat
+byte 0x00
+int 0
+load 62
+setbyte
+concat
+byte 0x00
+int 0
+load 63
+setbyte
+concat
+byte 0x00
+int 0
+load 64
+setbyte
+concat
+byte 0x00
+int 0
+load 65
+setbyte
+concat
+byte 0x00
+int 0
+load 66
+setbyte
+concat
+byte 0x00
+int 0
+load 67
+setbyte
+concat
+byte 0x00
+int 0
+load 68
+setbyte
+concat
+byte 0x00
+int 0
+load 69
+setbyte
+concat
+byte 0x00
+int 0
+load 70
+setbyte
+concat
+byte 0x00
+int 0
+load 71
+setbyte
+concat
+byte 0x00
+int 0
+load 72
+setbyte
+concat
+store 40
+load 40
+retsub
+
+// bool_comp
+boolcomp_9:
+store 33
+load 33
+!
+store 34
+load 34
+int 2
+<
+assert
+load 34
+retsub
+
+// bool_comp
+boolcomp_10:
+store 35
+load 35
+!
+store 36
+load 36
+int 2
+<
+assert
+load 36
+retsub

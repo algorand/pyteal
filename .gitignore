@@ -102,6 +102,7 @@ celerybeat-schedule
 *.sage.py
 
 # Environments
+_env
 .env
 .venv
 env/
@@ -138,3 +139,6 @@ dmypy.json
 
 # mac OS
 .DS_Store
+
+# asdf
+.tool-versions
