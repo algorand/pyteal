@@ -92,11 +92,6 @@ class StaticArray(Array[T], Generic[T, N]):
                 encoded, startIndex=startIndex, endIndex=endIndex, length=length
             )
 
-        if length is not None:
-            raise TealInputError(
-                "Expected None for endIndex and length on static array"
-            )
-
         return super().decode(
             encoded,
             startIndex=startIndex,
