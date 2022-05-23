@@ -213,7 +213,7 @@ T = TypeVar("T", bound=BaseType)
 
 
 def size_of(t: type[T]) -> int:
-    """Get the size of an ABI type. Must be a static type"""
+    """Get the size in bytes of an ABI type. Must be a static type"""
 
     ts = type_spec_from_annotation(t)
     if ts.is_dynamic():
