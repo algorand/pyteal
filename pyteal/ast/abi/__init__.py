@@ -40,6 +40,7 @@ from pyteal.ast.abi.util import (
     algosdk_from_annotation,
     algosdk_from_type_spec,
     make,
+    size_of,
     type_spec_from_annotation,
 )
 
@@ -86,6 +87,7 @@ __all__ = [
     "MethodReturn",
     "type_spec_from_annotation",
     "make",
+    "size_of",
     "algosdk_from_annotation",
     "algosdk_from_type_spec",
 ]
