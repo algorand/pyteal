@@ -8,6 +8,9 @@ class AccountTypeSpec(UintTypeSpec):
     def new_instance(self) -> "Account":
         return Account()
 
+    def annotation_type(self) -> "type[Account]":
+        return Account
+
     def __str__(self) -> str:
         return "account"
 
@@ -33,6 +36,9 @@ class AssetTypeSpec(UintTypeSpec):
     def new_instance(self) -> "Asset":
         return Asset()
 
+    def annotation_type(self) -> "type[Asset]":
+        return Asset
+
     def __str__(self) -> str:
         return "asset"
 
@@ -57,6 +63,9 @@ class ApplicationTypeSpec(UintTypeSpec):
 
     def new_instance(self) -> "Application":
         return Application()
+
+    def annotation_type(self) -> "type[Application]":
+        return Application
 
     def __str__(self) -> str:
         return "application"
