@@ -5,6 +5,7 @@ from pyteal.ast.subroutine import (
 )
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
+import pyteal as pt
 
 # router_switchboard.py outlines an approach attempting to meet these constraints:
 # * Use existing Subroutine abstractions.
@@ -57,7 +58,6 @@ class Switchboard:
 
 
 # Usage
-import pyteal as pt
 
 
 @pt.Subroutine(return_type=pt.TealType.none)
