@@ -40,10 +40,9 @@ black:
 flake8:
 	flake8 $(ALLPY)
 
-# TODO: add `tests` to $MYPY when graviton respects mypy (version 🐗) 
-MYPY = pyteal scripts
+MYPY = pyteal scripts tests
 mypy:
-	mypy $(MYPY)
+	mypy --show-error-codes $(MYPY)
 
 lint: black flake8 mypy
 
@@ -55,9 +54,9 @@ test-unit:
 	pytest -n $(NUM_PROCS) --durations=10 -sv pyteal tests/unit --ignore tests/unit/blackbox_test.py --ignore tests/unit/user_guide_test.py
 	pytest -n 1 -sv tests/unit/blackbox_test.py tests/unit/user_guide_test.py
 
-build-and-test: check-generate-init lint test-unit
+lint-and-test: check-generate-init lint test-unit
 
-# ---- Integration Test (algod required) ---- #
+# ---- Integration Tests (algod required) ---- #
 
 sandbox-dev-up:
 	docker-compose up -d algod
@@ -70,7 +69,7 @@ integration-run:
 
 test-integration: integration-run
 
-all-tests: build-and-test test-integration
+all-tests: lint-and-test test-integration
 
 # ---- Local Github Actions Simulation via `act` ---- #
 # assumes act is installed, e.g. via `brew install act`

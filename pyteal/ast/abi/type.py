@@ -20,6 +20,11 @@ class TypeSpec(ABC):
         pass
 
     @abstractmethod
+    def annotation_type(self) -> "type[BaseType]":
+        """Get the annotation type associated with this spec"""
+        pass
+
+    @abstractmethod
     def is_dynamic(self) -> bool:
         """Check if this ABI type is dynamic.
 

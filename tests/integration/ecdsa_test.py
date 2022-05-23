@@ -1,5 +1,3 @@
-from graviton.blackbox import DryRunExecutor
-
 from pyteal import (
     Bytes,
     EcdsaCurve,
@@ -10,15 +8,13 @@ from pyteal import (
     And,
     Subroutine,
     Sha512_256,
-    compileTeal,
     Mode,
     TealType,
 )
 
 from tests.blackbox import (
     Blackbox,
-    algod_with_assertion,
-    blackbox_pyteal,
+    PyTealDryRunExecutor,
 )
 
 
@@ -49,11 +45,10 @@ def test_verify():
             ),
         )
 
-    approval_app = blackbox_pyteal(verify, Mode.Application)
-    app_teal = compileTeal(approval_app(), Mode.Application, version=5)
     args = []
-    algod = algod_with_assertion()
-    app_result = DryRunExecutor.dryrun_app(algod, app_teal, args)
+    app_result = PyTealDryRunExecutor(verify, Mode.Application).dryrun(
+        args, compiler_version=5
+    )
 
     assert app_result.stack_top() == 1, app_result.report(
         args, "stack_top() is not equal to 1, indicating ecdsa verification failed."
@@ -85,11 +80,10 @@ def test_verify():
             ),
         )
 
-    approval_app = blackbox_pyteal(verify_fail, Mode.Application)
-    app_teal = compileTeal(approval_app(), Mode.Application, version=5)
     args = []
-    algod = algod_with_assertion()
-    app_result = DryRunExecutor.dryrun_app(algod, app_teal, args)
+    app_result = PyTealDryRunExecutor(verify_fail, Mode.Application).dryrun(
+        args, compiler_version=5
+    )
 
     assert app_result.stack_top() == 0, app_result.report(
         args,
@@ -122,11 +116,10 @@ def test_decompress():
             )
         )
 
-    approval_app = blackbox_pyteal(decompress, Mode.Application)
-    app_teal = compileTeal(approval_app(), Mode.Application, version=5)
     args = []
-    algod = algod_with_assertion()
-    app_result = DryRunExecutor.dryrun_app(algod, app_teal, args)
+    app_result = PyTealDryRunExecutor(decompress, Mode.Application).dryrun(
+        args, compiler_version=5
+    )
 
     assert app_result.stack_top() == 1, app_result.report(
         args, "stack_top() is not equal to 1, indicating ecdsa verification failed."
@@ -164,11 +157,10 @@ def test_recover():
             )
         )
 
-    approval_app = blackbox_pyteal(recover, Mode.Application)
-    app_teal = compileTeal(approval_app(), Mode.Application, version=5)
     args = []
-    algod = algod_with_assertion()
-    app_result = DryRunExecutor.dryrun_app(algod, app_teal, args)
+    app_result = PyTealDryRunExecutor(recover, Mode.Application).dryrun(
+        args, compiler_version=5
+    )
 
     assert app_result.stack_top() == 1, app_result.report(
         args, "stack_top() is not equal to 1, indicating ecdsa verification failed."

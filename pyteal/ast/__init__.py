@@ -140,8 +140,7 @@ from pyteal.ast.maybe import MaybeValue
 from pyteal.ast.multi import MultiValue
 from pyteal.ast.opup import OpUp, OpUpMode
 from pyteal.ast.ecdsa import EcdsaCurve, EcdsaVerify, EcdsaDecompress, EcdsaRecover
-
-from pyteal.ast.router import Router
+from pyteal.ast.router import Router, OnCompleteActions
 
 # abi
 import pyteal.ast.abi as abi  # noqa: I250
@@ -288,6 +287,7 @@ __all__ = [
     "Break",
     "Continue",
     "Router",
+    "OnCompleteActions",
     "abi",
     "EcdsaCurve",
     "EcdsaVerify",

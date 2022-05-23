@@ -176,13 +176,13 @@ ON_COMPLETE_CASES: list[pt.EnumInt] = [
 ]
 
 
-def non_empty_power_set(no_dup_list: list):
+def power_set(no_dup_list: list):
     masks = [1 << i for i in range(len(no_dup_list))]
-    for i in range(1, 1 << len(no_dup_list)):
+    for i in range(1 << len(no_dup_list)):
         yield [elem for mask, elem in zip(masks, no_dup_list) if i & mask]
 
 
-def is_sth_in_oc_list(sth: pt.EnumInt, oc_list: list[pt.EnumInt]):
+def oncomplete_is_in_oc_list(sth: pt.EnumInt, oc_list: list[pt.EnumInt]):
     return any(map(lambda x: str(x) == str(sth), oc_list))
 
 
@@ -194,23 +194,33 @@ def assemble_helper(what: pt.Expr) -> pt.TealBlock:
 
 
 def test_parse_conditions():
-    ON_COMPLETE_COMBINED_CASES = non_empty_power_set(ON_COMPLETE_CASES)
+    ON_COMPLETE_COMBINED_CASES = power_set(ON_COMPLETE_CASES)
 
     for subroutine, on_completes, is_creation in itertools.product(
         GOOD_SUBROUTINE_CASES, ON_COMPLETE_COMBINED_CASES, [False, True]
     ):
-        if not isinstance(subroutine, pt.ABIReturnSubroutine):
-            subroutine = None
+        is_abi_subroutine = isinstance(subroutine, pt.ABIReturnSubroutine)
+        method_sig = subroutine.method_signature() if is_abi_subroutine else None
 
-        method_sig = subroutine.method_signature() if subroutine else None
+        if len(on_completes) == 0:
+            with pytest.raises(pt.TealInputError) as err_no_oc:
+                pt.Router.parse_conditions(
+                    subroutine if is_abi_subroutine else None,
+                    on_completes,
+                    is_creation,
+                )
+            assert "on complete input should be non-empty list" in str(err_no_oc)
+            continue
 
         if is_creation and (
-            is_sth_in_oc_list(pt.OnComplete.CloseOut, on_completes)
-            or is_sth_in_oc_list(pt.OnComplete.ClearState, on_completes)
+            oncomplete_is_in_oc_list(pt.OnComplete.CloseOut, on_completes)
+            or oncomplete_is_in_oc_list(pt.OnComplete.ClearState, on_completes)
         ):
             with pytest.raises(pt.TealInputError) as err_conflict_conditions:
                 pt.Router.parse_conditions(
-                    method_sig, subroutine, on_completes, is_creation
+                    subroutine if is_abi_subroutine else None,
+                    on_completes,
+                    is_creation,
                 )
             assert (
                 "OnComplete ClearState/CloseOut may be ill-formed with app creation"
@@ -221,26 +231,22 @@ def test_parse_conditions():
         mutated_on_completes = on_completes + [random.choice(on_completes)]
         with pytest.raises(pt.TealInputError) as err_dup_oc:
             pt.Router.parse_conditions(
-                method_sig, subroutine, mutated_on_completes, is_creation
+                subroutine if is_abi_subroutine else None,
+                mutated_on_completes,
+                is_creation,
             )
         assert "has duplicated on_complete(s)" in str(err_dup_oc)
-
-        if subroutine is not None:
-            with pytest.raises(pt.TealInputError) as err_wrong_override:
-                pt.Router.parse_conditions(None, subroutine, on_completes, is_creation)
-            assert (
-                "A method_signature must be provided if method_to_register is not None"
-                in str(err_wrong_override)
-            )
 
         (
             approval_condition_list,
             clear_state_condition_list,
         ) = pt.Router.parse_conditions(
-            method_sig, subroutine, on_completes, is_creation
+            subroutine if is_abi_subroutine else None,
+            on_completes,
+            is_creation,
         )
 
-        if not is_sth_in_oc_list(pt.OnComplete.ClearState, on_completes):
+        if not oncomplete_is_in_oc_list(pt.OnComplete.ClearState, on_completes):
             assert len(clear_state_condition_list) == 0
 
         assembled_ap_condition_list: list[pt.TealBlock] = [
@@ -256,7 +262,7 @@ def test_parse_conditions():
                 assert assembled_condition in assembled_ap_condition_list
 
         subroutine_arg_cond: pt.Expr
-        if subroutine:
+        if is_abi_subroutine:
             max_subroutine_arg_allowed = 1 + min(
                 pt.METHOD_ARG_NUM_LIMIT, subroutine.subroutine.argument_count()
             )
@@ -266,17 +272,21 @@ def test_parse_conditions():
                 pt.Txn.application_args.length() == pt.Int(max_subroutine_arg_allowed),
             )
         else:
-            subroutine_arg_cond = pt.Txn.application_args.length() == pt.Int(0)
+            subroutine_arg_cond = pt.Int(1)
 
         assembled_condition = assemble_helper(subroutine_arg_cond)
         with pt.TealComponent.Context.ignoreExprEquality():
-            assert assembled_condition in assembled_ap_condition_list
+            if not (
+                len(on_completes) == 1
+                and oncomplete_is_in_oc_list(pt.OnComplete.ClearState, on_completes)
+            ):
+                assert assembled_condition in assembled_ap_condition_list
 
-        if is_sth_in_oc_list(pt.OnComplete.ClearState, on_completes):
+        if oncomplete_is_in_oc_list(pt.OnComplete.ClearState, on_completes):
             with pt.TealComponent.Context.ignoreExprEquality():
                 assert assembled_condition in assembled_csp_condition_list
 
-        if len(on_completes) == 1 and is_sth_in_oc_list(
+        if len(on_completes) == 1 and oncomplete_is_in_oc_list(
             pt.OnComplete.ClearState, on_completes
         ):
             continue
@@ -413,21 +423,18 @@ def test_wrap_handler_method_call():
 
 
 def test_contract_json_obj():
-    ONLY_ABI_SUBROUTINE_CASES = list(
+    abi_subroutines = list(
         filter(lambda x: isinstance(x, pt.ABIReturnSubroutine), GOOD_SUBROUTINE_CASES)
     )
-    for _ in range(4):
-        ONLY_ABI_SUBROUTINE_CASES = random.choices(ONLY_ABI_SUBROUTINE_CASES, k=5)
-        for index, case in enumerate(non_empty_power_set(ONLY_ABI_SUBROUTINE_CASES)):
-            contract_name = f"contract_{index}"
-            router = pt.Router(contract_name)
-            method_list: list[sdk_abi.contract.Method] = []
-            for subroutine in case:
-                router.add_method_handler(subroutine)
-                method_list.append(
-                    sdk_abi.Method.from_signature(subroutine.method_signature())
-                )
-            router.add_bare_call(safe_clear_state_delete, pt.OnComplete.ClearState)
-            sdk_contract = sdk_abi.contract.Contract(contract_name, method_list)
-            contract = router.contract_construct()
-            assert sdk_contract.dictify() == contract
+    contract_name = "contract_name"
+    on_complete_actions = pt.OnCompleteActions().set_action(
+        safe_clear_state_delete, pt.OnComplete.ClearState
+    )
+    router = pt.Router(contract_name, on_complete_actions)
+    method_list: list[sdk_abi.Method] = []
+    for subroutine in abi_subroutines:
+        router.abi_method()(subroutine)
+        method_list.append(sdk_abi.Method.from_signature(subroutine.method_signature()))
+    sdk_contract = sdk_abi.Contract(contract_name, method_list)
+    contract = router.contract_construct()
+    assert sdk_contract.dictify() == contract

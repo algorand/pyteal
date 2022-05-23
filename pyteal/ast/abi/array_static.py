@@ -1,11 +1,4 @@
-from typing import (
-    Union,
-    Sequence,
-    TypeVar,
-    Generic,
-    Final,
-    cast,
-)
+from typing import Final, Generic, Literal, Sequence, TypeVar, Union, cast
 
 from pyteal.errors import TealInputError
 from pyteal.ast.expr import Expr
@@ -25,10 +18,17 @@ class StaticArrayTypeSpec(ArrayTypeSpec[T], Generic[T, N]):
         super().__init__(value_type_spec)
         if not isinstance(array_length, int) or array_length < 0:
             raise TypeError(f"Unsupported StaticArray length: {array_length}")
-        self.array_length: Final = array_length
+
+        # Casts to `int` to handle downstream usage where value is a subclass of int like `IntEnum`.
+        self.array_length: Final = int(array_length)
 
     def new_instance(self) -> "StaticArray[T, N]":
         return StaticArray(self)
+
+    def annotation_type(self) -> "type[StaticArray[T, N]]":
+        return StaticArray[  # type: ignore[misc]
+            self.value_spec.annotation_type(), Literal[self.array_length]  # type: ignore
+        ]
 
     def length_static(self) -> int:
         """Get the size of this static array type.
