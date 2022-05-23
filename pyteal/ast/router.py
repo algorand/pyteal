@@ -243,18 +243,18 @@ class Router:
             raise TealInputError("on complete input should be non-empty list")
 
         # Check the existence of OC.CloseOut
-        close_out_exist = any(
-            map(lambda x: str(x) == str(OnComplete.CloseOut), on_completes)
-        )
+        # close_out_exist = any(
+        #     map(lambda x: str(x) == str(OnComplete.CloseOut), on_completes)
+        # )
         # Check the existence of OC.ClearState (needed later)
         clear_state_exist = any(
             map(lambda x: str(x) == str(OnComplete.ClearState), on_completes)
         )
         # Ill formed report if app create with existence of OC.CloseOut or OC.ClearState
-        if creation and (close_out_exist or clear_state_exist):
-            raise TealInputError(
-                "OnComplete ClearState/CloseOut may be ill-formed with app creation"
-            )
+        # if creation and (close_out_exist or clear_state_exist):
+        #     raise TealInputError(
+        #         "OnComplete ClearState/CloseOut may be ill-formed with app creation"
+        #     )
         # Check if anything other than ClearState exists
         oc_other_than_clear_state_exists = any(
             map(lambda x: str(x) != str(OnComplete.ClearState), on_completes)

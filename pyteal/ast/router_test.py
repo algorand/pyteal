@@ -212,21 +212,21 @@ def test_parse_conditions():
             assert "on complete input should be non-empty list" in str(err_no_oc)
             continue
 
-        if is_creation and (
-            oncomplete_is_in_oc_list(pt.OnComplete.CloseOut, on_completes)
-            or oncomplete_is_in_oc_list(pt.OnComplete.ClearState, on_completes)
-        ):
-            with pytest.raises(pt.TealInputError) as err_conflict_conditions:
-                pt.Router.parse_conditions(
-                    subroutine if is_abi_subroutine else None,
-                    on_completes,
-                    is_creation,
-                )
-            assert (
-                "OnComplete ClearState/CloseOut may be ill-formed with app creation"
-                in str(err_conflict_conditions)
-            )
-            continue
+        # if is_creation and (
+        #     oncomplete_is_in_oc_list(pt.OnComplete.CloseOut, on_completes)
+        #     or oncomplete_is_in_oc_list(pt.OnComplete.ClearState, on_completes)
+        # ):
+        #     with pytest.raises(pt.TealInputError) as err_conflict_conditions:
+        #         pt.Router.parse_conditions(
+        #             subroutine if is_abi_subroutine else None,
+        #             on_completes,
+        #             is_creation,
+        #         )
+        #     assert (
+        #         "OnComplete ClearState/CloseOut may be ill-formed with app creation"
+        #         in str(err_conflict_conditions)
+        #     )
+        #     continue
 
         mutated_on_completes = on_completes + [random.choice(on_completes)]
         with pytest.raises(pt.TealInputError) as err_dup_oc:
