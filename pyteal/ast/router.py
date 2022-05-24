@@ -28,6 +28,18 @@ from pyteal.ast.return_ import Approve
 
 
 class CallConfig(Enum):
+    """
+    CallConfigs: a "bitset" alike class for more fine-grained control over
+    `call or create` for a method about an OnComplete case.
+
+    This enumeration class allows for specifying one of the four following cases:
+    - CALL
+    - CREATE
+    - ALL
+    - NEVER
+    for a method call on one on_complete case.
+    """
+
     NEVER = 0
     CALL = 1
     CREATE = 2
@@ -54,6 +66,10 @@ CallConfig.__module__ = "pyteal"
 
 @dataclass(frozen=True)
 class CallConfigs:
+    """
+    CallConfigs keep track of one method registration's CallConfigs for all OnComplete cases.
+    """
+
     no_op: CallConfig = field(kw_only=True, default=CallConfig.CALL)
     opt_in: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
     close_out: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
@@ -93,6 +109,10 @@ class CallConfigs:
 
 @dataclass(frozen=True)
 class OCAction:
+    """
+    OnComplete Action, registers bare calls to one single OnCompletion case.
+    """
+
     on_create: Optional[Expr | SubroutineFnWrapper | ABIReturnSubroutine] = field(
         kw_only=True, default=None
     )
@@ -128,6 +148,10 @@ OCAction.__module__ = "pyteal"
 
 @dataclass(frozen=True)
 class OCActions:
+    """
+    OnCompletion Actions keep track of bare-call registrations to all OnCompletion cases.
+    """
+
     close_out: OCAction = field(kw_only=True, default=OCAction.never())
     clear_state: OCAction = field(kw_only=True, default=OCAction.never())
     delete_application: OCAction = field(kw_only=True, default=OCAction.never())
