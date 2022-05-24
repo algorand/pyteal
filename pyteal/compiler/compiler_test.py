@@ -2196,33 +2196,43 @@ retsub
 
 
 def test_router_app():
-    on_completion_actions = pt.OnCompleteActions().set_action(
-        pt.Approve(), pt.OnComplete.ClearState
+    on_completion_actions = pt.OCActions(
+        clear_state=pt.OCAction.call_only(pt.Approve())
     )
 
-    router = pt.Router("Contract", on_completion_actions)
+    router = pt.Router("ASimpleQuestionablyRobustContract", on_completion_actions)
 
-    @router.abi_method()
+    @pt.ABIReturnSubroutine
     def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(a.get() + b.get())
 
-    @router.abi_method()
+    router.add_method_handler(add)
+
+    @pt.ABIReturnSubroutine
     def sub(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(a.get() - b.get())
 
-    @router.abi_method()
+    router.add_method_handler(sub)
+
+    @pt.ABIReturnSubroutine
     def mul(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(a.get() * b.get())
 
-    @router.abi_method()
+    router.add_method_handler(mul)
+
+    @pt.ABIReturnSubroutine
     def div(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(a.get() / b.get())
 
-    @router.abi_method()
+    router.add_method_handler(div)
+
+    @pt.ABIReturnSubroutine
     def mod(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(a.get() % b.get())
 
-    @router.abi_method()
+    router.add_method_handler(mod)
+
+    @pt.ABIReturnSubroutine
     def all_laid_to_args(
         _a: pt.abi.Uint64,
         _b: pt.abi.Uint64,
@@ -2262,6 +2272,8 @@ def test_router_app():
             + _p.get()
         )
 
+    router.add_method_handler(all_laid_to_args)
+
     actual_ap_compiled, actual_csp_compiled, _ = router.compile_program(
         version=6, assembleConstants=True
     )
@@ -2269,48 +2281,48 @@ def test_router_app():
     expected_ap = """#pragma version 6
 intcblock 0 1
 bytecblock 0x151f7c75
-pushbytes 0xfe6bdf69 // "add(uint64,uint64)uint64"
 txna ApplicationArgs 0
+pushbytes 0xfe6bdf69 // "add(uint64,uint64)uint64"
 ==
 txn OnCompletion
 intc_0 // NoOp
 ==
 &&
 bnz main_l12
-pushbytes 0x78b488b7 // "sub(uint64,uint64)uint64"
 txna ApplicationArgs 0
+pushbytes 0x78b488b7 // "sub(uint64,uint64)uint64"
 ==
 txn OnCompletion
 intc_0 // NoOp
 ==
 &&
 bnz main_l11
-pushbytes 0xe2f188c5 // "mul(uint64,uint64)uint64"
 txna ApplicationArgs 0
+pushbytes 0xe2f188c5 // "mul(uint64,uint64)uint64"
 ==
 txn OnCompletion
 intc_0 // NoOp
 ==
 &&
 bnz main_l10
-pushbytes 0x16e80f08 // "div(uint64,uint64)uint64"
 txna ApplicationArgs 0
+pushbytes 0x16e80f08 // "div(uint64,uint64)uint64"
 ==
 txn OnCompletion
 intc_0 // NoOp
 ==
 &&
 bnz main_l9
-pushbytes 0x4dfc58ae // "mod(uint64,uint64)uint64"
 txna ApplicationArgs 0
+pushbytes 0x4dfc58ae // "mod(uint64,uint64)uint64"
 ==
 txn OnCompletion
 intc_0 // NoOp
 ==
 &&
 bnz main_l8
-pushbytes 0x487ce2fd // "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
 txna ApplicationArgs 0
+pushbytes 0x487ce2fd // "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
 ==
 txn OnCompletion
 intc_0 // NoOp
