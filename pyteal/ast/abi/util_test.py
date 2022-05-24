@@ -11,6 +11,7 @@ from pyteal.ast.abi.util import (
     int_literal_from_annotation,
     type_spec_from_annotation,
 )
+from pyteal.errors import TealInputError
 
 options = pt.CompileOptions(version=5)
 
@@ -315,6 +316,20 @@ def test_make():
 
     assert actual.type_spec() == expected_type_spec
     assert type(actual) is abi.Tuple
+
+
+def test_size_of():
+    values = [
+        (abi.Uint8, 1),
+        (abi.Address, 32),
+        (abi.StaticArray[abi.Uint16, Literal[10]], 2 * 10),
+    ]
+
+    for (t, s) in values:
+        assert abi.size_of(t) == s
+
+    with pytest.raises(TealInputError):
+        abi.size_of(abi.String)
 
 
 def test_abi_type_translation():
