@@ -5,6 +5,8 @@ from typing import (
 )
 from abc import abstractmethod
 
+from pyteal.ast.assert_ import Assert
+from pyteal.ast.naryexpr import And
 from pyteal.ast.seq import TealInputError, Seq
 from pyteal.ast.int import Int
 from pyteal.ast.expr import Expr
@@ -45,28 +47,21 @@ class SInt(Uint):
     def __init__(self, spec: SIntTypeSpec) -> None:
         super().__init__(spec)
 
-    def type_spec(self) -> SIntTypeSpec:
-        return cast(SIntTypeSpec, super().type_spec())
-
     def set(self: T, value: Union[int, Expr, "SInt", ComputedValue[T]]) -> Expr:
         bit_size = self.type_spec().bit_size()
-        min_int = -(2**bit_size)
-        max_int = 2**bit_size - 1
+        min_int = -(2**(bit_size-1))
+        max_int = 2**(bit_size-1) - 1
 
-        if isinstance(value, int) and min_int <= value <= max_int:
-            if value < 0:
-                value = twos_complement(value, self.type_spec().bit_size())
-            value = Int(value)
-        else:
-            raise TealInputError("Value is not within {} and {} range of allowed values".format(min_int, max_int))
+        if isinstance(value, int):
+            if min_int <= value <= max_int:
+                if value < 0:
+                    value = twos_complement(value, bit_size)
+            else:
+                raise TealInputError("Value is not within {} and {} range of allowed values".format(min_int, max_int))
+        elif isinstance(value, Expr) and not isinstance(value, SInt):
+            return Seq(super().set(value), Assert(And(self.stored_value.load() < Int(max_int))))
 
-        if isinstance(value, Expr):
-            # TODO: Continue implementing all input type cases.
-            pass
-
-        return Seq(
-            self.stored_value.store(value)
-        )
+        return super().set(value)
 
 
 class SInt16(SInt):
