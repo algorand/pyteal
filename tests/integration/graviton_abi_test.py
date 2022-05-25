@@ -19,6 +19,8 @@ WARNING: The following ABI types Int65 and Complex130 are ONLY for the purpose o
 ABISubroutine and graviton ABI capabilities and are NOT the recommended approach for 
 implementing integers and complex integers.
 A better approach would likely leverage `Uint64` (if any ABI type at all) and make use of 2's complement arithmetic.
+
+Cf. https://github.com/algorand/pyteal/issues/184
 """
 
 Int65 = pt.abi.Tuple2[pt.abi.Bool, pt.abi.Uint64]
