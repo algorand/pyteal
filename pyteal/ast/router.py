@@ -68,6 +68,18 @@ CallConfig.__module__ = "pyteal"
 class CallConfigs:
     """
     CallConfigs keep track of one method registration's CallConfigs for all OnComplete cases.
+
+    By ARC-0004 spec:
+        If an Application is called with greater than zero Application call arguments  (NOT a bare Application call),
+        the Application MUST always treat the first argument as a method selector and invoke the specified method,
+        regardless of the OnCompletion action of the Application call.
+        This applies to Application creation transactions as well, where the supplied Application ID is 0.
+
+    The `CallConfigs` implementation generalized contract method call such that method call is allowed
+    for certain OnCompletions.
+
+    The `arc4_compliant` method constructs a `CallConfigs` that allows a method call to be executed
+    under any OnCompletion, which is "arc4-compliant".
     """
 
     no_op: CallConfig = field(kw_only=True, default=CallConfig.CALL)
@@ -90,6 +102,9 @@ class CallConfigs:
             update_application=CallConfig.ALL,
             delete_application=CallConfig.ALL,
         )
+
+    def is_arc4_compliant(self) -> bool:
+        return self == self.arc4_compliant()
 
     def _oc_under_call_config(self, call_config: CallConfig) -> list[EnumInt]:
         if not isinstance(call_config, CallConfig):
