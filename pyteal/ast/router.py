@@ -27,6 +27,22 @@ from pyteal.ast.txn import Txn
 from pyteal.ast.return_ import Approve
 
 
+################################################################################
+#                                  DISCLAIMER                                  #
+################################################################################
+# ABI-Router is still taking shape and is subject to backwards incompatible    #
+# changes.                                                                     #
+#                                                                              #
+# * For ARC-4 Application definition, feel encouraged to use ABI-Router.       #
+#   Expect a best-effort attempt to minimize backwards incompatible changes    #
+#   along with a migration path.                                               #
+#                                                                              #
+# * USE AT YOUR OWN RISK.                                                      #
+#   Based on feedback, the API and usage patterns will change more freely and  #
+#   with less effort to provide migration paths.                               #
+################################################################################
+
+
 class CallConfig(Enum):
     """
     CallConfigs: a "bitset"-like class for more fine-grained control over
