@@ -2,7 +2,6 @@ from dataclasses import dataclass, field, fields, astuple
 from typing import Any, cast, Optional
 from enum import Enum
 
-import more_itertools
 import algosdk.abi as sdk_abi
 
 from pyteal.config import METHOD_ARG_NUM_LIMIT
@@ -100,12 +99,16 @@ class CallConfigs:
             if (oc_config & call_config) != CallConfig.NEVER
         ]
 
-    def partition_oc_by_clear_state(self, cc: CallConfig) -> tuple[bool, list[EnumInt]]:
-        not_clear_states, clear_states = more_itertools.partition(
-            lambda x: str(x) == str(OnComplete.ClearState),
-            self._oc_under_call_config(cc),
+    def has_clear_state(self, cc: CallConfig) -> bool:
+        return (self.clear_state & cc) != CallConfig.NEVER
+
+    def approval_program_oc(self, cc: CallConfig) -> list[EnumInt]:
+        return list(
+            filter(
+                lambda x: str(x) != str(OnComplete.ClearState),
+                self._oc_under_call_config(cc),
+            )
         )
-        return len(list(clear_states)) > 0, list(not_clear_states)
 
 
 @dataclass(frozen=True)
@@ -425,10 +428,11 @@ class Router:
 
         wrapped = Router._wrap_handler(True, method_call)
 
-        (
-            create_has_clear_state,
-            create_others,
-        ) = call_configs.partition_oc_by_clear_state(CallConfig.CREATE)
+        create_has_clear_state = call_configs.has_clear_state(CallConfig.CREATE)
+        create_others = call_configs.approval_program_oc(CallConfig.CREATE)
+        call_has_clear_state = call_configs.has_clear_state(CallConfig.CALL)
+        call_others = call_configs.approval_program_oc(CallConfig.CALL)
+
         if create_has_clear_state:
             self.categorized_clear_state_ast.method_calls_create.append(
                 CondNode(
@@ -439,10 +443,6 @@ class Router:
                     wrapped,
                 )
             )
-
-        call_has_clear_state, call_others = call_configs.partition_oc_by_clear_state(
-            CallConfig.CALL
-        )
         if call_has_clear_state:
             self.categorized_clear_state_ast.method_calls.append(
                 CondNode(
