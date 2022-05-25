@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
-from typing import Any, cast, Optional
+from typing import Any, cast, Optional, Tuple
 from enum import Enum
+import more_itertools
 
 import algosdk.abi as sdk_abi
 
@@ -87,7 +88,7 @@ class CallConfigs:
             and self.delete_application == CallConfig.NEVER
         )
 
-    def oc_under_call_config(self, call_config: CallConfig) -> list[EnumInt]:
+    def _oc_under_call_config(self, call_config: CallConfig) -> list[EnumInt]:
         if not isinstance(call_config, CallConfig):
             raise TealInputError(
                 "generate condition based on OCMethodCallConfigs should be based on OCMethodConfig"
@@ -427,15 +428,21 @@ class Router:
             raise TealInputError(
                 f"registered method {method_signature} is never executed"
             )
-        oc_create: list[EnumInt] = call_configs.oc_under_call_config(CallConfig.CREATE)
-        oc_call: list[EnumInt] = call_configs.oc_under_call_config(CallConfig.CALL)
         if method_signature in self.added_method_sig:
             raise TealInputError(f"re-registering method {method_signature} detected")
         self.added_method_sig.add(method_signature)
 
         wrapped = Router.wrap_handler(True, method_call)
 
-        if any(str(OnComplete.ClearState) == str(x) for x in oc_create):
+        def partition(cc: CallConfig) -> Tuple[bool, list[EnumInt]]:
+            (not_clear_states, clear_states) = more_itertools.partition(
+                lambda x: str(x) == str(OnComplete.ClearState),
+                call_configs._oc_under_call_config(cc),
+            )
+            return (len(list(clear_states)) > 0, list(not_clear_states))
+
+        (create_has_clear_state, create_others) = partition(CallConfig.CREATE)
+        if create_has_clear_state:
             self.categorized_clear_state_ast.method_calls_create.append(
                 CondNode(
                     And(
@@ -445,35 +452,33 @@ class Router:
                     wrapped,
                 )
             )
-            oc_create = [
-                oc for oc in oc_create if str(oc) != str(OnComplete.ClearState)
-            ]
-        if any(str(OnComplete.ClearState) == str(x) for x in oc_call):
+
+        (call_has_clear_state, call_others) = partition(CallConfig.CALL)
+        if call_has_clear_state:
             self.categorized_clear_state_ast.method_calls.append(
                 CondNode(
                     Txn.application_args[0] == MethodSignature(method_signature),
                     wrapped,
                 )
             )
-            oc_call = [oc for oc in oc_call if str(oc) != str(OnComplete.ClearState)]
 
-        if oc_create:
+        if create_others:
             self.categorized_approval_ast.method_calls_create.append(
                 CondNode(
                     And(
                         Txn.application_id() == Int(0),
                         Txn.application_args[0] == MethodSignature(method_signature),
-                        Or(*[Txn.on_completion() == oc for oc in oc_create]),
+                        Or(*[Txn.on_completion() == oc for oc in create_others]),
                     ),
                     wrapped,
                 )
             )
-        if oc_call:
+        if call_others:
             self.categorized_approval_ast.method_calls.append(
                 CondNode(
                     And(
                         Txn.application_args[0] == MethodSignature(method_signature),
-                        Or(*[Txn.on_completion() == oc for oc in oc_call]),
+                        Or(*[Txn.on_completion() == oc for oc in call_others]),
                     ),
                     wrapped,
                 )
