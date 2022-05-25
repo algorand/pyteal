@@ -99,10 +99,10 @@ class CallConfigs:
             if (oc_config & call_config) != CallConfig.NEVER
         ]
 
-    def has_clear_state(self, cc: CallConfig) -> bool:
+    def _has_clear_state(self, cc: CallConfig) -> bool:
         return (self.clear_state & cc) != CallConfig.NEVER
 
-    def approval_program_oc(self, cc: CallConfig) -> list[EnumInt]:
+    def _approval_program_oc(self, cc: CallConfig) -> list[EnumInt]:
         return list(
             filter(
                 lambda x: str(x) != str(OnComplete.ClearState),
@@ -172,7 +172,7 @@ class OnCompleteActions:
         kw_only=True, default=OnCompleteAction.never()
     )
 
-    def partition_oc_by_clear_state(
+    def _clear_state_n_other_oc(
         self,
     ) -> tuple[OnCompleteAction, dict[EnumInt, OnCompleteAction]]:
         return self.clear_state, {
@@ -377,7 +377,7 @@ class Router:
         action_type = Expr | SubroutineFnWrapper | ABIReturnSubroutine
         if oc_actions.is_empty():
             raise TealInternalError("the OnCompleteActions is empty.")
-        cs_calls, approval_calls = oc_actions.partition_oc_by_clear_state()
+        cs_calls, approval_calls = oc_actions._clear_state_n_other_oc()
         if cs_calls.on_call:
             on_call = cast(action_type, cs_calls.on_call)
             wrapped = Router._wrap_handler(False, on_call)
@@ -428,10 +428,10 @@ class Router:
 
         wrapped = Router._wrap_handler(True, method_call)
 
-        create_has_clear_state = call_configs.has_clear_state(CallConfig.CREATE)
-        create_others = call_configs.approval_program_oc(CallConfig.CREATE)
-        call_has_clear_state = call_configs.has_clear_state(CallConfig.CALL)
-        call_others = call_configs.approval_program_oc(CallConfig.CALL)
+        create_has_clear_state = call_configs._has_clear_state(CallConfig.CREATE)
+        create_others = call_configs._approval_program_oc(CallConfig.CREATE)
+        call_has_clear_state = call_configs._has_clear_state(CallConfig.CALL)
+        call_others = call_configs._approval_program_oc(CallConfig.CALL)
 
         if create_has_clear_state:
             self.categorized_clear_state_ast.method_calls_create.append(
