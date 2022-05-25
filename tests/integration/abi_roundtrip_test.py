@@ -11,6 +11,19 @@ from pyteal import abi
 from tests.abi_roundtrip import ABIRoundtrip
 from tests.compile_asserts import assert_teal_as_expected
 
+GAI_ISSUE_2050 = "https://github.com/algorand/go-algorand-internal/issues/2050"
+BAD_TEALS = {
+    "()": GAI_ISSUE_2050,
+}
+
+
+GAI_ISSUE_2068 = "https://github.com/algorand/go-algorand-internal/issues/2068"
+BAD_TYPES = {
+    "account": GAI_ISSUE_2068,
+    "asset": GAI_ISSUE_2068,
+    "application": GAI_ISSUE_2068,
+}
+
 PATH = Path.cwd() / "tests" / "integration"
 FIXTURES = PATH / "teal"
 GENERATED = PATH / "generated"
@@ -104,6 +117,7 @@ def roundtrip_setup(abi_type):
 
     return (
         abi_type,
+        str(abi.type_spec_from_annotation(abi_type)),
         dynamic_length,
         ABIRoundtrip(abi.make(abi_type), length=dynamic_length).pytealer(),
     )
@@ -141,10 +155,12 @@ def test_abi_types_comprehensive():
 @pytest.mark.parametrize("abi_type", ABI_TYPES)
 def test_pure_compilation(abi_type):
     print(f"Pure Compilation Test for {abi_type=}")
-    abi_type, dynamic_length, roundtripper = roundtrip_setup(abi_type)
+    abi_type, type_str, dynamic_length, roundtripper = roundtrip_setup(abi_type)
 
-    # TODO: Remove once we have necessary bits in SDK for reference types
-    if abi_type in [abi.Account, abi.Asset, abi.Application]:
+    if str(type_str) in BAD_TYPES:
+        print(
+            f"Skipping encoding roundtrip test of '{abi_type}' because of {BAD_TYPES[type_str]}"
+        )
         return
 
     sdk_abi_type = abi.algosdk_from_annotation(abi_type)
@@ -171,22 +187,17 @@ def test_pure_compilation(abi_type):
     assert_teal_as_expected(save_to, FIXTURES / "roundtrip" / filename)
 
 
-GAI_ISSUE_2050 = "https://github.com/algorand/go-algorand-internal/issues/2050"
-
-BAD_TEALS = {
-    "()": GAI_ISSUE_2050,
-}
-
-
 @pytest.mark.parametrize("abi_type", ABI_TYPES)
 def test_roundtrip(abi_type):
     print(f"Round Trip Test for {abi_type=}")
 
-    # TODO: Remove when we have SDK support
-    if abi_type in [abi.Account, abi.Asset, abi.Application]:
-        return
+    _, type_str, dynamic_length, roundtripper = roundtrip_setup(abi_type)
 
-    _, dynamic_length, roundtripper = roundtrip_setup(abi_type)
+    if type_str in BAD_TYPES:
+        print(
+            f"Skipping encoding roundtrip test of '{abi_type}' because of {BAD_TYPES[type_str]}"
+        )
+        return
 
     sdk_abi_types = roundtripper.abi_argument_types()
     sdk_ret_type = roundtripper.abi_return_type()
