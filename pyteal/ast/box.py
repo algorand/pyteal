@@ -176,7 +176,7 @@ class BoxExtract(Expr):
         return TealType.bytes
 
     def has_return(self):
-        return True
+        return False 
 
 
 BoxExtract.__module__ = "pyteal"
