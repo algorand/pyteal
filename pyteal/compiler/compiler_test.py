@@ -2196,8 +2196,8 @@ retsub
 
 
 def test_router_app():
-    on_completion_actions = pt.OCActions(
-        clear_state=pt.OCAction.call_only(pt.Approve())
+    on_completion_actions = pt.OnCompleteActions(
+        clear_state=pt.OnCompleteAction.call_only(pt.Approve())
     )
 
     router = pt.Router("ASimpleQuestionablyRobustContract", on_completion_actions)

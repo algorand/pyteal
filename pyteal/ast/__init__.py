@@ -142,8 +142,8 @@ from pyteal.ast.router import (
     Router,
     CallConfig,
     CallConfigs,
-    OCAction,
-    OCActions,
+    OnCompleteAction,
+    OnCompleteActions,
 )
 
 # abi
@@ -289,8 +289,8 @@ __all__ = [
     "Router",
     "CallConfig",
     "CallConfigs",
-    "OCAction",
-    "OCActions",
+    "OnCompleteAction",
+    "OnCompleteActions",
     "abi",
     "EcdsaCurve",
     "EcdsaVerify",

@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields, astuple
 from typing import Any, cast, Optional
 from enum import Enum
 
@@ -6,7 +6,7 @@ import more_itertools
 import algosdk.abi as sdk_abi
 
 from pyteal.config import METHOD_ARG_NUM_LIMIT
-from pyteal.errors import TealInputError
+from pyteal.errors import TealInputError, TealInternalError
 from pyteal.types import TealType
 from pyteal.compiler.compiler import compileTeal, DEFAULT_TEAL_VERSION, OptimizeOptions
 from pyteal.ir.ops import Mode
@@ -30,7 +30,7 @@ from pyteal.ast.return_ import Approve
 
 class CallConfig(Enum):
     """
-    CallConfigs: a "bitset" alike class for more fine-grained control over
+    CallConfigs: a "bitset"-like class for more fine-grained control over
     `call or create` for a method about an OnComplete case.
 
     This enumeration class allows for specifying one of the four following cases:
@@ -48,17 +48,17 @@ class CallConfig(Enum):
 
     def __or__(self, other: object) -> "CallConfig":
         if not isinstance(other, CallConfig):
-            raise TealInputError("OCMethodConfig must be compared with same class")
+            raise TealInputError("CallConfig must be compared with same class")
         return CallConfig(self.value | other.value)
 
     def __and__(self, other: object) -> "CallConfig":
         if not isinstance(other, CallConfig):
-            raise TealInputError("OCMethodConfig must be compared with same class")
+            raise TealInputError("CallConfig must be compared with same class")
         return CallConfig(self.value & other.value)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, CallConfig):
-            raise TealInputError("OCMethodConfig must be compared with same class")
+            raise TealInputError("CallConfig must be compared with same class")
         return self.value == other.value
 
 
@@ -79,19 +79,12 @@ class CallConfigs:
     delete_application: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
 
     def is_never(self) -> bool:
-        return (
-            self.no_op == CallConfig.NEVER
-            and self.opt_in == CallConfig.NEVER
-            and self.close_out == CallConfig.NEVER
-            and self.clear_state == CallConfig.NEVER
-            and self.update_application == CallConfig.NEVER
-            and self.delete_application == CallConfig.NEVER
-        )
+        return all(map(lambda cc: cc == CallConfig.NEVER, astuple(self)))
 
     def _oc_under_call_config(self, call_config: CallConfig) -> list[EnumInt]:
         if not isinstance(call_config, CallConfig):
             raise TealInputError(
-                "generate condition based on OCMethodCallConfigs should be based on OCMethodConfig"
+                "generate condition based on CallConfigs should be based on CallConfig"
             )
         config_oc_pairs: list[tuple[CallConfig, EnumInt]] = [
             (self.no_op, OnComplete.NoOp),
@@ -107,9 +100,7 @@ class CallConfigs:
             if (oc_config & call_config) != CallConfig.NEVER
         ]
 
-    def _partition_oc_by_clear_state(
-        self, cc: CallConfig
-    ) -> tuple[bool, list[EnumInt]]:
+    def partition_oc_by_clear_state(self, cc: CallConfig) -> tuple[bool, list[EnumInt]]:
         not_clear_states, clear_states = more_itertools.partition(
             lambda x: str(x) == str(OnComplete.ClearState),
             self._oc_under_call_config(cc),
@@ -118,7 +109,7 @@ class CallConfigs:
 
 
 @dataclass(frozen=True)
-class OCAction:
+class OnCompleteAction:
     """
     OnComplete Action, registers bare calls to one single OnCompletion case.
     """
@@ -131,48 +122,58 @@ class OCAction:
     )
 
     @staticmethod
-    def never() -> "OCAction":
-        return OCAction()
+    def never() -> "OnCompleteAction":
+        return OnCompleteAction()
 
     @staticmethod
     def create_only(
         f: Expr | SubroutineFnWrapper | ABIReturnSubroutine,
-    ) -> "OCAction":
-        return OCAction(on_create=f)
+    ) -> "OnCompleteAction":
+        return OnCompleteAction(on_create=f)
 
     @staticmethod
     def call_only(
         f: Expr | SubroutineFnWrapper | ABIReturnSubroutine,
-    ) -> "OCAction":
-        return OCAction(on_call=f)
+    ) -> "OnCompleteAction":
+        return OnCompleteAction(on_call=f)
 
     @staticmethod
     def always(
         f: Expr | SubroutineFnWrapper | ABIReturnSubroutine,
-    ) -> "OCAction":
-        return OCAction(on_create=f, on_call=f)
+    ) -> "OnCompleteAction":
+        return OnCompleteAction(on_create=f, on_call=f)
+
+    def is_empty(self) -> bool:
+        return not (self.on_call or self.on_create)
 
 
-OCAction.__module__ = "pyteal"
+OnCompleteAction.__module__ = "pyteal"
 
 
 @dataclass(frozen=True)
-class OCActions:
+class OnCompleteActions:
     """
     OnCompletion Actions keep track of bare-call registrations to all OnCompletion cases.
     """
 
-    close_out: OCAction = field(kw_only=True, default=OCAction.never())
-    clear_state: OCAction = field(kw_only=True, default=OCAction.never())
-    delete_application: OCAction = field(kw_only=True, default=OCAction.never())
-    no_op: OCAction = field(kw_only=True, default=OCAction.never())
-    opt_in: OCAction = field(kw_only=True, default=OCAction.never())
-    update_application: OCAction = field(kw_only=True, default=OCAction.never())
+    close_out: OnCompleteAction = field(kw_only=True, default=OnCompleteAction.never())
+    clear_state: OnCompleteAction = field(
+        kw_only=True, default=OnCompleteAction.never()
+    )
+    delete_application: OnCompleteAction = field(
+        kw_only=True, default=OnCompleteAction.never()
+    )
+    no_op: OnCompleteAction = field(kw_only=True, default=OnCompleteAction.never())
+    opt_in: OnCompleteAction = field(kw_only=True, default=OnCompleteAction.never())
+    update_application: OnCompleteAction = field(
+        kw_only=True, default=OnCompleteAction.never()
+    )
 
-    def dictify(self) -> dict[EnumInt, OCAction]:
-        return {
+    def partition_oc_by_clear_state(
+        self,
+    ) -> tuple[OnCompleteAction, dict[EnumInt, OnCompleteAction]]:
+        return self.clear_state, {
             OnComplete.CloseOut: self.close_out,
-            OnComplete.ClearState: self.clear_state,
             OnComplete.DeleteApplication: self.delete_application,
             OnComplete.NoOp: self.no_op,
             OnComplete.OptIn: self.opt_in,
@@ -180,13 +181,14 @@ class OCActions:
         }
 
     def is_empty(self) -> bool:
-        for oc_action in self.dictify().values():
-            if oc_action.on_call is not None or oc_action.on_create is not None:
+        for action_field in fields(self):
+            action: OnCompleteAction = getattr(self, action_field.name)
+            if not action.is_empty():
                 return False
         return True
 
 
-OCActions.__module__ = "pyteal"
+OnCompleteActions.__module__ = "pyteal"
 
 
 @dataclass(frozen=True)
@@ -212,7 +214,7 @@ class CategorizedCondNodes:
             + self.method_calls
             + self.bare_calls
         )
-        if len(concatenated_ast) == 0:
+        if not concatenated_ast:
             raise TealInputError("ABIRouter: Cannot build program with an empty AST")
         program: Cond = Cond(*[[n.condition, n.branch] for n in concatenated_ast])
         return program
@@ -231,7 +233,7 @@ class Router:
     def __init__(
         self,
         name: str,
-        bare_calls: OCActions,
+        bare_calls: OnCompleteActions,
     ) -> None:
         """
         Args:
@@ -280,7 +282,7 @@ class Router:
                 case SubroutineFnWrapper():
                     if handler.type_of() != TealType.none:
                         raise TealInputError(
-                            f"subroutine call should be returning none not {handler.type_of()}."
+                            f"subroutine call should be returning TealType.none not {handler.type_of()}."
                         )
                     if handler.subroutine.argument_count() != 0:
                         raise TealInputError(
@@ -310,7 +312,7 @@ class Router:
                 )
             if not handler.is_abi_routable():
                 raise TealInputError(
-                    f"method call ABIReturnSubroutine is not registrable"
+                    f"method call ABIReturnSubroutine is not routable "
                     f"got {handler.subroutine.argument_count()} args with {len(handler.subroutine.abi_args)} ABI args."
                 )
 
@@ -368,52 +370,32 @@ class Router:
                     Approve(),
                 )
 
-    def __add_bare_call(self, oc_actions: OCActions) -> None:
+    def __add_bare_call(self, oc_actions: OnCompleteActions) -> None:
+        action_type = Expr | SubroutineFnWrapper | ABIReturnSubroutine
         if oc_actions.is_empty():
-            raise TealInputError("the OnCompleteActions is empty.")
-        bare_app_calls: dict[EnumInt, OCAction] = oc_actions.dictify()
-
-        cs_calls = bare_app_calls[OnComplete.ClearState]
-        if cs_calls.on_call is not None:
-            on_call = cast(
-                Expr | SubroutineFnWrapper | ABIReturnSubroutine,
-                cs_calls.on_call,
-            )
+            raise TealInternalError("the OnCompleteActions is empty.")
+        cs_calls, approval_calls = oc_actions.partition_oc_by_clear_state()
+        if cs_calls.on_call:
+            on_call = cast(action_type, cs_calls.on_call)
             wrapped = Router._wrap_handler(False, on_call)
             self.categorized_clear_state_ast.bare_calls.append(
                 CondNode(Int(1), wrapped)
             )
-        if cs_calls.on_create is not None:
-            on_create = cast(
-                Expr | SubroutineFnWrapper | ABIReturnSubroutine,
-                cs_calls.on_create,
-            )
+        if cs_calls.on_create:
+            on_create = cast(action_type, cs_calls.on_create)
             wrapped = Router._wrap_handler(False, on_create)
             self.categorized_clear_state_ast.bare_calls_create.append(
                 CondNode(Txn.application_id() == Int(0), wrapped)
             )
-
-        approval_calls = {
-            oc: oc_action
-            for oc, oc_action in bare_app_calls.items()
-            if str(oc) != str(OnComplete.ClearState)
-        }
-
         for oc, approval_bac in approval_calls.items():
             if approval_bac.on_call:
-                on_call = cast(
-                    Expr | SubroutineFnWrapper | ABIReturnSubroutine,
-                    approval_bac.on_call,
-                )
+                on_call = cast(action_type, approval_bac.on_call)
                 wrapped = Router._wrap_handler(False, on_call)
                 self.categorized_approval_ast.bare_calls.append(
                     CondNode(Txn.on_completion() == oc, wrapped)
                 )
             if approval_bac.on_create:
-                on_create = cast(
-                    Expr | SubroutineFnWrapper | ABIReturnSubroutine,
-                    approval_bac.on_create,
-                )
+                on_create = cast(action_type, approval_bac.on_create)
                 wrapped = Router._wrap_handler(False, on_create)
                 self.categorized_approval_ast.bare_calls_create.append(
                     CondNode(
@@ -425,14 +407,14 @@ class Router:
     def add_method_handler(
         self,
         method_call: ABIReturnSubroutine,
-        method_overload_name: str = None,
+        overriding_name: str = None,
         call_configs: CallConfigs = CallConfigs(),
     ) -> None:
         if not isinstance(method_call, ABIReturnSubroutine):
             raise TealInputError(
                 "for adding method handler, must be ABIReturnSubroutine"
             )
-        method_signature = method_call.method_signature(method_overload_name)
+        method_signature = method_call.method_signature(overriding_name)
         if call_configs.is_never():
             raise TealInputError(
                 f"registered method {method_signature} is never executed"
@@ -446,7 +428,7 @@ class Router:
         (
             create_has_clear_state,
             create_others,
-        ) = call_configs._partition_oc_by_clear_state(CallConfig.CREATE)
+        ) = call_configs.partition_oc_by_clear_state(CallConfig.CREATE)
         if create_has_clear_state:
             self.categorized_clear_state_ast.method_calls_create.append(
                 CondNode(
@@ -458,7 +440,7 @@ class Router:
                 )
             )
 
-        call_has_clear_state, call_others = call_configs._partition_oc_by_clear_state(
+        call_has_clear_state, call_others = call_configs.partition_oc_by_clear_state(
             CallConfig.CALL
         )
         if call_has_clear_state:

@@ -241,7 +241,7 @@ def test_add_method():
     ]
     router = pt.Router(
         "routerForMethodTest",
-        pt.OCActions(clear_state=pt.OCAction.call_only(pt.Approve())),
+        pt.OnCompleteActions(clear_state=pt.OnCompleteAction.call_only(pt.Approve())),
     )
     for subroutine in normal_subroutine:
         with pytest.raises(pt.TealInputError) as must_be_abi:
@@ -383,7 +383,7 @@ def test_wrap_handler_bare_call():
         ),
         (
             returning_u64,
-            f"subroutine call should be returning none not {pt.TealType.uint64}.",
+            f"subroutine call should be returning TealType.none not {pt.TealType.uint64}.",
         ),
         (
             mult_over_u64_and_log,
@@ -411,7 +411,7 @@ def test_wrap_handler_bare_call():
 def test_wrap_handler_method_call():
     with pytest.raises(pt.TealInputError) as bug:
         pt.Router._wrap_handler(True, not_registrable)
-    assert "method call ABIReturnSubroutine is not registrable" in str(bug)
+    assert "method call ABIReturnSubroutine is not routable" in str(bug)
 
     with pytest.raises(pt.TealInputError) as bug:
         pt.Router._wrap_handler(True, safe_clear_state_delete)
@@ -480,8 +480,8 @@ def test_contract_json_obj():
         filter(lambda x: isinstance(x, pt.ABIReturnSubroutine), GOOD_SUBROUTINE_CASES)
     )
     contract_name = "contract_name"
-    on_complete_actions = pt.OCActions(
-        clear_state=pt.OCAction.call_only(safe_clear_state_delete)
+    on_complete_actions = pt.OnCompleteActions(
+        clear_state=pt.OnCompleteAction.call_only(safe_clear_state_delete)
     )
     router = pt.Router(contract_name, on_complete_actions)
     method_list: list[sdk_abi.Method] = []
