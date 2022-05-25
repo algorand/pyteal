@@ -237,7 +237,7 @@ class Router:
         self.__add_bare_call(bare_calls)
 
     @staticmethod
-    def wrap_handler(
+    def _wrap_handler(
         is_method_call: bool, handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr
     ) -> Expr:
         """This is a helper function that handles transaction arguments passing in bare-app-call/abi-method handlers.
@@ -369,7 +369,7 @@ class Router:
                 Expr | SubroutineFnWrapper | ABIReturnSubroutine,
                 cs_calls.on_call,
             )
-            wrapped = Router.wrap_handler(False, on_call)
+            wrapped = Router._wrap_handler(False, on_call)
             self.categorized_clear_state_ast.bare_calls.append(
                 CondNode(Int(1), wrapped)
             )
@@ -378,7 +378,7 @@ class Router:
                 Expr | SubroutineFnWrapper | ABIReturnSubroutine,
                 cs_calls.on_create,
             )
-            wrapped = Router.wrap_handler(False, on_create)
+            wrapped = Router._wrap_handler(False, on_create)
             self.categorized_clear_state_ast.bare_calls_create.append(
                 CondNode(Txn.application_id() == Int(0), wrapped)
             )
@@ -395,7 +395,7 @@ class Router:
                     Expr | SubroutineFnWrapper | ABIReturnSubroutine,
                     approval_bac.on_call,
                 )
-                wrapped = Router.wrap_handler(False, on_call)
+                wrapped = Router._wrap_handler(False, on_call)
                 self.categorized_approval_ast.bare_calls.append(
                     CondNode(Txn.on_completion() == oc, wrapped)
                 )
@@ -404,7 +404,7 @@ class Router:
                     Expr | SubroutineFnWrapper | ABIReturnSubroutine,
                     approval_bac.on_create,
                 )
-                wrapped = Router.wrap_handler(False, on_create)
+                wrapped = Router._wrap_handler(False, on_create)
                 self.categorized_approval_ast.bare_calls_create.append(
                     CondNode(
                         And(Txn.application_id() == Int(0), Txn.on_completion() == oc),
@@ -433,7 +433,7 @@ class Router:
             raise TealInputError(f"re-registering method {method_signature} detected")
         self.added_method_sig.add(method_signature)
 
-        wrapped = Router.wrap_handler(True, method_call)
+        wrapped = Router._wrap_handler(True, method_call)
 
         if any(str(OnComplete.ClearState) == str(x) for x in oc_create):
             self.categorized_clear_state_ast.method_calls_create.append(
