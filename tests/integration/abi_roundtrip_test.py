@@ -157,7 +157,7 @@ def test_pure_compilation(abi_type):
     print(f"Pure Compilation Test for {abi_type=}")
     abi_type, type_str, dynamic_length, roundtripper = roundtrip_setup(abi_type)
 
-    if str(type_str) in BAD_TYPES:
+    if type_str in BAD_TYPES:
         print(
             f"Skipping encoding roundtrip test of '{abi_type}' because of {BAD_TYPES[type_str]}"
         )
