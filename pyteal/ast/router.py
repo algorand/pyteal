@@ -88,7 +88,7 @@ class CallConfigs:
             and self.delete_application == CallConfig.NEVER
         )
 
-    def oc_under_call_config(self, call_config: CallConfig) -> list[EnumInt]:
+    def _oc_under_call_config(self, call_config: CallConfig) -> list[EnumInt]:
         if not isinstance(call_config, CallConfig):
             raise TealInputError(
                 "generate condition based on OCMethodCallConfigs should be based on OCMethodConfig"
@@ -437,7 +437,7 @@ class Router:
         def partition(cc: CallConfig) -> Tuple[bool, list[EnumInt]]:
             (not_clear_states, clear_states) = more_itertools.partition(
                 lambda x: str(x) == str(OnComplete.ClearState),
-                call_configs.oc_under_call_config(cc),
+                call_configs._oc_under_call_config(cc),
             )
             return (len(list(clear_states)) > 0, list(not_clear_states))
 
