@@ -24,7 +24,7 @@ def test_AccountTypeSpec_eq():
         abi.Uint8TypeSpec(),
         abi.AddressTypeSpec(),
     ):
-        assert abi.StringTypeSpec() != otherType
+        assert abi.AccountTypeSpec() != otherType
 
 
 def test_Account_typespec():
@@ -110,7 +110,7 @@ def test_AssetTypeSpec_eq():
         abi.Uint8TypeSpec(),
         abi.AddressTypeSpec(),
     ):
-        assert abi.StringTypeSpec() != otherType
+        assert abi.AssetTypeSpec() != otherType
 
 
 def test_Asset_typespec():
@@ -196,7 +196,7 @@ def test_ApplicationTypeSpec_eq():
         abi.Uint8TypeSpec(),
         abi.AddressTypeSpec(),
     ):
-        assert abi.StringTypeSpec() != otherType
+        assert abi.ApplicationTypeSpec() != otherType
 
 
 def test_Application_typespec():
