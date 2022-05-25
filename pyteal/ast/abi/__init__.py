@@ -20,6 +20,12 @@ from pyteal.ast.abi.uint import (
     Uint64TypeSpec,
     Uint64,
 )
+from pyteal.ast.abi.int import (
+    SIntTypeSpec,
+    SInt,
+    SInt16TypeSpec,
+    SInt16
+)
 from pyteal.ast.abi.tuple import (
     TupleTypeSpec,
     Tuple,
@@ -68,6 +74,10 @@ __all__ = [
     "Uint32",
     "Uint64TypeSpec",
     "Uint64",
+    "SIntTypeSpec",
+    "SInt",
+    "SInt16TypeSpec",
+    "SInt16",
     "TupleTypeSpec",
     "Tuple",
     "TupleElement",

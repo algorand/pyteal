@@ -97,6 +97,10 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
         Uint64TypeSpec,
         Uint64,
     )
+    from pyteal.ast.abi.int import (
+        SInt16TypeSpec,
+        SInt16
+    )
     from pyteal.ast.abi.array_dynamic import DynamicArrayTypeSpec, DynamicArray
     from pyteal.ast.abi.array_static import StaticArrayTypeSpec, StaticArray
     from pyteal.ast.abi.tuple import (
@@ -147,6 +151,11 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
         if len(args) != 0:
             raise TypeError("Uint64 expects 0 type arguments. Got: {}".format(args))
         return Uint64TypeSpec()
+
+    if origin is SInt16:
+        if len(args) != 0:
+            raise TypeError("SInt16 expects 0 type arguments. Got: {}".format(args))
+        return SInt16TypeSpec()
 
     if origin is String:
         if len(args) != 0:
