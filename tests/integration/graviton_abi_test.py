@@ -15,9 +15,12 @@ from tests.blackbox import (
 
 
 """
-WARNING: The following ABI Types Int65 and Complex130 are ONLY for the purpose of testing/demo'ing 
-ABISubroutine and graviton-abi, and are NOT the recommended approach for implementing integers and 
-complex integers. A better appraoch probably leverages `Uint64` without additional types use 2's complement arithmetic.
+WARNING: The following ABI types Int65 and Complex130 are ONLY for the purpose of testing/demo'ing 
+ABISubroutine and graviton ABI capabilities and are NOT the recommended approach for 
+implementing integers and complex integers.
+A better approach would likely leverage `Uint64` (if any ABI type at all) and make use of 2's complement arithmetic.
+
+Cf. https://github.com/algorand/pyteal/issues/184
 """
 
 Int65 = pt.abi.Tuple2[pt.abi.Bool, pt.abi.Uint64]
