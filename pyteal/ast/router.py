@@ -80,6 +80,17 @@ class CallConfigs:
     def is_never(self) -> bool:
         return all(map(lambda cc: cc == CallConfig.NEVER, astuple(self)))
 
+    @classmethod
+    def arc4_compliant(cls):
+        return cls(
+            no_op=CallConfig.ALL,
+            opt_in=CallConfig.ALL,
+            close_out=CallConfig.ALL,
+            clear_state=CallConfig.ALL,
+            update_application=CallConfig.ALL,
+            delete_application=CallConfig.ALL,
+        )
+
     def _oc_under_call_config(self, call_config: CallConfig) -> list[EnumInt]:
         if not isinstance(call_config, CallConfig):
             raise TealInputError(
@@ -229,7 +240,7 @@ CategorizedCondNodes.__module__ = "pyteal"
 class Router:
     """
     Class that help constructs:
-    - an ARC-4 app's approval/clear-state programs
+    - a *Generalized* ARC-4 app's approval/clear-state programs
     - and a contract JSON object allowing for easily read and call methods in the contract
     """
 
