@@ -64,7 +64,7 @@ class TealCompileError(Exception):
 TealCompileError.__module__ = "pyteal"
 
 
-def getSourceTrace(impl):
+def get_source_trace(impl):
     source_file = inspect.getabsfile(impl)
     _, source_line = inspect.getsourcelines(impl)
     return f": File {source_file}, line {source_line}"
