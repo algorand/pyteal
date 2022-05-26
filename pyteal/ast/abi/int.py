@@ -1,6 +1,6 @@
 from typing import (
     TypeVar,
-    Union
+    Union, cast
 )
 from abc import abstractmethod
 
@@ -94,6 +94,14 @@ class SInt(Uint):
     def __init__(self, spec: SIntTypeSpec) -> None:
         super().__init__(spec)
 
+    # PLEASE NOTE: It's not necessary to change this inherited method.
+    # This is an abstract class so as long as all the children of this class return a concrete SIntTypeSpec,
+    #  there's no way that a SInt could return a UintTypeSpec.
+    # Even if we could actually instantiate a generic SInt, it would still be correct for it to have
+    #  signature -> UintTypeSpec and return a SIntTypeSpec.
+    # def type_spec(self) -> SIntTypeSpec:
+    #     return cast(SIntTypeSpec, super().type_spec())
+
     def set(self: T, value: Union[int, Expr, "SInt", ComputedValue[T]]) -> Expr:
         bit_size = self.type_spec().bit_size()
         min_int = -(2**(bit_size-1))
@@ -109,6 +117,31 @@ class SInt(Uint):
             return Seq(super().set(value), Assert(And(self.stored_value.load() <= Int(max_int))))
 
         return super().set(value)
+
+    # FIXME: Eh, I'm not too happy with this code. This is here only to re-frame the raised error.
+    #  I don't know if that's enough to justify overriding this method.
+    def decode(
+        self,
+        encoded: Expr,
+        *,
+        startIndex: Expr = None,
+        endIndex: Expr = None,
+        length: Expr = None,
+    ) -> Expr:
+        try:
+            return super().decode(encoded, startIndex=startIndex, endIndex=endIndex, length=length)
+        except NotImplementedError:
+            raise NotImplementedError("SInt operations have not yet been implemented for bit sizes larger than 64")
+        except ValueError:
+            raise ValueError("Unsupported SInt size: {}".format(self.type_spec().bit_size()))
+
+    def encode(self) -> Expr:
+        try:
+            return super().encode()
+        except NotImplementedError:
+            raise NotImplementedError("SInt operations have not yet been implemented for bit sizes larger than 64")
+        except ValueError:
+            raise ValueError("Unsupported SInt size: {}".format(self.type_spec().bit_size()))
 
 
 SInt.__module__ = "pyteal"
