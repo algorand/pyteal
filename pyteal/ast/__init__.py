@@ -141,7 +141,7 @@ from pyteal.ast.ecdsa import EcdsaCurve, EcdsaVerify, EcdsaDecompress, EcdsaReco
 from pyteal.ast.router import (
     Router,
     CallConfig,
-    CallConfigs,
+    MethodConfig,
     OnCompleteAction,
     BareCallActions,
 )
@@ -288,7 +288,7 @@ __all__ = [
     "Continue",
     "Router",
     "CallConfig",
-    "CallConfigs",
+    "MethodConfig",
     "OnCompleteAction",
     "BareCallActions",
     "abi",

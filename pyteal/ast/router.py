@@ -34,13 +34,8 @@ from pyteal.ast.return_ import Approve
 # ABI-Router is still taking shape and is subject to backwards incompatible    #
 # changes.                                                                     #
 #                                                                              #
-# * For ARC-4 Application definition, feel encouraged to use ABI-Router.       #
-#   Expect a best-effort attempt to minimize backwards incompatible changes    #
-#   along with a migration path.                                               #
-#                                                                              #
-# * USE AT YOUR OWN RISK.                                                      #
-#   Based on feedback, the API and usage patterns will change more freely and  #
-#   with less effort to provide migration paths.                               #
+# Based on feedback, the API and usage patterns are likely to change.          #
+# Expect migration issues.                                                     #
 ################################################################################
 
 
@@ -67,7 +62,7 @@ CallConfig.__module__ = "pyteal"
 
 
 @dataclass(frozen=True)
-class CallConfigs:
+class MethodConfig:
     """
     CallConfigs keep track of one method registration's CallConfigs for all OnComplete cases.
 
@@ -410,7 +405,7 @@ class Router:
             on_call = cast(action_type, cs_calls.on_call)
             wrapped = Router._wrap_handler(False, on_call)
             self.categorized_clear_state_ast.bare_calls.append(
-                CondNode(Int(1), wrapped)
+                CondNode(Txn.application_args.length() == Int(0), wrapped)
             )
         if cs_calls.on_create:
             on_create = cast(action_type, cs_calls.on_create)
@@ -423,7 +418,13 @@ class Router:
                 on_call = cast(action_type, approval_bac.on_call)
                 wrapped = Router._wrap_handler(False, on_call)
                 self.categorized_approval_ast.bare_calls.append(
-                    CondNode(Txn.on_completion() == oc, wrapped)
+                    CondNode(
+                        And(
+                            Txn.application_args.length() == Int(0),
+                            Txn.on_completion() == oc,
+                        ),
+                        wrapped,
+                    )
                 )
             if approval_bac.on_create:
                 on_create = cast(action_type, approval_bac.on_create)
@@ -439,7 +440,7 @@ class Router:
         self,
         method_call: ABIReturnSubroutine,
         overriding_name: str = None,
-        call_configs: CallConfigs = CallConfigs(),
+        call_configs: MethodConfig = MethodConfig(),
     ) -> None:
         if not isinstance(method_call, ABIReturnSubroutine):
             raise TealInputError(

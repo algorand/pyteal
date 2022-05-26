@@ -258,7 +258,7 @@ def test_add_method():
         )
         oc_names = [camel_to_snake(oc.name) for oc in on_complete_set]
         for call_config in full_perm_call_configs_for_ocs:
-            method_call_configs: pt.CallConfigs = pt.CallConfigs(
+            method_call_configs: pt.MethodConfig = pt.MethodConfig(
                 **dict(zip(oc_names, call_config))
             )
             if method_call_configs.is_never():
