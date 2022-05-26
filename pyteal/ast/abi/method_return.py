@@ -4,7 +4,7 @@ from pyteal.types import TealType
 from pyteal.errors import TealInputError
 from pyteal.ast import Expr, Log, Concat, Bytes
 from pyteal.ir import TealBlock, TealSimpleBlock, Op
-from pyteal.config import RETURN_METHOD_SELECTOR
+from pyteal.config import RETURN_HASH_PREFIX
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
@@ -22,7 +22,7 @@ class MethodReturn(Expr):
             raise TealInputError(
                 f"current version {options.version} is lower than log's min version {Op.log.min_version}"
             )
-        return Log(Concat(Bytes(RETURN_METHOD_SELECTOR), self.arg.encode())).__teal__(
+        return Log(Concat(Bytes(RETURN_HASH_PREFIX), self.arg.encode())).__teal__(
             options
         )
 

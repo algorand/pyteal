@@ -20,7 +20,7 @@ from pyteal.errors import (
 from pyteal.config import (
     MAX_GROUP_SIZE,
     NUM_SLOTS,
-    RETURN_METHOD_SELECTOR,
+    RETURN_HASH_PREFIX,
     METHOD_ARG_NUM_LIMIT,
 )
 
@@ -42,7 +42,7 @@ __all__ = (
         "TealCompileError",
         "MAX_GROUP_SIZE",
         "NUM_SLOTS",
-        "RETURN_METHOD_SELECTOR",
+        "RETURN_HASH_PREFIX",
         "METHOD_ARG_NUM_LIMIT",
     ]
 )
