@@ -2042,7 +2042,7 @@ store 0
 load 0
 callsub abisum_0
 store 1
-byte 0x151F7C75
+byte 0x151f7c75
 load 1
 itob
 concat
@@ -2124,7 +2124,7 @@ store 0
 load 0
 callsub conditionalfactorial_0
 store 1
-byte 0x151F7C75
+byte 0x151f7c75
 load 1
 itob
 concat
@@ -2401,7 +2401,7 @@ load 45
 load 46
 callsub alllaidtoargs_5
 store 47
-bytec_0 // 0x151F7C75
+bytec_0 // 0x151f7c75
 load 47
 itob
 concat
@@ -2419,7 +2419,7 @@ load 24
 load 25
 callsub mod_4
 store 26
-bytec_0 // 0x151F7C75
+bytec_0 // 0x151f7c75
 load 26
 itob
 concat
@@ -2437,7 +2437,7 @@ load 18
 load 19
 callsub div_3
 store 20
-bytec_0 // 0x151F7C75
+bytec_0 // 0x151f7c75
 load 20
 itob
 concat
@@ -2455,7 +2455,7 @@ load 12
 load 13
 callsub mul_2
 store 14
-bytec_0 // 0x151F7C75
+bytec_0 // 0x151f7c75
 load 14
 itob
 concat
@@ -2473,7 +2473,7 @@ load 6
 load 7
 callsub sub_1
 store 8
-bytec_0 // 0x151F7C75
+bytec_0 // 0x151f7c75
 load 8
 itob
 concat
@@ -2491,7 +2491,7 @@ load 0
 load 1
 callsub add_0
 store 2
-bytec_0 // 0x151F7C75
+bytec_0 // 0x151f7c75
 load 2
 itob
 concat

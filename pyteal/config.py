@@ -1,3 +1,6 @@
+from algosdk.atomic_transaction_composer import ABI_RETURN_HASH
+
+
 # Maximum size of an atomic transaction group.
 MAX_GROUP_SIZE = 16
 
@@ -5,7 +8,7 @@ MAX_GROUP_SIZE = 16
 NUM_SLOTS = 256
 
 # Method return selector in base16
-RETURN_METHOD_SELECTOR = "0x151F7C75"
+RETURN_METHOD_SELECTOR = ABI_RETURN_HASH
 
 # Method argument number limit
 METHOD_ARG_NUM_LIMIT = 15

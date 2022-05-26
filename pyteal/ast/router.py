@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field, fields, astuple
-from typing import Any, cast, Optional
-from enum import Enum
+from typing import cast, Optional
+from enum import IntFlag
 
 import algosdk.abi as sdk_abi
 
@@ -43,7 +43,7 @@ from pyteal.ast.return_ import Approve
 ################################################################################
 
 
-class CallConfig(Enum):
+class CallConfig(IntFlag):
     """
     CallConfigs: a "bitset"-like class for more fine-grained control over
     `call or create` for a method about an OnComplete case.
@@ -60,21 +60,6 @@ class CallConfig(Enum):
     CALL = 1
     CREATE = 2
     ALL = 3
-
-    def __or__(self, other: object) -> "CallConfig":
-        if not isinstance(other, CallConfig):
-            raise TealInputError("CallConfig must be compared with same class")
-        return CallConfig(self.value | other.value)
-
-    def __and__(self, other: object) -> "CallConfig":
-        if not isinstance(other, CallConfig):
-            raise TealInputError("CallConfig must be compared with same class")
-        return CallConfig(self.value & other.value)
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, CallConfig):
-            raise TealInputError("CallConfig must be compared with same class")
-        return self.value == other.value
 
 
 CallConfig.__module__ = "pyteal"
@@ -299,7 +284,7 @@ class Router:
     ) -> Expr:
         """This is a helper function that handles transaction arguments passing in bare-app-call/abi-method handlers.
 
-        If `is_abi_method` is True, then it can only be `ABIReturnSubroutine`,
+        If `is_method_call` is True, then it can only be `ABIReturnSubroutine`,
         otherwise:
             - both `ABIReturnSubroutine` and `Subroutine` takes 0 argument on the stack.
             - all three cases have none (or void) type.
@@ -515,7 +500,7 @@ class Router:
                 )
             )
 
-    def contract_construct(self) -> dict[str, Any]:
+    def contract_construct(self) -> sdk_abi.Contract:
         """A helper function in constructing contract JSON object.
 
         It takes out the method signatures from approval program `ProgramNode`'s,
@@ -528,9 +513,9 @@ class Router:
         method_collections = [
             sdk_abi.Method.from_signature(sig) for sig in self.added_method_sig
         ]
-        return sdk_abi.Contract(self.name, method_collections).dictify()
+        return sdk_abi.Contract(self.name, method_collections)
 
-    def build_program(self) -> tuple[Expr, Expr, dict[str, Any]]:
+    def build_program(self) -> tuple[Expr, Expr, sdk_abi.Contract]:
         """
         Constructs ASTs for approval and clear-state programs from the registered methods in the router,
         also generates a JSON object of contract to allow client read and call the methods easily.
@@ -552,7 +537,7 @@ class Router:
         version: int = DEFAULT_TEAL_VERSION,
         assembleConstants: bool = False,
         optimize: OptimizeOptions = None,
-    ) -> tuple[str, str, dict[str, Any]]:
+    ) -> tuple[str, str, sdk_abi.Contract]:
         """
         Combining `build_program` and `compileTeal`, compiles built Approval and ClearState programs
         and returns Contract JSON object for off-chain calling.

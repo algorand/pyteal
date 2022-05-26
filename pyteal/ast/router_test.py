@@ -490,8 +490,8 @@ def test_contract_json_obj():
         method_list.append(sdk_abi.Method.from_signature(subroutine.method_signature()))
     sdk_contract = sdk_abi.Contract(contract_name, method_list)
     contract = router.contract_construct()
-    assert sdk_contract.desc == contract["desc"]
-    assert sdk_contract.name == contract["name"]
-    assert sdk_contract.networks == contract["networks"]
+    assert sdk_contract.desc == contract.desc
+    assert sdk_contract.name == contract.name
+    assert sdk_contract.networks == contract.networks
     for method in sdk_contract.methods:
-        assert method.dictify() in contract["methods"]
+        assert method in contract.methods
