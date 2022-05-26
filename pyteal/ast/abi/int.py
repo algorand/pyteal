@@ -59,7 +59,7 @@ class SInt(Uint):
             else:
                 raise TealInputError("Value is not within {} and {} range of allowed values".format(min_int, max_int))
         elif isinstance(value, Expr) and not isinstance(value, SInt):
-            return Seq(super().set(value), Assert(And(self.stored_value.load() < Int(max_int))))
+            return Seq(super().set(value), Assert(And(self.stored_value.load() <= Int(max_int))))
 
         return super().set(value)
 
