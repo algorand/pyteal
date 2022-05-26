@@ -1816,3 +1816,27 @@ return
             program, pt.Mode.Application, version=5, assembleConstants=False
         )
         assert actual == expected.strip()
+
+
+def test_compile_error_trace_with_subr():
+    @pt.Subroutine(pt.TealType.none)
+    def tst():
+        return pt.Int(1)
+
+    program = pt.Seq(tst(), pt.Int(1))
+
+    with pytest.raises(pt.TealCompileError, match="compiler_test.py"):
+        pt.compileTeal(program, pt.Mode.Application, version=5, assembleConstants=False)
+
+
+def test_compile_error_trace_no_subr():
+    @pt.Subroutine(pt.TealType.uint64)
+    def tst():
+        return pt.Bytes("asdf")
+
+    program = pt.Seq(
+        tst(),
+    )
+
+    with pytest.raises(pt.TealCompileError, match="compiler_test.py"):
+        pt.compileTeal(program, pt.Mode.Application, version=5, assembleConstants=False)

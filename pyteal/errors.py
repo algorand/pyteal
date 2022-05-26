@@ -1,4 +1,5 @@
 from typing import Any, Optional, TYPE_CHECKING
+import inspect
 
 if TYPE_CHECKING:
     from pyteal.ast import Expr
@@ -48,12 +49,10 @@ class TealCompileError(Exception):
     def __str__(self) -> str:
         if self.sourceExpr is None:
             return self.msg
-        trace = self.sourceExpr.getDefinitionTrace()
-        return (
-            self.msg
-            + "\nTraceback of origin expression (most recent call last):\n"
-            + "".join(trace)
-        )
+
+        trace = getSourceTrace(self.sourceExpr)
+
+        return self.msg + trace
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, TealCompileError):
@@ -62,6 +61,23 @@ class TealCompileError(Exception):
 
 
 TealCompileError.__module__ = "pyteal"
+
+
+def getSourceTrace(py_obj):
+    trace = "\nTraceback of origin expression (most recent call last):\n" + "".join(
+        py_obj.getDefinitionTrace()
+    )
+
+    if hasattr(py_obj, "value") and py_obj.value is not None:
+        val = py_obj.value
+        # TODO: when are these things None?
+        if hasattr(val, "subroutine") and val.subroutine is not None:
+            impl = val.subroutine.implementation
+            source_file = inspect.getabsfile(impl)
+            _, source_line = inspect.getsourcelines(impl)
+            trace = f": File {source_file}, line {source_line}"
+
+    return trace
 
 
 def verifyTealVersion(minVersion: int, version: int, msg: str):

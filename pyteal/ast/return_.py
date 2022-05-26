@@ -37,6 +37,7 @@ class Return(Expr):
                 "TEAL version too low to use subroutines",
             )
             returnType = options.currentSubroutine.returnType
+
             if returnType == TealType.none:
                 if self.value is not None:
                     raise TealCompileError(
