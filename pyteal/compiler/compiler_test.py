@@ -2196,7 +2196,7 @@ retsub
 
 
 def test_router_app():
-    on_completion_actions = pt.OnCompleteActions(
+    on_completion_actions = pt.BareCallActions(
         clear_state=pt.OnCompleteAction.call_only(pt.Approve())
     )
 

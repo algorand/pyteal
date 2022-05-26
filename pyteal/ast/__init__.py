@@ -143,7 +143,7 @@ from pyteal.ast.router import (
     CallConfig,
     CallConfigs,
     OnCompleteAction,
-    OnCompleteActions,
+    BareCallActions,
 )
 
 # abi
@@ -290,7 +290,7 @@ __all__ = [
     "CallConfig",
     "CallConfigs",
     "OnCompleteAction",
-    "OnCompleteActions",
+    "BareCallActions",
     "abi",
     "EcdsaCurve",
     "EcdsaVerify",

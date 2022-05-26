@@ -182,7 +182,7 @@ OnCompleteAction.__module__ = "pyteal"
 
 
 @dataclass(frozen=True)
-class OnCompleteActions:
+class BareCallActions:
     """
     OnCompletion Actions keep track of bare-call registrations to all OnCompletion cases.
     """
@@ -219,7 +219,7 @@ class OnCompleteActions:
         return True
 
 
-OnCompleteActions.__module__ = "pyteal"
+BareCallActions.__module__ = "pyteal"
 
 
 @dataclass(frozen=True)
@@ -264,7 +264,7 @@ class Router:
     def __init__(
         self,
         name: str,
-        bare_calls: OnCompleteActions = None,
+        bare_calls: BareCallActions = None,
     ) -> None:
         """
         Args:
@@ -403,7 +403,7 @@ class Router:
                     Approve(),
                 )
 
-    def __add_bare_call(self, oc_actions: OnCompleteActions) -> None:
+    def __add_bare_call(self, oc_actions: BareCallActions) -> None:
         action_type = Expr | SubroutineFnWrapper | ABIReturnSubroutine
         cs_calls, approval_calls = oc_actions._clear_state_n_other_oc()
         if cs_calls.on_call:

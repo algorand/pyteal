@@ -241,7 +241,7 @@ def test_add_method():
     ]
     router = pt.Router(
         "routerForMethodTest",
-        pt.OnCompleteActions(clear_state=pt.OnCompleteAction.call_only(pt.Approve())),
+        pt.BareCallActions(clear_state=pt.OnCompleteAction.call_only(pt.Approve())),
     )
     for subroutine in normal_subroutine:
         with pytest.raises(pt.TealInputError) as must_be_abi:
@@ -480,7 +480,7 @@ def test_contract_json_obj():
         filter(lambda x: isinstance(x, pt.ABIReturnSubroutine), GOOD_SUBROUTINE_CASES)
     )
     contract_name = "contract_name"
-    on_complete_actions = pt.OnCompleteActions(
+    on_complete_actions = pt.BareCallActions(
         clear_state=pt.OnCompleteAction.call_only(safe_clear_state_delete)
     )
     router = pt.Router(contract_name, on_complete_actions)
