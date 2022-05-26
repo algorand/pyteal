@@ -2,10 +2,11 @@ from dataclasses import dataclass, field, fields, astuple
 from typing import cast, Optional
 from enum import IntFlag
 
-import algosdk.abi as sdk_abi
+from algosdk import abi as sdk_abi
+from algosdk import encoding
 
 from pyteal.config import METHOD_ARG_NUM_LIMIT
-from pyteal.errors import TealInputError, TealInternalError
+from pyteal.errors import TealInputError
 from pyteal.types import TealType
 from pyteal.compiler.compiler import compileTeal, DEFAULT_TEAL_VERSION, OptimizeOptions
 from pyteal.ir.ops import Mode
@@ -263,7 +264,7 @@ class Router:
     def __init__(
         self,
         name: str,
-        bare_calls: OnCompleteActions,
+        bare_calls: OnCompleteActions = None,
     ) -> None:
         """
         Args:
@@ -274,9 +275,11 @@ class Router:
         self.name: str = name
         self.categorized_approval_ast = CategorizedCondNodes()
         self.categorized_clear_state_ast = CategorizedCondNodes()
-        self.added_method_sig: set[str] = set()
 
-        self.__add_bare_call(bare_calls)
+        self.method_sig_to_selector: dict[str, bytes] = dict()
+        self.method_selector_to_sig: dict[bytes, str] = dict()
+        if bare_calls:
+            self.__add_bare_call(bare_calls)
 
     @staticmethod
     def _wrap_handler(
@@ -402,8 +405,6 @@ class Router:
 
     def __add_bare_call(self, oc_actions: OnCompleteActions) -> None:
         action_type = Expr | SubroutineFnWrapper | ABIReturnSubroutine
-        if oc_actions.is_empty():
-            raise TealInternalError("the OnCompleteActions is empty.")
         cs_calls, approval_calls = oc_actions._clear_state_n_other_oc()
         if cs_calls.on_call:
             on_call = cast(action_type, cs_calls.on_call)
@@ -449,9 +450,17 @@ class Router:
             raise TealInputError(
                 f"registered method {method_signature} is never executed"
             )
-        if method_signature in self.added_method_sig:
+        method_selector = encoding.checksum(bytes(method_signature, "utf-8"))[:4]
+
+        if method_signature in self.method_sig_to_selector:
             raise TealInputError(f"re-registering method {method_signature} detected")
-        self.added_method_sig.add(method_signature)
+        if method_selector in self.method_selector_to_sig:
+            raise TealInputError(
+                f"re-registering method {method_signature} has hash collision "
+                f"with {self.method_selector_to_sig[method_selector]}"
+            )
+        self.method_sig_to_selector[method_signature] = method_selector
+        self.method_selector_to_sig[method_selector] = method_signature
 
         wrapped = Router._wrap_handler(True, method_call)
 
@@ -511,7 +520,9 @@ class Router:
                 approval program's method signatures and `self.name`.
         """
         method_collections = [
-            sdk_abi.Method.from_signature(sig) for sig in self.added_method_sig
+            sdk_abi.Method.from_signature(sig)
+            for sig in self.method_sig_to_selector
+            if isinstance(sig, str)
         ]
         return sdk_abi.Contract(self.name, method_collections)
 
