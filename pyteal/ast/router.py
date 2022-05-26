@@ -28,17 +28,6 @@ from pyteal.ast.txn import Txn
 from pyteal.ast.return_ import Approve
 
 
-################################################################################
-#                                  DISCLAIMER                                  #
-################################################################################
-# ABI-Router is still taking shape and is subject to backwards incompatible    #
-# changes.                                                                     #
-#                                                                              #
-# Based on feedback, the API and usage patterns are likely to change.          #
-# Expect migration issues.                                                     #
-################################################################################
-
-
 class CallConfig(IntFlag):
     """
     CallConfigs: a "bitset"-like class for more fine-grained control over
@@ -254,6 +243,11 @@ class Router:
     Class that help constructs:
     - a *Generalized* ARC-4 app's approval/clear-state programs
     - and a contract JSON object allowing for easily read and call methods in the contract
+
+    *DISCLAIMER*: ABI-Router is still taking shape and is subject to backwards incompatible changes.
+
+    * Based on feedback, the API and usage patterns are likely to change.
+    * Expect migration issues.
     """
 
     def __init__(
