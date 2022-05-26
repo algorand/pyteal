@@ -23,6 +23,9 @@ class SIntTypeSpec(UintTypeSpec):
         pass
 
 
+SIntTypeSpec.__module__ = "pyteal"
+
+
 class SInt8TypeSpec(SIntTypeSpec):
     def __init__(self):
         super().__init__(8)
@@ -32,6 +35,9 @@ class SInt8TypeSpec(SIntTypeSpec):
 
     def annotation_type(self) -> "type[SInt8]":
         return SInt8
+
+
+SInt8TypeSpec.__module__ = "pyteal"
 
 
 class SInt16TypeSpec(SIntTypeSpec):
@@ -45,6 +51,9 @@ class SInt16TypeSpec(SIntTypeSpec):
         return SInt16
 
 
+SInt16TypeSpec.__module__ = "pyteal"
+
+
 class SInt32TypeSpec(SIntTypeSpec):
     def __init__(self):
         super().__init__(32)
@@ -56,6 +65,9 @@ class SInt32TypeSpec(SIntTypeSpec):
         return SInt32
 
 
+SInt32TypeSpec.__module__ = "pyteal"
+
+
 class SInt64TypeSpec(SIntTypeSpec):
     def __init__(self):
         super().__init__(64)
@@ -65,6 +77,9 @@ class SInt64TypeSpec(SIntTypeSpec):
 
     def annotation_type(self) -> "type[SInt64]":
         return SInt64
+
+
+SInt64TypeSpec.__module__ = "pyteal"
 
 
 T = TypeVar("T", bound="Int")
@@ -96,9 +111,15 @@ class SInt(Uint):
         return super().set(value)
 
 
+SInt.__module__ = "pyteal"
+
+
 class SInt8(SInt):
     def __init__(self) -> None:
         super().__init__(SInt8TypeSpec())
+
+
+SInt8.__module__ = "pyteal"
 
 
 class SInt16(SInt):
@@ -106,11 +127,20 @@ class SInt16(SInt):
         super().__init__(SInt16TypeSpec())
 
 
+SInt16.__module__ = "pyteal"
+
+
 class SInt32(SInt):
     def __init__(self) -> None:
         super().__init__(SInt32TypeSpec())
 
 
+SInt32.__module__ = "pyteal"
+
+
 class SInt64(SInt):
     def __init__(self) -> None:
         super().__init__(SInt64TypeSpec())
+
+
+SInt64.__module__ = "pyteal"
