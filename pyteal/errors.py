@@ -1,8 +1,9 @@
 from typing import Any, Optional, TYPE_CHECKING
 import inspect
 
+
 if TYPE_CHECKING:
-    from pyteal.ast import Expr
+    from pyteal.compiler.compiler import CompileOptions
 
 
 class TealInternalError(Exception):
@@ -42,15 +43,15 @@ TealInputError.__module__ = "pyteal"
 
 
 class TealCompileError(Exception):
-    def __init__(self, msg: str, sourceExpr: Optional["Expr"]) -> None:
+    def __init__(self, msg: str, compileOpts: "CompileOptions") -> None:
         self.msg = msg
-        self.sourceExpr = sourceExpr
+        self.compileOptions = compileOpts
 
     def __str__(self) -> str:
-        if self.sourceExpr is None:
+        if self.compileOptions.currentSubroutine is None:
             return self.msg
 
-        trace = getSourceTrace(self.sourceExpr)
+        trace = getSourceTrace(self.compileOptions.currentSubroutine.implementation)
 
         return self.msg + trace
 
@@ -63,21 +64,10 @@ class TealCompileError(Exception):
 TealCompileError.__module__ = "pyteal"
 
 
-def getSourceTrace(py_obj):
-    trace = "\nTraceback of origin expression (most recent call last):\n" + "".join(
-        py_obj.getDefinitionTrace()
-    )
-
-    if hasattr(py_obj, "value") and py_obj.value is not None:
-        val = py_obj.value
-        # TODO: when are these things None?
-        if hasattr(val, "subroutine") and val.subroutine is not None:
-            impl = val.subroutine.implementation
-            source_file = inspect.getabsfile(impl)
-            _, source_line = inspect.getsourcelines(impl)
-            trace = f": File {source_file}, line {source_line}"
-
-    return trace
+def getSourceTrace(impl):
+    source_file = inspect.getabsfile(impl)
+    _, source_line = inspect.getsourcelines(impl)
+    return f": File {source_file}, line {source_line}"
 
 
 def verifyTealVersion(minVersion: int, version: int, msg: str):

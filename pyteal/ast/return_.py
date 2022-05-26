@@ -42,13 +42,13 @@ class Return(Expr):
                 if self.value is not None:
                     raise TealCompileError(
                         "Cannot return a value from a subroutine with return type TealType.none",
-                        self,
+                        options,
                     )
             else:
                 if self.value is None:
                     raise TealCompileError(
                         "A subroutine declares it returns a value, but no value is being returned",
-                        self,
+                        options,
                     )
                 actualType = self.value.type_of()
                 if not types_match(actualType, returnType):
@@ -56,13 +56,13 @@ class Return(Expr):
                         "Incompatible return type from subroutine, expected {} but got {}".format(
                             returnType, actualType
                         ),
-                        self,
+                        options,
                     )
             op = Op.retsub
         else:
             if self.value is None:
                 raise TealCompileError(
-                    "Return from main program must have an argument", self
+                    "Return from main program must have an argument", options
                 )
             actualType = self.value.type_of()
             if not types_match(actualType, TealType.uint64):
@@ -70,7 +70,7 @@ class Return(Expr):
                     "Incompatible return type from main program, expected {} but got {}".format(
                         TealType.uint64, actualType
                     ),
-                    self,
+                    options,
                 )
             op = Op.return_
 
