@@ -111,12 +111,35 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
     )
     from pyteal.ast.abi.string import StringTypeSpec, String
     from pyteal.ast.abi.address import AddressTypeSpec, Address
+    from pyteal.ast.abi.reference_type import (
+        AccountTypeSpec,
+        Account,
+        AssetTypeSpec,
+        Asset,
+        ApplicationTypeSpec,
+        Application,
+    )
 
     origin = get_origin(annotation)
     if origin is None:
         origin = annotation
 
     args = get_args(annotation)
+
+    if origin is Account:
+        if len(args) != 0:
+            raise TypeError("Account expects 0 arguments. Got: {}".format(args))
+        return AccountTypeSpec()
+
+    if origin is Asset:
+        if len(args) != 0:
+            raise TypeError("Asset expects 0 argsuments. Got: {}".format(args))
+        return AssetTypeSpec()
+
+    if origin is Application:
+        if len(args) != 0:
+            raise TypeError("Application expects 0 argsuments. Got: {}".format(args))
+        return ApplicationTypeSpec()
 
     if origin is Bool:
         if len(args) != 0:
@@ -210,6 +233,16 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
 
 
 T = TypeVar("T", bound=BaseType)
+
+
+def size_of(t: type[T]) -> int:
+    """Get the size in bytes of an ABI type. Must be a static type"""
+
+    ts = type_spec_from_annotation(t)
+    if ts.is_dynamic():
+        raise TealInputError("Cannot get size of dynamic type")
+
+    return ts.byte_length_static()
 
 
 def make(t: type[T]) -> T:

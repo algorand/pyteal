@@ -2042,7 +2042,7 @@ store 0
 load 0
 callsub abisum_0
 store 1
-byte 0x151F7C75
+byte 0x151f7c75
 load 1
 itob
 concat
@@ -2124,7 +2124,7 @@ store 0
 load 0
 callsub conditionalfactorial_0
 store 1
-byte 0x151F7C75
+byte 0x151f7c75
 load 1
 itob
 concat
@@ -2196,33 +2196,43 @@ retsub
 
 
 def test_router_app():
-    on_completion_actions = pt.OnCompleteActions().set_action(
-        pt.Approve(), pt.OnComplete.ClearState
+    on_completion_actions = pt.OnCompleteActions(
+        clear_state=pt.OnCompleteAction.call_only(pt.Approve())
     )
 
-    router = pt.Router("Contract", on_completion_actions)
+    router = pt.Router("ASimpleQuestionablyRobustContract", on_completion_actions)
 
-    @router.abi_method()
+    @pt.ABIReturnSubroutine
     def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(a.get() + b.get())
 
-    @router.abi_method()
+    router.add_method_handler(add)
+
+    @pt.ABIReturnSubroutine
     def sub(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(a.get() - b.get())
 
-    @router.abi_method()
+    router.add_method_handler(sub)
+
+    @pt.ABIReturnSubroutine
     def mul(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(a.get() * b.get())
 
-    @router.abi_method()
+    router.add_method_handler(mul)
+
+    @pt.ABIReturnSubroutine
     def div(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(a.get() / b.get())
 
-    @router.abi_method()
+    router.add_method_handler(div)
+
+    @pt.ABIReturnSubroutine
     def mod(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(a.get() % b.get())
 
-    @router.abi_method()
+    router.add_method_handler(mod)
+
+    @pt.ABIReturnSubroutine
     def all_laid_to_args(
         _a: pt.abi.Uint64,
         _b: pt.abi.Uint64,
@@ -2262,20 +2272,18 @@ def test_router_app():
             + _p.get()
         )
 
+    router.add_method_handler(all_laid_to_args)
+
     actual_ap_compiled, actual_csp_compiled, _ = router.compile_program(
         version=6, assembleConstants=True
     )
 
     expected_ap = """#pragma version 6
-intcblock 0 1 3
+intcblock 0 1
 bytecblock 0x151f7c75
 txna ApplicationArgs 0
 pushbytes 0xfe6bdf69 // "add(uint64,uint64)uint64"
 ==
-txn NumAppArgs
-intc_2 // 3
-==
-&&
 txn OnCompletion
 intc_0 // NoOp
 ==
@@ -2284,10 +2292,6 @@ bnz main_l12
 txna ApplicationArgs 0
 pushbytes 0x78b488b7 // "sub(uint64,uint64)uint64"
 ==
-txn NumAppArgs
-intc_2 // 3
-==
-&&
 txn OnCompletion
 intc_0 // NoOp
 ==
@@ -2296,10 +2300,6 @@ bnz main_l11
 txna ApplicationArgs 0
 pushbytes 0xe2f188c5 // "mul(uint64,uint64)uint64"
 ==
-txn NumAppArgs
-intc_2 // 3
-==
-&&
 txn OnCompletion
 intc_0 // NoOp
 ==
@@ -2308,10 +2308,6 @@ bnz main_l10
 txna ApplicationArgs 0
 pushbytes 0x16e80f08 // "div(uint64,uint64)uint64"
 ==
-txn NumAppArgs
-intc_2 // 3
-==
-&&
 txn OnCompletion
 intc_0 // NoOp
 ==
@@ -2320,10 +2316,6 @@ bnz main_l9
 txna ApplicationArgs 0
 pushbytes 0x4dfc58ae // "mod(uint64,uint64)uint64"
 ==
-txn NumAppArgs
-intc_2 // 3
-==
-&&
 txn OnCompletion
 intc_0 // NoOp
 ==
@@ -2332,10 +2324,6 @@ bnz main_l8
 txna ApplicationArgs 0
 pushbytes 0x487ce2fd // "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
 ==
-txn NumAppArgs
-pushint 16 // 16
-==
-&&
 txn OnCompletion
 intc_0 // NoOp
 ==
@@ -2413,7 +2401,7 @@ load 45
 load 46
 callsub alllaidtoargs_5
 store 47
-bytec_0 // 0x151F7C75
+bytec_0 // 0x151f7c75
 load 47
 itob
 concat
@@ -2431,7 +2419,7 @@ load 24
 load 25
 callsub mod_4
 store 26
-bytec_0 // 0x151F7C75
+bytec_0 // 0x151f7c75
 load 26
 itob
 concat
@@ -2449,7 +2437,7 @@ load 18
 load 19
 callsub div_3
 store 20
-bytec_0 // 0x151F7C75
+bytec_0 // 0x151f7c75
 load 20
 itob
 concat
@@ -2467,7 +2455,7 @@ load 12
 load 13
 callsub mul_2
 store 14
-bytec_0 // 0x151F7C75
+bytec_0 // 0x151f7c75
 load 14
 itob
 concat
@@ -2485,7 +2473,7 @@ load 6
 load 7
 callsub sub_1
 store 8
-bytec_0 // 0x151F7C75
+bytec_0 // 0x151f7c75
 load 8
 itob
 concat
@@ -2503,7 +2491,7 @@ load 0
 load 1
 callsub add_0
 store 2
-bytec_0 // 0x151F7C75
+bytec_0 // 0x151f7c75
 load 2
 itob
 concat

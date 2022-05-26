@@ -1,10 +1,11 @@
-from dataclasses import dataclass
-from typing import Any, Callable, cast, Optional
+from dataclasses import dataclass, field, fields, astuple
+from typing import cast, Optional
+from enum import IntFlag
 
 import algosdk.abi as sdk_abi
 
 from pyteal.config import METHOD_ARG_NUM_LIMIT
-from pyteal.errors import TealInputError
+from pyteal.errors import TealInputError, TealInternalError
 from pyteal.types import TealType
 from pyteal.compiler.compiler import compileTeal, DEFAULT_TEAL_VERSION, OptimizeOptions
 from pyteal.ir.ops import Mode
@@ -23,166 +24,239 @@ from pyteal.ast.seq import Seq
 from pyteal.ast.methodsig import MethodSignature
 from pyteal.ast.naryexpr import And, Or
 from pyteal.ast.txn import Txn
-from pyteal.ast.return_ import Approve, Reject, Return
-from pyteal.ast.global_ import Global
+from pyteal.ast.return_ import Approve
 
 
-"""
-Notes for OC:
-- creation conflict with closeout and clear-state
-- must check: txn ApplicationId == 0 for creation
-- clear-state AST build should be separated with other OC AST build
-"""
+################################################################################
+#                                  DISCLAIMER                                  #
+################################################################################
+# ABI-Router is still taking shape and is subject to backwards incompatible    #
+# changes.                                                                     #
+#                                                                              #
+# * For ARC-4 Application definition, feel encouraged to use ABI-Router.       #
+#   Expect a best-effort attempt to minimize backwards incompatible changes    #
+#   along with a migration path.                                               #
+#                                                                              #
+# * USE AT YOUR OWN RISK.                                                      #
+#   Based on feedback, the API and usage patterns will change more freely and  #
+#   with less effort to provide migration paths.                               #
+################################################################################
 
 
-class OnCompleteActions:
-    def __init__(self):
-        self.oc_to_action: dict[
-            EnumInt, dict[bool, Expr | SubroutineFnWrapper | ABIReturnSubroutine]
-        ] = dict()
+class CallConfig(IntFlag):
+    """
+    CallConfigs: a "bitset"-like class for more fine-grained control over
+    `call or create` for a method about an OnComplete case.
 
-    def set_action(
-        self,
-        action: Expr | SubroutineFnWrapper | ABIReturnSubroutine,
-        on_complete: EnumInt,
-        create: bool = False,
-    ) -> "OnCompleteActions":
-        if on_complete.name not in self.oc_to_action:
-            self.oc_to_action[on_complete] = dict()
-        self.oc_to_action[on_complete][create] = action
-        return self
+    This enumeration class allows for specifying one of the four following cases:
+    - CALL
+    - CREATE
+    - ALL
+    - NEVER
+    for a method call on one on_complete case.
+    """
+
+    NEVER = 0
+    CALL = 1
+    CREATE = 2
+    ALL = 3
+
+
+CallConfig.__module__ = "pyteal"
+
+
+@dataclass(frozen=True)
+class CallConfigs:
+    """
+    CallConfigs keep track of one method registration's CallConfigs for all OnComplete cases.
+
+    By ARC-0004 spec:
+        If an Application is called with greater than zero Application call arguments  (NOT a bare Application call),
+        the Application MUST always treat the first argument as a method selector and invoke the specified method,
+        regardless of the OnCompletion action of the Application call.
+        This applies to Application creation transactions as well, where the supplied Application ID is 0.
+
+    The `CallConfigs` implementation generalized contract method call such that method call is allowed
+    for certain OnCompletions.
+
+    The `arc4_compliant` method constructs a `CallConfigs` that allows a method call to be executed
+    under any OnCompletion, which is "arc4-compliant".
+    """
+
+    no_op: CallConfig = field(kw_only=True, default=CallConfig.CALL)
+    opt_in: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
+    close_out: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
+    clear_state: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
+    update_application: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
+    delete_application: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
+
+    def is_never(self) -> bool:
+        return all(map(lambda cc: cc == CallConfig.NEVER, astuple(self)))
 
     @classmethod
-    def template(
-        cls,
-        *,
-        approve_on_noop_create: Optional[bool] = True,
-        creator_can_update: Optional[bool] = True,
-        creator_can_delete: Optional[bool] = True,
-        can_opt_in: Optional[bool] = False,
-        can_close_out: Optional[bool] = True,
-        can_clear_state: Optional[bool] = True,
-    ) -> "OnCompleteActions":
-        instance = cls()
-
-        if approve_on_noop_create:
-            instance.set_action(Approve(), OnComplete.NoOp, True)
-
-        allow_creator_expr = Return(Txn.sender() == Global.creator_address())
-        instance.set_action(
-            allow_creator_expr if creator_can_update else Reject(),
-            OnComplete.UpdateApplication,
-        )
-        instance.set_action(
-            allow_creator_expr if creator_can_delete else Reject(),
-            OnComplete.DeleteApplication,
+    def arc4_compliant(cls):
+        return cls(
+            no_op=CallConfig.ALL,
+            opt_in=CallConfig.ALL,
+            close_out=CallConfig.ALL,
+            clear_state=CallConfig.ALL,
+            update_application=CallConfig.ALL,
+            delete_application=CallConfig.ALL,
         )
 
-        instance.set_action(Approve() if can_opt_in else Reject(), OnComplete.OptIn)
-        instance.set_action(
-            Approve() if can_close_out else Reject(), OnComplete.CloseOut
-        )
-        instance.set_action(
-            Approve() if can_clear_state else Reject(), OnComplete.ClearState
+    def is_arc4_compliant(self) -> bool:
+        return self == self.arc4_compliant()
+
+    def _oc_under_call_config(self, call_config: CallConfig) -> list[EnumInt]:
+        if not isinstance(call_config, CallConfig):
+            raise TealInputError(
+                "generate condition based on CallConfigs should be based on CallConfig"
+            )
+        config_oc_pairs: list[tuple[CallConfig, EnumInt]] = [
+            (self.no_op, OnComplete.NoOp),
+            (self.opt_in, OnComplete.OptIn),
+            (self.close_out, OnComplete.CloseOut),
+            (self.clear_state, OnComplete.ClearState),
+            (self.update_application, OnComplete.UpdateApplication),
+            (self.delete_application, OnComplete.DeleteApplication),
+        ]
+        return [
+            oc
+            for oc_config, oc in config_oc_pairs
+            if (oc_config & call_config) != CallConfig.NEVER
+        ]
+
+    def _has_clear_state(self, cc: CallConfig) -> bool:
+        return (self.clear_state & cc) != CallConfig.NEVER
+
+    def _approval_program_oc(self, cc: CallConfig) -> list[EnumInt]:
+        return list(
+            filter(
+                lambda x: str(x) != str(OnComplete.ClearState),
+                self._oc_under_call_config(cc),
+            )
         )
 
-        return instance
+
+@dataclass(frozen=True)
+class OnCompleteAction:
+    """
+    OnComplete Action, registers bare calls to one single OnCompletion case.
+    """
+
+    on_create: Optional[Expr | SubroutineFnWrapper | ABIReturnSubroutine] = field(
+        kw_only=True, default=None
+    )
+    on_call: Optional[Expr | SubroutineFnWrapper | ABIReturnSubroutine] = field(
+        kw_only=True, default=None
+    )
+
+    @staticmethod
+    def never() -> "OnCompleteAction":
+        return OnCompleteAction()
+
+    @staticmethod
+    def create_only(
+        f: Expr | SubroutineFnWrapper | ABIReturnSubroutine,
+    ) -> "OnCompleteAction":
+        return OnCompleteAction(on_create=f)
+
+    @staticmethod
+    def call_only(
+        f: Expr | SubroutineFnWrapper | ABIReturnSubroutine,
+    ) -> "OnCompleteAction":
+        return OnCompleteAction(on_call=f)
+
+    @staticmethod
+    def always(
+        f: Expr | SubroutineFnWrapper | ABIReturnSubroutine,
+    ) -> "OnCompleteAction":
+        return OnCompleteAction(on_create=f, on_call=f)
+
+    def is_empty(self) -> bool:
+        return not (self.on_call or self.on_create)
+
+
+OnCompleteAction.__module__ = "pyteal"
+
+
+@dataclass(frozen=True)
+class OnCompleteActions:
+    """
+    OnCompletion Actions keep track of bare-call registrations to all OnCompletion cases.
+    """
+
+    close_out: OnCompleteAction = field(kw_only=True, default=OnCompleteAction.never())
+    clear_state: OnCompleteAction = field(
+        kw_only=True, default=OnCompleteAction.never()
+    )
+    delete_application: OnCompleteAction = field(
+        kw_only=True, default=OnCompleteAction.never()
+    )
+    no_op: OnCompleteAction = field(kw_only=True, default=OnCompleteAction.never())
+    opt_in: OnCompleteAction = field(kw_only=True, default=OnCompleteAction.never())
+    update_application: OnCompleteAction = field(
+        kw_only=True, default=OnCompleteAction.never()
+    )
+
+    def _clear_state_n_other_oc(
+        self,
+    ) -> tuple[OnCompleteAction, dict[EnumInt, OnCompleteAction]]:
+        return self.clear_state, {
+            OnComplete.CloseOut: self.close_out,
+            OnComplete.DeleteApplication: self.delete_application,
+            OnComplete.NoOp: self.no_op,
+            OnComplete.OptIn: self.opt_in,
+            OnComplete.UpdateApplication: self.update_application,
+        }
+
+    def is_empty(self) -> bool:
+        for action_field in fields(self):
+            action: OnCompleteAction = getattr(self, action_field.name)
+            if not action.is_empty():
+                return False
+        return True
 
 
 OnCompleteActions.__module__ = "pyteal"
 
 
-@dataclass
-class ProgramNode:
-    """
-    This class contains a condition branch in program AST, with
-    - `condition`: logical condition of entering such AST branch
-    - `branch`: steps to execute the branch after entering
-    - `method_info` (optional): only needed in approval program node, constructed from
-        - SDK's method
-        - ABIReturnSubroutine's method signature
-    """
-
+@dataclass(frozen=True)
+class CondNode:
     condition: Expr
     branch: Expr
-    method_info: Optional[sdk_abi.Method]
-    ast_order_indicator: "ConflictMapElem"
 
 
-ProgramNode.__module__ = "pyteal"
+CondNode.__module__ = "pyteal"
 
 
 @dataclass
-class ConflictMapElem:
-    is_method_call: bool
-    method_name: str
-    on_creation: bool
+class CategorizedCondNodes:
+    method_calls_create: list[CondNode] = field(default_factory=list)
+    bare_calls_create: list[CondNode] = field(default_factory=list)
+    method_calls: list[CondNode] = field(default_factory=list)
+    bare_calls: list[CondNode] = field(default_factory=list)
 
-    def __lt__(self, other: "ConflictMapElem"):
-        # compare under same oc condition
-        # can be used to order AST
-        if not isinstance(other, ConflictMapElem):
-            raise TealInputError(
-                "ConflictMapElem can only check conflict with other ConflictMapElem"
-            )
-
-        if self.is_method_call:
-            if not other.is_method_call:
-                return False
-        else:
-            if other.is_method_call:
-                return True
-
-        # either both is_method_call or not
-        # compare on_creation
-        if self.on_creation:
-            return not other.on_creation
-        else:
-            return other.on_creation
-
-    def has_conflict_with(self, other: "ConflictMapElem"):
-        if not isinstance(other, ConflictMapElem):
-            raise TealInputError(
-                "ConflictMapElem can only check conflict with other ConflictMapElem"
-            )
-        if not self.is_method_call and not other.is_method_call:
-            if self.method_name == other.method_name:
-                raise TealInputError(f"re-registering {self.method_name} under same OC")
-            else:
-                raise TealInputError(
-                    f"re-registering {self.method_name} and {other.method_name} under same OC"
-                )
+    def program_construction(self) -> Expr:
+        concatenated_ast = (
+            self.method_calls_create
+            + self.bare_calls_create
+            + self.method_calls
+            + self.bare_calls
+        )
+        if not concatenated_ast:
+            raise TealInputError("ABIRouter: Cannot build program with an empty AST")
+        program: Cond = Cond(*[[n.condition, n.branch] for n in concatenated_ast])
+        return program
 
 
-ConflictMapElem.__module__ = "pyteal"
-
-
-class ASTConflictResolver:
-    def __init__(self):
-        self.conflict_detect_map: dict[str, list[ConflictMapElem]] = {
-            name: list() for name in dir(OnComplete) if not name.startswith("__")
-        }
-
-    def add_elem_to(self, oc: str, conflict_map_elem: ConflictMapElem):
-        if oc not in self.conflict_detect_map:
-            raise TealInputError(
-                f"{oc} is not one of the element in conflict map, should be one of the OnCompletes"
-            )
-        elems_under_oc: list[ConflictMapElem] = self.conflict_detect_map[oc]
-        for elem in elems_under_oc:
-            if elem.has_conflict_with(conflict_map_elem):
-                raise TealInputError(f"{elem} has conflict with {conflict_map_elem}")
-
-        self.conflict_detect_map[oc].append(conflict_map_elem)
-
-
-ASTConflictResolver.__module__ = "pyteal"
+CategorizedCondNodes.__module__ = "pyteal"
 
 
 class Router:
     """
     Class that help constructs:
-    - an ARC-4 app's approval/clear-state programs
+    - a *Generalized* ARC-4 app's approval/clear-state programs
     - and a contract JSON object allowing for easily read and call methods in the contract
     """
 
@@ -193,131 +267,24 @@ class Router:
     ) -> None:
         """
         Args:
-            name (optional): the name of the smart contract, used in the JSON object.
-                Default name is `contract`
+            name: the name of the smart contract, used in the JSON object.
+            bare_calls: the bare app call registered for each on_completion.
         """
 
         self.name: str = name
-        self.approval_if_then: list[ProgramNode] = []
-        self.clear_state_if_then: list[ProgramNode] = []
-        self.conflict_detect_map: ASTConflictResolver = ASTConflictResolver()
-        for oc, action_on_creation in bare_calls.oc_to_action.items():
-            for on_create, action in action_on_creation.items():
-                self.__add_bare_call(action, on_completes=[oc], creation=on_create)
+        self.categorized_approval_ast = CategorizedCondNodes()
+        self.categorized_clear_state_ast = CategorizedCondNodes()
+        self.added_method_sig: set[str] = set()
+
+        self.__add_bare_call(bare_calls)
 
     @staticmethod
-    def parse_conditions(
-        method_to_register: Optional[ABIReturnSubroutine],
-        on_completes: list[EnumInt],
-        creation: bool,
-    ) -> tuple[list[Expr], list[Expr]]:
-        """This is a helper function in inferring valid approval/clear-state program condition.
-
-        It starts with some initialization check to resolve some conflict:
-        - `creation` option is contradicting with OnCompletion.CloseOut and OnCompletion.ClearState
-        - if there is `method_to_register` existing, then `method_signature` should appear
-
-        Then this function appends conditions to approval/clear-state program condition:
-        - if `creation` is true, then append `Txn.application_id() == 0` to approval conditions
-        - if it is handling abi-method, then
-          `Txn.application_arg[0] == hash(method_signature) &&
-           Txn.application_arg_num == 1 + min(METHOD_ARG_NUM_LIMIT, method's arg num)`
-          where `METHOD_ARG_NUM_LIMIT == 15`.
-          # TODO wonder if we need to care about arg number, if the arg number is not enough/valid
-          # we just directly fail
-        - if it is handling conditions for other cases, then `Int(1)` automatically approve
-
-        Args:
-            method_to_register: an ABIReturnSubroutine if exists, or None
-            on_completes: a list of OnCompletion args
-            creation: a boolean variable indicating if this condition is triggered on creation
-        Returns:
-            approval_conds: A list of exprs for approval program's condition on: creation?, method/bare, Or[OCs]
-            clear_state_conds: A list of exprs for clear-state program's condition on: method/bare
-        """
-
-        # check that the onComplete has no duplicates
-        if len(on_completes) != len(set(on_completes)):
-            raise TealInputError(f"input {on_completes} has duplicated on_complete(s)")
-        if len(on_completes) == 0:
-            raise TealInputError("on complete input should be non-empty list")
-
-        # Check the existence of OC.CloseOut
-        close_out_exist = any(
-            map(lambda x: str(x) == str(OnComplete.CloseOut), on_completes)
-        )
-        # Check the existence of OC.ClearState (needed later)
-        clear_state_exist = any(
-            map(lambda x: str(x) == str(OnComplete.ClearState), on_completes)
-        )
-        # Ill formed report if app create with existence of OC.CloseOut or OC.ClearState
-        if creation and (close_out_exist or clear_state_exist):
-            raise TealInputError(
-                "OnComplete ClearState/CloseOut may be ill-formed with app creation"
-            )
-        # Check if anything other than ClearState exists
-        oc_other_than_clear_state_exists = any(
-            map(lambda x: str(x) != str(OnComplete.ClearState), on_completes)
-        )
-
-        # Check:
-        # - if current condition is for *ABI METHOD*
-        #   (method selector && numAppArg == 1 + min(METHOD_APP_ARG_NUM_LIMIT, subroutineSyntaxArgNum))
-        # - or *BARE APP CALL* (numAppArg == 0)
-        method_or_bare_condition = (
-            And(
-                Txn.application_args[0]
-                == MethodSignature(method_to_register.method_signature()),
-                Txn.application_args.length()
-                == Int(
-                    1
-                    + min(
-                        method_to_register.subroutine.argument_count(),
-                        METHOD_ARG_NUM_LIMIT,
-                    )
-                ),
-            )
-            if method_to_register is not None
-            # TODO the default condition for bare call need to be revised
-            else Int(1)
-        )
-
-        # Check if it is a *CREATION*
-        approval_conds: list[Expr] = (
-            [Txn.application_id() == Int(0)] if creation else []
-        )
-        clear_state_conds: list[Expr] = []
-
-        if oc_other_than_clear_state_exists:
-            approval_conds.append(method_or_bare_condition)
-
-        # if OC.ClearState exists, add method-or-bare-condition since it is only needed in ClearStateProgram
-        if clear_state_exist:
-            clear_state_conds.append(method_or_bare_condition)
-
-        # Check onComplete conditions for approval_conds, filter out *ClearState*
-        approval_oc_conds: list[Expr] = [
-            Txn.on_completion() == oc
-            for oc in on_completes
-            if str(oc) != str(OnComplete.ClearState)
-        ]
-
-        # if approval OC condition is not empty, append Or to approval_conds
-        if len(approval_oc_conds) > 0:
-            approval_conds.append(Or(*approval_oc_conds))
-
-        # what we have here is:
-        # list of conds for approval program on one branch: creation?, method/bare, Or[OCs]
-        # list of conds for clearState program on one branch: method/bare
-        return approval_conds, clear_state_conds
-
-    @staticmethod
-    def wrap_handler(
+    def _wrap_handler(
         is_method_call: bool, handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr
     ) -> Expr:
         """This is a helper function that handles transaction arguments passing in bare-app-call/abi-method handlers.
 
-        If `is_abi_method` is True, then it can only be `ABIReturnSubroutine`,
+        If `is_method_call` is True, then it can only be `ABIReturnSubroutine`,
         otherwise:
             - both `ABIReturnSubroutine` and `Subroutine` takes 0 argument on the stack.
             - all three cases have none (or void) type.
@@ -345,7 +312,7 @@ class Router:
                 case SubroutineFnWrapper():
                     if handler.type_of() != TealType.none:
                         raise TealInputError(
-                            f"subroutine call should be returning none not {handler.type_of()}."
+                            f"subroutine call should be returning TealType.none not {handler.type_of()}."
                         )
                     if handler.subroutine.argument_count() != 0:
                         raise TealInputError(
@@ -375,7 +342,7 @@ class Router:
                 )
             if not handler.is_abi_routable():
                 raise TealInputError(
-                    f"method call ABIReturnSubroutine is not registrable"
+                    f"method call ABIReturnSubroutine is not routable "
                     f"got {handler.subroutine.argument_count()} args with {len(handler.subroutine.abi_args)} ABI args."
                 )
 
@@ -433,188 +400,107 @@ class Router:
                     Approve(),
                 )
 
-    def __append_to_ast(
-        self,
-        approval_conditions: list[Expr],
-        clear_state_conditions: list[Expr],
-        branch: Expr,
-        ast_order_indicator: ConflictMapElem,
-        method_obj: Optional[sdk_abi.Method] = None,
-    ) -> None:
-        """
-        A helper function that appends conditions and execution of branches into AST.
-
-        Args:
-            approval_conditions: A list of expressions for approval program's condition on: creation?, method/bare, Or[OCs]
-            clear_state_conditions: A list of expressions for clear-state program's condition on: method/bare
-            branch: A branch of contract executing the registered method
-            method_obj: SDK's Method objects to construct Contract JSON object
-        """
-        if len(approval_conditions) > 0:
-            self.approval_if_then.append(
-                ProgramNode(
-                    And(*approval_conditions)
-                    if len(approval_conditions) > 1
-                    else approval_conditions[0],
-                    branch,
-                    method_obj,
-                    ast_order_indicator,
-                )
+    def __add_bare_call(self, oc_actions: OnCompleteActions) -> None:
+        action_type = Expr | SubroutineFnWrapper | ABIReturnSubroutine
+        if oc_actions.is_empty():
+            raise TealInternalError("the OnCompleteActions is empty.")
+        cs_calls, approval_calls = oc_actions._clear_state_n_other_oc()
+        if cs_calls.on_call:
+            on_call = cast(action_type, cs_calls.on_call)
+            wrapped = Router._wrap_handler(False, on_call)
+            self.categorized_clear_state_ast.bare_calls.append(
+                CondNode(Int(1), wrapped)
             )
-        if len(clear_state_conditions) > 0:
-            self.clear_state_if_then.append(
-                ProgramNode(
-                    And(*clear_state_conditions)
-                    if len(clear_state_conditions) > 1
-                    else clear_state_conditions[0],
-                    branch,
-                    method_obj,
-                    ast_order_indicator,
-                )
+        if cs_calls.on_create:
+            on_create = cast(action_type, cs_calls.on_create)
+            wrapped = Router._wrap_handler(False, on_create)
+            self.categorized_clear_state_ast.bare_calls_create.append(
+                CondNode(Txn.application_id() == Int(0), wrapped)
             )
-
-    def __add_bare_call(
-        self,
-        bare_app_call: ABIReturnSubroutine | SubroutineFnWrapper | Expr,
-        on_completes: EnumInt | list[EnumInt],
-        *,
-        creation: bool = False,
-    ) -> None:
-        """
-        Registering a bare-app-call to the router.
-
-        Args:
-            bare_app_call: either an `ABIReturnSubroutine`, or `SubroutineFnWrapper`, or `Expr`.
-                must take no arguments and evaluate to none (void).
-            on_completes: a list of OnCompletion args
-            creation: a boolean variable indicating if this condition is triggered on creation
-        """
-        oc_list: list[EnumInt] = (
-            cast(list[EnumInt], on_completes)
-            if isinstance(on_completes, list)
-            else [cast(EnumInt, on_completes)]
-        )
-        approval_conds, clear_state_conds = Router.parse_conditions(
-            method_to_register=None,
-            on_completes=oc_list,
-            creation=creation,
-        )
-        branch = Router.wrap_handler(False, bare_app_call)
-        method_name: str
-        match bare_app_call:
-            case ABIReturnSubroutine():
-                method_name = bare_app_call.method_signature()
-            case SubroutineFnWrapper():
-                method_name = bare_app_call.name()
-            case Expr():
-                method_name = str(bare_app_call)
-            case _:
-                raise TealInputError(
-                    f"bare app call can only be one of three following cases: "
-                    f"{ABIReturnSubroutine, SubroutineFnWrapper, Expr}"
+        for oc, approval_bac in approval_calls.items():
+            if approval_bac.on_call:
+                on_call = cast(action_type, approval_bac.on_call)
+                wrapped = Router._wrap_handler(False, on_call)
+                self.categorized_approval_ast.bare_calls.append(
+                    CondNode(Txn.on_completion() == oc, wrapped)
+                )
+            if approval_bac.on_create:
+                on_create = cast(action_type, approval_bac.on_create)
+                wrapped = Router._wrap_handler(False, on_create)
+                self.categorized_approval_ast.bare_calls_create.append(
+                    CondNode(
+                        And(Txn.application_id() == Int(0), Txn.on_completion() == oc),
+                        wrapped,
+                    )
                 )
 
-        ast_order_indicator = ConflictMapElem(False, method_name, creation)
-        for oc in oc_list:
-            self.conflict_detect_map.add_elem_to(oc.name, ast_order_indicator)
-        self.__append_to_ast(
-            approval_conds, clear_state_conds, branch, ast_order_indicator, None
-        )
-
-    def __add_method_handler(
+    def add_method_handler(
         self,
-        method_app_call: ABIReturnSubroutine,
-        *,
-        on_complete: EnumInt = OnComplete.NoOp,
-        creation: bool = False,
+        method_call: ABIReturnSubroutine,
+        overriding_name: str = None,
+        call_configs: CallConfigs = CallConfigs(),
     ) -> None:
-        """
-        Registering an ABI method call to the router.
-
-        Args:
-            method_app_call: an `ABIReturnSubroutine` that is registrable
-            on_complete: an OnCompletion args
-            creation: a boolean variable indicating if this condition is triggered on creation
-        """
-        oc_list: list[EnumInt] = [on_complete]
-        method_signature = method_app_call.method_signature()
-
-        approval_conds, clear_state_conds = Router.parse_conditions(
-            method_to_register=method_app_call,
-            on_completes=oc_list,
-            creation=creation,
-        )
-        branch = Router.wrap_handler(True, method_app_call)
-        ast_order_indicator = ConflictMapElem(
-            True, method_app_call.method_signature(), creation
-        )
-        for oc in oc_list:
-            self.conflict_detect_map.add_elem_to(oc.name, ast_order_indicator)
-        self.__append_to_ast(
-            approval_conds,
-            clear_state_conds,
-            branch,
-            ast_order_indicator,
-            sdk_abi.Method.from_signature(method_signature),
-        )
-
-    def abi_method(
-        self, *, on_complete: EnumInt = OnComplete.NoOp, creation: bool = False
-    ) -> Callable[[Callable | ABIReturnSubroutine], ABIReturnSubroutine]:
-        """Decorator to register an ABI method call to router.
-
-        Allowing following syntax:
-
-        @router.abi_method(on_complete=OnComplete.OptIn, create=False)
-        @router.abi_method(on_complete=OnComplete.NoOp, create=False)
-        def echo(a: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
-            ...
-
-        Args:
-            on_complete: an OnCompletion args
-            creation: a boolean variable indicating if this condition is triggered on creation
-        """
-
-        def __method(impl: Callable | ABIReturnSubroutine) -> ABIReturnSubroutine:
-            subroutine: ABIReturnSubroutine = (
-                impl
-                if isinstance(impl, ABIReturnSubroutine)
-                else ABIReturnSubroutine(impl)
+        if not isinstance(method_call, ABIReturnSubroutine):
+            raise TealInputError(
+                "for adding method handler, must be ABIReturnSubroutine"
             )
-            self.__add_method_handler(
-                subroutine, on_complete=on_complete, creation=creation
+        method_signature = method_call.method_signature(overriding_name)
+        if call_configs.is_never():
+            raise TealInputError(
+                f"registered method {method_signature} is never executed"
             )
-            return subroutine
+        if method_signature in self.added_method_sig:
+            raise TealInputError(f"re-registering method {method_signature} detected")
+        self.added_method_sig.add(method_signature)
 
-        return __method
+        wrapped = Router._wrap_handler(True, method_call)
 
-    @staticmethod
-    def __ast_construct(
-        ast_list: list[ProgramNode],
-    ) -> Expr:
-        """A helper function in constructing approval/clear-state programs.
+        create_has_clear_state = call_configs._has_clear_state(CallConfig.CREATE)
+        create_others = call_configs._approval_program_oc(CallConfig.CREATE)
+        call_has_clear_state = call_configs._has_clear_state(CallConfig.CALL)
+        call_others = call_configs._approval_program_oc(CallConfig.CALL)
 
-        It takes a list of `ProgramNode`s, which contains conditions of entering a condition branch
-        and the execution of the branch.
+        if create_has_clear_state:
+            self.categorized_clear_state_ast.method_calls_create.append(
+                CondNode(
+                    And(
+                        Txn.application_id() == Int(0),
+                        Txn.application_args[0] == MethodSignature(method_signature),
+                    ),
+                    wrapped,
+                )
+            )
+        if call_has_clear_state:
+            self.categorized_clear_state_ast.method_calls.append(
+                CondNode(
+                    Txn.application_args[0] == MethodSignature(method_signature),
+                    wrapped,
+                )
+            )
 
-        It constructs the program's AST from the list of `ProgramNode`.
+        if create_others:
+            self.categorized_approval_ast.method_calls_create.append(
+                CondNode(
+                    And(
+                        Txn.application_id() == Int(0),
+                        Txn.application_args[0] == MethodSignature(method_signature),
+                        Or(*[Txn.on_completion() == oc for oc in create_others]),
+                    ),
+                    wrapped,
+                )
+            )
+        if call_others:
+            self.categorized_approval_ast.method_calls.append(
+                CondNode(
+                    And(
+                        Txn.application_args[0] == MethodSignature(method_signature),
+                        Or(*[Txn.on_completion() == oc for oc in call_others]),
+                    ),
+                    wrapped,
+                )
+            )
 
-        Args:
-            ast_list: a non-empty list of `ProgramNode`'s containing conditions of entering such branch
-                and execution of the branch.
-        Returns:
-            program: the Cond AST of (approval/clear-state) program from the list of `ProgramNode`.
-        """
-        if len(ast_list) == 0:
-            raise TealInputError("ABIRouter: Cannot build program with an empty AST")
-
-        sorted(ast_list, key=lambda x: x.ast_order_indicator)
-
-        program: Cond = Cond(*[[node.condition, node.branch] for node in ast_list])
-
-        return program
-
-    def contract_construct(self) -> dict[str, Any]:
+    def contract_construct(self) -> sdk_abi.Contract:
         """A helper function in constructing contract JSON object.
 
         It takes out the method signatures from approval program `ProgramNode`'s,
@@ -625,11 +511,11 @@ class Router:
                 approval program's method signatures and `self.name`.
         """
         method_collections = [
-            node.method_info for node in self.approval_if_then if node.method_info
+            sdk_abi.Method.from_signature(sig) for sig in self.added_method_sig
         ]
-        return sdk_abi.Contract(self.name, method_collections).dictify()
+        return sdk_abi.Contract(self.name, method_collections)
 
-    def build_program(self) -> tuple[Expr, Expr, dict[str, Any]]:
+    def build_program(self) -> tuple[Expr, Expr, sdk_abi.Contract]:
         """
         Constructs ASTs for approval and clear-state programs from the registered methods in the router,
         also generates a JSON object of contract to allow client read and call the methods easily.
@@ -640,8 +526,8 @@ class Router:
             contract: JSON object of contract to allow client start off-chain call
         """
         return (
-            Router.__ast_construct(self.approval_if_then),
-            Router.__ast_construct(self.clear_state_if_then),
+            self.categorized_approval_ast.program_construction(),
+            self.categorized_clear_state_ast.program_construction(),
             self.contract_construct(),
         )
 
@@ -651,7 +537,7 @@ class Router:
         version: int = DEFAULT_TEAL_VERSION,
         assembleConstants: bool = False,
         optimize: OptimizeOptions = None,
-    ) -> tuple[str, str, dict[str, Any]]:
+    ) -> tuple[str, str, sdk_abi.Contract]:
         """
         Combining `build_program` and `compileTeal`, compiles built Approval and ClearState programs
         and returns Contract JSON object for off-chain calling.
