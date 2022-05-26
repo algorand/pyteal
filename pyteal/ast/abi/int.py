@@ -1,6 +1,5 @@
 from typing import (
     TypeVar,
-    cast,
     Union
 )
 from abc import abstractmethod
@@ -24,6 +23,17 @@ class SIntTypeSpec(UintTypeSpec):
         pass
 
 
+class SInt8TypeSpec(SIntTypeSpec):
+    def __init__(self):
+        super().__init__(8)
+
+    def new_instance(self) -> "SInt8":
+        return SInt8()
+
+    def annotation_type(self) -> "type[SInt8]":
+        return SInt8
+
+
 class SInt16TypeSpec(SIntTypeSpec):
     def __init__(self):
         super().__init__(16)
@@ -33,6 +43,28 @@ class SInt16TypeSpec(SIntTypeSpec):
 
     def annotation_type(self) -> "type[SInt16]":
         return SInt16
+
+
+class SInt32TypeSpec(SIntTypeSpec):
+    def __init__(self):
+        super().__init__(32)
+
+    def new_instance(self) -> "SInt32":
+        return SInt32()
+
+    def annotation_type(self) -> "type[SInt32]":
+        return SInt32
+
+
+class SInt64TypeSpec(SIntTypeSpec):
+    def __init__(self):
+        super().__init__(64)
+
+    def new_instance(self) -> "SInt64":
+        return SInt64()
+
+    def annotation_type(self) -> "type[SInt64]":
+        return SInt64
 
 
 T = TypeVar("T", bound="Int")
@@ -64,6 +96,21 @@ class SInt(Uint):
         return super().set(value)
 
 
+class SInt8(SInt):
+    def __init__(self) -> None:
+        super().__init__(SInt8TypeSpec())
+
+
 class SInt16(SInt):
     def __init__(self) -> None:
         super().__init__(SInt16TypeSpec())
+
+
+class SInt32(SInt):
+    def __init__(self) -> None:
+        super().__init__(SInt32TypeSpec())
+
+
+class SInt64(SInt):
+    def __init__(self) -> None:
+        super().__init__(SInt64TypeSpec())
