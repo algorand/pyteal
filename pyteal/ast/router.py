@@ -6,7 +6,7 @@ from algosdk import abi as sdk_abi
 from algosdk import encoding
 
 from pyteal.config import METHOD_ARG_NUM_LIMIT
-from pyteal.errors import TealInputError
+from pyteal.errors import TealInputError, TealInternalError
 from pyteal.types import TealType
 from pyteal.compiler.compiler import compileTeal, DEFAULT_TEAL_VERSION, OptimizeOptions
 from pyteal.ir.ops import Mode
@@ -92,35 +92,56 @@ class MethodConfig:
     def is_arc4_compliant(self) -> bool:
         return self == self.arc4_compliant()
 
-    def _oc_under_call_config(self, call_config: CallConfig) -> list[EnumInt]:
-        if not isinstance(call_config, CallConfig):
-            raise TealInputError(
-                "generate condition based on CallConfigs should be based on CallConfig"
-            )
-        config_oc_pairs: list[tuple[CallConfig, EnumInt]] = [
-            (self.no_op, OnComplete.NoOp),
-            (self.opt_in, OnComplete.OptIn),
-            (self.close_out, OnComplete.CloseOut),
-            (self.clear_state, OnComplete.ClearState),
-            (self.update_application, OnComplete.UpdateApplication),
-            (self.delete_application, OnComplete.DeleteApplication),
-        ]
-        return [
-            oc
-            for oc_config, oc in config_oc_pairs
-            if (oc_config & call_config) != CallConfig.NEVER
-        ]
+    @staticmethod
+    def __condition_under_config(cc: CallConfig) -> Expr | int:
+        match cc:
+            case CallConfig.NEVER:
+                return 0
+            case CallConfig.CALL:
+                return Txn.application_id() == Int(0)
+            case CallConfig.CREATE:
+                return Txn.application_id() != Int(0)
+            case CallConfig.ALL:
+                return 1
+            case _:
+                raise TealInternalError("CallConfig scope exceeding!")
 
-    def _has_clear_state(self, cc: CallConfig) -> bool:
-        return (self.clear_state & cc) != CallConfig.NEVER
+    def approval_cond(self) -> Expr | int:
+        config_oc_pairs: dict[CallConfig, EnumInt] = {
+            self.no_op: OnComplete.NoOp,
+            self.opt_in: OnComplete.OptIn,
+            self.close_out: OnComplete.CloseOut,
+            self.update_application: OnComplete.UpdateApplication,
+            self.delete_application: OnComplete.DeleteApplication,
+        }
+        if all(config == CallConfig.NEVER for config in config_oc_pairs):
+            return 0
+        elif all(config == CallConfig.ALL for config in config_oc_pairs):
+            return 1
+        else:
+            cond_list = []
+            for config in config_oc_pairs:
+                config_cond = self.__condition_under_config(config)
+                match config_cond:
+                    case Expr():
+                        cond_list.append(
+                            And(
+                                Txn.on_completion() == config_oc_pairs[config],
+                                config_cond,
+                            )
+                        )
+                    case 1:
+                        cond_list.append(Txn.on_completion() == config_oc_pairs[config])
+                    case 0:
+                        continue
+                    case _:
+                        raise TealInternalError(
+                            "condition_under_config scope exceeding!"
+                        )
+            return Or(*cond_list)
 
-    def _approval_program_oc(self, cc: CallConfig) -> list[EnumInt]:
-        return list(
-            filter(
-                lambda x: str(x) != str(OnComplete.ClearState),
-                self._oc_under_call_config(cc),
-            )
-        )
+    def clear_state_cond(self) -> Expr | int:
+        return self.__condition_under_config(self.clear_state)
 
 
 @dataclass(frozen=True)
@@ -184,23 +205,60 @@ class BareCallActions:
         kw_only=True, default=OnCompleteAction.never()
     )
 
-    def _clear_state_n_other_oc(
-        self,
-    ) -> tuple[OnCompleteAction, dict[EnumInt, OnCompleteAction]]:
-        return self.clear_state, {
-            OnComplete.CloseOut: self.close_out,
-            OnComplete.DeleteApplication: self.delete_application,
-            OnComplete.NoOp: self.no_op,
-            OnComplete.OptIn: self.opt_in,
-            OnComplete.UpdateApplication: self.update_application,
-        }
-
     def is_empty(self) -> bool:
         for action_field in fields(self):
             action: OnCompleteAction = getattr(self, action_field.name)
             if not action.is_empty():
                 return False
         return True
+
+    def approval_construction(self) -> Optional[Expr]:
+        oc_action_pair: dict[EnumInt, OnCompleteAction] = {
+            OnComplete.NoOp: self.no_op,
+            OnComplete.OptIn: self.opt_in,
+            OnComplete.CloseOut: self.close_out,
+            OnComplete.UpdateApplication: self.update_application,
+            OnComplete.DeleteApplication: self.delete_application,
+        }
+        if all(oca.is_empty() for oca in oc_action_pair.values()):
+            return None
+        conditions_n_branches: list[CondNode] = list()
+        for oc, oca in oc_action_pair.items():
+            if oca.on_call:
+                conditions_n_branches.append(
+                    CondNode(
+                        And(Txn.on_completion() == oc, Txn.application_id() != Int(0)),
+                        ASTBuilder.wrap_handler(False, oca.on_call),
+                    )
+                )
+            if oca.on_create:
+                conditions_n_branches.append(
+                    CondNode(
+                        And(Txn.on_completion() == oc, Txn.application_id() == Int(0)),
+                        ASTBuilder.wrap_handler(False, oca.on_create),
+                    )
+                )
+        return Cond(*[[n.condition, n.branch] for n in conditions_n_branches])
+
+    def clear_state_construction(self) -> Optional[Expr]:
+        if self.clear_state.is_empty():
+            return None
+        conditions_n_branches: list[CondNode] = list()
+        if self.clear_state.on_call:
+            conditions_n_branches.append(
+                CondNode(
+                    Txn.application_id() != Int(0),
+                    ASTBuilder.wrap_handler(False, self.clear_state.on_call),
+                )
+            )
+        if self.clear_state.on_create:
+            conditions_n_branches.append(
+                CondNode(
+                    Txn.application_id() == Int(0),
+                    ASTBuilder.wrap_handler(False, self.clear_state.on_create),
+                )
+            )
+        return Cond(*[[n.condition, n.branch] for n in conditions_n_branches])
 
 
 BareCallActions.__module__ = "pyteal"
@@ -216,62 +274,11 @@ CondNode.__module__ = "pyteal"
 
 
 @dataclass
-class CategorizedCondNodes:
-    method_calls_create: list[CondNode] = field(default_factory=list)
-    bare_calls_create: list[CondNode] = field(default_factory=list)
-    method_calls: list[CondNode] = field(default_factory=list)
-    bare_calls: list[CondNode] = field(default_factory=list)
-
-    def program_construction(self) -> Expr:
-        concatenated_ast = (
-            self.method_calls_create
-            + self.bare_calls_create
-            + self.method_calls
-            + self.bare_calls
-        )
-        if not concatenated_ast:
-            raise TealInputError("ABIRouter: Cannot build program with an empty AST")
-        program: Cond = Cond(*[[n.condition, n.branch] for n in concatenated_ast])
-        return program
-
-
-CategorizedCondNodes.__module__ = "pyteal"
-
-
-class Router:
-    """
-    Class that help constructs:
-    - a *Generalized* ARC-4 app's approval/clear-state programs
-    - and a contract JSON object allowing for easily read and call methods in the contract
-
-    *DISCLAIMER*: ABI-Router is still taking shape and is subject to backwards incompatible changes.
-
-    * Based on feedback, the API and usage patterns are likely to change.
-    * Expect migration issues.
-    """
-
-    def __init__(
-        self,
-        name: str,
-        bare_calls: BareCallActions = None,
-    ) -> None:
-        """
-        Args:
-            name: the name of the smart contract, used in the JSON object.
-            bare_calls: the bare app call registered for each on_completion.
-        """
-
-        self.name: str = name
-        self.categorized_approval_ast = CategorizedCondNodes()
-        self.categorized_clear_state_ast = CategorizedCondNodes()
-
-        self.method_sig_to_selector: dict[str, bytes] = dict()
-        self.method_selector_to_sig: dict[bytes, str] = dict()
-        if bare_calls:
-            self.__add_bare_call(bare_calls)
+class ASTBuilder:
+    conditions_n_branches: list[CondNode] = field(default_factory=list)
 
     @staticmethod
-    def _wrap_handler(
+    def wrap_handler(
         is_method_call: bool, handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr
     ) -> Expr:
         """This is a helper function that handles transaction arguments passing in bare-app-call/abi-method handlers.
@@ -392,41 +399,77 @@ class Router:
                     Approve(),
                 )
 
-    def __add_bare_call(self, oc_actions: BareCallActions) -> None:
-        action_type = Expr | SubroutineFnWrapper | ABIReturnSubroutine
-        cs_calls, approval_calls = oc_actions._clear_state_n_other_oc()
-        if cs_calls.on_call:
-            on_call = cast(action_type, cs_calls.on_call)
-            wrapped = Router._wrap_handler(False, on_call)
-            self.categorized_clear_state_ast.bare_calls.append(
-                CondNode(Txn.application_args.length() == Int(0), wrapped)
-            )
-        if cs_calls.on_create:
-            on_create = cast(action_type, cs_calls.on_create)
-            wrapped = Router._wrap_handler(False, on_create)
-            self.categorized_clear_state_ast.bare_calls_create.append(
-                CondNode(Txn.application_id() == Int(0), wrapped)
-            )
-        for oc, approval_bac in approval_calls.items():
-            if approval_bac.on_call:
-                on_call = cast(action_type, approval_bac.on_call)
-                wrapped = Router._wrap_handler(False, on_call)
-                self.categorized_approval_ast.bare_calls.append(
+    def add_method_to_ast(
+        self, method_signature: str, cond: Expr | int, handler: ABIReturnSubroutine
+    ) -> None:
+        walk_in_cond = Txn.application_args[0] == MethodSignature(method_signature)
+        match cond:
+            case Expr():
+                self.conditions_n_branches.append(
                     CondNode(
-                        And(
-                            Txn.application_args.length() == Int(0),
-                            Txn.on_completion() == oc,
-                        ),
-                        wrapped,
+                        walk_in_cond, Cond([cond, self.wrap_handler(True, handler)])
                     )
                 )
-            if approval_bac.on_create:
-                on_create = cast(action_type, approval_bac.on_create)
-                wrapped = Router._wrap_handler(False, on_create)
-                self.categorized_approval_ast.bare_calls_create.append(
+            case 1:
+                self.conditions_n_branches.append(
+                    CondNode(walk_in_cond, self.wrap_handler(True, handler))
+                )
+            case 0:
+                return
+            case _:
+                raise TealInputError("Invalid condition input for add_method_to_ast")
+
+    def program_construction(self) -> Expr:
+        if not self.conditions_n_branches:
+            raise TealInputError("ABIRouter: Cannot build program with an empty AST")
+        return Cond(*[[n.condition, n.branch] for n in self.conditions_n_branches])
+
+
+class Router:
+    """
+    Class that help constructs:
+    - a *Generalized* ARC-4 app's approval/clear-state programs
+    - and a contract JSON object allowing for easily read and call methods in the contract
+
+    *DISCLAIMER*: ABI-Router is still taking shape and is subject to backwards incompatible changes.
+
+    * Based on feedback, the API and usage patterns are likely to change.
+    * Expect migration issues.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        bare_calls: BareCallActions = None,
+    ) -> None:
+        """
+        Args:
+            name: the name of the smart contract, used in the JSON object.
+            bare_calls: the bare app call registered for each on_completion.
+        """
+
+        self.name: str = name
+        self.approval_ast = ASTBuilder()
+        self.clear_state_ast = ASTBuilder()
+
+        self.method_sig_to_selector: dict[str, bytes] = dict()
+        self.method_selector_to_sig: dict[bytes, str] = dict()
+
+        if bare_calls and not bare_calls.is_empty():
+            bare_call_approval = bare_calls.approval_construction()
+            if bare_call_approval:
+                self.approval_ast.conditions_n_branches.append(
                     CondNode(
-                        And(Txn.application_id() == Int(0), Txn.on_completion() == oc),
-                        wrapped,
+                        Txn.application_args.length() == Int(0),
+                        cast(Expr, bare_call_approval),
+                    )
+                )
+            bare_call_clear = bare_calls.clear_state_construction()
+            if bare_call_clear:
+                self.clear_state_ast.conditions_n_branches.append(
+                    CondNode(
+                        Txn.application_args.length() == Int(0),
+                        cast(Expr, bare_call_clear),
                     )
                 )
 
@@ -457,52 +500,14 @@ class Router:
         self.method_sig_to_selector[method_signature] = method_selector
         self.method_selector_to_sig[method_selector] = method_signature
 
-        wrapped = Router._wrap_handler(True, method_call)
-
-        create_has_clear_state = call_configs._has_clear_state(CallConfig.CREATE)
-        create_others = call_configs._approval_program_oc(CallConfig.CREATE)
-        call_has_clear_state = call_configs._has_clear_state(CallConfig.CALL)
-        call_others = call_configs._approval_program_oc(CallConfig.CALL)
-
-        if create_has_clear_state:
-            self.categorized_clear_state_ast.method_calls_create.append(
-                CondNode(
-                    And(
-                        Txn.application_id() == Int(0),
-                        Txn.application_args[0] == MethodSignature(method_signature),
-                    ),
-                    wrapped,
-                )
-            )
-        if call_has_clear_state:
-            self.categorized_clear_state_ast.method_calls.append(
-                CondNode(
-                    Txn.application_args[0] == MethodSignature(method_signature),
-                    wrapped,
-                )
-            )
-
-        if create_others:
-            self.categorized_approval_ast.method_calls_create.append(
-                CondNode(
-                    And(
-                        Txn.application_id() == Int(0),
-                        Txn.application_args[0] == MethodSignature(method_signature),
-                        Or(*[Txn.on_completion() == oc for oc in create_others]),
-                    ),
-                    wrapped,
-                )
-            )
-        if call_others:
-            self.categorized_approval_ast.method_calls.append(
-                CondNode(
-                    And(
-                        Txn.application_args[0] == MethodSignature(method_signature),
-                        Or(*[Txn.on_completion() == oc for oc in call_others]),
-                    ),
-                    wrapped,
-                )
-            )
+        method_approval_cond = call_configs.approval_cond()
+        method_clear_state_cond = call_configs.clear_state_cond()
+        self.approval_ast.add_method_to_ast(
+            method_signature, method_approval_cond, method_call
+        )
+        self.clear_state_ast.add_method_to_ast(
+            method_signature, method_clear_state_cond, method_call
+        )
 
     def contract_construct(self) -> sdk_abi.Contract:
         """A helper function in constructing contract JSON object.
@@ -532,8 +537,8 @@ class Router:
             contract: JSON object of contract to allow client start off-chain call
         """
         return (
-            self.categorized_approval_ast.program_construction(),
-            self.categorized_clear_state_ast.program_construction(),
+            self.approval_ast.program_construction(),
+            self.clear_state_ast.program_construction(),
             self.contract_construct(),
         )
 

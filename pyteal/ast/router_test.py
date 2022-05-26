@@ -364,7 +364,7 @@ def test_wrap_handler_bare_call():
         pt.Log(pt.Bytes("message")),
     ]
     for bare_call in BARE_CALL_CASES:
-        wrapped: pt.Expr = pt.Router._wrap_handler(False, bare_call)
+        wrapped: pt.Expr = pt.ASTBuilder.wrap_handler(False, bare_call)
         match bare_call:
             case pt.Expr():
                 if bare_call.has_return():
@@ -404,24 +404,24 @@ def test_wrap_handler_bare_call():
     ]
     for error_case, error_msg in ERROR_CASES:
         with pytest.raises(pt.TealInputError) as bug:
-            pt.Router._wrap_handler(False, error_case)
+            pt.ASTBuilder.wrap_handler(False, error_case)
         assert error_msg in str(bug)
 
 
 def test_wrap_handler_method_call():
     with pytest.raises(pt.TealInputError) as bug:
-        pt.Router._wrap_handler(True, not_registrable)
+        pt.ASTBuilder.wrap_handler(True, not_registrable)
     assert "method call ABIReturnSubroutine is not routable" in str(bug)
 
     with pytest.raises(pt.TealInputError) as bug:
-        pt.Router._wrap_handler(True, safe_clear_state_delete)
+        pt.ASTBuilder.wrap_handler(True, safe_clear_state_delete)
     assert "method call should be only registering ABIReturnSubroutine" in str(bug)
 
     ONLY_ABI_SUBROUTINE_CASES = list(
         filter(lambda x: isinstance(x, pt.ABIReturnSubroutine), GOOD_SUBROUTINE_CASES)
     )
     for abi_subroutine in ONLY_ABI_SUBROUTINE_CASES:
-        wrapped: pt.Expr = pt.Router._wrap_handler(True, abi_subroutine)
+        wrapped: pt.Expr = pt.ASTBuilder.wrap_handler(True, abi_subroutine)
         assembled_wrapped: pt.TealBlock = assemble_helper(wrapped)
 
         args: list[pt.abi.BaseType] = [
