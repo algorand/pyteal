@@ -427,4 +427,6 @@ def evaluateSubroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaratio
     bodyOps = [var.slot.store() for var in argumentVars[::-1]]
     bodyOps.append(subroutineBody)
 
-    return SubroutineDeclaration(subroutine, Seq(bodyOps))
+    sd = SubroutineDeclaration(subroutine, Seq(bodyOps))
+    sd.trace = subroutineBody.trace
+    return sd
