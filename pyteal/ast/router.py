@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field, fields, astuple
-from typing import cast, Optional
+from typing import cast, Optional, Callable
 from enum import IntFlag
 
 from algosdk import abi as sdk_abi
@@ -510,6 +510,35 @@ class Router:
         self.clear_state_ast.add_method_to_ast(
             method_signature, method_clear_state_cond, method_call
         )
+
+    def method(
+        self,
+        func: Callable = None,
+        /,
+        *,
+        overriding_name: str = None,
+        no_op: CallConfig = CallConfig.CALL,
+        opt_in: CallConfig = CallConfig.NEVER,
+        close_out: CallConfig = CallConfig.NEVER,
+        clear_state: CallConfig = CallConfig.NEVER,
+        update_application: CallConfig = CallConfig.NEVER,
+        delete_application: CallConfig = CallConfig.NEVER,
+    ):
+        def wrap(_func):
+            wrapped_subroutine = ABIReturnSubroutine(func)
+            call_configs = MethodConfig(
+                no_op=no_op,
+                opt_in=opt_in,
+                close_out=close_out,
+                clear_state=clear_state,
+                update_application=update_application,
+                delete_application=delete_application,
+            )
+            self.add_method_handler(wrapped_subroutine, overriding_name, call_configs)
+
+        if not func:
+            return wrap
+        return wrap(func)
 
     def contract_construct(self) -> sdk_abi.Contract:
         """A helper function in constructing contract JSON object.
