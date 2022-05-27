@@ -177,14 +177,6 @@ ON_COMPLETE_CASES: list[pt.EnumInt] = [
 ]
 
 
-CALL_CONFIGS = [
-    pt.CallConfig.NEVER,
-    pt.CallConfig.CALL,
-    pt.CallConfig.CREATE,
-    pt.CallConfig.ALL,
-]
-
-
 def power_set(no_dup_list: list, length_override: int = None):
     if length_override is None:
         length_override = len(no_dup_list)
@@ -203,7 +195,7 @@ def full_perm_gen(non_dup_list: list, perm_length: int):
     for index in range(len(non_dup_list) ** perm_length):
         index_list_basis = []
         temp = index
-        for i in range(perm_length):
+        for _ in range(perm_length):
             index_list_basis.append(non_dup_list[temp % len(non_dup_list)])
             temp //= len(non_dup_list)
         yield index_list_basis
@@ -224,12 +216,35 @@ def camel_to_snake(name: str) -> str:
     return "".join(["_" + c.lower() if c.isupper() else c for c in name]).lstrip("_")
 
 
+def test_call_config():
+    for cc in pt.CallConfig:
+        cond_on_cc: pt.Expr | int = cc.condition_under_config()
+        match cond_on_cc:
+            case pt.Expr():
+                expected_cc = (
+                    (pt.Txn.application_id() == pt.Int(0))
+                    if cc == pt.CallConfig.CREATE
+                    else (pt.Txn.application_id() != pt.Int(0))
+                )
+                with pt.TealComponent.Context.ignoreExprEquality():
+                    assert assemble_helper(cond_on_cc) == assemble_helper(expected_cc)
+            case int():
+                assert cond_on_cc == int(cc) & 1
+            case _:
+                raise pt.TealInternalError(f"unexpected cond_on_cc {cond_on_cc}")
+
+
 def test_method_config():
+    never_mc = pt.MethodConfig(no_op=pt.CallConfig.NEVER)
+    assert never_mc.is_never()
+    assert never_mc.approval_cond() == 0
+    assert never_mc.clear_state_cond() == 0
+
     on_complete_pow_set = power_set(ON_COMPLETE_CASES)
     for on_complete_set in on_complete_pow_set:
         oc_names = [camel_to_snake(oc.name) for oc in on_complete_set]
         full_perm_call_configs_for_ocs = full_perm_gen(
-            CALL_CONFIGS, len(on_complete_set)
+            list(pt.CallConfig), len(on_complete_set)
         )
         for call_config in full_perm_call_configs_for_ocs:
             mc = pt.MethodConfig(**dict(zip(oc_names, call_config)))
@@ -275,7 +290,7 @@ def test_add_method():
         abi_subroutine_cases, on_complete_pow_set
     ):
         full_perm_call_configs_for_ocs = full_perm_gen(
-            CALL_CONFIGS, len(on_complete_set)
+            list(pt.CallConfig), len(on_complete_set)
         )
         oc_names = [camel_to_snake(oc.name) for oc in on_complete_set]
         for call_config in full_perm_call_configs_for_ocs:

@@ -114,9 +114,9 @@ class MethodConfig:
             (self.update_application, OnComplete.UpdateApplication),
             (self.delete_application, OnComplete.DeleteApplication),
         ]
-        if all(config == CallConfig.NEVER for config in config_oc_pairs):
+        if all(config == CallConfig.NEVER for config, _ in config_oc_pairs):
             return 0
-        elif all(config == CallConfig.ALL for config in config_oc_pairs):
+        elif all(config == CallConfig.ALL for config, _ in config_oc_pairs):
             return 1
         else:
             cond_list = []
