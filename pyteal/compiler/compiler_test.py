@@ -2284,23 +2284,23 @@ bytecblock 0x151f7c75
 txna ApplicationArgs 0
 pushbytes 0xfe6bdf69 // "add(uint64,uint64)uint64"
 ==
-bnz main_l22
+bnz main_l12
 txna ApplicationArgs 0
 pushbytes 0x78b488b7 // "sub(uint64,uint64)uint64"
 ==
-bnz main_l19
+bnz main_l11
 txna ApplicationArgs 0
 pushbytes 0xe2f188c5 // "mul(uint64,uint64)uint64"
 ==
-bnz main_l16
+bnz main_l10
 txna ApplicationArgs 0
 pushbytes 0x16e80f08 // "div(uint64,uint64)uint64"
 ==
-bnz main_l13
+bnz main_l9
 txna ApplicationArgs 0
 pushbytes 0x4dfc58ae // "mod(uint64,uint64)uint64"
 ==
-bnz main_l10
+bnz main_l8
 txna ApplicationArgs 0
 pushbytes 0x487ce2fd // "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
 ==
@@ -2314,9 +2314,7 @@ txn ApplicationID
 intc_0 // 0
 !=
 &&
-bnz main_l9
-err
-main_l9:
+assert
 txna ApplicationArgs 1
 btoi
 store 30
@@ -2394,7 +2392,7 @@ concat
 log
 intc_1 // 1
 return
-main_l10:
+main_l8:
 txn OnCompletion
 intc_0 // NoOp
 ==
@@ -2402,9 +2400,7 @@ txn ApplicationID
 intc_0 // 0
 !=
 &&
-bnz main_l12
-err
-main_l12:
+assert
 txna ApplicationArgs 1
 btoi
 store 24
@@ -2422,7 +2418,7 @@ concat
 log
 intc_1 // 1
 return
-main_l13:
+main_l9:
 txn OnCompletion
 intc_0 // NoOp
 ==
@@ -2430,9 +2426,7 @@ txn ApplicationID
 intc_0 // 0
 !=
 &&
-bnz main_l15
-err
-main_l15:
+assert
 txna ApplicationArgs 1
 btoi
 store 18
@@ -2450,7 +2444,7 @@ concat
 log
 intc_1 // 1
 return
-main_l16:
+main_l10:
 txn OnCompletion
 intc_0 // NoOp
 ==
@@ -2458,9 +2452,7 @@ txn ApplicationID
 intc_0 // 0
 !=
 &&
-bnz main_l18
-err
-main_l18:
+assert
 txna ApplicationArgs 1
 btoi
 store 12
@@ -2478,7 +2470,7 @@ concat
 log
 intc_1 // 1
 return
-main_l19:
+main_l11:
 txn OnCompletion
 intc_0 // NoOp
 ==
@@ -2486,9 +2478,7 @@ txn ApplicationID
 intc_0 // 0
 !=
 &&
-bnz main_l21
-err
-main_l21:
+assert
 txna ApplicationArgs 1
 btoi
 store 6
@@ -2506,7 +2496,7 @@ concat
 log
 intc_1 // 1
 return
-main_l22:
+main_l12:
 txn OnCompletion
 intc_0 // NoOp
 ==
@@ -2514,9 +2504,7 @@ txn ApplicationID
 intc_0 // 0
 !=
 &&
-bnz main_l24
-err
-main_l24:
+assert
 txna ApplicationArgs 1
 btoi
 store 0

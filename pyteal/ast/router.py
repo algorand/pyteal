@@ -17,6 +17,7 @@ from pyteal.ast.subroutine import (
     SubroutineFnWrapper,
     ABIReturnSubroutine,
 )
+from pyteal.ast.assert_ import Assert
 from pyteal.ast.cond import Cond
 from pyteal.ast.expr import Expr
 from pyteal.ast.app import OnComplete, EnumInt
@@ -407,7 +408,8 @@ class ASTBuilder:
             case Expr():
                 self.conditions_n_branches.append(
                     CondNode(
-                        walk_in_cond, Cond([cond, self.wrap_handler(True, handler)])
+                        walk_in_cond,
+                        Seq(Assert(cond), self.wrap_handler(True, handler)),
                     )
                 )
             case 1:
