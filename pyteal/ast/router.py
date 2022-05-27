@@ -98,9 +98,9 @@ class MethodConfig:
             case CallConfig.NEVER:
                 return 0
             case CallConfig.CALL:
-                return Txn.application_id() == Int(0)
-            case CallConfig.CREATE:
                 return Txn.application_id() != Int(0)
+            case CallConfig.CREATE:
+                return Txn.application_id() == Int(0)
             case CallConfig.ALL:
                 return 1
             case _:

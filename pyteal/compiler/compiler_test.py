@@ -2312,7 +2312,7 @@ intc_0 // NoOp
 ==
 txn ApplicationID
 intc_0 // 0
-==
+!=
 &&
 bnz main_l9
 err
@@ -2400,7 +2400,11 @@ intc_0 // NoOp
 ==
 txn ApplicationID
 intc_0 // 0
+<<<<<<< HEAD
 ==
+=======
+!=
+>>>>>>> aa69b0f598dc24bba267bbaf498d5480bb1a835c
 &&
 bnz main_l12
 err
@@ -2428,7 +2432,11 @@ intc_0 // NoOp
 ==
 txn ApplicationID
 intc_0 // 0
+<<<<<<< HEAD
 ==
+=======
+!=
+>>>>>>> aa69b0f598dc24bba267bbaf498d5480bb1a835c
 &&
 bnz main_l15
 err
@@ -2456,7 +2464,11 @@ intc_0 // NoOp
 ==
 txn ApplicationID
 intc_0 // 0
+<<<<<<< HEAD
 ==
+=======
+!=
+>>>>>>> aa69b0f598dc24bba267bbaf498d5480bb1a835c
 &&
 bnz main_l18
 err
@@ -2484,7 +2496,11 @@ intc_0 // NoOp
 ==
 txn ApplicationID
 intc_0 // 0
+<<<<<<< HEAD
 ==
+=======
+!=
+>>>>>>> aa69b0f598dc24bba267bbaf498d5480bb1a835c
 &&
 bnz main_l21
 err
@@ -2512,7 +2528,11 @@ intc_0 // NoOp
 ==
 txn ApplicationID
 intc_0 // 0
+<<<<<<< HEAD
 ==
+=======
+!=
+>>>>>>> aa69b0f598dc24bba267bbaf498d5480bb1a835c
 &&
 bnz main_l24
 err
