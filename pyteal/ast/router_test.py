@@ -1,10 +1,13 @@
 import pyteal as pt
+from pyteal.ast.router import ASTBuilder
+
 import itertools
 import pytest
 
 # import random
 import typing
 import algosdk.abi as sdk_abi
+
 
 options = pt.CompileOptions(version=5)
 
@@ -188,7 +191,7 @@ def power_set(no_dup_list: list, length_override: int = None):
 
 def full_perm_gen(non_dup_list: list, perm_length: int):
     if perm_length < 0:
-        raise
+        raise pt.TealInputError("input permutation length must be non-negative")
     elif perm_length == 0:
         yield []
         return
@@ -413,7 +416,7 @@ def test_wrap_handler_bare_call():
         pt.Log(pt.Bytes("message")),
     ]
     for bare_call in BARE_CALL_CASES:
-        wrapped: pt.Expr = pt.ASTBuilder.wrap_handler(False, bare_call)
+        wrapped: pt.Expr = ASTBuilder.wrap_handler(False, bare_call)
         match bare_call:
             case pt.Expr():
                 if bare_call.has_return():
@@ -453,24 +456,24 @@ def test_wrap_handler_bare_call():
     ]
     for error_case, error_msg in ERROR_CASES:
         with pytest.raises(pt.TealInputError) as bug:
-            pt.ASTBuilder.wrap_handler(False, error_case)
+            ASTBuilder.wrap_handler(False, error_case)
         assert error_msg in str(bug)
 
 
 def test_wrap_handler_method_call():
     with pytest.raises(pt.TealInputError) as bug:
-        pt.ASTBuilder.wrap_handler(True, not_registrable)
+        ASTBuilder.wrap_handler(True, not_registrable)
     assert "method call ABIReturnSubroutine is not routable" in str(bug)
 
     with pytest.raises(pt.TealInputError) as bug:
-        pt.ASTBuilder.wrap_handler(True, safe_clear_state_delete)
+        ASTBuilder.wrap_handler(True, safe_clear_state_delete)
     assert "method call should be only registering ABIReturnSubroutine" in str(bug)
 
     ONLY_ABI_SUBROUTINE_CASES = list(
         filter(lambda x: isinstance(x, pt.ABIReturnSubroutine), GOOD_SUBROUTINE_CASES)
     )
     for abi_subroutine in ONLY_ABI_SUBROUTINE_CASES:
-        wrapped: pt.Expr = pt.ASTBuilder.wrap_handler(True, abi_subroutine)
+        wrapped: pt.Expr = ASTBuilder.wrap_handler(True, abi_subroutine)
         assembled_wrapped: pt.TealBlock = assemble_helper(wrapped)
 
         args: list[pt.abi.BaseType] = [
@@ -539,8 +542,4 @@ def test_contract_json_obj():
         method_list.append(sdk_abi.Method.from_signature(subroutine.method_signature()))
     sdk_contract = sdk_abi.Contract(contract_name, method_list)
     contract = router.contract_construct()
-    assert sdk_contract.desc == contract.desc
-    assert sdk_contract.name == contract.name
-    assert sdk_contract.networks == contract.networks
-    for method in sdk_contract.methods:
-        assert method in contract.methods
+    assert contract == sdk_contract

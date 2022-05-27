@@ -537,7 +537,7 @@ class Router:
         func: Callable = None,
         /,
         *,
-        overriding_name: str = None,
+        name: str = None,
         no_op: CallConfig = CallConfig.CALL,
         opt_in: CallConfig = CallConfig.NEVER,
         close_out: CallConfig = CallConfig.NEVER,
@@ -555,7 +555,7 @@ class Router:
                 update_application=update_application,
                 delete_application=delete_application,
             )
-            self.add_method_handler(wrapped_subroutine, overriding_name, call_configs)
+            self.add_method_handler(wrapped_subroutine, name, call_configs)
 
         if not func:
             return wrap

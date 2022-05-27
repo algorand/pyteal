@@ -2274,44 +2274,42 @@ def test_router_app():
 
     router.add_method_handler(all_laid_to_args)
 
-    actual_ap_compiled, actual_csp_compiled, _ = router.compile_program(
-        version=6, assembleConstants=True
-    )
+    actual_ap_compiled, actual_csp_compiled, _ = router.compile_program(version=6)
+    print(actual_ap_compiled)
+    print(actual_csp_compiled)
 
     expected_ap = """#pragma version 6
-intcblock 0 1
-bytecblock 0x151f7c75
 txna ApplicationArgs 0
-pushbytes 0xfe6bdf69 // "add(uint64,uint64)uint64"
+method "add(uint64,uint64)uint64"
 ==
 bnz main_l12
 txna ApplicationArgs 0
-pushbytes 0x78b488b7 // "sub(uint64,uint64)uint64"
+method "sub(uint64,uint64)uint64"
 ==
 bnz main_l11
 txna ApplicationArgs 0
-pushbytes 0xe2f188c5 // "mul(uint64,uint64)uint64"
+method "mul(uint64,uint64)uint64"
 ==
 bnz main_l10
 txna ApplicationArgs 0
-pushbytes 0x16e80f08 // "div(uint64,uint64)uint64"
+method "div(uint64,uint64)uint64"
 ==
 bnz main_l9
 txna ApplicationArgs 0
-pushbytes 0x4dfc58ae // "mod(uint64,uint64)uint64"
+method "mod(uint64,uint64)uint64"
 ==
 bnz main_l8
 txna ApplicationArgs 0
-pushbytes 0x487ce2fd // "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
+method "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
 ==
 bnz main_l7
 err
 main_l7:
 txn OnCompletion
-intc_0 // NoOp
+int NoOp
 ==
 txn ApplicationID
-intc_0 // 0
+int 0
 !=
 &&
 assert
@@ -2360,11 +2358,11 @@ store 43
 txna ApplicationArgs 15
 store 44
 load 44
-intc_0 // 0
+int 0
 extract_uint64
 store 45
 load 44
-pushint 8 // 8
+int 8
 extract_uint64
 store 46
 load 30
@@ -2385,19 +2383,19 @@ load 45
 load 46
 callsub alllaidtoargs_5
 store 47
-bytec_0 // 0x151f7c75
+byte 0x151f7c75
 load 47
 itob
 concat
 log
-intc_1 // 1
+int 1
 return
 main_l8:
 txn OnCompletion
-intc_0 // NoOp
+int NoOp
 ==
 txn ApplicationID
-intc_0 // 0
+int 0
 !=
 &&
 assert
@@ -2411,19 +2409,19 @@ load 24
 load 25
 callsub mod_4
 store 26
-bytec_0 // 0x151f7c75
+byte 0x151f7c75
 load 26
 itob
 concat
 log
-intc_1 // 1
+int 1
 return
 main_l9:
 txn OnCompletion
-intc_0 // NoOp
+int NoOp
 ==
 txn ApplicationID
-intc_0 // 0
+int 0
 !=
 &&
 assert
@@ -2437,19 +2435,19 @@ load 18
 load 19
 callsub div_3
 store 20
-bytec_0 // 0x151f7c75
+byte 0x151f7c75
 load 20
 itob
 concat
 log
-intc_1 // 1
+int 1
 return
 main_l10:
 txn OnCompletion
-intc_0 // NoOp
+int NoOp
 ==
 txn ApplicationID
-intc_0 // 0
+int 0
 !=
 &&
 assert
@@ -2463,19 +2461,19 @@ load 12
 load 13
 callsub mul_2
 store 14
-bytec_0 // 0x151f7c75
+byte 0x151f7c75
 load 14
 itob
 concat
 log
-intc_1 // 1
+int 1
 return
 main_l11:
 txn OnCompletion
-intc_0 // NoOp
+int NoOp
 ==
 txn ApplicationID
-intc_0 // 0
+int 0
 !=
 &&
 assert
@@ -2489,19 +2487,19 @@ load 6
 load 7
 callsub sub_1
 store 8
-bytec_0 // 0x151f7c75
+byte 0x151f7c75
 load 8
 itob
 concat
 log
-intc_1 // 1
+int 1
 return
 main_l12:
 txn OnCompletion
-intc_0 // NoOp
+int NoOp
 ==
 txn ApplicationID
-intc_0 // 0
+int 0
 !=
 &&
 assert
@@ -2515,12 +2513,12 @@ load 0
 load 1
 callsub add_0
 store 2
-bytec_0 // 0x151f7c75
+byte 0x151f7c75
 load 2
 itob
 concat
 log
-intc_1 // 1
+int 1
 return
 
 // add
@@ -2633,17 +2631,16 @@ retsub""".strip()
     assert expected_ap == actual_ap_compiled
 
     expected_csp = """#pragma version 6
-intcblock 0
 txn NumAppArgs
-intc_0 // 0
+int 0
 ==
 bnz main_l2
 err
 main_l2:
 txn ApplicationID
-intc_0 // 0
+int 0
 !=
 assert
-pushint 1 // 1
+int 1
 return""".strip()
     assert expected_csp == actual_csp_compiled
