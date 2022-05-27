@@ -128,9 +128,20 @@ def compileSubroutine(
 
     if not ast.has_return():
         if ast.type_of() == TealType.none:
-            ast = Seq([ast, Return()])
+            ret_expr = Return()
+            ret_expr.trace = ast.trace
+
+            seq_expr = Seq([ast, ret_expr])
+            seq_expr.trace = ast.trace
+
+            ast = seq_expr 
         else:
-            ast = Return(ast)
+            ret_expr = Return()
+            ret_expr.trace = ast.trace
+            ret_expr.value = ast
+            ast = ret_expr
+
+
 
     options.setSubroutine(currentSubroutine)
     start, end = ast.__teal__(options)
