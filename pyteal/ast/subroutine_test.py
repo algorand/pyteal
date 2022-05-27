@@ -249,7 +249,7 @@ def test_subroutine_return_reference():
     def invalid_ret_type_collection(
         *, output: pt.abi.Tuple2[pt.abi.Account, pt.abi.Uint64]
     ):
-        return output.set(0, 0)
+        return output.set(pt.abi.Account(), pt.abi.Uint64())
 
     with pytest.raises(pt.TealInputError):
         invalid_ret_type_collection.method_signature()
@@ -258,7 +258,11 @@ def test_subroutine_return_reference():
     def invalid_ret_type_collection_nested(
         *, output: pt.abi.DynamicArray[pt.abi.Tuple2[pt.abi.Account, pt.abi.Uint64]]
     ):
-        return output.set(0, 0)
+        return output.set(
+            pt.abi.make(
+                pt.abi.DynamicArray[pt.abi.Tuple2[pt.abi.Account, pt.abi.Uint64]]
+            )
+        )
 
     with pytest.raises(pt.TealInputError):
         invalid_ret_type_collection_nested.method_signature()

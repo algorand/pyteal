@@ -595,8 +595,9 @@ class ABIReturnSubroutine:
                 "Only registrable methods may return a method signature"
             )
 
-        if abi.contains_type_spec(
-            self.type_of(),
+        ret_type = self.type_of()
+        if isinstance(ret_type, abi.TypeSpec) and abi.contains_type_spec(
+            ret_type,
             [
                 abi.AccountTypeSpec(),
                 abi.AssetTypeSpec(),
