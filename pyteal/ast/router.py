@@ -5,7 +5,7 @@ from enum import IntFlag
 from algosdk import abi as sdk_abi
 from algosdk import encoding
 
-from pyteal.config import METHOD_ARG_NUM_LIMIT
+from pyteal.config import METHOD_ARG_NUM_CUTOFF
 from pyteal.errors import TealInputError, TealInternalError
 from pyteal.types import TealType
 from pyteal.compiler.compiler import compileTeal, DEFAULT_TEAL_VERSION, OptimizeOptions
@@ -365,9 +365,9 @@ class ASTBuilder:
             arg_type_specs = cast(
                 list[abi.TypeSpec], handler.subroutine.expected_arg_types
             )
-            if handler.subroutine.argument_count() > METHOD_ARG_NUM_LIMIT:
-                last_arg_specs_grouped = arg_type_specs[METHOD_ARG_NUM_LIMIT - 1 :]
-                arg_type_specs = arg_type_specs[: METHOD_ARG_NUM_LIMIT - 1]
+            if handler.subroutine.argument_count() > METHOD_ARG_NUM_CUTOFF:
+                last_arg_specs_grouped = arg_type_specs[METHOD_ARG_NUM_CUTOFF - 1 :]
+                arg_type_specs = arg_type_specs[: METHOD_ARG_NUM_CUTOFF - 1]
                 last_arg_spec = abi.TupleTypeSpec(*last_arg_specs_grouped)
                 arg_type_specs.append(last_arg_spec)
 
@@ -379,10 +379,10 @@ class ASTBuilder:
                 for i in range(len(arg_type_specs))
             ]
 
-            if handler.subroutine.argument_count() > METHOD_ARG_NUM_LIMIT:
+            if handler.subroutine.argument_count() > METHOD_ARG_NUM_CUTOFF:
                 tuple_arg_type_specs: list[abi.TypeSpec] = cast(
                     list[abi.TypeSpec],
-                    handler.subroutine.expected_arg_types[METHOD_ARG_NUM_LIMIT - 1 :],
+                    handler.subroutine.expected_arg_types[METHOD_ARG_NUM_CUTOFF - 1 :],
                 )
                 tuple_abi_args: list[abi.BaseType] = [
                     t_arg_ts.new_instance() for t_arg_ts in tuple_arg_type_specs

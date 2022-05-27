@@ -237,8 +237,15 @@ def test_call_config():
 def test_method_config():
     never_mc = pt.MethodConfig(no_op=pt.CallConfig.NEVER)
     assert never_mc.is_never()
+    assert not never_mc.is_arc4_compliant()
     assert never_mc.approval_cond() == 0
     assert never_mc.clear_state_cond() == 0
+
+    all_mc = pt.MethodConfig.arc4_compliant()
+    assert not all_mc.is_never()
+    assert all_mc.is_arc4_compliant()
+    assert all_mc.approval_cond() == 1
+    assert all_mc.clear_state_cond() == 1
 
     on_complete_pow_set = power_set(ON_COMPLETE_CASES)
     for on_complete_set in on_complete_pow_set:
@@ -260,8 +267,14 @@ def test_method_config():
             # method_config: pt.MethodConfig
 
 
-def test_add_bare_call():
-    pass
+def test_on_complete_action():
+    with pytest.raises(pt.TealInputError) as contradict_err:
+        pt.OnCompleteAction(action=pt.Seq(), call_config=pt.CallConfig.NEVER)
+    assert "contradicts" in str(contradict_err)
+    assert pt.OnCompleteAction.never().is_empty()
+    assert pt.OnCompleteAction.call_only(pt.Seq()).call_config == pt.CallConfig.CALL
+    assert pt.OnCompleteAction.create_only(pt.Seq()).call_config == pt.CallConfig.CREATE
+    assert pt.OnCompleteAction.always(pt.Seq()).call_config == pt.CallConfig.ALL
 
 
 def test_add_method():
@@ -469,26 +482,26 @@ def test_wrap_handler_method_call():
 
         loading: list[pt.Expr]
 
-        if abi_subroutine.subroutine.argument_count() > pt.METHOD_ARG_NUM_LIMIT:
+        if abi_subroutine.subroutine.argument_count() > pt.METHOD_ARG_NUM_CUTOFF:
             sdk_last_arg = pt.abi.TupleTypeSpec(
                 *[
                     spec
                     for spec in typing.cast(
                         list[pt.abi.TypeSpec],
                         abi_subroutine.subroutine.expected_arg_types,
-                    )[pt.METHOD_ARG_NUM_LIMIT - 1 :]
+                    )[pt.METHOD_ARG_NUM_CUTOFF - 1 :]
                 ]
             ).new_instance()
             loading = [
                 arg.decode(pt.Txn.application_args[index + 1])
-                for index, arg in enumerate(args[: pt.METHOD_ARG_NUM_LIMIT - 1])
+                for index, arg in enumerate(args[: pt.METHOD_ARG_NUM_CUTOFF - 1])
             ]
             loading.append(
-                sdk_last_arg.decode(pt.Txn.application_args[pt.METHOD_ARG_NUM_LIMIT])
+                sdk_last_arg.decode(pt.Txn.application_args[pt.METHOD_ARG_NUM_CUTOFF])
             )
-            for i in range(pt.METHOD_ARG_NUM_LIMIT - 1, len(args)):
+            for i in range(pt.METHOD_ARG_NUM_CUTOFF - 1, len(args)):
                 loading.append(
-                    sdk_last_arg[i - pt.METHOD_ARG_NUM_LIMIT + 1].store_into(args[i])
+                    sdk_last_arg[i - pt.METHOD_ARG_NUM_CUTOFF + 1].store_into(args[i])
                 )
         else:
             loading = [
