@@ -2643,9 +2643,7 @@ main_l2:
 txn ApplicationID
 intc_0 // 0
 !=
-bnz main_l4
-err
-main_l4:
+assert
 pushint 1 // 1
 return""".strip()
     assert expected_csp == actual_csp_compiled

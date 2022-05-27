@@ -47,6 +47,19 @@ class CallConfig(IntFlag):
     CREATE = 2
     ALL = 3
 
+    def condition_under_config(self) -> Expr | int:
+        match self:
+            case CallConfig.NEVER:
+                return 0
+            case CallConfig.CALL:
+                return Txn.application_id() != Int(0)
+            case CallConfig.CREATE:
+                return Txn.application_id() == Int(0)
+            case CallConfig.ALL:
+                return 1
+            case _:
+                raise TealInternalError(f"unexpected CallConfig {self}")
+
 
 CallConfig.__module__ = "pyteal"
 
@@ -54,7 +67,7 @@ CallConfig.__module__ = "pyteal"
 @dataclass(frozen=True)
 class MethodConfig:
     """
-    CallConfigs keep track of one method registration's CallConfigs for all OnComplete cases.
+    MethodConfig keep track of one method registration's CallConfigs for all OnComplete cases.
 
     By ARC-0004 spec:
         If an Application is called with greater than zero Application call arguments  (NOT a bare Application call),
@@ -93,20 +106,6 @@ class MethodConfig:
     def is_arc4_compliant(self) -> bool:
         return self == self.arc4_compliant()
 
-    @staticmethod
-    def __condition_under_config(cc: CallConfig) -> Expr | int:
-        match cc:
-            case CallConfig.NEVER:
-                return 0
-            case CallConfig.CALL:
-                return Txn.application_id() != Int(0)
-            case CallConfig.CREATE:
-                return Txn.application_id() == Int(0)
-            case CallConfig.ALL:
-                return 1
-            case _:
-                raise TealInternalError("CallConfig scope exceeding!")
-
     def approval_cond(self) -> Expr | int:
         config_oc_pairs: dict[CallConfig, EnumInt] = {
             self.no_op: OnComplete.NoOp,
@@ -122,7 +121,7 @@ class MethodConfig:
         else:
             cond_list = []
             for config in config_oc_pairs:
-                config_cond = self.__condition_under_config(config)
+                config_cond = config.condition_under_config()
                 match config_cond:
                     case Expr():
                         cond_list.append(
@@ -137,12 +136,12 @@ class MethodConfig:
                         continue
                     case _:
                         raise TealInternalError(
-                            "condition_under_config scope exceeding!"
+                            f"unexpected condition_under_config: {config_cond}"
                         )
             return Or(*cond_list)
 
     def clear_state_cond(self) -> Expr | int:
-        return self.__condition_under_config(self.clear_state)
+        return self.clear_state.condition_under_config()
 
 
 @dataclass(frozen=True)
@@ -151,12 +150,18 @@ class OnCompleteAction:
     OnComplete Action, registers bare calls to one single OnCompletion case.
     """
 
-    on_create: Optional[Expr | SubroutineFnWrapper | ABIReturnSubroutine] = field(
+    action: Optional[Expr | SubroutineFnWrapper | ABIReturnSubroutine] = field(
         kw_only=True, default=None
     )
-    on_call: Optional[Expr | SubroutineFnWrapper | ABIReturnSubroutine] = field(
-        kw_only=True, default=None
-    )
+    call_config: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
+
+    def __post_init__(self):
+        if (self.call_config == CallConfig.NEVER and self.action) or (
+            self.call_config != CallConfig.NEVER and not self.action
+        ):
+            raise TealInputError(
+                f"action {self.action} and call_config {self.call_config} contradicts"
+            )
 
     @staticmethod
     def never() -> "OnCompleteAction":
@@ -166,22 +171,22 @@ class OnCompleteAction:
     def create_only(
         f: Expr | SubroutineFnWrapper | ABIReturnSubroutine,
     ) -> "OnCompleteAction":
-        return OnCompleteAction(on_create=f)
+        return OnCompleteAction(action=f, call_config=CallConfig.CREATE)
 
     @staticmethod
     def call_only(
         f: Expr | SubroutineFnWrapper | ABIReturnSubroutine,
     ) -> "OnCompleteAction":
-        return OnCompleteAction(on_call=f)
+        return OnCompleteAction(action=f, call_config=CallConfig.CALL)
 
     @staticmethod
     def always(
         f: Expr | SubroutineFnWrapper | ABIReturnSubroutine,
     ) -> "OnCompleteAction":
-        return OnCompleteAction(on_create=f, on_call=f)
+        return OnCompleteAction(action=f, call_config=CallConfig.ALL)
 
     def is_empty(self) -> bool:
-        return not (self.on_call or self.on_create)
+        return not self.action and self.call_config == CallConfig.NEVER
 
 
 OnCompleteAction.__module__ = "pyteal"
@@ -190,7 +195,7 @@ OnCompleteAction.__module__ = "pyteal"
 @dataclass(frozen=True)
 class BareCallActions:
     """
-    OnCompletion Actions keep track of bare-call registrations to all OnCompletion cases.
+    BareCallActions keep track of bare-call registrations to all OnCompletion cases.
     """
 
     close_out: OnCompleteAction = field(kw_only=True, default=OnCompleteAction.never())
@@ -225,41 +230,57 @@ class BareCallActions:
             return None
         conditions_n_branches: list[CondNode] = list()
         for oc, oca in oc_action_pair.items():
-            if oca.on_call:
-                conditions_n_branches.append(
-                    CondNode(
-                        And(Txn.on_completion() == oc, Txn.application_id() != Int(0)),
-                        ASTBuilder.wrap_handler(False, oca.on_call),
+            if oca.is_empty():
+                continue
+            wrapped_handler = ASTBuilder.wrap_handler(
+                False,
+                cast(Expr | SubroutineFnWrapper | ABIReturnSubroutine, oca.action),
+            )
+            match oca.call_config:
+                case CallConfig.ALL:
+                    cond_body = wrapped_handler
+                case CallConfig.CALL | CallConfig.CREATE:
+                    cond_body = Seq(
+                        Assert(cast(Expr, oca.call_config.condition_under_config())),
+                        wrapped_handler,
                     )
+                case _:
+                    raise TealInternalError(f"Unexpected CallConfig: {oca.call_config}")
+            conditions_n_branches.append(
+                CondNode(
+                    Txn.on_completion() == oc,
+                    cond_body,
                 )
-            if oca.on_create:
-                conditions_n_branches.append(
-                    CondNode(
-                        And(Txn.on_completion() == oc, Txn.application_id() == Int(0)),
-                        ASTBuilder.wrap_handler(False, oca.on_create),
-                    )
-                )
+            )
         return Cond(*[[n.condition, n.branch] for n in conditions_n_branches])
 
     def clear_state_construction(self) -> Optional[Expr]:
         if self.clear_state.is_empty():
             return None
-        conditions_n_branches: list[CondNode] = list()
-        if self.clear_state.on_call:
-            conditions_n_branches.append(
-                CondNode(
-                    Txn.application_id() != Int(0),
-                    ASTBuilder.wrap_handler(False, self.clear_state.on_call),
+
+        wrapped_handler = ASTBuilder.wrap_handler(
+            False,
+            cast(
+                Expr | SubroutineFnWrapper | ABIReturnSubroutine,
+                self.clear_state.action,
+            ),
+        )
+        match self.clear_state.call_config:
+            case CallConfig.ALL:
+                return wrapped_handler
+            case CallConfig.CALL | CallConfig.CREATE:
+                return Seq(
+                    Assert(
+                        cast(
+                            Expr, self.clear_state.call_config.condition_under_config()
+                        )
+                    ),
+                    wrapped_handler,
                 )
-            )
-        if self.clear_state.on_create:
-            conditions_n_branches.append(
-                CondNode(
-                    Txn.application_id() == Int(0),
-                    ASTBuilder.wrap_handler(False, self.clear_state.on_create),
+            case _:
+                raise TealInternalError(
+                    f"Unexpected CallConfig: {self.clear_state.call_config}"
                 )
-            )
-        return Cond(*[[n.condition, n.branch] for n in conditions_n_branches])
 
 
 BareCallActions.__module__ = "pyteal"
@@ -501,6 +522,11 @@ class Router:
             )
         self.method_sig_to_selector[method_signature] = method_selector
         self.method_selector_to_sig[method_selector] = method_signature
+
+        if call_configs.is_arc4_compliant():
+            self.approval_ast.add_method_to_ast(method_signature, 1, method_call)
+            self.clear_state_ast.add_method_to_ast(method_signature, 1, method_call)
+            return
 
         method_approval_cond = call_configs.approval_cond()
         method_clear_state_cond = call_configs.clear_state_cond()

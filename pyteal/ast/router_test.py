@@ -224,6 +224,18 @@ def camel_to_snake(name: str) -> str:
     return "".join(["_" + c.lower() if c.isupper() else c for c in name]).lstrip("_")
 
 
+def test_method_config():
+    on_complete_pow_set = power_set(ON_COMPLETE_CASES)
+    for on_complete_set in on_complete_pow_set:
+        oc_names = [camel_to_snake(oc.name) for oc in on_complete_set]
+        full_perm_call_configs_for_ocs = full_perm_gen(
+            CALL_CONFIGS, len(on_complete_set)
+        )
+        for call_config in full_perm_call_configs_for_ocs:
+            _ = pt.MethodConfig(**dict(zip(oc_names, call_config)))
+            # method_config: pt.MethodConfig
+
+
 def test_add_bare_call():
     pass
 
