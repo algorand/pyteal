@@ -533,7 +533,6 @@ class Router:
                 delete_application=delete_application,
             )
             self.add_method_handler(wrapped_subroutine, overriding_name, call_configs)
-            return wrapped_subroutine
 
         if not func:
             return wrap
