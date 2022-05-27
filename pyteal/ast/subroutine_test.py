@@ -245,6 +245,15 @@ def test_subroutine_return_reference():
     with pytest.raises(pt.TealInputError):
         invalid_ret_type.method_signature()
 
+    @ABIReturnSubroutine
+    def invalid_ret_type_collection(
+        *, output: pt.abi.Tuple2[pt.abi.Account, pt.abi.Uint64]
+    ):
+        return output.set(0, 0)
+
+    with pytest.raises(pt.TealInputError):
+        invalid_ret_type_collection.method_signature()
+
 
 def test_subroutine_definition_validate():
     """

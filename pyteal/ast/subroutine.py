@@ -595,11 +595,14 @@ class ABIReturnSubroutine:
                 "Only registrable methods may return a method signature"
             )
 
-        if self.type_of() in [
-            abi.AccountTypeSpec(),
-            abi.AssetTypeSpec(),
-            abi.ApplicationTypeSpec(),
-        ]:
+        if abi.contains_type_spec(
+            self.type_of(),
+            [
+                abi.AccountTypeSpec(),
+                abi.AssetTypeSpec(),
+                abi.ApplicationTypeSpec(),
+            ],
+        ):
             raise TealInputError("Reference types may not be used as return values")
 
         args = [str(v) for v in self.subroutine.abi_args.values()]
