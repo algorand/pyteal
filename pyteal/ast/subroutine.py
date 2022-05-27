@@ -595,6 +595,13 @@ class ABIReturnSubroutine:
                 "Only registrable methods may return a method signature"
             )
 
+        if str(self.type_of()) in [
+            "account",
+            "asset",
+            "application",
+        ]:
+            raise TealInputError("Reference types may not be used as return values")
+
         args = [str(v) for v in self.subroutine.abi_args.values()]
         if overriding_name is None:
             overriding_name = self.name()

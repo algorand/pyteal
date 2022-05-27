@@ -5,7 +5,7 @@ import pytest
 from dataclasses import dataclass
 
 import pyteal as pt
-from pyteal.ast.subroutine import evaluate_subroutine
+from pyteal.ast.subroutine import ABIReturnSubroutine, evaluate_subroutine
 
 options = pt.CompileOptions(version=5)
 
@@ -235,6 +235,15 @@ def test_abi_subroutine_definition():
         else:
             with pytest.raises(pt.TealInputError):
                 case.definition.method_signature()
+
+
+def test_subroutine_return_reference():
+    @ABIReturnSubroutine
+    def invalid_ret_type(*, output: pt.abi.Account):
+        return output.set(0)
+
+    with pytest.raises(pt.TealInputError):
+        invalid_ret_type.method_signature()
 
 
 def test_subroutine_definition_validate():
