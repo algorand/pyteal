@@ -232,7 +232,16 @@ def test_method_config():
             CALL_CONFIGS, len(on_complete_set)
         )
         for call_config in full_perm_call_configs_for_ocs:
-            _ = pt.MethodConfig(**dict(zip(oc_names, call_config)))
+            mc = pt.MethodConfig(**dict(zip(oc_names, call_config)))
+            approval_list = [
+                mc.no_op,
+                mc.opt_in,
+                mc.close_out,
+                mc.update_application,
+                mc.delete_application,
+            ]
+            len(approval_list)
+
             # method_config: pt.MethodConfig
 
 

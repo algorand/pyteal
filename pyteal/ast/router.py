@@ -107,31 +107,26 @@ class MethodConfig:
         return self == self.arc4_compliant()
 
     def approval_cond(self) -> Expr | int:
-        config_oc_pairs: dict[CallConfig, EnumInt] = {
-            self.no_op: OnComplete.NoOp,
-            self.opt_in: OnComplete.OptIn,
-            self.close_out: OnComplete.CloseOut,
-            self.update_application: OnComplete.UpdateApplication,
-            self.delete_application: OnComplete.DeleteApplication,
-        }
+        config_oc_pairs: list[tuple[CallConfig, EnumInt]] = [
+            (self.no_op, OnComplete.NoOp),
+            (self.opt_in, OnComplete.OptIn),
+            (self.close_out, OnComplete.CloseOut),
+            (self.update_application, OnComplete.UpdateApplication),
+            (self.delete_application, OnComplete.DeleteApplication),
+        ]
         if all(config == CallConfig.NEVER for config in config_oc_pairs):
             return 0
         elif all(config == CallConfig.ALL for config in config_oc_pairs):
             return 1
         else:
             cond_list = []
-            for config in config_oc_pairs:
+            for config, oc in config_oc_pairs:
                 config_cond = config.condition_under_config()
                 match config_cond:
                     case Expr():
-                        cond_list.append(
-                            And(
-                                Txn.on_completion() == config_oc_pairs[config],
-                                config_cond,
-                            )
-                        )
+                        cond_list.append(And(Txn.on_completion() == oc, config_cond))
                     case 1:
-                        cond_list.append(Txn.on_completion() == config_oc_pairs[config])
+                        cond_list.append(Txn.on_completion() == oc)
                     case 0:
                         continue
                     case _:
@@ -219,17 +214,17 @@ class BareCallActions:
         return True
 
     def approval_construction(self) -> Optional[Expr]:
-        oc_action_pair: dict[EnumInt, OnCompleteAction] = {
-            OnComplete.NoOp: self.no_op,
-            OnComplete.OptIn: self.opt_in,
-            OnComplete.CloseOut: self.close_out,
-            OnComplete.UpdateApplication: self.update_application,
-            OnComplete.DeleteApplication: self.delete_application,
-        }
-        if all(oca.is_empty() for oca in oc_action_pair.values()):
+        oc_action_pair: list[tuple[EnumInt, OnCompleteAction]] = [
+            (OnComplete.NoOp, self.no_op),
+            (OnComplete.OptIn, self.opt_in),
+            (OnComplete.CloseOut, self.close_out),
+            (OnComplete.UpdateApplication, self.update_application),
+            (OnComplete.DeleteApplication, self.delete_application),
+        ]
+        if all(oca.is_empty() for _, oca in oc_action_pair):
             return None
         conditions_n_branches: list[CondNode] = list()
-        for oc, oca in oc_action_pair.items():
+        for oc, oca in oc_action_pair:
             if oca.is_empty():
                 continue
             wrapped_handler = ASTBuilder.wrap_handler(
