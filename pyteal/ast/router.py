@@ -525,7 +525,7 @@ class Router:
         delete_application: CallConfig = CallConfig.NEVER,
     ):
         def wrap(_func):
-            wrapped_subroutine = ABIReturnSubroutine(func)
+            wrapped_subroutine = ABIReturnSubroutine(_func)
             call_configs = MethodConfig(
                 no_op=no_op,
                 opt_in=opt_in,
