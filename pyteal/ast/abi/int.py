@@ -1,6 +1,6 @@
 from typing import (
     TypeVar,
-    Union, cast
+    Union
 )
 from abc import abstractmethod
 
@@ -21,6 +21,9 @@ class SIntTypeSpec(UintTypeSpec):
     @abstractmethod
     def annotation_type(self) -> "type[SInt]":
         pass
+
+    def __str__(self) -> str:
+        return "sint{}".format(self.bit_size())
 
 
 SIntTypeSpec.__module__ = "pyteal"
