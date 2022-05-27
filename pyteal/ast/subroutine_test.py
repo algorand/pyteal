@@ -254,6 +254,15 @@ def test_subroutine_return_reference():
     with pytest.raises(pt.TealInputError):
         invalid_ret_type_collection.method_signature()
 
+    @ABIReturnSubroutine
+    def invalid_ret_type_collection_nested(
+        *, output: pt.abi.DynamicArray[pt.abi.Tuple2[pt.abi.Account, pt.abi.Uint64]]
+    ):
+        return output.set(0, 0)
+
+    with pytest.raises(pt.TealInputError):
+        invalid_ret_type_collection_nested.method_signature()
+
 
 def test_subroutine_definition_validate():
     """
