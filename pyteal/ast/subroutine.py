@@ -751,4 +751,6 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
     body_ops = [var.slot.store() for var in arg_vars[::-1]]
     body_ops.append(subroutine_body)
 
-    return SubroutineDeclaration(subroutine, Seq(body_ops), deferred_expr)
+    sd = SubroutineDeclaration(subroutine, Seq(body_ops), deferred_expr)
+    sd.trace = subroutine_body.trace
+    return sd
