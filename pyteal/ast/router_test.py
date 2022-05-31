@@ -190,11 +190,26 @@ def power_set(no_dup_list: list, length_override: int = None):
 
 
 def full_perm_gen(non_dup_list: list, perm_length: int):
+    """
+    This function serves as a generator for all possible vectors of length `perm_length`,
+    each of whose entries are one of the elements in `non_dup_list`,
+    which is a list of non-duplicated elements.
+
+    Args:
+        non_dup_list: must be a list of elements with no duplication
+        perm_length: must be a non-negative number indicating resulting length of the vector
+    """
     if perm_length < 0:
         raise pt.TealInputError("input permutation length must be non-negative")
+    elif len(set(non_dup_list)) != len(non_dup_list):
+        raise pt.TealInputError(f"input non_dup_list {non_dup_list} has duplications")
     elif perm_length == 0:
         yield []
         return
+    # we can index all possible cases of vectors with an index in range
+    # [0, |non_dup_list| ^ perm_length - 1]
+    # by converting an index into |non_dup_list|-based number,
+    # we can get the vector mapped by the index.
     for index in range(len(non_dup_list) ** perm_length):
         index_list_basis = []
         temp = index
