@@ -417,16 +417,21 @@ def test_wrap_handler_bare_call():
     ]
     for bare_call in BARE_CALL_CASES:
         wrapped: pt.Expr = ASTBuilder.wrap_handler(False, bare_call)
+        expected: pt.Expr
         match bare_call:
             case pt.Expr():
                 if bare_call.has_return():
-                    assert wrapped == bare_call
+                    expected = bare_call
                 else:
-                    assert wrapped == pt.Seq(bare_call, pt.Approve())
+                    expected = pt.Seq(bare_call, pt.Approve())
             case pt.SubroutineFnWrapper() | pt.ABIReturnSubroutine():
-                assert wrapped == pt.Seq(bare_call(), pt.Approve())
+                expected = pt.Seq(bare_call(), pt.Approve())
             case _:
                 raise pt.TealInputError("how you got here?")
+        wrapped_assemble = assemble_helper(wrapped)
+        wrapped_helper = assemble_helper(expected)
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert wrapped_assemble == wrapped_helper
 
     ERROR_CASES = [
         (
