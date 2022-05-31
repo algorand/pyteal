@@ -53,7 +53,7 @@ class Transaction(BaseType):
     def set(self: T, value: Union[int, Expr, "Transaction", ComputedValue[T]]) -> Expr:
         match value:
             case ComputedValue():
-                self._set_with_computed_type(value)
+                return self._set_with_computed_type(value)
             case BaseType():
                 return self.stored_value.store(self.stored_value.load())
             case int():

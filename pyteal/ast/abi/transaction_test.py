@@ -30,19 +30,58 @@ def test_AnyTransactionTypeSpec_eq():
         assert abi.AnyTransactionTypeSpec() != otherType
 
 
+def test_AnyTransaction_typespec():
+    assert abi.AnyTransaction().type_spec() == abi.AnyTransactionTypeSpec()
+
+
+def test_AnyTransaction_decode():
+    value = abi.AnyTransaction()
+    with pytest.raises(TealInputError):
+        value.decode("")
+
+
 def test_AnyTransaction_encode():
     value = abi.AnyTransaction()
     with pytest.raises(TealInputError):
         value.encode()
 
 
-# def test_AnyTransaction_get():
-#    value = abi.AnyTransaction()
-#    with pytest.raises(TealInputError):
-#        value.get()
-#
-# def test_Transaction_set():
-#    val_to_set = 2
-#    value = abi.Transaction()
-#    expr = value.set(val_to_set)
-#    pass
+def test_AnyTransaction_get():
+    value = abi.AnyTransaction()
+    expr = value.get()
+    assert expr.type_of() == pt.TealType.uint64
+    assert expr.has_return() is False
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(expr, pt.Op.load, value.stored_value.slot),
+        ]
+    )
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
+def test_AnyTransaction_set():
+    val_to_set = 2
+    value = abi.AnyTransaction()
+    expr = value.set(val_to_set)
+
+    assert expr.type_of() == pt.TealType.none
+    assert expr.has_return() is False
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(expr, pt.Op.int, val_to_set),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+        ]
+    )
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
