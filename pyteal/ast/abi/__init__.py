@@ -42,6 +42,10 @@ from pyteal.ast.abi.reference_type import (
     Application,
     ApplicationTypeSpec,
 )
+from pyteal.ast.abi.transaction import (
+    Transaction,
+    TransactionTypeSpec
+)
 from pyteal.ast.abi.method_return import MethodReturn
 from pyteal.ast.abi.util import (
     algosdk_from_annotation,
@@ -98,6 +102,8 @@ __all__ = [
     "DynamicArrayTypeSpec",
     "DynamicArray",
     "MethodReturn",
+    "Transaction",
+    "TransactionTypeSpec",
     "type_spec_from_annotation",
     "make",
     "size_of",

@@ -2,23 +2,25 @@ from abc import abstractmethod
 from typing import TypeVar, Union, cast
 from pyteal.ast.abi.type import BaseType, ComputedValue, TypeSpec
 from pyteal.ast.expr import Expr
+from pyteal.ast.gtxn import Gtxn
 from pyteal.types import TealType
 from pyteal.errors import TealInputError
 
 class TransactionTypeSpec(TypeSpec):
+
     def __init__(self) -> None:
         super().__init__()
 
     @abstractmethod
-    def new_instance(self) -> "TransactionType":
-        pass
+    def new_instance(self) -> "Transaction":
+        return Transaction()
 
     @abstractmethod
-    def annotation_type(self) -> "type[TransactionType]":
-        pass
+    def annotation_type(self) -> "type[Transaction]":
+        return Transaction
 
     def is_dynamic(self) -> bool:
-        return True 
+        return False 
 
     def byte_length_static(self) -> int:
         raise TealInputError("Transaction Types don't have a static size")
@@ -37,10 +39,8 @@ TransactionTypeSpec.__module__ = "pyteal"
 
 T = TypeVar("T", bound=BaseType)
 
+class Transaction(BaseType):
 
-class TransactionType(BaseType):
-
-    @abstractmethod
     def __init__(self, spec: TransactionTypeSpec) -> None:
         super().__init__(spec)
 
@@ -48,9 +48,12 @@ class TransactionType(BaseType):
         return cast(TransactionTypeSpec, super().type_spec())
 
     def get(self) -> Expr:
-        return self.stored_value.load()
+        return Gtxn[self.idx] 
 
-    def set(self: T, value: Union[int, Expr, "TransactionType", ComputedValue[T]]) -> Expr:
+    def set(self: T, value: Union[int, Expr, "Transaction", ComputedValue[T]]) -> Expr:
+        raise TealInputError("A Transaction type cannot be set")
+
+    def validate(self)->Expr:
         pass
 
     def decode(
@@ -64,10 +67,11 @@ class TransactionType(BaseType):
         pass
 
     def encode(self) -> Expr:
-        pass
+        raise TealInputError("A Transaction cannot be encoded")
 
 
-TransactionType.__module__ = "pyteal"
+Transaction.__module__ = "pyteal"
+
 
 
 #txn represents any Algorand transaction
