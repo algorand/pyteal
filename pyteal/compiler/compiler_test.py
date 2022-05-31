@@ -2285,7 +2285,7 @@ def test_router_app():
 
         router.add_method_handler(
             empty_return_subroutine,
-            call_configs=pt.MethodConfig(
+            method_config=pt.MethodConfig(
                 opt_in=pt.CallConfig.ALL, close_out=pt.CallConfig.CALL
             ),
         )
@@ -2296,7 +2296,7 @@ def test_router_app():
 
         router.add_method_handler(
             log_1,
-            call_configs=pt.MethodConfig(
+            method_config=pt.MethodConfig(
                 opt_in=pt.CallConfig.CALL, clear_state=pt.CallConfig.CALL
             ),
         )
@@ -2306,7 +2306,7 @@ def test_router_app():
             return output.set("logging creation")
 
         router.add_method_handler(
-            log_creation, call_configs=pt.MethodConfig(no_op=pt.CallConfig.CREATE)
+            log_creation, method_config=pt.MethodConfig(no_op=pt.CallConfig.CREATE)
         )
 
     on_completion_actions = pt.BareCallActions(

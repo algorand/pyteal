@@ -144,7 +144,7 @@ class OnCompleteAction:
     def __post_init__(self):
         if bool(self.call_config) ^ bool(self.action):
             raise TealInputError(
-                f"action {self.action} and call_config {self.call_config} contradicts"
+                f"action {self.action} and call_config {str(self.call_config)} contradicts"
             )
 
     @staticmethod
@@ -229,7 +229,9 @@ class BareCallActions:
                         wrapped_handler,
                     )
                 case _:
-                    raise TealInternalError(f"Unexpected CallConfig: {oca.call_config}")
+                    raise TealInternalError(
+                        f"Unexpected CallConfig: {str(oca.call_config)}"
+                    )
             conditions_n_branches.append(
                 CondNode(
                     Txn.on_completion() == oc,
@@ -263,7 +265,7 @@ class BareCallActions:
                 )
             case _:
                 raise TealInternalError(
-                    f"Unexpected CallConfig: {self.clear_state.call_config}"
+                    f"Unexpected CallConfig: {str(self.clear_state.call_config)}"
                 )
 
 
@@ -484,14 +486,14 @@ class Router:
         self,
         method_call: ABIReturnSubroutine,
         overriding_name: str = None,
-        call_configs: MethodConfig = MethodConfig(),
+        method_config: MethodConfig = MethodConfig(),
     ) -> None:
         if not isinstance(method_call, ABIReturnSubroutine):
             raise TealInputError(
                 "for adding method handler, must be ABIReturnSubroutine"
             )
         method_signature = method_call.method_signature(overriding_name)
-        if call_configs.is_never():
+        if method_config.is_never():
             raise TealInputError(
                 f"registered method {method_signature} is never executed"
             )
@@ -507,13 +509,13 @@ class Router:
         self.method_sig_to_selector[method_signature] = method_selector
         self.method_selector_to_sig[method_selector] = method_signature
 
-        if call_configs.is_arc4_compliant():
+        if method_config.is_arc4_compliant():
             self.approval_ast.add_method_to_ast(method_signature, 1, method_call)
             self.clear_state_ast.add_method_to_ast(method_signature, 1, method_call)
             return
 
-        method_approval_cond = call_configs.approval_cond()
-        method_clear_state_cond = call_configs.clear_state_cond()
+        method_approval_cond = method_config.approval_cond()
+        method_clear_state_cond = method_config.clear_state_cond()
         self.approval_ast.add_method_to_ast(
             method_signature, method_approval_cond, method_call
         )
@@ -599,7 +601,7 @@ class Router:
         self,
         *,
         version: int = DEFAULT_TEAL_VERSION,
-        assembleConstants: bool = False,
+        assemble_constants: bool = False,
         optimize: OptimizeOptions = None,
     ) -> tuple[str, str, sdk_abi.Contract]:
         """
@@ -616,14 +618,14 @@ class Router:
             ap,
             Mode.Application,
             version=version,
-            assembleConstants=assembleConstants,
+            assembleConstants=assemble_constants,
             optimize=optimize,
         )
         csp_compiled = compileTeal(
             csp,
             Mode.Application,
             version=version,
-            assembleConstants=assembleConstants,
+            assembleConstants=assemble_constants,
             optimize=optimize,
         )
         return ap_compiled, csp_compiled, contract
