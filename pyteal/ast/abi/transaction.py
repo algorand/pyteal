@@ -34,7 +34,7 @@ class TransactionTypeSpec(TypeSpec):
 
     @abstractmethod
     def __str__(self) -> str:
-        return "txn"
+        return TxnType.Any.name
 
 
 TransactionTypeSpec.__module__ = "pyteal"
@@ -188,7 +188,7 @@ class ApplicationCallTransactionTypeSpec(TransactionTypeSpec):
         return ApplicationCallTransaction
 
     def __str__(self) -> str:
-        return TxnType.ApplicationCall
+        return TxnType.ApplicationCall.name
 
 
 class ApplicationCallTransaction(Transaction):
