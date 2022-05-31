@@ -8,7 +8,7 @@ load 4
 int 5
 callsub fn2mixedarg1ret_0
 store 3
-byte 0x151F7C75
+byte 0x151f7c75
 load 3
 itob
 concat
