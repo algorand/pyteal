@@ -142,9 +142,7 @@ class OnCompleteAction:
     call_config: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
 
     def __post_init__(self):
-        if (self.call_config == CallConfig.NEVER and self.action) or (
-            self.call_config != CallConfig.NEVER and not self.action
-        ):
+        if bool(self.call_config) ^ bool(self.action):
             raise TealInputError(
                 f"action {self.action} and call_config {self.call_config} contradicts"
             )
