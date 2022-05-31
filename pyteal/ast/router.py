@@ -31,7 +31,7 @@ from pyteal.ast.return_ import Approve
 
 class CallConfig(IntFlag):
     """
-    CallConfigs: a "bitset"-like class for more fine-grained control over
+    CallConfig: a "bitset"-like class for more fine-grained control over
     `call or create` for a method about an OnComplete case.
 
     This enumeration class allows for specifying one of the four following cases:
@@ -67,19 +67,10 @@ CallConfig.__module__ = "pyteal"
 @dataclass(frozen=True)
 class MethodConfig:
     """
-    MethodConfig keep track of one method registration's CallConfigs for all OnComplete cases.
+    MethodConfig keep track of one method's CallConfigs for all OnComplete cases.
 
-    By ARC-0004 spec:
-        If an Application is called with greater than zero Application call arguments  (NOT a bare Application call),
-        the Application MUST always treat the first argument as a method selector and invoke the specified method,
-        regardless of the OnCompletion action of the Application call.
-        This applies to Application creation transactions as well, where the supplied Application ID is 0.
-
-    The `CallConfigs` implementation generalized contract method call such that method call is allowed
-    for certain OnCompletions.
-
-    The `arc4_compliant` method constructs a `CallConfigs` that allows a method call to be executed
-    under any OnCompletion, which is "arc4-compliant".
+    The `MethodConfig` implementation generalized contract method call such that the registered
+    method call is paired with certain OnCompletion conditions and creation conditions.
     """
 
     no_op: CallConfig = field(kw_only=True, default=CallConfig.CALL)
@@ -545,6 +536,18 @@ class Router:
         update_application: CallConfig = CallConfig.NEVER,
         delete_application: CallConfig = CallConfig.NEVER,
     ):
+        """
+        A decorator style method registration by decorating over a python function,
+        which is internally converted to ABIReturnSubroutine, and taking keyword arguments
+        for each OnCompletes' `CallConfig`.
+
+        NOTE:
+            By default, all OnCompletes other than `NoOp` are set to `CallConfig.NEVER`,
+            while `no_op` field is always `CALL`.
+            If one wants to change `no_op`,  we need to change `no_op = CallConfig.ALL`,
+            for example, as a decorator argument.
+        """
+
         def wrap(_func):
             wrapped_subroutine = ABIReturnSubroutine(_func)
             call_configs = MethodConfig(
