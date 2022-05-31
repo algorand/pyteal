@@ -1,4 +1,4 @@
-from typing import TypeVar, Any, Literal, get_origin, get_args, cast
+from typing import Sequence, TypeVar, Any, Literal, get_origin, get_args, cast
 
 import algosdk.abi
 
@@ -233,6 +233,29 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
 
 
 T = TypeVar("T", bound=BaseType)
+
+
+def contains_type_spec(ts: TypeSpec, targets: Sequence[TypeSpec]) -> bool:
+    from pyteal.ast.abi.array_dynamic import DynamicArrayTypeSpec
+    from pyteal.ast.abi.array_static import StaticArrayTypeSpec
+    from pyteal.ast.abi.tuple import TupleTypeSpec
+
+    stack: list[TypeSpec] = [ts]
+
+    while stack:
+        current = stack.pop()
+        if current in targets:
+            return True
+
+        match current:
+            case TupleTypeSpec():
+                stack.extend(current.value_type_specs())
+            case DynamicArrayTypeSpec():
+                stack.append(current.value_type_spec())
+            case StaticArrayTypeSpec():
+                stack.append(current.value_type_spec())
+
+    return False
 
 
 def size_of(t: type[T]) -> int:
