@@ -181,6 +181,20 @@ ON_COMPLETE_CASES: list[pt.EnumInt] = [
 
 
 def power_set(no_dup_list: list, length_override: int = None):
+    """
+    This function serves as a generator for all possible elements in power_set
+    over `non_dup_list`, which is a list of non-duplicated elements (matches property of a set).
+
+    The cardinality of a powerset is 2^|non_dup_list|, so we can iterate from 0 to 2^|non_dup_list| - 1
+    to index each element in such power_set.
+    By binary representation of each index, we can see it as an allowance over each element in `no_dup_list`,
+    and generate a unique subset of `non_dup_list`, which yields as an element of power_set of `no_dup_list`.
+
+    Args:
+        no_dup_list: a list of elements with no duplication
+        length_override: a number indicating the largest size of super_set element,
+            must be in range [1, len(no_dup_list)].
+    """
     if length_override is None:
         length_override = len(no_dup_list)
     assert 1 <= length_override <= len(no_dup_list)
