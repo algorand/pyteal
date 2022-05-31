@@ -345,10 +345,21 @@ class ASTBuilder:
                     f"got {handler.subroutine.argument_count()} args with {len(handler.subroutine.abi_args)} ABI args."
                 )
 
-            arg_type_specs = cast(
+            all_arg_type_specs = cast(
                 list[abi.TypeSpec], handler.subroutine.expected_arg_types
             )
-            if handler.subroutine.argument_count() > METHOD_ARG_NUM_LIMIT:
+
+            # TODO:
+            # - filter out any Transaction types since they're not encoded in the application args
+            # - Validate that transaction args
+
+            arg_type_specs = [
+                ats
+                for ats in all_arg_type_specs
+                if not isinstance(ats, abi.TransactionTypeSpec)
+            ]
+
+            if arg_type_specs > METHOD_ARG_NUM_LIMIT:
                 last_arg_specs_grouped = arg_type_specs[METHOD_ARG_NUM_LIMIT - 1 :]
                 arg_type_specs = arg_type_specs[: METHOD_ARG_NUM_LIMIT - 1]
                 last_arg_spec = abi.TupleTypeSpec(*last_arg_specs_grouped)
@@ -357,6 +368,7 @@ class ASTBuilder:
             arg_abi_vars: list[abi.BaseType] = [
                 type_spec.new_instance() for type_spec in arg_type_specs
             ]
+
             decode_instructions: list[Expr] = [
                 arg_abi_vars[i].decode(Txn.application_args[i + 1])
                 for i in range(len(arg_type_specs))

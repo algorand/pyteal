@@ -44,7 +44,21 @@ from pyteal.ast.abi.reference_type import (
 )
 from pyteal.ast.abi.transaction import (
     Transaction,
-    TransactionTypeSpec
+    TransactionTypeSpec,
+    AnyTransaction,
+    AnyTransactionTypeSpec,
+    PaymentTransaction,
+    PaymentTransactionTypeSpec,
+    ApplicationCallTransaction,
+    ApplicationCallTransactionTypeSpec,
+    AssetConfigTransaction,
+    AssetConfigTransactionTypeSpec,
+    AssetFreezeTransaction,
+    AssetFreezeTransactionTypeSpec,
+    AssetTransferTransaction,
+    AssetTransferTransactionTypeSpec,
+    KeyRegisterTransaction,
+    KeyRegisterTransactionTypeSpec,
 )
 from pyteal.ast.abi.method_return import MethodReturn
 from pyteal.ast.abi.util import (
@@ -104,6 +118,20 @@ __all__ = [
     "MethodReturn",
     "Transaction",
     "TransactionTypeSpec",
+    "AnyTransaction",
+    "AnyTransactionTypeSpec",
+    "PaymentTransaction",
+    "PaymentTransactionTypeSpec",
+    "ApplicationCallTransaction",
+    "ApplicationCallTransactionTypeSpec",
+    "AssetConfigTransaction",
+    "AssetConfigTransactionTypeSpec",
+    "AssetFreezeTransaction",
+    "AssetFreezeTransactionTypeSpec",
+    "AssetTransferTransaction",
+    "AssetTransferTransactionTypeSpec",
+    "KeyRegisterTransaction",
+    "KeyRegisterTransactionTypeSpec",
     "type_spec_from_annotation",
     "make",
     "size_of",

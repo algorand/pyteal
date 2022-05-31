@@ -7,44 +7,42 @@ from pyteal.errors import TealInputError
 options = pt.CompileOptions(version=5)
 
 
-def test_Transaction_str():
-    assert str(abi.TransactionTypeSpec()) == "txn"
+def test_AnyTransaction_str():
+    assert str(abi.AnyTransactionTypeSpec()) == "txn"
 
 
-def test_TransactionTypeSpec_is_dynamic():
-    assert not (abi.TransactionTypeSpec()).is_dynamic()
+def test_AnyTransactionTypeSpec_is_dynamic():
+    assert not (abi.AnyTransactionTypeSpec()).is_dynamic()
 
 
-def test_TransactionTypeSpec_new_instance():
-    assert isinstance(abi.TransactionTypeSpec().new_instance(), abi.Account)
+def test_AnyTransactionTypeSpec_new_instance():
+    assert isinstance(abi.AnyTransactionTypeSpec().new_instance(), abi.AnyTransaction)
 
 
-def test_TransactionTypeSpec_eq():
-    assert abi.TransactionTypeSpec() == abi.Transaction.type_spec()
+def test_AnyTransactionTypeSpec_eq():
+    assert abi.AnyTransactionTypeSpec() == abi.AnyTransactionTypeSpec()
 
     for otherType in (
         abi.ByteTypeSpec(),
         abi.Uint8TypeSpec(),
         abi.AddressTypeSpec(),
     ):
-        assert abi.TransactionTypeSpec() != otherType
+        assert abi.AnyTransactionTypeSpec() != otherType
 
 
-def test_Transaction_encode():
-    value = abi.Transaction()
-
+def test_AnyTransaction_encode():
+    value = abi.AnyTransaction()
     with pytest.raises(TealInputError):
         value.encode()
 
 
-def test_Transaction_get():
-    value = abi.Transaction()
-    expr = value.get()
-    pass
-
-
-def test_Transaction_set():
-    val_to_set = 2
-    value = abi.Transaction()
-    expr = value.set(val_to_set)
-    pass
+# def test_AnyTransaction_get():
+#    value = abi.AnyTransaction()
+#    with pytest.raises(TealInputError):
+#        value.get()
+#
+# def test_Transaction_set():
+#    val_to_set = 2
+#    value = abi.Transaction()
+#    expr = value.set(val_to_set)
+#    pass
