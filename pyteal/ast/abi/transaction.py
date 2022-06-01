@@ -61,7 +61,7 @@ class Transaction(BaseType):
         return cast(TransactionTypeSpec, super().type_spec())
 
     def get(self) -> TxnObject:
-        return Gtxn[self.stored_value.load()]
+        return Gtxn[self.index()]
 
     def set(self: T, value: Union[int, Expr, "Transaction", ComputedValue[T]]) -> Expr:
         match value:

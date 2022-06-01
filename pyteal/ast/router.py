@@ -395,13 +395,12 @@ class ASTBuilder:
             if len(txn_arg_vals) > 0:
                 txn_decode_instructions: list[Expr] = []
                 txn_relative_pos = len(txn_arg_vals) - 1
-                for i in range(txn_relative_pos):
+                for i in range(len(txn_arg_vals)):
                     txn_decode_instructions.append(
                         cast(abi.Transaction, txn_arg_vals[i]).set(
-                            Txn.group_index() - Int(txn_relative_pos)
+                            Txn.group_index() - Int(txn_relative_pos - i)
                         ),
                     )
-                    txn_relative_pos -= 1
 
                 decode_instructions += txn_decode_instructions
 
