@@ -265,13 +265,11 @@ def test_call_config():
 def test_method_config():
     never_mc = pt.MethodConfig(no_op=pt.CallConfig.NEVER)
     assert never_mc.is_never()
-    assert not never_mc.is_arc4_compliant()
     assert never_mc.approval_cond() == 0
     assert never_mc.clear_state_cond() == 0
 
     all_mc = pt.MethodConfig.arc4_compliant()
     assert not all_mc.is_never()
-    assert all_mc.is_arc4_compliant()
     assert all_mc.approval_cond() == 1
     assert all_mc.clear_state_cond() == 1
 
@@ -309,7 +307,7 @@ def test_method_config():
             ):
                 assert mc.approval_cond() == 0
                 continue
-            elif mc.is_arc4_compliant() or all(
+            elif all(
                 getattr(mc, i) == pt.CallConfig.ALL
                 for i, _ in approval_check_names_n_ocs
             ):

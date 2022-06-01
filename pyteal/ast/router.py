@@ -94,9 +94,6 @@ class MethodConfig:
             delete_application=CallConfig.ALL,
         )
 
-    def is_arc4_compliant(self) -> bool:
-        return self == self.arc4_compliant()
-
     def approval_cond(self) -> Expr | int:
         config_oc_pairs: list[tuple[CallConfig, EnumInt]] = [
             (self.no_op, OnComplete.NoOp),
@@ -508,11 +505,6 @@ class Router:
             )
         self.method_sig_to_selector[method_signature] = method_selector
         self.method_selector_to_sig[method_selector] = method_signature
-
-        if method_config.is_arc4_compliant():
-            self.approval_ast.add_method_to_ast(method_signature, 1, method_call)
-            self.clear_state_ast.add_method_to_ast(method_signature, 1, method_call)
-            return
 
         method_approval_cond = method_config.approval_cond()
         method_clear_state_cond = method_config.clear_state_cond()
