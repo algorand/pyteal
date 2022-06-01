@@ -70,9 +70,7 @@ class BlackboxWrapper:
         self, input_types: list[TealType | None]
     ) -> list[TealType | abi.TypeSpec | None]:
         match self.subroutine:
-            case SubroutineFnWrapper():
-                return cast(list[TealType | abi.TypeSpec | None], input_types)
-            case ABIReturnSubroutine():
+            case SubroutineFnWrapper() | ABIReturnSubroutine():
                 args = self.subroutine.subroutine.arguments()
                 abis = self.subroutine.subroutine.abi_args
                 return [(x if x else abis[args[i]]) for i, x in enumerate(input_types)]
@@ -288,7 +286,6 @@ class PyTealDryRunExecutor:
 
         def arg_prep_n_call(i, p):
             name = arg_names[i]
-            by_ref = name in subdef.by_ref_args
             arg_expr = (
                 Txn.application_args[i] if self.mode == Mode.Application else Arg(i)
             )
@@ -296,9 +293,12 @@ class PyTealDryRunExecutor:
                 arg_expr = Btoi(arg_expr)
             prep = None
             arg_var = arg_expr
-            if by_ref:
+            if name in subdef.by_ref_args:
                 arg_var = ScratchVar(p)
                 prep = arg_var.store(arg_expr)
+            elif name in subdef.abi_args:
+                arg_var = p.new_instance()
+                prep = arg_var.decode(arg_expr)
             return prep, arg_var
 
         def subr_caller():

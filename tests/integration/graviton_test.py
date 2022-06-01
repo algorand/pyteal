@@ -829,6 +829,34 @@ def blackbox_pyteal_example4():
     report("lsig")
 
 
+def blackbox_pyteal_example5():
+    from pyteal import (
+        abi,
+        Sqrt,
+        Seq,
+        Subroutine,
+        TealType,
+        ScratchVar,
+        Assert,
+        Int,
+        For,
+    )
+
+    @Blackbox([TealType.uint64])
+    @Subroutine(TealType.uint64)
+    def primality_from_sieve(n: abi.Uint64):
+        i = ScratchVar(TealType.uint64)
+        return Seq(
+            Assert(n > Int(1)),
+            For(
+                i.store(Int(2)), i.load() <= Sqrt(n.get()), i.store(i.load() + Int(1))
+            ).Do(Seq()),
+        )
+        pass
+
+    pass
+
+
 def blackbox_pyteal_while_continue_test():
     from tests.blackbox import Blackbox
     from pyteal import (
