@@ -150,6 +150,11 @@ def not_registrable(lhs: pt.abi.Uint64, rhs: pt.Expr, *, output: pt.abi.Uint64):
     return output.set(lhs.get() * rhs)
 
 
+@pt.ABIReturnSubroutine
+def txn_type(t: pt.abi.Transaction, *, output: pt.abi.Uint64):
+    return output.set(t.get().amount())
+
+
 GOOD_SUBROUTINE_CASES: list[pt.ABIReturnSubroutine | pt.SubroutineFnWrapper] = [
     add,
     sub,
@@ -164,6 +169,7 @@ GOOD_SUBROUTINE_CASES: list[pt.ABIReturnSubroutine | pt.SubroutineFnWrapper] = [
     dummy_doing_nothing,
     eine_constant,
     take_abi_and_log,
+    # txn_type,
 ]
 
 ON_COMPLETE_CASES: list[pt.EnumInt] = [

@@ -1,11 +1,9 @@
 from dataclasses import dataclass, field, fields, astuple
-from operator import contains
 from typing import cast, Optional, Callable
 from enum import IntFlag
 
 from algosdk import abi as sdk_abi
 from algosdk import encoding
-from pyteal.ast.abi.util import contains_type_spec
 
 from pyteal.config import METHOD_ARG_NUM_CUTOFF
 from pyteal.errors import TealInputError, TealInternalError
@@ -369,10 +367,10 @@ class ASTBuilder:
             app_arg_vals: list[abi.BaseType] = [
                 ats for ats in arg_vals if not isinstance(ats, abi.Transaction)
             ]
-            tuplify =  len(app_arg_vals) > METHOD_ARG_NUM_CUTOFF
+            tuplify = len(app_arg_vals) > METHOD_ARG_NUM_CUTOFF
 
             # only transaction args (these are omitted from app args)
-            txn_arg_vals: list[abi.TypeSpec] = [
+            txn_arg_vals: list[abi.BaseType] = [
                 ats for ats in arg_vals if isinstance(ats, abi.Transaction)
             ]
 
@@ -382,7 +380,9 @@ class ASTBuilder:
                     t.type_spec() for t in app_arg_vals[METHOD_ARG_NUM_CUTOFF - 1 :]
                 ]
                 app_arg_vals = app_arg_vals[: METHOD_ARG_NUM_CUTOFF - 1]
-                last_arg_spec = abi.TupleTypeSpec(*last_arg_specs_grouped).new_instance()
+                last_arg_spec = abi.TupleTypeSpec(
+                    *last_arg_specs_grouped
+                ).new_instance()
                 app_arg_vals.append(last_arg_spec)
 
             # decode app args
@@ -397,14 +397,18 @@ class ASTBuilder:
                 txn_relative_pos = len(txn_arg_vals) - 1
                 for i in range(txn_relative_pos):
                     txn_decode_instructions.append(
-                        cast(abi.Transaction, txn_arg_vals[i]).set(Txn.group_index() - Int(txn_relative_pos)),
+                        cast(abi.Transaction, txn_arg_vals[i]).set(
+                            Txn.group_index() - Int(txn_relative_pos)
+                        ),
                     )
                     txn_relative_pos -= 1
 
                 decode_instructions += txn_decode_instructions
 
             if tuplify:
-                tuple_abi_args: list[abi.BaseType] = arg_vals[METHOD_ARG_NUM_CUTOFF -1:]
+                tuple_abi_args: list[abi.BaseType] = arg_vals[
+                    METHOD_ARG_NUM_CUTOFF - 1 :
+                ]
                 last_tuple_arg: abi.Tuple = cast(abi.Tuple, app_arg_vals[-1])
                 de_tuple_instructions: list[Expr] = [
                     last_tuple_arg[i].store_into(tuple_abi_args[i])
