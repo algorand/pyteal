@@ -3004,15 +3004,15 @@ txna ApplicationArgs 14
 btoi
 store 43
 txna ApplicationArgs 15
-store 44
-load 44
+store 46
+load 46
 int 0
 extract_uint64
-store 45
-load 44
+store 44
+load 46
 int 8
 extract_uint64
-store 46
+store 45
 load 30
 load 31
 load 32
@@ -3027,8 +3027,8 @@ load 40
 load 41
 load 42
 load 43
+load 44
 load 45
-load 46
 callsub alllaidtoargs_5
 store 47
 byte 0x151f7c75
