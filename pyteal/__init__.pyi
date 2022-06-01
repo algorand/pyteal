@@ -20,7 +20,12 @@ from pyteal.errors import (
     TealInputError,
     TealCompileError,
 )
-from pyteal.config import MAX_GROUP_SIZE, NUM_SLOTS
+from pyteal.config import (
+    MAX_GROUP_SIZE,
+    NUM_SLOTS,
+    RETURN_HASH_PREFIX,
+    METHOD_ARG_NUM_CUTOFF,
+)
 
 __all__ = [
     "ABIReturnSubroutine",
@@ -38,6 +43,7 @@ __all__ = [
     "AssetHolding",
     "AssetParam",
     "Balance",
+    "BareCallActions",
     "BinaryExpr",
     "BitLen",
     "BitwiseAnd",
@@ -64,6 +70,7 @@ __all__ = [
     "BytesSqrt",
     "BytesXor",
     "BytesZero",
+    "CallConfig",
     "CompileOptions",
     "Concat",
     "Cond",
@@ -117,8 +124,10 @@ __all__ = [
     "Lt",
     "MAX_GROUP_SIZE",
     "MAX_TEAL_VERSION",
+    "METHOD_ARG_NUM_CUTOFF",
     "MIN_TEAL_VERSION",
     "MaybeValue",
+    "MethodConfig",
     "MethodSignature",
     "MinBalance",
     "Minus",
@@ -132,14 +141,17 @@ __all__ = [
     "Nonce",
     "Not",
     "OnComplete",
+    "OnCompleteAction",
     "Op",
     "OpUp",
     "OpUpMode",
     "OptimizeOptions",
     "Or",
     "Pop",
+    "RETURN_HASH_PREFIX",
     "Reject",
     "Return",
+    "Router",
     "ScratchIndex",
     "ScratchLoad",
     "ScratchSlot",

@@ -125,7 +125,6 @@ from pyteal.ast.for_ import For
 from pyteal.ast.break_ import Break
 from pyteal.ast.continue_ import Continue
 
-
 # misc
 from pyteal.ast.scratch import (
     ScratchIndex,
@@ -139,6 +138,13 @@ from pyteal.ast.maybe import MaybeValue
 from pyteal.ast.multi import MultiValue
 from pyteal.ast.opup import OpUp, OpUpMode
 from pyteal.ast.ecdsa import EcdsaCurve, EcdsaVerify, EcdsaDecompress, EcdsaRecover
+from pyteal.ast.router import (
+    Router,
+    CallConfig,
+    MethodConfig,
+    OnCompleteAction,
+    BareCallActions,
+)
 
 # abi
 import pyteal.ast.abi as abi  # noqa: I250
@@ -280,6 +286,11 @@ __all__ = [
     "For",
     "Break",
     "Continue",
+    "Router",
+    "CallConfig",
+    "MethodConfig",
+    "OnCompleteAction",
+    "BareCallActions",
     "abi",
     "EcdsaCurve",
     "EcdsaVerify",
