@@ -394,7 +394,7 @@ class ASTBuilder:
             # "decode" transaction types by setting the relative index
             if len(txn_arg_vals) > 0:
                 txn_decode_instructions: list[Expr] = []
-                txn_relative_pos = len(txn_arg_vals) - 1
+                txn_relative_pos = len(txn_arg_vals)
                 for i in range(len(txn_arg_vals)):
                     txn_decode_instructions.append(
                         cast(abi.Transaction, txn_arg_vals[i]).set(
