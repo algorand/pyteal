@@ -19,9 +19,18 @@ BAD_TEALS = {
 
 GAI_ISSUE_2068 = "https://github.com/algorand/go-algorand-internal/issues/2068"
 BAD_TYPES = {
+    # Reference Types
     "account": GAI_ISSUE_2068,
     "asset": GAI_ISSUE_2068,
     "application": GAI_ISSUE_2068,
+    # Transaction Types
+    "txn": GAI_ISSUE_2068,
+    "pay": GAI_ISSUE_2068,
+    "keyreg": GAI_ISSUE_2068,
+    "acfg": GAI_ISSUE_2068,
+    "afrz": GAI_ISSUE_2068,
+    "axfer": GAI_ISSUE_2068,
+    "appl": GAI_ISSUE_2068,
 }
 
 PATH = Path.cwd() / "tests" / "integration"
@@ -41,6 +50,13 @@ ABI_TYPES = [
     abi.Account,
     abi.Asset,
     abi.Application,
+    abi.Transaction,
+    abi.PaymentTransaction,
+    abi.KeyRegisterTransaction,
+    abi.AssetConfigTransaction,
+    abi.AssetFreezeTransaction,
+    abi.AssetTransferTransaction,
+    abi.ApplicationCallTransaction,
     abi.Tuple0,
     abi.Tuple1[abi.Bool],
     abi.Tuple1[abi.Byte],

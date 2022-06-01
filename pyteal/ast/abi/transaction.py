@@ -29,7 +29,7 @@ class TransactionTypeSpec(TypeSpec):
         super().__init__()
 
     def new_instance(self) -> "Transaction":
-        return Transaction(self)
+        return Transaction()
 
     def annotation_type(self) -> "type[Transaction]":
         return Transaction
