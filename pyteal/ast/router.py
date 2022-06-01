@@ -367,6 +367,8 @@ class ASTBuilder:
             app_arg_vals: list[abi.BaseType] = [
                 ats for ats in arg_vals if not isinstance(ats, abi.Transaction)
             ]
+
+            # assign to a var here since we modify app_arg_vals later
             tuplify = len(app_arg_vals) > METHOD_ARG_NUM_CUTOFF
 
             # only transaction args (these are omitted from app args)
@@ -387,20 +389,19 @@ class ASTBuilder:
 
             # decode app args
             decode_instructions: list[Expr] = [
-                app_arg_vals[i].decode(Txn.application_args[i + 1])
-                for i in range(len(app_arg_vals))
+                app_arg.decode(Txn.application_args[idx + 1])
+                for idx, app_arg in enumerate(app_arg_vals)
             ]
 
             # "decode" transaction types by setting the relative index
             if len(txn_arg_vals) > 0:
-                txn_decode_instructions: list[Expr] = []
                 txn_relative_pos = len(txn_arg_vals)
-                for i in range(len(txn_arg_vals)):
-                    txn_decode_instructions.append(
-                        cast(abi.Transaction, txn_arg_vals[i]).set(
-                            Txn.group_index() - Int(txn_relative_pos - i)
-                        ),
+                txn_decode_instructions: list[Expr] = [
+                    cast(abi.Transaction, arg_val).set(
+                        Txn.group_index() - Int(txn_relative_pos - idx)
                     )
+                    for idx, arg_val in enumerate(txn_arg_vals)
+                ]
 
                 decode_instructions += txn_decode_instructions
 
@@ -410,8 +411,8 @@ class ASTBuilder:
                 ]
                 last_tuple_arg: abi.Tuple = cast(abi.Tuple, app_arg_vals[-1])
                 de_tuple_instructions: list[Expr] = [
-                    last_tuple_arg[i].store_into(tuple_abi_args[i])
-                    for i in range(len(tuple_abi_args))
+                    last_tuple_arg[idx].store_into(arg_val)
+                    for idx, arg_val in enumerate(tuple_abi_args)
                 ]
                 decode_instructions += de_tuple_instructions
 
