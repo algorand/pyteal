@@ -4,7 +4,7 @@ from enum import IntFlag
 
 from algosdk import abi as sdk_abi
 from algosdk import encoding
-from pyteal.ast.abi.transaction import TransactionTypeSpec
+from pyteal.ast.abi.util import contains_type_spec
 from pyteal.ast.global_ import Global
 
 from pyteal.config import METHOD_ARG_NUM_CUTOFF
@@ -355,35 +355,38 @@ class ASTBuilder:
                     f"got {handler.subroutine.argument_count()} args with {len(handler.subroutine.abi_args)} ABI args."
                 )
 
-            all_arg_type_specs = cast(
+            arg_type_specs = cast(
                 list[abi.TypeSpec], handler.subroutine.expected_arg_types
             )
 
-            arg_type_specs = [
+            # Filter to just the args present in application_args
+            app_arg_type_specs = [
                 ats
-                for ats in all_arg_type_specs
-                if not isinstance(ats, abi.TransactionTypeSpec)
-            ]
-
-            if len(arg_type_specs) > METHOD_ARG_NUM_CUTOFF:
-                last_arg_specs_grouped = arg_type_specs[METHOD_ARG_NUM_CUTOFF - 1 :]
-                arg_type_specs = arg_type_specs[: METHOD_ARG_NUM_CUTOFF - 1]
-                last_arg_spec = abi.TupleTypeSpec(*last_arg_specs_grouped)
-                arg_type_specs.append(last_arg_spec)
-
-            arg_abi_vars: list[abi.BaseType] = [
-                type_spec.new_instance() for type_spec in all_arg_type_specs
+                for ats in arg_type_specs
+                if not contains_type_spec(ats, abi.TransactionTypeSpecs)
             ]
 
             # The number of transaction args is derived from subtracting
             # the filtered list from the full list, MAY break if we add
             # more filters for things that may be specified in args but not
             # parsed in app_args array
-            txn_cnt = len(all_arg_type_specs) - len(arg_type_specs)
+            txn_cnt = len(arg_type_specs) - len(app_arg_type_specs)
+
+            # Use the filtered arg_type_specs for tupling since
+            # TransactionType is not part of application args
+            if len(app_arg_type_specs) > METHOD_ARG_NUM_CUTOFF:
+                last_arg_specs_grouped = app_arg_type_specs[METHOD_ARG_NUM_CUTOFF - 1 :]
+                app_arg_type_specs = app_arg_type_specs[: METHOD_ARG_NUM_CUTOFF - 1]
+                last_arg_spec = abi.TupleTypeSpec(*last_arg_specs_grouped)
+                app_arg_type_specs.append(last_arg_spec)
+
+            arg_abi_vars: list[abi.BaseType] = [
+                type_spec.new_instance() for type_spec in arg_type_specs
+            ]
 
             decode_instructions: list[Expr] = []
             for i in range(len(arg_abi_vars)):
-                if isinstance(all_arg_type_specs[i], abi.TransactionTypeSpec):
+                if isinstance(arg_type_specs[i], abi.TransactionTypeSpec):
                     decode_instructions.append(
                         cast(abi.Transaction, arg_abi_vars[i]).set(
                             Global.group_size() - txn_cnt

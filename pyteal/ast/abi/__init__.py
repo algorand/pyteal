@@ -41,6 +41,7 @@ from pyteal.ast.abi.reference_type import (
     AssetTypeSpec,
     Application,
     ApplicationTypeSpec,
+    ReferenceTypeSpecs,
 )
 from pyteal.ast.abi.transaction import (
     Transaction,
@@ -57,6 +58,7 @@ from pyteal.ast.abi.transaction import (
     AssetTransferTransactionTypeSpec,
     KeyRegisterTransaction,
     KeyRegisterTransactionTypeSpec,
+    TransactionTypeSpecs,
 )
 from pyteal.ast.abi.method_return import MethodReturn
 from pyteal.ast.abi.util import (
@@ -77,6 +79,7 @@ __all__ = [
     "AssetTypeSpec",
     "Application",
     "ApplicationTypeSpec",
+    "ReferenceTypeSpecs",
     "Address",
     "AddressTypeSpec",
     "AddressLength",
@@ -129,6 +132,7 @@ __all__ = [
     "AssetTransferTransactionTypeSpec",
     "KeyRegisterTransaction",
     "KeyRegisterTransactionTypeSpec",
+    "TransactionTypeSpecs",
     "type_spec_from_annotation",
     "make",
     "size_of",

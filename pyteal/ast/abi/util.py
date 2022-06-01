@@ -111,6 +111,22 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
     )
     from pyteal.ast.abi.string import StringTypeSpec, String
     from pyteal.ast.abi.address import AddressTypeSpec, Address
+    from pyteal.ast.abi.transaction import (
+        Transaction,
+        TransactionTypeSpec,
+        PaymentTransaction,
+        PaymentTransactionTypeSpec,
+        KeyRegisterTransaction,
+        KeyRegisterTransactionTypeSpec,
+        AssetConfigTransaction,
+        AssetConfigTransactionTypeSpec,
+        AssetFreezeTransaction,
+        AssetFreezeTransactionTypeSpec,
+        AssetTransferTransaction,
+        AssetTransferTransactionTypeSpec,
+        ApplicationCallTransaction,
+        ApplicationCallTransactionTypeSpec,
+    )
     from pyteal.ast.abi.reference_type import (
         AccountTypeSpec,
         Account,
@@ -228,6 +244,59 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
         if len(args) != 5:
             raise TypeError("Tuple5 expects 5 type arguments. Got: {}".format(args))
         return TupleTypeSpec(*(type_spec_from_annotation(arg) for arg in args))
+
+    if origin is Transaction:
+        if len(args) != 0:
+            raise TypeError(
+                "Transaction expects 0 type arguements. Got {}".format(args)
+            )
+        return TransactionTypeSpec()
+
+    if origin is PaymentTransaction:
+        if len(args) != 0:
+            raise TypeError(
+                "PaymentTransaction expects 0 type arguements. Got {}".format(args)
+            )
+        return PaymentTransactionTypeSpec()
+
+    if origin is KeyRegisterTransaction:
+        if len(args) != 0:
+            raise TypeError(
+                "KeyRegisterTransaction expects 0 type arguements. Got {}".format(args)
+            )
+        return KeyRegisterTransactionTypeSpec()
+
+    if origin is AssetConfigTransaction:
+        if len(args) != 0:
+            raise TypeError(
+                "AssetConfigTransaction expects 0 type arguements. Got {}".format(args)
+            )
+        return AssetConfigTransactionTypeSpec()
+
+    if origin is AssetFreezeTransaction:
+        if len(args) != 0:
+            raise TypeError(
+                "AssetFreezeTransaction expects 0 type arguements. Got {}".format(args)
+            )
+        return AssetFreezeTransactionTypeSpec()
+
+    if origin is AssetTransferTransaction:
+        if len(args) != 0:
+            raise TypeError(
+                "AssetTransferTransaction expects 0 type arguements. Got {}".format(
+                    args
+                )
+            )
+        return AssetTransferTransactionTypeSpec()
+
+    if origin is ApplicationCallTransaction:
+        if len(args) != 0:
+            raise TypeError(
+                "ApplicationCallTransaction expects 0 type arguements. Got {}".format(
+                    args
+                )
+            )
+        return ApplicationCallTransactionTypeSpec()
 
     raise TypeError("Unknown annotation origin: {}".format(origin))
 

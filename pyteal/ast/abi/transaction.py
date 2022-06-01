@@ -1,9 +1,9 @@
 from enum import Enum
-from typing import TypeVar, Union, cast
+from typing import TypeVar, Union, cast, List, Final
 from pyteal.ast.abi.type import BaseType, ComputedValue, TypeSpec
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
-from pyteal.ast.txn import TxnObject, TxnType
+from pyteal.ast.txn import TxnObject
 from pyteal.ast.gtxn import Gtxn
 from pyteal.types import TealType
 from pyteal.errors import TealInputError
@@ -19,6 +19,9 @@ class TransactionType(Enum):
     AssetTransfer = "axfer"
     AssetFreeze = "afrz"
     ApplicationCall = "appl"
+
+
+TransactionType.__module__ = "pyteal"
 
 
 class TransactionTypeSpec(TypeSpec):
@@ -105,9 +108,15 @@ class PaymentTransactionTypeSpec(TransactionTypeSpec):
         return TransactionType.Payment.value
 
 
+PaymentTransactionTypeSpec.__module__ = "pyteal"
+
+
 class PaymentTransaction(Transaction):
     def __init__(self):
         super().__init__(PaymentTransactionTypeSpec())
+
+
+PaymentTransaction.__module__ = "pyteal"
 
 
 class KeyRegisterTransactionTypeSpec(TransactionTypeSpec):
@@ -121,9 +130,15 @@ class KeyRegisterTransactionTypeSpec(TransactionTypeSpec):
         return TransactionType.KeyRegistration.value
 
 
+KeyRegisterTransactionTypeSpec.__module__ = "pyteal"
+
+
 class KeyRegisterTransaction(Transaction):
     def __init__(self):
         super().__init__(KeyRegisterTransactionTypeSpec())
+
+
+KeyRegisterTransaction.__module__ = "pyteal"
 
 
 class AssetConfigTransactionTypeSpec(TransactionTypeSpec):
@@ -137,9 +152,15 @@ class AssetConfigTransactionTypeSpec(TransactionTypeSpec):
         return TransactionType.AssetConfig.value
 
 
+AssetConfigTransactionTypeSpec.__module__ = "pyteal"
+
+
 class AssetConfigTransaction(Transaction):
     def __init__(self):
         super().__init__(AssetConfigTransactionTypeSpec())
+
+
+AssetConfigTransaction.__module__ = "pyteal"
 
 
 class AssetFreezeTransactionTypeSpec(TransactionTypeSpec):
@@ -153,9 +174,15 @@ class AssetFreezeTransactionTypeSpec(TransactionTypeSpec):
         return TransactionType.AssetFreeze.value
 
 
+AssetFreezeTransactionTypeSpec.__module__ = "pyteal"
+
+
 class AssetFreezeTransaction(Transaction):
     def __init__(self):
         super().__init__(AssetFreezeTransactionTypeSpec())
+
+
+AssetFreezeTransaction.__module__ = "pyteal"
 
 
 class AssetTransferTransactionTypeSpec(TransactionTypeSpec):
@@ -169,9 +196,15 @@ class AssetTransferTransactionTypeSpec(TransactionTypeSpec):
         return TransactionType.AssetTransfer.value
 
 
+AssetTransferTransactionTypeSpec.__module__ = "pyteal"
+
+
 class AssetTransferTransaction(Transaction):
     def __init__(self):
         super().__init__(AssetTransferTransactionTypeSpec())
+
+
+AssetTransferTransaction.__module__ = "pyteal"
 
 
 class ApplicationCallTransactionTypeSpec(TransactionTypeSpec):
@@ -185,6 +218,22 @@ class ApplicationCallTransactionTypeSpec(TransactionTypeSpec):
         return TransactionType.ApplicationCall.value
 
 
+ApplicationCallTransactionTypeSpec.__module__ = "pyteal"
+
+
 class ApplicationCallTransaction(Transaction):
     def __init__(self):
         super().__init__(ApplicationCallTransactionTypeSpec())
+
+
+ApplicationCallTransaction.__module__ = "pyteal"
+
+TransactionTypeSpecs: Final[List[TypeSpec]] = [
+    TransactionTypeSpec(),
+    PaymentTransactionTypeSpec(),
+    KeyRegisterTransactionTypeSpec(),
+    AssetConfigTransactionTypeSpec(),
+    AssetFreezeTransactionTypeSpec(),
+    AssetTransferTransactionTypeSpec(),
+    ApplicationCallTransactionTypeSpec(),
+]

@@ -3,7 +3,6 @@ from typing import List
 import pyteal as pt
 from pyteal import abi
 import pytest
-from pyteal.ast.txn import TxnObject
 
 from pyteal.errors import TealInputError
 
