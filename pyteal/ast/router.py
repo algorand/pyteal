@@ -73,7 +73,7 @@ class MethodConfig:
     method call is paired with certain OnCompletion conditions and creation conditions.
     """
 
-    no_op: CallConfig = field(kw_only=True, default=CallConfig.CALL)
+    no_op: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
     opt_in: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
     close_out: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
     clear_state: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
@@ -483,13 +483,15 @@ class Router:
         self,
         method_call: ABIReturnSubroutine,
         overriding_name: str = None,
-        method_config: MethodConfig = MethodConfig(),
+        method_config: MethodConfig = None,
     ) -> None:
         if not isinstance(method_call, ABIReturnSubroutine):
             raise TealInputError(
                 "for adding method handler, must be ABIReturnSubroutine"
             )
         method_signature = method_call.method_signature(overriding_name)
+        if method_config is None:
+            method_config = MethodConfig(no_op=CallConfig.CALL)
         if method_config.is_never():
             raise TealInputError(
                 f"registered method {method_signature} is never executed"
@@ -521,12 +523,12 @@ class Router:
         /,
         *,
         name: str = None,
-        no_op: CallConfig = CallConfig.CALL,
-        opt_in: CallConfig = CallConfig.NEVER,
-        close_out: CallConfig = CallConfig.NEVER,
-        clear_state: CallConfig = CallConfig.NEVER,
-        update_application: CallConfig = CallConfig.NEVER,
-        delete_application: CallConfig = CallConfig.NEVER,
+        no_op: CallConfig = None,
+        opt_in: CallConfig = None,
+        close_out: CallConfig = None,
+        clear_state: CallConfig = None,
+        update_application: CallConfig = None,
+        delete_application: CallConfig = None,
     ):
         """
         A decorator style method registration by decorating over a python function,
@@ -540,16 +542,42 @@ class Router:
             for example, as a decorator argument.
         """
 
+        # we use `is None` extensively for CallConfig to distinguish 2 following cases
+        # - None
+        # - CallConfig.Never
+        # both cases evaluate to False in if statement.
         def wrap(_func):
             wrapped_subroutine = ABIReturnSubroutine(_func)
-            call_configs = MethodConfig(
-                no_op=no_op,
-                opt_in=opt_in,
-                close_out=close_out,
-                clear_state=clear_state,
-                update_application=update_application,
-                delete_application=delete_application,
-            )
+            call_configs: MethodConfig
+            if (
+                no_op is None
+                and opt_in is None
+                and close_out is None
+                and clear_state is None
+                and update_application is None
+                and delete_application is None
+            ):
+                call_configs = MethodConfig(no_op=CallConfig.CALL)
+            else:
+
+                def none_to_never(x: None | CallConfig):
+                    return CallConfig.NEVER if x is None else x
+
+                _no_op = none_to_never(no_op)
+                _opt_in = none_to_never(opt_in)
+                _close_out = none_to_never(close_out)
+                _clear_state = none_to_never(clear_state)
+                _update_app = none_to_never(update_application)
+                _delete_app = none_to_never(delete_application)
+
+                call_configs = MethodConfig(
+                    no_op=_no_op,
+                    opt_in=_opt_in,
+                    close_out=_close_out,
+                    clear_state=_clear_state,
+                    update_application=_update_app,
+                    delete_application=_delete_app,
+                )
             self.add_method_handler(wrapped_subroutine, name, call_configs)
 
         if not func:

@@ -2286,7 +2286,9 @@ def test_router_app():
         router.add_method_handler(
             empty_return_subroutine,
             method_config=pt.MethodConfig(
-                opt_in=pt.CallConfig.ALL, clear_state=pt.CallConfig.CALL
+                no_op=pt.CallConfig.CALL,
+                opt_in=pt.CallConfig.ALL,
+                clear_state=pt.CallConfig.CALL,
             ),
         )
 
@@ -2297,7 +2299,9 @@ def test_router_app():
         router.add_method_handler(
             log_1,
             method_config=pt.MethodConfig(
-                opt_in=pt.CallConfig.CALL, clear_state=pt.CallConfig.CALL
+                no_op=pt.CallConfig.CALL,
+                opt_in=pt.CallConfig.CALL,
+                clear_state=pt.CallConfig.CALL,
             ),
         )
 
