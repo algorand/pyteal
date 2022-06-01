@@ -1,10 +1,6 @@
 import pyteal as pt
 from pyteal.ast.router import ASTBuilder
-
-import itertools
 import pytest
-
-# import random
 import typing
 import algosdk.abi as sdk_abi
 
@@ -203,7 +199,7 @@ def power_set(no_dup_list: list, length_override: int = None):
         yield [elem for mask, elem in zip(masks, no_dup_list) if i & mask]
 
 
-def full_perm_gen(non_dup_list: list, perm_length: int):
+def full_ordered_combination_gen(non_dup_list: list, perm_length: int):
     """
     This function serves as a generator for all possible vectors of length `perm_length`,
     each of whose entries are one of the elements in `non_dup_list`,
@@ -280,23 +276,67 @@ def test_method_config():
     assert all_mc.clear_state_cond() == 1
 
     on_complete_pow_set = power_set(ON_COMPLETE_CASES)
+    approval_check_names_n_ocs = [
+        (camel_to_snake(oc.name), oc)
+        for oc in ON_COMPLETE_CASES
+        if str(oc) != str(pt.OnComplete.ClearState)
+    ]
     for on_complete_set in on_complete_pow_set:
         oc_names = [camel_to_snake(oc.name) for oc in on_complete_set]
-        full_perm_call_configs_for_ocs = full_perm_gen(
+        ordered_call_configs = full_ordered_combination_gen(
             list(pt.CallConfig), len(on_complete_set)
         )
-        for call_config in full_perm_call_configs_for_ocs:
-            mc = pt.MethodConfig(**dict(zip(oc_names, call_config)))
-            approval_list = [
-                mc.no_op,
-                mc.opt_in,
-                mc.close_out,
-                mc.update_application,
-                mc.delete_application,
+        for call_configs in ordered_call_configs:
+            mc = pt.MethodConfig(**dict(zip(oc_names, call_configs)))
+            match mc.clear_state:
+                case pt.CallConfig.NEVER:
+                    assert mc.clear_state_cond() == 0
+                case pt.CallConfig.ALL:
+                    assert mc.clear_state_cond() == 1
+                case pt.CallConfig.CALL:
+                    with pt.TealComponent.Context.ignoreExprEquality():
+                        assert assemble_helper(
+                            mc.clear_state_cond()
+                        ) == assemble_helper(pt.Txn.application_id() != pt.Int(0))
+                case pt.CallConfig.CREATE:
+                    with pt.TealComponent.Context.ignoreExprEquality():
+                        assert assemble_helper(
+                            mc.clear_state_cond()
+                        ) == assemble_helper(pt.Txn.application_id() == pt.Int(0))
+            if mc.is_never() or all(
+                getattr(mc, i) == pt.CallConfig.NEVER
+                for i, _ in approval_check_names_n_ocs
+            ):
+                assert mc.approval_cond() == 0
+                continue
+            elif mc.is_arc4_compliant() or all(
+                getattr(mc, i) == pt.CallConfig.ALL
+                for i, _ in approval_check_names_n_ocs
+            ):
+                assert mc.approval_cond() == 1
+                continue
+            list_of_cc = [
+                (
+                    typing.cast(pt.CallConfig, getattr(mc, i)).condition_under_config(),
+                    oc,
+                )
+                for i, oc in approval_check_names_n_ocs
             ]
-            len(approval_list)
-
-            # method_config: pt.MethodConfig
+            list_of_expressions = []
+            for expr_or_int, oc in list_of_cc:
+                match expr_or_int:
+                    case pt.Expr():
+                        list_of_expressions.append(
+                            pt.And(pt.Txn.on_completion() == oc, expr_or_int)
+                        )
+                    case 0:
+                        continue
+                    case 1:
+                        list_of_expressions.append(pt.Txn.on_completion() == oc)
+            with pt.TealComponent.Context.ignoreExprEquality():
+                assert assemble_helper(mc.approval_cond()) == assemble_helper(
+                    pt.Or(*list_of_expressions)
+                )
 
 
 def test_on_complete_action():
@@ -307,134 +347,6 @@ def test_on_complete_action():
     assert pt.OnCompleteAction.call_only(pt.Seq()).call_config == pt.CallConfig.CALL
     assert pt.OnCompleteAction.create_only(pt.Seq()).call_config == pt.CallConfig.CREATE
     assert pt.OnCompleteAction.always(pt.Seq()).call_config == pt.CallConfig.ALL
-
-
-def test_add_method():
-    abi_subroutine_cases = [
-        abi_ret
-        for abi_ret in GOOD_SUBROUTINE_CASES
-        if isinstance(abi_ret, pt.ABIReturnSubroutine)
-    ]
-    normal_subroutine = [
-        subroutine
-        for subroutine in GOOD_SUBROUTINE_CASES
-        if not isinstance(subroutine, pt.ABIReturnSubroutine)
-    ]
-    router = pt.Router(
-        "routerForMethodTest",
-        pt.BareCallActions(clear_state=pt.OnCompleteAction.call_only(pt.Approve())),
-    )
-    for subroutine in normal_subroutine:
-        with pytest.raises(pt.TealInputError) as must_be_abi:
-            router.add_method_handler(subroutine)
-        assert "for adding method handler, must be ABIReturnSubroutine" in str(
-            must_be_abi
-        )
-    on_complete_pow_set = power_set(ON_COMPLETE_CASES)
-    for handler, on_complete_set in itertools.product(
-        abi_subroutine_cases, on_complete_pow_set
-    ):
-        full_perm_call_configs_for_ocs = full_perm_gen(
-            list(pt.CallConfig), len(on_complete_set)
-        )
-        oc_names = [camel_to_snake(oc.name) for oc in on_complete_set]
-        for call_config in full_perm_call_configs_for_ocs:
-            method_call_configs: pt.MethodConfig = pt.MethodConfig(
-                **dict(zip(oc_names, call_config))
-            )
-            if method_call_configs.is_never():
-                with pytest.raises(pt.TealInputError) as call_config_never:
-                    router.add_method_handler(handler, None, method_call_configs)
-                assert "is never executed" in str(call_config_never)
-                continue
-
-            # router.add_method_handler(handler, None, method_call_configs)
-            # on_create = method_call_configs.oc_under_call_config(pt.CallConfig.CREATE)
-            # on_call = method_call_configs.oc_under_call_config(pt.CallConfig.CALL)
-
-
-#     for subroutine, on_completes, is_creation in itertools.product(
-#         GOOD_SUBROUTINE_CASES, ON_COMPLETE_COMBINED_CASES, [False, True]
-#     ):
-#         if len(on_completes) == 0:
-#             with pytest.raises(pt.TealInputError) as err_no_oc:
-#                 pt.Router.parse_conditions(
-#                     subroutine if is_abi_subroutine else None,
-#                     on_completes,
-#                     is_creation,
-#                 )
-#             assert "on complete input should be non-empty list" in str(err_no_oc)
-#             continue
-#
-#         mutated_on_completes = on_completes + [random.choice(on_completes)]
-#         with pytest.raises(pt.TealInputError) as err_dup_oc:
-#             pt.Router.parse_conditions(
-#                 subroutine if is_abi_subroutine else None,
-#                 mutated_on_completes,
-#                 is_creation,
-#             )
-#         assert "has duplicated on_complete(s)" in str(err_dup_oc)
-#
-#         (
-#             approval_condition_list,
-#             clear_state_condition_list,
-#         ) = pt.Router.parse_conditions(
-#             subroutine if is_abi_subroutine else None,
-#             on_completes,
-#             is_creation,
-#         )
-#
-#         if not oncomplete_is_in_oc_list(pt.OnComplete.ClearState, on_completes):
-#             assert len(clear_state_condition_list) == 0
-#
-#         assembled_ap_condition_list: list[pt.TealBlock] = [
-#             assemble_helper(expr) for expr in approval_condition_list
-#         ]
-#         assembled_csp_condition_list: list[pt.TealBlock] = [
-#             assemble_helper(expr) for expr in clear_state_condition_list
-#         ]
-#         if is_creation:
-#             creation_condition: pt.Expr = pt.Txn.application_id() == pt.Int(0)
-#             assembled_condition = assemble_helper(creation_condition)
-#             with pt.TealComponent.Context.ignoreExprEquality():
-#                 assert assembled_condition in assembled_ap_condition_list
-#
-#         subroutine_arg_cond: pt.Expr
-#         if is_abi_subroutine:
-#             subroutine_arg_cond = (
-#                 pt.MethodSignature(typing.cast(str, method_sig))
-#                 == pt.Txn.application_args[0]
-#             )
-#         else:
-#             subroutine_arg_cond = pt.Int(1)
-#
-#         assembled_condition = assemble_helper(subroutine_arg_cond)
-#         with pt.TealComponent.Context.ignoreExprEquality():
-#             if not (
-#                 len(on_completes) == 1
-#                 and oncomplete_is_in_oc_list(pt.OnComplete.ClearState, on_completes)
-#             ):
-#                 assert assembled_condition in assembled_ap_condition_list
-#
-#         if oncomplete_is_in_oc_list(pt.OnComplete.ClearState, on_completes):
-#             with pt.TealComponent.Context.ignoreExprEquality():
-#                 assert assembled_condition in assembled_csp_condition_list
-#
-#         if len(on_completes) == 1 and oncomplete_is_in_oc_list(
-#             pt.OnComplete.ClearState, on_completes
-#         ):
-#             continue
-#
-#         on_completes_cond: pt.Expr = pt.Or(
-#             *[
-#                 pt.Txn.on_completion() == oc
-#                 for oc in on_completes
-#                 if str(oc) != str(pt.OnComplete.ClearState)
-#             ]
-#         )
-#         on_completes_cond_assembled = assemble_helper(on_completes_cond)
-#         with pt.TealComponent.Context.ignoreExprEquality():
-#             assert on_completes_cond_assembled in assembled_ap_condition_list
 
 
 def test_wrap_handler_bare_call():
