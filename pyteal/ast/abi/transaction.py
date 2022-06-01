@@ -171,7 +171,7 @@ class AssetTransferTransactionTypeSpec(TransactionTypeSpec):
 
 class AssetTransferTransaction(Transaction):
     def __init__(self):
-        super().__init__(AssetTransferTransactionTypeSpec)
+        super().__init__(AssetTransferTransactionTypeSpec())
 
 
 class ApplicationCallTransactionTypeSpec(TransactionTypeSpec):
