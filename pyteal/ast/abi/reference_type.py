@@ -30,7 +30,7 @@ class Account(Uint):
         super().__init__(AccountTypeSpec())
 
     def get(self) -> Expr:
-        return Txn.accounts[self.stored_value.load()]
+        return Txn.accounts[self.index()]
 
     def index(self) -> Expr:
         return self.stored_value.load()
@@ -64,7 +64,7 @@ class Asset(Uint):
         super().__init__(AssetTypeSpec())
 
     def get(self) -> Expr:
-        return Txn.assets[self.stored_value.load()]
+        return Txn.assets[self.index()]
 
     def index(self) -> Expr:
         return self.stored_value.load()
@@ -98,7 +98,7 @@ class Application(Uint):
         super().__init__(ApplicationTypeSpec())
 
     def get(self) -> Expr:
-        return Txn.applications[self.stored_value.load()]
+        return Txn.applications[self.index()]
 
     def index(self) -> Expr:
         return self.stored_value.load()
