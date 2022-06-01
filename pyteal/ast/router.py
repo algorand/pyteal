@@ -83,17 +83,6 @@ class MethodConfig:
     def is_never(self) -> bool:
         return all(map(lambda cc: cc == CallConfig.NEVER, astuple(self)))
 
-    @classmethod
-    def arc4_compliant(cls):
-        return cls(
-            no_op=CallConfig.ALL,
-            opt_in=CallConfig.ALL,
-            close_out=CallConfig.ALL,
-            clear_state=CallConfig.ALL,
-            update_application=CallConfig.ALL,
-            delete_application=CallConfig.ALL,
-        )
-
     def approval_cond(self) -> Expr | int:
         config_oc_pairs: list[tuple[CallConfig, EnumInt]] = [
             (self.no_op, OnComplete.NoOp),
