@@ -359,11 +359,20 @@ class ASTBuilder:
                 list[abi.TypeSpec], handler.subroutine.expected_arg_types
             )
 
-            # Filter to just the args present in application_args
+            def redefine_typespec_without(
+                ts: abi.TypeSpec, to_remove: list[abi.TypeSpec]
+            ):
+                # TODO: Redefine type spec to omit any of the
+                return ts
+
+            # Filter to just the args present in application_args, and redefine any
+            # types that contain TransactionTypeSpec
             app_arg_type_specs = [
                 ats
-                for ats in arg_type_specs
                 if not contains_type_spec(ats, abi.TransactionTypeSpecs)
+                else redefine_typespec_without(ats, abi.TransactionTypeSpecs)
+                for ats in arg_type_specs
+                if not isinstance(ats, abi.TransactionTypeSpec)
             ]
 
             # The number of transaction args is derived from subtracting

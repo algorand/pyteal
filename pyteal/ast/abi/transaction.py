@@ -76,6 +76,9 @@ class Transaction(BaseType):
             case _:
                 raise TealInputError(f"Cant store a {type(value)} in a Transaction")
 
+    def index(self) -> Expr:
+        return self.stored_value.load()
+
     def validate(self) -> Expr:
         # TODO: make sure the group length is large enough and the index is valid?
         pass
@@ -98,10 +101,10 @@ Transaction.__module__ = "pyteal"
 
 
 class PaymentTransactionTypeSpec(TransactionTypeSpec):
-    def new_instance(self) -> "Transaction":
+    def new_instance(self) -> "PaymentTransaction":
         return PaymentTransaction()
 
-    def annotation_type(self) -> "type[Transaction]":
+    def annotation_type(self) -> "type[PaymentTransaction]":
         return PaymentTransaction
 
     def __str__(self) -> str:
@@ -120,10 +123,10 @@ PaymentTransaction.__module__ = "pyteal"
 
 
 class KeyRegisterTransactionTypeSpec(TransactionTypeSpec):
-    def new_instance(self) -> "Transaction":
+    def new_instance(self) -> "KeyRegisterTransaction":
         return KeyRegisterTransaction()
 
-    def annotation_type(self) -> "type[Transaction]":
+    def annotation_type(self) -> "type[KeyRegisterTransaction]":
         return KeyRegisterTransaction
 
     def __str__(self) -> str:
@@ -142,10 +145,10 @@ KeyRegisterTransaction.__module__ = "pyteal"
 
 
 class AssetConfigTransactionTypeSpec(TransactionTypeSpec):
-    def new_instance(self) -> "Transaction":
+    def new_instance(self) -> "AssetConfigTransaction":
         return AssetConfigTransaction()
 
-    def annotation_type(self) -> "type[Transaction]":
+    def annotation_type(self) -> "type[AssetConfigTransaction]":
         return AssetConfigTransaction
 
     def __str__(self) -> str:
@@ -164,10 +167,10 @@ AssetConfigTransaction.__module__ = "pyteal"
 
 
 class AssetFreezeTransactionTypeSpec(TransactionTypeSpec):
-    def new_instance(self) -> "Transaction":
+    def new_instance(self) -> "AssetFreezeTransaction":
         return AssetFreezeTransaction()
 
-    def annotation_type(self) -> "type[Transaction]":
+    def annotation_type(self) -> "type[AssetFreezeTransaction]":
         return AssetFreezeTransaction
 
     def __str__(self) -> str:
@@ -186,10 +189,10 @@ AssetFreezeTransaction.__module__ = "pyteal"
 
 
 class AssetTransferTransactionTypeSpec(TransactionTypeSpec):
-    def new_instance(self) -> "Transaction":
+    def new_instance(self) -> "AssetTransferTransaction":
         return AssetTransferTransaction()
 
-    def annotation_type(self) -> "type[Transaction]":
+    def annotation_type(self) -> "type[AssetTransferTransaction]":
         return AssetTransferTransaction
 
     def __str__(self) -> str:
@@ -208,10 +211,10 @@ AssetTransferTransaction.__module__ = "pyteal"
 
 
 class ApplicationCallTransactionTypeSpec(TransactionTypeSpec):
-    def new_instance(self) -> "Transaction":
+    def new_instance(self) -> "ApplicationCallTransaction":
         return ApplicationCallTransaction()
 
-    def annotation_type(self) -> "type[Transaction]":
+    def annotation_type(self) -> "type[ApplicationCallTransaction]":
         return ApplicationCallTransaction
 
     def __str__(self) -> str:
