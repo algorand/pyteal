@@ -140,7 +140,6 @@ from pyteal.ast.opup import OpUp, OpUpMode
 from pyteal.ast.ecdsa import EcdsaCurve, EcdsaVerify, EcdsaDecompress, EcdsaRecover
 from pyteal.ast.router import (
     Router,
-    ASTBuilder,
     CallConfig,
     MethodConfig,
     OnCompleteAction,
@@ -288,7 +287,6 @@ __all__ = [
     "Break",
     "Continue",
     "Router",
-    "ASTBuilder",
     "CallConfig",
     "MethodConfig",
     "OnCompleteAction",

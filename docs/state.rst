@@ -108,7 +108,7 @@ is the address of the account to read from, and the second argument is the key t
     App.localGet(Txn.sender(), Bytes("balance")) # read from the sender's account
     App.localGet(Txn.accounts[1], Bytes("balance")) # read from Txn.accounts[1]
 
-If you try to read from a key that does not exist in your app's global state, the integer :code:`0`
+If you try to read from a key that does not exist in the account's local state, the integer :code:`0`
 is returned.
 
 Deleting Local State

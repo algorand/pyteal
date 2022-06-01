@@ -233,19 +233,19 @@ def test_roundtrip(abi_type):
 """
     )
 
-    last_rows = 2
+    last_steps = 2
 
     assert passed == (cost <= 700), inspector.report(
-        args, f"passed={passed} contradicted cost={cost}", last_rows=last_rows
+        args, f"passed={passed} contradicted cost={cost}", last_steps=last_steps
     )
     assert rand_abi_instance == original, inspector.report(
-        args, "rand_abi_instance v. original", last_rows=last_rows
+        args, "rand_abi_instance v. original", last_steps=last_steps
     )
     assert original == mut_mut, inspector.report(
-        args, "orginal v. mut_mut", last_rows=last_rows
+        args, "orginal v. mut_mut", last_steps=last_steps
     )
 
     expected_mut = abi_strat.mutate_for_roundtrip(rand_abi_instance)
     assert expected_mut == mut, inspector.report(
-        args, "expected_mut v. mut", last_rows=last_rows
+        args, "expected_mut v. mut", last_steps=last_steps
     )
