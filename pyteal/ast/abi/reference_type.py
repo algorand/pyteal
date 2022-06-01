@@ -1,4 +1,6 @@
 from pyteal.ast.abi.uint import Uint, UintTypeSpec
+from pyteal.ast.expr import Expr
+from pyteal.ast.txn import Txn
 
 
 class AccountTypeSpec(UintTypeSpec):
@@ -24,6 +26,9 @@ AccountTypeSpec.__module__ = "pyteal"
 class Account(Uint):
     def __init__(self) -> None:
         super().__init__(AccountTypeSpec())
+
+    def deref(self) -> Expr:
+        return Txn.accounts[self.stored_value.load()]
 
 
 Account.__module__ = "pyteal"
@@ -53,6 +58,9 @@ class Asset(Uint):
     def __init__(self) -> None:
         super().__init__(AssetTypeSpec())
 
+    def deref(self) -> Expr:
+        return Txn.assets[self.stored_value.load()]
+
 
 Asset.__module__ = "pyteal"
 
@@ -80,6 +88,9 @@ ApplicationTypeSpec.__module__ = "pyteal"
 class Application(Uint):
     def __init__(self) -> None:
         super().__init__(ApplicationTypeSpec())
+
+    def deref(self) -> Expr:
+        return Txn.applications[self.stored_value.load()]
 
 
 Application.__module__ = "pyteal"

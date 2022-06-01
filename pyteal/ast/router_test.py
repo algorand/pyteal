@@ -1,10 +1,13 @@
 import pyteal as pt
+from pyteal.ast.router import ASTBuilder
+
 import itertools
 import pytest
 
 # import random
 import typing
 import algosdk.abi as sdk_abi
+
 
 options = pt.CompileOptions(version=5)
 
@@ -177,15 +180,21 @@ ON_COMPLETE_CASES: list[pt.EnumInt] = [
 ]
 
 
-CALL_CONFIGS = [
-    pt.CallConfig.NEVER,
-    pt.CallConfig.CALL,
-    pt.CallConfig.CREATE,
-    pt.CallConfig.ALL,
-]
-
-
 def power_set(no_dup_list: list, length_override: int = None):
+    """
+    This function serves as a generator for all possible elements in power_set
+    over `non_dup_list`, which is a list of non-duplicated elements (matches property of a set).
+
+    The cardinality of a powerset is 2^|non_dup_list|, so we can iterate from 0 to 2^|non_dup_list| - 1
+    to index each element in such power_set.
+    By binary representation of each index, we can see it as an allowance over each element in `no_dup_list`,
+    and generate a unique subset of `non_dup_list`, which yields as an element of power_set of `no_dup_list`.
+
+    Args:
+        no_dup_list: a list of elements with no duplication
+        length_override: a number indicating the largest size of super_set element,
+            must be in range [1, len(no_dup_list)].
+    """
     if length_override is None:
         length_override = len(no_dup_list)
     assert 1 <= length_override <= len(no_dup_list)
@@ -195,15 +204,30 @@ def power_set(no_dup_list: list, length_override: int = None):
 
 
 def full_perm_gen(non_dup_list: list, perm_length: int):
+    """
+    This function serves as a generator for all possible vectors of length `perm_length`,
+    each of whose entries are one of the elements in `non_dup_list`,
+    which is a list of non-duplicated elements.
+
+    Args:
+        non_dup_list: must be a list of elements with no duplication
+        perm_length: must be a non-negative number indicating resulting length of the vector
+    """
     if perm_length < 0:
-        raise
+        raise pt.TealInputError("input permutation length must be non-negative")
+    elif len(set(non_dup_list)) != len(non_dup_list):
+        raise pt.TealInputError(f"input non_dup_list {non_dup_list} has duplications")
     elif perm_length == 0:
         yield []
         return
+    # we can index all possible cases of vectors with an index in range
+    # [0, |non_dup_list| ^ perm_length - 1]
+    # by converting an index into |non_dup_list|-based number,
+    # we can get the vector mapped by the index.
     for index in range(len(non_dup_list) ** perm_length):
         index_list_basis = []
         temp = index
-        for i in range(perm_length):
+        for _ in range(perm_length):
             index_list_basis.append(non_dup_list[temp % len(non_dup_list)])
             temp //= len(non_dup_list)
         yield index_list_basis
@@ -224,8 +248,65 @@ def camel_to_snake(name: str) -> str:
     return "".join(["_" + c.lower() if c.isupper() else c for c in name]).lstrip("_")
 
 
-def test_add_bare_call():
-    pass
+def test_call_config():
+    for cc in pt.CallConfig:
+        cond_on_cc: pt.Expr | int = cc.condition_under_config()
+        match cond_on_cc:
+            case pt.Expr():
+                expected_cc = (
+                    (pt.Txn.application_id() == pt.Int(0))
+                    if cc == pt.CallConfig.CREATE
+                    else (pt.Txn.application_id() != pt.Int(0))
+                )
+                with pt.TealComponent.Context.ignoreExprEquality():
+                    assert assemble_helper(cond_on_cc) == assemble_helper(expected_cc)
+            case int():
+                assert cond_on_cc == int(cc) & 1
+            case _:
+                raise pt.TealInternalError(f"unexpected cond_on_cc {cond_on_cc}")
+
+
+def test_method_config():
+    never_mc = pt.MethodConfig(no_op=pt.CallConfig.NEVER)
+    assert never_mc.is_never()
+    assert not never_mc.is_arc4_compliant()
+    assert never_mc.approval_cond() == 0
+    assert never_mc.clear_state_cond() == 0
+
+    all_mc = pt.MethodConfig.arc4_compliant()
+    assert not all_mc.is_never()
+    assert all_mc.is_arc4_compliant()
+    assert all_mc.approval_cond() == 1
+    assert all_mc.clear_state_cond() == 1
+
+    on_complete_pow_set = power_set(ON_COMPLETE_CASES)
+    for on_complete_set in on_complete_pow_set:
+        oc_names = [camel_to_snake(oc.name) for oc in on_complete_set]
+        full_perm_call_configs_for_ocs = full_perm_gen(
+            list(pt.CallConfig), len(on_complete_set)
+        )
+        for call_config in full_perm_call_configs_for_ocs:
+            mc = pt.MethodConfig(**dict(zip(oc_names, call_config)))
+            approval_list = [
+                mc.no_op,
+                mc.opt_in,
+                mc.close_out,
+                mc.update_application,
+                mc.delete_application,
+            ]
+            len(approval_list)
+
+            # method_config: pt.MethodConfig
+
+
+def test_on_complete_action():
+    with pytest.raises(pt.TealInputError) as contradict_err:
+        pt.OnCompleteAction(action=pt.Seq(), call_config=pt.CallConfig.NEVER)
+    assert "contradicts" in str(contradict_err)
+    assert pt.OnCompleteAction.never().is_empty()
+    assert pt.OnCompleteAction.call_only(pt.Seq()).call_config == pt.CallConfig.CALL
+    assert pt.OnCompleteAction.create_only(pt.Seq()).call_config == pt.CallConfig.CREATE
+    assert pt.OnCompleteAction.always(pt.Seq()).call_config == pt.CallConfig.ALL
 
 
 def test_add_method():
@@ -254,7 +335,7 @@ def test_add_method():
         abi_subroutine_cases, on_complete_pow_set
     ):
         full_perm_call_configs_for_ocs = full_perm_gen(
-            CALL_CONFIGS, len(on_complete_set)
+            list(pt.CallConfig), len(on_complete_set)
         )
         oc_names = [camel_to_snake(oc.name) for oc in on_complete_set]
         for call_config in full_perm_call_configs_for_ocs:
@@ -364,17 +445,22 @@ def test_wrap_handler_bare_call():
         pt.Log(pt.Bytes("message")),
     ]
     for bare_call in BARE_CALL_CASES:
-        wrapped: pt.Expr = pt.ASTBuilder.wrap_handler(False, bare_call)
+        wrapped: pt.Expr = ASTBuilder.wrap_handler(False, bare_call)
+        expected: pt.Expr
         match bare_call:
             case pt.Expr():
                 if bare_call.has_return():
-                    assert wrapped == bare_call
+                    expected = bare_call
                 else:
-                    assert wrapped == pt.Seq(bare_call, pt.Approve())
+                    expected = pt.Seq(bare_call, pt.Approve())
             case pt.SubroutineFnWrapper() | pt.ABIReturnSubroutine():
-                assert wrapped == pt.Seq(bare_call(), pt.Approve())
+                expected = pt.Seq(bare_call(), pt.Approve())
             case _:
                 raise pt.TealInputError("how you got here?")
+        wrapped_assemble = assemble_helper(wrapped)
+        wrapped_helper = assemble_helper(expected)
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert wrapped_assemble == wrapped_helper
 
     ERROR_CASES = [
         (
@@ -404,24 +490,24 @@ def test_wrap_handler_bare_call():
     ]
     for error_case, error_msg in ERROR_CASES:
         with pytest.raises(pt.TealInputError) as bug:
-            pt.ASTBuilder.wrap_handler(False, error_case)
+            ASTBuilder.wrap_handler(False, error_case)
         assert error_msg in str(bug)
 
 
 def test_wrap_handler_method_call():
     with pytest.raises(pt.TealInputError) as bug:
-        pt.ASTBuilder.wrap_handler(True, not_registrable)
+        ASTBuilder.wrap_handler(True, not_registrable)
     assert "method call ABIReturnSubroutine is not routable" in str(bug)
 
     with pytest.raises(pt.TealInputError) as bug:
-        pt.ASTBuilder.wrap_handler(True, safe_clear_state_delete)
+        ASTBuilder.wrap_handler(True, safe_clear_state_delete)
     assert "method call should be only registering ABIReturnSubroutine" in str(bug)
 
     ONLY_ABI_SUBROUTINE_CASES = list(
         filter(lambda x: isinstance(x, pt.ABIReturnSubroutine), GOOD_SUBROUTINE_CASES)
     )
     for abi_subroutine in ONLY_ABI_SUBROUTINE_CASES:
-        wrapped: pt.Expr = pt.ASTBuilder.wrap_handler(True, abi_subroutine)
+        wrapped: pt.Expr = ASTBuilder.wrap_handler(True, abi_subroutine)
         assembled_wrapped: pt.TealBlock = assemble_helper(wrapped)
 
         args: list[pt.abi.BaseType] = [
@@ -433,26 +519,26 @@ def test_wrap_handler_method_call():
 
         loading: list[pt.Expr]
 
-        if abi_subroutine.subroutine.argument_count() > pt.METHOD_ARG_NUM_LIMIT:
+        if abi_subroutine.subroutine.argument_count() > pt.METHOD_ARG_NUM_CUTOFF:
             sdk_last_arg = pt.abi.TupleTypeSpec(
                 *[
                     spec
                     for spec in typing.cast(
                         list[pt.abi.TypeSpec],
                         abi_subroutine.subroutine.expected_arg_types,
-                    )[pt.METHOD_ARG_NUM_LIMIT - 1 :]
+                    )[pt.METHOD_ARG_NUM_CUTOFF - 1 :]
                 ]
             ).new_instance()
             loading = [
                 arg.decode(pt.Txn.application_args[index + 1])
-                for index, arg in enumerate(args[: pt.METHOD_ARG_NUM_LIMIT - 1])
+                for index, arg in enumerate(args[: pt.METHOD_ARG_NUM_CUTOFF - 1])
             ]
             loading.append(
-                sdk_last_arg.decode(pt.Txn.application_args[pt.METHOD_ARG_NUM_LIMIT])
+                sdk_last_arg.decode(pt.Txn.application_args[pt.METHOD_ARG_NUM_CUTOFF])
             )
-            for i in range(pt.METHOD_ARG_NUM_LIMIT - 1, len(args)):
+            for i in range(pt.METHOD_ARG_NUM_CUTOFF - 1, len(args)):
                 loading.append(
-                    sdk_last_arg[i - pt.METHOD_ARG_NUM_LIMIT + 1].store_into(args[i])
+                    sdk_last_arg[i - pt.METHOD_ARG_NUM_CUTOFF + 1].store_into(args[i])
                 )
         else:
             loading = [
@@ -490,8 +576,4 @@ def test_contract_json_obj():
         method_list.append(sdk_abi.Method.from_signature(subroutine.method_signature()))
     sdk_contract = sdk_abi.Contract(contract_name, method_list)
     contract = router.contract_construct()
-    assert sdk_contract.desc == contract.desc
-    assert sdk_contract.name == contract.name
-    assert sdk_contract.networks == contract.networks
-    for method in sdk_contract.methods:
-        assert method in contract.methods
+    assert contract == sdk_contract

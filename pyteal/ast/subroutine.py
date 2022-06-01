@@ -595,6 +595,17 @@ class ABIReturnSubroutine:
                 "Only registrable methods may return a method signature"
             )
 
+        ret_type = self.type_of()
+        if isinstance(ret_type, abi.TypeSpec) and abi.contains_type_spec(
+            ret_type,
+            [
+                abi.AccountTypeSpec(),
+                abi.AssetTypeSpec(),
+                abi.ApplicationTypeSpec(),
+            ],
+        ):
+            raise TealInputError("Reference types may not be used as return values")
+
         args = [str(v) for v in self.subroutine.abi_args.values()]
         if overriding_name is None:
             overriding_name = self.name()
@@ -762,4 +773,6 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
     body_ops = [var.slot.store() for var in arg_vars[::-1]]
     body_ops.append(subroutine_body)
 
-    return SubroutineDeclaration(subroutine, Seq(body_ops), deferred_expr)
+    sd = SubroutineDeclaration(subroutine, Seq(body_ops), deferred_expr)
+    sd.trace = subroutine_body.trace
+    return sd

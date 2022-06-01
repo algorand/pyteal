@@ -24,12 +24,11 @@ from pyteal.config import (
     MAX_GROUP_SIZE,
     NUM_SLOTS,
     RETURN_HASH_PREFIX,
-    METHOD_ARG_NUM_LIMIT,
+    METHOD_ARG_NUM_CUTOFF,
 )
 
 __all__ = [
     "ABIReturnSubroutine",
-    "ASTBuilder",
     "AccountParam",
     "Add",
     "Addr",
@@ -125,7 +124,7 @@ __all__ = [
     "Lt",
     "MAX_GROUP_SIZE",
     "MAX_TEAL_VERSION",
-    "METHOD_ARG_NUM_LIMIT",
+    "METHOD_ARG_NUM_CUTOFF",
     "MIN_TEAL_VERSION",
     "MaybeValue",
     "MethodConfig",

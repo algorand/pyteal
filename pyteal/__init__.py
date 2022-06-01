@@ -21,7 +21,7 @@ from pyteal.config import (
     MAX_GROUP_SIZE,
     NUM_SLOTS,
     RETURN_HASH_PREFIX,
-    METHOD_ARG_NUM_LIMIT,
+    METHOD_ARG_NUM_CUTOFF,
 )
 
 # begin __all__
@@ -43,7 +43,7 @@ __all__ = (
         "MAX_GROUP_SIZE",
         "NUM_SLOTS",
         "RETURN_HASH_PREFIX",
-        "METHOD_ARG_NUM_LIMIT",
+        "METHOD_ARG_NUM_CUTOFF",
     ]
 )
 # end __all__
