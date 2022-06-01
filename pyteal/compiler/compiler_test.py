@@ -2309,6 +2309,21 @@ def test_router_app():
             log_creation, method_config=pt.MethodConfig(no_op=pt.CallConfig.CREATE)
         )
 
+        @pt.ABIReturnSubroutine
+        def approve_if_odd(condition_encoding: pt.abi.Uint32) -> pt.Expr:
+            return (
+                pt.If(condition_encoding.get() % pt.Int(2))
+                .Then(pt.Approve())
+                .Else(pt.Reject())
+            )
+
+        router.add_method_handler(
+            approve_if_odd,
+            method_config=pt.MethodConfig(
+                no_op=pt.CallConfig.NEVER, clear_state=pt.CallConfig.CALL
+            ),
+        )
+
     on_completion_actions = pt.BareCallActions(
         opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes("optin call"))),
         clear_state=pt.OnCompleteAction.call_only(pt.Approve()),
@@ -2803,13 +2818,30 @@ retsub""".strip()
 txn NumAppArgs
 int 0
 ==
-bnz main_l4
+bnz main_l6
 txna ApplicationArgs 0
 method "log_1()uint64"
 ==
-bnz main_l3
+bnz main_l5
+txna ApplicationArgs 0
+method "approve_if_odd(uint32)void"
+==
+bnz main_l4
 err
-main_l3:
+main_l4:
+txn ApplicationID
+int 0
+!=
+assert
+txna ApplicationArgs 1
+int 0
+extract_uint32
+store 2
+load 2
+callsub approveifodd_1
+int 1
+return
+main_l5:
 txn ApplicationID
 int 0
 !=
@@ -2823,7 +2855,7 @@ concat
 log
 int 1
 return
-main_l4:
+main_l6:
 txn ApplicationID
 int 0
 !=
@@ -2836,7 +2868,20 @@ log1_0:
 int 1
 store 0
 load 0
-retsub""".strip()
+retsub
+
+// approve_if_odd
+approveifodd_1:
+store 3
+load 3
+int 2
+%
+bnz approveifodd_1_l2
+int 0
+return
+approveifodd_1_l2:
+int 1
+return""".strip()
     assert expected_csp_with_oc == actual_csp_with_oc_compiled
 
     _router_without_oc = pt.Router("yetAnotherContractConstructedFromRouter")
@@ -3307,9 +3352,26 @@ retsub""".strip()
 txna ApplicationArgs 0
 method "log_1()uint64"
 ==
-bnz main_l2
+bnz main_l4
+txna ApplicationArgs 0
+method "approve_if_odd(uint32)void"
+==
+bnz main_l3
 err
-main_l2:
+main_l3:
+txn ApplicationID
+int 0
+!=
+assert
+txna ApplicationArgs 1
+int 0
+extract_uint32
+store 2
+load 2
+callsub approveifodd_1
+int 1
+return
+main_l4:
 txn ApplicationID
 int 0
 !=
@@ -3329,5 +3391,18 @@ log1_0:
 int 1
 store 0
 load 0
-retsub""".strip()
+retsub
+
+// approve_if_odd
+approveifodd_1:
+store 3
+load 3
+int 2
+%
+bnz approveifodd_1_l2
+int 0
+return
+approveifodd_1_l2:
+int 1
+return""".strip()
     assert actual_csp_without_oc_compiled == expected_csp_without_oc
