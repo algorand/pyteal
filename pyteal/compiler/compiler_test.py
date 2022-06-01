@@ -2286,7 +2286,7 @@ def test_router_app():
         router.add_method_handler(
             empty_return_subroutine,
             method_config=pt.MethodConfig(
-                opt_in=pt.CallConfig.ALL, close_out=pt.CallConfig.CALL
+                opt_in=pt.CallConfig.ALL, clear_state=pt.CallConfig.CALL
             ),
         )
 
@@ -2435,14 +2435,6 @@ int 0
 txn OnCompletion
 int OptIn
 ==
-||
-txn OnCompletion
-int CloseOut
-==
-txn ApplicationID
-int 0
-!=
-&&
 ||
 assert
 callsub emptyreturnsubroutine_6
@@ -2818,17 +2810,21 @@ retsub""".strip()
 txn NumAppArgs
 int 0
 ==
-bnz main_l6
+bnz main_l8
+txna ApplicationArgs 0
+method "empty_return_subroutine()void"
+==
+bnz main_l7
 txna ApplicationArgs 0
 method "log_1()uint64"
 ==
-bnz main_l5
+bnz main_l6
 txna ApplicationArgs 0
 method "approve_if_odd(uint32)void"
 ==
-bnz main_l4
+bnz main_l5
 err
-main_l4:
+main_l5:
 txn ApplicationID
 int 0
 !=
@@ -2838,15 +2834,15 @@ int 0
 extract_uint32
 store 2
 load 2
-callsub approveifodd_1
+callsub approveifodd_2
 int 1
 return
-main_l5:
+main_l6:
 txn ApplicationID
 int 0
 !=
 assert
-callsub log1_0
+callsub log1_1
 store 1
 byte 0x151f7c75
 load 1
@@ -2855,7 +2851,15 @@ concat
 log
 int 1
 return
-main_l6:
+main_l7:
+txn ApplicationID
+int 0
+!=
+assert
+callsub emptyreturnsubroutine_0
+int 1
+return
+main_l8:
 txn ApplicationID
 int 0
 !=
@@ -2863,23 +2867,29 @@ assert
 int 1
 return
 
+// empty_return_subroutine
+emptyreturnsubroutine_0:
+byte "appear in both approval and clear state"
+log
+retsub
+
 // log_1
-log1_0:
+log1_1:
 int 1
 store 0
 load 0
 retsub
 
 // approve_if_odd
-approveifodd_1:
+approveifodd_2:
 store 3
 load 3
 int 2
 %
-bnz approveifodd_1_l2
+bnz approveifodd_2_l2
 int 0
 return
-approveifodd_1_l2:
+approveifodd_2_l2:
 int 1
 return""".strip()
     assert expected_csp_with_oc == actual_csp_with_oc_compiled
@@ -2984,14 +2994,6 @@ int 0
 txn OnCompletion
 int OptIn
 ==
-||
-txn OnCompletion
-int CloseOut
-==
-txn ApplicationID
-int 0
-!=
-&&
 ||
 assert
 callsub emptyreturnsubroutine_6
@@ -3350,15 +3352,19 @@ retsub""".strip()
 
     expected_csp_without_oc = """#pragma version 6
 txna ApplicationArgs 0
+method "empty_return_subroutine()void"
+==
+bnz main_l6
+txna ApplicationArgs 0
 method "log_1()uint64"
 ==
-bnz main_l4
+bnz main_l5
 txna ApplicationArgs 0
 method "approve_if_odd(uint32)void"
 ==
-bnz main_l3
+bnz main_l4
 err
-main_l3:
+main_l4:
 txn ApplicationID
 int 0
 !=
@@ -3368,15 +3374,15 @@ int 0
 extract_uint32
 store 2
 load 2
-callsub approveifodd_1
+callsub approveifodd_2
 int 1
 return
-main_l4:
+main_l5:
 txn ApplicationID
 int 0
 !=
 assert
-callsub log1_0
+callsub log1_1
 store 1
 byte 0x151f7c75
 load 1
@@ -3385,24 +3391,38 @@ concat
 log
 int 1
 return
+main_l6:
+txn ApplicationID
+int 0
+!=
+assert
+callsub emptyreturnsubroutine_0
+int 1
+return
+
+// empty_return_subroutine
+emptyreturnsubroutine_0:
+byte "appear in both approval and clear state"
+log
+retsub
 
 // log_1
-log1_0:
+log1_1:
 int 1
 store 0
 load 0
 retsub
 
 // approve_if_odd
-approveifodd_1:
+approveifodd_2:
 store 3
 load 3
 int 2
 %
-bnz approveifodd_1_l2
+bnz approveifodd_2_l2
 int 0
 return
-approveifodd_1_l2:
+approveifodd_2_l2:
 int 1
 return""".strip()
     assert actual_csp_without_oc_compiled == expected_csp_without_oc
