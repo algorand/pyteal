@@ -79,10 +79,6 @@ class Transaction(BaseType):
     def index(self) -> Expr:
         return self.stored_value.load()
 
-    def validate(self) -> Expr:
-        # TODO: make sure the group length is large enough and the index is valid?
-        pass
-
     def decode(
         self,
         encoded: Expr,
