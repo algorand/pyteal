@@ -45,8 +45,6 @@ from pyteal.ast.abi.reference_type import (
 from pyteal.ast.abi.transaction import (
     Transaction,
     TransactionTypeSpec,
-    AnyTransaction,
-    AnyTransactionTypeSpec,
     PaymentTransaction,
     PaymentTransactionTypeSpec,
     ApplicationCallTransaction,
@@ -118,8 +116,6 @@ __all__ = [
     "MethodReturn",
     "Transaction",
     "TransactionTypeSpec",
-    "AnyTransaction",
-    "AnyTransactionTypeSpec",
     "PaymentTransaction",
     "PaymentTransactionTypeSpec",
     "ApplicationCallTransaction",

@@ -1,13 +1,24 @@
-from abc import abstractmethod
+from enum import Enum
 from typing import TypeVar, Union, cast
 from pyteal.ast.abi.type import BaseType, ComputedValue, TypeSpec
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
-from pyteal.ast.txn import TxnType
+from pyteal.ast.txn import TxnObject, TxnType
+from pyteal.ast.gtxn import Gtxn
 from pyteal.types import TealType
 from pyteal.errors import TealInputError
 
 T = TypeVar("T", bound=BaseType)
+
+
+class TransactionType(Enum):
+    Transaction = "txn"
+    Payment = "pay"
+    KeyRegistration = "keyreg"
+    AssetConfig = "acfg"
+    AssetTransfer = "axfer"
+    AssetFreeze = "afrz"
+    ApplicationCall = "appl"
 
 
 class TransactionTypeSpec(TypeSpec):
@@ -32,23 +43,22 @@ class TransactionTypeSpec(TypeSpec):
     def __eq__(self, other: object) -> bool:
         return type(self) is type(other)
 
-    @abstractmethod
     def __str__(self) -> str:
-        return TxnType.Any.name
+        return TransactionType.Transaction.value
 
 
 TransactionTypeSpec.__module__ = "pyteal"
 
 
 class Transaction(BaseType):
-    def __init__(self, spec: TransactionTypeSpec) -> None:
+    def __init__(self, spec: TransactionTypeSpec = TransactionTypeSpec()) -> None:
         super().__init__(spec)
 
     def type_spec(self) -> TransactionTypeSpec:
         return cast(TransactionTypeSpec, super().type_spec())
 
-    def get(self) -> Expr:
-        return self.stored_value.load()
+    def get(self) -> TxnObject:
+        return Gtxn[self.stored_value.load()]
 
     def set(self: T, value: Union[int, Expr, "Transaction", ComputedValue[T]]) -> Expr:
         match value:
@@ -84,22 +94,6 @@ class Transaction(BaseType):
 Transaction.__module__ = "pyteal"
 
 
-class AnyTransactionTypeSpec(TransactionTypeSpec):
-    def new_instance(self) -> "Transaction":
-        return AnyTransaction()
-
-    def annotation_type(self) -> "type[Transaction]":
-        return AnyTransaction
-
-    def __str__(self) -> str:
-        return TxnType.Any.name
-
-
-class AnyTransaction(Transaction):
-    def __init__(self):
-        super().__init__(AnyTransactionTypeSpec())
-
-
 class PaymentTransactionTypeSpec(TransactionTypeSpec):
     def new_instance(self) -> "Transaction":
         return PaymentTransaction()
@@ -108,7 +102,7 @@ class PaymentTransactionTypeSpec(TransactionTypeSpec):
         return PaymentTransaction
 
     def __str__(self) -> str:
-        return TxnType.Payment.name
+        return TransactionType.Payment.value
 
 
 class PaymentTransaction(Transaction):
@@ -124,7 +118,7 @@ class KeyRegisterTransactionTypeSpec(TransactionTypeSpec):
         return KeyRegisterTransaction
 
     def __str__(self) -> str:
-        return TxnType.KeyRegistration.name
+        return TransactionType.KeyRegistration.value
 
 
 class KeyRegisterTransaction(Transaction):
@@ -140,7 +134,7 @@ class AssetConfigTransactionTypeSpec(TransactionTypeSpec):
         return AssetConfigTransaction
 
     def __str__(self) -> str:
-        return TxnType.AssetConfig.name
+        return TransactionType.AssetConfig.value
 
 
 class AssetConfigTransaction(Transaction):
@@ -156,7 +150,7 @@ class AssetFreezeTransactionTypeSpec(TransactionTypeSpec):
         return AssetFreezeTransaction
 
     def __str__(self) -> str:
-        return TxnType.AssetFreeze.name
+        return TransactionType.AssetFreeze.value
 
 
 class AssetFreezeTransaction(Transaction):
@@ -172,7 +166,7 @@ class AssetTransferTransactionTypeSpec(TransactionTypeSpec):
         return AssetTransferTransaction
 
     def __str__(self) -> str:
-        return TxnType.AssetTransfer.name
+        return TransactionType.AssetTransfer.value
 
 
 class AssetTransferTransaction(Transaction):
@@ -188,7 +182,7 @@ class ApplicationCallTransactionTypeSpec(TransactionTypeSpec):
         return ApplicationCallTransaction
 
     def __str__(self) -> str:
-        return TxnType.ApplicationCall.name
+        return TransactionType.ApplicationCall.value
 
 
 class ApplicationCallTransaction(Transaction):

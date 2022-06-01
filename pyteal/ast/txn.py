@@ -28,7 +28,6 @@ class TxnType:
     AssetTransfer = EnumInt("axfer")
     AssetFreeze = EnumInt("afrz")
     ApplicationCall = EnumInt("appl")
-    Any = EnumInt("txn")
 
 
 TxnType.__module__ = "pyteal"
