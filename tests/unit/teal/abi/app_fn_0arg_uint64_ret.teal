@@ -1,7 +1,7 @@
 #pragma version 6
 callsub fn0arguint64ret_0
 store 1
-byte 0x151F7C75
+byte 0x151f7c75
 load 1
 itob
 concat

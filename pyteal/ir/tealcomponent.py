@@ -67,6 +67,21 @@ class TealComponent(ABC):
 
         @classmethod
         def ignoreScratchSlotEquality(cls):
+            """When comparing TealOps, do not verify the equality of any ScratchSlot arguments.
+
+            This is commonly used in testing to verify the that two control flow graphs contains the
+            same operations, but may use different ScratchSlots in them. In this case, you will most
+            likely want to also use use the following code after comparing with this option enabled:
+
+                .. code-block:: python
+                    TealBlock.MatchScratchSlotReferences(
+                        TealBlock.GetReferencedScratchSlots(actual),
+                        TealBlock.GetReferencedScratchSlots(expected),
+                    )
+
+            This ensures that the ScratchSlot usages between the two control flow graphs is
+            equivalent. See :any:`TealBlock.MatchScratchSlotReferences` for more info.
+            """
             return cls.ScratchSlotEqualityContext()
 
 

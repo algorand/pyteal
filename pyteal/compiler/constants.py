@@ -104,7 +104,7 @@ def extractMethodSigValue(op: TealOp) -> bytes:
         methodSignature = methodSignature[1:-1]
     else:
         raise TealInternalError(
-            "Method signature opcode error: signatue {} not wrapped with double-quotes".format(
+            "Method signature opcode error: signature {} not wrapped with double-quotes".format(
                 methodSignature
             )
         )
