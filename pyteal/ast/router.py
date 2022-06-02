@@ -6,7 +6,12 @@ from algosdk import abi as sdk_abi
 from algosdk import encoding
 
 from pyteal.config import METHOD_ARG_NUM_CUTOFF
-from pyteal.errors import TealInputError, TealInternalError
+from pyteal.errors import (
+    TealCompileError,
+    TealInputError,
+    TealInternalError,
+    TealTypeError,
+)
 from pyteal.types import TealType
 from pyteal.compiler.compiler import compileTeal, DEFAULT_TEAL_VERSION, OptimizeOptions
 from pyteal.ir.ops import Mode
@@ -622,10 +627,21 @@ class Router:
             if not isinstance(sig, str):
                 continue
 
-            meth = sdk_abi.Method.from_signature(sig)
-            for idx, arg in enumerate(meth.args):
-                print(mc.subroutine.annotations)
-                arg['name'] = mc.subroutine.annotations[idx]['name']
+            args = []
+            returns = {"type": "void"}
+            for name, val in mc.subroutine.annotations.items():
+                if name == "return":
+                    continue
+
+                t = str(abi.type_spec_from_annotation(val))
+                if name == "output":
+                    returns = {"type": t}
+
+                args.append({"type": t, "name": name, "desc": "todo"})
+
+            meth = sdk_abi.Method.undictify(
+                {"name": mc.name(), "args": args, "returns": returns, "desc": "todo"}
+            )
 
             method_collections.append(meth)
 
