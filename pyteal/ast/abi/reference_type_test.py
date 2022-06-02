@@ -50,9 +50,9 @@ def test_Account_encode():
         assert actual == expected
 
 
-def test_Account_get():
+def test_Account_index():
     value = abi.Account()
-    expr = value.get()
+    expr = value.index()
     assert expr.type_of() == pt.TealType.uint64
     assert expr.has_return() is False
 
@@ -90,11 +90,11 @@ def test_Account_set():
         assert actual == expected
 
 
-def test_Account_deref():
+def test_Account_get():
     val_to_set = 2
     value = abi.Account()
     value.set(val_to_set)
-    expr = value.deref()
+    expr = value.get()
     assert expr.type_of() == pt.TealType.bytes
     assert expr.has_return() is False
 
@@ -158,9 +158,9 @@ def test_Asset_encode():
         assert actual == expected
 
 
-def test_Asset_get():
+def test_Asset_index():
     value = abi.Asset()
-    expr = value.get()
+    expr = value.index()
     assert expr.type_of() == pt.TealType.uint64
     assert expr.has_return() is False
 
@@ -198,11 +198,11 @@ def test_Asset_set():
         assert actual == expected
 
 
-def test_Asset_deref():
+def test_Asset_get():
     val_to_set = 2
     value = abi.Asset()
     value.set(val_to_set)
-    expr = value.deref()
+    expr = value.get()
     assert expr.type_of() == pt.TealType.uint64
     assert expr.has_return() is False
 
@@ -266,9 +266,9 @@ def test_Application_encode():
         assert actual == expected
 
 
-def test_Application_get():
+def test_Application_index():
     value = abi.Application()
-    expr = value.get()
+    expr = value.index()
     assert expr.type_of() == pt.TealType.uint64
     assert expr.has_return() is False
 
@@ -306,11 +306,11 @@ def test_Application_set():
         assert actual == expected
 
 
-def test_Application_deref():
+def test_Application_get():
     val_to_set = 2
     value = abi.Application()
     value.set(val_to_set)
-    expr = value.deref()
+    expr = value.get()
     assert expr.type_of() == pt.TealType.uint64
     assert expr.has_return() is False
 

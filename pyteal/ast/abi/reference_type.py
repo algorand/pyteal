@@ -1,3 +1,5 @@
+from typing import List, Final
+from pyteal.ast.abi.type import TypeSpec
 from pyteal.ast.abi.uint import Uint, UintTypeSpec
 from pyteal.ast.expr import Expr
 from pyteal.ast.txn import Txn
@@ -27,8 +29,11 @@ class Account(Uint):
     def __init__(self) -> None:
         super().__init__(AccountTypeSpec())
 
-    def deref(self) -> Expr:
-        return Txn.accounts[self.stored_value.load()]
+    def get(self) -> Expr:
+        return Txn.accounts[self.index()]
+
+    def index(self) -> Expr:
+        return self.stored_value.load()
 
 
 Account.__module__ = "pyteal"
@@ -58,8 +63,11 @@ class Asset(Uint):
     def __init__(self) -> None:
         super().__init__(AssetTypeSpec())
 
-    def deref(self) -> Expr:
-        return Txn.assets[self.stored_value.load()]
+    def get(self) -> Expr:
+        return Txn.assets[self.index()]
+
+    def index(self) -> Expr:
+        return self.stored_value.load()
 
 
 Asset.__module__ = "pyteal"
@@ -89,8 +97,18 @@ class Application(Uint):
     def __init__(self) -> None:
         super().__init__(ApplicationTypeSpec())
 
-    def deref(self) -> Expr:
-        return Txn.applications[self.stored_value.load()]
+    def get(self) -> Expr:
+        return Txn.applications[self.index()]
+
+    def index(self) -> Expr:
+        return self.stored_value.load()
 
 
 Application.__module__ = "pyteal"
+
+
+ReferenceTypeSpecs: Final[List[TypeSpec]] = [
+    AccountTypeSpec(),
+    AssetTypeSpec(),
+    ApplicationTypeSpec(),
+]

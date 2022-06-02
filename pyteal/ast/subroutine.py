@@ -597,12 +597,7 @@ class ABIReturnSubroutine:
 
         ret_type = self.type_of()
         if isinstance(ret_type, abi.TypeSpec) and abi.contains_type_spec(
-            ret_type,
-            [
-                abi.AccountTypeSpec(),
-                abi.AssetTypeSpec(),
-                abi.ApplicationTypeSpec(),
-            ],
+            ret_type, abi.TransactionTypeSpecs + abi.ReferenceTypeSpecs
         ):
             raise TealInputError("Reference types may not be used as return values")
 

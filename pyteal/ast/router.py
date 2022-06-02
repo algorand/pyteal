@@ -339,44 +339,75 @@ class ASTBuilder:
                     f"got {handler.subroutine.argument_count()} args with {len(handler.subroutine.abi_args)} ABI args."
                 )
 
+            # All subroutine args types
             arg_type_specs = cast(
                 list[abi.TypeSpec], handler.subroutine.expected_arg_types
             )
-            if handler.subroutine.argument_count() > METHOD_ARG_NUM_CUTOFF:
-                last_arg_specs_grouped = arg_type_specs[METHOD_ARG_NUM_CUTOFF - 1 :]
-                arg_type_specs = arg_type_specs[: METHOD_ARG_NUM_CUTOFF - 1]
-                last_arg_spec = abi.TupleTypeSpec(*last_arg_specs_grouped)
-                arg_type_specs.append(last_arg_spec)
 
-            arg_abi_vars: list[abi.BaseType] = [
-                type_spec.new_instance() for type_spec in arg_type_specs
-            ]
-            decode_instructions: list[Expr] = [
-                arg_abi_vars[i].decode(Txn.application_args[i + 1])
-                for i in range(len(arg_type_specs))
+            # All subroutine arg values, initialize here and use below instead of
+            # creating new instances on the fly so we dont have to think about splicing
+            # back in the transaction types
+            arg_vals = [typespec.new_instance() for typespec in arg_type_specs]
+
+            # Only args that appear in app args
+            app_arg_vals: list[abi.BaseType] = [
+                ats for ats in arg_vals if not isinstance(ats, abi.Transaction)
             ]
 
-            if handler.subroutine.argument_count() > METHOD_ARG_NUM_CUTOFF:
-                tuple_arg_type_specs: list[abi.TypeSpec] = cast(
-                    list[abi.TypeSpec],
-                    handler.subroutine.expected_arg_types[METHOD_ARG_NUM_CUTOFF - 1 :],
-                )
-                tuple_abi_args: list[abi.BaseType] = [
-                    t_arg_ts.new_instance() for t_arg_ts in tuple_arg_type_specs
+            # assign to a var here since we modify app_arg_vals later
+            tuplify = len(app_arg_vals) > METHOD_ARG_NUM_CUTOFF
+
+            # only transaction args (these are omitted from app args)
+            txn_arg_vals: list[abi.BaseType] = [
+                ats for ats in arg_vals if isinstance(ats, abi.Transaction)
+            ]
+
+            # Tuple-ify any app args after the limit
+            if tuplify:
+                last_arg_specs_grouped: list[abi.TypeSpec] = [
+                    t.type_spec() for t in app_arg_vals[METHOD_ARG_NUM_CUTOFF - 1 :]
                 ]
-                last_tuple_arg: abi.Tuple = cast(abi.Tuple, arg_abi_vars[-1])
+                app_arg_vals = app_arg_vals[: METHOD_ARG_NUM_CUTOFF - 1]
+                app_arg_vals.append(
+                    abi.TupleTypeSpec(*last_arg_specs_grouped).new_instance()
+                )
+
+            # decode app args
+            decode_instructions: list[Expr] = [
+                app_arg.decode(Txn.application_args[idx + 1])
+                for idx, app_arg in enumerate(app_arg_vals)
+            ]
+
+            # "decode" transaction types by setting the relative index
+            if len(txn_arg_vals) > 0:
+                txn_relative_pos = len(txn_arg_vals)
+                txn_decode_instructions: list[Expr] = [
+                    cast(abi.Transaction, arg_val).set(
+                        Txn.group_index() - Int(txn_relative_pos - idx)
+                    )
+                    for idx, arg_val in enumerate(txn_arg_vals)
+                ]
+
+                decode_instructions += txn_decode_instructions
+
+            # de-tuple into specific values using `store_into` on
+            # each element of the tuple'd arguments
+            if tuplify:
+                tupled_abi_vals: list[abi.BaseType] = arg_vals[
+                    METHOD_ARG_NUM_CUTOFF - 1 :
+                ]
+                tupled_arg: abi.Tuple = cast(abi.Tuple, app_arg_vals[-1])
                 de_tuple_instructions: list[Expr] = [
-                    last_tuple_arg[i].store_into(tuple_abi_args[i])
-                    for i in range(len(tuple_arg_type_specs))
+                    tupled_arg[idx].store_into(arg_val)
+                    for idx, arg_val in enumerate(tupled_abi_vals)
                 ]
                 decode_instructions += de_tuple_instructions
-                arg_abi_vars = arg_abi_vars[:-1] + tuple_abi_args
 
             # NOTE: does not have to have return, can be void method
             if handler.type_of() == "void":
                 return Seq(
                     *decode_instructions,
-                    cast(Expr, handler(*arg_abi_vars)),
+                    cast(Expr, handler(*arg_vals)),
                     Approve(),
                 )
             else:
@@ -384,7 +415,7 @@ class ASTBuilder:
                     OutputKwArgInfo, handler.output_kwarg_info
                 ).abi_type.new_instance()
                 subroutine_call: abi.ReturnedValue = cast(
-                    abi.ReturnedValue, handler(*arg_abi_vars)
+                    abi.ReturnedValue, handler(*arg_vals)
                 )
                 return Seq(
                     *decode_instructions,
