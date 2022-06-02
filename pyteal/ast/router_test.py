@@ -150,6 +150,11 @@ def not_registrable(lhs: pt.abi.Uint64, rhs: pt.Expr, *, output: pt.abi.Uint64):
     return output.set(lhs.get() * rhs)
 
 
+@pt.ABIReturnSubroutine
+def txn_amount(t: pt.abi.PaymentTransaction, *, output: pt.abi.Uint64):
+    return output.set(t.get().amount())
+
+
 GOOD_SUBROUTINE_CASES: list[pt.ABIReturnSubroutine | pt.SubroutineFnWrapper] = [
     add,
     sub,
@@ -164,6 +169,7 @@ GOOD_SUBROUTINE_CASES: list[pt.ABIReturnSubroutine | pt.SubroutineFnWrapper] = [
     dummy_doing_nothing,
     eine_constant,
     take_abi_and_log,
+    txn_amount,
 ]
 
 ON_COMPLETE_CASES: list[pt.EnumInt] = [
@@ -411,6 +417,7 @@ def test_wrap_handler_method_call():
     ONLY_ABI_SUBROUTINE_CASES = list(
         filter(lambda x: isinstance(x, pt.ABIReturnSubroutine), GOOD_SUBROUTINE_CASES)
     )
+
     for abi_subroutine in ONLY_ABI_SUBROUTINE_CASES:
         wrapped: pt.Expr = ASTBuilder.wrap_handler(True, abi_subroutine)
         actual: pt.TealBlock = assemble_helper(wrapped)
@@ -422,34 +429,54 @@ def test_wrap_handler_method_call():
             )
         ]
 
-        loading: list[pt.Expr]
+        app_args = [
+            arg for arg in args if arg.type_spec() not in pt.abi.TransactionTypeSpecs
+        ]
 
-        if abi_subroutine.subroutine.argument_count() > pt.METHOD_ARG_NUM_CUTOFF:
+        app_arg_cnt = len(app_args)
+
+        txn_args = [
+            arg for arg in args if arg.type_spec() in pt.abi.TransactionTypeSpecs
+        ]
+
+        loading: list[pt.Expr] = []
+
+        if app_arg_cnt > pt.METHOD_ARG_NUM_CUTOFF:
             sdk_last_arg = pt.abi.TupleTypeSpec(
-                *[
-                    spec
-                    for spec in typing.cast(
-                        list[pt.abi.TypeSpec],
-                        abi_subroutine.subroutine.expected_arg_types,
-                    )[pt.METHOD_ARG_NUM_CUTOFF - 1 :]
-                ]
+                *[arg.type_spec() for arg in app_args[pt.METHOD_ARG_NUM_CUTOFF - 1 :]]
             ).new_instance()
+
             loading = [
                 arg.decode(pt.Txn.application_args[index + 1])
-                for index, arg in enumerate(args[: pt.METHOD_ARG_NUM_CUTOFF - 1])
+                for index, arg in enumerate(app_args[: pt.METHOD_ARG_NUM_CUTOFF - 1])
             ]
+
             loading.append(
                 sdk_last_arg.decode(pt.Txn.application_args[pt.METHOD_ARG_NUM_CUTOFF])
             )
-            for i in range(pt.METHOD_ARG_NUM_CUTOFF - 1, len(args)):
-                loading.append(
-                    sdk_last_arg[i - pt.METHOD_ARG_NUM_CUTOFF + 1].store_into(args[i])
-                )
         else:
             loading = [
                 arg.decode(pt.Txn.application_args[index + 1])
-                for index, arg in enumerate(args)
+                for index, arg in enumerate(app_args)
             ]
+
+        if len(txn_args) > 0:
+            loading.extend(
+                [
+                    typing.cast(pt.abi.Transaction, txn_arg).set(
+                        pt.Txn.group_index() - pt.Int(len(txn_args) - idx)
+                    )
+                    for idx, txn_arg in enumerate(txn_args)
+                ]
+            )
+
+        if app_arg_cnt > pt.METHOD_ARG_NUM_CUTOFF:
+            loading.extend(
+                [
+                    sdk_last_arg[idx].store_into(val)
+                    for idx, val in enumerate(app_args[pt.METHOD_ARG_NUM_CUTOFF - 1 :])
+                ]
+            )
 
         evaluate: pt.Expr
         if abi_subroutine.type_of() != "void":
