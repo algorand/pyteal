@@ -478,6 +478,7 @@ class Router:
         self.approval_ast = ASTBuilder()
         self.clear_state_ast = ASTBuilder()
 
+        self.method_sig_to_method_call: dict[str, ABIReturnSubroutine] = dict()
         self.method_sig_to_selector: dict[str, bytes] = dict()
         self.method_selector_to_sig: dict[bytes, str] = dict()
 
@@ -525,6 +526,7 @@ class Router:
                 f"re-registering method {method_signature} has hash collision "
                 f"with {self.method_selector_to_sig[method_selector]}"
             )
+        self.method_sig_to_method_call[method_signature] = method_call
         self.method_sig_to_selector[method_signature] = method_selector
         self.method_selector_to_sig[method_selector] = method_signature
 
@@ -614,11 +616,19 @@ class Router:
             contract: a dictified `Contract` object constructed from
                 approval program's method signatures and `self.name`.
         """
-        method_collections = [
-            sdk_abi.Method.from_signature(sig)
-            for sig in self.method_sig_to_selector
-            if isinstance(sig, str)
-        ]
+
+        method_collections = []
+        for sig, mc in self.method_sig_to_method_call.items():
+            if not isinstance(sig, str):
+                continue
+
+            meth = sdk_abi.Method.from_signature(sig)
+            for idx, arg in enumerate(meth.args):
+                print(mc.subroutine.annotations)
+                arg['name'] = mc.subroutine.annotations[idx]['name']
+
+            method_collections.append(meth)
+
         return sdk_abi.Contract(self.name, method_collections)
 
     def build_program(self) -> tuple[Expr, Expr, sdk_abi.Contract]:
