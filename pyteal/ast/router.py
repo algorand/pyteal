@@ -573,7 +573,7 @@ class Router:
             return wrap
         return wrap(func)
 
-    def contract_construct(self) -> sdk_abi.Contract:
+    def contract_construct(self) -> sdk_abi.Interface:
         """A helper function in constructing contract JSON object.
 
         It takes out the method signatures from approval program `ProgramNode`'s,
@@ -588,9 +588,9 @@ class Router:
             for sig in self.method_sig_to_selector
             if isinstance(sig, str)
         ]
-        return sdk_abi.Contract(self.name, method_collections)
+        return sdk_abi.Interface(self.name, method_collections)
 
-    def build_program(self) -> tuple[Expr, Expr, sdk_abi.Contract]:
+    def build_program(self) -> tuple[Expr, Expr, sdk_abi.Interface]:
         """
         Constructs ASTs for approval and clear-state programs from the registered methods in the router,
         also generates a JSON object of contract to allow client read and call the methods easily.
@@ -612,7 +612,7 @@ class Router:
         version: int = DEFAULT_TEAL_VERSION,
         assemble_constants: bool = False,
         optimize: OptimizeOptions = None,
-    ) -> tuple[str, str, sdk_abi.Contract]:
+    ) -> tuple[str, str, sdk_abi.Interface]:
         """
         Combining `build_program` and `compileTeal`, compiles built Approval and ClearState programs
         and returns Contract JSON object for off-chain calling.

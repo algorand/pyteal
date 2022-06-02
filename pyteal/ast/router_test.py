@@ -530,6 +530,6 @@ def test_contract_json_obj():
     for subroutine in abi_subroutines:
         router.add_method_handler(subroutine)
         method_list.append(sdk_abi.Method.from_signature(subroutine.method_signature()))
-    sdk_contract = sdk_abi.Contract(contract_name, method_list)
+    sdk_contract = sdk_abi.Interface(contract_name, method_list)
     contract = router.contract_construct()
     assert contract == sdk_contract
