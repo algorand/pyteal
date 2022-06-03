@@ -583,12 +583,12 @@ class Router:
     def contract_construct(self) -> sdk_abi.Contract:
         """A helper function in constructing contract JSON object.
 
-        It takes out the method signatures from approval program `ProgramNode`'s,
+        It takes out the method spec from approval program methods,
         and constructs an `Contract` object.
 
         Returns:
             contract: a dictified `Contract` object constructed from
-                approval program's method signatures and `self.name`.
+                approval program's method specs and `self.name`.
         """
 
         methods = [sdk_abi.Method.undictify(mc.method_spec()) for mc in self.methods]
