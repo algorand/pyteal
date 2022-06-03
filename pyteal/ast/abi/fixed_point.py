@@ -112,10 +112,20 @@ class FixedPoint(Uint):
         endIndex: Expr = None,
         length: Expr = None,
     ) -> Expr:
-        pass
+        try:
+            return super().decode(encoded, startIndex=startIndex, endIndex=endIndex, length=length)
+        except NotImplementedError:
+            raise NotImplementedError("FixedPoint operations have not yet been implemented for bit sizes larger than 64")
+        except ValueError:
+            raise ValueError("Unsupported FixedPoint size: {}".format(self.type_spec().bit_size()))
 
     def encode(self) -> Expr:
-        pass
+        try:
+            return super().encode()
+        except NotImplementedError:
+            raise NotImplementedError("FixedPoint operations have not yet been implemented for bit sizes larger than 64")
+        except ValueError:
+            raise ValueError("Unsupported FixedPoint size: {}".format(self.type_spec().bit_size()))
 
 
 FixedPoint.__module__ = "pyteal"
