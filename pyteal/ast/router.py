@@ -6,7 +6,10 @@ from algosdk import abi as sdk_abi
 from algosdk import encoding
 
 from pyteal.config import METHOD_ARG_NUM_CUTOFF
-from pyteal.errors import TealInputError, TealInternalError
+from pyteal.errors import (
+    TealInputError,
+    TealInternalError,
+)
 from pyteal.types import TealType
 from pyteal.compiler.compiler import compileTeal, DEFAULT_TEAL_VERSION, OptimizeOptions
 from pyteal.ir.ops import Mode
@@ -447,6 +450,7 @@ class Router:
         self.approval_ast = ASTBuilder()
         self.clear_state_ast = ASTBuilder()
 
+        self.methods: list[ABIReturnSubroutine] = []
         self.method_sig_to_selector: dict[str, bytes] = dict()
         self.method_selector_to_sig: dict[bytes, str] = dict()
 
@@ -494,6 +498,9 @@ class Router:
                 f"re-registering method {method_signature} has hash collision "
                 f"with {self.method_selector_to_sig[method_selector]}"
             )
+
+        self.methods.append(method_call)
+
         self.method_sig_to_selector[method_signature] = method_selector
         self.method_selector_to_sig[method_selector] = method_signature
 
@@ -583,12 +590,10 @@ class Router:
             contract: a dictified `Contract` object constructed from
                 approval program's method signatures and `self.name`.
         """
-        method_collections = [
-            sdk_abi.Method.from_signature(sig)
-            for sig in self.method_sig_to_selector
-            if isinstance(sig, str)
-        ]
-        return sdk_abi.Contract(self.name, method_collections)
+
+        methods = [sdk_abi.Method.undictify(mc.method_spec()) for mc in self.methods]
+
+        return sdk_abi.Contract(self.name, methods)
 
     def build_program(self) -> tuple[Expr, Expr, sdk_abi.Contract]:
         """
