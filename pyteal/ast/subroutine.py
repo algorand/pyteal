@@ -612,7 +612,6 @@ class ABIReturnSubroutine:
             {
                 "type": str(abi.type_spec_from_annotation(val)),
                 "name": name,
-                "desc": "todo",  # leave this blank always?
             }
             for name, val in self.subroutine.annotations.items()
             if name not in skip_names
