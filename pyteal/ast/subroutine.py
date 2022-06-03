@@ -615,6 +615,7 @@ class ABIReturnSubroutine:
 
     def method_spec(self) -> sdk_abi.Method:
         skip_names = ["return", "output"]
+
         args = [
             {
                 "type": str(abi.type_spec_from_annotation(val)),
@@ -623,14 +624,21 @@ class ABIReturnSubroutine:
             for name, val in self.subroutine.annotations.items()
             if name not in skip_names
         ]
-        return sdk_abi.Method.undictify(
-            {
-                "name": self.name(),
-                "args": args,
-                "returns": {"type": str(self.type_of())},
-                "desc": "todo",  # Allow decorator to accept desc? Repurpose doc string?
-            }
-        )
+
+        spec = {
+            "name": self.name(),
+            "args": args,
+            "returns": {"type": str(self.type_of())},
+        }
+
+        if self.subroutine.implementation.__doc__ is not None:
+            spec["desc"] = self.subroutine.implementation.__doc__
+
+        # TODO: how should we pass this through?
+        # if self.description is not None:
+        #    spec["desc"] = self.description
+
+        return sdk_abi.Method.undictify(spec)
 
     def type_of(self) -> str | abi.TypeSpec:
         return (

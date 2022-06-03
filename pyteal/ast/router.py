@@ -450,7 +450,7 @@ class Router:
         self.approval_ast = ASTBuilder()
         self.clear_state_ast = ASTBuilder()
 
-        self.methods: list[ABIReturnSubroutine] = []
+        self.methods: list[sdk_abi.Method] = []
         self.method_sig_to_selector: dict[str, bytes] = dict()
         self.method_selector_to_sig: dict[bytes, str] = dict()
 
@@ -499,7 +499,7 @@ class Router:
                 f"with {self.method_selector_to_sig[method_selector]}"
             )
 
-        self.methods.append(method_call)
+        self.methods.append(method_call.method_spec())
 
         self.method_sig_to_selector[method_signature] = method_selector
         self.method_selector_to_sig[method_selector] = method_signature
@@ -591,7 +591,7 @@ class Router:
                 approval program's method specs and `self.name`.
         """
 
-        return sdk_abi.Contract(self.name, [mc.method_spec() for mc in self.methods])
+        return sdk_abi.Contract(self.name, self.methods)
 
     def build_program(self) -> tuple[Expr, Expr, sdk_abi.Contract]:
         """
