@@ -33,7 +33,7 @@ class FixedPoint8TypeSpec(FixedPointTypeSpec):
         super().__init__(8, fractional_size)
     
     def new_instance(self) -> "FixedPoint":
-        return FixedPoint8()
+        return FixedPoint8(self.fractional_size)
     
     def annotation_type(self) -> "type[FixedPoint]":
         return FixedPoint8
@@ -47,7 +47,7 @@ class FixedPoint16TypeSpec(FixedPointTypeSpec):
         super().__init__(16, fractional_size)
     
     def new_instance(self) -> "FixedPoint":
-        return FixedPoint16()
+        return FixedPoint16(self.fractional_size)
     
     def annotation_type(self) -> "type[FixedPoint]":
         return FixedPoint16
@@ -61,7 +61,7 @@ class FixedPoint32TypeSpec(FixedPointTypeSpec):
         super().__init__(32, fractional_size)
     
     def new_instance(self) -> "FixedPoint":
-        return FixedPoint32()
+        return FixedPoint32(self.fractional_size)
     
     def annotation_type(self) -> "type[FixedPoint]":
         return FixedPoint32
@@ -75,7 +75,7 @@ class FixedPoint64TypeSpec(FixedPointTypeSpec):
         super().__init__(64, fractional_size)
 
     def new_instance(self) -> "FixedPoint":
-        return FixedPoint64()
+        return FixedPoint64(self.fractional_size)
 
     def annotation_type(self) -> "type[FixedPoint]":
         return FixedPoint64
