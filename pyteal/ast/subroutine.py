@@ -632,7 +632,13 @@ class ABIReturnSubroutine:
         }
 
         if self.subroutine.implementation.__doc__ is not None:
-            spec["desc"] = self.subroutine.implementation.__doc__
+            spec["desc"] = " ".join(
+                [
+                    i.strip()
+                    for i in self.subroutine.implementation.__doc__.split("\n")
+                    if not (i.isspace() or len(i) == 0)
+                ]
+            )
 
         return sdk_abi.Method.undictify(spec)
 
