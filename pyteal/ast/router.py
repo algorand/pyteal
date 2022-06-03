@@ -354,6 +354,15 @@ class ASTBuilder:
                 ats for ats in arg_vals if not isinstance(ats, abi.Transaction)
             ]
 
+            for aav in app_arg_vals:
+                # If we're here we know the top level isnt a Transaction but a transaction may
+                # be included in some collection type like a Tuple or Array, raise error
+                # as these are not supported
+                if abi.contains_type_spec(aav.type_spec(), abi.TransactionTypeSpecs):
+                    raise TealInputError(
+                        "A Transaction type may not be included in Tuples or Arrays"
+                    )
+
             # assign to a var here since we modify app_arg_vals later
             tuplify = len(app_arg_vals) > METHOD_ARG_NUM_CUTOFF
 
