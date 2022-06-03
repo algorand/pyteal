@@ -389,10 +389,26 @@ class ASTBuilder:
 
             # "decode" transaction types by setting the relative index
             if len(txn_arg_vals) > 0:
-                txn_relative_pos = len(txn_arg_vals)
+                txn_arg_len = len(txn_arg_vals)
+                # The transactions should appear in the group in the order they're specified in the method signature
+                # and should be relative to the current transaction.
+
+                # ex:
+                # doit(axfer,pay,appl)
+                # would be 4 transactions
+                #      current_idx-3 = axfer
+                #      current_idx-2 = pay
+                #      current_idx-1 = appl
+                #      current_idx-0 = the txn that triggered the current eval (not specified but here for completeness)
+
+                # since we're iterating in order of the txns appearance in the args we
+                # subtract the current index from the total length to get the offset.
+                # and subtract that from the current index to get the absolute position
+                # in the group
+
                 txn_decode_instructions: list[Expr] = [
                     cast(abi.Transaction, arg_val).set(
-                        Txn.group_index() - Int(txn_relative_pos - idx)
+                        Txn.group_index() - Int(txn_arg_len - idx)
                     )
                     for idx, arg_val in enumerate(txn_arg_vals)
                 ]
