@@ -477,7 +477,7 @@ class Router:
         method_call: ABIReturnSubroutine,
         overriding_name: str = None,
         method_config: MethodConfig = None,
-        description: str = None
+        description: str = None,
     ) -> None:
         if not isinstance(method_call, ABIReturnSubroutine):
             raise TealInputError(
