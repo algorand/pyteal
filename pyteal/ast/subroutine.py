@@ -599,7 +599,9 @@ class ABIReturnSubroutine:
         if isinstance(ret_type, abi.TypeSpec) and abi.contains_type_spec(
             ret_type, abi.TransactionTypeSpecs + abi.ReferenceTypeSpecs
         ):
-            raise TealInputError("Reference types may not be used as return values")
+            raise TealInputError(
+                f"Reference and Transaction types may not be used as return values, got {ret_type}"
+            )
 
         args = [str(v) for v in self.subroutine.abi_args.values()]
         if overriding_name is None:

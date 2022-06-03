@@ -12,7 +12,7 @@ T = TypeVar("T", bound=BaseType)
 
 
 class TransactionType(Enum):
-    Transaction = "txn"
+    Any = "txn"
     Payment = "pay"
     KeyRegistration = "keyreg"
     AssetConfig = "acfg"
@@ -47,15 +47,18 @@ class TransactionTypeSpec(TypeSpec):
         return type(self) is type(other)
 
     def __str__(self) -> str:
-        return TransactionType.Transaction.value
+        return TransactionType.Any.value
 
 
 TransactionTypeSpec.__module__ = "pyteal"
 
 
 class Transaction(BaseType):
-    def __init__(self, spec: TransactionTypeSpec = TransactionTypeSpec()) -> None:
-        super().__init__(spec)
+    def __init__(self, spec: TransactionTypeSpec = None) -> None:
+        if spec is None:
+            super().__init__(TransactionTypeSpec())
+        else:
+            super().__init__(spec)
 
     def type_spec(self) -> TransactionTypeSpec:
         return cast(TransactionTypeSpec, super().type_spec())
