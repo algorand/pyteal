@@ -134,7 +134,9 @@ def roundtrip_setup(abi_type):
     abi_type_str = str(abi.type_spec_from_annotation(abi_type))
     roundtrip_or_none = None
     if abi_type_str not in BAD_TYPES:
-        roundtrip_or_none = ABIRoundtrip(abi.make(abi_type), length=dynamic_length).pytealer()
+        roundtrip_or_none = ABIRoundtrip(
+            abi.make(abi_type), length=dynamic_length
+        ).pytealer()
 
     return (abi_type, abi_type_str, dynamic_length, roundtrip_or_none)
 
