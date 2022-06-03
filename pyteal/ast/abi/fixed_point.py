@@ -1,7 +1,7 @@
 from typing import (
     TypeVar,
     Union,
-    Final
+    Final, cast
 )
 from abc import abstractmethod
 
@@ -15,7 +15,7 @@ class FixedPointTypeSpec(UintTypeSpec):
         super().__init__(bit_size)
         if fractional_size >= self.size:
             raise TypeError("Unsupported fractional size. Must be less than total bit size.")
-        self.fractional_size: Final = fractional_size
+        self.fractional_bits: Final = fractional_size
 
     @abstractmethod
     def new_instance(self) -> "FixedPoint":
@@ -23,6 +23,12 @@ class FixedPointTypeSpec(UintTypeSpec):
     
     def annotation_type(self) -> "type[FixedPoint]":
         pass
+
+    def fractional_size(self):
+        return self.fractional_bits
+
+    def __str__(self):
+        return "fixedpoint{},{}".format(self.bit_size(), self.fractional_size())
 
 
 FixedPointTypeSpec.__module__ = "pyteal"
@@ -33,7 +39,7 @@ class FixedPoint8TypeSpec(FixedPointTypeSpec):
         super().__init__(8, fractional_size)
     
     def new_instance(self) -> "FixedPoint":
-        return FixedPoint8(self.fractional_size)
+        return FixedPoint8(self.fractional_bits)
     
     def annotation_type(self) -> "type[FixedPoint]":
         return FixedPoint8
@@ -47,7 +53,7 @@ class FixedPoint16TypeSpec(FixedPointTypeSpec):
         super().__init__(16, fractional_size)
     
     def new_instance(self) -> "FixedPoint":
-        return FixedPoint16(self.fractional_size)
+        return FixedPoint16(self.fractional_bits)
     
     def annotation_type(self) -> "type[FixedPoint]":
         return FixedPoint16
@@ -61,7 +67,7 @@ class FixedPoint32TypeSpec(FixedPointTypeSpec):
         super().__init__(32, fractional_size)
     
     def new_instance(self) -> "FixedPoint":
-        return FixedPoint32(self.fractional_size)
+        return FixedPoint32(self.fractional_bits)
     
     def annotation_type(self) -> "type[FixedPoint]":
         return FixedPoint32
@@ -75,7 +81,7 @@ class FixedPoint64TypeSpec(FixedPointTypeSpec):
         super().__init__(64, fractional_size)
 
     def new_instance(self) -> "FixedPoint":
-        return FixedPoint64(self.fractional_size)
+        return FixedPoint64(self.fractional_bits)
 
     def annotation_type(self) -> "type[FixedPoint]":
         return FixedPoint64
@@ -95,8 +101,8 @@ class FixedPoint(Uint):
     def set(self: T, value: Union[int, Expr, "Uint", ComputedValue[T]]) -> Expr:
         pass
 
-    def type_spec(self) -> UintTypeSpec:
-        pass
+    def type_spec(self) -> FixedPointTypeSpec:
+        return cast(FixedPointTypeSpec, super().type_spec())
 
     def decode(
         self,

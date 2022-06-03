@@ -1,6 +1,6 @@
 from typing import (
     TypeVar,
-    Union
+    Union, cast
 )
 from abc import abstractmethod
 
@@ -121,7 +121,8 @@ class SInt(Uint):
 
         return super().set(value)
 
-    # TODO: Re-implement signature for self.type_spec().
+    def type_spec(self) -> SIntTypeSpec:
+        return cast(SIntTypeSpec, super().type_spec())
 
     # FIXME: Eh, I'm not too happy with this code. This is here only to re-frame the raised error.
     #  I don't know if that's enough to justify overriding this method.
