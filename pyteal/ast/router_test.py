@@ -10,11 +10,13 @@ options = pt.CompileOptions(version=5)
 
 @pt.ABIReturnSubroutine
 def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+    """add takes 2 integers a,b and adds them, returning the sum"""
     return output.set(a.get() + b.get())
 
 
 @pt.ABIReturnSubroutine
 def sub(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+    """replace me"""
     return output.set(a.get() - b.get())
 
 
@@ -528,9 +530,20 @@ def test_contract_json_obj():
     router = pt.Router(contract_name, on_complete_actions)
     method_list: list[sdk_abi.Method] = []
     for subroutine in abi_subroutines:
-        router.add_method_handler(subroutine)
+
+        doc = subroutine.subroutine.implementation.__doc__
+        desc = None
+        if doc is not None and doc.strip() == "replace me":
+            desc = "dope description"
+
+        router.add_method_handler(subroutine, description=desc)
 
         ms = subroutine.method_spec()
+
+        # Manually replace it since the override is applied in the method handler
+        # not attached to the ABIReturnSubroutine itself
+        ms.desc = desc if desc is not None else ms.desc
+
         sig_method = sdk_abi.Method.from_signature(subroutine.method_signature())
 
         assert ms.name == sig_method.name
