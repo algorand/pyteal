@@ -6,7 +6,10 @@ from algosdk import abi as sdk_abi
 from algosdk import encoding
 
 from pyteal.config import METHOD_ARG_NUM_CUTOFF
-from pyteal.errors import TealInputError, TealInternalError
+from pyteal.errors import (
+    TealInputError,
+    TealInternalError,
+)
 from pyteal.types import TealType
 from pyteal.compiler.compiler import compileTeal, DEFAULT_TEAL_VERSION, OptimizeOptions
 from pyteal.ir.ops import Mode
@@ -447,6 +450,7 @@ class Router:
         self.approval_ast = ASTBuilder()
         self.clear_state_ast = ASTBuilder()
 
+        self.methods: list[sdk_abi.Method] = []
         self.method_sig_to_selector: dict[str, bytes] = dict()
         self.method_selector_to_sig: dict[bytes, str] = dict()
 
@@ -473,6 +477,7 @@ class Router:
         method_call: ABIReturnSubroutine,
         overriding_name: str = None,
         method_config: MethodConfig = None,
+        description: str = None,
     ) -> None:
         if not isinstance(method_call, ABIReturnSubroutine):
             raise TealInputError(
@@ -494,6 +499,12 @@ class Router:
                 f"re-registering method {method_signature} has hash collision "
                 f"with {self.method_selector_to_sig[method_selector]}"
             )
+
+        meth = method_call.method_spec()
+        if description is not None:
+            meth.desc = description
+        self.methods.append(meth)
+
         self.method_sig_to_selector[method_signature] = method_selector
         self.method_selector_to_sig[method_selector] = method_signature
 
@@ -518,6 +529,7 @@ class Router:
         clear_state: CallConfig = None,
         update_application: CallConfig = None,
         delete_application: CallConfig = None,
+        description: str = None,
     ):
         """
         A decorator style method registration by decorating over a python function,
@@ -567,7 +579,7 @@ class Router:
                     update_application=_update_app,
                     delete_application=_delete_app,
                 )
-            self.add_method_handler(wrapped_subroutine, name, call_configs)
+            self.add_method_handler(wrapped_subroutine, name, call_configs, description)
 
         if not func:
             return wrap
@@ -576,19 +588,15 @@ class Router:
     def contract_construct(self) -> sdk_abi.Contract:
         """A helper function in constructing contract JSON object.
 
-        It takes out the method signatures from approval program `ProgramNode`'s,
+        It takes out the method spec from approval program methods,
         and constructs an `Contract` object.
 
         Returns:
             contract: a dictified `Contract` object constructed from
-                approval program's method signatures and `self.name`.
+                approval program's method specs and `self.name`.
         """
-        method_collections = [
-            sdk_abi.Method.from_signature(sig)
-            for sig in self.method_sig_to_selector
-            if isinstance(sig, str)
-        ]
-        return sdk_abi.Contract(self.name, method_collections)
+
+        return sdk_abi.Contract(self.name, self.methods)
 
     def build_program(self) -> tuple[Expr, Expr, sdk_abi.Contract]:
         """
