@@ -529,8 +529,7 @@ def test_contract_json_obj():
     method_list: list[sdk_abi.Method] = []
     for subroutine in abi_subroutines:
         router.add_method_handler(subroutine)
-        meth = sdk_abi.Method.undictify(subroutine.method_spec())
-        method_list.append(meth)
+        method_list.append(subroutine.method_spec())
 
     sdk_contract = sdk_abi.Contract(contract_name, method_list)
     contract = router.contract_construct()

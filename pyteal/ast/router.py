@@ -591,9 +591,7 @@ class Router:
                 approval program's method specs and `self.name`.
         """
 
-        methods = [sdk_abi.Method.undictify(mc.method_spec()) for mc in self.methods]
-
-        return sdk_abi.Contract(self.name, methods)
+        return sdk_abi.Contract(self.name, [mc.method_spec() for mc in self.methods])
 
     def build_program(self) -> tuple[Expr, Expr, sdk_abi.Contract]:
         """
