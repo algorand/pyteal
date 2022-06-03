@@ -3,6 +3,8 @@ from inspect import isclass, Parameter, signature, get_annotations
 from types import MappingProxyType, NoneType
 from typing import Any, Callable, Final, Optional, TYPE_CHECKING, cast
 
+import algosdk.abi as sdk_abi
+
 from pyteal.ast import abi
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
@@ -607,6 +609,35 @@ class ABIReturnSubroutine:
         if overriding_name is None:
             overriding_name = self.name()
         return f"{overriding_name}({','.join(args)}){self.type_of()}"
+
+    def method_spec(self) -> sdk_abi.Method:
+        skip_names = ["return", "output"]
+
+        args = [
+            {
+                "type": str(abi.type_spec_from_annotation(val)),
+                "name": name,
+            }
+            for name, val in self.subroutine.annotations.items()
+            if name not in skip_names
+        ]
+
+        spec = {
+            "name": self.name(),
+            "args": args,
+            "returns": {"type": str(self.type_of())},
+        }
+
+        if self.subroutine.implementation.__doc__ is not None:
+            spec["desc"] = " ".join(
+                [
+                    i.strip()
+                    for i in self.subroutine.implementation.__doc__.split("\n")
+                    if not (i.isspace() or len(i) == 0)
+                ]
+            )
+
+        return sdk_abi.Method.undictify(spec)
 
     def type_of(self) -> str | abi.TypeSpec:
         return (
