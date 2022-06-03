@@ -121,6 +121,8 @@ class SInt(Uint):
 
         return super().set(value)
 
+    # TODO: Re-implement signature for self.type_spec().
+
     # FIXME: Eh, I'm not too happy with this code. This is here only to re-frame the raised error.
     #  I don't know if that's enough to justify overriding this method.
     def decode(
