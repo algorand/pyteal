@@ -7,10 +7,8 @@ from algosdk import encoding
 
 from pyteal.config import METHOD_ARG_NUM_CUTOFF
 from pyteal.errors import (
-    TealCompileError,
     TealInputError,
     TealInternalError,
-    TealTypeError,
 )
 from pyteal.types import TealType
 from pyteal.compiler.compiler import compileTeal, DEFAULT_TEAL_VERSION, OptimizeOptions
@@ -483,7 +481,7 @@ class Router:
         self.approval_ast = ASTBuilder()
         self.clear_state_ast = ASTBuilder()
 
-        self.method_sig_to_method_call: dict[str, ABIReturnSubroutine] = dict()
+        self.methods: list[ABIReturnSubroutine] = []
         self.method_sig_to_selector: dict[str, bytes] = dict()
         self.method_selector_to_sig: dict[bytes, str] = dict()
 
@@ -531,7 +529,9 @@ class Router:
                 f"re-registering method {method_signature} has hash collision "
                 f"with {self.method_selector_to_sig[method_selector]}"
             )
-        self.method_sig_to_method_call[method_signature] = method_call
+
+        self.methods.append(method_call)
+
         self.method_sig_to_selector[method_signature] = method_selector
         self.method_selector_to_sig[method_selector] = method_signature
 
@@ -622,30 +622,9 @@ class Router:
                 approval program's method signatures and `self.name`.
         """
 
-        method_collections = []
-        for sig, mc in self.method_sig_to_method_call.items():
-            if not isinstance(sig, str):
-                continue
+        methods = [sdk_abi.Method.undictify(mc.method_spec()) for mc in self.methods]
 
-            args = []
-            returns = {"type": "void"}
-            for name, val in mc.subroutine.annotations.items():
-                if name == "return":
-                    continue
-
-                t = str(abi.type_spec_from_annotation(val))
-                if name == "output":
-                    returns = {"type": t}
-
-                args.append({"type": t, "name": name, "desc": "todo"})
-
-            meth = sdk_abi.Method.undictify(
-                {"name": mc.name(), "args": args, "returns": returns, "desc": "todo"}
-            )
-
-            method_collections.append(meth)
-
-        return sdk_abi.Contract(self.name, method_collections)
+        return sdk_abi.Contract(self.name, methods)
 
     def build_program(self) -> tuple[Expr, Expr, sdk_abi.Contract]:
         """

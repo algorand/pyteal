@@ -606,6 +606,24 @@ class ABIReturnSubroutine:
             overriding_name = self.name()
         return f"{overriding_name}({','.join(args)}){self.type_of()}"
 
+    def method_spec(self) -> dict:
+        skip_names = ["return", "output"]
+        args = [
+            {
+                "type": str(abi.type_spec_from_annotation(val)),
+                "name": name,
+                "desc": "todo",  # leave this blank always?
+            }
+            for name, val in self.subroutine.annotations.items()
+            if name not in skip_names
+        ]
+        return {
+            "name": self.name(),
+            "args": args,
+            "returns": {"type": str(self.type_of())},
+            "desc": "todo",  # Allow decorator to accept desc? Repurpose doc string?
+        }
+
     def type_of(self) -> str | abi.TypeSpec:
         return (
             "void"
