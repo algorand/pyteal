@@ -130,7 +130,7 @@ class OnCompleteAction:
     def __post_init__(self):
         if bool(self.call_config) ^ bool(self.action):
             raise TealInputError(
-                f"action {self.action} and call_config {str(self.call_config)} contradicts"
+                f"action {self.action} and call_config {self.call_config!r} contradicts"
             )
 
     @staticmethod
@@ -216,7 +216,7 @@ class BareCallActions:
                     )
                 case _:
                     raise TealInternalError(
-                        f"Unexpected CallConfig: {str(oca.call_config)}"
+                        f"Unexpected CallConfig: {oca.call_config!r}"
                     )
             conditions_n_branches.append(
                 CondNode(
@@ -251,7 +251,7 @@ class BareCallActions:
                 )
             case _:
                 raise TealInternalError(
-                    f"Unexpected CallConfig: {str(self.clear_state.call_config)}"
+                    f"Unexpected CallConfig: {self.clear_state.call_config!r}"
                 )
 
 

@@ -280,33 +280,36 @@ class PyTealDryRunExecutor:
 
         return self._pyteal_lambda()
 
-    def _handle_SubroutineFnWrapper(self):
+    def _arg_prep_n_call(self, i, p):
         subdef = self.subr.subroutine.subroutine
         arg_names = subdef.arguments()
+        name = arg_names[i]
+        arg_expr = Txn.application_args[i] if self.mode == Mode.Application else Arg(i)
+        if p == TealType.uint64:
+            arg_expr = Btoi(arg_expr)
+        prep = None
+        arg_var = arg_expr
+        if name in subdef.by_ref_args:
+            arg_var = ScratchVar(p)
+            prep = arg_var.store(arg_expr)
+        elif name in subdef.abi_args:
+            arg_var = p.new_instance()
+            prep = arg_var.decode(arg_expr)
+        return prep, arg_var
 
-        def arg_prep_n_call(i, p):
-            name = arg_names[i]
-            arg_expr = (
-                Txn.application_args[i] if self.mode == Mode.Application else Arg(i)
-            )
-            if p == TealType.uint64:
-                arg_expr = Btoi(arg_expr)
-            prep = None
-            arg_var = arg_expr
-            if name in subdef.by_ref_args:
-                arg_var = ScratchVar(p)
-                prep = arg_var.store(arg_expr)
-            elif name in subdef.abi_args:
-                arg_var = p.new_instance()
-                prep = arg_var.decode(arg_expr)
-            return prep, arg_var
+    def _prepare_n_calls(self):
+        preps_n_calls = [
+            *(self._arg_prep_n_call(i, p) for i, p in enumerate(self.input_types))
+        ]
+        preps, calls = zip(*preps_n_calls) if preps_n_calls else ([], [])
+        preps = [p for p in preps if p]
+        return preps, calls
+
+    def _handle_SubroutineFnWrapper(self):
+        subdef = self.subr.subroutine.subroutine
 
         def subr_caller():
-            preps_n_calls = [
-                *(arg_prep_n_call(i, p) for i, p in enumerate(self.input_types))
-            ]
-            preps, calls = zip(*preps_n_calls) if preps_n_calls else ([], [])
-            preps = [p for p in preps if p]
+            preps, calls = self._prepare_n_calls()
             invocation = self.subr(*calls)
             if preps:
                 return Seq(*(preps + [invocation]))
@@ -351,36 +354,12 @@ class PyTealDryRunExecutor:
         return approval
 
     def _handle_ABIReturnSubroutine(self):
-        subdef = self.subr.subroutine.subroutine
-        arg_names = subdef.arguments()
-
-        def arg_prep_n_call(i, p):
-            name = arg_names[i]
-            arg_expr = (
-                Txn.application_args[i] if self.mode == Mode.Application else Arg(i)
-            )
-            if p == TealType.uint64:
-                arg_expr = Btoi(arg_expr)
-            prep = None
-            arg_var = arg_expr
-            if name in subdef.by_ref_args:
-                arg_var = ScratchVar(p)
-                prep = arg_var.store(arg_expr)
-            elif name in subdef.abi_args:
-                arg_var = p.new_instance()
-                prep = arg_var.decode(arg_expr)
-            return prep, arg_var
-
         output = None
         if self.subr.subroutine.output_kwarg_info:
             output = self.subr.subroutine.output_kwarg_info.abi_type.new_instance()
 
         def approval():
-            preps_n_calls = [
-                *(arg_prep_n_call(i, p) for i, p in enumerate(self.input_types))
-            ]
-            preps, calls = zip(*preps_n_calls) if preps_n_calls else ([], [])
-            preps = [p for p in preps if p]
+            preps, calls = self._prepare_n_calls()
 
             # when @ABIReturnSubroutine is void:
             #   invocation is an Expr of TealType.none
