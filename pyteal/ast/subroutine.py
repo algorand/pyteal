@@ -634,10 +634,6 @@ class ABIReturnSubroutine:
         if self.subroutine.implementation.__doc__ is not None:
             spec["desc"] = self.subroutine.implementation.__doc__
 
-        # TODO: how should we pass this through?
-        # if self.description is not None:
-        #    spec["desc"] = self.description
-
         return sdk_abi.Method.undictify(spec)
 
     def type_of(self) -> str | abi.TypeSpec:

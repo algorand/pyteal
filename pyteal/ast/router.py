@@ -477,6 +477,7 @@ class Router:
         method_call: ABIReturnSubroutine,
         overriding_name: str = None,
         method_config: MethodConfig = None,
+        description: str = None
     ) -> None:
         if not isinstance(method_call, ABIReturnSubroutine):
             raise TealInputError(
@@ -499,7 +500,10 @@ class Router:
                 f"with {self.method_selector_to_sig[method_selector]}"
             )
 
-        self.methods.append(method_call.method_spec())
+        meth = method_call.method_spec()
+        if description is not None:
+            meth.desc = description
+        self.methods.append(meth)
 
         self.method_sig_to_selector[method_signature] = method_selector
         self.method_selector_to_sig[method_selector] = method_signature
@@ -525,6 +529,7 @@ class Router:
         clear_state: CallConfig = None,
         update_application: CallConfig = None,
         delete_application: CallConfig = None,
+        description: str = None,
     ):
         """
         A decorator style method registration by decorating over a python function,
@@ -574,7 +579,7 @@ class Router:
                     update_application=_update_app,
                     delete_application=_delete_app,
                 )
-            self.add_method_handler(wrapped_subroutine, name, call_configs)
+            self.add_method_handler(wrapped_subroutine, name, call_configs, description)
 
         if not func:
             return wrap
