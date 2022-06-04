@@ -157,6 +157,17 @@ def txn_amount(t: pt.abi.PaymentTransaction, *, output: pt.abi.Uint64):
     return output.set(t.get().amount())
 
 
+@pt.ABIReturnSubroutine
+def multiple_txn(
+    appl: pt.abi.ApplicationCallTransaction,
+    axfer: pt.abi.AssetTransferTransaction,
+    pay: pt.abi.PaymentTransaction,
+    *,
+    output: pt.abi.Uint64,
+):
+    return output.set(appl.get().fee() + axfer.get().fee() + pay.get().fee())
+
+
 GOOD_SUBROUTINE_CASES: list[pt.ABIReturnSubroutine | pt.SubroutineFnWrapper] = [
     add,
     sub,
@@ -172,6 +183,7 @@ GOOD_SUBROUTINE_CASES: list[pt.ABIReturnSubroutine | pt.SubroutineFnWrapper] = [
     eine_constant,
     take_abi_and_log,
     txn_amount,
+    multiple_txn,
 ]
 
 ON_COMPLETE_CASES: list[pt.EnumInt] = [
@@ -498,6 +510,35 @@ def test_wrap_handler_method_call():
             pt.TealBlock.GetReferencedScratchSlots(actual),
             pt.TealBlock.GetReferencedScratchSlots(expected),
         )
+
+
+def test_wrap_handler_method_txn_types():
+    wrapped: pt.Expr = ASTBuilder.wrap_handler(True, multiple_txn)
+    actual: pt.TealBlock = assemble_helper(wrapped)
+
+    args: list[pt.abi.Transaction] = [
+        pt.abi.ApplicationCallTransaction(),
+        pt.abi.AssetTransferTransaction(),
+        pt.abi.PaymentTransaction(),
+    ]
+    output_temp = pt.abi.Uint64()
+    expected_ast = pt.Seq(
+        args[0].set(pt.Txn.group_index() - pt.Int(3)),
+        args[1].set(pt.Txn.group_index() - pt.Int(2)),
+        args[2].set(pt.Txn.group_index() - pt.Int(1)),
+        multiple_txn(*args).store_into(output_temp),
+        pt.abi.MethodReturn(output_temp),
+        pt.Approve(),
+    )
+
+    expected = assemble_helper(expected_ast)
+    with pt.TealComponent.Context.ignoreScratchSlotEquality(), pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    assert pt.TealBlock.MatchScratchSlotReferences(
+        pt.TealBlock.GetReferencedScratchSlots(actual),
+        pt.TealBlock.GetReferencedScratchSlots(expected),
+    )
 
 
 def test_wrap_handler_method_call_many_args():
