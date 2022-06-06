@@ -29,11 +29,8 @@ class Account(Uint):
     def __init__(self) -> None:
         super().__init__(AccountTypeSpec())
 
-    def get(self) -> Expr:
-        return Txn.accounts[self.index()]
-
-    def index(self) -> Expr:
-        return self.stored_value.load()
+    def deref(self) -> Expr:
+        return Txn.accounts[self.stored_value.load()]
 
 
 Account.__module__ = "pyteal"
@@ -63,11 +60,8 @@ class Asset(Uint):
     def __init__(self) -> None:
         super().__init__(AssetTypeSpec())
 
-    def get(self) -> Expr:
-        return Txn.assets[self.index()]
-
-    def index(self) -> Expr:
-        return self.stored_value.load()
+    def deref(self) -> Expr:
+        return Txn.assets[self.stored_value.load()]
 
 
 Asset.__module__ = "pyteal"
@@ -97,11 +91,8 @@ class Application(Uint):
     def __init__(self) -> None:
         super().__init__(ApplicationTypeSpec())
 
-    def get(self) -> Expr:
-        return Txn.applications[self.index()]
-
-    def index(self) -> Expr:
-        return self.stored_value.load()
+    def deref(self) -> Expr:
+        return Txn.applications[self.stored_value.load()]
 
 
 Application.__module__ = "pyteal"
