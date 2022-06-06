@@ -3,6 +3,12 @@ from pyteal.ast.expr import Expr
 from pyteal.ast.txn import Txn
 
 
+class ReferenceTypeSpec():
+    pass
+
+class ReferenceType():
+    pass
+
 class AccountTypeSpec(UintTypeSpec):
     def __init__(self):
         super().__init__(8)
