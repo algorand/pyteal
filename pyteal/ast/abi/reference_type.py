@@ -1,4 +1,4 @@
-from typing import Final, TypeVar, Union, cast
+from typing import List, Final, TypeVar, Union, cast
 from abc import abstractmethod
 from pyteal.ast.abi.type import BaseType, ComputedValue, TypeSpec
 
@@ -187,3 +187,10 @@ class Application(ReferenceType):
 
 
 Application.__module__ = "pyteal"
+
+
+ReferenceTypeSpecs: Final[List[TypeSpec]] = [
+    AccountTypeSpec(),
+    AssetTypeSpec(),
+    ApplicationTypeSpec(),
+]

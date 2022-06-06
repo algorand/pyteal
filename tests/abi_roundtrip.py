@@ -51,6 +51,8 @@ class ABIRoundtrip(Generic[T]):
             return self.tuple_comp_factory()
         if isinstance(self.type_spec, abi.ArrayTypeSpec):
             return self.array_comp_factory()
+        if isinstance(self.type_spec, abi.TransactionTypeSpec):
+            return self.transaction_comp_factory()
 
         raise ValueError(f"uh-oh!!! didn't handle type {self.instance}")
 
@@ -64,6 +66,13 @@ class ABIRoundtrip(Generic[T]):
     @classmethod
     def max_int(cls, bit_size):
         return (1 << bit_size) - 1
+
+    def transaction_comp_factory(self) -> pt.ABIReturnSubroutine:
+        @pt.ABIReturnSubroutine
+        def transaction_comp(x: self.annotation, *, output: abi.Uint64):  # type: ignore[name-defined]
+            return output.set(x.get().amount())
+
+        return transaction_comp
 
     def numerical_comp_factory(self) -> pt.ABIReturnSubroutine:
         @pt.ABIReturnSubroutine
