@@ -31,42 +31,42 @@ def test_Account_typespec():
     assert abi.Account().type_spec() == abi.AccountTypeSpec()
 
 
-def test_Account_encode():
-    value = abi.Account()
-    expr = value.encode()
-    assert expr.type_of() == pt.TealType.bytes
-    assert expr.has_return() is False
+# def test_Account_encode():
+#     value = abi.Account()
+#     expr = value.encode()
+#     assert expr.type_of() == pt.TealType.bytes
+#     assert expr.has_return() is False
 
-    expectEncoding = pt.SetByte(pt.Bytes(b"\x00"), pt.Int(0), value.stored_value.load())
+#     expectEncoding = pt.SetByte(pt.Bytes(b"\x00"), pt.Int(0), value.stored_value.load())
 
-    expected, _ = expectEncoding.__teal__(options)
-    expected.addIncoming()
-    expected = pt.TealBlock.NormalizeBlocks(expected)
+#     expected, _ = expectEncoding.__teal__(options)
+#     expected.addIncoming()
+#     expected = pt.TealBlock.NormalizeBlocks(expected)
 
-    actual, _ = expr.__teal__(options)
-    actual.addIncoming()
-    actual = pt.TealBlock.NormalizeBlocks(actual)
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
+#     actual, _ = expr.__teal__(options)
+#     actual.addIncoming()
+#     actual = pt.TealBlock.NormalizeBlocks(actual)
+#     with pt.TealComponent.Context.ignoreExprEquality():
+#         assert actual == expected
 
 
-def test_Account_get():
-    value = abi.Account()
-    expr = value.get()
-    assert expr.type_of() == pt.TealType.uint64
-    assert expr.has_return() is False
+# def test_Account_get():
+#     value = abi.Account()
+#     expr = value.get()
+#     assert expr.type_of() == pt.TealType.uint64
+#     assert expr.has_return() is False
 
-    expected = pt.TealSimpleBlock(
-        [
-            pt.TealOp(expr, pt.Op.load, value.stored_value.slot),
-        ]
-    )
-    actual, _ = expr.__teal__(options)
-    actual.addIncoming()
-    actual = pt.TealBlock.NormalizeBlocks(actual)
+#     expected = pt.TealSimpleBlock(
+#         [
+#             pt.TealOp(expr, pt.Op.load, value.stored_value.slot),
+#         ]
+#     )
+#     actual, _ = expr.__teal__(options)
+#     actual.addIncoming()
+#     actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
+#     with pt.TealComponent.Context.ignoreExprEquality():
+#         assert actual == expected
 
 
 def test_Account_set():
@@ -90,26 +90,26 @@ def test_Account_set():
         assert actual == expected
 
 
-def test_Account_deref():
-    val_to_set = 2
-    value = abi.Account()
-    value.set(val_to_set)
-    expr = value.deref()
-    assert expr.type_of() == pt.TealType.bytes
-    assert expr.has_return() is False
+# def test_Account_deref():
+#     val_to_set = 2
+#     value = abi.Account()
+#     value.set(val_to_set)
+#     expr = value.deref()
+#     assert expr.type_of() == pt.TealType.bytes
+#     assert expr.has_return() is False
 
-    expected = pt.TealSimpleBlock(
-        [
-            pt.TealOp(None, pt.Op.load, value.stored_value.slot),
-            pt.TealOp(None, pt.Op.txnas, "Accounts"),
-        ]
-    )
-    actual, _ = expr.__teal__(options)
-    actual.addIncoming()
-    actual = pt.TealBlock.NormalizeBlocks(actual)
+#     expected = pt.TealSimpleBlock(
+#         [
+#             pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+#             pt.TealOp(None, pt.Op.txnas, "Accounts"),
+#         ]
+#     )
+#     actual, _ = expr.__teal__(options)
+#     actual.addIncoming()
+#     actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
+#     with pt.TealComponent.Context.ignoreExprEquality():
+#         assert actual == expected
 
 
 def test_Asset_str():
@@ -139,42 +139,42 @@ def test_Asset_typespec():
     assert abi.Asset().type_spec() == abi.AssetTypeSpec()
 
 
-def test_Asset_encode():
-    value = abi.Asset()
-    expr = value.encode()
-    assert expr.type_of() == pt.TealType.bytes
-    assert expr.has_return() is False
+# def test_Asset_encode():
+#     value = abi.Asset()
+#     expr = value.encode()
+#     assert expr.type_of() == pt.TealType.bytes
+#     assert expr.has_return() is False
 
-    expectEncoding = pt.SetByte(pt.Bytes(b"\x00"), pt.Int(0), value.stored_value.load())
+#     expectEncoding = pt.SetByte(pt.Bytes(b"\x00"), pt.Int(0), value.stored_value.load())
 
-    expected, _ = expectEncoding.__teal__(options)
-    expected.addIncoming()
-    expected = pt.TealBlock.NormalizeBlocks(expected)
+#     expected, _ = expectEncoding.__teal__(options)
+#     expected.addIncoming()
+#     expected = pt.TealBlock.NormalizeBlocks(expected)
 
-    actual, _ = expr.__teal__(options)
-    actual.addIncoming()
-    actual = pt.TealBlock.NormalizeBlocks(actual)
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
+#     actual, _ = expr.__teal__(options)
+#     actual.addIncoming()
+#     actual = pt.TealBlock.NormalizeBlocks(actual)
+#     with pt.TealComponent.Context.ignoreExprEquality():
+#         assert actual == expected
 
 
-def test_Asset_get():
-    value = abi.Asset()
-    expr = value.get()
-    assert expr.type_of() == pt.TealType.uint64
-    assert expr.has_return() is False
+# def test_Asset_get():
+#     value = abi.Asset()
+#     expr = value.get()
+#     assert expr.type_of() == pt.TealType.uint64
+#     assert expr.has_return() is False
 
-    expected = pt.TealSimpleBlock(
-        [
-            pt.TealOp(expr, pt.Op.load, value.stored_value.slot),
-        ]
-    )
-    actual, _ = expr.__teal__(options)
-    actual.addIncoming()
-    actual = pt.TealBlock.NormalizeBlocks(actual)
+#     expected = pt.TealSimpleBlock(
+#         [
+#             pt.TealOp(expr, pt.Op.load, value.stored_value.slot),
+#         ]
+#     )
+#     actual, _ = expr.__teal__(options)
+#     actual.addIncoming()
+#     actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
+#     with pt.TealComponent.Context.ignoreExprEquality():
+#         assert actual == expected
 
 
 def test_Asset_set():
@@ -198,26 +198,26 @@ def test_Asset_set():
         assert actual == expected
 
 
-def test_Asset_deref():
-    val_to_set = 2
-    value = abi.Asset()
-    value.set(val_to_set)
-    expr = value.deref()
-    assert expr.type_of() == pt.TealType.uint64
-    assert expr.has_return() is False
+# def test_Asset_deref():
+#     val_to_set = 2
+#     value = abi.Asset()
+#     value.set(val_to_set)
+#     expr = value.deref()
+#     assert expr.type_of() == pt.TealType.uint64
+#     assert expr.has_return() is False
 
-    expected = pt.TealSimpleBlock(
-        [
-            pt.TealOp(None, pt.Op.load, value.stored_value.slot),
-            pt.TealOp(None, pt.Op.txnas, "Assets"),
-        ]
-    )
-    actual, _ = expr.__teal__(options)
-    actual.addIncoming()
-    actual = pt.TealBlock.NormalizeBlocks(actual)
+#     expected = pt.TealSimpleBlock(
+#         [
+#             pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+#             pt.TealOp(None, pt.Op.txnas, "Assets"),
+#         ]
+#     )
+#     actual, _ = expr.__teal__(options)
+#     actual.addIncoming()
+#     actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
+#     with pt.TealComponent.Context.ignoreExprEquality():
+#         assert actual == expected
 
 
 def test_Application_str():
@@ -247,42 +247,42 @@ def test_Application_typespec():
     assert abi.Application().type_spec() == abi.ApplicationTypeSpec()
 
 
-def test_Application_encode():
-    value = abi.Application()
-    expr = value.encode()
-    assert expr.type_of() == pt.TealType.bytes
-    assert expr.has_return() is False
+# def test_Application_encode():
+#     value = abi.Application()
+#     expr = value.encode()
+#     assert expr.type_of() == pt.TealType.bytes
+#     assert expr.has_return() is False
 
-    expectEncoding = pt.SetByte(pt.Bytes(b"\x00"), pt.Int(0), value.stored_value.load())
+#     expectEncoding = pt.SetByte(pt.Bytes(b"\x00"), pt.Int(0), value.stored_value.load())
 
-    expected, _ = expectEncoding.__teal__(options)
-    expected.addIncoming()
-    expected = pt.TealBlock.NormalizeBlocks(expected)
+#     expected, _ = expectEncoding.__teal__(options)
+#     expected.addIncoming()
+#     expected = pt.TealBlock.NormalizeBlocks(expected)
 
-    actual, _ = expr.__teal__(options)
-    actual.addIncoming()
-    actual = pt.TealBlock.NormalizeBlocks(actual)
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
+#     actual, _ = expr.__teal__(options)
+#     actual.addIncoming()
+#     actual = pt.TealBlock.NormalizeBlocks(actual)
+#     with pt.TealComponent.Context.ignoreExprEquality():
+#         assert actual == expected
 
 
-def test_Application_get():
-    value = abi.Application()
-    expr = value.get()
-    assert expr.type_of() == pt.TealType.uint64
-    assert expr.has_return() is False
+# def test_Application_get():
+#     value = abi.Application()
+#     expr = value.get()
+#     assert expr.type_of() == pt.TealType.uint64
+#     assert expr.has_return() is False
 
-    expected = pt.TealSimpleBlock(
-        [
-            pt.TealOp(expr, pt.Op.load, value.stored_value.slot),
-        ]
-    )
-    actual, _ = expr.__teal__(options)
-    actual.addIncoming()
-    actual = pt.TealBlock.NormalizeBlocks(actual)
+#     expected = pt.TealSimpleBlock(
+#         [
+#             pt.TealOp(expr, pt.Op.load, value.stored_value.slot),
+#         ]
+#     )
+#     actual, _ = expr.__teal__(options)
+#     actual.addIncoming()
+#     actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
+#     with pt.TealComponent.Context.ignoreExprEquality():
+#         assert actual == expected
 
 
 def test_Application_set():
@@ -306,23 +306,23 @@ def test_Application_set():
         assert actual == expected
 
 
-def test_Application_deref():
-    val_to_set = 2
-    value = abi.Application()
-    value.set(val_to_set)
-    expr = value.deref()
-    assert expr.type_of() == pt.TealType.uint64
-    assert expr.has_return() is False
+# def test_Application_deref():
+#     val_to_set = 2
+#     value = abi.Application()
+#     value.set(val_to_set)
+#     expr = value.deref()
+#     assert expr.type_of() == pt.TealType.uint64
+#     assert expr.has_return() is False
 
-    expected = pt.TealSimpleBlock(
-        [
-            pt.TealOp(None, pt.Op.load, value.stored_value.slot),
-            pt.TealOp(None, pt.Op.txnas, "Applications"),
-        ]
-    )
-    actual, _ = expr.__teal__(options)
-    actual.addIncoming()
-    actual = pt.TealBlock.NormalizeBlocks(actual)
+#     expected = pt.TealSimpleBlock(
+#         [
+#             pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+#             pt.TealOp(None, pt.Op.txnas, "Applications"),
+#         ]
+#     )
+#     actual, _ = expr.__teal__(options)
+#     actual.addIncoming()
+#     actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
+#     with pt.TealComponent.Context.ignoreExprEquality():
+#         assert actual == expected
