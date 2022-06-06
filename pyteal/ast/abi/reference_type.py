@@ -1,3 +1,5 @@
+from typing import List, Final
+from pyteal.ast.abi.type import TypeSpec
 from pyteal.ast.abi.uint import Uint, UintTypeSpec
 from pyteal.ast.expr import Expr
 from pyteal.ast.txn import Txn
@@ -94,3 +96,10 @@ class Application(Uint):
 
 
 Application.__module__ = "pyteal"
+
+
+ReferenceTypeSpecs: Final[List[TypeSpec]] = [
+    AccountTypeSpec(),
+    AssetTypeSpec(),
+    ApplicationTypeSpec(),
+]

@@ -332,174 +332,264 @@ def test_size_of():
         abi.size_of(abi.String)
 
 
-def test_abi_type_translation():
-    test_cases = [
-        # Test for byte/bool/address/strings
-        (algosdk.abi.ByteType(), "byte", abi.ByteTypeSpec(), abi.Byte),
-        (algosdk.abi.BoolType(), "bool", abi.BoolTypeSpec(), abi.Bool),
-        (algosdk.abi.AddressType(), "address", abi.AddressTypeSpec(), abi.Address),
-        (algosdk.abi.StringType(), "string", abi.StringTypeSpec(), abi.String),
-        # Test for dynamic array type
-        (
-            algosdk.abi.ArrayDynamicType(algosdk.abi.UintType(32)),
-            "uint32[]",
-            abi.DynamicArrayTypeSpec(abi.Uint32TypeSpec()),
-            abi.DynamicArray[abi.Uint32],
+ABI_TRANSLATION_TEST_CASES = [
+    # Test for byte/bool/address/strings
+    (algosdk.abi.ByteType(), "byte", abi.ByteTypeSpec(), abi.Byte),
+    (algosdk.abi.BoolType(), "bool", abi.BoolTypeSpec(), abi.Bool),
+    (algosdk.abi.AddressType(), "address", abi.AddressTypeSpec(), abi.Address),
+    (algosdk.abi.StringType(), "string", abi.StringTypeSpec(), abi.String),
+    # Test for dynamic array type
+    (
+        algosdk.abi.ArrayDynamicType(algosdk.abi.UintType(32)),
+        "uint32[]",
+        abi.DynamicArrayTypeSpec(abi.Uint32TypeSpec()),
+        abi.DynamicArray[abi.Uint32],
+    ),
+    (
+        algosdk.abi.ArrayDynamicType(
+            algosdk.abi.ArrayDynamicType(algosdk.abi.ByteType())
         ),
-        (
-            algosdk.abi.ArrayDynamicType(
-                algosdk.abi.ArrayDynamicType(algosdk.abi.ByteType())
-            ),
-            "byte[][]",
-            abi.DynamicArrayTypeSpec(abi.DynamicArrayTypeSpec(abi.ByteTypeSpec())),
-            abi.DynamicArray[abi.DynamicArray[abi.Byte]],
+        "byte[][]",
+        abi.DynamicArrayTypeSpec(abi.DynamicArrayTypeSpec(abi.ByteTypeSpec())),
+        abi.DynamicArray[abi.DynamicArray[abi.Byte]],
+    ),
+    # TODO: Turn these tests on when PyTeal supports ufixed<N>x<M>
+    # cf https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0004.md#types
+    # (
+    #     algosdk.abi.ArrayDynamicType(algosdk.abi.UfixedType(256, 64)),
+    #     "ufixed256x64[]",
+    #     abi.DynamicArrayTypeSpec(abi.UfixedTypeSpec(256, 64)),
+    # ),
+    # # Test for static array type
+    # (
+    #     algosdk.abi.ArrayStaticType(algosdk.abi.UfixedType(128, 10), 100),
+    #     "ufixed128x10[100]",
+    #     abi.ArrayStaticTypeSpec(abi.UfixedTypeSpec(128, 10), 100),
+    # ),
+    (
+        algosdk.abi.ArrayStaticType(
+            algosdk.abi.ArrayStaticType(algosdk.abi.BoolType(), 256),
+            100,
         ),
-        # TODO: Turn these tests on when PyTeal supports ufixed<N>x<M>
-        # cf https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0004.md#types
-        # (
-        #     algosdk.abi.ArrayDynamicType(algosdk.abi.UfixedType(256, 64)),
-        #     "ufixed256x64[]",
-        #     abi.DynamicArrayTypeSpec(abi.UfixedTypeSpec(256, 64)),
-        # ),
-        # # Test for static array type
-        # (
-        #     algosdk.abi.ArrayStaticType(algosdk.abi.UfixedType(128, 10), 100),
-        #     "ufixed128x10[100]",
-        #     abi.ArrayStaticTypeSpec(abi.UfixedTypeSpec(128, 10), 100),
-        # ),
-        (
-            algosdk.abi.ArrayStaticType(
-                algosdk.abi.ArrayStaticType(algosdk.abi.BoolType(), 256),
-                100,
-            ),
-            "bool[256][100]",
-            abi.StaticArrayTypeSpec(
-                abi.StaticArrayTypeSpec(abi.BoolTypeSpec(), 256),
-                100,
-            ),
-            abi.StaticArray[abi.StaticArray[abi.Bool, Literal[256]], Literal[100]],
+        "bool[256][100]",
+        abi.StaticArrayTypeSpec(
+            abi.StaticArrayTypeSpec(abi.BoolTypeSpec(), 256),
+            100,
         ),
-        # Test for tuple
-        (algosdk.abi.TupleType([]), "()", abi.TupleTypeSpec(), abi.Tuple0),
-        (
-            algosdk.abi.TupleType(
-                [
-                    algosdk.abi.UintType(16),
-                    algosdk.abi.TupleType(
-                        [
-                            algosdk.abi.ByteType(),
-                            algosdk.abi.ArrayStaticType(algosdk.abi.AddressType(), 10),
-                        ]
-                    ),
-                ]
-            ),
-            "(uint16,(byte,address[10]))",
-            abi.TupleTypeSpec(
-                abi.Uint16TypeSpec(),
-                abi.TupleTypeSpec(
-                    abi.ByteTypeSpec(),
-                    abi.StaticArrayTypeSpec(abi.AddressTypeSpec(), 10),
+        abi.StaticArray[abi.StaticArray[abi.Bool, Literal[256]], Literal[100]],
+    ),
+    # Test for tuple
+    (algosdk.abi.TupleType([]), "()", abi.TupleTypeSpec(), abi.Tuple0),
+    (
+        algosdk.abi.TupleType(
+            [
+                algosdk.abi.UintType(16),
+                algosdk.abi.TupleType(
+                    [
+                        algosdk.abi.ByteType(),
+                        algosdk.abi.ArrayStaticType(algosdk.abi.AddressType(), 10),
+                    ]
                 ),
+            ]
+        ),
+        "(uint16,(byte,address[10]))",
+        abi.TupleTypeSpec(
+            abi.Uint16TypeSpec(),
+            abi.TupleTypeSpec(
+                abi.ByteTypeSpec(),
+                abi.StaticArrayTypeSpec(abi.AddressTypeSpec(), 10),
             ),
+        ),
+        abi.Tuple2[
+            abi.Uint16,
             abi.Tuple2[
-                abi.Uint16,
-                abi.Tuple2[
-                    abi.Byte,
-                    abi.StaticArray[abi.Address, Literal[10]],
-                ],
+                abi.Byte,
+                abi.StaticArray[abi.Address, Literal[10]],
             ],
-        ),
-        (
-            algosdk.abi.TupleType(
-                [
-                    algosdk.abi.UintType(64),
-                    algosdk.abi.TupleType(
-                        [
-                            algosdk.abi.ByteType(),
-                            algosdk.abi.ArrayStaticType(algosdk.abi.AddressType(), 10),
-                        ]
-                    ),
-                    algosdk.abi.TupleType([]),
-                    algosdk.abi.BoolType(),
-                ]
-            ),
-            "(uint64,(byte,address[10]),(),bool)",
-            abi.TupleTypeSpec(
-                abi.Uint64TypeSpec(),
-                abi.TupleTypeSpec(
-                    abi.ByteTypeSpec(),
-                    abi.StaticArrayTypeSpec(abi.AddressTypeSpec(), 10),
+        ],
+    ),
+    (
+        algosdk.abi.TupleType(
+            [
+                algosdk.abi.UintType(64),
+                algosdk.abi.TupleType(
+                    [
+                        algosdk.abi.ByteType(),
+                        algosdk.abi.ArrayStaticType(algosdk.abi.AddressType(), 10),
+                    ]
                 ),
-                abi.TupleTypeSpec(),
-                abi.BoolTypeSpec(),
-            ),
-            abi.Tuple4[
-                abi.Uint64,
-                abi.Tuple2[
-                    abi.Byte,
-                    abi.StaticArray[abi.Address, Literal[10]],
-                ],
-                abi.Tuple,
-                abi.Bool,
-            ],
+                algosdk.abi.TupleType([]),
+                algosdk.abi.BoolType(),
+            ]
         ),
-        # TODO: Turn these tests on when PyTeal supports ufixed<N>x<M>
-        # cf https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0004.md#types
-        # (
-        #     algosdk.abi.TupleType(
-        #         [
-        #             algosdk.abi.UfixedType(256, 16),
-        #             algosdk.abi.TupleType(
-        #                 [
-        #                     algosdk.abi.TupleType(
-        #                         [
-        #                             algosdk.abi.StringType(),
-        #                         ]
-        #                     ),
-        #                     algosdk.abi.BoolType(),
-        #                     algosdk.abi.TupleType(
-        #                         [
-        #                             algosdk.abi.AddressType(),
-        #                             algosdk.abi.UintType(8),
-        #                         ]
-        #                     ),
-        #                 ]
-        #             ),
-        #         ]
-        #     ),
-        #     "(ufixed256x16,((string),bool,(address,uint8)))",
-        #     abi.TupleType(
-        #         [
-        #             abi.UfixedType(256, 16),
-        #             abi.TupleType(
-        #                 [
-        #                     abi.TupleType(
-        #                         [
-        #                             abi.StringType(),
-        #                         ]
-        #                     ),
-        #                     abi.BoolType(),
-        #                     abi.TupleType(
-        #                         [
-        #                             abi.AddressType(),
-        #                             abi.UintType(8),
-        #                         ]
-        #                     ),
-        #                 ]
-        #             ),
-        #         ]
-        #     ),
-        # ),
-    ]
+        "(uint64,(byte,address[10]),(),bool)",
+        abi.TupleTypeSpec(
+            abi.Uint64TypeSpec(),
+            abi.TupleTypeSpec(
+                abi.ByteTypeSpec(),
+                abi.StaticArrayTypeSpec(abi.AddressTypeSpec(), 10),
+            ),
+            abi.TupleTypeSpec(),
+            abi.BoolTypeSpec(),
+        ),
+        abi.Tuple4[
+            abi.Uint64,
+            abi.Tuple2[
+                abi.Byte,
+                abi.StaticArray[abi.Address, Literal[10]],
+            ],
+            abi.Tuple,
+            abi.Bool,
+        ],
+    ),
+    # TODO: Turn the following test on when PyTeal supports ufixed<N>x<M>
+    # cf https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0004.md#types
+    # (
+    #     algosdk.abi.TupleType(
+    #         [
+    #             algosdk.abi.UfixedType(256, 16),
+    #             algosdk.abi.TupleType(
+    #                 [
+    #                     algosdk.abi.TupleType(
+    #                         [
+    #                             algosdk.abi.StringType(),
+    #                         ]
+    #                     ),
+    #                     algosdk.abi.BoolType(),
+    #                     algosdk.abi.TupleType(
+    #                         [
+    #                             algosdk.abi.AddressType(),
+    #                             algosdk.abi.UintType(8),
+    #                         ]
+    #                     ),
+    #                 ]
+    #             ),
+    #         ]
+    #     ),
+    #     "(ufixed256x16,((string),bool,(address,uint8)))",
+    #     abi.TupleType(
+    #         [
+    #             abi.UfixedType(256, 16),
+    #             abi.TupleType(
+    #                 [
+    #                     abi.TupleType(
+    #                         [
+    #                             abi.StringType(),
+    #                         ]
+    #                     ),
+    #                     abi.BoolType(),
+    #                     abi.TupleType(
+    #                         [
+    #                             abi.AddressType(),
+    #                             abi.UintType(8),
+    #                         ]
+    #                     ),
+    #                 ]
+    #             ),
+    #         ]
+    #     ),
+    # ),
+    (algosdk.abi.TupleType([]), "()", abi.TupleTypeSpec(), abi.Tuple0),
+    (
+        "cannot map ABI transaction type spec <pyteal.TransactionTypeSpec",
+        "txn",
+        abi.TransactionTypeSpec(),
+        abi.Transaction,
+    ),
+    (
+        "cannot map ABI transaction type spec <pyteal.PaymentTransactionTypeSpec",
+        "pay",
+        abi.PaymentTransactionTypeSpec(),
+        abi.PaymentTransaction,
+    ),
+    (
+        "cannot map ABI transaction type spec <pyteal.KeyRegisterTransactionTypeSpec",
+        "keyreg",
+        abi.KeyRegisterTransactionTypeSpec(),
+        abi.KeyRegisterTransaction,
+    ),
+    (
+        "cannot map ABI transaction type spec <pyteal.AssetConfigTransactionTypeSpec",
+        "acfg",
+        abi.AssetConfigTransactionTypeSpec(),
+        abi.AssetConfigTransaction,
+    ),
+    (
+        "cannot map ABI transaction type spec <pyteal.AssetTransferTransactionTypeSpec",
+        "axfer",
+        abi.AssetTransferTransactionTypeSpec(),
+        abi.AssetTransferTransaction,
+    ),
+    (
+        "cannot map ABI transaction type spec <pyteal.AssetFreezeTransactionTypeSpec",
+        "afrz",
+        abi.AssetFreezeTransactionTypeSpec(),
+        abi.AssetFreezeTransaction,
+    ),
+    (
+        "cannot map ABI transaction type spec <pyteal.ApplicationCallTransactionTypeSpec",
+        "appl",
+        abi.ApplicationCallTransactionTypeSpec(),
+        abi.ApplicationCallTransaction,
+    ),
+    (
+        "cannot map ABI reference type spec <pyteal.AccountTypeSpec",
+        "account",
+        abi.AccountTypeSpec(),
+        abi.Account,
+    ),
+    (
+        "cannot map ABI reference type spec <pyteal.ApplicationTypeSpec",
+        "application",
+        abi.ApplicationTypeSpec(),
+        abi.Application,
+    ),
+    (
+        "cannot map ABI reference type spec <pyteal.AssetTypeSpec",
+        "asset",
+        abi.AssetTypeSpec(),
+        abi.Asset,
+    ),
+]
 
-    for algosdk_abi, abi_string, pyteal_abi_ts, pyteal_abi in test_cases:
-        print(f"({algosdk_abi}, {abi_string}, {pyteal_abi_ts}),")
-        assert str(algosdk_abi) == abi_string == str(pyteal_abi_ts)
-        assert (
-            algosdk_abi
-            == algosdk.abi.ABIType.from_string(abi_string)
-            == algosdk.abi.ABIType.from_string(str(pyteal_abi_ts))
-        )
-        assert algosdk_abi == abi.algosdk_from_type_spec(pyteal_abi_ts)
-        assert pyteal_abi_ts == abi.type_spec_from_annotation(pyteal_abi)
-        assert algosdk_abi == abi.algosdk_from_annotation(pyteal_abi)
+
+@pytest.mark.parametrize(
+    "algosdk_abi, abi_string, pyteal_abi_ts, pyteal_abi", ABI_TRANSLATION_TEST_CASES
+)
+def test_abi_type_translation(algosdk_abi, abi_string, pyteal_abi_ts, pyteal_abi):
+    print(f"({algosdk_abi}, {abi_string}, {pyteal_abi_ts}),")
+
+    assert pyteal_abi_ts == abi.type_spec_from_annotation(pyteal_abi)
+
+    if abi_string in (
+        "account",
+        "application",
+        "asset",
+        "txn",
+        "pay",
+        "keyreg",
+        "acfg",
+        "axfer",
+        "afrz",
+        "appl",
+    ):
+        assert str(pyteal_abi_ts) == abi_string
+
+        with pytest.raises(TealInputError) as tie:
+            abi.algosdk_from_type_spec(pyteal_abi_ts)
+        assert str(tie.value).startswith(algosdk_abi)
+
+        with pytest.raises(TealInputError) as tie:
+            abi.algosdk_from_annotation(pyteal_abi)
+        assert str(tie.value).startswith(algosdk_abi)
+
+        return
+
+    assert str(algosdk_abi) == abi_string == str(pyteal_abi_ts)
+    assert (
+        algosdk_abi
+        == algosdk.abi.ABIType.from_string(abi_string)
+        == algosdk.abi.ABIType.from_string(str(pyteal_abi_ts))
+    )
+    assert algosdk_abi == abi.algosdk_from_type_spec(pyteal_abi_ts)
+    assert algosdk_abi == abi.algosdk_from_annotation(pyteal_abi)
