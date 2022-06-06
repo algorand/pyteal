@@ -111,6 +111,18 @@ def test_InnerTxnBuilder_SetFields():
                 ),
             ),
         ),
+        (
+            {pt.TxnField.accounts: pt.Txn.accounts},
+            pt.For(
+                (i := pt.ScratchVar()).store(pt.Int(0)),
+                i.load() < pt.Txn.accounts.length(),
+                i.store(i.load() + pt.Int(1)),
+            ).Do(
+                pt.InnerTxnBuilder.SetField(
+                    pt.TxnField.accounts, [pt.Txn.accounts[i.load()]]
+                )
+            ),
+        ),
     )
 
     for fields, expectedExpr in cases:
@@ -126,7 +138,7 @@ def test_InnerTxnBuilder_SetFields():
         actual.addIncoming()
         actual = pt.TealBlock.NormalizeBlocks(actual)
 
-        with pt.TealComponent.Context.ignoreExprEquality():
+        with pt.TealComponent.Context.ignoreScratchSlotEquality(), pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected
 
         if len(fields) != 0:

@@ -1,11 +1,20 @@
 from enum import Enum
 from typing import Dict, TYPE_CHECKING, List, Union, cast
+from pyteal.ast.for_ import For
+from pyteal.ast.int import Int
+from pyteal.ast.scratchvar import ScratchVar
 
 from pyteal.types import TealType, require_type
 from pyteal.errors import TealInputError, verifyTealVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
-from pyteal.ast.txn import TxnField, TxnExprBuilder, TxnaExprBuilder, TxnObject
+from pyteal.ast.txn import (
+    TxnArray,
+    TxnField,
+    TxnExprBuilder,
+    TxnaExprBuilder,
+    TxnObject,
+)
 from pyteal.ast.seq import Seq
 
 if TYPE_CHECKING:
@@ -135,7 +144,9 @@ class InnerTxnBuilder:
         return InnerTxnActionExpr(InnerTxnAction.Submit)
 
     @classmethod
-    def SetField(cls, field: TxnField, value: Union[Expr, List[Expr]]) -> Expr:
+    def SetField(
+        cls, field: TxnField, value: Union[Expr, List[Expr], TxnArray]
+    ) -> Expr:
         """Set a field of the current inner transaction.
 
         :any:`InnerTxnBuilder.Begin` must be called before setting any fields on an inner
@@ -152,7 +163,7 @@ class InnerTxnBuilder:
                 compatible with the field being set.
         """
         if not field.is_array:
-            if type(value) is list:
+            if type(value) is list or isinstance(value, TxnArray):
                 raise TealInputError(
                     "inner transaction set field {} does not support array value".format(
                         field
@@ -160,25 +171,34 @@ class InnerTxnBuilder:
                 )
             return InnerTxnFieldExpr(field, cast(Expr, value))
         else:
-            if type(value) is not list:
+            if type(value) is not list and not isinstance(value, TxnArray):
                 raise TealInputError(
                     "inner transaction set array field {} with non-array value".format(
                         field
                     )
                 )
-            for valueIter in value:
-                if not isinstance(valueIter, Expr):
-                    raise TealInputError(
-                        "inner transaction set array field {} with non PyTeal expression array element {}".format(
-                            field, valueIter
+
+            if type(value) is list:
+                for valueIter in value:
+                    if not isinstance(valueIter, Expr):
+                        raise TealInputError(
+                            "inner transaction set array field {} with non PyTeal expression array element {}".format(
+                                field, valueIter
+                            )
                         )
-                    )
-            return Seq(
-                *[
-                    InnerTxnFieldExpr(field, cast(Expr, valueIter))
-                    for valueIter in value
-                ]
-            )
+
+                return Seq(
+                    *[
+                        InnerTxnFieldExpr(field, cast(Expr, valueIter))
+                        for valueIter in value
+                    ]
+                )
+            else:
+                return For(
+                    (i := ScratchVar()).store(Int(0)),
+                    i.load() < value.length(),
+                    i.store(i.load() + Int(1)),
+                ).Do(InnerTxnFieldExpr(field, value[i.load()]))
 
     @classmethod
     def SetFields(cls, fields: Dict[TxnField, Union[Expr, List[Expr]]]) -> Expr:
