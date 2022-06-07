@@ -1,12 +1,17 @@
 from enum import Enum
 from typing import Dict, TYPE_CHECKING, List, Union, cast
 
+from pyteal.ast.methodsig import MethodSignature
+from pyteal.ast.substring import Suffix
+from pyteal.ast.unaryexpr import Itob
 from pyteal.types import TealType, require_type
 from pyteal.errors import TealInputError, verifyTealVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
-from pyteal.ast.txn import TxnField, TxnExprBuilder, TxnaExprBuilder, TxnObject
+from pyteal.ast.txn import TxnField, TxnExprBuilder, TxnType, TxnaExprBuilder, TxnObject
 from pyteal.ast.seq import Seq
+from pyteal.ast.int import Int
+from pyteal.ast import abi
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
@@ -198,6 +203,60 @@ class InnerTxnBuilder:
                 field being set.
         """
         fieldsToSet = [cls.SetField(field, value) for field, value in fields.items()]
+        return Seq(fieldsToSet)
+
+    @classmethod
+    def MethodCall(
+        cls, app_id: Expr, method_signature: str, args: List[abi.BaseType]
+    ) -> Expr:
+
+        # Default, always need these
+        fieldsToSet = [
+            cls.SetField(TxnField.type_enum, TxnType.ApplicationCall),
+            cls.SetField(TxnField.application_id, app_id),
+        ]
+
+        # We should parse this out to double check args passed?
+        app_args: List[Expr] = [MethodSignature(method_signature)]
+
+        accts: List[Expr] = []
+        apps: List[Expr] = []
+        assets: List[Expr] = [] 
+
+        for arg in args:
+            # If its a reference type, add it to relevant array
+            # Add appropriate index to 
+            if arg.type_spec() in abi.ReferenceTypeSpecs:
+                match arg:
+                    # For both acct and application, add index to
+                    # app args _after_ appending since 0 is implicitly set
+                    case abi.Account():
+                        # TODO: "my" app account? 
+                        accts.append(arg.deref())
+                        app_args.append(Suffix(Itob(Int(len(accts))), Int(7)))
+                    case abi.Application():
+                        # TODO: "me" as app? 
+                        apps.append(arg.deref())
+                        app_args.append(Suffix(Itob(Int(len(apps))), Int(7)))
+
+                    # For assets, add to app_args prior to appending to assets array
+                    case abi.Asset():
+                        app_args.append(Suffix(Itob(Int(len(assets))), Int(7)))
+                        assets.append(arg.deref())
+            else:
+                app_args.append(arg.encode())
+
+        fieldsToSet.append(cls.SetField(TxnField.application_args, app_args))
+
+        if len(accts) > 0:
+            fieldsToSet.append(cls.SetField(TxnField.accounts, accts))
+
+        if len(apps) > 0:
+            fieldsToSet.append(cls.SetField(TxnField.applications, apps))
+
+        if len(assets) > 0:
+            fieldsToSet.append(cls.SetField(TxnField.assets, assets))
+
         return Seq(fieldsToSet)
 
 
