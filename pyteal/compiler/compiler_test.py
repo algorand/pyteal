@@ -2830,10 +2830,6 @@ method "approve_if_odd(uint32)void"
 bnz main_l5
 err
 main_l5:
-txn ApplicationID
-int 0
-!=
-assert
 txna ApplicationArgs 1
 int 0
 extract_uint32
@@ -2843,10 +2839,6 @@ callsub approveifodd_2
 int 1
 return
 main_l6:
-txn ApplicationID
-int 0
-!=
-assert
 callsub log1_1
 store 1
 byte 0x151f7c75
@@ -2857,18 +2849,10 @@ log
 int 1
 return
 main_l7:
-txn ApplicationID
-int 0
-!=
-assert
 callsub emptyreturnsubroutine_0
 int 1
 return
 main_l8:
-txn ApplicationID
-int 0
-!=
-assert
 int 1
 return
 
@@ -3369,10 +3353,6 @@ method "approve_if_odd(uint32)void"
 bnz main_l4
 err
 main_l4:
-txn ApplicationID
-int 0
-!=
-assert
 txna ApplicationArgs 1
 int 0
 extract_uint32
@@ -3382,10 +3362,6 @@ callsub approveifodd_2
 int 1
 return
 main_l5:
-txn ApplicationID
-int 0
-!=
-assert
 callsub log1_1
 store 1
 byte 0x151f7c75
@@ -3396,10 +3372,6 @@ log
 int 1
 return
 main_l6:
-txn ApplicationID
-int 0
-!=
-assert
 callsub emptyreturnsubroutine_0
 int 1
 return
