@@ -669,7 +669,8 @@ def test_build_program_all_empty():
 
 def test_build_program_approval_empty():
     router = pt.Router(
-        "test", pt.BareCallActions(clear_state=pt.OnCompleteAction.always(pt.Approve()))
+        "test",
+        pt.BareCallActions(clear_state=pt.OnCompleteAction.call_only(pt.Approve())),
     )
 
     approval, clear_state, contract = router.build_program()
