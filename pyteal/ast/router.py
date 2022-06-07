@@ -67,11 +67,11 @@ class CallConfig(IntFlag):
         match self:
             case CallConfig.NEVER:
                 return 0
-            case CallConfig.CALL | CallConfig.ALL:
+            case CallConfig.CALL:
                 return 1
-            case CallConfig.CREATE:
+            case CallConfig.CREATE | CallConfig.ALL:
                 raise TealInputError(
-                    "CallConfig.CREATE is not valid for a clear state CallConfig, since clear state can never be invoked during creation"
+                    "Only CallConfig.CALL or CallConfig.NEVER are valid for a clear state CallConfig, since clear state can never be invoked during creation"
                 )
             case _:
                 raise TealInputError(f"unexpected CallConfig {self}")
@@ -250,7 +250,7 @@ class BareCallActions:
         if self.clear_state.is_empty():
             return None
 
-        # call this to make sure we error if the CallConfig is creation only
+        # call this to make sure we error if the CallConfig is CREATE or ALL
         self.clear_state.call_config.clear_state_condition_under_config()
 
         return ASTBuilder.wrap_handler(
@@ -663,6 +663,9 @@ class Router:
         Constructs ASTs for approval and clear-state programs from the registered methods in the router,
         also generates a JSON object of contract to allow client read and call the methods easily.
 
+        Note that if no methods or bare app call actions have been registered to either the approval
+        or clear state programs, then that program will reject all transactions.
+
         Returns:
             approval_program: AST for approval program
             clear_state_program: AST for clear-state program
@@ -684,6 +687,9 @@ class Router:
         """
         Combining `build_program` and `compileTeal`, compiles built Approval and ClearState programs
         and returns Contract JSON object for off-chain calling.
+
+        Note that if no methods or bare app call actions have been registered to either the approval
+        or clear state programs, then that program will reject all transactions.
 
         Returns:
             approval_program: compiled approval program
