@@ -221,21 +221,21 @@ class InnerTxnBuilder:
 
         accts: List[Expr] = []
         apps: List[Expr] = []
-        assets: List[Expr] = [] 
+        assets: List[Expr] = []
 
         for arg in args:
             # If its a reference type, add it to relevant array
-            # Add appropriate index to 
+            # Add appropriate index to
             if arg.type_spec() in abi.ReferenceTypeSpecs:
                 match arg:
                     # For both acct and application, add index to
                     # app args _after_ appending since 0 is implicitly set
                     case abi.Account():
-                        # TODO: "my" app account? 
+                        # TODO: "my" app account?
                         accts.append(arg.deref())
                         app_args.append(Suffix(Itob(Int(len(accts))), Int(7)))
                     case abi.Application():
-                        # TODO: "me" as app? 
+                        # TODO: "me" as app?
                         apps.append(arg.deref())
                         app_args.append(Suffix(Itob(Int(len(apps))), Int(7)))
 
