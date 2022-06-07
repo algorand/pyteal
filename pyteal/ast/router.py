@@ -29,7 +29,7 @@ from pyteal.ast.seq import Seq
 from pyteal.ast.methodsig import MethodSignature
 from pyteal.ast.naryexpr import And, Or
 from pyteal.ast.txn import Txn
-from pyteal.ast.return_ import Approve
+from pyteal.ast.return_ import Approve, Reject
 
 
 class CallConfig(IntFlag):
@@ -50,7 +50,7 @@ class CallConfig(IntFlag):
     CREATE = 2
     ALL = 3
 
-    def condition_under_config(self) -> Expr | int:
+    def approval_condition_under_config(self) -> Expr | int:
         match self:
             case CallConfig.NEVER:
                 return 0
@@ -62,6 +62,19 @@ class CallConfig(IntFlag):
                 return 1
             case _:
                 raise TealInternalError(f"unexpected CallConfig {self}")
+
+    def clear_state_condition_under_config(self) -> int:
+        match self:
+            case CallConfig.NEVER:
+                return 0
+            case CallConfig.CALL | CallConfig.ALL:
+                return 1
+            case CallConfig.CREATE:
+                raise TealInputError(
+                    "CallConfig.CREATE is not valid for a clear state CallConfig, since clear state can never be invoked during creation"
+                )
+            case _:
+                raise TealInputError(f"unexpected CallConfig {self}")
 
 
 CallConfig.__module__ = "pyteal"
@@ -101,7 +114,7 @@ class MethodConfig:
         else:
             cond_list = []
             for config, oc in config_oc_pairs:
-                config_cond = config.condition_under_config()
+                config_cond = config.approval_condition_under_config()
                 match config_cond:
                     case Expr():
                         cond_list.append(And(Txn.on_completion() == oc, config_cond))
@@ -116,7 +129,7 @@ class MethodConfig:
             return Or(*cond_list)
 
     def clear_state_cond(self) -> Expr | int:
-        return self.clear_state.condition_under_config()
+        return self.clear_state.clear_state_condition_under_config()
 
 
 @dataclass(frozen=True)
@@ -214,7 +227,11 @@ class BareCallActions:
                     cond_body = wrapped_handler
                 case CallConfig.CALL | CallConfig.CREATE:
                     cond_body = Seq(
-                        Assert(cast(Expr, oca.call_config.condition_under_config())),
+                        Assert(
+                            cast(
+                                Expr, oca.call_config.approval_condition_under_config()
+                            )
+                        ),
                         wrapped_handler,
                     )
                 case _:
@@ -233,29 +250,16 @@ class BareCallActions:
         if self.clear_state.is_empty():
             return None
 
-        wrapped_handler = ASTBuilder.wrap_handler(
+        # call this to make sure we error if the CallConfig is creation only
+        self.clear_state.call_config.clear_state_condition_under_config()
+
+        return ASTBuilder.wrap_handler(
             False,
             cast(
                 Expr | SubroutineFnWrapper | ABIReturnSubroutine,
                 self.clear_state.action,
             ),
         )
-        match self.clear_state.call_config:
-            case CallConfig.ALL:
-                return wrapped_handler
-            case CallConfig.CALL | CallConfig.CREATE:
-                return Seq(
-                    Assert(
-                        cast(
-                            Expr, self.clear_state.call_config.condition_under_config()
-                        )
-                    ),
-                    wrapped_handler,
-                )
-            case _:
-                raise TealInternalError(
-                    f"Unexpected CallConfig: {self.clear_state.call_config!r}"
-                )
 
 
 BareCallActions.__module__ = "pyteal"
@@ -475,7 +479,7 @@ class ASTBuilder:
 
     def program_construction(self) -> Expr:
         if not self.conditions_n_branches:
-            raise TealInputError("ABIRouter: Cannot build program with an empty AST")
+            return Reject()
         return Cond(*[[n.condition, n.branch] for n in self.conditions_n_branches])
 
 

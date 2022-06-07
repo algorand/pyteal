@@ -266,8 +266,8 @@ def camel_to_snake(name: str) -> str:
 
 def test_call_config():
     for cc in pt.CallConfig:
-        cond_on_cc: pt.Expr | int = cc.condition_under_config()
-        match cond_on_cc:
+        approval_cond_on_cc: pt.Expr | int = cc.approval_condition_under_config()
+        match approval_cond_on_cc:
             case pt.Expr():
                 expected_cc = (
                     (pt.Txn.application_id() == pt.Int(0))
@@ -275,11 +275,34 @@ def test_call_config():
                     else (pt.Txn.application_id() != pt.Int(0))
                 )
                 with pt.TealComponent.Context.ignoreExprEquality():
-                    assert assemble_helper(cond_on_cc) == assemble_helper(expected_cc)
+                    assert assemble_helper(approval_cond_on_cc) == assemble_helper(
+                        expected_cc
+                    )
             case int():
-                assert cond_on_cc == int(cc) & 1
+                assert approval_cond_on_cc == int(cc) & 1
             case _:
-                raise pt.TealInternalError(f"unexpected cond_on_cc {cond_on_cc}")
+                raise pt.TealInternalError(
+                    f"unexpected approval_cond_on_cc {approval_cond_on_cc}"
+                )
+
+        if cc == pt.CallConfig.CREATE:
+            with pytest.raises(
+                pt.TealInputError,
+                match=r"CallConfig.CREATE is not valid for a clear state CallConfig, since clear state can never be invoked during creation$",
+            ):
+                cc.clear_state_condition_under_config()
+            continue
+
+        clear_state_cond_on_cc: int = cc.clear_state_condition_under_config()
+        match clear_state_cond_on_cc:
+            case 0:
+                assert cc == pt.CallConfig.NEVER
+            case 1:
+                assert cc in (pt.CallConfig.ALL, pt.CallConfig.CALL)
+            case _:
+                raise pt.TealInternalError(
+                    f"unexpected clear_state_cond_on_cc {clear_state_cond_on_cc}"
+                )
 
 
 def test_method_config():
@@ -304,18 +327,14 @@ def test_method_config():
             match mc.clear_state:
                 case pt.CallConfig.NEVER:
                     assert mc.clear_state_cond() == 0
-                case pt.CallConfig.ALL:
+                case pt.CallConfig.ALL | pt.CallConfig.CALL:
                     assert mc.clear_state_cond() == 1
-                case pt.CallConfig.CALL:
-                    with pt.TealComponent.Context.ignoreExprEquality():
-                        assert assemble_helper(
-                            mc.clear_state_cond()
-                        ) == assemble_helper(pt.Txn.application_id() != pt.Int(0))
                 case pt.CallConfig.CREATE:
-                    with pt.TealComponent.Context.ignoreExprEquality():
-                        assert assemble_helper(
-                            mc.clear_state_cond()
-                        ) == assemble_helper(pt.Txn.application_id() == pt.Int(0))
+                    with pytest.raises(
+                        pt.TealInputError,
+                        match=r"CallConfig.CREATE is not valid for a clear state CallConfig, since clear state can never be invoked during creation$",
+                    ):
+                        mc.clear_state_cond()
             if mc.is_never() or all(
                 getattr(mc, i) == pt.CallConfig.NEVER
                 for i, _ in approval_check_names_n_ocs
@@ -330,7 +349,9 @@ def test_method_config():
                 continue
             list_of_cc = [
                 (
-                    typing.cast(pt.CallConfig, getattr(mc, i)).condition_under_config(),
+                    typing.cast(
+                        pt.CallConfig, getattr(mc, i)
+                    ).approval_condition_under_config(),
                     oc,
                 )
                 for i, oc in approval_check_names_n_ocs
@@ -624,3 +645,144 @@ def test_contract_json_obj():
     sdk_contract = sdk_abi.Contract(contract_name, method_list)
     contract = router.contract_construct()
     assert contract == sdk_contract
+
+
+def test_build_program_all_empty():
+    router = pt.Router("test")
+
+    approval, clear_state, contract = router.build_program()
+
+    expected_empty_program = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.return_),
+        ]
+    )
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert assemble_helper(approval) == expected_empty_program
+        assert assemble_helper(clear_state) == expected_empty_program
+
+    expected_contract = sdk_abi.Contract("test", [])
+    assert contract == expected_contract
+
+
+def test_build_program_approval_empty():
+    router = pt.Router(
+        "test", pt.BareCallActions(clear_state=pt.OnCompleteAction.always(pt.Approve()))
+    )
+
+    approval, clear_state, contract = router.build_program()
+
+    expected_empty_program = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.return_),
+        ]
+    )
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert assemble_helper(approval) == expected_empty_program
+        assert assemble_helper(clear_state) != expected_empty_program
+
+    expected_contract = sdk_abi.Contract("test", [])
+    assert contract == expected_contract
+
+
+def test_build_program_clear_state_empty():
+    router = pt.Router(
+        "test", pt.BareCallActions(no_op=pt.OnCompleteAction.always(pt.Approve()))
+    )
+
+    approval, clear_state, contract = router.build_program()
+
+    expected_empty_program = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.return_),
+        ]
+    )
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert assemble_helper(approval) != expected_empty_program
+        assert assemble_helper(clear_state) == expected_empty_program
+
+    expected_contract = sdk_abi.Contract("test", [])
+    assert contract == expected_contract
+
+
+def test_build_program_clear_state_invalid_config():
+    bareCalls = pt.BareCallActions(
+        clear_state=pt.OnCompleteAction.create_only(pt.Approve())
+    )
+    with pytest.raises(
+        pt.TealInputError,
+        match=r"CallConfig.CREATE is not valid for a clear state CallConfig, since clear state can never be invoked during creation$",
+    ):
+        pt.Router("test", bareCalls)
+
+    router = pt.Router("test")
+
+    @pt.ABIReturnSubroutine
+    def clear_state_method():
+        return pt.Approve()
+
+    with pytest.raises(
+        pt.TealInputError,
+        match=r"CallConfig.CREATE is not valid for a clear state CallConfig, since clear state can never be invoked during creation$",
+    ):
+        router.add_method_handler(
+            clear_state_method,
+            method_config=pt.MethodConfig(clear_state=pt.CallConfig.CREATE),
+        )
+
+
+def test_build_program_clear_state_valid_config():
+    action = pt.If(pt.Txn.fee() == pt.Int(4)).Then(pt.Approve()).Else(pt.Reject())
+
+    for config in (pt.CallConfig.ALL, pt.CallConfig.CALL):
+        router_with_bare_call = pt.Router(
+            "test",
+            pt.BareCallActions(
+                clear_state=pt.OnCompleteAction(action=action, call_config=config)
+            ),
+        )
+        _, actual_clear_state_with_bare_call, _ = router_with_bare_call.build_program()
+
+        expected_clear_state_with_bare_call = assemble_helper(
+            pt.Cond([pt.Txn.application_args.length() == pt.Int(0), action])
+        )
+
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert (
+                assemble_helper(actual_clear_state_with_bare_call)
+                == expected_clear_state_with_bare_call
+            )
+
+        router_with_method = pt.Router("test")
+
+        @pt.ABIReturnSubroutine
+        def clear_state_method():
+            return action
+
+        router_with_method.add_method_handler(
+            clear_state_method, method_config=pt.MethodConfig(clear_state=config)
+        )
+
+        _, actual_clear_state_with_method, _ = router_with_method.build_program()
+
+        expected_clear_state_with_method = assemble_helper(
+            pt.Cond(
+                [
+                    pt.Txn.application_args[0]
+                    == pt.MethodSignature("clear_state_method()void"),
+                    pt.Seq(clear_state_method(), pt.Approve()),
+                ]
+            )
+        )
+
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert (
+                assemble_helper(actual_clear_state_with_method)
+                == expected_clear_state_with_method
+            )
