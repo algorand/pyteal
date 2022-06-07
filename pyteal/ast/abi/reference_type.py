@@ -40,6 +40,10 @@ class ReferenceTypeSpec(TypeSpec):
 
 
 class ReferenceType(BaseType):
+    @abstractmethod
+    def __init__(self, spec: ReferenceTypeSpec) -> None:
+        super().__init__(spec)
+
     def type_spec(self) -> ReferenceTypeSpec:
         return cast(ReferenceTypeSpec, super().type_spec())
 
