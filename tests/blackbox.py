@@ -292,14 +292,16 @@ class PyTealDryRunExecutor:
         arg_expr = Txn.application_args[i] if self.mode == Mode.Application else Arg(i)
         if p == TealType.uint64:
             arg_expr = Btoi(arg_expr)
-        prep = None
-        arg_var = arg_expr
+
         if name in subdef.by_ref_args:
             arg_var = ScratchVar(p)
             prep = arg_var.store(arg_expr)
         elif name in subdef.abi_args:
             arg_var = p.new_instance()
             prep = arg_var.decode(arg_expr)
+        else:
+            arg_var = arg_expr
+            prep = None
         return prep, arg_var
 
     def _prepare_n_calls(self):
