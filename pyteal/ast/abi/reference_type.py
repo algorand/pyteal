@@ -1,9 +1,8 @@
-from typing import List, Final, TypeVar, Union, cast
+from typing import List, Final, TypeVar, cast
 from abc import abstractmethod
-from pyteal.ast.abi.type import BaseType, ComputedValue, TypeSpec
+from pyteal.ast.abi.type import BaseType, TypeSpec
 from pyteal.ast.abi.uint import NUM_BITS_IN_BYTE, uint_decode
 
-from pyteal.ast.int import Int
 from pyteal.ast.expr import Expr
 from pyteal.ast.txn import Txn
 from pyteal.ast.acct import AccountParamObject
@@ -57,33 +56,6 @@ class ReferenceType(BaseType):
         application or asset ID. See :code:`application_id()` or :code:`asset_id()` for that.
         """
         return self.stored_value.load()
-
-    def set(
-        self: T, value: Union[int, Expr, "ReferenceType", ComputedValue[T]]
-    ) -> Expr:
-        if isinstance(value, ComputedValue):
-            return self._set_with_computed_type(value)
-
-        if isinstance(value, BaseType) and value.type_spec() != self.type_spec():
-            raise TealInputError(
-                "Type {} is not assignable to type {}".format(
-                    value.type_spec(), self.type_spec()
-                )
-            )
-
-        match value:
-            case int():
-                return self.stored_value.store(Int(value))
-            case Expr():
-                return self.stored_value.store(value)
-            case ReferenceType():
-                return self.stored_value.store(value.referenced_index())
-            case _:
-                raise TealInputError(
-                    "Expected int, Expr, ReferenceType or ComputedValue, got {}".format(
-                        type(value)
-                    )
-                )
 
     def decode(
         self,

@@ -6,6 +6,33 @@ from pyteal import abi
 options = pt.CompileOptions(version=5)
 
 
+def test_ReferenceTypeSpecs_list():
+    assert abi.ReferenceTypeSpecs == [
+        abi.AccountTypeSpec(),
+        abi.AssetTypeSpec(),
+        abi.ApplicationTypeSpec(),
+    ]
+
+
+def test_ReferenceType_referenced_index():
+    for value in (abi.Account(), abi.Asset(), abi.Application()):
+        expr = value.referenced_index()
+        assert expr.type_of() == pt.TealType.uint64
+        assert expr.has_return() is False
+
+        expected = pt.TealSimpleBlock(
+            [
+                pt.TealOp(expr, pt.Op.load, value.stored_value.slot),
+            ]
+        )
+        actual, _ = expr.__teal__(options)
+        actual.addIncoming()
+        actual = pt.TealBlock.NormalizeBlocks(actual)
+
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
+
+
 def test_ReferenceType_encode():
     for value in (abi.Account(), abi.Asset(), abi.Application()):
         with pytest.raises(
@@ -68,46 +95,6 @@ def test_AccountTypeSpec_eq():
 
 def test_Account_typespec():
     assert abi.Account().type_spec() == abi.AccountTypeSpec()
-
-
-def test_Account_referenced_index():
-    value = abi.Account()
-    expr = value.referenced_index()
-    assert expr.type_of() == pt.TealType.uint64
-    assert expr.has_return() is False
-
-    expected = pt.TealSimpleBlock(
-        [
-            pt.TealOp(expr, pt.Op.load, value.stored_value.slot),
-        ]
-    )
-    actual, _ = expr.__teal__(options)
-    actual.addIncoming()
-    actual = pt.TealBlock.NormalizeBlocks(actual)
-
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
-
-
-def test_Account_set():
-    val_to_set = 2
-    value = abi.Account()
-    expr = value.set(val_to_set)
-    assert expr.type_of() == pt.TealType.none
-    assert expr.has_return() is False
-
-    expected = pt.TealSimpleBlock(
-        [
-            pt.TealOp(expr, pt.Op.int, val_to_set),
-            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
-        ]
-    )
-    actual, _ = expr.__teal__(options)
-    actual.addIncoming()
-    actual = pt.TealBlock.NormalizeBlocks(actual)
-
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
 
 
 def test_Account_address():
@@ -191,46 +178,6 @@ def test_AssetTypeSpec_eq():
 
 def test_Asset_typespec():
     assert abi.Asset().type_spec() == abi.AssetTypeSpec()
-
-
-def test_Asset_referenced_index():
-    value = abi.Asset()
-    expr = value.referenced_index()
-    assert expr.type_of() == pt.TealType.uint64
-    assert expr.has_return() is False
-
-    expected = pt.TealSimpleBlock(
-        [
-            pt.TealOp(expr, pt.Op.load, value.stored_value.slot),
-        ]
-    )
-    actual, _ = expr.__teal__(options)
-    actual.addIncoming()
-    actual = pt.TealBlock.NormalizeBlocks(actual)
-
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
-
-
-def test_Asset_set():
-    val_to_set = 2
-    value = abi.Asset()
-    expr = value.set(val_to_set)
-    assert expr.type_of() == pt.TealType.none
-    assert expr.has_return() is False
-
-    expected = pt.TealSimpleBlock(
-        [
-            pt.TealOp(expr, pt.Op.int, val_to_set),
-            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
-        ]
-    )
-    actual, _ = expr.__teal__(options)
-    actual.addIncoming()
-    actual = pt.TealBlock.NormalizeBlocks(actual)
-
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
 
 
 def test_Asset_asset_id():
@@ -321,46 +268,6 @@ def test_ApplicationTypeSpec_eq():
 
 def test_Application_typespec():
     assert abi.Application().type_spec() == abi.ApplicationTypeSpec()
-
-
-def test_Application_referenced_index():
-    value = abi.Application()
-    expr = value.referenced_index()
-    assert expr.type_of() == pt.TealType.uint64
-    assert expr.has_return() is False
-
-    expected = pt.TealSimpleBlock(
-        [
-            pt.TealOp(expr, pt.Op.load, value.stored_value.slot),
-        ]
-    )
-    actual, _ = expr.__teal__(options)
-    actual.addIncoming()
-    actual = pt.TealBlock.NormalizeBlocks(actual)
-
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
-
-
-def test_Application_set():
-    val_to_set = 2
-    value = abi.Application()
-    expr = value.set(val_to_set)
-    assert expr.type_of() == pt.TealType.none
-    assert expr.has_return() is False
-
-    expected = pt.TealSimpleBlock(
-        [
-            pt.TealOp(expr, pt.Op.int, val_to_set),
-            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
-        ]
-    )
-    actual, _ = expr.__teal__(options)
-    actual.addIncoming()
-    actual = pt.TealBlock.NormalizeBlocks(actual)
-
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
 
 
 def test_Application_application_id():
