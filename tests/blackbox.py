@@ -121,6 +121,11 @@ def Blackbox(input_types: list[TealType | None]):
     def string_mult(x: abi.String, y):
         ...
 
+    @Blackbox([None])
+    @Subroutine(TealType.uint64)
+    def cubed(n: abi.Uint64):
+        ...
+
     """
 
     def decorator_blackbox(func: SubroutineFnWrapper | ABIReturnSubroutine):
@@ -237,11 +242,11 @@ class PyTealDryRunExecutor:
                 read arg and pass to subroutine as is
             * Expr arg of TealType.uint64:
                 convert arg to int using Btoi() when received
-            * pass-by-ref ScratchVar arguments (Subroutine case only):
+            * pass-by-ref ScratchVar arguments:
                 in addition to the above -
                     o store the arg (or converted arg) in a ScratchVar
                     o invoke the subroutine using this ScratchVar instead of the arg (or converted arg)
-            * ABI arguments (ABIReturnSubroutine case only):
+            * ABI arguments:
                 in addition to the above -
                     o store the decoded arg into the ScratchVar of an ABI Type instance
                     o invoke the subroutine using this ABI Type instead of the arg
