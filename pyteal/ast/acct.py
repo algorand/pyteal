@@ -66,7 +66,7 @@ class AccountParamObject:
         """Create a new AccountParamObject for the given account.
 
         Args:
-            app: An index into Txn.accounts that corresponds to the application to check or an
+            account: An index into Txn.accounts that corresponds to the application to check or an
                 address available at runtime. May evaluate to uint64 or bytes, respectively.
         """
         self._account: Final = account

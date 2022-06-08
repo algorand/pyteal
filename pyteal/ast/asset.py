@@ -68,7 +68,9 @@ class AssetHoldingObject:
                 since v4, an account address that appears in Txn.Accounts or is Txn.Sender (in which
                 case it must evaluate to bytes).
         """
+        require_type(asset, TealType.uint64)
         self._asset: Final = asset
+        require_type(account, TealType.anytype)
         self._account: Final = account
 
     def balance(self) -> MaybeValue:
@@ -307,6 +309,7 @@ class AssetParamObject:
                 corresponds to the asset to check, or since v4, an asset ID that appears in
                 Txn.ForeignAssets. In either case, it must evaluate to uint64.
         """
+        require_type(asset, TealType.uint64)
         self._asset: Final = asset
 
     def total(self) -> MaybeValue:
