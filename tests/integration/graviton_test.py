@@ -829,6 +829,41 @@ def blackbox_pyteal_example4():
     report("lsig")
 
 
+def blackbox_pyteal_example5():
+    from graviton.blackbox import DryRunEncoder
+
+    from pyteal import abi, Subroutine, TealType, Int, Mode
+    from tests.blackbox import Blackbox
+
+    @Blackbox([None])
+    @Subroutine(TealType.uint64)
+    def cubed(n: abi.Uint64):
+        return n.get() ** Int(3)
+
+    app_pytealer = PyTealDryRunExecutor(cubed, Mode.Application)
+    lsig_pytealer = PyTealDryRunExecutor(cubed, Mode.Signature)
+
+    inputs = [[i] for i in range(1, 11)]
+
+    app_inspect = app_pytealer.dryrun_on_sequence(inputs)
+    lsig_inspect = lsig_pytealer.dryrun_on_sequence(inputs)
+
+    for index, inspect in enumerate(app_inspect):
+        input_var = inputs[index][0]
+        assert inspect.stack_top() == input_var**3, inspect.report(
+            args=inputs[index], msg="stack_top() gave unexpected results from app"
+        )
+        assert inspect.last_log() == DryRunEncoder.hex(input_var**3), inspect.report(
+            args=inputs[index], msg="last_log() gave unexpected results from app"
+        )
+
+    for index, inspect in enumerate(lsig_inspect):
+        input_var = inputs[index][0]
+        assert inspect.stack_top() == input_var**3, inspect.report(
+            args=inputs[index], msg="stack_top() gave unexpected results from app"
+        )
+
+
 def blackbox_pyteal_while_continue_test():
     from tests.blackbox import Blackbox
     from pyteal import (
@@ -880,6 +915,7 @@ def blackbox_pyteal_while_continue_test():
         blackbox_pyteal_example2,
         blackbox_pyteal_example3,
         blackbox_pyteal_example4,
+        blackbox_pyteal_example5,
         blackbox_pyteal_while_continue_test,
     ],
 )
