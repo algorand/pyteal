@@ -370,6 +370,7 @@ class AppParamObject:
                 Txn.ForeignApps or is the CurrentApplicationID. In either case, it must evaluate to
                 uint64.
         """
+        require_type(app, TealType.uint64)
         self._app: Final = app
 
     def approval_program(self) -> MaybeValue:
