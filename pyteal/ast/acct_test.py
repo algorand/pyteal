@@ -1,4 +1,5 @@
 import pyteal as pt
+from pyteal.ast.maybe_test import assert_MaybeValue_equality
 
 options = pt.CompileOptions()
 teal4Options = pt.CompileOptions(version=4)
@@ -73,3 +74,23 @@ def test_acct_param_auth_addr_valid():
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+
+def test_AccountParamObject():
+    for account in (
+        pt.Int(7),
+        pt.Addr("QSA6K5MNJPEGO5SDSWXBM3K4UEI3Q2NCPS2OUXVJI5QPCHMVI27MFRSHKI"),
+    ):
+        obj = pt.AccountParamObject(account)
+
+        assert obj._account is account
+
+        assert_MaybeValue_equality(
+            obj.balance(), pt.AccountParam.balance(account), teal6Options
+        )
+        assert_MaybeValue_equality(
+            obj.min_balance(), pt.AccountParam.minBalance(account), teal6Options
+        )
+        assert_MaybeValue_equality(
+            obj.auth_address(), pt.AccountParam.authAddr(account), teal6Options
+        )
