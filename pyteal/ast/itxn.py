@@ -235,6 +235,10 @@ class InnerTxnBuilder:
         apps: List[Expr] = []
         assets: List[Expr] = []
 
+        # Reference types are encoded as a uint8 index into their respective arrays
+        def get_uint8(i):
+            return Suffix(Itob(Int(i)), Int(7))
+
         for idx, arg_ts in enumerate(arg_type_specs):
             arg = args[idx]
 
@@ -256,7 +260,7 @@ class InnerTxnBuilder:
                         else:
                             raise TealTypeError(arg, Union[abi.Account, Expr])
 
-                        app_args.append(Suffix(Itob(Int(len(accts))), Int(7)))
+                        app_args.append(get_uint8(len(accts)))
 
                     case abi.ApplicationTypeSpec():
                         if isinstance(arg, Expr):
@@ -266,11 +270,12 @@ class InnerTxnBuilder:
                         else:
                             raise TealTypeError(arg, Union[abi.Application, Expr])
 
-                        app_args.append(Suffix(Itob(Int(len(apps))), Int(7)))
+                        app_args.append(get_uint8(len(apps)))
 
                     # For assets, add to app_args prior to appending to assets array
                     case abi.AssetTypeSpec():
-                        app_args.append(Suffix(Itob(Int(len(assets))), Int(7)))
+                        app_args.append(get_uint8(len(assets)))
+
                         if isinstance(arg, Expr):
                             assets.append(arg)
                         elif isinstance(arg, abi.Asset):
