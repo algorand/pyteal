@@ -9,6 +9,7 @@ from pyteal import abi
 from pyteal.ast.abi.util import (
     substringForDecoding,
     int_literal_from_annotation,
+    type_spec_from_algosdk,
     type_spec_from_annotation,
 )
 from pyteal.errors import TealInputError
@@ -593,3 +594,11 @@ def test_abi_type_translation(algosdk_abi, abi_string, pyteal_abi_ts, pyteal_abi
     )
     assert algosdk_abi == abi.algosdk_from_type_spec(pyteal_abi_ts)
     assert algosdk_abi == abi.algosdk_from_annotation(pyteal_abi)
+
+
+def test_sdk_abi_translation():
+    for case in ABI_TRANSLATION_TEST_CASES:
+        # Errors are strings in the 0th element
+        if type(case[0]) == str:
+            continue
+        assert type_spec_from_algosdk(case[0]) == case[2]

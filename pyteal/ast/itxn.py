@@ -1,11 +1,12 @@
 from enum import Enum
 from typing import Dict, TYPE_CHECKING, List, Union, cast
+from pyteal.ast.abi.util import type_specs_from_signature
 
 from pyteal.ast.methodsig import MethodSignature
 from pyteal.ast.substring import Suffix
 from pyteal.ast.unaryexpr import Itob
 from pyteal.types import TealType, require_type
-from pyteal.errors import TealInputError, verifyTealVersion
+from pyteal.errors import TealInputError, TealTypeError, verifyTealVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
 from pyteal.ast.txn import TxnField, TxnExprBuilder, TxnType, TxnaExprBuilder, TxnObject
@@ -207,7 +208,7 @@ class InnerTxnBuilder:
 
     @classmethod
     def MethodCall(
-        cls, app_id: Expr, method_signature: str, args: List[abi.BaseType]
+        cls, app_id: Expr, method_signature: str, args: List[Union[abi.BaseType, Expr]]
     ) -> Expr:
 
         # Default, always need these
@@ -216,6 +217,8 @@ class InnerTxnBuilder:
             cls.SetField(TxnField.application_id, app_id),
         ]
 
+        arg_type_specs, return_type_spec = type_specs_from_signature(method_signature)
+
         # We should parse this out to double check args passed?
         app_args: List[Expr] = [MethodSignature(method_signature)]
 
@@ -223,26 +226,41 @@ class InnerTxnBuilder:
         apps: List[Expr] = []
         assets: List[Expr] = []
 
-        for arg in args:
-            # If its a reference type, add it to relevant array
-            # Add appropriate index to
-            if arg.type_spec() in abi.ReferenceTypeSpecs:
-                match arg:
+        for idx, arg_ts in enumerate(arg_type_specs):
+            arg = args[idx]
+
+            if arg_ts in abi.ReferenceTypeSpecs:
+                match arg_ts:
                     # For both acct and application, add index to
                     # app args _after_ appending since 0 is implicitly set
-                    case abi.Account():
-                        # TODO: "my" app account?
-                        accts.append(arg.deref())
+                    case abi.AccountTypeSpec():
+                        if isinstance(arg, Expr):
+                            accts.append(arg)
+                        elif isinstance(arg, abi.Account):
+                            accts.append(arg.deref())
+                        else:
+                            raise TealTypeError(arg, Union[abi.Account, Expr])
                         app_args.append(Suffix(Itob(Int(len(accts))), Int(7)))
-                    case abi.Application():
-                        # TODO: "me" as app?
-                        apps.append(arg.deref())
+                    case abi.ApplicationTypeSpec():
+                        if isinstance(arg, Expr):
+                            apps.append(arg)
+                        elif isinstance(arg, abi.Application):
+                            apps.append(arg.deref())
+                        else:
+                            raise TealTypeError(arg, Union[abi.Application, Expr])
+
                         app_args.append(Suffix(Itob(Int(len(apps))), Int(7)))
 
                     # For assets, add to app_args prior to appending to assets array
-                    case abi.Asset():
+                    case abi.AssetTypeSpec():
                         app_args.append(Suffix(Itob(Int(len(assets))), Int(7)))
-                        assets.append(arg.deref())
+                        if isinstance(arg, Expr):
+                            assets.append(arg)
+                        elif isinstance(arg, abi.Application):
+                            assets.append(arg.deref())
+                        else:
+                            raise TealTypeError(arg, Union[abi.Asset, Expr])
+
             else:
                 app_args.append(arg.encode())
 
