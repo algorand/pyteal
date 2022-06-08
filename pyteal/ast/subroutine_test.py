@@ -240,7 +240,7 @@ def test_abi_subroutine_definition():
 def test_subroutine_return_reference():
     @ABIReturnSubroutine
     def invalid_ret_type(*, output: pt.abi.Account):
-        return output.set(0)
+        return output.decode(pt.Bytes(b"\x00"))
 
     with pytest.raises(pt.TealInputError):
         invalid_ret_type.method_signature()
