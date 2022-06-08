@@ -95,7 +95,7 @@ def user_guide_snippet_ABIReturnSubroutine():
             Txn.application_args[1]
         ),
         (res := abi.Uint64()).set(abi_sum(to_sum_arr)),
-        abi.MethodReturn(res),
+        pt.MethodReturn(res),
         Int(1),
     )
     # --- END doc-comment --- #
