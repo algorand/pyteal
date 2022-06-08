@@ -379,7 +379,7 @@ class AppParamObject:
     def clear_state_program(self) -> MaybeValue:
         return AppParam.clearStateProgram(self._app)
 
-    def global_num_unit(self) -> MaybeValue:
+    def global_num_uint(self) -> MaybeValue:
         """Get the number of uint64 values allowed in Global State for the application."""
         return AppParam.globalNumUnit(self._app)
 
@@ -387,7 +387,7 @@ class AppParamObject:
         """Get the number of byte array values allowed in Global State for the application."""
         return AppParam.globalNumByteSlice(self._app)
 
-    def local_num_unit(self) -> MaybeValue:
+    def local_num_uint(self) -> MaybeValue:
         """Get the number of uint64 values allowed in Local State for the application."""
         return AppParam.localNumUnit(self._app)
 
