@@ -262,7 +262,6 @@ class InnerTxnBuilder:
                             assets.append(arg.asset_id())
                         else:
                             raise TealTypeError(arg, Union[abi.Asset, Expr])
-
             else:
                 if isinstance(arg, Expr):
                     app_args.append(arg)
@@ -270,8 +269,6 @@ class InnerTxnBuilder:
                     app_args.append(arg.encode())
                 else:
                     raise TealTypeError(arg, Union[abi.Asset, Expr])
-
-        fieldsToSet.append(cls.SetField(TxnField.application_args, app_args))
 
         if len(accts) > 0:
             fieldsToSet.append(cls.SetField(TxnField.accounts, accts))
@@ -281,6 +278,8 @@ class InnerTxnBuilder:
 
         if len(assets) > 0:
             fieldsToSet.append(cls.SetField(TxnField.assets, assets))
+
+        fieldsToSet.append(cls.SetField(TxnField.application_args, app_args))
 
         return Seq(fieldsToSet)
 
