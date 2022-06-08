@@ -212,6 +212,7 @@ class InnerTxnBuilder:
         app_id: Expr,
         method_signature: str,
         args: List[Union[abi.BaseType, Expr, Dict[TxnField, Union[Expr, List[Expr]]]]],
+        fields: Dict[TxnField, Union[Expr, List[Expr]]],
     ) -> Expr:
 
         # Default, always need these
@@ -300,7 +301,8 @@ class InnerTxnBuilder:
             # Add the transactions first
             *[Seq(ttp, InnerTxnBuilder.Next()) for ttp in txns_to_pass],
             # Set the fields for the app call
-            *fields_to_set
+            *fields_to_set,
+            InnerTxnBuilder.SetFields(fields)
         )
 
 
