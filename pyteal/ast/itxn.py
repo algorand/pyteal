@@ -226,7 +226,7 @@ class InnerTxnBuilder:
         # Start app args with the method selector
         app_args: List[Expr] = [MethodSignature(method_signature)]
 
-        # Transactions are not included in the App Call 
+        # Transactions are not included in the App Call
         txns_to_pass: List[Expr] = []
 
         # Reference Types are treated specially
@@ -240,10 +240,7 @@ class InnerTxnBuilder:
             if arg_ts in abi.TransactionTypeSpecs:
                 # Transaction types should be added to the group transaction as they're seen
                 if isinstance(arg, Dict):
-                    txns_to_pass.append(Seq(
-                        InnerTxnBuilder.SetFields(arg),
-                        InnerTxnBuilder.Next()
-                    ))
+                    txns_to_pass.append(InnerTxnBuilder.SetFields(arg))
                 else:
                     raise TealTypeError(arg, Dict[TxnField, Union[Expr, List[Expr]]])
 
@@ -299,7 +296,12 @@ class InnerTxnBuilder:
 
         fields_to_set.append(cls.SetField(TxnField.application_args, app_args))
 
-        return Seq(*txns_to_pass, *fields_to_set)
+        return Seq(
+            # Add the transactions first
+            *[Seq(ttp, InnerTxnBuilder.Next()) for ttp in txns_to_pass],
+            # Set the fields for the app call
+            *fields_to_set
+        )
 
 
 InnerTxnBuilder.__module__ = "pyteal"
