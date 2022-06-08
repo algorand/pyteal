@@ -209,6 +209,7 @@ class InnerTxnBuilder:
     @classmethod
     def MethodCall(
         cls,
+        *,
         app_id: Expr,
         method_signature: str,
         args: List[Union[abi.BaseType, Expr, Dict[TxnField, Union[Expr, List[Expr]]]]],
@@ -235,7 +236,8 @@ class InnerTxnBuilder:
         apps: List[Expr] = []
         assets: List[Expr] = []
 
-        # Reference types are encoded as a uint8 index into their respective arrays
+        # Reference types are encoded as a uint8 index into
+        # their respective arrays
         def get_uint8(i):
             return Suffix(Itob(Int(i)), Int(7))
 
@@ -306,7 +308,7 @@ class InnerTxnBuilder:
             *[Seq(ttp, InnerTxnBuilder.Next()) for ttp in txns_to_pass],
             # Set the fields for the app call
             *fields_to_set,
-            InnerTxnBuilder.SetFields(fields)
+            InnerTxnBuilder.SetFields(fields),
         )
 
 
