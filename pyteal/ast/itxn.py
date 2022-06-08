@@ -208,20 +208,28 @@ class InnerTxnBuilder:
 
     @classmethod
     def MethodCall(
-        cls, app_id: Expr, method_signature: str, args: List[Union[abi.BaseType, Expr]]
+        cls,
+        app_id: Expr,
+        method_signature: str,
+        args: List[Union[abi.BaseType, Expr, Dict[TxnField, Union[Expr, List[Expr]]]]],
     ) -> Expr:
 
         # Default, always need these
-        fieldsToSet = [
+        fields_to_set = [
             cls.SetField(TxnField.type_enum, TxnType.ApplicationCall),
             cls.SetField(TxnField.application_id, app_id),
         ]
 
-        arg_type_specs, return_type_spec = type_specs_from_signature(method_signature)
+        # We only care about the args
+        arg_type_specs, _ = type_specs_from_signature(method_signature)
 
-        # We should parse this out to double check args passed?
+        # Start app args with the method selector
         app_args: List[Expr] = [MethodSignature(method_signature)]
 
+        # Transactions are not included in the App Call 
+        txns_to_pass: List[Expr] = []
+
+        # Reference Types are treated specially
         accts: List[Expr] = []
         apps: List[Expr] = []
         assets: List[Expr] = []
@@ -229,7 +237,17 @@ class InnerTxnBuilder:
         for idx, arg_ts in enumerate(arg_type_specs):
             arg = args[idx]
 
-            if arg_ts in abi.ReferenceTypeSpecs:
+            if arg_ts in abi.TransactionTypeSpecs:
+                # Transaction types should be added to the group transaction as they're seen
+                if isinstance(arg, Dict):
+                    txns_to_pass.append(Seq(
+                        InnerTxnBuilder.SetFields(arg),
+                        InnerTxnBuilder.Next()
+                    ))
+                else:
+                    raise TealTypeError(arg, Dict[TxnField, Union[Expr, List[Expr]]])
+
+            elif arg_ts in abi.ReferenceTypeSpecs:
                 match arg_ts:
                     # For both acct and application, add index to
                     # app args _after_ appending since 0 is implicitly set
@@ -271,17 +289,17 @@ class InnerTxnBuilder:
                     raise TealTypeError(arg, Union[abi.Asset, Expr])
 
         if len(accts) > 0:
-            fieldsToSet.append(cls.SetField(TxnField.accounts, accts))
+            fields_to_set.append(cls.SetField(TxnField.accounts, accts))
 
         if len(apps) > 0:
-            fieldsToSet.append(cls.SetField(TxnField.applications, apps))
+            fields_to_set.append(cls.SetField(TxnField.applications, apps))
 
         if len(assets) > 0:
-            fieldsToSet.append(cls.SetField(TxnField.assets, assets))
+            fields_to_set.append(cls.SetField(TxnField.assets, assets))
 
-        fieldsToSet.append(cls.SetField(TxnField.application_args, app_args))
+        fields_to_set.append(cls.SetField(TxnField.application_args, app_args))
 
-        return Seq(fieldsToSet)
+        return Seq(*txns_to_pass, *fields_to_set)
 
 
 InnerTxnBuilder.__module__ = "pyteal"
