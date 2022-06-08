@@ -2032,7 +2032,7 @@ def test_compile_abi_subroutine_return():
             pt.Txn.application_args[1]
         ),
         (res := pt.abi.Uint64()).set(abi_sum(to_sum_arr)),
-        pt.abi.MethodReturn(res),
+        pt.MethodReturn(res),
         pt.Approve(),
     )
 
@@ -2113,7 +2113,7 @@ retsub
     program_cond_factorial = pt.Seq(
         (factor := pt.abi.Uint64()).decode(pt.Txn.application_args[1]),
         (res := pt.abi.Uint64()).set(conditional_factorial(factor)),
-        pt.abi.MethodReturn(res),
+        pt.MethodReturn(res),
         pt.Approve(),
     )
 

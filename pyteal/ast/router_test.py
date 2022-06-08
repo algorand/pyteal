@@ -518,7 +518,7 @@ def test_wrap_handler_method_call():
             output_temp = abi_subroutine.output_kwarg_info.abi_type.new_instance()
             evaluate = pt.Seq(
                 abi_subroutine(*args).store_into(output_temp),
-                pt.abi.MethodReturn(output_temp),
+                pt.MethodReturn(output_temp),
             )
         else:
             evaluate = abi_subroutine(*args)
@@ -548,7 +548,7 @@ def test_wrap_handler_method_txn_types():
         args[1].set(pt.Txn.group_index() - pt.Int(2)),
         args[2].set(pt.Txn.group_index() - pt.Int(1)),
         multiple_txn(*args).store_into(output_temp),
-        pt.abi.MethodReturn(output_temp),
+        pt.MethodReturn(output_temp),
         pt.Approve(),
     )
 
@@ -595,7 +595,7 @@ def test_wrap_handler_method_call_many_args():
         last_arg[4].store_into(args[18]),
         last_arg[5].store_into(args[19]),
         many_args(*args).store_into(output_temp),
-        pt.abi.MethodReturn(output_temp),
+        pt.MethodReturn(output_temp),
         pt.Approve(),
     )
     expected = assemble_helper(expected_ast)
