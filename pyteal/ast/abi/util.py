@@ -5,7 +5,6 @@ from typing import (
     Literal,
     List,
     Union,
-    Tuple,
     get_origin,
     get_args,
     cast,
@@ -397,7 +396,6 @@ def type_spec_from_algosdk(t: Union[algosdk.abi.ABIType, str]) -> TypeSpec:
     from pyteal.ast.abi.reference_type import ReferenceTypeSpecs
     from pyteal.ast.abi.transaction import TransactionTypeSpecs
 
-    from pyteal.ast.abi.array_base import ArrayTypeSpec
     from pyteal.ast.abi.array_dynamic import DynamicArrayTypeSpec
     from pyteal.ast.abi.array_static import StaticArrayTypeSpec
     from pyteal.ast.abi.tuple import TupleTypeSpec
@@ -437,14 +435,15 @@ def type_spec_from_algosdk(t: Union[algosdk.abi.ABIType, str]) -> TypeSpec:
         case algosdk.abi.ABIType():
             match t:
                 case algosdk.abi.ArrayDynamicType():
-                    cts = type_spec_from_algosdk(t.child_type)
-                    return DynamicArrayTypeSpec(cts)
+                    return DynamicArrayTypeSpec(type_spec_from_algosdk(t.child_type))
                 case algosdk.abi.ArrayStaticType():
-                    cts = type_spec_from_algosdk(t.child_type)
-                    return StaticArrayTypeSpec(cts, t.static_length)
+                    return StaticArrayTypeSpec(
+                        type_spec_from_algosdk(t.child_type), t.static_length
+                    )
                 case algosdk.abi.TupleType():
-                    cts = [type_spec_from_algosdk(ct) for ct in t.child_types]
-                    return TupleTypeSpec(*cts)
+                    return TupleTypeSpec(
+                        *[type_spec_from_algosdk(ct) for ct in t.child_types]
+                    )
                 case algosdk.abi.UintType():
                     match t.bit_size:
                         case 8:
@@ -469,7 +468,7 @@ def type_spec_from_algosdk(t: Union[algosdk.abi.ABIType, str]) -> TypeSpec:
     raise TealInputError(f"Invalid Type: {t}")
 
 
-def type_specs_from_signature(sig: str) -> Tuple[List[TypeSpec], TypeSpec]:
+def type_specs_from_signature(sig: str) -> tuple[List[TypeSpec], TypeSpec]:
     sdk_method = algosdk.abi.Method.from_signature(sig)
     return [
         type_spec_from_algosdk(arg.type) for arg in sdk_method.args

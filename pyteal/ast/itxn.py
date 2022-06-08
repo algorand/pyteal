@@ -237,15 +237,17 @@ class InnerTxnBuilder:
                         if isinstance(arg, Expr):
                             accts.append(arg)
                         elif isinstance(arg, abi.Account):
-                            accts.append(arg.deref())
+                            accts.append(arg.address())
                         else:
                             raise TealTypeError(arg, Union[abi.Account, Expr])
+
                         app_args.append(Suffix(Itob(Int(len(accts))), Int(7)))
+
                     case abi.ApplicationTypeSpec():
                         if isinstance(arg, Expr):
                             apps.append(arg)
                         elif isinstance(arg, abi.Application):
-                            apps.append(arg.deref())
+                            apps.append(arg.application_id())
                         else:
                             raise TealTypeError(arg, Union[abi.Application, Expr])
 
@@ -256,13 +258,18 @@ class InnerTxnBuilder:
                         app_args.append(Suffix(Itob(Int(len(assets))), Int(7)))
                         if isinstance(arg, Expr):
                             assets.append(arg)
-                        elif isinstance(arg, abi.Application):
-                            assets.append(arg.deref())
+                        elif isinstance(arg, abi.Asset):
+                            assets.append(arg.asset_id())
                         else:
                             raise TealTypeError(arg, Union[abi.Asset, Expr])
 
             else:
-                app_args.append(arg.encode())
+                if isinstance(arg, Expr):
+                    app_args.append(arg)
+                elif isinstance(arg, abi.BaseType):
+                    app_args.append(arg.encode())
+                else:
+                    raise TealTypeError(arg, Union[abi.Asset, Expr])
 
         fieldsToSet.append(cls.SetField(TxnField.application_args, app_args))
 
