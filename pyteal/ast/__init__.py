@@ -24,9 +24,14 @@ from pyteal.ast.gaid import GeneratedID
 from pyteal.ast.gitxn import Gitxn, GitxnExpr, GitxnaExpr, InnerTxnGroup
 from pyteal.ast.gload import ImportScratchValue
 from pyteal.ast.global_ import Global, GlobalField
-from pyteal.ast.app import App, AppField, OnComplete, AppParam
-from pyteal.ast.asset import AssetHolding, AssetParam
-from pyteal.ast.acct import AccountParam
+from pyteal.ast.app import App, AppField, OnComplete, AppParam, AppParamObject
+from pyteal.ast.asset import (
+    AssetHolding,
+    AssetHoldingObject,
+    AssetParam,
+    AssetParamObject,
+)
+from pyteal.ast.acct import AccountParam, AccountParamObject
 
 # inner txns
 from pyteal.ast.itxn import InnerTxnBuilder, InnerTxn, InnerTxnAction
@@ -180,9 +185,13 @@ __all__ = [
     "AppField",
     "OnComplete",
     "AppParam",
+    "AppParamObject",
     "AssetHolding",
+    "AssetHoldingObject",
     "AssetParam",
+    "AssetParamObject",
     "AccountParam",
+    "AccountParamObject",
     "InnerTxnBuilder",
     "InnerTxn",
     "InnerTxnAction",
