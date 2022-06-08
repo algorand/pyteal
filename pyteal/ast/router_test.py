@@ -372,6 +372,7 @@ def test_method_config():
                     pt.Or(*list_of_expressions)
                 )
 
+
 def test_on_complete_action():
     with pytest.raises(pt.TealInputError) as contradict_err:
         pt.OnCompleteAction(action=pt.Seq(), call_config=pt.CallConfig.NEVER)
