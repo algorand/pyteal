@@ -239,11 +239,10 @@ class InnerTxnBuilder:
             arg = args[idx]
 
             if arg_ts in abi.TransactionTypeSpecs:
-                # Transaction types should be added to the group transaction as they're seen
-                if isinstance(arg, Dict):
-                    txns_to_pass.append(InnerTxnBuilder.SetFields(arg))
-                else:
+                if not isinstance(arg, Dict):
                     raise TealTypeError(arg, Dict[TxnField, Union[Expr, List[Expr]]])
+
+                txns_to_pass.append(InnerTxnBuilder.SetFields(arg))
 
             elif arg_ts in abi.ReferenceTypeSpecs:
                 match arg_ts:
@@ -284,7 +283,7 @@ class InnerTxnBuilder:
                 elif isinstance(arg, abi.BaseType):
                     app_args.append(arg.encode())
                 else:
-                    raise TealTypeError(arg, Union[abi.Asset, Expr])
+                    raise TealTypeError(arg, Union[abi.BaseType, Expr])
 
         if len(accts) > 0:
             fields_to_set.append(cls.SetField(TxnField.accounts, accts))
