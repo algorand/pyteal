@@ -1,6 +1,5 @@
 from typing import (
     Any,
-    List,
     Literal,
     Sequence,
     TypeVar,

@@ -223,6 +223,7 @@ class InnerTxnBuilder:
         ]
 
         # We only care about the args
+        arg_type_specs: list[abi.TypeSpec]
         arg_type_specs, _ = type_specs_from_signature(method_signature)
 
         # Start app args with the method selector
