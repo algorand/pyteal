@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, TYPE_CHECKING, List, Union, cast
+from typing import TYPE_CHECKING, cast
 from pyteal.ast.abi.util import type_specs_from_signature
 
 from pyteal.ast.methodsig import MethodSignature
@@ -141,7 +141,7 @@ class InnerTxnBuilder:
         return InnerTxnActionExpr(InnerTxnAction.Submit)
 
     @classmethod
-    def SetField(cls, field: TxnField, value: Union[Expr, List[Expr]]) -> Expr:
+    def SetField(cls, field: TxnField, value: Expr | list[Expr]) -> Expr:
         """Set a field of the current inner transaction.
 
         :any:`InnerTxnBuilder.Begin` must be called before setting any fields on an inner
@@ -187,7 +187,7 @@ class InnerTxnBuilder:
             )
 
     @classmethod
-    def SetFields(cls, fields: dict[TxnField, Expr | List[Expr]]) -> Expr:
+    def SetFields(cls, fields: dict[TxnField, Expr | list[Expr]]) -> Expr:
         """Set multiple fields of the current inner transaction.
 
         :any:`InnerTxnBuilder.Begin` must be called before setting any fields on an inner
@@ -213,7 +213,7 @@ class InnerTxnBuilder:
         app_id: Expr,
         method_signature: str,
         args: list[abi.BaseType | Expr | dict[TxnField, Expr | list[Expr]]],
-        fields: Dict[TxnField, Union[Expr, List[Expr]]],
+        fields: dict[TxnField, Expr | list[Expr]],
     ) -> Expr:
 
         # Default, always need these
@@ -247,7 +247,7 @@ class InnerTxnBuilder:
 
             if arg_ts in abi.TransactionTypeSpecs:
                 if not isinstance(arg, dict):
-                    raise TealTypeError(arg, Dict[TxnField, Union[Expr, List[Expr]]])
+                    raise TealTypeError(arg, dict[TxnField, Expr | list[Expr]])
 
                 txns_to_pass.append(InnerTxnBuilder.SetFields(arg))
 
@@ -261,7 +261,7 @@ class InnerTxnBuilder:
                         elif isinstance(arg, abi.Account):
                             accts.append(arg.address())
                         else:
-                            raise TealTypeError(arg, Union[abi.Account, Expr])
+                            raise TealTypeError(arg, abi.Account | Expr)
 
                         app_args.append(get_uint8(len(accts)))
 
@@ -271,7 +271,7 @@ class InnerTxnBuilder:
                         elif isinstance(arg, abi.Application):
                             apps.append(arg.application_id())
                         else:
-                            raise TealTypeError(arg, Union[abi.Application, Expr])
+                            raise TealTypeError(arg, abi.Application | Expr)
 
                         app_args.append(get_uint8(len(apps)))
 
@@ -284,14 +284,14 @@ class InnerTxnBuilder:
                         elif isinstance(arg, abi.Asset):
                             assets.append(arg.asset_id())
                         else:
-                            raise TealTypeError(arg, Union[abi.Asset, Expr])
+                            raise TealTypeError(arg, abi.Asset | Expr)
             else:
                 if isinstance(arg, Expr):
                     app_args.append(arg)
                 elif isinstance(arg, abi.BaseType):
                     app_args.append(arg.encode())
                 else:
-                    raise TealTypeError(arg, Union[abi.BaseType, Expr])
+                    raise TealTypeError(arg, abi.BaseType | Expr)
 
         if len(accts) > 0:
             fields_to_set.append(cls.SetField(TxnField.accounts, accts))
