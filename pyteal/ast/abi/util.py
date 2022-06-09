@@ -1,6 +1,7 @@
 from typing import (
     Any,
     Literal,
+    Optional,
     Sequence,
     TypeVar,
     Union,
@@ -412,9 +413,6 @@ def type_spec_from_algosdk(t: Union[algosdk.abi.ABIType, str]) -> TypeSpec:
     match t:
         # Currently reference and transaction types are only strings
         case str():
-            if t == "void":
-                return None
-
             if algosdk.abi.is_abi_reference_type(t):
                 ref_dict: dict[str, TypeSpec] = {
                     str(rts): rts for rts in ReferenceTypeSpecs
@@ -471,8 +469,11 @@ def type_spec_from_algosdk(t: Union[algosdk.abi.ABIType, str]) -> TypeSpec:
     raise TealInputError(f"Invalid Type: {t}")
 
 
-def type_specs_from_signature(sig: str) -> tuple[list[TypeSpec], TypeSpec]:
+def type_specs_from_signature(sig: str) -> tuple[list[TypeSpec], Optional[TypeSpec]]:
     sdk_method = algosdk.abi.Method.from_signature(sig)
-    return [
-        type_spec_from_algosdk(arg.type) for arg in sdk_method.args
-    ], type_spec_from_algosdk(sdk_method.returns.type)
+
+    return_type = None
+    if sdk_method.returns.type != "void":
+        return_type = type_spec_from_algosdk(sdk_method.returns.type)
+
+    return [type_spec_from_algosdk(arg.type) for arg in sdk_method.args], return_type
