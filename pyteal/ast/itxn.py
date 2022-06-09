@@ -212,7 +212,7 @@ class InnerTxnBuilder:
         *,
         app_id: Expr,
         method_signature: str,
-        args: List[Union[abi.BaseType, Expr, Dict[TxnField, Union[Expr, List[Expr]]]]],
+        args: list[abi.BaseType | Expr | dict[TxnField, (Expr | list[Expr])]]]],
         fields: Dict[TxnField, Union[Expr, List[Expr]]],
     ) -> Expr:
 
