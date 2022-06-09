@@ -226,15 +226,15 @@ class InnerTxnBuilder:
         arg_type_specs, _ = type_specs_from_signature(method_signature)
 
         # Start app args with the method selector
-        app_args: List[Expr] = [MethodSignature(method_signature)]
+        app_args: list[Expr] = [MethodSignature(method_signature)]
 
         # Transactions are not included in the App Call
-        txns_to_pass: List[Expr] = []
+        txns_to_pass: list[Expr] = []
 
         # Reference Types are treated specially
-        accts: List[Expr] = []
-        apps: List[Expr] = []
-        assets: List[Expr] = []
+        accts: list[Expr] = []
+        apps: list[Expr] = []
+        assets: list[Expr] = []
 
         # Reference types are encoded as a uint8 index into
         # their respective arrays
