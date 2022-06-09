@@ -307,8 +307,9 @@ class InnerTxnBuilder:
         return Seq(
             # Add the transactions first
             *[Seq(ttp, InnerTxnBuilder.Next()) for ttp in txns_to_pass],
-            # Set the fields for the app call
+            # Set the fields for the app call in app args and foreign arrays
             *fields_to_set,
+            # Add any remaining fields specified by the user
             InnerTxnBuilder.SetFields(fields),
         )
 
