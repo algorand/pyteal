@@ -245,7 +245,7 @@ class InnerTxnBuilder:
             arg = args[idx]
 
             if arg_ts in abi.TransactionTypeSpecs:
-                if not isinstance(arg, Dict):
+                if not isinstance(arg, dict):
                     raise TealTypeError(arg, Dict[TxnField, Union[Expr, List[Expr]]])
 
                 txns_to_pass.append(InnerTxnBuilder.SetFields(arg))
