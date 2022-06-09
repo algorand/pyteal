@@ -11,6 +11,7 @@ from pyteal.ast.abi.util import (
     int_literal_from_annotation,
     type_spec_from_algosdk,
     type_spec_from_annotation,
+    type_specs_from_signature,
 )
 from pyteal.errors import TealInputError
 
@@ -553,6 +554,62 @@ ABI_TRANSLATION_TEST_CASES = [
     ),
 ]
 
+ABI_SIGNATURE_TYPESPEC_CASES = [
+    (
+        "check(uint64,uint64)uint64",
+        [abi.Uint64TypeSpec(), abi.Uint64TypeSpec()],
+        abi.Uint64TypeSpec(),
+    ),
+    (
+        "check(uint64[],uint64)uint64",
+        [abi.DynamicArrayTypeSpec(abi.Uint64TypeSpec()), abi.Uint64TypeSpec()],
+        abi.Uint64TypeSpec(),
+    ),
+    (
+        "check(uint64[5],uint64)uint64",
+        [abi.StaticArrayTypeSpec(abi.Uint64TypeSpec(), 5), abi.Uint64TypeSpec()],
+        abi.Uint64TypeSpec(),
+    ),
+    (
+        "check(uint64,uint64)uint64[]",
+        [abi.Uint64TypeSpec(), abi.Uint64TypeSpec()],
+        abi.DynamicArrayTypeSpec(abi.Uint64TypeSpec()),
+    ),
+    (
+        "check(uint64,uint64)uint64[5]",
+        [abi.Uint64TypeSpec(), abi.Uint64TypeSpec()],
+        abi.StaticArrayTypeSpec(abi.Uint64TypeSpec(), 5),
+    ),
+    (
+        "check((uint64,uint64),asset)string",
+        [
+            abi.TupleTypeSpec(abi.Uint64TypeSpec(), abi.Uint64TypeSpec()),
+            abi.AssetTypeSpec(),
+        ],
+        abi.StringTypeSpec(),
+    ),
+    (
+        "check(string,asset)(uint64,uint64)",
+        [abi.StringTypeSpec(), abi.AssetTypeSpec()],
+        abi.TupleTypeSpec(abi.Uint64TypeSpec(), abi.Uint64TypeSpec()),
+    ),
+    (
+        "check(account,asset,application)string",
+        [abi.AccountTypeSpec(), abi.AssetTypeSpec(), abi.ApplicationTypeSpec()],
+        abi.StringTypeSpec(),
+    ),
+    (
+        "check(pay,txn,appl)string",
+        [
+            abi.PaymentTransactionTypeSpec(),
+            abi.TransactionTypeSpec(),
+            abi.ApplicationCallTransactionTypeSpec(),
+        ],
+        abi.StringTypeSpec(),
+    ),
+    # ("check(uint64,uint64)void", [abi.Uint64TypeSpec(), abi.Uint64TypeSpec()], "void"),
+]
+
 
 @pytest.mark.parametrize(
     "algosdk_abi, abi_string, pyteal_abi_ts, pyteal_abi", ABI_TRANSLATION_TEST_CASES
@@ -602,3 +659,10 @@ def test_sdk_abi_translation(case):
     if type(case[0]) is str:
         return
     assert type_spec_from_algosdk(case[0]) == case[2]
+
+
+@pytest.mark.parametrize("sig_str, sig_args, sig_rets", ABI_SIGNATURE_TYPESPEC_CASES)
+def test_sdk_type_specs_from_signature(sig_str, sig_args, sig_rets):
+    args, ret = type_specs_from_signature(sig_str)
+    assert args == sig_args
+    assert ret == sig_rets
