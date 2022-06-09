@@ -187,7 +187,7 @@ class InnerTxnBuilder:
             )
 
     @classmethod
-    def SetFields(cls, fields: Dict[TxnField, Union[Expr, List[Expr]]]) -> Expr:
+    def SetFields(cls, fields: dict[TxnField, Expr | List[Expr]]) -> Expr:
         """Set multiple fields of the current inner transaction.
 
         :any:`InnerTxnBuilder.Begin` must be called before setting any fields on an inner
@@ -212,7 +212,7 @@ class InnerTxnBuilder:
         *,
         app_id: Expr,
         method_signature: str,
-        args: list[abi.BaseType | Expr | dict[TxnField, (Expr | list[Expr])]]]],
+        args: list[abi.BaseType | Expr | dict[TxnField, Expr | list[Expr]]],
         fields: Dict[TxnField, Union[Expr, List[Expr]]],
     ) -> Expr:
 

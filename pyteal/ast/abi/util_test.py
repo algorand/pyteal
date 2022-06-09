@@ -598,7 +598,7 @@ def test_abi_type_translation(algosdk_abi, abi_string, pyteal_abi_ts, pyteal_abi
 
 @pytest.mark.parametrize("case", ABI_TRANSLATION_TEST_CASES)
 def test_sdk_abi_translation(case):
-        # Errors are strings in the 0th element
-        if type(case[0]) == str:
-            continue
-        assert type_spec_from_algosdk(case[0]) == case[2]
+    # Errors are strings in the 0th element
+    if type(case[0]) == str:
+        continue
+    assert type_spec_from_algosdk(case[0]) == case[2]
