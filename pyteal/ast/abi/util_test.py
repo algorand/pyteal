@@ -596,8 +596,8 @@ def test_abi_type_translation(algosdk_abi, abi_string, pyteal_abi_ts, pyteal_abi
     assert algosdk_abi == abi.algosdk_from_annotation(pyteal_abi)
 
 
-def test_sdk_abi_translation():
-    for case in ABI_TRANSLATION_TEST_CASES:
+@pytest.mark.parametrize("case", ABI_TRANSLATION_TEST_CASES)
+def test_sdk_abi_translation(case):
         # Errors are strings in the 0th element
         if type(case[0]) == str:
             continue
