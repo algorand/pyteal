@@ -1,13 +1,13 @@
 from typing import (
+    Any,
+    List,
+    Literal,
     Sequence,
     TypeVar,
-    Any,
-    Literal,
-    List,
     Union,
-    get_origin,
-    get_args,
     cast,
+    get_args,
+    get_origin,
 )
 
 import algosdk.abi
