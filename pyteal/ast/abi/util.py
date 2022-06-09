@@ -469,7 +469,7 @@ def type_spec_from_algosdk(t: Union[algosdk.abi.ABIType, str]) -> TypeSpec:
     raise TealInputError(f"Invalid Type: {t}")
 
 
-def type_specs_from_signature(sig: str) -> tuple[List[TypeSpec], TypeSpec]:
+def type_specs_from_signature(sig: str) -> tuple[list[TypeSpec], TypeSpec]:
     sdk_method = algosdk.abi.Method.from_signature(sig)
     return [
         type_spec_from_algosdk(arg.type) for arg in sdk_method.args
