@@ -607,7 +607,7 @@ ABI_SIGNATURE_TYPESPEC_CASES = [
         ],
         abi.StringTypeSpec(),
     ),
-    # ("check(uint64,uint64)void", [abi.Uint64TypeSpec(), abi.Uint64TypeSpec()], "void"),
+    ("check(uint64,uint64)void", [abi.Uint64TypeSpec(), abi.Uint64TypeSpec()], None),
 ]
 
 

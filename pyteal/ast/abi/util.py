@@ -412,8 +412,8 @@ def type_spec_from_algosdk(t: Union[algosdk.abi.ABIType, str]) -> TypeSpec:
     match t:
         # Currently reference and transaction types are only strings
         case str():
-            # if t == "void":
-            #    return "void"
+            if t == "void":
+                return None
 
             if algosdk.abi.is_abi_reference_type(t):
                 ref_dict: dict[str, TypeSpec] = {
