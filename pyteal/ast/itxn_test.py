@@ -194,9 +194,9 @@ def test_InnerTxnBuilder_method_call():
                         pt.TxnField.assets: [pt.abi.Asset().asset_id()],
                         pt.TxnField.application_args: [
                             pt.MethodSignature("add(application,asset,account)void"),
-                            pt.Suffix(pt.Itob(pt.Int(1)), pt.Int(7)),
-                            pt.Suffix(pt.Itob(pt.Int(0)), pt.Int(7)),
-                            pt.Suffix(pt.Itob(pt.Int(1)), pt.Int(7)),
+                            pt.SetByte(pt.Bytes(b"\x00"), pt.Int(0), pt.Int(1)),
+                            pt.SetByte(pt.Bytes(b"\x00"), pt.Int(0), pt.Int(0)),
+                            pt.SetByte(pt.Bytes(b"\x00"), pt.Int(0), pt.Int(1)),
                         ],
                         pt.TxnField.fee: pt.Int(0),
                     }

@@ -1,10 +1,9 @@
 from enum import Enum
 from typing import TYPE_CHECKING, cast
+from pyteal.ast.abi.uint import uint_encode
 from pyteal.ast.abi.util import type_specs_from_signature
 
 from pyteal.ast.methodsig import MethodSignature
-from pyteal.ast.substring import Suffix
-from pyteal.ast.unaryexpr import Itob
 from pyteal.types import TealType, require_type
 from pyteal.errors import TealInputError, TealTypeError, verifyTealVersion
 from pyteal.ir import TealOp, Op, TealBlock
@@ -237,11 +236,6 @@ class InnerTxnBuilder:
         apps: list[Expr] = []
         assets: list[Expr] = []
 
-        # Reference types are encoded as a uint8 index into
-        # their respective arrays
-        def get_uint8(i):
-            return Suffix(Itob(Int(i)), Int(7))
-
         for idx, arg_ts in enumerate(arg_type_specs):
             arg = args[idx]
 
@@ -263,7 +257,7 @@ class InnerTxnBuilder:
                         else:
                             raise TealTypeError(arg, abi.Account | Expr)
 
-                        app_args.append(get_uint8(len(accts)))
+                        app_args.append(uint_encode(8, Int(len(accts))))
 
                     case abi.ApplicationTypeSpec():
                         if isinstance(arg, Expr):
@@ -273,11 +267,11 @@ class InnerTxnBuilder:
                         else:
                             raise TealTypeError(arg, abi.Application | Expr)
 
-                        app_args.append(get_uint8(len(apps)))
+                        app_args.append(uint_encode(8, Int(len(apps))))
 
                     # For assets, add to app_args prior to appending to assets array
                     case abi.AssetTypeSpec():
-                        app_args.append(get_uint8(len(assets)))
+                        app_args.append(uint_encode(8, Int(len(assets))))
 
                         if isinstance(arg, Expr):
                             assets.append(arg)
