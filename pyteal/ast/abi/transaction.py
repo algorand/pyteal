@@ -86,8 +86,8 @@ class Transaction(BaseType):
         self,
         encoded: Expr,
         *,
-        startIndex: Expr = None,
-        endIndex: Expr = None,
+        start_index: Expr = None,
+        end_index: Expr = None,
         length: Expr = None,
     ) -> Expr:
         raise TealInputError("A Transaction cannot be decoded")

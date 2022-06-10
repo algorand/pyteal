@@ -61,16 +61,16 @@ class ReferenceType(BaseType):
         self,
         encoded: Expr,
         *,
-        startIndex: Expr = None,
-        endIndex: Expr = None,
+        start_index: Expr = None,
+        end_index: Expr = None,
         length: Expr = None,
     ) -> Expr:
         return uint_decode(
             self.type_spec().bit_size(),
             self.stored_value,
             encoded,
-            startIndex,
-            endIndex,
+            start_index,
+            end_index,
             length,
         )
 

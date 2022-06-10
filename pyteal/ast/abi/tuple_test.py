@@ -249,20 +249,20 @@ def test_indexTuple():
         IndexTest(
             types=[uint64_t, uint64_t],
             typeIndex=1,
-            expected=lambda output: output.decode(encoded, startIndex=pt.Int(8)),
+            expected=lambda output: output.decode(encoded, start_index=pt.Int(8)),
         ),
         IndexTest(
             types=[uint64_t, byte_t, uint64_t],
             typeIndex=1,
             expected=lambda output: output.decode(
-                encoded, startIndex=pt.Int(8), length=pt.Int(1)
+                encoded, start_index=pt.Int(8), length=pt.Int(1)
             ),
         ),
         IndexTest(
             types=[uint64_t, byte_t, uint64_t],
             typeIndex=2,
             expected=lambda output: output.decode(
-                encoded, startIndex=pt.Int(9), length=pt.Int(8)
+                encoded, start_index=pt.Int(9), length=pt.Int(8)
             ),
         ),
         IndexTest(
@@ -303,7 +303,7 @@ def test_indexTuple():
         IndexTest(
             types=[bool_t, uint64_t],
             typeIndex=1,
-            expected=lambda output: output.decode(encoded, startIndex=pt.Int(1)),
+            expected=lambda output: output.decode(encoded, start_index=pt.Int(1)),
         ),
         IndexTest(
             types=[bool_t, bool_t, uint64_t],
@@ -318,7 +318,7 @@ def test_indexTuple():
         IndexTest(
             types=[bool_t, bool_t, uint64_t],
             typeIndex=2,
-            expected=lambda output: output.decode(encoded, startIndex=pt.Int(1)),
+            expected=lambda output: output.decode(encoded, start_index=pt.Int(1)),
         ),
         IndexTest(
             types=[tuple_t], typeIndex=0, expected=lambda output: output.decode(encoded)
@@ -326,14 +326,14 @@ def test_indexTuple():
         IndexTest(
             types=[byte_t, tuple_t],
             typeIndex=1,
-            expected=lambda output: output.decode(encoded, startIndex=pt.Int(1)),
+            expected=lambda output: output.decode(encoded, start_index=pt.Int(1)),
         ),
         IndexTest(
             types=[tuple_t, byte_t],
             typeIndex=0,
             expected=lambda output: output.decode(
                 encoded,
-                startIndex=pt.Int(0),
+                start_index=pt.Int(0),
                 length=pt.Int(tuple_t.byte_length_static()),
             ),
         ),
@@ -342,7 +342,7 @@ def test_indexTuple():
             typeIndex=1,
             expected=lambda output: output.decode(
                 encoded,
-                startIndex=pt.Int(1),
+                start_index=pt.Int(1),
                 length=pt.Int(tuple_t.byte_length_static()),
             ),
         ),
@@ -350,28 +350,28 @@ def test_indexTuple():
             types=[dynamic_array_t1],
             typeIndex=0,
             expected=lambda output: output.decode(
-                encoded, startIndex=pt.ExtractUint16(encoded, pt.Int(0))
+                encoded, start_index=pt.ExtractUint16(encoded, pt.Int(0))
             ),
         ),
         IndexTest(
             types=[byte_t, dynamic_array_t1],
             typeIndex=1,
             expected=lambda output: output.decode(
-                encoded, startIndex=pt.ExtractUint16(encoded, pt.Int(1))
+                encoded, start_index=pt.ExtractUint16(encoded, pt.Int(1))
             ),
         ),
         IndexTest(
             types=[dynamic_array_t1, byte_t],
             typeIndex=0,
             expected=lambda output: output.decode(
-                encoded, startIndex=pt.ExtractUint16(encoded, pt.Int(0))
+                encoded, start_index=pt.ExtractUint16(encoded, pt.Int(0))
             ),
         ),
         IndexTest(
             types=[byte_t, dynamic_array_t1, byte_t],
             typeIndex=1,
             expected=lambda output: output.decode(
-                encoded, startIndex=pt.ExtractUint16(encoded, pt.Int(1))
+                encoded, start_index=pt.ExtractUint16(encoded, pt.Int(1))
             ),
         ),
         IndexTest(
@@ -379,15 +379,15 @@ def test_indexTuple():
             typeIndex=1,
             expected=lambda output: output.decode(
                 encoded,
-                startIndex=pt.ExtractUint16(encoded, pt.Int(1)),
-                endIndex=pt.ExtractUint16(encoded, pt.Int(4)),
+                start_index=pt.ExtractUint16(encoded, pt.Int(1)),
+                end_index=pt.ExtractUint16(encoded, pt.Int(4)),
             ),
         ),
         IndexTest(
             types=[byte_t, dynamic_array_t1, byte_t, dynamic_array_t2],
             typeIndex=3,
             expected=lambda output: output.decode(
-                encoded, startIndex=pt.ExtractUint16(encoded, pt.Int(4))
+                encoded, start_index=pt.ExtractUint16(encoded, pt.Int(4))
             ),
         ),
         IndexTest(
@@ -395,15 +395,15 @@ def test_indexTuple():
             typeIndex=1,
             expected=lambda output: output.decode(
                 encoded,
-                startIndex=pt.ExtractUint16(encoded, pt.Int(1)),
-                endIndex=pt.ExtractUint16(encoded, pt.Int(4)),
+                start_index=pt.ExtractUint16(encoded, pt.Int(1)),
+                end_index=pt.ExtractUint16(encoded, pt.Int(4)),
             ),
         ),
         IndexTest(
             types=[byte_t, dynamic_array_t1, tuple_t, dynamic_array_t2],
             typeIndex=3,
             expected=lambda output: output.decode(
-                encoded, startIndex=pt.ExtractUint16(encoded, pt.Int(4))
+                encoded, start_index=pt.ExtractUint16(encoded, pt.Int(4))
             ),
         ),
         IndexTest(
@@ -411,15 +411,15 @@ def test_indexTuple():
             typeIndex=1,
             expected=lambda output: output.decode(
                 encoded,
-                startIndex=pt.ExtractUint16(encoded, pt.Int(1)),
-                endIndex=pt.ExtractUint16(encoded, pt.Int(4)),
+                start_index=pt.ExtractUint16(encoded, pt.Int(1)),
+                end_index=pt.ExtractUint16(encoded, pt.Int(4)),
             ),
         ),
         IndexTest(
             types=[byte_t, dynamic_array_t1, bool_t, bool_t, dynamic_array_t2],
             typeIndex=4,
             expected=lambda output: output.decode(
-                encoded, startIndex=pt.ExtractUint16(encoded, pt.Int(4))
+                encoded, start_index=pt.ExtractUint16(encoded, pt.Int(4))
             ),
         ),
     ]
@@ -607,14 +607,14 @@ def test_Tuple_decode():
                     with pytest.raises(pt.TealInputError):
                         tupleValue.decode(
                             encoded,
-                            startIndex=startIndex,
-                            endIndex=endIndex,
+                            start_index=startIndex,
+                            end_index=endIndex,
                             length=length,
                         )
                     continue
 
                 expr = tupleValue.decode(
-                    encoded, startIndex=startIndex, endIndex=endIndex, length=length
+                    encoded, start_index=startIndex, end_index=endIndex, length=length
                 )
                 assert expr.type_of() == pt.TealType.none
                 assert not expr.has_return()
