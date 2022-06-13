@@ -235,8 +235,8 @@ ITXN_METHOD_CASES = (
 def test_InnerTxnBuilder_method_call(
     app_id: pt.Expr,
     sig: str,
-    args: list[pt.abi.BaseType | pt.Expr],
-    fields: dict[pt.TxnField, pt.Expr],
+    args: list[pt.abi.BaseType | pt.Expr | dict[pt.TxnField, pt.Expr | list[pt.Expr]]],
+    fields: dict[pt.TxnField, pt.Expr | list[pt.Expr]],
     expectedExpr: pt.Expr,
 ):
     expr: pt.Expr = pt.InnerTxnBuilder.MethodCall(
