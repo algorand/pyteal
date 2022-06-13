@@ -473,7 +473,7 @@ def type_specs_from_signature(sig: str) -> tuple[list[TypeSpec], Optional[TypeSp
     sdk_method = algosdk.abi.Method.from_signature(sig)
 
     return_type = None
-    if sdk_method.returns.type != "void":
+    if sdk_method.returns.type != algosdk.abi.Returns.VOID:
         return_type = type_spec_from_algosdk(sdk_method.returns.type)
 
     return [type_spec_from_algosdk(arg.type) for arg in sdk_method.args], return_type
