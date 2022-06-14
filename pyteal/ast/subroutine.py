@@ -3,6 +3,8 @@ from inspect import isclass, Parameter, signature, get_annotations
 from types import MappingProxyType, NoneType
 from typing import Any, Callable, Final, Optional, TYPE_CHECKING, cast
 
+import algosdk.abi as sdk_abi
+
 from pyteal.ast import abi
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
@@ -589,6 +591,54 @@ class ABIReturnSubroutine:
     def name(self) -> str:
         return self.subroutine.name()
 
+    def method_signature(self, overriding_name: str = None) -> str:
+        if not self.is_abi_routable():
+            raise TealInputError(
+                "Only registrable methods may return a method signature"
+            )
+
+        ret_type = self.type_of()
+        if isinstance(ret_type, abi.TypeSpec) and abi.contains_type_spec(
+            ret_type, abi.TransactionTypeSpecs + abi.ReferenceTypeSpecs
+        ):
+            raise TealInputError(
+                f"Reference and Transaction types may not be used as return values, got {ret_type}"
+            )
+
+        args = [str(v) for v in self.subroutine.abi_args.values()]
+        if overriding_name is None:
+            overriding_name = self.name()
+        return f"{overriding_name}({','.join(args)}){self.type_of()}"
+
+    def method_spec(self) -> sdk_abi.Method:
+        skip_names = ["return", "output"]
+
+        args = [
+            {
+                "type": str(abi.type_spec_from_annotation(val)),
+                "name": name,
+            }
+            for name, val in self.subroutine.annotations.items()
+            if name not in skip_names
+        ]
+
+        spec = {
+            "name": self.name(),
+            "args": args,
+            "returns": {"type": str(self.type_of())},
+        }
+
+        if self.subroutine.implementation.__doc__ is not None:
+            spec["desc"] = " ".join(
+                [
+                    i.strip()
+                    for i in self.subroutine.implementation.__doc__.split("\n")
+                    if not (i.isspace() or len(i) == 0)
+                ]
+            )
+
+        return sdk_abi.Method.undictify(spec)
+
     def type_of(self) -> str | abi.TypeSpec:
         return (
             "void"
@@ -596,7 +646,7 @@ class ABIReturnSubroutine:
             else self.output_kwarg_info.abi_type
         )
 
-    def is_registrable(self) -> bool:
+    def is_abi_routable(self) -> bool:
         return len(self.subroutine.abi_args) == self.subroutine.argument_count()
 
 
@@ -751,4 +801,6 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
     body_ops = [var.slot.store() for var in arg_vars[::-1]]
     body_ops.append(subroutine_body)
 
-    return SubroutineDeclaration(subroutine, Seq(body_ops), deferred_expr)
+    sd = SubroutineDeclaration(subroutine, Seq(body_ops), deferred_expr)
+    sd.trace = subroutine_body.trace
+    return sd

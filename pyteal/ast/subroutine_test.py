@@ -1,11 +1,11 @@
 from itertools import product
-from typing import List, Literal
+from typing import List, Literal, Optional, cast
 
 import pytest
 from dataclasses import dataclass
 
 import pyteal as pt
-from pyteal.ast.subroutine import evaluate_subroutine
+from pyteal.ast.subroutine import ABIReturnSubroutine, evaluate_subroutine
 
 options = pt.CompileOptions(version=5)
 
@@ -86,6 +86,7 @@ class ABISubroutineTC:
     arg_instances: list[pt.Expr | pt.abi.BaseType]
     name: str
     ret_type: str | pt.abi.TypeSpec
+    signature: Optional[str]
 
 
 def test_abi_subroutine_definition():
@@ -139,13 +140,27 @@ def test_abi_subroutine_definition():
         return output.set(pt.Int(1))
 
     cases = (
-        ABISubroutineTC(fn_0arg_0ret, [], "fn_0arg_0ret", "void"),
+        ABISubroutineTC(fn_0arg_0ret, [], "fn_0arg_0ret", "void", "fn_0arg_0ret()void"),
         ABISubroutineTC(
-            fn_0arg_uint64_ret, [], "fn_0arg_uint64_ret", pt.abi.Uint64TypeSpec()
+            fn_0arg_uint64_ret,
+            [],
+            "fn_0arg_uint64_ret",
+            pt.abi.Uint64TypeSpec(),
+            "fn_0arg_uint64_ret()uint64",
         ),
-        ABISubroutineTC(fn_1arg_0ret, [pt.abi.Uint64()], "fn_1arg_0ret", "void"),
         ABISubroutineTC(
-            fn_1arg_1ret, [pt.abi.Uint64()], "fn_1arg_1ret", pt.abi.Uint64TypeSpec()
+            fn_1arg_0ret,
+            [pt.abi.Uint64()],
+            "fn_1arg_0ret",
+            "void",
+            "fn_1arg_0ret(uint64)void",
+        ),
+        ABISubroutineTC(
+            fn_1arg_1ret,
+            [pt.abi.Uint64()],
+            "fn_1arg_1ret",
+            pt.abi.Uint64TypeSpec(),
+            "fn_1arg_1ret(uint64)uint64",
         ),
         ABISubroutineTC(
             fn_2arg_0ret,
@@ -157,6 +172,7 @@ def test_abi_subroutine_definition():
             ],
             "fn_2arg_0ret",
             "void",
+            "fn_2arg_0ret(uint64,byte[10])void",
         ),
         ABISubroutineTC(
             fn_2arg_1ret,
@@ -168,6 +184,7 @@ def test_abi_subroutine_definition():
             ],
             "fn_2arg_1ret",
             pt.abi.ByteTypeSpec(),
+            "fn_2arg_1ret(uint64,byte[10])byte",
         ),
         ABISubroutineTC(
             fn_2arg_1ret_with_expr,
@@ -179,6 +196,7 @@ def test_abi_subroutine_definition():
             ],
             "fn_2arg_1ret_with_expr",
             pt.abi.ByteTypeSpec(),
+            None,
         ),
         ABISubroutineTC(
             fn_w_tuple1arg,
@@ -188,6 +206,7 @@ def test_abi_subroutine_definition():
             ],
             "fn_w_tuple1arg",
             pt.abi.ByteTypeSpec(),
+            None,
         ),
     )
 
@@ -207,9 +226,46 @@ def test_abi_subroutine_definition():
         assert isinstance(
             invoked, (pt.Expr if case.ret_type == "void" else pt.abi.ReturnedValue)
         )
-        assert case.definition.is_registrable() == all(
+        assert case.definition.is_abi_routable() == all(
             map(lambda x: isinstance(x, pt.abi.BaseType), case.arg_instances)
         )
+
+        if case.definition.is_abi_routable():
+            assert case.definition.method_signature() == cast(str, case.signature)
+        else:
+            with pytest.raises(pt.TealInputError):
+                case.definition.method_signature()
+
+
+def test_subroutine_return_reference():
+    @ABIReturnSubroutine
+    def invalid_ret_type(*, output: pt.abi.Account):
+        return output.decode(pt.Bytes(b"\x00"))
+
+    with pytest.raises(pt.TealInputError):
+        invalid_ret_type.method_signature()
+
+    @ABIReturnSubroutine
+    def invalid_ret_type_collection(
+        *, output: pt.abi.Tuple2[pt.abi.Account, pt.abi.Uint64]
+    ):
+        return output.set(pt.abi.Account(), pt.abi.Uint64())
+
+    with pytest.raises(pt.TealInputError):
+        invalid_ret_type_collection.method_signature()
+
+    @ABIReturnSubroutine
+    def invalid_ret_type_collection_nested(
+        *, output: pt.abi.DynamicArray[pt.abi.Tuple2[pt.abi.Account, pt.abi.Uint64]]
+    ):
+        return output.set(
+            pt.abi.make(
+                pt.abi.DynamicArray[pt.abi.Tuple2[pt.abi.Account, pt.abi.Uint64]]
+            )
+        )
+
+    with pytest.raises(pt.TealInputError):
+        invalid_ret_type_collection_nested.method_signature()
 
 
 def test_subroutine_definition_validate():

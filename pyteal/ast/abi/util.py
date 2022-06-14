@@ -1,4 +1,4 @@
-from typing import TypeVar, Any, Literal, get_origin, get_args, cast
+from typing import Sequence, TypeVar, Any, Literal, get_origin, get_args, cast
 
 import algosdk.abi
 
@@ -121,12 +121,51 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
     )
     from pyteal.ast.abi.string import StringTypeSpec, String
     from pyteal.ast.abi.address import AddressTypeSpec, Address
+    from pyteal.ast.abi.transaction import (
+        Transaction,
+        TransactionTypeSpec,
+        PaymentTransaction,
+        PaymentTransactionTypeSpec,
+        KeyRegisterTransaction,
+        KeyRegisterTransactionTypeSpec,
+        AssetConfigTransaction,
+        AssetConfigTransactionTypeSpec,
+        AssetFreezeTransaction,
+        AssetFreezeTransactionTypeSpec,
+        AssetTransferTransaction,
+        AssetTransferTransactionTypeSpec,
+        ApplicationCallTransaction,
+        ApplicationCallTransactionTypeSpec,
+    )
+    from pyteal.ast.abi.reference_type import (
+        AccountTypeSpec,
+        Account,
+        AssetTypeSpec,
+        Asset,
+        ApplicationTypeSpec,
+        Application,
+    )
 
     origin = get_origin(annotation)
     if origin is None:
         origin = annotation
 
     args = get_args(annotation)
+
+    if origin is Account:
+        if len(args) != 0:
+            raise TypeError("Account expects 0 arguments. Got: {}".format(args))
+        return AccountTypeSpec()
+
+    if origin is Asset:
+        if len(args) != 0:
+            raise TypeError("Asset expects 0 argsuments. Got: {}".format(args))
+        return AssetTypeSpec()
+
+    if origin is Application:
+        if len(args) != 0:
+            raise TypeError("Application expects 0 argsuments. Got: {}".format(args))
+        return ApplicationTypeSpec()
 
     if origin is Bool:
         if len(args) != 0:
@@ -236,10 +275,86 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
             raise TypeError("Tuple5 expects 5 type arguments. Got: {}".format(args))
         return TupleTypeSpec(*(type_spec_from_annotation(arg) for arg in args))
 
+    if origin is Transaction:
+        if len(args) != 0:
+            raise TypeError(
+                "Transaction expects 0 type arguements. Got {}".format(args)
+            )
+        return TransactionTypeSpec()
+
+    if origin is PaymentTransaction:
+        if len(args) != 0:
+            raise TypeError(
+                "PaymentTransaction expects 0 type arguements. Got {}".format(args)
+            )
+        return PaymentTransactionTypeSpec()
+
+    if origin is KeyRegisterTransaction:
+        if len(args) != 0:
+            raise TypeError(
+                "KeyRegisterTransaction expects 0 type arguements. Got {}".format(args)
+            )
+        return KeyRegisterTransactionTypeSpec()
+
+    if origin is AssetConfigTransaction:
+        if len(args) != 0:
+            raise TypeError(
+                "AssetConfigTransaction expects 0 type arguements. Got {}".format(args)
+            )
+        return AssetConfigTransactionTypeSpec()
+
+    if origin is AssetFreezeTransaction:
+        if len(args) != 0:
+            raise TypeError(
+                "AssetFreezeTransaction expects 0 type arguements. Got {}".format(args)
+            )
+        return AssetFreezeTransactionTypeSpec()
+
+    if origin is AssetTransferTransaction:
+        if len(args) != 0:
+            raise TypeError(
+                "AssetTransferTransaction expects 0 type arguements. Got {}".format(
+                    args
+                )
+            )
+        return AssetTransferTransactionTypeSpec()
+
+    if origin is ApplicationCallTransaction:
+        if len(args) != 0:
+            raise TypeError(
+                "ApplicationCallTransaction expects 0 type arguements. Got {}".format(
+                    args
+                )
+            )
+        return ApplicationCallTransactionTypeSpec()
+
     raise TypeError("Unknown annotation origin: {}".format(origin))
 
 
 T = TypeVar("T", bound=BaseType)
+
+
+def contains_type_spec(ts: TypeSpec, targets: Sequence[TypeSpec]) -> bool:
+    from pyteal.ast.abi.array_dynamic import DynamicArrayTypeSpec
+    from pyteal.ast.abi.array_static import StaticArrayTypeSpec
+    from pyteal.ast.abi.tuple import TupleTypeSpec
+
+    stack: list[TypeSpec] = [ts]
+
+    while stack:
+        current = stack.pop()
+        if current in targets:
+            return True
+
+        match current:
+            case TupleTypeSpec():
+                stack.extend(current.value_type_specs())
+            case DynamicArrayTypeSpec():
+                stack.append(current.value_type_spec())
+            case StaticArrayTypeSpec():
+                stack.append(current.value_type_spec())
+
+    return False
 
 
 def size_of(t: type[T]) -> int:
@@ -277,6 +392,18 @@ def make(t: type[T]) -> T:
 
 
 def algosdk_from_type_spec(t: TypeSpec) -> algosdk.abi.ABIType:
+    from pyteal.ast.abi import ReferenceTypeSpecs, TransactionTypeSpecs
+
+    if t in TransactionTypeSpecs:
+        raise TealInputError(
+            f"cannot map ABI transaction type spec {t!r} to an appropriate algosdk ABI type"
+        )
+
+    if t in ReferenceTypeSpecs:
+        raise TealInputError(
+            f"cannot map ABI reference type spec {t!r} to an appropriate algosdk ABI type"
+        )
+
     return algosdk.abi.ABIType.from_string(str(t))
 
 

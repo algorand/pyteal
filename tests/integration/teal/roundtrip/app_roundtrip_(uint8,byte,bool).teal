@@ -4,10 +4,10 @@ store 4                     // 4 -> uint8|byte|bool
 load 4                      // [uint8|byte|bool]
 callsub roundtripper_1      // [uint8|byte|bool | 255 - uint8 | 255 - byte | !bool | uint8|byte|bool]
 store 3                     // 3 -> uint8|byte|bool | 255 - uint8 | 255 - byte | !bool | uint8|byte|bool
-byte 0x151F7C75             // [0x151F7C75]
-load 3                      // [0x151F7C75, uint8|byte|bool | 255 - uint8 | 255 - byte | !bool | uint8|byte|bool]
-concat                      // [0x151F7C75 | uint8|byte|bool | 255 - uint8 | 255 - byte | !bool | uint8|byte|bool]
-log                         // log(0x151F7C75 | uint8|byte|bool | 255 - uint8 | 255 - byte | !bool | uint8|byte|bool)
+byte 0x151f7c75             // [0x151f7c75]
+load 3                      // [0x151f7c75, uint8|byte|bool | 255 - uint8 | 255 - byte | !bool | uint8|byte|bool]
+concat                      // [0x151f7c75 | uint8|byte|bool | 255 - uint8 | 255 - byte | !bool | uint8|byte|bool]
+log                         // log(0x151f7c75 | uint8|byte|bool | 255 - uint8 | 255 - byte | !bool | uint8|byte|bool)
 int 1                       // [1]
 return                      // PASSED
 

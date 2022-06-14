@@ -11,6 +11,28 @@ from pyteal import abi
 from tests.abi_roundtrip import ABIRoundtrip
 from tests.compile_asserts import assert_teal_as_expected
 
+GAI_ISSUE_2050 = "https://github.com/algorand/go-algorand-internal/issues/2050"
+BAD_TEALS = {
+    "()": GAI_ISSUE_2050,
+}
+
+
+GAI_ISSUE_2068 = "https://github.com/algorand/go-algorand-internal/issues/2068"
+BAD_TYPES = {
+    # Reference Types
+    "account": GAI_ISSUE_2068,
+    "asset": GAI_ISSUE_2068,
+    "application": GAI_ISSUE_2068,
+    # Transaction Types
+    "txn": GAI_ISSUE_2068,
+    "pay": GAI_ISSUE_2068,
+    "keyreg": GAI_ISSUE_2068,
+    "acfg": GAI_ISSUE_2068,
+    "afrz": GAI_ISSUE_2068,
+    "axfer": GAI_ISSUE_2068,
+    "appl": GAI_ISSUE_2068,
+}
+
 PATH = Path.cwd() / "tests" / "integration"
 FIXTURES = PATH / "teal"
 GENERATED = PATH / "generated"
@@ -25,6 +47,16 @@ ABI_TYPES = [
     abi.Uint16,
     abi.Uint32,
     abi.Uint64,
+    abi.Account,
+    abi.Asset,
+    abi.Application,
+    abi.Transaction,
+    abi.PaymentTransaction,
+    abi.KeyRegisterTransaction,
+    abi.AssetConfigTransaction,
+    abi.AssetFreezeTransaction,
+    abi.AssetTransferTransaction,
+    abi.ApplicationCallTransaction,
     abi.Tuple0,
     abi.Tuple1[abi.Bool],
     abi.Tuple1[abi.Byte],
@@ -99,11 +131,14 @@ def roundtrip_setup(abi_type):
     if isinstance(abi_type, tuple):
         abi_type, dynamic_length = abi_type
 
-    return (
-        abi_type,
-        dynamic_length,
-        ABIRoundtrip(abi.make(abi_type), length=dynamic_length).pytealer(),
-    )
+    abi_type_str = str(abi.type_spec_from_annotation(abi_type))
+    roundtrip_or_none = None
+    if abi_type_str not in BAD_TYPES:
+        roundtrip_or_none = ABIRoundtrip(
+            abi.make(abi_type), length=dynamic_length
+        ).pytealer()
+
+    return (abi_type, abi_type_str, dynamic_length, roundtrip_or_none)
 
 
 def test_abi_types_comprehensive():
@@ -138,7 +173,13 @@ def test_abi_types_comprehensive():
 @pytest.mark.parametrize("abi_type", ABI_TYPES)
 def test_pure_compilation(abi_type):
     print(f"Pure Compilation Test for {abi_type=}")
-    abi_type, dynamic_length, roundtripper = roundtrip_setup(abi_type)
+    abi_type, type_str, dynamic_length, roundtripper = roundtrip_setup(abi_type)
+
+    if type_str in BAD_TYPES:
+        print(
+            f"Skipping encoding roundtrip test of '{abi_type}' because of {BAD_TYPES[type_str]}"
+        )
+        return
 
     sdk_abi_type = abi.algosdk_from_annotation(abi_type)
 
@@ -164,18 +205,17 @@ def test_pure_compilation(abi_type):
     assert_teal_as_expected(save_to, FIXTURES / "roundtrip" / filename)
 
 
-GAI_ISSUE_2050 = "https://github.com/algorand/go-algorand-internal/issues/2050"
-
-BAD_TEALS = {
-    "()": GAI_ISSUE_2050,
-}
-
-
 @pytest.mark.parametrize("abi_type", ABI_TYPES)
 def test_roundtrip(abi_type):
     print(f"Round Trip Test for {abi_type=}")
 
-    _, dynamic_length, roundtripper = roundtrip_setup(abi_type)
+    _, type_str, dynamic_length, roundtripper = roundtrip_setup(abi_type)
+
+    if type_str in BAD_TYPES:
+        print(
+            f"Skipping encoding roundtrip test of '{abi_type}' because of {BAD_TYPES[type_str]}"
+        )
+        return
 
     sdk_abi_types = roundtripper.abi_argument_types()
     sdk_ret_type = roundtripper.abi_return_type()
@@ -211,19 +251,19 @@ def test_roundtrip(abi_type):
 """
     )
 
-    last_rows = 2
+    last_steps = 2
 
     assert passed == (cost <= 700), inspector.report(
-        args, f"passed={passed} contradicted cost={cost}", last_rows=last_rows
+        args, f"passed={passed} contradicted cost={cost}", last_steps=last_steps
     )
     assert rand_abi_instance == original, inspector.report(
-        args, "rand_abi_instance v. original", last_rows=last_rows
+        args, "rand_abi_instance v. original", last_steps=last_steps
     )
     assert original == mut_mut, inspector.report(
-        args, "orginal v. mut_mut", last_rows=last_rows
+        args, "orginal v. mut_mut", last_steps=last_steps
     )
 
     expected_mut = abi_strat.mutate_for_roundtrip(rand_abi_instance)
     assert expected_mut == mut, inspector.report(
-        args, "expected_mut v. mut", last_rows=last_rows
+        args, "expected_mut v. mut", last_steps=last_steps
     )
