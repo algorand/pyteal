@@ -164,7 +164,7 @@ def test_Bool_decode():
         for endIndex in (None, pt.Int(2)):
             for length in (None, pt.Int(3)):
                 expr = value.decode(
-                    encoded, startIndex=startIndex, endIndex=endIndex, length=length
+                    encoded, start_index=startIndex, end_index=endIndex, length=length
                 )
                 assert expr.type_of() == pt.TealType.none
                 assert not expr.has_return()

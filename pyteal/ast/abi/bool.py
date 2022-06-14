@@ -78,13 +78,13 @@ class Bool(BaseType):
         self,
         encoded: Expr,
         *,
-        startIndex: Expr = None,
-        endIndex: Expr = None,
+        start_index: Expr = None,
+        end_index: Expr = None,
         length: Expr = None
     ) -> Expr:
-        if startIndex is None:
-            startIndex = Int(0)
-        return self.decodeBit(encoded, startIndex * Int(NUM_BITS_IN_BYTE))
+        if start_index is None:
+            start_index = Int(0)
+        return self.decodeBit(encoded, start_index * Int(NUM_BITS_IN_BYTE))
 
     def decodeBit(self, encoded, bitIndex: Expr) -> Expr:
         return self.stored_value.store(GetBit(encoded, bitIndex))

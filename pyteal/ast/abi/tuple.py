@@ -178,12 +178,12 @@ def indexTuple(
         if not hasNextDynamicValue:
             # This is the final dynamic value, so decode the substring from startIndex to the end of
             # encoded
-            return output.decode(encoded, startIndex=startIndex)
+            return output.decode(encoded, start_index=startIndex)
 
         # There is a dynamic value after this one, and endIndex is where its tail starts, so decode
         # the substring from startIndex to endIndex
         endIndex = ExtractUint16(encoded, Int(nextDynamicValueOffset))
-        return output.decode(encoded, startIndex=startIndex, endIndex=endIndex)
+        return output.decode(encoded, start_index=startIndex, end_index=endIndex)
 
     startIndex = Int(offset)
     length = Int(valueType.byte_length_static())
@@ -194,14 +194,14 @@ def indexTuple(
             return output.decode(encoded)
         # This is the last value in the tuple, so decode the substring from startIndex to the end of
         # encoded
-        return output.decode(encoded, startIndex=startIndex)
+        return output.decode(encoded, start_index=startIndex)
 
     if offset == 0:
         # This is the first value in the tuple, so decode the substring from 0 with length length
         return output.decode(encoded, length=length)
 
     # This is not the first or last value, so decode the substring from startIndex with length length
-    return output.decode(encoded, startIndex=startIndex, length=length)
+    return output.decode(encoded, start_index=startIndex, length=length)
 
 
 class TupleTypeSpec(TypeSpec):
@@ -284,12 +284,12 @@ class Tuple(BaseType):
         self,
         encoded: Expr,
         *,
-        startIndex: Expr = None,
-        endIndex: Expr = None,
+        start_index: Expr = None,
+        end_index: Expr = None,
         length: Expr = None,
     ) -> Expr:
         extracted = substringForDecoding(
-            encoded, startIndex=startIndex, endIndex=endIndex, length=length
+            encoded, startIndex=start_index, endIndex=end_index, length=length
         )
         return self.stored_value.store(extracted)
 
