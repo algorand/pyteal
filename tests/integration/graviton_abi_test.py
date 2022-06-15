@@ -299,10 +299,6 @@ def conditional_factorial(_factor: pt.abi.Uint64, *, output: pt.abi.Uint64) -> p
 # ---- integration test functions ---- #
 
 
-def py_factorial(n):
-    return 1 if n <= 1 else n * py_factorial(n - 1)
-
-
 def test_integer65():
     bbpt_subtract_slick = PyTealDryRunExecutor(int65_sub, pt.Mode.Application)
 
@@ -513,6 +509,10 @@ def test_complex130():
         )
 
 
+def py_factorial(n):
+    return 1 if n <= 1 else n * py_factorial(n - 1)
+
+
 def test_conditional_factorial():
     ptdre = PyTealDryRunExecutor(conditional_factorial, pt.Mode.Application)
     inputs = [(n,) for n in range(20)]
@@ -526,6 +526,11 @@ def test_conditional_factorial():
         assert expected == inspector.last_log(), inspector.report(args, row=i + 1)
 
     n = 21
-    inspector = ptdre.dryrun((n,))
-    assert inspector.rejected(), f"rejected for {n=}"
-    assert inspector.error(), f"error for {n=}"
+    args = (n,)
+    inspector = ptdre.dryrun(args)
+    assert inspector.rejected(), inspector.report(
+        args, f"FAILED: should have rejected for {n=}", row=n + 1
+    )
+    assert inspector.error(), inspector.report(
+        args, f"FAILED: should error for {n=}", row=n + 1
+    )
