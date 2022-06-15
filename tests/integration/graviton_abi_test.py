@@ -274,6 +274,28 @@ def complex130_norm_squared(x: Complex130, *, output: Int65):
     )
 
 
+# ---- additional stand-alone ABIReturnSubroutine's ---- #
+
+
+@Blackbox(input_types=[None])
+@ABIReturnSubroutine
+def conditional_factorial(_factor: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+    i = pt.ScratchVar(pt.TealType.uint64)
+
+    return pt.Seq(
+        output.set(1),
+        pt.If(_factor.get() <= pt.Int(1))
+        .Then(pt.Return())
+        .Else(
+            pt.For(
+                i.store(_factor.get()),
+                i.load() > pt.Int(1),
+                i.store(i.load() - pt.Int(1)),
+            ).Do(output.set(output.get() * i.load())),
+        ),
+    )
+
+
 # ---- integration test functions ---- #
 
 
@@ -485,3 +507,30 @@ def test_complex130():
         ), inspector_cplx_norm_squared.report(
             unary_args, f"failed for {unary_args}", row=i
         )
+
+
+def py_factorial(n):
+    return 1 if n <= 1 else n * py_factorial(n - 1)
+
+
+def test_conditional_factorial():
+    ptdre = PyTealDryRunExecutor(conditional_factorial, pt.Mode.Application)
+    inputs = [(n,) for n in range(20)]
+    inspectors = ptdre.dryrun_on_sequence(inputs)
+    for i, args in enumerate(inputs):
+        inspector = inspectors[i]
+        n = args[0]
+        assert inspector.passed(), inspector.report(args, row=i + 1)
+
+        expected = py_factorial(n)
+        assert expected == inspector.last_log(), inspector.report(args, row=i + 1)
+
+    n = 21
+    args = (n,)
+    inspector = ptdre.dryrun(args)
+    assert inspector.rejected(), inspector.report(
+        args, f"FAILED: should have rejected for {n=}", row=n + 1
+    )
+    assert inspector.error(), inspector.report(
+        args, f"FAILED: should error for {n=}", row=n + 1
+    )
