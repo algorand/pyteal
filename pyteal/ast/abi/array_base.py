@@ -60,7 +60,7 @@ class ArrayTypeSpec(TypeSpec, Generic[T]):
         return self.value_spec.byte_length_static()
 
 
-ArrayTypeSpec.__module__ = "pyteal"
+ArrayTypeSpec.__module__ = "pyteal.abi"
 
 
 class Array(BaseType, Generic[T]):
@@ -179,7 +179,7 @@ class Array(BaseType, Generic[T]):
         return ArrayElement(self, cast(Expr, index))
 
 
-Array.__module__ = "pyteal"
+Array.__module__ = "pyteal.abi"
 
 
 class ArrayElement(ComputedValue[T]):
@@ -278,4 +278,4 @@ class ArrayElement(ComputedValue[T]):
         return output.decode(encodedArray, startIndex=valueStart, length=valueLength)
 
 
-ArrayElement.__module__ = "pyteal"
+ArrayElement.__module__ = "pyteal.abi"

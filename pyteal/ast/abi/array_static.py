@@ -66,7 +66,7 @@ class StaticArrayTypeSpec(ArrayTypeSpec[T], Generic[T, N]):
         return f"{self.value_type_spec()}[{self.length_static()}]"
 
 
-StaticArrayTypeSpec.__module__ = "pyteal"
+StaticArrayTypeSpec.__module__ = "pyteal.abi"
 
 
 class StaticArray(Array[T], Generic[T, N]):
@@ -135,4 +135,4 @@ class StaticArray(Array[T], Generic[T, N]):
         return super().__getitem__(index)
 
 
-StaticArray.__module__ = "pyteal"
+StaticArray.__module__ = "pyteal.abi"

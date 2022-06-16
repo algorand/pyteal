@@ -21,7 +21,7 @@ class TransactionType(Enum):
     ApplicationCall = "appl"
 
 
-TransactionType.__module__ = "pyteal"
+TransactionType.__module__ = "pyteal.abi"
 
 
 class TransactionTypeSpec(TypeSpec):
@@ -50,7 +50,7 @@ class TransactionTypeSpec(TypeSpec):
         return TransactionType.Any.value
 
 
-TransactionTypeSpec.__module__ = "pyteal"
+TransactionTypeSpec.__module__ = "pyteal.abi"
 
 
 class Transaction(BaseType):
@@ -96,7 +96,7 @@ class Transaction(BaseType):
         raise TealInputError("A Transaction cannot be encoded")
 
 
-Transaction.__module__ = "pyteal"
+Transaction.__module__ = "pyteal.abi"
 
 
 class PaymentTransactionTypeSpec(TransactionTypeSpec):
@@ -110,7 +110,7 @@ class PaymentTransactionTypeSpec(TransactionTypeSpec):
         return TransactionType.Payment.value
 
 
-PaymentTransactionTypeSpec.__module__ = "pyteal"
+PaymentTransactionTypeSpec.__module__ = "pyteal.abi"
 
 
 class PaymentTransaction(Transaction):
@@ -118,7 +118,7 @@ class PaymentTransaction(Transaction):
         super().__init__(PaymentTransactionTypeSpec())
 
 
-PaymentTransaction.__module__ = "pyteal"
+PaymentTransaction.__module__ = "pyteal.abi"
 
 
 class KeyRegisterTransactionTypeSpec(TransactionTypeSpec):
@@ -132,7 +132,7 @@ class KeyRegisterTransactionTypeSpec(TransactionTypeSpec):
         return TransactionType.KeyRegistration.value
 
 
-KeyRegisterTransactionTypeSpec.__module__ = "pyteal"
+KeyRegisterTransactionTypeSpec.__module__ = "pyteal.abi"
 
 
 class KeyRegisterTransaction(Transaction):
@@ -140,7 +140,7 @@ class KeyRegisterTransaction(Transaction):
         super().__init__(KeyRegisterTransactionTypeSpec())
 
 
-KeyRegisterTransaction.__module__ = "pyteal"
+KeyRegisterTransaction.__module__ = "pyteal.abi"
 
 
 class AssetConfigTransactionTypeSpec(TransactionTypeSpec):
@@ -154,7 +154,7 @@ class AssetConfigTransactionTypeSpec(TransactionTypeSpec):
         return TransactionType.AssetConfig.value
 
 
-AssetConfigTransactionTypeSpec.__module__ = "pyteal"
+AssetConfigTransactionTypeSpec.__module__ = "pyteal.abi"
 
 
 class AssetConfigTransaction(Transaction):
@@ -162,7 +162,7 @@ class AssetConfigTransaction(Transaction):
         super().__init__(AssetConfigTransactionTypeSpec())
 
 
-AssetConfigTransaction.__module__ = "pyteal"
+AssetConfigTransaction.__module__ = "pyteal.abi"
 
 
 class AssetFreezeTransactionTypeSpec(TransactionTypeSpec):
@@ -176,7 +176,7 @@ class AssetFreezeTransactionTypeSpec(TransactionTypeSpec):
         return TransactionType.AssetFreeze.value
 
 
-AssetFreezeTransactionTypeSpec.__module__ = "pyteal"
+AssetFreezeTransactionTypeSpec.__module__ = "pyteal.abi"
 
 
 class AssetFreezeTransaction(Transaction):
@@ -184,7 +184,7 @@ class AssetFreezeTransaction(Transaction):
         super().__init__(AssetFreezeTransactionTypeSpec())
 
 
-AssetFreezeTransaction.__module__ = "pyteal"
+AssetFreezeTransaction.__module__ = "pyteal.abi"
 
 
 class AssetTransferTransactionTypeSpec(TransactionTypeSpec):
@@ -198,7 +198,7 @@ class AssetTransferTransactionTypeSpec(TransactionTypeSpec):
         return TransactionType.AssetTransfer.value
 
 
-AssetTransferTransactionTypeSpec.__module__ = "pyteal"
+AssetTransferTransactionTypeSpec.__module__ = "pyteal.abi"
 
 
 class AssetTransferTransaction(Transaction):
@@ -206,7 +206,7 @@ class AssetTransferTransaction(Transaction):
         super().__init__(AssetTransferTransactionTypeSpec())
 
 
-AssetTransferTransaction.__module__ = "pyteal"
+AssetTransferTransaction.__module__ = "pyteal.abi"
 
 
 class ApplicationCallTransactionTypeSpec(TransactionTypeSpec):
@@ -220,7 +220,7 @@ class ApplicationCallTransactionTypeSpec(TransactionTypeSpec):
         return TransactionType.ApplicationCall.value
 
 
-ApplicationCallTransactionTypeSpec.__module__ = "pyteal"
+ApplicationCallTransactionTypeSpec.__module__ = "pyteal.abi"
 
 
 class ApplicationCallTransaction(Transaction):
@@ -228,7 +228,7 @@ class ApplicationCallTransaction(Transaction):
         super().__init__(ApplicationCallTransactionTypeSpec())
 
 
-ApplicationCallTransaction.__module__ = "pyteal"
+ApplicationCallTransaction.__module__ = "pyteal.abi"
 
 TransactionTypeSpecs: Final[List[TypeSpec]] = [
     TransactionTypeSpec(),

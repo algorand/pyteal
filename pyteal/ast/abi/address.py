@@ -17,7 +17,7 @@ class AddressLength(IntEnum):
     Bytes = 32
 
 
-AddressLength.__module__ = "pyteal"
+AddressLength.__module__ = "pyteal.abi"
 
 
 class AddressTypeSpec(StaticArrayTypeSpec):
@@ -37,7 +37,7 @@ class AddressTypeSpec(StaticArrayTypeSpec):
         return isinstance(other, AddressTypeSpec)
 
 
-AddressTypeSpec.__module__ = "pyteal"
+AddressTypeSpec.__module__ = "pyteal.abi"
 
 
 class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
@@ -104,4 +104,4 @@ class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
         )
 
 
-Address.__module__ = "pyteal"
+Address.__module__ = "pyteal.abi"

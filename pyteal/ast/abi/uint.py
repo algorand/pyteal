@@ -151,7 +151,7 @@ class UintTypeSpec(TypeSpec):
         return "uint{}".format(self.bit_size())
 
 
-UintTypeSpec.__module__ = "pyteal"
+UintTypeSpec.__module__ = "pyteal.abi"
 
 
 class ByteTypeSpec(UintTypeSpec):
@@ -168,7 +168,7 @@ class ByteTypeSpec(UintTypeSpec):
         return "byte"
 
 
-ByteTypeSpec.__module__ = "pyteal"
+ByteTypeSpec.__module__ = "pyteal.abi"
 
 
 class Uint8TypeSpec(UintTypeSpec):
@@ -182,7 +182,7 @@ class Uint8TypeSpec(UintTypeSpec):
         return Uint8
 
 
-Uint8TypeSpec.__module__ = "pyteal"
+Uint8TypeSpec.__module__ = "pyteal.abi"
 
 
 class Uint16TypeSpec(UintTypeSpec):
@@ -196,7 +196,7 @@ class Uint16TypeSpec(UintTypeSpec):
         return Uint16
 
 
-Uint16TypeSpec.__module__ = "pyteal"
+Uint16TypeSpec.__module__ = "pyteal.abi"
 
 
 class Uint32TypeSpec(UintTypeSpec):
@@ -210,7 +210,7 @@ class Uint32TypeSpec(UintTypeSpec):
         return Uint32
 
 
-Uint32TypeSpec.__module__ = "pyteal"
+Uint32TypeSpec.__module__ = "pyteal.abi"
 
 
 class Uint64TypeSpec(UintTypeSpec):
@@ -224,7 +224,7 @@ class Uint64TypeSpec(UintTypeSpec):
         return Uint64
 
 
-Uint32TypeSpec.__module__ = "pyteal"
+Uint32TypeSpec.__module__ = "pyteal.abi"
 
 
 T = TypeVar("T", bound="Uint")
@@ -278,7 +278,7 @@ class Uint(BaseType):
         return uint_encode(self.type_spec().bit_size(), self.stored_value)
 
 
-Uint.__module__ = "pyteal"
+Uint.__module__ = "pyteal.abi"
 
 
 class Byte(Uint):
@@ -286,7 +286,7 @@ class Byte(Uint):
         super().__init__(ByteTypeSpec())
 
 
-Byte.__module__ = "pyteal"
+Byte.__module__ = "pyteal.abi"
 
 
 class Uint8(Uint):
@@ -294,7 +294,7 @@ class Uint8(Uint):
         super().__init__(Uint8TypeSpec())
 
 
-Uint8.__module__ = "pyteal"
+Uint8.__module__ = "pyteal.abi"
 
 
 class Uint16(Uint):
@@ -302,7 +302,7 @@ class Uint16(Uint):
         super().__init__(Uint16TypeSpec())
 
 
-Uint16.__module__ = "pyteal"
+Uint16.__module__ = "pyteal.abi"
 
 
 class Uint32(Uint):
@@ -310,7 +310,7 @@ class Uint32(Uint):
         super().__init__(Uint32TypeSpec())
 
 
-Uint32.__module__ = "pyteal"
+Uint32.__module__ = "pyteal.abi"
 
 
 class Uint64(Uint):
@@ -318,4 +318,4 @@ class Uint64(Uint):
         super().__init__(Uint64TypeSpec())
 
 
-Uint64.__module__ = "pyteal"
+Uint64.__module__ = "pyteal.abi"

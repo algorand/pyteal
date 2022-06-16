@@ -37,7 +37,7 @@ class BoolTypeSpec(TypeSpec):
         return "bool"
 
 
-BoolTypeSpec.__module__ = "pyteal"
+BoolTypeSpec.__module__ = "pyteal.abi"
 
 
 class Bool(BaseType):

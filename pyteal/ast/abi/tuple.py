@@ -268,7 +268,7 @@ class TupleTypeSpec(TypeSpec):
         return "({})".format(",".join(map(str, self.value_type_specs())))
 
 
-TupleTypeSpec.__module__ = "pyteal"
+TupleTypeSpec.__module__ = "pyteal.abi"
 
 T_tuple = TypeVar("T_tuple", bound="Tuple")
 
@@ -331,7 +331,7 @@ class Tuple(BaseType):
         return TupleElement(self, index)
 
 
-Tuple.__module__ = "pyteal"
+Tuple.__module__ = "pyteal.abi"
 
 T = TypeVar("T", bound=BaseType)
 
@@ -356,7 +356,7 @@ class TupleElement(ComputedValue[T]):
         )
 
 
-TupleElement.__module__ = "pyteal"
+TupleElement.__module__ = "pyteal.abi"
 
 # Until Python 3.11 is released with support for PEP 646 -- Variadic Generics, it's not possible for
 # the Tuple class to take an arbitrary number of template parameters. As a workaround, we define the
@@ -378,7 +378,7 @@ class Tuple0(Tuple):
         super().__init__(TupleTypeSpec())
 
 
-Tuple0.__module__ = "pyteal"
+Tuple0.__module__ = "pyteal.abi"
 
 T1 = TypeVar("T1", bound=BaseType)
 
@@ -391,7 +391,7 @@ class Tuple1(Tuple, Generic[T1]):
         super().__init__(value_type_spec)
 
 
-Tuple1.__module__ = "pyteal"
+Tuple1.__module__ = "pyteal.abi"
 
 T2 = TypeVar("T2", bound=BaseType)
 
@@ -404,7 +404,7 @@ class Tuple2(Tuple, Generic[T1, T2]):
         super().__init__(value_type_spec)
 
 
-Tuple2.__module__ = "pyteal"
+Tuple2.__module__ = "pyteal.abi"
 
 T3 = TypeVar("T3", bound=BaseType)
 
@@ -420,7 +420,7 @@ class Tuple3(Tuple, Generic[T1, T2, T3]):
         super().__init__(value_type_spec)
 
 
-Tuple3.__module__ = "pyteal"
+Tuple3.__module__ = "pyteal.abi"
 
 T4 = TypeVar("T4", bound=BaseType)
 
@@ -436,7 +436,7 @@ class Tuple4(Tuple, Generic[T1, T2, T3, T4]):
         super().__init__(value_type_spec)
 
 
-Tuple4.__module__ = "pyteal"
+Tuple4.__module__ = "pyteal.abi"
 
 T5 = TypeVar("T5", bound=BaseType)
 
@@ -452,4 +452,4 @@ class Tuple5(Tuple, Generic[T1, T2, T3, T4, T5]):
         super().__init__(value_type_spec)
 
 
-Tuple5.__module__ = "pyteal"
+Tuple5.__module__ = "pyteal.abi"

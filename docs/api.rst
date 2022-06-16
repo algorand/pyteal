@@ -24,3 +24,10 @@ PyTeal Package
       :annotation: = <pyteal.TxnObject object>
 
       The most recently submitted inner transaction. This is an instance of :any:`TxnObject`.
+
+.. automodule:: pyteal.abi
+   :members:
+   :undoc-members:
+   :imported-members:
+   :special-members: __getitem__
+   :show-inheritance:

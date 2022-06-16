@@ -44,7 +44,7 @@ class DynamicArrayTypeSpec(ArrayTypeSpec[T]):
         return f"{self.value_type_spec()}[]"
 
 
-DynamicArrayTypeSpec.__module__ = "pyteal"
+DynamicArrayTypeSpec.__module__ = "pyteal.abi"
 
 
 class DynamicArray(Array[T]):
@@ -107,4 +107,4 @@ class DynamicArray(Array[T]):
         )
 
 
-DynamicArray.__module__ = "pyteal"
+DynamicArray.__module__ = "pyteal.abi"

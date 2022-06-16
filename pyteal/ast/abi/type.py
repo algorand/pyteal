@@ -62,7 +62,7 @@ class TypeSpec(ABC):
         pass
 
 
-TypeSpec.__module__ = "pyteal"
+TypeSpec.__module__ = "pyteal.abi"
 
 
 class BaseType(ABC):
@@ -143,7 +143,7 @@ class BaseType(ABC):
         return value.store_into(self)
 
 
-BaseType.__module__ = "pyteal"
+BaseType.__module__ = "pyteal.abi"
 
 T = TypeVar("T", bound=BaseType)
 
@@ -186,7 +186,7 @@ class ComputedValue(ABC, Generic[T]):
         return Seq(self.store_into(newInstance), action(newInstance))
 
 
-ComputedValue.__module__ = "pyteal"
+ComputedValue.__module__ = "pyteal.abi"
 
 
 class ReturnedValue(ComputedValue):
@@ -223,4 +223,4 @@ class ReturnedValue(ComputedValue):
         return output.stored_value.slot.store(self.computation)
 
 
-ReturnedValue.__module__ = "pyteal"
+ReturnedValue.__module__ = "pyteal.abi"

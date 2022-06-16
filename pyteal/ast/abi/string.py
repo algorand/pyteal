@@ -37,7 +37,7 @@ class StringTypeSpec(DynamicArrayTypeSpec):
         return isinstance(other, StringTypeSpec)
 
 
-StringTypeSpec.__module__ = "pyteal"
+StringTypeSpec.__module__ = "pyteal.abi"
 
 
 class String(DynamicArray[Byte]):
@@ -89,4 +89,4 @@ class String(DynamicArray[Byte]):
         )
 
 
-String.__module__ = "pyteal"
+String.__module__ = "pyteal.abi"
