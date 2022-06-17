@@ -95,9 +95,12 @@ class StaticArray(Array[T], Generic[T, N]):
         This function determines if the argument `values` is an ABI static array:
         * if so:
           * checks whether `values` is same type as this ABI staic array.
+
           * stores the encoding of `values`.
+
         * if not:
           * checks whether static array length matches sequence length.
+
           * calls the inherited `set` function and stores `values`.
 
         Args:
