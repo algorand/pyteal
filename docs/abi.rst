@@ -5,7 +5,16 @@ ABI Support
 
 TODO: brief description
 
-TODO: top-level warning about experimental nature of some APIs
+.. warning::
+  ABI support is still taking shape and is subject to backwards incompatible changes.
+    * Based on feedback, the API and usage patterns are likely to change.
+    * For the following use cases, feel encouraged to rely on abstractions.  Expect a best-effort attempt to minimize backwards incompatible changes along with a migration path.
+
+       * :any:`ABIReturnSubroutine` usage for ABI Application entry point definition.
+
+       * :any:`Router` usage for defining how to route program invocations.
+    * For general purpose :any:`Subroutine` definition usage, use at your own risk.  Based on feedback, the API and usage patterns will change more freely and with less effort to provide migration paths.
+
 TODO: warning about how ABI types are intended to be used at the moment (for standard serialization at the incoming and outgoing layers of contract) - internal use may be extremely inefficient with ABI types
 TODO: warning about how internal representation of ABI types may change over time
 
@@ -176,7 +185,12 @@ TODO: explain how to call a subroutine with ABI arguments
 ABIReturnSubroutine
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: warning again about experimental design
+.. warning::
+  :any:`ABIReturnSubroutine` is still taking shape and is subject to backwards incompatible changes.
+
+  * For ABI Application entry point definition, feel encouraged to use :any:`ABIReturnSubroutine`.  Expect a best-effort attempt to minimize backwards incompatible changes along with a migration path.
+  * For general purpose usage, use at your own risk.  Based on feedback, the API and usage patterns will change more freely and with less effort to provide migration paths.
+
 TODO: brief overview of why this is necessary and when it should be used
 
 Definition
@@ -193,7 +207,11 @@ Creating an ARC-4 Program with the ABI Router
 ----------------------------------------------------
 
 TODO: brief intro
-TODO: warning again about experimental design
+
+.. warning::
+  :any:`Router` usage is still taking shape and is subject to backwards incompatible changes.
+
+  Feel encouraged to use :any:`Router` and expect a best-effort attempt to minimize backwards incompatible changes along with a migration path.
 
 Registering Bare App Calls
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
