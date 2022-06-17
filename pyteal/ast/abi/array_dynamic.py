@@ -60,7 +60,8 @@ class DynamicArray(Array[T]):
         self,
         values: Union[Sequence[T], "DynamicArray[T]", ComputedValue["DynamicArray[T]"]],
     ) -> Expr:
-        """Set the ABI dynamic array with one of the following
+        """Set the ABI dynamic array with one of the following:
+
         * a sequence of ABI type variables
         * or another ABI static array
         * or a ComputedType with same TypeSpec
@@ -69,10 +70,15 @@ class DynamicArray(Array[T]):
         from ComputedType to store the internal ABI encoding into this StaticArray.
 
         This function determines if the argument `values` is an ABI dynamic array:
+
         * if so:
+
           * checks whether `values` is same type as this ABI dynamic array.
+
           * stores the encoding of `values`.
+
         * if not:
+
           * calls the inherited `set` function and stores `values`.
 
         Args:
