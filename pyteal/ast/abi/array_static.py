@@ -85,6 +85,7 @@ class StaticArray(Array[T], Generic[T, N]):
         ],
     ) -> Expr:
         """Set the ABI static array with one of the following:
+
         * a sequence of ABI type variables
         * or another ABI static array
         * or a ComputedType with same TypeSpec
@@ -93,12 +94,15 @@ class StaticArray(Array[T], Generic[T, N]):
         from ComputedType to store the internal ABI encoding into this StaticArray.
 
         This function determines if the argument `values` is an ABI static array:
+
         * if so:
+
           * checks whether `values` is same type as this ABI staic array.
 
           * stores the encoding of `values`.
 
         * if not:
+
           * checks whether static array length matches sequence length.
 
           * calls the inherited `set` function and stores `values`.
