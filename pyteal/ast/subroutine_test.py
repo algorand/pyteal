@@ -1023,15 +1023,15 @@ def test_subroutine_definition_invalid():
         ),
         (
             fnWithMixedAnnsABIRet1,
-            "Function has return of disallowed type pyteal.StaticArray[pyteal.Uint32, typing.Literal[10]]. "
+            "Function has return of disallowed type pyteal.abi.StaticArray[pyteal.abi.Uint32, typing.Literal[10]]. "
             "Only Expr is allowed",
-            "Function has return of disallowed type pyteal.StaticArray[pyteal.Uint32, typing.Literal[10]]. "
+            "Function has return of disallowed type pyteal.abi.StaticArray[pyteal.abi.Uint32, typing.Literal[10]]. "
             "Only Expr is allowed",
         ),
         (
             fnWithMixedAnnsABIRet2,
-            "Function has return of disallowed type <class 'pyteal.Uint64'>. Only Expr is allowed",
-            "Function has return of disallowed type <class 'pyteal.Uint64'>. Only Expr is allowed",
+            "Function has return of disallowed type <class 'pyteal.abi.Uint64'>. Only Expr is allowed",
+            "Function has return of disallowed type <class 'pyteal.abi.Uint64'>. Only Expr is allowed",
         ),
     )
 
