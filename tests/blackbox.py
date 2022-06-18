@@ -134,6 +134,74 @@ def Blackbox(input_types: list[TealType | None]):
     return decorator_blackbox
 
 
+def SubroutineRunner(input_types: list[TealType | None], mode=Mode.Application):
+    """
+    Decorator for enabling @Subroutine wrapped functions to be called directly and behave similarly
+    to Python native functions (e.g. raising on error during dryrun).
+    """
+
+    def decorator_runner(func: SubroutineFnWrapper):
+        return _SubroutineRunner(func, input_types, mode)
+
+    return decorator_runner
+
+
+@dataclass
+class _SubroutineRunner:
+    subroutine: SubroutineFnWrapper
+    input_types: list[TealType | None]
+    mode: Mode = Mode.Application
+
+    def __post_init__(self):
+        blackbox_wrapper = BlackboxWrapper(self.subroutine, self.input_types)
+        self.executor = PyTealDryRunExecutor(blackbox_wrapper, self.mode)
+
+    def __call__(self, *args, **kwargs):
+        dryrun = self.run(*args, **kwargs)
+
+        if dryrun.error():
+            raise RuntimeError(f"subroutine failed: '{dryrun.error_message()}'")
+
+        match (subr_type := self.subroutine.type_of()):
+            case TealType.uint64:
+                if (out := dryrun.stack_top()) is None:
+                    return 0
+                return out
+            case TealType.bytes:
+                out = dryrun.last_log()
+                if out is None:
+                    return 0
+                try:
+                    return int(out, 16)  # type: ignore
+                except Exception:
+                    raise ValueError(f"could not cast '{out}' to int")
+            case _:
+                raise ValueError(f"cannot infer output for type '{subr_type}'")
+
+    def _order_input(self, *args, **kwargs) -> list[bytes | str | int]:
+        # ensure args / kwargs map to subroutine arguments in right order
+        subr_args = self.subroutine.subroutine.arguments()
+
+        if len(args) + len(kwargs.keys()) != len(subr_args):
+            raise ValueError("number of arguments does not match subroutine")
+
+        subr_kwargs = subr_args[len(args) :]
+        if set(subr_kwargs) != set(kwargs.keys()):
+            raise KeyError(
+                f"keyword arguments {list(kwargs.keys())} do not match subroutine {subr_kwargs}"
+            )
+
+        return list(args) + [kwargs[kw] for kw in subr_args[len(args) :]]
+
+    def run(
+        self,
+        *args: bytes | str | int,
+        **kwargs: bytes | str | int,
+    ) -> DryRunInspector:
+        ordered_inputs = self._order_input(*args, **kwargs)
+        return self.executor.dryrun(ordered_inputs)
+
+
 # ---- API ---- #
 
 
