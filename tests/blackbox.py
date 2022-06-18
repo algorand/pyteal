@@ -1,3 +1,4 @@
+import math
 from typing import Callable, Generic, Sequence, TypeVar, cast
 from dataclasses import dataclass
 
@@ -193,13 +194,23 @@ class _SubroutineRunner:
 
         return list(args) + [kwargs[kw] for kw in subr_args[len(args) :]]
 
+    @staticmethod
+    def _itobytes(i: int) -> bytes:
+        return i.to_bytes(
+            max(math.ceil((i.bit_length()) / 8), 1), byteorder="big", signed=False
+        )
+
     def run(
         self,
         *args: bytes | str | int,
         **kwargs: bytes | str | int,
     ) -> DryRunInspector:
         ordered_inputs = self._order_input(*args, **kwargs)
-        return self.executor.dryrun(ordered_inputs)
+        # casting ints to bytes to circumvent uint64 assumption for int args
+        byte_inputs = [
+            self._itobytes(v) if isinstance(v, int) else v for v in ordered_inputs
+        ]
+        return self.executor.dryrun(byte_inputs)
 
 
 # ---- API ---- #
