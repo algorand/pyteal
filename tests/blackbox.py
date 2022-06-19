@@ -203,7 +203,7 @@ class _SubroutineRunner:
         if dryrun.error():
             raise RuntimeError(f"subroutine failed: '{dryrun.error_message()}'")
 
-        match (subr_type := self.subroutine.type_of()):
+        match (subr_type := self.subroutine.subroutine.return_type):
             case TealType.uint64:
                 if (out := dryrun.stack_top()) is None:
                     return 0
