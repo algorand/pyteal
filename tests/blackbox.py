@@ -139,6 +139,7 @@ def CallableSubroutine(
     input_types: list[TealType | None],
     output_type: TealType | None = None,
     name: str | None = None,
+    inline: bool = False,
     mode: Mode = Mode.Application,
 ):
     """
@@ -162,7 +163,7 @@ def CallableSubroutine(
             )
         else:
             func = SubroutineFnWrapper(func, output_type, name=name)
-        return _SubroutineRunner(func, input_types, mode)
+        return _SubroutineRunner(func, input_types, inline, mode)
 
     return decorator_runner
 
@@ -171,13 +172,29 @@ def CallableSubroutine(
 class _SubroutineRunner:
     subroutine: SubroutineFnWrapper
     input_types: list[TealType | None]
+    _inline: bool = False
     mode: Mode = Mode.Application
 
     def __post_init__(self):
         blackbox_wrapper = BlackboxWrapper(self.subroutine, self.input_types)
         self.executor = PyTealDryRunExecutor(blackbox_wrapper, self.mode)
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs) -> int | Expr:
+        args_are_pyteal = [
+            isinstance(arg, Expr) or isinstance(arg, ScratchVar)
+            for arg in [*args, *kwargs.values()]
+        ]
+        # attempting _pycall since PyTeal would _definitely_ fail
+        if not all(args_are_pyteal):
+            return self._pycall(*args, **kwargs)
+        return self._pytealcall(*args, **kwargs)
+
+    def _pytealcall(self, *args, **kwargs) -> Expr:
+        if self._inline:
+            return self.inline(*args, **kwargs)
+        return self.subroutine(*args, **kwargs)
+
+    def _pycall(self, *args, **kwargs) -> int:
         dryrun = self.run(*args, **kwargs)
 
         if dryrun.error():
@@ -187,17 +204,19 @@ class _SubroutineRunner:
             case TealType.uint64:
                 if (out := dryrun.stack_top()) is None:
                     return 0
-                return out
+                return out  # type: ignore
             case TealType.bytes:
-                out = dryrun.last_log()
-                if out is None:
+                if (out := dryrun.last_log()) is None:  # type: ignore
                     return 0
                 try:
-                    return int(out, 16)  # type: ignore
+                    return int(out, 16)
                 except Exception:
                     raise ValueError(f"could not cast '{out}' to int")
             case _:
                 raise ValueError(f"cannot infer output for type '{subr_type}'")
+
+    def inline(self, *args, **kwargs) -> Expr:
+        return self.subroutine.subroutine.implementation(*args, **kwargs)
 
     def _order_input(self, *args, **kwargs) -> list[bytes | str | int]:
         # ensure args / kwargs map to subroutine arguments in right order
