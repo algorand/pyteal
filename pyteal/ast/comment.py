@@ -15,7 +15,7 @@ class Comment(Expr):
 
     def __teal__(self, options: "CompileOptions") -> Tuple[TealBlock, TealSimpleBlock]:
         tb, tsb = self.expr.__teal__(options)
-        # tb.ops[-1].args.append("// "+self.comment)
+        # this seems not good, is there always going to oe an ops list? will it always have non None args?
         tsb.ops[-1].args.append("// " + self.comment)
         return tb, tsb
 
