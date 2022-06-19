@@ -135,13 +135,33 @@ def Blackbox(input_types: list[TealType | None]):
     return decorator_blackbox
 
 
-def SubroutineRunner(input_types: list[TealType | None], mode=Mode.Application):
+def CallableSubroutine(
+    input_types: list[TealType | None],
+    output_type: TealType | None = None,
+    name: str | None = None,
+    mode: Mode = Mode.Application,
+):
     """
-    Decorator for enabling @Subroutine wrapped functions to be called directly and behave similarly
-    to Python native functions (e.g. raising on error during dryrun).
+    Decorator for enabling functions to be called directly as Subroutines and behave similarly to
+    Python native functions (e.g. raising on error during dryrun).
     """
 
-    def decorator_runner(func: SubroutineFnWrapper):
+    def decorator_runner(func: SubroutineFnWrapper | Callable[..., Expr]):
+        if isinstance(func, SubroutineFnWrapper):
+            if output_type is not None:
+                raise ValueError(
+                    "received 'output_type', but function is already a Subroutine"
+                )
+            elif name is not None:
+                raise ValueError(
+                    "received 'name', but function is already a Subroutine"
+                )
+        elif output_type is None:
+            raise ValueError(
+                "'output_type' must be specified if function is not already a Subroutine"
+            )
+        else:
+            func = SubroutineFnWrapper(func, output_type, name=name)
         return _SubroutineRunner(func, input_types, mode)
 
     return decorator_runner
