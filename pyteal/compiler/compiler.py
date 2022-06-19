@@ -308,6 +308,7 @@ def compileTeal(
             )
         teal = createConstantBlocks(teal)
 
+    print(teal)
     lines = ["#pragma version {}".format(version)]
     lines += [i.assemble() for i in teal]
     return "\n".join(lines)
