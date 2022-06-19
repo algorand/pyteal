@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING, Tuple
 
-from pyteal.types import TealType
 from pyteal.ir import TealBlock, TealSimpleBlock
 from pyteal.ast.expr import Expr
 
@@ -23,10 +22,10 @@ class Comment(Expr):
         return "(Comment {} ({}))".format(self.comment, str(self.expr))
 
     def type_of(self):
-        return TealType.none
+        return self.expr.type_of()
 
     def has_return(self):
-        return False
+        return self.expr.has_return()
 
 
 Comment.__module__ = "pyteal"
