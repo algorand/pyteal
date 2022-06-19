@@ -1,5 +1,5 @@
 import math
-from typing import Callable, Generic, Sequence, TypeVar, cast
+from typing import Callable, Generic, ParamSpec, Sequence, TypeVar, cast
 from dataclasses import dataclass
 
 import algosdk.abi
@@ -135,6 +135,10 @@ def Blackbox(input_types: list[TealType | None]):
     return decorator_blackbox
 
 
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
 def CallableSubroutine(
     input_types: list[TealType | None],
     output_type: TealType | None = None,
@@ -147,7 +151,7 @@ def CallableSubroutine(
     Python native functions (e.g. raising on error during dryrun).
     """
 
-    def decorator_runner(func: SubroutineFnWrapper | Callable[..., Expr]):
+    def decorator_runner(func: Callable[P, R]) -> Callable[P, R]:
         if isinstance(func, SubroutineFnWrapper):
             if output_type is not None:
                 raise ValueError(
@@ -162,8 +166,8 @@ def CallableSubroutine(
                 "'output_type' must be specified if function is not already a Subroutine"
             )
         else:
-            func = SubroutineFnWrapper(func, output_type, name=name)
-        return _SubroutineRunner(func, input_types, inline, mode)
+            func = SubroutineFnWrapper(func, output_type, name=name)  # type: ignore
+        return _SubroutineRunner(func, input_types, inline, mode)  # type: ignore
 
     return decorator_runner
 
