@@ -63,7 +63,6 @@ __all__ = [
     "BytesSqrt",
     "BytesXor",
     "BytesZero",
-    "CallConfig",
     "Comment",
     "CompileOptions",
     "Concat",
