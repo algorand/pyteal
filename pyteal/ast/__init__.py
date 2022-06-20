@@ -36,6 +36,8 @@ from pyteal.ast.array import Array
 from pyteal.ast.tmpl import Tmpl
 from pyteal.ast.nonce import Nonce
 
+from pyteal.ast.comment import Comment
+
 # unary ops
 from pyteal.ast.unaryexpr import (
     UnaryExpr,
@@ -281,4 +283,5 @@ __all__ = [
     "EcdsaVerify",
     "EcdsaDecompress",
     "EcdsaRecover",
+    "Comment",
 ]
