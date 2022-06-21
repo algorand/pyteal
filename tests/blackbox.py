@@ -221,7 +221,7 @@ class _SubroutineRunner:
     def inline(self, *args, **kwargs) -> Expr:
         return self.subroutine.subroutine.implementation(*args, **kwargs)
 
-    def _order_input(self, *args, **kwargs) -> list[bytes | str | int]:
+    def _order_input(self, *args, **kwargs) -> list[str | int]:
         # ensure args / kwargs map to subroutine arguments in right order
         subr_args = self.subroutine.subroutine.arguments()
 
@@ -244,8 +244,8 @@ class _SubroutineRunner:
 
     def run(
         self,
-        *args: bytes | str | int,
-        **kwargs: bytes | str | int,
+        *args: str | int,
+        **kwargs: str | int,
     ) -> DryRunInspector:
         ordered_inputs = self._order_input(*args, **kwargs)
         # casting ints to bytes to circumvent uint64 assumption for int args
@@ -253,6 +253,15 @@ class _SubroutineRunner:
             self._itobytes(v) if isinstance(v, int) else v for v in ordered_inputs
         ]
         return self.executor.dryrun(byte_inputs)
+
+    def report(
+        self,
+        *args: str | int,
+        **kwargs: str | int,
+    ) -> None:
+        inspector = self.run(*args, **kwargs)
+        ordered_inputs = self._order_input(*args, **kwargs)
+        print(inspector.report(ordered_inputs))
 
 
 # ---- API ---- #
