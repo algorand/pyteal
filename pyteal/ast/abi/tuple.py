@@ -459,8 +459,11 @@ class Tuple5(Tuple, Generic[T1, T2, T3, T4, T5]):
 Tuple5.__module__ = "pyteal"
 
 P = TypeVarTuple("P")
+
+
 class TupleAny(Tuple, Generic[Unpack[P]]):
-    def __init_(self, value_type_spec: TupleTypeSpec)->None:
+    def __init_(self, value_type_spec: TupleTypeSpec) -> None:
         super().__init__(value_type_spec)
+
 
 TupleAny.__module__ = "pyteal"
