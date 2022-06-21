@@ -7,6 +7,7 @@ from typing import (
     cast,
     overload,
 )
+from typing_extensions import TypeVarTuple, Unpack
 
 from pyteal.types import TealType
 from pyteal.errors import TealInputError
@@ -244,6 +245,9 @@ class TupleTypeSpec(TypeSpec):
             case 5:
                 v0, v1, v2, v3, v4 = annotater()
                 return Tuple5[v0, v1, v2, v3, v4]  # type: ignore[valid-type]
+            case 6:
+                v0, v1, v2, v3, v4, v5 = annotater()
+                return TupleAny[v0, v1, v2, v3, v4, v5]
 
         raise TypeError(f"Cannot annotate tuple of length {len(vtses)}")
 
@@ -453,3 +457,10 @@ class Tuple5(Tuple, Generic[T1, T2, T3, T4, T5]):
 
 
 Tuple5.__module__ = "pyteal"
+
+P = TypeVarTuple("P")
+class TupleAny(Tuple, Generic[Unpack[P]]):
+    def __init_(self, value_type_spec: TupleTypeSpec)->None:
+        super().__init__(value_type_spec)
+
+TupleAny.__module__ = "pyteal"

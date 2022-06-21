@@ -108,6 +108,7 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
         Tuple3,
         Tuple4,
         Tuple5,
+        TupleAny,
     )
     from pyteal.ast.abi.string import StringTypeSpec, String
     from pyteal.ast.abi.address import AddressTypeSpec, Address
@@ -243,6 +244,9 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
     if origin is Tuple5:
         if len(args) != 5:
             raise TypeError("Tuple5 expects 5 type arguments. Got: {}".format(args))
+        return TupleTypeSpec(*(type_spec_from_annotation(arg) for arg in args))
+
+    if origin is TupleAny:
         return TupleTypeSpec(*(type_spec_from_annotation(arg) for arg in args))
 
     if origin is Transaction:
