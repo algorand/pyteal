@@ -23,7 +23,13 @@ Types
 
 The ABI supports a variety of types whose encodings are standardized.
 
+Fundamentals
+~~~~~~~~~~~~
+
 Before we introduce these ABI types, it's important to understand the fundamentals of how PyTeal's ABI type system works.
+
+:code:`abi.BaseType`
+^^^^^^^^^^^^^^^^^^^^
 
 :any:`abi.BaseType` is an abstract base class that all ABI type classes inherit from. This class defines a few methods common to all ABI types:
 
@@ -31,17 +37,89 @@ Before we introduce these ABI types, it's important to understand the fundamenta
 * :any:`abi.BaseType.encode()` is used to encode a type's value into an encoded byte string.
 * :any:`abi.BaseType.type_spec()` is used to get an instance of :any:`abi.TypeSpec` that describes that type.
 
-:any:`abi.TypeSpec` is an abstract base class used to describe types. TODO: finish description
+:code:`abi.TypeSpec`
+^^^^^^^^^^^^^^^^^^^^
 
-ABI types are divided into a few categories, each explained in the following sections.
+:any:`abi.TypeSpec` is an abstract base class used to describe ABI types. Every child class of :code:`abi.BaseType` also has a companion :code:`abi.TypeSpec` child class. The :code:`abi.TypeSpec` class has a few methods that return information about the type it represents, but one of the class's most important features is the method :any:`abi.TypeSpec.new_instance()`, which creates and returns a new :any:`abi.BaseType` instance of the ABI type it represents.
+
+Static vs Dynamic Types
+^^^^^^^^^^^^^^^^^^^^^^^
+
+An important property of an ABI type is whether it is static or dynamic.
+
+Static types are defined as types whose encoded length does not depend on the value of that type. This property allows encoding and decoding of static types to be more efficient.
+
+Likewise, dynamic types are defined as types whose encoded length does in fact depend on the value that type has. Due to this dependency, the code that PyTeal generates to encode, decode, and manipulate dynamic types is more complex and generally less efficient than the code needed for static types.
+
+Because of the difference in complexity and efficiency when working with static and dynamic types, **we strongly recommend using static types over dynamic types whenever possible**.
+
+Instantiating Types
+^^^^^^^^^^^^^^^^^^^
+
+There are a few ways to create an instance of an ABI type. Each method produces the same result, but some may be more convenient than others.
+
+With the Constructor
+""""""""""""""""""""""
+
+The most obvious way is to use its constructor, like so:
+
+.. code-block:: python
+
+    myUint8 = abi.Uint8()
+    myUint64 = abi.Uint64()
+    myArrayOf12Uint8s = abi.StaticArray(abi.StaticArrayTypeSpec(abi.Uint8TypeSpec(), 12))
+
+For simple types, using the constructor is straightforward and works as you would expect. However, more complex types like :any:`abi.StaticArray` have type-level arguments, so their constructor must take an :any:`abi.TypeSpec` which fully defines all necessary arguments. These types can be created with a constructor, but it's often not the most convenient way to do so.
+
+With an :code:`abi.TypeSpec` Instance
+""""""""""""""""""""""""""""""""""""""
+
+You may remember that :code:`abi.TypeSpec` has a :any:`new_instance() <abi.TypeSpec.new_instance>` method that can be used to instantiate ABI types. This is another way of instantiating ABI types, if you happen to have an :code:`abi.TypeSpec` instance available. For example:
+
+.. code-block:: python
+
+    myUintType = abi.Uint8TypeSpec()
+    myUint8 = myUintType.new_instance()
+
+    myArrayType = abi.StaticArrayTypeSpec(myUintType, 12)
+    myArrayOf12Uint8s = myArrayType.new_instance()
+
+With :code:`abi.make`
+"""""""""""""""""""""
+
+Using :code:`abi.TypeSpec.new_instance()` makes sense if you already have an instance of the right :code:`abi.TypeSpec`, but otherwise it's not much better than using the constructor. Because of this, we have the :any:`abi.make` method, which is perhaps the most convenient way to create a complex type.
+
+To use it, you pass in a Python type annotation that describes the ABI type, and :code:`abi.make` will create an instance of it for you. For example:
+
+.. code-block:: python
+
+    from typing import Literal
+
+    myUint8 = abi.make(abi.Uint8)
+    myUint64 = abi.make(abi.Uint64)
+    myArrayOf12Uint8s = abi.make(abi.StaticArray[abi.Uint8, Literal[12]])
+
+.. note::
+    Since Python does not allow integers to be directly embedded in type annotations, you must wrap any integer arguments in the :code:`Literal` annotation from the :code:`typing` module.
+
+Categories
+~~~~~~~~~~
+
+There are three categories of ABI types:
+
+1. Basic types
+2. Reference types
+3. Transaction types
+
+Each of which is described in detail in the following subsections.
 
 Basic Types
-~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 TODO: brief intro
 
 Definitions
-^^^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""
 
 PyTeal supports the following basic static types:
 
@@ -61,14 +139,15 @@ PyTeal Type                                    ARC-4 Type             Dynamic / 
 :any:`abi.Tuple`\*                             :code:`(...)`          Static if all elements are static A tuple of multiple types
 ============================================== ====================== ================================= =======================================================================================================================================================
 
-\*A note about :any:`abi.Tuple`: a proper implementation of this type requires a variable amount of generic arguments. Python 3.11 will support this with the introduction of `PEP 646 - Variadic Generics <https://peps.python.org/pep-0646/>`_, but until then it will not be possible to make :code:`abi.Tuple` a generic type. As a workaround, we have introduced the following subclasses of :code:`abi.Tuple` for fixed amounts of generic arguments:
+.. note::
+    \*A proper implementation of :any:`abi.Tuple` requires a variable amount of generic arguments. Python 3.11 will support this with the introduction of `PEP 646 - Variadic Generics <https://peps.python.org/pep-0646/>`_, but until then it will not be possible to make :code:`abi.Tuple` a generic type. As a workaround, we have introduced the following subclasses of :code:`abi.Tuple` for fixed amounts of generic arguments:
 
-* :any:`abi.Tuple0`: a tuple of zero values, :code:`()`
-* :any:`abi.Tuple1[T1] <abi.Tuple1>`: a tuple of one value, :code:`(T1)`
-* :any:`abi.Tuple2[T1,T2] <abi.Tuple2>`: a tuple of two values, :code:`(T1,T2)`
-* :any:`abi.Tuple3[T1,T2,T3] <abi.Tuple3>`: a tuple of three values, :code:`(T1,T2,T3)`
-* :any:`abi.Tuple4[T1,T2,T3,T4] <abi.Tuple4>`: a tuple of four values, :code:`(T1,T2,T3,T4)`
-* :any:`abi.Tuple5[T1,T2,T3,T4,T5] <abi.Tuple5>`: a tuple of five values, :code:`(T1,T2,T3,T4,T5)`
+    * :any:`abi.Tuple0`: a tuple of zero values, :code:`()`
+    * :any:`abi.Tuple1[T1] <abi.Tuple1>`: a tuple of one value, :code:`(T1)`
+    * :any:`abi.Tuple2[T1,T2] <abi.Tuple2>`: a tuple of two values, :code:`(T1,T2)`
+    * :any:`abi.Tuple3[T1,T2,T3] <abi.Tuple3>`: a tuple of three values, :code:`(T1,T2,T3)`
+    * :any:`abi.Tuple4[T1,T2,T3,T4] <abi.Tuple4>`: a tuple of four values, :code:`(T1,T2,T3,T4)`
+    * :any:`abi.Tuple5[T1,T2,T3,T4,T5] <abi.Tuple5>`: a tuple of five values, :code:`(T1,T2,T3,T4,T5)`
 
 These ARC-4 types are not yet supported in PyTeal:
 
@@ -76,34 +155,23 @@ These ARC-4 types are not yet supported in PyTeal:
 * Unsigned integers larger than 64 bits
 * Fixed point unsigned integers, i.e. :code:`ufixed<N>x<M>`
 
-Static vs Dynamic Types
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-An important property of the above types are whether they are static or dynamic.
-
-Static types are defined as types whose encoded length does not depend on the value of that type. This property allows encoding and decoding of static types to be more efficient.
-
-Likewise, dynamic types are defined as types whose encoded length does in fact depend on the value that type has. Due to this dependency, the code that PyTeal generates to encode, decode, and manipulate dynamic types is more complex and less efficient than the code needed for static types.
-
-Because of the difference in complexity and efficiency when working with static and dynamic types, we strongly recommend using static types over dynamic types whenever possible.
-
 Usage
-^^^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""
 
 TODO: explain usage and show examples
 
 Limitations
-^^^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""
 
 TODO: warn about code inefficiencies and type size limitations
 
 Reference Types
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-In addition to the basic types defined above, 
+TODO: brief description
 
 Definitions
-^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""""
 
 PyTeal supports the following reference types:
 
@@ -116,22 +184,22 @@ PyTeal Type            ARC-4 Type             Dynamic / Static Description
 ====================== ====================== ================ =======================================================================================================================================================
 
 Usage
-^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""""
 
 TODO: explain usage and show examples
 
 Limitations
-^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""""
 
 TODO: explain limitations, such as can't be created directly, or used as method return value
 
 Transaction Types
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 TODO: brief description
 
 Definitions
-^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""""
 
 PyTeal supports the following transaction types:
 
@@ -148,12 +216,12 @@ PyTeal Type                         ARC-4 Type             Dynamic / Static Desc
 =================================== ====================== ================ =======================================================================================================================================================
 
 Usage
-^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""""
 
 TODO: explain usage and show examples
 
 Limitations
-^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""""
 
 TODO: explain limitations, such as can't be created directly, used as method return value, or embedded in other types
 
