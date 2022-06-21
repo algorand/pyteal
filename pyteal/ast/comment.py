@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING, Tuple
+from pyteal.errors import TealInputError
 
 from pyteal.ir import TealBlock, TealSimpleBlock
 from pyteal.ast.expr import Expr
@@ -18,8 +19,12 @@ class Comment(Expr):
         # TODO: make sure this doesnt cause issues
         if len(tsb.ops) > 0:
             tsb.ops[-1].args.append(f"// {self.comment}")
-        else:
+        elif len(tb.ops) > 0:
             tb.ops[-1].args.append(f"// {self.comment}")
+        else:
+            raise TealInputError(
+                "Cannot apply comment to an empty Expression: {}".format(self.expr)
+            )
 
         return tb, tsb
 
