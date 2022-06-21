@@ -53,7 +53,7 @@ Byteslice arithemetic is available for Teal V4 and above.
 Byteslice arithmetic operators allow up to 512-bit arithmetic.
 In PyTeal, byteslice arithmetic expressions include 
 :code:`TealType.Bytes` values as arguments (with the exception of :code:`BytesZero`)
-and must be 64 bytes or less.
+and must be 64 bits or less.
 The table below summarizes the byteslize arithmetic operations in PyTeal.
 
 ======================================= ======================= ====================================================================== ==================
