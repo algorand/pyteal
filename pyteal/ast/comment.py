@@ -14,12 +14,17 @@ class Comment(Expr):
 
     def __teal__(self, options: "CompileOptions") -> Tuple[TealBlock, TealSimpleBlock]:
         tb, tsb = self.expr.__teal__(options)
-        # this seems not good, is there always going to oe an ops list? will it always have non None args?
-        tsb.ops[-1].args.append("// " + self.comment)
+
+        # TODO: make sure this doesnt cause issues
+        if len(tsb.ops) > 0:
+            tsb.ops[-1].args.append(f"// {self.comment}")
+        else:
+            tb.ops[-1].args.append(f"// {self.comment}")
+
         return tb, tsb
 
     def __str__(self):
-        return "(Comment {} ({}))".format(self.comment, str(self.expr))
+        return f"(Comment {self.comment} ({self.expr}))"
 
     def type_of(self):
         return self.expr.type_of()
