@@ -11,7 +11,9 @@ if TYPE_CHECKING:
 class Comment(Expr):
     def __init__(self, expr: Expr, comment: str):
         self.expr = expr
-        self.comment = comment
+        self.comment = " ".join(
+            [i.strip() for i in comment.split("\n") if not (i.isspace() or len(i) == 0)]
+        )
 
     def __teal__(self, options: "CompileOptions") -> Tuple[TealBlock, TealSimpleBlock]:
         tb, tsb = self.expr.__teal__(options)
