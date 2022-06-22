@@ -70,9 +70,9 @@ def test_comment_no_simple():
 #     comment = "should fail"
 #     expr = pt.Comment(to_wrap, comment)
 #     assert expr.type_of() == to_wrap.type_of()
-# 
+#
 #     print(expr.__teal__(options))
-# 
+#
 #     with pytest.raises(pt.TealInputError):
 #         expr.__teal__(options)
-# 
+#
