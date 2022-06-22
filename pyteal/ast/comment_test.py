@@ -1,5 +1,3 @@
-import pytest
-
 import pyteal as pt
 
 options = pt.CompileOptions()
