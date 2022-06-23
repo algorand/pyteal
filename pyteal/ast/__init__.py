@@ -102,6 +102,7 @@ from pyteal.ast.binaryexpr import (
 # ternary ops
 from pyteal.ast.ternaryexpr import Divw, Ed25519Verify, SetBit, SetByte
 from pyteal.ast.substring import Substring, Extract, Suffix
+from pyteal.ast.replace import Replace
 
 # more ops
 from pyteal.ast.naryexpr import NaryExpr, And, Or, Concat
@@ -272,6 +273,7 @@ __all__ = [
     "ExtractUint16",
     "ExtractUint32",
     "ExtractUint64",
+    "Replace",
     "Log",
     "While",
     "For",

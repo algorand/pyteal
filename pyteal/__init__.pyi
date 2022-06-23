@@ -85,6 +85,7 @@ __all__ = [
     "ExtractUint16",
     "ExtractUint32",
     "ExtractUint64",
+    "Replace",
     "For",
     "Ge",
     "GeneratedID",

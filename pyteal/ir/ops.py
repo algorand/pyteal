@@ -1,3 +1,4 @@
+from dataclasses import replace
 from typing import NamedTuple
 from enum import Enum, Flag, auto
 
@@ -179,6 +180,8 @@ class Op(Enum):
     gitxnas             = OpType("gitxnas",             Mode.Application,                  6)
     gloadss             = OpType("gloadss",             Mode.Application,                  6)
     acct_params_get     = OpType("acct_params_get",     Mode.Application,                  6)
+    replace2            = OpType("replace2",            Mode.Signature | Mode.Application, 7)
+    replace3            = OpType("replace3",            Mode.Signature | Mode.Application, 7)
     # fmt: on
 
 
