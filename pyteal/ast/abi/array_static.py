@@ -84,34 +84,19 @@ class StaticArray(Array[T], Generic[T, N]):
             Sequence[T], "StaticArray[T, N]", ComputedValue["StaticArray[T, N]"]
         ],
     ) -> Expr:
-        """Set the ABI static array with one of the following:
+        """Set the elements of this StaticArray to the input values.
 
-        * a sequence of ABI type variables
-        * or another ABI static array
-        * or a ComputedType with same TypeSpec
+        The behavior of this method depends on the input argument type:
 
-        If the argument `values` is a ComputedType, we call `store_into` method
-        from ComputedType to store the internal ABI encoding into this StaticArray.
-
-        This function determines if the argument `values` is an ABI static array:
-
-        * if so:
-
-          * checks whether `values` is same type as this ABI staic array.
-
-          * stores the encoding of `values`.
-
-        * if not:
-
-          * checks whether static array length matches sequence length.
-
-          * calls the inherited `set` function and stores `values`.
+            * :code:`Sequence[T]`: set the elements of this StaticArray to those contained in this Python sequence (e.g. a list or tuple). A compiler error will occur if any element in the sequence does not match this StaticArray's element type, or if the sequence length does not equal this StaticArray's length.
+            * :code:`StaticArray[T, N]`: copy the elements from another StaticArray. The argument's element type and length must exactly match this StaticArray's element type and length, otherwise an error will occur.
+            * :code:`ComputedValue[StaticArray[T, N]]`: copy the elements from a StaticArray produced by a ComputedValue. The element type and length produced by the ComputedValue must exactly match this StaticArray's element type and length, otherwise an error will occur.
 
         Args:
-            values: either a sequence of ABI typed values, or an ABI static array.
+            value: The new elements this StaticArray should have. This must follow the above constraints.
 
         Returns:
-            A PyTeal expression that stores encoded `values` in its internal ScratchVar.
+            An expression which stores the given value into this StaticArray.
         """
         if isinstance(values, ComputedValue):
             return self._set_with_computed_type(values)

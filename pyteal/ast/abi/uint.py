@@ -1,5 +1,4 @@
 from typing import (
-    TypeVar,
     Union,
     Optional,
     Final,
@@ -107,9 +106,6 @@ def uint_encode(size: int, uintVar: ScratchVar) -> Expr:
         return Itob(uintVar.load())
 
     raise ValueError("Unsupported uint size: {}".format(size))
-
-
-N = TypeVar("N", bound=int)
 
 
 class UintTypeSpec(TypeSpec):
@@ -227,9 +223,6 @@ class Uint64TypeSpec(UintTypeSpec):
 Uint32TypeSpec.__module__ = "pyteal.abi"
 
 
-T = TypeVar("T", bound="Uint")
-
-
 class Uint(BaseType):
     @abstractmethod
     def __init__(self, spec: UintTypeSpec) -> None:
@@ -239,9 +232,32 @@ class Uint(BaseType):
         return cast(UintTypeSpec, super().type_spec())
 
     def get(self) -> Expr:
+        """Return the value held by this Uint as a PyTeal expression.
+
+        The expression will have the type TealType.uint64.
+        """
         return self.stored_value.load()
 
-    def set(self: T, value: Union[int, Expr, "Uint", ComputedValue[T]]) -> Expr:
+    def set(self, value: Union[int, Expr, "Uint", ComputedValue["Uint"]]) -> Expr:
+        """Set the value of this Uint to the input value.
+
+        There are a variety of ways to express the input value. Regardless of the type used to
+        indicate the input value, this Uint type can only hold values in the range :code:`[0,2^N)`,
+        where :code:`N` is the bit size of this Uint.
+
+        The behavior of this method depends on the input argument type:
+
+            * :code:`int`: set the value to a Python integer. A compiler error will occur if this value does not fit in this integer type.
+            * :code:`Expr`: set the value to the result of a PyTeal expression, which must evaluate to a TealType.uint64. The program will fail if the evaluated value does not fit in this integer type.
+            * :code:`Uint`: copy the value from another Uint. The argument's type must exactly match this integer's type, otherwise an error will occur. For example, it's not possible to set a Uint64 to a Uint8, or vice versa.
+            * :code:`ComputedValue[Uint]`: copy the value from a Uint produced by a ComputedValue. The type produced by the ComputedValue must exactly match this integer's type, otherwise an error will occur.
+
+        Args:
+            value: The new value this Uint should take. This must follow the above constraints.
+
+        Returns:
+            An expression which stores the given value into this Uint.
+        """
         if isinstance(value, ComputedValue):
             return self._set_with_computed_type(value)
 

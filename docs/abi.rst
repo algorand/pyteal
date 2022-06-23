@@ -116,12 +116,12 @@ Each of which is described in detail in the following subsections.
 Basic Types
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-TODO: brief intro
+Basic types are the most straightforward category of ABI types. These types are used to hold values and they have no other side effects, in contrast to the other categories of types.
 
 Definitions
 """""""""""""""""""""
 
-PyTeal supports the following basic static types:
+PyTeal supports the following basic types:
 
 ============================================== ====================== ================================= =======================================================================================================================================================
 PyTeal Type                                    ARC-4 Type             Dynamic / Static                  Description
@@ -158,7 +158,81 @@ These ARC-4 types are not yet supported in PyTeal:
 Usage
 """""""""""""""""""""
 
-TODO: explain usage and show examples
+Setting Values
+''''''''''''''''
+
+All basic types have a :code:`set()` method which can be used to assign a value. The arguments for this method differ depending on the ABI type. For convenience, here are links to the docs for each class's method:
+
+* :any:`abi.Uint.set()`, which is used by all :code:`abi.Uint` classes and :code:`abi.Byte`
+* :any:`abi.Bool.set()`
+* :any:`abi.StaticArray.set()`
+* :any:`abi.Address.set()`
+* :any:`abi.DynamicArray.set()`
+* :any:`abi.String.set()`
+* :any:`abi.Tuple.set()`
+
+A brief example is below. Please consult the documentation linked above for each method to learn more about specific usage and behavior.
+
+.. code-block:: python
+
+    myAddress = abi.make(abi.Address)
+    myBool = abi.make(abi.Bool)
+    myUint64 = abi.make(abi.Uint64)
+    myTuple = abi.make(abi.Tuple3[abi.Address, abi.Bool, abi.Uint64])
+
+    program = Seq(
+        myAddress.set(Txn.sender()),
+        myBool.set(Txn.fee() == Int(0)),
+        myUint64.set(5000),
+        myTuple.set(myAddress, myBool, myUint64)
+    )
+
+Getting Values
+''''''''''''''''''''''
+
+All basic types that represent a single value have a :code:`get()` method, which can be used to extract that value. The supported types and methods are:
+
+* :any:`abi.Uint.get()`, which is used by all :code:`abi.Uint` classes and :code:`abi.Byte`
+* :any:`abi.Bool.get()`
+* :any:`abi.Address.get()`
+* :any:`abi.String.get()`
+
+A brief example is below. Please consult the documentation linked above for each method to learn more about specific usage and behavior.
+
+.. code-block:: python
+
+    myUint64 = abi.make(abi.Uint64)
+
+    program = Seq(
+        myUint64.decode(Txn.application_args[1]),
+        Assert(myUint64.get() != Int(0))
+    )
+
+Getting Values at Indexes
+''''''''''''''''''''''''''
+
+The types :code:`abi.StaticArray`, :code:`abi.Address`, :code:`abi.DynamicArray`, :code:`abi.String`, and :code:`abi.Tuple` are compound types, meaning they contain other types whose values can be extracted. The :code:`__getitem__` method, accessible by using square brackets to "index into" an object, can be used to extract these values.
+
+The supported methods are:
+
+* :any:`abi.StaticArray.__getitem__`, used for :code:`abi.StaticArray` and :code:`abi.Address`
+* :any:`abi.Array.__getitem__`, used for :code:`abi.DynamicArray` and :code:`abi.String`
+* :any:`abi.Tuple.__getitem__`
+
+Be aware that these methods return a :code:`ComputedValue`, TODO link to Computed Value section
+
+A brief example is below. Please consult the documentation linked above for each method to learn more about specific usage and behavior.
+
+.. code-block:: python
+
+    myTuple = abi.make(abi.Tuple3[abi.Address, abi.Bool, abi.Uint64])
+    myBool = abi.make(abi.Bool)
+
+    program = Seq(
+        myTuple.decode(Txn.application_args[1]),
+        myBool.set(myTuple[2]),
+        Assert(myBool.get())
+    )
 
 Limitations
 """""""""""""""""""""

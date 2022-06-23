@@ -270,8 +270,6 @@ class TupleTypeSpec(TypeSpec):
 
 TupleTypeSpec.__module__ = "pyteal.abi"
 
-T_tuple = TypeVar("T_tuple", bound="Tuple")
-
 
 class Tuple(BaseType):
     def __init__(self, tuple_type_spec: TupleTypeSpec) -> None:
@@ -298,7 +296,7 @@ class Tuple(BaseType):
         ...
 
     @overload
-    def set(self: T_tuple, value: ComputedValue[T_tuple]) -> Expr:
+    def set(self, value: ComputedValue["Tuple"]) -> Expr:
         ...
 
     def set(self, *values):
@@ -325,7 +323,7 @@ class Tuple(BaseType):
         """Get the number of values this tuple holds as an Expr."""
         return Int(self.type_spec().length_static())
 
-    def __getitem__(self, index: int) -> "TupleElement":
+    def __getitem__(self, index: int) -> "TupleElement[BaseType]":
         if not (0 <= index < self.type_spec().length_static()):
             raise TealInputError(f"Index out of bounds: {index}")
         return TupleElement(self, index)
