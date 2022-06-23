@@ -122,6 +122,20 @@ class StaticArray(Array[T], Generic[T, N]):
         return Int(self.type_spec().length_static())
 
     def __getitem__(self, index: Union[int, Expr]) -> "ArrayElement[T]":
+        """Retrieve an element by its index in this StaticArray.
+
+        Indexes start at 0.
+
+        Args:
+            index: either a Python integer or a PyTeal expression that evaluates to a TealType.uint64.
+                If a Python integer is used, this function will raise an error if its value is negative
+                or if the index is equal to or greater than the length of this StaticArray. If a PyTeal
+                expression is used, the program will fail at runtime if the index is outside of the
+                bounds of this StaticArray.
+
+        Returns:
+            An ArrayElement that corresponds to the element at the given index. This type is a ComputedValue.
+        """
         if type(index) is int and index >= self.type_spec().length_static():
             raise TealInputError(f"Index out of bounds: {index}")
         return super().__getitem__(index)

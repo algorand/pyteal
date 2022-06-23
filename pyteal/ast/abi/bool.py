@@ -45,7 +45,7 @@ class Bool(BaseType):
         super().__init__(BoolTypeSpec())
 
     def get(self) -> Expr:
-        """Return the value held by this Bool variable as a PyTeal expression.
+        """Return the value held by this Bool as a PyTeal expression.
 
         If the held value is true, an expression that evaluates to 1 will be returned. Otherwise, an
         expression that evaluates to 0 will be returned. In either case, the expression will have the
@@ -90,6 +90,7 @@ class Bool(BaseType):
 
         return Seq(
             self.stored_value.store(value),
+            # instead of failing if too high of a value is given, it's probably more consistent with the rest of the AVM to convert values >= 2 to 1 (the && and || opcodes do this)
             Assert(self.stored_value.load() < Int(2)),
         )
 

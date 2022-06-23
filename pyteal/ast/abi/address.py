@@ -48,6 +48,10 @@ class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
         return AddressTypeSpec()
 
     def get(self) -> Expr:
+        """Return the 32-byte value held by this Address as a PyTeal expression.
+
+        The expression will have the type TealType.bytes.
+        """
         return self.stored_value.load()
 
     def set(

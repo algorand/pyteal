@@ -297,7 +297,7 @@ class Tuple(BaseType):
 
     @overload
     def set(self, values: ComputedValue["Tuple"]) -> Expr:
-        # TODO: should support value as a Tuple as well
+        # TODO: should support values as a Tuple as well
         pass
 
     def set(self, *values) -> Expr:
@@ -342,6 +342,18 @@ class Tuple(BaseType):
         return Int(self.type_spec().length_static())
 
     def __getitem__(self, index: int) -> "TupleElement[BaseType]":
+        """Retrieve an element by its index in this Tuple.
+
+        Indexes start at 0.
+
+        Args:
+            index: a Python integer containing the index to access. This function will raise an error
+                if its value is negative or if the index is equal to or greater than the length of
+                this Tuple.
+
+        Returns:
+            A TupleElement that corresponds to the element at the given index. This type is a ComputedValue.
+        """
         if not (0 <= index < self.type_spec().length_static()):
             raise TealInputError(f"Index out of bounds: {index}")
         return TupleElement(self, index)

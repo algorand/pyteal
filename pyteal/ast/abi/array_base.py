@@ -162,15 +162,18 @@ class Array(BaseType, Generic[T]):
         pass
 
     def __getitem__(self, index: Union[int, Expr]) -> "ArrayElement[T]":
-        """Retrieve an ABI array element by an index (either a PyTeal expression or an integer).
+        """Retrieve an element by its index in this array.
 
-        If the argument index is integer, the function will raise an error if the index is negative.
+        Indexes start at 0.
 
         Args:
-            index: either an integer or a PyTeal expression that evaluates to a uint64.
+            index: either a Python integer or a PyTeal expression that evaluates to a TealType.uint64.
+                If a Python integer is used, this function will raise an error if its value is negative.
+                In either case, if the index is outside of the bounds of this array, the program will
+                fail at runtime.
 
         Returns:
-            An ArrayElement that represents the ABI array element at the index.
+            An ArrayElement that corresponds to the element at the given index. This type is a ComputedValue.
         """
         if type(index) is int:
             if index < 0:

@@ -48,6 +48,10 @@ class String(DynamicArray[Byte]):
         return StringTypeSpec()
 
     def get(self) -> Expr:
+        """Return the value held by this String as a PyTeal expression.
+
+        The expression will have the type TealType.bytes.
+        """
         return Suffix(
             self.stored_value.load(), Int(Uint16TypeSpec().byte_length_static())
         )
