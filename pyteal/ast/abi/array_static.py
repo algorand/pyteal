@@ -93,7 +93,7 @@ class StaticArray(Array[T], Generic[T, N]):
             * :code:`ComputedValue[StaticArray[T, N]]`: copy the elements from a StaticArray produced by a ComputedValue. The element type and length produced by the ComputedValue must exactly match this StaticArray's element type and length, otherwise an error will occur.
 
         Args:
-            value: The new elements this StaticArray should have. This must follow the above constraints.
+            values: The new elements this StaticArray should have. This must follow the above constraints.
 
         Returns:
             An expression which stores the given value into this StaticArray.

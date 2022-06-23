@@ -1,4 +1,4 @@
-from typing import TypeVar, Union, cast, Sequence, Callable
+from typing import TypeVar, Union, Sequence, Callable
 
 from pyteal.types import TealType
 from pyteal.errors import TealInputError

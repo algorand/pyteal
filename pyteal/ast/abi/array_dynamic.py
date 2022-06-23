@@ -60,32 +60,20 @@ class DynamicArray(Array[T]):
         self,
         values: Union[Sequence[T], "DynamicArray[T]", ComputedValue["DynamicArray[T]"]],
     ) -> Expr:
-        """Set the ABI dynamic array with one of the following:
+        """
+        Set the elements of this DynamicArray to the input values.
 
-        * a sequence of ABI type variables
-        * or another ABI static array
-        * or a ComputedType with same TypeSpec
+        The behavior of this method depends on the input argument type:
 
-        If the argument `values` is a ComputedType, we call `store_into` method
-        from ComputedType to store the internal ABI encoding into this StaticArray.
-
-        This function determines if the argument `values` is an ABI dynamic array:
-
-        * if so:
-
-          * checks whether `values` is same type as this ABI dynamic array.
-
-          * stores the encoding of `values`.
-
-        * if not:
-
-          * calls the inherited `set` function and stores `values`.
+            * :code:`Sequence[T]`: set the elements of this DynamicArray to those contained in this Python sequence (e.g. a list or tuple). A compiler error will occur if any element in the sequence does not match this DynamicArray's element type.
+            * :code:`DynamicArray[T]`: copy the elements from another DynamicArray. The argument's element type must exactly match this DynamicArray's element type, otherwise an error will occur.
+            * :code:`ComputedValue[DynamicArray[T]]`: copy the elements from a DynamicArray produced by a ComputedValue. The element type produced by the ComputedValue must exactly match this DynamicArray's element type, otherwise an error will occur.
 
         Args:
-            values: either a sequence of ABI typed values, or an ABI dynamic array.
+            values: The new elements this DynamicArray should have. This must follow the above constraints.
 
         Returns:
-            A PyTeal expression that stores encoded `values` in its internal ScratchVar.
+            An expression which stores the given value into this DynamicArray.
         """
 
         if isinstance(values, ComputedValue):

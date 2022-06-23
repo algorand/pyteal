@@ -293,13 +293,31 @@ class Tuple(BaseType):
 
     @overload
     def set(self, *values: BaseType) -> Expr:
-        ...
+        pass
 
     @overload
-    def set(self, value: ComputedValue["Tuple"]) -> Expr:
-        ...
+    def set(self, values: ComputedValue["Tuple"]) -> Expr:
+        # TODO: should support value as a Tuple as well
+        pass
 
-    def set(self, *values):
+    def set(self, *values) -> Expr:
+        """
+        set(*values: BaseType) -> Expr
+        set(values: ComputedValue[Tuple]) -> Expr
+
+        Set the elements of this Tuple to the input values.
+
+        The behavior of this method depends on the input argument type:
+
+            * Variable number of :code:`BaseType` arguments: set the elements of this Tuple to the arguments to this method. A compiler error will occur if any argument does not match this Tuple's element type at the same index, or if the total argument count does not equal this Tuple's length.
+            * :code:`ComputedValue[Tuple]`: copy the elements from a Tuple produced by a ComputedValue. The element types and length produced by the ComputedValue must exactly match this Tuple's element types and length, otherwise an error will occur.
+
+        Args:
+            values: The new elements this Tuple should have. This must follow the above constraints.
+
+        Returns:
+            An expression which stores the given value into this Tuple.
+        """
         if len(values) == 1 and isinstance(values[0], ComputedValue):
             return self._set_with_computed_type(values[0])
 

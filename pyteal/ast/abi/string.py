@@ -55,15 +55,35 @@ class String(DynamicArray[Byte]):
     def set(
         self,
         value: Union[
+            str,
+            bytes,
+            Expr,
             Sequence[Byte],
             DynamicArray[Byte],
             ComputedValue[DynamicArray[Byte]],
             "String",
-            str,
-            bytes,
-            Expr,
+            ComputedValue["String"],
         ],
     ) -> Expr:
+        """Set the value of this String to the input value.
+
+        The behavior of this method depends on the input argument type:
+
+            * :code:`str`: set the value to the Python string.
+            * :code:`bytes`: set the value to the Python byte string.
+            * :code:`Expr`: set the value to the result of a PyTeal expression, which must evaluate to a TealType.bytes.
+            * :code:`Sequence[Byte]`: set the bytes of this String to those contained in this Python sequence (e.g. a list or tuple).
+            * :code:`DynamicArray[Byte]`: copy the bytes from a DynamicArray.
+            * :code:`ComputedValue[DynamicArray[Byte]]`: copy the bytes from a DynamicArray produced by a ComputedValue.
+            * :code:`String`: copy the value from another String.
+            * :code:`ComputedValue[String]`: copy the value from a String produced by a ComputedValue.
+
+        Args:
+            value: The new value this String should take. This must follow the above constraints.
+
+        Returns:
+            An expression which stores the given value into this String.
+        """
 
         match value:
             case ComputedValue():
