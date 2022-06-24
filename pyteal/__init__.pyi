@@ -107,6 +107,7 @@ __all__ = [
     "InnerTxnGroup",
     "Int",
     "Itob",
+    "JsonRef",
     "Keccak256",
     "LabelReference",
     "Le",

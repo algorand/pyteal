@@ -102,6 +102,7 @@ from pyteal.ast.binaryexpr import (
 # ternary ops
 from pyteal.ast.ternaryexpr import Divw, Ed25519Verify, SetBit, SetByte
 from pyteal.ast.substring import Substring, Extract, Suffix
+from pyteal.ast.jsonref import JsonRef
 
 # more ops
 from pyteal.ast.naryexpr import NaryExpr, And, Or, Concat
@@ -281,4 +282,5 @@ __all__ = [
     "EcdsaVerify",
     "EcdsaDecompress",
     "EcdsaRecover",
+    "JsonRef",
 ]
