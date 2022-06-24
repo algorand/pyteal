@@ -37,6 +37,7 @@ __all__ = [
     "AssetHolding",
     "AssetParam",
     "Balance",
+    "Base64Decode",
     "BinaryExpr",
     "BitLen",
     "BitwiseAnd",
