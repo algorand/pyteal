@@ -185,6 +185,7 @@ __all__ = [
     "TxnType",
     "TxnaExpr",
     "UnaryExpr",
+    "VrfVerify",
     "While",
     "WideRatio",
     "compileTeal",

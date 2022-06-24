@@ -107,6 +107,9 @@ from pyteal.ast.substring import Substring, Extract, Suffix
 from pyteal.ast.replace import Replace
 from pyteal.ast.jsonref import JsonRef
 
+# quaternary ops
+from pyteal.ast.vrfverify import VrfVerify
+
 # more ops
 from pyteal.ast.naryexpr import NaryExpr, And, Or, Concat
 from pyteal.ast.widemath import WideRatio
@@ -289,4 +292,5 @@ __all__ = [
     "EcdsaDecompress",
     "EcdsaRecover",
     "JsonRef",
+    "VrfVerify",
 ]
