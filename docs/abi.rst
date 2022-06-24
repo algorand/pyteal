@@ -201,12 +201,14 @@ A brief example is below. Please consult the documentation linked above for each
 
 .. code-block:: python
 
-    myUint64 = abi.make(abi.Uint64)
-
-    program = Seq(
-        myUint64.decode(Txn.application_args[1]),
-        Assert(myUint64.get() != Int(0))
-    )
+    @Subroutine(TealType.uint64)
+    def minimum(a: abi.Uint64, b: abi.Uint64) -> Expr:
+        """Return the minimum value of the two arguments."""
+        return (
+            If(a.get() < b.get())
+            .Then(a.get())
+            .Else(b.get())
+        )
 
 Getting Values at Indexes
 ''''''''''''''''''''''''''
@@ -225,24 +227,27 @@ A brief example is below. Please consult the documentation linked above for each
 
 .. code-block:: python
 
-    myTuple = abi.make(abi.Tuple3[abi.Address, abi.Bool, abi.Uint64])
-    myBool = abi.make(abi.Bool)
-
-    program = Seq(
-        myTuple.decode(Txn.application_args[1]),
-        myBool.set(myTuple[2]),
-        Assert(myBool.get())
-    )
+    @Subroutine(TealType.none)
+    def ensure_all_values_greater_than_5(array: abi.StaticArray[abi.Uint64, L[10]]) -> Expr:
+        """This subroutine asserts that every value in the input array is greater than 5."""
+        i = ScratchVar(TealType.uint64)
+        return For(
+            i.store(Int(0)), i.load() < array.length(), i.store(i.load() + Int(1))
+        ).Do(
+            array[i.load()].use(lambda value: Assert(value.get() > Int(5)))
+        )
 
 Limitations
 """""""""""""""""""""
 
-TODO: warn about code inefficiencies and type size limitations
+TODO: explain type size limitations
 
 Reference Types
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-TODO: brief description
+Some AVM operations require specific values to be placed in the "foreign arrays" of the app call transaction. Reference types allow methods to describe these requirements.
+
+Reference types are only valid in the arguments of a method. They may not appear in a method's return value in any form.
 
 Definitions
 """"""""""""""""""""""""""""""""""""""""""
@@ -257,10 +262,133 @@ PyTeal Type            ARC-4 Type             Dynamic / Static Description
 :any:`abi.Application` :code:`application`    Static           Represents an additional application that the current transaction can access, stored in the :any:`Txn.applications <TxnObject.applications>` array
 ====================== ====================== ================ =======================================================================================================================================================
 
+These types all inherit from the abstract class :any:`abi.ReferenceType`.
+
 Usage
 """"""""""""""""""""""""""""""""""""""""""
 
-TODO: explain usage and show examples
+Getting Referenced Indexes
+''''''''''''''''''''''''''
+
+Because reference types represent values placed into one of the transaction's foreign arrays, each reference type value is associated with a specific index into the appropriate array.
+
+All reference types implement the method :any:`abi.ReferenceType.referenced_index()` which can be used to access this index.
+
+A brief example is below:
+
+.. code-block:: python
+
+    @Subroutine(TealType.none)
+    def referenced_index_example(
+        account: abi.Account, asset: abi.Asset, app: abi.Application
+    ) -> Expr:
+        return Seq(
+            # The accounts array has Txn.accounts.length() + 1 elements in it (the +1 is the txn sender)
+            Assert(account.referenced_index() <= Txn.accounts.length()),
+            # The assets array has Txn.assets.length() elements in it
+            Assert(asset.referenced_index() < Txn.assets.length()),
+            # The applications array has Txn.applications.length() + 1 elements in it (the +1 is the current app)
+            Assert(app.referenced_index() <= Txn.applications.length()),
+        )
+
+Getting Referenced Values
+''''''''''''''''''''''''''
+
+Perhaps more important than the index of a referenced type is its value. Depending on the reference type, there are different methods available to obtain the value being referenced:
+
+* :any:`abi.Account.address()`
+* :any:`abi.Asset.asset_id()`
+* :any:`abi.Application.application_id()`
+
+A brief example is below:
+
+.. code-block:: python
+
+    @Subroutine(TealType.none)
+    def send_inner_txns(
+        receiver: abi.Account, asset_to_transfer: abi.Asset, app_to_call: abi.Application
+    ) -> Expr:
+        return Seq(
+            InnerTxnBuilder.Begin(),
+            InnerTxnBuilder.SetFields(
+                {
+                    TxnField.type_enum: TxnType.AssetTransfer,
+                    TxnField.receiver: receiver.address(),
+                    TxnField.xfer_asset: asset_to_transfer.asset_id(),
+                    TxnField.amount: Int(1_000_000),
+                }
+            ),
+            InnerTxnBuilder.Submit(),
+            InnerTxnBuilder.Begin(),
+            InnerTxnBuilder.SetFields(
+                {
+                    TxnField.type_enum: TxnType.ApplicationCall,
+                    TxnField.application_id: app_to_call.application_id(),
+                    Txn.application_args: [Bytes("hello")],
+                }
+            ),
+            InnerTxnBuilder.Submit(),
+        )
+
+Accessing Parameters of Referenced Values
+''''''''''''''''''''''''''''''''''''''''''
+
+Reference types allow the program to access more information about them. Each reference type has a :code:`params()` method which can be used to access that object's parameters. These methods are listed below:
+
+* :any:`abi.Account.params()` returns an :any:`AccountParamObject`
+* :any:`abi.Asset.params()` returns an :any:`AssetParamObject`
+* :any:`abi.Application.params()` returns an :any:`AppParamObject`
+
+These method are provided for convenience. They expose the same properties accessible from the :any:`AccountParam`, :any:`AssetParam`, and :any:`AppParam` classes.
+
+A brief example is below:
+
+.. code-block:: python
+
+    @Subroutine(TealType.none)
+    def referenced_params_example(
+        account: abi.Account, asset: abi.Asset, app: abi.Application
+    ) -> Expr:
+        return Seq(
+            account.params().auth_address().outputReducer(
+                lambda value, has_value: Assert(And(has_value, value == Global.zero_address()))
+            ),
+            asset.params().total().outputReducer(
+                lambda value, has_value: Assert(And(has_value, value == Int(1)))
+            ),
+            app.params().creator_address().outputReducer(
+                lambda value, has_value: Assert(And(has_value, value == Txn.sender()))
+            )
+        )
+
+.. note::
+    All returned parameters are instances of :any:`MaybeValue`.
+
+Accessing Asset Holdings
+''''''''''''''''''''''''
+
+Similar to the parameters above, asset holding properties can be accessed using one of the following methods:
+
+* :any:`abi.Account.asset_holding()`: given an asset, returns an :any:`AssetHoldingObject`
+* :any:`abi.Asset.holding()`: given an account, returns an :any:`AssetHoldingObject`
+
+These method are provided for convenience. They expose the same properties accessible from the :any:`AssetHolding` class.
+
+A brief example is below:
+
+.. code-block:: python
+
+    @Subroutine(TealType.none)
+    def ensure_asset_balance_is_nonzero(account: abi.Account, asset: abi.Asset) -> Expr:
+        return Seq(
+            account.asset_holding(asset)
+            .balance()
+            .outputReducer(lambda value, has_value: Assert(And(has_value, value > Int(0)))),
+            # this check is equivalent
+            asset.holding(account)
+            .balance()
+            .outputReducer(lambda value, has_value: Assert(And(has_value, value > Int(0)))),
+        )
 
 Limitations
 """"""""""""""""""""""""""""""""""""""""""
