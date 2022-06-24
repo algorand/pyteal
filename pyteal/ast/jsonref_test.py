@@ -8,7 +8,7 @@ teal7Options = pt.CompileOptions(version=7)
 
 def test_json_string():
     args = [pt.Bytes('{"foo":"bar"}'), pt.Bytes("foo")]
-    expr = pt.JsonRef(pt.JsonRef.json_string, *args)
+    expr = pt.JsonRef.as_string(*args)
     assert expr.type_of() == pt.TealType.bytes
 
     expected = pt.TealSimpleBlock(
@@ -32,7 +32,7 @@ def test_json_string():
 
 def test_json_uint64():
     args = [pt.Bytes('{"foo":123456789}'), pt.Bytes("foo")]
-    expr = pt.JsonRef(pt.JsonRef.json_uint64, *args)
+    expr = pt.JsonRef.as_uint64(*args)
     assert expr.type_of() == pt.TealType.uint64
 
     expected = pt.TealSimpleBlock(
@@ -56,7 +56,7 @@ def test_json_uint64():
 
 def test_json_object():
     args = [pt.Bytes('{"foo":{"key": "value"}}'), pt.Bytes("foo")]
-    expr = pt.JsonRef(pt.JsonRef.json_object, *args)
+    expr = pt.JsonRef.as_object(*args)
     assert expr.type_of() == pt.TealType.bytes
 
     expected = pt.TealSimpleBlock(
@@ -80,10 +80,7 @@ def test_json_object():
 
 def test_json_ref_invalid():
     with pytest.raises(pt.TealTypeError):
-        pt.JsonRef(pt.Bytes("my string"), pt.Bytes("a"), pt.Bytes("a"))
+        pt.JsonRef.as_object(pt.Int(0), pt.Bytes("a"))
 
     with pytest.raises(pt.TealTypeError):
-        pt.JsonRef(pt.JsonRef.json_object, pt.Int(0), pt.Bytes("a"))
-
-    with pytest.raises(pt.TealTypeError):
-        pt.JsonRef(pt.JsonRef.json_string, pt.Bytes("a"), pt.Int(0))
+        pt.JsonRef.as_string(pt.Bytes("a"), pt.Int(0))
