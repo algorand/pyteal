@@ -14,8 +14,8 @@ if TYPE_CHECKING:
 class BlockField(Enum):
     # fmt: off
     #                 id  |    name     |      type     | min version
-    block_seed =      (0, "BlkSeed",      TealType.bytes,  7)
-    block_timestamp = (1, "BlkTimestamp", TealType.uint64, 7)
+    block_seed =      (0, "BlkSeed",      TealType.bytes,  7)  # noqa: E222
+    block_timestamp = (1, "BlkTimestamp", TealType.uint64, 7)  # noqa: E222
 
     # fmt: on
 
