@@ -25,6 +25,9 @@ def test_block_seed():
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+    with pytest.raises(pt.TealInputError):
+        expr.__teal__(teal6Options)
+
 
 def test_block_seed_invalid():
     with pytest.raises(pt.TealTypeError):
@@ -49,6 +52,9 @@ def test_block_timestamp():
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+    with pytest.raises(pt.TealInputError):
+        expr.__teal__(teal6Options)
 
 
 def test_block_timestamp_invalid():
