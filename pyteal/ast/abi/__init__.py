@@ -62,6 +62,7 @@ from pyteal.ast.abi.transaction import (
     KeyRegisterTransactionTypeSpec,
     TransactionTypeSpecs,
 )
+from pyteal.ast.abi.method_return import MethodReturn
 from pyteal.ast.abi.util import (
     algosdk_from_annotation,
     algosdk_from_type_spec,
@@ -120,6 +121,7 @@ __all__ = [
     "StaticArray",
     "DynamicArrayTypeSpec",
     "DynamicArray",
+    "MethodReturn",
     "Transaction",
     "TransactionTypeSpec",
     "PaymentTransaction",

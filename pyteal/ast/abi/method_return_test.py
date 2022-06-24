@@ -13,7 +13,7 @@ POSITIVE_CASES = [
 
 @pytest.mark.parametrize("case", POSITIVE_CASES)
 def test_method_return(case):
-    m_ret = pt.MethodReturn(case)
+    m_ret = abi.MethodReturn(case)
     assert m_ret.type_of() == pt.TealType.none
     assert not m_ret.has_return()
     assert str(m_ret) == f"(MethodReturn {case.type_spec()})"
@@ -30,4 +30,4 @@ NEGATIVE_CASES = [
 @pytest.mark.parametrize("case", NEGATIVE_CASES)
 def test_method_return_error(case):
     with pytest.raises(pt.TealInputError):
-        pt.MethodReturn(case)
+        abi.MethodReturn(case)

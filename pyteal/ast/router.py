@@ -5,7 +5,6 @@ from enum import IntFlag
 from algosdk import abi as sdk_abi
 from algosdk import encoding
 
-from pyteal.ast.method_return import MethodReturn
 from pyteal.config import METHOD_ARG_NUM_CUTOFF
 from pyteal.errors import (
     TealInputError,
@@ -453,7 +452,7 @@ class ASTBuilder:
                 return Seq(
                     *decode_instructions,
                     subroutine_call.store_into(output_temp),
-                    MethodReturn(output_temp),
+                    abi.MethodReturn(output_temp),
                     Approve(),
                 )
 
