@@ -1,8 +1,8 @@
 from enum import Enum
 from typing import TYPE_CHECKING, cast
 import algosdk
-from pyteal.ast.abi.uint import uint_encode
 from pyteal.ast.abi.util import type_specs_from_signature
+from pyteal.ast.int import EnumInt
 
 from pyteal.ast.methodsig import MethodSignature
 from pyteal.types import TealType, require_type
@@ -243,6 +243,20 @@ class InnerTxnBuilder:
             if method_arg_ts in abi.TransactionTypeSpecs:
                 if not isinstance(arg, dict):
                     raise TealTypeError(arg, dict[TxnField, Expr | list[Expr]])
+
+                if TxnField.type_enum not in arg:
+                    raise TealInputError(
+                        f"Expected Transaction at arg {idx} to contain field type_enum"
+                    )
+
+                txntype = cast(EnumInt, arg[TxnField.type_enum]).name
+                # If the arg is an unspecified transaction, no need to check the type_enum
+                if not isinstance(
+                    method_arg_ts, abi.TransactionTypeSpec
+                ) and txntype != str(method_arg_ts):
+                    raise TealInputError(
+                        f"Expected Transaction at arg {idx} to be {method_arg_ts}, got {txntype}"
+                    )
 
                 txns_to_pass.append(InnerTxnBuilder.SetFields(arg))
 
