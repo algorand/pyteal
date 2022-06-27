@@ -149,6 +149,7 @@ __all__ = [
     "SetBit",
     "SetByte",
     "Sha256",
+    "Sha3_256",
     "Sha512_256",
     "ShiftLeft",
     "ShiftRight",

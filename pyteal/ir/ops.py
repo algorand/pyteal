@@ -179,6 +179,7 @@ class Op(Enum):
     gitxnas             = OpType("gitxnas",             Mode.Application,                  6)
     gloadss             = OpType("gloadss",             Mode.Application,                  6)
     acct_params_get     = OpType("acct_params_get",     Mode.Application,                  6)
+    sha3_256            = OpType("sha3_256",            Mode.Signature | Mode.Application, 7)
     # fmt: on
 
 
