@@ -35,7 +35,7 @@ class MultiValue(LeafExpr):
         self.types = types
         self.immediate_args = immediate_args if immediate_args is not None else []
         self.args = args if args is not None else []
-
+        self.initialized = False 
         self.output_slots = [ScratchSlot() for _ in self.types]
 
     def outputReducer(self, reducer: Callable[..., Expr]) -> Expr:
@@ -57,6 +57,8 @@ class MultiValue(LeafExpr):
         return ret_str
 
     def __teal__(self, options: "CompileOptions"):
+        self.initialized = True 
+
         tealOp = TealOp(self, self.op, *self.immediate_args)
         callStart, callEnd = TealBlock.FromOp(options, tealOp, *self.args)
 

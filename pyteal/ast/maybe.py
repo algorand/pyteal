@@ -1,6 +1,7 @@
 from typing import List, Union
 
 from pyteal.ast.multi import MultiValue
+from pyteal.errors import TealInputError
 
 from pyteal.types import TealType
 from pyteal.ir import Op
@@ -35,6 +36,8 @@ class MaybeValue(MultiValue):
 
         This will return 1 if the value exists, otherwise 0.
         """
+        if not self.initialized:
+            raise TealInputError("Expected MaybeValue to be initialized before calling `hasValue`")
         return self.output_slots[1].load(self.types[1])
 
     def value(self) -> ScratchLoad:
@@ -43,6 +46,8 @@ class MaybeValue(MultiValue):
         If the value exists, it will be returned. Otherwise, the zero value for this type will be
         returned (i.e. either 0 or an empty byte string, depending on the type).
         """
+        if not self.initialized:
+            raise TealInputError("Expected MaybeValue to be initialized before calling `value`")
         return self.output_slots[0].load(self.types[0])
 
     @property
