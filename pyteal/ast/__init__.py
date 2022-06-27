@@ -100,7 +100,13 @@ from pyteal.ast.binaryexpr import (
 )
 
 # ternary ops
-from pyteal.ast.ternaryexpr import Divw, Ed25519Verify, SetBit, SetByte
+from pyteal.ast.ternaryexpr import (
+    Divw,
+    Ed25519Verify,
+    Ed25519Verify_Bare,
+    SetBit,
+    SetByte,
+)
 from pyteal.ast.substring import Substring, Extract, Suffix
 
 # more ops
@@ -218,6 +224,7 @@ __all__ = [
     "GetBit",
     "GetByte",
     "Ed25519Verify",
+    "Ed25519Verify_Bare",
     "Substring",
     "Extract",
     "Suffix",

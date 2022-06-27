@@ -77,6 +77,24 @@ def Ed25519Verify(data: Expr, sig: Expr, key: Expr) -> TernaryExpr:
     )
 
 
+def Ed25519Verify_Bare(data: Expr, sig: Expr, key: Expr) -> TernaryExpr:
+    """Verify the ed25519 signature of the data against the public key.
+
+    Args:
+        data: The data signed by the public key. Must evalutes to bytes.
+        sig: The proposed 64-byte signature of the data. Must evalute to bytes.
+        key: The 32 byte public key that produced the signature. Must evaluate to bytes.
+    """
+    return TernaryExpr(
+        Op.ed25519verify_bare,
+        (TealType.bytes, TealType.bytes, TealType.bytes),
+        TealType.uint64,
+        data,
+        sig,
+        key,
+    )
+
+
 def SetBit(value: Expr, index: Expr, newBitValue: Expr) -> TernaryExpr:
     """Set the bit value of an expression at a specific index.
 
