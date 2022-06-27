@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Tuple, TYPE_CHECKING
 
 from pyteal.ast import Expr, MultiValue
-from pyteal.errors import TealTypeError, verifyTealVersion
+from pyteal.errors import TealTypeError, verifyFieldVersion, verifyTealVersion
 from pyteal.ir import Op, TealBlock, TealOp
 from pyteal.types import TealType, require_type
 
@@ -17,6 +17,7 @@ class EcdsaCurve(Enum):
     """Enum representing an elliptic curve specification used in ECDSA."""
 
     Secp256k1 = (0, "Secp256k1", 5)
+    Secp256r1 = (1, "Secp256r1", 7)
 
     def __init__(self, id: int, name: str, min_version: int) -> None:
         self.id = id
@@ -52,10 +53,12 @@ class EcdsaVerifyExpr(Expr):
 
     def __teal__(self, options: "CompileOptions"):
         verifyTealVersion(
-            max(self.op.min_version, self.curve.min_version),
+            self.op.min_version,
             options.version,
             "TEAL version too low to use op {}".format(self.op),
         )
+
+        verifyFieldVersion(self.curve.arg_name, self.curve.min_version, options.version)
 
         return TealBlock.FromOp(
             options, TealOp(self, self.op, self.curve.arg_name), *self.args
@@ -111,7 +114,7 @@ def EcdsaVerify(
     return EcdsaVerifyExpr(curve, data, sigA, sigB, pubkey[0], pubkey[1])
 
 
-def EcdsaDecompress(curve: EcdsaCurve, compressed_pk: Expr) -> MultiValue:
+class EcdsaDecompress(MultiValue):
     """Decompress an ECDSA public key.
 
     Args:
@@ -119,25 +122,31 @@ def EcdsaDecompress(curve: EcdsaCurve, compressed_pk: Expr) -> MultiValue:
         compressed_pk: The compressed public key. Must be 33 bytes long and big endian encoded.
 
     Returns:
-        A MultiValue expression representing the two components of the public key, big endian
+        A MultiValue instance representing the two components of the public key, big endian
         encoded.
     """
 
-    if not isinstance(curve, EcdsaCurve):
-        raise TealTypeError(curve, EcdsaCurve)
+    def __init__(self, curve: EcdsaCurve, compressed_pk: Expr):
+        if not isinstance(curve, EcdsaCurve):
+            raise TealTypeError(curve, EcdsaCurve)
 
-    require_type(compressed_pk, TealType.bytes)
-    return MultiValue(
-        Op.ecdsa_pk_decompress,
-        EcdsaPubkey,
-        immediate_args=[curve.arg_name],
-        args=[compressed_pk],
-    )
+        self.curve = curve
+
+        require_type(compressed_pk, TealType.bytes)
+        super().__init__(
+            Op.ecdsa_pk_decompress,
+            EcdsaPubkey,
+            immediate_args=[curve.arg_name],
+            args=[compressed_pk],
+        )
+
+    def __teal__(self, options: "CompileOptions"):
+        verifyFieldVersion(self.curve.arg_name, self.curve.min_version, options.version)
+
+        return super().__teal__(options)
 
 
-def EcdsaRecover(
-    curve: EcdsaCurve, data: Expr, recovery_id: Expr, sigA: Expr, sigB: Expr
-) -> MultiValue:
+class EcdsaRecover(MultiValue):
     """Reover an ECDSA public key from a signature.
 
     All byte arguments must be big endian encoded.
@@ -150,20 +159,30 @@ def EcdsaRecover(
         sigB: Second component of the signature. Must evaluate to bytes.
 
     Returns:
-        A MultiValue expression representing the two components of the public key, big endian
+        A MultiValue instance representing the two components of the public key, big endian
         encoded.
     """
 
-    if not isinstance(curve, EcdsaCurve):
-        raise TealTypeError(curve, EcdsaCurve)
+    def __init__(
+        self, curve: EcdsaCurve, data: Expr, recovery_id: Expr, sigA: Expr, sigB: Expr
+    ):
+        if not isinstance(curve, EcdsaCurve):
+            raise TealTypeError(curve, EcdsaCurve)
 
-    require_type(data, TealType.bytes)
-    require_type(recovery_id, TealType.uint64)
-    require_type(sigA, TealType.bytes)
-    require_type(sigB, TealType.bytes)
-    return MultiValue(
-        Op.ecdsa_pk_recover,
-        EcdsaPubkey,
-        immediate_args=[curve.arg_name],
-        args=[data, recovery_id, sigA, sigB],
-    )
+        self.curve = curve
+
+        require_type(data, TealType.bytes)
+        require_type(recovery_id, TealType.uint64)
+        require_type(sigA, TealType.bytes)
+        require_type(sigB, TealType.bytes)
+        super().__init__(
+            Op.ecdsa_pk_recover,
+            EcdsaPubkey,
+            immediate_args=[curve.arg_name],
+            args=[data, recovery_id, sigA, sigB],
+        )
+
+    def __teal__(self, options: "CompileOptions"):
+        verifyFieldVersion(self.curve.arg_name, self.curve.min_version, options.version)
+
+        return super().__teal__(options)
