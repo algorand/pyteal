@@ -304,8 +304,8 @@ class TxnObject:
         return self.makeTxnExpr(TxnField.first_valid)
 
     def first_valid_time(self) -> TxnExpr:
-        """Get the UNIX timestamp of block before txn.FirstValid. Fails if negative
-        
+        """Get the UNIX timestamp of block before txn.FirstValid. Fails if negative.
+
         For more information, see https://developer.algorand.org/docs/reference/transactions/#firstvalidtime
         """
         return self.makeTxnExpr(TxnField.first_valid_time)
