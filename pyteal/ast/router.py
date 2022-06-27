@@ -538,7 +538,7 @@ class Router:
         overriding_name: str = None,
         method_config: MethodConfig = None,
         description: str = None,
-    ) -> None:
+    ) -> ABIReturnSubroutine:
         if not isinstance(method_call, ABIReturnSubroutine):
             raise TealInputError(
                 "for adding method handler, must be ABIReturnSubroutine"
@@ -576,6 +576,7 @@ class Router:
         self.clear_state_ast.add_method_to_ast(
             method_signature, method_clear_state_cond, method_call
         )
+        return method_call
 
     def method(
         self,
@@ -607,7 +608,7 @@ class Router:
         # - None
         # - CallConfig.Never
         # both cases evaluate to False in if statement.
-        def wrap(_func):
+        def wrap(_func) -> ABIReturnSubroutine:
             wrapped_subroutine = ABIReturnSubroutine(_func)
             call_configs: MethodConfig
             if (
@@ -639,7 +640,9 @@ class Router:
                     update_application=_update_app,
                     delete_application=_delete_app,
                 )
-            self.add_method_handler(wrapped_subroutine, name, call_configs, description)
+            return self.add_method_handler(
+                wrapped_subroutine, name, call_configs, description
+            )
 
         if not func:
             return wrap
