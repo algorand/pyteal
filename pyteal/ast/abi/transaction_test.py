@@ -14,29 +14,46 @@ class TransactionTypeTest:
     ts: abi.TransactionTypeSpec
     t: abi.Transaction
     s: str
+    txn_type_enum: pt.Expr | None
 
 
 TransactionValues: List[TransactionTypeTest] = [
-    TransactionTypeTest(abi.TransactionTypeSpec(), abi.Transaction(), "txn"),
+    TransactionTypeTest(abi.TransactionTypeSpec(), abi.Transaction(), "txn", None),
     TransactionTypeTest(
-        abi.KeyRegisterTransactionTypeSpec(), abi.KeyRegisterTransaction(), "keyreg"
+        abi.KeyRegisterTransactionTypeSpec(),
+        abi.KeyRegisterTransaction(),
+        "keyreg",
+        pt.TxnType.KeyRegistration,
     ),
     TransactionTypeTest(
-        abi.PaymentTransactionTypeSpec(), abi.PaymentTransaction(), "pay"
+        abi.PaymentTransactionTypeSpec(),
+        abi.PaymentTransaction(),
+        "pay",
+        pt.TxnType.Payment,
     ),
     TransactionTypeTest(
-        abi.AssetConfigTransactionTypeSpec(), abi.AssetConfigTransaction(), "acfg"
+        abi.AssetConfigTransactionTypeSpec(),
+        abi.AssetConfigTransaction(),
+        "acfg",
+        pt.TxnType.AssetConfig,
     ),
     TransactionTypeTest(
-        abi.AssetFreezeTransactionTypeSpec(), abi.AssetFreezeTransaction(), "afrz"
+        abi.AssetFreezeTransactionTypeSpec(),
+        abi.AssetFreezeTransaction(),
+        "afrz",
+        pt.TxnType.AssetFreeze,
     ),
     TransactionTypeTest(
-        abi.AssetTransferTransactionTypeSpec(), abi.AssetTransferTransaction(), "axfer"
+        abi.AssetTransferTransactionTypeSpec(),
+        abi.AssetTransferTransaction(),
+        "axfer",
+        pt.TxnType.AssetTransfer,
     ),
     TransactionTypeTest(
         abi.ApplicationCallTransactionTypeSpec(),
         abi.ApplicationCallTransaction(),
         "appl",
+        pt.TxnType.ApplicationCall,
     ),
 ]
 
@@ -54,6 +71,18 @@ def test_TransactionTypeSpec_is_dynamic():
 def test_TransactionTypeSpec_new_instance():
     for tv in TransactionValues:
         assert isinstance(tv.ts.new_instance(), abi.Transaction)
+
+
+def test_TransactionTypeSpec_txn_type_enum():
+    for tv in TransactionValues:
+        if tv.txn_type_enum is None:
+            with pytest.raises(
+                pt.TealInternalError,
+                match=r"abi.TransactionTypeSpec does not represent a specific transaction type$",
+            ):
+                tv.ts.txn_type_enum()
+        else:
+            assert tv.ts.txn_type_enum() is tv.txn_type_enum
 
 
 def test_TransactionTypeSpec_eq():
