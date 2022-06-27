@@ -26,7 +26,7 @@ class ReplaceExpr(Expr):
         self.replacement = replacement
 
     # helper method for correctly populating op
-    def __getOp(self, options: "CompileOptions"):
+    def __get_op(self, options: "CompileOptions"):
         s = cast(Int, self.start).value
         if s < 2**8:
             return Op.replace2
@@ -44,7 +44,7 @@ class ReplaceExpr(Expr):
                 self.replacement,
             ).__teal__(options)
 
-        op = self.__getOp(options)
+        op = self.__get_op(options)
 
         verifyTealVersion(
             op.min_version,
