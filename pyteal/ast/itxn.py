@@ -1,7 +1,6 @@
 from enum import Enum
 from typing import TYPE_CHECKING, cast
 import algosdk
-from pkg_resources import require
 from pyteal.ast.abi.util import type_specs_from_signature
 from pyteal.ast.int import EnumInt
 
@@ -224,14 +223,14 @@ class InnerTxnBuilder:
 
         Args:
             app_id: An expression that evaluates to a `TealType.uint64` corresponding to the application being called.
-            method_signature: A string representing the method signature of the method we're calling. This is used to do 
+            method_signature: A string representing the method signature of the method we're calling. This is used to do
                 type checking on the arguments passed and to create the method selector passed as the first argument.
             args: A list of arguments to pass to the application. These args may be one of three types
                 1. An ABI type: Any ABI type other than ReferenceTypes (asset,application,account) and TransactionTypes. These are encoded
                     as part of transaction preparation. The type passed _MUST_ match the type specified in the `method_signature` passed.
-                2. An Expr: An expression that evaluates to bytes representing a valid ABI encoded type passed directly to the arguments array. 
-                    No type checking is performed besides checking that it evaluates to `TealType.bytes`. 
-                3. A dictionary: A dictionary containing TxnField to Expr that describe Transactions to be pre-pended to the transaction group being constructed. 
+                2. An Expr: An expression that evaluates to bytes representing a valid ABI encoded type passed directly to the arguments array.
+                    No type checking is performed besides checking that it evaluates to `TealType.bytes`.
+                3. A dictionary: A dictionary containing TxnField to Expr that describe Transactions to be pre-pended to the transaction group being constructed.
                     The `TxnField.type_enum` key MUST be set and MUST match the expected transaction type specified in the `method_signature`.
             fields: A dictionary whose keys are fields to set and whose values are the value each
                 field should take. Each value must evaluate to a type that is compatible with the
