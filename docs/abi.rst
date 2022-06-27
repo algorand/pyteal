@@ -398,7 +398,9 @@ TODO: explain limitations, such as can't be created directly, or used as method 
 Transaction Types
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-TODO: brief description
+Some application calls require that they are invoked as part of a larger transaction group containing specific additional transactions. In order to express these types of calls, the ABI has transaction types.
+
+Every transaction type argument represents a specific, unique, transaction that must appear immediately before the application call.
 
 Definitions
 """"""""""""""""""""""""""""""""""""""""""
@@ -420,7 +422,50 @@ PyTeal Type                         ARC-4 Type             Dynamic / Static Desc
 Usage
 """"""""""""""""""""""""""""""""""""""""""
 
-TODO: explain usage and show examples
+Getting the Transaction Group Index
+''''''''''''''''''''''''''''''''''''
+
+All transaction types implement the :any:`abi.Transaction.index()` method, which returns the absolute index of that transaction in the group.
+
+A brief example is below:
+
+.. code-block:: python
+
+    @Subroutine(TealType.none)
+    def handle_txn_args(
+        any_txn: abi.Transaction,
+        pay: abi.PaymentTransaction,
+        axfer: abi.AssetTransferTransaction,
+    ) -> Expr:
+        return Seq(
+            Assert(any_txn.index() == Txn.group_index() - Int(3)),
+            Assert(pay.index() == Txn.group_index() - Int(2)),
+            Assert(axfer.index() == Txn.group_index() - Int(1)),
+        )
+
+Accessing Transaction Fields
+'''''''''''''''''''''''''''''
+
+All transaction types implement the :any:`abi.Transaction.get()` method, which returns a :any:`TxnObject` instance that can be used to access fields from that transaction.
+
+A brief example is below:
+
+.. code-block:: python
+
+    @Subroutine(TealType.none)
+    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
+        """This method receives a payment from an account opted into this app and records it in their
+        local state.
+        """
+        return Seq(
+            Assert(payment.get().sender() == sender.address()),
+            Assert(payment.get().receiver() == Global.current_application_address()),
+            App.localPut(
+                sender.address(),
+                Bytes("balance"),
+                App.localGet(sender.address(), Bytes("balance")) + payment.get().amount(),
+            ),
+        )
 
 Limitations
 """"""""""""""""""""""""""""""""""""""""""
