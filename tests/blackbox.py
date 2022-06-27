@@ -25,7 +25,6 @@ from pyteal import (
     ScratchVar,
     Seq,
     SubroutineFnWrapper,
-    MethodReturn,
     TealType,
     Txn,
 )
@@ -379,7 +378,7 @@ class PyTealDryRunExecutor:
                 if self.mode == Mode.Signature:
                     results = [invocation, Pop(output.encode()), Int(1)]
                 else:
-                    results = [invocation, MethodReturn(output), Int(1)]
+                    results = [invocation, abi.MethodReturn(output), Int(1)]
             else:
                 results = [invocation, Int(1)]
 

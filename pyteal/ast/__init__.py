@@ -131,9 +131,6 @@ from pyteal.ast.break_ import Break
 from pyteal.ast.continue_ import Continue
 
 # misc
-
-from pyteal.ast.method_return import MethodReturn
-
 from pyteal.ast.scratch import (
     ScratchIndex,
     ScratchLoad,
@@ -308,5 +305,4 @@ __all__ = [
     "EcdsaVerify",
     "EcdsaDecompress",
     "EcdsaRecover",
-    "MethodReturn",
 ]

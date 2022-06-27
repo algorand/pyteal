@@ -132,7 +132,6 @@ __all__ = [
     "MIN_TEAL_VERSION",
     "MaybeValue",
     "MethodConfig",
-    "MethodReturn",
     "MethodSignature",
     "MinBalance",
     "Minus",
