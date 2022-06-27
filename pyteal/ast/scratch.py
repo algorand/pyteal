@@ -24,6 +24,8 @@ class ScratchSlot:
             requestedSlotId (optional): A scratch slot id that the compiler must store the value.
             This id may be a Python int in the range [0-256).
         """
+        self.initialized = False
+
         if requestedSlotId is None:
             self.id = ScratchSlot.nextSlotId
             ScratchSlot.nextSlotId += 1
@@ -46,6 +48,7 @@ class ScratchSlot:
             the stack will be stored. NOTE: storing the last value on the stack breaks the typical
             semantics of PyTeal, only use if you know what you're doing.
         """
+        self.initialized = True
         if value is not None:
             return ScratchStore(self, value)
         return ScratchStackStore(self)
@@ -57,6 +60,10 @@ class ScratchSlot:
             type (optional): The type being loaded from this slot, if known. Defaults to
                 TealType.anytype.
         """
+        if not self.initialized:
+            raise TealInputError(
+                "Expected slot to be initialized prior to calling `load`"
+            )
         return ScratchLoad(self, type)
 
     def index(self) -> "ScratchIndex":
