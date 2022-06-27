@@ -1,3 +1,4 @@
+from pyparsing import empty
 import pytest
 
 import pyteal as pt
@@ -2203,7 +2204,8 @@ def test_router_app():
         ) -> pt.Expr:
             return output.set(a.get() + b.get())
 
-        router.add_method_handler(add)
+        meth = router.add_method_handler(add)
+        assert meth.method_signature() == "add(uint64,uint64)uint64"
 
         @pt.ABIReturnSubroutine
         def sub(
@@ -2211,7 +2213,8 @@ def test_router_app():
         ) -> pt.Expr:
             return output.set(a.get() - b.get())
 
-        router.add_method_handler(sub)
+        meth = router.add_method_handler(sub)
+        assert meth.method_signature() == "sub(uint64,uint64)uint64"
 
         @pt.ABIReturnSubroutine
         def mul(
@@ -2219,7 +2222,8 @@ def test_router_app():
         ) -> pt.Expr:
             return output.set(a.get() * b.get())
 
-        router.add_method_handler(mul)
+        meth = router.add_method_handler(mul)
+        assert meth.method_signature() == "mul(uint64,uint64)uint64"
 
         @pt.ABIReturnSubroutine
         def div(
@@ -2227,7 +2231,8 @@ def test_router_app():
         ) -> pt.Expr:
             return output.set(a.get() / b.get())
 
-        router.add_method_handler(div)
+        meth = router.add_method_handler(div)
+        assert meth.method_signature() == "div(uint64,uint64)uint64"
 
         @pt.ABIReturnSubroutine
         def mod(
@@ -2235,7 +2240,8 @@ def test_router_app():
         ) -> pt.Expr:
             return output.set(a.get() % b.get())
 
-        router.add_method_handler(mod)
+        meth = router.add_method_handler(mod)
+        assert meth.method_signature() == "mod(uint64,uint64)uint64"
 
         @pt.ABIReturnSubroutine
         def all_laid_to_args(
@@ -2277,13 +2283,17 @@ def test_router_app():
                 + _p.get()
             )
 
-        router.add_method_handler(all_laid_to_args)
+        meth = router.add_method_handler(all_laid_to_args)
+        assert (
+            meth.method_signature()
+            == "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
+        )
 
         @pt.ABIReturnSubroutine
         def empty_return_subroutine() -> pt.Expr:
             return pt.Log(pt.Bytes("appear in both approval and clear state"))
 
-        router.add_method_handler(
+        meth = router.add_method_handler(
             empty_return_subroutine,
             method_config=pt.MethodConfig(
                 no_op=pt.CallConfig.CALL,
@@ -2291,12 +2301,13 @@ def test_router_app():
                 clear_state=pt.CallConfig.CALL,
             ),
         )
+        assert meth.method_signature() == "empty_return_subroutine()void"
 
         @pt.ABIReturnSubroutine
         def log_1(*, output: pt.abi.Uint64) -> pt.Expr:
             return output.set(1)
 
-        router.add_method_handler(
+        meth = router.add_method_handler(
             log_1,
             method_config=pt.MethodConfig(
                 no_op=pt.CallConfig.CALL,
@@ -2305,13 +2316,16 @@ def test_router_app():
             ),
         )
 
+        assert meth.method_signature() == "log_1()uint64"
+
         @pt.ABIReturnSubroutine
         def log_creation(*, output: pt.abi.String) -> pt.Expr:
             return output.set("logging creation")
 
-        router.add_method_handler(
+        meth = router.add_method_handler(
             log_creation, method_config=pt.MethodConfig(no_op=pt.CallConfig.CREATE)
         )
+        assert meth.method_signature() == "log_creation()string"
 
         @pt.ABIReturnSubroutine
         def approve_if_odd(condition_encoding: pt.abi.Uint32) -> pt.Expr:
@@ -2321,12 +2335,13 @@ def test_router_app():
                 .Else(pt.Reject())
             )
 
-        router.add_method_handler(
+        meth = router.add_method_handler(
             approve_if_odd,
             method_config=pt.MethodConfig(
                 no_op=pt.CallConfig.NEVER, clear_state=pt.CallConfig.CALL
             ),
         )
+        assert meth.method_signature() == "approve_if_odd(uint32)void"
 
     on_completion_actions = pt.BareCallActions(
         opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes("optin call"))),
