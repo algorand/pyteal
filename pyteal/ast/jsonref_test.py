@@ -23,8 +23,7 @@ def test_json_string():
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
+    assert actual == expected
 
     with pytest.raises(pt.TealInputError):
         expr.__teal__(teal6Options)
@@ -47,8 +46,7 @@ def test_json_uint64():
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
+    assert actual == expected
 
     with pytest.raises(pt.TealInputError):
         expr.__teal__(teal6Options)
@@ -71,8 +69,7 @@ def test_json_object():
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
+    assert actual == expected
 
     with pytest.raises(pt.TealInputError):
         expr.__teal__(teal6Options)
