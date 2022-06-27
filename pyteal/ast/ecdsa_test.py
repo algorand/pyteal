@@ -1,4 +1,5 @@
 import pytest
+from typing import Union, List, cast
 
 import pyteal as pt
 
@@ -237,7 +238,12 @@ def test_ecdsa_verify_recovered_pk(curve: pt.EcdsaCurve):
 @pytest.mark.parametrize("curve", [pt.EcdsaCurve.Secp256k1, pt.EcdsaCurve.Secp256r1])
 def test_ecdsa_invalid(curve: pt.EcdsaCurve):
     with pytest.raises(pt.TealTypeError):
-        args = [pt.Bytes("data"), pt.Bytes("1"), pt.Bytes("sigA"), pt.Bytes("sigB")]
+        args: List[Union[pt.Bytes, pt.Int]] = [
+            pt.Bytes("data"),
+            pt.Bytes("1"),
+            pt.Bytes("sigA"),
+            pt.Bytes("sigB"),
+        ]
         pt.EcdsaRecover(curve, args[0], args[1], args[2], args[3])
 
     with pytest.raises(pt.TealTypeError):
@@ -245,7 +251,10 @@ def test_ecdsa_invalid(curve: pt.EcdsaCurve):
 
     with pytest.raises(pt.TealTypeError):
         args = [pt.Bytes("data"), pt.Bytes("sigA"), pt.Bytes("sigB")]
-        pubkey = (pt.Bytes("X"), pt.Int(1))
+        pubkey: Union[tuple[pt.Bytes, Union[pt.Int, pt.Bytes]], pt.MultiValue] = (
+            pt.Bytes("X"),
+            pt.Int(1),
+        )
         pt.EcdsaVerify(curve, args[0], args[1], args[2], pubkey)
 
     with pytest.raises(pt.TealTypeError):
@@ -259,7 +268,7 @@ def test_ecdsa_invalid(curve: pt.EcdsaCurve):
         pubkey = pt.MultiValue(
             pt.Op.ecdsa_pk_decompress,
             [pt.TealType.uint64, pt.TealType.bytes],
-            immediate_args=[curve],
+            immediate_args=[curve.__str__()],
             args=[compressed_pk],
         )
         pt.EcdsaVerify(curve, args[0], args[1], args[2], pubkey)
@@ -274,4 +283,4 @@ def test_ecdsa_invalid(curve: pt.EcdsaCurve):
     with pytest.raises(pt.TealTypeError):
         args = [pt.Bytes("data"), pt.Bytes("sigA"), pt.Bytes("sigB")]
         pubkey = (pt.Bytes("X"), pt.Bytes("Y"))
-        expr = pt.EcdsaVerify(5, args[0], args[1], args[2], pubkey)
+        expr = pt.EcdsaVerify(cast(pt.EcdsaCurve, 5), args[0], args[1], args[2], pubkey)
