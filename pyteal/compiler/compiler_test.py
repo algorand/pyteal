@@ -1,4 +1,3 @@
-from pyparsing import empty
 import pytest
 
 import pyteal as pt
