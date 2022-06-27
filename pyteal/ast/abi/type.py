@@ -144,12 +144,9 @@ class BaseType(ABC):
 
     def __str__(self) -> str:
         at = self.type_spec().annotation_type()
-
-        # Check if the type is the same as the annotation type
-        # This suggests it is not generic and we can just use the class name
-        if type(self) is at:
+        # If the annotation type itself is a class, just return its name
+        if isinstance(at, type):
             return self.__class__.__name__
-
         return str(at)
 
 
