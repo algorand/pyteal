@@ -22,8 +22,7 @@ def test_base64decode_std():
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
+    assert actual == expected
 
     with pytest.raises(pt.TealInputError):
         expr.__teal__(teal6Options)
@@ -45,8 +44,7 @@ def test_base64decode_url():
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
+    assert actual == expected
 
     with pytest.raises(pt.TealInputError):
         expr.__teal__(teal6Options)
