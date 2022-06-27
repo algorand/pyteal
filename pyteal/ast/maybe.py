@@ -36,13 +36,11 @@ class MaybeValue(MultiValue):
 
         This will return 1 if the value exists, otherwise 0.
         """
-        try:
-            sl = self.output_slots[1].load(self.types[1])
-        except TealInputError:
+        if not self.output_slots[1].initialized:
             raise TealInputError(
                 "Expected MaybeValue to be initialized prior to calling `hasValue`"
             )
-        return sl
+        return self.output_slots[1].load(self.types[1])
 
     def value(self) -> ScratchLoad:
         """Get the value.
@@ -50,14 +48,12 @@ class MaybeValue(MultiValue):
         If the value exists, it will be returned. Otherwise, the zero value for this type will be
         returned (i.e. either 0 or an empty byte string, depending on the type).
         """
-        try:
-            sl = self.output_slots[0].load(self.types[0])
-        except TealInputError:
+        if not self.output_slots[0].initialized:
             raise TealInputError(
                 "Expected MaybeValue to be initialized prior to calling `value`"
             )
 
-        return sl
+        return self.output_slots[0].load(self.types[0])
 
     @property
     def slotOk(self) -> ScratchSlot:
