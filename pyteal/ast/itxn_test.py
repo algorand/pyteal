@@ -191,9 +191,9 @@ ITXN_METHOD_CASES = (
                     pt.TxnField.assets: [pt.abi.Asset().asset_id()],
                     pt.TxnField.application_args: [
                         pt.MethodSignature("add(application,asset,account)void"),
-                        pt.SetByte(pt.Bytes(b"\x00"), pt.Int(0), pt.Int(1)),
-                        pt.SetByte(pt.Bytes(b"\x00"), pt.Int(0), pt.Int(0)),
-                        pt.SetByte(pt.Bytes(b"\x00"), pt.Int(0), pt.Int(1)),
+                        pt.Bytes(b"\x01"),
+                        pt.Bytes(b"\x00"),
+                        pt.Bytes(b"\x01"),
                     ],
                     pt.TxnField.fee: pt.Int(0),
                 }

@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import TYPE_CHECKING, cast
+import algosdk
 from pyteal.ast.abi.uint import uint_encode
 from pyteal.ast.abi.util import type_specs_from_signature
 
@@ -10,7 +11,7 @@ from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
 from pyteal.ast.txn import TxnField, TxnExprBuilder, TxnType, TxnaExprBuilder, TxnObject
 from pyteal.ast.seq import Seq
-from pyteal.ast.int import Int
+from pyteal.ast.bytes import Bytes
 from pyteal.ast import abi
 
 if TYPE_CHECKING:
@@ -236,17 +237,17 @@ class InnerTxnBuilder:
         apps: list[Expr] = []
         assets: list[Expr] = []
 
-        for idx, arg_ts in enumerate(arg_type_specs):
+        for idx, method_arg_ts in enumerate(arg_type_specs):
             arg = args[idx]
 
-            if arg_ts in abi.TransactionTypeSpecs:
+            if method_arg_ts in abi.TransactionTypeSpecs:
                 if not isinstance(arg, dict):
                     raise TealTypeError(arg, dict[TxnField, Expr | list[Expr]])
 
                 txns_to_pass.append(InnerTxnBuilder.SetFields(arg))
 
-            elif arg_ts in abi.ReferenceTypeSpecs:
-                match arg_ts:
+            elif method_arg_ts in abi.ReferenceTypeSpecs:
+                match method_arg_ts:
                     # For both acct and application, add index to
                     # app args _after_ appending since 0 is implicitly set
                     case abi.AccountTypeSpec():
@@ -257,7 +258,13 @@ class InnerTxnBuilder:
                         else:
                             raise TealTypeError(arg, abi.Account | Expr)
 
-                        app_args.append(uint_encode(8, Int(len(accts))))
+                        app_args.append(
+                            Bytes(
+                                algosdk.abi.ABIType.from_string("uint8").encode(
+                                    len(accts)
+                                )
+                            )
+                        )
 
                     case abi.ApplicationTypeSpec():
                         if isinstance(arg, Expr):
@@ -267,11 +274,23 @@ class InnerTxnBuilder:
                         else:
                             raise TealTypeError(arg, abi.Application | Expr)
 
-                        app_args.append(uint_encode(8, Int(len(apps))))
+                        app_args.append(
+                            Bytes(
+                                algosdk.abi.ABIType.from_string("uint8").encode(
+                                    len(apps)
+                                )
+                            )
+                        )
 
                     # For assets, add to app_args prior to appending to assets array
                     case abi.AssetTypeSpec():
-                        app_args.append(uint_encode(8, Int(len(assets))))
+                        app_args.append(
+                            Bytes(
+                                algosdk.abi.ABIType.from_string("uint8").encode(
+                                    len(assets)
+                                )
+                            )
+                        )
 
                         if isinstance(arg, Expr):
                             assets.append(arg)
@@ -281,8 +300,12 @@ class InnerTxnBuilder:
                             raise TealTypeError(arg, abi.Asset | Expr)
             else:
                 if isinstance(arg, Expr):
+                    # This should _always_ be bytes, since we assume its already abi encoded
+                    require_type(arg, TealType.bytes)
                     app_args.append(arg)
                 elif isinstance(arg, abi.BaseType):
+                    if arg.type_spec() != method_arg_ts:
+                        raise TealTypeError(arg.type_spec(), method_arg_ts)
                     app_args.append(arg.encode())
                 else:
                     raise TealTypeError(arg, abi.BaseType | Expr)
