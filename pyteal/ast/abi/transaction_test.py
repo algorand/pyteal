@@ -120,10 +120,10 @@ def test_Transaction_get():
         assert isinstance(expr, pt.TxnObject)
 
 
-def test_Transaction_set():
+def test_Transaction__set_index():
     for tv in TransactionValues:
         val_to_set = 2
-        expr = tv.t.set(val_to_set)
+        expr = tv.t._set_index(val_to_set)
 
         assert expr.type_of() == pt.TealType.none
         assert expr.has_return() is False

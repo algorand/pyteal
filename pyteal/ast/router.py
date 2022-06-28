@@ -417,7 +417,7 @@ class ASTBuilder:
 
                 for idx, arg_val in enumerate(txn_arg_vals):
                     txn_decode_instructions.append(
-                        arg_val.set(Txn.group_index() - Int(txn_arg_len - idx))
+                        arg_val._set_index(Txn.group_index() - Int(txn_arg_len - idx))
                     )
                     spec = arg_val.type_spec()
                     if type(spec) is not abi.TransactionTypeSpec:

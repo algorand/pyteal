@@ -77,7 +77,9 @@ class Transaction(BaseType):
     def get(self) -> TxnObject:
         return Gtxn[self.index()]
 
-    def set(self: T, value: Union[int, Expr, "Transaction", ComputedValue[T]]) -> Expr:
+    def _set_index(
+        self: T, value: Union[int, Expr, "Transaction", ComputedValue[T]]
+    ) -> Expr:
         match value:
             case ComputedValue():
                 return self._set_with_computed_type(value)

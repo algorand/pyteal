@@ -501,7 +501,9 @@ def test_wrap_handler_method_call():
         if len(txn_args) > 0:
             for idx, txn_arg in enumerate(txn_args):
                 loading.append(
-                    txn_arg.set(pt.Txn.group_index() - pt.Int(len(txn_args) - idx))
+                    txn_arg._set_index(
+                        pt.Txn.group_index() - pt.Int(len(txn_args) - idx)
+                    )
                 )
                 if str(txn_arg.type_spec()) != "txn":
                     loading.append(
@@ -551,13 +553,13 @@ def test_wrap_handler_method_txn_types():
     ]
     output_temp = pt.abi.Uint64()
     expected_ast = pt.Seq(
-        args[0].set(pt.Txn.group_index() - pt.Int(4)),
+        args[0]._set_index(pt.Txn.group_index() - pt.Int(4)),
         pt.Assert(args[0].get().type_enum() == pt.TxnType.ApplicationCall),
-        args[1].set(pt.Txn.group_index() - pt.Int(3)),
+        args[1]._set_index(pt.Txn.group_index() - pt.Int(3)),
         pt.Assert(args[1].get().type_enum() == pt.TxnType.AssetTransfer),
-        args[2].set(pt.Txn.group_index() - pt.Int(2)),
+        args[2]._set_index(pt.Txn.group_index() - pt.Int(2)),
         pt.Assert(args[2].get().type_enum() == pt.TxnType.Payment),
-        args[3].set(pt.Txn.group_index() - pt.Int(1)),
+        args[3]._set_index(pt.Txn.group_index() - pt.Int(1)),
         multiple_txn(*args).store_into(output_temp),
         pt.abi.MethodReturn(output_temp),
         pt.Approve(),
