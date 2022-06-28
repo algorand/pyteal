@@ -334,23 +334,21 @@ def test_size_of():
 
 ABI_TRANSLATION_TEST_CASES = [
     # Test for byte/bool/address/strings
-    (algosdk.abi.ByteType(), "byte", abi.ByteTypeSpec(), abi.Byte, "Byte"),
-    (algosdk.abi.BoolType(), "bool", abi.BoolTypeSpec(), abi.Bool, "Bool"),
+    (algosdk.abi.ByteType(), "byte", abi.ByteTypeSpec(), abi.Byte),
+    (algosdk.abi.BoolType(), "bool", abi.BoolTypeSpec(), abi.Bool),
     (
         algosdk.abi.AddressType(),
         "address",
         abi.AddressTypeSpec(),
         abi.Address,
-        "Address",
     ),
-    (algosdk.abi.StringType(), "string", abi.StringTypeSpec(), abi.String, "String"),
+    (algosdk.abi.StringType(), "string", abi.StringTypeSpec(), abi.String),
     # Test for dynamic array type
     (
         algosdk.abi.ArrayDynamicType(algosdk.abi.UintType(32)),
         "uint32[]",
         abi.DynamicArrayTypeSpec(abi.Uint32TypeSpec()),
         abi.DynamicArray[abi.Uint32],
-        "pyteal.DynamicArray[pyteal.Uint32]",
     ),
     (
         algosdk.abi.ArrayDynamicType(
@@ -359,7 +357,6 @@ ABI_TRANSLATION_TEST_CASES = [
         "byte[][]",
         abi.DynamicArrayTypeSpec(abi.DynamicArrayTypeSpec(abi.ByteTypeSpec())),
         abi.DynamicArray[abi.DynamicArray[abi.Byte]],
-        "pyteal.DynamicArray[pyteal.DynamicArray[pyteal.Byte]]",
     ),
     # TODO: Turn these tests on when PyTeal supports ufixed<N>x<M>
     # cf https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0004.md#types
@@ -385,10 +382,9 @@ ABI_TRANSLATION_TEST_CASES = [
             100,
         ),
         abi.StaticArray[abi.StaticArray[abi.Bool, Literal[256]], Literal[100]],
-        "pyteal.StaticArray[pyteal.StaticArray[pyteal.Bool, typing.Literal[256]], typing.Literal[100]]",
     ),
     # Test for tuple
-    (algosdk.abi.TupleType([]), "()", abi.TupleTypeSpec(), abi.Tuple0, "Tuple"),
+    (algosdk.abi.TupleType([]), "()", abi.TupleTypeSpec(), abi.Tuple0),
     (
         algosdk.abi.TupleType(
             [
@@ -416,7 +412,6 @@ ABI_TRANSLATION_TEST_CASES = [
                 abi.StaticArray[abi.Address, Literal[10]],
             ],
         ],
-        "pyteal.Tuple2[pyteal.Uint16, pyteal.Tuple2[pyteal.Byte, pyteal.StaticArray[pyteal.Address, typing.Literal[10]]]]",
     ),
     (
         algosdk.abi.TupleType(
@@ -451,7 +446,6 @@ ABI_TRANSLATION_TEST_CASES = [
             abi.Tuple,
             abi.Bool,
         ],
-        "pyteal.Tuple4[pyteal.Uint64, pyteal.Tuple2[pyteal.Byte, pyteal.StaticArray[pyteal.Address, typing.Literal[10]]], pyteal.Tuple0, pyteal.Bool]",
     ),
     # TODO: Turn the following test on when PyTeal supports ufixed<N>x<M>
     # cf https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0004.md#types
@@ -505,86 +499,74 @@ ABI_TRANSLATION_TEST_CASES = [
         "txn",
         abi.TransactionTypeSpec(),
         abi.Transaction,
-        "Transaction",
     ),
     (
         "cannot map ABI transaction type spec <pyteal.PaymentTransactionTypeSpec",
         "pay",
         abi.PaymentTransactionTypeSpec(),
         abi.PaymentTransaction,
-        "PaymentTransaction",
     ),
     (
         "cannot map ABI transaction type spec <pyteal.KeyRegisterTransactionTypeSpec",
         "keyreg",
         abi.KeyRegisterTransactionTypeSpec(),
         abi.KeyRegisterTransaction,
-        "KeyRegisterTransaction",
     ),
     (
         "cannot map ABI transaction type spec <pyteal.AssetConfigTransactionTypeSpec",
         "acfg",
         abi.AssetConfigTransactionTypeSpec(),
         abi.AssetConfigTransaction,
-        "AssetConfigTransaction",
     ),
     (
         "cannot map ABI transaction type spec <pyteal.AssetTransferTransactionTypeSpec",
         "axfer",
         abi.AssetTransferTransactionTypeSpec(),
         abi.AssetTransferTransaction,
-        "AssetTransferTransaction",
     ),
     (
         "cannot map ABI transaction type spec <pyteal.AssetFreezeTransactionTypeSpec",
         "afrz",
         abi.AssetFreezeTransactionTypeSpec(),
         abi.AssetFreezeTransaction,
-        "AssetFreezeTransaction",
     ),
     (
         "cannot map ABI transaction type spec <pyteal.ApplicationCallTransactionTypeSpec",
         "appl",
         abi.ApplicationCallTransactionTypeSpec(),
         abi.ApplicationCallTransaction,
-        "ApplicationCallTransaction",
     ),
     (
         "cannot map ABI reference type spec <pyteal.AccountTypeSpec",
         "account",
         abi.AccountTypeSpec(),
         abi.Account,
-        "Account",
     ),
     (
         "cannot map ABI reference type spec <pyteal.ApplicationTypeSpec",
         "application",
         abi.ApplicationTypeSpec(),
         abi.Application,
-        "Application",
     ),
     (
         "cannot map ABI reference type spec <pyteal.AssetTypeSpec",
         "asset",
         abi.AssetTypeSpec(),
         abi.Asset,
-        "Asset",
     ),
 ]
 
 
 @pytest.mark.parametrize(
-    "algosdk_abi, abi_string, pyteal_abi_ts, pyteal_abi, stringified",
+    "algosdk_abi, abi_string, pyteal_abi_ts, pyteal_abi",
     ABI_TRANSLATION_TEST_CASES,
 )
-def test_abi_type_translation(
-    algosdk_abi, abi_string, pyteal_abi_ts, pyteal_abi, stringified
-):
+def test_abi_type_translation(algosdk_abi, abi_string, pyteal_abi_ts, pyteal_abi):
     print(f"({algosdk_abi}, {abi_string}, {pyteal_abi_ts}),")
 
     assert pyteal_abi_ts == abi.type_spec_from_annotation(pyteal_abi)
 
-    assert str(pyteal_abi_ts.new_instance()) == stringified
+    assert str(pyteal_abi_ts.new_instance()) == abi_string
 
     if abi_string in (
         "account",

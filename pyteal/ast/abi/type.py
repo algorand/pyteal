@@ -143,11 +143,7 @@ class BaseType(ABC):
         return value.store_into(self)
 
     def __str__(self) -> str:
-        at = self.type_spec().annotation_type()
-        # If the annotation type itself is a class, just return its name
-        if isinstance(at, type):
-            return self.__class__.__name__
-        return str(at)
+        return str(self.type_spec())
 
 
 BaseType.__module__ = "pyteal"
