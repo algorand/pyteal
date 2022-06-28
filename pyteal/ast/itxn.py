@@ -225,12 +225,17 @@ class InnerTxnBuilder:
             app_id: An expression that evaluates to a `TealType.uint64` corresponding to the application being called.
             method_signature: A string representing the method signature of the method we're calling. This is used to do
                 type checking on the arguments passed and to create the method selector passed as the first argument.
-            args: A list of arguments to pass to the application. Thevalues in this list depend on the kind of argument you wish to pass:
-                - For basic arguments (not Reference or Transaction types): Any ABI type other than ReferenceTypes (asset,application,account) and TransactionTypes. These are encoded as part of transaction preparation. The type passed _MUST_ match the type specified in the `method_signature` passed.
-                - For reference arguments:
-                - For transaction arguments: A dictionary containing TxnField to Expr that describe Transactions to be pre-pended to the transaction group being constructed.  The `TxnField.type_enum` key MUST be set and MUST match the expected transaction type specified in the `method_signature`.
-                - Otherwise: An expression that evaluates to bytes representing a valid ABI encoded type passed directly to the arguments array.  No type checking is performed besides checking that it evaluates to `TealType.bytes`.
-            extra_fields: A dictionary whose keys are fields to set and whose values are the value each
+            args: A list of arguments to pass to the application. The values in this list depend on the kind of argument you wish to pass:
+
+                - For basic ABI arguments (not Reference or Transaction types): The ABI type is passed directly and encoded as part of transaction preparation. The type passed _MUST_ match the type specified in the `method_signature` passed.
+
+                - For Reference arguments: Either the Reference type or an Expr that returns the type corresponding to the reference type are allowed (Asset:TealType.uint64, Application:TealType.uint64, Account:TealType.bytes).
+
+                - For Transaction arguments: A dictionary containing TxnField to Expr that describe Transactions to be pre-pended to the transaction group being constructed.  The `TxnField.type_enum` key MUST be set and MUST match the expected transaction type specified in the `method_signature`.
+
+                - For any others: An expression that evaluates to bytes representing a valid ABI encoded type passed directly to the arguments array.  No type checking is performed besides checking that it evaluates to `TealType.bytes`.
+
+            extra_fields (optional): A dictionary whose keys are fields to set and whose values are the value each
                 field should take. Each value must evaluate to a type that is compatible with the
                 field being set. These fields are set on the ApplicationCallTransaction being constructed
         """
@@ -290,6 +295,8 @@ class InnerTxnBuilder:
                     # app args _after_ appending since 0 is implicitly set
                     case abi.AccountTypeSpec():
                         if isinstance(arg, Expr):
+                            # require the address is passed
+                            require_type(arg, TealType.bytes)
                             accts.append(arg)
                         elif isinstance(arg, abi.Account):
                             accts.append(arg.address())
@@ -306,6 +313,8 @@ class InnerTxnBuilder:
 
                     case abi.ApplicationTypeSpec():
                         if isinstance(arg, Expr):
+                            # require the app id be passed
+                            require_type(arg, TealType.uint64)
                             apps.append(arg)
                         elif isinstance(arg, abi.Application):
                             apps.append(arg.application_id())
@@ -331,6 +340,7 @@ class InnerTxnBuilder:
                         )
 
                         if isinstance(arg, Expr):
+                            require_type(arg, TealType.uint64)
                             assets.append(arg)
                         elif isinstance(arg, abi.Asset):
                             assets.append(arg.asset_id())

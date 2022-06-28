@@ -209,6 +209,35 @@ ITXN_METHOD_CASES = (
     ),
     (
         pt.Int(1),
+        "add(application,account,asset)void",
+        [
+            arg1 := pt.Int(1),
+            arg2 := pt.Global.zero_address(),
+            arg3 := pt.Int(1),
+        ],
+        {TxnField.fee: pt.Int(0)},
+        pt.Seq(
+            pt.InnerTxnBuilder.SetFields(
+                {
+                    pt.TxnField.type_enum: TxnType.ApplicationCall,
+                    pt.TxnField.application_id: pt.Int(1),
+                    pt.TxnField.accounts: [arg2],
+                    pt.TxnField.applications: [arg1],
+                    pt.TxnField.assets: [arg3],
+                    pt.TxnField.application_args: [
+                        pt.MethodSignature("add(application,account,asset)void"),
+                        pt.Bytes(b"\x01"),
+                        pt.Bytes(b"\x01"),
+                        pt.Bytes(b"\x00"),
+                    ],
+                    pt.TxnField.fee: pt.Int(0),
+                }
+            ),
+        ),
+        None,
+    ),
+    (
+        pt.Int(1),
         "add(pay,txn,appl)void",
         [
             arg1 := {TxnField.type_enum: TxnType.Payment},
@@ -236,7 +265,7 @@ ITXN_METHOD_CASES = (
         ),
         None,
     ),
-    ## Error cases
+    # Error cases
     (
         pt.Int(1),
         "add(pay,txn,appl)void",
@@ -287,6 +316,36 @@ ITXN_METHOD_CASES = (
     ),
     (
         pt.Int(1),
+        "add(application)void",
+        [
+            arg1 := pt.Bytes(""),
+        ],
+        None,
+        None,
+        pt.TealTypeError,
+    ),
+    (
+        pt.Int(1),
+        "add(asset)void",
+        [
+            arg1 := pt.Bytes(""),
+        ],
+        None,
+        None,
+        pt.TealTypeError,
+    ),
+    (
+        pt.Int(1),
+        "add(account)void",
+        [
+            arg1 := pt.Int(1),
+        ],
+        None,
+        None,
+        pt.TealTypeError,
+    ),
+    (
+        pt.Int(1),
         "add(uint64,uint64)void",
         [arg1 := pt.abi.String(), arg2 := pt.abi.Uint64()],
         None,
@@ -305,7 +364,7 @@ def test_InnerTxnBuilder_method_call(
     args: list[pt.abi.BaseType | pt.Expr | dict[pt.TxnField, pt.Expr | list[pt.Expr]]],
     extra_fields: dict[pt.TxnField, pt.Expr | list[pt.Expr]],
     expected_expr: pt.Expr,
-    expected_error: Exception,
+    expected_error: type[Exception],
 ):
 
     if expected_error is not None:
