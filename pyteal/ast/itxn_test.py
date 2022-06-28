@@ -176,7 +176,7 @@ ITXN_METHOD_CASES = (
                 }
             ),
         ),
-        None
+        None,
     ),
     (
         pt.Int(1),
@@ -311,7 +311,10 @@ def test_InnerTxnBuilder_method_call(
     if expected_error is not None:
         with pytest.raises(expected_error):
             pt.InnerTxnBuilder.MethodCall(
-                app_id=app_id, method_signature=sig, args=args, extra_fields=extra_fields
+                app_id=app_id,
+                method_signature=sig,
+                args=args,
+                extra_fields=extra_fields,
             )
         return
 
@@ -331,6 +334,10 @@ def test_InnerTxnBuilder_method_call(
 
     with pt.TealComponent.Context.ignoreScratchSlotEquality(), pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+        assert pt.TealBlock.MatchScratchSlotReferences(
+            pt.TealBlock.GetReferencedScratchSlots(actual),
+            pt.TealBlock.GetReferencedScratchSlots(expected),
+        )
 
 
 # txn_test.py performs additional testing
