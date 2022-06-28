@@ -170,7 +170,7 @@ ITXN_METHOD_CASES = (
                     pt.TxnField.application_args: [
                         pt.MethodSignature("add(uint64,uint64)void"),
                         t2_1.encode(),
-                        t2_1.encode(),
+                        t2_2.encode(),
                     ],
                     pt.TxnField.fee: pt.Int(0),
                 }
@@ -213,7 +213,7 @@ ITXN_METHOD_CASES = (
         [
             t4_1 := pt.Int(1),
             t4_2 := pt.Global.zero_address(),
-            t4_3 := pt.Int(1),
+            t4_3 := pt.Int(2),
         ],
         {TxnField.fee: pt.Int(0)},
         pt.Seq(
