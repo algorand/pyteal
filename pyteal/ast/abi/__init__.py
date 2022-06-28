@@ -41,6 +41,8 @@ from pyteal.ast.abi.reference_type import (
     AssetTypeSpec,
     Application,
     ApplicationTypeSpec,
+    ReferenceType,
+    ReferenceTypeSpec,
     ReferenceTypeSpecs,
 )
 from pyteal.ast.abi.transaction import (
@@ -79,6 +81,8 @@ __all__ = [
     "AssetTypeSpec",
     "Application",
     "ApplicationTypeSpec",
+    "ReferenceType",
+    "ReferenceTypeSpec",
     "ReferenceTypeSpecs",
     "Address",
     "AddressTypeSpec",

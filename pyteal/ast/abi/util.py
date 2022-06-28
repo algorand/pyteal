@@ -1,4 +1,14 @@
-from typing import Sequence, TypeVar, Any, Literal, get_origin, get_args, cast
+from typing import (
+    Any,
+    Literal,
+    Optional,
+    Sequence,
+    TypeVar,
+    Union,
+    cast,
+    get_args,
+    get_origin,
+)
 
 import algosdk.abi
 
@@ -379,3 +389,91 @@ def algosdk_from_type_spec(t: TypeSpec) -> algosdk.abi.ABIType:
 
 def algosdk_from_annotation(t: type[T]) -> algosdk.abi.ABIType:
     return algosdk_from_type_spec(type_spec_from_annotation(t))
+
+
+def type_spec_from_algosdk(t: Union[algosdk.abi.ABIType, str]) -> TypeSpec:
+
+    from pyteal.ast.abi.reference_type import ReferenceTypeSpecs
+    from pyteal.ast.abi.transaction import TransactionTypeSpecs
+
+    from pyteal.ast.abi.array_dynamic import DynamicArrayTypeSpec
+    from pyteal.ast.abi.array_static import StaticArrayTypeSpec
+    from pyteal.ast.abi.tuple import TupleTypeSpec
+    from pyteal.ast.abi.bool import BoolTypeSpec
+    from pyteal.ast.abi.string import StringTypeSpec
+    from pyteal.ast.abi.address import AddressTypeSpec
+    from pyteal.ast.abi.uint import (
+        ByteTypeSpec,
+        Uint8TypeSpec,
+        Uint16TypeSpec,
+        Uint32TypeSpec,
+        Uint64TypeSpec,
+    )
+
+    match t:
+        # Currently reference and transaction types are only strings
+        case str():
+            if algosdk.abi.is_abi_reference_type(t):
+                ref_dict: dict[str, TypeSpec] = {
+                    str(rts): rts for rts in ReferenceTypeSpecs
+                }
+                if t in ref_dict:
+                    return ref_dict[t]
+                else:
+                    raise TealInputError(f"Invalid reference type: {t}")
+
+            elif algosdk.abi.is_abi_transaction_type(t):
+                txn_dict: dict[str, TypeSpec] = {
+                    str(tts): tts for tts in TransactionTypeSpecs
+                }
+                if t in txn_dict:
+                    return txn_dict[t]
+                else:
+                    raise TealInputError(f"Invalid transaction type: {t}")
+            else:
+                raise TealInputError(f"Invalid ABI type: {t}")
+
+        case algosdk.abi.ABIType():
+            match t:
+                case algosdk.abi.ArrayDynamicType():
+                    return DynamicArrayTypeSpec(type_spec_from_algosdk(t.child_type))
+                case algosdk.abi.ArrayStaticType():
+                    return StaticArrayTypeSpec(
+                        type_spec_from_algosdk(t.child_type), t.static_length
+                    )
+                case algosdk.abi.TupleType():
+                    return TupleTypeSpec(
+                        *[type_spec_from_algosdk(ct) for ct in t.child_types]
+                    )
+                case algosdk.abi.UintType():
+                    match t.bit_size:
+                        case 8:
+                            return Uint8TypeSpec()
+                        case 16:
+                            return Uint16TypeSpec()
+                        case 32:
+                            return Uint32TypeSpec()
+                        case 64:
+                            return Uint64TypeSpec()
+                case algosdk.abi.ByteType():
+                    return ByteTypeSpec()
+                case algosdk.abi.BoolType():
+                    return BoolTypeSpec()
+                case algosdk.abi.StringType():
+                    return StringTypeSpec()
+                case algosdk.abi.AddressType():
+                    return AddressTypeSpec()
+                case algosdk.abi.UfixedType():
+                    raise TealInputError("Ufixed not supported")
+
+    raise TealInputError(f"Invalid Type: {t}")
+
+
+def type_specs_from_signature(sig: str) -> tuple[list[TypeSpec], Optional[TypeSpec]]:
+    sdk_method = algosdk.abi.Method.from_signature(sig)
+
+    return_type = None
+    if sdk_method.returns.type != algosdk.abi.Returns.VOID:
+        return_type = type_spec_from_algosdk(sdk_method.returns.type)
+
+    return [type_spec_from_algosdk(arg.type) for arg in sdk_method.args], return_type
