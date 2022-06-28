@@ -300,7 +300,7 @@ class Tuple(BaseType):
         # TODO: should support values as a Tuple as well
         pass
 
-    def set(self, *values) -> Expr:
+    def set(self, *values):
         """
         set(*values: BaseType) -> Expr
         set(values: ComputedValue[Tuple]) -> Expr

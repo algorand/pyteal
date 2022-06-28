@@ -8,8 +8,6 @@ from pyteal.ast.gtxn import Gtxn
 from pyteal.types import TealType
 from pyteal.errors import TealInputError
 
-T = TypeVar("T", bound=BaseType)
-
 
 class TransactionType(Enum):
     Any = "txn"
@@ -52,6 +50,8 @@ class TransactionTypeSpec(TypeSpec):
 
 TransactionTypeSpec.__module__ = "pyteal.abi"
 
+Self = TypeVar("Self", bound="Transaction")
+
 
 class Transaction(BaseType):
     def __init__(self, spec: TransactionTypeSpec = None) -> None:
@@ -66,7 +66,9 @@ class Transaction(BaseType):
     def get(self) -> TxnObject:
         return Gtxn[self.index()]
 
-    def set(self: T, value: Union[int, Expr, "Transaction", ComputedValue[T]]) -> Expr:
+    def set(
+        self: Self, value: Union[int, Expr, "Transaction", ComputedValue[Self]]
+    ) -> Expr:
         match value:
             case ComputedValue():
                 return self._set_with_computed_type(value)

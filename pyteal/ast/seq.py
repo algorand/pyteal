@@ -20,7 +20,7 @@ class Seq(Expr):
     def __init__(self, exprs: List[Expr]) -> None:
         pass
 
-    def __init__(self, *exprs) -> None:
+    def __init__(self, *exprs):
         """
         __init__(*exprs: Expr) -> None
         __init__(exprs: List[Expr]) -> None
