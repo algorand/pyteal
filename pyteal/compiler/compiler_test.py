@@ -30,7 +30,7 @@ def mock_version(version: str, monkeypatch: pytest.MonkeyPatch):
 )
 def test_pragma_compiler_version(version, compiler_version, should_error):
     if should_error:
-        with pytest.raises(pt.TealInputError):
+        with pytest.raises(pt.TealInternalError):
             pt.pragma(compiler_version=compiler_version)
     else:
         pt.pragma(compiler_version=compiler_version)

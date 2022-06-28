@@ -205,7 +205,7 @@ def pragma(
     """
     pyteal_version = Version(config.__version__)
     if pyteal_version not in NpmSpec(compiler_version):
-        raise TealInputError(
+        raise TealInternalError(
             "PyTeal version {} is not compatible with compiler version {}".format(
                 pyteal_version, compiler_version
             )
