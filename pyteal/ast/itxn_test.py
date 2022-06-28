@@ -352,6 +352,22 @@ ITXN_METHOD_CASES = (
         None,
         pt.TealTypeError,
     ),
+    (
+        pt.Int(1),
+        "add(uint64,uint64)void",
+        [pt.abi.Uint64()],
+        None,
+        None,
+        pt.TealInputError,
+    ),
+    (
+        pt.Int(1),
+        "add(uint64,uint64)void",
+        [pt.abi.Uint64(), pt.abi.Uint64(), pt.abi.Uint64()],
+        None,
+        None,
+        pt.TealInputError,
+    ),
 )
 
 

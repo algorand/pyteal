@@ -227,13 +227,15 @@ class InnerTxnBuilder:
                 type checking on the arguments passed and to create the method selector passed as the first argument.
             args: A list of arguments to pass to the application. The values in this list depend on the kind of argument you wish to pass:
 
-                - For basic ABI arguments (not Reference or Transaction types): The ABI type is passed directly and encoded as part of transaction preparation. The type passed _MUST_ match the type specified in the `method_signature` passed.
+                - For basic ABI arguments (not Reference or Transaction types):
+                    If an ABI type is passed it **MUST** match the type specified in the `method_signature`. If an Expr is passed it must evaluate to `TealType.bytes` but beyond that no type checking is performed.
 
-                - For Reference arguments: Either the Reference type or an Expr that returns the type corresponding to the reference type are allowed (Asset:TealType.uint64, Application:TealType.uint64, Account:TealType.bytes).
+                - For Reference arguments:
+                    Either the Reference type or an Expr that returns the type corresponding to the reference type are allowed.
+                    (i.e. Asset is TealType.uint64, Application is TealType.uint64, Account is TealType.bytes)
 
-                - For Transaction arguments: A dictionary containing TxnField to Expr that describe Transactions to be pre-pended to the transaction group being constructed.  The `TxnField.type_enum` key MUST be set and MUST match the expected transaction type specified in the `method_signature`.
-
-                - For any others: An expression that evaluates to bytes representing a valid ABI encoded type passed directly to the arguments array.  No type checking is performed besides checking that it evaluates to `TealType.bytes`.
+                - For Transaction arguments:
+                    A dictionary containing TxnField to Expr that describe Transactions to be pre-pended to the transaction group being constructed.  The `TxnField.type_enum` key MUST be set and MUST match the expected transaction type specified in the `method_signature`.
 
             extra_fields (optional): A dictionary whose keys are fields to set and whose values are the value each
                 field should take. Each value must evaluate to a type that is compatible with the
@@ -251,6 +253,11 @@ class InnerTxnBuilder:
         # We only care about the args
         arg_type_specs: list[abi.TypeSpec]
         arg_type_specs, _ = type_specs_from_signature(method_signature)
+
+        if len(args) != len(arg_type_specs):
+            raise TealInputError(
+                f"Expected {len(arg_type_specs)} arguments, got {len(args)}"
+            )
 
         # Start app args with the method selector
         app_args: list[Expr] = [MethodSignature(method_signature)]
