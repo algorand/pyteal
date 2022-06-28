@@ -139,7 +139,7 @@ ITXN_METHOD_CASES = (
     (
         pt.Int(1),
         "add(uint64,uint64)void",
-        [pt.Itob(pt.Int(1)), pt.Itob(pt.Int(1))],
+        [arg1 := pt.Itob(pt.Int(1)), arg2 := pt.Itob(pt.Int(1))],
         {TxnField.fee: pt.Int(0)},
         pt.Seq(
             pt.InnerTxnBuilder.SetFields(
@@ -148,18 +148,19 @@ ITXN_METHOD_CASES = (
                     pt.TxnField.application_id: pt.Int(1),
                     pt.TxnField.application_args: [
                         pt.MethodSignature("add(uint64,uint64)void"),
-                        pt.Itob(pt.Int(1)),
-                        pt.Itob(pt.Int(1)),
+                        arg1,
+                        arg2,
                     ],
                     pt.TxnField.fee: pt.Int(0),
                 }
             ),
         ),
+        None,
     ),
     (
         pt.Int(1),
         "add(uint64,uint64)void",
-        [pt.abi.Uint64(), pt.abi.Uint64()],
+        [arg1 := pt.abi.Uint64(), arg2 := pt.abi.Uint64()],
         {TxnField.fee: pt.Int(0)},
         pt.Seq(
             pt.InnerTxnBuilder.SetFields(
@@ -168,53 +169,59 @@ ITXN_METHOD_CASES = (
                     pt.TxnField.application_id: pt.Int(1),
                     pt.TxnField.application_args: [
                         pt.MethodSignature("add(uint64,uint64)void"),
-                        pt.abi.Uint64().encode(),
-                        pt.abi.Uint64().encode(),
+                        arg1.encode(),
+                        arg2.encode(),
                     ],
                     pt.TxnField.fee: pt.Int(0),
                 }
             ),
         ),
+        None
     ),
     (
         pt.Int(1),
-        "add(application,asset,account)void",
-        [pt.abi.Application(), pt.abi.Asset(), pt.abi.Account()],
+        "add(application,account,asset)void",
+        [
+            arg1 := pt.abi.Application(),
+            arg2 := pt.abi.Account(),
+            arg3 := pt.abi.Asset(),
+        ],
         {TxnField.fee: pt.Int(0)},
         pt.Seq(
             pt.InnerTxnBuilder.SetFields(
                 {
                     pt.TxnField.type_enum: TxnType.ApplicationCall,
                     pt.TxnField.application_id: pt.Int(1),
-                    pt.TxnField.accounts: [pt.abi.Account().address()],
-                    pt.TxnField.applications: [pt.abi.Application().application_id()],
-                    pt.TxnField.assets: [pt.abi.Asset().asset_id()],
+                    pt.TxnField.accounts: [arg2.address()],
+                    pt.TxnField.applications: [arg1.application_id()],
+                    pt.TxnField.assets: [arg3.asset_id()],
                     pt.TxnField.application_args: [
-                        pt.MethodSignature("add(application,asset,account)void"),
+                        pt.MethodSignature("add(application,account,asset)void"),
+                        pt.Bytes(b"\x01"),
                         pt.Bytes(b"\x01"),
                         pt.Bytes(b"\x00"),
-                        pt.Bytes(b"\x01"),
                     ],
                     pt.TxnField.fee: pt.Int(0),
                 }
             ),
         ),
+        None,
     ),
     (
         pt.Int(1),
         "add(pay,txn,appl)void",
         [
-            {TxnField.type_enum: TxnType.Payment},
-            {TxnField.type_enum: TxnType.AssetTransfer},
-            {TxnField.type_enum: TxnType.ApplicationCall},
+            arg1 := {TxnField.type_enum: TxnType.Payment},
+            arg2 := {TxnField.type_enum: TxnType.AssetTransfer},
+            arg3 := {TxnField.type_enum: TxnType.ApplicationCall},
         ],
         {TxnField.fee: pt.Int(0)},
         pt.Seq(
-            pt.InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment}),
+            pt.InnerTxnBuilder.SetFields(arg1),
             pt.InnerTxnBuilder.Next(),
-            pt.InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.AssetTransfer}),
+            pt.InnerTxnBuilder.SetFields(arg2),
             pt.InnerTxnBuilder.Next(),
-            pt.InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.ApplicationCall}),
+            pt.InnerTxnBuilder.SetFields(arg3),
             pt.InnerTxnBuilder.Next(),
             pt.InnerTxnBuilder.SetFields(
                 {
@@ -227,25 +234,94 @@ ITXN_METHOD_CASES = (
                 }
             ),
         ),
+        None,
+    ),
+    ## Error cases
+    (
+        pt.Int(1),
+        "add(pay,txn,appl)void",
+        [
+            arg1 := {},
+            arg2 := {TxnField.type_enum: TxnType.AssetTransfer},
+            arg3 := {TxnField.type_enum: TxnType.ApplicationCall},
+        ],
+        None,
+        None,
+        pt.TealInputError,
+    ),
+    (
+        pt.Int(1),
+        "add(pay,txn,appl)void",
+        [
+            arg1 := {TxnField.type_enum: pt.Int(10)},
+            arg2 := {TxnField.type_enum: TxnType.AssetTransfer},
+            arg3 := {TxnField.type_enum: TxnType.ApplicationCall},
+        ],
+        None,
+        None,
+        pt.TealTypeError,
+    ),
+    (
+        pt.Int(1),
+        "add(pay,txn,appl)void",
+        [
+            arg1 := {TxnField.type_enum: TxnType.ApplicationCall},
+            arg2 := {TxnField.type_enum: TxnType.AssetTransfer},
+            arg3 := {TxnField.type_enum: TxnType.ApplicationCall},
+        ],
+        None,
+        None,
+        pt.TealInputError,
+    ),
+    (
+        pt.Int(1),
+        "add(application,account,asset)void",
+        [
+            arg1 := pt.abi.Asset(),
+            arg2 := pt.abi.Account(),
+            arg3 := pt.abi.Asset(),
+        ],
+        None,
+        None,
+        pt.TealTypeError,
+    ),
+    (
+        pt.Int(1),
+        "add(uint64,uint64)void",
+        [arg1 := pt.abi.String(), arg2 := pt.abi.Uint64()],
+        None,
+        None,
+        pt.TealTypeError,
     ),
 )
 
 
-@pytest.mark.parametrize("app_id, sig, args, fields, expectedExpr", ITXN_METHOD_CASES)
+@pytest.mark.parametrize(
+    "app_id, sig, args, extra_fields, expected_expr, expected_error", ITXN_METHOD_CASES
+)
 def test_InnerTxnBuilder_method_call(
     app_id: pt.Expr,
     sig: str,
     args: list[pt.abi.BaseType | pt.Expr | dict[pt.TxnField, pt.Expr | list[pt.Expr]]],
-    fields: dict[pt.TxnField, pt.Expr | list[pt.Expr]],
-    expectedExpr: pt.Expr,
+    extra_fields: dict[pt.TxnField, pt.Expr | list[pt.Expr]],
+    expected_expr: pt.Expr,
+    expected_error: Exception,
 ):
+
+    if expected_error is not None:
+        with pytest.raises(expected_error):
+            pt.InnerTxnBuilder.MethodCall(
+                app_id=app_id, method_signature=sig, args=args, extra_fields=extra_fields
+            )
+        return
+
     expr: pt.Expr = pt.InnerTxnBuilder.MethodCall(
-        app_id=app_id, method_signature=sig, args=args, fields=fields
+        app_id=app_id, method_signature=sig, args=args, extra_fields=extra_fields
     )
     assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expected, _ = expectedExpr.__teal__(teal6Options)
+    expected, _ = expected_expr.__teal__(teal6Options)
     expected.addIncoming()
     expected = pt.TealBlock.NormalizeBlocks(expected)
 

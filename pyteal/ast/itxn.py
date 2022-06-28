@@ -213,7 +213,7 @@ class InnerTxnBuilder:
         app_id: Expr,
         method_signature: str,
         args: list[abi.BaseType | Expr | dict[TxnField, Expr | list[Expr]]],
-        fields: dict[TxnField, Expr | list[Expr]],
+        extra_fields: dict[TxnField, Expr | list[Expr]] = {},
     ) -> Expr:
         """Adds an ABI method call transaction to the current inner transaction group.
 
@@ -225,14 +225,12 @@ class InnerTxnBuilder:
             app_id: An expression that evaluates to a `TealType.uint64` corresponding to the application being called.
             method_signature: A string representing the method signature of the method we're calling. This is used to do
                 type checking on the arguments passed and to create the method selector passed as the first argument.
-            args: A list of arguments to pass to the application. These args may be one of three types
-                1. An ABI type: Any ABI type other than ReferenceTypes (asset,application,account) and TransactionTypes. These are encoded
-                    as part of transaction preparation. The type passed _MUST_ match the type specified in the `method_signature` passed.
-                2. An Expr: An expression that evaluates to bytes representing a valid ABI encoded type passed directly to the arguments array.
-                    No type checking is performed besides checking that it evaluates to `TealType.bytes`.
-                3. A dictionary: A dictionary containing TxnField to Expr that describe Transactions to be pre-pended to the transaction group being constructed.
-                    The `TxnField.type_enum` key MUST be set and MUST match the expected transaction type specified in the `method_signature`.
-            fields: A dictionary whose keys are fields to set and whose values are the value each
+            args: A list of arguments to pass to the application. Thevalues in this list depend on the kind of argument you wish to pass:
+                - For basic arguments (not Reference or Transaction types): Any ABI type other than ReferenceTypes (asset,application,account) and TransactionTypes. These are encoded as part of transaction preparation. The type passed _MUST_ match the type specified in the `method_signature` passed.
+                - For reference arguments:
+                - For transaction arguments: A dictionary containing TxnField to Expr that describe Transactions to be pre-pended to the transaction group being constructed.  The `TxnField.type_enum` key MUST be set and MUST match the expected transaction type specified in the `method_signature`.
+                - Otherwise: An expression that evaluates to bytes representing a valid ABI encoded type passed directly to the arguments array.  No type checking is performed besides checking that it evaluates to `TealType.bytes`.
+            extra_fields: A dictionary whose keys are fields to set and whose values are the value each
                 field should take. Each value must evaluate to a type that is compatible with the
                 field being set. These fields are set on the ApplicationCallTransaction being constructed
         """
@@ -272,11 +270,14 @@ class InnerTxnBuilder:
                         f"Expected Transaction at arg {idx} to contain field type_enum"
                     )
 
+                if type(arg[TxnField.type_enum]) is not EnumInt:
+                    raise TealTypeError(arg[TxnField.type_enum], EnumInt)
+
                 txntype = cast(EnumInt, arg[TxnField.type_enum]).name
                 # If the arg is an unspecified transaction, no need to check the type_enum
-                if not isinstance(
-                    method_arg_ts, abi.TransactionTypeSpec
-                ) and txntype != str(method_arg_ts):
+                if not type(
+                    method_arg_ts
+                ) is abi.TransactionTypeSpec and txntype != str(method_arg_ts):
                     raise TealInputError(
                         f"Expected Transaction at arg {idx} to be {method_arg_ts}, got {txntype}"
                     )
@@ -364,7 +365,7 @@ class InnerTxnBuilder:
             # Set the fields for the app call in app args and foreign arrays
             *fields_to_set,
             # Add any remaining fields specified by the user
-            InnerTxnBuilder.SetFields(fields),
+            InnerTxnBuilder.SetFields(extra_fields),
         )
 
 
