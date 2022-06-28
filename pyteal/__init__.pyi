@@ -10,6 +10,7 @@ from pyteal.compiler import (
     MIN_TEAL_VERSION,
     DEFAULT_TEAL_VERSION,
     CompileOptions,
+    pragma,
     compileTeal,
     OptimizeOptions,
 )
@@ -184,4 +185,5 @@ __all__ = [
     "While",
     "WideRatio",
     "compileTeal",
+    "pragma",
 ]

@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
 import setuptools
+from pyteal.config import __version__
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="pyteal",
-    version="0.13.0",
+    version=__version__,
     author="Algorand",
     author_email="pypiservice@algorand.com",
     description="Algorand Smart Contracts in Python",

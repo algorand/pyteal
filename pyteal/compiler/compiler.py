@@ -1,5 +1,7 @@
-from typing import List, Tuple, Set, Dict, Optional, cast
+from typing import Any, List, Tuple, Set, Dict, Optional, cast
+from semantic_version import Version, NpmSpec
 
+from pyteal import config
 from pyteal.compiler.optimizer import OptimizeOptions, apply_global_optimizations
 
 from pyteal.types import TealType
@@ -186,6 +188,28 @@ def sort_subroutine_blocks(
         subroutine_mapping[subroutine] = flattenBlocks(order)
 
     return subroutine_mapping
+
+
+def pragma(
+    *,
+    compiler_version: str,
+    **kwargs: Any,
+) -> None:
+    """
+    Specify pragmas for the compiler.
+
+    Args:
+        compiler_version: Acceptable versions of the compiler. Will fail if the current PyTeal version
+            is not contained in the list. Follows the npm `semver range scheme <https://github.com/npm/node-semver#ranges>`_
+            for specifying compatible versions.
+    """
+    pyteal_version = Version(config.__version__)
+    if pyteal_version not in NpmSpec(compiler_version):
+        raise TealInputError(
+            "PyTeal version {} is not compatible with compiler version {}".format(
+                pyteal_version, compiler_version
+            )
+        )
 
 
 def compileTeal(
