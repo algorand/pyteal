@@ -3,7 +3,6 @@ import pkg_resources
 from typing import Any, List, Tuple, Set, Dict, Optional, cast
 from semantic_version import Version, NpmSpec
 
-from pyteal import config
 from pyteal.compiler.optimizer import OptimizeOptions, apply_global_optimizations
 
 from pyteal.types import TealType
@@ -247,12 +246,12 @@ def convert_pep440_compiler_version(compiler_version: str):
             combined_additions.append(postrel or "0")
         if len(combined_additions) > 0 or dev is not None:
             combined_additions.append(dev or "0")
-        combined_additions = ".".join(combined_additions)
+        combined_additions_str = ".".join(combined_additions)
 
         # Build full_version
         full_version = base_version
         if len(combined_additions) > 0:
-            full_version += "-" + combined_additions
+            full_version += "-" + combined_additions_str
         if local is not None:
             full_version += "+" + local.lower()
 
@@ -278,7 +277,7 @@ def pragma(
     """
     pkg_version = pkg_resources.require("pyteal")[0].version
     pyteal_version = Version(convert_pep440_compiler_version(pkg_version))
-    if not pyteal_version in NpmSpec(convert_pep440_compiler_version(compiler_version)):
+    if pyteal_version not in NpmSpec(convert_pep440_compiler_version(compiler_version)):
         raise TealInternalError(
             "PyTeal version {} is not compatible with compiler version {}".format(
                 pkg_version, compiler_version
