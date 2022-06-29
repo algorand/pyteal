@@ -35,7 +35,7 @@ JsonRefType.__module__ = "pyteal"
 class JsonRef(LeafExpr):
     """An expression that accesses the value associated with a given key from a supported utf-8 encoded json object.
 
-    The json object must satisfy a [particular specification](https://github.com/algorand/go-algorand/blob/master/data/transactions/logic/jsonspec.md).
+    The json object must satisfy a `particular specification <https://github.com/algorand/go-algorand/blob/master/data/transactions/logic/jsonspec.md>`_.
     """
 
     def __init__(self, type: JsonRefType, json_obj: Expr, key: Expr) -> None:
