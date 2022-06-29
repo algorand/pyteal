@@ -62,9 +62,9 @@ def Ed25519Verify(data: Expr, sig: Expr, key: Expr) -> TernaryExpr:
     """Verify the ed25519 signature of the concatenation ("ProgData" + hash_of_current_program + data).
 
     Args:
-        data: The data signed by the public key. Must evalutes to bytes.
+        data: The data signed by the public key. Must evaluate to bytes.
         sig: The proposed 64-byte signature of the concatenation ("ProgData" + hash_of_current_program + data).
-            Must evalute to bytes.
+            Must evaluate to bytes.
         key: The 32 byte public key that produced the signature. Must evaluate to bytes.
     """
     return TernaryExpr(
@@ -81,8 +81,8 @@ def Ed25519Verify_Bare(data: Expr, sig: Expr, key: Expr) -> TernaryExpr:
     """Verify the ed25519 signature of the data against the public key.
 
     Args:
-        data: The data signed by the public key. Must evalutes to bytes.
-        sig: The proposed 64-byte signature of the data. Must evalute to bytes.
+        data: The data signed by the public key. Must evaluate to bytes.
+        sig: The proposed 64-byte signature of the data. Must evaluate to bytes.
         key: The 32 byte public key that produced the signature. Must evaluate to bytes.
     """
     return TernaryExpr(
