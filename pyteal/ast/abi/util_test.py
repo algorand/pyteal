@@ -338,7 +338,12 @@ ABI_TRANSLATION_TEST_CASES = [
     # Test for byte/bool/address/strings
     (algosdk.abi.ByteType(), "byte", abi.ByteTypeSpec(), abi.Byte),
     (algosdk.abi.BoolType(), "bool", abi.BoolTypeSpec(), abi.Bool),
-    (algosdk.abi.AddressType(), "address", abi.AddressTypeSpec(), abi.Address),
+    (
+        algosdk.abi.AddressType(),
+        "address",
+        abi.AddressTypeSpec(),
+        abi.Address,
+    ),
     (algosdk.abi.StringType(), "string", abi.StringTypeSpec(), abi.String),
     # Test for dynamic array type
     (
@@ -491,7 +496,6 @@ ABI_TRANSLATION_TEST_CASES = [
     #         ]
     #     ),
     # ),
-    (algosdk.abi.TupleType([]), "()", abi.TupleTypeSpec(), abi.Tuple0),
     (
         "cannot map ABI transaction type spec <pyteal.TransactionTypeSpec",
         "txn",
@@ -612,12 +616,15 @@ ABI_SIGNATURE_TYPESPEC_CASES = [
 
 
 @pytest.mark.parametrize(
-    "algosdk_abi, abi_string, pyteal_abi_ts, pyteal_abi", ABI_TRANSLATION_TEST_CASES
+    "algosdk_abi, abi_string, pyteal_abi_ts, pyteal_abi",
+    ABI_TRANSLATION_TEST_CASES,
 )
 def test_abi_type_translation(algosdk_abi, abi_string, pyteal_abi_ts, pyteal_abi):
     print(f"({algosdk_abi}, {abi_string}, {pyteal_abi_ts}),")
 
     assert pyteal_abi_ts == abi.type_spec_from_annotation(pyteal_abi)
+
+    assert str(pyteal_abi_ts.new_instance()) == abi_string
 
     if abi_string in (
         "account",

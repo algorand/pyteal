@@ -142,6 +142,9 @@ class BaseType(ABC):
             )
         return value.store_into(self)
 
+    def __str__(self) -> str:
+        return str(self.type_spec())
+
 
 BaseType.__module__ = "pyteal"
 
