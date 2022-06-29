@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import TypeVar, Union, cast, List, Final
+from typing import Union, cast, List, Final
 from pyteal.ast.abi.type import BaseType, ComputedValue, TypeSpec
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
@@ -50,8 +50,6 @@ class TransactionTypeSpec(TypeSpec):
 
 TransactionTypeSpec.__module__ = "pyteal.abi"
 
-Self = TypeVar("Self", bound="Transaction")
-
 
 class Transaction(BaseType):
     def __init__(self, spec: TransactionTypeSpec = None) -> None:
@@ -67,7 +65,7 @@ class Transaction(BaseType):
         return Gtxn[self.index()]
 
     def set(
-        self: Self, value: Union[int, Expr, "Transaction", ComputedValue[Self]]
+        self, value: Union[int, Expr, "Transaction", ComputedValue["Transaction"]]
     ) -> Expr:
         match value:
             case ComputedValue():

@@ -3,7 +3,6 @@ from typing import (
     Optional,
     Final,
     cast,
-    TypeVar,
 )
 from abc import abstractmethod
 
@@ -223,8 +222,6 @@ class Uint64TypeSpec(UintTypeSpec):
 
 Uint32TypeSpec.__module__ = "pyteal.abi"
 
-Self = TypeVar("Self", bound="Uint")
-
 
 class Uint(BaseType):
     @abstractmethod
@@ -241,7 +238,7 @@ class Uint(BaseType):
         """
         return self.stored_value.load()
 
-    def set(self: Self, value: Union[int, Expr, "Uint", ComputedValue[Self]]) -> Expr:
+    def set(self, value: Union[int, Expr, "Uint", ComputedValue["Uint"]]) -> Expr:
         """Set the value of this Uint to the input value.
 
         There are a variety of ways to express the input value. Regardless of the type used to

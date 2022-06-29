@@ -134,7 +134,7 @@ class BaseType(ABC):
         """
         pass
 
-    def _set_with_computed_type(self, value: "ComputedValue") -> Expr:
+    def _set_with_computed_type(self, value: "ComputedValue[BaseType]") -> Expr:
         target_type_spec = value.produced_type_spec()
         if self.type_spec() != target_type_spec:
             raise TealInputError(
@@ -145,10 +145,10 @@ class BaseType(ABC):
 
 BaseType.__module__ = "pyteal.abi"
 
-T = TypeVar("T", bound=BaseType)
+T_co = TypeVar("T_co", bound=BaseType, covariant=True)
 
 
-class ComputedValue(ABC, Generic[T]):
+class ComputedValue(ABC, Generic[T_co]):
     """Represents an ABI Type whose value must be computed by an expression."""
 
     @abstractmethod
@@ -157,7 +157,7 @@ class ComputedValue(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def store_into(self, output: T) -> Expr:
+    def store_into(self, output: T_co) -> Expr:  # type: ignore[misc]
         """Store the value of this computed type into an existing ABI type instance.
 
         Args:
@@ -170,7 +170,7 @@ class ComputedValue(ABC, Generic[T]):
         """
         pass
 
-    def use(self, action: Callable[[T], Expr]) -> Expr:
+    def use(self, action: Callable[[T_co], Expr]) -> Expr:
         """Use the computed value represented by this class in a function or lambda expression.
 
         Args:
@@ -182,7 +182,7 @@ class ComputedValue(ABC, Generic[T]):
             An expression which contains the returned expression from invoking action with the
             computed value.
         """
-        newInstance = cast(T, self.produced_type_spec().new_instance())
+        newInstance = cast(T_co, self.produced_type_spec().new_instance())
         return Seq(self.store_into(newInstance), action(newInstance))
 
 
