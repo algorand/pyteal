@@ -3,7 +3,6 @@ from pyteal.compiler.compiler import (
     MIN_TEAL_VERSION,
     DEFAULT_TEAL_VERSION,
     CompileOptions,
-    pragma,
     compileTeal,
 )
 
@@ -14,7 +13,6 @@ __all__ = [
     "MIN_TEAL_VERSION",
     "DEFAULT_TEAL_VERSION",
     "CompileOptions",
-    "pragma",
     "compileTeal",
     "OptimizeOptions",
 ]
