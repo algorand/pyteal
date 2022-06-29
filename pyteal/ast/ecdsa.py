@@ -114,75 +114,60 @@ def EcdsaVerify(
     return EcdsaVerifyExpr(curve, data, sigA, sigB, pubkey[0], pubkey[1])
 
 
-class EcdsaDecompress(MultiValue):
+def EcdsaDecompress(curve: EcdsaCurve, compressed_pk: Expr) -> MultiValue:
     """Decompress an ECDSA public key.
-
     Args:
         curve: Enum representing the ECDSA curve used for the public key
         compressed_pk: The compressed public key. Must be 33 bytes long and big endian encoded.
-
     Returns:
-        A MultiValue instance representing the two components of the public key, big endian
+        A MultiValue expression representing the two components of the public key, big endian
         encoded.
     """
 
-    def __init__(self, curve: EcdsaCurve, compressed_pk: Expr):
-        if not isinstance(curve, EcdsaCurve):
-            raise TealTypeError(curve, EcdsaCurve)
+    if not isinstance(curve, EcdsaCurve):
+        raise TealTypeError(curve, EcdsaCurve)
 
-        self.curve = curve
-
-        require_type(compressed_pk, TealType.bytes)
-        super().__init__(
-            Op.ecdsa_pk_decompress,
-            EcdsaPubkey,
-            immediate_args=[curve.arg_name],
-            args=[compressed_pk],
-        )
-
-    def __teal__(self, options: "CompileOptions"):
-        verifyFieldVersion(self.curve.arg_name, self.curve.min_version, options.version)
-
-        return super().__teal__(options)
+    require_type(compressed_pk, TealType.bytes)
+    return MultiValue(
+        Op.ecdsa_pk_decompress,
+        EcdsaPubkey,
+        immediate_args=[curve.arg_name],
+        args=[compressed_pk],
+        compile_check=lambda options: verifyFieldVersion(
+            curve.arg_name, curve.min_version, options.version
+        ),
+    )
 
 
-class EcdsaRecover(MultiValue):
-    """Recover an ECDSA public key from a signature.
-
+def EcdsaRecover(
+    curve: EcdsaCurve, data: Expr, recovery_id: Expr, sigA: Expr, sigB: Expr
+) -> MultiValue:
+    """Reover an ECDSA public key from a signature.
     All byte arguments must be big endian encoded.
-
     Args:
         curve: Enum representing the ECDSA curve used for the public key
         data: Hash value of the signed data. Must be 32 bytes long.
         recovery_id: value used to extract public key from signature. Must evaluate to uint.
         sigA: First component of the signature. Must evaluate to bytes.
         sigB: Second component of the signature. Must evaluate to bytes.
-
     Returns:
-        A MultiValue instance representing the two components of the public key, big endian
+        A MultiValue expression representing the two components of the public key, big endian
         encoded.
     """
 
-    def __init__(
-        self, curve: EcdsaCurve, data: Expr, recovery_id: Expr, sigA: Expr, sigB: Expr
-    ):
-        if not isinstance(curve, EcdsaCurve):
-            raise TealTypeError(curve, EcdsaCurve)
+    if not isinstance(curve, EcdsaCurve):
+        raise TealTypeError(curve, EcdsaCurve)
 
-        self.curve = curve
-
-        require_type(data, TealType.bytes)
-        require_type(recovery_id, TealType.uint64)
-        require_type(sigA, TealType.bytes)
-        require_type(sigB, TealType.bytes)
-        super().__init__(
-            Op.ecdsa_pk_recover,
-            EcdsaPubkey,
-            immediate_args=[curve.arg_name],
-            args=[data, recovery_id, sigA, sigB],
-        )
-
-    def __teal__(self, options: "CompileOptions"):
-        verifyFieldVersion(self.curve.arg_name, self.curve.min_version, options.version)
-
-        return super().__teal__(options)
+    require_type(data, TealType.bytes)
+    require_type(recovery_id, TealType.uint64)
+    require_type(sigA, TealType.bytes)
+    require_type(sigB, TealType.bytes)
+    return MultiValue(
+        Op.ecdsa_pk_recover,
+        EcdsaPubkey,
+        immediate_args=[curve.arg_name],
+        args=[data, recovery_id, sigA, sigB],
+        compile_check=lambda options: verifyFieldVersion(
+            curve.arg_name, curve.min_version, options.version
+        ),
+    )
