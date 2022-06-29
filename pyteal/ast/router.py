@@ -282,7 +282,6 @@ class ASTBuilder:
     def wrap_handler(
         is_method_call: bool,
         handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr,
-        read_only: bool = False,
     ) -> Expr:
         """This is a helper function that handles transaction arguments passing in bare-app-call/abi-method handlers.
 
@@ -437,15 +436,13 @@ class ASTBuilder:
                 ]
                 decode_instructions += de_tuple_instructions
 
-            result_expr = Approve()
-            if read_only:
-                result_expr = Reject()
+            
             # NOTE: does not have to have return, can be void method
             if handler.type_of() == "void":
                 return Seq(
                     *decode_instructions,
                     cast(Expr, handler(*arg_vals)),
-                    result_expr,
+                    Approve(),
                 )
             else:
                 output_temp: abi.BaseType = cast(
@@ -458,7 +455,7 @@ class ASTBuilder:
                     *decode_instructions,
                     subroutine_call.store_into(output_temp),
                     abi.MethodReturn(output_temp),
-                    result_expr,
+                    Approve(),
                 )
 
     def add_method_to_ast(
@@ -466,7 +463,6 @@ class ASTBuilder:
         method_signature: str,
         cond: Expr | int,
         handler: ABIReturnSubroutine,
-        read_only: bool = False,
     ) -> None:
         walk_in_cond = Txn.application_args[0] == MethodSignature(method_signature)
         match cond:
@@ -474,12 +470,12 @@ class ASTBuilder:
                 self.conditions_n_branches.append(
                     CondNode(
                         walk_in_cond,
-                        Seq(Assert(cond), self.wrap_handler(True, handler, read_only)),
+                        Seq(Assert(cond), self.wrap_handler(True, handler)),
                     )
                 )
             case 1:
                 self.conditions_n_branches.append(
-                    CondNode(walk_in_cond, self.wrap_handler(True, handler, read_only))
+                    CondNode(walk_in_cond, self.wrap_handler(True, handler))
                 )
             case 0:
                 return
@@ -573,6 +569,9 @@ class Router:
         meth = method_call.method_spec()
         if description is not None:
             meth.desc = description
+        #if read_only:
+        # TODO: implement this flag in the SDKs
+        #    method.read_only = True
         self.methods.append(meth)
 
         self.method_sig_to_selector[method_signature] = method_selector
@@ -581,10 +580,10 @@ class Router:
         method_approval_cond = method_config.approval_cond()
         method_clear_state_cond = method_config.clear_state_cond()
         self.approval_ast.add_method_to_ast(
-            method_signature, method_approval_cond, method_call, read_only
+            method_signature, method_approval_cond, method_call
         )
         self.clear_state_ast.add_method_to_ast(
-            method_signature, method_clear_state_cond, method_call, read_only
+            method_signature, method_clear_state_cond, method_call
         )
         return method_call
 
