@@ -147,7 +147,7 @@ class EcdsaDecompress(MultiValue):
 
 
 class EcdsaRecover(MultiValue):
-    """Reover an ECDSA public key from a signature.
+    """Recover an ECDSA public key from a signature.
 
     All byte arguments must be big endian encoded.
 
