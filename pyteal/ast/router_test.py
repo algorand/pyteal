@@ -162,10 +162,13 @@ def multiple_txn(
     appl: pt.abi.ApplicationCallTransaction,
     axfer: pt.abi.AssetTransferTransaction,
     pay: pt.abi.PaymentTransaction,
+    any_txn: pt.abi.Transaction,
     *,
     output: pt.abi.Uint64,
 ):
-    return output.set(appl.get().fee() + axfer.get().fee() + pay.get().fee())
+    return output.set(
+        appl.get().fee() + axfer.get().fee() + pay.get().fee() + any_txn.get().fee()
+    )
 
 
 GOOD_SUBROUTINE_CASES: list[pt.ABIReturnSubroutine | pt.SubroutineFnWrapper] = [
@@ -470,7 +473,7 @@ def test_wrap_handler_method_call():
 
         app_arg_cnt = len(app_args)
 
-        txn_args = [
+        txn_args: list[pt.abi.Transaction] = [
             arg for arg in args if arg.type_spec() in pt.abi.TransactionTypeSpecs
         ]
 
@@ -496,14 +499,19 @@ def test_wrap_handler_method_call():
             ]
 
         if len(txn_args) > 0:
-            loading.extend(
-                [
-                    typing.cast(pt.abi.Transaction, txn_arg).set(
+            for idx, txn_arg in enumerate(txn_args):
+                loading.append(
+                    txn_arg._set_index(
                         pt.Txn.group_index() - pt.Int(len(txn_args) - idx)
                     )
-                    for idx, txn_arg in enumerate(txn_args)
-                ]
-            )
+                )
+                if str(txn_arg.type_spec()) != "txn":
+                    loading.append(
+                        pt.Assert(
+                            txn_arg.get().type_enum()
+                            == txn_arg.type_spec().txn_type_enum()
+                        )
+                    )
 
         if app_arg_cnt > pt.METHOD_ARG_NUM_CUTOFF:
             loading.extend(
@@ -541,12 +549,17 @@ def test_wrap_handler_method_txn_types():
         pt.abi.ApplicationCallTransaction(),
         pt.abi.AssetTransferTransaction(),
         pt.abi.PaymentTransaction(),
+        pt.abi.Transaction(),
     ]
     output_temp = pt.abi.Uint64()
     expected_ast = pt.Seq(
-        args[0].set(pt.Txn.group_index() - pt.Int(3)),
-        args[1].set(pt.Txn.group_index() - pt.Int(2)),
-        args[2].set(pt.Txn.group_index() - pt.Int(1)),
+        args[0]._set_index(pt.Txn.group_index() - pt.Int(4)),
+        pt.Assert(args[0].get().type_enum() == pt.TxnType.ApplicationCall),
+        args[1]._set_index(pt.Txn.group_index() - pt.Int(3)),
+        pt.Assert(args[1].get().type_enum() == pt.TxnType.AssetTransfer),
+        args[2]._set_index(pt.Txn.group_index() - pt.Int(2)),
+        pt.Assert(args[2].get().type_enum() == pt.TxnType.Payment),
+        args[3]._set_index(pt.Txn.group_index() - pt.Int(1)),
         multiple_txn(*args).store_into(output_temp),
         pt.abi.MethodReturn(output_temp),
         pt.Approve(),

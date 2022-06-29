@@ -23,8 +23,8 @@ from pyteal.ast.subroutine import (
 from pyteal.ast.assert_ import Assert
 from pyteal.ast.cond import Cond
 from pyteal.ast.expr import Expr
-from pyteal.ast.app import OnComplete, EnumInt
-from pyteal.ast.int import Int
+from pyteal.ast.app import OnComplete
+from pyteal.ast.int import Int, EnumInt
 from pyteal.ast.seq import Seq
 from pyteal.ast.methodsig import MethodSignature
 from pyteal.ast.naryexpr import And, Or
@@ -374,7 +374,7 @@ class ASTBuilder:
             tuplify = len(app_arg_vals) > METHOD_ARG_NUM_CUTOFF
 
             # only transaction args (these are omitted from app args)
-            txn_arg_vals: list[abi.BaseType] = [
+            txn_arg_vals: list[abi.Transaction] = [
                 ats for ats in arg_vals if isinstance(ats, abi.Transaction)
             ]
 
@@ -413,12 +413,18 @@ class ASTBuilder:
                 # and subtract that from the current index to get the absolute position
                 # in the group
 
-                txn_decode_instructions: list[Expr] = [
-                    cast(abi.Transaction, arg_val).set(
-                        Txn.group_index() - Int(txn_arg_len - idx)
+                txn_decode_instructions: list[Expr] = []
+
+                for idx, arg_val in enumerate(txn_arg_vals):
+                    txn_decode_instructions.append(
+                        arg_val._set_index(Txn.group_index() - Int(txn_arg_len - idx))
                     )
-                    for idx, arg_val in enumerate(txn_arg_vals)
-                ]
+                    spec = arg_val.type_spec()
+                    if type(spec) is not abi.TransactionTypeSpec:
+                        # this is a specific transaction type
+                        txn_decode_instructions.append(
+                            Assert(arg_val.get().type_enum() == spec.txn_type_enum())
+                        )
 
                 decode_instructions += txn_decode_instructions
 
