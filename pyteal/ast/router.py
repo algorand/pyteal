@@ -280,7 +280,9 @@ class ASTBuilder:
 
     @staticmethod
     def wrap_handler(
-        is_method_call: bool, handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr
+        is_method_call: bool,
+        handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr,
+        read_only: bool = False,
     ) -> Expr:
         """This is a helper function that handles transaction arguments passing in bare-app-call/abi-method handlers.
 
@@ -435,12 +437,15 @@ class ASTBuilder:
                 ]
                 decode_instructions += de_tuple_instructions
 
+            result_expr = Approve()
+            if read_only:
+                result_expr = Reject()
             # NOTE: does not have to have return, can be void method
             if handler.type_of() == "void":
                 return Seq(
                     *decode_instructions,
                     cast(Expr, handler(*arg_vals)),
-                    Approve(),
+                    result_expr,
                 )
             else:
                 output_temp: abi.BaseType = cast(
@@ -453,11 +458,15 @@ class ASTBuilder:
                     *decode_instructions,
                     subroutine_call.store_into(output_temp),
                     abi.MethodReturn(output_temp),
-                    Approve(),
+                    result_expr,
                 )
 
     def add_method_to_ast(
-        self, method_signature: str, cond: Expr | int, handler: ABIReturnSubroutine
+        self,
+        method_signature: str,
+        cond: Expr | int,
+        handler: ABIReturnSubroutine,
+        read_only: bool = False,
     ) -> None:
         walk_in_cond = Txn.application_args[0] == MethodSignature(method_signature)
         match cond:
@@ -465,12 +474,12 @@ class ASTBuilder:
                 self.conditions_n_branches.append(
                     CondNode(
                         walk_in_cond,
-                        Seq(Assert(cond), self.wrap_handler(True, handler)),
+                        Seq(Assert(cond), self.wrap_handler(True, handler, read_only)),
                     )
                 )
             case 1:
                 self.conditions_n_branches.append(
-                    CondNode(walk_in_cond, self.wrap_handler(True, handler))
+                    CondNode(walk_in_cond, self.wrap_handler(True, handler, read_only))
                 )
             case 0:
                 return
@@ -537,6 +546,7 @@ class Router:
         method_call: ABIReturnSubroutine,
         overriding_name: str = None,
         method_config: MethodConfig = None,
+        read_only: bool = False,
         description: str = None,
     ) -> ABIReturnSubroutine:
         if not isinstance(method_call, ABIReturnSubroutine):
@@ -571,10 +581,10 @@ class Router:
         method_approval_cond = method_config.approval_cond()
         method_clear_state_cond = method_config.clear_state_cond()
         self.approval_ast.add_method_to_ast(
-            method_signature, method_approval_cond, method_call
+            method_signature, method_approval_cond, method_call, read_only
         )
         self.clear_state_ast.add_method_to_ast(
-            method_signature, method_clear_state_cond, method_call
+            method_signature, method_clear_state_cond, method_call, read_only
         )
         return method_call
 
@@ -590,6 +600,7 @@ class Router:
         clear_state: CallConfig = None,
         update_application: CallConfig = None,
         delete_application: CallConfig = None,
+        read_only: bool = False,
         description: str = None,
     ):
         """
@@ -641,7 +652,7 @@ class Router:
                     delete_application=_delete_app,
                 )
             return self.add_method_handler(
-                wrapped_subroutine, name, call_configs, description
+                wrapped_subroutine, name, call_configs, read_only, description
             )
 
         if not func:
