@@ -2,7 +2,7 @@ import pytest
 import pkg_resources
 
 import pyteal as pt
-from pyteal.compiler.compiler import convert_pep440_compiler_version
+from pyteal.compiler.compiler import __convert_pep440_compiler_version
 
 
 @pytest.fixture
@@ -37,7 +37,7 @@ def mock_version(version: str, monkeypatch: pytest.MonkeyPatch):
     ],
 )
 def test_convert_pep440_compiler_version(compiler_version, expected):
-    assert convert_pep440_compiler_version(compiler_version) == expected
+    assert __convert_pep440_compiler_version(compiler_version) == expected
 
 
 @pytest.mark.usefixtures("mock_version")

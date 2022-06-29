@@ -191,7 +191,7 @@ def sort_subroutine_blocks(
     return subroutine_mapping
 
 
-def convert_pep440_compiler_version(compiler_version: str):
+def __convert_pep440_compiler_version(compiler_version: str):
     """Convert PEP 440 version identifiers to valid NPM versions.
 
     For example:
@@ -276,8 +276,8 @@ def pragma(
             for specifying compatible versions.
     """
     pkg_version = pkg_resources.require("pyteal")[0].version
-    pyteal_version = Version(convert_pep440_compiler_version(pkg_version))
-    if pyteal_version not in NpmSpec(convert_pep440_compiler_version(compiler_version)):
+    pyteal_version = Version(__convert_pep440_compiler_version(pkg_version))
+    if pyteal_version not in NpmSpec(__convert_pep440_compiler_version(compiler_version)):
         raise TealInternalError(
             "PyTeal version {} is not compatible with compiler version {}".format(
                 pkg_version, compiler_version
