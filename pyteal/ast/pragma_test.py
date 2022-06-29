@@ -120,13 +120,25 @@ def test_pragma_expr(compiler_version, should_error):
     else:
         pt.compileTeal(program, mode=pt.Mode.Application, version=6)
 
+
+def test_pragma_expr_does_not_change():
+    without_pragma = pt.Seq(pt.Pop(pt.Add(pt.Int(1), pt.Int(2))), pt.Return(pt.Int(1)))
+    pragma = pt.Pragma(without_pragma, compiler_version=">=0.0.0")
+
+    compiled_with_pragma = pt.compileTeal(pragma, mode=pt.Mode.Application, version=6)
+    compiled_without_pragma = pt.compileTeal(
+        without_pragma, mode=pt.Mode.Application, version=6
+    )
+
+    assert compiled_with_pragma == compiled_without_pragma
+
+
 def test_pragma_expr_has_return():
     exprWithReturn = pt.Pragma(pt.Return(pt.Int(1)), compiler_version=">=0.0.0")
     assert exprWithReturn.has_return()
 
     exprWithoutReturn = pt.Pragma(pt.Int(1), compiler_version=">=0.0.0")
     assert not exprWithoutReturn.has_return()
-    
 
 
 @pytest.mark.parametrize(
