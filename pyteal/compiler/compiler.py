@@ -1,3 +1,5 @@
+import re
+import pkg_resources
 from typing import Any, List, Tuple, Set, Dict, Optional, cast
 from semantic_version import Version, NpmSpec
 
@@ -190,6 +192,77 @@ def sort_subroutine_blocks(
     return subroutine_mapping
 
 
+def convert_pep440_compiler_version(compiler_version: str):
+    """Convert PEP 440 version identifiers to valid NPM versions.
+
+    For example:
+        "1.0.0" -> "1.0.0"
+        "1.0.0a1" -> "1.0.0-a1"
+        "<0.5.0+local || >=1.0.0a9.post1.dev2" -> "<0.5.0 || >=1.0.0-alpha9.1.2"
+    """
+    NUMBER = r"(?:x|X|\*|0|[1-9][0-9]*)"
+    LOCAL = r"[a-zA-Z0-9.]*"
+    TRIM_PREFIX_RE = re.compile(
+        r"""
+            (?:v)?                                          # Strip optional initial v
+            (?P<op><|<=|>=|>|=|\^|~|)                       # Operator, can be empty
+            (?P<major>{nb})(?:\.(?P<minor>{nb})(?:\.(?P<patch>{nb}))?)?
+            (?:(?P<prerel_type>a|b|rc)(?P<prerel>{nb}))?    # Optional pre-release
+            (?:\.post(?P<postrel>{nb}))?                    # Optional post-release
+            (?:\.dev(?P<dev>{nb}))?                         # Optional dev release
+            (?:\+(?P<local>{lcl}))?                         # Optional local version
+        """.format(
+            nb=NUMBER,
+            lcl=LOCAL,
+        ),
+        re.VERBOSE,
+    )
+
+    def match_replacer(match: re.Match):
+        (
+            op,
+            major,
+            minor,
+            patch,
+            prerel_type,
+            prerel,
+            postrel,
+            dev,
+            local,
+        ) = match.groups()
+
+        # Base version (major/minor/patch)
+        base_version = "{}.{}.{}".format(major or "0", minor or "0", patch or "0")
+
+        # Combine prerel, postrel, and dev
+        combined_additions = []
+        short_prerel_type_to_long = {
+            "a": "alpha",
+            "b": "beta",
+            "rc": "rc",
+        }
+        if prerel_type is not None:
+            combined_additions.append(short_prerel_type_to_long[prerel_type] + prerel)
+        if len(combined_additions) > 0 or postrel is not None or dev is not None:
+            combined_additions.append(postrel or "0")
+        if len(combined_additions) > 0 or dev is not None:
+            combined_additions.append(dev or "0")
+        combined_additions = ".".join(combined_additions)
+
+        # Build full_version
+        full_version = base_version
+        if len(combined_additions) > 0:
+            full_version += "-" + combined_additions
+        if local is not None:
+            full_version += "+" + local.lower()
+
+        if op is not None:
+            return op + full_version
+        return full_version
+
+    return re.sub(TRIM_PREFIX_RE, match_replacer, compiler_version)
+
+
 def pragma(
     *,
     compiler_version: str,
@@ -203,11 +276,12 @@ def pragma(
             is not contained in the list. Follows the npm `semver range scheme <https://github.com/npm/node-semver#ranges>`_
             for specifying compatible versions.
     """
-    pyteal_version = Version(config.__version__)
-    if pyteal_version not in NpmSpec(compiler_version):
+    pkg_version = pkg_resources.require("pyteal")[0].version
+    pyteal_version = Version(convert_pep440_compiler_version(pkg_version))
+    if not pyteal_version in NpmSpec(convert_pep440_compiler_version(compiler_version)):
         raise TealInternalError(
             "PyTeal version {} is not compatible with compiler version {}".format(
-                pyteal_version, compiler_version
+                pkg_version, compiler_version
             )
         )
 
