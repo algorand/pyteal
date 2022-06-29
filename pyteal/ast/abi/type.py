@@ -158,7 +158,11 @@ class ComputedValue(ABC, Generic[T_co]):
 
     @abstractmethod
     def store_into(self, output: T_co) -> Expr:  # type: ignore[misc]
-        """Store the value of this computed type into an existing ABI type instance.
+        """Compute the value and store it into an existing ABI type instance.
+
+        NOTE: If you call this method multiple times, the computation to determine the value will be
+        repeated each time. For this reason, it is recommended to only issue a single call to either
+        :code:`store_into` or :code:`use`.
 
         Args:
             output: The object where the computed value will be stored. This object must have the
@@ -171,7 +175,11 @@ class ComputedValue(ABC, Generic[T_co]):
         pass
 
     def use(self, action: Callable[[T_co], Expr]) -> Expr:
-        """Use the computed value represented by this class in a function or lambda expression.
+        """Compute the value and pass it to a callable expression.
+
+        NOTE: If you call this method multiple times, the computation to determine the value will be
+        repeated each time. For this reason, it is recommended to only issue a single call to either
+        :code:`store_into` or :code:`use`.
 
         Args:
             action: A callable object that will receive an instance of this class's produced type
@@ -179,7 +187,7 @@ class ComputedValue(ABC, Generic[T_co]):
                 it must return an Expr to be included in the program's AST.
 
         Returns:
-            An expression which contains the returned expression from invoking action with the
+            An expression which contains the returned expression from invoking `action` with the
             computed value.
         """
         newInstance = cast(T_co, self.produced_type_spec().new_instance())
