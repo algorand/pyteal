@@ -4,7 +4,13 @@ from typing import Union, List, cast
 import pyteal as pt
 
 teal4Options = pt.CompileOptions(version=4)
+teal5Options = pt.CompileOptions(version=5)
 teal7Options = pt.CompileOptions(version=7)
+
+curve_options_map = {
+    pt.EcdsaCurve.Secp256k1: teal5Options,
+    pt.EcdsaCurve.Secp256r1: teal7Options,
+}
 
 
 @pytest.mark.parametrize("curve", [pt.EcdsaCurve.Secp256k1, pt.EcdsaCurve.Secp256r1])
@@ -26,7 +32,7 @@ def test_ecdsa_decompress(curve: pt.EcdsaCurve):
         ]
     )
 
-    actual, _ = pubkey.__teal__(teal7Options)
+    actual, _ = pubkey.__teal__(curve_options_map[curve])
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -68,7 +74,7 @@ def test_ecdsa_recover(curve: pt.EcdsaCurve):
         ]
     )
 
-    actual, _ = pubkey.__teal__(teal7Options)
+    actual, _ = pubkey.__teal__(curve_options_map[curve])
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -106,7 +112,7 @@ def test_ecdsa_verify_basic(curve: pt.EcdsaCurve):
         ]
     )
 
-    actual, _ = expr.__teal__(teal7Options)
+    actual, _ = expr.__teal__(curve_options_map[curve])
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -158,7 +164,7 @@ def test_ecdsa_verify_compressed_pk(curve: pt.EcdsaCurve):
         ]
     )
 
-    actual, _ = expr.__teal__(teal7Options)
+    actual, _ = expr.__teal__(curve_options_map[curve])
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -213,7 +219,7 @@ def test_ecdsa_verify_recovered_pk(curve: pt.EcdsaCurve):
         ]
     )
 
-    actual, _ = expr.__teal__(teal7Options)
+    actual, _ = expr.__teal__(curve_options_map[curve])
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
