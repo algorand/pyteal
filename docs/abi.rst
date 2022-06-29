@@ -33,7 +33,7 @@ Before we introduce these ABI types, it's important to understand the fundamenta
 
 :any:`abi.BaseType` is an abstract base class that all ABI type classes inherit from. This class defines a few methods common to all ABI types:
 
-* :any:`abi.BaseType.decode()` is used to decode and populate a type's value from an encoded byte string.
+* :any:`abi.BaseType.decode(...) <abi.BaseType.decode>` is used to decode and populate a type's value from an encoded byte string.
 * :any:`abi.BaseType.encode()` is used to encode a type's value into an encoded byte string.
 * :any:`abi.BaseType.type_spec()` is used to get an instance of :any:`abi.TypeSpec` that describes that type.
 
@@ -102,6 +102,59 @@ To use it, you pass in a Python type annotation that describes the ABI type, and
 .. note::
     Since Python does not allow integers to be directly embedded in type annotations, you must wrap any integer arguments in the :code:`Literal` annotation from the :code:`typing` module.
 
+Computed Values
+^^^^^^^^^^^^^^^^^^^^^^^
+
+With the introduction of ABI types, it's only natural for there to be functions and operations which return ABI values. In a conventional language, it would be enough to return an instance of the ABI type directly from the operation, as usual. However, in PyTeal, there operations must actually return two things:
+
+1. An instance of the ABI type populated with the right value
+2. An :code:`Expr` object that contains the expressions necessary to compute and populate the value that the return type should have
+
+In order to combine these two pieces of information, the :any:`abi.ComputedValue[T] <abi.ComputedValue>` interface was introduced. Instead of directly returning an instance of the appropriate ABI type, functions that return ABI values will return an :any:`abi.ComputedValue` instance parameterized by the return type.
+
+For example, the :any:`abi.Tuple.__getitem__` function does not return an :any:`abi.BaseType`; instead, it returns an :code:`abi.TupleElement[abi.BaseType]` instance, which inherits from :code:`abi.ComputedValue[abi.BaseType]`.
+
+The :any:`abi.ComputedValue[T] <abi.ComputedValue>` abstract base class provides the following methods:
+
+* :any:`abi.ComputedValue[T].produced_type_spec() <abi.ComputedValue.produced_type_spec>`: returns the :any:`abi.TypeSpec` representing the ABI type produced by this object.
+* :any:`abi.ComputedValue[T].store_into(output: T) <abi.ComputedValue.store_into>`: computes the value and store it into the ABI type instance :code:`output`.
+* :any:`abi.ComputedValue[T].use(action: Callable[[T], Expr]) -> Expr <abi.ComputedValue.use>`: computes the value and passes it to the callable expression :code:`action`. This is offered as a convenience over the :code:`store_into(...)` method if you don't want to create a new variable to store the value before using it.
+
+.. note::
+    If you call the methods :code:`store_into(...)` or :code:`use(...)` multiple times, the computation to determine the value will be repeated each time. For this reason, it is recommended to only issue a single call to either of these two method.
+
+A brief example is below:
+
+.. code-block:: python
+
+    @Subroutine(TealType.none)
+    def assert_sum_equals(
+        array: abi.StaticArray[abi.Uint64, L[10]], expected_sum: Expr
+    ) -> Expr:
+        """This subroutine asserts that the sum of the elements in `array` equals `expected_sum`"""
+        i = ScratchVar(TealType.uint64)
+        actual_sum = ScratchVar(TealType.uint64)
+        tmp_value = abi.Uint64()
+        return Seq(
+            For(i.store(Int(0)), i.load() < array.length(), i.store(i.load() + Int(1))).Do(
+                If(i.load() <= Int(5))
+                # Both branches of this If statement are equivalent
+                .Then(
+                    # This branch showcases how to use `store_into`
+                    Seq(
+                        array[i.load()].store_into(tmp_value),
+                        actual_sum.store(actual_sum.load() + tmp_value.get()),
+                    )
+                ).Else(
+                    # This branch showcases how to use `use`
+                    array[i.load()].use(
+                        lambda value: actual_sum.store(actual_sum.load() + value.get())
+                    )
+                )
+            ),
+            Assert(actual_sum.load() == expected_sum),
+        )
+
 Categories
 ~~~~~~~~~~
 
@@ -163,13 +216,13 @@ Setting Values
 
 All basic types have a :code:`set()` method which can be used to assign a value. The arguments for this method differ depending on the ABI type. For convenience, here are links to the docs for each class's method:
 
-* :any:`abi.Uint.set()`, which is used by all :code:`abi.Uint` classes and :code:`abi.Byte`
-* :any:`abi.Bool.set()`
-* :any:`abi.StaticArray.set()`
-* :any:`abi.Address.set()`
-* :any:`abi.DynamicArray.set()`
-* :any:`abi.String.set()`
-* :any:`abi.Tuple.set()`
+* :any:`abi.Uint.set(...) <abi.Uint.set>`, which is used by all :code:`abi.Uint` classes and :code:`abi.Byte`
+* :any:`abi.Bool.set(...) <abi.Bool.set>`
+* :any:`abi.StaticArray[T, N].set(...) <abi.StaticArray.set>`
+* :any:`abi.Address.set(...) <abi.Address.set>`
+* :any:`abi.DynamicArray[T].set(...) <abi.DynamicArray.set>`
+* :any:`abi.String.set(...) <abi.String.set>`
+* :any:`abi.Tuple.set(...) <abi.Tuple.set>`
 
 A brief example is below. Please consult the documentation linked above for each method to learn more about specific usage and behavior.
 
@@ -217,9 +270,9 @@ The types :code:`abi.StaticArray`, :code:`abi.Address`, :code:`abi.DynamicArray`
 
 The supported methods are:
 
-* :any:`abi.StaticArray.__getitem__`, used for :code:`abi.StaticArray` and :code:`abi.Address`
-* :any:`abi.Array.__getitem__`, used for :code:`abi.DynamicArray` and :code:`abi.String`
-* :any:`abi.Tuple.__getitem__`
+* :any:`abi.StaticArray.__getitem__(index: int | Expr) <abi.StaticArray.__getitem__>`, used for :code:`abi.StaticArray` and :code:`abi.Address`
+* :any:`abi.Array.__getitem__(index: int | Expr) <abi.Array.__getitem__>`, used for :code:`abi.DynamicArray` and :code:`abi.String`
+* :any:`abi.Tuple.__getitem__(index: int) <abi.Tuple.__getitem__>`
 
 Be aware that these methods return a :code:`ComputedValue`, TODO link to Computed Value section
 
@@ -369,8 +422,8 @@ Accessing Asset Holdings
 
 Similar to the parameters above, asset holding properties can be accessed using one of the following methods:
 
-* :any:`abi.Account.asset_holding()`: given an asset, returns an :any:`AssetHoldingObject`
-* :any:`abi.Asset.holding()`: given an account, returns an :any:`AssetHoldingObject`
+* :any:`abi.Account.asset_holding(asset: Expr | abi.Asset) <abi.Account.asset_holding>`: given an asset, returns an :any:`AssetHoldingObject`
+* :any:`abi.Asset.holding(account: Expr | abi.Account) <abi.Asset.holding>`: given an account, returns an :any:`AssetHoldingObject`
 
 These method are provided for convenience. They expose the same properties accessible from the :any:`AssetHolding` class.
 
@@ -472,32 +525,51 @@ Limitations
 
 TODO: explain limitations, such as can't be created directly, used as method return value, or embedded in other types
 
-Computed Values
-~~~~~~~~~~~~~~~~~
-
-TODO: explain what ComputedValue is, where it appears, how to use it, and why it's necessary
 
 Subroutines with ABI Types
 --------------------------
 
-TODO: brief description
+Subroutines can be created that accept ABI types are arguments and produce ABI types as return values. PyTeal will type check all subroutine calls and ensure that the correct types are being passed to such subroutines and that their return values are used correctly.
 
-ABI Arguments with the Subroutine decorator
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+There are two different ways to use ABI types in subroutines, depending on whether the return value is an ABI type or a PyTeal :code:`Expr`.
 
-TODO: brief description
+Subroutines that Return Expressions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Definition
-~~~~~~~~~~~~~~~~~
+If you'd like to create a subroutine that accepts some or all arguments as ABI types, but whose return value is a PyTeal :code:`Expr`, the normal :any:`@Subroutine <Subroutine>` decorator can be used.
 
-TODO: explain how to create a subroutine with the existing Subroutine decorator and ABI arguments
+To indicate the type of each argument, Python type annotations are used. Unlike normal usage of Python type annotations which are ignored at runtime, type annotations for subroutines inform the PyTeal compiler about the inputs and outputs of a subroutine. Changing these values has a direct affect on the code PyTeal generates.
 
-Usage
-~~~~~~~~~~~~~~~~~
+An example of this type of subroutine is below:
 
-TODO: explain how to call a subroutine with ABI arguments
+.. code-block:: python
 
-ABIReturnSubroutine
+    @Subroutine(TealType.uint64)
+    def get_volume_of_rectangular_prism(
+        length: abi.Uint16, width: abi.Uint64, height: Expr
+    ) -> Expr:
+        return length.get() * width.get() * height
+
+Notice that this subroutine accepts the following arguments, not all of which are ABI types:
+
+* :code:`length`: an ABI :any:`abi.Uint16` type
+* :code:`width`: an ABI :any:`abi.Uint64` type
+* :code:`height`: a PyTeal expression type
+
+Despite some inputs being ABI types, calling this subroutine works the same as usual, except the values for the ABI type arguments must be the appropriate ABI type. For example:
+
+.. code-block:: python
+
+    length = abi.Uint16()
+    width = abi.Uint64()
+    height = Int(10)
+    program = Seq(
+        length.set(4),
+        width.set(9),
+        Assert(get_volume_of_rectangular_prism(length, width, height) > Int(0))
+    )
+
+Subroutines that Return ABI Types
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. warning::
@@ -506,17 +578,37 @@ ABIReturnSubroutine
   * For ABI Application entry point definition, feel encouraged to use :any:`ABIReturnSubroutine`.  Expect a best-effort attempt to minimize backwards incompatible changes along with a migration path.
   * For general purpose usage, use at your own risk.  Based on feedback, the API and usage patterns will change more freely and with less effort to provide migration paths.
 
-TODO: brief overview of why this is necessary and when it should be used
+In addition to accepting ABI types as arguments, it's also possible for a subroutine to return an ABI type value.
 
-Definition
-~~~~~~~~~~~~~~~~~
+As mentioned in the Computed Value section (TODO: link), operations which return ABI values instead of traditional :code:`Expr` objects need extra care. In order to solve this problem for subroutines, a new decorator, :any:`@ABIReturnSubroutine <ABIReturnSubroutine>` has been introduced.
 
-TODO: explain how to create a subroutine using ABIReturnSubroutine with ABI return values
+The :code:`@ABIReturnSubroutine` decorator should be used with subroutines that return an ABI value. Subroutines defined with this decorator will have two places to output information: the function return value, and a new keyword-only argument called :code:`output`. The function return value must remain an :code:`Expr`, while the :code:`output` keyword argument will contain the ABI value the subroutine wishes to return. An example is below:
 
-Usage
-~~~~~~~~~~~~~~~~~
+.. code-block:: python
 
-TODO: explain how to call an ABIReturnSubroutine and how to process the return value
+    @ABIReturnSubroutine
+    def get_account_status(
+        account: abi.Account, *, output: abi.Tuple2[abi.Uint64, abi.Bool]
+    ) -> Expr:
+        balance = abi.Uint64()
+        is_admin = abi.Bool()
+        return Seq(
+            balance.set(App.localGet(account.address(), Bytes("balance"))),
+            is_admin.set(App.localGet(account.address(), Bytes("is_admin"))),
+            output.set(balance, is_admin),
+        )
+
+    account = abi.make(abi.Address)
+    status = abi.make(abi.Tuple2[abi.Uint64, abi.Bool])
+    program = Seq(
+        account.set(Txn.sender()),
+        # NOTE! The return value of get_account_status(account) is actually a ComputedValue[abi.Tuple2[abi.Uint64, abi.Bool]]
+        get_account_status(account).store_into(status),
+    )
+
+Notice that even though the original :code:`get_account_status` function returns an :code:`Expr` object, the :code:`@ABIReturnSubroutine` decorator automatically transforms the function's return value and the :code:`output` variable into a :code:`ComputedValue`. As a result, callers of this subroutine must work with a :code:`ComputedValue`.
+
+The only exception to this transformation is if the subroutine has no return value, in which case a :code:`ComputedValue` is unnecessary, so the subroutine will still return an :code:`Expr` to the caller. In this case the :code:`@ABIReturnSubroutine` decorator acts identically the original :code:`@Subroutine` decorator.
 
 Creating an ARC-4 Program with the ABI Router
 ----------------------------------------------------
