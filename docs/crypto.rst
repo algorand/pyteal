@@ -14,6 +14,7 @@ Below is how you express cryptographic primitives in PyTeal:
 Operator                             Cost      Description
 ==================================== ========= ==================================================================================================================
 :code:`Sha256(e)`                    `35`      `SHA-256` hash function, produces 32 bytes
+:code:`Sha3_256(e)`                  `130`     `SHA3-256` hash function, produces 32 bytes
 :code:`Keccak256(e)`                 `130`     `Keccak-256` hash funciton, produces 32 bytes
 :code:`Sha512_256(e)`                `45`      `SHA-512/256` hash function, produces 32 bytes
 :code:`Ed25519Verify(d, s, p)`       `1900`\*  `1` if :code:`s` is the signature of :code:`d` signed by the private key corresponding to the public key :code:`p`, else `0`
