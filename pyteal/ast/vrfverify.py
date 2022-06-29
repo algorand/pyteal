@@ -1,4 +1,3 @@
-from typing import TYPE_CHECKING
 from enum import Enum
 
 from pyteal.types import TealType, require_type
@@ -6,9 +5,6 @@ from pyteal.errors import verifyFieldVersion
 from pyteal.ir import Op
 from pyteal.ast.multi import MultiValue
 from pyteal.ast.expr import Expr
-
-if TYPE_CHECKING:
-    from pyteal.compiler import CompileOptions
 
 
 class VrfVerifyStandard(Enum):
@@ -44,14 +40,10 @@ class VrfVerify(MultiValue):
             [TealType.bytes, TealType.uint64],
             immediate_args=[standard.arg_name],
             args=[message, proof, public_key],
+            compile_check=lambda options: verifyFieldVersion(
+                standard.arg_name, standard.min_version, options.version
+            ),
         )
-
-    def __teal__(self, options: "CompileOptions"):
-        verifyFieldVersion(
-            self.standard.arg_name, self.standard.min_version, options.version
-        )
-
-        return super().__teal__(options)
 
     def __str__(self):
         return "(VrfVerify {})".format(self.standard.arg_name)
