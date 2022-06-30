@@ -20,6 +20,7 @@ from pyteal.ast.txn import (
     Txn,
 )
 from pyteal.ast.gtxn import GtxnExpr, GtxnaExpr, TxnGroup, Gtxn
+from pyteal.ast.block import Block
 from pyteal.ast.gaid import GeneratedID
 from pyteal.ast.gitxn import Gitxn, GitxnExpr, GitxnaExpr, InnerTxnGroup
 from pyteal.ast.gload import ImportScratchValue
@@ -102,6 +103,7 @@ from pyteal.ast.binaryexpr import (
 # ternary ops
 from pyteal.ast.ternaryexpr import Divw, Ed25519Verify, SetBit, SetByte
 from pyteal.ast.substring import Substring, Extract, Suffix
+from pyteal.ast.replace import Replace
 from pyteal.ast.jsonref import JsonRef
 
 # more ops
@@ -162,6 +164,7 @@ __all__ = [
     "GtxnaExpr",
     "TxnGroup",
     "Gtxn",
+    "Block",
     "GeneratedID",
     "ImportScratchValue",
     "Global",
@@ -273,6 +276,7 @@ __all__ = [
     "ExtractUint16",
     "ExtractUint32",
     "ExtractUint64",
+    "Replace",
     "Log",
     "While",
     "For",
