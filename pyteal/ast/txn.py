@@ -37,7 +37,7 @@ class TxnField(Enum):
     sender = (0, "Sender", TealType.bytes, False, 2)
     fee = (1, "Fee", TealType.uint64, False, 2)
     first_valid = (2, "FirstValid", TealType.uint64, False, 2)
-    first_valid_time = (3, "FirstValidTime", TealType.uint64, False, 2)
+    first_valid_time = (3, "FirstValidTime", TealType.uint64, False, 7)
     last_valid = (4, "LastValid", TealType.uint64, False, 2)
     note = (5, "Note", TealType.bytes, False, 2)
     lease = (6, "Lease", TealType.bytes, False, 2)
@@ -318,6 +318,13 @@ class TxnObject:
         For more information, see https://developer.algorand.org/docs/reference/transactions/#firstvalid
         """
         return self.makeTxnExpr(TxnField.first_valid)
+
+    def first_valid_time(self) -> TxnExpr:
+        """Get the UNIX timestamp of block before txn.FirstValid. Fails if negative.
+
+        For more information, see https://developer.algorand.org/docs/reference/transactions/#firstvalidtime
+        """
+        return self.makeTxnExpr(TxnField.first_valid_time)
 
     def last_valid(self) -> TxnExpr:
         """Get the last valid round number.

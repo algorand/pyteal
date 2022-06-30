@@ -27,6 +27,7 @@ Operator                                                                        
 :any:`Txn.sender() <TxnObject.sender>`                                           :code:`TealType.bytes`    2                32 byte address
 :any:`Txn.fee() <TxnObject.fee>`                                                 :code:`TealType.uint64`   2                in microAlgos
 :any:`Txn.first_valid() <TxnObject.first_valid>`                                 :code:`TealType.uint64`   2                round number
+:any:`Txn.first_valid_time() <TxnObject.first_valid_time>`                       :code:`TealType.uint64`   7                UNIX timestamp of block before :code:`Txn.first_valid()`. Fails if negative
 :any:`Txn.last_valid() <TxnObject.last_valid>`                                   :code:`TealType.uint64`   2                round number
 :any:`Txn.note() <TxnObject.note>`                                               :code:`TealType.bytes`    2                transaction note in bytes
 :any:`Txn.lease() <TxnObject.lease>`                                             :code:`TealType.bytes`    2                transaction lease in bytes

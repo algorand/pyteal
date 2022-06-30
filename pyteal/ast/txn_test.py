@@ -8,6 +8,7 @@ fieldToMethod: Dict[pt.TxnField, Callable[[pt.TxnObject], pt.Expr]] = {
     pt.TxnField.sender: lambda txn: txn.sender(),
     pt.TxnField.fee: lambda txn: txn.fee(),
     pt.TxnField.first_valid: lambda txn: txn.first_valid(),
+    pt.TxnField.first_valid_time: lambda txn: txn.first_valid_time(),
     pt.TxnField.last_valid: lambda txn: txn.last_valid(),
     pt.TxnField.note: lambda txn: txn.note(),
     pt.TxnField.lease: lambda txn: txn.lease(),
