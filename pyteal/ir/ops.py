@@ -181,6 +181,7 @@ class Op(Enum):
     acct_params_get     = OpType("acct_params_get",     Mode.Application,                  6)
     replace2            = OpType("replace2",            Mode.Signature | Mode.Application, 7)
     replace3            = OpType("replace3",            Mode.Signature | Mode.Application, 7)
+    json_ref            = OpType("json_ref",            Mode.Signature | Mode.Application, 7)
     block               = OpType("block",               Mode.Signature | Mode.Application, 7)
     # fmt: on
 
