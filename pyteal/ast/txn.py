@@ -110,6 +110,22 @@ class TxnField(Enum):
     created_application_id = (61, "CreatedApplicationID", TealType.uint64, False, 5)
     last_log = (62, "LastLog", TealType.bytes, False, 6)
     state_proof_pk = (63, "StateProofPK", TealType.bytes, False, 6)
+    approval_program_pages = (64, "ApprovalProgramPages", TealType.bytes, True, 7)
+    num_approval_program_pages = (
+        65,
+        "NumApprovalProgramPages",
+        TealType.uint64,
+        False,
+        7,
+    )
+    clear_state_program_pages = (66, "ClearStateProgramPages", TealType.bytes, True, 7)
+    num_clear_state_program_pages = (
+        67,
+        "NumClearStateProgramPages",
+        TealType.uint64,
+        False,
+        7,
+    )
 
     def __init__(
         self, id: int, name: str, type: TealType, is_array: bool, min_version: int
@@ -728,6 +744,20 @@ class TxnObject:
         """
         return self.makeTxnExpr(TxnField.state_proof_pk)
 
+    def num_approval_program_pages(self) -> TxnExpr:
+        """Get the number of pages in the approval program.
+
+        Requires TEAL version 7 or higher.
+        """
+        return self.makeTxnExpr(TxnField.num_approval_program_pages)
+
+    def num_clear_state_program_pages(self) -> TxnExpr:
+        """Get the number of pages in the clear state program.
+
+        Requires TEAL version 7 or higher.
+        """
+        return self.makeTxnExpr(TxnField.num_clear_state_program_pages)
+
     @property
     def application_args(self) -> TxnArray:
         """Application call arguments array.
@@ -776,6 +806,32 @@ class TxnObject:
         * >= v6 - Works on top-level and inner transactions.
         """
         return TxnArray(self, TxnField.logs, TxnField.num_logs)
+
+    @property
+    def approval_program_pages(self) -> TxnArray:
+        """The approval program pages.
+
+        :type: TxnArray
+
+        Requires TEAL version 7 or higher.
+        """
+        return TxnArray(
+            self, TxnField.approval_program_pages, TxnField.num_approval_program_pages
+        )
+
+    @property
+    def clear_state_program_pages(self) -> TxnArray:
+        """The clear state program pages.
+
+        :type: TxnArray
+
+        Requires TEAL version 7 or higher.
+        """
+        return TxnArray(
+            self,
+            TxnField.clear_state_program_pages,
+            TxnField.num_clear_state_program_pages,
+        )
 
 
 TxnObject.__module__ = "pyteal"
