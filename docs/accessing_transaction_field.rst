@@ -27,6 +27,7 @@ Operator                                                                        
 :any:`Txn.sender() <TxnObject.sender>`                                           :code:`TealType.bytes`    2                32 byte address
 :any:`Txn.fee() <TxnObject.fee>`                                                 :code:`TealType.uint64`   2                in microAlgos
 :any:`Txn.first_valid() <TxnObject.first_valid>`                                 :code:`TealType.uint64`   2                round number
+:any:`Txn.first_valid_time() <TxnObject.first_valid_time>`                       :code:`TealType.uint64`   7                UNIX timestamp of block before :code:`Txn.first_valid()`. Fails if negative
 :any:`Txn.last_valid() <TxnObject.last_valid>`                                   :code:`TealType.uint64`   2                round number
 :any:`Txn.note() <TxnObject.note>`                                               :code:`TealType.bytes`    2                transaction note in bytes
 :any:`Txn.lease() <TxnObject.lease>`                                             :code:`TealType.bytes`    2                transaction lease in bytes
@@ -37,26 +38,30 @@ Operator                                                                        
 
 Application Call
 .......................................................
-================================================================================ ========================= ================ ============================================================================
-Operator                                                                         Type                      Min TEAL Version Notes
-================================================================================ ========================= ================ ============================================================================
-:any:`Txn.application_id() <TxnObject.application_id>`                           :code:`TealType.uint64`   2
-:any:`Txn.on_completion() <TxnObject.on_completion>`                             :code:`TealType.uint64`   2
-:any:`Txn.approval_program() <TxnObject.approval_program>`                       :code:`TealType.bytes`    2
-:any:`Txn.global_num_uints() <TxnObject.global_num_uints>`                       :code:`TealType.uint64`   3                Maximum global integers in app schema
-:any:`Txn.global_num_byte_slices() <TxnObject.global_num_byte_slices>`           :code:`TealType.uint64`   3                Maximum global byte strings in app schema
-:any:`Txn.local_num_uints() <TxnObject.local_num_uints>`                         :code:`TealType.uint64`   3                Maximum local integers in app schema
-:any:`Txn.local_num_byte_slices() <TxnObject.local_num_byte_slices>`             :code:`TealType.uint64`   3                Maximum local byte strings in app schema
-:any:`Txn.accounts <TxnObject.accounts>`                                         :code:`TealType.bytes[]`  2                Array of accounts available to the application
-:any:`Txn.assets <TxnObject.assets>`                                             :code:`TealType.uint64[]` 3                Array of assets available to the application
-:any:`Txn.applications <TxnObject.applications>`                                 :code:`TealType.uint64[]` 3                Array of applications
-:any:`Txn.clear_state_program() <TxnObject.clear_state_program>`                 :code:`TealType.bytes`    2
-:any:`Txn.extra_program_pages() <TxnObject.extra_program_pages>`                 :code:`TealType.uint64`   4                Number of extra program pages for app
-:any:`Txn.application_args <TxnObject.application_args>`                         :code:`TealType.bytes[]`  2                Array of application arguments
-:any:`Txn.created_application_id() <TxnObject.created_application_id>`           :code:`TealType.uint64`   5                The ID of the newly created application in this transaction. In v5, only valid on inner transactions. >= v6 works with top-level and inner transactions.
-:any:`Txn.logs <TxnObject.logs>`                                                 :code:`TealType.bytes[]`  5                Array of application logged items. In v5, only valid on inner transactions. >= v6 works with top-level and inner transactions.
-:any:`Txn.last_log() <TxnObject.last_log>`                                       :code:`TealType.bytes[]`  6                The last message emitted. Empty bytes if none were emitted. Application mode only.
-================================================================================ ========================= ================ ============================================================================
+==================================================================================== ========================= ================ ============================================================================
+Operator                                                                             Type                      Min TEAL Version Notes
+==================================================================================== ========================= ================ ============================================================================
+:any:`Txn.application_id() <TxnObject.application_id>`                               :code:`TealType.uint64`   2
+:any:`Txn.on_completion() <TxnObject.on_completion>`                                 :code:`TealType.uint64`   2
+:any:`Txn.approval_program() <TxnObject.approval_program>`                           :code:`TealType.bytes`    2
+:any:`Txn.global_num_uints() <TxnObject.global_num_uints>`                           :code:`TealType.uint64`   3                Maximum global integers in app schema
+:any:`Txn.global_num_byte_slices() <TxnObject.global_num_byte_slices>`               :code:`TealType.uint64`   3                Maximum global byte strings in app schema
+:any:`Txn.local_num_uints() <TxnObject.local_num_uints>`                             :code:`TealType.uint64`   3                Maximum local integers in app schema
+:any:`Txn.local_num_byte_slices() <TxnObject.local_num_byte_slices>`                 :code:`TealType.uint64`   3                Maximum local byte strings in app schema
+:any:`Txn.accounts <TxnObject.accounts>`                                             :code:`TealType.bytes[]`  2                Array of accounts available to the application
+:any:`Txn.assets <TxnObject.assets>`                                                 :code:`TealType.uint64[]` 3                Array of assets available to the application
+:any:`Txn.applications <TxnObject.applications>`                                     :code:`TealType.uint64[]` 3                Array of applications
+:any:`Txn.clear_state_program() <TxnObject.clear_state_program>`                     :code:`TealType.bytes`    2
+:any:`Txn.extra_program_pages() <TxnObject.extra_program_pages>`                     :code:`TealType.uint64`   4                Number of extra program pages for app
+:any:`Txn.application_args <TxnObject.application_args>`                             :code:`TealType.bytes[]`  2                Array of application arguments
+:any:`Txn.created_application_id() <TxnObject.created_application_id>`               :code:`TealType.uint64`   5                The ID of the newly created application in this transaction. In v5, only valid on inner transactions. >= v6 works with top-level and inner transactions.
+:any:`Txn.logs <TxnObject.logs>`                                                     :code:`TealType.bytes[]`  5                Array of application logged items. In v5, only valid on inner transactions. >= v6 works with top-level and inner transactions.
+:any:`Txn.last_log() <TxnObject.last_log>`                                           :code:`TealType.bytes[]`  6                The last message emitted. Empty bytes if none were emitted. Application mode only.
+:any:`Txn.approval_program_pages() <TxnObject.approval_program_pages>`               :code:`TealType.bytes[]`  7                The pages of the approval program as an array
+:any:`Txn.num_approval_program_pages() <TxnObject.num_approval_program_pages>`       :code:`TealType.uint64`   7                The number of approval program pages 
+:any:`Txn.clear_state_program_pages() <TxnObject.clear_state_program_pages>`         :code:`TealType.bytes[]`  7                The pages of a clear state program as an array
+:any:`Txn.num_clear_state_program_pages() <TxnObject.num_clear_state_program_pages>` :code:`TealType.uint64`   7                The number of clear state program pages 
+==================================================================================== ========================= ================ ============================================================================
 
 Asset Config
 .......................................................

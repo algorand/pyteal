@@ -26,7 +26,7 @@ class SubstringExpr(Expr):
         self.endArg = endArg
 
     # helper method for correctly populating op
-    def __getOp(self, options: "CompileOptions"):
+    def __get_op(self, options: "CompileOptions"):
         s, e = cast(Int, self.startArg).value, cast(Int, self.endArg).value
         l = e - s
 
@@ -58,7 +58,7 @@ class SubstringExpr(Expr):
                 self.endArg,
             ).__teal__(options)
 
-        op = self.__getOp(options)
+        op = self.__get_op(options)
 
         verifyTealVersion(
             op.min_version,
@@ -121,7 +121,7 @@ class ExtractExpr(Expr):
         self.lenArg = lenArg
 
     # helper method for correctly populating op
-    def __getOp(self, options: "CompileOptions"):
+    def __get_op(self, options: "CompileOptions"):
         s, l = cast(Int, self.startArg).value, cast(Int, self.lenArg).value
         if s < 2**8 and l > 0 and l < 2**8:
             return Op.extract
@@ -139,7 +139,7 @@ class ExtractExpr(Expr):
                 self.lenArg,
             ).__teal__(options)
 
-        op = self.__getOp(options)
+        op = self.__get_op(options)
 
         verifyTealVersion(
             op.min_version,
@@ -186,7 +186,7 @@ class SuffixExpr(Expr):
         self.startArg = startArg
 
     # helper method for correctly populating op
-    def __getOp(self, options: "CompileOptions"):
+    def __get_op(self, options: "CompileOptions"):
         if not isinstance(self.startArg, Int):
             return Op.substring3
 
@@ -197,7 +197,7 @@ class SuffixExpr(Expr):
             return Op.substring3
 
     def __teal__(self, options: "CompileOptions"):
-        op = self.__getOp(options)
+        op = self.__get_op(options)
 
         verifyTealVersion(
             op.min_version,

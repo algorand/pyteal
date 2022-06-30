@@ -20,6 +20,7 @@ from pyteal.ast.txn import (
     Txn,
 )
 from pyteal.ast.gtxn import GtxnExpr, GtxnaExpr, TxnGroup, Gtxn
+from pyteal.ast.block import Block
 from pyteal.ast.gaid import GeneratedID
 from pyteal.ast.gitxn import Gitxn, GitxnExpr, GitxnaExpr, InnerTxnGroup
 from pyteal.ast.gload import ImportScratchValue
@@ -45,6 +46,7 @@ from pyteal.ast.unaryexpr import (
     BitLen,
     Sha256,
     Sha512_256,
+    Sha3_256,
     Keccak256,
     Not,
     BitwiseNot,
@@ -98,6 +100,7 @@ from pyteal.ast.binaryexpr import (
     ExtractUint32,
     ExtractUint64,
 )
+from pyteal.ast.base64decode import Base64Decode
 
 # ternary ops
 from pyteal.ast.ternaryexpr import (
@@ -108,6 +111,11 @@ from pyteal.ast.ternaryexpr import (
     SetByte,
 )
 from pyteal.ast.substring import Substring, Extract, Suffix
+from pyteal.ast.replace import Replace
+from pyteal.ast.jsonref import JsonRef
+
+# quaternary ops
+from pyteal.ast.vrfverify import VrfVerify
 
 # more ops
 from pyteal.ast.naryexpr import NaryExpr, And, Or, Concat
@@ -167,6 +175,7 @@ __all__ = [
     "GtxnaExpr",
     "TxnGroup",
     "Gtxn",
+    "Block",
     "GeneratedID",
     "ImportScratchValue",
     "Global",
@@ -195,6 +204,7 @@ __all__ = [
     "BitLen",
     "Sha256",
     "Sha512_256",
+    "Sha3_256",
     "Keccak256",
     "Not",
     "BitwiseNot",
@@ -279,6 +289,8 @@ __all__ = [
     "ExtractUint16",
     "ExtractUint32",
     "ExtractUint64",
+    "Replace",
+    "Base64Decode",
     "Log",
     "While",
     "For",
@@ -288,4 +300,6 @@ __all__ = [
     "EcdsaVerify",
     "EcdsaDecompress",
     "EcdsaRecover",
+    "JsonRef",
+    "VrfVerify",
 ]
