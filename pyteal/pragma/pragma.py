@@ -105,7 +105,7 @@ def pragma(
 
     Args:
         compiler_version: Acceptable versions of the compiler. Will fail if the current PyTeal version
-            is not contained in the list. Follows the npm `semver range scheme <https://github.com/npm/node-semver#ranges>`_
+            is not contained in the range. Follows the npm `semver range scheme <https://github.com/npm/node-semver#ranges>`_
             for specifying compatible versions.
     """
     pkg_version = pkg_resources.require("pyteal")[0].version
