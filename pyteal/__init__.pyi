@@ -78,6 +78,7 @@ __all__ = [
     "EcdsaRecover",
     "EcdsaVerify",
     "Ed25519Verify",
+    "Ed25519Verify_Bare",
     "EnumInt",
     "Eq",
     "Err",

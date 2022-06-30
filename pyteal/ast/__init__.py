@@ -103,7 +103,13 @@ from pyteal.ast.binaryexpr import (
 from pyteal.ast.base64decode import Base64Decode
 
 # ternary ops
-from pyteal.ast.ternaryexpr import Divw, Ed25519Verify, SetBit, SetByte
+from pyteal.ast.ternaryexpr import (
+    Divw,
+    Ed25519Verify,
+    Ed25519Verify_Bare,
+    SetBit,
+    SetByte,
+)
 from pyteal.ast.substring import Substring, Extract, Suffix
 from pyteal.ast.replace import Replace
 from pyteal.ast.jsonref import JsonRef
@@ -228,6 +234,7 @@ __all__ = [
     "GetBit",
     "GetByte",
     "Ed25519Verify",
+    "Ed25519Verify_Bare",
     "Substring",
     "Extract",
     "Suffix",
