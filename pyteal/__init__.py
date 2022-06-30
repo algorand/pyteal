@@ -1,6 +1,6 @@
 from pyteal.ast import *
 from pyteal.ast import __all__ as ast_all
-from pyteal.ast.pragma import pragma
+from pyteal.pragma import pragma
 from pyteal.ir import *
 from pyteal.ir import __all__ as ir_all
 from pyteal.compiler import (
