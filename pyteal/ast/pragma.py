@@ -13,6 +13,17 @@ class Pragma(Expr):
     This expression does not affect the underlying compiled TEAL code in any way."""
 
     def __init__(self, child: Expr, *, compiler_version: str, **kwargs: Any) -> None:
+        """Define a pragma for a specific subsection of PyTeal code.
+
+        The Pragma expression does not affect the underlying compiled TEAL code in any way,
+        it merely sets a pragma for the underlying expression.
+
+        Args:
+            child: The expression to wrap.
+            compiler_version: Acceptable versions of the compiler. Will fail if the current PyTeal version
+                is not contained in the range. Follows the npm `semver range scheme <https://github.com/npm/node-semver#ranges>`_
+                for specifying compatible versions.
+        """
         super().__init__()
 
         self.child = child
