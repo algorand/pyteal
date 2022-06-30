@@ -43,6 +43,7 @@ __all__ = [
     "BitwiseNot",
     "BitwiseOr",
     "BitwiseXor",
+    "Block",
     "Break",
     "Btoi",
     "Bytes",
