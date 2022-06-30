@@ -99,6 +99,7 @@ from pyteal.ast.binaryexpr import (
     ExtractUint32,
     ExtractUint64,
 )
+from pyteal.ast.base64decode import Base64Decode
 
 # ternary ops
 from pyteal.ast.ternaryexpr import Divw, Ed25519Verify, SetBit, SetByte
@@ -277,6 +278,7 @@ __all__ = [
     "ExtractUint32",
     "ExtractUint64",
     "Replace",
+    "Base64Decode",
     "Log",
     "While",
     "For",
