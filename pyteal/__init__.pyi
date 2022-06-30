@@ -138,6 +138,7 @@ __all__ = [
     "Or",
     "Pop",
     "Reject",
+    "Replace",
     "Return",
     "ScratchIndex",
     "ScratchLoad",
