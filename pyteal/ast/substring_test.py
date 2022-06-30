@@ -272,6 +272,88 @@ def test_suffix_stack():
     assert actual == expected
 
 
+@pytest.mark.parametrize("op", [pt.Op.extract3, pt.Op.substring3])
+def test_startArg_not_int(op: pt.Op):
+    my_string = "*" * 257
+    add = pt.Add(pt.Int(254), pt.Int(2))
+    args = [pt.Bytes(my_string), add, pt.Int(257)]
+
+    def generate_expr() -> pt.Expr:
+        match op:
+            case pt.Op.extract3:
+                return pt.Extract(args[0], args[1], args[2])
+            case pt.Op.substring3:
+                return pt.Substring(args[0], args[1], args[2])
+            case _:
+                raise Exception(f"Unsupported {op=}")
+
+    expr = generate_expr()
+    assert expr.type_of() == pt.TealType.bytes
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(args[0], pt.Op.byte, '"{my_string}"'.format(my_string=my_string)),
+            pt.TealOp(pt.Int(254), pt.Op.int, 254),
+            pt.TealOp(pt.Int(2), pt.Op.int, 2),
+            pt.TealOp(add, pt.Op.add),
+            pt.TealOp(args[2], pt.Op.int, 257),
+            pt.TealOp(None, op),
+        ]
+    )
+
+    actual, _ = expr.__teal__(teal5Options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    if op == pt.Op.extract3:
+        with pytest.raises(pt.TealInputError):
+            expr.__teal__(teal4Options)
+
+
+@pytest.mark.parametrize("op", [pt.Op.extract3, pt.Op.substring3])
+def test_endArg_not_int(op: pt.Op):
+    my_string = "*" * 257
+    add = pt.Add(pt.Int(254), pt.Int(3))
+    args = [pt.Bytes(my_string), pt.Int(256), add]
+
+    def generate_expr() -> pt.Expr:
+        match op:
+            case pt.Op.extract3:
+                return pt.Extract(args[0], args[1], args[2])
+            case pt.Op.substring3:
+                return pt.Substring(args[0], args[1], args[2])
+            case _:
+                raise Exception(f"Unsupported {op=}")
+
+    expr = generate_expr()
+    assert expr.type_of() == pt.TealType.bytes
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(args[0], pt.Op.byte, '"{my_string}"'.format(my_string=my_string)),
+            pt.TealOp(args[1], pt.Op.int, 256),
+            pt.TealOp(pt.Int(254), pt.Op.int, 254),
+            pt.TealOp(pt.Int(3), pt.Op.int, 3),
+            pt.TealOp(add, pt.Op.add),
+            pt.TealOp(None, op),
+        ]
+    )
+
+    actual, _ = expr.__teal__(teal5Options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    if op == pt.Op.extract3:
+        with pytest.raises(pt.TealInputError):
+            expr.__teal__(teal4Options)
+
+
 def test_suffix_invalid():
     with pytest.raises(pt.TealTypeError):
         pt.Suffix(pt.Int(0), pt.Int(0))

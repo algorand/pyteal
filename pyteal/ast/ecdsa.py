@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Tuple, TYPE_CHECKING
 
 from pyteal.ast import Expr, MultiValue
-from pyteal.errors import TealTypeError, verifyTealVersion
+from pyteal.errors import TealTypeError, verifyFieldVersion, verifyTealVersion
 from pyteal.ir import Op, TealBlock, TealOp
 from pyteal.types import TealType, require_type
 
@@ -17,6 +17,7 @@ class EcdsaCurve(Enum):
     """Enum representing an elliptic curve specification used in ECDSA."""
 
     Secp256k1 = (0, "Secp256k1", 5)
+    Secp256r1 = (1, "Secp256r1", 7)
 
     def __init__(self, id: int, name: str, min_version: int) -> None:
         self.id = id
@@ -52,10 +53,12 @@ class EcdsaVerifyExpr(Expr):
 
     def __teal__(self, options: "CompileOptions"):
         verifyTealVersion(
-            max(self.op.min_version, self.curve.min_version),
+            self.op.min_version,
             options.version,
             "TEAL version too low to use op {}".format(self.op),
         )
+
+        verifyFieldVersion(self.curve.arg_name, self.curve.min_version, options.version)
 
         return TealBlock.FromOp(
             options, TealOp(self, self.op, self.curve.arg_name), *self.args
@@ -113,11 +116,9 @@ def EcdsaVerify(
 
 def EcdsaDecompress(curve: EcdsaCurve, compressed_pk: Expr) -> MultiValue:
     """Decompress an ECDSA public key.
-
     Args:
         curve: Enum representing the ECDSA curve used for the public key
         compressed_pk: The compressed public key. Must be 33 bytes long and big endian encoded.
-
     Returns:
         A MultiValue expression representing the two components of the public key, big endian
         encoded.
@@ -132,6 +133,9 @@ def EcdsaDecompress(curve: EcdsaCurve, compressed_pk: Expr) -> MultiValue:
         EcdsaPubkey,
         immediate_args=[curve.arg_name],
         args=[compressed_pk],
+        compile_check=lambda options: verifyFieldVersion(
+            curve.arg_name, curve.min_version, options.version
+        ),
     )
 
 
@@ -139,16 +143,13 @@ def EcdsaRecover(
     curve: EcdsaCurve, data: Expr, recovery_id: Expr, sigA: Expr, sigB: Expr
 ) -> MultiValue:
     """Reover an ECDSA public key from a signature.
-
     All byte arguments must be big endian encoded.
-
     Args:
         curve: Enum representing the ECDSA curve used for the public key
         data: Hash value of the signed data. Must be 32 bytes long.
         recovery_id: value used to extract public key from signature. Must evaluate to uint.
         sigA: First component of the signature. Must evaluate to bytes.
         sigB: Second component of the signature. Must evaluate to bytes.
-
     Returns:
         A MultiValue expression representing the two components of the public key, big endian
         encoded.
@@ -166,4 +167,7 @@ def EcdsaRecover(
         EcdsaPubkey,
         immediate_args=[curve.arg_name],
         args=[data, recovery_id, sigA, sigB],
+        compile_check=lambda options: verifyFieldVersion(
+            curve.arg_name, curve.min_version, options.version
+        ),
     )
