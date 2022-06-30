@@ -1,14 +1,13 @@
 from typing import TYPE_CHECKING, Any
 
 from pyteal.ast.expr import Expr
-from pyteal.ast.leafexpr import LeafExpr
 from pyteal.pragma import is_valid_compiler_version, pragma
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
 
 
-class Pragma(LeafExpr):
+class Pragma(Expr):
     """A meta expression which defines a pragma for a specific subsection of PyTeal code.
 
     This expression does not affect the underlying compiled TEAL code in any way."""
