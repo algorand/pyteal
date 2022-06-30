@@ -1,5 +1,5 @@
 import pytest
-from tests.mock_version import mock_version
+from tests.mock_version import mock_version  # noqa: F401
 
 import pyteal as pt
 

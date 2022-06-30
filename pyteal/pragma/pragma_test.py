@@ -1,6 +1,8 @@
 import pytest
 import pkg_resources
-from tests.mock_version import mock_version
+from tests.mock_version import (  # noqa: F401
+    mock_version,
+)
 
 import pyteal as pt
 from pyteal.pragma.pragma import __convert_pep440_compiler_version
