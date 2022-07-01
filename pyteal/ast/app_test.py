@@ -690,7 +690,7 @@ def test_AppParamObject():
             obj.clear_state_program(), pt.AppParam.clearStateProgram(app), teal5Options
         )
         assert_MaybeValue_equality(
-            obj.global_num_uint(), pt.AppParam.globalNumUnit(app), teal5Options
+            obj.global_num_uint(), pt.AppParam.globalNumUint(app), teal5Options
         )
         assert_MaybeValue_equality(
             obj.global_num_byte_slice(),
@@ -698,7 +698,7 @@ def test_AppParamObject():
             teal5Options,
         )
         assert_MaybeValue_equality(
-            obj.local_num_uint(), pt.AppParam.localNumUnit(app), teal5Options
+            obj.local_num_uint(), pt.AppParam.localNumUint(app), teal5Options
         )
         assert_MaybeValue_equality(
             obj.local_num_byte_slice(), pt.AppParam.localNumByteSlice(app), teal5Options
