@@ -4,7 +4,11 @@ from collections.abc import Sequence as CollectionSequence
 
 from pyteal.errors import TealInputError
 
+from pyteal.ast.assert_ import Assert
 from pyteal.ast.bytes import Bytes
+from pyteal.ast.int import Int
+from pyteal.ast.seq import Seq
+from pyteal.ast.unaryexpr import Len
 from pyteal.ast.addr import Addr
 from pyteal.ast.abi.type import ComputedValue, BaseType
 from pyteal.ast.abi.array_static import StaticArray, StaticArrayTypeSpec
@@ -95,7 +99,10 @@ class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
                     f"Got bytes with length {len(value)}, expected {AddressLength.Bytes}"
                 )
             case Expr():
-                return self.stored_value.store(value)
+                return Seq(
+                    Assert(Len(value) == Int(AddressLength.Bytes.value)),
+                    self.stored_value.store(value),
+                )
             case CollectionSequence():
                 return super().set(cast(Sequence[Byte], value))
 
