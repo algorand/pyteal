@@ -104,6 +104,10 @@ class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
                     self.stored_value.store(value),
                 )
             case CollectionSequence():
+                if len(value) != AddressLength.Bytes:
+                    raise TealInputError(
+                        f"Got bytes with length {len(value)}, expected {AddressLength.Bytes}"
+                    )
                 return super().set(cast(Sequence[Byte], value))
 
         raise TealInputError(
