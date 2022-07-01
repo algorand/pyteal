@@ -2,6 +2,7 @@ import pytest
 import pyteal as pt
 from pyteal import abi
 
+from pyteal.ast.abi.address import AddressLength
 from pyteal.ast.abi.type_test import ContainerType
 from pyteal.ast.abi.util import substringForDecoding
 
@@ -199,6 +200,11 @@ def test_Address_set_expr():
         vts, _ = value_to_set.__teal__(options)
         expected = pt.TealSimpleBlock(
             [
+                vts.ops[0],
+                pt.TealOp(None, pt.Op.len),
+                pt.TealOp(None, pt.Op.int, AddressLength.Bytes.value),
+                pt.TealOp(None, pt.Op.eq),
+                pt.TealOp(None, pt.Op.assert_),
                 vts.ops[0],
                 pt.TealOp(None, pt.Op.store, value.stored_value.slot),
             ]
