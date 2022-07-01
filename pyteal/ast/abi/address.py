@@ -100,8 +100,8 @@ class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
                 )
             case Expr():
                 return Seq(
-                    Assert(Len(value) == Int(AddressLength.Bytes.value)),
                     self.stored_value.store(value),
+                    Assert(Len(self.stored_value.load()) == Int(AddressLength.Bytes.value)),
                 )
             case CollectionSequence():
                 if len(value) != AddressLength.Bytes:

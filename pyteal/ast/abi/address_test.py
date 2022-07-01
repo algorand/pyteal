@@ -201,12 +201,12 @@ def test_Address_set_expr():
         expected = pt.TealSimpleBlock(
             [
                 vts.ops[0],
+                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+                pt.TealOp(None, pt.Op.load, value.stored_value.slot),
                 pt.TealOp(None, pt.Op.len),
                 pt.TealOp(None, pt.Op.int, AddressLength.Bytes.value),
                 pt.TealOp(None, pt.Op.eq),
                 pt.TealOp(None, pt.Op.assert_),
-                vts.ops[0],
-                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
             ]
         )
 
