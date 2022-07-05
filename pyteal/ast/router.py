@@ -539,6 +539,19 @@ class Router:
         method_config: MethodConfig = None,
         description: str = None,
     ) -> None:
+        """Add a method call handler to this Router.
+
+        Args:
+            method_call: An ABIReturnSubroutine that implements the method body.
+            overriding_name (optional): A name for this method. Defaults to the function name of
+                method_call.
+            method_config (optional): An object describing the on completion actions and
+                creation/non-creation call statuses that are valid for calling this method. All
+                invalid configurations will be rejected. Defaults to :code:`MethodConfig(no_op=CallConfig.CALL)`
+                (i.e. only the no-op action during a non-creation call is accepted) if none is provided.
+            description (optional): A description for this method. Defaults to the docstring of
+                method_call, if there is one.
+        """
         if not isinstance(method_call, ABIReturnSubroutine):
             raise TealInputError(
                 "for adding method handler, must be ABIReturnSubroutine"
@@ -583,26 +596,37 @@ class Router:
         /,
         *,
         name: str = None,
+        description: str = None,
         no_op: CallConfig = None,
         opt_in: CallConfig = None,
         close_out: CallConfig = None,
         clear_state: CallConfig = None,
         update_application: CallConfig = None,
         delete_application: CallConfig = None,
-        description: str = None,
     ):
-        """
-        A decorator style method registration by decorating over a python function,
-        which is internally converted to ABIReturnSubroutine, and taking keyword arguments
-        for each OnCompletes' `CallConfig`.
+        """This is an alternative way to register a method, as supposed to :code:`add_method_handler`.
 
-        NOTE:
-            By default, all OnCompletes other than `NoOp` are set to `CallConfig.NEVER`,
-            while `no_op` field is always `CALL`.
-            If one wants to change `no_op`,  we need to change `no_op = CallConfig.ALL`,
-            for example, as a decorator argument.
-        """
+        This is a decorator that's meant to be used over a Python function, which is internally
+        wrapped with ABIReturnSubroutine. Additional keyword arguments on this decorator can be used
+        to specify the OnCompletion statuses that are valid for the registered method.
 
+        NOTE: By default, all OnCompletion actions other than `no_op` are set to `CallConfig.NEVER`,
+        while `no_op` field is set to `CallConfig.CALL`. However, if you provide any keywords for
+        OnCompletion actions, then the `no_op` field will default to `CallConfig.NEVER`.
+
+        Args:
+            func: A function that implements the method body. This should *NOT* be wrapped with the
+                :code:`ABIReturnSubroutine` decorator yet.
+            name (optional): A name for this method. Defaults to the function name of func.
+            description (optional): A description for this method. Defaults to the docstring of
+                func, if there is one.
+            no_op (optional): The allowed calls during :code:`OnComplete.NoOp`.
+            opt_in (optional): The allowed calls during :code:`OnComplete.OptIn`.
+            close_out (optional): The allowed calls during :code:`OnComplete.CloseOut`.
+            clear_state (optional): The allowed calls during :code:`OnComplete.ClearState`.
+            update_application (optional): The allowed calls during :code:`OnComplete.UpdateApplication`.
+            delete_application (optional): The allowed calls during :code:`OnComplete.DeleteApplication`.
+        """
         # we use `is None` extensively for CallConfig to distinguish 2 following cases
         # - None
         # - CallConfig.Never

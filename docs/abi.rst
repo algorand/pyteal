@@ -118,7 +118,7 @@ The :any:`abi.ComputedValue[T] <abi.ComputedValue>` abstract base class provides
 
 * :any:`abi.ComputedValue[T].produced_type_spec() <abi.ComputedValue.produced_type_spec>`: returns the :any:`abi.TypeSpec` representing the ABI type produced by this object.
 * :any:`abi.ComputedValue[T].store_into(output: T) <abi.ComputedValue.store_into>`: computes the value and store it into the ABI type instance :code:`output`.
-* :any:`abi.ComputedValue[T].use(action: Callable[[T], Expr]) -> Expr <abi.ComputedValue.use>`: computes the value and passes it to the callable expression :code:`action`. This is offered as a convenience over the :code:`store_into(...)` method if you don't want to create a new variable to store the value before using it.
+* :any:`abi.ComputedValue[T].use(action: Callable[[T], Expr]) <abi.ComputedValue.use>`: computes the value and passes it to the callable expression :code:`action`. This is offered as a convenience over the :code:`store_into(...)` method if you don't want to create a new variable to store the value before using it.
 
 .. note::
     If you call the methods :code:`store_into(...)` or :code:`use(...)` multiple times, the computation to determine the value will be repeated each time. For this reason, it is recommended to only issue a single call to either of these two method.
@@ -588,13 +588,13 @@ The :code:`@ABIReturnSubroutine` decorator should be used with subroutines that 
 
     @ABIReturnSubroutine
     def get_account_status(
-        account: abi.Account, *, output: abi.Tuple2[abi.Uint64, abi.Bool]
+        account: abi.Address, *, output: abi.Tuple2[abi.Uint64, abi.Bool]
     ) -> Expr:
         balance = abi.Uint64()
         is_admin = abi.Bool()
         return Seq(
-            balance.set(App.localGet(account.address(), Bytes("balance"))),
-            is_admin.set(App.localGet(account.address(), Bytes("is_admin"))),
+            balance.set(App.localGet(account.get(), Bytes("balance"))),
+            is_admin.set(App.localGet(account.get(), Bytes("is_admin"))),
             output.set(balance, is_admin),
         )
 
@@ -613,23 +613,177 @@ The only exception to this transformation is if the subroutine has no return val
 Creating an ARC-4 Program with the ABI Router
 ----------------------------------------------------
 
-TODO: brief intro
-
 .. warning::
   :any:`Router` usage is still taking shape and is subject to backwards incompatible changes.
 
   Feel encouraged to use :any:`Router` and expect a best-effort attempt to minimize backwards incompatible changes along with a migration path.
 
+An ARC-4 ABI compatible program can be called in up to two ways:
+
+* Through a method call, which chooses a specific method implemented by the contract and calls it with the appropriate arguments.
+* Through a bare app call, which has no arguments and no return value.
+
+A method is a section of code intended to be invoked externally with an Application call transaction. Methods may take arguments and may produce a return value. PyTeal implements methods as subroutines which are exposed to be externally callable.
+
+A bare app call is more limited than a method, since it takes no arguments and cannot return a value. For this reason, bare app calls are more suited to allow on completion actions to take place, such as opting into an app.
+
+To make it easier for an application to route between the many bare app calls and methods it may support, PyTeal introduces the :any:`Router` class. This class adheres to the ARC-4 ABI conventions with respect to when methods and bare app calls should be invoked. For methods, it also conveniently decodes all arguments and properly encodes and logs the return value as needed.
+
+The following sections explain how to register bare app calls and methods with the :code:`Router` class.
+
 Registering Bare App Calls
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: explain bare app calls and how they can be added to a Router
+The AVM supports 6 types of OnCompletion options that may be specified on an app call transaction. These actions are:
+
+#. No op
+#. Opt in
+#. Close out
+#. Clear state
+#. Update application
+#. Delete application
+
+In PyTeal, you have the ability to register a bare app call handler for each of these actions. Additionally, a bare app call handler must also specify whether the handler can be invoking during an app creation transaction, during a non-creation app call, or during either.
+
+The :any:`BareCallActions` class is used to define a bare app call handler for on completion actions. Each bare app call handler must be an instance of the :any:`OnCompleteAction` class.
+
+The :any:`OnCompleteAction` class is responsible for holding the actual code for the bare app call handler (an instance of either :code:`Expr` or a subroutine that takes no args and returns nothing) as well as a :any:`CallConfig` option that indicates whether the action is able to be called during a creation app call, a non-creation app call, or either.
+
+All the bare app calls that an application wishes to support must be provided to the :any:`Router.__init__` method.
+
+A brief example is below:
+
+.. code-block:: python
+
+    @Subroutine(TealType.none)
+    def opt_in_handler() -> Expr:
+        return App.localPut(Txn.sender(), Bytes("opted_in_round"), Global.round())
+
+
+    @Subroutine(TealType.none)
+    def assert_sender_is_creator() -> Expr:
+        return Assert(Txn.sender() == Global.creator_address())
+
+
+    router = Router(
+        name="ExampleApp",
+        bare_calls=BareCallActions(
+            no_op=OnCompleteAction(
+                action=Approve(), call_config=CallConfig.CREATE
+            ),
+            opt_in=OnCompleteAction(
+                action=opt_in_handler, call_config=CallConfig.ALL
+            ),
+            close_out=OnCompleteAction(
+                action=Approve(), call_config=CallConfig.CALL
+            ),
+            update_application=OnCompleteAction(
+                action=assert_sender_is_creator, call_config=CallConfig.CALL
+            ),
+            delete_application=OnCompleteAction(
+                action=assert_sender_is_creator, call_config=CallConfig.CALL
+            ),
+        ),
+    )
+
+TODO: explain example
+
+When deciding which :code:`CallConfig` value is appropriate for a bare app call or method, ask yourself the question, should should it be valid for someone to create my app by calling this method?
 
 Registering Methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: explain methods and how they can be added to a Router
 TODO: warning about input type validity -- no verification is done for you (right now)
+
+Method can be registered in two ways.
+
+The first way to register a method is with the :any:`Router.add_method_handler` method, which takes an existing subroutine decorated with :code:`@ABIReturnSubroutine`. An example of this is below:
+
+.. code-block:: python
+
+    router = Router(
+        name="Calculator",
+        bare_calls=BareCallActions(
+            # allow this app to be created with a NoOp call
+            no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE),
+            # allow standalone user opt in and close out
+            opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.CALL),
+            close_out=OnCompleteAction(action=Approve(), call_config=CallConfig.CALL),
+        ),
+    )
+
+    @ABIReturnSubroutine
+    def add(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64) -> Expr:
+        """Adds the two arguments and returns the result.
+
+        If addition will overflow a uint64, this method will fail.
+        """
+        return output.set(a.get() + b.get())
+
+    router.add_method_handler(add)
+
+    @ABIReturnSubroutine
+    def addAndStore(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64) -> Expr:
+        """Adds the two arguments, returns the result, and stores it in the sender's local state.
+
+        If addition will overflow a uint64, this method will fail.
+
+        The sender must be opted into the app. Opt-in can occur during this call.
+        """
+        return Seq(
+            output.set(a.get() + b.get()),
+            # store the result in the sender's local state too
+            App.localPut(Txn.sender(), Bytes("result", output.get())),
+        )
+
+    router.add_method_handler(
+        addAndStore,
+        method_config=MethodConfig(no_op=CallConfig.CALL, opt_in=CallConfig.CALL),
+    )
+
+This example registers two methods with the router, :code:`add` and :code:`addAndStore`.
+
+Because the :code:`add` method does not pass a value for the :code:`method_config` parameter of :any:`Router.add_method_handler`, it will only be callable with a transaction that is not an app creation and whose on completion value is :code:`OnComplete.NoOp`.
+
+On the other hand, the :code:`addAndStore` method does provide a :code:`method_config` value. A value of :code:`MethodConfig(no_op=CallConfig.CALL, opt_in=CallConfig.CALL)` indicates that this method can only be called with a transaction that is not an app creation and whose on completion value is one of :code:`OnComplete.NoOp` or :code:`OnComplete.OptIn`.
+
+The second way to register a method is with the :any:`Router.method` decorator placed directly on a function. This way is equivalent to the first, but has some properties that make it more convenient for some scenarios. Below is an example equivalent to the prior one, but using the :code:`Router.method` syntax:
+
+.. code-block:: python
+
+    my_router = Router(
+        name="Calculator",
+        bare_calls=BareCallActions(
+            # allow this app to be created with a NoOp call
+            no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE),
+            # allow standalone user opt in and close out
+            opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.CALL),
+            close_out=OnCompleteAction(action=Approve(), call_config=CallConfig.CALL),
+        ),
+    )
+
+    # NOTE: the first part of the decorator `@my_router.method` is the router variable's name
+    @my_router.method
+    def add(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64) -> Expr:
+        """Adds the two arguments and returns the result.
+
+        If addition will overflow a uint64, this method will fail.
+        """
+        return output.set(a.get() + b.get())
+
+    @my_router.method(no_op=CallConfig.CALL, opt_in=CallConfig.CALL)
+    def addAndStore(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64) -> Expr:
+        """Adds the two arguments, returns the result, and stores it in the sender's local state.
+
+        If addition will overflow a uint64, this method will fail.
+
+        The sender must be opted into the app. Opt-in can occur during this call.
+        """
+        return Seq(
+            output.set(a.get() + b.get()),
+            # store the result in the sender's local state too
+            App.localPut(Txn.sender(), Bytes("result", output.get())),
+        )
 
 Building and Compiling a Router Program
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
