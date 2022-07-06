@@ -785,10 +785,24 @@ The second way to register a method is with the :any:`Router.method` decorator p
             App.localPut(Txn.sender(), Bytes("result", output.get())),
         )
 
-Building and Compiling a Router Program
+Compiling a Router Program
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: explain how to build/compile a Router program to get the TEAL code + contract JSON
+Now that we know how to add bare app call and method call handlers to a :code:`Router`, the next step is to compile the :code:`Router` into TEAL code.
+
+The :any:`Router.compile_program` method exists for this purpose. It combines all registered methods and bare app calls into two ASTs, one for the approval program and one for clear state program, then internally calls :any:`compileTeal` to compile these expressions and create TEAL code.
+
+In addition to receiving the approval and clear state programs, the :code:`Router.compile_program` method also returns a :code:`Contract` object `from the Python SDK <https://py-algorand-sdk.readthedocs.io/en/latest/algosdk/abi/contract.html#algosdk.abi.contract.Contract>`_. This object represents an `ARC-4 Contract Description <https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0004.md#contract-description>`_, which can be distributed to clients to enable them to call the methods on the contract.
+
+Here's an example of a complete application that uses the :code:`Router` class:
+
+.. literalinclude:: ../examples/application/abi/algobank.py
+    :language: python
+
+This example uses the :code:`Router.compile_program` method to create the approval program, clear state program, and contract description for the "AlgoBank" contract. The produced :code:`algobank.json` file is below:
+
+.. literalinclude:: ../examples/application/abi/algobank.json
+    :language: json
 
 Calling an ARC-4 Program
 --------------------------

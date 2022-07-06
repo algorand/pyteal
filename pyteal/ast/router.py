@@ -670,30 +670,32 @@ class Router:
         return wrap(func)
 
     def contract_construct(self) -> sdk_abi.Contract:
-        """A helper function in constructing contract JSON object.
+        """A helper function in constructing a `Contract` object.
 
         It takes out the method spec from approval program methods,
         and constructs an `Contract` object.
 
         Returns:
-            contract: a dictified `Contract` object constructed from
-                approval program's method specs and `self.name`.
+            A Python SDK `Contract` object constructed from the registered methods on this router.
         """
 
         return sdk_abi.Contract(self.name, self.methods)
 
     def build_program(self) -> tuple[Expr, Expr, sdk_abi.Contract]:
         """
-        Constructs ASTs for approval and clear-state programs from the registered methods in the router,
-        also generates a JSON object of contract to allow client read and call the methods easily.
+        Constructs ASTs for approval and clear-state programs from the registered methods and bare
+        app calls in the router, and also generates a Contract object to allow client read and call
+        the methods easily.
 
         Note that if no methods or bare app call actions have been registered to either the approval
         or clear state programs, then that program will reject all transactions.
 
         Returns:
-            approval_program: AST for approval program
-            clear_state_program: AST for clear-state program
-            contract: JSON object of contract to allow client start off-chain call
+            A tuple of three objects.
+
+            * approval_program: an AST for approval program
+            * clear_state_program: an AST for clear-state program
+            * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
         return (
             self.approval_ast.program_construction(),
@@ -709,16 +711,21 @@ class Router:
         optimize: OptimizeOptions = None,
     ) -> tuple[str, str, sdk_abi.Contract]:
         """
-        Combining `build_program` and `compileTeal`, compiles built Approval and ClearState programs
-        and returns Contract JSON object for off-chain calling.
+        Constructs and compiles approval and clear-state programs from the registered methods and
+        bare app calls in the router, and also generates a Contract object to allow client read and call
+        the methods easily.
+
+        This method combines :any:`Router.build_program` and :any:`compileTeal`.
 
         Note that if no methods or bare app call actions have been registered to either the approval
         or clear state programs, then that program will reject all transactions.
 
         Returns:
-            approval_program: compiled approval program
-            clear_state_program: compiled clear-state program
-            contract: JSON object of contract to allow client start off-chain call
+            A tuple of three objects.
+
+            * approval_program: compiled approval program string
+            * clear_state_program: compiled clear-state program string
+            * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
         ap, csp, contract = self.build_program()
         ap_compiled = compileTeal(
