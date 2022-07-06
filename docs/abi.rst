@@ -807,14 +807,31 @@ This example uses the :code:`Router.compile_program` method to create the approv
 Calling an ARC-4 Program
 --------------------------
 
-TODO: brief intro
+One of the advantages of developing an ABI-compliant PyTeal contract is that there is a standard way for clients to call your contract.
+
+Broadly, there are two categories of clients that may wish to call your contract: off-chain systems and other on-chain contracts. The following sections describe how each of these clients can call ABI methods implemented by your contract.
 
 Off-Chain, from an SDK or :code:`goal`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: leave pointers to SDK/goal documentation about how to invoke ABI calls
+Off-chain systems can use the `Algorand SDKs <https://developer.algorand.org/docs/sdks/>`_ or the command-line tool `goal <https://developer.algorand.org/docs/clis/goal/goal/>`_ to interact with ABI-compliant contracts.
+
+Every SDK contains an :code:`AtomicTransactionComposer` type that can be used to build and execute transaction groups, including groups containing ABI method calls. More information and examples of this are available on the `Algorand Developer Portal <https://developer.algorand.org/docs/get-details/atc/>`_.
+
+The :code:`goal` CLI has subcommands for creating and submitting various types of transactions. The relevant ones for ABI-compliant contracts are mentioned below, and documentation for these `can be found here <https://developer.algorand.org/docs/clis/goal/app/app/>`_:
+
+* For bare app calls:
+    * For calls that create an app, :code:`goal app create` can be used to construct and send an app creation bare app call.
+    * For non-creation calls, :code:`goal app <action>`, where :code:`<action>` is one of :code:`call` (no-op), :code:`optin`, :code:`closeout`, :code:`clear`, :code:`update`, or :code:`delete` can be used to construct and send a non-creation bare app call.
+* For all method calls:
+    * :code:`goal app method` can be used to construct, send, and read the return value of a method call. This command can be used for application creation as well, if the application allows this to happen in one of its methods.
 
 On-Chain, in an Inner Transaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: explain how this is possible but there is no simple way to do it in PyTeal yet; once it is, we should update this section
+Algorand applications can issue `inner transactions <https://developer.algorand.org/docs/get-details/dapps/smart-contracts/apps/#issuing-transactions-from-an-application>`_, which can be used to invoke other applications.
+
+In PyTeal, this can be achieved using the :any:`InnerTxnBuilder` class and its functions. To invoke an ABI method, PyTeal has :any:`InnerTxnBuilder.MethodCall(...) <InnerTxnBuilder.MethodCall>` to properly build a method call and encode its arguments.
+
+.. note::
+    At the time of writing, there is no streamlined way to obtain a method return value. You must manually inspect the :any:`last_log() <TxnObject.last_log>` property of either :any:`InnerTxn` or :any:`Gitxn[\<index\>] <Gitxn>` to obtain the logged return value. `As described in ARC-4 <https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0004.md#standard-format>`_, this value will be prefixed with the 4 bytes :code:`151f7c75` (shown in hex), and after this prefix the encoded ABI value will be available. You can use the :any:`decode(...) <abi.BaseType.decode>` method on an instance of the appropriate ABI type in order to decode and use this value.

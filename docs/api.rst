@@ -25,6 +25,15 @@ PyTeal Package
 
       The most recently submitted inner transaction. This is an instance of :any:`TxnObject`.
 
+      If an transaction group was submitted most recently, then this will be the last transaction in that group.
+
+   .. data:: Gitxn
+      :annotation: = <pyteal.InnerTxnGroup object>
+
+      The most recently submitted inner transaction group. This is an instance of :any:`InnerTxnGroup`.
+
+      If a single transaction was submitted most recently, then this will be a group of size 1.
+
 .. automodule:: pyteal.abi
    :members:
    :undoc-members:
