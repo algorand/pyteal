@@ -15,7 +15,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/algorand/pyteal",
     packages=setuptools.find_packages(),
-    install_requires=["py-algorand-sdk"],
+    install_requires=["py-algorand-sdk", "semantic-version"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
