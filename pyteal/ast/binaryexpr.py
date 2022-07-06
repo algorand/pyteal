@@ -46,7 +46,9 @@ class BinaryExpr(Expr):
         )
 
     def __str__(self):
-        return "({} {} {})".format(self.op, self.argLeft, self.argRight)
+        return "({} {} {})".format(
+            str(self.op).title().replace("_", ""), self.argLeft, self.argRight
+        )
 
     def type_of(self):
         return self.outputType

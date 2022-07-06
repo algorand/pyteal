@@ -2,7 +2,10 @@ from typing import TYPE_CHECKING, Tuple
 from pyteal.ast.abi import BaseType
 from pyteal.types import TealType
 from pyteal.errors import TealInputError
-from pyteal.ast import Expr, Log, Concat, Bytes
+from pyteal.ast.expr import Expr
+from pyteal.ast.unaryexpr import Log
+from pyteal.ast.naryexpr import Concat
+from pyteal.ast.bytes import Bytes
 from pyteal.ir import TealBlock, TealSimpleBlock, Op
 from pyteal.config import RETURN_HASH_PREFIX
 

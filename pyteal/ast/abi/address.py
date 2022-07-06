@@ -4,7 +4,11 @@ from collections.abc import Sequence as CollectionSequence
 
 from pyteal.errors import TealInputError
 
+from pyteal.ast.assert_ import Assert
 from pyteal.ast.bytes import Bytes
+from pyteal.ast.int import Int
+from pyteal.ast.seq import Seq
+from pyteal.ast.unaryexpr import Len
 from pyteal.ast.addr import Addr
 from pyteal.ast.abi.type import ComputedValue, BaseType
 from pyteal.ast.abi.array_static import StaticArray, StaticArrayTypeSpec
@@ -73,7 +77,7 @@ class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
 
             * :code:`str`: set the value to the address from the encoded address string. This string must be a valid 58-character base-32 Algorand address with checksum.
             * :code:`bytes`: set the value to the raw address bytes. This byte string must have length 32.
-            * :code:`Expr`: set the value to the result of a PyTeal expression, which must evaluate to a TealType.bytes.
+            * :code:`Expr`: set the value to the result of a PyTeal expression, which must evaluate to a TealType.bytes. The program will fail if the evaluated byte string length is not 32.
             * :code:`Sequence[Byte]`: set the bytes of this Address to those contained in this Python sequence (e.g. a list or tuple). A compiler error will occur if the sequence length is not 32.
             * :code:`StaticArray[Byte, 32]`: copy the bytes from a StaticArray of 32 bytes.
             * :code:`ComputedValue[StaticArray[Byte, 32]]`: copy the bytes from a StaticArray of 32 bytes produced by a ComputedValue.
@@ -119,9 +123,17 @@ class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
                     f"Got bytes with length {len(value)}, expected {AddressLength.Bytes}"
                 )
             case Expr():
-                # TODO: need to validate length of value is 32
-                return self.stored_value.store(value)
+                return Seq(
+                    self.stored_value.store(value),
+                    Assert(
+                        Len(self.stored_value.load()) == Int(AddressLength.Bytes.value)
+                    ),
+                )
             case CollectionSequence():
+                if len(value) != AddressLength.Bytes:
+                    raise TealInputError(
+                        f"Got bytes with length {len(value)}, expected {AddressLength.Bytes}"
+                    )
                 return super().set(cast(Sequence[Byte], value))
 
         raise TealInputError(

@@ -33,7 +33,7 @@ class MethodSignature(LeafExpr):
         return TealBlock.FromOp(options, op)
 
     def __str__(self) -> str:
-        return "(method: {})".format(self.methodName)
+        return "(MethodSignature '{}')".format(self.methodName)
 
     def type_of(self) -> TealType:
         return TealType.bytes

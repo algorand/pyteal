@@ -82,17 +82,17 @@ class Array(BaseType, Generic[T]):
         self,
         encoded: Expr,
         *,
-        startIndex: Expr = None,
-        endIndex: Expr = None,
+        start_index: Expr = None,
+        end_index: Expr = None,
         length: Expr = None
     ) -> Expr:
         """Decode a substring of the passed in encoded byte string and set it as this type's value.
 
         Args:
             encoded: An expression containing the bytes to decode. Must evaluate to TealType.bytes.
-            startIndex (optional): An expression containing the index to start decoding. Must
+            start_index (optional): An expression containing the index to start decoding. Must
                 evaluate to TealType.uint64. Defaults to None.
-            endIndex (optional): An expression containing the index to stop decoding. Must evaluate
+            end_index (optional): An expression containing the index to stop decoding. Must evaluate
                 to TealType.uint64. Defaults to None.
             length (optional): An expression containing the length of the substring to decode. Must
                 evaluate to TealType.uint64. Defaults to None.
@@ -102,7 +102,7 @@ class Array(BaseType, Generic[T]):
             the scratch variable.
         """
         extracted = substringForDecoding(
-            encoded, startIndex=startIndex, endIndex=endIndex, length=length
+            encoded, startIndex=start_index, endIndex=end_index, length=length
         )
         return self.stored_value.store(extracted)
 
@@ -271,14 +271,16 @@ class ArrayElement(ComputedValue[T]):
                 .Else(nextValueStart)
             )
 
-            return output.decode(encodedArray, startIndex=valueStart, endIndex=valueEnd)
+            return output.decode(
+                encodedArray, start_index=valueStart, end_index=valueEnd
+            )
 
         # Handling case for array elements are static:
         # since array._stride() is element's static byte length
         # we partition the substring for array element.
         valueStart = byteIndex
         valueLength = Int(arrayType._stride())
-        return output.decode(encodedArray, startIndex=valueStart, length=valueLength)
+        return output.decode(encodedArray, start_index=valueStart, length=valueLength)
 
 
 ArrayElement.__module__ = "pyteal.abi"

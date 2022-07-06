@@ -97,8 +97,8 @@ class BaseType(ABC):
         self,
         encoded: Expr,
         *,
-        startIndex: Expr = None,
-        endIndex: Expr = None,
+        start_index: Expr = None,
+        end_index: Expr = None,
         length: Expr = None,
     ) -> Expr:
         """Decode a substring of the passed in encoded string and set it as this type's value.
@@ -121,9 +121,9 @@ class BaseType(ABC):
 
         Args:
             encoded: An expression containing the bytes to decode. Must evaluate to TealType.bytes.
-            startIndex (optional): An expression containing the index to start decoding. Must
+            start_index (optional): An expression containing the index to start decoding. Must
                 evaluate to TealType.uint64. Defaults to None.
-            endIndex (optional): An expression containing the index to stop decoding. Must evaluate
+            end_index (optional): An expression containing the index to stop decoding. Must evaluate
                 to TealType.uint64. Defaults to None.
             length (optional): An expression containing the length of the substring to decode. Must
                 evaluate to TealType.uint64. Defaults to None.
@@ -141,6 +141,9 @@ class BaseType(ABC):
                 f"Cannot set {self.type_spec()} with ComputedType of {target_type_spec}"
             )
         return value.store_into(self)
+
+    def __str__(self) -> str:
+        return str(self.type_spec())
 
 
 BaseType.__module__ = "pyteal.abi"

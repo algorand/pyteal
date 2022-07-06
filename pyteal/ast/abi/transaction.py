@@ -3,10 +3,10 @@ from typing import Union, cast, List, Final
 from pyteal.ast.abi.type import BaseType, ComputedValue, TypeSpec
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
-from pyteal.ast.txn import TxnObject
+from pyteal.ast.txn import TxnObject, TxnType
 from pyteal.ast.gtxn import Gtxn
 from pyteal.types import TealType
-from pyteal.errors import TealInputError
+from pyteal.errors import TealInputError, TealInternalError
 
 
 class TransactionType(Enum):
@@ -41,6 +41,17 @@ class TransactionTypeSpec(TypeSpec):
     def storage_type(self) -> TealType:
         return TealType.uint64
 
+    def txn_type_enum(self) -> Expr:
+        """Get the integer transaction type value this TransactionTypeSpec represents.
+
+        See :any:`TxnType` for the complete list.
+
+        If this is a generic TransactionTypeSpec, i.e. type :code:`txn`, this method will raise an error, since this type does not represent a single transaction type.
+        """
+        raise TealInternalError(
+            "abi.TransactionTypeSpec does not represent a specific transaction type"
+        )
+
     def __eq__(self, other: object) -> bool:
         return type(self) is type(other)
 
@@ -64,7 +75,7 @@ class Transaction(BaseType):
     def get(self) -> TxnObject:
         return Gtxn[self.index()]
 
-    def set(
+    def _set_index(
         self, value: Union[int, Expr, "Transaction", ComputedValue["Transaction"]]
     ) -> Expr:
         match value:
@@ -86,8 +97,8 @@ class Transaction(BaseType):
         self,
         encoded: Expr,
         *,
-        startIndex: Expr = None,
-        endIndex: Expr = None,
+        start_index: Expr = None,
+        end_index: Expr = None,
         length: Expr = None,
     ) -> Expr:
         raise TealInputError("A Transaction cannot be decoded")
@@ -105,6 +116,9 @@ class PaymentTransactionTypeSpec(TransactionTypeSpec):
 
     def annotation_type(self) -> "type[PaymentTransaction]":
         return PaymentTransaction
+
+    def txn_type_enum(self) -> Expr:
+        return TxnType.Payment
 
     def __str__(self) -> str:
         return TransactionType.Payment.value
@@ -128,6 +142,9 @@ class KeyRegisterTransactionTypeSpec(TransactionTypeSpec):
     def annotation_type(self) -> "type[KeyRegisterTransaction]":
         return KeyRegisterTransaction
 
+    def txn_type_enum(self) -> Expr:
+        return TxnType.KeyRegistration
+
     def __str__(self) -> str:
         return TransactionType.KeyRegistration.value
 
@@ -149,6 +166,9 @@ class AssetConfigTransactionTypeSpec(TransactionTypeSpec):
 
     def annotation_type(self) -> "type[AssetConfigTransaction]":
         return AssetConfigTransaction
+
+    def txn_type_enum(self) -> Expr:
+        return TxnType.AssetConfig
 
     def __str__(self) -> str:
         return TransactionType.AssetConfig.value
@@ -172,6 +192,9 @@ class AssetFreezeTransactionTypeSpec(TransactionTypeSpec):
     def annotation_type(self) -> "type[AssetFreezeTransaction]":
         return AssetFreezeTransaction
 
+    def txn_type_enum(self) -> Expr:
+        return TxnType.AssetFreeze
+
     def __str__(self) -> str:
         return TransactionType.AssetFreeze.value
 
@@ -194,6 +217,9 @@ class AssetTransferTransactionTypeSpec(TransactionTypeSpec):
     def annotation_type(self) -> "type[AssetTransferTransaction]":
         return AssetTransferTransaction
 
+    def txn_type_enum(self) -> Expr:
+        return TxnType.AssetTransfer
+
     def __str__(self) -> str:
         return TransactionType.AssetTransfer.value
 
@@ -215,6 +241,9 @@ class ApplicationCallTransactionTypeSpec(TransactionTypeSpec):
 
     def annotation_type(self) -> "type[ApplicationCallTransaction]":
         return ApplicationCallTransaction
+
+    def txn_type_enum(self) -> Expr:
+        return TxnType.ApplicationCall
 
     def __str__(self) -> str:
         return TransactionType.ApplicationCall.value

@@ -9,7 +9,9 @@ from pyteal import abi
 from pyteal.ast.abi.util import (
     substringForDecoding,
     int_literal_from_annotation,
+    type_spec_from_algosdk,
     type_spec_from_annotation,
+    type_specs_from_signature,
 )
 from pyteal.errors import TealInputError
 
@@ -336,7 +338,12 @@ ABI_TRANSLATION_TEST_CASES = [
     # Test for byte/bool/address/strings
     (algosdk.abi.ByteType(), "byte", abi.ByteTypeSpec(), abi.Byte),
     (algosdk.abi.BoolType(), "bool", abi.BoolTypeSpec(), abi.Bool),
-    (algosdk.abi.AddressType(), "address", abi.AddressTypeSpec(), abi.Address),
+    (
+        algosdk.abi.AddressType(),
+        "address",
+        abi.AddressTypeSpec(),
+        abi.Address,
+    ),
     (algosdk.abi.StringType(), "string", abi.StringTypeSpec(), abi.String),
     # Test for dynamic array type
     (
@@ -489,7 +496,6 @@ ABI_TRANSLATION_TEST_CASES = [
     #         ]
     #     ),
     # ),
-    (algosdk.abi.TupleType([]), "()", abi.TupleTypeSpec(), abi.Tuple0),
     (
         "cannot map ABI transaction type spec <pyteal.abi.TransactionTypeSpec",
         "txn",
@@ -552,14 +558,73 @@ ABI_TRANSLATION_TEST_CASES = [
     ),
 ]
 
+ABI_SIGNATURE_TYPESPEC_CASES = [
+    (
+        "check(uint64,uint64)uint64",
+        [abi.Uint64TypeSpec(), abi.Uint64TypeSpec()],
+        abi.Uint64TypeSpec(),
+    ),
+    (
+        "check(uint64[],uint64)uint64",
+        [abi.DynamicArrayTypeSpec(abi.Uint64TypeSpec()), abi.Uint64TypeSpec()],
+        abi.Uint64TypeSpec(),
+    ),
+    (
+        "check(uint64[5],uint64)uint64",
+        [abi.StaticArrayTypeSpec(abi.Uint64TypeSpec(), 5), abi.Uint64TypeSpec()],
+        abi.Uint64TypeSpec(),
+    ),
+    (
+        "check(uint64,uint64)uint64[]",
+        [abi.Uint64TypeSpec(), abi.Uint64TypeSpec()],
+        abi.DynamicArrayTypeSpec(abi.Uint64TypeSpec()),
+    ),
+    (
+        "check(uint64,uint64)uint64[5]",
+        [abi.Uint64TypeSpec(), abi.Uint64TypeSpec()],
+        abi.StaticArrayTypeSpec(abi.Uint64TypeSpec(), 5),
+    ),
+    (
+        "check((uint64,uint64),asset)string",
+        [
+            abi.TupleTypeSpec(abi.Uint64TypeSpec(), abi.Uint64TypeSpec()),
+            abi.AssetTypeSpec(),
+        ],
+        abi.StringTypeSpec(),
+    ),
+    (
+        "check(string,asset)(uint64,uint64)",
+        [abi.StringTypeSpec(), abi.AssetTypeSpec()],
+        abi.TupleTypeSpec(abi.Uint64TypeSpec(), abi.Uint64TypeSpec()),
+    ),
+    (
+        "check(account,asset,application)string",
+        [abi.AccountTypeSpec(), abi.AssetTypeSpec(), abi.ApplicationTypeSpec()],
+        abi.StringTypeSpec(),
+    ),
+    (
+        "check(pay,txn,appl)string",
+        [
+            abi.PaymentTransactionTypeSpec(),
+            abi.TransactionTypeSpec(),
+            abi.ApplicationCallTransactionTypeSpec(),
+        ],
+        abi.StringTypeSpec(),
+    ),
+    ("check(uint64,uint64)void", [abi.Uint64TypeSpec(), abi.Uint64TypeSpec()], None),
+]
+
 
 @pytest.mark.parametrize(
-    "algosdk_abi, abi_string, pyteal_abi_ts, pyteal_abi", ABI_TRANSLATION_TEST_CASES
+    "algosdk_abi, abi_string, pyteal_abi_ts, pyteal_abi",
+    ABI_TRANSLATION_TEST_CASES,
 )
 def test_abi_type_translation(algosdk_abi, abi_string, pyteal_abi_ts, pyteal_abi):
     print(f"({algosdk_abi}, {abi_string}, {pyteal_abi_ts}),")
 
     assert pyteal_abi_ts == abi.type_spec_from_annotation(pyteal_abi)
+
+    assert str(pyteal_abi_ts.new_instance()) == abi_string
 
     if abi_string in (
         "account",
@@ -593,3 +658,18 @@ def test_abi_type_translation(algosdk_abi, abi_string, pyteal_abi_ts, pyteal_abi
     )
     assert algosdk_abi == abi.algosdk_from_type_spec(pyteal_abi_ts)
     assert algosdk_abi == abi.algosdk_from_annotation(pyteal_abi)
+
+
+@pytest.mark.parametrize("case", ABI_TRANSLATION_TEST_CASES)
+def test_sdk_abi_translation(case):
+    # Errors are strings in the 0th element
+    if type(case[0]) is str:
+        return
+    assert type_spec_from_algosdk(case[0]) == case[2]
+
+
+@pytest.mark.parametrize("sig_str, sig_args, sig_rets", ABI_SIGNATURE_TYPESPEC_CASES)
+def test_sdk_type_specs_from_signature(sig_str, sig_args, sig_rets):
+    args, ret = type_specs_from_signature(sig_str)
+    assert args == sig_args
+    assert ret == sig_rets
