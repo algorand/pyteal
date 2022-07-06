@@ -1,0 +1,92 @@
+#pragma version 6
+txna ApplicationArgs 0
+store 1
+load 1
+callsub roundtripper_1
+store 0
+byte 0x151f7c75
+load 0
+concat
+log
+int 1
+return
+
+// array_complement
+arraycomplement_0:
+store 6
+int 0
+store 8
+load 8
+itob
+extract 6 0
+byte ""
+concat
+store 7
+load 7
+retsub
+
+// round_tripper
+roundtripper_1:
+store 2
+load 2
+callsub arraycomplement_0
+store 4
+load 4
+callsub arraycomplement_0
+store 5
+load 2
+store 12
+load 12
+store 11
+int 6
+store 9
+load 9
+load 12
+len
++
+store 10
+load 10
+int 65536
+<
+assert
+load 9
+itob
+extract 6 0
+load 4
+store 12
+load 11
+load 12
+concat
+store 11
+load 10
+store 9
+load 9
+load 12
+len
++
+store 10
+load 10
+int 65536
+<
+assert
+load 9
+itob
+extract 6 0
+concat
+load 5
+store 12
+load 11
+load 12
+concat
+store 11
+load 10
+store 9
+load 9
+itob
+extract 6 0
+concat
+load 11
+concat
+store 3
+load 3
+retsub

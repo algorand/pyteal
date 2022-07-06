@@ -36,7 +36,7 @@ class Return(Expr):
                 options.version,
                 "TEAL version too low to use subroutines",
             )
-            returnType = options.currentSubroutine.returnType
+            returnType = options.currentSubroutine.return_type
             if returnType == TealType.none:
                 if self.value is not None:
                     raise TealCompileError(
@@ -73,10 +73,7 @@ class Return(Expr):
                 )
             op = Op.return_
 
-        args = []
-        if self.value is not None:
-            args.append(self.value)
-
+        args = [] if self.value is None else [self.value]
         return TealBlock.FromOp(options, TealOp(self, op), *args)
 
     def __str__(self):

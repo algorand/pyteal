@@ -1,0 +1,103 @@
+#pragma version 6
+txna ApplicationArgs 0
+store 1
+load 1
+callsub roundtripper_1
+store 0
+byte 0x151f7c75
+load 0
+concat
+log
+int 1
+return
+
+// string_reverse
+stringreverse_0:
+store 6
+load 6
+int 1
+int 0
+*
+int 2
++
+getbyte
+store 8
+int 1
+store 9
+load 9
+itob
+extract 6 0
+byte 0x00
+int 0
+load 8
+setbyte
+concat
+store 7
+load 7
+retsub
+
+// round_tripper
+roundtripper_1:
+store 2
+load 2
+callsub stringreverse_0
+store 4
+load 4
+callsub stringreverse_0
+store 5
+load 2
+store 13
+load 13
+store 12
+int 6
+store 10
+load 10
+load 13
+len
++
+store 11
+load 11
+int 65536
+<
+assert
+load 10
+itob
+extract 6 0
+load 4
+store 13
+load 12
+load 13
+concat
+store 12
+load 11
+store 10
+load 10
+load 13
+len
++
+store 11
+load 11
+int 65536
+<
+assert
+load 10
+itob
+extract 6 0
+concat
+load 5
+store 13
+load 12
+load 13
+concat
+store 12
+load 11
+store 10
+load 10
+itob
+extract 6 0
+concat
+load 12
+concat
+store 3
+load 3
+retsub
