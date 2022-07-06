@@ -6,6 +6,7 @@ from typing import (
     TypeVar,
     cast,
     overload,
+    Any,
 )
 
 from pyteal.types import TealType
@@ -341,7 +342,7 @@ class Tuple(BaseType):
         """Get the number of values this tuple holds as an Expr."""
         return Int(self.type_spec().length_static())
 
-    def __getitem__(self, index: int) -> "TupleElement[BaseType]":
+    def __getitem__(self, index: int) -> "TupleElement[Any]":
         """Retrieve an element by its index in this Tuple.
 
         Indexes start at 0.
@@ -352,7 +353,9 @@ class Tuple(BaseType):
                 this Tuple.
 
         Returns:
-            A TupleElement that corresponds to the element at the given index. This type is a ComputedValue.
+            A TupleElement that corresponds to the element at the given index. This type is a
+            ComputedValue. Due to Python type limitations, the parameterized type of the
+            TupleElement is Any.
         """
         if not (0 <= index < self.type_spec().length_static()):
             raise TealInputError(f"Index out of bounds: {index}")
