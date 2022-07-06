@@ -40,6 +40,7 @@ from pyteal.ast.itxn import InnerTxnBuilder, InnerTxn, InnerTxnAction
 from pyteal.ast.array import Array
 from pyteal.ast.tmpl import Tmpl
 from pyteal.ast.nonce import Nonce
+from pyteal.ast.pragma import Pragma
 
 # unary ops
 from pyteal.ast.unaryexpr import (
@@ -199,6 +200,7 @@ __all__ = [
     "Array",
     "Tmpl",
     "Nonce",
+    "Pragma",
     "UnaryExpr",
     "Btoi",
     "Itob",
