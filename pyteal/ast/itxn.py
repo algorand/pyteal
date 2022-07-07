@@ -1,11 +1,10 @@
-from enum import Enum
+from enum import Enum, EnumInt
 import algosdk
 
-from typing import Dict, TYPE_CHECKING, List, Union, cast
+from typing import TYPE_CHECKING, cast
 from pyteal.ast.for_ import For
 from pyteal.ast.int import Int
 from pyteal.ast.scratchvar import ScratchVar
-from typing import TYPE_CHECKING, cast
 
 from pyteal.ast.methodsig import MethodSignature
 from pyteal.types import TealType, require_type
@@ -13,6 +12,7 @@ from pyteal.errors import TealInputError, TealTypeError, verifyTealVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
 from pyteal.ast.txn import (
+    TxnType,
     TxnArray,
     TxnField,
     TxnExprBuilder,
@@ -270,7 +270,7 @@ class InnerTxnBuilder:
 
         # We only care about the args
         arg_type_specs: list[abi.TypeSpec]
-        arg_type_specs, _ = type_specs_from_signature(method_signature)
+        arg_type_specs, _ = abi.type_specs_from_signature(method_signature)
 
         if len(args) != len(arg_type_specs):
             raise TealInputError(
