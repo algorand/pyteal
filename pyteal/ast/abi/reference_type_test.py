@@ -58,7 +58,8 @@ def test_ReferenceType_decode():
 
                     expected_decoding = value.stored_value.store(
                         pt.GetByte(
-                            encoded, start_index if start_index is not None else pt.Int(0)
+                            encoded,
+                            start_index if start_index is not None else pt.Int(0),
                         )
                     )
                     expected, _ = expected_decoding.__teal__(options)

@@ -81,7 +81,10 @@ def test_Address_decode():
 
                 expectedExpr = value.stored_value.store(
                     substringForDecoding(
-                        encoded, start_index=start_index, end_index=end_index, length=length
+                        encoded,
+                        start_index=start_index,
+                        end_index=end_index,
+                        length=length,
                     )
                 )
                 expected, _ = expectedExpr.__teal__(options)
