@@ -3,8 +3,6 @@
 ABI Support
 ===========
 
-TODO: brief description
-
 .. warning::
   ABI support is still taking shape and is subject to backwards incompatible changes.
     * Based on feedback, the API and usage patterns are likely to change.
@@ -15,18 +13,24 @@ TODO: brief description
        * :any:`Router` usage for defining how to route program invocations.
     * For general purpose :any:`Subroutine` definition usage, use at your own risk.  Based on feedback, the API and usage patterns will change more freely and with less effort to provide migration paths.
 
+`ARC-4 <https://arc.algorand.foundation/ARCs/arc-0004>`_ introduces a set of standards that increase the interoperability of smart contracts in the Algorand ecosystem. This set of standards is commonly referred to as Algorand's application binary interface, or ABI.
+
+This page will introduce and explain the relevant concepts necessary to build a PyTeal application that adheres to the ARC-4 ABI standards.
+
 TODO: warning about how ABI types are intended to be used at the moment (for standard serialization at the incoming and outgoing layers of contract) - internal use may be extremely inefficient with ABI types
 TODO: warning about how internal representation of ABI types may change over time
 
 Types
 ------
 
-The ABI supports a variety of types whose encodings are standardized.
+The ABI supports a variety of data types whose encodings are standardized.
+
+Be aware that the ABI type system in PyTeal has been designed specifically for the limited use case of describing a program's inputs and outputs. At the time of writing, we **do not recommend** using ABI types in a program's internal storage and computation logic, as the more basic :any:`TealType.uint64` and :any:`TealType.bytes` :any:`Expr` types are far more efficient for these purposes.
 
 Fundamentals
 ~~~~~~~~~~~~
 
-Before we introduce these ABI types, it's important to understand the fundamentals of how PyTeal's ABI type system works.
+Before diving into the specific ABI types, let us first explain the the fundamentals of PyTeal's ABI type system, which includes behavior common to all ABI types.
 
 :code:`abi.BaseType`
 ^^^^^^^^^^^^^^^^^^^^
@@ -47,67 +51,74 @@ Static vs Dynamic Types
 
 An important property of an ABI type is whether it is static or dynamic.
 
-Static types are defined as types whose encoded length does not depend on the value of that type. This property allows encoding and decoding of static types to be more efficient.
+Static types are defined as types whose encoded length does not depend on the value of that type. This property allows encoding and decoding of static types to be more efficient. For example, the encoding of a :code:`boolean` type will always have a fixed length, regardless of whether the value is true or false.
 
-Likewise, dynamic types are defined as types whose encoded length does in fact depend on the value that type has. Due to this dependency, the code that PyTeal generates to encode, decode, and manipulate dynamic types is more complex and generally less efficient than the code needed for static types.
+Likewise, dynamic types are defined as types whose encoded length does in fact depend on the value that type has. For example, it's not possible to know the encoding size of a variable-sized :code:`string` type without also knowing its value. Due to this dependency on values, the code that PyTeal generates to encode, decode, and manipulate dynamic types is more complex and generally less efficient than the code needed for static types.
 
-Because of the difference in complexity and efficiency when working with static and dynamic types, **we strongly recommend using static types over dynamic types whenever possible**.
+Because of the difference in complexity and efficiency when working with static and dynamic types, **we strongly recommend using static types over dynamic types whenever possible**. Using static types generally makes your program's resource usage more predictable as well, so you can be more confidant your app has enough computation budget and storage space when using static types.
 
 Instantiating Types
 ^^^^^^^^^^^^^^^^^^^
 
-There are a few ways to create an instance of an ABI type. Each method produces the same result, but some may be more convenient than others.
+There are a few ways to create an instance of an ABI type. Each method produces the same result, but some may be more convenient than others in certain situations.
 
 With the Constructor
 """"""""""""""""""""""
 
-The most obvious way is to use its constructor, like so:
+The most straightforward way is to use its constructor, like so:
 
 .. code-block:: python
 
-    myUint8 = abi.Uint8()
-    myUint64 = abi.Uint64()
-    myArrayOf12Uint8s = abi.StaticArray(abi.StaticArrayTypeSpec(abi.Uint8TypeSpec(), 12))
+    from pyteal import *
 
-For simple types, using the constructor is straightforward and works as you would expect. However, more complex types like :any:`abi.StaticArray` have type-level arguments, so their constructor must take an :any:`abi.TypeSpec` which fully defines all necessary arguments. These types can be created with a constructor, but it's often not the most convenient way to do so.
+    my_uint8 = abi.Uint8()
+    my_uint64 = abi.Uint64()
+    my_array = abi.StaticArray(abi.StaticArrayTypeSpec(abi.Uint8TypeSpec(), 12))
+
+For simple types, using the constructor is straightforward and works as you would expect. However, compound types like :any:`abi.StaticArray` have type-level arguments, so their constructor must take an :any:`abi.TypeSpec` which fully defines all necessary arguments. These types can be created with a constructor, but it's often not the most convenient way to do so.
 
 With an :code:`abi.TypeSpec` Instance
 """"""""""""""""""""""""""""""""""""""
 
-You may remember that :code:`abi.TypeSpec` has a :any:`new_instance() <abi.TypeSpec.new_instance>` method that can be used to instantiate ABI types. This is another way of instantiating ABI types, if you happen to have an :code:`abi.TypeSpec` instance available. For example:
+Recall that :code:`abi.TypeSpec` has a :any:`new_instance() <abi.TypeSpec.new_instance>` method which instantiates ABI types. This is another way of instantiating ABI types, if you have an :code:`abi.TypeSpec` instance available. For example:
 
 .. code-block:: python
 
-    myUintType = abi.Uint8TypeSpec()
-    myUint8 = myUintType.new_instance()
+    from pyteal import *
 
-    myArrayType = abi.StaticArrayTypeSpec(myUintType, 12)
-    myArrayOf12Uint8s = myArrayType.new_instance()
+    my_uint_type = abi.Uint8TypeSpec()
+    my_uint = my_uint_type.new_instance()
+
+    my_array_type = abi.StaticArrayTypeSpec(my_uint_type, 12)
+    my_array = my_array_type.new_instance()
 
 With :code:`abi.make`
 """""""""""""""""""""
 
-Using :code:`abi.TypeSpec.new_instance()` makes sense if you already have an instance of the right :code:`abi.TypeSpec`, but otherwise it's not much better than using the constructor. Because of this, we have the :any:`abi.make` method, which is perhaps the most convenient way to create a complex type.
+Using :code:`abi.TypeSpec.new_instance()` makes sense if you already have an instance of the right :code:`abi.TypeSpec`, but otherwise it's not much better than using the constructor. Because of this, we have the :any:`abi.make` method, which is perhaps the most convenient way to create a compound type.
 
 To use it, you pass in a Python type annotation that describes the ABI type, and :code:`abi.make` will create an instance of it for you. For example:
 
 .. code-block:: python
 
     from typing import Literal
+    from pyteal import *
 
-    myUint8 = abi.make(abi.Uint8)
-    myUint64 = abi.make(abi.Uint64)
-    myArrayOf12Uint8s = abi.make(abi.StaticArray[abi.Uint8, Literal[12]])
+    my_uint8 = abi.make(abi.Uint8)
+    my_uint64 = abi.make(abi.Uint64)
+    my_array = abi.make(abi.StaticArray[abi.Uint8, Literal[12]])
 
 .. note::
     Since Python does not allow integers to be directly embedded in type annotations, you must wrap any integer arguments in the :code:`Literal` annotation from the :code:`typing` module.
 
+.. _Computed Values:
+
 Computed Values
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-With the introduction of ABI types, it's only natural for there to be functions and operations which return ABI values. In a conventional language, it would be enough to return an instance of the ABI type directly from the operation, as usual. However, in PyTeal, there operations must actually return two things:
+With the introduction of ABI types, it's only natural for there to be functions and operations which return ABI values. In a conventional language, it would be enough to return an instance of the type directly from the operation. However, in PyTeal, these operations must actually return two values:
 
-1. An instance of the ABI type populated with the right value
+1. An instance of the ABI type that will be populated with the right value
 2. An :code:`Expr` object that contains the expressions necessary to compute and populate the value that the return type should have
 
 In order to combine these two pieces of information, the :any:`abi.ComputedValue[T] <abi.ComputedValue>` interface was introduced. Instead of directly returning an instance of the appropriate ABI type, functions that return ABI values will return an :any:`abi.ComputedValue` instance parameterized by the return type.
@@ -121,11 +132,14 @@ The :any:`abi.ComputedValue[T] <abi.ComputedValue>` abstract base class provides
 * :any:`abi.ComputedValue[T].use(action: Callable[[T], Expr]) <abi.ComputedValue.use>`: computes the value and passes it to the callable expression :code:`action`. This is offered as a convenience over the :code:`store_into(...)` method if you don't want to create a new variable to store the value before using it.
 
 .. note::
-    If you call the methods :code:`store_into(...)` or :code:`use(...)` multiple times, the computation to determine the value will be repeated each time. For this reason, it is recommended to only issue a single call to either of these two method.
+    If you call the methods :code:`store_into(...)` or :code:`use(...)` multiple times, the computation to determine the value will be repeated each time. For this reason, it's recommended to only issue a single call to either of these two methods.
 
 A brief example is below:
 
 .. code-block:: python
+
+    from typing import Literal as L
+    from pyteal import *
 
     @Subroutine(TealType.none)
     def assert_sum_equals(
@@ -155,45 +169,47 @@ A brief example is below:
             Assert(actual_sum.load() == expected_sum),
         )
 
-Categories
-~~~~~~~~~~
+Type Categories
+~~~~~~~~~~~~~~~~~~~~
 
 There are three categories of ABI types:
 
-1. Basic types
-2. Reference types
-3. Transaction types
+#. :ref:`Basic Types`
+#. :ref:`Reference Types`
+#. :ref:`Transaction Types`
 
 Each of which is described in detail in the following subsections.
+
+.. _Basic Types:
 
 Basic Types
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Basic types are the most straightforward category of ABI types. These types are used to hold values and they have no other side effects, in contrast to the other categories of types.
+Basic types are the most straightforward category of ABI types. These types are used to hold values and they have no other special meaning, in contrast to the other categories of types.
 
 Definitions
 """""""""""""""""""""
 
 PyTeal supports the following basic types:
 
-============================================== ====================== ================================= =======================================================================================================================================================
-PyTeal Type                                    ARC-4 Type             Dynamic / Static                  Description
-============================================== ====================== ================================= =======================================================================================================================================================
-:any:`abi.Uint8`                               :code:`uint8`          Static                            An 8-bit unsigned integer
-:any:`abi.Uint16`                              :code:`uint16`         Static                            A 16-bit unsigned integer
-:any:`abi.Uint32`                              :code:`uint32`         Static                            A 32-bit unsigned integer
-:any:`abi.Uint64`                              :code:`uint64`         Static                            A 64-bit unsigned integer
-:any:`abi.Bool`                                :code:`bool`           Static                            A boolean value that can be either 0 or 1
-:any:`abi.Byte`                                :code:`byte`           Static                            An 8-bit unsigned integer. This is an alias for :code:`abi.Uint8` that should be used to indicate non-numeric data, such as binary arrays.
-:any:`abi.StaticArray[T,N] <abi.StaticArray>`  :code:`T[N]`           Static if :code:`T` is static     A fixed-length array of :code:`T` with :code:`N` elements
-:any:`abi.Address`                             :code:`address`        Static                            A 32-byte Algorand address. This is an alias for :code:`abi.StaticArray[abi.Byte, Literal[32]]`.
-:any:`abi.DynamicArray[T] <abi.DynamicArray>`  :code:`T[]`            Dynamic                           A variable-length array of :code:`T`
-:any:`abi.String`                              :code:`string`         Dynamic                           A variable-length byte array assumed to contain UTF-8 encoded content. This is an alias for :code:`abi.DynamicArray[abi.Byte]`.
-:any:`abi.Tuple`\*                             :code:`(...)`          Static if all elements are static A tuple of multiple types
-============================================== ====================== ================================= =======================================================================================================================================================
+============================================== ====================== =================================== =======================================================================================================================================================
+PyTeal Type                                    ARC-4 Type             Dynamic / Static                    Description
+============================================== ====================== =================================== =======================================================================================================================================================
+:any:`abi.Uint8`                               :code:`uint8`          Static                              An 8-bit unsigned integer
+:any:`abi.Uint16`                              :code:`uint16`         Static                              A 16-bit unsigned integer
+:any:`abi.Uint32`                              :code:`uint32`         Static                              A 32-bit unsigned integer
+:any:`abi.Uint64`                              :code:`uint64`         Static                              A 64-bit unsigned integer
+:any:`abi.Bool`                                :code:`bool`           Static                              A boolean value that can be either 0 or 1
+:any:`abi.Byte`                                :code:`byte`           Static                              An 8-bit unsigned integer. This is an alias for :code:`abi.Uint8` that should be used to indicate non-numeric data, such as binary arrays.
+:any:`abi.StaticArray[T,N] <abi.StaticArray>`  :code:`T[N]`           Static when :code:`T` is static     A fixed-length array of :code:`T` with :code:`N` elements
+:any:`abi.Address`                             :code:`address`        Static                              A 32-byte Algorand address. This is an alias for :code:`abi.StaticArray[abi.Byte, Literal[32]]`.
+:any:`abi.DynamicArray[T] <abi.DynamicArray>`  :code:`T[]`            Dynamic                             A variable-length array of :code:`T`
+:any:`abi.String`                              :code:`string`         Dynamic                             A variable-length byte array assumed to contain UTF-8 encoded content. This is an alias for :code:`abi.DynamicArray[abi.Byte]`.
+:any:`abi.Tuple`\*                             :code:`(...)`          Static when all elements are static A tuple of multiple types
+============================================== ====================== =================================== =======================================================================================================================================================
 
 .. note::
-    \*A proper implementation of :any:`abi.Tuple` requires a variable amount of generic arguments. Python 3.11 will support this with the introduction of `PEP 646 - Variadic Generics <https://peps.python.org/pep-0646/>`_, but until then it will not be possible to make :code:`abi.Tuple` a generic type. As a workaround, we have introduced the following subclasses of :code:`abi.Tuple` for fixed amounts of generic arguments:
+    \*A proper implementation of :any:`abi.Tuple` requires a variable amount of generic arguments. Python 3.11 will support this with the introduction of `PEP 646 - Variadic Generics <https://peps.python.org/pep-0646/>`_, but until then it will not be possible to make :any:`abi.Tuple` a generic type. As a workaround, we have introduced the following subclasses of :any:`abi.Tuple` for tuples containing up to 5 generic arguments:
 
     * :any:`abi.Tuple0`: a tuple of zero values, :code:`()`
     * :any:`abi.Tuple1[T1] <abi.Tuple1>`: a tuple of one value, :code:`(T1)`
@@ -228,24 +244,28 @@ A brief example is below. Please consult the documentation linked above for each
 
 .. code-block:: python
 
-    myAddress = abi.make(abi.Address)
-    myBool = abi.make(abi.Bool)
-    myUint64 = abi.make(abi.Uint64)
-    myTuple = abi.make(abi.Tuple3[abi.Address, abi.Bool, abi.Uint64])
+    from pyteal import *
+
+    my_address = abi.make(abi.Address)
+    my_bool = abi.make(abi.Bool)
+    my_uint64 = abi.make(abi.Uint64)
+    my_tuple = abi.make(abi.Tuple3[abi.Address, abi.Bool, abi.Uint64])
 
     program = Seq(
-        myAddress.set(Txn.sender()),
-        myBool.set(Txn.fee() == Int(0)),
-        myUint64.set(5000),
-        myTuple.set(myAddress, myBool, myUint64)
+        my_address.set(Txn.sender()),
+        my_bool.set(Txn.fee() == Int(0)),
+        # It's ok to set an abi.Uint to a Python integer. This is actually preferred since PyTeal
+        # can determine at compile-time that the value will fit in the integer type.
+        my_uint64.set(5000),
+        my_tuple.set(my_address, my_bool, my_uint64)
     )
 
-Getting Values
+Getting Single Values
 ''''''''''''''''''''''
 
 All basic types that represent a single value have a :code:`get()` method, which can be used to extract that value. The supported types and methods are:
 
-* :any:`abi.Uint.get()`, which is used by all :code:`abi.Uint` classes and :code:`abi.Byte`
+* :any:`abi.Uint.get()`, which is used by all :any:`abi.Uint` classes and :any:`abi.Byte`
 * :any:`abi.Bool.get()`
 * :any:`abi.Address.get()`
 * :any:`abi.String.get()`
@@ -253,6 +273,8 @@ All basic types that represent a single value have a :code:`get()` method, which
 A brief example is below. Please consult the documentation linked above for each method to learn more about specific usage and behavior.
 
 .. code-block:: python
+    
+    from pyteal import *
 
     @Subroutine(TealType.uint64)
     def minimum(a: abi.Uint64, b: abi.Uint64) -> Expr:
@@ -266,19 +288,23 @@ A brief example is below. Please consult the documentation linked above for each
 Getting Values at Indexes
 ''''''''''''''''''''''''''
 
-The types :code:`abi.StaticArray`, :code:`abi.Address`, :code:`abi.DynamicArray`, :code:`abi.String`, and :code:`abi.Tuple` are compound types, meaning they contain other types whose values can be extracted. The :code:`__getitem__` method, accessible by using square brackets to "index into" an object, can be used to extract these values.
+The types :any:`abi.StaticArray`, :any:`abi.Address`, :any:`abi.DynamicArray`, :any:`abi.String`, and :any:`abi.Tuple` are compound types, meaning they contain other types whose values can be extracted. The :code:`__getitem__` method, accessible by using square brackets to "index into" an object, can be used to access these values.
 
 The supported methods are:
 
-* :any:`abi.StaticArray.__getitem__(index: int | Expr) <abi.StaticArray.__getitem__>`, used for :code:`abi.StaticArray` and :code:`abi.Address`
-* :any:`abi.Array.__getitem__(index: int | Expr) <abi.Array.__getitem__>`, used for :code:`abi.DynamicArray` and :code:`abi.String`
+* :any:`abi.StaticArray.__getitem__(index: int | Expr) <abi.StaticArray.__getitem__>`, used for :any:`abi.StaticArray` and :any:`abi.Address`
+* :any:`abi.Array.__getitem__(index: int | Expr) <abi.Array.__getitem__>`, used for :any:`abi.DynamicArray` and :any:`abi.String`
 * :any:`abi.Tuple.__getitem__(index: int) <abi.Tuple.__getitem__>`
 
-Be aware that these methods return a :code:`ComputedValue`, TODO link to Computed Value section
+.. note::
+    Be aware that these methods return a :any:`ComputedValue`, similar to other PyTeal operations which return ABI types. More information about why that is necessary and how to use a :any:`ComputedValue` can be found in the :ref:`Computed Values` section.
 
 A brief example is below. Please consult the documentation linked above for each method to learn more about specific usage and behavior.
 
 .. code-block:: python
+
+    from typing import Literal as L
+    from pyteal import *
 
     @Subroutine(TealType.none)
     def ensure_all_values_greater_than_5(array: abi.StaticArray[abi.Uint64, L[10]]) -> Expr:
@@ -295,24 +321,26 @@ Limitations
 
 TODO: explain type size limitations
 
+.. _Reference Types:
+
 Reference Types
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Some AVM operations require specific values to be placed in the "foreign arrays" of the app call transaction. Reference types allow methods to describe these requirements.
+Many applications require the caller to provide "foreign array" values when calling the app. These are the blockchain entities (such as accounts, assets, or other applications) that the application will interact with when executing this call. In the ABI, we have "Reference Types" to describe these requirements.
 
-Reference types are only valid in the arguments of a method. They may not appear in a method's return value in any form.
+Reference Types are only valid in the arguments of a method. They may not appear in a method's return value.
 
 Definitions
 """"""""""""""""""""""""""""""""""""""""""
 
-PyTeal supports the following reference types:
+PyTeal supports the following Reference Types:
 
 ====================== ====================== ================ =======================================================================================================================================================
 PyTeal Type            ARC-4 Type             Dynamic / Static Description
 ====================== ====================== ================ =======================================================================================================================================================
-:any:`abi.Account`     :code:`account`        Static           Represents an additional account that the current transaction can access, stored in the :any:`Txn.accounts <TxnObject.accounts>` array
-:any:`abi.Asset`       :code:`asset`          Static           Represents an additional asset that the current transaction can access, stored in the :any:`Txn.assets <TxnObject.assets>` array
-:any:`abi.Application` :code:`application`    Static           Represents an additional application that the current transaction can access, stored in the :any:`Txn.applications <TxnObject.applications>` array
+:any:`abi.Account`     :code:`account`        Static           Represents an account that the current transaction can access, stored in the :any:`Txn.accounts <TxnObject.accounts>` array
+:any:`abi.Asset`       :code:`asset`          Static           Represents an asset that the current transaction can access, stored in the :any:`Txn.assets <TxnObject.assets>` array
+:any:`abi.Application` :code:`application`    Static           Represents an application that the current transaction can access, stored in the :any:`Txn.applications <TxnObject.applications>` array
 ====================== ====================== ================ =======================================================================================================================================================
 
 These types all inherit from the abstract class :any:`abi.ReferenceType`.
@@ -320,34 +348,10 @@ These types all inherit from the abstract class :any:`abi.ReferenceType`.
 Usage
 """"""""""""""""""""""""""""""""""""""""""
 
-Getting Referenced Indexes
-''''''''''''''''''''''''''
-
-Because reference types represent values placed into one of the transaction's foreign arrays, each reference type value is associated with a specific index into the appropriate array.
-
-All reference types implement the method :any:`abi.ReferenceType.referenced_index()` which can be used to access this index.
-
-A brief example is below:
-
-.. code-block:: python
-
-    @Subroutine(TealType.none)
-    def referenced_index_example(
-        account: abi.Account, asset: abi.Asset, app: abi.Application
-    ) -> Expr:
-        return Seq(
-            # The accounts array has Txn.accounts.length() + 1 elements in it (the +1 is the txn sender)
-            Assert(account.referenced_index() <= Txn.accounts.length()),
-            # The assets array has Txn.assets.length() elements in it
-            Assert(asset.referenced_index() < Txn.assets.length()),
-            # The applications array has Txn.applications.length() + 1 elements in it (the +1 is the current app)
-            Assert(app.referenced_index() <= Txn.applications.length()),
-        )
-
 Getting Referenced Values
 ''''''''''''''''''''''''''
 
-Perhaps more important than the index of a referenced type is its value. Depending on the reference type, there are different methods available to obtain the value being referenced:
+Depending on the Reference Type, there are different methods available to obtain the value being referenced:
 
 * :any:`abi.Account.address()`
 * :any:`abi.Asset.asset_id()`
@@ -356,6 +360,8 @@ Perhaps more important than the index of a referenced type is its value. Dependi
 A brief example is below:
 
 .. code-block:: python
+
+    from pyteal import *
 
     @Subroutine(TealType.none)
     def send_inner_txns(
@@ -386,7 +392,7 @@ A brief example is below:
 Accessing Parameters of Referenced Values
 ''''''''''''''''''''''''''''''''''''''''''
 
-Reference types allow the program to access more information about them. Each reference type has a :code:`params()` method which can be used to access that object's parameters. These methods are listed below:
+Reference Types allow the program to access more information about them. Each Reference Type has a :code:`params()` method which can be used to access that object's parameters. These methods are listed below:
 
 * :any:`abi.Account.params()` returns an :any:`AccountParamObject`
 * :any:`abi.Asset.params()` returns an :any:`AssetParamObject`
@@ -397,6 +403,8 @@ These method are provided for convenience. They expose the same properties acces
 A brief example is below:
 
 .. code-block:: python
+
+    from pyteal import *
 
     @Subroutine(TealType.none)
     def referenced_params_example(
@@ -431,6 +439,8 @@ A brief example is below:
 
 .. code-block:: python
 
+    from pyteal import *
+
     @Subroutine(TealType.none)
     def ensure_asset_balance_is_nonzero(account: abi.Account, asset: abi.Asset) -> Expr:
         return Seq(
@@ -448,29 +458,31 @@ Limitations
 
 TODO: explain limitations, such as can't be created directly, or used as method return value
 
+.. _Transaction Types:
+
 Transaction Types
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Some application calls require that they are invoked as part of a larger transaction group containing specific additional transactions. In order to express these types of calls, the ABI has transaction types.
+Some application calls require that they are invoked as part of a larger transaction group containing specific additional transactions. In order to express these types of calls, the ABI has "Transaction Types".
 
-Every transaction type argument represents a specific, unique, transaction that must appear immediately before the application call.
+Every Transaction Type argument represents a specific and unique transaction that must appear immediately before the application call in the same transaction group. A method may have multiple Transaction Type arguments, in which case they must appear in the same order as the method's arguments immediately before the method application call.
 
 Definitions
 """"""""""""""""""""""""""""""""""""""""""
 
-PyTeal supports the following transaction types:
+PyTeal supports the following Transaction Types:
 
-=================================== ====================== ================ =======================================================================================================================================================
-PyTeal Type                         ARC-4 Type             Dynamic / Static Description
-=================================== ====================== ================ =======================================================================================================================================================
-:any:`abi.Transaction`              :code:`txn`            Static           A catch-all for any transaction type
-:any:`abi.PaymentTransaction`       :code:`pay`            Static           A payment transaction
-:any:`abi.KeyRegisterTransaction`   :code:`keyreg`         Static           A key registration transaction
-:any:`abi.AssetConfigTransaction`   :code:`acfg`           Static           An asset configuration transaction
-:any:`abi.AssetTransferTransaction` :code:`axfer`          Static           An asset transfer transaction
-:any:`abi.AssetFreezeTransaction`   :code:`afrz`           Static           An asset freeze transaction
-:any:`abi.AssetTransferTransaction` :code:`appl`           Static           An application call transaction
-=================================== ====================== ================ =======================================================================================================================================================
+===================================== ====================== ================ =======================================================================================================================================================
+PyTeal Type                           ARC-4 Type             Dynamic / Static Description
+===================================== ====================== ================ =======================================================================================================================================================
+:any:`abi.Transaction`                :code:`txn`            Static           A catch-all for any type of transaction
+:any:`abi.PaymentTransaction`         :code:`pay`            Static           A payment transaction
+:any:`abi.KeyRegisterTransaction`     :code:`keyreg`         Static           A key registration transaction
+:any:`abi.AssetConfigTransaction`     :code:`acfg`           Static           An asset configuration transaction
+:any:`abi.AssetTransferTransaction`   :code:`axfer`          Static           An asset transfer transaction
+:any:`abi.AssetFreezeTransaction`     :code:`afrz`           Static           An asset freeze transaction
+:any:`abi.ApplicationCallTransaction` :code:`appl`           Static           An application call transaction
+===================================== ====================== ================ =======================================================================================================================================================
 
 Usage
 """"""""""""""""""""""""""""""""""""""""""
@@ -478,11 +490,13 @@ Usage
 Getting the Transaction Group Index
 ''''''''''''''''''''''''''''''''''''
 
-All transaction types implement the :any:`abi.Transaction.index()` method, which returns the absolute index of that transaction in the group.
+All Transaction Types implement the :any:`abi.Transaction.index()` method, which returns the absolute index of that transaction in the group.
 
 A brief example is below:
 
 .. code-block:: python
+
+    from pyteal import *
 
     @Subroutine(TealType.none)
     def handle_txn_args(
@@ -499,16 +513,18 @@ A brief example is below:
 Accessing Transaction Fields
 '''''''''''''''''''''''''''''
 
-All transaction types implement the :any:`abi.Transaction.get()` method, which returns a :any:`TxnObject` instance that can be used to access fields from that transaction.
+All Transaction Types implement the :any:`abi.Transaction.get()` method, which returns a :any:`TxnObject` instance that can be used to access fields from that transaction.
 
 A brief example is below:
 
 .. code-block:: python
 
+    from pyteal import *
+
     @Subroutine(TealType.none)
     def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
-        """This method receives a payment from an account opted into this app and records it in their
-        local state.
+        """This method receives a payment from an account opted into this app
+        and records it in their local state.
         """
         return Seq(
             Assert(payment.get().sender() == sender.address()),
@@ -529,20 +545,22 @@ TODO: explain limitations, such as can't be created directly, used as method ret
 Subroutines with ABI Types
 --------------------------
 
-Subroutines can be created that accept ABI types are arguments and produce ABI types as return values. PyTeal will type check all subroutine calls and ensure that the correct types are being passed to such subroutines and that their return values are used correctly.
+Subroutines can be created that accept ABI types as arguments and produce ABI types as return values. PyTeal will type check all subroutine calls and ensure that the correct types are being passed to such subroutines and that their return values are used correctly.
 
 There are two different ways to use ABI types in subroutines, depending on whether the return value is an ABI type or a PyTeal :code:`Expr`.
 
 Subroutines that Return Expressions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you'd like to create a subroutine that accepts some or all arguments as ABI types, but whose return value is a PyTeal :code:`Expr`, the normal :any:`@Subroutine <Subroutine>` decorator can be used.
+If you'd like to create a subroutine that accepts some or all arguments as ABI types, but whose return value is a PyTeal :code:`Expr`, the :any:`@Subroutine <Subroutine>` decorator can be used.
 
-To indicate the type of each argument, Python type annotations are used. Unlike normal usage of Python type annotations which are ignored at runtime, type annotations for subroutines inform the PyTeal compiler about the inputs and outputs of a subroutine. Changing these values has a direct affect on the code PyTeal generates.
+To indicate the type of each argument, Python type annotations are used. Unlike normal usage of Python type annotations which are ignored at runtime, type annotations for subroutines inform the PyTeal compiler about the inputs and outputs of a subroutine. Changing these values has a direct effect on the code PyTeal generates.
 
 An example of this type of subroutine is below:
 
 .. code-block:: python
+
+    from pyteal import *
 
     @Subroutine(TealType.uint64)
     def get_volume_of_rectangular_prism(
@@ -554,11 +572,15 @@ Notice that this subroutine accepts the following arguments, not all of which ar
 
 * :code:`length`: an ABI :any:`abi.Uint16` type
 * :code:`width`: an ABI :any:`abi.Uint64` type
-* :code:`height`: a PyTeal expression type
+* :code:`height`: a PyTeal :any:`Expr` type
 
-Despite some inputs being ABI types, calling this subroutine works the same as usual, except the values for the ABI type arguments must be the appropriate ABI type. For example:
+Despite some inputs being ABI types, calling this subroutine works the same as usual, except the values for the ABI type arguments must be the appropriate ABI type.
+
+The following example shows how to prepare the arguments for and call :code:`get_volume_of_rectangular_prism()`:
 
 .. code-block:: python
+
+    # This is a continuation of the previous example
 
     length = abi.Uint16()
     width = abi.Uint64()
@@ -582,9 +604,11 @@ In addition to accepting ABI types as arguments, it's also possible for a subrou
 
 As mentioned in the Computed Value section (TODO: link), operations which return ABI values instead of traditional :code:`Expr` objects need extra care. In order to solve this problem for subroutines, a new decorator, :any:`@ABIReturnSubroutine <ABIReturnSubroutine>` has been introduced.
 
-The :code:`@ABIReturnSubroutine` decorator should be used with subroutines that return an ABI value. Subroutines defined with this decorator will have two places to output information: the function return value, and a new keyword-only argument called :code:`output`. The function return value must remain an :code:`Expr`, while the :code:`output` keyword argument will contain the ABI value the subroutine wishes to return. An example is below:
+The :code:`@ABIReturnSubroutine` decorator should be used with subroutines that return an ABI value. Subroutines defined with this decorator will have two places to output information: the function return value, and a `keyword-only argument <https://peps.python.org/pep-3102/>`_ called :code:`output`. The function return value must remain an :code:`Expr`, while the :code:`output` keyword argument will contain the ABI value the subroutine wishes to return. An example is below:
 
 .. code-block:: python
+
+    from pyteal import *
 
     @ABIReturnSubroutine
     def get_account_status(
@@ -655,6 +679,8 @@ A brief example is below:
 
 .. code-block:: python
 
+    from pyteal import *
+
     @Subroutine(TealType.none)
     def opt_in_handler() -> Expr:
         return App.localPut(Txn.sender(), Bytes("opted_in_round"), Global.round())
@@ -700,6 +726,8 @@ Method can be registered in two ways.
 The first way to register a method is with the :any:`Router.add_method_handler` method, which takes an existing subroutine decorated with :code:`@ABIReturnSubroutine`. An example of this is below:
 
 .. code-block:: python
+
+    from pyteal import *
 
     router = Router(
         name="Calculator",
@@ -750,6 +778,8 @@ On the other hand, the :code:`addAndStore` method does provide a :code:`method_c
 The second way to register a method is with the :any:`Router.method` decorator placed directly on a function. This way is equivalent to the first, but has some properties that make it more convenient for some scenarios. Below is an example equivalent to the prior one, but using the :code:`Router.method` syntax:
 
 .. code-block:: python
+
+    from pyteal import *
 
     my_router = Router(
         name="Calculator",
