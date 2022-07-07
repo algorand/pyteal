@@ -62,8 +62,8 @@ def uint_decode(
     size: int,
     uintVar: ScratchVar,
     encoded: Expr,
-    startIndex: Optional[Expr],
-    endIndex: Optional[Expr],
+    start_index: Optional[Expr],
+    end_index: Optional[Expr],
     length: Optional[Expr],
 ) -> Expr:
     if size > 64:
@@ -72,21 +72,21 @@ def uint_decode(
         )
 
     if size == 64:
-        if startIndex is None:
-            if endIndex is None and length is None:
+        if start_index is None:
+            if end_index is None and length is None:
                 return uintVar.store(Btoi(encoded))
-            startIndex = Int(0)
-        return uintVar.store(ExtractUint64(encoded, startIndex))
+            start_index = Int(0)
+        return uintVar.store(ExtractUint64(encoded, start_index))
 
-    if startIndex is None:
-        startIndex = Int(0)
+    if start_index is None:
+        start_index = Int(0)
 
     if size == 8:
-        return uintVar.store(GetByte(encoded, startIndex))
+        return uintVar.store(GetByte(encoded, start_index))
     if size == 16:
-        return uintVar.store(ExtractUint16(encoded, startIndex))
+        return uintVar.store(ExtractUint16(encoded, start_index))
     if size == 32:
-        return uintVar.store(ExtractUint32(encoded, startIndex))
+        return uintVar.store(ExtractUint32(encoded, start_index))
 
     raise ValueError("Unsupported uint size: {}".format(size))
 

@@ -58,30 +58,30 @@ def test_Address_decode():
     address = bytes([0] * abi.AddressLength.Bytes)
     encoded = pt.Bytes(address)
 
-    for startIndex in (None, pt.Int(0)):
-        for endIndex in (None, pt.Int(1)):
+    for start_index in (None, pt.Int(0)):
+        for end_index in (None, pt.Int(1)):
             for length in (None, pt.Int(2)):
                 value = abi.Address()
 
-                if endIndex is not None and length is not None:
+                if end_index is not None and length is not None:
                     with pytest.raises(pt.TealInputError):
                         value.decode(
                             encoded,
-                            start_index=startIndex,
-                            end_index=endIndex,
+                            start_index=start_index,
+                            end_index=end_index,
                             length=length,
                         )
                     continue
 
                 expr = value.decode(
-                    encoded, start_index=startIndex, end_index=endIndex, length=length
+                    encoded, start_index=start_index, end_index=end_index, length=length
                 )
                 assert expr.type_of() == pt.TealType.none
                 assert expr.has_return() is False
 
                 expectedExpr = value.stored_value.store(
                     substringForDecoding(
-                        encoded, startIndex=startIndex, endIndex=endIndex, length=length
+                        encoded, start_index=start_index, end_index=end_index, length=length
                     )
                 )
                 expected, _ = expectedExpr.__teal__(options)

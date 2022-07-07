@@ -44,13 +44,13 @@ def test_ReferenceType_encode():
 def test_ReferenceType_decode():
     encoded = pt.Bytes("encoded")
     for value in (abi.Account(), abi.Asset(), abi.Application()):
-        for startIndex in (None, pt.Int(1)):
-            for endIndex in (None, pt.Int(2)):
+        for start_index in (None, pt.Int(1)):
+            for end_index in (None, pt.Int(2)):
                 for length in (None, pt.Int(3)):
                     expr = value.decode(
                         encoded,
-                        start_index=startIndex,
-                        end_index=endIndex,
+                        start_index=start_index,
+                        end_index=end_index,
                         length=length,
                     )
                     assert expr.type_of() == pt.TealType.none
@@ -58,7 +58,7 @@ def test_ReferenceType_decode():
 
                     expected_decoding = value.stored_value.store(
                         pt.GetByte(
-                            encoded, startIndex if startIndex is not None else pt.Int(0)
+                            encoded, start_index if start_index is not None else pt.Int(0)
                         )
                     )
                     expected, _ = expected_decoding.__teal__(options)

@@ -33,8 +33,8 @@ testData = [
         expectedBits=8,
         maxValue=2**8 - 1,
         checkUpperBound=True,
-        expectedDecoding=lambda encoded, startIndex, endIndex, length: pt.GetByte(
-            encoded, noneToInt0(startIndex)
+        expectedDecoding=lambda encoded, start_index, end_index, length: pt.GetByte(
+            encoded, noneToInt0(start_index)
         ),
         expectedEncoding=lambda uintType: pt.SetByte(
             pt.Bytes(b"\x00"), pt.Int(0), uintType.get()
@@ -46,8 +46,8 @@ testData = [
         expectedBits=16,
         maxValue=2**16 - 1,
         checkUpperBound=True,
-        expectedDecoding=lambda encoded, startIndex, endIndex, length: pt.ExtractUint16(
-            encoded, noneToInt0(startIndex)
+        expectedDecoding=lambda encoded, start_index, end_index, length: pt.ExtractUint16(
+            encoded, noneToInt0(start_index)
         ),
         expectedEncoding=lambda uintType: pt.Suffix(pt.Itob(uintType.get()), pt.Int(6)),
     ),
@@ -57,8 +57,8 @@ testData = [
         expectedBits=32,
         maxValue=2**32 - 1,
         checkUpperBound=True,
-        expectedDecoding=lambda encoded, startIndex, endIndex, length: pt.ExtractUint32(
-            encoded, noneToInt0(startIndex)
+        expectedDecoding=lambda encoded, start_index, end_index, length: pt.ExtractUint32(
+            encoded, noneToInt0(start_index)
         ),
         expectedEncoding=lambda uintType: pt.Suffix(pt.Itob(uintType.get()), pt.Int(4)),
     ),
@@ -68,9 +68,9 @@ testData = [
         expectedBits=64,
         maxValue=2**64 - 1,
         checkUpperBound=False,
-        expectedDecoding=lambda encoded, startIndex, endIndex, length: pt.Btoi(encoded)
-        if startIndex is None and endIndex is None and length is None
-        else pt.ExtractUint64(encoded, noneToInt0(startIndex)),
+        expectedDecoding=lambda encoded, start_index, end_index, length: pt.Btoi(encoded)
+        if start_index is None and end_index is None and length is None
+        else pt.ExtractUint64(encoded, noneToInt0(start_index)),
         expectedEncoding=lambda uintType: pt.Itob(uintType.get()),
     ),
 ]
@@ -262,21 +262,21 @@ def test_Uint_get():
 def test_Uint_decode():
     encoded = pt.Bytes("encoded")
     for test in testData:
-        for startIndex in (None, pt.Int(1)):
-            for endIndex in (None, pt.Int(2)):
+        for start_index in (None, pt.Int(1)):
+            for end_index in (None, pt.Int(2)):
                 for length in (None, pt.Int(3)):
                     value = test.uintType.new_instance()
                     expr = value.decode(
                         encoded,
-                        start_index=startIndex,
-                        end_index=endIndex,
+                        start_index=start_index,
+                        end_index=end_index,
                         length=length,
                     )
                     assert expr.type_of() == pt.TealType.none
                     assert not expr.has_return()
 
                     expectedDecoding = value.stored_value.store(
-                        test.expectedDecoding(encoded, startIndex, endIndex, length)
+                        test.expectedDecoding(encoded, start_index, end_index, length)
                     )
                     expected, _ = expectedDecoding.__teal__(options)
                     expected.addIncoming()
