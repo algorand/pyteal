@@ -84,13 +84,13 @@ def test_ArrayElement_store_into():
             expectedExpr = cast(abi.Bool, output).decodeBit(encoded, index)
         elif not elementType.is_dynamic():
             expectedExpr = output.decode(
-                encoded, startIndex=stride * index, length=stride
+                encoded, start_index=stride * index, length=stride
             )
         else:
             expectedExpr = output.decode(
                 encoded,
-                startIndex=pt.ExtractUint16(encoded, stride * index),
-                endIndex=pt.If(index + pt.Int(1) == expectedLength)
+                start_index=pt.ExtractUint16(encoded, stride * index),
+                end_index=pt.If(index + pt.Int(1) == expectedLength)
                 .Then(pt.Len(encoded))
                 .Else(pt.ExtractUint16(encoded, stride * index + pt.Int(2))),
             )
@@ -125,14 +125,14 @@ def test_ArrayElement_store_into():
             expectedExpr = cast(abi.Bool, output).decodeBit(encoded, index + pt.Int(16))
         elif not elementType.is_dynamic():
             expectedExpr = output.decode(
-                encoded, startIndex=stride * index + pt.Int(2), length=stride
+                encoded, start_index=stride * index + pt.Int(2), length=stride
             )
         else:
             expectedExpr = output.decode(
                 encoded,
-                startIndex=pt.ExtractUint16(encoded, stride * index + pt.Int(2))
+                start_index=pt.ExtractUint16(encoded, stride * index + pt.Int(2))
                 + pt.Int(2),
-                endIndex=pt.If(index + pt.Int(1) == expectedLength)
+                end_index=pt.If(index + pt.Int(1) == expectedLength)
                 .Then(pt.Len(encoded))
                 .Else(
                     pt.ExtractUint16(encoded, stride * index + pt.Int(2) + pt.Int(2))

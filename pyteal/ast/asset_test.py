@@ -1,6 +1,7 @@
 import pytest
 
 import pyteal as pt
+from pyteal.ast.maybe_test import assert_MaybeValue_equality
 
 teal2Options = pt.CompileOptions()
 teal4Options = pt.CompileOptions(version=4)
@@ -706,3 +707,62 @@ def test_asset_param_creator_valid():
 def test_asset_param_creator_invalid():
     with pytest.raises(pt.TealTypeError):
         pt.AssetParam.creator(pt.Txn.sender())
+
+
+def test_AssetHoldingObject():
+    for asset in (pt.Int(1), pt.Int(100)):
+        for account in (
+            pt.Int(7),
+            pt.Addr("QSA6K5MNJPEGO5SDSWXBM3K4UEI3Q2NCPS2OUXVJI5QPCHMVI27MFRSHKI"),
+        ):
+            obj = pt.AssetHoldingObject(asset, account)
+
+            assert obj._asset is asset
+            assert obj._account is account
+
+            assert_MaybeValue_equality(
+                obj.balance(), pt.AssetHolding.balance(account, asset), teal5Options
+            )
+            assert_MaybeValue_equality(
+                obj.frozen(), pt.AssetHolding.frozen(account, asset), teal5Options
+            )
+
+
+def test_AssetParamObject():
+    for asset in (pt.Int(1), pt.Int(100)):
+        obj = pt.AssetParamObject(asset)
+
+        assert obj._asset is asset
+
+        assert_MaybeValue_equality(
+            obj.total(), pt.AssetParam.total(asset), teal5Options
+        )
+        assert_MaybeValue_equality(
+            obj.decimals(), pt.AssetParam.decimals(asset), teal5Options
+        )
+        assert_MaybeValue_equality(
+            obj.default_frozen(), pt.AssetParam.defaultFrozen(asset), teal5Options
+        )
+        assert_MaybeValue_equality(
+            obj.unit_name(), pt.AssetParam.unitName(asset), teal5Options
+        )
+        assert_MaybeValue_equality(obj.name(), pt.AssetParam.name(asset), teal5Options)
+        assert_MaybeValue_equality(obj.url(), pt.AssetParam.url(asset), teal5Options)
+        assert_MaybeValue_equality(
+            obj.metadata_hash(), pt.AssetParam.metadataHash(asset), teal5Options
+        )
+        assert_MaybeValue_equality(
+            obj.manager_address(), pt.AssetParam.manager(asset), teal5Options
+        )
+        assert_MaybeValue_equality(
+            obj.reserve_address(), pt.AssetParam.reserve(asset), teal5Options
+        )
+        assert_MaybeValue_equality(
+            obj.freeze_address(), pt.AssetParam.freeze(asset), teal5Options
+        )
+        assert_MaybeValue_equality(
+            obj.clawback_address(), pt.AssetParam.clawback(asset), teal5Options
+        )
+        assert_MaybeValue_equality(
+            obj.creator_address(), pt.AssetParam.creator(asset), teal5Options
+        )

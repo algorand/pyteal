@@ -152,6 +152,25 @@ def not_registrable(lhs: pt.abi.Uint64, rhs: pt.Expr, *, output: pt.abi.Uint64):
     return output.set(lhs.get() * rhs)
 
 
+@pt.ABIReturnSubroutine
+def txn_amount(t: pt.abi.PaymentTransaction, *, output: pt.abi.Uint64):
+    return output.set(t.get().amount())
+
+
+@pt.ABIReturnSubroutine
+def multiple_txn(
+    appl: pt.abi.ApplicationCallTransaction,
+    axfer: pt.abi.AssetTransferTransaction,
+    pay: pt.abi.PaymentTransaction,
+    any_txn: pt.abi.Transaction,
+    *,
+    output: pt.abi.Uint64,
+):
+    return output.set(
+        appl.get().fee() + axfer.get().fee() + pay.get().fee() + any_txn.get().fee()
+    )
+
+
 GOOD_SUBROUTINE_CASES: list[pt.ABIReturnSubroutine | pt.SubroutineFnWrapper] = [
     add,
     sub,
@@ -166,6 +185,8 @@ GOOD_SUBROUTINE_CASES: list[pt.ABIReturnSubroutine | pt.SubroutineFnWrapper] = [
     dummy_doing_nothing,
     eine_constant,
     take_abi_and_log,
+    txn_amount,
+    multiple_txn,
 ]
 
 ON_COMPLETE_CASES: list[pt.EnumInt] = [
@@ -248,8 +269,8 @@ def camel_to_snake(name: str) -> str:
 
 def test_call_config():
     for cc in pt.CallConfig:
-        cond_on_cc: pt.Expr | int = cc.condition_under_config()
-        match cond_on_cc:
+        approval_cond_on_cc: pt.Expr | int = cc.approval_condition_under_config()
+        match approval_cond_on_cc:
             case pt.Expr():
                 expected_cc = (
                     (pt.Txn.application_id() == pt.Int(0))
@@ -257,11 +278,34 @@ def test_call_config():
                     else (pt.Txn.application_id() != pt.Int(0))
                 )
                 with pt.TealComponent.Context.ignoreExprEquality():
-                    assert assemble_helper(cond_on_cc) == assemble_helper(expected_cc)
+                    assert assemble_helper(approval_cond_on_cc) == assemble_helper(
+                        expected_cc
+                    )
             case int():
-                assert cond_on_cc == int(cc) & 1
+                assert approval_cond_on_cc == int(cc) & 1
             case _:
-                raise pt.TealInternalError(f"unexpected cond_on_cc {cond_on_cc}")
+                raise pt.TealInternalError(
+                    f"unexpected approval_cond_on_cc {approval_cond_on_cc}"
+                )
+
+        if cc in (pt.CallConfig.CREATE, pt.CallConfig.ALL):
+            with pytest.raises(
+                pt.TealInputError,
+                match=r"Only CallConfig.CALL or CallConfig.NEVER are valid for a clear state CallConfig, since clear state can never be invoked during creation$",
+            ):
+                cc.clear_state_condition_under_config()
+            continue
+
+        clear_state_cond_on_cc: int = cc.clear_state_condition_under_config()
+        match clear_state_cond_on_cc:
+            case 0:
+                assert cc == pt.CallConfig.NEVER
+            case 1:
+                assert cc == pt.CallConfig.CALL
+            case _:
+                raise pt.TealInternalError(
+                    f"unexpected clear_state_cond_on_cc {clear_state_cond_on_cc}"
+                )
 
 
 def test_method_config():
@@ -286,18 +330,14 @@ def test_method_config():
             match mc.clear_state:
                 case pt.CallConfig.NEVER:
                     assert mc.clear_state_cond() == 0
-                case pt.CallConfig.ALL:
-                    assert mc.clear_state_cond() == 1
                 case pt.CallConfig.CALL:
-                    with pt.TealComponent.Context.ignoreExprEquality():
-                        assert assemble_helper(
-                            mc.clear_state_cond()
-                        ) == assemble_helper(pt.Txn.application_id() != pt.Int(0))
-                case pt.CallConfig.CREATE:
-                    with pt.TealComponent.Context.ignoreExprEquality():
-                        assert assemble_helper(
-                            mc.clear_state_cond()
-                        ) == assemble_helper(pt.Txn.application_id() == pt.Int(0))
+                    assert mc.clear_state_cond() == 1
+                case pt.CallConfig.CREATE | pt.CallConfig.ALL:
+                    with pytest.raises(
+                        pt.TealInputError,
+                        match=r"Only CallConfig.CALL or CallConfig.NEVER are valid for a clear state CallConfig, since clear state can never be invoked during creation$",
+                    ):
+                        mc.clear_state_cond()
             if mc.is_never() or all(
                 getattr(mc, i) == pt.CallConfig.NEVER
                 for i, _ in approval_check_names_n_ocs
@@ -312,7 +352,9 @@ def test_method_config():
                 continue
             list_of_cc = [
                 (
-                    typing.cast(pt.CallConfig, getattr(mc, i)).condition_under_config(),
+                    typing.cast(
+                        pt.CallConfig, getattr(mc, i)
+                    ).approval_condition_under_config(),
                     oc,
                 )
                 for i, oc in approval_check_names_n_ocs
@@ -413,6 +455,7 @@ def test_wrap_handler_method_call():
     ONLY_ABI_SUBROUTINE_CASES = list(
         filter(lambda x: isinstance(x, pt.ABIReturnSubroutine), GOOD_SUBROUTINE_CASES)
     )
+
     for abi_subroutine in ONLY_ABI_SUBROUTINE_CASES:
         wrapped: pt.Expr = ASTBuilder.wrap_handler(True, abi_subroutine)
         actual: pt.TealBlock = assemble_helper(wrapped)
@@ -424,34 +467,59 @@ def test_wrap_handler_method_call():
             )
         ]
 
-        loading: list[pt.Expr]
+        app_args = [
+            arg for arg in args if arg.type_spec() not in pt.abi.TransactionTypeSpecs
+        ]
 
-        if abi_subroutine.subroutine.argument_count() > pt.METHOD_ARG_NUM_CUTOFF:
+        app_arg_cnt = len(app_args)
+
+        txn_args: list[pt.abi.Transaction] = [
+            arg for arg in args if arg.type_spec() in pt.abi.TransactionTypeSpecs
+        ]
+
+        loading: list[pt.Expr] = []
+
+        if app_arg_cnt > pt.METHOD_ARG_NUM_CUTOFF:
             sdk_last_arg = pt.abi.TupleTypeSpec(
-                *[
-                    spec
-                    for spec in typing.cast(
-                        list[pt.abi.TypeSpec],
-                        abi_subroutine.subroutine.expected_arg_types,
-                    )[pt.METHOD_ARG_NUM_CUTOFF - 1 :]
-                ]
+                *[arg.type_spec() for arg in app_args[pt.METHOD_ARG_NUM_CUTOFF - 1 :]]
             ).new_instance()
+
             loading = [
                 arg.decode(pt.Txn.application_args[index + 1])
-                for index, arg in enumerate(args[: pt.METHOD_ARG_NUM_CUTOFF - 1])
+                for index, arg in enumerate(app_args[: pt.METHOD_ARG_NUM_CUTOFF - 1])
             ]
+
             loading.append(
                 sdk_last_arg.decode(pt.Txn.application_args[pt.METHOD_ARG_NUM_CUTOFF])
             )
-            for i in range(pt.METHOD_ARG_NUM_CUTOFF - 1, len(args)):
-                loading.append(
-                    sdk_last_arg[i - pt.METHOD_ARG_NUM_CUTOFF + 1].store_into(args[i])
-                )
         else:
             loading = [
                 arg.decode(pt.Txn.application_args[index + 1])
-                for index, arg in enumerate(args)
+                for index, arg in enumerate(app_args)
             ]
+
+        if len(txn_args) > 0:
+            for idx, txn_arg in enumerate(txn_args):
+                loading.append(
+                    txn_arg._set_index(
+                        pt.Txn.group_index() - pt.Int(len(txn_args) - idx)
+                    )
+                )
+                if str(txn_arg.type_spec()) != "txn":
+                    loading.append(
+                        pt.Assert(
+                            txn_arg.get().type_enum()
+                            == txn_arg.type_spec().txn_type_enum()
+                        )
+                    )
+
+        if app_arg_cnt > pt.METHOD_ARG_NUM_CUTOFF:
+            loading.extend(
+                [
+                    sdk_last_arg[idx].store_into(val)
+                    for idx, val in enumerate(app_args[pt.METHOD_ARG_NUM_CUTOFF - 1 :])
+                ]
+            )
 
         evaluate: pt.Expr
         if abi_subroutine.type_of() != "void":
@@ -471,6 +539,40 @@ def test_wrap_handler_method_call():
             pt.TealBlock.GetReferencedScratchSlots(actual),
             pt.TealBlock.GetReferencedScratchSlots(expected),
         )
+
+
+def test_wrap_handler_method_txn_types():
+    wrapped: pt.Expr = ASTBuilder.wrap_handler(True, multiple_txn)
+    actual: pt.TealBlock = assemble_helper(wrapped)
+
+    args: list[pt.abi.Transaction] = [
+        pt.abi.ApplicationCallTransaction(),
+        pt.abi.AssetTransferTransaction(),
+        pt.abi.PaymentTransaction(),
+        pt.abi.Transaction(),
+    ]
+    output_temp = pt.abi.Uint64()
+    expected_ast = pt.Seq(
+        args[0]._set_index(pt.Txn.group_index() - pt.Int(4)),
+        pt.Assert(args[0].get().type_enum() == pt.TxnType.ApplicationCall),
+        args[1]._set_index(pt.Txn.group_index() - pt.Int(3)),
+        pt.Assert(args[1].get().type_enum() == pt.TxnType.AssetTransfer),
+        args[2]._set_index(pt.Txn.group_index() - pt.Int(2)),
+        pt.Assert(args[2].get().type_enum() == pt.TxnType.Payment),
+        args[3]._set_index(pt.Txn.group_index() - pt.Int(1)),
+        multiple_txn(*args).store_into(output_temp),
+        pt.abi.MethodReturn(output_temp),
+        pt.Approve(),
+    )
+
+    expected = assemble_helper(expected_ast)
+    with pt.TealComponent.Context.ignoreScratchSlotEquality(), pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    assert pt.TealBlock.MatchScratchSlotReferences(
+        pt.TealBlock.GetReferencedScratchSlots(actual),
+        pt.TealBlock.GetReferencedScratchSlots(expected),
+    )
 
 
 def test_wrap_handler_method_call_many_args():
@@ -556,3 +658,146 @@ def test_contract_json_obj():
     sdk_contract = sdk_abi.Contract(contract_name, method_list)
     contract = router.contract_construct()
     assert contract == sdk_contract
+
+
+def test_build_program_all_empty():
+    router = pt.Router("test")
+
+    approval, clear_state, contract = router.build_program()
+
+    expected_empty_program = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.return_),
+        ]
+    )
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert assemble_helper(approval) == expected_empty_program
+        assert assemble_helper(clear_state) == expected_empty_program
+
+    expected_contract = sdk_abi.Contract("test", [])
+    assert contract == expected_contract
+
+
+def test_build_program_approval_empty():
+    router = pt.Router(
+        "test",
+        pt.BareCallActions(clear_state=pt.OnCompleteAction.call_only(pt.Approve())),
+    )
+
+    approval, clear_state, contract = router.build_program()
+
+    expected_empty_program = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.return_),
+        ]
+    )
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert assemble_helper(approval) == expected_empty_program
+        assert assemble_helper(clear_state) != expected_empty_program
+
+    expected_contract = sdk_abi.Contract("test", [])
+    assert contract == expected_contract
+
+
+def test_build_program_clear_state_empty():
+    router = pt.Router(
+        "test", pt.BareCallActions(no_op=pt.OnCompleteAction.always(pt.Approve()))
+    )
+
+    approval, clear_state, contract = router.build_program()
+
+    expected_empty_program = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.int, 0),
+            pt.TealOp(None, pt.Op.return_),
+        ]
+    )
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert assemble_helper(approval) != expected_empty_program
+        assert assemble_helper(clear_state) == expected_empty_program
+
+    expected_contract = sdk_abi.Contract("test", [])
+    assert contract == expected_contract
+
+
+def test_build_program_clear_state_invalid_config():
+    for config in (pt.CallConfig.CREATE, pt.CallConfig.ALL):
+        bareCalls = pt.BareCallActions(
+            clear_state=pt.OnCompleteAction(action=pt.Approve(), call_config=config)
+        )
+        with pytest.raises(
+            pt.TealInputError,
+            match=r"Only CallConfig.CALL or CallConfig.NEVER are valid for a clear state CallConfig, since clear state can never be invoked during creation$",
+        ):
+            pt.Router("test", bareCalls)
+
+        router = pt.Router("test")
+
+        @pt.ABIReturnSubroutine
+        def clear_state_method():
+            return pt.Approve()
+
+        with pytest.raises(
+            pt.TealInputError,
+            match=r"Only CallConfig.CALL or CallConfig.NEVER are valid for a clear state CallConfig, since clear state can never be invoked during creation$",
+        ):
+            router.add_method_handler(
+                clear_state_method,
+                method_config=pt.MethodConfig(clear_state=config),
+            )
+
+
+def test_build_program_clear_state_valid_config():
+    action = pt.If(pt.Txn.fee() == pt.Int(4)).Then(pt.Approve()).Else(pt.Reject())
+    config = pt.CallConfig.CALL
+
+    router_with_bare_call = pt.Router(
+        "test",
+        pt.BareCallActions(
+            clear_state=pt.OnCompleteAction(action=action, call_config=config)
+        ),
+    )
+    _, actual_clear_state_with_bare_call, _ = router_with_bare_call.build_program()
+
+    expected_clear_state_with_bare_call = assemble_helper(
+        pt.Cond([pt.Txn.application_args.length() == pt.Int(0), action])
+    )
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert (
+            assemble_helper(actual_clear_state_with_bare_call)
+            == expected_clear_state_with_bare_call
+        )
+
+    router_with_method = pt.Router("test")
+
+    @pt.ABIReturnSubroutine
+    def clear_state_method():
+        return action
+
+    router_with_method.add_method_handler(
+        clear_state_method, method_config=pt.MethodConfig(clear_state=config)
+    )
+
+    _, actual_clear_state_with_method, _ = router_with_method.build_program()
+
+    expected_clear_state_with_method = assemble_helper(
+        pt.Cond(
+            [
+                pt.Txn.application_args[0]
+                == pt.MethodSignature("clear_state_method()void"),
+                pt.Seq(clear_state_method(), pt.Approve()),
+            ]
+        )
+    )
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert (
+            assemble_helper(actual_clear_state_with_method)
+            == expected_clear_state_with_method
+        )

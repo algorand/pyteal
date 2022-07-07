@@ -23,13 +23,13 @@ from pyteal.ast.subroutine import (
 from pyteal.ast.assert_ import Assert
 from pyteal.ast.cond import Cond
 from pyteal.ast.expr import Expr
-from pyteal.ast.app import OnComplete, EnumInt
-from pyteal.ast.int import Int
+from pyteal.ast.app import OnComplete
+from pyteal.ast.int import Int, EnumInt
 from pyteal.ast.seq import Seq
 from pyteal.ast.methodsig import MethodSignature
 from pyteal.ast.naryexpr import And, Or
 from pyteal.ast.txn import Txn
-from pyteal.ast.return_ import Approve
+from pyteal.ast.return_ import Approve, Reject
 
 
 class CallConfig(IntFlag):
@@ -50,7 +50,7 @@ class CallConfig(IntFlag):
     CREATE = 2
     ALL = 3
 
-    def condition_under_config(self) -> Expr | int:
+    def approval_condition_under_config(self) -> Expr | int:
         match self:
             case CallConfig.NEVER:
                 return 0
@@ -62,6 +62,19 @@ class CallConfig(IntFlag):
                 return 1
             case _:
                 raise TealInternalError(f"unexpected CallConfig {self}")
+
+    def clear_state_condition_under_config(self) -> int:
+        match self:
+            case CallConfig.NEVER:
+                return 0
+            case CallConfig.CALL:
+                return 1
+            case CallConfig.CREATE | CallConfig.ALL:
+                raise TealInputError(
+                    "Only CallConfig.CALL or CallConfig.NEVER are valid for a clear state CallConfig, since clear state can never be invoked during creation"
+                )
+            case _:
+                raise TealInputError(f"unexpected CallConfig {self}")
 
 
 CallConfig.__module__ = "pyteal"
@@ -101,7 +114,7 @@ class MethodConfig:
         else:
             cond_list = []
             for config, oc in config_oc_pairs:
-                config_cond = config.condition_under_config()
+                config_cond = config.approval_condition_under_config()
                 match config_cond:
                     case Expr():
                         cond_list.append(And(Txn.on_completion() == oc, config_cond))
@@ -116,7 +129,7 @@ class MethodConfig:
             return Or(*cond_list)
 
     def clear_state_cond(self) -> Expr | int:
-        return self.clear_state.condition_under_config()
+        return self.clear_state.clear_state_condition_under_config()
 
 
 @dataclass(frozen=True)
@@ -133,7 +146,7 @@ class OnCompleteAction:
     def __post_init__(self):
         if bool(self.call_config) ^ bool(self.action):
             raise TealInputError(
-                f"action {self.action} and call_config {str(self.call_config)} contradicts"
+                f"action {self.action} and call_config {self.call_config!r} contradicts"
             )
 
     @staticmethod
@@ -214,12 +227,16 @@ class BareCallActions:
                     cond_body = wrapped_handler
                 case CallConfig.CALL | CallConfig.CREATE:
                     cond_body = Seq(
-                        Assert(cast(Expr, oca.call_config.condition_under_config())),
+                        Assert(
+                            cast(
+                                Expr, oca.call_config.approval_condition_under_config()
+                            )
+                        ),
                         wrapped_handler,
                     )
                 case _:
                     raise TealInternalError(
-                        f"Unexpected CallConfig: {str(oca.call_config)}"
+                        f"Unexpected CallConfig: {oca.call_config!r}"
                     )
             conditions_n_branches.append(
                 CondNode(
@@ -233,29 +250,16 @@ class BareCallActions:
         if self.clear_state.is_empty():
             return None
 
-        wrapped_handler = ASTBuilder.wrap_handler(
+        # call this to make sure we error if the CallConfig is CREATE or ALL
+        self.clear_state.call_config.clear_state_condition_under_config()
+
+        return ASTBuilder.wrap_handler(
             False,
             cast(
                 Expr | SubroutineFnWrapper | ABIReturnSubroutine,
                 self.clear_state.action,
             ),
         )
-        match self.clear_state.call_config:
-            case CallConfig.ALL:
-                return wrapped_handler
-            case CallConfig.CALL | CallConfig.CREATE:
-                return Seq(
-                    Assert(
-                        cast(
-                            Expr, self.clear_state.call_config.condition_under_config()
-                        )
-                    ),
-                    wrapped_handler,
-                )
-            case _:
-                raise TealInternalError(
-                    f"Unexpected CallConfig: {str(self.clear_state.call_config)}"
-                )
 
 
 BareCallActions.__module__ = "pyteal"
@@ -342,44 +346,106 @@ class ASTBuilder:
                     f"got {handler.subroutine.argument_count()} args with {len(handler.subroutine.abi_args)} ABI args."
                 )
 
+            # All subroutine args types
             arg_type_specs = cast(
                 list[abi.TypeSpec], handler.subroutine.expected_arg_types
             )
-            if handler.subroutine.argument_count() > METHOD_ARG_NUM_CUTOFF:
-                last_arg_specs_grouped = arg_type_specs[METHOD_ARG_NUM_CUTOFF - 1 :]
-                arg_type_specs = arg_type_specs[: METHOD_ARG_NUM_CUTOFF - 1]
-                last_arg_spec = abi.TupleTypeSpec(*last_arg_specs_grouped)
-                arg_type_specs.append(last_arg_spec)
 
-            arg_abi_vars: list[abi.BaseType] = [
-                type_spec.new_instance() for type_spec in arg_type_specs
-            ]
-            decode_instructions: list[Expr] = [
-                arg_abi_vars[i].decode(Txn.application_args[i + 1])
-                for i in range(len(arg_type_specs))
+            # All subroutine arg values, initialize here and use below instead of
+            # creating new instances on the fly so we dont have to think about splicing
+            # back in the transaction types
+            arg_vals = [typespec.new_instance() for typespec in arg_type_specs]
+
+            # Only args that appear in app args
+            app_arg_vals: list[abi.BaseType] = [
+                ats for ats in arg_vals if not isinstance(ats, abi.Transaction)
             ]
 
-            if handler.subroutine.argument_count() > METHOD_ARG_NUM_CUTOFF:
-                tuple_arg_type_specs: list[abi.TypeSpec] = cast(
-                    list[abi.TypeSpec],
-                    handler.subroutine.expected_arg_types[METHOD_ARG_NUM_CUTOFF - 1 :],
-                )
-                tuple_abi_args: list[abi.BaseType] = [
-                    t_arg_ts.new_instance() for t_arg_ts in tuple_arg_type_specs
+            for aav in app_arg_vals:
+                # If we're here we know the top level isnt a Transaction but a transaction may
+                # be included in some collection type like a Tuple or Array, raise error
+                # as these are not supported
+                if abi.contains_type_spec(aav.type_spec(), abi.TransactionTypeSpecs):
+                    raise TealInputError(
+                        "A Transaction type may not be included in Tuples or Arrays"
+                    )
+
+            # assign to a var here since we modify app_arg_vals later
+            tuplify = len(app_arg_vals) > METHOD_ARG_NUM_CUTOFF
+
+            # only transaction args (these are omitted from app args)
+            txn_arg_vals: list[abi.Transaction] = [
+                ats for ats in arg_vals if isinstance(ats, abi.Transaction)
+            ]
+
+            # Tuple-ify any app args after the limit
+            if tuplify:
+                last_arg_specs_grouped: list[abi.TypeSpec] = [
+                    t.type_spec() for t in app_arg_vals[METHOD_ARG_NUM_CUTOFF - 1 :]
                 ]
-                last_tuple_arg: abi.Tuple = cast(abi.Tuple, arg_abi_vars[-1])
+                app_arg_vals = app_arg_vals[: METHOD_ARG_NUM_CUTOFF - 1]
+                app_arg_vals.append(
+                    abi.TupleTypeSpec(*last_arg_specs_grouped).new_instance()
+                )
+
+            # decode app args
+            decode_instructions: list[Expr] = [
+                app_arg.decode(Txn.application_args[idx + 1])
+                for idx, app_arg in enumerate(app_arg_vals)
+            ]
+
+            # "decode" transaction types by setting the relative index
+            if len(txn_arg_vals) > 0:
+                txn_arg_len = len(txn_arg_vals)
+                # The transactions should appear in the group in the order they're specified in the method signature
+                # and should be relative to the current transaction.
+
+                # ex:
+                # doit(axfer,pay,appl)
+                # would be 4 transactions
+                #      current_idx-3 = axfer
+                #      current_idx-2 = pay
+                #      current_idx-1 = appl
+                #      current_idx-0 = the txn that triggered the current eval (not specified but here for completeness)
+
+                # since we're iterating in order of the txns appearance in the args we
+                # subtract the current index from the total length to get the offset.
+                # and subtract that from the current index to get the absolute position
+                # in the group
+
+                txn_decode_instructions: list[Expr] = []
+
+                for idx, arg_val in enumerate(txn_arg_vals):
+                    txn_decode_instructions.append(
+                        arg_val._set_index(Txn.group_index() - Int(txn_arg_len - idx))
+                    )
+                    spec = arg_val.type_spec()
+                    if type(spec) is not abi.TransactionTypeSpec:
+                        # this is a specific transaction type
+                        txn_decode_instructions.append(
+                            Assert(arg_val.get().type_enum() == spec.txn_type_enum())
+                        )
+
+                decode_instructions += txn_decode_instructions
+
+            # de-tuple into specific values using `store_into` on
+            # each element of the tuple'd arguments
+            if tuplify:
+                tupled_abi_vals: list[abi.BaseType] = arg_vals[
+                    METHOD_ARG_NUM_CUTOFF - 1 :
+                ]
+                tupled_arg: abi.Tuple = cast(abi.Tuple, app_arg_vals[-1])
                 de_tuple_instructions: list[Expr] = [
-                    last_tuple_arg[i].store_into(tuple_abi_args[i])
-                    for i in range(len(tuple_arg_type_specs))
+                    tupled_arg[idx].store_into(arg_val)
+                    for idx, arg_val in enumerate(tupled_abi_vals)
                 ]
                 decode_instructions += de_tuple_instructions
-                arg_abi_vars = arg_abi_vars[:-1] + tuple_abi_args
 
             # NOTE: does not have to have return, can be void method
             if handler.type_of() == "void":
                 return Seq(
                     *decode_instructions,
-                    cast(Expr, handler(*arg_abi_vars)),
+                    cast(Expr, handler(*arg_vals)),
                     Approve(),
                 )
             else:
@@ -387,7 +453,7 @@ class ASTBuilder:
                     OutputKwArgInfo, handler.output_kwarg_info
                 ).abi_type.new_instance()
                 subroutine_call: abi.ReturnedValue = cast(
-                    abi.ReturnedValue, handler(*arg_abi_vars)
+                    abi.ReturnedValue, handler(*arg_vals)
                 )
                 return Seq(
                     *decode_instructions,
@@ -419,7 +485,7 @@ class ASTBuilder:
 
     def program_construction(self) -> Expr:
         if not self.conditions_n_branches:
-            raise TealInputError("ABIRouter: Cannot build program with an empty AST")
+            return Reject()
         return Cond(*[[n.condition, n.branch] for n in self.conditions_n_branches])
 
 
@@ -478,7 +544,7 @@ class Router:
         overriding_name: str = None,
         method_config: MethodConfig = None,
         description: str = None,
-    ) -> None:
+    ) -> ABIReturnSubroutine:
         if not isinstance(method_call, ABIReturnSubroutine):
             raise TealInputError(
                 "for adding method handler, must be ABIReturnSubroutine"
@@ -516,6 +582,7 @@ class Router:
         self.clear_state_ast.add_method_to_ast(
             method_signature, method_clear_state_cond, method_call
         )
+        return method_call
 
     def method(
         self,
@@ -547,7 +614,7 @@ class Router:
         # - None
         # - CallConfig.Never
         # both cases evaluate to False in if statement.
-        def wrap(_func):
+        def wrap(_func) -> ABIReturnSubroutine:
             wrapped_subroutine = ABIReturnSubroutine(_func)
             call_configs: MethodConfig
             if (
@@ -579,7 +646,9 @@ class Router:
                     update_application=_update_app,
                     delete_application=_delete_app,
                 )
-            self.add_method_handler(wrapped_subroutine, name, call_configs, description)
+            return self.add_method_handler(
+                wrapped_subroutine, name, call_configs, description
+            )
 
         if not func:
             return wrap
@@ -603,6 +672,9 @@ class Router:
         Constructs ASTs for approval and clear-state programs from the registered methods in the router,
         also generates a JSON object of contract to allow client read and call the methods easily.
 
+        Note that if no methods or bare app call actions have been registered to either the approval
+        or clear state programs, then that program will reject all transactions.
+
         Returns:
             approval_program: AST for approval program
             clear_state_program: AST for clear-state program
@@ -624,6 +696,9 @@ class Router:
         """
         Combining `build_program` and `compileTeal`, compiles built Approval and ClearState programs
         and returns Contract JSON object for off-chain calling.
+
+        Note that if no methods or bare app call actions have been registered to either the approval
+        or clear state programs, then that program will reject all transactions.
 
         Returns:
             approval_program: compiled approval program

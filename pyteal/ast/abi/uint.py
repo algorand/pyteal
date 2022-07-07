@@ -91,20 +91,24 @@ def uint_decode(
     raise ValueError("Unsupported uint size: {}".format(size))
 
 
-def uint_encode(size: int, uintVar: ScratchVar) -> Expr:
+def uint_encode(size: int, uintVar: Expr | ScratchVar) -> Expr:
+
+    if isinstance(uintVar, ScratchVar):
+        uintVar = uintVar.load()
+
     if size > 64:
         raise NotImplementedError(
             "Uint operations have not yet been implemented for bit sizes larger than 64"
         )
 
     if size == 8:
-        return SetByte(Bytes(b"\x00"), Int(0), uintVar.load())
+        return SetByte(Bytes(b"\x00"), Int(0), uintVar)
     if size == 16:
-        return Suffix(Itob(uintVar.load()), Int(6))
+        return Suffix(Itob(uintVar), Int(6))
     if size == 32:
-        return Suffix(Itob(uintVar.load()), Int(4))
+        return Suffix(Itob(uintVar), Int(4))
     if size == 64:
-        return Itob(uintVar.load())
+        return Itob(uintVar)
 
     raise ValueError("Unsupported uint size: {}".format(size))
 
@@ -261,16 +265,16 @@ class Uint(BaseType):
         self,
         encoded: Expr,
         *,
-        startIndex: Expr = None,
-        endIndex: Expr = None,
+        start_index: Expr = None,
+        end_index: Expr = None,
         length: Expr = None,
     ) -> Expr:
         return uint_decode(
             self.type_spec().bit_size(),
             self.stored_value,
             encoded,
-            startIndex,
-            endIndex,
+            start_index,
+            end_index,
             length,
         )
 

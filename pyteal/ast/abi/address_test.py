@@ -2,6 +2,7 @@ import pytest
 import pyteal as pt
 from pyteal import abi
 
+from pyteal.ast.abi.address import AddressLength
 from pyteal.ast.abi.type_test import ContainerType
 from pyteal.ast.abi.util import substringForDecoding
 
@@ -66,14 +67,14 @@ def test_Address_decode():
                     with pytest.raises(pt.TealInputError):
                         value.decode(
                             encoded,
-                            startIndex=startIndex,
-                            endIndex=endIndex,
+                            start_index=startIndex,
+                            end_index=endIndex,
                             length=length,
                         )
                     continue
 
                 expr = value.decode(
-                    encoded, startIndex=startIndex, endIndex=endIndex, length=length
+                    encoded, start_index=startIndex, end_index=endIndex, length=length
                 )
                 assert expr.type_of() == pt.TealType.none
                 assert expr.has_return() is False
@@ -201,6 +202,11 @@ def test_Address_set_expr():
             [
                 vts.ops[0],
                 pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+                pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+                pt.TealOp(None, pt.Op.len),
+                pt.TealOp(None, pt.Op.int, AddressLength.Bytes.value),
+                pt.TealOp(None, pt.Op.eq),
+                pt.TealOp(None, pt.Op.assert_),
             ]
         )
 

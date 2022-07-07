@@ -112,14 +112,14 @@ def test_StaticArray_decode():
                     with pytest.raises(pt.TealInputError):
                         value.decode(
                             encoded,
-                            startIndex=startIndex,
-                            endIndex=endIndex,
+                            start_index=startIndex,
+                            end_index=endIndex,
                             length=length,
                         )
                     continue
 
                 expr = value.decode(
-                    encoded, startIndex=startIndex, endIndex=endIndex, length=length
+                    encoded, start_index=startIndex, end_index=endIndex, length=length
                 )
                 assert expr.type_of() == pt.TealType.none
                 assert not expr.has_return()

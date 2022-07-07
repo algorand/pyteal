@@ -3,6 +3,7 @@
 
 from pyteal.ast import *
 from pyteal.ast import __all__ as ast_all
+from pyteal.pragma import pragma
 from pyteal.ir import *
 from pyteal.ir import __all__ as ir_all
 from pyteal.compiler import (
@@ -19,6 +20,7 @@ from pyteal.errors import (
     TealTypeError,
     TealInputError,
     TealCompileError,
+    TealPragmaError,
 )
 from pyteal.config import (
     MAX_GROUP_SIZE,
@@ -30,18 +32,22 @@ from pyteal.config import (
 __all__ = [
     "ABIReturnSubroutine",
     "AccountParam",
+    "AccountParamObject",
     "Add",
     "Addr",
     "And",
     "App",
     "AppField",
     "AppParam",
+    "AppParamObject",
     "Approve",
     "Arg",
     "Array",
     "Assert",
     "AssetHolding",
+    "AssetHoldingObject",
     "AssetParam",
+    "AssetParamObject",
     "Balance",
     "BareCallActions",
     "BinaryExpr",
@@ -148,6 +154,7 @@ __all__ = [
     "OptimizeOptions",
     "Or",
     "Pop",
+    "Pragma",
     "RETURN_HASH_PREFIX",
     "Reject",
     "Return",
@@ -181,6 +188,7 @@ __all__ = [
     "TealInternalError",
     "TealLabel",
     "TealOp",
+    "TealPragmaError",
     "TealSimpleBlock",
     "TealType",
     "TealTypeError",
@@ -198,4 +206,5 @@ __all__ = [
     "WideRatio",
     "abi",
     "compileTeal",
+    "pragma",
 ]
