@@ -21,7 +21,9 @@ PyTeal provides high level, functional programming style abstractions over TEAL 
 
 PyTeal requires Python version >= 3.10.
 
-To manage multiple Python versions use tooling like [pyenv](https://github.com/pyenv/pyenv).
+If your operating system (OS) Python version < 3.10, we recommend:
+* Rather than override the OS Python version, install Python  >= 3.10 alongside the OS Python version.
+* Use [pyenv](https://github.com/pyenv/pyenv#installation) or similar tooling to manage multiple Python versions.
 
 ### Recommended: Install from PyPi
 
