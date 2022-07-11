@@ -116,29 +116,29 @@ T = TypeVar("T")
 
 
 def consecutiveThingNum(
-    things: Sequence[T], startIndex: int, condition: Callable[[T], bool]
+    things: Sequence[T], start_index: int, condition: Callable[[T], bool]
 ) -> int:
     numConsecutiveThings = 0
-    for t in things[startIndex:]:
+    for t in things[start_index:]:
         if not condition(t):
             break
         numConsecutiveThings += 1
     return numConsecutiveThings
 
 
-def consecutiveBoolTypeSpecNum(types: Sequence[TypeSpec], startIndex: int) -> int:
+def consecutiveBoolTypeSpecNum(types: Sequence[TypeSpec], start_index: int) -> int:
     if len(types) != 0 and not isinstance(types[0], TypeSpec):
         raise TypeError("Sequence of types expected")
-    return consecutiveThingNum(types, startIndex, lambda t: t == BoolTypeSpec())
+    return consecutiveThingNum(types, start_index, lambda t: t == BoolTypeSpec())
 
 
-def consecutiveBoolInstanceNum(values: Sequence[BaseType], startIndex: int) -> int:
+def consecutiveBoolInstanceNum(values: Sequence[BaseType], start_index: int) -> int:
     if len(values) != 0 and not isinstance(values[0], BaseType):
         raise TypeError(
             "Sequence of types expected, but got {}".format(type(values[0]))
         )
     return consecutiveThingNum(
-        values, startIndex, lambda t: t.type_spec() == BoolTypeSpec()
+        values, start_index, lambda t: t.type_spec() == BoolTypeSpec()
     )
 
 

@@ -22,33 +22,33 @@ from pyteal.ast.abi.type import TypeSpec, BaseType
 def substringForDecoding(
     encoded: Expr,
     *,
-    startIndex: Expr = None,
-    endIndex: Expr = None,
+    start_index: Expr = None,
+    end_index: Expr = None,
     length: Expr = None,
 ) -> Expr:
     """A helper function for getting the substring to decode according to the rules of BaseType.decode."""
-    if length is not None and endIndex is not None:
-        raise TealInputError("length and endIndex are mutually exclusive arguments")
+    if length is not None and end_index is not None:
+        raise TealInputError("length and end_index are mutually exclusive arguments")
 
-    if startIndex is not None:
+    if start_index is not None:
         if length is not None:
-            # substring from startIndex to startIndex + length
-            return Extract(encoded, startIndex, length)
+            # substring from start_index to start_index + length
+            return Extract(encoded, start_index, length)
 
-        if endIndex is not None:
-            # substring from startIndex to endIndex
-            return Substring(encoded, startIndex, endIndex)
+        if end_index is not None:
+            # substring from start_index to end_index
+            return Substring(encoded, start_index, end_index)
 
-        # substring from startIndex to end of string
-        return Suffix(encoded, startIndex)
+        # substring from start_index to end of string
+        return Suffix(encoded, start_index)
 
     if length is not None:
         # substring from 0 to length
         return Extract(encoded, Int(0), length)
 
-    if endIndex is not None:
-        # substring from 0 to endIndex
-        return Substring(encoded, Int(0), endIndex)
+    if end_index is not None:
+        # substring from 0 to end_index
+        return Substring(encoded, Int(0), end_index)
 
     # the entire string
     return encoded

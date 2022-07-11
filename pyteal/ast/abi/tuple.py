@@ -174,34 +174,34 @@ def indexTuple(
 
             nextDynamicValueOffset += typeAfter.byte_length_static()
 
-        startIndex = ExtractUint16(encoded, Int(offset))
+        start_index = ExtractUint16(encoded, Int(offset))
         if not hasNextDynamicValue:
-            # This is the final dynamic value, so decode the substring from startIndex to the end of
+            # This is the final dynamic value, so decode the substring from start_index to the end of
             # encoded
-            return output.decode(encoded, start_index=startIndex)
+            return output.decode(encoded, start_index=start_index)
 
-        # There is a dynamic value after this one, and endIndex is where its tail starts, so decode
-        # the substring from startIndex to endIndex
-        endIndex = ExtractUint16(encoded, Int(nextDynamicValueOffset))
-        return output.decode(encoded, start_index=startIndex, end_index=endIndex)
+        # There is a dynamic value after this one, and end_index is where its tail starts, so decode
+        # the substring from start_index to end_index
+        end_index = ExtractUint16(encoded, Int(nextDynamicValueOffset))
+        return output.decode(encoded, start_index=start_index, end_index=end_index)
 
-    startIndex = Int(offset)
+    start_index = Int(offset)
     length = Int(valueType.byte_length_static())
 
     if index + 1 == len(valueTypes):
         if offset == 0:
             # This is the first and only value in the tuple, so decode all of encoded
             return output.decode(encoded)
-        # This is the last value in the tuple, so decode the substring from startIndex to the end of
+        # This is the last value in the tuple, so decode the substring from start_index to the end of
         # encoded
-        return output.decode(encoded, start_index=startIndex)
+        return output.decode(encoded, start_index=start_index)
 
     if offset == 0:
         # This is the first value in the tuple, so decode the substring from 0 with length length
         return output.decode(encoded, length=length)
 
-    # This is not the first or last value, so decode the substring from startIndex with length length
-    return output.decode(encoded, start_index=startIndex, length=length)
+    # This is not the first or last value, so decode the substring from start_index with length length
+    return output.decode(encoded, start_index=start_index, length=length)
 
 
 class TupleTypeSpec(TypeSpec):
@@ -289,7 +289,7 @@ class Tuple(BaseType):
         length: Expr = None,
     ) -> Expr:
         extracted = substringForDecoding(
-            encoded, startIndex=start_index, endIndex=end_index, length=length
+            encoded, start_index=start_index, end_index=end_index, length=length
         )
         return self.stored_value.store(extracted)
 

@@ -600,28 +600,31 @@ def test_TupleTypeSpec_byte_length_static():
 def test_Tuple_decode():
     encoded = pt.Bytes("encoded")
     tupleValue = abi.Tuple(abi.TupleTypeSpec(abi.Uint64TypeSpec()))
-    for startIndex in (None, pt.Int(1)):
-        for endIndex in (None, pt.Int(2)):
+    for start_index in (None, pt.Int(1)):
+        for end_index in (None, pt.Int(2)):
             for length in (None, pt.Int(3)):
-                if endIndex is not None and length is not None:
+                if end_index is not None and length is not None:
                     with pytest.raises(pt.TealInputError):
                         tupleValue.decode(
                             encoded,
-                            start_index=startIndex,
-                            end_index=endIndex,
+                            start_index=start_index,
+                            end_index=end_index,
                             length=length,
                         )
                     continue
 
                 expr = tupleValue.decode(
-                    encoded, start_index=startIndex, end_index=endIndex, length=length
+                    encoded, start_index=start_index, end_index=end_index, length=length
                 )
                 assert expr.type_of() == pt.TealType.none
                 assert not expr.has_return()
 
                 expectedExpr = tupleValue.stored_value.store(
                     substringForDecoding(
-                        encoded, startIndex=startIndex, endIndex=endIndex, length=length
+                        encoded,
+                        start_index=start_index,
+                        end_index=end_index,
+                        length=length,
                     )
                 )
                 expected, _ = expectedExpr.__teal__(options)

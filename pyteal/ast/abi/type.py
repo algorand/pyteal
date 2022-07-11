@@ -106,18 +106,18 @@ class BaseType(ABC):
         The arguments to this function are means to be as flexible as possible for the caller.
         Multiple types of substrings can be specified based on the arguments, as listed below:
 
-        * Entire string: if startIndex, endIndex, and length are all None, the entire encoded string
+        * Entire string: if start_index, end_index, and length are all None, the entire encoded string
           is decoded.
-        * Prefix: if startIndex is None and one of endIndex or length is provided, a prefix of the
-          encoded string is decoded. The range is 0 through endIndex or length (they are equivalent).
-        * Suffix: if startIndex is provided and endIndex and length are None, a suffix of the encoded
-          string is decoded. The range is startIndex through the end of the string.
-        * Substring specified with endIndex: if startIndex and endIndex are provided and length is
-          None, a substring of the encoded string is decoded. The range is startIndex through
-          endIndex.
-        * Substring specified with length: if startIndex and length are provided and endIndex is
-          None, a substring of the encoded string is decoded. The range is startIndex through
-          startIndex+length.
+        * Prefix: if start_index is None and one of end_index or length is provided, a prefix of the
+          encoded string is decoded. The range is 0 through end_index or length (they are equivalent).
+        * Suffix: if start_index is provided and end_index and length are None, a suffix of the encoded
+          string is decoded. The range is start_index through the end of the string.
+        * Substring specified with end_index: if start_index and end_index are provided and length is
+          None, a substring of the encoded string is decoded. The range is start_index through
+          end_index.
+        * Substring specified with length: if start_index and length are provided and end_index is
+          None, a substring of the encoded string is decoded. The range is start_index through
+          start_index+length.
 
         Args:
             encoded: An expression containing the bytes to decode. Must evaluate to TealType.bytes.
