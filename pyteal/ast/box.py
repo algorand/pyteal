@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from pyteal.ast.maybe import MaybeValue
 from pyteal.errors import TealInputError
 
 from pyteal.types import TealType, require_type
@@ -25,6 +26,18 @@ class Box:
     @staticmethod
     def replace(name: Expr, start: Expr, value: Expr) -> "BoxReplace":
         return BoxReplace(name, start, value)
+
+    @staticmethod
+    def length(name: Expr) -> "MaybeValue":
+        return BoxLen(name)
+
+    @staticmethod
+    def get(name: Expr) -> "MaybeValue":
+        return BoxGet(name)
+
+    @staticmethod
+    def put(name: Expr, value: Expr) -> "BoxPut":
+        return BoxPut(name, value)
 
 
 class BoxCreate(Expr):
@@ -54,7 +67,7 @@ class BoxCreate(Expr):
         )
 
     def __str__(self):
-        return "(box_create {} {})".format(self.name, self.size)
+        return f"(box_create {self.name} {self.size})"
 
     def type_of(self):
         return TealType.none
@@ -87,7 +100,7 @@ class BoxDelete(Expr):
         return TealBlock.FromOp(options, TealOp(self, Op.box_del), self.name)
 
     def __str__(self):
-        return "(box_del {})".format(self.name)
+        return f"(box_del {self.name})"
 
     def type_of(self):
         return TealType.none
@@ -170,7 +183,7 @@ class BoxExtract(Expr):
         )
 
     def __str__(self):
-        return "(box_extract {} {} {})".format(self.name, self.start, self.stop)
+        return f"(box_extract {self.name} {self.start} {self.stop})"
 
     def type_of(self):
         return TealType.bytes
@@ -180,3 +193,62 @@ class BoxExtract(Expr):
 
 
 BoxExtract.__module__ = "pyteal"
+
+
+def BoxLen(name: Expr) -> MaybeValue:
+    """
+    Get the byte length of the box specified by its name.
+
+    Args:
+        name: The key the box was created with. Must evaluate to bytes
+    """
+    require_type(name, TealType.bytes)
+    return MaybeValue(Op.box_len, TealType.uint64, args=[name])
+
+
+def BoxGet(name: Expr) -> MaybeValue:
+    """
+    Get the full contents of a box given its name.
+
+    Args:
+        name: The key the box was created with. Must evaluate to bytes
+    """
+    require_type(name, TealType.bytes)
+    return MaybeValue(Op.box_get, TealType.bytes, args=[name])
+
+
+class BoxPut(Expr):
+    """Write all contents to a box given its name."""
+
+    def __init__(self, name: Expr, value: Expr) -> None:
+        """
+        Args:
+            name: The key the box was created with. Must evaluate to bytes
+            value: The value to write to the box. Must evaluate to bytes
+        """
+
+        super().__init__()
+        require_type(name, TealType.bytes)
+        require_type(value, TealType.bytes)
+        self.name = name
+        self.value = value
+
+    def __teal__(self, options: "CompileOptions"):
+        if options.version < Op.box_put.min_version:
+            raise TealInputError(
+                f"BoxPut not available on teal version {options.version} (first available {Op.box_put.min_version})"
+            )
+
+        return TealBlock.FromOp(options, TealOp(self, Op.box_put), self.name)
+
+    def __str__(self):
+        return f"(box_put {self.name})"
+
+    def type_of(self):
+        return TealType.none
+
+    def has_return(self):
+        return False
+
+
+BoxPut.__module__ = "pyteal"

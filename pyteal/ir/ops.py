@@ -183,6 +183,9 @@ class Op(Enum):
     box_extract         = OpType("box_extract",         Mode.Application,                  7)
     box_replace         = OpType("box_replace",         Mode.Application,                  7)
     box_del             = OpType("box_del",             Mode.Application,                  7)
+    box_len             = OpType("box_len",             Mode.Application,                  7)
+    box_get             = OpType("box_get",             Mode.Application,                  7)
+    box_put             = OpType("box_put",             Mode.Application,                  7)
     # fmt: on
 
 
