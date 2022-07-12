@@ -7,6 +7,8 @@ from pyteal.ast.leafexpr import LeafExpr
 from pyteal.ast.scratch import ScratchSlot
 from pyteal.ast.seq import Seq
 
+from pyteal.errors import TealInputError
+
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
 
@@ -20,7 +22,7 @@ class MultiValue(LeafExpr):
         types: List[TealType],
         *,
         immediate_args: List[Union[int, str]] = None,
-        args: List[Expr] = None
+        args: List[Expr] = None,
     ):
         """Create a new MultiValue.
 
@@ -57,6 +59,11 @@ class MultiValue(LeafExpr):
         return ret_str
 
     def __teal__(self, options: "CompileOptions"):
+        if options.version < self.op.min_version:
+            raise TealInputError(
+                f"{self.op} not available on teal version {options.version} (first available {self.op.min_version})"
+            )
+
         tealOp = TealOp(self, self.op, *self.immediate_args)
         callStart, callEnd = TealBlock.FromOp(options, tealOp, *self.args)
 
