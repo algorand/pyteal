@@ -141,7 +141,7 @@ class BoxReplace(Expr):
         )
 
     def __str__(self):
-        return "(box_replace {} {} {})".format(self.name, self.start, self.value)
+        return f"(box_replace {self.name} {self.start} {self.value})"
 
     def type_of(self):
         return TealType.none
