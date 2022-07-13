@@ -3,8 +3,8 @@ import pytest
 import pyteal as pt
 
 options = pt.CompileOptions()
-teal4Options = pt.CompileOptions(version=4)
-teal5Options = pt.CompileOptions(version=5)
+avm4Options = pt.CompileOptions(version=4)
+avm5Options = pt.CompileOptions(version=5)
 
 
 def test_on_complete():
@@ -258,7 +258,7 @@ def test_global_get_ex_direct_ref():
         ]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -439,7 +439,7 @@ def test_app_param_approval_program_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -467,7 +467,7 @@ def test_app_param_clear_state_program_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -495,7 +495,7 @@ def test_app_param_global_num_uint_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -523,7 +523,7 @@ def test_app_param_global_num_byte_slice_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -551,7 +551,7 @@ def test_app_param_local_num_uint_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -579,7 +579,7 @@ def test_app_param_local_num_byte_slice_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -607,7 +607,7 @@ def test_app_param_extra_programs_page_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -635,7 +635,7 @@ def test_app_param_creator_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -663,7 +663,7 @@ def test_app_param_address_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 

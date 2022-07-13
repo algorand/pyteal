@@ -2,8 +2,8 @@ import pytest
 
 import pyteal as pt
 
-teal4Options = pt.CompileOptions(version=4)
-teal5Options = pt.CompileOptions(version=5)
+avm4Options = pt.CompileOptions(version=4)
+avm5Options = pt.CompileOptions(version=5)
 
 
 def test_ecdsa_decompress():
@@ -26,7 +26,7 @@ def test_ecdsa_decompress():
         ]
     )
 
-    actual, _ = pubkey.__teal__(teal5Options)
+    actual, _ = pubkey.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -60,7 +60,7 @@ def test_ecdsa_recover():
         ]
     )
 
-    actual, _ = pubkey.__teal__(teal5Options)
+    actual, _ = pubkey.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -88,7 +88,7 @@ def test_ecdsa_verify_basic():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -130,7 +130,7 @@ def test_ecdsa_verify_compressed_pk():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -175,7 +175,7 @@ def test_ecdsa_verify_recovered_pk():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -222,7 +222,7 @@ def test_ecdsa_invalid():
             pt.EcdsaCurve.Secp256k1, args[0], args[1], args[2], pubkey
         )
 
-        expr.__teal__(teal4Options)
+        expr.__teal__(avm4Options)
 
     with pytest.raises(pt.TealTypeError):
         args = [pt.Bytes("data"), pt.Bytes("sigA"), pt.Bytes("sigB")]

@@ -2,10 +2,10 @@ import pytest
 
 import pyteal as pt
 
-teal2Options = pt.CompileOptions(version=2)
-teal3Options = pt.CompileOptions(version=3)
-teal4Options = pt.CompileOptions(version=4)
-teal5Options = pt.CompileOptions(version=5)
+avm2Options = pt.CompileOptions(version=2)
+avm3Options = pt.CompileOptions(version=3)
+avm4Options = pt.CompileOptions(version=4)
+avm5Options = pt.CompileOptions(version=5)
 
 
 def test_substring_immediate_v2():
@@ -20,7 +20,7 @@ def test_substring_immediate_v2():
         ]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -39,7 +39,7 @@ def test_substring_immediate_v5():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -59,7 +59,7 @@ def test_substring_to_extract():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -82,7 +82,7 @@ def test_substring_stack_v2():
         ]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -105,7 +105,7 @@ def test_substring_stack_v5():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -126,7 +126,7 @@ def test_zero_length_substring_immediate():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -145,7 +145,7 @@ def test_substring_invalid():
         pt.Substring(pt.Bytes("my string"), pt.Int(0), pt.Txn.sender())
 
     with pytest.raises(Exception):
-        pt.Substring(pt.Bytes("my string"), pt.Int(1), pt.Int(0)).__teal__(teal5Options)
+        pt.Substring(pt.Bytes("my string"), pt.Int(1), pt.Int(0)).__teal__(avm5Options)
 
 
 def test_extract_immediate():
@@ -160,14 +160,14 @@ def test_extract_immediate():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(teal4Options)
+        expr.__teal__(avm4Options)
 
 
 def test_extract_zero():
@@ -184,14 +184,14 @@ def test_extract_zero():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(teal4Options)
+        expr.__teal__(avm4Options)
 
 
 def test_extract_stack():
@@ -209,14 +209,14 @@ def test_extract_stack():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(teal4Options)
+        expr.__teal__(avm4Options)
 
 
 def test_extract_invalid():
@@ -242,7 +242,7 @@ def test_suffix_immediate():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -265,7 +265,7 @@ def test_suffix_stack():
         ]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
