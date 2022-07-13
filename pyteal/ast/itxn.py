@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Dict, TYPE_CHECKING, List, Union, cast
 
 from pyteal.types import TealType, require_type
-from pyteal.errors import TealInputError, verifyTealVersion
+from pyteal.errors import TealInputError, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
 from pyteal.ast.txn import TxnField, TxnExprBuilder, TxnaExprBuilder, TxnObject
@@ -32,10 +32,10 @@ class InnerTxnActionExpr(Expr):
     def __teal__(self, options: "CompileOptions"):
         op = self.action.value
 
-        verifyTealVersion(
+        verifyProgramVersion(
             op.min_version,
             options.version,
-            "TEAL version too low to create inner transactions",
+            "Program version too low to create inner transactions",
         )
 
         return TealBlock.FromOp(options, TealOp(self, op))
@@ -58,10 +58,10 @@ class InnerTxnFieldExpr(Expr):
         return "(InnerTxnSetField {} {})".format(self.field.arg_name, self.value)
 
     def __teal__(self, options: "CompileOptions"):
-        verifyTealVersion(
+        verifyProgramVersion(
             Op.itxn_field.min_version,
             options.version,
-            "TEAL version too low to create inner transactions",
+            "Program version too low to create inner transactions",
         )
 
         return TealBlock.FromOp(
@@ -81,7 +81,7 @@ class InnerTxnBuilder:
     Inner transactions are transactions which applications can dynamically create. Each inner
     transaction will appear as a transaction inside of the current transaction being executed.
 
-    As of TEAL version 5, only the transaction types :any:`TxnType.Payment`, :any:`TxnType.AssetTransfer`,
+    As of program version 5, only the transaction types :any:`TxnType.Payment`, :any:`TxnType.AssetTransfer`,
     :any:`TxnType.AssetConfig`, and :any:`TxnType.AssetFreeze` are allowed. Additionally, not all
     fields are allowed to be set. For example, it is not currently allowed to set the rekeyTo field
     of an inner transaction.
@@ -96,7 +96,7 @@ class InnerTxnBuilder:
         overpaying in earlier transactions; :code:`FirstValid`/:code:`LastValid` to the values in
         the top-level transaction, and all other fields to zero values.
 
-        Requires TEAL version 5 or higher. This operation is only permitted in application mode.
+        Requires program version 5 or higher. This operation is only permitted in application mode.
         """
         return InnerTxnActionExpr(InnerTxnAction.Begin)
 
@@ -109,7 +109,7 @@ class InnerTxnBuilder:
         overpaying in earlier transactions; :code:`FirstValid`/:code:`LastValid` to the values in
         the top-level transaction, and all other fields to zero values.
 
-        Requires TEAL version 6 or higher. This operation is only permitted in application mode.
+        Requires program version 6 or higher. This operation is only permitted in application mode.
         """
         return InnerTxnActionExpr(InnerTxnAction.Next)
 
@@ -130,7 +130,7 @@ class InnerTxnBuilder:
         If the inner transaction creates an asset, the new asset ID can be found by looking at
         :any:`InnerTxn.created_asset_id() <TxnObject.created_asset_id>`.
 
-        Requires TEAL version 5 or higher. This operation is only permitted in application mode.
+        Requires program version 5 or higher. This operation is only permitted in application mode.
         """
         return InnerTxnActionExpr(InnerTxnAction.Submit)
 
@@ -144,7 +144,7 @@ class InnerTxnBuilder:
         Note: For non-array field (e.g., note), setting it twice will overwrite the original value.
               While for array field (e.g., accounts), setting it multiple times will append the values.
 
-        Requires TEAL version 5 or higher. This operation is only permitted in application mode.
+        Requires program version 5 or higher. This operation is only permitted in application mode.
 
         Args:
             field: The field to set on the inner transaction.
@@ -190,7 +190,7 @@ class InnerTxnBuilder:
         Note: For non-array field (e.g., note), setting it twice will overwrite the original value.
               While for array field (e.g., accounts), setting it multiple times will append the values.
 
-        Requires TEAL version 5 or higher. This operation is only permitted in application mode.
+        Requires program version 5 or higher. This operation is only permitted in application mode.
 
         Args:
             fields: A dictionary whose keys are fields to set and whose values are the value each

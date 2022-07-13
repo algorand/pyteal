@@ -88,7 +88,7 @@ def verifyOpsForVersion(teal: List[TealComponent], version: int):
             op = stmt.getOp()
             if op.min_version > version:
                 raise TealInputError(
-                    "Op not supported in TEAL version {}: {}. Minimum required version is {}".format(
+                    "Op not supported in program version {}: {}. Minimum required version is {}".format(
                         version, op, op.min_version
                     )
                 )
@@ -201,13 +201,13 @@ def compileTeal(
     Args:
         ast: The PyTeal expression to assemble.
         mode: The mode of the program to assemble. Must be Signature or Application.
-        version (optional): The TEAL version used to assemble the program. This will determine which
+        version (optional): The program version used to assemble the program. This will determine which
             expressions and fields are able to be used in the program and how expressions compile to
             TEAL opcodes. Defaults to 2 if not included.
         assembleConstants (optional): When true, the compiler will produce a program with fully
             assembled constants, rather than using the pseudo-ops `int`, `byte`, and `addr`. These
             constants will be assembled in the most space-efficient way, so enabling this may reduce
-            the compiled program's size. Enabling this option requires a minimum TEAL version of 3.
+            the compiled program's size. Enabling this option requires a minimum program version of 3.
             Defaults to false.
         optimize (optional): OptimizeOptions that determine which optimizations will be applied.
 
@@ -223,7 +223,7 @@ def compileTeal(
         or type(version) is not int
     ):
         raise TealInputError(
-            "Unsupported TEAL version: {}. Excepted an integer in the range [{}, {}]".format(
+            "Unsupported program version: {}. Excepted an integer in the range [{}, {}]".format(
                 version, MIN_TEAL_VERSION, MAX_TEAL_VERSION
             )
         )
@@ -265,7 +265,7 @@ def compileTeal(
     if assembleConstants:
         if version < 3:
             raise TealInternalError(
-                "The minimum TEAL version required to enable assembleConstants is 3. The current version is {}".format(
+                "The minimum program version required to enable assembleConstants is 3. The current version is {}".format(
                     version
                 )
             )

@@ -2,7 +2,7 @@ from inspect import Parameter, get_annotations, isclass, signature
 from types import MappingProxyType
 from typing import Callable, List, Optional, Type, Union, TYPE_CHECKING
 
-from pyteal.errors import TealInputError, verifyTealVersion
+from pyteal.errors import TealInputError, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.types import TealType
 
@@ -263,10 +263,10 @@ class SubroutineCall(Expr):
         2. (by-reference) In the case of a by-reference argument of type ScratchVar, its SLOT INDEX is put on the stack
             and will be stored in a local DynamicScratchVar for subroutine evaluation
         """
-        verifyTealVersion(
+        verifyProgramVersion(
             Op.callsub.min_version,
             options.version,
-            "TEAL version too low to use SubroutineCall expression",
+            "Program version too low to use SubroutineCall expression",
         )
 
         def handle_arg(arg):

@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from pyteal.types import TealType, require_type
-from pyteal.errors import verifyTealVersion
+from pyteal.errors import verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
 
@@ -22,10 +22,10 @@ class UnaryExpr(Expr):
         self.arg = arg
 
     def __teal__(self, options: "CompileOptions"):
-        verifyTealVersion(
+        verifyProgramVersion(
             self.op.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(self.op),
+            "Program version too low to use op {}".format(self.op),
         )
 
         return TealBlock.FromOp(options, TealOp(self, self.op), self.arg)
@@ -65,7 +65,7 @@ def BitLen(arg: Expr) -> UnaryExpr:
 
     If the argument is a byte array, it is interpreted as a big-endian unsigned integer.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
     """
     return UnaryExpr(Op.bitlen, TealType.anytype, TealType.uint64, arg)
 
@@ -106,7 +106,7 @@ def Sqrt(arg: Expr) -> UnaryExpr:
 
     This will return the largest integer X such that X^2 <= arg.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
     """
     return UnaryExpr(Op.sqrt, TealType.uint64, TealType.uint64, arg)
 
@@ -137,7 +137,7 @@ def MinBalance(account: Expr) -> UnaryExpr:
     must be evaluated to uint64 (or, since v4, an account address that appears in Txn.Accounts
     or is Txn.Sender).
 
-    Requires TEAL version 3 or higher. This operation is only permitted in application mode.
+    Requires program version 3 or higher. This operation is only permitted in application mode.
     """
     return UnaryExpr(Op.min_balance, TealType.anytype, TealType.uint64, account)
 
@@ -148,7 +148,7 @@ def BytesNot(arg: Expr) -> UnaryExpr:
     Produces ~arg.
     Argument must not exceed 64 bytes.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
     """
     return UnaryExpr(Op.b_not, TealType.bytes, TealType.bytes, arg)
 
@@ -158,7 +158,7 @@ def BytesSqrt(arg: Expr) -> UnaryExpr:
 
     This will return the largest integer X such that X^2 <= arg.
 
-    Requires TEAL version 6 or higher.
+    Requires program version 6 or higher.
     """
     return UnaryExpr(Op.bsqrt, TealType.bytes, TealType.bytes, arg)
 
@@ -168,7 +168,7 @@ def BytesZero(arg: Expr) -> UnaryExpr:
 
     Argument must evaluate to uint64.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
     """
     return UnaryExpr(Op.bzero, TealType.uint64, TealType.bytes, arg)
 
@@ -176,12 +176,12 @@ def BytesZero(arg: Expr) -> UnaryExpr:
 def Log(message: Expr) -> UnaryExpr:
     """Write a message to log state of the current application.
 
-    This will fail if called more than :code:`MaxLogCalls` times in a program (32 as of TEAL v5), or
+    This will fail if called more than :code:`MaxLogCalls` times in a program (32 as of AVM v5), or
     if the sum of the lengths of all logged messages in a program exceeds 1024 bytes.
 
     Args:
         message: The message to write. Must evaluate to bytes.
 
-    Requires TEAL version 5 or higher.
+    Requires program version 5 or higher.
     """
     return UnaryExpr(Op.log, TealType.bytes, TealType.none, message)

@@ -103,7 +103,7 @@ def spillLocalSlotsDuringRecursion(
     slots from being modifying by a new recursive invocation of the current subroutine.
 
     Args:
-        version: The current TEAL version being assembled.
+        version: The current program version being assembled.
         subroutineMapping: A dictionary containing a list of TealComponents for every subroutine in
             a program. The key None is taken to indicate the main program routine. This input may be
             modified by this function in order to spill subroutine slots.
@@ -209,7 +209,7 @@ def spillLocalSlotsDuringRecursion(
                                 stackDistance,
                             )
                         )
-                        # because we are stuck using dig instead of uncover in TEAL 4, we'll need to
+                        # because we are stuck using dig instead of uncover in AVM 4, we'll need to
                         # pop all of the dug up arguments after the function returns
 
                 hideReturnValueInFirstSlot = False

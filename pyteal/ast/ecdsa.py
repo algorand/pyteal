@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Tuple, TYPE_CHECKING
 
 from pyteal.ast import Expr, MultiValue
-from pyteal.errors import TealTypeError, verifyTealVersion
+from pyteal.errors import TealTypeError, verifyProgramVersion
 from pyteal.ir import Op, TealBlock, TealOp
 from pyteal.types import TealType, require_type
 
@@ -51,10 +51,10 @@ class EcdsaVerifyExpr(Expr):
         self.args = [data, sigA, sigB, pkX, pkY]
 
     def __teal__(self, options: "CompileOptions"):
-        verifyTealVersion(
+        verifyProgramVersion(
             max(self.op.min_version, self.curve.min_version),
             options.version,
-            "TEAL version too low to use op {}".format(self.op),
+            "Program version too low to use op {}".format(self.op),
         )
 
         return TealBlock.FromOp(
