@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 from pyteal.ast.maybe import MaybeValue
-from pyteal.errors import TealInputError
+from pyteal.errors import verifyTealVersion
 
 from pyteal.types import TealType, require_type
 from pyteal.ir import TealOp, Op, TealBlock
@@ -27,11 +27,11 @@ class BoxCreate(Expr):
         self.size = size
 
     def __teal__(self, options: "CompileOptions"):
-        if options.version < Op.box_create.min_version:
-            raise TealInputError(
-                f"BoxCreate not available on teal version {options.version} (first available {Op.box_create.min_version})"
-            )
-
+        verifyTealVersion(
+            Op.box_create.min_version,
+            options.version,
+            f"{Op.box_create} unavailable for low version.",
+        )
         return TealBlock.FromOp(
             options, TealOp(self, Op.box_create), self.size, self.name
         )
@@ -62,11 +62,11 @@ class BoxDelete(Expr):
         self.name = name
 
     def __teal__(self, options: "CompileOptions"):
-        if options.version < Op.box_del.min_version:
-            raise TealInputError(
-                f"BoxDelete not available on teal version {options.version} (first available {Op.box_del.min_version})"
-            )
-
+        verifyTealVersion(
+            Op.box_del.min_version,
+            options.version,
+            f"{Op.box_del} unavailable for low version.",
+        )
         return TealBlock.FromOp(options, TealOp(self, Op.box_del), self.name)
 
     def __str__(self):
@@ -101,11 +101,11 @@ class BoxReplace(Expr):
         self.value = value
 
     def __teal__(self, options: "CompileOptions"):
-        if options.version < Op.box_replace.min_version:
-            raise TealInputError(
-                f"BoxReplace not available on teal version {options.version} (first available {Op.box_del.min_version})"
-            )
-
+        verifyTealVersion(
+            Op.box_replace.min_version,
+            options.version,
+            f"{Op.box_replace} unavailable for low version.",
+        )
         return TealBlock.FromOp(
             options, TealOp(self, Op.box_replace), self.name, self.start, self.value
         )
@@ -143,11 +143,11 @@ class BoxExtract(Expr):
         self.length = length
 
     def __teal__(self, options: "CompileOptions"):
-        if options.version < Op.box_extract.min_version:
-            raise TealInputError(
-                f"BoxExtract not available on teal version {options.version} (first available {Op.box_extract.min_version})"
-            )
-
+        verifyTealVersion(
+            Op.box_extract.min_version,
+            options.version,
+            f"{Op.box_extract} unavailable for low version.",
+        )
         return TealBlock.FromOp(
             options, TealOp(self, Op.box_extract), self.name, self.start, self.length
         )
@@ -204,11 +204,11 @@ class BoxPut(Expr):
         self.value = value
 
     def __teal__(self, options: "CompileOptions"):
-        if options.version < Op.box_put.min_version:
-            raise TealInputError(
-                f"BoxPut not available on teal version {options.version} (first available {Op.box_put.min_version})"
-            )
-
+        verifyTealVersion(
+            Op.box_put.min_version,
+            options.version,
+            f"{Op.box_put} unavailable for low version.",
+        )
         return TealBlock.FromOp(
             options, TealOp(self, Op.box_put), self.name, self.value
         )

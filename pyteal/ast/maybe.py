@@ -36,7 +36,7 @@ class MaybeValue(MultiValue):
             verifyTealVersion(
                 op.min_version,
                 option.version,
-                f"{op.value} not available on lower version.",
+                f"{op.value} not available for lower version.",
             )
 
         types = [type, TealType.uint64]
