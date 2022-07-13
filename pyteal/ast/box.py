@@ -156,21 +156,21 @@ BoxReplace.__module__ = "pyteal"
 class BoxExtract(Expr):
     """Extracts bytes in a box given its name, start index and stop index."""
 
-    def __init__(self, name: Expr, start: Expr, stop: Expr) -> None:
+    def __init__(self, name: Expr, start: Expr, length: Expr) -> None:
         """
         Args:
             name: The key the box was created with. Must evaluate to bytes
             start: The byte index into the box to start reading. Must evaluate to uint64
-            stop: The byte index into the box to stop reading. Must evaluate to uint64
+            length: The byte length into the box from start to stop reading. Must evaluate to uint64
         """
 
         super().__init__()
         require_type(name, TealType.bytes)
         require_type(start, TealType.uint64)
-        require_type(stop, TealType.uint64)
+        require_type(length, TealType.uint64)
         self.name = name
         self.start = start
-        self.stop = stop
+        self.length = length
 
     def __teal__(self, options: "CompileOptions"):
         if options.version < Op.box_extract.min_version:
@@ -179,11 +179,11 @@ class BoxExtract(Expr):
             )
 
         return TealBlock.FromOp(
-            options, TealOp(self, Op.box_extract), self.name, self.start, self.stop
+            options, TealOp(self, Op.box_extract), self.name, self.start, self.length
         )
 
     def __str__(self):
-        return f"(box_extract {self.name} {self.start} {self.stop})"
+        return f"(box_extract {self.name} {self.start} {self.length})"
 
     def type_of(self):
         return TealType.bytes
@@ -239,7 +239,9 @@ class BoxPut(Expr):
                 f"BoxPut not available on teal version {options.version} (first available {Op.box_put.min_version})"
             )
 
-        return TealBlock.FromOp(options, TealOp(self, Op.box_put), self.name)
+        return TealBlock.FromOp(
+            options, TealOp(self, Op.box_put), self.name, self.value
+        )
 
     def __str__(self):
         return f"(box_put {self.name})"

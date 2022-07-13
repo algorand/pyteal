@@ -62,28 +62,134 @@ def test_box_invalid_args():
 
 
 def test_box_create_compile():
-    pass
+    name_arg: pt.Expr = pt.Bytes("eineName")
+    size_arg: pt.Expr = pt.Int(10)
+    expr: pt.Expr = pt.Box.create(name_arg, size_arg)
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(size_arg, pt.Op.int, 10),
+            pt.TealOp(name_arg, pt.Op.byte, '"eineName"'),
+            pt.TealOp(expr, pt.Op.box_create),
+        ]
+    )
+    actual, _ = expr.__teal__(teal7Options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    assert expected == actual
 
 
 def test_box_delete_compile():
-    pass
+    name_arg: pt.Expr = pt.Bytes("eineName")
+    expr: pt.Expr = pt.Box.delete(name_arg)
+
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(name_arg, pt.Op.byte, '"eineName"'), pt.TealOp(expr, pt.Op.box_del)]
+    )
+    actual, _ = expr.__teal__(teal7Options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    assert expected == actual
 
 
 def test_box_extract():
-    pass
+    name_arg: pt.Expr = pt.Bytes("eineName")
+    srt_arg: pt.Expr = pt.Int(10)
+    end_arg: pt.Expr = pt.Int(15)
+    expr: pt.Expr = pt.Box.extract(name_arg, srt_arg, end_arg)
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(name_arg, pt.Op.byte, '"eineName"'),
+            pt.TealOp(srt_arg, pt.Op.int, 10),
+            pt.TealOp(end_arg, pt.Op.int, 15),
+            pt.TealOp(expr, pt.Op.box_extract),
+        ]
+    )
+    actual, _ = expr.__teal__(teal7Options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    assert expected == actual
 
 
 def test_box_replace():
-    pass
+    name_arg: pt.Expr = pt.Bytes("eineName")
+    srt_arg: pt.Expr = pt.Int(10)
+    replace_arg: pt.Expr = pt.Bytes("replace-str")
+    expr: pt.Expr = pt.Box.replace(name_arg, srt_arg, replace_arg)
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(name_arg, pt.Op.byte, '"eineName"'),
+            pt.TealOp(srt_arg, pt.Op.int, 10),
+            pt.TealOp(replace_arg, pt.Op.byte, '"replace-str"'),
+            pt.TealOp(expr, pt.Op.box_replace),
+        ]
+    )
+    actual, _ = expr.__teal__(teal7Options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    assert expected == actual
 
 
 def test_box_length():
-    pass
+    name_arg: pt.Expr = pt.Bytes("eineName")
+    expr: pt.MultiValue = pt.Box.length(name_arg)
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(name_arg, pt.Op.byte, '"eineName"'),
+            pt.TealOp(expr, pt.Op.box_len),
+            pt.TealOp(expr.output_slots[1].store(), pt.Op.store, expr.output_slots[1]),
+            pt.TealOp(expr.output_slots[0].store(), pt.Op.store, expr.output_slots[0]),
+        ]
+    )
+    actual, _ = expr.__teal__(teal7Options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert expected == actual
 
 
 def test_box_get():
-    pass
+    name_arg: pt.Expr = pt.Bytes("eineName")
+    expr: pt.MultiValue = pt.Box.get(name_arg)
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(name_arg, pt.Op.byte, '"eineName"'),
+            pt.TealOp(expr, pt.Op.box_get),
+            pt.TealOp(expr.output_slots[1].store(), pt.Op.store, expr.output_slots[1]),
+            pt.TealOp(expr.output_slots[0].store(), pt.Op.store, expr.output_slots[0]),
+        ]
+    )
+    actual, _ = expr.__teal__(teal7Options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert expected == actual
 
 
 def test_box_put():
-    pass
+    name_arg: pt.Expr = pt.Bytes("eineName")
+    put_arg: pt.Expr = pt.Bytes("put-str")
+    expr: pt.Expr = pt.Box.put(name_arg, put_arg)
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(name_arg, pt.Op.byte, '"eineName"'),
+            pt.TealOp(put_arg, pt.Op.byte, '"put-str"'),
+            pt.TealOp(expr, pt.Op.box_put),
+        ]
+    )
+    actual, _ = expr.__teal__(teal7Options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    assert expected == actual
