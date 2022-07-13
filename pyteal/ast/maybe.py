@@ -1,6 +1,6 @@
 from typing import List, Union, TYPE_CHECKING
-from pyteal.errors import verifyTealVersion
 
+from pyteal.errors import verifyTealVersion
 from pyteal.types import TealType
 from pyteal.ir import Op
 
