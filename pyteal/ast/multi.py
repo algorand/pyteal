@@ -23,6 +23,7 @@ class MultiValue(LeafExpr):
         *,
         immediate_args: List[Union[int, str]] = None,
         args: List[Expr] = None,
+        compile_check: Callable[["CompileOptions"], None] = lambda _: None,
     ):
         """Create a new MultiValue.
 
@@ -37,6 +38,7 @@ class MultiValue(LeafExpr):
         self.types = types
         self.immediate_args = immediate_args if immediate_args is not None else []
         self.args = args if args is not None else []
+        self.compile_check = compile_check
 
         self.output_slots = [ScratchSlot() for _ in self.types]
 
@@ -59,10 +61,7 @@ class MultiValue(LeafExpr):
         return ret_str
 
     def __teal__(self, options: "CompileOptions"):
-        if options.version < self.op.min_version:
-            raise TealInputError(
-                f"{self.op} not available on teal version {options.version} (first available {self.op.min_version})"
-            )
+        self.compile_check(options)
 
         tealOp = TealOp(self, self.op, *self.immediate_args)
         callStart, callEnd = TealBlock.FromOp(options, tealOp, *self.args)
