@@ -43,7 +43,6 @@ __all__ = [
     "BitwiseNot",
     "BitwiseOr",
     "BitwiseXor",
-    "Box",
     "BoxCreate",
     "BoxDelete",
     "BoxExtract",

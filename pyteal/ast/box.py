@@ -10,36 +10,6 @@ if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
 
 
-class Box:
-    @staticmethod
-    def create(name: Expr, size: Expr) -> "BoxCreate":
-        return BoxCreate(name, size)
-
-    @staticmethod
-    def delete(name: Expr) -> "BoxDelete":
-        return BoxDelete(name)
-
-    @staticmethod
-    def extract(name: Expr, start: Expr, stop: Expr) -> "BoxExtract":
-        return BoxExtract(name, start, stop)
-
-    @staticmethod
-    def replace(name: Expr, start: Expr, value: Expr) -> "BoxReplace":
-        return BoxReplace(name, start, value)
-
-    @staticmethod
-    def length(name: Expr) -> "MaybeValue":
-        return BoxLen(name)
-
-    @staticmethod
-    def get(name: Expr) -> "MaybeValue":
-        return BoxGet(name)
-
-    @staticmethod
-    def put(name: Expr, value: Expr) -> "BoxPut":
-        return BoxPut(name, value)
-
-
 class BoxCreate(Expr):
     """Create a box with a given name and size."""
 

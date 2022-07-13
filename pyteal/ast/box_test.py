@@ -9,16 +9,16 @@ teal7Options = pt.CompileOptions(version=7)
 
 def test_compile_version_and_type():
     TEST_CASES: list[Tuple[pt.Expr, pt.TealType]] = [
-        (pt.Box.create(pt.Bytes("box"), pt.Int(10)), pt.TealType.none),
-        (pt.Box.delete(pt.Bytes("box")), pt.TealType.none),
-        (pt.Box.extract(pt.Bytes("box"), pt.Int(2), pt.Int(4)), pt.TealType.bytes),
+        (pt.BoxCreate(pt.Bytes("box"), pt.Int(10)), pt.TealType.none),
+        (pt.BoxDelete(pt.Bytes("box")), pt.TealType.none),
+        (pt.BoxExtract(pt.Bytes("box"), pt.Int(2), pt.Int(4)), pt.TealType.bytes),
         (
-            pt.Box.replace(pt.Bytes("box"), pt.Int(3), pt.Bytes("replace")),
+            pt.BoxReplace(pt.Bytes("box"), pt.Int(3), pt.Bytes("replace")),
             pt.TealType.none,
         ),
-        (pt.Box.length(pt.Bytes("box")), pt.TealType.none),
-        (pt.Box.get(pt.Bytes("box")), pt.TealType.none),
-        (pt.Box.put(pt.Bytes("box"), pt.Bytes("goonery")), pt.TealType.none),
+        (pt.BoxLen(pt.Bytes("box")), pt.TealType.none),
+        (pt.BoxGet(pt.Bytes("box")), pt.TealType.none),
+        (pt.BoxPut(pt.Bytes("box"), pt.Bytes("goonery")), pt.TealType.none),
     ]
 
     for test_case, test_case_type in TEST_CASES:
@@ -35,28 +35,28 @@ def test_compile_version_and_type():
 
 def test_box_invalid_args():
     with pytest.raises(pt.TealTypeError):
-        pt.Box.create(pt.Bytes("box"), pt.Bytes("ten"))
+        pt.BoxCreate(pt.Bytes("box"), pt.Bytes("ten"))
 
     with pytest.raises(pt.TealTypeError):
-        pt.Box.create(pt.Int(0xB06), pt.Int(10))
+        pt.BoxCreate(pt.Int(0xB06), pt.Int(10))
 
     with pytest.raises(pt.TealTypeError):
-        pt.Box.delete(pt.Int(0xB06))
+        pt.BoxDelete(pt.Int(0xB06))
 
     with pytest.raises(pt.TealTypeError):
-        pt.Box.extract(pt.Bytes("box"), pt.Int(2), pt.Bytes("three"))
+        pt.BoxExtract(pt.Bytes("box"), pt.Int(2), pt.Bytes("three"))
 
     with pytest.raises(pt.TealTypeError):
-        pt.Box.replace(pt.Bytes("box"), pt.Int(2), pt.Int(0x570FF))
+        pt.BoxReplace(pt.Bytes("box"), pt.Int(2), pt.Int(0x570FF))
 
     with pytest.raises(pt.TealTypeError):
-        pt.Box.length(pt.Int(12))
+        pt.BoxLen(pt.Int(12))
 
     with pytest.raises(pt.TealTypeError):
-        pt.Box.get(pt.Int(45))
+        pt.BoxGet(pt.Int(45))
 
     with pytest.raises(pt.TealTypeError):
-        pt.Box.put(pt.Bytes("box"), pt.Int(123))
+        pt.BoxPut(pt.Bytes("box"), pt.Int(123))
 
     return
 
@@ -64,7 +64,7 @@ def test_box_invalid_args():
 def test_box_create_compile():
     name_arg: pt.Expr = pt.Bytes("eineName")
     size_arg: pt.Expr = pt.Int(10)
-    expr: pt.Expr = pt.Box.create(name_arg, size_arg)
+    expr: pt.Expr = pt.BoxCreate(name_arg, size_arg)
 
     expected = pt.TealSimpleBlock(
         [
@@ -82,7 +82,7 @@ def test_box_create_compile():
 
 def test_box_delete_compile():
     name_arg: pt.Expr = pt.Bytes("eineName")
-    expr: pt.Expr = pt.Box.delete(name_arg)
+    expr: pt.Expr = pt.BoxDelete(name_arg)
 
     expected = pt.TealSimpleBlock(
         [pt.TealOp(name_arg, pt.Op.byte, '"eineName"'), pt.TealOp(expr, pt.Op.box_del)]
@@ -98,7 +98,7 @@ def test_box_extract():
     name_arg: pt.Expr = pt.Bytes("eineName")
     srt_arg: pt.Expr = pt.Int(10)
     end_arg: pt.Expr = pt.Int(15)
-    expr: pt.Expr = pt.Box.extract(name_arg, srt_arg, end_arg)
+    expr: pt.Expr = pt.BoxExtract(name_arg, srt_arg, end_arg)
 
     expected = pt.TealSimpleBlock(
         [
@@ -119,7 +119,7 @@ def test_box_replace():
     name_arg: pt.Expr = pt.Bytes("eineName")
     srt_arg: pt.Expr = pt.Int(10)
     replace_arg: pt.Expr = pt.Bytes("replace-str")
-    expr: pt.Expr = pt.Box.replace(name_arg, srt_arg, replace_arg)
+    expr: pt.Expr = pt.BoxReplace(name_arg, srt_arg, replace_arg)
 
     expected = pt.TealSimpleBlock(
         [
@@ -138,7 +138,7 @@ def test_box_replace():
 
 def test_box_length():
     name_arg: pt.Expr = pt.Bytes("eineName")
-    expr: pt.MultiValue = pt.Box.length(name_arg)
+    expr: pt.MultiValue = pt.BoxLen(name_arg)
 
     expected = pt.TealSimpleBlock(
         [
@@ -158,7 +158,7 @@ def test_box_length():
 
 def test_box_get():
     name_arg: pt.Expr = pt.Bytes("eineName")
-    expr: pt.MultiValue = pt.Box.get(name_arg)
+    expr: pt.MultiValue = pt.BoxGet(name_arg)
 
     expected = pt.TealSimpleBlock(
         [
@@ -179,7 +179,7 @@ def test_box_get():
 def test_box_put():
     name_arg: pt.Expr = pt.Bytes("eineName")
     put_arg: pt.Expr = pt.Bytes("put-str")
-    expr: pt.Expr = pt.Box.put(name_arg, put_arg)
+    expr: pt.Expr = pt.BoxPut(name_arg, put_arg)
 
     expected = pt.TealSimpleBlock(
         [
