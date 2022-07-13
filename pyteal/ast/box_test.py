@@ -3,8 +3,8 @@ from typing import Tuple
 import pytest
 import pyteal as pt
 
-teal6Options = pt.CompileOptions(version=6)
 teal7Options = pt.CompileOptions(version=7)
+teal8Options = pt.CompileOptions(version=8)
 
 
 def test_compile_version_and_type():
@@ -23,9 +23,9 @@ def test_compile_version_and_type():
 
     for test_case, test_case_type in TEST_CASES:
         with pytest.raises(pt.TealInputError):
-            test_case.__teal__(teal6Options)
+            test_case.__teal__(teal7Options)
 
-        test_case.__teal__(teal7Options)
+        test_case.__teal__(teal8Options)
 
         assert test_case.type_of() == test_case_type
         assert not test_case.has_return()
@@ -73,7 +73,7 @@ def test_box_create_compile():
             pt.TealOp(expr, pt.Op.box_create),
         ]
     )
-    actual, _ = expr.__teal__(teal7Options)
+    actual, _ = expr.__teal__(teal8Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -87,7 +87,7 @@ def test_box_delete_compile():
     expected = pt.TealSimpleBlock(
         [pt.TealOp(name_arg, pt.Op.byte, '"eineName"'), pt.TealOp(expr, pt.Op.box_del)]
     )
-    actual, _ = expr.__teal__(teal7Options)
+    actual, _ = expr.__teal__(teal8Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -108,7 +108,7 @@ def test_box_extract():
             pt.TealOp(expr, pt.Op.box_extract),
         ]
     )
-    actual, _ = expr.__teal__(teal7Options)
+    actual, _ = expr.__teal__(teal8Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -129,7 +129,7 @@ def test_box_replace():
             pt.TealOp(expr, pt.Op.box_replace),
         ]
     )
-    actual, _ = expr.__teal__(teal7Options)
+    actual, _ = expr.__teal__(teal8Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -148,7 +148,7 @@ def test_box_length():
             pt.TealOp(expr.output_slots[0].store(), pt.Op.store, expr.output_slots[0]),
         ]
     )
-    actual, _ = expr.__teal__(teal7Options)
+    actual, _ = expr.__teal__(teal8Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -168,7 +168,7 @@ def test_box_get():
             pt.TealOp(expr.output_slots[0].store(), pt.Op.store, expr.output_slots[0]),
         ]
     )
-    actual, _ = expr.__teal__(teal7Options)
+    actual, _ = expr.__teal__(teal8Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -188,7 +188,7 @@ def test_box_put():
             pt.TealOp(expr, pt.Op.box_put),
         ]
     )
-    actual, _ = expr.__teal__(teal7Options)
+    actual, _ = expr.__teal__(teal8Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 

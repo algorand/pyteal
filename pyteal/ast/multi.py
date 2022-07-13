@@ -7,8 +7,6 @@ from pyteal.ast.leafexpr import LeafExpr
 from pyteal.ast.scratch import ScratchSlot
 from pyteal.ast.seq import Seq
 
-from pyteal.errors import TealInputError
-
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
 

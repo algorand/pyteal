@@ -1,11 +1,15 @@
-from typing import List, Union
-
-from pyteal.ast.multi import MultiValue
+from typing import List, Union, TYPE_CHECKING
+from pyteal.errors import verifyTealVersion
 
 from pyteal.types import TealType
 from pyteal.ir import Op
+
 from pyteal.ast.expr import Expr
 from pyteal.ast.scratch import ScratchLoad, ScratchSlot
+from pyteal.ast.multi import MultiValue
+
+if TYPE_CHECKING:
+    from pyteal.compiler import CompileOptions
 
 
 class MaybeValue(MultiValue):
@@ -17,7 +21,7 @@ class MaybeValue(MultiValue):
         type: TealType,
         *,
         immediate_args: List[Union[int, str]] = None,
-        args: List[Expr] = None
+        args: List[Expr] = None,
     ):
         """Create a new MaybeValue.
 
@@ -27,8 +31,22 @@ class MaybeValue(MultiValue):
             immediate_args (optional): Immediate arguments for the op. Defaults to None.
             args (optional): Stack arguments for the op. Defaults to None.
         """
+
+        def local_version_check(option: "CompileOptions"):
+            verifyTealVersion(
+                op.min_version,
+                option.version,
+                f"{op.value} not available on lower version.",
+            )
+
         types = [type, TealType.uint64]
-        super().__init__(op, types, immediate_args=immediate_args, args=args)
+        super().__init__(
+            op,
+            types,
+            immediate_args=immediate_args,
+            args=args,
+            compile_check=local_version_check,
+        )
 
     def hasValue(self) -> ScratchLoad:
         """Check if the value exists.

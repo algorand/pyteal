@@ -50,7 +50,7 @@ BoxCreate.__module__ = "pyteal"
 
 
 class BoxDelete(Expr):
-    """Deletes a box given it's name"""
+    """Deletes a box given its name"""
 
     def __init__(self, name: Expr) -> None:
         """
