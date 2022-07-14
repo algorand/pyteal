@@ -34,9 +34,9 @@ class MaybeValue(MultiValue):
 
         def local_version_check(option: "CompileOptions"):
             verifyTealVersion(
-                op.min_version,
-                option.version,
-                f"{op.value} not available for lower version.",
+                minVersion=op.min_version,
+                version=option.version,
+                msg=f"{op.value} unavailable",
             )
 
         types = [type, TealType.uint64]

@@ -28,9 +28,9 @@ class BoxCreate(Expr):
 
     def __teal__(self, options: "CompileOptions"):
         verifyTealVersion(
-            Op.box_create.min_version,
-            options.version,
-            f"{Op.box_create} unavailable for low version.",
+            minVersion=Op.box_create.min_version,
+            version=options.version,
+            msg=f"{Op.box_create} unavailable",
         )
         return TealBlock.FromOp(
             options, TealOp(self, Op.box_create), self.size, self.name
@@ -63,9 +63,9 @@ class BoxDelete(Expr):
 
     def __teal__(self, options: "CompileOptions"):
         verifyTealVersion(
-            Op.box_del.min_version,
-            options.version,
-            f"{Op.box_del} unavailable for low version.",
+            minVersion=Op.box_del.min_version,
+            version=options.version,
+            msg=f"{Op.box_del} unavailable",
         )
         return TealBlock.FromOp(options, TealOp(self, Op.box_del), self.name)
 
@@ -102,9 +102,9 @@ class BoxReplace(Expr):
 
     def __teal__(self, options: "CompileOptions"):
         verifyTealVersion(
-            Op.box_replace.min_version,
-            options.version,
-            f"{Op.box_replace} unavailable for low version.",
+            minVersion=Op.box_replace.min_version,
+            version=options.version,
+            msg=f"{Op.box_replace} unavailable",
         )
         return TealBlock.FromOp(
             options, TealOp(self, Op.box_replace), self.name, self.start, self.value
@@ -144,9 +144,9 @@ class BoxExtract(Expr):
 
     def __teal__(self, options: "CompileOptions"):
         verifyTealVersion(
-            Op.box_extract.min_version,
-            options.version,
-            f"{Op.box_extract} unavailable for low version.",
+            minVersion=Op.box_extract.min_version,
+            version=options.version,
+            msg=f"{Op.box_extract} unavailable",
         )
         return TealBlock.FromOp(
             options, TealOp(self, Op.box_extract), self.name, self.start, self.length
@@ -205,9 +205,9 @@ class BoxPut(Expr):
 
     def __teal__(self, options: "CompileOptions"):
         verifyTealVersion(
-            Op.box_put.min_version,
-            options.version,
-            f"{Op.box_put} unavailable for low version.",
+            minVersion=Op.box_put.min_version,
+            version=options.version,
+            msg=f"{Op.box_put} unavailable",
         )
         return TealBlock.FromOp(
             options, TealOp(self, Op.box_put), self.name, self.value
