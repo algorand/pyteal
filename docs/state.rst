@@ -13,14 +13,22 @@ slices. There are multiple types of state that an application can use.
 State Operation Table
 ---------------------
 
-================== ==================== ====================== ==================== ======================
-Context              Write                Read                 Delete               Check If Exists
-================== ==================== ====================== ==================== ======================
-Current App Global :any:`App.globalPut` :any:`App.globalGet`   :any:`App.globalDel` :any:`App.globalGetEx`
-Current App Local  :any:`App.localPut`  :any:`App.localGet`    :any:`App.localDel`  :any:`App.localGetEx`
-Other App Global                        :any:`App.globalGetEx`                      :any:`App.globalGetEx`
-Other App Local                         :any:`App.localGetEx`                       :any:`App.localGetEx`
-================== ==================== ====================== ==================== ======================
+================== ======================= ======================== ======================== ===================== ======================
+Context            Create                  Write                    Read                     Delete                Check If Exists
+================== ======================= ======================== ======================== ===================== ======================
+Current App Global                         :any:`App.globalPut`     :any:`App.globalGet`     :any:`App.globalDel`  :any:`App.globalGetEx`
+Current App Local                          :any:`App.localPut`      :any:`App.localGet`      :any:`App.localDel`   :any:`App.localGetEx`
+Other App Global                                                    :any:`App.globalGetEx`                         :any:`App.globalGetEx`
+Other App Local                                                     :any:`App.localGetEx`                          :any:`App.localGetEx`
+Current App Boxes  | :any:`App.box_create` | :any:`App.box_put`     | :any:`App.box_extract` :any:`App.box_delete` :any:`App.box_length`
+                   | :any:`App.box_put`    | :any:`App.box_replace` | :any:`App.box_get`
+================== ======================= ======================== ======================== ===================== ======================
+
+TODO: **probably mention boxes availability (global accessibility for read, only current app for write?)**
+
+TODO: **also mention how MinBalance Requirement (MBR model differs from the ones in global/local state.**
+
+TODO: **5 categories for box manipulation**
 
 Global State
 ------------
@@ -244,3 +252,52 @@ For example:
         otherAppOtherAccountRole,
         If(otherAppOtherAccountRole.hasValue(), otherAppOtherAccountRole.value(), Bytes("none"))
     ])
+
+Local Boxes
+-----------
+
+Local boxes consist of key-value pairs that are stored in application's local context.
+It can be manipulated as follows:
+
+Create Local Boxes
+~~~~~~~~~~~~~~~~~~
+
+To create a local box, use :any:`App.box_create`, or :any:`App.box_put` function.
+
+For :any:`App.box_create`, the first argument is the box name, and the second argument is the byte size to be allocated.
+For example:
+
+.. code-block:: python
+
+    # Allocate a box called "BoxForAlice" of byte size 100
+    App.box_create(Bytes("BoxForAlice"), Int(100))
+    # Allocate a box called "BoxForBob" of byte size 90
+    App.box_create(Bytes("BoxForBob"), Int(90))
+
+For :any:`App.box_put`, the first argument is the box name to create or to write to, and the second argument is the bytes to write.
+The distinction is that: if the box exists, then :any:`App.box_put` will write the contents to the box;
+otherwise, it will create a box with with allocated byte size equivalent to the content byte length.
+
+.. code-block:: python
+
+    # create a 42 bytes length box called `poemLine` with content
+    App.box_put(Bytes("poemLine"), Bytes("Of that colossal wreck, boundless and bare"))
+    # write to box `poemLine` with new value
+    App.box_put(Bytes("poemLine"), Bytes("The lone and level sands stretch far away."))
+
+Writing Local Boxes
+~~~~~~~~~~~~~~~~~~~
+
+
+Reading Local Boxes
+~~~~~~~~~~~~~~~~~~~
+
+
+Deleting Local Boxes
+~~~~~~~~~~~~~~~~~~~~
+
+
+Check if Local Box Exists
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
