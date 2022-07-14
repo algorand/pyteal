@@ -91,9 +91,9 @@ class App(LeafExpr):
             account: An index into Txn.Accounts that corresponds to the account to check,
                 must be evaluated to uint64 (or, since v4, an account address that appears in
                 Txn.Accounts or is Txn.Sender, must be evaluated to bytes).
-            app: An index into Txn.ForeignApps that corresponds to the application to read from,
+            app: An index into Txn.applications that corresponds to the application to read from,
                 must be evaluated to uint64 (or, since v4, an application id that appears in
-                Txn.ForeignApps or is the CurrentApplicationID, must be evaluated to int).
+                Txn.applications or is the CurrentApplicationID, must be evaluated to int).
         """
         require_type(account, TealType.anytype)
         require_type(app, TealType.uint64)
@@ -121,9 +121,9 @@ class App(LeafExpr):
             account: An index into Txn.Accounts that corresponds to the account to check,
                 must be evaluated to uint64 (or, since v4, an account address that appears in
                 Txn.Accounts or is Txn.Sender, must be evaluated to bytes).
-            app: An index into Txn.ForeignApps that corresponds to the application to read from,
+            app: An index into Txn.applications that corresponds to the application to read from,
                 must be evaluated to uint64 (or, since v4, an application id that appears in
-                Txn.ForeignApps or is the CurrentApplicationID, must be evaluated to int).
+                Txn.applications or is the CurrentApplicationID, must be evaluated to int).
             key: The key to read from the account's local state. Must evaluate to bytes.
         """
         require_type(account, TealType.anytype)
@@ -148,9 +148,9 @@ class App(LeafExpr):
         """Read from the global state of an application.
 
         Args:
-            app: An index into Txn.ForeignApps that corresponds to the application to read from,
+            app: An index into Txn.applications that corresponds to the application to read from,
                 must be evaluated to uint64 (or, since v4, an application id that appears in
-                Txn.ForeignApps or is the CurrentApplicationID, must be evaluated to uint64).
+                Txn.applications or is the CurrentApplicationID, must be evaluated to uint64).
             key: The key to read from the global application state. Must evaluate to bytes.
         """
         require_type(app, TealType.uint64)
@@ -221,7 +221,7 @@ class AppParam:
         """Get the bytecode of Approval Program for the application.
 
         Args:
-            app: An index into Txn.ForeignApps that correspond to the application to check.
+            app: An index into Txn.applications that correspond to the application to check.
                 Must evaluate to uint64.
         """
         require_type(app, TealType.uint64)
@@ -237,7 +237,7 @@ class AppParam:
         """Get the bytecode of Clear State Program for the application.
 
         Args:
-            app: An index into Txn.ForeignApps that correspond to the application to check.
+            app: An index into Txn.applications that correspond to the application to check.
                 Must evaluate to uint64.
         """
         require_type(app, TealType.uint64)
@@ -253,7 +253,7 @@ class AppParam:
         """Get the number of uint64 values allowed in Global State for the application.
 
         Args:
-            app: An index into Txn.ForeignApps that correspond to the application to check.
+            app: An index into Txn.applications that correspond to the application to check.
                 Must evaluate to uint64.
         """
         require_type(app, TealType.uint64)
@@ -269,7 +269,7 @@ class AppParam:
         """Get the number of byte array values allowed in Global State for the application.
 
         Args:
-            app: An index into Txn.ForeignApps that correspond to the application to check.
+            app: An index into Txn.applications that correspond to the application to check.
                 Must evaluate to uint64.
         """
         require_type(app, TealType.uint64)
@@ -285,7 +285,7 @@ class AppParam:
         """Get the number of uint64 values allowed in Local State for the application.
 
         Args:
-            app: An index into Txn.ForeignApps that correspond to the application to check.
+            app: An index into Txn.applications that correspond to the application to check.
                 Must evaluate to uint64.
         """
         require_type(app, TealType.uint64)
@@ -301,7 +301,7 @@ class AppParam:
         """Get the number of byte array values allowed in Local State for the application.
 
         Args:
-            app: An index into Txn.ForeignApps that correspond to the application to check.
+            app: An index into Txn.applications that correspond to the application to check.
                 Must evaluate to uint64.
         """
         require_type(app, TealType.uint64)
@@ -317,7 +317,7 @@ class AppParam:
         """Get the number of Extra Program Pages of code space for the application.
 
         Args:
-            app: An index into Txn.ForeignApps that correspond to the application to check.
+            app: An index into Txn.applications that correspond to the application to check.
                 Must evaluate to uint64.
         """
         require_type(app, TealType.uint64)
@@ -333,7 +333,7 @@ class AppParam:
         """Get the creator address for the application.
 
         Args:
-            app: An index into Txn.ForeignApps that correspond to the application to check.
+            app: An index into Txn.applications that correspond to the application to check.
                 Must evaluate to uint64.
         """
         require_type(app, TealType.uint64)
@@ -346,7 +346,7 @@ class AppParam:
         """Get the escrow address for the application.
 
         Args:
-            app: An index into Txn.ForeignApps that correspond to the application to check.
+            app: An index into Txn.applications that correspond to the application to check.
                 Must evaluate to uint64.
         """
         require_type(app, TealType.uint64)
