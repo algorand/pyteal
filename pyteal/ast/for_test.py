@@ -194,3 +194,36 @@ def test_invalid_for():
             .Do(pt.Continue())
         )
         expr.__str__()
+
+
+def test_for_multi():
+    i = pt.ScratchVar()
+    items = [
+        (i.store(pt.Int(0))),
+        i.load() < pt.Int(10),
+        i.store(i.load() + pt.Int(1)),
+        [pt.Pop(pt.Int(1)), pt.App.globalPut(pt.Itob(i.load()), i.load() * pt.Int(2))],
+    ]
+    expr = pt.For(items[0], items[1], items[2]).Do(*items[3])
+
+    assert expr.type_of() == pt.TealType.none
+    assert not expr.has_return()
+
+    expected, varEnd = items[0].__teal__(options)
+    condStart, condEnd = items[1].__teal__(options)
+    stepStart, stepEnd = items[2].__teal__(options)
+    do, doEnd = pt.Seq(items[3]).__teal__(options)
+    expectedBranch = pt.TealConditionalBlock([])
+    end = pt.TealSimpleBlock([])
+
+    varEnd.setNextBlock(condStart)
+    doEnd.setNextBlock(stepStart)
+
+    expectedBranch.setTrueBlock(do)
+    expectedBranch.setFalseBlock(end)
+    condEnd.setNextBlock(expectedBranch)
+    stepEnd.setNextBlock(condStart)
+
+    actual, _ = expr.__teal__(options)
+
+    assert actual == expected
