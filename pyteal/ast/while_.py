@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, List, Optional
+from pyteal.ast.seq import use_seq_if_multiple
 
 from pyteal.errors import TealCompileError
 from pyteal.types import TealType, require_type
@@ -70,9 +71,12 @@ class While(Expr):
     def has_return(self):
         return False
 
-    def Do(self, doBlock: Expr):
+    def Do(self, doBlock: Expr, *doBlockMulti: List[Expr]):
         if self.doBlock is not None:
             raise TealCompileError("While expression already has a doBlock", self)
+
+        doBlock = use_seq_if_multiple(doBlock, *doBlockMulti)
+
         require_type(doBlock, TealType.none)
         self.doBlock = doBlock
         return self
