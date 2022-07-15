@@ -237,7 +237,7 @@ class App(LeafExpr):
         Deletes a box given it's name.
 
         Args:
-            name: The key the box was created with. Must evaluate to bytes
+            name: The key the box was created with. Must evaluate to bytes.
         """
         return BoxDelete(name)
 
@@ -247,9 +247,9 @@ class App(LeafExpr):
         Extracts bytes in a box given its name, start index and stop index.
 
         Args:
-            name: The key the box was created with. Must evaluate to bytes
-            start: The byte index into the box to start reading. Must evaluate to uint64
-            length: The byte length into the box from start to stop reading. Must evaluate to uint64
+            name: The key the box was created with. Must evaluate to bytes.
+            start: The byte index into the box to start reading. Must evaluate to uint64.
+            length: The byte length into the box from start to stop reading. Must evaluate to uint64.
         """
         return BoxExtract(name, start, length)
 
@@ -259,9 +259,9 @@ class App(LeafExpr):
         Replaces bytes in a box given its name, start index, and value.
 
         Args:
-            name: The key the box was created with. Must evaluate to bytes
-            start: The byte index into the box to start writing. Must evaluate to uint64
-            value: The value to start writing at start index. Must evaluate to bytes
+            name: The key the box was created with. Must evaluate to bytes.
+            start: The byte index into the box to start writing. Must evaluate to uint64.
+            value: The value to start writing at start index. Must evaluate to bytes.
         """
         return BoxReplace(name, start, value)
 
@@ -271,7 +271,7 @@ class App(LeafExpr):
         Get the byte length of the box specified by its name.
 
         Args:
-            name: The key the box was created with. Must evaluate to bytes
+            name: The key the box was created with. Must evaluate to bytes.
         """
         return BoxLen(name)
 
@@ -281,7 +281,7 @@ class App(LeafExpr):
         Get the full contents of a box given its name.
 
         Args:
-            name: The key the box was created with. Must evaluate to bytes
+            name: The key the box was created with. Must evaluate to bytes.
         """
         return BoxGet(name)
 
@@ -291,8 +291,8 @@ class App(LeafExpr):
         Write all contents to a box given its name.
 
         Args:
-            name: The key the box was created with. Must evaluate to bytes
-            value: The value to write to the box. Must evaluate to bytes
+            name: The key the box was created with. Must evaluate to bytes.
+            value: The value to write to the box. Must evaluate to bytes.
         """
         return BoxPut(name, value)
 

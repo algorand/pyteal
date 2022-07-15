@@ -50,12 +50,12 @@ BoxCreate.__module__ = "pyteal"
 
 
 class BoxDelete(Expr):
-    """Deletes a box given its name"""
+    """Deletes a box given its name."""
 
     def __init__(self, name: Expr) -> None:
         """
         Args:
-            name: The key the box was created with. Must evaluate to bytes
+            name: The key the box was created with. Must evaluate to bytes.
         """
         super().__init__()
         require_type(name, TealType.bytes)
@@ -83,14 +83,14 @@ BoxDelete.__module__ = "pyteal"
 
 
 class BoxReplace(Expr):
-    """Replaces bytes in a box given its name, start index, and value"""
+    """Replaces bytes in a box given its name, start index, and value."""
 
     def __init__(self, name: Expr, start: Expr, value: Expr) -> None:
         """
         Args:
-            name: The key the box was created with. Must evaluate to bytes
-            start: The byte index into the box to start writing. Must evaluate to uint64
-            value: The value to start writing at start index. Must evaluate to bytes
+            name: The key the box was created with. Must evaluate to bytes.
+            start: The byte index into the box to start writing. Must evaluate to uint64.
+            value: The value to start writing at start index. Must evaluate to bytes.
         """
         super().__init__()
         require_type(name, TealType.bytes)
@@ -129,9 +129,9 @@ class BoxExtract(Expr):
     def __init__(self, name: Expr, start: Expr, length: Expr) -> None:
         """
         Args:
-            name: The key the box was created with. Must evaluate to bytes
-            start: The byte index into the box to start reading. Must evaluate to uint64
-            length: The byte length into the box from start to stop reading. Must evaluate to uint64
+            name: The key the box was created with. Must evaluate to bytes.
+            start: The byte index into the box to start reading. Must evaluate to uint64.
+            length: The byte length into the box from start to stop reading. Must evaluate to uint64.
         """
 
         super().__init__()
@@ -170,7 +170,7 @@ def BoxLen(name: Expr) -> MaybeValue:
     Get the byte length of the box specified by its name.
 
     Args:
-        name: The key the box was created with. Must evaluate to bytes
+        name: The key the box was created with. Must evaluate to bytes.
     """
     require_type(name, TealType.bytes)
     return MaybeValue(Op.box_len, TealType.uint64, args=[name])
@@ -181,7 +181,7 @@ def BoxGet(name: Expr) -> MaybeValue:
     Get the full contents of a box given its name.
 
     Args:
-        name: The key the box was created with. Must evaluate to bytes
+        name: The key the box was created with. Must evaluate to bytes.
     """
     require_type(name, TealType.bytes)
     return MaybeValue(Op.box_get, TealType.bytes, args=[name])
@@ -193,8 +193,8 @@ class BoxPut(Expr):
     def __init__(self, name: Expr, value: Expr) -> None:
         """
         Args:
-            name: The key the box was created with. Must evaluate to bytes
-            value: The value to write to the box. Must evaluate to bytes
+            name: The key the box was created with. Must evaluate to bytes.
+            value: The value to write to the box. Must evaluate to bytes.
         """
 
         super().__init__()
