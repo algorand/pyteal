@@ -1,4 +1,5 @@
 from typing import List, cast, TYPE_CHECKING
+from pyteal.ast.seq import use_seq_if_multiple
 
 from pyteal.types import TealType, require_type
 from pyteal.ir import TealOp, Op, TealSimpleBlock, TealConditionalBlock
@@ -7,6 +8,24 @@ from pyteal.ast.expr import Expr
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
+
+
+def reformat_multi_argv(argv: List[List[Expr]]) -> List[List[Expr]]:
+    """Reformat a list of lists of expressions with potentially multiple value expressions into a list of lists of expressions with only one value expression
+        by using Seq blocks where appropriate.
+
+    Example:
+        [ [a, b, c], [d, e, f] ] -> [ [a, Seq(b, c)], [d, Seq(e, f)] ]
+    """
+    reformatted = []
+    for arg in argv:
+        # Note: this is not a valid Cond arg, but will be caught later in Cond.__init__()
+        if len(arg) <= 1:
+            reformatted.append(arg)
+        else:
+            reformatted.append([arg[0], use_seq_if_multiple(arg[1:])])
+
+    return reformatted
 
 
 class Cond(Expr):
@@ -36,8 +55,9 @@ class Cond(Expr):
             raise TealInputError("Cond requires at least one [condition, value]")
 
         value_type = None
+        sequenced_argv = reformat_multi_argv(argv)
 
-        for arg in argv:
+        for arg in sequenced_argv:
             msg = "Cond should be in the form of Cond([cond1, value1], [cond2, value2], ...), error in {}"
             if not isinstance(arg, list):
                 raise TealInputError(msg.format(arg))
@@ -52,7 +72,7 @@ class Cond(Expr):
                 require_type(arg[1], value_type)
 
         self.value_type = value_type
-        self.args = argv
+        self.args = sequenced_argv
 
     def __teal__(self, options: "CompileOptions"):
         start = None
