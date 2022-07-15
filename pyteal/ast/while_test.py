@@ -143,7 +143,9 @@ def test_while_invalid():
 
     with pytest.raises(pt.TealTypeError):
         expr = pt.While(pt.Int(2)).Do(pt.Int(2))
-        expr.__str__()
+
+    with pytest.raises(pt.TealTypeError):
+        expr = pt.While(pt.Int(2)).Do(pt.Pop(pt.Int(2)), pt.Int(2))
 
     with pytest.raises(pt.TealCompileError):
         expr = pt.While(pt.Int(0)).Do(pt.Continue()).Do(pt.Continue())

@@ -125,6 +125,12 @@ def test_cond_invalid():
     with pytest.raises(pt.TealTypeError):
         pt.Cond([pt.Arg(0), pt.Int(2)])
 
+    with pytest.raises(pt.TealTypeError):
+        pt.Cond([pt.Int(1), pt.Int(2)], [pt.Int(2), pt.Pop(pt.Int(2))])
+
+    with pytest.raises(pt.TealTypeError):
+        pt.Cond([pt.Int(1), pt.Pop(pt.Int(1))], [pt.Int(2), pt.Int(2)])
+
 
 def test_cond_two_pred_multi():
     args = [

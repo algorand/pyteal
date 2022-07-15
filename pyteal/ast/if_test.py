@@ -256,6 +256,10 @@ def test_if_invalid_alt_syntax():
         expr = pt.If(pt.Int(0)).Then(pt.Int(2))
         expr.type_of()
 
+    with pytest.raises(pt.TealTypeError):
+        expr = pt.If(pt.Int(0)).Then(pt.Pop(pt.Int(1)), pt.Int(2))
+        expr.type_of()
+
     with pytest.raises(pt.TealInputError):
         pt.If(pt.Int(0)).Else(pt.Int(1)).Then(pt.Int(2))
 

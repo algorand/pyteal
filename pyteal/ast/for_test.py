@@ -187,6 +187,12 @@ def test_invalid_for():
             pt.Int(0)
         )
 
+    with pytest.raises(pt.TealTypeError):
+        i = pt.ScratchVar()
+        expr = pt.For(i.store(pt.Int(0)), pt.Int(1), i.store(i.load() + pt.Int(1))).Do(
+            pt.Pop(pt.Int(1)), pt.Int(2)
+        )
+
     with pytest.raises(pt.TealCompileError):
         expr = (
             pt.For(i.store(pt.Int(0)), pt.Int(1), i.store(i.load() + pt.Int(1)))

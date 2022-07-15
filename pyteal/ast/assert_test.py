@@ -61,8 +61,8 @@ def test_teal_3_assert_multi():
     assert expr.type_of() == pt.TealType.none
 
     expected = pt.TealSimpleBlock(
-        [pt.TealOp(args[0], pt.Op.int, 1), pt.TealOp(expr, pt.Op.assert_)] + 
-        [pt.TealOp(args[1], pt.Op.int, 2), pt.TealOp(expr, pt.Op.assert_)]
+        [pt.TealOp(args[0], pt.Op.int, 1), pt.TealOp(expr, pt.Op.assert_)]
+        + [pt.TealOp(args[1], pt.Op.int, 2), pt.TealOp(expr, pt.Op.assert_)]
     )
 
     actual, _ = expr.__teal__(teal3Options)
@@ -76,3 +76,6 @@ def test_teal_3_assert_multi():
 def test_assert_invalid():
     with pytest.raises(pt.TealTypeError):
         pt.Assert(pt.Txn.receiver())
+
+    with pytest.raises(pt.TealTypeError):
+        pt.Assert(pt.Int(1), pt.Txn.receiver())
