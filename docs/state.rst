@@ -262,7 +262,7 @@ It can be manipulated as follows:
 Create Local Boxes
 ~~~~~~~~~~~~~~~~~~
 
-To create a local box, use :any:`App.box_create`, or :any:`App.box_put` function.
+To create a local box, use :any:`App.box_create`, or :any:`App.box_put` method.
 
 For :any:`App.box_create`, the first argument is the box name, and the second argument is the byte size to be allocated.
 For example:
@@ -288,16 +288,57 @@ otherwise, it will create a box with with allocated byte size equivalent to the 
 Writing Local Boxes
 ~~~~~~~~~~~~~~~~~~~
 
+To write to a local box, use :any:`App.box_replace`, or :any:`App.box_put` method.
+
+For :any:`App.box_replace`,
+For example:
+
+.. code-block:: python
+
+
+
+For :any:`App.box_put`,
+For example:
+
+.. code-block:: python
+
 
 Reading Local Boxes
 ~~~~~~~~~~~~~~~~~~~
+
+To read from a local box, use :any:`App.box_extract`, or `App.box_get` method.
+
+For :any:`App.box_extract`,
+For example:
+
+.. code-block:: python
+
+For :any:`App.box_get`,
+For example:
+
+.. code-block:: python
 
 
 Deleting Local Boxes
 ~~~~~~~~~~~~~~~~~~~~
 
+To delete a local box, use :any:`App.box_delete` method.
+The only argument is the box name. For example:
+
+.. code-block:: python
+
+    App.box_delete(Bytes("boxToRemove"))
 
 Check if Local Box Exists
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
+To check the existence of a local box, use :any:`App.box_length` method.
+The only argument is the box name, and it returns a :any:`MaybeValue` containing:
 
+- a boolean value tells if the box exists
+- and the actual byte size of the box. For example:
+
+.. code-block:: python
+
+   # search for the box length for box `someBox`, and get the bool value for box existence
+   App.box_length(Bytes("someBox")).hasValue()
