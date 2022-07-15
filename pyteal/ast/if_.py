@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from pyteal.errors import (
     TealCompileError,
@@ -7,6 +7,7 @@ from pyteal.errors import (
 from pyteal.types import TealType, require_type
 from pyteal.ir import TealSimpleBlock, TealConditionalBlock
 from pyteal.ast.expr import Expr
+from pyteal.ast.seq import use_seq_if_multiple
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
@@ -99,9 +100,11 @@ class If(Expr):
         # otherwise, this expression has a return op only if both branches result in a return op
         return self.thenBranch.has_return() and self.elseBranch.has_return()
 
-    def Then(self, thenBranch: Expr):
+    def Then(self, thenBranch: Expr, *thenBranchMulti: List[Expr]):
         if not self.alternateSyntaxFlag:
             raise TealInputError("Cannot mix two different If syntax styles")
+
+        thenBranch = use_seq_if_multiple(thenBranch, *thenBranchMulti)
 
         if not self.elseBranch:
             self.thenBranch = thenBranch
@@ -123,12 +126,14 @@ class If(Expr):
             self.elseBranch.ElseIf(cond)
         return self
 
-    def Else(self, elseBranch: Expr):
+    def Else(self, elseBranch: Expr, *elseBranchMulti):
         if not self.alternateSyntaxFlag:
             raise TealInputError("Cannot mix two different If syntax styles")
 
         if not self.thenBranch:
             raise TealInputError("Must set Then branch before Else branch")
+
+        elseBranch = use_seq_if_multiple(elseBranch, *elseBranchMulti)
 
         if not self.elseBranch:
             require_type(elseBranch, self.thenBranch.type_of())
