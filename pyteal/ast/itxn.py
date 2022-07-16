@@ -181,6 +181,11 @@ class InnerTxnBuilder:
             )
 
     @classmethod
+    def Execute(cls, fields: Dict[TxnField, Union[Expr, List[Expr]]]) -> Expr:
+        """Performs a single transaction given fields passed in"""
+        return Seq(cls.Begin(), cls.SetFields(fields), cls.Submit())
+
+    @classmethod
     def SetFields(cls, fields: Dict[TxnField, Union[Expr, List[Expr]]]) -> Expr:
         """Set multiple fields of the current inner transaction.
 
