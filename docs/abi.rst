@@ -25,7 +25,8 @@ Types
 
 The ABI supports a variety of data types whose encodings are standardized.
 
-Be aware that the ABI type system in PyTeal has been designed specifically for the limited use case of describing a program's inputs and outputs. At the time of writing, we **do not recommend** using ABI types in a program's internal storage and computation logic, as the more basic :any:`TealType.uint64` and :any:`TealType.bytes` :any:`Expr` types are far more efficient for these purposes.
+.. note::
+    Be aware that the ABI type system in PyTeal has been designed specifically for the limited use case of describing a program's inputs and outputs. At the time of writing, we **do not recommend** using ABI types in a program's internal storage or computation logic, as the more basic :any:`TealType.uint64` and :any:`TealType.bytes` :any:`Expr` types are far more efficient for these purposes.
 
 Fundamentals
 ~~~~~~~~~~~~
@@ -55,12 +56,15 @@ Static types are defined as types whose encoded length does not depend on the va
 
 Likewise, dynamic types are defined as types whose encoded length does in fact depend on the value that type has. For example, it's not possible to know the encoding size of a variable-sized :code:`string` type without also knowing its value. Due to this dependency on values, the code that PyTeal generates to encode, decode, and manipulate dynamic types is more complex and generally less efficient than the code needed for static types.
 
-Because of the difference in complexity and efficiency when working with static and dynamic types, **we strongly recommend using static types over dynamic types whenever possible**. Using static types generally makes your program's resource usage more predictable as well, so you can be more confidant your app has enough computation budget and storage space when using static types.
+Because of the difference in complexity and efficiency when working with static and dynamic types, **we strongly recommend using static types over dynamic types whenever possible**. Using static types generally makes your program's resource usage more predictable as well, so you can be more confident your app has enough computation budget and storage space when using static types.
 
 Instantiating Types
 ^^^^^^^^^^^^^^^^^^^
 
 There are a few ways to create an instance of an ABI type. Each method produces the same result, but some may be more convenient than others in certain situations.
+
+.. note::
+    The following examples reference specific ABI types, which will be introduced in the :ref:`Type Categories` section.
 
 With the Constructor
 """"""""""""""""""""""
@@ -80,7 +84,7 @@ For simple types, using the constructor is straightforward and works as you woul
 With an :code:`abi.TypeSpec` Instance
 """"""""""""""""""""""""""""""""""""""
 
-Recall that :code:`abi.TypeSpec` has a :any:`new_instance() <abi.TypeSpec.new_instance>` method which instantiates ABI types. This is another way of instantiating ABI types, if you have an :code:`abi.TypeSpec` instance available. For example:
+Recall that :any:`abi.TypeSpec` has a :any:`new_instance() <abi.TypeSpec.new_instance>` method which instantiates ABI types. This is another way of instantiating ABI types, if you have an :any:`abi.TypeSpec` instance available. For example:
 
 .. code-block:: python
 
@@ -95,9 +99,9 @@ Recall that :code:`abi.TypeSpec` has a :any:`new_instance() <abi.TypeSpec.new_in
 With :code:`abi.make`
 """""""""""""""""""""
 
-Using :code:`abi.TypeSpec.new_instance()` makes sense if you already have an instance of the right :code:`abi.TypeSpec`, but otherwise it's not much better than using the constructor. Because of this, we have the :any:`abi.make` method, which is perhaps the most convenient way to create a compound type.
+Using :code:`abi.TypeSpec.new_instance()` makes sense if you already have an instance of the right :any:`abi.TypeSpec`, but otherwise it's not much better than using the constructor. Because of this, we have the :any:`abi.make` method, which is perhaps the most convenient way to create a compound type.
 
-To use it, you pass in a Python type annotation that describes the ABI type, and :code:`abi.make` will create an instance of it for you. For example:
+To use it, you pass in a `PEP 484 <https://peps.python.org/pep-0484/>`__ Python type annotation that describes the ABI type, and :any:`abi.make` will create an instance of it for you. For example:
 
 .. code-block:: python
 
@@ -168,6 +172,8 @@ A brief example is below:
             ),
             Assert(actual_sum.load() == expected_sum),
         )
+
+.. _Type Categories:
 
 Type Categories
 ~~~~~~~~~~~~~~~~~~~~
@@ -423,7 +429,7 @@ A brief example is below:
         )
 
 .. note::
-    All returned parameters are instances of :any:`MaybeValue`.
+    All returned parameters are instances of :any:`MaybeValue`, which is why the :any:`outputReducer(...) <MultiValue.outputReducer>` method is used.
 
 Accessing Asset Holdings
 ''''''''''''''''''''''''
@@ -554,7 +560,7 @@ Subroutines that Return Expressions
 
 If you'd like to create a subroutine that accepts some or all arguments as ABI types, but whose return value is a PyTeal :code:`Expr`, the :any:`@Subroutine <Subroutine>` decorator can be used.
 
-To indicate the type of each argument, Python type annotations are used. Unlike normal usage of Python type annotations which are ignored at runtime, type annotations for subroutines inform the PyTeal compiler about the inputs and outputs of a subroutine. Changing these values has a direct effect on the code PyTeal generates.
+To indicate the type of each argument, `PEP 484 <https://peps.python.org/pep-0484/>`__ Python type annotations are used. Unlike normal usage of Python type annotations which are ignored at runtime, type annotations for subroutines inform the PyTeal compiler about the inputs and outputs of a subroutine. Changing these values has a direct effect on the code PyTeal generates.
 
 An example of this type of subroutine is below:
 
@@ -602,7 +608,7 @@ Subroutines that Return ABI Types
 
 In addition to accepting ABI types as arguments, it's also possible for a subroutine to return an ABI type value.
 
-As mentioned in the Computed Value section (TODO: link), operations which return ABI values instead of traditional :code:`Expr` objects need extra care. In order to solve this problem for subroutines, a new decorator, :any:`@ABIReturnSubroutine <ABIReturnSubroutine>` has been introduced.
+As mentioned in the :ref:`Computed Values` section, operations which return ABI values instead of traditional :code:`Expr` objects need extra care. In order to solve this problem for subroutines, a new decorator, :any:`@ABIReturnSubroutine <ABIReturnSubroutine>` has been introduced.
 
 The :code:`@ABIReturnSubroutine` decorator should be used with subroutines that return an ABI value. Subroutines defined with this decorator will have two places to output information: the function return value, and a `keyword-only argument <https://peps.python.org/pep-3102/>`_ called :code:`output`. The function return value must remain an :code:`Expr`, while the :code:`output` keyword argument will contain the ABI value the subroutine wishes to return. An example is below:
 
@@ -632,42 +638,42 @@ The :code:`@ABIReturnSubroutine` decorator should be used with subroutines that 
 
 Notice that even though the original :code:`get_account_status` function returns an :code:`Expr` object, the :code:`@ABIReturnSubroutine` decorator automatically transforms the function's return value and the :code:`output` variable into a :code:`ComputedValue`. As a result, callers of this subroutine must work with a :code:`ComputedValue`.
 
-The only exception to this transformation is if the subroutine has no return value, in which case a :code:`ComputedValue` is unnecessary, so the subroutine will still return an :code:`Expr` to the caller. In this case the :code:`@ABIReturnSubroutine` decorator acts identically the original :code:`@Subroutine` decorator.
+The only exception to this transformation is if the subroutine has no return value. Without a return value, a :code:`ComputedValue` is unnecessary and the subroutine will still return an :code:`Expr` to the caller. In this case, the :code:`@ABIReturnSubroutine` decorator acts identically the :code:`@Subroutine` decorator.
 
-Creating an ARC-4 Program with the ABI Router
+Creating an ARC-4 Program
 ----------------------------------------------------
+
+An ARC-4 program, like all other programs, can be called by application call transactions. ARC-4 programs respond to two specific subtypes of application call transactions:
+
+* **Method calls**, which encode a specific method to be called and arguments for that method, if needed.
+* **Bare app calls**, which have no arguments and no return value.
+
+A method is a section of code intended to be invoked externally with an application call transaction. Methods may take arguments and may produce a return value. PyTeal implements methods as subroutines which are exposed to be externally callable.
+
+A bare app call is more limited than a method, since it takes no arguments and cannot return a value. For this reason, bare app calls are more suited to allow on completion actions to take place, such as opting into an app.
+
+To make it easier for an application to route across the many bare app calls and methods it may support, PyTeal introduces the :any:`Router` class. This class adheres to the ARC-4 ABI conventions with respect to when methods and bare app calls should be invoked. For methods, it also conveniently decodes all arguments and properly encodes and logs the return value as needed.
+
+The following sections explain how to register bare app calls and methods with the :any:`Router` class.
 
 .. warning::
   :any:`Router` usage is still taking shape and is subject to backwards incompatible changes.
 
   Feel encouraged to use :any:`Router` and expect a best-effort attempt to minimize backwards incompatible changes along with a migration path.
 
-An ARC-4 ABI compatible program can be called in up to two ways:
-
-* Through a method call, which chooses a specific method implemented by the contract and calls it with the appropriate arguments.
-* Through a bare app call, which has no arguments and no return value.
-
-A method is a section of code intended to be invoked externally with an Application call transaction. Methods may take arguments and may produce a return value. PyTeal implements methods as subroutines which are exposed to be externally callable.
-
-A bare app call is more limited than a method, since it takes no arguments and cannot return a value. For this reason, bare app calls are more suited to allow on completion actions to take place, such as opting into an app.
-
-To make it easier for an application to route between the many bare app calls and methods it may support, PyTeal introduces the :any:`Router` class. This class adheres to the ARC-4 ABI conventions with respect to when methods and bare app calls should be invoked. For methods, it also conveniently decodes all arguments and properly encodes and logs the return value as needed.
-
-The following sections explain how to register bare app calls and methods with the :code:`Router` class.
-
 Registering Bare App Calls
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The AVM supports 6 types of OnCompletion options that may be specified on an app call transaction. These actions are:
 
-#. No op
-#. Opt in
-#. Close out
-#. Clear state
-#. Update application
-#. Delete application
+#. **No-op**, the absence of an action, represented by :any:`OnComplete.NoOp`
+#. **Opt in**, which allocates account-local storage for an app, represented by :any:`OnComplete.OptIn`
+#. **Close out**, which removes account-local storage for an app, represented by :any:`OnComplete.CloseOut`
+#. **Clear state**, which forcibly removes account-local storage for an app, represented by :any:`OnComplete.ClearState`
+#. **Update application**, which updates an app, represented by :any:`OnComplete.UpdateApplication`
+#. **Delete application**, which deletes an app, represented by :any:`OnComplete.DeleteApplication`
 
-In PyTeal, you have the ability to register a bare app call handler for each of these actions. Additionally, a bare app call handler must also specify whether the handler can be invoking during an app creation transaction, during a non-creation app call, or during either.
+In PyTeal, you have the ability to register a bare app call handler for each of these actions. Additionally, a bare app call handler must also specify whether the handler can be invoking during an **app creation transaction** (:any:`CallConfig.CREATE`), during a **non-creation app call** (:any:`CallConfig.CALL`), or during **either** (:any:`CallConfig.ALL`).
 
 The :any:`BareCallActions` class is used to define a bare app call handler for on completion actions. Each bare app call handler must be an instance of the :any:`OnCompleteAction` class.
 
@@ -694,15 +700,25 @@ A brief example is below:
     router = Router(
         name="ExampleApp",
         bare_calls=BareCallActions(
+            # Allow app creation with a no-op action
             no_op=OnCompleteAction(
                 action=Approve(), call_config=CallConfig.CREATE
             ),
+
+            # Register the `opt_in_handler` to be called during opt in.
+            #
+            # Since we use `CallConfig.ALL`, this is also a valid way to create this app
+            # (if the creator wishes to immediately opt in).
             opt_in=OnCompleteAction(
                 action=opt_in_handler, call_config=CallConfig.ALL
             ),
+
+            # Allow anyone who opted in to close out from the app.
             close_out=OnCompleteAction(
                 action=Approve(), call_config=CallConfig.CALL
             ),
+
+            # Only approve update and delete operations if `assert_sender_is_creator` succeeds.
             update_application=OnCompleteAction(
                 action=assert_sender_is_creator, call_config=CallConfig.CALL
             ),
@@ -712,18 +728,17 @@ A brief example is below:
         ),
     )
 
-TODO: explain example
-
-When deciding which :code:`CallConfig` value is appropriate for a bare app call or method, ask yourself the question, should should it be valid for someone to create my app by calling this method?
+.. note::
+    When deciding which :any:`CallConfig` value is appropriate for a bare app call or method, consider the question, should it be valid for someone to create my app with this operation? Most of the time the answer will be no, in which case :any:`CallConfig.CALL` should be used.
 
 Registering Methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 TODO: warning about input type validity -- no verification is done for you (right now)
 
-Method can be registered in two ways.
+There are two ways to register a method with the :any:`Router` class.
 
-The first way to register a method is with the :any:`Router.add_method_handler` method, which takes an existing subroutine decorated with :code:`@ABIReturnSubroutine`. An example of this is below:
+The first way to register a method is with the :any:`Router.add_method_handler` method, which takes an existing subroutine decorated with :any:`@ABIReturnSubroutine <ABIReturnSubroutine>`. An example of this is below:
 
 .. code-block:: python
 
@@ -732,9 +747,9 @@ The first way to register a method is with the :any:`Router.add_method_handler` 
     router = Router(
         name="Calculator",
         bare_calls=BareCallActions(
-            # allow this app to be created with a NoOp call
+            # Allow this app to be created with a no-op call
             no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE),
-            # allow standalone user opt in and close out
+            # Allow standalone user opt in and close out
             opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.CALL),
             close_out=OnCompleteAction(action=Approve(), call_config=CallConfig.CALL),
         ),
@@ -748,7 +763,6 @@ The first way to register a method is with the :any:`Router.add_method_handler` 
         """
         return output.set(a.get() + b.get())
 
-    router.add_method_handler(add)
 
     @ABIReturnSubroutine
     def addAndStore(a: abi.Uint64, b: abi.Uint64, *, output: abi.Uint64) -> Expr:
@@ -763,7 +777,13 @@ The first way to register a method is with the :any:`Router.add_method_handler` 
             # store the result in the sender's local state too
             App.localPut(Txn.sender(), Bytes("result", output.get())),
         )
+    
+    # Register the `add` method with the router, using the default `MethodConfig`
+    # (only no-op, non-creation calls allowed).
+    router.add_method_handler(add)
 
+    # Register the `addAndStore` method with the router, using a `MethodConfig` that allows
+    # no-op and opt in non-creation calls.
     router.add_method_handler(
         addAndStore,
         method_config=MethodConfig(no_op=CallConfig.CALL, opt_in=CallConfig.CALL),
@@ -771,7 +791,7 @@ The first way to register a method is with the :any:`Router.add_method_handler` 
 
 This example registers two methods with the router, :code:`add` and :code:`addAndStore`.
 
-Because the :code:`add` method does not pass a value for the :code:`method_config` parameter of :any:`Router.add_method_handler`, it will only be callable with a transaction that is not an app creation and whose on completion value is :code:`OnComplete.NoOp`.
+Because the :code:`add` method does not pass a value for the :code:`method_config` parameter of :any:`Router.add_method_handler`, it will use the default value, which will make it only callable with a transaction that is not an app creation and whose on completion value is :code:`OnComplete.NoOp`.
 
 On the other hand, the :code:`addAndStore` method does provide a :code:`method_config` value. A value of :code:`MethodConfig(no_op=CallConfig.CALL, opt_in=CallConfig.CALL)` indicates that this method can only be called with a transaction that is not an app creation and whose on completion value is one of :code:`OnComplete.NoOp` or :code:`OnComplete.OptIn`.
 
@@ -784,9 +804,9 @@ The second way to register a method is with the :any:`Router.method` decorator p
     my_router = Router(
         name="Calculator",
         bare_calls=BareCallActions(
-            # allow this app to be created with a NoOp call
+            # Allow this app to be created with a no-op call
             no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE),
-            # allow standalone user opt in and close out
+            # Allow standalone user opt in and close out
             opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.CALL),
             close_out=OnCompleteAction(action=Approve(), call_config=CallConfig.CALL),
         ),
@@ -818,13 +838,16 @@ The second way to register a method is with the :any:`Router.method` decorator p
 Compiling a Router Program
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Now that we know how to add bare app call and method call handlers to a :code:`Router`, the next step is to compile the :code:`Router` into TEAL code.
+Now that we know how to add bare app call and method call handlers to a :any:`Router`, the next step is to compile the :any:`Router` into TEAL code.
 
 The :any:`Router.compile_program` method exists for this purpose. It combines all registered methods and bare app calls into two ASTs, one for the approval program and one for clear state program, then internally calls :any:`compileTeal` to compile these expressions and create TEAL code.
 
-In addition to receiving the approval and clear state programs, the :code:`Router.compile_program` method also returns a :code:`Contract` object `from the Python SDK <https://py-algorand-sdk.readthedocs.io/en/latest/algosdk/abi/contract.html#algosdk.abi.contract.Contract>`_. This object represents an `ARC-4 Contract Description <https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0004.md#contract-description>`_, which can be distributed to clients to enable them to call the methods on the contract.
+.. note::
+    We recommend enabling the :code:`scratch_slots` optimization when compiling a program that uses ABI types, since PyTeal's ABI types implementation makes frequent use of scratch slots under-the-hood. See the :ref:`compiler_optimization` page for more information.
 
-Here's an example of a complete application that uses the :code:`Router` class:
+In addition to receiving the approval and clear state programs, the :any:`Router.compile_program` method also returns a `Python SDK <https://py-algorand-sdk.readthedocs.io/en/latest/algosdk/abi/contract.html#algosdk.abi.contract.Contract>`_ :code:`Contract` object. This object represents an `ARC-4 Contract Description <https://arc.algorand.foundation/ARCs/arc-0004#contract-description>`_, which can be distributed to clients to enable them to call the methods on the contract.
+
+Here's an example of a complete application that uses the :any:`Router` class:
 
 .. literalinclude:: ../examples/application/abi/algobank.py
     :language: python
@@ -848,13 +871,13 @@ Off-chain systems can use the `Algorand SDKs <https://developer.algorand.org/doc
 
 Every SDK contains an :code:`AtomicTransactionComposer` type that can be used to build and execute transaction groups, including groups containing ABI method calls. More information and examples of this are available on the `Algorand Developer Portal <https://developer.algorand.org/docs/get-details/atc/>`_.
 
-The :code:`goal` CLI has subcommands for creating and submitting various types of transactions. The relevant ones for ABI-compliant contracts are mentioned below, and documentation for these `can be found here <https://developer.algorand.org/docs/clis/goal/app/app/>`_:
+The :code:`goal` CLI has subcommands for creating and submitting various types of transactions. The relevant ones for ABI-compliant contracts are mentioned below:
 
 * For bare app calls:
-    * For calls that create an app, :code:`goal app create` can be used to construct and send an app creation bare app call.
-    * For non-creation calls, :code:`goal app <action>`, where :code:`<action>` is one of :code:`call` (no-op), :code:`optin`, :code:`closeout`, :code:`clear`, :code:`update`, or :code:`delete` can be used to construct and send a non-creation bare app call.
+    * For calls that create an app, :code:`goal app create` (`docs <https://developer.algorand.org/docs/clis/goal/app/create/>`__) can be used to construct and send an app creation bare app call.
+    * For non-creation calls, :code:`goal app <action>` can be used to construct and send a non-creation bare app call. The :code:`<action>` keyword should be replaced with one of `"call" <https://developer.algorand.org/docs/clis/goal/app/call/>`_ (no-op), `"optin" <https://developer.algorand.org/docs/clis/goal/app/optin/>`_, `"closeout" <https://developer.algorand.org/docs/clis/goal/app/closeout/>`_, `"clear" <https://developer.algorand.org/docs/clis/goal/app/clear/>`_, `"update" <https://developer.algorand.org/docs/clis/goal/app/update/>`_, or `"delete" <https://developer.algorand.org/docs/clis/goal/app/delete/>`_, depending on the on-completion value the caller wishes to use.
 * For all method calls:
-    * :code:`goal app method` can be used to construct, send, and read the return value of a method call. This command can be used for application creation as well, if the application allows this to happen in one of its methods.
+    * :code:`goal app method` (`docs <https://developer.algorand.org/docs/clis/goal/app/method/>`__) can be used to construct, send, and read the return value of a method call. This command can be used for application creation as well, if the application allows this to happen in one of its methods.
 
 On-Chain, in an Inner Transaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -864,4 +887,4 @@ Algorand applications can issue `inner transactions <https://developer.algorand.
 In PyTeal, this can be achieved using the :any:`InnerTxnBuilder` class and its functions. To invoke an ABI method, PyTeal has :any:`InnerTxnBuilder.MethodCall(...) <InnerTxnBuilder.MethodCall>` to properly build a method call and encode its arguments.
 
 .. note::
-    At the time of writing, there is no streamlined way to obtain a method return value. You must manually inspect the :any:`last_log() <TxnObject.last_log>` property of either :any:`InnerTxn` or :any:`Gitxn[\<index\>] <Gitxn>` to obtain the logged return value. `As described in ARC-4 <https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0004.md#standard-format>`_, this value will be prefixed with the 4 bytes :code:`151f7c75` (shown in hex), and after this prefix the encoded ABI value will be available. You can use the :any:`decode(...) <abi.BaseType.decode>` method on an instance of the appropriate ABI type in order to decode and use this value.
+    At the time of writing, there is no streamlined way to obtain a method return value. You must manually inspect the :any:`last_log() <TxnObject.last_log>` property of either :any:`InnerTxn` or :any:`Gitxn[\<index\>] <Gitxn>` to obtain the logged return value. `As described in ARC-4 <https://arc.algorand.foundation/ARCs/arc-0004#standard-format>`_, this value will be prefixed with the 4 bytes :code:`151f7c75` (shown in hex), and after this prefix the encoded ABI value will be available. You can use the :any:`decode(...) <abi.BaseType.decode>` method on an instance of the appropriate ABI type in order to decode and use this value.

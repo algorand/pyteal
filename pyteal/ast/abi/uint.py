@@ -251,8 +251,8 @@ class Uint(BaseType):
 
         The behavior of this method depends on the input argument type:
 
-            * :code:`int`: set the value to a Python integer. A compiler error will occur if this value does not fit in this integer type.
-            * :code:`Expr`: set the value to the result of a PyTeal expression, which must evaluate to a TealType.uint64. The program will fail if the evaluated value does not fit in this integer type.
+            * :code:`int`: set the value to a Python integer. A compiler error will occur if this value overflows or underflows this integer type.
+            * :code:`Expr`: set the value to the result of a PyTeal expression, which must evaluate to a TealType.uint64. The program will fail if the evaluated value overflows or underflows this integer type.
             * :code:`Uint`: copy the value from another Uint. The argument's type must exactly match this integer's type, otherwise an error will occur. For example, it's not possible to set a Uint64 to a Uint8, or vice versa.
             * :code:`ComputedValue[Uint]`: copy the value from a Uint produced by a ComputedValue. The type produced by the ComputedValue must exactly match this integer's type, otherwise an error will occur.
 
