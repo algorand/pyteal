@@ -1,7 +1,7 @@
 from typing import cast, TYPE_CHECKING
 
 from pyteal.types import TealType, require_type
-from pyteal.errors import verifyTealVersion
+from pyteal.errors import verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
@@ -46,7 +46,7 @@ class ReplaceExpr(Expr):
 
         op = self.__get_op(options)
 
-        verifyTealVersion(
+        verifyProgramVersion(
             op.min_version,
             options.version,
             "TEAL version too low to use op {}".format(op),
