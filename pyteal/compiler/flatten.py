@@ -1,4 +1,3 @@
-from inspect import trace
 from typing import List, Dict, DefaultDict, Optional
 from collections import defaultdict
 

@@ -313,7 +313,7 @@ def compileTeal(
             idx = teal_line.index("// pyteal-src")
             if idx <= 0:
                 return teal_line
-        except:
+        except Exception:
             return teal_line
 
         return teal_line[:idx].strip(" \t") + "\t" * 2 + teal_line[idx:]
