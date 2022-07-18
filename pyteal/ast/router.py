@@ -504,6 +504,7 @@ class Router:
     def __init__(
         self,
         name: str,
+        descr: str = None,
         bare_calls: BareCallActions = None,
     ) -> None:
         """
@@ -513,6 +514,8 @@ class Router:
         """
 
         self.name: str = name
+        self.descr: str = descr
+
         self.approval_ast = ASTBuilder()
         self.clear_state_ast = ASTBuilder()
 
@@ -665,7 +668,7 @@ class Router:
                 approval program's method specs and `self.name`.
         """
 
-        return sdk_abi.Contract(self.name, self.methods)
+        return sdk_abi.Contract(self.name, self.methods, self.descr)
 
     def build_program(self) -> tuple[Expr, Expr, sdk_abi.Contract]:
         """
