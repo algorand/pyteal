@@ -7,11 +7,17 @@ if TYPE_CHECKING:
 
 
 def simpletb(tb: list[str]):
-    idx = (
-        len(tb) - 2
-    )  # Second from last element in traceback is where it was defined initially
+
+    # Take the first traceback that doesnt contain __init__
+    for idx in range(len(tb)-1, -1, -1):
+        if "__init__" in tb[idx]:
+            continue
+        else:
+            break
+
     file, line = tb[idx].split(",")[:2]  # Only take file: xxx, line xx, ...
     file = file.replace("File ", "").replace(" ", "")  # Remove `File` and any spaces
+
     return f"\t\t// pyteal-src {':'.join([file, line])}"
 
 
