@@ -301,7 +301,7 @@ def test_startArg_not_int(op: pt.Op):
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -310,7 +310,7 @@ def test_startArg_not_int(op: pt.Op):
 
     if op == pt.Op.extract3:
         with pytest.raises(pt.TealInputError):
-            expr.__teal__(teal4Options)
+            expr.__teal__(avm4Options)
 
 
 @pytest.mark.parametrize("op", [pt.Op.extract3, pt.Op.substring3])
@@ -342,7 +342,7 @@ def test_endArg_not_int(op: pt.Op):
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -351,7 +351,7 @@ def test_endArg_not_int(op: pt.Op):
 
     if op == pt.Op.extract3:
         with pytest.raises(pt.TealInputError):
-            expr.__teal__(teal4Options)
+            expr.__teal__(avm4Options)
 
 
 def test_suffix_invalid():
