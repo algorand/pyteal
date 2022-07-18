@@ -1,6 +1,6 @@
 from typing import Optional, TYPE_CHECKING
 
-from pyteal.ir.tealcomponent import TealComponent
+from pyteal.ir.tealcomponent import TealComponent, simpletb
 from pyteal.ir.labelref import LabelReference
 
 if TYPE_CHECKING:
@@ -9,18 +9,21 @@ if TYPE_CHECKING:
 
 class TealLabel(TealComponent):
     def __init__(
-        self, expr: Optional["Expr"], label: LabelReference, comment: str = None
+        self, expr: Optional["Expr"], label: LabelReference, comment: str = None, trace: list[str] = []
     ) -> None:
         super().__init__(expr)
         self.label = label
         self.comment = comment
+        self.trace = trace
 
     def getLabelRef(self) -> LabelReference:
         return self.label
 
     def assemble(self) -> str:
         comment = "\n// {}\n".format(self.comment) if self.comment is not None else ""
-        return "{}{}:".format(comment, self.label.getLabel())
+        trace = f" {simpletb(self.trace)}" if len(self.trace)>0 else ""
+
+        return "{}{}:{}".format(comment, self.label.getLabel(), trace)
 
     def __repr__(self) -> str:
         return "TealLabel({}, {}, {})".format(

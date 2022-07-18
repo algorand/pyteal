@@ -6,6 +6,12 @@ if TYPE_CHECKING:
     from pyteal.ast import Expr, ScratchSlot, SubroutineDefinition
 
 
+def simpletb(tb: list[str]):
+    idx = len(tb) - 2 # Second from last element in traceback is where it was defined initially
+    file, line = tb[idx].split(",")[:2] # Only take file: xxx, line xx, ...
+    file = file.replace("File ", "").replace(" ", "") # Remove `File` and any spaces
+    return f"\t\t// pyteal-src {':'.join([file, line])}"
+
 class TealComponent(ABC):
     def __init__(self, expr: Optional["Expr"]):
         self.expr = expr

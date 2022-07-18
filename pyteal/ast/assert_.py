@@ -24,7 +24,7 @@ class Assert(Expr):
     def __teal__(self, options: "CompileOptions"):
         if options.version >= Op.assert_.min_version:
             # use assert op if available
-            return TealBlock.FromOp(options, TealOp(self, Op.assert_), self.cond)
+            return TealBlock.FromOp(options, TealOp(self, Op.assert_), self.cond, traceback=self.trace)
 
         # if assert op is not available, use branches and err
         condStart, condEnd = self.cond.__teal__(options)

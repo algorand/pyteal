@@ -14,8 +14,9 @@ if TYPE_CHECKING:
 class TealBlock(ABC):
     """Represents a basic block of TealComponents in a graph."""
 
-    def __init__(self, ops: List[TealOp]) -> None:
+    def __init__(self, ops: List[TealOp], traceback: list[str] = []) -> None:
         self.ops = ops
+        self.traceback = traceback
         self.incoming: List[TealBlock] = []
 
     @abstractmethod
@@ -134,7 +135,7 @@ class TealBlock(ABC):
 
     @classmethod
     def FromOp(
-        cls, options: "CompileOptions", op: TealOp, *args: "Expr"
+        cls, options: "CompileOptions", op: TealOp, *args: "Expr", traceback: list[str] = []
     ) -> Tuple["TealBlock", "TealSimpleBlock"]:
         """Create a path of blocks from a TealOp and its arguments.
 
@@ -143,7 +144,7 @@ class TealBlock(ABC):
         """
         from pyteal.ir.tealsimpleblock import TealSimpleBlock
 
-        opBlock = TealSimpleBlock([op])
+        opBlock = TealSimpleBlock([op], traceback)
 
         if len(args) == 0:
             return opBlock, opBlock

@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
 
+from pyparsing import traceParseAction
+
 from pyteal.types import TealType
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.errors import TealInputError
@@ -30,7 +32,7 @@ class Int(LeafExpr):
 
     def __teal__(self, options: "CompileOptions"):
         op = TealOp(self, Op.int, self.value)
-        return TealBlock.FromOp(options, op)
+        return TealBlock.FromOp(options, op, traceback=self.trace)
 
     def __str__(self):
         return "(Int {})".format(self.value)

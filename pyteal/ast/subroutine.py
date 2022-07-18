@@ -1,5 +1,6 @@
+import traceback
 from dataclasses import dataclass
-from inspect import isclass, Parameter, signature, get_annotations
+from inspect import isclass, Parameter, signature, get_annotations, trace
 from types import MappingProxyType, NoneType
 from typing import Any, Callable, Final, Optional, TYPE_CHECKING, cast
 
@@ -30,6 +31,7 @@ class SubroutineDefinition:
         return_type: TealType,
         name_str: Optional[str] = None,
         has_abi_output: bool = False,
+        trace: list[str] = []
     ) -> None:
         """
         Args:
@@ -43,6 +45,7 @@ class SubroutineDefinition:
         self.id = SubroutineDefinition.nextSubroutineId
         SubroutineDefinition.nextSubroutineId += 1
 
+        self.trace = trace
         self.return_type = return_type
         self.declaration: Optional["SubroutineDeclaration"] = None
 
@@ -260,6 +263,7 @@ class SubroutineDefinition:
     def invoke(
         self,
         args: list[Expr | ScratchVar | abi.BaseType],
+        trace: list[str] = []
     ) -> "SubroutineCall":
         if len(args) != self.argument_count():
             raise TealInputError(
@@ -288,9 +292,11 @@ class SubroutineDefinition:
                         f"should have ABI typespec {arg_type} but got {arg.type_spec()}"
                     )
 
-        return SubroutineCall(
+        sc = SubroutineCall(
             self, args, output_kwarg=OutputKwArgInfo.from_dict(self.output_kwarg)
         )
+        sc.trace = trace
+        return sc
 
     def __str__(self):
         return f"subroutine#{self.id}"
@@ -423,8 +429,8 @@ class SubroutineCall(Expr):
                     f"cannot handle current arg: {arg} to put it on stack"
                 )
 
-        op = TealOp(self, Op.callsub, self.subroutine)
-        return TealBlock.FromOp(options, op, *[handle_arg(x) for x in self.args])
+        op = TealOp(self, Op.callsub, self.subroutine, traceback=self.trace)
+        return TealBlock.FromOp(options, op, *[handle_arg(x) for x in self.args], traceback=self.trace)
 
     def __str__(self):
         arg_str_list = list(map(str, self.args))
@@ -450,11 +456,13 @@ class SubroutineFnWrapper:
         fn_implementation: Callable[..., Expr],
         return_type: TealType,
         name: Optional[str] = None,
+        trace: list[str] = []
     ) -> None:
         self.subroutine = SubroutineDefinition(
             fn_implementation,
             return_type=return_type,
             name_str=name,
+            trace=trace,
         )
 
     def __call__(self, *args: Expr | ScratchVar | abi.BaseType, **kwargs: Any) -> Expr:
@@ -463,7 +471,7 @@ class SubroutineFnWrapper:
                 f"Subroutine cannot be called with keyword arguments. "
                 f"Received keyword arguments: {','.join(kwargs.keys())}"
             )
-        return self.subroutine.invoke(list(args))
+        return self.subroutine.invoke(list(args), trace=traceback.format_stack()[0:-1])
 
     def name(self) -> str:
         return self.subroutine.name()
@@ -685,6 +693,7 @@ class Subroutine:
             fn_implementation=fn_implementation,
             return_type=self.return_type,
             name=self.name,
+            trace=traceback.format_stack()[0:-1]
         )
 
 

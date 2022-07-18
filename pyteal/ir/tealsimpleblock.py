@@ -7,10 +7,14 @@ from pyteal.ir.tealblock import TealBlock
 class TealSimpleBlock(TealBlock):
     """Represents a basic block of TealComponents in a graph that does not contain a branch condition."""
 
-    def __init__(self, ops: List[TealOp]) -> None:
+    def __init__(self, ops: List[TealOp], traceback: list[str] = []) -> None:
+        for op in ops:
+            op.traceback = traceback
+
         super().__init__(ops)
         self.nextBlock: Optional[TealBlock] = None
         self.visited = False
+        self.traceback = traceback
 
     def setNextBlock(self, block: TealBlock) -> None:
         """Set the block that follows this one."""
