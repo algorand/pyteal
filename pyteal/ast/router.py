@@ -515,7 +515,7 @@ class Router:
         """
 
         self.name: str = name
-        self.descr: str = descr
+        self.descr = descr
 
         self.approval_ast = ASTBuilder()
         self.clear_state_ast = ASTBuilder()
