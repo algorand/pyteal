@@ -8,6 +8,7 @@ fieldToMethod: Dict[pt.TxnField, Callable[[pt.TxnObject], pt.Expr]] = {
     pt.TxnField.sender: lambda txn: txn.sender(),
     pt.TxnField.fee: lambda txn: txn.fee(),
     pt.TxnField.first_valid: lambda txn: txn.first_valid(),
+    pt.TxnField.first_valid_time: lambda txn: txn.first_valid_time(),
     pt.TxnField.last_valid: lambda txn: txn.last_valid(),
     pt.TxnField.note: lambda txn: txn.note(),
     pt.TxnField.lease: lambda txn: txn.lease(),
@@ -58,6 +59,8 @@ fieldToMethod: Dict[pt.TxnField, Callable[[pt.TxnObject], pt.Expr]] = {
     pt.TxnField.created_application_id: lambda txn: txn.created_application_id(),
     pt.TxnField.last_log: lambda txn: txn.last_log(),
     pt.TxnField.state_proof_pk: lambda txn: txn.state_proof_pk(),
+    pt.TxnField.num_approval_program_pages: lambda txn: txn.num_approval_program_pages(),
+    pt.TxnField.num_clear_state_program_pages: lambda txn: txn.num_clear_state_program_pages(),
 }
 
 arrayFieldToProperty: Dict[pt.TxnField, Callable[[pt.TxnObject], pt.TxnArray]] = {
@@ -66,6 +69,8 @@ arrayFieldToProperty: Dict[pt.TxnField, Callable[[pt.TxnObject], pt.TxnArray]] =
     pt.TxnField.assets: lambda txn: txn.assets,
     pt.TxnField.applications: lambda txn: txn.applications,
     pt.TxnField.logs: lambda txn: txn.logs,
+    pt.TxnField.approval_program_pages: lambda txn: txn.approval_program_pages,
+    pt.TxnField.clear_state_program_pages: lambda txn: txn.clear_state_program_pages,
 }
 
 arrayFieldToLengthField: Dict[pt.TxnField, pt.TxnField] = {
@@ -74,6 +79,8 @@ arrayFieldToLengthField: Dict[pt.TxnField, pt.TxnField] = {
     pt.TxnField.assets: pt.TxnField.num_assets,
     pt.TxnField.applications: pt.TxnField.num_applications,
     pt.TxnField.logs: pt.TxnField.num_logs,
+    pt.TxnField.approval_program_pages: pt.TxnField.num_approval_program_pages,
+    pt.TxnField.clear_state_program_pages: pt.TxnField.num_clear_state_program_pages,
 }
 
 

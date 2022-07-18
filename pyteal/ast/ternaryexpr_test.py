@@ -7,6 +7,7 @@ avm3Options = pt.CompileOptions(version=3)
 avm4Options = pt.CompileOptions(version=4)
 avm5Options = pt.CompileOptions(version=5)
 avm6Options = pt.CompileOptions(version=6)
+avm7Options = pt.CompileOptions(version=7)
 
 
 def test_ed25519verify():
@@ -39,6 +40,41 @@ def test_ed25519verify_invalid():
 
     with pytest.raises(pt.TealTypeError):
         pt.Ed25519Verify(pt.Bytes("data"), pt.Bytes("sig"), pt.Int(0))
+
+
+def test_ed25519verify_bare():
+    args = [pt.Bytes("data"), pt.Bytes("sig"), pt.Bytes("key")]
+    expr = pt.Ed25519Verify_Bare(args[0], args[1], args[2])
+    assert expr.type_of() == pt.TealType.uint64
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(args[0], pt.Op.byte, '"data"'),
+            pt.TealOp(args[1], pt.Op.byte, '"sig"'),
+            pt.TealOp(args[2], pt.Op.byte, '"key"'),
+            pt.TealOp(expr, pt.Op.ed25519verify_bare),
+        ]
+    )
+
+    actual, _ = expr.__teal__(avm7Options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+    with pytest.raises(pt.TealInputError):
+        expr.__teal__(avm6Options)
+
+
+def test_ed25519verify_bare_invalid():
+    with pytest.raises(pt.TealTypeError):
+        pt.Ed25519Verify_Bare(pt.Int(0), pt.Bytes("sig"), pt.Bytes("key"))
+
+    with pytest.raises(pt.TealTypeError):
+        pt.Ed25519Verify_Bare(pt.Bytes("data"), pt.Int(0), pt.Bytes("key"))
+
+    with pytest.raises(pt.TealTypeError):
+        pt.Ed25519Verify_Bare(pt.Bytes("data"), pt.Bytes("sig"), pt.Int(0))
 
 
 def test_set_bit_int():

@@ -7,6 +7,7 @@ avm3Options = pt.CompileOptions(version=3)
 avm4Options = pt.CompileOptions(version=4)
 avm5Options = pt.CompileOptions(version=5)
 avm6Options = pt.CompileOptions(version=6)
+avm7Options = pt.CompileOptions(version=7)
 
 
 def test_btoi():
@@ -144,6 +145,27 @@ def test_sha512_256():
 def test_sha512_256_invalid():
     with pytest.raises(pt.TealTypeError):
         pt.Sha512_256(pt.Int(1))
+
+
+def test_sha3_256():
+    arg = pt.Arg(0)
+    expr = pt.Sha3_256(arg)
+    assert expr.type_of() == pt.TealType.bytes
+
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(arg, pt.Op.arg, 0), pt.TealOp(expr, pt.Op.sha3_256)]
+    )
+
+    actual, _ = expr.__teal__(avm7Options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+
+def test_sha3_256_invalid():
+    with pytest.raises(pt.TealTypeError):
+        pt.Sha3_256(pt.Int(1))
 
 
 def test_keccak256():

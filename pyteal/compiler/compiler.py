@@ -25,7 +25,7 @@ from pyteal.compiler.subroutines import (
 )
 from pyteal.compiler.constants import createConstantBlocks
 
-MAX_PROGRAM_VERSION = 6
+MAX_PROGRAM_VERSION = 7
 MIN_PROGRAM_VERSION = 2
 DEFAULT_PROGRAM_VERSION = MIN_PROGRAM_VERSION
 

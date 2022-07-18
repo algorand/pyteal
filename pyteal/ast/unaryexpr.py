@@ -80,6 +80,11 @@ def Sha512_256(arg: Expr) -> UnaryExpr:
     return UnaryExpr(Op.sha512_256, TealType.bytes, TealType.bytes, arg)
 
 
+def Sha3_256(arg: Expr) -> UnaryExpr:
+    """Get the SHA3-256 hash of a byte string."""
+    return UnaryExpr(Op.sha3_256, TealType.bytes, TealType.bytes, arg)
+
+
 def Keccak256(arg: Expr) -> UnaryExpr:
     """Get the KECCAK-256 hash of a byte string."""
     return UnaryExpr(Op.keccak256, TealType.bytes, TealType.bytes, arg)
