@@ -491,14 +491,18 @@ class ASTBuilder:
 
 class Router:
     """
-    Class that help constructs:
-    - a *Generalized* ARC-4 app's approval/clear-state programs
-    - and a contract JSON object allowing for easily read and call methods in the contract
+    The Router class helps construct the approval and clear state programs for an ARC-4 compliant
+    application.
 
-    *DISCLAIMER*: ABI-Router is still taking shape and is subject to backwards incompatible changes.
+    Additionally, this class can produce an ARC-4 contract description object for the application.
+
+    **WARNING:** The ABI Router is still taking shape and is subject to backwards incompatible changes.
 
     * Based on feedback, the API and usage patterns are likely to change.
-    * Expect migration issues.
+    * Expect migration issues in future PyTeal versions.
+
+    For these reasons, we strongly recommend using :any:`pragma` to pin the version of PyTeal in your
+    source code.
     """
 
     def __init__(
