@@ -17,9 +17,6 @@ ABI Support
 
 This page will introduce and explain the relevant concepts necessary to build a PyTeal application that adheres to the ARC-4 ABI standards.
 
-TODO: warning about how ABI types are intended to be used at the moment (for standard serialization at the incoming and outgoing layers of contract) - internal use may be extremely inefficient with ABI types
-TODO: warning about how internal representation of ABI types may change over time
-
 Types
 ------
 
@@ -230,6 +227,13 @@ These ARC-4 types are not yet supported in PyTeal:
 * Unsigned integers larger than 64 bits
 * Fixed point unsigned integers, i.e. :code:`ufixed<N>x<M>`
 
+Limitations
+"""""""""""""""""""""
+
+Due to the nature of their encoding, dynamic container types, i.e. :any:`abi.DynamicArray[T] <abi.DynamicArray>` and :any:`abi.String`, have an implicit limit on the number of elements they may contain. This limit is :code:`2^16 - 1`, or 65535. Do not attempt to store more elements than this in these types.
+
+Static container types have no such limit.
+
 Usage
 """""""""""""""""""""
 
@@ -322,19 +326,12 @@ A brief example is below. Please consult the documentation linked above for each
             array[i.load()].use(lambda value: Assert(value.get() > Int(5)))
         )
 
-Limitations
-"""""""""""""""""""""
-
-TODO: explain type size limitations
-
 .. _Reference Types:
 
 Reference Types
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Many applications require the caller to provide "foreign array" values when calling the app. These are the blockchain entities (such as accounts, assets, or other applications) that the application will interact with when executing this call. In the ABI, we have "Reference Types" to describe these requirements.
-
-Reference Types are only valid in the arguments of a method. They may not appear in a method's return value.
+Many applications require the caller to provide "foreign array" values when calling the app. These are the blockchain entities (such as accounts, assets, or other applications) that the application will interact with when executing this call. In the ABI, we have **Reference Types** to describe these requirements.
 
 Definitions
 """"""""""""""""""""""""""""""""""""""""""
@@ -350,6 +347,22 @@ PyTeal Type            ARC-4 Type             Dynamic / Static Description
 ====================== ====================== ================ =======================================================================================================================================================
 
 These types all inherit from the abstract class :any:`abi.ReferenceType`.
+
+Limitations
+""""""""""""""""""""""""""""""""""""""""""
+
+Because References Types have a special meaning, they should not be directly created, and they cannot be assigned a value by a program.
+
+Additionally, Reference Types are only valid in the arguments of a method. They may not appear in a method's return value.
+
+Note that the AVM has limitations on the maximum number of foreign references an application call transaction may contain. At the time of writing, these limits are:
+
+* Accounts: 4
+* Assets: 8
+* Applications: 8
+* Sum of Accounts, Assets, and Applications: 8
+
+Because of this, methods that have a large amount of Reference Type arguments may be impossible to call as intended at runtime.
 
 Usage
 """"""""""""""""""""""""""""""""""""""""""
@@ -459,17 +472,12 @@ A brief example is below:
             .outputReducer(lambda value, has_value: Assert(And(has_value, value > Int(0)))),
         )
 
-Limitations
-""""""""""""""""""""""""""""""""""""""""""
-
-TODO: explain limitations, such as can't be created directly, or used as method return value
-
 .. _Transaction Types:
 
 Transaction Types
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Some application calls require that they are invoked as part of a larger transaction group containing specific additional transactions. In order to express these types of calls, the ABI has "Transaction Types".
+Some application calls require that they are invoked as part of a larger transaction group containing specific additional transactions. In order to express these types of calls, the ABI has **Transaction Types**.
 
 Every Transaction Type argument represents a specific and unique transaction that must appear immediately before the application call in the same transaction group. A method may have multiple Transaction Type arguments, in which case they must appear in the same order as the method's arguments immediately before the method application call.
 
@@ -489,6 +497,15 @@ PyTeal Type                           ARC-4 Type             Dynamic / Static De
 :any:`abi.AssetFreezeTransaction`     :code:`afrz`           Static           An asset freeze transaction
 :any:`abi.ApplicationCallTransaction` :code:`appl`           Static           An application call transaction
 ===================================== ====================== ================ =======================================================================================================================================================
+
+Limitations
+""""""""""""""""""""""""""""""""""""""""""
+
+Due to the special meaning of Transaction Types, they cannot be used as the return value of a method. They can be used as method arguments, but only at the top-level. This means that it's not possible to embed a Transaction Type inside a tuple or array.
+
+Transaction Types should not be directly created, and they cannot be modified by a program.
+
+Because the AVM has a maximum of 16 transactions in a single group, at most 15 Transaction Types may be used in the arguments of a method.
 
 Usage
 """"""""""""""""""""""""""""""""""""""""""
@@ -541,11 +558,6 @@ A brief example is below:
                 App.localGet(sender.address(), Bytes("balance")) + payment.get().amount(),
             ),
         )
-
-Limitations
-""""""""""""""""""""""""""""""""""""""""""
-
-TODO: explain limitations, such as can't be created directly, used as method return value, or embedded in other types
 
 
 Subroutines with ABI Types
@@ -734,7 +746,18 @@ A brief example is below:
 Registering Methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: warning about input type validity -- no verification is done for you (right now)
+.. warning::
+    A challenge for any system exposed to the public, including smart contracts, is input validation. At the moment, PyTeal's :any:`Router` class only performs a limited set of input validation. The largest hole in this validation is compound types, i.e. :any:`abi.StaticArray`, :any:`abi.Address`, :any:`abi.DynamicArray`, and :any:`abi.String`.
+
+    The :any:`Router` class performs no input validation against compound types when they are decoded as method inputs; however, if an invalid encoding is given to a method, an error may occur when the program accesses an element contained in the compound type value.
+
+    This means that methods will not fail immediately when given invalid inputs for compound types. Rather, they will fail when elements are extracted from the invalid value. Depending on the nature of the invalid encoding, only some elements may produce an error, while others are able to be accessed without issue.
+
+    For these reasons, **we strongly recommend** that methods which take compound types as inputs do not delay accessing the elements from these inputs. In other words, if your method takes a compound type argument, do not persist the argument to state and access elements from it in later transactions that you did not access in the method call it was introduced. This is because it's possible some elements may produce an error, and if so, you want that error to happen in the method call that introduces the value, since it will prevent the value from propagating further into your app's state.
+
+    Note that the above advice applies recursively to compound types contained in other compound types as well.
+
+    Also note that as a result of the limited input validation of compound types, :any:`abi.Address` is not guaranteed to have exactly 32 bytes. For many uses this does not matter, since AVM opcodes that expect addresses will validate the address length. However, if your app intends to persist an address to state and not immediately call one of these methods, we recommend manually verifying its length is 32 bytes. :any:`abi.Account` does not suffer from this issue.
 
 There are two ways to register a method with the :any:`Router` class.
 
