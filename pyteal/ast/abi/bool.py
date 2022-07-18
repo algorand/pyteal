@@ -113,7 +113,7 @@ class Bool(BaseType):
         return SetBit(Bytes(b"\x00"), Int(0), self.get())
 
 
-Bool.__module__ = "pyteal"
+Bool.__module__ = "pyteal.abi"
 
 
 def boolAwareStaticByteLength(types: Sequence[TypeSpec]) -> int:
