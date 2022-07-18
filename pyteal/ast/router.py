@@ -504,14 +504,14 @@ class Router:
     def __init__(
         self,
         name: str,
-        descr: str = None,
         bare_calls: BareCallActions = None,
+        descr: str = None,
     ) -> None:
         """
         Args:
             name: the name of the smart contract, used in the JSON object.
-            descr: a description of the smart contract, used in the JSON object.
             bare_calls: the bare app call registered for each on_completion.
+            descr: a description of the smart contract, used in the JSON object.
         """
 
         self.name: str = name
