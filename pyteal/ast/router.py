@@ -510,6 +510,7 @@ class Router:
         """
         Args:
             name: the name of the smart contract, used in the JSON object.
+            descr: a description of the smart contract, used in the JSON object.
             bare_calls: the bare app call registered for each on_completion.
         """
 
@@ -665,7 +666,7 @@ class Router:
 
         Returns:
             contract: a dictified `Contract` object constructed from
-                approval program's method specs and `self.name`.
+                approval program's method specs, `self.name`, and `self.descr`.
         """
 
         return sdk_abi.Contract(self.name, self.methods, self.descr)
