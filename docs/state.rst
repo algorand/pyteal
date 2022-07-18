@@ -253,30 +253,32 @@ For example:
         If(otherAppOtherAccountRole.hasValue(), otherAppOtherAccountRole.value(), Bytes("none"))
     ])
 
-Local Boxes
+Box Storage
 -----------
 
-Local boxes consist of key-value pairs that are stored in application's local context.
+Box storage consists of key-value pairs that are stored in application's local context.
 It can be manipulated as follows:
 
-Create Local Boxes
-~~~~~~~~~~~~~~~~~~
+Create Boxes
+~~~~~~~~~~~~
 
-To create a local box, use :any:`App.box_create`, or :any:`App.box_put` method.
+To create a box, use :any:`App.box_create`, or :any:`App.box_put` method.
 
 For :any:`App.box_create`, the first argument is the box name, and the second argument is the byte size to be allocated.
+
 For example:
 
 .. code-block:: python
 
     # Allocate a box called "BoxForAlice" of byte size 100
-    App.box_create(Bytes("BoxForAlice"), Int(100))
+    App.box_create(Bytes("BoxForAlice"), Int(0xA11CE))
     # Allocate a box called "BoxForBob" of byte size 90
-    App.box_create(Bytes("BoxForBob"), Int(90))
+    App.box_create(Bytes("BoxForBob"), Int(0xB0B)
 
 For :any:`App.box_put`, the first argument is the box name to create or to write to, and the second argument is the bytes to write.
-The distinction is that: if the box exists, then :any:`App.box_put` will write the contents to the box;
-otherwise, it will create a box with with allocated byte size equivalent to the content byte length.
+
+**Notice**: if the box exists, then :any:`App.box_put` will write the contents to the box;
+otherwise, it will create a box containing exactly the same input bytes.
 
 .. code-block:: python
 
@@ -285,58 +287,75 @@ otherwise, it will create a box with with allocated byte size equivalent to the 
     # write to box `poemLine` with new value
     App.box_put(Bytes("poemLine"), Bytes("The lone and level sands stretch far away."))
 
-Writing Local Boxes
-~~~~~~~~~~~~~~~~~~~
+Writing to a Box
+~~~~~~~~~~~~~~~~
 
-To write to a local box, use :any:`App.box_replace`, or :any:`App.box_put` method.
+To write to a box, use :any:`App.box_replace`, or :any:`App.box_put` method.
 
-For :any:`App.box_replace`,
+For :any:`App.box_replace`, it writes bytes of certain length from a start index in a Box.
+The first argument is the box name to write into, the second argument is the starting index to write,
+and the third argument is the replacement bytes. For example:
+
+.. code-block:: python
+
+   # replace 2 bytes to `Ne` starting from 0st bytes in a box with name `wordleBox`
+   App.box_replace(Bytes("wordleBox"), Int(0), Bytes("Ne"))
+
+For :any:`App.box_put`, it writes the full content to a pre-existing box.
+The first argument is the box name to write to, and the second argument is the full content.
 For example:
 
 .. code-block:: python
 
+   # write bytes `fullContents` to box of name `twelveByteBox`
+   App.box_put(Bytes("twelveByteBox"), Bytes("fullContents"))
 
+Reading from a Box
+~~~~~~~~~~~~~~~~~~
 
-For :any:`App.box_put`,
+To read from a box, use :any:`App.box_extract`, or :any:`App.box_get` method.
+
+For :any:`App.box_extract`, it reads bytes of a certain length from a start index in a Box.
+The first argument is the box name to read from, the second argument is the starting index to read,
+and the third argument is the length of bytes to extract. For example:
+
+.. code-block:: python
+
+   # extract segment of length 10 from 5th byte in Box of name `NoteBook`
+   App.box_extract(Bytes("NoteBook"), Int(5), Int(10))
+
+For :any:`App.box_get`, it gets the full content of a Box.
+The only argument is the box name, and it returns a :any:`MaybeValue` containing:
+
+- a boolean value indicating if the box exists
+- the full content of the box.
+
 For example:
 
 .. code-block:: python
 
+   # get the full content from a Box of name `NoteBook`
+   App.box_get(Bytes("NoteBook"))
 
-Reading Local Boxes
-~~~~~~~~~~~~~~~~~~~
+Deleting a Box
+~~~~~~~~~~~~~~
 
-To read from a local box, use :any:`App.box_extract`, or `App.box_get` method.
-
-For :any:`App.box_extract`,
-For example:
-
-.. code-block:: python
-
-For :any:`App.box_get`,
-For example:
-
-.. code-block:: python
-
-
-Deleting Local Boxes
-~~~~~~~~~~~~~~~~~~~~
-
-To delete a local box, use :any:`App.box_delete` method.
-The only argument is the box name. For example:
+To delete a box, use :any:`App.box_delete` method. The only argument is the box name. For example:
 
 .. code-block:: python
 
     App.box_delete(Bytes("boxToRemove"))
 
-Check if Local Box Exists
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Checking if a Box Exists
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-To check the existence of a local box, use :any:`App.box_length` method.
+To check the existence of a box, use :any:`App.box_length` method.
 The only argument is the box name, and it returns a :any:`MaybeValue` containing:
 
-- a boolean value tells if the box exists
-- and the actual byte size of the box. For example:
+- a boolean value indicating if the box exists
+- the actual byte size of the box.
+
+For example:
 
 .. code-block:: python
 
