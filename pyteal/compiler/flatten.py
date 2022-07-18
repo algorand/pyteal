@@ -51,7 +51,11 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
 
             if nextIndex != i + 1:
                 references[nextIndex] += 1
-                code.append(TealOp(None, Op.b, indexToLabel(nextIndex), traceback=block.traceback))
+                code.append(
+                    TealOp(
+                        None, Op.b, indexToLabel(nextIndex), traceback=block.traceback
+                    )
+                )
 
         elif type(block) is TealConditionalBlock:
             assert block.trueBlock is not None
@@ -63,22 +67,33 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             if falseIndex == i + 1:
 
                 references[trueIndex] += 1
-                code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex), traceback=block.traceback))
+                code.append(
+                    TealOp(
+                        None, Op.bnz, indexToLabel(trueIndex), traceback=block.traceback
+                    )
+                )
                 continue
 
             if trueIndex == i + 1:
                 references[falseIndex] += 1
-                code.append(TealOp(None, Op.bz, indexToLabel(falseIndex), traceback=block.traceback))
+                code.append(
+                    TealOp(
+                        None, Op.bz, indexToLabel(falseIndex), traceback=block.traceback
+                    )
+                )
                 continue
 
             references[trueIndex] += 1
-            code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex), traceback=block.traceback))
+            code.append(
+                TealOp(None, Op.bnz, indexToLabel(trueIndex), traceback=block.traceback)
+            )
 
             references[falseIndex] += 1
-            code.append(TealOp(None, Op.b, indexToLabel(falseIndex), traceback=block.traceback))
+            code.append(
+                TealOp(None, Op.b, indexToLabel(falseIndex), traceback=block.traceback)
+            )
         else:
             raise TealInternalError("Unrecognized block type: {}".format(type(block)))
-
 
     teal: List[TealComponent] = []
     for i, code in enumerate(codeblocks):
@@ -126,7 +141,9 @@ def flattenSubroutines(
             if isinstance(stmt, TealLabel):
                 stmt.getLabelRef().addPrefix(labelPrefix)
 
-        combinedOps.append(TealLabel(None, LabelReference(label), comment, trace=subroutine.trace))
+        combinedOps.append(
+            TealLabel(None, LabelReference(label), comment, trace=subroutine.trace)
+        )
         combinedOps += subroutineOps
 
     return combinedOps

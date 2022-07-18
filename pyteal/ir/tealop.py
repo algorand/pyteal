@@ -1,6 +1,6 @@
 from typing import Union, List, Optional, TYPE_CHECKING
 
-from pyteal.ir.tealcomponent import TealComponent, simpletb 
+from pyteal.ir.tealcomponent import TealComponent, simpletb
 from pyteal.ir.labelref import LabelReference
 from pyteal.ir.ops import Op
 from pyteal.errors import TealInternalError
@@ -15,7 +15,7 @@ class TealOp(TealComponent):
         expr: Optional["Expr"],
         op: Op,
         *args: Union[int, str, LabelReference, "ScratchSlot", "SubroutineDefinition"],
-        traceback: list[str] = []
+        traceback: list[str] = [],
     ) -> None:
         super().__init__(expr)
         self.op = op
@@ -63,8 +63,7 @@ class TealOp(TealComponent):
             else:
                 parts.append(arg)
 
-
-        if len(self.traceback)>0:
+        if len(self.traceback) > 0:
             parts.append(f" {simpletb(self.traceback)}")
 
         return " ".join(parts)

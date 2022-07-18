@@ -308,17 +308,15 @@ def compileTeal(
             )
         teal = createConstantBlocks(teal)
 
-    def fmt_cmt(teal_line: str)->str:
+    def fmt_cmt(teal_line: str) -> str:
         try:
             idx = teal_line.index("// pyteal-src")
-            if idx<=0:
+            if idx <= 0:
                 return teal_line
         except:
             return teal_line
 
-        return teal_line[:idx].strip(" \t") + "\t"*2 + teal_line[idx:]
-
-        
+        return teal_line[:idx].strip(" \t") + "\t" * 2 + teal_line[idx:]
 
     lines = ["#pragma version {}".format(version)]
     lines += [fmt_cmt(i.assemble()) for i in teal]

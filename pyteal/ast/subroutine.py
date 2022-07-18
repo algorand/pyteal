@@ -31,7 +31,7 @@ class SubroutineDefinition:
         return_type: TealType,
         name_str: Optional[str] = None,
         has_abi_output: bool = False,
-        trace: list[str] = []
+        trace: list[str] = [],
     ) -> None:
         """
         Args:
@@ -261,9 +261,7 @@ class SubroutineDefinition:
         return syntax_args
 
     def invoke(
-        self,
-        args: list[Expr | ScratchVar | abi.BaseType],
-        trace: list[str] = []
+        self, args: list[Expr | ScratchVar | abi.BaseType], trace: list[str] = []
     ) -> "SubroutineCall":
         if len(args) != self.argument_count():
             raise TealInputError(
@@ -430,7 +428,9 @@ class SubroutineCall(Expr):
                 )
 
         op = TealOp(self, Op.callsub, self.subroutine, traceback=self.trace)
-        return TealBlock.FromOp(options, op, *[handle_arg(x) for x in self.args], traceback=self.trace)
+        return TealBlock.FromOp(
+            options, op, *[handle_arg(x) for x in self.args], traceback=self.trace
+        )
 
     def __str__(self):
         arg_str_list = list(map(str, self.args))
@@ -456,7 +456,7 @@ class SubroutineFnWrapper:
         fn_implementation: Callable[..., Expr],
         return_type: TealType,
         name: Optional[str] = None,
-        trace: list[str] = []
+        trace: list[str] = [],
     ) -> None:
         self.subroutine = SubroutineDefinition(
             fn_implementation,
@@ -693,7 +693,7 @@ class Subroutine:
             fn_implementation=fn_implementation,
             return_type=self.return_type,
             name=self.name,
-            trace=traceback.format_stack()[0:-1]
+            trace=traceback.format_stack()[0:-1],
         )
 
 

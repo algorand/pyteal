@@ -135,7 +135,11 @@ class TealBlock(ABC):
 
     @classmethod
     def FromOp(
-        cls, options: "CompileOptions", op: TealOp, *args: "Expr", traceback: list[str] = []
+        cls,
+        options: "CompileOptions",
+        op: TealOp,
+        *args: "Expr",
+        traceback: list[str] = []
     ) -> Tuple["TealBlock", "TealSimpleBlock"]:
         """Create a path of blocks from a TealOp and its arguments.
 
