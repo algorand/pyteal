@@ -24,12 +24,6 @@ Current App Boxes  | :any:`App.box_create` | :any:`App.box_put`     | :any:`App.
                    | :any:`App.box_put`    | :any:`App.box_replace` | :any:`App.box_get`
 ================== ======================= ======================== ======================== ===================== ======================
 
-TODO: **probably mention boxes availability (global accessibility for read, only current app for write?)**
-
-TODO: **also mention how MinBalance Requirement (MBR model differs from the ones in global/local state.**
-
-TODO: **5 categories for box manipulation**
-
 Global State
 ------------
 
@@ -257,7 +251,14 @@ Box Storage
 -----------
 
 Box storage consists of key-value pairs that are stored in application's local context.
-It can be manipulated as follows:
+
+The app account's minimum balance requirement (MBR) is increased by each box, and by the byte size of the box.
+If one deletes an application with outstanding boxes, the MBR is not recoverable from the deleted app account.
+
+Box sizes and names cannot be changed after initial allocation, but they can be deleted and re-allocated.
+Boxes are only visible to the app itself, other apps cannot view the app's own boxes on-chain.
+
+Boxes can be manipulated as follows:
 
 Create Boxes
 ~~~~~~~~~~~~
