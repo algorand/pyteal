@@ -4,14 +4,16 @@ ABI Support
 ===========
 
 .. warning::
-  ABI support is still taking shape and is subject to backwards incompatible changes.
-    * Based on feedback, the API and usage patterns are likely to change.
-    * For the following use cases, feel encouraged to rely on abstractions.  Expect a best-effort attempt to minimize backwards incompatible changes along with a migration path.
+    ABI support is still taking shape and is subject to backwards incompatible changes.
+        * Based on feedback, the API and usage patterns are likely to change.
+        * For the following use cases, feel encouraged to rely on abstractions. Expect a best-effort attempt to minimize backwards incompatible changes along with a migration path.
 
-       * :any:`ABIReturnSubroutine` usage for ABI Application entry point definition.
+            * :any:`ABIReturnSubroutine` usage for ABI Application entry point definition.
 
-       * :any:`Router` usage for defining how to route program invocations.
-    * For general purpose :any:`Subroutine` definition usage, use at your own risk.  Based on feedback, the API and usage patterns will change more freely and with less effort to provide migration paths.
+            * :any:`Router` usage for defining how to route program invocations.
+        * For general purpose :any:`Subroutine` definition usage, use at your own risk. Based on feedback, the API and usage patterns will change more freely and with less effort to provide migration paths.
+
+    For these reasons, we strongly recommend using :any:`pragma` or the :any:`Pragma` expression to pin the version of PyTeal in your source code.
 
 `ARC-4 <https://arc.algorand.foundation/ARCs/arc-0004>`_ introduces a set of standards that increase the interoperability of smart contracts in the Algorand ecosystem. This set of standards is commonly referred to as Algorand's application binary interface, or ABI.
 
@@ -613,10 +615,12 @@ Subroutines that Return ABI Types
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. warning::
-  :any:`ABIReturnSubroutine` is still taking shape and is subject to backwards incompatible changes.
+    :any:`ABIReturnSubroutine` is still taking shape and is subject to backwards incompatible changes.
 
-  * For ABI Application entry point definition, feel encouraged to use :any:`ABIReturnSubroutine`.  Expect a best-effort attempt to minimize backwards incompatible changes along with a migration path.
-  * For general purpose usage, use at your own risk.  Based on feedback, the API and usage patterns will change more freely and with less effort to provide migration paths.
+    * For ABI Application entry point definition, feel encouraged to use :any:`ABIReturnSubroutine`. Expect a best-effort attempt to minimize backwards incompatible changes along with a migration path.
+    * For general purpose usage, use at your own risk. Based on feedback, the API and usage patterns will change more freely and with less effort to provide migration paths.
+
+    For these reasons, we strongly recommend using :any:`pragma` or the :any:`Pragma` expression to pin the version of PyTeal in your source code.
 
 In addition to accepting ABI types as arguments, it's also possible for a subroutine to return an ABI type value.
 
@@ -669,9 +673,11 @@ To make it easier for an application to route across the many bare app calls and
 The following sections explain how to register bare app calls and methods with the :any:`Router` class.
 
 .. warning::
-  :any:`Router` usage is still taking shape and is subject to backwards incompatible changes.
+    :any:`Router` usage is still taking shape and is subject to backwards incompatible changes.
 
-  Feel encouraged to use :any:`Router` and expect a best-effort attempt to minimize backwards incompatible changes along with a migration path.
+    Feel encouraged to use :any:`Router` and expect a best-effort attempt to minimize backwards incompatible changes along with a migration path.
+
+    For these reasons, we strongly recommend using :any:`pragma` or the :any:`Pragma` expression to pin the version of PyTeal in your source code.
 
 Registering Bare App Calls
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
