@@ -505,14 +505,18 @@ class Router:
         self,
         name: str,
         bare_calls: BareCallActions = None,
+        descr: str = None,
     ) -> None:
         """
         Args:
             name: the name of the smart contract, used in the JSON object.
             bare_calls: the bare app call registered for each on_completion.
+            descr: a description of the smart contract, used in the JSON object.
         """
 
         self.name: str = name
+        self.descr = descr
+
         self.approval_ast = ASTBuilder()
         self.clear_state_ast = ASTBuilder()
 
@@ -688,7 +692,7 @@ class Router:
             A Python SDK `Contract` object constructed from the registered methods on this router.
         """
 
-        return sdk_abi.Contract(self.name, self.methods)
+        return sdk_abi.Contract(self.name, self.methods, self.descr)
 
     def build_program(self) -> tuple[Expr, Expr, sdk_abi.Contract]:
         """

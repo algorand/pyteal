@@ -102,7 +102,7 @@ class Array(BaseType, Generic[T]):
             the scratch variable.
         """
         extracted = substringForDecoding(
-            encoded, startIndex=start_index, endIndex=end_index, length=length
+            encoded, start_index=start_index, end_index=end_index, length=length
         )
         return self.stored_value.store(extracted)
 

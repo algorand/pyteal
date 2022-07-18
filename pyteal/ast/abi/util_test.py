@@ -20,54 +20,54 @@ options = pt.CompileOptions(version=5)
 
 def test_substringForDecoding():
     class SubstringTest(NamedTuple):
-        startIndex: Optional[pt.Expr]
-        endIndex: Optional[pt.Expr]
+        start_index: Optional[pt.Expr]
+        end_index: Optional[pt.Expr]
         length: Optional[pt.Expr]
         expected: Union[pt.Expr, Any]
 
     encoded = pt.Bytes("encoded")
 
     tests: List[SubstringTest] = [
-        SubstringTest(startIndex=None, endIndex=None, length=None, expected=encoded),
+        SubstringTest(start_index=None, end_index=None, length=None, expected=encoded),
         SubstringTest(
-            startIndex=None,
-            endIndex=None,
+            start_index=None,
+            end_index=None,
             length=pt.Int(4),
             expected=pt.Extract(encoded, pt.Int(0), pt.Int(4)),
         ),
         SubstringTest(
-            startIndex=None,
-            endIndex=pt.Int(4),
+            start_index=None,
+            end_index=pt.Int(4),
             length=None,
             expected=pt.Substring(encoded, pt.Int(0), pt.Int(4)),
         ),
         SubstringTest(
-            startIndex=None,
-            endIndex=pt.Int(4),
+            start_index=None,
+            end_index=pt.Int(4),
             length=pt.Int(5),
             expected=pt.TealInputError,
         ),
         SubstringTest(
-            startIndex=pt.Int(4),
-            endIndex=None,
+            start_index=pt.Int(4),
+            end_index=None,
             length=None,
             expected=pt.Suffix(encoded, pt.Int(4)),
         ),
         SubstringTest(
-            startIndex=pt.Int(4),
-            endIndex=None,
+            start_index=pt.Int(4),
+            end_index=None,
             length=pt.Int(5),
             expected=pt.Extract(encoded, pt.Int(4), pt.Int(5)),
         ),
         SubstringTest(
-            startIndex=pt.Int(4),
-            endIndex=pt.Int(5),
+            start_index=pt.Int(4),
+            end_index=pt.Int(5),
             length=None,
             expected=pt.Substring(encoded, pt.Int(4), pt.Int(5)),
         ),
         SubstringTest(
-            startIndex=pt.Int(4),
-            endIndex=pt.Int(5),
+            start_index=pt.Int(4),
+            end_index=pt.Int(5),
             length=pt.Int(6),
             expected=pt.TealInputError,
         ),
@@ -78,16 +78,16 @@ def test_substringForDecoding():
             with pytest.raises(test.expected):
                 substringForDecoding(
                     encoded,
-                    startIndex=test.startIndex,
-                    endIndex=test.endIndex,
+                    start_index=test.start_index,
+                    end_index=test.end_index,
                     length=test.length,
                 )
             continue
 
         expr = substringForDecoding(
             encoded,
-            startIndex=test.startIndex,
-            endIndex=test.endIndex,
+            start_index=test.start_index,
+            end_index=test.end_index,
             length=test.length,
         )
         assert expr.type_of() == pt.TealType.bytes
