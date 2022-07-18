@@ -3,7 +3,7 @@
 AVM Versions
 =============
 
-Each version of PyTeal compiles contracts for a specific version of AVM. Newer versions of the AVM
+Each version of PyTeal compiles contracts for a specific AVM version. Newer versions of the AVM
 introduce new opcodes and transaction fields, so PyTeal must be updated to support these new
 features. Below is a table which shows the relationship between AVM and PyTeal versions.
 
@@ -16,6 +16,7 @@ AVM Version  PyTeal Version
 4            >= 0.8.0
 5            >= 0.9.0
 6            >= 0.10.0
+7            >= 0.14.0
 ============ ==============
 
 In order to support AVM v2, PyTeal v0.6.0 breaks backward compatibility with v0.5.4. PyTeal
