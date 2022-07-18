@@ -1,7 +1,5 @@
 from typing import TYPE_CHECKING
 
-from pyparsing import traceParseAction
-
 from pyteal.types import TealType
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.errors import TealInputError

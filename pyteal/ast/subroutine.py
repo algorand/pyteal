@@ -1,6 +1,6 @@
 import traceback
 from dataclasses import dataclass
-from inspect import isclass, Parameter, signature, get_annotations, trace
+from inspect import isclass, Parameter, signature, get_annotations
 from types import MappingProxyType, NoneType
 from typing import Any, Callable, Final, Optional, TYPE_CHECKING, cast
 
