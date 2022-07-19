@@ -329,7 +329,7 @@ For :any:`App.box_get`, it gets the full content of a Box.
 The only argument is the box name, and it returns a :any:`MaybeValue` containing:
 
 - a boolean value indicating if the box exists
-- the full content of the box.
+- the full contents of the box.
 
 For example:
 
