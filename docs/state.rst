@@ -13,16 +13,16 @@ slices. There are multiple types of state that an application can use.
 State Operation Table
 ---------------------
 
-================== ======================= ======================== ======================== ===================== ======================
+================== ======================= ======================== ======================== ===================== =======================
 Context            Create                  Write                    Read                     Delete                Check If Exists
-================== ======================= ======================== ======================== ===================== ======================
+================== ======================= ======================== ======================== ===================== =======================
 Current App Global                         :any:`App.globalPut`     :any:`App.globalGet`     :any:`App.globalDel`  :any:`App.globalGetEx`
 Current App Local                          :any:`App.localPut`      :any:`App.localGet`      :any:`App.localDel`   :any:`App.localGetEx`
 Other App Global                                                    :any:`App.globalGetEx`                         :any:`App.globalGetEx`
 Other App Local                                                     :any:`App.localGetEx`                          :any:`App.localGetEx`
-Current App Boxes  | :any:`App.box_create` | :any:`App.box_put`     | :any:`App.box_extract` :any:`App.box_delete` :any:`App.box_length`
-                   | :any:`App.box_put`    | :any:`App.box_replace` | :any:`App.box_get`
-================== ======================= ======================== ======================== ===================== ======================
+Current App Boxes  | :any:`App.box_create` | :any:`App.box_put`     | :any:`App.box_extract` :any:`App.box_delete` | :any:`App.box_length`
+                   | :any:`App.box_put`    | :any:`App.box_replace` | :any:`App.box_get`                           | :any:`App.box_get`
+================== ======================= ======================== ======================== ===================== =======================
 
 Global State
 ------------
@@ -310,6 +310,8 @@ and the third argument is the replacement bytes. For example:
 
 :any:`App.box_put` writes the full contents to a pre-existing box, as is mentioned in `Create Boxes`_.
 
+.. _Reading from a Box:
+
 Reading from a Box
 ~~~~~~~~~~~~~~~~~~
 
@@ -335,7 +337,14 @@ For example:
 .. code-block:: python
 
    # get the full contents from a box named `NoteBook`
-   App.box_get(Bytes("NoteBook"))
+   App.box_get(Bytes("NoteBook")).value()
+
+Notice: :any:`App.box_get` can also be used to check the existence of a box. For example:
+
+.. code-block:: python
+
+   # check existence of a box named `NoteBook`
+   App.box_get(Bytes("NoteBook")).hasValue()
 
 Deleting a Box
 ~~~~~~~~~~~~~~
@@ -346,8 +355,8 @@ To delete a box, use :any:`App.box_delete` method. The only argument is the box 
 
     App.box_delete(Bytes("boxToRemove"))
 
-Checking if a Box Exists
-~~~~~~~~~~~~~~~~~~~~~~~~
+Checking if a Box Exists and Reads its Length
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To check the existence of a box, use the :any:`App.box_length` method.
 The only argument is the box name, and it returns a :any:`MaybeValue` containing:
@@ -361,3 +370,5 @@ For example:
 
    # search for the box length for box `someBox`, and get the bool value for box existence
    App.box_length(Bytes("someBox")).hasValue()
+
+Notice: :any:`App.box_get` can also be used to check the existence of a box, as is mentioned in `Reading from a Box`_.
