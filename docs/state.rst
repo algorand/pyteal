@@ -262,6 +262,8 @@ Boxes are only visible to the application itself; in other words, an application
 
 Boxes can be manipulated as follows:
 
+.. _Create Boxes:
+
 Create Boxes
 ~~~~~~~~~~~~
 
@@ -306,14 +308,7 @@ and the third argument is the replacement bytes. For example:
    # replace 2 bytes starting from the 0'th byte  by `Ne` in the box named `wordleBox`
    App.box_replace(Bytes("wordleBox"), Int(0), Bytes("Ne"))
 
-:any:`App.box_put` writes the full contents to a pre-existing box.
-The first argument is the box name to write to, and the second argument is the full content.
-For example:
-
-.. code-block:: python
-
-   # write bytes `fullContents` to box of name `twelveByteBox`
-   App.box_put(Bytes("twelveByteBox"), Bytes("fullContents"))
+:any:`App.box_put` writes the full contents to a pre-existing box, as is mentioned in `Create Boxes`_.
 
 Reading from a Box
 ~~~~~~~~~~~~~~~~~~
