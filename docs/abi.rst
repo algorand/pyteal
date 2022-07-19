@@ -297,8 +297,8 @@ A brief example is below. Please consult the documentation linked above for each
             .Else(b.get())
         )
 
-Getting Values at Indexes
-''''''''''''''''''''''''''
+Getting Values at Indexes - Compound Types
+''''''''''''''''''''''''''''''''''''''''''
 
 The types :any:`abi.StaticArray`, :any:`abi.Address`, :any:`abi.DynamicArray`, :any:`abi.String`, and :any:`abi.Tuple` are compound types, meaning they contain other types whose values can be extracted. The :code:`__getitem__` method, accessible by using square brackets to "index into" an object, can be used to access these values.
 
@@ -357,7 +357,7 @@ Because References Types have a special meaning, they should not be directly cre
 
 Additionally, Reference Types are only valid in the arguments of a method. They may not appear in a method's return value.
 
-Note that the AVM has limitations on the maximum number of foreign references an application call transaction may contain. At the time of writing, these limits are:
+Note that the AVM has `limitations on the maximum number of foreign references <https://developer.algorand.org/docs/get-details/parameter_tables/#smart-contract-constraints>`_ an application call transaction may contain. At the time of writing, these limits are:
 
 * Accounts: 4
 * Assets: 8
@@ -753,17 +753,14 @@ Registering Methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. warning::
-    A challenge for any system exposed to the public, including smart contracts, is input validation. At the moment, PyTeal's :any:`Router` class only performs a limited set of input validation. The largest hole in this validation is compound types, i.e. :any:`abi.StaticArray`, :any:`abi.Address`, :any:`abi.DynamicArray`, and :any:`abi.String`.
+    The :any:`Router` **does not** validate inputs for compound types (:any:`abi.StaticArray`, :any:`abi.Address`, :any:`abi.DynamicArray`, :any:`abi.String`, or :any:`abi.Tuple`).
 
-    The :any:`Router` class performs no input validation against compound types when they are decoded as method inputs; however, if an invalid encoding is given to a method, an error may occur when the program accesses an element contained in the compound type value.
+    **We strongly recommend** methods immediately access and validate compound type parameters *before* persisting arguments for later transactions. For validation, it is sufficient to attempt to extract each element your method will use. If there is an input error for an element, indexing into that element will fail.
 
-    This means that methods will not fail immediately when given invalid inputs for compound types. Rather, they will fail when elements are extracted from the invalid value. Depending on the nature of the invalid encoding, only some elements may produce an error, while others are able to be accessed without issue.
-
-    For these reasons, **we strongly recommend** that methods which take compound types as inputs do not delay accessing the elements from these inputs. In other words, if your method takes a compound type argument, do not persist the argument to state and access elements from it in later transactions that you did not access in the method call it was introduced. This is because it's possible some elements may produce an error, and if so, you want that error to happen in the method call that introduces the value, since it will prevent the value from propagating further into your app's state.
-
-    Note that the above advice applies recursively to compound types contained in other compound types as well.
-
-    Also note that as a result of the limited input validation of compound types, :any:`abi.Address` is not guaranteed to have exactly 32 bytes. For many uses this does not matter, since AVM opcodes that expect addresses will validate the address length. However, if your app intends to persist an address to state and not immediately call one of these methods, we recommend manually verifying its length is 32 bytes. :any:`abi.Account` does not suffer from this issue.
+    Notes:
+    
+    * This recommendation applies to recursively contained compound types as well. Successfully extracting an element which is a compound type does not guarantee the extracted value is valid; you must also inspect its elements as well.
+    * Because of this, :any:`abi.Address` is **not** guaranteed to have exactly 32 bytes. To defend against unintended behavior, manually verify the length is 32 bytes, i.e. :code:`Assert(Len(address.get()) == Int(32))`.
 
 There are two ways to register a method with the :any:`Router` class.
 
