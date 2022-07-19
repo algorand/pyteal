@@ -147,7 +147,7 @@ def test_box_length():
 
 def test_box_get():
     name_arg: pt.Expr = pt.Bytes("eineName")
-    expr: pt.MultiValue = pt.BoxGet(name_arg)
+    expr: pt.MaybeValue = pt.BoxGet(name_arg)
 
     expected = pt.TealSimpleBlock(
         [

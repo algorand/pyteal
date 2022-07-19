@@ -380,4 +380,4 @@ For example:
 
 .. note::
 
-   :any:`App.box_get` can also check the existence of a box, mentioned in `Reading from a Box`_.
+   :any:`App.box_get` can also check the existence of a box as mentioned in `Reading from a Box`_.
