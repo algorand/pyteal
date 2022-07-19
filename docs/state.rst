@@ -267,7 +267,8 @@ Create Boxes
 
 To create a box, use :any:`App.box_create`, or :any:`App.box_put` method.
 
-For :any:`App.box_create`, the first argument is the box name, and the second argument is the byte size to be allocated.
+:any:`App.box_create` makes a box with a specified name and byte length.
+The first argument is the box name, and the second argument is the byte size to be allocated.
 
 For example:
 
@@ -296,7 +297,7 @@ Writing to a Box
 
 To write to a box, use :any:`App.box_replace`, or :any:`App.box_put` method.
 
-:any:`App.box_replace` writes bytes of certain length from a start index in a Box.
+:any:`App.box_replace` writes bytes of certain length from a start index in a box.
 The first argument is the box name to write into, the second argument is the starting index to write,
 and the third argument is the replacement bytes. For example:
 
@@ -305,7 +306,7 @@ and the third argument is the replacement bytes. For example:
    # replace 2 bytes starting from the 0'th byte  by `Ne` in the box named `wordleBox`
    App.box_replace(Bytes("wordleBox"), Int(0), Bytes("Ne"))
 
-For :any:`App.box_put`, it writes the full content to a pre-existing box.
+:any:`App.box_put` writes the full contents to a pre-existing box.
 The first argument is the box name to write to, and the second argument is the full content.
 For example:
 
