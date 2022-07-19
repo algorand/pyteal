@@ -280,7 +280,7 @@ For example:
 
 For :any:`App.box_put`, the first argument is the box name to create or to write to, and the second argument is the bytes to write.
 
-**Notice**: if the box exists, then :any:`App.box_put` will write the contents to the box;
+**Notice**: if the box exists, then :any:`App.box_put` will write the contents to the box (assuming the replacement has length identical to the box'es size, as otherwise the operation will fail);
 otherwise, it will create a box containing exactly the same input bytes.
 
 .. code-block:: python
