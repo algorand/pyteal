@@ -255,10 +255,10 @@ Box storage consists of key-value pairs that are stored in an application's loca
 The app account's minimum balance requirement (MBR) is increased with each additional box, and each additional byte in the box'es name and allocated size.
 
 **WARNING**: If one deletes an application with outstanding boxes, the MBR is not recoverable from the deleted app account.
-It is recommended that _before_ app deletion, all box storage be deleted, and funds previously allocated to the MBR be withdrawn.
+It is recommended that *before* app deletion, all box storage be deleted, and funds previously allocated to the MBR be withdrawn.
 
 Box sizes and names cannot be changed after initial allocation, but they can be deleted and re-allocated.
-Boxes are only visible to the app itself; in other words, an app cannot read from or write to another app's boxes on-chain.
+Boxes are only visible to the application itself; in other words, an application cannot read from or write to another application's boxes on-chain.
 
 Boxes can be manipulated as follows:
 
