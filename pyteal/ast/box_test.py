@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Callable, Tuple
 
 import pytest
 import pyteal as pt
@@ -6,59 +6,48 @@ import pyteal as pt
 teal7Options = pt.CompileOptions(version=7)
 teal8Options = pt.CompileOptions(version=8)
 
-
-def test_compile_version_and_type():
-    TEST_CASES: list[Tuple[pt.Expr, pt.TealType]] = [
-        (pt.BoxCreate(pt.Bytes("box"), pt.Int(10)), pt.TealType.none),
-        (pt.BoxDelete(pt.Bytes("box")), pt.TealType.none),
-        (pt.BoxExtract(pt.Bytes("box"), pt.Int(2), pt.Int(4)), pt.TealType.bytes),
-        (
-            pt.BoxReplace(pt.Bytes("box"), pt.Int(3), pt.Bytes("replace")),
-            pt.TealType.none,
-        ),
-        (pt.BoxLen(pt.Bytes("box")), pt.TealType.none),
-        (pt.BoxGet(pt.Bytes("box")), pt.TealType.none),
-        (pt.BoxPut(pt.Bytes("box"), pt.Bytes("goonery")), pt.TealType.none),
-    ]
-
-    for test_case, test_case_type in TEST_CASES:
-        with pytest.raises(pt.TealInputError):
-            test_case.__teal__(teal7Options)
-
-        test_case.__teal__(teal8Options)
-
-        assert test_case.type_of() == test_case_type
-        assert not test_case.has_return()
-
-    return
+POSITIVE_TEST_CASES: list[Tuple[pt.Expr, pt.TealType]] = [
+    (pt.BoxCreate(pt.Bytes("box"), pt.Int(10)), pt.TealType.none),
+    (pt.BoxDelete(pt.Bytes("box")), pt.TealType.none),
+    (pt.BoxExtract(pt.Bytes("box"), pt.Int(2), pt.Int(4)), pt.TealType.bytes),
+    (
+        pt.BoxReplace(pt.Bytes("box"), pt.Int(3), pt.Bytes("replace")),
+        pt.TealType.none,
+    ),
+    (pt.BoxLen(pt.Bytes("box")), pt.TealType.none),
+    (pt.BoxGet(pt.Bytes("box")), pt.TealType.none),
+    (pt.BoxPut(pt.Bytes("box"), pt.Bytes("goonery")), pt.TealType.none),
+]
 
 
-def test_box_invalid_args():
-    with pytest.raises(pt.TealTypeError):
-        pt.BoxCreate(pt.Bytes("box"), pt.Bytes("ten"))
+@pytest.mark.parametrize("test_case, test_case_type", POSITIVE_TEST_CASES)
+def test_compile_version_and_type(test_case, test_case_type):
+    with pytest.raises(pt.TealInputError):
+        test_case.__teal__(teal7Options)
 
-    with pytest.raises(pt.TealTypeError):
-        pt.BoxCreate(pt.Int(0xB06), pt.Int(10))
-
-    with pytest.raises(pt.TealTypeError):
-        pt.BoxDelete(pt.Int(0xB06))
-
-    with pytest.raises(pt.TealTypeError):
-        pt.BoxExtract(pt.Bytes("box"), pt.Int(2), pt.Bytes("three"))
-
-    with pytest.raises(pt.TealTypeError):
-        pt.BoxReplace(pt.Bytes("box"), pt.Int(2), pt.Int(0x570FF))
-
-    with pytest.raises(pt.TealTypeError):
-        pt.BoxLen(pt.Int(12))
-
-    with pytest.raises(pt.TealTypeError):
-        pt.BoxGet(pt.Int(45))
-
-    with pytest.raises(pt.TealTypeError):
-        pt.BoxPut(pt.Bytes("box"), pt.Int(123))
+    test_case.__teal__(teal8Options)
+    assert test_case.type_of() == test_case_type
+    assert not test_case.has_return()
 
     return
+
+
+INVALID_TEST_CASES: list[Tuple[list[pt.Expr], type | Callable[..., pt.MaybeValue]]] = [
+    ([pt.Bytes("box"), pt.Bytes("ten")], pt.BoxCreate),
+    ([pt.Int(0xB0B), pt.Int(10)], pt.BoxCreate),
+    ([pt.Int(0xA11CE)], pt.BoxDelete),
+    ([pt.Bytes("box"), pt.Int(2), pt.Bytes("three")], pt.BoxExtract),
+    ([pt.Bytes("box"), pt.Int(2), pt.Int(0x570FF)], pt.BoxReplace),
+    ([pt.Int(12)], pt.BoxLen),
+    ([pt.Int(45)], pt.BoxGet),
+    ([pt.Bytes("box"), pt.Int(123)], pt.BoxPut),
+]
+
+
+@pytest.mark.parametrize("test_args, test_expr", INVALID_TEST_CASES)
+def test_box_invalid_args(test_args, test_expr):
+    with pytest.raises(pt.TealTypeError):
+        test_expr(*test_args)
 
 
 def test_box_create_compile():
@@ -138,7 +127,7 @@ def test_box_replace():
 
 def test_box_length():
     name_arg: pt.Expr = pt.Bytes("eineName")
-    expr: pt.MultiValue = pt.BoxLen(name_arg)
+    expr: pt.MaybeValue = pt.BoxLen(name_arg)
 
     expected = pt.TealSimpleBlock(
         [
