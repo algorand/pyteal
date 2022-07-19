@@ -232,7 +232,7 @@ These ARC-4 types are not yet supported in PyTeal:
 Limitations
 """""""""""""""""""""
 
-Due to the nature of their encoding, dynamic container types, i.e. :any:`abi.DynamicArray[T] <abi.DynamicArray>` and :any:`abi.String`, have an implicit limit on the number of elements they may contain. This limit is :code:`2^16 - 1`, or 65535. Do not attempt to store more elements than this in these types.
+Due to the nature of their encoding, dynamic container types, i.e. :any:`abi.DynamicArray[T] <abi.DynamicArray>` and :any:`abi.String`, have an implicit limit on the number of elements they may contain. This limit is :code:`2^16 - 1`, or 65535. However, the AVM has a stack size limit of 4096 for byte strings, so it's unlikely this encoding limit will be reached by your program.
 
 Static container types have no such limit.
 
