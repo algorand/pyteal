@@ -302,7 +302,7 @@ and the third argument is the replacement bytes. For example:
 
 .. code-block:: python
 
-   # replace 2 bytes to `Ne` starting from 0st bytes in a box with name `wordleBox`
+   # replace 2 bytes starting from the 0'th byte  by `Ne` in the box named `wordleBox`
    App.box_replace(Bytes("wordleBox"), Int(0), Bytes("Ne"))
 
 For :any:`App.box_put`, it writes the full content to a pre-existing box.
@@ -353,7 +353,7 @@ To delete a box, use :any:`App.box_delete` method. The only argument is the box 
 Checking if a Box Exists
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-To check the existence of a box, use :any:`App.box_length` method.
+To check the existence of a box, use the :any:`App.box_length` method.
 The only argument is the box name, and it returns a :any:`MaybeValue` containing:
 
 - a boolean value indicating if the box exists
