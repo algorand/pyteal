@@ -322,7 +322,7 @@ and the third argument is the length of bytes to extract. For example:
 
 .. code-block:: python
 
-   # extract segment of length 10 from 5th byte in Box of name `NoteBook`
+   # extract a segment of length 10 starting at the 5'th byte in a box named `NoteBook`
    App.box_extract(Bytes("NoteBook"), Int(5), Int(10))
 
 :any:`App.box_get` gets the full contents of a box.
