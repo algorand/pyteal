@@ -480,16 +480,16 @@ def test_app_param_clear_state_program_invalid():
         pt.AppParam.clearStateProgram(pt.Txn.sender())
 
 
-def test_app_param_global_num_unit_valid():
+def test_app_param_global_num_uint_valid():
     arg = pt.Int(1)
-    expr = pt.AppParam.globalNumUnit(arg)
+    expr = pt.AppParam.globalNumUint(arg)
     assert expr.type_of() == pt.TealType.none
     assert expr.value().type_of() == pt.TealType.uint64
 
     expected = pt.TealSimpleBlock(
         [
             pt.TealOp(arg, pt.Op.int, 1),
-            pt.TealOp(expr, pt.Op.app_params_get, "AppGlobalNumUnit"),
+            pt.TealOp(expr, pt.Op.app_params_get, "AppGlobalNumUint"),
             pt.TealOp(None, pt.Op.store, expr.slotOk),
             pt.TealOp(None, pt.Op.store, expr.slotValue),
         ]
@@ -503,9 +503,9 @@ def test_app_param_global_num_unit_valid():
         assert actual == expected
 
 
-def test_app_param_global_num_unit_invalid():
+def test_app_param_global_num_uint_invalid():
     with pytest.raises(pt.TealTypeError):
-        pt.AppParam.globalNumUnit(pt.Txn.sender())
+        pt.AppParam.globalNumUint(pt.Txn.sender())
 
 
 def test_app_param_global_num_byte_slice_valid():
@@ -536,16 +536,16 @@ def test_app_param_global_num_byte_slice_invalid():
         pt.AppParam.globalNumByteSlice(pt.Txn.sender())
 
 
-def test_app_param_local_num_unit_valid():
+def test_app_param_local_num_uint_valid():
     arg = pt.Int(1)
-    expr = pt.AppParam.localNumUnit(arg)
+    expr = pt.AppParam.localNumUint(arg)
     assert expr.type_of() == pt.TealType.none
     assert expr.value().type_of() == pt.TealType.uint64
 
     expected = pt.TealSimpleBlock(
         [
             pt.TealOp(arg, pt.Op.int, 1),
-            pt.TealOp(expr, pt.Op.app_params_get, "AppLocalNumUnit"),
+            pt.TealOp(expr, pt.Op.app_params_get, "AppLocalNumUint"),
             pt.TealOp(None, pt.Op.store, expr.slotOk),
             pt.TealOp(None, pt.Op.store, expr.slotValue),
         ]
@@ -559,9 +559,9 @@ def test_app_param_local_num_unit_valid():
         assert actual == expected
 
 
-def test_app_param_local_num_unit_invalid():
+def test_app_param_local_num_uint_invalid():
     with pytest.raises(pt.TealTypeError):
-        pt.AppParam.localNumUnit(pt.Txn.sender())
+        pt.AppParam.localNumUint(pt.Txn.sender())
 
 
 def test_app_param_local_num_byte_slice_valid():
