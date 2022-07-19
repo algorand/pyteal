@@ -316,7 +316,7 @@ Reading from a Box
 
 To read from a box, use :any:`App.box_extract`, or :any:`App.box_get` method.
 
-For :any:`App.box_extract`, it reads bytes of a certain length from a start index in a Box.
+:any:`App.box_extract` reads bytes of a certain length from a start index in a Box.
 The first argument is the box name to read from, the second argument is the starting index to read,
 and the third argument is the length of bytes to extract. For example:
 
