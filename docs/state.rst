@@ -271,10 +271,10 @@ For example:
 
 .. code-block:: python
 
-    # Allocate a box called "BoxForAlice" of byte size 100
-    App.box_create(Bytes("BoxForAlice"), Int(0xA11CE))
-    # Allocate a box called "BoxForBob" of byte size 90
-    App.box_create(Bytes("BoxForBob"), Int(0xB0B)
+    # Allocate a box called "BoxA" of byte size 100
+    App.box_create(Bytes("BoxA"), Int(100))
+    # Allocate a box called "BoxB" of byte size 90
+    App.box_create(Bytes("BoxB"), Int(90)
 
 For :any:`App.box_put`, the first argument is the box name to create or to write to, and the second argument is the bytes to write.
 
