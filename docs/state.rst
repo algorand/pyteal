@@ -250,7 +250,7 @@ For example:
 Box Storage
 -----------
 
-Box storage consists of key-value pairs that are stored in application's local context.
+Box storage consists of key-value pairs that are stored in an application's local context.
 
 The app account's minimum balance requirement (MBR) is increased by each box, and by the byte size of the box.
 If one deletes an application with outstanding boxes, the MBR is not recoverable from the deleted app account.
