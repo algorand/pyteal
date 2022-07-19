@@ -293,7 +293,7 @@ Writing to a Box
 
 To write to a box, use :any:`App.box_replace`, or :any:`App.box_put` method.
 
-For :any:`App.box_replace`, it writes bytes of certain length from a start index in a Box.
+:any:`App.box_replace` writes bytes of certain length from a start index in a Box.
 The first argument is the box name to write into, the second argument is the starting index to write,
 and the third argument is the replacement bytes. For example:
 
