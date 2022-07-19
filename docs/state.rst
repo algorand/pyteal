@@ -325,7 +325,7 @@ and the third argument is the length of bytes to extract. For example:
    # extract segment of length 10 from 5th byte in Box of name `NoteBook`
    App.box_extract(Bytes("NoteBook"), Int(5), Int(10))
 
-For :any:`App.box_get`, it gets the full content of a Box.
+:any:`App.box_get` gets the full contents of a box.
 The only argument is the box name, and it returns a :any:`MaybeValue` containing:
 
 - a boolean value indicating if the box exists
