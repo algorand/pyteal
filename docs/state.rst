@@ -254,8 +254,10 @@ Box storage consists of key-value pairs that are stored in an application's loca
 
 The app account's minimum balance requirement (MBR) is increased with each additional box, and each additional byte in the box'es name and allocated size.
 
-**WARNING**: If one deletes an application with outstanding boxes, the MBR is not recoverable from the deleted app account.
-It is recommended that *before* app deletion, all box storage be deleted, and funds previously allocated to the MBR be withdrawn.
+.. warning::
+
+   If one deletes an application with outstanding boxes, the MBR is not recoverable from the deleted app account.
+   It is recommended that *before* app deletion, all box storage be deleted, and funds previously allocated to the MBR be withdrawn.
 
 Box sizes and names cannot be changed after initial allocation, but they can be deleted and re-allocated.
 Boxes are only visible to the application itself; in other words, an application cannot read from or write to another application's boxes on-chain.
@@ -283,9 +285,11 @@ For example:
 
 For :any:`App.box_put`, the first argument is the box name to create or to write to, and the second argument is the bytes to write.
 
-**Notice**: if the box exists, then :any:`App.box_put` will write the contents to the box
-(assuming the replacement has length **identical** to the box'es byte size, as otherwise the operation will fail);
-otherwise, it will create a box containing exactly the same input bytes.
+.. note::
+
+   If the box exists, then :any:`App.box_put` will write the contents to the box
+   (assuming the replacement has length **identical** to the box'es byte size, as otherwise the operation will fail);
+   otherwise, it will create a box containing exactly the same input bytes.
 
 .. code-block:: python
 
@@ -339,12 +343,15 @@ For example:
    # get the full contents from a box named `NoteBook`
    App.box_get(Bytes("NoteBook")).value()
 
-Notice: :any:`App.box_get` can also be used to check the existence of a box. For example:
 
-.. code-block:: python
+.. note::
 
-   # check existence of a box named `NoteBook`
-   App.box_get(Bytes("NoteBook")).hasValue()
+   :any:`App.box_get` can also be used to check the existence of a box. For example:
+
+   .. code-block:: python
+
+      # check existence of a box named `NoteBook`
+      App.box_get(Bytes("NoteBook")).hasValue()
 
 Deleting a Box
 ~~~~~~~~~~~~~~
@@ -371,4 +378,6 @@ For example:
    # search for the box length for box `someBox`, and get the bool value for box existence
    App.box_length(Bytes("someBox")).hasValue()
 
-Notice: :any:`App.box_get` can also be used to check the existence of a box, as is mentioned in `Reading from a Box`_.
+.. note::
+
+   :any:`App.box_get` can also check the existence of a box, mentioned in `Reading from a Box`_.
