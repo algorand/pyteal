@@ -53,7 +53,7 @@ class JsonRef(LeafExpr):
         verifyProgramVersion(
             Op.json_ref.min_version,
             options.version,
-            "TEAL version too low to use op json_ref",
+            "Program version too low to use op json_ref",
         )
 
         verifyFieldVersion(self.type.arg_name, self.type.min_version, options.version)

@@ -2,8 +2,8 @@ import pytest
 
 import pyteal as pt
 
-teal6Options = pt.CompileOptions(version=6)
-teal7Options = pt.CompileOptions(version=7)
+avm6Options = pt.CompileOptions(version=6)
+avm7Options = pt.CompileOptions(version=7)
 
 
 def test_base64decode_std():
@@ -18,14 +18,14 @@ def test_base64decode_std():
         ]
     )
 
-    actual, _ = expr.__teal__(teal7Options)
+    actual, _ = expr.__teal__(avm7Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(teal6Options)
+        expr.__teal__(avm6Options)
 
 
 def test_base64decode_url():
@@ -40,14 +40,14 @@ def test_base64decode_url():
         ]
     )
 
-    actual, _ = expr.__teal__(teal7Options)
+    actual, _ = expr.__teal__(avm7Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(teal6Options)
+        expr.__teal__(avm6Options)
 
 
 def test_base64decode_invalid():

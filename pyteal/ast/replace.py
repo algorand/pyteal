@@ -49,7 +49,7 @@ class ReplaceExpr(Expr):
         verifyProgramVersion(
             op.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(op),
+            "Program version too low to use op {}".format(op),
         )
 
         s = cast(Int, self.start).value
@@ -76,7 +76,7 @@ def Replace(original: Expr, start: Expr, replacement: Expr) -> Expr:
     """
     Replace a portion of original bytes with new bytes at a given starting point.
 
-    Requires TEAL version 7 or higher.
+    Requires program version 7 or higher.
 
     Args:
         original: The value containing the original bytes. Must evaluate to bytes.
