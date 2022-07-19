@@ -350,7 +350,7 @@ To delete a box, use :any:`App.box_delete` method. The only argument is the box 
 Checking if a Box Exists
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-To check the existence of a box, use :any:`App.box_length` method.
+To check the existence of a box, use the :any:`App.box_length` method.
 The only argument is the box name, and it returns a :any:`MaybeValue` containing:
 
 - a boolean value indicating if the box exists
