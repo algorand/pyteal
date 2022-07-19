@@ -256,7 +256,7 @@ The app account's minimum balance requirement (MBR) is increased with each addit
 If one deletes an application with outstanding boxes, the MBR is not recoverable from the deleted app account.
 
 Box sizes and names cannot be changed after initial allocation, but they can be deleted and re-allocated.
-Boxes are only visible to the app itself, other apps cannot view the app's own boxes on-chain.
+Boxes are only visible to the app itself; in other words, an app cannot read from or write to another app's boxes on-chain.
 
 Boxes can be manipulated as follows:
 
