@@ -252,7 +252,7 @@ Box Storage
 
 Box storage consists of key-value pairs that are stored in an application's local context.
 
-The app account's minimum balance requirement (MBR) is increased by each box, and by the byte size of the box.
+The app account's minimum balance requirement (MBR) is increased with each additional box, and each additional byte in the box'es name and allocated size.
 If one deletes an application with outstanding boxes, the MBR is not recoverable from the deleted app account.
 
 Box sizes and names cannot be changed after initial allocation, but they can be deleted and re-allocated.
