@@ -335,7 +335,7 @@ For example:
 
 .. code-block:: python
 
-   # get the full content from a Box of name `NoteBook`
+   # get the full contents from a box named `NoteBook`
    App.box_get(Bytes("NoteBook"))
 
 Deleting a Box
