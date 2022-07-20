@@ -126,7 +126,7 @@ class If(Expr):
             self.elseBranch.ElseIf(cond)
         return self
 
-    def Else(self, elseBranch: Expr, *elseBranchMulti):
+    def Else(self, elseBranch: Expr, *elseBranchMulti: Expr):
         if not self.alternateSyntaxFlag:
             raise TealInputError("Cannot mix two different If syntax styles")
 

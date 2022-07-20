@@ -1,4 +1,4 @@
-from typing import Union, List, TYPE_CHECKING, overload
+from typing import List, TYPE_CHECKING, overload
 
 from pyteal.types import TealType, require_type
 from pyteal.errors import TealInputError
@@ -86,12 +86,12 @@ Seq.__module__ = "pyteal"
 
 
 @overload
-def use_seq_if_multiple(exprs: list[Expr]) -> Union[Seq, Expr]:
+def use_seq_if_multiple(exprs: list[Expr]) -> Expr:
     ...
 
 
 @overload
-def use_seq_if_multiple(*exprs: Expr) -> Union[Seq, Expr]:
+def use_seq_if_multiple(*exprs: Expr) -> Expr:
     ...
 
 
