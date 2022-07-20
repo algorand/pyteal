@@ -233,7 +233,7 @@ class ArrayElement(ComputedValue[T]):
             bitIndex = self.index
             if arrayType.is_dynamic():
                 bitIndex = bitIndex + Int(Uint16TypeSpec().bit_size())
-            return cast(Bool, output).decodeBit(encodedArray, bitIndex)
+            return cast(Bool, output).decode_bit(encodedArray, bitIndex)
 
         # Compute the byteIndex (first byte indicating the element encoding)
         # (If the array is dynamic, add 2 to byte index for dynamic array length uint16 prefix)
