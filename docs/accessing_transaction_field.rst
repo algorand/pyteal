@@ -58,9 +58,7 @@ Operator                                                                        
 :any:`Txn.logs <TxnObject.logs>`                                                     :code:`TealType.bytes[]`  5                Array of application logged items. In v5, only valid on inner transactions. >= v6 works with top-level and inner transactions.
 :any:`Txn.last_log() <TxnObject.last_log>`                                           :code:`TealType.bytes[]`  6                The last message emitted. Empty bytes if none were emitted. Application mode only.
 :any:`Txn.approval_program_pages() <TxnObject.approval_program_pages>`               :code:`TealType.bytes[]`  7                The pages of the approval program as an array
-:any:`Txn.num_approval_program_pages() <TxnObject.num_approval_program_pages>`       :code:`TealType.uint64`   7                The number of approval program pages 
 :any:`Txn.clear_state_program_pages() <TxnObject.clear_state_program_pages>`         :code:`TealType.bytes[]`  7                The pages of a clear state program as an array
-:any:`Txn.num_clear_state_program_pages() <TxnObject.num_clear_state_program_pages>` :code:`TealType.uint64`   7                The number of clear state program pages 
 ==================================================================================== ========================= ================ ============================================================================
 
 Asset Config

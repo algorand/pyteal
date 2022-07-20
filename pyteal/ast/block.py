@@ -55,7 +55,7 @@ class Block(LeafExpr):
         return self.field.type_of()
 
     @classmethod
-    def seed(cls, block: Expr) -> "Block":
+    def seed(cls, block: Expr) -> Expr:
         """Get the seed of a block.
 
         Args:
@@ -66,7 +66,7 @@ class Block(LeafExpr):
         return cls(BlockField.block_seed, block)
 
     @classmethod
-    def timestamp(cls, block: Expr) -> "Block":
+    def timestamp(cls, block: Expr) -> Expr:
         """Get the timestamp of a block.
 
         Args:
