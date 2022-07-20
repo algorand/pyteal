@@ -88,10 +88,8 @@ class Bool(BaseType):
         if checked:
             return self.stored_value.store(value)
 
-        return Seq(
-            # Not(Not(value)) coerces all values greater than 0 to 1
-            self.stored_value.store(Not(Not(value))),
-        )
+        # Not(Not(value)) coerces all values greater than 0 to 1
+        return (self.stored_value.store(Not(Not(value))),)
 
     def decode(
         self,
