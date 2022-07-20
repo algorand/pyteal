@@ -2,7 +2,12 @@ from enum import Enum
 from typing import Tuple, TYPE_CHECKING
 
 from pyteal.ast import Expr, MultiValue
-from pyteal.errors import TealTypeError, verifyFieldVersion, verifyTealVersion, TealInputError
+from pyteal.errors import (
+    TealTypeError,
+    verifyFieldVersion,
+    verifyTealVersion,
+    TealInputError,
+)
 from pyteal.ir import Op, TealBlock, TealOp
 from pyteal.types import TealType, require_type
 

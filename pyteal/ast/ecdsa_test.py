@@ -56,7 +56,9 @@ def test_ecdsa_decompress(curve: pt.EcdsaCurve):
 def test_ecdsa_recover(curve: pt.EcdsaCurve):
     if curve != pt.EcdsaCurve.Secp256k1:
         with pytest.raises(pt.TealInputError):
-            pt.EcdsaRecover(curve, pt.Bytes("data"), pt.Int(1), pt.Bytes("sigA"), pt.Bytes("sigB"))
+            pt.EcdsaRecover(
+                curve, pt.Bytes("data"), pt.Int(1), pt.Bytes("sigA"), pt.Bytes("sigB")
+            )
     else:
         args = [pt.Bytes("data"), pt.Int(1), pt.Bytes("sigA"), pt.Bytes("sigB")]
         pubkey = pt.EcdsaRecover(curve, args[0], args[1], args[2], args[3])
