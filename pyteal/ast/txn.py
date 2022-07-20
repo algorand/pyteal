@@ -751,20 +751,6 @@ class TxnObject:
         """
         return self.makeTxnExpr(TxnField.state_proof_pk)
 
-    def num_approval_program_pages(self) -> TxnExpr:
-        """Get the number of pages in the approval program.
-
-        Requires TEAL version 7 or higher.
-        """
-        return self.makeTxnExpr(TxnField.num_approval_program_pages)
-
-    def num_clear_state_program_pages(self) -> TxnExpr:
-        """Get the number of pages in the clear state program.
-
-        Requires TEAL version 7 or higher.
-        """
-        return self.makeTxnExpr(TxnField.num_clear_state_program_pages)
-
     @property
     def application_args(self) -> TxnArray:
         """Application call arguments array.
