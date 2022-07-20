@@ -504,7 +504,7 @@ PyTeal Type                           ARC-4 Type             Dynamic / Static De
 Limitations
 """"""""""""""""""""""""""""""""""""""""""
 
-Due to the special meaning of Transaction Types, they cannot be used as the return value of a method. They can be used as method arguments, but only at the top-level. This means that it's not possible to embed a Transaction Type inside a tuple or array.
+Due to the special meaning of Transaction Types, they **cannot** be used as the return value of a method. They can be used as method arguments, but only at the top-level. This means that it's not possible to embed a Transaction Type inside a tuple or array.
 
 Transaction Types should not be directly created, and they cannot be modified by a program.
 
