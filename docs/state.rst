@@ -262,7 +262,7 @@ The app account's minimum balance requirement (MBR) is increased with each addit
 Box sizes and names cannot be changed after initial allocation, but they can be deleted and re-allocated.
 Boxes are only visible to the application itself; in other words, an application cannot read from or write to another application's boxes on-chain.
 
-Boxes can be manipulated as follows:
+The following sections explain how to work with boxes.
 
 .. _Creating Boxes:
 
