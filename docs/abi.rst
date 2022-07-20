@@ -364,7 +364,8 @@ Note that the AVM has `limitations on the maximum number of foreign references <
 * Applications: 8
 * Sum of Accounts, Assets, and Applications: 8
 
-Because of this, methods that have a large amount of Reference Type arguments may be impossible to call as intended at runtime.
+.. warning::
+    Because of these limits, methods that have a large amount of Reference Type arguments may be impossible to call as intended at runtime.
 
 Usage
 """"""""""""""""""""""""""""""""""""""""""
