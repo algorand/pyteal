@@ -288,7 +288,7 @@ For :any:`App.box_put`, the first argument is the box name to create or to write
 .. note::
 
    If the box exists, then :any:`App.box_put` will write the contents to the box
-   (assuming the replacement has length **identical** to the box'es byte size, as otherwise the operation will fail);
+   (fails when the replacement length is **not identical** to the box's byte size);
    otherwise, it will create a box containing exactly the same input bytes.
 
 .. code-block:: python
