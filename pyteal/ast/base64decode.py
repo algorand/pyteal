@@ -5,7 +5,6 @@ from pyteal.types import TealType, require_type
 from pyteal.errors import verifyFieldVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
-from pyteal.ast.leafexpr import LeafExpr
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
@@ -27,7 +26,7 @@ class Base64Encoding(Enum):
 Base64Encoding.__module__ = "pyteal"
 
 
-class Base64Decode(LeafExpr):
+class Base64Decode(Expr):
     """An expression that decodes a base64-encoded byte string according to a specific encoding.
 
     See [RFC 4648](https://rfc-editor.org/rfc/rfc4648.html#section-4) (sections 4 and 5) for information on specifications.
@@ -36,6 +35,8 @@ class Base64Decode(LeafExpr):
     When padding occurs, any unused pad bits in the encoding must be set to zero or the decoding will fail.
     The special cases of \\n and \\r are allowed but completely ignored. An error will result when attempting
     to decode a string with a character that is not in the encoding alphabet or not one of =, \\r, or \\n.
+
+    NOTE:  Base64Decode usage is not intended for introducing constants. Instead, use :any:`Bytes`.
     """
 
     def __init__(self, encoding: Base64Encoding, base64: Expr) -> None:
@@ -59,8 +60,11 @@ class Base64Decode(LeafExpr):
     def type_of(self):
         return TealType.bytes
 
+    def has_return(self):
+        return False
+
     @classmethod
-    def url(cls, base64: Expr) -> "Base64Decode":
+    def url(cls, base64: Expr) -> Expr:
         """Decode a base64-encoded byte string according to the URL encoding.
 
         Refer to the `Base64Decode` class documentation for more information.
@@ -71,7 +75,7 @@ class Base64Decode(LeafExpr):
         return cls(Base64Encoding.url, base64)
 
     @classmethod
-    def std(cls, base64: Expr) -> "Base64Decode":
+    def std(cls, base64: Expr) -> Expr:
         """Decode a base64-encoded byte string according to the Standard encoding.
 
         Refer to the `Base64Decode` class documentation for more information.
