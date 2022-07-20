@@ -7,8 +7,16 @@ PyTeal can be used to write `Stateful Algorand Smart Contracts <https://develope
 as well. Stateful contracts, also known as applications, can access and manipulate state on the
 Algorand blockchain.
 
-State consists of key-value pairs, where keys are byte slices and values can be integers or byte
-slices. There are multiple types of state that an application can use.
+There are multiple types of state that an application can use.
+State consists of key-value pairs, where keys are byte slices and values vary by type of state.
+
+=================== ===================== ===============================================
+Type of State       Type of Key           Type of Value
+=================== ===================== ===============================================
+Global State        :any:`TealType.bytes` :any:`TealType.uint64` or :any:`TealType.bytes`
+Local State         :any:`TealType.bytes` :any:`TealType.uint64` or :any:`TealType.bytes`
+Boxes               :any:`TealType.bytes` :any:`TealType.bytes`
+=================== ===================== ===============================================
 
 State Operation Table
 ---------------------
