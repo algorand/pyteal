@@ -119,6 +119,9 @@ def test_cond_invalid():
     with pytest.raises(pt.TealInputError):
         pt.Cond([])
 
+    with pytest.raises(pt.TealInputError):
+        pt.Cond([pt.Int(1)], [pt.Int(2), pt.Pop(pt.Txn.receiver())])
+
     with pytest.raises(pt.TealTypeError):
         pt.Cond([pt.Int(1), pt.Int(2)], [pt.Int(2), pt.Txn.receiver()])
 
