@@ -3,7 +3,6 @@ from typing import TypeVar, Union, Sequence, Callable
 from pyteal.types import TealType
 from pyteal.errors import TealInputError
 from pyteal.ast.expr import Expr
-from pyteal.ast.seq import Seq
 from pyteal.ast.int import Int
 from pyteal.ast.bytes import Bytes
 from pyteal.ast.unaryexpr import Not
