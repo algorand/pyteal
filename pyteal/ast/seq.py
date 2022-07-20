@@ -1,4 +1,4 @@
-from typing import List, TYPE_CHECKING, overload
+from typing import Union, List, TYPE_CHECKING, overload
 
 from pyteal.types import TealType, require_type
 from pyteal.errors import TealInputError
@@ -85,7 +85,17 @@ class Seq(Expr):
 Seq.__module__ = "pyteal"
 
 
-def use_seq_if_multiple(*exprs: Expr):
+@overload
+def use_seq_if_multiple(exprs: list[Expr]) -> Union[Seq, Expr]:
+    ...
+
+
+@overload
+def use_seq_if_multiple(*exprs: Expr) -> Union[Seq, Expr]:
+    ...
+
+
+def use_seq_if_multiple(*exprs):
     """If multiple expressions are provided, wrap them in a Seq expression."""
 
     # Handle case where a list of expressions is provided
