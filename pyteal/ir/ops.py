@@ -187,6 +187,13 @@ class Op(Enum):
     sha3_256            = OpType("sha3_256",            Mode.Signature | Mode.Application, 7)
     vrf_verify          = OpType("vrf_verify",          Mode.Signature | Mode.Application, 7)
     block               = OpType("block",               Mode.Signature | Mode.Application, 7)
+    box_create          = OpType("box_create",          Mode.Application,                  8)
+    box_extract         = OpType("box_extract",         Mode.Application,                  8)
+    box_replace         = OpType("box_replace",         Mode.Application,                  8)
+    box_del             = OpType("box_del",             Mode.Application,                  8)
+    box_len             = OpType("box_len",             Mode.Application,                  8)
+    box_get             = OpType("box_get",             Mode.Application,                  8)
+    box_put             = OpType("box_put",             Mode.Application,                  8)
     # fmt: on
 
 
