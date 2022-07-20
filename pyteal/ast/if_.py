@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from pyteal.errors import (
     TealCompileError,
@@ -100,7 +100,7 @@ class If(Expr):
         # otherwise, this expression has a return op only if both branches result in a return op
         return self.thenBranch.has_return() and self.elseBranch.has_return()
 
-    def Then(self, thenBranch: Expr, *thenBranchMulti: List[Expr]):
+    def Then(self, thenBranch: Expr, *thenBranchMulti: list[Expr]):
         if not self.alternateSyntaxFlag:
             raise TealInputError("Cannot mix two different If syntax styles")
 

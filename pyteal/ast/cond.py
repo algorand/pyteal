@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
 
 
-def reformat_multi_argv(argv: List[List[Expr]]) -> List[List[Expr]]:
+def reformat_multi_argv(argv: list[list[Expr]]) -> list[list[Expr]]:
     """Reformat a list of lists of expressions with potentially multiple value expressions into a list of lists of expressions with only one value expression
         by using Seq blocks where appropriate.
 

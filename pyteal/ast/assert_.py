@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from pyteal.types import TealType, require_type
 from pyteal.ir import TealOp, Op, TealBlock, TealSimpleBlock, TealConditionalBlock
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 class Assert(Expr):
     """A control flow expression to verify that a condition is true."""
 
-    def __init__(self, cond: Expr, *condMulti: List[Expr]) -> None:
+    def __init__(self, cond: Expr, *condMulti: list[Expr]) -> None:
         """Create an assert statement that raises an error if the condition is false.
 
         Args:
