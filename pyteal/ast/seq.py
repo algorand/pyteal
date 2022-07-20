@@ -85,7 +85,7 @@ class Seq(Expr):
 Seq.__module__ = "pyteal"
 
 
-def use_seq_if_multiple(*exprs: List[Expr]):
+def use_seq_if_multiple(*exprs: Expr):
     """If multiple expressions are provided, wrap them in a Seq expression."""
 
     # Handle case where a list of expressions is provided

@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 class Assert(Expr):
     """A control flow expression to verify that a condition is true."""
 
-    def __init__(self, cond: Expr, *condMulti: list[Expr]) -> None:
+    def __init__(self, cond: Expr, *condMulti: Expr) -> None:
         """Create an assert statement that raises an error if the condition is false.
 
         Args:
