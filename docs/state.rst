@@ -264,10 +264,10 @@ Boxes are only visible to the application itself; in other words, an application
 
 Boxes can be manipulated as follows:
 
-.. _Create Boxes:
+.. _Creating Boxes:
 
-Create Boxes
-~~~~~~~~~~~~
+Creating Boxes
+~~~~~~~~~~~~~~
 
 To create a box, use :any:`App.box_create`, or :any:`App.box_put` method.
 
@@ -312,7 +312,7 @@ and the third argument is the replacement bytes. For example:
    # replace 2 bytes starting from the 0'th byte  by `Ne` in the box named `wordleBox`
    App.box_replace(Bytes("wordleBox"), Int(0), Bytes("Ne"))
 
-:any:`App.box_put` writes the full contents to a pre-existing box, as is mentioned in `Create Boxes`_.
+:any:`App.box_put` writes the full contents to a pre-existing box, as is mentioned in `Creating Boxes`_.
 
 .. _Reading from a Box:
 
