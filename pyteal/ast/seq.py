@@ -104,4 +104,6 @@ def use_seq_if_multiple(*exprs):
 
     if len(exprs) > 1:
         return Seq(*exprs)
+    if len(exprs) == 0:
+        return None
     return exprs[0]
