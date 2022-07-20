@@ -1,4 +1,4 @@
-from typing import TypeVar, Union, cast, Sequence, Callable
+from typing import TypeVar, Union, Sequence, Callable
 
 from pyteal.types import TealType
 from pyteal.errors import TealInputError
@@ -37,7 +37,7 @@ class BoolTypeSpec(TypeSpec):
         return "bool"
 
 
-BoolTypeSpec.__module__ = "pyteal"
+BoolTypeSpec.__module__ = "pyteal.abi"
 
 
 class Bool(BaseType):
@@ -45,13 +45,32 @@ class Bool(BaseType):
         super().__init__(BoolTypeSpec())
 
     def get(self) -> Expr:
+        """Return the value held by this Bool as a PyTeal expression.
+
+        If the held value is true, an expression that evaluates to 1 will be returned. Otherwise, an
+        expression that evaluates to 0 will be returned. In either case, the expression will have the
+        type TealType.uint64.
+        """
         return self.stored_value.load()
 
     def set(self, value: Union[bool, Expr, "Bool", ComputedValue["Bool"]]) -> Expr:
+        """Set the value of this Bool to the input value.
+
+        The behavior of this method depends on the input argument type:
+
+            * :code:`bool`: set the value to a Python boolean value.
+            * :code:`Expr`: set the value to the result of a PyTeal expression, which must evaluate to a TealType.uint64. The program will fail if the evaluated value is not 0 or 1.
+            * :code:`Bool`: copy the value from another Bool.
+            * :code:`ComputedValue[Bool]`: copy the value from a Bool produced by a ComputedValue.
+
+        Args:
+            value: The new value this Bool should take. This must follow the above constraints.
+
+        Returns:
+            An expression which stores the given value into this Bool.
+        """
         if isinstance(value, ComputedValue):
             return self._set_with_computed_type(value)
-
-        value = cast(Union[bool, Expr, "Bool"], value)
 
         checked = False
         if type(value) is bool:
@@ -71,6 +90,7 @@ class Bool(BaseType):
 
         return Seq(
             self.stored_value.store(value),
+            # instead of failing if too high of a value is given, it's probably more consistent with the rest of the AVM to convert values >= 2 to 1 (the && and || opcodes do this)
             Assert(self.stored_value.load() < Int(2)),
         )
 
@@ -93,7 +113,7 @@ class Bool(BaseType):
         return SetBit(Bytes(b"\x00"), Int(0), self.get())
 
 
-Bool.__module__ = "pyteal"
+Bool.__module__ = "pyteal.abi"
 
 
 def boolAwareStaticByteLength(types: Sequence[TypeSpec]) -> int:

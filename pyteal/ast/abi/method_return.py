@@ -39,4 +39,4 @@ class MethodReturn(Expr):
         return False
 
 
-MethodReturn.__module__ = "pyteal"
+MethodReturn.__module__ = "pyteal.abi"

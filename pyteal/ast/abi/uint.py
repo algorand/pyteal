@@ -1,5 +1,4 @@
 from typing import (
-    TypeVar,
     Union,
     Optional,
     Final,
@@ -113,9 +112,6 @@ def uint_encode(size: int, uintVar: Expr | ScratchVar) -> Expr:
     raise ValueError("Unsupported uint size: {}".format(size))
 
 
-N = TypeVar("N", bound=int)
-
-
 class UintTypeSpec(TypeSpec):
     def __init__(self, bit_size: int) -> None:
         super().__init__()
@@ -155,7 +151,7 @@ class UintTypeSpec(TypeSpec):
         return "uint{}".format(self.bit_size())
 
 
-UintTypeSpec.__module__ = "pyteal"
+UintTypeSpec.__module__ = "pyteal.abi"
 
 
 class ByteTypeSpec(UintTypeSpec):
@@ -172,7 +168,7 @@ class ByteTypeSpec(UintTypeSpec):
         return "byte"
 
 
-ByteTypeSpec.__module__ = "pyteal"
+ByteTypeSpec.__module__ = "pyteal.abi"
 
 
 class Uint8TypeSpec(UintTypeSpec):
@@ -186,7 +182,7 @@ class Uint8TypeSpec(UintTypeSpec):
         return Uint8
 
 
-Uint8TypeSpec.__module__ = "pyteal"
+Uint8TypeSpec.__module__ = "pyteal.abi"
 
 
 class Uint16TypeSpec(UintTypeSpec):
@@ -200,7 +196,7 @@ class Uint16TypeSpec(UintTypeSpec):
         return Uint16
 
 
-Uint16TypeSpec.__module__ = "pyteal"
+Uint16TypeSpec.__module__ = "pyteal.abi"
 
 
 class Uint32TypeSpec(UintTypeSpec):
@@ -214,7 +210,7 @@ class Uint32TypeSpec(UintTypeSpec):
         return Uint32
 
 
-Uint32TypeSpec.__module__ = "pyteal"
+Uint32TypeSpec.__module__ = "pyteal.abi"
 
 
 class Uint64TypeSpec(UintTypeSpec):
@@ -228,10 +224,7 @@ class Uint64TypeSpec(UintTypeSpec):
         return Uint64
 
 
-Uint32TypeSpec.__module__ = "pyteal"
-
-
-T = TypeVar("T", bound="Uint")
+Uint32TypeSpec.__module__ = "pyteal.abi"
 
 
 class Uint(BaseType):
@@ -243,9 +236,32 @@ class Uint(BaseType):
         return cast(UintTypeSpec, super().type_spec())
 
     def get(self) -> Expr:
+        """Return the value held by this Uint as a PyTeal expression.
+
+        The expression will have the type TealType.uint64.
+        """
         return self.stored_value.load()
 
-    def set(self: T, value: Union[int, Expr, "Uint", ComputedValue[T]]) -> Expr:
+    def set(self, value: Union[int, Expr, "Uint", ComputedValue["Uint"]]) -> Expr:
+        """Set the value of this Uint to the input value.
+
+        There are a variety of ways to express the input value. Regardless of the type used to
+        indicate the input value, this Uint type can only hold values in the range :code:`[0,2^N)`,
+        where :code:`N` is the bit size of this Uint.
+
+        The behavior of this method depends on the input argument type:
+
+            * :code:`int`: set the value to a Python integer. A compiler error will occur if this value overflows or underflows this integer type.
+            * :code:`Expr`: set the value to the result of a PyTeal expression, which must evaluate to a TealType.uint64. The program will fail if the evaluated value overflows or underflows this integer type.
+            * :code:`Uint`: copy the value from another Uint. The argument's type must exactly match this integer's type, otherwise an error will occur. For example, it's not possible to set a Uint64 to a Uint8, or vice versa.
+            * :code:`ComputedValue[Uint]`: copy the value from a Uint produced by a ComputedValue. The type produced by the ComputedValue must exactly match this integer's type, otherwise an error will occur.
+
+        Args:
+            value: The new value this Uint should take. This must follow the above constraints.
+
+        Returns:
+            An expression which stores the given value into this Uint.
+        """
         if isinstance(value, ComputedValue):
             return self._set_with_computed_type(value)
 
@@ -282,7 +298,7 @@ class Uint(BaseType):
         return uint_encode(self.type_spec().bit_size(), self.stored_value)
 
 
-Uint.__module__ = "pyteal"
+Uint.__module__ = "pyteal.abi"
 
 
 class Byte(Uint):
@@ -290,7 +306,7 @@ class Byte(Uint):
         super().__init__(ByteTypeSpec())
 
 
-Byte.__module__ = "pyteal"
+Byte.__module__ = "pyteal.abi"
 
 
 class Uint8(Uint):
@@ -298,7 +314,7 @@ class Uint8(Uint):
         super().__init__(Uint8TypeSpec())
 
 
-Uint8.__module__ = "pyteal"
+Uint8.__module__ = "pyteal.abi"
 
 
 class Uint16(Uint):
@@ -306,7 +322,7 @@ class Uint16(Uint):
         super().__init__(Uint16TypeSpec())
 
 
-Uint16.__module__ = "pyteal"
+Uint16.__module__ = "pyteal.abi"
 
 
 class Uint32(Uint):
@@ -314,7 +330,7 @@ class Uint32(Uint):
         super().__init__(Uint32TypeSpec())
 
 
-Uint32.__module__ = "pyteal"
+Uint32.__module__ = "pyteal.abi"
 
 
 class Uint64(Uint):
@@ -322,4 +338,4 @@ class Uint64(Uint):
         super().__init__(Uint64TypeSpec())
 
 
-Uint64.__module__ = "pyteal"
+Uint64.__module__ = "pyteal.abi"

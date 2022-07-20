@@ -62,7 +62,7 @@ class TypeSpec(ABC):
         pass
 
 
-TypeSpec.__module__ = "pyteal"
+TypeSpec.__module__ = "pyteal.abi"
 
 
 class BaseType(ABC):
@@ -134,7 +134,7 @@ class BaseType(ABC):
         """
         pass
 
-    def _set_with_computed_type(self, value: "ComputedValue") -> Expr:
+    def _set_with_computed_type(self, value: "ComputedValue[BaseType]") -> Expr:
         target_type_spec = value.produced_type_spec()
         if self.type_spec() != target_type_spec:
             raise TealInputError(
@@ -146,12 +146,12 @@ class BaseType(ABC):
         return str(self.type_spec())
 
 
-BaseType.__module__ = "pyteal"
+BaseType.__module__ = "pyteal.abi"
 
-T = TypeVar("T", bound=BaseType)
+T_co = TypeVar("T_co", bound=BaseType, covariant=True)
 
 
-class ComputedValue(ABC, Generic[T]):
+class ComputedValue(ABC, Generic[T_co]):
     """Represents an ABI Type whose value must be computed by an expression."""
 
     @abstractmethod
@@ -160,8 +160,12 @@ class ComputedValue(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def store_into(self, output: T) -> Expr:
-        """Store the value of this computed type into an existing ABI type instance.
+    def store_into(self, output: T_co) -> Expr:  # type: ignore[misc]
+        """Compute the value and store it into an existing ABI type instance.
+
+        NOTE: If you call this method multiple times, the computation to determine the value will be
+        repeated each time. For this reason, it is recommended to only issue a single call to either
+        :code:`store_into` or :code:`use`.
 
         Args:
             output: The object where the computed value will be stored. This object must have the
@@ -173,8 +177,12 @@ class ComputedValue(ABC, Generic[T]):
         """
         pass
 
-    def use(self, action: Callable[[T], Expr]) -> Expr:
-        """Use the computed value represented by this class in a function or lambda expression.
+    def use(self, action: Callable[[T_co], Expr]) -> Expr:
+        """Compute the value and pass it to a callable expression.
+
+        NOTE: If you call this method multiple times, the computation to determine the value will be
+        repeated each time. For this reason, it is recommended to only issue a single call to either
+        :code:`store_into` or :code:`use`.
 
         Args:
             action: A callable object that will receive an instance of this class's produced type
@@ -182,14 +190,14 @@ class ComputedValue(ABC, Generic[T]):
                 it must return an Expr to be included in the program's AST.
 
         Returns:
-            An expression which contains the returned expression from invoking action with the
+            An expression which contains the returned expression from invoking `action` with the
             computed value.
         """
-        newInstance = cast(T, self.produced_type_spec().new_instance())
+        newInstance = cast(T_co, self.produced_type_spec().new_instance())
         return Seq(self.store_into(newInstance), action(newInstance))
 
 
-ComputedValue.__module__ = "pyteal"
+ComputedValue.__module__ = "pyteal.abi"
 
 
 class ReturnedValue(ComputedValue):
@@ -226,4 +234,4 @@ class ReturnedValue(ComputedValue):
         return output.stored_value.slot.store(self.computation)
 
 
-ReturnedValue.__module__ = "pyteal"
+ReturnedValue.__module__ = "pyteal.abi"

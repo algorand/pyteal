@@ -35,14 +35,14 @@ from pyteal.ast.abi.array_base import ArrayTypeSpec, Array, ArrayElement
 from pyteal.ast.abi.array_static import StaticArrayTypeSpec, StaticArray
 from pyteal.ast.abi.array_dynamic import DynamicArrayTypeSpec, DynamicArray
 from pyteal.ast.abi.reference_type import (
+    ReferenceTypeSpec,
+    ReferenceType,
     Account,
     AccountTypeSpec,
     Asset,
     AssetTypeSpec,
     Application,
     ApplicationTypeSpec,
-    ReferenceType,
-    ReferenceTypeSpec,
     ReferenceTypeSpecs,
 )
 from pyteal.ast.abi.transaction import (
@@ -78,6 +78,8 @@ __all__ = [
     "Account",
     "AccountTypeSpec",
     "Asset",
+    "ReferenceTypeSpec",
+    "ReferenceType",
     "AssetTypeSpec",
     "Application",
     "ApplicationTypeSpec",
