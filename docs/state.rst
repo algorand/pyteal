@@ -252,7 +252,7 @@ Box Storage
 
 Box storage consists of key-value pairs that are stored in an application's local context.
 
-The app account's minimum balance requirement (MBR) is increased with each additional box, and each additional byte in the box'es name and allocated size.
+The app account's minimum balance requirement (MBR) is increased with each additional box, and each additional byte in the box's name and allocated size.
 
 .. warning::
 
