@@ -77,7 +77,6 @@ load 11
 !
 store 12
 load 12
-load 12
 retsub
 
 // numerical_comp
