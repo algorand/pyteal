@@ -3,7 +3,7 @@ import pytest
 
 import pyteal as pt
 from pyteal import abi
-from pyteal.ast.abi.tuple import encodeTuple, indexTuple, TupleElement
+from pyteal.ast.abi.tuple import _encode_tuple, _index_tuple, TupleElement
 from pyteal.ast.abi.bool import _encode_bool_sequence
 from pyteal.ast.abi.util import substring_for_decoding
 from pyteal.ast.abi.type_test import ContainerType
@@ -196,7 +196,7 @@ def test_encodeTuple():
     ]
 
     for i, test in enumerate(tests):
-        expr = encodeTuple(test.types)
+        expr = _encode_tuple(test.types)
         assert expr.type_of() == pt.TealType.bytes
         assert not expr.has_return()
 
@@ -430,7 +430,7 @@ def test_indexTuple():
 
     for i, test in enumerate(tests):
         output = test.types[test.typeIndex].new_instance()
-        expr = indexTuple(test.types, encoded, test.typeIndex, output)
+        expr = _index_tuple(test.types, encoded, test.typeIndex, output)
         assert expr.type_of() == pt.TealType.none
         assert not expr.has_return()
 
@@ -446,17 +446,17 @@ def test_indexTuple():
             assert actual == expected, "Test at index {} failed".format(i)
 
         with pytest.raises(ValueError):
-            indexTuple(test.types, encoded, len(test.types), output)
+            _index_tuple(test.types, encoded, len(test.types), output)
 
         with pytest.raises(ValueError):
-            indexTuple(test.types, encoded, -1, output)
+            _index_tuple(test.types, encoded, -1, output)
 
         otherType = abi.Uint64()
         if output.type_spec() == otherType.type_spec():
             otherType = abi.Uint16()
 
         with pytest.raises(TypeError):
-            indexTuple(test.types, encoded, test.typeIndex, otherType)
+            _index_tuple(test.types, encoded, test.typeIndex, otherType)
 
 
 def test_TupleTypeSpec_eq():
@@ -672,7 +672,7 @@ def test_Tuple_set():
     assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expectedExpr = tupleValue.stored_value.store(encodeTuple([uint8, uint16, uint32]))
+    expectedExpr = tupleValue.stored_value.store(_encode_tuple([uint8, uint16, uint32]))
     expected, _ = expectedExpr.__teal__(options)
     expected.addIncoming()
     expected = pt.TealBlock.NormalizeBlocks(expected)
@@ -813,7 +813,7 @@ def test_TupleElement_store_into():
             assert expr.type_of() == pt.TealType.none
             assert not expr.has_return()
 
-            expectedExpr = indexTuple(test, tupleValue.encode(), j, output)
+            expectedExpr = _index_tuple(test, tupleValue.encode(), j, output)
             expected, _ = expectedExpr.__teal__(options)
             expected.addIncoming()
             expected = pt.TealBlock.NormalizeBlocks(expected)
