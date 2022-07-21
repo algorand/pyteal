@@ -34,7 +34,7 @@ from pyteal.ast.abi.uint import NUM_BITS_IN_BYTE, Uint16
 from pyteal.ast.abi.util import substringForDecoding
 
 
-def encodeTuple(values: Sequence[BaseType]) -> Expr:
+def _encode_tuple(values: Sequence[BaseType]) -> Expr:
     heads: List[Expr] = []
     head_length_static: int = 0
 
@@ -112,24 +112,24 @@ def encodeTuple(values: Sequence[BaseType]) -> Expr:
     return Concat(*toConcat)
 
 
-def indexTuple(
-    valueTypes: Sequence[TypeSpec], encoded: Expr, index: int, output: BaseType
+def _index_tuple(
+    value_types: Sequence[TypeSpec], encoded: Expr, index: int, output: BaseType
 ) -> Expr:
-    if not (0 <= index < len(valueTypes)):
+    if not (0 <= index < len(value_types)):
         raise ValueError("Index outside of range")
 
     offset = 0
     ignoreNext = 0
     lastBoolStart = 0
     lastBoolLength = 0
-    for i, typeBefore in enumerate(valueTypes[:index]):
+    for i, typeBefore in enumerate(value_types[:index]):
         if ignoreNext > 0:
             ignoreNext -= 1
             continue
 
         if typeBefore == BoolTypeSpec():
             lastBoolStart = offset
-            lastBoolLength = consecutiveBoolTypeSpecNum(valueTypes, i)
+            lastBoolLength = consecutiveBoolTypeSpecNum(value_types, i)
             offset += boolSequenceLength(lastBoolLength)
             ignoreNext = lastBoolLength - 1
             continue
@@ -140,7 +140,7 @@ def indexTuple(
 
         offset += typeBefore.byte_length_static()
 
-    valueType = valueTypes[index]
+    valueType = value_types[index]
     if output.type_spec() != valueType:
         raise TypeError("Output type does not match value type")
 
@@ -158,13 +158,13 @@ def indexTuple(
         hasNextDynamicValue = False
         nextDynamicValueOffset = offset + 2
         ignoreNext = 0
-        for i, typeAfter in enumerate(valueTypes[index + 1 :], start=index + 1):
+        for i, typeAfter in enumerate(value_types[index + 1 :], start=index + 1):
             if ignoreNext > 0:
                 ignoreNext -= 1
                 continue
 
             if type(typeAfter) is BoolTypeSpec:
-                boolLength = consecutiveBoolTypeSpecNum(valueTypes, i)
+                boolLength = consecutiveBoolTypeSpecNum(value_types, i)
                 nextDynamicValueOffset += boolSequenceLength(boolLength)
                 ignoreNext = boolLength - 1
                 continue
@@ -189,7 +189,7 @@ def indexTuple(
     start_index = Int(offset)
     length = Int(valueType.byte_length_static())
 
-    if index + 1 == len(valueTypes):
+    if index + 1 == len(value_types):
         if offset == 0:
             # This is the first and only value in the tuple, so decode all of encoded
             return output.decode(encoded)
@@ -333,7 +333,7 @@ class Tuple(BaseType):
             )
         if not all(myTypes[i] == values[i].type_spec() for i in range(len(myTypes))):
             raise TealInputError("Input values do not match type")
-        return self.stored_value.store(encodeTuple(values))
+        return self.stored_value.store(_encode_tuple(values))
 
     def encode(self) -> Expr:
         return self.stored_value.load()
@@ -379,7 +379,7 @@ class TupleElement(ComputedValue[T]):
         return self.tuple.type_spec().value_type_specs()[self.index]
 
     def store_into(self, output: T) -> Expr:
-        return indexTuple(
+        return _index_tuple(
             self.tuple.type_spec().value_type_specs(),
             self.tuple.encode(),
             self.index,

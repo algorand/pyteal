@@ -4,7 +4,7 @@ import pytest
 import pyteal as pt
 from pyteal import abi
 from pyteal.ast.abi.util import substringForDecoding
-from pyteal.ast.abi.tuple import encodeTuple
+from pyteal.ast.abi.tuple import _encode_tuple
 from pyteal.ast.abi.array_base_test import STATIC_TYPES, DYNAMIC_TYPES
 from pyteal.ast.abi.type_test import ContainerType
 
@@ -121,7 +121,7 @@ def test_DynamicArray_set_values():
         expectedExpr = value.stored_value.store(
             pt.Concat(
                 pt.Seq(length_tmp.set(len(values)), length_tmp.encode()),
-                encodeTuple(values),
+                _encode_tuple(values),
             )
         )
         expected, _ = expectedExpr.__teal__(options)

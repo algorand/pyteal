@@ -3,7 +3,7 @@ import pytest
 import pyteal as pt
 from pyteal import abi
 from pyteal.ast.abi.util import substringForDecoding
-from pyteal.ast.abi.tuple import encodeTuple
+from pyteal.ast.abi.tuple import _encode_tuple
 from pyteal.ast.abi.bool import boolSequenceLength
 from pyteal.ast.abi.type_test import ContainerType
 from pyteal.ast.abi.array_base_test import STATIC_TYPES, DYNAMIC_TYPES
@@ -167,7 +167,7 @@ def test_StaticArray_set_values():
     assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expectedExpr = value.stored_value.store(encodeTuple(values))
+    expectedExpr = value.stored_value.store(_encode_tuple(values))
     expected, _ = expectedExpr.__teal__(options)
     expected.addIncoming()
     expected = pt.TealBlock.NormalizeBlocks(expected)

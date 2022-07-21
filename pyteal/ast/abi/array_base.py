@@ -19,7 +19,7 @@ from pyteal.ast.binaryexpr import ExtractUint16
 from pyteal.ast.naryexpr import Concat
 
 from pyteal.ast.abi.type import TypeSpec, BaseType, ComputedValue
-from pyteal.ast.abi.tuple import encodeTuple
+from pyteal.ast.abi.tuple import _encode_tuple
 from pyteal.ast.abi.bool import Bool, BoolTypeSpec
 from pyteal.ast.abi.uint import Uint16, Uint16TypeSpec
 from pyteal.ast.abi.util import substringForDecoding
@@ -135,7 +135,7 @@ class Array(BaseType, Generic[T]):
                     )
                 )
 
-        encoded = encodeTuple(values)
+        encoded = _encode_tuple(values)
 
         if self.type_spec().is_length_dynamic():
             length_tmp = Uint16()
