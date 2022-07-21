@@ -1,9 +1,9 @@
 from enum import Enum
 from typing import TYPE_CHECKING, cast
 import algosdk
+
 from pyteal.ast.abi.util import type_specs_from_signature
 from pyteal.ast.int import EnumInt
-
 from pyteal.ast.methodsig import MethodSignature
 from pyteal.types import TealType, require_type
 from pyteal.errors import TealInputError, TealTypeError, verifyTealVersion
@@ -185,6 +185,27 @@ class InnerTxnBuilder:
                     for valueIter in value
                 ]
             )
+
+    @classmethod
+    def Execute(cls, fields: dict[TxnField, Expr | list[Expr]]) -> Expr:
+        """Performs a single transaction given fields passed in.
+
+        A convenience method that accepts fields to submit a single inner transaction, which is equivalent to:
+
+        .. code-block:: python
+
+            InnerTxnBuilder.Begin()
+            InnerTxnBuilder.SetFields(fields)
+            InnerTxnBuilder.End()
+
+        Requires TEAL version 5 or higher. This operation is only permitted in application mode.
+
+        Args:
+            fields: A dictionary whose keys are fields to set and whose values are the value each
+                field should take. Each value must evaluate to a type that is compatible with the
+                field being set.
+        """
+        return Seq(cls.Begin(), cls.SetFields(fields), cls.Submit())
 
     @classmethod
     def SetFields(cls, fields: dict[TxnField, Expr | list[Expr]]) -> Expr:
