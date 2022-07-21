@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 class Assert(Expr):
     """A control flow expression to verify that a condition is true."""
 
-    def __init__(self, cond: Expr, *condMulti: Expr) -> None:
+    def __init__(self, cond: Expr, *additionalConds: Expr) -> None:
         """Create an assert statement that raises an error if the condition is false.
 
         Args:
@@ -20,9 +20,9 @@ class Assert(Expr):
         """
         super().__init__()
         require_type(cond, TealType.uint64)
-        for cond_single in condMulti:
+        for cond_single in additionalConds:
             require_type(cond_single, TealType.uint64)
-        self.cond = [cond] + list(condMulti)
+        self.cond = [cond] + list(additionalConds)
 
     def __teal__(self, options: "CompileOptions"):
         if len(self.cond) > 1:
