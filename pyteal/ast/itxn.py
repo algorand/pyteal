@@ -192,7 +192,7 @@ class InnerTxnBuilder:
             InnerTxnBuilder.SetFields(fields)
             InnerTxnBuilder.End()
 
-        Requires TEAL version 5 or higher. This operation is only permitted in application mode.
+        Requires program version 5 or higher. This operation is only permitted in application mode.
 
         Args:
             fields: A dictionary whose keys are fields to set and whose values are the value each

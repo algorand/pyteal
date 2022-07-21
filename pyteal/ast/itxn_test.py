@@ -143,11 +143,11 @@ def test_InnerTxnBuilder_Execute():
             pt.InnerTxnBuilder.Begin(),
             expectedExpr,
             pt.InnerTxnBuilder.Submit(),
-        ).__teal__(teal5Options)
+        ).__teal__(avm5Options)
         expected.addIncoming()
         expected = pt.TealBlock.NormalizeBlocks(expected)
 
-        actual, _ = expr.__teal__(teal5Options)
+        actual, _ = expr.__teal__(avm5Options)
         actual.addIncoming()
         actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -155,7 +155,7 @@ def test_InnerTxnBuilder_Execute():
             assert actual == expected
 
         with pytest.raises(pt.TealInputError):
-            expr.__teal__(teal4Options)
+            expr.__teal__(avm4Options)
 
 
 # txn_test.py performs additional testing
