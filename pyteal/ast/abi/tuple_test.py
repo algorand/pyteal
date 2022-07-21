@@ -4,7 +4,7 @@ import pytest
 import pyteal as pt
 from pyteal import abi
 from pyteal.ast.abi.tuple import encodeTuple, indexTuple, TupleElement
-from pyteal.ast.abi.bool import encodeBoolSequence
+from pyteal.ast.abi.bool import _encode_bool_sequence
 from pyteal.ast.abi.util import substring_for_decoding
 from pyteal.ast.abi.type_test import ContainerType
 
@@ -39,21 +39,25 @@ def test_encodeTuple():
         ),
         EncodeTest(types=[bool_a], expected=bool_a.encode()),
         EncodeTest(
-            types=[bool_a, bool_b], expected=encodeBoolSequence([bool_a, bool_b])
+            types=[bool_a, bool_b], expected=_encode_bool_sequence([bool_a, bool_b])
         ),
         EncodeTest(
             types=[bool_a, bool_b, uint64_a],
-            expected=pt.Concat(encodeBoolSequence([bool_a, bool_b]), uint64_a.encode()),
+            expected=pt.Concat(
+                _encode_bool_sequence([bool_a, bool_b]), uint64_a.encode()
+            ),
         ),
         EncodeTest(
             types=[uint64_a, bool_a, bool_b],
-            expected=pt.Concat(uint64_a.encode(), encodeBoolSequence([bool_a, bool_b])),
+            expected=pt.Concat(
+                uint64_a.encode(), _encode_bool_sequence([bool_a, bool_b])
+            ),
         ),
         EncodeTest(
             types=[uint64_a, bool_a, bool_b, uint64_b],
             expected=pt.Concat(
                 uint64_a.encode(),
-                encodeBoolSequence([bool_a, bool_b]),
+                _encode_bool_sequence([bool_a, bool_b]),
                 uint64_b.encode(),
             ),
         ),
@@ -69,7 +73,7 @@ def test_encodeTuple():
             expected=pt.Concat(
                 uint64_a.encode(),
                 tuple_a.encode(),
-                encodeBoolSequence([bool_a, bool_b]),
+                _encode_bool_sequence([bool_a, bool_b]),
             ),
         ),
         EncodeTest(
@@ -121,7 +125,7 @@ def test_encodeTuple():
                     uint16_a.set(8 + 2 + 1),
                     uint16_a.encode(),
                 ),
-                encodeBoolSequence([bool_a, bool_b]),
+                _encode_bool_sequence([bool_a, bool_b]),
                 tail_holder.load(),
             ),
         ),
@@ -177,7 +181,7 @@ def test_encodeTuple():
                     uint16_b.set(uint16_a.get() + pt.Len(encoded_tail.load())),
                     uint16_a.encode(),
                 ),
-                encodeBoolSequence([bool_a, bool_b]),
+                _encode_bool_sequence([bool_a, bool_b]),
                 pt.Seq(
                     encoded_tail.store(dynamic_array_c.encode()),
                     tail_holder.store(
@@ -268,37 +272,37 @@ def test_indexTuple():
         IndexTest(
             types=[bool_t],
             typeIndex=0,
-            expected=lambda output: output.decodeBit(encoded, pt.Int(0)),
+            expected=lambda output: output.decode_bit(encoded, pt.Int(0)),
         ),
         IndexTest(
             types=[bool_t, bool_t],
             typeIndex=0,
-            expected=lambda output: output.decodeBit(encoded, pt.Int(0)),
+            expected=lambda output: output.decode_bit(encoded, pt.Int(0)),
         ),
         IndexTest(
             types=[bool_t, bool_t],
             typeIndex=1,
-            expected=lambda output: output.decodeBit(encoded, pt.Int(1)),
+            expected=lambda output: output.decode_bit(encoded, pt.Int(1)),
         ),
         IndexTest(
             types=[uint64_t, bool_t],
             typeIndex=1,
-            expected=lambda output: output.decodeBit(encoded, pt.Int(8 * 8)),
+            expected=lambda output: output.decode_bit(encoded, pt.Int(8 * 8)),
         ),
         IndexTest(
             types=[uint64_t, bool_t, bool_t],
             typeIndex=1,
-            expected=lambda output: output.decodeBit(encoded, pt.Int(8 * 8)),
+            expected=lambda output: output.decode_bit(encoded, pt.Int(8 * 8)),
         ),
         IndexTest(
             types=[uint64_t, bool_t, bool_t],
             typeIndex=2,
-            expected=lambda output: output.decodeBit(encoded, pt.Int(8 * 8 + 1)),
+            expected=lambda output: output.decode_bit(encoded, pt.Int(8 * 8 + 1)),
         ),
         IndexTest(
             types=[bool_t, uint64_t],
             typeIndex=0,
-            expected=lambda output: output.decodeBit(encoded, pt.Int(0)),
+            expected=lambda output: output.decode_bit(encoded, pt.Int(0)),
         ),
         IndexTest(
             types=[bool_t, uint64_t],
@@ -308,12 +312,12 @@ def test_indexTuple():
         IndexTest(
             types=[bool_t, bool_t, uint64_t],
             typeIndex=0,
-            expected=lambda output: output.decodeBit(encoded, pt.Int(0)),
+            expected=lambda output: output.decode_bit(encoded, pt.Int(0)),
         ),
         IndexTest(
             types=[bool_t, bool_t, uint64_t],
             typeIndex=1,
-            expected=lambda output: output.decodeBit(encoded, pt.Int(1)),
+            expected=lambda output: output.decode_bit(encoded, pt.Int(1)),
         ),
         IndexTest(
             types=[bool_t, bool_t, uint64_t],

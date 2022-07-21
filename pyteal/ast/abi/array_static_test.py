@@ -4,7 +4,7 @@ import pyteal as pt
 from pyteal import abi
 from pyteal.ast.abi.util import substring_for_decoding
 from pyteal.ast.abi.tuple import encodeTuple
-from pyteal.ast.abi.bool import boolSequenceLength
+from pyteal.ast.abi.bool import _bool_sequence_length
 from pyteal.ast.abi.type_test import ContainerType
 from pyteal.ast.abi.array_base_test import STATIC_TYPES, DYNAMIC_TYPES
 
@@ -84,7 +84,7 @@ def test_StaticArrayTypeSpec_byte_length_static():
             actual = staticArrayType.byte_length_static()
 
             if elementType == abi.BoolTypeSpec():
-                expected = boolSequenceLength(length)
+                expected = _bool_sequence_length(length)
             else:
                 expected = elementType.byte_length_static() * length
 
