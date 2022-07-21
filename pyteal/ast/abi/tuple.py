@@ -31,7 +31,7 @@ from pyteal.ast.abi.bool import (
     boolAwareStaticByteLength,
 )
 from pyteal.ast.abi.uint import NUM_BITS_IN_BYTE, Uint16
-from pyteal.ast.abi.util import substringForDecoding
+from pyteal.ast.abi.util import substring_for_decoding
 
 
 def encodeTuple(values: Sequence[BaseType]) -> Expr:
@@ -287,7 +287,7 @@ class Tuple(BaseType):
         end_index: Expr = None,
         length: Expr = None,
     ) -> Expr:
-        extracted = substringForDecoding(
+        extracted = substring_for_decoding(
             encoded, start_index=start_index, end_index=end_index, length=length
         )
         return self.stored_value.store(extracted)
