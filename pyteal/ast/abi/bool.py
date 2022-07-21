@@ -112,7 +112,7 @@ class Bool(BaseType):
 Bool.__module__ = "pyteal.abi"
 
 
-def boolAwareStaticByteLength(types: Sequence[TypeSpec]) -> int:
+def _bool_aware_static_byte_length(types: Sequence[TypeSpec]) -> int:
     length = 0
     ignoreNext = 0
     for i, t in enumerate(types):
@@ -120,9 +120,9 @@ def boolAwareStaticByteLength(types: Sequence[TypeSpec]) -> int:
             ignoreNext -= 1
             continue
         if t == BoolTypeSpec():
-            numBools = consecutiveBoolTypeSpecNum(types, i)
+            numBools = _consecutive_bool_type_spec_num(types, i)
             ignoreNext = numBools - 1
-            length += boolSequenceLength(numBools)
+            length += _bool_sequence_length(numBools)
             continue
         length += t.byte_length_static()
     return length
@@ -131,7 +131,7 @@ def boolAwareStaticByteLength(types: Sequence[TypeSpec]) -> int:
 T = TypeVar("T")
 
 
-def consecutiveThingNum(
+def _consecutive_thing_num(
     things: Sequence[T], start_index: int, condition: Callable[[T], bool]
 ) -> int:
     numConsecutiveThings = 0
@@ -142,28 +142,28 @@ def consecutiveThingNum(
     return numConsecutiveThings
 
 
-def consecutiveBoolTypeSpecNum(types: Sequence[TypeSpec], start_index: int) -> int:
+def _consecutive_bool_type_spec_num(types: Sequence[TypeSpec], start_index: int) -> int:
     if len(types) != 0 and not isinstance(types[0], TypeSpec):
         raise TypeError("Sequence of types expected")
-    return consecutiveThingNum(types, start_index, lambda t: t == BoolTypeSpec())
+    return _consecutive_thing_num(types, start_index, lambda t: t == BoolTypeSpec())
 
 
-def consecutiveBoolInstanceNum(values: Sequence[BaseType], start_index: int) -> int:
+def _consecutive_bool_instance_num(values: Sequence[BaseType], start_index: int) -> int:
     if len(values) != 0 and not isinstance(values[0], BaseType):
         raise TypeError(
             "Sequence of types expected, but got {}".format(type(values[0]))
         )
-    return consecutiveThingNum(
+    return _consecutive_thing_num(
         values, start_index, lambda t: t.type_spec() == BoolTypeSpec()
     )
 
 
-def boolSequenceLength(num_bools: int) -> int:
+def _bool_sequence_length(num_bools: int) -> int:
     """Get the length in bytes of an encoding of `num_bools` consecutive booleans values."""
     return (num_bools + NUM_BITS_IN_BYTE - 1) // NUM_BITS_IN_BYTE
 
 
-def encodeBoolSequence(values: Sequence[Bool]) -> Expr:
+def _encode_bool_sequence(values: Sequence[Bool]) -> Expr:
     """Encoding a sequences of boolean values into a byte string.
 
     Args:
@@ -172,7 +172,7 @@ def encodeBoolSequence(values: Sequence[Bool]) -> Expr:
     Returns:
         An expression which creates an encoded byte string with the input boolean values.
     """
-    length = boolSequenceLength(len(values))
+    length = _bool_sequence_length(len(values))
     expr: Expr = Bytes(b"\x00" * length)
 
     for i, value in enumerate(values):

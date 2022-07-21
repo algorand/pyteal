@@ -5,7 +5,7 @@ from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
 
 from pyteal.ast.abi.type import ComputedValue, TypeSpec, BaseType
-from pyteal.ast.abi.bool import BoolTypeSpec, boolSequenceLength
+from pyteal.ast.abi.bool import BoolTypeSpec, _bool_sequence_length
 from pyteal.ast.abi.array_base import ArrayTypeSpec, Array, ArrayElement
 
 
@@ -52,7 +52,7 @@ class StaticArrayTypeSpec(ArrayTypeSpec[T], Generic[T, N]):
         length = self.length_static()
 
         if value_type == BoolTypeSpec():
-            return boolSequenceLength(length)
+            return _bool_sequence_length(length)
         return length * value_type.byte_length_static()
 
     def __eq__(self, other: object) -> bool:

@@ -5,11 +5,11 @@ import pyteal as pt
 from pyteal import abi
 from pyteal.ast.abi.type_test import ContainerType
 from pyteal.ast.abi.bool import (
-    boolAwareStaticByteLength,
-    consecutiveBoolInstanceNum,
-    consecutiveBoolTypeSpecNum,
-    boolSequenceLength,
-    encodeBoolSequence,
+    _bool_aware_static_byte_length,
+    _consecutive_bool_instance_num,
+    _consecutive_bool_type_spec_num,
+    _bool_sequence_length,
+    _encode_bool_sequence,
 )
 
 options = pt.CompileOptions(version=5)
@@ -270,7 +270,7 @@ def test_boolAwareStaticByteLength():
     ]
 
     for i, test in enumerate(tests):
-        actual = boolAwareStaticByteLength(test.types)
+        actual = _bool_aware_static_byte_length(test.types)
         assert actual == test.expectedLength, "Test at index {} failed".format(i)
 
 
@@ -350,10 +350,10 @@ def test_consecutiveBool():
     ]
 
     for i, test in enumerate(tests):
-        actual = consecutiveBoolTypeSpecNum(test.types, test.start)
+        actual = _consecutive_bool_type_spec_num(test.types, test.start)
         assert actual == test.expected, "Test at index {} failed".format(i)
 
-        actual = consecutiveBoolInstanceNum(
+        actual = _consecutive_bool_instance_num(
             [t.new_instance() for t in test.types], test.start
         )
         assert actual == test.expected, "Test at index {} failed".format(i)
@@ -375,7 +375,7 @@ def test_boolSequenceLength():
     ]
 
     for i, test in enumerate(tests):
-        actual = boolSequenceLength(test.numBools)
+        actual = _bool_sequence_length(test.numBools)
         assert actual == test.expectedLength, "Test at index {} failed".format(i)
 
 
@@ -394,7 +394,7 @@ def test_encodeBoolSequence():
     ]
 
     for i, test in enumerate(tests):
-        expr = encodeBoolSequence(test.types)
+        expr = _encode_bool_sequence(test.types)
         assert expr.type_of() == pt.TealType.bytes
         assert not expr.has_return()
 
