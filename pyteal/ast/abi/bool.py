@@ -3,10 +3,9 @@ from typing import TypeVar, Union, Sequence, Callable
 from pyteal.types import TealType
 from pyteal.errors import TealInputError
 from pyteal.ast.expr import Expr
-from pyteal.ast.seq import Seq
-from pyteal.ast.assert_ import Assert
 from pyteal.ast.int import Int
 from pyteal.ast.bytes import Bytes
+from pyteal.ast.unaryexpr import Not
 from pyteal.ast.binaryexpr import GetBit
 from pyteal.ast.ternaryexpr import SetBit
 from pyteal.ast.abi.type import ComputedValue, TypeSpec, BaseType
@@ -59,7 +58,7 @@ class Bool(BaseType):
         The behavior of this method depends on the input argument type:
 
             * :code:`bool`: set the value to a Python boolean value.
-            * :code:`Expr`: set the value to the result of a PyTeal expression, which must evaluate to a TealType.uint64. The program will fail if the evaluated value is not 0 or 1.
+            * :code:`Expr`: set the value to the result of a PyTeal expression, which must evaluate to a TealType.uint64. All values greater than 0 are considered true, while 0 is considered false.
             * :code:`Bool`: copy the value from another Bool.
             * :code:`ComputedValue[Bool]`: copy the value from a Bool produced by a ComputedValue.
 
@@ -88,11 +87,8 @@ class Bool(BaseType):
         if checked:
             return self.stored_value.store(value)
 
-        return Seq(
-            self.stored_value.store(value),
-            # instead of failing if too high of a value is given, it's probably more consistent with the rest of the AVM to convert values >= 2 to 1 (the && and || opcodes do this)
-            Assert(self.stored_value.load() < Int(2)),
-        )
+        # Not(Not(value)) coerces all values greater than 0 to 1
+        return self.stored_value.store(Not(Not(value)))
 
     def decode(
         self,
@@ -104,9 +100,9 @@ class Bool(BaseType):
     ) -> Expr:
         if start_index is None:
             start_index = Int(0)
-        return self.decodeBit(encoded, start_index * Int(NUM_BITS_IN_BYTE))
+        return self.decode_bit(encoded, start_index * Int(NUM_BITS_IN_BYTE))
 
-    def decodeBit(self, encoded, bitIndex: Expr) -> Expr:
+    def decode_bit(self, encoded, bitIndex: Expr) -> Expr:
         return self.stored_value.store(GetBit(encoded, bitIndex))
 
     def encode(self) -> Expr:

@@ -152,7 +152,7 @@ def indexTuple(
         else:
             # value is the beginning of a bool sequence (or a single bool)
             bitOffsetInEncoded = offset * NUM_BITS_IN_BYTE
-        return output.decodeBit(encoded, Int(bitOffsetInEncoded))
+        return output.decode_bit(encoded, Int(bitOffsetInEncoded))
 
     if valueType.is_dynamic():
         hasNextDynamicValue = False

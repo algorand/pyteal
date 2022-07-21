@@ -76,11 +76,9 @@ def test_Bool_set_expr():
             pt.TealOp(None, pt.Op.int, 0),
             pt.TealOp(None, pt.Op.int, 1),
             pt.TealOp(None, pt.Op.logic_or),
+            pt.TealOp(None, pt.Op.logic_not),
+            pt.TealOp(None, pt.Op.logic_not),
             pt.TealOp(None, pt.Op.store, value.stored_value.slot),
-            pt.TealOp(None, pt.Op.load, value.stored_value.slot),
-            pt.TealOp(None, pt.Op.int, 2),
-            pt.TealOp(None, pt.Op.lt),
-            pt.TealOp(None, pt.Op.assert_),
         ]
     )
 
@@ -188,11 +186,11 @@ def test_Bool_decode():
                     assert actual == expected
 
 
-def test_Bool_decodeBit():
+def test_Bool_decode_bit():
     value = abi.Bool()
     bitIndex = pt.Int(17)
     encoded = pt.Bytes("encoded")
-    expr = value.decodeBit(encoded, bitIndex)
+    expr = value.decode_bit(encoded, bitIndex)
     assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 

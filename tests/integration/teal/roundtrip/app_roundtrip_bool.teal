@@ -20,11 +20,9 @@ boolcomp_0:
 store 6
 load 6
 !
+!
+!
 store 7
-load 7
-int 2
-<
-assert
 load 7
 retsub
 

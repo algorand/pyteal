@@ -81,7 +81,7 @@ def test_ArrayElement_store_into():
         stride = pt.Int(staticArray.type_spec()._stride())
         expectedLength = staticArray.length()
         if elementType == abi.BoolTypeSpec():
-            expectedExpr = cast(abi.Bool, output).decodeBit(encoded, index)
+            expectedExpr = cast(abi.Bool, output).decode_bit(encoded, index)
         elif not elementType.is_dynamic():
             expectedExpr = output.decode(
                 encoded, start_index=stride * index, length=stride
@@ -122,7 +122,9 @@ def test_ArrayElement_store_into():
         stride = pt.Int(dynamicArray.type_spec()._stride())
         expectedLength = dynamicArray.length()
         if elementType == abi.BoolTypeSpec():
-            expectedExpr = cast(abi.Bool, output).decodeBit(encoded, index + pt.Int(16))
+            expectedExpr = cast(abi.Bool, output).decode_bit(
+                encoded, index + pt.Int(16)
+            )
         elif not elementType.is_dynamic():
             expectedExpr = output.decode(
                 encoded, start_index=stride * index + pt.Int(2), length=stride

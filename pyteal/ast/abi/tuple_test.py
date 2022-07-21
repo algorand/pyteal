@@ -268,37 +268,37 @@ def test_indexTuple():
         IndexTest(
             types=[bool_t],
             typeIndex=0,
-            expected=lambda output: output.decodeBit(encoded, pt.Int(0)),
+            expected=lambda output: output.decode_bit(encoded, pt.Int(0)),
         ),
         IndexTest(
             types=[bool_t, bool_t],
             typeIndex=0,
-            expected=lambda output: output.decodeBit(encoded, pt.Int(0)),
+            expected=lambda output: output.decode_bit(encoded, pt.Int(0)),
         ),
         IndexTest(
             types=[bool_t, bool_t],
             typeIndex=1,
-            expected=lambda output: output.decodeBit(encoded, pt.Int(1)),
+            expected=lambda output: output.decode_bit(encoded, pt.Int(1)),
         ),
         IndexTest(
             types=[uint64_t, bool_t],
             typeIndex=1,
-            expected=lambda output: output.decodeBit(encoded, pt.Int(8 * 8)),
+            expected=lambda output: output.decode_bit(encoded, pt.Int(8 * 8)),
         ),
         IndexTest(
             types=[uint64_t, bool_t, bool_t],
             typeIndex=1,
-            expected=lambda output: output.decodeBit(encoded, pt.Int(8 * 8)),
+            expected=lambda output: output.decode_bit(encoded, pt.Int(8 * 8)),
         ),
         IndexTest(
             types=[uint64_t, bool_t, bool_t],
             typeIndex=2,
-            expected=lambda output: output.decodeBit(encoded, pt.Int(8 * 8 + 1)),
+            expected=lambda output: output.decode_bit(encoded, pt.Int(8 * 8 + 1)),
         ),
         IndexTest(
             types=[bool_t, uint64_t],
             typeIndex=0,
-            expected=lambda output: output.decodeBit(encoded, pt.Int(0)),
+            expected=lambda output: output.decode_bit(encoded, pt.Int(0)),
         ),
         IndexTest(
             types=[bool_t, uint64_t],
@@ -308,12 +308,12 @@ def test_indexTuple():
         IndexTest(
             types=[bool_t, bool_t, uint64_t],
             typeIndex=0,
-            expected=lambda output: output.decodeBit(encoded, pt.Int(0)),
+            expected=lambda output: output.decode_bit(encoded, pt.Int(0)),
         ),
         IndexTest(
             types=[bool_t, bool_t, uint64_t],
             typeIndex=1,
-            expected=lambda output: output.decodeBit(encoded, pt.Int(1)),
+            expected=lambda output: output.decode_bit(encoded, pt.Int(1)),
         ),
         IndexTest(
             types=[bool_t, bool_t, uint64_t],

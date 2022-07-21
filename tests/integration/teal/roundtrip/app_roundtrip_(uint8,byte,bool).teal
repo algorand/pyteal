@@ -104,10 +104,8 @@ boolcomp_4:                     // [bool]
 store 15                        // 15 -> bool
 load 15                         // [bool]
 !                               // [!bool]
+!
+!
 store 16                        // 16 -> !bool
-load 16                         // [!bool]
-int 2                           // [!bool, 2]
-<                               // [1]
-assert                          // []
 load 16                         // [!bool]
 retsub
