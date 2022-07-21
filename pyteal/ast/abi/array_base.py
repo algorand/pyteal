@@ -22,7 +22,7 @@ from pyteal.ast.abi.type import TypeSpec, BaseType, ComputedValue
 from pyteal.ast.abi.tuple import encodeTuple
 from pyteal.ast.abi.bool import Bool, BoolTypeSpec
 from pyteal.ast.abi.uint import Uint16, Uint16TypeSpec
-from pyteal.ast.abi.util import substringForDecoding
+from pyteal.ast.abi.util import substring_for_decoding
 
 T = TypeVar("T", bound=BaseType)
 
@@ -101,7 +101,7 @@ class Array(BaseType, Generic[T]):
             An expression that partitions the needed parts from given byte strings and stores into
             the scratch variable.
         """
-        extracted = substringForDecoding(
+        extracted = substring_for_decoding(
             encoded, start_index=start_index, end_index=end_index, length=length
         )
         return self.stored_value.store(extracted)

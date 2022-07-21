@@ -3,7 +3,7 @@ import pytest
 
 import pyteal as pt
 from pyteal import abi
-from pyteal.ast.abi.util import substringForDecoding
+from pyteal.ast.abi.util import substring_for_decoding
 from pyteal.ast.abi.tuple import encodeTuple
 from pyteal.ast.abi.array_base_test import STATIC_TYPES, DYNAMIC_TYPES
 from pyteal.ast.abi.type_test import ContainerType
@@ -84,7 +84,7 @@ def test_DynamicArray_decode():
                 assert not expr.has_return()
 
                 expectedExpr = value.stored_value.store(
-                    substringForDecoding(
+                    substring_for_decoding(
                         encoded,
                         start_index=start_index,
                         end_index=end_index,

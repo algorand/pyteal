@@ -7,7 +7,7 @@ import algosdk.abi
 import pyteal as pt
 from pyteal import abi
 from pyteal.ast.abi.util import (
-    substringForDecoding,
+    substring_for_decoding,
     int_literal_from_annotation,
     type_spec_from_algosdk,
     type_spec_from_annotation,
@@ -76,7 +76,7 @@ def test_substringForDecoding():
     for i, test in enumerate(tests):
         if not isinstance(test.expected, pt.Expr):
             with pytest.raises(test.expected):
-                substringForDecoding(
+                substring_for_decoding(
                     encoded,
                     start_index=test.start_index,
                     end_index=test.end_index,
@@ -84,7 +84,7 @@ def test_substringForDecoding():
                 )
             continue
 
-        expr = substringForDecoding(
+        expr = substring_for_decoding(
             encoded,
             start_index=test.start_index,
             end_index=test.end_index,
