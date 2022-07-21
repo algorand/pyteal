@@ -24,11 +24,11 @@ from pyteal.ast.abi.type import TypeSpec, BaseType, ComputedValue
 from pyteal.ast.abi.bool import (
     Bool,
     BoolTypeSpec,
-    consecutiveBoolInstanceNum,
-    consecutiveBoolTypeSpecNum,
-    boolSequenceLength,
-    encodeBoolSequence,
-    boolAwareStaticByteLength,
+    _consecutive_bool_instance_num,
+    _consecutive_bool_type_spec_num,
+    _bool_sequence_length,
+    _encode_bool_sequence,
+    _bool_aware_static_byte_length,
 )
 from pyteal.ast.abi.uint import NUM_BITS_IN_BYTE, Uint16
 from pyteal.ast.abi.util import substringForDecoding
@@ -48,11 +48,11 @@ def encodeTuple(values: Sequence[BaseType]) -> Expr:
         elemType = elem.type_spec()
 
         if elemType == BoolTypeSpec():
-            numBools = consecutiveBoolInstanceNum(values, i)
+            numBools = _consecutive_bool_instance_num(values, i)
             ignoreNext = numBools - 1
-            head_length_static += boolSequenceLength(numBools)
+            head_length_static += _bool_sequence_length(numBools)
             heads.append(
-                encodeBoolSequence(cast(Sequence[Bool], values[i : i + numBools]))
+                _encode_bool_sequence(cast(Sequence[Bool], values[i : i + numBools]))
             )
             continue
 
@@ -129,8 +129,8 @@ def indexTuple(
 
         if typeBefore == BoolTypeSpec():
             lastBoolStart = offset
-            lastBoolLength = consecutiveBoolTypeSpecNum(valueTypes, i)
-            offset += boolSequenceLength(lastBoolLength)
+            lastBoolLength = _consecutive_bool_type_spec_num(valueTypes, i)
+            offset += _bool_sequence_length(lastBoolLength)
             ignoreNext = lastBoolLength - 1
             continue
 
@@ -164,8 +164,8 @@ def indexTuple(
                 continue
 
             if type(typeAfter) is BoolTypeSpec:
-                boolLength = consecutiveBoolTypeSpecNum(valueTypes, i)
-                nextDynamicValueOffset += boolSequenceLength(boolLength)
+                boolLength = _consecutive_bool_type_spec_num(valueTypes, i)
+                nextDynamicValueOffset += _bool_sequence_length(boolLength)
                 ignoreNext = boolLength - 1
                 continue
 
@@ -254,7 +254,7 @@ class TupleTypeSpec(TypeSpec):
     def byte_length_static(self) -> int:
         if self.is_dynamic():
             raise ValueError("Type is dynamic")
-        return boolAwareStaticByteLength(self.value_type_specs())
+        return _bool_aware_static_byte_length(self.value_type_specs())
 
     def storage_type(self) -> TealType:
         return TealType.bytes
