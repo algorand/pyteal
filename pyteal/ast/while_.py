@@ -22,6 +22,14 @@ class While(Expr):
 
         Args:
             cond: The condition to check. Must evaluate to uint64.
+
+        Example:
+            .. code-block:: python
+
+                i = ScratchVar()
+                i.store(Int(0))
+                While(i.load() < pt.Int(2))
+                    .Do(Pop(Int(1)), i.store(i.load() + Int(1)))
         """
         super().__init__()
         require_type(cond, TealType.uint64)

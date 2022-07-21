@@ -17,6 +17,7 @@ class Assert(Expr):
 
         Args:
             cond: The condition to check. Must evaluate to a uint64.
+            *additionalConds: Additional conditions to check. Must evaluate to uint64.
         """
         super().__init__()
         require_type(cond, TealType.uint64)
