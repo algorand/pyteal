@@ -181,6 +181,27 @@ class InnerTxnBuilder:
             )
 
     @classmethod
+    def Execute(cls, fields: Dict[TxnField, Union[Expr, List[Expr]]]) -> Expr:
+        """Performs a single transaction given fields passed in.
+
+        A convenience method that accepts fields to submit a single inner transaction, which is equivalent to:
+
+        .. code-block:: python
+
+            InnerTxnBuilder.Begin()
+            InnerTxnBuilder.SetFields(fields)
+            InnerTxnBuilder.End()
+
+        Requires TEAL version 5 or higher. This operation is only permitted in application mode.
+
+        Args:
+            fields: A dictionary whose keys are fields to set and whose values are the value each
+                field should take. Each value must evaluate to a type that is compatible with the
+                field being set.
+        """
+        return Seq(cls.Begin(), cls.SetFields(fields), cls.Submit())
+
+    @classmethod
     def SetFields(cls, fields: Dict[TxnField, Union[Expr, List[Expr]]]) -> Expr:
         """Set multiple fields of the current inner transaction.
 
