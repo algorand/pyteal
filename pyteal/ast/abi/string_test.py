@@ -2,7 +2,7 @@ import pytest
 
 import pyteal as pt
 from pyteal import abi
-from pyteal.ast.abi.util import substringForDecoding
+from pyteal.ast.abi.util import substring_for_decoding
 from pyteal.ast.abi.type_test import ContainerType
 from pyteal.util import escapeStr
 
@@ -71,7 +71,7 @@ def test_DynamicArray_decode():
                 assert expr.has_return() is False
 
                 expectedExpr = value.stored_value.store(
-                    substringForDecoding(
+                    substring_for_decoding(
                         encoded,
                         start_index=start_index,
                         end_index=end_index,

@@ -178,10 +178,8 @@ boolcomp_3:
 store 21
 load 21
 !
+!
+!
 store 22
-load 22
-int 2
-<
-assert
 load 22
 retsub

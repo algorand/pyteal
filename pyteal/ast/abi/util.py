@@ -19,7 +19,7 @@ from pyteal.ast.substring import Extract, Substring, Suffix
 from pyteal.ast.abi.type import TypeSpec, BaseType
 
 
-def substringForDecoding(
+def substring_for_decoding(
     encoded: Expr,
     *,
     start_index: Expr = None,

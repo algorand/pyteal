@@ -16,11 +16,9 @@ boolcomp_0:
 store 9
 load 9
 !
+!
+!
 store 10
-load 10
-int 2
-<
-assert
 load 10
 retsub
 
