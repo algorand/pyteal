@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 def simpletb(tb: list[str]):
 
-    # Take the first traceback that doesnt contain __init__
+    # Take the first trace element that doesnt contain __init__
     for idx in range(len(tb)-1, -1, -1):
         if "__init__" in tb[idx]:
             continue

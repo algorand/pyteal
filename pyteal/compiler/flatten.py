@@ -52,7 +52,7 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
                 references[nextIndex] += 1
                 code.append(
                     TealOp(
-                        None, Op.b, indexToLabel(nextIndex), traceback=block.traceback
+                        None, Op.b, indexToLabel(nextIndex), trace=block.trace
                     )
                 )
 
@@ -68,7 +68,7 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
                 references[trueIndex] += 1
                 code.append(
                     TealOp(
-                        None, Op.bnz, indexToLabel(trueIndex), traceback=block.traceback
+                        None, Op.bnz, indexToLabel(trueIndex), trace=block.trace
                     )
                 )
                 continue
@@ -77,19 +77,19 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
                 references[falseIndex] += 1
                 code.append(
                     TealOp(
-                        None, Op.bz, indexToLabel(falseIndex), traceback=block.traceback
+                        None, Op.bz, indexToLabel(falseIndex), trace=block.trace
                     )
                 )
                 continue
 
             references[trueIndex] += 1
             code.append(
-                TealOp(None, Op.bnz, indexToLabel(trueIndex), traceback=block.traceback)
+                TealOp(None, Op.bnz, indexToLabel(trueIndex), trace=block.trace)
             )
 
             references[falseIndex] += 1
             code.append(
-                TealOp(None, Op.b, indexToLabel(falseIndex), traceback=block.traceback)
+                TealOp(None, Op.b, indexToLabel(falseIndex), trace=block.trace)
             )
         else:
             raise TealInternalError("Unrecognized block type: {}".format(type(block)))
@@ -97,7 +97,7 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
     teal: List[TealComponent] = []
     for i, code in enumerate(codeblocks):
         if references[i] != 0:
-            teal.append(TealLabel(None, indexToLabel(i), traceback=block.traceback))
+            teal.append(TealLabel(None, indexToLabel(i), trace=block.trace))
         teal += code
 
     return teal

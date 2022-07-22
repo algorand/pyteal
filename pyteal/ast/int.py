@@ -30,7 +30,7 @@ class Int(LeafExpr):
 
     def __teal__(self, options: "CompileOptions"):
         op = TealOp(self, Op.int, self.value)
-        return TealBlock.FromOp(options, op, traceback=self.trace)
+        return TealBlock.FromOp(options, op, trace=self.trace)
 
     def __str__(self):
         return "(Int {})".format(self.value)

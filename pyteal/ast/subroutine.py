@@ -261,7 +261,7 @@ class SubroutineDefinition:
         return syntax_args
 
     def invoke(
-        self, args: list[Expr | ScratchVar | abi.BaseType], trace: list[str] = []
+        self, args: list[Expr | ScratchVar | abi.BaseType], trace: list[str] = None
     ) -> "SubroutineCall":
         if len(args) != self.argument_count():
             raise TealInputError(
@@ -293,7 +293,10 @@ class SubroutineDefinition:
         sc = SubroutineCall(
             self, args, output_kwarg=OutputKwArgInfo.from_dict(self.output_kwarg)
         )
-        sc.trace = trace
+
+        if trace is not None:
+            sc.trace = trace
+
         return sc
 
     def __str__(self):
@@ -427,9 +430,9 @@ class SubroutineCall(Expr):
                     f"cannot handle current arg: {arg} to put it on stack"
                 )
 
-        op = TealOp(self, Op.callsub, self.subroutine, traceback=self.trace)
+        op = TealOp(self, Op.callsub, self.subroutine, trace=self.trace)
         return TealBlock.FromOp(
-            options, op, *[handle_arg(x) for x in self.args], traceback=self.trace
+            options, op, *[handle_arg(x) for x in self.args], trace=self.trace
         )
 
     def __str__(self):

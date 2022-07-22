@@ -15,11 +15,11 @@ class TealOp(TealComponent):
         expr: Optional["Expr"],
         op: Op,
         *args: Union[int, str, LabelReference, "ScratchSlot", "SubroutineDefinition"],
-        traceback: list[str] = [],
+        trace: list[str] = None,
     ) -> None:
         super().__init__(expr)
         self.op = op
-        self.traceback = traceback
+        self.trace = trace
         self.args = list(args)
 
     def getOp(self) -> Op:
@@ -63,8 +63,8 @@ class TealOp(TealComponent):
             else:
                 parts.append(arg)
 
-        if len(self.traceback) > 0:
-            parts.append(f" {simpletb(self.traceback)}")
+        if self.trace is not None:
+            parts.append(f" {simpletb(self.trace)}")
 
         return " ".join(parts)
 

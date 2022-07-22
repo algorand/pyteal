@@ -13,7 +13,7 @@ class TealLabel(TealComponent):
         expr: Optional["Expr"],
         label: LabelReference,
         comment: str = None,
-        trace: list[str] = [],
+        trace: list[str] = None, 
     ) -> None:
         super().__init__(expr)
         self.label = label
@@ -25,7 +25,7 @@ class TealLabel(TealComponent):
 
     def assemble(self) -> str:
         comment = "\n// {}\n".format(self.comment) if self.comment is not None else ""
-        trace = f" {simpletb(self.trace)}" if len(self.trace) > 0 else ""
+        trace = f" {simpletb(self.trace)}" if self.trace is not None else ""
 
         return "{}{}:{}".format(comment, self.label.getLabel(), trace)
 
