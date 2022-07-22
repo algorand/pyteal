@@ -31,7 +31,7 @@ class SubroutineDefinition:
         return_type: TealType,
         name_str: Optional[str] = None,
         has_abi_output: bool = False,
-        trace: list[str] = [],
+        trace: list[str] = None,
     ) -> None:
         """
         Args:
@@ -459,7 +459,7 @@ class SubroutineFnWrapper:
         fn_implementation: Callable[..., Expr],
         return_type: TealType,
         name: Optional[str] = None,
-        trace: list[str] = [],
+        trace: list[str] = None,
     ) -> None:
         self.subroutine = SubroutineDefinition(
             fn_implementation,
