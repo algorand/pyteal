@@ -86,16 +86,16 @@ Seq.__module__ = "pyteal"
 
 
 @overload
-def use_seq_if_multiple(exprs: list[Expr]) -> Expr:
+def _use_seq_if_multiple(exprs: list[Expr]) -> Expr:
     ...
 
 
 @overload
-def use_seq_if_multiple(*exprs: Expr) -> Expr:
+def _use_seq_if_multiple(*exprs: Expr) -> Expr:
     ...
 
 
-def use_seq_if_multiple(*exprs):
+def _use_seq_if_multiple(*exprs):
     """If multiple expressions are provided, wrap them in a Seq expression."""
 
     # Guard against no expressions

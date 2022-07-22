@@ -1,7 +1,7 @@
 import pytest
 
 import pyteal as pt
-from pyteal.ast.seq import use_seq_if_multiple
+from pyteal.ast.seq import _use_seq_if_multiple
 
 options = pt.CompileOptions()
 
@@ -118,7 +118,7 @@ def test_seq_overloads_equivalence():
 def test_use_seq_if_multiple():
     # Test a single expression
     items = [pt.Int(1)]
-    expr = use_seq_if_multiple(*items)
+    expr = _use_seq_if_multiple(*items)
 
     expected = items[0].__teal__(options)
     actual = expr.__teal__(options)
@@ -127,7 +127,7 @@ def test_use_seq_if_multiple():
 
     # Test multiple expressions
     items = [pt.Pop(pt.Int(1)), pt.Int(2)]
-    expr = use_seq_if_multiple(*items)
+    expr = _use_seq_if_multiple(*items)
 
     expected = pt.Seq(items).__teal__(options)
     actual = expr.__teal__(options)
@@ -137,7 +137,7 @@ def test_use_seq_if_multiple():
 
 def test_use_seq_if_multiple_overloads_equivalence():
     items = [pt.Pop(pt.Int(1)), pt.Int(2)]
-    expr = use_seq_if_multiple(items)
+    expr = _use_seq_if_multiple(items)
 
     expected = pt.Seq(items).__teal__(options)
     actual = expr.__teal__(options)

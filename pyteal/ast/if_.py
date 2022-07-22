@@ -7,7 +7,7 @@ from pyteal.errors import (
 from pyteal.types import TealType, require_type
 from pyteal.ir import TealSimpleBlock, TealConditionalBlock
 from pyteal.ast.expr import Expr
-from pyteal.ast.seq import use_seq_if_multiple
+from pyteal.ast.seq import _use_seq_if_multiple
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
@@ -104,7 +104,7 @@ class If(Expr):
         if not self.alternateSyntaxFlag:
             raise TealInputError("Cannot mix two different If syntax styles")
 
-        thenBranch = use_seq_if_multiple(thenBranch, *thenBranchMulti)
+        thenBranch = _use_seq_if_multiple(thenBranch, *thenBranchMulti)
 
         if not self.elseBranch:
             self.thenBranch = thenBranch
@@ -133,7 +133,7 @@ class If(Expr):
         if not self.thenBranch:
             raise TealInputError("Must set Then branch before Else branch")
 
-        elseBranch = use_seq_if_multiple(elseBranch, *elseBranchMulti)
+        elseBranch = _use_seq_if_multiple(elseBranch, *elseBranchMulti)
 
         if not self.elseBranch:
             require_type(elseBranch, self.thenBranch.type_of())
