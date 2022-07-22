@@ -89,6 +89,7 @@ class TealComponent(ABC):
             likely want to also use use the following code after comparing with this option enabled:
 
                 .. code-block:: python
+
                     TealBlock.MatchScratchSlotReferences(
                         TealBlock.GetReferencedScratchSlots(actual),
                         TealBlock.GetReferencedScratchSlots(expected),

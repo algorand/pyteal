@@ -23,6 +23,19 @@ class Pragma(Expr):
             compiler_version: Acceptable versions of the compiler. Will fail if the current PyTeal version
                 is not contained in the range. Follows the npm `semver range scheme <https://github.com/npm/node-semver#ranges>`_
                 for specifying compatible versions.
+
+        For example:
+
+        .. code-block:: python
+
+            @Subroutine(TealType.uint64)
+            def example() -> Expr:
+                # this will fail during compilation if the current PyTeal version does not satisfy
+                # the version constraint
+                return Pragma(
+                    Seq(...),
+                    compiler_version="^0.14.0"
+                )
         """
         super().__init__()
 

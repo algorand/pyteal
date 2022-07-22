@@ -6,6 +6,7 @@ from typing import (
     TypeVar,
     cast,
     overload,
+    Any,
 )
 
 from pyteal.types import TealType
@@ -23,17 +24,17 @@ from pyteal.ast.abi.type import TypeSpec, BaseType, ComputedValue
 from pyteal.ast.abi.bool import (
     Bool,
     BoolTypeSpec,
-    consecutiveBoolInstanceNum,
-    consecutiveBoolTypeSpecNum,
-    boolSequenceLength,
-    encodeBoolSequence,
-    boolAwareStaticByteLength,
+    _consecutive_bool_instance_num,
+    _consecutive_bool_type_spec_num,
+    _bool_sequence_length,
+    _encode_bool_sequence,
+    _bool_aware_static_byte_length,
 )
 from pyteal.ast.abi.uint import NUM_BITS_IN_BYTE, Uint16
-from pyteal.ast.abi.util import substringForDecoding
+from pyteal.ast.abi.util import substring_for_decoding
 
 
-def encodeTuple(values: Sequence[BaseType]) -> Expr:
+def _encode_tuple(values: Sequence[BaseType]) -> Expr:
     heads: List[Expr] = []
     head_length_static: int = 0
 
@@ -47,11 +48,11 @@ def encodeTuple(values: Sequence[BaseType]) -> Expr:
         elemType = elem.type_spec()
 
         if elemType == BoolTypeSpec():
-            numBools = consecutiveBoolInstanceNum(values, i)
+            numBools = _consecutive_bool_instance_num(values, i)
             ignoreNext = numBools - 1
-            head_length_static += boolSequenceLength(numBools)
+            head_length_static += _bool_sequence_length(numBools)
             heads.append(
-                encodeBoolSequence(cast(Sequence[Bool], values[i : i + numBools]))
+                _encode_bool_sequence(cast(Sequence[Bool], values[i : i + numBools]))
             )
             continue
 
@@ -111,25 +112,25 @@ def encodeTuple(values: Sequence[BaseType]) -> Expr:
     return Concat(*toConcat)
 
 
-def indexTuple(
-    valueTypes: Sequence[TypeSpec], encoded: Expr, index: int, output: BaseType
+def _index_tuple(
+    value_types: Sequence[TypeSpec], encoded: Expr, index: int, output: BaseType
 ) -> Expr:
-    if not (0 <= index < len(valueTypes)):
+    if not (0 <= index < len(value_types)):
         raise ValueError("Index outside of range")
 
     offset = 0
     ignoreNext = 0
     lastBoolStart = 0
     lastBoolLength = 0
-    for i, typeBefore in enumerate(valueTypes[:index]):
+    for i, typeBefore in enumerate(value_types[:index]):
         if ignoreNext > 0:
             ignoreNext -= 1
             continue
 
         if typeBefore == BoolTypeSpec():
             lastBoolStart = offset
-            lastBoolLength = consecutiveBoolTypeSpecNum(valueTypes, i)
-            offset += boolSequenceLength(lastBoolLength)
+            lastBoolLength = _consecutive_bool_type_spec_num(value_types, i)
+            offset += _bool_sequence_length(lastBoolLength)
             ignoreNext = lastBoolLength - 1
             continue
 
@@ -139,7 +140,7 @@ def indexTuple(
 
         offset += typeBefore.byte_length_static()
 
-    valueType = valueTypes[index]
+    valueType = value_types[index]
     if output.type_spec() != valueType:
         raise TypeError("Output type does not match value type")
 
@@ -151,20 +152,20 @@ def indexTuple(
         else:
             # value is the beginning of a bool sequence (or a single bool)
             bitOffsetInEncoded = offset * NUM_BITS_IN_BYTE
-        return output.decodeBit(encoded, Int(bitOffsetInEncoded))
+        return output.decode_bit(encoded, Int(bitOffsetInEncoded))
 
     if valueType.is_dynamic():
         hasNextDynamicValue = False
         nextDynamicValueOffset = offset + 2
         ignoreNext = 0
-        for i, typeAfter in enumerate(valueTypes[index + 1 :], start=index + 1):
+        for i, typeAfter in enumerate(value_types[index + 1 :], start=index + 1):
             if ignoreNext > 0:
                 ignoreNext -= 1
                 continue
 
             if type(typeAfter) is BoolTypeSpec:
-                boolLength = consecutiveBoolTypeSpecNum(valueTypes, i)
-                nextDynamicValueOffset += boolSequenceLength(boolLength)
+                boolLength = _consecutive_bool_type_spec_num(value_types, i)
+                nextDynamicValueOffset += _bool_sequence_length(boolLength)
                 ignoreNext = boolLength - 1
                 continue
 
@@ -188,7 +189,7 @@ def indexTuple(
     start_index = Int(offset)
     length = Int(valueType.byte_length_static())
 
-    if index + 1 == len(valueTypes):
+    if index + 1 == len(value_types):
         if offset == 0:
             # This is the first and only value in the tuple, so decode all of encoded
             return output.decode(encoded)
@@ -253,7 +254,7 @@ class TupleTypeSpec(TypeSpec):
     def byte_length_static(self) -> int:
         if self.is_dynamic():
             raise ValueError("Type is dynamic")
-        return boolAwareStaticByteLength(self.value_type_specs())
+        return _bool_aware_static_byte_length(self.value_type_specs())
 
     def storage_type(self) -> TealType:
         return TealType.bytes
@@ -268,9 +269,7 @@ class TupleTypeSpec(TypeSpec):
         return "({})".format(",".join(map(str, self.value_type_specs())))
 
 
-TupleTypeSpec.__module__ = "pyteal"
-
-T_tuple = TypeVar("T_tuple", bound="Tuple")
+TupleTypeSpec.__module__ = "pyteal.abi"
 
 
 class Tuple(BaseType):
@@ -288,20 +287,38 @@ class Tuple(BaseType):
         end_index: Expr = None,
         length: Expr = None,
     ) -> Expr:
-        extracted = substringForDecoding(
+        extracted = substring_for_decoding(
             encoded, start_index=start_index, end_index=end_index, length=length
         )
         return self.stored_value.store(extracted)
 
     @overload
     def set(self, *values: BaseType) -> Expr:
-        ...
+        pass
 
     @overload
-    def set(self: T_tuple, value: ComputedValue[T_tuple]) -> Expr:
-        ...
+    def set(self, values: ComputedValue["Tuple"]) -> Expr:
+        # TODO: should support values as a Tuple as well
+        pass
 
     def set(self, *values):
+        """
+        set(*values: BaseType) -> Expr
+        set(values: ComputedValue[Tuple]) -> Expr
+
+        Set the elements of this Tuple to the input values.
+
+        The behavior of this method depends on the input argument type:
+
+            * Variable number of :code:`BaseType` arguments: set the elements of this Tuple to the arguments to this method. A compiler error will occur if any argument does not match this Tuple's element type at the same index, or if the total argument count does not equal this Tuple's length.
+            * :code:`ComputedValue[Tuple]`: copy the elements from a Tuple produced by a ComputedValue. The element types and length produced by the ComputedValue must exactly match this Tuple's element types and length, otherwise an error will occur.
+
+        Args:
+            values: The new elements this Tuple should have. This must follow the above constraints.
+
+        Returns:
+            An expression which stores the given value into this Tuple.
+        """
         if len(values) == 1 and isinstance(values[0], ComputedValue):
             return self._set_with_computed_type(values[0])
 
@@ -316,7 +333,7 @@ class Tuple(BaseType):
             )
         if not all(myTypes[i] == values[i].type_spec() for i in range(len(myTypes))):
             raise TealInputError("Input values do not match type")
-        return self.stored_value.store(encodeTuple(values))
+        return self.stored_value.store(_encode_tuple(values))
 
     def encode(self) -> Expr:
         return self.stored_value.load()
@@ -325,13 +342,27 @@ class Tuple(BaseType):
         """Get the number of values this tuple holds as an Expr."""
         return Int(self.type_spec().length_static())
 
-    def __getitem__(self, index: int) -> "TupleElement":
+    def __getitem__(self, index: int) -> "TupleElement[Any]":
+        """Retrieve an element by its index in this Tuple.
+
+        Indexes start at 0.
+
+        Args:
+            index: a Python integer containing the index to access. This function will raise an error
+                if its value is negative or if the index is equal to or greater than the length of
+                this Tuple.
+
+        Returns:
+            A TupleElement that corresponds to the element at the given index. This type is a
+            ComputedValue. Due to Python type limitations, the parameterized type of the
+            TupleElement is Any.
+        """
         if not (0 <= index < self.type_spec().length_static()):
             raise TealInputError(f"Index out of bounds: {index}")
         return TupleElement(self, index)
 
 
-Tuple.__module__ = "pyteal"
+Tuple.__module__ = "pyteal.abi"
 
 T = TypeVar("T", bound=BaseType)
 
@@ -348,7 +379,7 @@ class TupleElement(ComputedValue[T]):
         return self.tuple.type_spec().value_type_specs()[self.index]
 
     def store_into(self, output: T) -> Expr:
-        return indexTuple(
+        return _index_tuple(
             self.tuple.type_spec().value_type_specs(),
             self.tuple.encode(),
             self.index,
@@ -356,7 +387,7 @@ class TupleElement(ComputedValue[T]):
         )
 
 
-TupleElement.__module__ = "pyteal"
+TupleElement.__module__ = "pyteal.abi"
 
 # Until Python 3.11 is released with support for PEP 646 -- Variadic Generics, it's not possible for
 # the Tuple class to take an arbitrary number of template parameters. As a workaround, we define the
@@ -378,7 +409,7 @@ class Tuple0(Tuple):
         super().__init__(TupleTypeSpec())
 
 
-Tuple0.__module__ = "pyteal"
+Tuple0.__module__ = "pyteal.abi"
 
 T1 = TypeVar("T1", bound=BaseType)
 
@@ -391,7 +422,7 @@ class Tuple1(Tuple, Generic[T1]):
         super().__init__(value_type_spec)
 
 
-Tuple1.__module__ = "pyteal"
+Tuple1.__module__ = "pyteal.abi"
 
 T2 = TypeVar("T2", bound=BaseType)
 
@@ -404,7 +435,7 @@ class Tuple2(Tuple, Generic[T1, T2]):
         super().__init__(value_type_spec)
 
 
-Tuple2.__module__ = "pyteal"
+Tuple2.__module__ = "pyteal.abi"
 
 T3 = TypeVar("T3", bound=BaseType)
 
@@ -420,7 +451,7 @@ class Tuple3(Tuple, Generic[T1, T2, T3]):
         super().__init__(value_type_spec)
 
 
-Tuple3.__module__ = "pyteal"
+Tuple3.__module__ = "pyteal.abi"
 
 T4 = TypeVar("T4", bound=BaseType)
 
@@ -436,7 +467,7 @@ class Tuple4(Tuple, Generic[T1, T2, T3, T4]):
         super().__init__(value_type_spec)
 
 
-Tuple4.__module__ = "pyteal"
+Tuple4.__module__ = "pyteal.abi"
 
 T5 = TypeVar("T5", bound=BaseType)
 
@@ -452,4 +483,4 @@ class Tuple5(Tuple, Generic[T1, T2, T3, T4, T5]):
         super().__init__(value_type_spec)
 
 
-Tuple5.__module__ = "pyteal"
+Tuple5.__module__ = "pyteal.abi"

@@ -5,7 +5,7 @@ from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
 
 from pyteal.ast.abi.type import ComputedValue, TypeSpec, BaseType
-from pyteal.ast.abi.bool import BoolTypeSpec, boolSequenceLength
+from pyteal.ast.abi.bool import BoolTypeSpec, _bool_sequence_length
 from pyteal.ast.abi.array_base import ArrayTypeSpec, Array, ArrayElement
 
 
@@ -52,7 +52,7 @@ class StaticArrayTypeSpec(ArrayTypeSpec[T], Generic[T, N]):
         length = self.length_static()
 
         if value_type == BoolTypeSpec():
-            return boolSequenceLength(length)
+            return _bool_sequence_length(length)
         return length * value_type.byte_length_static()
 
     def __eq__(self, other: object) -> bool:
@@ -66,7 +66,7 @@ class StaticArrayTypeSpec(ArrayTypeSpec[T], Generic[T, N]):
         return f"{self.value_type_spec()}[{self.length_static()}]"
 
 
-StaticArrayTypeSpec.__module__ = "pyteal"
+StaticArrayTypeSpec.__module__ = "pyteal.abi"
 
 
 class StaticArray(Array[T], Generic[T, N]):
@@ -84,27 +84,19 @@ class StaticArray(Array[T], Generic[T, N]):
             Sequence[T], "StaticArray[T, N]", ComputedValue["StaticArray[T, N]"]
         ],
     ) -> Expr:
-        """Set the ABI static array with one of the following:
-        * a sequence of ABI type variables
-        * or another ABI static array
-        * or a ComputedType with same TypeSpec
+        """Set the elements of this StaticArray to the input values.
 
-        If the argument `values` is a ComputedType, we call `store_into` method
-        from ComputedType to store the internal ABI encoding into this StaticArray.
+        The behavior of this method depends on the input argument type:
 
-        This function determines if the argument `values` is an ABI static array:
-        * if so:
-          * checks whether `values` is same type as this ABI staic array.
-          * stores the encoding of `values`.
-        * if not:
-          * checks whether static array length matches sequence length.
-          * calls the inherited `set` function and stores `values`.
+            * :code:`Sequence[T]`: set the elements of this StaticArray to those contained in this Python sequence (e.g. a list or tuple). A compiler error will occur if any element in the sequence does not match this StaticArray's element type, or if the sequence length does not equal this StaticArray's length.
+            * :code:`StaticArray[T, N]`: copy the elements from another StaticArray. The argument's element type and length must exactly match this StaticArray's element type and length, otherwise an error will occur.
+            * :code:`ComputedValue[StaticArray[T, N]]`: copy the elements from a StaticArray produced by a ComputedValue. The element type and length produced by the ComputedValue must exactly match this StaticArray's element type and length, otherwise an error will occur.
 
         Args:
-            values: either a sequence of ABI typed values, or an ABI static array.
+            values: The new elements this StaticArray should have. This must follow the above constraints.
 
         Returns:
-            A PyTeal expression that stores encoded `values` in its internal ScratchVar.
+            An expression which stores the given value into this StaticArray.
         """
         if isinstance(values, ComputedValue):
             return self._set_with_computed_type(values)
@@ -130,9 +122,23 @@ class StaticArray(Array[T], Generic[T, N]):
         return Int(self.type_spec().length_static())
 
     def __getitem__(self, index: Union[int, Expr]) -> "ArrayElement[T]":
+        """Retrieve an element by its index in this StaticArray.
+
+        Indexes start at 0.
+
+        Args:
+            index: either a Python integer or a PyTeal expression that evaluates to a TealType.uint64.
+                If a Python integer is used, this function will raise an error if its value is negative
+                or if the index is equal to or greater than the length of this StaticArray. If a PyTeal
+                expression is used, the program will fail at runtime if the index is outside of the
+                bounds of this StaticArray.
+
+        Returns:
+            An ArrayElement that corresponds to the element at the given index. This type is a ComputedValue.
+        """
         if type(index) is int and index >= self.type_spec().length_static():
             raise TealInputError(f"Index out of bounds: {index}")
         return super().__getitem__(index)
 
 
-StaticArray.__module__ = "pyteal"
+StaticArray.__module__ = "pyteal.abi"

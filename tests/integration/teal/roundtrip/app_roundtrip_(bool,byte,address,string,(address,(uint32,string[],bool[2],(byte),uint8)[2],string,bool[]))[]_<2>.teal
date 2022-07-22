@@ -304,11 +304,9 @@ boolcomp_3:
 store 23
 load 23
 !
+!
+!
 store 24
-load 24
-int 2
-<
-assert
 load 24
 retsub
 
@@ -1638,11 +1636,9 @@ boolcomp_14:
 store 170
 load 170
 !
+!
+!
 store 171
-load 171
-int 2
-<
-assert
 load 171
 retsub
 
@@ -1956,11 +1952,9 @@ boolcomp_19:
 store 144
 load 144
 !
+!
+!
 store 145
-load 145
-int 2
-<
-assert
 load 145
 retsub
 

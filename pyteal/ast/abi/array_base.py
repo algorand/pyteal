@@ -19,10 +19,10 @@ from pyteal.ast.binaryexpr import ExtractUint16
 from pyteal.ast.naryexpr import Concat
 
 from pyteal.ast.abi.type import TypeSpec, BaseType, ComputedValue
-from pyteal.ast.abi.tuple import encodeTuple
+from pyteal.ast.abi.tuple import _encode_tuple
 from pyteal.ast.abi.bool import Bool, BoolTypeSpec
 from pyteal.ast.abi.uint import Uint16, Uint16TypeSpec
-from pyteal.ast.abi.util import substringForDecoding
+from pyteal.ast.abi.util import substring_for_decoding
 
 T = TypeVar("T", bound=BaseType)
 
@@ -60,7 +60,7 @@ class ArrayTypeSpec(TypeSpec, Generic[T]):
         return self.value_spec.byte_length_static()
 
 
-ArrayTypeSpec.__module__ = "pyteal"
+ArrayTypeSpec.__module__ = "pyteal.abi"
 
 
 class Array(BaseType, Generic[T]):
@@ -101,7 +101,7 @@ class Array(BaseType, Generic[T]):
             An expression that partitions the needed parts from given byte strings and stores into
             the scratch variable.
         """
-        extracted = substringForDecoding(
+        extracted = substring_for_decoding(
             encoded, start_index=start_index, end_index=end_index, length=length
         )
         return self.stored_value.store(extracted)
@@ -135,7 +135,7 @@ class Array(BaseType, Generic[T]):
                     )
                 )
 
-        encoded = encodeTuple(values)
+        encoded = _encode_tuple(values)
 
         if self.type_spec().is_length_dynamic():
             length_tmp = Uint16()
@@ -162,15 +162,18 @@ class Array(BaseType, Generic[T]):
         pass
 
     def __getitem__(self, index: Union[int, Expr]) -> "ArrayElement[T]":
-        """Retrieve an ABI array element by an index (either a PyTeal expression or an integer).
+        """Retrieve an element by its index in this array.
 
-        If the argument index is integer, the function will raise an error if the index is negative.
+        Indexes start at 0.
 
         Args:
-            index: either an integer or a PyTeal expression that evaluates to a uint64.
+            index: either a Python integer or a PyTeal expression that evaluates to a TealType.uint64.
+                If a Python integer is used, this function will raise an error if its value is negative.
+                In either case, if the index is outside of the bounds of this array, the program will
+                fail at runtime.
 
         Returns:
-            An ArrayElement that represents the ABI array element at the index.
+            An ArrayElement that corresponds to the element at the given index. This type is a ComputedValue.
         """
         if type(index) is int:
             if index < 0:
@@ -179,7 +182,7 @@ class Array(BaseType, Generic[T]):
         return ArrayElement(self, cast(Expr, index))
 
 
-Array.__module__ = "pyteal"
+Array.__module__ = "pyteal.abi"
 
 
 class ArrayElement(ComputedValue[T]):
@@ -230,7 +233,7 @@ class ArrayElement(ComputedValue[T]):
             bitIndex = self.index
             if arrayType.is_dynamic():
                 bitIndex = bitIndex + Int(Uint16TypeSpec().bit_size())
-            return cast(Bool, output).decodeBit(encodedArray, bitIndex)
+            return cast(Bool, output).decode_bit(encodedArray, bitIndex)
 
         # Compute the byteIndex (first byte indicating the element encoding)
         # (If the array is dynamic, add 2 to byte index for dynamic array length uint16 prefix)
@@ -280,4 +283,4 @@ class ArrayElement(ComputedValue[T]):
         return output.decode(encodedArray, start_index=valueStart, length=valueLength)
 
 
-ArrayElement.__module__ = "pyteal"
+ArrayElement.__module__ = "pyteal.abi"

@@ -7,7 +7,7 @@ import algosdk.abi
 import pyteal as pt
 from pyteal import abi
 from pyteal.ast.abi.util import (
-    substringForDecoding,
+    substring_for_decoding,
     int_literal_from_annotation,
     type_spec_from_algosdk,
     type_spec_from_annotation,
@@ -76,7 +76,7 @@ def test_substringForDecoding():
     for i, test in enumerate(tests):
         if not isinstance(test.expected, pt.Expr):
             with pytest.raises(test.expected):
-                substringForDecoding(
+                substring_for_decoding(
                     encoded,
                     start_index=test.start_index,
                     end_index=test.end_index,
@@ -84,7 +84,7 @@ def test_substringForDecoding():
                 )
             continue
 
-        expr = substringForDecoding(
+        expr = substring_for_decoding(
             encoded,
             start_index=test.start_index,
             end_index=test.end_index,
@@ -497,61 +497,61 @@ ABI_TRANSLATION_TEST_CASES = [
     #     ),
     # ),
     (
-        "cannot map ABI transaction type spec <pyteal.TransactionTypeSpec",
+        "cannot map ABI transaction type spec <pyteal.abi.TransactionTypeSpec",
         "txn",
         abi.TransactionTypeSpec(),
         abi.Transaction,
     ),
     (
-        "cannot map ABI transaction type spec <pyteal.PaymentTransactionTypeSpec",
+        "cannot map ABI transaction type spec <pyteal.abi.PaymentTransactionTypeSpec",
         "pay",
         abi.PaymentTransactionTypeSpec(),
         abi.PaymentTransaction,
     ),
     (
-        "cannot map ABI transaction type spec <pyteal.KeyRegisterTransactionTypeSpec",
+        "cannot map ABI transaction type spec <pyteal.abi.KeyRegisterTransactionTypeSpec",
         "keyreg",
         abi.KeyRegisterTransactionTypeSpec(),
         abi.KeyRegisterTransaction,
     ),
     (
-        "cannot map ABI transaction type spec <pyteal.AssetConfigTransactionTypeSpec",
+        "cannot map ABI transaction type spec <pyteal.abi.AssetConfigTransactionTypeSpec",
         "acfg",
         abi.AssetConfigTransactionTypeSpec(),
         abi.AssetConfigTransaction,
     ),
     (
-        "cannot map ABI transaction type spec <pyteal.AssetTransferTransactionTypeSpec",
+        "cannot map ABI transaction type spec <pyteal.abi.AssetTransferTransactionTypeSpec",
         "axfer",
         abi.AssetTransferTransactionTypeSpec(),
         abi.AssetTransferTransaction,
     ),
     (
-        "cannot map ABI transaction type spec <pyteal.AssetFreezeTransactionTypeSpec",
+        "cannot map ABI transaction type spec <pyteal.abi.AssetFreezeTransactionTypeSpec",
         "afrz",
         abi.AssetFreezeTransactionTypeSpec(),
         abi.AssetFreezeTransaction,
     ),
     (
-        "cannot map ABI transaction type spec <pyteal.ApplicationCallTransactionTypeSpec",
+        "cannot map ABI transaction type spec <pyteal.abi.ApplicationCallTransactionTypeSpec",
         "appl",
         abi.ApplicationCallTransactionTypeSpec(),
         abi.ApplicationCallTransaction,
     ),
     (
-        "cannot map ABI reference type spec <pyteal.AccountTypeSpec",
+        "cannot map ABI reference type spec <pyteal.abi.AccountTypeSpec",
         "account",
         abi.AccountTypeSpec(),
         abi.Account,
     ),
     (
-        "cannot map ABI reference type spec <pyteal.ApplicationTypeSpec",
+        "cannot map ABI reference type spec <pyteal.abi.ApplicationTypeSpec",
         "application",
         abi.ApplicationTypeSpec(),
         abi.Application,
     ),
     (
-        "cannot map ABI reference type spec <pyteal.AssetTypeSpec",
+        "cannot map ABI reference type spec <pyteal.abi.AssetTypeSpec",
         "asset",
         abi.AssetTypeSpec(),
         abi.Asset,

@@ -260,8 +260,10 @@ class TealBlock(ABC):
         A mapping is defined as follows:
           * The actual and expected lists must have the same length.
           * For every ScratchSlot referenced by either list:
+
             * If the slot appears in both lists, it must appear the exact same number of times and at
               the exact same indexes in both lists.
+
             * If the slot appears only in one list, for each of its appearances in that list, there
               must be a ScratchSlot in the other list that appears the exact same number of times
               and at the exact same indexes.

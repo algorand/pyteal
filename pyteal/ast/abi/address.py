@@ -21,7 +21,7 @@ class AddressLength(IntEnum):
     Bytes = 32
 
 
-AddressLength.__module__ = "pyteal"
+AddressLength.__module__ = "pyteal.abi"
 
 
 class AddressTypeSpec(StaticArrayTypeSpec):
@@ -41,7 +41,7 @@ class AddressTypeSpec(StaticArrayTypeSpec):
         return isinstance(other, AddressTypeSpec)
 
 
-AddressTypeSpec.__module__ = "pyteal"
+AddressTypeSpec.__module__ = "pyteal.abi"
 
 
 class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
@@ -52,20 +52,44 @@ class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
         return AddressTypeSpec()
 
     def get(self) -> Expr:
+        """Return the 32-byte value held by this Address as a PyTeal expression.
+
+        The expression will have the type TealType.bytes.
+        """
         return self.stored_value.load()
 
     def set(
         self,
         value: Union[
+            str,
+            bytes,
+            Expr,
             Sequence[Byte],
             StaticArray[Byte, Literal[AddressLength.Bytes]],
             ComputedValue[StaticArray[Byte, Literal[AddressLength.Bytes]]],
             "Address",
-            str,
-            bytes,
-            Expr,
+            ComputedValue["Address"],
         ],
     ):
+        """Set the value of this Address to the input value.
+
+        The behavior of this method depends on the input argument type:
+
+            * :code:`str`: set the value to the address from the encoded address string. This string must be a valid 58-character base-32 Algorand address with checksum.
+            * :code:`bytes`: set the value to the raw address bytes. This byte string must have length 32.
+            * :code:`Expr`: set the value to the result of a PyTeal expression, which must evaluate to a TealType.bytes. The program will fail if the evaluated byte string length is not 32.
+            * :code:`Sequence[Byte]`: set the bytes of this Address to those contained in this Python sequence (e.g. a list or tuple). A compiler error will occur if the sequence length is not 32.
+            * :code:`StaticArray[Byte, 32]`: copy the bytes from a StaticArray of 32 bytes.
+            * :code:`ComputedValue[StaticArray[Byte, 32]]`: copy the bytes from a StaticArray of 32 bytes produced by a ComputedValue.
+            * :code:`Address`: copy the value from another Address.
+            * :code:`ComputedValue[Address]`: copy the value from an Address produced by a ComputedValue.
+
+        Args:
+            value: The new value this Address should take. This must follow the above constraints.
+
+        Returns:
+            An expression which stores the given value into this Address.
+        """
 
         match value:
             case ComputedValue():
@@ -117,4 +141,4 @@ class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
         )
 
 
-Address.__module__ = "pyteal"
+Address.__module__ = "pyteal.abi"

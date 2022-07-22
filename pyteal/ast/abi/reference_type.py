@@ -38,6 +38,9 @@ class ReferenceTypeSpec(TypeSpec):
         return TealType.uint64
 
 
+ReferenceTypeSpec.__module__ = "pyteal.abi"
+
+
 class ReferenceType(BaseType):
     @abstractmethod
     def __init__(self, spec: ReferenceTypeSpec) -> None:
@@ -78,6 +81,9 @@ class ReferenceType(BaseType):
         raise TealInputError("A ReferenceType cannot be encoded")
 
 
+ReferenceType.__module__ = "pyteal.abi"
+
+
 class AccountTypeSpec(ReferenceTypeSpec):
     def new_instance(self) -> "Account":
         return Account()
@@ -92,7 +98,7 @@ class AccountTypeSpec(ReferenceTypeSpec):
         return isinstance(other, AccountTypeSpec)
 
 
-AccountTypeSpec.__module__ = "pyteal"
+AccountTypeSpec.__module__ = "pyteal.abi"
 
 
 class Account(ReferenceType):
@@ -124,7 +130,7 @@ class Account(ReferenceType):
         return AssetHoldingObject(asset_ref, self.referenced_index())
 
 
-Account.__module__ = "pyteal"
+Account.__module__ = "pyteal.abi"
 
 
 class AssetTypeSpec(ReferenceTypeSpec):
@@ -141,7 +147,7 @@ class AssetTypeSpec(ReferenceTypeSpec):
         return isinstance(other, AssetTypeSpec)
 
 
-AssetTypeSpec.__module__ = "pyteal"
+AssetTypeSpec.__module__ = "pyteal.abi"
 
 
 class Asset(ReferenceType):
@@ -173,7 +179,7 @@ class Asset(ReferenceType):
         return AssetParamObject(self.referenced_index())
 
 
-Asset.__module__ = "pyteal"
+Asset.__module__ = "pyteal.abi"
 
 
 class ApplicationTypeSpec(ReferenceTypeSpec):
@@ -190,7 +196,7 @@ class ApplicationTypeSpec(ReferenceTypeSpec):
         return isinstance(other, ApplicationTypeSpec)
 
 
-ApplicationTypeSpec.__module__ = "pyteal"
+ApplicationTypeSpec.__module__ = "pyteal.abi"
 
 
 class Application(ReferenceType):
@@ -206,7 +212,7 @@ class Application(ReferenceType):
         return AppParamObject(self.referenced_index())
 
 
-Application.__module__ = "pyteal"
+Application.__module__ = "pyteal.abi"
 
 
 ReferenceTypeSpecs: Final[List[TypeSpec]] = [
