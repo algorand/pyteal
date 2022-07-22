@@ -36,6 +36,7 @@ class Assert(Expr):
                 options, TealOp(self, Op.assert_), self.cond[0], trace=self.trace
             )
 
+
         # if assert op is not available, use branches and err
         condStart, condEnd = self.cond[0].__teal__(options)
 
