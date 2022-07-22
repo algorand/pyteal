@@ -4,7 +4,7 @@ from pyteal import abi
 
 from pyteal.ast.abi.address import AddressLength
 from pyteal.ast.abi.type_test import ContainerType
-from pyteal.ast.abi.util import substringForDecoding
+from pyteal.ast.abi.util import substring_for_decoding
 
 
 options = pt.CompileOptions(version=5)
@@ -80,7 +80,7 @@ def test_Address_decode():
                 assert expr.has_return() is False
 
                 expectedExpr = value.stored_value.store(
-                    substringForDecoding(
+                    substring_for_decoding(
                         encoded,
                         start_index=start_index,
                         end_index=end_index,

@@ -16,7 +16,7 @@ from pyteal.ast.naryexpr import Concat
 from pyteal.errors import TealInputError
 
 
-def encoded_string(s: Expr):
+def _encoded_string(s: Expr):
     return Concat(Suffix(Itob(Len(s)), Int(6)), s)
 
 
@@ -102,9 +102,9 @@ class String(DynamicArray[Byte]):
                     f"Got {value} with type spec {value.type_spec()}, expected {StringTypeSpec}"
                 )
             case str() | bytes():
-                return self.stored_value.store(encoded_string(Bytes(value)))
+                return self.stored_value.store(_encoded_string(Bytes(value)))
             case Expr():
-                return self.stored_value.store(encoded_string(value))
+                return self.stored_value.store(_encoded_string(value))
             case CollectionSequence():
                 return super().set(cast(Sequence[Byte], value))
 

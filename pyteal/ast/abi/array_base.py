@@ -19,10 +19,10 @@ from pyteal.ast.binaryexpr import ExtractUint16
 from pyteal.ast.naryexpr import Concat
 
 from pyteal.ast.abi.type import TypeSpec, BaseType, ComputedValue
-from pyteal.ast.abi.tuple import encodeTuple
+from pyteal.ast.abi.tuple import _encode_tuple
 from pyteal.ast.abi.bool import Bool, BoolTypeSpec
 from pyteal.ast.abi.uint import Uint16, Uint16TypeSpec
-from pyteal.ast.abi.util import substringForDecoding
+from pyteal.ast.abi.util import substring_for_decoding
 
 T = TypeVar("T", bound=BaseType)
 
@@ -101,7 +101,7 @@ class Array(BaseType, Generic[T]):
             An expression that partitions the needed parts from given byte strings and stores into
             the scratch variable.
         """
-        extracted = substringForDecoding(
+        extracted = substring_for_decoding(
             encoded, start_index=start_index, end_index=end_index, length=length
         )
         return self.stored_value.store(extracted)
@@ -135,7 +135,7 @@ class Array(BaseType, Generic[T]):
                     )
                 )
 
-        encoded = encodeTuple(values)
+        encoded = _encode_tuple(values)
 
         if self.type_spec().is_length_dynamic():
             length_tmp = Uint16()
@@ -233,7 +233,7 @@ class ArrayElement(ComputedValue[T]):
             bitIndex = self.index
             if arrayType.is_dynamic():
                 bitIndex = bitIndex + Int(Uint16TypeSpec().bit_size())
-            return cast(Bool, output).decodeBit(encodedArray, bitIndex)
+            return cast(Bool, output).decode_bit(encodedArray, bitIndex)
 
         # Compute the byteIndex (first byte indicating the element encoding)
         # (If the array is dynamic, add 2 to byte index for dynamic array length uint16 prefix)
