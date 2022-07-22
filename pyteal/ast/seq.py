@@ -83,3 +83,29 @@ class Seq(Expr):
 
 
 Seq.__module__ = "pyteal"
+
+
+@overload
+def _use_seq_if_multiple(exprs: list[Expr]) -> Expr:
+    ...
+
+
+@overload
+def _use_seq_if_multiple(*exprs: Expr) -> Expr:
+    ...
+
+
+def _use_seq_if_multiple(*exprs):
+    """If multiple expressions are provided, wrap them in a Seq expression."""
+
+    # Guard against no expressions
+    if len(exprs) == 0:
+        raise TealInputError("Expressions cannot be empty.")
+
+    # Handle case where a list of expressions is provided
+    if len(exprs) == 1 and isinstance(exprs[0], list):
+        exprs = exprs[0]
+
+    if len(exprs) > 1:
+        return Seq(*exprs)
+    return exprs[0]
