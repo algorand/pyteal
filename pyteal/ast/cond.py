@@ -1,4 +1,5 @@
 from typing import List, cast, TYPE_CHECKING
+from pyteal.ast.seq import _use_seq_if_multiple
 
 from pyteal.types import TealType, require_type
 from pyteal.ir import TealOp, Op, TealSimpleBlock, TealConditionalBlock
@@ -9,16 +10,34 @@ if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
 
 
+def _reformat_multi_argv(argv: tuple[list[Expr], ...]) -> list[list[Expr]]:
+    """Reformat a list of lists of expressions with potentially multiple value expressions into a list of lists of expressions with only one value expression
+        by using Seq blocks where appropriate.
+
+    Example:
+        [ [a, b, c], [d, e, f] ] -> [ [a, Seq(b, c)], [d, Seq(e, f)] ]
+    """
+    reformatted = []
+    for arg in argv:
+        # Note: this is not a valid Cond arg, but will be caught later in Cond.__init__()
+        if len(arg) <= 1:
+            reformatted.append(arg)
+        else:
+            reformatted.append([arg[0], _use_seq_if_multiple(arg[1:])])
+
+    return reformatted
+
+
 class Cond(Expr):
     """A chainable branching expression that supports an arbitrary number of conditions."""
 
     def __init__(self, *argv: List[Expr]):
         """Create a new Cond expression.
 
-        At least one argument must be provided, and each argument must be a list with two elements.
-        The first element is a condition which evalutes to uint64, and the second is the body of the
-        condition, which will execute if that condition is true. All condition bodies must have the
-        same return type. During execution, each condition is tested in order, and the first
+        At least one argument must be provided, and each argument must be a list with two or more elements.
+        The first element is a condition which evalutes to uint64, and the remaining elements are the body
+        of the condition, which will execute if that condition is true. The last elements of the condition bodies
+        must have the same return type. During execution, each condition is tested in order, and the first
         condition to evaluate to a true value will cause its associated body to execute and become
         the value for this Cond expression. If no condition evalutes to a true value, the Cond
         expression produces an error and the TEAL program terminates.
@@ -27,7 +46,7 @@ class Cond(Expr):
             .. code-block:: python
 
                 Cond([Global.group_size() == Int(5), bid],
-                    [Global.group_size() == Int(4), redeem],
+                    [Global.group_size() == Int(4), redeem, log],
                     [Global.group_size() == Int(1), wrapup])
         """
         super().__init__()
@@ -36,8 +55,9 @@ class Cond(Expr):
             raise TealInputError("Cond requires at least one [condition, value]")
 
         value_type = None
+        sequenced_argv = _reformat_multi_argv(argv)
 
-        for arg in argv:
+        for arg in sequenced_argv:
             msg = "Cond should be in the form of Cond([cond1, value1], [cond2, value2], ...), error in {}"
             if not isinstance(arg, list):
                 raise TealInputError(msg.format(arg))
@@ -52,7 +72,7 @@ class Cond(Expr):
                 require_type(arg[1], value_type)
 
         self.value_type = value_type
-        self.args = argv
+        self.args = sequenced_argv
 
     def __teal__(self, options: "CompileOptions"):
         start = None

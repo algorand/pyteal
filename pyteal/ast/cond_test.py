@@ -119,8 +119,58 @@ def test_cond_invalid():
     with pytest.raises(pt.TealInputError):
         pt.Cond([])
 
+    with pytest.raises(pt.TealInputError):
+        pt.Cond([pt.Int(1)], [pt.Int(2), pt.Pop(pt.Txn.receiver())])
+
     with pytest.raises(pt.TealTypeError):
         pt.Cond([pt.Int(1), pt.Int(2)], [pt.Int(2), pt.Txn.receiver()])
 
     with pytest.raises(pt.TealTypeError):
         pt.Cond([pt.Arg(0), pt.Int(2)])
+
+    with pytest.raises(pt.TealTypeError):
+        pt.Cond([pt.Int(1), pt.Int(2)], [pt.Int(2), pt.Pop(pt.Int(2))])
+
+    with pytest.raises(pt.TealTypeError):
+        pt.Cond([pt.Int(1), pt.Pop(pt.Int(1))], [pt.Int(2), pt.Int(2)])
+
+
+def test_cond_two_pred_multi():
+    args = [
+        pt.Int(1),
+        [pt.Pop(pt.Int(1)), pt.Bytes("one")],
+        pt.Int(0),
+        [pt.Pop(pt.Int(2)), pt.Bytes("zero")],
+    ]
+    expr = pt.Cond(
+        [args[0]] + args[1],
+        [args[2]] + args[3],
+    )
+    assert expr.type_of() == pt.TealType.bytes
+
+    cond1, _ = args[0].__teal__(options)
+    pred1, pred1End = pt.Seq(args[1]).__teal__(options)
+    cond1Branch = pt.TealConditionalBlock([])
+    cond2, _ = args[2].__teal__(options)
+    pred2, pred2End = pt.Seq(args[3]).__teal__(options)
+    cond2Branch = pt.TealConditionalBlock([])
+    end = pt.TealSimpleBlock([])
+
+    cond1.setNextBlock(cond1Branch)
+    cond1Branch.setTrueBlock(pred1)
+    cond1Branch.setFalseBlock(cond2)
+    pred1End.setNextBlock(end)
+
+    cond2.setNextBlock(cond2Branch)
+    cond2Branch.setTrueBlock(pred2)
+    cond2Branch.setFalseBlock(pt.Err().__teal__(options)[0])
+    pred2End.setNextBlock(end)
+
+    expected = cond1
+
+    actual, _ = expr.__teal__(options)
+    print(actual)
+    print(expected)
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
