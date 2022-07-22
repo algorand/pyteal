@@ -1,7 +1,8 @@
-from enum import Enum, EnumInt
+from enum import Enum
 import algosdk
 
 from typing import TYPE_CHECKING, cast
+from pyteal.ast.int import EnumInt
 from pyteal.ast.for_ import For
 from pyteal.ast.int import Int
 from pyteal.ast.scratchvar import ScratchVar
