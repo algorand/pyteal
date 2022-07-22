@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 from enum import Enum
 
 from pyteal.types import TealType, require_type
-from pyteal.errors import verifyFieldVersion, verifyTealVersion
+from pyteal.errors import verifyFieldVersion, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
 
@@ -49,10 +49,10 @@ class JsonRef(Expr):
         self.key = key
 
     def __teal__(self, options: "CompileOptions"):
-        verifyTealVersion(
+        verifyProgramVersion(
             Op.json_ref.min_version,
             options.version,
-            "TEAL version too low to use op json_ref",
+            "Program version too low to use op json_ref",
         )
 
         verifyFieldVersion(self.type.arg_name, self.type.min_version, options.version)

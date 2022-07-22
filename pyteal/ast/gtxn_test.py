@@ -2,7 +2,7 @@ import pytest
 
 import pyteal as pt
 
-teal6Options = pt.CompileOptions(version=6)
+avm6Options = pt.CompileOptions(version=6)
 
 
 def test_gtxn_invalid():
@@ -29,7 +29,7 @@ def test_gtxn_expr_invalid():
 
 def test_gtxn_expr_valid():
     [
-        e.__teal__(teal6Options)
+        e.__teal__(avm6Options)
         for e in [
             pt.GtxnExpr(1, pt.TxnField.sender),
             pt.GtxnExpr(pt.Int(1), pt.TxnField.sender),
@@ -62,7 +62,7 @@ def test_gtxna_expr_invalid():
 
 def test_gtxna_expr_valid():
     [
-        e.__teal__(teal6Options)
+        e.__teal__(avm6Options)
         for e in [
             pt.GtxnaExpr(1, pt.TxnField.assets, 1),
             pt.GtxnaExpr(pt.Int(1), pt.TxnField.assets, pt.Int(1)),

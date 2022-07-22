@@ -49,7 +49,7 @@ The associativity and precedence of the overloaded Python arithmetic operators a
 Byteslice Arithmetic
 --------------------
 
-Byteslice arithemetic is available for Teal V4 and above. 
+Byteslice arithmetic is available for AVM V4 and above. 
 Byteslice arithmetic operators allow up to 512-bit arithmetic.
 In PyTeal, byteslice arithmetic expressions include 
 :code:`TealType.Bytes` values as arguments (with the exception of :code:`BytesZero`)

@@ -5,7 +5,7 @@ from pyteal.ast import Expr, MultiValue
 from pyteal.errors import (
     TealTypeError,
     verifyFieldVersion,
-    verifyTealVersion,
+    verifyProgramVersion,
     TealInputError,
 )
 from pyteal.ir import Op, TealBlock, TealOp
@@ -57,10 +57,10 @@ class EcdsaVerifyExpr(Expr):
         self.args = [data, sigA, sigB, pkX, pkY]
 
     def __teal__(self, options: "CompileOptions"):
-        verifyTealVersion(
+        verifyProgramVersion(
             self.op.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(self.op),
+            "Program version too low to use op {}".format(self.op),
         )
 
         verifyFieldVersion(self.curve.arg_name, self.curve.min_version, options.version)

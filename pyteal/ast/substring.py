@@ -1,7 +1,7 @@
 from typing import cast, TYPE_CHECKING
 
 from pyteal.types import TealType, require_type
-from pyteal.errors import TealCompileError, verifyTealVersion
+from pyteal.errors import TealCompileError, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock, TealSimpleBlock
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
@@ -60,10 +60,10 @@ class SubstringExpr(Expr):
 
         op = self.__get_op(options)
 
-        verifyTealVersion(
+        verifyProgramVersion(
             op.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(op),
+            "Program version too low to use op {}".format(op),
         )
 
         start, end = cast(Int, self.startArg).value, cast(Int, self.endArg).value
@@ -141,10 +141,10 @@ class ExtractExpr(Expr):
 
         op = self.__get_op(options)
 
-        verifyTealVersion(
+        verifyProgramVersion(
             op.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(op),
+            "Program version too low to use op {}".format(op),
         )
 
         s, l = cast(Int, self.startArg).value, cast(Int, self.lenArg).value
@@ -199,10 +199,10 @@ class SuffixExpr(Expr):
     def __teal__(self, options: "CompileOptions"):
         op = self.__get_op(options)
 
-        verifyTealVersion(
+        verifyProgramVersion(
             op.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(op),
+            "Program version too low to use op {}".format(op),
         )
 
         if op == Op.extract:
@@ -248,7 +248,7 @@ def Substring(string: Expr, start: Expr, end: Expr) -> Expr:
     This expression is similar to :any:`Extract`, except this expression uses start and end indexes,
     while :code:`Extract` uses a start index and length.
 
-    Requires TEAL version 2 or higher.
+    Requires program version 2 or higher.
 
     Args:
         string: The byte string.
@@ -273,7 +273,7 @@ def Extract(string: Expr, start: Expr, length: Expr) -> Expr:
     This expression is similar to :any:`Substring`, except this expression uses a start index and
     length, while :code:`Substring` uses start and end indexes.
 
-    Requires TEAL version 5 or higher.
+    Requires program version 5 or higher.
 
     Args:
         string: The byte string.
@@ -296,7 +296,7 @@ def Suffix(string: Expr, start: Expr) -> Expr:
     This expression is similar to :any:`Substring` and :any:`Extract`, except this expression only uses a
     start index.
 
-    Requires TEAL version 5 or higher.
+    Requires program version 5 or higher.
 
     Args:
         string: The byte string.

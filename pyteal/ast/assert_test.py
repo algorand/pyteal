@@ -2,8 +2,8 @@ import pytest
 
 import pyteal as pt
 
-teal2Options = pt.CompileOptions(version=2)
-teal3Options = pt.CompileOptions(version=3)
+avm2Options = pt.CompileOptions(version=2)
+avm3Options = pt.CompileOptions(version=3)
 
 
 def test_teal_2_assert():
@@ -11,13 +11,13 @@ def test_teal_2_assert():
     expr = pt.Assert(arg)
     assert expr.type_of() == pt.TealType.none
 
-    expected, _ = arg.__teal__(teal2Options)
+    expected, _ = arg.__teal__(avm2Options)
     expectedBranch = pt.TealConditionalBlock([])
     expectedBranch.setTrueBlock(pt.TealSimpleBlock([]))
-    expectedBranch.setFalseBlock(pt.Err().__teal__(teal2Options)[0])
+    expectedBranch.setFalseBlock(pt.Err().__teal__(avm2Options)[0])
     expected.setNextBlock(expectedBranch)
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
@@ -32,7 +32,7 @@ def test_teal_3_assert():
         [pt.TealOp(arg, pt.Op.int, 1), pt.TealOp(expr, pt.Op.assert_)]
     )
 
-    actual, _ = expr.__teal__(teal3Options)
+    actual, _ = expr.__teal__(avm3Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 

@@ -3,13 +3,13 @@ from typing import Union, List, cast
 
 import pyteal as pt
 
-teal4Options = pt.CompileOptions(version=4)
-teal5Options = pt.CompileOptions(version=5)
-teal7Options = pt.CompileOptions(version=7)
+avm4Options = pt.CompileOptions(version=4)
+avm5Options = pt.CompileOptions(version=5)
+avm7Options = pt.CompileOptions(version=7)
 
 curve_options_map = {
-    pt.EcdsaCurve.Secp256k1: teal5Options,
-    pt.EcdsaCurve.Secp256r1: teal7Options,
+    pt.EcdsaCurve.Secp256k1: avm5Options,
+    pt.EcdsaCurve.Secp256r1: avm7Options,
 }
 
 
@@ -291,7 +291,7 @@ def test_ecdsa_invalid(curve: pt.EcdsaCurve):
         pubkey = (pt.Bytes("X"), pt.Bytes("Y"))
         expr = pt.EcdsaVerify(curve, args[0], args[1], args[2], pubkey)
 
-        expr.__teal__(teal4Options)
+        expr.__teal__(avm4Options)
 
     with pytest.raises(pt.TealTypeError):
         args = [pt.Bytes("data"), pt.Bytes("sigA"), pt.Bytes("sigB")]
