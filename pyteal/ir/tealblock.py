@@ -139,7 +139,7 @@ class TealBlock(ABC):
         options: "CompileOptions",
         op: TealOp,
         *args: "Expr",
-        trace: list[str] = None 
+        trace: list[str] = None
     ) -> Tuple["TealBlock", "TealSimpleBlock"]:
         """Create a path of blocks from a TealOp and its arguments.
 

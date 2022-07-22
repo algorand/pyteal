@@ -51,9 +51,7 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             if nextIndex != i + 1:
                 references[nextIndex] += 1
                 code.append(
-                    TealOp(
-                        None, Op.b, indexToLabel(nextIndex), trace=block.trace
-                    )
+                    TealOp(None, Op.b, indexToLabel(nextIndex), trace=block.trace)
                 )
 
         elif type(block) is TealConditionalBlock:
@@ -67,18 +65,14 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
 
                 references[trueIndex] += 1
                 code.append(
-                    TealOp(
-                        None, Op.bnz, indexToLabel(trueIndex), trace=block.trace
-                    )
+                    TealOp(None, Op.bnz, indexToLabel(trueIndex), trace=block.trace)
                 )
                 continue
 
             if trueIndex == i + 1:
                 references[falseIndex] += 1
                 code.append(
-                    TealOp(
-                        None, Op.bz, indexToLabel(falseIndex), trace=block.trace
-                    )
+                    TealOp(None, Op.bz, indexToLabel(falseIndex), trace=block.trace)
                 )
                 continue
 
@@ -88,9 +82,7 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             )
 
             references[falseIndex] += 1
-            code.append(
-                TealOp(None, Op.b, indexToLabel(falseIndex), trace=block.trace)
-            )
+            code.append(TealOp(None, Op.b, indexToLabel(falseIndex), trace=block.trace))
         else:
             raise TealInternalError("Unrecognized block type: {}".format(type(block)))
 

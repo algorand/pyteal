@@ -13,7 +13,7 @@ class TealLabel(TealComponent):
         expr: Optional["Expr"],
         label: LabelReference,
         comment: str = None,
-        trace: list[str] = None, 
+        trace: list[str] = None,
     ) -> None:
         super().__init__(expr)
         self.label = label
