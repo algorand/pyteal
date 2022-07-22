@@ -1,10 +1,13 @@
-from pyteal import *
+from pyteal import Int, Assert, Seq, Pop, Bytes, Len, compileTeal, OptimizeOptions, Mode
 from util import thing
 
 program = Seq(
-    Pop(thing(Int(1), Int(2))), 
-    Assert(Len(Bytes("ok")) > Int(0)), 
-    thing(Int(2), Int(3))
+    # comments
+    Pop(thing(Int(1), Int(2))),
+    # stop black fmt
+    Assert(Len(Bytes("ok")) > Int(0)),
+    # from complaining
+    thing(Int(2), Int(3)),
 )
 
 print(

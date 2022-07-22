@@ -1,4 +1,4 @@
-from pyteal import *
+from pyteal import Subroutine, Expr, TealType
 
 
 @Subroutine(TealType.uint64)

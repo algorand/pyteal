@@ -319,8 +319,6 @@ def compileTeal(
 
         line = teal_line[:idx].strip(" \t")
 
-
-
         if debug:
             line_length = len(line)
 
@@ -328,7 +326,7 @@ def compileTeal(
                 line_length = line_length - (newline_idx + 1)
 
             max_width = 16
-            width = max(1, max_width-line_length)
+            width = max(1, max_width - line_length)
             return line + " " * width + teal_line[idx:]
 
         return line
