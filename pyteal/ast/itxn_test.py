@@ -122,8 +122,9 @@ ITXN_FIELDS_CASES = [
                 pt.TxnField.accounts, [pt.Txn.accounts[i.load()]]
             )
         ),
-    )
+    ),
 ]
+
 
 def test_InnerTxnBuilder_SetFields():
     for fields, expectedExpr in ITXN_FIELDS_CASES:
