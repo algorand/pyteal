@@ -100,11 +100,11 @@ class If(Expr):
         # otherwise, this expression has a return op only if both branches result in a return op
         return self.thenBranch.has_return() and self.elseBranch.has_return()
 
-    def Then(self, thenBranch: Expr, *thenBranchMulti: Expr):
+    def Then(self, thenBranch: Expr, *then_branch_multi: Expr):
         if not self.alternateSyntaxFlag:
             raise TealInputError("Cannot mix two different If syntax styles")
 
-        thenBranch = _use_seq_if_multiple(thenBranch, *thenBranchMulti)
+        thenBranch = _use_seq_if_multiple(thenBranch, *then_branch_multi)
 
         if not self.elseBranch:
             self.thenBranch = thenBranch
@@ -126,14 +126,14 @@ class If(Expr):
             self.elseBranch.ElseIf(cond)
         return self
 
-    def Else(self, elseBranch: Expr, *elseBranchMulti: Expr):
+    def Else(self, elseBranch: Expr, *else_branch_multi: Expr):
         if not self.alternateSyntaxFlag:
             raise TealInputError("Cannot mix two different If syntax styles")
 
         if not self.thenBranch:
             raise TealInputError("Must set Then branch before Else branch")
 
-        elseBranch = _use_seq_if_multiple(elseBranch, *elseBranchMulti)
+        elseBranch = _use_seq_if_multiple(elseBranch, *else_branch_multi)
 
         if not self.elseBranch:
             require_type(elseBranch, self.thenBranch.type_of())
