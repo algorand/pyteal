@@ -12,6 +12,7 @@
 
 ## Changed
 * Make PyTeal stack traces easier to debug ([#371](https://github.com/algorand/pyteal/pull/371)).
+* Streamline multi-expression clause construction [#442](https://github.com/algorand/pyteal/pull/442).
 
 # 0.13.0
 
