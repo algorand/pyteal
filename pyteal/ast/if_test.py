@@ -256,6 +256,10 @@ def test_if_invalid_alt_syntax():
         expr = pt.If(pt.Int(0)).Then(pt.Int(2))
         expr.type_of()
 
+    with pytest.raises(pt.TealTypeError):
+        expr = pt.If(pt.Int(0)).Then(pt.Pop(pt.Int(1)), pt.Int(2))
+        expr.type_of()
+
     with pytest.raises(pt.TealInputError):
         pt.If(pt.Int(0)).Else(pt.Int(1)).Then(pt.Int(2))
 
@@ -271,3 +275,82 @@ def test_if_invalid_alt_syntax():
 
     with pytest.raises(pt.TealInputError):
         expr = pt.If(pt.Int(0), pt.Pop(pt.Int(1))).Else(pt.Int(2))
+
+
+def test_if_alt_multi():
+    args = [pt.Int(0), [pt.Pop(pt.Int(1)), pt.Int(2)], pt.Int(3)]
+    expr = pt.If(args[0]).Then(*args[1]).Else(args[2])
+
+    expected, _ = args[0].__teal__(options)
+    thenBlockStart, thenBlockEnd = pt.Seq(*args[1]).__teal__(options)
+    elseBlockStart, elseBlockEnd = args[2].__teal__(options)
+    expectedBranch = pt.TealConditionalBlock([])
+    expectedBranch.setTrueBlock(thenBlockStart)
+    expectedBranch.setFalseBlock(elseBlockStart)
+    expected.setNextBlock(expectedBranch)
+    end = pt.TealSimpleBlock([])
+    thenBlockEnd.setNextBlock(end)
+    elseBlockEnd.setNextBlock(end)
+
+    actual, _ = expr.__teal__(options)
+
+    assert actual == expected
+
+
+def test_else_alt_multi():
+    args = [pt.Int(0), pt.Int(1), [pt.Pop(pt.Int(2)), pt.Int(3)]]
+    expr = pt.If(args[0]).Then(args[1]).Else(*args[2])
+
+    expected, _ = args[0].__teal__(options)
+    thenBlockStart, thenBlockEnd = args[1].__teal__(options)
+    elseBlockStart, elseBlockEnd = pt.Seq(*args[2]).__teal__(options)
+    expectedBranch = pt.TealConditionalBlock([])
+    expectedBranch.setTrueBlock(thenBlockStart)
+    expectedBranch.setFalseBlock(elseBlockStart)
+    expected.setNextBlock(expectedBranch)
+    end = pt.TealSimpleBlock([])
+    thenBlockEnd.setNextBlock(end)
+    elseBlockEnd.setNextBlock(end)
+
+    actual, _ = expr.__teal__(options)
+
+    assert actual == expected
+
+
+def test_elseif_multiple_with_multi():
+    args = [
+        pt.Int(0),
+        [pt.Pop(pt.Int(1)), pt.Int(2)],
+        pt.Int(3),
+        [pt.Pop(pt.Int(4)), pt.Int(5)],
+        pt.Int(6),
+        [pt.Pop(pt.Int(7)), pt.Int(8)],
+        [pt.Pop(pt.Int(9)), pt.Int(10)],
+    ]
+    expr = (
+        pt.If(args[0])
+        .Then(*args[1])
+        .ElseIf(args[2])
+        .Then(*args[3])
+        .ElseIf(args[4])
+        .Then(*args[5])
+        .Else(*args[6])
+    )
+
+    elseIfExpr = pt.If(
+        args[2], pt.Seq(args[3]), pt.If(args[4], pt.Seq(args[5]), pt.Seq(args[6]))
+    )
+    expected, _ = args[0].__teal__(options)
+    thenBlock, thenBlockEnd = pt.Seq(args[1]).__teal__(options)
+    elseStart, elseBlockEnd = elseIfExpr.__teal__(options)
+    expectedBranch = pt.TealConditionalBlock([])
+    expectedBranch.setTrueBlock(thenBlock)
+    expectedBranch.setFalseBlock(elseStart)
+    expected.setNextBlock(expectedBranch)
+    end = pt.TealSimpleBlock([])
+    thenBlockEnd.setNextBlock(end)
+    elseBlockEnd.setNextBlock(end)
+
+    actual, _ = expr.__teal__(options)
+
+    assert actual == expected

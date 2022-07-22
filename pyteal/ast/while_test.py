@@ -143,8 +143,32 @@ def test_while_invalid():
 
     with pytest.raises(pt.TealTypeError):
         expr = pt.While(pt.Int(2)).Do(pt.Int(2))
-        expr.__str__()
+
+    with pytest.raises(pt.TealTypeError):
+        expr = pt.While(pt.Int(2)).Do(pt.Pop(pt.Int(2)), pt.Int(2))
 
     with pytest.raises(pt.TealCompileError):
         expr = pt.While(pt.Int(0)).Do(pt.Continue()).Do(pt.Continue())
         expr.__str__()
+
+
+def test_while_multi():
+    i = pt.ScratchVar()
+    i.store(pt.Int(0))
+    items = [i.load() < pt.Int(2), [pt.Pop(pt.Int(1)), i.store(i.load() + pt.Int(1))]]
+    expr = pt.While(items[0]).Do(*items[1])
+    assert expr.type_of() == pt.TealType.none
+    assert not expr.has_return()
+
+    expected, condEnd = items[0].__teal__(options)
+    do, doEnd = pt.Seq(items[1]).__teal__(options)
+    expectedBranch = pt.TealConditionalBlock([])
+    end = pt.TealSimpleBlock([])
+
+    expectedBranch.setTrueBlock(do)
+    expectedBranch.setFalseBlock(end)
+    condEnd.setNextBlock(expectedBranch)
+    doEnd.setNextBlock(expected)
+    actual, _ = expr.__teal__(options)
+
+    assert actual == expected

@@ -24,6 +24,6 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    package_data={"pyteal": ["*.pyi"]},
+    package_data={"pyteal": ["*.pyi", "py.typed"]},
     python_requires=">=3.10",
 )
