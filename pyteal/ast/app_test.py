@@ -1,6 +1,7 @@
 import pytest
 
 import pyteal as pt
+from pyteal.ast.maybe_test import assert_MaybeValue_equality
 
 options = pt.CompileOptions()
 teal4Options = pt.CompileOptions(version=4)
@@ -674,3 +675,40 @@ def test_app_param_address_valid():
 def test_app_param_address_invalid():
     with pytest.raises(pt.TealTypeError):
         pt.AppParam.address(pt.Txn.sender())
+
+
+def test_AppParamObject():
+    for app in (pt.Int(1), pt.Int(100)):
+        obj = pt.AppParamObject(app)
+
+        assert obj._app is app
+
+        assert_MaybeValue_equality(
+            obj.approval_program(), pt.AppParam.approvalProgram(app), teal5Options
+        )
+        assert_MaybeValue_equality(
+            obj.clear_state_program(), pt.AppParam.clearStateProgram(app), teal5Options
+        )
+        assert_MaybeValue_equality(
+            obj.global_num_uint(), pt.AppParam.globalNumUint(app), teal5Options
+        )
+        assert_MaybeValue_equality(
+            obj.global_num_byte_slice(),
+            pt.AppParam.globalNumByteSlice(app),
+            teal5Options,
+        )
+        assert_MaybeValue_equality(
+            obj.local_num_uint(), pt.AppParam.localNumUint(app), teal5Options
+        )
+        assert_MaybeValue_equality(
+            obj.local_num_byte_slice(), pt.AppParam.localNumByteSlice(app), teal5Options
+        )
+        assert_MaybeValue_equality(
+            obj.extra_program_pages(), pt.AppParam.extraProgramPages(app), teal5Options
+        )
+        assert_MaybeValue_equality(
+            obj.creator_address(), pt.AppParam.creator(app), teal5Options
+        )
+        assert_MaybeValue_equality(
+            obj.address(), pt.AppParam.address(app), teal5Options
+        )

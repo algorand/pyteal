@@ -46,7 +46,9 @@ class BinaryExpr(Expr):
         )
 
     def __str__(self):
-        return "({} {} {})".format(self.op, self.argLeft, self.argRight)
+        return "({} {} {})".format(
+            str(self.op).title().replace("_", ""), self.argLeft, self.argRight
+        )
 
     def type_of(self):
         return self.outputType
@@ -58,19 +60,7 @@ class BinaryExpr(Expr):
 BinaryExpr.__module__ = "pyteal"
 
 
-def Add(left: Expr, right: Expr) -> BinaryExpr:
-    """Add two numbers.
-
-    Produces left + right.
-
-    Args:
-        left: Must evaluate to uint64.
-        right: Must evaluate to uint64.
-    """
-    return BinaryExpr(Op.add, TealType.uint64, TealType.uint64, left, right)
-
-
-def Minus(left: Expr, right: Expr) -> BinaryExpr:
+def Minus(left: Expr, right: Expr) -> Expr:
     """Subtract two numbers.
 
     Produces left - right.
@@ -82,19 +72,7 @@ def Minus(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.minus, TealType.uint64, TealType.uint64, left, right)
 
 
-def Mul(left: Expr, right: Expr) -> BinaryExpr:
-    """Multiply two numbers.
-
-    Produces left * right.
-
-    Args:
-        left: Must evaluate to uint64.
-        right: Must evaluate to uint64.
-    """
-    return BinaryExpr(Op.mul, TealType.uint64, TealType.uint64, left, right)
-
-
-def Div(left: Expr, right: Expr) -> BinaryExpr:
+def Div(left: Expr, right: Expr) -> Expr:
     """Divide two numbers.
 
     Produces left / right.
@@ -106,7 +84,7 @@ def Div(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.div, TealType.uint64, TealType.uint64, left, right)
 
 
-def Mod(left: Expr, right: Expr) -> BinaryExpr:
+def Mod(left: Expr, right: Expr) -> Expr:
     """Modulo expression.
 
     Produces left % right.
@@ -118,7 +96,7 @@ def Mod(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.mod, TealType.uint64, TealType.uint64, left, right)
 
 
-def Exp(a: Expr, b: Expr) -> BinaryExpr:
+def Exp(a: Expr, b: Expr) -> Expr:
     """Exponential expression.
 
     Produces a ** b.
@@ -132,7 +110,7 @@ def Exp(a: Expr, b: Expr) -> BinaryExpr:
     return BinaryExpr(Op.exp, TealType.uint64, TealType.uint64, a, b)
 
 
-def BitwiseAnd(left: Expr, right: Expr) -> BinaryExpr:
+def BitwiseAnd(left: Expr, right: Expr) -> Expr:
     """Bitwise and expression.
 
     Produces left & right.
@@ -144,7 +122,7 @@ def BitwiseAnd(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.bitwise_and, TealType.uint64, TealType.uint64, left, right)
 
 
-def BitwiseOr(left: Expr, right: Expr) -> BinaryExpr:
+def BitwiseOr(left: Expr, right: Expr) -> Expr:
     """Bitwise or expression.
 
     Produces left | right.
@@ -156,7 +134,7 @@ def BitwiseOr(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.bitwise_or, TealType.uint64, TealType.uint64, left, right)
 
 
-def BitwiseXor(left: Expr, right: Expr) -> BinaryExpr:
+def BitwiseXor(left: Expr, right: Expr) -> Expr:
     """Bitwise xor expression.
 
     Produces left ^ right.
@@ -168,7 +146,7 @@ def BitwiseXor(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.bitwise_xor, TealType.uint64, TealType.uint64, left, right)
 
 
-def ShiftLeft(a: Expr, b: Expr) -> BinaryExpr:
+def ShiftLeft(a: Expr, b: Expr) -> Expr:
     """Bitwise left shift expression.
 
     Produces a << b. This is equivalent to a times 2^b, modulo 2^64.
@@ -182,7 +160,7 @@ def ShiftLeft(a: Expr, b: Expr) -> BinaryExpr:
     return BinaryExpr(Op.shl, TealType.uint64, TealType.uint64, a, b)
 
 
-def ShiftRight(a: Expr, b: Expr) -> BinaryExpr:
+def ShiftRight(a: Expr, b: Expr) -> Expr:
     """Bitwise right shift expression.
 
     Produces a >> b. This is equivalent to a divided by 2^b.
@@ -196,7 +174,7 @@ def ShiftRight(a: Expr, b: Expr) -> BinaryExpr:
     return BinaryExpr(Op.shr, TealType.uint64, TealType.uint64, a, b)
 
 
-def Eq(left: Expr, right: Expr) -> BinaryExpr:
+def Eq(left: Expr, right: Expr) -> Expr:
     """Equality expression.
 
     Checks if left == right.
@@ -208,7 +186,7 @@ def Eq(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.eq, right.type_of(), TealType.uint64, left, right)
 
 
-def Neq(left: Expr, right: Expr) -> BinaryExpr:
+def Neq(left: Expr, right: Expr) -> Expr:
     """Difference expression.
 
     Checks if left != right.
@@ -220,7 +198,7 @@ def Neq(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.neq, right.type_of(), TealType.uint64, left, right)
 
 
-def Lt(left: Expr, right: Expr) -> BinaryExpr:
+def Lt(left: Expr, right: Expr) -> Expr:
     """Less than expression.
 
     Checks if left < right.
@@ -232,7 +210,7 @@ def Lt(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.lt, TealType.uint64, TealType.uint64, left, right)
 
 
-def Le(left: Expr, right: Expr) -> BinaryExpr:
+def Le(left: Expr, right: Expr) -> Expr:
     """Less than or equal to expression.
 
     Checks if left <= right.
@@ -244,7 +222,7 @@ def Le(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.le, TealType.uint64, TealType.uint64, left, right)
 
 
-def Gt(left: Expr, right: Expr) -> BinaryExpr:
+def Gt(left: Expr, right: Expr) -> Expr:
     """Greater than expression.
 
     Checks if left > right.
@@ -256,7 +234,7 @@ def Gt(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.gt, TealType.uint64, TealType.uint64, left, right)
 
 
-def Ge(left: Expr, right: Expr) -> BinaryExpr:
+def Ge(left: Expr, right: Expr) -> Expr:
     """Greater than or equal to expression.
 
     Checks if left >= right.
@@ -268,7 +246,7 @@ def Ge(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.ge, TealType.uint64, TealType.uint64, left, right)
 
 
-def GetBit(value: Expr, index: Expr) -> BinaryExpr:
+def GetBit(value: Expr, index: Expr) -> Expr:
     """Get the bit value of an expression at a specific index.
 
     The meaning of index differs if value is an integer or a byte string.
@@ -292,7 +270,7 @@ def GetBit(value: Expr, index: Expr) -> BinaryExpr:
     )
 
 
-def GetByte(value: Expr, index: Expr) -> BinaryExpr:
+def GetByte(value: Expr, index: Expr) -> Expr:
     """Extract a single byte as an integer from a byte string.
 
     Similar to GetBit, indexing begins at the first byte. For example, :code:`GetByte(Bytes("base16", "0xff0000"), Int(0))`
@@ -309,7 +287,7 @@ def GetByte(value: Expr, index: Expr) -> BinaryExpr:
     )
 
 
-def BytesAdd(left: Expr, right: Expr) -> BinaryExpr:
+def BytesAdd(left: Expr, right: Expr) -> Expr:
     """Add two numbers as bytes.
 
     Produces left + right, where left and right are interpreted as big-endian unsigned integers.
@@ -324,7 +302,7 @@ def BytesAdd(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.b_add, TealType.bytes, TealType.bytes, left, right)
 
 
-def BytesMinus(left: Expr, right: Expr) -> BinaryExpr:
+def BytesMinus(left: Expr, right: Expr) -> Expr:
     """Subtract two numbers as bytes.
 
     Produces left - right, where left and right are interpreted as big-endian unsigned integers.
@@ -339,7 +317,7 @@ def BytesMinus(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.b_minus, TealType.bytes, TealType.bytes, left, right)
 
 
-def BytesDiv(left: Expr, right: Expr) -> BinaryExpr:
+def BytesDiv(left: Expr, right: Expr) -> Expr:
     """Divide two numbers as bytes.
 
     Produces left / right, where left and right are interpreted as big-endian unsigned integers.
@@ -356,7 +334,7 @@ def BytesDiv(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.b_div, TealType.bytes, TealType.bytes, left, right)
 
 
-def BytesMul(left: Expr, right: Expr) -> BinaryExpr:
+def BytesMul(left: Expr, right: Expr) -> Expr:
     """Multiply two numbers as bytes.
 
     Produces left * right, where left and right are interpreted as big-endian unsigned integers.
@@ -371,7 +349,7 @@ def BytesMul(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.b_mul, TealType.bytes, TealType.bytes, left, right)
 
 
-def BytesMod(left: Expr, right: Expr) -> BinaryExpr:
+def BytesMod(left: Expr, right: Expr) -> Expr:
     """Modulo expression with bytes as arguments.
 
     Produces left % right, where left and right are interpreted as big-endian unsigned integers.
@@ -388,7 +366,7 @@ def BytesMod(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.b_mod, TealType.bytes, TealType.bytes, left, right)
 
 
-def BytesAnd(left: Expr, right: Expr) -> BinaryExpr:
+def BytesAnd(left: Expr, right: Expr) -> Expr:
     """Bitwise and expression with bytes as arguments.
 
     Produces left & right.
@@ -404,7 +382,7 @@ def BytesAnd(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.b_and, TealType.bytes, TealType.bytes, left, right)
 
 
-def BytesOr(left: Expr, right: Expr) -> BinaryExpr:
+def BytesOr(left: Expr, right: Expr) -> Expr:
     """Bitwise or expression with bytes as arguments.
 
     Produces left | right.
@@ -420,7 +398,7 @@ def BytesOr(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.b_or, TealType.bytes, TealType.bytes, left, right)
 
 
-def BytesXor(left: Expr, right: Expr) -> BinaryExpr:
+def BytesXor(left: Expr, right: Expr) -> Expr:
     """Bitwise xor expression with bytes as arguments.
 
     Produces left ^ right.
@@ -436,7 +414,7 @@ def BytesXor(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.b_xor, TealType.bytes, TealType.bytes, left, right)
 
 
-def BytesEq(left: Expr, right: Expr) -> BinaryExpr:
+def BytesEq(left: Expr, right: Expr) -> Expr:
     """Equality expression with bytes as arguments.
 
     Checks if left == right, where left and right are interpreted as big-endian unsigned integers.
@@ -451,7 +429,7 @@ def BytesEq(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.b_eq, TealType.bytes, TealType.uint64, left, right)
 
 
-def BytesNeq(left: Expr, right: Expr) -> BinaryExpr:
+def BytesNeq(left: Expr, right: Expr) -> Expr:
     """Difference expression with bytes as arguments.
 
     Checks if left != right, where left and right are interpreted as big-endian unsigned integers.
@@ -466,7 +444,7 @@ def BytesNeq(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.b_neq, TealType.bytes, TealType.uint64, left, right)
 
 
-def BytesLt(left: Expr, right: Expr) -> BinaryExpr:
+def BytesLt(left: Expr, right: Expr) -> Expr:
     """Less than expression with bytes as arguments.
 
     Checks if left < right, where left and right are interpreted as big-endian unsigned integers.
@@ -481,7 +459,7 @@ def BytesLt(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.b_lt, TealType.bytes, TealType.uint64, left, right)
 
 
-def BytesLe(left: Expr, right: Expr) -> BinaryExpr:
+def BytesLe(left: Expr, right: Expr) -> Expr:
     """Less than or equal to expression with bytes as arguments.
 
     Checks if left <= right, where left and right are interpreted as big-endian unsigned integers.
@@ -496,7 +474,7 @@ def BytesLe(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.b_le, TealType.bytes, TealType.uint64, left, right)
 
 
-def BytesGt(left: Expr, right: Expr) -> BinaryExpr:
+def BytesGt(left: Expr, right: Expr) -> Expr:
     """Greater than expression with bytes as arguments.
 
     Checks if left > right, where left and right are interpreted as big-endian unsigned integers.
@@ -511,7 +489,7 @@ def BytesGt(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.b_gt, TealType.bytes, TealType.uint64, left, right)
 
 
-def BytesGe(left: Expr, right: Expr) -> BinaryExpr:
+def BytesGe(left: Expr, right: Expr) -> Expr:
     """Greater than or equal to expression with bytes as arguments.
 
     Checks if left >= right, where left and right are interpreted as big-endian unsigned integers.
@@ -526,7 +504,7 @@ def BytesGe(left: Expr, right: Expr) -> BinaryExpr:
     return BinaryExpr(Op.b_ge, TealType.bytes, TealType.uint64, left, right)
 
 
-def ExtractUint16(string: Expr, offset: Expr) -> BinaryExpr:
+def ExtractUint16(string: Expr, offset: Expr) -> Expr:
     """Extract 2 bytes (16 bits) and convert them to an integer.
 
     The bytes starting at :code:`offset` up to but not including :code:`offset + 2` will be
@@ -549,7 +527,7 @@ def ExtractUint16(string: Expr, offset: Expr) -> BinaryExpr:
     )
 
 
-def ExtractUint32(string: Expr, offset: Expr) -> BinaryExpr:
+def ExtractUint32(string: Expr, offset: Expr) -> Expr:
     """Extract 4 bytes (32 bits) and convert them to an integer.
 
     The bytes starting at :code:`offset` up to but not including :code:`offset + 4` will be
@@ -572,7 +550,7 @@ def ExtractUint32(string: Expr, offset: Expr) -> BinaryExpr:
     )
 
 
-def ExtractUint64(string: Expr, offset: Expr) -> BinaryExpr:
+def ExtractUint64(string: Expr, offset: Expr) -> Expr:
     """Extract 8 bytes (64 bits) and convert them to an integer.
 
     The bytes starting at :code:`offset` up to but not including :code:`offset + 8` will be

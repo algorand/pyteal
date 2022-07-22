@@ -1,0 +1,30 @@
+#pragma version 6
+txna ApplicationArgs 0
+btoi
+store 4
+txna ApplicationArgs 1
+store 5
+load 4
+int 5
+callsub fn2mixedarg1ret_0
+store 3
+byte 0x151f7c75
+load 3
+itob
+concat
+log
+int 1
+return
+
+// fn_2mixed_arg_1ret
+fn2mixedarg1ret_0:
+store 1
+store 0
+load 1
+load 0
+itob
+stores
+load 0
+store 2
+load 2
+retsub

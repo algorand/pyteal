@@ -1,0 +1,226 @@
+#pragma version 6
+txn NumAppArgs
+int 0
+==
+bnz main_l8
+txna ApplicationArgs 0
+method "deposit(pay,account)void"
+==
+bnz main_l7
+txna ApplicationArgs 0
+method "getBalance(account)uint64"
+==
+bnz main_l6
+txna ApplicationArgs 0
+method "withdraw(uint64,account)void"
+==
+bnz main_l5
+err
+main_l5:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+store 3
+txna ApplicationArgs 2
+int 0
+getbyte
+store 4
+load 3
+load 4
+callsub withdraw_3
+int 1
+return
+main_l6:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+int 0
+getbyte
+callsub getBalance_2
+store 2
+byte 0x151f7c75
+load 2
+itob
+concat
+log
+int 1
+return
+main_l7:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+txn OnCompletion
+int OptIn
+==
+txn ApplicationID
+int 0
+!=
+&&
+||
+assert
+txna ApplicationArgs 1
+int 0
+getbyte
+store 1
+txn GroupIndex
+int 1
+-
+store 0
+load 0
+gtxns TypeEnum
+int pay
+==
+assert
+load 0
+load 1
+callsub deposit_1
+int 1
+return
+main_l8:
+txn OnCompletion
+int NoOp
+==
+bnz main_l18
+txn OnCompletion
+int OptIn
+==
+bnz main_l17
+txn OnCompletion
+int CloseOut
+==
+bnz main_l16
+txn OnCompletion
+int UpdateApplication
+==
+bnz main_l15
+txn OnCompletion
+int DeleteApplication
+==
+bnz main_l14
+err
+main_l14:
+txn ApplicationID
+int 0
+!=
+assert
+callsub assertsenderiscreator_0
+int 1
+return
+main_l15:
+txn ApplicationID
+int 0
+!=
+assert
+callsub assertsenderiscreator_0
+int 1
+return
+main_l16:
+txn ApplicationID
+int 0
+!=
+assert
+byte "lost"
+byte "lost"
+app_global_get
+txn Sender
+byte "balance"
+app_local_get
++
+app_global_put
+int 1
+return
+main_l17:
+int 1
+return
+main_l18:
+txn ApplicationID
+int 0
+==
+assert
+int 1
+return
+
+// assert_sender_is_creator
+assertsenderiscreator_0:
+txn Sender
+global CreatorAddress
+==
+assert
+retsub
+
+// deposit
+deposit_1:
+store 6
+store 5
+load 5
+gtxns Sender
+load 6
+txnas Accounts
+==
+assert
+load 5
+gtxns Receiver
+global CurrentApplicationAddress
+==
+assert
+load 6
+txnas Accounts
+byte "balance"
+load 6
+txnas Accounts
+byte "balance"
+app_local_get
+load 5
+gtxns Amount
++
+app_local_put
+retsub
+
+// getBalance
+getBalance_2:
+txnas Accounts
+byte "balance"
+app_local_get
+retsub
+
+// withdraw
+withdraw_3:
+store 8
+store 7
+txn Sender
+byte "balance"
+txn Sender
+byte "balance"
+app_local_get
+load 7
+-
+app_local_put
+itxn_begin
+int pay
+itxn_field TypeEnum
+load 8
+txnas Accounts
+itxn_field Receiver
+load 7
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+retsub
