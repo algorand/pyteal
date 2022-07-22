@@ -2,10 +2,9 @@ from typing import TYPE_CHECKING
 from enum import Enum
 
 from pyteal.types import TealType, require_type
-from pyteal.errors import verifyFieldVersion, verifyTealVersion
+from pyteal.errors import verifyFieldVersion, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
-from pyteal.ast.leafexpr import LeafExpr
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
@@ -32,7 +31,7 @@ class JsonRefType(Enum):
 JsonRefType.__module__ = "pyteal"
 
 
-class JsonRef(LeafExpr):
+class JsonRef(Expr):
     """An expression that accesses the value associated with a given key from a supported utf-8 encoded json object.
 
     The json object must satisfy a `particular specification <https://github.com/algorand/go-algorand/blob/master/data/transactions/logic/jsonspec.md>`_.
@@ -50,10 +49,10 @@ class JsonRef(LeafExpr):
         self.key = key
 
     def __teal__(self, options: "CompileOptions"):
-        verifyTealVersion(
+        verifyProgramVersion(
             Op.json_ref.min_version,
             options.version,
-            "TEAL version too low to use op json_ref",
+            "Program version too low to use op json_ref",
         )
 
         verifyFieldVersion(self.type.arg_name, self.type.min_version, options.version)
@@ -62,13 +61,16 @@ class JsonRef(LeafExpr):
         return TealBlock.FromOp(options, op, self.json_obj, self.key)
 
     def __str__(self):
-        return "(JsonRef {})".format(self.type.arg_name)
+        return "(JsonRef {} {} {})".format(self.type.arg_name, self.json_obj, self.key)
 
     def type_of(self):
         return self.type.type_of()
 
+    def has_return(self):
+        return False
+
     @classmethod
-    def as_string(cls, json_obj: Expr, key: Expr) -> "JsonRef":
+    def as_string(cls, json_obj: Expr, key: Expr) -> Expr:
         """Access the value of a given key as a string.
 
         Refer to the `JsonRef` class documentation for valid json specification.
@@ -80,7 +82,7 @@ class JsonRef(LeafExpr):
         return cls(JsonRefType.string, json_obj, key)
 
     @classmethod
-    def as_uint64(cls, json_obj: Expr, key: Expr) -> "JsonRef":
+    def as_uint64(cls, json_obj: Expr, key: Expr) -> Expr:
         """Access the value of a given key as a uint64.
 
         Refer to the `JsonRef` class documentation for valid json specification.

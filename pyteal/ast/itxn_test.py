@@ -3,9 +3,9 @@ import pytest
 import pyteal as pt
 from pyteal.types import types_match
 
-teal4Options = pt.CompileOptions(version=4)
-teal5Options = pt.CompileOptions(version=5)
-teal6Options = pt.CompileOptions(version=6)
+avm4Options = pt.CompileOptions(version=4)
+avm5Options = pt.CompileOptions(version=5)
+avm6Options = pt.CompileOptions(version=6)
 
 
 def test_InnerTxnBuilder_Begin():
@@ -15,12 +15,12 @@ def test_InnerTxnBuilder_Begin():
 
     expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.itxn_begin)])
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
 
     assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(teal4Options)
+        expr.__teal__(avm4Options)
 
 
 def test_InnerTxnBuilder_Submit():
@@ -30,12 +30,12 @@ def test_InnerTxnBuilder_Submit():
 
     expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.itxn_submit)])
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
 
     assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(teal4Options)
+        expr.__teal__(avm4Options)
 
 
 def test_InnerTxnBuilder_Next():
@@ -45,12 +45,12 @@ def test_InnerTxnBuilder_Next():
 
     expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.itxn_next)])
 
-    actual, _ = expr.__teal__(teal6Options)
+    actual, _ = expr.__teal__(avm6Options)
 
     assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(teal5Options)
+        expr.__teal__(avm5Options)
 
 
 def test_InnerTxnBuilder_SetField():
@@ -82,47 +82,48 @@ def test_InnerTxnBuilder_SetField():
                 ]
             )
 
-            actual, _ = expr.__teal__(teal5Options)
+            actual, _ = expr.__teal__(avm5Options)
             actual.addIncoming()
             actual = pt.TealBlock.NormalizeBlocks(actual)
 
             assert actual == expected
 
             with pytest.raises(pt.TealInputError):
-                expr.__teal__(teal4Options)
+                expr.__teal__(avm4Options)
+
+
+ITXN_FIELDS_CASES = [
+    ({}, pt.Seq()),
+    (
+        {pt.TxnField.amount: pt.Int(5)},
+        pt.InnerTxnBuilder.SetField(pt.TxnField.amount, pt.Int(5)),
+    ),
+    (
+        {
+            pt.TxnField.type_enum: pt.TxnType.Payment,
+            pt.TxnField.close_remainder_to: pt.Txn.sender(),
+        },
+        pt.Seq(
+            pt.InnerTxnBuilder.SetField(pt.TxnField.type_enum, pt.TxnType.Payment),
+            pt.InnerTxnBuilder.SetField(
+                pt.TxnField.close_remainder_to, pt.Txn.sender()
+            ),
+        ),
+    ),
+]
 
 
 def test_InnerTxnBuilder_SetFields():
-    cases = (
-        ({}, pt.Seq()),
-        (
-            {pt.TxnField.amount: pt.Int(5)},
-            pt.InnerTxnBuilder.SetField(pt.TxnField.amount, pt.Int(5)),
-        ),
-        (
-            {
-                pt.TxnField.type_enum: pt.TxnType.Payment,
-                pt.TxnField.close_remainder_to: pt.Txn.sender(),
-            },
-            pt.Seq(
-                pt.InnerTxnBuilder.SetField(pt.TxnField.type_enum, pt.TxnType.Payment),
-                pt.InnerTxnBuilder.SetField(
-                    pt.TxnField.close_remainder_to, pt.Txn.sender()
-                ),
-            ),
-        ),
-    )
-
-    for fields, expectedExpr in cases:
+    for fields, expectedExpr in ITXN_FIELDS_CASES:
         expr = pt.InnerTxnBuilder.SetFields(fields)
         assert expr.type_of() == pt.TealType.none
         assert not expr.has_return()
 
-        expected, _ = expectedExpr.__teal__(teal5Options)
+        expected, _ = expectedExpr.__teal__(avm5Options)
         expected.addIncoming()
         expected = pt.TealBlock.NormalizeBlocks(expected)
 
-        actual, _ = expr.__teal__(teal5Options)
+        actual, _ = expr.__teal__(avm5Options)
         actual.addIncoming()
         actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -131,7 +132,30 @@ def test_InnerTxnBuilder_SetFields():
 
         if len(fields) != 0:
             with pytest.raises(pt.TealInputError):
-                expr.__teal__(teal4Options)
+                expr.__teal__(avm4Options)
+
+
+def test_InnerTxnBuilder_Execute():
+    for fields, expectedExpr in ITXN_FIELDS_CASES:
+        expr = pt.InnerTxnBuilder.Execute(fields)
+
+        expected, _ = pt.Seq(
+            pt.InnerTxnBuilder.Begin(),
+            expectedExpr,
+            pt.InnerTxnBuilder.Submit(),
+        ).__teal__(avm5Options)
+        expected.addIncoming()
+        expected = pt.TealBlock.NormalizeBlocks(expected)
+
+        actual, _ = expr.__teal__(avm5Options)
+        actual.addIncoming()
+        actual = pt.TealBlock.NormalizeBlocks(actual)
+
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
+
+        with pytest.raises(pt.TealInputError):
+            expr.__teal__(avm4Options)
 
 
 # txn_test.py performs additional testing

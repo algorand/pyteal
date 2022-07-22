@@ -1,6 +1,6 @@
 from typing import List, Union, TYPE_CHECKING
 
-from pyteal.errors import verifyTealVersion
+from pyteal.errors import verifyProgramVersion
 from pyteal.types import TealType
 from pyteal.ir import Op
 
@@ -33,7 +33,7 @@ class MaybeValue(MultiValue):
         """
 
         def local_version_check(option: "CompileOptions"):
-            verifyTealVersion(
+            verifyProgramVersion(
                 minVersion=op.min_version,
                 version=option.version,
                 msg=f"{op.value} unavailable",

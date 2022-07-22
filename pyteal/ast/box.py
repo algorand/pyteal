@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 from pyteal.ast.maybe import MaybeValue
-from pyteal.errors import verifyTealVersion
+from pyteal.errors import verifyProgramVersion
 
 from pyteal.types import TealType, require_type
 from pyteal.ir import TealOp, Op, TealBlock
@@ -27,7 +27,7 @@ class BoxCreate(Expr):
         self.size = size
 
     def __teal__(self, options: "CompileOptions"):
-        verifyTealVersion(
+        verifyProgramVersion(
             minVersion=Op.box_create.min_version,
             version=options.version,
             msg=f"{Op.box_create} unavailable",
@@ -62,7 +62,7 @@ class BoxDelete(Expr):
         self.name = name
 
     def __teal__(self, options: "CompileOptions"):
-        verifyTealVersion(
+        verifyProgramVersion(
             minVersion=Op.box_del.min_version,
             version=options.version,
             msg=f"{Op.box_del} unavailable",
@@ -101,7 +101,7 @@ class BoxReplace(Expr):
         self.value = value
 
     def __teal__(self, options: "CompileOptions"):
-        verifyTealVersion(
+        verifyProgramVersion(
             minVersion=Op.box_replace.min_version,
             version=options.version,
             msg=f"{Op.box_replace} unavailable",
@@ -143,7 +143,7 @@ class BoxExtract(Expr):
         self.length = length
 
     def __teal__(self, options: "CompileOptions"):
-        verifyTealVersion(
+        verifyProgramVersion(
             minVersion=Op.box_extract.min_version,
             version=options.version,
             msg=f"{Op.box_extract} unavailable",
@@ -204,7 +204,7 @@ class BoxPut(Expr):
         self.value = value
 
     def __teal__(self, options: "CompileOptions"):
-        verifyTealVersion(
+        verifyProgramVersion(
             minVersion=Op.box_put.min_version,
             version=options.version,
             msg=f"{Op.box_put} unavailable",

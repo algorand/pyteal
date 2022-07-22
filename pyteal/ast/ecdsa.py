@@ -2,7 +2,12 @@ from enum import Enum
 from typing import Tuple, TYPE_CHECKING
 
 from pyteal.ast import Expr, MultiValue
-from pyteal.errors import TealTypeError, verifyFieldVersion, verifyTealVersion
+from pyteal.errors import (
+    TealTypeError,
+    verifyFieldVersion,
+    verifyProgramVersion,
+    TealInputError,
+)
 from pyteal.ir import Op, TealBlock, TealOp
 from pyteal.types import TealType, require_type
 
@@ -52,10 +57,10 @@ class EcdsaVerifyExpr(Expr):
         self.args = [data, sigA, sigB, pkX, pkY]
 
     def __teal__(self, options: "CompileOptions"):
-        verifyTealVersion(
+        verifyProgramVersion(
             self.op.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(self.op),
+            "Program version too low to use op {}".format(self.op),
         )
 
         verifyFieldVersion(self.curve.arg_name, self.curve.min_version, options.version)
@@ -142,7 +147,7 @@ def EcdsaDecompress(curve: EcdsaCurve, compressed_pk: Expr) -> MultiValue:
 def EcdsaRecover(
     curve: EcdsaCurve, data: Expr, recovery_id: Expr, sigA: Expr, sigB: Expr
 ) -> MultiValue:
-    """Reover an ECDSA public key from a signature.
+    """Recover an ECDSA public key from a signature.
     All byte arguments must be big endian encoded.
     Args:
         curve: Enum representing the ECDSA curve used for the public key
@@ -157,6 +162,9 @@ def EcdsaRecover(
 
     if not isinstance(curve, EcdsaCurve):
         raise TealTypeError(curve, EcdsaCurve)
+
+    if curve != EcdsaCurve.Secp256k1:
+        raise TealInputError("Recover only supports Secp256k1")
 
     require_type(data, TealType.bytes)
     require_type(recovery_id, TealType.uint64)
