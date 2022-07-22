@@ -1,7 +1,7 @@
 import pytest
 
 import pyteal as pt
-from pyteal.ast.txn import TxnField, TxnType
+from pyteal.ast.txn import Txn, TxnField, TxnType
 from pyteal.types import types_match
 
 teal4Options = pt.CompileOptions(version=4)
@@ -117,7 +117,9 @@ ITXN_FIELDS_CASES = [
             (i := pt.ScratchVar()).store(pt.Int(0)),
             i.load() < pt.Txn.accounts.length(),
             i.store(i.load() + pt.Int(1)),
-        ).Do(pt.InnerTxnBuilder.SetField(pt.TxnField.accounts, [i.load()])),
+        ).Do(
+            pt.InnerTxnBuilder.SetField(pt.TxnField.accounts, [Txn.accounts[i.load()]])
+        ),
     ),
 ]
 
