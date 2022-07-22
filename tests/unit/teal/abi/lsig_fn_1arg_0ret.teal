@@ -1,0 +1,13 @@
+#pragma version 6
+arg 0
+btoi
+store 0
+load 0
+callsub fn1arg0ret_0
+int 1
+return
+
+// fn_1arg_0ret
+fn1arg0ret_0:
+store 1
+retsub

@@ -64,6 +64,17 @@ class TealCompileError(Exception):
 TealCompileError.__module__ = "pyteal"
 
 
+class TealPragmaError(Exception):
+    def __init__(self, message: str) -> None:
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
+
+TealPragmaError.__module__ = "pyteal"
+
+
 def verifyTealVersion(minVersion: int, version: int, msg: str):
     if minVersion > version:
         msg = "{}. Minimum version needed is {}, but current version being compiled is {}".format(

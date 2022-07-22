@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 from enum import Enum
 
 from pyteal.types import TealType, require_type
@@ -356,3 +356,57 @@ class AppParam:
 
 
 AppParam.__module__ = "pyteal"
+
+
+class AppParamObject:
+    """Represents information about an application's parameters"""
+
+    def __init__(self, app: Expr) -> None:
+        """Create a new AppParamObject for the given application.
+
+        Args:
+            app: An identifier for the app. It must be an index into Txn.ForeignApps that
+                corresponds to the app to check, or since v4, an application ID that appears in
+                Txn.ForeignApps or is the CurrentApplicationID. In either case, it must evaluate to
+                uint64.
+        """
+        require_type(app, TealType.uint64)
+        self._app: Final = app
+
+    def approval_program(self) -> MaybeValue:
+        """Get the bytecode of Approval Program for the application."""
+        return AppParam.approvalProgram(self._app)
+
+    def clear_state_program(self) -> MaybeValue:
+        return AppParam.clearStateProgram(self._app)
+
+    def global_num_uint(self) -> MaybeValue:
+        """Get the number of uint64 values allowed in Global State for the application."""
+        return AppParam.globalNumUint(self._app)
+
+    def global_num_byte_slice(self) -> MaybeValue:
+        """Get the number of byte array values allowed in Global State for the application."""
+        return AppParam.globalNumByteSlice(self._app)
+
+    def local_num_uint(self) -> MaybeValue:
+        """Get the number of uint64 values allowed in Local State for the application."""
+        return AppParam.localNumUint(self._app)
+
+    def local_num_byte_slice(self) -> MaybeValue:
+        """Get the number of byte array values allowed in Local State for the application."""
+        return AppParam.localNumByteSlice(self._app)
+
+    def extra_program_pages(self) -> MaybeValue:
+        """Get the number of Extra Program Pages of code space for the application."""
+        return AppParam.extraProgramPages(self._app)
+
+    def creator_address(self) -> MaybeValue:
+        """Get the creator address for the application."""
+        return AppParam.creator(self._app)
+
+    def address(self) -> MaybeValue:
+        """Get the escrow address for the application."""
+        return AppParam.address(self._app)
+
+
+AppParamObject.__module__ = "pyteal"

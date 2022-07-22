@@ -1,3 +1,5 @@
+from typing import NamedTuple, List
+
 import pyteal as pt
 
 options = pt.CompileOptions()
@@ -245,3 +247,108 @@ def test_normalize_branch_converge():
     actual.validateTree()
 
     assert actual == expected
+
+
+def test_GetReferencedScratchSlots():
+    a = pt.ScratchSlot()
+    b = pt.ScratchSlot()
+    c = pt.ScratchSlot()
+    d = pt.ScratchSlot()
+
+    end = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.load, d)])
+    trueBranch = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.load, b)])
+    trueBranch.setNextBlock(end)
+    falseBranch = pt.TealSimpleBlock([pt.TealOp(None, pt.Op.load, c)])
+    falseBranch.setNextBlock(end)
+    splitBranch = pt.TealConditionalBlock([pt.TealOp(None, pt.Op.load, a)])
+    splitBranch.setTrueBlock(trueBranch)
+    splitBranch.setFalseBlock(falseBranch)
+
+    slotReferences = pt.TealBlock.GetReferencedScratchSlots(splitBranch)
+    assert slotReferences == [a, b, c, d]
+
+
+def test_MatchScratchSlotReferences():
+    class MatchSlotReferenceTest(NamedTuple):
+        actual: List[pt.ScratchSlot]
+        expected: List[pt.ScratchSlot]
+        match: bool
+
+    a = pt.ScratchSlot()
+    b = pt.ScratchSlot()
+    c = pt.ScratchSlot()
+    d = pt.ScratchSlot()
+
+    tests: List[MatchSlotReferenceTest] = [
+        MatchSlotReferenceTest(
+            actual=[],
+            expected=[],
+            match=True,
+        ),
+        MatchSlotReferenceTest(
+            actual=[a],
+            expected=[],
+            match=False,
+        ),
+        MatchSlotReferenceTest(
+            actual=[a],
+            expected=[a],
+            match=True,
+        ),
+        MatchSlotReferenceTest(
+            actual=[a],
+            expected=[b],
+            match=True,
+        ),
+        MatchSlotReferenceTest(
+            actual=[a, a],
+            expected=[a, a],
+            match=True,
+        ),
+        MatchSlotReferenceTest(
+            actual=[a, a],
+            expected=[b, b],
+            match=True,
+        ),
+        MatchSlotReferenceTest(
+            actual=[a, b],
+            expected=[a, b],
+            match=True,
+        ),
+        MatchSlotReferenceTest(
+            actual=[a, b],
+            expected=[b, c],
+            match=False,
+        ),
+        MatchSlotReferenceTest(
+            actual=[a, b],
+            expected=[c, d],
+            match=True,
+        ),
+        MatchSlotReferenceTest(
+            actual=[a, b, b, a, b],
+            expected=[c, d, d, c, d],
+            match=True,
+        ),
+        MatchSlotReferenceTest(
+            actual=[a, b, b, a, b],
+            expected=[a, d, d, a, d],
+            match=True,
+        ),
+        MatchSlotReferenceTest(
+            actual=[a, b, b, a, b],
+            expected=[c, a, a, c, a],
+            match=False,
+        ),
+        MatchSlotReferenceTest(
+            actual=[a, b, b, a, b],
+            expected=[c, d, d, c, c],
+            match=False,
+        ),
+    ]
+
+    for i, test in enumerate(tests):
+        assert (
+            pt.TealBlock.MatchScratchSlotReferences(test.actual, test.expected)
+            == test.match
+        ), "Test at index {} failed".format(i)
