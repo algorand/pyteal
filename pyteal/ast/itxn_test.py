@@ -117,11 +117,7 @@ ITXN_FIELDS_CASES = [
             (i := pt.ScratchVar()).store(pt.Int(0)),
             i.load() < pt.Txn.accounts.length(),
             i.store(i.load() + pt.Int(1)),
-        ).Do(
-            pt.InnerTxnBuilder.SetField(
-                pt.TxnField.accounts, [pt.Txn.accounts[i.load()]]
-            )
-        ),
+        ).Do(pt.InnerTxnBuilder.SetField(pt.TxnField.accounts, [i.load()])),
     ),
 ]
 

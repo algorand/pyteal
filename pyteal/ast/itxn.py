@@ -201,9 +201,9 @@ class InnerTxnBuilder:
             else:
                 return For(
                     (i := ScratchVar()).store(Int(0)),
-                    i.load() < value.length(),
+                    i.load() < cast(TxnArray, value).length(),
                     i.store(i.load() + Int(1)),
-                ).Do(InnerTxnFieldExpr(field, value[i.load()]))
+                ).Do(InnerTxnFieldExpr(field, i.load()))
 
     @classmethod
     def Execute(cls, fields: dict[TxnField, Expr | list[Expr]]) -> Expr:
