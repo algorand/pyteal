@@ -102,8 +102,8 @@ class Bool(BaseType):
             start_index = Int(0)
         return self.decode_bit(encoded, start_index * Int(NUM_BITS_IN_BYTE))
 
-    def decode_bit(self, encoded, bitIndex: Expr) -> Expr:
-        return self.stored_value.store(GetBit(encoded, bitIndex))
+    def decode_bit(self, encoded, bit_index: Expr) -> Expr:
+        return self.stored_value.store(GetBit(encoded, bit_index))
 
     def encode(self) -> Expr:
         return SetBit(Bytes(b"\x00"), Int(0), self.get())
