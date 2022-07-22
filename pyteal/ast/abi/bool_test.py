@@ -160,11 +160,11 @@ def test_Bool_get():
 def test_Bool_decode():
     value = abi.Bool()
     encoded = pt.Bytes("encoded")
-    for startIndex in (None, pt.Int(1)):
-        for endIndex in (None, pt.Int(2)):
+    for start_index in (None, pt.Int(1)):
+        for end_index in (None, pt.Int(2)):
             for length in (None, pt.Int(3)):
                 expr = value.decode(
-                    encoded, start_index=startIndex, end_index=endIndex, length=length
+                    encoded, start_index=start_index, end_index=end_index, length=length
                 )
                 assert expr.type_of() == pt.TealType.none
                 assert not expr.has_return()
@@ -172,7 +172,7 @@ def test_Bool_decode():
                 expected = pt.TealSimpleBlock(
                     [
                         pt.TealOp(None, pt.Op.byte, '"encoded"'),
-                        pt.TealOp(None, pt.Op.int, 0 if startIndex is None else 1),
+                        pt.TealOp(None, pt.Op.int, 0 if start_index is None else 1),
                         pt.TealOp(None, pt.Op.int, 8),
                         pt.TealOp(None, pt.Op.mul),
                         pt.TealOp(None, pt.Op.getbit),

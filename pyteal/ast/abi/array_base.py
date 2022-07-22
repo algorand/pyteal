@@ -60,7 +60,7 @@ class ArrayTypeSpec(TypeSpec, Generic[T]):
         return self.value_spec.byte_length_static()
 
 
-ArrayTypeSpec.__module__ = "pyteal"
+ArrayTypeSpec.__module__ = "pyteal.abi"
 
 
 class Array(BaseType, Generic[T]):
@@ -102,7 +102,7 @@ class Array(BaseType, Generic[T]):
             the scratch variable.
         """
         extracted = substringForDecoding(
-            encoded, startIndex=start_index, endIndex=end_index, length=length
+            encoded, start_index=start_index, end_index=end_index, length=length
         )
         return self.stored_value.store(extracted)
 
@@ -162,15 +162,18 @@ class Array(BaseType, Generic[T]):
         pass
 
     def __getitem__(self, index: Union[int, Expr]) -> "ArrayElement[T]":
-        """Retrieve an ABI array element by an index (either a PyTeal expression or an integer).
+        """Retrieve an element by its index in this array.
 
-        If the argument index is integer, the function will raise an error if the index is negative.
+        Indexes start at 0.
 
         Args:
-            index: either an integer or a PyTeal expression that evaluates to a uint64.
+            index: either a Python integer or a PyTeal expression that evaluates to a TealType.uint64.
+                If a Python integer is used, this function will raise an error if its value is negative.
+                In either case, if the index is outside of the bounds of this array, the program will
+                fail at runtime.
 
         Returns:
-            An ArrayElement that represents the ABI array element at the index.
+            An ArrayElement that corresponds to the element at the given index. This type is a ComputedValue.
         """
         if type(index) is int:
             if index < 0:
@@ -179,7 +182,7 @@ class Array(BaseType, Generic[T]):
         return ArrayElement(self, cast(Expr, index))
 
 
-Array.__module__ = "pyteal"
+Array.__module__ = "pyteal.abi"
 
 
 class ArrayElement(ComputedValue[T]):
@@ -280,4 +283,4 @@ class ArrayElement(ComputedValue[T]):
         return output.decode(encodedArray, start_index=valueStart, length=valueLength)
 
 
-ArrayElement.__module__ = "pyteal"
+ArrayElement.__module__ = "pyteal.abi"

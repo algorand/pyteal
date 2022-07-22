@@ -62,7 +62,7 @@ class TypeSpec(ABC):
         pass
 
 
-TypeSpec.__module__ = "pyteal"
+TypeSpec.__module__ = "pyteal.abi"
 
 
 class BaseType(ABC):
@@ -106,18 +106,18 @@ class BaseType(ABC):
         The arguments to this function are means to be as flexible as possible for the caller.
         Multiple types of substrings can be specified based on the arguments, as listed below:
 
-        * Entire string: if startIndex, endIndex, and length are all None, the entire encoded string
+        * Entire string: if start_index, end_index, and length are all None, the entire encoded string
           is decoded.
-        * Prefix: if startIndex is None and one of endIndex or length is provided, a prefix of the
-          encoded string is decoded. The range is 0 through endIndex or length (they are equivalent).
-        * Suffix: if startIndex is provided and endIndex and length are None, a suffix of the encoded
-          string is decoded. The range is startIndex through the end of the string.
-        * Substring specified with endIndex: if startIndex and endIndex are provided and length is
-          None, a substring of the encoded string is decoded. The range is startIndex through
-          endIndex.
-        * Substring specified with length: if startIndex and length are provided and endIndex is
-          None, a substring of the encoded string is decoded. The range is startIndex through
-          startIndex+length.
+        * Prefix: if start_index is None and one of end_index or length is provided, a prefix of the
+          encoded string is decoded. The range is 0 through end_index or length (they are equivalent).
+        * Suffix: if start_index is provided and end_index and length are None, a suffix of the encoded
+          string is decoded. The range is start_index through the end of the string.
+        * Substring specified with end_index: if start_index and end_index are provided and length is
+          None, a substring of the encoded string is decoded. The range is start_index through
+          end_index.
+        * Substring specified with length: if start_index and length are provided and end_index is
+          None, a substring of the encoded string is decoded. The range is start_index through
+          start_index+length.
 
         Args:
             encoded: An expression containing the bytes to decode. Must evaluate to TealType.bytes.
@@ -134,7 +134,7 @@ class BaseType(ABC):
         """
         pass
 
-    def _set_with_computed_type(self, value: "ComputedValue") -> Expr:
+    def _set_with_computed_type(self, value: "ComputedValue[BaseType]") -> Expr:
         target_type_spec = value.produced_type_spec()
         if self.type_spec() != target_type_spec:
             raise TealInputError(
@@ -146,12 +146,12 @@ class BaseType(ABC):
         return str(self.type_spec())
 
 
-BaseType.__module__ = "pyteal"
+BaseType.__module__ = "pyteal.abi"
 
-T = TypeVar("T", bound=BaseType)
+T_co = TypeVar("T_co", bound=BaseType, covariant=True)
 
 
-class ComputedValue(ABC, Generic[T]):
+class ComputedValue(ABC, Generic[T_co]):
     """Represents an ABI Type whose value must be computed by an expression."""
 
     @abstractmethod
@@ -160,8 +160,12 @@ class ComputedValue(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def store_into(self, output: T) -> Expr:
-        """Store the value of this computed type into an existing ABI type instance.
+    def store_into(self, output: T_co) -> Expr:  # type: ignore[misc]
+        """Compute the value and store it into an existing ABI type instance.
+
+        NOTE: If you call this method multiple times, the computation to determine the value will be
+        repeated each time. For this reason, it is recommended to only issue a single call to either
+        :code:`store_into` or :code:`use`.
 
         Args:
             output: The object where the computed value will be stored. This object must have the
@@ -173,8 +177,12 @@ class ComputedValue(ABC, Generic[T]):
         """
         pass
 
-    def use(self, action: Callable[[T], Expr]) -> Expr:
-        """Use the computed value represented by this class in a function or lambda expression.
+    def use(self, action: Callable[[T_co], Expr]) -> Expr:
+        """Compute the value and pass it to a callable expression.
+
+        NOTE: If you call this method multiple times, the computation to determine the value will be
+        repeated each time. For this reason, it is recommended to only issue a single call to either
+        :code:`store_into` or :code:`use`.
 
         Args:
             action: A callable object that will receive an instance of this class's produced type
@@ -182,14 +190,14 @@ class ComputedValue(ABC, Generic[T]):
                 it must return an Expr to be included in the program's AST.
 
         Returns:
-            An expression which contains the returned expression from invoking action with the
+            An expression which contains the returned expression from invoking `action` with the
             computed value.
         """
-        newInstance = cast(T, self.produced_type_spec().new_instance())
+        newInstance = cast(T_co, self.produced_type_spec().new_instance())
         return Seq(self.store_into(newInstance), action(newInstance))
 
 
-ComputedValue.__module__ = "pyteal"
+ComputedValue.__module__ = "pyteal.abi"
 
 
 class ReturnedValue(ComputedValue):
@@ -226,4 +234,4 @@ class ReturnedValue(ComputedValue):
         return output.stored_value.slot.store(self.computation)
 
 
-ReturnedValue.__module__ = "pyteal"
+ReturnedValue.__module__ = "pyteal.abi"

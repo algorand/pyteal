@@ -13,15 +13,19 @@ class Seq(Expr):
     """A control flow expression to represent a sequence of expressions."""
 
     @overload
-    def __init__(self, *exprs: Expr):
-        ...
+    def __init__(self, *exprs: Expr) -> None:
+        pass
 
     @overload
-    def __init__(self, exprs: List[Expr]):
-        ...
+    def __init__(self, exprs: List[Expr]) -> None:
+        pass
 
     def __init__(self, *exprs):
-        """Create a new Seq expression.
+        """
+        __init__(*exprs: Expr) -> None
+        __init__(exprs: List[Expr]) -> None
+
+        Create a new Seq expression.
 
         The new Seq expression will take on the return value of the final expression in the sequence.
 

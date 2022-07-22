@@ -20,54 +20,54 @@ options = pt.CompileOptions(version=5)
 
 def test_substringForDecoding():
     class SubstringTest(NamedTuple):
-        startIndex: Optional[pt.Expr]
-        endIndex: Optional[pt.Expr]
+        start_index: Optional[pt.Expr]
+        end_index: Optional[pt.Expr]
         length: Optional[pt.Expr]
         expected: Union[pt.Expr, Any]
 
     encoded = pt.Bytes("encoded")
 
     tests: List[SubstringTest] = [
-        SubstringTest(startIndex=None, endIndex=None, length=None, expected=encoded),
+        SubstringTest(start_index=None, end_index=None, length=None, expected=encoded),
         SubstringTest(
-            startIndex=None,
-            endIndex=None,
+            start_index=None,
+            end_index=None,
             length=pt.Int(4),
             expected=pt.Extract(encoded, pt.Int(0), pt.Int(4)),
         ),
         SubstringTest(
-            startIndex=None,
-            endIndex=pt.Int(4),
+            start_index=None,
+            end_index=pt.Int(4),
             length=None,
             expected=pt.Substring(encoded, pt.Int(0), pt.Int(4)),
         ),
         SubstringTest(
-            startIndex=None,
-            endIndex=pt.Int(4),
+            start_index=None,
+            end_index=pt.Int(4),
             length=pt.Int(5),
             expected=pt.TealInputError,
         ),
         SubstringTest(
-            startIndex=pt.Int(4),
-            endIndex=None,
+            start_index=pt.Int(4),
+            end_index=None,
             length=None,
             expected=pt.Suffix(encoded, pt.Int(4)),
         ),
         SubstringTest(
-            startIndex=pt.Int(4),
-            endIndex=None,
+            start_index=pt.Int(4),
+            end_index=None,
             length=pt.Int(5),
             expected=pt.Extract(encoded, pt.Int(4), pt.Int(5)),
         ),
         SubstringTest(
-            startIndex=pt.Int(4),
-            endIndex=pt.Int(5),
+            start_index=pt.Int(4),
+            end_index=pt.Int(5),
             length=None,
             expected=pt.Substring(encoded, pt.Int(4), pt.Int(5)),
         ),
         SubstringTest(
-            startIndex=pt.Int(4),
-            endIndex=pt.Int(5),
+            start_index=pt.Int(4),
+            end_index=pt.Int(5),
             length=pt.Int(6),
             expected=pt.TealInputError,
         ),
@@ -78,16 +78,16 @@ def test_substringForDecoding():
             with pytest.raises(test.expected):
                 substringForDecoding(
                     encoded,
-                    startIndex=test.startIndex,
-                    endIndex=test.endIndex,
+                    start_index=test.start_index,
+                    end_index=test.end_index,
                     length=test.length,
                 )
             continue
 
         expr = substringForDecoding(
             encoded,
-            startIndex=test.startIndex,
-            endIndex=test.endIndex,
+            start_index=test.start_index,
+            end_index=test.end_index,
             length=test.length,
         )
         assert expr.type_of() == pt.TealType.bytes
@@ -497,61 +497,61 @@ ABI_TRANSLATION_TEST_CASES = [
     #     ),
     # ),
     (
-        "cannot map ABI transaction type spec <pyteal.TransactionTypeSpec",
+        "cannot map ABI transaction type spec <pyteal.abi.TransactionTypeSpec",
         "txn",
         abi.TransactionTypeSpec(),
         abi.Transaction,
     ),
     (
-        "cannot map ABI transaction type spec <pyteal.PaymentTransactionTypeSpec",
+        "cannot map ABI transaction type spec <pyteal.abi.PaymentTransactionTypeSpec",
         "pay",
         abi.PaymentTransactionTypeSpec(),
         abi.PaymentTransaction,
     ),
     (
-        "cannot map ABI transaction type spec <pyteal.KeyRegisterTransactionTypeSpec",
+        "cannot map ABI transaction type spec <pyteal.abi.KeyRegisterTransactionTypeSpec",
         "keyreg",
         abi.KeyRegisterTransactionTypeSpec(),
         abi.KeyRegisterTransaction,
     ),
     (
-        "cannot map ABI transaction type spec <pyteal.AssetConfigTransactionTypeSpec",
+        "cannot map ABI transaction type spec <pyteal.abi.AssetConfigTransactionTypeSpec",
         "acfg",
         abi.AssetConfigTransactionTypeSpec(),
         abi.AssetConfigTransaction,
     ),
     (
-        "cannot map ABI transaction type spec <pyteal.AssetTransferTransactionTypeSpec",
+        "cannot map ABI transaction type spec <pyteal.abi.AssetTransferTransactionTypeSpec",
         "axfer",
         abi.AssetTransferTransactionTypeSpec(),
         abi.AssetTransferTransaction,
     ),
     (
-        "cannot map ABI transaction type spec <pyteal.AssetFreezeTransactionTypeSpec",
+        "cannot map ABI transaction type spec <pyteal.abi.AssetFreezeTransactionTypeSpec",
         "afrz",
         abi.AssetFreezeTransactionTypeSpec(),
         abi.AssetFreezeTransaction,
     ),
     (
-        "cannot map ABI transaction type spec <pyteal.ApplicationCallTransactionTypeSpec",
+        "cannot map ABI transaction type spec <pyteal.abi.ApplicationCallTransactionTypeSpec",
         "appl",
         abi.ApplicationCallTransactionTypeSpec(),
         abi.ApplicationCallTransaction,
     ),
     (
-        "cannot map ABI reference type spec <pyteal.AccountTypeSpec",
+        "cannot map ABI reference type spec <pyteal.abi.AccountTypeSpec",
         "account",
         abi.AccountTypeSpec(),
         abi.Account,
     ),
     (
-        "cannot map ABI reference type spec <pyteal.ApplicationTypeSpec",
+        "cannot map ABI reference type spec <pyteal.abi.ApplicationTypeSpec",
         "application",
         abi.ApplicationTypeSpec(),
         abi.Application,
     ),
     (
-        "cannot map ABI reference type spec <pyteal.AssetTypeSpec",
+        "cannot map ABI reference type spec <pyteal.abi.AssetTypeSpec",
         "asset",
         abi.AssetTypeSpec(),
         abi.Asset,

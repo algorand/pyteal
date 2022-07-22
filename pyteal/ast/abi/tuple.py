@@ -6,6 +6,7 @@ from typing import (
     TypeVar,
     cast,
     overload,
+    Any,
 )
 
 from pyteal.types import TealType
@@ -174,34 +175,34 @@ def indexTuple(
 
             nextDynamicValueOffset += typeAfter.byte_length_static()
 
-        startIndex = ExtractUint16(encoded, Int(offset))
+        start_index = ExtractUint16(encoded, Int(offset))
         if not hasNextDynamicValue:
-            # This is the final dynamic value, so decode the substring from startIndex to the end of
+            # This is the final dynamic value, so decode the substring from start_index to the end of
             # encoded
-            return output.decode(encoded, start_index=startIndex)
+            return output.decode(encoded, start_index=start_index)
 
-        # There is a dynamic value after this one, and endIndex is where its tail starts, so decode
-        # the substring from startIndex to endIndex
-        endIndex = ExtractUint16(encoded, Int(nextDynamicValueOffset))
-        return output.decode(encoded, start_index=startIndex, end_index=endIndex)
+        # There is a dynamic value after this one, and end_index is where its tail starts, so decode
+        # the substring from start_index to end_index
+        end_index = ExtractUint16(encoded, Int(nextDynamicValueOffset))
+        return output.decode(encoded, start_index=start_index, end_index=end_index)
 
-    startIndex = Int(offset)
+    start_index = Int(offset)
     length = Int(valueType.byte_length_static())
 
     if index + 1 == len(valueTypes):
         if offset == 0:
             # This is the first and only value in the tuple, so decode all of encoded
             return output.decode(encoded)
-        # This is the last value in the tuple, so decode the substring from startIndex to the end of
+        # This is the last value in the tuple, so decode the substring from start_index to the end of
         # encoded
-        return output.decode(encoded, start_index=startIndex)
+        return output.decode(encoded, start_index=start_index)
 
     if offset == 0:
         # This is the first value in the tuple, so decode the substring from 0 with length length
         return output.decode(encoded, length=length)
 
-    # This is not the first or last value, so decode the substring from startIndex with length length
-    return output.decode(encoded, start_index=startIndex, length=length)
+    # This is not the first or last value, so decode the substring from start_index with length length
+    return output.decode(encoded, start_index=start_index, length=length)
 
 
 class TupleTypeSpec(TypeSpec):
@@ -268,9 +269,7 @@ class TupleTypeSpec(TypeSpec):
         return "({})".format(",".join(map(str, self.value_type_specs())))
 
 
-TupleTypeSpec.__module__ = "pyteal"
-
-T_tuple = TypeVar("T_tuple", bound="Tuple")
+TupleTypeSpec.__module__ = "pyteal.abi"
 
 
 class Tuple(BaseType):
@@ -289,19 +288,37 @@ class Tuple(BaseType):
         length: Expr = None,
     ) -> Expr:
         extracted = substringForDecoding(
-            encoded, startIndex=start_index, endIndex=end_index, length=length
+            encoded, start_index=start_index, end_index=end_index, length=length
         )
         return self.stored_value.store(extracted)
 
     @overload
     def set(self, *values: BaseType) -> Expr:
-        ...
+        pass
 
     @overload
-    def set(self: T_tuple, value: ComputedValue[T_tuple]) -> Expr:
-        ...
+    def set(self, values: ComputedValue["Tuple"]) -> Expr:
+        # TODO: should support values as a Tuple as well
+        pass
 
     def set(self, *values):
+        """
+        set(*values: BaseType) -> Expr
+        set(values: ComputedValue[Tuple]) -> Expr
+
+        Set the elements of this Tuple to the input values.
+
+        The behavior of this method depends on the input argument type:
+
+            * Variable number of :code:`BaseType` arguments: set the elements of this Tuple to the arguments to this method. A compiler error will occur if any argument does not match this Tuple's element type at the same index, or if the total argument count does not equal this Tuple's length.
+            * :code:`ComputedValue[Tuple]`: copy the elements from a Tuple produced by a ComputedValue. The element types and length produced by the ComputedValue must exactly match this Tuple's element types and length, otherwise an error will occur.
+
+        Args:
+            values: The new elements this Tuple should have. This must follow the above constraints.
+
+        Returns:
+            An expression which stores the given value into this Tuple.
+        """
         if len(values) == 1 and isinstance(values[0], ComputedValue):
             return self._set_with_computed_type(values[0])
 
@@ -325,13 +342,27 @@ class Tuple(BaseType):
         """Get the number of values this tuple holds as an Expr."""
         return Int(self.type_spec().length_static())
 
-    def __getitem__(self, index: int) -> "TupleElement":
+    def __getitem__(self, index: int) -> "TupleElement[Any]":
+        """Retrieve an element by its index in this Tuple.
+
+        Indexes start at 0.
+
+        Args:
+            index: a Python integer containing the index to access. This function will raise an error
+                if its value is negative or if the index is equal to or greater than the length of
+                this Tuple.
+
+        Returns:
+            A TupleElement that corresponds to the element at the given index. This type is a
+            ComputedValue. Due to Python type limitations, the parameterized type of the
+            TupleElement is Any.
+        """
         if not (0 <= index < self.type_spec().length_static()):
             raise TealInputError(f"Index out of bounds: {index}")
         return TupleElement(self, index)
 
 
-Tuple.__module__ = "pyteal"
+Tuple.__module__ = "pyteal.abi"
 
 T = TypeVar("T", bound=BaseType)
 
@@ -356,7 +387,7 @@ class TupleElement(ComputedValue[T]):
         )
 
 
-TupleElement.__module__ = "pyteal"
+TupleElement.__module__ = "pyteal.abi"
 
 # Until Python 3.11 is released with support for PEP 646 -- Variadic Generics, it's not possible for
 # the Tuple class to take an arbitrary number of template parameters. As a workaround, we define the
@@ -378,7 +409,7 @@ class Tuple0(Tuple):
         super().__init__(TupleTypeSpec())
 
 
-Tuple0.__module__ = "pyteal"
+Tuple0.__module__ = "pyteal.abi"
 
 T1 = TypeVar("T1", bound=BaseType)
 
@@ -391,7 +422,7 @@ class Tuple1(Tuple, Generic[T1]):
         super().__init__(value_type_spec)
 
 
-Tuple1.__module__ = "pyteal"
+Tuple1.__module__ = "pyteal.abi"
 
 T2 = TypeVar("T2", bound=BaseType)
 
@@ -404,7 +435,7 @@ class Tuple2(Tuple, Generic[T1, T2]):
         super().__init__(value_type_spec)
 
 
-Tuple2.__module__ = "pyteal"
+Tuple2.__module__ = "pyteal.abi"
 
 T3 = TypeVar("T3", bound=BaseType)
 
@@ -420,7 +451,7 @@ class Tuple3(Tuple, Generic[T1, T2, T3]):
         super().__init__(value_type_spec)
 
 
-Tuple3.__module__ = "pyteal"
+Tuple3.__module__ = "pyteal.abi"
 
 T4 = TypeVar("T4", bound=BaseType)
 
@@ -436,7 +467,7 @@ class Tuple4(Tuple, Generic[T1, T2, T3, T4]):
         super().__init__(value_type_spec)
 
 
-Tuple4.__module__ = "pyteal"
+Tuple4.__module__ = "pyteal.abi"
 
 T5 = TypeVar("T5", bound=BaseType)
 
@@ -452,4 +483,4 @@ class Tuple5(Tuple, Generic[T1, T2, T3, T4, T5]):
         super().__init__(value_type_spec)
 
 
-Tuple5.__module__ = "pyteal"
+Tuple5.__module__ = "pyteal.abi"

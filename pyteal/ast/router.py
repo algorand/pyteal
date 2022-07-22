@@ -491,28 +491,36 @@ class ASTBuilder:
 
 class Router:
     """
-    Class that help constructs:
-    - a *Generalized* ARC-4 app's approval/clear-state programs
-    - and a contract JSON object allowing for easily read and call methods in the contract
+    The Router class helps construct the approval and clear state programs for an ARC-4 compliant
+    application.
 
-    *DISCLAIMER*: ABI-Router is still taking shape and is subject to backwards incompatible changes.
+    Additionally, this class can produce an ARC-4 contract description object for the application.
+
+    **WARNING:** The ABI Router is still taking shape and is subject to backwards incompatible changes.
 
     * Based on feedback, the API and usage patterns are likely to change.
-    * Expect migration issues.
+    * Expect migration issues in future PyTeal versions.
+
+    For these reasons, we strongly recommend using :any:`pragma` to pin the version of PyTeal in your
+    source code.
     """
 
     def __init__(
         self,
         name: str,
         bare_calls: BareCallActions = None,
+        descr: str = None,
     ) -> None:
         """
         Args:
             name: the name of the smart contract, used in the JSON object.
             bare_calls: the bare app call registered for each on_completion.
+            descr: a description of the smart contract, used in the JSON object.
         """
 
         self.name: str = name
+        self.descr = descr
+
         self.approval_ast = ASTBuilder()
         self.clear_state_ast = ASTBuilder()
 
@@ -545,6 +553,19 @@ class Router:
         method_config: MethodConfig = None,
         description: str = None,
     ) -> ABIReturnSubroutine:
+        """Add a method call handler to this Router.
+
+        Args:
+            method_call: An ABIReturnSubroutine that implements the method body.
+            overriding_name (optional): A name for this method. Defaults to the function name of
+                method_call.
+            method_config (optional): An object describing the on completion actions and
+                creation/non-creation call statuses that are valid for calling this method. All
+                invalid configurations will be rejected. Defaults to :code:`MethodConfig(no_op=CallConfig.CALL)`
+                (i.e. only the no-op action during a non-creation call is accepted) if none is provided.
+            description (optional): A description for this method. Defaults to the docstring of
+                method_call, if there is one.
+        """
         if not isinstance(method_call, ABIReturnSubroutine):
             raise TealInputError(
                 "for adding method handler, must be ABIReturnSubroutine"
@@ -590,26 +611,37 @@ class Router:
         /,
         *,
         name: str = None,
+        description: str = None,
         no_op: CallConfig = None,
         opt_in: CallConfig = None,
         close_out: CallConfig = None,
         clear_state: CallConfig = None,
         update_application: CallConfig = None,
         delete_application: CallConfig = None,
-        description: str = None,
     ):
-        """
-        A decorator style method registration by decorating over a python function,
-        which is internally converted to ABIReturnSubroutine, and taking keyword arguments
-        for each OnCompletes' `CallConfig`.
+        """This is an alternative way to register a method, as supposed to :code:`add_method_handler`.
 
-        NOTE:
-            By default, all OnCompletes other than `NoOp` are set to `CallConfig.NEVER`,
-            while `no_op` field is always `CALL`.
-            If one wants to change `no_op`,  we need to change `no_op = CallConfig.ALL`,
-            for example, as a decorator argument.
-        """
+        This is a decorator that's meant to be used over a Python function, which is internally
+        wrapped with ABIReturnSubroutine. Additional keyword arguments on this decorator can be used
+        to specify the OnCompletion statuses that are valid for the registered method.
 
+        NOTE: By default, all OnCompletion actions other than `no_op` are set to `CallConfig.NEVER`,
+        while `no_op` field is set to `CallConfig.CALL`. However, if you provide any keywords for
+        OnCompletion actions, then the `no_op` field will default to `CallConfig.NEVER`.
+
+        Args:
+            func: A function that implements the method body. This should *NOT* be wrapped with the
+                :code:`ABIReturnSubroutine` decorator yet.
+            name (optional): A name for this method. Defaults to the function name of func.
+            description (optional): A description for this method. Defaults to the docstring of
+                func, if there is one.
+            no_op (optional): The allowed calls during :code:`OnComplete.NoOp`.
+            opt_in (optional): The allowed calls during :code:`OnComplete.OptIn`.
+            close_out (optional): The allowed calls during :code:`OnComplete.CloseOut`.
+            clear_state (optional): The allowed calls during :code:`OnComplete.ClearState`.
+            update_application (optional): The allowed calls during :code:`OnComplete.UpdateApplication`.
+            delete_application (optional): The allowed calls during :code:`OnComplete.DeleteApplication`.
+        """
         # we use `is None` extensively for CallConfig to distinguish 2 following cases
         # - None
         # - CallConfig.Never
@@ -655,30 +687,32 @@ class Router:
         return wrap(func)
 
     def contract_construct(self) -> sdk_abi.Contract:
-        """A helper function in constructing contract JSON object.
+        """A helper function in constructing a `Contract` object.
 
         It takes out the method spec from approval program methods,
         and constructs an `Contract` object.
 
         Returns:
-            contract: a dictified `Contract` object constructed from
-                approval program's method specs and `self.name`.
+            A Python SDK `Contract` object constructed from the registered methods on this router.
         """
 
-        return sdk_abi.Contract(self.name, self.methods)
+        return sdk_abi.Contract(self.name, self.methods, self.descr)
 
     def build_program(self) -> tuple[Expr, Expr, sdk_abi.Contract]:
         """
-        Constructs ASTs for approval and clear-state programs from the registered methods in the router,
-        also generates a JSON object of contract to allow client read and call the methods easily.
+        Constructs ASTs for approval and clear-state programs from the registered methods and bare
+        app calls in the router, and also generates a Contract object to allow client read and call
+        the methods easily.
 
         Note that if no methods or bare app call actions have been registered to either the approval
         or clear state programs, then that program will reject all transactions.
 
         Returns:
-            approval_program: AST for approval program
-            clear_state_program: AST for clear-state program
-            contract: JSON object of contract to allow client start off-chain call
+            A tuple of three objects.
+
+            * approval_program: an AST for approval program
+            * clear_state_program: an AST for clear-state program
+            * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
         return (
             self.approval_ast.program_construction(),
@@ -694,16 +728,21 @@ class Router:
         optimize: OptimizeOptions = None,
     ) -> tuple[str, str, sdk_abi.Contract]:
         """
-        Combining `build_program` and `compileTeal`, compiles built Approval and ClearState programs
-        and returns Contract JSON object for off-chain calling.
+        Constructs and compiles approval and clear-state programs from the registered methods and
+        bare app calls in the router, and also generates a Contract object to allow client read and call
+        the methods easily.
+
+        This method combines :any:`Router.build_program` and :any:`compileTeal`.
 
         Note that if no methods or bare app call actions have been registered to either the approval
         or clear state programs, then that program will reject all transactions.
 
         Returns:
-            approval_program: compiled approval program
-            clear_state_program: compiled clear-state program
-            contract: JSON object of contract to allow client start off-chain call
+            A tuple of three objects.
+
+            * approval_program: compiled approval program string
+            * clear_state_program: compiled clear-state program string
+            * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
         ap, csp, contract = self.build_program()
         ap_compiled = compileTeal(
