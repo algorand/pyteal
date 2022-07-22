@@ -1,9 +1,9 @@
 import pyteal as pt
 
 options = pt.CompileOptions()
-teal4Options = pt.CompileOptions(version=4)
-teal5Options = pt.CompileOptions(version=5)
-teal6Options = pt.CompileOptions(version=6)
+avm4Options = pt.CompileOptions(version=4)
+avm5Options = pt.CompileOptions(version=5)
+avm6Options = pt.CompileOptions(version=6)
 
 
 def test_acct_param_balance_valid():
@@ -21,7 +21,7 @@ def test_acct_param_balance_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal6Options)
+    actual, _ = expr.__teal__(avm6Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -44,7 +44,7 @@ def test_acct_param_min_balance_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal6Options)
+    actual, _ = expr.__teal__(avm6Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -67,7 +67,7 @@ def test_acct_param_auth_addr_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal6Options)
+    actual, _ = expr.__teal__(avm6Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 

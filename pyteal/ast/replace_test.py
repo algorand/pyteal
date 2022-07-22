@@ -2,8 +2,8 @@ import pytest
 
 import pyteal as pt
 
-teal6Options = pt.CompileOptions(version=6)
-teal7Options = pt.CompileOptions(version=7)
+avm6Options = pt.CompileOptions(version=6)
+avm7Options = pt.CompileOptions(version=7)
 
 
 def test_replace_immediate():
@@ -19,14 +19,14 @@ def test_replace_immediate():
         ]
     )
 
-    actual, _ = expr.__teal__(teal7Options)
+    actual, _ = expr.__teal__(avm7Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(teal6Options)
+        expr.__teal__(avm6Options)
 
 
 def test_replace_stack_int():
@@ -44,14 +44,14 @@ def test_replace_stack_int():
         ]
     )
 
-    actual, _ = expr.__teal__(teal7Options)
+    actual, _ = expr.__teal__(avm7Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(teal6Options)
+        expr.__teal__(avm6Options)
 
 
 # Mirrors `test_replace_stack_int`, but attempts replacement with start != pt.Int.
@@ -73,7 +73,7 @@ def test_replace_stack_not_int():
         ]
     )
 
-    actual, _ = expr.__teal__(teal7Options)
+    actual, _ = expr.__teal__(avm7Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -81,7 +81,7 @@ def test_replace_stack_not_int():
         assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(teal6Options)
+        expr.__teal__(avm6Options)
 
 
 def test_replace_invalid():

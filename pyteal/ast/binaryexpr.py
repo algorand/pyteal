@@ -1,7 +1,7 @@
 from typing import Union, Tuple, cast, TYPE_CHECKING
 
 from pyteal.types import TealType, require_type
-from pyteal.errors import verifyTealVersion
+from pyteal.errors import verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
 
@@ -35,10 +35,10 @@ class BinaryExpr(Expr):
         self.argRight = argRight
 
     def __teal__(self, options: "CompileOptions"):
-        verifyTealVersion(
+        verifyProgramVersion(
             self.op.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(self.op),
+            "Program version too low to use op {}".format(self.op),
         )
 
         return TealBlock.FromOp(
@@ -123,7 +123,7 @@ def Exp(a: Expr, b: Expr) -> BinaryExpr:
 
     Produces a ** b.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
 
     Args:
         a: Must evaluate to uint64.
@@ -173,7 +173,7 @@ def ShiftLeft(a: Expr, b: Expr) -> BinaryExpr:
 
     Produces a << b. This is equivalent to a times 2^b, modulo 2^64.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
 
     Args:
         a: Must evaluate to uint64.
@@ -187,7 +187,7 @@ def ShiftRight(a: Expr, b: Expr) -> BinaryExpr:
 
     Produces a >> b. This is equivalent to a divided by 2^b.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
 
     Args:
         a: Must evaluate to uint64.
@@ -281,7 +281,7 @@ def GetBit(value: Expr, index: Expr) -> BinaryExpr:
       yields 1. Any index less than 4 would yield 1, and any valid index 4 or greater would yield 0.
       Any integer less than 8*Len(value) is a valid index.
 
-    Requires TEAL version 3 or higher.
+    Requires program version 3 or higher.
 
     Args:
         value: The value containing bits. Can evaluate to any type.
@@ -298,7 +298,7 @@ def GetByte(value: Expr, index: Expr) -> BinaryExpr:
     Similar to GetBit, indexing begins at the first byte. For example, :code:`GetByte(Bytes("base16", "0xff0000"), Int(0))`
     yields 255. Any other valid index would yield 0.
 
-    Requires TEAL version 3 or higher.
+    Requires program version 3 or higher.
 
     Args:
         value: The value containing the bytes. Must evaluate to bytes.
@@ -315,7 +315,7 @@ def BytesAdd(left: Expr, right: Expr) -> BinaryExpr:
     Produces left + right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
 
     Args:
         left: Must evaluate to bytes.
@@ -330,7 +330,7 @@ def BytesMinus(left: Expr, right: Expr) -> BinaryExpr:
     Produces left - right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
 
     Args:
         left: Must evaluate to bytes.
@@ -347,7 +347,7 @@ def BytesDiv(left: Expr, right: Expr) -> BinaryExpr:
 
     Panics if right is 0.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
 
     Args:
         left: Must evaluate to bytes.
@@ -362,7 +362,7 @@ def BytesMul(left: Expr, right: Expr) -> BinaryExpr:
     Produces left * right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
 
     Args:
         left: Must evaluate to bytes.
@@ -379,7 +379,7 @@ def BytesMod(left: Expr, right: Expr) -> BinaryExpr:
 
     Panics if right is 0.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
 
     Args:
         left: Must evaluate to bytes.
@@ -395,7 +395,7 @@ def BytesAnd(left: Expr, right: Expr) -> BinaryExpr:
     Left and right are zero-left extended to the greater of their lengths.
     Arguments must not exceed 64 bytes.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
 
     Args:
         left: Must evaluate to bytes.
@@ -411,7 +411,7 @@ def BytesOr(left: Expr, right: Expr) -> BinaryExpr:
     Left and right are zero-left extended to the greater of their lengths.
     Arguments must not exceed 64 bytes.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
 
     Args:
         left: Must evaluate to bytes.
@@ -427,7 +427,7 @@ def BytesXor(left: Expr, right: Expr) -> BinaryExpr:
     Left and right are zero-left extended to the greater of their lengths.
     Arguments must not exceed 64 bytes.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
 
     Args:
         left: Must evaluate to bytes.
@@ -442,7 +442,7 @@ def BytesEq(left: Expr, right: Expr) -> BinaryExpr:
     Checks if left == right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
 
     Args:
         left: Must evaluate to bytes.
@@ -457,7 +457,7 @@ def BytesNeq(left: Expr, right: Expr) -> BinaryExpr:
     Checks if left != right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
 
     Args:
         left: Must evaluate to bytes.
@@ -472,7 +472,7 @@ def BytesLt(left: Expr, right: Expr) -> BinaryExpr:
     Checks if left < right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
 
     Args:
         left: Must evaluate to bytes.
@@ -487,7 +487,7 @@ def BytesLe(left: Expr, right: Expr) -> BinaryExpr:
     Checks if left <= right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
 
     Args:
         left: Must evaluate to bytes.
@@ -502,7 +502,7 @@ def BytesGt(left: Expr, right: Expr) -> BinaryExpr:
     Checks if left > right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
 
     Args:
         left: Must evaluate to bytes.
@@ -517,7 +517,7 @@ def BytesGe(left: Expr, right: Expr) -> BinaryExpr:
     Checks if left >= right, where left and right are interpreted as big-endian unsigned integers.
     Arguments must not exceed 64 bytes.
 
-    Requires TEAL version 4 or higher.
+    Requires program version 4 or higher.
 
     Args:
         left: Must evaluate to bytes.
@@ -534,7 +534,7 @@ def ExtractUint16(string: Expr, offset: Expr) -> BinaryExpr:
 
     If :code:`offset + 2` exceeds :code:`Len(string)`, the program fails.
 
-    Requires TEAL version 5 or higher.
+    Requires program version 5 or higher.
 
     Args:
         string: The bytestring to extract from. Must evaluate to bytes.
@@ -557,7 +557,7 @@ def ExtractUint32(string: Expr, offset: Expr) -> BinaryExpr:
 
     If :code:`offset + 4` exceeds :code:`Len(string)`, the program fails.
 
-    Requires TEAL version 5 or higher.
+    Requires program version 5 or higher.
 
     Args:
         string: The bytestring to extract from. Must evaluate to bytes.
@@ -580,7 +580,7 @@ def ExtractUint64(string: Expr, offset: Expr) -> BinaryExpr:
 
     If :code:`offset + 8` exceeds :code:`Len(string)`, the program fails.
 
-    Requires TEAL version 5 or higher.
+    Requires program version 5 or higher.
 
     Args:
         string: The bytestring to extract from. Must evaluate to bytes.

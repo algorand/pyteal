@@ -59,8 +59,6 @@ fieldToMethod: Dict[pt.TxnField, Callable[[pt.TxnObject], pt.Expr]] = {
     pt.TxnField.created_application_id: lambda txn: txn.created_application_id(),
     pt.TxnField.last_log: lambda txn: txn.last_log(),
     pt.TxnField.state_proof_pk: lambda txn: txn.state_proof_pk(),
-    pt.TxnField.num_approval_program_pages: lambda txn: txn.num_approval_program_pages(),
-    pt.TxnField.num_clear_state_program_pages: lambda txn: txn.num_clear_state_program_pages(),
 }
 
 arrayFieldToProperty: Dict[pt.TxnField, Callable[[pt.TxnObject], pt.TxnArray]] = {

@@ -2,13 +2,13 @@ import pytest
 
 import pyteal as pt
 
-teal3Options = pt.CompileOptions(version=3)
-teal4Options = pt.CompileOptions(version=4)
+avm3Options = pt.CompileOptions(version=3)
+avm4Options = pt.CompileOptions(version=4)
 
 
 def test_gaid_teal_3():
     with pytest.raises(pt.TealInputError):
-        pt.GeneratedID(0).__teal__(teal3Options)
+        pt.GeneratedID(0).__teal__(avm3Options)
 
 
 def test_gaid():
@@ -17,7 +17,7 @@ def test_gaid():
 
     expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.gaid, 0)])
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
 
     assert actual == expected
 
@@ -32,7 +32,7 @@ def test_gaid_invalid():
 
 def test_gaid_dynamic_teal_3():
     with pytest.raises(pt.TealInputError):
-        pt.GeneratedID(pt.Int(0)).__teal__(teal3Options)
+        pt.GeneratedID(pt.Int(0)).__teal__(avm3Options)
 
 
 def test_gaid_dynamic():
@@ -44,7 +44,7 @@ def test_gaid_dynamic():
         [pt.TealOp(arg, pt.Op.int, 0), pt.TealOp(expr, pt.Op.gaids)]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 

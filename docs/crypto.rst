@@ -24,9 +24,9 @@ Operator                             Cost      Description
 :code:`EcdsaRecover(c, d, id, r, s)` `2000`    produces the public key associated with the signature :code:`(r, s)` and recovery id :code:`id`
 ==================================== ========= ==================================================================================================================
 
-\* :code:`Ed25519Verify` is only available in signature mode up to version 4 of TEAL. From version 5 upwards, `Ed25519Verify` can be used in any mode.
+\* :code:`Ed25519Verify` is only available in signature mode up to version 4 of AVM. From version 5 upwards, `Ed25519Verify` can be used in any mode.
 
-Note the cost amount is accurate for version 2 of TEAL and higher. The parameter :code:`c` in the ECDSA expressions defined above represents the elliptic curve
+Note the cost amount is accurate for version 2 of AVM and higher. The parameter :code:`c` in the ECDSA expressions defined above represents the elliptic curve
 specification to be used (for example, :code:`Secp256k1`).
 
 These cryptographic primitives cover the most used ones in blockchains and cryptocurrencies. For example, Bitcoin uses `SHA-256` for creating Bitcoin addresses;

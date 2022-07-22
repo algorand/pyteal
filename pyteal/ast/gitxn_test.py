@@ -2,8 +2,8 @@ import pytest
 
 import pyteal as pt
 
-teal5Options = pt.CompileOptions(version=5)
-teal6Options = pt.CompileOptions(version=6)
+avm5Options = pt.CompileOptions(version=5)
+avm6Options = pt.CompileOptions(version=6)
 
 
 def test_gitxn_invalid():
@@ -33,7 +33,7 @@ def test_gitxn_expr_invalid():
             pt.TealInputError,
         ),
         (
-            lambda: pt.GitxnExpr(1, pt.TxnField.sender).__teal__(teal5Options),
+            lambda: pt.GitxnExpr(1, pt.TxnField.sender).__teal__(avm5Options),
             pt.TealInputError,
         ),
     ]:
@@ -42,7 +42,7 @@ def test_gitxn_expr_invalid():
 
 
 def test_gitxn_expr_valid():
-    pt.GitxnExpr(1, pt.TxnField.sender).__teal__(teal6Options)
+    pt.GitxnExpr(1, pt.TxnField.sender).__teal__(avm6Options)
 
 
 def test_gitxna_expr_invalid():
@@ -63,7 +63,7 @@ def test_gitxna_expr_invalid():
         ),
         (
             lambda: pt.GitxnaExpr(0, pt.TxnField.application_args, 0).__teal__(
-                teal5Options
+                avm5Options
             ),
             pt.TealInputError,
         ),
@@ -74,7 +74,7 @@ def test_gitxna_expr_invalid():
 
 def test_gitxna_valid():
     [
-        e.__teal__(teal6Options)
+        e.__teal__(avm6Options)
         for e in [
             pt.GitxnaExpr(0, pt.TxnField.application_args, 1),
             pt.GitxnaExpr(0, pt.TxnField.application_args, pt.Int(1)),
