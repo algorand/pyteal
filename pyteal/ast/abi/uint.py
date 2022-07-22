@@ -31,7 +31,7 @@ def uint_storage_type(size: int) -> TealType:
     return TealType.bytes
 
 
-def uint_set(size: int, uintVar: ScratchVar, value: Union[int, Expr, "Uint"]) -> Expr:
+def uint_set(size: int, uint_var: ScratchVar, value: Union[int, Expr, "Uint"]) -> Expr:
     if size > 64:
         raise NotImplementedError(
             "Uint operations have not yet been implemented for bit sizes larger than 64"
@@ -49,17 +49,17 @@ def uint_set(size: int, uintVar: ScratchVar, value: Union[int, Expr, "Uint"]) ->
         checked = True
 
     if checked or size == 64:
-        return uintVar.store(cast(Expr, value))
+        return uint_var.store(cast(Expr, value))
 
     return Seq(
-        uintVar.store(cast(Expr, value)),
-        Assert(uintVar.load() < Int(2**size)),
+        uint_var.store(cast(Expr, value)),
+        Assert(uint_var.load() < Int(2**size)),
     )
 
 
 def uint_decode(
     size: int,
-    uintVar: ScratchVar,
+    uint_var: ScratchVar,
     encoded: Expr,
     start_index: Optional[Expr],
     end_index: Optional[Expr],
@@ -73,27 +73,27 @@ def uint_decode(
     if size == 64:
         if start_index is None:
             if end_index is None and length is None:
-                return uintVar.store(Btoi(encoded))
+                return uint_var.store(Btoi(encoded))
             start_index = Int(0)
-        return uintVar.store(ExtractUint64(encoded, start_index))
+        return uint_var.store(ExtractUint64(encoded, start_index))
 
     if start_index is None:
         start_index = Int(0)
 
     if size == 8:
-        return uintVar.store(GetByte(encoded, start_index))
+        return uint_var.store(GetByte(encoded, start_index))
     if size == 16:
-        return uintVar.store(ExtractUint16(encoded, start_index))
+        return uint_var.store(ExtractUint16(encoded, start_index))
     if size == 32:
-        return uintVar.store(ExtractUint32(encoded, start_index))
+        return uint_var.store(ExtractUint32(encoded, start_index))
 
     raise ValueError("Unsupported uint size: {}".format(size))
 
 
-def uint_encode(size: int, uintVar: Expr | ScratchVar) -> Expr:
+def uint_encode(size: int, uint_var: Expr | ScratchVar) -> Expr:
 
-    if isinstance(uintVar, ScratchVar):
-        uintVar = uintVar.load()
+    if isinstance(uint_var, ScratchVar):
+        uint_var = uint_var.load()
 
     if size > 64:
         raise NotImplementedError(
@@ -101,13 +101,13 @@ def uint_encode(size: int, uintVar: Expr | ScratchVar) -> Expr:
         )
 
     if size == 8:
-        return SetByte(Bytes(b"\x00"), Int(0), uintVar)
+        return SetByte(Bytes(b"\x00"), Int(0), uint_var)
     if size == 16:
-        return Suffix(Itob(uintVar), Int(6))
+        return Suffix(Itob(uint_var), Int(6))
     if size == 32:
-        return Suffix(Itob(uintVar), Int(4))
+        return Suffix(Itob(uint_var), Int(4))
     if size == 64:
-        return Itob(uintVar)
+        return Itob(uint_var)
 
     raise ValueError("Unsupported uint size: {}".format(size))
 
