@@ -314,14 +314,22 @@ def compileTeal(
     def fmt_cmt(teal_line: str) -> str:
         try:
             idx = teal_line.index("// pyteal-src")
-            if idx <= 0:
-                return teal_line
         except Exception:
             return teal_line
 
         line = teal_line[:idx].strip(" \t")
+
+
+
         if debug:
-            return +"\t" * 2 + teal_line[idx:]
+            line_length = len(line)
+
+            if (newline_idx := line.rfind("\n")) > 0:
+                line_length = line_length - (newline_idx + 1)
+
+            max_width = 16
+            width = max(1, max_width-line_length)
+            return line + " " * width + teal_line[idx:]
 
         return line
 
