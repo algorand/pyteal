@@ -257,9 +257,7 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
 
     if origin is Transaction:
         if len(args) != 0:
-            raise TypeError(
-                "Transaction expects 0 type arguments. Got {}".format(args)
-            )
+            raise TypeError("Transaction expects 0 type arguments. Got {}".format(args))
         return TransactionTypeSpec()
 
     if origin is PaymentTransaction:
@@ -293,9 +291,7 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
     if origin is AssetTransferTransaction:
         if len(args) != 0:
             raise TypeError(
-                "AssetTransferTransaction expects 0 type arguments. Got {}".format(
-                    args
-                )
+                "AssetTransferTransaction expects 0 type arguments. Got {}".format(args)
             )
         return AssetTransferTransactionTypeSpec()
 
