@@ -6,7 +6,10 @@ if TYPE_CHECKING:
     from pyteal.ast import Expr, ScratchSlot, SubroutineDefinition
 
 
-def simpletb(tb: list[str]):
+def simpletb(tb: list[str]) -> str:
+
+    if tb is None or len(tb) == 0:
+        return ""
 
     # Take the first trace element that doesnt contain __init__
     for idx in range(len(tb) - 1, -1, -1):

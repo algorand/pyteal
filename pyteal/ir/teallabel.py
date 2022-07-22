@@ -25,8 +25,7 @@ class TealLabel(TealComponent):
 
     def assemble(self) -> str:
         comment = "\n// {}\n".format(self.comment) if self.comment is not None else ""
-        trace = f" {simpletb(self.trace)}" if self.trace is not None else ""
-
+        trace = f"{simpletb(self.trace)}" if self.trace is not None else ""
         return "{}{}:{}".format(comment, self.label.getLabel(), trace)
 
     def __repr__(self) -> str:

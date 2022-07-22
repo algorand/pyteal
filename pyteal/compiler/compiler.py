@@ -37,10 +37,12 @@ class CompileOptions:
         mode: Mode = Mode.Signature,
         version: int = DEFAULT_TEAL_VERSION,
         optimize: OptimizeOptions = None,
+        debug: bool = False,
     ) -> None:
         self.mode = mode
         self.version = version
         self.optimize = optimize if optimize is not None else OptimizeOptions()
+        self.debug = debug
 
         self.currentSubroutine: Optional[SubroutineDefinition] = None
 
@@ -229,6 +231,7 @@ def compileTeal(
     version: int = DEFAULT_TEAL_VERSION,
     assembleConstants: bool = False,
     optimize: OptimizeOptions = None,
+    debug: bool = False,
 ) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 
@@ -262,7 +265,7 @@ def compileTeal(
             )
         )
 
-    options = CompileOptions(mode=mode, version=version, optimize=optimize)
+    options = CompileOptions(mode=mode, version=version, optimize=optimize, debug=debug)
 
     subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
     subroutine_start_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
@@ -316,7 +319,11 @@ def compileTeal(
         except Exception:
             return teal_line
 
-        return teal_line[:idx].strip(" \t") + "\t" * 2 + teal_line[idx:]
+        line = teal_line[:idx].strip(" \t")
+        if debug:
+            return +"\t" * 2 + teal_line[idx:]
+
+        return line
 
     lines = ["#pragma version {}".format(version)]
     lines += [fmt_cmt(i.assemble()) for i in teal]
