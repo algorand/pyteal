@@ -159,12 +159,12 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
 
     if origin is Asset:
         if len(args) != 0:
-            raise TypeError("Asset expects 0 argsuments. Got: {}".format(args))
+            raise TypeError("Asset expects 0 arguments. Got: {}".format(args))
         return AssetTypeSpec()
 
     if origin is Application:
         if len(args) != 0:
-            raise TypeError("Application expects 0 argsuments. Got: {}".format(args))
+            raise TypeError("Application expects 0 arguments. Got: {}".format(args))
         return ApplicationTypeSpec()
 
     if origin is Bool:
@@ -257,52 +257,48 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
 
     if origin is Transaction:
         if len(args) != 0:
-            raise TypeError(
-                "Transaction expects 0 type arguements. Got {}".format(args)
-            )
+            raise TypeError("Transaction expects 0 type arguments. Got {}".format(args))
         return TransactionTypeSpec()
 
     if origin is PaymentTransaction:
         if len(args) != 0:
             raise TypeError(
-                "PaymentTransaction expects 0 type arguements. Got {}".format(args)
+                "PaymentTransaction expects 0 type arguments. Got {}".format(args)
             )
         return PaymentTransactionTypeSpec()
 
     if origin is KeyRegisterTransaction:
         if len(args) != 0:
             raise TypeError(
-                "KeyRegisterTransaction expects 0 type arguements. Got {}".format(args)
+                "KeyRegisterTransaction expects 0 type arguments. Got {}".format(args)
             )
         return KeyRegisterTransactionTypeSpec()
 
     if origin is AssetConfigTransaction:
         if len(args) != 0:
             raise TypeError(
-                "AssetConfigTransaction expects 0 type arguements. Got {}".format(args)
+                "AssetConfigTransaction expects 0 type arguments. Got {}".format(args)
             )
         return AssetConfigTransactionTypeSpec()
 
     if origin is AssetFreezeTransaction:
         if len(args) != 0:
             raise TypeError(
-                "AssetFreezeTransaction expects 0 type arguements. Got {}".format(args)
+                "AssetFreezeTransaction expects 0 type arguments. Got {}".format(args)
             )
         return AssetFreezeTransactionTypeSpec()
 
     if origin is AssetTransferTransaction:
         if len(args) != 0:
             raise TypeError(
-                "AssetTransferTransaction expects 0 type arguements. Got {}".format(
-                    args
-                )
+                "AssetTransferTransaction expects 0 type arguments. Got {}".format(args)
             )
         return AssetTransferTransactionTypeSpec()
 
     if origin is ApplicationCallTransaction:
         if len(args) != 0:
             raise TypeError(
-                "ApplicationCallTransaction expects 0 type arguements. Got {}".format(
+                "ApplicationCallTransaction expects 0 type arguments. Got {}".format(
                     args
                 )
             )
