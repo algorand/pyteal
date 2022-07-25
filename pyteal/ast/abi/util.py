@@ -118,6 +118,7 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
         Tuple3,
         Tuple4,
         Tuple5,
+        NamedTuple,
     )
     from pyteal.ast.abi.string import StringTypeSpec, String
     from pyteal.ast.abi.address import AddressTypeSpec, Address
@@ -222,7 +223,7 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
         array_length = int_literal_from_annotation(args[1])
         return StaticArrayTypeSpec(value_type_spec, array_length)
 
-    if origin is Tuple:
+    if origin is Tuple or origin is NamedTuple:
         return TupleTypeSpec(*(type_spec_from_annotation(arg) for arg in args))
 
     if origin is Tuple0:
