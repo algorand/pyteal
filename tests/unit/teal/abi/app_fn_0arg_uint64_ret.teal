@@ -1,0 +1,17 @@
+#pragma version 6
+callsub fn0arguint64ret_0
+store 1
+byte 0x151f7c75
+load 1
+itob
+concat
+log
+int 1
+return
+
+// fn_0arg_uint64_ret
+fn0arguint64ret_0:
+int 1
+store 0
+load 0
+retsub

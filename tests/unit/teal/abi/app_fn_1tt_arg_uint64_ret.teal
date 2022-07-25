@@ -1,0 +1,19 @@
+#pragma version 6
+txna ApplicationArgs 0
+callsub fn1ttarguint64ret_0
+store 2
+byte 0x151f7c75
+load 2
+itob
+concat
+log
+int 1
+return
+
+// fn_1tt_arg_uint64_ret
+fn1ttarguint64ret_0:
+store 0
+int 1
+store 1
+load 1
+retsub

@@ -24,9 +24,14 @@ from pyteal.ast.gaid import GeneratedID
 from pyteal.ast.gitxn import Gitxn, GitxnExpr, GitxnaExpr, InnerTxnGroup
 from pyteal.ast.gload import ImportScratchValue
 from pyteal.ast.global_ import Global, GlobalField
-from pyteal.ast.app import App, AppField, OnComplete, AppParam
-from pyteal.ast.asset import AssetHolding, AssetParam
-from pyteal.ast.acct import AccountParam
+from pyteal.ast.app import App, AppField, OnComplete, AppParam, AppParamObject
+from pyteal.ast.asset import (
+    AssetHolding,
+    AssetHoldingObject,
+    AssetParam,
+    AssetParamObject,
+)
+from pyteal.ast.acct import AccountParam, AccountParamObject
 
 # inner txns
 from pyteal.ast.itxn import InnerTxnBuilder, InnerTxn, InnerTxnAction
@@ -35,6 +40,7 @@ from pyteal.ast.itxn import InnerTxnBuilder, InnerTxn, InnerTxnAction
 from pyteal.ast.array import Array
 from pyteal.ast.tmpl import Tmpl
 from pyteal.ast.nonce import Nonce
+from pyteal.ast.pragma import Pragma
 
 # unary ops
 from pyteal.ast.unaryexpr import (
@@ -61,9 +67,7 @@ from pyteal.ast.unaryexpr import (
 # binary ops
 from pyteal.ast.binaryexpr import (
     BinaryExpr,
-    Add,
     Minus,
-    Mul,
     Div,
     Mod,
     Exp,
@@ -104,7 +108,7 @@ from pyteal.ast.ternaryexpr import Divw, Ed25519Verify, SetBit, SetByte
 from pyteal.ast.substring import Substring, Extract, Suffix
 
 # more ops
-from pyteal.ast.naryexpr import NaryExpr, And, Or, Concat
+from pyteal.ast.naryexpr import NaryExpr, Add, And, Mul, Or, Concat
 from pyteal.ast.widemath import WideRatio
 
 # control flow
@@ -120,12 +124,12 @@ from pyteal.ast.subroutine import (
     SubroutineDeclaration,
     SubroutineCall,
     SubroutineFnWrapper,
+    ABIReturnSubroutine,
 )
 from pyteal.ast.while_ import While
 from pyteal.ast.for_ import For
 from pyteal.ast.break_ import Break
 from pyteal.ast.continue_ import Continue
-
 
 # misc
 from pyteal.ast.scratch import (
@@ -140,6 +144,16 @@ from pyteal.ast.maybe import MaybeValue
 from pyteal.ast.multi import MultiValue
 from pyteal.ast.opup import OpUp, OpUpMode
 from pyteal.ast.ecdsa import EcdsaCurve, EcdsaVerify, EcdsaDecompress, EcdsaRecover
+from pyteal.ast.router import (
+    Router,
+    CallConfig,
+    MethodConfig,
+    OnCompleteAction,
+    BareCallActions,
+)
+
+# abi
+import pyteal.ast.abi as abi  # noqa: I250
 
 __all__ = [
     "Expr",
@@ -169,9 +183,13 @@ __all__ = [
     "AppField",
     "OnComplete",
     "AppParam",
+    "AppParamObject",
     "AssetHolding",
+    "AssetHoldingObject",
     "AssetParam",
+    "AssetParamObject",
     "AccountParam",
+    "AccountParamObject",
     "InnerTxnBuilder",
     "InnerTxn",
     "InnerTxnAction",
@@ -182,6 +200,7 @@ __all__ = [
     "Array",
     "Tmpl",
     "Nonce",
+    "Pragma",
     "UnaryExpr",
     "Btoi",
     "Itob",
@@ -241,6 +260,7 @@ __all__ = [
     "SubroutineDeclaration",
     "SubroutineCall",
     "SubroutineFnWrapper",
+    "ABIReturnSubroutine",
     "ScratchIndex",
     "ScratchLoad",
     "ScratchSlot",
@@ -277,6 +297,12 @@ __all__ = [
     "For",
     "Break",
     "Continue",
+    "Router",
+    "CallConfig",
+    "MethodConfig",
+    "OnCompleteAction",
+    "BareCallActions",
+    "abi",
     "EcdsaCurve",
     "EcdsaVerify",
     "EcdsaDecompress",

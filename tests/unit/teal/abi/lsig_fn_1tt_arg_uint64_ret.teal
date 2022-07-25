@@ -1,0 +1,17 @@
+#pragma version 6
+arg 0
+callsub fn1ttarguint64ret_0
+store 0
+load 0
+itob
+pop
+int 1
+return
+
+// fn_1tt_arg_uint64_ret
+fn1ttarguint64ret_0:
+store 1
+int 1
+store 2
+load 2
+retsub

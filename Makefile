@@ -40,7 +40,7 @@ black:
 flake8:
 	flake8 $(ALLPY)
 
-MYPY = pyteal scripts
+MYPY = pyteal scripts tests
 mypy:
 	mypy $(MYPY)
 

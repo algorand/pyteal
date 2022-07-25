@@ -1,0 +1,52 @@
+#pragma version 6
+txna ApplicationArgs 0
+int 0
+extract_uint16
+store 1
+load 1
+callsub roundtripper_1
+store 0
+byte 0x151f7c75
+load 0
+concat
+log
+int 1
+return
+
+// numerical_comp
+numericalcomp_0:
+store 6
+int 65535
+load 6
+-
+store 7
+load 7
+int 65536
+<
+assert
+load 7
+retsub
+
+// round_tripper
+roundtripper_1:
+store 2
+load 2
+callsub numericalcomp_0
+store 4
+load 4
+callsub numericalcomp_0
+store 5
+load 2
+itob
+extract 6 0
+load 4
+itob
+extract 6 0
+concat
+load 5
+itob
+extract 6 0
+concat
+store 3
+load 3
+retsub
