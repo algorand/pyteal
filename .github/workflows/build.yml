@@ -59,10 +59,10 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
           sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
           docker-compose --version
-      - name: Install python dependencies
-        run: make setup-development
       - name: Create sandbox
         run: make sandbox-dev-up
+      - name: Install python dependencies
+        run: make setup-development
       - name: Integration Tests Only
         run: make test-integration
       - name: Stop running images
