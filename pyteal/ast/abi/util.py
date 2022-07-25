@@ -223,8 +223,11 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
         array_length = int_literal_from_annotation(args[1])
         return StaticArrayTypeSpec(value_type_spec, array_length)
 
-    if origin is Tuple or origin is NamedTuple:
+    if origin is Tuple:
         return TupleTypeSpec(*(type_spec_from_annotation(arg) for arg in args))
+
+    if issubclass(origin, NamedTuple):
+        return origin().type_spec()
 
     if origin is Tuple0:
         if len(args) != 0:

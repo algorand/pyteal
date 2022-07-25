@@ -491,6 +491,9 @@ class NamedTuple(Tuple):
     """A NamedTuple from Tuple with all it's elements named."""
 
     def __init__(self):
+        if type(self) is NamedTuple:
+            raise TealInputError("NamedTuple must be subclassed.")
+
         if not hasattr(self, "__annotations__"):
             raise Exception("Expected fields to be declared but found none")
 
