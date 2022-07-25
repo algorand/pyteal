@@ -495,11 +495,9 @@ class NamedTuple(Tuple):
             raise Exception("Expected fields to be declared but found none")
 
         self.type_specs: OrderedDict[str, TypeSpec] = OrderedDict()
-        self.field_names: list[str] = []
 
         for index, (name, annotation) in enumerate(self.__annotations__.items()):
             self.type_specs[name] = type_spec_from_annotation(annotation)
-            self.field_names.append(name)
             setattr(self, name, lambda: self[index])
 
         super().__init__(TupleTypeSpec(*self.type_specs.values()))
