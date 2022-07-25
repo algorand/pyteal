@@ -5,6 +5,7 @@
 * Introduce ABI Router to simplify ARC-0004 App construction and JSON descriptor generation.  See user guide for a walkthrough ([#170](https://github.com/algorand/pyteal/pull/170)).
 * Support declaring PyTeal version compatibility with a new pragma directive ([#429](https://github.com/algorand/pyteal/pull/429)).
 * Add `Execute` method to simplify inner transaction creation and submission ([#444](https://github.com/algorand/pyteal/pull/444)).
+* Add `py.typed` marker to allow downstream use of mypy with PyTeal ([#465](https://github.com/algorand/pyteal/pull/465)).
 
 ## Fixed
 * Fix misspelled function names (`globalNumUint`, `globalNumUint`) and corresponding internal field references ([#431](https://github.com/algorand/pyteal/pull/431)).
