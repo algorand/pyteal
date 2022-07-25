@@ -8,6 +8,7 @@ from typing import (
     overload,
     Any,
 )
+from collections import OrderedDict
 
 from pyteal.types import TealType
 from pyteal.errors import TealInputError
@@ -31,7 +32,7 @@ from pyteal.ast.abi.bool import (
     _bool_aware_static_byte_length,
 )
 from pyteal.ast.abi.uint import NUM_BITS_IN_BYTE, Uint16
-from pyteal.ast.abi.util import substring_for_decoding
+from pyteal.ast.abi.util import substring_for_decoding, type_spec_from_annotation
 
 
 def _encode_tuple(values: Sequence[BaseType]) -> Expr:
@@ -484,3 +485,24 @@ class Tuple5(Tuple, Generic[T1, T2, T3, T4, T5]):
 
 
 Tuple5.__module__ = "pyteal.abi"
+
+
+class NamedTuple(Tuple):
+    """A NamedTuple from Tuple with all it's elements named."""
+
+    def __init__(self):
+        if not hasattr(self, "__annotations__"):
+            raise Exception("Expected fields to be declared but found none")
+
+        self.type_specs: OrderedDict[str, TypeSpec] = OrderedDict()
+        self.field_names: list[str] = []
+
+        for index, (name, annotation) in enumerate(self.__annotations__.items()):
+            self.type_specs[name] = type_spec_from_annotation(annotation)
+            self.field_names.append(name)
+            setattr(self, name, lambda: self[index])
+
+        super().__init__(TupleTypeSpec(*self.type_specs.values()))
+
+
+NamedTuple.__module__ = "pyteal.abi"
