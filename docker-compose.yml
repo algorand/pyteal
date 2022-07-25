@@ -10,3 +10,10 @@ services:
     environment:
       - DEV_MODE
       - TOKEN=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+  # TODO: do not merge with this kmd service. This is only needed cause I don't want to
+  # stand-up a seperate service locally
+  kmd:
+    image: makerxau/algorand-sandbox-dev:latest
+    ports:
+      - "4002:4002"

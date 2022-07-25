@@ -59,10 +59,10 @@ lint-and-test: check-generate-init lint test-unit
 # ---- Integration Tests (algod required) ---- #
 
 sandbox-dev-up:
-	docker-compose up -d algod
+	docker-compose up -d algod kmd
 
 sandbox-dev-stop:
-	docker-compose stop algod
+	docker-compose stop algod kmd
 	
 integration-run:
 	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration
