@@ -1,3 +1,4 @@
+from inspect import isclass
 from pathlib import Path
 import pytest
 from typing import Literal
@@ -32,6 +33,15 @@ BAD_TYPES = {
     "axfer": GAI_ISSUE_2068,
     "appl": GAI_ISSUE_2068,
 }
+
+
+class NamedTupleInherit(abi.NamedTuple):
+    a: abi.Bool
+    b: abi.Address
+    c: abi.Tuple2[abi.Uint64, abi.Bool]
+    d: abi.StaticArray[abi.Byte, Literal[10]]
+    e: abi.StaticArray[abi.Bool, Literal[4]]
+
 
 PATH = Path.cwd() / "tests" / "integration"
 FIXTURES = PATH / "teal"
@@ -123,6 +133,7 @@ ABI_TYPES = [
         ],
         2,
     ),
+    NamedTupleInherit,
 ]
 
 
@@ -142,12 +153,21 @@ def roundtrip_setup(abi_type):
 
 
 def test_abi_types_comprehensive():
-    top_level_names = {
-        tli.split("[")[0] if tli.startswith("pyteal") else tli.split("'")[1]
-        for tli in (
-            str(x) for x in (at[0] if isinstance(at, tuple) else at for at in ABI_TYPES)
+    top_level_names = set()
+    for at in ABI_TYPES:
+        at = at[0] if isinstance(at, tuple) else at
+        tli: str
+
+        tli = (
+            str(abi.NamedTuple)
+            if isclass(at) and issubclass(at, abi.NamedTuple)
+            else str(at)
         )
-    }
+        tli = tli.split("[")[0] if tli.startswith("pyteal") else tli.split("'")[1]
+
+        top_level_names.add(tli)
+
+    print(top_level_names)
 
     def get_subclasses(cls):
         for subclass in cls.__subclasses__():
