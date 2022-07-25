@@ -8,7 +8,7 @@
 * Add `py.typed` marker to allow downstream use of mypy with PyTeal ([#465](https://github.com/algorand/pyteal/pull/465)).
 
 ## Fixed
-* Fix misspelled function names (`globalNumUint`, `globalNumUint`) and corresponding internal field references ([#431](https://github.com/algorand/pyteal/pull/431)).
+* Fix misspelled function names (`localNumUint`, `globalNumUint`) and corresponding internal field references ([#431](https://github.com/algorand/pyteal/pull/431)).
 * Fix stale user guide references ([#359](https://github.com/algorand/pyteal/pull/359)).
 
 ## Changed
