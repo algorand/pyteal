@@ -41,6 +41,7 @@ class NamedTupleInherit(abi.NamedTuple):
     c: abi.Tuple2[abi.Uint64, abi.Bool]
     d: abi.StaticArray[abi.Byte, Literal[10]]
     e: abi.StaticArray[abi.Bool, Literal[4]]
+    f: abi.Uint64
 
 
 PATH = Path.cwd() / "tests" / "integration"

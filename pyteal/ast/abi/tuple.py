@@ -487,6 +487,27 @@ class Tuple5(Tuple, Generic[T1, T2, T3, T4, T5]):
 Tuple5.__module__ = "pyteal.abi"
 
 
+class NamedTupleTypeSpec(TupleTypeSpec):
+    """A NamedTupleType inherited from TupleTypeSpec, allowing for more than 5 elements."""
+
+    def __init__(
+        self, instance_class: type["NamedTuple"], *value_type_specs: TypeSpec
+    ) -> None:
+        if instance_class == NamedTuple:
+            raise TealInputError(
+                "NamedTupleTypeSpec must be instanced with subclassed NamedTuple class."
+            )
+
+        self.instance_class: type["NamedTuple"] = instance_class
+        super().__init__(*value_type_specs)
+
+    def annotation_type(self) -> "type[NamedTuple]":
+        return self.instance_class
+
+
+NamedTupleTypeSpec.__module__ = "pyteal.abi"
+
+
 class NamedTuple(Tuple):
     """A NamedTuple from Tuple with all it's elements named."""
 
@@ -503,7 +524,10 @@ class NamedTuple(Tuple):
             self.type_specs[name] = type_spec_from_annotation(annotation)
             setattr(self, name, lambda: self[index])
 
-        super().__init__(TupleTypeSpec(*self.type_specs.values()))
+        super().__init__(NamedTupleTypeSpec(type(self), *self.type_specs.values()))
+
+    def type_spec(self) -> TupleTypeSpec:
+        return super().type_spec()
 
 
 NamedTuple.__module__ = "pyteal.abi"
