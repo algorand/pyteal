@@ -192,10 +192,11 @@ class PyTealDryRunExecutor:
         self._pyteal_lambda: Callable[..., Expr] = approval
 
     def is_abi(self) -> bool:
+        """DEPRECATED: This doesn't have much value, now that @Subroutine decorators can handle abi types too!"""
         return isinstance(self.subr.subroutine, ABIReturnSubroutine)
 
     def abi_argument_types(self) -> None | list[algosdk.abi.ABIType]:
-        if not self.is_abi():
+        if not self.input_types:
             return None
 
         def handle_arg(arg):
@@ -206,10 +207,7 @@ class PyTealDryRunExecutor:
         return [handle_arg(arg) for arg in self.input_types]
 
     def abi_return_type(self) -> None | algosdk.abi.ABIType:
-        if not self.is_abi():
-            return None
-
-        out_info = getattr(self.subr.subroutine, "output_kwarg_info")
+        out_info = getattr(self.subr.subroutine, "output_kwarg_info", None)
         if not out_info:
             return None
 
