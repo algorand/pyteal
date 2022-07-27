@@ -963,7 +963,7 @@ def blackbox_pyteal_named_tupleness_test():
     lsig_pytealer = PyTealDryRunExecutor(named_tuple_field_access, Mode.Signature)
     args = (False, b"1" * 32, (0, False), b"0" * 10, [True] * 4, 0)
     
-    inspector = lsig_pytealer.dryrun([args])
+    inspector = lsig_pytealer.dryrun(args)
     
     assert inspector.stack_top() == 1
     assert inspector.passed()
@@ -994,7 +994,7 @@ def blackbox_pyteal_named_tupleness_test():
         blackbox_pyteal_example4,
         blackbox_pyteal_example5,
         blackbox_pyteal_while_continue_test,
-        # blackbox_pyteal_named_tupleness_test,
+        blackbox_pyteal_named_tupleness_test,
     ],
 )
 def test_blackbox_pyteal_examples(example):
