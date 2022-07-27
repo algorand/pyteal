@@ -505,6 +505,9 @@ class NamedTupleTypeSpec(TupleTypeSpec):
     def annotation_type(self) -> "type[NamedTuple]":
         return self.instance_class
 
+    def new_instance(self) -> "NamedTuple":
+        return self.instance_class()
+
 
 NamedTupleTypeSpec.__module__ = "pyteal.abi"
 
@@ -517,7 +520,6 @@ class NamedTuple(Tuple):
             raise TealInputError("NamedTuple must be subclassed.")
 
         anns = get_annotations(type(self))
-
         if not anns:
             raise Exception("Expected fields to be declared but found none")
 
@@ -525,12 +527,16 @@ class NamedTuple(Tuple):
 
         for index, (name, annotation) in enumerate(anns.items()):
             self.type_specs[name] = type_spec_from_annotation(annotation)
-            setattr(self, name, lambda: self[index])
 
-        super().__init__(NamedTupleTypeSpec(type(self), *self.type_specs.values()))
+        super().__init__(
+            NamedTupleTypeSpec(type(self), *list(self.type_specs.values()))
+        )
+
+        for index, name in enumerate(anns):
+            setattr(self, name, self[index])
 
     def type_spec(self) -> TupleTypeSpec:
-        return super().type_spec()
+        return cast(NamedTupleTypeSpec, super().type_spec())
 
 
 NamedTuple.__module__ = "pyteal.abi"

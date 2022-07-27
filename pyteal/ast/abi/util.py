@@ -119,6 +119,7 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
         Tuple4,
         Tuple5,
         NamedTuple,
+        NamedTupleTypeSpec,
     )
     from pyteal.ast.abi.string import StringTypeSpec, String
     from pyteal.ast.abi.address import AddressTypeSpec, Address
@@ -227,7 +228,7 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
         return TupleTypeSpec(*(type_spec_from_annotation(arg) for arg in args))
 
     if issubclass(origin, NamedTuple):
-        return origin().type_spec()
+        return NamedTupleTypeSpec(origin, *origin().type_specs.values())
 
     if origin is Tuple0:
         if len(args) != 0:

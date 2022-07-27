@@ -150,7 +150,7 @@ def roundtrip_setup(abi_type):
             abi.make(abi_type), length=dynamic_length
         ).pytealer()
 
-    return (abi_type, abi_type_str, dynamic_length, roundtrip_or_none)
+    return abi_type, abi_type_str, dynamic_length, roundtrip_or_none
 
 
 def test_abi_types_comprehensive():
@@ -167,8 +167,6 @@ def test_abi_types_comprehensive():
         tli = tli.split("[")[0] if tli.startswith("pyteal") else tli.split("'")[1]
 
         top_level_names.add(tli)
-
-    print(top_level_names)
 
     def get_subclasses(cls):
         for subclass in cls.__subclasses__():
