@@ -1,3 +1,4 @@
+from inspect import get_annotations
 from typing import (
     List,
     Sequence,
@@ -488,7 +489,7 @@ Tuple5.__module__ = "pyteal.abi"
 
 
 class NamedTupleTypeSpec(TupleTypeSpec):
-    """A NamedTupleType inherited from TupleTypeSpec, allowing for more than 5 elements."""
+    """A NamedTupleType inherits from TupleTypeSpec, allowing for more than 5 elements."""
 
     def __init__(
         self, instance_class: type["NamedTuple"], *value_type_specs: TypeSpec
@@ -509,18 +510,20 @@ NamedTupleTypeSpec.__module__ = "pyteal.abi"
 
 
 class NamedTuple(Tuple):
-    """A NamedTuple from Tuple with all it's elements named."""
+    """A NamedTuple is a Tuple with all its elements named."""
 
     def __init__(self):
         if type(self) is NamedTuple:
             raise TealInputError("NamedTuple must be subclassed.")
 
-        if not hasattr(self, "__annotations__"):
+        anns = get_annotations(type(self))
+
+        if not anns:
             raise Exception("Expected fields to be declared but found none")
 
         self.type_specs: OrderedDict[str, TypeSpec] = OrderedDict()
 
-        for index, (name, annotation) in enumerate(self.__annotations__.items()):
+        for index, (name, annotation) in enumerate(anns.items()):
             self.type_specs[name] = type_spec_from_annotation(annotation)
             setattr(self, name, lambda: self[index])
 
