@@ -1,7 +1,6 @@
 import base64
 import os
 
-from pyteal import *
 from examples.application.abi.algobank import (
     approval_program,
     clear_state_program,
