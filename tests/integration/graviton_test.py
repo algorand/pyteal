@@ -908,8 +908,9 @@ def blackbox_pyteal_while_continue_test():
         )
 
 
-def blackbox_pyteal_named_tupleness():
-    from typing import Literal as L
+def blackbox_pyteal_named_tupleness_test():
+    from typing import Any, Literal as L
+    from algosdk.abi import ABIType
     from tests.blackbox import Blackbox
     from pyteal import (
         Seq,
@@ -929,32 +930,32 @@ def blackbox_pyteal_named_tupleness():
         e: abi.StaticArray[abi.Bool, L[4]]
         f: abi.Uint64
 
-    sdk_abi_t = abi.algosdk_from_annotation(NamedTupleExample)
-
-    @Blackbox(input_types=[None])
+    @Blackbox(input_types=[None] * 6)
     @Subroutine(TealType.uint64)
-    def named_tuple_field_access(v_temp: NamedTupleExample):
+    def named_tuple_field_access(
+        a_0: abi.Bool,
+        a_1: abi.Address,
+        a_2: abi.Tuple2[abi.Uint64, abi.Bool],
+        a_3: abi.StaticArray[abi.Byte, L[10]],
+        a_4: abi.StaticArray[abi.Bool, L[4]],
+        a_5: abi.Uint64,
+    ):
         return Seq(
-            (v_a0 := abi.Bool()).set(v_temp[0]),
-            (v_a1 := abi.Bool()).set(v_temp.a),
-            (v_b0 := abi.Address()).set(v_temp[1]),
-            (v_b1 := abi.Address()).set(v_temp.b),
-            (v_c0 := abi.make(abi.Tuple2[abi.Uint64, abi.Bool])).set(v_temp[2]),
-            (v_c1 := abi.make(abi.Tuple2[abi.Uint64, abi.Bool])).set(v_temp.c),
-            (v_d0 := abi.make(abi.StaticArray[abi.Byte, L[10]])).set(v_temp[3]),
-            (v_d1 := abi.make(abi.StaticArray[abi.Byte, L[10]])).set(v_temp.d),
-            (v_e0 := abi.make(abi.StaticArray[abi.Bool, L[4]])).set(v_temp[4]),
-            (v_e1 := abi.make(abi.StaticArray[abi.Bool, L[4]])).set(v_temp.e),
-            (v_f0 := abi.Uint64()).set(v_temp[5]),
-            (v_f1 := abi.Uint64()).set(v_temp.f),
+            (v_tuple := NamedTupleExample()).set(a_0, a_1, a_2, a_3, a_4, a_5),
+            (v_a := abi.Bool()).set(v_tuple.a),
+            (v_b := abi.Address()).set(v_tuple.b),
+            (v_c := abi.make(abi.Tuple2[abi.Uint64, abi.Bool])).set(v_tuple.c),
+            (v_d := abi.make(abi.StaticArray[abi.Byte, L[10]])).set(v_tuple.d),
+            (v_e := abi.make(abi.StaticArray[abi.Bool, L[4]])).set(v_tuple.e),
+            (v_f := abi.Uint64()).set(v_tuple.f),
             Return(
                 And(
-                    v_a0.get() == v_a1.get(),
-                    v_b0.get() == v_b1.get(),
-                    v_c0.encode() == v_c1.encode(),
-                    v_d0.encode() == v_d1.encode(),
-                    v_e0.encode() == v_e1.encode(),
-                    v_f0.get() == v_f1.get(),
+                    a_0.get() == v_a.get(),
+                    a_1.get() == v_b.get(),
+                    a_2.encode() == v_c.encode(),
+                    a_3.encode() == v_d.encode(),
+                    a_4.encode() == v_e.encode(),
+                    a_5.get() == v_f.get(),
                 )
             ),
         )
@@ -967,6 +968,21 @@ def blackbox_pyteal_named_tupleness():
     assert inspector.stack_top() == 1
     assert inspector.passed()
 
+    # TYPES_N_VALS: list[tuple[str, Any]] = [
+    #     ("bool", False),
+    #     ("address", b"1" * 32),
+    #     ("(uint64,bool)", (12, True)),
+    #     ("byte[10]", b"a" * 10),
+    #     ("bool[4]", [False] * 4),
+    #     ("uint64", 100),
+    # ]
+
+    # args: list[bytes] = [
+    #     ABIType.from_string(abi_t).encode(var) for abi_t, var in TYPES_N_VALS
+    # ]
+
+    # lsig_result = lsig_pytealer.dryrun(args)
+    # assert lsig_result.passed()
 
 
 @pytest.mark.parametrize(
