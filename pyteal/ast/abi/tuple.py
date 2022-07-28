@@ -524,16 +524,22 @@ class NamedTuple(Tuple):
             raise Exception("Expected fields to be declared but found none")
 
         self.__type_specs: OrderedDict[str, TypeSpec] = OrderedDict()
+        self.__field_index: dict[str, int] = {}
 
         for index, (name, annotation) in enumerate(anns.items()):
             self.__type_specs[name] = type_spec_from_annotation(annotation)
+            self.__field_index[name] = index
 
         super().__init__(
             NamedTupleTypeSpec(type(self), *list(self.__type_specs.values()))
         )
 
-        for index, name in enumerate(anns):
-            setattr(self, name, self[index])
+    def __getattr__(self, field: str) -> TupleElement:
+        return self.__getitem__(self.__field_index[field])
+
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        # TODO need some thinking? seems we should not allow folks to set in tuple tho.
+        return super().__setattr__(__name, __value)
 
 
 NamedTuple.__module__ = "pyteal.abi"
