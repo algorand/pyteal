@@ -543,6 +543,7 @@ class NamedTuple(Tuple):
         self._ready = True
 
     def __getattr__(self, field: str) -> TupleElement:
+        """Retrieve an element by its field in this NamedTuple."""
         return self.__getitem__(self.__field_index[field])
 
     def __setattr__(self, name: str, field: Any) -> None:
