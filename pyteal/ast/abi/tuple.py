@@ -523,20 +523,17 @@ class NamedTuple(Tuple):
         if not anns:
             raise Exception("Expected fields to be declared but found none")
 
-        self.type_specs: OrderedDict[str, TypeSpec] = OrderedDict()
+        self.__type_specs: OrderedDict[str, TypeSpec] = OrderedDict()
 
         for index, (name, annotation) in enumerate(anns.items()):
-            self.type_specs[name] = type_spec_from_annotation(annotation)
+            self.__type_specs[name] = type_spec_from_annotation(annotation)
 
         super().__init__(
-            NamedTupleTypeSpec(type(self), *list(self.type_specs.values()))
+            NamedTupleTypeSpec(type(self), *list(self.__type_specs.values()))
         )
 
         for index, name in enumerate(anns):
             setattr(self, name, self[index])
-
-    def type_spec(self) -> TupleTypeSpec:
-        return cast(NamedTupleTypeSpec, super().type_spec())
 
 
 NamedTuple.__module__ = "pyteal.abi"

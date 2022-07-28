@@ -228,7 +228,7 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
         return TupleTypeSpec(*(type_spec_from_annotation(arg) for arg in args))
 
     if issubclass(origin, NamedTuple):
-        return NamedTupleTypeSpec(origin, *origin().type_specs.values())
+        return cast(NamedTupleTypeSpec, origin().type_spec())
 
     if origin is Tuple0:
         if len(args) != 0:
