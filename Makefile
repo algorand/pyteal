@@ -28,7 +28,7 @@ bundle-docs: bundle-docs-clean
 	doc2dash --name pyteal --index-page index.html --online-redirect-url https://pyteal.readthedocs.io/en/ _build/html && \
 	tar -czvf pyteal.docset.tar.gz pyteal.docset
 
-# The `SPHINXOPTS="-W -keep-going -n"` comes from https://www.sphinx-doc.org/en/master/man/sphinx-build.html#cmdoption-sphinx-build-W
+# The `SPHINXOPTS="-W -keep-going"` comes from https://www.sphinx-doc.org/en/master/man/sphinx-build.html#cmdoption-sphinx-build-W
 # also check link https://stackoverflow.com/questions/38048945/how-to-turn-warnings-into-errors-when-building-sphinx-documentation-with-setupto
 
 # ---- Code Quality ---- #

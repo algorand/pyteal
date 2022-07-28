@@ -280,7 +280,7 @@ All basic types that represent a single value have a :code:`get()` method, which
 * :any:`abi.Uint.get()`, which is used by all :any:`abi.Uint` classes and :any:`abi.Byte`
 * :any:`abi.Bool.get()`
 * :any:`abi.Address.get()`
-* :any:`abi.String.gt()`
+* :any:`abi.String.get()`
 
 A brief example is below. Please consult the documentation linked above for each method to learn more about specific usage and behavior.
 
