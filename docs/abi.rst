@@ -285,7 +285,7 @@ All basic types that represent a single value have a :code:`get()` method, which
 A brief example is below. Please consult the documentation linked above for each method to learn more about specific usage and behavior.
 
 .. code-block:: python
-    
+
     from pyteal import *
 
     @Subroutine(TealType.uint64)
