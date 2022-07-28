@@ -885,3 +885,6 @@ def test_NamedTuple_getitem(test_case: type[abi.NamedTuple]):
 
     with pytest.raises(KeyError):
         tuple_value.aaaaa
+
+    with pytest.raises(pt.TealInputError):
+        tuple_value.f0 = abi.Uint64()

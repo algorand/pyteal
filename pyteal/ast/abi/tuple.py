@@ -523,6 +523,12 @@ class NamedTuple(Tuple):
         if not anns:
             raise Exception("Expected fields to be declared but found none")
 
+        # NOTE: this `_ready` variable enables `__setattr__` during `__init__` execution,
+        # while after `__init__`, we cannot use `__setattr__` to set fields in `NamedTuple`.
+        # The reason for `_ready` is that, the field naming scheme in Python would change
+        # _double underscore led field name_ to something else,
+        # while _single underscore led variable names_ would stay intact.
+        self._ready = False
         self.__type_specs: OrderedDict[str, TypeSpec] = OrderedDict()
         self.__field_index: dict[str, int] = {}
 
@@ -534,12 +540,19 @@ class NamedTuple(Tuple):
             NamedTupleTypeSpec(type(self), *list(self.__type_specs.values()))
         )
 
+        self._ready = True
+
     def __getattr__(self, field: str) -> TupleElement:
         return self.__getitem__(self.__field_index[field])
 
-    def __setattr__(self, __name: str, __value: Any) -> None:
-        # TODO need some thinking? seems we should not allow folks to set in tuple tho.
-        return super().__setattr__(__name, __value)
+    def __setattr__(self, name: str, field: Any) -> None:
+        # we allow `__setattr__` only when:
+        # - we are in `__init__`: `not self._ready`
+        # - we are setting `_ready`: `name == "_ready"`
+        if name == "_ready" or not self._ready:
+            super().__setattr__(name, field)
+            return
+        raise TealInputError("cannot assign to NamedTuple attributes.")
 
 
 NamedTuple.__module__ = "pyteal.abi"
