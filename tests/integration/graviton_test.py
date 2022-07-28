@@ -967,22 +967,6 @@ def blackbox_pyteal_named_tupleness_test():
     assert inspector.stack_top() == 1
     assert inspector.passed()
 
-    # TYPES_N_VALS: list[tuple[str, Any]] = [
-    #     ("bool", False),
-    #     ("address", b"1" * 32),
-    #     ("(uint64,bool)", (12, True)),
-    #     ("byte[10]", b"a" * 10),
-    #     ("bool[4]", [False] * 4),
-    #     ("uint64", 100),
-    # ]
-
-    # args: list[bytes] = [
-    #     ABIType.from_string(abi_t).encode(var) for abi_t, var in TYPES_N_VALS
-    # ]
-
-    # lsig_result = lsig_pytealer.dryrun(args)
-    # assert lsig_result.passed()
-
 
 @pytest.mark.parametrize(
     "example",
