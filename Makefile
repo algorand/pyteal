@@ -24,7 +24,7 @@ bundle-docs-clean:
 
 bundle-docs: bundle-docs-clean
 	cd docs && \
-	make html SPHINXOPTS="-W --keep-going -n" && \
+	make html SPHINXOPTS="-W --keep-going" && \
 	doc2dash --name pyteal --index-page index.html --online-redirect-url https://pyteal.readthedocs.io/en/ _build/html && \
 	tar -czvf pyteal.docset.tar.gz pyteal.docset
 
