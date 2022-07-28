@@ -909,8 +909,7 @@ def blackbox_pyteal_while_continue_test():
 
 
 def blackbox_pyteal_named_tupleness_test():
-    from typing import Any, Literal as L
-    from algosdk.abi import ABIType
+    from typing import Literal as L
     from tests.blackbox import Blackbox
     from pyteal import (
         Seq,
@@ -961,22 +960,12 @@ def blackbox_pyteal_named_tupleness_test():
         )
 
     lsig_pytealer = PyTealDryRunExecutor(named_tuple_field_access, Mode.Signature)
+    args = (False, b"1" * 32, (0, False), b"0" * 10, [True] * 4, 0)
 
-    TYPES_N_VALS: list[tuple[str, Any]] = [
-        ("bool", False),
-        ("address", b"1" * 32),
-        ("(uint64,bool)", (12, True)),
-        ("byte[10]", b"a" * 10),
-        ("bool[4]", [False] * 4),
-        ("uint64", 100),
-    ]
+    inspector = lsig_pytealer.dryrun(args)
 
-    args: list[bytes] = [
-        ABIType.from_string(abi_t).encode(var) for abi_t, var in TYPES_N_VALS
-    ]
-
-    lsig_result = lsig_pytealer.dryrun(args)
-    assert lsig_result.passed()
+    assert inspector.stack_top() == 1
+    assert inspector.passed()
 
 
 @pytest.mark.parametrize(
