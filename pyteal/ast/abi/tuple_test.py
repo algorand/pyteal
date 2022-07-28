@@ -866,19 +866,29 @@ def test_NamedTuple_getitem(test_case: type[abi.NamedTuple]):
     tuple_len_static = tuple_value.type_spec().length_static()
     for i in range(tuple_len_static):
         elem_by_field: abi.TupleElement = getattr(tuple_value, f"f{i}")
+        elem_by_index: abi.TupleElement = tuple_value[i]
+
         assert (
             type(elem_by_field) is abi.TupleElement
         ), f"Test case {test_case} at field f{i} must be TupleElement"
-        elem_by_index: abi.TupleElement = tuple_value[i]
         assert (
-            type(elem_by_field) is abi.TupleElement
+            type(elem_by_index) is abi.TupleElement
         ), f"Test case {test_case} at index {i} must be TupleElement"
+
         assert (
             elem_by_field.index == i
         ), f"Test case {test_case} at field f{i} should have index {i}."
         assert (
-            elem_by_field.tuple == tuple_value
+            elem_by_index.index == i
+        ), f"Test case {test_case} at index {i} should have index {i}."
+
+        assert (
+            elem_by_field.tuple is tuple_value
         ), f"Test case {test_case} at field f{i} should have attr tuple == {test_case}."
+        assert (
+            elem_by_index.tuple is tuple_value
+        ), f"Test case {test_case} at index {i} should have attr tuple == {test_case}."
+
         assert (
             elem_by_field.produced_type_spec() == elem_by_index.produced_type_spec()
         ), f"Test case {test_case} at field f{i} type spec unmatching: {elem_by_field.produced_type_spec()} != {elem_by_index.produced_type_spec()}."

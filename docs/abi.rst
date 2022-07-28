@@ -210,7 +210,7 @@ PyTeal Type                                    ARC-4 Type             Dynamic / 
 :any:`abi.Address`                             :code:`address`        Static                              A 32-byte Algorand address. This is an alias for :code:`abi.StaticArray[abi.Byte, Literal[32]]`.
 :any:`abi.DynamicArray[T] <abi.DynamicArray>`  :code:`T[]`            Dynamic                             A variable-length array of :code:`T`
 :any:`abi.String`                              :code:`string`         Dynamic                             A variable-length byte array assumed to contain UTF-8 encoded content. This is an alias for :code:`abi.DynamicArray[abi.Byte]`.
-:any:`abi.Tuple`\*, :any:`abi.NamedTuple`\*    :code:`(...)`          Static when all elements are static A tuple of multiple types
+:any:`abi.Tuple`\*, :any:`abi.NamedTuple`      :code:`(...)`          Static when all elements are static A tuple of multiple types
 ============================================== ====================== =================================== =======================================================================================================================================================
 
 .. note::
@@ -223,7 +223,7 @@ PyTeal Type                                    ARC-4 Type             Dynamic / 
     * :any:`abi.Tuple4[T1,T2,T3,T4] <abi.Tuple4>`: a tuple of four values, :code:`(T1,T2,T3,T4)`
     * :any:`abi.Tuple5[T1,T2,T3,T4,T5] <abi.Tuple5>`: a tuple of five values, :code:`(T1,T2,T3,T4,T5)`
 
-    \*While we are still on PyTeal 3.10, we have a workaround for :any:`abi.Tuple` by :any:`abi.NamedTuple`, which allows one to define a tuple with more than 5 generic arguments, and access tuple elements by field name. For example:
+    While we are still on PyTeal 3.10, we have a workaround for :any:`abi.Tuple` by :any:`abi.NamedTuple`, which allows one to define a tuple with more than 5 generic arguments, and access tuple elements by field name. For example:
 
     .. code-block:: python
 
@@ -236,7 +236,7 @@ PyTeal Type                                    ARC-4 Type             Dynamic / 
             retrivable: abi.Bool
             desc: abi.String
             list_of_addrs: abi.DynamicArray[abi.Address]
-            balance_list: abi.StaticArray[abi.Uint, L[10]]
+            balance_list: abi.StaticArray[abi.Uint64, L[10]]
 
 These ARC-4 types are not yet supported in PyTeal:
 
@@ -321,10 +321,17 @@ The supported methods are:
 
 * :any:`abi.StaticArray.__getitem__(index: int | Expr) <abi.StaticArray.__getitem__>`, used for :any:`abi.StaticArray` and :any:`abi.Address`
 * :any:`abi.Array.__getitem__(index: int | Expr) <abi.Array.__getitem__>`, used for :any:`abi.DynamicArray` and :any:`abi.String`
-* :any:`abi.Tuple.__getitem__(index: int) <abi.Tuple.__getitem__>`, used for :any:`abi.NamedTuple`
+* :any:`abi.Tuple.__getitem__(index: int) <abi.Tuple.__getitem__>`, used for :any:`abi.Tuple` and :any:`abi.NamedTuple`\*
 
 .. note::
-    Be aware that these methods return a :any:`ComputedValue`, similar to other PyTeal operations which return ABI types. More information about why that is necessary and how to use a :any:`ComputedValue` can be found in the :ref:`Computed Values` section.
+    \*For :any:`abi.NamedTuple`, one can access tuple elements through both methods
+
+    * :any:`abi.Tuple.__getitem__(index: int) <abi.Tuple.__getitem__>`
+    * :any:`abi.NamedTuple.__getattr__(name: str) <abi.NamedTuple.__getattr__>`
+
+    Be aware that, though the fields in a :any:`abi.NamedTuple` are annotated in ABI types, the return values from the annotated fields are :any:`ComputedValues <abi.ComputedValue>`.
+
+    Also be aware that these methods return a :any:`ComputedValue`, similar to other PyTeal operations which return ABI types. More information about why that is necessary and how to use a :any:`ComputedValue` can be found in the :ref:`Computed Values` section.
 
 A brief example is below. Please consult the documentation linked above for each method to learn more about specific usage and behavior.
 

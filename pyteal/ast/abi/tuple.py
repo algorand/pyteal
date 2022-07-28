@@ -513,7 +513,10 @@ NamedTupleTypeSpec.__module__ = "pyteal.abi"
 
 
 class NamedTuple(Tuple):
-    """A NamedTuple is a Tuple with all its elements named."""
+    """A NamedTuple is a Tuple with all its elements named.
+
+    .. automethod:: __getattr__
+    """
 
     def __init__(self):
         if type(self) is NamedTuple:
@@ -543,7 +546,16 @@ class NamedTuple(Tuple):
         self._ready = True
 
     def __getattr__(self, field: str) -> TupleElement:
-        """Retrieve an element by its field in this NamedTuple."""
+        """Retrieve an element by its field in this NamedTuple.
+
+        Args:
+            field: a Python string containing the field to access.
+                This function will raise an KeyError if the field is not available in the defined NamedTuple.
+
+        Returns:
+            A TupleElement that corresponds to the element at the given field name, returning a ComputedType.
+            Due to Python type limitations, the parameterized type of the TupleElement is Any.
+        """
         return self.__getitem__(self.__field_index[field])
 
     def __setattr__(self, name: str, field: Any) -> None:
