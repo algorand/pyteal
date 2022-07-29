@@ -42,6 +42,27 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+nitpick_ignore = [
+    ("py:class", "optional"),
+    ("py:class", "abc.ABC"),
+]
+
+nitpick_ignore_regex = [
+    ("py:class", r"algosdk\.abi\..*"),
+    ("py:class", r"contextlib\..*"),
+    ("py:class", r"enum\..*"),
+    ("py.obj", r".*\.T$"),
+    ("py.obj", r".*\.T[0-9]+$"),
+    ("py.class", r".*\.T_co$"),
+    ("py.obj", r".*\.T_co$"),
+    ("py.class", r".*\.T$"),
+    ("py.class", r"^T$"),
+    ("py.obj", r".*\.N$"),
+    ("py.class", r".*\.N$"),
+    ("py.class", r"^N$"),
+    ("py.class", r"^type\[.*"),
+    ("py.obj", r"typing\..*"),
+]
 
 # -- Options for HTML output -------------------------------------------------
 

@@ -85,7 +85,7 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
     return `abi.StaticArrayTypeSpec(abi.BoolTypeSpec(), 5)`.
 
     Args:
-        annotation. An annotation representing an ABI type instance.
+        annotation: An annotation representing an ABI type instance.
 
     Raises:
         TypeError: if the input annotation does not represent a valid ABI type instance or its

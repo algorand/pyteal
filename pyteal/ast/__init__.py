@@ -104,7 +104,7 @@ from pyteal.ast.binaryexpr import (
 )
 
 # ternary ops
-from pyteal.ast.ternaryexpr import Divw, Ed25519Verify, SetBit, SetByte
+from pyteal.ast.ternaryexpr import TernaryExpr, Divw, Ed25519Verify, SetBit, SetByte
 from pyteal.ast.substring import Substring, Extract, Suffix
 
 # more ops
@@ -119,6 +119,7 @@ from pyteal.ast.assert_ import Assert
 from pyteal.ast.err import Err
 from pyteal.ast.return_ import Return, Approve, Reject
 from pyteal.ast.subroutine import (
+    OutputKwArgInfo,
     Subroutine,
     SubroutineDefinition,
     SubroutineDeclaration,
@@ -222,6 +223,7 @@ __all__ = [
     "Div",
     "Mod",
     "Exp",
+    "TernaryExpr",
     "Divw",
     "BitwiseAnd",
     "BitwiseOr",
@@ -255,6 +257,7 @@ __all__ = [
     "Return",
     "Approve",
     "Reject",
+    "OutputKwArgInfo",
     "Subroutine",
     "SubroutineDefinition",
     "SubroutineDeclaration",
