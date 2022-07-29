@@ -1,7 +1,7 @@
 # 0.15.0
 ## Added
 * Support AVM 7 updates:
-  * `New opcodes:
+  * New opcodes:
     * base64_decode` ([#418](https://github.com/algorand/pyteal/pull/418))
     * `block` ([#415](https://github.com/algorand/pyteal/pull/415))
     * `ed25519verify_bare` ([#426](https://github.com/algorand/pyteal/pull/426))
