@@ -191,10 +191,10 @@ current group and sum up all of their fees.
         Seq([
             i.store(Int(0)),
             totalFees.store(Int(0)),
-            While(i.load() < Global.group_size()).Do(Seq([
+            While(i.load() < Global.group_size()).Do(
                 totalFees.store(totalFees.load() + Gtxn[i.load()].fee()),
                 i.store(i.load() + Int(1))
-            ]))
+            )
         ])
 
 .. _loop_for_expr:
@@ -256,11 +256,11 @@ many are payments, using the :code:`Continue` expression.
 
         Seq([
             numPayments.store(Int(0)),
-            For(i.store(Int(0)), i.load() < Global.group_size(), i.store(i.load() + Int(1))).Do(Seq([
+            For(i.store(Int(0)), i.load() < Global.group_size(), i.store(i.load() + Int(1))).Do(
                 If(Gtxn[i.load()].type_enum() != TxnType.Payment)
                 .Then(Continue()),
                 numPayments.store(numPayments.load() + Int(1))
-            ]))
+            )
         ])
 
 When :code:`Break` is present in the loop body, it instructs the program to completely exit the
@@ -279,10 +279,10 @@ using the :code:`Break` expression.
             firstPaymentIndex.store(Global.group_size()),
             For(i.store(Int(0)), i.load() < Global.group_size(), i.store(i.load() + Int(1))).Do(
                 If(Gtxn[i.load()].type_enum() == TxnType.Payment)
-                .Then(Seq([
+                .Then(
                     firstPaymentIndex.store(i.load()),
                     Break()
-                ]))
+                )
             ),
             # assert that a payment was found
             Assert(firstPaymentIndex.load() < Global.group_size())
@@ -379,7 +379,7 @@ subroutine is considered illegal and attempting compilation will result in a `Te
                 .Then(i.store(Int(1)))
                 .ElseIf(i.load() == Int(1))
                 .Then(i.store(Int(0)))
-                .Else(Seq(i.store(i.load() - Int(2)), ILLEGAL_recursion(i)))
+                .Else(i.store(i.load() - Int(2)), ILLEGAL_recursion(i))
             )
 
 
@@ -403,10 +403,10 @@ fee of 0:
             return Seq([
                 For(i.store(Int(0)), i.load() < Global.group_size(), i.store(i.load() + Int(1))).Do(
                     If(Gtxn[i.load()].type_enum() == TxnType.Payment)
-                    .Then(Seq([
+                    .Then(
                         Assert(Gtxn[i.load()].fee() == Int(0)),
                         Return()
-                    ]))
+                    )
                 ),
                 # no payments found
                 Err()

@@ -70,7 +70,7 @@ class Expr(ABC):
         return Neq(self, other)
 
     def __add__(self, other):
-        from pyteal.ast.binaryexpr import Add
+        from pyteal.ast.naryexpr import Add
 
         return Add(self, other)
 
@@ -80,7 +80,7 @@ class Expr(ABC):
         return Minus(self, other)
 
     def __mul__(self, other):
-        from pyteal.ast.binaryexpr import Mul
+        from pyteal.ast.naryexpr import Mul
 
         return Mul(self, other)
 

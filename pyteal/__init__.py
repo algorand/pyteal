@@ -1,5 +1,6 @@
 from pyteal.ast import *
 from pyteal.ast import __all__ as ast_all
+from pyteal.pragma import pragma
 from pyteal.ir import *
 from pyteal.ir import __all__ as ir_all
 from pyteal.compiler import (
@@ -19,8 +20,14 @@ from pyteal.errors import (
     TealTypeError,
     TealInputError,
     TealCompileError,
+    TealPragmaError,
 )
-from pyteal.config import MAX_GROUP_SIZE, NUM_SLOTS
+from pyteal.config import (
+    MAX_GROUP_SIZE,
+    NUM_SLOTS,
+    RETURN_HASH_PREFIX,
+    METHOD_ARG_NUM_CUTOFF,
+)
 
 # begin __all__
 __all__ = (
@@ -34,6 +41,7 @@ __all__ = (
         "MIN_PROGRAM_VERSION",
         "DEFAULT_PROGRAM_VERSION",
         "CompileOptions",
+        "pragma",
         "compileTeal",
         "OptimizeOptions",
         "TealType",
@@ -41,8 +49,11 @@ __all__ = (
         "TealTypeError",
         "TealInputError",
         "TealCompileError",
+        "TealPragmaError",
         "MAX_GROUP_SIZE",
         "NUM_SLOTS",
+        "RETURN_HASH_PREFIX",
+        "METHOD_ARG_NUM_CUTOFF",
     ]
 )
 # end __all__

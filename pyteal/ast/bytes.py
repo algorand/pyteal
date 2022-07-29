@@ -15,14 +15,18 @@ class Bytes(LeafExpr):
 
     @overload
     def __init__(self, arg1: Union[str, bytes, bytearray]) -> None:
-        ...
+        pass
 
     @overload
     def __init__(self, arg1: str, arg2: str) -> None:
-        ...
+        pass
 
     def __init__(self, arg1: Union[str, bytes, bytearray], arg2: str = None) -> None:
-        """Create a new byte string.
+        """
+        __init__(arg1: Union[str, bytes, bytearray]) -> None
+        __init__(self, arg1: str, arg2: str) -> None
+
+        Create a new byte string.
 
         Depending on the encoding, there are different arguments to pass:
 
