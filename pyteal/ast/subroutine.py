@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from inspect import isclass, Parameter, signature, get_annotations
 from types import MappingProxyType, NoneType
 from typing import Any, Callable, Final, Optional, TYPE_CHECKING, cast
-
 import algosdk.abi as sdk_abi
+
 from pyteal.ast import abi
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
