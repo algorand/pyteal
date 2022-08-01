@@ -42,8 +42,8 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
-class NitpickIgnore:
 
+class NitpickIgnore:
     @staticmethod
     def optional() -> list[tuple[str, str]]:
         """
@@ -59,11 +59,11 @@ class NitpickIgnore:
         Ignores Python standard library references that Sphinx does not track.
         """
         return [
-    ("py:class", "abc.ABC"),
-]
+            ("py:class", "abc.ABC"),
+        ]
+
 
 class NitpickIgnoreRegex:
-
     @staticmethod
     def type_vars() -> list[tuple[str, str]]:
         """
@@ -100,14 +100,14 @@ class NitpickIgnoreRegex:
             ("py:class", r"algosdk\.abi\..*"),
         ]
 
-nitpick_ignore = \
-    NitpickIgnore.optional() + \
-    NitpickIgnore.standard_library()
 
-nitpick_ignore_regex = \
-    NitpickIgnoreRegex.standard_library() + \
-    NitpickIgnoreRegex.third_party() + \
-    NitpickIgnoreRegex.type_vars()
+nitpick_ignore = NitpickIgnore.optional() + NitpickIgnore.standard_library()
+
+nitpick_ignore_regex = (
+    NitpickIgnoreRegex.standard_library()
+    + NitpickIgnoreRegex.third_party()
+    + NitpickIgnoreRegex.type_vars()
+)
 
 
 # -- Options for HTML output -------------------------------------------------
