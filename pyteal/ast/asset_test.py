@@ -3,9 +3,9 @@ import pytest
 import pyteal as pt
 from pyteal.ast.maybe_test import assert_MaybeValue_equality
 
-teal2Options = pt.CompileOptions()
-teal4Options = pt.CompileOptions(version=4)
-teal5Options = pt.CompileOptions(version=5)
+avm2Options = pt.CompileOptions()
+avm4Options = pt.CompileOptions(version=4)
+avm5Options = pt.CompileOptions(version=5)
 
 
 def test_asset_holding_balance():
@@ -24,7 +24,7 @@ def test_asset_holding_balance():
         ]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -48,7 +48,7 @@ def test_asset_holding_balance_direct_ref():
         ]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -80,7 +80,7 @@ def test_asset_holding_frozen():
         ]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -104,7 +104,7 @@ def test_asset_holding_frozen_direct_ref():
         ]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -135,7 +135,7 @@ def test_asset_param_total():
         ]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -158,7 +158,7 @@ def test_asset_param_total_direct_ref():
         ]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -186,7 +186,7 @@ def test_asset_param_decimals():
         ]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -209,7 +209,7 @@ def test_asset_param_decimals_direct_ref():
         ]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -237,7 +237,7 @@ def test_asset_param_default_frozen():
         ]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -260,7 +260,7 @@ def test_asset_param_default_frozen_direct_ref():
         ]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -288,7 +288,7 @@ def test_asset_param_unit_name():
         ]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -311,7 +311,7 @@ def test_asset_param_unit_name_direct_ref():
         ]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -339,7 +339,7 @@ def test_asset_param_name():
         ]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -362,7 +362,7 @@ def test_asset_param_name_direct_ref():
         ]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -390,7 +390,7 @@ def test_asset_param_url():
         ]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -413,7 +413,7 @@ def test_asset_param_url_direct_ref():
         ]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -441,7 +441,7 @@ def test_asset_param_metadata_hash():
         ]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -464,7 +464,7 @@ def test_asset_param_metadata_hash_direct_ref():
         ]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -492,7 +492,7 @@ def test_asset_param_manager():
         ]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -515,7 +515,7 @@ def test_asset_param_manager_direct_ref():
         ]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -543,7 +543,7 @@ def test_asset_param_reserve():
         ]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -566,7 +566,7 @@ def test_asset_param_reserve_direct_ref():
         ]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -594,7 +594,7 @@ def test_asset_param_freeze():
         ]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -617,7 +617,7 @@ def test_asset_param_freeze_direct_ref():
         ]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -645,7 +645,7 @@ def test_asset_param_clawback():
         ]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -668,7 +668,7 @@ def test_asset_param_clawback_direct_ref():
         ]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -696,7 +696,7 @@ def test_asset_param_creator_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -721,10 +721,10 @@ def test_AssetHoldingObject():
             assert obj._account is account
 
             assert_MaybeValue_equality(
-                obj.balance(), pt.AssetHolding.balance(account, asset), teal5Options
+                obj.balance(), pt.AssetHolding.balance(account, asset), avm5Options
             )
             assert_MaybeValue_equality(
-                obj.frozen(), pt.AssetHolding.frozen(account, asset), teal5Options
+                obj.frozen(), pt.AssetHolding.frozen(account, asset), avm5Options
             )
 
 
@@ -734,35 +734,33 @@ def test_AssetParamObject():
 
         assert obj._asset is asset
 
+        assert_MaybeValue_equality(obj.total(), pt.AssetParam.total(asset), avm5Options)
         assert_MaybeValue_equality(
-            obj.total(), pt.AssetParam.total(asset), teal5Options
+            obj.decimals(), pt.AssetParam.decimals(asset), avm5Options
         )
         assert_MaybeValue_equality(
-            obj.decimals(), pt.AssetParam.decimals(asset), teal5Options
+            obj.default_frozen(), pt.AssetParam.defaultFrozen(asset), avm5Options
         )
         assert_MaybeValue_equality(
-            obj.default_frozen(), pt.AssetParam.defaultFrozen(asset), teal5Options
+            obj.unit_name(), pt.AssetParam.unitName(asset), avm5Options
+        )
+        assert_MaybeValue_equality(obj.name(), pt.AssetParam.name(asset), avm5Options)
+        assert_MaybeValue_equality(obj.url(), pt.AssetParam.url(asset), avm5Options)
+        assert_MaybeValue_equality(
+            obj.metadata_hash(), pt.AssetParam.metadataHash(asset), avm5Options
         )
         assert_MaybeValue_equality(
-            obj.unit_name(), pt.AssetParam.unitName(asset), teal5Options
-        )
-        assert_MaybeValue_equality(obj.name(), pt.AssetParam.name(asset), teal5Options)
-        assert_MaybeValue_equality(obj.url(), pt.AssetParam.url(asset), teal5Options)
-        assert_MaybeValue_equality(
-            obj.metadata_hash(), pt.AssetParam.metadataHash(asset), teal5Options
+            obj.manager_address(), pt.AssetParam.manager(asset), avm5Options
         )
         assert_MaybeValue_equality(
-            obj.manager_address(), pt.AssetParam.manager(asset), teal5Options
+            obj.reserve_address(), pt.AssetParam.reserve(asset), avm5Options
         )
         assert_MaybeValue_equality(
-            obj.reserve_address(), pt.AssetParam.reserve(asset), teal5Options
+            obj.freeze_address(), pt.AssetParam.freeze(asset), avm5Options
         )
         assert_MaybeValue_equality(
-            obj.freeze_address(), pt.AssetParam.freeze(asset), teal5Options
+            obj.clawback_address(), pt.AssetParam.clawback(asset), avm5Options
         )
         assert_MaybeValue_equality(
-            obj.clawback_address(), pt.AssetParam.clawback(asset), teal5Options
-        )
-        assert_MaybeValue_equality(
-            obj.creator_address(), pt.AssetParam.creator(asset), teal5Options
+            obj.creator_address(), pt.AssetParam.creator(asset), avm5Options
         )

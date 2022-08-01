@@ -90,7 +90,7 @@ class WideRatio(Expr):
         :code:`N_i` represents an element in :code:`numeratorFactors` and each :code:`D_i`
         represents an element in :code:`denominatorFactors`.
 
-        Requires TEAL version 5 or higher.
+        Requires program version 5 or higher.
 
         Args:
             numeratorFactors: The factors in the numerator of the ratio. This list must have at
@@ -114,7 +114,7 @@ class WideRatio(Expr):
     def __teal__(self, options: "CompileOptions"):
         if options.version < Op.cover.min_version:
             raise TealCompileError(
-                "WideRatio requires TEAL version {} or higher".format(
+                "WideRatio requires program version {} or higher".format(
                     Op.cover.min_version
                 ),
                 self,

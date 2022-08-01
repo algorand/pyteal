@@ -4,8 +4,8 @@ import pyteal as pt
 from pyteal.ast.maybe_test import assert_MaybeValue_equality
 
 options = pt.CompileOptions()
-teal4Options = pt.CompileOptions(version=4)
-teal5Options = pt.CompileOptions(version=5)
+avm4Options = pt.CompileOptions(version=4)
+avm5Options = pt.CompileOptions(version=5)
 
 
 def test_on_complete():
@@ -259,7 +259,7 @@ def test_global_get_ex_direct_ref():
         ]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -440,7 +440,7 @@ def test_app_param_approval_program_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -468,7 +468,7 @@ def test_app_param_clear_state_program_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -496,7 +496,7 @@ def test_app_param_global_num_uint_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -524,7 +524,7 @@ def test_app_param_global_num_byte_slice_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -552,7 +552,7 @@ def test_app_param_local_num_uint_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -580,7 +580,7 @@ def test_app_param_local_num_byte_slice_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -608,7 +608,7 @@ def test_app_param_extra_programs_page_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -636,7 +636,7 @@ def test_app_param_creator_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -664,7 +664,7 @@ def test_app_param_address_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -684,31 +684,29 @@ def test_AppParamObject():
         assert obj._app is app
 
         assert_MaybeValue_equality(
-            obj.approval_program(), pt.AppParam.approvalProgram(app), teal5Options
+            obj.approval_program(), pt.AppParam.approvalProgram(app), avm5Options
         )
         assert_MaybeValue_equality(
-            obj.clear_state_program(), pt.AppParam.clearStateProgram(app), teal5Options
+            obj.clear_state_program(), pt.AppParam.clearStateProgram(app), avm5Options
         )
         assert_MaybeValue_equality(
-            obj.global_num_uint(), pt.AppParam.globalNumUint(app), teal5Options
+            obj.global_num_uint(), pt.AppParam.globalNumUint(app), avm5Options
         )
         assert_MaybeValue_equality(
             obj.global_num_byte_slice(),
             pt.AppParam.globalNumByteSlice(app),
-            teal5Options,
+            avm5Options,
         )
         assert_MaybeValue_equality(
-            obj.local_num_uint(), pt.AppParam.localNumUint(app), teal5Options
+            obj.local_num_uint(), pt.AppParam.localNumUint(app), avm5Options
         )
         assert_MaybeValue_equality(
-            obj.local_num_byte_slice(), pt.AppParam.localNumByteSlice(app), teal5Options
+            obj.local_num_byte_slice(), pt.AppParam.localNumByteSlice(app), avm5Options
         )
         assert_MaybeValue_equality(
-            obj.extra_program_pages(), pt.AppParam.extraProgramPages(app), teal5Options
+            obj.extra_program_pages(), pt.AppParam.extraProgramPages(app), avm5Options
         )
         assert_MaybeValue_equality(
-            obj.creator_address(), pt.AppParam.creator(app), teal5Options
+            obj.creator_address(), pt.AppParam.creator(app), avm5Options
         )
-        assert_MaybeValue_equality(
-            obj.address(), pt.AppParam.address(app), teal5Options
-        )
+        assert_MaybeValue_equality(obj.address(), pt.AppParam.address(app), avm5Options)

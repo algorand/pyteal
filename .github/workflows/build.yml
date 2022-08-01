@@ -82,7 +82,10 @@ jobs:
         with:
           python-version: "${{ matrix.python }}"
       - name: Install python dependencies
-        run: make setup-docs
+        run: |
+          pip install -r requirements.txt
+          pip install -r docs/requirements.txt
+          pip install doc2dash
       - name: Make docs
         run: make bundle-docs
       - name: Archive docset

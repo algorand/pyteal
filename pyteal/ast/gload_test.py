@@ -2,25 +2,25 @@ import pytest
 
 import pyteal as pt
 
-teal3Options = pt.CompileOptions(version=3)
-teal4Options = pt.CompileOptions(version=4)
-teal6Options = pt.CompileOptions(version=6)
+avm3Options = pt.CompileOptions(version=3)
+avm4Options = pt.CompileOptions(version=4)
+avm6Options = pt.CompileOptions(version=6)
 
 
 def test_gload_teal_3():
     with pytest.raises(pt.TealInputError):
-        pt.ImportScratchValue(0, 1).__teal__(teal3Options)
+        pt.ImportScratchValue(0, 1).__teal__(avm3Options)
 
     with pytest.raises(pt.TealInputError):
-        pt.ImportScratchValue(pt.Int(0), 1).__teal__(teal3Options)
+        pt.ImportScratchValue(pt.Int(0), 1).__teal__(avm3Options)
 
     with pytest.raises(pt.TealInputError):
-        pt.ImportScratchValue(pt.Int(0), pt.Int(1)).__teal__(teal3Options)
+        pt.ImportScratchValue(pt.Int(0), pt.Int(1)).__teal__(avm3Options)
 
 
 def test_gload_teal_4():
     with pytest.raises(pt.TealInputError):
-        pt.ImportScratchValue(pt.Int(0), pt.Int(2)).__teal__(teal4Options)
+        pt.ImportScratchValue(pt.Int(0), pt.Int(2)).__teal__(avm4Options)
 
 
 def test_gload():
@@ -29,7 +29,7 @@ def test_gload():
 
     expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.gload, 0, 1)])
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
 
     assert actual == expected
 
@@ -43,7 +43,7 @@ def test_gloads():
         [pt.TealOp(arg, pt.Op.int, 1), pt.TealOp(expr, pt.Op.gloads, 0)]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -64,7 +64,7 @@ def test_gloadss():
         ]
     )
 
-    actual, _ = expr.__teal__(teal6Options)
+    actual, _ = expr.__teal__(avm6Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 

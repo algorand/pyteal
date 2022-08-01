@@ -4,10 +4,6 @@ setup-development:
 	pip install -e .
 	pip install -r requirements.txt
 
-setup-docs: setup-development
-	pip install -r docs/requirements.txt
-	pip install doc2dash
-
 setup-wheel:
 	pip install wheel
 

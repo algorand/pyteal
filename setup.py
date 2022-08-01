@@ -7,7 +7,11 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pyteal",
+<<<<<<< HEAD
     version="0.13.0",
+=======
+    version="0.15.0",
+>>>>>>> doc-error-on-warning
     author="Algorand",
     author_email="pypiservice@algorand.com",
     description="Algorand Smart Contracts in Python",
