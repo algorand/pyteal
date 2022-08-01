@@ -42,27 +42,73 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
-nitpick_ignore = [
-    ("py:class", "optional"),
+class NitpickIgnore:
+
+    @staticmethod
+    def optional() -> list[tuple[str, str]]:
+        """
+        Ignores parameter declarations that specify _optional_ usage.
+        """
+        return [
+            ("py:class", "optional"),
+        ]
+
+    @staticmethod
+    def standard_library() -> list[tuple[str, str]]:
+        """
+        Ignores Python standard library references that Sphinx does not track.
+        """
+        return [
     ("py:class", "abc.ABC"),
 ]
 
-nitpick_ignore_regex = [
-    ("py:class", r"algosdk\.abi\..*"),
-    ("py:class", r"contextlib\..*"),
-    ("py:class", r"enum\..*"),
-    ("py.obj", r".*\.T$"),
-    ("py.obj", r".*\.T[0-9]+$"),
-    ("py.class", r".*\.T_co$"),
-    ("py.obj", r".*\.T_co$"),
-    ("py.class", r".*\.T$"),
-    ("py.class", r"^T$"),
-    ("py.obj", r".*\.N$"),
-    ("py.class", r".*\.N$"),
-    ("py.class", r"^N$"),
-    ("py.class", r"^type\[.*"),
-    ("py.obj", r"typing\..*"),
-]
+class NitpickIgnoreRegex:
+
+    @staticmethod
+    def type_vars() -> list[tuple[str, str]]:
+        """
+        Regex ignores generic TypeVar definitions that Sphinx does not track.
+        """
+        return [
+            ("py.obj", r".*\.T$"),
+            ("py.obj", r".*\.T[0-9]+$"),
+            ("py.class", r".*\.T_co$"),
+            ("py.obj", r".*\.T_co$"),
+            ("py.class", r".*\.T$"),
+            ("py.class", r"^T$"),
+            ("py.obj", r".*\.N$"),
+            ("py.class", r".*\.N$"),
+            ("py.class", r"^N$"),
+        ]
+
+    @staticmethod
+    def standard_library() -> list[tuple[str, str]]:
+        """
+        Regex ignores Python standard library references that Sphinx does not track.
+        """
+        return [
+            ("py:class", r"contextlib\..*"),
+            ("py:class", r"enum\..*"),
+        ]
+
+    @staticmethod
+    def third_party() -> list[tuple[str, str]]:
+        """
+        Regex ignores 3rd party references that Sphinx does not track.
+        """
+        return [
+            ("py:class", r"algosdk\.abi\..*"),
+        ]
+
+nitpick_ignore = \
+    NitpickIgnore.optional() + \
+    NitpickIgnore.standard_library()
+
+nitpick_ignore_regex = \
+    NitpickIgnoreRegex.standard_library() + \
+    NitpickIgnoreRegex.third_party() + \
+    NitpickIgnoreRegex.type_vars()
+
 
 # -- Options for HTML output -------------------------------------------------
 
