@@ -2,7 +2,7 @@ from typing import Union, cast, TYPE_CHECKING
 
 from pyteal.types import TealType, require_type
 from pyteal.ir import TealOp, Op, TealBlock
-from pyteal.errors import TealInputError, verifyTealVersion
+from pyteal.errors import TealInputError, verifyProgramVersion
 from pyteal.ast.expr import Expr
 from pyteal.ast.leafexpr import LeafExpr
 
@@ -21,7 +21,7 @@ class Arg(LeafExpr):
 
         Args:
             index: The index of the argument to get. The index must be between 0 and 255 inclusive.
-                Starting in TEAL v5, the index may be a PyTeal expression that evaluates to uint64.
+                Starting in AVM v5, the index may be a PyTeal expression that evaluates to uint64.
         """
         super().__init__()
 
@@ -38,10 +38,10 @@ class Arg(LeafExpr):
             op = TealOp(self, Op.arg, self.index)
             return TealBlock.FromOp(options, op)
 
-        verifyTealVersion(
+        verifyProgramVersion(
             Op.args.min_version,
             options.version,
-            "TEAL version too low to use dynamic indexes with Arg",
+            "Program version too low to use dynamic indexes with Arg",
         )
 
         op = TealOp(self, Op.args)

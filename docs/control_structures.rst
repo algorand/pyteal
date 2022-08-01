@@ -11,7 +11,7 @@ Exiting the Program: :code:`Approve` and :code:`Reject`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-    The :code:`Approve` and :code:`Reject` expressions are only available in TEAL version 4 or higher.
+    The :code:`Approve` and :code:`Reject` expressions are only available in program version 4 or higher.
     Prior to this, :code:`Return(Int(1))` is equivalent to :code:`Approve()` and :code:`Return(Int(0))`
     is equivalent to :code:`Reject()`.
 
@@ -166,7 +166,7 @@ Looping: :code:`While`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-    This expression is only available in TEAL version 4 or higher.
+    This expression is only available in program version 4 or higher.
 
 The :any:`While` expression can be used to create simple loops in PyTeal. The syntax of :code:`While` is:
 
@@ -203,7 +203,7 @@ Looping: :code:`For`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-    This expression is only available in TEAL version 4 or higher.
+    This expression is only available in program version 4 or higher.
 
 Similar to :code:`While`, the :any:`For` expression can also be used to create loops in PyTeal. The
 syntax of :code:`For` is:
@@ -294,7 +294,7 @@ Subroutines
 ~~~~~~~~~~~
 
 .. note::
-    Subroutines are only available in TEAL version 4 or higher.
+    Subroutines are only available in program version 4 or higher.
 
 A subroutine is section of code that can be called multiple times from within a program. Subroutines are PyTeal's equivalent to functions.  Subroutine constraints include:
 

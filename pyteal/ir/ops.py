@@ -179,6 +179,14 @@ class Op(Enum):
     gitxnas             = OpType("gitxnas",             Mode.Application,                  6)
     gloadss             = OpType("gloadss",             Mode.Application,                  6)
     acct_params_get     = OpType("acct_params_get",     Mode.Application,                  6)
+    replace2            = OpType("replace2",            Mode.Signature | Mode.Application, 7)
+    replace3            = OpType("replace3",            Mode.Signature | Mode.Application, 7)
+    base64_decode       = OpType("base64_decode",       Mode.Signature | Mode.Application, 7)
+    json_ref            = OpType("json_ref",            Mode.Signature | Mode.Application, 7)
+    ed25519verify_bare  = OpType("ed25519verify_bare",  Mode.Signature | Mode.Application, 7)
+    sha3_256            = OpType("sha3_256",            Mode.Signature | Mode.Application, 7)
+    vrf_verify          = OpType("vrf_verify",          Mode.Signature | Mode.Application, 7)
+    block               = OpType("block",               Mode.Signature | Mode.Application, 7)
     # fmt: on
 
 

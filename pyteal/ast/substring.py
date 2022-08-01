@@ -1,7 +1,7 @@
 from typing import cast, TYPE_CHECKING
 
 from pyteal.types import TealType, require_type
-from pyteal.errors import TealCompileError, verifyTealVersion
+from pyteal.errors import TealCompileError, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock, TealSimpleBlock
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
@@ -26,7 +26,7 @@ class SubstringExpr(Expr):
         self.endArg = endArg
 
     # helper method for correctly populating op
-    def __getOp(self, options: "CompileOptions"):
+    def __get_op(self, options: "CompileOptions"):
         s, e = cast(Int, self.startArg).value, cast(Int, self.endArg).value
         l = e - s
 
@@ -58,12 +58,12 @@ class SubstringExpr(Expr):
                 self.endArg,
             ).__teal__(options)
 
-        op = self.__getOp(options)
+        op = self.__get_op(options)
 
-        verifyTealVersion(
+        verifyProgramVersion(
             op.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(op),
+            "Program version too low to use op {}".format(op),
         )
 
         start, end = cast(Int, self.startArg).value, cast(Int, self.endArg).value
@@ -121,7 +121,7 @@ class ExtractExpr(Expr):
         self.lenArg = lenArg
 
     # helper method for correctly populating op
-    def __getOp(self, options: "CompileOptions"):
+    def __get_op(self, options: "CompileOptions"):
         s, l = cast(Int, self.startArg).value, cast(Int, self.lenArg).value
         if s < 2**8 and l > 0 and l < 2**8:
             return Op.extract
@@ -139,12 +139,12 @@ class ExtractExpr(Expr):
                 self.lenArg,
             ).__teal__(options)
 
-        op = self.__getOp(options)
+        op = self.__get_op(options)
 
-        verifyTealVersion(
+        verifyProgramVersion(
             op.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(op),
+            "Program version too low to use op {}".format(op),
         )
 
         s, l = cast(Int, self.startArg).value, cast(Int, self.lenArg).value
@@ -186,7 +186,7 @@ class SuffixExpr(Expr):
         self.startArg = startArg
 
     # helper method for correctly populating op
-    def __getOp(self, options: "CompileOptions"):
+    def __get_op(self, options: "CompileOptions"):
         if not isinstance(self.startArg, Int):
             return Op.substring3
 
@@ -197,12 +197,12 @@ class SuffixExpr(Expr):
             return Op.substring3
 
     def __teal__(self, options: "CompileOptions"):
-        op = self.__getOp(options)
+        op = self.__get_op(options)
 
-        verifyTealVersion(
+        verifyProgramVersion(
             op.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(op),
+            "Program version too low to use op {}".format(op),
         )
 
         if op == Op.extract:
@@ -248,7 +248,7 @@ def Substring(string: Expr, start: Expr, end: Expr) -> Expr:
     This expression is similar to :any:`Extract`, except this expression uses start and end indexes,
     while :code:`Extract` uses a start index and length.
 
-    Requires TEAL version 2 or higher.
+    Requires program version 2 or higher.
 
     Args:
         string: The byte string.
@@ -273,7 +273,7 @@ def Extract(string: Expr, start: Expr, length: Expr) -> Expr:
     This expression is similar to :any:`Substring`, except this expression uses a start index and
     length, while :code:`Substring` uses start and end indexes.
 
-    Requires TEAL version 5 or higher.
+    Requires program version 5 or higher.
 
     Args:
         string: The byte string.
@@ -296,7 +296,7 @@ def Suffix(string: Expr, start: Expr) -> Expr:
     This expression is similar to :any:`Substring` and :any:`Extract`, except this expression only uses a
     start index.
 
-    Requires TEAL version 5 or higher.
+    Requires program version 5 or higher.
 
     Args:
         string: The byte string.
