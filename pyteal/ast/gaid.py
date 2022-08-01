@@ -21,9 +21,9 @@ class GeneratedID(LeafExpr):
 
         Args:
             txnIndex: The index of the transaction from which the created ID should be obtained.
-            This index may be a Python int, or it may be a PyTeal expression that evaluates at
-            runtime. If it's an expression, it must evaluate to a uint64. In all cases, the index
-            must be less than the index of the current transaction.
+                This index may be a Python int, or it may be a PyTeal expression that evaluates at runtime.
+                If it's an expression, it must evaluate to a uint64.
+                In all cases, the index must be less than the index of the current transaction.
         """
         super().__init__()
         if type(txnIndex) is int:
