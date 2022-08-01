@@ -1,6 +1,6 @@
 .. _versions:
 
-AVM Versions
+Versions
 =============
 
 Each version of PyTeal compiles contracts for a specific AVM version. Newer versions of the AVM
