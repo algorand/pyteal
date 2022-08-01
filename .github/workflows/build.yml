@@ -23,7 +23,7 @@ jobs:
       - name: Install python dependencies
         run: make setup-development
       - name: Build and Test
-        run: make build-and-test
+        run: make lint-and-test
 
   run-integration-tests:
     runs-on: ubuntu-20.04
@@ -63,8 +63,8 @@ jobs:
         run: make sandbox-dev-up
       - name: Install python dependencies
         run: make setup-development
-      - name: Build, Unit Tests and Integration Tests
-        run: make all-tests
+      - name: Integration Tests Only
+        run: make test-integration
       - name: Stop running images
         run: make sandbox-dev-stop
 

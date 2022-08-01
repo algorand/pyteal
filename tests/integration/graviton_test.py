@@ -4,31 +4,15 @@ from typing import Any, Dict
 
 import pytest
 
-from pyteal import (
-    Bytes,
-    Concat,
-    For,
-    If,
-    Int,
-    Mode,
-    ScratchVar,
-    Seq,
-    While,
-    Continue,
-    Return,
-    Subroutine,
-    SubroutineFnWrapper,
-    TealType,
-    compileTeal,
-)
+import pyteal as pt
 
 from tests.compile_asserts import assert_teal_as_expected
 from tests.blackbox import (
     Blackbox,
     BlackboxWrapper,
     algod_with_assertion,
-    blackbox_pyteal,
     mode_to_execution_mode,
+    PyTealDryRunExecutor,
 )
 
 from graviton.blackbox import (
@@ -55,15 +39,9 @@ SKIP_SCRATCH_ASSERTIONS = not STABLE_SLOT_GENERATION
 def wrap_compile_and_save(
     subr, mode, version, assemble_constants, test_name, case_name
 ):
-    is_app = mode == Mode.Application
+    is_app = mode == pt.Mode.Application
 
-    # 1. PyTeal program Expr generation
-    approval = blackbox_pyteal(subr, mode)
-
-    # 2. TEAL generation
-    teal = compileTeal(
-        approval(), mode, version=version, assembleConstants=assemble_constants
-    )
+    teal = PyTealDryRunExecutor(subr, mode).compile(version, assemble_constants)
     tealfile = f'{"app" if is_app else "lsig"}_{case_name}.teal'
 
     tealdir = GENERATED / test_name
@@ -73,7 +51,7 @@ def wrap_compile_and_save(
         f.write(teal)
 
     print(
-        f"""subroutine {case_name}@{mode} generated TEAL. 
+        f"""Subroutine {case_name}@{mode} generated TEAL. 
 saved to {tealpath}:
 -------
 {teal}
@@ -87,60 +65,60 @@ saved to {tealpath}:
 
 
 @Blackbox(input_types=[])
-@Subroutine(TealType.uint64)
+@pt.Subroutine(pt.TealType.uint64)
 def exp():
-    return Int(2) ** Int(10)
+    return pt.Int(2) ** pt.Int(10)
 
 
-@Blackbox(input_types=[TealType.uint64])
-@Subroutine(TealType.none)
-def square_byref(x: ScratchVar):
+@Blackbox(input_types=[pt.TealType.uint64])
+@pt.Subroutine(pt.TealType.none)
+def square_byref(x: pt.ScratchVar):
     return x.store(x.load() * x.load())
 
 
-@Blackbox(input_types=[TealType.uint64])
-@Subroutine(TealType.uint64)
+@Blackbox(input_types=[pt.TealType.uint64])
+@pt.Subroutine(pt.TealType.uint64)
 def square(x):
-    return x ** Int(2)
+    return x ** pt.Int(2)
 
 
-@Blackbox(input_types=[TealType.anytype, TealType.anytype])
-@Subroutine(TealType.none)
-def swap(x: ScratchVar, y: ScratchVar):
-    z = ScratchVar(TealType.anytype)
-    return Seq(
+@Blackbox(input_types=[pt.TealType.anytype, pt.TealType.anytype])
+@pt.Subroutine(pt.TealType.none)
+def swap(x: pt.ScratchVar, y: pt.ScratchVar):
+    z = pt.ScratchVar(pt.TealType.anytype)
+    return pt.Seq(
         z.store(x.load()),
         x.store(y.load()),
         y.store(z.load()),
     )
 
 
-@Blackbox(input_types=[TealType.bytes, TealType.uint64])
-@Subroutine(TealType.bytes)
-def string_mult(s: ScratchVar, n):
-    i = ScratchVar(TealType.uint64)
-    tmp = ScratchVar(TealType.bytes)
-    start = Seq(i.store(Int(1)), tmp.store(s.load()), s.store(Bytes("")))
-    step = i.store(i.load() + Int(1))
-    return Seq(
-        For(start, i.load() <= n, step).Do(s.store(Concat(s.load(), tmp.load()))),
+@Blackbox(input_types=[pt.TealType.bytes, pt.TealType.uint64])
+@pt.Subroutine(pt.TealType.bytes)
+def string_mult(s: pt.ScratchVar, n):
+    i = pt.ScratchVar(pt.TealType.uint64)
+    tmp = pt.ScratchVar(pt.TealType.bytes)
+    start = pt.Seq(i.store(pt.Int(1)), tmp.store(s.load()), s.store(pt.Bytes("")))
+    step = i.store(i.load() + pt.Int(1))
+    return pt.Seq(
+        pt.For(start, i.load() <= n, step).Do(s.store(pt.Concat(s.load(), tmp.load()))),
         s.load(),
     )
 
 
-@Blackbox(input_types=[TealType.uint64])
-@Subroutine(TealType.uint64)
+@Blackbox(input_types=[pt.TealType.uint64])
+@pt.Subroutine(pt.TealType.uint64)
 def oldfac(n):
-    return If(n < Int(2)).Then(Int(1)).Else(n * oldfac(n - Int(1)))
+    return pt.If(n < pt.Int(2)).Then(pt.Int(1)).Else(n * oldfac(n - pt.Int(1)))
 
 
-@Blackbox(input_types=[TealType.uint64])
-@Subroutine(TealType.uint64)
+@Blackbox(input_types=[pt.TealType.uint64])
+@pt.Subroutine(pt.TealType.uint64)
 def slow_fibonacci(n):
     return (
-        If(n <= Int(1))
+        pt.If(n <= pt.Int(1))
         .Then(n)
-        .Else(slow_fibonacci(n - Int(2)) + slow_fibonacci(n - Int(1)))
+        .Else(slow_fibonacci(n - pt.Int(2)) + slow_fibonacci(n - pt.Int(1)))
     )
 
 
@@ -174,7 +152,7 @@ def fib_cost(args):
     "subr, mode",
     product(
         [exp, square_byref, square, swap, string_mult, oldfac, slow_fibonacci],
-        [Mode.Application, Mode.Signature],
+        [pt.Mode.Application, pt.Mode.Signature],
     ),
 )
 def test_stable_teal_generation(subr, mode):
@@ -509,8 +487,8 @@ LOGICSIG_SCENARIOS = {
 
 
 def blackbox_test_runner(
-    subr: SubroutineFnWrapper,
-    mode: Mode,
+    subr: pt.SubroutineFnWrapper,
+    mode: pt.Mode,
     scenario: Dict[str, Any],
     version: int,
     assemble_constants: bool = True,
@@ -521,7 +499,7 @@ def blackbox_test_runner(
 
     # 0. Validations
     assert isinstance(subr, BlackboxWrapper), f"unexpected subr type {type(subr)}"
-    assert isinstance(mode, Mode)
+    assert isinstance(mode, pt.Mode)
 
     # 1. Compile to TEAL
     teal, _, tealfile = wrap_compile_and_save(
@@ -567,48 +545,39 @@ def blackbox_test_runner(
 
 @pytest.mark.parametrize("subr, scenario", APP_SCENARIOS.items())
 def test_blackbox_subroutines_as_apps(
-    subr: SubroutineFnWrapper,
+    subr: pt.SubroutineFnWrapper,
     scenario: Dict[str, Any],
 ):
-    blackbox_test_runner(subr, Mode.Application, scenario, 6)
+    blackbox_test_runner(subr, pt.Mode.Application, scenario, 6)
 
 
 @pytest.mark.parametrize("subr, scenario", LOGICSIG_SCENARIOS.items())
 def test_blackbox_subroutines_as_logic_sigs(
-    subr: SubroutineFnWrapper,
+    subr: pt.SubroutineFnWrapper,
     scenario: Dict[str, Any],
 ):
-    blackbox_test_runner(subr, Mode.Signature, scenario, 6)
+    blackbox_test_runner(subr, pt.Mode.Signature, scenario, 6)
 
 
 def blackbox_pyteal_example1():
     # Example 1: Using blackbox_pyteal for a simple test of both an app and logic sig:
-    from graviton.blackbox import DryRunEncoder, DryRunExecutor
+    from graviton.blackbox import DryRunEncoder
 
-    from pyteal import compileTeal, Int, Mode, Subroutine, TealType
-    from tests.blackbox import Blackbox, algod_with_assertion, blackbox_pyteal
+    from pyteal import Int, Mode, Subroutine, TealType
+    from tests.blackbox import Blackbox
 
     @Blackbox(input_types=[TealType.uint64])
     @Subroutine(TealType.uint64)
     def square(x):
         return x ** Int(2)
 
-    # create pyteal app and logic sig approvals:
-    approval_app = blackbox_pyteal(square, Mode.Application)
-    approval_lsig = blackbox_pyteal(square, Mode.Signature)
-
-    # compile the evaluated approvals to generate TEAL:
-    app_teal = compileTeal(approval_app(), Mode.Application, version=6)
-    lsig_teal = compileTeal(approval_lsig(), Mode.Signature, version=6)
-
     # provide args for evaluation (will compute x^2)
     x = 9
     args = [x]
 
     # evaluate the programs
-    algod = algod_with_assertion()
-    app_result = DryRunExecutor.dryrun_app(algod, app_teal, args)
-    lsig_result = DryRunExecutor.dryrun_logicsig(algod, lsig_teal, args)
+    app_result = PyTealDryRunExecutor(square, Mode.Application).dryrun(args)
+    lsig_result = PyTealDryRunExecutor(square, Mode.Signature).dryrun(args)
 
     # check to see that x^2 is at the top of the stack as expected
     assert app_result.stack_top() == x**2, app_result.report(
@@ -631,10 +600,9 @@ def blackbox_pyteal_example2():
     from pathlib import Path
     import random
 
-    from graviton.blackbox import DryRunExecutor, DryRunInspector
+    from graviton.blackbox import DryRunInspector
 
     from pyteal import (
-        compileTeal,
         For,
         If,
         Int,
@@ -646,7 +614,7 @@ def blackbox_pyteal_example2():
         TealType,
     )
 
-    from tests.blackbox import Blackbox, algod_with_assertion, blackbox_pyteal
+    from tests.blackbox import Blackbox
 
     # GCD via the Euclidean Algorithm (iterative version):
     @Blackbox(input_types=[TealType.uint64, TealType.uint64])
@@ -662,10 +630,6 @@ def blackbox_pyteal_example2():
         )
         return Seq(For(start, cond, step).Do(Seq()), a.load())
 
-    # create approval PyTeal and compile it to TEAL:
-    euclid_app = blackbox_pyteal(euclid, Mode.Application)
-    euclid_app_teal = compileTeal(euclid_app(), Mode.Application, version=6)
-
     # generate a report with 400 = 20*20 dry run rows:
     N = 20
     inputs = list(
@@ -675,11 +639,10 @@ def blackbox_pyteal_example2():
         )
     )
 
-    # execute the dry-run sequence:
-    algod = algod_with_assertion()
-
     # assert that each result is that same as what Python's math.gcd() computes
-    inspectors = DryRunExecutor.dryrun_app_on_sequence(algod, euclid_app_teal, inputs)
+    inspectors = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_on_sequence(
+        inputs
+    )
     for i, result in enumerate(inspectors):
         args = inputs[i]
         assert result.stack_top() == math.gcd(*args), result.report(
@@ -700,14 +663,13 @@ def blackbox_pyteal_example3():
 
     from graviton.blackbox import (
         DryRunEncoder,
-        DryRunExecutor,
         DryRunProperty as DRProp,
     )
     from graviton.invariant import Invariant
 
-    from pyteal import compileTeal, If, Int, Mod, Mode, Subroutine, TealType
+    from pyteal import If, Int, Mod, Mode, Subroutine, TealType
 
-    from tests.blackbox import Blackbox, algod_with_assertion, blackbox_pyteal
+    from tests.blackbox import Blackbox
 
     # avoid flaky tests just in case I was wrong about the stack height invariant...
     random.seed(42)
@@ -760,20 +722,162 @@ def blackbox_pyteal_example3():
             .Else(If(y == Int(0)).Then(x).Else(euclid(y, Mod(x, y))))
         )
 
-    # Generate PyTeal and TEAL for the recursive Euclidean algorithm:
-    euclid_app = blackbox_pyteal(euclid, Mode.Application)
-    euclid_app_teal = compileTeal(euclid_app(), Mode.Application, version=6)
-
     # Execute on the input sequence to get a dry-run inspectors:
-    algod = algod_with_assertion()
-    inspectors = DryRunExecutor.dryrun_app_on_sequence(algod, euclid_app_teal, inputs)
+    inspectors = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_on_sequence(
+        inputs
+    )
 
     # Assert that each invariant holds on the sequences of inputs and dry-runs:
     for property, predicate in predicates.items():
         Invariant(predicate).validates(property, inputs, inspectors)
 
 
+def blackbox_pyteal_example4():
+    # Example 4: Using PyTealDryRunExecutor to debug an ABIReturnSubroutine with an app, logic sig and csv report
+    from pathlib import Path
+    import random
+
+    from graviton.blackbox import DryRunInspector
+
+    from pyteal import (
+        abi,
+        ABIReturnSubroutine,
+        Expr,
+        For,
+        Int,
+        Mode,
+        ScratchVar,
+        Seq,
+        TealType,
+    )
+
+    from tests.blackbox import Blackbox, PyTealDryRunExecutor
+
+    # Sum a dynamic uint64 array
+    @Blackbox(input_types=[None])
+    @ABIReturnSubroutine
+    def abi_sum(toSum: abi.DynamicArray[abi.Uint64], *, output: abi.Uint64) -> Expr:
+        i = ScratchVar(TealType.uint64)
+        valueAtIndex = abi.Uint64()
+        return Seq(
+            output.set(0),
+            For(
+                i.store(Int(0)),
+                i.load() < toSum.length(),
+                i.store(i.load() + Int(1)),
+            ).Do(
+                Seq(
+                    toSum[i.load()].store_into(valueAtIndex),
+                    output.set(output.get() + valueAtIndex.get()),
+                )
+            ),
+        )
+
+    # instantiate PyTealDryRunExecutor objects for the app and lsig:
+    app_pytealer = PyTealDryRunExecutor(abi_sum, Mode.Application)
+    lsig_pytealer = PyTealDryRunExecutor(abi_sum, Mode.Signature)
+
+    # generate reports with the same random inputs (fix the randomness with a seed):
+    random.seed(42)
+
+    N = 50  # the number of dry runs for each experiment
+    choices = range(10_000)
+    inputs = []
+    for n in range(N):
+        inputs.append(tuple([random.sample(choices, n)]))
+
+    app_inspectors = app_pytealer.dryrun_on_sequence(inputs)
+
+    lsig_inspectors = lsig_pytealer.dryrun_on_sequence(inputs)
+
+    for i in range(N):
+        args = inputs[i]
+
+        app_inspector = app_inspectors[i]
+        lsig_inspector = lsig_inspectors[i]
+
+        def message(insp):
+            return insp.report(args, f"failed for {args}", row=i)
+
+        # the app should pass exactly when it's cost was within the 700 budget:
+        assert app_inspector.passed() == (app_inspector.cost() <= 700), message(
+            app_inspector
+        )
+        # the lsig always passes (never goes over budget):
+        assert lsig_inspector.passed(), message(lsig_inspector)
+
+        expected = sum(args[0])
+        actual4app = app_inspector.last_log()
+        assert expected == actual4app, message(app_inspector)
+
+        if i > 0:
+            assert expected in app_inspector.final_scratch().values(), message(
+                app_inspector
+            )
+            assert expected in lsig_inspector.final_scratch().values(), message(
+                lsig_inspector
+            )
+
+    def report(kind):
+        assert kind in ("app", "lsig")
+        insps = app_inspectors if kind == "app" else lsig_inspectors
+        csv_report = DryRunInspector.csv_report(inputs, insps)
+        with open(Path.cwd() / f"abi_sum_{kind}.csv", "w") as f:
+            f.write(csv_report)
+
+    report("app")
+    report("lsig")
+
+
+def blackbox_pyteal_example5():
+    from graviton.blackbox import DryRunEncoder
+
+    from pyteal import abi, Subroutine, TealType, Int, Mode
+    from tests.blackbox import Blackbox
+
+    @Blackbox([None])
+    @Subroutine(TealType.uint64)
+    def cubed(n: abi.Uint64):
+        return n.get() ** Int(3)
+
+    app_pytealer = PyTealDryRunExecutor(cubed, Mode.Application)
+    lsig_pytealer = PyTealDryRunExecutor(cubed, Mode.Signature)
+
+    inputs = [[i] for i in range(1, 11)]
+
+    app_inspect = app_pytealer.dryrun_on_sequence(inputs)
+    lsig_inspect = lsig_pytealer.dryrun_on_sequence(inputs)
+
+    for index, inspect in enumerate(app_inspect):
+        input_var = inputs[index][0]
+        assert inspect.stack_top() == input_var**3, inspect.report(
+            args=inputs[index], msg="stack_top() gave unexpected results from app"
+        )
+        assert inspect.last_log() == DryRunEncoder.hex(input_var**3), inspect.report(
+            args=inputs[index], msg="last_log() gave unexpected results from app"
+        )
+
+    for index, inspect in enumerate(lsig_inspect):
+        input_var = inputs[index][0]
+        assert inspect.stack_top() == input_var**3, inspect.report(
+            args=inputs[index], msg="stack_top() gave unexpected results from app"
+        )
+
+
 def blackbox_pyteal_while_continue_test():
+    from tests.blackbox import Blackbox
+    from pyteal import (
+        Continue,
+        Int,
+        Mode,
+        Return,
+        ScratchVar,
+        Seq,
+        Subroutine,
+        TealType,
+        While,
+    )
+
     @Blackbox(input_types=[TealType.uint64])
     @Subroutine(TealType.uint64)
     def while_continue_accumulation(n):
@@ -789,13 +893,11 @@ def blackbox_pyteal_while_continue_test():
             Return(i.load()),
         )
 
-    approval_lsig = blackbox_pyteal(while_continue_accumulation, Mode.Signature)
-    lsig_teal = compileTeal(approval_lsig(), Mode.Signature, version=6)
-    algod = algod_with_assertion()
-
     for x in range(30):
         args = [x]
-        lsig_result = DryRunExecutor.dryrun_logicsig(algod, lsig_teal, args)
+        lsig_result = PyTealDryRunExecutor(
+            while_continue_accumulation, Mode.Signature
+        ).dryrun(args)
         if x == 0:
             assert not lsig_result.passed()
         else:
@@ -812,6 +914,8 @@ def blackbox_pyteal_while_continue_test():
         blackbox_pyteal_example1,
         blackbox_pyteal_example2,
         blackbox_pyteal_example3,
+        blackbox_pyteal_example4,
+        blackbox_pyteal_example5,
         blackbox_pyteal_while_continue_test,
     ],
 )

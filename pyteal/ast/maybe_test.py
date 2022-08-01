@@ -3,6 +3,26 @@ import pyteal as pt
 options = pt.CompileOptions()
 
 
+def assert_MaybeValue_equality(
+    actual: pt.MaybeValue, expected: pt.MaybeValue, options: pt.CompileOptions
+):
+    actual_block, _ = actual.__teal__(options)
+    actual_block.addIncoming()
+    actual_block = pt.TealBlock.NormalizeBlocks(actual_block)
+
+    expected_block, _ = expected.__teal__(options)
+    expected_block.addIncoming()
+    expected_block = pt.TealBlock.NormalizeBlocks(expected_block)
+
+    with pt.TealComponent.Context.ignoreExprEquality(), pt.TealComponent.Context.ignoreScratchSlotEquality():
+        assert actual_block == expected_block
+
+    assert pt.TealBlock.MatchScratchSlotReferences(
+        pt.TealBlock.GetReferencedScratchSlots(actual_block),
+        pt.TealBlock.GetReferencedScratchSlots(expected_block),
+    )
+
+
 def test_maybe_value():
     ops = (
         pt.Op.app_global_get_ex,

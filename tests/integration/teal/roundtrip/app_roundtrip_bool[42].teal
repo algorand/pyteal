@@ -1,0 +1,469 @@
+#pragma version 6
+txna ApplicationArgs 0
+store 1
+load 1
+callsub roundtripper_2
+store 0
+byte 0x151f7c75
+load 0
+concat
+log
+int 1
+return
+
+// bool_comp
+boolcomp_0:
+store 50
+load 50
+!
+!
+!
+store 51
+load 51
+retsub
+
+// array_complement
+arraycomplement_1:
+store 6
+load 6
+int 0
+getbit
+store 8
+load 6
+int 1
+getbit
+store 9
+load 6
+int 2
+getbit
+store 10
+load 6
+int 3
+getbit
+store 11
+load 6
+int 4
+getbit
+store 12
+load 6
+int 5
+getbit
+store 13
+load 6
+int 6
+getbit
+store 14
+load 6
+int 7
+getbit
+store 15
+load 6
+int 8
+getbit
+store 16
+load 6
+int 9
+getbit
+store 17
+load 6
+int 10
+getbit
+store 18
+load 6
+int 11
+getbit
+store 19
+load 6
+int 12
+getbit
+store 20
+load 6
+int 13
+getbit
+store 21
+load 6
+int 14
+getbit
+store 22
+load 6
+int 15
+getbit
+store 23
+load 6
+int 16
+getbit
+store 24
+load 6
+int 17
+getbit
+store 25
+load 6
+int 18
+getbit
+store 26
+load 6
+int 19
+getbit
+store 27
+load 6
+int 20
+getbit
+store 28
+load 6
+int 21
+getbit
+store 29
+load 6
+int 22
+getbit
+store 30
+load 6
+int 23
+getbit
+store 31
+load 6
+int 24
+getbit
+store 32
+load 6
+int 25
+getbit
+store 33
+load 6
+int 26
+getbit
+store 34
+load 6
+int 27
+getbit
+store 35
+load 6
+int 28
+getbit
+store 36
+load 6
+int 29
+getbit
+store 37
+load 6
+int 30
+getbit
+store 38
+load 6
+int 31
+getbit
+store 39
+load 6
+int 32
+getbit
+store 40
+load 6
+int 33
+getbit
+store 41
+load 6
+int 34
+getbit
+store 42
+load 6
+int 35
+getbit
+store 43
+load 6
+int 36
+getbit
+store 44
+load 6
+int 37
+getbit
+store 45
+load 6
+int 38
+getbit
+store 46
+load 6
+int 39
+getbit
+store 47
+load 6
+int 40
+getbit
+store 48
+load 6
+int 41
+getbit
+store 49
+load 8
+callsub boolcomp_0
+store 8
+load 9
+callsub boolcomp_0
+store 9
+load 10
+callsub boolcomp_0
+store 10
+load 11
+callsub boolcomp_0
+store 11
+load 12
+callsub boolcomp_0
+store 12
+load 13
+callsub boolcomp_0
+store 13
+load 14
+callsub boolcomp_0
+store 14
+load 15
+callsub boolcomp_0
+store 15
+load 16
+callsub boolcomp_0
+store 16
+load 17
+callsub boolcomp_0
+store 17
+load 18
+callsub boolcomp_0
+store 18
+load 19
+callsub boolcomp_0
+store 19
+load 20
+callsub boolcomp_0
+store 20
+load 21
+callsub boolcomp_0
+store 21
+load 22
+callsub boolcomp_0
+store 22
+load 23
+callsub boolcomp_0
+store 23
+load 24
+callsub boolcomp_0
+store 24
+load 25
+callsub boolcomp_0
+store 25
+load 26
+callsub boolcomp_0
+store 26
+load 27
+callsub boolcomp_0
+store 27
+load 28
+callsub boolcomp_0
+store 28
+load 29
+callsub boolcomp_0
+store 29
+load 30
+callsub boolcomp_0
+store 30
+load 31
+callsub boolcomp_0
+store 31
+load 32
+callsub boolcomp_0
+store 32
+load 33
+callsub boolcomp_0
+store 33
+load 34
+callsub boolcomp_0
+store 34
+load 35
+callsub boolcomp_0
+store 35
+load 36
+callsub boolcomp_0
+store 36
+load 37
+callsub boolcomp_0
+store 37
+load 38
+callsub boolcomp_0
+store 38
+load 39
+callsub boolcomp_0
+store 39
+load 40
+callsub boolcomp_0
+store 40
+load 41
+callsub boolcomp_0
+store 41
+load 42
+callsub boolcomp_0
+store 42
+load 43
+callsub boolcomp_0
+store 43
+load 44
+callsub boolcomp_0
+store 44
+load 45
+callsub boolcomp_0
+store 45
+load 46
+callsub boolcomp_0
+store 46
+load 47
+callsub boolcomp_0
+store 47
+load 48
+callsub boolcomp_0
+store 48
+load 49
+callsub boolcomp_0
+store 49
+byte 0x000000000000
+int 0
+load 8
+setbit
+int 1
+load 9
+setbit
+int 2
+load 10
+setbit
+int 3
+load 11
+setbit
+int 4
+load 12
+setbit
+int 5
+load 13
+setbit
+int 6
+load 14
+setbit
+int 7
+load 15
+setbit
+int 8
+load 16
+setbit
+int 9
+load 17
+setbit
+int 10
+load 18
+setbit
+int 11
+load 19
+setbit
+int 12
+load 20
+setbit
+int 13
+load 21
+setbit
+int 14
+load 22
+setbit
+int 15
+load 23
+setbit
+int 16
+load 24
+setbit
+int 17
+load 25
+setbit
+int 18
+load 26
+setbit
+int 19
+load 27
+setbit
+int 20
+load 28
+setbit
+int 21
+load 29
+setbit
+int 22
+load 30
+setbit
+int 23
+load 31
+setbit
+int 24
+load 32
+setbit
+int 25
+load 33
+setbit
+int 26
+load 34
+setbit
+int 27
+load 35
+setbit
+int 28
+load 36
+setbit
+int 29
+load 37
+setbit
+int 30
+load 38
+setbit
+int 31
+load 39
+setbit
+int 32
+load 40
+setbit
+int 33
+load 41
+setbit
+int 34
+load 42
+setbit
+int 35
+load 43
+setbit
+int 36
+load 44
+setbit
+int 37
+load 45
+setbit
+int 38
+load 46
+setbit
+int 39
+load 47
+setbit
+int 40
+load 48
+setbit
+int 41
+load 49
+setbit
+store 7
+load 7
+retsub
+
+// round_tripper
+roundtripper_2:
+store 2
+load 2
+callsub arraycomplement_1
+store 4
+load 4
+callsub arraycomplement_1
+store 5
+load 2
+load 4
+concat
+load 5
+concat
+store 3
+load 3
+retsub

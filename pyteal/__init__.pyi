@@ -3,6 +3,7 @@
 
 from pyteal.ast import *
 from pyteal.ast import __all__ as ast_all
+from pyteal.pragma import pragma
 from pyteal.ir import *
 from pyteal.ir import __all__ as ir_all
 from pyteal.compiler import (
@@ -22,24 +23,36 @@ from pyteal.errors import (
     TealTypeError,
     TealInputError,
     TealCompileError,
+    TealPragmaError,
 )
-from pyteal.config import MAX_GROUP_SIZE, NUM_SLOTS
+from pyteal.config import (
+    MAX_GROUP_SIZE,
+    NUM_SLOTS,
+    RETURN_HASH_PREFIX,
+    METHOD_ARG_NUM_CUTOFF,
+)
 
 __all__ = [
+    "ABIReturnSubroutine",
     "AccountParam",
+    "AccountParamObject",
     "Add",
     "Addr",
     "And",
     "App",
     "AppField",
     "AppParam",
+    "AppParamObject",
     "Approve",
     "Arg",
     "Array",
     "Assert",
     "AssetHolding",
+    "AssetHoldingObject",
     "AssetParam",
+    "AssetParamObject",
     "Balance",
+    "BareCallActions",
     "Base64Decode",
     "BinaryExpr",
     "BitLen",
@@ -68,6 +81,7 @@ __all__ = [
     "BytesSqrt",
     "BytesXor",
     "BytesZero",
+    "CallConfig",
     "CompileOptions",
     "Concat",
     "Cond",
@@ -125,9 +139,11 @@ __all__ = [
     "MAX_GROUP_SIZE",
     "MAX_PROGRAM_VERSION",
     "MAX_TEAL_VERSION",
+    "METHOD_ARG_NUM_CUTOFF",
     "MIN_PROGRAM_VERSION",
     "MIN_TEAL_VERSION",
     "MaybeValue",
+    "MethodConfig",
     "MethodSignature",
     "MinBalance",
     "Minus",
@@ -141,15 +157,19 @@ __all__ = [
     "Nonce",
     "Not",
     "OnComplete",
+    "OnCompleteAction",
     "Op",
     "OpUp",
     "OpUpMode",
     "OptimizeOptions",
     "Or",
     "Pop",
+    "Pragma",
+    "RETURN_HASH_PREFIX",
     "Reject",
     "Replace",
     "Return",
+    "Router",
     "ScratchIndex",
     "ScratchLoad",
     "ScratchSlot",
@@ -180,6 +200,7 @@ __all__ = [
     "TealInternalError",
     "TealLabel",
     "TealOp",
+    "TealPragmaError",
     "TealSimpleBlock",
     "TealType",
     "TealTypeError",
@@ -196,5 +217,7 @@ __all__ = [
     "VrfVerify",
     "While",
     "WideRatio",
+    "abi",
     "compileTeal",
+    "pragma",
 ]

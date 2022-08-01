@@ -1,0 +1,22 @@
+#pragma version 6
+txna ApplicationArgs 0
+btoi
+store 3
+txna ApplicationArgs 1
+btoi
+store 4
+txna ApplicationArgs 2
+store 5
+load 3
+int 4
+load 5
+callsub fn3mixedargs0ret_0
+int 1
+return
+
+// fn_3mixed_args_0ret
+fn3mixedargs0ret_0:
+store 2
+store 1
+store 0
+retsub

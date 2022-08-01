@@ -1659,6 +1659,194 @@ retsub
     assert actual == expected
 
 
+def test_compile_subroutine_deferred_expr():
+    @pt.Subroutine(pt.TealType.none)
+    def deferredExample(value: pt.Expr) -> pt.Expr:
+        return pt.Seq(
+            pt.If(value == pt.Int(0)).Then(pt.Return()),
+            pt.If(value == pt.Int(1)).Then(pt.Approve()),
+            pt.If(value == pt.Int(2)).Then(pt.Reject()),
+            pt.If(value == pt.Int(3)).Then(pt.Err()),
+        )
+
+    program = pt.Seq(deferredExample(pt.Int(10)), pt.Approve())
+
+    expected_no_deferred = """#pragma version 6
+int 10
+callsub deferredExample_0
+int 1
+return
+
+// deferredExample
+deferredExample_0:
+store 0
+load 0
+int 0
+==
+bnz deferredExample_0_l7
+load 0
+int 1
+==
+bnz deferredExample_0_l6
+load 0
+int 2
+==
+bnz deferredExample_0_l5
+load 0
+int 3
+==
+bz deferredExample_0_l8
+err
+deferredExample_0_l5:
+int 0
+return
+deferredExample_0_l6:
+int 1
+return
+deferredExample_0_l7:
+retsub
+deferredExample_0_l8:
+retsub
+    """.strip()
+    actual_no_deferred = pt.compileTeal(
+        program, pt.Mode.Application, version=6, assembleConstants=False
+    )
+    assert actual_no_deferred == expected_no_deferred
+
+    # manually add deferred expression to SubroutineDefinition
+    declaration = deferredExample.subroutine.get_declaration()
+    declaration.deferred_expr = pt.Pop(pt.Bytes("deferred"))
+
+    expected_deferred = """#pragma version 6
+int 10
+callsub deferredExample_0
+int 1
+return
+
+// deferredExample
+deferredExample_0:
+store 0
+load 0
+int 0
+==
+bnz deferredExample_0_l7
+load 0
+int 1
+==
+bnz deferredExample_0_l6
+load 0
+int 2
+==
+bnz deferredExample_0_l5
+load 0
+int 3
+==
+bz deferredExample_0_l8
+err
+deferredExample_0_l5:
+int 0
+return
+deferredExample_0_l6:
+int 1
+return
+deferredExample_0_l7:
+byte "deferred"
+pop
+retsub
+deferredExample_0_l8:
+byte "deferred"
+pop
+retsub
+    """.strip()
+    actual_deferred = pt.compileTeal(
+        program, pt.Mode.Application, version=6, assembleConstants=False
+    )
+    assert actual_deferred == expected_deferred
+
+
+def test_compile_subroutine_deferred_expr_empty():
+    @pt.Subroutine(pt.TealType.none)
+    def empty() -> pt.Expr:
+        return pt.Return()
+
+    program = pt.Seq(empty(), pt.Approve())
+
+    expected_no_deferred = """#pragma version 6
+callsub empty_0
+int 1
+return
+
+// empty
+empty_0:
+retsub
+    """.strip()
+    actual_no_deferred = pt.compileTeal(
+        program, pt.Mode.Application, version=6, assembleConstants=False
+    )
+    assert actual_no_deferred == expected_no_deferred
+
+    # manually add deferred expression to SubroutineDefinition
+    declaration = empty.subroutine.get_declaration()
+    declaration.deferred_expr = pt.Pop(pt.Bytes("deferred"))
+
+    expected_deferred = """#pragma version 6
+callsub empty_0
+int 1
+return
+
+// empty
+empty_0:
+byte "deferred"
+pop
+retsub
+    """.strip()
+    actual_deferred = pt.compileTeal(
+        program, pt.Mode.Application, version=6, assembleConstants=False
+    )
+    assert actual_deferred == expected_deferred
+
+
+def test_compileSubroutine_deferred_block_malformed():
+    class BadRetsub(pt.Expr):
+        def type_of(self) -> pt.TealType:
+            return pt.TealType.none
+
+        def has_return(self) -> bool:
+            return True
+
+        def __str__(self) -> str:
+            return "(BadRetsub)"
+
+        def __teal__(
+            self, options: pt.CompileOptions
+        ) -> tuple[pt.TealBlock, pt.TealSimpleBlock]:
+            block = pt.TealSimpleBlock(
+                [
+                    pt.TealOp(self, pt.Op.int, 1),
+                    pt.TealOp(self, pt.Op.pop),
+                    pt.TealOp(self, pt.Op.retsub),
+                ]
+            )
+
+            return block, block
+
+    @pt.Subroutine(pt.TealType.none)
+    def bad() -> pt.Expr:
+        return BadRetsub()
+
+    program = pt.Seq(bad(), pt.Approve())
+
+    # manually add deferred expression to SubroutineDefinition
+    declaration = bad.subroutine.get_declaration()
+    declaration.deferred_expr = pt.Pop(pt.Bytes("deferred"))
+
+    with pytest.raises(
+        pt.TealInternalError,
+        match=r"^Expected retsub to be the only op in the block, but there are 3 ops$",
+    ):
+        pt.compileTeal(program, pt.Mode.Application, version=6, assembleConstants=False)
+
+
 def test_compile_wide_ratio():
     cases = (
         (
@@ -1816,3 +2004,1415 @@ return
             program, pt.Mode.Application, version=5, assembleConstants=False
         )
         assert actual == expected.strip()
+
+
+def test_compile_abi_subroutine_return():
+    @pt.ABIReturnSubroutine
+    def abi_sum(
+        toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64
+    ) -> pt.Expr:
+        i = pt.ScratchVar(pt.TealType.uint64)
+        valueAtIndex = pt.abi.Uint64()
+        return pt.Seq(
+            output.set(0),
+            pt.For(
+                i.store(pt.Int(0)),
+                i.load() < toSum.length(),
+                i.store(i.load() + pt.Int(1)),
+            ).Do(
+                pt.Seq(
+                    toSum[i.load()].store_into(valueAtIndex),
+                    output.set(output.get() + valueAtIndex.get()),
+                )
+            ),
+        )
+
+    program = pt.Seq(
+        (to_sum_arr := pt.abi.make(pt.abi.DynamicArray[pt.abi.Uint64])).decode(
+            pt.Txn.application_args[1]
+        ),
+        (res := pt.abi.Uint64()).set(abi_sum(to_sum_arr)),
+        pt.abi.MethodReturn(res),
+        pt.Approve(),
+    )
+
+    expected_sum = """#pragma version 6
+txna ApplicationArgs 1
+store 0
+load 0
+callsub abisum_0
+store 1
+byte 0x151f7c75
+load 1
+itob
+concat
+log
+int 1
+return
+
+// abi_sum
+abisum_0:
+store 2
+int 0
+store 3
+int 0
+store 4
+abisum_0_l1:
+load 4
+load 2
+int 0
+extract_uint16
+store 6
+load 6
+<
+bz abisum_0_l3
+load 2
+int 8
+load 4
+*
+int 2
++
+extract_uint64
+store 5
+load 3
+load 5
++
+store 3
+load 4
+int 1
++
+store 4
+b abisum_0_l1
+abisum_0_l3:
+load 3
+retsub
+    """.strip()
+
+    actual_sum = pt.compileTeal(program, pt.Mode.Application, version=6)
+    assert expected_sum == actual_sum
+
+    @pt.ABIReturnSubroutine
+    def conditional_factorial(
+        _factor: pt.abi.Uint64, *, output: pt.abi.Uint64
+    ) -> pt.Expr:
+        i = pt.ScratchVar(pt.TealType.uint64)
+
+        return pt.Seq(
+            output.set(1),
+            pt.If(_factor.get() <= pt.Int(1))
+            .Then(pt.Return())
+            .Else(
+                pt.For(
+                    i.store(_factor.get()),
+                    i.load() > pt.Int(1),
+                    i.store(i.load() - pt.Int(1)),
+                ).Do(output.set(output.get() * i.load())),
+            ),
+        )
+
+    program_cond_factorial = pt.Seq(
+        (factor := pt.abi.Uint64()).decode(pt.Txn.application_args[1]),
+        (res := pt.abi.Uint64()).set(conditional_factorial(factor)),
+        pt.abi.MethodReturn(res),
+        pt.Approve(),
+    )
+
+    expected_conditional_factorial = """#pragma version 6
+txna ApplicationArgs 1
+btoi
+store 0
+load 0
+callsub conditionalfactorial_0
+store 1
+byte 0x151f7c75
+load 1
+itob
+concat
+log
+int 1
+return
+
+// conditional_factorial
+conditionalfactorial_0:
+store 2
+int 1
+store 3
+load 2
+int 1
+<=
+bnz conditionalfactorial_0_l4
+load 2
+store 4
+conditionalfactorial_0_l2:
+load 4
+int 1
+>
+bz conditionalfactorial_0_l5
+load 3
+load 4
+*
+store 3
+load 4
+int 1
+-
+store 4
+b conditionalfactorial_0_l2
+conditionalfactorial_0_l4:
+load 3
+retsub
+conditionalfactorial_0_l5:
+load 3
+retsub
+    """.strip()
+
+    actual_conditional_factorial = pt.compileTeal(
+        program_cond_factorial, pt.Mode.Application, version=6
+    )
+    assert actual_conditional_factorial == expected_conditional_factorial
+
+    @pt.ABIReturnSubroutine
+    def load_b4_set(*, output: pt.abi.Bool):
+        return pt.Return()
+
+    program_load_b4_set_broken = pt.Seq(
+        (_ := pt.abi.Bool()).set(load_b4_set()), pt.Approve()
+    )
+
+    with pytest.raises(pt.TealInternalError):
+        pt.compileTeal(program_load_b4_set_broken, pt.Mode.Application, version=6)
+
+    @pt.ABIReturnSubroutine
+    def access_b4_store(magic_num: pt.abi.Uint64, *, output: pt.abi.Uint64):
+        return pt.Seq(output.set(output.get() ^ magic_num.get()))
+
+    program_access_b4_store_broken = pt.Seq(
+        (other_party_magic := pt.abi.Uint64()).decode(pt.Txn.application_args[1]),
+        (_ := pt.abi.Uint64()).set(access_b4_store(other_party_magic)),
+        pt.Approve(),
+    )
+
+    with pytest.raises(pt.TealInternalError):
+        pt.compileTeal(program_access_b4_store_broken, pt.Mode.Application, version=6)
+
+
+def test_router_app():
+    def add_methods_to_router(router: pt.Router):
+        @pt.ABIReturnSubroutine
+        def add(
+            a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
+        ) -> pt.Expr:
+            return output.set(a.get() + b.get())
+
+        meth = router.add_method_handler(add)
+        assert meth.method_signature() == "add(uint64,uint64)uint64"
+
+        @pt.ABIReturnSubroutine
+        def sub(
+            a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
+        ) -> pt.Expr:
+            return output.set(a.get() - b.get())
+
+        meth = router.add_method_handler(sub)
+        assert meth.method_signature() == "sub(uint64,uint64)uint64"
+
+        @pt.ABIReturnSubroutine
+        def mul(
+            a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
+        ) -> pt.Expr:
+            return output.set(a.get() * b.get())
+
+        meth = router.add_method_handler(mul)
+        assert meth.method_signature() == "mul(uint64,uint64)uint64"
+
+        @pt.ABIReturnSubroutine
+        def div(
+            a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
+        ) -> pt.Expr:
+            return output.set(a.get() / b.get())
+
+        meth = router.add_method_handler(div)
+        assert meth.method_signature() == "div(uint64,uint64)uint64"
+
+        @pt.ABIReturnSubroutine
+        def mod(
+            a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
+        ) -> pt.Expr:
+            return output.set(a.get() % b.get())
+
+        meth = router.add_method_handler(mod)
+        assert meth.method_signature() == "mod(uint64,uint64)uint64"
+
+        @pt.ABIReturnSubroutine
+        def all_laid_to_args(
+            _a: pt.abi.Uint64,
+            _b: pt.abi.Uint64,
+            _c: pt.abi.Uint64,
+            _d: pt.abi.Uint64,
+            _e: pt.abi.Uint64,
+            _f: pt.abi.Uint64,
+            _g: pt.abi.Uint64,
+            _h: pt.abi.Uint64,
+            _i: pt.abi.Uint64,
+            _j: pt.abi.Uint64,
+            _k: pt.abi.Uint64,
+            _l: pt.abi.Uint64,
+            _m: pt.abi.Uint64,
+            _n: pt.abi.Uint64,
+            _o: pt.abi.Uint64,
+            _p: pt.abi.Uint64,
+            *,
+            output: pt.abi.Uint64,
+        ):
+            return output.set(
+                _a.get()
+                + _b.get()
+                + _c.get()
+                + _d.get()
+                + _e.get()
+                + _f.get()
+                + _g.get()
+                + _h.get()
+                + _i.get()
+                + _j.get()
+                + _k.get()
+                + _l.get()
+                + _m.get()
+                + _n.get()
+                + _o.get()
+                + _p.get()
+            )
+
+        meth = router.add_method_handler(all_laid_to_args)
+        assert (
+            meth.method_signature()
+            == "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
+        )
+
+        @pt.ABIReturnSubroutine
+        def empty_return_subroutine() -> pt.Expr:
+            return pt.Log(pt.Bytes("appear in both approval and clear state"))
+
+        meth = router.add_method_handler(
+            empty_return_subroutine,
+            method_config=pt.MethodConfig(
+                no_op=pt.CallConfig.CALL,
+                opt_in=pt.CallConfig.ALL,
+                clear_state=pt.CallConfig.CALL,
+            ),
+        )
+        assert meth.method_signature() == "empty_return_subroutine()void"
+
+        @pt.ABIReturnSubroutine
+        def log_1(*, output: pt.abi.Uint64) -> pt.Expr:
+            return output.set(1)
+
+        meth = router.add_method_handler(
+            log_1,
+            method_config=pt.MethodConfig(
+                no_op=pt.CallConfig.CALL,
+                opt_in=pt.CallConfig.CALL,
+                clear_state=pt.CallConfig.CALL,
+            ),
+        )
+
+        assert meth.method_signature() == "log_1()uint64"
+
+        @pt.ABIReturnSubroutine
+        def log_creation(*, output: pt.abi.String) -> pt.Expr:
+            return output.set("logging creation")
+
+        meth = router.add_method_handler(
+            log_creation, method_config=pt.MethodConfig(no_op=pt.CallConfig.CREATE)
+        )
+        assert meth.method_signature() == "log_creation()string"
+
+        @pt.ABIReturnSubroutine
+        def approve_if_odd(condition_encoding: pt.abi.Uint32) -> pt.Expr:
+            return (
+                pt.If(condition_encoding.get() % pt.Int(2))
+                .Then(pt.Approve())
+                .Else(pt.Reject())
+            )
+
+        meth = router.add_method_handler(
+            approve_if_odd,
+            method_config=pt.MethodConfig(
+                no_op=pt.CallConfig.NEVER, clear_state=pt.CallConfig.CALL
+            ),
+        )
+        assert meth.method_signature() == "approve_if_odd(uint32)void"
+
+    on_completion_actions = pt.BareCallActions(
+        opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes("optin call"))),
+        clear_state=pt.OnCompleteAction.call_only(pt.Approve()),
+    )
+
+    _router_with_oc = pt.Router(
+        "ASimpleQuestionablyRobustContract", on_completion_actions
+    )
+    add_methods_to_router(_router_with_oc)
+    (
+        actual_ap_with_oc_compiled,
+        actual_csp_with_oc_compiled,
+        _,
+    ) = _router_with_oc.compile_program(version=6)
+
+    expected_ap_with_oc = """#pragma version 6
+txn NumAppArgs
+int 0
+==
+bnz main_l20
+txna ApplicationArgs 0
+method "add(uint64,uint64)uint64"
+==
+bnz main_l19
+txna ApplicationArgs 0
+method "sub(uint64,uint64)uint64"
+==
+bnz main_l18
+txna ApplicationArgs 0
+method "mul(uint64,uint64)uint64"
+==
+bnz main_l17
+txna ApplicationArgs 0
+method "div(uint64,uint64)uint64"
+==
+bnz main_l16
+txna ApplicationArgs 0
+method "mod(uint64,uint64)uint64"
+==
+bnz main_l15
+txna ApplicationArgs 0
+method "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
+==
+bnz main_l14
+txna ApplicationArgs 0
+method "empty_return_subroutine()void"
+==
+bnz main_l13
+txna ApplicationArgs 0
+method "log_1()uint64"
+==
+bnz main_l12
+txna ApplicationArgs 0
+method "log_creation()string"
+==
+bnz main_l11
+err
+main_l11:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+==
+&&
+assert
+callsub logcreation_8
+store 67
+byte 0x151f7c75
+load 67
+concat
+log
+int 1
+return
+main_l12:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+txn OnCompletion
+int OptIn
+==
+txn ApplicationID
+int 0
+!=
+&&
+||
+assert
+callsub log1_7
+store 65
+byte 0x151f7c75
+load 65
+itob
+concat
+log
+int 1
+return
+main_l13:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+txn OnCompletion
+int OptIn
+==
+||
+assert
+callsub emptyreturnsubroutine_6
+int 1
+return
+main_l14:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+store 30
+txna ApplicationArgs 2
+btoi
+store 31
+txna ApplicationArgs 3
+btoi
+store 32
+txna ApplicationArgs 4
+btoi
+store 33
+txna ApplicationArgs 5
+btoi
+store 34
+txna ApplicationArgs 6
+btoi
+store 35
+txna ApplicationArgs 7
+btoi
+store 36
+txna ApplicationArgs 8
+btoi
+store 37
+txna ApplicationArgs 9
+btoi
+store 38
+txna ApplicationArgs 10
+btoi
+store 39
+txna ApplicationArgs 11
+btoi
+store 40
+txna ApplicationArgs 12
+btoi
+store 41
+txna ApplicationArgs 13
+btoi
+store 42
+txna ApplicationArgs 14
+btoi
+store 43
+txna ApplicationArgs 15
+store 46
+load 46
+int 0
+extract_uint64
+store 44
+load 46
+int 8
+extract_uint64
+store 45
+load 30
+load 31
+load 32
+load 33
+load 34
+load 35
+load 36
+load 37
+load 38
+load 39
+load 40
+load 41
+load 42
+load 43
+load 44
+load 45
+callsub alllaidtoargs_5
+store 47
+byte 0x151f7c75
+load 47
+itob
+concat
+log
+int 1
+return
+main_l15:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+store 24
+txna ApplicationArgs 2
+btoi
+store 25
+load 24
+load 25
+callsub mod_4
+store 26
+byte 0x151f7c75
+load 26
+itob
+concat
+log
+int 1
+return
+main_l16:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+store 18
+txna ApplicationArgs 2
+btoi
+store 19
+load 18
+load 19
+callsub div_3
+store 20
+byte 0x151f7c75
+load 20
+itob
+concat
+log
+int 1
+return
+main_l17:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+store 12
+txna ApplicationArgs 2
+btoi
+store 13
+load 12
+load 13
+callsub mul_2
+store 14
+byte 0x151f7c75
+load 14
+itob
+concat
+log
+int 1
+return
+main_l18:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+store 6
+txna ApplicationArgs 2
+btoi
+store 7
+load 6
+load 7
+callsub sub_1
+store 8
+byte 0x151f7c75
+load 8
+itob
+concat
+log
+int 1
+return
+main_l19:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+store 0
+txna ApplicationArgs 2
+btoi
+store 1
+load 0
+load 1
+callsub add_0
+store 2
+byte 0x151f7c75
+load 2
+itob
+concat
+log
+int 1
+return
+main_l20:
+txn OnCompletion
+int OptIn
+==
+bnz main_l22
+err
+main_l22:
+txn ApplicationID
+int 0
+!=
+assert
+byte "optin call"
+log
+int 1
+return
+
+// add
+add_0:
+store 4
+store 3
+load 3
+load 4
++
+store 5
+load 5
+retsub
+
+// sub
+sub_1:
+store 10
+store 9
+load 9
+load 10
+-
+store 11
+load 11
+retsub
+
+// mul
+mul_2:
+store 16
+store 15
+load 15
+load 16
+*
+store 17
+load 17
+retsub
+
+// div
+div_3:
+store 22
+store 21
+load 21
+load 22
+/
+store 23
+load 23
+retsub
+
+// mod
+mod_4:
+store 28
+store 27
+load 27
+load 28
+%
+store 29
+load 29
+retsub
+
+// all_laid_to_args
+alllaidtoargs_5:
+store 63
+store 62
+store 61
+store 60
+store 59
+store 58
+store 57
+store 56
+store 55
+store 54
+store 53
+store 52
+store 51
+store 50
+store 49
+store 48
+load 48
+load 49
++
+load 50
++
+load 51
++
+load 52
++
+load 53
++
+load 54
++
+load 55
++
+load 56
++
+load 57
++
+load 58
++
+load 59
++
+load 60
++
+load 61
++
+load 62
++
+load 63
++
+store 64
+load 64
+retsub
+
+// empty_return_subroutine
+emptyreturnsubroutine_6:
+byte "appear in both approval and clear state"
+log
+retsub
+
+// log_1
+log1_7:
+int 1
+store 66
+load 66
+retsub
+
+// log_creation
+logcreation_8:
+byte "logging creation"
+len
+itob
+extract 6 0
+byte "logging creation"
+concat
+store 68
+load 68
+retsub""".strip()
+
+    assert expected_ap_with_oc == actual_ap_with_oc_compiled
+
+    expected_csp_with_oc = """#pragma version 6
+txn NumAppArgs
+int 0
+==
+bnz main_l8
+txna ApplicationArgs 0
+method "empty_return_subroutine()void"
+==
+bnz main_l7
+txna ApplicationArgs 0
+method "log_1()uint64"
+==
+bnz main_l6
+txna ApplicationArgs 0
+method "approve_if_odd(uint32)void"
+==
+bnz main_l5
+err
+main_l5:
+txna ApplicationArgs 1
+int 0
+extract_uint32
+store 2
+load 2
+callsub approveifodd_2
+int 1
+return
+main_l6:
+callsub log1_1
+store 1
+byte 0x151f7c75
+load 1
+itob
+concat
+log
+int 1
+return
+main_l7:
+callsub emptyreturnsubroutine_0
+int 1
+return
+main_l8:
+int 1
+return
+
+// empty_return_subroutine
+emptyreturnsubroutine_0:
+byte "appear in both approval and clear state"
+log
+retsub
+
+// log_1
+log1_1:
+int 1
+store 0
+load 0
+retsub
+
+// approve_if_odd
+approveifodd_2:
+store 3
+load 3
+int 2
+%
+bnz approveifodd_2_l2
+int 0
+return
+approveifodd_2_l2:
+int 1
+return""".strip()
+    assert expected_csp_with_oc == actual_csp_with_oc_compiled
+
+    _router_without_oc = pt.Router("yetAnotherContractConstructedFromRouter")
+    add_methods_to_router(_router_without_oc)
+    (
+        actual_ap_without_oc_compiled,
+        actual_csp_without_oc_compiled,
+        _,
+    ) = _router_without_oc.compile_program(version=6)
+    expected_ap_without_oc = """#pragma version 6
+txna ApplicationArgs 0
+method "add(uint64,uint64)uint64"
+==
+bnz main_l18
+txna ApplicationArgs 0
+method "sub(uint64,uint64)uint64"
+==
+bnz main_l17
+txna ApplicationArgs 0
+method "mul(uint64,uint64)uint64"
+==
+bnz main_l16
+txna ApplicationArgs 0
+method "div(uint64,uint64)uint64"
+==
+bnz main_l15
+txna ApplicationArgs 0
+method "mod(uint64,uint64)uint64"
+==
+bnz main_l14
+txna ApplicationArgs 0
+method "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
+==
+bnz main_l13
+txna ApplicationArgs 0
+method "empty_return_subroutine()void"
+==
+bnz main_l12
+txna ApplicationArgs 0
+method "log_1()uint64"
+==
+bnz main_l11
+txna ApplicationArgs 0
+method "log_creation()string"
+==
+bnz main_l10
+err
+main_l10:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+==
+&&
+assert
+callsub logcreation_8
+store 67
+byte 0x151f7c75
+load 67
+concat
+log
+int 1
+return
+main_l11:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+txn OnCompletion
+int OptIn
+==
+txn ApplicationID
+int 0
+!=
+&&
+||
+assert
+callsub log1_7
+store 65
+byte 0x151f7c75
+load 65
+itob
+concat
+log
+int 1
+return
+main_l12:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+txn OnCompletion
+int OptIn
+==
+||
+assert
+callsub emptyreturnsubroutine_6
+int 1
+return
+main_l13:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+store 30
+txna ApplicationArgs 2
+btoi
+store 31
+txna ApplicationArgs 3
+btoi
+store 32
+txna ApplicationArgs 4
+btoi
+store 33
+txna ApplicationArgs 5
+btoi
+store 34
+txna ApplicationArgs 6
+btoi
+store 35
+txna ApplicationArgs 7
+btoi
+store 36
+txna ApplicationArgs 8
+btoi
+store 37
+txna ApplicationArgs 9
+btoi
+store 38
+txna ApplicationArgs 10
+btoi
+store 39
+txna ApplicationArgs 11
+btoi
+store 40
+txna ApplicationArgs 12
+btoi
+store 41
+txna ApplicationArgs 13
+btoi
+store 42
+txna ApplicationArgs 14
+btoi
+store 43
+txna ApplicationArgs 15
+store 46
+load 46
+int 0
+extract_uint64
+store 44
+load 46
+int 8
+extract_uint64
+store 45
+load 30
+load 31
+load 32
+load 33
+load 34
+load 35
+load 36
+load 37
+load 38
+load 39
+load 40
+load 41
+load 42
+load 43
+load 44
+load 45
+callsub alllaidtoargs_5
+store 47
+byte 0x151f7c75
+load 47
+itob
+concat
+log
+int 1
+return
+main_l14:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+store 24
+txna ApplicationArgs 2
+btoi
+store 25
+load 24
+load 25
+callsub mod_4
+store 26
+byte 0x151f7c75
+load 26
+itob
+concat
+log
+int 1
+return
+main_l15:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+store 18
+txna ApplicationArgs 2
+btoi
+store 19
+load 18
+load 19
+callsub div_3
+store 20
+byte 0x151f7c75
+load 20
+itob
+concat
+log
+int 1
+return
+main_l16:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+store 12
+txna ApplicationArgs 2
+btoi
+store 13
+load 12
+load 13
+callsub mul_2
+store 14
+byte 0x151f7c75
+load 14
+itob
+concat
+log
+int 1
+return
+main_l17:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+store 6
+txna ApplicationArgs 2
+btoi
+store 7
+load 6
+load 7
+callsub sub_1
+store 8
+byte 0x151f7c75
+load 8
+itob
+concat
+log
+int 1
+return
+main_l18:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+store 0
+txna ApplicationArgs 2
+btoi
+store 1
+load 0
+load 1
+callsub add_0
+store 2
+byte 0x151f7c75
+load 2
+itob
+concat
+log
+int 1
+return
+
+// add
+add_0:
+store 4
+store 3
+load 3
+load 4
++
+store 5
+load 5
+retsub
+
+// sub
+sub_1:
+store 10
+store 9
+load 9
+load 10
+-
+store 11
+load 11
+retsub
+
+// mul
+mul_2:
+store 16
+store 15
+load 15
+load 16
+*
+store 17
+load 17
+retsub
+
+// div
+div_3:
+store 22
+store 21
+load 21
+load 22
+/
+store 23
+load 23
+retsub
+
+// mod
+mod_4:
+store 28
+store 27
+load 27
+load 28
+%
+store 29
+load 29
+retsub
+
+// all_laid_to_args
+alllaidtoargs_5:
+store 63
+store 62
+store 61
+store 60
+store 59
+store 58
+store 57
+store 56
+store 55
+store 54
+store 53
+store 52
+store 51
+store 50
+store 49
+store 48
+load 48
+load 49
++
+load 50
++
+load 51
++
+load 52
++
+load 53
++
+load 54
++
+load 55
++
+load 56
++
+load 57
++
+load 58
++
+load 59
++
+load 60
++
+load 61
++
+load 62
++
+load 63
++
+store 64
+load 64
+retsub
+
+// empty_return_subroutine
+emptyreturnsubroutine_6:
+byte "appear in both approval and clear state"
+log
+retsub
+
+// log_1
+log1_7:
+int 1
+store 66
+load 66
+retsub
+
+// log_creation
+logcreation_8:
+byte "logging creation"
+len
+itob
+extract 6 0
+byte "logging creation"
+concat
+store 68
+load 68
+retsub""".strip()
+    assert actual_ap_without_oc_compiled == expected_ap_without_oc
+
+    expected_csp_without_oc = """#pragma version 6
+txna ApplicationArgs 0
+method "empty_return_subroutine()void"
+==
+bnz main_l6
+txna ApplicationArgs 0
+method "log_1()uint64"
+==
+bnz main_l5
+txna ApplicationArgs 0
+method "approve_if_odd(uint32)void"
+==
+bnz main_l4
+err
+main_l4:
+txna ApplicationArgs 1
+int 0
+extract_uint32
+store 2
+load 2
+callsub approveifodd_2
+int 1
+return
+main_l5:
+callsub log1_1
+store 1
+byte 0x151f7c75
+load 1
+itob
+concat
+log
+int 1
+return
+main_l6:
+callsub emptyreturnsubroutine_0
+int 1
+return
+
+// empty_return_subroutine
+emptyreturnsubroutine_0:
+byte "appear in both approval and clear state"
+log
+retsub
+
+// log_1
+log1_1:
+int 1
+store 0
+load 0
+retsub
+
+// approve_if_odd
+approveifodd_2:
+store 3
+load 3
+int 2
+%
+bnz approveifodd_2_l2
+int 0
+return
+approveifodd_2_l2:
+int 1
+return""".strip()
+    assert actual_csp_without_oc_compiled == expected_csp_without_oc
