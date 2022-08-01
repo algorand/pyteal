@@ -2,7 +2,7 @@ from typing import cast, Union, TYPE_CHECKING
 
 from pyteal.types import TealType, require_type
 from pyteal.ir import TealOp, Op, TealBlock
-from pyteal.errors import TealInputError, verifyTealVersion
+from pyteal.errors import TealInputError, verifyProgramVersion
 from pyteal.config import MAX_GROUP_SIZE
 from pyteal.ast.expr import Expr
 from pyteal.ast.leafexpr import LeafExpr
@@ -17,7 +17,7 @@ class GeneratedID(LeafExpr):
     def __init__(self, txnIndex: Union[int, Expr]) -> None:
         """Create an expression to extract the created ID from a transaction in the current group.
 
-        Requires TEAL version 4 or higher. This operation is only permitted in application mode.
+        Requires program version 4 or higher. This operation is only permitted in application mode.
 
         Args:
             txnIndex: The index of the transaction from which the created ID should be obtained.
@@ -41,10 +41,10 @@ class GeneratedID(LeafExpr):
         return "(Gaid {})".format(self.txnIndex)
 
     def __teal__(self, options: "CompileOptions"):
-        verifyTealVersion(
+        verifyProgramVersion(
             Op.gaid.min_version,
             options.version,
-            "TEAL version too low to use Gaid expression",
+            "Program version too low to use Gaid expression",
         )
 
         if type(self.txnIndex) is int:

@@ -20,6 +20,7 @@ from pyteal.ast.txn import (
     Txn,
 )
 from pyteal.ast.gtxn import GtxnExpr, GtxnaExpr, TxnGroup, Gtxn
+from pyteal.ast.block import Block, BlockField
 from pyteal.ast.gaid import GeneratedID
 from pyteal.ast.gitxn import Gitxn, GitxnExpr, GitxnaExpr, InnerTxnGroup
 from pyteal.ast.gload import ImportScratchValue
@@ -51,6 +52,7 @@ from pyteal.ast.unaryexpr import (
     BitLen,
     Sha256,
     Sha512_256,
+    Sha3_256,
     Keccak256,
     Not,
     BitwiseNot,
@@ -102,10 +104,23 @@ from pyteal.ast.binaryexpr import (
     ExtractUint32,
     ExtractUint64,
 )
+from pyteal.ast.base64decode import Base64Decode, Base64Encoding
 
 # ternary ops
-from pyteal.ast.ternaryexpr import TernaryExpr, Divw, Ed25519Verify, SetBit, SetByte
+from pyteal.ast.ternaryexpr import (
+    TernaryExpr,
+    Divw,
+    Ed25519Verify,
+    Ed25519Verify_Bare,
+    SetBit,
+    SetByte,
+)
 from pyteal.ast.substring import Substring, Extract, Suffix
+from pyteal.ast.replace import Replace
+from pyteal.ast.jsonref import JsonRef, JsonRefType
+
+# quaternary ops
+from pyteal.ast.vrfverify import VrfVerify, VrfVerifyStandard
 
 # more ops
 from pyteal.ast.naryexpr import NaryExpr, Add, And, Mul, Or, Concat
@@ -176,6 +191,8 @@ __all__ = [
     "GtxnaExpr",
     "TxnGroup",
     "Gtxn",
+    "Block",
+    "BlockField",
     "GeneratedID",
     "ImportScratchValue",
     "Global",
@@ -209,6 +226,7 @@ __all__ = [
     "BitLen",
     "Sha256",
     "Sha512_256",
+    "Sha3_256",
     "Keccak256",
     "Not",
     "BitwiseNot",
@@ -239,6 +257,7 @@ __all__ = [
     "GetBit",
     "GetByte",
     "Ed25519Verify",
+    "Ed25519Verify_Bare",
     "Substring",
     "Extract",
     "Suffix",
@@ -295,6 +314,9 @@ __all__ = [
     "ExtractUint16",
     "ExtractUint32",
     "ExtractUint64",
+    "Replace",
+    "Base64Decode",
+    "Base64Encoding",
     "Log",
     "While",
     "For",
@@ -310,4 +332,8 @@ __all__ = [
     "EcdsaVerify",
     "EcdsaDecompress",
     "EcdsaRecover",
+    "JsonRef",
+    "JsonRefType",
+    "VrfVerify",
+    "VrfVerifyStandard",
 ]

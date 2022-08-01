@@ -89,7 +89,7 @@ class Global(LeafExpr):
 
     @classmethod
     def logic_sig_version(cls) -> "Global":
-        """Get the maximum supported TEAL version."""
+        """Get the maximum supported program version."""
         return cls(GlobalField.logic_sig_version)
 
     @classmethod
@@ -115,14 +115,14 @@ class Global(LeafExpr):
     def creator_address(cls) -> "Global":
         """Address of the creator of the current application.
 
-        Fails during Signature mode. Requires TEAL version 3 or higher."""
+        Fails during Signature mode. Requires program version 3 or higher."""
         return cls(GlobalField.creator_address)
 
     @classmethod
     def current_application_address(cls) -> "Global":
         """Get the address of that the current application controls.
 
-        Fails during Signature mode. Requires TEAL version 5 or higher."""
+        Fails during Signature mode. Requires program version 5 or higher."""
         return cls(GlobalField.current_app_address)
 
     @classmethod
@@ -131,14 +131,14 @@ class Global(LeafExpr):
 
         If the current transaction is not part of a group, this will return 32 zero bytes.
 
-        Requires TEAL version 5 or higher."""
+        Requires program version 5 or higher."""
         return cls(GlobalField.group_id)
 
     @classmethod
     def opcode_budget(cls) -> "Global":
         """Get the remaining opcode execution budget
 
-        Requires TEAL version 6 or higher."""
+        Requires program version 6 or higher."""
         return cls(GlobalField.opcode_budget)
 
     @classmethod
@@ -147,7 +147,7 @@ class Global(LeafExpr):
 
         If not called from another app, this will return 0
 
-        Requires TEAL version 6 or higher."""
+        Requires program version 6 or higher."""
         return cls(GlobalField.caller_app_id)
 
     @classmethod
@@ -156,7 +156,7 @@ class Global(LeafExpr):
 
         If not called from another app, this will return the ZeroAddress
 
-        Requires TEAL version 6 or higher."""
+        Requires program version 6 or higher."""
         return cls(GlobalField.caller_app_address)
 
 

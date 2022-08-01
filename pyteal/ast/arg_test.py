@@ -2,9 +2,9 @@ import pytest
 
 import pyteal as pt
 
-teal2Options = pt.CompileOptions(version=2)
-teal4Options = pt.CompileOptions(version=4)
-teal5Options = pt.CompileOptions(version=5)
+avm2Options = pt.CompileOptions(version=2)
+avm4Options = pt.CompileOptions(version=4)
+avm5Options = pt.CompileOptions(version=5)
 
 
 def test_arg_static():
@@ -15,7 +15,7 @@ def test_arg_static():
 
         expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.arg, i)])
 
-        actual, _ = expr.__teal__(teal2Options)
+        actual, _ = expr.__teal__(avm2Options)
         assert actual == expected
 
 
@@ -29,14 +29,14 @@ def test_arg_dynamic():
         [pt.TealOp(i, pt.Op.int, 7), pt.TealOp(expr, pt.Op.args)]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(teal4Options)
+        expr.__teal__(avm4Options)
 
 
 def test_arg_invalid():

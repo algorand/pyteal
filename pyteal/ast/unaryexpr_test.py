@@ -2,11 +2,12 @@ import pytest
 
 import pyteal as pt
 
-teal2Options = pt.CompileOptions(version=2)
-teal3Options = pt.CompileOptions(version=3)
-teal4Options = pt.CompileOptions(version=4)
-teal5Options = pt.CompileOptions(version=5)
-teal6Options = pt.CompileOptions(version=6)
+avm2Options = pt.CompileOptions(version=2)
+avm3Options = pt.CompileOptions(version=3)
+avm4Options = pt.CompileOptions(version=4)
+avm5Options = pt.CompileOptions(version=5)
+avm6Options = pt.CompileOptions(version=6)
+avm7Options = pt.CompileOptions(version=7)
 
 
 def test_btoi():
@@ -18,7 +19,7 @@ def test_btoi():
         [pt.TealOp(arg, pt.Op.arg, 1), pt.TealOp(expr, pt.Op.btoi)]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -39,7 +40,7 @@ def test_itob():
         [pt.TealOp(arg, pt.Op.int, 1), pt.TealOp(expr, pt.Op.itob)]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -60,7 +61,7 @@ def test_len():
         [pt.TealOp(arg, pt.Op.txn, "Receiver"), pt.TealOp(expr, pt.Op.len)]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -81,7 +82,7 @@ def test_bitlen_int():
         [pt.TealOp(arg, pt.Op.int, 7), pt.TealOp(expr, pt.Op.bitlen)]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -97,7 +98,7 @@ def test_bitlen_bytes():
         [pt.TealOp(arg, pt.Op.txn, "Receiver"), pt.TealOp(expr, pt.Op.bitlen)]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -113,7 +114,7 @@ def test_sha256():
         [pt.TealOp(arg, pt.Op.arg, 0), pt.TealOp(expr, pt.Op.sha256)]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -134,7 +135,7 @@ def test_sha512_256():
         [pt.TealOp(arg, pt.Op.arg, 0), pt.TealOp(expr, pt.Op.sha512_256)]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -146,6 +147,27 @@ def test_sha512_256_invalid():
         pt.Sha512_256(pt.Int(1))
 
 
+def test_sha3_256():
+    arg = pt.Arg(0)
+    expr = pt.Sha3_256(arg)
+    assert expr.type_of() == pt.TealType.bytes
+
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(arg, pt.Op.arg, 0), pt.TealOp(expr, pt.Op.sha3_256)]
+    )
+
+    actual, _ = expr.__teal__(avm7Options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+
+def test_sha3_256_invalid():
+    with pytest.raises(pt.TealTypeError):
+        pt.Sha3_256(pt.Int(1))
+
+
 def test_keccak256():
     arg = pt.Arg(0)
     expr = pt.Keccak256(arg)
@@ -155,7 +177,7 @@ def test_keccak256():
         [pt.TealOp(arg, pt.Op.arg, 0), pt.TealOp(expr, pt.Op.keccak256)]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -176,7 +198,7 @@ def test_not():
         [pt.TealOp(arg, pt.Op.int, 1), pt.TealOp(expr, pt.Op.logic_not)]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -197,7 +219,7 @@ def test_bitwise_not():
         [pt.TealOp(arg, pt.Op.int, 2), pt.TealOp(expr, pt.Op.bitwise_not)]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -213,7 +235,7 @@ def test_bitwise_not_overload():
         [pt.TealOp(arg, pt.Op.int, 10), pt.TealOp(expr, pt.Op.bitwise_not)]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -234,7 +256,7 @@ def test_sqrt():
         [pt.TealOp(arg, pt.Op.int, 4), pt.TealOp(expr, pt.Op.sqrt)]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -255,7 +277,7 @@ def test_pop():
         [pt.TealOp(arg_int, pt.Op.int, 3), pt.TealOp(expr_int, pt.Op.pop)]
     )
 
-    actual_int, _ = expr_int.__teal__(teal2Options)
+    actual_int, _ = expr_int.__teal__(avm2Options)
     actual_int.addIncoming()
     actual_int = pt.TealBlock.NormalizeBlocks(actual_int)
 
@@ -269,7 +291,7 @@ def test_pop():
         [pt.TealOp(arg_bytes, pt.Op.txn, "Receiver"), pt.TealOp(expr_bytes, pt.Op.pop)]
     )
 
-    actual_bytes, _ = expr_bytes.__teal__(teal2Options)
+    actual_bytes, _ = expr_bytes.__teal__(avm2Options)
     actual_bytes.addIncoming()
     actual_bytes = pt.TealBlock.NormalizeBlocks(actual_bytes)
 
@@ -291,7 +313,7 @@ def test_balance():
         [pt.TealOp(arg, pt.Op.int, 0), pt.TealOp(expr, pt.Op.balance)]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -307,7 +329,7 @@ def test_balance_direct_ref():
         [pt.TealOp(arg, pt.Op.txn, "Sender"), pt.TealOp(expr, pt.Op.balance)]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -330,7 +352,7 @@ def test_min_balance():
         [pt.TealOp(arg, pt.Op.int, 0), pt.TealOp(expr, pt.Op.min_balance)]
     )
 
-    actual, _ = expr.__teal__(teal3Options)
+    actual, _ = expr.__teal__(avm3Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -346,7 +368,7 @@ def test_min_balance_direct_ref():
         [pt.TealOp(arg, pt.Op.txn, "Sender"), pt.TealOp(expr, pt.Op.min_balance)]
     )
 
-    actual, _ = expr.__teal__(teal3Options)
+    actual, _ = expr.__teal__(avm3Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -372,7 +394,7 @@ def test_b_not():
         ]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -393,7 +415,7 @@ def test_bsqrt():
         [pt.TealOp(arg, pt.Op.byte, "0xFEDCBA9876543210"), pt.TealOp(expr, pt.Op.bsqrt)]
     )
 
-    actual, _ = expr.__teal__(teal6Options)
+    actual, _ = expr.__teal__(avm6Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -414,7 +436,7 @@ def test_b_zero():
         [pt.TealOp(arg, pt.Op.int, 8), pt.TealOp(expr, pt.Op.bzero)]
     )
 
-    actual, _ = expr.__teal__(teal4Options)
+    actual, _ = expr.__teal__(avm4Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -436,14 +458,14 @@ def test_log():
         [pt.TealOp(arg, pt.Op.byte, '"message"'), pt.TealOp(expr, pt.Op.log)]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(teal4Options)
+        expr.__teal__(avm4Options)
 
 
 def test_log_invalid():
