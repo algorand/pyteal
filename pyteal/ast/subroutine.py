@@ -2,14 +2,13 @@ from dataclasses import dataclass
 from inspect import isclass, Parameter, signature, get_annotations
 from types import MappingProxyType, NoneType
 from typing import Any, Callable, Final, Optional, TYPE_CHECKING, cast
-
 import algosdk.abi as sdk_abi
 
 from pyteal.ast import abi
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
-from pyteal.errors import TealInputError, verifyTealVersion
+from pyteal.errors import TealInputError, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.types import TealType
 
@@ -405,10 +404,10 @@ class SubroutineCall(Expr):
             This is an *output-only* argument: in `evaluate_subroutine` an ABI typed instance for subroutine evaluation
             will be generated, and gets in to construct the subroutine implementation.
         """
-        verifyTealVersion(
+        verifyProgramVersion(
             Op.callsub.min_version,
             options.version,
-            "TEAL version too low to use SubroutineCall expression",
+            "Program version too low to use SubroutineCall expression",
         )
 
         def handle_arg(arg: Expr | ScratchVar | abi.BaseType) -> Expr:
