@@ -14,7 +14,7 @@ PyTeal Package
       :annotation: = <pyteal.TxnObject object>
 
       The current transaction being evaluated. This is an instance of :any:`TxnObject`.
-   
+
    .. data:: Gtxn
       :annotation: = <pyteal.TxnGroup object>
 

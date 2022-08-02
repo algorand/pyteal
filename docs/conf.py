@@ -62,6 +62,19 @@ class NitpickIgnore:
             ("py:class", "abc.ABC"),
         ]
 
+    @staticmethod
+    def unexported() -> list[tuple[str, str]]:
+        """
+        Ignores Pyteal internal unexported classes that Sphinx cannot track reference.
+        """
+        return [
+            ("py:class", "pyteal.BlockField"),
+            ("py:class", "pyteal.Base64Encoding"),
+            ("py:class", "pyteal.VrfVerifyStandard"),
+            ("py:class", "pyteal.JsonRefType"),
+            ("py:class", "pyteal.OutputKwArgInfo"),
+        ]
+
 
 class NitpickIgnoreRegex:
     @staticmethod
@@ -101,7 +114,11 @@ class NitpickIgnoreRegex:
         ]
 
 
-nitpick_ignore = NitpickIgnore.optional() + NitpickIgnore.standard_library()
+nitpick_ignore = (
+    NitpickIgnore.optional()
+    + NitpickIgnore.standard_library()
+    + NitpickIgnore.unexported()
+)
 
 nitpick_ignore_regex = (
     NitpickIgnoreRegex.standard_library()

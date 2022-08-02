@@ -20,7 +20,7 @@ from pyteal.ast.txn import (
     Txn,
 )
 from pyteal.ast.gtxn import GtxnExpr, GtxnaExpr, TxnGroup, Gtxn
-from pyteal.ast.block import Block, BlockField
+from pyteal.ast.block import Block
 from pyteal.ast.gaid import GeneratedID
 from pyteal.ast.gitxn import Gitxn, GitxnExpr, GitxnaExpr, InnerTxnGroup
 from pyteal.ast.gload import ImportScratchValue
@@ -104,7 +104,7 @@ from pyteal.ast.binaryexpr import (
     ExtractUint32,
     ExtractUint64,
 )
-from pyteal.ast.base64decode import Base64Decode, Base64Encoding
+from pyteal.ast.base64decode import Base64Decode
 
 # ternary ops
 from pyteal.ast.ternaryexpr import (
@@ -117,10 +117,10 @@ from pyteal.ast.ternaryexpr import (
 )
 from pyteal.ast.substring import Substring, Extract, Suffix
 from pyteal.ast.replace import Replace
-from pyteal.ast.jsonref import JsonRef, JsonRefType
+from pyteal.ast.jsonref import JsonRef
 
 # quaternary ops
-from pyteal.ast.vrfverify import VrfVerify, VrfVerifyStandard
+from pyteal.ast.vrfverify import VrfVerify
 
 # more ops
 from pyteal.ast.naryexpr import NaryExpr, Add, And, Mul, Or, Concat
@@ -134,7 +134,6 @@ from pyteal.ast.assert_ import Assert
 from pyteal.ast.err import Err
 from pyteal.ast.return_ import Return, Approve, Reject
 from pyteal.ast.subroutine import (
-    OutputKwArgInfo,
     Subroutine,
     SubroutineDefinition,
     SubroutineDeclaration,
@@ -192,7 +191,6 @@ __all__ = [
     "TxnGroup",
     "Gtxn",
     "Block",
-    "BlockField",
     "GeneratedID",
     "ImportScratchValue",
     "Global",
@@ -276,7 +274,6 @@ __all__ = [
     "Return",
     "Approve",
     "Reject",
-    "OutputKwArgInfo",
     "Subroutine",
     "SubroutineDefinition",
     "SubroutineDeclaration",
@@ -316,7 +313,6 @@ __all__ = [
     "ExtractUint64",
     "Replace",
     "Base64Decode",
-    "Base64Encoding",
     "Log",
     "While",
     "For",
@@ -333,7 +329,5 @@ __all__ = [
     "EcdsaDecompress",
     "EcdsaRecover",
     "JsonRef",
-    "JsonRefType",
     "VrfVerify",
-    "VrfVerifyStandard",
 ]
