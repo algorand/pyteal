@@ -922,12 +922,12 @@ def blackbox_pyteal_named_tupleness_test():
     )
 
     class NamedTupleExample(abi.NamedTuple):
-        a: abi.Bool
-        b: abi.Address
-        c: abi.Tuple2[abi.Uint64, abi.Bool]
-        d: abi.StaticArray[abi.Byte, L[10]]
-        e: abi.StaticArray[abi.Bool, L[4]]
-        f: abi.Uint64
+        a: abi.Field[abi.Bool]
+        b: abi.Field[abi.Address]
+        c: abi.Field[abi.Tuple2[abi.Uint64, abi.Bool]]
+        d: abi.Field[abi.StaticArray[abi.Byte, L[10]]]
+        e: abi.Field[abi.StaticArray[abi.Bool, L[4]]]
+        f: abi.Field[abi.Uint64]
 
     @Blackbox(input_types=[None] * 6)
     @Subroutine(TealType.uint64)

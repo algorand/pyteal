@@ -826,38 +826,65 @@ def test_TupleElement_store_into():
                 assert actual == expected, "Test at index {} failed".format(i)
 
 
+def test_NamedTuple_init():
+    with pytest.raises(pt.TealInputError, match=r"NamedTuple must be subclassed$"):
+        abi.NamedTuple()
+
+    class Empty(abi.NamedTuple):
+        pass
+
+    with pytest.raises(
+        pt.TealInputError, match=r"Expected fields to be declared but found none$"
+    ):
+        Empty()
+
+    class ValidField(abi.NamedTuple):
+        name: abi.Field[abi.Uint16]
+
+    ValidField()
+
+    class NoField(abi.NamedTuple):
+        name: abi.Uint16
+
+    with pytest.raises(
+        pt.TealInputError,
+        match=r'Type annotation for attribute "name" must be a Field. Got ',
+    ):
+        NoField()
+
+
 class NT_0(abi.NamedTuple):
-    f0: abi.Uint64
-    f1: abi.Uint32
-    f2: abi.Uint16
-    f3: abi.Uint8
+    f0: abi.Field[abi.Uint64]
+    f1: abi.Field[abi.Uint32]
+    f2: abi.Field[abi.Uint16]
+    f3: abi.Field[abi.Uint8]
 
 
 class NT_1(abi.NamedTuple):
-    f0: abi.StaticArray[abi.Bool, Literal[4]]
-    f1: abi.DynamicArray[abi.String]
-    f2: abi.String
-    f3: abi.Bool
-    f4: abi.Address
-    f5: NT_0
+    f0: abi.Field[abi.StaticArray[abi.Bool, Literal[4]]]
+    f1: abi.Field[abi.DynamicArray[abi.String]]
+    f2: abi.Field[abi.String]
+    f3: abi.Field[abi.Bool]
+    f4: abi.Field[abi.Address]
+    f5: abi.Field[NT_0]
 
 
 class NT_2(abi.NamedTuple):
-    f0: abi.Bool
-    f1: abi.Bool
-    f2: abi.Bool
-    f3: abi.Bool
-    f4: abi.Bool
-    f5: abi.Bool
-    f6: abi.Bool
-    f7: abi.Bool
-    f8: NT_1
+    f0: abi.Field[abi.Bool]
+    f1: abi.Field[abi.Bool]
+    f2: abi.Field[abi.Bool]
+    f3: abi.Field[abi.Bool]
+    f4: abi.Field[abi.Bool]
+    f5: abi.Field[abi.Bool]
+    f6: abi.Field[abi.Bool]
+    f7: abi.Field[abi.Bool]
+    f8: abi.Field[NT_1]
 
 
 class NT_3(abi.NamedTuple):
-    f0: NT_0
-    f1: NT_1
-    f2: NT_2
+    f0: abi.Field[NT_0]
+    f1: abi.Field[NT_1]
+    f2: abi.Field[NT_2]
 
 
 @pytest.mark.parametrize("test_case", [NT_0, NT_1, NT_2, NT_3])
