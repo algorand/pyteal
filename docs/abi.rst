@@ -324,14 +324,13 @@ The supported methods are:
 * :any:`abi.Tuple.__getitem__(index: int) <abi.Tuple.__getitem__>`, used for :any:`abi.Tuple` and :any:`abi.NamedTuple`\*
 
 .. note::
+    Be aware that these methods return a :any:`ComputedValue`, similar to other PyTeal operations which return ABI types. More information about why that is necessary and how to use a :any:`ComputedValue` can be found in the :ref:`Computed Values` section.
+
+.. note::
     \*For :any:`abi.NamedTuple`, one can access tuple elements through both methods
 
     * :any:`abi.Tuple.__getitem__(index: int) <abi.Tuple.__getitem__>`
     * :any:`abi.NamedTuple.__getattr__(name: str) <abi.NamedTuple.__getattr__>`
-
-    Be aware that, though the fields in a :any:`abi.NamedTuple` are annotated in ABI types, the return values from the annotated fields are :any:`ComputedValues <abi.ComputedValue>`.
-
-    Also be aware that these methods return a :any:`ComputedValue`, similar to other PyTeal operations which return ABI types. More information about why that is necessary and how to use a :any:`ComputedValue` can be found in the :ref:`Computed Values` section.
 
 A brief example is below. Please consult the documentation linked above for each method to learn more about specific usage and behavior.
 
