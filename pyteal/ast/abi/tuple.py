@@ -599,8 +599,6 @@ class NamedTuple(Tuple):
             def get_user_balance(user: User, *, output: abi.Uint64) -> Expr:
                 return output.set(user.balance)
 
-
-
         Args:
             field: a Python string containing the field to access.
                 This function will raise an KeyError if the field is not available in the defined NamedTuple.
