@@ -528,9 +528,11 @@ class NamedTuple(Tuple):
 
         # NOTE: this `_ready` variable enables `__setattr__` during `__init__` execution,
         # while after `__init__`, we cannot use `__setattr__` to set fields in `NamedTuple`.
-        # The reason for `_ready` is that, the field naming scheme in Python would change
+        # NOTE: The reason for `_ready` is that, the field naming scheme in Python would change
         # _double underscore led field name_ to something else,
         # while _single underscore led variable names_ would stay intact.
+        # e.g., if we set variable `self.__ready`,
+        # then internally the variable name would be changed to `_NamedTuple__ready`, which is implicit.
         self._ready = False
         self.__type_specs: OrderedDict[str, TypeSpec] = OrderedDict()
         self.__field_index: dict[str, int] = {}
