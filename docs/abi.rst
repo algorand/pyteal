@@ -231,12 +231,12 @@ PyTeal Type                                    ARC-4 Type             Dynamic / 
         from typing import Literal as L
 
         class InheritedFromNamedTuple(abi.NamedTuple):
-            acct_address: abi.Address
-            amount: abi.Uint64
-            retrivable: abi.Bool
-            desc: abi.String
-            list_of_addrs: abi.DynamicArray[abi.Address]
-            balance_list: abi.StaticArray[abi.Uint64, L[10]]
+            acct_address: abi.Field[abi.Address]
+            amount: abi.Field[abi.Uint64]
+            retrivable: abi.Field[abi.Bool]
+            desc: abi.Field[abi.String]
+            list_of_addrs: abi.Field[abi.DynamicArray[abi.Address]]
+            balance_list: abi.Field[abi.StaticArray[abi.Uint64, L[10]]]
 
 These ARC-4 types are not yet supported in PyTeal:
 
