@@ -36,12 +36,12 @@ BAD_TYPES = {
 
 
 class NamedTupleInherit(abi.NamedTuple):
-    a: abi.Bool
-    b: abi.Address
-    c: abi.Tuple2[abi.Uint64, abi.Bool]
-    d: abi.StaticArray[abi.Byte, Literal[10]]
-    e: abi.StaticArray[abi.Bool, Literal[4]]
-    f: abi.Uint64
+    a: abi.Field[abi.Bool]
+    b: abi.Field[abi.Address]
+    c: abi.Field[abi.Tuple2[abi.Uint64, abi.Bool]]
+    d: abi.Field[abi.StaticArray[abi.Byte, Literal[10]]]
+    e: abi.Field[abi.StaticArray[abi.Bool, Literal[4]]]
+    f: abi.Field[abi.Uint64]
 
 
 PATH = Path.cwd() / "tests" / "integration"
