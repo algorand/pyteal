@@ -20,13 +20,19 @@ from pyteal.ast.txn import (
     Txn,
 )
 from pyteal.ast.gtxn import GtxnExpr, GtxnaExpr, TxnGroup, Gtxn
+from pyteal.ast.block import Block
 from pyteal.ast.gaid import GeneratedID
 from pyteal.ast.gitxn import Gitxn, GitxnExpr, GitxnaExpr, InnerTxnGroup
 from pyteal.ast.gload import ImportScratchValue
 from pyteal.ast.global_ import Global, GlobalField
-from pyteal.ast.app import App, AppField, OnComplete, AppParam
-from pyteal.ast.asset import AssetHolding, AssetParam
-from pyteal.ast.acct import AccountParam
+from pyteal.ast.app import App, AppField, OnComplete, AppParam, AppParamObject
+from pyteal.ast.asset import (
+    AssetHolding,
+    AssetHoldingObject,
+    AssetParam,
+    AssetParamObject,
+)
+from pyteal.ast.acct import AccountParam, AccountParamObject
 
 # inner txns
 from pyteal.ast.itxn import InnerTxnBuilder, InnerTxn, InnerTxnAction
@@ -35,6 +41,7 @@ from pyteal.ast.itxn import InnerTxnBuilder, InnerTxn, InnerTxnAction
 from pyteal.ast.array import Array
 from pyteal.ast.tmpl import Tmpl
 from pyteal.ast.nonce import Nonce
+from pyteal.ast.pragma import Pragma
 
 from pyteal.ast.comment import Comment
 
@@ -47,6 +54,7 @@ from pyteal.ast.unaryexpr import (
     BitLen,
     Sha256,
     Sha512_256,
+    Sha3_256,
     Keccak256,
     Not,
     BitwiseNot,
@@ -63,9 +71,7 @@ from pyteal.ast.unaryexpr import (
 # binary ops
 from pyteal.ast.binaryexpr import (
     BinaryExpr,
-    Add,
     Minus,
-    Mul,
     Div,
     Mod,
     Exp,
@@ -100,13 +106,25 @@ from pyteal.ast.binaryexpr import (
     ExtractUint32,
     ExtractUint64,
 )
+from pyteal.ast.base64decode import Base64Decode
 
 # ternary ops
-from pyteal.ast.ternaryexpr import Divw, Ed25519Verify, SetBit, SetByte
+from pyteal.ast.ternaryexpr import (
+    Divw,
+    Ed25519Verify,
+    Ed25519Verify_Bare,
+    SetBit,
+    SetByte,
+)
 from pyteal.ast.substring import Substring, Extract, Suffix
+from pyteal.ast.replace import Replace
+from pyteal.ast.jsonref import JsonRef
+
+# quaternary ops
+from pyteal.ast.vrfverify import VrfVerify
 
 # more ops
-from pyteal.ast.naryexpr import NaryExpr, And, Or, Concat
+from pyteal.ast.naryexpr import NaryExpr, Add, And, Mul, Or, Concat
 from pyteal.ast.widemath import WideRatio
 
 # control flow
@@ -122,12 +140,12 @@ from pyteal.ast.subroutine import (
     SubroutineDeclaration,
     SubroutineCall,
     SubroutineFnWrapper,
+    ABIReturnSubroutine,
 )
 from pyteal.ast.while_ import While
 from pyteal.ast.for_ import For
 from pyteal.ast.break_ import Break
 from pyteal.ast.continue_ import Continue
-
 
 # misc
 from pyteal.ast.scratch import (
@@ -142,6 +160,16 @@ from pyteal.ast.maybe import MaybeValue
 from pyteal.ast.multi import MultiValue
 from pyteal.ast.opup import OpUp, OpUpMode
 from pyteal.ast.ecdsa import EcdsaCurve, EcdsaVerify, EcdsaDecompress, EcdsaRecover
+from pyteal.ast.router import (
+    Router,
+    CallConfig,
+    MethodConfig,
+    OnCompleteAction,
+    BareCallActions,
+)
+
+# abi
+import pyteal.ast.abi as abi  # noqa: I250
 
 __all__ = [
     "Expr",
@@ -163,6 +191,7 @@ __all__ = [
     "GtxnaExpr",
     "TxnGroup",
     "Gtxn",
+    "Block",
     "GeneratedID",
     "ImportScratchValue",
     "Global",
@@ -171,9 +200,13 @@ __all__ = [
     "AppField",
     "OnComplete",
     "AppParam",
+    "AppParamObject",
     "AssetHolding",
+    "AssetHoldingObject",
     "AssetParam",
+    "AssetParamObject",
     "AccountParam",
+    "AccountParamObject",
     "InnerTxnBuilder",
     "InnerTxn",
     "InnerTxnAction",
@@ -184,6 +217,7 @@ __all__ = [
     "Array",
     "Tmpl",
     "Nonce",
+    "Pragma",
     "UnaryExpr",
     "Btoi",
     "Itob",
@@ -191,6 +225,7 @@ __all__ = [
     "BitLen",
     "Sha256",
     "Sha512_256",
+    "Sha3_256",
     "Keccak256",
     "Not",
     "BitwiseNot",
@@ -220,6 +255,7 @@ __all__ = [
     "GetBit",
     "GetByte",
     "Ed25519Verify",
+    "Ed25519Verify_Bare",
     "Substring",
     "Extract",
     "Suffix",
@@ -243,6 +279,7 @@ __all__ = [
     "SubroutineDeclaration",
     "SubroutineCall",
     "SubroutineFnWrapper",
+    "ABIReturnSubroutine",
     "ScratchIndex",
     "ScratchLoad",
     "ScratchSlot",
@@ -274,14 +311,24 @@ __all__ = [
     "ExtractUint16",
     "ExtractUint32",
     "ExtractUint64",
+    "Replace",
+    "Base64Decode",
     "Log",
     "While",
     "For",
     "Break",
     "Continue",
+    "Router",
+    "CallConfig",
+    "MethodConfig",
+    "OnCompleteAction",
+    "BareCallActions",
+    "abi",
     "EcdsaCurve",
     "EcdsaVerify",
     "EcdsaDecompress",
     "EcdsaRecover",
     "Comment",
+    "JsonRef",
+    "VrfVerify",
 ]

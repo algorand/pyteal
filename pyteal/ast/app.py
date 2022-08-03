@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 from enum import Enum
 
 from pyteal.types import TealType, require_type
@@ -91,9 +91,9 @@ class App(LeafExpr):
             account: An index into Txn.Accounts that corresponds to the account to check,
                 must be evaluated to uint64 (or, since v4, an account address that appears in
                 Txn.Accounts or is Txn.Sender, must be evaluated to bytes).
-            app: An index into Txn.ForeignApps that corresponds to the application to read from,
+            app: An index into Txn.applications that corresponds to the application to read from,
                 must be evaluated to uint64 (or, since v4, an application id that appears in
-                Txn.ForeignApps or is the CurrentApplicationID, must be evaluated to int).
+                Txn.applications or is the CurrentApplicationID, must be evaluated to int).
         """
         require_type(account, TealType.anytype)
         require_type(app, TealType.uint64)
@@ -121,9 +121,9 @@ class App(LeafExpr):
             account: An index into Txn.Accounts that corresponds to the account to check,
                 must be evaluated to uint64 (or, since v4, an account address that appears in
                 Txn.Accounts or is Txn.Sender, must be evaluated to bytes).
-            app: An index into Txn.ForeignApps that corresponds to the application to read from,
+            app: An index into Txn.applications that corresponds to the application to read from,
                 must be evaluated to uint64 (or, since v4, an application id that appears in
-                Txn.ForeignApps or is the CurrentApplicationID, must be evaluated to int).
+                Txn.applications or is the CurrentApplicationID, must be evaluated to int).
             key: The key to read from the account's local state. Must evaluate to bytes.
         """
         require_type(account, TealType.anytype)
@@ -148,9 +148,9 @@ class App(LeafExpr):
         """Read from the global state of an application.
 
         Args:
-            app: An index into Txn.ForeignApps that corresponds to the application to read from,
+            app: An index into Txn.applications that corresponds to the application to read from,
                 must be evaluated to uint64 (or, since v4, an application id that appears in
-                Txn.ForeignApps or is the CurrentApplicationID, must be evaluated to uint64).
+                Txn.applications or is the CurrentApplicationID, must be evaluated to uint64).
             key: The key to read from the global application state. Must evaluate to bytes.
         """
         require_type(app, TealType.uint64)
@@ -221,7 +221,7 @@ class AppParam:
         """Get the bytecode of Approval Program for the application.
 
         Args:
-            app: An index into Txn.ForeignApps that correspond to the application to check.
+            app: An index into Txn.applications that correspond to the application to check.
                 Must evaluate to uint64.
         """
         require_type(app, TealType.uint64)
@@ -237,7 +237,7 @@ class AppParam:
         """Get the bytecode of Clear State Program for the application.
 
         Args:
-            app: An index into Txn.ForeignApps that correspond to the application to check.
+            app: An index into Txn.applications that correspond to the application to check.
                 Must evaluate to uint64.
         """
         require_type(app, TealType.uint64)
@@ -249,18 +249,18 @@ class AppParam:
         )
 
     @classmethod
-    def globalNumUnit(cls, app: Expr) -> MaybeValue:
+    def globalNumUint(cls, app: Expr) -> MaybeValue:
         """Get the number of uint64 values allowed in Global State for the application.
 
         Args:
-            app: An index into Txn.ForeignApps that correspond to the application to check.
+            app: An index into Txn.applications that correspond to the application to check.
                 Must evaluate to uint64.
         """
         require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get,
             TealType.uint64,
-            immediate_args=["AppGlobalNumUnit"],
+            immediate_args=["AppGlobalNumUint"],
             args=[app],
         )
 
@@ -269,7 +269,7 @@ class AppParam:
         """Get the number of byte array values allowed in Global State for the application.
 
         Args:
-            app: An index into Txn.ForeignApps that correspond to the application to check.
+            app: An index into Txn.applications that correspond to the application to check.
                 Must evaluate to uint64.
         """
         require_type(app, TealType.uint64)
@@ -281,18 +281,18 @@ class AppParam:
         )
 
     @classmethod
-    def localNumUnit(cls, app: Expr) -> MaybeValue:
+    def localNumUint(cls, app: Expr) -> MaybeValue:
         """Get the number of uint64 values allowed in Local State for the application.
 
         Args:
-            app: An index into Txn.ForeignApps that correspond to the application to check.
+            app: An index into Txn.applications that correspond to the application to check.
                 Must evaluate to uint64.
         """
         require_type(app, TealType.uint64)
         return MaybeValue(
             Op.app_params_get,
             TealType.uint64,
-            immediate_args=["AppLocalNumUnit"],
+            immediate_args=["AppLocalNumUint"],
             args=[app],
         )
 
@@ -301,7 +301,7 @@ class AppParam:
         """Get the number of byte array values allowed in Local State for the application.
 
         Args:
-            app: An index into Txn.ForeignApps that correspond to the application to check.
+            app: An index into Txn.applications that correspond to the application to check.
                 Must evaluate to uint64.
         """
         require_type(app, TealType.uint64)
@@ -317,7 +317,7 @@ class AppParam:
         """Get the number of Extra Program Pages of code space for the application.
 
         Args:
-            app: An index into Txn.ForeignApps that correspond to the application to check.
+            app: An index into Txn.applications that correspond to the application to check.
                 Must evaluate to uint64.
         """
         require_type(app, TealType.uint64)
@@ -333,7 +333,7 @@ class AppParam:
         """Get the creator address for the application.
 
         Args:
-            app: An index into Txn.ForeignApps that correspond to the application to check.
+            app: An index into Txn.applications that correspond to the application to check.
                 Must evaluate to uint64.
         """
         require_type(app, TealType.uint64)
@@ -346,7 +346,7 @@ class AppParam:
         """Get the escrow address for the application.
 
         Args:
-            app: An index into Txn.ForeignApps that correspond to the application to check.
+            app: An index into Txn.applications that correspond to the application to check.
                 Must evaluate to uint64.
         """
         require_type(app, TealType.uint64)
@@ -356,3 +356,57 @@ class AppParam:
 
 
 AppParam.__module__ = "pyteal"
+
+
+class AppParamObject:
+    """Represents information about an application's parameters"""
+
+    def __init__(self, app: Expr) -> None:
+        """Create a new AppParamObject for the given application.
+
+        Args:
+            app: An identifier for the app. It must be an index into Txn.ForeignApps that
+                corresponds to the app to check, or since v4, an application ID that appears in
+                Txn.ForeignApps or is the CurrentApplicationID. In either case, it must evaluate to
+                uint64.
+        """
+        require_type(app, TealType.uint64)
+        self._app: Final = app
+
+    def approval_program(self) -> MaybeValue:
+        """Get the bytecode of Approval Program for the application."""
+        return AppParam.approvalProgram(self._app)
+
+    def clear_state_program(self) -> MaybeValue:
+        return AppParam.clearStateProgram(self._app)
+
+    def global_num_uint(self) -> MaybeValue:
+        """Get the number of uint64 values allowed in Global State for the application."""
+        return AppParam.globalNumUint(self._app)
+
+    def global_num_byte_slice(self) -> MaybeValue:
+        """Get the number of byte array values allowed in Global State for the application."""
+        return AppParam.globalNumByteSlice(self._app)
+
+    def local_num_uint(self) -> MaybeValue:
+        """Get the number of uint64 values allowed in Local State for the application."""
+        return AppParam.localNumUint(self._app)
+
+    def local_num_byte_slice(self) -> MaybeValue:
+        """Get the number of byte array values allowed in Local State for the application."""
+        return AppParam.localNumByteSlice(self._app)
+
+    def extra_program_pages(self) -> MaybeValue:
+        """Get the number of Extra Program Pages of code space for the application."""
+        return AppParam.extraProgramPages(self._app)
+
+    def creator_address(self) -> MaybeValue:
+        """Get the creator address for the application."""
+        return AppParam.creator(self._app)
+
+    def address(self) -> MaybeValue:
+        """Get the escrow address for the application."""
+        return AppParam.address(self._app)
+
+
+AppParamObject.__module__ = "pyteal"

@@ -10,6 +10,7 @@ ignore =
 
 per-file-ignores =
     pyteal/compiler/optimizer/__init__.py:          F401
+    examples/application/abi/algobank.py:           F403, F405
     examples/application/asset.py:                  F403, F405
     examples/application/opup.py:                   F403, F405
     examples/application/security_token.py:         F403, F405

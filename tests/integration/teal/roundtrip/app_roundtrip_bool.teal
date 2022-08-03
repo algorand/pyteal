@@ -1,0 +1,50 @@
+#pragma version 6
+txna ApplicationArgs 0
+int 0
+int 8
+*
+getbit
+store 1
+load 1
+callsub roundtripper_1
+store 0
+byte 0x151f7c75
+load 0
+concat
+log
+int 1
+return
+
+// bool_comp
+boolcomp_0:
+store 6
+load 6
+!
+!
+!
+store 7
+load 7
+retsub
+
+// round_tripper
+roundtripper_1:
+store 2
+load 2
+callsub boolcomp_0
+store 4
+load 4
+callsub boolcomp_0
+store 5
+byte 0x00
+int 0
+load 2
+setbit
+int 1
+load 4
+setbit
+int 2
+load 5
+setbit
+store 3
+load 3
+retsub

@@ -64,7 +64,18 @@ class TealCompileError(Exception):
 TealCompileError.__module__ = "pyteal"
 
 
-def verifyTealVersion(minVersion: int, version: int, msg: str):
+class TealPragmaError(Exception):
+    def __init__(self, message: str) -> None:
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
+
+TealPragmaError.__module__ = "pyteal"
+
+
+def verifyProgramVersion(minVersion: int, version: int, msg: str):
     if minVersion > version:
         msg = "{}. Minimum version needed is {}, but current version being compiled is {}".format(
             msg, minVersion, version
@@ -73,8 +84,8 @@ def verifyTealVersion(minVersion: int, version: int, msg: str):
 
 
 def verifyFieldVersion(fieldName: str, fieldMinVersion: int, version: int):
-    verifyTealVersion(
+    verifyProgramVersion(
         fieldMinVersion,
         version,
-        "TEAL version too low to use field {}".format(fieldName),
+        "Program version too low to use field {}".format(fieldName),
     )

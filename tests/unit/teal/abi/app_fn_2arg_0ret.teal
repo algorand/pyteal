@@ -1,0 +1,17 @@
+#pragma version 6
+txna ApplicationArgs 0
+btoi
+store 2
+txna ApplicationArgs 1
+store 3
+load 2
+load 3
+callsub fn2arg0ret_0
+int 1
+return
+
+// fn_2arg_0ret
+fn2arg0ret_0:
+store 1
+store 0
+retsub

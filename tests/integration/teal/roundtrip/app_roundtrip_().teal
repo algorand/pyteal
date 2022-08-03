@@ -1,0 +1,38 @@
+#pragma version 6
+txna ApplicationArgs 0
+store 1
+load 1
+callsub roundtripper_1
+store 0
+byte 0x151f7c75
+load 0
+concat
+log
+int 1
+return
+
+// tuple_complement
+tuplecomplement_0:
+store 6
+byte ""
+store 7
+load 7
+retsub
+
+// round_tripper
+roundtripper_1:
+store 2
+load 2
+callsub tuplecomplement_0
+store 4
+load 4
+callsub tuplecomplement_0
+store 5
+load 2
+load 4
+concat
+load 5
+concat
+store 3
+load 3
+retsub

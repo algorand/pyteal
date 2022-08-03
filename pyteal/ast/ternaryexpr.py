@@ -1,7 +1,7 @@
 from typing import Tuple, TYPE_CHECKING
 
 from pyteal.types import TealType, require_type
-from pyteal.errors import verifyTealVersion
+from pyteal.errors import verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
 
@@ -33,10 +33,10 @@ class TernaryExpr(Expr):
         self.thirdArg = thirdArg
 
     def __teal__(self, options: "CompileOptions"):
-        verifyTealVersion(
+        verifyProgramVersion(
             self.op.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(self.op),
+            "Program version too low to use op {}".format(self.op),
         )
 
         return TealBlock.FromOp(
@@ -62,13 +62,31 @@ def Ed25519Verify(data: Expr, sig: Expr, key: Expr) -> TernaryExpr:
     """Verify the ed25519 signature of the concatenation ("ProgData" + hash_of_current_program + data).
 
     Args:
-        data: The data signed by the public key. Must evalutes to bytes.
+        data: The data signed by the public key. Must evaluate to bytes.
         sig: The proposed 64-byte signature of the concatenation ("ProgData" + hash_of_current_program + data).
-            Must evalute to bytes.
+            Must evaluate to bytes.
         key: The 32 byte public key that produced the signature. Must evaluate to bytes.
     """
     return TernaryExpr(
         Op.ed25519verify,
+        (TealType.bytes, TealType.bytes, TealType.bytes),
+        TealType.uint64,
+        data,
+        sig,
+        key,
+    )
+
+
+def Ed25519Verify_Bare(data: Expr, sig: Expr, key: Expr) -> TernaryExpr:
+    """Verify the ed25519 signature of the data against the public key.
+
+    Args:
+        data: The data signed by the public key. Must evaluate to bytes.
+        sig: The proposed 64-byte signature of the data. Must evaluate to bytes.
+        key: The 32 byte public key that produced the signature. Must evaluate to bytes.
+    """
+    return TernaryExpr(
+        Op.ed25519verify_bare,
         (TealType.bytes, TealType.bytes, TealType.bytes),
         TealType.uint64,
         data,
@@ -88,7 +106,7 @@ def SetBit(value: Expr, index: Expr, newBitValue: Expr) -> TernaryExpr:
     * For byte strings, bit indexing begins at the first byte. For example, :code:`SetBit(Bytes("base16", "0x00"), Int(7), Int(1))`
       yields the byte string 0x01. Any integer less than 8*Len(value) is a valid index.
 
-    Requires TEAL version 3 or higher.
+    Requires program version 3 or higher.
 
     Args:
         value: The value containing bits. Can evaluate to any type.
@@ -111,7 +129,7 @@ def SetByte(value: Expr, index: Expr, newByteValue: Expr) -> TernaryExpr:
     Similar to SetBit, indexing begins at the first byte. For example, :code:`SetByte(Bytes("base16", "0x000000"), Int(0), Int(255))`
     yields the byte string 0xff0000.
 
-    Requires TEAL version 3 or higher.
+    Requires program version 3 or higher.
 
     Args:
         value: The value containing the bytes. Must evaluate to bytes.
@@ -132,7 +150,7 @@ def Divw(hi: Expr, lo: Expr, y: Expr) -> TernaryExpr:
     """
     Performs wide division by interpreting `hi` and `lo` as a uint128 value.
 
-    Requires TEAL version 6 or higher.
+    Requires program version 6 or higher.
 
     Args:
         hi: Quotient's high 64 bits.  Must evaluate to uint64.
