@@ -308,8 +308,8 @@ class Tuple(BaseType):
 
     def set(self, *values):
         """
-        set(*values: BaseType) -> Expr
-        set(values: ComputedValue[Tuple]) -> Expr
+        set(*values: BaseType) -> pyteal.Expr
+        set(values: ComputedValue[Tuple]) -> pyteal.Expr
 
         Set the elements of this Tuple to the input values.
 

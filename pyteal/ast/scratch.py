@@ -22,7 +22,7 @@ class ScratchSlot:
 
         Args:
             requestedSlotId (optional): A scratch slot id that the compiler must store the value.
-            This id may be a Python int in the range [0-256).
+                This id may be a Python int in the range [0-256).
         """
         if requestedSlotId is None:
             self.id = ScratchSlot.nextSlotId
@@ -42,9 +42,10 @@ class ScratchSlot:
         """Get an expression to store a value in this slot.
 
         Args:
-            value (optional): The value to store in this slot. If not included, the last value on
-            the stack will be stored. NOTE: storing the last value on the stack breaks the typical
-            semantics of PyTeal, only use if you know what you're doing.
+            value (optional): The value to store in this slot.
+                If not included, the last value on the stack will be stored.
+                NOTE: storing the last value on the stack breaks the typical
+                semantics of PyTeal, only use if you know what you're doing.
         """
         if value is not None:
             return ScratchStore(self, value)

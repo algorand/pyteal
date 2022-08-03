@@ -4,7 +4,7 @@ setup-development:
 	pip install -e .
 	pip install -r requirements.txt
 
-setup-docs: setup-development
+setup-docs:
 	pip install -r docs/requirements.txt
 	pip install doc2dash
 
@@ -24,7 +24,7 @@ bundle-docs-clean:
 
 bundle-docs: bundle-docs-clean
 	cd docs && \
-	make html && \
+	make html SPHINXOPTS="-W --keep-going" && \
 	doc2dash --name pyteal --index-page index.html --online-redirect-url https://pyteal.readthedocs.io/en/ _build/html && \
 	tar -czvf pyteal.docset.tar.gz pyteal.docset
 
@@ -63,7 +63,7 @@ sandbox-dev-up:
 
 sandbox-dev-stop:
 	docker-compose stop algod
-	
+
 integration-run:
 	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration
 
