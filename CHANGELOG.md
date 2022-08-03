@@ -1,6 +1,7 @@
 # Unreleased
 ## Added
 * Add the ability to pass foreign reference arrays directly into inner transactions ([#384](https://github.com/algorand/pyteal/pull/384))
+* NamedTuple Implementation ([#473](https://github.com/algorand/pyteal/pull/473))
 
 ## Fixed
 
