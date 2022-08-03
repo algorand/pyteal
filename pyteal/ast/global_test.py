@@ -2,10 +2,10 @@ import pytest
 
 import pyteal as pt
 
-teal2Options = pt.CompileOptions(version=2)
-teal3Options = pt.CompileOptions(version=3)
-teal5Options = pt.CompileOptions(version=5)
-teal6Options = pt.CompileOptions(version=6)
+avm2Options = pt.CompileOptions(version=2)
+avm3Options = pt.CompileOptions(version=3)
+avm5Options = pt.CompileOptions(version=5)
+avm6Options = pt.CompileOptions(version=6)
 
 
 def test_global_min_txn_fee():
@@ -14,7 +14,7 @@ def test_global_min_txn_fee():
 
     expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.global_, "MinTxnFee")])
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
 
     assert actual == expected
 
@@ -25,7 +25,7 @@ def test_global_min_balance():
 
     expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.global_, "MinBalance")])
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
 
     assert actual == expected
 
@@ -36,7 +36,7 @@ def test_global_max_txn_life():
 
     expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.global_, "MaxTxnLife")])
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
 
     assert actual == expected
 
@@ -47,7 +47,7 @@ def test_global_zero_address():
 
     expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.global_, "ZeroAddress")])
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
 
     assert actual == expected
 
@@ -58,7 +58,7 @@ def test_global_group_size():
 
     expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.global_, "GroupSize")])
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
 
     assert actual == expected
 
@@ -69,7 +69,7 @@ def test_global_logic_sig_version():
 
     expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.global_, "LogicSigVersion")])
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
 
     assert actual == expected
 
@@ -80,7 +80,7 @@ def test_global_round():
 
     expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.global_, "Round")])
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
 
     assert actual == expected
 
@@ -91,7 +91,7 @@ def test_global_latest_timestamp():
 
     expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.global_, "LatestTimestamp")])
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
 
     assert actual == expected
 
@@ -104,7 +104,7 @@ def test_global_current_application_id():
         [pt.TealOp(expr, pt.Op.global_, "CurrentApplicationID")]
     )
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
 
     assert actual == expected
 
@@ -115,12 +115,12 @@ def test_global_creator_address():
 
     expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.global_, "CreatorAddress")])
 
-    actual, _ = expr.__teal__(teal3Options)
+    actual, _ = expr.__teal__(avm3Options)
 
     assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(teal2Options)
+        expr.__teal__(avm2Options)
 
 
 def test_global_current_application_address():
@@ -131,12 +131,12 @@ def test_global_current_application_address():
         [pt.TealOp(expr, pt.Op.global_, "CurrentApplicationAddress")]
     )
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
 
     assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(teal3Options)
+        expr.__teal__(avm3Options)
 
 
 def test_global_group_id():
@@ -145,12 +145,12 @@ def test_global_group_id():
 
     expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.global_, "GroupID")])
 
-    actual, _ = expr.__teal__(teal5Options)
+    actual, _ = expr.__teal__(avm5Options)
 
     assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(teal3Options)
+        expr.__teal__(avm3Options)
 
 
 def test_global_opcode_budget():
@@ -159,12 +159,12 @@ def test_global_opcode_budget():
 
     expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.global_, "OpcodeBudget")])
 
-    actual, _ = expr.__teal__(teal6Options)
+    actual, _ = expr.__teal__(avm6Options)
 
     assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(teal5Options)
+        expr.__teal__(avm5Options)
 
 
 def test_global_caller_application_id():
@@ -175,12 +175,12 @@ def test_global_caller_application_id():
         [pt.TealOp(expr, pt.Op.global_, "CallerApplicationID")]
     )
 
-    actual, _ = expr.__teal__(teal6Options)
+    actual, _ = expr.__teal__(avm6Options)
 
     assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(teal5Options)
+        expr.__teal__(avm5Options)
 
 
 def test_global_caller_app_address():
@@ -191,9 +191,9 @@ def test_global_caller_app_address():
         [pt.TealOp(expr, pt.Op.global_, "CallerApplicationAddress")]
     )
 
-    actual, _ = expr.__teal__(teal6Options)
+    actual, _ = expr.__teal__(avm6Options)
 
     assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(teal5Options)
+        expr.__teal__(avm5Options)

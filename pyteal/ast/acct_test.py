@@ -1,9 +1,10 @@
 import pyteal as pt
+from pyteal.ast.maybe_test import assert_MaybeValue_equality
 
 options = pt.CompileOptions()
-teal4Options = pt.CompileOptions(version=4)
-teal5Options = pt.CompileOptions(version=5)
-teal6Options = pt.CompileOptions(version=6)
+avm4Options = pt.CompileOptions(version=4)
+avm5Options = pt.CompileOptions(version=5)
+avm6Options = pt.CompileOptions(version=6)
 
 
 def test_acct_param_balance_valid():
@@ -21,7 +22,7 @@ def test_acct_param_balance_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal6Options)
+    actual, _ = expr.__teal__(avm6Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -44,7 +45,7 @@ def test_acct_param_min_balance_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal6Options)
+    actual, _ = expr.__teal__(avm6Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -67,9 +68,29 @@ def test_acct_param_auth_addr_valid():
         ]
     )
 
-    actual, _ = expr.__teal__(teal6Options)
+    actual, _ = expr.__teal__(avm6Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+
+def test_AccountParamObject():
+    for account in (
+        pt.Int(7),
+        pt.Addr("QSA6K5MNJPEGO5SDSWXBM3K4UEI3Q2NCPS2OUXVJI5QPCHMVI27MFRSHKI"),
+    ):
+        obj = pt.AccountParamObject(account)
+
+        assert obj._account is account
+
+        assert_MaybeValue_equality(
+            obj.balance(), pt.AccountParam.balance(account), avm6Options
+        )
+        assert_MaybeValue_equality(
+            obj.min_balance(), pt.AccountParam.minBalance(account), avm6Options
+        )
+        assert_MaybeValue_equality(
+            obj.auth_address(), pt.AccountParam.authAddr(account), avm6Options
+        )

@@ -3,7 +3,7 @@
 Loading Values from Group Transactions
 ======================================
 
-Since TEAL version 4 and above, programs can load values from transactions within an atomic 
+Since program version 4 and above, programs can load values from transactions within an atomic 
 group transaction. For instance, you can import values from the scratch space of another 
 application call, and you can access the generated ID of a new application or asset.
 These operations are only permitted in application mode.

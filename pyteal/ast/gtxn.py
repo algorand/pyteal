@@ -2,7 +2,7 @@ from typing import Union, cast, TYPE_CHECKING
 
 from pyteal.types import TealType, require_type
 from pyteal.ir import TealOp, Op, TealBlock
-from pyteal.errors import TealInputError, verifyFieldVersion, verifyTealVersion
+from pyteal.errors import TealInputError, verifyFieldVersion, verifyProgramVersion
 from pyteal.config import MAX_GROUP_SIZE
 from pyteal.ast.expr import Expr
 from pyteal.ast.txn import TxnField, TxnExpr, TxnaExpr, TxnObject
@@ -35,16 +35,18 @@ class GtxnExpr(TxnExpr):
         verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
 
         if type(self.txnIndex) is int:
-            verifyTealVersion(
-                Op.gtxn.min_version, options.version, "TEAL version too low to use gtxn"
+            verifyProgramVersion(
+                Op.gtxn.min_version,
+                options.version,
+                "Program version too low to use gtxn",
             )
             op = TealOp(self, Op.gtxn, self.txnIndex, self.field.arg_name)
             return TealBlock.FromOp(options, op)
 
-        verifyTealVersion(
+        verifyProgramVersion(
             Op.gtxns.min_version,
             options.version,
-            "TEAL version too low to index Gtxn with dynamic values",
+            "Program version too low to index Gtxn with dynamic values",
         )
 
         op = TealOp(self, Op.gtxns, self.field.arg_name)
@@ -83,10 +85,10 @@ class GtxnaExpr(TxnaExpr):
             else:
                 opToUse = Op.gtxnsas
 
-        verifyTealVersion(
+        verifyProgramVersion(
             opToUse.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(opToUse),
+            "Program version too low to use op {}".format(opToUse),
         )
 
         if type(self.txnIndex) is int:

@@ -1,0 +1,688 @@
+#pragma version 6
+txna ApplicationArgs 0
+store 1
+load 1
+callsub roundtripper_2
+store 0
+byte 0x151f7c75
+load 0
+concat
+log
+int 1
+return
+
+// numerical_comp
+numericalcomp_0:
+store 50
+int 18446744073709551615
+load 50
+-
+store 51
+load 51
+retsub
+
+// array_complement
+arraycomplement_1:
+store 6
+load 6
+int 8
+int 0
+*
+int 2
++
+extract_uint64
+store 8
+load 6
+int 8
+int 1
+*
+int 2
++
+extract_uint64
+store 9
+load 6
+int 8
+int 2
+*
+int 2
++
+extract_uint64
+store 10
+load 6
+int 8
+int 3
+*
+int 2
++
+extract_uint64
+store 11
+load 6
+int 8
+int 4
+*
+int 2
++
+extract_uint64
+store 12
+load 6
+int 8
+int 5
+*
+int 2
++
+extract_uint64
+store 13
+load 6
+int 8
+int 6
+*
+int 2
++
+extract_uint64
+store 14
+load 6
+int 8
+int 7
+*
+int 2
++
+extract_uint64
+store 15
+load 6
+int 8
+int 8
+*
+int 2
++
+extract_uint64
+store 16
+load 6
+int 8
+int 9
+*
+int 2
++
+extract_uint64
+store 17
+load 6
+int 8
+int 10
+*
+int 2
++
+extract_uint64
+store 18
+load 6
+int 8
+int 11
+*
+int 2
++
+extract_uint64
+store 19
+load 6
+int 8
+int 12
+*
+int 2
++
+extract_uint64
+store 20
+load 6
+int 8
+int 13
+*
+int 2
++
+extract_uint64
+store 21
+load 6
+int 8
+int 14
+*
+int 2
++
+extract_uint64
+store 22
+load 6
+int 8
+int 15
+*
+int 2
++
+extract_uint64
+store 23
+load 6
+int 8
+int 16
+*
+int 2
++
+extract_uint64
+store 24
+load 6
+int 8
+int 17
+*
+int 2
++
+extract_uint64
+store 25
+load 6
+int 8
+int 18
+*
+int 2
++
+extract_uint64
+store 26
+load 6
+int 8
+int 19
+*
+int 2
++
+extract_uint64
+store 27
+load 6
+int 8
+int 20
+*
+int 2
++
+extract_uint64
+store 28
+load 6
+int 8
+int 21
+*
+int 2
++
+extract_uint64
+store 29
+load 6
+int 8
+int 22
+*
+int 2
++
+extract_uint64
+store 30
+load 6
+int 8
+int 23
+*
+int 2
++
+extract_uint64
+store 31
+load 6
+int 8
+int 24
+*
+int 2
++
+extract_uint64
+store 32
+load 6
+int 8
+int 25
+*
+int 2
++
+extract_uint64
+store 33
+load 6
+int 8
+int 26
+*
+int 2
++
+extract_uint64
+store 34
+load 6
+int 8
+int 27
+*
+int 2
++
+extract_uint64
+store 35
+load 6
+int 8
+int 28
+*
+int 2
++
+extract_uint64
+store 36
+load 6
+int 8
+int 29
+*
+int 2
++
+extract_uint64
+store 37
+load 6
+int 8
+int 30
+*
+int 2
++
+extract_uint64
+store 38
+load 6
+int 8
+int 31
+*
+int 2
++
+extract_uint64
+store 39
+load 6
+int 8
+int 32
+*
+int 2
++
+extract_uint64
+store 40
+load 6
+int 8
+int 33
+*
+int 2
++
+extract_uint64
+store 41
+load 6
+int 8
+int 34
+*
+int 2
++
+extract_uint64
+store 42
+load 6
+int 8
+int 35
+*
+int 2
++
+extract_uint64
+store 43
+load 6
+int 8
+int 36
+*
+int 2
++
+extract_uint64
+store 44
+load 6
+int 8
+int 37
+*
+int 2
++
+extract_uint64
+store 45
+load 6
+int 8
+int 38
+*
+int 2
++
+extract_uint64
+store 46
+load 6
+int 8
+int 39
+*
+int 2
++
+extract_uint64
+store 47
+load 6
+int 8
+int 40
+*
+int 2
++
+extract_uint64
+store 48
+load 6
+int 8
+int 41
+*
+int 2
++
+extract_uint64
+store 49
+load 8
+callsub numericalcomp_0
+store 8
+load 9
+callsub numericalcomp_0
+store 9
+load 10
+callsub numericalcomp_0
+store 10
+load 11
+callsub numericalcomp_0
+store 11
+load 12
+callsub numericalcomp_0
+store 12
+load 13
+callsub numericalcomp_0
+store 13
+load 14
+callsub numericalcomp_0
+store 14
+load 15
+callsub numericalcomp_0
+store 15
+load 16
+callsub numericalcomp_0
+store 16
+load 17
+callsub numericalcomp_0
+store 17
+load 18
+callsub numericalcomp_0
+store 18
+load 19
+callsub numericalcomp_0
+store 19
+load 20
+callsub numericalcomp_0
+store 20
+load 21
+callsub numericalcomp_0
+store 21
+load 22
+callsub numericalcomp_0
+store 22
+load 23
+callsub numericalcomp_0
+store 23
+load 24
+callsub numericalcomp_0
+store 24
+load 25
+callsub numericalcomp_0
+store 25
+load 26
+callsub numericalcomp_0
+store 26
+load 27
+callsub numericalcomp_0
+store 27
+load 28
+callsub numericalcomp_0
+store 28
+load 29
+callsub numericalcomp_0
+store 29
+load 30
+callsub numericalcomp_0
+store 30
+load 31
+callsub numericalcomp_0
+store 31
+load 32
+callsub numericalcomp_0
+store 32
+load 33
+callsub numericalcomp_0
+store 33
+load 34
+callsub numericalcomp_0
+store 34
+load 35
+callsub numericalcomp_0
+store 35
+load 36
+callsub numericalcomp_0
+store 36
+load 37
+callsub numericalcomp_0
+store 37
+load 38
+callsub numericalcomp_0
+store 38
+load 39
+callsub numericalcomp_0
+store 39
+load 40
+callsub numericalcomp_0
+store 40
+load 41
+callsub numericalcomp_0
+store 41
+load 42
+callsub numericalcomp_0
+store 42
+load 43
+callsub numericalcomp_0
+store 43
+load 44
+callsub numericalcomp_0
+store 44
+load 45
+callsub numericalcomp_0
+store 45
+load 46
+callsub numericalcomp_0
+store 46
+load 47
+callsub numericalcomp_0
+store 47
+load 48
+callsub numericalcomp_0
+store 48
+load 49
+callsub numericalcomp_0
+store 49
+int 42
+store 52
+load 52
+itob
+extract 6 0
+load 8
+itob
+load 9
+itob
+concat
+load 10
+itob
+concat
+load 11
+itob
+concat
+load 12
+itob
+concat
+load 13
+itob
+concat
+load 14
+itob
+concat
+load 15
+itob
+concat
+load 16
+itob
+concat
+load 17
+itob
+concat
+load 18
+itob
+concat
+load 19
+itob
+concat
+load 20
+itob
+concat
+load 21
+itob
+concat
+load 22
+itob
+concat
+load 23
+itob
+concat
+load 24
+itob
+concat
+load 25
+itob
+concat
+load 26
+itob
+concat
+load 27
+itob
+concat
+load 28
+itob
+concat
+load 29
+itob
+concat
+load 30
+itob
+concat
+load 31
+itob
+concat
+load 32
+itob
+concat
+load 33
+itob
+concat
+load 34
+itob
+concat
+load 35
+itob
+concat
+load 36
+itob
+concat
+load 37
+itob
+concat
+load 38
+itob
+concat
+load 39
+itob
+concat
+load 40
+itob
+concat
+load 41
+itob
+concat
+load 42
+itob
+concat
+load 43
+itob
+concat
+load 44
+itob
+concat
+load 45
+itob
+concat
+load 46
+itob
+concat
+load 47
+itob
+concat
+load 48
+itob
+concat
+load 49
+itob
+concat
+concat
+store 7
+load 7
+retsub
+
+// round_tripper
+roundtripper_2:
+store 2
+load 2
+callsub arraycomplement_1
+store 4
+load 4
+callsub arraycomplement_1
+store 5
+load 2
+store 56
+load 56
+store 55
+int 6
+store 53
+load 53
+load 56
+len
++
+store 54
+load 54
+int 65536
+<
+assert
+load 53
+itob
+extract 6 0
+load 4
+store 56
+load 55
+load 56
+concat
+store 55
+load 54
+store 53
+load 53
+load 56
+len
++
+store 54
+load 54
+int 65536
+<
+assert
+load 53
+itob
+extract 6 0
+concat
+load 5
+store 56
+load 55
+load 56
+concat
+store 55
+load 54
+store 53
+load 53
+itob
+extract 6 0
+concat
+load 55
+concat
+store 3
+load 3
+retsub
