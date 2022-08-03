@@ -33,14 +33,14 @@ class BoxCreate(Expr):
             msg=f"{Op.box_create} unavailable",
         )
         return TealBlock.FromOp(
-            options, TealOp(self, Op.box_create), self.size, self.name
+            options, TealOp(self, Op.box_create), self.name, self.size
         )
 
     def __str__(self):
         return f"(box_create {self.name} {self.size})"
 
     def type_of(self):
-        return TealType.none
+        return TealType.uint64
 
     def has_return(self):
         return False
@@ -73,7 +73,7 @@ class BoxDelete(Expr):
         return f"(box_del {self.name})"
 
     def type_of(self):
-        return TealType.none
+        return TealType.uint64
 
     def has_return(self):
         return False

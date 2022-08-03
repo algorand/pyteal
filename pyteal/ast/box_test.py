@@ -7,8 +7,8 @@ avm7Options = pt.CompileOptions(version=7)
 avm8Options = pt.CompileOptions(version=8)
 
 POSITIVE_TEST_CASES: list[Tuple[pt.Expr, pt.TealType]] = [
-    (pt.BoxCreate(pt.Bytes("box"), pt.Int(10)), pt.TealType.none),
-    (pt.BoxDelete(pt.Bytes("box")), pt.TealType.none),
+    (pt.BoxCreate(pt.Bytes("box"), pt.Int(10)), pt.TealType.uint64),
+    (pt.BoxDelete(pt.Bytes("box")), pt.TealType.uint64),
     (pt.BoxExtract(pt.Bytes("box"), pt.Int(2), pt.Int(4)), pt.TealType.bytes),
     (
         pt.BoxReplace(pt.Bytes("box"), pt.Int(3), pt.Bytes("replace")),
@@ -57,8 +57,8 @@ def test_box_create_compile():
 
     expected = pt.TealSimpleBlock(
         [
-            pt.TealOp(size_arg, pt.Op.int, 10),
             pt.TealOp(name_arg, pt.Op.byte, '"eineName"'),
+            pt.TealOp(size_arg, pt.Op.int, 10),
             pt.TealOp(expr, pt.Op.box_create),
         ]
     )
