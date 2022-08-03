@@ -551,12 +551,9 @@ class NamedTuple(Tuple):
 
         # NOTE: this `_ready` variable enables `__setattr__` during `__init__` execution,
         # while after `__init__`, we cannot use `__setattr__` to set fields in `NamedTuple`.
-        # NOTE: The reason for `_ready` is that, the field naming scheme in Python would change
-        # _double underscore led field name_ to something else,
-        # while _single underscore led variable names_ would stay intact.
-        # e.g., if we set variable `self.__ready`,
-        # then internally the variable name would be changed to `_NamedTuple__ready`, which is implicit.
-        self._ready = False
+        # NOTE: If we declare variable `__ready`, then internally,
+        # the variable name would be changed to `_NamedTuple__ready`, which is implicit.
+        self.__ready = False
         self.__type_specs: OrderedDict[str, TypeSpec] = OrderedDict()
         self.__field_index: dict[str, int] = {}
 
@@ -582,7 +579,7 @@ class NamedTuple(Tuple):
             NamedTupleTypeSpec(type(self), *list(self.__type_specs.values()))
         )
 
-        self._ready = True
+        self.__ready = True
 
     def __getattr__(self, field: str) -> TupleElement[Any]:
         """Retrieve an element by its field in this NamedTuple.
@@ -613,9 +610,11 @@ class NamedTuple(Tuple):
 
     def __setattr__(self, name: str, field: Any) -> None:
         # we allow `__setattr__` only when:
-        # - we are in `__init__`: `not self._ready`
-        # - we are setting `_ready`: `name == "_ready"`
-        if name == "_ready" or not self._ready:
+        # - we are in `__init__`: `not self.__ready`
+        # - we are setting `_ready`: `name == "_NamedTuple__ready"`,
+        #   it is internally changed from `__ready` to `_NamedTuple__ready`,
+        #   see notes in `__init__`
+        if name == "_NamedTuple__ready" or not self.__ready:
             super().__setattr__(name, field)
             return
         raise TealInputError("cannot assign to NamedTuple attributes.")
