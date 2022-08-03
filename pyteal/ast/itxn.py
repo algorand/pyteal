@@ -159,6 +159,7 @@ class InnerTxnBuilder:
 
         Note: For non-array field (e.g., note), setting it twice will overwrite the original value.
               While for array field (e.g., accounts), setting it multiple times will append the values.
+              It is also possible to pass the entire array field if desired (e.g., Txn.accounts) to pass all the references.
 
         Requires program version 5 or higher. This operation is only permitted in application mode.
 
@@ -236,6 +237,7 @@ class InnerTxnBuilder:
 
         Note: For non-array field (e.g., note), setting it twice will overwrite the original value.
               While for array field (e.g., accounts), setting it multiple times will append the values.
+              It is also possible to pass the entire array field if desired (e.g., Txn.accounts) to pass all the references.
 
         Requires program version 5 or higher. This operation is only permitted in application mode.
 

@@ -141,6 +141,11 @@ def test_InnerTxnBuilder_SetFields():
         with pt.TealComponent.Context.ignoreScratchSlotEquality(), pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected
 
+        assert pt.TealBlock.MatchScratchSlotReferences(
+            pt.TealBlock.GetReferencedScratchSlots(actual),
+            pt.TealBlock.GetReferencedScratchSlots(expected),
+        )
+
         if len(fields) != 0:
             with pytest.raises(pt.TealInputError):
                 expr.__teal__(avm4Options)
@@ -164,6 +169,11 @@ def test_InnerTxnBuilder_Execute():
 
         with pt.TealComponent.Context.ignoreScratchSlotEquality(), pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected
+
+        assert pt.TealBlock.MatchScratchSlotReferences(
+            pt.TealBlock.GetReferencedScratchSlots(actual),
+            pt.TealBlock.GetReferencedScratchSlots(expected),
+        )
 
         with pytest.raises(pt.TealInputError):
             expr.__teal__(avm4Options)
