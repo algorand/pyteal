@@ -6,7 +6,7 @@ from pyteal.errors import (
     TealInputError,
     TealCompileError,
     verifyFieldVersion,
-    verifyTealVersion,
+    verifyProgramVersion,
 )
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.leafexpr import LeafExpr
@@ -37,7 +37,7 @@ class TxnField(Enum):
     sender = (0, "Sender", TealType.bytes, False, 2)
     fee = (1, "Fee", TealType.uint64, False, 2)
     first_valid = (2, "FirstValid", TealType.uint64, False, 2)
-    first_valid_time = (3, "FirstValidTime", TealType.uint64, False, 2)
+    first_valid_time = (3, "FirstValidTime", TealType.uint64, False, 7)
     last_valid = (4, "LastValid", TealType.uint64, False, 2)
     note = (5, "Note", TealType.bytes, False, 2)
     lease = (6, "Lease", TealType.bytes, False, 2)
@@ -110,6 +110,22 @@ class TxnField(Enum):
     created_application_id = (61, "CreatedApplicationID", TealType.uint64, False, 5)
     last_log = (62, "LastLog", TealType.bytes, False, 6)
     state_proof_pk = (63, "StateProofPK", TealType.bytes, False, 6)
+    approval_program_pages = (64, "ApprovalProgramPages", TealType.bytes, True, 7)
+    num_approval_program_pages = (
+        65,
+        "NumApprovalProgramPages",
+        TealType.uint64,
+        False,
+        7,
+    )
+    clear_state_program_pages = (66, "ClearStateProgramPages", TealType.bytes, True, 7)
+    num_clear_state_program_pages = (
+        67,
+        "NumClearStateProgramPages",
+        TealType.uint64,
+        False,
+        7,
+    )
 
     def __init__(
         self, id: int, name: str, type: TealType, is_array: bool, min_version: int
@@ -143,10 +159,10 @@ class TxnExpr(LeafExpr):
 
     def __teal__(self, options: "CompileOptions"):
         verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
-        verifyTealVersion(
+        verifyProgramVersion(
             self.op.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(self.op),
+            "Program version too low to use op {}".format(self.op),
         )
 
         op = TealOp(self, self.op, self.field.arg_name)
@@ -200,10 +216,10 @@ class TxnaExpr(LeafExpr):
         if opToUse is None:
             raise TealCompileError("Dynamic array indexing not supported", self)
 
-        verifyTealVersion(
+        verifyProgramVersion(
             opToUse.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(opToUse),
+            "Program version too low to use op {}".format(opToUse),
         )
 
         if type(self.index) is int:
@@ -302,6 +318,13 @@ class TxnObject:
         For more information, see https://developer.algorand.org/docs/reference/transactions/#firstvalid
         """
         return self.makeTxnExpr(TxnField.first_valid)
+
+    def first_valid_time(self) -> TxnExpr:
+        """Get the UNIX timestamp of block before txn.FirstValid. Fails if negative.
+
+        For more information, see https://developer.algorand.org/docs/reference/transactions/#firstvalidtime
+        """
+        return self.makeTxnExpr(TxnField.first_valid_time)
 
     def last_valid(self) -> TxnExpr:
         """Get the last valid round number.
@@ -403,7 +426,7 @@ class TxnObject:
 
         For more information, see https://developer.algorand.org/docs/reference/transactions/#nonparticipation
 
-        Requires TEAL version 5 or higher.
+        Requires program version 5 or higher.
         """
         return self.makeTxnExpr(TxnField.nonparticipation)
 
@@ -620,7 +643,7 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.AssetConfig` and this is an asset creation transaction.
 
-        Requires TEAL version 5 or higher.
+        Requires program version 5 or higher.
 
         * v5 - Only works on inner transactions.
         * >= v6 - Works on top-level and inner transactions.
@@ -656,7 +679,7 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall` and this is an app creation call.
 
-        Requires TEAL version 3 or higher.
+        Requires program version 3 or higher.
         """
         return self.makeTxnExpr(TxnField.global_num_uints)
 
@@ -665,7 +688,7 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall` and this is an app creation call.
 
-        Requires TEAL version 3 or higher.
+        Requires program version 3 or higher.
         """
         return self.makeTxnExpr(TxnField.global_num_byte_slices)
 
@@ -674,7 +697,7 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall` and this is an app creation call.
 
-        Requires TEAL version 3 or higher.
+        Requires program version 3 or higher.
         """
         return self.makeTxnExpr(TxnField.local_num_uints)
 
@@ -683,7 +706,7 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall` and this is an app creation call.
 
-        Requires TEAL version 3 or higher.
+        Requires program version 3 or higher.
         """
         return self.makeTxnExpr(TxnField.local_num_byte_slices)
 
@@ -694,7 +717,7 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall` and this is an app creation call.
 
-        Requires TEAL version 4 or higher.
+        Requires program version 4 or higher.
         """
         return self.makeTxnExpr(TxnField.extra_program_pages)
 
@@ -703,7 +726,7 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall` and this is an app creation call.
 
-        Requires TEAL version 5 or higher.
+        Requires program version 5 or higher.
 
         * v5 - Only works on inner transactions.
         * >= v6 - Works on top-level and inner transactions.
@@ -717,14 +740,14 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.ApplicationCall`.
 
-        Requires TEAL version 6 or higher.
+        Requires program version 6 or higher.
         """
         return self.makeTxnExpr(TxnField.last_log)
 
     def state_proof_pk(self) -> TxnExpr:
         """Get the state proof public key commitment from a transaction.
 
-        Requires TEAL version 6 or higher.
+        Requires program version 6 or higher.
         """
         return self.makeTxnExpr(TxnField.state_proof_pk)
 
@@ -750,7 +773,7 @@ class TxnObject:
 
         :type: TxnArray
 
-        Requires TEAL version 3 or higher.
+        Requires program version 3 or higher.
         """
         return TxnArray(self, TxnField.assets, TxnField.num_assets)
 
@@ -760,7 +783,7 @@ class TxnObject:
 
         :type: TxnArray
 
-        Requires TEAL version 3 or higher.
+        Requires program version 3 or higher.
         """
         return TxnArray(self, TxnField.applications, TxnField.num_applications)
 
@@ -770,12 +793,38 @@ class TxnObject:
 
         :type: TxnArray
 
-        Requires TEAL version 5 or higher.
+        Requires program version 5 or higher.
 
         * v5 - Only works on inner transactions.
         * >= v6 - Works on top-level and inner transactions.
         """
         return TxnArray(self, TxnField.logs, TxnField.num_logs)
+
+    @property
+    def approval_program_pages(self) -> TxnArray:
+        """The approval program pages.
+
+        :type: TxnArray
+
+        Requires program version 7 or higher.
+        """
+        return TxnArray(
+            self, TxnField.approval_program_pages, TxnField.num_approval_program_pages
+        )
+
+    @property
+    def clear_state_program_pages(self) -> TxnArray:
+        """The clear state program pages.
+
+        :type: TxnArray
+
+        Requires program version 7 or higher.
+        """
+        return TxnArray(
+            self,
+            TxnField.clear_state_program_pages,
+            TxnField.num_clear_state_program_pages,
+        )
 
 
 TxnObject.__module__ = "pyteal"

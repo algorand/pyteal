@@ -302,6 +302,13 @@ def test_type_spec_from_annotation_is_exhaustive():
                 type_spec_from_annotation(subclass)
             continue
 
+        if subclass is pt.abi.NamedTuple:
+            with pytest.raises(
+                TealInputError, match=r"^NamedTuple must be subclassed$"
+            ):
+                type_spec_from_annotation(subclass)
+            continue
+
         try:
             # if subclass is not generic, this will succeed
             type_spec_from_annotation(subclass)

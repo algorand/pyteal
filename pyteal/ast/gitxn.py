@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, cast, Union
 
 from pyteal.config import MAX_GROUP_SIZE
 
-from pyteal.errors import TealInputError, verifyFieldVersion, verifyTealVersion
+from pyteal.errors import TealInputError, verifyFieldVersion, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
 from pyteal.ast.txn import TxnExpr, TxnField, TxnObject, TxnaExpr
@@ -33,10 +33,10 @@ class GitxnExpr(TxnExpr):
     def __teal__(self, options: "CompileOptions"):
         verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
 
-        verifyTealVersion(
+        verifyProgramVersion(
             Op.gitxn.min_version,
             options.version,
-            "TEAL version too low to use gitxn",
+            "Program version too low to use gitxn",
         )
         op = TealOp(self, Op.gitxn, self.txnIndex, self.field.arg_name)
         return TealBlock.FromOp(options, op)
@@ -71,10 +71,10 @@ class GitxnaExpr(TxnaExpr):
         else:
             opToUse = Op.gitxnas
 
-        verifyTealVersion(
+        verifyProgramVersion(
             opToUse.min_version,
             options.version,
-            "TEAL version too low to use op {}".format(opToUse),
+            "Program version too low to use op {}".format(opToUse),
         )
 
         if type(self.index) is int:

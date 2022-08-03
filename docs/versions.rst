@@ -3,12 +3,12 @@
 Versions
 =============
 
-Each version of PyTeal compiles contracts for a specific version of TEAL. Newer versions of TEAL
+Each version of PyTeal compiles contracts for a specific AVM version. Newer versions of the AVM
 introduce new opcodes and transaction fields, so PyTeal must be updated to support these new
-features. Below is a table which shows the relationship between TEAL and PyTeal versions.
+features. Below is a table which shows the relationship between AVM and PyTeal versions.
 
 ============ ==============
-TEAL Version PyTeal Version
+AVM Version  PyTeal Version
 ============ ==============
 1            <= 0.5.4
 2            >= 0.6.0
@@ -16,6 +16,7 @@ TEAL Version PyTeal Version
 4            >= 0.8.0
 5            >= 0.9.0
 6            >= 0.10.0
+7            >= 0.15.0
 ============ ==============
 
 .. _version pragmas:
@@ -38,14 +39,14 @@ constraint to only a section of the AST.
 PyTeal v0.5.4 and Below
 -----------------------
 
-In order to support TEAL v2, PyTeal v0.6.0 breaks backward compatibility with v0.5.4. PyTeal
+In order to support AVM v2, PyTeal v0.6.0 breaks backward compatibility with v0.5.4. PyTeal
 programs written for PyTeal version 0.5.4 and below will not compile properly and most likely will
 display an error of the form :code:`AttributeError: * object has no attribute 'teal'`.
 
 .. warning::
-    If you are updating from a v1 TEAL program, make
+    If you are updating from a v1 AVM program, make
     sure your program abides by the `TEAL safety guidelines <https://developer.algorand.org/docs/reference/teal/guidelines/>`_.
-    Changing a v1 TEAL program to a v2 TEAL program without any code changes is insecure because v2
-    TEAL programs allow rekeying. Specifically, you must add a check that the :code:`RekeyTo` property
+    Changing a v1 AVM program to a v2 AVM program without any code changes is insecure because v2
+    AVM programs allow rekeying. Specifically, you must add a check that the :code:`RekeyTo` property
     of any transaction is set to the zero address when updating an older PyTeal program from v0.5.4 and
     below.

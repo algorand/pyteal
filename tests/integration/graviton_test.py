@@ -51,7 +51,7 @@ def wrap_compile_and_save(
         f.write(teal)
 
     print(
-        f"""Subroutine {case_name}@{mode} generated TEAL. 
+        f"""Subroutine {case_name}@{mode} generated TEAL.
 saved to {tealpath}:
 -------
 {teal}
@@ -908,6 +908,66 @@ def blackbox_pyteal_while_continue_test():
         )
 
 
+def blackbox_pyteal_named_tupleness_test():
+    from typing import Literal as L
+    from tests.blackbox import Blackbox
+    from pyteal import (
+        Seq,
+        abi,
+        Subroutine,
+        TealType,
+        Return,
+        And,
+        Mode,
+    )
+
+    class NamedTupleExample(abi.NamedTuple):
+        a: abi.Field[abi.Bool]
+        b: abi.Field[abi.Address]
+        c: abi.Field[abi.Tuple2[abi.Uint64, abi.Bool]]
+        d: abi.Field[abi.StaticArray[abi.Byte, L[10]]]
+        e: abi.Field[abi.StaticArray[abi.Bool, L[4]]]
+        f: abi.Field[abi.Uint64]
+
+    @Blackbox(input_types=[None] * 6)
+    @Subroutine(TealType.uint64)
+    def named_tuple_field_access(
+        a_0: abi.Bool,
+        a_1: abi.Address,
+        a_2: abi.Tuple2[abi.Uint64, abi.Bool],
+        a_3: abi.StaticArray[abi.Byte, L[10]],
+        a_4: abi.StaticArray[abi.Bool, L[4]],
+        a_5: abi.Uint64,
+    ):
+        return Seq(
+            (v_tuple := NamedTupleExample()).set(a_0, a_1, a_2, a_3, a_4, a_5),
+            (v_a := abi.Bool()).set(v_tuple.a),
+            (v_b := abi.Address()).set(v_tuple.b),
+            (v_c := abi.make(abi.Tuple2[abi.Uint64, abi.Bool])).set(v_tuple.c),
+            (v_d := abi.make(abi.StaticArray[abi.Byte, L[10]])).set(v_tuple.d),
+            (v_e := abi.make(abi.StaticArray[abi.Bool, L[4]])).set(v_tuple.e),
+            (v_f := abi.Uint64()).set(v_tuple.f),
+            Return(
+                And(
+                    a_0.get() == v_a.get(),
+                    a_1.get() == v_b.get(),
+                    a_2.encode() == v_c.encode(),
+                    a_3.encode() == v_d.encode(),
+                    a_4.encode() == v_e.encode(),
+                    a_5.get() == v_f.get(),
+                )
+            ),
+        )
+
+    lsig_pytealer = PyTealDryRunExecutor(named_tuple_field_access, Mode.Signature)
+    args = (False, b"1" * 32, (0, False), b"0" * 10, [True] * 4, 0)
+
+    inspector = lsig_pytealer.dryrun(args)
+
+    assert inspector.stack_top() == 1
+    assert inspector.passed()
+
+
 @pytest.mark.parametrize(
     "example",
     [
@@ -917,6 +977,7 @@ def blackbox_pyteal_while_continue_test():
         blackbox_pyteal_example4,
         blackbox_pyteal_example5,
         blackbox_pyteal_while_continue_test,
+        blackbox_pyteal_named_tupleness_test,
     ],
 )
 def test_blackbox_pyteal_examples(example):

@@ -1,4 +1,4 @@
-from typing import NamedTuple, List, Callable
+from typing import NamedTuple, List, Callable, Literal
 import pytest
 
 import pyteal as pt
@@ -824,3 +824,104 @@ def test_TupleElement_store_into():
 
             with pt.TealComponent.Context.ignoreExprEquality():
                 assert actual == expected, "Test at index {} failed".format(i)
+
+
+def test_NamedTuple_init():
+    with pytest.raises(pt.TealInputError, match=r"NamedTuple must be subclassed$"):
+        abi.NamedTuple()
+
+    class Empty(abi.NamedTuple):
+        pass
+
+    with pytest.raises(
+        pt.TealInputError, match=r"Expected fields to be declared but found none$"
+    ):
+        Empty()
+
+    class ValidField(abi.NamedTuple):
+        name: abi.Field[abi.Uint16]
+
+    ValidField()
+
+    class NoField(abi.NamedTuple):
+        name: abi.Uint16
+
+    with pytest.raises(
+        pt.TealInputError,
+        match=r'Type annotation for attribute "name" must be a Field. Got ',
+    ):
+        NoField()
+
+
+class NT_0(abi.NamedTuple):
+    f0: abi.Field[abi.Uint64]
+    f1: abi.Field[abi.Uint32]
+    f2: abi.Field[abi.Uint16]
+    f3: abi.Field[abi.Uint8]
+
+
+class NT_1(abi.NamedTuple):
+    f0: abi.Field[abi.StaticArray[abi.Bool, Literal[4]]]
+    f1: abi.Field[abi.DynamicArray[abi.String]]
+    f2: abi.Field[abi.String]
+    f3: abi.Field[abi.Bool]
+    f4: abi.Field[abi.Address]
+    f5: abi.Field[NT_0]
+
+
+class NT_2(abi.NamedTuple):
+    f0: abi.Field[abi.Bool]
+    f1: abi.Field[abi.Bool]
+    f2: abi.Field[abi.Bool]
+    f3: abi.Field[abi.Bool]
+    f4: abi.Field[abi.Bool]
+    f5: abi.Field[abi.Bool]
+    f6: abi.Field[abi.Bool]
+    f7: abi.Field[abi.Bool]
+    f8: abi.Field[NT_1]
+
+
+class NT_3(abi.NamedTuple):
+    f0: abi.Field[NT_0]
+    f1: abi.Field[NT_1]
+    f2: abi.Field[NT_2]
+
+
+@pytest.mark.parametrize("test_case", [NT_0, NT_1, NT_2, NT_3])
+def test_NamedTuple_getitem(test_case: type[abi.NamedTuple]):
+    tuple_value = test_case()
+    tuple_len_static = tuple_value.type_spec().length_static()
+    for i in range(tuple_len_static):
+        elem_by_field: abi.TupleElement = getattr(tuple_value, f"f{i}")
+        elem_by_index: abi.TupleElement = tuple_value[i]
+
+        assert (
+            type(elem_by_field) is abi.TupleElement
+        ), f"Test case {test_case} at field f{i} must be TupleElement"
+        assert (
+            type(elem_by_index) is abi.TupleElement
+        ), f"Test case {test_case} at index {i} must be TupleElement"
+
+        assert (
+            elem_by_field.index == i
+        ), f"Test case {test_case} at field f{i} should have index {i}."
+        assert (
+            elem_by_index.index == i
+        ), f"Test case {test_case} at index {i} should have index {i}."
+
+        assert (
+            elem_by_field.tuple is tuple_value
+        ), f"Test case {test_case} at field f{i} should have attr tuple == {test_case}."
+        assert (
+            elem_by_index.tuple is tuple_value
+        ), f"Test case {test_case} at index {i} should have attr tuple == {test_case}."
+
+        assert (
+            elem_by_field.produced_type_spec() == elem_by_index.produced_type_spec()
+        ), f"Test case {test_case} at field f{i} type spec unmatching: {elem_by_field.produced_type_spec()} != {elem_by_index.produced_type_spec()}."
+
+    with pytest.raises(KeyError):
+        tuple_value.aaaaa
+
+    with pytest.raises(pt.TealInputError):
+        tuple_value.f0 = abi.Uint64()

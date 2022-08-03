@@ -48,7 +48,7 @@ Extract
 ~~~~~~~
 
 .. note::
-    :code:`Extract` is only available in TEAL version 5 or higher.
+    :code:`Extract` is only available in program version 5 or higher.
 
 The :any:`Extract` expression can extract part of a byte slice given the start index and length. For
 example:

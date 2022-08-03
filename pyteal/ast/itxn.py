@@ -1,15 +1,25 @@
 from enum import Enum
-from typing import TYPE_CHECKING, cast
 import algosdk
 
-from pyteal.ast.abi.util import type_specs_from_signature
+from typing import TYPE_CHECKING, cast
 from pyteal.ast.int import EnumInt
+from pyteal.ast.for_ import For
+from pyteal.ast.int import Int
+from pyteal.ast.scratchvar import ScratchVar
+
 from pyteal.ast.methodsig import MethodSignature
 from pyteal.types import TealType, require_type
-from pyteal.errors import TealInputError, TealTypeError, verifyTealVersion
+from pyteal.errors import TealInputError, TealTypeError, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
-from pyteal.ast.txn import TxnField, TxnExprBuilder, TxnType, TxnaExprBuilder, TxnObject
+from pyteal.ast.txn import (
+    TxnType,
+    TxnArray,
+    TxnField,
+    TxnExprBuilder,
+    TxnaExprBuilder,
+    TxnObject,
+)
 from pyteal.ast.seq import Seq
 from pyteal.ast.bytes import Bytes
 from pyteal.ast import abi
@@ -38,10 +48,10 @@ class InnerTxnActionExpr(Expr):
     def __teal__(self, options: "CompileOptions"):
         op = self.action.value
 
-        verifyTealVersion(
+        verifyProgramVersion(
             op.min_version,
             options.version,
-            "TEAL version too low to create inner transactions",
+            "Program version too low to create inner transactions",
         )
 
         return TealBlock.FromOp(options, TealOp(self, op))
@@ -64,10 +74,10 @@ class InnerTxnFieldExpr(Expr):
         return "(InnerTxnSetField {} {})".format(self.field.arg_name, self.value)
 
     def __teal__(self, options: "CompileOptions"):
-        verifyTealVersion(
+        verifyProgramVersion(
             Op.itxn_field.min_version,
             options.version,
-            "TEAL version too low to create inner transactions",
+            "Program version too low to create inner transactions",
         )
 
         return TealBlock.FromOp(
@@ -87,7 +97,7 @@ class InnerTxnBuilder:
     Inner transactions are transactions which applications can dynamically create. Each inner
     transaction will appear as a transaction inside of the current transaction being executed.
 
-    As of TEAL version 5, only the transaction types :any:`TxnType.Payment`, :any:`TxnType.AssetTransfer`,
+    As of program version 5, only the transaction types :any:`TxnType.Payment`, :any:`TxnType.AssetTransfer`,
     :any:`TxnType.AssetConfig`, and :any:`TxnType.AssetFreeze` are allowed. Additionally, not all
     fields are allowed to be set. For example, it is not currently allowed to set the rekeyTo field
     of an inner transaction.
@@ -102,7 +112,7 @@ class InnerTxnBuilder:
         overpaying in earlier transactions; :code:`FirstValid`/:code:`LastValid` to the values in
         the top-level transaction, and all other fields to zero values.
 
-        Requires TEAL version 5 or higher. This operation is only permitted in application mode.
+        Requires program version 5 or higher. This operation is only permitted in application mode.
         """
         return InnerTxnActionExpr(InnerTxnAction.Begin)
 
@@ -115,7 +125,7 @@ class InnerTxnBuilder:
         overpaying in earlier transactions; :code:`FirstValid`/:code:`LastValid` to the values in
         the top-level transaction, and all other fields to zero values.
 
-        Requires TEAL version 6 or higher. This operation is only permitted in application mode.
+        Requires program version 6 or higher. This operation is only permitted in application mode.
         """
         return InnerTxnActionExpr(InnerTxnAction.Next)
 
@@ -136,7 +146,7 @@ class InnerTxnBuilder:
         If the inner transaction creates an asset, the new asset ID can be found by looking at
         :any:`InnerTxn.created_asset_id() <TxnObject.created_asset_id>`.
 
-        Requires TEAL version 5 or higher. This operation is only permitted in application mode.
+        Requires program version 5 or higher. This operation is only permitted in application mode.
         """
         return InnerTxnActionExpr(InnerTxnAction.Submit)
 
@@ -149,8 +159,9 @@ class InnerTxnBuilder:
 
         Note: For non-array field (e.g., note), setting it twice will overwrite the original value.
               While for array field (e.g., accounts), setting it multiple times will append the values.
+              It is also possible to pass the entire array field if desired (e.g., Txn.accounts) to pass all the references.
 
-        Requires TEAL version 5 or higher. This operation is only permitted in application mode.
+        Requires program version 5 or higher. This operation is only permitted in application mode.
 
         Args:
             field: The field to set on the inner transaction.
@@ -158,7 +169,7 @@ class InnerTxnBuilder:
                 compatible with the field being set.
         """
         if not field.is_array:
-            if type(value) is list:
+            if type(value) is list or isinstance(value, TxnArray):
                 raise TealInputError(
                     "inner transaction set field {} does not support array value".format(
                         field
@@ -166,25 +177,35 @@ class InnerTxnBuilder:
                 )
             return InnerTxnFieldExpr(field, cast(Expr, value))
         else:
-            if type(value) is not list:
+            if type(value) is not list and not isinstance(value, TxnArray):
                 raise TealInputError(
                     "inner transaction set array field {} with non-array value".format(
                         field
                     )
                 )
-            for valueIter in value:
-                if not isinstance(valueIter, Expr):
-                    raise TealInputError(
-                        "inner transaction set array field {} with non PyTeal expression array element {}".format(
-                            field, valueIter
+
+            if type(value) is list:
+                for valueIter in value:
+                    if not isinstance(valueIter, Expr):
+                        raise TealInputError(
+                            "inner transaction set array field {} with non PyTeal expression array element {}".format(
+                                field, valueIter
+                            )
                         )
-                    )
-            return Seq(
-                *[
-                    InnerTxnFieldExpr(field, cast(Expr, valueIter))
-                    for valueIter in value
-                ]
-            )
+
+                return Seq(
+                    *[
+                        InnerTxnFieldExpr(field, cast(Expr, valueIter))
+                        for valueIter in value
+                    ]
+                )
+            else:
+                arr = cast(TxnArray, value)
+                return For(
+                    (i := ScratchVar()).store(Int(0)),
+                    i.load() < arr.length(),
+                    i.store(i.load() + Int(1)),
+                ).Do(InnerTxnFieldExpr(field, arr[i.load()]))
 
     @classmethod
     def Execute(cls, fields: dict[TxnField, Expr | list[Expr]]) -> Expr:
@@ -198,7 +219,7 @@ class InnerTxnBuilder:
             InnerTxnBuilder.SetFields(fields)
             InnerTxnBuilder.End()
 
-        Requires TEAL version 5 or higher. This operation is only permitted in application mode.
+        Requires program version 5 or higher. This operation is only permitted in application mode.
 
         Args:
             fields: A dictionary whose keys are fields to set and whose values are the value each
@@ -216,8 +237,9 @@ class InnerTxnBuilder:
 
         Note: For non-array field (e.g., note), setting it twice will overwrite the original value.
               While for array field (e.g., accounts), setting it multiple times will append the values.
+              It is also possible to pass the entire array field if desired (e.g., Txn.accounts) to pass all the references.
 
-        Requires TEAL version 5 or higher. This operation is only permitted in application mode.
+        Requires program version 5 or higher. This operation is only permitted in application mode.
 
         Args:
             fields: A dictionary whose keys are fields to set and whose values are the value each
@@ -273,7 +295,7 @@ class InnerTxnBuilder:
 
         # We only care about the args
         arg_type_specs: list[abi.TypeSpec]
-        arg_type_specs, _ = type_specs_from_signature(method_signature)
+        arg_type_specs, _ = abi.type_specs_from_signature(method_signature)
 
         if len(args) != len(arg_type_specs):
             raise TealInputError(

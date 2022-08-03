@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from pyteal.types import TealType, require_type, types_match
-from pyteal.errors import verifyTealVersion, TealCompileError
+from pyteal.errors import verifyProgramVersion, TealCompileError
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
@@ -31,10 +31,10 @@ class Return(Expr):
 
     def __teal__(self, options: "CompileOptions"):
         if options.currentSubroutine is not None:
-            verifyTealVersion(
+            verifyProgramVersion(
                 Op.retsub.min_version,
                 options.version,
-                "TEAL version too low to use subroutines",
+                "Program version too low to use subroutines",
             )
             returnType = options.currentSubroutine.return_type
             if returnType == TealType.none:
