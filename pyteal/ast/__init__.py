@@ -108,7 +108,6 @@ from pyteal.ast.base64decode import Base64Decode
 
 # ternary ops
 from pyteal.ast.ternaryexpr import (
-    TernaryExpr,
     Divw,
     Ed25519Verify,
     Ed25519Verify_Bare,
@@ -239,7 +238,6 @@ __all__ = [
     "Div",
     "Mod",
     "Exp",
-    "TernaryExpr",
     "Divw",
     "BitwiseAnd",
     "BitwiseOr",

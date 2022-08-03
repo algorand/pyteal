@@ -204,7 +204,6 @@ __all__ = [
     "TealSimpleBlock",
     "TealType",
     "TealTypeError",
-    "TernaryExpr",
     "Tmpl",
     "Txn",
     "TxnArray",
