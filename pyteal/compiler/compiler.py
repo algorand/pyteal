@@ -25,9 +25,17 @@ from pyteal.compiler.subroutines import (
 )
 from pyteal.compiler.constants import createConstantBlocks
 
-MAX_TEAL_VERSION = 6
-MIN_TEAL_VERSION = 2
-DEFAULT_TEAL_VERSION = MIN_TEAL_VERSION
+MAX_PROGRAM_VERSION = 7
+MIN_PROGRAM_VERSION = 2
+DEFAULT_PROGRAM_VERSION = MIN_PROGRAM_VERSION
+
+
+"""Deprecated. Use MAX_PROGRAM_VERSION instead."""
+MAX_TEAL_VERSION = MAX_PROGRAM_VERSION
+"""Deprecated. Use MIN_PROGRAM_VERSION instead."""
+MIN_TEAL_VERSION = MIN_PROGRAM_VERSION
+"""Deprecated. Use DEFAULT_PROGRAM_VERSION instead."""
+DEFAULT_TEAL_VERSION = DEFAULT_PROGRAM_VERSION
 
 
 class CompileOptions:
@@ -35,7 +43,7 @@ class CompileOptions:
         self,
         *,
         mode: Mode = Mode.Signature,
-        version: int = DEFAULT_TEAL_VERSION,
+        version: int = DEFAULT_PROGRAM_VERSION,
         optimize: OptimizeOptions = None,
     ) -> None:
         self.mode = mode
@@ -88,7 +96,7 @@ def verifyOpsForVersion(teal: List[TealComponent], version: int):
             op = stmt.getOp()
             if op.min_version > version:
                 raise TealInputError(
-                    "Op not supported in TEAL version {}: {}. Minimum required version is {}".format(
+                    "Op not supported in program version {}: {}. Minimum required version is {}".format(
                         version, op, op.min_version
                     )
                 )
@@ -226,7 +234,7 @@ def compileTeal(
     ast: Expr,
     mode: Mode,
     *,
-    version: int = DEFAULT_TEAL_VERSION,
+    version: int = DEFAULT_PROGRAM_VERSION,
     assembleConstants: bool = False,
     optimize: OptimizeOptions = None,
 ) -> str:
@@ -235,13 +243,13 @@ def compileTeal(
     Args:
         ast: The PyTeal expression to assemble.
         mode: The mode of the program to assemble. Must be Signature or Application.
-        version (optional): The TEAL version used to assemble the program. This will determine which
+        version (optional): The program version used to assemble the program. This will determine which
             expressions and fields are able to be used in the program and how expressions compile to
             TEAL opcodes. Defaults to 2 if not included.
         assembleConstants (optional): When true, the compiler will produce a program with fully
             assembled constants, rather than using the pseudo-ops `int`, `byte`, and `addr`. These
             constants will be assembled in the most space-efficient way, so enabling this may reduce
-            the compiled program's size. Enabling this option requires a minimum TEAL version of 3.
+            the compiled program's size. Enabling this option requires a minimum program version of 3.
             Defaults to false.
         optimize (optional): OptimizeOptions that determine which optimizations will be applied.
 
@@ -253,12 +261,12 @@ def compileTeal(
         TealInternalError: if an internal error is encounter during compilation.
     """
     if (
-        not (MIN_TEAL_VERSION <= version <= MAX_TEAL_VERSION)
+        not (MIN_PROGRAM_VERSION <= version <= MAX_PROGRAM_VERSION)
         or type(version) is not int
     ):
         raise TealInputError(
-            "Unsupported TEAL version: {}. Excepted an integer in the range [{}, {}]".format(
-                version, MIN_TEAL_VERSION, MAX_TEAL_VERSION
+            "Unsupported program version: {}. Excepted an integer in the range [{}, {}]".format(
+                version, MIN_PROGRAM_VERSION, MAX_PROGRAM_VERSION
             )
         )
 
@@ -302,7 +310,7 @@ def compileTeal(
     if assembleConstants:
         if version < 3:
             raise TealInternalError(
-                "The minimum TEAL version required to enable assembleConstants is 3. The current version is {}".format(
+                "The minimum program version required to enable assembleConstants is 3. The current version is {}".format(
                     version
                 )
             )
