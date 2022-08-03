@@ -30,6 +30,9 @@ from pyteal.ast.abi.tuple import (
     Tuple3,
     Tuple4,
     Tuple5,
+    NamedTuple,
+    NamedTupleTypeSpec,
+    Field,
 )
 from pyteal.ast.abi.array_base import ArrayTypeSpec, Array, ArrayElement
 from pyteal.ast.abi.array_static import StaticArrayTypeSpec, StaticArray
@@ -117,6 +120,9 @@ __all__ = [
     "Tuple3",
     "Tuple4",
     "Tuple5",
+    "NamedTuple",
+    "NamedTupleTypeSpec",
+    "Field",
     "ArrayTypeSpec",
     "Array",
     "ArrayElement",

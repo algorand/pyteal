@@ -210,7 +210,7 @@ PyTeal Type                                    ARC-4 Type             Dynamic / 
 :any:`abi.Address`                             :code:`address`        Static                              A 32-byte Algorand address. This is an alias for :code:`abi.StaticArray[abi.Byte, Literal[32]]`.
 :any:`abi.DynamicArray[T] <abi.DynamicArray>`  :code:`T[]`            Dynamic                             A variable-length array of :code:`T`
 :any:`abi.String`                              :code:`string`         Dynamic                             A variable-length byte array assumed to contain UTF-8 encoded content. This is an alias for :code:`abi.DynamicArray[abi.Byte]`.
-:any:`abi.Tuple`\*                             :code:`(...)`          Static when all elements are static A tuple of multiple types
+:any:`abi.Tuple`\*, :any:`abi.NamedTuple`      :code:`(...)`          Static when all elements are static A tuple of multiple types
 ============================================== ====================== =================================== =======================================================================================================================================================
 
 .. note::
@@ -222,6 +222,21 @@ PyTeal Type                                    ARC-4 Type             Dynamic / 
     * :any:`abi.Tuple3[T1,T2,T3] <abi.Tuple3>`: a tuple of three values, :code:`(T1,T2,T3)`
     * :any:`abi.Tuple4[T1,T2,T3,T4] <abi.Tuple4>`: a tuple of four values, :code:`(T1,T2,T3,T4)`
     * :any:`abi.Tuple5[T1,T2,T3,T4,T5] <abi.Tuple5>`: a tuple of five values, :code:`(T1,T2,T3,T4,T5)`
+
+    While we are still on PyTeal 3.10, we have a workaround for :any:`abi.Tuple` by :any:`abi.NamedTuple`, which allows one to define a tuple with more than 5 generic arguments, and access tuple elements by field name. For example:
+
+    .. code-block:: python
+
+        from pyteal import *
+        from typing import Literal as L
+
+        class InheritedFromNamedTuple(abi.NamedTuple):
+            acct_address: abi.Field[abi.Address]
+            amount: abi.Field[abi.Uint64]
+            retrivable: abi.Field[abi.Bool]
+            desc: abi.Field[abi.String]
+            list_of_addrs: abi.Field[abi.DynamicArray[abi.Address]]
+            balance_list: abi.Field[abi.StaticArray[abi.Uint64, L[10]]]
 
 These ARC-4 types are not yet supported in PyTeal:
 
@@ -285,7 +300,7 @@ All basic types that represent a single value have a :code:`get()` method, which
 A brief example is below. Please consult the documentation linked above for each method to learn more about specific usage and behavior.
 
 .. code-block:: python
-    
+
     from pyteal import *
 
     @Subroutine(TealType.uint64)
@@ -306,10 +321,16 @@ The supported methods are:
 
 * :any:`abi.StaticArray.__getitem__(index: int | Expr) <abi.StaticArray.__getitem__>`, used for :any:`abi.StaticArray` and :any:`abi.Address`
 * :any:`abi.Array.__getitem__(index: int | Expr) <abi.Array.__getitem__>`, used for :any:`abi.DynamicArray` and :any:`abi.String`
-* :any:`abi.Tuple.__getitem__(index: int) <abi.Tuple.__getitem__>`
+* :any:`abi.Tuple.__getitem__(index: int) <abi.Tuple.__getitem__>`, used for :any:`abi.Tuple` and :any:`abi.NamedTuple`\*
 
 .. note::
     Be aware that these methods return a :any:`ComputedValue`, similar to other PyTeal operations which return ABI types. More information about why that is necessary and how to use a :any:`ComputedValue` can be found in the :ref:`Computed Values` section.
+
+.. note::
+    \*For :any:`abi.NamedTuple`, one can access tuple elements through both methods
+
+    * :any:`abi.Tuple.__getitem__(index: int) <abi.Tuple.__getitem__>`
+    * :any:`abi.NamedTuple.__getattr__(name: str) <abi.NamedTuple.__getattr__>`
 
 A brief example is below. Please consult the documentation linked above for each method to learn more about specific usage and behavior.
 
@@ -759,7 +780,7 @@ Registering Methods
     **We strongly recommend** methods immediately access and validate compound type parameters *before* persisting arguments for later transactions. For validation, it is sufficient to attempt to extract each element your method will use. If there is an input error for an element, indexing into that element will fail.
 
     Notes:
-    
+
     * This recommendation applies to recursively contained compound types as well. Successfully extracting an element which is a compound type does not guarantee the extracted value is valid; you must also inspect its elements as well.
     * Because of this, :any:`abi.Address` is **not** guaranteed to have exactly 32 bytes. To defend against unintended behavior, manually verify the length is 32 bytes, i.e. :code:`Assert(Len(address.get()) == Int(32))`.
 
@@ -804,7 +825,7 @@ The first way to register a method is with the :any:`Router.add_method_handler` 
             # store the result in the sender's local state too
             App.localPut(Txn.sender(), Bytes("result", output.get())),
         )
-    
+
     # Register the `add` method with the router, using the default `MethodConfig`
     # (only no-op, non-creation calls allowed).
     router.add_method_handler(add)
