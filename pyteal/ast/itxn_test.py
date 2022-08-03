@@ -1,7 +1,7 @@
 import pytest
 
 import pyteal as pt
-from pyteal.ast.txn import TxnField, TxnType
+from pyteal.ast.txn import Txn, TxnField, TxnType
 from pyteal.types import types_match
 
 avm4Options = pt.CompileOptions(version=4)
@@ -111,6 +111,16 @@ ITXN_FIELDS_CASES = [
             ),
         ),
     ),
+    (
+        {pt.TxnField.accounts: pt.Txn.accounts},
+        pt.For(
+            (i := pt.ScratchVar()).store(pt.Int(0)),
+            i.load() < pt.Txn.accounts.length(),
+            i.store(i.load() + pt.Int(1)),
+        ).Do(
+            pt.InnerTxnBuilder.SetField(pt.TxnField.accounts, [Txn.accounts[i.load()]])
+        ),
+    ),
 ]
 
 
@@ -128,8 +138,13 @@ def test_InnerTxnBuilder_SetFields():
         actual.addIncoming()
         actual = pt.TealBlock.NormalizeBlocks(actual)
 
-        with pt.TealComponent.Context.ignoreExprEquality():
+        with pt.TealComponent.Context.ignoreScratchSlotEquality(), pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected
+
+        assert pt.TealBlock.MatchScratchSlotReferences(
+            pt.TealBlock.GetReferencedScratchSlots(actual),
+            pt.TealBlock.GetReferencedScratchSlots(expected),
+        )
 
         if len(fields) != 0:
             with pytest.raises(pt.TealInputError):
@@ -152,8 +167,13 @@ def test_InnerTxnBuilder_Execute():
         actual.addIncoming()
         actual = pt.TealBlock.NormalizeBlocks(actual)
 
-        with pt.TealComponent.Context.ignoreExprEquality():
+        with pt.TealComponent.Context.ignoreScratchSlotEquality(), pt.TealComponent.Context.ignoreExprEquality():
             assert actual == expected
+
+        assert pt.TealBlock.MatchScratchSlotReferences(
+            pt.TealBlock.GetReferencedScratchSlots(actual),
+            pt.TealBlock.GetReferencedScratchSlots(expected),
+        )
 
         with pytest.raises(pt.TealInputError):
             expr.__teal__(avm4Options)

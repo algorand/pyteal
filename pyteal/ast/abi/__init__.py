@@ -30,6 +30,9 @@ from pyteal.ast.abi.tuple import (
     Tuple3,
     Tuple4,
     Tuple5,
+    NamedTuple,
+    NamedTupleTypeSpec,
+    Field,
 )
 from pyteal.ast.abi.array_base import ArrayTypeSpec, Array, ArrayElement
 from pyteal.ast.abi.array_static import StaticArrayTypeSpec, StaticArray
@@ -69,6 +72,7 @@ from pyteal.ast.abi.util import (
     make,
     size_of,
     type_spec_from_annotation,
+    type_specs_from_signature,
     contains_type_spec,
 )
 
@@ -116,6 +120,9 @@ __all__ = [
     "Tuple3",
     "Tuple4",
     "Tuple5",
+    "NamedTuple",
+    "NamedTupleTypeSpec",
+    "Field",
     "ArrayTypeSpec",
     "Array",
     "ArrayElement",
@@ -140,6 +147,7 @@ __all__ = [
     "KeyRegisterTransactionTypeSpec",
     "TransactionTypeSpecs",
     "type_spec_from_annotation",
+    "type_specs_from_signature",
     "make",
     "size_of",
     "algosdk_from_annotation",

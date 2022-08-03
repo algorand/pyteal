@@ -1,3 +1,4 @@
+from inspect import get_annotations
 from typing import (
     List,
     Sequence,
@@ -7,7 +8,11 @@ from typing import (
     cast,
     overload,
     Any,
+    TypeAlias,
+    get_args,
+    get_origin,
 )
+from collections import OrderedDict
 
 from pyteal.types import TealType
 from pyteal.errors import TealInputError
@@ -31,7 +36,7 @@ from pyteal.ast.abi.bool import (
     _bool_aware_static_byte_length,
 )
 from pyteal.ast.abi.uint import NUM_BITS_IN_BYTE, Uint16
-from pyteal.ast.abi.util import substring_for_decoding
+from pyteal.ast.abi.util import substring_for_decoding, type_spec_from_annotation
 
 
 def _encode_tuple(values: Sequence[BaseType]) -> Expr:
@@ -484,3 +489,135 @@ class Tuple5(Tuple, Generic[T1, T2, T3, T4, T5]):
 
 
 Tuple5.__module__ = "pyteal.abi"
+
+
+Field: TypeAlias = TupleElement[T]
+
+
+class NamedTupleTypeSpec(TupleTypeSpec):
+    """A NamedTupleType inherits from TupleTypeSpec, allowing for more than 5 elements."""
+
+    def __init__(
+        self, instance_class: type["NamedTuple"], *value_type_specs: TypeSpec
+    ) -> None:
+        if instance_class == NamedTuple:
+            raise TealInputError(
+                "NamedTupleTypeSpec must be instanced with subclassed NamedTuple class."
+            )
+
+        self.instance_class: type["NamedTuple"] = instance_class
+        super().__init__(*value_type_specs)
+
+    def annotation_type(self) -> "type[NamedTuple]":
+        return self.instance_class
+
+    def new_instance(self) -> "NamedTuple":
+        return self.instance_class()
+
+
+NamedTupleTypeSpec.__module__ = "pyteal.abi"
+
+
+class NamedTuple(Tuple):
+    """A NamedTuple is a :any:`Tuple` that has named elements, inspired by Python's `typing.NamedTuple <https://docs.python.org/3/library/typing.html#typing.NamedTuple>`_.
+
+    A new NamedTuple type can be created by subclassing this class and adding field annotations.
+    Every field annotation must be an instantiable ABI type wrapped in the :code:`abi.Field` annotation.
+
+    For example:
+
+        .. code-block:: python
+
+            from pyteal import *
+
+            class User(abi.NamedTuple):
+                address: abi.Field[abi.Address]
+                balance: abi.Field[abi.Uint64]
+
+            # User is equivalent to abi.Tuple2[abi.Address, abi.Uint64]
+
+            my_user = User()
+
+    .. automethod:: __getattr__
+    """
+
+    def __init__(self):
+        if type(self) is NamedTuple:
+            raise TealInputError("NamedTuple must be subclassed")
+
+        anns = get_annotations(type(self))
+        if not anns:
+            raise TealInputError("Expected fields to be declared but found none")
+
+        # NOTE: this `_ready` variable enables `__setattr__` during `__init__` execution,
+        # while after `__init__`, we cannot use `__setattr__` to set fields in `NamedTuple`.
+        # NOTE: If we declare variable `__ready`, then internally,
+        # the variable name would be changed to `_NamedTuple__ready`, which is implicit.
+        self.__ready = False
+        self.__type_specs: OrderedDict[str, TypeSpec] = OrderedDict()
+        self.__field_index: dict[str, int] = {}
+
+        for index, (name, annotation) in enumerate(anns.items()):
+            origin = get_origin(annotation)
+            if origin is None:
+                origin = annotation
+            if origin is not get_origin(Field):
+                raise TealInputError(
+                    f'Type annotation for attribute "{name}" must be a Field. Got {origin}'
+                )
+
+            args = get_args(annotation)
+            if len(args) != 1:
+                raise TealInputError(
+                    f'Type annotation for attribute "{name}" must have a single argument. Got {args}'
+                )
+
+            self.__type_specs[name] = type_spec_from_annotation(args[0])
+            self.__field_index[name] = index
+
+        super().__init__(
+            NamedTupleTypeSpec(type(self), *list(self.__type_specs.values()))
+        )
+
+        self.__ready = True
+
+    def __getattr__(self, field: str) -> TupleElement[Any]:
+        """Retrieve an element by its field in this NamedTuple.
+
+        For example:
+
+        .. code-block:: python
+
+            from pyteal import *
+
+            class User(abi.NamedTuple):
+                address: abi.Field[abi.Address]
+                balance: abi.Field[abi.Uint64]
+
+            @ABIReturnSubroutine
+            def get_user_balance(user: User, *, output: abi.Uint64) -> Expr:
+                return output.set(user.balance)
+
+        Args:
+            field: a Python string containing the field to access.
+                This function will raise an KeyError if the field is not available in the defined NamedTuple.
+
+        Returns:
+            A TupleElement that corresponds to the element at the given field name, returning a ComputedType.
+            Due to Python type limitations, the parameterized type of the TupleElement is Any.
+        """
+        return self.__getitem__(self.__field_index[field])
+
+    def __setattr__(self, name: str, field: Any) -> None:
+        # we allow `__setattr__` only when:
+        # - we are in `__init__`: `not self.__ready`
+        # - we are setting `_ready`: `name == "_NamedTuple__ready"`,
+        #   it is internally changed from `__ready` to `_NamedTuple__ready`,
+        #   see notes in `__init__`
+        if name == "_NamedTuple__ready" or not self.__ready:
+            super().__setattr__(name, field)
+            return
+        raise TealInputError("cannot assign to NamedTuple attributes.")
+
+
+NamedTuple.__module__ = "pyteal.abi"
