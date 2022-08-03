@@ -5,6 +5,8 @@
 
 ## Fixed
 
+* CI: Fail readthedocs build on warning ([#478](https://github.com/algorand/pyteal/pull/478))
+
 ## Changed
 
 # 0.15.0
