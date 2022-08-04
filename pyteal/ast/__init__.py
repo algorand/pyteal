@@ -42,7 +42,6 @@ from pyteal.ast.array import Array
 from pyteal.ast.tmpl import Tmpl
 from pyteal.ast.nonce import Nonce
 from pyteal.ast.pragma import Pragma
-
 from pyteal.ast.comment import Comment
 
 # unary ops
@@ -218,6 +217,7 @@ __all__ = [
     "Tmpl",
     "Nonce",
     "Pragma",
+    "Comment",
     "UnaryExpr",
     "Btoi",
     "Itob",
@@ -328,7 +328,6 @@ __all__ = [
     "EcdsaVerify",
     "EcdsaDecompress",
     "EcdsaRecover",
-    "Comment",
     "JsonRef",
     "VrfVerify",
 ]
