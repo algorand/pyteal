@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING, Optional
+from pyteal.ast.seq import _use_seq_if_multiple
 
 from pyteal.types import TealType, require_type
 from pyteal.ir import TealSimpleBlock, TealConditionalBlock
@@ -23,6 +24,13 @@ class For(Expr):
             start: Expression setting the variable's initial value
             cond: The condition to check. Must evaluate to uint64.
             step: Expression to update the variable's value.
+
+        Example:
+            .. code-block:: python
+
+                i = ScratchVar()
+                For(i.store(Int(0)), i.load() < Int(10), i.store(i.load() + Int(1))
+                    .Do(expr1, expr2, ...)
         """
         super().__init__()
         require_type(cond, TealType.uint64)
@@ -89,9 +97,12 @@ class For(Expr):
     def has_return(self):
         return False
 
-    def Do(self, doBlock: Expr):
+    def Do(self, doBlock: Expr, *do_block_multi: Expr):
         if self.doBlock is not None:
             raise TealCompileError("For expression already has a doBlock", self)
+
+        doBlock = _use_seq_if_multiple(doBlock, *do_block_multi)
+
         require_type(doBlock, TealType.none)
         self.doBlock = doBlock
         return self

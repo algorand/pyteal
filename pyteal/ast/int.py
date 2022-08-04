@@ -33,7 +33,7 @@ class Int(LeafExpr):
         return TealBlock.FromOp(options, op)
 
     def __str__(self):
-        return "(Int: {})".format(self.value)
+        return "(Int {})".format(self.value)
 
     def type_of(self):
         return TealType.uint64
@@ -59,7 +59,7 @@ class EnumInt(LeafExpr):
         return TealBlock.FromOp(options, op)
 
     def __str__(self):
-        return "(IntEnum: {})".format(self.name)
+        return "(IntEnum {})".format(self.name)
 
     def type_of(self):
         return TealType.uint64
