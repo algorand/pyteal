@@ -211,7 +211,7 @@ def test_pure_compilation(abi_type):
 
     filename = (
         f"app_roundtrip_{sdk_abi_type}"
-        + ("" if dynamic_length is None else f"_<{dynamic_length}>")
+        + ("" if dynamic_length is None else f"_{dynamic_length}")
         + ".teal"
     )
     tealdir = GENERATED / "roundtrip"
