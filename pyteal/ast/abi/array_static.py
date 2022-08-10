@@ -6,6 +6,7 @@ from pyteal.ast.int import Int
 
 from pyteal.ast.abi.type import ComputedValue, TypeSpec, BaseType
 from pyteal.ast.abi.bool import BoolTypeSpec, _bool_sequence_length
+from pyteal.ast.abi.uint import Byte, ByteTypeSpec
 from pyteal.ast.abi.array_base import ArrayTypeSpec, Array, ArrayElement
 
 
@@ -142,3 +143,13 @@ class StaticArray(Array[T], Generic[T, N]):
 
 
 StaticArray.__module__ = "pyteal.abi"
+
+
+class StaticBytes(StaticArray[Byte, N], Generic[N]):
+    """The convenience class that represents ABI static byte array."""
+
+    def __init__(self, static_len: N) -> None:
+        super().__init__(StaticArrayTypeSpec(ByteTypeSpec(), static_len))
+
+
+StaticBytes.__module__ = "pyteal.abi"
