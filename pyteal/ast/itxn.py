@@ -301,7 +301,7 @@ class InnerTxnBuilder:
                 app_id=app_id,
                 method_signature=method_signature,
                 args=args,
-                extra_fields=cast(dict, extra_fields),
+                extra_fields=extra_fields,
             ),
             cls.Submit(),
         )
@@ -313,7 +313,7 @@ class InnerTxnBuilder:
         app_id: Expr,
         method_signature: str,
         args: list[abi.BaseType | Expr | dict[TxnField, Expr | list[Expr]]],
-        extra_fields: dict[TxnField, Expr | list[Expr]] = {},
+        extra_fields: dict[TxnField, Expr | list[Expr]] = None,
     ) -> Expr:
         """Adds an ABI method call transaction to the current inner transaction group.
 
@@ -482,7 +482,7 @@ class InnerTxnBuilder:
             # Set the fields for the app call in app args and foreign arrays
             *fields_to_set,
             # Add any remaining fields specified by the user
-            InnerTxnBuilder.SetFields(extra_fields),
+            InnerTxnBuilder.SetFields(cast(dict, extra_fields)),
         )
 
 
