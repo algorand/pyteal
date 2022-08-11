@@ -435,8 +435,16 @@ def test_InnerTxnBuilder_method_call(
                 args=args,
                 extra_fields=extra_fields,
             )
+        with pytest.raises(expected_error):
+            pt.InnerTxnBuilder.ExecuteMethodCall(
+                app_id=app_id,
+                method_signature=sig,
+                args=args,
+                extra_fields=extra_fields,
+            )
         return
 
+    # First run the test with MethodCall
     expr: pt.Expr = pt.InnerTxnBuilder.MethodCall(
         app_id=app_id, method_signature=sig, args=args, extra_fields=extra_fields
     )
@@ -458,30 +466,8 @@ def test_InnerTxnBuilder_method_call(
             pt.TealBlock.GetReferencedScratchSlots(expected),
         )
 
-
-@pytest.mark.parametrize(
-    "app_id, sig, args, extra_fields, expected_expr, expected_error", ITXN_METHOD_CASES
-)
-def test_InnerTxnBuilder_execute_method(
-    app_id: pt.Expr,
-    sig: str,
-    args: list[pt.abi.BaseType | pt.Expr | dict[pt.TxnField, pt.Expr | list[pt.Expr]]],
-    extra_fields: dict[pt.TxnField, pt.Expr | list[pt.Expr]],
-    expected_expr: pt.Expr,
-    expected_error: type[Exception],
-):
-
-    if expected_error is not None:
-        with pytest.raises(expected_error):
-            pt.InnerTxnBuilder.ExecuteMethod(
-                app_id=app_id,
-                method_signature=sig,
-                args=args,
-                extra_fields=extra_fields,
-            )
-        return
-
-    expr: pt.Expr = pt.InnerTxnBuilder.ExecuteMethod(
+    # Now run the same test with ExecuteMethodCall
+    expr = pt.InnerTxnBuilder.ExecuteMethodCall(
         app_id=app_id, method_signature=sig, args=args, extra_fields=extra_fields
     )
     assert expr.type_of() == pt.TealType.none

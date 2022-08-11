@@ -217,7 +217,7 @@ class InnerTxnBuilder:
 
             InnerTxnBuilder.Begin()
             InnerTxnBuilder.SetFields(fields)
-            InnerTxnBuilder.End()
+            InnerTxnBuilder.Submit()
 
         Requires program version 5 or higher. This operation is only permitted in application mode.
 
@@ -250,13 +250,13 @@ class InnerTxnBuilder:
         return Seq(fieldsToSet)
 
     @classmethod
-    def ExecuteMethod(
+    def ExecuteMethodCall(
         cls,
         *,
         app_id: Expr,
         method_signature: str,
         args: list[abi.BaseType | Expr | dict[TxnField, Expr | list[Expr]]],
-        extra_fields: dict[TxnField, Expr | list[Expr]] = {},
+        extra_fields: dict[TxnField, Expr | list[Expr]] = None,
     ) -> Expr:
         """Performs a single app call transaction formatted as an ABI method call.
 
@@ -271,7 +271,7 @@ class InnerTxnBuilder:
                 args=args,
                 extra_fields=extra_fields,
             ),
-            InnerTxnBuilder.End()
+            InnerTxnBuilder.Submit()
 
         Requires program version 5 or higher. This operation is only permitted in application mode.
 
@@ -301,7 +301,7 @@ class InnerTxnBuilder:
                 app_id=app_id,
                 method_signature=method_signature,
                 args=args,
-                extra_fields=extra_fields,
+                extra_fields=cast(dict, extra_fields),
             ),
             cls.Submit(),
         )
