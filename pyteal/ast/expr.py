@@ -70,8 +70,11 @@ class Expr(ABC):
         return Neq(self, other)
 
     def __add__(self, other):
-        from pyteal.ast.naryexpr import Add
+        if self.type_of() == TealType.bytes:
+            from pyteal.ast.naryexpr import Concat
+            return Concat(self, other)
 
+        from pyteal.ast.naryexpr import Add
         return Add(self, other)
 
     def __sub__(self, other):
