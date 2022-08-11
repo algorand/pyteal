@@ -482,7 +482,7 @@ class InnerTxnBuilder:
             # Set the fields for the app call in app args and foreign arrays
             *fields_to_set,
             # Add any remaining fields specified by the user
-            InnerTxnBuilder.SetFields(cast(dict, extra_fields)),
+            InnerTxnBuilder.SetFields({} if extra_fields is None else extra_fields),
         )
 
 
