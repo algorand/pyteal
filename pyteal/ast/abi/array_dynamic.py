@@ -1,16 +1,11 @@
-from typing import (
-    Union,
-    Sequence,
-    TypeVar,
-    cast,
-)
-
+from typing import Union, Sequence, TypeVar, cast
 
 from pyteal.errors import TealInputError
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 
 from pyteal.ast.abi.type import ComputedValue, BaseType
+from pyteal.ast.bytes import Bytes
 from pyteal.ast.abi.uint import Uint16, Byte, ByteTypeSpec
 from pyteal.ast.abi.array_base import ArrayTypeSpec, Array
 
@@ -109,6 +104,28 @@ class DynamicBytes(DynamicArray[Byte]):
 
     def __init__(self) -> None:
         super().__init__(DynamicArrayTypeSpec(ByteTypeSpec()))
+
+    def set(
+        self,
+        values: Union[
+            bytes,
+            bytearray,
+            Expr,
+            Sequence[Byte],
+            DynamicArray[Byte],
+            ComputedValue[DynamicArray[Byte]],
+        ],
+    ) -> Expr:
+        # NOTE: the import here is to avoid importing in partial initialized module abi
+        from pyteal.ast.abi.string import _encoded_string
+
+        match values:
+            case bytes() | bytearray():
+                return self.stored_value.store(_encoded_string(Bytes(values)))
+            case Expr():
+                return self.stored_value.store(_encoded_string(values))
+
+        return super().set(values)
 
 
 DynamicBytes.__module__ = "pyteal.abi"

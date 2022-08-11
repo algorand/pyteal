@@ -1,8 +1,12 @@
 from typing import Final, Generic, Literal, Sequence, TypeVar, Union, cast
 
 from pyteal.errors import TealInputError
+from pyteal.ast.assert_ import Assert
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
+from pyteal.ast.bytes import Bytes
+from pyteal.ast.seq import Seq
+from pyteal.ast.unaryexpr import Len
 
 from pyteal.ast.abi.type import ComputedValue, TypeSpec, BaseType
 from pyteal.ast.abi.bool import BoolTypeSpec, _bool_sequence_length
@@ -150,6 +154,32 @@ class StaticBytes(StaticArray[Byte, N], Generic[N]):
 
     def __init__(self, static_len: N) -> None:
         super().__init__(StaticArrayTypeSpec(ByteTypeSpec(), static_len))
+
+    def set(
+        self,
+        values: Union[
+            bytes,
+            bytearray,
+            Expr,
+            Sequence[Byte],
+            StaticArray[Byte, N],
+            ComputedValue[StaticArray[Byte, N]],
+        ],
+    ) -> Expr:
+        match values:
+            case bytes() | bytearray():
+                if len(values) != self.type_spec().length_static():
+                    raise TealInputError(
+                        f"Got bytes with length {len(values)}, expect {self.type_spec().length_static()}"
+                    )
+                return self.stored_value.store(Bytes(values))
+            case Expr():
+                return Seq(
+                    self.stored_value.store(values),
+                    Assert(self.length() == Len(self.stored_value.load())),
+                )
+
+        return super().set(values)
 
 
 StaticBytes.__module__ = "pyteal.abi"
