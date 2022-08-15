@@ -4,11 +4,6 @@
 
 * Static and Dynamic Byte Array convenience classes ([#500](https://github.com/algorand/pyteal/pull/500))
 
-## Fixed
-
-
-## Changed
-
 
 # 0.16.0
 

@@ -244,7 +244,7 @@ def test_StaticArray_set_computed():
 
 
 # AACS key recovery
-BYTE_HEX_TEST_CASE = "09F911029D74E35BD84156C5635688C0"
+BYTE_HEX_TEST_CASE = "09f911029d74e35bd84156c5635688c0"
 
 
 BYTES_SET_TESTCASES = [
@@ -267,7 +267,7 @@ def test_StaticBytes_set_py_bytes(test_case: bytes | bytearray):
 
     expected = pt.TealSimpleBlock(
         [
-            pt.TealOp(None, pt.Op.byte, "0x" + pt.Bytes(test_case).byte_str),
+            pt.TealOp(None, pt.Op.byte, "0x" + BYTE_HEX_TEST_CASE),
             pt.TealOp(None, pt.Op.store, value.stored_value.slot),
         ]
     )
@@ -294,8 +294,8 @@ def test_StaticBytes_expr(test_case: bytes | bytearray):
 
     expected = pt.TealSimpleBlock(
         [
-            pt.TealOp(None, pt.Op.byte, "0x" + pt.Bytes(test_case).byte_str),
-            pt.TealOp(None, pt.Op.byte, "0x" + pt.Bytes(test_case).byte_str),
+            pt.TealOp(None, pt.Op.byte, "0x" + BYTE_HEX_TEST_CASE),
+            pt.TealOp(None, pt.Op.byte, "0x" + BYTE_HEX_TEST_CASE),
             pt.TealOp(None, pt.Op.concat),
             pt.TealOp(None, pt.Op.store, value.stored_value.slot),
             pt.TealOp(None, pt.Op.int, 32),
