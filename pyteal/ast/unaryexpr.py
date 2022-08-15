@@ -1,3 +1,4 @@
+import ast
 from typing import TYPE_CHECKING
 
 from pyteal.types import TealType, require_type
@@ -13,13 +14,14 @@ class UnaryExpr(Expr):
     """An expression with a single argument."""
 
     def __init__(
-        self, op: Op, inputType: TealType, outputType: TealType, arg: Expr
+        self, op: Op, inputType: TealType, outputType: TealType, arg: Expr, ast_func: str = None
     ) -> None:
         super().__init__()
         require_type(arg, inputType)
         self.op = op
         self.outputType = outputType
         self.arg = arg
+        self.ast_func = ast_func
 
     def __teal__(self, options: "CompileOptions"):
         verifyProgramVersion(
@@ -33,6 +35,10 @@ class UnaryExpr(Expr):
     def __str__(self):
         return "({} {})".format(str(self.op).title().replace("_", ""), self.arg)
 
+    def __astnode__(self)->ast.Expr:
+        return ast.Call(func=ast.Name(id=self.ast_func, ctx=ast.Load()), args=[self.arg.__astnode__()], keywords=[])
+
+
     def type_of(self):
         return self.outputType
 
@@ -45,17 +51,17 @@ UnaryExpr.__module__ = "pyteal"
 
 def Btoi(arg: Expr) -> UnaryExpr:
     """Convert a byte string to a uint64."""
-    return UnaryExpr(Op.btoi, TealType.bytes, TealType.uint64, arg)
+    return UnaryExpr(Op.btoi, TealType.bytes, TealType.uint64, arg, ast_func='itob')
 
 
 def Itob(arg: Expr) -> UnaryExpr:
     """Convert a uint64 string to a byte string."""
-    return UnaryExpr(Op.itob, TealType.uint64, TealType.bytes, arg)
+    return UnaryExpr(Op.itob, TealType.uint64, TealType.bytes, arg, ast_func='itob')
 
 
 def Len(arg: Expr) -> UnaryExpr:
     """Get the length of a byte string."""
-    return UnaryExpr(Op.len, TealType.bytes, TealType.uint64, arg)
+    return UnaryExpr(Op.len, TealType.bytes, TealType.uint64, arg, ast_func='len')
 
 
 def BitLen(arg: Expr) -> UnaryExpr:
@@ -67,27 +73,27 @@ def BitLen(arg: Expr) -> UnaryExpr:
 
     Requires program version 4 or higher.
     """
-    return UnaryExpr(Op.bitlen, TealType.anytype, TealType.uint64, arg)
+    return UnaryExpr(Op.bitlen, TealType.anytype, TealType.uint64, arg, ast_func='bitlen')
 
 
 def Sha256(arg: Expr) -> UnaryExpr:
     """Get the SHA-256 hash of a byte string."""
-    return UnaryExpr(Op.sha256, TealType.bytes, TealType.bytes, arg)
+    return UnaryExpr(Op.sha256, TealType.bytes, TealType.bytes, arg, ast_func='sha256')
 
 
 def Sha512_256(arg: Expr) -> UnaryExpr:
     """Get the SHA-512/256 hash of a byte string."""
-    return UnaryExpr(Op.sha512_256, TealType.bytes, TealType.bytes, arg)
+    return UnaryExpr(Op.sha512_256, TealType.bytes, TealType.bytes, arg, ast_func='sha512_256')
 
 
 def Sha3_256(arg: Expr) -> UnaryExpr:
     """Get the SHA3-256 hash of a byte string."""
-    return UnaryExpr(Op.sha3_256, TealType.bytes, TealType.bytes, arg)
+    return UnaryExpr(Op.sha3_256, TealType.bytes, TealType.bytes, arg, ast_func='sha3_256')
 
 
 def Keccak256(arg: Expr) -> UnaryExpr:
     """Get the KECCAK-256 hash of a byte string."""
-    return UnaryExpr(Op.keccak256, TealType.bytes, TealType.bytes, arg)
+    return UnaryExpr(Op.keccak256, TealType.bytes, TealType.bytes, arg, ast_func='keccak256')
 
 
 def Not(arg: Expr) -> UnaryExpr:
@@ -95,7 +101,7 @@ def Not(arg: Expr) -> UnaryExpr:
 
     If the argument is 0, then this will produce 1. Otherwise this will produce 0.
     """
-    return UnaryExpr(Op.logic_not, TealType.uint64, TealType.uint64, arg)
+    return UnaryExpr(Op.logic_not, TealType.uint64, TealType.uint64, arg, ast_func='not')
 
 
 def BitwiseNot(arg: Expr) -> UnaryExpr:
@@ -103,7 +109,7 @@ def BitwiseNot(arg: Expr) -> UnaryExpr:
 
     Produces ~arg.
     """
-    return UnaryExpr(Op.bitwise_not, TealType.uint64, TealType.uint64, arg)
+    return UnaryExpr(Op.bitwise_not, TealType.uint64, TealType.uint64, arg, ast_func='bnot')
 
 
 def Sqrt(arg: Expr) -> UnaryExpr:
@@ -113,12 +119,12 @@ def Sqrt(arg: Expr) -> UnaryExpr:
 
     Requires program version 4 or higher.
     """
-    return UnaryExpr(Op.sqrt, TealType.uint64, TealType.uint64, arg)
+    return UnaryExpr(Op.sqrt, TealType.uint64, TealType.uint64, arg, ast_func='sqrt')
 
 
 def Pop(arg: Expr) -> UnaryExpr:
     """Pop a value from the stack."""
-    return UnaryExpr(Op.pop, TealType.anytype, TealType.none, arg)
+    return UnaryExpr(Op.pop, TealType.anytype, TealType.none, arg, ast_func='pop')
 
 
 def Balance(account: Expr) -> UnaryExpr:
@@ -130,7 +136,7 @@ def Balance(account: Expr) -> UnaryExpr:
 
     This operation is only permitted in application mode.
     """
-    return UnaryExpr(Op.balance, TealType.anytype, TealType.uint64, account)
+    return UnaryExpr(Op.balance, TealType.anytype, TealType.uint64, account, ast_func='balance')
 
 
 def MinBalance(account: Expr) -> UnaryExpr:
@@ -144,7 +150,7 @@ def MinBalance(account: Expr) -> UnaryExpr:
 
     Requires program version 3 or higher. This operation is only permitted in application mode.
     """
-    return UnaryExpr(Op.min_balance, TealType.anytype, TealType.uint64, account)
+    return UnaryExpr(Op.min_balance, TealType.anytype, TealType.uint64, account, ast_func='min_balance')
 
 
 def BytesNot(arg: Expr) -> UnaryExpr:
@@ -155,7 +161,7 @@ def BytesNot(arg: Expr) -> UnaryExpr:
 
     Requires program version 4 or higher.
     """
-    return UnaryExpr(Op.b_not, TealType.bytes, TealType.bytes, arg)
+    return UnaryExpr(Op.b_not, TealType.bytes, TealType.bytes, arg, ast_func='bnot')
 
 
 def BytesSqrt(arg: Expr) -> UnaryExpr:
@@ -165,7 +171,7 @@ def BytesSqrt(arg: Expr) -> UnaryExpr:
 
     Requires program version 6 or higher.
     """
-    return UnaryExpr(Op.bsqrt, TealType.bytes, TealType.bytes, arg)
+    return UnaryExpr(Op.bsqrt, TealType.bytes, TealType.bytes, arg, ast_func='bsqrt')
 
 
 def BytesZero(arg: Expr) -> UnaryExpr:
@@ -175,7 +181,7 @@ def BytesZero(arg: Expr) -> UnaryExpr:
 
     Requires program version 4 or higher.
     """
-    return UnaryExpr(Op.bzero, TealType.uint64, TealType.bytes, arg)
+    return UnaryExpr(Op.bzero, TealType.uint64, TealType.bytes, arg, ast_func='bytes')
 
 
 def Log(message: Expr) -> UnaryExpr:
@@ -189,4 +195,4 @@ def Log(message: Expr) -> UnaryExpr:
 
     Requires program version 5 or higher.
     """
-    return UnaryExpr(Op.log, TealType.bytes, TealType.none, message)
+    return UnaryExpr(Op.log, TealType.bytes, TealType.none, message, ast_func='print')

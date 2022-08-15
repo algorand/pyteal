@@ -1,3 +1,4 @@
+import ast
 from typing import Sequence, cast, TYPE_CHECKING
 
 from pyteal.types import TealType, require_type
@@ -53,6 +54,10 @@ class NaryExpr(Expr):
             ret_str += " " + a.__str__()
         ret_str += ")"
         return ret_str
+
+    def __astnode__(self) -> ast.Expr:
+        # TODO:
+        return super().__astnode__()
 
     def type_of(self):
         return self.outputType

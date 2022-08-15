@@ -1,3 +1,4 @@
+import ast
 from abc import ABC, abstractmethod
 from typing import Tuple, List, TYPE_CHECKING
 
@@ -38,6 +39,10 @@ class Expr(ABC):
     def __teal__(self, options: "CompileOptions") -> Tuple[TealBlock, TealSimpleBlock]:
         """Assemble TEAL IR for this component and its arguments."""
         pass
+
+    def __astnode__(self) -> ast.Expr:
+        """Return an ast node"""
+        raise NotImplementedError("astnode not implemented")
 
     def __lt__(self, other):
         from pyteal.ast.binaryexpr import Lt

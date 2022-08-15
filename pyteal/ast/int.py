@@ -1,3 +1,5 @@
+import ast
+
 from typing import TYPE_CHECKING
 
 from pyteal.types import TealType
@@ -34,6 +36,9 @@ class Int(LeafExpr):
 
     def __str__(self):
         return "(Int {})".format(self.value)
+
+    def __astnode__(self) -> ast.Constant:
+        return ast.Constant(value=self.value, kind='int')
 
     def type_of(self):
         return TealType.uint64

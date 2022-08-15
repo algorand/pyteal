@@ -1,3 +1,4 @@
+import ast
 from typing import Union, Tuple, cast, TYPE_CHECKING
 
 from pyteal.types import TealType, require_type
@@ -19,6 +20,7 @@ class BinaryExpr(Expr):
         outputType: TealType,
         argLeft: Expr,
         argRight: Expr,
+        ast_operator: type[ast.operator]
     ) -> None:
         super().__init__()
         if type(inputType) is tuple:
@@ -33,6 +35,7 @@ class BinaryExpr(Expr):
         self.outputType = outputType
         self.argLeft = argLeft
         self.argRight = argRight
+        self.ast_operator = ast_operator
 
     def __teal__(self, options: "CompileOptions"):
         verifyProgramVersion(
@@ -49,6 +52,9 @@ class BinaryExpr(Expr):
         return "({} {} {})".format(
             str(self.op).title().replace("_", ""), self.argLeft, self.argRight
         )
+
+    def __astnode__(self)-> ast.BinOp:
+        return ast.BinOp(left=self.argLeft.__astnode__(), right=self.argRight.__astnode__(), op=self.ast_operator())
 
     def type_of(self):
         return self.outputType
@@ -69,7 +75,7 @@ def Minus(left: Expr, right: Expr) -> Expr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
-    return BinaryExpr(Op.minus, TealType.uint64, TealType.uint64, left, right)
+    return BinaryExpr(Op.minus, TealType.uint64, TealType.uint64, left, right, ast.Sub)
 
 
 def Div(left: Expr, right: Expr) -> Expr:
@@ -81,7 +87,7 @@ def Div(left: Expr, right: Expr) -> Expr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
-    return BinaryExpr(Op.div, TealType.uint64, TealType.uint64, left, right)
+    return BinaryExpr(Op.div, TealType.uint64, TealType.uint64, left, right, ast.FloorDiv)
 
 
 def Mod(left: Expr, right: Expr) -> Expr:
@@ -93,7 +99,7 @@ def Mod(left: Expr, right: Expr) -> Expr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
-    return BinaryExpr(Op.mod, TealType.uint64, TealType.uint64, left, right)
+    return BinaryExpr(Op.mod, TealType.uint64, TealType.uint64, left, right, ast.Mod)
 
 
 def Exp(a: Expr, b: Expr) -> Expr:
@@ -107,7 +113,7 @@ def Exp(a: Expr, b: Expr) -> Expr:
         a: Must evaluate to uint64.
         b: Must evaluate to uint64.
     """
-    return BinaryExpr(Op.exp, TealType.uint64, TealType.uint64, a, b)
+    return BinaryExpr(Op.exp, TealType.uint64, TealType.uint64, a, b, ast.Pow)
 
 
 def BitwiseAnd(left: Expr, right: Expr) -> Expr:
@@ -119,7 +125,7 @@ def BitwiseAnd(left: Expr, right: Expr) -> Expr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
-    return BinaryExpr(Op.bitwise_and, TealType.uint64, TealType.uint64, left, right)
+    return BinaryExpr(Op.bitwise_and, TealType.uint64, TealType.uint64, left, right, ast.BitAnd)
 
 
 def BitwiseOr(left: Expr, right: Expr) -> Expr:
@@ -131,7 +137,7 @@ def BitwiseOr(left: Expr, right: Expr) -> Expr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
-    return BinaryExpr(Op.bitwise_or, TealType.uint64, TealType.uint64, left, right)
+    return BinaryExpr(Op.bitwise_or, TealType.uint64, TealType.uint64, left, right, ast.BitOr)
 
 
 def BitwiseXor(left: Expr, right: Expr) -> Expr:
@@ -143,7 +149,7 @@ def BitwiseXor(left: Expr, right: Expr) -> Expr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
-    return BinaryExpr(Op.bitwise_xor, TealType.uint64, TealType.uint64, left, right)
+    return BinaryExpr(Op.bitwise_xor, TealType.uint64, TealType.uint64, left, right, ast.BitXor)
 
 
 def ShiftLeft(a: Expr, b: Expr) -> Expr:
@@ -157,7 +163,7 @@ def ShiftLeft(a: Expr, b: Expr) -> Expr:
         a: Must evaluate to uint64.
         b: Must evaluate to uint64.
     """
-    return BinaryExpr(Op.shl, TealType.uint64, TealType.uint64, a, b)
+    return BinaryExpr(Op.shl, TealType.uint64, TealType.uint64, a, b, ast.LShift)
 
 
 def ShiftRight(a: Expr, b: Expr) -> Expr:
@@ -171,7 +177,7 @@ def ShiftRight(a: Expr, b: Expr) -> Expr:
         a: Must evaluate to uint64.
         b: Must evaluate to uint64.
     """
-    return BinaryExpr(Op.shr, TealType.uint64, TealType.uint64, a, b)
+    return BinaryExpr(Op.shr, TealType.uint64, TealType.uint64, a, b, ast.RShift)
 
 
 def Eq(left: Expr, right: Expr) -> Expr:
@@ -183,7 +189,7 @@ def Eq(left: Expr, right: Expr) -> Expr:
         left: A value to check.
         right: The other value to check. Must evaluate to the same type as left.
     """
-    return BinaryExpr(Op.eq, right.type_of(), TealType.uint64, left, right)
+    return BinaryExpr(Op.eq, right.type_of(), TealType.uint64, left, right, ast.Eq)
 
 
 def Neq(left: Expr, right: Expr) -> Expr:
@@ -195,7 +201,7 @@ def Neq(left: Expr, right: Expr) -> Expr:
         left: A value to check.
         right: The other value to check. Must evaluate to the same type as left.
     """
-    return BinaryExpr(Op.neq, right.type_of(), TealType.uint64, left, right)
+    return BinaryExpr(Op.neq, right.type_of(), TealType.uint64, left, right, ast.NotEq)
 
 
 def Lt(left: Expr, right: Expr) -> Expr:
@@ -207,7 +213,7 @@ def Lt(left: Expr, right: Expr) -> Expr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
-    return BinaryExpr(Op.lt, TealType.uint64, TealType.uint64, left, right)
+    return BinaryExpr(Op.lt, TealType.uint64, TealType.uint64, left, right, ast.Lt)
 
 
 def Le(left: Expr, right: Expr) -> Expr:
@@ -219,7 +225,7 @@ def Le(left: Expr, right: Expr) -> Expr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
-    return BinaryExpr(Op.le, TealType.uint64, TealType.uint64, left, right)
+    return BinaryExpr(Op.le, TealType.uint64, TealType.uint64, left, right, ast.LtE)
 
 
 def Gt(left: Expr, right: Expr) -> Expr:
@@ -231,7 +237,7 @@ def Gt(left: Expr, right: Expr) -> Expr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
-    return BinaryExpr(Op.gt, TealType.uint64, TealType.uint64, left, right)
+    return BinaryExpr(Op.gt, TealType.uint64, TealType.uint64, left, right, ast.Gt)
 
 
 def Ge(left: Expr, right: Expr) -> Expr:
@@ -243,7 +249,7 @@ def Ge(left: Expr, right: Expr) -> Expr:
         left: Must evaluate to uint64.
         right: Must evaluate to uint64.
     """
-    return BinaryExpr(Op.ge, TealType.uint64, TealType.uint64, left, right)
+    return BinaryExpr(Op.ge, TealType.uint64, TealType.uint64, left, right, ast.GtE)
 
 
 def GetBit(value: Expr, index: Expr) -> Expr:
