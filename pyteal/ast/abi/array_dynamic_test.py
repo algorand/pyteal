@@ -203,6 +203,78 @@ def test_DynamicArray_set_computed():
         )
 
 
+# AACS key recovery
+BYTE_HEX_TEST_CASE = "09F911029D74E35BD84156C5635688C0"
+
+
+BYTES_SET_TESTCASES = [
+    bytes.fromhex(BYTE_HEX_TEST_CASE),
+    bytearray.fromhex(BYTE_HEX_TEST_CASE),
+]
+
+
+@pytest.mark.parametrize("test_case", BYTES_SET_TESTCASES)
+def test_DynamicBytes_set_py_bytes(test_case: bytes | bytearray):
+    value = abi.DynamicBytes()
+
+    expr = value.set(test_case)
+    assert expr.type_of() == pt.TealType.none
+    assert not expr.has_return()
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = actual.NormalizeBlocks(actual)
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.byte, "0x" + pt.Bytes(test_case).byte_str),
+            pt.TealOp(None, pt.Op.len),
+            pt.TealOp(None, pt.Op.itob),
+            pt.TealOp(None, pt.Op.extract, 6, 0),
+            pt.TealOp(None, pt.Op.byte, "0x" + pt.Bytes(test_case).byte_str),
+            pt.TealOp(None, pt.Op.concat),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+        ]
+    )
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
+@pytest.mark.parametrize("test_case", BYTES_SET_TESTCASES)
+def test_DynamicBytes_set_expr(test_case: bytes | bytearray):
+    value = abi.DynamicBytes()
+
+    set_expr = pt.Concat(pt.Bytes(test_case), pt.Bytes(test_case))
+
+    expr = value.set(set_expr)
+    assert expr.type_of() == pt.TealType.none
+    assert not expr.has_return()
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = actual.NormalizeBlocks(actual)
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.byte, "0x" + pt.Bytes(test_case).byte_str),
+            pt.TealOp(None, pt.Op.byte, "0x" + pt.Bytes(test_case).byte_str),
+            pt.TealOp(None, pt.Op.concat),
+            pt.TealOp(None, pt.Op.len),
+            pt.TealOp(None, pt.Op.itob),
+            pt.TealOp(None, pt.Op.extract, 6, 0),
+            pt.TealOp(None, pt.Op.byte, "0x" + pt.Bytes(test_case).byte_str),
+            pt.TealOp(None, pt.Op.byte, "0x" + pt.Bytes(test_case).byte_str),
+            pt.TealOp(None, pt.Op.concat),
+            pt.TealOp(None, pt.Op.concat),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+        ]
+    )
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
 def test_DynamicArray_encode():
     dynamicArrayType = abi.DynamicArrayTypeSpec(abi.Uint64TypeSpec())
     value = dynamicArrayType.new_instance()
