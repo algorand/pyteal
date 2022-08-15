@@ -86,12 +86,12 @@ class TealOp(TealComponent):
 
         if self.expr is not None:
             comments = []
-            if self.expr.trace is not None:
+            if self.expr.trace is not None and debug:
                 comments.append(fmt_traceback(self.expr.trace))
             if self.expr.comment is not None:
                 comments.append(fmt_comment(self.expr.comment))
 
-            if len(comments) > 0 and debug:
+            if len(comments) > 0:
                 parts.append(f"// {'|'.join(comments)}")
 
         return " ".join(parts)
