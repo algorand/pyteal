@@ -217,7 +217,7 @@ class InnerTxnBuilder:
 
             InnerTxnBuilder.Begin()
             InnerTxnBuilder.SetFields(fields)
-            InnerTxnBuilder.End()
+            InnerTxnBuilder.Submit()
 
         Requires program version 5 or higher. This operation is only permitted in application mode.
 
@@ -250,13 +250,70 @@ class InnerTxnBuilder:
         return Seq(fieldsToSet)
 
     @classmethod
+    def ExecuteMethodCall(
+        cls,
+        *,
+        app_id: Expr,
+        method_signature: str,
+        args: list[abi.BaseType | Expr | dict[TxnField, Expr | list[Expr]]],
+        extra_fields: dict[TxnField, Expr | list[Expr]] = None,
+    ) -> Expr:
+        """Performs a single app call transaction formatted as an ABI method call.
+
+        A convenience method that accepts fields to submit a single inner transaction, which is equivalent to:
+
+        .. code-block:: python
+
+            InnerTxnBuilder.Begin()
+            InnerTxnBuilder.MethodCall(
+                app_id=app_id,
+                method_signature=method_signature,
+                args=args,
+                extra_fields=extra_fields,
+            ),
+            InnerTxnBuilder.Submit()
+
+        Requires program version 5 or higher. This operation is only permitted in application mode.
+
+        Args:
+            app_id: An expression that evaluates to a `TealType.uint64` corresponding to the application being called.
+            method_signature: A string representing the method signature of the method we're calling. This is used to do
+                type checking on the arguments passed and to create the method selector passed as the first argument.
+            args: A list of arguments to pass to the application. The values in this list depend on the kind of argument you wish to pass:
+
+                - For basic ABI arguments (not Reference or Transaction types):
+                    If an ABI type is passed it **MUST** match the type specified in the `method_signature`. If an Expr is passed it must evaluate to `TealType.bytes` but beyond that no type checking is performed.
+
+                - For Reference arguments:
+                    Either the Reference type or an Expr that returns the type corresponding to the reference type are allowed.
+                    (i.e. Asset is TealType.uint64, Application is TealType.uint64, Account is TealType.bytes)
+
+                - For Transaction arguments:
+                    A dictionary containing TxnField to Expr that describe Transactions to be pre-pended to the transaction group being constructed.  The `TxnField.type_enum` key MUST be set and MUST match the expected transaction type specified in the `method_signature`.
+
+            extra_fields (optional): A dictionary whose keys are fields to set and whose values are the value each
+                field should take. Each value must evaluate to a type that is compatible with the
+                field being set. These fields are set on the ApplicationCallTransaction being constructed
+        """
+        return Seq(
+            cls.Begin(),
+            cls.MethodCall(
+                app_id=app_id,
+                method_signature=method_signature,
+                args=args,
+                extra_fields=extra_fields,
+            ),
+            cls.Submit(),
+        )
+
+    @classmethod
     def MethodCall(
         cls,
         *,
         app_id: Expr,
         method_signature: str,
         args: list[abi.BaseType | Expr | dict[TxnField, Expr | list[Expr]]],
-        extra_fields: dict[TxnField, Expr | list[Expr]] = {},
+        extra_fields: dict[TxnField, Expr | list[Expr]] = None,
     ) -> Expr:
         """Adds an ABI method call transaction to the current inner transaction group.
 
@@ -425,7 +482,7 @@ class InnerTxnBuilder:
             # Set the fields for the app call in app args and foreign arrays
             *fields_to_set,
             # Add any remaining fields specified by the user
-            InnerTxnBuilder.SetFields(extra_fields),
+            InnerTxnBuilder.SetFields({} if extra_fields is None else extra_fields),
         )
 
 
