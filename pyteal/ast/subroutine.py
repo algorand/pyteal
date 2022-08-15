@@ -291,9 +291,10 @@ class SubroutineDefinition:
             self, args, output_kwarg=OutputKwArgInfo.from_dict(self.output_kwarg)
         )
 
-        decl = self.get_declaration()
-        if decl is not None and decl.trace is not None:
-            sc.trace = decl.trace
+        # TODO: this triggers infinite recursion?
+        # decl = self.get_declaration()
+        # if decl is not None and decl.trace is not None:
+        #    sc.trace = decl.trace
 
         return sc
 

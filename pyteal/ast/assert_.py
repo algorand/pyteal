@@ -35,6 +35,7 @@ class Assert(Expr):
 
             self.comment = comment
         else:
+            self.cond.append(cast(Expr, cond))
             # Keep matching indicies for expr/comment
             self.comments.append(None)
 
