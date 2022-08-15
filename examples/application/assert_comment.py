@@ -20,7 +20,7 @@ def tst_subr():
 program = Seq(
     Comment(
         """
-    
+
     Dope program section here
 
     """

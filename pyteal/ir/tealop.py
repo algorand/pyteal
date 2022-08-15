@@ -24,12 +24,12 @@ def fmt_traceback(tb: list[str]) -> str:
     line = line.replace(" line ", "l")
     file = file.replace("File ", "").replace(" ", "")  # Remove `File` and any spaces
 
-    return f"src;{':'.join([file, line])}"
+    return f"// {':'.join([file, line])}\n"
 
 
 def fmt_comment(comment: str) -> str:
     comment = "\n// ".join(comment.strip(";").splitlines())
-    return f"{comment}"
+    return f"// {comment}"
 
 
 class TealOp(TealComponent):
@@ -85,14 +85,10 @@ class TealOp(TealComponent):
                 parts.append(arg)
 
         if self.expr is not None:
-            comments = []
             if self.expr.trace is not None and debug:
-                comments.append(fmt_traceback(self.expr.trace))
+                parts.insert(0, fmt_traceback(self.expr.trace))
             if self.expr.comment is not None:
-                comments.append(fmt_comment(self.expr.comment))
-
-            if len(comments) > 0:
-                parts.append(f"// {'|'.join(comments)}")
+                parts.append(fmt_comment(self.expr.comment))
 
         return " ".join(parts)
 
