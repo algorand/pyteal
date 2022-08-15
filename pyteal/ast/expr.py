@@ -11,10 +11,11 @@ if TYPE_CHECKING:
 class Expr(ABC):
     """Abstract base class for PyTeal expressions."""
 
-    def __init__(self):
+    def __init__(self, comment: str = None):
         import traceback
 
         self.trace = traceback.format_stack()[0:-1]
+        self.comment = comment
 
     def getDefinitionTrace(self) -> List[str]:
         return self.trace

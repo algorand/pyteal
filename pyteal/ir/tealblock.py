@@ -14,8 +14,9 @@ if TYPE_CHECKING:
 class TealBlock(ABC):
     """Represents a basic block of TealComponents in a graph."""
 
-    def __init__(self, ops: List[TealOp]) -> None:
+    def __init__(self, ops: List[TealOp], comment: str = None) -> None:
         self.ops = ops
+        self.comment = comment
         self.incoming: List[TealBlock] = []
 
     @abstractmethod

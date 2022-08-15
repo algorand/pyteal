@@ -61,6 +61,9 @@ class TealOp(TealComponent):
             else:
                 parts.append(arg)
 
+        if self.expr.comment is not None:
+            parts.append("// " + self.expr.comment)
+
         return " ".join(parts)
 
     def __repr__(self) -> str:

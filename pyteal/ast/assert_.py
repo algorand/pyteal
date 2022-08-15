@@ -12,7 +12,9 @@ if TYPE_CHECKING:
 class Assert(Expr):
     """A control flow expression to verify that a condition is true."""
 
-    def __init__(self, cond: Expr, *additional_conds: Expr) -> None:
+    def __init__(
+        self, cond: Expr | tuple[Expr, str], *additional_conds: Expr | tuple[Expr, str]
+    ) -> None:
         """Create an assert statement that raises an error if the condition is false.
 
         Args:
@@ -20,14 +22,40 @@ class Assert(Expr):
             *additional_conds: Additional conditions to check. Must evaluate to uint64.
         """
         super().__init__()
+
+        comments = []
+
+        if type(cond) is tuple:
+            cond, comment = cond
+            self.comment = comment
+            comments.append(comment)
+        else:
+            # Keep comments associated to the correct
+            # condition
+            comments.append(None)
+
         require_type(cond, TealType.uint64)
+
+        extra_conds = []
         for cond_single in additional_conds:
+
+            if type(cond_single) is tuple:
+                cond_single, cond_single_comment = cond_single
+                comments.append(cond_single_comment)
+            else:
+                comments.append(None)
+
             require_type(cond_single, TealType.uint64)
-        self.cond = [cond] + list(additional_conds)
+            extra_conds.append(cond_single)
+
+        self.cond = [cond] + list(extra_conds)
+        self.comments = comments
 
     def __teal__(self, options: "CompileOptions"):
         if len(self.cond) > 1:
-            asserts = [Assert(cond) for cond in self.cond]
+            asserts = [
+                Assert((cond, self.comments[idx])) for idx, cond in enumerate(self.cond)
+            ]
             return Seq(*asserts).__teal__(options)
 
         if options.version >= Op.assert_.min_version:
