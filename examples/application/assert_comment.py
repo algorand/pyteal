@@ -1,4 +1,4 @@
-from pyteal import *
+from pyteal import Seq, Subroutine, TealType, Assert, Int, compileTeal, Mode
 
 
 @Subroutine(TealType.uint64)
@@ -16,4 +16,4 @@ program = Seq(
 )
 
 
-print(compileTeal(program, mode=Mode.Application, version=7, debug=True))
+print(compileTeal(program, mode=Mode.Application, version=7, debug=False))
