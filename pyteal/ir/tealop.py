@@ -1,4 +1,3 @@
-from lib2to3.pgen2.literals import simple_escapes
 from typing import Union, List, Optional, TYPE_CHECKING
 
 from pyteal.ir.tealcomponent import TealComponent

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, cast
 
 from pyteal.types import TealType, require_type
 from pyteal.ir import TealOp, Op, TealBlock, TealSimpleBlock, TealConditionalBlock
@@ -13,7 +13,9 @@ class Assert(Expr):
     """A control flow expression to verify that a condition is true."""
 
     def __init__(
-        self, cond: Expr | tuple[Expr, str], *additional_conds: Expr | tuple[Expr, str]
+        self,
+        cond: Expr | tuple[Expr, Optional[str]],
+        *additional_conds: Expr | tuple[Expr, Optional[str]]
     ) -> None:
         """Create an assert statement that raises an error if the condition is false.
 
@@ -23,33 +25,31 @@ class Assert(Expr):
         """
         super().__init__()
 
-        comments = []
+        self.cond: list[Expr] = []
+        self.comments: list[Optional[str]] = []
 
         if type(cond) is tuple:
             cond, comment = cond
+            self.comments.append(comment)
+            self.cond.append(cond)
+
             self.comment = comment
-            comments.append(comment)
         else:
-            # Keep comments associated to the correct
-            # condition
-            comments.append(None)
+            # Keep matching indicies for expr/comment
+            self.comments.append(None)
 
         require_type(cond, TealType.uint64)
 
-        extra_conds = []
         for cond_single in additional_conds:
-
             if type(cond_single) is tuple:
                 cond_single, cond_single_comment = cond_single
-                comments.append(cond_single_comment)
+                self.comments.append(cond_single_comment)
+                self.cond.append(cond_single)
             else:
-                comments.append(None)
+                self.comments.append(None)
+                self.cond.append(cast(Expr, cond_single))
 
             require_type(cond_single, TealType.uint64)
-            extra_conds.append(cond_single)
-
-        self.cond: list[Expr] = [cond] + list(extra_conds)
-        self.comments: list[str] = comments
 
     def __teal__(self, options: "CompileOptions"):
         if len(self.cond) > 1:
