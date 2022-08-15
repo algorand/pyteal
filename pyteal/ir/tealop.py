@@ -29,7 +29,7 @@ def fmt_traceback(tb: list[str]) -> str:
 
 def fmt_comment(comment: str) -> str:
     comment = "\n// ".join(comment.strip(";").splitlines())
-    return f"cmt;{comment}"
+    return f"{comment}"
 
 
 class TealOp(TealComponent):

@@ -24,6 +24,7 @@ class CommentExpr(Expr):
             raise TealInputError(
                 "Newlines should not be present in the CommentExpr constructor"
             )
+        # Purposely dont use `comment` since its used by the assembler
         self.comment_string = single_line_comment
 
     def __teal__(self, options: "CompileOptions") -> Tuple[TealBlock, TealSimpleBlock]:

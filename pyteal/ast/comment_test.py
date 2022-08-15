@@ -52,7 +52,7 @@ def test_Comment_single_line():
 
     version = 6
     expected_teal = f"""#pragma version {version}
-int 1 // cmt;{comment}
+int 1 // {comment}
 return"""
     actual_teal = pt.compileTeal(
         pt.Return(expr), version=version, mode=pt.Mode.Application
@@ -99,20 +99,13 @@ You might say its a 64 bit representation of an element of the set Z and comes f
 since it has no fractional part. You might also say this run on comment has gone too far. See https://en.wikipedia.org/wiki/Integer for more details 
 """
 
-    comment_parts = [
-        "just an int",
-        "but its really more than that isnt it? an integer here is a uint64 stack type but looking further what does that mean? ",
-        "You might say its a 64 bit representation of an element of the set Z and comes from the latin `integer` meaning `whole`",
-        "since it has no fractional part. You might also say this run on comment has gone too far. See https://en.wikipedia.org/wiki/Integer for more details ",
-    ]
-
     expr = pt.Comment(comment, to_wrap)
     assert type(expr) is pt.Int
     assert expr.comment == comment
 
     version = 6
     expected_teal = f"""#pragma version {version}
-int 1 // cmt;just an int
+int 1 // just an int
 // but its really more than that isnt it? an integer here is a uint64 stack type but looking further what does that mean? 
 // You might say its a 64 bit representation of an element of the set Z and comes from the latin `integer` meaning `whole`
 // since it has no fractional part. You might also say this run on comment has gone too far. See https://en.wikipedia.org/wiki/Integer for more details 

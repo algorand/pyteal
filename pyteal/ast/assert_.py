@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Optional, cast
 from pyteal.types import TealType, require_type
 from pyteal.ir import TealOp, Op, TealBlock, TealSimpleBlock, TealConditionalBlock
 from pyteal.ast.expr import Expr
+from pyteal.ast.comment import Comment
 from pyteal.ast.seq import Seq
 
 if TYPE_CHECKING:
@@ -56,8 +57,10 @@ class Assert(Expr):
         if len(self.cond) > 1:
             asserts = []
             for idx, cond in enumerate(self.cond):
-                a = Assert((cond, self.comments[idx]))
+                a = Assert(cond)
                 a.trace = cond.trace
+                if self.comments[idx] is not None:
+                    a = cast(Assert, Comment(cast(str, self.comments[idx]), a))
                 asserts.append(a)
 
             return Seq(*asserts).__teal__(options)

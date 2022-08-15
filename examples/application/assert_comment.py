@@ -27,7 +27,7 @@ program = Seq(
     ),
     Comment("popper", Pop(Int(1))),
     # Make this be
-    Comment("ok", Assert(Int(1))),
+    Assert((Int(1), "ok")),
     # On different
     Assert((Int(1), "no way"), (Int(1), "wow")),
     # lines
