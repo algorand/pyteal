@@ -23,7 +23,7 @@ class TealComponent(ABC):
         pass
 
     @abstractmethod
-    def assemble(self) -> str:
+    def assemble(self, debug: bool = False) -> str:
         pass
 
     @abstractmethod

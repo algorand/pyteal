@@ -18,7 +18,7 @@ class TealLabel(TealComponent):
     def getLabelRef(self) -> LabelReference:
         return self.label
 
-    def assemble(self) -> str:
+    def assemble(self, debug: bool = False) -> str:
         comment = "\n// {}\n".format(self.comment) if self.comment is not None else ""
         return "{}{}:".format(comment, self.label.getLabel())
 

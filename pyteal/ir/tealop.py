@@ -24,12 +24,12 @@ def fmt_traceback(tb: list[str]) -> str:
     line = line.replace(" line ", "l")
     file = file.replace("File ", "").replace(" ", "")  # Remove `File` and any spaces
 
-    return f"pyteal-src;{':'.join([file, line])}"
+    return f"src;{':'.join([file, line])}"
 
 
 def fmt_comment(comment: str) -> str:
     comment = comment.strip(";")
-    return f"comment;{comment}"
+    return f"cmt;{comment}"
 
 
 class TealOp(TealComponent):
@@ -66,7 +66,7 @@ class TealOp(TealComponent):
             if subroutine == arg:
                 self.args[i] = label
 
-    def assemble(self) -> str:
+    def assemble(self, debug: bool = False) -> str:
         from pyteal.ast import ScratchSlot, SubroutineDefinition
 
         parts = [str(self.op)]
@@ -91,7 +91,7 @@ class TealOp(TealComponent):
             if self.expr.comment is not None:
                 comments.append(fmt_comment(self.expr.comment))
 
-            if len(comments) > 0:
+            if len(comments) > 0 and debug:
                 parts.append(f"// {'|'.join(comments)}")
 
         return " ".join(parts)

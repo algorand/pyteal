@@ -45,6 +45,7 @@ class CompileOptions:
         mode: Mode = Mode.Signature,
         version: int = DEFAULT_PROGRAM_VERSION,
         optimize: OptimizeOptions = None,
+        debug: bool = False,
     ) -> None:
         self.mode = mode
         self.version = version
@@ -54,6 +55,7 @@ class CompileOptions:
 
         self.breakBlocksStack: List[List[TealSimpleBlock]] = []
         self.continueBlocksStack: List[List[TealSimpleBlock]] = []
+        self.debug = debug
 
     def setSubroutine(self, subroutine: Optional[SubroutineDefinition]) -> None:
         self.currentSubroutine = subroutine
@@ -237,6 +239,7 @@ def compileTeal(
     version: int = DEFAULT_PROGRAM_VERSION,
     assembleConstants: bool = False,
     optimize: OptimizeOptions = None,
+    debug: bool = False,
 ) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 
@@ -270,7 +273,7 @@ def compileTeal(
             )
         )
 
-    options = CompileOptions(mode=mode, version=version, optimize=optimize)
+    options = CompileOptions(mode=mode, version=version, optimize=optimize, debug=debug)
 
     subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
     subroutine_start_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
@@ -317,5 +320,5 @@ def compileTeal(
         teal = createConstantBlocks(teal)
 
     lines = ["#pragma version {}".format(version)]
-    lines += [i.assemble() for i in teal]
+    lines += [i.assemble(options.debug) for i in teal]
     return "\n".join(lines)

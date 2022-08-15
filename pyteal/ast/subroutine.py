@@ -287,9 +287,15 @@ class SubroutineDefinition:
                         f"should have ABI typespec {arg_type} but got {arg.type_spec()}"
                     )
 
-        return SubroutineCall(
+        sc = SubroutineCall(
             self, args, output_kwarg=OutputKwArgInfo.from_dict(self.output_kwarg)
         )
+
+        decl = self.get_declaration()
+        if decl is not None and decl.trace is not None:
+            sc.trace = decl.trace
+
+        return sc
 
     def __str__(self):
         return f"subroutine#{self.id}"
