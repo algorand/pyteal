@@ -28,7 +28,7 @@ def fmt_traceback(tb: list[str]) -> str:
 
 
 def fmt_comment(comment: str) -> str:
-    comment = comment.strip(";")
+    comment = "\n// ".join(comment.strip(";").splitlines())
     return f"cmt;{comment}"
 
 
