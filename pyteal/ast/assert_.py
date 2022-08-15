@@ -48,14 +48,17 @@ class Assert(Expr):
             require_type(cond_single, TealType.uint64)
             extra_conds.append(cond_single)
 
-        self.cond = [cond] + list(extra_conds)
-        self.comments = comments
+        self.cond: list[Expr] = [cond] + list(extra_conds)
+        self.comments: list[str] = comments
 
     def __teal__(self, options: "CompileOptions"):
         if len(self.cond) > 1:
-            asserts = [
-                Assert((cond, self.comments[idx])) for idx, cond in enumerate(self.cond)
-            ]
+            asserts = []
+            for idx, cond in enumerate(self.cond):
+                a = Assert((cond, self.comments[idx]))
+                a.trace = cond.trace
+                asserts.append(a)
+
             return Seq(*asserts).__teal__(options)
 
         if options.version >= Op.assert_.min_version:

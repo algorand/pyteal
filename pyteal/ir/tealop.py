@@ -1,3 +1,4 @@
+from lib2to3.pgen2.literals import simple_escapes
 from typing import Union, List, Optional, TYPE_CHECKING
 
 from pyteal.ir.tealcomponent import TealComponent
@@ -9,12 +10,35 @@ if TYPE_CHECKING:
     from pyteal.ast import Expr, ScratchSlot, SubroutineDefinition
 
 
+def fmt_traceback(tb: list[str]) -> str:
+    if tb is None or len(tb) == 0:
+        return ""
+
+    # Take the first trace element that doesnt contain __init__
+    for idx in range(len(tb) - 1, -1, -1):
+        if "__init__" in tb[idx]:
+            continue
+        else:
+            break
+
+    file, line = tb[idx].split(",")[:2]  # Only take file: xxx, line xx, ...
+    line = line.replace(" line ", "l")
+    file = file.replace("File ", "").replace(" ", "")  # Remove `File` and any spaces
+
+    return f"pyteal-src;{':'.join([file, line])}"
+
+
+def fmt_comment(comment: str) -> str:
+    comment = comment.strip(";")
+    return f"comment;{comment}"
+
+
 class TealOp(TealComponent):
     def __init__(
         self,
         expr: Optional["Expr"],
         op: Op,
-        *args: Union[int, str, LabelReference, "ScratchSlot", "SubroutineDefinition"]
+        *args: Union[int, str, LabelReference, "ScratchSlot", "SubroutineDefinition"],
     ) -> None:
         super().__init__(expr)
         self.op = op
@@ -61,8 +85,15 @@ class TealOp(TealComponent):
             else:
                 parts.append(arg)
 
-        if self.expr is not None and self.expr.comment is not None:
-            parts.append("// " + self.expr.comment)
+        if self.expr is not None:
+            comments = []
+            if self.expr.trace is not None:
+                comments.append(fmt_traceback(self.expr.trace))
+            if self.expr.comment is not None:
+                comments.append(fmt_comment(self.expr.comment))
+
+            if len(comments) > 0:
+                parts.append(f"// {'|'.join(comments)}")
 
         return " ".join(parts)
 
