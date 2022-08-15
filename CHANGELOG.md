@@ -8,6 +8,7 @@
 * CI: Fail readthedocs build on warning ([#478](https://github.com/algorand/pyteal/pull/478))
 
 ## Changed
+* Update `Block` docs to match spec change ([#503](https://github.com/algorand/pyteal/pull/503))
 
 # 0.15.0
 ## Added
