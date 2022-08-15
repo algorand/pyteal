@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Tuple, Optional
 
 from pyteal.errors import TealInputError
 from pyteal.types import TealType
@@ -24,10 +24,10 @@ class CommentExpr(Expr):
             raise TealInputError(
                 "Newlines should not be present in the CommentExpr constructor"
             )
-        self.comment = single_line_comment
+        self.comment_string = single_line_comment
 
     def __teal__(self, options: "CompileOptions") -> Tuple[TealBlock, TealSimpleBlock]:
-        op = TealOp(self, Op.comment, self.comment)
+        op = TealOp(self, Op.comment, self.comment_string)
         return TealBlock.FromOp(options, op)
 
     def __str__(self):
@@ -43,7 +43,7 @@ class CommentExpr(Expr):
 CommentExpr.__module__ = "pyteal"
 
 
-def Comment(expr: Expr, comment: str) -> Expr:
+def Comment(comment: str, expr: Optional[Expr] = None) -> Expr:
     """Wrap an existing expression with a comment.
 
     This comment will be present in the compiled TEAL source immediately before the first op of the
@@ -59,5 +59,7 @@ def Comment(expr: Expr, comment: str) -> Expr:
         A new expression which is functionally equivalent to the input expression, but which will
         compile with the given comment string.
     """
-    lines = comment.splitlines()
-    return Seq(*[CommentExpr(line) for line in lines], expr)
+    if expr is not None:
+        expr.comment = comment
+        return expr
+    return Seq(*[CommentExpr(comment) for comment in comment.splitlines()])
