@@ -1,16 +1,25 @@
 # Unreleased
+
+# 0.16.0
+
 ## Added
 * Add the ability to pass foreign reference arrays directly into inner transactions ([#384](https://github.com/algorand/pyteal/pull/384))
+
 * NamedTuple Implementation ([#473](https://github.com/algorand/pyteal/pull/473))
+
+* ExecuteMethodCall helper ([#501](https://github.com/algorand/pyteal/pull/501))
 
 ## Fixed
 
 * CI: Fail readthedocs build on warning ([#478](https://github.com/algorand/pyteal/pull/478))
 
+* Windows Compatibility ([#499](https://github.com/algorand/pyteal/pull/499))
+
 ## Changed
 * Update `Block` docs to match spec change ([#503](https://github.com/algorand/pyteal/pull/503))
 
 # 0.15.0
+
 ## Added
 * Support AVM 7 updates:
   * New opcodes:
