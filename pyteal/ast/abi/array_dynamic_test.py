@@ -274,6 +274,28 @@ def test_DynamicBytes_set_expr(test_case: bytes | bytearray):
         assert actual == expected
 
 
+def test_DynamicBytes_get():
+    value = abi.DynamicBytes()
+
+    expr = value.get()
+    assert expr.type_of() == pt.TealType.bytes
+    assert not expr.has_return()
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = actual.NormalizeBlocks(actual)
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+            pt.TealOp(None, pt.Op.extract, 2, 0),
+        ]
+    )
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
 def test_DynamicArray_encode():
     dynamicArrayType = abi.DynamicArrayTypeSpec(abi.Uint64TypeSpec())
     value = dynamicArrayType.new_instance()

@@ -166,6 +166,23 @@ class StaticBytes(StaticArray[Byte, N], Generic[N]):
             ComputedValue[StaticArray[Byte, N]],
         ],
     ) -> Expr:
+        """Set the elements of this StaticBytes to the input values.
+
+        The behavior of this method depends on the input argument type:
+
+            * :code:`bytes`: set the value to the Python byte string.
+            * :code:`bytearray`: set the value to the Python byte array.
+            * :code:`Expr`: set the value to the result of a PyTeal expression, which must evaluate to a TealType.bytes.
+            * :code:`Sequence[Byte]`: set the bytes of this String to those contained in this Python sequence (e.g. a list or tuple).
+            * :code:`StaticArray[Byte, N]`: copy the bytes from another StaticArray. The argument's element type and length must exactly match Byte and this StaticBytes' length, otherwise an error will occur.
+            * :code:`ComputedValue[StaticArray[Byte, N]]`: copy the bytes from a StaticArray produced by a ComputedType. The argument's element type and length must exactly match Byte and this StaticBytes' length, otherwise an error will occur.
+
+        Args:
+            values: The new elements this StaticBytes should have. This must follow the above constraints.
+
+        Returns:
+            An expression which stores the given value into this StaticBytes.
+        """
         match values:
             case bytes() | bytearray():
                 if len(values) != self.type_spec().length_static():
@@ -180,6 +197,14 @@ class StaticBytes(StaticArray[Byte, N], Generic[N]):
                 )
 
         return super().set(values)
+
+    def get(self) -> Expr:
+        """Get the byte encoding of this StaticBytes.
+
+        Returns:
+            A Pyteal expression that loads byte encoding of this StaticBytes.
+        """
+        return self.stored_value.load()
 
 
 StaticBytes.__module__ = "pyteal.abi"
