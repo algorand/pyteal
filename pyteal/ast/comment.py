@@ -60,4 +60,6 @@ def Comment(expr: Expr, comment: str) -> Expr:
         compile with the given comment string.
     """
     lines = comment.splitlines()
+    if type(expr) is Seq and len(expr.args) == 0:
+        return Seq()
     return Seq(*[CommentExpr(line) for line in lines], expr)

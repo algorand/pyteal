@@ -69,16 +69,16 @@ return"""
 def test_Comment_multi_line():
     to_wrap = pt.Int(1)
     comment = """just an int
-but its really more than that isnt it? an integer here is a uint64 stack type but looking further what does that mean? 
+but its really more than that isnt it? an integer here is a uint64 stack type but looking further what does that mean?
 You might say its a 64 bit representation of an element of the set Z and comes from the latin `integer` meaning `whole`
-since it has no fractional part. You might also say this run on comment has gone too far. See https://en.wikipedia.org/wiki/Integer for more details 
+since it has no fractional part. You might also say this run on comment has gone too far. See https://en.wikipedia.org/wiki/Integer for more details
 """
 
     comment_parts = [
         "just an int",
-        "but its really more than that isnt it? an integer here is a uint64 stack type but looking further what does that mean? ",
+        "but its really more than that isnt it? an integer here is a uint64 stack type but looking further what does that mean?",
         "You might say its a 64 bit representation of an element of the set Z and comes from the latin `integer` meaning `whole`",
-        "since it has no fractional part. You might also say this run on comment has gone too far. See https://en.wikipedia.org/wiki/Integer for more details ",
+        "since it has no fractional part. You might also say this run on comment has gone too far. See https://en.wikipedia.org/wiki/Integer for more details",
     ]
 
     expr = pt.Comment(to_wrap, comment)
@@ -95,13 +95,31 @@ since it has no fractional part. You might also say this run on comment has gone
     version = 6
     expected_teal = f"""#pragma version {version}
 // just an int
-// but its really more than that isnt it? an integer here is a uint64 stack type but looking further what does that mean? 
+// but its really more than that isnt it? an integer here is a uint64 stack type but looking further what does that mean?
 // You might say its a 64 bit representation of an element of the set Z and comes from the latin `integer` meaning `whole`
-// since it has no fractional part. You might also say this run on comment has gone too far. See https://en.wikipedia.org/wiki/Integer for more details 
+// since it has no fractional part. You might also say this run on comment has gone too far. See https://en.wikipedia.org/wiki/Integer for more details
 int 1
 return"""
     actual_teal = pt.compileTeal(
         pt.Return(expr), version=version, mode=pt.Mode.Application
     )
-    print(actual_teal)
     assert actual_teal == expected_teal
+
+
+def test_comment_vanish_on_empty_expr():
+    def wrapper(intermediate: pt.Expr):
+        return pt.Seq(intermediate, pt.Return(pt.Int(1)))
+
+    test_cases = [
+        pt.Comment(pt.Seq(), "blabla0"),
+        pt.Comment(pt.Comment(pt.Seq(), "cascaded0"), "cascaded1"),
+    ]
+
+    expected = f"""#pragma version {options.version}
+int 1
+return"""
+
+    for case in test_cases:
+        expr = wrapper(case)
+        actual = pt.compileTeal(expr, version=options.version, mode=pt.Mode.Application)
+        assert actual == expected
