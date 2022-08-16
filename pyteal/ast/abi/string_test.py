@@ -4,7 +4,6 @@ import pyteal as pt
 from pyteal import abi
 from pyteal.ast.abi.util import substring_for_decoding
 from pyteal.ast.abi.type_test import ContainerType
-from pyteal.util import escapeStr
 
 options = pt.CompileOptions(version=5)
 
@@ -110,62 +109,41 @@ def test_String_get():
         assert actual == expected
 
 
-def test_String_set_static():
+STATIC_SET_TESTCASES: list[tuple[str | bytes | bytearray, bytes]] = [
+    ("stringy", b"\x00\x07stringy"),
+    ("😀", b"\x00\x04\xf0\x9f\x98\x80"),
+    ("0xDEADBEEF", b"\x00\x0a0xDEADBEEF"),
+    (bytes(32), b"\x00\x20" + bytes(32)),
+    (b"alphabet_soup", b"\x00\x0dalphabet_soup"),
+    (bytearray(b"another one"), b"\x00\x0banother one"),
+]
 
-    for value_to_set in ("stringy", "😀", "0xDEADBEEF"):
-        value = abi.String()
-        expr = value.set(value_to_set)
-        assert expr.type_of() == pt.TealType.none
-        assert not expr.has_return()
 
-        expected = pt.TealSimpleBlock(
-            [
-                pt.TealOp(None, pt.Op.byte, escapeStr(value_to_set)),
-                pt.TealOp(None, pt.Op.len),
-                pt.TealOp(None, pt.Op.itob),
-                pt.TealOp(None, pt.Op.extract, 6, 0),
-                pt.TealOp(None, pt.Op.byte, escapeStr(value_to_set)),
-                pt.TealOp(None, pt.Op.concat),
-                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
-            ]
-        )
+@pytest.mark.parametrize("value_to_set, value_encoded", STATIC_SET_TESTCASES)
+def test_String_set_static(value_to_set, value_encoded):
+    value = abi.String()
+    expr = value.set(value_to_set)
+    assert expr.type_of() == pt.TealType.none
+    assert not expr.has_return()
 
-        actual, _ = expr.__teal__(options)
-        actual.addIncoming()
-        actual = pt.TealBlock.NormalizeBlocks(actual)
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.byte, "0x" + value_encoded.hex()),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+        ]
+    )
 
-        with pt.TealComponent.Context.ignoreExprEquality():
-            assert actual == expected
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    for value_to_set in (bytes(32), b"alphabet_soup"):
-        value = abi.String()
-        expr = value.set(value_to_set)
-        assert expr.type_of() == pt.TealType.none
-        assert not expr.has_return()
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
 
-        teal_val = f"0x{value_to_set.hex()}"
 
-        expected = pt.TealSimpleBlock(
-            [
-                pt.TealOp(None, pt.Op.byte, teal_val),
-                pt.TealOp(None, pt.Op.len),
-                pt.TealOp(None, pt.Op.itob),
-                pt.TealOp(None, pt.Op.extract, 6, 0),
-                pt.TealOp(None, pt.Op.byte, teal_val),
-                pt.TealOp(None, pt.Op.concat),
-                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
-            ]
-        )
-
-        actual, _ = expr.__teal__(options)
-        actual.addIncoming()
-        actual = pt.TealBlock.NormalizeBlocks(actual)
-
-        with pt.TealComponent.Context.ignoreExprEquality():
-            assert actual == expected
-
+def test_String_set_static_invalid():
     with pytest.raises(pt.TealInputError):
-        value.set(42)
+        abi.String().set(42)
 
 
 def test_String_set_expr():
@@ -175,18 +153,23 @@ def test_String_set_expr():
         assert expr.type_of() == pt.TealType.none
         assert not expr.has_return()
 
-        vts, _ = value_to_set.__teal__(options)
-        expected = pt.TealSimpleBlock(
+        value_start, value_end = value_to_set.__teal__(options)
+        expected_body = pt.TealSimpleBlock(
             [
-                vts.ops[0],
+                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+                pt.TealOp(None, pt.Op.load, value.stored_value.slot),
                 pt.TealOp(None, pt.Op.len),
                 pt.TealOp(None, pt.Op.itob),
                 pt.TealOp(None, pt.Op.extract, 6, 0),
-                vts.ops[0],
+                pt.TealOp(None, pt.Op.load, value.stored_value.slot),
                 pt.TealOp(None, pt.Op.concat),
                 pt.TealOp(None, pt.Op.store, value.stored_value.slot),
             ]
         )
+        value_end.setNextBlock(expected_body)
+        expected = value_start
+        expected.addIncoming()
+        expected = pt.TealBlock.NormalizeBlocks(expected)
 
         actual, _ = expr.__teal__(options)
         actual.addIncoming()

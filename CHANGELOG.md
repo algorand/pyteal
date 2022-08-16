@@ -4,7 +4,7 @@
 * Add the ability to insert comments in TEAL source file with the Comment method ([#410](https://github.com/algorand/pyteal/pull/410))
 
 ## Fixed
-## Changed
+* Fix AST duplication bug in `String.set` when called with an `Expr` argument ([#508](https://github.com/algorand/pyteal/pull/508))
 
 # 0.16.0
 
