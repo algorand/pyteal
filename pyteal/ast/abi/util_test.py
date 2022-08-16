@@ -275,6 +275,14 @@ def test_type_spec_from_annotation():
             annotation=List[abi.Uint16],
             expected=TypeError,
         ),
+        TypeAnnotationTest(
+            annotation=abi.StaticBytes[Literal[10]],
+            expected=abi.StaticArrayTypeSpec(abi.ByteTypeSpec(), 10),
+        ),
+        TypeAnnotationTest(
+            annotation=abi.DynamicBytes,
+            expected=abi.DynamicArrayTypeSpec(abi.ByteTypeSpec()),
+        ),
     ]
 
     for i, test in enumerate(tests):
@@ -332,6 +340,7 @@ def test_size_of():
         (abi.Uint8, 1),
         (abi.Address, 32),
         (abi.StaticArray[abi.Uint16, Literal[10]], 2 * 10),
+        (abi.StaticBytes[Literal[36]], 36),
     ]
 
     for (t, s) in values:
@@ -339,6 +348,9 @@ def test_size_of():
 
     with pytest.raises(TealInputError):
         abi.size_of(abi.String)
+
+    with pytest.raises(TealInputError):
+        abi.size_of(abi.DynamicBytes)
 
 
 ABI_TRANSLATION_TEST_CASES = [

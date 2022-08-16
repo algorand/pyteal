@@ -88,6 +88,7 @@ ABI_TYPES = [
     abi.StaticArray[abi.Bool, Literal[42]],
     abi.StaticArray[abi.Uint64, Literal[1]],
     abi.StaticArray[abi.Uint64, Literal[42]],
+    abi.StaticBytes[Literal[16]],
     (abi.DynamicArray[abi.Bool], 0),
     (abi.DynamicArray[abi.Bool], 1),
     (abi.DynamicArray[abi.Bool], 42),
@@ -95,6 +96,7 @@ ABI_TYPES = [
     (abi.DynamicArray[abi.Uint64], 1),
     (abi.DynamicArray[abi.Uint64], 42),
     (abi.DynamicArray[abi.Address], 10),
+    (abi.DynamicBytes, 36),
     (abi.DynamicArray[abi.StaticArray[abi.Bool, Literal[3]]], 11),
     abi.StaticArray[abi.Tuple1[abi.Bool], Literal[10]],
     (

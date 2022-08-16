@@ -1,7 +1,9 @@
 from typing import List
-import pytest
 
+import pytest
 import pyteal as pt
+
+from algosdk.abi import ABIType
 from pyteal import abi
 from pyteal.ast.abi.util import substring_for_decoding
 from pyteal.ast.abi.tuple import _encode_tuple
@@ -201,6 +203,97 @@ def test_DynamicArray_set_computed():
                 pt.Bytes("well i am trolling again"),
             )
         )
+
+
+# AACS key recovery
+BYTE_HEX_TEST_CASE = "09f911029d74e35bd84156c5635688c0"
+
+
+BYTES_SET_TESTCASES = [
+    bytes.fromhex(BYTE_HEX_TEST_CASE),
+    bytearray.fromhex(BYTE_HEX_TEST_CASE),
+]
+
+
+@pytest.mark.parametrize("test_case", BYTES_SET_TESTCASES)
+def test_DynamicBytes_set_py_bytes(test_case: bytes | bytearray):
+    value = abi.DynamicBytes()
+
+    expr = value.set(test_case)
+    assert expr.type_of() == pt.TealType.none
+    assert not expr.has_return()
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = actual.NormalizeBlocks(actual)
+
+    length_encoding = ABIType.from_string("uint16").encode(len(test_case)).hex()
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.byte, "0x" + length_encoding + BYTE_HEX_TEST_CASE),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+        ]
+    )
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
+@pytest.mark.parametrize("test_case", BYTES_SET_TESTCASES)
+def test_DynamicBytes_set_expr(test_case: bytes | bytearray):
+    value = abi.DynamicBytes()
+
+    set_expr = pt.Concat(pt.Bytes(test_case), pt.Bytes(test_case))
+
+    expr = value.set(set_expr)
+    assert expr.type_of() == pt.TealType.none
+    assert not expr.has_return()
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = actual.NormalizeBlocks(actual)
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.byte, "0x" + BYTE_HEX_TEST_CASE),
+            pt.TealOp(None, pt.Op.byte, "0x" + BYTE_HEX_TEST_CASE),
+            pt.TealOp(None, pt.Op.concat),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+            pt.TealOp(None, pt.Op.len),
+            pt.TealOp(None, pt.Op.itob),
+            pt.TealOp(None, pt.Op.extract, 6, 0),
+            pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+            pt.TealOp(None, pt.Op.concat),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+        ]
+    )
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
+def test_DynamicBytes_get():
+    value = abi.DynamicBytes()
+
+    expr = value.get()
+    assert expr.type_of() == pt.TealType.bytes
+    assert not expr.has_return()
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = actual.NormalizeBlocks(actual)
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+            pt.TealOp(None, pt.Op.extract, 2, 0),
+        ]
+    )
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
 
 
 def test_DynamicArray_encode():

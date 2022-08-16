@@ -1,17 +1,13 @@
-from typing import (
-    Union,
-    Sequence,
-    TypeVar,
-    cast,
-)
-
+from typing import Union, Sequence, TypeVar, cast
 
 from pyteal.errors import TealInputError
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
+from pyteal.ast.int import Int
+from pyteal.ast.substring import Suffix
 
 from pyteal.ast.abi.type import ComputedValue, BaseType
-from pyteal.ast.abi.uint import Uint16
+from pyteal.ast.abi.uint import Uint16, Byte, ByteTypeSpec
 from pyteal.ast.abi.array_base import ArrayTypeSpec, Array
 
 
@@ -102,3 +98,67 @@ class DynamicArray(Array[T]):
 
 
 DynamicArray.__module__ = "pyteal.abi"
+
+
+class DynamicBytes(DynamicArray[Byte]):
+    """The convenience class that represents ABI dynamic byte array."""
+
+    def __init__(self) -> None:
+        super().__init__(DynamicArrayTypeSpec(ByteTypeSpec()))
+
+    def set(
+        self,
+        values: Union[
+            bytes,
+            bytearray,
+            Expr,
+            Sequence[Byte],
+            DynamicArray[Byte],
+            ComputedValue[DynamicArray[Byte]],
+        ],
+    ) -> Expr:
+        """Set the elements of this DynamicBytes to the input values.
+
+        The behavior of this method depends on the input argument type:
+
+            * :code:`bytes`: set the value to the Python byte string.
+            * :code:`bytearray`: set the value to the Python byte array.
+            * :code:`Expr`: set the value to the result of a PyTeal expression, which must evaluate to a TealType.bytes.
+            * :code:`Sequence[Byte]`: set the bytes of this String to those contained in this Python sequence (e.g. a list or tuple).
+            * :code:`DynamicArray[Byte]`: copy the bytes from another DynamicArray. The argument's element type must exactly match Byte, otherwise an error will occur.
+            * :code:`ComputedValue[DynamicArray[Byte]]`: copy the bytes from a DynamicArray produced by a ComputedValue. The argument's element type must exactly match Byte, otherwise an error will occur.
+
+        Args:
+            values: The new elements this DynamicBytes should have. This must follow the above constraints.
+
+        Returns:
+            An expression which stores the given value into this DynamicBytes.
+        """
+        # NOTE: the import here is to avoid importing in partial initialized module abi
+        from pyteal.ast.abi.string import (
+            _encoded_byte_string,
+            _store_encoded_expr_byte_string_into_var,
+        )
+
+        match values:
+            case bytes() | bytearray():
+                return self.stored_value.store(_encoded_byte_string(values))
+            case Expr():
+                return _store_encoded_expr_byte_string_into_var(
+                    values, self.stored_value
+                )
+
+        return super().set(values)
+
+    def get(self) -> Expr:
+        """Get the byte encoding of this DynamicBytes.
+
+        Dropping the uint16 encoding prefix for dynamic array length.
+
+        Returns:
+            A Pyteal expression that loads byte encoding of this DynamicBytes, and drop the first uint16 DynamicArray length encoding.
+        """
+        return Suffix(self.stored_value.load(), Int(2))
+
+
+DynamicBytes.__module__ = "pyteal.abi"

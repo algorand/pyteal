@@ -107,8 +107,16 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
         Uint64TypeSpec,
         Uint64,
     )
-    from pyteal.ast.abi.array_dynamic import DynamicArrayTypeSpec, DynamicArray
-    from pyteal.ast.abi.array_static import StaticArrayTypeSpec, StaticArray
+    from pyteal.ast.abi.array_dynamic import (
+        DynamicArrayTypeSpec,
+        DynamicArray,
+        DynamicBytes,
+    )
+    from pyteal.ast.abi.array_static import (
+        StaticArrayTypeSpec,
+        StaticArray,
+        StaticBytes,
+    )
     from pyteal.ast.abi.tuple import (
         TupleTypeSpec,
         Tuple,
@@ -209,6 +217,11 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
             raise TypeError("Address expects 0 arguments. Got: {}".format(args))
         return AddressTypeSpec()
 
+    if origin is DynamicBytes:
+        if len(args) != 0:
+            raise TypeError(f"DynamicBytes expect 0 type argument. Got: {args}")
+        return DynamicArrayTypeSpec(ByteTypeSpec())
+
     if origin is DynamicArray:
         if len(args) != 1:
             raise TypeError(
@@ -216,6 +229,12 @@ def type_spec_from_annotation(annotation: Any) -> TypeSpec:
             )
         value_type_spec = type_spec_from_annotation(args[0])
         return DynamicArrayTypeSpec(value_type_spec)
+
+    if origin is StaticBytes:
+        if len(args) != 1:
+            raise TypeError(f"StaticBytes expect 1 type argument. Got: {args}")
+        array_length = int_literal_from_annotation(args[0])
+        return StaticArrayTypeSpec(ByteTypeSpec(), array_length)
 
     if origin is StaticArray:
         if len(args) != 2:
