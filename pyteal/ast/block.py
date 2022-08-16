@@ -60,8 +60,8 @@ class Block(LeafExpr):
 
         Args:
             block: A block index that corresponds to the block to check,
-                must be evaluated to uint64. Fails if the block index is not less than the
-                current round or more than 1001 rounds before txn.LastValid.
+                must be evaluated to uint64. Fails if the block index is not less than
+                :code:`Txn.first_valid()` or more than 1001 rounds before :code:`Txn.last_valid()`.
         """
         return cls(BlockField.block_seed, block)
 
@@ -71,8 +71,8 @@ class Block(LeafExpr):
 
         Args:
             block: A block index that corresponds to the block to check,
-                must be evaluated to uint64. Fails if the block index is not less than the
-                current round or more than 1001 rounds before txn.LastValid.
+                must be evaluated to uint64. Fails if the block index is not less than
+                :code:`Txn.first_valid()` or more than 1001 rounds before :code:`Txn.last_valid()`.
         """
         return cls(BlockField.block_timestamp, block)
 
