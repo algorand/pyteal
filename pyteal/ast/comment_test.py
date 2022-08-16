@@ -112,5 +112,5 @@ return"""
     actual_teal = pt.compileTeal(
         pt.Return(expr), version=version, mode=pt.Mode.Application
     )
-    print(actual_teal)
+
     assert actual_teal == expected_teal
