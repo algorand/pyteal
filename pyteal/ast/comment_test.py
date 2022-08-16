@@ -33,10 +33,19 @@ def test_CommentExpr():
             CommentExpr(f"one line{newline}two lines")
 
 
+def test_Comment_Expr_empty():
+    comment = "dope"
+    expr = pt.Comment(comment)
+    assert type(expr) is pt.Seq
+    assert len(expr.args) == 1
+
+    assert getattr(expr.args[0], "comment") == comment
+
+
 def test_Comment_empty():
     to_wrap = pt.Int(1)
     comment = ""
-    expr = pt.Comment(to_wrap, comment)
+    expr = pt.Comment(comment, to_wrap)
     assert type(expr) is pt.Seq
     assert len(expr.args) == 1
 
@@ -46,7 +55,7 @@ def test_Comment_empty():
 def test_Comment_single_line():
     to_wrap = pt.Int(1)
     comment = "just an int"
-    expr = pt.Comment(to_wrap, comment)
+    expr = pt.Comment(comment, to_wrap)
     assert type(expr) is pt.Seq
     assert len(expr.args) == 2
 
@@ -81,7 +90,7 @@ since it has no fractional part. You might also say this run on comment has gone
         "since it has no fractional part. You might also say this run on comment has gone too far. See https://en.wikipedia.org/wiki/Integer for more details ",
     ]
 
-    expr = pt.Comment(to_wrap, comment)
+    expr = pt.Comment(comment, to_wrap)
     assert type(expr) is pt.Seq
     assert len(expr.args) == 5
 

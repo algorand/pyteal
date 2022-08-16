@@ -43,7 +43,7 @@ class CommentExpr(Expr):
 CommentExpr.__module__ = "pyteal"
 
 
-def Comment(expr: Expr, comment: str) -> Expr:
+def Comment(comment: str, expr: Expr = None) -> Expr:
     """Wrap an existing expression with a comment.
 
     This comment will be present in the compiled TEAL source immediately before the first op of the
@@ -52,12 +52,15 @@ def Comment(expr: Expr, comment: str) -> Expr:
     Note that when TEAL source is assembled into bytes, all comments are omitted.
 
     Args:
-        expr: The expression to be commented.
         comment: The comment that will be associated with the expression.
+        expr: The expression to be commented.
 
     Returns:
         A new expression which is functionally equivalent to the input expression, but which will
         compile with the given comment string.
     """
     lines = comment.splitlines()
-    return Seq(*[CommentExpr(line) for line in lines], expr)
+    comment_lines: list[Expr] = [CommentExpr(line) for line in lines]
+    if expr is not None:
+        comment_lines.append(expr)
+    return Seq(*comment_lines)

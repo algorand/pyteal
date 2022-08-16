@@ -32,7 +32,7 @@ class Op(Enum):
 
     # fmt: off
     # meta
-    comment             = OpType("//",                  Mode.Signature | Mode.Application, 1)
+    comment             = OpType("//",                  Mode.Signature | Mode.Application, 0)
     # avm 
     err                 = OpType("err",                 Mode.Signature | Mode.Application, 2)
     sha256              = OpType("sha256",              Mode.Signature | Mode.Application, 2)
