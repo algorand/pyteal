@@ -1,7 +1,9 @@
 from typing import List
-import pytest
 
+import pytest
 import pyteal as pt
+
+from algosdk.abi import ABIType
 from pyteal import abi
 from pyteal.ast.abi.util import substring_for_decoding
 from pyteal.ast.abi.tuple import _encode_tuple
@@ -225,14 +227,11 @@ def test_DynamicBytes_set_py_bytes(test_case: bytes | bytearray):
     actual.addIncoming()
     actual = actual.NormalizeBlocks(actual)
 
+    length_encoding = ABIType.from_string("uint16").encode(len(test_case)).hex()
+
     expected = pt.TealSimpleBlock(
         [
-            pt.TealOp(None, pt.Op.byte, "0x" + BYTE_HEX_TEST_CASE),
-            pt.TealOp(None, pt.Op.len),
-            pt.TealOp(None, pt.Op.itob),
-            pt.TealOp(None, pt.Op.extract, 6, 0),
-            pt.TealOp(None, pt.Op.byte, "0x" + BYTE_HEX_TEST_CASE),
-            pt.TealOp(None, pt.Op.concat),
+            pt.TealOp(None, pt.Op.byte, "0x" + length_encoding + BYTE_HEX_TEST_CASE),
             pt.TealOp(None, pt.Op.store, value.stored_value.slot),
         ]
     )
@@ -260,12 +259,12 @@ def test_DynamicBytes_set_expr(test_case: bytes | bytearray):
             pt.TealOp(None, pt.Op.byte, "0x" + BYTE_HEX_TEST_CASE),
             pt.TealOp(None, pt.Op.byte, "0x" + BYTE_HEX_TEST_CASE),
             pt.TealOp(None, pt.Op.concat),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            pt.TealOp(None, pt.Op.load, value.stored_value.slot),
             pt.TealOp(None, pt.Op.len),
             pt.TealOp(None, pt.Op.itob),
             pt.TealOp(None, pt.Op.extract, 6, 0),
-            pt.TealOp(None, pt.Op.byte, "0x" + BYTE_HEX_TEST_CASE),
-            pt.TealOp(None, pt.Op.byte, "0x" + BYTE_HEX_TEST_CASE),
-            pt.TealOp(None, pt.Op.concat),
+            pt.TealOp(None, pt.Op.load, value.stored_value.slot),
             pt.TealOp(None, pt.Op.concat),
             pt.TealOp(None, pt.Op.store, value.stored_value.slot),
         ]

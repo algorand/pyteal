@@ -1,14 +1,15 @@
 # Unreleased
 
 ## Added
-
+* Add the ability to insert comments in TEAL source file with the Comment method ([#410](https://github.com/algorand/pyteal/pull/410))
 * Static and Dynamic Byte Array convenience classes ([#500](https://github.com/algorand/pyteal/pull/500))
 
+## Fixed
+* Fix AST duplication bug in `String.set` when called with an `Expr` argument ([#508](https://github.com/algorand/pyteal/pull/508))
 
 # 0.16.0
 
 ## Added
-
 * Add the ability to pass foreign reference arrays directly into inner transactions ([#384](https://github.com/algorand/pyteal/pull/384))
 
 * NamedTuple Implementation ([#473](https://github.com/algorand/pyteal/pull/473))

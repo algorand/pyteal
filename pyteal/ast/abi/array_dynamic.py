@@ -5,7 +5,6 @@ from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 
 from pyteal.ast.abi.type import ComputedValue, BaseType
-from pyteal.ast.bytes import Bytes
 from pyteal.ast.abi.uint import Uint16, Byte, ByteTypeSpec
 from pyteal.ast.abi.array_base import ArrayTypeSpec, Array
 
@@ -117,13 +116,18 @@ class DynamicBytes(DynamicArray[Byte]):
         ],
     ) -> Expr:
         # NOTE: the import here is to avoid importing in partial initialized module abi
-        from pyteal.ast.abi.string import _encoded_string
+        from pyteal.ast.abi.string import (
+            _encoded_byte_string,
+            _store_encoded_expr_byte_string_into_var,
+        )
 
         match values:
             case bytes() | bytearray():
-                return self.stored_value.store(_encoded_string(Bytes(values)))
+                return self.stored_value.store(_encoded_byte_string(values))
             case Expr():
-                return self.stored_value.store(_encoded_string(values))
+                return _store_encoded_expr_byte_string_into_var(
+                    values, self.stored_value
+                )
 
         return super().set(values)
 
