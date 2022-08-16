@@ -2813,12 +2813,7 @@ retsub
 
 // log_creation
 logcreation_8:
-byte "logging creation"
-len
-itob
-extract 6 0
-byte "logging creation"
-concat
+byte 0x00106c6f6767696e67206372656174696f6e
 store 68
 load 68
 retsub""".strip()
@@ -3341,12 +3336,7 @@ retsub
 
 // log_creation
 logcreation_8:
-byte "logging creation"
-len
-itob
-extract 6 0
-byte "logging creation"
-concat
+byte 0x00106c6f6767696e67206372656174696f6e
 store 68
 load 68
 retsub""".strip()

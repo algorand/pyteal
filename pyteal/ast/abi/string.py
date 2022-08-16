@@ -1,6 +1,8 @@
 from typing import Union, Sequence, cast
 from collections.abc import Sequence as CollectionSequence
 
+from algosdk.abi import ABIType
+
 from pyteal.ast.abi.uint import Byte
 from pyteal.ast.abi.type import ComputedValue, BaseType
 from pyteal.ast.abi.array_dynamic import DynamicArray, DynamicArrayTypeSpec
@@ -9,6 +11,8 @@ from pyteal.ast.abi.uint import ByteTypeSpec, Uint16TypeSpec
 from pyteal.ast.int import Int
 from pyteal.ast.expr import Expr
 from pyteal.ast.bytes import Bytes
+from pyteal.ast.seq import Seq
+from pyteal.ast.scratchvar import ScratchVar
 from pyteal.ast.unaryexpr import Itob, Len
 from pyteal.ast.substring import Suffix
 from pyteal.ast.naryexpr import Concat
@@ -16,8 +20,18 @@ from pyteal.ast.naryexpr import Concat
 from pyteal.errors import TealInputError
 
 
-def _encoded_string(s: Expr):
-    return Concat(Suffix(Itob(Len(s)), Int(6)), s)
+def _encoded_byte_string(s: bytes | bytearray) -> Expr:
+    prefix = ABIType.from_string("uint16").encode(len(s))
+    return Bytes(prefix + s)
+
+
+def _store_encoded_expr_byte_string_into_var(value: Expr, location: ScratchVar) -> Expr:
+    return Seq(
+        location.store(value),
+        location.store(
+            Concat(Suffix(Itob(Len(location.load())), Int(6)), location.load())
+        ),
+    )
 
 
 class StringTypeSpec(DynamicArrayTypeSpec):
@@ -101,10 +115,14 @@ class String(DynamicArray[Byte]):
                 raise TealInputError(
                     f"Got {value} with type spec {value.type_spec()}, expected {StringTypeSpec}"
                 )
-            case str() | bytes():
-                return self.stored_value.store(_encoded_string(Bytes(value)))
+            case bytes() | bytearray():
+                return self.stored_value.store(_encoded_byte_string(value))
+            case str():
+                return self.stored_value.store(_encoded_byte_string(value.encode()))
             case Expr():
-                return self.stored_value.store(_encoded_string(value))
+                return _store_encoded_expr_byte_string_into_var(
+                    value, self.stored_value
+                )
             case CollectionSequence():
                 return super().set(cast(Sequence[Byte], value))
 

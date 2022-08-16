@@ -1,5 +1,8 @@
 # Unreleased
 
+## Fixed
+* Fix AST duplication bug in `String.set` when called with an `Expr` argument ([#508](https://github.com/algorand/pyteal/pull/508))
+
 # 0.16.0
 
 ## Added
