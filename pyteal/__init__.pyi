@@ -82,6 +82,7 @@ __all__ = [
     "BytesXor",
     "BytesZero",
     "CallConfig",
+    "Comment",
     "CompileOptions",
     "Concat",
     "Cond",
