@@ -169,8 +169,6 @@ def test_cond_two_pred_multi():
     expected = cond1
 
     actual, _ = expr.__teal__(options)
-    print(actual)
-    print(expected)
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
