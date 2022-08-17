@@ -3,6 +3,7 @@
 ## Added
 * Add the ability to insert comments in TEAL source file with the Comment method ([#410](https://github.com/algorand/pyteal/pull/410))
 * Static and Dynamic Byte Array convenience classes ([#500](https://github.com/algorand/pyteal/pull/500))
+* Add a `comment` keyword argument to the Assert expression that will place the comment immediately above the `assert` op in the resulting TEAL ([#510](https://github.com/algorand/pyteal/pull/510))
 
 ## Fixed
 * Fix AST duplication bug in `String.set` when called with an `Expr` argument ([#508](https://github.com/algorand/pyteal/pull/508))
