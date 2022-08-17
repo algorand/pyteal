@@ -1,11 +1,16 @@
 from typing import Final, Generic, Literal, Sequence, TypeVar, Union, cast
 
 from pyteal.errors import TealInputError
+from pyteal.ast.assert_ import Assert
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
+from pyteal.ast.bytes import Bytes
+from pyteal.ast.seq import Seq
+from pyteal.ast.unaryexpr import Len
 
 from pyteal.ast.abi.type import ComputedValue, TypeSpec, BaseType
 from pyteal.ast.abi.bool import BoolTypeSpec, _bool_sequence_length
+from pyteal.ast.abi.uint import Byte, ByteTypeSpec
 from pyteal.ast.abi.array_base import ArrayTypeSpec, Array, ArrayElement
 
 
@@ -142,3 +147,64 @@ class StaticArray(Array[T], Generic[T, N]):
 
 
 StaticArray.__module__ = "pyteal.abi"
+
+
+class StaticBytes(StaticArray[Byte, N], Generic[N]):
+    """The convenience class that represents ABI static byte array."""
+
+    def __init__(self, static_len: N) -> None:
+        super().__init__(StaticArrayTypeSpec(ByteTypeSpec(), static_len))
+
+    def set(
+        self,
+        values: Union[
+            bytes,
+            bytearray,
+            Expr,
+            Sequence[Byte],
+            StaticArray[Byte, N],
+            ComputedValue[StaticArray[Byte, N]],
+        ],
+    ) -> Expr:
+        """Set the elements of this StaticBytes to the input values.
+
+        The behavior of this method depends on the input argument type:
+
+            * :code:`bytes`: set the value to the Python byte string.
+            * :code:`bytearray`: set the value to the Python byte array.
+            * :code:`Expr`: set the value to the result of a PyTeal expression, which must evaluate to a TealType.bytes.
+            * :code:`Sequence[Byte]`: set the bytes of this String to those contained in this Python sequence (e.g. a list or tuple).
+            * :code:`StaticArray[Byte, N]`: copy the bytes from another StaticArray. The argument's element type and length must exactly match Byte and this StaticBytes' length, otherwise an error will occur.
+            * :code:`ComputedValue[StaticArray[Byte, N]]`: copy the bytes from a StaticArray produced by a ComputedType. The argument's element type and length must exactly match Byte and this StaticBytes' length, otherwise an error will occur.
+
+        Args:
+            values: The new elements this StaticBytes should have. This must follow the above constraints.
+
+        Returns:
+            An expression which stores the given value into this StaticBytes.
+        """
+        match values:
+            case bytes() | bytearray():
+                if len(values) != self.type_spec().length_static():
+                    raise TealInputError(
+                        f"Got bytes with length {len(values)}, expect {self.type_spec().length_static()}"
+                    )
+                return self.stored_value.store(Bytes(values))
+            case Expr():
+                return Seq(
+                    self.stored_value.store(values),
+                    Assert(self.length() == Len(self.stored_value.load())),
+                )
+
+        return super().set(values)
+
+    def get(self) -> Expr:
+        """Get the byte encoding of this StaticBytes.
+
+        Returns:
+            A Pyteal expression that loads byte encoding of this StaticBytes.
+        """
+        return self.stored_value.load()
+
+
+StaticBytes.__module__ = "pyteal.abi"

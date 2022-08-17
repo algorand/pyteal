@@ -243,6 +243,73 @@ def test_StaticArray_set_computed():
         )
 
 
+# AACS key recovery
+BYTE_HEX_TEST_CASE = "09f911029d74e35bd84156c5635688c0"
+
+
+BYTES_SET_TESTCASES = [
+    bytes.fromhex(BYTE_HEX_TEST_CASE),
+    bytearray.fromhex(BYTE_HEX_TEST_CASE),
+]
+
+
+@pytest.mark.parametrize("test_case", BYTES_SET_TESTCASES)
+def test_StaticBytes_set_py_bytes(test_case: bytes | bytearray):
+    value = abi.StaticBytes(len(test_case))
+
+    expr = value.set(test_case)
+    assert expr.type_of() == pt.TealType.none
+    assert not expr.has_return()
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = actual.NormalizeBlocks(actual)
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.byte, "0x" + BYTE_HEX_TEST_CASE),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+        ]
+    )
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+    with pytest.raises(pt.TealInputError):
+        value.set(test_case[:-1])
+
+
+@pytest.mark.parametrize("test_case", BYTES_SET_TESTCASES)
+def test_StaticBytes_expr(test_case: bytes | bytearray):
+    value = abi.StaticBytes(len(test_case) * 2)
+    set_expr = pt.Concat(pt.Bytes(test_case), pt.Bytes(test_case))
+
+    expr = value.set(set_expr)
+    assert expr.type_of() == pt.TealType.none
+    assert not expr.has_return()
+
+    actual, _ = expr.__teal__(options)
+    actual.addIncoming()
+    actual = actual.NormalizeBlocks(actual)
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.byte, "0x" + BYTE_HEX_TEST_CASE),
+            pt.TealOp(None, pt.Op.byte, "0x" + BYTE_HEX_TEST_CASE),
+            pt.TealOp(None, pt.Op.concat),
+            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            pt.TealOp(None, pt.Op.int, 32),
+            pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+            pt.TealOp(None, pt.Op.len),
+            pt.TealOp(None, pt.Op.eq),
+            pt.TealOp(None, pt.Op.assert_),
+        ]
+    )
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
 def test_StaticArray_encode():
     value = abi.StaticArray(abi.StaticArrayTypeSpec(abi.Uint64TypeSpec(), 10))
     expr = value.encode()

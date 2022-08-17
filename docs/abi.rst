@@ -208,7 +208,9 @@ PyTeal Type                                    ARC-4 Type             Dynamic / 
 :any:`abi.Byte`                                :code:`byte`           Static                              An 8-bit unsigned integer. This is an alias for :code:`abi.Uint8` that should be used to indicate non-numeric data, such as binary arrays.
 :any:`abi.StaticArray[T,N] <abi.StaticArray>`  :code:`T[N]`           Static when :code:`T` is static     A fixed-length array of :code:`T` with :code:`N` elements
 :any:`abi.Address`                             :code:`address`        Static                              A 32-byte Algorand address. This is an alias for :code:`abi.StaticArray[abi.Byte, Literal[32]]`.
+:any:`abi.StaticBytes[N] <abi.StaticBytes>`    :code:`byte[N]`        Static                              A fixed-length array with :code:`N` elements of :code:`abi.Byte`.
 :any:`abi.DynamicArray[T] <abi.DynamicArray>`  :code:`T[]`            Dynamic                             A variable-length array of :code:`T`
+:any:`abi.DynamicBytes`                        :code:`byte[]`         Dynamic                             A variable-length array of :code:`abi.Byte`.
 :any:`abi.String`                              :code:`string`         Dynamic                             A variable-length byte array assumed to contain UTF-8 encoded content. This is an alias for :code:`abi.DynamicArray[abi.Byte]`.
 :any:`abi.Tuple`\*, :any:`abi.NamedTuple`      :code:`(...)`          Static when all elements are static A tuple of multiple types
 ============================================== ====================== =================================== =======================================================================================================================================================
@@ -263,7 +265,9 @@ All basic types have a :code:`set()` method which can be used to assign a value.
 * :any:`abi.Bool.set(...) <abi.Bool.set>`
 * :any:`abi.StaticArray[T, N].set(...) <abi.StaticArray.set>`
 * :any:`abi.Address.set(...) <abi.Address.set>`
+* :any:`abi.StaticBytes[N].set(...) <abi.StaticBytes.set>`
 * :any:`abi.DynamicArray[T].set(...) <abi.DynamicArray.set>`
+* :any:`abi.DynamicBytes.set(...) <abi.DynamicBytes.set>`
 * :any:`abi.String.set(...) <abi.String.set>`
 * :any:`abi.Tuple.set(...) <abi.Tuple.set>`
 
