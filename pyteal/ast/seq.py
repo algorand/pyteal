@@ -47,13 +47,16 @@ class Seq(Expr):
         if len(exprs) == 1 and isinstance(exprs[0], list):
             exprs = exprs[0]
 
+        filtered_exprs: list[Expr] = []
         for i, expr in enumerate(exprs):
             if not isinstance(expr, Expr):
-                raise TealInputError("{} is not a pyteal expression.".format(expr))
+                continue
             if i + 1 < len(exprs):
                 require_type(expr, TealType.none)
 
-        self.args = exprs
+            filtered_exprs.append(expr)
+
+        self.args = filtered_exprs
 
     def __teal__(self, options: "CompileOptions"):
         start = TealSimpleBlock([])
