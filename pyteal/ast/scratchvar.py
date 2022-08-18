@@ -1,8 +1,46 @@
-from pyteal.errors import TealInputError
+from typing import Optional
+
+from pyteal.errors import TealInputError, TealTypeError
 from pyteal.types import TealType, require_type
 
+from pyteal.ast.int import Int
+from pyteal.ast.bytes import Bytes
 from pyteal.ast.expr import Expr
 from pyteal.ast.scratch import ScratchSlot, ScratchLoad, ScratchStore
+
+VarSetable = Expr | int | str | bytes | bytearray
+
+
+def wrap_native(val: VarSetable) -> Expr:
+    match val:
+        case Expr():
+            return val
+        case int():
+            return Int(val)
+        case str() | bytes() | bytearray():
+            return Bytes(val)
+        case _:
+            raise TealTypeError(val, VarSetable)
+
+
+class Var:
+    def __init__(self, val: VarSetable):
+        self.val_to_store: Optional[Expr] = wrap_native(val)
+        self.scratch = ScratchVar(self.val_to_store.type_of())
+
+    def __get_or_store__(self) -> Expr:
+        if self.val_to_store is not None:
+            store_op = self.scratch.store(self.val_to_store)
+            self.val_to_store = None
+            return store_op
+
+        return self.scratch.load()
+
+    def __call__(self, val: VarSetable) -> Expr:
+        return self.scratch.store(wrap_native(val))
+
+
+Var.__module__ = "pyteal"
 
 
 class ScratchVar:

@@ -4,6 +4,7 @@ from pyteal.types import TealType, require_type
 from pyteal.errors import TealInputError
 from pyteal.ir import TealSimpleBlock
 from pyteal.ast.expr import Expr
+from pyteal.ast.scratchvar import Var
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
@@ -50,7 +51,10 @@ class Seq(Expr):
         filtered_exprs: list[Expr] = []
         for i, expr in enumerate(exprs):
             if not isinstance(expr, Expr):
-                continue
+                if isinstance(expr, Var):
+                    expr = expr.__get_or_store__()
+                else:
+                    continue
             if i + 1 < len(exprs):
                 require_type(expr, TealType.none)
 
