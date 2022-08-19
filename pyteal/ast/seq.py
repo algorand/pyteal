@@ -50,6 +50,9 @@ class Seq(Expr):
         filtered_exprs: list[Expr] = []
         for i, expr in enumerate(exprs):
             if not isinstance(expr, Expr):
+                # lax evaluation of Seq so that we can do
+                # something like Seq(sv := ScratchVar(), sv.store(10))
+                # or otherwise without throwing an exception
                 continue
             if i + 1 < len(exprs):
                 require_type(expr, TealType.none)
