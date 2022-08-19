@@ -100,11 +100,34 @@ class DynamicArray(Array[T]):
 DynamicArray.__module__ = "pyteal.abi"
 
 
+class DynamicBytesTypeSpec(DynamicArrayTypeSpec):
+    def __init__(self) -> None:
+        super().__init__(ByteTypeSpec())
+
+    def new_instance(self) -> "DynamicBytes":
+        return DynamicBytes()
+
+    def annotation_type(self) -> "type[DynamicBytes]":
+        return DynamicBytes
+
+    def __str__(self) -> str:
+        return "byte[]"
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, DynamicBytesTypeSpec)
+
+
+DynamicBytesTypeSpec.__module__ = "pyteal.abi"
+
+
 class DynamicBytes(DynamicArray[Byte]):
     """The convenience class that represents ABI dynamic byte array."""
 
     def __init__(self) -> None:
-        super().__init__(DynamicArrayTypeSpec(ByteTypeSpec()))
+        super().__init__(DynamicBytesTypeSpec())
+
+    def type_spec(self) -> DynamicBytesTypeSpec:
+        return DynamicBytesTypeSpec()
 
     def set(
         self,

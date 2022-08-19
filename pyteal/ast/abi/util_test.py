@@ -277,11 +277,11 @@ def test_type_spec_from_annotation():
         ),
         TypeAnnotationTest(
             annotation=abi.StaticBytes[Literal[10]],
-            expected=abi.StaticArrayTypeSpec(abi.ByteTypeSpec(), 10),
+            expected=abi.StaticBytesTypeSpec(10),
         ),
         TypeAnnotationTest(
             annotation=abi.DynamicBytes,
-            expected=abi.DynamicArrayTypeSpec(abi.ByteTypeSpec()),
+            expected=abi.DynamicBytesTypeSpec(),
         ),
     ]
 
