@@ -1,5 +1,3 @@
-from typing import Literal
-
 import pytest
 
 import pyteal as pt
@@ -91,7 +89,7 @@ def test_StaticArrayTypeSpec_byte_length_static():
                 expected = elementType.byte_length_static() * length
 
             assert (
-                actual == expected
+                    actual == expected
             ), "failed with element type {} and length {}".format(elementType, length)
 
     for elementType in DYNAMIC_TYPES:
@@ -248,7 +246,6 @@ def test_StaticArray_set_computed():
 # AACS key recovery
 BYTE_HEX_TEST_CASE = "09f911029d74e35bd84156c5635688c0"
 
-
 BYTES_SET_TESTCASES = [
     bytes.fromhex(BYTE_HEX_TEST_CASE),
     bytearray.fromhex(BYTE_HEX_TEST_CASE),
@@ -257,7 +254,7 @@ BYTES_SET_TESTCASES = [
 
 @pytest.mark.parametrize("test_case", BYTES_SET_TESTCASES)
 def test_StaticBytes_set_py_bytes(test_case: bytes | bytearray):
-    value: abi.StaticBytes[Literal[16]] = abi.StaticBytes(abi.StaticBytesTypeSpec(16))
+    value: abi.StaticBytes = abi.StaticBytes(abi.StaticBytesTypeSpec(len(test_case)))
 
     expr = value.set(test_case)
     assert expr.type_of() == pt.TealType.none
@@ -283,8 +280,8 @@ def test_StaticBytes_set_py_bytes(test_case: bytes | bytearray):
 
 @pytest.mark.parametrize("test_case", BYTES_SET_TESTCASES)
 def test_StaticBytes_expr(test_case: bytes | bytearray):
-    value: abi.StaticBytes[Literal[32]] = abi.StaticBytes(
-        abi.StaticBytesTypeSpec(16 * 2)
+    value: abi.StaticBytes = abi.StaticBytes(
+        abi.StaticBytesTypeSpec(len(test_case) * 2)
     )
     set_expr = pt.Concat(pt.Bytes(test_case), pt.Bytes(test_case))
 

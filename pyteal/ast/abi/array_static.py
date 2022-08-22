@@ -13,7 +13,6 @@ from pyteal.ast.abi.bool import BoolTypeSpec, _bool_sequence_length
 from pyteal.ast.abi.uint import Byte, ByteTypeSpec
 from pyteal.ast.abi.array_base import ArrayTypeSpec, Array, ArrayElement
 
-
 T = TypeVar("T", bound=BaseType)
 N = TypeVar("N", bound=int)
 
@@ -30,7 +29,7 @@ class StaticArrayTypeSpec(ArrayTypeSpec[T], Generic[T, N]):
     def new_instance(self) -> "StaticArray[T, N]":
         return StaticArray(self)
 
-    def annotation_type(self) -> "type[StaticArray[T, N]]":
+    def annotation_type(self) -> type["StaticArray[T, N]"]:
         return StaticArray[  # type: ignore[misc]
             self.value_spec.annotation_type(), Literal[self.array_length]  # type: ignore
         ]
@@ -156,7 +155,7 @@ class StaticBytesTypeSpec(StaticArrayTypeSpec[Byte, N], Generic[N]):
     def new_instance(self) -> "StaticBytes[N]":
         return StaticBytes(self)
 
-    def annotation_type(self) -> "type[StaticBytes[N]]":
+    def annotation_type(self) -> type["StaticBytes[N]"]:
         return StaticBytes[  # type: ignore[misc]
             Literal[self.array_length]  # type: ignore
         ]

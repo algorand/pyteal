@@ -18,7 +18,7 @@ class DynamicArrayTypeSpec(ArrayTypeSpec[T]):
     def new_instance(self) -> "DynamicArray[T]":
         return DynamicArray(self)
 
-    def annotation_type(self) -> "type[DynamicArray[T]]":
+    def annotation_type(self) -> type["DynamicArray[T]"]:
         return DynamicArray[self.value_type_spec().annotation_type()]  # type: ignore[misc]
 
     def is_length_dynamic(self) -> bool:
@@ -107,7 +107,7 @@ class DynamicBytesTypeSpec(DynamicArrayTypeSpec):
     def new_instance(self) -> "DynamicBytes":
         return DynamicBytes()
 
-    def annotation_type(self) -> "type[DynamicBytes]":
+    def annotation_type(self) -> type["DynamicBytes"]:
         return DynamicBytes
 
     def __str__(self) -> str:

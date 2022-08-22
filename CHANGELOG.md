@@ -7,6 +7,7 @@
 
 ## Fixed
 * Fix AST duplication bug in `String.set` when called with an `Expr` argument ([#508](https://github.com/algorand/pyteal/pull/508))
+* Modify ABI `DynamicBytes` and `StaticBytes` to support `router`/`subroutine` ([#514](https://github.com/algorand/pyteal/pull/514))
 
 # 0.16.0
 
