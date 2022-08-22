@@ -100,7 +100,7 @@ class DynamicArray(Array[T]):
 DynamicArray.__module__ = "pyteal.abi"
 
 
-class DynamicBytesTypeSpec(DynamicArrayTypeSpec):
+class DynamicBytesTypeSpec(DynamicArrayTypeSpec[Byte]):
     def __init__(self) -> None:
         super().__init__(ByteTypeSpec())
 
