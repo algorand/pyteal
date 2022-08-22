@@ -13,7 +13,6 @@ from pyteal.ast.abi.bool import BoolTypeSpec, _bool_sequence_length
 from pyteal.ast.abi.uint import Byte, ByteTypeSpec
 from pyteal.ast.abi.array_base import ArrayTypeSpec, Array, ArrayElement
 
-
 T = TypeVar("T", bound=BaseType)
 N = TypeVar("N", bound=int)
 
@@ -30,7 +29,7 @@ class StaticArrayTypeSpec(ArrayTypeSpec[T], Generic[T, N]):
     def new_instance(self) -> "StaticArray[T, N]":
         return StaticArray(self)
 
-    def annotation_type(self) -> "type[StaticArray[T, N]]":
+    def annotation_type(self) -> type["StaticArray[T, N]"]:
         return StaticArray[  # type: ignore[misc]
             self.value_spec.annotation_type(), Literal[self.array_length]  # type: ignore
         ]
@@ -149,11 +148,30 @@ class StaticArray(Array[T], Generic[T, N]):
 StaticArray.__module__ = "pyteal.abi"
 
 
+class StaticBytesTypeSpec(StaticArrayTypeSpec[Byte, N], Generic[N]):
+    def __init__(self, array_length: int) -> None:
+        super().__init__(ByteTypeSpec(), array_length)
+
+    def new_instance(self) -> "StaticBytes[N]":
+        return StaticBytes(self)
+
+    def annotation_type(self) -> type["StaticBytes[N]"]:
+        return StaticBytes[  # type: ignore[misc]
+            Literal[self.array_length]  # type: ignore
+        ]
+
+
+StaticBytesTypeSpec.__module__ = "pyteal.abi"
+
+
 class StaticBytes(StaticArray[Byte, N], Generic[N]):
     """The convenience class that represents ABI static byte array."""
 
-    def __init__(self, static_len: N) -> None:
-        super().__init__(StaticArrayTypeSpec(ByteTypeSpec(), static_len))
+    def __init__(self, array_type_spec: StaticBytesTypeSpec[N]) -> None:
+        super().__init__(array_type_spec)
+
+    def type_spec(self) -> StaticBytesTypeSpec:
+        return cast(StaticBytesTypeSpec[N], super().type_spec())
 
     def set(
         self,
