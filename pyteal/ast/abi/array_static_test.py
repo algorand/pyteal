@@ -89,7 +89,7 @@ def test_StaticArrayTypeSpec_byte_length_static():
                 expected = elementType.byte_length_static() * length
 
             assert (
-                    actual == expected
+                actual == expected
             ), "failed with element type {} and length {}".format(elementType, length)
 
     for elementType in DYNAMIC_TYPES:
