@@ -23,6 +23,13 @@ def test_StaticArrayTypeSpec_init():
         with pytest.raises(TypeError):
             abi.StaticArrayTypeSpec(elementType, -1)
 
+    for length in range(256):
+        staticBytesType = abi.StaticBytesTypeSpec(length)
+        assert isinstance(staticBytesType.value_type_spec(), abi.ByteTypeSpec)
+        assert not staticBytesType.is_length_dynamic()
+        assert staticBytesType._stride() == 1
+        assert staticBytesType.length_static() == length
+
     for elementType in DYNAMIC_TYPES:
         for length in range(256):
             staticArrayType = abi.StaticArrayTypeSpec(elementType, length)
@@ -41,6 +48,9 @@ def test_StaticArrayTypeSpec_str():
             staticArrayType = abi.StaticArrayTypeSpec(elementType, length)
             assert str(staticArrayType) == "{}[{}]".format(elementType, length)
 
+    for length in range(256):
+        assert str(abi.StaticBytesTypeSpec(length)) == f"byte[{length}]"
+
 
 def test_StaticArrayTypeSpec_new_instance():
     for elementType in STATIC_TYPES + DYNAMIC_TYPES:
@@ -53,6 +63,12 @@ def test_StaticArrayTypeSpec_new_instance():
             )
             assert instance.type_spec() == staticArrayType
 
+    for length in range(256):
+        staticBytesType = abi.StaticBytesTypeSpec(length)
+        instance = staticBytesType.new_instance()
+        assert isinstance(instance, abi.StaticBytes)
+        assert instance.type_spec() == staticBytesType
+
 
 def test_StaticArrayTypeSpec_eq():
     for elementType in STATIC_TYPES + DYNAMIC_TYPES:
@@ -64,12 +80,23 @@ def test_StaticArrayTypeSpec_eq():
                 abi.TupleTypeSpec(elementType), length
             )
 
+    for length in range(256):
+        staticBytesType = abi.StaticBytesTypeSpec(length)
+        assert staticBytesType == staticBytesType
+        assert staticBytesType != abi.StaticBytesTypeSpec(length + 1)
+        assert staticBytesType != abi.StaticArrayTypeSpec(
+            abi.TupleTypeSpec(abi.ByteTypeSpec()), length
+        )
+
 
 def test_StaticArrayTypeSpec_is_dynamic():
     for elementType in STATIC_TYPES:
         for length in range(256):
             staticArrayType = abi.StaticArrayTypeSpec(elementType, length)
             assert not staticArrayType.is_dynamic()
+
+    for length in range(256):
+        assert not abi.StaticBytesTypeSpec(length).is_dynamic()
 
     for elementType in DYNAMIC_TYPES:
         for length in range(256):
@@ -91,6 +118,13 @@ def test_StaticArrayTypeSpec_byte_length_static():
             assert (
                 actual == expected
             ), "failed with element type {} and length {}".format(elementType, length)
+
+    for length in range(256):
+        staticBytesType = abi.StaticBytesTypeSpec(length)
+        actual = staticBytesType.byte_length_static()
+        assert (
+            actual == length
+        ), f"failed with element type {staticBytesType.value_type_spec()} and length {length}"
 
     for elementType in DYNAMIC_TYPES:
         for length in range(256):
