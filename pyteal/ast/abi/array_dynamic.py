@@ -107,7 +107,7 @@ class DynamicBytesTypeSpec(DynamicArrayTypeSpec):
     def new_instance(self) -> "DynamicBytes":
         return DynamicBytes()
 
-    def annotation_type(self) -> "type[DynamicBytes]":
+    def annotation_type(self) -> type["DynamicBytes"]:
         return DynamicBytes
 
     def __str__(self) -> str:
