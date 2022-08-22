@@ -20,6 +20,11 @@ def test_DynamicArrayTypeSpec_init():
         assert dynamicArrayType.is_length_dynamic()
         assert dynamicArrayType._stride() == elementType.byte_length_static()
 
+    dynamicBytesType = abi.DynamicBytesTypeSpec()
+    assert isinstance(dynamicBytesType.value_type_spec(), abi.ByteTypeSpec)
+    assert dynamicBytesType.is_length_dynamic()
+    assert dynamicBytesType._stride() == 1
+
     for elementType in DYNAMIC_TYPES:
         dynamicArrayType = abi.DynamicArrayTypeSpec(elementType)
         assert dynamicArrayType.value_type_spec() is elementType
@@ -32,6 +37,8 @@ def test_DynamicArrayTypeSpec_str():
         dynamicArrayType = abi.DynamicArrayTypeSpec(elementType)
         assert str(dynamicArrayType) == "{}[]".format(elementType)
 
+    assert str(abi.DynamicBytesTypeSpec()) == "byte[]"
+
 
 def test_DynamicArrayTypeSpec_new_instance():
     for elementType in STATIC_TYPES + DYNAMIC_TYPES:
@@ -40,6 +47,11 @@ def test_DynamicArrayTypeSpec_new_instance():
         assert isinstance(instance, abi.DynamicArray)
         assert instance.type_spec() == dynamicArrayType
 
+    dynamicBytesType = abi.DynamicBytesTypeSpec()
+    instance = dynamicBytesType.new_instance()
+    assert isinstance(instance, abi.DynamicBytes)
+    assert instance.type_spec() == dynamicBytesType
+
 
 def test_DynamicArrayTypeSpec_eq():
     for elementType in STATIC_TYPES + DYNAMIC_TYPES:
@@ -47,11 +59,17 @@ def test_DynamicArrayTypeSpec_eq():
         assert dynamicArrayType == dynamicArrayType
         assert dynamicArrayType != abi.TupleTypeSpec(dynamicArrayType)
 
+    dynamicBytesType = abi.DynamicBytesTypeSpec()
+    assert dynamicBytesType == dynamicBytesType
+    assert dynamicBytesType != abi.TupleTypeSpec(dynamicBytesType)
+
 
 def test_DynamicArrayTypeSpec_is_dynamic():
     for elementType in STATIC_TYPES + DYNAMIC_TYPES:
         dynamicArrayType = abi.DynamicArrayTypeSpec(elementType)
         assert dynamicArrayType.is_dynamic()
+
+    assert abi.DynamicBytesTypeSpec().is_dynamic()
 
 
 def test_DynamicArrayTypeSpec_byte_length_static():
@@ -59,6 +77,9 @@ def test_DynamicArrayTypeSpec_byte_length_static():
         dynamicArrayType = abi.DynamicArrayTypeSpec(elementType)
         with pytest.raises(ValueError):
             dynamicArrayType.byte_length_static()
+
+    with pytest.raises(ValueError):
+        abi.DynamicBytesTypeSpec().byte_length_static()
 
 
 def test_DynamicArray_decode():
