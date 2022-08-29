@@ -629,10 +629,11 @@ class ABIReturnSubroutine:
             )
 
             for arg in docstring.params:
+                desc_for_arg = arg.description if arg.description is not None else ""
                 if arg.arg_name == "output":
-                    output_desc = arg.description
+                    output_desc = desc_for_arg
                 else:
-                    arg_descs[arg.arg_name] = arg.description
+                    arg_descs[arg.arg_name] = desc_for_arg
 
         args = [
             {
