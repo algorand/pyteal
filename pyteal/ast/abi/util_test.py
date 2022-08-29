@@ -117,7 +117,7 @@ def test_substringForDecoding(
 
 class IntAnnotationTest(NamedTuple):
     annotation: Any
-    expected: int | Exception
+    expected: int | type[Exception]
 
 
 IN_ANNOTATION_TEST_CASES: list[IntAnnotationTest] = [
@@ -134,8 +134,8 @@ IN_ANNOTATION_TEST_CASES: list[IntAnnotationTest] = [
 
 
 @pytest.mark.parametrize("annotation, expected", IN_ANNOTATION_TEST_CASES)
-def test_int_literal_from_annotation(annotation: Any, expected: int | Exception):
-    if type(expected) is not int:
+def test_int_literal_from_annotation(annotation: Any, expected: int | type[Exception]):
+    if not isinstance(expected, int):
         with pytest.raises(expected):
             int_literal_from_annotation(annotation)
         return
@@ -146,7 +146,7 @@ def test_int_literal_from_annotation(annotation: Any, expected: int | Exception)
 
 class TypeAnnotationTest(NamedTuple):
     annotation: Any
-    expected: abi.TypeSpec | Exception
+    expected: abi.TypeSpec | type[Exception]
 
 
 class ExampleNamedTuple(abi.NamedTuple):
@@ -329,7 +329,9 @@ TYPE_ANNOTATION_TEST_CASES: list[TypeAnnotationTest] = [
 
 
 @pytest.mark.parametrize("annotation, expected", TYPE_ANNOTATION_TEST_CASES)
-def test_type_spec_from_annotation(annotation: Any, expected: abi.TypeSpec | Exception):
+def test_type_spec_from_annotation(
+    annotation: Any, expected: abi.TypeSpec | type[Exception]
+):
     if not isinstance(expected, abi.TypeSpec):
         with pytest.raises(expected):
             abi.type_spec_from_annotation(annotation)
