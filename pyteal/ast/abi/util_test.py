@@ -393,7 +393,7 @@ def test_make():
     )
 
     assert actual.type_spec() == expected_type_spec
-    assert type(actual) is abi.Tuple
+    assert type(actual) is abi.Tuple2
 
 
 def test_size_of():
