@@ -224,7 +224,21 @@ class TupleTypeSpec(TypeSpec):
         return len(self.value_specs)
 
     def new_instance(self) -> "Tuple":
-        return Tuple(self)
+        match self.length_static():
+            case 0:
+                return Tuple0()
+            case 1:
+                return Tuple1(self)
+            case 2:
+                return Tuple2(self)
+            case 3:
+                return Tuple3(self)
+            case 4:
+                return Tuple4(self)
+            case 5:
+                return Tuple5(self)
+            case _:
+                return Tuple(self)
 
     def annotation_type(self) -> "type[Tuple]":
         vtses = self.value_type_specs()
