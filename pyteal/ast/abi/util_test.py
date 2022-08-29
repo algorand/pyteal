@@ -292,7 +292,9 @@ def test_type_spec_from_annotation():
             continue
 
         actual = type_spec_from_annotation(test.annotation)
-        assert actual == test.expected, "Test at index {} failed".format(i)
+        assert actual == test.expected, f"Test at index {i} failed"
+
+        assert actual == actual.new_instance().type_spec(), f"Test at index {i} failed round-trip comparison"
 
 
 def test_type_spec_from_annotation_is_exhaustive():
