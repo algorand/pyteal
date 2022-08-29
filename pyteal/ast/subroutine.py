@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from docstring_parser import parse as parse_docstring
 from inspect import isclass, Parameter, signature, get_annotations
 from types import MappingProxyType, NoneType
 from typing import Any, Callable, Final, Optional, TYPE_CHECKING, cast
@@ -612,10 +613,32 @@ class ABIReturnSubroutine:
     def method_spec(self) -> sdk_abi.Method:
         skip_names = ["return", "output"]
 
+        desc: str = ""
+        arg_descs: dict[str, str] = {}
+        output_desc: str = ""
+
+        if self.subroutine.implementation.__doc__ is not None:
+            docstring = parse_docstring(self.subroutine.implementation.__doc__)
+
+            desc = " ".join(
+                [
+                    i.strip()
+                    for i in self.subroutine.implementation.__doc__.split("\n")
+                    if not (i.isspace() or len(i) == 0)
+                ]
+            )
+
+            for arg in docstring.params:
+                if arg.arg_name == "output":
+                    output_desc = arg.description
+                else:
+                    arg_descs[arg.arg_name] = arg.description
+
         args = [
             {
                 "type": str(abi.type_spec_from_annotation(val)),
                 "name": name,
+                "desc": arg_descs[name] if name in arg_descs else ""
             }
             for name, val in self.subroutine.annotations.items()
             if name not in skip_names
@@ -624,17 +647,11 @@ class ABIReturnSubroutine:
         spec = {
             "name": self.name(),
             "args": args,
-            "returns": {"type": str(self.type_of())},
+            "desc": desc, 
+            "returns": {"type": str(self.type_of()), "desc": output_desc},
         }
 
-        if self.subroutine.implementation.__doc__ is not None:
-            spec["desc"] = " ".join(
-                [
-                    i.strip()
-                    for i in self.subroutine.implementation.__doc__.split("\n")
-                    if not (i.isspace() or len(i) == 0)
-                ]
-            )
+
 
         return sdk_abi.Method.undictify(spec)
 
