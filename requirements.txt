@@ -9,3 +9,4 @@ pytest-timeout==2.1.0
 pytest-xdist==2.5.0
 semantic-version==2.10.0
 types-setuptools==57.4.18
+docstring-parser==0.14.1

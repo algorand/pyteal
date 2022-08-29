@@ -4,11 +4,11 @@ from pyteal import *
 @ABIReturnSubroutine
 def tmp_method(s: abi.String, *, output: abi.String):
     """
-        copies input to output
+    copies input to output
 
-        Args:
-            s: The incoming string 
-            output: The string that gets returned
+    Args:
+        s: The incoming string
+        output: The string that gets returned
     """
 
     return output.set(s)

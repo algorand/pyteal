@@ -638,7 +638,7 @@ class ABIReturnSubroutine:
             {
                 "type": str(abi.type_spec_from_annotation(val)),
                 "name": name,
-                "desc": arg_descs[name] if name in arg_descs else ""
+                "desc": arg_descs[name] if name in arg_descs else "",
             }
             for name, val in self.subroutine.annotations.items()
             if name not in skip_names
@@ -647,11 +647,9 @@ class ABIReturnSubroutine:
         spec = {
             "name": self.name(),
             "args": args,
-            "desc": desc, 
+            "desc": desc,
             "returns": {"type": str(self.type_of()), "desc": output_desc},
         }
-
-
 
         return sdk_abi.Method.undictify(spec)
 
