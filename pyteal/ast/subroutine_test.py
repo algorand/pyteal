@@ -1335,7 +1335,7 @@ def test_docstring_parsing_with_different_format():
     @pt.ABIReturnSubroutine
     def epy_style(a: pt.abi.Uint64, *, output: pt.abi.Uint64):
         """
-        Example of a ABIReturnSubroutine with Google format docstring.
+        Example of a ABIReturnSubroutine with epytext format docstring.
 
         @param a: an abi Uint64 value
         @param output: an abi Uint64 value get set from argument a
@@ -1347,7 +1347,7 @@ def test_docstring_parsing_with_different_format():
 
     assert (
         mspec_dict["desc"]
-        == "Example of a ABIReturnSubroutine with Google format docstring."
+        == "Example of a ABIReturnSubroutine with epytext format docstring."
     )
     assert mspec_dict["args"][0]["desc"] == "an abi Uint64 value"
     assert (
@@ -1359,7 +1359,7 @@ def test_docstring_parsing_with_different_format():
     @pt.ABIReturnSubroutine
     def numpy_style(a: pt.abi.Uint64, *, output: pt.abi.Uint64):
         """
-        Example of a ABIReturnSubroutine with Google format docstring.
+        Example of a ABIReturnSubroutine with numpy format docstring.
 
         Parameters
         ----------
@@ -1379,7 +1379,7 @@ def test_docstring_parsing_with_different_format():
     mspec_dict = numpy_style.method_spec().dictify()
     assert (
         mspec_dict["desc"]
-        == "Example of a ABIReturnSubroutine with Google format docstring."
+        == "Example of a ABIReturnSubroutine with numpy format docstring."
     )
     assert mspec_dict["args"][0]["desc"] == "an abi Uint64 value"
     assert (
@@ -1391,7 +1391,7 @@ def test_docstring_parsing_with_different_format():
     @pt.ABIReturnSubroutine
     def rest_style(a: pt.abi.Uint64, *, output: pt.abi.Uint64):
         """
-        Example of a ABIReturnSubroutine with Google format docstring.
+        Example of a ABIReturnSubroutine with REST format docstring.
 
         :param a: an abi Uint64 value
         :param output: an abi Uint64 value get set from argument a
@@ -1403,7 +1403,7 @@ def test_docstring_parsing_with_different_format():
 
     assert (
         mspec_dict["desc"]
-        == "Example of a ABIReturnSubroutine with Google format docstring."
+        == "Example of a ABIReturnSubroutine with REST format docstring."
     )
     assert mspec_dict["args"][0]["desc"] == "an abi Uint64 value"
     assert (
