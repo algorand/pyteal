@@ -648,7 +648,7 @@ class ABIReturnSubroutine:
                     res = res + " " + _output_desc
                 return res
 
-        if self.subroutine.implementation.__doc__ is not None:
+        if self.subroutine.implementation.__doc__:
             docstring = parse_docstring(self.subroutine.implementation.__doc__)
             method_desc = get_method_desc(
                 docstring.short_description, docstring.long_description
