@@ -628,10 +628,10 @@ class ABIReturnSubroutine:
             if not short_desc:
                 return long_desc if long_desc else ""
             else:
-                method_desc = short_desc
+                _method_desc = short_desc
                 if long_desc:
-                    method_desc = method_desc + "\n" + long_desc
-                return method_desc
+                    _method_desc = _method_desc + "\n" + long_desc
+                return _method_desc
 
         def get_ret_desc(_ret_desc: str, _output_desc: str) -> str:
             """
