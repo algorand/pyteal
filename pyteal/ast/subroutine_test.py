@@ -1302,3 +1302,38 @@ def test_evaluate_subroutine_10_args():
         actual, _ = declaration.__teal__(options)
         options.setSubroutine(None)
         assert actual == expected
+
+
+def test_docstring_parsing_with_different_format():
+    @pt.ABIReturnSubroutine
+    def google_style(a: pt.abi.Uint64, *, output: pt.abi.Uint64):
+        """Example of a ABIReturnSubroutine with Google format docstring.
+
+        Args:
+            a: an abi Uint64 value
+            output: an abi Uint64 value get set from argument a
+
+        Returns:
+            A PyTeal expression that sets output Uint64 value as argument a.
+        """
+        return output.set(a)
+
+    print(google_style.method_spec().dictify())
+
+    @pt.ABIReturnSubroutine
+    def epy_style(a: pt.abi.Uint64, *, output: pt.abi.Uint64):
+        return output.set(a)
+
+    print(epy_style.method_spec())
+
+    @pt.ABIReturnSubroutine
+    def numpy_style(a: pt.abi.Uint64, *, output: pt.abi.Uint64):
+        return output.set(a)
+
+    print(numpy_style.method_spec())
+
+    @pt.ABIReturnSubroutine
+    def rest_style(a: pt.abi.Uint64, *, output: pt.abi.Uint64):
+        return output.set(a)
+
+    print(rest_style.method_spec())

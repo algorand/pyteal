@@ -616,14 +616,48 @@ class ABIReturnSubroutine:
         desc: str = ""
         arg_descs: dict[str, str] = {}
         output_desc: str = ""
+        return_desc: str = ""
+
+        def get_method_desc(short_desc: Optional[str], long_desc: Optional[str]) -> str:
+            """
+            method description is based on short desc and long desc, with 4 cases of outputs:
+            - if only short (or long) desc, then output only short (or long) desc
+            - if neither exists, then outputs empty string
+            - if both exists, concat with break line
+            """
+            if not short_desc:
+                return long_desc if long_desc else ""
+            else:
+                method_desc = short_desc
+                if long_desc:
+                    method_desc = method_desc + "\n" + long_desc
+                return method_desc
+
+        def get_ret_desc(_ret_desc: str, _output_desc: str) -> str:
+            """
+            return description is based on return desc and output desc:
+            - if only return (or output) desc, then output only return (or output) desc
+            - if neither exists, then outputs empty string
+            - if both exists, concat with space
+            """
+            if not _ret_desc:
+                return _output_desc
+            else:
+                res = _ret_desc
+                if _output_desc:
+                    res = res + " " + _output_desc
+                return res
 
         if self.subroutine.implementation.__doc__ is not None:
             docstring = parse_docstring(self.subroutine.implementation.__doc__)
+            method_desc = get_method_desc(
+                docstring.short_description, docstring.long_description
+            )
 
             desc = " ".join(
                 [
                     i.strip()
-                    for i in self.subroutine.implementation.__doc__.split("\n")
+                    for i in method_desc.split("\n")
                     if not (i.isspace() or len(i) == 0)
                 ]
             )
@@ -634,6 +668,14 @@ class ABIReturnSubroutine:
                     output_desc = desc_for_arg
                 else:
                     arg_descs[arg.arg_name] = desc_for_arg
+
+            return_desc = (
+                ""
+                if not docstring.returns or not docstring.returns.description
+                else docstring.returns.description
+            )
+
+            return_desc = get_ret_desc(return_desc, output_desc)
 
         args = [
             {
@@ -649,7 +691,7 @@ class ABIReturnSubroutine:
             "name": self.name(),
             "args": args,
             "desc": desc,
-            "returns": {"type": str(self.type_of()), "desc": output_desc},
+            "returns": {"type": str(self.type_of()), "desc": return_desc},
         }
 
         return sdk_abi.Method.undictify(spec)
