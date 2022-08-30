@@ -611,7 +611,7 @@ class ABIReturnSubroutine:
         return f"{overriding_name}({','.join(args)}){self.type_of()}"
 
     def method_spec(self) -> sdk_abi.Method:
-        skip_names = ["return", "output"]
+        skip_names = ["return", self.OUTPUT_ARG_NAME]
 
         desc: str = ""
         arg_descs: dict[str, str] = {}
@@ -648,8 +648,10 @@ class ABIReturnSubroutine:
                     res = res + " " + _output_desc
                 return res
 
+        print(self.subroutine.implementation.__doc__)
         if self.subroutine.implementation.__doc__ is not None:
             docstring = parse_docstring(self.subroutine.implementation.__doc__)
+            print(docstring.params)
             method_desc = get_method_desc(
                 docstring.short_description, docstring.long_description
             )
@@ -664,7 +666,7 @@ class ABIReturnSubroutine:
 
             for arg in docstring.params:
                 desc_for_arg = arg.description if arg.description is not None else ""
-                if arg.arg_name == "output":
+                if arg.arg_name == self.OUTPUT_ARG_NAME:
                     output_desc = desc_for_arg
                 else:
                     arg_descs[arg.arg_name] = desc_for_arg
@@ -676,6 +678,8 @@ class ABIReturnSubroutine:
             )
 
             return_desc = get_ret_desc(return_desc, output_desc)
+
+        print(arg_descs)
 
         args = [
             {

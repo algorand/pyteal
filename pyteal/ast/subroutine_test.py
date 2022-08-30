@@ -1307,7 +1307,8 @@ def test_evaluate_subroutine_10_args():
 def test_docstring_parsing_with_different_format():
     @pt.ABIReturnSubroutine
     def google_style(a: pt.abi.Uint64, *, output: pt.abi.Uint64):
-        """Example of a ABIReturnSubroutine with Google format docstring.
+        """
+        Example of a ABIReturnSubroutine with Google format docstring.
 
         Args:
             a: an abi Uint64 value
@@ -1318,22 +1319,95 @@ def test_docstring_parsing_with_different_format():
         """
         return output.set(a)
 
-    print(google_style.method_spec().dictify())
+    mspec_dict = google_style.method_spec().dictify()
+
+    assert (
+        mspec_dict["desc"]
+        == "Example of a ABIReturnSubroutine with Google format docstring."
+    )
+    assert mspec_dict["args"][0]["desc"] == "an abi Uint64 value"
+    assert (
+        mspec_dict["returns"]["desc"]
+        == "A PyTeal expression that sets output Uint64 value as argument a. "
+        + "an abi Uint64 value get set from argument a"
+    )
 
     @pt.ABIReturnSubroutine
     def epy_style(a: pt.abi.Uint64, *, output: pt.abi.Uint64):
+        """
+        Example of a ABIReturnSubroutine with Google format docstring.
+
+        @param a: an abi Uint64 value
+        @param output: an abi Uint64 value get set from argument a
+        @return: A PyTeal expression that sets output Uint64 value as argument a.
+        """
         return output.set(a)
 
-    print(epy_style.method_spec())
+    mspec_dict = epy_style.method_spec().dictify()
+
+    assert (
+        mspec_dict["desc"]
+        == "Example of a ABIReturnSubroutine with Google format docstring."
+    )
+    assert mspec_dict["args"][0]["desc"] == "an abi Uint64 value"
+    assert (
+        mspec_dict["returns"]["desc"]
+        == "A PyTeal expression that sets output Uint64 value as argument a. "
+        + "an abi Uint64 value get set from argument a"
+    )
 
     @pt.ABIReturnSubroutine
     def numpy_style(a: pt.abi.Uint64, *, output: pt.abi.Uint64):
+        """
+        Example of a ABIReturnSubroutine with Google format docstring.
+
+        Parameters
+        ----------
+        a:
+            an abi Uint64 value
+        output:
+            an abi Uint64 value get set from argument a
+
+        Returns
+        -------
+        uint64
+            A PyTeal expression that sets output Uint64 value as argument a.
+
+        """
         return output.set(a)
 
-    print(numpy_style.method_spec())
+    mspec_dict = numpy_style.method_spec().dictify()
+    assert (
+        mspec_dict["desc"]
+        == "Example of a ABIReturnSubroutine with Google format docstring."
+    )
+    assert mspec_dict["args"][0]["desc"] == "an abi Uint64 value"
+    assert (
+        mspec_dict["returns"]["desc"]
+        == "A PyTeal expression that sets output Uint64 value as argument a. "
+        + "an abi Uint64 value get set from argument a"
+    )
 
     @pt.ABIReturnSubroutine
     def rest_style(a: pt.abi.Uint64, *, output: pt.abi.Uint64):
+        """
+        Example of a ABIReturnSubroutine with Google format docstring.
+
+        :param a: an abi Uint64 value
+        :param output: an abi Uint64 value get set from argument a
+        :returns: A PyTeal expression that sets output Uint64 value as argument a.
+        """
         return output.set(a)
 
-    print(rest_style.method_spec())
+    mspec_dict = rest_style.method_spec().dictify()
+
+    assert (
+        mspec_dict["desc"]
+        == "Example of a ABIReturnSubroutine with Google format docstring."
+    )
+    assert mspec_dict["args"][0]["desc"] == "an abi Uint64 value"
+    assert (
+        mspec_dict["returns"]["desc"]
+        == "A PyTeal expression that sets output Uint64 value as argument a. "
+        + "an abi Uint64 value get set from argument a"
+    )
