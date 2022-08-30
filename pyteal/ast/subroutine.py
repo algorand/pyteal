@@ -648,10 +648,8 @@ class ABIReturnSubroutine:
                     res = res + " " + _output_desc
                 return res
 
-        print(self.subroutine.implementation.__doc__)
         if self.subroutine.implementation.__doc__ is not None:
             docstring = parse_docstring(self.subroutine.implementation.__doc__)
-            print(docstring.params)
             method_desc = get_method_desc(
                 docstring.short_description, docstring.long_description
             )
@@ -678,8 +676,6 @@ class ABIReturnSubroutine:
             )
 
             return_desc = get_ret_desc(return_desc, output_desc)
-
-        print(arg_descs)
 
         args = [
             {
