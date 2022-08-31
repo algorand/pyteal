@@ -16,7 +16,7 @@
             "returns": {
                 "type": "void"
             },
-            "desc": "This method receives a payment from an account opted into this app and records it in their local state. The caller may opt into this app during this call."
+            "desc": "This method receives a payment from an account opted into this app and records it in their local state.\nThe caller may opt into this app during this call."
         },
         {
             "name": "getBalance",
@@ -46,7 +46,7 @@
             "returns": {
                 "type": "void"
             },
-            "desc": "Withdraw an amount of Algos held by this app. The sender of this method call will be the source of the Algos, and the destination will be the `recipient` argument. This may or may not be the same as the sender's address. This method will fail if the amount of Algos requested to be withdrawn exceeds the amount of Algos held by this app for the sender. The Algos will be transferred to the recipient using an inner transaction whose fee is set to 0, meaning the caller's transaction must include a surplus fee to cover the inner transaction."
+            "desc": "Withdraw an amount of Algos held by this app. The sender of this method call will be the source of the Algos, and the destination will be the `recipient` argument. This may or may not be the same as the sender's address.\nThis method will fail if the amount of Algos requested to be withdrawn exceeds the amount of Algos held by this app for the sender.\nThe Algos will be transferred to the recipient using an inner transaction whose fee is set to 0, meaning the caller's transaction must include a surplus fee to cover the inner transaction."
         }
     ],
     "networks": {}
