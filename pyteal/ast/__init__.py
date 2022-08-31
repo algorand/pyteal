@@ -52,6 +52,7 @@ from pyteal.ast.array import Array
 from pyteal.ast.tmpl import Tmpl
 from pyteal.ast.nonce import Nonce
 from pyteal.ast.pragma import Pragma
+from pyteal.ast.comment import Comment
 
 # unary ops
 from pyteal.ast.unaryexpr import (
@@ -233,6 +234,7 @@ __all__ = [
     "Tmpl",
     "Nonce",
     "Pragma",
+    "Comment",
     "UnaryExpr",
     "Btoi",
     "Itob",

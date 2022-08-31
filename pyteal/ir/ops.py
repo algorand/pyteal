@@ -31,6 +31,9 @@ class Op(Enum):
         return self.value.min_version
 
     # fmt: off
+    # meta
+    comment             = OpType("//",                  Mode.Signature | Mode.Application, 0)
+    # avm 
     err                 = OpType("err",                 Mode.Signature | Mode.Application, 2)
     sha256              = OpType("sha256",              Mode.Signature | Mode.Application, 2)
     keccak256           = OpType("keccak256",           Mode.Signature | Mode.Application, 2)

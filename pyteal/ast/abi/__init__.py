@@ -35,8 +35,18 @@ from pyteal.ast.abi.tuple import (
     Field,
 )
 from pyteal.ast.abi.array_base import ArrayTypeSpec, Array, ArrayElement
-from pyteal.ast.abi.array_static import StaticArrayTypeSpec, StaticArray
-from pyteal.ast.abi.array_dynamic import DynamicArrayTypeSpec, DynamicArray
+from pyteal.ast.abi.array_static import (
+    StaticArrayTypeSpec,
+    StaticArray,
+    StaticBytesTypeSpec,
+    StaticBytes,
+)
+from pyteal.ast.abi.array_dynamic import (
+    DynamicArrayTypeSpec,
+    DynamicArray,
+    DynamicBytesTypeSpec,
+    DynamicBytes,
+)
 from pyteal.ast.abi.reference_type import (
     ReferenceTypeSpec,
     ReferenceType,
@@ -128,8 +138,12 @@ __all__ = [
     "ArrayElement",
     "StaticArrayTypeSpec",
     "StaticArray",
+    "StaticBytesTypeSpec",
+    "StaticBytes",
     "DynamicArrayTypeSpec",
     "DynamicArray",
+    "DynamicBytesTypeSpec",
+    "DynamicBytes",
     "MethodReturn",
     "Transaction",
     "TransactionTypeSpec",

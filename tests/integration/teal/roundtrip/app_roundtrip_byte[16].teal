@@ -1,0 +1,274 @@
+#pragma version 6
+txna ApplicationArgs 0
+store 1
+load 1
+callsub roundtripper_2
+store 0
+byte 0x151f7c75
+load 0
+concat
+log
+int 1
+return
+
+// numerical_comp
+numericalcomp_0:
+store 24
+int 255
+load 24
+-
+store 25
+load 25
+int 256
+<
+assert
+load 25
+retsub
+
+// array_complement
+arraycomplement_1:
+store 6
+load 6
+int 1
+int 0
+*
+getbyte
+store 8
+load 6
+int 1
+int 1
+*
+getbyte
+store 9
+load 6
+int 1
+int 2
+*
+getbyte
+store 10
+load 6
+int 1
+int 3
+*
+getbyte
+store 11
+load 6
+int 1
+int 4
+*
+getbyte
+store 12
+load 6
+int 1
+int 5
+*
+getbyte
+store 13
+load 6
+int 1
+int 6
+*
+getbyte
+store 14
+load 6
+int 1
+int 7
+*
+getbyte
+store 15
+load 6
+int 1
+int 8
+*
+getbyte
+store 16
+load 6
+int 1
+int 9
+*
+getbyte
+store 17
+load 6
+int 1
+int 10
+*
+getbyte
+store 18
+load 6
+int 1
+int 11
+*
+getbyte
+store 19
+load 6
+int 1
+int 12
+*
+getbyte
+store 20
+load 6
+int 1
+int 13
+*
+getbyte
+store 21
+load 6
+int 1
+int 14
+*
+getbyte
+store 22
+load 6
+int 1
+int 15
+*
+getbyte
+store 23
+load 8
+callsub numericalcomp_0
+store 8
+load 9
+callsub numericalcomp_0
+store 9
+load 10
+callsub numericalcomp_0
+store 10
+load 11
+callsub numericalcomp_0
+store 11
+load 12
+callsub numericalcomp_0
+store 12
+load 13
+callsub numericalcomp_0
+store 13
+load 14
+callsub numericalcomp_0
+store 14
+load 15
+callsub numericalcomp_0
+store 15
+load 16
+callsub numericalcomp_0
+store 16
+load 17
+callsub numericalcomp_0
+store 17
+load 18
+callsub numericalcomp_0
+store 18
+load 19
+callsub numericalcomp_0
+store 19
+load 20
+callsub numericalcomp_0
+store 20
+load 21
+callsub numericalcomp_0
+store 21
+load 22
+callsub numericalcomp_0
+store 22
+load 23
+callsub numericalcomp_0
+store 23
+byte 0x00
+int 0
+load 8
+setbyte
+byte 0x00
+int 0
+load 9
+setbyte
+concat
+byte 0x00
+int 0
+load 10
+setbyte
+concat
+byte 0x00
+int 0
+load 11
+setbyte
+concat
+byte 0x00
+int 0
+load 12
+setbyte
+concat
+byte 0x00
+int 0
+load 13
+setbyte
+concat
+byte 0x00
+int 0
+load 14
+setbyte
+concat
+byte 0x00
+int 0
+load 15
+setbyte
+concat
+byte 0x00
+int 0
+load 16
+setbyte
+concat
+byte 0x00
+int 0
+load 17
+setbyte
+concat
+byte 0x00
+int 0
+load 18
+setbyte
+concat
+byte 0x00
+int 0
+load 19
+setbyte
+concat
+byte 0x00
+int 0
+load 20
+setbyte
+concat
+byte 0x00
+int 0
+load 21
+setbyte
+concat
+byte 0x00
+int 0
+load 22
+setbyte
+concat
+byte 0x00
+int 0
+load 23
+setbyte
+concat
+store 7
+load 7
+retsub
+
+// round_tripper
+roundtripper_2:
+store 2
+load 2
+callsub arraycomplement_1
+store 4
+load 4
+callsub arraycomplement_1
+store 5
+load 2
+load 4
+concat
+load 5
+concat
+store 3
+load 3
+retsub
