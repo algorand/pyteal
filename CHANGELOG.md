@@ -1,5 +1,8 @@
 # Unreleased
 
+## Fixed
+* Subroutines annotated with a `TupleX` class are now invoked with an instance of that exact class, instead of the more general `Tuple` class ([#519](https://github.com/algorand/pyteal/pull/519))
+
 # 0.17.0
 
 ## Added
