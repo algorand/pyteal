@@ -210,6 +210,7 @@ TYPE_ANNOTATION_TEST_CASES: list[TypeAnnotationTest] = [
             abi.StaticArrayTypeSpec(abi.BoolTypeSpec(), 500), 5
         ),
     ),
+    TypeAnnotationTest(annotation=abi.Address, expected=abi.AddressTypeSpec()),
     TypeAnnotationTest(
         annotation=abi.StaticBytes[Literal[10]],
         expected=abi.StaticBytesTypeSpec(10),
@@ -220,6 +221,7 @@ TYPE_ANNOTATION_TEST_CASES: list[TypeAnnotationTest] = [
             abi.StaticArrayTypeSpec(abi.BoolTypeSpec(), 500)
         ),
     ),
+    TypeAnnotationTest(annotation=abi.String, expected=abi.StringTypeSpec()),
     TypeAnnotationTest(
         annotation=abi.DynamicBytes,
         expected=abi.DynamicBytesTypeSpec(),
@@ -384,6 +386,22 @@ def test_type_spec_from_annotation_is_exhaustive():
         except TypeError as e:
             # if subclass is generic, we should get an error that is NOT "Unknown annotation origin"
             assert "Unknown annotation origin" not in str(e)
+
+        if issubclass(subclass, pt.abi.NamedTuple):
+            # ignore NamedTuple subclasses for the following check
+            continue
+
+        # make sure there is a testcase for this subclass in test_type_spec_from_annotation
+        found = False
+        for testcase in TYPE_ANNOTATION_TEST_CASES:
+            if subclass is testcase.annotation or subclass is get_origin(
+                testcase.annotation
+            ):
+                found = True
+                break
+        assert (
+            found
+        ), f"Test case for subclass {subclass} is not present in TYPE_ANNOTATION_TEST_CASES"
 
 
 def test_make():
