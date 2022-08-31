@@ -1308,20 +1308,20 @@ def test_docstring_parsing_with_different_format():
     short_desc = "Example of a ABIReturnSubroutine with short description docstring."
     a_doc = "an abi Uint64 value"
     return_doc = "A PyTeal expression that sets output Uint64 value as argument a."
-    long_desc = """
-    This is an example docstring. This first line wraps since it's too
-    long to fit in a single line of source code.
+    long_desc = """Example first line.
 
     This is a second line.
+
+    This is a third line that's so long it has to wrap in order to fit properly
+    in a line of source code.
     """
-    expected_long_desc = "This is an example docstring. This first line wraps since it's too long to fit in a single line of source code.\nThis is a second line."
+    expected_long_desc = "Example first line.\nThis is a second line.\nThis is a third line that's so long it has to wrap in order to fit properly in a line of source code."
 
     def documented_method(a: pt.abi.Uint64, *, output: pt.abi.Uint64):
         return output.set(a)
 
     # Google format
-    documented_method.__doc__ = f"""
-    {short_desc}
+    documented_method.__doc__ = f"""{short_desc}
 
     Args:
         a: {a_doc}
@@ -1349,8 +1349,7 @@ def test_docstring_parsing_with_different_format():
     assert mspec_dict["returns"]["desc"] == return_doc
 
     # numpy format
-    documented_method.__doc__ = f"""
-    {short_desc}
+    documented_method.__doc__ = f"""{short_desc}
 
     Parameters
     ----------
@@ -1371,8 +1370,7 @@ def test_docstring_parsing_with_different_format():
     assert mspec_dict["returns"]["desc"] == return_doc
 
     # rst format
-    documented_method.__doc__ = f"""
-    {short_desc}
+    documented_method.__doc__ = f"""{short_desc}
 
     :param a: {a_doc} 
     :returns: {return_doc}
@@ -1383,7 +1381,21 @@ def test_docstring_parsing_with_different_format():
     assert mspec_dict["args"][0]["desc"] == a_doc
     assert mspec_dict["returns"]["desc"] == return_doc
 
-    # Long description
+    # Short and long descriptions
+    documented_method.__doc__ = f"""{long_desc}
+
+    :param a: {a_doc} 
+    :returns: {return_doc}
+    """
+
+    mspec_dict = ABIReturnSubroutine(documented_method).method_spec().dictify()
+    assert mspec_dict["desc"] == expected_long_desc
+    assert mspec_dict["args"][0]["desc"] == a_doc
+    assert mspec_dict["returns"]["desc"] == return_doc
+
+    # Only long description
+    # Short description is defined as being on the first line, so by introducing
+    # long_desc on the second, there is no short description.
     documented_method.__doc__ = f"""
     {long_desc}
 
