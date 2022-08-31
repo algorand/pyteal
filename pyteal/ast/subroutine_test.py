@@ -1370,7 +1370,7 @@ def test_docstring_parsing_with_different_format():
     assert mspec_dict["args"][0]["desc"] == a_doc
     assert mspec_dict["returns"]["desc"] == return_doc
 
-    #rst format
+    # rst format
     documented_method.__doc__ = f"""
     {short_desc}
 
