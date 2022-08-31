@@ -1319,6 +1319,7 @@ def test_docstring_parsing_with_different_format():
     def documented_method(a: pt.abi.Uint64, *, output: pt.abi.Uint64):
         return output.set(a)
 
+    # Google format
     documented_method.__doc__ = f"""
     {short_desc}
 
@@ -1334,6 +1335,7 @@ def test_docstring_parsing_with_different_format():
     assert mspec_dict["args"][0]["desc"] == a_doc
     assert mspec_dict["returns"]["desc"] == return_doc
 
+    # epy format
     documented_method.__doc__ = f"""
     {short_desc}
 
@@ -1346,6 +1348,7 @@ def test_docstring_parsing_with_different_format():
     assert mspec_dict["args"][0]["desc"] == a_doc
     assert mspec_dict["returns"]["desc"] == return_doc
 
+    # numpy format
     documented_method.__doc__ = f"""
     {short_desc}
 
@@ -1367,6 +1370,7 @@ def test_docstring_parsing_with_different_format():
     assert mspec_dict["args"][0]["desc"] == a_doc
     assert mspec_dict["returns"]["desc"] == return_doc
 
+    #rst format
     documented_method.__doc__ = f"""
     {short_desc}
 
@@ -1379,6 +1383,7 @@ def test_docstring_parsing_with_different_format():
     assert mspec_dict["args"][0]["desc"] == a_doc
     assert mspec_dict["returns"]["desc"] == return_doc
 
+    # Long description
     documented_method.__doc__ = f"""
     {long_desc}
 
