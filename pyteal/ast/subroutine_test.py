@@ -1335,11 +1335,11 @@ def test_docstring_parsing_with_different_format():
     assert mspec_dict["returns"]["desc"] == return_doc
 
     documented_method.__doc__ = f"""
-        {short_desc}
+    {short_desc}
 
-        @param a: {a_doc} 
-        @return: {return_doc} 
-        """
+    @param a: {a_doc} 
+    @return: {return_doc} 
+    """
 
     mspec_dict = ABIReturnSubroutine(documented_method).method_spec().dictify()
     assert mspec_dict["desc"] == short_desc
@@ -1347,20 +1347,20 @@ def test_docstring_parsing_with_different_format():
     assert mspec_dict["returns"]["desc"] == return_doc
 
     documented_method.__doc__ = f"""
-        {short_desc}
+    {short_desc}
 
-        Parameters
-        ----------
-        a:
-            an abi Uint64 value
-        output:
-           {a_doc} 
+    Parameters
+    ----------
+    a:
+        an abi Uint64 value
+    output:
+        {a_doc} 
 
-        Returns
-        -------
-        uint64
-            {return_doc}
-        """
+    Returns
+    -------
+    uint64
+        {return_doc}
+    """
 
     mspec_dict = ABIReturnSubroutine(documented_method).method_spec().dictify()
     assert mspec_dict["desc"] == short_desc
@@ -1373,6 +1373,7 @@ def test_docstring_parsing_with_different_format():
     :param a: {a_doc} 
     :returns: {return_doc}
     """
+
     mspec_dict = ABIReturnSubroutine(documented_method).method_spec().dictify()
     assert mspec_dict["desc"] == short_desc
     assert mspec_dict["args"][0]["desc"] == a_doc
