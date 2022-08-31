@@ -1305,109 +1305,98 @@ def test_evaluate_subroutine_10_args():
 
 
 def test_docstring_parsing_with_different_format():
-    @pt.ABIReturnSubroutine
-    def google_style(a: pt.abi.Uint64, *, output: pt.abi.Uint64):
-        """
-        Example of a ABIReturnSubroutine with Google format docstring.
+    short_desc = "Example of a ABIReturnSubroutine with short description docstring."
+    a_doc = "an abi Uint64 value"
+    return_doc = "A PyTeal expression that sets output Uint64 value as argument a."
+    long_desc = """
+    This is an example docstring. This first line wraps since it's too
+    long to fit in a single line of source code.
+    
+    This is a second line.
+    """
+    expected_long_desc = "This is an example docstring. This first line wraps since it's too long to fit in a single line of source code.\nThis is a second line."
 
-        Args:
-            a: an abi Uint64 value
-            output: an abi Uint64 value get set from argument a
-
-        Returns:
-            A PyTeal expression that sets output Uint64 value as argument a.
-        """
+    def documented_method(a: pt.abi.Uint64, *, output: pt.abi.Uint64):
         return output.set(a)
 
-    mspec_dict = google_style.method_spec().dictify()
+    documented_method.__doc__ = f"""
+    {short_desc}
 
-    assert (
-        mspec_dict["desc"]
-        == "Example of a ABIReturnSubroutine with Google format docstring."
-    )
-    assert mspec_dict["args"][0]["desc"] == "an abi Uint64 value"
-    assert (
-        mspec_dict["returns"]["desc"]
-        == "A PyTeal expression that sets output Uint64 value as argument a. "
-        + "an abi Uint64 value get set from argument a"
-    )
+    Args:
+        a: {a_doc}
 
-    @pt.ABIReturnSubroutine
-    def epy_style(a: pt.abi.Uint64, *, output: pt.abi.Uint64):
+    Returns:
+        {return_doc}
+    """
+
+    mspec_dict = pt.ABIReturnSubroutine(documented_method).method_spec().dictify()
+    assert mspec_dict["desc"] == short_desc
+    assert mspec_dict["args"][0]["desc"] == a_doc
+    assert mspec_dict["returns"]["desc"] == return_doc
+
+    documented_method.__doc__ = f"""
+        {short_desc}
+
+        @param a: {a_doc} 
+        @return: {return_doc} 
         """
-        Example of a ABIReturnSubroutine with epytext format docstring.
 
-        @param a: an abi Uint64 value
-        @param output: an abi Uint64 value get set from argument a
-        @return: A PyTeal expression that sets output Uint64 value as argument a.
-        """
-        return output.set(a)
+    mspec_dict = ABIReturnSubroutine(documented_method).method_spec().dictify()
+    assert mspec_dict["desc"] == short_desc
+    assert mspec_dict["args"][0]["desc"] == a_doc
+    assert mspec_dict["returns"]["desc"] == return_doc
 
-    mspec_dict = epy_style.method_spec().dictify()
-
-    assert (
-        mspec_dict["desc"]
-        == "Example of a ABIReturnSubroutine with epytext format docstring."
-    )
-    assert mspec_dict["args"][0]["desc"] == "an abi Uint64 value"
-    assert (
-        mspec_dict["returns"]["desc"]
-        == "A PyTeal expression that sets output Uint64 value as argument a. "
-        + "an abi Uint64 value get set from argument a"
-    )
-
-    @pt.ABIReturnSubroutine
-    def numpy_style(a: pt.abi.Uint64, *, output: pt.abi.Uint64):
-        """
-        Example of a ABIReturnSubroutine with numpy format docstring.
+    documented_method.__doc__ = f"""
+        {short_desc}
 
         Parameters
         ----------
         a:
             an abi Uint64 value
         output:
-            an abi Uint64 value get set from argument a
+           {a_doc} 
 
         Returns
         -------
         uint64
-            A PyTeal expression that sets output Uint64 value as argument a.
-
+            {return_doc}
         """
-        return output.set(a)
 
-    mspec_dict = numpy_style.method_spec().dictify()
-    assert (
-        mspec_dict["desc"]
-        == "Example of a ABIReturnSubroutine with numpy format docstring."
-    )
-    assert mspec_dict["args"][0]["desc"] == "an abi Uint64 value"
-    assert (
-        mspec_dict["returns"]["desc"]
-        == "A PyTeal expression that sets output Uint64 value as argument a. "
-        + "an abi Uint64 value get set from argument a"
-    )
+    mspec_dict = ABIReturnSubroutine(documented_method).method_spec().dictify()
+    assert mspec_dict["desc"] == short_desc
+    assert mspec_dict["args"][0]["desc"] == a_doc
+    assert mspec_dict["returns"]["desc"] == return_doc
 
-    @pt.ABIReturnSubroutine
-    def rest_style(a: pt.abi.Uint64, *, output: pt.abi.Uint64):
-        """
-        Example of a ABIReturnSubroutine with REST format docstring.
+    documented_method.__doc__ = f"""
+    {short_desc}
 
-        :param a: an abi Uint64 value
-        :param output: an abi Uint64 value get set from argument a
-        :returns: A PyTeal expression that sets output Uint64 value as argument a.
-        """
-        return output.set(a)
+    :param a: {a_doc} 
+    :returns: {return_doc}
+    """
+    mspec_dict = ABIReturnSubroutine(documented_method).method_spec().dictify()
+    assert mspec_dict["desc"] == short_desc
+    assert mspec_dict["args"][0]["desc"] == a_doc
+    assert mspec_dict["returns"]["desc"] == return_doc
 
-    mspec_dict = rest_style.method_spec().dictify()
+    documented_method.__doc__ = f"""
+    {long_desc}
 
-    assert (
-        mspec_dict["desc"]
-        == "Example of a ABIReturnSubroutine with REST format docstring."
-    )
-    assert mspec_dict["args"][0]["desc"] == "an abi Uint64 value"
-    assert (
-        mspec_dict["returns"]["desc"]
-        == "A PyTeal expression that sets output Uint64 value as argument a. "
-        + "an abi Uint64 value get set from argument a"
-    )
+    :param a: {a_doc} 
+    :returns: {return_doc}
+    """
+
+    mspec_dict = ABIReturnSubroutine(documented_method).method_spec().dictify()
+    assert mspec_dict["desc"] == expected_long_desc
+    assert mspec_dict["args"][0]["desc"] == a_doc
+    assert mspec_dict["returns"]["desc"] == return_doc
+
+    # No description
+    documented_method.__doc__ = f"""
+
+    :param a: {a_doc} 
+    :returns: {return_doc}
+    """
+    mspec_dict = ABIReturnSubroutine(documented_method).method_spec().dictify()
+    assert "descr" not in mspec_dict
+    assert mspec_dict["args"][0]["desc"] == a_doc
+    assert mspec_dict["returns"]["desc"] == return_doc

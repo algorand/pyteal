@@ -611,88 +611,70 @@ class ABIReturnSubroutine:
         return f"{overriding_name}({','.join(args)}){self.type_of()}"
 
     def method_spec(self) -> sdk_abi.Method:
-        skip_names = ["return", self.OUTPUT_ARG_NAME]
-
         desc: str = ""
         arg_descs: dict[str, str] = {}
-        output_desc: str = ""
         return_desc: str = ""
-
-        def get_method_desc(short_desc: Optional[str], long_desc: Optional[str]) -> str:
-            """
-            method description is based on short desc and long desc, with 4 cases of outputs:
-            - if only short (or long) desc, then output only short (or long) desc
-            - if neither exists, then outputs empty string
-            - if both exists, concat with break line
-            """
-            if not short_desc:
-                return long_desc if long_desc else ""
-            else:
-                _method_desc = short_desc
-                if long_desc:
-                    _method_desc = _method_desc + "\n" + long_desc
-                return _method_desc
-
-        def get_ret_desc(_ret_desc: str, _output_desc: str) -> str:
-            """
-            return description is based on return desc and output desc:
-            - if only return (or output) desc, then output only return (or output) desc
-            - if neither exists, then outputs empty string
-            - if both exists, concat with space
-            """
-            if not _ret_desc:
-                return _output_desc
-            else:
-                res = _ret_desc
-                if _output_desc:
-                    res = res + " " + _output_desc
-                return res
+        args: list[dict[str, str]] = []
 
         if self.subroutine.implementation.__doc__:
             docstring = parse_docstring(self.subroutine.implementation.__doc__)
-            method_desc = get_method_desc(
-                docstring.short_description, docstring.long_description
+
+            # Combine short and long descriptions with newline
+            method_desc = (
+                (docstring.short_description if docstring.short_description else "")
+                + "\n"
+                + (docstring.long_description if docstring.long_description else "")
             )
 
-            desc = " ".join(
+            # Turn double new line into single, replacing single newline with space
+            desc = "\n".join(
                 [
-                    i.strip()
-                    for i in method_desc.split("\n")
+                    i.replace("\n", " ").strip()
+                    for i in method_desc.split("\n\n")
                     if not (i.isspace() or len(i) == 0)
                 ]
             )
 
-            for arg in docstring.params:
-                desc_for_arg = arg.description if arg.description is not None else ""
-                if arg.arg_name == self.OUTPUT_ARG_NAME:
-                    output_desc = desc_for_arg
-                else:
-                    arg_descs[arg.arg_name] = desc_for_arg
+            # Get the descriptions for any documented arguments
+            arg_descs: dict[str, str] = {
+                arg.arg_name: arg.description
+                for arg in docstring.params
+                if arg.arg_name != self.OUTPUT_ARG_NAME or arg.description is not None
+            }
 
+            # Get the special return description
             return_desc = (
                 ""
                 if not docstring.returns or not docstring.returns.description
                 else docstring.returns.description
             )
 
-            return_desc = get_ret_desc(return_desc, output_desc)
+            # Generate the ABI method object given the subroutine args
+            # Add in description if one is set
+            for name, val in self.subroutine.annotations.items():
+                # Skip annotations for `return` and `output` in the args list
+                if name in ["return", self.OUTPUT_ARG_NAME]:
+                    continue
 
-        args = [
-            {
-                "type": str(abi.type_spec_from_annotation(val)),
-                "name": name,
-                "desc": arg_descs[name] if name in arg_descs else "",
-            }
-            for name, val in self.subroutine.annotations.items()
-            if name not in skip_names
-        ]
+                arg_obj = {
+                    "type": str(abi.type_spec_from_annotation(val)),
+                    "name": name,
+                }
 
-        spec = {
-            "name": self.name(),
-            "args": args,
-            "desc": desc,
-            "returns": {"type": str(self.type_of()), "desc": return_desc},
-        }
+                if name in arg_descs:
+                    arg_obj["desc"] = arg_descs[name]
+
+                args.append(arg_obj)
+
+        # Create the return obj for the method, adding description if set
+        return_obj = {"type": str(self.type_of())}
+        if return_desc:
+            return_obj["desc"] = return_desc
+
+        # Create the method spec, adding description if set
+        spec = {"name": self.name(), "args": args, "returns": return_obj}
+        if desc:
+            spec["desc"] = desc
 
         return sdk_abi.Method.undictify(spec)
 
