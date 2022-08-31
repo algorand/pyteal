@@ -636,10 +636,10 @@ class ABIReturnSubroutine:
             )
 
             # Get the descriptions for any documented arguments
-            arg_descs: dict[str, str] = {
+            arg_descs = {
                 arg.arg_name: arg.description
                 for arg in docstring.params
-                if arg.arg_name != self.OUTPUT_ARG_NAME or arg.description is not None
+                if arg.arg_name != self.OUTPUT_ARG_NAME and arg.description is not None
             }
 
             # Get the special return description

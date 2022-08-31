@@ -1311,7 +1311,7 @@ def test_docstring_parsing_with_different_format():
     long_desc = """
     This is an example docstring. This first line wraps since it's too
     long to fit in a single line of source code.
-    
+
     This is a second line.
     """
     expected_long_desc = "This is an example docstring. This first line wraps since it's too long to fit in a single line of source code.\nThis is a second line."
