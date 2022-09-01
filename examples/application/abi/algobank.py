@@ -41,8 +41,7 @@ router = Router(
 
 @router.method(no_op=CallConfig.CALL, opt_in=CallConfig.CALL)
 def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
-    """This method receives a payment from an account opted into this app and records it in
-    their local state.
+    """This method receives a payment from an account opted into this app and records it as a deposit.
 
     The caller may opt into this app during this call.
 
