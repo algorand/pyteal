@@ -2,7 +2,7 @@
 
 setup-development:
 	pip install -e .
-	pip install -r requirements.txt
+	pip install -r requirements.txt --upgrade
 
 setup-docs:
 	pip install -r docs/requirements.txt
