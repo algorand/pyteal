@@ -67,10 +67,10 @@ def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
 @router.method
 def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
     """Lookup the balance of a user held by this app.
-    
+
     Args:
         user: The user whose balance you wish to look up. This user must be opted into this app.
-    
+
     Returns:
         The balance corresponding to the given user, in microAlgos.
     """
