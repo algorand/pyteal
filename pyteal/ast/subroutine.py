@@ -620,11 +620,13 @@ class ABIReturnSubroutine:
             docstring = parse_docstring(self.subroutine.implementation.__doc__)
 
             # Combine short and long descriptions with newline
-            method_desc = (
-                (docstring.short_description if docstring.short_description else "")
-                + "\n"
-                + (docstring.long_description if docstring.long_description else "")
-            )
+            method_descriptions: list[str] = []
+            if docstring.short_description:
+                method_descriptions.append(docstring.short_description)
+            if docstring.long_description:
+                method_descriptions.append(docstring.long_description)
+
+            method_desc = "\n\n".join(method_descriptions)
 
             # Turn double new line into single, replacing single newline with space
             desc = "\n".join(
