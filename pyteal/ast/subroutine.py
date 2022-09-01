@@ -670,7 +670,7 @@ class ABIReturnSubroutine:
 
         # Create the return obj for the method, adding description if set
         return_obj = {"type": str(self.type_of())}
-        if return_desc:
+        if return_desc and return_obj["type"] != "void":
             return_obj["desc"] = return_desc
 
         # Create the method spec, adding description if set
