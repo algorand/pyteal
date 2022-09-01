@@ -11,7 +11,6 @@ def test_abi_algobank():
         clear_state_program,
         contract,
     )
-    from algosdk.abi import Contract
 
     target_dir = Path.cwd() / "examples" / "application" / "abi"
 
@@ -33,7 +32,7 @@ def test_abi_algobank():
 
     with open(target_dir / "algobank.json", "r") as expected_contract_file:
         expected_contract = json.load(expected_contract_file)
-        assert contract.dictify() == Contract.undictify(expected_contract).dictify()
+        assert contract.dictify() == expected_contract
 
 
 def test_basic_bank():
