@@ -12,7 +12,7 @@
                 {
                     "type": "account",
                     "name": "sender",
-                    "desc": "An account that is opted into this app (or will opt in during this method call). The deposited funds will be recorded in this account's local state. This account must\nbe the same as the sender of the `payment` transaction."
+                    "desc": "An account that is opted into this app (or will opt in during this method call). The deposited funds will be recorded in this account's local state. This account must be the same as the sender of the `payment` transaction."
                 }
             ],
             "returns": {
