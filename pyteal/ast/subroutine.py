@@ -639,7 +639,7 @@ class ABIReturnSubroutine:
 
             # Get the descriptions for any documented arguments
             arg_descs = {
-                arg.arg_name: arg.description
+                arg.arg_name: arg.description.replace("\n", " ").strip()
                 for arg in docstring.params
                 if arg.arg_name != self.OUTPUT_ARG_NAME and arg.description is not None
             }
@@ -648,7 +648,7 @@ class ABIReturnSubroutine:
             return_desc = (
                 ""
                 if not docstring.returns or not docstring.returns.description
-                else docstring.returns.description
+                else docstring.returns.description.replace("\n", " ").strip()
             )
 
             # Generate the ABI method object given the subroutine args

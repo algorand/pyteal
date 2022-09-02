@@ -41,12 +41,12 @@
                 {
                     "type": "uint64",
                     "name": "amount",
-                    "desc": "The amount of Algos requested to be withdraw, in microAlgos. This method will fail\nif this amount exceeds the amount of Algos held by this app for the method call sender."
+                    "desc": "The amount of Algos requested to be withdraw, in microAlgos. This method will fail if this amount exceeds the amount of Algos held by this app for the method call sender."
                 },
                 {
                     "type": "account",
                     "name": "recipient",
-                    "desc": "An account who will receive the withdrawn Algos. This may or may not be the same\nas the method call sender."
+                    "desc": "An account who will receive the withdrawn Algos. This may or may not be the same as the method call sender."
                 }
             ],
             "returns": {

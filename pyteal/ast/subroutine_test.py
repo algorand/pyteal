@@ -1418,3 +1418,43 @@ def test_docstring_parsing_with_different_format():
     assert "descr" not in mspec_dict
     assert mspec_dict["args"][0]["desc"] == a_doc
     assert mspec_dict["returns"]["desc"] == return_doc
+
+    algobank_example = """Withdraw an amount of Algos held by this app.
+
+    The sender of this method call will be the source of the Algos, and the destination will be
+    the `recipient` argument.
+
+    The Algos will be transferred to the recipient using an inner transaction whose fee is set
+    to 0, meaning the caller's transaction must include a surplus fee to cover the inner
+    transaction.
+
+    Args:
+        amount: The amount of Algos requested to be withdraw, in microAlgos. This method will fail
+            if this amount exceeds the amount of Algos held by this app for the method call sender.
+        recipient: An account who will receive the withdrawn Algos. This may or may not be the same
+            as the method call sender.
+    """
+
+    # algobank example
+    def withdraw(amount: pt.abi.Uint64, recipient: pt.abi.Account):
+        return pt.Assert(pt.Int(1))
+
+    withdraw.__doc__ = algobank_example
+
+    mspec_dict = ABIReturnSubroutine(withdraw).method_spec().dictify()
+    assert (
+        mspec_dict["desc"]
+        == "Withdraw an amount of Algos held by this app.\nThe sender of this method call will be the source of the Algos, "
+        + "and the destination will be the `recipient` argument.\nThe Algos will be transferred to the recipient using an inner transaction whose fee is "
+        + "set to 0, meaning the caller's transaction must include a surplus fee to cover the inner transaction."
+    )
+    assert (
+        mspec_dict["args"][0]["desc"]
+        == "The amount of Algos requested to be withdraw, in microAlgos. This method will fail if this amount exceeds "
+        + "the amount of Algos held by this app for the method call sender."
+    )
+    assert (
+        mspec_dict["args"][1]["desc"]
+        == "An account who will receive the withdrawn Algos. This may or may not be the same as the method call sender."
+    )
+    assert "desc" not in mspec_dict["returns"]
