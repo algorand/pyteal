@@ -1339,8 +1339,8 @@ def test_docstring_parsing_with_different_format():
     documented_method.__doc__ = f"""
     {short_desc}
 
-    @param a: {a_doc} 
-    @return: {return_doc} 
+    @param a: {a_doc}
+    @return: {return_doc}
     """
 
     mspec_dict = ABIReturnSubroutine(documented_method).method_spec().dictify()
@@ -1356,7 +1356,7 @@ def test_docstring_parsing_with_different_format():
     a:
         an abi Uint64 value
     output:
-        {a_doc} 
+        {a_doc}
 
     Returns
     -------
@@ -1372,7 +1372,7 @@ def test_docstring_parsing_with_different_format():
     # rst format
     documented_method.__doc__ = f"""{short_desc}
 
-    :param a: {a_doc} 
+    :param a: {a_doc}
     :returns: {return_doc}
     """
 
@@ -1384,7 +1384,7 @@ def test_docstring_parsing_with_different_format():
     # Short and long descriptions
     documented_method.__doc__ = f"""{long_desc}
 
-    :param a: {a_doc} 
+    :param a: {a_doc}
     :returns: {return_doc}
     """
 
@@ -1399,7 +1399,7 @@ def test_docstring_parsing_with_different_format():
     documented_method.__doc__ = f"""
     {long_desc}
 
-    :param a: {a_doc} 
+    :param a: {a_doc}
     :returns: {return_doc}
     """
 
@@ -1411,7 +1411,7 @@ def test_docstring_parsing_with_different_format():
     # No description
     documented_method.__doc__ = f"""
 
-    :param a: {a_doc} 
+    :param a: {a_doc}
     :returns: {return_doc}
     """
     mspec_dict = ABIReturnSubroutine(documented_method).method_spec().dictify()
