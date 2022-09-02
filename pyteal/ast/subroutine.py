@@ -633,7 +633,7 @@ class ABIReturnSubroutine:
                 [
                     i.replace("\n", " ").strip()
                     for i in method_desc.split("\n\n")
-                    if not (i.isspace() or len(i) == 0)
+                    if i.strip()
                 ]
             )
 
