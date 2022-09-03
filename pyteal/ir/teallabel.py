@@ -1,3 +1,4 @@
+import inspect
 from typing import Optional, TYPE_CHECKING
 
 from pyteal.ir.tealcomponent import TealComponent
@@ -14,6 +15,7 @@ class TealLabel(TealComponent):
         super().__init__(expr)
         self.label = label
         self.comment = comment
+        self.frames = inspect.stack()
 
     def getLabelRef(self) -> LabelReference:
         return self.label

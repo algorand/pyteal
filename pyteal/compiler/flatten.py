@@ -123,7 +123,7 @@ def flattenSubroutines(
             if isinstance(stmt, TealLabel):
                 stmt.getLabelRef().addPrefix(labelPrefix)
 
-        combinedOps.append(TealLabel(None, LabelReference(label), comment))
+        combinedOps.append(TealLabel(None, LabelReference(label), comment))  # T2PT1
         combinedOps += subroutineOps
 
     return combinedOps

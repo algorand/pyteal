@@ -1,3 +1,4 @@
+import inspect
 from typing import List, Tuple, Set, Dict, Optional, cast
 
 from pyteal.compiler.optimizer import OptimizeOptions, apply_global_optimizations
@@ -136,13 +137,13 @@ def compileSubroutine(
 
     if not ast.has_return():
         if ast.type_of() == TealType.none:
-            ret_expr = Return()
+            ret_expr = Return()  # T2PT2
             ret_expr.trace = ast.trace
             seq_expr = Seq([ast, ret_expr])
             seq_expr.trace = ret_expr.trace
             ast = seq_expr
         else:
-            ret_expr = Return(ast)
+            ret_expr = Return(ast)  # T2PT3
             ret_expr.trace = ast.trace
             ast = ret_expr
 
@@ -208,7 +209,7 @@ def compileSubroutine(
     newSubroutines = referencedSubroutines - subroutine_start_blocks.keys()
     for subroutine in sorted(newSubroutines, key=lambda subroutine: subroutine.id):
         compileSubroutine(
-            subroutine.get_declaration(),
+            subroutine.get_declaration(),  # T2PT4
             options,
             subroutineGraph,
             subroutine_start_blocks,
@@ -237,6 +238,7 @@ def compileTeal(
     version: int = DEFAULT_PROGRAM_VERSION,
     assembleConstants: bool = False,
     optimize: OptimizeOptions = None,
+    map_source: bool = True,
 ) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 
@@ -318,4 +320,8 @@ def compileTeal(
 
     lines = ["#pragma version {}".format(version)]
     lines += [i.assemble() for i in teal]
-    return "\n".join(lines)
+    teal_code = "\n".join(lines)
+    if not map_source:
+        return teal_code
+
+    return teal_code, lines, teal
