@@ -201,6 +201,7 @@ __all__ = [
     "TealInternalError",
     "TealLabel",
     "TealOp",
+    "TealPragma",
     "TealPragmaError",
     "TealSimpleBlock",
     "TealType",

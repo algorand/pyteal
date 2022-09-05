@@ -11,7 +11,15 @@ from pyteal.ast import (
     SubroutineDefinition,
     SubroutineDeclaration,
 )
-from pyteal.ir import Mode, Op, TealComponent, TealOp, TealBlock, TealSimpleBlock
+from pyteal.ir import (
+    Mode,
+    Op,
+    TealBlock,
+    TealComponent,
+    TealOp,
+    TealPragma,
+    TealSimpleBlock,
+)
 from pyteal.errors import TealInputError, TealInternalError
 
 from pyteal.compiler.sort import sortBlocks
@@ -318,8 +326,8 @@ def compileTeal(
             )
         teal = createConstantBlocks(teal)
 
-    lines = ["#pragma version {}".format(version)]
-    lines += [i.assemble() for i in teal]
+    teal = [TealPragma(version)] + teal  # T2PT0
+    lines = [tl.assemble() for tl in teal]
     teal_code = "\n".join(lines)
     if not map_source:
         return teal_code
