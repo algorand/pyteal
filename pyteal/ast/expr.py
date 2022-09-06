@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from executing import Source
 import inspect
 from typing import Tuple, List, TYPE_CHECKING
 
@@ -11,7 +12,9 @@ if TYPE_CHECKING:
 
 def frames_adder(init):
     def wrapper(*args, **kwargs):
-        args[0].frames = inspect.stack()
+        frames = inspect.stack()
+        args[0].frames = frames
+        args[0].frame_nodes = [Source.executing(f.frame).node for f in frames]
 
         return init(*args, **kwargs)
 
@@ -30,6 +33,8 @@ class Expr(ABC):
         self.trace = traceback.format_stack()[0:-1]
         if not hasattr(self, "frames"):
             self.frames = []
+            self.frame_nodes = []
+            self.frame_qualnames = []
 
     def getDefinitionTrace(self) -> List[str]:
         return self.trace

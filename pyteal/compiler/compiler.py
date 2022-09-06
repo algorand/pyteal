@@ -53,7 +53,7 @@ class CompileOptions:
         *,
         mode: Mode = Mode.Signature,
         version: int = DEFAULT_PROGRAM_VERSION,
-        optimize: OptimizeOptions = None,
+        optimize: OptimizeOptions | None = None,
     ) -> None:
         self.mode = mode
         self.version = version
@@ -239,15 +239,14 @@ def sort_subroutine_blocks(
     return subroutine_mapping
 
 
-def compileTeal(
+def compile_teal_with_components(
     ast: Expr,
     mode: Mode,
     *,
     version: int = DEFAULT_PROGRAM_VERSION,
     assembleConstants: bool = False,
-    optimize: OptimizeOptions = None,
-    map_source: bool = True,
-) -> str:
+    optimize: OptimizeOptions | None = None,
+) -> tuple[str, list[str], list[TealComponent]]:
     """Compile a PyTeal expression into TEAL assembly.
 
     Args:
@@ -312,10 +311,10 @@ def compileTeal(
     )
 
     subroutineLabels = resolveSubroutines(subroutineMapping)
-    teal = flattenSubroutines(subroutineMapping, subroutineLabels)
+    components = flattenSubroutines(subroutineMapping, subroutineLabels)
 
-    verifyOpsForVersion(teal, options.version)
-    verifyOpsForMode(teal, options.mode)
+    verifyOpsForVersion(components, options.version)
+    verifyOpsForMode(components, options.mode)
 
     if assembleConstants:
         if version < 3:
@@ -324,12 +323,27 @@ def compileTeal(
                     version
                 )
             )
-        teal = createConstantBlocks(teal)
+        components = createConstantBlocks(components)
 
-    teal = [TealPragma(version)] + teal  # T2PT0
-    lines = [tl.assemble() for tl in teal]
+    components = [TealPragma(version)] + components  # T2PT0
+    lines = [tl.assemble() for tl in components]
     teal_code = "\n".join(lines)
-    if not map_source:
-        return teal_code
+    return teal_code, lines, components
 
-    return teal_code, lines, teal
+
+def compileTeal(
+    ast: Expr,
+    mode: Mode,
+    *,
+    version: int = DEFAULT_PROGRAM_VERSION,
+    assembleConstants: bool = False,
+    optimize: OptimizeOptions | None = None,
+) -> str:
+    teal_program, _, _ = compile_teal_with_components(
+        ast,
+        mode,
+        version=version,
+        assembleConstants=assembleConstants,
+        optimize=optimize,
+    )
+    return teal_program
