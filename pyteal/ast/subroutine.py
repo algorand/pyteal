@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from docstring_parser import parse as parse_docstring
 from inspect import isclass, Parameter, signature, get_annotations
 from types import MappingProxyType, NoneType
 from typing import Any, Callable, Final, Optional, TYPE_CHECKING, cast
@@ -610,31 +611,72 @@ class ABIReturnSubroutine:
         return f"{overriding_name}({','.join(args)}){self.type_of()}"
 
     def method_spec(self) -> sdk_abi.Method:
-        skip_names = ["return", "output"]
+        desc: str = ""
+        arg_descs: dict[str, str] = {}
+        return_desc: str = ""
+        args: list[dict[str, str]] = []
 
-        args = [
-            {
-                "type": str(abi.type_spec_from_annotation(val)),
-                "name": name,
-            }
-            for name, val in self.subroutine.annotations.items()
-            if name not in skip_names
-        ]
+        if self.subroutine.implementation.__doc__:
+            docstring = parse_docstring(self.subroutine.implementation.__doc__)
 
-        spec = {
-            "name": self.name(),
-            "args": args,
-            "returns": {"type": str(self.type_of())},
-        }
+            # Combine short and long descriptions with newline
+            method_descriptions: list[str] = []
+            if docstring.short_description:
+                method_descriptions.append(docstring.short_description)
+            if docstring.long_description:
+                method_descriptions.append(docstring.long_description)
 
-        if self.subroutine.implementation.__doc__ is not None:
-            spec["desc"] = " ".join(
+            method_desc = "\n\n".join(method_descriptions)
+
+            # Turn double new line into single, replacing single newline with space
+            desc = "\n".join(
                 [
-                    i.strip()
-                    for i in self.subroutine.implementation.__doc__.split("\n")
-                    if not (i.isspace() or len(i) == 0)
+                    i.replace("\n", " ").strip()
+                    for i in method_desc.split("\n\n")
+                    if i.strip()
                 ]
             )
+
+            # Get the descriptions for any documented arguments
+            arg_descs = {
+                arg.arg_name: arg.description.replace("\n", " ").strip()
+                for arg in docstring.params
+                if arg.arg_name != self.OUTPUT_ARG_NAME and arg.description is not None
+            }
+
+            # Get the special return description
+            return_desc = (
+                ""
+                if not docstring.returns or not docstring.returns.description
+                else docstring.returns.description.replace("\n", " ").strip()
+            )
+
+            # Generate the ABI method object given the subroutine args
+            # Add in description if one is set
+            for name, val in self.subroutine.annotations.items():
+                # Skip annotations for `return` and `output` in the args list
+                if name in ["return", self.OUTPUT_ARG_NAME]:
+                    continue
+
+                arg_obj = {
+                    "type": str(abi.type_spec_from_annotation(val)),
+                    "name": name,
+                }
+
+                if name in arg_descs:
+                    arg_obj["desc"] = arg_descs[name]
+
+                args.append(arg_obj)
+
+        # Create the return obj for the method, adding description if set
+        return_obj = {"type": str(self.type_of())}
+        if return_desc and return_obj["type"] != "void":
+            return_obj["desc"] = return_desc
+
+        # Create the method spec, adding description if set
+        spec = {"name": self.name(), "args": args, "returns": return_obj}
+        if desc:
+            spec["desc"] = desc
 
         return sdk_abi.Method.undictify(spec)
 
