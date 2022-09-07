@@ -1,5 +1,7 @@
 # Unreleased
 
+# 0.18.1
+
 ## Fixed
 * ABI methods without a docstring now have their arguments in the output Contract object. ([#524](https://github.com/algorand/pyteal/pull/524))
 
