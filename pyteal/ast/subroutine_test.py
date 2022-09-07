@@ -1419,6 +1419,12 @@ def test_docstring_parsing_with_different_format():
     assert mspec_dict["args"][0]["desc"] == a_doc
     assert mspec_dict["returns"]["desc"] == return_doc
 
+    # No doc
+    documented_method.__doc__ = None
+    mspec_dict = ABIReturnSubroutine(documented_method).method_spec().dictify()
+    assert "descr" not in mspec_dict
+    assert len(mspec_dict["args"]) == 1
+
     algobank_example = """Withdraw an amount of Algos held by this app.
 
     The sender of this method call will be the source of the Algos, and the destination will be
