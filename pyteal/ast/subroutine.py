@@ -651,22 +651,22 @@ class ABIReturnSubroutine:
                 else docstring.returns.description.replace("\n", " ").strip()
             )
 
-            # Generate the ABI method object given the subroutine args
-            # Add in description if one is set
-            for name, val in self.subroutine.annotations.items():
-                # Skip annotations for `return` and `output` in the args list
-                if name in ["return", self.OUTPUT_ARG_NAME]:
-                    continue
+        # Generate the ABI method object given the subroutine args
+        # Add in description if one is set
+        for name, val in self.subroutine.annotations.items():
+            # Skip annotations for `return` and `output` in the args list
+            if name in ["return", self.OUTPUT_ARG_NAME]:
+                continue
 
-                arg_obj = {
-                    "type": str(abi.type_spec_from_annotation(val)),
-                    "name": name,
-                }
+            arg_obj = {
+                "type": str(abi.type_spec_from_annotation(val)),
+                "name": name,
+            }
 
-                if name in arg_descs:
-                    arg_obj["desc"] = arg_descs[name]
+            if name in arg_descs:
+                arg_obj["desc"] = arg_descs[name]
 
-                args.append(arg_obj)
+            args.append(arg_obj)
 
         # Create the return obj for the method, adding description if set
         return_obj = {"type": str(self.type_of())}
