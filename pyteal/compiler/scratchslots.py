@@ -130,7 +130,6 @@ def assignScratchSlotsToSubroutines(
             )
             raise TealInternalError(msg) from errors[0]
 
-
     # Get ids of the reserved slots, checking to make sure it hasnt been re-used
     for slot in all_slots:
         if not slot.isReservedSlot:
@@ -159,7 +158,7 @@ def assignScratchSlotsToSubroutines(
             slot_assignments[slot] = global_slot_index
             slot_ids.add(global_slot_index)
 
-    # Reassign local slots that arent used elsewhere, 
+    # Reassign local slots that arent used elsewhere,
     # taking care not to assign a slot that has been reserved
     for slots in local_slots.values():
         local_slot_index = 0
@@ -174,12 +173,14 @@ def assignScratchSlotsToSubroutines(
                 slot_assignments[slot] = local_slot_index
                 local_slot_index += 1
 
-    max_slot = max([slot_id for slot_id in slot_assignments.values()]) if len(slot_assignments)>0 else 0
-    if  max_slot > NUM_SLOTS:
+    max_slot = (
+        max([slot_id for slot_id in slot_assignments.values()])
+        if len(slot_assignments) > 0
+        else 0
+    )
+    if max_slot > NUM_SLOTS:
         raise TealInternalError(
-            "Too many slots in use: {}, maximum is {}".format(
-                max_slot, NUM_SLOTS
-            )
+            "Too many slots in use: {}, maximum is {}".format(max_slot, NUM_SLOTS)
         )
 
     for start in subroutineBlocks.values():
