@@ -108,30 +108,51 @@ def assignScratchSlotsToSubroutines(
         (subroutine local slots).
     """
     global_slots, local_slots = collectScratchSlots(subroutineBlocks)
-    # all scratch slots referenced by the program
-    allSlots: Set[ScratchSlot] = global_slots | cast(Set[ScratchSlot], set()).union(
+
+    # All scratch slots referenced by the program, this is a set of ScratchSlot not scratch slot ids.
+    # There may be equivalent scratch slots that have separate entries
+    all_slots: Set[ScratchSlot] = global_slots | cast(Set[ScratchSlot], set()).union(
         *local_slots.values()
     )
 
-    slotAssignments: Dict[ScratchSlot, int] = dict()
-    slotIds: Set[int] = set()
+    slot_assignments: dict[ScratchSlot, int] = dict()
+    slot_ids: set[int] = set()
 
-    for slot in allSlots:
+    # Get ids of the reserved slots, checking to make sure it hasnt been re-assigned
+    for slot in all_slots:
         if not slot.isReservedSlot:
             continue
 
         # If there are two unique slots with same IDs, raise an error
-        if slot.id in slotIds:
+        if slot.id in slot_ids:
             raise TealInternalError(
                 "Slot ID {} has been assigned multiple times".format(slot.id)
             )
-        slotIds.add(slot.id)
+        slot_ids.add(slot.id)
 
-    if len(allSlots) > NUM_SLOTS:
-        # TODO: identify which slots can be reused
-        # subroutines which never invoke each other can use the same slot ID for local slots
+    # Reassign local slots that arent used elsewhere, taking care not to
+    # assign a slot that has been reserved
+    for slots in local_slots.values():
+        idx = 0
+        local_reserved = set([slot.id for slot in slots if slot.isReservedSlot])
+        for slot in slots:
+            if slot.isReservedSlot:
+                continue
+
+            slot.id = idx
+            idx += 1
+            # If its reserved, we cant use it
+            while slot.id in local_reserved:
+                slot.id = idx
+                idx += 1
+
+    all_slot_ids: set[int] = set([s.id for s in all_slots])
+
+    if len(all_slot_ids) > NUM_SLOTS:
         raise TealInternalError(
-            "Too many slots in use: {}, maximum is {}".format(len(allSlots), NUM_SLOTS)
+            "Too many slots in use: {}, maximum is {}".format(
+                len(all_slot_ids), NUM_SLOTS
+            )
         )
 
     # verify that all local slots are assigned to before being loaded.
@@ -145,27 +166,27 @@ def assignScratchSlotsToSubroutines(
             )
             raise TealInternalError(msg) from errors[0]
 
-    nextSlotIndex = 0
-    for slot in sorted(allSlots, key=lambda slot: slot.id):
+    next_slot_index = 0
+    for slot in sorted(all_slots, key=lambda slot: slot.id):
         # Find next vacant slot that compiler can assign to
-        while nextSlotIndex in slotIds:
-            nextSlotIndex += 1
+        while next_slot_index in slot_ids:
+            next_slot_index += 1
 
         if slot.isReservedSlot:
             # Slot ids under 256 are manually reserved slots
-            slotAssignments[slot] = slot.id
+            slot_assignments[slot] = slot.id
         else:
-            slotAssignments[slot] = nextSlotIndex
-            slotIds.add(nextSlotIndex)
+            slot_assignments[slot] = next_slot_index
+            slot_ids.add(next_slot_index)
 
     for start in subroutineBlocks.values():
         for block in TealBlock.Iterate(start):
             for op in block.ops:
                 for slot in op.getSlots():
-                    op.assignSlot(slot, slotAssignments[slot])
+                    op.assignSlot(slot, slot_assignments[slot])
 
     assignedLocalSlots: Dict[Optional[SubroutineDefinition], Set[int]] = dict()
     for subroutine, slots in local_slots.items():
-        assignedLocalSlots[subroutine] = set(slotAssignments[slot] for slot in slots)
+        assignedLocalSlots[subroutine] = set(slot_assignments[slot] for slot in slots)
 
     return assignedLocalSlots
