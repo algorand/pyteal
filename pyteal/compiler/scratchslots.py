@@ -127,12 +127,12 @@ def assignScratchSlotsToSubroutines(
             )
         slotIds.add(slot.id)
 
-    if len(allSlots) > NUM_SLOTS:
-        # TODO: identify which slots can be reused
-        # subroutines which never invoke each other can use the same slot ID for local slots
-        raise TealInternalError(
-            "Too many slots in use: {}, maximum is {}".format(len(allSlots), NUM_SLOTS)
-        )
+    # if len(allSlots) > NUM_SLOTS:
+    #    # TODO: identify which slots can be reused
+    #    # subroutines which never invoke each other can use the same slot ID for local slots
+    #    raise TealInternalError(
+    #        "Too many slots in use: {}, maximum is {}".format(len(allSlots), NUM_SLOTS)
+    #    )
 
     # verify that all local slots are assigned to before being loaded.
     # TODO: for simplicity, the current implementation does not perform this check with global slots

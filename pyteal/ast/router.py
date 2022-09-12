@@ -30,6 +30,7 @@ from pyteal.ast.methodsig import MethodSignature
 from pyteal.ast.naryexpr import And, Or
 from pyteal.ast.txn import Txn
 from pyteal.ast.return_ import Approve, Reject
+from pyteal.ast.scratch import ScratchSlot
 
 
 class CallConfig(IntFlag):
@@ -441,10 +442,11 @@ class ASTBuilder:
                 ]
                 decode_instructions += de_tuple_instructions
 
+            handler.decode_incoming(*decode_instructions)
             # NOTE: does not have to have return, can be void method
             if handler.type_of() == "void":
+
                 return Seq(
-                    *decode_instructions,
                     cast(Expr, handler(*arg_vals)),
                     Approve(),
                 )
@@ -456,7 +458,6 @@ class ASTBuilder:
                     abi.ReturnedValue, handler(*arg_vals)
                 )
                 return Seq(
-                    *decode_instructions,
                     subroutine_call.store_into(output_temp),
                     abi.MethodReturn(output_temp),
                     Approve(),

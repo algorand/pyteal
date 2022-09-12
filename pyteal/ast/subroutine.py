@@ -523,8 +523,15 @@ class ABIReturnSubroutine:
         self.output_kwarg_info: Optional[OutputKwArgInfo] = self._get_output_kwarg_info(
             fn_implementation
         )
+
+        import functools
+
+        @functools.wraps(fn_implementation)
+        def _impl(*args, **kwargs) -> Expr:
+            return Seq(*self.to_decode, fn_implementation(*args, **kwargs))
+
         self.subroutine = SubroutineDefinition(
-            fn_implementation,
+            _impl,
             return_type=TealType.none,
             has_abi_output=self.output_kwarg_info is not None,
         )
@@ -563,6 +570,9 @@ class ABIReturnSubroutine:
                     f"multiple output arguments ({len(potential_abi_arg_names)}) "
                     f"with type annotations {potential_abi_arg_names}"
                 )
+
+    def decode_incoming(self, *args: Expr):
+        self.to_decode = args
 
     def __call__(
         self, *args: Expr | ScratchVar | abi.BaseType, **kwargs
