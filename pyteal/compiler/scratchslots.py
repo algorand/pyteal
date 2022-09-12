@@ -4,6 +4,7 @@ from pyteal.ast import ScratchSlot, SubroutineDefinition
 from pyteal.ir import TealBlock, Op
 from pyteal.errors import TealInternalError
 from pyteal.config import NUM_SLOTS
+from pyteal.compiler.subroutines import find_callstack_exclusive_subroutines
 
 
 def collect_unoptimized_slots(
@@ -89,6 +90,7 @@ def collectScratchSlots(
 
 def assignScratchSlotsToSubroutines(
     subroutineBlocks: Dict[Optional[SubroutineDefinition], TealBlock],
+    subroutine_graph: dict[Optional[SubroutineDefinition], set[SubroutineDefinition]],
 ) -> Dict[Optional[SubroutineDefinition], Set[int]]:
     """Assign scratch slot values for an entire program.
 
@@ -113,7 +115,119 @@ def assignScratchSlotsToSubroutines(
         *local_slots.values()
     )
 
-    slotAssignments: Dict[ScratchSlot, int] = dict()
+    # This is an imperfect greedy algorithm to share scratch slot assignments between callstack
+    # exclusive subroutines.
+    # * It's granularity is at the subroutine level, meaning it decides that two subroutines must share
+    #   all of their scratch slot assignments, or none of them.
+    # * It uses the "exclusivity" of a subroutine (i.e. how many other subroutines it's callstack
+    #   exclusive with) as a heuristic to combine subroutines.
+    # * Analysis has not been done to prove that this algorithm always terminates (or if its results
+    #   are anywhere near optimal).
+    # * WARNING: this algorithm DOES NOT honor user-defined scratch slots. Those slots may be
+    #   assigned to a numeric slot which IS NOT what the user specified.
+    callstack_exclusive_subroutines = find_callstack_exclusive_subroutines(
+        subroutine_graph
+    )
+    # combined_subroutine_groups is a makeshift union-find data structure
+    combined_subroutine_groups: list[set[Optional[SubroutineDefinition]]] = [
+        {s} for s in callstack_exclusive_subroutines.keys()
+    ]
+    if len(callstack_exclusive_subroutines) != 0:
+        # choose "most exclusive" (i.e. most compatible) subroutine to start
+        current_subroutine = max(
+            callstack_exclusive_subroutines.keys(),
+            key=lambda s: len(callstack_exclusive_subroutines[s]),
+        )
+        while True:
+            group_index = -1
+            for i, group in enumerate(combined_subroutine_groups):
+                if current_subroutine in group:
+                    group_index = i
+                    break
+
+            # only look at subroutines we're not already grouped with
+            new_callstack_exclusive = [
+                s
+                for s in callstack_exclusive_subroutines[current_subroutine]
+                if s not in combined_subroutine_groups[group_index]
+            ]
+            if len(new_callstack_exclusive) == 0:
+                # nothing else to do
+                break
+
+            # choose the "most exclusive" subroutine that is exclusive to `current_subroutine`
+            to_combine = max(
+                new_callstack_exclusive,
+                key=lambda s: len(callstack_exclusive_subroutines[s]),
+            )
+            # Share scratch slot assignments between `current_subroutine` and `to_combine`.
+            to_combine_group_index = -1
+            for i, group in enumerate(combined_subroutine_groups):
+                if to_combine in group:
+                    to_combine_group_index = i
+                    break
+            combined_subroutine_groups[group_index] |= combined_subroutine_groups[
+                to_combine_group_index
+            ]
+            combined_subroutine_groups.pop(to_combine_group_index)
+
+            # BEWARE! Now that we've decided to share scratch slot assignments between the two
+            # subroutines, this potentially limits the other subroutines that they can share assignments
+            # with. Specifically, if even if `current_subroutine` is callstack exclusive with another
+            # subroutine `X`, if `to_combine` is not callstack exclusive with `X`, it's no longer safe
+            # for `current_subroutine` to share assignments with `X`. We encode this constraint by
+            # taking the intersection of `current_subroutine` and `to_combine`'s callstack exclusive
+            # subroutines.
+            intersection = (
+                callstack_exclusive_subroutines[current_subroutine]
+                & callstack_exclusive_subroutines[to_combine]
+            )
+            callstack_exclusive_subroutines[current_subroutine] = intersection | {
+                to_combine
+            }
+            callstack_exclusive_subroutines[to_combine] = intersection | {
+                cast(SubroutineDefinition, current_subroutine)
+            }
+
+            current_subroutine = max(
+                callstack_exclusive_subroutines.keys(),
+                key=lambda s: len(callstack_exclusive_subroutines[s]),
+            )
+
+    # the "spokesperson" for a group is the subroutine with the largest number of local slots
+    combined_subroutine_groups_spokesperson: list[Optional[SubroutineDefinition]] = []
+    # all other subroutines in the group will have their local slots mapped to their spokesperson's
+    local_slot_mappings_to_spokesperson: list[dict[ScratchSlot, ScratchSlot]] = []
+    for group in combined_subroutine_groups:
+        spokesperson = max(group, key=lambda s: len(local_slots[s]))
+        spokesperson_local_slots = list(local_slots[spokesperson])
+        local_slot_mappings = {slot: slot for slot in spokesperson_local_slots}
+
+        for subroutine in group:
+            if subroutine is spokesperson:
+                continue
+            for i, slot in enumerate(local_slots[subroutine]):
+                local_slot_mappings[slot] = spokesperson_local_slots[i]
+
+        combined_subroutine_groups_spokesperson.append(spokesperson)
+        local_slot_mappings_to_spokesperson.append(local_slot_mappings)
+
+    slots_to_assign: set[ScratchSlot] = global_slots | cast(
+        set[ScratchSlot], set()
+    ).union(
+        *[
+            local_slots[spokesperson]
+            for spokesperson in combined_subroutine_groups_spokesperson
+        ]
+    )
+
+    if len(slots_to_assign) > NUM_SLOTS:
+        raise TealInternalError(
+            "Too many slots in use: {}, maximum is {}".format(
+                slots_to_assign, NUM_SLOTS
+            )
+        )
+
     slotIds: Set[int] = set()
 
     for slot in allSlots:
@@ -127,12 +241,15 @@ def assignScratchSlotsToSubroutines(
             )
         slotIds.add(slot.id)
 
-    if len(allSlots) > NUM_SLOTS:
-        # TODO: identify which slots can be reused
-        # subroutines which never invoke each other can use the same slot ID for local slots
-        raise TealInternalError(
-            "Too many slots in use: {}, maximum is {}".format(len(allSlots), NUM_SLOTS)
-        )
+    # Run the above check on all slots (before subroutine combination optimization), but clear it out
+    # and populate slotIds again. We only do this because the optimization algorithm above doesn't
+    # honor user-defined slot IDs.
+    slotIds.clear()
+
+    for slot in slots_to_assign:
+        if not slot.isReservedSlot:
+            continue
+        slotIds.add(slot.id)
 
     # verify that all local slots are assigned to before being loaded.
     # TODO: for simplicity, the current implementation does not perform this check with global slots
@@ -145,8 +262,9 @@ def assignScratchSlotsToSubroutines(
             )
             raise TealInternalError(msg) from errors[0]
 
+    slotAssignments: Dict[ScratchSlot, int] = dict()
     nextSlotIndex = 0
-    for slot in sorted(allSlots, key=lambda slot: slot.id):
+    for slot in sorted(slots_to_assign, key=lambda slot: slot.id):
         # Find next vacant slot that compiler can assign to
         while nextSlotIndex in slotIds:
             nextSlotIndex += 1
@@ -158,14 +276,32 @@ def assignScratchSlotsToSubroutines(
             slotAssignments[slot] = nextSlotIndex
             slotIds.add(nextSlotIndex)
 
-    for start in subroutineBlocks.values():
+    for subroutine, start in subroutineBlocks.items():
+        group_index = -1
+        for i, group in enumerate(combined_subroutine_groups):
+            if subroutine in group:
+                group_index = i
+                break
+        assert group_index != -1
+
+        slot_mapping = local_slot_mappings_to_spokesperson[group_index]
+
         for block in TealBlock.Iterate(start):
             for op in block.ops:
                 for slot in op.getSlots():
-                    op.assignSlot(slot, slotAssignments[slot])
+                    if slot in slot_mapping:
+                        # a local slot
+                        op.assignSlot(slot, slotAssignments[slot_mapping[slot]])
+                    else:
+                        # a global slot
+                        op.assignSlot(slot, slotAssignments[slot])
 
     assignedLocalSlots: Dict[Optional[SubroutineDefinition], Set[int]] = dict()
-    for subroutine, slots in local_slots.items():
-        assignedLocalSlots[subroutine] = set(slotAssignments[slot] for slot in slots)
+    for i, group in enumerate(combined_subroutine_groups):
+        slot_mapping = local_slot_mappings_to_spokesperson[i]
+        for subroutine in group:
+            assignedLocalSlots[subroutine] = set(
+                slotAssignments[slot_mapping[slot]] for slot in local_slots[subroutine]
+            )
 
     return assignedLocalSlots

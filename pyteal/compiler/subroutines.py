@@ -1,5 +1,5 @@
 import re
-from typing import List, Dict, Set, Optional, TypeVar
+from typing import List, Dict, Set, Optional, TypeVar, cast
 from collections import OrderedDict
 
 from pyteal.errors import TealInputError
@@ -32,38 +32,111 @@ def graph_search(graph: Dict[Node, Set[Node]], start: Node, end: Node) -> bool:
     return False
 
 
-def findRecursionPoints(
-    subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]]
-) -> Dict[SubroutineDefinition, Set[SubroutineDefinition]]:
-    """Find all subroutine calls which may result in the current subroutine being called again
-    recursively.
+def find_callstack_exclusive_subroutines(
+    subroutine_graph: dict[Optional[SubroutineDefinition], set[SubroutineDefinition]]
+) -> dict[Optional[SubroutineDefinition], set[SubroutineDefinition]]:
+    """Find all subroutines which are "callstack exclusive."
+
+    Two subroutines are "callstack exclusive" if they never appear on the callstack at the same time.
 
     Args:
-        subroutineGraph: A graph of subroutines. Each key is a subroutine (the main routine should
+        subroutine_graph: A graph of subroutines. Each key is a subroutine (the main routine should
             be present), which represents a node in the graph. Each value is a set of all
             subroutines that specific subroutine calls, which represent directional edges in the
             graph.
 
     Returns:
-        A dictionary whose keys are the same as subroutineGraph, and whose values are a subset of
-        the key's values from subroutineGraph. Each element in this subset represents a subroutine
+        A dictionary whose keys are the same as subroutine_graph, and whose values are a subset of
+        the key's values from subroutine_graph. Each element in this subset represents a subroutine
+        which is callstack exclusive with the subroutine key.
+    """
+    all_subroutines = subroutine_graph.keys()
+    callstack_exclusives: dict[
+        Optional[SubroutineDefinition], set[SubroutineDefinition]
+    ] = {s: set() for s in all_subroutines}
+
+    for s1 in all_subroutines:
+        for s2 in all_subroutines:
+            if s1 is s2:
+                continue
+            # need to use the casts to help mypy detect the generic type assignment
+            if graph_search(
+                cast(
+                    dict[
+                        Optional[SubroutineDefinition],
+                        set[Optional[SubroutineDefinition]],
+                    ],
+                    subroutine_graph,
+                ),
+                s1,
+                s2,
+            ) or graph_search(
+                cast(
+                    dict[
+                        Optional[SubroutineDefinition],
+                        set[Optional[SubroutineDefinition]],
+                    ],
+                    subroutine_graph,
+                ),
+                s2,
+                s1,
+            ):
+                # Is there a path from s1 to s2, or s2 to s1? If so, these subroutines can exist on
+                # the callstack at the same time.
+                continue
+            callstack_exclusives[s1].add(
+                cast(SubroutineDefinition, s2)
+            )  # this is annoying, we should reconsider using None to represent the main routine
+            callstack_exclusives[s2].add(cast(SubroutineDefinition, s1))
+
+    return callstack_exclusives
+
+
+def find_recursion_points(
+    subroutine_graph: dict[Optional[SubroutineDefinition], set[SubroutineDefinition]]
+) -> dict[Optional[SubroutineDefinition], set[SubroutineDefinition]]:
+    """Find all subroutine calls which may result in the current subroutine being called again
+    recursively.
+
+    Args:
+        subroutine_graph: A graph of subroutines. Each key is a subroutine (the main routine should
+            be present), which represents a node in the graph. Each value is a set of all
+            subroutines that specific subroutine calls, which represent directional edges in the
+            graph.
+
+    Returns:
+        A dictionary whose keys are the same as subroutine_graph, and whose values are a subset of
+        the key's values from subroutine_graph. Each element in this subset represents a subroutine
         which may reenter the calling subroutine.
     """
-    reentryPoints: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
+    reentry_points: dict[
+        Optional[SubroutineDefinition], set[SubroutineDefinition]
+    ] = dict()
 
-    for subroutine in subroutineGraph.keys():
+    for subroutine in subroutine_graph.keys():
         # perform a depth first search to see which callers (if any) have a path to invoke the calling subroutine again
-        reentryPoints[subroutine] = set(
+        reentry_points[subroutine] = set(
             callee
-            for callee in subroutineGraph[subroutine]
-            if graph_search(subroutineGraph, callee, subroutine)
+            for callee in subroutine_graph[subroutine]
+            # need to use the cast to help mypy detect the generic type assignment
+            if graph_search(
+                cast(
+                    dict[
+                        Optional[SubroutineDefinition],
+                        set[Optional[SubroutineDefinition]],
+                    ],
+                    subroutine_graph,
+                ),
+                callee,
+                subroutine,
+            )
         )
 
-    return reentryPoints
+    return reentry_points
 
 
 def find_recursive_path(
-    subroutine_graph: Dict[SubroutineDefinition, Set[SubroutineDefinition]],
+    subroutine_graph: Dict[Optional[SubroutineDefinition], Set[SubroutineDefinition]],
     subroutine: SubroutineDefinition,
 ) -> List[SubroutineDefinition]:
     visited = set()
@@ -91,7 +164,7 @@ def find_recursive_path(
 def spillLocalSlotsDuringRecursion(
     version: int,
     subroutineMapping: Dict[Optional[SubroutineDefinition], List[TealComponent]],
-    subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]],
+    subroutineGraph: Dict[Optional[SubroutineDefinition], Set[SubroutineDefinition]],
     localSlots: Dict[Optional[SubroutineDefinition], Set[int]],
 ) -> None:
     """In order to prevent recursion from modifying the local scratch slots a subroutine uses,
@@ -114,11 +187,11 @@ def spillLocalSlotsDuringRecursion(
         localSlots: The output from the function `assignScratchSlotsToSubroutines`, which indicates
             the local slots which must be spilled for each subroutine.
     """
-    recursivePoints = findRecursionPoints(subroutineGraph)
+    recursivePoints = find_recursion_points(subroutineGraph)
 
     recursive_byref = None
     for k, v in recursivePoints.items():
-        if v and k.by_ref_args:
+        if v and k is not None and k.by_ref_args:
             recursive_byref = k
             break
 
@@ -214,7 +287,7 @@ def spillLocalSlotsDuringRecursion(
 
                 hideReturnValueInFirstSlot = False
 
-                if subroutine.return_type != TealType.none:
+                if subroutine is not None and subroutine.return_type != TealType.none:
                     # if the subroutine returns a value on the stack, we need to preserve this after
                     # restoring all local slots.
 
@@ -245,7 +318,10 @@ def spillLocalSlotsDuringRecursion(
                         # clear out the duplicate arguments that were dug up previously, since dig
                         # does not pop the dug values -- once we use cover/uncover to properly set up
                         # the spilled slots, this will no longer be necessary
-                        if subroutine.return_type != TealType.none:
+                        if (
+                            subroutine is not None
+                            and subroutine.return_type != TealType.none
+                        ):
                             # if there is a return value on top of the stack, we need to preserve
                             # it, so swap it with the subroutine argument that's below it on the
                             # stack

@@ -5,21 +5,138 @@ import pytest
 import pyteal as pt
 
 from pyteal.compiler.subroutines import (
-    findRecursionPoints,
+    find_callstack_exclusive_subroutines,
+    find_recursion_points,
     spillLocalSlotsDuringRecursion,
     resolveSubroutines,
 )
 
 
-def test_findRecursionPoints_empty():
+def test_find_callstack_exclusive_subroutines_empty():
     subroutines = dict()
 
     expected = dict()
-    actual = findRecursionPoints(subroutines)
+    actual = find_callstack_exclusive_subroutines(subroutines)
     assert actual == expected
 
 
-def test_findRecursionPoints_none():
+def test_find_callstack_exclusive_subroutines_none():
+    def sub1Impl():
+        return None
+
+    def sub2Impl(a1):
+        return None
+
+    def sub3Impl(a1, a2, a3):
+        return None
+
+    subroutine1 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+    subroutine2 = pt.SubroutineDefinition(sub2Impl, pt.TealType.bytes)
+    subroutine3 = pt.SubroutineDefinition(sub3Impl, pt.TealType.none)
+
+    subroutines = {
+        subroutine1: {subroutine2},
+        subroutine2: {subroutine3},
+        subroutine3: set(),
+    }
+
+    expected = {
+        subroutine1: set(),
+        subroutine2: set(),
+        subroutine3: set(),
+    }
+
+    actual = find_callstack_exclusive_subroutines(subroutines)
+    assert actual == expected
+
+
+def test_find_callstack_exclusive_subroutines_leaf_subroutines():
+    def sub1Impl():
+        return None
+
+    def sub2Impl(a1):
+        return None
+
+    def sub3Impl(a1, a2, a3):
+        return None
+
+    def sub4Impl():
+        return None
+
+    def sub5Impl():
+        return None
+
+    subroutine1 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+    subroutine2 = pt.SubroutineDefinition(sub2Impl, pt.TealType.bytes)
+    subroutine3 = pt.SubroutineDefinition(sub3Impl, pt.TealType.none)
+    subroutine4 = pt.SubroutineDefinition(sub4Impl, pt.TealType.none)
+    subroutine5 = pt.SubroutineDefinition(sub5Impl, pt.TealType.none)
+
+    subroutines = {
+        subroutine1: {subroutine2, subroutine4},
+        subroutine2: {subroutine3, subroutine5},
+        subroutine3: set(),
+        subroutine4: set(),
+        subroutine5: set(),
+    }
+
+    expected = {
+        subroutine1: set(),
+        subroutine2: {subroutine4},
+        subroutine3: {subroutine4, subroutine5},
+        subroutine4: {subroutine2, subroutine3, subroutine5},
+        subroutine5: {subroutine3, subroutine4},
+    }
+
+    actual = find_callstack_exclusive_subroutines(subroutines)
+    assert actual == expected
+
+
+def test_find_callstack_exclusive_subroutines_leaf_subroutines_recursive():
+    def sub1Impl():
+        return None
+
+    def sub2Impl(a1):
+        return None
+
+    def sub3Impl(a1, a2, a3):
+        return None
+
+    def sub4Impl():
+        return None
+
+    subroutine1 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+    subroutine2 = pt.SubroutineDefinition(sub2Impl, pt.TealType.bytes)
+    subroutine3 = pt.SubroutineDefinition(sub3Impl, pt.TealType.none)
+    subroutine4 = pt.SubroutineDefinition(sub4Impl, pt.TealType.none)
+
+    subroutines = {
+        subroutine1: {subroutine2, subroutine3},
+        subroutine2: {subroutine1, subroutine4},
+        subroutine3: set(),
+        subroutine4: set(),
+    }
+
+    expected = {
+        subroutine1: set(),
+        subroutine2: set(),
+        subroutine3: {subroutine4},
+        subroutine4: {subroutine3},
+    }
+
+    actual = find_callstack_exclusive_subroutines(subroutines)
+    assert actual == expected
+
+
+def test_find_recursion_points_empty():
+    subroutines = dict()
+
+    expected = dict()
+    actual = find_recursion_points(subroutines)
+    assert actual == expected
+
+
+def test_find_recursion_points_none():
     def sub1Impl():
         return None
 
@@ -45,11 +162,11 @@ def test_findRecursionPoints_none():
         subroutine3: set(),
     }
 
-    actual = findRecursionPoints(subroutines)
+    actual = find_recursion_points(subroutines)
     assert actual == expected
 
 
-def test_findRecursionPoints_direct_recursion():
+def test_find_recursion_points_direct_recursion():
     def sub1Impl():
         return None
 
@@ -75,11 +192,11 @@ def test_findRecursionPoints_direct_recursion():
         subroutine3: set(),
     }
 
-    actual = findRecursionPoints(subroutines)
+    actual = find_recursion_points(subroutines)
     assert actual == expected
 
 
-def test_findRecursionPoints_mutual_recursion():
+def test_find_recursion_points_mutual_recursion():
     def sub1Impl():
         return None
 
@@ -105,11 +222,11 @@ def test_findRecursionPoints_mutual_recursion():
         subroutine3: set(),
     }
 
-    actual = findRecursionPoints(subroutines)
+    actual = find_recursion_points(subroutines)
     assert actual == expected
 
 
-def test_findRecursionPoints_direct_and_mutual_recursion():
+def test_find_recursion_points_direct_and_mutual_recursion():
     def sub1Impl():
         return None
 
@@ -135,7 +252,7 @@ def test_findRecursionPoints_direct_and_mutual_recursion():
         subroutine3: set(),
     }
 
-    actual = findRecursionPoints(subroutines)
+    actual = find_recursion_points(subroutines)
     assert actual == expected
 
 

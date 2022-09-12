@@ -202,23 +202,23 @@ retsub
 
 // withdraw
 withdraw_3:
-store 8
-store 7
+store 5
+store 6
 txn Sender
 byte "balance"
 txn Sender
 byte "balance"
 app_local_get
-load 7
+load 6
 -
 app_local_put
 itxn_begin
 int pay
 itxn_field TypeEnum
-load 8
+load 5
 txnas Accounts
 itxn_field Receiver
-load 7
+load 6
 itxn_field Amount
 int 0
 itxn_field Fee
