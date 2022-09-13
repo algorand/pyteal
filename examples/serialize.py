@@ -3,6 +3,8 @@ from typing import Iterable
 from build.lib.pyteal.ast.txn import TxnExprBuilder
 from pyteal import *
 
+slots_in_use: dict[int, ScratchSlot] = {}
+
 
 class SerializedExpr:
     def __init__(self, name: str, args: list["SerializedExpr"]):
@@ -58,17 +60,21 @@ class SerializedExpr:
             case Global():
                 field = str(e.field).split(".")[1]
                 name = "Global." + field
-            case MaybeValue():
+            case MultiValue():
                 if len(e.immediate_args) > 0:
                     nested_args.append(SerializedExpr.from_expr(e.immediate_args))
 
                 for arg in e.args:
                     nested_args.append(SerializedExpr.from_expr(arg))
 
+                for os in e.output_slots:
+                    nested_args.append(SerializedExpr.from_expr(os))
+
                 if e.op.name == "app_local_get_ex":
                     name = "App.localGetEx"
                 elif e.op.name == "app_global_get_ex":
                     name = "App.globalGetEx"
+
             case EnumInt():
                 name = "OnComplete." + e.name
             case ScratchSlot():
@@ -120,61 +126,81 @@ class SerializedExpr:
             field_name = self.name.split(".")[1]
             return getattr(Txn, field_name)[self.args[0].to_expr()]
         elif self.name == "ScratchSlot":
+            id = int(self.args[0].name)
+            if id in slots_in_use:
+                return slots_in_use[id]
+
             ss = ScratchSlot()
-            ss.id = int(self.args[0].name)
+            ss.id = id
+            slots_in_use[id] = ss
             return ss
+        elif self.name == "App.globalGetEx":
+            args = [arg.to_expr() for arg in self.args]
+            expr = eval(self.name)(*args[:-2])
+            expr.output_slots = args[-2:]
+            return expr
+        elif self.name == "App.localGetEx":
+            args = [arg.to_expr() for arg in self.args]
+            expr = eval(self.name)(*args[:-2])
+            expr.output_slots = args[-2:]
+            return expr
+
         elif self.name.startswith("OnComplete"):
             return eval(self.name)
 
-        return eval(self.name)(*[arg.to_expr() for arg in self.args])
+        args = [arg.to_expr() for arg in self.args]
+        thing = eval(self.name)(*args)
+
+        return thing
 
     def dictify(self) -> dict:
         return {"name": self.name, "args": [a.dictify() for a in self.args]}
 
 
 if __name__ == "__main__":
-    # from application.vote import approval_program
+    from application.vote import approval_program
 
-    # program = approval_program()
+    program = approval_program()
 
     # program = Seq(
-    #     val := App.globalGetEx(Int(0), Bytes("asdf")),
-    #     Assert(val.hasValue()),
-    #     val.value(),
+    #    val := App.globalGetEx(Int(0), Bytes("asdf")),
+    #    Assert(val.hasValue()),
+    #    val.value(),
     # )
 
-    program = Seq(
-        (sv := ScratchVar()).store(Int(1)),
-        Assert(sv.load()),
-        sv.load(),
-    )
+    # program = Seq(
+    #    (sv := ScratchVar()).store(Int(1)),
+    #    Assert(sv.load()),
+    #    sv.load(),
+    # )
 
     se = SerializedExpr.from_expr(program)
     regen_program = se.to_expr()
 
-    co = CompileOptions(mode=Mode.Application, version=7)
-
-    expected, _ = program.__teal__(co)
-    expected.addIncoming()
-    expected = TealBlock.NormalizeBlocks(expected)
-
-    actual, _ = regen_program.__teal__(co)
-    actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
-
-    with TealComponent.Context.ignoreExprEquality(), TealComponent.Context.ignoreScratchSlotEquality():
-        assert actual == expected
-
     print(program)
     print(regen_program)
 
-    print(expected)
-    print(actual)
+    import json
 
-    print(compileTeal(program, mode=Mode.Application, version=7))
-    # print(compileTeal(regen_program, mode=Mode.Application, version=7))
+    js = json.dumps(se.dictify(), indent=2)
+    with open("approval.json", "w") as f:
+        f.write(js)
 
-    # import json
-    # js = json.dumps(se.dictify(), indent=2)
-    # with open("approval.json", "w") as f:
-    #   f.write(js)
+    # co = CompileOptions(mode=Mode.Application, version=7)
+
+    # expected, _ = program.__teal__(co)
+    # expected.addIncoming()
+    # expected = TealBlock.NormalizeBlocks(expected)
+
+    # actual, _ = regen_program.__teal__(co)
+    # actual.addIncoming()
+    # actual = TealBlock.NormalizeBlocks(actual)
+
+    # with TealComponent.Context.ignoreExprEquality(), TealComponent.Context.ignoreScratchSlotEquality():
+    #    assert actual == expected
+
+    # print(expected)
+    # print(actual)
+
+    # print(compileTeal(program, mode=Mode.Application, version=7))
+    print(compileTeal(regen_program, mode=Mode.Application, version=7))
