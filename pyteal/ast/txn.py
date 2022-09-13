@@ -751,7 +751,7 @@ class TxnObject:
         """
         return self.makeTxnExpr(TxnField.state_proof_pk)
 
-    def num_app_args(self)->TxnExpr:
+    def num_app_args(self) -> TxnExpr:
         return self.makeTxnExpr(TxnField.num_app_args)
 
     @property

@@ -6,29 +6,15 @@ from pyteal import *
 class SerializedExpr:
     def __init__(self, name: str, args: list["SerializedExpr"]):
         self.name = name
-        self.args = args 
-        self.input_type = None
-        self.output_type = None
+        self.args = args
 
-    
     @staticmethod
-    def from_expr(e: Expr)->"SerializedExpr":
-        nested_args = []
-        name = ""
+    def from_expr(e: Expr) -> "SerializedExpr":
+        nested_args: list[SerializedExpr] = []
+        name: str = ""
 
         match e:
-            case Seq():
-                for arg in e.args:
-                    if isinstance(arg, Iterable):
-                        for x in arg:
-                            nested_args.append(SerializedExpr.from_expr(x))
-                    else:
-                        nested_args.append(SerializedExpr.from_expr(arg))
-            case Cond():
-                for arg in e.args:
-                    nested_args.append(SerializedExpr.from_expr(arg[0]))
-                    nested_args.append(SerializedExpr.from_expr(arg[1]))
-            case NaryExpr():
+            case Seq() | Cond() | NaryExpr():
                 for arg in e.args:
                     if isinstance(arg, Iterable):
                         for x in arg:
@@ -43,16 +29,18 @@ class SerializedExpr:
                     nested_args.append(SerializedExpr.from_expr(cond))
             case App():
                 field = str(e.field).split(".")[1]
-                name = "App."+field
+                name = "App." + field
                 for arg in e.args:
                     nested_args.append(SerializedExpr.from_expr(arg))
             case Int():
                 nested_args.append(SerializedExpr.from_expr(e.value))
             case Bytes():
-                nested_args.append(SerializedExpr.from_expr(e.byte_str.replace('"', "")))
+                nested_args.append(
+                    SerializedExpr.from_expr(e.byte_str.replace('"', ""))
+                )
             case TxnExpr():
                 field = str(e.field).split(".")[1]
-                name = "Txn."+field
+                name = "Txn." + field
             case UnaryExpr():
                 nested_args.append(SerializedExpr.from_expr(e.arg))
             case TxnaExpr():
@@ -68,7 +56,7 @@ class SerializedExpr:
                     nested_args.append(SerializedExpr.from_expr(e.elseBranch))
             case Global():
                 field = str(e.field).split(".")[1]
-                name = "Global."+field
+                name = "Global." + field
             case MaybeValue():
                 if len(e.immediate_args) > 0:
                     nested_args.append(SerializedExpr.from_expr(e.immediate_args))
@@ -80,9 +68,8 @@ class SerializedExpr:
                     name = "App.localGetEx"
                 elif e.op.name == "app_global_get_ex":
                     name = "App.globalGetEx"
-
             case ScratchSlot():
-                name = "ScratchSlot" 
+                name = "ScratchSlot"
             case ScratchStackStore():
                 name = "ScratchStackStore"
                 if e.slot is not None:
@@ -92,13 +79,13 @@ class SerializedExpr:
                 if e.slot is not None:
                     nested_args.append(SerializedExpr.from_expr(e.slot))
             case EnumInt():
-                name = "OnComplete."+e.name
+                name = "OnComplete." + e.name
             case _:
-                #print(f"unhandled: {e.__class__}")
+                # print(f"unhandled: {e.__class__}")
                 pass
 
         if name == "":
-            if hasattr(e, 'op'):
+            if hasattr(e, "op"):
                 name = e.op.name.title().replace("_", "")
                 if name == "LogicAnd":
                     name = "And"
@@ -110,17 +97,24 @@ class SerializedExpr:
         return SerializedExpr(name, nested_args)
 
     @staticmethod
-    def undictify(d: dict)->"SerializedExpr":
-        return SerializedExpr(d["name"], [SerializedExpr.undictify(arg) for arg in d["args"]])
+    def undictify(d: dict) -> "SerializedExpr":
+        return SerializedExpr(
+            d["name"], [SerializedExpr.undictify(arg) for arg in d["args"]]
+        )
 
-    def to_expr(self)->Expr:
+    def to_expr(self) -> Expr:
         if self.name == "Int":
             return Int(int(self.args[0].name))
         elif self.name == "Bytes":
             return Bytes(self.args[0].name)
         elif self.name == "Cond":
             args = [arg.to_expr() for arg in self.args]
-            return Cond(*[[args[pair*2], args[(pair*2)+1]] for pair in range(int(len(args)/2))])
+            return Cond(
+                *[
+                    [args[pair * 2], args[(pair * 2) + 1]]
+                    for pair in range(int(len(args) / 2))
+                ]
+            )
         elif self.name == "Txn":
             field_name = self.args[0].name.split(".")[1]
             return getattr(Txn, field_name)()
@@ -128,32 +122,19 @@ class SerializedExpr:
             field_name = self.name.split(".")[1]
             return getattr(Txn, field_name)[self.args[0].to_expr()]
         elif self.name.startswith("OnComplete"):
-            return eval(self.name) 
+            return eval(self.name)
 
         args = [arg.to_expr() for arg in self.args]
         return eval(self.name)(*args)
 
+    def dictify(self) -> dict:
+        return {"name": self.name, "args": [a.dictify() for a in self.args]}
 
 
-    def dictify(self)->dict:
-        return {
-            "name":self.name,
-            "args":[a.dictify() for a in self.args]
-        }
+if __name__ == "__main__":
+    import json
+    from application.vote import approval_program
 
-#program = Seq(
-#    Assert(Int(1), Int(1)),
-#    Int(1) + Int(0)
-#)
-#se = SerializedExpr.from_expr(program)
-#assert se.to_expr() == program
-
-from application.vote import approval_program
-program = approval_program()
-se = SerializedExpr.from_expr(program)
-
-import json
-s = json.dumps(se.dictify())
-se2 = SerializedExpr.undictify(json.loads(s))
-print(program)
-print(se2.to_expr())
+    se = SerializedExpr.from_expr(approval_program())
+    print(json.dumps(se.dictify()))
+    print(se.to_expr())
