@@ -224,7 +224,7 @@ def assignScratchSlotsToSubroutines(
     if len(slots_to_assign) > NUM_SLOTS:
         raise TealInternalError(
             "Too many slots in use: {}, maximum is {}".format(
-                slots_to_assign, NUM_SLOTS
+                len(slots_to_assign), NUM_SLOTS
             )
         )
 
