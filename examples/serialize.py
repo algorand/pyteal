@@ -68,18 +68,20 @@ class SerializedExpr:
                     name = "App.localGetEx"
                 elif e.op.name == "app_global_get_ex":
                     name = "App.globalGetEx"
+            case EnumInt():
+                name = "OnComplete." + e.name
             case ScratchSlot():
-                name = "ScratchSlot"
+                nested_args.append(SerializedExpr.from_expr(e.id))
             case ScratchStackStore():
-                name = "ScratchStackStore"
                 if e.slot is not None:
                     nested_args.append(SerializedExpr.from_expr(e.slot))
             case ScratchLoad():
-                name = "ScratchLoad"
                 if e.slot is not None:
                     nested_args.append(SerializedExpr.from_expr(e.slot))
-            case EnumInt():
-                name = "OnComplete." + e.name
+            case ScratchStore():
+                if e.slot is not None:
+                    nested_args.append(SerializedExpr.from_expr(e.slot))
+                nested_args.append(SerializedExpr.from_expr(e.value))
             case _:
                 # print(f"unhandled: {e.__class__}")
                 pass
@@ -116,6 +118,10 @@ class SerializedExpr:
         elif self.name.startswith("Txna"):
             field_name = self.name.split(".")[1]
             return getattr(Txn, field_name)[self.args[0].to_expr()]
+        elif self.name == "ScratchSlot":
+            ss = ScratchSlot()
+            ss.id = int(self.args[0].name)
+            return ss
         elif self.name.startswith("OnComplete"):
             return eval(self.name)
 
@@ -129,6 +135,33 @@ if __name__ == "__main__":
     import json
     from application.vote import approval_program
 
-    se = SerializedExpr.from_expr(approval_program())
-    print(json.dumps(se.dictify()))
-    print(se.to_expr())
+    program = approval_program()
+
+    program = Seq(
+        val := App.globalGetEx(Int(0), Bytes("asdf")),
+        Assert(val.hasValue()),
+        val.value(),
+    )
+
+    program = Seq(
+        (sv := ScratchVar()).store(Int(1)),
+        Assert(sv.load()),
+        sv.load(),
+    )
+
+    se = SerializedExpr.from_expr(program)
+    regen_program = se.to_expr()
+
+    co = CompileOptions(mode=Mode.Application, version=7)
+    expected, _ = program.__teal__(co)
+    actual, _ = regen_program.__teal__(co)
+
+    with TealComponent.Context.ignoreExprEquality(), TealComponent.Context.ignoreScratchSlotEquality():
+        assert actual == expected
+
+    print(compileTeal(program, mode=Mode.Application, version=7))
+    print(compileTeal(regen_program, mode=Mode.Application, version=7))
+
+    # js = json.dumps(se.dictify(), indent=2)
+    # with open("approval.json", "w") as f:
+    #    f.write(js)
