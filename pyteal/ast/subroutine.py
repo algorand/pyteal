@@ -285,7 +285,7 @@ class SubroutineDefinition:
 
                 # If the expected arg is a TransactionType we can relax our check
                 # to be any subclass of TransactionTypeSpec
-                if arg_type.__class__ is abi.TransactionTypeSpec:
+                if type(arg_type) is abi.TransactionTypeSpec:
                     if not isinstance(arg.type_spec(), abi.TransactionTypeSpec):
                         raise TealInputError(
                             f"supplied argument {arg} at index {i} "
