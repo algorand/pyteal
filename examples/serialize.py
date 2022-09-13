@@ -119,8 +119,7 @@ class SerializedExpr:
         elif self.name.startswith("OnComplete"):
             return eval(self.name)
 
-        args = [arg.to_expr() for arg in self.args]
-        return eval(self.name)(*args)
+        return eval(self.name)(*[arg.to_expr() for arg in self.args])
 
     def dictify(self) -> dict:
         return {"name": self.name, "args": [a.dictify() for a in self.args]}
