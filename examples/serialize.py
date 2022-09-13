@@ -109,12 +109,7 @@ class SerializedExpr:
             return Bytes(self.args[0].name)
         elif self.name == "Cond":
             args = [arg.to_expr() for arg in self.args]
-            return Cond(
-                *[
-                    [args[pair * 2], args[(pair * 2) + 1]]
-                    for pair in range(int(len(args) / 2))
-                ]
-            )
+            return Cond(*[[args[idx], args[idx + 1]] for idx in range(0, len(args), 2)])
         elif self.name == "Txn":
             field_name = self.args[0].name.split(".")[1]
             return getattr(Txn, field_name)()
