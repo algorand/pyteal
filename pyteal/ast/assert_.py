@@ -62,7 +62,7 @@ class Assert(Expr):
         return condStart, end
 
     def __str__(self):
-        return "(Assert {})".format(self.cond)
+        return f"(Assert [{', '.join([str(cond) for cond in self.cond])}])"
 
     def type_of(self):
         return TealType.none

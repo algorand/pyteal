@@ -19,9 +19,9 @@ class GlobalField(Enum):
     logic_sig_version = (5, "LogicSigVersion", TealType.uint64, 2)
     round = (6, "Round", TealType.uint64, 2)
     latest_timestamp = (7, "LatestTimestamp", TealType.uint64, 2)
-    current_app_id = (8, "CurrentApplicationID", TealType.uint64, 2)
+    current_application_id = (8, "CurrentApplicationID", TealType.uint64, 2)
     creator_address = (9, "CreatorAddress", TealType.bytes, 3)
-    current_app_address = (10, "CurrentApplicationAddress", TealType.bytes, 5)
+    current_application_address = (10, "CurrentApplicationAddress", TealType.bytes, 5)
     group_id = (11, "GroupID", TealType.bytes, 5)
     opcode_budget = (12, "OpcodeBudget", TealType.uint64, 6)
     caller_app_id = (13, "CallerApplicationID", TealType.uint64, 6)
@@ -109,7 +109,7 @@ class Global(LeafExpr):
         """Get the ID of the current application executing.
 
         Fails during Signature mode."""
-        return cls(GlobalField.current_app_id)
+        return cls(GlobalField.current_application_id)
 
     @classmethod
     def creator_address(cls) -> "Global":
@@ -123,7 +123,7 @@ class Global(LeafExpr):
         """Get the address of that the current application controls.
 
         Fails during Signature mode. Requires program version 5 or higher."""
-        return cls(GlobalField.current_app_address)
+        return cls(GlobalField.current_application_address)
 
     @classmethod
     def group_id(cls) -> "Global":
