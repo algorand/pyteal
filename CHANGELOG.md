@@ -1,5 +1,8 @@
 # Unreleased
 
+## Fixed
+* Subroutines that take ABI type of Transaction now allow any Transaction type to be passed. ([#531](https://github.com/algorand/pyteal/pull/531))
+
 # 0.18.1
 
 ## Fixed
