@@ -106,7 +106,7 @@ class SerializedExpr:
         if self.name == "Int":
             return Int(int(self.args[0].name))
         elif self.name == "Bytes":
-            return Bytes(self.args[0].name)
+            return Bytes(str(self.args[0].name))
         elif self.name == "Cond":
             args = [arg.to_expr() for arg in self.args]
             return Cond(*[[args[idx], args[idx + 1]] for idx in range(0, len(args), 2)])
