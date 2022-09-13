@@ -49,7 +49,7 @@ class SerializedExpr:
             case TxnaExpr():
                 field = str(e.field).split(".")[1]
                 name = f"Txna.{field}"
-                nested_args.append(SerializedExpr.from_expr(Int(e.index)))
+                nested_args.append(SerializedExpr.from_expr(e.index))
             case Return():
                 nested_args.append(SerializedExpr.from_expr(e.value))
             case If():
@@ -149,9 +149,11 @@ class SerializedExpr:
             return eval(self.name)
 
         args = [arg.to_expr() for arg in self.args]
-        thing = eval(self.name)(*args)
+        thing = eval(self.name)
+        if type(thing) is int:
+            return thing
 
-        return thing
+        return thing(*args)
 
     def dictify(self) -> dict:
         return {"name": self.name, "args": [a.dictify() for a in self.args]}
@@ -177,8 +179,8 @@ if __name__ == "__main__":
     se = SerializedExpr.from_expr(program)
     regen_program = se.to_expr()
 
-    print(program)
-    print(regen_program)
+    # print(program)
+    # print(regen_program)
 
     import json
 
@@ -202,5 +204,8 @@ if __name__ == "__main__":
     # print(expected)
     # print(actual)
 
-    # print(compileTeal(program, mode=Mode.Application, version=7))
-    print(compileTeal(regen_program, mode=Mode.Application, version=7))
+    pcomp = compileTeal(program, mode=Mode.Application, version=7).split("\n")
+    rgcomp = compileTeal(regen_program, mode=Mode.Application, version=7).split("\n")
+    for idx in range(len(pcomp)):
+        print(idx, pcomp[idx])
+        print(idx, rgcomp[idx])
