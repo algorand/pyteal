@@ -1,3 +1,4 @@
+from cmath import exp
 from typing import Iterable
 from build.lib.pyteal.ast.txn import TxnExprBuilder
 from pyteal import *
@@ -132,16 +133,15 @@ class SerializedExpr:
 
 
 if __name__ == "__main__":
-    import json
-    from application.vote import approval_program
+    # from application.vote import approval_program
 
-    program = approval_program()
+    # program = approval_program()
 
-    program = Seq(
-        val := App.globalGetEx(Int(0), Bytes("asdf")),
-        Assert(val.hasValue()),
-        val.value(),
-    )
+    # program = Seq(
+    #     val := App.globalGetEx(Int(0), Bytes("asdf")),
+    #     Assert(val.hasValue()),
+    #     val.value(),
+    # )
 
     program = Seq(
         (sv := ScratchVar()).store(Int(1)),
@@ -153,15 +153,28 @@ if __name__ == "__main__":
     regen_program = se.to_expr()
 
     co = CompileOptions(mode=Mode.Application, version=7)
+
     expected, _ = program.__teal__(co)
+    expected.addIncoming()
+    expected = TealBlock.NormalizeBlocks(expected)
+
     actual, _ = regen_program.__teal__(co)
+    actual.addIncoming()
+    actual = TealBlock.NormalizeBlocks(actual)
 
     with TealComponent.Context.ignoreExprEquality(), TealComponent.Context.ignoreScratchSlotEquality():
         assert actual == expected
 
-    print(compileTeal(program, mode=Mode.Application, version=7))
-    print(compileTeal(regen_program, mode=Mode.Application, version=7))
+    print(program)
+    print(regen_program)
 
+    print(expected)
+    print(actual)
+
+    print(compileTeal(program, mode=Mode.Application, version=7))
+    # print(compileTeal(regen_program, mode=Mode.Application, version=7))
+
+    # import json
     # js = json.dumps(se.dictify(), indent=2)
     # with open("approval.json", "w") as f:
-    #    f.write(js)
+    #   f.write(js)
