@@ -88,6 +88,100 @@ def collectScratchSlots(
     return global_slots, local_slots
 
 
+def combine_subroutine_slot_assignments_greedy_algorithm(
+    combined_subroutine_groups: list[set[Optional[SubroutineDefinition]]],
+    subroutine_graph: dict[Optional[SubroutineDefinition], set[SubroutineDefinition]],
+) -> None:
+    """This is an imperfect greedy algorithm to share scratch slot assignments between callstack
+    exclusive subroutines.
+
+    * It's granularity is at the subroutine level, meaning it decides that two subroutines must share
+      all of their scratch slot assignments, or none of them.
+    * It uses the "exclusivity" of a subroutine (i.e. how many other subroutines it's callstack
+      exclusive with) as a heuristic to combine subroutines.
+    * Analysis has not been done to prove that this algorithm always terminates (or if its results
+      are anywhere near optimal).
+    * WARNING: this algorithm DOES NOT honor user-defined scratch slots. Those slots may be
+      assigned to a numeric slot which IS NOT what the user specified.
+
+    Args:
+        combined_subroutine_groups: A list of sets of subroutines. Each set indicates subroutines
+            which will share scratch slot assignments. This is a makeshift union-find data
+            structure.
+        subroutine_graph: A graph of subroutines. Each key is a subroutine (the main routine should
+            not be present), which represents a node in the graph. Each value is a set of all
+            subroutines that specific subroutine calls, which represent directional edges in the
+            graph.
+    """
+    callstack_exclusive_subroutines = find_callstack_exclusive_subroutines(
+        subroutine_graph
+    )
+
+    if len(callstack_exclusive_subroutines) == 0:
+        return
+
+    # choose "most exclusive" (i.e. most compatible) subroutine to start
+    current_subroutine = max(
+        callstack_exclusive_subroutines.keys(),
+        key=lambda s: len(callstack_exclusive_subroutines[s]),
+    )
+    while True:
+        group_index = -1
+        for i, group in enumerate(combined_subroutine_groups):
+            if current_subroutine in group:
+                group_index = i
+                break
+
+        # only look at subroutines we're not already grouped with
+        new_callstack_exclusive = [
+            s
+            for s in callstack_exclusive_subroutines[current_subroutine]
+            if s not in combined_subroutine_groups[group_index]
+        ]
+        if len(new_callstack_exclusive) == 0:
+            # nothing else to do
+            break
+
+        # choose the "most exclusive" subroutine that is exclusive to `current_subroutine`
+        to_combine = max(
+            new_callstack_exclusive,
+            key=lambda s: len(callstack_exclusive_subroutines[s]),
+        )
+        # Share scratch slot assignments between `current_subroutine` and `to_combine`.
+        to_combine_group_index = -1
+        for i, group in enumerate(combined_subroutine_groups):
+            if to_combine in group:
+                to_combine_group_index = i
+                break
+        combined_subroutine_groups[group_index] |= combined_subroutine_groups[
+            to_combine_group_index
+        ]
+        combined_subroutine_groups.pop(to_combine_group_index)
+
+        # BEWARE! Now that we've decided to share scratch slot assignments between the two
+        # subroutines, this potentially limits the other subroutines that they can share assignments
+        # with. Specifically, if even if `current_subroutine` is callstack exclusive with another
+        # subroutine `X`, if `to_combine` is not callstack exclusive with `X`, it's no longer safe
+        # for `current_subroutine` to share assignments with `X`. We encode this constraint by
+        # taking the intersection of `current_subroutine` and `to_combine`'s callstack exclusive
+        # subroutines.
+        intersection = (
+            callstack_exclusive_subroutines[current_subroutine]
+            & callstack_exclusive_subroutines[to_combine]
+        )
+        callstack_exclusive_subroutines[current_subroutine] = intersection | {
+            to_combine
+        }
+        callstack_exclusive_subroutines[to_combine] = intersection | {
+            cast(SubroutineDefinition, current_subroutine)
+        }
+
+        current_subroutine = max(
+            callstack_exclusive_subroutines.keys(),
+            key=lambda s: len(callstack_exclusive_subroutines[s]),
+        )
+
+
 def assignScratchSlotsToSubroutines(
     subroutineBlocks: Dict[Optional[SubroutineDefinition], TealBlock],
     subroutine_graph: dict[Optional[SubroutineDefinition], set[SubroutineDefinition]],
@@ -99,6 +193,10 @@ def assignScratchSlotsToSubroutines(
             blocks. The key None is taken to mean the main program routine. The values of this
             map will be modified in order to assign specific slot values to all referenced scratch
             slots.
+        subroutine_graph: A graph of subroutines. Each key is a subroutine (the main routine should
+            not be present), which represents a node in the graph. Each value is a set of all
+            subroutines that specific subroutine calls, which represent directional edges in the
+            graph.
 
     Raises:
         TealInternalError: if the scratch slots referenced by the program do not fit into 256 slots,
@@ -115,84 +213,19 @@ def assignScratchSlotsToSubroutines(
         *local_slots.values()
     )
 
-    # This is an imperfect greedy algorithm to share scratch slot assignments between callstack
-    # exclusive subroutines.
-    # * It's granularity is at the subroutine level, meaning it decides that two subroutines must share
-    #   all of their scratch slot assignments, or none of them.
-    # * It uses the "exclusivity" of a subroutine (i.e. how many other subroutines it's callstack
-    #   exclusive with) as a heuristic to combine subroutines.
-    # * Analysis has not been done to prove that this algorithm always terminates (or if its results
-    #   are anywhere near optimal).
-    # * WARNING: this algorithm DOES NOT honor user-defined scratch slots. Those slots may be
-    #   assigned to a numeric slot which IS NOT what the user specified.
-    callstack_exclusive_subroutines = find_callstack_exclusive_subroutines(
-        subroutine_graph
-    )
-    # combined_subroutine_groups is a makeshift union-find data structure
+    # combined_subroutine_groups is a makeshift union-find data structure which identifies which
+    # subroutines will share scratch slot assignments.
+    # TODO: replace this with an actual union-find data structure
+    # TODO: it may make more sense to decide whether two subroutines can share an assignment on a
+    # slot-by-slot basis, instead of grouping all a subroutine's slots together.
     combined_subroutine_groups: list[set[Optional[SubroutineDefinition]]] = [
-        {s} for s in callstack_exclusive_subroutines.keys()
+        {s} for s in subroutine_graph.keys()
     ]
-    if len(callstack_exclusive_subroutines) != 0:
-        # choose "most exclusive" (i.e. most compatible) subroutine to start
-        current_subroutine = max(
-            callstack_exclusive_subroutines.keys(),
-            key=lambda s: len(callstack_exclusive_subroutines[s]),
-        )
-        while True:
-            group_index = -1
-            for i, group in enumerate(combined_subroutine_groups):
-                if current_subroutine in group:
-                    group_index = i
-                    break
 
-            # only look at subroutines we're not already grouped with
-            new_callstack_exclusive = [
-                s
-                for s in callstack_exclusive_subroutines[current_subroutine]
-                if s not in combined_subroutine_groups[group_index]
-            ]
-            if len(new_callstack_exclusive) == 0:
-                # nothing else to do
-                break
-
-            # choose the "most exclusive" subroutine that is exclusive to `current_subroutine`
-            to_combine = max(
-                new_callstack_exclusive,
-                key=lambda s: len(callstack_exclusive_subroutines[s]),
-            )
-            # Share scratch slot assignments between `current_subroutine` and `to_combine`.
-            to_combine_group_index = -1
-            for i, group in enumerate(combined_subroutine_groups):
-                if to_combine in group:
-                    to_combine_group_index = i
-                    break
-            combined_subroutine_groups[group_index] |= combined_subroutine_groups[
-                to_combine_group_index
-            ]
-            combined_subroutine_groups.pop(to_combine_group_index)
-
-            # BEWARE! Now that we've decided to share scratch slot assignments between the two
-            # subroutines, this potentially limits the other subroutines that they can share assignments
-            # with. Specifically, if even if `current_subroutine` is callstack exclusive with another
-            # subroutine `X`, if `to_combine` is not callstack exclusive with `X`, it's no longer safe
-            # for `current_subroutine` to share assignments with `X`. We encode this constraint by
-            # taking the intersection of `current_subroutine` and `to_combine`'s callstack exclusive
-            # subroutines.
-            intersection = (
-                callstack_exclusive_subroutines[current_subroutine]
-                & callstack_exclusive_subroutines[to_combine]
-            )
-            callstack_exclusive_subroutines[current_subroutine] = intersection | {
-                to_combine
-            }
-            callstack_exclusive_subroutines[to_combine] = intersection | {
-                cast(SubroutineDefinition, current_subroutine)
-            }
-
-            current_subroutine = max(
-                callstack_exclusive_subroutines.keys(),
-                key=lambda s: len(callstack_exclusive_subroutines[s]),
-            )
+    # TODO: implement a way to opt into this optimization -- don't always run it
+    combine_subroutine_slot_assignments_greedy_algorithm(
+        combined_subroutine_groups, subroutine_graph
+    )
 
     # the "spokesperson" for a group is the subroutine with the largest number of local slots
     combined_subroutine_groups_spokesperson: list[Optional[SubroutineDefinition]] = []
