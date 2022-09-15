@@ -41,10 +41,16 @@ router = Router(
 
 @router.method(no_op=CallConfig.CALL, opt_in=CallConfig.CALL)
 def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
-    """This method receives a payment from an account opted into this app and records it in
-    their local state.
+    """This method receives a payment from an account opted into this app and records it as a deposit.
 
     The caller may opt into this app during this call.
+
+    Args:
+        payment: A payment transaction containing the amount of Algos the user wishes to deposit.
+            The receiver of this transaction must be this app's escrow account.
+        sender: An account that is opted into this app (or will opt in during this method call).
+            The deposited funds will be recorded in this account's local state. This account must
+            be the same as the sender of the `payment` transaction.
     """
     return Seq(
         Assert(payment.get().sender() == sender.address()),
@@ -59,7 +65,14 @@ def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
 
 @router.method
 def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
-    """Lookup the balance of a user held by this app."""
+    """Lookup the balance of a user held by this app.
+
+    Args:
+        user: The user whose balance you wish to look up. This user must be opted into this app.
+
+    Returns:
+        The balance corresponding to the given user, in microAlgos.
+    """
     return output.set(App.localGet(user.address(), Bytes("balance")))
 
 
@@ -68,14 +81,17 @@ def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
     """Withdraw an amount of Algos held by this app.
 
     The sender of this method call will be the source of the Algos, and the destination will be
-    the `recipient` argument. This may or may not be the same as the sender's address.
-
-    This method will fail if the amount of Algos requested to be withdrawn exceeds the amount of
-    Algos held by this app for the sender.
+    the `recipient` argument.
 
     The Algos will be transferred to the recipient using an inner transaction whose fee is set
     to 0, meaning the caller's transaction must include a surplus fee to cover the inner
     transaction.
+
+    Args:
+        amount: The amount of Algos requested to be withdraw, in microAlgos. This method will fail
+            if this amount exceeds the amount of Algos held by this app for the method call sender.
+        recipient: An account who will receive the withdrawn Algos. This may or may not be the same
+            as the method call sender.
     """
     return Seq(
         # if amount is larger than App.localGet(Txn.sender(), Bytes("balance")), the subtraction

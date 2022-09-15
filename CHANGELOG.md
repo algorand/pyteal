@@ -1,5 +1,20 @@
 # Unreleased
 
+# 0.18.1
+
+## Fixed
+* ABI methods without a docstring now have their arguments in the output Contract object. ([#524](https://github.com/algorand/pyteal/pull/524))
+
+# 0.18.0
+
+## Added
+
+* ABI Methods will now parse the docstring for the method and set the description for any parameters that are described. ([#518](https://github.com/algorand/pyteal/pull/518))
+  * Note: the docstring must adhere to one of google, rst, numpy , or epy formatting styles.
+
+## Fixed
+* Subroutines annotated with a `TupleX` class are now invoked with an instance of that exact class, instead of the more general `Tuple` class ([#519](https://github.com/algorand/pyteal/pull/519))
+
 # 0.17.0
 
 ## Added
