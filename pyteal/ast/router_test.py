@@ -244,10 +244,10 @@ def full_ordered_combination_gen(non_dup_list: list, perm_length: int):
     # by converting an index into |non_dup_list|-based number,
     # we can get the vector mapped by the index.
     for index in range(len(non_dup_list) ** perm_length):
-        index_list_basis = []
+        index_list_basis = [0] * perm_length
         temp = index
-        for _ in range(perm_length):
-            index_list_basis.append(non_dup_list[temp % len(non_dup_list)])
+        for i in range(perm_length):
+            index_list_basis[i] = non_dup_list[temp % len(non_dup_list)]
             temp //= len(non_dup_list)
         yield index_list_basis
 
@@ -321,6 +321,7 @@ def test_method_config():
         if str(oc) != str(pt.OnComplete.ClearState)
     ]
     for on_complete_set in on_complete_pow_set:
+        print(on_complete_set)
         oc_names = [camel_to_snake(oc.name) for oc in on_complete_set]
         ordered_call_configs = full_ordered_combination_gen(
             list(pt.CallConfig), len(on_complete_set)
