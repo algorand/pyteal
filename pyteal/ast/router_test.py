@@ -224,6 +224,11 @@ def power_set(no_dup_list: list, length_override: int = None):
 
 
 class FullOrderCombinationGen:
+    """
+    This class serves as a generator for all possible vectors of maximal length `largest_perm_length` (non-negative),
+    each of whose entries are one of the elements in `non_dup_list`, namely, a list of non-duplicated elements.
+    """
+
     def __init__(self, non_dup_list: list, largest_perm_length: int) -> None:
         if largest_perm_length < 0:
             raise pt.TealInputError(
@@ -242,6 +247,12 @@ class FullOrderCombinationGen:
             [] for _ in range(self.__basis_size**largest_perm_length)
         ]
 
+        # we can index all possible cases of vectors with an index in range
+        # [0, |non_dup_list| ^ perm_length - 1]
+        # by converting an index into |non_dup_list|-based number,
+        # we can get the vector mapped by the index.
+
+        # we iterate through [0, |non_dup_list|^largest_perm_length - 1] to precompute permutation table.
         lhs_scope = 0
         discrete_log = 0
         for expn in range(largest_perm_length + 1):
@@ -264,6 +275,10 @@ class FullOrderCombinationGen:
             yield []
             return
 
+        # since we are sampling for a permutation with length `perm_length`,
+        # this corresponds to sampling a value from [|non_dup_list|^(perm_length - 1), |non_dup_list|^perm_length - 1].
+        # if sample number is greater than interval size, by pigeonhole principle there is re-testing
+        # reduce back down to interval size
         sample_num = min(sample_num, self.__basis_size ** (perm_length - 1))
 
         for _ in range(sample_num):
@@ -274,41 +289,6 @@ class FullOrderCombinationGen:
                 )
             )
             yield [self.__basis_symbol[j] for j in self.__pre_gen_table[take]]
-
-
-# TODO delete and move comments to previous
-def full_ordered_combination_gen(non_dup_list: list, perm_length: int):
-    """
-    This function serves as a generator for all possible vectors of length `perm_length`,
-    each of whose entries are one of the elements in `non_dup_list`,
-    which is a list of non-duplicated elements.
-
-    Args:
-        non_dup_list: must be a list of elements with no duplication
-        perm_length: must be a non-negative number indicating resulting length of the vector
-    """
-    if perm_length < 0:
-        raise pt.TealInputError("input permutation length must be non-negative")
-    elif len(set(non_dup_list)) != len(non_dup_list):
-        raise pt.TealInputError(f"input non_dup_list {non_dup_list} has duplications")
-    elif perm_length == 0:
-        yield []
-        return
-    # we can index all possible cases of vectors with an index in range
-    # [0, |non_dup_list| ^ perm_length - 1]
-    # by converting an index into |non_dup_list|-based number,
-    # we can get the vector mapped by the index.
-    for index in range(len(non_dup_list) ** perm_length):
-        index_list_basis = [0] * perm_length
-        temp = index
-        for i in range(perm_length):
-            index_list_basis[i] = non_dup_list[temp % len(non_dup_list)]
-            temp //= len(non_dup_list)
-        yield index_list_basis
-
-
-def oncomplete_is_in_oc_list(sth: pt.EnumInt, oc_list: list[pt.EnumInt]):
-    return any(map(lambda x: str(x) == str(sth), oc_list))
 
 
 def assemble_helper(what: pt.Expr) -> pt.TealBlock:
