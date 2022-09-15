@@ -257,14 +257,16 @@ class FullOrderCombinationGen:
             lhs_scope = self.__basis_size**expn
             discrete_log = expn + 1
 
-    def sample_gen(self, perm_length: int):
+    def sample_gen(self, perm_length: int, sample_num: int = 10):
         if perm_length < 0:
             raise pt.TealInputError("input permutation length must be non-negative")
         elif perm_length == 0:
             yield []
             return
 
-        for _ in range(perm_length):
+        sample_num = min(sample_num, self.__basis_size ** (perm_length - 1))
+
+        for _ in range(sample_num):
             take = secrets.choice(
                 range(
                     self.__basis_size ** (perm_length - 1),
