@@ -265,7 +265,12 @@ class FullOrderCombinationGen:
             return
 
         for _ in range(perm_length):
-            take = secrets.randbelow(self.__basis_size**perm_length)
+            take = secrets.choice(
+                range(
+                    self.__basis_size ** (perm_length - 1),
+                    self.__basis_size**perm_length,
+                )
+            )
             yield [self.__basis_symbol[j] for j in self.__pre_gen_table[take]]
 
 
