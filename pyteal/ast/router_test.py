@@ -1,4 +1,5 @@
 import pyteal as pt
+import secrets
 from pyteal.ast.router import ASTBuilder
 import pytest
 import typing
@@ -222,6 +223,53 @@ def power_set(no_dup_list: list, length_override: int = None):
         yield [elem for mask, elem in zip(masks, no_dup_list) if i & mask]
 
 
+class FullOrderCombinationGen:
+    def __init__(self, non_dup_list: list, largest_perm_length: int) -> None:
+        if largest_perm_length < 0:
+            raise pt.TealInputError(
+                "largest input permutation length must be non-negative"
+            )
+        elif len(set(non_dup_list)) != len(non_dup_list):
+            raise pt.TealInputError(
+                f"input non_dup_list {non_dup_list} has duplications"
+            )
+        elif not len(non_dup_list):
+            raise pt.TealInputError("input non_dup_list must be non empty")
+
+        self.__basis_symbol = non_dup_list
+        self.__basis_size = len(self.__basis_symbol)
+        self.__pre_gen_table: list[list[int]] = [
+            [] for _ in range(self.__basis_size**largest_perm_length)
+        ]
+
+        lhs_scope = 0
+        discrete_log = 0
+        for expn in range(largest_perm_length + 1):
+            for index in range(lhs_scope, self.__basis_size**expn):
+                basis_repr = [0 for _ in range(discrete_log)]
+                if discrete_log:
+                    temp = index
+                    for i in range(discrete_log):
+                        basis_repr[i] = temp % self.__basis_size
+                        temp //= self.__basis_size
+                self.__pre_gen_table[index] = basis_repr
+
+            lhs_scope = self.__basis_size**expn
+            discrete_log = expn + 1
+
+    def sample_gen(self, perm_length: int):
+        if perm_length < 0:
+            raise pt.TealInputError("input permutation length must be non-negative")
+        elif perm_length == 0:
+            yield []
+            return
+
+        for _ in range(perm_length):
+            take = secrets.randbelow(self.__basis_size**perm_length)
+            yield [self.__basis_symbol[j] for j in self.__pre_gen_table[take]]
+
+
+# TODO delete and move comments to previous
 def full_ordered_combination_gen(non_dup_list: list, perm_length: int):
     """
     This function serves as a generator for all possible vectors of length `perm_length`,
@@ -320,13 +368,10 @@ def test_method_config():
         for oc in ON_COMPLETE_CASES
         if str(oc) != str(pt.OnComplete.ClearState)
     ]
+    focg = FullOrderCombinationGen(list(pt.CallConfig), len(ON_COMPLETE_CASES))
     for on_complete_set in on_complete_pow_set:
-        print(on_complete_set)
         oc_names = [camel_to_snake(oc.name) for oc in on_complete_set]
-        ordered_call_configs = full_ordered_combination_gen(
-            list(pt.CallConfig), len(on_complete_set)
-        )
-        for call_configs in ordered_call_configs:
+        for call_configs in focg.sample_gen(len(on_complete_set)):
             mc = pt.MethodConfig(**dict(zip(oc_names, call_configs)))
             match mc.clear_state:
                 case pt.CallConfig.NEVER:
