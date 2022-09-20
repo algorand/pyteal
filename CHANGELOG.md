@@ -1,5 +1,8 @@
 # Unreleased
 
+## Fixed
+* Erroring on constructing an odd length hex string. ([#539](https://github.com/algorand/pyteal/pull/539))
+
 # 0.18.1
 
 ## Fixed
