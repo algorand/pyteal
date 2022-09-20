@@ -84,6 +84,11 @@ def valid_base64(s: str):
 
 def valid_base16(s: str):
     """check if s is a valid hex encoding string"""
+    if len(s) % 2:
+        raise TealInputError(
+            f"{s} is of odd length, not a valid RFC 4648 base16 string"
+        )
+
     pattern = re.compile(r"[0-9A-Fa-f]*")
 
     if pattern.fullmatch(s) is None:

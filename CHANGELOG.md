@@ -1,7 +1,7 @@
 # Unreleased
 
 ## Fixed
-* Odd length hex string compilation pass by inserting 0 before last hex. ([#539](https://github.com/algorand/pyteal/pull/539))
+* Erroring on constructing an odd length hex string. ([#539](https://github.com/algorand/pyteal/pull/539))
 
 # 0.18.1
 

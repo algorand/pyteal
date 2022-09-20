@@ -72,8 +72,6 @@ class Bytes(LeafExpr):
                     self.byte_str = arg2[2:]
                 else:
                     self.byte_str = arg2
-                if len(self.byte_str) % 2:
-                    self.byte_str = self.byte_str[:-1] + "0" + self.byte_str[-1]
                 valid_base16(self.byte_str)
             else:
                 raise TealInputError(
