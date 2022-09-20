@@ -1,5 +1,8 @@
 # Unreleased
 
+## Fixed
+* Odd length hex string compilation pass by inserting 0 before last hex.
+
 # 0.18.1
 
 ## Fixed
