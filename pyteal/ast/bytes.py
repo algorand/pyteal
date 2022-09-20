@@ -1,4 +1,4 @@
-from typing import Union, cast, overload, TYPE_CHECKING
+from typing import cast, overload, TYPE_CHECKING
 
 from pyteal.types import TealType, valid_base16, valid_base32, valid_base64
 from pyteal.util import escapeStr
@@ -14,14 +14,14 @@ class Bytes(LeafExpr):
     """An expression that represents a byte string."""
 
     @overload
-    def __init__(self, arg1: Union[str, bytes, bytearray]) -> None:
+    def __init__(self, arg1: str | bytes | bytearray) -> None:
         pass
 
     @overload
     def __init__(self, arg1: str, arg2: str) -> None:
         pass
 
-    def __init__(self, arg1: Union[str, bytes, bytearray], arg2: str = None) -> None:
+    def __init__(self, arg1: str | bytes | bytearray, arg2: str = None) -> None:
         """
         __init__(arg1: Union[str, bytes, bytearray]) -> None
         __init__(self, arg1: str, arg2: str) -> None
