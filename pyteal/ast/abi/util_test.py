@@ -771,3 +771,79 @@ def test_sdk_type_specs_from_signature(sig_str, sig_args, sig_rets):
     args, ret = abi.type_specs_from_signature(sig_str)
     assert args == sig_args
     assert ret == sig_rets
+
+
+class NamedTDecl(abi.NamedTuple):
+    a: abi.Field[abi.Uint64]
+    b: abi.Field[
+        abi.Tuple3[abi.PaymentTransaction, abi.Address, abi.StaticBytes[Literal[16]]]
+    ]
+    c: abi.Field[abi.Transaction]
+
+
+TYPE_SPEC_ASSIGNABLE_CASES = [
+    (abi.PaymentTransactionTypeSpec(), abi.TransactionTypeSpec(), True),
+    (
+        abi.type_spec_from_annotation(abi.StaticArray[abi.Byte, Literal[10]]),
+        abi.type_spec_from_annotation(abi.StaticBytes[Literal[10]]),
+        True,
+    ),
+    (
+        abi.type_spec_from_annotation(abi.StaticBytes[Literal[10]]),
+        abi.type_spec_from_annotation(abi.StaticArray[abi.Byte, Literal[10]]),
+        True,
+    ),
+    (
+        abi.type_spec_from_annotation(abi.DynamicBytes),
+        abi.type_spec_from_annotation(abi.DynamicArray[abi.Byte]),
+        True,
+    ),
+    (
+        abi.type_spec_from_annotation(abi.DynamicArray[abi.Byte]),
+        abi.type_spec_from_annotation(abi.DynamicBytes),
+        True,
+    ),
+    (
+        abi.type_spec_from_annotation(abi.DynamicArray[abi.Uint8]),
+        abi.type_spec_from_annotation(abi.DynamicBytes),
+        False,
+    ),
+    (
+        abi.type_spec_from_annotation(abi.DynamicBytes),
+        abi.type_spec_from_annotation(abi.DynamicArray[abi.Uint8]),
+        False,
+    ),
+    (
+        abi.type_spec_from_annotation(NamedTDecl),
+        abi.type_spec_from_annotation(
+            abi.Tuple3[
+                abi.Uint64,
+                abi.Tuple3[
+                    abi.Transaction, abi.Address, abi.StaticArray[abi.Byte, Literal[16]]
+                ],
+                abi.Transaction,
+            ]
+        ),
+        True,
+    ),
+    (
+        abi.type_spec_from_annotation(
+            abi.Tuple3[
+                abi.Uint64,
+                abi.Tuple3[
+                    abi.PaymentTransaction,
+                    abi.Address,
+                    abi.StaticArray[abi.Byte, Literal[16]],
+                ],
+                abi.Transaction,
+            ]
+        ),
+        abi.type_spec_from_annotation(NamedTDecl),
+        True,
+    ),
+]
+
+
+@pytest.mark.parametrize("a, b, expected", TYPE_SPEC_ASSIGNABLE_CASES)
+def test_type_spec_assignable(a, b, expected):
+    assert abi.type_spec_is_assignable(a, b) == expected
