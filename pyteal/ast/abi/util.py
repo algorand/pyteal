@@ -499,3 +499,47 @@ def type_specs_from_signature(sig: str) -> tuple[list[TypeSpec], Optional[TypeSp
         return_type = type_spec_from_algosdk(sdk_method.returns.type)
 
     return [type_spec_from_algosdk(arg.type) for arg in sdk_method.args], return_type
+
+
+def type_spec_is_assignable(a: TypeSpec, b: TypeSpec) -> bool:
+    from pyteal.ast.abi import (
+        TupleTypeSpec,
+        ArrayTypeSpec,
+        StaticArrayTypeSpec,
+        DynamicArrayTypeSpec,
+    )
+
+    match a, b:
+        case TupleTypeSpec(), TupleTypeSpec():
+            a, b = cast(TupleTypeSpec, a), cast(TupleTypeSpec, b)
+            if len(a.value_type_specs()) != len(b.value_type_specs()):
+                return False
+            return all(
+                map(
+                    lambda ab: type_spec_is_assignable(ab[0], ab[1]),
+                    zip(a.value_type_specs(), b.value_type_specs()),
+                )
+            )
+        case TupleTypeSpec(), _:
+            return False
+        case ArrayTypeSpec(), ArrayTypeSpec():
+            a, b = cast(ArrayTypeSpec, a), cast(ArrayTypeSpec, b)
+            if not type_spec_is_assignable(a.value_type_spec(), b.value_type_spec()):
+                return False
+            match a, b:
+                case StaticArrayTypeSpec(), StaticArrayTypeSpec():
+                    a, b = cast(StaticArrayTypeSpec, a), cast(StaticArrayTypeSpec, b)
+                    return a.length_static() == b.length_static()
+                case DynamicArrayTypeSpec(), DynamicArrayTypeSpec():
+                    return True
+                case _:
+                    return False
+        case ArrayTypeSpec(), _:
+            return False
+
+    if isinstance(a, type(b)):
+        return True
+    elif str(a) == str(b):
+        return True
+
+    return False
