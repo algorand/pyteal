@@ -1,5 +1,8 @@
 # Unreleased
 
+## Added
+* Refined ABI type-check on assignment. ([#540](https://github.com/algorand/pyteal/pull/540))
+
 ## Fixed
 * Erroring on constructing an odd length hex string. ([#539](https://github.com/algorand/pyteal/pull/539))
 
