@@ -223,10 +223,10 @@ __all__ = [
     "While",
     "WideRatio",
     "WideUint128",
+    "abi",
     "compileTeal",
     "expW",
+    "pragma",
     "prodW",
     "sumW",
-    "abi",
-    "pragma",
 ]
