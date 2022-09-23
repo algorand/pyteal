@@ -1,11 +1,13 @@
 from abc import ABCMeta, abstractmethod
-from typing import List, Tuple, TYPE_CHECKING
-from pyteal.ast.multi import MultiValue
-from pyteal.ir.tealblock import TealBlock
-from pyteal.types import TealType, require_type
-from pyteal.errors import TealInternalError, TealCompileError
-from pyteal.ir import TealOp, Op, TealSimpleBlock
+from typing import TYPE_CHECKING, Callable, List, Tuple
+
 from pyteal.ast.expr import Expr
+from pyteal.ast.leafexpr import LeafExpr
+from pyteal.ast.multi import MultiValue
+from pyteal.ast.scratch import ScratchSlot
+from pyteal.errors import TealCompileError, TealInputError, TealInternalError
+from pyteal.ir import Op, TealBlock, TealConditionalBlock, TealOp, TealSimpleBlock
+from pyteal.types import TealType, require_type
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions

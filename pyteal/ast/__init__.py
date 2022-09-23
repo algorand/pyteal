@@ -124,7 +124,7 @@ from pyteal.ast.vrfverify import VrfVerify
 
 # more ops
 from pyteal.ast.naryexpr import NaryExpr, Add, And, Mul, Or, Concat
-from pyteal.ast.widemath import WideRatio
+from pyteal.ast.widemath import WideRatio, sumW, prodW, expW, WideUint128
 
 # control flow
 from pyteal.ast.if_ import If
