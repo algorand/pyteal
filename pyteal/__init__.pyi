@@ -37,6 +37,7 @@ __all__ = [
     "AccountParam",
     "AccountParamObject",
     "Add",
+    "AddW",
     "Addr",
     "And",
     "App",

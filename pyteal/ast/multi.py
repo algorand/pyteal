@@ -1,6 +1,6 @@
 from typing import Callable, List, Union, TYPE_CHECKING
 
-from pyteal.types import TealType
+from pyteal.types import TealType, require_type
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
 from pyteal.ast.leafexpr import LeafExpr
@@ -81,3 +81,21 @@ class MultiValue(LeafExpr):
 
 
 MultiValue.__module__ = "pyteal"
+
+
+# Binary MultiValue operations
+def AddW(adder: Expr, adder_: Expr) -> MultiValue:
+    """Add two 64-bit integers.
+
+    Produces a MultiValue with two outputs: the sum and the carry bit.
+
+    Args:
+        adder: Must evaluate to uint64.
+        adder_: Must evaluate to uint64.
+    """
+
+    # Should this be
+    require_type(adder, TealType.uint64)
+    require_type(adder_, TealType.uint64)
+
+    return MultiValue(Op.addw, [TealType.uint64, TealType.uint64], args=[adder, adder_])
