@@ -19,8 +19,8 @@ class MultiValue(LeafExpr):
         op: Op,
         types: List[TealType],
         *,
-        immediate_args: List[Union[int, str]] = None,
-        args: List[Expr] = None,
+        immediate_args: List[Union[int, str]] | None = None,
+        args: List[Expr] | None = None,
         compile_check: Callable[["CompileOptions"], None] = lambda _: None,
     ):
         """Create a new MultiValue.
@@ -41,8 +41,8 @@ class MultiValue(LeafExpr):
         self.output_slots = [ScratchSlot() for _ in self.types]
 
     def outputReducer(self, reducer: Callable[..., Expr]) -> Expr:
-        input = [slot.load(self.types[i]) for i, slot in enumerate(self.output_slots)]
-        return Seq(self, reducer(*input))
+        inputs = [slot.load(self.types[i]) for i, slot in enumerate(self.output_slots)]
+        return Seq(self, reducer(*inputs))
 
     def __str__(self):
         ret_str = "(({}".format(self.op)

@@ -6,6 +6,10 @@ import pyteal as pt
 options = pt.CompileOptions()
 
 
+def TOO_MANY_ARGS(arg_len):
+    return ValueError("Too many arguments. Expected 0-2, got {}".format(len(arg_len)))
+
+
 def __test_single(expr: pt.MultiValue):
     assert expr.output_slots[0] != expr.output_slots[1]
 
@@ -54,6 +58,8 @@ def __test_single_conditional(
         arg_2, after_arg_2 = args[1].__teal__(options)
         after_arg_1.setNextBlock(arg_2)
         after_arg_2.setNextBlock(expected_call)
+    else:
+        raise TOO_MANY_ARGS(len(args))
 
     expected.addIncoming()
     expected = pt.TealBlock.NormalizeBlocks(expected)
@@ -94,6 +100,8 @@ def __test_single_assert(expr: pt.MultiValue, op, args: List[pt.Expr], iargs, re
         arg_2, after_arg_2 = args[1].__teal__(options)
         after_arg_1.setNextBlock(arg_2)
         after_arg_2.setNextBlock(expected_call)
+    else:
+        raise TOO_MANY_ARGS(len(args))
 
     expected.addIncoming()
     expected = pt.TealBlock.NormalizeBlocks(expected)
@@ -136,6 +144,8 @@ def __test_single_with_vars(
         arg_2, after_arg_2 = args[1].__teal__(options)
         after_arg_1.setNextBlock(arg_2)
         after_arg_2.setNextBlock(expected_call)
+    else:
+        raise TOO_MANY_ARGS(len(args))
 
     expected.addIncoming()
     expected = pt.TealBlock.NormalizeBlocks(expected)

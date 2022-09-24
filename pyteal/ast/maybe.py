@@ -16,8 +16,8 @@ class MaybeValue(MultiValue):
         op: Op,
         type: TealType,
         *,
-        immediate_args: List[Union[int, str]] = None,
-        args: List[Expr] = None
+        immediate_args: List[Union[int, str]] | None = None,
+        args: List[Expr] | None = None
     ):
         """Create a new MaybeValue.
 
