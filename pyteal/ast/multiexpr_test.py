@@ -1,9 +1,11 @@
 import pytest
-from typing import List
 
 import pyteal as pt
 
-options = pt.CompileOptions()
+avm2Options = pt.CompileOptions(version=2)
+avm3Options = pt.CompileOptions(version=3)
+avm4Options = pt.CompileOptions(version=4)
+avm5Options = pt.CompileOptions(version=5)
 
 
 def test_addw():
@@ -19,9 +21,17 @@ def test_addw():
         ]
     )
 
-    actual, _ = expr.__teal__(options)
+    actual, _ = expr.__teal__(avm2Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+
+def test_addw_invalid():
+    with pytest.raises(pt.TealTypeError):
+        pt.AddW(pt.Int(2), pt.Txn.receiver())
+
+    with pytest.raises(pt.TealTypeError):
+        pt.AddW(pt.Txn.sender(), pt.Int(2))
