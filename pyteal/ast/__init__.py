@@ -157,7 +157,7 @@ from pyteal.ast.scratch import (
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
 from pyteal.ast.maybe import MaybeValue
 from pyteal.ast.multi import MultiValue
-from pyteal.ast.wideexpr import AddW
+from pyteal.ast.wideexpr import AddW, MulW, ExpW, DivModW
 from pyteal.ast.opup import OpUp, OpUpMode
 from pyteal.ast.ecdsa import EcdsaCurve, EcdsaVerify, EcdsaDecompress, EcdsaRecover
 from pyteal.ast.router import (
@@ -332,4 +332,7 @@ __all__ = [
     "JsonRef",
     "VrfVerify",
     "AddW",
+    "MulW",
+    "ExpW",
+    "DivModW",
 ]
