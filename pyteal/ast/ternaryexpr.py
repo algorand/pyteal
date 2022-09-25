@@ -146,7 +146,7 @@ def SetByte(value: Expr, index: Expr, newByteValue: Expr) -> TernaryExpr:
     )
 
 
-def Divw(hi: Expr, lo: Expr, y: Expr) -> TernaryExpr:
+def DivW(hi: Expr, lo: Expr, y: Expr) -> TernaryExpr:
     """
     Performs wide division by interpreting `hi` and `lo` as a uint128 value.
 

@@ -92,7 +92,7 @@ __all__ = [
     "DEFAULT_TEAL_VERSION",
     "Div",
     "DivModW",
-    "Divw",
+    "DivW",
     "DynamicScratchVar",
     "EcdsaCurve",
     "EcdsaDecompress",

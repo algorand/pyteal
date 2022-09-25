@@ -176,7 +176,7 @@ def test_set_byte_invalid():
 
 def test_divw():
     args = [pt.Int(0), pt.Int(90), pt.Int(30)]
-    expr = pt.Divw(args[0], args[1], args[2])
+    expr = pt.DivW(args[0], args[1], args[2])
     assert expr.type_of() == pt.TealType.uint64
 
     expected = pt.TealSimpleBlock(
@@ -197,10 +197,10 @@ def test_divw():
 
 def test_divw_invalid():
     with pytest.raises(pt.TealTypeError):
-        pt.Divw(pt.Bytes("10"), pt.Int(0), pt.Int(1))
+        pt.DivW(pt.Bytes("10"), pt.Int(0), pt.Int(1))
 
     with pytest.raises(pt.TealTypeError):
-        pt.Divw(pt.Int(10), pt.Bytes("0"), pt.Int(1))
+        pt.DivW(pt.Int(10), pt.Bytes("0"), pt.Int(1))
 
     with pytest.raises(pt.TealTypeError):
-        pt.Divw(pt.Int(10), pt.Int(0), pt.Bytes("1"))
+        pt.DivW(pt.Int(10), pt.Int(0), pt.Bytes("1"))
