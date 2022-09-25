@@ -1,6 +1,6 @@
 from typing import Callable, List, Union, TYPE_CHECKING
 
-from pyteal.types import TealType, require_type
+from pyteal.types import TealType
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
 from pyteal.ast.leafexpr import LeafExpr
