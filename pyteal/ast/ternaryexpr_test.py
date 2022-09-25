@@ -204,3 +204,8 @@ def test_divw_invalid():
 
     with pytest.raises(pt.TealTypeError):
         pt.DivW(pt.Int(10), pt.Int(0), pt.Bytes("1"))
+
+
+def test_divw_invalid_version():
+    with pytest.raises(pt.TealInputError):
+        pt.DivW(pt.Int(2), pt.Int(2), pt.Int(2)).__teal__(avm5Options)  # needs >=6

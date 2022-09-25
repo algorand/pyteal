@@ -75,8 +75,6 @@ def test_mulw_invalid():
         pt.MulW(pt.Txn.sender(), pt.Int(2))
 
 
-# TODO: ref: def test_divw():
-# TODO: ref: def test_divw_overload():
 # TODO: test: def test_modw_overload():
 # TODO: test: def test_modw_invalid():
 
@@ -118,12 +116,6 @@ def test_expw_invalid():
 def test_expw_invalid_version():
     with pytest.raises(pt.TealInputError):
         pt.ExpW(pt.Int(2), pt.Int(2)).__teal__(avm3Options)  # needs >=4
-
-
-# TODO: ref: move test_divw() to here
-def test_divw_invalid_version():
-    with pytest.raises(pt.TealInputError):
-        pt.DivW(pt.Int(2), pt.Int(2), pt.Int(2)).__teal__(avm5Options)  # needs >=5
 
 
 def test_divmodw():
