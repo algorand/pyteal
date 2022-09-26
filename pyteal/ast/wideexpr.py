@@ -49,6 +49,8 @@ class WideExpr(MultiValue):
         return super().__teal__(options)
 
 
+WideExpr.__module__ = "pyteal"
+
 """Binary MultiValue operations"""
 
 
