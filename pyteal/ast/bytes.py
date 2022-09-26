@@ -20,11 +20,11 @@ class Bytes(LeafExpr):
     byte_str: str
 
     @overload
-    def __init__(self, arg1: str | bytes | bytearray) -> None:  # overload_0
+    def __init__(self, arg1: str | bytes | bytearray) -> None:  # overload_1
         pass
 
     @overload
-    def __init__(self, arg1: ValidBase, arg2: str) -> None:  # overload_1
+    def __init__(self, arg1: ValidBase, arg2: str) -> None:  # overload_2
         pass
 
     def __init__(
@@ -52,7 +52,7 @@ class Bytes(LeafExpr):
         """
         super().__init__()
 
-        # overload_0, Bytes(arg1: str | bytes | bytearray)
+        # overload_1, Bytes(arg1: str | bytes | bytearray)
         if arg2 is None:
             if type(arg1) is str:
                 self.base = "utf8"
@@ -65,7 +65,7 @@ class Bytes(LeafExpr):
             else:
                 raise TealInputError(f"Unknown argument type: {type(arg1)}")
 
-        # overload_1, Bytes(self, arg1: ValidBase, arg2: str)
+        # overload_2, Bytes(self, arg1: ValidBase, arg2: str)
         if type(arg1) is not str:
             raise TealInputError(f"Unknown type for base: {type(arg1)}")
         if type(arg2) is not str:

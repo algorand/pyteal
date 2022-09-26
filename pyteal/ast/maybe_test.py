@@ -1,3 +1,4 @@
+from typing import List, cast
 import pyteal as pt
 
 options = pt.CompileOptions()
@@ -37,7 +38,9 @@ def test_maybe_value():
     for op in ops:
         for type in types:
             for iargs in immedate_argv:
+                iargs = cast(List[str | int], iargs)
                 for args in argv:
+                    args = cast(List[pt.Expr], args)
                     expr = pt.MaybeValue(op, type, immediate_args=iargs, args=args)
 
                     assert expr.slotOk != expr.slotValue
@@ -75,6 +78,10 @@ def test_maybe_value():
                         arg_2, after_arg_2 = args[1].__teal__(options)
                         after_arg_1.setNextBlock(arg_2)
                         after_arg_2.setNextBlock(expected_call)
+                    else:
+                        raise pt.TealInputError(
+                            f"Invalid number of args {len(args)}, expected 0-2"
+                        )
 
                     expected.addIncoming()
                     expected = pt.TealBlock.NormalizeBlocks(expected)
