@@ -62,6 +62,8 @@ class WideInt(LeafExpr):
         For two Expr() objects:
             Pass two ``Expr``s. They must be of type ``TealType.uint64`` For example, ``WideInt(Int(1),Int(1))``.
         For two ScratchSlot() objects:
+            Pass two ``ScratchSlot``s. For example, ``WideInt(ScratchSlot(), ScratchSlot())``.
+
         """
         super().__init__()
         is_overload_1 = isinstance(arg1, int) and arg2 is None
