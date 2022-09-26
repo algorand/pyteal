@@ -13,15 +13,20 @@ if TYPE_CHECKING:
 class Bytes(LeafExpr):
     """An expression that represents a byte string."""
 
+    base: str  # Literal["utf8","base16", "base32", "base64"]
+    byte_str: str
+
     @overload
-    def __init__(self, arg1: str | bytes | bytearray) -> None:
+    def __init__(self, arg1: str | bytes | bytearray) -> None:  # overload_0
         pass
 
     @overload
-    def __init__(self, arg1: str, arg2: str) -> None:
+    def __init__(self, arg1: str, arg2: str) -> None:  # overload_1
         pass
 
-    def __init__(self, arg1: str | bytes | bytearray, arg2: str = None) -> None:
+    def __init__(
+        self, arg1: str | bytes | bytearray | str, arg2: None | str = None
+    ) -> None:
         """
         __init__(arg1: Union[str, bytes, bytearray]) -> None
         __init__(self, arg1: str, arg2: str) -> None
@@ -43,40 +48,39 @@ class Bytes(LeafExpr):
             ``Bytes("base16", "0x636F6E74656E74")``.
         """
         super().__init__()
+
+        # overload_0, Bytes(arg1: str | bytes | bytearray)
         if arg2 is None:
             if type(arg1) is str:
                 self.base = "utf8"
                 self.byte_str = escapeStr(arg1)
+                return
             elif type(arg1) in (bytes, bytearray):
                 self.base = "base16"
                 self.byte_str = cast(bytes | bytearray, arg1).hex()
+                return
             else:
                 raise TealInputError(f"Unknown argument type: {type(arg1)}")
-        else:
-            if type(arg1) is not str:
-                raise TealInputError(f"Unknown type for base: {type(arg1)}")
 
-            if type(arg2) is not str:
-                raise TealInputError(f"Unknown type for value: {type(arg2)}")
+        # overload_1, Bytes(self, arg1: str, arg2: str)
+        valid_bases = ("base16", "base32", "base64")
+        if type(arg1) is not str:
+            raise TealInputError(f"Unknown type for value: {type(arg1)}")
+        if arg1 not in valid_bases:
+            raise TealInputError(f"invalid base {arg1}, need to be in {valid_bases}")
+        if type(arg2) is not str:
+            raise TealInputError(f"Unknown type for value: {type(arg2)}")
 
-            self.base = arg1
-
-            if self.base == "base32":
-                valid_base32(arg2)
-                self.byte_str = arg2
-            elif self.base == "base64":
-                self.byte_str = arg2
-                valid_base64(self.byte_str)
-            elif self.base == "base16":
-                if arg2.startswith("0x"):
-                    self.byte_str = arg2[2:]
-                else:
-                    self.byte_str = arg2
-                valid_base16(self.byte_str)
-            else:
-                raise TealInputError(
-                    f"invalid base {self.base}, need to be base32, base64, or base16."
-                )
+        self.base = arg1
+        self.byte_str = arg2
+        if self.base == "base16" and arg2.startswith("0x"):
+            self.byte_str = self.byte_str[2:]
+        validate_method = {
+            "base16": valid_base16,
+            "base32": valid_base32,
+            "base64": valid_base64,
+        }
+        validate_method[self.base](self.byte_str)
 
     def __teal__(self, options: "CompileOptions"):
         if self.base == "utf8":
