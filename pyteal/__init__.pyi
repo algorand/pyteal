@@ -221,6 +221,7 @@ __all__ = [
     "UnaryExpr",
     "VrfVerify",
     "While",
+    "WideInt",
     "WideRatio",
     "abi",
     "compileTeal",
