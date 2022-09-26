@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING
 
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
@@ -16,21 +16,38 @@ class WideInt(LeafExpr):
 
     hi: ScratchSlot
     lo: ScratchSlot
-    _hi_int: Expr | Int
-    _lo_int: Expr | Int
+    _hi_expr: Expr | Int
+    _lo_expr: Expr | Int
 
-    @overload
-    def __init__(self, arg1: int) -> None:  # overload_1
-        pass
+    @classmethod
+    def FromInt(cls, py_int: int) -> "WideInt":  # overload_1
+        if py_int < 0 or py_int > 2**128 - 1:
+            raise TealInputError("WideInt value must be between 0 and 2**128-1")
 
-    @overload
-    def __init__(self, arg1: Expr, arg2: Expr) -> None:  # overload_2
-        pass
+        cls._hi_expr = Int(py_int >> 64)
+        cls._lo_expr = Int(py_int & 0xFFFFFFFFFFFFFFFF)  # 64-bit mask
+        return cls.FromExprExpr(cls._hi_expr, cls._lo_expr)
 
-    def __init__(self, arg1: int | Expr, arg2: None | Expr = None) -> None:
+    @classmethod
+    def FromExprExpr(cls, expr_high: Expr, expr_low: Expr) -> "WideInt":
+        require_type(expr_high, TealType.uint64)
+        require_type(expr_low, TealType.uint64)
+        cls._hi_expr = expr_high
+        cls._lo_expr = expr_low
+        return cls(ScratchSlot(), ScratchSlot())
+
+    # correct_type = (isinstance(arg1, int) and arg2 is None) or (
+    #     isinstance(arg1, Expr) and isinstance(arg2, Expr)
+    # )
+
+    # TealInputError(
+    #                 f"WideInt() requires `int` or `Expr, Expr`, got {arg1} of {type(arg1)} and {arg2} of {type(arg2)}"
+    #             )
+
+    def __init__(self, slot_hi: ScratchSlot, slot_lo: ScratchSlot) -> None:
         """
-        WideInt(arg1: int) -> None
-        WideInt(arg1: Expr, arg2: Expr) -> None
+        WideInt(num: int) -> WideInt
+        WideInt(expr_high: Expr, expr_low: Expr) -> WideInt
 
         Create a new WideInt.
 
@@ -39,30 +56,11 @@ class WideInt(LeafExpr):
         For two Int() objects:
             Pass the two Int. They must have type ``TealType.uint64`` For example, ``WideInt(Int(1),Int(1))``.
         """
-
         super().__init__()
-        correct_type = (isinstance(arg1, int) and arg2 is None) or (
-            isinstance(arg1, Expr) and isinstance(arg2, Expr)
-        )
-        if not correct_type:
-            raise TealInputError(
-                f"WideInt() requires `int` or `Expr, Expr`, got {arg1} of {type(arg1)} and {arg2} of {type(arg2)}"
-            )
-
-        if isinstance(arg1, int):
-            self._hi_int = Int(arg1 >> 64)
-            self._lo_int = Int(arg1 & 0xFFFFFFFFFFFFFFFF)  # 64-bit mask
-        elif isinstance(arg1, Expr) and isinstance(arg2, Expr):
-            require_type(arg1, TealType.uint64)
-            require_type(arg2, TealType.uint64)
-            self._hi_int = arg1
-            self._lo_int = arg2
-        # don't need else because of correct_type check
-
-        self.hi = ScratchSlot()
-        self.lo = ScratchSlot()
-        self.hi.store(self._hi_int)
-        self.lo.store(self._lo_int)
+        self.hi = slot_hi
+        self.lo = slot_lo
+        self.hi.store(self._hi_expr)
+        self.lo.store(self._lo_expr)
 
     def __str__(self):
         # TODO: not sure how this works
@@ -70,8 +68,8 @@ class WideInt(LeafExpr):
 
     def __teal__(self, options: "CompileOptions"):
         # TODO: compile check
-        store_lo = self.lo.store(self._lo_int).__teal__(options)
-        store_hi = self.hi.store(self._hi_int).__teal__(options)
+        store_lo = self.lo.store(self._lo_expr).__teal__(options)
+        store_hi = self.hi.store(self._hi_expr).__teal__(options)
 
         # for Int.__teal__(), [0] and [1] are the same, but not for store.
 
