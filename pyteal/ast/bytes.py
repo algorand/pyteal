@@ -1,4 +1,4 @@
-from typing import cast, overload, TYPE_CHECKING
+from typing import Literal, cast, get_args, overload, TYPE_CHECKING
 
 from pyteal.types import TealType, valid_base16, valid_base32, valid_base64
 from pyteal.util import escapeStr
@@ -9,11 +9,14 @@ from pyteal.ast.leafexpr import LeafExpr
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
 
+ValidBase = Literal["base16", "base32", "base64"]
+valid_bases = get_args(ValidBase)
+
 
 class Bytes(LeafExpr):
     """An expression that represents a byte string."""
 
-    base: str  # Literal["utf8","base16", "base32", "base64"]
+    base: ValidBase | Literal["utf8"]
     byte_str: str
 
     @overload
@@ -21,11 +24,11 @@ class Bytes(LeafExpr):
         pass
 
     @overload
-    def __init__(self, arg1: str, arg2: str) -> None:  # overload_1
+    def __init__(self, arg1: ValidBase, arg2: str) -> None:  # overload_1
         pass
 
     def __init__(
-        self, arg1: str | bytes | bytearray | str, arg2: None | str = None
+        self, arg1: str | bytes | bytearray | ValidBase, arg2: None | str = None
     ) -> None:
         """
         __init__(arg1: Union[str, bytes, bytearray]) -> None
@@ -62,25 +65,26 @@ class Bytes(LeafExpr):
             else:
                 raise TealInputError(f"Unknown argument type: {type(arg1)}")
 
-        # overload_1, Bytes(self, arg1: str, arg2: str)
-        valid_bases = ("base16", "base32", "base64")
+        # overload_1, Bytes(self, arg1: ValidBase, arg2: str)
         if type(arg1) is not str:
-            raise TealInputError(f"Unknown type for value: {type(arg1)}")
-        if arg1 not in valid_bases:
-            raise TealInputError(f"invalid base {arg1}, need to be in {valid_bases}")
+            raise TealInputError(f"Unknown type for base: {type(arg1)}")
         if type(arg2) is not str:
             raise TealInputError(f"Unknown type for value: {type(arg2)}")
 
-        self.base = arg1
+        if arg1 not in valid_bases:
+            raise TealInputError(f"invalid base {arg1}, need to be in {valid_bases}")
+
+        self.base = cast(ValidBase, arg1)
         self.byte_str = arg2
         if self.base == "base16" and arg2.startswith("0x"):
             self.byte_str = self.byte_str[2:]
-        validate_method = {
+
+        validation = {
             "base16": valid_base16,
             "base32": valid_base32,
             "base64": valid_base64,
         }
-        validate_method[self.base](self.byte_str)
+        validation[self.base](self.byte_str)
 
     def __teal__(self, options: "CompileOptions"):
         if self.base == "utf8":

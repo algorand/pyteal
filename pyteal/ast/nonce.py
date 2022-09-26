@@ -1,9 +1,9 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from pyteal.errors import TealInputError
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
-from pyteal.ast.bytes import Bytes
+from pyteal.ast.bytes import Bytes, ValidBase
 from pyteal.ast.unaryexpr import Pop
 
 if TYPE_CHECKING:
@@ -34,6 +34,7 @@ class Nonce(Expr):
         if base == "utf8":
             self.nonce_bytes = Bytes(nonce)
         else:
+            base = cast(ValidBase, base)
             self.nonce_bytes = Bytes(base, nonce)
 
         self.seq = Seq([Pop(self.nonce_bytes), self.child])
