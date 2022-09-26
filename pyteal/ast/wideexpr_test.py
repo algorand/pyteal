@@ -10,12 +10,12 @@ avm5Options = pt.CompileOptions(version=5)
 
 def test_addw():
     args = [pt.Int(2), pt.Int(3)]
-    expr = pt.AddW(pt.Int(1), pt.Int(2))
+    expr = pt.AddW(args[0], args[1])
 
     expected = pt.TealSimpleBlock(
         [
-            pt.TealOp(args[0], pt.Op.int, 1),
-            pt.TealOp(args[1], pt.Op.int, 2),
+            pt.TealOp(args[0], pt.Op.int, 2),
+            pt.TealOp(args[1], pt.Op.int, 3),
             pt.TealOp(expr, pt.Op.addw),
             pt.TealOp(expr.output_slots[1].store(), pt.Op.store, expr.output_slots[1]),
             pt.TealOp(expr.output_slots[0].store(), pt.Op.store, expr.output_slots[0]),
