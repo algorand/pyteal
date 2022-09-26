@@ -17,8 +17,8 @@ def test_addw():
             pt.TealOp(args[0], pt.Op.int, 2),
             pt.TealOp(args[1], pt.Op.int, 3),
             pt.TealOp(expr, pt.Op.addw),
-            pt.TealOp(expr.output_slots[1].store(), pt.Op.store, expr.output_slots[1]),
-            pt.TealOp(expr.output_slots[0].store(), pt.Op.store, expr.output_slots[0]),
+            pt.TealOp(expr.lo.store(), pt.Op.store, expr.lo),
+            pt.TealOp(expr.hi.store(), pt.Op.store, expr.hi),
         ]
     )
 
@@ -51,8 +51,8 @@ def test_mulw():
             pt.TealOp(args[0], pt.Op.int, 3),
             pt.TealOp(args[1], pt.Op.int, 8),
             pt.TealOp(expr, pt.Op.mulw),
-            pt.TealOp(expr.output_slots[1].store(), pt.Op.store, expr.output_slots[1]),
-            pt.TealOp(expr.output_slots[0].store(), pt.Op.store, expr.output_slots[0]),
+            pt.TealOp(expr.lo.store(), pt.Op.store, expr.lo),
+            pt.TealOp(expr.hi.store(), pt.Op.store, expr.hi),
         ]
     )
 
@@ -89,8 +89,8 @@ def test_expw():
             pt.TealOp(args[0], pt.Op.int, 2),
             pt.TealOp(args[1], pt.Op.int, 9),
             pt.TealOp(expr, pt.Op.expw),
-            pt.TealOp(expr.output_slots[1].store(), pt.Op.store, expr.output_slots[1]),
-            pt.TealOp(expr.output_slots[0].store(), pt.Op.store, expr.output_slots[0]),
+            pt.TealOp(expr.lo.store(), pt.Op.store, expr.lo),
+            pt.TealOp(expr.hi.store(), pt.Op.store, expr.hi),
         ]
     )
 
@@ -130,8 +130,8 @@ def test_divmodw():
             pt.TealOp(args[2], pt.Op.int, 1),
             pt.TealOp(args[3], pt.Op.int, 3),
             pt.TealOp(expr, pt.Op.divmodw),
-            pt.TealOp(expr.output_slots[1].store(), pt.Op.store, expr.output_slots[1]),
-            pt.TealOp(expr.output_slots[0].store(), pt.Op.store, expr.output_slots[0]),
+            pt.TealOp(expr.lo.store(), pt.Op.store, expr.lo),
+            pt.TealOp(expr.hi.store(), pt.Op.store, expr.hi),
         ]
     )
 

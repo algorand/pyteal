@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, List
 
 from pyteal.ast.expr import Expr
 from pyteal.ast.multi import MultiValue
+from pyteal.ast.wideint import WideInt
 from pyteal.errors import verifyProgramVersion
 from pyteal.ir import Op
 from pyteal.types import TealType, require_type
@@ -10,11 +11,13 @@ if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
 
 
-class WideExpr(MultiValue):
+class WideExpr(WideInt):
     """Base class for WideInt Operations
 
     This type of expression produces WideInt(MultiValue).
     """
+
+    multivalue: MultiValue  # The calculation
 
     def __init__(
         self,
@@ -29,24 +32,27 @@ class WideExpr(MultiValue):
             min_version: The minimum TEAL version required to use this expression.
         """
 
-        super().__init__(
+        self.multivalue = MultiValue(
             op=op,
             types=[TealType.uint64, TealType.uint64],
             args=args,
             immediate_args=None,
         )
-
         for arg in args:
             require_type(arg, TealType.uint64)
 
-    def __teal__(self, options: "CompileOptions"):
-        verifyProgramVersion(
-            self.op.min_version,
-            options.version,
-            "Program version too low to use op {}".format(self.op),
+        super().__init__(
+            self.multivalue.output_slots[0], self.multivalue.output_slots[1]
         )
 
-        return super().__teal__(options)
+    def __teal__(self, options: "CompileOptions"):
+        verifyProgramVersion(
+            self.multivalue.op.min_version,
+            options.version,
+            "Program version too low to use op {}".format(self.multivalue.op),
+        )
+
+        return self.multivalue.__teal__(options)
 
 
 WideExpr.__module__ = "pyteal"
@@ -54,10 +60,10 @@ WideExpr.__module__ = "pyteal"
 """Binary MultiValue operations"""
 
 
-def AddW(adder: Expr, adder_: Expr) -> MultiValue:
+def AddW(adder: Expr, adder_: Expr) -> WideExpr:
     """Add two 64-bit integers.
 
-    Produces a MultiValue with two outputs: the sum and the carry-bit.
+    Produces a WideExpr with two outputs: the sum and the carry-bit.
 
     Args:
         adder: Must evaluate to uint64.
@@ -66,10 +72,10 @@ def AddW(adder: Expr, adder_: Expr) -> MultiValue:
     return WideExpr(Op.addw, [adder, adder_])
 
 
-def MulW(factor: Expr, factor_: Expr) -> MultiValue:
+def MulW(factor: Expr, factor_: Expr) -> WideExpr:
     """Multiply two 64-bit integers.
 
-    Produces a MultiValue with two outputs: the product and the carry-bit.
+    Produces a WideExpr with two outputs: the product and the carry-bit.
 
     Args:
         factor: Must evaluate to uint64.
@@ -79,10 +85,10 @@ def MulW(factor: Expr, factor_: Expr) -> MultiValue:
     return WideExpr(Op.mulw, [factor, factor_])
 
 
-def ExpW(base: Expr, exponent: Expr) -> MultiValue:
+def ExpW(base: Expr, exponent: Expr) -> WideExpr:
     """Raise a 64-bit integer to a power.
 
-    Produces a MultiValue with two outputs: the result and the carry-bit.
+    Produces a WideExpr with two outputs: the result and the carry-bit.
 
     Args:
         base: Must evaluate to uint64.
@@ -94,10 +100,10 @@ def ExpW(base: Expr, exponent: Expr) -> MultiValue:
 
 def DivModW(
     dividendHigh: Expr, dividendLow: Expr, divisorHigh: Expr, divisorLow: Expr
-) -> MultiValue:
+) -> WideExpr:
     """Divide two wide-64-bit integers.
 
-    Produces a MultiValue with four outputs: the quotient and its carry-bit, the remainder and its carry-bit.
+    Produces a WideExpr with four outputs: the quotient and its carry-bit, the remainder and its carry-bit.
 
     Stack:
         ..., A: uint64, B: uint64, C: uint64, D: uint64 --> ..., W: uint64, X: uint64, Y: uint64, Z: uint64
