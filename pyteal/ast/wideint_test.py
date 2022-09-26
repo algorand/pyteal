@@ -30,7 +30,6 @@ def test_wide_from_int():
     ]
 
     for (idx, arg) in enumerate(creation_int_args):
-        print(arg, type(arg))
         expr = pt.WideInt.FromInt(arg)
         assert expr.type_of() == pt.TealType.none
 

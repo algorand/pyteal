@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
 
+from plum import dispatch
+
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
 from pyteal.ast.leafexpr import LeafExpr
@@ -36,15 +38,21 @@ class WideInt(LeafExpr):
         cls._lo_expr = expr_low
         return cls(ScratchSlot(), ScratchSlot())
 
-    # correct_type = (isinstance(arg1, int) and arg2 is None) or (
-    #     isinstance(arg1, Expr) and isinstance(arg2, Expr)
-    # )
+    @dispatch
+    def __init__(self, py_int: int):  # type: ignore
+        wide_int = self.FromInt(py_int)
+        self.hi = wide_int.hi
+        self.lo = wide_int.lo
 
-    # TealInputError(
-    #                 f"WideInt() requires `int` or `Expr, Expr`, got {arg1} of {type(arg1)} and {arg2} of {type(arg2)}"
-    #             )
+    @dispatch
+    def __init__(self, expr_high: Expr, expr_low: Expr):  # type: ignore
+        wide_int = self.FromExprExpr(expr_high, expr_low)
+        self.hi = wide_int.hi
+        self.lo = wide_int.lo
 
+    @dispatch
     def __init__(self, slot_hi: ScratchSlot, slot_lo: ScratchSlot) -> None:
+        # FIX: use `Expr` instead of `Int` in docstring
         """
         WideInt(num: int) -> WideInt
         WideInt(expr_high: Expr, expr_low: Expr) -> WideInt
@@ -64,7 +72,7 @@ class WideInt(LeafExpr):
 
     def __str__(self):
         # TODO: not sure how this works
-        return "(wide_int {} {})".format(self.hi.load(), self.lo.load())
+        return "(wide_int hi:{} lo:{})".format(self.hi, self.lo)
 
     def __teal__(self, options: "CompileOptions"):
         # TODO: compile check
