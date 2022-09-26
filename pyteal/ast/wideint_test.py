@@ -30,7 +30,7 @@ def test_wide_from_int():
     ]
 
     for (idx, arg) in enumerate(creation_int_args):
-        expr = pt.WideInt.FromInt(arg)
+        expr = pt.WideInt(arg)
         assert expr.type_of() == pt.TealType.none
 
         expected = pt.TealSimpleBlock(
@@ -66,7 +66,7 @@ def test_wide_from_expr_expr():
     ]
 
     for (idx, args) in enumerate(creation_expr_args):
-        expr = pt.WideInt.FromExprExpr(*args)
+        expr = pt.WideInt(*args)
         assert expr.type_of() == pt.TealType.none
 
         expected = pt.TealSimpleBlock(
@@ -106,10 +106,7 @@ def test_wide_int_creation_invalid():
     for arg in invalid_creation_args:
         if isinstance(arg, list):
             with pytest.raises(pt.TealTypeError):
-                pt.WideInt.FromExprExpr(*arg)
-        elif isinstance(arg, int):
-            with pytest.raises(pt.TealInputError):
-                pt.WideInt.FromInt(arg)
+                pt.WideInt(*arg)
         else:
-            with pytest.raises(pt.TealTypeError):
-                pt.WideInt.FromInt(arg)
+            with pytest.raises(pt.TealInputError):
+                pt.WideInt(arg)

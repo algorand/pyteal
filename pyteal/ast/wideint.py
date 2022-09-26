@@ -1,6 +1,4 @@
-from typing import TYPE_CHECKING
-
-from plum import dispatch
+from typing import TYPE_CHECKING, overload, cast
 
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
@@ -25,7 +23,6 @@ class WideInt(LeafExpr):
     def FromInt(cls, py_int: int) -> "WideInt":  # overload_1
         if py_int < 0 or py_int > 2**128 - 1:
             raise TealInputError("WideInt value must be between 0 and 2**128-1")
-
         cls._hi_expr = Int(py_int >> 64)
         cls._lo_expr = Int(py_int & 0xFFFFFFFFFFFFFFFF)  # 64-bit mask
         return cls.FromExprExpr(cls._hi_expr, cls._lo_expr)
@@ -38,50 +35,73 @@ class WideInt(LeafExpr):
         cls._lo_expr = expr_low
         return cls(ScratchSlot(), ScratchSlot())
 
-    @dispatch
-    def __init__(self, py_int: int):  # type: ignore
-        wide_int = self.FromInt(py_int)
-        self.hi = wide_int.hi
-        self.lo = wide_int.lo
+    @overload
+    def __init__(self, arg1: int):  # overload_1
+        pass
 
-    @dispatch
-    def __init__(self, expr_high: Expr, expr_low: Expr):  # type: ignore
-        wide_int = self.FromExprExpr(expr_high, expr_low)
-        self.hi = wide_int.hi
-        self.lo = wide_int.lo
+    @overload
+    def __init__(self, arg1: Expr, arg2: Expr):  # overload_2
+        pass
 
-    @dispatch
-    def __init__(self, slot_hi: ScratchSlot, slot_lo: ScratchSlot) -> None:
-        # FIX: use `Expr` instead of `Int` in docstring
+    @overload
+    def __init__(self, arg1: ScratchSlot, arg2: ScratchSlot) -> None:
+        pass  # overload_3
+
+    def __init__(
+        self, arg1: int | Expr | ScratchSlot, arg2: Expr | ScratchSlot | None = None
+    ):
         """
         WideInt(num: int) -> WideInt
         WideInt(expr_high: Expr, expr_low: Expr) -> WideInt
+        WideInt(expr_high: ScratchSlot, expr_low: ScratchSlot) -> WideInt
 
         Create a new WideInt.
 
         For int:
             Pass the int as the only argument. For example, ``WideInt((1<<64)+1)``.
-        For two Int() objects:
-            Pass the two Int. They must have type ``TealType.uint64`` For example, ``WideInt(Int(1),Int(1))``.
+        For two Expr() objects:
+            Pass two ``Expr``s. They must be of type ``TealType.uint64`` For example, ``WideInt(Int(1),Int(1))``.
+        For two ScratchSlot() objects:
         """
         super().__init__()
-        self.hi = slot_hi
-        self.lo = slot_lo
+        is_overload_1 = isinstance(arg1, int) and arg2 is None
+        is_overload_2 = isinstance(arg1, Expr) and isinstance(arg2, Expr)
+        is_overload_3 = isinstance(arg1, ScratchSlot) and isinstance(arg2, ScratchSlot)
+        correct_type = any([is_overload_1, is_overload_2, is_overload_3])
+
+        if not correct_type:
+            raise TealInputError(
+                f"WideInt() requires `int` or `Expr, Expr`, got {arg1} of {type(arg1)} and {arg2} of {type(arg2)}"
+            )
+
+        if is_overload_1:
+
+            arg1 = cast(int, arg1)
+            wide_int = WideInt.FromInt(arg1)
+        elif is_overload_2:
+            arg1 = cast(Expr, arg1)
+            arg2 = cast(Expr, arg2)
+            wide_int = WideInt.FromExprExpr(arg1, arg2)
+        else:
+            arg1 = cast(ScratchSlot, arg1)
+            arg2 = cast(ScratchSlot, arg2)
+            self.hi = arg1
+            self.lo = arg2
+            # no store() needed
+            return
+
+        self.hi = wide_int.hi
+        self.lo = wide_int.lo
         self.hi.store(self._hi_expr)
         self.lo.store(self._lo_expr)
 
     def __str__(self):
-        # TODO: not sure how this works
         return "(wide_int hi:{} lo:{})".format(self.hi, self.lo)
 
     def __teal__(self, options: "CompileOptions"):
-        # TODO: compile check
         store_lo = self.lo.store(self._lo_expr).__teal__(options)
         store_hi = self.hi.store(self._hi_expr).__teal__(options)
 
-        # for Int.__teal__(), [0] and [1] are the same, but not for store.
-
-        # this is reversed
         start = store_lo[0]
         end = store_lo[1]
         end.setNextBlock(store_hi[0])
@@ -91,15 +111,14 @@ class WideInt(LeafExpr):
 
     def type_of(self):
         return TealType.none
-        # [TealType.uint64, TealType.uint64] matches MultiValue.types but fails test
 
     @property
     def high(self):
-        return self.hi  # should add? : .load()
+        return self.hi
 
     @property
     def low(self):
-        return self.lo  # should add? : .load()
+        return self.lo
 
 
 WideInt.__module__ = "pyteal"
