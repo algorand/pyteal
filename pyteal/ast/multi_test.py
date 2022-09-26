@@ -7,7 +7,7 @@ options = pt.CompileOptions()
 
 
 def TOO_MANY_ARGS(arg_len):
-    return ValueError("Too many arguments. Expected 0-2, got {}".format(len(arg_len)))
+    return ValueError("Too many arguments. Expected 0-2, got {}".format(arg_len))
 
 
 def __test_single(expr: pt.MultiValue):
