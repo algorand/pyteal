@@ -67,7 +67,7 @@ class MaybeValue(MultiValue):
     def slotOk(self) -> ScratchSlot:
         """Get the scratch slot that stores hasValue.
 
-        Note: This is mainly added for backwards compatability and normally shouldn't be used
+        Note: This is mainly added for backwards compatibility and normally shouldn't be used
         directly in pyteal code.
         """
         return self.output_slots[1]
@@ -77,7 +77,7 @@ class MaybeValue(MultiValue):
         """Get the scratch slot that stores the value or the zero value for the type if the value
         doesn't exist.
 
-        Note: This is mainly added for backwards compatability and normally shouldn't be used
+        Note: This is mainly added for backwards compatibility and normally shouldn't be used
         directly in pyteal code.
         """
         return self.output_slots[0]
