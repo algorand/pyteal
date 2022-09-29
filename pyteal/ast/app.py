@@ -221,9 +221,15 @@ class App(LeafExpr):
         return cls(AppField.globalDel, [key])
 
     @classmethod
-    def box_create(cls, name: Expr, size: Expr) -> BoxCreate:
-        """
-        Create a box with a given name and size.
+    def box_create(cls, name: Expr, size: Expr) -> Expr:
+        """Create a box with a given name and size.
+
+        New boxes will contain a byte string of all zeros. Performing this operation on a box that
+        already exists will not change its contents.
+
+        If successful, this expression returns 0 if the box already existed, otherwise it returns 1.
+
+        A failure will occur if you attempt to create a box that already exists with a different size.
 
         Args:
             name: The key used to reference this box. Must evaluate to a bytes.
@@ -232,9 +238,12 @@ class App(LeafExpr):
         return BoxCreate(name, size)
 
     @classmethod
-    def box_delete(cls, name: Expr) -> BoxDelete:
-        """
-        Deletes a box given it's name.
+    def box_delete(cls, name: Expr) -> Expr:
+        """Deletes a box given it's name.
+
+        This expression returns 1 if the box existed, otherwise it returns 0.
+
+        Deleting a nonexistent box is allowed, but has no effect.
 
         Args:
             name: The key the box was created with. Must evaluate to bytes.
@@ -242,9 +251,8 @@ class App(LeafExpr):
         return BoxDelete(name)
 
     @classmethod
-    def box_extract(cls, name: Expr, start: Expr, length: Expr) -> BoxExtract:
-        """
-        Extracts bytes in a box given its name, start index and stop index.
+    def box_extract(cls, name: Expr, start: Expr, length: Expr) -> Expr:
+        """Extracts bytes in a box given its name, start index and stop index.
 
         Args:
             name: The key the box was created with. Must evaluate to bytes.
@@ -254,9 +262,8 @@ class App(LeafExpr):
         return BoxExtract(name, start, length)
 
     @classmethod
-    def box_replace(cls, name: Expr, start: Expr, value: Expr) -> BoxReplace:
-        """
-        Replaces bytes in a box given its name, start index, and value.
+    def box_replace(cls, name: Expr, start: Expr, value: Expr) -> Expr:
+        """Replaces bytes in a box given its name, start index, and value.
 
         Args:
             name: The key the box was created with. Must evaluate to bytes.
@@ -267,8 +274,7 @@ class App(LeafExpr):
 
     @classmethod
     def box_length(cls, name: Expr) -> MaybeValue:
-        """
-        Get the byte length of the box specified by its name.
+        """Get the byte length of the box specified by its name.
 
         Args:
             name: The key the box was created with. Must evaluate to bytes.
@@ -277,8 +283,7 @@ class App(LeafExpr):
 
     @classmethod
     def box_get(cls, name: Expr) -> MaybeValue:
-        """
-        Get the full contents of a box given its name.
+        """Get the full contents of a box given its name.
 
         Args:
             name: The key the box was created with. Must evaluate to bytes.
@@ -286,9 +291,8 @@ class App(LeafExpr):
         return BoxGet(name)
 
     @classmethod
-    def box_put(cls, name: Expr, value: Expr) -> BoxPut:
-        """
-        Write all contents to a box given its name.
+    def box_put(cls, name: Expr, value: Expr) -> Expr:
+        """Write all contents to a box given its name.
 
         Args:
             name: The key the box was created with. Must evaluate to bytes.

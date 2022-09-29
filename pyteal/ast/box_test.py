@@ -131,10 +131,10 @@ def test_box_length():
 
     expected = pt.TealSimpleBlock(
         [
-            pt.TealOp(name_arg, pt.Op.byte, '"eineName"'),
-            pt.TealOp(expr, pt.Op.box_len),
-            pt.TealOp(expr.output_slots[1].store(), pt.Op.store, expr.output_slots[1]),
-            pt.TealOp(expr.output_slots[0].store(), pt.Op.store, expr.output_slots[0]),
+            pt.TealOp(None, pt.Op.byte, '"eineName"'),
+            pt.TealOp(None, pt.Op.box_len),
+            pt.TealOp(None, pt.Op.store, expr.output_slots[1]),
+            pt.TealOp(None, pt.Op.store, expr.output_slots[0]),
         ]
     )
     actual, _ = expr.__teal__(avm8Options)
@@ -151,10 +151,10 @@ def test_box_get():
 
     expected = pt.TealSimpleBlock(
         [
-            pt.TealOp(name_arg, pt.Op.byte, '"eineName"'),
-            pt.TealOp(expr, pt.Op.box_get),
-            pt.TealOp(expr.output_slots[1].store(), pt.Op.store, expr.output_slots[1]),
-            pt.TealOp(expr.output_slots[0].store(), pt.Op.store, expr.output_slots[0]),
+            pt.TealOp(None, pt.Op.byte, '"eineName"'),
+            pt.TealOp(None, pt.Op.box_get),
+            pt.TealOp(None, pt.Op.store, expr.output_slots[1]),
+            pt.TealOp(None, pt.Op.store, expr.output_slots[0]),
         ]
     )
     actual, _ = expr.__teal__(avm8Options)
