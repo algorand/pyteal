@@ -781,6 +781,21 @@ class NamedTDecl(abi.NamedTuple):
     c: abi.Field[abi.Transaction]
 
 
+class NamedTComp0(abi.NamedTuple):
+    a0: abi.Field[abi.String]
+    a1: abi.Field[abi.StaticArray[abi.Byte, Literal[32]]]
+
+
+class NamedTComp1(abi.NamedTuple):
+    b0: abi.Field[abi.DynamicBytes]
+    b1: abi.Field[abi.Address]
+
+
+class NamedTComp2(abi.NamedTuple):
+    b1: abi.Field[abi.Address]
+    b0: abi.Field[abi.DynamicBytes]
+
+
 TYPE_SPEC_ASSIGNABLE_CASES = [
     (abi.PaymentTransactionTypeSpec(), abi.TransactionTypeSpec(), True),
     (
@@ -840,6 +855,76 @@ TYPE_SPEC_ASSIGNABLE_CASES = [
         ),
         abi.type_spec_from_annotation(NamedTDecl),
         True,
+    ),
+    (
+        abi.type_spec_from_annotation(abi.StaticBytes[Literal[7]]),
+        abi.type_spec_from_annotation(abi.StaticArray[abi.Byte, Literal[11]]),
+        False,
+    ),
+    (
+        abi.type_spec_from_annotation(NamedTDecl),
+        abi.type_spec_from_annotation(NamedTDecl),
+        True,
+    ),
+    (
+        abi.type_spec_from_annotation(abi.String),
+        abi.type_spec_from_annotation(abi.DynamicBytes),
+        True,
+    ),
+    (
+        abi.type_spec_from_annotation(abi.DynamicArray[abi.Byte]),
+        abi.type_spec_from_annotation(abi.String),
+        True,
+    ),
+    (
+        abi.type_spec_from_annotation(abi.DynamicArray[abi.Uint32]),
+        abi.type_spec_from_annotation(abi.String),
+        False,
+    ),
+    (
+        abi.type_spec_from_annotation(abi.Address),
+        abi.type_spec_from_annotation(abi.StaticArray[abi.Byte, Literal[32]]),
+        True,
+    ),
+    (
+        abi.type_spec_from_annotation(abi.StaticBytes[Literal[32]]),
+        abi.type_spec_from_annotation(abi.Address),
+        True,
+    ),
+    (
+        abi.type_spec_from_annotation(abi.StaticBytes[Literal[33]]),
+        abi.type_spec_from_annotation(abi.Address),
+        False,
+    ),
+    (
+        abi.type_spec_from_annotation(NamedTComp0),
+        abi.type_spec_from_annotation(NamedTComp1),
+        True,
+    ),
+    (
+        abi.type_spec_from_annotation(NamedTComp1),
+        abi.type_spec_from_annotation(NamedTComp0),
+        True,
+    ),
+    (
+        abi.type_spec_from_annotation(NamedTDecl),
+        abi.type_spec_from_annotation(NamedTComp0),
+        False,
+    ),
+    (
+        abi.type_spec_from_annotation(NamedTComp2),
+        abi.type_spec_from_annotation(NamedTComp0),
+        False,
+    ),
+    (
+        abi.type_spec_from_annotation(abi.String),
+        abi.type_spec_from_annotation(abi.DynamicArray[abi.Uint64]),
+        False,
+    ),
+    (
+        abi.type_spec_from_annotation(abi.DynamicArray[abi.Uint64]),
+        abi.type_spec_from_annotation(abi.String),
+        False,
     ),
 ]
 

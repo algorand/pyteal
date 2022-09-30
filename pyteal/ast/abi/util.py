@@ -507,6 +507,8 @@ def type_spec_is_assignable(a: TypeSpec, b: TypeSpec) -> bool:
         ArrayTypeSpec,
         StaticArrayTypeSpec,
         DynamicArrayTypeSpec,
+        StringTypeSpec,
+        AddressTypeSpec,
     )
 
     match a, b:
@@ -532,9 +534,20 @@ def type_spec_is_assignable(a: TypeSpec, b: TypeSpec) -> bool:
                     return a.length_static() == b.length_static()
                 case DynamicArrayTypeSpec(), DynamicArrayTypeSpec():
                     return True
-                case _:
-                    return False
-        case ArrayTypeSpec(), _:
+            return False
+        case (ArrayTypeSpec(), _) | (_, ArrayTypeSpec()):
+            if isinstance(b, ArrayTypeSpec):
+                a, b = b, a
+            match a, b:
+                case DynamicArrayTypeSpec(), StringTypeSpec():
+                    a, b = cast(DynamicArrayTypeSpec, a), cast(StringTypeSpec, b)
+                    return a.value_type_spec() == b.value_type_spec()
+                case StaticArrayTypeSpec(), AddressTypeSpec():
+                    a, b = cast(StaticArrayTypeSpec, a), cast(AddressTypeSpec, b)
+                    return (
+                        a.value_type_spec() == b.value_type_spec()
+                        and a.length_static() == b.length_static()
+                    )
             return False
 
     if isinstance(a, type(b)):
