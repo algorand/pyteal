@@ -501,7 +501,7 @@ def type_specs_from_signature(sig: str) -> tuple[list[TypeSpec], Optional[TypeSp
     return [type_spec_from_algosdk(arg.type) for arg in sdk_method.args], return_type
 
 
-def type_spec_is_assignable(a: TypeSpec, b: TypeSpec) -> bool:
+def type_spec_is_assignable_to(a: TypeSpec, b: TypeSpec) -> bool:
     from pyteal.ast.abi import (
         TupleTypeSpec,
         ArrayTypeSpec,
@@ -514,40 +514,33 @@ def type_spec_is_assignable(a: TypeSpec, b: TypeSpec) -> bool:
     match a, b:
         case TupleTypeSpec(), TupleTypeSpec():
             a, b = cast(TupleTypeSpec, a), cast(TupleTypeSpec, b)
-            if len(a.value_type_specs()) != len(b.value_type_specs()):
+            if a.length_static() != b.length_static():
                 return False
             return all(
                 map(
-                    lambda ab: type_spec_is_assignable(ab[0], ab[1]),
+                    lambda ab: type_spec_is_assignable_to(ab[0], ab[1]),
                     zip(a.value_type_specs(), b.value_type_specs()),
                 )
             )
-        case TupleTypeSpec(), _:
-            return False
         case ArrayTypeSpec(), ArrayTypeSpec():
             a, b = cast(ArrayTypeSpec, a), cast(ArrayTypeSpec, b)
-            if not type_spec_is_assignable(a.value_type_spec(), b.value_type_spec()):
+            if not type_spec_is_assignable_to(a.value_type_spec(), b.value_type_spec()):
                 return False
             match a, b:
+                case AddressTypeSpec(), StaticArrayTypeSpec():
+                    a, b = cast(AddressTypeSpec, a), cast(StaticArrayTypeSpec, b)
+                    return a.length_static() == b.length_static()
+                case StaticArrayTypeSpec(), AddressTypeSpec():
+                    return False
                 case StaticArrayTypeSpec(), StaticArrayTypeSpec():
                     a, b = cast(StaticArrayTypeSpec, a), cast(StaticArrayTypeSpec, b)
                     return a.length_static() == b.length_static()
+                case StringTypeSpec(), DynamicArrayTypeSpec():
+                    return True
+                case DynamicArrayTypeSpec(), StringTypeSpec():
+                    return False
                 case DynamicArrayTypeSpec(), DynamicArrayTypeSpec():
                     return True
-            return False
-        case (ArrayTypeSpec(), _) | (_, ArrayTypeSpec()):
-            if isinstance(b, ArrayTypeSpec):
-                a, b = b, a
-            match a, b:
-                case DynamicArrayTypeSpec(), StringTypeSpec():
-                    a, b = cast(DynamicArrayTypeSpec, a), cast(StringTypeSpec, b)
-                    return a.value_type_spec() == b.value_type_spec()
-                case StaticArrayTypeSpec(), AddressTypeSpec():
-                    a, b = cast(StaticArrayTypeSpec, a), cast(AddressTypeSpec, b)
-                    return (
-                        a.value_type_spec() == b.value_type_spec()
-                        and a.length_static() == b.length_static()
-                    )
             return False
 
     if isinstance(a, type(b)):

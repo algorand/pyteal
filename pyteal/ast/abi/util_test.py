@@ -783,12 +783,12 @@ class NamedTDecl(abi.NamedTuple):
 
 class NamedTComp0(abi.NamedTuple):
     a0: abi.Field[abi.String]
-    a1: abi.Field[abi.StaticArray[abi.Byte, Literal[32]]]
+    a1: abi.Field[abi.Address]
 
 
 class NamedTComp1(abi.NamedTuple):
     b0: abi.Field[abi.DynamicBytes]
-    b1: abi.Field[abi.Address]
+    b1: abi.Field[abi.StaticBytes[Literal[32]]]
 
 
 class NamedTComp2(abi.NamedTuple):
@@ -874,7 +874,7 @@ TYPE_SPEC_ASSIGNABLE_CASES = [
     (
         abi.type_spec_from_annotation(abi.DynamicArray[abi.Byte]),
         abi.type_spec_from_annotation(abi.String),
-        True,
+        False,
     ),
     (
         abi.type_spec_from_annotation(abi.DynamicArray[abi.Uint32]),
@@ -889,7 +889,7 @@ TYPE_SPEC_ASSIGNABLE_CASES = [
     (
         abi.type_spec_from_annotation(abi.StaticBytes[Literal[32]]),
         abi.type_spec_from_annotation(abi.Address),
-        True,
+        False,
     ),
     (
         abi.type_spec_from_annotation(abi.StaticBytes[Literal[33]]),
@@ -904,7 +904,7 @@ TYPE_SPEC_ASSIGNABLE_CASES = [
     (
         abi.type_spec_from_annotation(NamedTComp1),
         abi.type_spec_from_annotation(NamedTComp0),
-        True,
+        False,
     ),
     (
         abi.type_spec_from_annotation(NamedTDecl),
@@ -931,4 +931,4 @@ TYPE_SPEC_ASSIGNABLE_CASES = [
 
 @pytest.mark.parametrize("a, b, expected", TYPE_SPEC_ASSIGNABLE_CASES)
 def test_type_spec_assignable(a, b, expected):
-    assert abi.type_spec_is_assignable(a, b) == expected
+    assert abi.type_spec_is_assignable_to(a, b) == expected
