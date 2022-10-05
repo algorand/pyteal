@@ -817,7 +817,8 @@ def test_override_names():
         """handles the deposit where the input is a payment"""
         return pt.Assert(deposit.get().amount() > pt.Int(0))
 
-    approval, clear, contract = router.compile_program(version=7)
+    _, _, contract = router.compile_program(version=7)
     assert len(contract.methods) > 0
     for meth in contract.methods:
-        print(meth.dictify())
+        dmeth = meth.dictify()
+        assert dmeth["name"] == "handle"
