@@ -1473,5 +1473,5 @@ def test_override_abi_method_name():
     mspec = ABIReturnSubroutine(abi_meth).method_spec().dictify()
     assert mspec["name"] == "abi_meth"
 
-    mspec = ABIReturnSubroutine(abi_meth).method_spec("add").dictify()
+    mspec = ABIReturnSubroutine(abi_meth, overriding_name="add").method_spec().dictify()
     assert mspec["name"] == "add"

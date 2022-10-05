@@ -621,7 +621,7 @@ class ABIReturnSubroutine:
             overriding_name = self.name()
         return f"{overriding_name}({','.join(args)}){self.type_of()}"
 
-    def method_spec(self, overriding_name: str = None) -> sdk_abi.Method:
+    def method_spec(self) -> sdk_abi.Method:
         desc: str = ""
         arg_descs: dict[str, str] = {}
         return_desc: str = ""
@@ -685,8 +685,7 @@ class ABIReturnSubroutine:
             return_obj["desc"] = return_desc
 
         # Create the method spec, adding description if set
-        name = overriding_name if overriding_name is not None else self.name()
-        spec = {"name": name, "args": args, "returns": return_obj}
+        spec = {"name": self.name(), "args": args, "returns": return_obj}
         if desc:
             spec["desc"] = desc
 

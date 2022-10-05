@@ -587,7 +587,7 @@ class Router:
                 f"with {self.method_selector_to_sig[method_selector]}"
             )
 
-        meth = method_call.method_spec(overriding_name)
+        meth = method_call.method_spec()
         if description is not None:
             meth.desc = description
         self.methods.append(meth)
@@ -647,7 +647,7 @@ class Router:
         # - CallConfig.Never
         # both cases evaluate to False in if statement.
         def wrap(_func) -> ABIReturnSubroutine:
-            wrapped_subroutine = ABIReturnSubroutine(_func)
+            wrapped_subroutine = ABIReturnSubroutine(_func, overriding_name=name)
             call_configs: MethodConfig
             if (
                 no_op is None
