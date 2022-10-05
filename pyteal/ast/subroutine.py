@@ -519,6 +519,9 @@ class ABIReturnSubroutine:
     def __init__(
         self,
         fn_implementation: Callable[..., Expr],
+        /,
+        *,
+        overriding_name: Optional[str] = None,
     ) -> None:
         self.output_kwarg_info: Optional[OutputKwArgInfo] = self._get_output_kwarg_info(
             fn_implementation
@@ -526,8 +529,16 @@ class ABIReturnSubroutine:
         self.subroutine = SubroutineDefinition(
             fn_implementation,
             return_type=TealType.none,
+            name_str=overriding_name,
             has_abi_output=self.output_kwarg_info is not None,
         )
+
+    @staticmethod
+    def name_override(name: str) -> Callable[..., "ABIReturnSubroutine"]:
+        def wrapper(fn_impl: Callable[..., Expr]) -> ABIReturnSubroutine:
+            return ABIReturnSubroutine(fn_impl, overriding_name=name)
+
+        return wrapper
 
     @classmethod
     def _get_output_kwarg_info(
