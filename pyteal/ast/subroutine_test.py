@@ -1464,3 +1464,14 @@ def test_docstring_parsing_with_different_format():
         == "An account who will receive the withdrawn Algos. This may or may not be the same as the method call sender."
     )
     assert "desc" not in mspec_dict["returns"]
+
+
+def test_override_abi_method_name():
+    def abi_meth(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64):
+        return output.set(a.get() + b.get())
+
+    mspec = ABIReturnSubroutine(abi_meth).method_spec().dictify()
+    assert mspec["name"] == "abi_meth"
+
+    mspec = ABIReturnSubroutine(abi_meth).method_spec("add").dictify()
+    assert mspec["name"] == "add"

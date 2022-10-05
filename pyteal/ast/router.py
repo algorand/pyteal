@@ -587,7 +587,7 @@ class Router:
                 f"with {self.method_selector_to_sig[method_selector]}"
             )
 
-        meth = method_call.method_spec()
+        meth = method_call.method_spec(overriding_name)
         if description is not None:
             meth.desc = description
         self.methods.append(meth)
