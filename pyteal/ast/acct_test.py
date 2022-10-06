@@ -7,6 +7,7 @@ from pyteal.ast.maybe_test import assert_MaybeValue_equality
 avm6Options = pt.CompileOptions(version=6)
 avm8Options = pt.CompileOptions(version=8)
 
+
 @pytest.mark.parametrize(
     "method_name,field_name",
     [
@@ -22,7 +23,7 @@ avm8Options = pt.CompileOptions(version=8)
         ("totalAssets", "total_assets"),
         ("totalBoxes", "total_boxes"),
         ("totalBoxBytes", "total_box_bytes"),
-    ]
+    ],
 )
 def test_acct_param_fields_valid(method_name, field_name):
     arg = pt.Int(1)
@@ -42,7 +43,9 @@ def test_acct_param_fields_valid(method_name, field_name):
         ]
     )
 
-    supported_options_version = pt.CompileOptions(version=account_param_field.min_version)
+    supported_options_version = pt.CompileOptions(
+        version=account_param_field.min_version
+    )
     actual, _ = expr.__teal__(supported_options_version)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
@@ -51,13 +54,24 @@ def test_acct_param_fields_valid(method_name, field_name):
         assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        unsupported_options_version = pt.CompileOptions(version=account_param_field.min_version - 1)
+        unsupported_options_version = pt.CompileOptions(
+            version=account_param_field.min_version - 1
+        )
         expr.__teal__(unsupported_options_version)
 
+
 def test_acct_param_string():
-    assert str(pt.AccountParam.balance(pt.Int(1))) == "(AccountParam AcctBalance (Int 1))"
-    assert str(pt.AccountParam.minBalance(pt.Int(1))) == "(AccountParam AcctMinBalance (Int 1))"
-    assert str(pt.AccountParam.authAddr(pt.Int(1))) == "(AccountParam AcctAuthAddr (Int 1))"
+    assert (
+        str(pt.AccountParam.balance(pt.Int(1))) == "(AccountParam AcctBalance (Int 1))"
+    )
+    assert (
+        str(pt.AccountParam.minBalance(pt.Int(1)))
+        == "(AccountParam AcctMinBalance (Int 1))"
+    )
+    assert (
+        str(pt.AccountParam.authAddr(pt.Int(1)))
+        == "(AccountParam AcctAuthAddr (Int 1))"
+    )
 
 
 def test_AccountParamObject():
@@ -83,19 +97,29 @@ def test_AccountParamObject():
             obj.total_num_uint(), pt.AccountParam.totalNumUint(account), avm8Options
         )
         assert_MaybeValue_equality(
-            obj.total_num_byte_slice(), pt.AccountParam.totalNumByteSlice(account), avm8Options
+            obj.total_num_byte_slice(),
+            pt.AccountParam.totalNumByteSlice(account),
+            avm8Options,
         )
         assert_MaybeValue_equality(
-            obj.total_extra_app_pages(), pt.AccountParam.totalExtraAppPages(account), avm8Options
+            obj.total_extra_app_pages(),
+            pt.AccountParam.totalExtraAppPages(account),
+            avm8Options,
         )
         assert_MaybeValue_equality(
-            obj.total_apps_created(), pt.AccountParam.totalAppsCreated(account), avm8Options
+            obj.total_apps_created(),
+            pt.AccountParam.totalAppsCreated(account),
+            avm8Options,
         )
         assert_MaybeValue_equality(
-            obj.total_apps_opted_in(), pt.AccountParam.totalAppsOptedIn(account), avm8Options
+            obj.total_apps_opted_in(),
+            pt.AccountParam.totalAppsOptedIn(account),
+            avm8Options,
         )
         assert_MaybeValue_equality(
-            obj.total_assets_created(), pt.AccountParam.totalAssetsCreated(account), avm8Options
+            obj.total_assets_created(),
+            pt.AccountParam.totalAssetsCreated(account),
+            avm8Options,
         )
         assert_MaybeValue_equality(
             obj.total_assets(), pt.AccountParam.totalAssets(account), avm8Options
