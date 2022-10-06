@@ -1,29 +1,39 @@
 import pytest
 
 import pyteal as pt
+from pyteal.ast.acct import AccountParamField
 from pyteal.ast.maybe_test import assert_MaybeValue_equality
 
-options = pt.CompileOptions()
-avm5Options = pt.CompileOptions(version=5)
 avm6Options = pt.CompileOptions(version=6)
 
-
-def test_acct_param_balance_valid():
+@pytest.mark.parametrize(
+    "method_name,field_name",
+    [
+        ("balance", "balance"),
+        ("minBalance", "min_balance"),
+        ("authAddr", "auth_addr"),
+    ]
+)
+def test_acct_param_fields_valid(method_name, field_name):
     arg = pt.Int(1)
-    expr = pt.AccountParam.balance(arg)
+    account_param_method = getattr(pt.AccountParam, method_name)
+    expr = account_param_method(arg)
     assert expr.type_of() == pt.TealType.none
-    assert expr.value().type_of() == pt.TealType.uint64
+
+    account_param_field = AccountParamField[field_name]
+    assert expr.value().type_of() == account_param_field.type_of()
 
     expected = pt.TealSimpleBlock(
         [
             pt.TealOp(arg, pt.Op.int, 1),
-            pt.TealOp(expr, pt.Op.acct_params_get, "AcctBalance"),
+            pt.TealOp(expr, pt.Op.acct_params_get, account_param_field.arg_name),
             pt.TealOp(None, pt.Op.store, expr.slotOk),
             pt.TealOp(None, pt.Op.store, expr.slotValue),
         ]
     )
 
-    actual, _ = expr.__teal__(avm6Options)
+    supported_options_version = pt.CompileOptions(version=account_param_field.min_version)
+    actual, _ = expr.__teal__(supported_options_version)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
@@ -31,60 +41,8 @@ def test_acct_param_balance_valid():
         assert actual == expected
 
     with pytest.raises(pt.TealInputError):
-        expr.__teal__(avm5Options)
-
-
-def test_acct_param_min_balance_valid():
-    arg = pt.Int(0)
-    expr = pt.AccountParam.minBalance(arg)
-    assert expr.type_of() == pt.TealType.none
-    assert expr.value().type_of() == pt.TealType.uint64
-
-    expected = pt.TealSimpleBlock(
-        [
-            pt.TealOp(arg, pt.Op.int, 0),
-            pt.TealOp(expr, pt.Op.acct_params_get, "AcctMinBalance"),
-            pt.TealOp(None, pt.Op.store, expr.slotOk),
-            pt.TealOp(None, pt.Op.store, expr.slotValue),
-        ]
-    )
-
-    actual, _ = expr.__teal__(avm6Options)
-    actual.addIncoming()
-    actual = pt.TealBlock.NormalizeBlocks(actual)
-
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
-
-    with pytest.raises(pt.TealInputError):
-        expr.__teal__(avm5Options)
-
-
-def test_acct_param_auth_addr_valid():
-    arg = pt.Int(1)
-    expr = pt.AccountParam.authAddr(arg)
-    assert expr.type_of() == pt.TealType.none
-    assert expr.value().type_of() == pt.TealType.bytes
-
-    expected = pt.TealSimpleBlock(
-        [
-            pt.TealOp(arg, pt.Op.int, 1),
-            pt.TealOp(expr, pt.Op.acct_params_get, "AcctAuthAddr"),
-            pt.TealOp(None, pt.Op.store, expr.slotOk),
-            pt.TealOp(None, pt.Op.store, expr.slotValue),
-        ]
-    )
-
-    actual, _ = expr.__teal__(avm6Options)
-    actual.addIncoming()
-    actual = pt.TealBlock.NormalizeBlocks(actual)
-
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
-
-    with pytest.raises(pt.TealInputError):
-        expr.__teal__(avm5Options)
-
+        unsupported_options_version = pt.CompileOptions(version=account_param_field.min_version - 1)
+        expr.__teal__(unsupported_options_version)
 
 def test_acct_param_string():
     assert str(pt.AccountParam.balance(pt.Int(1))) == "(AccountParam AcctBalance (Int 1))"
