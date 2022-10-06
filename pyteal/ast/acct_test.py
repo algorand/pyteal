@@ -12,6 +12,15 @@ avm6Options = pt.CompileOptions(version=6)
         ("balance", "balance"),
         ("minBalance", "min_balance"),
         ("authAddr", "auth_addr"),
+        ("totalNumUint", "total_num_uint"),
+        ("totalNumByteSlice", "total_num_byte_slice"),
+        ("totalExtraAppPages", "total_extra_app_pages"),
+        ("totalAppsCreated", "total_apps_created"),
+        ("totalAppsOptedIn", "total_apps_opted_in"),
+        ("totalAssetsCreated", "total_assets_created"),
+        ("totalAssets", "total_assets"),
+        ("totalBoxes", "total_boxes"),
+        ("totalBoxBytes", "total_box_bytes"),
     ]
 )
 def test_acct_param_fields_valid(method_name, field_name):
