@@ -220,5 +220,41 @@ class AccountParamObject:
         If the account is not rekeyed, the empty address is returned."""
         return AccountParam.authAddr(self._account)
 
+    def total_num_uint(self) -> AccountParamExpr:
+        """Get the total number of uint64 values allocated by the account in Global and Local States."""
+        return AccountParam.totalNumUint(self._account)
+
+    def total_num_byte_slice(self) -> AccountParamExpr:
+        """Get the total number of byte array values allocated by the account in Global and Local States."""
+        return AccountParam.totalNumByteSlice(self._account)
+
+    def total_extra_app_pages(self) -> AccountParamExpr:
+        """Get the number of extra app code pages used by the account."""
+        return AccountParam.totalExtraAppPages(self._account)
+
+    def total_apps_created(self) -> AccountParamExpr:
+        """Get the number of existing apps created by the account."""
+        return AccountParam.totalAppsCreated(self._account)
+
+    def total_apps_opted_in(self) -> AccountParamExpr:
+        """Get the number of apps the account is opted into."""
+        return AccountParam.totalAppsOptedIn(self._account)
+
+    def total_assets_created(self) -> AccountParamExpr:
+        """Get the number of existing ASAs created by the account."""
+        return AccountParam.totalAssetsCreated(self._account)
+
+    def total_assets(self) -> AccountParamExpr:
+        """Get the number of ASAs held by the account (including ASAs the account created)."""
+        return AccountParam.totalAssets(self._account)
+
+    def total_boxes(self) -> AccountParamExpr:
+        """Get the number of existing boxes created by the account's app."""
+        return AccountParam.totalBoxes(self._account)
+
+    def total_box_bytes(self) -> AccountParamExpr:
+        """Get the total number of bytes used by the account's app's box keys and values."""
+        return AccountParam.totalBoxBytes(self._account)
+
 
 AccountParamObject.__module__ = "pyteal"

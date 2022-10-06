@@ -5,6 +5,7 @@ from pyteal.ast.acct import AccountParamField
 from pyteal.ast.maybe_test import assert_MaybeValue_equality
 
 avm6Options = pt.CompileOptions(version=6)
+avm8Options = pt.CompileOptions(version=8)
 
 @pytest.mark.parametrize(
     "method_name,field_name",
@@ -76,4 +77,32 @@ def test_AccountParamObject():
         )
         assert_MaybeValue_equality(
             obj.auth_address(), pt.AccountParam.authAddr(account), avm6Options
+        )
+
+        assert_MaybeValue_equality(
+            obj.total_num_uint(), pt.AccountParam.totalNumUint(account), avm8Options
+        )
+        assert_MaybeValue_equality(
+            obj.total_num_byte_slice(), pt.AccountParam.totalNumByteSlice(account), avm8Options
+        )
+        assert_MaybeValue_equality(
+            obj.total_extra_app_pages(), pt.AccountParam.totalExtraAppPages(account), avm8Options
+        )
+        assert_MaybeValue_equality(
+            obj.total_apps_created(), pt.AccountParam.totalAppsCreated(account), avm8Options
+        )
+        assert_MaybeValue_equality(
+            obj.total_apps_opted_in(), pt.AccountParam.totalAppsOptedIn(account), avm8Options
+        )
+        assert_MaybeValue_equality(
+            obj.total_assets_created(), pt.AccountParam.totalAssetsCreated(account), avm8Options
+        )
+        assert_MaybeValue_equality(
+            obj.total_assets(), pt.AccountParam.totalAssets(account), avm8Options
+        )
+        assert_MaybeValue_equality(
+            obj.total_boxes(), pt.AccountParam.totalBoxes(account), avm8Options
+        )
+        assert_MaybeValue_equality(
+            obj.total_box_bytes(), pt.AccountParam.totalBoxBytes(account), avm8Options
         )
