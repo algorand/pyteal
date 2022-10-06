@@ -18,6 +18,8 @@ from pyteal.ast.int import Int
 from pyteal.ast.substring import Extract, Substring, Suffix
 from pyteal.ast.abi.type import TypeSpec, BaseType
 
+from pyteal.ast.abi.uint import Uint64
+
 
 def substring_for_decoding(
     encoded: Expr,
@@ -499,3 +501,7 @@ def type_specs_from_signature(sig: str) -> tuple[list[TypeSpec], Optional[TypeSp
         return_type = type_spec_from_algosdk(sdk_method.returns.type)
 
     return [type_spec_from_algosdk(arg.type) for arg in sdk_method.args], return_type
+
+
+class BadIntentionUncoveredCase(Uint64):
+    pass
