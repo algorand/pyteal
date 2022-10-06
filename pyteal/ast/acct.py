@@ -4,7 +4,6 @@ from pyteal.errors import verifyFieldVersion
 
 from pyteal.types import TealType, require_type
 from pyteal.ir import Op
-from pyteal.ast.leafexpr import LeafExpr
 from pyteal.ast.expr import Expr
 from pyteal.ast.maybe import MaybeValue
 
@@ -15,18 +14,18 @@ if TYPE_CHECKING:
 class AccountParamField(Enum):
     # fmt: off
     #                    id  |         name               |     type    |  min version
-    balance               = (0,  "AcctBalance",            TealType.uint64, 6)
-    min_balance           = (1,  "AcctMinBalance",         TealType.uint64, 6)
-    auth_addr             = (2,  "AcctAuthAddr",           TealType.bytes,  6)
-    total_num_uint        = (3,  "AcctTotalNumUint",       TealType.uint64, 8)
-    total_num_byte_slice  = (4,  "AcctTotalNumByteSlice",  TealType.uint64, 8)
-    total_extra_app_pages = (5,  "AcctTotalExtraAppPages", TealType.uint64, 8)
-    total_apps_created    = (6,  "AcctTotalAppsCreated",   TealType.uint64, 8)
-    total_apps_opted_in   = (7,  "AcctTotalAppsOptedIn",   TealType.uint64, 8)
-    total_assets_created  = (8,  "AcctTotalAssetsCreated", TealType.uint64, 8)
-    total_assets          = (9,  "AcctTotalAssets",        TealType.uint64, 8)
-    total_boxes           = (10, "AcctTotalBoxes",         TealType.uint64, 8)
-    total_box_bytes       = (11, "AcctTotalBoxBytes",      TealType.uint64, 8)
+    balance               = (0,  "AcctBalance",            TealType.uint64, 6)  # noqa: E221
+    min_balance           = (1,  "AcctMinBalance",         TealType.uint64, 6)  # noqa: E221
+    auth_addr             = (2,  "AcctAuthAddr",           TealType.bytes,  6)  # noqa: E221
+    total_num_uint        = (3,  "AcctTotalNumUint",       TealType.uint64, 8)  # noqa: E221
+    total_num_byte_slice  = (4,  "AcctTotalNumByteSlice",  TealType.uint64, 8)  # noqa: E221
+    total_extra_app_pages = (5,  "AcctTotalExtraAppPages", TealType.uint64, 8)  # noqa: E221
+    total_apps_created    = (6,  "AcctTotalAppsCreated",   TealType.uint64, 8)  # noqa: E221
+    total_apps_opted_in   = (7,  "AcctTotalAppsOptedIn",   TealType.uint64, 8)  # noqa: E221
+    total_assets_created  = (8,  "AcctTotalAssetsCreated", TealType.uint64, 8)  # noqa: E221
+    total_assets          = (9,  "AcctTotalAssets",        TealType.uint64, 8)  # noqa: E221
+    total_boxes           = (10, "AcctTotalBoxes",         TealType.uint64, 8)  # noqa: E221
+    total_box_bytes       = (11, "AcctTotalBoxBytes",      TealType.uint64, 8)  # noqa: E221
     # fmt: on
 
     def __init__(self, id: int, name: str, type: TealType, min_version: int) -> None:
