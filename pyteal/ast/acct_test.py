@@ -1,7 +1,10 @@
+import pytest
+
 import pyteal as pt
 from pyteal.ast.maybe_test import assert_MaybeValue_equality
 
 options = pt.CompileOptions()
+avm5Options = pt.CompileOptions(version=5)
 avm6Options = pt.CompileOptions(version=6)
 
 
@@ -27,6 +30,9 @@ def test_acct_param_balance_valid():
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+    with pytest.raises(pt.TealInputError):
+        expr.__teal__(avm5Options)
+
 
 def test_acct_param_min_balance_valid():
     arg = pt.Int(0)
@@ -50,6 +56,9 @@ def test_acct_param_min_balance_valid():
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
+    with pytest.raises(pt.TealInputError):
+        expr.__teal__(avm5Options)
+
 
 def test_acct_param_auth_addr_valid():
     arg = pt.Int(1)
@@ -72,6 +81,9 @@ def test_acct_param_auth_addr_valid():
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
+
+    with pytest.raises(pt.TealInputError):
+        expr.__teal__(avm5Options)
 
 
 def test_AccountParamObject():
