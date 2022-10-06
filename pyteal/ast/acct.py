@@ -23,10 +23,10 @@ class AccountParamField(Enum):
     total_extra_app_pages = (5,  "AcctTotalExtraAppPages", TealType.uint64, 8)
     total_apps_created    = (6,  "AcctTotalAppsCreated",   TealType.uint64, 8)
     total_apps_opted_in   = (7,  "AcctTotalAppsOptedIn",   TealType.uint64, 8)
-    total_box_bytes       = (8,  "AcctTotalBoxBytes",      TealType.uint64, 8)
-    total_assets_created  = (9,  "AcctTotalAssetsCreated", TealType.uint64, 8)
-    total_assets          = (10, "AcctTotalAssets",        TealType.uint64, 8)
-    total_boxes           = (11, "AcctTotalBoxes",         TealType.uint64, 8)
+    total_assets_created  = (8,  "AcctTotalAssetsCreated", TealType.uint64, 8)
+    total_assets          = (9,  "AcctTotalAssets",        TealType.uint64, 8)
+    total_boxes           = (10, "AcctTotalBoxes",         TealType.uint64, 8)
+    total_box_bytes       = (11, "AcctTotalBoxBytes",      TealType.uint64, 8)
     # fmt: on
 
     def __init__(self, id: int, name: str, type: TealType, min_version: int) -> None:
@@ -100,6 +100,96 @@ class AccountParam:
         """
         return AccountParamExpr(AccountParamField.auth_addr, acct)
 
+    @classmethod
+    def totalNumUint(cls, acct: Expr) -> AccountParamExpr:
+        """Get the total number of uint64 values allocated by the account in Global and Local States.
+        
+        Args:
+            acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
+                May evaluate to uint64 or an address.
+        """
+        return AccountParamExpr(AccountParamField.total_num_uint, acct)
+
+    @classmethod
+    def totalNumByteSlice(cls, acct: Expr) -> AccountParamExpr:
+        """Get the total number of byte array values allocated by the account in Global and Local States.
+        
+        Args:
+            acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
+                May evaluate to uint64 or an address.
+        """
+        return AccountParamExpr(AccountParamField.total_num_byte_slice, acct)
+
+    @classmethod
+    def totalExtraAppPages(cls, acct: Expr) -> AccountParamExpr:
+        """Get the number of extra app code pages used by the account.
+        
+        Args:
+            acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
+                May evaluate to uint64 or an address.
+        """
+        return AccountParamExpr(AccountParamField.total_extra_app_pages, acct)
+
+    @classmethod
+    def totalAppsCreated(cls, acct: Expr) -> AccountParamExpr:
+        """Get the number of existing apps created by the account.
+
+        Args:
+            acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
+                May evaluate to uint64 or an address.
+        """
+        return AccountParamExpr(AccountParamField.total_apps_created, acct)
+
+    @classmethod
+    def totalAppsOptedIn(cls, acct: Expr) -> AccountParamExpr:
+        """Get the number of apps the account is opted into.
+        
+        Args:
+            acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
+                May evaluate to uint64 or an address.
+        """
+        return AccountParamExpr(AccountParamField.total_apps_opted_in, acct)
+    
+    @classmethod
+    def totalAssetsCreated(cls, acct: Expr) -> AccountParamExpr:
+        """Get the number of existing ASAs created by the account.
+        
+        Args:
+            acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
+                May evaluate to uint64 or an address.
+        """
+        return AccountParamExpr(AccountParamField.total_assets_created, acct)
+
+    @classmethod
+    def totalAssets(cls, acct: Expr) -> AccountParamExpr:
+        """Get the number of ASAs held by the account (including ASAs the account created).
+        
+        Args:
+            acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
+                May evaluate to uint64 or an address.
+        """
+        return AccountParamExpr(AccountParamField.total_assets, acct)
+
+
+    @classmethod
+    def totalBoxes(cls, acct: Expr) -> AccountParamExpr:
+        """Get the number of existing boxes created by the account's app.
+        
+        Args:
+            acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
+                May evaluate to uint64 or an address.
+        """
+        return AccountParamExpr(AccountParamField.total_boxes, acct)
+
+    @classmethod
+    def totalBoxBytes(cls, acct: Expr) -> AccountParamExpr:
+        """Get the total number of bytes used by the account's app's box keys and values.
+        
+        Args:
+            acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
+                May evaluate to uint64 or an address.
+        """
+        return AccountParamExpr(AccountParamField.total_box_bytes, acct)
 
 AccountParam.__module__ = "pyteal"
 
