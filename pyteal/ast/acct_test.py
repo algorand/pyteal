@@ -2,8 +2,6 @@ import pyteal as pt
 from pyteal.ast.maybe_test import assert_MaybeValue_equality
 
 options = pt.CompileOptions()
-avm4Options = pt.CompileOptions(version=4)
-avm5Options = pt.CompileOptions(version=5)
 avm6Options = pt.CompileOptions(version=6)
 
 
