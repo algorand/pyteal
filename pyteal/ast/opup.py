@@ -58,7 +58,9 @@ class OpUp:
             )
     """
 
-    def __init__(self, mode: OpUpMode, target_app_id: Expr = None):
+    def __init__(
+        self, mode: OpUpMode, target_app_id: Expr = None, inner_fee: Expr = Int(0)
+    ):
         """Create a new OpUp object.
 
         Args:
@@ -67,10 +69,15 @@ class OpUp:
             target_app_id (optional): In Explicit mode, the OpUp utility
                 requires the app_id to target for inner app calls. Defaults
                 to None.
+            inner_fee (optional): OpUp utility requires inner
+                transactions fee to be paid by the upper call as default. To
+                let the application pay inner transactions fee with app
+                account's funds, set this parameter to `Global.min_txn_fee`
+                or a given fixed `Int`.
         """
 
         # With only OnCall and Explicit modes supported, the mode argument
-        # isn't strictly necessary but it will most likely be required if
+        # isn't strictly necessary, but it will most likely be required if
         # we do decide to add more modes in the future.
         if mode == OpUpMode.Explicit:
             if target_app_id is None:
@@ -87,30 +94,27 @@ class OpUp:
 
         self.mode = mode
 
+        require_type(inner_fee, TealType.uint64)
+        self.inner_fee = inner_fee
+
     def _construct_itxn(self) -> Expr:
         if self.mode == OpUpMode.Explicit:
-            return Seq(
-                InnerTxnBuilder.Begin(),
-                InnerTxnBuilder.SetFields(
-                    {
-                        TxnField.type_enum: TxnType.ApplicationCall,
-                        TxnField.application_id: self.target_app_id,
-                    }
-                ),
-                InnerTxnBuilder.Submit(),
+            return InnerTxnBuilder.Execute(
+                {
+                    TxnField.type_enum: TxnType.ApplicationCall,
+                    TxnField.application_id: self.target_app_id,
+                    TxnField.fee: self.inner_fee,
+                }
             )
         else:
-            return Seq(
-                InnerTxnBuilder.Begin(),
-                InnerTxnBuilder.SetFields(
-                    {
-                        TxnField.type_enum: TxnType.ApplicationCall,
-                        TxnField.on_completion: OnComplete.DeleteApplication,
-                        TxnField.approval_program: ON_CALL_APP,
-                        TxnField.clear_state_program: ON_CALL_APP,
-                    }
-                ),
-                InnerTxnBuilder.Submit(),
+            return InnerTxnBuilder.Execute(
+                {
+                    TxnField.type_enum: TxnType.ApplicationCall,
+                    TxnField.on_completion: OnComplete.DeleteApplication,
+                    TxnField.approval_program: ON_CALL_APP,
+                    TxnField.clear_state_program: ON_CALL_APP,
+                    TxnField.fee: self.inner_fee,
+                }
             )
 
     def ensure_budget(self, required_budget: Expr) -> Expr:
