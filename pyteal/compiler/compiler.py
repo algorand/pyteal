@@ -249,6 +249,8 @@ def compile_teal_with_components(
 ) -> tuple[str, list[str], list[TealComponent]]:
     """Compile a PyTeal expression into TEAL assembly.
 
+    TODO: this comment is out of date!!!
+
     Args:
         ast: The PyTeal expression to assemble.
         mode: The mode of the program to assemble. Must be Signature or Application.

@@ -151,7 +151,7 @@ _PT_frame = "PT frame"
 class SourceMapItem:
     line: int
     teal: str
-    component: pt.TealComponent
+    component: "pt.TealComponent"
     frame: PyTealFrame
     extras: dict[str, Any] | None
 
@@ -182,7 +182,7 @@ class SourceMapItem:
 
 def get_source_map(
     teal_lines: list[str],
-    teal_components: list[pt.TealComponent],
+    teal_components: list["pt.TealComponent"],
     add_extras: bool = False,
 ) -> dict:
     N = len(teal_lines)
@@ -211,7 +211,7 @@ def get_source_map(
 
 
 def best_frame_and_more(
-    t: pt.TealComponent,
+    t: "pt.TealComponent",
 ) -> tuple[inspect.FrameInfo | None, list[inspect.FrameInfo], list[inspect.FrameInfo]]:
     # TODO: probly need to trim down the extra before and afters before merging
     frames_reversed: list[inspect.FrameInfo]
@@ -219,7 +219,8 @@ def best_frame_and_more(
     path_match: str
     match t:
         case pt.TealOp():
-            assert t.expr is not None, f"provided TealOp {t} missing Expr"
+            if t.expr is None:
+                assert t.expr is not None, f"provided TealOp {t} missing Expr"
             frames_reversed = t.expr.frames
             frame_nodes = t.expr.frame_nodes
             path_match = "pyteal/ast"

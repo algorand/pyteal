@@ -11,7 +11,13 @@ from pyteal.errors import (
     TealInternalError,
 )
 from pyteal.types import TealType
-from pyteal.compiler.compiler import compileTeal, DEFAULT_TEAL_VERSION, OptimizeOptions
+from pyteal.compiler.compiler import (
+    compile_teal_with_components,
+    DEFAULT_TEAL_VERSION,
+    OptimizeOptions,
+)
+from pyteal.compiler.source_map import get_source_map
+
 from pyteal.ir.ops import Mode
 
 from pyteal.ast import abi
@@ -489,6 +495,17 @@ class ASTBuilder:
         return Cond(*[[n.condition, n.branch] for n in self.conditions_n_branches])
 
 
+@dataclass
+class CompilationBundle:
+    approval_program: Expr
+    clear_program: Expr
+    abi_contract: sdk_abi.Contract
+    approval_teal: str
+    clear_teal: str
+    approval_sourcemap: dict | None = None
+    clear_sourcemap: dict | None = None
+
+
 class Router:
     """
     The Router class helps construct the approval and clear state programs for an ARC-4 compliant
@@ -725,7 +742,7 @@ class Router:
         *,
         version: int = DEFAULT_TEAL_VERSION,
         assemble_constants: bool = False,
-        optimize: OptimizeOptions = None,
+        optimize: OptimizeOptions | None = None,
     ) -> tuple[str, str, sdk_abi.Contract]:
         """
         Constructs and compiles approval and clear-state programs from the registered methods and
@@ -744,22 +761,61 @@ class Router:
             * clear_state_program: compiled clear-state program string
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
+        cpb = self._build_impl(version, assemble_constants, optimize, False)
+
+        return cpb.approval_teal, cpb.clear_teal, cpb.abi_contract
+
+    def compile_program_with_sourcemaps(
+        self,
+        *,
+        version: int = DEFAULT_TEAL_VERSION,
+        assemble_constants: bool = False,
+        optimize: OptimizeOptions | None = None,
+    ) -> CompilationBundle:
+        """
+        TODO: out of date comment
+
+        Constructs and compiles approval and clear-state programs from the registered methods and
+        bare app calls in the router, and also generates a Contract object to allow client read and call
+        the methods easily.
+
+        This method combines :any:`Router.build_program` and :any:`compileTeal`.
+
+        Note that if no methods or bare app call actions have been registered to either the approval
+        or clear state programs, then that program will reject all transactions.
+
+        Returns:
+            A tuple of three objects.
+
+            * approval_program: compiled approval program string
+            * clear_state_program: compiled clear-state program string
+            * contract: a Python SDK Contract object to allow clients to make off-chain calls
+        """
+        return self._build_impl(version, assemble_constants, optimize, True)
+
+    def _build_impl(self, version, assemble_constants, optimize, sourcemaps):
         ap, csp, contract = self.build_program()
-        ap_compiled = compileTeal(
+        ap_compiled, ap_lines, ap_components = compile_teal_with_components(
             ap,
             Mode.Application,
             version=version,
             assembleConstants=assemble_constants,
             optimize=optimize,
         )
-        csp_compiled = compileTeal(
+        csp_compiled, csp_lines, csp_components = compile_teal_with_components(
             csp,
             Mode.Application,
             version=version,
             assembleConstants=assemble_constants,
             optimize=optimize,
         )
-        return ap_compiled, csp_compiled, contract
+        cpb = CompilationBundle(ap, csp, contract, ap_compiled, csp_compiled)
+        if sourcemaps is False:
+            return cpb
+
+        cpb.approval_sourcemap = get_source_map(ap_lines, ap_components)
+        cpb.clear_sourcemap = get_source_map(csp_lines, csp_components)
+        return cpb
 
 
 Router.__module__ = "pyteal"
