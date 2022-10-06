@@ -86,6 +86,12 @@ def test_acct_param_auth_addr_valid():
         expr.__teal__(avm5Options)
 
 
+def test_acct_param_string():
+    assert str(pt.AccountParam.balance(pt.Int(1))) == "(AccountParam AcctBalance (Int 1))"
+    assert str(pt.AccountParam.minBalance(pt.Int(1))) == "(AccountParam AcctMinBalance (Int 1))"
+    assert str(pt.AccountParam.authAddr(pt.Int(1))) == "(AccountParam AcctAuthAddr (Int 1))"
+
+
 def test_AccountParamObject():
     for account in (
         pt.Int(7),
