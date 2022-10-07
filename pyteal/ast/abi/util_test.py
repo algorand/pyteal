@@ -15,6 +15,19 @@ from pyteal.ast.abi.util import (
 options = pt.CompileOptions(version=5)
 
 
+def bfs_on_inheritance(tt: type):
+    type_queue = [tt]
+    visited_types = set()
+    while type_queue:
+        current_type = type_queue.pop()
+        yield current_type
+        visited_types.add(current_type)
+        for child_type in current_type.__subclasses__():
+            if child_type in visited_types:
+                continue
+            type_queue.append(child_type)
+
+
 class SubstringTest(NamedTuple):
     start_index: Optional[pt.Expr]
     end_index: Optional[pt.Expr]
@@ -358,50 +371,38 @@ def test_type_spec_from_annotation(
     ), "TypeSpec.new_instance().type_spec() does not match original TypeSpec"
 
 
-def test_type_spec_from_annotation_is_exhaustive():
+@pytest.mark.parametrize("subclass", bfs_on_inheritance(abi.BaseType))
+def test_type_spec_from_annotation_is_exhaustive(subclass: type):
     # This test is to make sure there are no new subclasses of BaseType that type_spec_from_annotation
     # is not aware of.
 
-    subclasses = abi.BaseType.__subclasses__()
-    while len(subclasses) > 0:
-        subclass = subclasses.pop()
-        subclasses += subclass.__subclasses__()
-
-        if isabstract(subclass):
-            # abstract class type annotations should not be supported
-            with pytest.raises(TypeError, match=r"^Unknown annotation origin"):
-                abi.type_spec_from_annotation(subclass)
-            continue
-
-        if subclass is pt.abi.NamedTuple:
-            with pytest.raises(
-                pt.TealInputError, match=r"^NamedTuple must be subclassed$"
-            ):
-                abi.type_spec_from_annotation(subclass)
-            continue
-
-        try:
-            # if subclass is not generic, this will succeed
+    if isabstract(subclass):
+        # abstract class type annotations should not be supported
+        with pytest.raises(TypeError, match=r"^Unknown annotation origin"):
             abi.type_spec_from_annotation(subclass)
-        except TypeError as e:
-            # if subclass is generic, we should get an error that is NOT "Unknown annotation origin"
-            assert "Unknown annotation origin" not in str(e)
+        return
 
-        if issubclass(subclass, pt.abi.NamedTuple):
-            # ignore NamedTuple subclasses for the following check
-            continue
+    if subclass is pt.abi.NamedTuple:
+        with pytest.raises(pt.TealInputError, match=r"^NamedTuple must be subclassed$"):
+            abi.type_spec_from_annotation(subclass)
+        return
 
-        # make sure there is a testcase for this subclass in test_type_spec_from_annotation
-        found = False
-        for testcase in TYPE_ANNOTATION_TEST_CASES:
-            if subclass is testcase.annotation or subclass is get_origin(
-                testcase.annotation
-            ):
-                found = True
-                break
-        assert (
-            found
-        ), f"Test case for subclass {subclass} is not present in TYPE_ANNOTATION_TEST_CASES"
+    try:
+        # if subclass is not generic, this will succeed
+        abi.type_spec_from_annotation(subclass)
+    except TypeError as e:
+        # if subclass is generic, we should get an error that is NOT "Unknown annotation origin"
+        assert "Unknown annotation origin" not in str(e)
+
+    if issubclass(subclass, pt.abi.NamedTuple):
+        # ignore NamedTuple subclasses for the following check
+        return
+
+    # make sure there is a testcase for this subclass in test_type_spec_from_annotation
+    assert any(
+        subclass is testcase.annotation or subclass is get_origin(testcase.annotation)
+        for testcase in TYPE_ANNOTATION_TEST_CASES
+    ), f"Test case for subclass {subclass} is not present in TYPE_ANNOTATION_TEST_CASES"
 
 
 def test_make():
