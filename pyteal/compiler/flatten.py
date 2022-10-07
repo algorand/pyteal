@@ -50,7 +50,7 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
 
             if nextIndex != i + 1:
                 references[nextIndex] += 1
-                code.append(TealOp(None, Op.b, indexToLabel(nextIndex)))
+                code.append(TealOp(None, Op.b, indexToLabel(nextIndex)))  # T2PT5
 
         elif type(block) is TealConditionalBlock:
             assert block.trueBlock is not None
@@ -61,26 +61,26 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
 
             if falseIndex == i + 1:
                 references[trueIndex] += 1
-                code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex)))
+                code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex)))  # T2PT5
                 continue
 
             if trueIndex == i + 1:
                 references[falseIndex] += 1
-                code.append(TealOp(None, Op.bz, indexToLabel(falseIndex)))
+                code.append(TealOp(None, Op.bz, indexToLabel(falseIndex)))  # T2PT5
                 continue
 
             references[trueIndex] += 1
-            code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex)))
+            code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex)))  # T2PT5
 
             references[falseIndex] += 1
-            code.append(TealOp(None, Op.b, indexToLabel(falseIndex)))
+            code.append(TealOp(None, Op.b, indexToLabel(falseIndex)))  # T2PT5
         else:
             raise TealInternalError("Unrecognized block type: {}".format(type(block)))
 
     teal: List[TealComponent] = []
     for i, code in enumerate(codeblocks):
         if references[i] != 0:
-            teal.append(TealLabel(None, indexToLabel(i)))
+            teal.append(TealLabel(None, indexToLabel(i)))  # T2PT6
         teal += code
 
     return teal

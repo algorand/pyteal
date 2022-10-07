@@ -1,5 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, TYPE_CHECKING
+import ast
+import executing
+import inspect
+from typing import cast, List, Optional, TYPE_CHECKING
 from contextlib import AbstractContextManager
 
 if TYPE_CHECKING:
@@ -9,6 +12,19 @@ if TYPE_CHECKING:
 class TealComponent(ABC):
     def __init__(self, expr: Optional["Expr"]):
         self.expr = expr
+
+        # TODO: need to refactor/extract frame stuff
+        self._frames: List[inspect.FrameInfo] | None
+        # TODO: this is some sort of AST node, not Any:
+        self._frame_nodes: List[ast.AST | None] | None
+
+        if not self.expr:  # expr already has the frame info
+            fs = inspect.stack()
+            self._frames = fs
+            self._frame_nodes = [
+                cast(ast.AST | None, executing.Source.executing(f.frame).node)
+                for f in fs
+            ]
 
     def getSlots(self) -> List["ScratchSlot"]:
         return []
@@ -21,6 +37,14 @@ class TealComponent(ABC):
 
     def resolveSubroutine(self, subroutine: "SubroutineDefinition", label: str) -> None:
         pass
+
+    # TODO: unify/refactor + handle case when no tracing occurred
+    def frames(self) -> List[inspect.FrameInfo] | None:
+        return self.expr.frames if self.expr else self._frames
+
+    # TODO: unify/refactor + handle case when no tracing occurred
+    def frame_nodes(self) -> List[ast.AST | None] | None:
+        return self.expr.frame_nodes if self.expr else self._frame_nodes
 
     @abstractmethod
     def assemble(self) -> str:

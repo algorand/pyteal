@@ -1,12 +1,10 @@
-import inspect
-
 from pyteal.ir.tealcomponent import TealComponent
 
 
 class TealPragma(TealComponent):
     def __init__(self, version: int):
+        super().__init__(None)
         self.version = version
-        self.frames = inspect.stack()
 
     def assemble(self) -> str:
         return f"#pragma version {self.version}"

@@ -12,11 +12,11 @@ from pyteal.errors import (
 )
 from pyteal.types import TealType
 from pyteal.compiler.compiler import (
-    compile_teal_with_components,
+    Compilation,
     DEFAULT_TEAL_VERSION,
     OptimizeOptions,
 )
-from pyteal.compiler.source_map import get_source_map
+from pyteal.compiler.source_map import PyTealSourceMap
 
 from pyteal.ir.ops import Mode
 
@@ -496,14 +496,14 @@ class ASTBuilder:
 
 
 @dataclass
-class CompilationBundle:
+class RouterBundle:
     approval_program: Expr
     clear_program: Expr
     abi_contract: sdk_abi.Contract
     approval_teal: str
     clear_teal: str
-    approval_sourcemap: dict | None = None
-    clear_sourcemap: dict | None = None
+    approval_sourcemap: PyTealSourceMap | None = None
+    clear_sourcemap: PyTealSourceMap | None = None
 
 
 class Router:
@@ -525,8 +525,8 @@ class Router:
     def __init__(
         self,
         name: str,
-        bare_calls: BareCallActions = None,
-        descr: str = None,
+        bare_calls: BareCallActions | None = None,
+        descr: str | None = None,
     ) -> None:
         """
         Args:
@@ -566,9 +566,9 @@ class Router:
     def add_method_handler(
         self,
         method_call: ABIReturnSubroutine,
-        overriding_name: str = None,
-        method_config: MethodConfig = None,
-        description: str = None,
+        overriding_name: str | None = None,
+        method_config: MethodConfig | None = None,
+        description: str | None = None,
     ) -> ABIReturnSubroutine:
         """Add a method call handler to this Router.
 
@@ -624,17 +624,17 @@ class Router:
 
     def method(
         self,
-        func: Callable = None,
+        func: Callable | None = None,
         /,
         *,
-        name: str = None,
-        description: str = None,
-        no_op: CallConfig = None,
-        opt_in: CallConfig = None,
-        close_out: CallConfig = None,
-        clear_state: CallConfig = None,
-        update_application: CallConfig = None,
-        delete_application: CallConfig = None,
+        name: str | None = None,
+        description: str | None = None,
+        no_op: CallConfig | None = None,
+        opt_in: CallConfig | None = None,
+        close_out: CallConfig | None = None,
+        clear_state: CallConfig | None = None,
+        update_application: CallConfig | None = None,
+        delete_application: CallConfig | None = None,
     ):
         """This is an alternative way to register a method, as supposed to :code:`add_method_handler`.
 
@@ -771,7 +771,7 @@ class Router:
         version: int = DEFAULT_TEAL_VERSION,
         assemble_constants: bool = False,
         optimize: OptimizeOptions | None = None,
-    ) -> CompilationBundle:
+    ) -> RouterBundle:
         """
         TODO: out of date comment
 
@@ -795,27 +795,38 @@ class Router:
 
     def _build_impl(self, version, assemble_constants, optimize, sourcemaps):
         ap, csp, contract = self.build_program()
-        ap_compiled, ap_lines, ap_components = compile_teal_with_components(
+
+        abundle = Compilation(
             ap,
             Mode.Application,
             version=version,
-            assembleConstants=assemble_constants,
+            assemble_constants=assemble_constants,
             optimize=optimize,
-        )
-        csp_compiled, csp_lines, csp_components = compile_teal_with_components(
+        ).compile(with_sourcemap=sourcemaps)
+
+        csbundle = Compilation(
             csp,
             Mode.Application,
             version=version,
-            assembleConstants=assemble_constants,
+            assemble_constants=assemble_constants,
             optimize=optimize,
-        )
-        cpb = CompilationBundle(ap, csp, contract, ap_compiled, csp_compiled)
-        if sourcemaps is False:
-            return cpb
+        ).compile(with_sourcemap=sourcemaps)
 
-        cpb.approval_sourcemap = get_source_map(ap_lines, ap_components)
-        cpb.clear_sourcemap = get_source_map(csp_lines, csp_components)
-        return cpb
+        return RouterBundle(
+            ap,
+            csp,
+            contract,
+            abundle.teal,
+            csbundle.teal,
+            abundle.sourcemap,
+            csbundle.sourcemap,
+        )
+        # if sourcemaps is False:
+        #     return cpb
+
+        # # TODO: unnecessary!
+        # cpb.approval_sourcemap = abundle.sourcemap
+        # cpb.clear_sourcemap = csbundle.sourcemap
 
 
 Router.__module__ = "pyteal"

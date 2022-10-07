@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
-from executing import Source
+import ast
+import executing
 import inspect
-from typing import Tuple, List, TYPE_CHECKING
+from typing import cast, Tuple, List, TYPE_CHECKING
 
 from pyteal.types import TealType
 from pyteal.ir import TealBlock, TealSimpleBlock
@@ -12,9 +13,12 @@ if TYPE_CHECKING:
 
 def frames_adder(init):
     def wrapper(*args, **kwargs):
-        frames = inspect.stack()
-        args[0].frames = frames
-        args[0].frame_nodes = [Source.executing(f.frame).node for f in frames]
+        # TODO: need to refactor/extract frame stuff
+        fs = inspect.stack()
+        args[0].frames = fs
+        args[0].frame_nodes = [
+            cast(ast.AST, executing.Source.executing(f.frame).node) for f in fs
+        ]
 
         return init(*args, **kwargs)
 
@@ -32,9 +36,9 @@ class Expr(ABC):
 
         self.trace = traceback.format_stack()[0:-1]
         if not hasattr(self, "frames"):
-            self.frames = []
-            self.frame_nodes = []
-            self.frame_qualnames = []
+            self.frames: List[inspect.FrameInfo] = []
+            self.frame_nodes: List[ast.AST | None] = []
+            # self.frame_qualnames = []
 
     def getDefinitionTrace(self) -> List[str]:
         return self.trace

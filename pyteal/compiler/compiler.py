@@ -1,7 +1,10 @@
+from dataclasses import dataclass
+import executing
 import inspect
 from typing import List, Tuple, Set, Dict, Optional, cast
 
 from pyteal.compiler.optimizer import OptimizeOptions, apply_global_optimizations
+from pyteal.compiler.source_map import PyTealSourceMap
 
 from pyteal.types import TealType
 from pyteal.ast import (
@@ -239,98 +242,149 @@ def sort_subroutine_blocks(
     return subroutine_mapping
 
 
-def compile_teal_with_components(
-    ast: Expr,
-    mode: Mode,
-    *,
-    version: int = DEFAULT_PROGRAM_VERSION,
-    assembleConstants: bool = False,
-    optimize: OptimizeOptions | None = None,
-) -> tuple[str, list[str], list[TealComponent]]:
-    """Compile a PyTeal expression into TEAL assembly.
+@dataclass
+class CompilationBundle:
+    ast: Expr
+    mode: Mode
+    version: int
+    assemble_constants: bool
+    optimize: OptimizeOptions | None
+    teal: str
+    lines: list[str]
+    components: list[TealComponent]
+    sourcemap: PyTealSourceMap | None = None
 
-    TODO: this comment is out of date!!!
 
-    Args:
-        ast: The PyTeal expression to assemble.
-        mode: The mode of the program to assemble. Must be Signature or Application.
-        version (optional): The program version used to assemble the program. This will determine which
-            expressions and fields are able to be used in the program and how expressions compile to
-            TEAL opcodes. Defaults to 2 if not included.
-        assembleConstants (optional): When true, the compiler will produce a program with fully
-            assembled constants, rather than using the pseudo-ops `int`, `byte`, and `addr`. These
-            constants will be assembled in the most space-efficient way, so enabling this may reduce
-            the compiled program's size. Enabling this option requires a minimum program version of 3.
-            Defaults to false.
-        optimize (optional): OptimizeOptions that determine which optimizations will be applied.
-
-    Returns:
-        A TEAL assembly program compiled from the input expression.
-
-    Raises:
-        TealInputError: if an operation in ast is not supported by the supplied mode and version.
-        TealInternalError: if an internal error is encounter during compilation.
-    """
-    if (
-        not (MIN_PROGRAM_VERSION <= version <= MAX_PROGRAM_VERSION)
-        or type(version) is not int
+class Compilation:
+    def __init__(
+        self,
+        ast: Expr,
+        mode: Mode,
+        *,
+        version: int = DEFAULT_PROGRAM_VERSION,
+        assemble_constants: bool = False,
+        optimize: OptimizeOptions | None = None,
     ):
-        raise TealInputError(
-            "Unsupported program version: {}. Excepted an integer in the range [{}, {}]".format(
-                version, MIN_PROGRAM_VERSION, MAX_PROGRAM_VERSION
-            )
-        )
+        self.ast = ast
+        self.mode = mode
+        self.version = version
+        self.assemble_constants = assemble_constants
+        self.optimize = optimize
 
-    options = CompileOptions(mode=mode, version=version, optimize=optimize)
+        # TODO: need to refactor/extract frame stuff
+        frames = inspect.stack()
+        self.frames = frames
+        self.frame_nodes = [executing.Source.executing(f.frame).node for f in frames]
 
-    subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
-    subroutine_start_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
-    subroutine_end_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
-    compileSubroutine(
-        ast, options, subroutineGraph, subroutine_start_blocks, subroutine_end_blocks
-    )
+    # TODO: API needs refactor....
+    def compile(self, with_sourcemap: bool = True) -> CompilationBundle:
+        """Compile a PyTeal expression into TEAL assembly.
 
-    # note: optimizations are off by default, in which case, apply_global_optimizations
-    # won't make any changes. Because the optimizer is invoked on a subroutine's
-    # control flow graph, the optimizer requires context across block boundaries. This
-    # is necessary for the dependency checking of local slots. Global slots, slots
-    # used by DynamicScratchVar, and reserved slots are not optimized.
-    if options.optimize.scratch_slots:
-        options.optimize._skip_slots = collect_unoptimized_slots(
-            subroutine_start_blocks
-        )
-        for start in subroutine_start_blocks.values():
-            apply_global_optimizations(start, options.optimize)
+        TODO: this comment is out of date!!!
 
-    localSlotAssignments = assignScratchSlotsToSubroutines(subroutine_start_blocks)
+        Args:
+            ast: The PyTeal expression to assemble.
+            mode: The mode of the program to assemble. Must be Signature or Application.
+            version (optional): The program version used to assemble the program. This will determine which
+                expressions and fields are able to be used in the program and how expressions compile to
+                TEAL opcodes. Defaults to 2 if not included.
+            assembleConstants (optional): When true, the compiler will produce a program with fully
+                assembled constants, rather than using the pseudo-ops `int`, `byte`, and `addr`. These
+                constants will be assembled in the most space-efficient way, so enabling this may reduce
+                the compiled program's size. Enabling this option requires a minimum program version of 3.
+                Defaults to false.
+            optimize (optional): OptimizeOptions that determine which optimizations will be applied.
 
-    subroutineMapping: Dict[
-        Optional[SubroutineDefinition], List[TealComponent]
-    ] = sort_subroutine_blocks(subroutine_start_blocks, subroutine_end_blocks)
+        Returns:
+            A TEAL assembly program compiled from the input expression.
 
-    spillLocalSlotsDuringRecursion(
-        version, subroutineMapping, subroutineGraph, localSlotAssignments
-    )
-
-    subroutineLabels = resolveSubroutines(subroutineMapping)
-    components = flattenSubroutines(subroutineMapping, subroutineLabels)
-
-    verifyOpsForVersion(components, options.version)
-    verifyOpsForMode(components, options.mode)
-
-    if assembleConstants:
-        if version < 3:
-            raise TealInternalError(
-                "The minimum program version required to enable assembleConstants is 3. The current version is {}".format(
-                    version
+        Raises:
+            TealInputError: if an operation in ast is not supported by the supplied mode and version.
+            TealInternalError: if an internal error is encounter during compilation.
+        """
+        if (
+            not (MIN_PROGRAM_VERSION <= self.version <= MAX_PROGRAM_VERSION)
+            or type(self.version) is not int
+        ):
+            raise TealInputError(
+                "Unsupported program version: {}. Excepted an integer in the range [{}, {}]".format(
+                    self.version, MIN_PROGRAM_VERSION, MAX_PROGRAM_VERSION
                 )
             )
-        components = createConstantBlocks(components)
 
-    components = [TealPragma(version)] + components  # T2PT0
-    lines = [tl.assemble() for tl in components]
-    teal_code = "\n".join(lines)
-    return teal_code, lines, components
+        options = CompileOptions(
+            mode=self.mode, version=self.version, optimize=self.optimize
+        )
+
+        subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
+        subroutine_start_blocks: Dict[
+            Optional[SubroutineDefinition], TealBlock
+        ] = dict()
+        subroutine_end_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
+        compileSubroutine(
+            self.ast,
+            options,
+            subroutineGraph,
+            subroutine_start_blocks,
+            subroutine_end_blocks,
+        )
+
+        # note: optimizations are off by default, in which case, apply_global_optimizations
+        # won't make any changes. Because the optimizer is invoked on a subroutine's
+        # control flow graph, the optimizer requires context across block boundaries. This
+        # is necessary for the dependency checking of local slots. Global slots, slots
+        # used by DynamicScratchVar, and reserved slots are not optimized.
+        if options.optimize.scratch_slots:
+            options.optimize._skip_slots = collect_unoptimized_slots(
+                subroutine_start_blocks
+            )
+            for start in subroutine_start_blocks.values():
+                apply_global_optimizations(start, options.optimize)
+
+        localSlotAssignments = assignScratchSlotsToSubroutines(subroutine_start_blocks)
+
+        subroutineMapping: Dict[
+            Optional[SubroutineDefinition], List[TealComponent]
+        ] = sort_subroutine_blocks(subroutine_start_blocks, subroutine_end_blocks)
+
+        spillLocalSlotsDuringRecursion(
+            self.version, subroutineMapping, subroutineGraph, localSlotAssignments
+        )
+
+        subroutineLabels = resolveSubroutines(subroutineMapping)
+        components = flattenSubroutines(subroutineMapping, subroutineLabels)
+
+        verifyOpsForVersion(components, options.version)
+        verifyOpsForMode(components, options.mode)
+
+        if self.assemble_constants:
+            if self.version < 3:
+                raise TealInternalError(
+                    "The minimum program version required to enable assembleConstants is 3. The current version is {}".format(
+                        self.version
+                    )
+                )
+            components = createConstantBlocks(components)
+
+        components = [TealPragma(self.version)] + components  # T2PT0
+        lines = [tl.assemble() for tl in components]
+        teal_code = "\n".join(lines)
+
+        cpb = CompilationBundle(
+            self.ast,
+            self.mode,
+            self.version,
+            self.assemble_constants,
+            self.optimize,
+            teal_code,
+            lines,
+            components,
+        )
+        if not with_sourcemap:
+            return cpb
+
+        cpb.sourcemap = PyTealSourceMap(lines, components, build=True)
+        return cpb
 
 
 def compileTeal(
@@ -341,11 +395,11 @@ def compileTeal(
     assembleConstants: bool = False,
     optimize: OptimizeOptions | None = None,
 ) -> str:
-    teal_program, _, _ = compile_teal_with_components(
+    bundle = Compilation(
         ast,
         mode,
         version=version,
-        assembleConstants=assembleConstants,
+        assemble_constants=assembleConstants,
         optimize=optimize,
-    )
-    return teal_program
+    ).compile(with_sourcemap=False)
+    return bundle.teal

@@ -11,7 +11,7 @@ from pyteal.compiler import (
     MIN_PROGRAM_VERSION,
     DEFAULT_PROGRAM_VERSION,
     CompileOptions,
-    compile_teal_with_components,
+    Compilation,
     compileTeal,
     OptimizeOptions,
 )
@@ -43,7 +43,7 @@ __all__ = (
         "DEFAULT_PROGRAM_VERSION",
         "CompileOptions",
         "pragma",
-        "compile_teal_with_components",
+        "Compilation",
         "compileTeal",
         "OptimizeOptions",
         "TealType",

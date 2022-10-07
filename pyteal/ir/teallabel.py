@@ -1,4 +1,3 @@
-import inspect
 from typing import Optional, TYPE_CHECKING
 
 from pyteal.ir.tealcomponent import TealComponent
@@ -10,12 +9,11 @@ if TYPE_CHECKING:
 
 class TealLabel(TealComponent):
     def __init__(
-        self, expr: Optional["Expr"], label: LabelReference, comment: str = None
+        self, expr: Optional["Expr"], label: LabelReference, comment: str | None = None
     ) -> None:
         super().__init__(expr)
         self.label = label
         self.comment = comment
-        self.frames = inspect.stack()
 
     def getLabelRef(self) -> LabelReference:
         return self.label

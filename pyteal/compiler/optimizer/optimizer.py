@@ -1,4 +1,7 @@
+from executing import Source
+import inspect
 from typing import Set
+
 from pyteal.ast import ScratchSlot
 from pyteal.ir import TealBlock, TealOp, Op
 from pyteal.errors import TealInternalError
@@ -27,6 +30,11 @@ class OptimizeOptions:
     def __init__(self, *, scratch_slots: bool = False):
         self.scratch_slots = scratch_slots
         self._skip_slots: Set[ScratchSlot] = set()
+
+        # TODO: need to refactor/extract frame stuff
+        frames = inspect.stack()
+        self.frames = frames
+        self.frame_nodes = [Source.executing(f.frame).node for f in frames]
 
 
 def _remove_extraneous_slot_access(start: TealBlock, remove: Set[ScratchSlot]):
