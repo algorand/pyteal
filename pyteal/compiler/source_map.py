@@ -1,5 +1,6 @@
 import ast
 from dataclasses import dataclass
+from enum import Enum
 from executing import Source
 import inspect
 import os
@@ -20,9 +21,10 @@ class PyTealFrame:
         self.frame = frame
         self.rel_paths = rel_paths
         self.node = node
-        self.source = None
-        self.ast = None
-        self._raw_code = None
+        self.source: str | None = None
+        self.ast: ast.AST | None = None
+        self._raw_code: str | None = None
+        self._status: SourceMapItemStatus | None = None
 
     pt_generated = {
         "# T2PT0": "PyTeal generated pragma",
@@ -83,8 +85,26 @@ class PyTealFrame:
     def failed_ast(self) -> bool:
         return not self.node
 
-    def status(self) -> str:
-        return "Failed AST (do not trust)" if self.failed_ast() else "AST Found"
+    def set_status(self, status: "SourceMapItemStatus") -> None:
+        self._status = status
+
+    def status(self) -> "SourceMapItemStatus":
+        if self._status is not None:
+            return self._status
+
+        if self.frame is None:
+            return SourceMapItemStatus.MISSING
+
+        if self.node is None:
+            return SourceMapItemStatus.MISSING_AST
+
+        if self.compiler_generated():
+            return SourceMapItemStatus.PYTEAL_GENERATED
+
+        if not self.raw_code():
+            return SourceMapItemStatus.MISSING_CODE
+
+        return SourceMapItemStatus.COPACETIC
 
     def node_source(self) -> str:
         return ast.unparse(self.node) if self.node else ""
@@ -159,6 +179,31 @@ _failed = "FAILED"
 _status = "Sourcemap Status"
 
 
+class SourceMapItemStatus(Enum):
+    """integer values indicate 'confidence' on a scale of 0 - 10"""
+
+    MISSING = 0
+    MISSING_AST = 1
+    MISSING_CODE = 2
+    PYTEAL_GENERATED = 5
+    COPACETIC = 9  # currently, 90% confidient is as good as it gets
+
+    def __str__(self) -> str:
+        match self:
+            case self.MISSING:
+                return "sourcemapping line: total failure"
+            case self.MISSING_AST:
+                return "unreliable as missing AST"
+            case self.MISSING_CODE:
+                return "unreliable as couldn't retrieve source"
+            case self.PYTEAL_GENERATED:
+                return "INCOMPLETE"  # "incomplete as source not user generated"
+            case self.COPACETIC:
+                return "COPACETIC"
+
+        raise Exception(f"unrecognized {type(self)} - THIS SHOULD NEVER HAPPEN!")
+
+
 @dataclass
 class SourceMapItem:
     line: int
@@ -200,10 +245,12 @@ class PyTealSourceMap:
         lines: list[str],
         components: list["pt.TealComponent"],
         build: bool = False,
+        source_inference: bool = True,
         x: bool = False,
     ):
         self.teal_lines: list[str] = lines
         self.components: list["pt.TealComponent"] = components
+        self.source_inference: bool = source_inference
         self.add_extras: bool = x
         self._cached_source_map: dict[int, SourceMapItem] = {}
 
@@ -224,6 +271,17 @@ class PyTealSourceMap:
                 best_frames.append(f)
                 before.append(b)
                 after.append(a)
+
+            if self.source_inference:
+                pass
+                # statuses = [f.status() for f in best_frames]
+                # for i, f in enumerate(best_frames):
+                #     this_before = before[i]
+                #     this_before_source = [tb.node_source() for tb in this_before]
+                #     this_before_file = [tb.file() for tb in this_before]
+                #     status = statuses[i]
+                #     x = status
+                #     x = 42
 
             def source_map_item(i, tc):
                 extras: dict[str, Any] | None = None
@@ -248,6 +306,7 @@ class PyTealSourceMap:
     ) -> tuple[
         inspect.FrameInfo | None, list[inspect.FrameInfo], list[inspect.FrameInfo]
     ]:
+        """
         # TODO: probly need to trim down the extra before and afters before merging
         # TODO: this is too complicated!!!
         path_match: str
@@ -259,6 +318,7 @@ class PyTealSourceMap:
                 path_match = "pyteal/ir"
             case _:
                 raise Exception(f"expected TealComponent but got {type(t)}")
+        """
 
         # TODO: Refactor using a generic version of cast that un-optionalizes any optional type
         frames = t.frames()
@@ -273,8 +333,11 @@ class PyTealSourceMap:
         assert len(frame_nodes) == len(frames)
 
         pyteals = [
-            path_match,
-            "pyteal/__init__.py",
+            # "pyteal/__init__.py",
+            "pyteal/ast",
+            "pyteal/compiler",
+            "pyteal/ir",
+            "pyteal/pragma",
             "tests/abi_roundtrip.py",
             "tests/blackbox.py",
             "tests/compile_asserts.py",

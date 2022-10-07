@@ -47,19 +47,19 @@ def fixture_comparison(sourcemap: PyTealSourceMap, name: str):
     new_version = sourcemap.tabulate(
         teal_line_col="line",
         teal_code_col="teal",
-        pyteal_path_col="file",
         linemap_status="line status",
-        pyteal_exec_col="pyteal ast",
+        pyteal_exec_col="pyteal AST",
+        pyteal_path_col="source",
+        pyteal_code_window="rows & columns",
         pyteal_line_col="pt line",
-        pyteal_code_context_col="pyteal",
-        pyteal_code_window="window",
+        pyteal_code_context_col="pyteal line",
     )
     with open(FIXTURES / f"_{name}", "w") as f:
         f.write(new_version)
 
-    not_actually_comparing = True
-    if not_actually_comparing:
-        return
+    # not_actually_comparing = True
+    # if not_actually_comparing:
+    #     return
 
     with open(FIXTURES / name) as f:
         old_version = f.read()
@@ -68,13 +68,15 @@ def fixture_comparison(sourcemap: PyTealSourceMap, name: str):
 
 
 @pytest.mark.parametrize("version", [6])
+@pytest.mark.parametrize("source_inference", [False, True])
 @pytest.mark.parametrize("assemble_constants", [False, True])
 @pytest.mark.parametrize("optimize_slots", [False, True])
-def test_sourcemaps(version, assemble_constants, optimize_slots):
+def test_sourcemaps(version, source_inference, assemble_constants, optimize_slots):
     compile_bundle = router.compile_program_with_sourcemaps(
         version=version,
         assemble_constants=assemble_constants,
         optimize=OptimizeOptions(scratch_slots=optimize_slots),
+        source_inference=source_inference,
     )
 
     assert compile_bundle.approval_sourcemap

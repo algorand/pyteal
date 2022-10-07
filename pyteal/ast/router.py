@@ -761,7 +761,7 @@ class Router:
             * clear_state_program: compiled clear-state program string
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
-        cpb = self._build_impl(version, assemble_constants, optimize, False)
+        cpb = self._build_impl(version, assemble_constants, optimize, False, False)
 
         return cpb.approval_teal, cpb.clear_teal, cpb.abi_contract
 
@@ -771,6 +771,7 @@ class Router:
         version: int = DEFAULT_TEAL_VERSION,
         assemble_constants: bool = False,
         optimize: OptimizeOptions | None = None,
+        source_inference: bool = True,
     ) -> RouterBundle:
         """
         TODO: out of date comment
@@ -791,9 +792,13 @@ class Router:
             * clear_state_program: compiled clear-state program string
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
-        return self._build_impl(version, assemble_constants, optimize, True)
+        return self._build_impl(
+            version, assemble_constants, optimize, True, source_inference
+        )
 
-    def _build_impl(self, version, assemble_constants, optimize, sourcemaps):
+    def _build_impl(
+        self, version, assemble_constants, optimize, sourcemaps, source_inference
+    ):
         ap, csp, contract = self.build_program()
 
         abundle = Compilation(
@@ -802,7 +807,7 @@ class Router:
             version=version,
             assemble_constants=assemble_constants,
             optimize=optimize,
-        ).compile(with_sourcemap=sourcemaps)
+        ).compile(with_sourcemap=sourcemaps, source_inference=source_inference)
 
         csbundle = Compilation(
             csp,
@@ -810,7 +815,7 @@ class Router:
             version=version,
             assemble_constants=assemble_constants,
             optimize=optimize,
-        ).compile(with_sourcemap=sourcemaps)
+        ).compile(with_sourcemap=sourcemaps, source_inference=source_inference)
 
         return RouterBundle(
             ap,
@@ -821,12 +826,6 @@ class Router:
             abundle.sourcemap,
             csbundle.sourcemap,
         )
-        # if sourcemaps is False:
-        #     return cpb
-
-        # # TODO: unnecessary!
-        # cpb.approval_sourcemap = abundle.sourcemap
-        # cpb.clear_sourcemap = csbundle.sourcemap
 
 
 Router.__module__ = "pyteal"

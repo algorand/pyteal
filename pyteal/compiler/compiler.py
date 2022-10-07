@@ -277,7 +277,9 @@ class Compilation:
         self.frame_nodes = [executing.Source.executing(f.frame).node for f in frames]
 
     # TODO: API needs refactor....
-    def compile(self, with_sourcemap: bool = True) -> CompilationBundle:
+    def compile(
+        self, with_sourcemap: bool = True, source_inference: bool = True
+    ) -> CompilationBundle:
         """Compile a PyTeal expression into TEAL assembly.
 
         TODO: this comment is out of date!!!
@@ -383,7 +385,9 @@ class Compilation:
         if not with_sourcemap:
             return cpb
 
-        cpb.sourcemap = PyTealSourceMap(lines, components, build=True)
+        cpb.sourcemap = PyTealSourceMap(
+            lines, components, build=True, source_inference=source_inference
+        )
         return cpb
 
 
