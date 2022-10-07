@@ -82,7 +82,7 @@ def test_sourcemaps(version, source_inference, assemble_constants, optimize_slot
     assert compile_bundle.approval_sourcemap
     assert compile_bundle.clear_sourcemap
 
-    suffix = f"_v{version}_ac{int(assemble_constants)}_ozs{int(optimize_slots)}"
+    suffix = f"_v{version}_si{int(source_inference)}_ac{int(assemble_constants)}_ozs{int(optimize_slots)}"
     fixture_comparison(
         compile_bundle.approval_sourcemap, f"algobank_approval{suffix}.txt"
     )
