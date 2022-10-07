@@ -682,7 +682,7 @@ Notice that even though the original :code:`get_account_status` function returns
 
 The only exception to this transformation is if the subroutine has no return value. Without a return value, a :code:`ComputedValue` is unnecessary and the subroutine will still return an :code:`Expr` to the caller. In this case, the :code:`@ABIReturnSubroutine` decorator acts identically the :code:`@Subroutine` decorator.
 
-The name of the subroutine constructed by the :code:`@ABIReturnSubroutine` decorator is by default the function name. In order to override the default subroutine name, the decorator :any:`ABIReturnSubroutine.name_override <ABIReturnSubroutine.name_override>` is introduced to construct a subroutine with its name overriden. An example is below:
+The name of the subroutine constructed by the :code:`@ABIReturnSubroutine` decorator is by default the function name. In order to override the default subroutine name, the decorator :any:`ABIReturnSubroutine.name_override <ABIReturnSubroutine.name_override>` is introduced to construct a subroutine with its name overridden. An example is below:
 
 .. code-block:: python
 
