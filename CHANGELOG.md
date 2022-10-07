@@ -2,6 +2,7 @@
 
 ## Fixed
 * Erroring on constructing an odd length hex string. ([#539](https://github.com/algorand/pyteal/pull/539))
+* Incorrect behavior when overriding a method name ([#550](https://github.com/algorand/pyteal/pull/550))
 
 # 0.18.1
 
