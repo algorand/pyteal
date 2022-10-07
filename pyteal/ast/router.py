@@ -647,7 +647,7 @@ class Router:
         # - CallConfig.Never
         # both cases evaluate to False in if statement.
         def wrap(_func) -> ABIReturnSubroutine:
-            wrapped_subroutine = ABIReturnSubroutine(_func)
+            wrapped_subroutine = ABIReturnSubroutine(_func, overriding_name=name)
             call_configs: MethodConfig
             if (
                 no_op is None
