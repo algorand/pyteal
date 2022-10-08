@@ -16,7 +16,7 @@ from pyteal.compiler.compiler import (
     DEFAULT_TEAL_VERSION,
     OptimizeOptions,
 )
-from pyteal.compiler.source_map import PyTealSourceMap
+from pyteal.compiler.sourcemap import PyTealSourceMap
 
 from pyteal.ir.ops import Mode
 

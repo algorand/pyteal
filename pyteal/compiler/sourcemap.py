@@ -1,14 +1,48 @@
 import ast
 from dataclasses import dataclass
-from enum import Enum
+from enum import IntEnum
 from executing import Source
 import inspect
 import os
-from typing import cast, Any, List, OrderedDict
+from typing import cast, Any, List, OrderedDict, Optional
 
 from tabulate import tabulate
 
 import pyteal as pt
+
+
+class SourceMapItemStatus(IntEnum):
+    """integer values indicate 'confidence' on a scale of 0 - 10"""
+
+    MISSING = 0
+    MISSING_AST = 1
+    MISSING_CODE = 2
+    PYTEAL_GENERATED = 5
+    PATCHED_BY_PREV = 6
+    PATCHED_BY_NEXT = 7
+    PATCHED_BY_PREV_AND_NEXT = 8
+    COPACETIC = 9  # currently, 90% confidient is as good as it gets
+
+    def human(self) -> str:
+        match self:
+            case self.MISSING:
+                return "sourcemapping line: total failure"
+            case self.MISSING_AST:
+                return "unreliable as missing AST"
+            case self.MISSING_CODE:
+                return "unreliable as couldn't retrieve source"
+            case self.PYTEAL_GENERATED:
+                return "INCOMPLETE"  # "incomplete as source not user generated"
+            case self.PATCHED_BY_PREV:
+                return "previously INCOMPLETE- patched to previous frame"
+            case self.PATCHED_BY_NEXT:
+                return "previously INCOMPLETE- patched to next frame"
+            case self.PATCHED_BY_PREV_AND_NEXT:
+                return "previously INCOMPLETE- patched"
+            case self.COPACETIC:
+                return "COPACETIC"
+
+        raise Exception(f"unrecognized {type(self)} - THIS SHOULD NEVER HAPPEN!")
 
 
 class PyTealFrame:
@@ -17,14 +51,38 @@ class PyTealFrame:
         frame: inspect.FrameInfo | None,
         node: ast.AST | None,
         rel_paths: bool = True,
+        parent: Optional["PyTealFrame"] | None = None,
     ):
         self.frame = frame
-        self.rel_paths = rel_paths
         self.node = node
-        self.source: str | None = None
-        self.ast: ast.AST | None = None
+        self.rel_paths = rel_paths
+        self.parent = parent
+
         self._raw_code: str | None = None
         self._status: SourceMapItemStatus | None = None
+
+    def __eq__(self, other: "PyTealFrame") -> bool:
+        """We don't care about parents here. TODO: this comment is too rude"""
+        if not isinstance(other, PyTealFrame):
+            return False
+
+        return all(
+            [
+                self.frame == other.frame,
+                self.node == other.node,
+                self.rel_paths == other.rel_paths,
+            ]
+        )
+
+    def spawn(
+        self, other: "PyTealFrame", status: "SourceMapItemStatus"
+    ) -> "PyTealFrame":
+        assert isinstance(other, PyTealFrame)
+
+        ptf = PyTealFrame(other.frame, other.node, other.rel_paths, self)
+        ptf._status = status
+
+        return ptf
 
     pt_generated = {
         "# T2PT0": "PyTeal generated pragma",
@@ -85,10 +143,7 @@ class PyTealFrame:
     def failed_ast(self) -> bool:
         return not self.node
 
-    def set_status(self, status: "SourceMapItemStatus") -> None:
-        self._status = status
-
-    def status(self) -> "SourceMapItemStatus":
+    def status_code(self) -> SourceMapItemStatus:
         if self._status is not None:
             return self._status
 
@@ -105,6 +160,9 @@ class PyTealFrame:
             return SourceMapItemStatus.MISSING_CODE
 
         return SourceMapItemStatus.COPACETIC
+
+    def status(self) -> str:
+        return self.status_code().human()
 
     def node_source(self) -> str:
         return ast.unparse(self.node) if self.node else ""
@@ -132,6 +190,23 @@ class PyTealFrame:
             return ""
         return "L{}:{}-L{}:{}".format(*boundaries)
 
+    # def equivalent_source(self, other: "PyTealFrame") -> bool:
+    #     if not isinstance(other, PyTealFrame):
+    #         return False
+
+    #     return all(
+    #         self.node_source(),
+    #         self.node_source() == other.node_source(),
+    #         self.node_source_window() == other.node_source_window(),
+    #         self.file() == other.file(),
+    #         self.code_qualname() == other.code_qualname(),
+    #         self.lineno() == other.lineno(),
+    #         self.raw_code() == other.raw_code(),
+    #     )
+
+    # def transfer_source(self, other: "PyTealFrame") -> None:
+    #     pass
+
     def __str__(self, verbose: bool = True) -> str:
         if not self.frame:
             return "None"
@@ -141,9 +216,9 @@ class PyTealFrame:
         if not verbose:
             return short
 
+        # {self.source=}
+        # {self.ast=}
         return f"""{short}
-{self.source=}
-{self.ast=}
 {self.frame.index=}
 {self.frame.function=}
 {self.frame.frame=}"""
@@ -176,32 +251,8 @@ _PTCC = "PTCC"
 _PT_AST = "PT AST"
 _PT_frame = "PT frame"
 _failed = "FAILED"
+_status_code = "Sourcemap Status Code"
 _status = "Sourcemap Status"
-
-
-class SourceMapItemStatus(Enum):
-    """integer values indicate 'confidence' on a scale of 0 - 10"""
-
-    MISSING = 0
-    MISSING_AST = 1
-    MISSING_CODE = 2
-    PYTEAL_GENERATED = 5
-    COPACETIC = 9  # currently, 90% confidient is as good as it gets
-
-    def __str__(self) -> str:
-        match self:
-            case self.MISSING:
-                return "sourcemapping line: total failure"
-            case self.MISSING_AST:
-                return "unreliable as missing AST"
-            case self.MISSING_CODE:
-                return "unreliable as couldn't retrieve source"
-            case self.PYTEAL_GENERATED:
-                return "INCOMPLETE"  # "incomplete as source not user generated"
-            case self.COPACETIC:
-                return "COPACETIC"
-
-        raise Exception(f"unrecognized {type(self)} - THIS SHOULD NEVER HAPPEN!")
 
 
 @dataclass
@@ -229,6 +280,7 @@ class SourceMapItem:
             _PT_AST: self.frame.node,
             _PT_frame: self.frame,
             _failed: self.frame.failed_ast(),
+            _status_code: self.frame.status_code(),
             _status: self.frame.status(),
         }
 
@@ -273,15 +325,42 @@ class PyTealSourceMap:
                 after.append(a)
 
             if self.source_inference:
-                pass
-                # statuses = [f.status() for f in best_frames]
-                # for i, f in enumerate(best_frames):
-                #     this_before = before[i]
-                #     this_before_source = [tb.node_source() for tb in this_before]
-                #     this_before_file = [tb.file() for tb in this_before]
-                #     status = statuses[i]
-                #     x = status
-                #     x = 42
+
+                def infer_source(i: int) -> PyTealFrame | None:
+                    frame = best_frames[i]
+                    prev_frame = None if i <= 0 else best_frames[i - 1]
+                    next_frame = (
+                        None if len(best_frames) <= i + 1 else best_frames[i + 1]
+                    )
+                    if prev_frame and next_frame:
+                        if prev_frame == next_frame:
+                            return frame.spawn(
+                                prev_frame, SourceMapItemStatus.PATCHED_BY_PREV_AND_NEXT
+                            )
+
+                        # NO-OP for now when disagreee
+                        return None
+
+                    if prev_frame:
+                        return frame.spawn(
+                            prev_frame, SourceMapItemStatus.PATCHED_BY_PREV
+                        )
+
+                    if next_frame:
+                        return frame.spawn(
+                            prev_frame, SourceMapItemStatus.PATCHED_BY_NEXT
+                        )
+
+                    return None
+
+                for i in range(len(best_frames)):
+                    if (
+                        best_frames[i].status_code()
+                        <= SourceMapItemStatus.PYTEAL_GENERATED
+                    ):
+                        ptf_or_none = infer_source(i)
+                        if ptf_or_none:
+                            best_frames[i] = ptf_or_none
 
             def source_map_item(i, tc):
                 extras: dict[str, Any] | None = None
@@ -416,6 +495,7 @@ class PyTealSourceMap:
             pyteal_code_context_col=_PTCC,
             pyteal_ast_col=_PT_AST,
             linemap_failed=_failed,
+            linemap_status_code=_status_code,
             linemap_status=_status,
         )
         for k in kwargs:

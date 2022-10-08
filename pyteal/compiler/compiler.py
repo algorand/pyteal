@@ -4,7 +4,7 @@ import inspect
 from typing import List, Tuple, Set, Dict, Optional, cast
 
 from pyteal.compiler.optimizer import OptimizeOptions, apply_global_optimizations
-from pyteal.compiler.source_map import PyTealSourceMap
+from pyteal.compiler.sourcemap import PyTealSourceMap
 
 from pyteal.types import TealType
 from pyteal.ast import (
