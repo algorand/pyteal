@@ -58,9 +58,7 @@ class OpUp:
             )
     """
 
-    def __init__(
-        self, mode: OpUpMode, target_app_id: Expr = None, inner_fee: Expr = Int(0)
-    ):
+    def __init__(self, mode: OpUpMode, target_app_id: Expr = None):
         """Create a new OpUp object.
 
         Args:
@@ -69,11 +67,6 @@ class OpUp:
             target_app_id (optional): In Explicit mode, the OpUp utility
                 requires the app_id to target for inner app calls. Defaults
                 to None.
-            inner_fee (optional): OpUp utility requires inner
-                transactions fee to be paid by the upper call as default. To
-                let the application pay inner transactions fee with app
-                account's funds, set this parameter to `Global.min_txn_fee`
-                or a given fixed `Int`.
         """
 
         # With only OnCall and Explicit modes supported, the mode argument
@@ -94,16 +87,15 @@ class OpUp:
 
         self.mode = mode
 
+    def _construct_itxn(self, inner_fee: Expr) -> Expr:
         require_type(inner_fee, TealType.uint64)
-        self.inner_fee = inner_fee
 
-    def _construct_itxn(self) -> Expr:
         if self.mode == OpUpMode.Explicit:
             return InnerTxnBuilder.Execute(
                 {
                     TxnField.type_enum: TxnType.ApplicationCall,
                     TxnField.application_id: self.target_app_id,
-                    TxnField.fee: self.inner_fee,
+                    TxnField.fee: inner_fee,
                 }
             )
         else:
@@ -113,12 +105,21 @@ class OpUp:
                     TxnField.on_completion: OnComplete.DeleteApplication,
                     TxnField.approval_program: ON_CALL_APP,
                     TxnField.clear_state_program: ON_CALL_APP,
-                    TxnField.fee: self.inner_fee,
+                    TxnField.fee: inner_fee,
                 }
             )
 
-    def ensure_budget(self, required_budget: Expr) -> Expr:
+    def ensure_budget(self, required_budget: Expr, inner_fee: Expr = Int(0)) -> Expr:
         """Ensure that the budget will be at least the required_budget.
+
+        Args:
+            required_budget: minimum op-code budget to ensure for the
+                upcoming execution.
+            inner_fee (optional): OpUp utility requires inner transactions fee
+                to be paid by the upper call as default. To let the
+                application pay inner transactions fee with app account's
+                funds, set this parameter to `Global.min_txn_fee` or a given
+                fixed `Int`.
 
         Note: the available budget just prior to calling ensure_budget() must be
         high enough to execute the budget increase code. The exact budget required
@@ -137,12 +138,20 @@ class OpUp:
         return Seq(
             buffered_budget.store(required_budget + buffer),
             While(buffered_budget.load() > Global.opcode_budget()).Do(
-                self._construct_itxn()
+                self._construct_itxn(inner_fee=inner_fee)
             ),
         )
 
-    def maximize_budget(self, fee: Expr) -> Expr:
+    def maximize_budget(self, fee: Expr, inner_fee: Expr = Int(0)) -> Expr:
         """Maximize the available opcode budget without spending more than the given fee.
+
+        Args:
+            fee: fee expenditure cap for the op-code budget maximization.
+            inner_fee (optional): OpUp utility requires inner transactions fee
+                to be paid by the upper call as default. To let the
+                application pay inner transactions fee with app account's
+                funds, set this parameter to `Global.min_txn_fee` or a given
+                fixed `Int`.
 
         Note: the available budget just prior to calling maximize_budget() must be
         high enough to execute the budget increase code. The exact budget required
@@ -154,7 +163,7 @@ class OpUp:
         i = ScratchVar(TealType.uint64)
         n = fee / Global.min_txn_fee()
         return For(i.store(Int(0)), i.load() < n, i.store(i.load() + Int(1))).Do(
-            self._construct_itxn()
+            self._construct_itxn(inner_fee=inner_fee)
         )
 
 
