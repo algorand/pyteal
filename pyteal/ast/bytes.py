@@ -1,4 +1,4 @@
-from typing import Union, cast, overload, TYPE_CHECKING
+from typing import cast, overload, TYPE_CHECKING
 
 from pyteal.types import TealType, valid_base16, valid_base32, valid_base64
 from pyteal.util import escapeStr
@@ -14,14 +14,14 @@ class Bytes(LeafExpr):
     """An expression that represents a byte string."""
 
     @overload
-    def __init__(self, arg1: Union[str, bytes, bytearray]) -> None:
+    def __init__(self, arg1: str | bytes | bytearray) -> None:
         pass
 
     @overload
     def __init__(self, arg1: str, arg2: str) -> None:
         pass
 
-    def __init__(self, arg1: Union[str, bytes, bytearray], arg2: str = None) -> None:
+    def __init__(self, arg1: str | bytes | bytearray, arg2: str = None) -> None:
         """
         __init__(arg1: Union[str, bytes, bytearray]) -> None
         __init__(self, arg1: str, arg2: str) -> None
@@ -49,15 +49,15 @@ class Bytes(LeafExpr):
                 self.byte_str = escapeStr(arg1)
             elif type(arg1) in (bytes, bytearray):
                 self.base = "base16"
-                self.byte_str = cast(Union[bytes, bytearray], arg1).hex()
+                self.byte_str = cast(bytes | bytearray, arg1).hex()
             else:
-                raise TealInputError("Unknown argument type: {}".format(type(arg1)))
+                raise TealInputError(f"Unknown argument type: {type(arg1)}")
         else:
             if type(arg1) is not str:
-                raise TealInputError("Unknown type for base: {}".format(type(arg1)))
+                raise TealInputError(f"Unknown type for base: {type(arg1)}")
 
             if type(arg2) is not str:
-                raise TealInputError("Unknown type for value: {}".format(type(arg2)))
+                raise TealInputError(f"Unknown type for value: {type(arg2)}")
 
             self.base = arg1
 
@@ -75,9 +75,7 @@ class Bytes(LeafExpr):
                 valid_base16(self.byte_str)
             else:
                 raise TealInputError(
-                    "invalid base {}, need to be base32, base64, or base16.".format(
-                        self.base
-                    )
+                    f"invalid base {self.base}, need to be base32, base64, or base16."
                 )
 
     def __teal__(self, options: "CompileOptions"):
@@ -86,12 +84,12 @@ class Bytes(LeafExpr):
         elif self.base == "base16":
             payload = "0x" + self.byte_str
         else:
-            payload = "{}({})".format(self.base, self.byte_str)
+            payload = f"{self.base}({self.byte_str})"
         op = TealOp(self, Op.byte, payload)
         return TealBlock.FromOp(options, op)
 
     def __str__(self):
-        return "({} bytes: {})".format(self.base, self.byte_str)
+        return f"({self.base} bytes: {self.byte_str})"
 
     def type_of(self):
         return TealType.bytes
