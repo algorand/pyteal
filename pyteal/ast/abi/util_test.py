@@ -1,5 +1,5 @@
 from typing import Callable, NamedTuple, Literal, Optional, Any, get_origin
-from inspect import isabstract, signature
+from inspect import isabstract
 import pytest
 
 import algosdk.abi
@@ -897,6 +897,20 @@ SAFE_ASSIGNMENT_TEST_CASES: list[SafeAssignment] = [
         ],
     ),
     SafeAssignment(
+        abi.type_spec_from_annotation(
+            abi.Tuple3[
+                abi.Uint64,
+                abi.Tuple3[
+                    abi.PaymentTransaction,
+                    abi.Address,
+                    abi.StaticArray[abi.Byte, Literal[16]],
+                ],
+                abi.PaymentTransaction,
+            ]
+        ),
+        [abi.type_spec_from_annotation(NamedTDecl)],
+    ),
+    SafeAssignment(
         abi.AddressTypeSpec(),
         [abi.StaticArrayTypeSpec(abi.ByteTypeSpec(), 32), abi.StaticBytesTypeSpec(32)],
     ),
@@ -921,10 +935,18 @@ def test_type_spec_is_assignable_safe_assignment(tc: SafeAssignment):
 
 @pytest.mark.parametrize("ts", bfs_on_inheritance(abi.TypeSpec))
 def test_type_spec_is_assignable_safe_assignment_full_coverage(ts: type):
-    if isabstract(ts) or len(signature(ts).parameters) > 0:
+    def exists_in_safe_assignment(ts: type):
+        for safe_assignment in SAFE_ASSIGNMENT_TEST_CASES:
+            if type(safe_assignment.a) == ts:
+                return True
+            for t in safe_assignment.bs:
+                if type(t) == ts:
+                    return True
+        return False
+
+    if isabstract(ts) or all(isabstract(parent) for parent in ts.__bases__):
         return
-    # TODO to implement
-    pass
+    assert exists_in_safe_assignment(ts)
 
 
 class UnsafeBidirectional(NamedTuple):
