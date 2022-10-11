@@ -20,6 +20,19 @@ ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 
 FIXTURES = Path.cwd() / "tests" / "integration" / "sourcemaps"
 
+"""
+# TODO: Additional examples needed before merging:
+
+1. Inline programs patched together from various sources
+2. Example with OpUp
+3. Run on the ABI Router example
+4. Run on Steve's Staking Contract
+5. Run an Ben's AMM
+
+?. Beaker example
+
+"""
+
 
 def test_frames():
     this_file, this_func = "sourcemap_test.py", "test_ptframe_as_source_mapping"
