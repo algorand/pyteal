@@ -1,6 +1,5 @@
 from typing import cast, Callable, NamedTuple, Literal, Optional, Any, get_origin
 from inspect import isabstract
-from dataclasses import dataclass
 import pytest
 
 import algosdk.abi
@@ -797,24 +796,20 @@ class NamedTComp2(abi.NamedTuple):
     b0: abi.Field[abi.DynamicBytes]
 
 
-@dataclass
-class SafeBidirectional:
+class SafeBidirectional(NamedTuple):
     xs: list[abi.TypeSpec]
 
 
-@dataclass
-class UnsafeBidirectional:
+class UnsafeBidirectional(NamedTuple):
     xs: list[abi.TypeSpec]
 
 
-@dataclass
-class SafeAssignment:
+class SafeAssignment(NamedTuple):
     a: abi.TypeSpec
     bs: list[abi.TypeSpec]
 
 
-@dataclass
-class UnsafeAssignment:
+class UnsafeAssignment(NamedTuple):
     a: abi.TypeSpec
     bs: list[abi.TypeSpec]
 
