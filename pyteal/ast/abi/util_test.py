@@ -1,5 +1,5 @@
 from typing import Callable, NamedTuple, Literal, Optional, Any, get_origin
-from inspect import isabstract
+from inspect import isabstract, signature
 import pytest
 
 import algosdk.abi
@@ -801,37 +801,51 @@ class SafeBidirectional(NamedTuple):
     xs: list[abi.TypeSpec]
 
 
-SAFE_BIDIRECTIONAL_TEST_CASES: list[SafeBidirectional] = [
-    SafeBidirectional(
-        [
-            abi.type_spec_from_annotation(abi.StaticArray[abi.Byte, Literal[10]]),
-            abi.type_spec_from_annotation(abi.StaticBytes[Literal[10]]),
-        ],
-    ),
-    SafeBidirectional(
-        [
-            abi.type_spec_from_annotation(abi.DynamicBytes),
-            abi.type_spec_from_annotation(abi.DynamicArray[abi.Byte]),
-        ]
-    ),
-    SafeBidirectional(
-        [
-            abi.type_spec_from_annotation(
-                abi.Tuple3[
-                    abi.Uint64,
+SAFE_BIDIRECTIONAL_TEST_CASES: list[SafeBidirectional] = (
+    [
+        SafeBidirectional(
+            [
+                abi.type_spec_from_annotation(abi.StaticArray[abi.Byte, Literal[10]]),
+                abi.type_spec_from_annotation(abi.StaticBytes[Literal[10]]),
+            ],
+        ),
+        SafeBidirectional([abi.BoolTypeSpec(), abi.BoolTypeSpec()]),
+        SafeBidirectional([abi.StringTypeSpec(), abi.StringTypeSpec()]),
+        SafeBidirectional([abi.AddressTypeSpec(), abi.AddressTypeSpec()]),
+        SafeBidirectional(
+            [
+                abi.type_spec_from_annotation(abi.DynamicBytes),
+                abi.type_spec_from_annotation(abi.DynamicArray[abi.Byte]),
+            ]
+        ),
+        SafeBidirectional(
+            [
+                abi.type_spec_from_annotation(
                     abi.Tuple3[
-                        abi.PaymentTransaction,
-                        abi.Address,
-                        abi.StaticArray[abi.Byte, Literal[16]],
-                    ],
-                    abi.Transaction,
-                ]
-            ),
-            abi.type_spec_from_annotation(NamedTDecl),
-            abi.type_spec_from_annotation(NamedTDecl),
-        ]
-    ),
-]
+                        abi.Uint64,
+                        abi.Tuple3[
+                            abi.PaymentTransaction,
+                            abi.Address,
+                            abi.StaticArray[abi.Byte, Literal[16]],
+                        ],
+                        abi.Transaction,
+                    ]
+                ),
+                abi.type_spec_from_annotation(NamedTDecl),
+                abi.type_spec_from_annotation(NamedTDecl),
+            ]
+        ),
+    ]
+    + [
+        SafeBidirectional([spec, spec])
+        for spec in abi.ReferenceTypeSpecs + abi.TransactionTypeSpecs
+    ]
+    + [
+        SafeBidirectional([spec_t(), spec_t()])
+        for spec_t in bfs_on_inheritance(abi.UintTypeSpec)
+        if not isabstract(spec_t)
+    ]
+)
 
 
 @pytest.mark.parametrize("tc", SAFE_BIDIRECTIONAL_TEST_CASES)
@@ -840,6 +854,20 @@ def test_type_spec_is_assignable_safe_bidirectional(tc: SafeBidirectional):
     for a in tc.xs:
         for b in tc.xs:
             assert abi.type_spec_is_assignable_to(a, b)
+
+
+@pytest.mark.parametrize("ts", bfs_on_inheritance(abi.TypeSpec))
+def test_type_spec_is_assignable_safe_bidirectional_full_coverage(ts: type):
+    def exists_in_safe_bidirectional(ts: type):
+        for safe_bidirectional in SAFE_BIDIRECTIONAL_TEST_CASES:
+            for t in safe_bidirectional.xs:
+                if type(t) == ts:
+                    return True
+        return False
+
+    if isabstract(ts):
+        return
+    assert exists_in_safe_bidirectional(ts)
 
 
 class SafeAssignment(NamedTuple):
@@ -893,7 +921,7 @@ def test_type_spec_is_assignable_safe_assignment(tc: SafeAssignment):
 
 @pytest.mark.parametrize("ts", bfs_on_inheritance(abi.TypeSpec))
 def test_type_spec_is_assignable_safe_assignment_full_coverage(ts: type):
-    if isabstract(ts):
+    if isabstract(ts) or len(signature(ts).parameters) > 0:
         return
     # TODO to implement
     pass
@@ -940,7 +968,7 @@ def test_type_spec_is_assignable_unsafe_bidirectional(tc: UnsafeBidirectional):
 
 @pytest.mark.parametrize("ts", bfs_on_inheritance(abi.TypeSpec))
 def test_type_spec_is_assignable_unsafe_bidirectional_full_coverage(ts: type):
-    if isabstract(ts):
+    if isabstract(ts) or len(signature(ts).parameters) > 0:
         return
     # TODO to implement
     pass
