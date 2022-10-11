@@ -2,8 +2,6 @@
 from pyteal import *
 import json
 
-pragma(compiler_version="^0.17.0")
-
 
 @Subroutine(TealType.none)
 def assert_sender_is_creator() -> Expr:

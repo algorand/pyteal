@@ -271,11 +271,6 @@ class Compilation:
         self.assemble_constants = assemble_constants
         self.optimize = optimize
 
-        # TODO: need to refactor/extract frame stuff
-        frames = inspect.stack()
-        self.frames = frames
-        self.frame_nodes = [executing.Source.executing(f.frame).node for f in frames]
-
     # TODO: API needs refactor....
     def compile(
         self, with_sourcemap: bool = True, source_inference: bool = True

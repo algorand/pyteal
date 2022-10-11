@@ -6,6 +6,7 @@ from typing import cast, Tuple, List, TYPE_CHECKING
 
 from pyteal.types import TealType
 from pyteal.ir import TealBlock, TealSimpleBlock
+from pyteal.util import Frames
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
@@ -13,12 +14,7 @@ if TYPE_CHECKING:
 
 def frames_adder(init):
     def wrapper(*args, **kwargs):
-        # TODO: need to refactor/extract frame stuff
-        fs = inspect.stack()
-        args[0].frames = fs
-        args[0].frame_nodes = [
-            cast(ast.AST, executing.Source.executing(f.frame).node) for f in fs
-        ]
+        args[0].frames = Frames()
 
         return init(*args, **kwargs)
 
@@ -36,9 +32,7 @@ class Expr(ABC):
 
         self.trace = traceback.format_stack()[0:-1]
         if not hasattr(self, "frames"):
-            self.frames: List[inspect.FrameInfo] = []
-            self.frame_nodes: List[ast.AST | None] = []
-            # self.frame_qualnames = []
+            self.frames: Frames
 
     def getDefinitionTrace(self) -> List[str]:
         return self.trace

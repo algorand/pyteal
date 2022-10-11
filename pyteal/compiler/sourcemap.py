@@ -1,13 +1,17 @@
-import ast
+from ast import unparse
+from copy import deepcopy
 from dataclasses import dataclass
 from enum import IntEnum
 from executing import Source
-import inspect
+from inspect import FrameInfo
 import os
-from typing import cast, Any, List, OrderedDict, Optional
+from typing import cast, Any, OrderedDict, Optional, Sequence, Union
 
 from tabulate import tabulate
 
+from algosdk.source_map import SourceMapping
+
+from pyteal.util import Frame, FrameSequence
 import pyteal as pt
 
 
@@ -17,7 +21,9 @@ class SourceMapItemStatus(IntEnum):
     MISSING = 0
     MISSING_AST = 1
     MISSING_CODE = 2
-    PYTEAL_GENERATED = 5
+    PYTEAL_GENERATED = 3
+    PATCHED_BY_PREV_OVERRIDE_NEXT = 4
+    PATCHED_BY_NEXT_OVERRIDE_PREV = 5
     PATCHED_BY_PREV = 6
     PATCHED_BY_NEXT = 7
     PATCHED_BY_PREV_AND_NEXT = 8
@@ -33,6 +39,10 @@ class SourceMapItemStatus(IntEnum):
                 return "unreliable as couldn't retrieve source"
             case self.PYTEAL_GENERATED:
                 return "INCOMPLETE"  # "incomplete as source not user generated"
+            case self.PATCHED_BY_PREV_OVERRIDE_NEXT:
+                return "previously INCOMPLETE- patched to previous frame (ambiguous)"
+            case self.PATCHED_BY_NEXT_OVERRIDE_PREV:
+                return "previously INCOMPLETE- patched to next frame (ambiguous)"
             case self.PATCHED_BY_PREV:
                 return "previously INCOMPLETE- patched to previous frame"
             case self.PATCHED_BY_NEXT:
@@ -45,21 +55,49 @@ class SourceMapItemStatus(IntEnum):
         raise Exception(f"unrecognized {type(self)} - THIS SHOULD NEVER HAPPEN!")
 
 
+PyTealFrameSequence = Union["PyTealFrame", list["PyTealFrameSequence"]]
+
+PT_GENERATED_PRAGMA = "PyTeal generated pragma"
+PT_GENERATED_SUBR_LABEL = "PyTeal generated subroutine label"
+PT_GENERATED_RETURN_NONE = "PyTeal generated return for TealType.none"
+PT_GENERATED_RETURN_VALUE = "PyTeal generated return for non-null TealType"
+PT_GENERATED_SUBR_PARAM = "PyTeal generated subroutine parameter handler instruction"
+PT_GENERATED_BRANCH = "PyTeal generated branching"
+PT_GENERATED_BRANCH_LABEL = "PyTeal generated branching label"
+PT_GENERATED_TYPE_ENUM_TXN = "PyTeal generated transaction Type Enum"
+PT_GENERATED_TYPE_ENUM_ONCOMPLETE = "PyTeal generated OnComplete Type Enum"
+
+
+_PT_GEN = {
+    "# T2PT0": PT_GENERATED_PRAGMA,
+    "# T2PT1": PT_GENERATED_SUBR_LABEL,
+    "# T2PT2": PT_GENERATED_RETURN_NONE,
+    "# T2PT3": PT_GENERATED_RETURN_VALUE,
+    "# T2PT4": PT_GENERATED_SUBR_PARAM,
+    "# T2PT5": PT_GENERATED_BRANCH,
+    "# T2PT6": PT_GENERATED_BRANCH_LABEL,
+    "# T2PT7": PT_GENERATED_TYPE_ENUM_TXN,
+    "# T2PT8": PT_GENERATED_TYPE_ENUM_ONCOMPLETE,
+}
+
+
 class PyTealFrame:
     def __init__(
         self,
-        frame: inspect.FrameInfo | None,
-        node: ast.AST | None,
+        frame: Frame,
         rel_paths: bool = True,
         parent: Optional["PyTealFrame"] | None = None,
     ):
-        self.frame = frame
-        self.node = node
+        self.frame_info = frame.frame_info
+        self.node = frame.node
         self.rel_paths = rel_paths
         self.parent = parent
 
         self._raw_code: str | None = None
         self._status: SourceMapItemStatus | None = None
+
+    def frame(self) -> Frame:
+        return Frame(self.frame_info, self.node)
 
     def __eq__(self, other: "PyTealFrame") -> bool:
         """We don't care about parents here. TODO: this comment is too rude"""
@@ -68,7 +106,7 @@ class PyTealFrame:
 
         return all(
             [
-                self.frame == other.frame,
+                self.frame_info == other.frame_info,
                 self.node == other.node,
                 self.rel_paths == other.rel_paths,
             ]
@@ -79,62 +117,74 @@ class PyTealFrame:
     ) -> "PyTealFrame":
         assert isinstance(other, PyTealFrame)
 
-        ptf = PyTealFrame(other.frame, other.node, other.rel_paths, self)
+        ptf = PyTealFrame(other.frame(), other.rel_paths, self)
         ptf._status = status
 
         return ptf
 
-    pt_generated = {
-        "# T2PT0": "PyTeal generated pragma",
-        "# T2PT1": "PyTeal generated subroutine label",
-        "# T2PT2": "PyTeal generated return for TealType.none",
-        "# T2PT3": "PyTeal generated return for non-null TealType",
-        "# T2PT4": "PyTeal generated subroutine parameter handler instruction",
-        "# T2PT5": "PyTeal generated branching",
-        "# T2PT6": "PyTeal generated branching label",
-        "# T2PT7": "PyTeal generated transaction Type Enum",
-        "# T2PT8": "PyTeal generated OnComplete Type Enum",
-    }
-
     def location(self) -> str:
-        return f"{self.file()}:{self.lineno()}" if self.frame else ""
+        return f"{self.file()}:{self.lineno()}" if self.frame_info else ""
 
     def file(self) -> str:
-        if not self.frame:
+        if not self.frame_info:
             return ""
 
-        path = self.frame.filename
+        path = self.frame_info.filename
         return os.path.relpath(path) if self.rel_paths else path
 
     def code_qualname(self) -> str:
-        return Source.executing(self.frame.frame).code_qualname() if self.frame else ""
+        return (
+            Source.executing(self.frame_info.frame).code_qualname()
+            if self.frame_info
+            else ""
+        )
 
     def lineno(self) -> int | None:
-        return self.frame.lineno if self.frame else None
+        return self.frame_info.lineno if self.frame_info else None
 
     def raw_code(self) -> str:
         if self._raw_code is None:
             self._raw_code = (
-                ("".join(self.frame.code_context)).strip()
-                if self.frame and self.frame.code_context
+                ("".join(self.frame_info.code_context)).strip()
+                if self.frame_info and self.frame_info.code_context
                 else ""
             )
 
         return self._raw_code
 
     def compiler_generated(self) -> bool | None:
-        """None indicates "unknown"."""
+        """
+        None indicates "unknown".
+
+        i.e. `not x.compiler_generated()` === NOT or UNKNOWN
+        """
         if not self.raw_code():
             return None  # we don't know / NA
 
         return "# T2PT" in self.raw_code()
+
+    def compiler_generated_reason(self) -> str | None:
+        """
+        None indicates either "unkown" or "not compiler generated".
+        To distinguish between these two usages, call `compiler_generated()` first.
+        """
+        if not self.compiler_generated():
+            return None
+
+        for k, v in _PT_GEN.items():
+            if k in self.raw_code():
+                return v
+
+        raise AssertionError(
+            "This should never happen as the call to self.compiler_generated() should have prevented this case."
+        )
 
     def code(self) -> str:
         raw = self.raw_code()
         if not self.compiler_generated():
             return raw
 
-        for k, v in self.pt_generated.items():
+        for k, v in _PT_GEN.items():
             if k in raw:
                 return f"{v}: {raw}"
 
@@ -147,7 +197,7 @@ class PyTealFrame:
         if self._status is not None:
             return self._status
 
-        if self.frame is None:
+        if self.frame_info is None:
             return SourceMapItemStatus.MISSING
 
         if self.node is None:
@@ -165,7 +215,7 @@ class PyTealFrame:
         return self.status_code().human()
 
     def node_source(self) -> str:
-        return ast.unparse(self.node) if self.node else ""
+        return unparse(self.node) if self.node else ""
 
     def node_lineno(self) -> int | None:
         return getattr(self.node, "lineno", None) if self.node else None
@@ -190,25 +240,8 @@ class PyTealFrame:
             return ""
         return "L{}:{}-L{}:{}".format(*boundaries)
 
-    # def equivalent_source(self, other: "PyTealFrame") -> bool:
-    #     if not isinstance(other, PyTealFrame):
-    #         return False
-
-    #     return all(
-    #         self.node_source(),
-    #         self.node_source() == other.node_source(),
-    #         self.node_source_window() == other.node_source_window(),
-    #         self.file() == other.file(),
-    #         self.code_qualname() == other.code_qualname(),
-    #         self.lineno() == other.lineno(),
-    #         self.raw_code() == other.raw_code(),
-    #     )
-
-    # def transfer_source(self, other: "PyTealFrame") -> None:
-    #     pass
-
     def __str__(self, verbose: bool = True) -> str:
-        if not self.frame:
+        if not self.frame_info:
             return "None"
 
         spaces = "\n\t\t\t"
@@ -219,9 +252,9 @@ class PyTealFrame:
         # {self.source=}
         # {self.ast=}
         return f"""{short}
-{self.frame.index=}
-{self.frame.function=}
-{self.frame.frame=}"""
+{self.frame_info.index=}
+{self.frame_info.function=}
+{self.frame_info.frame=}"""
 
     def __repr__(self) -> str:
         """TODO: this repr isn't compliant. Should we keep it anyway for convenience?"""
@@ -229,14 +262,11 @@ class PyTealFrame:
 
     @classmethod
     def convert(
-        cls, frame_n_nodes: tuple[inspect.FrameInfo | None, ast.AST | None] | list
-    ):
-        if isinstance(frame_n_nodes, tuple):
-            return cls(*frame_n_nodes)
-        assert isinstance(
-            frame_n_nodes, list
-        ), f"expected list but got {type(frame_n_nodes)}"
-        return [cls.convert(f_and_n) for f_and_n in cast(list, frame_n_nodes)]
+        cls, frames: FrameSequence, rel_paths: bool = True
+    ) -> "PyTealFrameSequence":  # type: ignore
+        if isinstance(frames, Frame):
+            return cls(frames, rel_paths)
+        return [cls.convert(f) for f in cast(Sequence[Frame], frames)]
 
 
 _TL = "TL"
@@ -261,7 +291,7 @@ class SourceMapItem:
     teal: str
     component: "pt.TealComponent"
     frame: PyTealFrame
-    extras: dict[str, Any] | None
+    extras: dict[str, Any] | None = None  # TODO: probly these shouldn't exist
 
     def asdict(self, **kwargs) -> OrderedDict:
         """kwargs serve as a rename mapping when present
@@ -290,6 +320,20 @@ class SourceMapItem:
 
         return OrderedDict(((kwargs[k], attrs[k]) for k in kwargs))
 
+    def source_mapping(self) -> SourceMapping:
+        return SourceMapping(
+            line=self.line - 1,
+            column=0,
+            column_rbound=len(self.teal),
+            source=self.frame.node_source(),
+            source_line=self.frame.lineno(),
+            source_column=self.frame.node_col_offset(),
+            source_line_end=self.frame.node_end_lineno(),
+            source_column_rbound=self.frame.node_end_col_offset(),
+            source_extract=self.frame.code(),
+            target_extract=self.teal,
+        )
+
 
 class PyTealSourceMap:
     def __init__(
@@ -300,11 +344,13 @@ class PyTealSourceMap:
         source_inference: bool = True,
         x: bool = False,
     ):
+        # TODO: get rid of x and add_extras ???
         self.teal_lines: list[str] = lines
         self.components: list["pt.TealComponent"] = components
         self.source_inference: bool = source_inference
         self.add_extras: bool = x
         self._cached_source_map: dict[int, SourceMapItem] = {}
+        self.inferred_frames_at: list[int] = []
 
         if build:
             self.get_map()
@@ -325,42 +371,9 @@ class PyTealSourceMap:
                 after.append(a)
 
             if self.source_inference:
-
-                def infer_source(i: int) -> PyTealFrame | None:
-                    frame = best_frames[i]
-                    prev_frame = None if i <= 0 else best_frames[i - 1]
-                    next_frame = (
-                        None if len(best_frames) <= i + 1 else best_frames[i + 1]
-                    )
-                    if prev_frame and next_frame:
-                        if prev_frame == next_frame:
-                            return frame.spawn(
-                                prev_frame, SourceMapItemStatus.PATCHED_BY_PREV_AND_NEXT
-                            )
-
-                        # NO-OP for now when disagreee
-                        return None
-
-                    if prev_frame:
-                        return frame.spawn(
-                            prev_frame, SourceMapItemStatus.PATCHED_BY_PREV
-                        )
-
-                    if next_frame:
-                        return frame.spawn(
-                            prev_frame, SourceMapItemStatus.PATCHED_BY_NEXT
-                        )
-
-                    return None
-
-                for i in range(len(best_frames)):
-                    if (
-                        best_frames[i].status_code()
-                        <= SourceMapItemStatus.PYTEAL_GENERATED
-                    ):
-                        ptf_or_none = infer_source(i)
-                        if ptf_or_none:
-                            best_frames[i] = ptf_or_none
+                mutated = self._search_for_better_frames_and_modify(best_frames)
+                if mutated:
+                    self.inferred_frames_at = mutated
 
             def source_map_item(i, tc):
                 extras: dict[str, Any] | None = None
@@ -379,37 +392,70 @@ class PyTealSourceMap:
 
         return self._cached_source_map
 
+    def _search_for_better_frames_and_modify(
+        self, frames: list[PyTealFrame]
+    ) -> list[int]:
+        N = len(frames)
+        mutated = []
+
+        def infer_source(i: int) -> PyTealFrame | None:
+            frame = frames[i]
+            prev_frame = None if i <= 0 else frames[i - 1]
+            next_frame = None if N <= i + 1 else frames[i + 1]
+            if prev_frame and next_frame:
+                if prev_frame == next_frame:
+                    return frame.spawn(
+                        prev_frame, SourceMapItemStatus.PATCHED_BY_PREV_AND_NEXT
+                    )
+
+                # PT Generated TypeEnum's presumably happened because of setting an transaction
+                # field in the next step:
+                reason = frame.compiler_generated_reason()
+                if reason in [
+                    PT_GENERATED_TYPE_ENUM_ONCOMPLETE,
+                    PT_GENERATED_TYPE_ENUM_TXN,
+                ]:
+                    return frame.spawn(
+                        next_frame, SourceMapItemStatus.PATCHED_BY_NEXT_OVERRIDE_PREV
+                    )
+
+                # NO-OP otherwise:
+                return None
+
+            if prev_frame:
+                return frame.spawn(prev_frame, SourceMapItemStatus.PATCHED_BY_PREV)
+
+            if next_frame:
+                return frame.spawn(next_frame, SourceMapItemStatus.PATCHED_BY_NEXT)
+
+            return None
+
+        for i in range(N):
+            if frames[i].status_code() <= SourceMapItemStatus.PYTEAL_GENERATED:
+                ptf_or_none = infer_source(i)
+                if ptf_or_none:
+                    mutated.append(i)
+                    frames[i] = ptf_or_none
+
+        return mutated
+
     @classmethod
     def best_frame_and_windows_around_it(
         cls, t: "pt.TealComponent"
-    ) -> tuple[
-        inspect.FrameInfo | None, list[inspect.FrameInfo], list[inspect.FrameInfo]
-    ]:
+    ) -> tuple[FrameInfo | None, list[FrameInfo], list[FrameInfo]]:
         """
-        # TODO: probly need to trim down the extra before and afters before merging
+        # TODO: probly need to REMOVE the extra before and after
         # TODO: this is too complicated!!!
-        path_match: str
-        # TODO: match is overkill now that TealComponent has methods frames() and frame_nodes()
-        match t:
-            case pt.TealOp():
-                path_match = "pyteal/ast"
-            case pt.TealLabel() | pt.TealPragma():
-                path_match = "pyteal/ir"
-            case _:
-                raise Exception(f"expected TealComponent but got {type(t)}")
         """
 
-        # TODO: Refactor using a generic version of cast that un-optionalizes any optional type
-        frames = t.frames()
-        frame_nodes = t.frame_nodes()
+        # TODO: Do I need to resurrect these assertions?
+        # def call_out_emptys(xs):
+        #     f"The following indices were empty {[x for x in xs if not x]}"
 
-        def call_out_emptys(xs):
-            f"The following indices were empty {[x for x in xs if not x]}"
-
-        frames = cast(List[inspect.FrameInfo], frames)
-        frame_nodes = cast(List[ast.AST | None], frame_nodes)
-        assert all(frames), call_out_emptys(frames)
-        assert len(frame_nodes) == len(frames)
+        # frames = cast(List[inspect.FrameInfo], frames)
+        # frame_nodes = cast(List[ast.AST | None], frame_nodes)
+        # assert all(frame_infos), call_out_emptys(frame_infos)
+        # assert len(frame_nodes) == len(frame_infos)
 
         pyteals = [
             # "pyteal/__init__.py",
@@ -423,10 +469,12 @@ class PyTealSourceMap:
             "tests/mock_version.py",
         ]
 
-        pyteal_idx = [any(w in f.filename for w in pyteals) for f in frames]
+        frames = t.frames()
+        frame_infos = frames.frame_infos()
+        pyteal_idx = [any(w in f.filename for w in pyteals) for f in frame_infos]
 
         def is_code_file(idx):
-            f = frames[idx].filename
+            f = frame_infos[idx].filename
             return not (f.startswith("<") and f.endswith(">"))
 
         in_pt, first_pt_entrancy = False, None
@@ -441,12 +489,13 @@ class PyTealSourceMap:
         if first_pt_entrancy is None:
             return None, [], []
 
+        frame_nodes = frames.nodes()
         if frame_nodes[first_pt_entrancy] is None:
-            # failure. Look for first pyteal generated code entry in stack trace:
+            # FAILURE CASE: Look for first pyteal generated code entry in stack trace:
             found = False
             i = -1
-            for i in range(len(frames) - 1, -1, -1):
-                f = frames[i]
+            for i in range(len(frame_infos) - 1, -1, -1):
+                f = frame_infos[i]
                 if not f.code_context:
                     continue
 
@@ -458,20 +507,16 @@ class PyTealSourceMap:
             if found and i >= 0:
                 first_pt_entrancy = i
 
-        frames_n_nodes = list(zip(frames, frame_nodes))
         # TODO: probly don't need to keep `extras` param of SourceMapItem
         # nor the 2nd and 3rd elements of the following tuple being returned
         return tuple(
             PyTealFrame.convert(
                 [
-                    frames_n_nodes[first_pt_entrancy],
-                    [frames_n_nodes[i] for i in range(first_pt_entrancy - 1, -1, -1)],
-                    [
-                        frames_n_nodes[i]
-                        for i in range(first_pt_entrancy + 1, len(frames))
-                    ],
+                    frames[first_pt_entrancy],  # type: ignore
+                    [frames[i] for i in range(first_pt_entrancy - 1, -1, -1)],
+                    [frames[i] for i in range(first_pt_entrancy + 1, len(frame_infos))],
                 ]
-            )  # type: ignore
+            )
         )
 
     def teal(self) -> str:

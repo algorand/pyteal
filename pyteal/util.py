@@ -1,3 +1,9 @@
+from ast import AST
+from dataclasses import dataclass
+import executing
+from inspect import FrameInfo, stack
+from typing import cast, Union
+
 from pyteal.errors import TealInternalError
 
 
@@ -58,3 +64,34 @@ def correctBase32Padding(s: str) -> str:
         raise TealInternalError("Invalid base32 content")
 
     return content
+
+
+@dataclass(frozen=True)
+class Frame:
+    frame_info: FrameInfo
+    node: AST | None
+
+
+FrameSequence = Union[Frame, list["FrameSequence"]]
+
+
+class Frames:
+    # TODO: BIG QUESTION: How can we configure Frames so that it defaults to a NO-OP ?
+    # I believe this should involve a project level config. Some ideas.
+    # source_map.ini config file a la: https://www.codeproject.com/Articles/5319621/Configuration-Files-in-Python
+    # TOML config a la: https://realpython.com/python-toml/
+
+    def __init__(self):
+        self.frames: list[Frame] = [
+            Frame(f, cast(AST | None, executing.Source.executing(f.frame).node))
+            for f in stack()
+        ]
+
+    def __getitem__(self, index: int) -> Frame:
+        return self.frames[index]
+
+    def frame_infos(self) -> list[FrameInfo]:
+        return [f.frame_info for f in self.frames]
+
+    def nodes(self) -> list[AST | None]:
+        return [f.node for f in self.frames]

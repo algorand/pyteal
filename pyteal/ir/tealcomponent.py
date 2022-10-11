@@ -5,6 +5,8 @@ import inspect
 from typing import cast, List, Optional, TYPE_CHECKING
 from contextlib import AbstractContextManager
 
+from pyteal.util import Frames
+
 if TYPE_CHECKING:
     from pyteal.ast import Expr, ScratchSlot, SubroutineDefinition
 
@@ -13,18 +15,9 @@ class TealComponent(ABC):
     def __init__(self, expr: Optional["Expr"]):
         self.expr = expr
 
-        # TODO: need to refactor/extract frame stuff
-        self._frames: List[inspect.FrameInfo] | None
-        # TODO: this is some sort of AST node, not Any:
-        self._frame_nodes: List[ast.AST | None] | None
-
+        self._frames: Frames
         if not self.expr:  # expr already has the frame info
-            fs = inspect.stack()
-            self._frames = fs
-            self._frame_nodes = [
-                cast(ast.AST | None, executing.Source.executing(f.frame).node)
-                for f in fs
-            ]
+            self._frames = Frames()
 
     def getSlots(self) -> List["ScratchSlot"]:
         return []
@@ -39,12 +32,12 @@ class TealComponent(ABC):
         pass
 
     # TODO: unify/refactor + handle case when no tracing occurred
-    def frames(self) -> List[inspect.FrameInfo] | None:
+    def frames(self) -> Frames:
         return self.expr.frames if self.expr else self._frames
 
-    # TODO: unify/refactor + handle case when no tracing occurred
-    def frame_nodes(self) -> List[ast.AST | None] | None:
-        return self.expr.frame_nodes if self.expr else self._frame_nodes
+    # # TODO: unify/refactor + handle case when no tracing occurred
+    # def frame_nodes(self) -> List[ast.AST | None] | None:
+    #     return self.expr.frame_nodes if self.expr else self._frame_nodes
 
     @abstractmethod
     def assemble(self) -> str:
