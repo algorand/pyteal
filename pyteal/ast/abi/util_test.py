@@ -893,6 +893,8 @@ def test_type_spec_is_assignable_safe_assignment(tc: SafeAssignment):
 
 @pytest.mark.parametrize("ts", bfs_on_inheritance(abi.TypeSpec))
 def test_type_spec_is_assignable_safe_assignment_full_coverage(ts: type):
+    if isabstract(ts):
+        return
     # TODO to implement
     pass
 
@@ -938,5 +940,7 @@ def test_type_spec_is_assignable_unsafe_bidirectional(tc: UnsafeBidirectional):
 
 @pytest.mark.parametrize("ts", bfs_on_inheritance(abi.TypeSpec))
 def test_type_spec_is_assignable_unsafe_bidirectional_full_coverage(ts: type):
+    if isabstract(ts):
+        return
     # TODO to implement
     pass
