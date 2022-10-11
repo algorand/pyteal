@@ -1010,3 +1010,6 @@ def test_type_spec_assignable_example(tc):
             z = cast(UnsafeAssignment, tc)
             for b in z.bs:
                 assert abi.type_spec_is_assignable_to(z.a, b) is False
+
+        case _:
+            assert False, f"Unknown testcase group {type(tc)}."
