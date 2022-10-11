@@ -889,6 +889,12 @@ def test_type_spec_is_assignable_safe_assignment(tc: SafeAssignment):
         assert not abi.type_spec_is_assignable_to(b, tc.a)
 
 
+@pytest.mark.parametrize("ts", bfs_on_inheritance(abi.TypeSpec))
+def test_type_spec_is_assignable_safe_assignment_full_coverage(ts: type):
+    # TODO to implement
+    pass
+
+
 class UnsafeBidirectional(NamedTuple):
     xs: list[abi.TypeSpec]
 
@@ -920,9 +926,15 @@ UNSAFE_BIDIRECTIONAL_TEST_CASES: list[UnsafeBidirectional] = [
 
 
 @pytest.mark.parametrize("tc", UNSAFE_BIDIRECTIONAL_TEST_CASES)
-def test_type_spec_is_assignment_unsafe_bidirectional(tc: UnsafeBidirectional):
+def test_type_spec_is_assignable_unsafe_bidirectional(tc: UnsafeBidirectional):
     for ia, a in enumerate(tc.xs):
         for ib, b in enumerate(tc.xs):
             if ia == ib:
                 continue
             assert not abi.type_spec_is_assignable_to(a, b)
+
+
+@pytest.mark.parametrize("ts", bfs_on_inheritance(abi.TypeSpec))
+def test_type_spec_is_assignable_unsafe_bidirectional_full_coverage(ts: type):
+    # TODO to implement
+    pass
