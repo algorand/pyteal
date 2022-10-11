@@ -836,6 +836,7 @@ SAFE_BIDIRECTIONAL_TEST_CASES: list[SafeBidirectional] = [
 
 @pytest.mark.parametrize("tc", SAFE_BIDIRECTIONAL_TEST_CASES)
 def test_type_spec_is_assignable_safe_bidirectional(tc: SafeBidirectional):
+    assert len(tc.xs) > 0
     for a in tc.xs:
         for b in tc.xs:
             assert abi.type_spec_is_assignable_to(a, b)
@@ -884,6 +885,7 @@ SAFE_ASSIGNMENT_TEST_CASES: list[SafeAssignment] = [
 
 @pytest.mark.parametrize("tc", SAFE_ASSIGNMENT_TEST_CASES)
 def test_type_spec_is_assignable_safe_assignment(tc: SafeAssignment):
+    assert len(tc.bs) > 0
     for b in tc.bs:
         assert abi.type_spec_is_assignable_to(tc.a, b)
         assert not abi.type_spec_is_assignable_to(b, tc.a)
