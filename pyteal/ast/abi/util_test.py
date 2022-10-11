@@ -905,9 +905,9 @@ SAFE_ASSIGNMENT_TEST_CASES: list[SafeAssignment] = [
         [abi.type_spec_from_annotation(NamedTComp1)],
     ),
 ] + [
-    SafeAssignment(spec(), [abi.TransactionTypeSpec()])
-    for spec in bfs_on_inheritance(abi.TransactionTypeSpec)
-    if spec != abi.TransactionTypeSpec
+    SafeAssignment(spec, [abi.TransactionTypeSpec()])
+    for spec in abi.TransactionTypeSpecs
+    if spec != abi.TransactionTypeSpec()
 ]
 
 
@@ -954,6 +954,25 @@ UNSAFE_BIDIRECTIONAL_TEST_CASES: list[UnsafeBidirectional] = [
             abi.type_spec_from_annotation(NamedTComp2),
         ]
     ),
+    UnsafeBidirectional(
+        [
+            abi.type_spec_from_annotation(NamedTComp1),
+            abi.TupleTypeSpec(
+                abi.AddressTypeSpec(),
+                abi.StaticArrayTypeSpec(abi.Uint16TypeSpec(), 100),
+            ),
+        ]
+    ),
+    UnsafeBidirectional(
+        [spec for spec in abi.TransactionTypeSpecs if spec != abi.TransactionTypeSpec()]
+        + [
+            spec()
+            for spec in bfs_on_inheritance(abi.UintTypeSpec)
+            if not isabstract(spec)
+        ]
+        + [abi.BoolTypeSpec()]
+    ),
+    UnsafeBidirectional(abi.ReferenceTypeSpecs + [abi.TransactionTypeSpec()]),
 ]
 
 
@@ -968,7 +987,13 @@ def test_type_spec_is_assignable_unsafe_bidirectional(tc: UnsafeBidirectional):
 
 @pytest.mark.parametrize("ts", bfs_on_inheritance(abi.TypeSpec))
 def test_type_spec_is_assignable_unsafe_bidirectional_full_coverage(ts: type):
-    if isabstract(ts) or len(signature(ts).parameters) > 0:
+    def exists_in_unsafe_bidirectional(ts: type):
+        for unsafe_bidirectional in UNSAFE_BIDIRECTIONAL_TEST_CASES:
+            for t in unsafe_bidirectional.xs:
+                if type(t) == ts:
+                    return True
+        return False
+
+    if isabstract(ts):
         return
-    # TODO to implement
-    pass
+    assert exists_in_unsafe_bidirectional(ts)
