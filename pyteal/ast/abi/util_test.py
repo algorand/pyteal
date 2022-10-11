@@ -1,4 +1,4 @@
-from typing import cast, Callable, NamedTuple, Literal, Optional, Any, get_origin
+from typing import Callable, NamedTuple, Literal, Optional, Any, get_origin
 from inspect import isabstract
 import pytest
 
@@ -810,24 +810,10 @@ class SafeAssignment(NamedTuple):
     bs: list[abi.TypeSpec]
 
 
-class UnsafeAssignment(NamedTuple):
-    a: abi.TypeSpec
-    bs: list[abi.TypeSpec]
-
-
-EXAMPLE_TEST_CASES = [
-    SafeAssignment(abi.PaymentTransactionTypeSpec(), [abi.TransactionTypeSpec()]),
-    SafeBidirectional(
-        [
-            abi.type_spec_from_annotation(abi.StaticArray[abi.Byte, Literal[10]]),
-            abi.type_spec_from_annotation(abi.StaticBytes[Literal[10]]),
-        ],
-    ),
-    SafeBidirectional(
-        [
-            abi.type_spec_from_annotation(abi.DynamicBytes),
-            abi.type_spec_from_annotation(abi.DynamicArray[abi.Byte]),
-        ]
+SAFE_ASSIGNMENT_TEST_CASES: list[SafeAssignment] = [
+    SafeAssignment(
+        abi.StringTypeSpec(),
+        [abi.DynamicBytesTypeSpec(), abi.DynamicArrayTypeSpec(abi.ByteTypeSpec())],
     ),
     SafeAssignment(
         abi.type_spec_from_annotation(NamedTDecl),
@@ -845,172 +831,98 @@ EXAMPLE_TEST_CASES = [
             ),
         ],
     ),
+    SafeAssignment(
+        abi.AddressTypeSpec(),
+        [abi.StaticArrayTypeSpec(abi.ByteTypeSpec(), 32), abi.StaticBytesTypeSpec(32)],
+    ),
+    SafeAssignment(
+        abi.type_spec_from_annotation(NamedTComp0),
+        [abi.type_spec_from_annotation(NamedTComp1)],
+    ),
+] + [
+    SafeAssignment(spec(), [abi.TransactionTypeSpec()])
+    for spec in bfs_on_inheritance(abi.TransactionTypeSpec)
+    if spec != abi.TransactionTypeSpec
 ]
 
 
-TYPE_SPEC_ASSIGNABLE_CASES = [
-    (abi.PaymentTransactionTypeSpec(), abi.TransactionTypeSpec(), True),
-    (
-        abi.type_spec_from_annotation(abi.StaticArray[abi.Byte, Literal[10]]),
-        abi.type_spec_from_annotation(abi.StaticBytes[Literal[10]]),
-        True,
+@pytest.mark.parametrize("tc", SAFE_ASSIGNMENT_TEST_CASES)
+def test_type_spec_is_assignable_safe_assignment(tc: SafeAssignment):
+    for b in tc.bs:
+        assert abi.type_spec_is_assignable_to(tc.a, b)
+        assert not abi.type_spec_is_assignable_to(b, tc.a)
+
+
+SAFE_BIDIRECTIONAL_TEST_CASES: list[SafeBidirectional] = [
+    SafeBidirectional(
+        [
+            abi.type_spec_from_annotation(abi.StaticArray[abi.Byte, Literal[10]]),
+            abi.type_spec_from_annotation(abi.StaticBytes[Literal[10]]),
+        ],
     ),
-    (
-        abi.type_spec_from_annotation(abi.StaticBytes[Literal[10]]),
-        abi.type_spec_from_annotation(abi.StaticArray[abi.Byte, Literal[10]]),
-        True,
+    SafeBidirectional(
+        [
+            abi.type_spec_from_annotation(abi.DynamicBytes),
+            abi.type_spec_from_annotation(abi.DynamicArray[abi.Byte]),
+        ]
     ),
-    (
-        abi.type_spec_from_annotation(abi.DynamicBytes),
-        abi.type_spec_from_annotation(abi.DynamicArray[abi.Byte]),
-        True,
-    ),
-    (
-        abi.type_spec_from_annotation(abi.DynamicArray[abi.Byte]),
-        abi.type_spec_from_annotation(abi.DynamicBytes),
-        True,
-    ),
-    (
-        abi.type_spec_from_annotation(abi.DynamicArray[abi.Uint8]),
-        abi.type_spec_from_annotation(abi.DynamicBytes),
-        False,
-    ),
-    (
-        abi.type_spec_from_annotation(abi.DynamicBytes),
-        abi.type_spec_from_annotation(abi.DynamicArray[abi.Uint8]),
-        False,
-    ),
-    (
-        abi.type_spec_from_annotation(NamedTDecl),
-        abi.type_spec_from_annotation(
-            abi.Tuple3[
-                abi.Uint64,
+    SafeBidirectional(
+        [
+            abi.type_spec_from_annotation(
                 abi.Tuple3[
-                    abi.Transaction, abi.Address, abi.StaticArray[abi.Byte, Literal[16]]
-                ],
-                abi.Transaction,
-            ]
-        ),
-        True,
-    ),
-    (
-        abi.type_spec_from_annotation(
-            abi.Tuple3[
-                abi.Uint64,
-                abi.Tuple3[
-                    abi.PaymentTransaction,
-                    abi.Address,
-                    abi.StaticArray[abi.Byte, Literal[16]],
-                ],
-                abi.Transaction,
-            ]
-        ),
-        abi.type_spec_from_annotation(NamedTDecl),
-        True,
-    ),
-    (
-        abi.type_spec_from_annotation(abi.StaticBytes[Literal[7]]),
-        abi.type_spec_from_annotation(abi.StaticArray[abi.Byte, Literal[11]]),
-        False,
-    ),
-    (
-        abi.type_spec_from_annotation(NamedTDecl),
-        abi.type_spec_from_annotation(NamedTDecl),
-        True,
-    ),
-    (
-        abi.type_spec_from_annotation(abi.String),
-        abi.type_spec_from_annotation(abi.DynamicBytes),
-        True,
-    ),
-    (
-        abi.type_spec_from_annotation(abi.DynamicArray[abi.Byte]),
-        abi.type_spec_from_annotation(abi.String),
-        False,
-    ),
-    (
-        abi.type_spec_from_annotation(abi.DynamicArray[abi.Uint32]),
-        abi.type_spec_from_annotation(abi.String),
-        False,
-    ),
-    (
-        abi.type_spec_from_annotation(abi.Address),
-        abi.type_spec_from_annotation(abi.StaticArray[abi.Byte, Literal[32]]),
-        True,
-    ),
-    (
-        abi.type_spec_from_annotation(abi.StaticBytes[Literal[32]]),
-        abi.type_spec_from_annotation(abi.Address),
-        False,
-    ),
-    (
-        abi.type_spec_from_annotation(abi.StaticBytes[Literal[33]]),
-        abi.type_spec_from_annotation(abi.Address),
-        False,
-    ),
-    (
-        abi.type_spec_from_annotation(NamedTComp0),
-        abi.type_spec_from_annotation(NamedTComp1),
-        True,
-    ),
-    (
-        abi.type_spec_from_annotation(NamedTComp1),
-        abi.type_spec_from_annotation(NamedTComp0),
-        False,
-    ),
-    (
-        abi.type_spec_from_annotation(NamedTDecl),
-        abi.type_spec_from_annotation(NamedTComp0),
-        False,
-    ),
-    (
-        abi.type_spec_from_annotation(NamedTComp2),
-        abi.type_spec_from_annotation(NamedTComp0),
-        False,
-    ),
-    (
-        abi.type_spec_from_annotation(abi.String),
-        abi.type_spec_from_annotation(abi.DynamicArray[abi.Uint64]),
-        False,
-    ),
-    (
-        abi.type_spec_from_annotation(abi.DynamicArray[abi.Uint64]),
-        abi.type_spec_from_annotation(abi.String),
-        False,
+                    abi.Uint64,
+                    abi.Tuple3[
+                        abi.PaymentTransaction,
+                        abi.Address,
+                        abi.StaticArray[abi.Byte, Literal[16]],
+                    ],
+                    abi.Transaction,
+                ]
+            ),
+            abi.type_spec_from_annotation(NamedTDecl),
+            abi.type_spec_from_annotation(NamedTDecl),
+        ]
     ),
 ]
 
 
-@pytest.mark.parametrize("a, b, expected", TYPE_SPEC_ASSIGNABLE_CASES)
-def test_type_spec_assignable(a, b, expected):
-    assert abi.type_spec_is_assignable_to(a, b) == expected
+@pytest.mark.parametrize("tc", SAFE_BIDIRECTIONAL_TEST_CASES)
+def test_type_spec_is_assignable_safe_bidirectional(tc: SafeBidirectional):
+    for a in tc.xs:
+        for b in tc.xs:
+            assert abi.type_spec_is_assignable_to(a, b)
 
 
-@pytest.mark.parametrize("tc", EXAMPLE_TEST_CASES)
-def test_type_spec_assignable_example(tc):
-    match tc:
-        case SafeBidirectional():
-            z = cast(SafeBidirectional, tc)
-            for a in z.xs:
-                for b in z.xs:
-                    assert abi.type_spec_is_assignable_to(a, b)
+UNSAFE_BIDIRECTIONAL_TEST_CASES: list[UnsafeBidirectional] = [
+    UnsafeBidirectional(
+        [abi.DynamicArrayTypeSpec(abi.Uint8TypeSpec()), abi.DynamicBytesTypeSpec()]
+    ),
+    UnsafeBidirectional(
+        [abi.StaticBytesTypeSpec(7), abi.StaticArrayTypeSpec(abi.ByteTypeSpec(), 11)]
+    ),
+    UnsafeBidirectional(
+        [
+            abi.StringTypeSpec(),
+            abi.DynamicArrayTypeSpec(abi.Uint32TypeSpec()),
+            abi.DynamicArrayTypeSpec(abi.Uint64TypeSpec()),
+            abi.AddressTypeSpec(),
+            abi.StaticBytesTypeSpec(33),
+        ]
+    ),
+    UnsafeBidirectional(
+        [
+            abi.type_spec_from_annotation(NamedTDecl),
+            abi.type_spec_from_annotation(NamedTComp0),
+            abi.type_spec_from_annotation(NamedTComp2),
+        ]
+    ),
+]
 
-        case UnsafeBidirectional():
-            z = cast(UnsafeBidirectional, tc)
-            for a in z.xs:
-                for b in z.xs:
-                    assert abi.type_spec_is_assignable_to(a, b) is False
 
-        case SafeAssignment():
-            z = cast(SafeAssignment, tc)
-            for b in z.bs:
-                assert abi.type_spec_is_assignable_to(z.a, b)
-                assert abi.type_spec_is_assignable_to(b, z.a) is False
-
-        case UnsafeAssignment():
-            z = cast(UnsafeAssignment, tc)
-            for b in z.bs:
-                assert abi.type_spec_is_assignable_to(z.a, b) is False
-
-        case _:
-            assert False, f"Unknown testcase group {type(tc)}."
+@pytest.mark.parametrize("tc", UNSAFE_BIDIRECTIONAL_TEST_CASES)
+def test_type_spec_is_assignment_unsafe_bidirectional(tc: UnsafeBidirectional):
+    for ia, a in enumerate(tc.xs):
+        for ib, b in enumerate(tc.xs):
+            if ia == ib:
+                continue
+            assert not abi.type_spec_is_assignable_to(a, b)
