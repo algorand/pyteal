@@ -269,20 +269,20 @@ class PyTealFrame:
         return [cls.convert(f) for f in cast(Sequence[Frame], frames)]
 
 
-_TL = "TL"
-_Teal = "Teal"
-_PTE = "PTE"
-_PTQ = "PTQ"
-_PTC = "PTC"
-_PTCW = "PTCW"
-_PT_path = "PT path"
-_PTL = "PTL"
-_PTCC = "PTCC"
-_PT_AST = "PT AST"
-_PT_frame = "PT frame"
-_failed = "FAILED"
-_status_code = "Sourcemap Status Code"
-_status = "Sourcemap Status"
+_TEAL_LINE_NUMBER = "TL"
+_TEAL_LINE = "Teal"
+_PYTEAL_NODE_AST_UNPARSED = "PyTeal AST Unparsed"
+_PYTEAL_NODE_AST_QUALNAME = "PyTeal Qualname"
+_PYTEAL_COMPONENT = "PyTeal Qualname"
+_PYTEAL_NODE_AST_SOURCE_BOUNDARIES = "PT Window"
+_PYTEAL_FILENAME = "PT path"
+_PYTEAL_LINE_NUMBER = "PTL"
+_PYTEAL_LINE = "PyTeal"
+_PYTEAL_NODE_AST = "PT AST"
+_PYTEAL_FRAME = "PT Frame"
+_PYTEAL_NODE_AST_NONE = "FAILED"
+_STATUS_CODE = "Sourcemap Status Code"
+_STATUS = "Sourcemap Status"
 
 
 @dataclass
@@ -298,20 +298,20 @@ class SourceMapItem:
         TODO: is this overly complicated?
         """
         attrs = {
-            _TL: self.line,
-            _Teal: self.teal,
-            _PTE: self.frame.node_source(),
-            _PTQ: self.frame.code_qualname(),
-            _PTC: self.component,
-            _PTCW: self.frame.node_source_window(),
-            _PT_path: self.frame.file(),
-            _PTL: self.frame.lineno(),
-            _PTCC: self.frame.code(),
-            _PT_AST: self.frame.node,
-            _PT_frame: self.frame,
-            _failed: self.frame.failed_ast(),
-            _status_code: self.frame.status_code(),
-            _status: self.frame.status(),
+            _TEAL_LINE_NUMBER: self.line,
+            _TEAL_LINE: self.teal,
+            _PYTEAL_NODE_AST_UNPARSED: self.frame.node_source(),
+            _PYTEAL_NODE_AST_QUALNAME: self.frame.code_qualname(),
+            _PYTEAL_COMPONENT: self.component,
+            _PYTEAL_NODE_AST_SOURCE_BOUNDARIES: self.frame.node_source_window(),
+            _PYTEAL_FILENAME: self.frame.file(),
+            _PYTEAL_LINE_NUMBER: self.frame.lineno(),
+            _PYTEAL_LINE: self.frame.code(),
+            _PYTEAL_NODE_AST: self.frame.node,
+            _PYTEAL_FRAME: self.frame,
+            _PYTEAL_NODE_AST_NONE: self.frame.failed_ast(),
+            _STATUS_CODE: self.frame.status_code(),
+            _STATUS: self.frame.status(),
         }
 
         assert (
@@ -320,7 +320,16 @@ class SourceMapItem:
 
         return OrderedDict(((kwargs[k], attrs[k]) for k in kwargs))
 
+    def validate_for_export(self) -> None:
+        """
+        Ensure providing necessary and unambiguous data before exporting.
+        1. source line + col should be available from frame_info
+        2. if
+        ?. source line + col info provided by frame_info should agree with node's (when provided)
+        """
+
     def source_mapping(self) -> SourceMapping:
+        self.validate_for_export()
         return SourceMapping(
             line=self.line - 1,
             column=0,
@@ -522,35 +531,73 @@ class PyTealSourceMap:
     def teal(self) -> str:
         return "\n".join(smi.teal for smi in self.get_map().values())
 
+    _tabulate_param_defaults = dict(
+        teal_line_number=_TEAL_LINE_NUMBER,
+        teal=_TEAL_LINE,
+        pyteal=_PYTEAL_NODE_AST_UNPARSED,
+        pyteal_node_ast_qualname=_PYTEAL_NODE_AST_QUALNAME,
+        pyteal_component=_PYTEAL_COMPONENT,
+        pyteal_node_ast_source_boundaries=_PYTEAL_NODE_AST_SOURCE_BOUNDARIES,
+        pyteal_filename=_PYTEAL_FILENAME,
+        pyteal_line_number=_PYTEAL_LINE_NUMBER,
+        pyteal_line=_PYTEAL_LINE,
+        pyteal_node_ast=_PYTEAL_NODE_AST,
+        pyteal_node_ast_none=_PYTEAL_NODE_AST_NONE,
+        status_code=_STATUS_CODE,
+        status=_STATUS,
+    )
+
     def tabulate(
         self,
         *,
         tablefmt="fancy_grid",
         **kwargs,
     ) -> str:
-        defaults = dict(
-            teal_line_col=_TL,
-            teal_code_col=_Teal,
-            pyteal_exec_col=_PTE,
-            pyteal_qualname_col=_PTQ,
-            pyteal_component_col=_PTC,
-            pyteal_code_window=_PTCW,
-            pyteal_path_col=_PT_path,
-            pyteal_line_col=_PTL,
-            pyteal_code_context_col=_PTCC,
-            pyteal_ast_col=_PT_AST,
-            linemap_failed=_failed,
-            linemap_status_code=_status_code,
-            linemap_status=_status,
-        )
-        for k in kwargs:
-            assert k in defaults, f"unrecognized parameter '{k}'"
+        """
+        Tabulate a sourcemap using Python's tabulate package: https://pypi.org/project/tabulate/
 
-        required = ["teal_line_col", "teal_code_col", "pyteal_exec_col"]
-        renames = {defaults[k]: v for k, v in kwargs.items()}
+        Columns are named and ordered by the arguments provided
+
+        Args:
+            tablefmt (defaults to 'fancy_grid'): format specifier used by tabulate. For choices see: https://github.com/astanin/python-tabulate#table-format
+            teal_line_number: Column name and implicit order for the Teal target line number
+            teal: Column name and implicit order for the generated Teal
+            pyteal: Column name and implicit order for the PyTeal source mapping to target (this usually contains only the Python AST responsible for the generated Teal)
+            pyteal_node_ast_qualname (optional): Column name and implicit order for the Python qualname of the PyTeal source mapping to target
+            pyteal_component (optional): Column name and implicit order for the PyTeal source component mapping to target
+            pyteal_node_ast_source_boundaries (optional): Column name and implicit order for line and column boundaries of the PyTeal source mapping to target
+            pyteal_filename (optional): Column name and implicit order for the filname whose PyTeal source is mapping to the target
+            pyteal_line_number (optional): Column name and implicit order for line number of the PyTeal source mapping to target
+            pyteal_line (optional): Column name and implicit order for the PyTeal source _line_ mapping to target (in general, this may only overlap with the PyTeal code which generated the Teal)
+            pyteal_node_ast_none (optional): Column name and implicit order for indicator of whether the AST node was extracted for the PyTEAL source mapping to target
+            status_code (optional): Column name and implicit order for confidence level for locating the PyTeal source responsible for generated Teal
+            status (optional): Column name and implicit order for descriptor of confidence level for locating the PyTeal source responsible for generated Teal
+
+        Returns:
+            A ready to print string containing the table information.
+        """
+        for k in kwargs:
+            assert k in self._tabulate_param_defaults, f"unrecognized parameter '{k}'"
+
+        required = ["teal_line_number", "teal", "pyteal"]
+        renames = {self._tabulate_param_defaults[k]: v for k, v in kwargs.items()}
         for r in required:
             if r not in kwargs:
-                renames[defaults[r]] = defaults[r]
+                renames[
+                    self._tabulate_param_defaults[r]
+                ] = self._tabulate_param_defaults[r]
 
-        rows = (item.asdict(**renames) for item in self.get_map().values())
+        rows = (smitem.asdict(**renames) for smitem in self.get_map().values())
         return tabulate(rows, headers=renames, tablefmt=tablefmt)
+
+    def _tabulate_for_dev(self) -> str:
+        return self.tabulate(
+            teal_line_number="line",
+            teal="teal",
+            status="line status",
+            pyteal="pyteal AST",
+            pyteal_filename="source",
+            pyteal_node_ast_source_boundaries="rows & columns",
+            pyteal_line_number="pt line",
+            pyteal_line="pyteal line",
+        )

@@ -20,23 +20,10 @@ ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 
 FIXTURES = Path.cwd() / "tests" / "integration" / "sourcemaps"
 
-"""
-# TODO: Additional examples needed before merging:
-
-1. Inline programs patched together from various sources
-2. Example with OpUp
-3. Run on the ABI Router example
-4. Run on Steve's Staking Contract
-5. Run an Ben's AMM
-
-?. Beaker example
-
-"""
-
 
 def test_frames():
-    this_file, this_func = "sourcemap_test.py", "test_ptframe_as_source_mapping"
-    this_lineno, this_frame = 22, Frames()[1]
+    this_file, this_func = "sourcemap_test.py", "test_frames"
+    this_lineno, this_frame = 26, Frames()[1]
     code = f"    this_lineno, this_frame = {this_lineno}, Frames()[1]\n"
     this_col_offset, this_end_col_offset = 34, 42
     frame_info, node = this_frame.frame_info, this_frame.node
@@ -54,6 +41,20 @@ def test_frames():
     assert this_end_col_offset == node.end_col_offset
     assert isinstance(node, ast.Call)
     assert isinstance(node.parent, ast.Subscript)  # type: ignore
+
+
+"""
+# TODO: Additional examples needed before merging:
+
+1. Inline programs patched together from various sources
+2. Example with OpUp
+3. Run on the ABI Router example
+4. Run on Steve's Staking Contract
+5. Run an Ben's AMM
+
+?. Beaker example
+
+"""
 
 
 def test_no_regression():
@@ -87,22 +88,13 @@ def test_reconstruct():
 
 
 def fixture_comparison(sourcemap: PyTealSourceMap, name: str):
-    new_version = sourcemap.tabulate(
-        teal_line_col="line",
-        teal_code_col="teal",
-        linemap_status="line status",
-        pyteal_exec_col="pyteal AST",
-        pyteal_path_col="source",
-        pyteal_code_window="rows & columns",
-        pyteal_line_col="pt line",
-        pyteal_code_context_col="pyteal line",
-    )
+    new_version = sourcemap._tabulate_for_dev()
     with open(FIXTURES / f"{name}", "w") as f:
         f.write(new_version)
 
-    # not_actually_comparing = True
-    # if not_actually_comparing:
-    #     return
+    not_actually_comparing = True
+    if not_actually_comparing:
+        return
 
     with open(FIXTURES / name) as f:
         old_version = f.read()
