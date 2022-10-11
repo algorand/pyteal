@@ -1,4 +1,4 @@
-from typing import Callable, NamedTuple, Literal, Optional, Any, get_origin
+from typing import cast, Callable, NamedTuple, Literal, Optional, Any, get_origin
 from inspect import isabstract
 import pytest
 
@@ -797,6 +797,57 @@ class NamedTComp2(abi.NamedTuple):
     b0: abi.Field[abi.DynamicBytes]
 
 
+class SafeBidirectional(NamedTuple):
+    xs: list[abi.TypeSpec]
+
+
+class UnsafeBidirectional(NamedTuple):
+    xs: list[abi.TypeSpec]
+
+
+class SafeAssignment(NamedTuple):
+    a: abi.TypeSpec
+    bs: list[abi.TypeSpec]
+
+
+class UnsafeAssignment(NamedTuple):
+    a: abi.TypeSpec
+    bs: list[abi.TypeSpec]
+
+
+EXAMPLE_TEST_CASES = [
+    SafeAssignment(abi.PaymentTransactionTypeSpec(), [abi.TransactionTypeSpec()]),
+    SafeBidirectional(
+        [
+            abi.type_spec_from_annotation(abi.StaticArray[abi.Byte, Literal[10]]),
+            abi.type_spec_from_annotation(abi.StaticBytes[Literal[10]]),
+        ],
+    ),
+    SafeBidirectional(
+        [
+            abi.type_spec_from_annotation(abi.DynamicBytes),
+            abi.type_spec_from_annotation(abi.DynamicArray[abi.Byte]),
+        ]
+    ),
+    SafeAssignment(
+        abi.type_spec_from_annotation(NamedTDecl),
+        [
+            abi.type_spec_from_annotation(
+                abi.Tuple3[
+                    abi.Uint64,
+                    abi.Tuple3[
+                        abi.Transaction,
+                        abi.Address,
+                        abi.StaticArray[abi.Byte, Literal[16]],
+                    ],
+                    abi.Transaction,
+                ]
+            ),
+        ],
+    ),
+]
+
+
 TYPE_SPEC_ASSIGNABLE_CASES = [
     (abi.PaymentTransactionTypeSpec(), abi.TransactionTypeSpec(), True),
     (
@@ -933,3 +984,33 @@ TYPE_SPEC_ASSIGNABLE_CASES = [
 @pytest.mark.parametrize("a, b, expected", TYPE_SPEC_ASSIGNABLE_CASES)
 def test_type_spec_assignable(a, b, expected):
     assert abi.type_spec_is_assignable_to(a, b) == expected
+
+
+@pytest.mark.parametrize("tc", EXAMPLE_TEST_CASES)
+def test_type_spec_assignable_example(tc):
+    match tc:
+        case SafeBidirectional():
+            z = cast(SafeBidirectional, tc)
+            for a in z.xs:
+                for b in z.xs:
+                    assert abi.type_spec_is_assignable_to(a, b)
+
+        case UnsafeBidirectional():
+            z = cast(UnsafeBidirectional, tc)
+            for a in z.xs:
+                for b in z.xs:
+                    assert abi.type_spec_is_assignable_to(a, b) is False
+
+        case SafeAssignment():
+            z = cast(SafeAssignment, tc)
+            for b in z.bs:
+                assert abi.type_spec_is_assignable_to(z.a, b)
+                assert abi.type_spec_is_assignable_to(b, z.a) is False
+
+        case UnsafeAssignment():
+            z = cast(UnsafeAssignment, tc)
+            for b in z.bs:
+                assert abi.type_spec_is_assignable_to(z.a, b) is False
+
+        case _:
+            assert False, f"Unknown testcase group {type(tc)}."
