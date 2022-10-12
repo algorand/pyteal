@@ -1020,6 +1020,8 @@ def test_type_spec_is_assignable_unsafe_bidirectional(tc: UnsafeBidirectional):
     for ia, a in enumerate(tc.xs):
         for ib, b in enumerate(tc.xs):
             if ia == ib:
+                assert abi.type_spec_is_assignable_to(a, b)
+                assert abi.type_spec_is_assignable_to(b, a)
                 continue
             assert not abi.type_spec_is_assignable_to(a, b)
 
