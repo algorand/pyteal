@@ -956,6 +956,22 @@ class UnsafeBidirectional(NamedTuple):
 
 UNSAFE_BIDIRECTIONAL_TEST_CASES: list[UnsafeBidirectional] = [
     UnsafeBidirectional(
+        [
+            abi.Uint8TypeSpec(),
+            abi.Uint16TypeSpec(),
+            abi.Uint32TypeSpec(),
+            abi.Uint64TypeSpec(),
+        ]
+    ),
+    UnsafeBidirectional(
+        [
+            abi.ByteTypeSpec(),
+            abi.Uint16TypeSpec(),
+            abi.Uint32TypeSpec(),
+            abi.Uint64TypeSpec(),
+        ]
+    ),
+    UnsafeBidirectional(
         [abi.DynamicArrayTypeSpec(abi.Uint8TypeSpec()), abi.DynamicBytesTypeSpec()]
     ),
     UnsafeBidirectional(
