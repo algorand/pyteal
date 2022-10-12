@@ -801,3 +801,40 @@ def test_build_program_clear_state_valid_config():
             assemble_helper(actual_clear_state_with_method)
             == expected_clear_state_with_method
         )
+
+
+def test_override_names():
+    r1 = pt.Router("test")
+
+    @r1.method(name="handle")
+    def handle_asa(deposit: pt.abi.AssetTransferTransaction):
+        """handles the deposit where the input is an asset transfer"""
+        return pt.Assert(deposit.get().asset_amount() > pt.Int(0))
+
+    @r1.method(name="handle")
+    def handle_algo(deposit: pt.abi.PaymentTransaction):
+        """handles the deposit where the input is a payment"""
+        return pt.Assert(deposit.get().amount() > pt.Int(0))
+
+    ap1, cs1, c1 = r1.compile_program(version=pt.compiler.MAX_PROGRAM_VERSION)
+    assert len(c1.methods) == 2
+    for meth in c1.methods:
+        dmeth = meth.dictify()
+        assert dmeth["name"] == "handle"
+
+    # Confirm an equivalent router definition _without_ `name` overrides produces the same output.
+    r2 = pt.Router("test")
+
+    @r2.method()
+    def handle(deposit: pt.abi.AssetTransferTransaction):
+        """handles the deposit where the input is an asset transfer"""
+        return pt.Assert(deposit.get().asset_amount() > pt.Int(0))
+
+    @r2.method()
+    def handle(deposit: pt.abi.PaymentTransaction):  # noqa: F811
+        """handles the deposit where the input is a payment"""
+        return pt.Assert(deposit.get().amount() > pt.Int(0))
+
+    ap2, cs2, c2 = r2.compile_program(version=pt.compiler.MAX_PROGRAM_VERSION)
+
+    assert (ap1, cs1, c1) == (ap2, cs2, c2)

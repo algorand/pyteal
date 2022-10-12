@@ -682,6 +682,21 @@ Notice that even though the original :code:`get_account_status` function returns
 
 The only exception to this transformation is if the subroutine has no return value. Without a return value, a :code:`ComputedValue` is unnecessary and the subroutine will still return an :code:`Expr` to the caller. In this case, the :code:`@ABIReturnSubroutine` decorator acts identically the :code:`@Subroutine` decorator.
 
+The name of the subroutine constructed by the :code:`@ABIReturnSubroutine` decorator is by default the function name. In order to override the default subroutine name, the decorator :any:`ABIReturnSubroutine.name_override <ABIReturnSubroutine.name_override>` is introduced to construct a subroutine with its name overridden. An example is below:
+
+.. code-block:: python
+
+    from pyteal import *
+
+    @ABIReturnSubroutine.name_override("increment")
+    def add_by_one(prev: abi.Uint32, *, output: abi.Uint32) -> Expr:
+        return output.set(prev.get() + Int(1))
+
+    # NOTE! In this case, the `ABIReturnSubroutine` is initialized with a name "increment"
+    #       overriding its original name "add_by_one"
+    assert add_by_one.method_spec().dictify()["name"] == "increment"
+
+
 Creating an ARC-4 Program
 ----------------------------------------------------
 
