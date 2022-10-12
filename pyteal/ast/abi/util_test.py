@@ -945,7 +945,9 @@ def test_type_spec_is_assignable_safe_assignment_full_coverage(ts: type):
         return False
 
     # Abstract types and types without safe assignments should _not_ appear in test cases.
-    if isabstract(ts) or ts in [
+    # These typespecs are only assignable to themselves, and that forms a bidirectional assignment.
+    # Otherwise, they are unsafe bidirectional with all the other non-abstract typespecs.
+    if isabstract(ts) or ts in {
         abi.AccountTypeSpec,
         abi.ApplicationTypeSpec,
         abi.AssetTypeSpec,
@@ -955,7 +957,7 @@ def test_type_spec_is_assignable_safe_assignment_full_coverage(ts: type):
         abi.Uint16TypeSpec,
         abi.Uint32TypeSpec,
         abi.Uint64TypeSpec,
-    ]:
+    }:
         assert not exists_in_safe_assignment(ts)
     else:
         assert exists_in_safe_assignment(ts)
