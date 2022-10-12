@@ -809,9 +809,9 @@ SAFE_BIDIRECTIONAL_TEST_CASES: list[SafeBidirectional] = (
                 abi.type_spec_from_annotation(abi.StaticBytes[Literal[10]]),
             ],
         ),
-        SafeBidirectional([abi.BoolTypeSpec(), abi.BoolTypeSpec()]),
-        SafeBidirectional([abi.StringTypeSpec(), abi.StringTypeSpec()]),
-        SafeBidirectional([abi.AddressTypeSpec(), abi.AddressTypeSpec()]),
+        SafeBidirectional([abi.BoolTypeSpec()]),
+        SafeBidirectional([abi.StringTypeSpec()]),
+        SafeBidirectional([abi.AddressTypeSpec()]),
         SafeBidirectional(
             [
                 abi.type_spec_from_annotation(abi.DynamicBytes),
@@ -832,16 +832,15 @@ SAFE_BIDIRECTIONAL_TEST_CASES: list[SafeBidirectional] = (
                     ]
                 ),
                 abi.type_spec_from_annotation(NamedTDecl),
-                abi.type_spec_from_annotation(NamedTDecl),
             ]
         ),
     ]
     + [
-        SafeBidirectional([spec, spec])
+        SafeBidirectional([spec])
         for spec in abi.ReferenceTypeSpecs + abi.TransactionTypeSpecs
     ]
     + [
-        SafeBidirectional([spec_t(), spec_t()])
+        SafeBidirectional([spec_t()])
         for spec_t in bfs_on_inheritance(abi.UintTypeSpec)
         if not isabstract(spec_t)
     ]
