@@ -866,8 +866,9 @@ def test_type_spec_is_assignable_safe_bidirectional_full_coverage(ts: type):
         return False
 
     if isabstract(ts):
-        return
-    assert exists_in_safe_bidirectional(ts)
+        assert not exists_in_safe_bidirectional(ts)
+    else:
+        assert exists_in_safe_bidirectional(ts)
 
 
 class SafeAssignment(NamedTuple):
@@ -1017,5 +1018,6 @@ def test_type_spec_is_assignable_unsafe_bidirectional_full_coverage(ts: type):
         return False
 
     if isabstract(ts):
-        return
-    assert exists_in_unsafe_bidirectional(ts)
+        assert not exists_in_unsafe_bidirectional(ts)
+    else:
+        assert exists_in_unsafe_bidirectional(ts)
