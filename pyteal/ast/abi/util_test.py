@@ -945,9 +945,21 @@ def test_type_spec_is_assignable_safe_assignment_full_coverage(ts: type):
                     return True
         return False
 
-    if isabstract(ts) or all(isabstract(parent) for parent in ts.__bases__):
-        return
-    assert exists_in_safe_assignment(ts)
+    # Abstract types and types without safe assignments should _not_ appear in test cases.
+    if isabstract(ts) or ts in [
+        abi.AccountTypeSpec,
+        abi.ApplicationTypeSpec,
+        abi.AssetTypeSpec,
+        abi.BoolTypeSpec,
+        abi.ByteTypeSpec,
+        abi.Uint8TypeSpec,
+        abi.Uint16TypeSpec,
+        abi.Uint32TypeSpec,
+        abi.Uint64TypeSpec,
+    ]:
+        assert not exists_in_safe_assignment(ts)
+    else:
+        assert exists_in_safe_assignment(ts)
 
 
 class UnsafeBidirectional(NamedTuple):
