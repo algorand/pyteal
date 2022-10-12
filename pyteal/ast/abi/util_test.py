@@ -809,6 +809,10 @@ SAFE_BIDIRECTIONAL_TEST_CASES: list[SafeBidirectional] = (
                 abi.type_spec_from_annotation(abi.StaticBytes[Literal[10]]),
             ],
         ),
+        SafeBidirectional(
+            [abi.DynamicArrayTypeSpec(abi.Uint8TypeSpec()), abi.DynamicBytesTypeSpec()]
+        ),
+        SafeBidirectional([abi.Uint8TypeSpec(), abi.ByteTypeSpec()]),
         SafeBidirectional([abi.BoolTypeSpec()]),
         SafeBidirectional([abi.StringTypeSpec()]),
         SafeBidirectional([abi.AddressTypeSpec()]),
@@ -974,6 +978,7 @@ UNSAFE_BIDIRECTIONAL_TEST_CASES: list[UnsafeBidirectional] = [
             abi.Uint16TypeSpec(),
             abi.Uint32TypeSpec(),
             abi.Uint64TypeSpec(),
+            abi.BoolTypeSpec(),
         ]
     ),
     UnsafeBidirectional(
@@ -982,10 +987,11 @@ UNSAFE_BIDIRECTIONAL_TEST_CASES: list[UnsafeBidirectional] = [
             abi.Uint16TypeSpec(),
             abi.Uint32TypeSpec(),
             abi.Uint64TypeSpec(),
+            abi.BoolTypeSpec(),
         ]
     ),
     UnsafeBidirectional(
-        [abi.DynamicArrayTypeSpec(abi.Uint8TypeSpec()), abi.DynamicBytesTypeSpec()]
+        [abi.DynamicBytesTypeSpec(), abi.DynamicArrayTypeSpec(abi.Uint16TypeSpec())]
     ),
     UnsafeBidirectional(
         [abi.StaticBytesTypeSpec(7), abi.StaticArrayTypeSpec(abi.ByteTypeSpec(), 11)]
@@ -1017,11 +1023,6 @@ UNSAFE_BIDIRECTIONAL_TEST_CASES: list[UnsafeBidirectional] = [
     ),
     UnsafeBidirectional(
         [spec for spec in abi.TransactionTypeSpecs if spec != abi.TransactionTypeSpec()]
-        + [
-            spec()
-            for spec in bfs_on_inheritance(abi.UintTypeSpec)
-            if not isabstract(spec)
-        ]
         + [abi.BoolTypeSpec()]
     ),
     UnsafeBidirectional(abi.ReferenceTypeSpecs + [abi.TransactionTypeSpec()]),

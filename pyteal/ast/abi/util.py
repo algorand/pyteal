@@ -509,6 +509,7 @@ def type_spec_is_assignable_to(a: TypeSpec, b: TypeSpec) -> bool:
         DynamicArrayTypeSpec,
         StringTypeSpec,
         AddressTypeSpec,
+        UintTypeSpec,
     )
 
     match a, b:
@@ -542,6 +543,9 @@ def type_spec_is_assignable_to(a: TypeSpec, b: TypeSpec) -> bool:
                 case DynamicArrayTypeSpec(), DynamicArrayTypeSpec():
                     return True
             return False
+        case UintTypeSpec(), UintTypeSpec():
+            a, b = cast(UintTypeSpec, a), cast(UintTypeSpec, b)
+            return a.size == b.size
 
     if isinstance(a, type(b)):
         return True
