@@ -25,3 +25,4 @@ def test_sourcemap_fails_elegantly_when_no_ini(_):
         )
 
     assert "pyteal.ini" in str(smde.value)
+    assert "1337" not in str(smde.value)
