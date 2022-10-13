@@ -238,6 +238,21 @@ def test_annotated_teal(_):
         f.write(table_ast)
 
 
+def test_sourcemap_fails_because_unconfigured():
+    from pyteal import OptimizeOptions
+    from pyteal.compiler.sourcemap import SourceMapDisabledError
+
+    from examples.application.abi.algobank import router
+
+    with pytest.raises(SourceMapDisabledError) as smde:
+        router.compile_program_with_sourcemaps(
+            version=6,
+            optimize=OptimizeOptions(scratch_slots=True),
+        )
+
+    assert "pyteal.ini" in str(smde.value)
+
+
 def time_for_n_secs(f, n):
     start = time.time()
 
