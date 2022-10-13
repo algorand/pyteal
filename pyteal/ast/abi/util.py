@@ -502,6 +502,40 @@ def type_specs_from_signature(sig: str) -> tuple[list[TypeSpec], Optional[TypeSp
 
 
 def type_spec_is_assignable_to(a: TypeSpec, b: TypeSpec) -> bool:
+    """Decides if the value of type :code:`a` can be assigned to or interpreted as another value of type :code:`b`.
+
+    This method return true if and only if all of the following properties hold:
+
+        * value of type :code:`a` has identical encoding as value of type :code:`b`
+        * type :code:`b` is as general as, or more general than type :code:`a`
+
+    Some examples are illustrated as following:
+
+    =========================== =========================== ============= ====================================================================
+    Type :code:`a`              Type :code:`b`              Assignable?   Reason
+    =========================== =========================== ============= ====================================================================
+    :code:`DynamicArray[Byte]`  :code:`DynamicBytes`        :code:`True`  :code:`DynamicBytes` is as general as :code:`DynamicArray[Byte]`
+    :code:`DynamicBytes`        :code:`DynamicArray[Byte]`  :code:`True`  :code:`DynamicArray[Byte]` is as general as :code:`DynamicBytes`
+    :code:`StaticArray[Byte,N]` :code:`StaticBytes[N]`      :code:`True`  :code:`StaticBytes[N]` is as general as :code:`StaticArray[Byte,N]`
+    :code:`StaticBytes[N]`      :code:`StaticArray[Byte,N]` :code:`True`  :code:`StaticArray[Byte,N]` is as general as :code:`StaticBytes[N]`
+    :code:`String`              :code:`DynamicBytes`        :code:`True`  :code:`DynamicBytes` is more general than :code:`String`
+    :code:`DynamicBytes`        :code:`String`              :code:`False` :code:`String` is more specific than :code:`DynamicBytes`
+    :code:`Address`             :code:`StaticBytes[32]`     :code:`True`  :code:`StaticBytes[32]` is more general than :code:`Address`
+    :code:`StaticBytes[32]`     :code:`Address`             :code:`False` :code:`Address` is more specific than :code:`StaticBytes[32]`
+    :code:`PaymentTransaction`  :code:`Transaction`         :code:`True`  :code:`Transaction` is more general than :code:`PaymentTransaction`
+    :code:`Transaction`         :code:`PaymentTransaction`  :code:`False` :code:`PaymentTransaction` is more specific than :code`Transaction`
+    :code:`Uint8`               :code:`Byte`                :code:`True`  :code:`Uint8` is as general as :code:`Byte`
+    :code:`Byte`                :code:`Uint8`               :code:`True`  :code:`Byte` is as general as :code:`Uint8`
+    =========================== =========================== ============= ====================================================================
+
+    Args:
+        a: The abi.TypeSpec of the value on the right hand side of the assignment.
+        b: The abi.TypeSpec of the value on the left hand side of the assignment.
+
+    Returns:
+        A boolean result on if type :code:`a` is assignable to type :code:`b`.
+    """
+
     from pyteal.ast.abi import (
         TupleTypeSpec,
         ArrayTypeSpec,
