@@ -564,7 +564,7 @@ class NamedTuple(Tuple):
     """
 
     def __init_subclass__(cls) -> None:
-        """This method ensures one to construct only directly from `NamedTuple`,
+        """This method ensures one only constructs directly from `NamedTuple`,
         rather than inheriting from `NamedTuple`'s inheritance.
 
         We want to prohibit the following examples:
