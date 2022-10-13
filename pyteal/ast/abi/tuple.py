@@ -552,10 +552,31 @@ class NamedTuple(Tuple):
 
             my_user = User()
 
+    .. automethod:: __init_subclass__
     .. automethod:: __getattr__
     """
 
     def __init_subclass__(cls) -> None:
+        """This method ensures one to construct only directly from `NamedTuple`,
+        rather than inheriting from `NamedTuple`'s inheritance.
+
+        We want to prohibit the following examples:
+
+            .. code-block:: python
+
+                from pyteal import *
+
+                class LegalInheritance(abi.NamedTuple):
+                    a: abi.Field[abi.Uint64]
+
+                # following are bad cases we guard against
+
+                class IllegalInheritance0(LegalInheritance):
+                    a: abi.Field[abi.Uint64]
+
+                class IllegalInheritance1(LegalInheritance, abi.NamedTuple):
+                    a: abi.Field[abi.Uint64]
+        """
         is_named_tuple_in_bases = False
 
         for base_t in cls.__bases__:
