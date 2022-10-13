@@ -283,16 +283,7 @@ class SubroutineDefinition:
                         f"supplied argument at index {i} should be an ABI type but got {arg}"
                     )
 
-                # If the expected arg is a TransactionType we can relax our check
-                # to be any subclass of TransactionTypeSpec
-                if type(arg_type) is abi.TransactionTypeSpec:
-                    if not isinstance(arg.type_spec(), abi.TransactionTypeSpec):
-                        raise TealInputError(
-                            f"supplied argument {arg} at index {i} "
-                            f"should have ABI typespec {arg_type} but got {arg.type_spec()}"
-                        )
-
-                elif arg.type_spec() != arg_type:
+                if not abi.type_spec_is_assignable_to(arg.type_spec(), arg_type):
                     raise TealInputError(
                         f"supplied argument {arg} at index {i} "
                         f"should have ABI typespec {arg_type} but got {arg.type_spec()}"
