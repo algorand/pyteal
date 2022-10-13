@@ -253,6 +253,22 @@ def test_sourcemap_fails_because_unconfigured():
     assert "pyteal.ini" in str(smde.value)
 
 
+@mock.patch.object(ConfigParser, "getboolean", side_effect=Exception("1337"))
+def test_sourcemap_fails_elegantly_when_no_ini(_):
+    from pyteal import OptimizeOptions
+    from pyteal.compiler.sourcemap import SourceMapDisabledError
+
+    from examples.application.abi.algobank import router
+
+    with pytest.raises(SourceMapDisabledError) as smde:
+        router.compile_program_with_sourcemaps(
+            version=6,
+            optimize=OptimizeOptions(scratch_slots=True),
+        )
+
+    assert "pyteal.ini" in str(smde.value)
+
+
 def time_for_n_secs(f, n):
     start = time.time()
 
@@ -321,21 +337,46 @@ def test_profile():
     # profile.run("factory(simple_compilation, skip=True)")
 
 
-def test_time_benchmark_under_config():
-    summaries_only = True
+summaries_only = True
 
-    def trial(func):
-        trials, tot = time_for_n_secs(simple_compilation, 10)
-        avg = tot / len(trials)
-        N = len(trials)
-        trials = "" if summaries_only else f"{trials=}"
-        print(
-            f"""
+
+def trial(func):
+    trials, tot = time_for_n_secs(simple_compilation, 10)
+    avg = tot / len(trials)
+    N = len(trials)
+    trials = "" if summaries_only else f"{trials=}"
+    print(
+        f"""
 {func.__name__}: {avg=}, {N=}
 {trials}"""
-        )
+    )
 
-    print(f"{Frames._skip_all=}")
+
+@pytest.mark.skip()
+def test_time_benchmark_under_config():
+    from pyteal.util import Frames
+
+    print(f"{Frames.skipping_all()=}")
+
+    trial(simple_compilation)
+    trial(simple_compilation)
+
+    assert False
+
+
+"""RESULTS FROM test_time_benchmark_under_config()
+Frames.skipping_all()=True
+simple_compilation: avg=0.020052342233294714, N=499
+simple_compilation: avg=0.020396863370223346, N=491
+"""
+
+
+@pytest.mark.skip()
+@mock.patch.object(ConfigParser, "getboolean", return_value=True)
+def test_time_benchmark_sourcemap_enabled(_):
+    from pyteal.util import Frames
+
+    print(f"{Frames.skipping_all()=}")
 
     trial(simple_compilation)
     trial(simple_compilation)
@@ -349,27 +390,14 @@ def test_time_benchmark_under_config():
     assert False
 
 
-""" TIMING RESULTS
-... the following was a slight understimate as Frames were still being
-computed BEFORE the compilation began. So 7X is a more accurate figure
-
-UPSHOT - this slows down compilation by around 6X
-
-pytest -v tests/integration/sourcemap_test.py::test_time_benchmark
-....
->>>>>>> Frames.skip=True <<<<<<<<
-simple_compilation: avg=0.024473970851571752, N=409  (OR 432 when completely off)
-simple_compilation: avg=0.025086215862952975, N=399
-
->>>>>>> Frames.skip=False <<<<<<<<
-simple_compilation: avg=0.14234830963779505, N=71
-simple_compilation: avg=0.15479997121370756, N=65
-
-... other experiments ...
-source_map_compilation: avg=0.13471186637878418, N=75
-source_map_compilation: avg=0.13401989301045736, N=75
-annotated_teal: avg=0.1270798761633378, N=79
-annotated_teal: avg=0.1271697478958323, N=79
+"""RESULTS FROM test_time_benchmark_sourcemap_enabled
+Frames.skipping_all()=False
+simple_compilation: avg=0.2972649405984318, N=34
+simple_compilation: avg=0.11990405832018171, N=84
+source_map_compilation: avg=0.11482023921879855, N=88
+source_map_compilation: avg=0.11954815898622785, N=84
+annotated_teal: avg=0.11837509379667395, N=85
+annotated_teal: avg=0.11272530341416262, N=89
 """
 
 

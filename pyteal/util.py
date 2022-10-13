@@ -77,9 +77,16 @@ FrameSequence = Union[Frame, list["FrameSequence"]]
 
 
 def _skip_all_frames() -> bool:
-    config = ConfigParser()
-    config.read("pyteal.ini")
-    return not config.getboolean("pyteal-source-mapper", "enabled")
+    try:
+        config = ConfigParser()
+        config.read("pyteal.ini")
+        return not config.getboolean("pyteal-source-mapper", "enabled")
+    except Exception as e:
+        print(
+            f"""Turning off frame capture and disabling sourcemaps. 
+Could not read section (pyteal-source-mapper, enabled) of config "pyteal.ini": {e}"""
+        )
+    return True
 
 
 class Frames:
