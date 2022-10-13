@@ -551,10 +551,9 @@ def type_spec_is_assignable_to(a: TypeSpec, b: TypeSpec) -> bool:
     )
 
     match a, b:
+        case NamedTupleTypeSpec(), NamedTupleTypeSpec():
+            return a == b
         case TupleTypeSpec(), TupleTypeSpec():
-            match a, b:
-                case NamedTupleTypeSpec(), NamedTupleTypeSpec():
-                    return a == b
             a, b = cast(TupleTypeSpec, a), cast(TupleTypeSpec, b)
             if a.length_static() != b.length_static():
                 return False
