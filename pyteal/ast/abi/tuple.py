@@ -15,7 +15,7 @@ from typing import (
 from collections import OrderedDict
 
 from pyteal.types import TealType
-from pyteal.errors import TealInputError
+from pyteal.errors import TealInputError, TealInternalError
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.int import Int
@@ -555,14 +555,17 @@ class NamedTuple(Tuple):
     .. automethod:: __getattr__
     """
 
+    def __init_subclass__(cls) -> None:
+        super().__init_subclass__()
+        if NamedTuple not in cls.__bases__:
+            raise TealInternalError(
+                f"Cannot construct {cls} by inheriting {cls.__bases__}. "
+                f"Must be constructed by direct inheritance from NamedTuple"
+            )
+
     def __init__(self):
         if type(self) is NamedTuple:
             raise TealInputError("NamedTuple must be subclassed")
-
-        if NamedTuple not in type(self).__bases__:
-            raise TealInputError(
-                "NamedTuple instances must be constructed by direct inheritance of NamedTuple"
-            )
 
         anns = get_annotations(type(self))
         if not anns:
