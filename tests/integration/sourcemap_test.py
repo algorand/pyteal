@@ -374,6 +374,9 @@ simple_compilation: avg=0.020396863370223346, N=491
 @pytest.mark.skip()
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
 def test_time_benchmark_sourcemap_enabled(_):
+    """
+    UPSHOT: expect deterioration of (5 to 15)X when enabling source maps.
+    """
     from pyteal.util import Frames
 
     print(f"{Frames.skipping_all()=}")
@@ -392,7 +395,7 @@ def test_time_benchmark_sourcemap_enabled(_):
 
 """RESULTS FROM test_time_benchmark_sourcemap_enabled
 Frames.skipping_all()=False
-simple_compilation: avg=0.2972649405984318, N=34
+simple_compilation: avg=0.2972649405984318, N=34  <---- FIRST RUN RESULT CAN PROBLY BE DISCARDED
 simple_compilation: avg=0.11990405832018171, N=84
 source_map_compilation: avg=0.11482023921879855, N=88
 source_map_compilation: avg=0.11954815898622785, N=84
