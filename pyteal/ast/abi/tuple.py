@@ -15,7 +15,7 @@ from typing import (
 from collections import OrderedDict
 
 from pyteal.types import TealType
-from pyteal.errors import TealInputError
+from pyteal.errors import TealInputError, TealInternalError
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.int import Int
@@ -522,6 +522,13 @@ class NamedTupleTypeSpec(TupleTypeSpec):
         self.instance_class: type["NamedTuple"] = instance_class
         super().__init__(*value_type_specs)
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, NamedTupleTypeSpec)
+            and self.instance_class == other.instance_class
+            and self.value_type_specs() == other.value_type_specs()
+        )
+
     def annotation_type(self) -> "type[NamedTuple]":
         return self.instance_class
 
@@ -552,8 +559,49 @@ class NamedTuple(Tuple):
 
             my_user = User()
 
+    .. automethod:: __init_subclass__
     .. automethod:: __getattr__
     """
+
+    def __init_subclass__(cls) -> None:
+        """This method ensures one only constructs directly from `NamedTuple`,
+        rather than inheriting from `NamedTuple`'s inheritance.
+
+        We want to prohibit the following examples:
+
+            .. code-block:: python
+
+                from pyteal import *
+
+                class LegalInheritance(abi.NamedTuple):
+                    a: abi.Field[abi.Uint64]
+
+                # following are bad cases we guard against
+
+                class IllegalInheritance0(LegalInheritance):
+                    a: abi.Field[abi.Uint64]
+
+                class IllegalInheritance1(LegalInheritance, abi.NamedTuple):
+                    a: abi.Field[abi.Uint64]
+        """
+        is_named_tuple_in_bases = False
+
+        for base_t in cls.__bases__:
+            if base_t == NamedTuple:
+                is_named_tuple_in_bases = True
+            elif issubclass(base_t, NamedTuple):
+                raise TealInternalError(
+                    f"Cannot construct {cls} by inheriting {cls.__bases__}. "
+                    f"Must be constructed by direct inheritance from NamedTuple"
+                )
+
+        if not is_named_tuple_in_bases:
+            raise TealInternalError(
+                "Unexpected: did not find NamedTuple in __bases__,"
+                "did not find NamedTuple in __bases__ member's __bases__"
+            )
+
+        super().__init_subclass__()
 
     def __init__(self):
         if type(self) is NamedTuple:
