@@ -426,13 +426,16 @@ def test_config():
     assert config.getboolean("pyteal-source-mapper", "enabled") is False
     assert Frames.skipping_all() is True
 
+    Frames._skip_all = False
+    assert Frames.skipping_all() is False
+    assert Frames.skipping_all(_force_refresh=True) is True
 
-def test_mocked_config_for_frames():
-    with mock.patch.object(ConfigParser, "getboolean", return_value=True):
-        config = ConfigParser()
-        assert config.getboolean("pyteal-source-mapper", "enabled") is True
-        from pyteal.util import Frames
 
-        assert Frames.skipping_all() is True
+@mock.patch.object(ConfigParser, "getboolean", return_value=True)
+def test_mocked_config_for_frames(_):
+    config = ConfigParser()
+    assert config.getboolean("pyteal-source-mapper", "enabled") is True
+    from pyteal.util import Frames
 
-        assert Frames.skipping_all(_force_refresh=True) is False
+    assert Frames.skipping_all() is False
+    assert Frames.skipping_all(_force_refresh=True) is False
