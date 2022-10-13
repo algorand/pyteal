@@ -282,7 +282,8 @@ class SubroutineDefinition:
                     raise TealInputError(
                         f"supplied argument at index {i} should be an ABI type but got {arg}"
                     )
-                if arg.type_spec() != arg_type:
+
+                if not abi.type_spec_is_assignable_to(arg.type_spec(), arg_type):
                     raise TealInputError(
                         f"supplied argument {arg} at index {i} "
                         f"should have ABI typespec {arg_type} but got {arg.type_spec()}"

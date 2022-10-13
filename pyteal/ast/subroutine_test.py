@@ -1466,6 +1466,29 @@ def test_docstring_parsing_with_different_format():
     assert "desc" not in mspec_dict["returns"]
 
 
+def test_relaxed_abi_arg():
+    @pt.Subroutine(pt.TealType.none)
+    def txn_checker(t: pt.abi.Transaction):
+        return pt.Seq(
+            pt.Assert(
+                pt.Or(
+                    t.get().type_enum() == pt.TxnType.Payment,
+                    t.get().type_enum() == pt.TxnType.AssetTransfer,
+                )
+            )
+        )
+
+    # Pass a payment transaction to the subroutine that expects a Transaction type
+    # this will fail if we don't have a relaxed type check for the transaction type
+    program = pt.Seq(
+        (p := pt.abi.PaymentTransaction())._set_index(pt.Txn.group_index() - pt.Int(1)),
+        txn_checker(p),
+        pt.Int(1),
+    )
+
+    pt.compileTeal(program, mode=pt.Mode.Application, version=7)
+
+
 def test_override_abi_method_name():
     def abi_meth(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64):
         return output.set(a.get() + b.get())
