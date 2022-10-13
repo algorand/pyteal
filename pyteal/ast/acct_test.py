@@ -60,21 +60,6 @@ def test_acct_param_fields_valid(method_name, field_name):
         expr.__teal__(unsupported_options_version)
 
 
-def test_acct_param_string():
-    assert (
-        str(pt.AccountParam.balance(pt.Int(1)))
-        == "((acct_params_get AcctBalance (Int 1)) (StackStore slot#280) (StackStore slot#281))"
-    )
-    assert (
-        str(pt.AccountParam.minBalance(pt.Int(1)))
-        == "((acct_params_get AcctMinBalance (Int 1)) (StackStore slot#282) (StackStore slot#283))"
-    )
-    assert (
-        str(pt.AccountParam.authAddr(pt.Int(1)))
-        == "((acct_params_get AcctAuthAddr (Int 1)) (StackStore slot#284) (StackStore slot#285))"
-    )
-
-
 def test_AccountParamObject():
     for account in (
         pt.Int(7),
