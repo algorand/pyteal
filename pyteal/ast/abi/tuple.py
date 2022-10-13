@@ -556,26 +556,12 @@ class NamedTuple(Tuple):
     """
 
     def __init_subclass__(cls) -> None:
-        def __bfs_bases_tree_contain_named_tuple(tt: type):
-            type_queue = [tt]
-            visited_type = set()
-            while type_queue:
-                current_type = type_queue.pop()
-                if current_type == NamedTuple:
-                    return True
-                visited_type.add(current_type)
-                for _t in current_type.__bases__:
-                    if _t in visited_type:
-                        continue
-                    type_queue.append(_t)
-            return False
-
         is_named_tuple_in_bases = False
 
         for base_t in cls.__bases__:
             if base_t == NamedTuple:
                 is_named_tuple_in_bases = True
-            elif __bfs_bases_tree_contain_named_tuple(base_t):
+            elif issubclass(base_t, NamedTuple):
                 raise TealInternalError(
                     f"Cannot construct {cls} by inheriting {cls.__bases__}. "
                     f"Must be constructed by direct inheritance from NamedTuple"
