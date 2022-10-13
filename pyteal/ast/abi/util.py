@@ -509,6 +509,9 @@ def type_spec_is_assignable_to(a: TypeSpec, b: TypeSpec) -> bool:
         * value of type :code:`a` has identical encoding as value of type :code:`b`
         * type :code:`b` is as general as, or more general than type :code:`a`
 
+    For `abi.NamedTuple`, we allow mutual assigning between `abi.Tuple` and `abi.NamedTuple`.
+    But between `abi.NamedTuple`, we only return true when the type specs are identical, or we cannot compare against generality.
+
     Some examples are illustrated as following:
 
     =========================== =========================== ============= ====================================================================
@@ -538,6 +541,7 @@ def type_spec_is_assignable_to(a: TypeSpec, b: TypeSpec) -> bool:
 
     from pyteal.ast.abi import (
         TupleTypeSpec,
+        NamedTupleTypeSpec,
         ArrayTypeSpec,
         StaticArrayTypeSpec,
         DynamicArrayTypeSpec,
@@ -548,6 +552,9 @@ def type_spec_is_assignable_to(a: TypeSpec, b: TypeSpec) -> bool:
 
     match a, b:
         case TupleTypeSpec(), TupleTypeSpec():
+            match a, b:
+                case NamedTupleTypeSpec(), NamedTupleTypeSpec():
+                    return a == b
             a, b = cast(TupleTypeSpec, a), cast(TupleTypeSpec, b)
             if a.length_static() != b.length_static():
                 return False

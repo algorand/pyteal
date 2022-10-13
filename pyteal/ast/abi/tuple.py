@@ -559,6 +559,11 @@ class NamedTuple(Tuple):
         if type(self) is NamedTuple:
             raise TealInputError("NamedTuple must be subclassed")
 
+        if NamedTuple not in type(self).__bases__:
+            raise TealInputError(
+                "NamedTuple instances must be constructed by direct inheritance of NamedTuple"
+            )
+
         anns = get_annotations(type(self))
         if not anns:
             raise TealInputError("Expected fields to be declared but found none")

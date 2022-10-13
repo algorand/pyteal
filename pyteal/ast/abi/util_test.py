@@ -918,10 +918,6 @@ SAFE_ASSIGNMENT_TEST_CASES: list[SafeAssignment] = [
         abi.AddressTypeSpec(),
         [abi.StaticArrayTypeSpec(abi.ByteTypeSpec(), 32), abi.StaticBytesTypeSpec(32)],
     ),
-    SafeAssignment(
-        abi.type_spec_from_annotation(NamedTComp0),
-        [abi.type_spec_from_annotation(NamedTComp1)],
-    ),
 ] + [
     SafeAssignment(spec, [abi.TransactionTypeSpec()])
     for spec in abi.TransactionTypeSpecs
@@ -1009,6 +1005,7 @@ UNSAFE_BIDIRECTIONAL_TEST_CASES: list[UnsafeBidirectional] = [
         [
             abi.type_spec_from_annotation(NamedTDecl),
             abi.type_spec_from_annotation(NamedTComp0),
+            abi.type_spec_from_annotation(NamedTComp1),
             abi.type_spec_from_annotation(NamedTComp2),
         ]
     ),
