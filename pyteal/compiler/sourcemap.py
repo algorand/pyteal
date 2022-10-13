@@ -9,7 +9,7 @@ from typing import cast, Any, OrderedDict, Optional, Sequence, Union
 
 from tabulate import tabulate
 
-from algosdk.source_map import SourceMapping
+from algosdk.source_map import R3SourceMapping
 
 from pyteal.util import Frame, FrameSequence
 import pyteal as pt
@@ -142,6 +142,10 @@ class PyTealFrame:
     def lineno(self) -> int | None:
         return self.frame_info.lineno if self.frame_info else None
 
+    def column(self) -> int:
+        """Provide accurate column info when available. Or 0 when not."""
+        return self.node_col_offset() or 0
+
     def raw_code(self) -> str:
         if self._raw_code is None:
             self._raw_code = (
@@ -270,6 +274,8 @@ class PyTealFrame:
 
 
 _TEAL_LINE_NUMBER = "TL"
+_TEAL_COLUMN = "TC"
+_TEAL_COLUMN_END = "TCE"
 _TEAL_LINE = "Teal"
 _PYTEAL_NODE_AST_UNPARSED = "PyTeal AST Unparsed"
 _PYTEAL_NODE_AST_QUALNAME = "PyTeal Qualname"
@@ -277,6 +283,9 @@ _PYTEAL_COMPONENT = "PyTeal Qualname"
 _PYTEAL_NODE_AST_SOURCE_BOUNDARIES = "PT Window"
 _PYTEAL_FILENAME = "PT path"
 _PYTEAL_LINE_NUMBER = "PTL"
+_PYTEAL_LINE_NUMBER_END = "PTLE"
+_PYTEAL_COLUMN = "PTC"
+_PYTEAL_COLUMN_END = "PTCE"
 _PYTEAL_LINE = "PyTeal"
 _PYTEAL_NODE_AST = "PT AST"
 _PYTEAL_FRAME = "PT Frame"
@@ -287,18 +296,35 @@ _STATUS = "Sourcemap Status"
 
 @dataclass
 class SourceMapItem:
-    line: int
+    line: int  # TODO: this is inaccurate currently because of multiline ops with spaces + comments
     teal: str
     component: "pt.TealComponent"
     frame: PyTealFrame
     extras: dict[str, Any] | None = None  # TODO: probly these shouldn't exist
 
+    def column(self) -> int:
+        """TODO: this will need to be rewored when/if compiling to multi-opcode lines with ';'"""
+        return 0
+
+    def column_rbound(self) -> int:
+        """TODO: this will need to be rewored when/if compiling to multi-opcode lines with ';'"""
+        return len(self.teal)
+
+    """
+    def node_col_offset(self) -> int | None:
+        return getattr(self.node, "col_offset", None) if self.node else None
+
+    def node_end_lineno(self) -> int | None:
+        return getattr(self.node, "end_lineno", None) if self.node else None
+
+    """
+
     def asdict(self, **kwargs) -> OrderedDict:
-        """kwargs serve as a rename mapping when present
-        TODO: is this overly complicated?
-        """
+        """kwargs serve as a rename mapping when present"""
         attrs = {
             _TEAL_LINE_NUMBER: self.line,
+            _TEAL_COLUMN: self.column(),
+            _TEAL_COLUMN_END: self.column_rbound(),
             _TEAL_LINE: self.teal,
             _PYTEAL_NODE_AST_UNPARSED: self.frame.node_source(),
             _PYTEAL_NODE_AST_QUALNAME: self.frame.code_qualname(),
@@ -306,6 +332,9 @@ class SourceMapItem:
             _PYTEAL_NODE_AST_SOURCE_BOUNDARIES: self.frame.node_source_window(),
             _PYTEAL_FILENAME: self.frame.file(),
             _PYTEAL_LINE_NUMBER: self.frame.lineno(),
+            _PYTEAL_LINE_NUMBER_END: self.frame.node_end_lineno(),
+            _PYTEAL_COLUMN: self.frame.column(),
+            _PYTEAL_COLUMN_END: self.frame.node_end_col_offset(),
             _PYTEAL_LINE: self.frame.code(),
             _PYTEAL_NODE_AST: self.frame.node,
             _PYTEAL_FRAME: self.frame,
@@ -323,22 +352,37 @@ class SourceMapItem:
     def validate_for_export(self) -> None:
         """
         Ensure providing necessary and unambiguous data before exporting.
-        1. source line + col should be available from frame_info
-        2. if
-        ?. source line + col info provided by frame_info should agree with node's (when provided)
         """
+        if self.line is None or self.column() is None:
+            raise ValueError(
+                f"unable to export without valid line and column for TARGET but got: {self.line=}, {self.column()=}"
+            )
+        if (line := self.frame.lineno()) is None or (
+            col := self.frame.column()
+        ) is None:
+            raise ValueError(
+                f"unable to export without valid line and column for SOURCE but got: {self.frame.lineno=}, {self.frame.column()=}"
+            )
+        if (_line := self.frame.node_lineno()) and _line != line:
+            raise ValueError(
+                f"aborting: inconsistency in source line number found: {_line} != {line}"
+            )
+        if (_col := self.frame.node_col_offset()) and _col != col:
+            raise ValueError(
+                f"aborting: inconsistency in source column number found: {_col} != {col}"
+            )
 
-    def source_mapping(self) -> SourceMapping:
+    def source_mapping(self) -> R3SourceMapping:
         self.validate_for_export()
-        return SourceMapping(
+        return R3SourceMapping(
             line=self.line - 1,
-            column=0,
-            column_rbound=len(self.teal),
-            source=self.frame.node_source(),
-            source_line=self.frame.lineno(),
-            source_column=self.frame.node_col_offset(),
+            column=self.column(),
+            column_end=self.column_rbound(),
+            source=self.frame.file(),
+            source_line=cast(int, self.frame.lineno()) - 1,
+            source_column=self.frame.column(),
             source_line_end=self.frame.node_end_lineno(),
-            source_column_rbound=self.frame.node_end_col_offset(),
+            source_column_end=self.frame.node_end_col_offset(),
             source_extract=self.frame.code(),
             target_extract=self.teal,
         )
@@ -532,16 +576,20 @@ class PyTealSourceMap:
         return "\n".join(smi.teal for smi in self.get_map().values())
 
     _tabulate_param_defaults = dict(
-        teal_line_number=_TEAL_LINE_NUMBER,
         teal=_TEAL_LINE,
         pyteal=_PYTEAL_NODE_AST_UNPARSED,
-        pyteal_node_ast_qualname=_PYTEAL_NODE_AST_QUALNAME,
+        teal_line_number=_TEAL_LINE_NUMBER,
+        teal_column=_TEAL_COLUMN,
+        teal_column_end=_TEAL_COLUMN_END,
         pyteal_component=_PYTEAL_COMPONENT,
-        pyteal_node_ast_source_boundaries=_PYTEAL_NODE_AST_SOURCE_BOUNDARIES,
+        pyteal_node_ast_qualname=_PYTEAL_NODE_AST_QUALNAME,
         pyteal_filename=_PYTEAL_FILENAME,
         pyteal_line_number=_PYTEAL_LINE_NUMBER,
+        pyteal_line_number_end=_PYTEAL_LINE_NUMBER_END,
+        pyteal_column=_PYTEAL_COLUMN,
+        pyteal_column_end=_PYTEAL_COLUMN_END,
         pyteal_line=_PYTEAL_LINE,
-        pyteal_node_ast=_PYTEAL_NODE_AST,
+        pyteal_node_ast_source_boundaries=_PYTEAL_NODE_AST_SOURCE_BOUNDARIES,
         pyteal_node_ast_none=_PYTEAL_NODE_AST_NONE,
         status_code=_STATUS_CODE,
         status=_STATUS,
@@ -550,7 +598,9 @@ class PyTealSourceMap:
     def tabulate(
         self,
         *,
-        tablefmt="fancy_grid",
+        tablefmt="plain",
+        numalign="right",
+        omit_headers: bool = False,
         **kwargs,
     ) -> str:
         """
@@ -560,15 +610,23 @@ class PyTealSourceMap:
 
         Args:
             tablefmt (defaults to 'fancy_grid'): format specifier used by tabulate. For choices see: https://github.com/astanin/python-tabulate#table-format
-            teal_line_number: Column name and implicit order for the Teal target line number
+            omit_headers (defaults to False): Explain this....
+            numalign ... explain this...
+            const_col_* ... explain this
             teal: Column name and implicit order for the generated Teal
             pyteal: Column name and implicit order for the PyTeal source mapping to target (this usually contains only the Python AST responsible for the generated Teal)
-            pyteal_node_ast_qualname (optional): Column name and implicit order for the Python qualname of the PyTeal source mapping to target
+            teal_line_number (optional): Column name and implicit order for the Teal target line number
+            teal_column (optional): Column name and implicit order for the generated Teal starting 0-based column number (defaults to 0 when unknown)
+            teal_column_end (optional): Column name and implicit order for the generated Teal ending 0-based column (defaults to len(code) - 1 when unknown)
             pyteal_component (optional): Column name and implicit order for the PyTeal source component mapping to target
-            pyteal_node_ast_source_boundaries (optional): Column name and implicit order for line and column boundaries of the PyTeal source mapping to target
-            pyteal_filename (optional): Column name and implicit order for the filname whose PyTeal source is mapping to the target
-            pyteal_line_number (optional): Column name and implicit order for line number of the PyTeal source mapping to target
+            pyteal_node_ast_qualname (optional): Column name and implicit order for the Python qualname of the PyTeal source mapping to target
+            pyteal_filename (optional): Column name and implicit order for the filename whose PyTeal source is mapping to the target
+            pyteal_line_number (optional): Column name and implicit order for starting line number of the PyTeal source mapping to target
+            pyteal_line_number_end (optional): Column name and implicit order for the ending line number of the PyTeal source mapping to target
+            pyteal_column (optional): Column name and implicit order for the PyTeal starting 0-based column number mapping to the target (defaults to 0 when unknown)
+            pyteal_column_end (optional): Column name and implicit order for the PyTeal ending 0-based column number mapping to the target (defaults to len(code) - 1 when unknown)
             pyteal_line (optional): Column name and implicit order for the PyTeal source _line_ mapping to target (in general, this may only overlap with the PyTeal code which generated the Teal)
+            pyteal_node_ast_source_boundaries (optional): Column name and implicit order for line and column boundaries of the PyTeal source mapping to target
             pyteal_node_ast_none (optional): Column name and implicit order for indicator of whether the AST node was extracted for the PyTEAL source mapping to target
             status_code (optional): Column name and implicit order for confidence level for locating the PyTeal source responsible for generated Teal
             status (optional): Column name and implicit order for descriptor of confidence level for locating the PyTeal source responsible for generated Teal
@@ -576,10 +634,20 @@ class PyTealSourceMap:
         Returns:
             A ready to print string containing the table information.
         """
+        constant_columns = {}
+        new_kwargs = {}
+        for i, (k, v) in enumerate(kwargs.items()):
+            if k.startswith("const_col_"):
+                constant_columns[i] = v
+            else:
+                new_kwargs[k] = v
+        kwargs = new_kwargs
+
         for k in kwargs:
             assert k in self._tabulate_param_defaults, f"unrecognized parameter '{k}'"
 
-        required = ["teal_line_number", "teal", "pyteal"]
+        # TODO: probly should just insist that printin sumn, not any particular column
+        required = ["teal"]
         renames = {self._tabulate_param_defaults[k]: v for k, v in kwargs.items()}
         for r in required:
             if r not in kwargs:
@@ -588,7 +656,29 @@ class PyTealSourceMap:
                 ] = self._tabulate_param_defaults[r]
 
         rows = (smitem.asdict(**renames) for smitem in self.get_map().values())
-        return tabulate(rows, headers=renames, tablefmt=tablefmt)
+
+        if constant_columns:
+
+            def mod_row(row):
+                i = 0
+                new_row = {}
+                for k, v in row.items():
+                    if i in constant_columns:
+                        new_row[f"_{i}"] = constant_columns[i]
+                        i += 1
+                    new_row[k] = v
+                    i += 1
+                return new_row
+
+            rows = list(map(mod_row, rows))  # can revert to pure map ???
+
+            renames = mod_row(renames)
+
+        return (
+            tabulate(rows, tablefmt=tablefmt, numalign=numalign)
+            if omit_headers
+            else tabulate(rows, headers=renames, tablefmt=tablefmt, numalign=numalign)
+        )
 
     def _tabulate_for_dev(self) -> str:
         return self.tabulate(
@@ -600,4 +690,16 @@ class PyTealSourceMap:
             pyteal_node_ast_source_boundaries="rows & columns",
             pyteal_line_number="pt line",
             pyteal_line="pyteal line",
+        )
+
+    def annotated_teal(self) -> str:
+        return self.tabulate(
+            tablefmt="plain",
+            omit_headers=False,
+            teal="// GENERATED TEAL",
+            const_col_2="//",
+            pyteal_line="PYTEAL SOURCE",
+            pyteal_line_number="LINE",
+            pyteal_filename="PYTEAL PATH",
+            numalign="left",
         )

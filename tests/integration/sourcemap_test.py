@@ -1,10 +1,9 @@
 import ast
 from functools import reduce
-from pathlib import Path
 import json
-from typing import cast
+from pathlib import Path
 
-from algosdk.source_map import SourceMapping
+from algosdk.source_map import R3SourceMap, R3SourceMapJSON
 
 import pytest
 
@@ -128,6 +127,7 @@ def test_sourcemaps(version, source_inference, assemble_constants, optimize_slot
 
 
 expr = pt.Int(0) + pt.Int(1)
+expr_line_offset, expr_str = 128, "expr = pt.Int(0) + pt.Int(1)"
 
 
 def test_SourceMapItem_source_mapping():
@@ -145,35 +145,47 @@ def test_SourceMapItem_source_mapping():
         SourceMapItem(i + 1, teals[i], op, PyTealFrame(op.expr.frames[4]))
         for i, op in enumerate(ops)
     ]
-    source_mappings = [smi.source_mapping() for smi in smis]
 
-    # TODO: this isn't working as I expected, but it's a good test
-    # as it shows that getting the AST info isn't as reliable as I
-    # expected. So we need to assert that we succeed still to construct
-    # trace producing SourceMapItems and can still generate the b64vlq SourceMappings from them
-    x = 42
-    # ptframe = PyTealFrame(this_frame)
-    # assert this_frame == ptframe.frame
+    mock_source_lines = [""] * 500
+    mock_source_lines[expr_line_offset] = expr_str
+    source_files = ["sourcemap_test.py"]
+    r3sm = R3SourceMap(
+        file="dohhh.teal",
+        source_root="~",
+        entries={(i, 0): smi.source_mapping() for i, smi in enumerate(smis)},
+        index=[(0,) for _ in range(3)],
+        file_lines=list(map(lambda x: x.teal, smis)),
+        source_files=source_files,
+        source_files_lines=[mock_source_lines],
+    )
+    expected_json = '{"version": 3, "sources": ["tests/integration/sourcemap_test.py"], "names": [], "mappings": "AAgIA;AAAA;AAAA", "file": "dohhh.teal", "sourceRoot": "~"}'
+    assert expected_json == json.dumps(r3sm.to_json())
 
-    # source_mapping = ptframe.source_mapping()
-    # assert isinstance(source_mapping, SourceMapping)
+    r3sm_unmarshalled = R3SourceMap.from_json(
+        R3SourceMapJSON(**json.loads(expected_json)),
+        sources_content_override=["\n".join(mock_source_lines)],
+        target="\n".join(teals),
+    )
+
+    # TODO: test various properties of r3sm_unmarshalled
+
+    assert expected_json == json.dumps(r3sm_unmarshalled.to_json())
 
 
-# class MockASTNode:
-#     def __init__(self, **kwargs):
-#         self.stuff = {**kwargs}
+def test_PyTealSourceMap_R3SourceMap_roundtrip():
+    assert False, "test is currently RED"
 
-#     def node_lineno(self):
-#         return self.stuff["node_lineno"]
 
-#     def node_col_offset(self):
-#         return self.stuff["node_col_offset"]
+def test_annotated_teal():
+    compile_bundle = router.compile_program_with_sourcemaps(
+        version=6,
+        optimize=OptimizeOptions(scratch_slots=True),
+    )
 
-#     def node_end_lineno(self):
-#         return self.stuff["node_end_lineno"]
+    ptsm = compile_bundle.approval_sourcemap
+    assert ptsm
 
-#     def node_end_col_offset(self):
-#         return self.stuff["node_end_col_offset"]
+    table = ptsm.annotated_teal()
 
-#     def _unparse(self):
-#         return self.stuff["unparse"]
+    with open(FIXTURES / "algobank_annotated.teal", "w") as f:
+        f.write(table)
