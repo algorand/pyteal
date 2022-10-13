@@ -11,8 +11,6 @@ from algosdk.source_map import R3SourceMap, R3SourceMapJSON
 
 ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 
-FIXTURES = Path.cwd() / "tests" / "integration" / "sourcemaps"
-
 
 def test_frames():
     from pyteal.util import Frames
@@ -20,7 +18,7 @@ def test_frames():
     Frames._skip_all = False
 
     this_file, this_func = "sourcemap_test.py", "test_frames"
-    this_lineno, this_frame = 23, Frames()[1]
+    this_lineno, this_frame = 21, Frames()[1]
     code = f"    this_lineno, this_frame = {this_lineno}, Frames()[1]\n"
     this_col_offset, this_end_col_offset = 34, 42
     frame_info, node = this_frame.frame_info, this_frame.node
@@ -49,7 +47,7 @@ def test_SourceMapItem_source_mapping():
     import pyteal as pt
 
     expr = pt.Int(0) + pt.Int(1)
-    expr_line_offset, expr_str = 51, "expr = pt.Int(0) + pt.Int(1)"
+    expr_line_offset, expr_str = 50, "expr = pt.Int(0) + pt.Int(1)"
 
     def mock_teal(ops):
         return [f"{i+1}. {op}" for i, op in enumerate(ops)]
@@ -78,7 +76,7 @@ def test_SourceMapItem_source_mapping():
         source_files=source_files,
         source_files_lines=[mock_source_lines],
     )
-    expected_json = '{"version": 3, "sources": ["tests/integration/sourcemap_test.py"], "names": [], "mappings": "AAkDW;AAAY;AAAZ", "file": "dohhh.teal", "sourceRoot": "~"}'
+    expected_json = '{"version": 3, "sources": ["tests/unit/sourcemap_test.py"], "names": [], "mappings": "AAgDW;AAAY;AAAZ", "file": "dohhh.teal", "sourceRoot": "~"}'
 
     assert expected_json == json.dumps(r3sm.to_json())
 
@@ -100,9 +98,7 @@ def test_SourceMapItem_source_mapping():
 2. Example with OpUp
 3. Run on the ABI Router example
 4. Run on Steve's Staking Contract
-5. Run an Ben's AMM
-
-?. Beaker example
+5. Run an Ben's AMM (Beaker)
 
 """
 
@@ -145,116 +141,12 @@ def test_no_regression_with_sourcemap_disabled():
     no_regressions()
 
 
-@mock.patch.object(ConfigParser, "getboolean", return_value=True)
-def test_reconstruct(_):
-    from pyteal import OptimizeOptions
-    from examples.application.abi.algobank import router
-
-    compile_bundle = router.compile_program_with_sourcemaps(
-        version=6, optimize=OptimizeOptions(scratch_slots=True)
-    )
-
-    assert compile_bundle.approval_sourcemap
-    assert compile_bundle.clear_sourcemap
-
-    with open(ALGOBANK / "algobank_approval.teal") as af:
-        assert af.read() == compile_bundle.approval_sourcemap.teal()
-
-    with open(ALGOBANK / "algobank_clear_state.teal") as cf:
-        assert cf.read() == compile_bundle.clear_sourcemap.teal()
-
-
-def fixture_comparison(sourcemap: "PyTealSourceMap", name: str):
-    new_version = sourcemap._tabulate_for_dev()
-    with open(FIXTURES / f"{name}", "w") as f:
-        f.write(new_version)
-
-    not_actually_comparing = True
-    if not_actually_comparing:
-        return
-
-    with open(FIXTURES / name) as f:
-        old_version = f.read()
-
-    assert old_version == new_version
-
-
-@mock.patch.object(ConfigParser, "getboolean", return_value=True)
-@pytest.mark.parametrize("version", [6])
-@pytest.mark.parametrize("source_inference", [False, True])
-@pytest.mark.parametrize("assemble_constants", [False, True])
-@pytest.mark.parametrize("optimize_slots", [False, True])
-def test_sourcemaps(_, version, source_inference, assemble_constants, optimize_slots):
-    from pyteal import OptimizeOptions
-
-    from examples.application.abi.algobank import router
-
-    # TODO: add functionality that tallies the line statuses up and assert that all
-    # statuses were > SourceMapItemStatus.PYTEAL_GENERATED
-
-    compile_bundle = router.compile_program_with_sourcemaps(
-        version=version,
-        assemble_constants=assemble_constants,
-        optimize=OptimizeOptions(scratch_slots=optimize_slots),
-        source_inference=source_inference,
-    )
-
-    assert compile_bundle.approval_sourcemap
-    assert compile_bundle.clear_sourcemap
-
-    suffix = f"_v{version}_si{int(source_inference)}_ac{int(assemble_constants)}_ozs{int(optimize_slots)}"
-    fixture_comparison(
-        compile_bundle.approval_sourcemap, f"algobank_approval{suffix}.txt"
-    )
-    fixture_comparison(compile_bundle.clear_sourcemap, f"algobank_clear{suffix}.txt")
-
-
+@pytest.mark.skip
 def test_PyTealSourceMap_R3SourceMap_roundtrip():
     assert False, "test is currently RED"
 
 
-@mock.patch.object(ConfigParser, "getboolean", return_value=True)
-def test_annotated_teal(_):
-    from pyteal import OptimizeOptions
-
-    from examples.application.abi.algobank import router
-
-    compile_bundle = router.compile_program_with_sourcemaps(
-        version=6,
-        optimize=OptimizeOptions(scratch_slots=True),
-    )
-
-    ptsm = compile_bundle.approval_sourcemap
-    assert ptsm
-
-    table = ptsm.annotated_teal()
-
-    with open(FIXTURES / "algobank_annotated.teal", "w") as f:
-        f.write(table)
-
-    table_ast = ptsm.annotated_teal(unparse_hybrid=True)
-
-    with open(FIXTURES / "algobank_hybrid.teal", "w") as f:
-        f.write(table_ast)
-
-
 def test_sourcemap_fails_because_unconfigured():
-    from pyteal import OptimizeOptions
-    from pyteal.compiler.sourcemap import SourceMapDisabledError
-
-    from examples.application.abi.algobank import router
-
-    with pytest.raises(SourceMapDisabledError) as smde:
-        router.compile_program_with_sourcemaps(
-            version=6,
-            optimize=OptimizeOptions(scratch_slots=True),
-        )
-
-    assert "pyteal.ini" in str(smde.value)
-
-
-@mock.patch.object(ConfigParser, "getboolean", side_effect=Exception("1337"))
-def test_sourcemap_fails_elegantly_when_no_ini(_):
     from pyteal import OptimizeOptions
     from pyteal.compiler.sourcemap import SourceMapDisabledError
 
@@ -322,6 +214,8 @@ def test_profile():
     """
 
     def factory(func, skip):
+        from util import Frames
+
         def trial():
             if skip:
                 Frames.skip = True
@@ -432,13 +326,3 @@ def test_config():
     Frames._skip_all = False
     assert Frames.skipping_all() is False
     assert Frames.skipping_all(_force_refresh=True) is True
-
-
-@mock.patch.object(ConfigParser, "getboolean", return_value=True)
-def test_mocked_config_for_frames(_):
-    config = ConfigParser()
-    assert config.getboolean("pyteal-source-mapper", "enabled") is True
-    from pyteal.util import Frames
-
-    assert Frames.skipping_all() is False
-    assert Frames.skipping_all(_force_refresh=True) is False
