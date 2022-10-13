@@ -1,10 +1,8 @@
 from dataclasses import dataclass
-import executing
-import inspect
 from typing import List, Tuple, Set, Dict, Optional, cast
 
 from pyteal.compiler.optimizer import OptimizeOptions, apply_global_optimizations
-from pyteal.compiler.sourcemap import PyTealSourceMap
+from pyteal.compiler.sourcemap import PyTealSourceMap, SourceMapDisabledError
 
 from pyteal.types import TealType
 from pyteal.ast import (
@@ -36,6 +34,8 @@ from pyteal.compiler.subroutines import (
     resolveSubroutines,
 )
 from pyteal.compiler.constants import createConstantBlocks
+
+from pyteal.util import Frames
 
 MAX_PROGRAM_VERSION = 7
 MIN_PROGRAM_VERSION = 2
@@ -308,6 +308,9 @@ class Compilation:
                     self.version, MIN_PROGRAM_VERSION, MAX_PROGRAM_VERSION
                 )
             )
+
+        if with_sourcemap and Frames.skipping_all():
+            raise SourceMapDisabledError()
 
         options = CompileOptions(
             mode=self.mode, version=self.version, optimize=self.optimize

@@ -295,6 +295,17 @@ _STATUS_CODE = "Sourcemap Status Code"
 _STATUS = "Sourcemap Status"
 
 
+class SourceMapDisabledError(RuntimeError):
+    msg = value = """
+    Cannot calculate Teal to PyTeal source map because stack frame discovery is turned off.
+
+    To enable source maps, set `enabled = True` in `pyteal.ini`'s [pyteal-source-mapper] section.
+    """
+
+    def __str__(self):
+        return self.msg
+
+
 @dataclass
 class SourceMapItem:
     line: int  # TODO: this is inaccurate currently because of multiline ops with spaces + comments
