@@ -459,7 +459,9 @@ class InnerTxnBuilder:
                     require_type(arg, TealType.bytes)
                     app_args.append(arg)
                 elif isinstance(arg, abi.BaseType):
-                    if arg.type_spec() != method_arg_ts:
+                    if not abi.type_spec_is_assignable_to(
+                        arg.type_spec(), method_arg_ts
+                    ):
                         raise TealTypeError(arg.type_spec(), method_arg_ts)
                     app_args.append(arg.encode())
                 else:
