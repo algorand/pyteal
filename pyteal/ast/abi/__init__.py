@@ -84,6 +84,7 @@ from pyteal.ast.abi.util import (
     type_spec_from_annotation,
     type_specs_from_signature,
     contains_type_spec,
+    type_spec_is_assignable_to,
 )
 
 __all__ = [
@@ -167,4 +168,5 @@ __all__ = [
     "algosdk_from_annotation",
     "algosdk_from_type_spec",
     "contains_type_spec",
+    "type_spec_is_assignable_to",
 ]

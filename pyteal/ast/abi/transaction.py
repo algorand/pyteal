@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Union, cast, List, Final
+from typing import Union, cast, Final
 from pyteal.ast.abi.type import BaseType, ComputedValue, TypeSpec
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
@@ -259,7 +259,7 @@ class ApplicationCallTransaction(Transaction):
 
 ApplicationCallTransaction.__module__ = "pyteal.abi"
 
-TransactionTypeSpecs: Final[List[TypeSpec]] = [
+TransactionTypeSpecs: Final[list[TypeSpec]] = [
     TransactionTypeSpec(),
     PaymentTransactionTypeSpec(),
     KeyRegisterTransactionTypeSpec(),
