@@ -1,7 +1,7 @@
 # Unreleased
 
 ## Added
-* Refined ABI type-check on assignment. ([#540](https://github.com/algorand/pyteal/pull/540))
+* Added `abi.type_spec_is_assignable_to` to check for compatible ABI type assignments. ([#540](https://github.com/algorand/pyteal/pull/540))
 
 ## Fixed
 * Erroring on constructing an odd length hex string. ([#539](https://github.com/algorand/pyteal/pull/539))
