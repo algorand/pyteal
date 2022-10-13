@@ -797,6 +797,11 @@ class NamedTComp2(abi.NamedTuple):
     b0: abi.Field[abi.DynamicBytes]
 
 
+class NamedTComp2SameField(abi.NamedTuple):
+    b1: abi.Field[abi.Address]
+    b0: abi.Field[abi.DynamicBytes]
+
+
 class SafeBidirectional(NamedTuple):
     xs: list[abi.TypeSpec]
 
@@ -1007,6 +1012,7 @@ UNSAFE_BIDIRECTIONAL_TEST_CASES: list[UnsafeBidirectional] = [
             abi.type_spec_from_annotation(NamedTComp0),
             abi.type_spec_from_annotation(NamedTComp1),
             abi.type_spec_from_annotation(NamedTComp2),
+            abi.type_spec_from_annotation(NamedTComp2SameField),
         ]
     ),
     UnsafeBidirectional(

@@ -925,3 +925,22 @@ def test_NamedTuple_getitem(test_case: type[abi.NamedTuple]):
 
     with pytest.raises(pt.TealInputError):
         tuple_value.f0 = abi.Uint64()
+
+
+def test_NamedTupleTypeSpec():
+    class Point(abi.NamedTuple):
+        x: abi.Field[abi.Uint64]
+        y: abi.Field[abi.Uint64]
+
+    class AccountRecord(abi.NamedTuple):
+        algoBalance: abi.Field[abi.Uint64]
+        assetBalance: abi.Field[abi.Uint64]
+
+    p = Point()
+    ar = AccountRecord()
+
+    assert p.type_spec() == p.type_spec()
+    assert ar.type_spec() == ar.type_spec()
+    assert p.type_spec() != ar.type_spec()
+    assert not abi.type_spec_is_assignable_to(p.type_spec(), ar.type_spec())
+    assert not abi.type_spec_is_assignable_to(ar.type_spec(), p.type_spec())

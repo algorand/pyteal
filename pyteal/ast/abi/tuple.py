@@ -522,6 +522,13 @@ class NamedTupleTypeSpec(TupleTypeSpec):
         self.instance_class: type["NamedTuple"] = instance_class
         super().__init__(*value_type_specs)
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, NamedTupleTypeSpec)
+            and self.instance_class == other.instance_class
+            and self.value_type_specs() == other.value_type_specs()
+        )
+
     def annotation_type(self) -> "type[NamedTuple]":
         return self.instance_class
 
