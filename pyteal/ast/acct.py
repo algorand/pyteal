@@ -41,153 +41,141 @@ class AccountParamField(Enum):
 AccountParamField.__module__ = "pyteal"
 
 
-class AccountParamExpr(MaybeValue):
-    """A maybe value expression that accesses an account parameter field from a given account."""
+class AccountParam:
+    @staticmethod
+    def __makeAccountParamExpr(field: AccountParamField, acct: Expr) -> MaybeValue:
+        require_type(acct, TealType.anytype)
 
-    def __init__(self, field: AccountParamField, acct: Expr) -> None:
-        super().__init__(
+        def field_version_check(options: "CompileOptions"):
+            verifyFieldVersion(field.arg_name, field.min_version, options.version)
+
+        return MaybeValue(
             Op.acct_params_get,
             field.type_of(),
             immediate_args=[field.arg_name],
             args=[acct],
+            compile_check=field_version_check,
         )
-        require_type(acct, TealType.anytype)
 
-        self.field = field
-        self.acct = acct
-
-    def __str__(self):
-        return "(AccountParam {} {})".format(self.field.arg_name, self.acct)
-
-    def __teal__(self, options: "CompileOptions"):
-        verifyFieldVersion(self.field.arg_name, self.field.min_version, options.version)
-
-        return super().__teal__(options)
-
-
-AccountParamExpr.__module__ = "pyteal"
-
-
-class AccountParam:
     @classmethod
-    def balance(cls, acct: Expr) -> AccountParamExpr:
+    def balance(cls, acct: Expr) -> MaybeValue:
         """Get the current balance in microalgos an account.
 
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
                 May evaluate to uint64 or an address.
         """
-        return AccountParamExpr(AccountParamField.balance, acct)
+        return cls.__makeAccountParamExpr(AccountParamField.balance, acct)
 
     @classmethod
-    def minBalance(cls, acct: Expr) -> AccountParamExpr:
+    def minBalance(cls, acct: Expr) -> MaybeValue:
         """Get the minimum balance in microalgos for an account.
 
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
                 May evaluate to uint64 or an address.
         """
-        return AccountParamExpr(AccountParamField.min_balance, acct)
+        return cls.__makeAccountParamExpr(AccountParamField.min_balance, acct)
 
     @classmethod
-    def authAddr(cls, acct: Expr) -> AccountParamExpr:
+    def authAddr(cls, acct: Expr) -> MaybeValue:
         """Get the authorizing address for an account. If the account is not rekeyed, the empty addresss is returned.
 
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
                 May evaluate to uint64 or an address.
         """
-        return AccountParamExpr(AccountParamField.auth_addr, acct)
+        return cls.__makeAccountParamExpr(AccountParamField.auth_addr, acct)
 
     @classmethod
-    def totalNumUint(cls, acct: Expr) -> AccountParamExpr:
+    def totalNumUint(cls, acct: Expr) -> MaybeValue:
         """Get the total number of uint64 values allocated by the account in Global and Local States.
 
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
                 May evaluate to uint64 or an address.
         """
-        return AccountParamExpr(AccountParamField.total_num_uint, acct)
+        return cls.__makeAccountParamExpr(AccountParamField.total_num_uint, acct)
 
     @classmethod
-    def totalNumByteSlice(cls, acct: Expr) -> AccountParamExpr:
+    def totalNumByteSlice(cls, acct: Expr) -> MaybeValue:
         """Get the total number of byte array values allocated by the account in Global and Local States.
 
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
                 May evaluate to uint64 or an address.
         """
-        return AccountParamExpr(AccountParamField.total_num_byte_slice, acct)
+        return cls.__makeAccountParamExpr(AccountParamField.total_num_byte_slice, acct)
 
     @classmethod
-    def totalExtraAppPages(cls, acct: Expr) -> AccountParamExpr:
+    def totalExtraAppPages(cls, acct: Expr) -> MaybeValue:
         """Get the number of extra app code pages used by the account.
 
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
                 May evaluate to uint64 or an address.
         """
-        return AccountParamExpr(AccountParamField.total_extra_app_pages, acct)
+        return cls.__makeAccountParamExpr(AccountParamField.total_extra_app_pages, acct)
 
     @classmethod
-    def totalAppsCreated(cls, acct: Expr) -> AccountParamExpr:
+    def totalAppsCreated(cls, acct: Expr) -> MaybeValue:
         """Get the number of existing apps created by the account.
 
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
                 May evaluate to uint64 or an address.
         """
-        return AccountParamExpr(AccountParamField.total_apps_created, acct)
+        return cls.__makeAccountParamExpr(AccountParamField.total_apps_created, acct)
 
     @classmethod
-    def totalAppsOptedIn(cls, acct: Expr) -> AccountParamExpr:
+    def totalAppsOptedIn(cls, acct: Expr) -> MaybeValue:
         """Get the number of apps the account is opted into.
 
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
                 May evaluate to uint64 or an address.
         """
-        return AccountParamExpr(AccountParamField.total_apps_opted_in, acct)
+        return cls.__makeAccountParamExpr(AccountParamField.total_apps_opted_in, acct)
 
     @classmethod
-    def totalAssetsCreated(cls, acct: Expr) -> AccountParamExpr:
+    def totalAssetsCreated(cls, acct: Expr) -> MaybeValue:
         """Get the number of existing ASAs created by the account.
 
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
                 May evaluate to uint64 or an address.
         """
-        return AccountParamExpr(AccountParamField.total_assets_created, acct)
+        return cls.__makeAccountParamExpr(AccountParamField.total_assets_created, acct)
 
     @classmethod
-    def totalAssets(cls, acct: Expr) -> AccountParamExpr:
+    def totalAssets(cls, acct: Expr) -> MaybeValue:
         """Get the number of ASAs held by the account (including ASAs the account created).
 
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
                 May evaluate to uint64 or an address.
         """
-        return AccountParamExpr(AccountParamField.total_assets, acct)
+        return cls.__makeAccountParamExpr(AccountParamField.total_assets, acct)
 
     @classmethod
-    def totalBoxes(cls, acct: Expr) -> AccountParamExpr:
+    def totalBoxes(cls, acct: Expr) -> MaybeValue:
         """Get the number of existing boxes created by the account's app.
 
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
                 May evaluate to uint64 or an address.
         """
-        return AccountParamExpr(AccountParamField.total_boxes, acct)
+        return cls.__makeAccountParamExpr(AccountParamField.total_boxes, acct)
 
     @classmethod
-    def totalBoxBytes(cls, acct: Expr) -> AccountParamExpr:
+    def totalBoxBytes(cls, acct: Expr) -> MaybeValue:
         """Get the total number of bytes used by the account's app's box keys and values.
 
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
                 May evaluate to uint64 or an address.
         """
-        return AccountParamExpr(AccountParamField.total_box_bytes, acct)
+        return cls.__makeAccountParamExpr(AccountParamField.total_box_bytes, acct)
 
 
 AccountParam.__module__ = "pyteal"
@@ -205,53 +193,53 @@ class AccountParamObject:
         """
         self._account: Final = account
 
-    def balance(self) -> AccountParamExpr:
+    def balance(self) -> MaybeValue:
         """Get the current balance in microAlgos for the account"""
         return AccountParam.balance(self._account)
 
-    def min_balance(self) -> AccountParamExpr:
+    def min_balance(self) -> MaybeValue:
         """Get the minimum balance in microAlgos for the account."""
         return AccountParam.minBalance(self._account)
 
-    def auth_address(self) -> AccountParamExpr:
+    def auth_address(self) -> MaybeValue:
         """Get the authorizing address for the account.
 
         If the account is not rekeyed, the empty address is returned."""
         return AccountParam.authAddr(self._account)
 
-    def total_num_uint(self) -> AccountParamExpr:
+    def total_num_uint(self) -> MaybeValue:
         """Get the total number of uint64 values allocated by the account in Global and Local States."""
         return AccountParam.totalNumUint(self._account)
 
-    def total_num_byte_slice(self) -> AccountParamExpr:
+    def total_num_byte_slice(self) -> MaybeValue:
         """Get the total number of byte array values allocated by the account in Global and Local States."""
         return AccountParam.totalNumByteSlice(self._account)
 
-    def total_extra_app_pages(self) -> AccountParamExpr:
+    def total_extra_app_pages(self) -> MaybeValue:
         """Get the number of extra app code pages used by the account."""
         return AccountParam.totalExtraAppPages(self._account)
 
-    def total_apps_created(self) -> AccountParamExpr:
+    def total_apps_created(self) -> MaybeValue:
         """Get the number of existing apps created by the account."""
         return AccountParam.totalAppsCreated(self._account)
 
-    def total_apps_opted_in(self) -> AccountParamExpr:
+    def total_apps_opted_in(self) -> MaybeValue:
         """Get the number of apps the account is opted into."""
         return AccountParam.totalAppsOptedIn(self._account)
 
-    def total_assets_created(self) -> AccountParamExpr:
+    def total_assets_created(self) -> MaybeValue:
         """Get the number of existing ASAs created by the account."""
         return AccountParam.totalAssetsCreated(self._account)
 
-    def total_assets(self) -> AccountParamExpr:
+    def total_assets(self) -> MaybeValue:
         """Get the number of ASAs held by the account (including ASAs the account created)."""
         return AccountParam.totalAssets(self._account)
 
-    def total_boxes(self) -> AccountParamExpr:
+    def total_boxes(self) -> MaybeValue:
         """Get the number of existing boxes created by the account's app."""
         return AccountParam.totalBoxes(self._account)
 
-    def total_box_bytes(self) -> AccountParamExpr:
+    def total_box_bytes(self) -> MaybeValue:
         """Get the total number of bytes used by the account's app's box keys and values."""
         return AccountParam.totalBoxBytes(self._account)
 
