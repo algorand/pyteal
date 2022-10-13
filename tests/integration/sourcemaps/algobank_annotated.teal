@@ -1,223 +1,227 @@
-// GENERATED TEAL                      //    PYTEAL SOURCE                                                                 LINE    PYTEAL PATH
-#pragma version 6                      //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-txn NumAppArgs                         //    router = Router(                                                              17      examples/application/abi/algobank.py
-int 0                                  //    router = Router(                                                              17      examples/application/abi/algobank.py
-==                                     //    router = Router(                                                              17      examples/application/abi/algobank.py
-bnz main_l8                            //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-txna ApplicationArgs 0                 //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-method "deposit(pay,account)void"      //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-==                                     //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-bnz main_l7                            //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-txna ApplicationArgs 0                 //    def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:             67      examples/application/abi/algobank.py
-method "getBalance(account)uint64"     //    def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:             67      examples/application/abi/algobank.py
-==                                     //    def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:             67      examples/application/abi/algobank.py
-bnz main_l6                            //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-txna ApplicationArgs 0                 //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-method "withdraw(uint64,account)void"  //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-==                                     //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-bnz main_l5                            //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-err                                    //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-main_l5:                               //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-txn OnCompletion                       //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-int NoOp                               //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-==                                     //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-txn ApplicationID                      //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-int 0                                  //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-!=                                     //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-&&                                     //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-assert                                 //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-txna ApplicationArgs 1                 //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-btoi                                   //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-store 3                                //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-txna ApplicationArgs 2                 //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-int 0                                  //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-getbyte                                //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-store 4                                //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-load 3                                 //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-load 4                                 //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-callsub withdraw_3                     //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-int 1                                  //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-return                                 //    def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:             80      examples/application/abi/algobank.py
-main_l6:                               //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-txn OnCompletion                       //    def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:             67      examples/application/abi/algobank.py
-int NoOp                               //    def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:             67      examples/application/abi/algobank.py
-==                                     //    def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:             67      examples/application/abi/algobank.py
-txn ApplicationID                      //    def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:             67      examples/application/abi/algobank.py
-int 0                                  //    def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:             67      examples/application/abi/algobank.py
-!=                                     //    def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:             67      examples/application/abi/algobank.py
-&&                                     //    def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:             67      examples/application/abi/algobank.py
-assert                                 //    def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:             67      examples/application/abi/algobank.py
-txna ApplicationArgs 1                 //    def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:             67      examples/application/abi/algobank.py
-int 0                                  //    def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:             67      examples/application/abi/algobank.py
-getbyte                                //    def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:             67      examples/application/abi/algobank.py
-callsub getBalance_2                   //    def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:             67      examples/application/abi/algobank.py
-store 2                                //    def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:             67      examples/application/abi/algobank.py
-byte 0x151f7c75                        //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-load 2                                 //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-itob                                   //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-concat                                 //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-log                                    //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-int 1                                  //    def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:             67      examples/application/abi/algobank.py
-return                                 //    def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:             67      examples/application/abi/algobank.py
-main_l7:                               //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-txn OnCompletion                       //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-int NoOp                               //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-==                                     //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-txn ApplicationID                      //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-int 0                                  //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-!=                                     //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-&&                                     //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-txn OnCompletion                       //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-int OptIn                              //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-==                                     //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-txn ApplicationID                      //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-int 0                                  //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-!=                                     //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-&&                                     //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-||                                     //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-assert                                 //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-txna ApplicationArgs 1                 //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-int 0                                  //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-getbyte                                //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-store 1                                //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-txn GroupIndex                         //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-int 1                                  //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
--                                      //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-store 0                                //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-load 0                                 //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-gtxns TypeEnum                         //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-int pay                                //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-==                                     //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-assert                                 //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-load 0                                 //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-load 1                                 //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-callsub deposit_1                      //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-int 1                                  //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-return                                 //    def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:    43      examples/application/abi/algobank.py
-main_l8:                               //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-txn OnCompletion                       //    router = Router(                                                              17      examples/application/abi/algobank.py
-int NoOp                               //    router = Router(                                                              17      examples/application/abi/algobank.py
-==                                     //    router = Router(                                                              17      examples/application/abi/algobank.py
-bnz main_l18                           //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-txn OnCompletion                       //    router = Router(                                                              17      examples/application/abi/algobank.py
-int OptIn                              //    router = Router(                                                              17      examples/application/abi/algobank.py
-==                                     //    router = Router(                                                              17      examples/application/abi/algobank.py
-bnz main_l17                           //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-txn OnCompletion                       //    router = Router(                                                              17      examples/application/abi/algobank.py
-int CloseOut                           //    router = Router(                                                              17      examples/application/abi/algobank.py
-==                                     //    router = Router(                                                              17      examples/application/abi/algobank.py
-bnz main_l16                           //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-txn OnCompletion                       //    router = Router(                                                              17      examples/application/abi/algobank.py
-int UpdateApplication                  //    router = Router(                                                              17      examples/application/abi/algobank.py
-==                                     //    router = Router(                                                              17      examples/application/abi/algobank.py
-bnz main_l15                           //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-txn OnCompletion                       //    router = Router(                                                              17      examples/application/abi/algobank.py
-int DeleteApplication                  //    router = Router(                                                              17      examples/application/abi/algobank.py
-==                                     //    router = Router(                                                              17      examples/application/abi/algobank.py
-bnz main_l14                           //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-err                                    //    router = Router(                                                              17      examples/application/abi/algobank.py
-main_l14:                              //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-txn ApplicationID                      //    router = Router(                                                              17      examples/application/abi/algobank.py
-int 0                                  //    router = Router(                                                              17      examples/application/abi/algobank.py
-!=                                     //    router = Router(                                                              17      examples/application/abi/algobank.py
-assert                                 //    router = Router(                                                              17      examples/application/abi/algobank.py
-callsub assertsenderiscreator_0        //    router = Router(                                                              17      examples/application/abi/algobank.py
-int 1                                  //    router = Router(                                                              17      examples/application/abi/algobank.py
-return                                 //    router = Router(                                                              17      examples/application/abi/algobank.py
-main_l15:                              //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-txn ApplicationID                      //    router = Router(                                                              17      examples/application/abi/algobank.py
-int 0                                  //    router = Router(                                                              17      examples/application/abi/algobank.py
-!=                                     //    router = Router(                                                              17      examples/application/abi/algobank.py
-assert                                 //    router = Router(                                                              17      examples/application/abi/algobank.py
-callsub assertsenderiscreator_0        //    router = Router(                                                              17      examples/application/abi/algobank.py
-int 1                                  //    router = Router(                                                              17      examples/application/abi/algobank.py
-return                                 //    router = Router(                                                              17      examples/application/abi/algobank.py
-main_l16:                              //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-txn ApplicationID                      //    router = Router(                                                              17      examples/application/abi/algobank.py
-int 0                                  //    router = Router(                                                              17      examples/application/abi/algobank.py
-!=                                     //    router = Router(                                                              17      examples/application/abi/algobank.py
-assert                                 //    router = Router(                                                              17      examples/application/abi/algobank.py
-byte "lost"                            //    Bytes("lost"),                                                                13      examples/application/abi/algobank.py
-byte "lost"                            //    App.globalGet(Bytes("lost")) + App.localGet(Txn.sender(), Bytes("balance")),  14      examples/application/abi/algobank.py
-app_global_get                         //    App.globalGet(Bytes("lost")) + App.localGet(Txn.sender(), Bytes("balance")),  14      examples/application/abi/algobank.py
-txn Sender                             //    App.globalGet(Bytes("lost")) + App.localGet(Txn.sender(), Bytes("balance")),  14      examples/application/abi/algobank.py
-byte "balance"                         //    App.globalGet(Bytes("lost")) + App.localGet(Txn.sender(), Bytes("balance")),  14      examples/application/abi/algobank.py
-app_local_get                          //    App.globalGet(Bytes("lost")) + App.localGet(Txn.sender(), Bytes("balance")),  14      examples/application/abi/algobank.py
-+                                      //    App.globalGet(Bytes("lost")) + App.localGet(Txn.sender(), Bytes("balance")),  14      examples/application/abi/algobank.py
-app_global_put                         //    transfer_balance_to_lost = App.globalPut(                                     12      examples/application/abi/algobank.py
-int 1                                  //    router = Router(                                                              17      examples/application/abi/algobank.py
-return                                 //    router = Router(                                                              17      examples/application/abi/algobank.py
-main_l17:                              //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-int 1                                  //    opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL),        23      examples/application/abi/algobank.py
-return                                 //    opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL),        23      examples/application/abi/algobank.py
-main_l18:                              //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-txn ApplicationID                      //    router = Router(                                                              17      examples/application/abi/algobank.py
-int 0                                  //    router = Router(                                                              17      examples/application/abi/algobank.py
-==                                     //    router = Router(                                                              17      examples/application/abi/algobank.py
-assert                                 //    router = Router(                                                              17      examples/application/abi/algobank.py
-int 1                                  //    no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE),      21      examples/application/abi/algobank.py
-return                                 //    no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE),      21      examples/application/abi/algobank.py
-// assert_sender_is_creator            //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
+// GENERATED TEAL                      //    PYTEAL PATH                           LINE    PYTEAL SOURCE
+#pragma version 6                      //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+txn NumAppArgs                         //    examples/application/abi/algobank.py  17      router = Router(
+int 0                                  //
+==                                     //
+bnz main_l8                            //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+txna ApplicationArgs 0                 //    examples/application/abi/algobank.py  43      def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
+method "deposit(pay,account)void"      //
+==                                     //
+bnz main_l7                            //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+txna ApplicationArgs 0                 //    examples/application/abi/algobank.py  67      def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
+method "getBalance(account)uint64"     //
+==                                     //
+bnz main_l6                            //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+txna ApplicationArgs 0                 //    examples/application/abi/algobank.py  80      def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
+method "withdraw(uint64,account)void"  //
+==                                     //
+bnz main_l5                            //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+err                                    //
+main_l5:                               //
+txn OnCompletion                       //    examples/application/abi/algobank.py  80      def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
+int NoOp                               //
+==                                     //
+txn ApplicationID                      //
+int 0                                  //
+!=                                     //
+&&                                     //
+assert                                 //
+txna ApplicationArgs 1                 //
+btoi                                   //
+store 3                                //
+txna ApplicationArgs 2                 //
+int 0                                  //
+getbyte                                //
+store 4                                //
+load 3                                 //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+load 4                                 //
+callsub withdraw_3                     //    examples/application/abi/algobank.py  80      def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
+int 1                                  //
+return                                 //
+main_l6:                               //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+txn OnCompletion                       //    examples/application/abi/algobank.py  67      def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
+int NoOp                               //
+==                                     //
+txn ApplicationID                      //
+int 0                                  //
+!=                                     //
+&&                                     //
+assert                                 //
+txna ApplicationArgs 1                 //
+int 0                                  //
+getbyte                                //
+callsub getBalance_2                   //
+store 2                                //
+byte 0x151f7c75                        //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+load 2                                 //
+itob                                   //
+concat                                 //
+log                                    //
+int 1                                  //    examples/application/abi/algobank.py  67      def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
+return                                 //
+main_l7:                               //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+txn OnCompletion                       //    examples/application/abi/algobank.py  43      def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
+int NoOp                               //
+==                                     //
+txn ApplicationID                      //
+int 0                                  //
+!=                                     //
+&&                                     //
+txn OnCompletion                       //
+int OptIn                              //
+==                                     //
+txn ApplicationID                      //
+int 0                                  //
+!=                                     //
+&&                                     //
+||                                     //
+assert                                 //
+txna ApplicationArgs 1                 //
+int 0                                  //
+getbyte                                //
+store 1                                //
+txn GroupIndex                         //
+int 1                                  //
+-                                      //
+store 0                                //
+load 0                                 //
+gtxns TypeEnum                         //
+int pay                                //
+==                                     //
+assert                                 //
+load 0                                 //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+load 1                                 //
+callsub deposit_1                      //    examples/application/abi/algobank.py  43      def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
+int 1                                  //
+return                                 //
+main_l8:                               //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+txn OnCompletion                       //    examples/application/abi/algobank.py  17      router = Router(
+int NoOp                               //
+==                                     //
+bnz main_l18                           //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+txn OnCompletion                       //    examples/application/abi/algobank.py  17      router = Router(
+int OptIn                              //
+==                                     //
+bnz main_l17                           //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+txn OnCompletion                       //    examples/application/abi/algobank.py  17      router = Router(
+int CloseOut                           //
+==                                     //
+bnz main_l16                           //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+txn OnCompletion                       //    examples/application/abi/algobank.py  17      router = Router(
+int UpdateApplication                  //
+==                                     //
+bnz main_l15                           //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+txn OnCompletion                       //    examples/application/abi/algobank.py  17      router = Router(
+int DeleteApplication                  //
+==                                     //
+bnz main_l14                           //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+err                                    //    examples/application/abi/algobank.py  17      router = Router(
+main_l14:                              //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+txn ApplicationID                      //    examples/application/abi/algobank.py  17      router = Router(
+int 0                                  //
+!=                                     //
+assert                                 //
+callsub assertsenderiscreator_0        //
+int 1                                  //
+return                                 //
+main_l15:                              //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+txn ApplicationID                      //    examples/application/abi/algobank.py  17      router = Router(
+int 0                                  //
+!=                                     //
+assert                                 //
+callsub assertsenderiscreator_0        //
+int 1                                  //
+return                                 //
+main_l16:                              //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+txn ApplicationID                      //    examples/application/abi/algobank.py  17      router = Router(
+int 0                                  //
+!=                                     //
+assert                                 //
+byte "lost"                            //                                          13      Bytes("lost"),
+byte "lost"                            //                                          14      App.globalGet(Bytes("lost")) + App.localGet(Txn.sender(), Bytes("balance")),
+app_global_get                         //
+txn Sender                             //
+byte "balance"                         //
+app_local_get                          //
++                                      //
+app_global_put                         //                                          12      transfer_balance_to_lost = App.globalPut(
+int 1                                  //                                          17      router = Router(
+return                                 //
+main_l17:                              //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+int 1                                  //    examples/application/abi/algobank.py  23      opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL),
+return                                 //
+main_l18:                              //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+txn ApplicationID                      //    examples/application/abi/algobank.py  17      router = Router(
+int 0                                  //
+==                                     //
+assert                                 //
+int 1                                  //                                          21      no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE),
+return                                 //
+                                       //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+// assert_sender_is_creator
 assertsenderiscreator_0:
-txn Sender                             //    return Assert(Txn.sender() == Global.creator_address())                       8       examples/application/abi/algobank.py
-global CreatorAddress                  //    return Assert(Txn.sender() == Global.creator_address())                       8       examples/application/abi/algobank.py
-==                                     //    return Assert(Txn.sender() == Global.creator_address())                       8       examples/application/abi/algobank.py
-assert                                 //    return Assert(Txn.sender() == Global.creator_address())                       8       examples/application/abi/algobank.py
-retsub                                 //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-// deposit                             //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
+txn Sender                             //    examples/application/abi/algobank.py  8       return Assert(Txn.sender() == Global.creator_address())
+global CreatorAddress                  //
+==                                     //
+assert                                 //
+retsub                                 //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+                                       //
+// deposit
 deposit_1:
-store 6                                //    approval_program, clear_state_program, contract = router.compile_program(     117     examples/application/abi/algobank.py
-store 5                                //    approval_program, clear_state_program, contract = router.compile_program(     117     examples/application/abi/algobank.py
-load 5                                 //    Assert(payment.get().sender() == sender.address()),                           56      examples/application/abi/algobank.py
-gtxns Sender                           //    Assert(payment.get().sender() == sender.address()),                           56      examples/application/abi/algobank.py
-load 6                                 //    Assert(payment.get().sender() == sender.address()),                           56      examples/application/abi/algobank.py
-txnas Accounts                         //    Assert(payment.get().sender() == sender.address()),                           56      examples/application/abi/algobank.py
-==                                     //    Assert(payment.get().sender() == sender.address()),                           56      examples/application/abi/algobank.py
-assert                                 //    Assert(payment.get().sender() == sender.address()),                           56      examples/application/abi/algobank.py
-load 5                                 //    Assert(payment.get().receiver() == Global.current_application_address()),     57      examples/application/abi/algobank.py
-gtxns Receiver                         //    Assert(payment.get().receiver() == Global.current_application_address()),     57      examples/application/abi/algobank.py
-global CurrentApplicationAddress       //    Assert(payment.get().receiver() == Global.current_application_address()),     57      examples/application/abi/algobank.py
-==                                     //    Assert(payment.get().receiver() == Global.current_application_address()),     57      examples/application/abi/algobank.py
-assert                                 //    Assert(payment.get().receiver() == Global.current_application_address()),     57      examples/application/abi/algobank.py
-load 6                                 //    sender.address(),                                                             59      examples/application/abi/algobank.py
-txnas Accounts                         //    sender.address(),                                                             59      examples/application/abi/algobank.py
-byte "balance"                         //    Bytes("balance"),                                                             60      examples/application/abi/algobank.py
-load 6                                 //    App.localGet(sender.address(), Bytes("balance")) + payment.get().amount(),    61      examples/application/abi/algobank.py
-txnas Accounts                         //    App.localGet(sender.address(), Bytes("balance")) + payment.get().amount(),    61      examples/application/abi/algobank.py
-byte "balance"                         //    App.localGet(sender.address(), Bytes("balance")) + payment.get().amount(),    61      examples/application/abi/algobank.py
-app_local_get                          //    App.localGet(sender.address(), Bytes("balance")) + payment.get().amount(),    61      examples/application/abi/algobank.py
-load 5                                 //    App.localGet(sender.address(), Bytes("balance")) + payment.get().amount(),    61      examples/application/abi/algobank.py
-gtxns Amount                           //    App.localGet(sender.address(), Bytes("balance")) + payment.get().amount(),    61      examples/application/abi/algobank.py
-+                                      //    App.localGet(sender.address(), Bytes("balance")) + payment.get().amount(),    61      examples/application/abi/algobank.py
-app_local_put                          //    App.localPut(                                                                 58      examples/application/abi/algobank.py
-retsub                                 //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-// getBalance                          //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
+store 6                                //    examples/application/abi/algobank.py  117     approval_program, clear_state_program, contract = router.compile_program(
+store 5                                //
+load 5                                 //                                          56      Assert(payment.get().sender() == sender.address()),
+gtxns Sender                           //
+load 6                                 //
+txnas Accounts                         //
+==                                     //
+assert                                 //
+load 5                                 //                                          57      Assert(payment.get().receiver() == Global.current_application_address()),
+gtxns Receiver                         //
+global CurrentApplicationAddress       //
+==                                     //
+assert                                 //
+load 6                                 //                                          59      sender.address(),
+txnas Accounts                         //
+byte "balance"                         //                                          60      Bytes("balance"),
+load 6                                 //                                          61      App.localGet(sender.address(), Bytes("balance")) + payment.get().amount(),
+txnas Accounts                         //
+byte "balance"                         //
+app_local_get                          //
+load 5                                 //
+gtxns Amount                           //
++                                      //
+app_local_put                          //                                          58      App.localPut(
+retsub                                 //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+                                       //
+// getBalance
 getBalance_2:
-txnas Accounts                         //    return output.set(App.localGet(user.address(), Bytes("balance")))             76      examples/application/abi/algobank.py
-byte "balance"                         //    return output.set(App.localGet(user.address(), Bytes("balance")))             76      examples/application/abi/algobank.py
-app_local_get                          //    return output.set(App.localGet(user.address(), Bytes("balance")))             76      examples/application/abi/algobank.py
-retsub                                 //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
-// withdraw                            //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
+txnas Accounts                         //    examples/application/abi/algobank.py  76      return output.set(App.localGet(user.address(), Bytes("balance")))
+byte "balance"                         //
+app_local_get                          //
+retsub                                 //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(
+                                       //
+// withdraw
 withdraw_3:
-store 8                                //    approval_program, clear_state_program, contract = router.compile_program(     117     examples/application/abi/algobank.py
-store 7                                //    approval_program, clear_state_program, contract = router.compile_program(     117     examples/application/abi/algobank.py
-txn Sender                             //    Txn.sender(),                                                                 100     examples/application/abi/algobank.py
-byte "balance"                         //    Bytes("balance"),                                                             101     examples/application/abi/algobank.py
-txn Sender                             //    App.localGet(Txn.sender(), Bytes("balance")) - amount.get(),                  102     examples/application/abi/algobank.py
-byte "balance"                         //    App.localGet(Txn.sender(), Bytes("balance")) - amount.get(),                  102     examples/application/abi/algobank.py
-app_local_get                          //    App.localGet(Txn.sender(), Bytes("balance")) - amount.get(),                  102     examples/application/abi/algobank.py
-load 7                                 //    App.localGet(Txn.sender(), Bytes("balance")) - amount.get(),                  102     examples/application/abi/algobank.py
--                                      //    App.localGet(Txn.sender(), Bytes("balance")) - amount.get(),                  102     examples/application/abi/algobank.py
-app_local_put                          //    App.localPut(                                                                 99      examples/application/abi/algobank.py
-itxn_begin                             //    InnerTxnBuilder.Begin(),                                                      104     examples/application/abi/algobank.py
-int pay                                //    InnerTxnBuilder.SetFields(                                                    105     examples/application/abi/algobank.py
-itxn_field TypeEnum                    //    InnerTxnBuilder.SetFields(                                                    105     examples/application/abi/algobank.py
-load 8                                 //    TxnField.receiver: recipient.address(),                                       108     examples/application/abi/algobank.py
-txnas Accounts                         //    TxnField.receiver: recipient.address(),                                       108     examples/application/abi/algobank.py
-itxn_field Receiver                    //    InnerTxnBuilder.SetFields(                                                    105     examples/application/abi/algobank.py
-load 7                                 //    TxnField.amount: amount.get(),                                                109     examples/application/abi/algobank.py
-itxn_field Amount                      //    InnerTxnBuilder.SetFields(                                                    105     examples/application/abi/algobank.py
-int 0                                  //    TxnField.fee: Int(0),                                                         110     examples/application/abi/algobank.py
-itxn_field Fee                         //    InnerTxnBuilder.SetFields(                                                    105     examples/application/abi/algobank.py
-itxn_submit                            //    InnerTxnBuilder.Submit(),                                                     113     examples/application/abi/algobank.py
-retsub                                 //    compile_bundle = router.compile_program_with_sourcemaps(                      180     tests/integration/sourcemap_test.py
+store 8                                //    examples/application/abi/algobank.py  117     approval_program, clear_state_program, contract = router.compile_program(
+store 7                                //
+txn Sender                             //                                          100     Txn.sender(),
+byte "balance"                         //                                          101     Bytes("balance"),
+txn Sender                             //                                          102     App.localGet(Txn.sender(), Bytes("balance")) - amount.get(),
+byte "balance"                         //
+app_local_get                          //
+load 7                                 //
+-                                      //
+app_local_put                          //                                          99      App.localPut(
+itxn_begin                             //                                          104     InnerTxnBuilder.Begin(),
+int pay                                //                                          105     InnerTxnBuilder.SetFields(
+itxn_field TypeEnum                    //
+load 8                                 //                                          108     TxnField.receiver: recipient.address(),
+txnas Accounts                         //
+itxn_field Receiver                    //                                          105     InnerTxnBuilder.SetFields(
+load 7                                 //                                          109     TxnField.amount: amount.get(),
+itxn_field Amount                      //                                          105     InnerTxnBuilder.SetFields(
+int 0                                  //                                          110     TxnField.fee: Int(0),
+itxn_field Fee                         //                                          105     InnerTxnBuilder.SetFields(
+itxn_submit                            //                                          113     InnerTxnBuilder.Submit(),
+retsub                                 //    tests/integration/sourcemap_test.py   222     compile_bundle = router.compile_program_with_sourcemaps(

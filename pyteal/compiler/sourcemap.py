@@ -1,11 +1,10 @@
 from ast import unparse
-from copy import deepcopy
 from dataclasses import dataclass
 from enum import IntEnum
 from executing import Source
 from inspect import FrameInfo
 import os
-from typing import cast, Any, OrderedDict, Optional, Sequence, Union
+from typing import cast, Any, Callable, OrderedDict, Optional, Sequence, Union
 
 from tabulate import tabulate
 
@@ -277,6 +276,8 @@ _TEAL_LINE_NUMBER = "TL"
 _TEAL_COLUMN = "TC"
 _TEAL_COLUMN_END = "TCE"
 _TEAL_LINE = "Teal"
+_TABULATABLE_TEAL_LINE = "Tabulatable Teal"
+_PYTEAL_HYBRID_UNPARSED = "PyTeal Hybrid Unparsed"
 _PYTEAL_NODE_AST_UNPARSED = "PyTeal AST Unparsed"
 _PYTEAL_NODE_AST_QUALNAME = "PyTeal Qualname"
 _PYTEAL_COMPONENT = "PyTeal Qualname"
@@ -302,6 +303,9 @@ class SourceMapItem:
     frame: PyTealFrame
     extras: dict[str, Any] | None = None  # TODO: probly these shouldn't exist
 
+    def _tabulatable_teal(self, prefix_for_empty="//#") -> str:
+        return "\n".join((x or prefix_for_empty) for x in self.teal.splitlines())
+
     def column(self) -> int:
         """TODO: this will need to be rewored when/if compiling to multi-opcode lines with ';'"""
         return 0
@@ -310,14 +314,12 @@ class SourceMapItem:
         """TODO: this will need to be rewored when/if compiling to multi-opcode lines with ';'"""
         return len(self.teal)
 
-    """
-    def node_col_offset(self) -> int | None:
-        return getattr(self.node, "col_offset", None) if self.node else None
+    def hybrid_unparsed(self) -> str:
+        pt_line = self.frame.node_source()
+        if pt_line and len(pt_line.splitlines()) == 1:
+            return pt_line
 
-    def node_end_lineno(self) -> int | None:
-        return getattr(self.node, "end_lineno", None) if self.node else None
-
-    """
+        return self.frame.code()
 
     def asdict(self, **kwargs) -> OrderedDict:
         """kwargs serve as a rename mapping when present"""
@@ -326,6 +328,8 @@ class SourceMapItem:
             _TEAL_COLUMN: self.column(),
             _TEAL_COLUMN_END: self.column_rbound(),
             _TEAL_LINE: self.teal,
+            _TABULATABLE_TEAL_LINE: self._tabulatable_teal(),
+            _PYTEAL_HYBRID_UNPARSED: self.hybrid_unparsed(),
             _PYTEAL_NODE_AST_UNPARSED: self.frame.node_source(),
             _PYTEAL_NODE_AST_QUALNAME: self.frame.code_qualname(),
             _PYTEAL_COMPONENT: self.component,
@@ -417,7 +421,8 @@ class PyTealSourceMap:
 
             best_frames = []
             before, after = [], []
-            for tc in self.components:
+            for i, tc in enumerate(self.components):
+                print(f"{i}. {tc=}")
                 f, a, b = self.best_frame_and_windows_around_it(tc)
                 best_frames.append(f)
                 before.append(b)
@@ -492,6 +497,18 @@ class PyTealSourceMap:
 
         return mutated
 
+    _interal_paths = [
+        # "pyteal/__init__.py",
+        "pyteal/ast",
+        "pyteal/compiler",
+        "pyteal/ir",
+        "pyteal/pragma",
+        "tests/abi_roundtrip.py",
+        "tests/blackbox.py",
+        "tests/compile_asserts.py",
+        "tests/mock_version.py",
+    ]
+
     @classmethod
     def best_frame_and_windows_around_it(
         cls, t: "pt.TealComponent"
@@ -500,31 +517,11 @@ class PyTealSourceMap:
         # TODO: probly need to REMOVE the extra before and after
         # TODO: this is too complicated!!!
         """
-
-        # TODO: Do I need to resurrect these assertions?
-        # def call_out_emptys(xs):
-        #     f"The following indices were empty {[x for x in xs if not x]}"
-
-        # frames = cast(List[inspect.FrameInfo], frames)
-        # frame_nodes = cast(List[ast.AST | None], frame_nodes)
-        # assert all(frame_infos), call_out_emptys(frame_infos)
-        # assert len(frame_nodes) == len(frame_infos)
-
-        pyteals = [
-            # "pyteal/__init__.py",
-            "pyteal/ast",
-            "pyteal/compiler",
-            "pyteal/ir",
-            "pyteal/pragma",
-            "tests/abi_roundtrip.py",
-            "tests/blackbox.py",
-            "tests/compile_asserts.py",
-            "tests/mock_version.py",
-        ]
-
         frames = t.frames()
         frame_infos = frames.frame_infos()
-        pyteal_idx = [any(w in f.filename for w in pyteals) for f in frame_infos]
+        pyteal_idx = [
+            any(w in f.filename for w in cls._interal_paths) for f in frame_infos
+        ]
 
         def is_code_file(idx):
             f = frame_infos[idx].filename
@@ -577,6 +574,8 @@ class PyTealSourceMap:
 
     _tabulate_param_defaults = dict(
         teal=_TEAL_LINE,
+        tabulatable_teal=_TABULATABLE_TEAL_LINE,
+        pyteal_hybrid_unparsed=_PYTEAL_HYBRID_UNPARSED,
         pyteal=_PYTEAL_NODE_AST_UNPARSED,
         teal_line_number=_TEAL_LINE_NUMBER,
         teal_column=_TEAL_COLUMN,
@@ -598,9 +597,11 @@ class PyTealSourceMap:
     def tabulate(
         self,
         *,
-        tablefmt="plain",
+        tablefmt="fancy_grid",
         numalign="right",
         omit_headers: bool = False,
+        omit_rep_cols: set = set(),
+        postprocessor: Optional[Callable[..., str]] = None,
         **kwargs,
     ) -> str:
         """
@@ -612,9 +613,11 @@ class PyTealSourceMap:
             tablefmt (defaults to 'fancy_grid'): format specifier used by tabulate. For choices see: https://github.com/astanin/python-tabulate#table-format
             omit_headers (defaults to False): Explain this....
             numalign ... explain this...
+            omit_rep_cols ... TODO: this is confusing. When empty, nothing is omitted. When non-empty, all reps other than this column are omitted
             const_col_* ... explain this
             teal: Column name and implicit order for the generated Teal
-            pyteal: Column name and implicit order for the PyTeal source mapping to target (this usually contains only the Python AST responsible for the generated Teal)
+            pyteal (optional): Column name and implicit order for the PyTeal source mapping to target (this usually contains only the Python AST responsible for the generated Teal)
+            pyteal_hybrid_unparsed (optional): ... explain
             teal_line_number (optional): Column name and implicit order for the Teal target line number
             teal_column (optional): Column name and implicit order for the generated Teal starting 0-based column number (defaults to 0 when unknown)
             teal_column_end (optional): Column name and implicit order for the generated Teal ending 0-based column (defaults to len(code) - 1 when unknown)
@@ -647,7 +650,7 @@ class PyTealSourceMap:
             assert k in self._tabulate_param_defaults, f"unrecognized parameter '{k}'"
 
         # TODO: probly should just insist that printin sumn, not any particular column
-        required = ["teal"]
+        required = []
         renames = {self._tabulate_param_defaults[k]: v for k, v in kwargs.items()}
         for r in required:
             if r not in kwargs:
@@ -655,11 +658,11 @@ class PyTealSourceMap:
                     self._tabulate_param_defaults[r]
                 ] = self._tabulate_param_defaults[r]
 
-        rows = (smitem.asdict(**renames) for smitem in self.get_map().values())
+        rows = list(smitem.asdict(**renames) for smitem in self.get_map().values())
 
         if constant_columns:
 
-            def mod_row(row):
+            def add_const_cols(row):
                 i = 0
                 new_row = {}
                 for k, v in row.items():
@@ -670,15 +673,32 @@ class PyTealSourceMap:
                     i += 1
                 return new_row
 
-            rows = list(map(mod_row, rows))  # can revert to pure map ???
+            rows = list(map(add_const_cols, rows))  # can revert to pure map ???
+            renames = add_const_cols(renames)
 
-            renames = mod_row(renames)
+        if omit_rep_cols:
 
-        return (
+            def reduction(row, next_row):
+                return {
+                    k: v2
+                    for k, v in row.items()
+                    if (v2 := next_row[k]) != v or k in omit_rep_cols
+                }
+
+            rows = [rows[0]] + list(
+                map(lambda r_and_n: reduction(*r_and_n), zip(rows[:-1], rows[1:]))
+            )
+
+        tabulated = (
             tabulate(rows, tablefmt=tablefmt, numalign=numalign)
             if omit_headers
             else tabulate(rows, headers=renames, tablefmt=tablefmt, numalign=numalign)
         )
+
+        if postprocessor:
+            tabulated = postprocessor(tabulated)
+
+        return tabulated
 
     def _tabulate_for_dev(self) -> str:
         return self.tabulate(
@@ -692,14 +712,32 @@ class PyTealSourceMap:
             pyteal_line="pyteal line",
         )
 
-    def annotated_teal(self) -> str:
-        return self.tabulate(
+    def annotated_teal(
+        self, unparse_hybrid: bool = False, omit_reps: bool = True
+    ) -> str:
+        teal_col = "// GENERATED TEAL"
+        seperator_col = "_1"  # TODO: fix this ugly hack
+        omit_rep_cols = {teal_col, seperator_col}
+        kwargs = dict(
             tablefmt="plain",
             omit_headers=False,
-            teal="// GENERATED TEAL",
-            const_col_2="//",
-            pyteal_line="PYTEAL SOURCE",
-            pyteal_line_number="LINE",
-            pyteal_filename="PYTEAL PATH",
+            omit_rep_cols=omit_rep_cols,
             numalign="left",
+            tabulatable_teal=teal_col,
+            const_col_2="//",
+            pyteal_filename="PYTEAL PATH",
+            pyteal_line_number="LINE",
         )
+        if unparse_hybrid:
+            kwargs["pyteal_hybrid_unparsed"] = "PYTEAL HYBRID UNPARSED"
+        else:
+            kwargs["pyteal_line"] = "PYTEAL SOURCE"
+
+        def erase_sentinels(teal):
+            sentinel = "//#"
+            return "\n".join(
+                x.replace(sentinel, "   ") if x.startswith(sentinel) else x
+                for x in teal.splitlines()
+            )
+
+        return self.tabulate(**kwargs, postprocessor=erase_sentinels)

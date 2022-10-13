@@ -1,4 +1,5 @@
 from ast import AST
+from configparser import ConfigParser
 from dataclasses import dataclass
 import executing
 from inspect import FrameInfo, stack
@@ -75,14 +76,42 @@ class Frame:
 FrameSequence = Union[Frame, list["FrameSequence"]]
 
 
+def _skip_all_frames() -> bool:
+    config = ConfigParser()
+    config.read("pyteal.ini")
+    return not config.getboolean("pyteal-source-mapper", "enabled")
+
+
 class Frames:
+    # TODO: I'm pretty sure I have a reasonable go-forward approach, but not sure
+    # it's the most modern pythonic way to handle this issue.
     # TODO: BIG QUESTION: How can we configure Frames so that it defaults to a NO-OP ?
     # I believe this should involve a project level config. Some ideas.
     # source_map.ini config file a la: https://www.codeproject.com/Articles/5319621/Configuration-Files-in-Python
     # TOML config a la: https://realpython.com/python-toml/
+    _skip_all: bool = _skip_all_frames()
+
+    @classmethod
+    def skipping_all(cls, _force_refresh: bool = False) -> bool:
+        """
+        The `_force_refresh` parameter, is mainly for test validation purposes.
+        It is discouraged for use in the wild because:
+        * Frames are useful in an "all or nothing" capacity. For example, in preparing
+            for a source mapping, it would be error prone to generate frames for
+            a subset of analyzed PyTeal
+        * Setting `_force_refresh = True` will cause a read from the file system every
+            time Frames are initialized, and will result in significant performance degredation
+        """
+        if _force_refresh:
+            cls._skip_all = _skip_all_frames()
+
+        return cls._skip_all
 
     def __init__(self):
-        self.frames: list[Frame] = [
+        self.frames: list[Frame] = []
+        if self.skipping_all():
+            return
+        self.frames = [
             Frame(f, cast(AST | None, executing.Source.executing(f.frame).node))
             for f in stack()
         ]
