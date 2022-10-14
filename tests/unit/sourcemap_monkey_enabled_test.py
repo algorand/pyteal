@@ -99,22 +99,6 @@ def test_annotated_teal(_):
         f.write(table_ast)
 
 
-# @mock.patch.object(ConfigParser, "getboolean", side_effect=Exception("1337"))
-# def test_sourcemap_fails_elegantly_when_no_ini(_):
-#     from pyteal import OptimizeOptions
-#     from pyteal.compiler.sourcemap import SourceMapDisabledError
-
-#     from examples.application.abi.algobank import router
-
-#     with pytest.raises(SourceMapDisabledError) as smde:
-#         router.compile_program_with_sourcemaps(
-#             version=6,
-#             optimize=OptimizeOptions(scratch_slots=True),
-#         )
-
-#     assert "pyteal.ini" in str(smde.value)
-
-
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
 def test_mocked_config_for_frames(_):
     config = ConfigParser()

@@ -91,6 +91,10 @@ def test_SourceMapItem_source_mapping():
     assert expected_json == json.dumps(r3sm_unmarshalled.to_json())
 
 
+def test_PyTealSourceMap_R3SourceMap_roundtrip():
+    assert False, "test is currently RED"
+
+
 """
 # TODO: Additional examples needed before merging:
 
@@ -139,11 +143,6 @@ def test_no_regression_with_sourcemap_disabled():
     Frames._skip_all = True
 
     no_regressions()
-
-
-@pytest.mark.skip
-def test_PyTealSourceMap_R3SourceMap_roundtrip():
-    assert False, "test is currently RED"
 
 
 def test_sourcemap_fails_because_unconfigured():
