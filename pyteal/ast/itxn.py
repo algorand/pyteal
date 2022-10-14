@@ -387,9 +387,10 @@ class InnerTxnBuilder:
 
                 txntype = cast(EnumInt, arg[TxnField.type_enum]).name
                 # If the arg is an unspecified transaction, no need to check the type_enum
-                if not type(
-                    method_arg_ts
-                ) is abi.TransactionTypeSpec and txntype != str(method_arg_ts):
+
+                if not abi.type_spec_is_assignable_to(
+                    abi.type_spec_from_algosdk(txntype), method_arg_ts
+                ):
                     raise TealInputError(
                         f"Expected Transaction at arg {idx} to be {method_arg_ts}, got {txntype}"
                     )
@@ -459,7 +460,9 @@ class InnerTxnBuilder:
                     require_type(arg, TealType.bytes)
                     app_args.append(arg)
                 elif isinstance(arg, abi.BaseType):
-                    if arg.type_spec() != method_arg_ts:
+                    if not abi.type_spec_is_assignable_to(
+                        arg.type_spec(), method_arg_ts
+                    ):
                         raise TealTypeError(arg.type_spec(), method_arg_ts)
                     app_args.append(arg.encode())
                 else:
