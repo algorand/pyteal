@@ -733,6 +733,10 @@ class TxnObject:
         """
         return self.makeTxnExpr(TxnField.created_application_id)
 
+    def num_app_args(self) -> TxnExpr:
+        """Get the number of application arguments sent with a transaction."""
+        return self.makeTxnExpr(TxnField.num_app_args)
+
     def last_log(self) -> TxnExpr:
         """A convenience method for getting the last logged message from a transaction.
 
