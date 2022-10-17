@@ -71,11 +71,12 @@ class DynamicArray(Array[T]):
         Returns:
             An expression which stores the given value into this DynamicArray.
         """
+        from pyteal.ast.abi.util import type_spec_is_assignable_to
 
         if isinstance(values, ComputedValue):
             return self._set_with_computed_type(values)
         elif isinstance(values, BaseType):
-            if self.type_spec() != values.type_spec():
+            if not type_spec_is_assignable_to(values.type_spec(), self.type_spec()):
                 raise TealInputError(
                     f"Cannot assign type {values.type_spec()} to {self.type_spec()}"
                 )

@@ -93,6 +93,7 @@ class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
 
         match value:
             case ComputedValue():
+                # TODO need to see again if we need to change on type system or not, _set_with_computed_type?
                 pts = value.produced_type_spec()
                 if pts == AddressTypeSpec() or pts == StaticArrayTypeSpec(
                     ByteTypeSpec(), AddressLength.Bytes
@@ -103,6 +104,7 @@ class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
                     f"Got ComputedValue with type spec {pts}, expected AddressTypeSpec or StaticArray[Byte, Literal[AddressLength.Bytes]]"
                 )
             case BaseType():
+                # TODO need to see again if we need to change on type system or not
                 if (
                     value.type_spec() == AddressTypeSpec()
                     or value.type_spec()

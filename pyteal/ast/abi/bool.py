@@ -68,6 +68,8 @@ class Bool(BaseType):
         Returns:
             An expression which stores the given value into this Bool.
         """
+        from pyteal.ast.abi.util import type_spec_is_assignable_to
+
         if isinstance(value, ComputedValue):
             return self._set_with_computed_type(value)
 
@@ -77,7 +79,7 @@ class Bool(BaseType):
             checked = True
 
         if isinstance(value, BaseType):
-            if value.type_spec() != self.type_spec():
+            if not type_spec_is_assignable_to(value.type_spec(), self.type_spec()):
                 raise TealInputError(
                     "Cannot set type bool to {}".format(value.type_spec())
                 )

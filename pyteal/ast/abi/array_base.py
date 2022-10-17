@@ -125,8 +125,12 @@ class Array(BaseType, Generic[T]):
             A PyTeal expression that stores encoded sequence of ABI values in its internal
             ScratchVar.
         """
+        from pyteal.ast.abi.util import type_spec_is_assignable_to
+
         for index, value in enumerate(values):
-            if self.type_spec().value_type_spec() != value.type_spec():
+            if not type_spec_is_assignable_to(
+                value.type_spec(), self.type_spec().value_type_spec()
+            ):
                 raise TealInputError(
                     "Cannot assign type {} at index {} to {}".format(
                         value.type_spec(),
@@ -220,7 +224,11 @@ class ArrayElement(ComputedValue[T]):
         Returns:
             An expression that stores the byte string of the array element into value `output`.
         """
-        if output.type_spec() != self.produced_type_spec():
+        from pyteal.ast.abi.util import type_spec_is_assignable_to
+
+        if not type_spec_is_assignable_to(
+            self.produced_type_spec(), output.type_spec()
+        ):
             raise TealInputError("Output type does not match value type")
 
         encodedArray = self.array.encode()

@@ -120,6 +120,8 @@ def _encode_tuple(values: Sequence[BaseType]) -> Expr:
 def _index_tuple(
     value_types: Sequence[TypeSpec], encoded: Expr, index: int, output: BaseType
 ) -> Expr:
+    from pyteal.ast.abi.util import type_spec_is_assignable_to
+
     if not (0 <= index < len(value_types)):
         raise ValueError("Index outside of range")
 
@@ -146,7 +148,7 @@ def _index_tuple(
         offset += typeBefore.byte_length_static()
 
     valueType = value_types[index]
-    if output.type_spec() != valueType:
+    if not type_spec_is_assignable_to(valueType, output.type_spec()):
         raise TypeError("Output type does not match value type")
 
     if type(output) is Bool:

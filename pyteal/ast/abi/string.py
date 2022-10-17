@@ -103,13 +103,13 @@ class String(DynamicArray[Byte]):
             An expression which stores the given value into this String.
         """
 
+        from pyteal.ast.abi.util import type_spec_is_assignable_to
+
         match value:
             case ComputedValue():
                 return self._set_with_computed_type(value)
             case BaseType():
-                if value.type_spec() == StringTypeSpec() or (
-                    value.type_spec() == DynamicArrayTypeSpec(ByteTypeSpec())
-                ):
+                if type_spec_is_assignable_to(value.type_spec(), StringTypeSpec()):
                     return self.stored_value.store(value.stored_value.load())
 
                 raise TealInputError(
