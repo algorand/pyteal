@@ -58,6 +58,7 @@ lint-and-test: check-generate-init lint test-unit
 
 # ---- Integration Tests (algod required) ---- #
 
+sandbox-dev-up: SHELL:=/bin/bash
 sandbox-dev-up:
 	docker-compose up -d algod
 	SANDBOX_READY_REGEX="^Last committed block:*" ; \
