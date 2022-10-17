@@ -135,10 +135,12 @@ class BaseType(ABC):
         pass
 
     def _set_with_computed_type(self, value: "ComputedValue[BaseType]") -> Expr:
-        target_type_spec = value.produced_type_spec()
-        if self.type_spec() != target_type_spec:
+        from pyteal.ast.abi.util import type_spec_is_assignable_to
+
+        value_type_spec = value.produced_type_spec()
+        if not type_spec_is_assignable_to(value_type_spec, self.type_spec()):
             raise TealInputError(
-                f"Cannot set {self.type_spec()} with ComputedType of {target_type_spec}"
+                f"Cannot set {self.type_spec()} with ComputedType of {value_type_spec}"
             )
         return value.store_into(self)
 
@@ -215,7 +217,11 @@ class ReturnedValue(ComputedValue):
         return self.type_spec
 
     def store_into(self, output: BaseType) -> Expr:
-        if output.type_spec() != self.produced_type_spec():
+        from pyteal.ast.abi.util import type_spec_is_assignable_to
+
+        if not type_spec_is_assignable_to(
+            self.produced_type_spec(), output.type_spec()
+        ):
             raise TealInputError(
                 f"expected type_spec {self.produced_type_spec()} but get {output.type_spec()}"
             )
