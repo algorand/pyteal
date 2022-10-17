@@ -14,6 +14,9 @@ from pyteal.ast.for_ import For
 from pyteal.types import TealType, require_type
 from enum import Enum
 
+ON_CALL_APP = Bytes("base16", "068101")  # v6 program "int 1"
+MIN_TXN_FEE = Int(1000)
+
 
 class OpUpMode(Enum):
     """An Enum object that defines the mode used for the OpUp utility.
@@ -30,17 +33,23 @@ class OpUpMode(Enum):
     OnCall = 1
 
 
-class OpUpFeePayer(Enum):
+class OpUpFeeSource(Enum):
     # Only the excess fee on the outer group should be used (set inner_tx.fee=0)
-    Excess = 0
-    # The app account will cover fees
-    Self = 1
+    GroupExcess = 0
+    # The app's account will cover all fees (set inner_tx.fee=Global.min_tx_fee())
+    AppAccount = 1
     # First the excess will be used, remaining fees will be taken from the app account
     Any = 2
 
 
-ON_CALL_APP = Bytes("base16", "068101")  # v6 program "int 1"
-MIN_TXN_FEE = Int(1000)
+def fee_by_source(source: OpUpFeeSource) -> Optional[Expr]:
+    match source:
+        case OpUpFeeSource.GroupExcess:
+            return Int(0)
+        case OpUpFeeSource.AppAccount:
+            return Global.min_txn_fee()
+        case _:
+            return None
 
 
 class OpUp:
@@ -119,7 +128,9 @@ class OpUp:
 
         return InnerTxnBuilder.Execute(fields)
 
-    def ensure_budget(self, required_budget: Expr, inner_fee: Expr = None) -> Expr:
+    def ensure_budget(
+        self, required_budget: Expr, fee_source: OpUpFeeSource = OpUpFeeSource.Any
+    ) -> Expr:
         """Ensure that the budget will be at least the required_budget.
 
         Args:
@@ -146,6 +157,8 @@ class OpUp:
         should be sufficient for most use cases. If lack of budget is an issue then
         consider moving the call to ensure_budget() earlier in the pyteal program."""
         require_type(required_budget, TealType.uint64)
+        if not type(fee_source) == OpUpFeeSource:
+            raise TealTypeError(type(fee_source), OpUpFeeSource)
 
         # A budget buffer is necessary to deal with an edge case of ensure_budget():
         #   if the current budget is equal to or only slightly higher than the
@@ -157,12 +170,12 @@ class OpUp:
         return Seq(
             buffered_budget.store(required_budget + buffer),
             While(buffered_budget.load() > Global.opcode_budget()).Do(
-                self._construct_itxn(inner_fee=inner_fee)
+                self._construct_itxn(inner_fee=fee_by_source(fee_source))
             ),
         )
 
     def maximize_budget(
-        self, fee: Expr, payer: OpUpFeePayer = OpUpFeePayer.Any
+        self, fee: Expr, fee_source: OpUpFeeSource = OpUpFeeSource.Any
     ) -> Expr:
         """Maximize the available opcode budget without spending more than the given fee.
 
@@ -176,19 +189,13 @@ class OpUp:
         sufficient for most use cases. If lack of budget is an issue then consider
         moving the call to maximize_budget() earlier in the pyteal program."""
         require_type(fee, TealType.uint64)
-        if not type(payer) == OpUpFeePayer:
-            raise TealTypeError(type(payer), OpUpFeePayer)
-
-        inner_fee: Optional[Expr] = None
-        if payer == OpUpFeePayer.Excess:
-            inner_fee = Int(0)
-        elif payer == OpUpFeePayer.Self:
-            inner_fee = Global.min_txn_fee()
+        if not type(fee_source) == OpUpFeeSource:
+            raise TealTypeError(type(fee_source), OpUpFeeSource)
 
         i = ScratchVar(TealType.uint64)
         n = fee / Global.min_txn_fee()
         return For(i.store(Int(0)), i.load() < n, i.store(i.load() + Int(1))).Do(
-            self._construct_itxn(inner_fee)
+            self._construct_itxn(inner_fee=fee_by_source(fee_source))
         )
 
 
