@@ -92,21 +92,20 @@ class OpUp:
             TxnField.type_enum: TxnType.ApplicationCall
         }
 
-        # If an inner_fee is specified, use it here
+        # If an inner_fee is specified
+        # add it to the transaction fields
         if inner_fee is not None:
             require_type(inner_fee, TealType.uint64)
             fields[TxnField.fee] = inner_fee
 
         if self.mode == OpUpMode.Explicit:
-            fields[TxnField.application_id] = self.target_app_id
+            fields |= {TxnField.application_id: self.target_app_id}
         else:
-            fields.update(
-                {
-                    TxnField.on_completion: OnComplete.DeleteApplication,
-                    TxnField.approval_program: ON_CALL_APP,
-                    TxnField.clear_state_program: ON_CALL_APP,
-                }
-            )
+            fields |= {
+                TxnField.on_completion: OnComplete.DeleteApplication,
+                TxnField.approval_program: ON_CALL_APP,
+                TxnField.clear_state_program: ON_CALL_APP,
+            }
 
         return InnerTxnBuilder.Execute(fields)
 
