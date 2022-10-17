@@ -1,5 +1,6 @@
+from typing import Optional
 from pyteal.ast.app import OnComplete
-from pyteal.errors import TealInputError
+from pyteal.errors import TealInputError, TealTypeError
 from pyteal.ast.while_ import While
 from pyteal.ast.expr import Expr
 from pyteal.ast.global_ import Global
@@ -27,6 +28,15 @@ class OpUpMode(Enum):
 
     # The app to call is created then deleted for each request to increase budget.
     OnCall = 1
+
+
+class OpUpFeePayer(Enum):
+    # Only the excess fee on the outer group should be used (set inner_tx.fee=0)
+    Excess = 0
+    # The app account will cover fees
+    Self = 1
+    # First the excess will be used, remaining fees will be taken from the app account
+    Any = 2
 
 
 ON_CALL_APP = Bytes("base16", "068101")  # v6 program "int 1"
@@ -115,11 +125,20 @@ class OpUp:
         Args:
             required_budget: minimum op-code budget to ensure for the
                 upcoming execution.
-            inner_fee (optional): OpUp utility requires inner transactions fee
-                to be paid by the upper call as default. To let the
-                application pay inner transactions fee with app account's
-                funds, set this parameter to `Global.min_txn_fee` or a given
-                fixed `Int`.
+            inner_fee (optional): controls the behavior of setting the fee for
+                the inner transactions to increase opcode budget.
+
+                Note: there may be multiple inner transaction executed if necessary
+
+                If not specified:
+                - First draw any excess fee credit from the outer transaction group
+                - Next the app account issuing this inner transaction is charged the fee for the transaction
+
+                If specified:
+                - The value passed for the fee is set on all transactions created as part of the group transaction.
+
+                e.g. if Int(0) is passed it requires the outer group to have enough fee credit to cover all the inner transactions
+                executed, otherwise the entire transaction group will fail.
 
         Note: the available budget just prior to calling ensure_budget() must be
         high enough to execute the budget increase code. The exact budget required
@@ -142,16 +161,14 @@ class OpUp:
             ),
         )
 
-    def maximize_budget(self, fee: Expr, inner_fee: Expr = None) -> Expr:
+    def maximize_budget(
+        self, fee: Expr, payer: OpUpFeePayer = OpUpFeePayer.Any
+    ) -> Expr:
         """Maximize the available opcode budget without spending more than the given fee.
 
         Args:
             fee: fee expenditure cap for the op-code budget maximization.
-            inner_fee (optional): OpUp utility requires inner transactions fee
-                to be paid by the upper call as default. To let the
-                application pay inner transactions fee with app account's
-                funds, set this parameter to `Global.min_txn_fee` or a given
-                fixed `Int`.
+            payer: TODO
 
         Note: the available budget just prior to calling maximize_budget() must be
         high enough to execute the budget increase code. The exact budget required
@@ -159,11 +176,19 @@ class OpUp:
         sufficient for most use cases. If lack of budget is an issue then consider
         moving the call to maximize_budget() earlier in the pyteal program."""
         require_type(fee, TealType.uint64)
+        if not type(payer) == OpUpFeePayer:
+            raise TealTypeError(type(payer), OpUpFeePayer)
+
+        inner_fee: Optional[Expr] = None
+        if payer == OpUpFeePayer.Excess:
+            inner_fee = Int(0)
+        elif payer == OpUpFeePayer.Self:
+            inner_fee = Global.min_txn_fee()
 
         i = ScratchVar(TealType.uint64)
         n = fee / Global.min_txn_fee()
         return For(i.store(Int(0)), i.load() < n, i.store(i.load() + Int(1))).Do(
-            self._construct_itxn(inner_fee=inner_fee)
+            self._construct_itxn(inner_fee)
         )
 
 

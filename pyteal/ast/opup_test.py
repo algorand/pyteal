@@ -1,6 +1,6 @@
 import pytest
 
-from pyteal.ast.opup import OpUp, OpUpMode
+from pyteal.ast.opup import OpUp, OpUpFeePayer, OpUpMode
 
 import pyteal as pt
 
@@ -26,7 +26,7 @@ def test_opup_explicit():
         opup.maximize_budget(fee=pt.Bytes("fee"))
 
     with pytest.raises(pt.TealTypeError):
-        opup.maximize_budget(fee=pt.Int(1_000), inner_fee=pt.Bytes("min_fee"))
+        opup.maximize_budget(fee=pt.Int(1_000), payer=pt.Bytes("payer"))
 
     assert opup.target_app_id == pt.Int(1)
 
@@ -49,7 +49,7 @@ def test_opup_explicit():
         opup.maximize_budget(fee=pt.Txn.fee() - pt.Int(100)), pt.Return(pt.Int(1))
     )
     _ = pt.Seq(
-        opup.maximize_budget(fee=pt.Txn.fee() - pt.Int(100), inner_fee=pt.Int(1_000)),
+        opup.maximize_budget(fee=pt.Txn.fee() - pt.Int(100), payer=OpUpFeePayer.Any),
         pt.Return(pt.Int(1)),
     )
 
@@ -68,7 +68,7 @@ def test_opup_oncall():
         opup.maximize_budget(fee=pt.Bytes("fee"))
 
     with pytest.raises(pt.TealTypeError):
-        opup.maximize_budget(fee=pt.Int(1_000), inner_fee=pt.Bytes("min_fee"))
+        opup.maximize_budget(fee=pt.Int(1_000), payer=pt.Bytes("min_fee"))
 
     # verify correct usage doesn't cause an error
     opup = OpUp(mode)
@@ -89,6 +89,6 @@ def test_opup_oncall():
         opup.maximize_budget(fee=pt.Txn.fee() - pt.Int(100)), pt.Return(pt.Int(1))
     )
     _ = pt.Seq(
-        opup.maximize_budget(fee=pt.Txn.fee() - pt.Int(100), inner_fee=pt.Int(1_000)),
+        opup.maximize_budget(fee=pt.Txn.fee() - pt.Int(100), payer=OpUpFeePayer.Any),
         pt.Return(pt.Int(1)),
     )
