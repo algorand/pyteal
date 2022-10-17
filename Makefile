@@ -60,6 +60,8 @@ lint-and-test: check-generate-init lint test-unit
 
 sandbox-dev-up:
 	docker-compose up -d algod
+	SANDBOX_READY_REGEX="^Last committed block:*" ; \
+	while ! [[ `docker compose exec algod goal node status | head -n 1` =~ $$SANDBOX_READY_REGEX ]] ; do sleep 1 ; done
 
 sandbox-dev-stop:
 	docker-compose stop algod
