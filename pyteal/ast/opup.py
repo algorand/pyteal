@@ -87,8 +87,12 @@ class OpUp:
 
         self.mode = mode
 
-    def _construct_itxn(self, inner_fee: Expr) -> Expr:
-        require_type(inner_fee, TealType.uint64)
+    def _construct_itxn(self, inner_fee: Expr = None) -> Expr:
+        if inner_fee is not None:
+            require_type(inner_fee, TealType.uint64)
+        else:
+            inner_fee = MIN_TXN_FEE
+
 
         if self.mode == OpUpMode.Explicit:
             return InnerTxnBuilder.Execute(
@@ -109,7 +113,7 @@ class OpUp:
                 }
             )
 
-    def ensure_budget(self, required_budget: Expr, inner_fee: Expr = Int(0)) -> Expr:
+    def ensure_budget(self, required_budget: Expr, inner_fee: Expr = None) -> Expr:
         """Ensure that the budget will be at least the required_budget.
 
         Args:
@@ -142,7 +146,7 @@ class OpUp:
             ),
         )
 
-    def maximize_budget(self, fee: Expr, inner_fee: Expr = Int(0)) -> Expr:
+    def maximize_budget(self, fee: Expr, inner_fee: Expr = None) -> Expr:
         """Maximize the available opcode budget without spending more than the given fee.
 
         Args:
