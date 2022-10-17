@@ -93,7 +93,6 @@ class OpUp:
         else:
             inner_fee = MIN_TXN_FEE
 
-
         if self.mode == OpUpMode.Explicit:
             return InnerTxnBuilder.Execute(
                 {
