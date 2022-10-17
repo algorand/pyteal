@@ -88,29 +88,27 @@ class OpUp:
         self.mode = mode
 
     def _construct_itxn(self, inner_fee: Expr = None) -> Expr:
+        fields: dict[TxnField, Expr | list[Expr]] = {
+            TxnField.type_enum: TxnType.ApplicationCall
+        }
+
+        # If an inner_fee is specified, use it here
         if inner_fee is not None:
             require_type(inner_fee, TealType.uint64)
-        else:
-            inner_fee = MIN_TXN_FEE
+            fields[TxnField.fee] = inner_fee
 
         if self.mode == OpUpMode.Explicit:
-            return InnerTxnBuilder.Execute(
-                {
-                    TxnField.type_enum: TxnType.ApplicationCall,
-                    TxnField.application_id: self.target_app_id,
-                    TxnField.fee: inner_fee,
-                }
-            )
+            fields[TxnField.application_id] = self.target_app_id
         else:
-            return InnerTxnBuilder.Execute(
+            fields.update(
                 {
-                    TxnField.type_enum: TxnType.ApplicationCall,
                     TxnField.on_completion: OnComplete.DeleteApplication,
                     TxnField.approval_program: ON_CALL_APP,
                     TxnField.clear_state_program: ON_CALL_APP,
-                    TxnField.fee: inner_fee,
                 }
             )
+
+        return InnerTxnBuilder.Execute(fields)
 
     def ensure_budget(self, required_budget: Expr, inner_fee: Expr = None) -> Expr:
         """Ensure that the budget will be at least the required_budget.
