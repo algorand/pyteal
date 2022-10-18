@@ -25,39 +25,65 @@ avm8Options = pt.CompileOptions(version=8)
         ("totalBoxBytes", "total_box_bytes"),
     ],
 )
-def test_acct_param_fields_valid(method_name, field_name):
-    arg = pt.Int(1)
-    account_param_method = getattr(pt.AccountParam, method_name)
-    expr = account_param_method(arg)
-    assert expr.type_of() == pt.TealType.none
+class TestAcctParam:
+    @staticmethod
+    def test_acct_param_fields_valid(method_name, field_name):
+        arg = pt.Int(1)
+        account_param_method = getattr(pt.AccountParam, method_name)
+        expr = account_param_method(arg)
+        assert expr.type_of() == pt.TealType.none
 
-    account_param_field = AccountParamField[field_name]
-    assert expr.value().type_of() == account_param_field.type_of()
+        account_param_field = AccountParamField[field_name]
+        assert expr.value().type_of() == account_param_field.type_of()
 
-    expected = pt.TealSimpleBlock(
-        [
-            pt.TealOp(arg, pt.Op.int, 1),
-            pt.TealOp(expr, pt.Op.acct_params_get, account_param_field.arg_name),
-            pt.TealOp(None, pt.Op.store, expr.slotOk),
-            pt.TealOp(None, pt.Op.store, expr.slotValue),
-        ]
-    )
-
-    supported_options_version = pt.CompileOptions(
-        version=account_param_field.min_version
-    )
-    actual, _ = expr.__teal__(supported_options_version)
-    actual.addIncoming()
-    actual = pt.TealBlock.NormalizeBlocks(actual)
-
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert actual == expected
-
-    with pytest.raises(pt.TealInputError):
-        unsupported_options_version = pt.CompileOptions(
-            version=account_param_field.min_version - 1
+        expected = pt.TealSimpleBlock(
+            [
+                pt.TealOp(arg, pt.Op.int, 1),
+                pt.TealOp(expr, pt.Op.acct_params_get, account_param_field.arg_name),
+                pt.TealOp(None, pt.Op.store, expr.slotOk),
+                pt.TealOp(None, pt.Op.store, expr.slotValue),
+            ]
         )
-        expr.__teal__(unsupported_options_version)
+
+        supported_options_version = pt.CompileOptions(
+            version=account_param_field.min_version
+        )
+        actual, _ = expr.__teal__(supported_options_version)
+        actual.addIncoming()
+        actual = pt.TealBlock.NormalizeBlocks(actual)
+
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
+
+    @staticmethod
+    def test_acct_param_version_checks(method_name, field_name):
+        arg = pt.Int(1)
+        account_param_method = getattr(pt.AccountParam, method_name)
+        expr = account_param_method(arg)
+
+        account_param_field = AccountParamField[field_name]
+
+        def test_unsupported_version(version: int, match: str = None):
+            with pytest.raises(pt.TealInputError, match=match):
+                unsupported_options_version = pt.CompileOptions(version=version)
+                expr.__teal__(unsupported_options_version)
+
+        # Test program and field version checks
+        program_unsupported_version = pt.ir.Op.acct_params_get.min_version - 1
+        program_error_match = "unavailable"
+        test_unsupported_version(program_unsupported_version, program_error_match)
+
+        field_unsupported_version = account_param_field.min_version - 1
+
+        # Since program version dominates, we conditionally check field error message or program error message
+        # depending on whether the unsupported field version is less than or equal to the program unsupported
+        # version.
+        field_error_match = (
+            "Program version too low to use field"
+            if field_unsupported_version > program_unsupported_version
+            else program_error_match
+        )
+        test_unsupported_version(field_unsupported_version, field_error_match)
 
 
 def test_AccountParamObject():
