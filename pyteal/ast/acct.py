@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import Final, TYPE_CHECKING
-from pyteal.errors import verifyFieldVersion
+from pyteal.errors import verifyFieldVersion, verifyProgramVersion
 
 from pyteal.types import TealType, require_type
 from pyteal.ir import Op
@@ -46,7 +46,12 @@ class AccountParam:
     def __makeAccountParamExpr(field: AccountParamField, acct: Expr) -> MaybeValue:
         require_type(acct, TealType.anytype)
 
-        def field_version_check(options: "CompileOptions"):
+        def field_and_program_version_check(options: "CompileOptions"):
+            verifyProgramVersion(
+                minVersion=Op.acct_params_get.min_version,
+                version=options.version,
+                msg=f"{Op.acct_params_get.value} unavailable",
+            )
             verifyFieldVersion(field.arg_name, field.min_version, options.version)
 
         return MaybeValue(
@@ -54,7 +59,7 @@ class AccountParam:
             field.type_of(),
             immediate_args=[field.arg_name],
             args=[acct],
-            compile_check=field_version_check,
+            compile_check=field_and_program_version_check,
         )
 
     @classmethod

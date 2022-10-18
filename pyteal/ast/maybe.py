@@ -22,7 +22,7 @@ class MaybeValue(MultiValue):
         *,
         immediate_args: List[Union[int, str]] = None,
         args: List[Expr] = None,
-        compile_check: Callable[["CompileOptions"], None] = lambda _: None,
+        compile_check: Callable[["CompileOptions"], None] = None,
     ):
         """Create a new MaybeValue.
 
@@ -31,15 +31,16 @@ class MaybeValue(MultiValue):
             type: The type of the returned value.
             immediate_args (optional): Immediate arguments for the op. Defaults to None.
             args (optional): Stack arguments for the op. Defaults to None.
+            compile_check (optional): Callable compile check. Defaults to program version check.
         """
 
+        # Default compile check if one is not given
         def local_version_check(options: "CompileOptions"):
             verifyProgramVersion(
                 minVersion=op.min_version,
                 version=options.version,
                 msg=f"{op.value} unavailable",
             )
-            compile_check(options)
 
         types = [type, TealType.uint64]
         super().__init__(
@@ -47,7 +48,9 @@ class MaybeValue(MultiValue):
             types,
             immediate_args=immediate_args,
             args=args,
-            compile_check=local_version_check,
+            compile_check=(
+                local_version_check if compile_check is None else compile_check
+            ),
         )
 
     def hasValue(self) -> ScratchLoad:
