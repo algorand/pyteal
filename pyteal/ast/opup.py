@@ -34,6 +34,8 @@ class OpUpMode(Enum):
 
 
 class OpUpFeeSource(Enum):
+    """An Enum object that defines the source for fees for the OpUp utility.
+    """
     # Only the excess fee (credit) on the outer group should be used (set inner_tx.fee=0)
     GroupCredit = 0
     # The app's account will cover all fees (set inner_tx.fee=Global.min_tx_fee())
@@ -136,20 +138,8 @@ class OpUp:
         Args:
             required_budget: minimum op-code budget to ensure for the
                 upcoming execution.
-            inner_fee (optional): controls the behavior of setting the fee for
-                the inner transactions to increase opcode budget.
-
-                Note: there may be multiple inner transaction executed if necessary
-
-                If not specified:
-                - First draw any excess fee credit from the outer transaction group
-                - Next the app account issuing this inner transaction is charged the fee for the transaction
-
-                If specified:
-                - The value passed for the fee is set on all transactions created as part of the group transaction.
-
-                e.g. if Int(0) is passed it requires the outer group to have enough fee credit to cover all the inner transactions
-                executed, otherwise the entire transaction group will fail.
+            fee_source (optional): source that should be used for covering fees on 
+                the inner transactions that are generated. 
 
         Note: the available budget just prior to calling ensure_budget() must be
         high enough to execute the budget increase code. The exact budget required
@@ -181,7 +171,8 @@ class OpUp:
 
         Args:
             fee: fee expenditure cap for the op-code budget maximization.
-            payer: TODO
+            fee_source (optional): source that should be used for covering fees on 
+                the inner transactions that are generated. 
 
         Note: the available budget just prior to calling maximize_budget() must be
         high enough to execute the budget increase code. The exact budget required
