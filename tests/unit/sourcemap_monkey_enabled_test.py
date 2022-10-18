@@ -1,3 +1,9 @@
+"""
+This file monkey-patches ConfigParser in order to enable
+source mapping and test the results of source mapping various 
+PyTeal apps.
+"""
+
 from configparser import ConfigParser
 from pathlib import Path
 
@@ -107,3 +113,29 @@ def test_mocked_config_for_frames(_):
 
     assert Frames.skipping_all() is False
     assert Frames.skipping_all(_force_refresh=True) is False
+
+
+# TODO: this is temporary
+
+
+def make(x, y, z):
+    import pyteal as pt
+
+    return pt.Int(x) + pt.Int(y) + pt.Int(z)
+
+
+import pyteal as pt
+
+e1 = pt.Seq(pt.Pop(make(1, 2, 3)), pt.Pop(make(4, 5, 6)), make(7, 8, 9))
+
+
+@pt.Subroutine(pt.TealType.uint64)
+def foo(x):
+    return pt.Seq(pt.Pop(e1), e1)
+
+
+@mock.patch.object(ConfigParser, "getboolean", return_value=True)
+def test_lots_o_indirection(_):
+    bundle = pt.Compilation(foo(pt.Int(42)), pt.Mode.Application, version=6).compile(
+        with_sourcemap=True
+    )

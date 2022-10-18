@@ -1,9 +1,9 @@
-from ast import AST
+from ast import AST, unparse
 from configparser import ConfigParser
 from dataclasses import dataclass
 import executing
 from inspect import FrameInfo, stack
-from typing import cast, Union
+from typing import cast, Callable, Optional, Union
 
 from pyteal.errors import TealInternalError
 
@@ -69,8 +69,44 @@ def correctBase32Padding(s: str) -> str:
 
 @dataclass(frozen=True)
 class Frame:
+    _internal_paths = [
+        # "pyteal/__init__.py",
+        "pyteal/ast",
+        "pyteal/compiler",
+        "pyteal/ir",
+        "pyteal/pragma",
+        "tests/abi_roundtrip.py",
+        "tests/blackbox.py",
+        "tests/compile_asserts.py",
+        "tests/mock_version.py",
+    ]
+
     frame_info: FrameInfo
     node: AST | None
+
+    def _is_right_before_core(self) -> bool:
+        code = self.frame_info.code_context
+        return "Frames()" in "".join(code) if code else False
+
+    def _is_pyteal(self) -> bool:
+        f = self.frame_info.filename
+        return any(w in f for w in self._internal_paths)
+
+    def _is_py_crud(self) -> bool:
+        """Hackery that depends on C-Python. Not sure how reliable."""
+        return (fi := self.frame_info).code_context is None and fi.filename.startswith(
+            "<"
+        )
+
+    @classmethod
+    def _init_or_drop(cls, f: FrameInfo) -> Optional["Frame"]:
+        frame = Frame(f, cast(AST | None, executing.Source.executing(f.frame).node))
+        return frame if not frame._is_py_crud() else None
+
+    def __repr__(self) -> str:
+        node = unparse(n) if (n := self.node) else None
+        context = "".join(cc) if (cc := (fi := self.frame_info).code_context) else None
+        return f"{node=}; {context=}; frame_info={fi}"
 
 
 FrameSequence = Union[Frame, list["FrameSequence"]]
@@ -114,14 +150,47 @@ class Frames:
 
         return cls._skip_all
 
-    def __init__(self):
+    def __init__(self, keep_all: bool = False, TODO_experimental: bool = True):
         self.frames: list[Frame] = []
         if self.skipping_all():
             return
-        self.frames = [
-            Frame(f, cast(AST | None, executing.Source.executing(f.frame).node))
-            for f in stack()
-        ]
+
+        frames = [frame for f in stack() if (frame := Frame._init_or_drop(f))]
+
+        if keep_all:
+            self.frames = frames
+            return
+
+        last_drop_idx = -1
+        for i, f in enumerate(frames):
+            if f._is_right_before_core():
+                last_drop_idx = i
+                break
+
+        last_pyteal_idx = last_drop_idx
+        prev_file = ""
+        in_post_pyteal_streak = False
+        last_post_pyteal_streak_idx = last_pyteal_idx + 1
+        for i in range(last_drop_idx + 1, len(frames)):
+            f = frames[i]
+            curr_file = f.frame_info.filename
+            if f._is_pyteal():
+                last_pyteal_idx = i
+            else:
+                if last_pyteal_idx == i - 1:
+                    in_post_pyteal_streak = True
+                    last_post_pyteal_streak_idx = i
+                elif in_post_pyteal_streak:
+                    in_post_pyteal_streak = prev_file == curr_file
+                    if in_post_pyteal_streak:
+                        last_post_pyteal_streak_idx = i
+            prev_file = curr_file
+
+        last_keep_idx = (
+            last_post_pyteal_streak_idx if TODO_experimental else last_pyteal_idx + 1
+        )
+
+        self.frames = frames[last_drop_idx + 1 : last_keep_idx + 1]
 
     def __getitem__(self, index: int) -> Frame:
         return self.frames[index]

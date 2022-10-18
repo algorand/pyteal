@@ -508,7 +508,7 @@ class PyTealSourceMap:
 
         return mutated
 
-    _interal_paths = [
+    _internal_paths = [
         # "pyteal/__init__.py",
         "pyteal/ast",
         "pyteal/compiler",
@@ -531,7 +531,7 @@ class PyTealSourceMap:
         frames = t.frames()
         frame_infos = frames.frame_infos()
         pyteal_idx = [
-            any(w in f.filename for w in cls._interal_paths) for f in frame_infos
+            any(w in f.filename for w in cls._internal_paths) for f in frame_infos
         ]
 
         def is_code_file(idx):
