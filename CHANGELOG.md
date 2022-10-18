@@ -1,7 +1,17 @@
 # Unreleased
 
+## Added
+* Added `abi.type_spec_is_assignable_to` to check for compatible ABI type assignments. ([#540](https://github.com/algorand/pyteal/pull/540))
+
 ## Fixed
 * Erroring on constructing an odd length hex string. ([#539](https://github.com/algorand/pyteal/pull/539))
+* Incorrect behavior when overriding a method name ([#550](https://github.com/algorand/pyteal/pull/550))
+* Add missing `abi.NamedTupleTypeSpec` equality override, such that equality holds only when `instance_class` and `value_type_specs` match. ([#540](https://github.com/algorand/pyteal/pull/540))
+* Prohibited instantiating `abi.NamedTuple` from inheriting subclasses of `abi.NamedTuple`, for fields in subclasses are not inherited. ([#540](https://github.com/algorand/pyteal/pull/540))
+
+## Changed
+* Subroutines that take ABI type of Transaction now allow any Transaction type to be passed. ([#531](https://github.com/algorand/pyteal/pull/531))
+* Relaxing exact type check in `InnerTxnFieldExpr.MethodCall` by applying `abi.type_spec_is_assignable_to`. ([#561](https://github.com/algorand/pyteal/pull/561))
 
 # 0.18.1
 

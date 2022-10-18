@@ -82,8 +82,10 @@ from pyteal.ast.abi.util import (
     make,
     size_of,
     type_spec_from_annotation,
+    type_spec_from_algosdk,
     type_specs_from_signature,
     contains_type_spec,
+    type_spec_is_assignable_to,
 )
 
 __all__ = [
@@ -161,10 +163,12 @@ __all__ = [
     "KeyRegisterTransactionTypeSpec",
     "TransactionTypeSpecs",
     "type_spec_from_annotation",
+    "type_spec_from_algosdk",
     "type_specs_from_signature",
     "make",
     "size_of",
     "algosdk_from_annotation",
     "algosdk_from_type_spec",
     "contains_type_spec",
+    "type_spec_is_assignable_to",
 ]
