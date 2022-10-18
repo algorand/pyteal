@@ -106,7 +106,7 @@ class OpUp:
 
         self.mode = mode
 
-    def _construct_itxn(self, inner_fee: Expr = None) -> Expr:
+    def _construct_itxn(self, inner_fee: Optional[Expr]) -> Expr:
         fields: dict[TxnField, Expr | list[Expr]] = {
             TxnField.type_enum: TxnType.ApplicationCall
         }
