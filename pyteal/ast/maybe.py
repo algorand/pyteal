@@ -32,6 +32,7 @@ class MaybeValue(MultiValue):
             immediate_args (optional): Immediate arguments for the op. Defaults to None.
             args (optional): Stack arguments for the op. Defaults to None.
             compile_check (optional): Callable compile check. Defaults to program version check.
+                This parameter overwrites the default program version check.
         """
 
         # Default compile check if one is not given
