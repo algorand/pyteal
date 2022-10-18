@@ -10,3 +10,7 @@ services:
     environment:
       - DEV_MODE
       - TOKEN=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    healthcheck:
+      test: goal node status || exit 1
+      interval: 2s
+      retries: 10

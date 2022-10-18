@@ -58,11 +58,8 @@ lint-and-test: check-generate-init lint test-unit
 
 # ---- Integration Tests (algod required) ---- #
 
-sandbox-dev-up: SHELL:=/bin/bash
 sandbox-dev-up:
-	docker-compose up -d algod
-	SANDBOX_READY_REGEX="^Last committed block:*" ; \
-	while ! [[ `docker compose exec algod goal node status 2>&1 | head -n 1` =~ $$SANDBOX_READY_REGEX ]] ; do echo "waiting algod..." ; sleep 1 ; done
+	docker-compose up -d algod --wait
 
 sandbox-dev-stop:
 	docker-compose stop algod
