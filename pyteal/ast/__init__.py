@@ -157,7 +157,7 @@ from pyteal.ast.scratch import (
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
 from pyteal.ast.maybe import MaybeValue
 from pyteal.ast.multi import MultiValue
-from pyteal.ast.opup import OpUp, OpUpMode
+from pyteal.ast.opup import OpUp, OpUpMode, OpUpFeeSource
 from pyteal.ast.ecdsa import EcdsaCurve, EcdsaVerify, EcdsaDecompress, EcdsaRecover
 from pyteal.ast.router import (
     Router,
@@ -291,6 +291,7 @@ __all__ = [
     "MultiValue",
     "OpUp",
     "OpUpMode",
+    "OpUpFeeSource",
     "BytesAdd",
     "BytesMinus",
     "BytesDiv",

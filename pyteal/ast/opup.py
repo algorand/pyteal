@@ -26,21 +26,21 @@ class OpUpMode(Enum):
     during evaluation.
     """
 
-    # The app to call must be provided by the user.
+    #: The app to call must be provided by the user.
     Explicit = 0
 
-    # The app to call is created then deleted for each request to increase budget.
+    #: The app to call is created then deleted for each request to increase budget.
     OnCall = 1
 
 
 class OpUpFeeSource(Enum):
-    """An Enum object that defines the source for fees for the OpUp utility.
-    """
-    # Only the excess fee (credit) on the outer group should be used (set inner_tx.fee=0)
+    """An Enum object that defines the source for fees for the OpUp utility."""
+
+    #: Only the excess fee (credit) on the outer group should be used (set inner_tx.fee=0)
     GroupCredit = 0
-    # The app's account will cover all fees (set inner_tx.fee=Global.min_tx_fee())
+    #: The app's account will cover all fees (set inner_tx.fee=Global.min_tx_fee())
     AppAccount = 1
-    # First the excess will be used, remaining fees will be taken from the app account
+    #: First the excess will be used, remaining fees will be taken from the app account
     Any = 2
 
 
@@ -138,8 +138,8 @@ class OpUp:
         Args:
             required_budget: minimum op-code budget to ensure for the
                 upcoming execution.
-            fee_source (optional): source that should be used for covering fees on 
-                the inner transactions that are generated. 
+            fee_source (optional): source that should be used for covering fees on
+                the inner transactions that are generated.
 
         Note: the available budget just prior to calling ensure_budget() must be
         high enough to execute the budget increase code. The exact budget required
@@ -171,8 +171,8 @@ class OpUp:
 
         Args:
             fee: fee expenditure cap for the op-code budget maximization.
-            fee_source (optional): source that should be used for covering fees on 
-                the inner transactions that are generated. 
+            fee_source (optional): source that should be used for covering fees on
+                the inner transactions that are generated.
 
         Note: the available budget just prior to calling maximize_budget() must be
         high enough to execute the budget increase code. The exact budget required
