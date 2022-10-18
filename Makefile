@@ -62,7 +62,7 @@ sandbox-dev-up: SHELL:=/bin/bash
 sandbox-dev-up:
 	docker-compose up -d algod
 	SANDBOX_READY_REGEX="^Last committed block:*" ; \
-	while ! [[ `docker compose exec algod goal node status | head -n 1` =~ $$SANDBOX_READY_REGEX ]] ; do sleep 1 ; done
+	while ! [[ `docker compose exec algod goal node status 2>&1 | head -n 1` =~ $$SANDBOX_READY_REGEX ]] ; do echo "waiting algod..." ; sleep 1 ; done
 
 sandbox-dev-stop:
 	docker-compose stop algod
