@@ -57,7 +57,7 @@ def test_opup_explicit():
     )
     _ = pt.Seq(
         opup.maximize_budget(
-            fee=pt.Txn.fee() - pt.Int(100), fee_source=OpUpFeeSource.GroupExcess
+            fee=pt.Txn.fee() - pt.Int(100), fee_source=OpUpFeeSource.GroupCredit
         ),
         pt.Return(pt.Int(1)),
     )
@@ -112,7 +112,7 @@ def test_opup_oncall():
     )
     _ = pt.Seq(
         opup.maximize_budget(
-            fee=pt.Txn.fee() - pt.Int(100), fee_source=OpUpFeeSource.GroupExcess
+            fee=pt.Txn.fee() - pt.Int(100), fee_source=OpUpFeeSource.GroupCredit
         ),
         pt.Return(pt.Int(1)),
     )

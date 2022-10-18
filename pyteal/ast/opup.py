@@ -34,17 +34,17 @@ class OpUpMode(Enum):
 
 
 class OpUpFeeSource(Enum):
-    # Only the excess fee on the outer group should be used (set inner_tx.fee=0)
-    GroupExcess = 0
+    # Only the excess fee (credit) on the outer group should be used (set inner_tx.fee=0)
+    GroupCredit = 0
     # The app's account will cover all fees (set inner_tx.fee=Global.min_tx_fee())
     AppAccount = 1
     # First the excess will be used, remaining fees will be taken from the app account
     Any = 2
 
 
-def fee_by_source(source: OpUpFeeSource) -> Optional[Expr]:
+def _fee_by_source(source: OpUpFeeSource) -> Optional[Expr]:
     match source:
-        case OpUpFeeSource.GroupExcess:
+        case OpUpFeeSource.GroupCredit:
             return Int(0)
         case OpUpFeeSource.AppAccount:
             return Global.min_txn_fee()
@@ -170,7 +170,7 @@ class OpUp:
         return Seq(
             buffered_budget.store(required_budget + buffer),
             While(buffered_budget.load() > Global.opcode_budget()).Do(
-                self._construct_itxn(inner_fee=fee_by_source(fee_source))
+                self._construct_itxn(inner_fee=_fee_by_source(fee_source))
             ),
         )
 
@@ -195,7 +195,7 @@ class OpUp:
         i = ScratchVar(TealType.uint64)
         n = fee / Global.min_txn_fee()
         return For(i.store(Int(0)), i.load() < n, i.store(i.load() + Int(1))).Do(
-            self._construct_itxn(inner_fee=fee_by_source(fee_source))
+            self._construct_itxn(inner_fee=_fee_by_source(fee_source))
         )
 
 
