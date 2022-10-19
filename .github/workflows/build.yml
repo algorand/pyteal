@@ -44,14 +44,14 @@ jobs:
           expected="${{ matrix.python }}"
           echo $installed
           [[ $installed =~ "Python ${expected}" ]] && echo "Configured Python" || (echo "Failed to configure Python" && exit 1)
-      - name: Create sandbox
-        run: make sandbox-dev-up
+      - name: Start algod
+        run: make algod-start
       - name: Install python dependencies
         run: make setup-development
       - name: Integration Tests Only
         run: make test-integration
-      - name: Stop running images
-        run: make sandbox-dev-stop
+      - name: Stop algod
+        run: make algod-stop
 
   build-docset:
     runs-on: ubuntu-20.04

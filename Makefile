@@ -58,10 +58,10 @@ lint-and-test: check-generate-init lint test-unit
 
 # ---- Integration Tests (algod required) ---- #
 
-sandbox-dev-up:
+algod-start:
 	docker compose up -d algod --wait
 
-sandbox-dev-stop:
+algod-stop:
 	docker compose stop algod
 
 integration-run:
