@@ -60,10 +60,10 @@ lint-and-test: check-generate-init lint test-unit
 
 <<<<<<< HEAD
 algod-start:
-	docker-compose up -d algod --wait
+	docker compose up -d algod --wait
 
 algod-stop:
-	docker-compose stop algod
+	docker compose stop algod
 =======
 sandbox-dev-up:
 	docker compose up -d algod --wait
