@@ -11,6 +11,6 @@ services:
       - DEV_MODE
       - TOKEN=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     healthcheck:
-      test: goal node status || exit 1
+      test: goal node status
       interval: 2s
       retries: 10
