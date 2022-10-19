@@ -21,7 +21,6 @@ if TYPE_CHECKING:
 class _SubroutineDeclByVersion:
     def __init__(self, subroutine_def: "SubroutineDefinition") -> None:
         from pyteal.compiler.compiler import FRAME_POINTER_VERSION, MAX_PROGRAM_VERSION
-        from pyteal.ir import Op
 
         self.subroutine: SubroutineDefinition = subroutine_def
         self.version_map: dict[range, Optional[SubroutineDeclaration]] = {
@@ -43,13 +42,10 @@ class _SubroutineDeclByVersion:
 
     def get_declaration(self) -> "SubroutineDeclaration":
         # XXX MARK THIS METHOD TO BE DEPRECATED LATER I GUESS
-        from pyteal.ir import Op
-
         return self.get_declaration_by_version(Op.callsub.min_version)
 
     def get_declaration_by_version(self, version: int) -> "SubroutineDeclaration":
         from pyteal.compiler.compiler import MAX_PROGRAM_VERSION
-        from pyteal.ir import Op
 
         for _r, decl in self.version_map.items():
             if version not in _r:
