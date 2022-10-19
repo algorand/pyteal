@@ -65,14 +65,14 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
           sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
           docker-compose --version
-      - name: Create sandbox
-        run: make sandbox-dev-up
+      - name: Start algod
+        run: make algod-start
       - name: Install python dependencies
         run: make setup-development
       - name: Integration Tests Only
         run: make test-integration
-      - name: Stop running images
-        run: make sandbox-dev-stop
+      - name: Stop algod
+        run: make algod-stop
 
   build-docset:
     runs-on: ubuntu-20.04
