@@ -103,6 +103,7 @@ class OpUp:
         elif mode == OpUpMode.OnCall:
             if target_app_id is not None:
                 raise TealInputError("target_app_id is not used in OnCall OpUp mode")
+            self.target_app_id = None
         else:
             raise TealInputError("Invalid OpUp mode provided")
 
