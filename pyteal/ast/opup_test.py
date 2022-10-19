@@ -179,7 +179,7 @@ def test_OpUp_ensure_budget(
 
     with pytest.raises(pt.TealTypeError):
         opup.ensure_budget(
-            required_budget=required_budget, fee_source=pt.Bytes("fee_src")
+            required_budget=required_budget, fee_source=pt.Bytes("fee_src")  # type: ignore[arg-type]
         )
 
 
@@ -224,4 +224,4 @@ def test_OpUp_maximize_budget(
         opup.maximize_budget(fee=pt.Bytes("fee"))
 
     with pytest.raises(pt.TealTypeError):
-        opup.maximize_budget(fee=fee, fee_source=pt.Bytes("fee_src"))
+        opup.maximize_budget(fee=fee, fee_source=pt.Bytes("fee_src"))  # type: ignore[arg-type]

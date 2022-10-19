@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, cast
 from pyteal.ast.app import OnComplete
 from pyteal.errors import TealInputError, TealTypeError
 from pyteal.ast.while_ import While
@@ -99,15 +99,14 @@ class OpUp:
                     "target_app_id must be specified in Explicit OpUp mode"
                 )
             require_type(target_app_id, TealType.uint64)
-            self.target_app_id = target_app_id
         elif mode == OpUpMode.OnCall:
             if target_app_id is not None:
                 raise TealInputError("target_app_id is not used in OnCall OpUp mode")
-            self.target_app_id = None
         else:
             raise TealInputError("Invalid OpUp mode provided")
 
         self.mode = mode
+        self.target_app_id = target_app_id
 
     def _construct_itxn(self, inner_fee: Optional[Expr]) -> Expr:
         fields: dict[TxnField, Expr | list[Expr]] = {
@@ -121,7 +120,7 @@ class OpUp:
             fields[TxnField.fee] = inner_fee
 
         if self.mode == OpUpMode.Explicit:
-            fields |= {TxnField.application_id: self.target_app_id}
+            fields |= {TxnField.application_id: cast(Expr, self.target_app_id)}
         else:
             fields |= {
                 TxnField.on_completion: OnComplete.DeleteApplication,
