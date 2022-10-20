@@ -13,6 +13,7 @@ from pyteal.ast.addr import Addr
 from pyteal.ast.abi.type import ComputedValue, BaseType
 from pyteal.ast.abi.array_static import StaticArray, StaticArrayTypeSpec
 from pyteal.ast.abi.uint import ByteTypeSpec, Byte
+from pyteal.ast.abi.util import type_spec_is_assignable_to
 from pyteal.ast.expr import Expr
 
 
@@ -65,8 +66,6 @@ class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
             bytes,
             Expr,
             Sequence[Byte],
-            StaticArray[Byte, Literal[AddressLength.Bytes]],
-            ComputedValue[StaticArray[Byte, Literal[AddressLength.Bytes]]],
             "Address",
             ComputedValue["Address"],
         ],
@@ -93,23 +92,9 @@ class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
 
         match value:
             case ComputedValue():
-                # TODO need to see again if we need to change on type system or not, _set_with_computed_type?
-                pts = value.produced_type_spec()
-                if pts == AddressTypeSpec() or pts == StaticArrayTypeSpec(
-                    ByteTypeSpec(), AddressLength.Bytes
-                ):
-                    return value.store_into(self)
-
-                raise TealInputError(
-                    f"Got ComputedValue with type spec {pts}, expected AddressTypeSpec or StaticArray[Byte, Literal[AddressLength.Bytes]]"
-                )
+                return self._set_with_computed_type(value)
             case BaseType():
-                # TODO need to see again if we need to change on type system or not
-                if (
-                    value.type_spec() == AddressTypeSpec()
-                    or value.type_spec()
-                    == StaticArrayTypeSpec(ByteTypeSpec(), AddressLength.Bytes)
-                ):
+                if type_spec_is_assignable_to(value.type_spec(), AddressTypeSpec()):
                     return self.stored_value.store(value.stored_value.load())
 
                 raise TealInputError(
