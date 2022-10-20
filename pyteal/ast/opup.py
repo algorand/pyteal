@@ -15,7 +15,6 @@ from pyteal.types import TealType, require_type
 from enum import Enum
 
 ON_CALL_APP = Bytes("base16", "068101")  # v6 program "int 1"
-MIN_TXN_FEE = Int(1000)
 
 
 class OpUpMode(Enum):
