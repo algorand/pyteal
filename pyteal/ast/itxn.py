@@ -457,7 +457,8 @@ class InnerTxnBuilder:
             else:
                 if isinstance(arg, Expr):
                     # This should _always_ be bytes, since we assume its already abi encoded
-                    require_type(arg, TealType.bytes)
+                    if arg.type_of() != TealType.bytes:
+                        raise TealTypeError(arg, TealType.bytes)
                     app_args.append(arg)
                 elif isinstance(arg, abi.BaseType):
                     if not abi.type_spec_is_assignable_to(
