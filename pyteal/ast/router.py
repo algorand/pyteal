@@ -378,6 +378,11 @@ class ASTBuilder:
             # assign to a var here since we modify app_arg_vals later
             tuplify = len(app_arg_vals) > METHOD_ARG_NUM_CUTOFF
 
+            # only transaction args (these are omitted from app args)
+            txn_arg_vals: list[abi.Transaction] = [
+                ats for ats in arg_vals if isinstance(ats, abi.Transaction)
+            ]
+
             # Tuple-ify any app args after the limit
             if tuplify:
                 last_arg_specs_grouped: list[abi.TypeSpec] = [
