@@ -431,6 +431,7 @@ class ASTBuilder:
             # de-tuple into specific values using `store_into` on
             # each element of the tuple'd arguments
             if tuplify:
+                tupled_app_args = app_arg_vals[METHOD_ARG_NUM_CUTOFF - 1 :]
                 tupled_arg: abi.Tuple = cast(abi.Tuple, app_arg_vals[-1])
                 de_tuple_instructions: list[Expr] = [
                     tupled_arg[idx].store_into(arg_val)
