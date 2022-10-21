@@ -12,6 +12,7 @@
 ## Changed
 * Subroutines that take ABI type of Transaction now allow any Transaction type to be passed. ([#531](https://github.com/algorand/pyteal/pull/531))
 * Relaxing exact type check in `InnerTxnFieldExpr.MethodCall` by applying `abi.type_spec_is_assignable_to`. ([#561](https://github.com/algorand/pyteal/pull/561))
+* Relaxing exact type check in `abi` package by applying `abi.type_spec_is_assignable_to`. ([#567](https://github.com/algorand/pyteal/pull/567))
 
 # 0.18.1
 
