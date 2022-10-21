@@ -9,6 +9,7 @@
 * Incorrect behavior when overriding a method name ([#550](https://github.com/algorand/pyteal/pull/550))
 * Add missing `abi.NamedTupleTypeSpec` equality override, such that equality holds only when `instance_class` and `value_type_specs` match. ([#540](https://github.com/algorand/pyteal/pull/540))
 * Prohibited instantiating `abi.NamedTuple` from inheriting subclasses of `abi.NamedTuple`, for fields in subclasses are not inherited. ([#540](https://github.com/algorand/pyteal/pull/540))
+* Fixed bug in app arg tupling and detupling when a Txn argument is present ([#577](https://github.com/algorand/pyteal/pull/577))
 
 ## Changed
 * Subroutines that take ABI type of Transaction now allow any Transaction type to be passed. ([#531](https://github.com/algorand/pyteal/pull/531))

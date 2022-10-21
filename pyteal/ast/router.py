@@ -380,8 +380,9 @@ class ASTBuilder:
 
             # Tuple-ify any app args after the limit
             if tuplify:
+                tupled_app_args = app_arg_vals[METHOD_ARG_NUM_CUTOFF - 1 :]
                 last_arg_specs_grouped: list[abi.TypeSpec] = [
-                    t.type_spec() for t in app_arg_vals[METHOD_ARG_NUM_CUTOFF - 1 :]
+                    t.type_spec() for t in tupled_app_args
                 ]
                 app_arg_vals = app_arg_vals[: METHOD_ARG_NUM_CUTOFF - 1]
                 app_arg_vals.append(
@@ -431,13 +432,10 @@ class ASTBuilder:
             # de-tuple into specific values using `store_into` on
             # each element of the tuple'd arguments
             if tuplify:
-                tupled_abi_vals: list[abi.BaseType] = arg_vals[
-                    METHOD_ARG_NUM_CUTOFF - 1 :
-                ]
                 tupled_arg: abi.Tuple = cast(abi.Tuple, app_arg_vals[-1])
                 de_tuple_instructions: list[Expr] = [
                     tupled_arg[idx].store_into(arg_val)
-                    for idx, arg_val in enumerate(tupled_abi_vals)
+                    for idx, arg_val in enumerate(tupled_app_args)
                 ]
                 decode_instructions += de_tuple_instructions
 
