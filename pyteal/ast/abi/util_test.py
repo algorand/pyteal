@@ -840,9 +840,9 @@ SAFE_BIDIRECTIONAL_TEST_CASES: list[SafeBidirectional] = (
                         abi.Transaction,
                     ]
                 ),
-                abi.type_spec_from_annotation(NamedTDecl),
             ]
         ),
+        SafeBidirectional([abi.type_spec_from_annotation(NamedTDecl)]),
     ]
     + [
         SafeBidirectional([spec])
@@ -890,6 +890,10 @@ SAFE_ASSIGNMENT_TEST_CASES: list[SafeAssignment] = [
         [abi.DynamicBytesTypeSpec(), abi.DynamicArrayTypeSpec(abi.ByteTypeSpec())],
     ),
     SafeAssignment(
+        abi.AddressTypeSpec(),
+        [abi.StaticArrayTypeSpec(abi.ByteTypeSpec(), 32), abi.StaticBytesTypeSpec(32)],
+    ),
+    SafeAssignment(
         abi.type_spec_from_annotation(NamedTDecl),
         [
             abi.type_spec_from_annotation(
@@ -906,18 +910,20 @@ SAFE_ASSIGNMENT_TEST_CASES: list[SafeAssignment] = [
         ],
     ),
     SafeAssignment(
-        abi.type_spec_from_annotation(
-            abi.Tuple3[
-                abi.Uint64,
+        abi.type_spec_from_annotation(NamedTDecl),
+        [
+            abi.type_spec_from_annotation(
                 abi.Tuple3[
-                    abi.PaymentTransaction,
-                    abi.Address,
-                    abi.StaticArray[abi.Byte, Literal[16]],
-                ],
-                abi.PaymentTransaction,
-            ]
-        ),
-        [abi.type_spec_from_annotation(NamedTDecl)],
+                    abi.Uint64,
+                    abi.Tuple3[
+                        abi.PaymentTransaction,
+                        abi.Address,
+                        abi.StaticArray[abi.Byte, Literal[16]],
+                    ],
+                    abi.Transaction,
+                ]
+            ),
+        ],
     ),
     SafeAssignment(
         abi.StaticArrayTypeSpec(abi.StringTypeSpec(), 10),
@@ -950,17 +956,13 @@ def test_type_spec_is_assignable_safe_assignment_full_coverage(ts: type):
         return False
 
     # Abstract types and types without safe assignments should _not_ appear in test cases.
-    # These typespecs are either:
-    # - only assignable to themselves, and that forms a bidirectional assignment, or
-    # - only bidirectionally assignable to other types.
+    # These typespecs are only assignable to themselves, and that forms a bidirectional assignment.
     # Otherwise, they are unsafe bidirectional with all the other non-abstract typespecs.
     if isabstract(ts) or ts in {
         abi.AccountTypeSpec,
         abi.ApplicationTypeSpec,
         abi.AssetTypeSpec,
         abi.BoolTypeSpec,
-        abi.AddressTypeSpec,
-        abi.StaticBytesTypeSpec,
         abi.ByteTypeSpec,
         abi.Uint8TypeSpec,
         abi.Uint16TypeSpec,
@@ -997,12 +999,6 @@ UNSAFE_BIDIRECTIONAL_TEST_CASES: list[UnsafeBidirectional] = [
     ),
     UnsafeBidirectional(
         [abi.DynamicBytesTypeSpec(), abi.DynamicArrayTypeSpec(abi.Uint16TypeSpec())]
-    ),
-    UnsafeBidirectional(
-        [abi.AddressTypeSpec(), abi.StaticArrayTypeSpec(abi.ByteTypeSpec(), 32)],
-    ),
-    UnsafeBidirectional(
-        [abi.AddressTypeSpec(), abi.StaticBytesTypeSpec(32)],
     ),
     UnsafeBidirectional(
         [abi.StaticBytesTypeSpec(7), abi.StaticArrayTypeSpec(abi.ByteTypeSpec(), 11)]

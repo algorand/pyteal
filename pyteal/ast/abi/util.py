@@ -509,27 +509,31 @@ def type_spec_is_assignable_to(a: TypeSpec, b: TypeSpec) -> bool:
         * value of type :code:`a` has identical encoding as value of type :code:`b`
         * type :code:`b` is as general as, or more general than type :code:`a`
 
-    For `abi.NamedTuple`, we allow mutual assigning between `abi.Tuple` and `abi.NamedTuple`.
-    But between `abi.NamedTuple`, we only return true when the type specs are identical, or we cannot compare against generality.
+    On :code:`abi.Tuple`, we have following policies:
+
+        * We allow assigning from :code:`abi.NamedTuple` to :code:`abi.Tuple`, for :code:`abi.Tuple` is more general than :code:`abi.NamedTuple`.
+        * We disallow assigning from :code:`abi.Tuple` to :code:`abi.NamedTuple`, for :code:`abi.NamedTuple` is not as general as :code:`abi.Tuple`.
+        * We allow mutual assigning between two :code:`abi.Tuple` s, if they have same fields and ordering.
+        * We allow mutual assigning between two :code:`abi.NamedTuple` s, if they are *identical*, or we cannot compare against generality.
 
     Some examples are illustrated as following:
 
-    =========================== =========================== ============= =========================================================================
+    =========================== =========================== ============= ===================================================================
     Type :code:`a`              Type :code:`b`              Assignable?   Reason
-    =========================== =========================== ============= =========================================================================
+    =========================== =========================== ============= ===================================================================
     :code:`DynamicArray[Byte]`  :code:`DynamicBytes`        :code:`True`  :code:`DynamicBytes` is as general as :code:`DynamicArray[Byte]`
     :code:`DynamicBytes`        :code:`DynamicArray[Byte]`  :code:`True`  :code:`DynamicArray[Byte]` is as general as :code:`DynamicBytes`
     :code:`StaticArray[Byte,N]` :code:`StaticBytes[N]`      :code:`True`  :code:`StaticBytes[N]` is as general as :code:`StaticArray[Byte,N]`
     :code:`StaticBytes[N]`      :code:`StaticArray[Byte,N]` :code:`True`  :code:`StaticArray[Byte,N]` is as general as :code:`StaticBytes[N]`
     :code:`String`              :code:`DynamicBytes`        :code:`True`  :code:`DynamicBytes` is more general than :code:`String`
     :code:`DynamicBytes`        :code:`String`              :code:`False` :code:`String` is more specific than :code:`DynamicBytes`
-    :code:`Address`             :code:`StaticBytes[32]`     :code:`False` :code:`StaticBytes[32]` cannot compare generality against :code:`Address`
-    :code:`StaticBytes[32]`     :code:`Address`             :code:`False` :code:`Address` cannot compare generality against :code:`StaticBytes[32]`
+    :code:`Address`             :code:`StaticBytes[32]`     :code:`True`  :code:`StaticBytes[32]` is more general than :code:`Address`
+    :code:`StaticBytes[32]`     :code:`Address`             :code:`False` :code:`Address` is not as general as :code:`StaticBytes[32]`
     :code:`PaymentTransaction`  :code:`Transaction`         :code:`True`  :code:`Transaction` is more general than :code:`PaymentTransaction`
     :code:`Transaction`         :code:`PaymentTransaction`  :code:`False` :code:`PaymentTransaction` is more specific than :code`Transaction`
     :code:`Uint8`               :code:`Byte`                :code:`True`  :code:`Uint8` is as general as :code:`Byte`
     :code:`Byte`                :code:`Uint8`               :code:`True`  :code:`Byte` is as general as :code:`Uint8`
-    =========================== =========================== ============= =========================================================================
+    =========================== =========================== ============= ===================================================================
 
     Args:
         a: The abi.TypeSpec of the value on the right hand side of the assignment.
@@ -553,6 +557,8 @@ def type_spec_is_assignable_to(a: TypeSpec, b: TypeSpec) -> bool:
     match a, b:
         case NamedTupleTypeSpec(), NamedTupleTypeSpec():
             return a == b
+        case TupleTypeSpec(), NamedTupleTypeSpec():
+            return False
         case TupleTypeSpec(), TupleTypeSpec():
             a, b = cast(TupleTypeSpec, a), cast(TupleTypeSpec, b)
             if a.length_static() != b.length_static():
@@ -569,7 +575,8 @@ def type_spec_is_assignable_to(a: TypeSpec, b: TypeSpec) -> bool:
                 return False
             match a, b:
                 case AddressTypeSpec(), StaticArrayTypeSpec():
-                    return str(a) == str(b)
+                    a, b = cast(AddressTypeSpec, a), cast(StaticArrayTypeSpec, b)
+                    return a.length_static() == b.length_static()
                 case StaticArrayTypeSpec(), AddressTypeSpec():
                     return str(a) == str(b)
                 case StaticArrayTypeSpec(), StaticArrayTypeSpec():

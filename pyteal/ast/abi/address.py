@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import Union, Sequence, Literal, cast
+from typing import Sequence, Literal, cast
 from collections.abc import Sequence as CollectionSequence
 
 from pyteal.errors import TealInputError
@@ -59,16 +59,14 @@ class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
         """
         return self.stored_value.load()
 
-    def set(
+    def set(  # type: ignore[override]
         self,
-        value: Union[
-            str,
-            bytes,
-            Expr,
-            Sequence[Byte],
-            "Address",
-            ComputedValue["Address"],
-        ],
+        value: str
+        | bytes
+        | Expr
+        | Sequence[Byte]
+        | "Address"
+        | ComputedValue["Address"],
     ):
         """Set the value of this Address to the input value.
 
