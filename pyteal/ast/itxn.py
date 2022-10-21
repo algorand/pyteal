@@ -342,6 +342,8 @@ class InnerTxnBuilder:
                 field being set. These fields are set on the ApplicationCallTransaction being constructed
         """
 
+        from pyteal.ast.abi.util import type_spec_is_assignable_to
+
         require_type(app_id, TealType.uint64)
 
         # Default, always need these
@@ -388,7 +390,7 @@ class InnerTxnBuilder:
                 txntype = cast(EnumInt, arg[TxnField.type_enum]).name
                 # If the arg is an unspecified transaction, no need to check the type_enum
 
-                if not abi.type_spec_is_assignable_to(
+                if not type_spec_is_assignable_to(
                     abi.type_spec_from_algosdk(txntype), method_arg_ts
                 ):
                     raise TealInputError(
@@ -460,9 +462,7 @@ class InnerTxnBuilder:
                     require_type(arg, TealType.bytes)
                     app_args.append(arg)
                 elif isinstance(arg, abi.BaseType):
-                    if not abi.type_spec_is_assignable_to(
-                        arg.type_spec(), method_arg_ts
-                    ):
+                    if not type_spec_is_assignable_to(arg.type_spec(), method_arg_ts):
                         raise TealTypeError(arg.type_spec(), method_arg_ts)
                     app_args.append(arg.encode())
                 else:

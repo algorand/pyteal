@@ -261,6 +261,8 @@ class SubroutineDefinition:
         self,
         args: list[Expr | ScratchVar | abi.BaseType],
     ) -> "SubroutineCall":
+        from pyteal.ast.abi.util import type_spec_is_assignable_to
+
         if len(args) != self.argument_count():
             raise TealInputError(
                 f"Incorrect number of arguments for subroutine call. "
@@ -283,7 +285,7 @@ class SubroutineDefinition:
                         f"supplied argument at index {i} should be an ABI type but got {arg}"
                     )
 
-                if not abi.type_spec_is_assignable_to(arg.type_spec(), arg_type):
+                if not type_spec_is_assignable_to(arg.type_spec(), arg_type):
                     raise TealInputError(
                         f"supplied argument {arg} at index {i} "
                         f"should have ABI typespec {arg_type} but got {arg.type_spec()}"
