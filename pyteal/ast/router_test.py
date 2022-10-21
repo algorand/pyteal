@@ -142,6 +142,35 @@ def many_args_with_transaction(
     return output.set(_t.get())
 
 
+@pt.ABIReturnSubroutine
+def add_and_store(
+    a1: pt.abi.Uint64,
+    a2: pt.abi.Uint64,
+    a3: pt.abi.Uint64,
+    a4: pt.abi.Uint64,
+    a5: pt.abi.Uint64,
+    a6: pt.abi.Uint64,
+    a7: pt.abi.Uint64,
+    a8: pt.abi.Uint64,
+    a9: pt.abi.Uint64,
+    a10: pt.abi.Uint64,
+    a11: pt.abi.Uint64,
+    a12: pt.abi.Uint64,
+    a13: pt.abi.Uint64,
+    a14: pt.abi.Uint64,
+    a15: pt.abi.Uint64,
+    a16: pt.abi.Uint64,
+    t1: pt.abi.PaymentTransaction,
+    *,
+    output: pt.abi.Uint64,
+) -> pt.Expr:
+    return pt.Seq(
+        output.set(a1.get() + a2.get()),
+        # store the result in the sender's local state too
+        pt.App.localPut(pt.Txn.sender(), pt.Bytes("result"), output.get()),
+    )
+
+
 @pt.Subroutine(pt.TealType.none)
 def safe_clear_state_delete():
     return (
@@ -211,6 +240,7 @@ GOOD_SUBROUTINE_CASES: list[pt.ABIReturnSubroutine | pt.SubroutineFnWrapper] = [
     concat_strings,
     many_args,
     many_args_with_transaction,
+    add_and_store,
     safe_clear_state_delete,
     dummy_doing_nothing,
     eine_constant,
