@@ -9,7 +9,7 @@ def test_scratchvar_type():
     myvar_default = pt.ScratchVar()
     assert myvar_default.storage_type() == pt.TealType.anytype
     assert myvar_default.store(pt.Bytes("value")).type_of() == pt.TealType.none
-    assert myvar_default.load().type_of() == pt.TealType.anytype
+    assert myvar_default.load().type_of() == pt.TealType.bytes
 
     with pytest.raises(pt.TealTypeError):
         myvar_default.store(pt.Pop(pt.Int(1)))
