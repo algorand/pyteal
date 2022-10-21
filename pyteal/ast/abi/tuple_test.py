@@ -928,6 +928,8 @@ def test_NamedTuple_getitem(test_case: type[abi.NamedTuple]):
 
 
 def test_NamedTupleTypeSpec():
+    from pyteal.ast.abi.util import type_spec_is_assignable_to
+
     class Point(abi.NamedTuple):
         x: abi.Field[abi.Uint64]
         y: abi.Field[abi.Uint64]
@@ -942,5 +944,5 @@ def test_NamedTupleTypeSpec():
     assert p.type_spec() == p.type_spec()
     assert ar.type_spec() == ar.type_spec()
     assert p.type_spec() != ar.type_spec()
-    assert not abi.type_spec_is_assignable_to(p.type_spec(), ar.type_spec())
-    assert not abi.type_spec_is_assignable_to(ar.type_spec(), p.type_spec())
+    assert not type_spec_is_assignable_to(p.type_spec(), ar.type_spec())
+    assert not type_spec_is_assignable_to(ar.type_spec(), p.type_spec())

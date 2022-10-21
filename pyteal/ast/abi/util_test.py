@@ -10,6 +10,7 @@ from pyteal.ast.abi.util import (
     substring_for_decoding,
     int_literal_from_annotation,
     type_spec_from_algosdk,
+    type_spec_is_assignable_to,
 )
 
 options = pt.CompileOptions(version=5)
@@ -861,7 +862,7 @@ def test_type_spec_is_assignable_safe_bidirectional(tc: SafeBidirectional):
     assert len(tc.xs) > 0
     for a in tc.xs:
         for b in tc.xs:
-            assert abi.type_spec_is_assignable_to(a, b)
+            assert type_spec_is_assignable_to(a, b)
 
 
 @pytest.mark.parametrize("ts", bfs_on_inheritance(abi.TypeSpec))
@@ -934,8 +935,8 @@ SAFE_ASSIGNMENT_TEST_CASES: list[SafeAssignment] = [
 def test_type_spec_is_assignable_safe_assignment(tc: SafeAssignment):
     assert len(tc.bs) > 0
     for b in tc.bs:
-        assert abi.type_spec_is_assignable_to(tc.a, b)
-        assert not abi.type_spec_is_assignable_to(b, tc.a)
+        assert type_spec_is_assignable_to(tc.a, b)
+        assert not type_spec_is_assignable_to(b, tc.a)
 
 
 @pytest.mark.parametrize("ts", bfs_on_inheritance(abi.TypeSpec))
@@ -1037,10 +1038,10 @@ def test_type_spec_is_assignable_unsafe_bidirectional(tc: UnsafeBidirectional):
     for ia, a in enumerate(tc.xs):
         for ib, b in enumerate(tc.xs):
             if ia == ib:
-                assert abi.type_spec_is_assignable_to(a, b)
-                assert abi.type_spec_is_assignable_to(b, a)
+                assert type_spec_is_assignable_to(a, b)
+                assert type_spec_is_assignable_to(b, a)
                 continue
-            assert not abi.type_spec_is_assignable_to(a, b)
+            assert not type_spec_is_assignable_to(a, b)
 
 
 @pytest.mark.parametrize("ts", bfs_on_inheritance(abi.TypeSpec))
