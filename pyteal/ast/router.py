@@ -361,6 +361,11 @@ class ASTBuilder:
                 ats for ats in arg_vals if not isinstance(ats, abi.Transaction)
             ]
 
+            # only transaction args (these are omitted from app args)
+            txn_arg_vals: list[abi.Transaction] = [
+                ats for ats in arg_vals if isinstance(ats, abi.Transaction)
+            ]
+
             for aav in app_arg_vals:
                 # If we're here we know the top level isnt a Transaction but a transaction may
                 # be included in some collection type like a Tuple or Array, raise error
@@ -373,16 +378,12 @@ class ASTBuilder:
             # assign to a var here since we modify app_arg_vals later
             tuplify = len(app_arg_vals) > METHOD_ARG_NUM_CUTOFF
 
-            # only transaction args (these are omitted from app args)
-            txn_arg_vals: list[abi.Transaction] = [
-                ats for ats in arg_vals if isinstance(ats, abi.Transaction)
-            ]
-
             # Tuple-ify any app args after the limit
             if tuplify:
                 last_arg_specs_grouped: list[abi.TypeSpec] = [
                     t.type_spec() for t in app_arg_vals[METHOD_ARG_NUM_CUTOFF - 1 :]
                 ]
+                tupled_app_args = app_arg_vals[METHOD_ARG_NUM_CUTOFF - 1 :]
                 app_arg_vals = app_arg_vals[: METHOD_ARG_NUM_CUTOFF - 1]
                 app_arg_vals.append(
                     abi.TupleTypeSpec(*last_arg_specs_grouped).new_instance()
@@ -431,13 +432,10 @@ class ASTBuilder:
             # de-tuple into specific values using `store_into` on
             # each element of the tuple'd arguments
             if tuplify:
-                tupled_abi_vals: list[abi.BaseType] = arg_vals[
-                    METHOD_ARG_NUM_CUTOFF - 1 :
-                ]
                 tupled_arg: abi.Tuple = cast(abi.Tuple, app_arg_vals[-1])
                 de_tuple_instructions: list[Expr] = [
                     tupled_arg[idx].store_into(arg_val)
-                    for idx, arg_val in enumerate(tupled_abi_vals)
+                    for idx, arg_val in enumerate(tupled_app_args)
                 ]
                 decode_instructions += de_tuple_instructions
 

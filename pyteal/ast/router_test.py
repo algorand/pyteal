@@ -114,6 +114,34 @@ def many_args(
     return output.set(_t.get())
 
 
+@pt.ABIReturnSubroutine
+def many_args_with_transaction(
+    _txn: pt.abi.Transaction,
+    _b: pt.abi.Uint64,
+    _c: pt.abi.Uint64,
+    _d: pt.abi.Uint64,
+    _e: pt.abi.Uint64,
+    _f: pt.abi.Uint64,
+    _g: pt.abi.Uint64,
+    _h: pt.abi.Uint64,
+    _i: pt.abi.Uint64,
+    _j: pt.abi.Uint64,
+    _k: pt.abi.Uint64,
+    _l: pt.abi.Uint64,
+    _m: pt.abi.Uint64,
+    _n: pt.abi.Uint64,
+    _o: pt.abi.Uint64,
+    _p: pt.abi.Uint64,
+    _q: pt.abi.Uint64,
+    _r: pt.abi.Uint64,
+    _s: pt.abi.Uint64,
+    _t: pt.abi.Uint64,
+    *,
+    output: pt.abi.Uint64,
+) -> pt.Expr:
+    return output.set(_t.get())
+
+
 @pt.Subroutine(pt.TealType.none)
 def safe_clear_state_delete():
     return (
@@ -182,6 +210,7 @@ GOOD_SUBROUTINE_CASES: list[pt.ABIReturnSubroutine | pt.SubroutineFnWrapper] = [
     reverse,
     concat_strings,
     many_args,
+    many_args_with_transaction,
     safe_clear_state_delete,
     dummy_doing_nothing,
     eine_constant,
