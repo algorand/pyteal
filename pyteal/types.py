@@ -38,6 +38,14 @@ def require_type(input: Any, expected: TealType):
         raise TealTypeError(actual, expected)
 
 
+def require_exact_type(input: Any, expected: TealType):
+    require_type(input, expected)
+
+    input_type = input.type_of()
+    if not types_match(input_type, expected):
+        raise TealTypeError(input_type, expected)
+
+
 def types_match(type1: TealType, type2: TealType) -> bool:
     if (type1 == TealType.none or type2 == TealType.none) and type1 != type2:
         return False

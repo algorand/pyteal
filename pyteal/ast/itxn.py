@@ -8,7 +8,7 @@ from pyteal.ast.int import Int
 from pyteal.ast.scratchvar import ScratchVar
 
 from pyteal.ast.methodsig import MethodSignature
-from pyteal.types import TealType, require_type
+from pyteal.types import TealType, require_type, require_exact_type
 from pyteal.errors import TealInputError, TealTypeError, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.ast.expr import Expr
@@ -342,7 +342,7 @@ class InnerTxnBuilder:
                 field being set. These fields are set on the ApplicationCallTransaction being constructed
         """
 
-        require_type(app_id, TealType.uint64)
+        require_exact_type(app_id, TealType.uint64)
 
         # Default, always need these
         fields_to_set = [
@@ -404,7 +404,7 @@ class InnerTxnBuilder:
                     case abi.AccountTypeSpec():
                         if isinstance(arg, Expr):
                             # require the address is passed
-                            require_type(arg, TealType.bytes)
+                            require_exact_type(arg, TealType.bytes)
                             accts.append(arg)
                         elif isinstance(arg, abi.Account):
                             accts.append(arg.address())
@@ -422,7 +422,7 @@ class InnerTxnBuilder:
                     case abi.ApplicationTypeSpec():
                         if isinstance(arg, Expr):
                             # require the app id be passed
-                            require_type(arg, TealType.uint64)
+                            require_exact_type(arg, TealType.uint64)
                             apps.append(arg)
                         elif isinstance(arg, abi.Application):
                             apps.append(arg.application_id())
@@ -448,7 +448,7 @@ class InnerTxnBuilder:
                         )
 
                         if isinstance(arg, Expr):
-                            require_type(arg, TealType.uint64)
+                            require_exact_type(arg, TealType.uint64)
                             assets.append(arg)
                         elif isinstance(arg, abi.Asset):
                             assets.append(arg.asset_id())
@@ -457,7 +457,7 @@ class InnerTxnBuilder:
             else:
                 if isinstance(arg, Expr):
                     # This should _always_ be bytes, since we assume its already abi encoded
-                    if arg.type_of() != TealType.bytes:
+                    if require_exact_type(arg, TealType.bytes):
                         raise TealTypeError(arg, TealType.bytes)
                     app_args.append(arg)
                 elif isinstance(arg, abi.BaseType):
