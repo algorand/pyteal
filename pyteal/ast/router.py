@@ -361,11 +361,6 @@ class ASTBuilder:
                 ats for ats in arg_vals if not isinstance(ats, abi.Transaction)
             ]
 
-            # only transaction args (these are omitted from app args)
-            txn_arg_vals: list[abi.Transaction] = [
-                ats for ats in arg_vals if isinstance(ats, abi.Transaction)
-            ]
-
             for aav in app_arg_vals:
                 # If we're here we know the top level isnt a Transaction but a transaction may
                 # be included in some collection type like a Tuple or Array, raise error
