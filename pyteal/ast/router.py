@@ -383,7 +383,6 @@ class ASTBuilder:
                 last_arg_specs_grouped: list[abi.TypeSpec] = [
                     t.type_spec() for t in app_arg_vals[METHOD_ARG_NUM_CUTOFF - 1 :]
                 ]
-                tupled_app_args = app_arg_vals[METHOD_ARG_NUM_CUTOFF - 1 :]
                 app_arg_vals = app_arg_vals[: METHOD_ARG_NUM_CUTOFF - 1]
                 app_arg_vals.append(
                     abi.TupleTypeSpec(*last_arg_specs_grouped).new_instance()
