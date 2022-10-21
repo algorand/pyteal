@@ -43,6 +43,11 @@ class ScratchVar:
             value: The value to store. Must conform to this ScratchVar's type.
         """
         require_type(value, self.type)
+
+        val_type = value.type_of()
+        if self.type == TealType.anytype and val_type != TealType.anytype:
+            self.type = val_type
+
         return self.slot.store(value)
 
     def load(self) -> ScratchLoad:
