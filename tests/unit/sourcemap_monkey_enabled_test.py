@@ -104,6 +104,11 @@ def test_annotated_teal(_):
     with open(FIXTURES / "algobank_hybrid.teal", "w") as f:
         f.write(table_ast)
 
+    table_concise = ptsm.annotated_teal(unparse_hybrid=True, concise=True)
+
+    with open(FIXTURES / "algobank_concise.teal", "w") as f:
+        f.write(table_concise)
+
 
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
 def test_mocked_config_for_frames(_):

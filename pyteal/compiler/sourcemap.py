@@ -724,7 +724,7 @@ class PyTealSourceMap:
         )
 
     def annotated_teal(
-        self, unparse_hybrid: bool = False, omit_reps: bool = True
+        self, unparse_hybrid: bool = False, concise: bool = False
     ) -> str:
         teal_col = "// GENERATED TEAL"
         seperator_col = "_1"  # TODO: fix this ugly hack
@@ -737,8 +737,10 @@ class PyTealSourceMap:
             tabulatable_teal=teal_col,
             const_col_2="//",
             pyteal_filename="PYTEAL PATH",
-            pyteal_line_number="LINE",
         )
+        if not concise:
+            kwargs["pyteal_line_number"] = "LINE"
+
         if unparse_hybrid:
             kwargs["pyteal_hybrid_unparsed"] = "PYTEAL HYBRID UNPARSED"
         else:
