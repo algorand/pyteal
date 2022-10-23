@@ -37,10 +37,10 @@ def test_reconstruct(_):
 
 def fixture_comparison(sourcemap: "PyTealSourceMap", name: str):
     new_version = sourcemap._tabulate_for_dev()
-    with open(FIXTURES / f"{name}", "w") as f:
+    with open(FIXTURES / f"_{name}", "w") as f:
         f.write(new_version)
 
-    not_actually_comparing = True
+    not_actually_comparing = False
     if not_actually_comparing:
         return
 
