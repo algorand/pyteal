@@ -108,6 +108,12 @@ class Frame:
         context = "".join(cc) if (cc := (fi := self.frame_info).code_context) else None
         return f"{node=}; {context=}; frame_info={fi}"
 
+    def compiler_generated(self) -> bool | None:
+        if not (cc := self.frame_info.code_context):
+            return None  # we don't know / NA
+
+        return "# T2PT" in "".join(cc)
+
 
 FrameSequence = Union[Frame, list["FrameSequence"]]
 
@@ -150,7 +156,12 @@ class Frames:
 
         return cls._skip_all
 
-    def __init__(self, keep_all: bool = False, TODO_experimental: bool = True):
+    def __init__(
+        self,
+        keep_all: bool = False,
+        stop_after_first_pyteal: bool = True,
+        keep_one_frame_only: bool = True,
+    ):
         self.frames: list[Frame] = []
         if self.skipping_all():
             return
@@ -167,30 +178,46 @@ class Frames:
                 last_drop_idx = i
                 break
 
-        last_pyteal_idx = last_drop_idx
+        pyteal_idx = last_drop_idx
         prev_file = ""
         in_post_pyteal_streak = False
-        last_post_pyteal_streak_idx = last_pyteal_idx + 1
         for i in range(last_drop_idx + 1, len(frames)):
             f = frames[i]
             curr_file = f.frame_info.filename
             if f._is_pyteal():
-                last_pyteal_idx = i
+                pyteal_idx = i
             else:
-                if last_pyteal_idx == i - 1:
+                if pyteal_idx == i - 1:
                     in_post_pyteal_streak = True
-                    last_post_pyteal_streak_idx = i
+                    if stop_after_first_pyteal:
+                        break
                 elif in_post_pyteal_streak:
                     in_post_pyteal_streak = prev_file == curr_file
-                    if in_post_pyteal_streak:
-                        last_post_pyteal_streak_idx = i
             prev_file = curr_file
 
-        last_keep_idx = (
-            last_post_pyteal_streak_idx if TODO_experimental else last_pyteal_idx + 1
-        )
+        last_keep_idx = pyteal_idx + 1
+
+        # TODO TODO TODO TODO !!!!
+        # TODO: this fragile hack depends on _NOT_ finding an AST node, and should be improved!!!
+        if not frames[last_keep_idx].node:
+            # FAILURE CASE: Look for first pyteal generated code entry in stack trace:
+            found = False
+            i = -1
+            for i in range(len(frames) - 1, -1, -1):
+                if frames[i].compiler_generated():
+                    found = True
+                    break
+
+            if found and i >= 0:
+                last_keep_idx = i
 
         self.frames = frames[last_drop_idx + 1 : last_keep_idx + 1]
+
+        if keep_one_frame_only:
+            self.frames = self.frames[-1:]
+
+    def __len__(self) -> int:
+        return len(self.frames)
 
     def __getitem__(self, index: int) -> Frame:
         return self.frames[index]
