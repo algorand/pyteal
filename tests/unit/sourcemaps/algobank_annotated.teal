@@ -163,24 +163,24 @@ assertsenderiscreator_0:
 txn Sender                             //    examples/application/abi/algobank.py         8       return Assert(Txn.sender() == Global.creator_address())
 global CreatorAddress                  //
 ==                                     //
-assert                                 //                                                 17      router = Router(
+assert                                 //
 retsub                                 //    tests/unit/sourcemap_monkey_enabled_test.py  89      compile_bundle = router.compile_program_with_sourcemaps(
                                        //
 // deposit
 deposit_1:
-store 6                                //    examples/application/abi/algobank.py         117     approval_program, clear_state_program, contract = router.compile_program(
+store 6                                //
 store 5                                //
-load 5                                 //                                                 56      Assert(payment.get().sender() == sender.address()),
+load 5                                 //    examples/application/abi/algobank.py         56      Assert(payment.get().sender() == sender.address()),
 gtxns Sender                           //
 load 6                                 //
 txnas Accounts                         //
 ==                                     //
-assert                                 //                                                 117     approval_program, clear_state_program, contract = router.compile_program(
+assert                                 //
 load 5                                 //                                                 57      Assert(payment.get().receiver() == Global.current_application_address()),
 gtxns Receiver                         //
 global CurrentApplicationAddress       //
 ==                                     //
-assert                                 //                                                 117     approval_program, clear_state_program, contract = router.compile_program(
+assert                                 //
 load 6                                 //                                                 59      sender.address(),
 txnas Accounts                         //
 byte "balance"                         //                                                 60      Bytes("balance"),
@@ -203,9 +203,9 @@ retsub                                 //    tests/unit/sourcemap_monkey_enabled
                                        //
 // withdraw
 withdraw_3:
-store 8                                //    examples/application/abi/algobank.py         117     approval_program, clear_state_program, contract = router.compile_program(
+store 8                                //
 store 7                                //
-txn Sender                             //                                                 100     Txn.sender(),
+txn Sender                             //    examples/application/abi/algobank.py         100     Txn.sender(),
 byte "balance"                         //                                                 101     Bytes("balance"),
 txn Sender                             //                                                 102     App.localGet(Txn.sender(), Bytes("balance")) - amount.get(),
 byte "balance"                         //

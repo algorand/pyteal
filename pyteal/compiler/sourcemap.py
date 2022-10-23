@@ -81,6 +81,10 @@ _PT_GEN = {
 
 
 class PyTealFrame:
+    """
+    TODO: Inherit from util::Frame and remove code duplications
+    """
+
     def __init__(
         self,
         frame: Frame,
@@ -161,8 +165,13 @@ class PyTealFrame:
 
         i.e. `not x.compiler_generated()` === NOT or UNKNOWN
         """
-        if not self.raw_code():
-            return None  # we don't know / NA
+        # FORMER CODE:
+        # if not self.raw_code():
+        #     return None  # we don't know / NA
+
+        # return "# T2PT" in self.raw_code()
+        # TODO: this becomes obsolete as soon as inherit from Frame
+        return Frame(self.frame_info, self.node).compiler_generated()
 
         return "# T2PT" in self.raw_code()
 
@@ -529,7 +538,27 @@ class PyTealSourceMap:
         # TODO: this is too complicated!!!
         """
         frames = t.frames()
+        if not frames:
+            return None, [], []
+
         frame_infos = frames.frame_infos()
+
+        def result(best_idx):
+            # TODO: probly don't need to keep `extras` param of SourceMapItem
+            # nor the 2nd and 3rd elements of the following tuple being returned
+            return tuple(
+                PyTealFrame.convert(
+                    [
+                        frames[best_idx],  # type: ignore
+                        [frames[i] for i in range(best_idx - 1, -1, -1)],
+                        [frames[i] for i in range(best_idx + 1, len(frame_infos))],
+                    ]
+                )
+            )
+
+        if len(frames) == 1:
+            return result(0)
+
         pyteal_idx = [
             any(w in f.filename for w in cls._internal_paths) for f in frame_infos
         ]
@@ -568,17 +597,7 @@ class PyTealSourceMap:
             if found and i >= 0:
                 first_pt_entrancy = i
 
-        # TODO: probly don't need to keep `extras` param of SourceMapItem
-        # nor the 2nd and 3rd elements of the following tuple being returned
-        return tuple(
-            PyTealFrame.convert(
-                [
-                    frames[first_pt_entrancy],  # type: ignore
-                    [frames[i] for i in range(first_pt_entrancy - 1, -1, -1)],
-                    [frames[i] for i in range(first_pt_entrancy + 1, len(frame_infos))],
-                ]
-            )
-        )
+        return result(first_pt_entrancy)
 
     def teal(self) -> str:
         return "\n".join(smi.teal for smi in self.get_map().values())

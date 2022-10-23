@@ -163,24 +163,24 @@ assertsenderiscreator_0:
 txn Sender                             //    examples/application/abi/algobank.py         8       Txn.sender()
 global CreatorAddress                  //                                                         Global.creator_address()
 ==                                     //                                                         Txn.sender() == Global.creator_address()
-assert                                 //                                                 17      Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))
+assert                                 //                                                         Assert(Txn.sender() == Global.creator_address())
 retsub                                 //    tests/unit/sourcemap_monkey_enabled_test.py  89      router.compile_program_with_sourcemaps(version=6, optimize=OptimizeOptions(scratch_slots=True))
                                        //
 // deposit
 deposit_1:
-store 6                                //    examples/application/abi/algobank.py         117     router.compile_program(version=6, optimize=OptimizeOptions(scratch_slots=True))
+store 6                                //
 store 5                                //
-load 5                                 //                                                 56      payment.get()
+load 5                                 //    examples/application/abi/algobank.py         56      payment.get()
 gtxns Sender                           //                                                         payment.get().sender()
 load 6                                 //                                                         sender.address()
 txnas Accounts                         //
 ==                                     //                                                         payment.get().sender() == sender.address()
-assert                                 //                                                 117     router.compile_program(version=6, optimize=OptimizeOptions(scratch_slots=True))
+assert                                 //                                                         Assert(payment.get().sender() == sender.address())
 load 5                                 //                                                 57      payment.get()
 gtxns Receiver                         //                                                         payment.get().receiver()
 global CurrentApplicationAddress       //                                                         Global.current_application_address()
 ==                                     //                                                         payment.get().receiver() == Global.current_application_address()
-assert                                 //                                                 117     router.compile_program(version=6, optimize=OptimizeOptions(scratch_slots=True))
+assert                                 //                                                         Assert(payment.get().receiver() == Global.current_application_address())
 load 6                                 //                                                 59      sender.address()
 txnas Accounts                         //
 byte "balance"                         //                                                 60      Bytes('balance')
@@ -203,9 +203,9 @@ retsub                                 //    tests/unit/sourcemap_monkey_enabled
                                        //
 // withdraw
 withdraw_3:
-store 8                                //    examples/application/abi/algobank.py         117     router.compile_program(version=6, optimize=OptimizeOptions(scratch_slots=True))
+store 8                                //
 store 7                                //
-txn Sender                             //                                                 100     Txn.sender()
+txn Sender                             //    examples/application/abi/algobank.py         100     Txn.sender()
 byte "balance"                         //                                                 101     Bytes('balance')
 txn Sender                             //                                                 102     Txn.sender()
 byte "balance"                         //                                                         Bytes('balance')
