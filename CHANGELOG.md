@@ -3,7 +3,7 @@
 # 0.19.0
 
 ## Added
-* Added option to `OpUp` utility to allow specification of source for fees ([566](https://github.com/algorand/pyteal/pull/566))
+* Added option to `OpUp` utility to allow specification of source for fees ([#566](https://github.com/algorand/pyteal/pull/566))
 
 ## Fixed
 * Erroring on constructing an odd length hex string. ([#539](https://github.com/algorand/pyteal/pull/539))
