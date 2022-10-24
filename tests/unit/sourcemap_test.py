@@ -259,8 +259,23 @@ def test_time_benchmark_under_config():
 
 """RESULTS FROM test_time_benchmark_under_config()
 Frames.skipping_all()=True
-simple_compilation: avg=0.020052342233294714, N=499
-simple_compilation: avg=0.020396863370223346, N=491
+simple_compilation: avg=0.013368103946639953, N=749
+simple_compilation: avg=0.01360061149234357, N=736
+
+--memray results:
+======================================================================== MEMRAY REPORT ========================================================================
+Allocations results for tests/unit/sourcemap_test.py::test_time_benchmark_under_config
+
+         📦 Total memory allocated: 15.0MiB
+         📏 Total allocations: 432,949
+         📊 Histogram of allocation sizes: |  █ ▁    |
+         🥇 Biggest allocating functions:
+                - updatecache:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/linecache.py:137 -> 1.1MiB
+                - updatecache:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/linecache.py:137 -> 1.0MiB
+                - __init__:/Users/zeph/github/tzaffi/pyteal/pyteal/ir/tealblock.py:18 -> 1.0MiB
+                - updatecache:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/linecache.py:137 -> 1.0MiB
+                - _compile_bytecode:<frozen importlib._bootstrap_external>:672 -> 1.0MiB
+
 """
 
 
@@ -273,6 +288,13 @@ def test_time_benchmark_sourcemap_enabled(_):
     from pyteal.util import Frames
 
     print(f"{Frames.skipping_all()=}")
+    print(
+        """
+keep_all: bool = True,
+stop_after_first_pyteal: bool = True,
+keep_one_frame_only: bool = True,
+"""
+    )
 
     trial(simple_compilation)
     trial(simple_compilation)
@@ -288,12 +310,57 @@ def test_time_benchmark_sourcemap_enabled(_):
 
 """RESULTS FROM test_time_benchmark_sourcemap_enabled
 Frames.skipping_all()=False
-simple_compilation: avg=0.2972649405984318, N=34  <---- FIRST RUN RESULT CAN PROBLY BE DISCARDED
-simple_compilation: avg=0.11990405832018171, N=84
-source_map_compilation: avg=0.11482023921879855, N=88
-source_map_compilation: avg=0.11954815898622785, N=84
-annotated_teal: avg=0.11837509379667395, N=85
-annotated_teal: avg=0.11272530341416262, N=89
+>>>>>>>>>>>>>>>>>>keep_all: bool = False,<<<<<<<<<<<<<<<<<<<<<<
+stop_after_first_pyteal: bool = True,
+keep_one_frame_only: bool = True,
+_______
+simple_compilation: avg=0.10818169962975287, N=93   <---- FIRST RUN RESULT CAN PROBLY BE DISCARDED
+simple_compilation: avg=0.07248607299310698, N=139
+source_map_compilation: avg=0.07400739454004886, N=137
+source_map_compilation: avg=0.07380111077252556, N=136
+annotated_teal: avg=0.0730285696739698, N=137
+annotated_teal: avg=0.07186885220663888, N=140
+
+--memray results:
+======================================================================== MEMRAY REPORT ========================================================================
+Allocations results for tests/unit/sourcemap_test.py::test_time_benchmark_sourcemap_enabled
+
+         📦 Total memory allocated: 40.2MiB
+         📏 Total allocations: 2,944,972
+         📊 Histogram of allocation sizes: |    █    |
+         🥇 Biggest allocating functions:
+                - parse:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/ast.py:50 -> 5.1MiB
+                - compile_similar_to:/Users/zeph/github/tzaffi/pyteal/py310ptt/lib/python3.10/site-packages/executing/executing.py:519 -> 4.0MiB
+                - format:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/traceback.py:447 -> 2.0MiB
+                - __init__:/Users/zeph/github/tzaffi/pyteal/py310ptt/lib/python3.10/site-packages/executing/executing.py:236 -> 1.3MiB
+                - _compile_bytecode:<frozen importlib._bootstrap_external>:672 -> 1.1MiB
+
+_______ _______ _______ _______
+Frames.skipping_all()=False
+>>>>>>>>>>>>>>>>>>keep_all: bool = True,<<<<<<<<<<<<<<<<<<<<<<
+stop_after_first_pyteal: bool = True,
+keep_one_frame_only: bool = True,
+_______
+simple_compilation: avg=0.1326251971094232, N=76
+simple_compilation: avg=0.0847121106476343, N=119
+source_map_compilation: avg=0.07992530247521779, N=126
+source_map_compilation: avg=0.08953454451901573, N=112
+annotated_teal: avg=0.07898699204752764, N=127
+annotated_teal: avg=0.07613436200402, N=132
+
+--memray results:
+======================================================================== MEMRAY REPORT ========================================================================
+Allocations results for tests/unit/sourcemap_test.py::test_time_benchmark_sourcemap_enabled
+
+         📦 Total memory allocated: 44.2MiB
+         📏 Total allocations: 2,875,365
+         📊 Histogram of allocation sizes: |  ▁ █    |
+         🥇 Biggest allocating functions:
+                - parse:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/ast.py:50 -> 7.0MiB
+                - format:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/traceback.py:447 -> 2.0MiB
+                - compile_similar_to:/Users/zeph/github/tzaffi/pyteal/py310ptt/lib/python3.10/site-packages/executing/executing.py:519 -> 2.0MiB
+                - _compile_bytecode:<frozen importlib._bootstrap_external>:672 -> 1.1MiB
+                - updatecache:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/linecache.py:137 -> 1.1MiB
 """
 
 

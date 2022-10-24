@@ -168,7 +168,7 @@ retsub                                 //    tests/unit/sourcemap_monkey_enabled
                                        //
 // deposit
 deposit_1:
-store 6                                //
+store 6                                //                                                 24
 store 5                                //
 load 5                                 //    examples/application/abi/algobank.py         56      Assert(payment.get().sender() == sender.address()),
 gtxns Sender                           //
@@ -203,7 +203,7 @@ retsub                                 //    tests/unit/sourcemap_monkey_enabled
                                        //
 // withdraw
 withdraw_3:
-store 8                                //
+store 8                                //                                                 24
 store 7                                //
 txn Sender                             //    examples/application/abi/algobank.py         100     Txn.sender(),
 byte "balance"                         //                                                 101     Bytes("balance"),

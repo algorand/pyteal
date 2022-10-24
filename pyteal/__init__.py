@@ -14,6 +14,7 @@ from pyteal.compiler import (
     Compilation,
     compileTeal,
     OptimizeOptions,
+    PyTealSourceMap,
 )
 from pyteal.types import TealType
 from pyteal.errors import (
@@ -46,6 +47,7 @@ __all__ = (
         "Compilation",
         "compileTeal",
         "OptimizeOptions",
+        "PyTealSourceMap",
         "TealType",
         "TealInternalError",
         "TealTypeError",

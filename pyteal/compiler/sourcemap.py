@@ -519,6 +519,10 @@ class PyTealSourceMap:
 
     _internal_paths = [
         # "pyteal/__init__.py",
+        "beaker/application.py",
+        "beaker/consts.py",
+        "beaker/decorators.py",
+        "beaker/state.py",
         "pyteal/ast",
         "pyteal/compiler",
         "pyteal/ir",
