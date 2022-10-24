@@ -1,5 +1,7 @@
 # Unreleased
 
+# 0.19.0
+
 ## Added
 * Added option to `OpUp` utility to allow specification of source for fees ([566](https://github.com/algorand/pyteal/pull/566))
 
