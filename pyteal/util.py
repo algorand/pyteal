@@ -70,11 +70,12 @@ def correctBase32Padding(s: str) -> str:
 @dataclass(frozen=True)
 class Frame:
     _internal_paths = [
-        # "pyteal/__init__.py",
+        "beaker/__init__.py",
         "beaker/application.py",
         "beaker/consts.py",
         "beaker/decorators.py",
         "beaker/state.py",
+        # "pyteal/__init__.py",
         "pyteal/ast",
         "pyteal/compiler",
         "pyteal/ir",
@@ -163,7 +164,7 @@ class Frames:
     def __init__(
         self,
         keep_all: bool = False,
-        stop_after_first_pyteal: bool = True,
+        immediate_stop_post_pyteal: bool = True,  # setting False doesn't work 90% of the time
         keep_one_frame_only: bool = True,
     ):
         self.frames: list[Frame] = []
@@ -182,24 +183,27 @@ class Frames:
                 last_drop_idx = i
                 break
 
-        pyteal_idx = last_drop_idx
+        penultimate_idx = last_drop_idx
         prev_file = ""
-        in_post_pyteal_streak = False
+        in_first_post_pyteal = False
         for i in range(last_drop_idx + 1, len(frames)):
             f = frames[i]
             curr_file = f.frame_info.filename
             if f._is_pyteal():
-                pyteal_idx = i
+                penultimate_idx = i
             else:
-                if pyteal_idx == i - 1:
-                    in_post_pyteal_streak = True
-                    if stop_after_first_pyteal:
+                if penultimate_idx == i - 1:
+                    in_first_post_pyteal = True
+                    if immediate_stop_post_pyteal:
                         break
-                elif in_post_pyteal_streak:
-                    in_post_pyteal_streak = prev_file == curr_file
+                elif in_first_post_pyteal:
+                    in_first_post_pyteal = prev_file == curr_file
+                    if not in_first_post_pyteal:
+                        penultimate_idx = i - 2
+                        break
             prev_file = curr_file
 
-        last_keep_idx = pyteal_idx + 1
+        last_keep_idx = penultimate_idx + 1
 
         # TODO TODO TODO TODO !!!!
         # TODO: this fragile hack depends on _NOT_ finding an AST node, and should be improved!!!
