@@ -2,8 +2,15 @@ version: '3'
 
 services:
   algod:
-    image: makerxau/algorand-sandbox-dev:latest
+    image: wwinder/algod:latest
     ports:
-      - "4001:4001"
-      - "4002:4002"
-      - "9392:9392"
+      - "4001:8080" # algod
+      - "4160:4160" # gossip
+      - "9100:9100" # prometheus
+    environment:
+      - DEV_MODE
+      - TOKEN=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    healthcheck:
+      test: goal node status || exit 1
+      interval: 2s
+      retries: 10

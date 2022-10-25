@@ -168,6 +168,7 @@ __all__ = [
     "OnCompleteAction",
     "Op",
     "OpUp",
+    "OpUpFeeSource",
     "OpUpMode",
     "OptimizeOptions",
     "Or",

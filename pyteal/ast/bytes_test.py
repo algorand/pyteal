@@ -1,6 +1,7 @@
 import pytest
 
 import pyteal as pt
+from pyteal.errors import TealInputError
 
 options = pt.CompileOptions()
 
@@ -86,6 +87,15 @@ def test_bytes_base16_empty():
     expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.byte, "0x")])
     actual, _ = expr.__teal__(options)
     assert actual == expected
+
+
+B16_ODD_LEN_TESTCASES = ["F", "0c1"]
+
+
+@pytest.mark.parametrize("testcase", B16_ODD_LEN_TESTCASES)
+def test_bytes_base16_odd_len(testcase):
+    with pytest.raises(TealInputError):
+        pt.Bytes("base16", testcase)
 
 
 def test_bytes_utf8():

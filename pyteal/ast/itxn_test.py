@@ -309,6 +309,27 @@ ITXN_METHOD_CASES = (
         ),
         None,
     ),
+    (
+        pt.Int(1),
+        "query(byte[],uint64)void",
+        [t6_1 := pt.abi.DynamicBytes(), t6_2 := pt.abi.Uint64()],
+        {TxnField.fee: pt.Int(0)},
+        pt.Seq(
+            pt.InnerTxnBuilder.SetFields(
+                {
+                    pt.TxnField.type_enum: TxnType.ApplicationCall,
+                    pt.TxnField.application_id: pt.Int(1),
+                    pt.TxnField.application_args: [
+                        pt.MethodSignature("query(byte[],uint64)void"),
+                        t6_1.encode(),
+                        t6_2.encode(),
+                    ],
+                    pt.TxnField.fee: pt.Int(0),
+                }
+            ),
+        ),
+        None,
+    ),
     # Error cases
     (
         pt.Int(1),

@@ -261,6 +261,8 @@ class SubroutineDefinition:
         self,
         args: list[Expr | ScratchVar | abi.BaseType],
     ) -> "SubroutineCall":
+        from pyteal.ast.abi.util import type_spec_is_assignable_to
+
         if len(args) != self.argument_count():
             raise TealInputError(
                 f"Incorrect number of arguments for subroutine call. "
@@ -282,7 +284,8 @@ class SubroutineDefinition:
                     raise TealInputError(
                         f"supplied argument at index {i} should be an ABI type but got {arg}"
                     )
-                if arg.type_spec() != arg_type:
+
+                if not type_spec_is_assignable_to(arg.type_spec(), arg_type):
                     raise TealInputError(
                         f"supplied argument {arg} at index {i} "
                         f"should have ABI typespec {arg_type} but got {arg.type_spec()}"
@@ -519,6 +522,9 @@ class ABIReturnSubroutine:
     def __init__(
         self,
         fn_implementation: Callable[..., Expr],
+        /,
+        *,
+        overriding_name: Optional[str] = None,
     ) -> None:
         self.output_kwarg_info: Optional[OutputKwArgInfo] = self._get_output_kwarg_info(
             fn_implementation
@@ -526,8 +532,16 @@ class ABIReturnSubroutine:
         self.subroutine = SubroutineDefinition(
             fn_implementation,
             return_type=TealType.none,
+            name_str=overriding_name,
             has_abi_output=self.output_kwarg_info is not None,
         )
+
+    @staticmethod
+    def name_override(name: str) -> Callable[..., "ABIReturnSubroutine"]:
+        def wrapper(fn_impl: Callable[..., Expr]) -> ABIReturnSubroutine:
+            return ABIReturnSubroutine(fn_impl, overriding_name=name)
+
+        return wrapper
 
     @classmethod
     def _get_output_kwarg_info(

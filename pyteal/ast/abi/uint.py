@@ -224,7 +224,7 @@ class Uint64TypeSpec(UintTypeSpec):
         return Uint64
 
 
-Uint32TypeSpec.__module__ = "pyteal.abi"
+Uint64TypeSpec.__module__ = "pyteal.abi"
 
 
 class Uint(BaseType):
