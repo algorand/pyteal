@@ -35,10 +35,6 @@ class TealComponent(ABC):
     def frames(self) -> Frames:
         return self.expr.frames if self.expr else self._frames
 
-    # # TODO: unify/refactor + handle case when no tracing occurred
-    # def frame_nodes(self) -> List[ast.AST | None] | None:
-    #     return self.expr.frame_nodes if self.expr else self._frame_nodes
-
     @abstractmethod
     def assemble(self) -> str:
         pass

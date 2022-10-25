@@ -75,7 +75,7 @@ class Frame:
         "beaker/consts.py",
         "beaker/decorators.py",
         "beaker/state.py",
-        # "pyteal/__init__.py",
+        "pyteal/__init__.py",
         "pyteal/ast",
         "pyteal/compiler",
         "pyteal/ir",
@@ -96,6 +96,14 @@ class Frame:
     def _is_pyteal(self) -> bool:
         f = self.frame_info.filename
         return any(w in f for w in self._internal_paths)
+
+    def _is_pyteal_import(self) -> bool:
+        cc = self.frame_info.code_context
+        if not cc:
+            return False
+
+        code = "".join(cc)
+        return "import" in code and "pyteal" in code
 
     def _is_py_crud(self) -> bool:
         """Hackery that depends on C-Python. Not sure how reliable."""
@@ -165,7 +173,7 @@ class Frames:
         self,
         keep_all: bool = False,
         immediate_stop_post_pyteal: bool = True,  # setting False doesn't work 90% of the time
-        keep_one_frame_only: bool = True,
+        keep_one_frame_only: bool = False,
     ):
         self.frames: list[Frame] = []
         if self.skipping_all():
@@ -205,19 +213,32 @@ class Frames:
 
         last_keep_idx = penultimate_idx + 1
 
-        # TODO TODO TODO TODO !!!!
-        # TODO: this fragile hack depends on _NOT_ finding an AST node, and should be improved!!!
-        if not frames[last_keep_idx].node:
+        if frames[last_keep_idx]._is_pyteal_import():
             # FAILURE CASE: Look for first pyteal generated code entry in stack trace:
             found = False
             i = -1
-            for i in range(len(frames) - 1, -1, -1):
+            for i in range(last_keep_idx - 1, -1, -1):
                 if frames[i].compiler_generated():
                     found = True
                     break
 
             if found and i >= 0:
                 last_keep_idx = i
+
+        # Commenting out for now
+        # # TODO TODO TODO TODO !!!!
+        # # TODO: this fragile hack depends on _NOT_ finding an AST node, and should be improved!!!
+        # if not frames[last_keep_idx].node:
+        #     # FAILURE CASE: Look for first pyteal generated code entry in stack trace:
+        #     found = False
+        #     i = -1
+        #     for i in range(len(frames) - 1, -1, -1):
+        #         if frames[i].compiler_generated():
+        #             found = True
+        #             break
+
+        #     if found and i >= 0:
+        #         last_keep_idx = i
 
         self.frames = frames[last_drop_idx + 1 : last_keep_idx + 1]
 

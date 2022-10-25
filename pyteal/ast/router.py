@@ -761,7 +761,9 @@ class Router:
             * clear_state_program: compiled clear-state program string
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
-        cpb = self._build_impl(version, assemble_constants, optimize, False, False)
+        cpb = self._build_impl(
+            version, assemble_constants, optimize, False, False, False, None, None
+        )
 
         return cpb.approval_teal, cpb.clear_teal, cpb.abi_contract
 
@@ -772,6 +774,9 @@ class Router:
         assemble_constants: bool = False,
         optimize: OptimizeOptions | None = None,
         source_inference: bool = True,
+        hybrid_source: bool = True,
+        approval_filename: str | None = None,
+        clear_filename: str | None = None,
     ) -> RouterBundle:
         """
         TODO: out of date comment
@@ -793,11 +798,26 @@ class Router:
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
         return self._build_impl(
-            version, assemble_constants, optimize, True, source_inference
+            version,
+            assemble_constants,
+            optimize,
+            True,
+            source_inference,
+            hybrid_source,
+            approval_filename,
+            clear_filename,
         )
 
     def _build_impl(
-        self, version, assemble_constants, optimize, sourcemaps, source_inference
+        self,
+        version,
+        assemble_constants,
+        optimize,
+        sourcemaps,
+        source_inference,
+        hybrid_source,
+        approval_filename,
+        clear_filename,
     ):
         ap, csp, contract = self.build_program()
 
@@ -807,7 +827,12 @@ class Router:
             version=version,
             assemble_constants=assemble_constants,
             optimize=optimize,
-        ).compile(with_sourcemap=sourcemaps, source_inference=source_inference)
+        ).compile(
+            with_sourcemap=sourcemaps,
+            source_inference=source_inference,
+            hybrid_source=hybrid_source,
+            teal_filename=approval_filename,
+        )
 
         csbundle = Compilation(
             csp,
@@ -815,7 +840,12 @@ class Router:
             version=version,
             assemble_constants=assemble_constants,
             optimize=optimize,
-        ).compile(with_sourcemap=sourcemaps, source_inference=source_inference)
+        ).compile(
+            with_sourcemap=sourcemaps,
+            source_inference=source_inference,
+            hybrid_source=hybrid_source,
+            teal_filename=clear_filename,
+        )
 
         return RouterBundle(
             ap,

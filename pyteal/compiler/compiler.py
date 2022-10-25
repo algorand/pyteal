@@ -273,7 +273,11 @@ class Compilation:
 
     # TODO: API needs refactor....
     def compile(
-        self, with_sourcemap: bool = True, source_inference: bool = True
+        self,
+        with_sourcemap: bool = True,
+        source_inference: bool = True,
+        hybrid_source: bool = True,
+        teal_filename: str | None = None,
     ) -> CompilationBundle:
         """Compile a PyTeal expression into TEAL assembly.
 
@@ -384,7 +388,12 @@ class Compilation:
             return cpb
 
         cpb.sourcemap = PyTealSourceMap(
-            lines, components, build=True, source_inference=source_inference
+            lines,
+            components,
+            build=True,
+            source_inference=source_inference,
+            hybrid=hybrid_source,
+            teal_file=teal_filename,
         )
         return cpb
 
