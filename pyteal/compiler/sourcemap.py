@@ -517,18 +517,24 @@ class PyTealSourceMap:
                 if mutated:
                     self.inferred_frames_at = mutated
 
-            def source_map_item(i, tc):
+            def source_map_item(line, i, tc):
                 extras: dict[str, Any] | None = None
                 if self.add_extras:
                     extras = {
-                        "after_frames": after[i],
-                        "before_frames": before[i],
+                        "after_frames": after[line],
+                        "before_frames": before[line],
                     }
-                return SourceMapItem(i, self.teal_chunks[i], tc, best_frames[i], extras)
+                return SourceMapItem(
+                    line, self.teal_chunks[i], tc, best_frames[i], extras
+                )
 
-            self._cached_source_map_DEPRECATED = {
-                i + 1: source_map_item(i, tc) for i, tc in enumerate(self.components)
-            }
+            _map = {}
+            line = 0
+            for i, tc in enumerate(self.components):
+                _map[line + 1] = (smi := source_map_item(line, i, tc))
+                line += len(smi.teal.splitlines())
+
+            self._cached_source_map_DEPRECATED = _map
 
         return self._cached_source_map_DEPRECATED
 
