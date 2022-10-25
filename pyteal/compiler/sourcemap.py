@@ -581,22 +581,22 @@ class PyTealSourceMap:
 
         return mutated
 
-    _internal_paths = [
-        "beaker/__init__.py",
-        "beaker/application.py",
-        "beaker/consts.py",
-        "beaker/decorators.py",
-        "beaker/state.py",
-        # "pyteal/__init__.py",
-        "pyteal/ast",
-        "pyteal/compiler",
-        "pyteal/ir",
-        "pyteal/pragma",
-        "tests/abi_roundtrip.py",
-        "tests/blackbox.py",
-        "tests/compile_asserts.py",
-        "tests/mock_version.py",
-    ]
+    # _internal_paths = [
+    #     "beaker/__init__.py",
+    #     "beaker/application.py",
+    #     "beaker/consts.py",
+    #     "beaker/decorators.py",
+    #     "beaker/state.py",
+    #     # "pyteal/__init__.py",
+    #     "pyteal/ast",
+    #     "pyteal/compiler",
+    #     "pyteal/ir",
+    #     "pyteal/pragma",
+    #     "tests/abi_roundtrip.py",
+    #     "tests/blackbox.py",
+    #     "tests/compile_asserts.py",
+    #     "tests/mock_version.py",
+    # ]
 
     @classmethod
     def best_frame_and_windows_around_it(
@@ -612,6 +612,7 @@ class PyTealSourceMap:
 
         frame_infos = frames.frame_infos()
 
+        # TODO: at this point, result() is complete overkill
         def result(best_idx):
             # TODO: probly don't need to keep `extras` param of SourceMapItem
             # nor the 2nd and 3rd elements of the following tuple being returned
@@ -626,6 +627,7 @@ class PyTealSourceMap:
             )
 
         return result(len(frames) - 1)
+
         # THIS IS DUPLICATIVE CODE!!!!
         # if len(frames) == 1:
         #     return result(0)

@@ -60,7 +60,7 @@ def test_SourceMapItem_source_mapping():
 
     teals = mock_teal(ops)
     smis = [
-        SourceMapItem(i + 1, teals[i], op, PyTealFrame(op.expr.frames[4]))
+        SourceMapItem(i, teals[i], op, PyTealFrame(op.expr.frames[0]))
         for i, op in enumerate(ops)
     ]
 
@@ -70,7 +70,7 @@ def test_SourceMapItem_source_mapping():
     r3sm = R3SourceMap(
         file="dohhh.teal",
         source_root="~",
-        entries={(i, 0): smi.source_mapping() for i, smi in enumerate(smis)},
+        entries={(i, 0): smi.source_mappings()[0] for i, smi in enumerate(smis)},
         index=[(0,) for _ in range(3)],
         file_lines=list(map(lambda x: x.teal, smis)),
         source_files=source_files,

@@ -173,7 +173,7 @@ class Frames:
         self,
         keep_all: bool = False,
         immediate_stop_post_pyteal: bool = True,  # setting False doesn't work 90% of the time
-        keep_one_frame_only: bool = False,
+        keep_one_frame_only: bool = True,
     ):
         self.frames: list[Frame] = []
         if self.skipping_all():
