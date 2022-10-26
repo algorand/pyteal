@@ -309,7 +309,7 @@ class Tuple(BaseType):
         extracted = substring_for_decoding(
             encoded, start_index=start_index, end_index=end_index, length=length
         )
-        return self.stored_value.store(extracted)
+        return self._data_storage.store_value(extracted)
 
     @overload
     def set(self, *values: BaseType) -> Expr:
@@ -352,10 +352,10 @@ class Tuple(BaseType):
             )
         if not all(myTypes[i] == values[i].type_spec() for i in range(len(myTypes))):
             raise TealInputError("Input values do not match type")
-        return self.stored_value.store(_encode_tuple(values))
+        return self._data_storage.store_value(_encode_tuple(values))
 
     def encode(self) -> Expr:
-        return self.stored_value.load()
+        return self._data_storage.load_value()
 
     def length(self) -> Expr:
         """Get the number of values this tuple holds as an Expr."""
