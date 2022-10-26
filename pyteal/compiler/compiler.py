@@ -154,9 +154,8 @@ def compileSubroutine(
     start.validateTree()
 
     if (
-        currentSubroutine is not None
+        currentSubroutine
         and currentSubroutine.get_declaration_by_version(options.version).deferred_expr
-        is not None
     ):
         # this represents code that should be inserted before each retsub op
         deferred_expr = cast(
