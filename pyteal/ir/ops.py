@@ -33,7 +33,7 @@ class Op(Enum):
     # fmt: off
     # meta
     comment             = OpType("//",                  Mode.Signature | Mode.Application, 0)
-    # avm 
+    # avm
     err                 = OpType("err",                 Mode.Signature | Mode.Application, 2)
     sha256              = OpType("sha256",              Mode.Signature | Mode.Application, 2)
     keccak256           = OpType("keccak256",           Mode.Signature | Mode.Application, 2)
@@ -197,6 +197,12 @@ class Op(Enum):
     box_len             = OpType("box_len",             Mode.Application,                  8)
     box_get             = OpType("box_get",             Mode.Application,                  8)
     box_put             = OpType("box_put",             Mode.Application,                  8)
+    popn                = OpType("popn",                Mode.Signature | Mode.Application, 8)
+    dupn                = OpType("dupn",                Mode.Signature | Mode.Application, 8)
+    bury                = OpType("bury",                Mode.Signature | Mode.Application, 8)
+    frame_dig           = OpType("frame_dig",           Mode.Signature | Mode.Application, 8)
+    frame_bury          = OpType("frame_bury",          Mode.Signature | Mode.Application, 8)
+    proto               = OpType("proto",               Mode.Signature | Mode.Application, 8)
     # fmt: on
 
 
