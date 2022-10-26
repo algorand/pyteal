@@ -4,7 +4,7 @@ from collections.abc import Sequence as CollectionSequence
 from algosdk.abi import ABIType
 
 from pyteal.ast.abi.uint import Byte
-from pyteal.ast.abi.type import ComputedValue, BaseType
+from pyteal.ast.abi.type import ComputedValue, BaseType, DataStorageSchema
 from pyteal.ast.abi.array_dynamic import DynamicArray, DynamicArrayTypeSpec
 from pyteal.ast.abi.uint import ByteTypeSpec, Uint16TypeSpec
 
@@ -12,7 +12,6 @@ from pyteal.ast.int import Int
 from pyteal.ast.expr import Expr
 from pyteal.ast.bytes import Bytes
 from pyteal.ast.seq import Seq
-from pyteal.ast.scratchvar import ScratchVar
 from pyteal.ast.unaryexpr import Itob, Len
 from pyteal.ast.substring import Suffix
 from pyteal.ast.naryexpr import Concat
@@ -25,11 +24,15 @@ def _encoded_byte_string(s: bytes | bytearray) -> Expr:
     return Bytes(prefix + s)
 
 
-def _store_encoded_expr_byte_string_into_var(value: Expr, location: ScratchVar) -> Expr:
+def _store_encoded_expr_byte_string_into_var(
+    value: Expr, location: DataStorageSchema
+) -> Expr:
     return Seq(
-        location.store(value),
-        location.store(
-            Concat(Suffix(Itob(Len(location.load())), Int(6)), location.load())
+        location.store_value(value),
+        location.store_value(
+            Concat(
+                Suffix(Itob(Len(location.load_value())), Int(6)), location.load_value()
+            )
         ),
     )
 
@@ -67,7 +70,7 @@ class String(DynamicArray[Byte]):
         The expression will have the type TealType.bytes.
         """
         return Suffix(
-            self.stored_value.load(), Int(Uint16TypeSpec().byte_length_static())
+            self._data_storage.load_value(), Int(Uint16TypeSpec().byte_length_static())
         )
 
     def set(
@@ -110,18 +113,22 @@ class String(DynamicArray[Byte]):
                 if value.type_spec() == StringTypeSpec() or (
                     value.type_spec() == DynamicArrayTypeSpec(ByteTypeSpec())
                 ):
-                    return self.stored_value.store(value.stored_value.load())
+                    return self._data_storage.store_value(
+                        value._data_storage.load_value()
+                    )
 
                 raise TealInputError(
                     f"Got {value} with type spec {value.type_spec()}, expected {StringTypeSpec}"
                 )
             case bytes() | bytearray():
-                return self.stored_value.store(_encoded_byte_string(value))
+                return self._data_storage.store_value(_encoded_byte_string(value))
             case str():
-                return self.stored_value.store(_encoded_byte_string(value.encode()))
+                return self._data_storage.store_value(
+                    _encoded_byte_string(value.encode())
+                )
             case Expr():
                 return _store_encoded_expr_byte_string_into_var(
-                    value, self.stored_value
+                    value, self._data_storage
                 )
             case CollectionSequence():
                 return super().set(cast(Sequence[Byte], value))

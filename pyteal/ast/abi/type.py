@@ -65,6 +65,55 @@ class TypeSpec(ABC):
 TypeSpec.__module__ = "pyteal.abi"
 
 
+class DataStorageSchema(ABC):
+    @abstractmethod
+    def store_value(self, value: Expr) -> Expr:
+        pass
+
+    @abstractmethod
+    def load_value(self) -> Expr:
+        pass
+
+    @abstractmethod
+    def storage_type(self) -> TealType:
+        pass
+
+
+class ScratchVarStorage(DataStorageSchema):
+    def __init__(self, storage_type: TealType) -> None:
+        super().__init__()
+        self.scratchvar: Final = ScratchVar(storage_type)
+
+    def load_value(self) -> Expr:
+        return self.scratchvar.load()
+
+    def store_value(self, value: Expr) -> Expr:
+        return self.scratchvar.slot.store(value)
+
+    def storage_type(self) -> TealType:
+        return self.scratchvar.storage_type()
+
+
+class FrameStorage(DataStorageSchema):
+    def __init__(self, storage_type: TealType, stack_depth: int) -> None:
+        super().__init__()
+        self.stack_type = storage_type
+        self.stack_depth = stack_depth
+
+    def storage_type(self) -> TealType:
+        return self.stack_type
+
+    def store_value(self, value: Expr) -> Expr:
+        from pyteal.ast import FrameBury
+
+        return FrameBury(value, self.stack_depth)
+
+    def load_value(self) -> Expr:
+        from pyteal.ast import FrameDig
+
+        return FrameDig(self.stack_depth)
+
+
 class BaseType(ABC):
     """The abstract base class for all ABI type instances.
 
@@ -77,7 +126,18 @@ class BaseType(ABC):
         """Create a new BaseType."""
         super().__init__()
         self._type_spec: Final = spec
-        self.stored_value: Final = ScratchVar(spec.storage_type())
+        self._data_storage: DataStorageSchema = ScratchVarStorage(spec.storage_type())
+
+        # self.stored_value: Final = ScratchVar(spec.storage_type())
+
+    def _set_data_source(self, storage: DataStorageSchema) -> None:
+        self._data_storage = storage
+
+    def _load_value(self) -> Expr:
+        return self._data_storage.load_value()
+
+    def _store_value(self, value: Expr) -> Expr:
+        return self._data_storage.store_value(value)
 
     def type_spec(self) -> TypeSpec:
         """Get the TypeSpec for this ABI type instance."""
@@ -231,7 +291,7 @@ class ReturnedValue(ComputedValue):
                 f"ABI return subroutine deferred_expr is expected to be typed {output.type_spec().storage_type()}, "
                 f"but has type {declaration.deferred_expr.type_of()}."
             )
-        return output.stored_value.slot.store(self.computation)
+        return output._data_storage.store_value(self.computation)
 
 
 ReturnedValue.__module__ = "pyteal.abi"
