@@ -26,6 +26,7 @@ from pyteal.compiler.subroutines import (
 from pyteal.compiler.constants import createConstantBlocks
 
 MAX_PROGRAM_VERSION = 8
+FRAME_POINTER_VERSION = 8
 MIN_PROGRAM_VERSION = 2
 DEFAULT_PROGRAM_VERSION = MIN_PROGRAM_VERSION
 
