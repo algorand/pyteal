@@ -96,6 +96,8 @@ class AccountParam:
     def totalNumUint(cls, acct: Expr) -> MaybeValue:
         """Get the total number of uint64 values allocated by the account in Global and Local States.
 
+        Requires program version 8 or higher.
+
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
                 May evaluate to uint64 or an address.
@@ -105,6 +107,8 @@ class AccountParam:
     @classmethod
     def totalNumByteSlice(cls, acct: Expr) -> MaybeValue:
         """Get the total number of byte array values allocated by the account in Global and Local States.
+
+        Requires program version 8 or higher.
 
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
@@ -116,6 +120,8 @@ class AccountParam:
     def totalExtraAppPages(cls, acct: Expr) -> MaybeValue:
         """Get the number of extra app code pages used by the account.
 
+        Requires program version 8 or higher.
+
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
                 May evaluate to uint64 or an address.
@@ -125,6 +131,8 @@ class AccountParam:
     @classmethod
     def totalAppsCreated(cls, acct: Expr) -> MaybeValue:
         """Get the number of existing apps created by the account.
+
+        Requires program version 8 or higher.
 
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
@@ -136,6 +144,8 @@ class AccountParam:
     def totalAppsOptedIn(cls, acct: Expr) -> MaybeValue:
         """Get the number of apps the account is opted into.
 
+        Requires program version 8 or higher.
+
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
                 May evaluate to uint64 or an address.
@@ -145,6 +155,8 @@ class AccountParam:
     @classmethod
     def totalAssetsCreated(cls, acct: Expr) -> MaybeValue:
         """Get the number of existing ASAs created by the account.
+
+        Requires program version 8 or higher.
 
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
@@ -156,6 +168,8 @@ class AccountParam:
     def totalAssets(cls, acct: Expr) -> MaybeValue:
         """Get the number of ASAs held by the account (including ASAs the account created).
 
+        Requires program version 8 or higher.
+
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
                 May evaluate to uint64 or an address.
@@ -166,6 +180,8 @@ class AccountParam:
     def totalBoxes(cls, acct: Expr) -> MaybeValue:
         """Get the number of existing boxes created by the account's app.
 
+        Requires program version 8 or higher.
+
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
                 May evaluate to uint64 or an address.
@@ -175,6 +191,8 @@ class AccountParam:
     @classmethod
     def totalBoxBytes(cls, acct: Expr) -> MaybeValue:
         """Get the total number of bytes used by the account's app's box keys and values.
+
+        Requires program version 8 or higher.
 
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
