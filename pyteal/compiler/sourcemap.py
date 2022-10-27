@@ -443,7 +443,7 @@ class PyTealSourceMap:
         self.source_inference: bool = source_inference
         self.hybrid: bool = hybrid
         self.add_extras: bool = x
-        self._cached_source_map_DEPRECATED: dict[int, SourceMapItem] = {}
+        self._cached_sourcemap_items: dict[int, SourceMapItem] = {}
         self._cached_r3sourcemap: R3SourceMap | None = None
         self.inferred_frames_at: list[int] = []
         self.teal_file: str | None = teal_file
@@ -455,7 +455,7 @@ class PyTealSourceMap:
         if not self._cached_r3sourcemap:
             smi_and_r3sms = [
                 (smi, r3sm)
-                for smi in self.get_map_DEPRECATED().values()
+                for smi in self.get_sourcemap_items().values()
                 for r3sm in smi.source_mappings(hybrid=self.hybrid)
             ]
 
@@ -496,8 +496,8 @@ class PyTealSourceMap:
 
         return self._cached_r3sourcemap
 
-    def get_map_DEPRECATED(self) -> dict[int, SourceMapItem]:
-        if not self._cached_source_map_DEPRECATED:
+    def get_sourcemap_items(self) -> dict[int, SourceMapItem]:
+        if not self._cached_sourcemap_items:
             N = len(self.teal_chunks)
             assert N == len(
                 self.components
@@ -534,9 +534,12 @@ class PyTealSourceMap:
                 _map[line + 1] = (smi := source_map_item(line, i, tc))
                 line += len(smi.teal.splitlines())
 
-            self._cached_source_map_DEPRECATED = _map
+            self._cached_sourcemap_items = _map
 
-        return self._cached_source_map_DEPRECATED
+        return self._cached_sourcemap_items
+
+    def as_list(self) -> list[SourceMapItem]:
+        return list(self.get_sourcemap_items().values())
 
     def _search_for_better_frames_and_modify(
         self, frames: list[PyTealFrame]
@@ -679,7 +682,7 @@ class PyTealSourceMap:
         # return result(first_pt_entrancy)
 
     def teal(self) -> str:
-        return "\n".join(smi.teal for smi in self.get_map_DEPRECATED().values())
+        return "\n".join(smi.teal for smi in self.get_sourcemap_items().values())
 
     _tabulate_param_defaults = dict(
         teal=_TEAL_CHUNK,
@@ -768,7 +771,7 @@ class PyTealSourceMap:
                 ] = self._tabulate_param_defaults[r]
 
         rows = list(
-            smitem.asdict(**renames) for smitem in self.get_map_DEPRECATED().values()
+            smitem.asdict(**renames) for smitem in self.get_sourcemap_items().values()
         )
 
         if constant_columns:

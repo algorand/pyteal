@@ -4,14 +4,21 @@ source mapping and test the results of source mapping various
 PyTeal apps.
 """
 
+import ast
 from configparser import ConfigParser
+from ensurepip import version
 from pathlib import Path
+from tabnanny import verbose
 from typing import cast
 
 import pytest
 from unittest import mock
 
 from algosdk.source_map import R3SourceMap
+from pyteal.compiler import sourcemap
+
+from pyteal.compiler.compiler import Compilation
+from pyteal.ir.ops import Mode
 
 
 ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
@@ -192,3 +199,64 @@ def test_r3sourcemap(_):
     )
 
     assert r3sm_json == round_trip.to_json()
+
+
+C = "comp.compile(with_sourcemap=True)"
+
+
+def unparse(sourcemap_items):
+    return list(map(lambda smi: ast.unparse(smi.frame.node), sourcemap_items))
+
+
+@pytest.mark.parametrize("mode", Mode)
+@pytest.mark.parametrize("version", range(2, 8))
+@mock.patch.object(ConfigParser, "getboolean", return_value=True)
+def test_sanity_check(_, mode, version):
+    """
+    Sanity check source mapping the most important PyTeal constructs
+
+    Cannot utilize @pytest.mark.parametrize because of monkeypatching
+    """
+    import pyteal as pt
+
+    P = f"#pragma version {version}"
+    test_cases = [
+        (pt.Int(42), [(P, C), ("int 42", "pt.Int(42)"), ("return", C)]),
+        (
+            pt.Seq(pt.Pop(pt.Bytes("hello world")), pt.Int(1)),
+            [
+                (P, C),
+                ('byte "hello world"', "pt.Bytes('hello world')"),
+                ("pop", "pt.Pop(pt.Bytes('hello world'))"),
+                ("int 1", "pt.Int(1)"),
+                ("return", C),
+            ],
+        ),
+        (
+            pt.Int(2) * pt.Int(3),
+            [
+                (P, C),
+                ("int 2", "pt.Int(2)"),
+                ("int 3", "pt.Int(3)"),
+                ("*", "pt.Int(2) * pt.Int(3)"),
+                ("return", C),
+            ],
+        ),
+    ]
+
+    for i, (expr, line2unparsed) in enumerate(test_cases):
+        comp = Compilation(
+            expr, mode, version=version, assemble_constants=False, optimize=None
+        )
+        bundle = comp.compile(with_sourcemap=True)
+        sourcemap = bundle.sourcemap
+
+        assert sourcemap
+        assert sourcemap.hybrid is True
+        assert sourcemap.source_inference is True
+
+        smis = sourcemap.as_list()
+        expected_lines, unparsed = list(zip(*line2unparsed))
+        assert list(expected_lines) == bundle.lines
+        assert list(expected_lines) == sourcemap.teal_chunks
+        assert list(unparsed) == unparse(smis)
