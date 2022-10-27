@@ -117,8 +117,8 @@ The :any:`GetBit` expression can extract individual bit values from integers and
     GetBit(Int(16), Int(63)) # get the 63rd bit of 16, produces 0
     GetBit(Int(16), Int(64)) # get the 64th bit of 16, invalid index
 
-    GetBit(Bytes("base16", "0xf0"), Int(0)) # get the 0th bit of 0xf0, produces 1
-    GetBit(Bytes("base16", "0xf0"), Int(7)) # get the 7th bit of 0xf0, produces 0
+    GetBit(Bytes("base16", "0xf0"), Int(0)) # get the 0th bit of 0xf0, produces 0
+    GetBit(Bytes("base16", "0xf0"), Int(7)) # get the 7th bit of 0xf0, produces 1
     GetBit(Bytes("base16", "0xf0"), Int(8)) # get the 8th bit of 0xf0, invalid index
 
 Additionally, the :any:`SetBit` expression can modify individual bit values from integers and byte strings. For example,
