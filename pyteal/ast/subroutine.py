@@ -8,8 +8,9 @@ import algosdk.abi as sdk_abi
 from pyteal.ast import abi
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
+from pyteal.ast.int import Int
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar, ScratchSlot
-from pyteal.ast.frame import FrameDig, Proto
+from pyteal.ast.frame import FrameBury, FrameDig, Proto
 from pyteal.errors import TealInputError, TealInternalError, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.types import TealType
@@ -1019,17 +1020,22 @@ class SubroutineEval:
         # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
         # need to reverse order of argumentVars because the last argument will be on top of the stack
         body_ops: list[Expr] = []
+
+        stack_output_cnt: int
+        if not subroutine.has_abi_output:
+            # if subroutine do not have abi output, then only two cases happen:
+            # - subroutine is a normal subroutine, then check subroutine body evaluates to something, rather than none
+            # - subroutine is an ABIReturnSubroutine, the type is void, and its subroutine body type of is always none
+            stack_output_cnt = int(subroutine_body.type_of() != TealType.none)
+        else:
+            stack_output_cnt = len(abi_output_kwargs)
+
         if self.use_frame_pt:
-            body_ops += [
-                Proto(
-                    subroutine.argument_count(),
-                    int(
-                        subroutine_body.type_of() != TealType.none
-                        if not subroutine.has_abi_output
-                        else len(abi_output_kwargs)
-                    ),
-                )
-            ]
+            body_ops = [Proto(subroutine.argument_count(), stack_output_cnt)]
+            # reserve a spot for output variable on stack?
+            if stack_output_cnt > 0 and subroutine.has_abi_output:
+                body_ops.append(FrameBury(Int(0), 0))
+
         body_ops += [var.slot.store() for var in arg_vars[::-1]]
         body_ops.append(subroutine_body)
         sd = SubroutineDeclaration(subroutine, Seq(body_ops), deferred_expr)
