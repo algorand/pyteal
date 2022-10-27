@@ -79,7 +79,10 @@ class DataStorageSchema(ABC):
         pass
 
 
-class ScratchVarStorage(DataStorageSchema):
+DataStorageSchema.__module__ = "pyteal"
+
+
+class ScratchStorage(DataStorageSchema):
     def __init__(self, storage_type: TealType) -> None:
         super().__init__()
         self.scratchvar: Final = ScratchVar(storage_type)
@@ -92,6 +95,9 @@ class ScratchVarStorage(DataStorageSchema):
 
     def storage_type(self) -> TealType:
         return self.scratchvar.storage_type()
+
+
+ScratchStorage.__module__ = "pyteal"
 
 
 class FrameStorage(DataStorageSchema):
@@ -114,6 +120,9 @@ class FrameStorage(DataStorageSchema):
         return FrameDig(self.stack_depth)
 
 
+FrameStorage.__module__ = "pyteal"
+
+
 class BaseType(ABC):
     """The abstract base class for all ABI type instances.
 
@@ -126,7 +135,7 @@ class BaseType(ABC):
         """Create a new BaseType."""
         super().__init__()
         self._type_spec: Final = spec
-        self._data_storage: DataStorageSchema = ScratchVarStorage(spec.storage_type())
+        self._data_storage: DataStorageSchema = ScratchStorage(spec.storage_type())
 
         # self.stored_value: Final = ScratchVar(spec.storage_type())
 

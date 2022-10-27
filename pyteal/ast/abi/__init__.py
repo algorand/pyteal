@@ -11,7 +11,7 @@ from pyteal.ast.abi.type import (
     ReturnedValue,
     DataStorageSchema,
     FrameStorage,
-    ScratchVarStorage,
+    ScratchStorage,
 )
 from pyteal.ast.abi.bool import BoolTypeSpec, Bool
 from pyteal.ast.abi.uint import (
@@ -176,7 +176,7 @@ __all__ = [
     "size_of",
     "DataStorageSchema",
     "FrameStorage",
-    "ScratchVarStorage",
+    "ScratchStorage",
     "algosdk_from_annotation",
     "algosdk_from_type_spec",
     "contains_type_spec",

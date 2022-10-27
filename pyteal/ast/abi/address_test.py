@@ -53,7 +53,7 @@ def test_Address_encode():
             pt.TealOp(
                 expr,
                 pt.Op.load,
-                cast(abi.ScratchVarStorage, value._data_storage).scratchvar.slot,
+                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
             ),
         ]
     )
@@ -117,7 +117,7 @@ def test_Address_get():
             pt.TealOp(
                 expr,
                 pt.Op.load,
-                cast(abi.ScratchVarStorage, value._data_storage).scratchvar.slot,
+                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
             ),
         ]
     )
@@ -139,12 +139,12 @@ def test_Address_set_StaticArray():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(abi.ScratchVarStorage, value_to_set._data_storage).scratchvar.slot,
+                cast(abi.ScratchStorage, value_to_set._data_storage).scratchvar.slot,
             ),
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(abi.ScratchVarStorage, value._data_storage).scratchvar.slot,
+                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
             ),
         ]
     )
@@ -174,7 +174,7 @@ def test_Address_set_str():
                 pt.TealOp(
                     None,
                     pt.Op.store,
-                    cast(abi.ScratchVarStorage, value._data_storage).scratchvar.slot,
+                    cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
                 ),
             ]
         )
@@ -203,7 +203,7 @@ def test_Address_set_bytes():
                 pt.TealOp(
                     None,
                     pt.Op.store,
-                    cast(abi.ScratchVarStorage, value._data_storage).scratchvar.slot,
+                    cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
                 ),
             ]
         )
@@ -236,12 +236,12 @@ def test_Address_set_expr():
                 pt.TealOp(
                     None,
                     pt.Op.store,
-                    cast(abi.ScratchVarStorage, value._data_storage).scratchvar.slot,
+                    cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
                 ),
                 pt.TealOp(
                     None,
                     pt.Op.load,
-                    cast(abi.ScratchVarStorage, value._data_storage).scratchvar.slot,
+                    cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
                 ),
                 pt.TealOp(None, pt.Op.len),
                 pt.TealOp(None, pt.Op.int, AddressLength.Bytes.value),
@@ -270,12 +270,12 @@ def test_Address_set_copy():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(abi.ScratchVarStorage, other._data_storage).scratchvar.slot,
+                cast(abi.ScratchStorage, other._data_storage).scratchvar.slot,
             ),
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(abi.ScratchVarStorage, value._data_storage).scratchvar.slot,
+                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
             ),
         ]
     )
@@ -307,7 +307,7 @@ def test_Address_set_computed():
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(abi.ScratchVarStorage, value._data_storage).scratchvar.slot,
+                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
             ),
         ]
     )
