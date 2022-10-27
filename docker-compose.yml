@@ -8,7 +8,7 @@ services:
       - "4160:4160" # gossip
       - "9100:9100" # prometheus
     environment:
-      - DEV_MODE
+      - DEV_MODE=true
       - TOKEN=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     healthcheck:
       test: goal node status

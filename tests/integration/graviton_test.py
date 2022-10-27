@@ -549,6 +549,7 @@ def test_blackbox_subroutines_as_apps(
     scenario: Dict[str, Any],
 ):
     blackbox_test_runner(subr, pt.Mode.Application, scenario, 6)
+    blackbox_test_runner(subr, pt.Mode.Application, scenario, 8)
 
 
 @pytest.mark.parametrize("subr, scenario", LOGICSIG_SCENARIOS.items())
@@ -557,6 +558,7 @@ def test_blackbox_subroutines_as_logic_sigs(
     scenario: Dict[str, Any],
 ):
     blackbox_test_runner(subr, pt.Mode.Signature, scenario, 6)
+    blackbox_test_runner(subr, pt.Mode.Signature, scenario, 8)
 
 
 def blackbox_pyteal_example1():
