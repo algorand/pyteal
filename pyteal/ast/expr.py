@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Tuple, List, TYPE_CHECKING
 
 from pyteal.types import TealType
+from pyteal.errors import TealInternalError
 from pyteal.ir import TealBlock, TealSimpleBlock
 
 if TYPE_CHECKING:
@@ -128,6 +129,9 @@ class Expr(ABC):
         from pyteal.ast.binaryexpr import ShiftRight
 
         return ShiftRight(self, other)
+
+    def __bool__(self):
+        raise TealInternalError("Cannot coerce Expr to bool")
 
     def And(self, other: "Expr") -> "Expr":
         """Take the logical And of this expression and another one.

@@ -36,8 +36,8 @@ class If(Expr):
         # Flag to denote and check whether the new If().Then() syntax is being used
         self.alternateSyntaxFlag = False
 
-        if thenBranch:
-            if elseBranch:
+        if thenBranch is not None:
+            if elseBranch is not None:
                 require_type(thenBranch, elseBranch.type_of())
             else:
                 # If there is only a thenBranch, then it should evaluate to none type
@@ -106,7 +106,7 @@ class If(Expr):
 
         thenBranch = _use_seq_if_multiple(thenBranch, *then_branch_multi)
 
-        if not self.elseBranch:
+        if self.elseBranch is None:
             self.thenBranch = thenBranch
         else:
             if not isinstance(self.elseBranch, If):
@@ -118,7 +118,7 @@ class If(Expr):
         if not self.alternateSyntaxFlag:
             raise TealInputError("Cannot mix two different If syntax styles")
 
-        if not self.elseBranch:
+        if self.elseBranch is None:
             self.elseBranch = If(cond)
         else:
             if not isinstance(self.elseBranch, If):
@@ -130,12 +130,12 @@ class If(Expr):
         if not self.alternateSyntaxFlag:
             raise TealInputError("Cannot mix two different If syntax styles")
 
-        if not self.thenBranch:
+        if self.thenBranch is None:
             raise TealInputError("Must set Then branch before Else branch")
 
         elseBranch = _use_seq_if_multiple(elseBranch, *else_branch_multi)
 
-        if not self.elseBranch:
+        if self.elseBranch is None:
             require_type(elseBranch, self.thenBranch.type_of())
             self.elseBranch = elseBranch
         else:

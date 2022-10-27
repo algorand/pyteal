@@ -122,7 +122,7 @@ class ScratchLoad(Expr):
                 "Exactly one of slot or index_expressions must be provided"
             )
 
-        if index_expression:
+        if index_expression is not None:
             if not isinstance(index_expression, Expr):
                 raise TealInputError(
                     "index_expression must be an Expr but was of type {}".format(
@@ -185,7 +185,7 @@ class ScratchStore(Expr):
                 "Exactly one of slot or index_expressions must be provided"
             )
 
-        if index_expression:
+        if index_expression is not None:
             if not isinstance(index_expression, Expr):
                 raise TealInputError(
                     "index_expression must be an Expr but was of type {}".format(

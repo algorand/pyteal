@@ -309,7 +309,7 @@ class PyTealDryRunExecutor:
             *(self._arg_prep_n_call(i, p) for i, p in enumerate(self.input_types))
         ]
         preps, calls = zip(*preps_n_calls) if preps_n_calls else ([], [])
-        preps = [p for p in preps if p]
+        preps = [p for p in preps if p is not None]
         return preps, calls
 
     def _handle_SubroutineFnWrapper(self):

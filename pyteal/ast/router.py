@@ -144,7 +144,7 @@ class OnCompleteAction:
     call_config: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
 
     def __post_init__(self):
-        if bool(self.call_config) ^ bool(self.action):
+        if (self.call_config == CallConfig.NEVER) ^ (self.action is None):
             raise TealInputError(
                 f"action {self.action} and call_config {self.call_config!r} contradicts"
             )
@@ -172,7 +172,7 @@ class OnCompleteAction:
         return OnCompleteAction(action=f, call_config=CallConfig.ALL)
 
     def is_empty(self) -> bool:
-        return not self.action and self.call_config == CallConfig.NEVER
+        return self.action is None and self.call_config == CallConfig.NEVER
 
 
 OnCompleteAction.__module__ = "pyteal"
@@ -528,7 +528,7 @@ class Router:
 
         if bare_calls and not bare_calls.is_empty():
             bare_call_approval = bare_calls.approval_construction()
-            if bare_call_approval:
+            if bare_call_approval is not None:
                 self.approval_ast.conditions_n_branches.append(
                     CondNode(
                         Txn.application_args.length() == Int(0),
@@ -536,7 +536,7 @@ class Router:
                     )
                 )
             bare_call_clear = bare_calls.clear_state_construction()
-            if bare_call_clear:
+            if bare_call_clear is not None:
                 self.clear_state_ast.conditions_n_branches.append(
                     CondNode(
                         Txn.application_args.length() == Int(0),
