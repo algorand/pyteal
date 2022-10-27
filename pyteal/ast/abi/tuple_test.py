@@ -706,7 +706,7 @@ def test_Tuple_set_Computed():
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(abi.ScratchVarStorage, tupleValue._data_storage).scratchvar.slot,
+                cast(abi.ScratchStorage, tupleValue._data_storage).scratchvar.slot,
             ),
         ]
     )
@@ -737,7 +737,7 @@ def test_Tuple_encode():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(abi.ScratchVarStorage, tupleValue._data_storage).scratchvar.slot,
+                cast(abi.ScratchStorage, tupleValue._data_storage).scratchvar.slot,
             ),
         ]
     )

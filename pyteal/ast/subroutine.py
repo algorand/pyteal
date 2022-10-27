@@ -791,7 +791,7 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
     def var_n_loaded(
         param: str,
     ) -> tuple[ScratchVar, ScratchVar | abi.BaseType | Expr]:
-        from pyteal.ast.abi.type import ScratchVarStorage
+        from pyteal.ast.abi.type import ScratchStorage
 
         loaded_var: ScratchVar | abi.BaseType | Expr
         argument_var: ScratchVar
@@ -801,7 +801,7 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
             loaded_var = argument_var
         elif param in subroutine.abi_args:
             internal_abi_var = subroutine.abi_args[param].new_instance()
-            if not isinstance(internal_abi_var._data_storage, ScratchVarStorage):
+            if not isinstance(internal_abi_var._data_storage, ScratchStorage):
                 raise TealInternalError(
                     "subroutine ABI args must have data schema being ScratchVarStorage"
                 )
