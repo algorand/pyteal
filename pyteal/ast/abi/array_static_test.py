@@ -237,12 +237,12 @@ def test_StaticArray_set_copy():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(abi.ScratchVarStorage, otherArray._data_storage).scratchvar.slot,
+                cast(abi.ScratchStorage, otherArray._data_storage).scratchvar.slot,
             ),
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(abi.ScratchVarStorage, value._data_storage).scratchvar.slot,
+                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
             ),
         ]
     )
@@ -270,7 +270,7 @@ def test_StaticArray_set_computed():
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(abi.ScratchVarStorage, value._data_storage).scratchvar.slot,
+                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
             ),
         ]
     )
@@ -317,7 +317,7 @@ def test_StaticBytes_set_py_bytes(test_case: bytes | bytearray):
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(abi.ScratchVarStorage, value._data_storage).scratchvar.slot,
+                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
             ),
         ]
     )
@@ -352,13 +352,13 @@ def test_StaticBytes_expr(test_case: bytes | bytearray):
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(abi.ScratchVarStorage, value._data_storage).scratchvar.slot,
+                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
             ),
             pt.TealOp(None, pt.Op.int, 32),
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(abi.ScratchVarStorage, value._data_storage).scratchvar.slot,
+                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
             ),
             pt.TealOp(None, pt.Op.len),
             pt.TealOp(None, pt.Op.eq),
@@ -381,7 +381,7 @@ def test_StaticArray_encode():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(abi.ScratchVarStorage, value._data_storage).scratchvar.slot,
+                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
             ),
         ]
     )

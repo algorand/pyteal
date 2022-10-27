@@ -26,7 +26,7 @@ def test_ReferenceType_referenced_index():
                 pt.TealOp(
                     expr,
                     pt.Op.load,
-                    cast(abi.ScratchVarStorage, value._data_storage).scratchvar.slot,
+                    cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
                 ),
             ]
         )
@@ -117,7 +117,7 @@ def test_Account_address():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(abi.ScratchVarStorage, value._data_storage).scratchvar.slot,
+                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
             ),
             pt.TealOp(None, pt.Op.txnas, "Accounts"),
         ]
@@ -204,7 +204,7 @@ def test_Asset_asset_id():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(abi.ScratchVarStorage, value._data_storage).scratchvar.slot,
+                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
             ),
             pt.TealOp(None, pt.Op.txnas, "Assets"),
         ]
@@ -298,7 +298,7 @@ def test_Application_application_id():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(abi.ScratchVarStorage, value._data_storage).scratchvar.slot,
+                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
             ),
             pt.TealOp(None, pt.Op.txnas, "Applications"),
         ]
