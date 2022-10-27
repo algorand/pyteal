@@ -27,13 +27,13 @@ class _SubroutineDeclByVersion:
             range(Op.callsub.min_version, FRAME_POINTER_VERSION): None,
             range(FRAME_POINTER_VERSION, MAX_PROGRAM_VERSION + 1): None,
         }
-        self.version_method: dict[range, Callable[..., SubroutineDeclaration]] = {
+        self.version_method: dict[range, SubroutineEval] = {
             range(
                 Op.callsub.min_version, FRAME_POINTER_VERSION
-            ): SubroutineEval.normal_evaluator,
+            ): SubroutineEval.normal_evaluator(),
             range(
                 FRAME_POINTER_VERSION, MAX_PROGRAM_VERSION + 1
-            ): SubroutineEval.fp_evaluator,
+            ): SubroutineEval.fp_evaluator(),
         }
         self.has_return: Optional[bool] = None
         self.type_of: Optional[TealType] = None
@@ -109,6 +109,9 @@ class _SubroutineDeclByVersion:
             if decl:
                 continue
             self.version_map[_r] = self.get_declaration_by_version(_r.start)
+
+
+_SubroutineDeclByVersion.__module__ = "pyteal"
 
 
 class SubroutineDefinition:
@@ -840,6 +843,7 @@ class Subroutine:
 Subroutine.__module__ = "pyteal"
 
 
+@dataclass
 class SubroutineEval:
     """
     Puts together the data necessary to define the code for a subroutine.
@@ -909,6 +913,12 @@ class SubroutineEval:
             and appends a return expression of stored value of the ABI keyword value.
     """
 
+    var_n_loaded: Callable[
+        [SubroutineDefinition, str],
+        tuple[Optional[ScratchVar], ScratchVar | abi.BaseType | Expr],
+    ]
+    use_frame_pt: bool = False
+
     @staticmethod
     def __var_n_loaded(
         subroutine: SubroutineDefinition,
@@ -966,92 +976,73 @@ class SubroutineEval:
 
         return argument_var, loaded_var
 
-    @staticmethod
-    def __evaluator_gen(
-        var_n_loaded: Callable[
-            [SubroutineDefinition, str],
-            tuple[Optional[ScratchVar], ScratchVar | abi.BaseType | Expr],
-        ],
-        /,
-        *,
-        use_proto: bool = False,
-    ) -> Callable[[SubroutineDefinition], SubroutineDeclaration]:
+    def __call__(self, subroutine: SubroutineDefinition) -> SubroutineDeclaration:
         from pyteal.ast.abi.type import FrameStorage
 
-        def evaluator(subroutine: SubroutineDefinition) -> SubroutineDeclaration:
-            args = subroutine.arguments()
-            arg_vars: list[ScratchVar] = []
-            loaded_args: list[ScratchVar | Expr | abi.BaseType] = []
-            for arg in args:
-                arg_var, loaded_arg = var_n_loaded(subroutine, arg)
-                if arg_var:
-                    arg_vars.append(arg_var)
-                loaded_args.append(loaded_arg)
+        args = subroutine.arguments()
+        arg_vars: list[ScratchVar] = []
+        loaded_args: list[ScratchVar | Expr | abi.BaseType] = []
+        for arg in args:
+            arg_var, loaded_arg = self.var_n_loaded(subroutine, arg)
+            if arg_var:
+                arg_vars.append(arg_var)
+            loaded_args.append(loaded_arg)
 
-            abi_output_kwargs: dict[str, abi.BaseType] = {}
-            output_kwarg_info = OutputKwArgInfo.from_dict(subroutine.output_kwarg)
-            output_carrying_abi: Optional[abi.BaseType] = None
+        abi_output_kwargs: dict[str, abi.BaseType] = {}
+        output_kwarg_info = OutputKwArgInfo.from_dict(subroutine.output_kwarg)
+        output_carrying_abi: Optional[abi.BaseType] = None
 
-            if output_kwarg_info:
-                output_carrying_abi = output_kwarg_info.abi_type.new_instance()
-                if use_proto:
-                    output_carrying_abi._data_storage = FrameStorage(
-                        TealType.anytype, 0
-                    )
-                abi_output_kwargs[output_kwarg_info.name] = output_carrying_abi
+        if output_kwarg_info:
+            output_carrying_abi = output_kwarg_info.abi_type.new_instance()
+            if self.use_frame_pt:
+                output_carrying_abi._data_storage = FrameStorage(TealType.anytype, 0)
+            abi_output_kwargs[output_kwarg_info.name] = output_carrying_abi
 
-            # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:
-            subroutine_body = subroutine.implementation(
-                *loaded_args, **abi_output_kwargs
+        # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:
+        subroutine_body = subroutine.implementation(*loaded_args, **abi_output_kwargs)
+        if not isinstance(subroutine_body, Expr):
+            raise TealInputError(
+                f"Subroutine function does not return a PyTeal expression. Got type {type(subroutine_body)}."
             )
-            if not isinstance(subroutine_body, Expr):
+
+        deferred_expr: Optional[Expr] = None
+
+        # if there is an output keyword argument for ABI, place the storing on the stack
+        if output_carrying_abi:
+            if subroutine_body.type_of() != TealType.none:
                 raise TealInputError(
-                    f"Subroutine function does not return a PyTeal expression. Got type {type(subroutine_body)}."
+                    f"ABI returning subroutine definition should evaluate to TealType.none, "
+                    f"while evaluate to {subroutine_body.type_of()}."
                 )
+            deferred_expr = output_carrying_abi._data_storage.load_value()
 
-            deferred_expr: Optional[Expr] = None
+        # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
+        # need to reverse order of argumentVars because the last argument will be on top of the stack
+        body_ops: list[Expr] = []
+        if self.use_frame_pt:
+            body_ops += [
+                Proto(
+                    subroutine.argument_count(),
+                    int(
+                        subroutine_body.type_of() != TealType.none
+                        if not subroutine.has_abi_output
+                        else len(abi_output_kwargs)
+                    ),
+                )
+            ]
+        body_ops += [var.slot.store() for var in arg_vars[::-1]]
+        body_ops.append(subroutine_body)
+        sd = SubroutineDeclaration(subroutine, Seq(body_ops), deferred_expr)
+        sd.trace = subroutine_body.trace
+        return sd
 
-            # if there is an output keyword argument for ABI, place the storing on the stack
-            if output_carrying_abi:
-                if subroutine_body.type_of() != TealType.none:
-                    raise TealInputError(
-                        f"ABI returning subroutine definition should evaluate to TealType.none, "
-                        f"while evaluate to {subroutine_body.type_of()}."
-                    )
-                deferred_expr = output_carrying_abi._data_storage.load_value()
+    @classmethod
+    def normal_evaluator(cls) -> "SubroutineEval":
+        return cls(SubroutineEval.__var_n_loaded, False)
 
-            # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
-            # need to reverse order of argumentVars because the last argument will be on top of the stack
-            body_ops: list[Expr] = []
-            if use_proto:
-                body_ops += [
-                    Proto(
-                        subroutine.argument_count(),
-                        int(
-                            subroutine_body.type_of() != TealType.none
-                            if not subroutine.has_abi_output
-                            else len(abi_output_kwargs)
-                        ),
-                    )
-                ]
-            body_ops += [var.slot.store() for var in arg_vars[::-1]]
-            body_ops.append(subroutine_body)
-
-            sd = SubroutineDeclaration(subroutine, Seq(body_ops), deferred_expr)
-            sd.trace = subroutine_body.trace
-            return sd
-
-        return evaluator
-
-    @staticmethod
-    def normal_evaluator(subroutine: SubroutineDefinition) -> SubroutineDeclaration:
-        return SubroutineEval.__evaluator_gen(SubroutineEval.__var_n_loaded)(subroutine)
-
-    @staticmethod
-    def fp_evaluator(subroutine: SubroutineDefinition) -> SubroutineDeclaration:
-        return SubroutineEval.__evaluator_gen(
-            SubroutineEval.__var_n_loaded_fp, use_proto=True
-        )(subroutine)
+    @classmethod
+    def fp_evaluator(cls) -> "SubroutineEval":
+        return cls(SubroutineEval.__var_n_loaded_fp, True)
 
 
 SubroutineEval.__module__ = "pyteal"
