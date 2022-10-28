@@ -834,9 +834,9 @@ def blackbox_pyteal_example4():
     for n in range(N):
         inputs.append(tuple([random.sample(choices, n)]))
 
-    app_inspectors = app_pytealer.dryrun_on_sequence(inputs)
+    app_inspectors = app_pytealer.dryrun_on_sequence(inputs, compiler_version=8)
 
-    lsig_inspectors = lsig_pytealer.dryrun_on_sequence(inputs)
+    lsig_inspectors = lsig_pytealer.dryrun_on_sequence(inputs, compiler_version=8)
 
     for i in range(N):
         args = inputs[i]

@@ -8,10 +8,8 @@ import algosdk.abi as sdk_abi
 from pyteal.ast import abi
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
-
-# from pyteal.ast.int import Int
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar, ScratchSlot
-from pyteal.ast.frame import FrameDig, Proto  # FrameBury
+from pyteal.ast.frame import FrameDig, Proto
 from pyteal.errors import TealInputError, TealInternalError, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.types import TealType
@@ -979,7 +977,10 @@ class SubroutineEval:
         return argument_var, loaded_var
 
     def __call__(self, subroutine: SubroutineDefinition) -> SubroutineDeclaration:
-        # from pyteal.ast.abi.type import FrameStorage
+        # TODO need to make it better for my temp hack, kinda ugly but it works
+        from pyteal.ast.abi.type import FrameStorage
+        from pyteal.compiler.compiler import TealSimpleBlock
+        from pyteal.ast.int import Int
 
         args = subroutine.arguments()
         arg_vars: list[ScratchVar] = []
@@ -996,9 +997,8 @@ class SubroutineEval:
 
         if output_kwarg_info:
             output_carrying_abi = output_kwarg_info.abi_type.new_instance()
-            # TODO seems to need a "prefix expr" to let output frame bury work
-            # if self.use_frame_pt:
-            #     output_carrying_abi._data_storage = FrameStorage(TealType.anytype, 0)
+            if self.use_frame_pt:
+                output_carrying_abi._data_storage = FrameStorage(TealType.anytype, 0)
             abi_output_kwargs[output_kwarg_info.name] = output_carrying_abi
 
         # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:
@@ -1033,10 +1033,37 @@ class SubroutineEval:
             stack_output_cnt = len(abi_output_kwargs)
 
         if self.use_frame_pt:
-            body_ops = [Proto(subroutine.argument_count(), stack_output_cnt)]
-            # reserve a spot for output variable on stack?
-            # if stack_output_cnt > 0 and subroutine.has_abi_output:
-            #     body_ops += [Int(0), FrameBury(Int(0), 0)]
+            if not subroutine.has_abi_output:
+                body_ops = [Proto(subroutine.argument_count(), stack_output_cnt)]
+            else:
+
+                class TempStuff(Expr):
+                    def __init__(self, arg_cnt, stack_out_cnt):
+                        super().__init__()
+                        self.arg_cnt = arg_cnt
+                        self.stack_cnt = stack_out_cnt
+
+                    def __teal__(
+                        self, options: "CompileOptions"
+                    ) -> tuple[TealBlock, TealSimpleBlock]:
+                        proto_srt, proto_end = Proto(
+                            self.arg_cnt, self.stack_cnt
+                        ).__teal__(options)
+                        int_srt, int_end = Int(0xB0BA7EA).__teal__(options)
+                        srt, end = proto_srt, int_end
+                        proto_end.setNextBlock(int_srt)
+                        return srt, end
+
+                    def has_return(self) -> bool:
+                        return False
+
+                    def type_of(self) -> TealType:
+                        return TealType.none
+
+                    def __str__(self) -> str:
+                        return "why_are_you_here"
+
+                body_ops = [TempStuff(subroutine.argument_count(), stack_output_cnt)]
 
         body_ops += [var.slot.store() for var in arg_vars[::-1]]
         body_ops.append(subroutine_body)
