@@ -5,6 +5,7 @@ PyTeal apps.
 """
 
 import ast
+from asyncore import close_all
 from configparser import ConfigParser
 from ensurepip import version
 from pathlib import Path
@@ -220,6 +221,12 @@ def test_sanity_check(_, mode, version):
     import pyteal as pt
 
     P = f"#pragma version {version}"
+    is_admin = pt.App.localGet(pt.Int(0), pt.Bytes("admin"))
+    transfer = set_admin = mint = register = on_closeout = on_creation = pt.Return(
+        pt.Int(1)
+    )
+
+    """
     test_cases = [
         (
             pt.Return(pt.Int(42)),
@@ -461,16 +468,173 @@ def test_sanity_check(_, mode, version):
             ],
             5,
         ),
+        (
+            pt.And(
+                pt.Txn.type_enum() == pt.TxnType.Payment,
+                pt.Txn.fee() < pt.Int(100),
+                pt.Txn.first_valid() % pt.Int(50) == pt.Int(0),
+                pt.Txn.last_valid() == pt.Int(5000) + pt.Txn.first_valid(),
+                pt.Txn.lease() == pt.Bytes("base64", "023sdDE2"),
+            ),
+            [
+                (P, C),
+                ("txn TypeEnum", "pt.Txn.type_enum()"),
+                ("int pay", "pt.Txn.type_enum() == pt.TxnType.Payment"),
+                ("==", "pt.Txn.type_enum() == pt.TxnType.Payment"),
+                ("txn Fee", "pt.Txn.fee()"),
+                ("int 100", "pt.Int(100)"),
+                ("<", "pt.Txn.fee() < pt.Int(100)"),
+                (
+                    "&&",
+                    "pt.And(pt.Txn.type_enum() == pt.TxnType.Payment, pt.Txn.fee() < pt.Int(100), pt.Txn.first_valid() % pt.Int(50) == pt.Int(0), pt.Txn.last_valid() == pt.Int(5000) + pt.Txn.first_valid(), pt.Txn.lease() == pt.Bytes('base64', '023sdDE2'))",
+                ),
+                ("txn FirstValid", "pt.Txn.first_valid()"),
+                ("int 50", "pt.Int(50)"),
+                ("%", "pt.Txn.first_valid() % pt.Int(50)"),
+                ("int 0", "pt.Int(0)"),
+                ("==", "pt.Txn.first_valid() % pt.Int(50) == pt.Int(0)"),
+                (
+                    "&&",
+                    "pt.And(pt.Txn.type_enum() == pt.TxnType.Payment, pt.Txn.fee() < pt.Int(100), pt.Txn.first_valid() % pt.Int(50) == pt.Int(0), pt.Txn.last_valid() == pt.Int(5000) + pt.Txn.first_valid(), pt.Txn.lease() == pt.Bytes('base64', '023sdDE2'))",
+                ),
+                ("txn LastValid", "pt.Txn.last_valid()"),
+                ("int 5000", "pt.Int(5000)"),
+                ("txn FirstValid", "pt.Txn.first_valid()"),
+                ("+", "pt.Int(5000) + pt.Txn.first_valid()"),
+                ("==", "pt.Txn.last_valid() == pt.Int(5000) + pt.Txn.first_valid()"),
+                (
+                    "&&",
+                    "pt.And(pt.Txn.type_enum() == pt.TxnType.Payment, pt.Txn.fee() < pt.Int(100), pt.Txn.first_valid() % pt.Int(50) == pt.Int(0), pt.Txn.last_valid() == pt.Int(5000) + pt.Txn.first_valid(), pt.Txn.lease() == pt.Bytes('base64', '023sdDE2'))",
+                ),
+                ("txn Lease", "pt.Txn.lease()"),
+                ("byte base64(023sdDE2)", "pt.Bytes('base64', '023sdDE2')"),
+                ("==", "pt.Txn.lease() == pt.Bytes('base64', '023sdDE2')"),
+                (
+                    "&&",
+                    "pt.And(pt.Txn.type_enum() == pt.TxnType.Payment, pt.Txn.fee() < pt.Int(100), pt.Txn.first_valid() % pt.Int(50) == pt.Int(0), pt.Txn.last_valid() == pt.Int(5000) + pt.Txn.first_valid(), pt.Txn.lease() == pt.Bytes('base64', '023sdDE2'))",
+                ),
+                ("return", C),
+            ],
+        ),
+    ]
+    """
+    test_cases = [
+        (
+            pt.Cond(
+                [pt.Txn.application_id() == pt.Int(0), on_creation],
+                [
+                    pt.Txn.on_completion() == pt.OnComplete.DeleteApplication,
+                    pt.Return(is_admin),
+                ],
+                [
+                    pt.Txn.on_completion() == pt.OnComplete.UpdateApplication,
+                    pt.Return(is_admin),
+                ],
+                [pt.Txn.on_completion() == pt.OnComplete.CloseOut, on_closeout],
+                [pt.Txn.on_completion() == pt.OnComplete.OptIn, register],
+                [pt.Txn.application_args[0] == pt.Bytes("set admin"), set_admin],
+                [pt.Txn.application_args[0] == pt.Bytes("mint"), mint],
+                [pt.Txn.application_args[0] == pt.Bytes("transfer"), transfer],
+                [pt.Txn.accounts[4] == pt.Bytes("foo"), on_closeout],
+            ),
+            [
+                (P, C),
+                ("txn ApplicationID", "pt.Txn.application_id()"),
+                ("int 0", "pt.Int(0)"),
+                ("==", "pt.Txn.application_id() == pt.Int(0)"),
+                ("bnz main_l18", C),  # ... makes sense
+                ("txn OnCompletion", "pt.Txn.on_completion()"),
+                (
+                    "int DeleteApplication",
+                    "pt.Txn.on_completion() == pt.OnComplete.DeleteApplication",
+                ),  # source inferencing at work here!!!!
+                ("==", "pt.Txn.on_completion() == pt.OnComplete.DeleteApplication"),
+                ("bnz main_l17", C),  # makes sense
+                ("txn OnCompletion", "pt.Txn.on_completion()"),
+                (
+                    "int UpdateApplication",
+                    "pt.Txn.on_completion() == pt.OnComplete.UpdateApplication",
+                ),  # source inferencing
+                ("==", "pt.Txn.on_completion() == pt.OnComplete.UpdateApplication"),
+                ("bnz main_l16", C),  # yep
+                ("txn OnCompletion", "pt.Txn.on_completion()"),
+                ("int CloseOut", "pt.Txn.on_completion() == pt.OnComplete.CloseOut"),
+                ("==", "pt.Txn.on_completion() == pt.OnComplete.CloseOut"),
+                ("bnz main_l15", C),
+                ("txn OnCompletion", "pt.Txn.on_completion()"),
+                ("int OptIn", "pt.Txn.on_completion() == pt.OnComplete.OptIn"),
+                ("==", "pt.Txn.on_completion() == pt.OnComplete.OptIn"),
+                ("bnz main_l14", C),
+                ("txna ApplicationArgs 0", "pt.Txn.application_args[0]"),
+                ('byte "set admin"', "pt.Bytes('set admin')"),
+                ("==", "pt.Txn.application_args[0] == pt.Bytes('set admin')"),
+                ("bnz main_l13", C),
+                ("txna ApplicationArgs 0", "pt.Txn.application_args[0]"),
+                ('byte "mint"', "pt.Bytes('mint')"),
+                ("==", "pt.Txn.application_args[0] == pt.Bytes('mint')"),
+                ("bnz main_l12", C),
+                ("txna ApplicationArgs 0", "pt.Txn.application_args[0]"),
+                ('byte "transfer"', "pt.Bytes('transfer')"),
+                ("==", "pt.Txn.application_args[0] == pt.Bytes('transfer')"),
+                ("bnz main_l11", C),
+                ("txna Accounts 4", "pt.Txn.accounts[4]"),
+                ('byte "foo"', "pt.Bytes('foo')"),
+                ("==", "pt.Txn.accounts[4] == pt.Bytes('foo')"),
+                ("bnz main_l10", C),
+                (
+                    "err",
+                    "pt.Cond([pt.Txn.application_id() == pt.Int(0), on_creation], [pt.Txn.on_completion() == pt.OnComplete.DeleteApplication, pt.Return(is_admin)], [pt.Txn.on_completion() == pt.OnComplete.UpdateApplication, pt.Return(is_admin)], [pt.Txn.on_completion() == pt.OnComplete.CloseOut, on_closeout], [pt.Txn.on_completion() == pt.OnComplete.OptIn, register], [pt.Txn.application_args[0] == pt.Bytes('set admin'), set_admin], [pt.Txn.application_args[0] == pt.Bytes('mint'), mint], [pt.Txn.application_args[0] == pt.Bytes('transfer'), transfer], [pt.Txn.accounts[4] == pt.Bytes('foo'), on_closeout])",
+                ),  # OUCH - this nastiness is from Cond gnerating an err block at the very end!!!
+                ("main_l10:", C),
+                ("int 1", "pt.Int(1)"),
+                ("return", "pt.Return(pt.Int(1))"),
+                ("main_l11:", C),
+                ("int 1", "pt.Int(1)"),
+                ("return", "pt.Return(pt.Int(1))"),
+                ("main_l12:", C),
+                ("int 1", "pt.Int(1)"),
+                ("return", "pt.Return(pt.Int(1))"),
+                ("main_l13:", C),
+                ("int 1", "pt.Int(1)"),
+                ("return", "pt.Return(pt.Int(1))"),
+                ("main_l14:", C),
+                ("int 1", "pt.Int(1)"),
+                ("return", "pt.Return(pt.Int(1))"),
+                ("main_l15:", C),
+                ("int 1", "pt.Int(1)"),
+                ("return", "pt.Return(pt.Int(1))"),
+                ("main_l16:", C),
+                ("int 0", "pt.Int(0)"),
+                ('byte "admin"', "pt.Bytes('admin')"),
+                ("app_local_get", "pt.App.localGet(pt.Int(0), pt.Bytes('admin'))"),
+                ("return", "pt.Return(is_admin)"),
+                ("main_l17:", C),
+                ("int 0", "pt.Int(0)"),
+                ('byte "admin"', "pt.Bytes('admin')"),
+                ("app_local_get", "pt.App.localGet(pt.Int(0), pt.Bytes('admin'))"),
+                ("return", "pt.Return(is_admin)"),
+                ("main_l18:", C),
+                ("int 1", "pt.Int(1)"),
+                ("return", "pt.Return(pt.Int(1))"),
+            ],
+            2,
+            Mode.Application,
+        ),
     ]
 
     # TODO: don't merge in the next line:
-    # test_cases = test_cases[-1:]∂ß
+    test_cases = test_cases[-1:]
     for i, test_case in enumerate(test_cases):
         expr, line2unparsed = test_case[:2]
         if len(test_case) > 2:
             min_version = test_case[2]
             if version < min_version:
                 return
+        if len(test_case) > 3:
+            fixed_mode = test_case[3]
+            if mode != fixed_mode:
+                return
+
         comp = Compilation(
             expr, mode, version=version, assemble_constants=False, optimize=None
         )
