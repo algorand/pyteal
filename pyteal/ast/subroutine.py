@@ -8,9 +8,10 @@ import algosdk.abi as sdk_abi
 from pyteal.ast import abi
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
-from pyteal.ast.int import Int
+
+# from pyteal.ast.int import Int
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar, ScratchSlot
-from pyteal.ast.frame import FrameBury, FrameDig, Proto
+from pyteal.ast.frame import FrameDig, Proto  # FrameBury
 from pyteal.errors import TealInputError, TealInternalError, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.types import TealType
@@ -978,7 +979,7 @@ class SubroutineEval:
         return argument_var, loaded_var
 
     def __call__(self, subroutine: SubroutineDefinition) -> SubroutineDeclaration:
-        from pyteal.ast.abi.type import FrameStorage
+        # from pyteal.ast.abi.type import FrameStorage
 
         args = subroutine.arguments()
         arg_vars: list[ScratchVar] = []
@@ -995,8 +996,9 @@ class SubroutineEval:
 
         if output_kwarg_info:
             output_carrying_abi = output_kwarg_info.abi_type.new_instance()
-            if self.use_frame_pt:
-                output_carrying_abi._data_storage = FrameStorage(TealType.anytype, 0)
+            # TODO seems to need a "prefix expr" to let output frame bury work
+            # if self.use_frame_pt:
+            #     output_carrying_abi._data_storage = FrameStorage(TealType.anytype, 0)
             abi_output_kwargs[output_kwarg_info.name] = output_carrying_abi
 
         # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:
@@ -1026,15 +1028,15 @@ class SubroutineEval:
             # if subroutine do not have abi output, then only two cases happen:
             # - subroutine is a normal subroutine, then check subroutine body evaluates to something, rather than none
             # - subroutine is an ABIReturnSubroutine, the type is void, and its subroutine body type of is always none
-            stack_output_cnt = int(subroutine_body.type_of() != TealType.none)
+            stack_output_cnt = int(subroutine.return_type != TealType.none)
         else:
             stack_output_cnt = len(abi_output_kwargs)
 
         if self.use_frame_pt:
             body_ops = [Proto(subroutine.argument_count(), stack_output_cnt)]
             # reserve a spot for output variable on stack?
-            if stack_output_cnt > 0 and subroutine.has_abi_output:
-                body_ops.append(FrameBury(Int(0), 0))
+            # if stack_output_cnt > 0 and subroutine.has_abi_output:
+            #     body_ops += [Int(0), FrameBury(Int(0), 0)]
 
         body_ops += [var.slot.store() for var in arg_vars[::-1]]
         body_ops.append(subroutine_body)
