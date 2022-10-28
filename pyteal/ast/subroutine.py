@@ -979,8 +979,6 @@ class SubroutineEval:
     def __call__(self, subroutine: SubroutineDefinition) -> SubroutineDeclaration:
         # TODO need to make it better for my temp hack, kinda ugly but it works
         from pyteal.ast.abi.type import FrameStorage
-        from pyteal.compiler.compiler import TealSimpleBlock
-        from pyteal.ast.int import Int
 
         args = subroutine.arguments()
         arg_vars: list[ScratchVar] = []
@@ -1033,37 +1031,13 @@ class SubroutineEval:
             stack_output_cnt = len(abi_output_kwargs)
 
         if self.use_frame_pt:
-            if not subroutine.has_abi_output:
-                body_ops = [Proto(subroutine.argument_count(), stack_output_cnt)]
-            else:
-
-                class TempStuff(Expr):
-                    def __init__(self, arg_cnt, stack_out_cnt):
-                        super().__init__()
-                        self.arg_cnt = arg_cnt
-                        self.stack_cnt = stack_out_cnt
-
-                    def __teal__(
-                        self, options: "CompileOptions"
-                    ) -> tuple[TealBlock, TealSimpleBlock]:
-                        proto_srt, proto_end = Proto(
-                            self.arg_cnt, self.stack_cnt
-                        ).__teal__(options)
-                        int_srt, int_end = Int(0xB0BA7EA).__teal__(options)
-                        srt, end = proto_srt, int_end
-                        proto_end.setNextBlock(int_srt)
-                        return srt, end
-
-                    def has_return(self) -> bool:
-                        return False
-
-                    def type_of(self) -> TealType:
-                        return TealType.none
-
-                    def __str__(self) -> str:
-                        return "why_are_you_here"
-
-                body_ops = [TempStuff(subroutine.argument_count(), stack_output_cnt)]
+            body_ops = [
+                Proto(
+                    subroutine.argument_count(),
+                    stack_output_cnt,
+                    reserve_spot=int(subroutine.has_abi_output),
+                )
+            ]
 
         body_ops += [var.slot.store() for var in arg_vars[::-1]]
         body_ops.append(subroutine_body)

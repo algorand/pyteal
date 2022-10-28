@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from pyteal.ast.expr import Expr
+from pyteal.ast.int import Int
 from pyteal.types import TealType, require_type
 from pyteal.errors import TealInputError, verifyProgramVersion
 from pyteal.ir import TealBlock, TealSimpleBlock, TealOp, Op
@@ -10,14 +11,17 @@ if TYPE_CHECKING:
 
 
 class Proto(Expr):
-    def __init__(self, arg_num: int, ret_num: int):
+    def __init__(self, arg_num: int, ret_num: int, /, *, reserve_spot: int = 0):
         super().__init__()
         if arg_num < 0:
             raise TealInputError(f"subroutine arg number {arg_num} must be >= 0")
         if ret_num < 0:
             raise TealInputError(f"return value number {ret_num} must be >= 0")
+        if reserve_spot < 0:
+            raise TealInputError(f"reserve spot number {reserve_spot} must be >= 0")
         self.arg_num = arg_num
         self.ret_num = ret_num
+        self.reserve_spot = reserve_spot
 
     def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
         verifyProgramVersion(
@@ -26,10 +30,22 @@ class Proto(Expr):
             "Program version too low to use op proto",
         )
         op = TealOp(self, Op.proto, self.arg_num, self.ret_num)
-        return TealBlock.FromOp(options, op)
+        proto_srt, proto_end = TealBlock.FromOp(options, op)
+        if self.reserve_spot == 0:
+            return proto_srt, proto_end
+        elif self.reserve_spot == 1:
+            int_srt, int_end = Int(0xD00D1E).__teal__(options)
+            proto_end.setNextBlock(int_srt)
+            return proto_srt, int_end
+        else:
+            dupn_srt, dupn_end = DupN(Int(0x5EA51DE), self.reserve_spot).__teal__(
+                options
+            )
+            proto_end.setNextBlock(dupn_srt)
+            return proto_srt, dupn_end
 
     def __str__(self) -> str:
-        return f"(proto: arg_num = {self.arg_num}, ret_num = {self.ret_num})"
+        return f"(proto: arg_num = {self.arg_num}, ret_num = {self.ret_num}, reserve_spot = {self.reserve_spot})"
 
     def type_of(self) -> TealType:
         return TealType.none
