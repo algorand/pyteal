@@ -221,6 +221,10 @@ def test_sanity_check(_, mode, version):
 
     P = f"#pragma version {version}"
     test_cases = [
+        (
+            pt.Return(pt.Int(42)),
+            [(P, C), ("int 42", "pt.Int(42)"), ("return", "pt.Return(pt.Int(42))")],
+        ),
         (pt.Int(42), [(P, C), ("int 42", "pt.Int(42)"), ("return", C)]),
         (
             pt.Seq(pt.Pop(pt.Bytes("hello world")), pt.Int(1)),
@@ -242,21 +246,247 @@ def test_sanity_check(_, mode, version):
                 ("return", C),
             ],
         ),
+        (
+            pt.Int(2) ^ pt.Int(3),
+            [
+                (P, C),
+                ("int 2", "pt.Int(2)"),
+                ("int 3", "pt.Int(3)"),
+                ("^", "pt.Int(2) ^ pt.Int(3)"),
+                ("return", C),
+            ],
+        ),
+        (
+            pt.Int(1) + pt.Int(2) * pt.Int(3),
+            [
+                (P, C),
+                ("int 1", "pt.Int(1)"),
+                ("int 2", "pt.Int(2)"),
+                ("int 3", "pt.Int(3)"),
+                ("*", "pt.Int(2) * pt.Int(3)"),
+                ("+", "pt.Int(1) + pt.Int(2) * pt.Int(3)"),
+                ("return", C),
+            ],
+        ),
+        (
+            ~pt.Int(1),
+            [(P, C), ("int 1", "pt.Int(1)"), ("~", "~pt.Int(1)"), ("return", C)],
+        ),
+        (
+            pt.And(
+                pt.Int(1),
+                pt.Int(2),
+                pt.Or(pt.Int(3), pt.Int(4), pt.Or(pt.And(pt.Int(5), pt.Int(6)))),
+            ),
+            [
+                (P, C),
+                ("int 1", "pt.Int(1)"),
+                ("int 2", "pt.Int(2)"),
+                (
+                    "&&",
+                    "pt.And(pt.Int(1), pt.Int(2), pt.Or(pt.Int(3), pt.Int(4), pt.Or(pt.And(pt.Int(5), pt.Int(6)))))",
+                ),
+                ("int 3", "pt.Int(3)"),
+                ("int 4", "pt.Int(4)"),
+                (
+                    "||",
+                    "pt.Or(pt.Int(3), pt.Int(4), pt.Or(pt.And(pt.Int(5), pt.Int(6))))",
+                ),
+                ("int 5", "pt.Int(5)"),
+                ("int 6", "pt.Int(6)"),
+                ("&&", "pt.And(pt.Int(5), pt.Int(6))"),
+                (
+                    "||",
+                    "pt.Or(pt.Int(3), pt.Int(4), pt.Or(pt.And(pt.Int(5), pt.Int(6))))",
+                ),
+                (
+                    "&&",
+                    "pt.And(pt.Int(1), pt.Int(2), pt.Or(pt.Int(3), pt.Int(4), pt.Or(pt.And(pt.Int(5), pt.Int(6)))))",
+                ),
+                ("return", C),
+            ],
+        ),
+        # PyTEAL bugs - the following don't get parsed as expected!
+        # (pt.Int(1) != pt.Int(2) == pt.Int(3), [])
+        # (
+        #     pt.Int(1) + pt.Int(2) - pt.Int(3) * pt.Int(4) / pt.Int(5) % pt.Int(6)
+        #     < pt.Int(7)
+        #     > pt.Int(8)
+        #     <= pt.Int(9) ** pt.Int(10)
+        #     != pt.Int(11)
+        #     == pt.Int(12),
+        #     [],
+        # ),
+        (
+            pt.Btoi(
+                pt.BytesAnd(pt.Bytes("base16", "0xBEEF"), pt.Bytes("base16", "0x1337"))
+            ),
+            [
+                (P, C),
+                ("byte 0xBEEF", "pt.Bytes('base16', '0xBEEF')"),
+                ("byte 0x1337", "pt.Bytes('base16', '0x1337')"),
+                (
+                    "b&",
+                    "pt.BytesAnd(pt.Bytes('base16', '0xBEEF'), pt.Bytes('base16', '0x1337'))",
+                ),
+                (
+                    "btoi",
+                    "pt.Btoi(pt.BytesAnd(pt.Bytes('base16', '0xBEEF'), pt.Bytes('base16', '0x1337')))",
+                ),
+                ("return", C),
+            ],
+            4,
+        ),
+        (
+            pt.Btoi(pt.BytesZero(pt.Int(4))),
+            [
+                (P, C),
+                ("int 4", "pt.Int(4)"),
+                ("bzero", "pt.BytesZero(pt.Int(4))"),
+                ("btoi", "pt.Btoi(pt.BytesZero(pt.Int(4)))"),
+                ("return", C),
+            ],
+            4,
+        ),
+        (
+            pt.Btoi(pt.BytesNot(pt.Bytes("base16", "0xFF00"))),
+            [
+                (P, C),
+                ("byte 0xFF00", "pt.Bytes('base16', '0xFF00')"),
+                ("b~", "pt.BytesNot(pt.Bytes('base16', '0xFF00'))"),
+                ("btoi", "pt.Btoi(pt.BytesNot(pt.Bytes('base16', '0xFF00')))"),
+                ("return", C),
+            ],
+            4,
+        ),
+        (
+            pt.Seq(
+                pt.Pop(pt.SetBit(pt.Bytes("base16", "0x00"), pt.Int(3), pt.Int(1))),
+                pt.GetBit(pt.Int(16), pt.Int(64)),
+            ),
+            [
+                (P, C),
+                ("byte 0x00", "pt.Bytes('base16', '0x00')"),
+                ("int 3", "pt.Int(3)"),
+                ("int 1", "pt.Int(1)"),
+                (
+                    "setbit",
+                    "pt.SetBit(pt.Bytes('base16', '0x00'), pt.Int(3), pt.Int(1))",
+                ),
+                (
+                    "pop",
+                    "pt.Pop(pt.SetBit(pt.Bytes('base16', '0x00'), pt.Int(3), pt.Int(1)))",
+                ),
+                ("int 16", "pt.Int(16)"),
+                ("int 64", "pt.Int(64)"),
+                ("getbit", "pt.GetBit(pt.Int(16), pt.Int(64))"),
+                ("return", C),
+            ],
+            3,
+        ),
+        (
+            pt.Seq(
+                pt.Pop(pt.SetByte(pt.Bytes("base16", "0xff00"), pt.Int(0), pt.Int(0))),
+                pt.GetByte(pt.Bytes("abc"), pt.Int(2)),
+            ),
+            [
+                (P, C),
+                ("byte 0xff00", "pt.Bytes('base16', '0xff00')"),
+                ("int 0", "pt.Int(0)"),
+                ("int 0", "pt.Int(0)"),
+                (
+                    "setbyte",
+                    "pt.SetByte(pt.Bytes('base16', '0xff00'), pt.Int(0), pt.Int(0))",
+                ),
+                (
+                    "pop",
+                    "pt.Pop(pt.SetByte(pt.Bytes('base16', '0xff00'), pt.Int(0), pt.Int(0)))",
+                ),
+                ('byte "abc"', "pt.Bytes('abc')"),
+                ("int 2", "pt.Int(2)"),
+                ("getbyte", "pt.GetByte(pt.Bytes('abc'), pt.Int(2))"),
+                ("return", C),
+            ],
+            3,
+        ),
+        (
+            pt.Btoi(pt.Concat(pt.Bytes("a"), pt.Bytes("b"), pt.Bytes("c"))),
+            [
+                (P, C),
+                ('byte "a"', "pt.Bytes('a')"),
+                ('byte "b"', "pt.Bytes('b')"),
+                ("concat", "pt.Concat(pt.Bytes('a'), pt.Bytes('b'), pt.Bytes('c'))"),
+                ('byte "c"', "pt.Bytes('c')"),
+                ("concat", "pt.Concat(pt.Bytes('a'), pt.Bytes('b'), pt.Bytes('c'))"),
+                (
+                    "btoi",
+                    "pt.Btoi(pt.Concat(pt.Bytes('a'), pt.Bytes('b'), pt.Bytes('c')))",
+                ),
+                ("return", C),
+            ],
+        ),
+        (
+            pt.Btoi(pt.Substring(pt.Bytes("algorand"), pt.Int(2), pt.Int(8))),
+            [
+                (P, C),
+                ('byte "algorand"', "pt.Bytes('algorand')"),
+                (
+                    "extract 2 6" if version >= 5 else "substring 2 8",
+                    "pt.Substring(pt.Bytes('algorand'), pt.Int(2), pt.Int(8))",
+                ),
+                (
+                    "btoi",
+                    "pt.Btoi(pt.Substring(pt.Bytes('algorand'), pt.Int(2), pt.Int(8)))",
+                ),
+                (
+                    "return",
+                    C,
+                ),
+            ],
+        ),
+        (
+            pt.Btoi(pt.Extract(pt.Bytes("algorand"), pt.Int(2), pt.Int(6))),
+            [
+                (P, C),
+                ('byte "algorand"', "pt.Bytes('algorand')"),
+                (
+                    "substring 2 8" if version < 5 else "extract 2 6",
+                    "pt.Extract(pt.Bytes('algorand'), pt.Int(2), pt.Int(6))",
+                ),
+                (
+                    "btoi",
+                    "pt.Btoi(pt.Extract(pt.Bytes('algorand'), pt.Int(2), pt.Int(6)))",
+                ),
+                ("return", C),
+            ],
+            5,
+        ),
     ]
 
-    for i, (expr, line2unparsed) in enumerate(test_cases):
+    # TODO: don't merge in the next line:
+    # test_cases = test_cases[-1:]∂ß
+    for i, test_case in enumerate(test_cases):
+        expr, line2unparsed = test_case[:2]
+        if len(test_case) > 2:
+            min_version = test_case[2]
+            if version < min_version:
+                return
         comp = Compilation(
             expr, mode, version=version, assemble_constants=False, optimize=None
         )
         bundle = comp.compile(with_sourcemap=True)
         sourcemap = bundle.sourcemap
 
-        assert sourcemap
-        assert sourcemap.hybrid is True
-        assert sourcemap.source_inference is True
+        msg = f"[{i+1}]. case with {expr=}, {bundle=}"
+
+        assert sourcemap, msg
+        assert sourcemap.hybrid is True, msg
+        assert sourcemap.source_inference is True, msg
 
         smis = sourcemap.as_list()
         expected_lines, unparsed = list(zip(*line2unparsed))
-        assert list(expected_lines) == bundle.lines
-        assert list(expected_lines) == sourcemap.teal_chunks
-        assert list(unparsed) == unparse(smis)
+
+        msg = f"{msg}, {smis=}"
+        assert list(expected_lines) == bundle.lines, msg
+        assert list(expected_lines) == sourcemap.teal_chunks, msg
+        assert list(unparsed) == unparse(smis), msg
