@@ -49,7 +49,8 @@ class While(Expr):
 
         doEnd.setNextBlock(condStart)
 
-        branchBlock = TealConditionalBlock([])
+        # TODO: is the root_expr useful?
+        branchBlock = TealConditionalBlock([], root_expr=self)
         branchBlock.setTrueBlock(doStart)
         branchBlock.setFalseBlock(end)
 

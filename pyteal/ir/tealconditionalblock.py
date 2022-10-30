@@ -7,8 +7,8 @@ from pyteal.ir.tealblock import TealBlock
 class TealConditionalBlock(TealBlock):
     """Represents a basic block of TealComponents in a graph ending with a branch condition."""
 
-    def __init__(self, ops: List[TealOp]) -> None:
-        super().__init__(ops)
+    def __init__(self, ops: List[TealOp], root_expr: Optional["Expr"] = None) -> None:
+        super().__init__(ops, root_expr=root_expr)
         self.trueBlock: Optional[TealBlock] = None
         self.falseBlock: Optional[TealBlock] = None
 
@@ -35,10 +35,11 @@ class TealConditionalBlock(TealBlock):
             self.falseBlock = newBlock
 
     def __repr__(self) -> str:
-        return "TealConditionalBlock({}, true={}, false={})".format(
+        return "TealConditionalBlock({}, true={}, false={}, conditional={})".format(
             repr(self.ops),
             repr(self.trueBlock),
             repr(self.falseBlock),
+            repr(self.root_expr),
         )
 
     def __eq__(self, other: object) -> bool:

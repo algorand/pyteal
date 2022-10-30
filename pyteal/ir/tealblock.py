@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from typing import Dict, List, Tuple, Set, Iterator, cast, TYPE_CHECKING
+from typing import Dict, List, Optional, Tuple, Set, Iterator, cast, TYPE_CHECKING
 
 from pyteal.ir.tealop import TealOp, Op
 from pyteal.errors import TealCompileError
@@ -14,9 +14,10 @@ if TYPE_CHECKING:
 class TealBlock(ABC):
     """Represents a basic block of TealComponents in a graph."""
 
-    def __init__(self, ops: List[TealOp]) -> None:
+    def __init__(self, ops: List[TealOp], root_expr: Optional["Expr"] = None) -> None:
         self.ops = ops
         self.incoming: List[TealBlock] = []
+        self.root_expr = root_expr
 
     @abstractmethod
     def getOutgoing(self) -> List["TealBlock"]:

@@ -23,6 +23,11 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
     """
     codeblocks = []
     references: DefaultDict[int, int] = defaultdict(int)
+    experimental_referer: dict[int, int] = {}
+
+    def add_if_new(nextIndex, i):
+        if nextIndex not in experimental_referer:
+            experimental_referer[nextIndex] = i
 
     labelRefs: Dict[int, LabelReference] = dict()
 
@@ -43,6 +48,8 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
         if block.isTerminal():
             continue
 
+        root: Optional["Expr"] = block.root_expr
+
         if type(block) is TealSimpleBlock:
             assert block.nextBlock is not None
 
@@ -50,7 +57,8 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
 
             if nextIndex != i + 1:
                 references[nextIndex] += 1
-                code.append(TealOp(None, Op.b, indexToLabel(nextIndex)))  # T2PT5
+                add_if_new(nextIndex, i)
+                code.append(TealOp(root, Op.b, indexToLabel(nextIndex)))  # T2PT5
 
         elif type(block) is TealConditionalBlock:
             assert block.trueBlock is not None
@@ -61,26 +69,31 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
 
             if falseIndex == i + 1:
                 references[trueIndex] += 1
-                code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex)))  # T2PT5
+                add_if_new(trueIndex, i)
+                code.append(TealOp(root, Op.bnz, indexToLabel(trueIndex)))  # T2PT5
                 continue
 
             if trueIndex == i + 1:
                 references[falseIndex] += 1
-                code.append(TealOp(None, Op.bz, indexToLabel(falseIndex)))  # T2PT5
+                add_if_new(falseIndex, i)
+                code.append(TealOp(root, Op.bz, indexToLabel(falseIndex)))  # T2PT5
                 continue
 
             references[trueIndex] += 1
-            code.append(TealOp(None, Op.bnz, indexToLabel(trueIndex)))  # T2PT5
+            add_if_new(trueIndex, i)
+            code.append(TealOp(root, Op.bnz, indexToLabel(trueIndex)))  # T2PT5
 
             references[falseIndex] += 1
-            code.append(TealOp(None, Op.b, indexToLabel(falseIndex)))  # T2PT5
+            add_if_new(falseIndex, i)
+            code.append(TealOp(root, Op.b, indexToLabel(falseIndex)))  # T2PT5
         else:
             raise TealInternalError("Unrecognized block type: {}".format(type(block)))
 
     teal: List[TealComponent] = []
     for i, code in enumerate(codeblocks):
         if references[i] != 0:
-            teal.append(TealLabel(None, indexToLabel(i)))  # T2PT6
+            experimental_expr = blocks[experimental_referer[i]].root_expr
+            teal.append(TealLabel(experimental_expr, indexToLabel(i)))  # T2PT6
         teal += code
 
     return teal
@@ -123,7 +136,9 @@ def flattenSubroutines(
             if isinstance(stmt, TealLabel):
                 stmt.getLabelRef().addPrefix(labelPrefix)
 
-        combinedOps.append(TealLabel(None, LabelReference(label), comment))  # T2PT1
+        # TODO: should I retain populating expr with ... may be a problem as evaluated to early here
+        dexpr = subroutine.get_declaration()
+        combinedOps.append(TealLabel(dexpr, LabelReference(label), comment))  # T2PT1
         combinedOps += subroutineOps
 
     return combinedOps

@@ -1,13 +1,14 @@
 from typing import TYPE_CHECKING
 
+from pyteal.ast.expr import Expr
+from pyteal.ast.seq import _use_seq_if_multiple
 from pyteal.errors import (
     TealCompileError,
     TealInputError,
 )
+from pyteal.util import Frames
 from pyteal.types import TealType, require_type
 from pyteal.ir import TealSimpleBlock, TealConditionalBlock
-from pyteal.ast.expr import Expr
-from pyteal.ast.seq import _use_seq_if_multiple
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
@@ -17,7 +18,7 @@ class If(Expr):
     """Simple two-way conditional expression."""
 
     def __init__(
-        self, cond: Expr, thenBranch: Expr = None, elseBranch: Expr = None
+        self, cond: Expr, thenBranch: Expr | None = None, elseBranch: Expr | None = None
     ) -> None:
         """Create a new If expression.
 
@@ -36,14 +37,22 @@ class If(Expr):
         # Flag to denote and check whether the new If().Then() syntax is being used
         self.alternateSyntaxFlag = False
 
+        # TODO: if we're not actually using these frames, remove them!
+        self.then_frames: Frames | None = None
+        self.else_frames: Frames | None = None
+
         if thenBranch:
             if elseBranch:
                 require_type(thenBranch, elseBranch.type_of())
             else:
                 # If there is only a thenBranch, then it should evaluate to none type
                 require_type(thenBranch, TealType.none)
+            self.then_frames = self.frames
         else:
             self.alternateSyntaxFlag = True
+
+        if elseBranch:
+            self.else_frames = self.frames
 
         self.cond = cond
         self.thenBranch = thenBranch
@@ -55,9 +64,9 @@ class If(Expr):
 
         condStart, condEnd = self.cond.__teal__(options)
         thenStart, thenEnd = self.thenBranch.__teal__(options)
-        end = TealSimpleBlock([])
+        end = TealSimpleBlock([], root_expr=self)
 
-        branchBlock = TealConditionalBlock([])
+        branchBlock = TealConditionalBlock([], root_expr=self)
         branchBlock.setTrueBlock(thenStart)
 
         condEnd.setNextBlock(branchBlock)
@@ -105,6 +114,7 @@ class If(Expr):
             raise TealInputError("Cannot mix two different If syntax styles")
 
         thenBranch = _use_seq_if_multiple(thenBranch, *then_branch_multi)
+        self.then_frames = Frames()
 
         if not self.elseBranch:
             self.thenBranch = thenBranch
@@ -134,10 +144,12 @@ class If(Expr):
             raise TealInputError("Must set Then branch before Else branch")
 
         elseBranch = _use_seq_if_multiple(elseBranch, *else_branch_multi)
+        self.else_frames = Frames()
 
         if not self.elseBranch:
             require_type(elseBranch, self.thenBranch.type_of())
             self.elseBranch = elseBranch
+            self.else_frames = Frames()
         else:
             if not isinstance(self.elseBranch, If):
                 raise TealInputError("Else-Else block is malformed")

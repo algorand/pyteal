@@ -218,7 +218,7 @@ BIG_B = "pt.Or(pt.App.globalGet(pt.Bytes('paused')), pt.App.localGet(pt.Int(0), 
 # receiver = pt.Tmpl.Addr("TMPL_RECEIVER")
 # transfer_amount = pt.Btoi(pt.Txn.application_args[1])
 
-SANITIES = [
+CONSTRUCTS = [
     (
         lambda pt: pt.Return(pt.Int(42)),
         [[P, C], ["int 42", "pt.Int(42)"], ["return", "pt.Return(pt.Int(42))"]],
@@ -865,14 +865,141 @@ SANITIES = [
         ],
         5,
     ),
+    (
+        lambda pt: [
+            myvar := pt.ScratchVar(
+                pt.TealType.uint64
+            ),  # assign a scratch slot in any available slot
+            anotherVar := pt.ScratchVar(
+                pt.TealType.bytes, 4
+            ),  # assign this scratch slot to slot #4
+            pt.Seq(
+                [
+                    myvar.store(pt.Int(5)),
+                    anotherVar.store(pt.Bytes("hello")),
+                    pt.Assert(myvar.load() == pt.Int(5)),
+                    pt.Return(pt.Int(1)),
+                ]
+            ),
+        ][-1],
+        [
+            [P, C],
+            ["int 5", "pt.Int(5)"],
+            ["store 0", "myvar.store(pt.Int(5))"],
+            ['byte "hello"', "pt.Bytes('hello')"],
+            ["store 4", "anotherVar.store(pt.Bytes('hello'))"],
+            ["load 0", "myvar.load()"],
+            ["int 5", "pt.Int(5)"],
+            ["==", "myvar.load() == pt.Int(5)"],
+            ["assert", "pt.Assert(myvar.load() == pt.Int(5))"],
+            ["int 1", "pt.Int(1)"],
+            ["return", "pt.Return(pt.Int(1))"],
+        ],
+        3,
+    ),
+    (
+        lambda pt: [
+            s := pt.ScratchVar(pt.TealType.uint64),
+            d := pt.DynamicScratchVar(pt.TealType.uint64),
+            pt.Seq(
+                d.set_index(s),
+                s.store(pt.Int(7)),
+                d.store(d.load() + pt.Int(3)),
+                pt.Assert(s.load() == pt.Int(10)),
+                pt.Int(1),
+            ),
+        ][-1],
+        [
+            [P, C],
+            ["int 0", "d.set_index(s)"],
+            ["store 1", "d.set_index(s)"],
+            ["int 7", "pt.Int(7)"],
+            ["store 0", "s.store(pt.Int(7))"],
+            ["load 1", "d.store(d.load() + pt.Int(3))"],
+            ["load 1", "d.load()"],
+            ["loads", "d.load()"],
+            ["int 3", "pt.Int(3)"],
+            ["+", "d.load() + pt.Int(3)"],
+            ["stores", "d.store(d.load() + pt.Int(3))"],
+            ["load 0", "s.load()"],
+            ["int 10", "pt.Int(10)"],
+            ["==", "s.load() == pt.Int(10)"],
+            ["assert", "pt.Assert(s.load() == pt.Int(10))"],
+            ["int 1", "pt.Int(1)"],
+            ["return", C],
+        ],
+        5,
+    ),
+    (
+        lambda pt: [  # App is called at transaction index 0
+            greeting := pt.ScratchVar(
+                pt.TealType.bytes, 20
+            ),  # this variable will live in scratch slot 20
+            app1_seq := pt.Seq(
+                [
+                    pt.If(pt.Txn.sender() == pt.App.globalGet(pt.Bytes("creator")))
+                    .Then(greeting.store(pt.Bytes("hi creator!")))
+                    .Else(greeting.store(pt.Bytes("hi user!"))),
+                    pt.Int(1),
+                ]
+            ),
+            greetingFromPreviousApp := pt.ImportScratchValue(
+                0, 20
+            ),  # loading scratch slot 20 from the transaction at index 0
+            app2_seq := pt.Seq(
+                [
+                    # not shown: make sure that the transaction at index 0 is an app call to App A
+                    pt.App.globalPut(
+                        pt.Bytes("greeting from prev app"), greetingFromPreviousApp
+                    ),
+                    pt.Int(1),
+                ]
+            ),
+            pt.And(app1_seq, app2_seq),
+        ][-1],
+        [
+            [P, C],
+            ["txn Sender", "pt.Txn.sender()"],
+            ['byte "creator"', "pt.Bytes('creator')"],
+            ["app_global_get", "pt.App.globalGet(pt.Bytes('creator'))"],
+            ["==", "pt.Txn.sender() == pt.App.globalGet(pt.Bytes('creator'))"],
+            [
+                "bnz main_l2",
+                "pt.If(pt.Txn.sender() == pt.App.globalGet(pt.Bytes('creator')))",
+            ],
+            ['byte "hi user!"', "pt.Bytes('hi user!')"],
+            ["store 20", "greeting.store(pt.Bytes('hi user!'))"],
+            ["b main_l3", C],
+            [
+                "main_l2:",
+                "pt.If(pt.Txn.sender() == pt.App.globalGet(pt.Bytes('creator')))",
+            ],
+            ['byte "hi creator!"', "pt.Bytes('hi creator!')"],
+            ["store 20", "greeting.store(pt.Bytes('hi creator!'))"],
+            ["main_l3:", C],
+            ["int 1", "pt.Int(1)"],
+            ['byte "greeting from prev app"', "pt.Bytes('greeting from prev app')"],
+            ["gload 0 20", "pt.ImportScratchValue(0, 20)"],
+            [
+                "app_global_put",
+                "pt.App.globalPut(pt.Bytes('greeting from prev app'), greetingFromPreviousApp)",
+            ],
+            ["int 1", "pt.Int(1)"],
+            ["&&", "pt.And(app1_seq, app2_seq)"],
+            ["return", C],
+        ],
+        4,
+        "Application",
+    ),
+    # (lambda pt: If(pt.Int(0)).Then),
 ]
 
 
-@pytest.mark.parametrize("i, test_case", enumerate(SANITIES))
+@pytest.mark.parametrize("i, test_case", enumerate(CONSTRUCTS))
 @pytest.mark.parametrize("mode", ["Application", "Signature"])
 @pytest.mark.parametrize("version", range(2, 8))
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
-def test_sanity_check(_, i, test_case, mode, version):
+def test_constructs(_, i, test_case, mode, version):
     """
     Sanity check source mapping the most important PyTeal constructs
 
