@@ -5,22 +5,16 @@ PyTeal apps.
 """
 
 import ast
-from asyncore import close_all
 from configparser import ConfigParser
-from ensurepip import version
+from copy import deepcopy
+from enum import Flag, auto
 from pathlib import Path
-from tabnanny import verbose
 from typing import cast
 
 import pytest
 from unittest import mock
 
 from algosdk.source_map import R3SourceMap
-from pyteal.compiler import sourcemap
-
-from pyteal.compiler.compiler import Compilation
-from pyteal.ir.ops import Mode
-
 
 ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 
@@ -140,18 +134,16 @@ def make(x, y, z):
     return pt.Int(x) + pt.Int(y) + pt.Int(z)
 
 
-import pyteal as pt
-
-e1 = pt.Seq(pt.Pop(make(1, 2, 3)), pt.Pop(make(4, 5, 6)), make(7, 8, 9))
-
-
-@pt.Subroutine(pt.TealType.uint64)
-def foo(x):
-    return pt.Seq(pt.Pop(e1), e1)
-
-
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
 def test_lots_o_indirection(_):
+    import pyteal as pt
+
+    e1 = pt.Seq(pt.Pop(make(1, 2, 3)), pt.Pop(make(4, 5, 6)), make(7, 8, 9))
+
+    @pt.Subroutine(pt.TealType.uint64)
+    def foo(x):
+        return pt.Seq(pt.Pop(e1), e1)
+
     bundle = pt.Compilation(foo(pt.Int(42)), pt.Mode.Application, version=6).compile(
         with_sourcemap=True
     )
@@ -202,326 +194,326 @@ def test_r3sourcemap(_):
     assert r3sm_json == round_trip.to_json()
 
 
+# ### ----------------- SANITY CHECKS SURVEY MOST PYTEAL CONSTRUCTS ----------------- ### #
+
+P = "#pragma version {v}"  # fill the template at runtime
+
 C = "comp.compile(with_sourcemap=True)"
 
+BIG_A = "pt.And(pt.Gtxn[0].rekey_to() == pt.Global.zero_address(), pt.Gtxn[1].rekey_to() == pt.Global.zero_address(), pt.Gtxn[2].rekey_to() == pt.Global.zero_address(), pt.Gtxn[3].rekey_to() == pt.Global.zero_address(), pt.Gtxn[4].rekey_to() == pt.Global.zero_address(), pt.Gtxn[0].last_valid() == pt.Gtxn[1].last_valid(), pt.Gtxn[1].last_valid() == pt.Gtxn[2].last_valid(), pt.Gtxn[2].last_valid() == pt.Gtxn[3].last_valid(), pt.Gtxn[3].last_valid() == pt.Gtxn[4].last_valid(), pt.Gtxn[0].type_enum() == pt.TxnType.AssetTransfer, pt.Gtxn[0].xfer_asset() == asset_c, pt.Gtxn[0].receiver() == receiver)"
+BIG_B = "pt.Or(pt.App.globalGet(pt.Bytes('paused')), pt.App.localGet(pt.Int(0), pt.Bytes('frozen')), pt.App.localGet(pt.Int(1), pt.Bytes('frozen')), pt.App.localGet(pt.Int(0), pt.Bytes('lock until')) >= pt.Global.latest_timestamp(), pt.App.localGet(pt.Int(1), pt.Bytes('lock until')) >= pt.Global.latest_timestamp(), pt.App.globalGet(pt.Concat(pt.Bytes('rule'), pt.Itob(pt.App.localGet(pt.Int(0), pt.Bytes('transfer group'))), pt.Itob(pt.App.localGet(pt.Int(1), pt.Bytes('transfer group'))))))"
 
-def unparse(sourcemap_items):
-    return list(map(lambda smi: ast.unparse(smi.frame.node), sourcemap_items))
 
+"""
+    asset_c = pt.Tmpl.Int("TMPL_ASSET_C")
+    receiver = pt.Tmpl.Addr("TMPL_RECEIVER")
+    transfer_amount = pt.Btoi(pt.Txn.application_args[1])
+"""
 
-@pytest.mark.parametrize("mode", Mode)
-@pytest.mark.parametrize("version", range(2, 8))
-@mock.patch.object(ConfigParser, "getboolean", return_value=True)
-def test_sanity_check(_, mode, version):
-    """
-    Sanity check source mapping the most important PyTeal constructs
+# is_admin = pt.App.localGet(pt.Int(0), pt.Bytes("admin"))
+# transfer = set_admin = mint = register = on_closeout = on_creation = pt.Return(pt.Int(1))
+#     pt.Int(1)
+# )
+# asset_c = pt.Tmpl.Int("TMPL_ASSET_C")
+# receiver = pt.Tmpl.Addr("TMPL_RECEIVER")
+# transfer_amount = pt.Btoi(pt.Txn.application_args[1])
 
-    Cannot utilize @pytest.mark.parametrize because of monkeypatching
-    """
-    import pyteal as pt
-
-    P = f"#pragma version {version}"
-    is_admin = pt.App.localGet(pt.Int(0), pt.Bytes("admin"))
-    transfer = set_admin = mint = register = on_closeout = on_creation = pt.Return(
-        pt.Int(1)
-    )
-
-    """
-    test_cases = [
-        (
-            pt.Return(pt.Int(42)),
-            [(P, C), ("int 42", "pt.Int(42)"), ("return", "pt.Return(pt.Int(42))")],
+SANITIES = [
+    (
+        lambda pt: pt.Return(pt.Int(42)),
+        [[P, C], ["int 42", "pt.Int(42)"], ["return", "pt.Return(pt.Int(42))"]],
+    ),
+    (lambda pt: pt.Int(42), [[P, C], ["int 42", "pt.Int(42)"], ["return", C]]),
+    (
+        lambda pt: pt.Seq(pt.Pop(pt.Bytes("hello world")), pt.Int(1)),
+        [
+            [P, C],
+            ['byte "hello world"', "pt.Bytes('hello world')"],
+            ["pop", "pt.Pop(pt.Bytes('hello world'))"],
+            ["int 1", "pt.Int(1)"],
+            ["return", C],
+        ],
+    ),
+    (
+        lambda pt: pt.Int(2) * pt.Int(3),
+        [
+            [P, C],
+            ["int 2", "pt.Int(2)"],
+            ["int 3", "pt.Int(3)"],
+            ["*", "pt.Int(2) * pt.Int(3)"],
+            ["return", C],
+        ],
+    ),
+    (
+        lambda pt: pt.Int(2) ^ pt.Int(3),
+        [
+            [P, C],
+            ["int 2", "pt.Int(2)"],
+            ["int 3", "pt.Int(3)"],
+            ["^", "pt.Int(2) ^ pt.Int(3)"],
+            ["return", C],
+        ],
+    ),
+    (
+        lambda pt: pt.Int(1) + pt.Int(2) * pt.Int(3),
+        [
+            [P, C],
+            ["int 1", "pt.Int(1)"],
+            ["int 2", "pt.Int(2)"],
+            ["int 3", "pt.Int(3)"],
+            ["*", "pt.Int(2) * pt.Int(3)"],
+            ["+", "pt.Int(1) + pt.Int(2) * pt.Int(3)"],
+            ["return", C],
+        ],
+    ),
+    (
+        lambda pt: ~pt.Int(1),
+        [[P, C], ["int 1", "pt.Int(1)"], ["~", "~pt.Int(1)"], ["return", C]],
+    ),
+    (
+        lambda pt: pt.And(
+            pt.Int(1),
+            pt.Int(2),
+            pt.Or(pt.Int(3), pt.Int(4), pt.Or(pt.And(pt.Int(5), pt.Int(6)))),
         ),
-        (pt.Int(42), [(P, C), ("int 42", "pt.Int(42)"), ("return", C)]),
-        (
-            pt.Seq(pt.Pop(pt.Bytes("hello world")), pt.Int(1)),
+        [
+            [P, C],
+            ["int 1", "pt.Int(1)"],
+            ["int 2", "pt.Int(2)"],
             [
-                (P, C),
-                ('byte "hello world"', "pt.Bytes('hello world')"),
-                ("pop", "pt.Pop(pt.Bytes('hello world'))"),
-                ("int 1", "pt.Int(1)"),
-                ("return", C),
+                "&&",
+                "pt.And(pt.Int(1), pt.Int(2), pt.Or(pt.Int(3), pt.Int(4), pt.Or(pt.And(pt.Int(5), pt.Int(6)))))",
             ],
-        ),
-        (
-            pt.Int(2) * pt.Int(3),
+            ["int 3", "pt.Int(3)"],
+            ["int 4", "pt.Int(4)"],
             [
-                (P, C),
-                ("int 2", "pt.Int(2)"),
-                ("int 3", "pt.Int(3)"),
-                ("*", "pt.Int(2) * pt.Int(3)"),
-                ("return", C),
+                "||",
+                "pt.Or(pt.Int(3), pt.Int(4), pt.Or(pt.And(pt.Int(5), pt.Int(6))))",
             ],
-        ),
-        (
-            pt.Int(2) ^ pt.Int(3),
+            ["int 5", "pt.Int(5)"],
+            ["int 6", "pt.Int(6)"],
+            ["&&", "pt.And(pt.Int(5), pt.Int(6))"],
             [
-                (P, C),
-                ("int 2", "pt.Int(2)"),
-                ("int 3", "pt.Int(3)"),
-                ("^", "pt.Int(2) ^ pt.Int(3)"),
-                ("return", C),
+                "||",
+                "pt.Or(pt.Int(3), pt.Int(4), pt.Or(pt.And(pt.Int(5), pt.Int(6))))",
             ],
-        ),
-        (
-            pt.Int(1) + pt.Int(2) * pt.Int(3),
             [
-                (P, C),
-                ("int 1", "pt.Int(1)"),
-                ("int 2", "pt.Int(2)"),
-                ("int 3", "pt.Int(3)"),
-                ("*", "pt.Int(2) * pt.Int(3)"),
-                ("+", "pt.Int(1) + pt.Int(2) * pt.Int(3)"),
-                ("return", C),
+                "&&",
+                "pt.And(pt.Int(1), pt.Int(2), pt.Or(pt.Int(3), pt.Int(4), pt.Or(pt.And(pt.Int(5), pt.Int(6)))))",
             ],
+            ["return", C],
+        ],
+    ),
+    # PyTEAL bugs - the following don't get parsed as expected!
+    # (pt.Int(1) != pt.Int(2) == pt.Int(3), [])
+    # (
+    #     pt.Int(1) + pt.Int(2) - pt.Int(3) * pt.Int(4) / pt.Int(5) % pt.Int(6)
+    #     < pt.Int(7)
+    #     > pt.Int(8)
+    #     <= pt.Int(9) ** pt.Int(10)
+    #     != pt.Int(11)
+    #     == pt.Int(12),
+    #     [],
+    # ),
+    (
+        lambda pt: pt.Btoi(
+            pt.BytesAnd(pt.Bytes("base16", "0xBEEF"), pt.Bytes("base16", "0x1337"))
         ),
-        (
-            ~pt.Int(1),
-            [(P, C), ("int 1", "pt.Int(1)"), ("~", "~pt.Int(1)"), ("return", C)],
+        [
+            [P, C],
+            ["byte 0xBEEF", "pt.Bytes('base16', '0xBEEF')"],
+            ["byte 0x1337", "pt.Bytes('base16', '0x1337')"],
+            [
+                "b&",
+                "pt.BytesAnd(pt.Bytes('base16', '0xBEEF'), pt.Bytes('base16', '0x1337'))",
+            ],
+            [
+                "btoi",
+                "pt.Btoi(pt.BytesAnd(pt.Bytes('base16', '0xBEEF'), pt.Bytes('base16', '0x1337')))",
+            ],
+            ["return", C],
+        ],
+        4,
+    ),
+    (
+        lambda pt: pt.Btoi(pt.BytesZero(pt.Int(4))),
+        [
+            [P, C],
+            ["int 4", "pt.Int(4)"],
+            ["bzero", "pt.BytesZero(pt.Int(4))"],
+            ["btoi", "pt.Btoi(pt.BytesZero(pt.Int(4)))"],
+            ["return", C],
+        ],
+        4,
+    ),
+    (
+        lambda pt: pt.Btoi(pt.BytesNot(pt.Bytes("base16", "0xFF00"))),
+        [
+            [P, C],
+            ["byte 0xFF00", "pt.Bytes('base16', '0xFF00')"],
+            ["b~", "pt.BytesNot(pt.Bytes('base16', '0xFF00'))"],
+            ["btoi", "pt.Btoi(pt.BytesNot(pt.Bytes('base16', '0xFF00')))"],
+            ["return", C],
+        ],
+        4,
+    ),
+    (
+        lambda pt: pt.Seq(
+            pt.Pop(pt.SetBit(pt.Bytes("base16", "0x00"), pt.Int(3), pt.Int(1))),
+            pt.GetBit(pt.Int(16), pt.Int(64)),
         ),
-        (
-            pt.And(
-                pt.Int(1),
-                pt.Int(2),
-                pt.Or(pt.Int(3), pt.Int(4), pt.Or(pt.And(pt.Int(5), pt.Int(6)))),
+        [
+            [P, C],
+            ("byte 0x00", "pt.Bytes('base16', '0x00')"),
+            ("int 3", "pt.Int(3)"),
+            ("int 1", "pt.Int(1)"),
+            (
+                "setbit",
+                "pt.SetBit(pt.Bytes('base16', '0x00'), pt.Int(3), pt.Int(1))",
             ),
-            [
-                (P, C),
-                ("int 1", "pt.Int(1)"),
-                ("int 2", "pt.Int(2)"),
-                (
-                    "&&",
-                    "pt.And(pt.Int(1), pt.Int(2), pt.Or(pt.Int(3), pt.Int(4), pt.Or(pt.And(pt.Int(5), pt.Int(6)))))",
-                ),
-                ("int 3", "pt.Int(3)"),
-                ("int 4", "pt.Int(4)"),
-                (
-                    "||",
-                    "pt.Or(pt.Int(3), pt.Int(4), pt.Or(pt.And(pt.Int(5), pt.Int(6))))",
-                ),
-                ("int 5", "pt.Int(5)"),
-                ("int 6", "pt.Int(6)"),
-                ("&&", "pt.And(pt.Int(5), pt.Int(6))"),
-                (
-                    "||",
-                    "pt.Or(pt.Int(3), pt.Int(4), pt.Or(pt.And(pt.Int(5), pt.Int(6))))",
-                ),
-                (
-                    "&&",
-                    "pt.And(pt.Int(1), pt.Int(2), pt.Or(pt.Int(3), pt.Int(4), pt.Or(pt.And(pt.Int(5), pt.Int(6)))))",
-                ),
-                ("return", C),
-            ],
-        ),
-        # PyTEAL bugs - the following don't get parsed as expected!
-        # (pt.Int(1) != pt.Int(2) == pt.Int(3), [])
-        # (
-        #     pt.Int(1) + pt.Int(2) - pt.Int(3) * pt.Int(4) / pt.Int(5) % pt.Int(6)
-        #     < pt.Int(7)
-        #     > pt.Int(8)
-        #     <= pt.Int(9) ** pt.Int(10)
-        #     != pt.Int(11)
-        #     == pt.Int(12),
-        #     [],
-        # ),
-        (
-            pt.Btoi(
-                pt.BytesAnd(pt.Bytes("base16", "0xBEEF"), pt.Bytes("base16", "0x1337"))
+            (
+                "pop",
+                "pt.Pop(pt.SetBit(pt.Bytes('base16', '0x00'), pt.Int(3), pt.Int(1)))",
             ),
-            [
-                (P, C),
-                ("byte 0xBEEF", "pt.Bytes('base16', '0xBEEF')"),
-                ("byte 0x1337", "pt.Bytes('base16', '0x1337')"),
-                (
-                    "b&",
-                    "pt.BytesAnd(pt.Bytes('base16', '0xBEEF'), pt.Bytes('base16', '0x1337'))",
-                ),
-                (
-                    "btoi",
-                    "pt.Btoi(pt.BytesAnd(pt.Bytes('base16', '0xBEEF'), pt.Bytes('base16', '0x1337')))",
-                ),
-                ("return", C),
-            ],
-            4,
+            ("int 16", "pt.Int(16)"),
+            ("int 64", "pt.Int(64)"),
+            ("getbit", "pt.GetBit(pt.Int(16), pt.Int(64))"),
+            ("return", C),
+        ],
+        3,
+    ),
+    (
+        lambda pt: pt.Seq(
+            pt.Pop(pt.SetByte(pt.Bytes("base16", "0xff00"), pt.Int(0), pt.Int(0))),
+            pt.GetByte(pt.Bytes("abc"), pt.Int(2)),
         ),
-        (
-            pt.Btoi(pt.BytesZero(pt.Int(4))),
-            [
-                (P, C),
-                ("int 4", "pt.Int(4)"),
-                ("bzero", "pt.BytesZero(pt.Int(4))"),
-                ("btoi", "pt.Btoi(pt.BytesZero(pt.Int(4)))"),
-                ("return", C),
-            ],
-            4,
-        ),
-        (
-            pt.Btoi(pt.BytesNot(pt.Bytes("base16", "0xFF00"))),
-            [
-                (P, C),
-                ("byte 0xFF00", "pt.Bytes('base16', '0xFF00')"),
-                ("b~", "pt.BytesNot(pt.Bytes('base16', '0xFF00'))"),
-                ("btoi", "pt.Btoi(pt.BytesNot(pt.Bytes('base16', '0xFF00')))"),
-                ("return", C),
-            ],
-            4,
-        ),
-        (
-            pt.Seq(
-                pt.Pop(pt.SetBit(pt.Bytes("base16", "0x00"), pt.Int(3), pt.Int(1))),
-                pt.GetBit(pt.Int(16), pt.Int(64)),
+        [
+            [P, C],
+            ("byte 0xff00", "pt.Bytes('base16', '0xff00')"),
+            ("int 0", "pt.Int(0)"),
+            ("int 0", "pt.Int(0)"),
+            (
+                "setbyte",
+                "pt.SetByte(pt.Bytes('base16', '0xff00'), pt.Int(0), pt.Int(0))",
             ),
-            [
-                (P, C),
-                ("byte 0x00", "pt.Bytes('base16', '0x00')"),
-                ("int 3", "pt.Int(3)"),
-                ("int 1", "pt.Int(1)"),
-                (
-                    "setbit",
-                    "pt.SetBit(pt.Bytes('base16', '0x00'), pt.Int(3), pt.Int(1))",
-                ),
-                (
-                    "pop",
-                    "pt.Pop(pt.SetBit(pt.Bytes('base16', '0x00'), pt.Int(3), pt.Int(1)))",
-                ),
-                ("int 16", "pt.Int(16)"),
-                ("int 64", "pt.Int(64)"),
-                ("getbit", "pt.GetBit(pt.Int(16), pt.Int(64))"),
-                ("return", C),
-            ],
-            3,
-        ),
-        (
-            pt.Seq(
-                pt.Pop(pt.SetByte(pt.Bytes("base16", "0xff00"), pt.Int(0), pt.Int(0))),
-                pt.GetByte(pt.Bytes("abc"), pt.Int(2)),
+            (
+                "pop",
+                "pt.Pop(pt.SetByte(pt.Bytes('base16', '0xff00'), pt.Int(0), pt.Int(0)))",
             ),
-            [
-                (P, C),
-                ("byte 0xff00", "pt.Bytes('base16', '0xff00')"),
-                ("int 0", "pt.Int(0)"),
-                ("int 0", "pt.Int(0)"),
-                (
-                    "setbyte",
-                    "pt.SetByte(pt.Bytes('base16', '0xff00'), pt.Int(0), pt.Int(0))",
-                ),
-                (
-                    "pop",
-                    "pt.Pop(pt.SetByte(pt.Bytes('base16', '0xff00'), pt.Int(0), pt.Int(0)))",
-                ),
-                ('byte "abc"', "pt.Bytes('abc')"),
-                ("int 2", "pt.Int(2)"),
-                ("getbyte", "pt.GetByte(pt.Bytes('abc'), pt.Int(2))"),
-                ("return", C),
-            ],
-            3,
-        ),
-        (
-            pt.Btoi(pt.Concat(pt.Bytes("a"), pt.Bytes("b"), pt.Bytes("c"))),
-            [
-                (P, C),
-                ('byte "a"', "pt.Bytes('a')"),
-                ('byte "b"', "pt.Bytes('b')"),
-                ("concat", "pt.Concat(pt.Bytes('a'), pt.Bytes('b'), pt.Bytes('c'))"),
-                ('byte "c"', "pt.Bytes('c')"),
-                ("concat", "pt.Concat(pt.Bytes('a'), pt.Bytes('b'), pt.Bytes('c'))"),
-                (
-                    "btoi",
-                    "pt.Btoi(pt.Concat(pt.Bytes('a'), pt.Bytes('b'), pt.Bytes('c')))",
-                ),
-                ("return", C),
-            ],
-        ),
-        (
-            pt.Btoi(pt.Substring(pt.Bytes("algorand"), pt.Int(2), pt.Int(8))),
-            [
-                (P, C),
-                ('byte "algorand"', "pt.Bytes('algorand')"),
-                (
-                    "extract 2 6" if version >= 5 else "substring 2 8",
-                    "pt.Substring(pt.Bytes('algorand'), pt.Int(2), pt.Int(8))",
-                ),
-                (
-                    "btoi",
-                    "pt.Btoi(pt.Substring(pt.Bytes('algorand'), pt.Int(2), pt.Int(8)))",
-                ),
-                (
-                    "return",
-                    C,
-                ),
-            ],
-        ),
-        (
-            pt.Btoi(pt.Extract(pt.Bytes("algorand"), pt.Int(2), pt.Int(6))),
-            [
-                (P, C),
-                ('byte "algorand"', "pt.Bytes('algorand')"),
-                (
-                    "substring 2 8" if version < 5 else "extract 2 6",
-                    "pt.Extract(pt.Bytes('algorand'), pt.Int(2), pt.Int(6))",
-                ),
-                (
-                    "btoi",
-                    "pt.Btoi(pt.Extract(pt.Bytes('algorand'), pt.Int(2), pt.Int(6)))",
-                ),
-                ("return", C),
-            ],
-            5,
-        ),
-        (
-            pt.And(
-                pt.Txn.type_enum() == pt.TxnType.Payment,
-                pt.Txn.fee() < pt.Int(100),
-                pt.Txn.first_valid() % pt.Int(50) == pt.Int(0),
-                pt.Txn.last_valid() == pt.Int(5000) + pt.Txn.first_valid(),
-                pt.Txn.lease() == pt.Bytes("base64", "023sdDE2"),
+            ('byte "abc"', "pt.Bytes('abc')"),
+            ("int 2", "pt.Int(2)"),
+            ("getbyte", "pt.GetByte(pt.Bytes('abc'), pt.Int(2))"),
+            ("return", C),
+        ],
+        3,
+    ),
+    (
+        lambda pt: pt.Btoi(pt.Concat(pt.Bytes("a"), pt.Bytes("b"), pt.Bytes("c"))),
+        [
+            [P, C],
+            ('byte "a"', "pt.Bytes('a')"),
+            ('byte "b"', "pt.Bytes('b')"),
+            ("concat", "pt.Concat(pt.Bytes('a'), pt.Bytes('b'), pt.Bytes('c'))"),
+            ('byte "c"', "pt.Bytes('c')"),
+            ("concat", "pt.Concat(pt.Bytes('a'), pt.Bytes('b'), pt.Bytes('c'))"),
+            (
+                "btoi",
+                "pt.Btoi(pt.Concat(pt.Bytes('a'), pt.Bytes('b'), pt.Bytes('c')))",
             ),
-            [
-                (P, C),
-                ("txn TypeEnum", "pt.Txn.type_enum()"),
-                ("int pay", "pt.Txn.type_enum() == pt.TxnType.Payment"),
-                ("==", "pt.Txn.type_enum() == pt.TxnType.Payment"),
-                ("txn Fee", "pt.Txn.fee()"),
-                ("int 100", "pt.Int(100)"),
-                ("<", "pt.Txn.fee() < pt.Int(100)"),
-                (
-                    "&&",
-                    "pt.And(pt.Txn.type_enum() == pt.TxnType.Payment, pt.Txn.fee() < pt.Int(100), pt.Txn.first_valid() % pt.Int(50) == pt.Int(0), pt.Txn.last_valid() == pt.Int(5000) + pt.Txn.first_valid(), pt.Txn.lease() == pt.Bytes('base64', '023sdDE2'))",
-                ),
-                ("txn FirstValid", "pt.Txn.first_valid()"),
-                ("int 50", "pt.Int(50)"),
-                ("%", "pt.Txn.first_valid() % pt.Int(50)"),
-                ("int 0", "pt.Int(0)"),
-                ("==", "pt.Txn.first_valid() % pt.Int(50) == pt.Int(0)"),
-                (
-                    "&&",
-                    "pt.And(pt.Txn.type_enum() == pt.TxnType.Payment, pt.Txn.fee() < pt.Int(100), pt.Txn.first_valid() % pt.Int(50) == pt.Int(0), pt.Txn.last_valid() == pt.Int(5000) + pt.Txn.first_valid(), pt.Txn.lease() == pt.Bytes('base64', '023sdDE2'))",
-                ),
-                ("txn LastValid", "pt.Txn.last_valid()"),
-                ("int 5000", "pt.Int(5000)"),
-                ("txn FirstValid", "pt.Txn.first_valid()"),
-                ("+", "pt.Int(5000) + pt.Txn.first_valid()"),
-                ("==", "pt.Txn.last_valid() == pt.Int(5000) + pt.Txn.first_valid()"),
-                (
-                    "&&",
-                    "pt.And(pt.Txn.type_enum() == pt.TxnType.Payment, pt.Txn.fee() < pt.Int(100), pt.Txn.first_valid() % pt.Int(50) == pt.Int(0), pt.Txn.last_valid() == pt.Int(5000) + pt.Txn.first_valid(), pt.Txn.lease() == pt.Bytes('base64', '023sdDE2'))",
-                ),
-                ("txn Lease", "pt.Txn.lease()"),
-                ("byte base64(023sdDE2)", "pt.Bytes('base64', '023sdDE2')"),
-                ("==", "pt.Txn.lease() == pt.Bytes('base64', '023sdDE2')"),
-                (
-                    "&&",
-                    "pt.And(pt.Txn.type_enum() == pt.TxnType.Payment, pt.Txn.fee() < pt.Int(100), pt.Txn.first_valid() % pt.Int(50) == pt.Int(0), pt.Txn.last_valid() == pt.Int(5000) + pt.Txn.first_valid(), pt.Txn.lease() == pt.Bytes('base64', '023sdDE2'))",
-                ),
-                ("return", C),
-            ],
+            ("return", C),
+        ],
+    ),
+    (
+        lambda pt: pt.Btoi(pt.Substring(pt.Bytes("algorand"), pt.Int(2), pt.Int(8))),
+        [
+            [P, C],
+            ('byte "algorand"', "pt.Bytes('algorand')"),
+            (
+                "extract 2 6",
+                "pt.Substring(pt.Bytes('algorand'), pt.Int(2), pt.Int(8))",
+            ),
+            (
+                "btoi",
+                "pt.Btoi(pt.Substring(pt.Bytes('algorand'), pt.Int(2), pt.Int(8)))",
+            ),
+            (
+                "return",
+                C,
+            ),
+        ],
+        5,
+    ),
+    (
+        lambda pt: pt.Btoi(pt.Extract(pt.Bytes("algorand"), pt.Int(2), pt.Int(6))),
+        [
+            [P, C],
+            ('byte "algorand"', "pt.Bytes('algorand')"),
+            (
+                "extract 2 6",
+                "pt.Extract(pt.Bytes('algorand'), pt.Int(2), pt.Int(6))",
+            ),
+            (
+                "btoi",
+                "pt.Btoi(pt.Extract(pt.Bytes('algorand'), pt.Int(2), pt.Int(6)))",
+            ),
+            ("return", C),
+        ],
+        5,
+    ),
+    (
+        lambda pt: pt.And(
+            pt.Txn.type_enum() == pt.TxnType.Payment,
+            pt.Txn.fee() < pt.Int(100),
+            pt.Txn.first_valid() % pt.Int(50) == pt.Int(0),
+            pt.Txn.last_valid() == pt.Int(5000) + pt.Txn.first_valid(),
+            pt.Txn.lease() == pt.Bytes("base64", "023sdDE2"),
         ),
-    ]
-    """
-    test_cases = [
-        (
+        [
+            [P, C],
+            ("txn TypeEnum", "pt.Txn.type_enum()"),
+            ("int pay", "pt.Txn.type_enum() == pt.TxnType.Payment"),
+            ("==", "pt.Txn.type_enum() == pt.TxnType.Payment"),
+            ("txn Fee", "pt.Txn.fee()"),
+            ("int 100", "pt.Int(100)"),
+            ("<", "pt.Txn.fee() < pt.Int(100)"),
+            (
+                "&&",
+                "pt.And(pt.Txn.type_enum() == pt.TxnType.Payment, pt.Txn.fee() < pt.Int(100), pt.Txn.first_valid() % pt.Int(50) == pt.Int(0), pt.Txn.last_valid() == pt.Int(5000) + pt.Txn.first_valid(), pt.Txn.lease() == pt.Bytes('base64', '023sdDE2'))",
+            ),
+            ("txn FirstValid", "pt.Txn.first_valid()"),
+            ("int 50", "pt.Int(50)"),
+            ("%", "pt.Txn.first_valid() % pt.Int(50)"),
+            ("int 0", "pt.Int(0)"),
+            ("==", "pt.Txn.first_valid() % pt.Int(50) == pt.Int(0)"),
+            (
+                "&&",
+                "pt.And(pt.Txn.type_enum() == pt.TxnType.Payment, pt.Txn.fee() < pt.Int(100), pt.Txn.first_valid() % pt.Int(50) == pt.Int(0), pt.Txn.last_valid() == pt.Int(5000) + pt.Txn.first_valid(), pt.Txn.lease() == pt.Bytes('base64', '023sdDE2'))",
+            ),
+            ("txn LastValid", "pt.Txn.last_valid()"),
+            ("int 5000", "pt.Int(5000)"),
+            ("txn FirstValid", "pt.Txn.first_valid()"),
+            ("+", "pt.Int(5000) + pt.Txn.first_valid()"),
+            ("==", "pt.Txn.last_valid() == pt.Int(5000) + pt.Txn.first_valid()"),
+            (
+                "&&",
+                "pt.And(pt.Txn.type_enum() == pt.TxnType.Payment, pt.Txn.fee() < pt.Int(100), pt.Txn.first_valid() % pt.Int(50) == pt.Int(0), pt.Txn.last_valid() == pt.Int(5000) + pt.Txn.first_valid(), pt.Txn.lease() == pt.Bytes('base64', '023sdDE2'))",
+            ),
+            ("txn Lease", "pt.Txn.lease()"),
+            ("byte base64(023sdDE2)", "pt.Bytes('base64', '023sdDE2')"),
+            ("==", "pt.Txn.lease() == pt.Bytes('base64', '023sdDE2')"),
+            (
+                "&&",
+                "pt.And(pt.Txn.type_enum() == pt.TxnType.Payment, pt.Txn.fee() < pt.Int(100), pt.Txn.first_valid() % pt.Int(50) == pt.Int(0), pt.Txn.last_valid() == pt.Int(5000) + pt.Txn.first_valid(), pt.Txn.lease() == pt.Bytes('base64', '023sdDE2'))",
+            ),
+            ("return", C),
+        ],
+    ),
+    (
+        lambda pt: [
+            is_admin := pt.App.localGet(pt.Int(0), pt.Bytes("admin")),
+            foo := pt.Return(pt.Int(1)),
             pt.Cond(
-                [pt.Txn.application_id() == pt.Int(0), on_creation],
+                [pt.Txn.application_id() == pt.Int(0), foo],
                 [
                     pt.Txn.on_completion() == pt.OnComplete.DeleteApplication,
                     pt.Return(is_admin),
@@ -530,127 +522,399 @@ def test_sanity_check(_, mode, version):
                     pt.Txn.on_completion() == pt.OnComplete.UpdateApplication,
                     pt.Return(is_admin),
                 ],
-                [pt.Txn.on_completion() == pt.OnComplete.CloseOut, on_closeout],
-                [pt.Txn.on_completion() == pt.OnComplete.OptIn, register],
-                [pt.Txn.application_args[0] == pt.Bytes("set admin"), set_admin],
-                [pt.Txn.application_args[0] == pt.Bytes("mint"), mint],
-                [pt.Txn.application_args[0] == pt.Bytes("transfer"), transfer],
-                [pt.Txn.accounts[4] == pt.Bytes("foo"), on_closeout],
+                [pt.Txn.on_completion() == pt.OnComplete.CloseOut, foo],
+                [pt.Txn.on_completion() == pt.OnComplete.OptIn, foo],
+                [pt.Txn.application_args[0] == pt.Bytes("set admin"), foo],
+                [pt.Txn.application_args[0] == pt.Bytes("mint"), foo],
+                [pt.Txn.application_args[0] == pt.Bytes("transfer"), foo],
+                [pt.Txn.accounts[4] == pt.Bytes("foo"), foo],
             ),
-            [
-                (P, C),
-                ("txn ApplicationID", "pt.Txn.application_id()"),
-                ("int 0", "pt.Int(0)"),
-                ("==", "pt.Txn.application_id() == pt.Int(0)"),
-                ("bnz main_l18", C),  # ... makes sense
-                ("txn OnCompletion", "pt.Txn.on_completion()"),
-                (
-                    "int DeleteApplication",
-                    "pt.Txn.on_completion() == pt.OnComplete.DeleteApplication",
-                ),  # source inferencing at work here!!!!
-                ("==", "pt.Txn.on_completion() == pt.OnComplete.DeleteApplication"),
-                ("bnz main_l17", C),  # makes sense
-                ("txn OnCompletion", "pt.Txn.on_completion()"),
-                (
-                    "int UpdateApplication",
-                    "pt.Txn.on_completion() == pt.OnComplete.UpdateApplication",
-                ),  # source inferencing
-                ("==", "pt.Txn.on_completion() == pt.OnComplete.UpdateApplication"),
-                ("bnz main_l16", C),  # yep
-                ("txn OnCompletion", "pt.Txn.on_completion()"),
-                ("int CloseOut", "pt.Txn.on_completion() == pt.OnComplete.CloseOut"),
-                ("==", "pt.Txn.on_completion() == pt.OnComplete.CloseOut"),
-                ("bnz main_l15", C),
-                ("txn OnCompletion", "pt.Txn.on_completion()"),
-                ("int OptIn", "pt.Txn.on_completion() == pt.OnComplete.OptIn"),
-                ("==", "pt.Txn.on_completion() == pt.OnComplete.OptIn"),
-                ("bnz main_l14", C),
-                ("txna ApplicationArgs 0", "pt.Txn.application_args[0]"),
-                ('byte "set admin"', "pt.Bytes('set admin')"),
-                ("==", "pt.Txn.application_args[0] == pt.Bytes('set admin')"),
-                ("bnz main_l13", C),
-                ("txna ApplicationArgs 0", "pt.Txn.application_args[0]"),
-                ('byte "mint"', "pt.Bytes('mint')"),
-                ("==", "pt.Txn.application_args[0] == pt.Bytes('mint')"),
-                ("bnz main_l12", C),
-                ("txna ApplicationArgs 0", "pt.Txn.application_args[0]"),
-                ('byte "transfer"', "pt.Bytes('transfer')"),
-                ("==", "pt.Txn.application_args[0] == pt.Bytes('transfer')"),
-                ("bnz main_l11", C),
-                ("txna Accounts 4", "pt.Txn.accounts[4]"),
-                ('byte "foo"', "pt.Bytes('foo')"),
-                ("==", "pt.Txn.accounts[4] == pt.Bytes('foo')"),
-                ("bnz main_l10", C),
-                (
-                    "err",
-                    "pt.Cond([pt.Txn.application_id() == pt.Int(0), on_creation], [pt.Txn.on_completion() == pt.OnComplete.DeleteApplication, pt.Return(is_admin)], [pt.Txn.on_completion() == pt.OnComplete.UpdateApplication, pt.Return(is_admin)], [pt.Txn.on_completion() == pt.OnComplete.CloseOut, on_closeout], [pt.Txn.on_completion() == pt.OnComplete.OptIn, register], [pt.Txn.application_args[0] == pt.Bytes('set admin'), set_admin], [pt.Txn.application_args[0] == pt.Bytes('mint'), mint], [pt.Txn.application_args[0] == pt.Bytes('transfer'), transfer], [pt.Txn.accounts[4] == pt.Bytes('foo'), on_closeout])",
-                ),  # OUCH - this nastiness is from Cond gnerating an err block at the very end!!!
-                ("main_l10:", C),
-                ("int 1", "pt.Int(1)"),
-                ("return", "pt.Return(pt.Int(1))"),
-                ("main_l11:", C),
-                ("int 1", "pt.Int(1)"),
-                ("return", "pt.Return(pt.Int(1))"),
-                ("main_l12:", C),
-                ("int 1", "pt.Int(1)"),
-                ("return", "pt.Return(pt.Int(1))"),
-                ("main_l13:", C),
-                ("int 1", "pt.Int(1)"),
-                ("return", "pt.Return(pt.Int(1))"),
-                ("main_l14:", C),
-                ("int 1", "pt.Int(1)"),
-                ("return", "pt.Return(pt.Int(1))"),
-                ("main_l15:", C),
-                ("int 1", "pt.Int(1)"),
-                ("return", "pt.Return(pt.Int(1))"),
-                ("main_l16:", C),
-                ("int 0", "pt.Int(0)"),
-                ('byte "admin"', "pt.Bytes('admin')"),
-                ("app_local_get", "pt.App.localGet(pt.Int(0), pt.Bytes('admin'))"),
-                ("return", "pt.Return(is_admin)"),
-                ("main_l17:", C),
-                ("int 0", "pt.Int(0)"),
-                ('byte "admin"', "pt.Bytes('admin')"),
-                ("app_local_get", "pt.App.localGet(pt.Int(0), pt.Bytes('admin'))"),
-                ("return", "pt.Return(is_admin)"),
-                ("main_l18:", C),
-                ("int 1", "pt.Int(1)"),
-                ("return", "pt.Return(pt.Int(1))"),
-            ],
-            2,
-            Mode.Application,
+        ][-1],
+        [
+            [P, C],
+            ("txn ApplicationID", "pt.Txn.application_id()"),
+            ("int 0", "pt.Int(0)"),
+            ("==", "pt.Txn.application_id() == pt.Int(0)"),
+            ("bnz main_l18", C),  # ... makes sense
+            ("txn OnCompletion", "pt.Txn.on_completion()"),
+            (
+                "int DeleteApplication",
+                "pt.Txn.on_completion() == pt.OnComplete.DeleteApplication",
+            ),  # source inferencing at work here!!!!
+            ("==", "pt.Txn.on_completion() == pt.OnComplete.DeleteApplication"),
+            ("bnz main_l17", C),  # makes sense
+            ("txn OnCompletion", "pt.Txn.on_completion()"),
+            (
+                "int UpdateApplication",
+                "pt.Txn.on_completion() == pt.OnComplete.UpdateApplication",
+            ),  # source inferencing
+            ("==", "pt.Txn.on_completion() == pt.OnComplete.UpdateApplication"),
+            ("bnz main_l16", C),  # yep
+            ("txn OnCompletion", "pt.Txn.on_completion()"),
+            ("int CloseOut", "pt.Txn.on_completion() == pt.OnComplete.CloseOut"),
+            ("==", "pt.Txn.on_completion() == pt.OnComplete.CloseOut"),
+            ("bnz main_l15", C),
+            ("txn OnCompletion", "pt.Txn.on_completion()"),
+            ("int OptIn", "pt.Txn.on_completion() == pt.OnComplete.OptIn"),
+            ("==", "pt.Txn.on_completion() == pt.OnComplete.OptIn"),
+            ("bnz main_l14", C),
+            ("txna ApplicationArgs 0", "pt.Txn.application_args[0]"),
+            ('byte "set admin"', "pt.Bytes('set admin')"),
+            ("==", "pt.Txn.application_args[0] == pt.Bytes('set admin')"),
+            ("bnz main_l13", C),
+            ("txna ApplicationArgs 0", "pt.Txn.application_args[0]"),
+            ('byte "mint"', "pt.Bytes('mint')"),
+            ("==", "pt.Txn.application_args[0] == pt.Bytes('mint')"),
+            ("bnz main_l12", C),
+            ("txna ApplicationArgs 0", "pt.Txn.application_args[0]"),
+            ('byte "transfer"', "pt.Bytes('transfer')"),
+            ("==", "pt.Txn.application_args[0] == pt.Bytes('transfer')"),
+            ("bnz main_l11", C),
+            ("txna Accounts 4", "pt.Txn.accounts[4]"),
+            ('byte "foo"', "pt.Bytes('foo')"),
+            ("==", "pt.Txn.accounts[4] == pt.Bytes('foo')"),
+            ("bnz main_l10", C),
+            (
+                "err",
+                "pt.Cond([pt.Txn.application_id() == pt.Int(0), foo], [pt.Txn.on_completion() == pt.OnComplete.DeleteApplication, pt.Return(is_admin)], [pt.Txn.on_completion() == pt.OnComplete.UpdateApplication, pt.Return(is_admin)], [pt.Txn.on_completion() == pt.OnComplete.CloseOut, foo], [pt.Txn.on_completion() == pt.OnComplete.OptIn, foo], [pt.Txn.application_args[0] == pt.Bytes('set admin'), foo], [pt.Txn.application_args[0] == pt.Bytes('mint'), foo], [pt.Txn.application_args[0] == pt.Bytes('transfer'), foo], [pt.Txn.accounts[4] == pt.Bytes('foo'), foo])",
+            ),  # OUCH - this nastiness is from Cond gnerating an err block at the very end!!!
+            ("main_l10:", C),
+            ("int 1", "pt.Int(1)"),
+            ("return", "pt.Return(pt.Int(1))"),
+            ("main_l11:", C),
+            ("int 1", "pt.Int(1)"),
+            ("return", "pt.Return(pt.Int(1))"),
+            ("main_l12:", C),
+            ("int 1", "pt.Int(1)"),
+            ("return", "pt.Return(pt.Int(1))"),
+            ("main_l13:", C),
+            ("int 1", "pt.Int(1)"),
+            ("return", "pt.Return(pt.Int(1))"),
+            ("main_l14:", C),
+            ("int 1", "pt.Int(1)"),
+            ("return", "pt.Return(pt.Int(1))"),
+            ("main_l15:", C),
+            ("int 1", "pt.Int(1)"),
+            ("return", "pt.Return(pt.Int(1))"),
+            ("main_l16:", C),
+            ("int 0", "pt.Int(0)"),
+            ('byte "admin"', "pt.Bytes('admin')"),
+            ("app_local_get", "pt.App.localGet(pt.Int(0), pt.Bytes('admin'))"),
+            ("return", "pt.Return(is_admin)"),
+            ("main_l17:", C),
+            ("int 0", "pt.Int(0)"),
+            ('byte "admin"', "pt.Bytes('admin')"),
+            ("app_local_get", "pt.App.localGet(pt.Int(0), pt.Bytes('admin'))"),
+            ("return", "pt.Return(is_admin)"),
+            ("main_l18:", C),
+            ("int 1", "pt.Int(1)"),
+            ("return", "pt.Return(pt.Int(1))"),
+        ],
+        2,
+        "Application",
+    ),
+    (
+        lambda pt: [
+            asset_c := pt.Tmpl.Int("TMPL_ASSET_C"),
+            receiver := pt.Tmpl.Addr("TMPL_RECEIVER"),
+            pt.And(
+                pt.Gtxn[0].rekey_to() == pt.Global.zero_address(),
+                pt.Gtxn[1].rekey_to() == pt.Global.zero_address(),
+                pt.Gtxn[2].rekey_to() == pt.Global.zero_address(),
+                pt.Gtxn[3].rekey_to() == pt.Global.zero_address(),
+                pt.Gtxn[4].rekey_to() == pt.Global.zero_address(),
+                pt.Gtxn[0].last_valid() == pt.Gtxn[1].last_valid(),
+                pt.Gtxn[1].last_valid() == pt.Gtxn[2].last_valid(),
+                pt.Gtxn[2].last_valid() == pt.Gtxn[3].last_valid(),
+                pt.Gtxn[3].last_valid() == pt.Gtxn[4].last_valid(),
+                pt.Gtxn[0].type_enum() == pt.TxnType.AssetTransfer,
+                pt.Gtxn[0].xfer_asset() == asset_c,
+                pt.Gtxn[0].receiver() == receiver,
+            ),
+        ][-1],
+        [
+            [P, C],
+            ("gtxn 0 RekeyTo", "pt.Gtxn[0].rekey_to()"),
+            ("global ZeroAddress", "pt.Global.zero_address()"),
+            ("==", "pt.Gtxn[0].rekey_to() == pt.Global.zero_address()"),
+            ("gtxn 1 RekeyTo", "pt.Gtxn[1].rekey_to()"),
+            ("global ZeroAddress", "pt.Global.zero_address()"),
+            ("==", "pt.Gtxn[1].rekey_to() == pt.Global.zero_address()"),
+            ("&&", BIG_A),
+            ("gtxn 2 RekeyTo", "pt.Gtxn[2].rekey_to()"),
+            ("global ZeroAddress", "pt.Global.zero_address()"),
+            ("==", "pt.Gtxn[2].rekey_to() == pt.Global.zero_address()"),
+            ("&&", BIG_A),
+            ("gtxn 3 RekeyTo", "pt.Gtxn[3].rekey_to()"),
+            ("global ZeroAddress", "pt.Global.zero_address()"),
+            ("==", "pt.Gtxn[3].rekey_to() == pt.Global.zero_address()"),
+            ("&&", BIG_A),
+            ("gtxn 4 RekeyTo", "pt.Gtxn[4].rekey_to()"),
+            ("global ZeroAddress", "pt.Global.zero_address()"),
+            ("==", "pt.Gtxn[4].rekey_to() == pt.Global.zero_address()"),
+            ("&&", BIG_A),
+            ("gtxn 0 LastValid", "pt.Gtxn[0].last_valid()"),
+            ("gtxn 1 LastValid", "pt.Gtxn[1].last_valid()"),
+            ("==", "pt.Gtxn[0].last_valid() == pt.Gtxn[1].last_valid()"),
+            ("&&", BIG_A),
+            ("gtxn 1 LastValid", "pt.Gtxn[1].last_valid()"),
+            ("gtxn 2 LastValid", "pt.Gtxn[2].last_valid()"),
+            ("==", "pt.Gtxn[1].last_valid() == pt.Gtxn[2].last_valid()"),
+            ("&&", BIG_A),
+            ("gtxn 2 LastValid", "pt.Gtxn[2].last_valid()"),
+            ("gtxn 3 LastValid", "pt.Gtxn[3].last_valid()"),
+            ("==", "pt.Gtxn[2].last_valid() == pt.Gtxn[3].last_valid()"),
+            ("&&", BIG_A),
+            ("gtxn 3 LastValid", "pt.Gtxn[3].last_valid()"),
+            ("gtxn 4 LastValid", "pt.Gtxn[4].last_valid()"),
+            ("==", "pt.Gtxn[3].last_valid() == pt.Gtxn[4].last_valid()"),
+            ("&&", BIG_A),
+            ("gtxn 0 TypeEnum", "pt.Gtxn[0].type_enum()"),
+            (
+                "int axfer",
+                "pt.Gtxn[0].type_enum() == pt.TxnType.AssetTransfer",
+            ),  # source inference
+            ("==", "pt.Gtxn[0].type_enum() == pt.TxnType.AssetTransfer"),
+            ("&&", BIG_A),
+            ("gtxn 0 XferAsset", "pt.Gtxn[0].xfer_asset()"),
+            ("int TMPL_ASSET_C", "pt.Tmpl.Int('TMPL_ASSET_C')"),
+            ("==", "pt.Gtxn[0].xfer_asset() == asset_c"),
+            ("&&", BIG_A),
+            ("gtxn 0 Receiver", "pt.Gtxn[0].receiver()"),
+            ("addr TMPL_RECEIVER", "pt.Tmpl.Addr('TMPL_RECEIVER')"),
+            ("==", "pt.Gtxn[0].receiver() == receiver"),
+            ("&&", BIG_A),
+            ("return", C),
+        ],
+    ),
+    (
+        lambda pt: pt.And(
+            pt.Txn.application_args.length(),  # get the number of application arguments in the transaction
+            # as of AVM v5, PyTeal expressions can be used to dynamically index into array properties as well
+            pt.Btoi(
+                pt.Txn.application_args[pt.Txn.application_args.length() - pt.Int(1)]
+            ),
         ),
-    ]
+        [
+            [P, C],
+            ("txn NumAppArgs", "pt.Txn.application_args.length()"),
+            ("txn NumAppArgs", "pt.Txn.application_args.length()"),
+            ("int 1", "pt.Int(1)"),
+            ("-", "pt.Txn.application_args.length() - pt.Int(1)"),
+            (
+                "txnas ApplicationArgs",
+                "pt.Txn.application_args[pt.Txn.application_args.length() - pt.Int(1)]",
+            ),
+            (
+                "btoi",
+                "pt.Btoi(pt.Txn.application_args[pt.Txn.application_args.length() - pt.Int(1)])",
+            ),
+            (
+                "&&",
+                "pt.And(pt.Txn.application_args.length(), pt.Btoi(pt.Txn.application_args[pt.Txn.application_args.length() - pt.Int(1)]))",
+            ),
+            ("return", C),
+        ],
+        5,
+    ),
+    (
+        lambda pt: pt.Seq(
+            receiver_max_balance := pt.App.localGetEx(
+                pt.Int(1), pt.App.id(), pt.Bytes("max balance")
+            ),
+            pt.Or(
+                pt.App.globalGet(pt.Bytes("paused")),
+                pt.App.localGet(pt.Int(0), pt.Bytes("frozen")),
+                pt.App.localGet(pt.Int(1), pt.Bytes("frozen")),
+                pt.App.localGet(pt.Int(0), pt.Bytes("lock until"))
+                >= pt.Global.latest_timestamp(),
+                pt.App.localGet(pt.Int(1), pt.Bytes("lock until"))
+                >= pt.Global.latest_timestamp(),
+                pt.App.globalGet(
+                    pt.Concat(
+                        pt.Bytes("rule"),
+                        pt.Itob(pt.App.localGet(pt.Int(0), pt.Bytes("transfer group"))),
+                        pt.Itob(pt.App.localGet(pt.Int(1), pt.Bytes("transfer group"))),
+                    )
+                ),
+            ),
+        ),
+        [
+            [P, C],
+            ("int 1", "pt.Int(1)"),
+            ("global CurrentApplicationID", "pt.App.id()"),
+            ('byte "max balance"', "pt.Bytes('max balance')"),
+            (
+                "app_local_get_ex",
+                "pt.App.localGetEx(pt.Int(1), pt.App.id(), pt.Bytes('max balance'))",
+            ),
+            ("store 1", C),
+            ("store 0", C),
+            ('byte "paused"', "pt.Bytes('paused')"),
+            ("app_global_get", "pt.App.globalGet(pt.Bytes('paused'))"),
+            ("int 0", "pt.Int(0)"),
+            ('byte "frozen"', "pt.Bytes('frozen')"),
+            ("app_local_get", "pt.App.localGet(pt.Int(0), pt.Bytes('frozen'))"),
+            ("||", BIG_B),
+            ("int 1", "pt.Int(1)"),
+            ('byte "frozen"', "pt.Bytes('frozen')"),
+            ("app_local_get", "pt.App.localGet(pt.Int(1), pt.Bytes('frozen'))"),
+            ("||", BIG_B),
+            ("int 0", "pt.Int(0)"),
+            ('byte "lock until"', "pt.Bytes('lock until')"),
+            ("app_local_get", "pt.App.localGet(pt.Int(0), pt.Bytes('lock until'))"),
+            ("global LatestTimestamp", "pt.Global.latest_timestamp()"),
+            (
+                ">=",
+                "pt.App.localGet(pt.Int(0), pt.Bytes('lock until')) >= pt.Global.latest_timestamp()",
+            ),
+            ("||", BIG_B),
+            ("int 1", "pt.Int(1)"),
+            ('byte "lock until"', "pt.Bytes('lock until')"),
+            ("app_local_get", "pt.App.localGet(pt.Int(1), pt.Bytes('lock until'))"),
+            ("global LatestTimestamp", "pt.Global.latest_timestamp()"),
+            (
+                ">=",
+                "pt.App.localGet(pt.Int(1), pt.Bytes('lock until')) >= pt.Global.latest_timestamp()",
+            ),
+            ("||", BIG_B),
+            ('byte "rule"', "pt.Bytes('rule')"),
+            ("int 0", "pt.Int(0)"),
+            ('byte "transfer group"', "pt.Bytes('transfer group')"),
+            (
+                "app_local_get",
+                "pt.App.localGet(pt.Int(0), pt.Bytes('transfer group'))",
+            ),
+            (
+                "itob",
+                "pt.Itob(pt.App.localGet(pt.Int(0), pt.Bytes('transfer group')))",
+            ),
+            (
+                "concat",
+                "pt.Concat(pt.Bytes('rule'), pt.Itob(pt.App.localGet(pt.Int(0), pt.Bytes('transfer group'))), pt.Itob(pt.App.localGet(pt.Int(1), pt.Bytes('transfer group'))))",
+            ),
+            ("int 1", "pt.Int(1)"),
+            ('byte "transfer group"', "pt.Bytes('transfer group')"),
+            (
+                "app_local_get",
+                "pt.App.localGet(pt.Int(1), pt.Bytes('transfer group'))",
+            ),
+            ("itob", "pt.Itob(pt.App.localGet(pt.Int(1), pt.Bytes('transfer group')))"),
+            (
+                "concat",
+                "pt.Concat(pt.Bytes('rule'), pt.Itob(pt.App.localGet(pt.Int(0), pt.Bytes('transfer group'))), pt.Itob(pt.App.localGet(pt.Int(1), pt.Bytes('transfer group'))))",
+            ),
+            (
+                "app_global_get",
+                "pt.App.globalGet(pt.Concat(pt.Bytes('rule'), pt.Itob(pt.App.localGet(pt.Int(0), pt.Bytes('transfer group'))), pt.Itob(pt.App.localGet(pt.Int(1), pt.Bytes('transfer group')))))",
+            ),
+            ("||", BIG_B),
+            ("return", C),
+        ],
+        2,
+        "Application",
+    ),
+    (
+        lambda pt: pt.EcdsaVerify(
+            pt.EcdsaCurve.Secp256k1,
+            pt.Sha512_256(pt.Bytes("testdata")),
+            pt.Bytes(
+                "base16",
+                "33602297203d2753372cea7794ffe1756a278cbc4907b15a0dd132c9fb82555e",
+            ),
+            pt.Bytes(
+                "base16",
+                "20f112126cf3e2eac6e8d4f97a403d21bab07b8dbb77154511bb7b07c0173195",
+            ),
+            (
+                pt.Bytes(
+                    "base16",
+                    "d6143a58c90c06b594e4414cb788659c2805e0056b1dfceea32c03f59efec517",
+                ),
+                pt.Bytes(
+                    "base16",
+                    "00bd2400c479efe5ea556f37e1dc11ccb20f1e642dbfe00ca346fffeae508298",
+                ),
+            ),
+        ),
+        [
+            [P, C],
+            ['byte "testdata"', "pt.Bytes('testdata')"],
+            ["sha512_256", "pt.Sha512_256(pt.Bytes('testdata'))"],
+            [
+                "byte 0x33602297203d2753372cea7794ffe1756a278cbc4907b15a0dd132c9fb82555e",
+                "pt.Bytes('base16', '33602297203d2753372cea7794ffe1756a278cbc4907b15a0dd132c9fb82555e')",
+            ],
+            [
+                "byte 0x20f112126cf3e2eac6e8d4f97a403d21bab07b8dbb77154511bb7b07c0173195",
+                "pt.Bytes('base16', '20f112126cf3e2eac6e8d4f97a403d21bab07b8dbb77154511bb7b07c0173195')",
+            ],
+            [
+                "byte 0xd6143a58c90c06b594e4414cb788659c2805e0056b1dfceea32c03f59efec517",
+                "pt.Bytes('base16', 'd6143a58c90c06b594e4414cb788659c2805e0056b1dfceea32c03f59efec517')",
+            ],
+            [
+                "byte 0x00bd2400c479efe5ea556f37e1dc11ccb20f1e642dbfe00ca346fffeae508298",
+                "pt.Bytes('base16', '00bd2400c479efe5ea556f37e1dc11ccb20f1e642dbfe00ca346fffeae508298')",
+            ],
+            [
+                "ecdsa_verify Secp256k1",
+                "pt.EcdsaVerify(pt.EcdsaCurve.Secp256k1, pt.Sha512_256(pt.Bytes('testdata')), pt.Bytes('base16', '33602297203d2753372cea7794ffe1756a278cbc4907b15a0dd132c9fb82555e'), pt.Bytes('base16', '20f112126cf3e2eac6e8d4f97a403d21bab07b8dbb77154511bb7b07c0173195'), (pt.Bytes('base16', 'd6143a58c90c06b594e4414cb788659c2805e0056b1dfceea32c03f59efec517'), pt.Bytes('base16', '00bd2400c479efe5ea556f37e1dc11ccb20f1e642dbfe00ca346fffeae508298')))",
+            ],
+            ["return", C],
+        ],
+        5,
+    ),
+]
 
-    # TODO: don't merge in the next line:
-    test_cases = test_cases[-1:]
-    for i, test_case in enumerate(test_cases):
-        expr, line2unparsed = test_case[:2]
-        if len(test_case) > 2:
-            min_version = test_case[2]
-            if version < min_version:
-                return
-        if len(test_case) > 3:
-            fixed_mode = test_case[3]
-            if mode != fixed_mode:
-                return
 
-        comp = Compilation(
-            expr, mode, version=version, assemble_constants=False, optimize=None
-        )
-        bundle = comp.compile(with_sourcemap=True)
-        sourcemap = bundle.sourcemap
+@pytest.mark.parametrize("i, test_case", enumerate(SANITIES))
+@pytest.mark.parametrize("mode", ["Application", "Signature"])
+@pytest.mark.parametrize("version", range(2, 8))
+@mock.patch.object(ConfigParser, "getboolean", return_value=True)
+def test_sanity_check(_, i, test_case, mode, version):
+    """
+    Sanity check source mapping the most important PyTeal constructs
 
-        msg = f"[{i+1}]. case with {expr=}, {bundle=}"
+    Cannot utilize @pytest.mark.parametrize because of monkeypatching
+    """
+    import pyteal as pt
 
-        assert sourcemap, msg
-        assert sourcemap.hybrid is True, msg
-        assert sourcemap.source_inference is True, msg
+    def unparse(sourcemap_items):
+        return list(map(lambda smi: ast.unparse(smi.frame.node), sourcemap_items))
 
-        smis = sourcemap.as_list()
-        expected_lines, unparsed = list(zip(*line2unparsed))
+    expr, line2unparsed = test_case[:2]
+    line2unparsed = deepcopy(line2unparsed)
+    # fill the pragma template:
+    line2unparsed[0][0] = line2unparsed[0][0].format(v=version)
 
-        msg = f"{msg}, {smis=}"
-        assert list(expected_lines) == bundle.lines, msg
-        assert list(expected_lines) == sourcemap.teal_chunks, msg
-        assert list(unparsed) == unparse(smis), msg
+    expr = expr(pt)
+    if len(test_case) > 2:
+        min_version = test_case[2]
+        if version < min_version:
+            return
+    if len(test_case) > 3:
+        fixed_mode = test_case[3]
+        if mode != fixed_mode:
+            return
+
+    mode = getattr(pt.Mode, mode)
+    comp = pt.Compilation(
+        expr, mode, version=version, assemble_constants=False, optimize=None
+    )
+    bundle = comp.compile(with_sourcemap=True)
+    sourcemap = bundle.sourcemap
+
+    msg = f"[CASE #{i+1}]: {expr=}, {bundle=}"
+
+    assert sourcemap, msg
+    assert sourcemap.hybrid is True, msg
+    assert sourcemap.source_inference is True, msg
+
+    smis = sourcemap.as_list()
+    expected_lines, unparsed = list(zip(*line2unparsed))
+
+    msg = f"{msg}, {smis=}"
+    assert list(expected_lines) == bundle.lines, msg
+    assert list(expected_lines) == sourcemap.teal_chunks, msg
+    assert list(unparsed) == unparse(smis), msg

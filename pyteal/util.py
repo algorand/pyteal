@@ -135,7 +135,8 @@ def _skip_all_frames() -> bool:
     try:
         config = ConfigParser()
         config.read("pyteal.ini")
-        return not config.getboolean("pyteal-source-mapper", "enabled")
+        enabled = config.getboolean("pyteal-source-mapper", "enabled")
+        return not enabled
     except Exception as e:
         print(
             f"""Turning off frame capture and disabling sourcemaps. 
