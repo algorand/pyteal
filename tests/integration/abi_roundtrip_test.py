@@ -255,14 +255,17 @@ def test_roundtrip(abi_type):
     abi_strat = ABIStrategy(sdk_abi_types[0], dynamic_length=dynamic_length)
     rand_abi_instance = abi_strat.get_random()
     args = (rand_abi_instance,)
-    inspector = roundtripper.dryrun(args, compiler_version=8)
 
-    cost = inspector.cost()
-    passed = inspector.passed()
-    original, mut, mut_mut = inspector.last_log()
+    def dryrun_roundtrip(_version: int):
+        inspector = roundtripper.dryrun(args, compiler_version=_version)
 
-    print(
-        f"""
+        cost = inspector.cost()
+        passed = inspector.passed()
+        original, mut, mut_mut = inspector.last_log()
+
+        print(
+            f"""
+version={_version}
 {abi_type=}
 {sdk_abi_str=}
 {dynamic_length=}
@@ -274,21 +277,24 @@ def test_roundtrip(abi_type):
 {mut=}
 {mut_mut=}
 """
-    )
+        )
 
-    last_steps = 2
+        last_steps = 2
 
-    assert passed == (cost <= 700), inspector.report(
-        args, f"passed={passed} contradicted cost={cost}", last_steps=last_steps
-    )
-    assert rand_abi_instance == original, inspector.report(
-        args, "rand_abi_instance v. original", last_steps=last_steps
-    )
-    assert original == mut_mut, inspector.report(
-        args, "orginal v. mut_mut", last_steps=last_steps
-    )
+        assert passed == (cost <= 700), inspector.report(
+            args, f"passed={passed} contradicted cost={cost}", last_steps=last_steps
+        )
+        assert rand_abi_instance == original, inspector.report(
+            args, "rand_abi_instance v. original", last_steps=last_steps
+        )
+        assert original == mut_mut, inspector.report(
+            args, "orginal v. mut_mut", last_steps=last_steps
+        )
 
-    expected_mut = abi_strat.mutate_for_roundtrip(rand_abi_instance)
-    assert expected_mut == mut, inspector.report(
-        args, "expected_mut v. mut", last_steps=last_steps
-    )
+        expected_mut = abi_strat.mutate_for_roundtrip(rand_abi_instance)
+        assert expected_mut == mut, inspector.report(
+            args, "expected_mut v. mut", last_steps=last_steps
+        )
+
+    dryrun_roundtrip(6)
+    dryrun_roundtrip(8)
