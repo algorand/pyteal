@@ -398,14 +398,20 @@ class SourceMapItem:
             raise ValueError(
                 f"unable to export without valid line and column for SOURCE but got: {self.frame.lineno=}, {self.frame.column()=}"
             )
-        if (_line := self.frame.node_lineno()) and _line != line:
+        if not self.frame.node:
+            return
+
+        # self.frame.node_lineno() doesn't seem as accurate as self.frame.node.end_lineno
+        if (_line := self.frame.node.end_lineno) and _line != line:
             raise ValueError(
                 f"aborting: inconsistency in source line number found: {_line} != {line}"
             )
-        if (_col := self.frame.node_col_offset()) and _col != col:
-            raise ValueError(
-                f"aborting: inconsistency in source column number found: {_col} != {col}"
-            )
+
+        # This can n ever happen because that's what col is!!!!
+        # if (_col := self.frame.node_col_offset()) and _col != col:
+        #     raise ValueError(
+        #         f"aborting: inconsistency in source column number found: {_col} != {col}"
+        #     )
 
     def source_mappings(self, hybrid: bool = True) -> list[R3SourceMapping]:
         self.validate_for_export()

@@ -202,7 +202,7 @@ C = "comp.compile(with_sourcemap=True)"
 
 BIG_A = "pt.And(pt.Gtxn[0].rekey_to() == pt.Global.zero_address(), pt.Gtxn[1].rekey_to() == pt.Global.zero_address(), pt.Gtxn[2].rekey_to() == pt.Global.zero_address(), pt.Gtxn[3].rekey_to() == pt.Global.zero_address(), pt.Gtxn[4].rekey_to() == pt.Global.zero_address(), pt.Gtxn[0].last_valid() == pt.Gtxn[1].last_valid(), pt.Gtxn[1].last_valid() == pt.Gtxn[2].last_valid(), pt.Gtxn[2].last_valid() == pt.Gtxn[3].last_valid(), pt.Gtxn[3].last_valid() == pt.Gtxn[4].last_valid(), pt.Gtxn[0].type_enum() == pt.TxnType.AssetTransfer, pt.Gtxn[0].xfer_asset() == asset_c, pt.Gtxn[0].receiver() == receiver)"
 BIG_B = "pt.Or(pt.App.globalGet(pt.Bytes('paused')), pt.App.localGet(pt.Int(0), pt.Bytes('frozen')), pt.App.localGet(pt.Int(1), pt.Bytes('frozen')), pt.App.localGet(pt.Int(0), pt.Bytes('lock until')) >= pt.Global.latest_timestamp(), pt.App.localGet(pt.Int(1), pt.Bytes('lock until')) >= pt.Global.latest_timestamp(), pt.App.globalGet(pt.Concat(pt.Bytes('rule'), pt.Itob(pt.App.localGet(pt.Int(0), pt.Bytes('transfer group'))), pt.Itob(pt.App.localGet(pt.Int(1), pt.Bytes('transfer group'))))))"
-
+BIG_C = "pt.Cond([pt.Txn.application_id() == pt.Int(0), foo], [pt.Txn.on_completion() == pt.OnComplete.DeleteApplication, pt.Return(is_admin)], [pt.Txn.on_completion() == pt.OnComplete.UpdateApplication, pt.Return(is_admin)], [pt.Txn.on_completion() == pt.OnComplete.CloseOut, foo], [pt.Txn.on_completion() == pt.OnComplete.OptIn, foo], [pt.Txn.application_args[0] == pt.Bytes('set admin'), foo], [pt.Txn.application_args[0] == pt.Bytes('mint'), foo], [pt.Txn.application_args[0] == pt.Bytes('transfer'), foo], [pt.Txn.accounts[4] == pt.Bytes('foo'), foo])"
 
 """
     asset_c = pt.Tmpl.Int("TMPL_ASSET_C")
@@ -535,78 +535,75 @@ CONSTRUCTS = [
             ("txn ApplicationID", "pt.Txn.application_id()"),
             ("int 0", "pt.Int(0)"),
             ("==", "pt.Txn.application_id() == pt.Int(0)"),
-            ("bnz main_l18", C),  # ... makes sense
+            ("bnz main_l18", BIG_C),  # ... makes sense
             ("txn OnCompletion", "pt.Txn.on_completion()"),
             (
                 "int DeleteApplication",
                 "pt.Txn.on_completion() == pt.OnComplete.DeleteApplication",
             ),  # source inferencing at work here!!!!
             ("==", "pt.Txn.on_completion() == pt.OnComplete.DeleteApplication"),
-            ("bnz main_l17", C),  # makes sense
+            ("bnz main_l17", BIG_C),  # makes sense
             ("txn OnCompletion", "pt.Txn.on_completion()"),
             (
                 "int UpdateApplication",
                 "pt.Txn.on_completion() == pt.OnComplete.UpdateApplication",
             ),  # source inferencing
             ("==", "pt.Txn.on_completion() == pt.OnComplete.UpdateApplication"),
-            ("bnz main_l16", C),  # yep
+            ("bnz main_l16", BIG_C),  # yep
             ("txn OnCompletion", "pt.Txn.on_completion()"),
             ("int CloseOut", "pt.Txn.on_completion() == pt.OnComplete.CloseOut"),
             ("==", "pt.Txn.on_completion() == pt.OnComplete.CloseOut"),
-            ("bnz main_l15", C),
+            ("bnz main_l15", BIG_C),
             ("txn OnCompletion", "pt.Txn.on_completion()"),
             ("int OptIn", "pt.Txn.on_completion() == pt.OnComplete.OptIn"),
             ("==", "pt.Txn.on_completion() == pt.OnComplete.OptIn"),
-            ("bnz main_l14", C),
+            ("bnz main_l14", BIG_C),
             ("txna ApplicationArgs 0", "pt.Txn.application_args[0]"),
             ('byte "set admin"', "pt.Bytes('set admin')"),
             ("==", "pt.Txn.application_args[0] == pt.Bytes('set admin')"),
-            ("bnz main_l13", C),
+            ("bnz main_l13", BIG_C),
             ("txna ApplicationArgs 0", "pt.Txn.application_args[0]"),
             ('byte "mint"', "pt.Bytes('mint')"),
             ("==", "pt.Txn.application_args[0] == pt.Bytes('mint')"),
-            ("bnz main_l12", C),
+            ("bnz main_l12", BIG_C),
             ("txna ApplicationArgs 0", "pt.Txn.application_args[0]"),
             ('byte "transfer"', "pt.Bytes('transfer')"),
             ("==", "pt.Txn.application_args[0] == pt.Bytes('transfer')"),
-            ("bnz main_l11", C),
+            ("bnz main_l11", BIG_C),
             ("txna Accounts 4", "pt.Txn.accounts[4]"),
             ('byte "foo"', "pt.Bytes('foo')"),
             ("==", "pt.Txn.accounts[4] == pt.Bytes('foo')"),
-            ("bnz main_l10", C),
-            (
-                "err",
-                "pt.Cond([pt.Txn.application_id() == pt.Int(0), foo], [pt.Txn.on_completion() == pt.OnComplete.DeleteApplication, pt.Return(is_admin)], [pt.Txn.on_completion() == pt.OnComplete.UpdateApplication, pt.Return(is_admin)], [pt.Txn.on_completion() == pt.OnComplete.CloseOut, foo], [pt.Txn.on_completion() == pt.OnComplete.OptIn, foo], [pt.Txn.application_args[0] == pt.Bytes('set admin'), foo], [pt.Txn.application_args[0] == pt.Bytes('mint'), foo], [pt.Txn.application_args[0] == pt.Bytes('transfer'), foo], [pt.Txn.accounts[4] == pt.Bytes('foo'), foo])",
-            ),  # OUCH - this nastiness is from Cond gnerating an err block at the very end!!!
-            ("main_l10:", C),
+            ("bnz main_l10", BIG_C),
+            ("err", BIG_C),
+            ("main_l10:", BIG_C),
             ("int 1", "pt.Int(1)"),
             ("return", "pt.Return(pt.Int(1))"),
-            ("main_l11:", C),
+            ("main_l11:", BIG_C),
             ("int 1", "pt.Int(1)"),
             ("return", "pt.Return(pt.Int(1))"),
-            ("main_l12:", C),
+            ("main_l12:", BIG_C),
             ("int 1", "pt.Int(1)"),
             ("return", "pt.Return(pt.Int(1))"),
-            ("main_l13:", C),
+            ("main_l13:", BIG_C),
             ("int 1", "pt.Int(1)"),
             ("return", "pt.Return(pt.Int(1))"),
-            ("main_l14:", C),
+            ("main_l14:", BIG_C),
             ("int 1", "pt.Int(1)"),
             ("return", "pt.Return(pt.Int(1))"),
-            ("main_l15:", C),
+            ("main_l15:", BIG_C),
             ("int 1", "pt.Int(1)"),
             ("return", "pt.Return(pt.Int(1))"),
-            ("main_l16:", C),
+            ("main_l16:", BIG_C),
             ("int 0", "pt.Int(0)"),
             ('byte "admin"', "pt.Bytes('admin')"),
             ("app_local_get", "pt.App.localGet(pt.Int(0), pt.Bytes('admin'))"),
             ("return", "pt.Return(is_admin)"),
-            ("main_l17:", C),
+            ("main_l17:", BIG_C),
             ("int 0", "pt.Int(0)"),
             ('byte "admin"', "pt.Bytes('admin')"),
             ("app_local_get", "pt.App.localGet(pt.Int(0), pt.Bytes('admin'))"),
             ("return", "pt.Return(is_admin)"),
-            ("main_l18:", C),
+            ("main_l18:", BIG_C),
             ("int 1", "pt.Int(1)"),
             ("return", "pt.Return(pt.Int(1))"),
         ],
@@ -748,7 +745,7 @@ CONSTRUCTS = [
                 "app_local_get_ex",
                 "pt.App.localGetEx(pt.Int(1), pt.App.id(), pt.Bytes('max balance'))",
             ),
-            ("store 1", C),
+            ("store 1", C),  # TODO: can be improved
             ("store 0", C),
             ('byte "paused"', "pt.Bytes('paused')"),
             ("app_global_get", "pt.App.globalGet(pt.Bytes('paused'))"),
@@ -991,7 +988,47 @@ CONSTRUCTS = [
         4,
         "Application",
     ),
-    # (lambda pt: If(pt.Int(0)).Then),
+    (
+        lambda pt: [
+            arg := pt.Btoi(pt.Arg(1)),
+            pt.If(arg == pt.Int(0))
+            .Then(pt.Reject())
+            .ElseIf(arg == pt.Int(1))
+            .Then(pt.Reject())
+            .ElseIf(arg == pt.Int(2))
+            .Then(pt.Approve())
+            .Else(pt.Reject()),
+        ][-1],
+        [
+            [P, C],
+            ("arg 1", "pt.Arg(1)"),
+            ("btoi", "pt.Btoi(pt.Arg(1))"),
+            ("int 0", "pt.Int(0)"),
+            ("==", "arg == pt.Int(0)"),
+            ("bnz main_l6", "pt.If(arg == pt.Int(0))"),
+            ("arg 1", "pt.Arg(1)"),
+            ("btoi", "pt.Btoi(pt.Arg(1))"),
+            ("int 1", "pt.Int(1)"),
+            ("==", "arg == pt.Int(1)"),
+        ("bnz main_l5", 'pt.If(arg == pt.Int(0)).Then(pt.Reject()).ElseIf(arg == pt.Int(1))'),
+            ("arg 1", "pt.Arg(1)"),
+            ("btoi", "pt.Btoi(pt.Arg(1))"),
+            ("int 2", "pt.Int(2)"),
+            ("==", "arg == pt.Int(2)"),
+        ("bnz main_l4", "pt.If(arg == pt.Int(0)).Then(pt.Reject()).ElseIf(arg == pt.Int(1)).Then(pt.Reject()).ElseIf(arg == pt.Int(2))"),
+            ("int 0", "pt.Reject()"),
+            ("return", "pt.Reject()"),
+        ("main_l4:", "pt.If(arg == pt.Int(0)).Then(pt.Reject()).ElseIf(arg == pt.Int(1)).Then(pt.Reject()).ElseIf(arg == pt.Int(2))"),
+            ("int 1", "pt.Approve()"),
+            ("return", "pt.Approve()"),
+        ("main_l5:", "pt.If(arg == pt.Int(0)).Then(pt.Reject()).ElseIf(arg == pt.Int(1))"),
+            ("int 0", "pt.Reject()"),
+            ("return", "pt.Reject()"),
+            ("main_l6:", "pt.If(arg == pt.Int(0))"),
+            ("int 0", "pt.Reject()"),
+            ("return", "pt.Reject()"),
+        ],
+    ),
 ]
 
 

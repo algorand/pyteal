@@ -82,7 +82,7 @@ class Cond(Expr):
             condStart, condEnd = cond.__teal__(options)
             predStart, predEnd = pred.__teal__(options)
 
-            branchBlock = TealConditionalBlock([])
+            branchBlock = TealConditionalBlock([], root_expr=self)
             branchBlock.setTrueBlock(predStart)
 
             condEnd.setNextBlock(branchBlock)
