@@ -198,7 +198,7 @@ def test_pure_compilation(abi_type):
 
     # TODO neeed to make this version flexible
 
-    _version = 6
+    _version = 8
 
     if type_str in BAD_TYPES:
         print(
@@ -213,7 +213,7 @@ def test_pure_compilation(abi_type):
     assert [sdk_abi_type] == abi_arg_types
     assert algosdk.abi.TupleType([sdk_abi_type] * 3) == abi_ret_type
 
-    teal = roundtripper.compile(version=6)
+    teal = roundtripper.compile(version=_version)
 
     filename = (
         f"app_roundtrip_{sdk_abi_type}"
@@ -255,7 +255,7 @@ def test_roundtrip(abi_type):
     abi_strat = ABIStrategy(sdk_abi_types[0], dynamic_length=dynamic_length)
     rand_abi_instance = abi_strat.get_random()
     args = (rand_abi_instance,)
-    inspector = roundtripper.dryrun(args)
+    inspector = roundtripper.dryrun(args, compiler_version=8)
 
     cost = inspector.cost()
     passed = inspector.passed()

@@ -996,7 +996,7 @@ class SubroutineEval:
         if output_kwarg_info:
             output_carrying_abi = output_kwarg_info.abi_type.new_instance()
             if self.use_frame_pt:
-                output_carrying_abi._data_storage = FrameStorage(TealType.anytype, 0)
+                output_carrying_abi._set_data_source(FrameStorage(TealType.anytype, 0))
             abi_output_kwargs[output_kwarg_info.name] = output_carrying_abi
 
         # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:

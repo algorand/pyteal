@@ -679,6 +679,10 @@ class NamedTuple(Tuple):
         if name == "_NamedTuple__ready" or not self.__ready:
             super().__setattr__(name, field)
             return
+        # TODO need to relax this part lol
+        if name.startswith("_") and name != "_NamedTuple__ready" and self.__ready:
+            super().__setattr__(name, field)
+            return
         raise TealInputError("cannot assign to NamedTuple attributes.")
 
 
