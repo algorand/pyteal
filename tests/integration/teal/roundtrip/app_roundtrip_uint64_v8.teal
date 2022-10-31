@@ -15,7 +15,7 @@ return
 // numerical_comp
 numericalcomp_0:
 proto 1 1
-int 13634846
+int 0
 int 18446744073709551615
 frame_dig -1
 -
@@ -26,7 +26,7 @@ retsub
 // round_tripper
 roundtripper_1:
 proto 1 1
-int 13634846
+int 0
 frame_dig -1
 callsub numericalcomp_0
 store 2

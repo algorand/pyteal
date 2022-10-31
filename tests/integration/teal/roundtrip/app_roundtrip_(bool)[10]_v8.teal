@@ -14,7 +14,7 @@ return
 // tuple_complement
 tuplecomplement_0:
 proto 1 1
-int 13634846
+int 0
 frame_dig -1
 int 0
 getbit
@@ -33,7 +33,7 @@ retsub
 // array_complement
 arraycomplement_1:
 proto 1 1
-int 13634846
+int 0
 frame_dig -1
 int 1
 int 0
@@ -160,7 +160,7 @@ retsub
 // round_tripper
 roundtripper_2:
 proto 1 1
-int 13634846
+int 0
 frame_dig -1
 callsub arraycomplement_1
 store 3
@@ -179,7 +179,7 @@ retsub
 // bool_comp
 boolcomp_3:
 proto 1 1
-int 13634846
+int 0
 frame_dig -1
 !
 !

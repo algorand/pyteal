@@ -14,7 +14,7 @@ return
 // tuple_complement
 tuplecomplement_0:
 proto 1 1
-int 13634846
+int 0
 frame_dig -1
 int 0
 getbit
@@ -75,7 +75,7 @@ retsub
 // round_tripper
 roundtripper_1:
 proto 1 1
-int 13634846
+int 0
 frame_dig -1
 callsub tuplecomplement_0
 store 8
@@ -94,7 +94,7 @@ retsub
 // bool_comp
 boolcomp_2:
 proto 1 1
-int 13634846
+int 0
 frame_dig -1
 !
 !
@@ -106,7 +106,7 @@ retsub
 // numerical_comp
 numericalcomp_3:
 proto 1 1
-int 13634846
+int 0
 int 255
 frame_dig -1
 -
@@ -121,7 +121,7 @@ retsub
 // array_complement
 arraycomplement_4:
 proto 1 1
-int 13634846
+int 0
 frame_dig -1
 int 1
 int 0
@@ -576,7 +576,7 @@ retsub
 // tuple_complement
 tuplecomplement_5:
 proto 1 1
-int 13634846
+int 0
 frame_dig -1
 int 0
 extract_uint64
@@ -605,7 +605,7 @@ retsub
 // numerical_comp
 numericalcomp_6:
 proto 1 1
-int 13634846
+int 0
 int 255
 frame_dig -1
 -
@@ -620,7 +620,7 @@ retsub
 // array_complement
 arraycomplement_7:
 proto 1 1
-int 13634846
+int 0
 frame_dig -1
 int 1
 int 0
@@ -767,7 +767,7 @@ retsub
 // bool_comp
 boolcomp_8:
 proto 1 1
-int 13634846
+int 0
 frame_dig -1
 !
 !
@@ -779,7 +779,7 @@ retsub
 // array_complement
 arraycomplement_9:
 proto 1 1
-int 13634846
+int 0
 frame_dig -1
 int 0
 getbit
@@ -828,7 +828,7 @@ retsub
 // numerical_comp
 numericalcomp_10:
 proto 1 1
-int 13634846
+int 0
 int 18446744073709551615
 frame_dig -1
 -
@@ -839,7 +839,7 @@ retsub
 // numerical_comp
 numericalcomp_11:
 proto 1 1
-int 13634846
+int 0
 int 18446744073709551615
 frame_dig -1
 -
@@ -850,7 +850,7 @@ retsub
 // bool_comp
 boolcomp_12:
 proto 1 1
-int 13634846
+int 0
 frame_dig -1
 !
 !

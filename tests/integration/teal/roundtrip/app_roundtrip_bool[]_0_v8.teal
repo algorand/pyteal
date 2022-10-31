@@ -14,7 +14,7 @@ return
 // array_complement
 arraycomplement_0:
 proto 1 1
-int 13634846
+int 0
 int 0
 store 8
 load 8
@@ -29,7 +29,7 @@ retsub
 // round_tripper
 roundtripper_1:
 proto 1 1
-int 13634846
+int 0
 frame_dig -1
 callsub arraycomplement_0
 store 2

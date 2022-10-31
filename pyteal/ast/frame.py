@@ -34,13 +34,11 @@ class Proto(Expr):
         if self.reserve_spot == 0:
             return proto_srt, proto_end
         elif self.reserve_spot == 1:
-            int_srt, int_end = Int(0xD00D1E).__teal__(options)
+            int_srt, int_end = Int(0).__teal__(options)
             proto_end.setNextBlock(int_srt)
             return proto_srt, int_end
         else:
-            dupn_srt, dupn_end = DupN(Int(0x5EA51DE), self.reserve_spot).__teal__(
-                options
-            )
+            dupn_srt, dupn_end = DupN(Int(0), self.reserve_spot).__teal__(options)
             proto_end.setNextBlock(dupn_srt)
             return proto_srt, dupn_end
 
