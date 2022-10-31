@@ -196,10 +196,6 @@ def test_pure_compilation(abi_type):
     print(f"Pure Compilation Test for {abi_type=}")
     abi_type, type_str, dynamic_length, roundtripper = roundtrip_setup(abi_type)
 
-    # TODO neeed to make this version flexible
-
-    _version = 8
-
     if type_str in BAD_TYPES:
         print(
             f"Skipping encoding roundtrip test of '{abi_type}' because of {BAD_TYPES[type_str]}"
@@ -213,21 +209,25 @@ def test_pure_compilation(abi_type):
     assert [sdk_abi_type] == abi_arg_types
     assert algosdk.abi.TupleType([sdk_abi_type] * 3) == abi_ret_type
 
-    teal = roundtripper.compile(version=_version)
+    def compile_and_compare(_version: int):
+        teal = roundtripper.compile(_version)
 
-    filename = (
-        f"app_roundtrip_{sdk_abi_type}"
-        + ("" if dynamic_length is None else f"_{dynamic_length}")
-        + f"_v{_version}.teal"
-    )
-    tealdir = GENERATED / "roundtrip"
-    tealdir.mkdir(parents=True, exist_ok=True)
+        filename = (
+            f"app_roundtrip_{sdk_abi_type}"
+            + ("" if dynamic_length is None else f"_{dynamic_length}")
+            + f"_v{_version}.teal"
+        )
+        tealdir = GENERATED / "roundtrip"
+        tealdir.mkdir(parents=True, exist_ok=True)
 
-    save_to = tealdir / filename
-    with open(save_to, "w") as f:
-        f.write(teal)
+        save_to = tealdir / filename
+        with open(save_to, "w") as f:
+            f.write(teal)
 
-    assert_teal_as_expected(save_to, FIXTURES / "roundtrip" / filename)
+        assert_teal_as_expected(save_to, FIXTURES / "roundtrip" / filename)
+
+    compile_and_compare(6)
+    compile_and_compare(8)
 
 
 @pytest.mark.parametrize("abi_type", ABI_TYPES)
