@@ -520,21 +520,26 @@ def py_factorial(n):
 def test_conditional_factorial():
     ptdre = PyTealDryRunExecutor(conditional_factorial, pt.Mode.Application)
     inputs = [(n,) for n in range(20)]
-    inspectors = ptdre.dryrun_on_sequence(inputs)
-    for i, args in enumerate(inputs):
-        inspector = inspectors[i]
-        n = args[0]
-        assert inspector.passed(), inspector.report(args, row=i + 1)
 
-        expected = py_factorial(n)
-        assert expected == inspector.last_log(), inspector.report(args, row=i + 1)
+    def dryrun_on_version(_version: int):
+        inspectors = ptdre.dryrun_on_sequence(inputs, compiler_version=_version)
+        for i, args in enumerate(inputs):
+            inspector = inspectors[i]
+            n = args[0]
+            assert inspector.passed(), inspector.report(args, row=i + 1)
 
-    n = 21
-    args = (n,)
-    inspector = ptdre.dryrun(args)
-    assert inspector.rejected(), inspector.report(
-        args, f"FAILED: should have rejected for {n=}", row=n + 1
-    )
-    assert inspector.error(), inspector.report(
-        args, f"FAILED: should error for {n=}", row=n + 1
-    )
+            expected = py_factorial(n)
+            assert expected == inspector.last_log(), inspector.report(args, row=i + 1)
+
+        n = 21
+        args = (n,)
+        inspector = ptdre.dryrun(args)
+        assert inspector.rejected(), inspector.report(
+            args, f"FAILED: should have rejected for {n=}", row=n + 1
+        )
+        assert inspector.error(), inspector.report(
+            args, f"FAILED: should error for {n=}", row=n + 1
+        )
+
+    dryrun_on_version(6)
+    dryrun_on_version(8)
