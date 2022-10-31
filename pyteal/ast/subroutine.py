@@ -977,7 +977,6 @@ class SubroutineEval:
         return argument_var, loaded_var
 
     def __call__(self, subroutine: SubroutineDefinition) -> SubroutineDeclaration:
-        # TODO need to make it better for my temp hack, kinda ugly but it works
         from pyteal.ast.abi.type import FrameStorage
 
         args = subroutine.arguments()

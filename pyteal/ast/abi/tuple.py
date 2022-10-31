@@ -679,7 +679,10 @@ class NamedTuple(Tuple):
         if name == "_NamedTuple__ready" or not self.__ready:
             super().__setattr__(name, field)
             return
-        # TODO need to relax this part lol
+        # NOTE this pass condition is for following scenario:
+        # NamedTuple is an argument, and inside subroutine, subroutine set internal ABI value with FrameStorage
+        # This used to violate `__setattr__` for not allowing any assignment to attributes
+        # Now this case is lifted such that we can shift the storage scheme.
         if name.startswith("_") and name != "_NamedTuple__ready" and self.__ready:
             super().__setattr__(name, field)
             return
