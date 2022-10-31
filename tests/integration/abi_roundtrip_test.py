@@ -196,6 +196,10 @@ def test_pure_compilation(abi_type):
     print(f"Pure Compilation Test for {abi_type=}")
     abi_type, type_str, dynamic_length, roundtripper = roundtrip_setup(abi_type)
 
+    # TODO neeed to make this version flexible
+
+    _version = 6
+
     if type_str in BAD_TYPES:
         print(
             f"Skipping encoding roundtrip test of '{abi_type}' because of {BAD_TYPES[type_str]}"
@@ -214,7 +218,7 @@ def test_pure_compilation(abi_type):
     filename = (
         f"app_roundtrip_{sdk_abi_type}"
         + ("" if dynamic_length is None else f"_{dynamic_length}")
-        + ".teal"
+        + f"_v{_version}.teal"
     )
     tealdir = GENERATED / "roundtrip"
     tealdir.mkdir(parents=True, exist_ok=True)

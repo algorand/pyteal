@@ -15,8 +15,8 @@ from tests.blackbox import (
 
 
 """
-WARNING: The following ABI types Int65 and Complex130 are ONLY for the purpose of testing/demo'ing 
-ABISubroutine and graviton ABI capabilities and are NOT the recommended approach for 
+WARNING: The following ABI types Int65 and Complex130 are ONLY for the purpose of testing/demo'ing
+ABISubroutine and graviton ABI capabilities and are NOT the recommended approach for
 implementing integers and complex integers.
 A better approach would likely leverage `Uint64` (if any ABI type at all) and make use of 2's complement arithmetic.
 
@@ -438,16 +438,20 @@ def test_complex130():
     ]
 
     # Binary:
-    def binary_dryrun(p: PyTealDryRunExecutor) -> list[DryRunInspector]:
-        return p.dryrun_on_sequence(binary_inputs)
+    def binary_dryrun(
+        p: PyTealDryRunExecutor, _version: int = 6
+    ) -> list[DryRunInspector]:
+        return p.dryrun_on_sequence(binary_inputs, compiler_version=_version)
+
+    # Unary:
+    def unary_dryrun(
+        p: PyTealDryRunExecutor, _version: int = 6
+    ) -> list[DryRunInspector]:
+        return p.dryrun_on_sequence(unary_inputs, compiler_version=_version)
 
     inspectors_cplx_add = binary_dryrun(bbpt_cplx_add)
 
     inspectors_cplx_mult = binary_dryrun(bbpt_cplx_mult)
-
-    # Unary:
-    def unary_dryrun(p: PyTealDryRunExecutor) -> list[DryRunInspector]:
-        return p.dryrun_on_sequence(unary_inputs)
 
     inspectors_cplx_real = unary_dryrun(bbpt_complex_real)
 
