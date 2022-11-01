@@ -85,7 +85,6 @@ FrameDig.__module__ = "pyteal"
 class FrameBury(Expr):
     def __init__(self, what: Expr, depth: int):
         super().__init__()
-        require_type(what, TealType.anytype)
         self.what = what
         self.depth = depth
 

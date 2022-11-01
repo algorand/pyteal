@@ -70,9 +70,6 @@ def test_frame_bury():
 
 
 def test_frame_bury_invalid():
-    with pytest.raises(pt.TealTypeError):
-        pt.FrameBury(pt.Seq(), 1)
-
     with pytest.raises(pt.TealInputError):
         pt.FrameBury(pt.Int(1), 1).__teal__(avm7Options)
 

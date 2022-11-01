@@ -1,4 +1,5 @@
 import random
+import pytest
 
 from graviton.blackbox import DryRunInspector
 
@@ -299,7 +300,8 @@ def conditional_factorial(_factor: pt.abi.Uint64, *, output: pt.abi.Uint64) -> p
 # ---- integration test functions ---- #
 
 
-def test_integer65():
+@pytest.mark.parametrize("version", [6, 8])
+def test_integer65(version: int):
     bbpt_subtract_slick = PyTealDryRunExecutor(int65_sub, pt.Mode.Application)
 
     bbpt_subtract_cond = PyTealDryRunExecutor(int65_minus_cond, pt.Mode.Application)
@@ -329,7 +331,7 @@ def test_integer65():
     ]
 
     def binary_dryrun(p: PyTealDryRunExecutor) -> list[DryRunInspector]:
-        return p.dryrun_on_sequence(binary_inputs)
+        return p.dryrun_on_sequence(binary_inputs, compiler_version=version)  # type: ignore
 
     # Binary:
     inspectors_subtract_slick = binary_dryrun(bbpt_subtract_slick)
@@ -341,7 +343,9 @@ def test_integer65():
     inspectors_add = binary_dryrun(bbpt_add)
 
     # Unary:
-    inspectors_negate = bbpt_negate.dryrun_on_sequence(unary_inputs)
+    inspectors_negate = bbpt_negate.dryrun_on_sequence(
+        unary_inputs, compiler_version=version  # type: ignore
+    )
 
     for i in range(N):
         binary_args = binary_inputs[i]
@@ -382,7 +386,8 @@ def test_integer65():
         ), inspector_negate.report(unary_args, f"failed for {unary_args}", row=i)
 
 
-def test_complex130():
+@pytest.mark.parametrize("version", [6, 8])
+def test_complex130(version: int):
     # Binary:
 
     bbpt_cplx_add = PyTealDryRunExecutor(complex130_add, pt.Mode.Application)
@@ -438,16 +443,12 @@ def test_complex130():
     ]
 
     # Binary:
-    def binary_dryrun(
-        p: PyTealDryRunExecutor, _version: int = 6
-    ) -> list[DryRunInspector]:
-        return p.dryrun_on_sequence(binary_inputs, compiler_version=_version)
+    def binary_dryrun(p: PyTealDryRunExecutor) -> list[DryRunInspector]:
+        return p.dryrun_on_sequence(binary_inputs, compiler_version=version)  # type: ignore
 
     # Unary:
-    def unary_dryrun(
-        p: PyTealDryRunExecutor, _version: int = 6
-    ) -> list[DryRunInspector]:
-        return p.dryrun_on_sequence(unary_inputs, compiler_version=_version)
+    def unary_dryrun(p: PyTealDryRunExecutor) -> list[DryRunInspector]:
+        return p.dryrun_on_sequence(unary_inputs, compiler_version=version)  # type: ignore
 
     inspectors_cplx_add = binary_dryrun(bbpt_cplx_add)
 
@@ -517,29 +518,26 @@ def py_factorial(n):
     return 1 if n <= 1 else n * py_factorial(n - 1)
 
 
-def test_conditional_factorial():
+@pytest.mark.parametrize("version", [6, 8])
+def test_conditional_factorial(version: int):
     ptdre = PyTealDryRunExecutor(conditional_factorial, pt.Mode.Application)
     inputs = [(n,) for n in range(20)]
 
-    def dryrun_on_version(_version: int):
-        inspectors = ptdre.dryrun_on_sequence(inputs, compiler_version=_version)
-        for i, args in enumerate(inputs):
-            inspector = inspectors[i]
-            n = args[0]
-            assert inspector.passed(), inspector.report(args, row=i + 1)
+    inspectors = ptdre.dryrun_on_sequence(inputs, compiler_version=version)  # type: ignore
+    for i, args in enumerate(inputs):
+        inspector = inspectors[i]
+        n = args[0]
+        assert inspector.passed(), inspector.report(args, row=i + 1)
 
-            expected = py_factorial(n)
-            assert expected == inspector.last_log(), inspector.report(args, row=i + 1)
+        expected = py_factorial(n)
+        assert expected == inspector.last_log(), inspector.report(args, row=i + 1)
 
-        n = 21
-        args = (n,)
-        inspector = ptdre.dryrun(args)
-        assert inspector.rejected(), inspector.report(
-            args, f"FAILED: should have rejected for {n=}", row=n + 1
-        )
-        assert inspector.error(), inspector.report(
-            args, f"FAILED: should error for {n=}", row=n + 1
-        )
-
-    dryrun_on_version(6)
-    dryrun_on_version(8)
+    n = 21
+    args = (n,)
+    inspector = ptdre.dryrun(args)
+    assert inspector.rejected(), inspector.report(
+        args, f"FAILED: should have rejected for {n=}", row=n + 1
+    )
+    assert inspector.error(), inspector.report(
+        args, f"FAILED: should error for {n=}", row=n + 1
+    )
