@@ -79,7 +79,7 @@ class DataStorageSchema(ABC):
         pass
 
 
-DataStorageSchema.__module__ = "pyteal"
+DataStorageSchema.__module__ = "pyteal.abi"
 
 
 class ScratchStorage(DataStorageSchema):
@@ -97,7 +97,7 @@ class ScratchStorage(DataStorageSchema):
         return self.scratchvar.storage_type()
 
 
-ScratchStorage.__module__ = "pyteal"
+ScratchStorage.__module__ = "pyteal.abi"
 
 
 class FrameStorage(DataStorageSchema):
@@ -120,7 +120,7 @@ class FrameStorage(DataStorageSchema):
         return FrameDig(self.stack_depth)
 
 
-FrameStorage.__module__ = "pyteal"
+FrameStorage.__module__ = "pyteal.abi"
 
 
 class BaseType(ABC):
