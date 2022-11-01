@@ -10,14 +10,18 @@ if TYPE_CHECKING:
 
 
 class Proto(Expr):
-    def __init__(self, arg_num: int, ret_num: int):
+    def __init__(self, num_args: int, num_returns: int):
         super().__init__()
-        if arg_num < 0:
-            raise TealInputError(f"subroutine arg number {arg_num} must be >= 0")
-        if ret_num < 0:
-            raise TealInputError(f"return value number {ret_num} must be >= 0")
-        self.arg_num = arg_num
-        self.ret_num = ret_num
+        if num_args < 0:
+            raise TealInputError(
+                f"the number of arguments provided to Proto must be >= 0 but {num_args=}"
+            )
+        if num_returns < 0:
+            raise TealInputError(
+                f"the number of return values provided to Proto must be >= 0 but {num_returns=}"
+            )
+        self.num_args = num_args
+        self.num_returns = num_returns
 
     def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
         verifyProgramVersion(
@@ -25,11 +29,11 @@ class Proto(Expr):
             options.version,
             "Program version too low to use op proto",
         )
-        op = TealOp(self, Op.proto, self.arg_num, self.ret_num)
+        op = TealOp(self, Op.proto, self.num_args, self.num_returns)
         return TealBlock.FromOp(options, op)
 
     def __str__(self) -> str:
-        return f"(proto: arg_num = {self.arg_num}, ret_num = {self.ret_num})"
+        return f"(proto: num_args = {self.num_args}, num_returns = {self.num_returns})"
 
     def type_of(self) -> TealType:
         return TealType.none
