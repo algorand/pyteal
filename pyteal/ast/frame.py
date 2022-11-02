@@ -132,13 +132,9 @@ class FrameVar(AbstractVar):
         return self.stack_type
 
     def store(self, value: Expr) -> Expr:
-        from pyteal.ast import FrameBury
-
         return FrameBury(value, self.stack_depth)
 
     def load(self) -> Expr:
-        from pyteal.ast import FrameDig
-
         return FrameDig(self.stack_depth)
 
 
