@@ -73,10 +73,10 @@ FrameDig.__module__ = "pyteal"
 
 
 class FrameBury(Expr):
-    def __init__(self, what: Expr, depth: int):
+    def __init__(self, value: Expr, depth: int):
         super().__init__()
-        require_type(what, TealType.anytype)
-        self.what = what
+        require_type(value, TealType.anytype)
+        self.value = value
         self.depth = depth
 
     def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
@@ -86,10 +86,10 @@ class FrameBury(Expr):
             "Program version too low to use op frame_bury",
         )
         op = TealOp(self, Op.frame_bury, self.depth)
-        return TealBlock.FromOp(options, op, self.what)
+        return TealBlock.FromOp(options, op, self.value)
 
     def __str__(self) -> str:
-        return f"(frame_bury (bury_depth = {self.depth}) ({self.what}))"
+        return f"(frame_bury (bury_depth = {self.depth}) ({self.value}))"
 
     def type_of(self) -> TealType:
         return TealType.none
@@ -102,12 +102,12 @@ FrameBury.__module__ = "pyteal"
 
 
 class Bury(Expr):
-    def __init__(self, what: Expr, depth: int):
+    def __init__(self, value: Expr, depth: int):
         super().__init__()
-        require_type(what, TealType.anytype)
+        require_type(value, TealType.anytype)
         if depth <= 0:
             raise TealInputError("bury depth should be strictly positive")
-        self.what = what
+        self.value = value
         self.depth = depth
 
     def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
@@ -117,10 +117,10 @@ class Bury(Expr):
             "Program version too low to use op bury",
         )
         op = TealOp(self, Op.bury, self.depth)
-        return TealBlock.FromOp(options, op, self.what)
+        return TealBlock.FromOp(options, op, self.value)
 
     def __str__(self) -> str:
-        return f"(bury (depth = {self.depth}) ({self.what}))"
+        return f"(bury (depth = {self.depth}) ({self.value}))"
 
     def type_of(self) -> TealType:
         return TealType.none
@@ -133,12 +133,12 @@ Bury.__module__ = "pyteal"
 
 
 class DupN(Expr):
-    def __init__(self, what: Expr, repetition: int):
+    def __init__(self, value: Expr, repetition: int):
         super().__init__()
-        require_type(what, TealType.anytype)
+        require_type(value, TealType.anytype)
         if repetition < 0:
             raise TealInputError("dupn repetition should be non negative")
-        self.what = what
+        self.value = value
         self.repetition = repetition
 
     def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
@@ -148,13 +148,13 @@ class DupN(Expr):
             "Program version too low to use op dupn",
         )
         op = TealOp(self, Op.dupn, self.repetition)
-        return TealBlock.FromOp(options, op, self.what)
+        return TealBlock.FromOp(options, op, self.value)
 
     def __str__(self) -> str:
-        return f"(dupn (repetition = {self.repetition}) ({self.what}))"
+        return f"(dupn (repetition = {self.repetition}) ({self.value}))"
 
     def type_of(self) -> TealType:
-        return self.what.type_of()
+        return self.value.type_of()
 
     def has_return(self) -> bool:
         return False
