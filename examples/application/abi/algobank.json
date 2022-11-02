@@ -1,5 +1,6 @@
 {
     "name": "AlgoBank",
+    "desc": null,
     "methods": [
         {
             "name": "deposit",

@@ -1,5 +1,5 @@
-from pyteal.errors import TealInputError
-from pyteal.types import TealType, require_type, types_match
+from pyteal.errors import TealInputError, TealInternalError
+from pyteal.types import TealType, require_type
 
 from pyteal.ast.abstractvar import AbstractVar
 from pyteal.ast.expr import Expr
@@ -117,8 +117,13 @@ class DynamicScratchVar(ScratchVar):
         """Get the type of expressions that can be stored in this ScratchVar."""
         return self.dynamic_type
 
-    def store(self, value: Expr) -> Expr:
+    def store(self, value: Expr, validate_types: bool = True) -> Expr:
         """Store the value in the referenced ScratchVar."""
+        if not validate_types:
+            raise TealInternalError(
+                f"DynamicScratchVar's must validate_types but {validate_types=}"
+            )
+
         require_type(value, self.dynamic_type)
         return ScratchStore(slot=None, value=value, index_expression=self.index())
 
