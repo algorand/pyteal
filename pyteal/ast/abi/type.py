@@ -85,7 +85,7 @@ DataStorageSchema.__module__ = "pyteal"
 class ScratchStorage(DataStorageSchema):
     def __init__(self, storage_type: TealType) -> None:
         super().__init__()
-        self.scratchvar: Final = ScratchVar(storage_type)
+        self.scratchvar: Final[ScratchVar] = ScratchVar(storage_type)
 
     def load_value(self) -> Expr:
         return self.scratchvar.load()
@@ -134,7 +134,7 @@ class BaseType(ABC):
     def __init__(self, spec: TypeSpec) -> None:
         """Create a new BaseType."""
         super().__init__()
-        self._type_spec: Final = spec
+        self._type_spec: Final[TypeSpec] = spec
         self._data_storage: DataStorageSchema = ScratchStorage(spec.storage_type())
 
         # self.stored_value: Final = ScratchVar(spec.storage_type())
