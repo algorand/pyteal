@@ -68,7 +68,7 @@ class String(DynamicArray[Byte]):
         The expression will have the type TealType.bytes.
         """
         return Suffix(
-            self._data_storage.load(), Int(Uint16TypeSpec().byte_length_static())
+            self.stored_value.load(), Int(Uint16TypeSpec().byte_length_static())
         )
 
     def set(
@@ -111,18 +111,18 @@ class String(DynamicArray[Byte]):
                 if value.type_spec() == StringTypeSpec() or (
                     value.type_spec() == DynamicArrayTypeSpec(ByteTypeSpec())
                 ):
-                    return self._data_storage.store(value._data_storage.load())
+                    return self.stored_value.store(value.stored_value.load())
 
                 raise TealInputError(
                     f"Got {value} with type spec {value.type_spec()}, expected {StringTypeSpec}"
                 )
             case bytes() | bytearray():
-                return self._data_storage.store(_encoded_byte_string(value))
+                return self.stored_value.store(_encoded_byte_string(value))
             case str():
-                return self._data_storage.store(_encoded_byte_string(value.encode()))
+                return self.stored_value.store(_encoded_byte_string(value.encode()))
             case Expr():
                 return _store_encoded_expr_byte_string_into_var(
-                    value, self._data_storage
+                    value, self.stored_value
                 )
             case CollectionSequence():
                 return super().set(cast(Sequence[Byte], value))

@@ -1,3 +1,5 @@
+from abc import ABC, abstractmethod
+
 from pyteal.errors import TealInputError
 from pyteal.types import TealType, require_type
 
@@ -5,7 +7,24 @@ from pyteal.ast.expr import Expr
 from pyteal.ast.scratch import ScratchSlot, ScratchLoad, ScratchStore
 
 
-class ScratchVar:
+class AbstractVar(ABC):
+    @abstractmethod
+    def store(self, value: Expr) -> Expr:
+        pass
+
+    @abstractmethod
+    def load(self) -> Expr:
+        pass
+
+    @abstractmethod
+    def storage_type(self) -> TealType:
+        pass
+
+
+AbstractVar.__module__ = "pyteal"
+
+
+class ScratchVar(AbstractVar):
     """
     Interface around Scratch space, similar to get/put local/global state
 

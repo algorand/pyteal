@@ -142,7 +142,7 @@ def test_Uint_set_static():
                     pt.TealOp(
                         None,
                         pt.Op.store,
-                        cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                        cast(pt.ScratchVar, value.stored_value).slot,
                     ),
                 ]
             )
@@ -174,7 +174,7 @@ def test_Uint_set_expr():
                 pt.TealOp(
                     None,
                     pt.Op.load,
-                    cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                    cast(pt.ScratchVar, value.stored_value).slot,
                 ),
                 pt.TealOp(None, pt.Op.int, test.maxValue + 1),
                 pt.TealOp(None, pt.Op.lt),
@@ -189,7 +189,7 @@ def test_Uint_set_expr():
                 pt.TealOp(
                     None,
                     pt.Op.store,
-                    cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                    cast(pt.ScratchVar, value.stored_value).slot,
                 ),
             ]
             + upperBoundCheck
@@ -216,12 +216,12 @@ def test_Uint_set_copy():
                 pt.TealOp(
                     None,
                     pt.Op.load,
-                    cast(abi.ScratchStorage, other._data_storage).scratchvar.slot,
+                    cast(pt.ScratchVar, other.stored_value).slot,
                 ),
                 pt.TealOp(
                     None,
                     pt.Op.store,
-                    cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                    cast(pt.ScratchVar, value.stored_value).slot,
                 ),
             ]
         )
@@ -253,7 +253,7 @@ def test_Uint_set_computed():
                 pt.TealOp(
                     None,
                     pt.Op.store,
-                    cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                    cast(pt.ScratchVar, value.stored_value).slot,
                 ),
             ]
         )
@@ -281,7 +281,7 @@ def test_Uint_get():
                 pt.TealOp(
                     expr,
                     pt.Op.load,
-                    cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                    cast(pt.ScratchVar, value.stored_value).slot,
                 ),
             ]
         )
@@ -307,7 +307,7 @@ def test_Uint_decode():
                     assert expr.type_of() == pt.TealType.none
                     assert not expr.has_return()
 
-                    expectedDecoding = value._data_storage.store(
+                    expectedDecoding = value.stored_value.store(
                         test.expectedDecoding(encoded, start_index, end_index, length)
                     )
                     expected, _ = expectedDecoding.__teal__(options)
@@ -359,14 +359,12 @@ def test_ByteUint8_mutual_conversion():
                 pt.TealOp(
                     None,
                     pt.Op.load,
-                    cast(abi.ScratchStorage, other._data_storage).scratchvar.slot,
+                    cast(pt.ScratchVar, other.stored_value).slot,
                 ),
                 pt.TealOp(
                     None,
                     pt.Op.store,
-                    cast(
-                        abi.ScratchStorage, type_b_instance._data_storage
-                    ).scratchvar.slot,
+                    cast(pt.ScratchVar, type_b_instance.stored_value).slot,
                 ),
             ]
         )

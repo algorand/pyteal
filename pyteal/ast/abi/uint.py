@@ -239,7 +239,7 @@ class Uint(BaseType):
 
         The expression will have the type TealType.uint64.
         """
-        return self._data_storage.load()
+        return self.stored_value.load()
 
     def set(self, value: Union[int, Expr, "Uint", ComputedValue["Uint"]]) -> Expr:
         """Set the value of this Uint to the input value.
@@ -274,7 +274,7 @@ class Uint(BaseType):
                     value.type_spec(), self.type_spec()
                 )
             )
-        return uint_set(self.type_spec().bit_size(), self._data_storage, value)
+        return uint_set(self.type_spec().bit_size(), self.stored_value, value)
 
     def decode(
         self,
@@ -286,7 +286,7 @@ class Uint(BaseType):
     ) -> Expr:
         return uint_decode(
             self.type_spec().bit_size(),
-            self._data_storage,
+            self.stored_value,
             encoded,
             start_index,
             end_index,
@@ -294,7 +294,7 @@ class Uint(BaseType):
         )
 
     def encode(self) -> Expr:
-        return uint_encode(self.type_spec().bit_size(), self._data_storage)
+        return uint_encode(self.type_spec().bit_size(), self.stored_value)
 
 
 Uint.__module__ = "pyteal.abi"

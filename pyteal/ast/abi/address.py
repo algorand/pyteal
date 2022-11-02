@@ -56,7 +56,7 @@ class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
 
         The expression will have the type TealType.bytes.
         """
-        return self._data_storage.load()
+        return self.stored_value.load()
 
     def set(
         self,
@@ -108,25 +108,25 @@ class Address(StaticArray[Byte, Literal[AddressLength.Bytes]]):
                     or value.type_spec()
                     == StaticArrayTypeSpec(ByteTypeSpec(), AddressLength.Bytes)
                 ):
-                    return self._data_storage.store(value._data_storage.load())
+                    return self.stored_value.store(value.stored_value.load())
 
                 raise TealInputError(
                     f"Got {value} with type spec {value.type_spec()}, expected AddressTypeSpec"
                 )
             case str():
                 # Addr throws if value is invalid address
-                return self._data_storage.store(Addr(value))
+                return self.stored_value.store(Addr(value))
             case bytes():
                 if len(value) == AddressLength.Bytes:
-                    return self._data_storage.store(Bytes(value))
+                    return self.stored_value.store(Bytes(value))
                 raise TealInputError(
                     f"Got bytes with length {len(value)}, expected {AddressLength.Bytes}"
                 )
             case Expr():
                 return Seq(
-                    self._data_storage.store(value),
+                    self.stored_value.store(value),
                     Assert(
-                        Len(self._data_storage.load()) == Int(AddressLength.Bytes.value)
+                        Len(self.stored_value.load()) == Int(AddressLength.Bytes.value)
                     ),
                 )
             case CollectionSequence():

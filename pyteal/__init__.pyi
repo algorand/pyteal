@@ -35,6 +35,7 @@ from pyteal.config import (
 
 __all__ = [
     "ABIReturnSubroutine",
+    "AbstractVar",
     "AccountParam",
     "AccountParamObject",
     "Add",
