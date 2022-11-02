@@ -165,7 +165,7 @@ from pyteal.ast.scratch import (
     ScratchStackStore,
     ScratchStore,
 )
-from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
+from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar, AbstractVar
 from pyteal.ast.maybe import MaybeValue
 from pyteal.ast.multi import MultiValue
 from pyteal.ast.opup import OpUp, OpUpMode, OpUpFeeSource
@@ -305,6 +305,7 @@ __all__ = [
     "ScratchStore",
     "DynamicScratchVar",
     "ScratchVar",
+    "AbstractVar",
     "MaybeValue",
     "MultiValue",
     "OpUp",
