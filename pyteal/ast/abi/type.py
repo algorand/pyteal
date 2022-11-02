@@ -281,8 +281,7 @@ class ReturnedValue(ComputedValue):
                 f"ABI return subroutine deferred_expr is expected to be typed {output.type_spec().storage_type()}, "
                 f"but has type {declaration.deferred_expr.type_of()}."
             )
-        assert isinstance(output.stored_value, ScratchVar)
-        return output.stored_value.slot.store(self.computation)
+        return output.stored_value.store(self.computation)
 
 
 ReturnedValue.__module__ = "pyteal.abi"

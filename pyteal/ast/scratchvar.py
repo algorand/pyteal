@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from pyteal.errors import TealInputError
-from pyteal.types import TealType, require_type
+from pyteal.types import TealType, require_type, types_match
 
 from pyteal.ast.expr import Expr
 from pyteal.ast.scratch import ScratchSlot, ScratchLoad, ScratchStore
@@ -61,7 +61,12 @@ class ScratchVar(AbstractVar):
         Args:
             value: The value to store. Must conform to this ScratchVar's type.
         """
-        require_type(value, self.type)
+        from pyteal.ast.subroutine import SubroutineCall
+
+        if not isinstance(value, SubroutineCall) or not value.output_kwarg:
+            require_type(value, self.type)
+        else:
+            assert types_match(value.output_kwarg.abi_type.storage_type(), self.type)
         return self.slot.store(value)
 
     def load(self) -> ScratchLoad:
