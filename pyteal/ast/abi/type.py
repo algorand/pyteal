@@ -79,9 +79,6 @@ class BaseType(ABC):
         self._type_spec: Final[TypeSpec] = spec
         self._stored_value: AbstractVar = ScratchVar(spec.storage_type())
 
-    def _set_data_source(self, storage: AbstractVar) -> None:
-        self._stored_value = storage
-
     def _load_value(self) -> Expr:
         return self._stored_value.load()
 
