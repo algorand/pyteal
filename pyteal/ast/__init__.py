@@ -155,7 +155,7 @@ from pyteal.ast.while_ import While
 from pyteal.ast.for_ import For
 from pyteal.ast.break_ import Break
 from pyteal.ast.continue_ import Continue
-from pyteal.ast.frame import Proto, FrameDig, FrameBury, DupN, FrameVar
+from pyteal.ast.frame import Proto, FrameDig, FrameBury, DupN
 
 # misc
 from pyteal.ast.scratch import (
@@ -166,7 +166,6 @@ from pyteal.ast.scratch import (
     ScratchStore,
 )
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar
-from pyteal.ast.abstractvar import AbstractVar
 from pyteal.ast.maybe import MaybeValue
 from pyteal.ast.multi import MultiValue
 from pyteal.ast.opup import OpUp, OpUpMode, OpUpFeeSource
@@ -306,7 +305,6 @@ __all__ = [
     "ScratchStore",
     "DynamicScratchVar",
     "ScratchVar",
-    "AbstractVar",
     "MaybeValue",
     "MultiValue",
     "OpUp",
@@ -343,7 +341,6 @@ __all__ = [
     "FrameDig",
     "FrameBury",
     "DupN",
-    "FrameVar",
     "Router",
     "CallConfig",
     "MethodConfig",
