@@ -17,7 +17,7 @@ from pyteal.ast.bytes import Bytes
 from pyteal.ast.unaryexpr import Itob, Btoi
 from pyteal.ast.binaryexpr import GetByte, ExtractUint16, ExtractUint32, ExtractUint64
 from pyteal.ast.ternaryexpr import SetByte
-from pyteal.ast.abi.type import ComputedValue, TypeSpec, BaseType, DataStorageSchema
+from pyteal.ast.abi.type import ComputedValue, TypeSpec, BaseType, AbstractVar
 
 NUM_BITS_IN_BYTE = 8
 
@@ -30,9 +30,7 @@ def uint_storage_type(size: int) -> TealType:
     return TealType.bytes
 
 
-def uint_set(
-    size: int, uint_var: DataStorageSchema, value: Union[int, Expr, "Uint"]
-) -> Expr:
+def uint_set(size: int, uint_var: AbstractVar, value: Union[int, Expr, "Uint"]) -> Expr:
     if size > 64:
         raise NotImplementedError(
             "Uint operations have not yet been implemented for bit sizes larger than 64"
@@ -50,17 +48,17 @@ def uint_set(
         checked = True
 
     if checked or size == 64:
-        return uint_var.store_value(cast(Expr, value))
+        return uint_var.store(cast(Expr, value))
 
     return Seq(
-        uint_var.store_value(cast(Expr, value)),
-        Assert(uint_var.load_value() < Int(2**size)),
+        uint_var.store(cast(Expr, value)),
+        Assert(uint_var.load() < Int(2**size)),
     )
 
 
 def uint_decode(
     size: int,
-    uint_var: DataStorageSchema,
+    uint_var: AbstractVar,
     encoded: Expr,
     start_index: Optional[Expr],
     end_index: Optional[Expr],
@@ -74,27 +72,27 @@ def uint_decode(
     if size == 64:
         if start_index is None:
             if end_index is None and length is None:
-                return uint_var.store_value(Btoi(encoded))
+                return uint_var.store(Btoi(encoded))
             start_index = Int(0)
-        return uint_var.store_value(ExtractUint64(encoded, start_index))
+        return uint_var.store(ExtractUint64(encoded, start_index))
 
     if start_index is None:
         start_index = Int(0)
 
     if size == 8:
-        return uint_var.store_value(GetByte(encoded, start_index))
+        return uint_var.store(GetByte(encoded, start_index))
     if size == 16:
-        return uint_var.store_value(ExtractUint16(encoded, start_index))
+        return uint_var.store(ExtractUint16(encoded, start_index))
     if size == 32:
-        return uint_var.store_value(ExtractUint32(encoded, start_index))
+        return uint_var.store(ExtractUint32(encoded, start_index))
 
     raise ValueError("Unsupported uint size: {}".format(size))
 
 
-def uint_encode(size: int, uint_var: Expr | DataStorageSchema) -> Expr:
+def uint_encode(size: int, uint_var: Expr | AbstractVar) -> Expr:
 
-    if isinstance(uint_var, DataStorageSchema):
-        uint_var = uint_var.load_value()
+    if isinstance(uint_var, AbstractVar):
+        uint_var = uint_var.load()
 
     if size > 64:
         raise NotImplementedError(
@@ -241,7 +239,7 @@ class Uint(BaseType):
 
         The expression will have the type TealType.uint64.
         """
-        return self._data_storage.load_value()
+        return self.stored_value.load()
 
     def set(self, value: Union[int, Expr, "Uint", ComputedValue["Uint"]]) -> Expr:
         """Set the value of this Uint to the input value.
@@ -276,7 +274,7 @@ class Uint(BaseType):
                     value.type_spec(), self.type_spec()
                 )
             )
-        return uint_set(self.type_spec().bit_size(), self._data_storage, value)
+        return uint_set(self.type_spec().bit_size(), self.stored_value, value)
 
     def decode(
         self,
@@ -288,7 +286,7 @@ class Uint(BaseType):
     ) -> Expr:
         return uint_decode(
             self.type_spec().bit_size(),
-            self._data_storage,
+            self.stored_value,
             encoded,
             start_index,
             end_index,
@@ -296,7 +294,7 @@ class Uint(BaseType):
         )
 
     def encode(self) -> Expr:
-        return uint_encode(self.type_spec().bit_size(), self._data_storage)
+        return uint_encode(self.type_spec().bit_size(), self.stored_value)
 
 
 Uint.__module__ = "pyteal.abi"

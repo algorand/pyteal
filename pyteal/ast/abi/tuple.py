@@ -309,7 +309,7 @@ class Tuple(BaseType):
         extracted = substring_for_decoding(
             encoded, start_index=start_index, end_index=end_index, length=length
         )
-        return self._data_storage.store_value(extracted)
+        return self.stored_value.store(extracted)
 
     @overload
     def set(self, *values: BaseType) -> Expr:
@@ -352,10 +352,10 @@ class Tuple(BaseType):
             )
         if not all(myTypes[i] == values[i].type_spec() for i in range(len(myTypes))):
             raise TealInputError("Input values do not match type")
-        return self._data_storage.store_value(_encode_tuple(values))
+        return self.stored_value.store(_encode_tuple(values))
 
     def encode(self) -> Expr:
-        return self._data_storage.load_value()
+        return self.stored_value.load()
 
     def length(self) -> Expr:
         """Get the number of values this tuple holds as an Expr."""
@@ -683,7 +683,7 @@ class NamedTuple(Tuple):
         # NamedTuple is an argument, and inside subroutine, subroutine set internal ABI value with FrameStorage
         # This used to violate `__setattr__` for not allowing any assignment to attributes
         # Now this case is lifted such that we can shift the storage scheme.
-        if name.startswith("_") and name != "_NamedTuple__ready" and self.__ready:
+        if name == "stored_value" and name != "_NamedTuple__ready" and self.__ready:
             super().__setattr__(name, field)
             return
         raise TealInputError("cannot assign to NamedTuple attributes.")

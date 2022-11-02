@@ -44,7 +44,7 @@ def test_String_encode():
             pt.TealOp(
                 expr,
                 pt.Op.load,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
         ]
     )
@@ -76,7 +76,7 @@ def test_DynamicArray_decode():
                 assert expr.type_of() == pt.TealType.none
                 assert expr.has_return() is False
 
-                expectedExpr = value._data_storage.store_value(
+                expectedExpr = value.stored_value.store(
                     substring_for_decoding(
                         encoded,
                         start_index=start_index,
@@ -107,7 +107,7 @@ def test_String_get():
             pt.TealOp(
                 expr,
                 pt.Op.load,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
             pt.TealOp(None, pt.Op.extract, 2, 0),
         ]
@@ -143,7 +143,7 @@ def test_String_set_static(value_to_set, value_encoded):
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
         ]
     )
@@ -174,12 +174,12 @@ def test_String_set_expr():
                 pt.TealOp(
                     None,
                     pt.Op.store,
-                    cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                    cast(pt.ScratchVar, value.stored_value).slot,
                 ),
                 pt.TealOp(
                     None,
                     pt.Op.load,
-                    cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                    cast(pt.ScratchVar, value.stored_value).slot,
                 ),
                 pt.TealOp(None, pt.Op.len),
                 pt.TealOp(None, pt.Op.itob),
@@ -187,13 +187,13 @@ def test_String_set_expr():
                 pt.TealOp(
                     None,
                     pt.Op.load,
-                    cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                    cast(pt.ScratchVar, value.stored_value).slot,
                 ),
                 pt.TealOp(None, pt.Op.concat),
                 pt.TealOp(
                     None,
                     pt.Op.store,
-                    cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                    cast(pt.ScratchVar, value.stored_value).slot,
                 ),
             ]
         )
@@ -222,12 +222,12 @@ def test_String_set_copy():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(abi.ScratchStorage, other._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, other.stored_value).slot,
             ),
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
         ]
     )
@@ -259,7 +259,7 @@ def test_String_set_computed():
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
         ]
     )

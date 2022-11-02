@@ -4,7 +4,7 @@ from collections.abc import Sequence as CollectionSequence
 from algosdk.abi import ABIType
 
 from pyteal.ast.abi.uint import Byte
-from pyteal.ast.abi.type import ComputedValue, BaseType, DataStorageSchema
+from pyteal.ast.abi.type import ComputedValue, BaseType, AbstractVar
 from pyteal.ast.abi.array_dynamic import DynamicArray, DynamicArrayTypeSpec
 from pyteal.ast.abi.uint import ByteTypeSpec, Uint16TypeSpec
 
@@ -25,14 +25,12 @@ def _encoded_byte_string(s: bytes | bytearray) -> Expr:
 
 
 def _store_encoded_expr_byte_string_into_var(
-    value: Expr, location: DataStorageSchema
+    value: Expr, location: AbstractVar
 ) -> Expr:
     return Seq(
-        location.store_value(value),
-        location.store_value(
-            Concat(
-                Suffix(Itob(Len(location.load_value())), Int(6)), location.load_value()
-            )
+        location.store(value),
+        location.store(
+            Concat(Suffix(Itob(Len(location.load())), Int(6)), location.load())
         ),
     )
 
@@ -70,7 +68,7 @@ class String(DynamicArray[Byte]):
         The expression will have the type TealType.bytes.
         """
         return Suffix(
-            self._data_storage.load_value(), Int(Uint16TypeSpec().byte_length_static())
+            self.stored_value.load(), Int(Uint16TypeSpec().byte_length_static())
         )
 
     def set(
@@ -113,22 +111,18 @@ class String(DynamicArray[Byte]):
                 if value.type_spec() == StringTypeSpec() or (
                     value.type_spec() == DynamicArrayTypeSpec(ByteTypeSpec())
                 ):
-                    return self._data_storage.store_value(
-                        value._data_storage.load_value()
-                    )
+                    return self.stored_value.store(value.stored_value.load())
 
                 raise TealInputError(
                     f"Got {value} with type spec {value.type_spec()}, expected {StringTypeSpec}"
                 )
             case bytes() | bytearray():
-                return self._data_storage.store_value(_encoded_byte_string(value))
+                return self.stored_value.store(_encoded_byte_string(value))
             case str():
-                return self._data_storage.store_value(
-                    _encoded_byte_string(value.encode())
-                )
+                return self.stored_value.store(_encoded_byte_string(value.encode()))
             case Expr():
                 return _store_encoded_expr_byte_string_into_var(
-                    value, self._data_storage
+                    value, self.stored_value
                 )
             case CollectionSequence():
                 return super().set(cast(Sequence[Byte], value))

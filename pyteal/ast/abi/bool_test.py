@@ -56,7 +56,7 @@ def test_Bool_set_static():
                 pt.TealOp(
                     None,
                     pt.Op.store,
-                    cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                    cast(pt.ScratchVar, value.stored_value).slot,
                 ),
             ]
         )
@@ -85,7 +85,7 @@ def test_Bool_set_expr():
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
         ]
     )
@@ -110,12 +110,12 @@ def test_Bool_set_copy():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(abi.ScratchStorage, other._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, other.stored_value).slot,
             ),
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
         ]
     )
@@ -144,7 +144,7 @@ def test_Bool_set_computed():
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
         ]
     )
@@ -171,7 +171,7 @@ def test_Bool_get():
             pt.TealOp(
                 expr,
                 pt.Op.load,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
         ]
     )
@@ -203,9 +203,7 @@ def test_Bool_decode():
                         pt.TealOp(
                             None,
                             pt.Op.store,
-                            cast(
-                                abi.ScratchStorage, value._data_storage
-                            ).scratchvar.slot,
+                            cast(pt.ScratchVar, value.stored_value).slot,
                         ),
                     ]
                 )
@@ -234,7 +232,7 @@ def test_Bool_decode_bit():
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
         ]
     )
@@ -260,7 +258,7 @@ def test_Bool_encode():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
             pt.TealOp(None, pt.Op.setbit),
         ]
@@ -444,7 +442,7 @@ def test_encodeBoolSequence():
                 pt.TealOp(
                     None,
                     pt.Op.load,
-                    cast(abi.ScratchStorage, testType._data_storage).scratchvar.slot,
+                    cast(pt.ScratchVar, testType.stored_value).slot,
                 ),
                 pt.TealOp(None, pt.Op.setbit),
             ]

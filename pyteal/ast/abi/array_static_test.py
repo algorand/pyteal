@@ -159,7 +159,7 @@ def test_StaticArray_decode():
                 assert expr.type_of() == pt.TealType.none
                 assert not expr.has_return()
 
-                expectedExpr = value._data_storage.store_value(
+                expectedExpr = value.stored_value.store(
                     substring_for_decoding(
                         encoded,
                         start_index=start_index,
@@ -202,7 +202,7 @@ def test_StaticArray_set_values():
     assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expectedExpr = value._data_storage.store_value(_encode_tuple(values))
+    expectedExpr = value.stored_value.store(_encode_tuple(values))
     expected, _ = expectedExpr.__teal__(options)
     expected.addIncoming()
     expected = pt.TealBlock.NormalizeBlocks(expected)
@@ -237,12 +237,12 @@ def test_StaticArray_set_copy():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(abi.ScratchStorage, otherArray._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, otherArray.stored_value).slot,
             ),
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
         ]
     )
@@ -270,7 +270,7 @@ def test_StaticArray_set_computed():
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
         ]
     )
@@ -317,7 +317,7 @@ def test_StaticBytes_set_py_bytes(test_case: bytes | bytearray):
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
         ]
     )
@@ -352,13 +352,13 @@ def test_StaticBytes_expr(test_case: bytes | bytearray):
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
             pt.TealOp(None, pt.Op.int, 32),
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
             pt.TealOp(None, pt.Op.len),
             pt.TealOp(None, pt.Op.eq),
@@ -381,7 +381,7 @@ def test_StaticArray_encode():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
         ]
     )

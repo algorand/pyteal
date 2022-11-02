@@ -477,7 +477,7 @@ class SubroutineCall(Expr):
             elif isinstance(arg, ScratchVar):
                 arg_type = arg.type
             elif isinstance(arg, abi.BaseType):
-                arg_type = cast(abi.BaseType, arg)._data_storage.storage_type()
+                arg_type = cast(abi.BaseType, arg).stored_value.storage_type()
             else:
                 raise TealInputError(
                     f"Subroutine argument {arg} at index {i} was of unexpected Python type {type(arg)}"
@@ -519,7 +519,7 @@ class SubroutineCall(Expr):
             elif isinstance(arg, Expr):
                 return arg
             elif isinstance(arg, abi.BaseType):
-                return arg._data_storage.load_value()
+                return arg.stored_value.load()
             else:
                 raise TealInputError(
                     f"cannot handle current arg: {arg} to put it on stack"
@@ -924,8 +924,6 @@ class SubroutineEval:
         subroutine: SubroutineDefinition,
         param: str,
     ) -> tuple[ScratchVar, ScratchVar | abi.BaseType | Expr]:
-        from pyteal.ast.abi.type import ScratchStorage
-
         loaded_var: ScratchVar | abi.BaseType | Expr
         argument_var: ScratchVar
 
@@ -934,11 +932,11 @@ class SubroutineEval:
             loaded_var = argument_var
         elif param in subroutine.abi_args:
             internal_abi_var = subroutine.abi_args[param].new_instance()
-            if not isinstance(internal_abi_var._data_storage, ScratchStorage):
+            if not isinstance(internal_abi_var.stored_value, ScratchVar):
                 raise TealInternalError(
                     "before program version 8, ABI data storage can only be done through ScratchStorage"
                 )
-            argument_var = internal_abi_var._data_storage.scratchvar
+            argument_var = internal_abi_var.stored_value
             loaded_var = internal_abi_var
         else:
             argument_var = ScratchVar(TealType.anytype)
@@ -951,7 +949,7 @@ class SubroutineEval:
         subroutine: SubroutineDefinition,
         param: str,
     ) -> tuple[Optional[ScratchVar], ScratchVar | abi.BaseType | Expr]:
-        from pyteal.ast.abi.type import FrameStorage
+        from pyteal.ast.frame import FrameStorage
 
         loaded_var: ScratchVar | abi.BaseType | Expr
         argument_var: Optional[ScratchVar]
@@ -977,7 +975,7 @@ class SubroutineEval:
         return argument_var, loaded_var
 
     def __call__(self, subroutine: SubroutineDefinition) -> SubroutineDeclaration:
-        from pyteal.ast.abi.type import FrameStorage
+        from pyteal.ast.frame import FrameStorage
 
         args = subroutine.arguments()
         arg_vars: list[ScratchVar] = []
@@ -1014,7 +1012,7 @@ class SubroutineEval:
                     f"ABI returning subroutine definition should evaluate to TealType.none, "
                     f"while evaluate to {subroutine_body.type_of()}."
                 )
-            deferred_expr = output_carrying_abi._data_storage.load_value()
+            deferred_expr = output_carrying_abi.stored_value.load()
 
         # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
         # need to reverse order of argumentVars because the last argument will be on top of the stack
@@ -1105,8 +1103,6 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
     def var_n_loaded(
         param: str,
     ) -> tuple[ScratchVar, ScratchVar | abi.BaseType | Expr]:
-        from pyteal.ast.abi.type import ScratchStorage
-
         loaded_var: ScratchVar | abi.BaseType | Expr
         argument_var: ScratchVar
 
@@ -1115,11 +1111,11 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
             loaded_var = argument_var
         elif param in subroutine.abi_args:
             internal_abi_var = subroutine.abi_args[param].new_instance()
-            if not isinstance(internal_abi_var._data_storage, ScratchStorage):
+            if not isinstance(internal_abi_var.stored_value, ScratchVar):
                 raise TealInternalError(
                     "subroutine ABI args must have data schema being ScratchVarStorage"
                 )
-            argument_var = internal_abi_var._data_storage.scratchvar
+            argument_var = internal_abi_var.stored_value
             loaded_var = internal_abi_var
         else:
             argument_var = ScratchVar(TealType.anytype)
@@ -1167,7 +1163,7 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
                 f"ABI returning subroutine definition should evaluate to TealType.none, "
                 f"while evaluate to {subroutine_body.type_of()}."
             )
-        deferred_expr = output_carrying_abi._data_storage.load_value()
+        deferred_expr = output_carrying_abi.stored_value.load()
 
     # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
     # need to reverse order of argumentVars because the last argument will be on top of the stack

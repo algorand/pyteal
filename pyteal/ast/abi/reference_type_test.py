@@ -26,7 +26,7 @@ def test_ReferenceType_referenced_index():
                 pt.TealOp(
                     expr,
                     pt.Op.load,
-                    cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                    cast(pt.ScratchVar, value.stored_value).slot,
                 ),
             ]
         )
@@ -61,7 +61,7 @@ def test_ReferenceType_decode():
                     assert expr.type_of() == pt.TealType.none
                     assert expr.has_return() is False
 
-                    expected_decoding = value._data_storage.store_value(
+                    expected_decoding = value.stored_value.store(
                         pt.GetByte(
                             encoded,
                             start_index if start_index is not None else pt.Int(0),
@@ -117,7 +117,7 @@ def test_Account_address():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
             pt.TealOp(None, pt.Op.txnas, "Accounts"),
         ]
@@ -204,7 +204,7 @@ def test_Asset_asset_id():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
             pt.TealOp(None, pt.Op.txnas, "Assets"),
         ]
@@ -298,7 +298,7 @@ def test_Application_application_id():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(abi.ScratchStorage, value._data_storage).scratchvar.slot,
+                cast(pt.ScratchVar, value.stored_value).slot,
             ),
             pt.TealOp(None, pt.Op.txnas, "Applications"),
         ]

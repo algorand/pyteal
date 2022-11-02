@@ -4,15 +4,7 @@ from pyteal.ast.abi.address import (
     Address,
     AddressLength,
 )
-from pyteal.ast.abi.type import (
-    TypeSpec,
-    BaseType,
-    ComputedValue,
-    ReturnedValue,
-    DataStorageSchema,
-    FrameStorage,
-    ScratchStorage,
-)
+from pyteal.ast.abi.type import TypeSpec, BaseType, ComputedValue, ReturnedValue
 from pyteal.ast.abi.bool import BoolTypeSpec, Bool
 from pyteal.ast.abi.uint import (
     UintTypeSpec,
@@ -174,9 +166,6 @@ __all__ = [
     "type_specs_from_signature",
     "make",
     "size_of",
-    "DataStorageSchema",
-    "FrameStorage",
-    "ScratchStorage",
     "algosdk_from_annotation",
     "algosdk_from_type_spec",
     "contains_type_spec",
