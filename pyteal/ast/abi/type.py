@@ -65,13 +65,13 @@ class TypeSpec(ABC):
 TypeSpec.__module__ = "pyteal.abi"
 
 
-class DataStorageSchema(ABC):
+class AbstractVar(ABC):
     @abstractmethod
-    def store_value(self, value: Expr) -> Expr:
+    def store(self, value: Expr) -> Expr:
         pass
 
     @abstractmethod
-    def load_value(self) -> Expr:
+    def load(self) -> Expr:
         pass
 
     @abstractmethod
@@ -79,18 +79,18 @@ class DataStorageSchema(ABC):
         pass
 
 
-DataStorageSchema.__module__ = "pyteal"
+AbstractVar.__module__ = "pyteal"
 
 
-class ScratchStorage(DataStorageSchema):
+class ScratchStorage(AbstractVar):
     def __init__(self, storage_type: TealType) -> None:
         super().__init__()
         self.scratchvar: Final[ScratchVar] = ScratchVar(storage_type)
 
-    def load_value(self) -> Expr:
+    def load(self) -> Expr:
         return self.scratchvar.load()
 
-    def store_value(self, value: Expr) -> Expr:
+    def store(self, value: Expr) -> Expr:
         return self.scratchvar.slot.store(value)
 
     def storage_type(self) -> TealType:
@@ -100,7 +100,7 @@ class ScratchStorage(DataStorageSchema):
 ScratchStorage.__module__ = "pyteal"
 
 
-class FrameStorage(DataStorageSchema):
+class FrameStorage(AbstractVar):
     def __init__(self, storage_type: TealType, stack_depth: int) -> None:
         super().__init__()
         self.stack_type = storage_type
@@ -109,12 +109,12 @@ class FrameStorage(DataStorageSchema):
     def storage_type(self) -> TealType:
         return self.stack_type
 
-    def store_value(self, value: Expr) -> Expr:
+    def store(self, value: Expr) -> Expr:
         from pyteal.ast import FrameBury
 
         return FrameBury(value, self.stack_depth)
 
-    def load_value(self) -> Expr:
+    def load(self) -> Expr:
         from pyteal.ast import FrameDig
 
         return FrameDig(self.stack_depth)
@@ -135,18 +135,18 @@ class BaseType(ABC):
         """Create a new BaseType."""
         super().__init__()
         self._type_spec: Final[TypeSpec] = spec
-        self._data_storage: DataStorageSchema = ScratchStorage(spec.storage_type())
+        self._data_storage: AbstractVar = ScratchStorage(spec.storage_type())
 
         # self.stored_value: Final = ScratchVar(spec.storage_type())
 
-    def _set_data_source(self, storage: DataStorageSchema) -> None:
+    def _set_data_source(self, storage: AbstractVar) -> None:
         self._data_storage = storage
 
     def _load_value(self) -> Expr:
-        return self._data_storage.load_value()
+        return self._data_storage.load()
 
     def _store_value(self, value: Expr) -> Expr:
-        return self._data_storage.store_value(value)
+        return self._data_storage.store(value)
 
     def type_spec(self) -> TypeSpec:
         """Get the TypeSpec for this ABI type instance."""
@@ -300,7 +300,7 @@ class ReturnedValue(ComputedValue):
                 f"ABI return subroutine deferred_expr is expected to be typed {output.type_spec().storage_type()}, "
                 f"but has type {declaration.deferred_expr.type_of()}."
             )
-        return output._data_storage.store_value(self.computation)
+        return output._data_storage.store(self.computation)
 
 
 ReturnedValue.__module__ = "pyteal.abi"

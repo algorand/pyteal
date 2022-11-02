@@ -9,7 +9,7 @@ from pyteal.ast.abi.type import (
     BaseType,
     ComputedValue,
     ReturnedValue,
-    DataStorageSchema,
+    AbstractVar,
     FrameStorage,
     ScratchStorage,
 )
@@ -174,7 +174,7 @@ __all__ = [
     "type_specs_from_signature",
     "make",
     "size_of",
-    "DataStorageSchema",
+    "AbstractVar",
     "FrameStorage",
     "ScratchStorage",
     "algosdk_from_annotation",

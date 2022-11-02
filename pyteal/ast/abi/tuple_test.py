@@ -623,7 +623,7 @@ def test_Tuple_decode():
                 assert expr.type_of() == pt.TealType.none
                 assert not expr.has_return()
 
-                expectedExpr = tupleValue._data_storage.store_value(
+                expectedExpr = tupleValue._data_storage.store(
                     substring_for_decoding(
                         encoded,
                         start_index=start_index,
@@ -672,7 +672,7 @@ def test_Tuple_set():
     assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expectedExpr = tupleValue._data_storage.store_value(
+    expectedExpr = tupleValue._data_storage.store(
         _encode_tuple([uint8, uint16, uint32])
     )
     expected, _ = expectedExpr.__teal__(options)

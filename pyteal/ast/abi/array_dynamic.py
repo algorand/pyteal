@@ -79,7 +79,7 @@ class DynamicArray(Array[T]):
                 raise TealInputError(
                     f"Cannot assign type {values.type_spec()} to {self.type_spec()}"
                 )
-            return self._data_storage.store_value(values.encode())
+            return self._data_storage.store(values.encode())
         return super().set(values)
 
     def length(self) -> Expr:
@@ -165,7 +165,7 @@ class DynamicBytes(DynamicArray[Byte]):
 
         match values:
             case bytes() | bytearray():
-                return self._data_storage.store_value(_encoded_byte_string(values))
+                return self._data_storage.store(_encoded_byte_string(values))
             case Expr():
                 return _store_encoded_expr_byte_string_into_var(
                     values, self._data_storage
@@ -181,7 +181,7 @@ class DynamicBytes(DynamicArray[Byte]):
         Returns:
             A Pyteal expression that loads byte encoding of this DynamicBytes, and drop the first uint16 DynamicArray length encoding.
         """
-        return Suffix(self._data_storage.load_value(), Int(2))
+        return Suffix(self._data_storage.load(), Int(2))
 
 
 DynamicBytes.__module__ = "pyteal.abi"
