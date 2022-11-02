@@ -159,7 +159,7 @@ def test_StaticArray_decode():
                 assert expr.type_of() == pt.TealType.none
                 assert not expr.has_return()
 
-                expectedExpr = value._data_storage.store_value(
+                expectedExpr = value._data_storage.store(
                     substring_for_decoding(
                         encoded,
                         start_index=start_index,
@@ -202,7 +202,7 @@ def test_StaticArray_set_values():
     assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expectedExpr = value._data_storage.store_value(_encode_tuple(values))
+    expectedExpr = value._data_storage.store(_encode_tuple(values))
     expected, _ = expectedExpr.__teal__(options)
     expected.addIncoming()
     expected = pt.TealBlock.NormalizeBlocks(expected)

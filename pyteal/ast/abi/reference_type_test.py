@@ -61,7 +61,7 @@ def test_ReferenceType_decode():
                     assert expr.type_of() == pt.TealType.none
                     assert expr.has_return() is False
 
-                    expected_decoding = value._data_storage.store_value(
+                    expected_decoding = value._data_storage.store(
                         pt.GetByte(
                             encoded,
                             start_index if start_index is not None else pt.Int(0),

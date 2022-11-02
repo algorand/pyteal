@@ -106,7 +106,7 @@ def test_DynamicArray_decode():
                 assert expr.type_of() == pt.TealType.none
                 assert not expr.has_return()
 
-                expectedExpr = value._data_storage.store_value(
+                expectedExpr = value._data_storage.store(
                     substring_for_decoding(
                         encoded,
                         start_index=start_index,
@@ -141,7 +141,7 @@ def test_DynamicArray_set_values():
         assert not expr.has_return()
 
         length_tmp = abi.Uint16()
-        expectedExpr = value._data_storage.store_value(
+        expectedExpr = value._data_storage.store(
             pt.Concat(
                 pt.Seq(length_tmp.set(len(values)), length_tmp.encode()),
                 _encode_tuple(values),

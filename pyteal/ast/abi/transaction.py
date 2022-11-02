@@ -82,16 +82,16 @@ class Transaction(BaseType):
             case ComputedValue():
                 return self._set_with_computed_type(value)
             case BaseType():
-                return self._data_storage.store_value(self._data_storage.load_value())
+                return self._data_storage.store(self._data_storage.load())
             case int():
-                return self._data_storage.store_value(Int(value))
+                return self._data_storage.store(Int(value))
             case Expr():
-                return self._data_storage.store_value(value)
+                return self._data_storage.store(value)
             case _:
                 raise TealInputError(f"Cant store a {type(value)} in a Transaction")
 
     def index(self) -> Expr:
-        return self._data_storage.load_value()
+        return self._data_storage.load()
 
     def decode(
         self,

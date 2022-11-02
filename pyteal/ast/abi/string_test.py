@@ -76,7 +76,7 @@ def test_DynamicArray_decode():
                 assert expr.type_of() == pt.TealType.none
                 assert expr.has_return() is False
 
-                expectedExpr = value._data_storage.store_value(
+                expectedExpr = value._data_storage.store(
                     substring_for_decoding(
                         encoded,
                         start_index=start_index,

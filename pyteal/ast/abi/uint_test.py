@@ -307,7 +307,7 @@ def test_Uint_decode():
                     assert expr.type_of() == pt.TealType.none
                     assert not expr.has_return()
 
-                    expectedDecoding = value._data_storage.store_value(
+                    expectedDecoding = value._data_storage.store(
                         test.expectedDecoding(encoded, start_index, end_index, length)
                     )
                     expected, _ = expectedDecoding.__teal__(options)

@@ -420,7 +420,7 @@ class SubroutineCall(Expr):
             elif isinstance(arg, Expr):
                 return arg
             elif isinstance(arg, abi.BaseType):
-                return arg._data_storage.load_value()
+                return arg._data_storage.load()
             else:
                 raise TealInputError(
                     f"cannot handle current arg: {arg} to put it on stack"
@@ -853,7 +853,7 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
                 f"ABI returning subroutine definition should evaluate to TealType.none, "
                 f"while evaluate to {subroutine_body.type_of()}."
             )
-        deferred_expr = output_carrying_abi._data_storage.load_value()
+        deferred_expr = output_carrying_abi._data_storage.load()
 
     # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
     # need to reverse order of argumentVars because the last argument will be on top of the stack

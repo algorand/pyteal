@@ -58,7 +58,7 @@ class ReferenceType(BaseType):
         If this reference type is an application or asset, note that this DOES NOT return the
         application or asset ID. See :code:`application_id()` or :code:`asset_id()` for that.
         """
-        return self._data_storage.load_value()
+        return self._data_storage.load()
 
     def decode(
         self,
@@ -107,7 +107,7 @@ class Account(ReferenceType):
 
     def address(self) -> Expr:
         """Get the address of the account."""
-        return Txn.accounts[self._data_storage.load_value()]
+        return Txn.accounts[self._data_storage.load()]
 
     def params(self) -> AccountParamObject:
         """Get information about the account."""
@@ -205,7 +205,7 @@ class Application(ReferenceType):
 
     def application_id(self) -> Expr:
         """Get the ID of the application."""
-        return Txn.applications[self._data_storage.load_value()]
+        return Txn.applications[self._data_storage.load()]
 
     def params(self) -> AppParamObject:
         """Get information about the application's parameters."""
