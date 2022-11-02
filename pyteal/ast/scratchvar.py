@@ -1,5 +1,5 @@
 from pyteal.errors import TealInputError
-from pyteal.types import TealType, require_type
+from pyteal.types import TealType, require_type, types_match
 
 from pyteal.ast.abstractvar import AbstractVar
 from pyteal.ast.expr import Expr
