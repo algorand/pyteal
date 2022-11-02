@@ -46,9 +46,9 @@ Proto.__module__ = "pyteal"
 
 
 class FrameDig(Expr):
-    def __init__(self, depth: int):
+    def __init__(self, frame_index: int):
         super().__init__()
-        self.depth = depth
+        self.frame_index = frame_index
 
     def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
         verifyProgramVersion(
@@ -56,11 +56,11 @@ class FrameDig(Expr):
             options.version,
             "Program version too low to use op frame_dig",
         )
-        op = TealOp(self, Op.frame_dig, self.depth)
+        op = TealOp(self, Op.frame_dig, self.frame_index)
         return TealBlock.FromOp(options, op)
 
     def __str__(self) -> str:
-        return f"(frame_dig: dig_depth = {self.depth})"
+        return f"(frame_dig: dig_from = {self.frame_index})"
 
     def type_of(self) -> TealType:
         return TealType.anytype
@@ -73,11 +73,11 @@ FrameDig.__module__ = "pyteal"
 
 
 class FrameBury(Expr):
-    def __init__(self, value: Expr, depth: int):
+    def __init__(self, value: Expr, frame_index: int):
         super().__init__()
         require_type(value, TealType.anytype)
         self.value = value
-        self.depth = depth
+        self.frame_index = frame_index
 
     def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
         verifyProgramVersion(
@@ -85,11 +85,11 @@ class FrameBury(Expr):
             options.version,
             "Program version too low to use op frame_bury",
         )
-        op = TealOp(self, Op.frame_bury, self.depth)
+        op = TealOp(self, Op.frame_bury, self.frame_index)
         return TealBlock.FromOp(options, op, self.value)
 
     def __str__(self) -> str:
-        return f"(frame_bury (bury_depth = {self.depth}) ({self.value}))"
+        return f"(frame_bury (bury_to = {self.frame_index}) ({self.value}))"
 
     def type_of(self) -> TealType:
         return TealType.none
