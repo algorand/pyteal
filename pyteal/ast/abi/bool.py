@@ -50,7 +50,7 @@ class Bool(BaseType):
         expression that evaluates to 0 will be returned. In either case, the expression will have the
         type TealType.uint64.
         """
-        return self.stored_value.load()
+        return self._stored_value.load()
 
     def set(self, value: Union[bool, Expr, "Bool", ComputedValue["Bool"]]) -> Expr:
         """Set the value of this Bool to the input value.
@@ -85,10 +85,10 @@ class Bool(BaseType):
             checked = True
 
         if checked:
-            return self.stored_value.store(value)
+            return self._stored_value.store(value)
 
         # Not(Not(value)) coerces all values greater than 0 to 1
-        return self.stored_value.store(Not(Not(value)))
+        return self._stored_value.store(Not(Not(value)))
 
     def decode(
         self,
@@ -103,7 +103,7 @@ class Bool(BaseType):
         return self.decode_bit(encoded, start_index * Int(NUM_BITS_IN_BYTE))
 
     def decode_bit(self, encoded, bit_index: Expr) -> Expr:
-        return self.stored_value.store(GetBit(encoded, bit_index))
+        return self._stored_value.store(GetBit(encoded, bit_index))
 
     def encode(self) -> Expr:
         return SetBit(Bytes(b"\x00"), Int(0), self.get())

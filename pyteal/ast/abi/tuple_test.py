@@ -623,7 +623,7 @@ def test_Tuple_decode():
                 assert expr.type_of() == pt.TealType.none
                 assert not expr.has_return()
 
-                expectedExpr = tupleValue.stored_value.store(
+                expectedExpr = tupleValue._stored_value.store(
                     substring_for_decoding(
                         encoded,
                         start_index=start_index,
@@ -672,7 +672,9 @@ def test_Tuple_set():
     assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expectedExpr = tupleValue.stored_value.store(_encode_tuple([uint8, uint16, uint32]))
+    expectedExpr = tupleValue._stored_value.store(
+        _encode_tuple([uint8, uint16, uint32])
+    )
     expected, _ = expectedExpr.__teal__(options)
     expected.addIncoming()
     expected = pt.TealBlock.NormalizeBlocks(expected)
@@ -704,7 +706,7 @@ def test_Tuple_set_Computed():
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(pt.ScratchVar, tupleValue.stored_value).slot,
+                cast(pt.ScratchVar, tupleValue._stored_value).slot,
             ),
         ]
     )
@@ -735,7 +737,7 @@ def test_Tuple_encode():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(pt.ScratchVar, tupleValue.stored_value).slot,
+                cast(pt.ScratchVar, tupleValue._stored_value).slot,
             ),
         ]
     )

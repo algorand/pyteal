@@ -104,7 +104,7 @@ class Array(BaseType, Generic[T]):
         extracted = substring_for_decoding(
             encoded, start_index=start_index, end_index=end_index, length=length
         )
-        return self.stored_value.store(extracted)
+        return self._stored_value.store(extracted)
 
     def set(self, values: Sequence[T]) -> Expr:
         """Set the ABI array with a sequence of ABI type variables.
@@ -142,7 +142,7 @@ class Array(BaseType, Generic[T]):
             length_prefix = Seq(length_tmp.set(len(values)), length_tmp.encode())
             encoded = Concat(length_prefix, encoded)
 
-        return self.stored_value.store(encoded)
+        return self._stored_value.store(encoded)
 
     def encode(self) -> Expr:
         """Encode the ABI array to be a byte string.
@@ -150,7 +150,7 @@ class Array(BaseType, Generic[T]):
         Returns:
             A PyTeal expression that encodes this ABI array to a byte string.
         """
-        return self.stored_value.load()
+        return self._stored_value.load()
 
     @abstractmethod
     def length(self) -> Expr:
