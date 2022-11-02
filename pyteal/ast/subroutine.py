@@ -949,7 +949,7 @@ class SubroutineEval:
         subroutine: SubroutineDefinition,
         param: str,
     ) -> tuple[Optional[ScratchVar], ScratchVar | abi.BaseType | Expr]:
-        from pyteal.ast.frame import FrameStorage
+        from pyteal.ast.frame import FrameVar
 
         loaded_var: ScratchVar | abi.BaseType | Expr
         argument_var: Optional[ScratchVar]
@@ -962,7 +962,7 @@ class SubroutineEval:
             dig_index = (
                 subroutine.arguments().index(param) - subroutine.argument_count()
             )
-            internal_abi_var._set_data_source(FrameStorage(TealType.anytype, dig_index))
+            internal_abi_var._set_data_source(FrameVar(TealType.anytype, dig_index))
             argument_var = None
             loaded_var = internal_abi_var
         else:
@@ -975,7 +975,7 @@ class SubroutineEval:
         return argument_var, loaded_var
 
     def __call__(self, subroutine: SubroutineDefinition) -> SubroutineDeclaration:
-        from pyteal.ast.frame import FrameStorage
+        from pyteal.ast.frame import FrameVar
 
         args = subroutine.arguments()
         arg_vars: list[ScratchVar] = []
@@ -993,7 +993,7 @@ class SubroutineEval:
         if output_kwarg_info:
             output_carrying_abi = output_kwarg_info.abi_type.new_instance()
             if self.use_frame_pt:
-                output_carrying_abi._set_data_source(FrameStorage(TealType.anytype, 0))
+                output_carrying_abi._set_data_source(FrameVar(TealType.anytype, 0))
             abi_output_kwargs[output_kwarg_info.name] = output_carrying_abi
 
         # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:
