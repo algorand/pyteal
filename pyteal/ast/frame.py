@@ -102,7 +102,7 @@ class FrameBury(Expr):
 FrameBury.__module__ = "pyteal"
 
 
-class FrameStorage(AbstractVar):
+class FrameVar(AbstractVar):
     def __init__(self, storage_type: TealType, stack_depth: int) -> None:
         super().__init__()
         self.stack_type = storage_type
@@ -122,7 +122,7 @@ class FrameStorage(AbstractVar):
         return FrameDig(self.stack_depth)
 
 
-FrameStorage.__module__ = "pyteal"
+FrameVar.__module__ = "pyteal"
 
 
 class Bury(Expr):
