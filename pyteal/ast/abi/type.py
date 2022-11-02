@@ -2,7 +2,7 @@ from typing import TypeVar, Generic, Callable, Final, cast
 from abc import ABC, abstractmethod
 
 from pyteal.errors import TealInputError
-from pyteal.types import TealType
+from pyteal.types import TealType, types_match
 from pyteal.ast.expr import Expr
 from pyteal.ast.scratchvar import ScratchVar, AbstractVar
 from pyteal.ast.seq import Seq
@@ -237,7 +237,12 @@ class ReturnedValue(ComputedValue):
                 f"ABI return subroutine deferred_expr is expected to be typed {output.type_spec().storage_type()}, "
                 f"but has type {declaration.deferred_expr.type_of()}."
             )
-        return output._stored_value.store(self.computation)
+        assert types_match(
+            self.computation.output_kwarg.abi_type.storage_type(),
+            self._stored_value.type,
+        )
+
+        return output._stored_value.store(self.computation, validate_types=False)
 
 
 ReturnedValue.__module__ = "pyteal.abi"
