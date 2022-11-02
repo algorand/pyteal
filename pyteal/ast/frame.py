@@ -102,6 +102,29 @@ class FrameBury(Expr):
 FrameBury.__module__ = "pyteal"
 
 
+class FrameVar(AbstractVar):
+    def __init__(self, storage_type: TealType, stack_depth: int) -> None:
+        super().__init__()
+        self.stack_type = storage_type
+        self.stack_depth = stack_depth
+
+    def storage_type(self) -> TealType:
+        return self.stack_type
+
+    def store(self, value: Expr) -> Expr:
+        from pyteal.ast import FrameBury
+
+        return FrameBury(value, self.stack_depth)
+
+    def load(self) -> Expr:
+        from pyteal.ast import FrameDig
+
+        return FrameDig(self.stack_depth)
+
+
+FrameVar.__module__ = "pyteal"
+
+
 class DupN(Expr):
     def __init__(self, value: Expr, repetition: int):
         super().__init__()
