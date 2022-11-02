@@ -74,28 +74,6 @@ def test_frame_bury_invalid():
         pt.FrameBury(pt.Int(1), 1).__teal__(avm7Options)
 
 
-@pytest.mark.parametrize("repetition", [0, 1, 2, 3, 4, 5])
-def test_popn(repetition: int):
-    expr = pt.PopN(repetition)
-    assert not expr.has_return()
-    assert expr.type_of() == pt.TealType.none
-
-    expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.popn, repetition)])
-    actual, _ = expr.__teal__(avm8Options)
-    actual.addIncoming()
-    actual = pt.TealBlock.NormalizeBlocks(actual)
-
-    assert actual == expected
-
-
-def test_popn_invalid():
-    with pytest.raises(pt.TealInputError):
-        pt.PopN(-1)
-
-    with pytest.raises(pt.TealInputError):
-        pt.PopN(5).__teal__(avm7Options)
-
-
 def test_dupn():
     byte_expr = pt.Bytes("Astartes")
     expr = pt.DupN(byte_expr, 4)
