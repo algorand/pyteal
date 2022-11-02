@@ -145,37 +145,6 @@ class FrameVar(AbstractVar):
 FrameVar.__module__ = "pyteal"
 
 
-class Bury(Expr):
-    def __init__(self, value: Expr, depth: int):
-        super().__init__()
-        require_type(value, TealType.anytype)
-        if depth <= 0:
-            raise TealInputError("bury depth should be strictly positive")
-        self.value = value
-        self.depth = depth
-
-    def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
-        verifyProgramVersion(
-            Op.bury.min_version,
-            options.version,
-            "Program version too low to use op bury",
-        )
-        op = TealOp(self, Op.bury, self.depth)
-        return TealBlock.FromOp(options, op, self.value)
-
-    def __str__(self) -> str:
-        return f"(bury (depth = {self.depth}) ({self.value}))"
-
-    def type_of(self) -> TealType:
-        return TealType.none
-
-    def has_return(self) -> bool:
-        return False
-
-
-Bury.__module__ = "pyteal"
-
-
 class DupN(Expr):
     def __init__(self, value: Expr, repetition: int):
         super().__init__()
