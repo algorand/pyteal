@@ -1032,7 +1032,7 @@ class SubroutineEval:
                 Proto(
                     subroutine.argument_count(),
                     stack_output_cnt,
-                    reserve_spot=int(subroutine.has_abi_output),
+                    num_local_vars=int(subroutine.has_abi_output),
                 )
             ]
 

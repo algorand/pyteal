@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class Proto(Expr):
-    def __init__(self, num_args: int, num_returns: int, /, *, reserve_spot: int = 0):
+    def __init__(self, num_args: int, num_returns: int, /, *, num_local_vars: int = 0):
         super().__init__()
         if num_args < 0:
             raise TealInputError(
@@ -24,7 +24,7 @@ class Proto(Expr):
             )
         self.num_args = num_args
         self.num_returns = num_returns
-        self.reserve_spot = reserve_spot
+        self.num_local_vars = num_local_vars
 
     def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
         verifyProgramVersion(
@@ -34,19 +34,19 @@ class Proto(Expr):
         )
         op = TealOp(self, Op.proto, self.num_args, self.num_returns)
         proto_srt, proto_end = TealBlock.FromOp(options, op)
-        if self.reserve_spot == 0:
+        if self.num_local_vars == 0:
             return proto_srt, proto_end
-        elif self.reserve_spot == 1:
+        elif self.num_local_vars == 1:
             int_srt, int_end = Int(0).__teal__(options)
             proto_end.setNextBlock(int_srt)
             return proto_srt, int_end
         else:
-            dupn_srt, dupn_end = DupN(Int(0), self.reserve_spot).__teal__(options)
+            dupn_srt, dupn_end = DupN(Int(0), self.num_local_vars).__teal__(options)
             proto_end.setNextBlock(dupn_srt)
             return proto_srt, dupn_end
 
     def __str__(self) -> str:
-        return f"(proto: arg_num = {self.num_args}, ret_num = {self.num_returns}, reserve_spot = {self.reserve_spot})"
+        return f"(proto: num_args = {self.num_args}, num_rets = {self.num_returns}, num_local_vars = {self.num_local_vars})"
 
     def type_of(self) -> TealType:
         return TealType.none
