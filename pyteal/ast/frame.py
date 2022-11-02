@@ -103,19 +103,19 @@ FrameBury.__module__ = "pyteal"
 
 
 class FrameVar(AbstractVar):
-    def __init__(self, storage_type: TealType, stack_depth: int) -> None:
+    def __init__(self, storage_type: TealType, frame_index: int) -> None:
         super().__init__()
         self.stack_type = storage_type
-        self.stack_depth = stack_depth
+        self.frame_index = frame_index
 
     def storage_type(self) -> TealType:
         return self.stack_type
 
     def store(self, value: Expr) -> Expr:
-        return FrameBury(value, self.stack_depth)
+        return FrameBury(value, self.frame_index)
 
     def load(self) -> Expr:
-        return FrameDig(self.stack_depth)
+        return FrameDig(self.frame_index)
 
 
 FrameVar.__module__ = "pyteal"
