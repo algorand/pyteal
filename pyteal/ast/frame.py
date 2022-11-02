@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from pyteal.ast.expr import Expr
+from pyteal.ast.scratchvar import AbstractVar
 from pyteal.types import TealType, require_type
 from pyteal.errors import TealInputError, verifyProgramVersion
 from pyteal.ir import TealBlock, TealSimpleBlock, TealOp, Op
@@ -99,6 +100,29 @@ class FrameBury(Expr):
 
 
 FrameBury.__module__ = "pyteal"
+
+
+class FrameStorage(AbstractVar):
+    def __init__(self, storage_type: TealType, stack_depth: int) -> None:
+        super().__init__()
+        self.stack_type = storage_type
+        self.stack_depth = stack_depth
+
+    def storage_type(self) -> TealType:
+        return self.stack_type
+
+    def store(self, value: Expr) -> Expr:
+        from pyteal.ast import FrameBury
+
+        return FrameBury(value, self.stack_depth)
+
+    def load(self) -> Expr:
+        from pyteal.ast import FrameDig
+
+        return FrameDig(self.stack_depth)
+
+
+FrameStorage.__module__ = "pyteal"
 
 
 class Bury(Expr):
