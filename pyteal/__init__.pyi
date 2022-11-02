@@ -122,6 +122,7 @@ __all__ = [
     "For",
     "FrameBury",
     "FrameDig",
+    "FrameStorage",
     "Ge",
     "GeneratedID",
     "GetBit",

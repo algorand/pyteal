@@ -65,47 +65,6 @@ class TypeSpec(ABC):
 TypeSpec.__module__ = "pyteal.abi"
 
 
-class ScratchStorage(AbstractVar):
-    def __init__(self, storage_type: TealType) -> None:
-        super().__init__()
-        self.scratchvar: Final[ScratchVar] = ScratchVar(storage_type)
-
-    def load(self) -> Expr:
-        return self.scratchvar.load()
-
-    def store(self, value: Expr) -> Expr:
-        return self.scratchvar.slot.store(value)
-
-    def storage_type(self) -> TealType:
-        return self.scratchvar.storage_type()
-
-
-ScratchStorage.__module__ = "pyteal"
-
-
-class FrameStorage(AbstractVar):
-    def __init__(self, storage_type: TealType, stack_depth: int) -> None:
-        super().__init__()
-        self.stack_type = storage_type
-        self.stack_depth = stack_depth
-
-    def storage_type(self) -> TealType:
-        return self.stack_type
-
-    def store(self, value: Expr) -> Expr:
-        from pyteal.ast import FrameBury
-
-        return FrameBury(value, self.stack_depth)
-
-    def load(self) -> Expr:
-        from pyteal.ast import FrameDig
-
-        return FrameDig(self.stack_depth)
-
-
-FrameStorage.__module__ = "pyteal"
-
-
 class BaseType(ABC):
     """The abstract base class for all ABI type instances.
 

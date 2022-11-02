@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from pyteal.ast.expr import Expr
+from pyteal.ast.scratchvar import AbstractVar
 from pyteal.types import TealType, require_type
 from pyteal.errors import TealInputError, verifyProgramVersion
 from pyteal.ir import TealBlock, TealSimpleBlock, TealOp, Op
