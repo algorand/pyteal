@@ -178,7 +178,6 @@ __all__ = [
     "OptimizeOptions",
     "Or",
     "Pop",
-    "PopN",
     "Pragma",
     "Proto",
     "RETURN_HASH_PREFIX",

@@ -155,7 +155,7 @@ from pyteal.ast.while_ import While
 from pyteal.ast.for_ import For
 from pyteal.ast.break_ import Break
 from pyteal.ast.continue_ import Continue
-from pyteal.ast.frame import Proto, FrameDig, FrameBury, PopN, DupN
+from pyteal.ast.frame import Proto, FrameDig, FrameBury, DupN
 
 # misc
 from pyteal.ast.scratch import (
@@ -341,7 +341,6 @@ __all__ = [
     "FrameDig",
     "FrameBury",
     "DupN",
-    "PopN",
     "Router",
     "CallConfig",
     "MethodConfig",
