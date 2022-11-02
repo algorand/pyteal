@@ -71,7 +71,6 @@ __all__ = [
     "BoxReplace",
     "Break",
     "Btoi",
-    "Bury",
     "Bytes",
     "BytesAdd",
     "BytesAnd",
