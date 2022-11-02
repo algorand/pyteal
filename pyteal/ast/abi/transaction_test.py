@@ -134,7 +134,7 @@ def test_Transaction__set_index():
                 pt.TealOp(
                     None,
                     pt.Op.store,
-                    cast(pt.ScratchVar, tv.t.stored_value).slot,
+                    cast(pt.ScratchVar, tv.t._stored_value).slot,
                 ),
             ]
         )

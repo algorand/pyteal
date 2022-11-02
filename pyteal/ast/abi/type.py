@@ -77,16 +77,16 @@ class BaseType(ABC):
         """Create a new BaseType."""
         super().__init__()
         self._type_spec: Final[TypeSpec] = spec
-        self.stored_value: AbstractVar = ScratchVar(spec.storage_type())
+        self._stored_value: AbstractVar = ScratchVar(spec.storage_type())
 
     def _set_data_source(self, storage: AbstractVar) -> None:
-        self.stored_value = storage
+        self._stored_value = storage
 
     def _load_value(self) -> Expr:
-        return self.stored_value.load()
+        return self._stored_value.load()
 
     def _store_value(self, value: Expr) -> Expr:
-        return self.stored_value.store(value)
+        return self._stored_value.store(value)
 
     def type_spec(self) -> TypeSpec:
         """Get the TypeSpec for this ABI type instance."""
@@ -240,7 +240,7 @@ class ReturnedValue(ComputedValue):
                 f"ABI return subroutine deferred_expr is expected to be typed {output.type_spec().storage_type()}, "
                 f"but has type {declaration.deferred_expr.type_of()}."
             )
-        return output.stored_value.store(self.computation)
+        return output._stored_value.store(self.computation)
 
 
 ReturnedValue.__module__ = "pyteal.abi"

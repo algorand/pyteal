@@ -106,7 +106,7 @@ def test_DynamicArray_decode():
                 assert expr.type_of() == pt.TealType.none
                 assert not expr.has_return()
 
-                expectedExpr = value.stored_value.store(
+                expectedExpr = value._stored_value.store(
                     substring_for_decoding(
                         encoded,
                         start_index=start_index,
@@ -141,7 +141,7 @@ def test_DynamicArray_set_values():
         assert not expr.has_return()
 
         length_tmp = abi.Uint16()
-        expectedExpr = value.stored_value.store(
+        expectedExpr = value._stored_value.store(
             pt.Concat(
                 pt.Seq(length_tmp.set(len(values)), length_tmp.encode()),
                 _encode_tuple(values),
@@ -185,12 +185,12 @@ def test_DynamicArray_set_copy():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(pt.ScratchVar, otherArray.stored_value).slot,
+                cast(pt.ScratchVar, otherArray._stored_value).slot,
             ),
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(pt.ScratchVar, value.stored_value).slot,
+                cast(pt.ScratchVar, value._stored_value).slot,
             ),
         ]
     )
@@ -218,7 +218,7 @@ def test_DynamicArray_set_computed():
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(pt.ScratchVar, value.stored_value).slot,
+                cast(pt.ScratchVar, value._stored_value).slot,
             ),
         ]
     )
@@ -268,7 +268,7 @@ def test_DynamicBytes_set_py_bytes(test_case: bytes | bytearray):
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(pt.ScratchVar, value.stored_value).slot,
+                cast(pt.ScratchVar, value._stored_value).slot,
             ),
         ]
     )
@@ -299,12 +299,12 @@ def test_DynamicBytes_set_expr(test_case: bytes | bytearray):
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(pt.ScratchVar, value.stored_value).slot,
+                cast(pt.ScratchVar, value._stored_value).slot,
             ),
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(pt.ScratchVar, value.stored_value).slot,
+                cast(pt.ScratchVar, value._stored_value).slot,
             ),
             pt.TealOp(None, pt.Op.len),
             pt.TealOp(None, pt.Op.itob),
@@ -312,13 +312,13 @@ def test_DynamicBytes_set_expr(test_case: bytes | bytearray):
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(pt.ScratchVar, value.stored_value).slot,
+                cast(pt.ScratchVar, value._stored_value).slot,
             ),
             pt.TealOp(None, pt.Op.concat),
             pt.TealOp(
                 None,
                 pt.Op.store,
-                cast(pt.ScratchVar, value.stored_value).slot,
+                cast(pt.ScratchVar, value._stored_value).slot,
             ),
         ]
     )
@@ -343,7 +343,7 @@ def test_DynamicBytes_get():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(pt.ScratchVar, value.stored_value).slot,
+                cast(pt.ScratchVar, value._stored_value).slot,
             ),
             pt.TealOp(None, pt.Op.extract, 2, 0),
         ]
@@ -365,7 +365,7 @@ def test_DynamicArray_encode():
             pt.TealOp(
                 None,
                 pt.Op.load,
-                cast(pt.ScratchVar, value.stored_value).slot,
+                cast(pt.ScratchVar, value._stored_value).slot,
             ),
         ]
     )

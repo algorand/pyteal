@@ -109,7 +109,7 @@ class StaticArray(Array[T], Generic[T, N]):
                 raise TealInputError(
                     f"Cannot assign type {values.type_spec()} to {self.type_spec()}"
                 )
-            return self.stored_value.store(values.encode())
+            return self._stored_value.store(values.encode())
 
         if self.type_spec().length_static() != len(values):
             raise TealInputError(
@@ -207,11 +207,11 @@ class StaticBytes(StaticArray[Byte, N], Generic[N]):
                     raise TealInputError(
                         f"Got bytes with length {len(values)}, expect {self.type_spec().length_static()}"
                     )
-                return self.stored_value.store(Bytes(values))
+                return self._stored_value.store(Bytes(values))
             case Expr():
                 return Seq(
-                    self.stored_value.store(values),
-                    Assert(self.length() == Len(self.stored_value.load())),
+                    self._stored_value.store(values),
+                    Assert(self.length() == Len(self._stored_value.load())),
                 )
 
         return super().set(values)
@@ -222,7 +222,7 @@ class StaticBytes(StaticArray[Byte, N], Generic[N]):
         Returns:
             A Pyteal expression that loads byte encoding of this StaticBytes.
         """
-        return self.stored_value.load()
+        return self._stored_value.load()
 
 
 StaticBytes.__module__ = "pyteal.abi"
