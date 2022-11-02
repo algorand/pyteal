@@ -154,32 +154,3 @@ class DupN(Expr):
 
 
 DupN.__module__ = "pyteal"
-
-
-class PopN(Expr):
-    def __init__(self, repetition: int):
-        super().__init__()
-        if repetition < 0:
-            raise TealInputError("popn repetition should be non negative")
-        self.repetition = repetition
-
-    def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
-        verifyProgramVersion(
-            Op.popn.min_version,
-            options.version,
-            "Program version too low to use op popn",
-        )
-        op = TealOp(self, Op.popn, self.repetition)
-        return TealBlock.FromOp(options, op)
-
-    def __str__(self) -> str:
-        return f"(popn {self.repetition})"
-
-    def type_of(self) -> TealType:
-        return TealType.none
-
-    def has_return(self) -> bool:
-        return False
-
-
-PopN.__module__ = "pyteal"
