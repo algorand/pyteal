@@ -4,10 +4,11 @@ from collections.abc import Sequence as CollectionSequence
 from algosdk.abi import ABIType
 
 from pyteal.ast.abi.uint import Byte
-from pyteal.ast.abi.type import ComputedValue, BaseType, AbstractVar
+from pyteal.ast.abi.type import ComputedValue, BaseType
 from pyteal.ast.abi.array_dynamic import DynamicArray, DynamicArrayTypeSpec
 from pyteal.ast.abi.uint import ByteTypeSpec, Uint16TypeSpec
 
+from pyteal.ast.abstractvar import AbstractVar
 from pyteal.ast.int import Int
 from pyteal.ast.expr import Expr
 from pyteal.ast.bytes import Bytes

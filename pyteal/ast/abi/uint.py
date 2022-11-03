@@ -8,6 +8,7 @@ from abc import abstractmethod
 
 from pyteal.types import TealType
 from pyteal.errors import TealInputError
+from pyteal.ast.abstractvar import AbstractVar
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.assert_ import Assert
@@ -17,7 +18,7 @@ from pyteal.ast.bytes import Bytes
 from pyteal.ast.unaryexpr import Itob, Btoi
 from pyteal.ast.binaryexpr import GetByte, ExtractUint16, ExtractUint32, ExtractUint64
 from pyteal.ast.ternaryexpr import SetByte
-from pyteal.ast.abi.type import ComputedValue, TypeSpec, BaseType, AbstractVar
+from pyteal.ast.abi.type import ComputedValue, TypeSpec, BaseType
 
 NUM_BITS_IN_BYTE = 8
 

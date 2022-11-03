@@ -2,7 +2,8 @@ from typing import TypeVar, Generic, Callable, Final, cast
 from abc import ABC, abstractmethod
 
 from pyteal.ast.expr import Expr
-from pyteal.ast.scratchvar import ScratchVar, AbstractVar
+from pyteal.ast.abstractvar import AbstractVar
+from pyteal.ast.scratchvar import ScratchVar
 from pyteal.ast.seq import Seq
 from pyteal.errors import TealInputError
 from pyteal.types import TealType, require_type, types_match
