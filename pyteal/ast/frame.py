@@ -115,7 +115,7 @@ class FrameVar(AbstractVar):
         if not validate_types:
             # validation always happens inside of FramBury's initializer
             raise TealInternalError(
-                f"DynamicScratchVar's must validate_types but {validate_types=}"
+                f"FrameVar's must validate_types but {validate_types=}"
             )
 
         return FrameBury(value, self.frame_index)
