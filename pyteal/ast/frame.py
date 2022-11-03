@@ -2,9 +2,9 @@ from typing import TYPE_CHECKING
 
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
-from pyteal.ast.scratchvar import AbstractVar
+from pyteal.ast.abstractvar import AbstractVar
 from pyteal.types import TealType, require_type, types_match
-from pyteal.errors import TealInputError, verifyProgramVersion
+from pyteal.errors import TealInputError, TealInternalError, verifyProgramVersion
 from pyteal.ir import TealBlock, TealSimpleBlock, TealOp, Op
 
 if TYPE_CHECKING:
@@ -131,7 +131,13 @@ class FrameVar(AbstractVar):
     def storage_type(self) -> TealType:
         return self.stack_type
 
-    def store(self, value: Expr) -> Expr:
+    def store(self, value: Expr, validate_types: bool = True) -> Expr:
+        if not validate_types:
+            # validation always happens inside of FramBury's initializer
+            raise TealInternalError(
+                f"FrameVar's must validate_types but {validate_types=}"
+            )
+
         return FrameBury(value, self.frame_index)
 
     def load(self) -> Expr:

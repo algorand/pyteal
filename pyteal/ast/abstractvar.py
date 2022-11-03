@@ -5,7 +5,7 @@ from pyteal.ast.expr import Expr
 
 class AbstractVar(ABC):
     @abstractmethod
-    def store(self, value: Expr) -> Expr:
+    def store(self, value: Expr, validate_types: bool = True) -> Expr:
         pass
 
     @abstractmethod

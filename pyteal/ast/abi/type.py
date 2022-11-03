@@ -1,11 +1,12 @@
 from typing import TypeVar, Generic, Callable, Final, cast
 from abc import ABC, abstractmethod
 
-from pyteal.errors import TealInputError
-from pyteal.types import TealType
 from pyteal.ast.expr import Expr
-from pyteal.ast.scratchvar import ScratchVar, AbstractVar
+from pyteal.ast.abstractvar import AbstractVar
+from pyteal.ast.scratchvar import ScratchVar
 from pyteal.ast.seq import Seq
+from pyteal.errors import TealInputError
+from pyteal.types import TealType, require_type, types_match
 
 
 class TypeSpec(ABC):
@@ -221,6 +222,8 @@ class ReturnedValue(ComputedValue):
         return self.type_spec
 
     def store_into(self, output: BaseType) -> Expr:
+        from pyteal.ast.subroutine import SubroutineCall
+
         if output.type_spec() != self.produced_type_spec():
             raise TealInputError(
                 f"expected type_spec {self.produced_type_spec()} but get {output.type_spec()}"
@@ -237,7 +240,21 @@ class ReturnedValue(ComputedValue):
                 f"ABI return subroutine deferred_expr is expected to be typed {output.type_spec().storage_type()}, "
                 f"but has type {declaration.deferred_expr.type_of()}."
             )
-        return output._stored_value.store(self.computation)
+        if (
+            isinstance(self.computation, SubroutineCall)
+            and self.computation.output_kwarg
+        ):
+            assert types_match(
+                self.computation.output_kwarg.abi_type.storage_type(),
+                output._stored_value.storage_type(),
+            )
+        else:
+            require_type(self.computation, output._stored_value.storage_type())
+
+        return output._stored_value.store(
+            self.computation,
+            validate_types=not isinstance(output._stored_value, ScratchVar),
+        )
 
 
 ReturnedValue.__module__ = "pyteal.abi"
