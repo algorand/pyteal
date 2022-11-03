@@ -1,7 +1,10 @@
-from typing import TYPE_CHECKING
+from dataclasses import dataclass, field
+from itertools import groupby
+from typing import TYPE_CHECKING, Optional
 
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
+from pyteal.ast.bytes import Bytes
 from pyteal.ast.abstractvar import AbstractVar
 from pyteal.types import TealType, require_type, types_match
 from pyteal.errors import TealInputError, TealInternalError, verifyProgramVersion
@@ -11,8 +14,88 @@ if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
 
 
+@dataclass
+class LocalTypeSegment:
+    local_type: TealType
+    cnt: int
+    auto_instance: Expr = field(init=False)
+
+    def __post_init__(self):
+        assert self.cnt > 0
+        match self.local_type:
+            case TealType.uint64 | TealType.anytype:
+                self.auto_instance = Int(0)
+            case TealType.bytes:
+                self.auto_instance = Bytes("")
+            case TealType.none:
+                raise TealInternalError(
+                    "Local variable in subroutine initialization must be typed."
+                )
+
+    def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
+        if self.cnt == 1:
+            inst_srt, inst_end = self.auto_instance.__teal__(options)
+            return inst_srt, inst_end
+        else:
+            dupn_srt, dupn_end = DupN(self.auto_instance, self.cnt).__teal__(options)
+            return dupn_srt, dupn_end
+
+
+LocalTypeSegment.__module__ = "pyteal"
+
+
+@dataclass
+class ProtoStackLayout:
+    arg_stack_types: list[TealType]
+    local_stack_types: list[TealType]
+    has_output: bool
+    output_index: Optional[int] = field(init=False)
+    succinct_repr: list[LocalTypeSegment] = field(init=False)
+
+    def __post_init__(self):
+        self.output_index = 0 if self.has_output else None
+        for t in self.arg_stack_types + self.local_stack_types:
+            if types_match(t, TealType.none):
+                raise TealInternalError(
+                    "Variables in frame memory layout must be typed."
+                )
+
+        self.succinct_repr = [
+            LocalTypeSegment(t_type, len(list(dup_seg)))
+            for t_type, dup_seg in groupby(self.local_stack_types)
+        ]
+
+        for i in reversed(range(len(self.succinct_repr) - 1)):
+            if self.succinct_repr[i + 1].local_type == TealType.anytype:
+                self.succinct_repr[i].cnt += self.succinct_repr[i + 1].cnt
+                self.succinct_repr.pop(i + 1)
+
+    def __getitem__(self, index: int):
+        if index < 0:
+            return self.arg_stack_types[len(self.arg_stack_types) + index]
+        return self.local_stack_types[index]
+
+    def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
+        seg_srt, seg_end = self.succinct_repr[0].__teal__(options)
+        for iter_seg in self.succinct_repr[1:]:
+            srt, end = iter_seg.__teal__(options)
+            seg_end.setNextBlock(srt)
+            seg_end = end
+        return seg_srt, seg_end
+
+
+ProtoStackLayout.__module__ = "pyteal"
+
+
 class Proto(Expr):
-    def __init__(self, num_args: int, num_returns: int, /, *, num_allocs: int = 0):
+    def __init__(
+        self,
+        num_args: int,
+        num_returns: int,
+        /,
+        *,
+        mem_layout: Optional[ProtoStackLayout] = None,
+    ):
         super().__init__()
         if num_args < 0:
             raise TealInputError(
@@ -24,7 +107,7 @@ class Proto(Expr):
             )
         self.num_args = num_args
         self.num_returns = num_returns
-        self.num_allocs = num_allocs
+        self.mem_layout: Optional[ProtoStackLayout] = mem_layout
 
     def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
         verifyProgramVersion(
@@ -34,19 +117,14 @@ class Proto(Expr):
         )
         op = TealOp(self, Op.proto, self.num_args, self.num_returns)
         proto_srt, proto_end = TealBlock.FromOp(options, op)
-        if self.num_allocs == 0:
+        if not self.mem_layout:
             return proto_srt, proto_end
-        elif self.num_allocs == 1:
-            int_srt, int_end = Int(0).__teal__(options)
-            proto_end.setNextBlock(int_srt)
-            return proto_srt, int_end
-        else:
-            dupn_srt, dupn_end = DupN(Int(0), self.num_allocs).__teal__(options)
-            proto_end.setNextBlock(dupn_srt)
-            return proto_srt, dupn_end
+        local_srt, local_end = self.mem_layout.__teal__(options)
+        proto_end.setNextBlock(local_srt)
+        return proto_srt, local_end
 
     def __str__(self) -> str:
-        return f"(proto: num_args = {self.num_args}, num_rets = {self.num_returns}, num_allocs = {self.num_allocs})"
+        return f"(proto: num_args = {self.num_args}, num_rets = {self.num_returns})"
 
     def type_of(self) -> TealType:
         return TealType.none
@@ -59,9 +137,12 @@ Proto.__module__ = "pyteal"
 
 
 class FrameDig(Expr):
-    def __init__(self, frame_index: int):
+    def __init__(
+        self, frame_index: int, /, *, inferred_type: Optional[TealType] = None
+    ):
         super().__init__()
         self.frame_index = frame_index
+        self.dig_type = inferred_type if inferred_type else TealType.anytype
 
     def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
         verifyProgramVersion(
@@ -76,7 +157,7 @@ class FrameDig(Expr):
         return f"(frame_dig: dig_from = {self.frame_index})"
 
     def type_of(self) -> TealType:
-        return TealType.anytype
+        return self.dig_type
 
     def has_return(self) -> bool:
         return False
@@ -86,16 +167,24 @@ FrameDig.__module__ = "pyteal"
 
 
 class FrameBury(Expr):
-    def __init__(self, value: Expr, frame_index: int):
+    def __init__(
+        self,
+        value: Expr,
+        frame_index: int,
+        /,
+        *,
+        inferred_type: Optional[TealType] = None,
+    ):
         from pyteal.ast.subroutine import SubroutineCall
 
         super().__init__()
+
+        target_type = inferred_type if inferred_type else TealType.anytype
+
         if not isinstance(value, SubroutineCall) or not value.output_kwarg:
-            require_type(value, TealType.anytype)
+            require_type(value, target_type)
         else:
-            assert types_match(
-                value.output_kwarg.abi_type.storage_type(), TealType.anytype
-            )
+            assert types_match(value.output_kwarg.abi_type.storage_type(), target_type)
 
         self.value = value
         self.frame_index = frame_index
@@ -123,10 +212,15 @@ FrameBury.__module__ = "pyteal"
 
 
 class FrameVar(AbstractVar):
-    def __init__(self, storage_type: TealType, frame_index: int) -> None:
+    def __init__(self, under_proto: Proto, frame_index: int) -> None:
         super().__init__()
-        self.stack_type = storage_type
+        self.proto = under_proto
         self.frame_index = frame_index
+        self.stack_type = (
+            self.proto.mem_layout[frame_index]
+            if self.proto.mem_layout
+            else TealType.anytype
+        )
 
     def storage_type(self) -> TealType:
         return self.stack_type
@@ -138,10 +232,10 @@ class FrameVar(AbstractVar):
                 f"FrameVar's must validate_types but {validate_types=}"
             )
 
-        return FrameBury(value, self.frame_index)
+        return FrameBury(value, self.frame_index, inferred_type=self.stack_type)
 
     def load(self) -> Expr:
-        return FrameDig(self.frame_index)
+        return FrameDig(self.frame_index, inferred_type=self.stack_type)
 
 
 FrameVar.__module__ = "pyteal"
