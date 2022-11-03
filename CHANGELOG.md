@@ -1,5 +1,24 @@
 # Unreleased
 
+# 0.20.0
+
+## Added
+* adding program page related ops ([#412](https://github.com/algorand/pyteal/pull/412))
+* Add Replace ([#413](https://github.com/algorand/pyteal/pull/413))
+* Add Block ([#415](https://github.com/algorand/pyteal/pull/415))
+* Add JsonRef ([#417](https://github.com/algorand/pyteal/pull/417))
+* Add Base64Decode ([#418](https://github.com/algorand/pyteal/pull/418))
+* Support Secp256r1 curve ([#423](https://github.com/algorand/pyteal/pull/423))
+* Add VrfVerify ([#419](https://github.com/algorand/pyteal/pull/419))
+* Add Sha3_256 ([#425](https://github.com/algorand/pyteal/pull/425))
+* Support FirstValidTime transaction field ([#424](https://github.com/algorand/pyteal/pull/424))
+* Add Ed25519Verify_Bare ([#426](https://github.com/algorand/pyteal/pull/426))
+* AVM Boxes Ops in Pyteal ([#438](https://github.com/algorand/pyteal/pull/438))
+* Support new AVM 8 account parameters ([#555](https://github.com/algorand/pyteal/pull/555))
+
+## Changed
+* Changes to avm8 docs ([#546](https://github.com/algorand/pyteal/pull/546))
+
 # 0.19.0
 
 ## Added
