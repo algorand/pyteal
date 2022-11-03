@@ -1,13 +1,25 @@
 # ---- Setup ---- #
 LOCAL_VERSION := "$(shell python setup.py --version)"
 REMOTE_VERSION := "$(lastword $(shell pip index versions pyteal))"
+RELEASEABLE := echo "$(LOCAL_VERSION) $(REMOTE_VERSION)" | xargs python -c "import sys; print(0) if sys.argv[-2].split('.') <= sys.argv[-1].split('.') else print(1)"
+COND := 1
 
-releasable-version:
-ifeq ($(REMOTE_VERSION), $(LOCAL_VERSION))
-	@$(error Cannot release as remote version = local version = $(LOCAL_VERSION))
-else
-	@echo "COPACETIC"
-endif
+echo:
+	echo $(RELEASEABLE)
+
+# releasable-version:
+# ifeq ($(REMOTE_VERSION), $(LOCAL_VERSION))
+# 	@$(error Cannot release as remote version = local version = $(LOCAL_VERSION))
+# else
+# 	@echo "COPACETIC"
+# endif
+
+# releaseable-version:
+# 	$(ifeq ($(strip $(RELEASEABLE)), 1) ,,$(error Cannot release as remote version = $(REMOTE_VERSION) >= local version = $(LOCAL_VERSION)))
+
+fail-if-unreleasable:
+	@echo "$(LOCAL_VERSION) $(REMOTE_VERSION)" | xargs python -c "import sys; a=sys.argv; f=lambda s: list(map(int, s.split('.'))); assert (x:=f(a[-2])) > (y:=f(a[-1])), f'cannot release as local={x} v. pipy={y}'"
+
 
 setup-development:
 	pip install -e .
