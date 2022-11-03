@@ -1,5 +1,9 @@
 # Unreleased
 
+# Fixed
+* Allowing the `MethodCall` and `ExecuteMethodCall` to be passed `None` as app_id argument in the case of an app create transaction ([#592](https://github.com/algorand/pyteal/pull/592))
+
+
 # 0.20.1
 
 ## Added
