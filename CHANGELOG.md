@@ -1,6 +1,6 @@
 # Unreleased
 
-# 0.20.0
+# 0.20.1
 
 ## Added
 * adding program page related ops ([#412](https://github.com/algorand/pyteal/pull/412))
