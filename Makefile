@@ -1,4 +1,13 @@
 # ---- Setup ---- #
+LOCAL_VERSION := "$(shell python setup.py --version)"
+REMOTE_VERSION := "$(lastword $(shell pip index versions pyteal))"
+
+releasable-version:
+ifeq ($(REMOTE_VERSION), $(LOCAL_VERSION))
+	@$(error Cannot release as remote version = local version = $(LOCAL_VERSION))
+else
+	@echo "COPACETIC"
+endif
 
 setup-development:
 	pip install -e .
