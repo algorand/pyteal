@@ -173,18 +173,14 @@ class FrameBury(Expr):
         frame_index: int,
         /,
         *,
+        validate_types: bool = True,
         inferred_type: Optional[TealType] = None,
     ):
-        from pyteal.ast.subroutine import SubroutineCall
-
         super().__init__()
 
-        target_type = inferred_type if inferred_type else TealType.anytype
-
-        if not isinstance(value, SubroutineCall) or not value.output_kwarg:
+        if validate_types:
+            target_type = inferred_type if inferred_type else TealType.anytype
             require_type(value, target_type)
-        else:
-            assert types_match(value.output_kwarg.abi_type.storage_type(), target_type)
 
         self.value = value
         self.frame_index = frame_index
@@ -226,13 +222,12 @@ class FrameVar(AbstractVar):
         return self.stack_type
 
     def store(self, value: Expr, validate_types: bool = True) -> Expr:
-        if not validate_types:
-            # validation always happens inside of FramBury's initializer
-            raise TealInternalError(
-                f"FrameVar's must validate_types but {validate_types=}"
-            )
-
-        return FrameBury(value, self.frame_index, inferred_type=self.stack_type)
+        return FrameBury(
+            value,
+            self.frame_index,
+            validate_types=validate_types,
+            inferred_type=self.stack_type,
+        )
 
     def load(self) -> Expr:
         return FrameDig(self.frame_index, inferred_type=self.stack_type)
