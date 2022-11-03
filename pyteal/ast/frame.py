@@ -1,8 +1,9 @@
 from typing import TYPE_CHECKING
 
 from pyteal.ast.expr import Expr
+from pyteal.ast.int import Int
 from pyteal.ast.abstractvar import AbstractVar
-from pyteal.types import TealType, require_type
+from pyteal.types import TealType, require_type, types_match
 from pyteal.errors import TealInputError, TealInternalError, verifyProgramVersion
 from pyteal.ir import TealBlock, TealSimpleBlock, TealOp, Op
 
@@ -11,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class Proto(Expr):
-    def __init__(self, num_args: int, num_returns: int):
+    def __init__(self, num_args: int, num_returns: int, /, *, num_allocs: int = 0):
         super().__init__()
         if num_args < 0:
             raise TealInputError(
@@ -23,6 +24,7 @@ class Proto(Expr):
             )
         self.num_args = num_args
         self.num_returns = num_returns
+        self.num_allocs = num_allocs
 
     def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
         verifyProgramVersion(
@@ -31,10 +33,20 @@ class Proto(Expr):
             "Program version too low to use op proto",
         )
         op = TealOp(self, Op.proto, self.num_args, self.num_returns)
-        return TealBlock.FromOp(options, op)
+        proto_srt, proto_end = TealBlock.FromOp(options, op)
+        if self.num_allocs == 0:
+            return proto_srt, proto_end
+        elif self.num_allocs == 1:
+            int_srt, int_end = Int(0).__teal__(options)
+            proto_end.setNextBlock(int_srt)
+            return proto_srt, int_end
+        else:
+            dupn_srt, dupn_end = DupN(Int(0), self.num_allocs).__teal__(options)
+            proto_end.setNextBlock(dupn_srt)
+            return proto_srt, dupn_end
 
     def __str__(self) -> str:
-        return f"(proto: num_args = {self.num_args}, num_returns = {self.num_returns})"
+        return f"(proto: num_args = {self.num_args}, num_rets = {self.num_returns}, num_allocs = {self.num_allocs})"
 
     def type_of(self) -> TealType:
         return TealType.none
@@ -75,8 +87,16 @@ FrameDig.__module__ = "pyteal"
 
 class FrameBury(Expr):
     def __init__(self, value: Expr, frame_index: int):
+        from pyteal.ast.subroutine import SubroutineCall
+
         super().__init__()
-        require_type(value, TealType.anytype)
+        if not isinstance(value, SubroutineCall) or not value.output_kwarg:
+            require_type(value, TealType.anytype)
+        else:
+            assert types_match(
+                value.output_kwarg.abi_type.storage_type(), TealType.anytype
+            )
+
         self.value = value
         self.frame_index = frame_index
 
