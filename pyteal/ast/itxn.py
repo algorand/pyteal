@@ -1,7 +1,7 @@
 from enum import Enum
 import algosdk
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, Optional
 from pyteal.ast.int import EnumInt
 from pyteal.ast.for_ import For
 from pyteal.ast.int import Int
@@ -253,10 +253,10 @@ class InnerTxnBuilder:
     def ExecuteMethodCall(
         cls,
         *,
-        app_id: Expr,
+        app_id: Optional[Expr],
         method_signature: str,
         args: list[abi.BaseType | Expr | dict[TxnField, Expr | list[Expr]]],
-        extra_fields: dict[TxnField, Expr | list[Expr]] = None,
+        extra_fields: Optional[dict[TxnField, Expr | list[Expr]]] = None,
     ) -> Expr:
         """Performs a single app call transaction formatted as an ABI method call.
 
@@ -311,10 +311,10 @@ class InnerTxnBuilder:
     def MethodCall(
         cls,
         *,
-        app_id: Expr,
+        app_id: Optional[Expr],
         method_signature: str,
         args: list[abi.BaseType | Expr | dict[TxnField, Expr | list[Expr]]],
-        extra_fields: dict[TxnField, Expr | list[Expr]] = None,
+        extra_fields: Optional[dict[TxnField, Expr | list[Expr]]] = None,
     ) -> Expr:
         """Adds an ABI method call transaction to the current inner transaction group.
 
