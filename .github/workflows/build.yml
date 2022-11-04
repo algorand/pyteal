@@ -77,10 +77,26 @@ jobs:
           name: pyteal.docset
           path: docs/pyteal.docset.tar.gz
 
+  validate-release:
+    runs-on: ubuntu-20.04
+    container: python:3.10
+    needs: ['build-test']
+    strategy:
+      matrix:
+        python: [ "3.10" ]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Validate Release
+        run: make fail-if-unreleasable
+
+
   upload-to-pypi:
     runs-on: ubuntu-20.04
     container: python:3.10
-    needs: ['build-test', 'run-integration-tests', 'build-docset']
+    needs: ['build-test', 'validate-release', 'run-integration-tests', 'build-docset']
     if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
     steps:
       - name: Check out code
