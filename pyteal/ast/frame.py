@@ -106,7 +106,6 @@ class Proto(Expr):
         self,
         num_args: int,
         num_returns: int,
-        /,
         *,
         mem_layout: Optional[ProtoStackLayout] = None,
     ):
@@ -151,9 +150,7 @@ Proto.__module__ = "pyteal"
 
 
 class FrameDig(Expr):
-    def __init__(
-        self, frame_index: int, /, *, inferred_type: Optional[TealType] = None
-    ):
+    def __init__(self, frame_index: int, *, inferred_type: Optional[TealType] = None):
         super().__init__()
         self.frame_index = frame_index
         self.dig_type = inferred_type if inferred_type else TealType.anytype
@@ -185,7 +182,6 @@ class FrameBury(Expr):
         self,
         value: Expr,
         frame_index: int,
-        /,
         *,
         validate_types: bool = True,
         inferred_type: Optional[TealType] = None,
