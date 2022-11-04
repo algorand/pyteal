@@ -21,7 +21,10 @@ class LocalTypeSegment:
     auto_instance: Expr = field(init=False)
 
     def __post_init__(self):
-        assert self.cnt > 0
+        if self.cnt <= 0:
+            raise TealInternalError(
+                "LocalTypeSegment initialization error: segment length must be strictly greatly than 0."
+            )
         match self.local_type:
             case TealType.uint64 | TealType.anytype:
                 self.auto_instance = Int(0)
