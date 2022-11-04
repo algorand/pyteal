@@ -56,22 +56,33 @@ class ProtoStackLayout:
     succinct_repr: list[LocalTypeSegment] = field(init=False)
 
     def __post_init__(self):
-        self.output_index = 0 if self.has_output else None
-        for t in self.arg_stack_types + self.local_stack_types:
-            if types_match(t, TealType.none):
-                raise TealInternalError(
-                    "Variables in frame memory layout must be typed."
-                )
+        if self.has_output and len(self.local_stack_types) == 0:
+            raise TealInternalError(
+                "ProtoStackLayout initialization error: cannot output without local variable allocs."
+            )
 
+        self.output_index = 0 if self.has_output else None
+        if not all(map(lambda t: types_match(t, TealType.none), self.arg_stack_types)):
+            raise TealInternalError("Variables in frame memory layout must be typed.")
+
+        # Type check of local variables are performed over LocalTypeSegments
         self.succinct_repr = [
             LocalTypeSegment(t_type, len(list(dup_seg)))
             for t_type, dup_seg in groupby(self.local_stack_types)
         ]
 
+        # anytype at i + 1 merge to i
         for i in reversed(range(len(self.succinct_repr) - 1)):
             if self.succinct_repr[i + 1].local_type == TealType.anytype:
                 self.succinct_repr[i].cnt += self.succinct_repr[i + 1].cnt
                 self.succinct_repr.pop(i + 1)
+
+        if (
+            len(self.succinct_repr) > 1
+            and self.succinct_repr[0].local_type == TealType.anytype
+        ):
+            self.succinct_repr[1].cnt += self.succinct_repr[0].cnt
+            self.succinct_repr.pop(0)
 
     def __getitem__(self, index: int):
         if index < 0:
