@@ -8,7 +8,7 @@ on:
       - master
 
 jobs:
-  build:
+  build-test:
     runs-on: ubuntu-20.04
     container: python:${{ matrix.python }}
     strategy:
@@ -22,15 +22,6 @@ jobs:
           fetch-depth: 0
       - name: Install python dependencies
         run: make setup-development
-
-  build-test:
-    runs-on: ubuntu-20.04
-    container: python:${{ matrix.python }}
-    needs: ['build']
-    strategy:
-      matrix:
-        python: ["3.10"]
-    steps:
       - name: Build and Test
         run: make lint-and-test
 
@@ -89,7 +80,6 @@ jobs:
   validate-release:
     runs-on: ubuntu-20.04
     container: python:3.10
-    needs: ['build']
     strategy:
       matrix:
         python: [ "3.10" ]
