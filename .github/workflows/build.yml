@@ -80,9 +80,7 @@ jobs:
   validate-release:
     runs-on: ubuntu-20.04
     container: python:3.10
-    strategy:
-      matrix:
-        python: [ "3.10" ]
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
     steps:
       - name: Check out code
         uses: actions/checkout@v2
