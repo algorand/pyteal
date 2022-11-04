@@ -1,10 +1,12 @@
 # ---- Setup ---- #
 LOCAL_VERSION := "$(shell python setup.py --version)"
 REMOTE_VERSION := "$(lastword $(shell pip index versions pyteal))"
-RELEASEABLE := echo "$(LOCAL_VERSION) $(REMOTE_VERSION)" | xargs python -c "import sys; print(0) if sys.argv[-2].split('.') <= sys.argv[-1].split('.') else print(1)"
 
-echo:
-	echo $(RELEASEABLE)
+
+# RELEASEABLE := echo "$(LOCAL_VERSION) $(REMOTE_VERSION)" | xargs python -c "import sys; print(0) if sys.argv[-2].split('.') <= sys.argv[-1].split('.') else print(1)"
+
+# echo:
+# 	echo $(RELEASEABLE)
 
 # releasable-version:
 # ifeq ($(REMOTE_VERSION), $(LOCAL_VERSION))
