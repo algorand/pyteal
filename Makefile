@@ -1,8 +1,9 @@
 # ---- Setup ---- #
 LOCAL_VERSION := "$(shell python setup.py --version)"
-REMOTE_VERSION := "$(lastword $(shell pip index versions pyteal))"
+REMOTE_VERSION := "$(shell pip index versions pyteal | xargs python -c 'import sys; a=sys.argv; print(".".join(map(str, max(map(lambda s: list(map(lambda i: int(i) if i.isnumeric() else -1, s.replace(",", "").split("."))), sys.argv)))))' )"
 
 fail-if-unreleasable:
+	@echo "VALIDATING new_version=$(LOCAL_VERSION) vs. pypi=$(REMOTE_VERSION)"
 	@echo "$(LOCAL_VERSION) $(REMOTE_VERSION)" | xargs python -c "import sys; a=sys.argv; f=lambda s: list(map(int, s.split('.'))); assert (x:=f(a[-2])) > (y:=f(a[-1])), f'cannot release as local={x} v. pipy={y}'"
 	@echo "You're all good to go. Enjoy releasing new_version=$(LOCAL_VERSION) (> pypi=$(REMOTE_VERSION))"
 
@@ -83,11 +84,10 @@ all-tests: lint-and-test test-integration
 
 ACT_JOB = run-integration-tests
 local-gh-job:
-	act -j $(ACT_JOB)
+	act -j "$(ACT_JOB)"
 
 local-gh-simulate:
 	act
-
 
 # ---- Extras ---- #
 
