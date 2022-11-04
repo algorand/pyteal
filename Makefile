@@ -18,6 +18,7 @@ echo:
 
 fail-if-unreleasable:
 	@echo "$(LOCAL_VERSION) $(REMOTE_VERSION)" | xargs python -c "import sys; a=sys.argv; f=lambda s: list(map(int, s.split('.'))); assert (x:=f(a[-2])) > (y:=f(a[-1])), f'cannot release as local={x} v. pipy={y}'"
+	@echo "You're all good to go. Enjoy releasing new_version=$(LOCAL_VERSION) (> pypi=$(REMOTE_VERSION))"
 
 
 setup-development:
