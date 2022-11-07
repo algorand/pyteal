@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
 class LocalTypeSegment(Expr):
     def __init__(self, local_type: TealType, count: int):
+        super().__init__()
         self.local_type = local_type
         self.count = count
         self.auto_instance: Expr
@@ -61,6 +62,7 @@ class ProtoStackLayout(Expr):
         local_stack_types: list[TealType],
         num_returns: int,
     ):
+        super().__init__()
         if num_returns < 0:
             raise TealInternalError("Return number should be non-negative.")
         elif num_returns > len(local_stack_types):
