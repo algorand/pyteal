@@ -116,11 +116,15 @@ def test_dupn_invalid():
 
 
 def test_local_type_segment_invalid():
-    with pytest.raises(pt.TealInternalError):
+    with pytest.raises(pt.TealInternalError) as tie:
         LocalTypeSegment(pt.TealType.anytype, 0)
 
-    with pytest.raises(pt.TealInternalError):
+    assert "segment length must be strictly greater than 0" in str(tie)
+
+    with pytest.raises(pt.TealInternalError) as tie:
         LocalTypeSegment(pt.TealType.anytype, -1)
+
+    assert "segment length must be strictly greater than 0" in str(tie)
 
     with pytest.raises(pt.TealInternalError) as tie:
         LocalTypeSegment(pt.TealType.none, 2)

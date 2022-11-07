@@ -21,7 +21,7 @@ class LocalTypeSegment(Expr):
 
         if self.count <= 0:
             raise TealInternalError(
-                "LocalTypeSegment initialization error: segment length must be strictly greatly than 0."
+                "LocalTypeSegment initialization error: segment length must be strictly greater than 0."
             )
         match self.local_type:
             case TealType.uint64 | TealType.anytype:
