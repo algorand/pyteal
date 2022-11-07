@@ -251,10 +251,7 @@ class ReturnedValue(ComputedValue):
         else:
             require_type(self.computation, output._stored_value.storage_type())
 
-        return output._stored_value.store(
-            self.computation,
-            validate_types=not isinstance(output._stored_value, ScratchVar),
-        )
+        return output._stored_value.store(self.computation, validate_types=False)
 
 
 ReturnedValue.__module__ = "pyteal.abi"

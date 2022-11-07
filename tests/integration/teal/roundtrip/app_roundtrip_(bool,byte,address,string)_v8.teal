@@ -14,7 +14,7 @@ return
 // tuple_complement
 tuplecomplement_0:
 proto 1 1
-int 0
+byte ""
 frame_dig -1
 int 0
 getbit
@@ -76,7 +76,7 @@ retsub
 // round_tripper
 roundtripper_1:
 proto 1 1
-int 0
+byte ""
 frame_dig -1
 callsub tuplecomplement_0
 store 6
@@ -185,7 +185,7 @@ retsub
 // array_complement
 arraycomplement_5:
 proto 1 1
-int 0
+byte ""
 frame_dig -1
 int 1
 int 0
@@ -640,7 +640,7 @@ retsub
 // string_reverse
 stringreverse_6:
 proto 1 1
-int 0
+byte ""
 frame_dig -1
 int 1
 int 0

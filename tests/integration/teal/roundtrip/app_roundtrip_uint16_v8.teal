@@ -31,7 +31,7 @@ retsub
 // round_tripper
 roundtripper_1:
 proto 1 1
-int 0
+byte ""
 frame_dig -1
 callsub numericalcomp_0
 store 2

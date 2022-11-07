@@ -9,7 +9,7 @@ from pyteal.ast import abi
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar, ScratchSlot
-from pyteal.ast.frame import FrameDig, Proto
+from pyteal.ast.frame import FrameDig, Proto, FrameVar, ProtoStackLayout
 from pyteal.errors import TealInputError, TealInternalError, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.types import TealType
@@ -914,7 +914,7 @@ class SubroutineEval:
     """
 
     var_n_loaded: Callable[
-        [SubroutineDefinition, str],
+        [SubroutineDefinition, str, Optional[Proto]],
         tuple[Optional[ScratchVar], ScratchVar | abi.BaseType | Expr],
     ]
     use_frame_pt: bool = False
@@ -923,6 +923,7 @@ class SubroutineEval:
     def __var_n_loaded(
         subroutine: SubroutineDefinition,
         param: str,
+        _: Optional[Proto] = None,
     ) -> tuple[ScratchVar, ScratchVar | abi.BaseType | Expr]:
         loaded_var: ScratchVar | abi.BaseType | Expr
         argument_var: ScratchVar
@@ -948,8 +949,12 @@ class SubroutineEval:
     def __var_n_loaded_fp(
         subroutine: SubroutineDefinition,
         param: str,
+        proto: Optional[Proto],
     ) -> tuple[Optional[ScratchVar], ScratchVar | abi.BaseType | Expr]:
-        from pyteal.ast.frame import FrameVar
+        if not proto:
+            raise TealInternalError(
+                "proto should be available for frame pointer based subroutine."
+            )
 
         loaded_var: ScratchVar | abi.BaseType | Expr
         argument_var: Optional[ScratchVar]
@@ -962,7 +967,7 @@ class SubroutineEval:
             dig_index = (
                 subroutine.arguments().index(param) - subroutine.argument_count()
             )
-            internal_abi_var._stored_value = FrameVar(TealType.anytype, dig_index)
+            internal_abi_var._stored_value = FrameVar(proto, dig_index)
             argument_var = None
             loaded_var = internal_abi_var
         else:
@@ -974,14 +979,49 @@ class SubroutineEval:
 
         return argument_var, loaded_var
 
+    @staticmethod
+    def __proto(subroutine: SubroutineDefinition) -> Proto:
+        arg_stack_types: list[TealType] = []
+        for t in subroutine.expected_arg_types:
+            if t is Expr:
+                arg_stack_types.append(TealType.anytype)
+            elif t is ScratchVar:
+                arg_stack_types.append(TealType.uint64)
+            else:
+                arg_stack_types.append(cast(abi.TypeSpec, t).storage_type())
+
+        num_return_allocs: int = int(subroutine.has_abi_output)
+
+        local_stack_types: list[TealType] = []
+        if subroutine.has_abi_output:
+            output_info = cast(
+                OutputKwArgInfo, OutputKwArgInfo.from_dict(subroutine.output_kwarg)
+            )
+            local_stack_types = [output_info.abi_type.storage_type()]
+
+        layout: ProtoStackLayout = ProtoStackLayout(
+            arg_stack_types, local_stack_types, num_return_allocs
+        )
+
+        # if subroutine do not have abi output, then only two cases happen:
+        # - subroutine is a normal subroutine, then check subroutine body evaluates to something, rather than none
+        # - subroutine is an ABIReturnSubroutine, the type is void, and its subroutine body type of is always none
+        num_stack_outputs: int = (
+            1
+            if subroutine.has_abi_output
+            else int(subroutine.return_type != TealType.none)
+        )
+
+        return Proto(subroutine.argument_count(), num_stack_outputs, mem_layout=layout)
+
     def __call__(self, subroutine: SubroutineDefinition) -> SubroutineDeclaration:
-        from pyteal.ast.frame import FrameVar
+        proto = self.__proto(subroutine)
 
         args = subroutine.arguments()
         arg_vars: list[ScratchVar] = []
         loaded_args: list[ScratchVar | Expr | abi.BaseType] = []
         for arg in args:
-            arg_var, loaded_arg = self.var_n_loaded(subroutine, arg)
+            arg_var, loaded_arg = self.var_n_loaded(subroutine, arg, proto)
             if arg_var:
                 arg_vars.append(arg_var)
             loaded_args.append(loaded_arg)
@@ -993,7 +1033,7 @@ class SubroutineEval:
         if output_kwarg_info:
             output_carrying_abi = output_kwarg_info.abi_type.new_instance()
             if self.use_frame_pt:
-                output_carrying_abi._stored_value = FrameVar(TealType.anytype, 0)
+                output_carrying_abi._stored_value = FrameVar(proto, 0)
             abi_output_kwargs[output_kwarg_info.name] = output_carrying_abi
 
         # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:
@@ -1016,25 +1056,7 @@ class SubroutineEval:
 
         # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
         # need to reverse order of argumentVars because the last argument will be on top of the stack
-        body_ops: list[Expr] = []
-
-        stack_output_cnt: int
-        if not subroutine.has_abi_output:
-            # if subroutine do not have abi output, then only two cases happen:
-            # - subroutine is a normal subroutine, then check subroutine body evaluates to something, rather than none
-            # - subroutine is an ABIReturnSubroutine, the type is void, and its subroutine body type of is always none
-            stack_output_cnt = int(subroutine.return_type != TealType.none)
-        else:
-            stack_output_cnt = len(abi_output_kwargs)
-
-        if self.use_frame_pt:
-            body_ops = [
-                Proto(
-                    subroutine.argument_count(),
-                    stack_output_cnt,
-                    num_allocs=int(subroutine.has_abi_output),
-                )
-            ]
+        body_ops: list[Expr] = [] if not self.use_frame_pt else [proto]
 
         body_ops += [var.slot.store() for var in arg_vars[::-1]]
         body_ops.append(subroutine_body)

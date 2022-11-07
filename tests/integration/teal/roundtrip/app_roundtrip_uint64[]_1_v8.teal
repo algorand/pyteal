@@ -25,7 +25,7 @@ retsub
 // array_complement
 arraycomplement_1:
 proto 1 1
-int 0
+byte ""
 frame_dig -1
 int 8
 int 0
@@ -52,7 +52,7 @@ retsub
 // round_tripper
 roundtripper_2:
 proto 1 1
-int 0
+byte ""
 frame_dig -1
 callsub arraycomplement_1
 store 2
