@@ -36,13 +36,13 @@ def test_abi_algobank():
 
 
 def test_abi_vote():
-    from examples.application.abi.vote.contract import (
+    from examples.application.abi.poll.contract import (
         approval_program,
         clear_state_program,
         contract,
     )
 
-    target_dir = Path.cwd() / "examples" / "application" / "abi" / "vote"
+    target_dir = Path.cwd() / "examples" / "application" / "abi" / "poll"
 
     with open(target_dir / "approval.teal", "r") as expected_approval_program_file:
         expected_approval_program = "".join(
