@@ -1,0 +1,169 @@
+#pragma version 8
+txn NumAppArgs
+int 0
+==
+bnz main_l12
+txna ApplicationArgs 0
+method "create(string[],bool)void"
+==
+bnz main_l11
+txna ApplicationArgs 0
+method "open()void"
+==
+bnz main_l10
+txna ApplicationArgs 0
+method "close()void"
+==
+bnz main_l9
+txna ApplicationArgs 0
+method "submit(uint16)void"
+==
+bnz main_l8
+txna ApplicationArgs 0
+method "status()(bool,bool,(string,uint64)[])"
+==
+bnz main_l7
+err
+main_l7:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+callsub status_4
+store 2
+byte 0x151f7c75
+load 2
+concat
+log
+int 1
+return
+main_l8:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+int 0
+extract_uint16
+callsub submit_3
+int 1
+return
+main_l9:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+callsub close_2
+int 1
+return
+main_l10:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+callsub open_1
+int 1
+return
+main_l11:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+==
+&&
+assert
+txna ApplicationArgs 1
+store 0
+txna ApplicationArgs 2
+int 0
+int 8
+*
+getbit
+store 1
+load 0
+load 1
+callsub create_0
+int 1
+return
+main_l12:
+txn OnCompletion
+int DeleteApplication
+==
+bnz main_l14
+err
+main_l14:
+txn ApplicationID
+int 0
+!=
+assert
+txn Sender
+global CreatorAddress
+==
+assert
+int 1
+return
+
+// create
+create_0:
+store 8
+store 7
+retsub
+
+// open
+open_1:
+retsub
+
+// close
+close_2:
+retsub
+
+// submit
+submit_3:
+store 9
+retsub
+
+// status
+status_4:
+int 0
+store 3
+int 0
+store 4
+int 0
+itob
+extract 6 0
+byte ""
+concat
+store 5
+byte 0x00
+int 0
+load 3
+setbit
+int 1
+load 4
+setbit
+load 5
+store 6
+int 3
+itob
+extract 6 0
+concat
+load 6
+concat
+retsub

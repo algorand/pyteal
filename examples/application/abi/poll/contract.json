@@ -1,0 +1,65 @@
+{
+    "name": "OpenPollingApp",
+    "methods": [
+        {
+            "name": "create",
+            "args": [
+                {
+                    "type": "string[]",
+                    "name": "options",
+                    "desc": "A list of options for the poll. This list should not contain duplicate entries."
+                },
+                {
+                    "type": "bool",
+                    "name": "can_resubmit",
+                    "desc": "Whether this poll allows accounts to change their submissions or not."
+                }
+            ],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "Create a new polling application."
+        },
+        {
+            "name": "open",
+            "args": [],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "Marks this poll as open.\nThis will fail if the poll is already open.\nThe poll must be open in order to receive user input."
+        },
+        {
+            "name": "close",
+            "args": [],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "Marks this poll as closed.\nThis will fail if the poll is already closed."
+        },
+        {
+            "name": "submit",
+            "args": [
+                {
+                    "type": "uint16",
+                    "name": "choice",
+                    "desc": "The choice made by the sender. This must be an index into the options for this poll."
+                }
+            ],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "Submit a response to the poll.\nSubmissions can only be received if the poll is open. If the poll is closed, this will fail.\nIf a submission has already been made by the sender and the poll allows resubmissions, the sender's choice will be updated to the most recent submission. If the poll does not allow resubmissions, this action will fail."
+        },
+        {
+            "name": "status",
+            "args": [],
+            "returns": {
+                "type": "(bool,bool,(string,uint64)[])",
+                "desc": "A tuple containing the following information, in order: whether the poll allows resubmission, whether the poll is open, and an array of the poll's current results. This array contains one entry per option, and each entry is a tuple of that option's value and the number of accounts who have voted for it."
+            },
+            "desc": "Get the status of this poll."
+        }
+    ],
+    "networks": {},
+    "desc": "This is a polling application with no restrictions on who can participate."
+}
