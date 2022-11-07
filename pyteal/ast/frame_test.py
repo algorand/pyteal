@@ -260,6 +260,31 @@ class SuccinctReprTestCase:
                 LocalTypeSegment(pt.TealType.uint64, 2),
             ],
         ),
+        SuccinctReprTestCase(
+            [
+                pt.TealType.anytype,
+                pt.TealType.bytes,
+                pt.TealType.bytes,
+                pt.TealType.uint64,
+                pt.TealType.uint64,
+                pt.TealType.uint64,
+                pt.TealType.anytype,
+                pt.TealType.anytype,
+                pt.TealType.anytype,
+                pt.TealType.anytype,
+                pt.TealType.bytes,
+                pt.TealType.bytes,
+                pt.TealType.uint64,
+                pt.TealType.uint64,
+                pt.TealType.uint64,
+            ],
+            [
+                LocalTypeSegment(pt.TealType.bytes, 3),
+                LocalTypeSegment(pt.TealType.uint64, 7),
+                LocalTypeSegment(pt.TealType.bytes, 2),
+                LocalTypeSegment(pt.TealType.uint64, 3),
+            ],
+        ),
     ],
 )
 def test_proto_stack_layout_succinct_repr(testcase: SuccinctReprTestCase):
