@@ -154,11 +154,14 @@ def compileSubroutine(
     start.validateTree()
 
     if (
-        currentSubroutine is not None
-        and currentSubroutine.get_declaration().deferred_expr is not None
+        currentSubroutine
+        and currentSubroutine.get_declaration_by_version(options.version).deferred_expr
     ):
         # this represents code that should be inserted before each retsub op
-        deferred_expr = cast(Expr, currentSubroutine.get_declaration().deferred_expr)
+        deferred_expr = cast(
+            Expr,
+            currentSubroutine.get_declaration_by_version(options.version).deferred_expr,
+        )
 
         for block in TealBlock.Iterate(start):
             if not any(op.getOp() == Op.retsub for op in block.ops):
@@ -209,7 +212,7 @@ def compileSubroutine(
     newSubroutines = referencedSubroutines - subroutine_start_blocks.keys()
     for subroutine in sorted(newSubroutines, key=lambda subroutine: subroutine.id):
         compileSubroutine(
-            subroutine.get_declaration(),
+            subroutine.get_declaration_by_version(options.version),
             options,
             subroutineGraph,
             subroutine_start_blocks,
