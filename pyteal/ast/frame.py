@@ -99,12 +99,13 @@ class ProtoStackLayout(Expr):
         return TealType.none
 
     def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
-        seg_srt, seg_end = self.succinct_repr[0].__teal__(options)
-        for iter_seg in self.succinct_repr[1:]:
-            srt, end = iter_seg.__teal__(options)
-            seg_end.setNextBlock(srt)
-            seg_end = end
-        return seg_srt, seg_end
+        srt = TealSimpleBlock([])
+        end = srt
+        for iter_seg in self.succinct_repr:
+            seg_srt, seg_end = iter_seg.__teal__(options)
+            end.setNextBlock(seg_srt)
+            end = seg_end
+        return srt, end
 
 
 ProtoStackLayout.__module__ = "pyteal"
