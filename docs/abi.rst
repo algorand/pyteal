@@ -916,12 +916,12 @@ In addition to receiving the approval and clear state programs, the :any:`Router
 
 Here's an example of a complete application that uses the :any:`Router` class:
 
-.. literalinclude:: ../examples/application/abi/algobank.py
+.. literalinclude:: ../examples/application/abi/algobank/algobank.py
     :language: python
 
 This example uses the :code:`Router.compile_program` method to create the approval program, clear state program, and contract description for the "AlgoBank" contract. The produced :code:`algobank.json` file is below:
 
-.. literalinclude:: ../examples/application/abi/algobank.json
+.. literalinclude:: ../examples/application/abi/algobank/algobank.json
     :language: json
 
 Calling an ARC-4 Program
