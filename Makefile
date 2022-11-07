@@ -55,7 +55,7 @@ test-async-unit:
 		--ignore tests/unit/blackbox_test.py --ignore tests/unit/user_guide_test.py --ignore tests/unit/sourcemap_monkey_raises_test.py
 
 test-sync-unit:
-	pytest -n 1 -sv tests/unit/blackbox_test.py tests/unit/user_guide_test.py tests/unit/sourcemap_monkey_raises_test.py
+	pytest -n 1 --durations=10 -sv tests/unit/blackbox_test.py tests/unit/user_guide_test.py tests/unit/sourcemap_monkey_raises_test.py
 
 test-unit: test-async-unit test-sync-unit
 

@@ -4,7 +4,7 @@ from configparser import ConfigParser
 from dataclasses import dataclass
 from enum import IntEnum
 from inspect import FrameInfo, stack
-from typing import Optional, Sequence, Union, cast
+from typing import Optional, Union, cast
 
 from executing import Source
 

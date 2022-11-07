@@ -6,7 +6,8 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
-from algosdk.source_map import R3SourceMap, R3SourceMapJSON
+
+from pyteal.compiler.sourcemap import R3SourceMap, R3SourceMapJSON
 
 ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 
@@ -38,7 +39,7 @@ def test_frames():
 
 
 def test_SourceMapItem_source_mapping():
-    from pyteal.stack_frame import Frames, PyTealFrame
+    from pyteal.stack_frame import Frames
 
     Frames._skip_all = False
 
