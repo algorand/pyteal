@@ -82,19 +82,6 @@ class ProtoStackLayout(Expr):
             for t_type, dup_seg in groupby(self.local_stack_types)
         ]
 
-        # anytype at i + 1 merge to i
-        for i in reversed(range(len(self.succinct_repr) - 1)):
-            if self.succinct_repr[i + 1].local_type == TealType.anytype:
-                self.succinct_repr[i].count += self.succinct_repr[i + 1].count
-                self.succinct_repr.pop(i + 1)
-
-        if (
-            len(self.succinct_repr) > 1
-            and self.succinct_repr[0].local_type == TealType.anytype
-        ):
-            self.succinct_repr[1].count += self.succinct_repr[0].count
-            self.succinct_repr.pop(0)
-
     def __getitem__(self, index: int) -> TealType:
         if index < 0:
             return self.arg_stack_types[len(self.arg_stack_types) + index]
