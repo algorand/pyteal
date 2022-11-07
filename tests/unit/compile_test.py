@@ -6,13 +6,13 @@ import pyteal as pt
 
 
 def test_abi_algobank():
-    from examples.application.abi.algobank import (
+    from examples.application.abi.algobank.algobank import (
         approval_program,
         clear_state_program,
         contract,
     )
 
-    target_dir = Path.cwd() / "examples" / "application" / "abi"
+    target_dir = Path.cwd() / "examples" / "application" / "abi" / "algobank"
 
     with open(
         target_dir / "algobank_approval.teal", "r"
@@ -31,6 +31,34 @@ def test_abi_algobank():
         assert clear_state_program == expected_clear_state_program
 
     with open(target_dir / "algobank.json", "r") as expected_contract_file:
+        expected_contract = json.load(expected_contract_file)
+        assert contract.dictify() == expected_contract
+
+
+def test_abi_vote():
+    from examples.application.abi.vote.contract import (
+        approval_program,
+        clear_state_program,
+        contract,
+    )
+
+    target_dir = Path.cwd() / "examples" / "application" / "abi" / "vote"
+
+    with open(target_dir / "approval.teal", "r") as expected_approval_program_file:
+        expected_approval_program = "".join(
+            expected_approval_program_file.readlines()
+        ).strip()
+        assert approval_program == expected_approval_program
+
+    with open(
+        target_dir / "clear_state.teal", "r"
+    ) as expected_clear_state_program_file:
+        expected_clear_state_program = "".join(
+            expected_clear_state_program_file.readlines()
+        ).strip()
+        assert clear_state_program == expected_clear_state_program
+
+    with open(target_dir / "contract.json", "r") as expected_contract_file:
         expected_contract = json.load(expected_contract_file)
         assert contract.dictify() == expected_contract
 
