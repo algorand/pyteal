@@ -84,7 +84,7 @@ class ProtoStackLayout:
             self.succinct_repr[1].cnt += self.succinct_repr[0].cnt
             self.succinct_repr.pop(0)
 
-    def __getitem__(self, index: int):
+    def __getitem__(self, index: int) -> TealType:
         if index < 0:
             return self.arg_stack_types[len(self.arg_stack_types) + index]
         return self.local_stack_types[index]
