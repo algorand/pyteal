@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Optional
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
 from pyteal.ast.bytes import Bytes
-from pyteal.ast.seq import Seq
 from pyteal.ast.abstractvar import AbstractVar
 from pyteal.types import TealType, require_type
 from pyteal.errors import TealInputError, TealInternalError, verifyProgramVersion
@@ -14,7 +13,7 @@ if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
 
 
-class LocalTypeSegment(Seq):
+class LocalTypeSegment(Expr):
     def __init__(self, local_type: TealType, count: int):
         self.local_type = local_type
         self.count = count
@@ -55,7 +54,7 @@ class LocalTypeSegment(Seq):
 LocalTypeSegment.__module__ = "pyteal"
 
 
-class ProtoStackLayout(Seq):
+class ProtoStackLayout(Expr):
     def __init__(
         self,
         arg_stack_types: list[TealType],
@@ -133,12 +132,22 @@ class Proto(Expr):
         super().__init__()
         if num_args < 0:
             raise TealInputError(
-                f"the number of arguments provided to Proto must be >= 0 but {num_args=}"
+                f"The number of arguments provided to Proto must be >= 0 but {num_args=}."
             )
         if num_returns < 0:
             raise TealInputError(
-                f"the number of return values provided to Proto must be >= 0 but {num_returns=}"
+                f"The number of returns provided to Proto must be >= 0 but {num_returns=}."
             )
+        if mem_layout:
+            if mem_layout.num_returns != num_returns:
+                raise TealInternalError(
+                    f"The number of returns {num_returns} should match with memory layout's number of returns {mem_layout.num_returns}"
+                )
+            if len(mem_layout.arg_stack_types) != num_args:
+                raise TealInternalError(
+                    f"The number of arguments {num_args} should match with memory layout's number of arguments {len(mem_layout.arg_stack_types)}"
+                )
+
         self.num_args = num_args
         self.num_returns = num_returns
         self.mem_layout: Optional[ProtoStackLayout] = mem_layout
