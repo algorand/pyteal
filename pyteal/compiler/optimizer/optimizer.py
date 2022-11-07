@@ -1,11 +1,9 @@
-from executing import Source
-import inspect
 from typing import Set
 
 from pyteal.ast import ScratchSlot
-from pyteal.ir import TealBlock, TealOp, Op
 from pyteal.errors import TealInternalError
-from pyteal.util import Frames
+from pyteal.ir import Op, TealBlock, TealOp
+from pyteal.stack_frame import Frames
 
 
 class OptimizeOptions:

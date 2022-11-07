@@ -1,20 +1,14 @@
-from typing import Callable, Generic, Sequence, TypeVar, cast
 from dataclasses import dataclass
+from typing import Callable, Generic, Sequence, TypeVar, cast
 
 import algosdk.abi
-from algosdk.v2client import algod
-
 from graviton import blackbox
-from graviton.blackbox import DryRunInspector, DryRunExecutor
-
-from pyteal.ast.subroutine import OutputKwArgInfo
+from graviton.blackbox import DryRunExecutor, DryRunInspector
 
 from pyteal import (
-    abi,
     Arg,
     Btoi,
     Bytes,
-    compileTeal,
     Expr,
     Int,
     Itob,
@@ -27,25 +21,11 @@ from pyteal import (
     SubroutineFnWrapper,
     TealType,
     Txn,
+    abi,
+    compileTeal,
 )
-
-from pyteal.ast.subroutine import ABIReturnSubroutine
-
-# ---- Clients ---- #
-
-
-def algod_with_assertion():
-    algod = _algod_client()
-    assert algod.status(), "algod.status() did not produce any results"
-    return algod
-
-
-def _algod_client(
-    algod_address="http://localhost:4001", algod_token="a" * 64
-) -> algod.AlgodClient:
-    """Instantiate and return Algod client object."""
-    return algod.AlgodClient(algod_token, algod_address)
-
+from pyteal.ast.subroutine import ABIReturnSubroutine, OutputKwArgInfo
+from pyteal.util import algod_with_assertion
 
 # ---- Decorator ---- #
 

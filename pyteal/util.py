@@ -1,11 +1,35 @@
-from ast import AST, unparse
-from configparser import ConfigParser
-from dataclasses import dataclass
-import executing
-from inspect import FrameInfo, stack
-from typing import cast, Callable, Optional, Union
+from algosdk.v2client import algod
 
-from pyteal.errors import TealInternalError
+from pyteal.errors import AlgodClientError, TealInternalError
+
+
+def algod_with_assertion(
+    client: algod.AlgodClient | None = None, msg: str = ""
+) -> algod.AlgodClient:
+    def wrap(e, msg):
+        raise AlgodClientError(f"{msg}: {e}" if msg else str(e))
+
+    if not client:
+        try:
+            client = _algod_client()
+        except Exception as e:
+            wrap(e, msg)
+
+    try:
+        if not client.status():
+            wrap("algod.status() did not produce any results", msg)
+
+    except Exception as e:
+        wrap(e, msg)
+
+    return client
+
+
+def _algod_client(
+    algod_address="http://localhost:4001", algod_token="a" * 64
+) -> algod.AlgodClient:
+    """Instantiate and return Algod client object."""
+    return algod.AlgodClient(algod_token, algod_address)
 
 
 def escapeStr(s: str) -> str:
@@ -65,195 +89,3 @@ def correctBase32Padding(s: str) -> str:
         raise TealInternalError("Invalid base32 content")
 
     return content
-
-
-@dataclass(frozen=True)
-class Frame:
-    _internal_paths = [
-        "beaker/__init__.py",
-        "beaker/application.py",
-        "beaker/consts.py",
-        "beaker/decorators.py",
-        "beaker/state.py",
-        "pyteal/__init__.py",
-        "pyteal/ast",
-        "pyteal/compiler",
-        "pyteal/ir",
-        "pyteal/pragma",
-        "tests/abi_roundtrip.py",
-        "tests/blackbox.py",
-        "tests/compile_asserts.py",
-        "tests/mock_version.py",
-    ]
-
-    frame_info: FrameInfo
-    node: AST | None
-
-    def _is_right_before_core(self) -> bool:
-        code = self.frame_info.code_context
-        return "Frames()" in "".join(code) if code else False
-
-    def _is_pyteal(self) -> bool:
-        f = self.frame_info.filename
-        return any(w in f for w in self._internal_paths)
-
-    def _is_pyteal_import(self) -> bool:
-        cc = self.frame_info.code_context
-        if not cc:
-            return False
-
-        code = "".join(cc)
-        return "import" in code and "pyteal" in code
-
-    def _is_py_crud(self) -> bool:
-        """Hackery that depends on C-Python. Not sure how reliable."""
-        return (fi := self.frame_info).code_context is None and fi.filename.startswith(
-            "<"
-        )
-
-    @classmethod
-    def _init_or_drop(cls, f: FrameInfo) -> Optional["Frame"]:
-        frame = Frame(f, cast(AST | None, executing.Source.executing(f.frame).node))
-        return frame if not frame._is_py_crud() else None
-
-    def __repr__(self) -> str:
-        node = unparse(n) if (n := self.node) else None
-        context = "".join(cc) if (cc := (fi := self.frame_info).code_context) else None
-        return f"{node=}; {context=}; frame_info={fi}"
-
-    def compiler_generated(self) -> bool | None:
-        if not (cc := self.frame_info.code_context):
-            return None  # we don't know / NA
-
-        return "# T2PT" in "".join(cc)
-
-
-FrameSequence = Union[Frame, list["FrameSequence"]]
-
-
-def _skip_all_frames() -> bool:
-    try:
-        config = ConfigParser()
-        config.read("pyteal.ini")
-        enabled = config.getboolean("pyteal-source-mapper", "enabled")
-        return not enabled
-    except Exception as e:
-        print(
-            f"""Turning off frame capture and disabling sourcemaps. 
-Could not read section (pyteal-source-mapper, enabled) of config "pyteal.ini": {e}"""
-        )
-    return True
-
-
-class Frames:
-    # TODO: I'm pretty sure I have a reasonable go-forward approach, but not sure
-    # it's the most modern pythonic way to handle this issue.
-    # TODO: BIG QUESTION: How can we configure Frames so that it defaults to a NO-OP ?
-    # I believe this should involve a project level config. Some ideas.
-    # source_map.ini config file a la: https://www.codeproject.com/Articles/5319621/Configuration-Files-in-Python
-    # TOML config a la: https://realpython.com/python-toml/
-    _skip_all: bool = _skip_all_frames()
-
-    @classmethod
-    def skipping_all(cls, _force_refresh: bool = False) -> bool:
-        """
-        The `_force_refresh` parameter, is mainly for test validation purposes.
-        It is discouraged for use in the wild because:
-        * Frames are useful in an "all or nothing" capacity. For example, in preparing
-            for a source mapping, it would be error prone to generate frames for
-            a subset of analyzed PyTeal
-        * Setting `_force_refresh = True` will cause a read from the file system every
-            time Frames are initialized, and will result in significant performance degredation
-        """
-        if _force_refresh:
-            cls._skip_all = _skip_all_frames()
-
-        return cls._skip_all
-
-    def __init__(
-        self,
-        keep_all: bool = False,
-        immediate_stop_post_pyteal: bool = True,  # setting False doesn't work 90% of the time
-        keep_one_frame_only: bool = True,
-    ):
-        self.frames: list[Frame] = []
-        if self.skipping_all():
-            return
-
-        frames = [frame for f in stack() if (frame := Frame._init_or_drop(f))]
-
-        if keep_all:
-            self.frames = frames
-            return
-
-        last_drop_idx = -1
-        for i, f in enumerate(frames):
-            if f._is_right_before_core():
-                last_drop_idx = i
-                break
-
-        penultimate_idx = last_drop_idx
-        prev_file = ""
-        in_first_post_pyteal = False
-        for i in range(last_drop_idx + 1, len(frames)):
-            f = frames[i]
-            curr_file = f.frame_info.filename
-            if f._is_pyteal():
-                penultimate_idx = i
-            else:
-                if penultimate_idx == i - 1:
-                    in_first_post_pyteal = True
-                    if immediate_stop_post_pyteal:
-                        break
-                elif in_first_post_pyteal:
-                    in_first_post_pyteal = prev_file == curr_file
-                    if not in_first_post_pyteal:
-                        penultimate_idx = i - 2
-                        break
-            prev_file = curr_file
-
-        last_keep_idx = penultimate_idx + 1
-
-        if frames[last_keep_idx]._is_pyteal_import():
-            # FAILURE CASE: Look for first pyteal generated code entry in stack trace:
-            found = False
-            i = -1
-            for i in range(last_keep_idx - 1, -1, -1):
-                if frames[i].compiler_generated():
-                    found = True
-                    break
-
-            if found and i >= 0:
-                last_keep_idx = i
-
-        # Commenting out for now
-        # # TODO TODO TODO TODO !!!!
-        # # TODO: this fragile hack depends on _NOT_ finding an AST node, and should be improved!!!
-        # if not frames[last_keep_idx].node:
-        #     # FAILURE CASE: Look for first pyteal generated code entry in stack trace:
-        #     found = False
-        #     i = -1
-        #     for i in range(len(frames) - 1, -1, -1):
-        #         if frames[i].compiler_generated():
-        #             found = True
-        #             break
-
-        #     if found and i >= 0:
-        #         last_keep_idx = i
-
-        self.frames = frames[last_drop_idx + 1 : last_keep_idx + 1]
-
-        if keep_one_frame_only:
-            self.frames = self.frames[-1:]
-
-    def __len__(self) -> int:
-        return len(self.frames)
-
-    def __getitem__(self, index: int) -> Frame:
-        return self.frames[index]
-
-    def frame_infos(self) -> list[FrameInfo]:
-        return [f.frame_info for f in self.frames]
-
-    def nodes(self) -> list[AST | None]:
-        return [f.node for f in self.frames]

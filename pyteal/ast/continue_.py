@@ -28,7 +28,7 @@ class Continue(Expr):
         if not options.isInLoop():
             raise TealCompileError("continue is only allowed in a loop", self)
 
-        start = TealSimpleBlock([])
+        start = TealSimpleBlock([], root_expr=self)
         options.addLoopContinueBlock(start)
 
         return start, start

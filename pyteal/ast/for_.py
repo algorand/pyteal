@@ -48,7 +48,7 @@ class For(Expr):
 
         options.enterLoop()
 
-        end = TealSimpleBlock([])
+        end = TealSimpleBlock([], root_expr=self)
         start, startEnd = self.start.__teal__(options)
         condStart, condEnd = self.cond.__teal__(options)
         doStart, doEnd = self.doBlock.__teal__(options)
@@ -57,7 +57,8 @@ class For(Expr):
         stepEnd.setNextBlock(condStart)
         doEnd.setNextBlock(stepStart)
 
-        branchBlock = TealConditionalBlock([])
+        # TODO: apparently supplied root_expr has no effect
+        branchBlock = TealConditionalBlock([], root_expr=self)
         branchBlock.setTrueBlock(doStart)
         branchBlock.setFalseBlock(end)
 

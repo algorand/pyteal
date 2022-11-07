@@ -28,7 +28,8 @@ class Break(Expr):
         if not options.isInLoop():
             raise TealCompileError("break is only allowed in a loop", self)
 
-        start = TealSimpleBlock([])
+        # TODO: apparently supplied root_expr has no effect
+        start = TealSimpleBlock([], root_expr=self)
         options.addLoopBreakBlock(start)
 
         return start, start

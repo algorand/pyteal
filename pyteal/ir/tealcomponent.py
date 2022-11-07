@@ -1,11 +1,8 @@
 from abc import ABC, abstractmethod
-import ast
-import executing
-import inspect
-from typing import cast, List, Optional, TYPE_CHECKING
 from contextlib import AbstractContextManager
+from typing import TYPE_CHECKING, List, Optional
 
-from pyteal.util import Frames
+from pyteal.stack_frame import Frames
 
 if TYPE_CHECKING:
     from pyteal.ast import Expr, ScratchSlot, SubroutineDefinition

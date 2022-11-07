@@ -20,6 +20,7 @@ from pyteal.compiler import (
 )
 from pyteal.types import TealType
 from pyteal.errors import (
+    AlgodClientError,
     TealInternalError,
     TealTypeError,
     TealInputError,
@@ -39,6 +40,7 @@ __all__ = [
     "AccountParamObject",
     "Add",
     "Addr",
+    "AlgodClientError",
     "And",
     "App",
     "AppField",

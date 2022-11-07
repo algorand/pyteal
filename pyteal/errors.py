@@ -75,6 +75,17 @@ class TealPragmaError(Exception):
 TealPragmaError.__module__ = "pyteal"
 
 
+class AlgodClientError(Exception):
+    def __init__(self, message: str) -> None:
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
+
+AlgodClientError.__module__ = "pyteal"
+
+
 def verifyProgramVersion(minVersion: int, version: int, msg: str):
     if minVersion > version:
         msg = "{}. Minimum version needed is {}, but current version being compiled is {}".format(

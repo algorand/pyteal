@@ -55,5 +55,6 @@
             "desc": "Withdraw an amount of Algos held by this app.\nThe sender of this method call will be the source of the Algos, and the destination will be the `recipient` argument.\nThe Algos will be transferred to the recipient using an inner transaction whose fee is set to 0, meaning the caller's transaction must include a surplus fee to cover the inner transaction."
         }
     ],
-    "networks": {}
+    "networks": {},
+    "desc": ""
 }

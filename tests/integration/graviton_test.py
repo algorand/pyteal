@@ -3,27 +3,21 @@ from pathlib import Path
 from typing import Any, Dict
 
 import pytest
+from graviton.blackbox import DryRunEncoder as Encoder
+from graviton.blackbox import DryRunExecutor, DryRunInspector
+from graviton.blackbox import DryRunProperty as DRProp
+from graviton.blackbox import mode_has_property
+from graviton.invariant import Invariant
 
 import pyteal as pt
-
-from tests.compile_asserts import assert_teal_as_expected
+from pyteal.util import algod_with_assertion
 from tests.blackbox import (
     Blackbox,
     BlackboxWrapper,
-    algod_with_assertion,
-    mode_to_execution_mode,
     PyTealDryRunExecutor,
+    mode_to_execution_mode,
 )
-
-from graviton.blackbox import (
-    DryRunProperty as DRProp,
-    DryRunEncoder as Encoder,
-    DryRunExecutor,
-    DryRunInspector,
-    mode_has_property,
-)
-
-from graviton.invariant import Invariant
+from tests.compile_asserts import assert_teal_as_expected
 
 PATH = Path.cwd() / "tests" / "integration"
 FIXTURES = PATH / "teal"
@@ -595,25 +589,14 @@ def blackbox_pyteal_example1():
 
 def blackbox_pyteal_example2():
     # Example 2: Using blackbox_pyteal to make 400 assertions and generate a CSV report with 400 dryrun rows
-    from itertools import product
     import math
-    from pathlib import Path
     import random
+    from itertools import product
+    from pathlib import Path
 
     from graviton.blackbox import DryRunInspector
 
-    from pyteal import (
-        For,
-        If,
-        Int,
-        Mod,
-        Mode,
-        ScratchVar,
-        Seq,
-        Subroutine,
-        TealType,
-    )
-
+    from pyteal import For, If, Int, Mod, Mode, ScratchVar, Seq, Subroutine, TealType
     from tests.blackbox import Blackbox
 
     # GCD via the Euclidean Algorithm (iterative version):
@@ -657,18 +640,15 @@ def blackbox_pyteal_example2():
 
 def blackbox_pyteal_example3():
     # Example 3: declarative Test Driven Development approach through Invariant's
-    from itertools import product
     import math
     import random
+    from itertools import product
 
-    from graviton.blackbox import (
-        DryRunEncoder,
-        DryRunProperty as DRProp,
-    )
+    from graviton.blackbox import DryRunEncoder
+    from graviton.blackbox import DryRunProperty as DRProp
     from graviton.invariant import Invariant
 
     from pyteal import If, Int, Mod, Mode, Subroutine, TealType
-
     from tests.blackbox import Blackbox
 
     # avoid flaky tests just in case I was wrong about the stack height invariant...
@@ -734,13 +714,12 @@ def blackbox_pyteal_example3():
 
 def blackbox_pyteal_example4():
     # Example 4: Using PyTealDryRunExecutor to debug an ABIReturnSubroutine with an app, logic sig and csv report
-    from pathlib import Path
     import random
+    from pathlib import Path
 
     from graviton.blackbox import DryRunInspector
 
     from pyteal import (
-        abi,
         ABIReturnSubroutine,
         Expr,
         For,
@@ -749,8 +728,8 @@ def blackbox_pyteal_example4():
         ScratchVar,
         Seq,
         TealType,
+        abi,
     )
-
     from tests.blackbox import Blackbox, PyTealDryRunExecutor
 
     # Sum a dynamic uint64 array
@@ -832,7 +811,7 @@ def blackbox_pyteal_example4():
 def blackbox_pyteal_example5():
     from graviton.blackbox import DryRunEncoder
 
-    from pyteal import abi, Subroutine, TealType, Int, Mode
+    from pyteal import Int, Mode, Subroutine, TealType, abi
     from tests.blackbox import Blackbox
 
     @Blackbox([None])
@@ -865,7 +844,6 @@ def blackbox_pyteal_example5():
 
 
 def blackbox_pyteal_while_continue_test():
-    from tests.blackbox import Blackbox
     from pyteal import (
         Continue,
         Int,
@@ -877,6 +855,7 @@ def blackbox_pyteal_while_continue_test():
         TealType,
         While,
     )
+    from tests.blackbox import Blackbox
 
     @Blackbox(input_types=[TealType.uint64])
     @Subroutine(TealType.uint64)
@@ -910,16 +889,9 @@ def blackbox_pyteal_while_continue_test():
 
 def blackbox_pyteal_named_tupleness_test():
     from typing import Literal as L
+
+    from pyteal import And, Mode, Return, Seq, Subroutine, TealType, abi
     from tests.blackbox import Blackbox
-    from pyteal import (
-        Seq,
-        abi,
-        Subroutine,
-        TealType,
-        Return,
-        And,
-        Mode,
-    )
 
     class NamedTupleExample(abi.NamedTuple):
         a: abi.Field[abi.Bool]

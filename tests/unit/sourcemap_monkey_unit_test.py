@@ -1,20 +1,15 @@
 """
-This file monkey-patches ConfigParser in order to enable
-source mapping and test the results of source mapping various 
-PyTeal apps.
+This file monkey-patches ConfigParser in order to enable source mapping
+and test the results of source mapping various PyTeal apps.
 """
 
 import ast
 from configparser import ConfigParser
 from copy import deepcopy
-from enum import Flag, auto
 from pathlib import Path
-from typing import cast
-
-import pytest
 from unittest import mock
 
-from algosdk.source_map import R3SourceMap
+import pytest
 
 ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 
@@ -23,8 +18,8 @@ FIXTURES = Path.cwd() / "tests" / "unit" / "sourcemaps"
 
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
 def test_reconstruct(_):
-    from pyteal import OptimizeOptions
     from examples.application.abi.algobank import router
+    from pyteal import OptimizeOptions
 
     compile_bundle = router.compile_program_with_sourcemaps(
         version=6, optimize=OptimizeOptions(scratch_slots=True)
@@ -40,7 +35,10 @@ def test_reconstruct(_):
         assert cf.read() == compile_bundle.clear_sourcemap.teal()
 
 
-def fixture_comparison(sourcemap: "PyTealSourceMap", name: str):
+def fixture_comparison(sourcemap, name: str):
+    from pyteal.compiler.sourcemap import PyTealSourceMap
+
+    assert isinstance(sourcemap, PyTealSourceMap)
     new_version = sourcemap._tabulate_for_dev()
     with open(FIXTURES / f"_{name}", "w") as f:
         f.write(new_version)
@@ -61,9 +59,8 @@ def fixture_comparison(sourcemap: "PyTealSourceMap", name: str):
 @pytest.mark.parametrize("assemble_constants", [False, True])
 @pytest.mark.parametrize("optimize_slots", [False, True])
 def test_sourcemaps(_, version, source_inference, assemble_constants, optimize_slots):
-    from pyteal import OptimizeOptions
-
     from examples.application.abi.algobank import router
+    from pyteal import OptimizeOptions
 
     # TODO: add functionality that tallies the line statuses up and assert that all
     # statuses were > SourceMapItemStatus.PYTEAL_GENERATED
@@ -87,9 +84,8 @@ def test_sourcemaps(_, version, source_inference, assemble_constants, optimize_s
 
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
 def test_annotated_teal(_):
-    from pyteal import OptimizeOptions
-
     from examples.application.abi.algobank import router
+    from pyteal import OptimizeOptions
 
     compile_bundle = router.compile_program_with_sourcemaps(
         version=6,
@@ -119,7 +115,7 @@ def test_annotated_teal(_):
 def test_mocked_config_for_frames(_):
     config = ConfigParser()
     assert config.getboolean("pyteal-source-mapper", "enabled") is True
-    from pyteal.util import Frames
+    from pyteal.stack_frame import Frames
 
     assert Frames.skipping_all() is False
     assert Frames.skipping_all(_force_refresh=True) is False
@@ -149,51 +145,6 @@ def test_lots_o_indirection(_):
     )
 
 
-@mock.patch.object(ConfigParser, "getboolean", return_value=True)
-def test_r3sourcemap(_):
-    from pyteal import OptimizeOptions
-
-    from examples.application.abi.algobank import router
-
-    file = "dummy filename"
-    compile_bundle = router.compile_program_with_sourcemaps(
-        version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=file
-    )
-
-    ptsm = compile_bundle.approval_sourcemap
-    assert ptsm
-
-    r3sm = ptsm.get_r3sourcemap()
-    assert file == r3sm.file
-    assert cast(str, r3sm.source_root).endswith("/pyteal/")
-    assert list(range(len(r3sm.entries))) == [l for l, _ in r3sm.entries]
-    assert all(c == 0 for _, c in r3sm.entries)
-    assert all(x == (0,) for x in r3sm.index)
-    assert len(r3sm.entries) == len(r3sm.index)
-
-    source_files = [
-        "examples/application/abi/algobank.py",
-        "tests/unit/sourcemap_monkey_enabled_test.py",
-    ]
-    assert source_files == r3sm.source_files
-
-    r3sm_json = r3sm.to_json()
-
-    assert (
-        "AAgBS;AAAA;AAAA;AAAA;AC8IT;ADpHA;AAAA;AAAA;ACoHA;AD5FA;AAAA;AAAA;AC4FA;AD/EA;AAAA;AAAA;AC+EA;AAAA;AAAA;AD/EA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AC+EA;AAAA;AD/EA;AAAA;AAAA;AC+EA;AD5FA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AC4FA;AAAA;AAAA;AAAA;AAAA;AD5FA;AAAA;AC4FA;ADpHA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;ACoHA;AAAA;ADpHA;AAAA;AAAA;ACoHA;AD9IS;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAJL;AACc;AAAd;AAA4C;AAAc;AAA3B;AAA/B;AAFuB;AAKlB;AAAA;AC8IT;ADxIuC;AAAA;ACwIvC;AD9IS;AAAA;AAAA;AAAA;AAI6B;AAAA;AC0ItC;AAAA;AAAA;ADvJkB;AAAgB;AAAhB;AAAP;ACuJX;AAAA;AAAA;AAAA;AAAA;AAAA;ADvGe;AAAA;AAA0B;AAAA;AAA1B;AAAP;AACO;AAAA;AAA4B;AAA5B;AAAP;AAEI;AAAA;AACA;AACa;AAAA;AAAkB;AAA/B;AAAmD;AAAA;AAAnD;AAHJ;ACqGR;AAAA;AAAA;AAAA;ADnFmC;AAAgB;AAA7B;ACmFtB;AAAA;AAAA;AAAA;AAAA;AAAA;AD3DY;AACA;AACa;AAAc;AAA3B;AAA+C;AAA/C;AAHJ;AAKA;AACA;AAAA;AAG2B;AAAA;AAH3B;AAIyB;AAJzB;AAKsB;AALtB;AAQA;AAAA"
-        == r3sm_json["mappings"]
-    )
-    assert file == r3sm_json["file"]
-    assert source_files == r3sm_json["sources"]
-    assert r3sm.source_root == r3sm_json["sourceRoot"]
-
-    round_trip = R3SourceMap.from_json(
-        r3sm_json, target="\n".join(r.target_extract for r in r3sm.entries.values())
-    )
-
-    assert r3sm_json == round_trip.to_json()
-
-
 # ### ----------------- SANITY CHECKS SURVEY MOST PYTEAL CONSTRUCTS ----------------- ### #
 
 P = "#pragma version {v}"  # fill the template at runtime
@@ -201,8 +152,10 @@ P = "#pragma version {v}"  # fill the template at runtime
 C = "comp.compile(with_sourcemap=True)"
 
 BIG_A = "pt.And(pt.Gtxn[0].rekey_to() == pt.Global.zero_address(), pt.Gtxn[1].rekey_to() == pt.Global.zero_address(), pt.Gtxn[2].rekey_to() == pt.Global.zero_address(), pt.Gtxn[3].rekey_to() == pt.Global.zero_address(), pt.Gtxn[4].rekey_to() == pt.Global.zero_address(), pt.Gtxn[0].last_valid() == pt.Gtxn[1].last_valid(), pt.Gtxn[1].last_valid() == pt.Gtxn[2].last_valid(), pt.Gtxn[2].last_valid() == pt.Gtxn[3].last_valid(), pt.Gtxn[3].last_valid() == pt.Gtxn[4].last_valid(), pt.Gtxn[0].type_enum() == pt.TxnType.AssetTransfer, pt.Gtxn[0].xfer_asset() == asset_c, pt.Gtxn[0].receiver() == receiver)"
-BIG_B = "pt.Or(pt.App.globalGet(pt.Bytes('paused')), pt.App.localGet(pt.Int(0), pt.Bytes('frozen')), pt.App.localGet(pt.Int(1), pt.Bytes('frozen')), pt.App.localGet(pt.Int(0), pt.Bytes('lock until')) >= pt.Global.latest_timestamp(), pt.App.localGet(pt.Int(1), pt.Bytes('lock until')) >= pt.Global.latest_timestamp(), pt.App.globalGet(pt.Concat(pt.Bytes('rule'), pt.Itob(pt.App.localGet(pt.Int(0), pt.Bytes('transfer group'))), pt.Itob(pt.App.localGet(pt.Int(1), pt.Bytes('transfer group'))))))"
+BIG_OR = "pt.Or(pt.App.globalGet(pt.Bytes('paused')), pt.App.localGet(pt.Int(0), pt.Bytes('frozen')), pt.App.localGet(pt.Int(1), pt.Bytes('frozen')), pt.App.localGet(pt.Int(0), pt.Bytes('lock until')) >= pt.Global.latest_timestamp(), pt.App.localGet(pt.Int(1), pt.Bytes('lock until')) >= pt.Global.latest_timestamp(), pt.App.globalGet(pt.Concat(pt.Bytes('rule'), pt.Itob(pt.App.localGet(pt.Int(0), pt.Bytes('transfer group'))), pt.Itob(pt.App.localGet(pt.Int(1), pt.Bytes('transfer group'))))))"
 BIG_C = "pt.Cond([pt.Txn.application_id() == pt.Int(0), foo], [pt.Txn.on_completion() == pt.OnComplete.DeleteApplication, pt.Return(is_admin)], [pt.Txn.on_completion() == pt.OnComplete.UpdateApplication, pt.Return(is_admin)], [pt.Txn.on_completion() == pt.OnComplete.CloseOut, foo], [pt.Txn.on_completion() == pt.OnComplete.OptIn, foo], [pt.Txn.application_args[0] == pt.Bytes('set admin'), foo], [pt.Txn.application_args[0] == pt.Bytes('mint'), foo], [pt.Txn.application_args[0] == pt.Bytes('transfer'), foo], [pt.Txn.accounts[4] == pt.Bytes('foo'), foo])"
+BIG_W = "pt.While(i.load() < pt.Global.group_size())"
+BIG_F = "pt.For(i.store(pt.Int(0)), i.load() < pt.Global.group_size(), i.store(i.load() + pt.Int(1)))"
 
 """
     asset_c = pt.Tmpl.Int("TMPL_ASSET_C")
@@ -304,17 +257,6 @@ CONSTRUCTS = [
             ["return", C],
         ],
     ),
-    # PyTEAL bugs - the following don't get parsed as expected!
-    # (pt.Int(1) != pt.Int(2) == pt.Int(3), [])
-    # (
-    #     pt.Int(1) + pt.Int(2) - pt.Int(3) * pt.Int(4) / pt.Int(5) % pt.Int(6)
-    #     < pt.Int(7)
-    #     > pt.Int(8)
-    #     <= pt.Int(9) ** pt.Int(10)
-    #     != pt.Int(11)
-    #     == pt.Int(12),
-    #     [],
-    # ),
     (
         lambda pt: pt.Btoi(
             pt.BytesAnd(pt.Bytes("base16", "0xBEEF"), pt.Bytes("base16", "0x1337"))
@@ -745,18 +687,18 @@ CONSTRUCTS = [
                 "app_local_get_ex",
                 "pt.App.localGetEx(pt.Int(1), pt.App.id(), pt.Bytes('max balance'))",
             ),
-            ("store 1", C),  # TODO: can be improved
+            ("store 1", C),  # TODO: can be improved if handle maybe/multi-values
             ("store 0", C),
             ('byte "paused"', "pt.Bytes('paused')"),
             ("app_global_get", "pt.App.globalGet(pt.Bytes('paused'))"),
             ("int 0", "pt.Int(0)"),
             ('byte "frozen"', "pt.Bytes('frozen')"),
             ("app_local_get", "pt.App.localGet(pt.Int(0), pt.Bytes('frozen'))"),
-            ("||", BIG_B),
+            ("||", BIG_OR),
             ("int 1", "pt.Int(1)"),
             ('byte "frozen"', "pt.Bytes('frozen')"),
             ("app_local_get", "pt.App.localGet(pt.Int(1), pt.Bytes('frozen'))"),
-            ("||", BIG_B),
+            ("||", BIG_OR),
             ("int 0", "pt.Int(0)"),
             ('byte "lock until"', "pt.Bytes('lock until')"),
             ("app_local_get", "pt.App.localGet(pt.Int(0), pt.Bytes('lock until'))"),
@@ -765,7 +707,7 @@ CONSTRUCTS = [
                 ">=",
                 "pt.App.localGet(pt.Int(0), pt.Bytes('lock until')) >= pt.Global.latest_timestamp()",
             ),
-            ("||", BIG_B),
+            ("||", BIG_OR),
             ("int 1", "pt.Int(1)"),
             ('byte "lock until"', "pt.Bytes('lock until')"),
             ("app_local_get", "pt.App.localGet(pt.Int(1), pt.Bytes('lock until'))"),
@@ -774,7 +716,7 @@ CONSTRUCTS = [
                 ">=",
                 "pt.App.localGet(pt.Int(1), pt.Bytes('lock until')) >= pt.Global.latest_timestamp()",
             ),
-            ("||", BIG_B),
+            ("||", BIG_OR),
             ('byte "rule"', "pt.Bytes('rule')"),
             ("int 0", "pt.Int(0)"),
             ('byte "transfer group"', "pt.Bytes('transfer group')"),
@@ -805,7 +747,7 @@ CONSTRUCTS = [
                 "app_global_get",
                 "pt.App.globalGet(pt.Concat(pt.Bytes('rule'), pt.Itob(pt.App.localGet(pt.Int(0), pt.Bytes('transfer group'))), pt.Itob(pt.App.localGet(pt.Int(1), pt.Bytes('transfer group')))))",
             ),
-            ("||", BIG_B),
+            ("||", BIG_OR),
             ("return", C),
         ],
         2,
@@ -961,19 +903,25 @@ CONSTRUCTS = [
             ["app_global_get", "pt.App.globalGet(pt.Bytes('creator'))"],
             ["==", "pt.Txn.sender() == pt.App.globalGet(pt.Bytes('creator'))"],
             [
-                "bnz main_l2",
+                "bnz main_l2",  # .Then(...) would be a bit better here
                 "pt.If(pt.Txn.sender() == pt.App.globalGet(pt.Bytes('creator')))",
             ],
             ['byte "hi user!"', "pt.Bytes('hi user!')"],
             ["store 20", "greeting.store(pt.Bytes('hi user!'))"],
-            ["b main_l3", C],
             [
-                "main_l2:",
+                "b main_l3",  # pt.If(...) does make sense because this is the next scope
+                "pt.If(pt.Txn.sender() == pt.App.globalGet(pt.Bytes('creator')))",
+            ],
+            [
+                "main_l2:",  # .Then(...) is a bit better
                 "pt.If(pt.Txn.sender() == pt.App.globalGet(pt.Bytes('creator')))",
             ],
             ['byte "hi creator!"', "pt.Bytes('hi creator!')"],
             ["store 20", "greeting.store(pt.Bytes('hi creator!'))"],
-            ["main_l3:", C],
+            [
+                "main_l3:",
+                "pt.If(pt.Txn.sender() == pt.App.globalGet(pt.Bytes('creator')))",
+            ],  # pt.If(...) etc. sent us over here
             ["int 1", "pt.Int(1)"],
             ['byte "greeting from prev app"', "pt.Bytes('greeting from prev app')"],
             ["gload 0 20", "pt.ImportScratchValue(0, 20)"],
@@ -1010,21 +958,301 @@ CONSTRUCTS = [
             ("btoi", "pt.Btoi(pt.Arg(1))"),
             ("int 1", "pt.Int(1)"),
             ("==", "arg == pt.Int(1)"),
-        ("bnz main_l5", 'pt.If(arg == pt.Int(0)).Then(pt.Reject()).ElseIf(arg == pt.Int(1))'),
+            (
+                "bnz main_l5",
+                "pt.If(arg == pt.Int(0)).Then(pt.Reject()).ElseIf(arg == pt.Int(1))",
+            ),
             ("arg 1", "pt.Arg(1)"),
             ("btoi", "pt.Btoi(pt.Arg(1))"),
             ("int 2", "pt.Int(2)"),
             ("==", "arg == pt.Int(2)"),
-        ("bnz main_l4", "pt.If(arg == pt.Int(0)).Then(pt.Reject()).ElseIf(arg == pt.Int(1)).Then(pt.Reject()).ElseIf(arg == pt.Int(2))"),
+            (
+                "bnz main_l4",
+                "pt.If(arg == pt.Int(0)).Then(pt.Reject()).ElseIf(arg == pt.Int(1)).Then(pt.Reject()).ElseIf(arg == pt.Int(2))",
+            ),
             ("int 0", "pt.Reject()"),
             ("return", "pt.Reject()"),
-        ("main_l4:", "pt.If(arg == pt.Int(0)).Then(pt.Reject()).ElseIf(arg == pt.Int(1)).Then(pt.Reject()).ElseIf(arg == pt.Int(2))"),
+            (
+                "main_l4:",
+                "pt.If(arg == pt.Int(0)).Then(pt.Reject()).ElseIf(arg == pt.Int(1)).Then(pt.Reject()).ElseIf(arg == pt.Int(2))",
+            ),
             ("int 1", "pt.Approve()"),
             ("return", "pt.Approve()"),
-        ("main_l5:", "pt.If(arg == pt.Int(0)).Then(pt.Reject()).ElseIf(arg == pt.Int(1))"),
+            (
+                "main_l5:",
+                "pt.If(arg == pt.Int(0)).Then(pt.Reject()).ElseIf(arg == pt.Int(1))",
+            ),
             ("int 0", "pt.Reject()"),
             ("return", "pt.Reject()"),
             ("main_l6:", "pt.If(arg == pt.Int(0))"),
+            ("int 0", "pt.Reject()"),
+            ("return", "pt.Reject()"),
+        ],
+        2,
+        "Signature",
+    ),
+    (
+        lambda pt: [
+            totalFees := pt.ScratchVar(pt.TealType.uint64),
+            i := pt.ScratchVar(pt.TealType.uint64),
+            pt.Seq(
+                i.store(pt.Int(0)),
+                totalFees.store(pt.Int(0)),
+                pt.While(i.load() < pt.Global.group_size()).Do(
+                    totalFees.store(totalFees.load() + pt.Gtxn[i.load()].fee()),
+                    i.store(i.load() + pt.Int(1)),
+                ),
+                pt.Approve(),
+            ),
+        ][-1],
+        (
+            [P, C],
+            ("int 0", "pt.Int(0)"),
+            ("store 1", "i.store(pt.Int(0))"),
+            ("int 0", "pt.Int(0)"),
+            ("store 0", "totalFees.store(pt.Int(0))"),
+            ("main_l1:", BIG_W),  # yes, this makes sense to be While(...)
+            ("load 1", "i.load()"),
+            ("global GroupSize", "pt.Global.group_size()"),
+            ("<", "i.load() < pt.Global.group_size()"),
+            ("bz main_l3", BIG_W),  # yes, this as well cause we're exiting while
+            ("load 0", "totalFees.load()"),
+            ("load 1", "i.load()"),
+            ("gtxns Fee", "pt.Gtxn[i.load()].fee()"),
+            ("+", "totalFees.load() + pt.Gtxn[i.load()].fee()"),
+            ("store 0", "totalFees.store(totalFees.load() + pt.Gtxn[i.load()].fee())"),
+            ("load 1", "i.load()"),
+            ("int 1", "pt.Int(1)"),
+            ("+", "i.load() + pt.Int(1)"),
+            ("store 1", "i.store(i.load() + pt.Int(1))"),
+            ("b main_l1", BIG_W),  # but the only reason for this is While(...)
+            ("main_l3:", BIG_W),  # and this exit condition as well for the While(...)
+            ("int 1", "pt.Approve()"),
+            ("return", "pt.Approve()"),
+        ),
+        3,
+    ),
+    (
+        lambda pt: [
+            totalFees := pt.ScratchVar(pt.TealType.uint64),
+            i := pt.ScratchVar(pt.TealType.uint64),
+            pt.Seq(
+                totalFees.store(pt.Int(0)),
+                pt.For(
+                    i.store(pt.Int(0)),
+                    i.load() < pt.Global.group_size(),
+                    i.store(i.load() + pt.Int(1)),
+                ).Do(totalFees.store(totalFees.load() + pt.Gtxn[i.load()].fee())),
+                pt.Approve(),
+            ),
+        ][-1],
+        [
+            [P, C],
+            ("int 0", "pt.Int(0)"),
+            ("store 0", "totalFees.store(pt.Int(0))"),
+            ("int 0", "pt.Int(0)"),
+            ("store 1", "i.store(pt.Int(0))"),
+            ("main_l1:", BIG_F),
+            ("load 1", "i.load()"),
+            ("global GroupSize", "pt.Global.group_size()"),
+            ("<", "i.load() < pt.Global.group_size()"),
+            ("bz main_l3", BIG_F),  # .Do(...) seems a bit more appropriate here
+            ("load 0", "totalFees.load()"),
+            ("load 1", "i.load()"),
+            ("gtxns Fee", "pt.Gtxn[i.load()].fee()"),
+            ("+", "totalFees.load() + pt.Gtxn[i.load()].fee()"),
+            ("store 0", "totalFees.store(totalFees.load() + pt.Gtxn[i.load()].fee())"),
+            ("load 1", "i.load()"),
+            ("int 1", "pt.Int(1)"),
+            ("+", "i.load() + pt.Int(1)"),
+            ("store 1", "i.store(i.load() + pt.Int(1))"),
+            ("b main_l1", BIG_F),
+            ("main_l3:", BIG_F),
+            ("int 1", "pt.Approve()"),
+            ("return", "pt.Approve()"),
+        ],
+        3,
+    ),
+    (
+        lambda pt: [
+            numPayments := pt.ScratchVar(pt.TealType.uint64),
+            i := pt.ScratchVar(pt.TealType.uint64),
+            pt.Seq(
+                numPayments.store(pt.Int(0)),
+                pt.For(
+                    i.store(pt.Int(0)),
+                    i.load() < pt.Global.group_size(),
+                    i.store(i.load() + pt.Int(1)),
+                ).Do(
+                    pt.If(pt.Gtxn[i.load()].type_enum() != pt.TxnType.Payment)
+                    .Then(pt.Continue())
+                    .ElseIf(pt.Int(42))
+                    .Then(pt.Break()),
+                    numPayments.store(numPayments.load() + pt.Int(1)),
+                ),
+                pt.Approve(),
+            ),
+        ][-1],
+        [
+            [P, C],
+            ("int 0", "pt.Int(0)"),
+            ("store 0", "numPayments.store(pt.Int(0))"),
+            ("int 0", "pt.Int(0)"),
+            ("store 1", "i.store(pt.Int(0))"),
+            (
+                "main_l1:",
+                "pt.For(i.store(pt.Int(0)), i.load() < pt.Global.group_size(), i.store(i.load() + pt.Int(1)))",
+            ),
+            ("load 1", "i.load()"),
+            ("global GroupSize", "pt.Global.group_size()"),
+            ("<", "i.load() < pt.Global.group_size()"),
+            (
+                "bz main_l6",
+                "pt.For(i.store(pt.Int(0)), i.load() < pt.Global.group_size(), i.store(i.load() + pt.Int(1)))",
+            ),
+            ("load 1", "i.load()"),
+            ("gtxns TypeEnum", "pt.Gtxn[i.load()].type_enum()"),
+            ("int pay", "pt.Gtxn[i.load()].type_enum() != pt.TxnType.Payment"),
+            ("!=", "pt.Gtxn[i.load()].type_enum() != pt.TxnType.Payment"),
+            (
+                "bnz main_l5",
+                "pt.If(pt.Gtxn[i.load()].type_enum() != pt.TxnType.Payment)",  # pt.Continue() is better
+            ),
+            ("int 42", "pt.Int(42)"),
+            (
+                "bnz main_l6",
+                "pt.If(pt.Gtxn[i.load()].type_enum() != pt.TxnType.Payment).Then(pt.Continue()).ElseIf(pt.Int(42))",  # pt.Break() would be better
+            ),
+            ("load 0", "numPayments.load()"),
+            ("int 1", "pt.Int(1)"),
+            ("+", "numPayments.load() + pt.Int(1)"),
+            ("store 0", "numPayments.store(numPayments.load() + pt.Int(1))"),
+            (
+                "main_l5:",
+                "pt.If(pt.Gtxn[i.load()].type_enum() != pt.TxnType.Payment)",
+            ),
+            ("load 1", "i.load()"),
+            ("int 1", "pt.Int(1)"),
+            ("+", "i.load() + pt.Int(1)"),
+            ("store 1", "i.store(i.load() + pt.Int(1))"),
+            (
+                "b main_l1",
+                "pt.If(pt.Gtxn[i.load()].type_enum() != pt.TxnType.Payment).Then(pt.Continue()).ElseIf(pt.Int(42))",  # ???pt.Continue() is better
+            ),
+            (
+                "main_l6:",
+                "pt.For(i.store(pt.Int(0)), i.load() < pt.Global.group_size(), i.store(i.load() + pt.Int(1)))",
+            ),
+            ("int 1", "pt.Approve()"),
+            ("return", "pt.Approve()"),
+        ],
+        3,
+    ),
+    (
+        lambda pt: pt.Seq(
+            pt.For(pt.Pop(pt.Int(1)), pt.Int(2), pt.Pop(pt.Int(3))).Do(
+                pt.Seq(
+                    pt.Cond(
+                        [pt.Int(4), pt.Continue()],
+                        [pt.Int(5), pt.Break()],
+                    ),
+                    pt.Pop(pt.Int(6)),
+                )
+            ),
+            pt.Reject(),
+        ),
+        [
+            [P, C],
+            ("int 1", "pt.Int(1)"),
+            ("pop", "pt.Pop(pt.Int(1))"),
+            ("main_l1:", "pt.For(pt.Pop(pt.Int(1)), pt.Int(2), pt.Pop(pt.Int(3)))"),
+            ("int 2", "pt.Int(2)"),
+            ("bz main_l6", "pt.For(pt.Pop(pt.Int(1)), pt.Int(2), pt.Pop(pt.Int(3)))"),
+            ("int 4", "pt.Int(4)"),
+            (
+                "bnz main_l5",
+                "pt.Cond([pt.Int(4), pt.Continue()], [pt.Int(5), pt.Break()])",
+            ),
+            ("int 5", "pt.Int(5)"),
+            (
+                "bnz main_l6",
+                "pt.Cond([pt.Int(4), pt.Continue()], [pt.Int(5), pt.Break()])",
+            ),
+            ("err", "pt.Cond([pt.Int(4), pt.Continue()], [pt.Int(5), pt.Break()])"),
+            (
+                "main_l5:",
+                "pt.Cond([pt.Int(4), pt.Continue()], [pt.Int(5), pt.Break()])",
+            ),
+            ("int 3", "pt.Int(3)"),
+            ("pop", "pt.Pop(pt.Int(3))"),
+            (
+                "b main_l1",
+                "pt.Cond([pt.Int(4), pt.Continue()], [pt.Int(5), pt.Break()])",
+            ),
+            ("main_l6:", "pt.For(pt.Pop(pt.Int(1)), pt.Int(2), pt.Pop(pt.Int(3)))"),
+            ("int 0", "pt.Reject()"),
+            ("return", "pt.Reject()"),
+        ],
+    ),
+    (
+        lambda pt: pt.Seq(
+            pt.Pop(pt.Int(0)),
+            pt.While(pt.Int(1)).Do(
+                pt.Cond(
+                    [pt.Int(2), pt.Continue()],
+                    [pt.Int(3), pt.Break()],
+                    [pt.Int(4), pt.Pop(pt.Int(5))],
+                ),
+                pt.Pop(pt.Int(6)),
+            ),
+            pt.Reject(),
+        ),
+        # This example shows that Continue() and Break() don't receive credit for the labelled targets
+        [
+            [P, C],
+            ("int 0", "pt.Int(0)"),
+            ("pop", "pt.Pop(pt.Int(0))"),
+            ("main_l1:", "pt.While(pt.Int(1))"),
+            ("int 1", "pt.Int(1)"),
+            (
+                "bz main_l7",
+                "pt.While(pt.Int(1))",
+            ),  # makes sense as While determines where to branch
+            ("int 2", "pt.Int(2)"),
+            (
+                "bnz main_l1",  # TODO: this could be improved as Continue() ought to get credit here
+                "pt.Cond([pt.Int(2), pt.Continue()], [pt.Int(3), pt.Break()], [pt.Int(4), pt.Pop(pt.Int(5))])",
+            ),
+            ("int 3", "pt.Int(3)"),
+            (
+                "bnz main_l7",  # TODO: this could be improved as Break() ought to get credit here
+                "pt.Cond([pt.Int(2), pt.Continue()], [pt.Int(3), pt.Break()], [pt.Int(4), pt.Pop(pt.Int(5))])",
+            ),
+            ("int 4", "pt.Int(4)"),
+            (
+                "bnz main_l6",  # makes sense
+                "pt.Cond([pt.Int(2), pt.Continue()], [pt.Int(3), pt.Break()], [pt.Int(4), pt.Pop(pt.Int(5))])",
+            ),
+            (
+                "err",  # makes sense
+                "pt.Cond([pt.Int(2), pt.Continue()], [pt.Int(3), pt.Break()], [pt.Int(4), pt.Pop(pt.Int(5))])",
+            ),
+            (
+                "main_l6:",  # makes sense
+                "pt.Cond([pt.Int(2), pt.Continue()], [pt.Int(3), pt.Break()], [pt.Int(4), pt.Pop(pt.Int(5))])",
+            ),
+            ("int 5", "pt.Int(5)"),
+            ("pop", "pt.Pop(pt.Int(5))"),
+            ("int 6", "pt.Int(6)"),
+            ("pop", "pt.Pop(pt.Int(6))"),
+            (
+                "b main_l1",
+                "pt.Cond([pt.Int(2), pt.Continue()], [pt.Int(3), pt.Break()], [pt.Int(4), pt.Pop(pt.Int(5))])",
+            ),
+            (
+                "main_l7:",
+                "pt.While(pt.Int(1))",
+            ),  # makes sense as this is the exit condition - but it could also have been Break()
             ("int 0", "pt.Reject()"),
             ("return", "pt.Reject()"),
         ],
@@ -1044,6 +1272,8 @@ def test_constructs(_, i, test_case, mode, version):
     """
     import pyteal as pt
 
+    # TODO - translate this to the pyteal frame... and make sure not to blow up
+    # Occationally we stop getting nodes from AST under random conditions
     def unparse(sourcemap_items):
         return list(map(lambda smi: ast.unparse(smi.frame.node), sourcemap_items))
 
@@ -1080,5 +1310,5 @@ def test_constructs(_, i, test_case, mode, version):
 
     msg = f"{msg}, {smis=}"
     assert list(expected_lines) == bundle.lines, msg
-    assert list(expected_lines) == sourcemap.teal_chunks, msg
+    assert list(expected_lines) == sourcemap.compiled_teal_lines, msg
     assert list(unparsed) == unparse(smis), msg

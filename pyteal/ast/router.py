@@ -1,41 +1,34 @@
-from dataclasses import dataclass, field, fields, astuple
-from typing import cast, Optional, Callable
+from dataclasses import astuple, dataclass, field, fields
 from enum import IntFlag
+from typing import Callable, Optional, cast
 
 from algosdk import abi as sdk_abi
 from algosdk import encoding
-
-from pyteal.config import METHOD_ARG_NUM_CUTOFF
-from pyteal.errors import (
-    TealInputError,
-    TealInternalError,
-)
-from pyteal.types import TealType
-from pyteal.compiler.compiler import (
-    Compilation,
-    DEFAULT_TEAL_VERSION,
-    OptimizeOptions,
-)
-from pyteal.compiler.sourcemap import PyTealSourceMap
-
-from pyteal.ir.ops import Mode
+from algosdk.v2client.algod import AlgodClient
 
 from pyteal.ast import abi
-from pyteal.ast.subroutine import (
-    OutputKwArgInfo,
-    SubroutineFnWrapper,
-    ABIReturnSubroutine,
-)
+from pyteal.ast.app import OnComplete
 from pyteal.ast.assert_ import Assert
 from pyteal.ast.cond import Cond
 from pyteal.ast.expr import Expr
-from pyteal.ast.app import OnComplete
-from pyteal.ast.int import Int, EnumInt
-from pyteal.ast.seq import Seq
+from pyteal.ast.int import EnumInt, Int
 from pyteal.ast.methodsig import MethodSignature
 from pyteal.ast.naryexpr import And, Or
-from pyteal.ast.txn import Txn
 from pyteal.ast.return_ import Approve, Reject
+from pyteal.ast.seq import Seq
+from pyteal.ast.subroutine import (
+    ABIReturnSubroutine,
+    OutputKwArgInfo,
+    SubroutineFnWrapper,
+)
+from pyteal.ast.txn import Txn
+from pyteal.compiler.compiler import DEFAULT_TEAL_VERSION, Compilation, OptimizeOptions
+from pyteal.compiler.sourcemap import PyTealSourceMap
+from pyteal.config import METHOD_ARG_NUM_CUTOFF
+from pyteal.errors import TealInputError, TealInternalError
+from pyteal.ir.ops import Mode
+from pyteal.types import TealType
+from pyteal.util import algod_with_assertion
 
 
 class CallConfig(IntFlag):
@@ -506,6 +499,51 @@ class RouterBundle:
     clear_sourcemap: PyTealSourceMap | None = None
 
 
+@dataclass
+class _RouterCompileInput:
+    version: int
+    assemble_constants: bool
+    optimize_opts: OptimizeOptions | None = None
+    with_sourcemap: bool = False
+    source_inference: bool = True
+    pcs_in_sourcemap: bool = False
+    approval_filename: str | None = None
+    clear_filename: str | None = None
+    algod_client: AlgodClient | None = None
+    annotate_teal: bool = True
+    # deprecated:
+    hybrid_source: bool = True
+
+    def __post_init__(self):
+        # The following params are non-sensical when truthy without sourcemaps.
+        # However, they are not defining anything actionable so are simple ignored
+        # rather than erroring when `with_source == False`:
+        # * pcs_in_sourcemap
+        # * approval_filename
+        # * clear_filename
+        # * algod_client
+
+        # On the other hand, self.annotate_teal indicates a user request which cannot
+        # be provided on when there isn't a sourcemap
+        if self.annotate_teal and not self.with_sourcemap:
+            raise ValueError(
+                "In order annotate generated teal source, must set source_inference True"
+            )
+
+        if self.pcs_in_sourcemap:
+            # bootstrap an algod_client if not provided, and in either case, run a healthcheck
+            self.algod_client = algod_with_assertion(self.algod_client)
+
+    def get_compilation(self, program: Expr) -> Compilation:
+        return Compilation(
+            ast=program,
+            mode=Mode.Application,
+            version=self.version,
+            assemble_constants=self.assemble_constants,
+            optimize=self.optimize_opts,
+        )
+
+
 class Router:
     """
     The Router class helps construct the approval and clear state programs for an ARC-4 compliant
@@ -713,7 +751,7 @@ class Router:
             A Python SDK `Contract` object constructed from the registered methods on this router.
         """
 
-        return sdk_abi.Contract(self.name, self.methods, self.descr)
+        return sdk_abi.Contract(self.name, self.methods, self.descr or "")
 
     def build_program(self) -> tuple[Expr, Expr, sdk_abi.Contract]:
         """
@@ -761,9 +799,12 @@ class Router:
             * clear_state_program: compiled clear-state program string
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
-        cpb = self._build_impl(
-            version, assemble_constants, optimize, False, False, False, None, None
+        input = _RouterCompileInput(
+            version=version,
+            assemble_constants=assemble_constants,
+            optimize_opts=optimize,
         )
+        cpb = self._build_impl(input)
 
         return cpb.approval_teal, cpb.clear_teal, cpb.abi_contract
 
@@ -773,10 +814,14 @@ class Router:
         version: int = DEFAULT_TEAL_VERSION,
         assemble_constants: bool = False,
         optimize: OptimizeOptions | None = None,
-        source_inference: bool = True,
-        hybrid_source: bool = True,
         approval_filename: str | None = None,
         clear_filename: str | None = None,
+        pcs_in_sourcemap: bool = False,
+        algod_client: AlgodClient | None = None,
+        annotate_teal: bool = True,
+        # deprecated:
+        source_inference: bool = True,
+        hybrid_source: bool = True,
     ) -> RouterBundle:
         """
         TODO: out of date comment
@@ -797,54 +842,45 @@ class Router:
             * clear_state_program: compiled clear-state program string
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
-        return self._build_impl(
-            version,
-            assemble_constants,
-            optimize,
-            True,
-            source_inference,
-            hybrid_source,
-            approval_filename,
-            clear_filename,
+        input = _RouterCompileInput(
+            version=version,
+            assemble_constants=assemble_constants,
+            optimize_opts=optimize,
+            with_sourcemap=True,
+            approval_filename=approval_filename,
+            clear_filename=clear_filename,
+            pcs_in_sourcemap=pcs_in_sourcemap,
+            algod_client=algod_client,
+            annotate_teal=annotate_teal,
+            # deprecated:
+            source_inference=source_inference,
+            hybrid_source=hybrid_source,
         )
+        return self._build_impl(input)
 
-    def _build_impl(
-        self,
-        version,
-        assemble_constants,
-        optimize,
-        sourcemaps,
-        source_inference,
-        hybrid_source,
-        approval_filename,
-        clear_filename,
-    ):
+    def _build_impl(self, input: _RouterCompileInput) -> RouterBundle:
         ap, csp, contract = self.build_program()
 
-        abundle = Compilation(
-            ap,
-            Mode.Application,
-            version=version,
-            assemble_constants=assemble_constants,
-            optimize=optimize,
-        ).compile(
-            with_sourcemap=sourcemaps,
-            source_inference=source_inference,
-            hybrid_source=hybrid_source,
-            teal_filename=approval_filename,
+        abundle = input.get_compilation(ap).compile(
+            with_sourcemap=input.with_sourcemap,
+            teal_filename=input.approval_filename,
+            pcs_in_sourcemap=input.pcs_in_sourcemap,
+            algod_client=input.algod_client,
+            annotate_teal=input.annotate_teal,
+            # deprecated:
+            source_inference=input.source_inference,
+            hybrid_source=input.hybrid_source,
         )
 
-        csbundle = Compilation(
-            csp,
-            Mode.Application,
-            version=version,
-            assemble_constants=assemble_constants,
-            optimize=optimize,
-        ).compile(
-            with_sourcemap=sourcemaps,
-            source_inference=source_inference,
-            hybrid_source=hybrid_source,
-            teal_filename=clear_filename,
+        csbundle = input.get_compilation(csp).compile(
+            with_sourcemap=input.with_sourcemap,
+            teal_filename=input.clear_filename,
+            pcs_in_sourcemap=input.pcs_in_sourcemap,
+            algod_client=input.algod_client,
+            annotate_teal=input.annotate_teal,
+            # deprecated:
+            source_inference=input.source_inference,
+            hybrid_source=input.hybrid_source,
         )
 
         return RouterBundle(

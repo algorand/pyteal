@@ -1,17 +1,23 @@
 from dataclasses import dataclass
-from typing import List, Tuple, Set, Dict, Optional, cast
+from typing import Dict, List, Optional, Set, Tuple, cast
 
+from algosdk.v2client.algod import AlgodClient
+
+from pyteal.ast import Expr, Return, Seq, SubroutineDeclaration, SubroutineDefinition
+from pyteal.compiler.constants import createConstantBlocks
+from pyteal.compiler.flatten import flattenBlocks, flattenSubroutines
 from pyteal.compiler.optimizer import OptimizeOptions, apply_global_optimizations
-from pyteal.compiler.sourcemap import PyTealSourceMap, SourceMapDisabledError
-
-from pyteal.types import TealType
-from pyteal.ast import (
-    Expr,
-    Return,
-    Seq,
-    SubroutineDefinition,
-    SubroutineDeclaration,
+from pyteal.compiler.scratchslots import (
+    assignScratchSlotsToSubroutines,
+    collect_unoptimized_slots,
 )
+from pyteal.compiler.sort import sortBlocks
+from pyteal.compiler.sourcemap import PyTealSourceMap, SourceMapDisabledError
+from pyteal.compiler.subroutines import (
+    resolveSubroutines,
+    spillLocalSlotsDuringRecursion,
+)
+from pyteal.errors import TealInputError, TealInternalError
 from pyteal.ir import (
     Mode,
     Op,
@@ -21,21 +27,9 @@ from pyteal.ir import (
     TealPragma,
     TealSimpleBlock,
 )
-from pyteal.errors import TealInputError, TealInternalError
-
-from pyteal.compiler.sort import sortBlocks
-from pyteal.compiler.flatten import flattenBlocks, flattenSubroutines
-from pyteal.compiler.scratchslots import (
-    assignScratchSlotsToSubroutines,
-    collect_unoptimized_slots,
-)
-from pyteal.compiler.subroutines import (
-    spillLocalSlotsDuringRecursion,
-    resolveSubroutines,
-)
-from pyteal.compiler.constants import createConstantBlocks
-
-from pyteal.util import Frames
+from pyteal.stack_frame import Frames
+from pyteal.types import TealType
+from pyteal.util import algod_with_assertion
 
 MAX_PROGRAM_VERSION = 7
 MIN_PROGRAM_VERSION = 2
@@ -275,9 +269,13 @@ class Compilation:
     def compile(
         self,
         with_sourcemap: bool = True,
+        teal_filename: str | None = None,
+        pcs_in_sourcemap: bool = False,
+        algod_client: AlgodClient | None = None,
+        annotate_teal: bool = False,
+        # deprecated:
         source_inference: bool = True,
         hybrid_source: bool = True,
-        teal_filename: str | None = None,
     ) -> CompilationBundle:
         """Compile a PyTeal expression into TEAL assembly.
 
@@ -315,6 +313,17 @@ class Compilation:
 
         if with_sourcemap and Frames.skipping_all():
             raise SourceMapDisabledError()
+
+        if annotate_teal and not with_sourcemap:
+            raise ValueError(
+                "In order annotate generated teal source, must set source_inference True"
+            )
+
+        if pcs_in_sourcemap:
+            # bootstrap an algod_client if not provided, and in either case, run a healthcheck
+            algod_client = algod_with_assertion(
+                algod_client, msg="Adding PC's to sourcemap requires live Algod"
+            )
 
         options = CompileOptions(
             mode=self.mode, version=self.version, optimize=self.optimize
@@ -375,26 +384,34 @@ class Compilation:
         teal_code = "\n".join(lines)
 
         cpb = CompilationBundle(
-            self.ast,
-            self.mode,
-            self.version,
-            self.assemble_constants,
-            self.optimize,
-            teal_code,
-            lines,
-            components,
+            ast=self.ast,
+            mode=self.mode,
+            version=self.version,
+            assemble_constants=self.assemble_constants,
+            optimize=self.optimize,
+            teal=teal_code,
+            lines=lines,
+            components=components,
         )
         if not with_sourcemap:
             return cpb
 
         cpb.sourcemap = PyTealSourceMap(
-            lines,
-            components,
+            compiled_teal_lines=lines,
+            components=components,
             build=True,
+            teal_file=teal_filename,
+            include_pcs=pcs_in_sourcemap,
+            algod=algod_client,
+            annotate_teal=annotate_teal,
+            # deprecated:
             source_inference=source_inference,
             hybrid=hybrid_source,
-            teal_file=teal_filename,
         )
+
+        if annotate_teal:
+            cpb.teal = cpb.sourcemap.annotated_teal()
+
         return cpb
 
 

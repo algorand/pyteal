@@ -6,7 +6,7 @@ from pyteal.errors import (
     TealCompileError,
     TealInputError,
 )
-from pyteal.util import Frames
+from pyteal.stack_frame import Frames
 from pyteal.types import TealType, require_type
 from pyteal.ir import TealSimpleBlock, TealConditionalBlock
 

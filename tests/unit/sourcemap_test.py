@@ -1,26 +1,25 @@
 import ast
-from configparser import ConfigParser
 import json
-from pathlib import Path
 import time
-
-import pytest
+from configparser import ConfigParser
+from pathlib import Path
 from unittest import mock
 
+import pytest
 from algosdk.source_map import R3SourceMap, R3SourceMapJSON
 
 ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 
 
 def test_frames():
-    from pyteal.util import Frames
+    from pyteal.stack_frame import Frames
 
     Frames._skip_all = False
 
     this_file, this_func = "sourcemap_test.py", "test_frames"
-    this_lineno, this_frame = 21, Frames()[1]
-    code = f"    this_lineno, this_frame = {this_lineno}, Frames()[1]\n"
-    this_col_offset, this_end_col_offset = 34, 42
+    this_lineno, this_frame = 21, Frames(keep_all=True)[1]
+    code = f"    this_lineno, this_frame = {this_lineno}, Frames(keep_all=True)[1]\n"
+    this_col_offset, this_end_col_offset = 34, 55
     frame_info, node = this_frame.frame_info, this_frame.node
 
     assert frame_info.filename.endswith(this_file)
@@ -39,12 +38,12 @@ def test_frames():
 
 
 def test_SourceMapItem_source_mapping():
-    from pyteal.util import Frames
+    from pyteal.stack_frame import Frames, PyTealFrame
 
     Frames._skip_all = False
 
-    from pyteal.compiler.sourcemap import PyTealFrame, SourceMapItem
     import pyteal as pt
+    from pyteal.compiler.sourcemap import SourceMapItemDEPRECATED
 
     expr = pt.Int(0) + pt.Int(1)
     expr_line_offset, expr_str = 50, "expr = pt.Int(0) + pt.Int(1)"
@@ -60,7 +59,7 @@ def test_SourceMapItem_source_mapping():
 
     teals = mock_teal(ops)
     smis = [
-        SourceMapItem(i, teals[i], op, PyTealFrame(op.expr.frames[0]))
+        SourceMapItemDEPRECATED(i, teals[i], op, op.expr.frames[0].as_pyteal_frame())
         for i, op in enumerate(ops)
     ]
 
@@ -108,8 +107,8 @@ def test_PyTealSourceMap_R3SourceMap_roundtrip():
 
 
 def no_regressions():
-    from pyteal import OptimizeOptions
     from examples.application.abi.algobank import router
+    from pyteal import OptimizeOptions
 
     approval, clear, contract = router.compile_program(
         version=6, optimize=OptimizeOptions(scratch_slots=True)
@@ -122,7 +121,8 @@ def no_regressions():
         assert clear == cf.read()
 
     with open(ALGOBANK / "algobank.json") as jf:
-        assert json.dumps(contract.dictify(), indent=4) == jf.read()
+        expected = jf.read()
+        assert expected == json.dumps(contract.dictify(), indent=4)
 
 
 def test_no_regression_with_sourcemap_as_configured():
@@ -130,7 +130,7 @@ def test_no_regression_with_sourcemap_as_configured():
 
 
 def test_no_regression_with_sourcemap_enabled():
-    from pyteal.util import Frames
+    from pyteal.stack_frame import Frames
 
     Frames._skip_all = False
 
@@ -138,7 +138,7 @@ def test_no_regression_with_sourcemap_enabled():
 
 
 def test_no_regression_with_sourcemap_disabled():
-    from pyteal.util import Frames
+    from pyteal.stack_frame import Frames
 
     Frames._skip_all = True
 
@@ -146,10 +146,9 @@ def test_no_regression_with_sourcemap_disabled():
 
 
 def test_sourcemap_fails_because_unconfigured():
+    from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
     from pyteal.compiler.sourcemap import SourceMapDisabledError
-
-    from examples.application.abi.algobank import router
 
     with pytest.raises(SourceMapDisabledError) as smde:
         router.compile_program_with_sourcemaps(
@@ -178,17 +177,15 @@ def time_for_n_secs(f, n):
 
 
 def simple_compilation():
-    from pyteal import OptimizeOptions
-
     from examples.application.abi.algobank import router
+    from pyteal import OptimizeOptions
 
     router.compile_program(version=6, optimize=OptimizeOptions(scratch_slots=True))
 
 
 def source_map_compilation():
-    from pyteal import OptimizeOptions
-
     from examples.application.abi.algobank import router
+    from pyteal import OptimizeOptions
 
     router.compile_program_with_sourcemaps(
         version=6,
@@ -197,37 +194,13 @@ def source_map_compilation():
 
 
 def annotated_teal():
-    from pyteal import OptimizeOptions
-
     from examples.application.abi.algobank import router
+    from pyteal import OptimizeOptions
 
     router.compile_program_with_sourcemaps(
         version=6,
         optimize=OptimizeOptions(scratch_slots=True),
     ).approval_sourcemap.annotated_teal(unparse_hybrid=True)
-
-
-def test_profile():
-    """
-    TODO: run factory(simple_compilation, skip=???) through a memory profiler
-    """
-
-    def factory(func, skip):
-        from util import Frames
-
-        def trial():
-            if skip:
-                Frames.skip = True
-            trials, tot = time_for_n_secs(simple_compilation, 10)
-            avg = tot / len(trials)
-            N = len(trials)
-            print("\n" + f"{func.__name__}: {avg=}, {N=}")
-
-            Frames.skip = False
-
-        return trial
-
-    # profile.run("factory(simple_compilation, skip=True)")
 
 
 summaries_only = True
@@ -247,7 +220,7 @@ def trial(func):
 
 @pytest.mark.skip()
 def test_time_benchmark_under_config():
-    from pyteal.util import Frames
+    from pyteal.stack_frame import Frames
 
     print(f"{Frames.skipping_all()=}")
 
@@ -285,7 +258,7 @@ def test_time_benchmark_sourcemap_enabled(_):
     """
     UPSHOT: expect deterioration of (5 to 15)X when enabling source maps.
     """
-    from pyteal.util import Frames
+    from pyteal.stack_frame import Frames
 
     print(f"{Frames.skipping_all()=}")
     print(
@@ -365,7 +338,7 @@ Allocations results for tests/unit/sourcemap_test.py::test_time_benchmark_source
 
 
 def test_config():
-    from pyteal.util import Frames
+    from pyteal.stack_frame import Frames
 
     config = ConfigParser()
     config.read([".flake8", "mypy.ini", "pyteal.ini"])

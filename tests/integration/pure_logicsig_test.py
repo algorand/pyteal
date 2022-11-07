@@ -1,19 +1,16 @@
 from itertools import product
 from os import environ
 from pathlib import Path
-import pytest
 
-from pyteal import compileTeal, Mode
+import pytest
+from graviton.blackbox import DryRunExecutor as Executor
+from graviton.blackbox import DryRunInspector as Inspector
+from graviton.blackbox import DryRunProperty as DRProp
+from graviton.invariant import Invariant
 
 import examples.signature.factorizer_game as factorizer
-
-from tests.blackbox import algod_with_assertion
-from graviton.blackbox import (
-    DryRunExecutor as Executor,
-    DryRunInspector as Inspector,
-    DryRunProperty as DRProp,
-)
-from graviton.invariant import Invariant
+from pyteal import Mode, compileTeal
+from pyteal.util import algod_with_assertion
 
 REPORTS_DIR = Path.cwd() / "tests" / "integration" / "reports"
 ALGOD = algod_with_assertion()

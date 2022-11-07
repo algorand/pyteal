@@ -45,11 +45,10 @@ class While(Expr):
 
         condStart, condEnd = self.cond.__teal__(options)
         doStart, doEnd = self.doBlock.__teal__(options)
-        end = TealSimpleBlock([])
+        end = TealSimpleBlock([], root_expr=self)
 
         doEnd.setNextBlock(condStart)
 
-        # TODO: is the root_expr useful?
         branchBlock = TealConditionalBlock([], root_expr=self)
         branchBlock.setTrueBlock(doStart)
         branchBlock.setFalseBlock(end)

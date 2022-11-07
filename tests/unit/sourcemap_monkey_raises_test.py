@@ -1,7 +1,7 @@
 from configparser import ConfigParser
+from unittest import mock
 
 import pytest
-from unittest import mock
 
 # TODO - why is this failing when running together with other tests?
 # Perhaps - I need proper setup/teardowns for this test
@@ -13,10 +13,9 @@ from unittest import mock
 
 @mock.patch.object(ConfigParser, "getboolean", side_effect=Exception("1337"))
 def test_sourcemap_fails_elegantly_when_no_ini(_):
+    from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
     from pyteal.compiler.sourcemap import SourceMapDisabledError
-
-    from examples.application.abi.algobank import router
 
     with pytest.raises(SourceMapDisabledError) as smde:
         router.compile_program_with_sourcemaps(

@@ -23,11 +23,11 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
     """
     codeblocks = []
     references: DefaultDict[int, int] = defaultdict(int)
-    experimental_referer: dict[int, int] = {}
+    referer: dict[int, int] = {}
 
     def add_if_new(nextIndex, i):
-        if nextIndex not in experimental_referer:
-            experimental_referer[nextIndex] = i
+        if nextIndex not in referer:
+            referer[nextIndex] = i
 
     labelRefs: Dict[int, LabelReference] = dict()
 
@@ -42,13 +42,14 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
                 return i
         raise ValueError("Block not present in list: {}".format(block))
 
+    root: Optional["Expr"] = None
     for i, block in enumerate(blocks):
         code = list(block.ops)
         codeblocks.append(code)
         if block.isTerminal():
             continue
 
-        root: Optional["Expr"] = block.root_expr
+        root = block.root_expr or root
 
         if type(block) is TealSimpleBlock:
             assert block.nextBlock is not None
@@ -90,10 +91,11 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             raise TealInternalError("Unrecognized block type: {}".format(type(block)))
 
     teal: List[TealComponent] = []
+    root = None
     for i, code in enumerate(codeblocks):
         if references[i] != 0:
-            experimental_expr = blocks[experimental_referer[i]].root_expr
-            teal.append(TealLabel(experimental_expr, indexToLabel(i)))  # T2PT6
+            root = blocks[i].root_expr or blocks[referer[i]].root_expr or root
+            teal.append(TealLabel(root, indexToLabel(i)))  # T2PT6
         teal += code
 
     return teal
@@ -136,7 +138,6 @@ def flattenSubroutines(
             if isinstance(stmt, TealLabel):
                 stmt.getLabelRef().addPrefix(labelPrefix)
 
-        # TODO: should I retain populating expr with ... may be a problem as evaluated to early here
         dexpr = subroutine.get_declaration()
         combinedOps.append(TealLabel(dexpr, LabelReference(label), comment))  # T2PT1
         combinedOps += subroutineOps

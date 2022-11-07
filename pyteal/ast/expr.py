@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Tuple, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Tuple
 
-from pyteal.types import TealType
 from pyteal.ir import TealBlock, TealSimpleBlock
-from pyteal.util import Frames
+from pyteal.stack_frame import Frames
+from pyteal.types import TealType
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
