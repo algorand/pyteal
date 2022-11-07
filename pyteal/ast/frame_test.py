@@ -192,29 +192,29 @@ def test_local_type_segment_compilation(testcase: LocalTypeSegmentTestCase):
 
 
 def test_proto_stack_layout_invalid():
-    with pytest.raises(pt.TealInternalError) as bad_local_alloc:
+    with pytest.raises(pt.TealInternalError) as tie:
         ProtoStackLayout([pt.TealType.uint64, pt.TealType.bytes], [], -1)
 
-    assert "Return number should be non-negative." == str(bad_local_alloc.value)
+    assert "Return allocation number should be non-negative." == str(tie.value)
 
-    with pytest.raises(pt.TealInternalError) as bad_local_alloc:
+    with pytest.raises(pt.TealInternalError) as tie:
         ProtoStackLayout([pt.TealType.uint64, pt.TealType.bytes], [], 1)
 
-    assert "should not be greater than local allocations" in str(bad_local_alloc.value)
+    assert "should not be greater than local allocations" in str(tie.value)
 
-    with pytest.raises(pt.TealInternalError) as bad_type_on_stack:
+    with pytest.raises(pt.TealInternalError) as tie:
         ProtoStackLayout([pt.TealType.bytes, pt.TealType.none], [], 0)
 
-    assert "must be typed" in str(bad_type_on_stack.value)
+    assert "must be typed" in str(tie.value)
 
-    with pytest.raises(pt.TealInternalError) as bad_type_on_stack:
+    with pytest.raises(pt.TealInternalError) as tie:
         ProtoStackLayout(
             [pt.TealType.bytes, pt.TealType.uint64],
             [pt.TealType.uint64, pt.TealType.none],
             0,
         )
 
-    assert "must be typed" in str(bad_type_on_stack.value)
+    assert "must be typed" in str(tie.value)
 
 
 @dataclass

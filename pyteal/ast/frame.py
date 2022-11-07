@@ -60,21 +60,21 @@ class ProtoStackLayout(Expr):
         self,
         arg_stack_types: list[TealType],
         local_stack_types: list[TealType],
-        num_returns: int,
+        num_return_allocs: int,
     ):
         super().__init__()
-        if num_returns < 0:
-            raise TealInternalError("Return number should be non-negative.")
-        elif num_returns > len(local_stack_types):
+        if num_return_allocs < 0:
+            raise TealInternalError("Return allocation number should be non-negative.")
+        elif num_return_allocs > len(local_stack_types):
             raise TealInternalError(
                 "ProtoStackLayout initialization error:"
-                f"return number {num_returns} should not be greater than local allocations {len(local_stack_types)}."
+                f"return allocation number {num_return_allocs} should not be greater than local allocations {len(local_stack_types)}."
             )
 
         if not all(map(lambda t: t != TealType.none, arg_stack_types)):
             raise TealInternalError("Variables in frame memory layout must be typed.")
 
-        self.num_returns: int = num_returns
+        self.num_return_allocs: int = num_return_allocs
         self.arg_stack_types: list[TealType] = arg_stack_types
         self.local_stack_types: list[TealType] = local_stack_types
 
@@ -128,13 +128,15 @@ class Proto(Expr):
                 f"The number of returns provided to Proto must be >= 0 but {num_returns=}."
             )
         if mem_layout:
-            if mem_layout.num_returns != num_returns:
+            if mem_layout.num_return_allocs > num_returns:
                 raise TealInternalError(
-                    f"The number of returns {num_returns} should match with memory layout's number of returns {mem_layout.num_returns}"
+                    f"The number of returns {num_returns} should be greater equal to "
+                    f"memory layout's number of allocations for returns {mem_layout.num_return_allocs}"
                 )
             if len(mem_layout.arg_stack_types) != num_args:
                 raise TealInternalError(
-                    f"The number of arguments {num_args} should match with memory layout's number of arguments {len(mem_layout.arg_stack_types)}"
+                    f"The number of arguments {num_args} should match with "
+                    f"memory layout's number of arguments {len(mem_layout.arg_stack_types)}"
                 )
 
         self.num_args = num_args
