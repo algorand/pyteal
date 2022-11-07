@@ -122,8 +122,10 @@ def test_local_type_segment_invalid():
     with pytest.raises(pt.TealInternalError):
         LocalTypeSegment(pt.TealType.anytype, -1)
 
-    with pytest.raises(pt.TealInternalError):
+    with pytest.raises(pt.TealInternalError) as tie:
         LocalTypeSegment(pt.TealType.none, 2)
+
+    assert "Local variable in subroutine initialization must be typed." in str(tie)
 
 
 @dataclass
