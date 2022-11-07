@@ -6,7 +6,7 @@ from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
 from pyteal.ast.bytes import Bytes
 from pyteal.ast.abstractvar import AbstractVar
-from pyteal.types import TealType, require_type, types_match
+from pyteal.types import TealType, require_type
 from pyteal.errors import TealInputError, TealInternalError, verifyProgramVersion
 from pyteal.ir import TealBlock, TealSimpleBlock, TealOp, Op
 
@@ -62,7 +62,7 @@ class ProtoStackLayout:
             )
 
         self.output_index = 0 if self.has_output else None
-        if not all(map(lambda t: types_match(t, TealType.none), self.arg_stack_types)):
+        if any(map(lambda t: t != TealType.none, self.arg_stack_types)):
             raise TealInternalError("Variables in frame memory layout must be typed.")
 
         # Type check of local variables are performed over LocalTypeSegments
