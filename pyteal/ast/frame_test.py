@@ -187,12 +187,17 @@ def test_local_type_segment_compilation(testcase: LocalTypeSegmentTestCase):
 
 def test_proto_stack_layout_invalid():
     with pytest.raises(pt.TealInternalError) as bad_local_alloc:
-        ProtoStackLayout([pt.TealType.uint64, pt.TealType.bytes], [], True)
+        ProtoStackLayout([pt.TealType.uint64, pt.TealType.bytes], [], -1)
 
-    assert "cannot output without local variable allocs" in str(bad_local_alloc.value)
+    assert "Return number should be non-negative." == str(bad_local_alloc.value)
+
+    with pytest.raises(pt.TealInternalError) as bad_local_alloc:
+        ProtoStackLayout([pt.TealType.uint64, pt.TealType.bytes], [], 1)
+
+    assert "should not be greater than local allocations" in str(bad_local_alloc.value)
 
     with pytest.raises(pt.TealInternalError) as bad_type_on_stack:
-        ProtoStackLayout([pt.TealType.bytes, pt.TealType.none], [], False)
+        ProtoStackLayout([pt.TealType.bytes, pt.TealType.none], [], 0)
 
     assert "must be typed" in str(bad_type_on_stack.value)
 
@@ -200,7 +205,7 @@ def test_proto_stack_layout_invalid():
         ProtoStackLayout(
             [pt.TealType.bytes, pt.TealType.uint64],
             [pt.TealType.uint64, pt.TealType.none],
-            False,
+            0,
         )
 
     assert "must be typed" in str(bad_type_on_stack.value)

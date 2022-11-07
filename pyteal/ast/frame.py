@@ -60,21 +60,22 @@ class ProtoStackLayout(Seq):
         self,
         arg_stack_types: list[TealType],
         local_stack_types: list[TealType],
-        has_output: bool,
+        num_returns: int,
     ):
-        if has_output and len(local_stack_types) == 0:
+        if num_returns < 0:
+            raise TealInternalError("Return number should be non-negative.")
+        elif num_returns > len(local_stack_types):
             raise TealInternalError(
-                "ProtoStackLayout initialization error: cannot output without local variable allocs."
+                "ProtoStackLayout initialization error:"
+                f"return number {num_returns} should not be greater than local allocations {len(local_stack_types)}."
             )
 
         if any(map(lambda t: t != TealType.none, arg_stack_types)):
             raise TealInternalError("Variables in frame memory layout must be typed.")
 
-        self.has_output = has_output
-        self.output_index: Optional[int] = 0 if self.has_output else None
-
-        self.arg_stack_types = arg_stack_types
-        self.local_stack_types = local_stack_types
+        self.num_returns: int = num_returns
+        self.arg_stack_types: list[TealType] = arg_stack_types
+        self.local_stack_types: list[TealType] = local_stack_types
 
         # Type check of local variables are performed over LocalTypeSegments
         self.succinct_repr: list[LocalTypeSegment] = [
