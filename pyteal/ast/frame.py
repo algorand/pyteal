@@ -1,10 +1,10 @@
-from dataclasses import dataclass, field
 from itertools import groupby
 from typing import TYPE_CHECKING, Optional
 
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
 from pyteal.ast.bytes import Bytes
+from pyteal.ast.seq import Seq
 from pyteal.ast.abstractvar import AbstractVar
 from pyteal.types import TealType, require_type
 from pyteal.errors import TealInputError, TealInternalError, verifyProgramVersion
@@ -14,14 +14,13 @@ if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
 
 
-@dataclass
-class LocalTypeSegment:
-    local_type: TealType
-    cnt: int
-    auto_instance: Expr = field(init=False)
+class LocalTypeSegment(Seq):
+    def __init__(self, local_type: TealType, count: int):
+        self.local_type = local_type
+        self.count = count
+        self.auto_instance: Expr
 
-    def __post_init__(self):
-        if self.cnt <= 0:
+        if self.count <= 0:
             raise TealInternalError(
                 "LocalTypeSegment initialization error: segment length must be strictly greatly than 0."
             )
@@ -36,37 +35,49 @@ class LocalTypeSegment:
                 )
 
     def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
-        if self.cnt == 1:
+        if self.count == 1:
             inst_srt, inst_end = self.auto_instance.__teal__(options)
             return inst_srt, inst_end
         else:
-            dupn_srt, dupn_end = DupN(self.auto_instance, self.cnt).__teal__(options)
+            dupn_srt, dupn_end = DupN(self.auto_instance, self.count).__teal__(options)
             return dupn_srt, dupn_end
+
+    def __str__(self) -> str:
+        return f"(LocalTypeSegment: (type: {self.local_type}) (count: {self.count}))"
+
+    def has_return(self) -> bool:
+        return False
+
+    def type_of(self) -> TealType:
+        return TealType.none
 
 
 LocalTypeSegment.__module__ = "pyteal"
 
 
-@dataclass
-class ProtoStackLayout:
-    arg_stack_types: list[TealType]
-    local_stack_types: list[TealType]
-    has_output: bool
-    output_index: Optional[int] = field(init=False)
-    succinct_repr: list[LocalTypeSegment] = field(init=False)
-
-    def __post_init__(self):
-        if self.has_output and len(self.local_stack_types) == 0:
+class ProtoStackLayout(Seq):
+    def __init__(
+        self,
+        arg_stack_types: list[TealType],
+        local_stack_types: list[TealType],
+        has_output: bool,
+    ):
+        if has_output and len(local_stack_types) == 0:
             raise TealInternalError(
                 "ProtoStackLayout initialization error: cannot output without local variable allocs."
             )
 
-        self.output_index = 0 if self.has_output else None
-        if any(map(lambda t: t != TealType.none, self.arg_stack_types)):
+        if any(map(lambda t: t != TealType.none, arg_stack_types)):
             raise TealInternalError("Variables in frame memory layout must be typed.")
 
+        self.has_output = has_output
+        self.output_index: Optional[int] = 0 if self.has_output else None
+
+        self.arg_stack_types = arg_stack_types
+        self.local_stack_types = local_stack_types
+
         # Type check of local variables are performed over LocalTypeSegments
-        self.succinct_repr = [
+        self.succinct_repr: list[LocalTypeSegment] = [
             LocalTypeSegment(t_type, len(list(dup_seg)))
             for t_type, dup_seg in groupby(self.local_stack_types)
         ]
@@ -74,20 +85,29 @@ class ProtoStackLayout:
         # anytype at i + 1 merge to i
         for i in reversed(range(len(self.succinct_repr) - 1)):
             if self.succinct_repr[i + 1].local_type == TealType.anytype:
-                self.succinct_repr[i].cnt += self.succinct_repr[i + 1].cnt
+                self.succinct_repr[i].count += self.succinct_repr[i + 1].count
                 self.succinct_repr.pop(i + 1)
 
         if (
             len(self.succinct_repr) > 1
             and self.succinct_repr[0].local_type == TealType.anytype
         ):
-            self.succinct_repr[1].cnt += self.succinct_repr[0].cnt
+            self.succinct_repr[1].count += self.succinct_repr[0].count
             self.succinct_repr.pop(0)
 
     def __getitem__(self, index: int) -> TealType:
         if index < 0:
             return self.arg_stack_types[len(self.arg_stack_types) + index]
         return self.local_stack_types[index]
+
+    def __str__(self) -> str:
+        return f"(ProtoStackLayout: (args: {self.arg_stack_types}) (locals: {self.local_stack_types}))"
+
+    def has_return(self) -> bool:
+        return False
+
+    def type_of(self) -> TealType:
+        return TealType.none
 
     def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
         seg_srt, seg_end = self.succinct_repr[0].__teal__(options)
