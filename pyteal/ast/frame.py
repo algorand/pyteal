@@ -67,8 +67,9 @@ class ProtoStackLayout(Expr):
             raise TealInternalError("Return allocation number should be non-negative.")
         elif num_return_allocs > len(local_stack_types):
             raise TealInternalError(
-                "ProtoStackLayout initialization error:"
-                f"return allocation number {num_return_allocs} should not be greater than local allocations {len(local_stack_types)}."
+                "ProtoStackLayout initialization error: "
+                f"return allocation number {num_return_allocs} should not "
+                f"be greater than local allocations {len(local_stack_types)}."
             )
 
         if not all(map(lambda t: t != TealType.none, arg_stack_types)):
