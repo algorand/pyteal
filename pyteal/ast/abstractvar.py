@@ -4,6 +4,20 @@ from pyteal.ast.expr import Expr
 
 
 class AbstractVar(ABC):
+    """AbstractVar is an abstract class that captures properties of a variable.
+
+    A variable, on an abstract perspective, has following properties:
+
+    * Storing: can be stored to a certain position.
+    * Loading: can be loaded from a certain position.
+    * (Strong) Typed: can indicate its own type.
+
+    ScratchVar and FrameVar inherits from this class, representing the load and storage of value
+    against scratch slots or stack based on frame pointer.
+
+    This class is intentionally hidden because it's too basic to directly expose.
+    """
+
     @abstractmethod
     def store(self, value: Expr, validate_types: bool = True) -> Expr:
         pass

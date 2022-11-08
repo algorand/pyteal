@@ -14,6 +14,12 @@ if TYPE_CHECKING:
 
 
 class LocalTypeSegment(Expr):
+    """An expression that allocates stack spaces for local variable.
+
+    This class is intentionally hidden because it's too basic to directly expose.
+    This is only used in ProtoStackLayout internally.
+    """
+
     def __init__(self, local_type: TealType, count: int):
         super().__init__()
         self.local_type = local_type
@@ -56,6 +62,12 @@ LocalTypeSegment.__module__ = "pyteal"
 
 
 class ProtoStackLayout(Expr):
+    """An expression that carrys arg types and local types for a subroutine.
+
+    This class is intentionally hidden because it's too basic to directly expose.
+    This is only used in Proto internally.
+    """
+
     def __init__(
         self,
         arg_stack_types: list[TealType],
@@ -113,6 +125,12 @@ ProtoStackLayout.__module__ = "pyteal"
 
 
 class Proto(Expr):
+    """An expression that prepare top call frame for a retsub that will assume A args and R return values.
+
+    This class is intentionally hidden because it's too basic to directly expose.
+    It is only used in subroutine, for subrouine declaration computation.
+    """
+
     def __init__(
         self,
         num_args: int,
@@ -173,6 +191,12 @@ Proto.__module__ = "pyteal"
 
 
 class FrameDig(Expr):
+    """An expression that digs a value from a position around frame pointer.
+
+    This class is intentionally hidden because it's too basic to directly expose.
+    his is used only internally by FrameVar.
+    """
+
     def __init__(self, frame_index: int, *, inferred_type: Optional[TealType] = None):
         super().__init__()
         self.frame_index = frame_index
@@ -201,6 +225,12 @@ FrameDig.__module__ = "pyteal"
 
 
 class FrameBury(Expr):
+    """An expression that burys a value to a position around frame pointer.
+
+    This class is intentionally hidden because it's too basic to directly expose.
+    his is used only internally by FrameVar.
+    """
+
     def __init__(
         self,
         value: Expr,
@@ -241,6 +271,14 @@ FrameBury.__module__ = "pyteal"
 
 
 class FrameVar(AbstractVar):
+    """An instantiation for AbstractVar based on frame pointer.
+
+    FrameVar captures loading, storing and type of variable over stack by frame pointer.
+
+    This class is intentionally hidden because it's too basic to directly expose.
+    This is used only internally by SubroutineEval in subroutine declaration computation.
+    """
+
     def __init__(self, under_proto: Proto, frame_index: int) -> None:
         super().__init__()
         self.proto = under_proto
@@ -270,6 +308,12 @@ FrameVar.__module__ = "pyteal"
 
 
 class DupN(Expr):
+    """Duplicate an expression N times.
+
+    This class is intentionally hidden because it's too basic to directly expose.
+    This is used only by Proto and LocalTypeSegment.
+    """
+
     def __init__(self, value: Expr, repetition: int):
         super().__init__()
         require_type(value, TealType.anytype)
