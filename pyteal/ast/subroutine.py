@@ -9,7 +9,7 @@ from pyteal.ast import abi
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar, ScratchSlot
-from pyteal.ast.frame import FrameDig, Proto, FrameVar, ProtoStackLayout
+from pyteal.ast.frame import Proto, FrameVar, ProtoStackLayout
 from pyteal.errors import TealInputError, TealInternalError, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.types import TealType
@@ -975,7 +975,7 @@ class SubroutineEval:
                 subroutine.arguments().index(param) - subroutine.argument_count()
             )
             argument_var = None
-            loaded_var = FrameDig(dig_index)
+            loaded_var = FrameVar(proto, dig_index).load()
 
         return argument_var, loaded_var
 
