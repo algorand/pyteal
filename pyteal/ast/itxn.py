@@ -253,10 +253,10 @@ class InnerTxnBuilder:
     def ExecuteMethodCall(
         cls,
         *,
-        app_id: Expr,
+        app_id: Expr | None,
         method_signature: str,
         args: list[abi.BaseType | Expr | dict[TxnField, Expr | list[Expr]]],
-        extra_fields: dict[TxnField, Expr | list[Expr]] = None,
+        extra_fields: dict[TxnField, Expr | list[Expr]] | None = None,
     ) -> Expr:
         """Performs a single app call transaction formatted as an ABI method call.
 
@@ -277,6 +277,7 @@ class InnerTxnBuilder:
 
         Args:
             app_id: An expression that evaluates to a `TealType.uint64` corresponding to the application being called.
+                If the call is meant to create an application, the value `None` should be passed
             method_signature: A string representing the method signature of the method we're calling. This is used to do
                 type checking on the arguments passed and to create the method selector passed as the first argument.
             args: A list of arguments to pass to the application. The values in this list depend on the kind of argument you wish to pass:
@@ -310,10 +311,10 @@ class InnerTxnBuilder:
     def MethodCall(
         cls,
         *,
-        app_id: Expr,
+        app_id: Expr | None,
         method_signature: str,
         args: list[abi.BaseType | Expr | dict[TxnField, Expr | list[Expr]]],
-        extra_fields: dict[TxnField, Expr | list[Expr]] = None,
+        extra_fields: dict[TxnField, Expr | list[Expr]] | None = None,
     ) -> Expr:
         """Adds an ABI method call transaction to the current inner transaction group.
 
@@ -323,6 +324,7 @@ class InnerTxnBuilder:
 
         Args:
             app_id: An expression that evaluates to a `TealType.uint64` corresponding to the application being called.
+                If the call is meant to create an application, the value `None` should be passed
             method_signature: A string representing the method signature of the method we're calling. This is used to do
                 type checking on the arguments passed and to create the method selector passed as the first argument.
             args: A list of arguments to pass to the application. The values in this list depend on the kind of argument you wish to pass:
@@ -344,13 +346,15 @@ class InnerTxnBuilder:
 
         from pyteal.ast.abi.util import type_spec_is_assignable_to
 
-        require_type(app_id, TealType.uint64)
-
-        # Default, always need these
+        # Start collecting the fields we'd like to set
         fields_to_set = [
             cls.SetField(TxnField.type_enum, TxnType.ApplicationCall),
-            cls.SetField(TxnField.application_id, app_id),
         ]
+
+        # In the case of an app create, the `app_id` arg may be `None`
+        if app_id is not None:
+            require_type(app_id, TealType.uint64)
+            fields_to_set.append(cls.SetField(TxnField.application_id, app_id))
 
         # We only care about the args
         arg_type_specs: list[abi.TypeSpec]
