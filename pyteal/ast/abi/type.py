@@ -6,7 +6,7 @@ from pyteal.ast.abstractvar import AbstractVar
 from pyteal.ast.scratchvar import ScratchVar
 from pyteal.ast.seq import Seq
 from pyteal.errors import TealInputError
-from pyteal.types import TealType, require_type, types_match
+from pyteal.types import TealType, types_match
 
 
 class TypeSpec(ABC):
@@ -240,6 +240,9 @@ class ReturnedValue(ComputedValue):
                 f"ABI return subroutine deferred_expr is expected to be typed {output.type_spec().storage_type()}, "
                 f"but has type {declaration.deferred_expr.type_of()}."
             )
+
+        validate_in_store: bool = True
+
         if (
             isinstance(self.computation, SubroutineCall)
             and self.computation.output_kwarg
@@ -248,10 +251,9 @@ class ReturnedValue(ComputedValue):
                 self.computation.output_kwarg.abi_type.storage_type(),
                 output._stored_value.storage_type(),
             )
-        else:
-            require_type(self.computation, output._stored_value.storage_type())
+            validate_in_store = False
 
-        return output._stored_value.store(self.computation, validate_types=False)
+        return output._stored_value.store(self.computation, validate_types=validate_in_store)
 
 
 ReturnedValue.__module__ = "pyteal.abi"
