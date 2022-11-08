@@ -20,7 +20,6 @@ frame_dig -1
 !
 !
 frame_bury 0
-frame_dig 0
 retsub
 
 // array_complement
@@ -39,7 +38,6 @@ int 0
 load 4
 setbit
 frame_bury 0
-frame_dig 0
 retsub
 
 // round_tripper
@@ -58,5 +56,4 @@ concat
 load 3
 concat
 frame_bury 0
-frame_dig 0
 retsub

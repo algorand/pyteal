@@ -19,7 +19,6 @@ int 18446744073709551615
 frame_dig -1
 -
 frame_bury 0
-frame_dig 0
 retsub
 
 // array_complement
@@ -620,7 +619,6 @@ itob
 concat
 concat
 frame_bury 0
-frame_dig 0
 retsub
 
 // round_tripper
@@ -687,5 +685,4 @@ concat
 load 6
 concat
 frame_bury 0
-frame_dig 0
 retsub

@@ -23,7 +23,6 @@ frame_dig 0
 int 256
 <
 assert
-frame_dig 0
 retsub
 
 // array_complement
@@ -478,7 +477,6 @@ load 50
 setbyte
 concat
 frame_bury 0
-frame_dig 0
 retsub
 
 // array_complement
@@ -631,7 +629,6 @@ load 17
 concat
 concat
 frame_bury 0
-frame_dig 0
 retsub
 
 // round_tripper
@@ -698,5 +695,4 @@ concat
 load 6
 concat
 frame_bury 0
-frame_dig 0
 retsub

@@ -27,7 +27,6 @@ int 0
 load 0
 setbyte
 frame_bury 0
-frame_dig 0
 retsub
 
 // round_tripper
@@ -46,7 +45,6 @@ concat
 load 4
 concat
 frame_bury 0
-frame_dig 0
 retsub
 
 // numerical_comp
@@ -61,5 +59,4 @@ frame_dig 0
 int 256
 <
 assert
-frame_dig 0
 retsub

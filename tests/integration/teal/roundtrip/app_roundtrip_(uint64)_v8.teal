@@ -24,7 +24,6 @@ store 0
 load 0
 itob
 frame_bury 0
-frame_dig 0
 retsub
 
 // round_tripper
@@ -43,7 +42,6 @@ concat
 load 4
 concat
 frame_bury 0
-frame_dig 0
 retsub
 
 // numerical_comp
@@ -54,5 +52,4 @@ int 18446744073709551615
 frame_dig -1
 -
 frame_bury 0
-frame_dig 0
 retsub

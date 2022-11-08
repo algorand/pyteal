@@ -24,7 +24,6 @@ frame_dig -1
 !
 !
 frame_bury 0
-frame_dig 0
 retsub
 
 // round_tripper
@@ -48,5 +47,4 @@ int 2
 load 3
 setbit
 frame_bury 0
-frame_dig 0
 retsub

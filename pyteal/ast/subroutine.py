@@ -1052,7 +1052,8 @@ class SubroutineEval:
                     f"ABI returning subroutine definition should evaluate to TealType.none, "
                     f"while evaluate to {subroutine_body.type_of()}."
                 )
-            deferred_expr = output_carrying_abi._stored_value.load()
+            if not self.use_frame_pt:
+                deferred_expr = output_carrying_abi._stored_value.load()
 
         # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
         # need to reverse order of argumentVars because the last argument will be on top of the stack

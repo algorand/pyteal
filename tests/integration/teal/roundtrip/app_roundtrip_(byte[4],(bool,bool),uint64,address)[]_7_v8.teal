@@ -49,7 +49,6 @@ concat
 load 3
 concat
 frame_bury 0
-frame_dig 0
 retsub
 
 // array_complement
@@ -160,7 +159,6 @@ load 18
 concat
 concat
 frame_bury 0
-frame_dig 0
 retsub
 
 // round_tripper
@@ -227,7 +225,6 @@ concat
 load 10
 concat
 frame_bury 0
-frame_dig 0
 retsub
 
 // numerical_comp
@@ -242,7 +239,6 @@ frame_dig 0
 int 256
 <
 assert
-frame_dig 0
 retsub
 
 // array_complement
@@ -305,7 +301,6 @@ load 25
 setbyte
 concat
 frame_bury 0
-frame_dig 0
 retsub
 
 // tuple_complement
@@ -334,7 +329,6 @@ int 1
 load 21
 setbit
 frame_bury 0
-frame_dig 0
 retsub
 
 // numerical_comp
@@ -345,7 +339,6 @@ int 18446744073709551615
 frame_dig -1
 -
 frame_bury 0
-frame_dig 0
 retsub
 
 // numerical_comp
@@ -360,7 +353,6 @@ frame_dig 0
 int 256
 <
 assert
-frame_dig 0
 retsub
 
 // array_complement
@@ -815,7 +807,6 @@ load 57
 setbyte
 concat
 frame_bury 0
-frame_dig 0
 retsub
 
 // bool_comp
@@ -827,7 +818,6 @@ frame_dig -1
 !
 !
 frame_bury 0
-frame_dig 0
 retsub
 
 // bool_comp
@@ -839,5 +829,4 @@ frame_dig -1
 !
 !
 frame_bury 0
-frame_dig 0
 retsub

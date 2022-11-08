@@ -25,7 +25,6 @@ frame_dig 0
 int 65536
 <
 assert
-frame_dig 0
 retsub
 
 // round_tripper
@@ -50,5 +49,4 @@ itob
 extract 6 0
 concat
 frame_bury 0
-frame_dig 0
 retsub

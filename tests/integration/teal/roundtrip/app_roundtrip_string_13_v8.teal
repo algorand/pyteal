@@ -190,7 +190,6 @@ setbyte
 concat
 concat
 frame_bury 0
-frame_dig 0
 retsub
 
 // round_tripper
@@ -257,5 +256,4 @@ concat
 load 6
 concat
 frame_bury 0
-frame_dig 0
 retsub

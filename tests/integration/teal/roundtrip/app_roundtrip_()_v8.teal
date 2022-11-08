@@ -17,7 +17,6 @@ proto 1 1
 byte ""
 byte ""
 frame_bury 0
-frame_dig 0
 retsub
 
 // round_tripper
@@ -36,5 +35,4 @@ concat
 load 3
 concat
 frame_bury 0
-frame_dig 0
 retsub
