@@ -1045,7 +1045,8 @@ class SubroutineEval:
 
         deferred_expr: Optional[Expr] = None
 
-        # if there is an output keyword argument for ABI, place the storing on the stack
+        # if there is an output keyword argument for ABI
+        # place the storing on the stack with deferred expr only when compile to scratch var
         if output_carrying_abi:
             if subroutine_body.type_of() != TealType.none:
                 raise TealInputError(
