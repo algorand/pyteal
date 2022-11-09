@@ -849,6 +849,9 @@ class Router:
             * clear_state_program: compiled clear-state program string
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
+        approval_filename = approval_filename or f"{self.name}_approval.teal"
+        clear_filename = clear_filename or f"{self.name}_clear.teal"
+
         input = _RouterCompileInput(
             version=version,
             assemble_constants=assemble_constants,
