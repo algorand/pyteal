@@ -64,6 +64,8 @@ test-sync-unit:
 test-sync-unit-monkey:
 	pytest -n 1 --durations=10 -sv tests/unit/sourcemap_monkey_unit_test.py
 
+test-unit: test-async-unit test-sync-unit test-sync-unit-monkey
+
 
 test-unit: test-async-unit test-sync-unit
 
