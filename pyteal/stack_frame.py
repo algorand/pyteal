@@ -4,9 +4,9 @@ from configparser import ConfigParser
 from dataclasses import dataclass
 from enum import IntEnum
 from inspect import FrameInfo, stack
-from typing import Optional, Union, cast
+from typing import Optional, cast
 
-from executing import Source
+from executing import Source  # type: ignore
 
 
 @dataclass(frozen=True)
@@ -83,7 +83,7 @@ class StackFrame:
         return "# T2PT" in "".join(cc)
 
 
-FrameSequence = Union[StackFrame, list["FrameSequence"]]
+# FrameSequence = Union[StackFrame, list["FrameSequence"]]
 
 
 def _skip_all_frames() -> bool:
@@ -234,7 +234,7 @@ _PT_GEN = {
 }
 
 
-PyTealFrameSequence = Union["PyTealFrame", list["PyTealFrameSequence"]]
+# PyTealFrameSequence = Union["PyTealFrame", list["PyTealFrameSequence"]]
 
 
 class PytealFrameStatus(IntEnum):
@@ -311,9 +311,9 @@ class PyTealFrame(StackFrame):
 
     def __repr__(self) -> str:
         """TODO: this repr isn't compliant. Should we keep it anyway for convenience?"""
-        return self.__str__(verbose=False)
+        return self._str_impl(verbose=False)
 
-    def __eq__(self, other: "PyTealFrame") -> bool:
+    def __eq__(self, other: object) -> bool:
         """We don't care about parents here. TODO: this comment is too rude"""
         if not isinstance(other, PyTealFrame):
             return False
@@ -469,7 +469,10 @@ class PyTealFrame(StackFrame):
             return ""
         return "L{}:{}-L{}:{}".format(*boundaries)
 
-    def __str__(self, verbose: bool = True) -> str:
+    def __str__(self) -> str:
+        return self._str_impl(verbose=True)
+
+    def _str_impl(self, verbose: bool = True) -> str:
         if not self.frame_info:
             return "None"
 

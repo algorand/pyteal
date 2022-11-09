@@ -31,6 +31,8 @@ from pyteal.stack_frame import Frames
 from pyteal.types import TealType
 from pyteal.util import algod_with_assertion
 
+TComponents = TealComponent | TealPragma
+
 MAX_PROGRAM_VERSION = 7
 MIN_PROGRAM_VERSION = 2
 DEFAULT_PROGRAM_VERSION = MIN_PROGRAM_VERSION
@@ -367,7 +369,9 @@ class Compilation:
         )
 
         subroutineLabels = resolveSubroutines(subroutineMapping)
-        components = flattenSubroutines(subroutineMapping, subroutineLabels)
+        components: list[TComponents] = flattenSubroutines(
+            subroutineMapping, subroutineLabels
+        )
 
         verifyOpsForVersion(components, options.version)
         verifyOpsForMode(components, options.mode)
@@ -381,7 +385,7 @@ class Compilation:
                 )
             components = createConstantBlocks(components)
 
-        components = [TealPragma(self.version)] + components  # T2PT0
+        components = [cast(TComponents, TealPragma(self.version))] + components  # T2PT0
         lines = [tl.assemble() for tl in components]
         teal_code = "\n".join(lines)
 

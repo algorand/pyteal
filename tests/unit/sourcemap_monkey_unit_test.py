@@ -7,6 +7,7 @@ import ast
 from configparser import ConfigParser
 from copy import deepcopy
 from pathlib import Path
+from typing import cast
 from unittest import mock
 
 import pytest
@@ -14,6 +15,62 @@ import pytest
 ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 
 FIXTURES = Path.cwd() / "tests" / "unit" / "sourcemaps"
+
+
+@mock.patch.object(ConfigParser, "getboolean", return_value=True)
+def test_r3sourcemap(_):
+    from examples.application.abi.algobank import router
+    from pyteal import OptimizeOptions
+    from pyteal.compiler.sourcemap import R3SourceMap
+
+    filename = "dummy filename"
+    compile_bundle = router.compile_program_with_sourcemaps(
+        version=6,
+        optimize=OptimizeOptions(scratch_slots=True),
+        approval_filename=filename,
+    )
+
+    ptsm = compile_bundle.approval_sourcemap
+    assert ptsm
+
+    r3sm = ptsm._cached_r3sourcemap
+    assert r3sm
+
+    assert filename == r3sm.file
+    assert cast(str, r3sm.source_root).endswith("/pyteal/")
+    assert list(range(len(r3sm.entries))) == [l for l, _ in r3sm.entries]
+    assert all(c == 0 for _, c in r3sm.entries)
+    assert all(x == (0,) for x in r3sm.index)
+    assert len(r3sm.entries) == len(r3sm.index)
+
+    this_file = __file__.split("/")[-1]
+    source_files = [
+        "examples/application/abi/algobank.py",
+        f"tests/unit/{this_file}",
+    ]
+    assert source_files == r3sm.source_files
+
+    r3sm_json = r3sm.to_json()
+
+    assert "mappings" in r3sm_json
+    assert (
+        "AAgBS;AAAA;AAAA;AAAA;ACUT;ADgBA;AAAA;AAAA;AChBA;ADwCA;AAAA;AAAA;ACxCA;ADqDA;AAAA;AAAA;ACrDA;AAAA;AAAA;ADqDA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;ACrDA;AAAA;ADqDA;AAAA;AAAA;ACrDA;ADwCA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;ACxCA;AAAA;AAAA;AAAA;AAAA;ADwCA;AAAA;ACxCA;ADgBA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AChBA;AAAA;ADgBA;AAAA;AAAA;AA1BS;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAJL;AACc;AAAd;AAA4C;AAAc;AAA3B;AAA/B;AAFuB;AAKlB;AAAA;AAAA;AAM8B;AAAA;AAN9B;AAAA;AAAA;AAAA;AAAA;AAI6B;AAAA;AAJ7B;AAAA;AAAA;AATS;AAAgB;AAAhB;AAAP;ACmBX;AAAA;AAAA;AAAA;AAAA;AAAA;AD6Be;AAAA;AAA0B;AAAA;AAA1B;AAAP;AACO;AAAA;AAA4B;AAA5B;AAAP;AAEI;AAAA;AACA;AACa;AAAA;AAAkB;AAA/B;AAAmD;AAAA;AAAnD;AAHJ;AC/BR;ADwCA;AAAA;AAAA;AASmC;AAAgB;AAA7B;ACjDtB;AAAA;AAAA;AAAA;AAAA;AAAA;ADyEY;AACA;AACa;AAAc;AAA3B;AAA+C;AAA/C;AAHJ;AAKA;AACA;AAAA;AAG2B;AAAA;AAH3B;AAIyB;AAJzB;AAKsB;AALtB;AAQA;AAAA"
+        == r3sm_json["mappings"]
+    )
+
+    assert "file" in r3sm_json
+    assert filename == r3sm_json["file"]
+
+    assert "sources" in r3sm_json
+    assert source_files == r3sm_json["sources"]
+
+    assert "sourceRoot" in r3sm_json
+    assert r3sm.source_root == r3sm_json["sourceRoot"]
+
+    target = "\n".join(r.target_extract for r in r3sm.entries.values())  # type: ignore
+    round_trip = R3SourceMap.from_json(r3sm_json, target=target)
+
+    assert r3sm_json == round_trip.to_json()
 
 
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
@@ -111,7 +168,7 @@ def test_lots_o_indirection(_):
     def foo(x):
         return pt.Seq(pt.Pop(e1), e1)
 
-    bundle = pt.Compilation(foo(pt.Int(42)), pt.Mode.Application, version=6).compile(
+    pt.Compilation(foo(pt.Int(42)), pt.Mode.Application, version=6).compile(
         with_sourcemap=True
     )
 
@@ -629,7 +686,7 @@ CONSTRUCTS = [
     ),
     (
         lambda pt: pt.Seq(
-            receiver_max_balance := pt.App.localGetEx(
+            receiver_max_balance := pt.App.localGetEx(  # noqa: F841
                 pt.Int(1), pt.App.id(), pt.Bytes("max balance")
             ),
             pt.Or(

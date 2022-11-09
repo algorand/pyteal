@@ -15,6 +15,7 @@ def algod_with_assertion(
         except Exception as e:
             wrap(e, msg)
 
+    assert client
     try:
         if not client.status():
             wrap("algod.status() did not produce any results", msg)

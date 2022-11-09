@@ -4,108 +4,37 @@ and test the results of source mapping various PyTeal apps.
 """
 
 from configparser import ConfigParser
-from typing import cast
 from unittest import mock
 
 
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
-def test_r3sourcemap(_):
-    """This isn't actually an integration test, but it's a prelude to the closely related integration tests that follow"""
-    from examples.application.abi.algobank import router
-    from pyteal import OptimizeOptions
-    from pyteal.compiler.sourcemap import R3SourceMap
-
-    filename = "dummy filename"
-    compile_bundle = router.compile_program_with_sourcemaps(
-        version=6,
-        optimize=OptimizeOptions(scratch_slots=True),
-        approval_filename=filename,
-    )
-
-    ptsm = compile_bundle.approval_sourcemap
-    assert ptsm
-
-    r3sm = ptsm._cached_r3sourcemap
-    assert r3sm
-
-    assert filename == r3sm.file
-    assert cast(str, r3sm.source_root).endswith("/pyteal/")
-    assert list(range(len(r3sm.entries))) == [l for l, _ in r3sm.entries]
-    assert all(c == 0 for _, c in r3sm.entries)
-    assert all(x == (0,) for x in r3sm.index)
-    assert len(r3sm.entries) == len(r3sm.index)
-
-    this_file = __file__.split("/")[-1]
-    source_files = [
-        "examples/application/abi/algobank.py",
-        f"tests/integration/{this_file}",
-    ]
-    assert source_files == r3sm.source_files
-
-    r3sm_json = r3sm.to_json()
-
-    assert "mappings" in r3sm_json
-    assert (
-        "AAgBS;AAAA;AAAA;AAAA;ACET;ADwBA;AAAA;AAAA;ACxBA;ADgDA;AAAA;AAAA;AChDA;AD6DA;AAAA;AAAA;AC7DA;AAAA;AAAA;AD6DA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AC7DA;AAAA;AD6DA;AAAA;AAAA;AC7DA;ADgDA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AChDA;AAAA;AAAA;AAAA;AAAA;ADgDA;AAAA;AChDA;ADwBA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;ACxBA;AAAA;ADwBA;AAAA;AAAA;AA1BS;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAJL;AACc;AAAd;AAA4C;AAAc;AAA3B;AAA/B;AAFuB;AAKlB;AAAA;AAAA;AAM8B;AAAA;AAN9B;AAAA;AAAA;AAAA;AAAA;AAI6B;AAAA;AAJ7B;AAAA;AAAA;AATS;AAAgB;AAAhB;AAAP;ACWX;AAAA;AAAA;AAAA;AAAA;AAAA;ADqCe;AAAA;AAA0B;AAAA;AAA1B;AAAP;AACO;AAAA;AAA4B;AAA5B;AAAP;AAEI;AAAA;AACA;AACa;AAAA;AAAkB;AAA/B;AAAmD;AAAA;AAAnD;AAHJ;ACvCR;ADgDA;AAAA;AAAA;AASmC;AAAgB;AAA7B;ACzDtB;AAAA;AAAA;AAAA;AAAA;AAAA;ADiFY;AACA;AACa;AAAc;AAA3B;AAA+C;AAA/C;AAHJ;AAKA;AACA;AAAA;AAG2B;AAAA;AAH3B;AAIyB;AAJzB;AAKsB;AALtB;AAQA;AAAA"
-        == r3sm_json["mappings"]
-    )
-
-    assert "file" in r3sm_json
-    assert filename == r3sm_json["file"]
-
-    assert "sources" in r3sm_json
-    assert source_files == r3sm_json["sources"]
-
-    assert "sourceRoot" in r3sm_json
-    assert r3sm.source_root == r3sm_json["sourceRoot"]
-
-    target = "\n".join(r.target_extract for r in r3sm.entries.values())  # type: ignore
-    round_trip = R3SourceMap.from_json(r3sm_json, target=target)
-
-    assert r3sm_json == round_trip.to_json()
-
-
-@mock.patch.object(ConfigParser, "getboolean", return_value=True)
 def test_sourcemap_annotate(_):
-    """This isn't actually an integration test either"""
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
-
-    a_fname, c_fname = "A.teal", "C.teal"
-    compile_bundle = router.compile_program_with_sourcemaps(
-        version=6,
-        optimize=OptimizeOptions(scratch_slots=True),
-        assemble_constants=False,
-        approval_filename=a_fname,
-        clear_filename=c_fname,
-        pcs_in_sourcemap=True,
-        annotate_teal=True,
-        annotate_teal_headers=True,
-        annotate_teal_concise=False,
-    )
 
     COMPILATION = "router.compile_program_with_sourcemaps(version=6, optimize=OptimizeOptions(scratch_slots=True), assemble_constants=False, approval_filename=a_fname, clear_filename=c_fname, pcs_in_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)"
+    L = 250  # COMPILATION LINE
     ROUTER = "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))"
     INNERTXN = "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})"
     expected = f"""
 // GENERATED TEAL                      //    PC           PYTEAL PATH                                       LINE    PYTEAL
-#pragma version 6                      //    PC[0-19]     tests/integration/sourcemap_monkey_integ_test.py  75      {COMPILATION}
+#pragma version 6                      //    PC[0-19]     tests/integration/sourcemap_monkey_integ_test.py  {L}     {COMPILATION}
 txn NumAppArgs                         //    PC[20-21]    examples/application/abi/algobank.py              17      {ROUTER}
 int 0                                  //    PC[22]
 ==                                     //    PC[23]
-bnz main_l8                            //    PC[24-26]    tests/integration/sourcemap_monkey_integ_test.py  75      {COMPILATION}
+bnz main_l8                            //    PC[24-26]    tests/integration/sourcemap_monkey_integ_test.py  {L}     {COMPILATION}
 txna ApplicationArgs 0                 //    PC[27-29]    examples/application/abi/algobank.py              43      def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
 method "deposit(pay,account)void"      //    PC[30-35]
 ==                                     //    PC[36]
-bnz main_l7                            //    PC[37-39]    tests/integration/sourcemap_monkey_integ_test.py  75      {COMPILATION}
+bnz main_l7                            //    PC[37-39]    tests/integration/sourcemap_monkey_integ_test.py  {L}     {COMPILATION}
 txna ApplicationArgs 0                 //    PC[40-42]    examples/application/abi/algobank.py              67      def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
 method "getBalance(account)uint64"     //    PC[43-48]
 ==                                     //    PC[49]
-bnz main_l6                            //    PC[50-52]    tests/integration/sourcemap_monkey_integ_test.py  75      {COMPILATION}
+bnz main_l6                            //    PC[50-52]    tests/integration/sourcemap_monkey_integ_test.py  {L}     {COMPILATION}
 txna ApplicationArgs 0                 //    PC[53-55]    examples/application/abi/algobank.py              80      def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
 method "withdraw(uint64,account)void"  //    PC[56-61]
 ==                                     //    PC[62]
-bnz main_l5                            //    PC[63-65]    tests/integration/sourcemap_monkey_integ_test.py  75      {COMPILATION}
+bnz main_l5                            //    PC[63-65]    tests/integration/sourcemap_monkey_integ_test.py  {L}     {COMPILATION}
 err                                    //    PC[66]
 main_l5:                               //    PC[]
 txn OnCompletion                       //    PC[67-68]    examples/application/abi/algobank.py              80      def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
@@ -123,12 +52,12 @@ txna ApplicationArgs 2                 //    PC[83-85]
 int 0                                  //    PC[86]
 getbyte                                //    PC[87]
 store 4                                //    PC[88-89]
-load 3                                 //    PC[90-91]    tests/integration/sourcemap_monkey_integ_test.py  75      {COMPILATION}
+load 3                                 //    PC[90-91]    tests/integration/sourcemap_monkey_integ_test.py  {L}     {COMPILATION}
 load 4                                 //    PC[92-93]
 callsub withdraw_3                     //    PC[94-96]    examples/application/abi/algobank.py              80      def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
 int 1                                  //    PC[97]
 return                                 //    PC[98]
-main_l6:                               //    PC[]         tests/integration/sourcemap_monkey_integ_test.py  75      {COMPILATION}
+main_l6:                               //    PC[]         tests/integration/sourcemap_monkey_integ_test.py  {L}     {COMPILATION}
 txn OnCompletion                       //    PC[99-100]   examples/application/abi/algobank.py              67      def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
 int NoOp                               //    PC[101]
 ==                                     //    PC[102]
@@ -142,14 +71,14 @@ int 0                                  //    PC[112]
 getbyte                                //    PC[113]
 callsub getBalance_2                   //    PC[114-116]
 store 2                                //    PC[117-118]
-byte 0x151f7c75                        //    PC[119-124]  tests/integration/sourcemap_monkey_integ_test.py  75      {COMPILATION}
+byte 0x151f7c75                        //    PC[119-124]  tests/integration/sourcemap_monkey_integ_test.py  {L}     {COMPILATION}
 load 2                                 //    PC[125-126]
 itob                                   //    PC[127]
 concat                                 //    PC[128]
 log                                    //    PC[129]
 int 1                                  //    PC[130]      examples/application/abi/algobank.py              67      def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
 return                                 //    PC[131]
-main_l7:                               //    PC[]         tests/integration/sourcemap_monkey_integ_test.py  75      {COMPILATION}
+main_l7:                               //    PC[]         tests/integration/sourcemap_monkey_integ_test.py  {L}     {COMPILATION}
 txn OnCompletion                       //    PC[132-133]  examples/application/abi/algobank.py              43      def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
 int NoOp                               //    PC[134]
 ==                                     //    PC[135]
@@ -179,7 +108,7 @@ gtxns TypeEnum                         //    PC[167-168]
 int pay                                //    PC[169]
 ==                                     //    PC[170]
 assert                                 //    PC[171]
-load 0                                 //    PC[172-173]  tests/integration/sourcemap_monkey_integ_test.py  75      {COMPILATION}
+load 0                                 //    PC[172-173]  tests/integration/sourcemap_monkey_integ_test.py  {L}     {COMPILATION}
 load 1                                 //    PC[174-175]
 callsub deposit_1                      //    PC[176-178]  examples/application/abi/algobank.py              43      def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
 int 1                                  //    PC[179]
@@ -254,7 +183,7 @@ txn Sender                             //    PC[265-266]                        
 global CreatorAddress                  //    PC[267-268]                                                            Global.creator_address()
 ==                                     //    PC[269]                                                                Txn.sender() == Global.creator_address()
 assert                                 //    PC[270]                                                                Assert(Txn.sender() == Global.creator_address())
-retsub                                 //    PC[271]      tests/integration/sourcemap_monkey_integ_test.py  75      {COMPILATION}
+retsub                                 //    PC[271]      tests/integration/sourcemap_monkey_integ_test.py  {L}     {COMPILATION}
                                        //    PC[]
 // deposit                             //
 deposit_1:                             //
@@ -282,14 +211,14 @@ load 5                                 //    PC[305-306]                        
 gtxns Amount                           //    PC[307-308]                                                            payment.get().amount()
 +                                      //    PC[309]                                                                App.localGet(sender.address(), Bytes('balance')) + payment.get().amount()
 app_local_put                          //    PC[310]                                                        58      App.localPut(sender.address(), Bytes('balance'), App.localGet(sender.address(), Bytes('balance')) + payment.get().amount())
-retsub                                 //    PC[311]      tests/integration/sourcemap_monkey_integ_test.py  75      {COMPILATION}
+retsub                                 //    PC[311]      tests/integration/sourcemap_monkey_integ_test.py  {L}     {COMPILATION}
                                        //    PC[]         examples/application/abi/algobank.py              67      def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
 // getBalance                          //
 getBalance_2:                          //
 txnas Accounts                         //    PC[312-313]                                                    76      user.address()
 byte "balance"                         //    PC[314]                                                                Bytes('balance')
 app_local_get                          //    PC[315]                                                                App.localGet(user.address(), Bytes('balance'))
-retsub                                 //    PC[316]      tests/integration/sourcemap_monkey_integ_test.py  75      {COMPILATION}
+retsub                                 //    PC[316]      tests/integration/sourcemap_monkey_integ_test.py  {L}     {COMPILATION}
                                        //    PC[]
 // withdraw                            //
 withdraw_3:                            //
@@ -314,11 +243,44 @@ itxn_field Amount                      //    PC[344-345]                        
 int 0                                  //    PC[346]                                                        110     Int(0)
 itxn_field Fee                         //    PC[347-348]                                                    105     {INNERTXN}
 itxn_submit                            //    PC[349]                                                        113     InnerTxnBuilder.Submit()
-retsub                                 //    PC[350]      tests/integration/sourcemap_monkey_integ_test.py  75      {COMPILATION}
+retsub                                 //    PC[350]      tests/integration/sourcemap_monkey_integ_test.py  {L}     {COMPILATION}
 """.strip()
 
+    a_fname, c_fname = "A.teal", "C.teal"
+    compile_bundle = router.compile_program_with_sourcemaps(
+        version=6,
+        optimize=OptimizeOptions(scratch_slots=True),
+        assemble_constants=False,
+        approval_filename=a_fname,
+        clear_filename=c_fname,
+        pcs_in_sourcemap=True,
+        annotate_teal=True,
+        annotate_teal_headers=True,
+        annotate_teal_concise=False,
+    )
     ptsm = compile_bundle.approval_sourcemap
     assert ptsm
-    assert expected == ptsm.annotated_teal(omit_headers=False, concise=False)
+    actual = ptsm.annotated_teal(omit_headers=False, concise=False)
+    assert expected == actual, first_diff(expected, actual)
 
     assert expected == compile_bundle.approval_teal
+
+
+def first_diff(expected, actual):
+    alines = actual.splitlines()
+    elines = expected.splitlines()
+    for i, e in enumerate(elines):
+        if i >= len(alines):
+            return f"""LINE[{i+1}] missing from actual:
+{e}"""
+        if e != (a := alines[i]):
+            return f"""LINE[{i+1}]
+{e}
+VS.
+{a}
+"""
+    if len(alines) > len(elines):
+        return f"""LINE[{len(elines) + 1}] missing from expected:
+{alines[len(elines)]}"""
+
+    return ""

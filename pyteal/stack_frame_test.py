@@ -1,4 +1,3 @@
-from inspect import FrameInfo
 from unittest.mock import Mock
 
 from pyteal.stack_frame import StackFrame

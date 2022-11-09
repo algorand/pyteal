@@ -87,7 +87,7 @@ def test_SourceMapItem_source_mapping():
     assert expected_json == json.dumps(r3sm.to_json())
 
     r3sm_unmarshalled = R3SourceMap.from_json(
-        R3SourceMapJSON(**json.loads(expected_json)),
+        R3SourceMapJSON(**json.loads(expected_json)),  # type: ignore
         sources_content_override=["\n".join(mock_source_lines)],
         target="\n".join(teals),
     )
@@ -204,10 +204,14 @@ def annotated_teal():
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
 
-    router.compile_program_with_sourcemaps(
+    compilation = router.compile_program_with_sourcemaps(
         version=6,
         optimize=OptimizeOptions(scratch_slots=True),
-    ).approval_sourcemap.annotated_teal()
+    )
+
+    assert compilation.approval_sourcemap
+
+    return compilation.approval_sourcemap.annotated_teal()
 
 
 summaries_only = True

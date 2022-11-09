@@ -510,7 +510,7 @@ class _RouterCompileInput:
     approval_filename: str | None = None
     clear_filename: str | None = None
     algod_client: AlgodClient | None = None
-    annotate_teal: bool = True
+    annotate_teal: bool = False
     annotate_teal_headers: bool = False
     annotate_teal_concise: bool = True
     # deprecated:

@@ -42,7 +42,7 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
                 return i
         raise ValueError("Block not present in list: {}".format(block))
 
-    root: Optional["Expr"] = None
+    root: Optional["Expr"] = None  # type: ignore
     for i, block in enumerate(blocks):
         code = list(block.ops)
         codeblocks.append(code)
