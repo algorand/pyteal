@@ -66,9 +66,6 @@ test-sync-unit-monkey:
 
 test-unit: test-async-unit test-sync-unit test-sync-unit-monkey
 
-
-test-unit: test-async-unit test-sync-unit
-
 lint-and-test: check-generate-init lint test-unit
 
 # ---- Integration Tests (algod required) ---- #
