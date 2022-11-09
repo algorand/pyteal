@@ -29,86 +29,57 @@ def test_reconstruct(_):
     assert compile_bundle.clear_sourcemap
 
     with open(ALGOBANK / "algobank_approval.teal") as af:
-        assert af.read() == compile_bundle.approval_sourcemap.teal()
+        assert af.read() == compile_bundle.approval_sourcemap.pure_teal()
 
     with open(ALGOBANK / "algobank_clear_state.teal") as cf:
-        assert cf.read() == compile_bundle.clear_sourcemap.teal()
+        assert cf.read() == compile_bundle.clear_sourcemap.pure_teal()
 
 
-def fixture_comparison(sourcemap, name: str):
-    from pyteal.compiler.sourcemap import PyTealSourceMap
+# def fixture_comparison(sourcemap, name: str):
+#     from pyteal.compiler.sourcemap import PyTealSourceMap
 
-    assert isinstance(sourcemap, PyTealSourceMap)
-    new_version = sourcemap._tabulate_for_dev()
-    with open(FIXTURES / f"_{name}", "w") as f:
-        f.write(new_version)
+#     assert isinstance(sourcemap, PyTealSourceMap)
+#     new_version = sourcemap._tabulate_for_dev()
+#     with open(FIXTURES / f"_{name}", "w") as f:
+#         f.write(new_version)
 
-    not_actually_comparing = False
-    if not_actually_comparing:
-        return
+#     not_actually_comparing = False
+#     if not_actually_comparing:
+#         return
 
-    with open(FIXTURES / name) as f:
-        old_version = f.read()
+#     with open(FIXTURES / name) as f:
+#         old_version = f.read()
 
-    assert old_version == new_version
-
-
-@mock.patch.object(ConfigParser, "getboolean", return_value=True)
-@pytest.mark.parametrize("version", [6])
-@pytest.mark.parametrize("source_inference", [False, True])
-@pytest.mark.parametrize("assemble_constants", [False, True])
-@pytest.mark.parametrize("optimize_slots", [False, True])
-def test_sourcemaps(_, version, source_inference, assemble_constants, optimize_slots):
-    from examples.application.abi.algobank import router
-    from pyteal import OptimizeOptions
-
-    # TODO: add functionality that tallies the line statuses up and assert that all
-    # statuses were > SourceMapItemStatus.PYTEAL_GENERATED
-
-    compile_bundle = router.compile_program_with_sourcemaps(
-        version=version,
-        assemble_constants=assemble_constants,
-        optimize=OptimizeOptions(scratch_slots=optimize_slots),
-        source_inference=source_inference,
-    )
-
-    assert compile_bundle.approval_sourcemap
-    assert compile_bundle.clear_sourcemap
-
-    suffix = f"_v{version}_si{int(source_inference)}_ac{int(assemble_constants)}_ozs{int(optimize_slots)}"
-    fixture_comparison(
-        compile_bundle.approval_sourcemap, f"algobank_approval{suffix}.txt"
-    )
-    fixture_comparison(compile_bundle.clear_sourcemap, f"algobank_clear{suffix}.txt")
+#     assert old_version == new_version
 
 
-@mock.patch.object(ConfigParser, "getboolean", return_value=True)
-def test_annotated_teal(_):
-    from examples.application.abi.algobank import router
-    from pyteal import OptimizeOptions
+# @mock.patch.object(ConfigParser, "getboolean", return_value=True)
+# @pytest.mark.parametrize("version", [6])
+# @pytest.mark.parametrize("source_inference", [False, True])
+# @pytest.mark.parametrize("assemble_constants", [False, True])
+# @pytest.mark.parametrize("optimize_slots", [False, True])
+# def test_sourcemaps(_, version, source_inference, assemble_constants, optimize_slots):
+#     from examples.application.abi.algobank import router
+#     from pyteal import OptimizeOptions
 
-    compile_bundle = router.compile_program_with_sourcemaps(
-        version=6,
-        optimize=OptimizeOptions(scratch_slots=True),
-    )
+#     # TODO: add functionality that tallies the line statuses up and assert that all
+#     # statuses were > SourceMapItemStatus.PYTEAL_GENERATED
 
-    ptsm = compile_bundle.approval_sourcemap
-    assert ptsm
+#     compile_bundle = router.compile_program_with_sourcemaps(
+#         version=version,
+#         assemble_constants=assemble_constants,
+#         optimize=OptimizeOptions(scratch_slots=optimize_slots),
+#         source_inference=source_inference,
+#     )
 
-    table = ptsm.annotated_teal()
+#     assert compile_bundle.approval_sourcemap
+#     assert compile_bundle.clear_sourcemap
 
-    with open(FIXTURES / "algobank_annotated.teal", "w") as f:
-        f.write(table)
-
-    table_ast = ptsm.annotated_teal(unparse_hybrid=True)
-
-    with open(FIXTURES / "algobank_hybrid.teal", "w") as f:
-        f.write(table_ast)
-
-    table_concise = ptsm.annotated_teal(unparse_hybrid=True, concise=True)
-
-    with open(FIXTURES / "algobank_concise.teal", "w") as f:
-        f.write(table_concise)
+#     suffix = f"_v{version}_si{int(source_inference)}_ac{int(assemble_constants)}_ozs{int(optimize_slots)}"
+#     fixture_comparison(
+#         compile_bundle.approval_sourcemap, f"algobank_approval{suffix}.txt"
+#     )
+#     fixture_comparison(compile_bundle.clear_sourcemap, f"algobank_clear{suffix}.txt")
 
 
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
@@ -121,7 +92,7 @@ def test_mocked_config_for_frames(_):
     assert Frames.skipping_all(_force_refresh=True) is False
 
 
-# TODO: this is temporary
+# TODO: ???this is temporary????
 
 
 def make(x, y, z):
@@ -1272,10 +1243,9 @@ def test_constructs(_, i, test_case, mode, version):
     """
     import pyteal as pt
 
-    # TODO - translate this to the pyteal frame... and make sure not to blow up
     # Occationally we stop getting nodes from AST under random conditions
-    def unparse(sourcemap_items):
-        return list(map(lambda smi: ast.unparse(smi.frame.node), sourcemap_items))
+    def unparse(tmis):
+        return list(map(lambda tmi: ast.unparse(tmi.node), tmis))
 
     expr, line2unparsed = test_case[:2]
     line2unparsed = deepcopy(line2unparsed)
@@ -1305,10 +1275,10 @@ def test_constructs(_, i, test_case, mode, version):
     assert sourcemap.hybrid is True, msg
     assert sourcemap.source_inference is True, msg
 
-    smis = sourcemap.as_list()
+    tmis = sourcemap.as_list()
     expected_lines, unparsed = list(zip(*line2unparsed))
 
-    msg = f"{msg}, {smis=}"
+    msg = f"{msg}, {tmis=}"
     assert list(expected_lines) == bundle.lines, msg
     assert list(expected_lines) == sourcemap.compiled_teal_lines, msg
-    assert list(unparsed) == unparse(smis), msg
+    assert list(unparsed) == unparse(tmis), msg
