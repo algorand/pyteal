@@ -158,9 +158,10 @@ def test_sourcemap_fails_because_unconfigured():
     from pyteal.compiler.sourcemap import SourceMapDisabledError
 
     with pytest.raises(SourceMapDisabledError) as smde:
-        router.compile_program_with_sourcemaps(
+        router.compile(
             version=6,
             optimize=OptimizeOptions(scratch_slots=True),
+            with_sourcemaps=True,
         )
 
     assert "pyteal.ini" in str(smde.value)
@@ -194,9 +195,10 @@ def source_map_compilation():
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
 
-    router.compile_program_with_sourcemaps(
+    router.compile(
         version=6,
         optimize=OptimizeOptions(scratch_slots=True),
+        with_sourcemaps=True,
     )
 
 
@@ -204,9 +206,10 @@ def annotated_teal():
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
 
-    compilation = router.compile_program_with_sourcemaps(
+    compilation = router.compile(
         version=6,
         optimize=OptimizeOptions(scratch_slots=True),
+        with_sourcemaps=True,
     )
 
     assert compilation.approval_sourcemap

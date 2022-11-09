@@ -24,10 +24,11 @@ def test_r3sourcemap(_):
     from pyteal.compiler.sourcemap import R3SourceMap
 
     filename = "dummy filename"
-    compile_bundle = router.compile_program_with_sourcemaps(
+    compile_bundle = router.compile(
         version=6,
         optimize=OptimizeOptions(scratch_slots=True),
         approval_filename=filename,
+        with_sourcemaps=True,
     )
 
     ptsm = compile_bundle.approval_sourcemap
@@ -78,8 +79,8 @@ def test_reconstruct(_):
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
 
-    compile_bundle = router.compile_program_with_sourcemaps(
-        version=6, optimize=OptimizeOptions(scratch_slots=True)
+    compile_bundle = router.compile(
+        version=6, optimize=OptimizeOptions(scratch_slots=True), with_sourcemaps=True
     )
 
     assert compile_bundle.approval_sourcemap

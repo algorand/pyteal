@@ -247,10 +247,11 @@ retsub                                 //    PC[350]      tests/integration/sour
 """.strip()
 
     a_fname, c_fname = "A.teal", "C.teal"
-    compile_bundle = router.compile_program_with_sourcemaps(
+    compile_bundle = router.compile(
         version=6,
         optimize=OptimizeOptions(scratch_slots=True),
         assemble_constants=False,
+        with_sourcemaps=True,
         approval_filename=a_fname,
         clear_filename=c_fname,
         pcs_in_sourcemap=True,

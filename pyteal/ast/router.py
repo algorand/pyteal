@@ -785,6 +785,8 @@ class Router:
         optimize: OptimizeOptions | None = None,
     ) -> tuple[str, str, sdk_abi.Contract]:
         """
+        DEPRECATED BUT KEPT FOR BACKWARDS COMPATIBILITY. PREFER Router.compile().
+
         Constructs and compiles approval and clear-state programs from the registered methods and
         bare app calls in the router, and also generates a Contract object to allow client read and call
         the methods easily.
@@ -810,7 +812,7 @@ class Router:
 
         return cpb.approval_teal, cpb.clear_teal, cpb.abi_contract
 
-    def compile_program_with_sourcemaps(
+    def compile(
         self,
         *,
         version: int = DEFAULT_TEAL_VERSION,
@@ -818,6 +820,7 @@ class Router:
         optimize: OptimizeOptions | None = None,
         approval_filename: str | None = None,
         clear_filename: str | None = None,
+        with_sourcemaps: bool = False,
         pcs_in_sourcemap: bool = False,
         algod_client: AlgodClient | None = None,
         annotate_teal: bool = True,
@@ -850,7 +853,7 @@ class Router:
             version=version,
             assemble_constants=assemble_constants,
             optimize_opts=optimize,
-            with_sourcemap=True,
+            with_sourcemap=with_sourcemaps,
             approval_filename=approval_filename,
             clear_filename=clear_filename,
             pcs_in_sourcemap=pcs_in_sourcemap,
