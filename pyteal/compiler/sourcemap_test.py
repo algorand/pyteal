@@ -201,7 +201,7 @@ def annotated_teal():
     router.compile_program_with_sourcemaps(
         version=6,
         optimize=OptimizeOptions(scratch_slots=True),
-    ).approval_sourcemap.annotated_teal(unparse_hybrid=True)
+    ).approval_sourcemap.annotated_teal()
 
 
 summaries_only = True

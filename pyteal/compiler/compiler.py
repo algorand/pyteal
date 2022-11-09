@@ -273,6 +273,8 @@ class Compilation:
         pcs_in_sourcemap: bool = False,
         algod_client: AlgodClient | None = None,
         annotate_teal: bool = False,
+        annotate_teal_headers: bool = False,
+        annotate_teal_concise: bool = True,
         # deprecated:
         source_inference: bool = True,
         hybrid_source: bool = True,
@@ -410,7 +412,9 @@ class Compilation:
         )
 
         if annotate_teal:
-            cpb.teal = cpb.sourcemap.annotated_teal()
+            cpb.teal = cpb.sourcemap.annotated_teal(
+                omit_headers=not annotate_teal_headers, concise=annotate_teal_concise
+            )
 
         return cpb
 

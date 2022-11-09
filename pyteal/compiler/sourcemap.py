@@ -1,4 +1,3 @@
-import base64
 import bisect
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -31,8 +30,9 @@ from pyteal.util import algod_with_assertion
 _TEAL_LINE_NUMBER = "TL"
 _TEAL_COLUMN = "TC"
 _TEAL_COLUMN_END = "TCE"
-_TEAL_CHUNK = "Teal Chunk"
+_TEAL_LINE = "Teal Line"
 _TABULATABLE_TEAL = "Tabulatable Teal"
+_PROGRAM_COUNTERS = "PC"
 _PYTEAL_HYBRID_UNPARSED = "PyTeal Hybrid Unparsed"
 _PYTEAL_NODE_AST_UNPARSED = "PyTeal AST Unparsed"
 _PYTEAL_NODE_AST_QUALNAME = "PyTeal Qualname"
@@ -63,12 +63,13 @@ class SourceMapDisabledError(RuntimeError):
         return self.msg
 
 
-class TealLine(PyTealFrame):
+class TealMapItem(PyTealFrame):
     def __init__(
         self,
         pt_frame: PyTealFrame,
-        lineno: int,
+        teal_lineno: int,
         teal_line: str,
+        teal_component: "pt.TealComponent",
         pcs: list[int] | None = None,
     ):
         super().__init__(
@@ -77,22 +78,63 @@ class TealLine(PyTealFrame):
             rel_paths=pt_frame.rel_paths,
             parent=pt_frame.parent,
         )
-        self.lineno: int = lineno
+        self.teal_lineno: int = teal_lineno
         self.teal_line: str = teal_line
+        self.teal_component: pt.TealComponent = teal_component
         self.pcs_hydrated: bool = pcs is not None
         self.pcs: list[int] | None = pcs if pcs else None
 
+    def pcs_repr(self, prefix: str = "") -> str:
+        if not self.pcs_hydrated:
+            return ""
+
+        pcs_repr = prefix + "PC[{}]"
+        internal = ""
+        if self.pcs:
+            internal += str(self.pcs[0])
+            if len(self.pcs) > 1:
+                internal += "-" + str(self.pcs[-1])
+        return pcs_repr.format(internal)
+
     def __repr__(self) -> str:
-        pcs_repr = ""
-        if self.pcs_hydrated:
-            pcs_repr = " // PC[{}]"
-            internal = ""
-            if self.pcs:
-                internal += str(self.pcs[0])
-                if len(self.pcs) > 1:
-                    internal += "-" + str(self.pcs[-1])
-            pcs_repr = pcs_repr.format(internal)
-        return f"TealLine({self.lineno}: {self.teal_line}{pcs_repr} // PyTeal: {self.hybrid_unparsed()}"
+        P = " // "
+        return f"TealLine({self.teal_lineno}: {self.teal_line}{self.pcs_repr(prefix=P)} // PyTeal: {self.hybrid_unparsed()}"
+
+    def hybrid_unparsed(self) -> str:
+        pt_line = self.node_source()
+        if pt_line and len(pt_line.splitlines()) == 1:
+            return pt_line
+
+        return self.code()
+
+    def asdict(self, **kwargs) -> OrderedDict[str, Any]:
+        """kwargs serve as a rename mapping when present"""
+        attrs = {
+            _TEAL_LINE_NUMBER: self.teal_lineno,
+            _TEAL_LINE: self.teal_line,
+            _PROGRAM_COUNTERS: self.pcs_repr(),
+            _PYTEAL_HYBRID_UNPARSED: self.hybrid_unparsed(),
+            _PYTEAL_NODE_AST_UNPARSED: self.node_source(),
+            _PYTEAL_NODE_AST_QUALNAME: self.code_qualname(),
+            _PYTEAL_COMPONENT: self.teal_component,
+            _PYTEAL_NODE_AST_SOURCE_BOUNDARIES: self.node_source_window(),
+            _PYTEAL_FILENAME: self.file(),
+            _PYTEAL_LINE_NUMBER: self.lineno(),
+            _PYTEAL_LINE_NUMBER_END: self.node_end_lineno(),
+            _PYTEAL_COLUMN: self.column(),
+            _PYTEAL_COLUMN_END: self.node_end_col_offset(),
+            _PYTEAL_LINE: self.code(),
+            _PYTEAL_NODE_AST: self.node,
+            _PYTEAL_NODE_AST_NONE: self.failed_ast(),
+            _STATUS_CODE: self.status_code(),
+            _STATUS: self.status(),
+        }
+
+        assert (
+            kwargs.keys() <= attrs.keys()
+        ), f"unrecognized parameters {kwargs.keys() - attrs.keys()}"
+
+        return OrderedDict(((kwargs[k], attrs[k]) for k in kwargs))
 
 
 @dataclass
@@ -127,7 +169,7 @@ class SourceMapItemDEPRECATED:
             _TEAL_LINE_NUMBER: self.first_line,
             # _TEAL_COLUMN: self.column(),
             # _TEAL_COLUMN_END: self.column_rbound(),
-            _TEAL_CHUNK: self.teal,
+            _TEAL_LINE: self.teal,
             _TABULATABLE_TEAL: self._tabulatable_teal(),
             _PYTEAL_HYBRID_UNPARSED: self.hybrid_unparsed(),
             _PYTEAL_NODE_AST_UNPARSED: self.frame.node_source(),
@@ -251,7 +293,7 @@ class PyTealSourceMap:
         self.inferred_frames_at: list[int] = []
         self.teal_file: str | None = teal_file
 
-        self._cached_teal_lines: list[TealLine] = []
+        self._cached_teal_lines: list[TealMapItem] = []
         self._cached_pc_sourcemap: PCSourceMap | None = None
 
         if build:
@@ -354,10 +396,6 @@ class PyTealSourceMap:
                     )
                 self._cached_pc_sourcemap = PCSourceMap(raw_sourcemap)
 
-                # The rest of this scope is unnecessary:
-                pbs = base64.b64decode(algod_compilation["result"])
-
-                tl = self.compiled_teal().splitlines()
                 # algod_disassembly = algod.disassemble(pbs)
                 # disassembled = algod_disassembly["result"]
                 # dlines = disassembled.splitlines()
@@ -367,133 +405,33 @@ class PyTealSourceMap:
                 #     if i < 200 and (y := dlines[i])
                 # ]
 
-                rfunc = lambda xs: f"{xs[0]}-{xs[-1]}" if xs else None
-                hmmm = [
-                    (i, l, rfunc(self._cached_pc_sourcemap.line_to_pc.get(i)))
-                    for i, l in enumerate(tl)
-                ]
-
             lineno = 0
             for i, smi in enumerate(self._cached_sourcemap_items.values()):
                 teal_chunk = self.compiled_teal_lines[i]
                 for line in teal_chunk.splitlines():
                     pcsm = cast(PCSourceMap, self._cached_pc_sourcemap)
+                    pcs = None
+                    if self.include_pcs:
+                        pcs = pcsm.line_to_pc.get(lineno, [])
                     self._cached_teal_lines.append(
-                        TealLine(
+                        TealMapItem(
                             pt_frame=smi.frame,
-                            lineno=lineno,
+                            teal_lineno=lineno,
                             teal_line=line,
-                            pcs=pcsm.line_to_pc.get(lineno, [])
-                            if self.include_pcs
-                            else None,
+                            teal_component=self.components[i],
+                            pcs=pcs,
                         )
                     )
                     lineno += 1
 
-            x = 42
-
-    # def get_r3sourcemap_DEPRECATED(self) -> R3SourceMap:
-    #     if not self._cached_r3sourcemap:
-    #         smi_and_r3sms = [
-    #             (smi, r3sm)
-    #             for smi in self.get_sourcemap_items_DEPRECATED().values()
-    #             for r3sm in smi.source_mappings(hybrid=self.hybrid)
-    #         ]
-
-    #         assert smi_and_r3sms, "Unexpected error: no source mappings found"
-
-    #         smis = [smi for smi, _ in smi_and_r3sms]
-    #         root = smis[0].frame.root()
-    #         assert all(
-    #             root == r3sm.frame.root() for r3sm in smis
-    #         ), "inconsistent sourceRoot - aborting"
-
-    #         r3sms = [r3sm for _, r3sm in smi_and_r3sms]
-    #         entries = {(r3sm.line, r3sm.column): r3sm for r3sm in r3sms}
-    #         index = [[]]
-    #         prev_line = 0
-    #         for line, col in entries.keys():
-    #             for _ in range(prev_line, line):
-    #                 index.append([])
-    #             curr = index[-1]
-    #             curr.append(col)
-    #             prev_line = line
-    #         index = [tuple(cs) for cs in index]
-    #         lines = [cast(str, r3sm.target_extract) for r3sm in r3sms]
-    #         sources = []
-    #         for smi in smis:
-    #             if (f := smi.frame.file()) not in sources:
-    #                 sources.append(f)
-
-    #         # source_files_lines: Optional[list[list[str]]] = None
-    #         # if with_source_lines:
-
-    #         #     def get_file_lines(filename: str) -> list[str]:
-    #         #         x = 42
-    #         #         pass
-
-    #         #     source_files_lines = list(map(get_file_lines, sources))
-
-    #         self._cached_r3sourcemap = R3SourceMap(
-    #             file=self.teal_file,
-    #             source_root=root,
-    #             entries=entries,
-    #             index=index,
-    #             file_lines=lines,
-    #             source_files=sources,
-    #             # source_files_lines=source_files_lines,
-    #         )
-
-    #     return self._cached_r3sourcemap
-
-    # def get_sourcemap_items_DEPRECATED(self) -> dict[int, SourceMapItemDEPRECATED]:
-    #     if not self._cached_sourcemap_items:
-    #         N = len(self.compiled_teal_lines)
-    #         assert N == len(
-    #             self.components
-    #         ), f"expected same number of teal lines {N} and components {len(self.components)}"
-
-    #         best_frames = []
-    #         before, after = [], []
-    #         for i, tc in enumerate(self.components):
-    #             print(f"{i}. {tc=}")
-    #             f, a, b = self.best_frame_and_windows_around_it_DEPRECATED(tc)
-    #             best_frames.append(f)
-    #             before.append(b)
-    #             after.append(a)
-
-    #         if self.source_inference:
-    #             mutated = self._search_for_better_frames_and_modify(best_frames)
-    #             if mutated:
-    #                 self.inferred_frames_at = mutated
-
-    #         def source_map_item(line, i, tc):
-    #             extras: dict[str, Any] | None = None
-    #             if self.add_extras:
-    #                 extras = {
-    #                     "after_frames": after[line],
-    #                     "before_frames": before[line],
-    #                 }
-    #             return SourceMapItemDEPRECATED(
-    #                 line, self.compiled_teal_lines[i], tc, best_frames[i], extras
-    #             )
-
-    #         _map = {}
-    #         line = 0
-    #         for i, tc in enumerate(self.components):
-    #             _map[line + 1] = (smi := source_map_item(line, i, tc))
-    #             line += len(smi.teal.splitlines())
-
-    #         self._cached_sourcemap_items = _map
-
-    #     return self._cached_sourcemap_items
-
-    # def as_list(self) -> list[SourceMapItemDEPRECATED]:
-    #     return list(self.get_sourcemap_items_DEPRECATED().values())
-
-    def as_list(self) -> list[SourceMapItemDEPRECATED]:
+    def as_list_DEPRECATED(self) -> list[SourceMapItemDEPRECATED]:
         self._build()
         return list(self._cached_sourcemap_items.values())
+
+    def as_list(self) -> list[TealMapItem]:
+        # TODO: finer grained caching/building
+        self._build()
+        return self._cached_teal_lines
 
     def _search_for_better_frames_and_modify(
         self, frames: list[PyTealFrame]
@@ -544,121 +482,18 @@ class PyTealSourceMap:
 
         return mutated
 
-    # @classmethod
-    # def best_index_and_frame_DELETEME(
-    #     cls, t: "pt.TealComponent"
-    # ) -> tuple[int, PyTealFrame] | None:
-    #     frames = t.frames()
-    #     if not frames:
-    #         return None
-
-    #     best_idx = len(frames) - 1
-    #     return best_idx, PyTealFrame.convert(frames[best_idx])  # type: ignore
-
-    #     # def result(best_idx):
-    #     #     # TODO: probly don't need to keep `extras` param of SourceMapItem
-    #     #     # nor the 2nd and 3rd elements of the following tuple being returned
-    #     #     return tuple(
-    #     #         PyTealFrame.convert(
-    #     #             [
-    #     #                 frames[best_idx],  # type: ignore
-    #     #                 [frames[i] for i in range(best_idx - 1, -1, -1)],
-    #     #                 [frames[i] for i in range(best_idx + 1, len(frame_infos))],
-    #     #             ]
-    #     #         )
-    #     #     )
-
-    #     # return result(len(frames) - 1)
-
-    # @classmethod
-    # def best_frame_and_windows_around_it_DEPRECATED(
-    #     cls, t: "pt.TealComponent"
-    # ) -> tuple[FrameInfo | None, list[FrameInfo], list[FrameInfo]]:
-    #     """
-    #     # TODO: probly need to REMOVE the extra before and after
-    #     # TODO: this is too complicated!!!
-    #     """
-    #     frames = t.frames()
-    #     if not frames:
-    #         return None, [], []
-
-    #     frame_infos = frames.frame_infos()
-
-    #     # TODO: at this point, result() is complete overkill
-    #     def result(best_idx):
-    #         # TODO: probly don't need to keep `extras` param of SourceMapItem
-    #         # nor the 2nd and 3rd elements of the following tuple being returned
-    #         return tuple(
-    #             PyTealFrame.convert(
-    #                 [
-    #                     frames[best_idx],  # type: ignore
-    #                     [frames[i] for i in range(best_idx - 1, -1, -1)],
-    #                     [frames[i] for i in range(best_idx + 1, len(frame_infos))],
-    #                 ]
-    #             )
-    #         )
-
-    #     return result(len(frames) - 1)
-
-    #     # THIS IS DUPLICATIVE CODE!!!!
-    #     # if len(frames) == 1:
-    #     #     return result(0)
-
-    #     # pyteal_idx = [
-    #     #     any(w in f.filename for w in cls._internal_paths) for f in frame_infos
-    #     # ]
-
-    #     # def is_code_file(idx):
-    #     #     f = frame_infos[idx].filename
-    #     #     return not (f.startswith("<") and f.endswith(">"))
-
-    #     # in_pt, first_pt_entrancy = False, None
-    #     # for i, is_pyteal in enumerate(pyteal_idx):
-    #     #     if is_pyteal and not in_pt:
-    #     #         in_pt = True
-    #     #         continue
-    #     #     if not is_pyteal and in_pt and is_code_file(i):
-    #     #         first_pt_entrancy = i
-    #     #         break
-
-    #     # if first_pt_entrancy is None:
-    #     #     return None, [], []
-
-    #     # frame_nodes = frames.nodes()
-    #     # if frame_nodes[first_pt_entrancy] is None:
-    #     #     # FAILURE CASE: Look for first pyteal generated code entry in stack trace:
-    #     #     found = False
-    #     #     i = -1
-    #     #     for i in range(len(frame_infos) - 1, -1, -1):
-    #     #         f = frame_infos[i]
-    #     #         if not f.code_context:
-    #     #             continue
-
-    #     #         cc = "".join(f.code_context)
-    #     #         if "# T2PT" in cc:
-    #     #             found = True
-    #     #             break
-
-    #     #     if found and i >= 0:
-    #     #         first_pt_entrancy = i
-
-    #     # return result(first_pt_entrancy)
-
-    def teal(self) -> str:
-        return "\n".join(
-            # smi.teal for smi in self.get_sourcemap_items_DEPRECATED().values()
-            smi.teal
-            for smi in self.as_list()
-        )
+    def teal_DEPRECATED(self) -> str:
+        return "\n".join(smi.teal for smi in self.as_list_DEPRECATED())
 
     _tabulate_param_defaults = dict(
-        teal=_TEAL_CHUNK,
+        teal=_TEAL_LINE,
         tabulatable_teal=_TABULATABLE_TEAL,
         pyteal_hybrid_unparsed=_PYTEAL_HYBRID_UNPARSED,
         pyteal=_PYTEAL_NODE_AST_UNPARSED,
         teal_line_number=_TEAL_LINE_NUMBER,
         teal_column=_TEAL_COLUMN,
         teal_column_end=_TEAL_COLUMN_END,
+        program_counters=_PROGRAM_COUNTERS,
         pyteal_component=_PYTEAL_COMPONENT,
         pyteal_node_ast_qualname=_PYTEAL_NODE_AST_QUALNAME,
         pyteal_filename=_PYTEAL_FILENAME,
@@ -672,6 +507,133 @@ class PyTealSourceMap:
         status_code=_STATUS_CODE,
         status=_STATUS,
     )
+
+    def tabulate(
+        self,
+        *,
+        tablefmt="fancy_grid",
+        numalign="right",
+        omit_headers: bool = False,
+        omit_repeating_col_except: list[int] | None = None,
+        **kwargs,
+    ) -> str:
+        """
+        Tabulate a sourcemap using Python's tabulate package: https://pypi.org/project/tabulate/
+
+        Columns are named and ordered by the arguments provided
+
+        Args:
+            tablefmt (defaults to 'fancy_grid'): format specifier used by tabulate. For choices see: https://github.com/astanin/python-tabulate#table-format
+            omit_headers (defaults to False): Explain this....
+            numalign ... explain this...
+            omit_repeating_col_except ... TODO: this is confusing. When empty, nothing is omitted. When non-empty, all reps other than this column are omitted
+            const_col_* ... explain this
+            teal: Column name and implicit order for the generated Teal
+            pyteal (optional): Column name and implicit order for the PyTeal source mapping to target (this usually contains only the Python AST responsible for the generated Teal)
+            pyteal_hybrid_unparsed (optional): ... explain
+            teal_line_number (optional): Column name and implicit order for the Teal target line number
+            teal_column (optional): Column name and implicit order for the generated Teal starting 0-based column number (defaults to 0 when unknown)
+            teal_column_end (optional): Column name and implicit order for the generated Teal ending 0-based column (defaults to len(code) - 1 when unknown)
+            program_counters (optional): Program counters assembled by algod
+            pyteal_component (optional): Column name and implicit order for the PyTeal source component mapping to target
+            pyteal_node_ast_qualname (optional): Column name and implicit order for the Python qualname of the PyTeal source mapping to target
+            pyteal_filename (optional): Column name and implicit order for the filename whose PyTeal source is mapping to the target
+            pyteal_line_number (optional): Column name and implicit order for starting line number of the PyTeal source mapping to target
+            pyteal_line_number_end (optional): Column name and implicit order for the ending line number of the PyTeal source mapping to target
+            pyteal_column (optional): Column name and implicit order for the PyTeal starting 0-based column number mapping to the target (defaults to 0 when unknown)
+            pyteal_column_end (optional): Column name and implicit order for the PyTeal ending 0-based column number mapping to the target (defaults to len(code) - 1 when unknown)
+            pyteal_line (optional): Column name and implicit order for the PyTeal source _line_ mapping to target (in general, this may only overlap with the PyTeal code which generated the Teal)
+            pyteal_node_ast_source_boundaries (optional): Column name and implicit order for line and column boundaries of the PyTeal source mapping to target
+            pyteal_node_ast_none (optional): Column name and implicit order for indicator of whether the AST node was extracted for the PyTEAL source mapping to target
+            status_code (optional): Column name and implicit order for confidence level for locating the PyTeal source responsible for generated Teal
+            status (optional): Column name and implicit order for descriptor of confidence level for locating the PyTeal source responsible for generated Teal
+
+        Returns:
+            A ready to print string containing the table information.
+        """
+        constant_columns = {}
+        new_kwargs = {}
+        for i, (k, v) in enumerate(kwargs.items()):
+            if k.startswith("const_col_"):
+                constant_columns[i] = v
+            else:
+                new_kwargs[k] = v
+        kwargs = new_kwargs
+
+        for k in kwargs:
+            assert k in self._tabulate_param_defaults, f"unrecognized parameter '{k}'"
+
+        # TODO: probly should just insist that printin sumn, not any particular column
+        required = []
+        renames = {self._tabulate_param_defaults[k]: v for k, v in kwargs.items()}
+        for r in required:
+            if r not in kwargs:
+                renames[
+                    self._tabulate_param_defaults[r]
+                ] = self._tabulate_param_defaults[r]
+
+        rows = list(teal_item.asdict(**renames) for teal_item in self.as_list())
+
+        if constant_columns:
+
+            def add_const_cols(row):
+                i = 0
+                new_row = {}
+                for k, v in row.items():
+                    if i in constant_columns:
+                        new_row[f"_{i}"] = constant_columns[i]
+                        i += 1
+                    new_row[k] = v
+                    i += 1
+                return new_row
+
+            rows = list(map(add_const_cols, rows))
+            renames = add_const_cols(renames)
+
+        if omit_repeating_col_except is not None:
+
+            def reduction(row, next_row):
+                return {
+                    k: v2
+                    for i, (k, v) in enumerate(row.items())
+                    if (v2 := next_row[k]) != v or i in omit_repeating_col_except  # type: ignore
+                }
+
+            rows = [rows[0]] + list(
+                map(lambda r_and_n: reduction(*r_and_n), zip(rows[:-1], rows[1:]))
+            )
+
+        calling_kwargs: dict[str, Any] = dict(tablefmt=tablefmt, numalign=numalign)
+        if not omit_headers:
+            calling_kwargs["headers"] = renames
+
+        return tabulate(rows, **calling_kwargs)
+
+    def annotated_teal(self, omit_headers: bool = True, concise: bool = True) -> str:
+        teal_col = "// GENERATED TEAL"
+        kwargs = dict(
+            tablefmt="plain",
+            omit_headers=omit_headers,
+            omit_repeating_col_except=[0, 1],
+            numalign="left",
+            teal=teal_col,
+            const_col_2="//",
+            program_counters="PC",
+        )
+
+        extras = (
+            dict(
+                pyteal_filename="PYTEAL PATH",
+                pyteal_line_number="LINE",
+                pyteal_hybrid_unparsed="PYTEAL",
+            )
+            if not concise
+            else dict(pyteal_hybrid_unparsed="PYTEAL")
+        )
+
+        kwargs.update(extras)
+
+        return self.tabulate(**kwargs)
 
     def tabulate_DEPRECATED(
         self,
@@ -740,7 +702,7 @@ class PyTealSourceMap:
         rows = list(
             smitem.asdict(**renames)
             # for smitem in self.get_sourcemap_items_DEPRECATED().values()
-            for smitem in self.as_list()
+            for smitem in self.as_list_DEPRECATED()
         )
 
         if constant_columns:
@@ -795,7 +757,7 @@ class PyTealSourceMap:
             pyteal_line="pyteal line",
         )
 
-    def annotated_teal(
+    def annotated_teal_DEPRECATED(
         self,
         # deprecated:
         unparse_hybrid: bool = True,

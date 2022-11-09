@@ -511,6 +511,8 @@ class _RouterCompileInput:
     clear_filename: str | None = None
     algod_client: AlgodClient | None = None
     annotate_teal: bool = True
+    annotate_teal_headers: bool = False
+    annotate_teal_concise: bool = True
     # deprecated:
     hybrid_source: bool = True
 
@@ -819,6 +821,8 @@ class Router:
         pcs_in_sourcemap: bool = False,
         algod_client: AlgodClient | None = None,
         annotate_teal: bool = True,
+        annotate_teal_headers: bool = False,
+        annotate_teal_concise: bool = True,
         # deprecated:
         source_inference: bool = True,
         hybrid_source: bool = True,
@@ -852,6 +856,8 @@ class Router:
             pcs_in_sourcemap=pcs_in_sourcemap,
             algod_client=algod_client,
             annotate_teal=annotate_teal,
+            annotate_teal_headers=annotate_teal_headers,
+            annotate_teal_concise=annotate_teal_concise,
             # deprecated:
             source_inference=source_inference,
             hybrid_source=hybrid_source,
@@ -867,6 +873,8 @@ class Router:
             pcs_in_sourcemap=input.pcs_in_sourcemap,
             algod_client=input.algod_client,
             annotate_teal=input.annotate_teal,
+            annotate_teal_headers=input.annotate_teal_headers,
+            annotate_teal_concise=input.annotate_teal_concise,
             # deprecated:
             source_inference=input.source_inference,
             hybrid_source=input.hybrid_source,
@@ -878,6 +886,8 @@ class Router:
             pcs_in_sourcemap=input.pcs_in_sourcemap,
             algod_client=input.algod_client,
             annotate_teal=input.annotate_teal,
+            annotate_teal_headers=input.annotate_teal_headers,
+            annotate_teal_concise=input.annotate_teal_concise,
             # deprecated:
             source_inference=input.source_inference,
             hybrid_source=input.hybrid_source,
