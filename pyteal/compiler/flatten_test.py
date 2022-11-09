@@ -300,6 +300,15 @@ def test_flattenSubroutines_no_subroutines():
     assert actual == expected
 
 
+def without_expr(comp):
+    if isinstance(comp, pt.TealOp):
+        return pt.TealOp(None, comp.op, *comp.args)
+    if isinstance(comp, pt.TealLabel):
+        return pt.TealLabel(None, comp.label, comp.comment)
+
+    assert False, "should never get here"
+
+
 def test_flattenSubroutines_1_subroutine():
     subroutine = pt.SubroutineDefinition(
         lambda: pt.Int(1) + pt.Int(2) + pt.Int(3), pt.TealType.uint64
@@ -356,7 +365,7 @@ def test_flattenSubroutines_1_subroutine():
 
     actual = flattenSubroutines(subroutineMapping, subroutineToLabel)
 
-    assert actual == expected
+    assert list(map(without_expr, actual)) == expected
 
 
 def test_flattenSubroutines_multiple_subroutines():

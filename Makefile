@@ -52,10 +52,18 @@ lint: black flake8 mypy
 NUM_PROCS = auto
 test-async-unit:
 	pytest -n $(NUM_PROCS) --durations=10 -sv pyteal tests/unit \
-		--ignore tests/unit/blackbox_test.py --ignore tests/unit/user_guide_test.py --ignore tests/unit/sourcemap_monkey_raises_test.py
+		--ignore tests/unit/blackbox_test.py \
+		--ignore tests/unit/user_guide_test.py \
+		--ignore tests/unit/sourcemap_test.py \
+		--ignore tests/unit/sourcemap_monkey_raises_test.py \
+		--ignore tests/unit/sourcemap_monkey_unit_test.py
 
 test-sync-unit:
-	pytest -n 1 --durations=10 -sv tests/unit/blackbox_test.py tests/unit/user_guide_test.py tests/unit/sourcemap_monkey_raises_test.py
+	pytest -n 1 --durations=10 -sv tests/unit/blackbox_test.py tests/unit/user_guide_test.py tests/unit/sourcemap_test.py tests/unit/sourcemap_monkey_raises_test.py
+
+test-sync-unit-monkey:
+	pytest -n 1 --durations=10 -sv tests/unit/sourcemap_monkey_unit_test.py
+
 
 test-unit: test-async-unit test-sync-unit
 
@@ -69,10 +77,15 @@ sandbox-dev-up:
 sandbox-dev-stop:
 	docker-compose stop algod
 
-integration-run:
-	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration
+test-async-integration:
+	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration \
+		--ignore tests/integration/sourcemap_monkey_integ_test.py
 
-test-integration: integration-run
+test-sync-integration:
+	pytest -n 1 --durations=10 -sv tests/integration/sourcemap_monkey_integ_test.py
+
+test-integration: test-async-integration test-sync-integration
+
 
 all-tests: lint-and-test test-integration
 

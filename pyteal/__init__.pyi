@@ -17,6 +17,7 @@ from pyteal.compiler import (
     Compilation,
     compileTeal,
     OptimizeOptions,
+    PyTealSourceMap,
 )
 from pyteal.types import TealType
 from pyteal.errors import (
@@ -86,6 +87,7 @@ __all__ = [
     "BytesZero",
     "CallConfig",
     "Comment",
+    "Compilation",
     "CompileOptions",
     "Concat",
     "Cond",
@@ -169,6 +171,7 @@ __all__ = [
     "Or",
     "Pop",
     "Pragma",
+    "PyTealSourceMap",
     "RETURN_HASH_PREFIX",
     "Reject",
     "Replace",
@@ -223,7 +226,6 @@ __all__ = [
     "While",
     "WideRatio",
     "abi",
-    "Compilation",
     "compileTeal",
     "pragma",
 ]

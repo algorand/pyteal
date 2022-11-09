@@ -753,7 +753,7 @@ class Router:
             A Python SDK `Contract` object constructed from the registered methods on this router.
         """
 
-        return sdk_abi.Contract(self.name, self.methods, self.descr or "")
+        return sdk_abi.Contract(self.name, self.methods, self.descr)
 
     def build_program(self) -> tuple[Expr, Expr, sdk_abi.Contract]:
         """

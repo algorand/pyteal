@@ -12,7 +12,7 @@ from pyteal.ir import (
     TealConditionalBlock,
     LabelReference,
 )
-from pyteal.errors import TealInternalError
+from pyteal.errors import TealInternalError, TealInputError
 
 
 def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
@@ -116,6 +116,8 @@ def flattenSubroutines(
     Returns:
         A single list of TealComponents representing the entire program.
     """
+    from pyteal.ast import Expr
+
     combinedOps: List[TealComponent] = []
 
     # By default all branch labels in each subroutine will start from "l0". To
@@ -138,7 +140,12 @@ def flattenSubroutines(
             if isinstance(stmt, TealLabel):
                 stmt.getLabelRef().addPrefix(labelPrefix)
 
-        dexpr = subroutine.get_declaration()
+        dexpr: Expr | None = None
+        try:
+            dexpr = subroutine.get_declaration()
+        except TealInputError:
+            pass  # NOOP - just ignoring, as only used for source mapping
+
         combinedOps.append(TealLabel(dexpr, LabelReference(label), comment))  # T2PT1
         combinedOps += subroutineOps
 

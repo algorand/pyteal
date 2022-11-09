@@ -6,12 +6,13 @@ import pyteal as pt
 
 
 def test_abi_algobank():
-    from examples.application.abi.algobank import (
-        approval_program,
-        clear_state_program,
-        contract,
-    )
+    from pyteal.compiler.optimizer import OptimizeOptions
 
+    from examples.application.abi.algobank import router
+
+    approval_program, clear_state_program, contract = router.compile_program(
+        version=6, optimize=OptimizeOptions(scratch_slots=True)
+    )
     target_dir = Path.cwd() / "examples" / "application" / "abi"
 
     with open(
