@@ -80,12 +80,6 @@ class BaseType(ABC):
         self._type_spec: Final[TypeSpec] = spec
         self._stored_value: AbstractVar = ScratchVar(spec.storage_type())
 
-    def _load_value(self) -> Expr:
-        return self._stored_value.load()
-
-    def _store_value(self, value: Expr) -> Expr:
-        return self._stored_value.store(value)
-
     def type_spec(self) -> TypeSpec:
         """Get the TypeSpec for this ABI type instance."""
         return self._type_spec
@@ -254,7 +248,7 @@ class ReturnedValue(ComputedValue):
             validate_in_store = False
 
         return output._stored_value.store(
-            self.computation, validate_types=validate_in_store
+            self.computation, validate_type=validate_in_store
         )
 
 
