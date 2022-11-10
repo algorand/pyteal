@@ -118,11 +118,11 @@ class DynamicScratchVar(ScratchVar):
         """Get the type of expressions that can be stored in this ScratchVar."""
         return self.dynamic_type
 
-    def store(self, value: Expr, validate_types: bool = True) -> Expr:
+    def store(self, value: Expr, validate_type: bool = True) -> Expr:
         """Store the value in the referenced ScratchVar."""
-        if not validate_types:
+        if not validate_type:
             raise TealInternalError(
-                f"DynamicScratchVar's must validate_types but {validate_types=}"
+                f"DynamicScratchVar's must validate_type but {validate_type=}"
             )
 
         require_type(value, self.dynamic_type)
