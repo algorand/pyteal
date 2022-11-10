@@ -1,5 +1,4 @@
 black==22.3.0
-executing==1.2.0
 flake8==4.0.1
 flake8-tidy-imports==4.6.0
 graviton@git+https://github.com/algorand/graviton@v0.3.0
