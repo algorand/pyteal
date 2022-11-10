@@ -62,7 +62,7 @@ LocalTypeSegment.__module__ = "pyteal"
 
 
 class ProtoStackLayout(Expr):
-    """An expression that carrys arg types and local types for a subroutine.
+    """An expression that carries arg types and local types for a subroutine.
 
     This class is intentionally hidden because it's too basic to directly expose.
     This is only used in Proto internally.
@@ -128,7 +128,7 @@ class Proto(Expr):
     """An expression that prepare top call frame for a retsub that will assume A args and R return values.
 
     This class is intentionally hidden because it's too basic to directly expose.
-    It is only used in subroutine, for subrouine declaration computation.
+    It is only used in subroutine, for subroutine declaration computation.
     """
 
     def __init__(
@@ -225,7 +225,7 @@ FrameDig.__module__ = "pyteal"
 
 
 class FrameBury(Expr):
-    """An expression that burys a value to a position around frame pointer.
+    """An expression that buries a value to a position around frame pointer.
 
     This class is intentionally hidden because it's too basic to directly expose.
     his is used only internally by FrameVar.
