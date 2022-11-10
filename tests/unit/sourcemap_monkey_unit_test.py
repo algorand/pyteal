@@ -86,10 +86,10 @@ def test_reconstruct(_):
     assert compile_bundle.approval_sourcemap
     assert compile_bundle.clear_sourcemap
 
-    with open(ALGOBANK / "algobank_approval.teal") as af:
+    with open(ALGOBANK / "algobank_approval.teal", "r") as af:
         assert af.read() == compile_bundle.approval_sourcemap.pure_teal()
 
-    with open(ALGOBANK / "algobank_clear_state.teal") as cf:
+    with open(ALGOBANK / "algobank_clear_state.teal", "r") as cf:
         assert cf.read() == compile_bundle.clear_sourcemap.pure_teal()
 
 
@@ -1295,9 +1295,165 @@ CONSTRUCTS = [
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
 def test_constructs(_, i, test_case, mode, version):
     """
-    Sanity check source mapping the most important PyTeal constructs
+                                        Sanity check source mapping the most important PyTeal constructs
 
-    Cannot utilize @pytest.mark.parametrize because of monkeypatching
+                            ................FFF.F......
+
+                                        PERFORMANCE RESULTS 10Nov2022 AS ATTEMPT TO STREAMLINE THE SOURCE MAPPER.
+
+                                        TEST COMMAND:
+                                        > command gtime -v pytest --memray --durations=0 tests/unit/sourcemap_monkey_unit_test.py::test_constructs
+
+                                        FIRST RUN - BEFORE ANY REFACTORING
+                                ❯ command gtime -v pytest --memray --durations=0 tests/unit/sourcemap_monkey_unit_test.py::test_constructs
+                                ======================================================================================================= test session starts =======================================================================================================
+                                platform darwin -- Python 3.10.4, pytest-7.1.2, pluggy-1.0.0
+                                rootdir: /Users/zeph/github/tzaffi/pyteal
+                                plugins: xdist-2.5.0, forked-1.4.0, timeout-2.1.0, memray-1.3.0, cov-3.0.0
+                                collected 372 items
+
+                                tests/unit/sourcemap_monkey_unit_test.py .................................................................................................................................................................................. [ 47%]
+                                .................................................................................................................................................................................................
+
+
+                                ========================================================================================================== MEMRAY REPORT ==========================================================================================================
+                                Allocations results for tests/unit/sourcemap_monkey_unit_test.py::test_constructs[2-Application-0-test_case0]
+
+                                         📦 Total memory allocated: 28.9MiB
+                                         📏 Total allocations: 435609
+                                         📊 Histogram of allocation sizes: |  ▃ █    |
+                                         🥇 Biggest allocating functions:
+                                                - parse:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/ast.py:50 -> 11.0MiB
+                                                - <module>:/Users/zeph/github/tzaffi/pyteal/py310ptt/lib/python3.10/site-packages/pycparser/yacctab.py:16 -> 1.5MiB
+                                                - updatecache:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/linecache.py:137 -> 1.1MiB
+                                                - updatecache:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/linecache.py:137 -> 1.0MiB
+                                                - _call_with_frames_removed:<frozen importlib._bootstrap>:241 -> 1.0MiB
+                                . . .
+
+                                ======================================================================================================== slowest durations ========================================================================================================
+                                58.47s call     tests/unit/sourcemap_monkey_unit_test.py::test_constructs[2-Application-20-test_case20]
+                                43.22s call     tests/unit/sourcemap_monkey_unit_test.py::test_constructs[2-Application-18-test_case18]
+                                42.10s call     tests/unit/sourcemap_monkey_unit_test.py::test_constructs[2-Application-28-test_case28]
+
+                                . . .
+
+
+                                (744 durations < 0.005s hidden.  Use -vv to show these durations.)
+                                ================================================================================================= 372 passed in 537.85s (0:08:57) =================================================================================================
+                                        Command being timed: "pytest --memray --durations=0 tests/unit/sourcemap_monkey_unit_test.py::test_constructs"
+                                        User time (seconds): 515.76
+                                        System time (seconds): 11.91
+                                        Percent of CPU this job got: 97%
+                                        Elapsed (wall clock) time (h:mm:ss or m:ss): 8:58.53
+                                        Average shared text size (kbytes): 0
+                                        Average unshared data size (kbytes): 0
+                                        Average stack size (kbytes): 0
+                                        Average total size (kbytes): 0
+                                        Maximum resident set size (kbytes): 102644
+                                        Average resident set size (kbytes): 0
+                                        Major (requiring I/O) page faults: 66187
+                                        Minor (reclaiming a frame) page faults: 215076
+                                        Voluntary context switches: 189
+                                        Involuntary context switches: 268839
+                                        Swaps: 0
+                                        File system inputs: 0
+                                        File system outputs: 0
+                                        Socket messages sent: 0
+                                        Socket messages received: 0
+
+
+
+                        (741 durations < 0.005s hidden.  Use -vv to show these durations.)
+                        ================================================================================================= 372 passed in 545.95s (0:09:05) =================================================================================================
+                                Command being timed: "pytest --memray --durations=0 tests/unit/sourcemap_monkey_unit_test.py::test_constructs"
+                                User time (seconds): 507.70
+
+                        SECOND RUN - just use a regex to match instead of iterating over list
+
+                        ABOUT 5% faster
+
+                    (742 durations < 0.005s hidden.  Use -vv to show these durations.)
+                    ================================================================================================= 372 passed in 498.47s (0:08:18) =================================================================================================
+                            Command being timed: "pytest --memray --durations=0 tests/unit/sourcemap_monkey_unit_test.py::test_constructs"
+                            User time (seconds): 482.87
+
+                        THIRD RUN - can we keep only the most relevant `Frames` ?
+
+                3A: just extracted a new method _original_initializer()... don't expect much if any degredation
+
+                3B: more extractions... getting 20% slower...
+
+                3C: post new SUPPOSEDELY faster method - not really, but 25% less memory used
+
+                ❯ command gtime -v pytest --memray --durations=0 tests/unit/sourcemap_monkey_unit_test.py::test_constructs
+        ======================================================================================================= test session starts =======================================================================================================
+        platform darwin -- Python 3.10.4, pytest-7.1.2, pluggy-1.0.0
+        rootdir: /Users/zeph/github/tzaffi/pyteal
+        plugins: xdist-2.5.0, forked-1.4.0, timeout-2.1.0, memray-1.3.0, cov-3.0.0
+        collected 372 items
+
+        tests/unit/sourcemap_monkey_unit_test.py .................................................................................................................................................................................. [ 47%]
+        ..................................................................................................................................................................................................                          [100%]
+
+
+        ========================================================================================================== MEMRAY REPORT ==========================================================================================================
+        Allocations results for tests/unit/sourcemap_monkey_unit_test.py::test_constructs[2-Application-0-test_case0]
+
+                 📦 Total memory allocated: 16.9MiB
+                 📏 Total allocations: 398334
+                 📊 Histogram of allocation sizes: |    █    |
+                 🥇 Biggest allocating functions:
+                        - parse:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/ast.py:50 -> 3.0MiB
+                        - updatecache:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/linecache.py:137 -> 1.1MiB
+                        - updatecache:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/linecache.py:137 -> 1.0MiB
+                        - _compile_bytecode:<frozen importlib._bootstrap_external>:672 -> 1.0MiB
+                        - _compile_bytecode:<frozen importlib._bootstrap_external>:672 -> 1.0MiB
+
+
+
+        (742 durations < 0.005s hidden.  Use -vv to show these durations.)
+        ================================================================================================= 372 passed in 516.01s (0:08:36) =================================================================================================
+                Command being timed: "pytest --memray --durations=0 tests/unit/sourcemap_monkey_unit_test.py::test_constructs"
+                User time (seconds): 494.42
+                System time (seconds): 11.48
+                Percent of CPU this job got: 97%
+
+        3D: inline the initializer
+
+        4 - try upgrading to python 3.11:
+
+    ❯ command gtime -v pytest --memray --durations=0 tests/unit/sourcemap_monkey_unit_test.py::test_constructs
+    ======================================================================================================= test session starts =======================================================================================================
+    platform darwin -- Python 3.11.0, pytest-7.1.2, pluggy-1.0.0
+    rootdir: /Users/zeph/github/tzaffi/pyteal
+    plugins: xdist-2.5.0, forked-1.4.0, timeout-2.1.0, memray-1.3.0, cov-3.0.0
+    collected 372 items
+
+    tests/unit/sourcemap_monkey_unit_test.py .................................................................................................................................................................................. [ 47%]
+    ..................................................................................................................................................................................................                          [100%]
+
+
+    ========================================================================================================== MEMRAY REPORT ==========================================================================================================
+    Allocations results for tests/unit/sourcemap_monkey_unit_test.py::test_constructs[2-Application-0-test_case0]
+
+             📦 Total memory allocated: 22.9MiB
+             📏 Total allocations: 86866
+             📊 Histogram of allocation sizes: |    █    |
+             🥇 Biggest allocating functions:
+                    - _call_with_frames_removed:<frozen importlib._bootstrap>:241 -> 2.7MiB
+                    - parse:/Users/zeph/.asdf/installs/python/3.11.0/lib/python3.11/ast.py:50 -> 2.1MiB
+                    - updatecache:/Users/zeph/.asdf/installs/python/3.11.0/lib/python3.11/linecache.py:137 -> 2.1MiB
+                    - updatecache:/Users/zeph/.asdf/installs/python/3.11.0/lib/python3.11/linecache.py:137 -> 1.0MiB
+                    - _compile_bytecode:<frozen importlib._bootstrap_external>:729 -> 1.0MiB
+
+
+    (744 durations < 0.005s hidden.  Use -vv to show these durations.)
+    ====================================================================================================== 372 passed in 38.20s =======================================================================================================
+            Command being timed: "pytest --memray --durations=0 tests/unit/sourcemap_monkey_unit_test.py::test_constructs"
+            User time (seconds): 27.61
+            System time (seconds): 8.61
+
+
     """
     import pyteal as pt
 
