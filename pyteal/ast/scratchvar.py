@@ -42,6 +42,7 @@ class ScratchVar(AbstractVar):
 
         Args:
             value: The value to store. Must conform to this ScratchVar's type.
+            validate_type: A bool variable that activate type check in value storage.
         """
         if validate_type:
             require_type(value, self.type)
