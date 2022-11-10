@@ -29,9 +29,9 @@ class AbstractVar(ABC):
         while an :any:`AbstractVar` has any concrete type other than :code:`TealType.none`.
         A direct type check against :any:`ABIReturnSubroutine` will incur a type error,
         while we apply type check against output keyword argument of :any:`ABIReturnSubroutine`,
-        which is applied and enforced inside of :any:`ReturnedValue`.
+        which is applied and enforced inside :any:`ReturnedValue`.
 
-        In short, in most scenarios, it is not recommended to let validate_type to be False,
+        In short, in most scenarios, we do not recommended to let validate_type to be False,
         unless one is very clear about the expected behavior.
 
         Args:
