@@ -248,7 +248,7 @@ class ReturnedValue(ComputedValue):
             validate_in_store = False
 
         return output._stored_value.store(
-            self.computation, validate_types=validate_in_store
+            self.computation, validate_type=validate_in_store
         )
 
 
