@@ -7,7 +7,6 @@ pytest==7.1.2
 pytest-cov==3.0.0
 pytest-timeout==2.1.0
 pytest-xdist==2.5.0
-tabulate>=0.8.9
 types-setuptools==57.4.18
 
 # TODO: update pytest & tabulate once graviton is update to v0.4.0
