@@ -16,7 +16,6 @@ from typing import (
     cast,
 )
 
-# from algosdk.source_map import R3SourceMap, R3SourceMapping
 from algosdk.source_map import SourceMap as PCSourceMap
 from algosdk.v2client.algod import AlgodClient
 from tabulate import tabulate  # type: ignore
@@ -25,6 +24,396 @@ import pyteal as pt
 from pyteal.errors import TealInternalError
 from pyteal.stack_frame import PT_GENERATED, PyTealFrame, PytealFrameStatus
 from pyteal.util import algod_with_assertion
+
+
+# ### ---- Based on mjpieters CODE ---- ### #
+#
+#     Modified from the original `SourceMap` available under MIT License here (as of Nov. 12, 2022): https://gist.github.com/mjpieters/86b0d152bb51d5f5979346d11005588b
+#    `R3` is a nod to "Revision 3" of John Lenz's Source Map Proposal: https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?hl=en_US&pli=1&pli=1
+#
+# ###
+
+_b64chars = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+_b64table = [-1] * (max(_b64chars) + 1)
+for i, b in enumerate(_b64chars):
+    _b64table[b] = i
+
+shiftsize, flag, mask = 5, 1 << 5, (1 << 5) - 1
+
+
+def _base64vlq_decode(vlqval: str) -> List[int]:
+    """Decode Base64 VLQ value"""
+    results = []
+    shift = value = 0
+    # use byte values and a table to go from base64 characters to integers
+    for v in map(_b64table.__getitem__, vlqval.encode("ascii")):
+        v = cast(int, v)
+        value += (v & mask) << shift
+        if v & flag:
+            shift += shiftsize
+            continue
+        # determine sign and add to results
+        results.append((value >> 1) * (-1 if value & 1 else 1))
+        shift = value = 0
+    return results
+
+
+def _base64vlq_encode(*values: int) -> str:
+    """Encode integers to a VLQ value"""
+    results: list[int] = []
+    add = results.append
+    for v in values:
+        # add sign bit
+        v = (abs(v) << 1) | int(v < 0)
+        while True:
+            toencode, v = v & mask, v >> shiftsize
+            add(toencode | (v and flag))
+            if not v:
+                break
+    # TODO: latest version of gist avoids the decode() step
+    return bytes(map(_b64chars.__getitem__, results)).decode()
+
+
+class autoindex(defaultdict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(partial(next, count()), *args, **kwargs)
+
+
+@dataclass(frozen=False)
+class R3SourceMapping:
+    line: int
+    # line_end: Optional[int] = None #### NOT PROVIDED (AND NOT CONFORMING WITH R3 SPEC) AS TARGETS ARE ASSUMED TO SPAN AT MOST ONE LINE ####
+    column: int
+    source: Optional[str] = None
+    source_line: Optional[int] = None
+    source_column: Optional[int] = None
+    source_content: Optional[List[str]] = None
+    source_extract: Optional[str] = None
+    target_extract: Optional[str] = None
+    name: Optional[str] = None
+    source_line_end: Optional[int] = None
+    source_column_end: Optional[int] = None
+    column_end: Optional[int] = None
+
+    def __post_init__(self):
+        if self.source is not None and (
+            self.source_line is None or self.source_column is None
+        ):
+            raise TypeError(
+                "Invalid source mapping; missing line and column for source file"
+            )
+        if self.name is not None and self.source is None:
+            raise TypeError(
+                "Invalid source mapping; name entry without source location info"
+            )
+
+    def __lt__(self, other: "R3SourceMapping") -> bool:
+        assert isinstance(other, type(self)), f"received incomparable {type(other)}"
+
+        return (self.line, self.column) < (other.line, other.column)
+
+    def __ge__(self, other: "R3SourceMapping") -> bool:
+        return not self < other
+
+    def location(self, source=False) -> Tuple[str, int, int]:
+        return (
+            (
+                self.source if self.source else "",
+                self.source_line if self.source_line else -1,
+                self.source_column if self.source_column else -1,
+            )
+            if source
+            else ("", self.line, self.column)
+        )
+
+    # TODO: THIS IS CURRENTLY BROKEN BUT USEFUL
+    # @property
+    # def content_line(self) -> Optional[str]:
+    #     try:
+    #         return self.source_content[self.source_line]
+    #     except (TypeError, IndexError):
+    #         return None
+
+    @classmethod
+    def extract_window(
+        cls,
+        source_lines: Optional[List[str]],
+        line: int,
+        column: int,
+        right_column: Optional[int],
+    ) -> Optional[str]:
+        return (
+            (
+                source_lines[line][column:right_column]
+                if right_column is not None
+                else source_lines[line][column:]
+            )
+            if source_lines
+            else None
+        )
+
+    def __str__(self) -> str:
+        def swindow(file, line, col, rcol, extract):
+            if file == "unknown":
+                file = None
+            if not rcol:
+                rcol = ""
+            if extract is None:
+                extract = "?"
+            return f"{file + '::' if file else ''}L{line}C{col}-{rcol}='{extract}'"
+
+        return (
+            f"{swindow(self.source, self.source_line, self.source_column, self.source_column_end, self.source_extract)} <- "
+            f"{swindow(None, self.line, self.column, self.column_end, self.target_extract)}"
+        )
+
+    __repr__ = __str__
+
+
+class R3SourceMapJSON(TypedDict, total=False):
+    version: Literal[3]
+    file: Optional[str]
+    sourceRoot: Optional[str]
+    sources: List[str]
+    sourcesContent: Optional[List[Optional[str]]]
+    names: List[str]
+    mappings: str
+
+
+@dataclass(frozen=True)
+class R3SourceMap:
+    file: Optional[str]
+    source_root: Optional[str]
+    entries: Mapping[Tuple[int, int], "R3SourceMapping"]
+    index: List[Tuple[int, ...]] = field(default_factory=list)
+    file_lines: Optional[List[str]] = None
+    source_files: Optional[List[str]] = None
+    source_files_lines: Optional[List[List[str] | None]] = None
+
+    def __post_init__(self):
+        entries = list(self.entries.values())
+        for i, entry in enumerate(entries):
+            if i + 1 >= len(entries):
+                return
+
+            if entry >= entries[i + 1]:
+                raise TypeError(
+                    f"Invalid source map as entries aren't properly ordered: entries[{i}] = {entry} >= entries[{i+1}] = {entries[i + 1]}"
+                )
+
+    def __repr__(self) -> str:
+        parts = []
+        if self.file is not None:
+            parts += [f"file={self.file!r}"]
+        if self.source_root is not None:
+            parts += [f"source_root={self.source_root!r}"]
+        parts += [f"len={len(self.entries)}"]
+        return f"<MJPSourceMap({', '.join(parts)})>"
+
+    @classmethod
+    def from_json(
+        cls,
+        smap: R3SourceMapJSON,
+        sources_override: Optional[List[str]] = None,
+        sources_content_override: List[str] = [],
+        target: Optional[str] = None,
+        add_right_bounds: bool = True,
+    ) -> "R3SourceMap":
+        """
+        NOTE about `*_if_missing` arguments
+        * sources_override - STRICTLY SPEAKING `sources` OUGHT NOT BE MISSING OR EMPTY in R3SourceMapJSON.
+            However, currently the POST v2/teal/compile endpoint populate this field with an empty list, as it is not provided the name of the
+            Teal file which is being compiled. In order comply with the R3 spec, this field is populated with ["unknown"] when either missing or empty
+            in the JSON and not supplied during construction.
+            An error will be raised when attempting to replace a nonempty R3SourceMapJSON.sources.
+        * sources_content_override - `sourcesContent` is optional and this provides a way at runtime to supply the actual source.
+            When provided, and the R3SourceMapJSON is either missing or empty, this will be substituted.
+            An error will be raised when attempting to replace a nonempty R3SourceMapJSON.sourcesContent.
+        """
+        if smap.get("version") != 3:
+            raise ValueError("Only version 3 sourcemaps are supported ")
+        entries: dict[tuple[int, int], R3SourceMapping] = {}
+        index: list[list[int]] = []
+        spos = npos = sline = scol = 0
+
+        sources = smap.get("sources")
+        if sources and sources_override:
+            raise AssertionError("ambiguous sources from JSON and method argument")
+        sources = sources or sources_override or ["unknown"]
+
+        contents: List[str | None] | List[str] | None = smap.get("sourcesContent")
+        if contents and sources_content_override:
+            raise AssertionError(
+                "ambiguous sourcesContent from JSON and method argument"
+            )
+        contents = contents or sources_content_override
+
+        names = smap.get("names")
+
+        tcont, sp_conts = (
+            target.splitlines() if target else None,
+            [c.splitlines() if c else None for c in contents],
+        )
+
+        if "mappings" in smap:
+            for gline, vlqs in enumerate(smap["mappings"].split(";")):
+                index += [[]]
+                if not vlqs:
+                    continue
+                gcol = 0
+                for gcd, *ref in map(_base64vlq_decode, vlqs.split(",")):
+                    gcol += gcd
+                    kwargs = {}
+                    if len(ref) >= 3:
+                        sd, sld, scd, *namedelta = ref
+                        spos, sline, scol = spos + sd, sline + sld, scol + scd
+                        scont = sp_conts[spos] if len(sp_conts) > spos else None  # type: ignore
+                        # extract the referenced source till the end of the current line
+                        extract = R3SourceMapping.extract_window
+                        kwargs = {
+                            "source": sources[spos] if spos < len(sources) else None,
+                            "source_line": sline,
+                            "source_column": scol,
+                            "source_content": scont,
+                            "source_extract": extract(scont, sline, scol, None),
+                            "target_extract": extract(tcont, gline, gcol, None),
+                        }
+                        if namedelta and names:
+                            npos += namedelta[0]
+                            kwargs["name"] = names[npos]
+                    entries[gline, gcol] = R3SourceMapping(
+                        line=gline, column=gcol, **kwargs  # type: ignore
+                    )
+                    index[gline].append(gcol)
+
+        sourcemap = cls(
+            smap.get("file"),
+            smap.get("sourceRoot"),
+            entries,
+            [tuple(cs) for cs in index],
+            tcont,
+            sources,
+            sp_conts,
+        )
+        if add_right_bounds:
+            sourcemap.add_right_bounds()
+        return sourcemap
+
+    def add_right_bounds(self) -> None:
+        entries = list(self.entries.values())
+        for i, entry in enumerate(entries):
+            if i + 1 >= len(entries):
+                continue
+
+            next_entry = entries[i + 1]
+
+            def same_line_less_than(lc, nlc):
+                return (lc[0], lc[1]) == (nlc[0], nlc[1]) and lc[2] < nlc[2]
+
+            if not same_line_less_than(entry.location(), next_entry.location()):
+                continue
+            entry.column_end = next_entry.column
+            entry.target_extract = entry.extract_window(
+                self.file_lines, entry.line, entry.column, entry.column_end
+            )
+
+            if not all(
+                [
+                    self.source_files,
+                    self.source_files_lines,
+                    next_entry.source,
+                    same_line_less_than(
+                        entry.location(source=True),
+                        next_entry.location(source=True),
+                    ),
+                ]
+            ):
+                continue
+            entry.source_column_end = next_entry.source_column
+            try:
+                fidx = self.source_files.index(next_entry.source)  # type: ignore
+            except ValueError:
+                continue
+            if (
+                self.source_files_lines
+                and isinstance(entry.source_line, int)
+                and isinstance(entry.source_column, int)
+            ):
+                entry.source_extract = entry.extract_window(
+                    self.source_files_lines[fidx],
+                    entry.source_line,
+                    entry.source_column,
+                    next_entry.source_column,
+                )
+
+    def to_json(self, with_contents: bool = False) -> R3SourceMapJSON:
+        content: list[str | None] = []
+        mappings: list[str] = []
+        sources, names = autoindex(), autoindex()
+        entries = self.entries
+        spos = sline = scol = npos = 0
+        for gline, cols in enumerate(self.index):
+            gcol = 0
+            mapping = []
+            for col in cols:
+                entry = entries[gline, col]
+                ds, gcol = [col - gcol], col
+
+                if entry.source is not None:
+                    assert entry.source_line is not None
+                    assert entry.source_column is not None
+                    ds += (
+                        sources[entry.source] - spos,
+                        entry.source_line - sline,
+                        entry.source_column - scol,
+                    )
+                    spos, sline, scol = (
+                        spos + ds[1],
+                        sline + ds[2],
+                        scol + ds[3],
+                    )
+                    if spos == len(content):
+                        c = entry.source_content
+                        content.append("\n".join(c) if c else None)
+                    if entry.name is not None:
+                        ds += (names[entry.name] - npos,)
+                        npos += ds[-1]
+                mapping.append(_base64vlq_encode(*ds))
+
+            mappings.append(",".join(mapping))
+
+        encoded = {
+            "version": 3,
+            "sources": [s for s, _ in sorted(sources.items(), key=lambda si: si[1])],
+            "names": [n for n, _ in sorted(names.items(), key=lambda ni: ni[1])],
+            "mappings": ";".join(mappings),
+        }
+        if with_contents:
+            encoded["sourcesContent"] = content
+        if self.file is not None:
+            encoded["file"] = self.file
+        if self.source_root is not None:
+            encoded["sourceRoot"] = self.source_root
+        return encoded  # type: ignore
+
+    def __getitem__(self, idx: Union[int, Tuple[int, int]]):
+        l: int
+        c: int
+        try:
+            l, c = idx  # type: ignore   # The exception handler deals with the int case
+        except TypeError:
+            l, c = idx, 0  # type: ignore   # yes, idx is guaranteed to be an int
+        try:
+            return self.entries[l, c]
+        except KeyError:
+            # find the closest column
+            if not (cols := self.index[l]):
+                raise IndexError(idx)
+            cidx = bisect.bisect(cols, c)
+            return self.entries[l, cols[cidx and cidx - 1]]
+
+
+# #### PyTeal Specific Classes below #### #
 
 _TEAL_LINE_NUMBER = "TL"
 _TEAL_COLUMN = "TC"
@@ -442,14 +831,15 @@ class PyTealSourceMap:
                     )
                     lineno += 1
 
-    # def as_list_DEPRECATED(self) -> list[SourceMapItemDEPRECATED]:
-    #     self._build()
-    #     return list(self._cached_sourcemap_items.values())
-
     def as_list(self) -> list[TealMapItem]:
         # TODO: finer grained caching/building
         self._build()
         return self._cached_teal_lines
+
+    def as_r3sourcemap(self) -> R3SourceMap | None:
+        # TODO: finer grained caching/building
+        self._build()
+        return self._cached_r3sourcemap
 
     def _search_for_better_frames_and_modify(
         self, frames: list[PyTealFrame | None]
@@ -504,9 +894,6 @@ class PyTealSourceMap:
                     frames[i] = ptf_or_none
 
         return mutated
-
-    # def teal_DEPRECATED(self) -> str:
-    #     return "\n".join(smi.teal for smi in self.as_list_DEPRECATED())
 
     def pure_teal(self) -> str:
         return "\n".join(tmi.teal_line for tmi in self.as_list())
@@ -661,551 +1048,3 @@ class PyTealSourceMap:
         kwargs.update(extras)
 
         return self.tabulate(**kwargs)  # type: ignore
-
-    # def tabulate_DEPRECATED(
-    #     self,
-    #     *,
-    #     tablefmt="fancy_grid",
-    #     numalign="right",
-    #     omit_headers: bool = False,
-    #     omit_rep_cols: set = set(),
-    #     postprocessor: Optional[Callable[..., str]] = None,
-    #     **kwargs,
-    # ) -> str:
-    #     """
-    #     Tabulate a sourcemap using Python's tabulate package: https://pypi.org/project/tabulate/
-
-    #     Columns are named and ordered by the arguments provided
-
-    #     Args:
-    #         tablefmt (defaults to 'fancy_grid'): format specifier used by tabulate. For choices see: https://github.com/astanin/python-tabulate#table-format
-    #         omit_headers (defaults to False): Explain this....
-    #         numalign ... explain this...
-    #         omit_rep_cols ... TODO: this is confusing. When empty, nothing is omitted. When non-empty, all reps other than this column are omitted
-    #         const_col_* ... explain this
-    #         teal: Column name and implicit order for the generated Teal
-    #         pyteal (optional): Column name and implicit order for the PyTeal source mapping to target (this usually contains only the Python AST responsible for the generated Teal)
-    #         pyteal_hybrid_unparsed (optional): ... explain
-    #         teal_line_number (optional): Column name and implicit order for the Teal target line number
-    #         teal_column (optional): Column name and implicit order for the generated Teal starting 0-based column number (defaults to 0 when unknown)
-    #         teal_column_end (optional): Column name and implicit order for the generated Teal ending 0-based column (defaults to len(code) - 1 when unknown)
-    #         pyteal_component (optional): Column name and implicit order for the PyTeal source component mapping to target
-    #         pyteal_node_ast_qualname (optional): Column name and implicit order for the Python qualname of the PyTeal source mapping to target
-    #         pyteal_filename (optional): Column name and implicit order for the filename whose PyTeal source is mapping to the target
-    #         pyteal_line_number (optional): Column name and implicit order for starting line number of the PyTeal source mapping to target
-    #         pyteal_line_number_end (optional): Column name and implicit order for the ending line number of the PyTeal source mapping to target
-    #         pyteal_column (optional): Column name and implicit order for the PyTeal starting 0-based column number mapping to the target (defaults to 0 when unknown)
-    #         pyteal_column_end (optional): Column name and implicit order for the PyTeal ending 0-based column number mapping to the target (defaults to len(code) - 1 when unknown)
-    #         pyteal_line (optional): Column name and implicit order for the PyTeal source _line_ mapping to target (in general, this may only overlap with the PyTeal code which generated the Teal)
-    #         pyteal_node_ast_source_boundaries (optional): Column name and implicit order for line and column boundaries of the PyTeal source mapping to target
-    #         pyteal_node_ast_none (optional): Column name and implicit order for indicator of whether the AST node was extracted for the PyTEAL source mapping to target
-    #         status_code (optional): Column name and implicit order for confidence level for locating the PyTeal source responsible for generated Teal
-    #         status (optional): Column name and implicit order for descriptor of confidence level for locating the PyTeal source responsible for generated Teal
-
-    #     Returns:
-    #         A ready to print string containing the table information.
-    #     """
-    #     constant_columns = {}
-    #     new_kwargs = {}
-    #     for i, (k, v) in enumerate(kwargs.items()):
-    #         if k.startswith("const_col_"):
-    #             constant_columns[i] = v
-    #         else:
-    #             new_kwargs[k] = v
-    #     kwargs = new_kwargs
-
-    #     for k in kwargs:
-    #         assert k in self._tabulate_param_defaults, f"unrecognized parameter '{k}'"
-
-    #     # TODO: probly should just insist that printin sumn, not any particular column
-    #     required = []
-    #     renames = {self._tabulate_param_defaults[k]: v for k, v in kwargs.items()}
-    #     for r in required:
-    #         if r not in kwargs:
-    #             renames[
-    #                 self._tabulate_param_defaults[r]
-    #             ] = self._tabulate_param_defaults[r]
-
-    #     rows = list(
-    #         smitem.asdict(**renames)
-    #         # for smitem in self.get_sourcemap_items_DEPRECATED().values()
-    #         for smitem in self.as_list_DEPRECATED()
-    #     )
-
-    #     if constant_columns:
-
-    #         def add_const_cols(row):
-    #             i = 0
-    #             new_row = {}
-    #             for k, v in row.items():
-    #                 if i in constant_columns:
-    #                     new_row[f"_{i}"] = constant_columns[i]
-    #                     i += 1
-    #                 new_row[k] = v
-    #                 i += 1
-    #             return new_row
-
-    #         rows = list(map(add_const_cols, rows))  # can revert to pure map ???
-    #         renames = add_const_cols(renames)
-
-    #     if omit_rep_cols:
-
-    #         def reduction(row, next_row):
-    #             return {
-    #                 k: v2
-    #                 for k, v in row.items()
-    #                 if (v2 := next_row[k]) != v or k in omit_rep_cols
-    #             }
-
-    #         rows = [rows[0]] + list(
-    #             map(lambda r_and_n: reduction(*r_and_n), zip(rows[:-1], rows[1:]))
-    #         )
-
-    #     tabulated = (
-    #         tabulate(rows, tablefmt=tablefmt, numalign=numalign)
-    #         if omit_headers
-    #         else tabulate(rows, headers=renames, tablefmt=tablefmt, numalign=numalign)
-    #     )
-
-    #     if postprocessor:
-    #         tabulated = postprocessor(tabulated)
-
-    #     return tabulated
-
-    # def _tabulate_for_dev(self) -> str:
-    #     return self.tabulate_DEPRECATED(
-    #         teal_line_number="line",
-    #         teal="teal",
-    #         status="line status",
-    #         pyteal="pyteal AST",
-    #         pyteal_filename="source",
-    #         pyteal_node_ast_source_boundaries="rows & columns",
-    #         pyteal_line_number="pt line",
-    #         pyteal_line="pyteal line",
-    #     )
-
-    # def annotated_teal_DEPRECATED(
-    #     self,
-    #     # deprecated:
-    #     unparse_hybrid: bool = True,
-    #     concise: bool = True,
-    # ) -> str:
-    #     teal_col = "// GENERATED TEAL"
-    #     seperator_col = "_1"  # TODO: fix this ugly hack
-    #     omit_rep_cols = {teal_col, seperator_col}
-    #     kwargs = dict(
-    #         tablefmt="plain",
-    #         omit_headers=False,
-    #         omit_rep_cols=omit_rep_cols,
-    #         numalign="left",
-    #         tabulatable_teal=teal_col,
-    #         const_col_2="//",
-    #         pyteal_filename="PYTEAL PATH",
-    #     )
-    #     if not concise:
-    #         kwargs["pyteal_line_number"] = "LINE"
-
-    #     if unparse_hybrid:
-    #         kwargs["pyteal_hybrid_unparsed"] = "PYTEAL HYBRID UNPARSED"
-    #     else:
-    #         kwargs["pyteal_line"] = "PYTEAL SOURCE"
-
-    #     def erase_sentinels(teal):
-    #         sentinel = "//#"
-    #         return "\n".join(
-    #             x.replace(sentinel, "   ") if x.startswith(sentinel) else x
-    #             for x in teal.splitlines()
-    #         )
-
-    #     return self.tabulate_DEPRECATED(**kwargs, postprocessor=erase_sentinels)
-
-
-# ### ---- Based on mjpieters CODE ---- ### #
-#
-# Source modified from: https://gist.github.com/mjpieters/86b0d152bb51d5f5979346d11005588b
-#
-# ###
-
-_b64chars = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-_b64table = [-1] * (max(_b64chars) + 1)
-for i, b in enumerate(_b64chars):
-    _b64table[b] = i
-
-shiftsize, flag, mask = 5, 1 << 5, (1 << 5) - 1
-
-
-def _base64vlq_decode(vlqval: str) -> List[int]:
-    """Decode Base64 VLQ value"""
-    results = []
-    shift = value = 0
-    # use byte values and a table to go from base64 characters to integers
-    for v in map(_b64table.__getitem__, vlqval.encode("ascii")):
-        v = cast(int, v)
-        value += (v & mask) << shift
-        if v & flag:
-            shift += shiftsize
-            continue
-        # determine sign and add to results
-        results.append((value >> 1) * (-1 if value & 1 else 1))
-        shift = value = 0
-    return results
-
-
-def _base64vlq_encode(*values: int) -> str:
-    """Encode integers to a VLQ value"""
-    results: list[int] = []
-    add = results.append
-    for v in values:
-        # add sign bit
-        v = (abs(v) << 1) | int(v < 0)
-        while True:
-            toencode, v = v & mask, v >> shiftsize
-            add(toencode | (v and flag))
-            if not v:
-                break
-    # TODO: latest version of gist avoids the decode() step
-    return bytes(map(_b64chars.__getitem__, results)).decode()
-
-
-class autoindex(defaultdict):
-    def __init__(self, *args, **kwargs):
-        super().__init__(partial(next, count()), *args, **kwargs)
-
-
-@dataclass(frozen=False)
-class R3SourceMapping:
-    line: int
-    # line_end: Optional[int] = None #### NOT PROVIDED (AND NOT CONFORMING WITH R3 SPEC) AS TARGETS ARE ASSUMED TO SPAN AT MOST ONE LINE ####
-    column: int
-    source: Optional[str] = None
-    source_line: Optional[int] = None
-    source_column: Optional[int] = None
-    source_content: Optional[List[str]] = None
-    source_extract: Optional[str] = None
-    target_extract: Optional[str] = None
-    name: Optional[str] = None
-    source_line_end: Optional[int] = None
-    source_column_end: Optional[int] = None
-    column_end: Optional[int] = None
-
-    def __post_init__(self):
-        if self.source is not None and (
-            self.source_line is None or self.source_column is None
-        ):
-            raise TypeError(
-                "Invalid source mapping; missing line and column for source file"
-            )
-        if self.name is not None and self.source is None:
-            raise TypeError(
-                "Invalid source mapping; name entry without source location info"
-            )
-
-    def __lt__(self, other: "R3SourceMapping") -> bool:
-        assert isinstance(other, type(self)), f"received incomparable {type(other)}"
-
-        return (self.line, self.column) < (other.line, other.column)
-
-    def __ge__(self, other: "R3SourceMapping") -> bool:
-        return not self < other
-
-    def location(self, source=False) -> Tuple[str, int, int]:
-        return (
-            (
-                self.source if self.source else "",
-                self.source_line if self.source_line else -1,
-                self.source_column if self.source_column else -1,
-            )
-            if source
-            else ("", self.line, self.column)
-        )
-
-    # TODO: THIS IS CURRENTLY BROKEN BUT USEFUL
-    # @property
-    # def content_line(self) -> Optional[str]:
-    #     try:
-    #         return self.source_content[self.source_line]
-    #     except (TypeError, IndexError):
-    #         return None
-
-    @classmethod
-    def extract_window(
-        cls,
-        source_lines: Optional[List[str]],
-        line: int,
-        column: int,
-        right_column: Optional[int],
-    ) -> Optional[str]:
-        return (
-            (
-                source_lines[line][column:right_column]
-                if right_column is not None
-                else source_lines[line][column:]
-            )
-            if source_lines
-            else None
-        )
-
-    def __str__(self) -> str:
-        def swindow(file, line, col, rcol, extract):
-            if file == "unknown":
-                file = None
-            if not rcol:
-                rcol = ""
-            if extract is None:
-                extract = "?"
-            return f"{file + '::' if file else ''}L{line}C{col}-{rcol}='{extract}'"
-
-        return (
-            f"{swindow(self.source, self.source_line, self.source_column, self.source_column_end, self.source_extract)} <- "
-            f"{swindow(None, self.line, self.column, self.column_end, self.target_extract)}"
-        )
-
-    __repr__ = __str__
-
-
-class R3SourceMapJSON(TypedDict, total=False):
-    version: Literal[3]
-    file: Optional[str]
-    sourceRoot: Optional[str]
-    sources: List[str]
-    sourcesContent: Optional[List[Optional[str]]]
-    names: List[str]
-    mappings: str
-
-
-@dataclass(frozen=True)
-class R3SourceMap:
-    """
-    Modified from the original `SourceMap` available under MIT License here (as of Oct. 12, 2022): https://gist.github.com/mjpieters/86b0d152bb51d5f5979346d11005588b
-    `R3` is a nod to "Revision 3" of John Lenz's Source Map Proposal: https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?hl=en_US&pli=1&pli=1
-    """
-
-    file: Optional[str]
-    source_root: Optional[str]
-    entries: Mapping[Tuple[int, int], "R3SourceMapping"]
-    index: List[Tuple[int, ...]] = field(default_factory=list)
-    file_lines: Optional[List[str]] = None
-    source_files: Optional[List[str]] = None
-    source_files_lines: Optional[List[List[str] | None]] = None
-
-    def __post_init__(self):
-        entries = list(self.entries.values())
-        for i, entry in enumerate(entries):
-            if i + 1 >= len(entries):
-                return
-
-            if entry >= entries[i + 1]:
-                raise TypeError(
-                    f"Invalid source map as entries aren't properly ordered: entries[{i}] = {entry} >= entries[{i+1}] = {entries[i + 1]}"
-                )
-
-    def __repr__(self) -> str:
-        parts = []
-        if self.file is not None:
-            parts += [f"file={self.file!r}"]
-        if self.source_root is not None:
-            parts += [f"source_root={self.source_root!r}"]
-        parts += [f"len={len(self.entries)}"]
-        return f"<MJPSourceMap({', '.join(parts)})>"
-
-    @classmethod
-    def from_json(
-        cls,
-        smap: R3SourceMapJSON,
-        sources_override: Optional[List[str]] = None,
-        sources_content_override: List[str] = [],
-        target: Optional[str] = None,
-        add_right_bounds: bool = True,
-    ) -> "R3SourceMap":
-        """
-        NOTE about `*_if_missing` arguments
-        * sources_override - STRICTLY SPEAKING `sources` OUGHT NOT BE MISSING OR EMPTY in R3SourceMapJSON.
-            However, currently the POST v2/teal/compile endpoint populate this field with an empty list, as it is not provided the name of the
-            Teal file which is being compiled. In order comply with the R3 spec, this field is populated with ["unknown"] when either missing or empty
-            in the JSON and not supplied during construction.
-            An error will be raised when attempting to replace a nonempty R3SourceMapJSON.sources.
-        * sources_content_override - `sourcesContent` is optional and this provides a way at runtime to supply the actual source.
-            When provided, and the R3SourceMapJSON is either missing or empty, this will be substituted.
-            An error will be raised when attempting to replace a nonempty R3SourceMapJSON.sourcesContent.
-        """
-        if smap.get("version") != 3:
-            raise ValueError("Only version 3 sourcemaps are supported ")
-        entries: dict[tuple[int, int], R3SourceMapping] = {}
-        index: list[list[int]] = []
-        spos = npos = sline = scol = 0
-
-        sources = smap.get("sources")
-        if sources and sources_override:
-            raise AssertionError("ambiguous sources from JSON and method argument")
-        sources = sources or sources_override or ["unknown"]
-
-        contents: List[str | None] | List[str] | None = smap.get("sourcesContent")
-        if contents and sources_content_override:
-            raise AssertionError(
-                "ambiguous sourcesContent from JSON and method argument"
-            )
-        contents = contents or sources_content_override
-
-        names = smap.get("names")
-
-        tcont, sp_conts = (
-            target.splitlines() if target else None,
-            [c.splitlines() if c else None for c in contents],
-        )
-
-        if "mappings" in smap:
-            for gline, vlqs in enumerate(smap["mappings"].split(";")):
-                index += [[]]
-                if not vlqs:
-                    continue
-                gcol = 0
-                for gcd, *ref in map(_base64vlq_decode, vlqs.split(",")):
-                    gcol += gcd
-                    kwargs = {}
-                    if len(ref) >= 3:
-                        sd, sld, scd, *namedelta = ref
-                        spos, sline, scol = spos + sd, sline + sld, scol + scd
-                        scont = sp_conts[spos] if len(sp_conts) > spos else None  # type: ignore
-                        # extract the referenced source till the end of the current line
-                        extract = R3SourceMapping.extract_window
-                        kwargs = {
-                            "source": sources[spos] if spos < len(sources) else None,
-                            "source_line": sline,
-                            "source_column": scol,
-                            "source_content": scont,
-                            "source_extract": extract(scont, sline, scol, None),
-                            "target_extract": extract(tcont, gline, gcol, None),
-                        }
-                        if namedelta and names:
-                            npos += namedelta[0]
-                            kwargs["name"] = names[npos]
-                    entries[gline, gcol] = R3SourceMapping(
-                        line=gline, column=gcol, **kwargs  # type: ignore
-                    )
-                    index[gline].append(gcol)
-
-        sourcemap = cls(
-            smap.get("file"),
-            smap.get("sourceRoot"),
-            entries,
-            [tuple(cs) for cs in index],
-            tcont,
-            sources,
-            sp_conts,
-        )
-        if add_right_bounds:
-            sourcemap.add_right_bounds()
-        return sourcemap
-
-    def add_right_bounds(self) -> None:
-        entries = list(self.entries.values())
-        for i, entry in enumerate(entries):
-            if i + 1 >= len(entries):
-                continue
-
-            next_entry = entries[i + 1]
-
-            def same_line_less_than(lc, nlc):
-                return (lc[0], lc[1]) == (nlc[0], nlc[1]) and lc[2] < nlc[2]
-
-            if not same_line_less_than(entry.location(), next_entry.location()):
-                continue
-            entry.column_end = next_entry.column
-            entry.target_extract = entry.extract_window(
-                self.file_lines, entry.line, entry.column, entry.column_end
-            )
-
-            if not all(
-                [
-                    self.source_files,
-                    self.source_files_lines,
-                    next_entry.source,
-                    same_line_less_than(
-                        entry.location(source=True),
-                        next_entry.location(source=True),
-                    ),
-                ]
-            ):
-                continue
-            entry.source_column_end = next_entry.source_column
-            try:
-                fidx = self.source_files.index(next_entry.source)  # type: ignore
-            except ValueError:
-                continue
-            if (
-                self.source_files_lines
-                and isinstance(entry.source_line, int)
-                and isinstance(entry.source_column, int)
-            ):
-                entry.source_extract = entry.extract_window(
-                    self.source_files_lines[fidx],
-                    entry.source_line,
-                    entry.source_column,
-                    next_entry.source_column,
-                )
-
-    def to_json(self, with_contents: bool = False) -> R3SourceMapJSON:
-        content: list[str | None] = []
-        mappings: list[str] = []
-        sources, names = autoindex(), autoindex()
-        entries = self.entries
-        spos = sline = scol = npos = 0
-        for gline, cols in enumerate(self.index):
-            gcol = 0
-            mapping = []
-            for col in cols:
-                entry = entries[gline, col]
-                ds, gcol = [col - gcol], col
-
-                if entry.source is not None:
-                    assert entry.source_line is not None
-                    assert entry.source_column is not None
-                    ds += (
-                        sources[entry.source] - spos,
-                        entry.source_line - sline,
-                        entry.source_column - scol,
-                    )
-                    spos, sline, scol = (
-                        spos + ds[1],
-                        sline + ds[2],
-                        scol + ds[3],
-                    )
-                    if spos == len(content):
-                        c = entry.source_content
-                        content.append("\n".join(c) if c else None)
-                    if entry.name is not None:
-                        ds += (names[entry.name] - npos,)
-                        npos += ds[-1]
-                mapping.append(_base64vlq_encode(*ds))
-
-            mappings.append(",".join(mapping))
-
-        encoded = {
-            "version": 3,
-            "sources": [s for s, _ in sorted(sources.items(), key=lambda si: si[1])],
-            "names": [n for n, _ in sorted(names.items(), key=lambda ni: ni[1])],
-            "mappings": ";".join(mappings),
-        }
-        if with_contents:
-            encoded["sourcesContent"] = content
-        if self.file is not None:
-            encoded["file"] = self.file
-        if self.source_root is not None:
-            encoded["sourceRoot"] = self.source_root
-        return encoded  # type: ignore
-
-    def __getitem__(self, idx: Union[int, Tuple[int, int]]):
-        l: int
-        c: int
-        try:
-            l, c = idx  # type: ignore   # The exception handler deals with the int case
-        except TypeError:
-            l, c = idx, 0  # type: ignore   # yes, idx is guaranteed to be an int
-        try:
-            return self.entries[l, c]
-        except KeyError:
-            # find the closest column
-            if not (cols := self.index[l]):
-                raise IndexError(idx)
-            cidx = bisect.bisect(cols, c)
-            return self.entries[l, cols[cidx and cidx - 1]]
