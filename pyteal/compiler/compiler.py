@@ -240,6 +240,12 @@ def sort_subroutine_blocks(
 
 @dataclass
 class CompilationBundle:
+    """
+    NOTE: `annotated_teal` can grow quite large and become unsuitable for compilation as algod's compile
+    endpoint may throw a "request body too large" error.
+    Therefore, it is recommended that `teal` be used for algod compilation purposes.
+    """
+
     ast: Expr
     mode: Mode
     version: int
@@ -249,6 +255,7 @@ class CompilationBundle:
     lines: list[str]
     components: list[TealComponent]
     sourcemap: PyTealSourceMap | None = None
+    annotated_teal: str | None = None
 
 
 class Compilation:
@@ -416,7 +423,7 @@ class Compilation:
         )
 
         if annotate_teal:
-            cpb.teal = cpb.sourcemap.annotated_teal(
+            cpb.annotated_teal = cpb.sourcemap.annotated_teal(
                 omit_headers=not annotate_teal_headers, concise=annotate_teal_concise
             )
 

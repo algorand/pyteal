@@ -497,6 +497,8 @@ class RouterBundle:
     clear_teal: str
     approval_sourcemap: PyTealSourceMap | None = None
     clear_sourcemap: PyTealSourceMap | None = None
+    approval_annotated_teal: str | None = None
+    clear_annotated_teal: str | None = None
 
 
 @dataclass
@@ -894,19 +896,21 @@ class Router:
             annotate_teal=input.annotate_teal,
             annotate_teal_headers=input.annotate_teal_headers,
             annotate_teal_concise=input.annotate_teal_concise,
-            # deprecated:
+            # DEPRECATED:
             source_inference=input.source_inference,
             hybrid_source=input.hybrid_source,
         )
 
         return RouterBundle(
-            ap,
-            csp,
-            contract,
-            abundle.teal,
-            csbundle.teal,
-            abundle.sourcemap,
-            csbundle.sourcemap,
+            approval_program=ap,
+            clear_program=csp,
+            abi_contract=contract,
+            approval_teal=abundle.teal,
+            clear_teal=csbundle.teal,
+            approval_sourcemap=abundle.sourcemap,
+            clear_sourcemap=csbundle.sourcemap,
+            approval_annotated_teal=abundle.annotated_teal,
+            clear_annotated_teal=csbundle.annotated_teal,
         )
 
 

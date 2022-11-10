@@ -12,11 +12,11 @@ def test_sourcemap_annotate(_):
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
 
-    COMPILATION = "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), assemble_constants=False, with_sourcemaps=True, approval_filename=a_fname, clear_filename=c_fname, pcs_in_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)"
-    L = 250  # COMPILATION LINE
+    COMPILATION = "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), assemble_constants=False, with_sourcemaps=True, approval_filename=a_fname, clear_filename=c_fname, pcs_in_sourcemap=True, annotate_teal=True, annotate_teal_headers=annotate_teal_headers, annotate_teal_concise=annotate_teal_concise)"
+    L = 251  # COMPILATION LINE
     ROUTER = "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))"
     INNERTXN = "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})"
-    expected = f"""
+    EXPECTED_ANNOTATED_TEAL = f"""
 // GENERATED TEAL                      //    PC           PYTEAL PATH                                       LINE    PYTEAL
 #pragma version 6                      //    PC[0-19]     tests/integration/sourcemap_monkey_integ_test.py  {L}     {COMPILATION}
 txn NumAppArgs                         //    PC[20-21]    examples/application/abi/algobank.py              17      {ROUTER}
@@ -247,6 +247,7 @@ retsub                                 //    PC[350]      tests/integration/sour
 """.strip()
 
     a_fname, c_fname = "A.teal", "C.teal"
+    annotate_teal_headers, annotate_teal_concise = True, False
     compile_bundle = router.compile(
         version=6,
         optimize=OptimizeOptions(scratch_slots=True),
@@ -256,15 +257,53 @@ retsub                                 //    PC[350]      tests/integration/sour
         clear_filename=c_fname,
         pcs_in_sourcemap=True,
         annotate_teal=True,
-        annotate_teal_headers=True,
-        annotate_teal_concise=False,
+        annotate_teal_headers=annotate_teal_headers,
+        annotate_teal_concise=annotate_teal_concise,
     )
-    ptsm = compile_bundle.approval_sourcemap
-    assert ptsm
-    actual = ptsm.annotated_teal(omit_headers=False, concise=False)
-    assert expected == actual, first_diff(expected, actual)
+    annotated_approval, annotated_clear = (
+        compile_bundle.approval_annotated_teal,
+        compile_bundle.clear_annotated_teal,
+    )
+    assert annotated_approval
+    assert annotated_clear
 
-    assert expected == compile_bundle.approval_teal
+    approval_ptsm, clear_ptsm = (
+        compile_bundle.approval_sourcemap,
+        compile_bundle.clear_sourcemap,
+    )
+    assert approval_ptsm
+    assert clear_ptsm
+
+    kwargs = dict(omit_headers=not annotate_teal_headers, concise=annotate_teal_concise)
+    annotated_approval2, annotated_clear2 = approval_ptsm.annotated_teal(
+        **kwargs
+    ), clear_ptsm.annotated_teal(**kwargs)
+    assert annotated_approval == annotated_approval2
+    assert annotated_clear == annotated_clear2
+
+    # FINALLY: compare to the actual expected
+    assert EXPECTED_ANNOTATED_TEAL == annotated_approval, first_diff(
+        EXPECTED_ANNOTATED_TEAL, annotated_approval
+    )
+
+    raw_approval_lines, raw_clear_lines = (
+        compile_bundle.approval_teal.splitlines(),
+        compile_bundle.clear_teal.splitlines(),
+    )
+
+    ann_approval_lines, ann_clear_lines = (
+        annotated_approval.splitlines(),
+        annotated_clear.splitlines(),
+    )
+
+    assert len(raw_approval_lines) + 1 == len(ann_approval_lines)
+    assert len(raw_clear_lines) + 1 == len(ann_clear_lines)
+
+    for i, raw_line in enumerate(raw_approval_lines):
+        assert ann_approval_lines[i + 1].startswith(raw_line)
+
+    for i, raw_line in enumerate(raw_clear_lines):
+        assert ann_clear_lines[i + 1].startswith(raw_line)
 
 
 def first_diff(expected, actual):
