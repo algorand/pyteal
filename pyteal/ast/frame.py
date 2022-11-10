@@ -64,6 +64,9 @@ LocalTypeSegment.__module__ = "pyteal"
 class ProtoStackLayout(Expr):
     """An expression that carries arg types and local types for a subroutine.
 
+    Proto return value is placed on frame index 0 against frame pointer,
+    and return type is included in local_stack_types, which is the first element.
+
     This class is intentionally hidden because it's too basic to directly expose.
     This is only used in Proto internally.
     """
@@ -126,6 +129,8 @@ ProtoStackLayout.__module__ = "pyteal"
 
 class Proto(Expr):
     """An expression that prepare top call frame for a retsub that will assume A args and R return values.
+
+    Proto return value is placed from frame index 0 against frame pointer.
 
     This class is intentionally hidden because it's too basic to directly expose.
     It is only used in subroutine, for subroutine declaration computation.
