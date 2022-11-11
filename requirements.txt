@@ -3,7 +3,7 @@ flake8==4.0.1
 flake8-tidy-imports==4.6.0
 graviton@git+https://github.com/algorand/graviton@v0.3.0
 mypy==0.950
-pytest==7.1.2
+pytest>=7.2.0
 pytest-cov==3.0.0
 pytest-memray==1.3.0
 pytest-timeout==2.1.0

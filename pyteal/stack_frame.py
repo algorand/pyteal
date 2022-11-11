@@ -150,16 +150,6 @@ class Frames:
         if self.skipping_all():
             return
 
-        return self._fast_initializer(
-            keep_all, keep_one_frame_only, immediate_stop_post_pyteal
-        )
-        # return self._original_initializer_DEPRECATED(
-        #     keep_all, keep_one_frame_only, immediate_stop_post_pyteal
-        # )
-
-    def _fast_initializer(
-        self, keep_all, keep_one_frame_only, immediate_stop_post_pyteal
-    ):
         frame_infos = [f for f in stack() if not StackFrame._frame_info_is_py_crud(f)]
 
         def make_frames(frame_infos):
@@ -218,66 +208,134 @@ class Frames:
 
         self.frames = make_frames(frame_infos)
 
-    def _original_initializer_DEPRECATED(
-        self, keep_all, keep_one_frame_only, immediate_stop_post_pyteal
-    ):
-        # _init_or_drop does the heavy lifting of hydrating the AST node in the
-        # case of a "promising" frame_info
-        # BUT IT DOES NOT actually require the AST info for its logic
-        frames = [frame for f in stack() if (frame := StackFrame._init_or_drop(f))]
+        # return self._fast_initializer(
+        #     keep_all, keep_one_frame_only, immediate_stop_post_pyteal
+        # )
+        # return self._original_initializer_DEPRECATED(
+        #     keep_all, keep_one_frame_only, immediate_stop_post_pyteal
+        # )
 
-        if keep_all:
-            self.frames = frames
-            return
+    # def _fast_initializer(
+    #     self, keep_all, keep_one_frame_only, immediate_stop_post_pyteal
+    # ):
+    #     frame_infos = [f for f in stack() if not StackFrame._frame_info_is_py_crud(f)]
 
-        last_drop_idx = -1
-        for i, f in enumerate(frames):
-            if f._is_right_before_core():  # _is_right_before_core DOESN'T need AST
-                last_drop_idx = i
-                break
+    #     def make_frames(frame_infos):
+    #         return [
+    #             frame for f in frame_infos if (frame := StackFrame._init_or_drop(f))
+    #         ]
 
-        penultimate_idx = last_drop_idx
-        prev_file = ""
-        in_first_post_pyteal = False
-        for i in range(last_drop_idx + 1, len(frames)):
-            f = frames[i]
-            curr_file = f.frame_info.filename
-            if f._is_pyteal():  # _is_pyteal DOESN'T need AST
-                penultimate_idx = i
-            else:
-                if penultimate_idx == i - 1:
-                    in_first_post_pyteal = True
-                    if immediate_stop_post_pyteal:
-                        break
-                elif in_first_post_pyteal:
-                    in_first_post_pyteal = prev_file == curr_file
-                    if not in_first_post_pyteal:
-                        penultimate_idx = i - 2
-                        break
-            prev_file = curr_file
+    #     if keep_all:
+    #         self.frames = make_frames(frame_infos)
+    #         return
 
-        last_keep_idx = penultimate_idx + 1
+    #     last_drop_idx = -1
+    #     for i, frame_info in enumerate(frame_infos):
+    #         if StackFrame._frame_info_is_right_before_core(frame_info):
+    #             last_drop_idx = i
+    #             break
 
-        if frames[
-            last_keep_idx
-        ]._is_pyteal_import():  # _is_pyteal_import DOESN'T need AST
-            # FAILURE CASE: Look for first pyteal generated code entry in stack trace:
-            found = False
-            i = -1
-            for i in range(last_keep_idx - 1, -1, -1):
-                if frames[
-                    i
-                ].compiler_generated():  # compiler_generated DOESN'T NEED AST
-                    found = True
-                    break
+    #     penultimate_idx = last_drop_idx
+    #     prev_file = ""
+    #     in_first_post_pyteal = False
+    #     for i in range(last_drop_idx + 1, len(frame_infos)):
+    #         frame_info = frame_infos[i]
+    #         curr_file = frame_info.filename
+    #         if StackFrame._frame_info_is_pyteal(frame_info):
+    #             penultimate_idx = i
+    #         else:
+    #             if penultimate_idx == i - 1:
+    #                 in_first_post_pyteal = True
+    #                 if immediate_stop_post_pyteal:
+    #                     break
+    #             elif in_first_post_pyteal:
+    #                 in_first_post_pyteal = prev_file == curr_file
+    #                 if not in_first_post_pyteal:
+    #                     penultimate_idx = i - 2
+    #                     break
+    #         prev_file = curr_file
 
-            if found and i >= 0:
-                last_keep_idx = i
+    #     last_keep_idx = penultimate_idx + 1
 
-        self.frames = frames[last_drop_idx + 1 : last_keep_idx + 1]
+    #     if StackFrame._frame_info_is_pyteal_import(frame_infos[last_keep_idx]):
+    #         # FAILURE CASE: Look for first pyteal generated code entry in stack trace:
+    #         found = False
+    #         i = -1
+    #         for i in range(last_keep_idx - 1, -1, -1):
+    #             if StackFrame._frame_info_compiler_generated(frame_infos[i]):
+    #                 found = True
+    #                 break
 
-        if keep_one_frame_only:
-            self.frames = self.frames[-1:]
+    #         if found and i >= 0:
+    #             last_keep_idx = i
+
+    #     frame_infos = frame_infos[last_drop_idx + 1 : last_keep_idx + 1]
+
+    #     if keep_one_frame_only:
+    #         frame_infos = frame_infos[-1:]
+
+    #     self.frames = make_frames(frame_infos)
+
+    # def _original_initializer_DEPRECATED(
+    #     self, keep_all, keep_one_frame_only, immediate_stop_post_pyteal
+    # ):
+    #     # _init_or_drop does the heavy lifting of hydrating the AST node in the
+    #     # case of a "promising" frame_info
+    #     # BUT IT DOES NOT actually require the AST info for its logic
+    #     frames = [frame for f in stack() if (frame := StackFrame._init_or_drop(f))]
+
+    #     if keep_all:
+    #         self.frames = frames
+    #         return
+
+    #     last_drop_idx = -1
+    #     for i, f in enumerate(frames):
+    #         if f._is_right_before_core():  # _is_right_before_core DOESN'T need AST
+    #             last_drop_idx = i
+    #             break
+
+    #     penultimate_idx = last_drop_idx
+    #     prev_file = ""
+    #     in_first_post_pyteal = False
+    #     for i in range(last_drop_idx + 1, len(frames)):
+    #         f = frames[i]
+    #         curr_file = f.frame_info.filename
+    #         if f._is_pyteal():  # _is_pyteal DOESN'T need AST
+    #             penultimate_idx = i
+    #         else:
+    #             if penultimate_idx == i - 1:
+    #                 in_first_post_pyteal = True
+    #                 if immediate_stop_post_pyteal:
+    #                     break
+    #             elif in_first_post_pyteal:
+    #                 in_first_post_pyteal = prev_file == curr_file
+    #                 if not in_first_post_pyteal:
+    #                     penultimate_idx = i - 2
+    #                     break
+    #         prev_file = curr_file
+
+    #     last_keep_idx = penultimate_idx + 1
+
+    #     if frames[
+    #         last_keep_idx
+    #     ]._is_pyteal_import():  # _is_pyteal_import DOESN'T need AST
+    #         # FAILURE CASE: Look for first pyteal generated code entry in stack trace:
+    #         found = False
+    #         i = -1
+    #         for i in range(last_keep_idx - 1, -1, -1):
+    #             if frames[
+    #                 i
+    #             ].compiler_generated():  # compiler_generated DOESN'T NEED AST
+    #                 found = True
+    #                 break
+
+    #         if found and i >= 0:
+    #             last_keep_idx = i
+
+    #     self.frames = frames[last_drop_idx + 1 : last_keep_idx + 1]
+
+    #     if keep_one_frame_only:
+    #         self.frames = self.frames[-1:]
 
     def __len__(self) -> int:
         return len(self.frames)
