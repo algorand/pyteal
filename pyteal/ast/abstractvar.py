@@ -6,7 +6,7 @@ from pyteal.ast.expr import Expr
 class AbstractVar(ABC):
     """AbstractVar is an abstract class that captures properties of a variable.
 
-    A variable, on an abstract perspective, has following properties:
+    A variable, on an abstract perspective, has the following properties:
 
     * Storing: can be stored to a certain position.
     * Loading: can be loaded from a certain position.
