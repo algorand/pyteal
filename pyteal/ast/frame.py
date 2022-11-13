@@ -45,7 +45,9 @@ class LocalTypeSegment(Expr):
             inst_srt, inst_end = self.auto_instance.__teal__(options)
             return inst_srt, inst_end
         else:
-            dupn_srt, dupn_end = DupN(self.auto_instance, self.count).__teal__(options)
+            dupn_srt, dupn_end = DupN(self.auto_instance, self.count - 1).__teal__(
+                options
+            )
             return dupn_srt, dupn_end
 
     def __str__(self) -> str:

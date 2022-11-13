@@ -150,7 +150,7 @@ class LocalTypeSegmentTestCase:
             pt.TealSimpleBlock(
                 [
                     pt.TealOp(None, pt.Op.int, 0),
-                    pt.TealOp(None, pt.Op.dupn, 5),
+                    pt.TealOp(None, pt.Op.dupn, 4),
                 ]
             ),
         ),
@@ -163,7 +163,7 @@ class LocalTypeSegmentTestCase:
             pt.TealSimpleBlock(
                 [
                     pt.TealOp(None, pt.Op.int, 0),
-                    pt.TealOp(None, pt.Op.dupn, 5),
+                    pt.TealOp(None, pt.Op.dupn, 4),
                 ]
             ),
         ),
@@ -176,7 +176,7 @@ class LocalTypeSegmentTestCase:
             pt.TealSimpleBlock(
                 [
                     pt.TealOp(None, pt.Op.byte, '""'),
-                    pt.TealOp(None, pt.Op.dupn, 5),
+                    pt.TealOp(None, pt.Op.dupn, 4),
                 ]
             ),
         ),
