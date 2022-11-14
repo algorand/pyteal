@@ -535,6 +535,9 @@ class SubroutineCall(Expr):
         return f'(SubroutineCall {self.subroutine.name()} ({" ".join(arg_str_list)}))'
 
     def type_of(self):
+        output_info = OutputKwArgInfo.from_dict(self.subroutine.output_kwarg)
+        if output_info:
+            return output_info.abi_type.storage_type()
         return self.subroutine.return_type
 
     def has_return(self):

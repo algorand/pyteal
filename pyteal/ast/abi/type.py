@@ -6,7 +6,7 @@ from pyteal.ast.abstractvar import AbstractVar
 from pyteal.ast.scratchvar import ScratchVar
 from pyteal.ast.seq import Seq
 from pyteal.errors import TealInputError
-from pyteal.types import TealType, types_match
+from pyteal.types import TealType
 
 
 class TypeSpec(ABC):
@@ -216,8 +216,6 @@ class ReturnedValue(ComputedValue):
         return self.type_spec
 
     def store_into(self, output: BaseType) -> Expr:
-        from pyteal.ast.subroutine import SubroutineCall
-
         if output.type_spec() != self.produced_type_spec():
             raise TealInputError(
                 f"expected type_spec {self.produced_type_spec()} but get {output.type_spec()}"
@@ -235,21 +233,7 @@ class ReturnedValue(ComputedValue):
                 f"but has type {declaration.deferred_expr.type_of()}."
             )
 
-        validate_in_store: bool = True
-
-        if (
-            isinstance(self.computation, SubroutineCall)
-            and self.computation.output_kwarg
-        ):
-            assert types_match(
-                self.computation.output_kwarg.abi_type.storage_type(),
-                output._stored_value.storage_type(),
-            )
-            validate_in_store = False
-
-        return output._stored_value.store(
-            self.computation, validate_type=validate_in_store
-        )
+        return output._stored_value.store(self.computation)
 
 
 ReturnedValue.__module__ = "pyteal.abi"

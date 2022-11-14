@@ -243,14 +243,12 @@ class FrameBury(Expr):
         value: Expr,
         frame_index: int,
         *,
-        validate_type: bool = True,
         inferred_type: Optional[TealType] = None,
     ):
         super().__init__()
 
-        if validate_type:
-            target_type = inferred_type if inferred_type else TealType.anytype
-            require_type(value, target_type)
+        target_type = inferred_type if inferred_type else TealType.anytype
+        require_type(value, target_type)
 
         self.value = value
         self.frame_index = frame_index
@@ -299,11 +297,10 @@ class FrameVar(AbstractVar):
     def storage_type(self) -> TealType:
         return self.stack_type
 
-    def store(self, value: Expr, validate_type: bool = True) -> Expr:
+    def store(self, value: Expr) -> Expr:
         return FrameBury(
             value,
             self.frame_index,
-            validate_type=validate_type,
             inferred_type=self.stack_type,
         )
 
