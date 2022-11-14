@@ -19,7 +19,7 @@ class AbstractVar(ABC):
     """
 
     @abstractmethod
-    def store(self, value: Expr, validate_type: bool = True) -> Expr:
+    def store(self, value: Expr) -> Expr:
         """Store value in AbstractVar.
 
         In most cases, we validate the type of the value to store against the type of the :any:`AbstractVar`.
@@ -36,7 +36,6 @@ class AbstractVar(ABC):
 
         Args:
             value: An expression that represents the value to store.
-            validate_type: A bool variable that activate type check in value storage.
         """
         pass
 
