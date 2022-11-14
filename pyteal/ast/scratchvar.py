@@ -1,4 +1,4 @@
-from pyteal.errors import TealInputError, TealInternalError
+from pyteal.errors import TealInputError
 from pyteal.types import TealType, require_type
 
 from pyteal.ast.abstractvar import AbstractVar
@@ -37,15 +37,13 @@ class ScratchVar(AbstractVar):
         """Get the type of expressions that can be stored in this ScratchVar."""
         return self.type
 
-    def store(self, value: Expr, validate_type: bool = True) -> Expr:
+    def store(self, value: Expr) -> Expr:
         """Store value in Scratch Space
 
         Args:
             value: The value to store. Must conform to this ScratchVar's type.
-            validate_type: A bool variable that activate type check in value storage.
         """
-        if validate_type:
-            require_type(value, self.type)
+        require_type(value, self.type)
         return self.slot.store(value)
 
     def load(self) -> ScratchLoad:
@@ -118,12 +116,8 @@ class DynamicScratchVar(ScratchVar):
         """Get the type of expressions that can be stored in this ScratchVar."""
         return self.dynamic_type
 
-    def store(self, value: Expr, validate_type: bool = True) -> Expr:
+    def store(self, value: Expr) -> Expr:
         """Store the value in the referenced ScratchVar."""
-        if not validate_type:
-            raise TealInternalError(
-                f"DynamicScratchVar's must validate_type but {validate_type=}"
-            )
 
         require_type(value, self.dynamic_type)
         return ScratchStore(slot=None, value=value, index_expression=self.index())
