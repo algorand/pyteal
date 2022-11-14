@@ -579,13 +579,13 @@ def blackbox_pyteal_example1():
     x = 9
     args = [x]
 
-    def evaluate_and_check(_version: int):
+    def evaluate_and_check(version: int):
         # evaluate the programs
         app_result = PyTealDryRunExecutor(square, Mode.Application).dryrun(
-            args, compiler_version=_version
+            args, compiler_version=version
         )
         lsig_result = PyTealDryRunExecutor(square, Mode.Signature).dryrun(
-            args, compiler_version=_version
+            args, compiler_version=version
         )
 
         # check to see that x^2 is at the top of the stack as expected
@@ -651,10 +651,10 @@ def blackbox_pyteal_example2():
         )
     )
 
-    def test_and_report(_verison: int):
+    def test_and_report(version: int):
         # assert that each result is that same as what Python's math.gcd() computes
         inspectors = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_on_sequence(
-            inputs, compiler_version=_verison
+            inputs, compiler_version=version
         )
         for i, result in enumerate(inspectors):
             args = inputs[i]
@@ -664,7 +664,7 @@ def blackbox_pyteal_example2():
 
         # save the CSV to ...current working directory.../euclid_v{version}.csv
         euclid_csv = DryRunInspector.csv_report(inputs, inspectors)
-        with open(Path.cwd() / f"euclid_v{_verison}.csv", "w") as f:
+        with open(Path.cwd() / f"euclid_v{version}.csv", "w") as f:
             f.write(euclid_csv)
 
     test_and_report(6)

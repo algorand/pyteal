@@ -5,7 +5,7 @@ import pytest
 from dataclasses import dataclass
 
 import pyteal as pt
-from pyteal.ast.subroutine import ABIReturnSubroutine, evaluate_subroutine
+from pyteal.ast.subroutine import ABIReturnSubroutine, SubroutineEval
 
 options = pt.CompileOptions(version=5)
 
@@ -1153,6 +1153,8 @@ def test_evaluate_subroutine_no_args():
             return returnValue
 
         definition = pt.SubroutineDefinition(mySubroutine, returnType)
+        evaluate_subroutine = SubroutineEval.normal_evaluator()
+
         declaration = evaluate_subroutine(definition)
 
         assert isinstance(declaration, pt.SubroutineDeclaration)
@@ -1187,6 +1189,8 @@ def test_evaluate_subroutine_1_arg():
             return returnValue
 
         definition = pt.SubroutineDefinition(mySubroutine, returnType)
+
+        evaluate_subroutine = SubroutineEval.normal_evaluator()
         declaration = evaluate_subroutine(definition)
 
         assert isinstance(declaration, pt.SubroutineDeclaration)
@@ -1231,6 +1235,7 @@ def test_evaluate_subroutine_2_args():
 
         definition = pt.SubroutineDefinition(mySubroutine, returnType)
 
+        evaluate_subroutine = SubroutineEval.normal_evaluator()
         declaration = evaluate_subroutine(definition)
 
         assert isinstance(declaration, pt.SubroutineDeclaration)
@@ -1277,6 +1282,8 @@ def test_evaluate_subroutine_10_args():
             return returnValue
 
         definition = pt.SubroutineDefinition(mySubroutine, returnType)
+
+        evaluate_subroutine = SubroutineEval.normal_evaluator()
         declaration = evaluate_subroutine(definition)
 
         assert isinstance(declaration, pt.SubroutineDeclaration)

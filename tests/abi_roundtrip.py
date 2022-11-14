@@ -128,13 +128,6 @@ class ABIRoundtrip(Generic[T]):
         elif self.length is None:
             self.length = DEFAULT_DYNAMIC_ARRAY_LENGTH
 
-        # if self.length is not None:
-        #     assert self.type_spec.is_length_dynamic()  # type: ignore[attr-defined]
-        # elif not self.type_spec.is_length_dynamic():  # type: ignore[attr-defined]
-        #     self.length = self.type_spec.length_static()  # type: ignore[attr-defined]
-        # else:
-        #     self.length = DEFAULT_DYNAMIC_ARRAY_LENGTH
-
         internal_type_spec = self.type_spec.value_type_spec()  # type: ignore[attr-defined]
         internal_ann_inst = internal_type_spec.new_instance()
         comp_func = ABIRoundtrip(internal_ann_inst, length=None).mutator_factory()

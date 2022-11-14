@@ -39,7 +39,6 @@ class _SubroutineDeclByVersion:
         self.type_of: Optional[TealType] = None
 
     def get_declaration(self) -> "SubroutineDeclaration":
-        # XXX MARK THIS METHOD TO BE DEPRECATED LATER I GUESS
         return self.get_declaration_by_version(Op.callsub.min_version)
 
     def get_declaration_by_version(self, version: int) -> "SubroutineDeclaration":
@@ -337,7 +336,6 @@ class SubroutineDefinition:
         )
 
     def get_declaration(self) -> "SubroutineDeclaration":
-        # XXX MARK THIS METHOD TO BE DEPRECATED LATER I GUESS
         return self.declarations.get_declaration()
 
     def get_declaration_by_version(self, version: int) -> "SubroutineDeclaration":
@@ -896,31 +894,30 @@ class SubroutineEval:
     -------------- --- ------------ ----- ------- - -----------------------
 
     Usage (A) "argumentVars" - Storing pre-placed stack variables with frame pointer:
-        Type 1. (by-value) use None for we can load from stack with FrameDig()
-        Type 2. (by-reference) ALSO use FrameDig to pick up from the stack
+        Type 1. (by-value) use None for we can load from stack with FrameDig() from FrameVar abstraction
+        Type 2. (by-reference) ALSO use FrameDig() from FrameVar abstraction to pick up from the stack
             NOTE: SubroutineCall.__teal__() has placed the _SLOT INDEX_ on the stack so this is stored into the local scratch space
-        Type 3. (ABI) use None for we can load from stack with FrameDig()
+        Type 3. (ABI) use None for we can load from stack with FrameDig() from FrameVar abstraction
             NOTE: SubroutineCall.__teal__() has placed the ABI encoding on the stack, so ABI set and get methods are working over stack
         Type 4. (ABI-output-arg) it is not really used here, but we use FrameDig/Bury to interact with it
 
-    TODO need to repolish later after merge and rebase
     Usage (B) "loadedArgs" - Passing through to an invoked PyTEAL subroutine AST:
-        Type 1. (by-value) use FrameDig() to have an Expr that can be compiled in python by the PyTEAL subroutine
+        Type 1. (by-value) use FrameDig() from FrameVar absrraction, to have an Expr that can be compiled in python by the PyTEAL subroutine.
         Type 2. (by-reference) use a DynamicScratchVar as the user will have written the PyTEAL in a way that satisfies
             the ScratchVar API. I.e., the user will write `x.load()` and `x.store(val)` as opposed to just `x`.
-        Type 3. (ABI) use abi_value that interface with stack data through FrameDig/FrameBury
-        Type 4. (ABI-output-arg) generates a new instance of the ABI value,
-            and appends a return expression of stored value of the ABI keyword value.
+        Type 3. (ABI) use abi_value that interface with stack data through FrameVar abstraction.
+        Type 4. (ABI-output-arg) Prepare a FrameVar over the stack with frame-index 0 against current frame pointer,
+            and set the ABI value's _stored_value to be using FrameVar.
     """
 
-    var_n_loaded: Callable[
+    var_n_loaded_method: Callable[
         [SubroutineDefinition, str, Optional[Proto]],
         tuple[Optional[ScratchVar], ScratchVar | abi.BaseType | Expr],
     ]
     use_frame_pt: bool = False
 
     @staticmethod
-    def __var_n_loaded(
+    def var_n_loaded_scratch(
         subroutine: SubroutineDefinition,
         param: str,
         _: Optional[Proto] = None,
@@ -946,7 +943,7 @@ class SubroutineEval:
         return argument_var, loaded_var
 
     @staticmethod
-    def __var_n_loaded_fp(
+    def var_n_loaded_fp(
         subroutine: SubroutineDefinition,
         param: str,
         proto: Optional[Proto],
@@ -1021,7 +1018,7 @@ class SubroutineEval:
         arg_vars: list[ScratchVar] = []
         loaded_args: list[ScratchVar | Expr | abi.BaseType] = []
         for arg in args:
-            arg_var, loaded_arg = self.var_n_loaded(subroutine, arg, proto)
+            arg_var, loaded_arg = self.var_n_loaded_method(subroutine, arg, proto)
             if arg_var:
                 arg_vars.append(arg_var)
             loaded_args.append(loaded_arg)
@@ -1068,128 +1065,11 @@ class SubroutineEval:
 
     @classmethod
     def normal_evaluator(cls) -> "SubroutineEval":
-        return cls(SubroutineEval.__var_n_loaded, False)
+        return cls(SubroutineEval.var_n_loaded_scratch, False)
 
     @classmethod
     def fp_evaluator(cls) -> "SubroutineEval":
-        return cls(SubroutineEval.__var_n_loaded_fp, True)
+        return cls(SubroutineEval.var_n_loaded_fp, True)
 
 
 SubroutineEval.__module__ = "pyteal"
-
-
-def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclaration:
-    """
-    NOTE: THIS METHOD IS DEPRECATED, USE CLASS `SubroutineEval` INSTEAD FOR SUBROUTINE EVALUATOR
-
-    Puts together the data necessary to define the code for a subroutine.
-    "evaluate" is used here to connote evaluating the PyTEAL AST into a SubroutineDeclaration,
-    but not actually placing it at call locations. The trickiest part here is managing the subroutine's arguments.
-    The arguments are needed for two different code-paths, and there are 2 different argument types to consider
-    for each of the code-paths:
-
-    2 Argument Usages / Code-Paths
-    - -------- ------   ----------
-    Usage (A) for run-time: "argumentVars" --reverse--> "body_ops"
-        These are "store" expressions that pick up parameters that have been pre-placed on the stack prior to subroutine invocation.
-        The argumentVars are stored into local scratch space to be used by the TEAL subroutine.
-
-    Usage (B) for compile-time: "loadedArgs"
-        These are expressions supplied to the user-defined PyTEAL function.
-        The loadedArgs are invoked to by the subroutine to create a self-contained AST which will translate into a TEAL subroutine.
-
-    In both usage cases, we need to handle
-
-    2 Argument Types
-    - -------- -----
-    Type 1 (by-value): these have python type Expr
-    Type 2 (by-reference): these have python type ScratchVar
-    Type 3 (ABI): these are ABI typed variables with scratch space storage, and still pass by value
-    Type 4 (ABI-output-arg): ABI typed variables with scratch space, a new ABI instance is generated inside function body,
-        not one of the cases in the previous three options
-
-    Usage (A) "argumentVars" - Storing pre-placed stack variables into local scratch space:
-        Type 1. (by-value) use ScratchVar.store() to pick the actual value into a local scratch space
-        Type 2. (by-reference) ALSO use ScratchVar.store() to pick up from the stack
-            NOTE: SubroutineCall.__teal__() has placed the _SLOT INDEX_ on the stack so this is stored into the local scratch space
-        Type 3. (ABI) abi_value.stored_value.store() to pick from the stack
-        Type 4. (ABI-output-arg) it is not really used here, since it is only generated internal of the subroutine
-
-    Usage (B) "loadedArgs" - Passing through to an invoked PyTEAL subroutine AST:
-        Type 1. (by-value) use ScratchVar.load() to have an Expr that can be compiled in python by the PyTEAL subroutine
-        Type 2. (by-reference) use a DynamicScratchVar as the user will have written the PyTEAL in a way that satisfies
-            the ScratchVar API. I.e., the user will write `x.load()` and `x.store(val)` as opposed to just `x`.
-        Type 3. (ABI) use abi_value itself after storing stack value into scratch space.
-        Type 4. (ABI-output-arg) generates a new instance of the ABI value,
-            and appends a return expression of stored value of the ABI keyword value.
-    """
-
-    def var_n_loaded(
-        param: str,
-    ) -> tuple[ScratchVar, ScratchVar | abi.BaseType | Expr]:
-        loaded_var: ScratchVar | abi.BaseType | Expr
-        argument_var: ScratchVar
-
-        if param in subroutine.by_ref_args:
-            argument_var = DynamicScratchVar(TealType.anytype)
-            loaded_var = argument_var
-        elif param in subroutine.abi_args:
-            internal_abi_var = subroutine.abi_args[param].new_instance()
-            argument_var = cast(ScratchVar, internal_abi_var._stored_value)
-            loaded_var = internal_abi_var
-        else:
-            argument_var = ScratchVar(TealType.anytype)
-            loaded_var = argument_var.load()
-
-        return argument_var, loaded_var
-
-    if len(subroutine.output_kwarg) > 1:
-        raise TealInputError(
-            f"ABI keyword argument num: {len(subroutine.output_kwarg)}. "
-            f"Exceeding abi output keyword argument max number 1."
-        )
-
-    args = subroutine.arguments()
-
-    arg_vars: list[ScratchVar] = []
-    loaded_args: list[ScratchVar | Expr | abi.BaseType] = []
-    for arg in args:
-        arg_var, loaded_arg = var_n_loaded(arg)
-        arg_vars.append(arg_var)
-        loaded_args.append(loaded_arg)
-
-    abi_output_kwargs: dict[str, abi.BaseType] = {}
-    output_kwarg_info = OutputKwArgInfo.from_dict(subroutine.output_kwarg)
-    output_carrying_abi: Optional[abi.BaseType] = None
-
-    if output_kwarg_info:
-        output_carrying_abi = output_kwarg_info.abi_type.new_instance()
-        abi_output_kwargs[output_kwarg_info.name] = output_carrying_abi
-
-    # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:
-    subroutine_body = subroutine.implementation(*loaded_args, **abi_output_kwargs)
-
-    if not isinstance(subroutine_body, Expr):
-        raise TealInputError(
-            f"Subroutine function does not return a PyTeal expression. Got type {type(subroutine_body)}."
-        )
-
-    deferred_expr: Optional[Expr] = None
-
-    # if there is an output keyword argument for ABI, place the storing on the stack
-    if output_carrying_abi:
-        if subroutine_body.type_of() != TealType.none:
-            raise TealInputError(
-                f"ABI returning subroutine definition should evaluate to TealType.none, "
-                f"while evaluate to {subroutine_body.type_of()}."
-            )
-        deferred_expr = output_carrying_abi._stored_value.load()
-
-    # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
-    # need to reverse order of argumentVars because the last argument will be on top of the stack
-    body_ops = [var.slot.store() for var in arg_vars[::-1]]
-    body_ops.append(subroutine_body)
-
-    sd = SubroutineDeclaration(subroutine, Seq(body_ops), deferred_expr)
-    sd.trace = subroutine_body.trace
-    return sd
