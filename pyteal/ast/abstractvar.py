@@ -19,24 +19,11 @@ class AbstractVar(ABC):
     """
 
     @abstractmethod
-    def store(self, value: Expr, validate_type: bool = True) -> Expr:
+    def store(self, value: Expr) -> Expr:
         """Store value in AbstractVar.
-
-        In most cases, we validate the type of the value to store against the type of the :any:`AbstractVar`.
-        The *only* case we skip type validation is:
-        we store a :any:`ReturnValue` of an :code:`ABIReturnSubroutine` into an :any:`AbstractVar`.
-        An :any:`ABIReturnSubroutine` evaluates to :code:`TealType.none`,
-        while an :any:`AbstractVar` has any concrete type other than :code:`TealType.none`.
-        A direct type check against :any:`ABIReturnSubroutine` will incur a type error,
-        while we apply type check against output keyword argument of :any:`ABIReturnSubroutine`,
-        which is applied and enforced inside :any:`ReturnedValue`.
-
-        In short, in most scenarios, we do not recommended to let validate_type to be False,
-        unless one is very clear about the expected behavior.
 
         Args:
             value: An expression that represents the value to store.
-            validate_type: A bool variable that activate type check in value storage.
         """
         pass
 
