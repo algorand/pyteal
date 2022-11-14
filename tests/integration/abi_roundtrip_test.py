@@ -5,7 +5,7 @@ from typing import Literal
 
 import algosdk.abi
 
-from graviton.abi_strategy import ABIStrategy
+from graviton.abi_strategy import RandomABIStrategy
 
 from pyteal import abi
 
@@ -248,8 +248,8 @@ def test_roundtrip(abi_type):
         )
         return
 
-    abi_strat = ABIStrategy(sdk_abi_types[0], dynamic_length=dynamic_length)
-    rand_abi_instance = abi_strat.get_random()
+    abi_strat = RandomABIStrategy(sdk_abi_types[0], dynamic_length=dynamic_length)
+    rand_abi_instance = abi_strat.get()
     args = (rand_abi_instance,)
     inspector = roundtripper.dryrun(args)
 

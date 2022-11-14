@@ -105,7 +105,7 @@ def factorizer_game_check(a: int, p: int, q: int, M: int, N: int):
         lambda args: bool(payment_amount(*args)),
         name=f"passing invariant for coeffs {a, p, q}",
     )
-    passing_invariant.validates(DRProp.passed, inputs, inspectors)
+    passing_invariant.validates(DRProp.passed, inspectors)
 
     print(
         f"validate procedurally that payment amount as expected for (a,p,q) = {a,p,q} over {M, N} dry-rundry-run calls"
