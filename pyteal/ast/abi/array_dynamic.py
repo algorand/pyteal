@@ -1,13 +1,23 @@
 from typing import Union, Sequence, TypeVar, cast
 
 from pyteal.errors import TealInputError
+from pyteal.types import TealType
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.int import Int
-from pyteal.ast.substring import Suffix
+from pyteal.ast.if_ import If
+from pyteal.ast.assert_ import Assert
+from pyteal.ast.unaryexpr import Len
+from pyteal.ast.ternaryexpr import SetBit
+from pyteal.ast.naryexpr import Concat
+from pyteal.ast.substring import Suffix, Extract
+from pyteal.ast.replace import Replace
+from pyteal.ast.for_ import For
+from pyteal.ast.scratchvar import ScratchVar
 
 from pyteal.ast.abi.type import ComputedValue, BaseType
-from pyteal.ast.abi.uint import Uint16, Byte, ByteTypeSpec
+from pyteal.ast.abi.bool import Bool, BoolTypeSpec
+from pyteal.ast.abi.uint import Uint16, Uint16TypeSpec, Byte, ByteTypeSpec, NUM_BITS_IN_BYTE
 from pyteal.ast.abi.array_base import ArrayTypeSpec, Array
 
 
@@ -94,6 +104,66 @@ class DynamicArray(Array[T]):
         return Seq(
             output.decode(self.encode()),
             output.get(),
+        )
+    
+    def append(self, value: T) -> Expr:
+        encoded = self.encode()
+        type_spec = self.type_spec()
+
+        length = Uint16()
+
+        uint16_size = Uint16TypeSpec().bit_size() // NUM_BITS_IN_BYTE
+
+        if value.type_spec() != type_spec.value_type_spec():
+            raise TealInputError(f"Cannot append {value.type_spec()} to {type_spec.value_type_spec()}")
+        
+        if type_spec.value_type_spec() == BoolTypeSpec():
+            updated_content = If(length.get() % Int(NUM_BITS_IN_BYTE)).Then(
+                # previous length was not a multiple of 8, so the last byte has space for more bits
+                # bit index to change is:
+                #   16 + 8*prev_length = 8*(2 + prev_length)
+                SetBit(encoded, Int(NUM_BITS_IN_BYTE) * (Int(2) + length.get()), cast(Bool, value).get())
+            ).Else(
+                # previous length was a multiple of 8, so we need to append a new byte
+                Concat(encoded, value.encode())
+            )
+        else:
+            value_to_extend = encoded
+            if type_spec.value_type_spec().is_dynamic():
+                # if element is dynamic, must add new section to header and add 2 to existing offsets
+                # to do this, we will modify self.stored_value directly
+                header = ScratchVar(TealType.bytes)
+                i = ScratchVar(TealType.uint64)
+
+                value_to_extend = Seq(
+                    # header.store(Extract(encoded, Int(uint16_size), length.get() * Int(uint16_size))),
+                    For(i.store(length.get() * Int(uint16_size) + Int(uint16_size)), i.load(), i.store(i.load() - Int(uint16_size))).Do(
+                        self.stored_value.store(Replace(self.stored_value.load(), i.load(), Extract(self.stored_value.load(), i.load(), Int(2)) + Int(2)))
+                    ),
+                    # Append the header offset for the new element, which happens to be Len(encoded)
+                    header.store(Concat(header.load(), Len(encoded))), # TODO: actually encode Len(encoded) and append body
+                    # TODO: assert Len(encoded) is less than uint16 max?
+                    encoded,
+                )
+
+                header = Extract(encoded, Int(uint16_size), length.get() * Int(uint16_size))
+                body = Suffix(encoded, (length.get() + Int(1)) * uint16_size)
+                value_to_extend = Concat(header, Len(body), body)
+
+            updated_content = Concat(value_to_extend, value.encode())
+
+        return Seq(
+            length.decode(encoded),
+            # prevent more than max uint16 elements
+            Assert(length.get() < Int(2**Uint16TypeSpec().bit_size() - 1)),
+            self.stored_value.store(Replace(
+                updated_content,
+                Int(0),
+                Seq(
+                    length.set(length.get() + Int(1)),
+                    length.encode()
+                )
+            ))
         )
 
 
