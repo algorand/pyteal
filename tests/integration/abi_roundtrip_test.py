@@ -209,13 +209,13 @@ def test_pure_compilation(abi_type):
     assert [sdk_abi_type] == abi_arg_types
     assert algosdk.abi.TupleType([sdk_abi_type] * 3) == abi_ret_type
 
-    def compile_and_compare(_version: int):
-        teal = roundtripper.compile(_version)
+    def compile_and_compare(version: int):
+        teal = roundtripper.compile(version)
 
         filename = (
             f"app_roundtrip_{sdk_abi_type}"
             + ("" if dynamic_length is None else f"_{dynamic_length}")
-            + f"_v{_version}.teal"
+            + f"_v{version}.teal"
         )
         tealdir = GENERATED / "roundtrip"
         tealdir.mkdir(parents=True, exist_ok=True)
@@ -256,8 +256,8 @@ def test_roundtrip(abi_type):
     rand_abi_instance = abi_strat.get_random()
     args = (rand_abi_instance,)
 
-    def dryrun_roundtrip(_version: int):
-        inspector = roundtripper.dryrun(args, compiler_version=_version)
+    def dryrun_roundtrip(version: int):
+        inspector = roundtripper.dryrun(args, compiler_version=version)
 
         cost = inspector.cost()
         passed = inspector.passed()
@@ -265,7 +265,7 @@ def test_roundtrip(abi_type):
 
         print(
             f"""
-version={_version}
+version={version}
 {abi_type=}
 {sdk_abi_str=}
 {dynamic_length=}
