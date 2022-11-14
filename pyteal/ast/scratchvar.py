@@ -1,11 +1,12 @@
 from pyteal.errors import TealInputError
 from pyteal.types import TealType, require_type
 
+from pyteal.ast.abstractvar import AbstractVar
 from pyteal.ast.expr import Expr
 from pyteal.ast.scratch import ScratchSlot, ScratchLoad, ScratchStore
 
 
-class ScratchVar:
+class ScratchVar(AbstractVar):
     """
     Interface around Scratch space, similar to get/put local/global state
 
@@ -117,6 +118,7 @@ class DynamicScratchVar(ScratchVar):
 
     def store(self, value: Expr) -> Expr:
         """Store the value in the referenced ScratchVar."""
+
         require_type(value, self.dynamic_type)
         return ScratchStore(slot=None, value=value, index_expression=self.index())
 

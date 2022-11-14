@@ -1,4 +1,5 @@
 import pytest
+from typing import cast
 
 import pyteal as pt
 from pyteal import abi
@@ -158,7 +159,7 @@ def test_StaticArray_decode():
                 assert expr.type_of() == pt.TealType.none
                 assert not expr.has_return()
 
-                expectedExpr = value.stored_value.store(
+                expectedExpr = value._stored_value.store(
                     substring_for_decoding(
                         encoded,
                         start_index=start_index,
@@ -201,7 +202,7 @@ def test_StaticArray_set_values():
     assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expectedExpr = value.stored_value.store(_encode_tuple(values))
+    expectedExpr = value._stored_value.store(_encode_tuple(values))
     expected, _ = expectedExpr.__teal__(options)
     expected.addIncoming()
     expected = pt.TealBlock.NormalizeBlocks(expected)
@@ -233,8 +234,16 @@ def test_StaticArray_set_copy():
 
     expected = pt.TealSimpleBlock(
         [
-            pt.TealOp(None, pt.Op.load, otherArray.stored_value.slot),
-            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            pt.TealOp(
+                None,
+                pt.Op.load,
+                cast(pt.ScratchVar, otherArray._stored_value).slot,
+            ),
+            pt.TealOp(
+                None,
+                pt.Op.store,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
         ]
     )
 
@@ -258,7 +267,11 @@ def test_StaticArray_set_computed():
     expected = pt.TealSimpleBlock(
         [
             pt.TealOp(None, pt.Op.byte, '"indeed this is hard to simulate"'),
-            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            pt.TealOp(
+                None,
+                pt.Op.store,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
         ]
     )
     actual, _ = expr.__teal__(options)
@@ -301,7 +314,11 @@ def test_StaticBytes_set_py_bytes(test_case: bytes | bytearray):
     expected = pt.TealSimpleBlock(
         [
             pt.TealOp(None, pt.Op.byte, "0x" + BYTE_HEX_TEST_CASE),
-            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            pt.TealOp(
+                None,
+                pt.Op.store,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
         ]
     )
 
@@ -332,9 +349,17 @@ def test_StaticBytes_expr(test_case: bytes | bytearray):
             pt.TealOp(None, pt.Op.byte, "0x" + BYTE_HEX_TEST_CASE),
             pt.TealOp(None, pt.Op.byte, "0x" + BYTE_HEX_TEST_CASE),
             pt.TealOp(None, pt.Op.concat),
-            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            pt.TealOp(
+                None,
+                pt.Op.store,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
             pt.TealOp(None, pt.Op.int, 32),
-            pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+            pt.TealOp(
+                None,
+                pt.Op.load,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
             pt.TealOp(None, pt.Op.len),
             pt.TealOp(None, pt.Op.eq),
             pt.TealOp(None, pt.Op.assert_),
@@ -352,7 +377,13 @@ def test_StaticArray_encode():
     assert not expr.has_return()
 
     expected = pt.TealSimpleBlock(
-        [pt.TealOp(None, pt.Op.load, value.stored_value.slot)]
+        [
+            pt.TealOp(
+                None,
+                pt.Op.load,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
+        ]
     )
 
     actual, _ = expr.__teal__(options)

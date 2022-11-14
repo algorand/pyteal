@@ -1,4 +1,4 @@
-from typing import List, Tuple, NamedTuple, Callable, Union, Optional
+from typing import List, Tuple, NamedTuple, Callable, Union, Optional, cast
 from pyteal.ast.abi.type_test import ContainerType
 import pyteal as pt
 from pyteal import abi
@@ -139,7 +139,11 @@ def test_Uint_set_static():
             expected = pt.TealSimpleBlock(
                 [
                     pt.TealOp(None, pt.Op.int, value_to_set),
-                    pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+                    pt.TealOp(
+                        None,
+                        pt.Op.store,
+                        cast(pt.ScratchVar, value._stored_value).slot,
+                    ),
                 ]
             )
 
@@ -167,7 +171,11 @@ def test_Uint_set_expr():
         upperBoundCheck = []
         if test.checkUpperBound:
             upperBoundCheck = [
-                pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+                pt.TealOp(
+                    None,
+                    pt.Op.load,
+                    cast(pt.ScratchVar, value._stored_value).slot,
+                ),
                 pt.TealOp(None, pt.Op.int, test.maxValue + 1),
                 pt.TealOp(None, pt.Op.lt),
                 pt.TealOp(None, pt.Op.assert_),
@@ -178,7 +186,11 @@ def test_Uint_set_expr():
                 pt.TealOp(None, pt.Op.int, 10),
                 pt.TealOp(None, pt.Op.int, 1),
                 pt.TealOp(None, pt.Op.add),
-                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+                pt.TealOp(
+                    None,
+                    pt.Op.store,
+                    cast(pt.ScratchVar, value._stored_value).slot,
+                ),
             ]
             + upperBoundCheck
         )
@@ -201,8 +213,16 @@ def test_Uint_set_copy():
 
         expected = pt.TealSimpleBlock(
             [
-                pt.TealOp(None, pt.Op.load, other.stored_value.slot),
-                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+                pt.TealOp(
+                    None,
+                    pt.Op.load,
+                    cast(pt.ScratchVar, other._stored_value).slot,
+                ),
+                pt.TealOp(
+                    None,
+                    pt.Op.store,
+                    cast(pt.ScratchVar, value._stored_value).slot,
+                ),
             ]
         )
 
@@ -230,7 +250,11 @@ def test_Uint_set_computed():
         expected = pt.TealSimpleBlock(
             [
                 pt.TealOp(None, pt.Op.int, 0x44),
-                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+                pt.TealOp(
+                    None,
+                    pt.Op.store,
+                    cast(pt.ScratchVar, value._stored_value).slot,
+                ),
             ]
         )
 
@@ -253,7 +277,13 @@ def test_Uint_get():
         assert not expr.has_return()
 
         expected = pt.TealSimpleBlock(
-            [pt.TealOp(expr, pt.Op.load, value.stored_value.slot)]
+            [
+                pt.TealOp(
+                    expr,
+                    pt.Op.load,
+                    cast(pt.ScratchVar, value._stored_value).slot,
+                ),
+            ]
         )
 
         actual, _ = expr.__teal__(options)
@@ -277,7 +307,7 @@ def test_Uint_decode():
                     assert expr.type_of() == pt.TealType.none
                     assert not expr.has_return()
 
-                    expectedDecoding = value.stored_value.store(
+                    expectedDecoding = value._stored_value.store(
                         test.expectedDecoding(encoded, start_index, end_index, length)
                     )
                     expected, _ = expectedDecoding.__teal__(options)
@@ -326,8 +356,16 @@ def test_ByteUint8_mutual_conversion():
 
         expected = pt.TealSimpleBlock(
             [
-                pt.TealOp(None, pt.Op.load, other.stored_value.slot),
-                pt.TealOp(None, pt.Op.store, type_b_instance.stored_value.slot),
+                pt.TealOp(
+                    None,
+                    pt.Op.load,
+                    cast(pt.ScratchVar, other._stored_value).slot,
+                ),
+                pt.TealOp(
+                    None,
+                    pt.Op.store,
+                    cast(pt.ScratchVar, type_b_instance._stored_value).slot,
+                ),
             ]
         )
 

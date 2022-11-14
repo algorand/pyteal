@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, cast
 import pyteal as pt
 from pyteal import abi
 import pytest
@@ -131,7 +131,11 @@ def test_Transaction__set_index():
         expected = pt.TealSimpleBlock(
             [
                 pt.TealOp(expr, pt.Op.int, val_to_set),
-                pt.TealOp(None, pt.Op.store, tv.t.stored_value.slot),
+                pt.TealOp(
+                    None,
+                    pt.Op.store,
+                    cast(pt.ScratchVar, tv.t._stored_value).slot,
+                ),
             ]
         )
         actual, _ = expr.__teal__(options)

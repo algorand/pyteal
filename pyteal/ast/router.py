@@ -352,7 +352,7 @@ class ASTBuilder:
             )
 
             # All subroutine arg values, initialize here and use below instead of
-            # creating new instances on the fly so we dont have to think about splicing
+            # creating new instances on the fly, so we don't have to think about splicing
             # back in the transaction types
             arg_vals = [typespec.new_instance() for typespec in arg_type_specs]
 

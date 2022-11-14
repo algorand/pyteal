@@ -1,11 +1,12 @@
 from typing import TypeVar, Generic, Callable, Final, cast
 from abc import ABC, abstractmethod
 
-from pyteal.errors import TealInputError
-from pyteal.types import TealType
 from pyteal.ast.expr import Expr
+from pyteal.ast.abstractvar import AbstractVar
 from pyteal.ast.scratchvar import ScratchVar
 from pyteal.ast.seq import Seq
+from pyteal.errors import TealInputError
+from pyteal.types import TealType
 
 
 class TypeSpec(ABC):
@@ -76,8 +77,8 @@ class BaseType(ABC):
     def __init__(self, spec: TypeSpec) -> None:
         """Create a new BaseType."""
         super().__init__()
-        self._type_spec: Final = spec
-        self.stored_value: Final = ScratchVar(spec.storage_type())
+        self._type_spec: Final[TypeSpec] = spec
+        self._stored_value: AbstractVar = ScratchVar(spec.storage_type())
 
     def type_spec(self) -> TypeSpec:
         """Get the TypeSpec for this ABI type instance."""
@@ -231,7 +232,8 @@ class ReturnedValue(ComputedValue):
                 f"ABI return subroutine deferred_expr is expected to be typed {output.type_spec().storage_type()}, "
                 f"but has type {declaration.deferred_expr.type_of()}."
             )
-        return output.stored_value.slot.store(self.computation)
+
+        return output._stored_value.store(self.computation)
 
 
 ReturnedValue.__module__ = "pyteal.abi"

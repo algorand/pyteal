@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
 
 from pyteal.errors import TealInputError
 from pyteal.types import TealType
@@ -26,7 +26,7 @@ class CommentExpr(Expr):
             )
         self.comment = single_line_comment
 
-    def __teal__(self, options: "CompileOptions") -> Tuple[TealBlock, TealSimpleBlock]:
+    def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
         op = TealOp(self, Op.comment, self.comment)
         return TealBlock.FromOp(options, op)
 

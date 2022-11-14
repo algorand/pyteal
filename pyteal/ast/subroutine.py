@@ -378,7 +378,7 @@ class SubroutineCall(Expr):
             elif isinstance(arg, ScratchVar):
                 arg_type = arg.type
             elif isinstance(arg, abi.BaseType):
-                arg_type = cast(abi.BaseType, arg).stored_value.type
+                arg_type = cast(abi.BaseType, arg)._stored_value.storage_type()
             else:
                 raise TealInputError(
                     f"Subroutine argument {arg} at index {i} was of unexpected Python type {type(arg)}"
@@ -420,7 +420,7 @@ class SubroutineCall(Expr):
             elif isinstance(arg, Expr):
                 return arg
             elif isinstance(arg, abi.BaseType):
-                return arg.stored_value.load()
+                return arg._stored_value.load()
             else:
                 raise TealInputError(
                     f"cannot handle current arg: {arg} to put it on stack"
@@ -438,6 +438,9 @@ class SubroutineCall(Expr):
         return f'(SubroutineCall {self.subroutine.name()} ({" ".join(arg_str_list)}))'
 
     def type_of(self):
+        output_info = OutputKwArgInfo.from_dict(self.subroutine.output_kwarg)
+        if output_info:
+            return output_info.abi_type.storage_type()
         return self.subroutine.return_type
 
     def has_return(self):
@@ -594,8 +597,6 @@ class ABIReturnSubroutine:
                     "ABI subroutine with void type should be evaluated to TealType.none"
                 )
             return invoked
-
-        self.subroutine.get_declaration()
 
         return abi.ReturnedValue(
             self.output_kwarg_info.abi_type,
@@ -801,7 +802,7 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
             loaded_var = argument_var
         elif param in subroutine.abi_args:
             internal_abi_var = subroutine.abi_args[param].new_instance()
-            argument_var = internal_abi_var.stored_value
+            argument_var = cast(ScratchVar, internal_abi_var._stored_value)
             loaded_var = internal_abi_var
         else:
             argument_var = ScratchVar(TealType.anytype)
@@ -849,7 +850,7 @@ def evaluate_subroutine(subroutine: SubroutineDefinition) -> SubroutineDeclarati
                 f"ABI returning subroutine definition should evaluate to TealType.none, "
                 f"while evaluate to {subroutine_body.type_of()}."
             )
-        deferred_expr = output_carrying_abi.stored_value.load()
+        deferred_expr = output_carrying_abi._stored_value.load()
 
     # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
     # need to reverse order of argumentVars because the last argument will be on top of the stack

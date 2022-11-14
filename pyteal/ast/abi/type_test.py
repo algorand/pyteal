@@ -17,7 +17,7 @@ class ContainerType(abi.ComputedValue):
             raise pt.TealInputError(
                 f"expected type_spec {self.type_spec} but get {output.type_spec()}"
             )
-        return output.stored_value.store(self.encodings)
+        return output._stored_value.store(self.encodings)
 
 
 def test_ComputedType_use():
