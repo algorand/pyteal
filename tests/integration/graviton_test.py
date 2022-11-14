@@ -539,7 +539,7 @@ def blackbox_test_runner(
 
         invariant = Invariant(predicate, name=f"{case_name}[{i}]@{mode}-{dr_prop}")
         print(f"{i+1}. Assertion for {case_name}-{mode}: {dr_prop} <<{predicate}>>")
-        invariant.validates(dr_prop, inputs, inspectors)
+        invariant.validates(dr_prop, inspectors)
 
 
 # ---- Graviton / Blackbox tests ---- #
@@ -745,7 +745,7 @@ def blackbox_pyteal_example3():
 
     # Assert that each invariant holds on the sequences of inputs and dry-runs:
     for property, predicate in predicates.items():
-        Invariant(predicate).validates(property, inputs, inspectors)
+        Invariant(predicate).validates(property, inspectors)
 
     # Execute on the input sequence to get a dry-run inspectors:
     inspectors = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_on_sequence(
@@ -754,7 +754,7 @@ def blackbox_pyteal_example3():
 
     # Assert that each invariant holds on the sequences of inputs and dry-runs:
     for property, predicate in predicates.items():
-        Invariant(predicate).validates(property, inputs, inspectors)
+        Invariant(predicate).validates(property, inspectors)
 
 
 def blackbox_pyteal_example4():

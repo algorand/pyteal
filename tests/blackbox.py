@@ -6,6 +6,7 @@ from algosdk.v2client import algod
 
 from graviton import blackbox
 from graviton.blackbox import DryRunInspector, DryRunExecutor
+from graviton.models import PyTypes
 
 from pyteal.ast.subroutine import OutputKwArgInfo
 
@@ -404,23 +405,23 @@ class PyTealDryRunExecutor:
 
     def dryrun_on_sequence(
         self,
-        inputs: list[Sequence[str | int]],
+        inputs: list[Sequence[PyTypes]],
         compiler_version=6,
     ) -> list[DryRunInspector]:
         return _MatchMode(
             app_case=lambda: DryRunExecutor.dryrun_app_on_sequence(
-                algod_with_assertion(),
-                self.compile(compiler_version),
-                inputs,
-                self.abi_argument_types(),
-                self.abi_return_type(),
+                algod=algod_with_assertion(),
+                teal=self.compile(compiler_version),
+                inputs=inputs,
+                abi_argument_types=self.abi_argument_types(),
+                abi_return_type=self.abi_return_type(),
             ),
             signature_case=lambda: DryRunExecutor.dryrun_logicsig_on_sequence(
-                algod_with_assertion(),
-                self.compile(compiler_version),
-                inputs,
-                self.abi_argument_types(),
-                self.abi_return_type(),
+                algod=algod_with_assertion(),
+                teal=self.compile(compiler_version),
+                inputs=inputs,
+                abi_argument_types=self.abi_argument_types(),
+                abi_return_type=self.abi_return_type(),
             ),
         )(self.mode)
 
