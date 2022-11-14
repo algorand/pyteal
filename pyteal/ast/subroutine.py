@@ -933,11 +933,7 @@ class SubroutineEval:
             loaded_var = argument_var
         elif param in subroutine.abi_args:
             internal_abi_var = subroutine.abi_args[param].new_instance()
-            if not isinstance(internal_abi_var._stored_value, ScratchVar):
-                raise TealInternalError(
-                    "before program version 8, ABI data storage can only be done through ScratchStorage"
-                )
-            argument_var = internal_abi_var._stored_value
+            argument_var = cast(ScratchVar, internal_abi_var._stored_value)
             loaded_var = internal_abi_var
         else:
             argument_var = ScratchVar(TealType.anytype)
