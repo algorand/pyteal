@@ -23,7 +23,7 @@ from graviton.blackbox import (
     mode_has_property,
 )
 
-from graviton.invariant import Invariant
+from graviton.invariant import Invariant, PredicateKind
 
 PATH = Path.cwd() / "tests" / "integration"
 FIXTURES = PATH / "teal"
@@ -487,6 +487,16 @@ LOGICSIG_SCENARIOS = {
     },
 }
 
+APP_IDENTITICAL_PREDICATES = {
+    DRProp.lastLog: PredicateKind.IdenticalPair,
+    DRProp.status: PredicateKind.IdenticalPair,
+    DRProp.error: PredicateKind.IdenticalPair,
+}
+LSIG_IDENTICAL_PREDICATES = {
+    DRProp.status: PredicateKind.IdenticalPair,
+    DRProp.error: PredicateKind.IdenticalPair,
+}
+
 
 def blackbox_test_runner(
     subr: pt.SubroutineFnWrapper,
@@ -494,7 +504,7 @@ def blackbox_test_runner(
     scenario: Dict[str, Any],
     version: int,
     assemble_constants: bool = True,
-):
+) -> list[DryRunInspector]:
     case_name = subr.name()
     print(f"blackbox test of {case_name} with mode {mode}")
     exec_mode = mode_to_execution_mode(mode)
@@ -541,6 +551,8 @@ def blackbox_test_runner(
         print(f"{i+1}. Assertion for {case_name}-{mode}: {dr_prop} <<{predicate}>>")
         invariant.validates(dr_prop, inspectors)
 
+    return inspectors
+
 
 # ---- Graviton / Blackbox tests ---- #
 
@@ -550,8 +562,14 @@ def test_blackbox_subroutines_as_apps(
     subr: pt.SubroutineFnWrapper,
     scenario: Dict[str, Any],
 ):
-    blackbox_test_runner(subr, pt.Mode.Application, scenario, 6)
-    blackbox_test_runner(subr, pt.Mode.Application, scenario, 8)
+    inspectors6 = blackbox_test_runner(subr, pt.Mode.Application, scenario, 6)
+    inspectors8 = blackbox_test_runner(subr, pt.Mode.Application, scenario, 8)
+    Invariant.full_validation(
+        APP_IDENTITICAL_PREDICATES,
+        inspectors=inspectors6,
+        identities=inspectors8,
+        msg=f"{subr.name()=}",
+    )
 
 
 @pytest.mark.parametrize("subr, scenario", LOGICSIG_SCENARIOS.items())
@@ -559,8 +577,14 @@ def test_blackbox_subroutines_as_logic_sigs(
     subr: pt.SubroutineFnWrapper,
     scenario: Dict[str, Any],
 ):
-    blackbox_test_runner(subr, pt.Mode.Signature, scenario, 6)
-    blackbox_test_runner(subr, pt.Mode.Signature, scenario, 8)
+    inspectors6 = blackbox_test_runner(subr, pt.Mode.Signature, scenario, 6)
+    inspectors8 = blackbox_test_runner(subr, pt.Mode.Signature, scenario, 8)
+    Invariant.full_validation(
+        LSIG_IDENTICAL_PREDICATES,
+        inspectors=inspectors6,
+        identities=inspectors8,
+        msg=f"{subr.name()=}",
+    )
 
 
 def blackbox_pyteal_example1():
@@ -601,8 +625,22 @@ def blackbox_pyteal_example1():
             args, "last_log() gave unexpected results from app"
         )
 
-    evaluate_and_check(6)
-    evaluate_and_check(8)
+        return (app_result, lsig_result)
+
+    app6, lsig6 = evaluate_and_check(6)
+    app8, lsig8 = evaluate_and_check(8)
+    Invariant.full_validation(
+        APP_IDENTITICAL_PREDICATES,
+        inspectors=[app6],
+        identities=[app8],
+        msg="Mode.Application example 1",
+    )
+    Invariant.full_validation(
+        LSIG_IDENTICAL_PREDICATES,
+        inspectors=[lsig6],
+        identities=[lsig8],
+        msg="Mode.Signature example 1",
+    )
 
 
 def blackbox_pyteal_example2():
@@ -667,8 +705,16 @@ def blackbox_pyteal_example2():
         with open(Path.cwd() / f"euclid_v{version}.csv", "w") as f:
             f.write(euclid_csv)
 
-    test_and_report(6)
-    test_and_report(8)
+        return inspectors
+
+    inspectors6 = test_and_report(6)
+    inspectors8 = test_and_report(8)
+    Invariant.full_validation(
+        APP_IDENTITICAL_PREDICATES,
+        inspectors=inspectors6,
+        identities=inspectors8,
+        msg="example 2",
+    )
 
 
 def blackbox_pyteal_example3():
@@ -739,22 +785,29 @@ def blackbox_pyteal_example3():
         )
 
     # Execute on the input sequence to get a dry-run inspectors:
-    inspectors = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_on_sequence(
-        inputs
+    inspectors6 = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_on_sequence(
+        inputs, compiler_version=6
     )
 
     # Assert that each invariant holds on the sequences of inputs and dry-runs:
     for property, predicate in predicates.items():
-        Invariant(predicate).validates(property, inspectors)
+        Invariant(predicate).validates(property, inspectors6)
 
     # Execute on the input sequence to get a dry-run inspectors:
-    inspectors = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_on_sequence(
+    inspectors8 = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_on_sequence(
         inputs, compiler_version=8
     )
 
     # Assert that each invariant holds on the sequences of inputs and dry-runs:
     for property, predicate in predicates.items():
-        Invariant(predicate).validates(property, inspectors)
+        Invariant(predicate).validates(property, inspectors8)
+
+    Invariant.full_validation(
+        APP_IDENTITICAL_PREDICATES,
+        inspectors=inspectors6,
+        identities=inspectors8,
+        msg="Mode.Application example 3",
+    )
 
 
 def blackbox_pyteal_example4():
@@ -856,8 +909,22 @@ def blackbox_pyteal_example4():
         report("app")
         report("lsig")
 
-    test_and_report_for_app_and_lsig(6)
-    test_and_report_for_app_and_lsig(8)
+        return app_inspectors, lsig_inspectors
+
+    app_inspectors6, lsig_inspectors6 = test_and_report_for_app_and_lsig(6)
+    app_inspectors8, lsig_inspectors8 = test_and_report_for_app_and_lsig(8)
+    Invariant.full_validation(
+        APP_IDENTITICAL_PREDICATES,
+        inspectors=app_inspectors6,
+        identities=app_inspectors8,
+        msg=f"Mode.Application example 4 {abi_sum.name()=}",
+    )
+    Invariant.full_validation(
+        LSIG_IDENTICAL_PREDICATES,
+        inspectors=lsig_inspectors6,
+        identities=lsig_inspectors8,
+        msg=f"Mode.Signature example 4 {abi_sum.name()=}",
+    )
 
 
 def blackbox_pyteal_example5():
@@ -898,9 +965,22 @@ def blackbox_pyteal_example5():
             assert inspect.stack_top() == input_var**3, inspect.report(
                 args=inputs[index], msg="stack_top() gave unexpected results from app"
             )
+        return app_inspect, lsig_inspect
 
-    test_app_and_lsig(6)
-    test_app_and_lsig(8)
+    app6, lsig6 = test_app_and_lsig(6)
+    app8, lsig8 = test_app_and_lsig(8)
+    Invariant.full_validation(
+        APP_IDENTITICAL_PREDICATES,
+        inspectors=[app6],
+        identities=[app8],
+        msg="Mode.Application example 5",
+    )
+    Invariant.full_validation(
+        LSIG_IDENTICAL_PREDICATES,
+        inspectors=[lsig6],
+        identities=[lsig8],
+        msg="Mode.Application example 5",
+    )
 
 
 def blackbox_pyteal_while_continue_test():
@@ -1011,14 +1091,21 @@ def blackbox_pyteal_named_tupleness_test():
     lsig_pytealer = PyTealDryRunExecutor(named_tuple_field_access, Mode.Signature)
     args = (False, b"1" * 32, (0, False), b"0" * 10, [True] * 4, 0)
 
-    inspector = lsig_pytealer.dryrun(args)
+    inspector6 = lsig_pytealer.dryrun(args, compiler_version=6)
 
-    assert inspector.stack_top() == 1
-    assert inspector.passed()
+    assert inspector6.stack_top() == 1
+    assert inspector6.passed()
 
-    inspector = lsig_pytealer.dryrun(args, compiler_version=8)
-    assert inspector.passed()
-    assert inspector.stack_top() == 1
+    inspector8 = lsig_pytealer.dryrun(args, compiler_version=8)
+    assert inspector8.passed()
+    assert inspector8.stack_top() == 1
+
+    Invariant.full_validation(
+        LSIG_IDENTICAL_PREDICATES,
+        inspectors=inspector6,
+        identities=inspector8,
+        msg="Mode.Signature NamedTuple example",
+    )
 
 
 @pytest.mark.parametrize(
