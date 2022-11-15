@@ -3,7 +3,7 @@ import random
 import pytest
 
 from graviton.blackbox import DryRunInspector, DryRunProperty as DRProp
-from graviton.invariant import Invariant, PredicateKind as IQ
+from graviton.invariant import Invariant, PredicateKind
 
 import pyteal as pt
 from pyteal.ast.subroutine import ABIReturnSubroutine
@@ -567,10 +567,10 @@ VERSIONING_CASES = [
 ]
 
 IDENTITY_PREDICATES = {
-    DRProp.lastLog: IQ.IdenticalPair,
-    DRProp.status: IQ.IdenticalPair,
-    DRProp.error: IQ.IdenticalPair,
-    DRProp.lastMessage: IQ.IdenticalPair,
+    DRProp.lastLog: PredicateKind.IdenticalPair,
+    DRProp.status: PredicateKind.IdenticalPair,
+    DRProp.error: PredicateKind.IdenticalPair,
+    DRProp.lastMessage: PredicateKind.IdenticalPair,
 }
 
 min_version = 5
