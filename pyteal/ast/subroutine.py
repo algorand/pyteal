@@ -1014,12 +1014,12 @@ class SubroutineEval:
         proto = self.__proto(subroutine)
 
         args = subroutine.arguments()
-        arg_vars: list[ScratchVar] = []
+        arg_vars: list[tuple[ScratchVar, int]] = []
         loaded_args: list[ScratchVar | Expr | abi.BaseType] = []
-        for arg in args:
+        for index, arg in enumerate(args):
             arg_var, loaded_arg = self.var_n_loaded_method(subroutine, arg, proto)
             if arg_var:
-                arg_vars.append(arg_var)
+                arg_vars.append((arg_var, index - subroutine.argument_count()))
             loaded_args.append(loaded_arg)
 
         abi_output_kwargs: dict[str, abi.BaseType] = {}
@@ -1054,9 +1054,17 @@ class SubroutineEval:
 
         # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
         # need to reverse order of argumentVars because the last argument will be on top of the stack
-        body_ops: list[Expr] = [] if not self.use_frame_pt else [proto]
 
-        body_ops += [var.slot.store() for var in arg_vars[::-1]]
+        body_ops: list[Expr]
+        if not self.use_frame_pt:
+            body_ops = [var.slot.store() for var, _ in arg_vars[::-1]]
+        else:
+            body_ops = [proto]
+            body_ops += [
+                var.slot.store(FrameVar(proto, index).load())
+                for var, index in arg_vars[::-1]
+            ]
+
         body_ops.append(subroutine_body)
         sd = SubroutineDeclaration(subroutine, Seq(body_ops), deferred_expr)
         sd.trace = subroutine_body.trace
