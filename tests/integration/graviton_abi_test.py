@@ -580,6 +580,7 @@ LSIG_PREDICATES = {
 min_version = 5
 
 
+@pytest.mark.skip("Nice test, but too slow. Good to know that it ran once and passed.")
 @pytest.mark.parametrize("subroutine, inputs", VERSIONING_CASES)
 @pytest.mark.parametrize("mode", pt.Mode)
 @pytest.mark.parametrize("version", range(min_version + 1, pt.MAX_PROGRAM_VERSION + 1))
