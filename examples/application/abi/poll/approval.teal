@@ -4,7 +4,7 @@ int 0
 ==
 bnz main_l12
 txna ApplicationArgs 0
-method "create(string[],bool)void"
+method "create(string[3],bool)void"
 ==
 bnz main_l11
 txna ApplicationArgs 0
@@ -16,11 +16,11 @@ method "close()void"
 ==
 bnz main_l9
 txna ApplicationArgs 0
-method "submit(uint16)void"
+method "submit(uint8)void"
 ==
 bnz main_l8
 txna ApplicationArgs 0
-method "status()(bool,bool,(string,uint64)[])"
+method "status()(bool,bool,(string,uint64)[3])"
 ==
 bnz main_l7
 err
@@ -52,7 +52,7 @@ int 0
 assert
 txna ApplicationArgs 1
 int 0
-extract_uint16
+getbyte
 callsub submit_3
 int 1
 return
@@ -122,35 +122,317 @@ return
 
 // create
 create_0:
-store 8
-store 7
+store 20
+store 19
+byte 0x6f70656e
+int 0
+app_global_put
+byte 0x72657375626d6974
+load 20
+app_global_put
+byte 0x6f7074696f6e5f6e616d655f00
+load 19
+load 19
+int 2
+int 0
+*
+extract_uint16
+int 0
+int 1
++
+int 3
+==
+bnz create_0_l8
+load 19
+int 2
+int 0
+*
+int 2
++
+extract_uint16
+create_0_l2:
+substring3
+extract 2 0
+app_global_put
+byte 0x6f7074696f6e5f636f756e745f00
+int 0
+app_global_put
+byte 0x6f7074696f6e5f6e616d655f01
+load 19
+load 19
+int 2
+int 1
+*
+extract_uint16
+int 1
+int 1
++
+int 3
+==
+bnz create_0_l7
+load 19
+int 2
+int 1
+*
+int 2
++
+extract_uint16
+create_0_l4:
+substring3
+extract 2 0
+app_global_put
+byte 0x6f7074696f6e5f636f756e745f01
+int 0
+app_global_put
+byte 0x6f7074696f6e5f6e616d655f02
+load 19
+load 19
+int 2
+int 2
+*
+extract_uint16
+int 2
+int 1
++
+int 3
+==
+bnz create_0_l6
+load 19
+int 2
+int 2
+*
+int 2
++
+extract_uint16
+b create_0_l9
+create_0_l6:
+load 19
+len
+b create_0_l9
+create_0_l7:
+load 19
+len
+b create_0_l4
+create_0_l8:
+load 19
+len
+b create_0_l2
+create_0_l9:
+substring3
+extract 2 0
+app_global_put
+byte 0x6f7074696f6e5f636f756e745f02
+int 0
+app_global_put
 retsub
 
 // open
 open_1:
+byte 0x6f70656e
+app_global_get
+!
+assert
+byte 0x6f70656e
+int 1
+app_global_put
 retsub
 
 // close
 close_2:
+byte 0x6f70656e
+app_global_get
+assert
+byte 0x6f70656e
+int 0
+app_global_put
 retsub
 
 // submit
 submit_3:
-store 9
+store 21
+load 21
+int 3
+<
+assert
+byte 0x6f7074696f6e5f636f756e745f00
+int 13
+load 21
+setbyte
+store 22
+txn Sender
+box_get
+store 25
+store 24
+load 25
+bz submit_3_l2
+byte 0x72657375626d6974
+app_global_get
+assert
+byte 0x6f7074696f6e5f636f756e745f00
+int 13
+load 24
+btoi
+setbyte
+store 23
+load 23
+load 23
+app_global_get
+int 1
+-
+app_global_put
+submit_3_l2:
+txn Sender
+byte 0x00
+int 0
+load 21
+setbyte
+box_put
+load 22
+load 22
+app_global_get
+int 1
++
+app_global_put
 retsub
 
 // status
 status_4:
-int 0
+byte 0x72657375626d6974
+app_global_get
+!
+!
 store 3
-int 0
+byte 0x6f70656e
+app_global_get
+!
+!
 store 4
-int 0
+byte 0x6f7074696f6e5f6e616d655f00
+app_global_get
+store 5
+load 5
+len
 itob
 extract 6 0
-byte ""
+load 5
 concat
 store 5
+byte 0x6f7074696f6e5f636f756e745f00
+app_global_get
+store 6
+load 5
+store 11
+int 10
+itob
+extract 6 0
+load 6
+itob
+concat
+load 11
+concat
+store 7
+byte 0x6f7074696f6e5f6e616d655f01
+app_global_get
+store 5
+load 5
+len
+itob
+extract 6 0
+load 5
+concat
+store 5
+byte 0x6f7074696f6e5f636f756e745f01
+app_global_get
+store 6
+load 5
+store 12
+int 10
+itob
+extract 6 0
+load 6
+itob
+concat
+load 12
+concat
+store 8
+byte 0x6f7074696f6e5f6e616d655f02
+app_global_get
+store 5
+load 5
+len
+itob
+extract 6 0
+load 5
+concat
+store 5
+byte 0x6f7074696f6e5f636f756e745f02
+app_global_get
+store 6
+load 5
+store 13
+int 10
+itob
+extract 6 0
+load 6
+itob
+concat
+load 13
+concat
+store 9
+load 7
+store 17
+load 17
+store 16
+int 6
+store 14
+load 14
+load 17
+len
++
+store 15
+load 15
+int 65536
+<
+assert
+load 14
+itob
+extract 6 0
+load 8
+store 17
+load 16
+load 17
+concat
+store 16
+load 15
+store 14
+load 14
+load 17
+len
++
+store 15
+load 15
+int 65536
+<
+assert
+load 14
+itob
+extract 6 0
+concat
+load 9
+store 17
+load 16
+load 17
+concat
+store 16
+load 15
+store 14
+load 14
+itob
+extract 6 0
+concat
+load 16
+concat
+store 10
 byte 0x00
 int 0
 load 3
@@ -158,12 +440,12 @@ setbit
 int 1
 load 4
 setbit
-load 5
-store 6
+load 10
+store 18
 int 3
 itob
 extract 6 0
 concat
-load 6
+load 18
 concat
 retsub
