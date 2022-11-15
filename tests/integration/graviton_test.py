@@ -310,7 +310,7 @@ APP_SCENARIOS = {
         },
     },
     slow_fibonacci: {
-        "inputs": [(i,) for i in range(18)],
+        "inputs": [(i,) for i in range(17)],
         "assertions": {
             DRProp.cost: lambda args: (fib_cost(args) if args[0] < 17 else 70_000),
             DRProp.lastLog: lambda args: (
@@ -625,7 +625,7 @@ def blackbox_pyteal_example1():
             args, "last_log() gave unexpected results from app"
         )
 
-        return (app_result, lsig_result)
+        return app_result, lsig_result
 
     app6, lsig6 = evaluate_and_check(6)
     app8, lsig8 = evaluate_and_check(8)
