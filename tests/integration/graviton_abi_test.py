@@ -1,7 +1,9 @@
+from itertools import product
 import random
 import pytest
 
-from graviton.blackbox import DryRunInspector
+from graviton.blackbox import DryRunInspector, DryRunProperty as DRProp
+from graviton.invariant import Invariant, PredicateKind as IQ
 
 import pyteal as pt
 from pyteal.ast.subroutine import ABIReturnSubroutine
@@ -300,6 +302,10 @@ def conditional_factorial(_factor: pt.abi.Uint64, *, output: pt.abi.Uint64) -> p
 # ---- integration test functions ---- #
 
 
+def pynum_to_int65tuple(n):
+    return (n >= 0, abs(n))
+
+
 @pytest.mark.parametrize("version", [6, 8])
 def test_integer65(version: int):
     bbpt_subtract_slick = PyTealDryRunExecutor(int65_sub, pt.Mode.Application)
@@ -312,9 +318,6 @@ def test_integer65(version: int):
 
     bbpt_add = PyTealDryRunExecutor(int65_add, pt.Mode.Application)
 
-    def pynum_to_tuple(n):
-        return (n >= 0, abs(n))
-
     def pytuple_to_num(t):
         s, x = t
         return x if s else -x
@@ -323,10 +326,10 @@ def test_integer65(version: int):
     random.seed(42)
 
     choices = range(-9_999, 10_000)
-    unary_inputs = [(pynum_to_tuple(x),) for x in random.sample(choices, N)]
+    unary_inputs = [(pynum_to_int65tuple(x),) for x in random.sample(choices, N)]
 
     binary_inputs = [
-        (pynum_to_tuple(x), pynum_to_tuple(y))
+        (pynum_to_int65tuple(x), pynum_to_int65tuple(y))
         for x, y in zip(random.sample(choices, N), random.sample(choices, N))
     ]
 
@@ -540,4 +543,47 @@ def test_conditional_factorial(version: int):
     )
     assert inspector.error(), inspector.report(
         args, f"FAILED: should error for {n=}", row=n + 1
+    )
+
+
+xs = list(map(pynum_to_int65tuple, (-1, 1, 3, 5, 7)))
+int65_unary_function_inputs = [(x,) for x in xs]
+int65_binary_function_inputs = list(product(xs, xs))
+zs = int65_binary_function_inputs
+complex130_unary_function_inputs = [(z,) for z in zs]
+complex130_binary_function_inputs = list(product(zs, zs))
+VERSIONING_CASES = [
+    (int65_minus_cond, int65_binary_function_inputs),
+    (int65_sub, int65_binary_function_inputs),
+    (int65_mult, int65_binary_function_inputs),
+    (int65_negate, int65_unary_function_inputs),
+    (int65_add, int65_binary_function_inputs),
+    (complex130_add, complex130_binary_function_inputs),
+    (complex130_mult, complex130_binary_function_inputs),
+    (complex130_real, complex130_unary_function_inputs),
+    (complex130_imag, complex130_unary_function_inputs),
+    (complex130_conjugate, complex130_unary_function_inputs),
+    (complex130_norm_squared, complex130_unary_function_inputs),
+]
+
+IDENTITY_PREDICATES = {
+    DRProp.lastLog: IQ.IdenticalPair,
+    DRProp.status: IQ.IdenticalPair,
+    DRProp.error: IQ.IdenticalPair,
+    DRProp.lastMessage: IQ.IdenticalPair,
+}
+
+min_version = 5
+
+
+@pytest.mark.parametrize("subroutine, inputs", VERSIONING_CASES)
+@pytest.mark.parametrize("mode", pt.Mode)
+@pytest.mark.parametrize("version", range(min_version + 1, pt.MAX_PROGRAM_VERSION + 1))
+def test_identical_functionality(subroutine, inputs, mode, version):
+    ptdre = PyTealDryRunExecutor(subroutine, mode)
+    inspectors2 = ptdre.dryrun_on_sequence(inputs, compiler_version=min_version)
+    inspectorsN = ptdre.dryrun_on_sequence(inputs, compiler_version=version)
+
+    Invariant.full_validation(
+        IDENTITY_PREDICATES, inspectors=inspectors2, identities=inspectorsN
     )
