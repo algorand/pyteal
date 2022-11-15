@@ -35,7 +35,7 @@ def test_abi_algobank():
         assert contract.dictify() == expected_contract
 
 
-def test_abi_vote():
+def test_abi_poll():
     from examples.application.abi.poll.contract import (
         approval_program,
         clear_state_program,
