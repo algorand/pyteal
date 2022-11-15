@@ -566,13 +566,17 @@ VERSIONING_CASES = [
     (complex130_norm_squared, complex130_unary_function_inputs),
 ]
 
-IDENTITY_PREDICATES = {
+APP_PREDICATES = {
     DRProp.lastLog: PredicateKind.IdenticalPair,
     DRProp.status: PredicateKind.IdenticalPair,
     DRProp.error: PredicateKind.IdenticalPair,
     DRProp.lastMessage: PredicateKind.IdenticalPair,
 }
-
+LSIG_PREDICATES = {
+    DRProp.status: PredicateKind.IdenticalPair,
+    DRProp.error: PredicateKind.IdenticalPair,
+    DRProp.lastMessage: PredicateKind.IdenticalPair,
+}
 min_version = 5
 
 
@@ -581,9 +585,13 @@ min_version = 5
 @pytest.mark.parametrize("version", range(min_version + 1, pt.MAX_PROGRAM_VERSION + 1))
 def test_identical_functionality(subroutine, inputs, mode, version):
     ptdre = PyTealDryRunExecutor(subroutine, mode)
-    inspectors2 = ptdre.dryrun_on_sequence(inputs, compiler_version=min_version)
-    inspectorsN = ptdre.dryrun_on_sequence(inputs, compiler_version=version)
+    inspectors5 = ptdre.dryrun_on_sequence(inputs, compiler_version=min_version)
+    teal5 = ptdre.traces[-1]
+    assert teal5.startswith("#pragma version 5")
 
-    Invariant.full_validation(
-        IDENTITY_PREDICATES, inspectors=inspectors2, identities=inspectorsN
-    )
+    inspectorsN = ptdre.dryrun_on_sequence(inputs, compiler_version=version)
+    tealN = ptdre.traces[-1]
+    assert tealN.startswith(f"#pragma version {version}")
+
+    preds = APP_PREDICATES if mode == pt.Mode.Application else LSIG_PREDICATES
+    Invariant.full_validation(preds, inspectors=inspectors5, identities=inspectorsN)
