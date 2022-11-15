@@ -967,19 +967,19 @@ def blackbox_pyteal_example5():
             )
         return app_inspect, lsig_inspect
 
-    app6, lsig6 = test_app_and_lsig(6)
-    app8, lsig8 = test_app_and_lsig(8)
+    app_inspectors6, lsig_inspectors6 = test_app_and_lsig(6)
+    app_inspectors8, lsig_inspectors8 = test_app_and_lsig(8)
     Invariant.full_validation(
         APP_IDENTITICAL_PREDICATES,
-        inspectors=[app6],
-        identities=[app8],
+        inspectors=app_inspectors6,
+        identities=app_inspectors8,
         msg="Mode.Application example 5",
     )
     Invariant.full_validation(
         LSIG_IDENTICAL_PREDICATES,
-        inspectors=[lsig6],
-        identities=[lsig8],
-        msg="Mode.Application example 5",
+        inspectors=lsig_inspectors6,
+        identities=lsig_inspectors8,
+        msg="Mode.Signature example 5",
     )
 
 
@@ -1102,8 +1102,8 @@ def blackbox_pyteal_named_tupleness_test():
 
     Invariant.full_validation(
         LSIG_IDENTICAL_PREDICATES,
-        inspectors=inspector6,
-        identities=inspector8,
+        inspectors=[inspector6],
+        identities=[inspector8],
         msg="Mode.Signature NamedTuple example",
     )
 
