@@ -310,7 +310,7 @@ APP_SCENARIOS = {
         },
     },
     slow_fibonacci: {
-        "inputs": [(i,) for i in range(17)],
+        "inputs": [(i,) for i in range(18)],
         "assertions": {
             DRProp.cost: lambda args: (fib_cost(args) if args[0] < 17 else 70_000),
             DRProp.lastLog: lambda args: (
@@ -564,6 +564,15 @@ def test_blackbox_subroutines_as_apps(
 ):
     inspectors6 = blackbox_test_runner(subr, pt.Mode.Application, scenario, 6)
     inspectors8 = blackbox_test_runner(subr, pt.Mode.Application, scenario, 8)
+
+    if subr.name() == "slow_fibonacci":
+        assert len(inspectors6) == len(inspectors8) == 18
+        # NOTE the last case of inspector 8 (compilation with frame pointer)
+        # does not blow up the 70k budget limit, so we skip specifically for this one.
+
+        del inspectors6[-1]
+        del inspectors8[-1]
+
     Invariant.full_validation(
         APP_IDENTITICAL_PREDICATES,
         inspectors=inspectors6,
