@@ -201,7 +201,7 @@ class FrameDig(Expr):
     """An expression that digs a value from a position around frame pointer.
 
     This class is intentionally hidden because it's too basic to directly expose.
-    his is used only internally by FrameVar.
+    This is used only internally by FrameVar.
     """
 
     def __init__(self, frame_index: int, *, inferred_type: Optional[TealType] = None):
@@ -235,7 +235,7 @@ class FrameBury(Expr):
     """An expression that buries a value to a position around frame pointer.
 
     This class is intentionally hidden because it's too basic to directly expose.
-    his is used only internally by FrameVar.
+    This is used only internally by FrameVar.
     """
 
     def __init__(
