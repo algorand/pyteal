@@ -485,7 +485,7 @@ LOGICSIG_SCENARIOS = {
     },
 }
 
-APP_IDENTITICAL_PREDICATES = {
+APP_IDENTICAL_PREDICATES = {
     DRProp.lastLog: PredicateKind.IdenticalPair,
     DRProp.status: PredicateKind.IdenticalPair,
     DRProp.error: PredicateKind.IdenticalPair,
@@ -572,7 +572,7 @@ def test_blackbox_subroutines_as_apps(
         del inspectors8[-1]
 
     Invariant.full_validation(
-        APP_IDENTITICAL_PREDICATES,
+        APP_IDENTICAL_PREDICATES,
         inspectors=inspectors6,
         identities=inspectors8,
         msg=f"{subr.name()=}",
@@ -637,7 +637,7 @@ def blackbox_pyteal_example1():
     app6, lsig6 = evaluate_and_check(6)
     app8, lsig8 = evaluate_and_check(8)
     Invariant.full_validation(
-        APP_IDENTITICAL_PREDICATES,
+        APP_IDENTICAL_PREDICATES,
         inspectors=[app6],
         identities=[app8],
         msg="Mode.Application example 1",
@@ -717,7 +717,7 @@ def blackbox_pyteal_example2():
     inspectors6 = test_and_report(6)
     inspectors8 = test_and_report(8)
     Invariant.full_validation(
-        APP_IDENTITICAL_PREDICATES,
+        APP_IDENTICAL_PREDICATES,
         inspectors=inspectors6,
         identities=inspectors8,
         msg="example 2",
@@ -810,7 +810,7 @@ def blackbox_pyteal_example3():
         Invariant(predicate).validates(property, inspectors8)
 
     Invariant.full_validation(
-        APP_IDENTITICAL_PREDICATES,
+        APP_IDENTICAL_PREDICATES,
         inspectors=inspectors6,
         identities=inspectors8,
         msg="Mode.Application example 3",
@@ -921,7 +921,7 @@ def blackbox_pyteal_example4():
     app_inspectors6, lsig_inspectors6 = test_and_report_for_app_and_lsig(6)
     app_inspectors8, lsig_inspectors8 = test_and_report_for_app_and_lsig(8)
     Invariant.full_validation(
-        APP_IDENTITICAL_PREDICATES,
+        APP_IDENTICAL_PREDICATES,
         inspectors=app_inspectors6,
         identities=app_inspectors8,
         msg=f"Mode.Application example 4 {abi_sum.name()=}",
@@ -977,7 +977,7 @@ def blackbox_pyteal_example5():
     app_inspectors6, lsig_inspectors6 = test_app_and_lsig(6)
     app_inspectors8, lsig_inspectors8 = test_app_and_lsig(8)
     Invariant.full_validation(
-        APP_IDENTITICAL_PREDICATES,
+        APP_IDENTICAL_PREDICATES,
         inspectors=app_inspectors6,
         identities=app_inspectors8,
         msg="Mode.Application example 5",
