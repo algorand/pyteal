@@ -1,3 +1,4 @@
+from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from docstring_parser import parse as parse_docstring
 from inspect import isclass, Parameter, signature, get_annotations
@@ -9,7 +10,7 @@ from pyteal.ast import abi
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar, ScratchSlot
-from pyteal.ast.frame import Proto, FrameVar, ProtoStackLayout
+from pyteal.ast.frame import Bury, Proto, FrameVar, ProtoStackLayout
 from pyteal.errors import TealInputError, TealInternalError, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.types import TealType
@@ -1006,7 +1007,17 @@ class SubroutineEval:
             abi_output_kwargs[output_kwarg_info.name] = output_carrying_abi
 
         # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:
-        subroutine_body = subroutine.implementation(*loaded_args, **abi_output_kwargs)
+        subroutine_body: Expr
+        if not self.use_frame_pt:
+            subroutine_body = subroutine.implementation(
+                *loaded_args, **abi_output_kwargs
+            )
+        else:
+            with SubroutineEval.Context.CompileWithFrameContext(proto):
+                subroutine_body = subroutine.implementation(
+                    *loaded_args, **abi_output_kwargs
+                )
+
         if not isinstance(subroutine_body, Expr):
             raise TealInputError(
                 f"Subroutine function does not return a PyTeal expression. Got type {type(subroutine_body)}."
@@ -1024,6 +1035,14 @@ class SubroutineEval:
                 )
             if not self.use_frame_pt:
                 deferred_expr = output_carrying_abi._stored_value.load()
+
+        if self.use_frame_pt:
+            assert proto.mem_layout
+            depth = len(proto.mem_layout.local_stack_types)
+            # only when we have 1 return, and with other local variables
+            # we use bury to bury the result to 0 index against frame pointer
+            if not abi_output_kwargs and 0 < proto.num_returns < depth:
+                deferred_expr = Bury(depth)
 
         # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
         # need to reverse order of argumentVars because the last argument will be on top of the stack
@@ -1052,6 +1071,25 @@ class SubroutineEval:
     @classmethod
     def fp_evaluator(cls) -> "SubroutineEval":
         return cls(SubroutineEval.var_n_loaded_fp, True)
+
+    class Context:
+        config_use_frame_pointer: bool = False
+        proto: Optional[Proto] = None
+
+        class CompileWithFrameContext(AbstractContextManager):
+            def __init__(self, _proto: Proto):
+                super().__init__()
+                self.prev_ctxt_proto: Optional[Proto] = SubroutineEval.Context.proto
+                SubroutineEval.Context.proto = _proto
+
+            def __enter__(self):
+                SubroutineEval.Context.config_use_frame_pointer = True
+                return self
+
+            def __exit__(self, *_):
+                SubroutineEval.Context.config_use_frame_pointer = False
+                SubroutineEval.Context.proto = self.prev_ctxt_proto
+                return None
 
 
 SubroutineEval.__module__ = "pyteal"

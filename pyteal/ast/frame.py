@@ -349,3 +349,31 @@ class DupN(Expr):
 
 
 DupN.__module__ = "pyteal"
+
+
+class Bury(Expr):
+    def __init__(self, depth: int):
+        super(Bury, self).__init__()
+        if depth <= 0:
+            raise TealInputError("bury depth should be positive")
+        self.depth = depth
+
+    def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
+        verifyProgramVersion(
+            Op.bury.min_version,
+            options.version,
+            "Program version too low to use bury",
+        )
+        return TealBlock.FromOp(options, TealOp(self, Op.bury, self.depth))
+
+    def __str__(self):
+        return f"(Bury {self.depth})"
+
+    def has_return(self) -> bool:
+        return False
+
+    def type_of(self) -> TealType:
+        return TealType.none
+
+
+Bury.__module__ = "pyteal"

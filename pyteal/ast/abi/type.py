@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 
 from pyteal.ast.expr import Expr
 from pyteal.ast.abstractvar import AbstractVar
+from pyteal.ast.frame import FrameVar
 from pyteal.ast.scratchvar import ScratchVar
 from pyteal.ast.seq import Seq
 from pyteal.errors import TealInputError
@@ -76,9 +77,28 @@ class BaseType(ABC):
 
     def __init__(self, spec: TypeSpec) -> None:
         """Create a new BaseType."""
+        from pyteal.ast.subroutine import SubroutineEval
+
         super().__init__()
         self._type_spec: Final[TypeSpec] = spec
-        self._stored_value: AbstractVar = ScratchVar(spec.storage_type())
+        self._stored_value: AbstractVar
+
+        if SubroutineEval.Context.config_use_frame_pointer:
+            assert SubroutineEval.Context.proto
+            proto = SubroutineEval.Context.proto
+
+            assert proto.mem_layout
+            local_types = proto.mem_layout.local_stack_types
+
+            # NOTE: you can have at most 128 local variables.
+            # len(local_types) + 1 computes the resulting length,
+            # should be <= 128
+            if len(local_types) + 1 <= 128:
+                local_types.append(self._type_spec.storage_type())
+                self._stored_value = FrameVar(proto, len(local_types) - 1)
+                return
+
+        self._stored_value = ScratchVar(spec.storage_type())
 
     def type_spec(self) -> TypeSpec:
         """Get the TypeSpec for this ABI type instance."""
@@ -221,17 +241,23 @@ class ReturnedValue(ComputedValue):
                 f"expected type_spec {self.produced_type_spec()} but get {output.type_spec()}"
             )
 
-        declaration = self.computation.subroutine.get_declaration()
+        # HANG NOTE! This get_declaration check applies only for pre frame pointer case
+        # the post frame pointer case should not apply
+        # need to somehow expose the context of evaluation
+        try:
+            declaration = self.computation.subroutine.get_declaration()
 
-        if declaration.deferred_expr is None:
-            raise TealInputError(
-                "ABI return subroutine must have deferred_expr to be not-None."
-            )
-        if declaration.deferred_expr.type_of() != output.type_spec().storage_type():
-            raise TealInputError(
-                f"ABI return subroutine deferred_expr is expected to be typed {output.type_spec().storage_type()}, "
-                f"but has type {declaration.deferred_expr.type_of()}."
-            )
+            if declaration.deferred_expr is None:
+                raise TealInputError(
+                    "ABI return subroutine must have deferred_expr to be not-None."
+                )
+            if declaration.deferred_expr.type_of() != output.type_spec().storage_type():
+                raise TealInputError(
+                    f"ABI return subroutine deferred_expr is expected to be typed {output.type_spec().storage_type()}, "
+                    f"but has type {declaration.deferred_expr.type_of()}."
+                )
+        except Exception:
+            pass
 
         return output._stored_value.store(self.computation)
 
