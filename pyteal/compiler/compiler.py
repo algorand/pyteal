@@ -46,12 +46,22 @@ class CompileOptions:
         mode: Mode = Mode.Signature,
         version: int = DEFAULT_PROGRAM_VERSION,
         optimize: OptimizeOptions = None,
-        frame_pointers: bool = True,
+        frame_pointers: Optional[bool] = None,
     ) -> None:
         self.mode = mode
         self.version = version
         self.optimize = optimize if optimize is not None else OptimizeOptions()
-        self.frame_pointers = frame_pointers and version >= FRAME_POINTER_VERSION
+        self.frame_pointers: bool
+
+        if frame_pointers is None:
+            self.frame_pointers = self.version >= FRAME_POINTER_VERSION
+        else:
+            if frame_pointers and self.version < FRAME_POINTER_VERSION:
+                raise TealInputError(
+                    f"Try to use frame pointer with an insufficient version {self.version}."
+                )
+            else:
+                self.frame_pointers = frame_pointers
 
         self.currentSubroutine: Optional[SubroutineDefinition] = None
 
