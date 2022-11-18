@@ -305,5 +305,5 @@ class SuccinctReprTestCase:
     ],
 )
 def test_proto_stack_layout_succinct_repr(testcase: SuccinctReprTestCase):
-    actual = ProtoStackLayout([], testcase.local_types, False).succinct_repr
+    actual = ProtoStackLayout([], testcase.local_types, False)._succinct_repr()
     assert actual == testcase.expected

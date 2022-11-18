@@ -51,17 +51,17 @@ class CompileOptions:
         self.mode = mode
         self.version = version
         self.optimize = optimize if optimize is not None else OptimizeOptions()
-        self.frame_pointers: bool
+        self.use_frame_pointer: bool
 
         if frame_pointers is None:
-            self.frame_pointers = self.version >= FRAME_POINTER_VERSION
+            self.use_frame_pointer = self.version >= FRAME_POINTER_VERSION
         else:
             if frame_pointers and self.version < FRAME_POINTER_VERSION:
                 raise TealInputError(
                     f"Try to use frame pointer with an insufficient version {self.version}."
                 )
             else:
-                self.frame_pointers = frame_pointers
+                self.use_frame_pointer = frame_pointers
 
         self.currentSubroutine: Optional[SubroutineDefinition] = None
 
@@ -167,12 +167,16 @@ def compileSubroutine(
 
     if (
         currentSubroutine
-        and currentSubroutine.get_declaration_by_version(options.version).deferred_expr
+        and currentSubroutine.get_declaration_by_option(
+            options.use_frame_pointer
+        ).deferred_expr
     ):
         # this represents code that should be inserted before each retsub op
         deferred_expr = cast(
             Expr,
-            currentSubroutine.get_declaration_by_version(options.version).deferred_expr,
+            currentSubroutine.get_declaration_by_option(
+                options.use_frame_pointer
+            ).deferred_expr,
         )
 
         for block in TealBlock.Iterate(start):
@@ -224,7 +228,7 @@ def compileSubroutine(
     newSubroutines = referencedSubroutines - subroutine_start_blocks.keys()
     for subroutine in sorted(newSubroutines, key=lambda subroutine: subroutine.id):
         compileSubroutine(
-            subroutine.get_declaration_by_version(options.version),
+            subroutine.get_declaration_by_option(options.use_frame_pointer),
             options,
             subroutineGraph,
             subroutine_start_blocks,
