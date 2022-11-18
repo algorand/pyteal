@@ -46,10 +46,12 @@ class CompileOptions:
         mode: Mode = Mode.Signature,
         version: int = DEFAULT_PROGRAM_VERSION,
         optimize: OptimizeOptions = None,
+        frame_pointers: bool = True,
     ) -> None:
         self.mode = mode
         self.version = version
         self.optimize = optimize if optimize is not None else OptimizeOptions()
+        self.frame_pointers = frame_pointers and version >= FRAME_POINTER_VERSION
 
         self.currentSubroutine: Optional[SubroutineDefinition] = None
 
