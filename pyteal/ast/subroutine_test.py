@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 import pyteal as pt
 from pyteal.ast.subroutine import ABIReturnSubroutine, SubroutineEval
+from pyteal.compiler.compiler import FRAME_POINTER_VERSION
 
 options = pt.CompileOptions(version=5)
 
@@ -1512,3 +1513,9 @@ def test_override_abi_method_name():
 
     mspec = abi_meth_2.method_spec().dictify()
     assert mspec["name"] == "overriden_add"
+
+
+def test_frame_option_version_range_well_formed():
+    assert (
+        pt.Op.callsub.min_version < FRAME_POINTER_VERSION < pt.MAX_PROGRAM_VERSION + 1
+    )

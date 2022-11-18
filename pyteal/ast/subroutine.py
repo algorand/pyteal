@@ -86,7 +86,7 @@ class _SubroutineDeclByVersion:
     def __info_prepare(self) -> None:
         from pyteal.compiler.compiler import FRAME_POINTER_VERSION
 
-        if self.has_return and self.type_of:
+        if self.has_return is not None and self.type_of is not None:
             return
         v2_ret, v2_type = self.__probe_info(FRAME_POINTER_VERSION - 1)
         v8_ret, v8_type = self.__probe_info(FRAME_POINTER_VERSION)
@@ -575,7 +575,7 @@ class SubroutineFnWrapper:
         return self.subroutine.declarations.versions_type_of()
 
     def has_return(self):
-        return self.subroutine.declarations.versions_type_of()
+        return self.subroutine.declarations.versions_has_return()
 
 
 SubroutineFnWrapper.__module__ = "pyteal"
@@ -898,14 +898,14 @@ class SubroutineEval:
 
     Usage (A) "argumentVars" - Storing pre-placed stack variables with frame pointer:
         Type 1. (by-value) use None for we can load from stack with FrameDig() from FrameVar abstraction
-        Type 2. (by-reference) ALSO use FrameDig() from FrameVar abstraction to pick up from the stack
+        Type 2. (by-reference) use FrameDig() from FrameVar abstraction to pick up from the stack
             NOTE: SubroutineCall.__teal__() has placed the _SLOT INDEX_ on the stack so this is stored into the local scratch space
         Type 3. (ABI) use None for we can load from stack with FrameDig() from FrameVar abstraction
             NOTE: SubroutineCall.__teal__() has placed the ABI encoding on the stack, so ABI set and get methods are working over stack
         Type 4. (ABI-output-arg) it is not really used here, but we use FrameDig/Bury to interact with it
 
     Usage (B) "loadedArgs" - Passing through to an invoked PyTEAL subroutine AST:
-        Type 1. (by-value) use FrameDig() from FrameVar absrraction, to have an Expr that can be compiled in python by the PyTEAL subroutine.
+        Type 1. (by-value) use FrameDig() from FrameVar abstraction, to have an Expr that can be compiled in python by the PyTEAL subroutine.
         Type 2. (by-reference) use a DynamicScratchVar as the user will have written the PyTEAL in a way that satisfies
             the ScratchVar API. I.e., the user will write `x.load()` and `x.store(val)` as opposed to just `x`.
         Type 3. (ABI) use abi_value that interface with stack data through FrameVar abstraction.
