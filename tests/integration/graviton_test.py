@@ -163,8 +163,6 @@ def test_stable_teal_generation(subr, mode):
     case_name = subr.name()
     print(f"stable TEAL generation test for {case_name} in mode {mode}")
 
-    # HANG NOTE: I prefer not to modify this test, for it is skipped now on thread-unsafe behavior,
-    # and I would suggest revisiting later after we have satisfied solution for #199.
     _, _, tealfile = wrap_compile_and_save(subr, mode, 6, True, "stability", case_name)
     path2actual = GENERATED / "stability" / tealfile
     path2expected = FIXTURES / "stability" / tealfile
