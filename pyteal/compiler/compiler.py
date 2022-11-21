@@ -333,9 +333,7 @@ def compileTeal(
     if assembleConstants:
         if version < 3:
             raise TealInternalError(
-                "The minimum program version required to enable assembleConstants is 3. The current version is {}".format(
-                    version
-                )
+                f"The minimum program version required to enable assembleConstants is 3. The current version is {version}."
             )
         teal = createConstantBlocks(teal)
 
