@@ -26,8 +26,8 @@ class _SubroutineDeclByOption:
             False: None,
         }
         self.option_method: dict[bool, SubroutineEval] = {
-            False: SubroutineEval.normal_evaluator(),
             True: SubroutineEval.fp_evaluator(),
+            False: SubroutineEval.normal_evaluator(),
         }
         self.has_return: Optional[bool] = None
         self.type_of: Optional[TealType] = None
