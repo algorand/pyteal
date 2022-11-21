@@ -257,6 +257,7 @@ def compileTeal(
     version: int = DEFAULT_PROGRAM_VERSION,
     assembleConstants: bool = False,
     optimize: OptimizeOptions = None,
+    frame_pointers: Optional[bool] = None,
 ) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 
@@ -290,7 +291,9 @@ def compileTeal(
             )
         )
 
-    options = CompileOptions(mode=mode, version=version, optimize=optimize)
+    options = CompileOptions(
+        mode=mode, version=version, optimize=optimize, frame_pointers=frame_pointers
+    )
 
     subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
     subroutine_start_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
