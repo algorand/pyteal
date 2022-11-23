@@ -1,9 +1,7 @@
-from itertools import product
 import random
 import pytest
 
-from graviton.blackbox import DryRunInspector, DryRunProperty as DRProp
-from graviton.invariant import Invariant, PredicateKind
+from graviton.blackbox import DryRunInspector
 
 import pyteal as pt
 from pyteal.ast.subroutine import ABIReturnSubroutine
@@ -544,55 +542,3 @@ def test_conditional_factorial(version: int):
     assert inspector.error(), inspector.report(
         args, f"FAILED: should error for {n=}", row=n + 1
     )
-
-
-xs = list(map(pynum_to_int65tuple, (-1, 1, 3, 5, 7)))
-int65_unary_function_inputs = [(x,) for x in xs]
-int65_binary_function_inputs = list(product(xs, xs))
-zs = int65_binary_function_inputs
-complex130_unary_function_inputs = [(z,) for z in zs]
-complex130_binary_function_inputs = list(product(zs, zs))
-VERSIONING_CASES = [
-    (int65_minus_cond, int65_binary_function_inputs),
-    (int65_sub, int65_binary_function_inputs),
-    (int65_mult, int65_binary_function_inputs),
-    (int65_negate, int65_unary_function_inputs),
-    (int65_add, int65_binary_function_inputs),
-    (complex130_add, complex130_binary_function_inputs),
-    (complex130_mult, complex130_binary_function_inputs),
-    (complex130_real, complex130_unary_function_inputs),
-    (complex130_imag, complex130_unary_function_inputs),
-    (complex130_conjugate, complex130_unary_function_inputs),
-    (complex130_norm_squared, complex130_unary_function_inputs),
-]
-
-APP_PREDICATES = {
-    DRProp.lastLog: PredicateKind.IdenticalPair,
-    DRProp.status: PredicateKind.IdenticalPair,
-    DRProp.error: PredicateKind.IdenticalPair,
-    DRProp.lastMessage: PredicateKind.IdenticalPair,
-}
-LSIG_PREDICATES = {
-    DRProp.status: PredicateKind.IdenticalPair,
-    DRProp.error: PredicateKind.IdenticalPair,
-    DRProp.lastMessage: PredicateKind.IdenticalPair,
-}
-min_version = 5
-
-
-@pytest.mark.skip("Nice test, but too slow. Good to know that it ran once and passed.")
-@pytest.mark.parametrize("subroutine, inputs", VERSIONING_CASES)
-@pytest.mark.parametrize("mode", pt.Mode)
-@pytest.mark.parametrize("version", range(min_version + 1, pt.MAX_PROGRAM_VERSION + 1))
-def test_identical_functionality(subroutine, inputs, mode, version):
-    ptdre = PyTealDryRunExecutor(subroutine, mode)
-    inspectors5 = ptdre.dryrun_on_sequence(inputs, compiler_version=min_version)
-    teal5 = ptdre.traces[-1]
-    assert teal5.startswith("#pragma version 5")
-
-    inspectorsN = ptdre.dryrun_on_sequence(inputs, compiler_version=version)
-    tealN = ptdre.traces[-1]
-    assert tealN.startswith(f"#pragma version {version}")
-
-    preds = APP_PREDICATES if mode == pt.Mode.Application else LSIG_PREDICATES
-    Invariant.full_validation(preds, inspectors=inspectors5, identities=inspectorsN)
