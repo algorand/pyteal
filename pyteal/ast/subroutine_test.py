@@ -1,5 +1,6 @@
 from itertools import product
 from typing import Callable, Literal, Optional, cast
+from inspect import signature
 
 import pytest
 from dataclasses import dataclass
@@ -1326,6 +1327,11 @@ def test_evaluate_subroutine_frame_pt_version(
         assert len(declaration.body.args) == 2
 
         assert isinstance(declaration.body.args[0], Proto)
+
+        proto_expr = declaration.body.args[0]
+        assert proto_expr.num_returns == int(return_type != pt.TealType.none)
+        assert proto_expr.num_args == len(signature(subr).parameters)
+
         assert isinstance(declaration.body.args[1], type(return_value))
 
         options_v8.setSubroutine(definition)
@@ -1335,8 +1341,7 @@ def test_evaluate_subroutine_frame_pt_version(
 
         actual, _ = declaration.__teal__(options_v8)
         options_v8.setSubroutine(None)
-        with pt.TealComponent.Context.ExprEqualityContext():
-            assert actual == expected
+        assert actual == expected
 
 
 def test_docstring_parsing_with_different_format():
