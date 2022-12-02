@@ -89,9 +89,7 @@ class ProtoStackLayout(Expr):
                 f"be greater than local allocations {len(local_stack_types)}."
             )
 
-        if not all(
-            map(lambda t: t != TealType.none, arg_stack_types + local_stack_types)
-        ):
+        if any(t == TealType.none for t in arg_stack_types + local_stack_types):
             raise TealInternalError("Variables in frame memory layout must be typed.")
 
         self.num_return_allocs: int = num_return_allocs
