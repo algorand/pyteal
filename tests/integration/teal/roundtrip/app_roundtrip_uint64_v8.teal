@@ -1,0 +1,44 @@
+#pragma version 8
+txna ApplicationArgs 0
+btoi
+store 1
+load 1
+callsub roundtripper_1
+store 0
+byte 0x151f7c75
+load 0
+concat
+log
+int 1
+return
+
+// numerical_comp
+numericalcomp_0:
+proto 1 1
+int 0
+int 18446744073709551615
+frame_dig -1
+-
+frame_bury 0
+retsub
+
+// round_tripper
+roundtripper_1:
+proto 1 1
+byte ""
+frame_dig -1
+callsub numericalcomp_0
+store 2
+load 2
+callsub numericalcomp_0
+store 3
+frame_dig -1
+itob
+load 2
+itob
+concat
+load 3
+itob
+concat
+frame_bury 0
+retsub

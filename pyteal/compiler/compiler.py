@@ -46,10 +46,22 @@ class CompileOptions:
         mode: Mode = Mode.Signature,
         version: int = DEFAULT_PROGRAM_VERSION,
         optimize: OptimizeOptions = None,
+        frame_pointers: Optional[bool] = None,
     ) -> None:
         self.mode = mode
         self.version = version
         self.optimize = optimize if optimize is not None else OptimizeOptions()
+        self.use_frame_pointer: bool
+
+        if frame_pointers is None:
+            self.use_frame_pointer = self.version >= FRAME_POINTER_VERSION
+        else:
+            if frame_pointers and self.version < FRAME_POINTER_VERSION:
+                raise TealInputError(
+                    f"Try to use frame pointer with an insufficient version {self.version}."
+                )
+            else:
+                self.use_frame_pointer = frame_pointers
 
         self.currentSubroutine: Optional[SubroutineDefinition] = None
 
@@ -154,11 +166,18 @@ def compileSubroutine(
     start.validateTree()
 
     if (
-        currentSubroutine is not None
-        and currentSubroutine.get_declaration().deferred_expr is not None
+        currentSubroutine
+        and currentSubroutine.get_declaration_by_option(
+            options.use_frame_pointer
+        ).deferred_expr
     ):
         # this represents code that should be inserted before each retsub op
-        deferred_expr = cast(Expr, currentSubroutine.get_declaration().deferred_expr)
+        deferred_expr = cast(
+            Expr,
+            currentSubroutine.get_declaration_by_option(
+                options.use_frame_pointer
+            ).deferred_expr,
+        )
 
         for block in TealBlock.Iterate(start):
             if not any(op.getOp() == Op.retsub for op in block.ops):
@@ -209,7 +228,7 @@ def compileSubroutine(
     newSubroutines = referencedSubroutines - subroutine_start_blocks.keys()
     for subroutine in sorted(newSubroutines, key=lambda subroutine: subroutine.id):
         compileSubroutine(
-            subroutine.get_declaration(),
+            subroutine.get_declaration_by_option(options.use_frame_pointer),
             options,
             subroutineGraph,
             subroutine_start_blocks,
@@ -238,6 +257,7 @@ def compileTeal(
     version: int = DEFAULT_PROGRAM_VERSION,
     assembleConstants: bool = False,
     optimize: OptimizeOptions = None,
+    frame_pointers: Optional[bool] = None,
 ) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 
@@ -271,7 +291,9 @@ def compileTeal(
             )
         )
 
-    options = CompileOptions(mode=mode, version=version, optimize=optimize)
+    options = CompileOptions(
+        mode=mode, version=version, optimize=optimize, frame_pointers=frame_pointers
+    )
 
     subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
     subroutine_start_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
@@ -311,9 +333,7 @@ def compileTeal(
     if assembleConstants:
         if version < 3:
             raise TealInternalError(
-                "The minimum program version required to enable assembleConstants is 3. The current version is {}".format(
-                    version
-                )
+                f"The minimum program version required to enable assembleConstants is 3. The current version is {version}."
             )
         teal = createConstantBlocks(teal)
 

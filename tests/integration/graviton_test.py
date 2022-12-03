@@ -42,7 +42,7 @@ def wrap_compile_and_save(
     is_app = mode == pt.Mode.Application
 
     teal = PyTealDryRunExecutor(subr, mode).compile(version, assemble_constants)
-    tealfile = f'{"app" if is_app else "lsig"}_{case_name}.teal'
+    tealfile = f'{"app" if is_app else "lsig"}_{case_name}_v{version}.teal'
 
     tealdir = GENERATED / test_name
     tealdir.mkdir(parents=True, exist_ok=True)
@@ -519,7 +519,7 @@ def blackbox_test_runner(
     inspectors = list(map(lambda a: execute(algod, teal, a, exec_mode), inputs))
 
     # 4. Statistical report:
-    csvpath = GENERATED / "blackbox" / f"{tealfile}.csv"
+    csvpath = GENERATED / "blackbox" / f"{tealfile}_v{version}.csv"
     with open(csvpath, "w") as f:
         f.write(DryRunInspector.csv_report(inputs, inspectors))
 
@@ -549,6 +549,7 @@ def test_blackbox_subroutines_as_apps(
     scenario: Dict[str, Any],
 ):
     blackbox_test_runner(subr, pt.Mode.Application, scenario, 6)
+    blackbox_test_runner(subr, pt.Mode.Application, scenario, 8)
 
 
 @pytest.mark.parametrize("subr, scenario", LOGICSIG_SCENARIOS.items())
@@ -557,6 +558,7 @@ def test_blackbox_subroutines_as_logic_sigs(
     scenario: Dict[str, Any],
 ):
     blackbox_test_runner(subr, pt.Mode.Signature, scenario, 6)
+    blackbox_test_runner(subr, pt.Mode.Signature, scenario, 8)
 
 
 def blackbox_pyteal_example1():
@@ -575,22 +577,30 @@ def blackbox_pyteal_example1():
     x = 9
     args = [x]
 
-    # evaluate the programs
-    app_result = PyTealDryRunExecutor(square, Mode.Application).dryrun(args)
-    lsig_result = PyTealDryRunExecutor(square, Mode.Signature).dryrun(args)
+    def evaluate_and_check(version: int):
+        # evaluate the programs
+        app_result = PyTealDryRunExecutor(square, Mode.Application).dryrun(
+            args, compiler_version=version
+        )
+        lsig_result = PyTealDryRunExecutor(square, Mode.Signature).dryrun(
+            args, compiler_version=version
+        )
 
-    # check to see that x^2 is at the top of the stack as expected
-    assert app_result.stack_top() == x**2, app_result.report(
-        args, "stack_top() gave unexpected results for app"
-    )
-    assert lsig_result.stack_top() == x**2, lsig_result.report(
-        args, "stack_top() gave unexpected results for lsig"
-    )
+        # check to see that x^2 is at the top of the stack as expected
+        assert app_result.stack_top() == x**2, app_result.report(
+            args, "stack_top() gave unexpected results for app"
+        )
+        assert lsig_result.stack_top() == x**2, lsig_result.report(
+            args, "stack_top() gave unexpected results for lsig"
+        )
 
-    # check to see that itob of x^2 has been logged (only for the app case)
-    assert app_result.last_log() == DryRunEncoder.hex(x**2), app_result.report(
-        args, "last_log() gave unexpected results from app"
-    )
+        # check to see that itob of x^2 has been logged (only for the app case)
+        assert app_result.last_log() == DryRunEncoder.hex(x**2), app_result.report(
+            args, "last_log() gave unexpected results from app"
+        )
+
+    evaluate_and_check(6)
+    evaluate_and_check(8)
 
 
 def blackbox_pyteal_example2():
@@ -639,20 +649,24 @@ def blackbox_pyteal_example2():
         )
     )
 
-    # assert that each result is that same as what Python's math.gcd() computes
-    inspectors = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_on_sequence(
-        inputs
-    )
-    for i, result in enumerate(inspectors):
-        args = inputs[i]
-        assert result.stack_top() == math.gcd(*args), result.report(
-            args, f"failed for {args}"
+    def test_and_report(version: int):
+        # assert that each result is that same as what Python's math.gcd() computes
+        inspectors = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_on_sequence(
+            inputs, compiler_version=version
         )
+        for i, result in enumerate(inspectors):
+            args = inputs[i]
+            assert result.stack_top() == math.gcd(*args), result.report(
+                args, f"failed for {args}"
+            )
 
-    # save the CSV to ...current working directory.../euclid.csv
-    euclid_csv = DryRunInspector.csv_report(inputs, inspectors)
-    with open(Path.cwd() / "euclid.csv", "w") as f:
-        f.write(euclid_csv)
+        # save the CSV to ...current working directory.../euclid_v{version}.csv
+        euclid_csv = DryRunInspector.csv_report(inputs, inspectors)
+        with open(Path.cwd() / f"euclid_v{version}.csv", "w") as f:
+            f.write(euclid_csv)
+
+    test_and_report(6)
+    test_and_report(8)
 
 
 def blackbox_pyteal_example3():
@@ -731,6 +745,15 @@ def blackbox_pyteal_example3():
     for property, predicate in predicates.items():
         Invariant(predicate).validates(property, inspectors)
 
+    # Execute on the input sequence to get a dry-run inspectors:
+    inspectors = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_on_sequence(
+        inputs, compiler_version=8
+    )
+
+    # Assert that each invariant holds on the sequences of inputs and dry-runs:
+    for property, predicate in predicates.items():
+        Invariant(predicate).validates(property, inspectors)
+
 
 def blackbox_pyteal_example4():
     # Example 4: Using PyTealDryRunExecutor to debug an ABIReturnSubroutine with an app, logic sig and csv report
@@ -786,47 +809,53 @@ def blackbox_pyteal_example4():
     for n in range(N):
         inputs.append(tuple([random.sample(choices, n)]))
 
-    app_inspectors = app_pytealer.dryrun_on_sequence(inputs)
-
-    lsig_inspectors = lsig_pytealer.dryrun_on_sequence(inputs)
-
-    for i in range(N):
-        args = inputs[i]
-
-        app_inspector = app_inspectors[i]
-        lsig_inspector = lsig_inspectors[i]
-
-        def message(insp):
-            return insp.report(args, f"failed for {args}", row=i)
-
-        # the app should pass exactly when it's cost was within the 700 budget:
-        assert app_inspector.passed() == (app_inspector.cost() <= 700), message(
-            app_inspector
+    def test_and_report_for_app_and_lsig(_version: int):
+        app_inspectors = app_pytealer.dryrun_on_sequence(
+            inputs, compiler_version=_version
         )
-        # the lsig always passes (never goes over budget):
-        assert lsig_inspector.passed(), message(lsig_inspector)
+        lsig_inspectors = lsig_pytealer.dryrun_on_sequence(
+            inputs, compiler_version=_version
+        )
+        for i in range(N):
+            args = inputs[i]
 
-        expected = sum(args[0])
-        actual4app = app_inspector.last_log()
-        assert expected == actual4app, message(app_inspector)
+            app_inspector = app_inspectors[i]
+            lsig_inspector = lsig_inspectors[i]
 
-        if i > 0:
-            assert expected in app_inspector.final_scratch().values(), message(
+            def message(insp):
+                return insp.report(args, f"failed for {args}", row=i)
+
+            # the app should pass exactly when it's cost was within the 700 budget:
+            assert app_inspector.passed() == (app_inspector.cost() <= 700), message(
                 app_inspector
             )
-            assert expected in lsig_inspector.final_scratch().values(), message(
-                lsig_inspector
-            )
+            # the lsig always passes (never goes over budget):
+            assert lsig_inspector.passed(), message(lsig_inspector)
 
-    def report(kind):
-        assert kind in ("app", "lsig")
-        insps = app_inspectors if kind == "app" else lsig_inspectors
-        csv_report = DryRunInspector.csv_report(inputs, insps)
-        with open(Path.cwd() / f"abi_sum_{kind}.csv", "w") as f:
-            f.write(csv_report)
+            expected = sum(args[0])
+            actual4app = app_inspector.last_log()
+            assert expected == actual4app, message(app_inspector)
 
-    report("app")
-    report("lsig")
+            if i > 0:
+                assert expected in app_inspector.final_scratch().values(), message(
+                    app_inspector
+                )
+                assert expected in lsig_inspector.final_scratch().values(), message(
+                    lsig_inspector
+                )
+
+        def report(kind):
+            assert kind in ("app", "lsig")
+            insps = app_inspectors if kind == "app" else lsig_inspectors
+            csv_report = DryRunInspector.csv_report(inputs, insps)
+            with open(Path.cwd() / f"abi_sum_{kind}_v{_version}.csv", "w") as f:
+                f.write(csv_report)
+
+        report("app")
+        report("lsig")
+
+    test_and_report_for_app_and_lsig(6)
+    test_and_report_for_app_and_lsig(8)
 
 
 def blackbox_pyteal_example5():
@@ -845,23 +874,31 @@ def blackbox_pyteal_example5():
 
     inputs = [[i] for i in range(1, 11)]
 
-    app_inspect = app_pytealer.dryrun_on_sequence(inputs)
-    lsig_inspect = lsig_pytealer.dryrun_on_sequence(inputs)
-
-    for index, inspect in enumerate(app_inspect):
-        input_var = inputs[index][0]
-        assert inspect.stack_top() == input_var**3, inspect.report(
-            args=inputs[index], msg="stack_top() gave unexpected results from app"
-        )
-        assert inspect.last_log() == DryRunEncoder.hex(input_var**3), inspect.report(
-            args=inputs[index], msg="last_log() gave unexpected results from app"
+    def test_app_and_lsig(_version: int):
+        app_inspect = app_pytealer.dryrun_on_sequence(inputs, compiler_version=_version)
+        lsig_inspect = lsig_pytealer.dryrun_on_sequence(
+            inputs, compiler_version=_version
         )
 
-    for index, inspect in enumerate(lsig_inspect):
-        input_var = inputs[index][0]
-        assert inspect.stack_top() == input_var**3, inspect.report(
-            args=inputs[index], msg="stack_top() gave unexpected results from app"
-        )
+        for index, inspect in enumerate(app_inspect):
+            input_var = inputs[index][0]
+            assert inspect.stack_top() == input_var**3, inspect.report(
+                args=inputs[index], msg="stack_top() gave unexpected results from app"
+            )
+            assert inspect.last_log() == DryRunEncoder.hex(
+                input_var**3
+            ), inspect.report(
+                args=inputs[index], msg="last_log() gave unexpected results from app"
+            )
+
+        for index, inspect in enumerate(lsig_inspect):
+            input_var = inputs[index][0]
+            assert inspect.stack_top() == input_var**3, inspect.report(
+                args=inputs[index], msg="stack_top() gave unexpected results from app"
+            )
+
+    test_app_and_lsig(6)
+    test_app_and_lsig(8)
 
 
 def blackbox_pyteal_while_continue_test():
@@ -893,11 +930,21 @@ def blackbox_pyteal_while_continue_test():
             Return(i.load()),
         )
 
+    executor = PyTealDryRunExecutor(while_continue_accumulation, Mode.Signature)
+
     for x in range(30):
         args = [x]
-        lsig_result = PyTealDryRunExecutor(
-            while_continue_accumulation, Mode.Signature
-        ).dryrun(args)
+        lsig_result = executor.dryrun(args)
+        if x == 0:
+            assert not lsig_result.passed()
+        else:
+            assert lsig_result.passed()
+
+        assert lsig_result.stack_top() == x, lsig_result.report(
+            args, "stack_top() gave unexpected results for lsig"
+        )
+
+        lsig_result = executor.dryrun(args, compiler_version=8)
         if x == 0:
             assert not lsig_result.passed()
         else:
@@ -966,6 +1013,10 @@ def blackbox_pyteal_named_tupleness_test():
 
     assert inspector.stack_top() == 1
     assert inspector.passed()
+
+    inspector = lsig_pytealer.dryrun(args, compiler_version=8)
+    assert inspector.passed()
+    assert inspector.stack_top() == 1
 
 
 @pytest.mark.parametrize(

@@ -209,21 +209,25 @@ def test_pure_compilation(abi_type):
     assert [sdk_abi_type] == abi_arg_types
     assert algosdk.abi.TupleType([sdk_abi_type] * 3) == abi_ret_type
 
-    teal = roundtripper.compile(version=6)
+    def compile_and_compare(version: int):
+        teal = roundtripper.compile(version)
 
-    filename = (
-        f"app_roundtrip_{sdk_abi_type}"
-        + ("" if dynamic_length is None else f"_{dynamic_length}")
-        + ".teal"
-    )
-    tealdir = GENERATED / "roundtrip"
-    tealdir.mkdir(parents=True, exist_ok=True)
+        filename = (
+            f"app_roundtrip_{sdk_abi_type}"
+            + ("" if dynamic_length is None else f"_{dynamic_length}")
+            + f"_v{version}.teal"
+        )
+        tealdir = GENERATED / "roundtrip"
+        tealdir.mkdir(parents=True, exist_ok=True)
 
-    save_to = tealdir / filename
-    with open(save_to, "w") as f:
-        f.write(teal)
+        save_to = tealdir / filename
+        with open(save_to, "w") as f:
+            f.write(teal)
 
-    assert_teal_as_expected(save_to, FIXTURES / "roundtrip" / filename)
+        assert_teal_as_expected(save_to, FIXTURES / "roundtrip" / filename)
+
+    compile_and_compare(6)
+    compile_and_compare(8)
 
 
 @pytest.mark.parametrize("abi_type", ABI_TYPES)
@@ -251,14 +255,17 @@ def test_roundtrip(abi_type):
     abi_strat = RandomABIStrategy(sdk_abi_types[0], dynamic_length=dynamic_length)
     rand_abi_instance = abi_strat.get()
     args = (rand_abi_instance,)
-    inspector = roundtripper.dryrun(args)
 
-    cost = inspector.cost()
-    passed = inspector.passed()
-    original, mut, mut_mut = inspector.last_log()
+    def dryrun_roundtrip(version: int):
+        inspector = roundtripper.dryrun(args, compiler_version=version)
 
-    print(
-        f"""
+        cost = inspector.cost()
+        passed = inspector.passed()
+        original, mut, mut_mut = inspector.last_log()
+
+        print(
+            f"""
+version={version}
 {abi_type=}
 {sdk_abi_str=}
 {dynamic_length=}
@@ -270,21 +277,24 @@ def test_roundtrip(abi_type):
 {mut=}
 {mut_mut=}
 """
-    )
+        )
 
-    last_steps = 2
+        last_steps = 2
 
-    assert passed == (cost <= 700), inspector.report(
-        args, f"passed={passed} contradicted cost={cost}", last_steps=last_steps
-    )
-    assert rand_abi_instance == original, inspector.report(
-        args, "rand_abi_instance v. original", last_steps=last_steps
-    )
-    assert original == mut_mut, inspector.report(
-        args, "orginal v. mut_mut", last_steps=last_steps
-    )
+        assert passed == (cost <= 700), inspector.report(
+            args, f"passed={passed} contradicted cost={cost}", last_steps=last_steps
+        )
+        assert rand_abi_instance == original, inspector.report(
+            args, "rand_abi_instance v. original", last_steps=last_steps
+        )
+        assert original == mut_mut, inspector.report(
+            args, "orginal v. mut_mut", last_steps=last_steps
+        )
 
-    expected_mut = abi_strat.mutate_for_roundtrip(rand_abi_instance)
-    assert expected_mut == mut, inspector.report(
-        args, "expected_mut v. mut", last_steps=last_steps
-    )
+        expected_mut = abi_strat.mutate_for_roundtrip(rand_abi_instance)
+        assert expected_mut == mut, inspector.report(
+            args, "expected_mut v. mut", last_steps=last_steps
+        )
+
+    dryrun_roundtrip(6)
+    dryrun_roundtrip(8)

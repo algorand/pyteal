@@ -1,4 +1,5 @@
 import random
+import pytest
 
 from graviton.blackbox import DryRunInspector
 
@@ -15,8 +16,8 @@ from tests.blackbox import (
 
 
 """
-WARNING: The following ABI types Int65 and Complex130 are ONLY for the purpose of testing/demo'ing 
-ABISubroutine and graviton ABI capabilities and are NOT the recommended approach for 
+WARNING: The following ABI types Int65 and Complex130 are ONLY for the purpose of testing/demo'ing
+ABISubroutine and graviton ABI capabilities and are NOT the recommended approach for
 implementing integers and complex integers.
 A better approach would likely leverage `Uint64` (if any ABI type at all) and make use of 2's complement arithmetic.
 
@@ -299,7 +300,8 @@ def conditional_factorial(_factor: pt.abi.Uint64, *, output: pt.abi.Uint64) -> p
 # ---- integration test functions ---- #
 
 
-def test_integer65():
+@pytest.mark.parametrize("version", [6, 8])
+def test_integer65(version: int):
     bbpt_subtract_slick = PyTealDryRunExecutor(int65_sub, pt.Mode.Application)
 
     bbpt_subtract_cond = PyTealDryRunExecutor(int65_minus_cond, pt.Mode.Application)
@@ -329,7 +331,7 @@ def test_integer65():
     ]
 
     def binary_dryrun(p: PyTealDryRunExecutor) -> list[DryRunInspector]:
-        return p.dryrun_on_sequence(binary_inputs)
+        return p.dryrun_on_sequence(binary_inputs, compiler_version=version)  # type: ignore
 
     # Binary:
     inspectors_subtract_slick = binary_dryrun(bbpt_subtract_slick)
@@ -341,7 +343,9 @@ def test_integer65():
     inspectors_add = binary_dryrun(bbpt_add)
 
     # Unary:
-    inspectors_negate = bbpt_negate.dryrun_on_sequence(unary_inputs)
+    inspectors_negate = bbpt_negate.dryrun_on_sequence(
+        unary_inputs, compiler_version=version  # type: ignore
+    )
 
     for i in range(N):
         binary_args = binary_inputs[i]
@@ -382,7 +386,8 @@ def test_integer65():
         ), inspector_negate.report(unary_args, f"failed for {unary_args}", row=i)
 
 
-def test_complex130():
+@pytest.mark.parametrize("version", [6, 8])
+def test_complex130(version: int):
     # Binary:
 
     bbpt_cplx_add = PyTealDryRunExecutor(complex130_add, pt.Mode.Application)
@@ -439,15 +444,15 @@ def test_complex130():
 
     # Binary:
     def binary_dryrun(p: PyTealDryRunExecutor) -> list[DryRunInspector]:
-        return p.dryrun_on_sequence(binary_inputs)
+        return p.dryrun_on_sequence(binary_inputs, compiler_version=version)  # type: ignore
+
+    # Unary:
+    def unary_dryrun(p: PyTealDryRunExecutor) -> list[DryRunInspector]:
+        return p.dryrun_on_sequence(unary_inputs, compiler_version=version)  # type: ignore
 
     inspectors_cplx_add = binary_dryrun(bbpt_cplx_add)
 
     inspectors_cplx_mult = binary_dryrun(bbpt_cplx_mult)
-
-    # Unary:
-    def unary_dryrun(p: PyTealDryRunExecutor) -> list[DryRunInspector]:
-        return p.dryrun_on_sequence(unary_inputs)
 
     inspectors_cplx_real = unary_dryrun(bbpt_complex_real)
 
@@ -513,10 +518,12 @@ def py_factorial(n):
     return 1 if n <= 1 else n * py_factorial(n - 1)
 
 
-def test_conditional_factorial():
+@pytest.mark.parametrize("version", [6, 8])
+def test_conditional_factorial(version: int):
     ptdre = PyTealDryRunExecutor(conditional_factorial, pt.Mode.Application)
     inputs = [(n,) for n in range(20)]
-    inspectors = ptdre.dryrun_on_sequence(inputs)
+
+    inspectors = ptdre.dryrun_on_sequence(inputs, compiler_version=version)  # type: ignore
     for i, args in enumerate(inputs):
         inspector = inspectors[i]
         n = args[0]

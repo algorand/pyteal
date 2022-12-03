@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, Optional
 
 import pyteal as pt
 from pyteal import abi
@@ -14,13 +14,13 @@ class ABIRoundtrip(Generic[T]):
     def __init__(
         self,
         annotation_instance: abi.BaseType,
-        length: int | None = None,
+        length: Optional[int] = None,
     ):
         self.instance: abi.BaseType = annotation_instance
         self.type_spec: abi.TypeSpec = annotation_instance.type_spec()
         self.annotation: type[abi.BaseType] = self.type_spec.annotation_type()
 
-        self.length: int | None = length
+        self.length: Optional[int] = length
 
     def pytealer(self) -> PyTealDryRunExecutor:
         roundtrip = self.roundtrip_factory()
@@ -120,11 +120,12 @@ class ABIRoundtrip(Generic[T]):
         When the length has not been provided for a dynamic array,
         default to DEFAULT_DYNAMIC_ARRAY_LENGTH
         """
-        if self.length is not None:
-            assert self.type_spec.is_length_dynamic()  # type: ignore[attr-defined]
-        elif not self.type_spec.is_length_dynamic():  # type: ignore[attr-defined]
-            self.length = self.type_spec.length_static()  # type: ignore[attr-defined]
-        else:
+        if not self.type_spec.is_length_dynamic():  # type: ignore[attr-defined]
+            if self.length is not None:
+                assert self.length == self.type_spec.length_static()  # type: ignore[attr-defined]
+            else:
+                self.length = self.type_spec.length_static()  # type: ignore[attr-defined]
+        elif self.length is None:
             self.length = DEFAULT_DYNAMIC_ARRAY_LENGTH
 
         internal_type_spec = self.type_spec.value_type_spec()  # type: ignore[attr-defined]

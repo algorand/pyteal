@@ -1,13 +1,17 @@
 from itertools import product
-from typing import List, Literal, Optional, cast
+from typing import Callable, Literal, Optional, cast
+from inspect import signature
 
 import pytest
 from dataclasses import dataclass
 
 import pyteal as pt
-from pyteal.ast.subroutine import ABIReturnSubroutine, evaluate_subroutine
+from pyteal.ast.frame import Proto
+from pyteal.ast.subroutine import ABIReturnSubroutine, SubroutineEval
+from pyteal.compiler.compiler import FRAME_POINTER_VERSION
 
 options = pt.CompileOptions(version=5)
+options_v8 = pt.CompileOptions(version=8)
 
 
 def test_subroutine_definition():
@@ -1138,169 +1142,205 @@ def test_decorator():
         mySubroutine(a=pt.Int(1))
 
 
-def test_evaluate_subroutine_no_args():
-    cases = (
-        (pt.TealType.none, pt.Return()),
-        (pt.TealType.uint64, pt.Int(1) + pt.Int(2)),
-        (pt.TealType.uint64, pt.Return(pt.Int(1) + pt.Int(2))),
-        (pt.TealType.bytes, pt.Bytes("value")),
-        (pt.TealType.bytes, pt.Return(pt.Bytes("value"))),
-    )
+SUBROUTINE_VAR_ARGS_CASES = [
+    (pt.TealType.none, pt.Return()),
+    (pt.TealType.uint64, pt.Int(1) + pt.Int(2)),
+    (pt.TealType.uint64, pt.Return(pt.Int(1) + pt.Int(2))),
+    (pt.TealType.bytes, pt.Bytes("value")),
+    (pt.TealType.bytes, pt.Return(pt.Bytes("value"))),
+]
 
-    for (returnType, returnValue) in cases:
 
-        def mySubroutine():
-            return returnValue
+@pytest.mark.parametrize("return_type, return_value", SUBROUTINE_VAR_ARGS_CASES)
+def test_evaluate_subroutine_no_args(return_type: pt.TealType, return_value: pt.Expr):
+    def mySubroutine():
+        return return_value
 
-        definition = pt.SubroutineDefinition(mySubroutine, returnType)
+    definition = pt.SubroutineDefinition(mySubroutine, return_type)
+    evaluate_subroutine = SubroutineEval.normal_evaluator()
+
+    declaration = evaluate_subroutine(definition)
+
+    assert isinstance(declaration, pt.SubroutineDeclaration)
+    assert declaration.subroutine is definition
+
+    assert declaration.type_of() == return_value.type_of()
+    assert declaration.has_return() == return_value.has_return()
+
+    options.setSubroutine(definition)
+    expected, _ = pt.Seq([return_value]).__teal__(options)
+
+    actual, _ = declaration.__teal__(options)
+    options.setSubroutine(None)
+    assert actual == expected
+
+
+@pytest.mark.parametrize("return_type, return_value", SUBROUTINE_VAR_ARGS_CASES)
+def test_evaluate_subroutine_1_arg(return_type: pt.TealType, return_value: pt.Expr):
+    argSlots: list[pt.ScratchSlot] = []
+
+    def mySubroutine(a1):
+        assert isinstance(a1, pt.ScratchLoad)
+        argSlots.append(a1.slot)
+        return return_value
+
+    definition = pt.SubroutineDefinition(mySubroutine, return_type)
+
+    evaluate_subroutine = SubroutineEval.normal_evaluator()
+    declaration = evaluate_subroutine(definition)
+
+    assert isinstance(declaration, pt.SubroutineDeclaration)
+    assert declaration.subroutine is definition
+
+    assert declaration.type_of() == return_value.type_of()
+    assert declaration.has_return() == return_value.has_return()
+
+    assert isinstance(declaration.body, pt.Seq)
+    assert len(declaration.body.args) == 2
+
+    assert isinstance(declaration.body.args[0], pt.ScratchStackStore)
+
+    assert declaration.body.args[0].slot is argSlots[-1]
+
+    options.setSubroutine(definition)
+    expected, _ = pt.Seq([declaration.body.args[0], return_value]).__teal__(options)
+
+    actual, _ = declaration.__teal__(options)
+    options.setSubroutine(None)
+    assert actual == expected
+
+
+@pytest.mark.parametrize("return_type, return_value", SUBROUTINE_VAR_ARGS_CASES)
+def test_evaluate_subroutine_2_args(return_type: pt.TealType, return_value: pt.Expr):
+    argSlots: list[pt.ScratchSlot] = []
+
+    def mySubroutine(a1, a2):
+        assert isinstance(a1, pt.ScratchLoad)
+        argSlots.append(a1.slot)
+        assert isinstance(a2, pt.ScratchLoad)
+        argSlots.append(a2.slot)
+        return return_value
+
+    definition = pt.SubroutineDefinition(mySubroutine, return_type)
+
+    evaluate_subroutine = SubroutineEval.normal_evaluator()
+    declaration = evaluate_subroutine(definition)
+
+    assert isinstance(declaration, pt.SubroutineDeclaration)
+    assert declaration.subroutine is definition
+
+    assert declaration.type_of() == return_value.type_of()
+    assert declaration.has_return() == return_value.has_return()
+
+    assert isinstance(declaration.body, pt.Seq)
+    assert len(declaration.body.args) == 3
+
+    assert isinstance(declaration.body.args[0], pt.ScratchStackStore)
+    assert isinstance(declaration.body.args[1], pt.ScratchStackStore)
+
+    assert declaration.body.args[0].slot is argSlots[-1]
+    assert declaration.body.args[1].slot is argSlots[-2]
+
+    options.setSubroutine(definition)
+    expected, _ = pt.Seq(
+        [declaration.body.args[0], declaration.body.args[1], return_value]
+    ).__teal__(options)
+
+    actual, _ = declaration.__teal__(options)
+    options.setSubroutine(None)
+    assert actual == expected
+
+
+@pytest.mark.parametrize("return_type, return_value", SUBROUTINE_VAR_ARGS_CASES)
+def test_evaluate_subroutine_10_args(return_type: pt.TealType, return_value: pt.Expr):
+    argSlots: list[pt.ScratchSlot] = []
+
+    def mySubroutine(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10):
+        for a in (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10):
+            assert isinstance(a, pt.ScratchLoad)
+            argSlots.append(a.slot)
+        return return_value
+
+    definition = pt.SubroutineDefinition(mySubroutine, return_type)
+
+    evaluate_subroutine = SubroutineEval.normal_evaluator()
+    declaration = evaluate_subroutine(definition)
+
+    assert isinstance(declaration, pt.SubroutineDeclaration)
+    assert declaration.subroutine is definition
+
+    assert declaration.type_of() == return_value.type_of()
+    assert declaration.has_return() == return_value.has_return()
+
+    assert isinstance(declaration.body, pt.Seq)
+    assert len(declaration.body.args) == 11
+
+    for i in range(10):
+        assert isinstance(declaration.body.args[i], pt.ScratchStackStore)
+
+    for i in range(10):
+        assert declaration.body.args[i].slot is argSlots[-i - 1]
+
+    options.setSubroutine(definition)
+    expected, _ = pt.Seq(declaration.body.args[:10] + [return_value]).__teal__(options)
+
+    actual, _ = declaration.__teal__(options)
+    options.setSubroutine(None)
+    assert actual == expected
+
+
+@pytest.mark.parametrize("return_type, return_value", SUBROUTINE_VAR_ARGS_CASES)
+def test_evaluate_subroutine_frame_pt_version(
+    return_type: pt.TealType, return_value: pt.Expr
+):
+    def mySubroutine_no_arg():
+        return return_value
+
+    def mySubroutine_arg_1(a1):
+        return return_value
+
+    def mySubroutine_arg_2(a1, a2):
+        return return_value
+
+    def mySubroutine_arg_10(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10):
+        return return_value
+
+    for subr in [
+        mySubroutine_no_arg,
+        mySubroutine_arg_1,
+        mySubroutine_arg_2,
+        mySubroutine_arg_10,
+    ]:
+        subr = cast(Callable[..., pt.Expr], subr)
+        definition = pt.SubroutineDefinition(subr, return_type)
+        evaluate_subroutine = SubroutineEval.fp_evaluator()
+
         declaration = evaluate_subroutine(definition)
 
         assert isinstance(declaration, pt.SubroutineDeclaration)
         assert declaration.subroutine is definition
 
-        assert declaration.type_of() == returnValue.type_of()
-        assert declaration.has_return() == returnValue.has_return()
-
-        options.setSubroutine(definition)
-        expected, _ = pt.Seq([returnValue]).__teal__(options)
-
-        actual, _ = declaration.__teal__(options)
-        options.setSubroutine(None)
-        assert actual == expected
-
-
-def test_evaluate_subroutine_1_arg():
-    cases = (
-        (pt.TealType.none, pt.Return()),
-        (pt.TealType.uint64, pt.Int(1) + pt.Int(2)),
-        (pt.TealType.uint64, pt.Return(pt.Int(1) + pt.Int(2))),
-        (pt.TealType.bytes, pt.Bytes("value")),
-        (pt.TealType.bytes, pt.Return(pt.Bytes("value"))),
-    )
-
-    for (returnType, returnValue) in cases:
-        argSlots: List[pt.ScratchSlot] = []
-
-        def mySubroutine(a1):
-            assert isinstance(a1, pt.ScratchLoad)
-            argSlots.append(a1.slot)
-            return returnValue
-
-        definition = pt.SubroutineDefinition(mySubroutine, returnType)
-        declaration = evaluate_subroutine(definition)
-
-        assert isinstance(declaration, pt.SubroutineDeclaration)
-        assert declaration.subroutine is definition
-
-        assert declaration.type_of() == returnValue.type_of()
-        assert declaration.has_return() == returnValue.has_return()
+        assert declaration.type_of() == return_value.type_of()
+        assert declaration.has_return() == return_value.has_return()
 
         assert isinstance(declaration.body, pt.Seq)
         assert len(declaration.body.args) == 2
 
-        assert isinstance(declaration.body.args[0], pt.ScratchStackStore)
+        assert isinstance(declaration.body.args[0], Proto)
 
-        assert declaration.body.args[0].slot is argSlots[-1]
+        proto_expr = declaration.body.args[0]
+        assert proto_expr.num_returns == int(return_type != pt.TealType.none)
+        assert proto_expr.num_args == len(signature(subr).parameters)
 
-        options.setSubroutine(definition)
-        expected, _ = pt.Seq([declaration.body.args[0], returnValue]).__teal__(options)
+        assert isinstance(declaration.body.args[1], type(return_value))
 
-        actual, _ = declaration.__teal__(options)
-        options.setSubroutine(None)
-        assert actual == expected
-
-
-def test_evaluate_subroutine_2_args():
-    cases = (
-        (pt.TealType.none, pt.Return()),
-        (pt.TealType.uint64, pt.Int(1) + pt.Int(2)),
-        (pt.TealType.uint64, pt.Return(pt.Int(1) + pt.Int(2))),
-        (pt.TealType.bytes, pt.Bytes("value")),
-        (pt.TealType.bytes, pt.Return(pt.Bytes("value"))),
-    )
-
-    for (returnType, returnValue) in cases:
-        argSlots: List[pt.ScratchSlot] = []
-
-        def mySubroutine(a1, a2):
-            assert isinstance(a1, pt.ScratchLoad)
-            argSlots.append(a1.slot)
-            assert isinstance(a2, pt.ScratchLoad)
-            argSlots.append(a2.slot)
-            return returnValue
-
-        definition = pt.SubroutineDefinition(mySubroutine, returnType)
-
-        declaration = evaluate_subroutine(definition)
-
-        assert isinstance(declaration, pt.SubroutineDeclaration)
-        assert declaration.subroutine is definition
-
-        assert declaration.type_of() == returnValue.type_of()
-        assert declaration.has_return() == returnValue.has_return()
-
-        assert isinstance(declaration.body, pt.Seq)
-        assert len(declaration.body.args) == 3
-
-        assert isinstance(declaration.body.args[0], pt.ScratchStackStore)
-        assert isinstance(declaration.body.args[1], pt.ScratchStackStore)
-
-        assert declaration.body.args[0].slot is argSlots[-1]
-        assert declaration.body.args[1].slot is argSlots[-2]
-
-        options.setSubroutine(definition)
-        expected, _ = pt.Seq(
-            [declaration.body.args[0], declaration.body.args[1], returnValue]
-        ).__teal__(options)
-
-        actual, _ = declaration.__teal__(options)
-        options.setSubroutine(None)
-        assert actual == expected
-
-
-def test_evaluate_subroutine_10_args():
-    cases = (
-        (pt.TealType.none, pt.Return()),
-        (pt.TealType.uint64, pt.Int(1) + pt.Int(2)),
-        (pt.TealType.uint64, pt.Return(pt.Int(1) + pt.Int(2))),
-        (pt.TealType.bytes, pt.Bytes("value")),
-        (pt.TealType.bytes, pt.Return(pt.Bytes("value"))),
-    )
-
-    for (returnType, returnValue) in cases:
-        argSlots: List[pt.ScratchSlot] = []
-
-        def mySubroutine(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10):
-            for a in (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10):
-                assert isinstance(a, pt.ScratchLoad)
-                argSlots.append(a.slot)
-            return returnValue
-
-        definition = pt.SubroutineDefinition(mySubroutine, returnType)
-        declaration = evaluate_subroutine(definition)
-
-        assert isinstance(declaration, pt.SubroutineDeclaration)
-        assert declaration.subroutine is definition
-
-        assert declaration.type_of() == returnValue.type_of()
-        assert declaration.has_return() == returnValue.has_return()
-
-        assert isinstance(declaration.body, pt.Seq)
-        assert len(declaration.body.args) == 11
-
-        for i in range(10):
-            assert isinstance(declaration.body.args[i], pt.ScratchStackStore)
-
-        for i in range(10):
-            assert declaration.body.args[i].slot is argSlots[-i - 1]
-
-        options.setSubroutine(definition)
-        expected, _ = pt.Seq(declaration.body.args[:10] + [returnValue]).__teal__(
-            options
+        options_v8.setSubroutine(definition)
+        expected, _ = pt.Seq([declaration.body.args[0], return_value]).__teal__(
+            options_v8
         )
 
-        actual, _ = declaration.__teal__(options)
-        options.setSubroutine(None)
+        actual, _ = declaration.__teal__(options_v8)
+        options_v8.setSubroutine(None)
         assert actual == expected
 
 
@@ -1505,3 +1545,9 @@ def test_override_abi_method_name():
 
     mspec = abi_meth_2.method_spec().dictify()
     assert mspec["name"] == "overriden_add"
+
+
+def test_frame_option_version_range_well_formed():
+    assert (
+        pt.Op.callsub.min_version < FRAME_POINTER_VERSION < pt.MAX_PROGRAM_VERSION + 1
+    )
