@@ -565,7 +565,7 @@ def test_blackbox_subroutines_as_apps(
 
     if subr.name() == "slow_fibonacci":
         assert len(inspectors6) == len(inspectors8) == 18
-        # NOTE the last case of inspector 8 (compilation with frame pointer)
+        # NOTE! the last case of inspector 8 (slow_fibonacci compilation with frame pointer)
         # does not blow up the 70k budget limit, so we skip specifically for this one.
 
         del inspectors6[-1]
