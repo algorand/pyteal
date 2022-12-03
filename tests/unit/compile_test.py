@@ -6,13 +6,13 @@ import pyteal as pt
 
 
 def test_abi_algobank():
-    from examples.application.abi.algobank import (
+    from pyteal_examples.application.abi.algobank import (
         approval_program,
         clear_state_program,
         contract,
     )
 
-    target_dir = Path.cwd() / "examples" / "application" / "abi"
+    target_dir = Path.cwd() / "pyteal_examples" / "application" / "abi"
 
     with open(
         target_dir / "algobank_approval.teal", "r"
@@ -36,13 +36,13 @@ def test_abi_algobank():
 
 
 def test_basic_bank():
-    from examples.signature.basic import bank_for_account
+    from pyteal_examples.signature.basic import bank_for_account
 
     program = bank_for_account(
         "ZZAF5ARA4MEC5PVDOP64JM5O5MQST63Q2KOY2FLYFLXXD3PFSNJJBYAFZM"
     )
 
-    target_path = Path.cwd() / "examples" / "signature" / "basic.teal"
+    target_path = Path.cwd() / "pyteal_examples" / "signature" / "basic.teal"
 
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
@@ -50,11 +50,11 @@ def test_basic_bank():
 
 
 def test_atomic_swap():
-    from examples.signature.atomic_swap import htlc
+    from pyteal_examples.signature.atomic_swap import htlc
 
     program = htlc()
 
-    target_path = Path.cwd() / "examples" / "signature" / "atomic_swap.teal"
+    target_path = Path.cwd() / "pyteal_examples" / "signature" / "atomic_swap.teal"
 
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
@@ -62,22 +62,22 @@ def test_atomic_swap():
 
 
 def test_periodic_payment():
-    from examples.signature.periodic_payment import periodic_payment
+    from pyteal_examples.signature.periodic_payment import periodic_payment
 
     program = periodic_payment()
 
-    target_path = Path.cwd() / "examples" / "signature" / "periodic_payment.teal"
+    target_path = Path.cwd() / "pyteal_examples" / "signature" / "periodic_payment.teal"
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
         assert pt.compileTeal(program, mode=pt.Mode.Signature, version=2) == target
 
 
 def test_split():
-    from examples.signature.split import split
+    from pyteal_examples.signature.split import split
 
     program = split()
 
-    target_path = Path.cwd() / "examples" / "signature" / "split.teal"
+    target_path = Path.cwd() / "pyteal_examples" / "signature" / "split.teal"
 
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
@@ -85,11 +85,11 @@ def test_split():
 
 
 def test_dutch_auction():
-    from examples.signature.dutch_auction import dutch_auction
+    from pyteal_examples.signature.dutch_auction import dutch_auction
 
     program = dutch_auction()
 
-    target_path = Path.cwd() / "examples" / "signature" / "dutch_auction.teal"
+    target_path = Path.cwd() / "pyteal_examples" / "signature" / "dutch_auction.teal"
 
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
@@ -97,11 +97,11 @@ def test_dutch_auction():
 
 
 def test_recurring_swap():
-    from examples.signature.recurring_swap import recurring_swap
+    from pyteal_examples.signature.recurring_swap import recurring_swap
 
     program = recurring_swap()
 
-    target_path = Path.cwd() / "examples" / "signature" / "recurring_swap.teal"
+    target_path = Path.cwd() / "pyteal_examples" / "signature" / "recurring_swap.teal"
 
     with open(target_path, "r") as target_file:
         target = "".join(target_file.readlines()).strip()
@@ -109,7 +109,7 @@ def test_recurring_swap():
 
 
 def test_asset():
-    from examples.application.asset import approval_program, clear_state_program
+    from pyteal_examples.application.asset import approval_program, clear_state_program
 
     approval = approval_program()
     clear_state = clear_state_program()
@@ -120,7 +120,7 @@ def test_asset():
 
 
 def test_security_token():
-    from examples.application.security_token import (
+    from pyteal_examples.application.security_token import (
         approval_program,
         clear_state_program,
     )
@@ -134,7 +134,7 @@ def test_security_token():
 
 
 def test_vote():
-    from examples.application.vote import approval_program, clear_state_program
+    from pyteal_examples.application.vote import approval_program, clear_state_program
 
     approval = approval_program()
     clear_state = clear_state_program()

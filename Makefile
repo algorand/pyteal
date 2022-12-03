@@ -33,7 +33,7 @@ bundle-docs: bundle-docs-clean
 check-generate-init:
 	python -m scripts.generate_init --check
 
-ALLPY = docs examples pyteal scripts tests *.py
+ALLPY = docs pyteal_examples pyteal scripts tests *.py
 black:
 	black --check $(ALLPY)
 

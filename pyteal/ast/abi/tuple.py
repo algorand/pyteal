@@ -567,7 +567,7 @@ class NamedTuple(Tuple):
         """This method ensures one only constructs directly from `NamedTuple`,
         rather than inheriting from `NamedTuple`'s inheritance.
 
-        We want to prohibit the following examples:
+        We want to prohibit the following pyteal_examples:
 
             .. code-block:: python
 

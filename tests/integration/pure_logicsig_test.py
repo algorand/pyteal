@@ -5,7 +5,7 @@ import pytest
 
 from pyteal import compileTeal, Mode
 
-import examples.signature.factorizer_game as factorizer
+import pyteal_examples.signature.factorizer_game as factorizer
 
 from tests.blackbox import algod_with_assertion
 from graviton.blackbox import (
