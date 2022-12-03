@@ -1087,6 +1087,7 @@ class SubroutineEval:
                 return self
 
             def __exit__(self, *_):
+                # HANG NOTE: TODO revisit this part, sounds right?
                 SubroutineEval.Context.config_use_frame_pointer = False
                 SubroutineEval.Context.proto = self.prev_ctxt_proto
                 return None
