@@ -83,8 +83,7 @@ class BaseType(ABC):
         self._type_spec: Final[TypeSpec] = spec
         self._stored_value: AbstractVar
 
-        if SubroutineEval.Context.config_use_frame_pointer:
-            assert SubroutineEval.Context.proto
+        if SubroutineEval.Context.proto:
             proto = SubroutineEval.Context.proto
 
             assert proto.mem_layout

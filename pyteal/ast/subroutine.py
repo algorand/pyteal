@@ -1073,22 +1073,18 @@ class SubroutineEval:
         return cls(SubroutineEval.var_n_loaded_fp, True)
 
     class Context:
-        config_use_frame_pointer: bool = False
         proto: Optional[Proto] = None
 
         class CompileWithFrameContext(AbstractContextManager):
             def __init__(self, _proto: Proto):
                 super().__init__()
-                self.prev_ctxt_proto: Optional[Proto] = SubroutineEval.Context.proto
+                self.prev_ctxt_proto = SubroutineEval.Context.proto
                 SubroutineEval.Context.proto = _proto
 
             def __enter__(self):
-                SubroutineEval.Context.config_use_frame_pointer = True
                 return self
 
             def __exit__(self, *_):
-                # HANG NOTE: TODO revisit this part, sounds right?
-                SubroutineEval.Context.config_use_frame_pointer = False
                 SubroutineEval.Context.proto = self.prev_ctxt_proto
                 return None
 
