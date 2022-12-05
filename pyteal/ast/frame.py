@@ -1,5 +1,5 @@
 from itertools import groupby
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Final
 
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
@@ -11,6 +11,9 @@ from pyteal.ir import TealBlock, TealSimpleBlock, TealOp, Op
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
+
+
+FRAME_LOCAL_NUM: Final[int] = 128
 
 
 class LocalTypeSegment(Expr):
