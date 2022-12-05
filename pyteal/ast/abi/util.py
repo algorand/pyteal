@@ -512,7 +512,7 @@ def type_spec_is_assignable_to(a: TypeSpec, b: TypeSpec) -> bool:
     For `abi.NamedTuple`, we allow mutual assigning between `abi.Tuple` and `abi.NamedTuple`.
     But between `abi.NamedTuple`, we only return true when the type specs are identical, or we cannot compare against generality.
 
-    Some pyteal_examples are illustrated as following:
+    Some examples are illustrated as following:
 
     =========================== =========================== ============= ====================================================================
     Type :code:`a`              Type :code:`b`              Assignable?   Reason

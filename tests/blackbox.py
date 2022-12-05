@@ -276,7 +276,7 @@ class PyTealDryRunExecutor:
                 * when present, the output is encoded as TealType.bytes and concatenated to the rewturn
                 method selector. This can be decoded by the receiver using appropriate ABI-libraries
 
-        For illustrative pyteal_examples of how to use this method please refer to the integration test file `graviton_test.py` and especially:
+        For illustrative examples of how to use this method please refer to the integration test file `graviton_test.py` and especially:
 
         * `blackbox_pyteal_example1()`: Using blackbox_pyteal() for a simple test of both an app and logic sig
         * `blackbox_pyteal_example2()`: Using blackbox_pyteal() to make 400 assertions and generate a CSV report with 400 dryrun rows

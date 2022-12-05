@@ -10,19 +10,19 @@ ignore =
 
 per-file-ignores =
     pyteal/compiler/optimizer/__init__.py:          F401
-    pyteal_examples/application/abi/algobank.py:           F403, F405
-    pyteal_examples/application/asset.py:                  F403, F405
-    pyteal_examples/application/opup.py:                   F403, F405
-    pyteal_examples/application/security_token.py:         F403, F405
-    pyteal_examples/application/vote.py:                   F403, F405
-    pyteal_examples/signature/atomic_swap.py:              F403, F405
-    pyteal_examples/signature/basic.py:                    F403, F405
-    pyteal_examples/signature/dutch_auction.py:            F403, F405
-    pyteal_examples/signature/periodic_payment_deploy.py:  F403, F405
-    pyteal_examples/signature/recurring_swap.py:           F403, F405
-    pyteal_examples/signature/split.py:                    F403, F405
-    pyteal_examples/signature/periodic_payment.py:         F403, F405
-    pyteal_examples/signature/recurring_swap_deploy.py:    F403, F405
+    examples/application/abi/algobank.py:           F403, F405
+    examples/application/asset.py:                  F403, F405
+    examples/application/opup.py:                   F403, F405
+    examples/application/security_token.py:         F403, F405
+    examples/application/vote.py:                   F403, F405
+    examples/signature/atomic_swap.py:              F403, F405
+    examples/signature/basic.py:                    F403, F405
+    examples/signature/dutch_auction.py:            F403, F405
+    examples/signature/periodic_payment_deploy.py:  F403, F405
+    examples/signature/recurring_swap.py:           F403, F405
+    examples/signature/split.py:                    F403, F405
+    examples/signature/periodic_payment.py:         F403, F405
+    examples/signature/recurring_swap_deploy.py:    F403, F405
     pyteal/__init__.py:                             F401, F403
     pyteal/ir/ops.py:                               E221
     tests/unit/module_test.py:                      F401, F403
