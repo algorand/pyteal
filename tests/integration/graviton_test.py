@@ -567,7 +567,7 @@ def test_blackbox_subroutines_as_apps(
 
     if subr.name() == "slow_fibonacci":
         assert len(inspectors6) == len(inspectors8) == 18
-        # NOTE the last case of inspector 8 (compilation with frame pointer)
+        # NOTE! the last case of inspector 8 (slow_fibonacci compilation with frame pointer)
         # does not blow up the 70k budget limit, so we skip specifically for this one.
 
         del inspectors6[-1]
@@ -825,7 +825,14 @@ def blackbox_pyteal_example3():
 
     # Assert that each invariant holds on the sequences of inputs and dry-runs:
     for property, predicate in predicates.items():
-        Invariant(predicate).validates(property, inspectors)
+        Invariant(predicate).validates(property, inspectors8)
+
+    Invariant.full_validation(
+        APP_IDENTICAL_PREDICATES,
+        inspectors=inspectors6,
+        identities=inspectors8,
+        msg="Mode.Application example 3",
+    )
 
 
 def blackbox_pyteal_example4():
@@ -1128,6 +1135,13 @@ def blackbox_pyteal_named_tupleness_test():
     inspector = lsig_pytealer.dryrun(args, compiler_version=8)
     assert inspector.passed()
     assert inspector.stack_top() == 1
+
+    Invariant.full_validation(
+        LSIG_IDENTICAL_PREDICATES,
+        inspectors=[inspector6],
+        identities=[inspector8],
+        msg="Mode.Signature NamedTuple example",
+    )
 
 
 @pytest.mark.parametrize(
