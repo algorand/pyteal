@@ -43,7 +43,7 @@ _application_opcode_budget = 700
 
 
 @pytest.mark.parametrize("source", pt.OpUpFeeSource)
-@pytest.mark.parametrize("inner_txn_count", list(range(1, 5)))
+@pytest.mark.parametrize("inner_txn_count", range(1, 5))
 @pytest.mark.parametrize("with_funding", [True, False])
 def test_opup_maximize_budget(
     source: pt.OpUpFeeSource, inner_txn_count: int, with_funding: bool
