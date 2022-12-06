@@ -95,7 +95,6 @@ def test_opup_maximize_budget(
         sp.fee = algosdk.constants.min_txn_fee
         result = _dryrun(maximize_budget, DryRunExecutor.SUGGESTED_PARAMS, [])
         assert not result.passed()
-        assert result.budget_added() == 0
 
 
 @pytest.mark.parametrize("source", [f for f in pt.OpUpFeeSource])
