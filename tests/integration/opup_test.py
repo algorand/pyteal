@@ -79,7 +79,7 @@ def test_opup_maximize_budget(
         sp = DryRunExecutor.SUGGESTED_PARAMS
         sp.fee = (
             innerTxnFeeMicroAlgos + algosdk.constants.min_txn_fee
-            if pt.OpUpFeeSource.GroupCredit
+            if source == pt.OpUpFeeSource.GroupCredit
             else sp.fee
         )
 
@@ -138,7 +138,7 @@ def test_opup_ensure_budget(
         sp = DryRunExecutor.SUGGESTED_PARAMS
         sp.fee = (
             innerTxnFeeMicroAlgos + algosdk.constants.min_txn_fee
-            if pt.OpUpFeeSource.GroupCredit
+            if source == pt.OpUpFeeSource.GroupCredit
             else sp.fee
         )
 
