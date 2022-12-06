@@ -300,10 +300,6 @@ def conditional_factorial(_factor: pt.abi.Uint64, *, output: pt.abi.Uint64) -> p
 # ---- integration test functions ---- #
 
 
-def pynum_to_int65tuple(n):
-    return (n >= 0, abs(n))
-
-
 @pytest.mark.parametrize("version", [6, 8])
 def test_integer65(version: int):
     bbpt_subtract_slick = PyTealDryRunExecutor(int65_sub, pt.Mode.Application)
@@ -318,7 +314,6 @@ def test_integer65(version: int):
 
     def pynum_to_int65tuple(n):
         return (n >= 0, abs(n))
-    
     def pytuple_to_num(t):
         s, x = t
         return x if s else -x
