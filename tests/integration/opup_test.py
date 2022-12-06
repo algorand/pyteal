@@ -42,7 +42,7 @@ def _dryrun(
 _application_opcode_budget = 700
 
 
-@pytest.mark.parametrize("source", [f for f in pt.OpUpFeeSource])
+@pytest.mark.parametrize("source", pt.OpUpFeeSource)
 @pytest.mark.parametrize("inner_txn_count", list(range(1, 5)))
 @pytest.mark.parametrize("with_funding", [True, False])
 def test_opup_maximize_budget(
