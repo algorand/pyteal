@@ -95,6 +95,7 @@ def test_opup_maximize_budget(
         sp.fee = algosdk.constants.min_txn_fee
         result = _dryrun(maximize_budget, DryRunExecutor.SUGGESTED_PARAMS, [])
         assert not result.passed()
+        assert result.budget_added() == 0
 
 
 @pytest.mark.parametrize("source", [f for f in pt.OpUpFeeSource])
@@ -148,14 +149,9 @@ def test_opup_ensure_budget(
         # Since ensure_budget guarantees _at least_ the required budget, the
         # assertions confirm minimum expected budget added without significantly
         # overshooting the mark.
-        assert (
-            cast(int, result.budget_added())
-            >= _application_opcode_budget * inner_txn_count
-        )
-        assert (
-            cast(int, result.budget_added())
-            <= _application_opcode_budget * inner_txn_count + _application_opcode_budget
-        )
+        actual = cast(int, result.budget_added())
+        threshold = _application_opcode_budget * inner_txn_count
+        assert threshold <= actual <= threshold + _application_opcode_budget
     else:
         # Withholding account and/or transaction fee funding fails the
         # transaction.
