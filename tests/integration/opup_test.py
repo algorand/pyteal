@@ -6,11 +6,11 @@ from typing import cast
 import pyteal as pt
 from tests.blackbox import (
     Blackbox,
+    BlackboxWrapper,
     PyTealDryRunExecutor,
 )
 import tests
 from graviton.blackbox import DryRunExecutor, DryRunInspector, ExecutionMode
-from tests.blackbox import BlackboxWrapper
 
 from algosdk.v2client.models import Account
 import algosdk
