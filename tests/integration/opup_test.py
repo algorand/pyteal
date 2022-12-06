@@ -119,7 +119,11 @@ def test_opup_maximize_budget(
 def test_opup_ensure_budget(
     source: pt.OpUpFeeSource, budget_added: int, with_funding: bool
 ):
-    inner_txn_count = int(budget_added / _application_opcode_budget) + 1 if budget_added % _application_opcode_budget == 0 else math.ceil(budget_added / _application_opcode_budget)
+    inner_txn_count = (
+        int(budget_added / _application_opcode_budget) + 1
+        if budget_added % _application_opcode_budget == 0
+        else math.ceil(budget_added / _application_opcode_budget)
+    )
 
     innerTxnFeeMicroAlgos = (
         inner_txn_count * algosdk.constants.min_txn_fee + algosdk.constants.min_txn_fee
