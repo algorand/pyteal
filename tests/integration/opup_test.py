@@ -51,6 +51,7 @@ def _expected_execution_cost_ops(
 @pytest.mark.parametrize("source", pt.OpUpFeeSource)
 @pytest.mark.parametrize("inner_txn_count", range(1, 5))
 @pytest.mark.parametrize("with_funding", [True, False])
+@pytest.mark.serial  # Serial due to reused account + application state
 def test_opup_maximize_budget(
     source: pt.OpUpFeeSource, inner_txn_count: int, with_funding: bool
 ):
@@ -116,6 +117,7 @@ def test_opup_maximize_budget(
 @pytest.mark.parametrize("source", [f for f in pt.OpUpFeeSource])
 @pytest.mark.parametrize("budget_added", range(0, 12_000, 2_000))
 @pytest.mark.parametrize("with_funding", [True, False])
+@pytest.mark.serial  # Serial due to reused account + application state
 def test_opup_ensure_budget(
     source: pt.OpUpFeeSource, budget_added: int, with_funding: bool
 ):
