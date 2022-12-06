@@ -2347,6 +2347,13 @@ def test_router_app():
         clear_state=pt.OnCompleteAction.call_only(pt.Approve()),
     )
 
+    with pytest.raises(pt.TealInputError) as e:
+        pt.Router("will-error", on_completion_actions).compile_program(
+            version=6, frame_pointers=True
+        )
+
+    assert "Try to use frame pointer with an insufficient version 6" in str(e)
+
     _router_with_oc = pt.Router(
         "ASimpleQuestionablyRobustContract", on_completion_actions
     )

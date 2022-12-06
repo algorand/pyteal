@@ -121,7 +121,7 @@ class ABIRoundtrip(Generic[T]):
         default to DEFAULT_DYNAMIC_ARRAY_LENGTH
         """
         if not self.type_spec.is_length_dynamic():  # type: ignore[attr-defined]
-            if self.length:
+            if self.length is not None:
                 assert self.length == self.type_spec.length_static()  # type: ignore[attr-defined]
             else:
                 self.length = self.type_spec.length_static()  # type: ignore[attr-defined]

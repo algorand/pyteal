@@ -1,8 +1,14 @@
 # Unreleased
 
+# Added
+* Added frame pointer support for subroutine arguments, replacing the previous usage of scratch. ([#562](https://github.com/algorand/pyteal/pull/562))
+
 # Fixed
 * Allowing the `MethodCall` and `ExecuteMethodCall` to be passed `None` as app_id argument in the case of an app create transaction ([#592](https://github.com/algorand/pyteal/pull/592))
 
+# Changed
+* Introducing `AbstractVar` to abstract value access: store, load, and stack type. ([#584](https://github.com/algorand/pyteal/pull/584))
+  * NOTE: a backwards incompatable change was imposed in this PR: previous ABI value's public member `stored_value` with type `ScratchVar`, is now changed to protected member `_stored_value` with type `AbstractVar`.
 
 # 0.20.1
 

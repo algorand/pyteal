@@ -724,6 +724,7 @@ class Router:
         version: int = DEFAULT_TEAL_VERSION,
         assemble_constants: bool = False,
         optimize: OptimizeOptions = None,
+        frame_pointers: Optional[bool] = None,
     ) -> tuple[str, str, sdk_abi.Contract]:
         """
         Constructs and compiles approval and clear-state programs from the registered methods and
@@ -749,6 +750,7 @@ class Router:
             version=version,
             assembleConstants=assemble_constants,
             optimize=optimize,
+            frame_pointers=frame_pointers,
         )
         csp_compiled = compileTeal(
             csp,
@@ -756,6 +758,7 @@ class Router:
             version=version,
             assembleConstants=assemble_constants,
             optimize=optimize,
+            frame_pointers=frame_pointers,
         )
         return ap_compiled, csp_compiled, contract
 

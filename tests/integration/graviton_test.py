@@ -818,6 +818,15 @@ def blackbox_pyteal_example3():
         msg="Mode.Application example 3",
     )
 
+    # Execute on the input sequence to get a dry-run inspectors:
+    inspectors = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_on_sequence(
+        inputs, compiler_version=8
+    )
+
+    # Assert that each invariant holds on the sequences of inputs and dry-runs:
+    for property, predicate in predicates.items():
+        Invariant(predicate).validates(property, inspectors)
+
 
 def blackbox_pyteal_example4():
     # Example 4: Using PyTealDryRunExecutor to debug an ABIReturnSubroutine with an app, logic sig and csv report
@@ -1115,6 +1124,10 @@ def blackbox_pyteal_named_tupleness_test():
         identities=[inspector8],
         msg="Mode.Signature NamedTuple example",
     )
+
+    inspector = lsig_pytealer.dryrun(args, compiler_version=8)
+    assert inspector.passed()
+    assert inspector.stack_top() == 1
 
 
 @pytest.mark.parametrize(

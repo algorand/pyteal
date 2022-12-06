@@ -89,18 +89,12 @@ class ProtoStackLayout(Expr):
                 f"be greater than local allocations {len(local_stack_types)}."
             )
 
-        if not all(map(lambda t: t != TealType.none, arg_stack_types)):
+        if any(t == TealType.none for t in arg_stack_types + local_stack_types):
             raise TealInternalError("Variables in frame memory layout must be typed.")
 
         self.num_return_allocs: int = num_return_allocs
         self.arg_stack_types: list[TealType] = arg_stack_types
         self.local_stack_types: list[TealType] = local_stack_types
-
-        # Type check of local variables are performed over LocalTypeSegments
-        self.succinct_repr: list[LocalTypeSegment] = [
-            LocalTypeSegment(t_type, len(list(dup_seg)))
-            for t_type, dup_seg in groupby(self.local_stack_types)
-        ]
 
     def __getitem__(self, index: int) -> TealType:
         if index < 0:
@@ -116,10 +110,19 @@ class ProtoStackLayout(Expr):
     def type_of(self) -> TealType:
         return TealType.none
 
+    def _succinct_repr(self) -> list[LocalTypeSegment]:
+        return [
+            LocalTypeSegment(t_type, len(list(dup_seg)))
+            for t_type, dup_seg in groupby(self.local_stack_types)
+        ]
+
     def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
         srt = TealSimpleBlock([])
         end = srt
-        for iter_seg in self.succinct_repr:
+
+        # Type check of local variables are performed over LocalTypeSegments
+        succinct_repr: list[LocalTypeSegment] = self._succinct_repr()
+        for iter_seg in succinct_repr:
             seg_srt, seg_end = iter_seg.__teal__(options)
             end.setNextBlock(seg_srt)
             end = seg_end
@@ -201,7 +204,7 @@ class FrameDig(Expr):
     """An expression that digs a value from a position around frame pointer.
 
     This class is intentionally hidden because it's too basic to directly expose.
-    his is used only internally by FrameVar.
+    This is used only internally by FrameVar.
     """
 
     def __init__(self, frame_index: int, *, inferred_type: Optional[TealType] = None):
@@ -235,7 +238,7 @@ class FrameBury(Expr):
     """An expression that buries a value to a position around frame pointer.
 
     This class is intentionally hidden because it's too basic to directly expose.
-    his is used only internally by FrameVar.
+    This is used only internally by FrameVar.
     """
 
     def __init__(

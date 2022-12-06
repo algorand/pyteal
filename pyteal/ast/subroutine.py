@@ -18,82 +18,52 @@ if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
 
 
-class _SubroutineDeclByVersion:
+class _SubroutineDeclByOption:
     def __init__(self, subroutine_def: "SubroutineDefinition") -> None:
-        from pyteal.compiler.compiler import FRAME_POINTER_VERSION, MAX_PROGRAM_VERSION
-
         self.subroutine: SubroutineDefinition = subroutine_def
-        self.version_map: dict[range, Optional[SubroutineDeclaration]] = {
-            range(Op.callsub.min_version, FRAME_POINTER_VERSION): None,
-            range(FRAME_POINTER_VERSION, MAX_PROGRAM_VERSION + 1): None,
+        self.option_map: dict[bool, Optional[SubroutineDeclaration]] = {
+            True: None,
+            False: None,
         }
-        self.version_method: dict[range, SubroutineEval] = {
-            range(
-                Op.callsub.min_version, FRAME_POINTER_VERSION
-            ): SubroutineEval.normal_evaluator(),
-            range(
-                FRAME_POINTER_VERSION, MAX_PROGRAM_VERSION + 1
-            ): SubroutineEval.fp_evaluator(),
+        self.option_method: dict[bool, SubroutineEval] = {
+            True: SubroutineEval.fp_evaluator(),
+            False: SubroutineEval.normal_evaluator(),
         }
         self.has_return: Optional[bool] = None
         self.type_of: Optional[TealType] = None
 
     def get_declaration(self) -> "SubroutineDeclaration":
-        return self.get_declaration_by_version(Op.callsub.min_version)
+        return self.get_declaration_by_option(False)
 
-    def get_declaration_by_version(self, version: int) -> "SubroutineDeclaration":
-        from pyteal.compiler.compiler import MAX_PROGRAM_VERSION
+    def get_declaration_by_option(
+        self,
+        fp_option: bool = True,
+    ) -> "SubroutineDeclaration":
+        decl = self.option_map[fp_option]
+        if decl is not None:
+            return decl
+        self.option_map[fp_option] = self.option_method[fp_option](self.subroutine)
+        return cast(SubroutineDeclaration, self.option_map[fp_option])
 
-        for _r, decl in self.version_map.items():
-            if version not in _r:
-                continue
-            if decl:
-                return decl
-            self.version_map[_r] = self.version_method[_r](self.subroutine)
-            return cast(SubroutineDeclaration, self.version_map[_r])
-
-        raise TealInputError(
-            f"version {version} must be in range [{Op.callsub.min_version}, {MAX_PROGRAM_VERSION}]."
-        )
-
-    def __erase_version(self, version: int) -> None:
-        from pyteal.compiler.compiler import MAX_PROGRAM_VERSION
-
-        for _r in self.version_map:
-            if version in _r:
-                self.version_map[_r] = None
-                return
-        raise TealInputError(
-            f"version {version} must be in range [{Op.callsub.min_version}, {MAX_PROGRAM_VERSION}]."
-        )
-
-    def __is_version_pre_existing(self, version: int) -> bool:
-        for _r in self.version_map:
-            if version in _r:
-                return self.version_map[_r] is not None
-        raise TealInputError(f"no such versioning {version}")
-
-    def __probe_info(self, version: int) -> tuple[bool, TealType]:
+    def __probe_info(self, fp_option: bool) -> tuple[bool, TealType]:
         current_slot_id = ScratchSlot.nextSlotId
-        is_pre_existing = self.__is_version_pre_existing(version)
-        decl = self.get_declaration_by_version(version)
+        is_pre_existing = self.option_map[fp_option] is not None
+        decl = self.get_declaration_by_option(fp_option)
         has_return, type_of = decl.has_return(), decl.type_of()
         if not is_pre_existing:
-            self.__erase_version(version)
+            self.option_map[fp_option] = None
         ScratchSlot.nextSlotId = current_slot_id
         return has_return, type_of
 
     def __info_prepare(self) -> None:
-        from pyteal.compiler.compiler import FRAME_POINTER_VERSION
-
-        if self.has_return and self.type_of:
+        if self.has_return is not None and self.type_of is not None:
             return
-        v2_ret, v2_type = self.__probe_info(FRAME_POINTER_VERSION - 1)
-        v8_ret, v8_type = self.__probe_info(FRAME_POINTER_VERSION)
-        assert v2_ret == v8_ret
-        assert v2_type == v8_type
-        self.has_return = v2_ret
-        self.type_of = v2_type
+        ss_ret, ss_type = self.__probe_info(False)
+        fp_ret, fp_type = self.__probe_info(True)
+        assert ss_ret == fp_ret
+        assert ss_type == fp_type
+        self.has_return = ss_ret
+        self.type_of = ss_type
 
     def versions_type_of(self) -> TealType:
         self.__info_prepare()
@@ -104,13 +74,11 @@ class _SubroutineDeclByVersion:
         return cast(bool, self.has_return)
 
     def get_declarations(self) -> None:
-        for _r, decl in self.version_map.items():
-            if decl:
-                continue
-            self.version_map[_r] = self.get_declaration_by_version(_r.start)
+        self.option_map[False] = self.get_declaration_by_option(False)
+        self.option_map[True] = self.get_declaration_by_option(True)
 
 
-_SubroutineDeclByVersion.__module__ = "pyteal"
+_SubroutineDeclByOption.__module__ = "pyteal"
 
 
 class SubroutineDefinition:
@@ -141,7 +109,7 @@ class SubroutineDefinition:
 
         self.return_type = return_type
         self.declaration: Optional["SubroutineDeclaration"] = None
-        self.declarations: _SubroutineDeclByVersion = _SubroutineDeclByVersion(self)
+        self.declarations: _SubroutineDeclByOption = _SubroutineDeclByOption(self)
 
         self.implementation: Callable = implementation
         self.has_abi_output: bool = has_abi_output
@@ -338,8 +306,11 @@ class SubroutineDefinition:
     def get_declaration(self) -> "SubroutineDeclaration":
         return self.declarations.get_declaration()
 
-    def get_declaration_by_version(self, version: int) -> "SubroutineDeclaration":
-        return self.declarations.get_declaration_by_version(version)
+    def get_declaration_by_option(
+        self,
+        fp_option: bool = True,
+    ) -> "SubroutineDeclaration":
+        return self.declarations.get_declaration_by_option(fp_option)
 
     def name(self) -> str:
         return self.__name
@@ -575,7 +546,7 @@ class SubroutineFnWrapper:
         return self.subroutine.declarations.versions_type_of()
 
     def has_return(self):
-        return self.subroutine.declarations.versions_type_of()
+        return self.subroutine.declarations.versions_has_return()
 
 
 SubroutineFnWrapper.__module__ = "pyteal"
@@ -898,14 +869,14 @@ class SubroutineEval:
 
     Usage (A) "argumentVars" - Storing pre-placed stack variables with frame pointer:
         Type 1. (by-value) use None for we can load from stack with FrameDig() from FrameVar abstraction
-        Type 2. (by-reference) ALSO use FrameDig() from FrameVar abstraction to pick up from the stack
+        Type 2. (by-reference) use FrameDig() from FrameVar abstraction to pick up from the stack
             NOTE: SubroutineCall.__teal__() has placed the _SLOT INDEX_ on the stack so this is stored into the local scratch space
         Type 3. (ABI) use None for we can load from stack with FrameDig() from FrameVar abstraction
             NOTE: SubroutineCall.__teal__() has placed the ABI encoding on the stack, so ABI set and get methods are working over stack
         Type 4. (ABI-output-arg) it is not really used here, but we use FrameDig/Bury to interact with it
 
     Usage (B) "loadedArgs" - Passing through to an invoked PyTEAL subroutine AST:
-        Type 1. (by-value) use FrameDig() from FrameVar absrraction, to have an Expr that can be compiled in python by the PyTEAL subroutine.
+        Type 1. (by-value) use FrameDig() from FrameVar abstraction, to have an Expr that can be compiled in python by the PyTEAL subroutine.
         Type 2. (by-reference) use a DynamicScratchVar as the user will have written the PyTEAL in a way that satisfies
             the ScratchVar API. I.e., the user will write `x.load()` and `x.store(val)` as opposed to just `x`.
         Type 3. (ABI) use abi_value that interface with stack data through FrameVar abstraction.
