@@ -312,6 +312,9 @@ def test_integer65(version: int):
 
     bbpt_add = PyTealDryRunExecutor(int65_add, pt.Mode.Application)
 
+    def pynum_to_int65tuple(n):
+        return (n >= 0, abs(n))
+    
     def pytuple_to_num(t):
         s, x = t
         return x if s else -x
