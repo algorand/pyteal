@@ -42,12 +42,6 @@ def _dryrun(
 _application_opcode_budget = 700
 
 
-def _expected_execution_cost_ops(
-    base_cost_ops: int, per_transaction_cost_ops: int, inner_txn_count: int
-) -> int:
-    return base_cost_ops + inner_txn_count * per_transaction_cost_ops
-
-
 @pytest.mark.parametrize("source", pt.OpUpFeeSource)
 @pytest.mark.parametrize("inner_txn_count", range(1, 5))
 @pytest.mark.parametrize("with_funding", [True, False])
@@ -94,16 +88,6 @@ def test_opup_maximize_budget(
 
         assert result.passed()
         assert result.budget_added() == _application_opcode_budget * inner_txn_count
-
-        expected_costs = {
-            pt.OpUpFeeSource.Any: (18, 22),
-            pt.OpUpFeeSource.AppAccount: (18, 24),
-            pt.OpUpFeeSource.GroupCredit: (19, 24),
-        }
-        base, per_txn = expected_costs[source]
-        assert result.budget_consumed() == _expected_execution_cost_ops(
-            base, per_txn, inner_txn_count
-        )
     else:
         # Withholding account and/or transaction fee funding fails the
         # transaction.
@@ -115,18 +99,13 @@ def test_opup_maximize_budget(
 
 
 @pytest.mark.parametrize("source", [f for f in pt.OpUpFeeSource])
-@pytest.mark.parametrize("budget_added", range(0, 12_000, 2_000))
+@pytest.mark.parametrize("budget_added", range(1_000, 20_000, 2_500))
 @pytest.mark.parametrize("with_funding", [True, False])
 @pytest.mark.serial  # Serial due to reused account + application state
 def test_opup_ensure_budget(
     source: pt.OpUpFeeSource, budget_added: int, with_funding: bool
 ):
-    inner_txn_count = (
-        int(budget_added / _application_opcode_budget) + 1
-        if budget_added % _application_opcode_budget == 0
-        else math.ceil(budget_added / _application_opcode_budget)
-    )
-
+    inner_txn_count = math.ceil(budget_added / _application_opcode_budget)
     innerTxnFeeMicroAlgos = (
         inner_txn_count * algosdk.constants.min_txn_fee + algosdk.constants.min_txn_fee
     )
@@ -174,16 +153,6 @@ def test_opup_ensure_budget(
         actual = cast(int, result.budget_added())
         threshold = _application_opcode_budget * inner_txn_count
         assert threshold <= actual <= threshold + _application_opcode_budget
-
-        expected_costs = {
-            pt.OpUpFeeSource.Any: (18, 16),
-            pt.OpUpFeeSource.AppAccount: (18, 18),
-            pt.OpUpFeeSource.GroupCredit: (18, 18),
-        }
-        base, per_txn = expected_costs[source]
-        assert result.budget_consumed() == _expected_execution_cost_ops(
-            base, per_txn, inner_txn_count
-        )
     else:
         # Withholding account and/or transaction fee funding fails the
         # transaction.
