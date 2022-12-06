@@ -314,6 +314,7 @@ def test_integer65(version: int):
 
     def pynum_to_int65tuple(n):
         return (n >= 0, abs(n))
+
     def pytuple_to_num(t):
         s, x = t
         return x if s else -x
