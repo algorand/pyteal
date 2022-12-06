@@ -98,7 +98,7 @@ def test_opup_maximize_budget(
 
 
 @pytest.mark.parametrize("source", [f for f in pt.OpUpFeeSource])
-@pytest.mark.parametrize("budget_added", list(range(1_000, 20_000, 2_500)))
+@pytest.mark.parametrize("budget_added", range(1_000, 20_000, 2_500))
 @pytest.mark.parametrize("with_funding", [True, False])
 def test_opup_ensure_budget(
     source: pt.OpUpFeeSource, budget_added: int, with_funding: bool
