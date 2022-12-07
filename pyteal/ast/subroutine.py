@@ -10,7 +10,7 @@ from pyteal.ast import abi
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar, ScratchSlot
-from pyteal.ast.frame import Bury, Proto, FrameVar, ProtoStackLayout
+from pyteal.ast.frame import FrameBury, Proto, FrameVar, ProtoStackLayout
 from pyteal.errors import TealInputError, TealInternalError, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.types import TealType
@@ -1041,7 +1041,7 @@ class SubroutineEval:
             # only when we have 1 return, and with other local variables
             # we use bury to bury the result to 0 index against frame pointer
             if not abi_output_kwargs and 0 < proto.num_returns < depth:
-                deferred_expr = Bury(depth)
+                deferred_expr = FrameBury(Seq(), 0, inferred_type=TealType.none)
 
         # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
         # need to reverse order of argumentVars because the last argument will be on top of the stack
