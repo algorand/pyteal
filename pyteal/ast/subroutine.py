@@ -1,9 +1,8 @@
-from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from docstring_parser import parse as parse_docstring
 from inspect import isclass, Parameter, signature, get_annotations
 from types import MappingProxyType, NoneType
-from typing import Any, Callable, Final, Optional, TYPE_CHECKING, cast
+from typing import Any, Callable, Final, Optional, TYPE_CHECKING, cast, ClassVar
 import algosdk.abi as sdk_abi
 
 from pyteal.ast import abi
@@ -890,6 +889,7 @@ class SubroutineEval:
         tuple[Optional[ScratchVar], ScratchVar | abi.BaseType | Expr],
     ]
     use_frame_pt: bool = False
+    current_proto: ClassVar[Optional[Proto]] = None
 
     @staticmethod
     def var_n_loaded_scratch(
@@ -1013,10 +1013,12 @@ class SubroutineEval:
                 *loaded_args, **abi_output_kwargs
             )
         else:
-            with SubroutineEval.Context.CompileWithFrameContext(proto):
-                subroutine_body = subroutine.implementation(
-                    *loaded_args, **abi_output_kwargs
-                )
+            prev_proto: Optional[Proto] = SubroutineEval.current_proto
+            SubroutineEval.current_proto = proto
+            subroutine_body = subroutine.implementation(
+                *loaded_args, **abi_output_kwargs
+            )
+            SubroutineEval.current_proto = prev_proto
 
         if not isinstance(subroutine_body, Expr):
             raise TealInputError(
@@ -1070,22 +1072,6 @@ class SubroutineEval:
     @classmethod
     def fp_evaluator(cls) -> "SubroutineEval":
         return cls(SubroutineEval.var_n_loaded_fp, True)
-
-    class Context:
-        proto: Optional[Proto] = None
-
-        class CompileWithFrameContext(AbstractContextManager):
-            def __init__(self, _proto: Proto):
-                super().__init__()
-                self.prev_ctxt_proto = SubroutineEval.Context.proto
-                SubroutineEval.Context.proto = _proto
-
-            def __enter__(self):
-                return self
-
-            def __exit__(self, *_):
-                SubroutineEval.Context.proto = self.prev_ctxt_proto
-                return None
 
 
 SubroutineEval.__module__ = "pyteal"
