@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 from pyteal.ast.expr import Expr
 from pyteal.ast.abstractvar import AbstractVar
-from pyteal.ast.frame import FrameVar, FRAME_LOCAL_NUM
+from pyteal.ast.frame import FrameVar, MAX_FRAME_LOCAL_VARS
 from pyteal.ast.scratchvar import ScratchVar
 from pyteal.ast.seq import Seq
 from pyteal.errors import TealInputError
@@ -92,7 +92,7 @@ class BaseType(ABC):
             # NOTE: you can have at most 128 local variables.
             # len(local_types) + 1 computes the resulting length,
             # should be <= 128
-            if len(local_types) + 1 <= FRAME_LOCAL_NUM:
+            if len(local_types) + 1 <= MAX_FRAME_LOCAL_VARS:
                 local_types.append(self._type_spec.storage_type())
                 self._stored_value = FrameVar(proto, len(local_types) - 1)
                 return

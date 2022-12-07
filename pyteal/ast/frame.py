@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
 
 
-FRAME_LOCAL_NUM: Final[int] = 128
+MAX_FRAME_LOCAL_VARS: Final[int] = 128
 
 
 class LocalTypeSegment(Expr):
