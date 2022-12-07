@@ -84,17 +84,16 @@ class BaseType(ABC):
         self._stored_value: AbstractVar
 
         if SubroutineEval.Context.proto:
-            proto = SubroutineEval.Context.proto
-
-            assert proto.mem_layout
-            local_types = proto.mem_layout.local_stack_types
+            local_types = SubroutineEval.Context.proto.mem_layout.local_stack_types
 
             # NOTE: you can have at most 128 local variables.
             # len(local_types) + 1 computes the resulting length,
             # should be <= 128
             if len(local_types) + 1 <= MAX_FRAME_LOCAL_VARS:
                 local_types.append(self._type_spec.storage_type())
-                self._stored_value = FrameVar(proto, len(local_types) - 1)
+                self._stored_value = FrameVar(
+                    SubroutineEval.Context.proto, len(local_types) - 1
+                )
                 return
 
         self._stored_value = ScratchVar(spec.storage_type())

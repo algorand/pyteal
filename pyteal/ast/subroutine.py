@@ -1037,7 +1037,6 @@ class SubroutineEval:
                 deferred_expr = output_carrying_abi._stored_value.load()
 
         if self.use_frame_pt:
-            assert proto.mem_layout
             depth = len(proto.mem_layout.local_stack_types)
             # only when we have 1 return, and with other local variables
             # we use bury to bury the result to 0 index against frame pointer
