@@ -2349,7 +2349,7 @@ def test_router_app():
 
     with pytest.raises(pt.TealInputError) as e:
         pt.Router("will-error", on_completion_actions).compile_program(
-            version=6, frame_pointers=True
+            version=6, optimize=pt.OptimizeOptions(frame_pointers=True)
         )
 
     assert "Try to use frame pointer with an insufficient version 6" in str(e)
