@@ -2,7 +2,7 @@ Overview
 ========
 
 With PyTeal, developers can easily write `Algorand Smart Contracts (ASC1s) <https://developer.algorand.org/docs/features/asc1/>`_ in Python.
-PyTeal supports both stateless and statefull smart contracts.
+PyTeal supports both stateless and stateful smart contracts.
 
 Below is an example of writing a basic stateless smart contract that allows a specific receiver to withdraw funds from an account.
 
