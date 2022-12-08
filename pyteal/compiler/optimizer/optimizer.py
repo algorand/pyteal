@@ -23,7 +23,6 @@ class OptimizeOptions:
 
         scratch_slots (optional): cancel contiguous store/load operations
             that have no load dependencies elsewhere.
-        frame_opinters
     """
 
     def __init__(self, *, scratch_slots: bool = False, frame_pointers: bool = False):
