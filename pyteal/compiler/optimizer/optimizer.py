@@ -1,4 +1,4 @@
-from typing import Set
+from typing import Final, Set
 
 from pyteal.ast import ScratchSlot
 from pyteal.ir import TealBlock, TealOp, Op
@@ -27,8 +27,8 @@ class OptimizeOptions:
     """
 
     def __init__(self, *, scratch_slots: bool = False, frame_pointers: bool = False):
-        self.scratch_slots: bool = scratch_slots
-        self.frame_pointers: bool = frame_pointers
+        self.scratch_slots: Final[bool] = scratch_slots
+        self.frame_pointers: Final[bool] = frame_pointers
         self._skip_slots: Set[ScratchSlot] = set()
 
     @classmethod
