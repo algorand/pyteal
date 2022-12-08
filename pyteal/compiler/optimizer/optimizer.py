@@ -1,4 +1,4 @@
-from typing import Optional, Set
+from typing import Set
 
 from pyteal.ast import ScratchSlot
 from pyteal.ir import TealBlock, TealOp, Op
