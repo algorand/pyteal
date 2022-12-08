@@ -558,3 +558,20 @@ return""".strip()
         program, version=4, mode=pt.Mode.Application, optimize=optimize_options
     )
     assert actual == expected
+
+def test_optimize_default_for_version_etc():
+    oo = OptimizeOptions()
+    assert oo.scratch_slots is False
+    assert oo.frame_pointers is False
+
+    oo = OptimizeOptions.maximize()
+    assert oo.scratch_slots is True
+    assert oo.frame_pointers is True
+
+    oo = OptimizeOptions.default_for_version(7)
+    assert oo.scratch_slots is False
+    assert oo.frame_pointers is False
+
+    oo = OptimizeOptions.default_for_version(8)
+    assert oo.scratch_slots is False
+    assert oo.frame_pointers is True
