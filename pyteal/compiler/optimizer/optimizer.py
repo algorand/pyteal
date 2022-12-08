@@ -26,7 +26,7 @@ class OptimizeOptions:
         frame_opinters
     """
 
-    def __init__(self, *, scratch_slots: bool = False, frame_pointers: bool = True):
+    def __init__(self, *, scratch_slots: bool = False, frame_pointers: bool = False):
         self.scratch_slots: bool = scratch_slots
         self.frame_pointers: bool = frame_pointers
         self._skip_slots: Set[ScratchSlot] = set()
