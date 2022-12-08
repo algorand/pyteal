@@ -559,6 +559,7 @@ return""".strip()
     )
     assert actual == expected
 
+
 def test_optimize_default_for_version_etc():
     oo = OptimizeOptions()
     assert oo.scratch_slots is False
