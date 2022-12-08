@@ -1,4 +1,5 @@
-from typing import Set
+from typing import Optional, Set
+
 from pyteal.ast import ScratchSlot
 from pyteal.ir import TealBlock, TealOp, Op
 from pyteal.errors import TealInternalError
@@ -22,11 +23,27 @@ class OptimizeOptions:
 
         scratch_slots (optional): cancel contiguous store/load operations
             that have no load dependencies elsewhere.
+        frame_opinters
     """
 
-    def __init__(self, *, scratch_slots: bool = False):
-        self.scratch_slots = scratch_slots
+    def __init__(self, *, scratch_slots: bool = False, frame_pointers: bool = True):
+        self.scratch_slots: bool = scratch_slots
+        self.frame_pointers: bool = frame_pointers
         self._skip_slots: Set[ScratchSlot] = set()
+
+    @classmethod
+    def maximize(cls) -> "OptimizeOptions":
+        return cls(scratch_slots=True, frame_pointers=True)
+
+    @classmethod
+    def default_for_version(cls, version: int) -> "OptimizeOptions":
+        """TODO: consider maximizing for default starting with Teal v. 9"""
+        from pyteal.compiler.compiler import FRAME_POINTER_VERSION
+
+        if version < FRAME_POINTER_VERSION:
+            return cls(scratch_slots=False, frame_pointers=False)
+
+        return cls(scratch_slots=False, frame_pointers=True)
 
 
 def _remove_extraneous_slot_access(start: TealBlock, remove: Set[ScratchSlot]):

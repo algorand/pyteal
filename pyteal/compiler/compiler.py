@@ -46,22 +46,20 @@ class CompileOptions:
         mode: Mode = Mode.Signature,
         version: int = DEFAULT_PROGRAM_VERSION,
         optimize: OptimizeOptions = None,
-        frame_pointers: Optional[bool] = None,
     ) -> None:
         self.mode = mode
         self.version = version
-        self.optimize = optimize if optimize is not None else OptimizeOptions()
+        self.optimize = (
+            optimize if optimize else OptimizeOptions.default_for_version(self.version)
+        )
         self.use_frame_pointer: bool
 
-        if frame_pointers is None:
-            self.use_frame_pointer = self.version >= FRAME_POINTER_VERSION
+        if self.optimize.frame_pointers and self.version < FRAME_POINTER_VERSION:
+            raise TealInputError(
+                f"Try to use frame pointer with an insufficient version {self.version}."
+            )
         else:
-            if frame_pointers and self.version < FRAME_POINTER_VERSION:
-                raise TealInputError(
-                    f"Try to use frame pointer with an insufficient version {self.version}."
-                )
-            else:
-                self.use_frame_pointer = frame_pointers
+            self.use_frame_pointer = self.optimize.frame_pointers
 
         self.currentSubroutine: Optional[SubroutineDefinition] = None
 
@@ -257,7 +255,6 @@ def compileTeal(
     version: int = DEFAULT_PROGRAM_VERSION,
     assembleConstants: bool = False,
     optimize: OptimizeOptions = None,
-    frame_pointers: Optional[bool] = None,
 ) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 
@@ -291,9 +288,7 @@ def compileTeal(
             )
         )
 
-    options = CompileOptions(
-        mode=mode, version=version, optimize=optimize, frame_pointers=frame_pointers
-    )
+    options = CompileOptions(mode=mode, version=version, optimize=optimize)
 
     subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
     subroutine_start_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
