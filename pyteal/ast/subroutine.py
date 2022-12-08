@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from dataclasses import dataclass
 from docstring_parser import parse as parse_docstring
 from inspect import isclass, Parameter, signature, get_annotations
@@ -815,6 +816,13 @@ class Subroutine:
 Subroutine.__module__ = "pyteal"
 
 
+@contextmanager
+def _frame_pointer_context(proto: Proto):
+    tmp, SubroutineEval._current_proto = SubroutineEval._current_proto, proto
+    yield proto
+    SubroutineEval._current_proto = tmp
+
+
 @dataclass
 class SubroutineEval:
     """
@@ -889,7 +897,7 @@ class SubroutineEval:
         tuple[Optional[ScratchVar], ScratchVar | abi.BaseType | Expr],
     ]
     use_frame_pt: bool = False
-    current_proto: ClassVar[Optional[Proto]] = None
+    _current_proto: ClassVar[Optional[Proto]] = None
 
     @staticmethod
     def var_n_loaded_scratch(
@@ -1013,12 +1021,10 @@ class SubroutineEval:
                 *loaded_args, **abi_output_kwargs
             )
         else:
-            prev_proto: Optional[Proto] = SubroutineEval.current_proto
-            SubroutineEval.current_proto = proto
-            subroutine_body = subroutine.implementation(
-                *loaded_args, **abi_output_kwargs
-            )
-            SubroutineEval.current_proto = prev_proto
+            with _frame_pointer_context(proto):
+                subroutine_body = subroutine.implementation(
+                    *loaded_args, **abi_output_kwargs
+                )
 
         if not isinstance(subroutine_body, Expr):
             raise TealInputError(

@@ -83,16 +83,16 @@ class BaseType(ABC):
         self._type_spec: Final[TypeSpec] = spec
         self._stored_value: AbstractVar
 
-        if SubroutineEval.current_proto:
-            local_types = SubroutineEval.current_proto.mem_layout.local_stack_types
+        if SubroutineEval._current_proto:
+            local_types = SubroutineEval._current_proto.mem_layout.local_stack_types
 
             # NOTE: you can have at most 128 local variables.
             # len(local_types) + 1 computes the resulting length,
             # should be <= 128
             if len(local_types) + 1 <= MAX_FRAME_LOCAL_VARS:
-                local_types.append(self._type_spec.storage_type())
+                local_types.append(spec.storage_type())
                 self._stored_value = FrameVar(
-                    SubroutineEval.current_proto, len(local_types) - 1
+                    SubroutineEval._current_proto, len(local_types) - 1
                 )
                 return
 
