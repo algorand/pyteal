@@ -48,14 +48,14 @@ class OptimizeOptions:
         return self._scratch_slots
 
     def use_frame_pointers(self, version: int) -> bool:
-        from pyteal.compiler.compiler import FRAME_POINTER_VERSION
+        from pyteal.compiler.compiler import FRAME_POINTERS_VERSION
 
         if self._frame_pointers is None:
-            return version >= FRAME_POINTER_VERSION
+            return version >= FRAME_POINTERS_VERSION
 
         if self._frame_pointers:
             verifyProgramVersion(
-                FRAME_POINTER_VERSION,
+                FRAME_POINTERS_VERSION,
                 version,
                 f"Frame pointers aren't available when compiling to TEAL version {version}",
             )
