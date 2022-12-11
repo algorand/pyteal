@@ -46,7 +46,7 @@ class CompileOptions:
         *,
         mode: Mode = Mode.Signature,
         version: int = DEFAULT_PROGRAM_VERSION,
-        optimize: OptimizeOptions = None,
+        optimize: Optional[OptimizeOptions] = None,
     ) -> None:
         self.mode: Mode = mode
         self.version: int = version
