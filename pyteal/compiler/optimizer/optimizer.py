@@ -1,8 +1,8 @@
-from typing import Final, Set
+from typing import Final, Optional, Set
 
 from pyteal.ast import ScratchSlot
 from pyteal.ir import TealBlock, TealOp, Op
-from pyteal.errors import TealInternalError
+from pyteal.errors import TealInternalError, verifyProgramVersion
 
 
 class OptimizeOptions:
@@ -25,24 +25,42 @@ class OptimizeOptions:
             that have no load dependencies elsewhere.
     """
 
-    def __init__(self, *, scratch_slots: bool = False, frame_pointers: bool = False):
-        self.scratch_slots: Final[bool] = scratch_slots
-        self.frame_pointers: Final[bool] = frame_pointers
+    def __init__(
+        self,
+        *,
+        scratch_slots: Optional[bool] = None,
+        frame_pointers: Optional[bool] = None,
+    ):
+        self._scratch_slots: Final[Optional[bool]] = scratch_slots
+        self._frame_pointers: Final[Optional[bool]] = frame_pointers
+
         self._skip_slots: Set[ScratchSlot] = set()
 
-    @classmethod
-    def maximize(cls) -> "OptimizeOptions":
-        return cls(scratch_slots=True, frame_pointers=True)
+        # deprecated field kept for backwards compatibility - not used. Shall I remove altogether?
+        self.scratch_slots: Final[bool] = bool(scratch_slots)
 
-    @classmethod
-    def default_for_version(cls, version: int) -> "OptimizeOptions":
-        """TODO: consider maximizing for default starting with Teal v. 9"""
+    def optimize_scratch_slots(self, version: int) -> bool:
+        from pyteal.compiler.compiler import DEFAULT_SCRATCH_SLOT_OPTIMIZE_VERSION
+
+        if self._scratch_slots is None:
+            return version >= DEFAULT_SCRATCH_SLOT_OPTIMIZE_VERSION
+
+        return self._scratch_slots
+
+    def use_frame_pointers(self, version: int) -> bool:
         from pyteal.compiler.compiler import FRAME_POINTER_VERSION
 
-        if version < FRAME_POINTER_VERSION:
-            return cls(scratch_slots=False, frame_pointers=False)
+        if self._frame_pointers is None:
+            return version >= FRAME_POINTER_VERSION
 
-        return cls(scratch_slots=False, frame_pointers=True)
+        if self._frame_pointers:
+            verifyProgramVersion(
+                FRAME_POINTER_VERSION,
+                version,
+                f"Frame pointers aren't available when compiling to TEAL version {version}",
+            )
+
+        return self._frame_pointers
 
 
 def _remove_extraneous_slot_access(start: TealBlock, remove: Set[ScratchSlot]):
@@ -103,13 +121,15 @@ def _apply_slot_to_stack(
     _remove_extraneous_slot_access(start, slots_to_remove)
 
 
-def apply_global_optimizations(start: TealBlock, options: OptimizeOptions) -> TealBlock:
+def apply_global_optimizations(
+    start: TealBlock, options: OptimizeOptions, version: int
+) -> TealBlock:
     # limit number of iterations to length of teal program to avoid potential
     # infinite loops.
     for block in TealBlock.Iterate(start):
         for _ in range(len(block.ops)):
             prev_ops = block.ops.copy()
-            if options.scratch_slots:
+            if options.optimize_scratch_slots(version):
                 _apply_slot_to_stack(block, start, options._skip_slots)
 
             if prev_ops == block.ops:

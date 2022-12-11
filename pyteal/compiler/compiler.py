@@ -27,6 +27,7 @@ from pyteal.compiler.constants import createConstantBlocks
 
 MAX_PROGRAM_VERSION = 8
 FRAME_POINTER_VERSION = 8
+DEFAULT_SCRATCH_SLOT_OPTIMIZE_VERSION = 9
 MIN_PROGRAM_VERSION = 2
 DEFAULT_PROGRAM_VERSION = MIN_PROGRAM_VERSION
 
@@ -47,19 +48,10 @@ class CompileOptions:
         version: int = DEFAULT_PROGRAM_VERSION,
         optimize: OptimizeOptions = None,
     ) -> None:
-        self.mode = mode
-        self.version = version
-        self.optimize = (
-            optimize if optimize else OptimizeOptions.default_for_version(self.version)
-        )
-        self.use_frame_pointer: bool
-
-        if self.optimize.frame_pointers and self.version < FRAME_POINTER_VERSION:
-            raise TealInputError(
-                f"Try to use frame pointer with an insufficient version {self.version}."
-            )
-        else:
-            self.use_frame_pointer = self.optimize.frame_pointers
+        self.mode: Mode = mode
+        self.version: int = version
+        self.optimize: OptimizeOptions = optimize or OptimizeOptions()
+        self.use_frame_pointer: bool = self.optimize.use_frame_pointers(self.version)
 
         self.currentSubroutine: Optional[SubroutineDefinition] = None
 
@@ -302,12 +294,12 @@ def compileTeal(
     # control flow graph, the optimizer requires context across block boundaries. This
     # is necessary for the dependency checking of local slots. Global slots, slots
     # used by DynamicScratchVar, and reserved slots are not optimized.
-    if options.optimize.scratch_slots:
+    if options.optimize.optimize_scratch_slots(version):
         options.optimize._skip_slots = collect_unoptimized_slots(
             subroutine_start_blocks
         )
         for start in subroutine_start_blocks.values():
-            apply_global_optimizations(start, options.optimize)
+            apply_global_optimizations(start, options.optimize, version)
 
     localSlotAssignments = assignScratchSlotsToSubroutines(subroutine_start_blocks)
 
