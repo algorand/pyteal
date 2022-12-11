@@ -1,4 +1,4 @@
-from typing import List, Tuple, Set, Dict, Optional, cast
+from typing import Final, List, Tuple, Set, Dict, Optional, cast
 
 from pyteal.compiler.optimizer import OptimizeOptions, apply_global_optimizations
 
@@ -48,10 +48,10 @@ class CompileOptions:
         version: int = DEFAULT_PROGRAM_VERSION,
         optimize: Optional[OptimizeOptions] = None,
     ) -> None:
-        self.mode: Mode = mode
-        self.version: int = version
-        self.optimize: OptimizeOptions = optimize or OptimizeOptions()
-        self.use_frame_pointers: bool = self.optimize.use_frame_pointers(self.version)
+        self.mode: Final[Mode] = mode
+        self.version: Final[int] = version
+        self.optimize: Final[OptimizeOptions] = optimize or OptimizeOptions()
+        self.use_frame_pointers: Final[bool] = self.optimize.use_frame_pointers(self.version)
 
         self.currentSubroutine: Optional[SubroutineDefinition] = None
 
