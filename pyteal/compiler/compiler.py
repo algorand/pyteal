@@ -246,7 +246,7 @@ def compileTeal(
     *,
     version: int = DEFAULT_PROGRAM_VERSION,
     assembleConstants: bool = False,
-    optimize: OptimizeOptions = None,
+    optimize: Optional[OptimizeOptions] = None,
 ) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 

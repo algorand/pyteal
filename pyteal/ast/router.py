@@ -723,7 +723,7 @@ class Router:
         *,
         version: int = DEFAULT_TEAL_VERSION,
         assemble_constants: bool = False,
-        optimize: OptimizeOptions = None,
+        optimize: Optional[OptimizeOptions] = None,
     ) -> tuple[str, str, sdk_abi.Contract]:
         """
         Constructs and compiles approval and clear-state programs from the registered methods and
