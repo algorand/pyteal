@@ -51,7 +51,9 @@ class CompileOptions:
         self.mode: Final[Mode] = mode
         self.version: Final[int] = version
         self.optimize: Final[OptimizeOptions] = optimize or OptimizeOptions()
-        self.use_frame_pointers: Final[bool] = self.optimize.use_frame_pointers(self.version)
+        self.use_frame_pointers: Final[bool] = self.optimize.use_frame_pointers(
+            self.version
+        )
 
         self.currentSubroutine: Optional[SubroutineDefinition] = None
 
