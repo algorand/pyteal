@@ -51,7 +51,7 @@ class CompileOptions:
         self.mode: Mode = mode
         self.version: int = version
         self.optimize: OptimizeOptions = optimize or OptimizeOptions()
-        self.use_frame_pointer: bool = self.optimize.use_frame_pointers(self.version)
+        self.use_frame_pointers: bool = self.optimize.use_frame_pointers(self.version)
 
         self.currentSubroutine: Optional[SubroutineDefinition] = None
 
@@ -158,14 +158,14 @@ def compileSubroutine(
     if (
         currentSubroutine
         and currentSubroutine.get_declaration_by_option(
-            options.use_frame_pointer
+            options.use_frame_pointers
         ).deferred_expr
     ):
         # this represents code that should be inserted before each retsub op
         deferred_expr = cast(
             Expr,
             currentSubroutine.get_declaration_by_option(
-                options.use_frame_pointer
+                options.use_frame_pointers
             ).deferred_expr,
         )
 
@@ -218,7 +218,7 @@ def compileSubroutine(
     newSubroutines = referencedSubroutines - subroutine_start_blocks.keys()
     for subroutine in sorted(newSubroutines, key=lambda subroutine: subroutine.id):
         compileSubroutine(
-            subroutine.get_declaration_by_option(options.use_frame_pointer),
+            subroutine.get_declaration_by_option(options.use_frame_pointers),
             options,
             subroutineGraph,
             subroutine_start_blocks,
