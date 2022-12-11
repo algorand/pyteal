@@ -22,7 +22,9 @@ class OptimizeOptions:
     Args:
 
         scratch_slots (optional): cancel contiguous store/load operations
-            that have no load dependencies elsewhere.
+            that have no load dependencies elsewhere. Starting TEAL version 9, defaults to optimizing.
+        frame_pointers (optional): employ frame pointers instead of scratch slots during compilation.
+            Available only starting in version 8. Defaults to optimizing starting TEAL version 8.
     """
 
     def __init__(
