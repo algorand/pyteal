@@ -1714,7 +1714,7 @@ retsub
     assert actual_no_deferred == expected_no_deferred
 
     # manually add deferred expression to SubroutineDefinition
-    declaration = deferredExample.subroutine.get_declaration()
+    declaration = deferredExample.subroutine.get_declaration_by_option(False)
     declaration.deferred_expr = pt.Pop(pt.Bytes("deferred"))
 
     expected_deferred = """#pragma version 6
@@ -1786,7 +1786,7 @@ retsub
     assert actual_no_deferred == expected_no_deferred
 
     # manually add deferred expression to SubroutineDefinition
-    declaration = empty.subroutine.get_declaration()
+    declaration = empty.subroutine.get_declaration_by_option(False)
     declaration.deferred_expr = pt.Pop(pt.Bytes("deferred"))
 
     expected_deferred = """#pragma version 6
@@ -1837,7 +1837,7 @@ def test_compileSubroutine_deferred_block_malformed():
     program = pt.Seq(bad(), pt.Approve())
 
     # manually add deferred expression to SubroutineDefinition
-    declaration = bad.subroutine.get_declaration()
+    declaration = bad.subroutine.get_declaration_by_option(False)
     declaration.deferred_expr = pt.Pop(pt.Bytes("deferred"))
 
     with pytest.raises(
