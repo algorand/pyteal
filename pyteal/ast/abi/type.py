@@ -224,7 +224,7 @@ class ReturnedValue(ComputedValue):
         # the post frame pointer case should not apply
         # need to somehow expose the context of evaluation
         try:
-            declaration = self.computation.subroutine.get_declaration()
+            declaration = self.computation.subroutine.get_declaration_by_option(False)
 
             if declaration.deferred_expr is None:
                 raise TealInputError(
