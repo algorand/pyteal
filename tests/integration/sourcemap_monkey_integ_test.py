@@ -3,6 +3,28 @@ This file monkey-patches ConfigParser in order to enable source mapping
 and test the results of source mapping various PyTeal apps.
 """
 
+# TODO: this gotta be cleaned up before merging
+
+"""
+Q: Why is this an integration test? 
+A: Because we are using an algod here. In particular:
+BTW: I don't think the algod logic needs to be THIS COMPLICATED!!!
+1. setting router.compile(..., pcs_in_source=True, ...)
+2. is passed to instance `input` = _RouterCompileInput which       
+    on __post_init__ bootstraps an algod
+3. `input` is then passed to router._build_impl()
+4. inside _build_impl(), a Compilation instance is obtained via `input.get_compilation(each program)`
+5. the compilation instance's `compile()` is called with param algod_client
+    receiving `input.algod_client`
+6. inside Compilation.compile() algod_client is enhanced with a liveness assertion
+7. still inside compile(), algod_client is passed to PyTealSourceMap()'s init via algod
+8. inside PTSM's __init__(), ONCE AGAIN, algod is enhanced with a liveness assertion
+9. inside PTSM's _build(), ONCE AGAIN, algod is enhanced with a liveness assertion
+10. FINALLY, we call algod.compile() and get the "sourcemap" value from the result
+11. and supply it to a PCSourcemap() init
+12. and set the rstuls to the _cached_pc_sourcemap property
+"""
+
 from configparser import ConfigParser
 import sys
 from unittest import mock
