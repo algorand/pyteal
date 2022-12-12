@@ -34,6 +34,7 @@ class _SubroutineDeclByOption:
         self.type_of: Optional[TealType] = None
 
     def get_declaration(self) -> "SubroutineDeclaration":
+        """MARK AS DEPRECATED, FOR WE ARE NOW GET DECLARATION BY COMPILE OPTIONS"""
         return self.get_declaration_by_option(False)
 
     def get_declaration_by_option(
@@ -305,6 +306,7 @@ class SubroutineDefinition:
         )
 
     def get_declaration(self) -> "SubroutineDeclaration":
+        """MARK AS DEPRECATED, FOR WE ARE NOW GET DECLARATION BY COMPILE OPTIONS"""
         return self.declarations.get_declaration()
 
     def get_declaration_by_option(
