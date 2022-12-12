@@ -2,9 +2,7 @@ from typing import TypeVar, Generic, Callable, Final, cast
 from abc import ABC, abstractmethod
 
 from pyteal.ast.expr import Expr
-from pyteal.ast.abstractvar import AbstractVar
-from pyteal.ast.frame import FrameVar, MAX_FRAME_LOCAL_VARS
-from pyteal.ast.scratchvar import ScratchVar
+from pyteal.ast.abstractvar import AbstractVar, alloc_abstract_var
 from pyteal.ast.seq import Seq
 from pyteal.errors import TealInputError
 from pyteal.types import TealType
@@ -77,26 +75,9 @@ class BaseType(ABC):
 
     def __init__(self, spec: TypeSpec) -> None:
         """Create a new BaseType."""
-        from pyteal.ast.subroutine import SubroutineEval
-
         super().__init__()
         self._type_spec: Final[TypeSpec] = spec
-        self._stored_value: AbstractVar
-
-        if SubroutineEval._current_proto:
-            local_types = SubroutineEval._current_proto.mem_layout.local_stack_types
-
-            # NOTE: you can have at most 128 local variables.
-            # len(local_types) + 1 computes the resulting length,
-            # should be <= 128
-            if len(local_types) + 1 <= MAX_FRAME_LOCAL_VARS:
-                local_types.append(spec.storage_type())
-                self._stored_value = FrameVar(
-                    SubroutineEval._current_proto, len(local_types) - 1
-                )
-                return
-
-        self._stored_value = ScratchVar(spec.storage_type())
+        self._stored_value: AbstractVar = alloc_abstract_var(spec.storage_type())
 
     def type_spec(self) -> TypeSpec:
         """Get the TypeSpec for this ABI type instance."""
