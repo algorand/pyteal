@@ -77,20 +77,22 @@ class Cond(Expr):
     def __teal__(self, options: "CompileOptions"):
         start = None
         end = TealSimpleBlock([])
-        prevBranch = None
+        prevBranch: TealConditionalBlock | None = None
         for i, (cond, pred) in enumerate(self.args):
             condStart, condEnd = cond.__teal__(options)
             predStart, predEnd = pred.__teal__(options)
 
-            branchBlock = TealConditionalBlock([], root_expr=self)
-            branchBlock.setTrueBlock(predStart)
+            branchBlock = TealConditionalBlock([], root_expr=cond)
+            branchBlock.setTrueBlock(predStart, true_expr=pred)
 
             condEnd.setNextBlock(branchBlock)
             predEnd.setNextBlock(end)
             if i == 0:
                 start = condStart
             else:
-                cast(TealConditionalBlock, prevBranch).setFalseBlock(condStart)
+                assert prevBranch
+                prevBranch.setFalseBlock(condStart, false_expr=cond)
+
             prevBranch = branchBlock
 
         errBlock = TealSimpleBlock([TealOp(self, Op.err)])

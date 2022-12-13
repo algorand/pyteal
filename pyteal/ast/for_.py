@@ -59,7 +59,7 @@ class For(Expr):
 
         # TODO: apparently supplied root_expr has no effect
         branchBlock = TealConditionalBlock([], root_expr=self)
-        branchBlock.setTrueBlock(doStart)
+        branchBlock.setTrueBlock(doStart, true_expr=self.doBlock)
         branchBlock.setFalseBlock(end)
 
         condEnd.setNextBlock(branchBlock)

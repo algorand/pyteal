@@ -53,7 +53,7 @@ class Assert(Expr):
         end = TealSimpleBlock([])
         errBlock = TealSimpleBlock([TealOp(self, Op.err)])
 
-        branchBlock = TealConditionalBlock([])
+        branchBlock = TealConditionalBlock([], root_expr=self)
         branchBlock.setTrueBlock(end)
         branchBlock.setFalseBlock(errBlock)
 

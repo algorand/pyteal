@@ -9,7 +9,10 @@ if TYPE_CHECKING:
 
 class TealLabel(TealComponent):
     def __init__(
-        self, expr: Optional["Expr"], label: LabelReference, comment: str | None = None
+        self,
+        expr: Optional["Expr"],
+        label: LabelReference,
+        comment: Optional[str] = None,
     ) -> None:
         super().__init__(expr)
         self.label = label
