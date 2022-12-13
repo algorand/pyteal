@@ -8,7 +8,7 @@ from dataclasses import dataclass
 import pyteal as pt
 from pyteal.ast.frame import Proto
 from pyteal.ast.subroutine import ABIReturnSubroutine, SubroutineEval
-from pyteal.compiler.compiler import FRAME_POINTER_VERSION
+from pyteal.compiler.compiler import FRAME_POINTERS_VERSION
 
 options = pt.CompileOptions(version=5)
 options_v8 = pt.CompileOptions(version=8)
@@ -1549,5 +1549,5 @@ def test_override_abi_method_name():
 
 def test_frame_option_version_range_well_formed():
     assert (
-        pt.Op.callsub.min_version < FRAME_POINTER_VERSION < pt.MAX_PROGRAM_VERSION + 1
+        pt.Op.callsub.min_version < FRAME_POINTERS_VERSION < pt.MAX_PROGRAM_VERSION + 1
     )
