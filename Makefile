@@ -81,7 +81,6 @@ local-gh-job:
 local-gh-simulate:
 	act
 
-
 # ---- Extras ---- #
 
 coverage:
