@@ -14,7 +14,12 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/algorand/pyteal",
-    packages=["pyteal"],
+    packages=setuptools.find_packages(
+        include=(
+            "pyteal",
+            "pyteal.*",
+        )
+    ),
     install_requires=[
         # when changing this list, also update docs/requirements.txt
         "py-algorand-sdk>=1.9.0,<2.0.0",
