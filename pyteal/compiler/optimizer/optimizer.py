@@ -1,7 +1,8 @@
-from typing import Set
+from typing import Final, Optional, Set
+
 from pyteal.ast import ScratchSlot
 from pyteal.ir import TealBlock, TealOp, Op
-from pyteal.errors import TealInternalError
+from pyteal.errors import TealInternalError, verifyProgramVersion
 
 
 class OptimizeOptions:
@@ -21,12 +22,44 @@ class OptimizeOptions:
     Args:
 
         scratch_slots (optional): cancel contiguous store/load operations
-            that have no load dependencies elsewhere.
+            that have no load dependencies elsewhere. Starting with program version 9, defaults to optimizing.
+        frame_pointers (optional): employ frame pointers instead of scratch slots during compilation.
+            Available only starting in program version 8. Defaults to optimizing starting in program version 8.
     """
 
-    def __init__(self, *, scratch_slots: bool = False):
-        self.scratch_slots = scratch_slots
+    def __init__(
+        self,
+        *,
+        scratch_slots: Optional[bool] = None,
+        frame_pointers: Optional[bool] = None,
+    ):
+        self._scratch_slots: Final[Optional[bool]] = scratch_slots
+        self._frame_pointers: Final[Optional[bool]] = frame_pointers
+
         self._skip_slots: Set[ScratchSlot] = set()
+
+    def optimize_scratch_slots(self, version: int) -> bool:
+        from pyteal.compiler.compiler import DEFAULT_SCRATCH_SLOT_OPTIMIZE_VERSION
+
+        if self._scratch_slots is None:
+            return version >= DEFAULT_SCRATCH_SLOT_OPTIMIZE_VERSION
+
+        return self._scratch_slots
+
+    def use_frame_pointers(self, version: int) -> bool:
+        from pyteal.compiler.compiler import FRAME_POINTERS_VERSION
+
+        if self._frame_pointers is None:
+            return version >= FRAME_POINTERS_VERSION
+
+        if self._frame_pointers:
+            verifyProgramVersion(
+                FRAME_POINTERS_VERSION,
+                version,
+                f"Frame pointers aren't available when compiling to program version {version}",
+            )
+
+        return self._frame_pointers
 
 
 def _remove_extraneous_slot_access(start: TealBlock, remove: Set[ScratchSlot]):
@@ -87,13 +120,15 @@ def _apply_slot_to_stack(
     _remove_extraneous_slot_access(start, slots_to_remove)
 
 
-def apply_global_optimizations(start: TealBlock, options: OptimizeOptions) -> TealBlock:
+def apply_global_optimizations(
+    start: TealBlock, options: OptimizeOptions, version: int
+) -> TealBlock:
     # limit number of iterations to length of teal program to avoid potential
     # infinite loops.
     for block in TealBlock.Iterate(start):
         for _ in range(len(block.ops)):
             prev_ops = block.ops.copy()
-            if options.scratch_slots:
+            if options.optimize_scratch_slots(version):
                 _apply_slot_to_stack(block, start, options._skip_slots)
 
             if prev_ops == block.ops:
