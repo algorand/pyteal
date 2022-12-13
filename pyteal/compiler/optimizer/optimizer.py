@@ -59,7 +59,7 @@ class OptimizeOptions:
             verifyProgramVersion(
                 FRAME_POINTERS_VERSION,
                 version,
-                f"Frame pointers aren't available when compiling to TEAL version {version}",
+                f"Frame pointers aren't available when compiling to program version {version}",
             )
 
         return self._frame_pointers
