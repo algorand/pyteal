@@ -14,6 +14,8 @@ from executing import Source  # type: ignore
 class StackFrame:
     frame_info: FrameInfo
     node: AST | None
+    # for debugging purposes:
+    full_stack: list[FrameInfo] | None = None
 
     def as_pyteal_frame(
         self,
@@ -23,6 +25,7 @@ class StackFrame:
         return PyTealFrame(
             frame_info=self.frame_info,
             node=self.node,
+            full_stack=self.full_stack,
             rel_paths=rel_paths,
             parent=parent,
         )
@@ -86,8 +89,11 @@ class StackFrame:
         return f.code_context is None and f.filename.startswith("<")
 
     @classmethod
-    def _init_or_drop(cls, f: FrameInfo) -> Optional["StackFrame"]:
-        frame = StackFrame(f, cast(AST | None, Source.executing(f.frame).node))
+    def _init_or_drop(
+        cls, f: FrameInfo, full_stack: list[FrameInfo]
+    ) -> Optional["StackFrame"]:
+        node = cast(AST | None, Source.executing(f.frame).node)
+        frame = StackFrame(f, node, full_stack if Frames._debug else None)
         return frame if not frame._is_py_crud() else None
 
     def __repr__(self) -> str:
@@ -120,8 +126,22 @@ Could not read section (pyteal-source-mapper, enabled) of config "pyteal.ini": {
     return True
 
 
+def _debug_frames() -> bool:
+    try:
+        config = ConfigParser()
+        config.read("pyteal.ini")
+        return config.getboolean("pyteal-source-mapper", "debug")
+    except Exception as e:
+        print(
+            f"""Disabling `debug` status for sourcemaps. 
+Could not read section (pyteal-source-mapper, debug) of config "pyteal.ini": {e}"""
+        )
+    return False
+
+
 class Frames:
     _skip_all: bool = _skip_all_frames()
+    _debug: bool = _debug_frames()
 
     @classmethod
     def skipping_all(cls, _force_refresh: bool = False) -> bool:
@@ -150,11 +170,16 @@ class Frames:
         if self.skipping_all():
             return
 
-        frame_infos = [f for f in stack() if not StackFrame._frame_info_is_py_crud(f)]
+        full_stack = stack()
+        frame_infos = [
+            f for f in full_stack if not StackFrame._frame_info_is_py_crud(f)
+        ]
 
         def make_frames(frame_infos):
             return [
-                frame for f in frame_infos if (frame := StackFrame._init_or_drop(f))
+                frame
+                for f in frame_infos
+                if (frame := StackFrame._init_or_drop(f, full_stack))
             ]
 
         if keep_all:
@@ -424,12 +449,11 @@ class PyTealFrame(StackFrame):
         self,
         frame_info: FrameInfo,
         node: AST | None,
+        full_stack: list[FrameInfo] | None,
         rel_paths: bool = True,
         parent: Optional["PyTealFrame"] | None = None,
     ):
-        super().__init__(frame_info, node)
-        # self.frame_info = frame.frame_info
-        # self.node = frame.node
+        super().__init__(frame_info, node, full_stack)
         self.rel_paths = rel_paths
         self.parent = parent
 
@@ -470,6 +494,7 @@ class PyTealFrame(StackFrame):
         ptf = PyTealFrame(
             frame_info=other.frame_info,
             node=other.node,
+            full_stack=other.full_stack,
             rel_paths=other.rel_paths,
             parent=self,
         )

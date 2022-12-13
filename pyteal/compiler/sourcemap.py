@@ -463,6 +463,7 @@ class TealMapItem(PyTealFrame):
         super().__init__(
             frame_info=pt_frame.frame_info,
             node=pt_frame.node,
+            full_stack=pt_frame.full_stack,
             rel_paths=pt_frame.rel_paths,
             parent=pt_frame.parent,
         )
@@ -927,7 +928,7 @@ class PyTealSourceMap:
         tablefmt="fancy_grid",
         numalign="right",
         omit_headers: bool = False,
-        omit_repeating_col_except: list[int] | None = None,
+        omit_repeating_col_except: list[str] = [],
         **kwargs,
     ) -> str:
         """
@@ -1004,13 +1005,33 @@ class PyTealSourceMap:
             rows = list(map(add_const_cols, rows))
             renames = add_const_cols(renames)
 
-        if omit_repeating_col_except is not None:
+        teal_col_name = renames[_TEAL_LINE]
+        pt_simple_col_name = renames.get(_PYTEAL_COLUMN)
+        pt_hybrid_col_name = renames.get(_PYTEAL_HYBRID_UNPARSED)
+        if omit_repeating_col_except:
+            # Assume the following column structure:
+            # * col 0 is the generated source with column name stored in `teal_col`
+            # * the source line number has column name stored in `pyteal_line_number`
+            # * the pyteal source has column name stored in `pyteal` OR `pyteal_hybrid_unparsed`
+            #
+            # Consequently, when `teal_col` is repeating we need to take extra care NOT
+            # to omit repeating source values, as these were likely coming from different portions of the source
+            #
+            # TODO: should also never omit the next line no. when the pyteal source isn't repeated
 
             def reduction(row, next_row):
+                same_gen_teal = row[teal_col_name] == next_row[teal_col_name]
                 return {
                     k: v2
-                    for i, (k, v) in enumerate(row.items())
-                    if (v2 := next_row[k]) != v or i in omit_repeating_col_except  # type: ignore
+                    for k, v in row.items()
+                    if any(
+                        [
+                            (v2 := next_row[k]) != v,
+                            k in omit_repeating_col_except,
+                            same_gen_teal and k == pt_hybrid_col_name,
+                            same_gen_teal and k == pt_simple_col_name,
+                        ]
+                    )
                 }
 
             rows = [rows[0]] + list(
@@ -1025,10 +1046,11 @@ class PyTealSourceMap:
 
     def annotated_teal(self, omit_headers: bool = True, concise: bool = True) -> str:
         teal_col = "// GENERATED TEAL"
+        comment_col = "_1"
         kwargs = dict(
             tablefmt="plain",
             omit_headers=omit_headers,
-            omit_repeating_col_except=[0, 1],
+            omit_repeating_col_except=[teal_col, comment_col],
             numalign="left",
             teal=teal_col,
             const_col_2="//",
