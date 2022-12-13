@@ -12,7 +12,7 @@ Optimizer Usage
 
 The compiler determines which optimizations to apply based on the provided :any:`OptimizeOptions` object as
 shown in the code block below. Both :any:`compileTeal` as well as the :any:`Router.compile_program` method
-can receive an `:any:optimize` parameter of type :any:`OptimizeOptions`.
+can receive an :code:`optimize` parameter of type :any:`OptimizeOptions`.
 
 
 .. code-block:: python
@@ -32,9 +32,7 @@ Default Behavior
 
 The :any:`OptimizeOptions` constructor receives keyword arguments representing flags for particular optimizations.
 If an argument is not provided to the constructor of :any:`OptimizeOptions`, a default program version dependent 
-optimization behavior is used in its place according to the table below. When no :any:`OptimizeOptions` is provided
-to :any:`compileTeal` or :any:`Router.compile_program`, all parameters conform progrem dependent defaults
-described below.
+optimization behavior is used in its place according to the table below. 
 
 
 .. list-table::
@@ -93,10 +91,19 @@ described below.
      - Frame pointers not applied
    
 
+When the :code:`optimize` parameter is omitted in :any:`compileTeal` 
+or :any:`Router.compile_program`, all parameters conform to program version dependent defaults
+as defined in the above table. For example:
+
 .. code-block:: python
 
     # apply default optimization behavior by NOT providing `OptimizeOptions`
-    # for version 9 as shown, this is equivalent to passing in 
-    # `optimize=OptimizeOptions(scratch_slots=True, frame_pointers=True)`
+    # for version 9 as shown next, this is equivalent to passing in 
+    # optimize=OptimizeOptions(scratch_slots=True, frame_pointers=True)
 
     compileTeal(approval_program(), mode=Mode.Application, version=9)
+
+    # for version 8 as shown next, this is equivalent to passing in 
+    # optimize=OptimizeOptions(scratch_slots=False, frame_pointers=True)
+
+    compileTeal(approval_program(), mode=Mode.Application, version=8)
