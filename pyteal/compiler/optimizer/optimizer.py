@@ -38,9 +38,6 @@ class OptimizeOptions:
 
         self._skip_slots: Set[ScratchSlot] = set()
 
-        # deprecated field kept for backwards compatibility - not used. Shall I remove altogether?
-        self.scratch_slots: Final[bool] = bool(scratch_slots)
-
     def optimize_scratch_slots(self, version: int) -> bool:
         from pyteal.compiler.compiler import DEFAULT_SCRATCH_SLOT_OPTIMIZE_VERSION
 
