@@ -139,7 +139,7 @@ def test_compile_version_invalid():
         pt.compileTeal(expr, pt.Mode.Signature, version=1)  # too small
 
     with pytest.raises(pt.TealInputError):
-        pt.compileTeal(expr, pt.Mode.Signature, version=8)  # too large
+        pt.compileTeal(expr, pt.Mode.Signature, version=9)  # too large
 
     with pytest.raises(pt.TealInputError):
         pt.compileTeal(expr, pt.Mode.Signature, version=2.0)  # decimal
@@ -1714,7 +1714,7 @@ retsub
     assert actual_no_deferred == expected_no_deferred
 
     # manually add deferred expression to SubroutineDefinition
-    declaration = deferredExample.subroutine.get_declaration()
+    declaration = deferredExample.subroutine.get_declaration_by_option(False)
     declaration.deferred_expr = pt.Pop(pt.Bytes("deferred"))
 
     expected_deferred = """#pragma version 6
@@ -1786,7 +1786,7 @@ retsub
     assert actual_no_deferred == expected_no_deferred
 
     # manually add deferred expression to SubroutineDefinition
-    declaration = empty.subroutine.get_declaration()
+    declaration = empty.subroutine.get_declaration_by_option(False)
     declaration.deferred_expr = pt.Pop(pt.Bytes("deferred"))
 
     expected_deferred = """#pragma version 6
@@ -1837,7 +1837,7 @@ def test_compileSubroutine_deferred_block_malformed():
     program = pt.Seq(bad(), pt.Approve())
 
     # manually add deferred expression to SubroutineDefinition
-    declaration = bad.subroutine.get_declaration()
+    declaration = bad.subroutine.get_declaration_by_option(False)
     declaration.deferred_expr = pt.Pop(pt.Bytes("deferred"))
 
     with pytest.raises(
@@ -2346,6 +2346,13 @@ def test_router_app():
         opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes("optin call"))),
         clear_state=pt.OnCompleteAction.call_only(pt.Approve()),
     )
+
+    with pytest.raises(pt.TealInputError) as e:
+        pt.Router("will-error", on_completion_actions).compile_program(
+            version=6, optimize=pt.OptimizeOptions(frame_pointers=True)
+        )
+
+    assert "Frame pointers aren't available" in str(e.value)
 
     _router_with_oc = pt.Router(
         "ASimpleQuestionablyRobustContract", on_completion_actions

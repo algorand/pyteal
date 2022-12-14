@@ -1,4 +1,5 @@
 import pytest
+from typing import cast
 
 import pyteal as pt
 from pyteal import abi
@@ -22,7 +23,11 @@ def test_ReferenceType_referenced_index():
 
         expected = pt.TealSimpleBlock(
             [
-                pt.TealOp(expr, pt.Op.load, value.stored_value.slot),
+                pt.TealOp(
+                    expr,
+                    pt.Op.load,
+                    cast(pt.ScratchVar, value._stored_value).slot,
+                ),
             ]
         )
         actual, _ = expr.__teal__(options)
@@ -56,7 +61,7 @@ def test_ReferenceType_decode():
                     assert expr.type_of() == pt.TealType.none
                     assert expr.has_return() is False
 
-                    expected_decoding = value.stored_value.store(
+                    expected_decoding = value._stored_value.store(
                         pt.GetByte(
                             encoded,
                             start_index if start_index is not None else pt.Int(0),
@@ -109,7 +114,11 @@ def test_Account_address():
 
     expected = pt.TealSimpleBlock(
         [
-            pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+            pt.TealOp(
+                None,
+                pt.Op.load,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
             pt.TealOp(None, pt.Op.txnas, "Accounts"),
         ]
     )
@@ -192,7 +201,11 @@ def test_Asset_asset_id():
 
     expected = pt.TealSimpleBlock(
         [
-            pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+            pt.TealOp(
+                None,
+                pt.Op.load,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
             pt.TealOp(None, pt.Op.txnas, "Assets"),
         ]
     )
@@ -282,7 +295,11 @@ def test_Application_application_id():
 
     expected = pt.TealSimpleBlock(
         [
-            pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+            pt.TealOp(
+                None,
+                pt.Op.load,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
             pt.TealOp(None, pt.Op.txnas, "Applications"),
         ]
     )

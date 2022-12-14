@@ -70,21 +70,24 @@ lint-and-test: check-generate-init lint test-unit
 
 # ---- Integration Tests (algod required) ---- #
 
-sandbox-dev-up:
-	docker-compose up -d algod
+algod-start:
+	docker compose up -d algod --wait
 
-sandbox-dev-stop:
-	docker-compose stop algod
+algod-stop:
+	docker compose stop algod
 
+# TODO: probly don't want the separate special ignore
 test-async-integration:
-	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration \
-		--ignore tests/integration/sourcemap_monkey_integ_test.py
+	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration -m "not serial" --ignore tests/integration/sourcemap_monkey_integ_test.py
 
+
+# TODO: consolidate running synchronous tests into one method only. 
+# a priori - let's use the "serial" pytest.ini tag approach in the second line:
 test-sync-integration:
 	pytest -n 1 --durations=10 -sv tests/integration/sourcemap_monkey_integ_test.py
+	pytest --durations=10 -sv tests/integration -m serial
 
 test-integration: test-async-integration test-sync-integration
-
 
 all-tests: lint-and-test test-integration
 
@@ -97,7 +100,6 @@ local-gh-job:
 
 local-gh-simulate:
 	act
-
 
 # ---- Extras ---- #
 

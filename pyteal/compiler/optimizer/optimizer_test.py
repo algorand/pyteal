@@ -1,3 +1,5 @@
+import pytest
+
 from pyteal.compiler.optimizer.optimizer import OptimizeOptions, _apply_slot_to_stack
 
 import pyteal as pt
@@ -558,3 +560,38 @@ return""".strip()
         program, version=4, mode=pt.Mode.Application, optimize=optimize_options
     )
     assert actual == expected
+
+
+def test_optimize_default_for_version_etc():
+    oo = OptimizeOptions()
+    assert oo.optimize_scratch_slots(7) is False
+    assert oo.use_frame_pointers(7) is False
+
+    assert oo.optimize_scratch_slots(8) is False
+    assert oo.use_frame_pointers(8) is True
+
+    assert oo.optimize_scratch_slots(9) is True
+    assert oo.use_frame_pointers(9) is True
+
+    oo = OptimizeOptions(scratch_slots=True)
+    assert oo.optimize_scratch_slots(7) is True
+    assert oo.optimize_scratch_slots(8) is True
+    assert oo.optimize_scratch_slots(9) is True
+
+    oo = OptimizeOptions(scratch_slots=False)
+    assert oo.optimize_scratch_slots(7) is False
+    assert oo.optimize_scratch_slots(8) is False
+    assert oo.optimize_scratch_slots(9) is False
+
+    oo = OptimizeOptions(frame_pointers=False)
+    assert oo.use_frame_pointers(7) is False
+    assert oo.use_frame_pointers(8) is False
+    assert oo.use_frame_pointers(9) is False
+
+    oo = OptimizeOptions(frame_pointers=True)
+    with pytest.raises(pt.TealInputError) as tie:
+        oo.use_frame_pointers(7)
+    assert "Frame pointers aren't available" in str(tie.value)
+
+    assert oo.use_frame_pointers(8) is True
+    assert oo.use_frame_pointers(9) is True

@@ -7,20 +7,30 @@ PyTeal can be used to write `Stateful Algorand Smart Contracts <https://develope
 as well. Stateful contracts, also known as applications, can access and manipulate state on the
 Algorand blockchain.
 
-State consists of key-value pairs, where keys are byte slices and values can be integers or byte
-slices. There are multiple types of state that an application can use.
+There are multiple types of state that an application can use.
+State consists of key-value pairs, where keys are byte slices and values vary by type of state.
+
+=================== ===================== ===============================================
+Type of State       Type of Key           Type of Value
+=================== ===================== ===============================================
+Global State        :any:`TealType.bytes` :any:`TealType.uint64` or :any:`TealType.bytes`
+Local State         :any:`TealType.bytes` :any:`TealType.uint64` or :any:`TealType.bytes`
+Boxes               :any:`TealType.bytes` :any:`TealType.bytes`
+=================== ===================== ===============================================
 
 State Operation Table
 ---------------------
 
-================== ==================== ====================== ==================== ======================
-Context              Write                Read                 Delete               Check If Exists
-================== ==================== ====================== ==================== ======================
-Current App Global :any:`App.globalPut` :any:`App.globalGet`   :any:`App.globalDel` :any:`App.globalGetEx`
-Current App Local  :any:`App.localPut`  :any:`App.localGet`    :any:`App.localDel`  :any:`App.localGetEx`
-Other App Global                        :any:`App.globalGetEx`                      :any:`App.globalGetEx`
-Other App Local                         :any:`App.localGetEx`                       :any:`App.localGetEx`
-================== ==================== ====================== ==================== ======================
+================== ======================= ======================== ======================== ===================== =======================
+Context            Create                  Write                    Read                     Delete                Check If Exists
+================== ======================= ======================== ======================== ===================== =======================
+Current App Global                         :any:`App.globalPut`     :any:`App.globalGet`     :any:`App.globalDel`  :any:`App.globalGetEx`
+Current App Local                          :any:`App.localPut`      :any:`App.localGet`      :any:`App.localDel`   :any:`App.localGetEx`
+Other App Global                                                    :any:`App.globalGetEx`                         :any:`App.globalGetEx`
+Other App Local                                                     :any:`App.localGetEx`                          :any:`App.localGetEx`
+Current App Boxes  :any:`App.box_create`   :any:`App.box_put`       :any:`App.box_extract`   :any:`App.box_delete` :any:`App.box_length`
+                   :any:`App.box_put`      :any:`App.box_replace`   :any:`App.box_get`                             :any:`App.box_get`
+================== ======================= ======================== ======================== ===================== =======================
 
 Global State
 ------------
@@ -244,3 +254,149 @@ For example:
         otherAppOtherAccountRole,
         If(otherAppOtherAccountRole.hasValue(), otherAppOtherAccountRole.value(), Bytes("none"))
     ])
+
+Box Storage
+-----------
+
+Box storage consists of key-value pairs that are stored in an application's local context.
+
+The app account's minimum balance requirement (MBR) is increased with each additional box, and each additional byte in the box's name and allocated size.
+
+.. warning::
+
+   If one deletes an application with outstanding boxes, the MBR is not recoverable from the deleted app account.
+   It is recommended that *before* app deletion, all box storage be deleted, and funds previously allocated to the MBR be withdrawn.
+
+Box sizes and names cannot be changed after initial allocation, but they can be deleted and re-allocated.
+Boxes are only visible to the application itself; in other words, an application cannot read from or write to another application's boxes on-chain.
+
+The following sections explain how to work with boxes.
+
+.. _Creating Boxes:
+
+Creating Boxes
+~~~~~~~~~~~~~~
+
+To create a box, use :any:`App.box_create`, or :any:`App.box_put` method.
+
+For :any:`App.box_create`, the first argument is the box name, and the second argument is the byte size to be allocated.
+
+:any:`App.box_create` creates a new box with the specified name and byte length. New boxes will contain a byte string of all zeros. Performing this operation on a box that already exists will not change its contents.
+
+If successful, :any:`App.box_create` will return :code:`0` if the box already existed, otherwise it will return :code:`1`. A failure will occur if you attempt to create a box that already exists with a different size.
+
+For example:
+
+.. code-block:: python
+
+    # Allocate a box called "BoxA" of byte size 100 and ignore the return value
+    Pop(App.box_create(Bytes("BoxA"), Int(100)))
+
+    # Allocate a box called "BoxB" of byte size 90, asserting that it didn't exist before.
+    Assert(App.box_create(Bytes("BoxB"), Int(90))
+
+For :any:`App.box_put`, the first argument is the box name to create or to write to, and the second argument is the bytes to write.
+
+.. note::
+
+   If the box exists, then :any:`App.box_put` will write the contents to the box
+   (fails when the content length is **not identical** to the existing box's byte size);
+   otherwise, it will create a box containing exactly the same input bytes.
+
+.. code-block:: python
+
+    # create a 42 bytes length box called `poemLine` with content
+    App.box_put(Bytes("poemLine"), Bytes("Of that colossal wreck, boundless and bare"))
+
+    # write to box `poemLine` with new value
+    App.box_put(Bytes("poemLine"), Bytes("The lone and level sands stretch far away."))
+
+Writing to a Box
+~~~~~~~~~~~~~~~~
+
+To write to a box, use :any:`App.box_replace`, or :any:`App.box_put` method.
+
+:any:`App.box_replace` writes bytes of certain length from a start index in a box.
+The first argument is the box name to write into, the second argument is the starting index to write,
+and the third argument is the replacement bytes. For example:
+
+.. code-block:: python
+
+   # replace 2 bytes starting from the 0'th byte  by `Ne` in the box named `wordleBox`
+   App.box_replace(Bytes("wordleBox"), Int(0), Bytes("Ne"))
+
+:any:`App.box_put` writes the full contents to a pre-existing box, as is mentioned in `Creating Boxes`_.
+
+.. _Reading from a Box:
+
+Reading from a Box
+~~~~~~~~~~~~~~~~~~
+
+To read from a box, use :any:`App.box_extract`, or :any:`App.box_get` method.
+
+:any:`App.box_extract` reads bytes of a certain length from a start index in a Box.
+The first argument is the box name to read from, the second argument is the starting index to read,
+and the third argument is the length of bytes to extract. For example:
+
+.. code-block:: python
+
+   # extract a segment of length 10 starting at the 5th byte in a box named `NoteBook`
+   App.box_extract(Bytes("NoteBook"), Int(5), Int(10))
+
+:any:`App.box_get` gets the full contents of a box.
+The only argument is the box name, and it returns a :any:`MaybeValue` containing:
+
+- a boolean value indicating if the box exists
+- the full contents of the box.
+
+For example:
+
+.. code-block:: python
+
+   # get the full contents from a box named `NoteBook`, asserting that it exists
+   Seq(
+       contents := App.box_get(Bytes("NoteBook")),
+       Assert(contents.hasValue()),
+       contents.value()
+   )
+
+Deleting a Box
+~~~~~~~~~~~~~~
+
+To delete a box, use :any:`App.box_delete` method. The only argument is the box name.
+
+:any:`App.box_delete` will return :code:`1` if the box already existed, otherwise it will return :code:`0`. Deleting a nonexistent box is allowed, but has no effect.
+
+For example:
+
+.. code-block:: python
+
+    # delete the box `boxToRemove`, asserting that it existed prior to this
+    Assert(App.box_delete(Bytes("boxToRemove")))
+
+    # delete the box `mightExist` and ignore the return value
+    Pop(App.box_delete(Bytes("mightExist")))
+
+Checking if a Box Exists and Reads its Length
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To check the existence of a box, use the :any:`App.box_length` method.
+The only argument is the box name, and it returns a :any:`MaybeValue` containing:
+
+- a boolean value indicating if the box exists
+- the actual byte size of the box.
+
+For example:
+
+.. code-block:: python
+
+   # get the length of the box `someBox`, and assert that the box exists
+   Seq(
+       length := App.box_length(Bytes("someBox")),
+       Assert(length.hasValue()),
+       length.value()
+   )
+
+.. note::
+
+   :any:`App.box_get` can also check the existence of a box as mentioned in `Reading from a Box`_.

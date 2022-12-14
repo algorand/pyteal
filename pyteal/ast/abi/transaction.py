@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Union, cast, List, Final
+from typing import Union, cast, Final
 from pyteal.ast.abi.type import BaseType, ComputedValue, TypeSpec
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
@@ -82,16 +82,16 @@ class Transaction(BaseType):
             case ComputedValue():
                 return self._set_with_computed_type(value)
             case BaseType():
-                return self.stored_value.store(self.stored_value.load())
+                return self._stored_value.store(self._stored_value.load())
             case int():
-                return self.stored_value.store(Int(value))
+                return self._stored_value.store(Int(value))
             case Expr():
-                return self.stored_value.store(value)
+                return self._stored_value.store(value)
             case _:
                 raise TealInputError(f"Cant store a {type(value)} in a Transaction")
 
     def index(self) -> Expr:
-        return self.stored_value.load()
+        return self._stored_value.load()
 
     def decode(
         self,
@@ -259,7 +259,7 @@ class ApplicationCallTransaction(Transaction):
 
 ApplicationCallTransaction.__module__ = "pyteal.abi"
 
-TransactionTypeSpecs: Final[List[TypeSpec]] = [
+TransactionTypeSpecs: Final[list[TypeSpec]] = [
     TransactionTypeSpec(),
     PaymentTransactionTypeSpec(),
     KeyRegisterTransactionTypeSpec(),

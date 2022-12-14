@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING
 
 from pyteal.ir import TealBlock, TealSimpleBlock
 from pyteal.stack_frame import Frames
@@ -31,7 +31,7 @@ class Expr(ABC):
         if not hasattr(self, "frames"):
             self.frames: Frames
 
-    def getDefinitionTrace(self) -> List[str]:
+    def getDefinitionTrace(self) -> list[str]:
         return self.trace
 
     @abstractmethod
@@ -50,7 +50,7 @@ class Expr(ABC):
         pass
 
     @abstractmethod
-    def __teal__(self, options: "CompileOptions") -> Tuple[TealBlock, TealSimpleBlock]:
+    def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
         """Assemble TEAL IR for this component and its arguments."""
         pass
 

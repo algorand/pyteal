@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Set, Tuple, cast
+from typing import Dict, Final, List, Optional, Set, Tuple, cast
 
 from algosdk.v2client.algod import AlgodClient
 
@@ -33,7 +33,9 @@ from pyteal.util import algod_with_assertion
 
 TComponents = TealComponent | TealPragma
 
-MAX_PROGRAM_VERSION = 7
+MAX_PROGRAM_VERSION = 8
+FRAME_POINTERS_VERSION = 8
+DEFAULT_SCRATCH_SLOT_OPTIMIZE_VERSION = 9
 MIN_PROGRAM_VERSION = 2
 DEFAULT_PROGRAM_VERSION = MIN_PROGRAM_VERSION
 
@@ -52,11 +54,14 @@ class CompileOptions:
         *,
         mode: Mode = Mode.Signature,
         version: int = DEFAULT_PROGRAM_VERSION,
-        optimize: OptimizeOptions | None = None,
+        optimize: OptimizeOptions = None,
     ) -> None:
-        self.mode = mode
-        self.version = version
-        self.optimize = optimize if optimize is not None else OptimizeOptions()
+        self.mode: Final[Mode] = mode
+        self.version: Final[int] = version
+        self.optimize: Final[OptimizeOptions] = optimize or OptimizeOptions()
+        self.use_frame_pointers: Final[bool] = self.optimize.use_frame_pointers(
+            self.version
+        )
 
         self.currentSubroutine: Optional[SubroutineDefinition] = None
 
@@ -161,11 +166,18 @@ def compileSubroutine(
     start.validateTree()
 
     if (
-        currentSubroutine is not None
-        and currentSubroutine.get_declaration().deferred_expr is not None
+        currentSubroutine
+        and currentSubroutine.get_declaration_by_option(
+            options.use_frame_pointers
+        ).deferred_expr
     ):
         # this represents code that should be inserted before each retsub op
-        deferred_expr = cast(Expr, currentSubroutine.get_declaration().deferred_expr)
+        deferred_expr = cast(
+            Expr,
+            currentSubroutine.get_declaration_by_option(
+                options.use_frame_pointers
+            ).deferred_expr,
+        )
 
         for block in TealBlock.Iterate(start):
             if not any(op.getOp() == Op.retsub for op in block.ops):
@@ -216,7 +228,7 @@ def compileSubroutine(
     newSubroutines = referencedSubroutines - subroutine_start_blocks.keys()
     for subroutine in sorted(newSubroutines, key=lambda subroutine: subroutine.id):
         compileSubroutine(
-            subroutine.get_declaration(),  # T2PT4
+            subroutine.get_declaration_by_option(options.use_frame_pointers),  # T2PT4
             options,
             subroutineGraph,
             subroutine_start_blocks,
@@ -250,7 +262,7 @@ class CompilationBundle:
     mode: Mode
     version: int
     assemble_constants: bool
-    optimize: OptimizeOptions | None
+    optimize: Optional[OptimizeOptions]
     teal: str
     lines: list[str]
     components: list[TealComponent]
@@ -358,12 +370,12 @@ class Compilation:
         # control flow graph, the optimizer requires context across block boundaries. This
         # is necessary for the dependency checking of local slots. Global slots, slots
         # used by DynamicScratchVar, and reserved slots are not optimized.
-        if options.optimize.scratch_slots:
+        if options.optimize.optimize_scratch_slots(self.version):
             options.optimize._skip_slots = collect_unoptimized_slots(
                 subroutine_start_blocks
             )
             for start in subroutine_start_blocks.values():
-                apply_global_optimizations(start, options.optimize)
+                apply_global_optimizations(start, options.optimize, self.version)
 
         localSlotAssignments = assignScratchSlotsToSubroutines(subroutine_start_blocks)
 
@@ -386,9 +398,7 @@ class Compilation:
         if self.assemble_constants:
             if self.version < 3:
                 raise TealInternalError(
-                    "The minimum program version required to enable assembleConstants is 3. The current version is {}".format(
-                        self.version
-                    )
+                    f"The minimum program version required to enable assembleConstants is 3. The current version is {self.version}."
                 )
             components = createConstantBlocks(components)
 

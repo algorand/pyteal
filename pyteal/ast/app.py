@@ -1,5 +1,14 @@
 from typing import TYPE_CHECKING, Final
 from enum import Enum
+from pyteal.ast.box import (
+    BoxCreate,
+    BoxDelete,
+    BoxExtract,
+    BoxReplace,
+    BoxLen,
+    BoxGet,
+    BoxPut,
+)
 
 from pyteal.types import TealType, require_type
 from pyteal.ir import TealOp, Op, TealBlock
@@ -181,7 +190,7 @@ class App(LeafExpr):
 
         Args:
             key: The key to write in the global application state. Must evaluate to bytes.
-            value: THe value to write in the global application state. Can evaluate to any type.
+            value: The value to write in the global application state. Can evaluate to any type.
         """
         require_type(key, TealType.bytes)
         require_type(value, TealType.anytype)
@@ -210,6 +219,86 @@ class App(LeafExpr):
         """
         require_type(key, TealType.bytes)
         return cls(AppField.globalDel, [key])
+
+    @classmethod
+    def box_create(cls, name: Expr, size: Expr) -> Expr:
+        """Create a box with a given name and size.
+
+        New boxes will contain a byte string of all zeros. Performing this operation on a box that
+        already exists will not change its contents.
+
+        If successful, this expression returns 0 if the box already existed, otherwise it returns 1.
+
+        A failure will occur if you attempt to create a box that already exists with a different size.
+
+        Args:
+            name: The key used to reference this box. Must evaluate to a bytes.
+            size: The number of bytes to reserve for this box. Must evaluate to a uint64.
+        """
+        return BoxCreate(name, size)
+
+    @classmethod
+    def box_delete(cls, name: Expr) -> Expr:
+        """Deletes a box given it's name.
+
+        This expression returns 1 if the box existed, otherwise it returns 0.
+
+        Deleting a nonexistent box is allowed, but has no effect.
+
+        Args:
+            name: The key the box was created with. Must evaluate to bytes.
+        """
+        return BoxDelete(name)
+
+    @classmethod
+    def box_extract(cls, name: Expr, start: Expr, length: Expr) -> Expr:
+        """Extracts bytes in a box given its name, start index and stop index.
+
+        Args:
+            name: The key the box was created with. Must evaluate to bytes.
+            start: The byte index into the box to start reading. Must evaluate to uint64.
+            length: The byte length into the box from start to stop reading. Must evaluate to uint64.
+        """
+        return BoxExtract(name, start, length)
+
+    @classmethod
+    def box_replace(cls, name: Expr, start: Expr, value: Expr) -> Expr:
+        """Replaces bytes in a box given its name, start index, and value.
+
+        Args:
+            name: The key the box was created with. Must evaluate to bytes.
+            start: The byte index into the box to start writing. Must evaluate to uint64.
+            value: The value to start writing at start index. Must evaluate to bytes.
+        """
+        return BoxReplace(name, start, value)
+
+    @classmethod
+    def box_length(cls, name: Expr) -> MaybeValue:
+        """Get the byte length of the box specified by its name.
+
+        Args:
+            name: The key the box was created with. Must evaluate to bytes.
+        """
+        return BoxLen(name)
+
+    @classmethod
+    def box_get(cls, name: Expr) -> MaybeValue:
+        """Get the full contents of a box given its name.
+
+        Args:
+            name: The key the box was created with. Must evaluate to bytes.
+        """
+        return BoxGet(name)
+
+    @classmethod
+    def box_put(cls, name: Expr, value: Expr) -> Expr:
+        """Write all contents to a box given its name.
+
+        Args:
+            name: The key the box was created with. Must evaluate to bytes.
+            value: The value to write to the box. Must evaluate to bytes.
+        """
+        return BoxPut(name, value)
 
 
 App.__module__ = "pyteal"

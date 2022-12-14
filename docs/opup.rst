@@ -14,8 +14,16 @@ of inner transactions issued in a transaction group so budget cannot be increase
 budget when using the OpUp utility will need to be high enough to execute the TEAL code that issues the inner
 transactions. A budget of ~20 is enough for most use cases. 
 
+The default behavior for fees on Inner Transactions is to first take any excess fee credit from overpayment of fees
+in the group transaction and, if necessary, draw the remainder of fees from the application account. 
+This behavior can be changed by specifying the source that should be used to cover fees by passing a fee source argument. 
+
+
 Usage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Mode
+----
 
 The :any:`pyteal.OpUp` utility is available in two modes: :any:`Explicit` and :any:`OnCall`:
 
@@ -31,6 +39,21 @@ OpUp Mode         Description
 target app ID to be provided in the foreign apps array field of the transaction and the :any:`pyteal.OpUp`
 constructor in order for it to be accessible. :any:`OnCall` is easier to use, but has slightly more overhead
 because the target app must be created and deleted during the evaluation of an app call.
+
+Fee Source
+----------
+
+The source of fees to cover the Inner Transactions for the :any:`pyteal.OpUp` utility can be specified by passing the appropriate
+argument for the fee source.
+
+==================== ========================================================================================
+OpUp Fee Source      Description
+==================== ========================================================================================
+:code:`GroupCredit`  Only take from the group transaction excess fees
+:code:`AppAccount`   Always pay out of the app accounts algo balance
+:code:`Any`          Default behavior. First take from GroupCredit then, if necessary, take from App Account.
+==================== ========================================================================================
+
 
 Ensure Budget
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

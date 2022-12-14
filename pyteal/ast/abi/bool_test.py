@@ -1,4 +1,4 @@
-from typing import NamedTuple, List
+from typing import NamedTuple, List, cast
 import pytest
 
 import pyteal as pt
@@ -53,7 +53,11 @@ def test_Bool_set_static():
         expected = pt.TealSimpleBlock(
             [
                 pt.TealOp(None, pt.Op.int, 1 if value_to_set else 0),
-                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+                pt.TealOp(
+                    None,
+                    pt.Op.store,
+                    cast(pt.ScratchVar, value._stored_value).slot,
+                ),
             ]
         )
 
@@ -78,7 +82,11 @@ def test_Bool_set_expr():
             pt.TealOp(None, pt.Op.logic_or),
             pt.TealOp(None, pt.Op.logic_not),
             pt.TealOp(None, pt.Op.logic_not),
-            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            pt.TealOp(
+                None,
+                pt.Op.store,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
         ]
     )
 
@@ -99,8 +107,16 @@ def test_Bool_set_copy():
 
     expected = pt.TealSimpleBlock(
         [
-            pt.TealOp(None, pt.Op.load, other.stored_value.slot),
-            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            pt.TealOp(
+                None,
+                pt.Op.load,
+                cast(pt.ScratchVar, other._stored_value).slot,
+            ),
+            pt.TealOp(
+                None,
+                pt.Op.store,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
         ]
     )
 
@@ -125,7 +141,11 @@ def test_Bool_set_computed():
     expected = pt.TealSimpleBlock(
         [
             pt.TealOp(None, pt.Op.int, 0x80),
-            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            pt.TealOp(
+                None,
+                pt.Op.store,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
         ]
     )
 
@@ -147,7 +167,13 @@ def test_Bool_get():
     assert not expr.has_return()
 
     expected = pt.TealSimpleBlock(
-        [pt.TealOp(expr, pt.Op.load, value.stored_value.slot)]
+        [
+            pt.TealOp(
+                expr,
+                pt.Op.load,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
+        ]
     )
 
     actual, _ = expr.__teal__(options)
@@ -174,7 +200,11 @@ def test_Bool_decode():
                         pt.TealOp(None, pt.Op.int, 8),
                         pt.TealOp(None, pt.Op.mul),
                         pt.TealOp(None, pt.Op.getbit),
-                        pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+                        pt.TealOp(
+                            None,
+                            pt.Op.store,
+                            cast(pt.ScratchVar, value._stored_value).slot,
+                        ),
                     ]
                 )
 
@@ -199,7 +229,11 @@ def test_Bool_decode_bit():
             pt.TealOp(None, pt.Op.byte, '"encoded"'),
             pt.TealOp(None, pt.Op.int, 17),
             pt.TealOp(None, pt.Op.getbit),
-            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            pt.TealOp(
+                None,
+                pt.Op.store,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
         ]
     )
 
@@ -221,7 +255,11 @@ def test_Bool_encode():
         [
             pt.TealOp(None, pt.Op.byte, "0x00"),
             pt.TealOp(None, pt.Op.int, 0),
-            pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+            pt.TealOp(
+                None,
+                pt.Op.load,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
             pt.TealOp(None, pt.Op.setbit),
         ]
     )
@@ -401,7 +439,11 @@ def test_encodeBoolSequence():
         setBits = [
             [
                 pt.TealOp(None, pt.Op.int, j),
-                pt.TealOp(None, pt.Op.load, testType.stored_value.slot),
+                pt.TealOp(
+                    None,
+                    pt.Op.load,
+                    cast(pt.ScratchVar, testType._stored_value).slot,
+                ),
                 pt.TealOp(None, pt.Op.setbit),
             ]
             for j, testType in enumerate(test.types)

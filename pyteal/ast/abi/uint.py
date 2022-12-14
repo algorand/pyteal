@@ -8,7 +8,7 @@ from abc import abstractmethod
 
 from pyteal.types import TealType
 from pyteal.errors import TealInputError
-from pyteal.ast.scratchvar import ScratchVar
+from pyteal.ast.abstractvar import AbstractVar
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.assert_ import Assert
@@ -31,7 +31,7 @@ def uint_storage_type(size: int) -> TealType:
     return TealType.bytes
 
 
-def uint_set(size: int, uint_var: ScratchVar, value: Union[int, Expr, "Uint"]) -> Expr:
+def uint_set(size: int, uint_var: AbstractVar, value: Union[int, Expr, "Uint"]) -> Expr:
     if size > 64:
         raise NotImplementedError(
             "Uint operations have not yet been implemented for bit sizes larger than 64"
@@ -59,7 +59,7 @@ def uint_set(size: int, uint_var: ScratchVar, value: Union[int, Expr, "Uint"]) -
 
 def uint_decode(
     size: int,
-    uint_var: ScratchVar,
+    uint_var: AbstractVar,
     encoded: Expr,
     start_index: Optional[Expr],
     end_index: Optional[Expr],
@@ -90,9 +90,9 @@ def uint_decode(
     raise ValueError("Unsupported uint size: {}".format(size))
 
 
-def uint_encode(size: int, uint_var: Expr | ScratchVar) -> Expr:
+def uint_encode(size: int, uint_var: Expr | AbstractVar) -> Expr:
 
-    if isinstance(uint_var, ScratchVar):
+    if isinstance(uint_var, AbstractVar):
         uint_var = uint_var.load()
 
     if size > 64:
@@ -240,7 +240,7 @@ class Uint(BaseType):
 
         The expression will have the type TealType.uint64.
         """
-        return self.stored_value.load()
+        return self._stored_value.load()
 
     def set(self, value: Union[int, Expr, "Uint", ComputedValue["Uint"]]) -> Expr:
         """Set the value of this Uint to the input value.
@@ -275,7 +275,7 @@ class Uint(BaseType):
                     value.type_spec(), self.type_spec()
                 )
             )
-        return uint_set(self.type_spec().bit_size(), self.stored_value, value)
+        return uint_set(self.type_spec().bit_size(), self._stored_value, value)
 
     def decode(
         self,
@@ -287,7 +287,7 @@ class Uint(BaseType):
     ) -> Expr:
         return uint_decode(
             self.type_spec().bit_size(),
-            self.stored_value,
+            self._stored_value,
             encoded,
             start_index,
             end_index,
@@ -295,7 +295,7 @@ class Uint(BaseType):
         )
 
     def encode(self) -> Expr:
-        return uint_encode(self.type_spec().bit_size(), self.stored_value)
+        return uint_encode(self.type_spec().bit_size(), self._stored_value)
 
 
 Uint.__module__ = "pyteal.abi"

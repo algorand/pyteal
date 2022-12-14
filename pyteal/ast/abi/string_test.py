@@ -1,4 +1,5 @@
 import pytest
+from typing import cast
 
 import pyteal as pt
 from pyteal import abi
@@ -39,7 +40,13 @@ def test_String_encode():
     assert expr.has_return() is False
 
     expected = pt.TealSimpleBlock(
-        [pt.TealOp(expr, pt.Op.load, value.stored_value.slot)]
+        [
+            pt.TealOp(
+                expr,
+                pt.Op.load,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
+        ]
     )
     actual, _ = expr.__teal__(options)
     assert actual == expected
@@ -69,7 +76,7 @@ def test_DynamicArray_decode():
                 assert expr.type_of() == pt.TealType.none
                 assert expr.has_return() is False
 
-                expectedExpr = value.stored_value.store(
+                expectedExpr = value._stored_value.store(
                     substring_for_decoding(
                         encoded,
                         start_index=start_index,
@@ -97,7 +104,11 @@ def test_String_get():
 
     expected = pt.TealSimpleBlock(
         [
-            pt.TealOp(expr, pt.Op.load, value.stored_value.slot),
+            pt.TealOp(
+                expr,
+                pt.Op.load,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
             pt.TealOp(None, pt.Op.extract, 2, 0),
         ]
     )
@@ -129,7 +140,11 @@ def test_String_set_static(value_to_set, value_encoded):
     expected = pt.TealSimpleBlock(
         [
             pt.TealOp(None, pt.Op.byte, "0x" + value_encoded.hex()),
-            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            pt.TealOp(
+                None,
+                pt.Op.store,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
         ]
     )
 
@@ -156,14 +171,30 @@ def test_String_set_expr():
         value_start, value_end = value_to_set.__teal__(options)
         expected_body = pt.TealSimpleBlock(
             [
-                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
-                pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+                pt.TealOp(
+                    None,
+                    pt.Op.store,
+                    cast(pt.ScratchVar, value._stored_value).slot,
+                ),
+                pt.TealOp(
+                    None,
+                    pt.Op.load,
+                    cast(pt.ScratchVar, value._stored_value).slot,
+                ),
                 pt.TealOp(None, pt.Op.len),
                 pt.TealOp(None, pt.Op.itob),
                 pt.TealOp(None, pt.Op.extract, 6, 0),
-                pt.TealOp(None, pt.Op.load, value.stored_value.slot),
+                pt.TealOp(
+                    None,
+                    pt.Op.load,
+                    cast(pt.ScratchVar, value._stored_value).slot,
+                ),
                 pt.TealOp(None, pt.Op.concat),
-                pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+                pt.TealOp(
+                    None,
+                    pt.Op.store,
+                    cast(pt.ScratchVar, value._stored_value).slot,
+                ),
             ]
         )
         value_end.setNextBlock(expected_body)
@@ -188,8 +219,16 @@ def test_String_set_copy():
 
     expected = pt.TealSimpleBlock(
         [
-            pt.TealOp(None, pt.Op.load, other.stored_value.slot),
-            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            pt.TealOp(
+                None,
+                pt.Op.load,
+                cast(pt.ScratchVar, other._stored_value).slot,
+            ),
+            pt.TealOp(
+                None,
+                pt.Op.store,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
         ]
     )
 
@@ -217,7 +256,11 @@ def test_String_set_computed():
     expected = pt.TealSimpleBlock(
         [
             byte_ops.ops[0],
-            pt.TealOp(None, pt.Op.store, value.stored_value.slot),
+            pt.TealOp(
+                None,
+                pt.Op.store,
+                cast(pt.ScratchVar, value._stored_value).slot,
+            ),
         ]
     )
 

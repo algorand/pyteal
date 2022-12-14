@@ -1,8 +1,52 @@
 # Unreleased
 
+# Added
+* Added frame pointer support for subroutine arguments, replacing the previous usage of scratch. ([#562](https://github.com/algorand/pyteal/pull/562))
+* Added frame pointer support for local ABI variables in subroutine. ([#606](https://github.com/algorand/pyteal/pull/606))
+* Added `frame_pointers` property in `OptimizeOptions` to optimize away scratch slots during subroutine calls. This defaults to frame pointer usage when not specified. ([#613](https://github.com/algorand/pyteal/pull/613))
+
+# Fixed
+* Allowing the `MethodCall` and `ExecuteMethodCall` to be passed `None` as app_id argument in the case of an app create transaction ([#592](https://github.com/algorand/pyteal/pull/592))
+
+# Changed
+* Introducing `AbstractVar` to abstract value access: store, load, and stack type. ([#584](https://github.com/algorand/pyteal/pull/584))
+  * NOTE: a backwards incompatable change was imposed in this PR: previous ABI value's public member `stored_value` with type `ScratchVar`, is now changed to protected member `_stored_value` with type `AbstractVar`.
+* Starting with program version 9, when `scratch_slots` flag isn't provided to `OptimizeOptions`, default to optimizing. For versions 8 and earlier the default is and remains to _not_ optimize. ([#613](https://github.com/algorand/pyteal/pull/613))
+
+# 0.20.1
+
+## Added
+* adding program page related ops ([#412](https://github.com/algorand/pyteal/pull/412))
+* Add Replace ([#413](https://github.com/algorand/pyteal/pull/413))
+* Add Block ([#415](https://github.com/algorand/pyteal/pull/415))
+* Add JsonRef ([#417](https://github.com/algorand/pyteal/pull/417))
+* Add Base64Decode ([#418](https://github.com/algorand/pyteal/pull/418))
+* Support Secp256r1 curve ([#423](https://github.com/algorand/pyteal/pull/423))
+* Add VrfVerify ([#419](https://github.com/algorand/pyteal/pull/419))
+* Add Sha3_256 ([#425](https://github.com/algorand/pyteal/pull/425))
+* Support FirstValidTime transaction field ([#424](https://github.com/algorand/pyteal/pull/424))
+* Add Ed25519Verify_Bare ([#426](https://github.com/algorand/pyteal/pull/426))
+* AVM Boxes Ops in Pyteal ([#438](https://github.com/algorand/pyteal/pull/438))
+* Support new AVM 8 account parameters ([#555](https://github.com/algorand/pyteal/pull/555))
+
+## Changed
+* Changes to avm8 docs ([#546](https://github.com/algorand/pyteal/pull/546))
+
+# 0.19.0
+
+## Added
+* Added option to `OpUp` utility to allow specification of source for fees ([#566](https://github.com/algorand/pyteal/pull/566))
+
 ## Fixed
 * Erroring on constructing an odd length hex string. ([#539](https://github.com/algorand/pyteal/pull/539))
 * Incorrect behavior when overriding a method name ([#550](https://github.com/algorand/pyteal/pull/550))
+* Add missing `abi.NamedTupleTypeSpec` equality override, such that equality holds only when `instance_class` and `value_type_specs` match. ([#540](https://github.com/algorand/pyteal/pull/540))
+* Prohibited instantiating `abi.NamedTuple` from inheriting subclasses of `abi.NamedTuple`, for fields in subclasses are not inherited. ([#540](https://github.com/algorand/pyteal/pull/540))
+* Fixed bug in app arg tupling and detupling when a Txn argument is present ([#577](https://github.com/algorand/pyteal/pull/577))
+
+## Changed
+* Subroutines that take ABI type of Transaction now allow any Transaction type to be passed. ([#531](https://github.com/algorand/pyteal/pull/531))
+* Relaxing exact type check in `InnerTxnFieldExpr.MethodCall` by applying `abi.type_spec_is_assignable_to`. ([#561](https://github.com/algorand/pyteal/pull/561))
 
 # 0.18.1
 

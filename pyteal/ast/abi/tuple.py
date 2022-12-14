@@ -15,7 +15,7 @@ from typing import (
 from collections import OrderedDict
 
 from pyteal.types import TealType
-from pyteal.errors import TealInputError
+from pyteal.errors import TealInputError, TealInternalError
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.int import Int
@@ -309,7 +309,7 @@ class Tuple(BaseType):
         extracted = substring_for_decoding(
             encoded, start_index=start_index, end_index=end_index, length=length
         )
-        return self.stored_value.store(extracted)
+        return self._stored_value.store(extracted)
 
     @overload
     def set(self, *values: BaseType) -> Expr:
@@ -352,10 +352,10 @@ class Tuple(BaseType):
             )
         if not all(myTypes[i] == values[i].type_spec() for i in range(len(myTypes))):
             raise TealInputError("Input values do not match type")
-        return self.stored_value.store(_encode_tuple(values))
+        return self._stored_value.store(_encode_tuple(values))
 
     def encode(self) -> Expr:
-        return self.stored_value.load()
+        return self._stored_value.load()
 
     def length(self) -> Expr:
         """Get the number of values this tuple holds as an Expr."""
@@ -522,6 +522,13 @@ class NamedTupleTypeSpec(TupleTypeSpec):
         self.instance_class: type["NamedTuple"] = instance_class
         super().__init__(*value_type_specs)
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, NamedTupleTypeSpec)
+            and self.instance_class == other.instance_class
+            and self.value_type_specs() == other.value_type_specs()
+        )
+
     def annotation_type(self) -> "type[NamedTuple]":
         return self.instance_class
 
@@ -552,8 +559,49 @@ class NamedTuple(Tuple):
 
             my_user = User()
 
+    .. automethod:: __init_subclass__
     .. automethod:: __getattr__
     """
+
+    def __init_subclass__(cls) -> None:
+        """This method ensures one only constructs directly from `NamedTuple`,
+        rather than inheriting from `NamedTuple`'s inheritance.
+
+        We want to prohibit the following examples:
+
+            .. code-block:: python
+
+                from pyteal import *
+
+                class LegalInheritance(abi.NamedTuple):
+                    a: abi.Field[abi.Uint64]
+
+                # following are bad cases we guard against
+
+                class IllegalInheritance0(LegalInheritance):
+                    a: abi.Field[abi.Uint64]
+
+                class IllegalInheritance1(LegalInheritance, abi.NamedTuple):
+                    a: abi.Field[abi.Uint64]
+        """
+        is_named_tuple_in_bases = False
+
+        for base_t in cls.__bases__:
+            if base_t == NamedTuple:
+                is_named_tuple_in_bases = True
+            elif issubclass(base_t, NamedTuple):
+                raise TealInternalError(
+                    f"Cannot construct {cls} by inheriting {cls.__bases__}. "
+                    f"Must be constructed by direct inheritance from NamedTuple"
+                )
+
+        if not is_named_tuple_in_bases:
+            raise TealInternalError(
+                "Unexpected: did not find NamedTuple in __bases__,"
+                "did not find NamedTuple in __bases__ member's __bases__"
+            )
+
+        super().__init_subclass__()
 
     def __init__(self):
         if type(self) is NamedTuple:
@@ -629,6 +677,13 @@ class NamedTuple(Tuple):
         #   it is internally changed from `__ready` to `_NamedTuple__ready`,
         #   see notes in `__init__`
         if name == "_NamedTuple__ready" or not self.__ready:
+            super().__setattr__(name, field)
+            return
+        # NOTE this pass condition is for following scenario:
+        # NamedTuple is an argument, and inside subroutine, subroutine set internal ABI value with FrameStorage
+        # This used to violate `__setattr__` for not allowing any assignment to attributes
+        # Now this case is lifted such that we can shift the storage scheme.
+        if name == "_stored_value" and self.__ready:
             super().__setattr__(name, field)
             return
         raise TealInputError("cannot assign to NamedTuple attributes.")

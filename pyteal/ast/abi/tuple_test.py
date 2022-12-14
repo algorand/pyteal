@@ -1,4 +1,4 @@
-from typing import NamedTuple, List, Callable, Literal
+from typing import NamedTuple, List, Callable, Literal, cast
 import pytest
 
 import pyteal as pt
@@ -623,7 +623,7 @@ def test_Tuple_decode():
                 assert expr.type_of() == pt.TealType.none
                 assert not expr.has_return()
 
-                expectedExpr = tupleValue.stored_value.store(
+                expectedExpr = tupleValue._stored_value.store(
                     substring_for_decoding(
                         encoded,
                         start_index=start_index,
@@ -672,7 +672,9 @@ def test_Tuple_set():
     assert expr.type_of() == pt.TealType.none
     assert not expr.has_return()
 
-    expectedExpr = tupleValue.stored_value.store(_encode_tuple([uint8, uint16, uint32]))
+    expectedExpr = tupleValue._stored_value.store(
+        _encode_tuple([uint8, uint16, uint32])
+    )
     expected, _ = expectedExpr.__teal__(options)
     expected.addIncoming()
     expected = pt.TealBlock.NormalizeBlocks(expected)
@@ -701,7 +703,11 @@ def test_Tuple_set_Computed():
     expected = pt.TealSimpleBlock(
         [
             pt.TealOp(None, pt.Op.byte, '"internal representation"'),
-            pt.TealOp(None, pt.Op.store, tupleValue.stored_value.slot),
+            pt.TealOp(
+                None,
+                pt.Op.store,
+                cast(pt.ScratchVar, tupleValue._stored_value).slot,
+            ),
         ]
     )
     actual, _ = expr.__teal__(options)
@@ -727,7 +733,13 @@ def test_Tuple_encode():
     assert not expr.has_return()
 
     expected = pt.TealSimpleBlock(
-        [pt.TealOp(None, pt.Op.load, tupleValue.stored_value.slot)]
+        [
+            pt.TealOp(
+                None,
+                pt.Op.load,
+                cast(pt.ScratchVar, tupleValue._stored_value).slot,
+            ),
+        ]
     )
 
     actual, _ = expr.__teal__(options)
@@ -925,3 +937,24 @@ def test_NamedTuple_getitem(test_case: type[abi.NamedTuple]):
 
     with pytest.raises(pt.TealInputError):
         tuple_value.f0 = abi.Uint64()
+
+
+def test_NamedTupleTypeSpec():
+    from pyteal.ast.abi.util import type_spec_is_assignable_to
+
+    class Point(abi.NamedTuple):
+        x: abi.Field[abi.Uint64]
+        y: abi.Field[abi.Uint64]
+
+    class AccountRecord(abi.NamedTuple):
+        algoBalance: abi.Field[abi.Uint64]
+        assetBalance: abi.Field[abi.Uint64]
+
+    p = Point()
+    ar = AccountRecord()
+
+    assert p.type_spec() == p.type_spec()
+    assert ar.type_spec() == ar.type_spec()
+    assert p.type_spec() != ar.type_spec()
+    assert not type_spec_is_assignable_to(p.type_spec(), ar.type_spec())
+    assert not type_spec_is_assignable_to(ar.type_spec(), p.type_spec())

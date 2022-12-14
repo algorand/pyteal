@@ -33,7 +33,7 @@ class Op(Enum):
     # fmt: off
     # meta
     comment             = OpType("//",                  Mode.Signature | Mode.Application, 0)
-    # avm 
+    # avm
     err                 = OpType("err",                 Mode.Signature | Mode.Application, 2)
     sha256              = OpType("sha256",              Mode.Signature | Mode.Application, 2)
     keccak256           = OpType("keccak256",           Mode.Signature | Mode.Application, 2)
@@ -190,6 +190,19 @@ class Op(Enum):
     sha3_256            = OpType("sha3_256",            Mode.Signature | Mode.Application, 7)
     vrf_verify          = OpType("vrf_verify",          Mode.Signature | Mode.Application, 7)
     block               = OpType("block",               Mode.Signature | Mode.Application, 7)
+    box_create          = OpType("box_create",          Mode.Application,                  8)
+    box_extract         = OpType("box_extract",         Mode.Application,                  8)
+    box_replace         = OpType("box_replace",         Mode.Application,                  8)
+    box_del             = OpType("box_del",             Mode.Application,                  8)
+    box_len             = OpType("box_len",             Mode.Application,                  8)
+    box_get             = OpType("box_get",             Mode.Application,                  8)
+    box_put             = OpType("box_put",             Mode.Application,                  8)
+    popn                = OpType("popn",                Mode.Signature | Mode.Application, 8)
+    dupn                = OpType("dupn",                Mode.Signature | Mode.Application, 8)
+    bury                = OpType("bury",                Mode.Signature | Mode.Application, 8)
+    frame_dig           = OpType("frame_dig",           Mode.Signature | Mode.Application, 8)
+    frame_bury          = OpType("frame_bury",          Mode.Signature | Mode.Application, 8)
+    proto               = OpType("proto",               Mode.Signature | Mode.Application, 8)
     # fmt: on
 
 
