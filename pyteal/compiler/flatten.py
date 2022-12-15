@@ -49,7 +49,7 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
         if block.isTerminal():
             continue
 
-        root = block.root_expr or root
+        root = block.root_expr
 
         if type(block) is TealSimpleBlock:
             assert block.nextBlock is not None

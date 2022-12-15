@@ -242,6 +242,7 @@ class ScratchStackStore(Expr):
         """
         super().__init__()
         self.slot = slot
+        self.root_expr: Optional[Expr] = None
 
     def __str__(self):
         return "(StackStore {})".format(self.slot)
@@ -249,7 +250,8 @@ class ScratchStackStore(Expr):
     def __teal__(self, options: "CompileOptions"):
         from pyteal.ir import TealOp, Op, TealBlock
 
-        op = TealOp(self, Op.store, self.slot)
+        # TODO: This seems dangerous. Revert before merging or prove not dangerous.
+        op = TealOp(self.root_expr or self, Op.store, self.slot)
         return TealBlock.FromOp(options, op)
 
     def type_of(self):

@@ -55,6 +55,7 @@ class For(Expr):
 
         stepStart, stepEnd = self.step.__teal__(options)
         stepEnd.setNextBlock(condStart)
+        stepEnd.root_expr = self
         doEnd.setNextBlock(stepStart)
 
         # TODO: apparently supplied root_expr has no effect

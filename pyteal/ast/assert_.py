@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 from pyteal.types import TealType, require_type
 from pyteal.ir import TealOp, Op, TealBlock, TealSimpleBlock, TealConditionalBlock
@@ -30,6 +30,7 @@ class Assert(Expr):
 
         self.comment = comment
         self.cond = [cond] + list(additional_conds)
+        self.root_expr: Optional[Expr] = None
 
     def __teal__(self, options: "CompileOptions"):
         if len(self.cond) > 1:
@@ -37,6 +38,7 @@ class Assert(Expr):
             for cond in self.cond:
                 asrt = Assert(cond, comment=self.comment)
                 asrt.trace = cond.trace
+                asrt.root_expr = cond
                 asserts.append(asrt)
             return Seq(*asserts).__teal__(options)
 
@@ -45,7 +47,8 @@ class Assert(Expr):
             conds: list[Expr] = [self.cond[0]]
             if self.comment is not None:
                 conds.append(Comment(self.comment))
-            return TealBlock.FromOp(options, TealOp(self, Op.assert_), *conds)
+            start, end = TealBlock.FromOp(options, TealOp(self, Op.assert_), *conds)
+            return start, end
 
         # if assert op is not available, use branches and err
         condStart, condEnd = self.cond[0].__teal__(options)

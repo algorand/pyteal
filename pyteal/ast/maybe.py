@@ -1,4 +1,4 @@
-from typing import Callable, List, Union, TYPE_CHECKING
+from typing import Callable, List, Optional, Union, TYPE_CHECKING
 
 from pyteal.errors import verifyProgramVersion
 from pyteal.types import TealType
@@ -20,9 +20,10 @@ class MaybeValue(MultiValue):
         op: Op,
         type: TealType,
         *,
-        immediate_args: List[Union[int, str]] = None,
-        args: List[Expr] = None,
-        compile_check: Callable[["CompileOptions"], None] = None,
+        immediate_args: Optional[List[Union[int, str]]] = None,
+        args: Optional[List[Expr]] = None,
+        compile_check: Optional[Callable[["CompileOptions"], None]] = None,
+        root_expr: Optional[Expr] = None,
     ):
         """Create a new MaybeValue.
 
@@ -52,6 +53,7 @@ class MaybeValue(MultiValue):
             compile_check=(
                 local_version_check if compile_check is None else compile_check
             ),
+            root_expr=root_expr or self,
         )
 
     def hasValue(self) -> ScratchLoad:

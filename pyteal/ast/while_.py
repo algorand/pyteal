@@ -45,9 +45,10 @@ class While(Expr):
 
         condStart, condEnd = self.cond.__teal__(options)
         doStart, doEnd = self.doBlock.__teal__(options)
-        end = TealSimpleBlock([], root_expr=self)
+        end = TealSimpleBlock([])
 
         doEnd.setNextBlock(condStart)
+        doEnd.root_expr = self
 
         branchBlock = TealConditionalBlock([], root_expr=self)
         branchBlock.setTrueBlock(doStart, true_expr=self.doBlock)
@@ -86,6 +87,7 @@ class While(Expr):
         doBlock = _use_seq_if_multiple(doBlock, *do_block_multi)
 
         require_type(doBlock, TealType.none)
+
         self.doBlock = doBlock
         return self
 

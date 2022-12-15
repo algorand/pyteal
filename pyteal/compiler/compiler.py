@@ -108,6 +108,7 @@ def verifyOpsForVersion(teal: List[TealComponent], version: int):
         if isinstance(stmt, TealOp):
             op = stmt.getOp()
             if op.min_version > version:
+                # TODO: convert this to a `verifyProgramVersion()` call
                 raise TealInputError(
                     "Op not supported in program version {}: {}. Minimum required version is {}".format(
                         version, op, op.min_version
@@ -397,11 +398,13 @@ class Compilation:
 
         if self.assemble_constants:
             if self.version < 3:
+                # TODO: convert this to a `verifyProgramVersion()` call
                 raise TealInternalError(
                     f"The minimum program version required to enable assembleConstants is 3. The current version is {self.version}."
                 )
             components = createConstantBlocks(components)
 
+        # TODO: do we really need this cast?
         components = [cast(TComponents, TealPragma(self.version))] + components  # T2PT0
         lines = [tl.assemble() for tl in components]
         teal_code = "\n".join(lines)

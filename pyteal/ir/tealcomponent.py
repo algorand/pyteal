@@ -28,9 +28,12 @@ class TealComponent(ABC):
     def resolveSubroutine(self, subroutine: "SubroutineDefinition", label: str) -> None:
         pass
 
-    # TODO: unify/refactor + handle case when no tracing occurred
     def frames(self) -> Frames:
-        return self.expr.frames if self.expr else self._frames
+        if self.expr:
+            root_expr = getattr(self.expr, "root_expr", None) or self.expr
+            return root_expr.frames
+
+        return self._frames
 
     @abstractmethod
     def assemble(self) -> str:
