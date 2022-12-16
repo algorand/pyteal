@@ -27,6 +27,7 @@ def _dryrun(
         e.compile(pt.compiler.MAX_PROGRAM_VERSION),
         [],
         ExecutionMode.Application,
+        None,
         e.abi_argument_types(),
         e.abi_return_type(),
         txn_params=DryRunExecutor.transaction_params(
