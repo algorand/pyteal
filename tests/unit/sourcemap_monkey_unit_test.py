@@ -96,53 +96,6 @@ def test_reconstruct(_):
         assert cf.read() == compile_bundle.clear_sourcemap.pure_teal()
 
 
-# def fixture_comparison(sourcemap, name: str):
-#     from pyteal.compiler.sourcemap import PyTealSourceMap
-
-#     assert isinstance(sourcemap, PyTealSourceMap)
-#     new_version = sourcemap._tabulate_for_dev()
-#     with open(FIXTURES / f"_{name}", "w") as f:
-#         f.write(new_version)
-
-#     not_actually_comparing = False
-#     if not_actually_comparing:
-#         return
-
-#     with open(FIXTURES / name) as f:
-#         old_version = f.read()
-
-#     assert old_version == new_version
-
-
-# @mock.patch.object(ConfigParser, "getboolean", return_value=True)
-# @pytest.mark.parametrize("version", [6])
-# @pytest.mark.parametrize("source_inference", [False, True])
-# @pytest.mark.parametrize("assemble_constants", [False, True])
-# @pytest.mark.parametrize("optimize_slots", [False, True])
-# def test_sourcemaps(_, version, source_inference, assemble_constants, optimize_slots):
-#     from examples.application.abi.algobank import router
-#     from pyteal import OptimizeOptions
-
-#     # TODO: add functionality that tallies the line statuses up and assert that all
-#     # statuses were > SourceMapItemStatus.PYTEAL_GENERATED
-
-#     compile_bundle = router.compile_program_with_sourcemaps(
-#         version=version,
-#         assemble_constants=assemble_constants,
-#         optimize=OptimizeOptions(scratch_slots=optimize_slots),
-#         source_inference=source_inference,
-#     )
-
-#     assert compile_bundle.approval_sourcemap
-#     assert compile_bundle.clear_sourcemap
-
-#     suffix = f"_v{version}_si{int(source_inference)}_ac{int(assemble_constants)}_ozs{int(optimize_slots)}"
-#     fixture_comparison(
-#         compile_bundle.approval_sourcemap, f"algobank_approval{suffix}.txt"
-#     )
-#     fixture_comparison(compile_bundle.clear_sourcemap, f"algobank_clear{suffix}.txt")
-
-
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
 def test_mocked_config_for_frames(_):
     config = ConfigParser()
@@ -190,20 +143,6 @@ BIG_W = "pt.While(i.load() < pt.Global.group_size())"
 BIG_F = "pt.For(i.store(pt.Int(0)), i.load() < pt.Global.group_size(), i.store(i.load() + pt.Int(1)))"
 BIG_A2 = "pt.And(pt.Int(1) - pt.Int(2), pt.Not(pt.Int(3)), pt.Int(4) ^ pt.Int(5), ~pt.Int(6), pt.BytesEq(pt.Bytes('7'), pt.Bytes('8')), pt.GetBit(pt.Int(9), pt.Int(10)), pt.SetBit(pt.Int(11), pt.Int(12), pt.Int(13)), pt.GetByte(pt.Bytes('14'), pt.Int(15)), pt.Btoi(pt.Concat(pt.BytesDiv(pt.Bytes('101'), pt.Bytes('102')), pt.BytesNot(pt.Bytes('103')), pt.BytesZero(pt.Int(10)), pt.SetBit(pt.Bytes('105'), pt.Int(106), pt.Int(107)), pt.SetByte(pt.Bytes('108'), pt.Int(109), pt.Int(110)))))"
 BIG_C2 = "pt.Concat(pt.BytesDiv(pt.Bytes('101'), pt.Bytes('102')), pt.BytesNot(pt.Bytes('103')), pt.BytesZero(pt.Int(10)), pt.SetBit(pt.Bytes('105'), pt.Int(106), pt.Int(107)), pt.SetByte(pt.Bytes('108'), pt.Int(109), pt.Int(110)))"
-
-"""
-    asset_c = pt.Tmpl.Int("TMPL_ASSET_C")
-    receiver = pt.Tmpl.Addr("TMPL_RECEIVER")
-    transfer_amount = pt.Btoi(pt.Txn.application_args[1])
-"""
-
-# is_admin = pt.App.localGet(pt.Int(0), pt.Bytes("admin"))
-# transfer = set_admin = mint = register = on_closeout = on_creation = pt.Return(pt.Int(1))
-#     pt.Int(1)
-# )
-# asset_c = pt.Tmpl.Int("TMPL_ASSET_C")
-# receiver = pt.Tmpl.Addr("TMPL_RECEIVER")
-# transfer_amount = pt.Btoi(pt.Txn.application_args[1])
 
 CONSTRUCTS = [
     (
@@ -696,7 +635,7 @@ CONSTRUCTS = [
         ],
         5,
     ),
-    (
+    (  # 20
         lambda pt: pt.Seq(
             receiver_max_balance := pt.App.localGetEx(  # noqa: F841
                 pt.Int(1), pt.App.id(), pt.Bytes("max balance")
@@ -727,8 +666,14 @@ CONSTRUCTS = [
                 "app_local_get_ex",
                 "pt.App.localGetEx(pt.Int(1), pt.App.id(), pt.Bytes('max balance'))",
             ),
-            ("store 1", C),  # TODO: can be improved if handle maybe/multi-values
-            ("store 0", C),
+            (
+                "store 1",
+                "pt.App.localGetEx(pt.Int(1), pt.App.id(), pt.Bytes('max balance'))",
+            ),
+            (
+                "store 0",
+                "pt.App.localGetEx(pt.Int(1), pt.App.id(), pt.Bytes('max balance'))",
+            ),
             ('byte "paused"', "pt.Bytes('paused')"),
             ("app_global_get", "pt.App.globalGet(pt.Bytes('paused'))"),
             ("int 0", "pt.Int(0)"),
@@ -1335,6 +1280,8 @@ CONSTRUCTS = [
             ("int 42", "pt.Int(42)"),
             ("return", C),
         ],
+        3,
+        "Application",
     ),
     (  # 32 - arithmetic
         lambda pt: pt.And(
