@@ -493,28 +493,29 @@ class RouterBundle:
     abi_contract: sdk_abi.Contract
     approval_teal: str
     clear_teal: str
-    approval_sourcemap: PyTealSourceMap | None = None
-    clear_sourcemap: PyTealSourceMap | None = None
-    approval_annotated_teal: str | None = None
-    clear_annotated_teal: str | None = None
+    approval_sourcemap: Optional[PyTealSourceMap] = None
+    clear_sourcemap: Optional[PyTealSourceMap] = None
+    approval_annotated_teal: Optional[str] = None
+    clear_annotated_teal: Optional[str] = None
+    input: Optional["_RouterCompileInput"] = None
 
 
 @dataclass
 class _RouterCompileInput:
     version: int
     assemble_constants: bool
-    optimize_opts: OptimizeOptions | None = None
+    optimize_opts: Optional[OptimizeOptions] = None
     with_sourcemap: bool = False
     source_inference: bool = True
     pcs_in_sourcemap: bool = False
-    approval_filename: str | None = None
-    clear_filename: str | None = None
-    algod_client: AlgodClient | None = None
+    approval_filename: Optional[str] = None
+    clear_filename: Optional[str] = None
+    algod_client: Optional[AlgodClient] = None
     annotate_teal: bool = False
     annotate_teal_headers: bool = False
     annotate_teal_concise: bool = True
     # deprecated:
-    hybrid_source: bool = True
+    _hybrid_source: bool = True
 
     def __post_init__(self):
         # The following params are non-sensical when truthy without sourcemaps.
@@ -565,8 +566,8 @@ class Router:
     def __init__(
         self,
         name: str,
-        bare_calls: BareCallActions | None = None,
-        descr: str | None = None,
+        bare_calls: Optional[BareCallActions] = None,
+        descr: Optional[str] = None,
     ) -> None:
         """
         Args:
@@ -606,9 +607,9 @@ class Router:
     def add_method_handler(
         self,
         method_call: ABIReturnSubroutine,
-        overriding_name: str | None = None,
-        method_config: MethodConfig | None = None,
-        description: str | None = None,
+        overriding_name: Optional[str] = None,
+        method_config: Optional[MethodConfig] = None,
+        description: Optional[str] = None,
     ) -> ABIReturnSubroutine:
         """Add a method call handler to this Router.
 
@@ -664,17 +665,17 @@ class Router:
 
     def method(
         self,
-        func: Callable | None = None,
+        func: Optional[Callable] = None,
         /,
         *,
-        name: str | None = None,
-        description: str | None = None,
-        no_op: CallConfig | None = None,
-        opt_in: CallConfig | None = None,
-        close_out: CallConfig | None = None,
-        clear_state: CallConfig | None = None,
-        update_application: CallConfig | None = None,
-        delete_application: CallConfig | None = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        no_op: Optional[CallConfig] = None,
+        opt_in: Optional[CallConfig] = None,
+        close_out: Optional[CallConfig] = None,
+        clear_state: Optional[CallConfig] = None,
+        update_application: Optional[CallConfig] = None,
+        delete_application: Optional[CallConfig] = None,
     ):
         """This is an alternative way to register a method, as supposed to :code:`add_method_handler`.
 
@@ -817,18 +818,18 @@ class Router:
         *,
         version: int = DEFAULT_TEAL_VERSION,
         assemble_constants: bool = False,
-        optimize: OptimizeOptions | None = None,
-        approval_filename: str | None = None,
-        clear_filename: str | None = None,
+        optimize: Optional[OptimizeOptions] = None,
+        approval_filename: Optional[str] = None,
+        clear_filename: Optional[str] = None,
         with_sourcemaps: bool = False,
         pcs_in_sourcemap: bool = False,
-        algod_client: AlgodClient | None = None,
+        algod_client: Optional[AlgodClient] = None,
         annotate_teal: bool = True,
         annotate_teal_headers: bool = False,
         annotate_teal_concise: bool = True,
         # deprecated:
-        source_inference: bool = True,
-        hybrid_source: bool = True,
+        _source_inference: bool = True,
+        _hybrid_source: bool = True,
     ) -> RouterBundle:
         """
         TODO: out of date comment
@@ -865,8 +866,8 @@ class Router:
             annotate_teal_headers=annotate_teal_headers,
             annotate_teal_concise=annotate_teal_concise,
             # deprecated:
-            source_inference=source_inference,
-            hybrid_source=hybrid_source,
+            source_inference=_source_inference,
+            _hybrid_source=_hybrid_source,
         )
         return self._build_impl(input)
 
@@ -882,8 +883,8 @@ class Router:
             annotate_teal_headers=input.annotate_teal_headers,
             annotate_teal_concise=input.annotate_teal_concise,
             # deprecated:
-            source_inference=input.source_inference,
-            hybrid_source=input.hybrid_source,
+            _source_inference=input.source_inference,
+            _hybrid_source=input._hybrid_source,
         )
 
         csbundle = input.get_compilation(csp).compile(
@@ -895,8 +896,8 @@ class Router:
             annotate_teal_headers=input.annotate_teal_headers,
             annotate_teal_concise=input.annotate_teal_concise,
             # DEPRECATED:
-            source_inference=input.source_inference,
-            hybrid_source=input.hybrid_source,
+            _source_inference=input.source_inference,
+            _hybrid_source=input._hybrid_source,
         )
 
         return RouterBundle(
@@ -909,6 +910,7 @@ class Router:
             clear_sourcemap=csbundle.sourcemap,
             approval_annotated_teal=abundle.annotated_teal,
             clear_annotated_teal=csbundle.annotated_teal,
+            input=input,
         )
 
 

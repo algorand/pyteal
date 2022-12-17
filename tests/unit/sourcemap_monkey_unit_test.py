@@ -35,6 +35,9 @@ def test_r3sourcemap(_):
     ptsm = compile_bundle.approval_sourcemap
     assert ptsm
 
+    actual_unparsed = [x._hybrid_w_offset() for x in ptsm._cached_teal_lines]
+    assert_algobank_unparsed_as_expected(actual_unparsed)
+
     r3sm = ptsm._cached_r3sourcemap
     assert r3sm
 
@@ -46,27 +49,46 @@ def test_r3sourcemap(_):
     assert len(r3sm.entries) == len(r3sm.index)
 
     this_file = __file__.split("/")[-1]
-    source_files_310 = [
-        f"tests/unit/{this_file}",
+    expected_source_files = [
         "examples/application/abi/algobank.py",
+        f"tests/unit/{this_file}",
     ]
-    expected_source_files = source_files_310
     assert expected_source_files == r3sm.source_files
 
     r3sm_json = r3sm.to_json()
 
     assert "mappings" in r3sm_json
-    assert (
-        "AA2BqB;ACXZ;AAAA;AAAA;ADWY;ACerB;AAAA;AAAA;ADfqB;ACuCrB;AAAA;AAAA;ADvCqB;ACoDrB;AAAA;AAAA;ADpDqB;AAAA;AAAA;ACoDrB;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;ADpDqB;AAAA;ACoDrB;AAAA;AAAA;ADpDqB;ACuCrB;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;ADvCqB;AAAA;AAAA;AAAA;AAAA;ACuCrB;AAAA;ADvCqB;ACerB;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;ADfqB;AAAA;ACerB;AAAA;AAAA;AA1BS;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAJL;AACc;AAAd;AAA4C;AAAc;AAA3B;AAA/B;AAFuB;AAKlB;AAAA;AAAA;AAM8B;AAAA;AAN9B;AAAA;AAAA;AAAA;AAAA;AAI6B;AAAA;AAJ7B;AAAA;AAAA;AATS;AAAgB;AAAhB;AAAP;ADoBU;AAAA;AAAA;AAAA;AAAA;AAAA;AC4BN;AAAA;AAA0B;AAAA;AAA1B;AAAP;AACO;AAAA;AAA4B;AAA5B;AAAP;AAEI;AAAA;AACA;AACa;AAAA;AAAkB;AAA/B;AAAmD;AAAA;AAAnD;AAHJ;AD9Ba;ACuCrB;AAAA;AAAA;AASmC;AAAgB;AAA7B;ADhDD;AAAA;AAAA;AAAA;AAAA;AAAA;ACwET;AACA;AACa;AAAc;AAA3B;AAA+C;AAA/C;AAHJ;AAKA;AACA;AAAA;AAG2B;AAAA;AAH3B;AAIyB;AAJzB;AAKsB;AALtB;AAQA;ADrFa"
-        if sys.version_info <= (3, 11)
-        else "AA2BqB;ACXZ;AAAA;AAAA;ADWY;ACcrB;AAAA;AAAA;ADdqB;ACsCrB;AAAA;AAAA;ADtCqB;ACmDrB;AAAA;AAAA;ADnDqB;AAAA;AAAA;ACmDrB;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;ADnDqB;AAAA;ACmDrB;AAAA;AAAA;ADnDqB;ACsCrB;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;ADtCqB;AAAA;AAAA;AAAA;AAAA;ACsCrB;AAAA;ADtCqB;ACcrB;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;ADdqB;AAAA;ACcrB;AAAA;AAAA;AAzBS;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAJL;AACc;AAAd;AAA4C;AAAc;AAA3B;AAA/B;AAFuB;AAKlB;AAAA;AAAA;AAM8B;AAAA;AAN9B;AAAA;AAAA;AAAA;AAAA;AAI6B;AAAA;AAJ7B;AAAA;AAAA;AATS;AAAgB;AAAhB;AAAP;ADoBU;AAAA;AAAA;AAAA;AAAA;AAAA;AC4BN;AAAA;AAA0B;AAAA;AAA1B;AAAP;AACO;AAAA;AAA4B;AAA5B;AAAP;AAEI;AAAA;AACA;AACa;AAAA;AAAkB;AAA/B;AAAmD;AAAA;AAAnD;AAHJ;AD9Ba;ACsCrB;AAAA;AAAA;AAUmC;AAAgB;AAA7B;ADhDD;AAAA;AAAA;AAAA;AAAA;AAAA;ACwET;AACA;AACa;AAAc;AAA3B;AAA+C;AAA/C;AAHJ;AAKA;AACA;AAAA;AAG2B;AAAA;AAH3B;AAIyB;AAJzB;AAKsB;AALtB;AAQA;ADrFa"
-    ) == r3sm_json["mappings"]
+
+    r3sm_for_version = {
+        (
+            3,
+            11,
+        ): "AA2BqB;ACXZ;AAAA;AAAA;AAAA;AA0BT;AAAA;AAAA;AAAA;AAwBA;AAAA;AAAA;AAAA;AAaA;AAAA;AAAA;AAAA;ADpDqB;ACoDrB;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;ADpDqB;AAAA;ACoDrB;AAAA;AAAA;AAbA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;ADvCqB;AAAA;AAAA;AAAA;AAAA;ACuCrB;AAAA;AAxBA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;ADfqB;AAAA;ACerB;AAAA;AAAA;AA1BS;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAJL;AACc;AAAd;AAA4C;AAAc;AAA3B;AAA/B;AAFuB;AAKlB;AAAA;AAAA;AAM8B;AAAA;AAN9B;AAAA;AAAA;AAAA;AAAA;AAI6B;AAAA;ADOjB;AAAA;AAAA;ACpBH;AAAgB;AAAhB;AAAP;ADoBU;AAAA;AAAA;AAAA;AAAA;AAAA;AC4BN;AAAA;AAA0B;AAAA;AAA1B;AAAP;AACO;AAAA;AAA4B;AAA5B;AAAP;AAEI;AAAA;AACA;AACa;AAAA;AAAkB;AAA/B;AAAmD;AAAA;AAAnD;AAHJ;AD9Ba;ACuCrB;AAAA;AAAA;AASmC;AAAgB;AAA7B;ADhDD;AAAA;AAAA;AAAA;AAAA;AAAA;ACwET;AACA;AACa;AAAc;AAA3B;AAA+C;AAA/C;AAHJ;AAKA;AACA;AAAA;AAG2B;AAAA;AAH3B;AAIyB;AAJzB;AAKsB;AALtB;AAQA;ADrFa",
+        (
+            3,
+            10,
+        ): "AAgBS;AAAA;AAAA;AAAA;AAAA;AA0BT;AAAA;AAAA;AAAA;AAwBA;AAAA;AAAA;AAAA;AAaA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;ACpDA;AAAA;ADoDA;AAAA;AAAA;AAbA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;ACvCA;AAAA;AAAA;AAAA;AAAA;ADuCA;AAAA;AAxBA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;ACfA;AAAA;ADeA;AAAA;AAAA;AA1BS;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAJL;AACc;AAAd;AAA4C;AAAc;AAA3B;AAA/B;AAFuB;AAKlB;AAAA;AAAA;AAM8B;AAAA;AAN9B;AAAA;AAAA;AAAA;AAAA;AAI6B;AAAA;ACOtC;AAAA;AAAA;ADpBkB;AAAgB;AAAhB;AAAP;ACoBX;AAAA;AAAA;AAAA;AAAA;AAAA;AD4Be;AAAA;AAA0B;AAAA;AAA1B;AAAP;AACO;AAAA;AAA4B;AAA5B;AAAP;AAEI;AAAA;AACA;AACa;AAAA;AAAkB;AAA/B;AAAmD;AAAA;AAAnD;AAHJ;AC9BR;ADuCA;AAAA;AAAA;AASmC;AAAgB;AAA7B;AChDtB;AAAA;AAAA;AAAA;AAAA;AAAA;ADwEY;AACA;AACa;AAAc;AAA3B;AAA+C;AAA/C;AAHJ;AAKA;AACA;AAAA;AAG2B;AAAA;AAH3B;AAIyB;AAJzB;AAKsB;AALtB;AAQA;AAAA",
+    }
+
+    py_version = sys.version_info[:2]
+    if py_version >= (3, 11):
+        assert r3sm_for_version[(3, 11)] == r3sm_json["mappings"]
+    else:
+        # allow for 3.10 to be flaky
+        if r3sm_for_version[(3, 11)] != r3sm_json["mappings"]:
+            assert r3sm_for_version[(3, 10)] == r3sm_json["mappings"]
 
     assert "file" in r3sm_json
     assert filename == r3sm_json["file"]
 
     assert "sources" in r3sm_json
-    assert expected_source_files == r3sm_json["sources"]
+
+    # jsonizing creates it's own separate order based on first seen and defaultdict with autoindex
+    expected_json_source_files = [
+        f"tests/unit/{this_file}",
+        "examples/application/abi/algobank.py",
+    ]
+    assert set(expected_json_source_files) == set(r3sm_json["sources"])
 
     assert "sourceRoot" in r3sm_json
     assert r3sm.source_root == r3sm_json["sourceRoot"]
@@ -104,9 +126,6 @@ def test_mocked_config_for_frames(_):
 
     assert Frames.skipping_all() is False
     assert Frames.skipping_all(_force_refresh=True) is False
-
-
-# TODO: ???this is temporary????
 
 
 def make(x, y, z):
@@ -1560,19 +1579,2446 @@ def test_constructs(_, i, test_case, mode, version):
     msg = f"[CASE #{i+1}]: {expr=}, {bundle=}"
 
     assert sourcemap, msg
-    assert sourcemap.hybrid is True, msg
-    assert sourcemap.source_inference is True, msg
+    assert sourcemap._hybrid is True, msg
+    assert sourcemap._source_inference is True, msg
 
     tmis = sourcemap.as_list()
-    expected_lines, unparsed = list(zip(*line2unparsed))
+    expected_chunks, unparsed = list(zip(*line2unparsed))
 
     msg = f"{msg}, {tmis=}"
-    assert list(expected_lines) == bundle.lines, msg
-    assert list(expected_lines) == sourcemap.compiled_teal_lines, msg
+    assert list(expected_chunks) == bundle.teal_chunks, msg
+    assert list(expected_chunks) == sourcemap.teal_chunks, msg
     assert list(unparsed) == unparse(tmis), msg
 
 
-def test_blah():
-    import sys
+def assert_algobank_unparsed_as_expected(actual):
+    expected = [
+        (
+            0,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            1,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            2,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            3,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            4,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            5,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            6,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            7,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            8,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            9,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            10,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            11,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            12,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            13,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            14,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            15,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            16,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            17,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            18,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            19,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            20,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            21,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            22,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            23,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            24,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            25,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            26,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            27,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            28,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            29,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            30,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            31,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            32,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            33,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            34,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            35,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            36,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            37,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            38,
+            {
+                (3, 11): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            39,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            40,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            41,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            42,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            43,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            44,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            45,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            46,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            47,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            48,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            49,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            50,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            51,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            52,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            53,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            54,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            55,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            56,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            57,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            58,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            59,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            60,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            61,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            62,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            63,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            64,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            65,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            66,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            67,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            68,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            69,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            70,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            71,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            72,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            73,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            74,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            75,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            76,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            77,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            78,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            79,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            80,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            81,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            82,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            83,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            84,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            85,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            86,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            87,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            88,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            89,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            90,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            91,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            92,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            93,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            94,
+            {
+                (3, 11): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            95,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            96,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            97,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            98,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            99,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            100,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            101,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            102,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            103,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            104,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            105,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            106,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            107,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            108,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            109,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            110,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            111,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            112,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            113,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            114,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            115,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            116,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            117,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            118,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            119,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            120,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            121,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            122,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            123,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            124,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            125,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            126,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            127,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            128,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            129,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            130,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            131,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            132,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            133,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            134,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            135,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            136,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            137,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (138, {(3, 11): ("Bytes('lost')", 0), (3, 10): ("Bytes('lost')", 0)}),
+        (139, {(3, 11): ("Bytes('lost')", 0), (3, 10): ("Bytes('lost')", 0)}),
+        (
+            140,
+            {
+                (3, 11): ("App.globalGet(Bytes('lost'))", 0),
+                (3, 10): ("App.globalGet(Bytes('lost'))", 0),
+            },
+        ),
+        (141, {(3, 11): ("Txn.sender()", 0), (3, 10): ("Txn.sender()", 0)}),
+        (142, {(3, 11): ("Bytes('balance')", 0), (3, 10): ("Bytes('balance')", 0)}),
+        (
+            143,
+            {
+                (3, 11): ("App.localGet(Txn.sender(), Bytes('balance'))", 0),
+                (3, 10): ("App.localGet(Txn.sender(), Bytes('balance'))", 0),
+            },
+        ),
+        (
+            144,
+            {
+                (3, 11): (
+                    "App.globalGet(Bytes('lost')) + App.localGet(Txn.sender(), Bytes('balance'))",
+                    0,
+                ),
+                (3, 10): (
+                    "App.globalGet(Bytes('lost')) + App.localGet(Txn.sender(), Bytes('balance'))",
+                    0,
+                ),
+            },
+        ),
+        (
+            145,
+            {
+                (3, 11): (
+                    "App.globalPut(Bytes('lost'), App.globalGet(Bytes('lost')) + App.localGet(Txn.sender(), Bytes('balance')))",
+                    0,
+                ),
+                (3, 10): (
+                    "App.globalPut(Bytes('lost'), App.globalGet(Bytes('lost')) + App.localGet(Txn.sender(), Bytes('balance')))",
+                    0,
+                ),
+            },
+        ),
+        (
+            146,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            147,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            148,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (149, {(3, 11): ("Approve()", 0), (3, 10): ("Approve()", 0)}),
+        (150, {(3, 11): ("Approve()", 0), (3, 10): ("Approve()", 0)}),
+        (
+            151,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            152,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            153,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            154,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (
+            155,
+            {
+                (3, 11): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+                (3, 10): (
+                    "Router(name='AlgoBank', bare_calls=BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), clear_state=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)))",
+                    0,
+                ),
+            },
+        ),
+        (156, {(3, 11): ("Approve()", 0), (3, 10): ("Approve()", 0)}),
+        (157, {(3, 11): ("Approve()", 0), (3, 10): ("Approve()", 0)}),
+        (
+            158,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            159,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            160,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (161, {(3, 11): ("Txn.sender()", 0), (3, 10): ("Txn.sender()", 0)}),
+        (
+            162,
+            {
+                (3, 11): ("Global.creator_address()", 0),
+                (3, 10): ("Global.creator_address()", 0),
+            },
+        ),
+        (
+            163,
+            {
+                (3, 11): ("Txn.sender() == Global.creator_address()", 0),
+                (3, 10): ("Txn.sender() == Global.creator_address()", 0),
+            },
+        ),
+        (
+            164,
+            {
+                (3, 11): ("Assert(Txn.sender() == Global.creator_address())", 0),
+                (3, 10): ("Assert(Txn.sender() == Global.creator_address())", 0),
+            },
+        ),
+        (
+            165,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            166,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            167,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            168,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            169,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            170,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (171, {(3, 11): ("payment.get()", 0), (3, 10): ("payment.get()", 0)}),
+        (
+            172,
+            {
+                (3, 11): ("payment.get().sender()", 0),
+                (3, 10): ("payment.get().sender()", 0),
+            },
+        ),
+        (173, {(3, 11): ("sender.address()", 0), (3, 10): ("sender.address()", 0)}),
+        (174, {(3, 11): ("sender.address()", 0), (3, 10): ("sender.address()", 0)}),
+        (
+            175,
+            {
+                (3, 11): ("payment.get().sender() == sender.address()", 0),
+                (3, 10): ("payment.get().sender() == sender.address()", 0),
+            },
+        ),
+        (
+            176,
+            {
+                (3, 11): ("Assert(payment.get().sender() == sender.address())", 0),
+                (3, 10): ("Assert(payment.get().sender() == sender.address())", 0),
+            },
+        ),
+        (177, {(3, 11): ("payment.get()", 0), (3, 10): ("payment.get()", 0)}),
+        (
+            178,
+            {
+                (3, 11): ("payment.get().receiver()", 0),
+                (3, 10): ("payment.get().receiver()", 0),
+            },
+        ),
+        (
+            179,
+            {
+                (3, 11): ("Global.current_application_address()", 0),
+                (3, 10): ("Global.current_application_address()", 0),
+            },
+        ),
+        (
+            180,
+            {
+                (3, 11): (
+                    "payment.get().receiver() == Global.current_application_address()",
+                    0,
+                ),
+                (3, 10): (
+                    "payment.get().receiver() == Global.current_application_address()",
+                    0,
+                ),
+            },
+        ),
+        (
+            181,
+            {
+                (3, 11): (
+                    "Assert(payment.get().receiver() == Global.current_application_address())",
+                    0,
+                ),
+                (3, 10): (
+                    "Assert(payment.get().receiver() == Global.current_application_address())",
+                    0,
+                ),
+            },
+        ),
+        (182, {(3, 11): ("sender.address()", 0), (3, 10): ("sender.address()", 0)}),
+        (183, {(3, 11): ("sender.address()", 0), (3, 10): ("sender.address()", 0)}),
+        (184, {(3, 11): ("Bytes('balance')", 0), (3, 10): ("Bytes('balance')", 0)}),
+        (185, {(3, 11): ("sender.address()", 0), (3, 10): ("sender.address()", 0)}),
+        (186, {(3, 11): ("sender.address()", 0), (3, 10): ("sender.address()", 0)}),
+        (187, {(3, 11): ("Bytes('balance')", 0), (3, 10): ("Bytes('balance')", 0)}),
+        (
+            188,
+            {
+                (3, 11): ("App.localGet(sender.address(), Bytes('balance'))", 0),
+                (3, 10): ("App.localGet(sender.address(), Bytes('balance'))", 0),
+            },
+        ),
+        (189, {(3, 11): ("payment.get()", 0), (3, 10): ("payment.get()", 0)}),
+        (
+            190,
+            {
+                (3, 11): ("payment.get().amount()", 0),
+                (3, 10): ("payment.get().amount()", 0),
+            },
+        ),
+        (
+            191,
+            {
+                (3, 11): (
+                    "App.localGet(sender.address(), Bytes('balance')) + payment.get().amount()",
+                    0,
+                ),
+                (3, 10): (
+                    "App.localGet(sender.address(), Bytes('balance')) + payment.get().amount()",
+                    0,
+                ),
+            },
+        ),
+        (
+            192,
+            {
+                (3, 11): (
+                    "App.localPut(sender.address(), Bytes('balance'), App.localGet(sender.address(), Bytes('balance')) + payment.get().amount())",
+                    0,
+                ),
+                (3, 10): (
+                    "App.localPut(sender.address(), Bytes('balance'), App.localGet(sender.address(), Bytes('balance')) + payment.get().amount())",
+                    0,
+                ),
+            },
+        ),
+        (
+            193,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            194,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            195,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (
+            196,
+            {
+                (3, 11): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+                (3, 10): (
+                    "def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:",
+                    1,
+                ),
+            },
+        ),
+        (197, {(3, 11): ("user.address()", 0), (3, 10): ("user.address()", 0)}),
+        (198, {(3, 11): ("Bytes('balance')", 0), (3, 10): ("Bytes('balance')", 0)}),
+        (
+            199,
+            {
+                (3, 11): ("App.localGet(user.address(), Bytes('balance'))", 0),
+                (3, 10): ("App.localGet(user.address(), Bytes('balance'))", 0),
+            },
+        ),
+        (
+            200,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            201,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            202,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            203,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            204,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (
+            205,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("compile_bundle = router.compile(", 0),
+            },
+        ),
+        (206, {(3, 11): ("Txn.sender()", 0), (3, 10): ("Txn.sender()", 0)}),
+        (207, {(3, 11): ("Bytes('balance')", 0), (3, 10): ("Bytes('balance')", 0)}),
+        (208, {(3, 11): ("Txn.sender()", 0), (3, 10): ("Txn.sender()", 0)}),
+        (209, {(3, 11): ("Bytes('balance')", 0), (3, 10): ("Bytes('balance')", 0)}),
+        (
+            210,
+            {
+                (3, 11): ("App.localGet(Txn.sender(), Bytes('balance'))", 0),
+                (3, 10): ("App.localGet(Txn.sender(), Bytes('balance'))", 0),
+            },
+        ),
+        (211, {(3, 11): ("amount.get()", 0), (3, 10): ("amount.get()", 0)}),
+        (
+            212,
+            {
+                (3, 11): (
+                    "App.localGet(Txn.sender(), Bytes('balance')) - amount.get()",
+                    0,
+                ),
+                (3, 10): (
+                    "App.localGet(Txn.sender(), Bytes('balance')) - amount.get()",
+                    0,
+                ),
+            },
+        ),
+        (
+            213,
+            {
+                (3, 11): (
+                    "App.localPut(Txn.sender(), Bytes('balance'), App.localGet(Txn.sender(), Bytes('balance')) - amount.get())",
+                    0,
+                ),
+                (3, 10): (
+                    "App.localPut(Txn.sender(), Bytes('balance'), App.localGet(Txn.sender(), Bytes('balance')) - amount.get())",
+                    0,
+                ),
+            },
+        ),
+        (
+            214,
+            {
+                (3, 11): ("InnerTxnBuilder.Begin()", 0),
+                (3, 10): ("InnerTxnBuilder.Begin()", 0),
+            },
+        ),
+        (
+            215,
+            {
+                (3, 11): (
+                    "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
+                    0,
+                ),
+                (3, 10): (
+                    "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
+                    0,
+                ),
+            },
+        ),
+        (
+            216,
+            {
+                (3, 11): (
+                    "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
+                    0,
+                ),
+                (3, 10): (
+                    "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
+                    0,
+                ),
+            },
+        ),
+        (
+            217,
+            {(3, 11): ("recipient.address()", 0), (3, 10): ("recipient.address()", 0)},
+        ),
+        (
+            218,
+            {(3, 11): ("recipient.address()", 0), (3, 10): ("recipient.address()", 0)},
+        ),
+        (
+            219,
+            {
+                (3, 11): (
+                    "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
+                    0,
+                ),
+                (3, 10): (
+                    "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
+                    0,
+                ),
+            },
+        ),
+        (220, {(3, 11): ("amount.get()", 0), (3, 10): ("amount.get()", 0)}),
+        (
+            221,
+            {
+                (3, 11): (
+                    "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
+                    0,
+                ),
+                (3, 10): (
+                    "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
+                    0,
+                ),
+            },
+        ),
+        (222, {(3, 11): ("Int(0)", 0), (3, 10): ("Int(0)", 0)}),
+        (
+            223,
+            {
+                (3, 11): (
+                    "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
+                    0,
+                ),
+                (3, 10): (
+                    "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
+                    0,
+                ),
+            },
+        ),
+        (
+            224,
+            {
+                (3, 11): ("InnerTxnBuilder.Submit()", 0),
+                (3, 10): ("InnerTxnBuilder.Submit()", 0),
+            },
+        ),
+        (
+            225,
+            {
+                (3, 11): (
+                    "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+                    0,
+                ),
+                (3, 10): ("InnerTxnBuilder.Submit()", 0),
+            },
+        ),
+    ]
+    assert len(expected) == len(actual)
 
-    x = 42
+    version = sys.version_info[:2]
+    flakes_for_310 = [d[(3, 10)] for _, d in expected]
+    expected_for_311 = [d[(3, 11)] for _, d in expected]
+
+    flake_count = 0
+    for i, a in enumerate(actual):
+        e = expected_for_311[i]
+        if version >= (3, 11):
+            assert (
+                a == e
+            ), f"""discrepancy at {i=} 
+expected:
+{e}
+!= actual:
+{a}"""
+        else:
+            if a != e:
+                f = flakes_for_310[i]
+                assert (
+                    a == f
+                ), f"""discrepancy at {i=} 
+expected flake (current {flake_count=}):
+{f}
+!= actual:
+{a}"""
+                flake_count += 1
+
+    print(f"TOTAL {flake_count=}")

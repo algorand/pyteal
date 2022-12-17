@@ -265,7 +265,7 @@ class CompilationBundle:
     assemble_constants: bool
     optimize: Optional[OptimizeOptions]
     teal: str
-    lines: list[str]
+    teal_chunks: list[str]
     components: list[TealComponent]
     sourcemap: PyTealSourceMap | None = None
     annotated_teal: str | None = None
@@ -298,8 +298,8 @@ class Compilation:
         annotate_teal_headers: bool = False,
         annotate_teal_concise: bool = True,
         # deprecated:
-        source_inference: bool = True,
-        hybrid_source: bool = True,
+        _source_inference: bool = True,
+        _hybrid_source: bool = True,
     ) -> CompilationBundle:
         """Compile a PyTeal expression into TEAL assembly.
 
@@ -406,8 +406,8 @@ class Compilation:
 
         # TODO: do we really need this cast?
         components = [cast(TComponents, TealPragma(self.version))] + components  # T2PT0
-        lines = [tl.assemble() for tl in components]
-        teal_code = "\n".join(lines)
+        teal_chunks = [tl.assemble() for tl in components]
+        teal_code = "\n".join(teal_chunks)
 
         cpb = CompilationBundle(
             ast=self.ast,
@@ -416,14 +416,14 @@ class Compilation:
             assemble_constants=self.assemble_constants,
             optimize=self.optimize,
             teal=teal_code,
-            lines=lines,
+            teal_chunks=teal_chunks,
             components=components,
         )
         if not with_sourcemap:
             return cpb
 
         cpb.sourcemap = PyTealSourceMap(
-            compiled_teal_lines=lines,
+            teal_chunks=teal_chunks,
             components=components,
             build=True,
             teal_file=teal_filename,
@@ -431,8 +431,8 @@ class Compilation:
             algod=algod_client,
             annotate_teal=annotate_teal,
             # deprecated:
-            source_inference=source_inference,
-            hybrid=hybrid_source,
+            _source_inference=_source_inference,
+            _hybrid=_hybrid_source,
         )
 
         if annotate_teal:

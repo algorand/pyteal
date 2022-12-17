@@ -5,6 +5,7 @@ from functools import partial
 from itertools import count
 from typing import (
     Any,
+    Final,
     List,
     Literal,
     Mapping,
@@ -22,7 +23,7 @@ from tabulate import tabulate  # type: ignore
 
 import pyteal as pt
 from pyteal.errors import TealInternalError
-from pyteal.stack_frame import PT_GENERATED, PyTealFrame, PytealFrameStatus
+from pyteal.stack_frame import Frames, PT_GENERATED, PyTealFrame, PytealFrameStatus
 from pyteal.util import algod_with_assertion
 
 
@@ -487,14 +488,7 @@ class TealMapItem(PyTealFrame):
 
     def __repr__(self) -> str:
         P = " // "
-        return f"TealLine({self.teal_lineno}: {self.teal_line}{self.pcs_repr(prefix=P)} // PyTeal: {self.hybrid_unparsed()}"
-
-    def hybrid_unparsed(self) -> str:
-        pt_line = self.node_source()
-        if pt_line and len(pt_line.splitlines()) == 1:
-            return pt_line
-
-        return self.code()
+        return f"TealLine({self.teal_lineno}: {self.teal_line}{self.pcs_repr(prefix=P)} // PyTeal: {self._hybrid_w_offset()[0]}"
 
     def asdict(self, **kwargs) -> OrderedDict[str, Any]:
         """kwargs serve as a rename mapping when present"""
@@ -537,7 +531,7 @@ class TealMapItem(PyTealFrame):
                 f"unable to export without valid line and column for SOURCE but got: {line=}, {col=}"
             )
 
-    def source_mapping(self, hybrid: bool = True) -> "R3SourceMapping":
+    def source_mapping(self, _hybrid: bool = True) -> "R3SourceMapping":
         self.validate_for_export()
         return R3SourceMapping(
             line=cast(int, self.teal_lineno) - 1,
@@ -548,7 +542,7 @@ class TealMapItem(PyTealFrame):
             source_column=self.column(),
             source_line_end=nel - 1 if (nel := self.node_end_lineno()) else None,
             source_column_end=self.node_end_col_offset(),
-            source_extract=self.hybrid_unparsed() if hybrid else self.code(),
+            source_extract=self.hybrid_unparsed() if _hybrid else self.code(),
             target_extract=self.teal_line,
         )
 
@@ -556,20 +550,13 @@ class TealMapItem(PyTealFrame):
 @dataclass
 class SourceMapItemDEPRECATED:
     first_line: int  # 0-indexed
-    teal: str
+    teal_chunk: str
     component: "pt.TealComponent"
     frame: PyTealFrame
     extras: dict[str, Any] | None = None  # TODO: probly these shouldn't exist
 
     def _tabulatable_teal(self, prefix_for_empty="//#") -> str:
-        return "\n".join((x or prefix_for_empty) for x in self.teal.splitlines())
-
-    def hybrid_unparsed(self) -> str:
-        pt_line = self.frame.node_source()
-        if pt_line and len(pt_line.splitlines()) == 1:
-            return pt_line
-
-        return self.frame.code()
+        return "\n".join((x or prefix_for_empty) for x in self.teal_chunk.splitlines())
 
     def asdict(self, **kwargs) -> OrderedDict:
         """kwargs serve as a rename mapping when present"""
@@ -577,7 +564,7 @@ class SourceMapItemDEPRECATED:
             _TEAL_LINE_NUMBER: self.first_line,
             # _TEAL_COLUMN: self.column(),
             # _TEAL_COLUMN_END: self.column_rbound(),
-            _TEAL_LINE: self.teal,
+            _TEAL_LINE: self.teal_chunk,
             _TABULATABLE_TEAL: self._tabulatable_teal(),
             _PYTEAL_HYBRID_UNPARSED: self.hybrid_unparsed(),
             _PYTEAL_NODE_AST_UNPARSED: self.frame.node_source(),
@@ -620,23 +607,6 @@ class SourceMapItemDEPRECATED:
                 f"unable to export without valid line and column for SOURCE but got: {self.frame.lineno()}, {self.frame.column()=}"
             )
 
-        # if not self.frame.node:
-        #     return
-
-        # self.frame.node_lineno() doesn't seem as accurate as self.frame.node.end_lineno
-        # OKAY - every once in a while, inspect.frame_info() disagrees with ast.node()
-        # line number. For now, we'll just coe with inspect.frame_info()
-        # if (_line := self.frame.node.end_lineno) and _line != line:
-        #     raise ValueError(
-        #         f"aborting: inconsistency in source line number found: {_line} != {line}"
-        #     )
-
-        # This can n ever happen because that's what col is!!!!
-        # if (_col := self.frame.node_col_offset()) and _col != col:
-        #     raise ValueError(
-        #         f"aborting: inconsistency in source column number found: {_col} != {col}"
-        #     )
-
     def source_mappings(self, hybrid: bool = True) -> list["R3SourceMapping"]:
         self.validate_for_export()
         return [
@@ -649,18 +619,21 @@ class SourceMapItemDEPRECATED:
                 source_column=self.frame.column(),
                 source_line_end=self.frame.node_end_lineno(),
                 source_column_end=self.frame.node_end_col_offset(),
-                source_extract=self.hybrid_unparsed() if hybrid else self.frame.code(),
+                source_extract=self.frame._hybrid_w_offset()
+                if hybrid
+                else self.frame.code(),
                 target_extract=target_line,
             )
-            for i, target_line in enumerate(self.teal.splitlines())
+            for i, target_line in enumerate(self.teal_chunk.splitlines())
         ]
 
 
 class PyTealSourceMap:
     def __init__(
         self,
-        compiled_teal_lines: list[str],
+        teal_chunks: list[str],
         components: list["pt.TealComponent"],
+        *,
         teal_file: str | None = None,
         annotate_teal: bool = False,
         include_pcs: bool = False,
@@ -668,9 +641,8 @@ class PyTealSourceMap:
         build: bool = True,
         verbose: bool = False,
         # deprecated:
-        source_inference: bool = True,
-        hybrid: bool = True,
-        x: bool = False,
+        _source_inference: bool = True,
+        _hybrid: bool = True,
     ):
         if include_pcs:
             # bootstrap an algod_client if not provided, and in either case, run a healthcheck
@@ -678,172 +650,184 @@ class PyTealSourceMap:
                 algod, msg="Adding PC's to sourcemap requires live Algod"
             )
 
-        self.compiled_teal_lines: list[str] = compiled_teal_lines
-        self.components: list["pt.TealComponent"] = components
-        self.include_pcs: bool = include_pcs
-        self.annotate_teal: bool = annotate_teal
+        self.teal_chunks: Final[list[str]] = teal_chunks
+        self.components: Final[list["pt.TealComponent"]] = components
+
         self.algod: AlgodClient | None = algod
 
+        self.include_pcs: bool = include_pcs
+        self.annotate_teal: bool = annotate_teal
+
+        self.teal_file: str | None = teal_file
         self.verbose: bool = verbose
 
         # --- deprecated fields BEGIN
-        # TODO: get rid of x and add_extras ???
-        self.hybrid: bool = hybrid
-        self.source_inference: bool = source_inference
-        self.add_extras: bool = x
+        self._hybrid: bool = _hybrid
+        self._source_inference: bool = _source_inference
         # --- deprecated fields END
 
-        self._cached_sourcemap_items_DEPRECATED: dict[int, SourceMapItemDEPRECATED] = {}
+        self._best_frames: list[PyTealFrame] = []
         self._cached_r3sourcemap: R3SourceMap | None = None
-        self.inferred_frames_at: list[int] = []
-        self.teal_file: str | None = teal_file
+        self._inferred_frames_at: list[int] = []
 
         self._cached_teal_lines: list[TealMapItem] = []
         self._cached_pc_sourcemap: PCSourceMap | None = None
 
         if build:
-            self._build()
+            self.build()
 
     def compiled_teal(self) -> str:
-        return "\n".join(self.compiled_teal_lines)
+        return "\n".join(self.teal_chunks)
 
-    def _build(self) -> None:
-        # TODO: remove dependency on SourceMapItemDEPRECATED
-        if not self._cached_sourcemap_items_DEPRECATED:
-            N = len(self.compiled_teal_lines)
-            assert N == len(
-                self.components
-            ), f"expected same number of teal lines {N} and components {len(self.components)}"
-
-            best_frames: list[PyTealFrame | None] = []
-            for i, tc in enumerate(self.components):
-                if self.verbose:
-                    print(f"{i}. {tc=}")
-
-                frames = tc.frames()
-                if not frames:
-                    best_frames.append(None)
-                    continue
-
-                best_frames.append(frames[-1].as_pyteal_frame())
-
-            if self.source_inference:
-                mutated = self._search_for_better_frames_and_modify(best_frames)
-                if mutated:
-                    self.inferred_frames_at = mutated
-
-            def source_map_item(line, i, tc):
-                return SourceMapItemDEPRECATED(
-                    line, self.compiled_teal_lines[i], tc, best_frames[i]
-                )
-
-            _map = {}
-            line = 0
-            for i, tc in enumerate(self.components):
-                _map[line + 1] = (smi := source_map_item(line, i, tc))
-                line += len(smi.teal.splitlines())
-
-            self._cached_sourcemap_items_DEPRECATED = _map
-
-        if not self._cached_r3sourcemap:
-            smi_and_r3sms = [
-                (smi, r3sm)
-                for smi in self._cached_sourcemap_items_DEPRECATED.values()
-                for r3sm in smi.source_mappings(hybrid=self.hybrid)
+    def _built(self) -> bool:
+        """
+        If any portion of source map is missing, re-build it from scratch
+        """
+        return all(
+            [
+                not self.include_pcs or self._cached_pc_sourcemap,
+                self._cached_r3sourcemap,
+                self._cached_teal_lines,
             ]
+        )
 
-            assert smi_and_r3sms, "Unexpected error: no source mappings found"
+    def build(self) -> None:
+        if self._built():
+            return
 
-            smis = [smi for smi, _ in smi_and_r3sms]
-            root = smis[0].frame.root()
-            assert all(
-                root == r3sm.frame.root() for r3sm in smis
-            ), "inconsistent sourceRoot - aborting"
+        if self.include_pcs:
+            self._build_pc_sourcemap()
 
-            r3sms = [r3sm for _, r3sm in smi_and_r3sms]
-            entries = {(r3sm.line, r3sm.column): r3sm for r3sm in r3sms}
-            index_l: list[list[int]] = [[]]
-            prev_line = 0
-            for line, col in entries.keys():
-                for _ in range(prev_line, line):
-                    index_l.append([])
-                curr = index_l[-1]
-                curr.append(col)
-                prev_line = line
-            index: list[tuple[int, ...]] = [tuple(cs) for cs in index_l]
-            lines = [cast(str, r3sm.target_extract) for r3sm in r3sms]
-            sources = []
-            for smi in smis:
-                if (f := smi.frame.file()) not in sources:
-                    sources.append(f)
+        if (n := len(self.teal_chunks)) != len(self.components):
+            raise TealInternalError(
+                f"expected same number of teal chunks {n} and components {len(self.components)}"
+            )
+        self._best_frames = [
+            tc.frames()[-1].as_pyteal_frame() for tc in self.components
+        ]
 
-            self._cached_r3sourcemap = R3SourceMap(
-                file=self.teal_file,
-                source_root=root,
-                entries=entries,
-                index=index,
-                file_lines=lines,
-                source_files=sources,
+        if self._source_inference:
+            # TODO: hard-code this deprecated field to always be True ASAP
+            mutated = self._search_for_better_frames_and_modify(self._best_frames)
+            if mutated:
+                self._inferred_frames_at = mutated
+
+        lineno = 0
+        for i, best_frame in enumerate(self._best_frames):
+            teal_chunk = self.teal_chunks[i]
+            for line in teal_chunk.splitlines():
+                pcsm = cast(PCSourceMap, self._cached_pc_sourcemap)
+                pcs = None
+                if self.include_pcs:
+                    pcs = pcsm.line_to_pc.get(lineno, [])
+                self._cached_teal_lines.append(
+                    TealMapItem(
+                        pt_frame=best_frame,
+                        teal_lineno=lineno,
+                        teal_line=line,  # type: ignore
+                        teal_component=self.components[i],
+                        pcs=pcs,
+                    )
+                )
+                lineno += 1
+
+        def source_map_item(line, i, tc):
+            # return SMI_DEPR(
+            #     teal_chunk_lines=self.teal_chunks[i].splitlines(),
+            #
+            # )
+            return SourceMapItemDEPRECATED(
+                line, self.teal_chunks[i], tc, self._best_frames[i]
             )
 
-        if not self._cached_teal_lines:
-            if self.include_pcs and not self._cached_pc_sourcemap:
-                algod = algod_with_assertion(
-                    self.algod, msg="Adding PC's to sourcemap requires live Algod"
-                )
-                # as uncommented portion of the annotated teal is identical
-                # to the uncommented portion of the compiled teal, we can
-                # always construct the PC -> Teal sourcemap from self.compiled_teal():
-                algod_compilation = algod.compile(self.compiled_teal(), source_map=True)
-                raw_sourcemap = algod_compilation.get("sourcemap")
-                if not raw_sourcemap:
-                    raise TealInternalError(
-                        f"algod compilation did not return 'sourcemap' as expected. {algod_compilation=}"
-                    )
-                self._cached_pc_sourcemap = PCSourceMap(raw_sourcemap)
+        # DOING: remove dependency on SourceMapItemDEPRECATED
+        _map_DEPR = {}
 
-                # algod_disassembly = algod.disassemble(pbs)
-                # disassembled = algod_disassembly["result"]
-                # dlines = disassembled.splitlines()
-                # ctor = [
-                #     (i, x, y)
-                #     for i, x in enumerate(self.compiled_teal_lines)
-                #     if i < 200 and (y := dlines[i])
-                # ]
+        @dataclass
+        class SMI_DEPR:
+            teal_lines: str
 
-            # TODO: this is really cruddy from mypy's perspective
-            # This section ought to get removed completely so keeping the type ignores for now
-            lineno = 0
-            for i, smi in enumerate(self._cached_sourcemap_items_DEPRECATED.values()):
-                teal_chunk = self.compiled_teal_lines[i]
-                for line in teal_chunk.splitlines():  # type: ignore
-                    pcsm = cast(PCSourceMap, self._cached_pc_sourcemap)
-                    pcs = None
-                    if self.include_pcs:
-                        pcs = pcsm.line_to_pc.get(lineno, [])
-                    self._cached_teal_lines.append(
-                        TealMapItem(
-                            pt_frame=smi.frame,
-                            teal_lineno=lineno,
-                            teal_line=line,  # type: ignore
-                            teal_component=self.components[i],
-                            pcs=pcs,
-                        )
-                    )
-                    lineno += 1
+        line = 0
+        for i, tc in enumerate(self.components):
+            _map_DEPR[line + 1] = (smi := source_map_item(line, i, tc))
+            line += len(smi.teal_chunk.splitlines())
+            if self.verbose:
+                print(f"{i}. {tc=}")
+
+        self._build_r3sourcemap(_map_DEPR)
+
+        if not Frames._debug:
+            self._best_frames = []
+            self._inferred_frames_at = []
+
+    def _build_r3sourcemap(self, _map_DEPR):
+        smi_and_r3sms = [
+            (smi, r3sm)
+            for smi in _map_DEPR.values()
+            for r3sm in smi.source_mappings(hybrid=self._hybrid)
+        ]
+
+        assert smi_and_r3sms, "Unexpected error: no source mappings found"
+
+        smis = [smi for smi, _ in smi_and_r3sms]
+        root = smis[0].frame.root()
+        assert all(
+            root == r3sm.frame.root() for r3sm in smis
+        ), "inconsistent sourceRoot - aborting"
+
+        r3sms = [r3sm for _, r3sm in smi_and_r3sms]
+        entries = {(r3sm.line, r3sm.column): r3sm for r3sm in r3sms}
+        index_l: list[list[int]] = [[]]
+        prev_line = 0
+        for line, col in entries.keys():
+            for _ in range(prev_line, line):
+                index_l.append([])
+            curr = index_l[-1]
+            curr.append(col)
+            prev_line = line
+        index: list[tuple[int, ...]] = [tuple(cs) for cs in index_l]
+        lines = [cast(str, r3sm.target_extract) for r3sm in r3sms]
+        sources = []
+        for smi in smis:
+            if (f := smi.frame.file()) not in sources:
+                sources.append(f)
+
+        self._cached_r3sourcemap = R3SourceMap(
+            file=self.teal_file,
+            source_root=root,
+            entries=entries,
+            index=index,
+            file_lines=lines,
+            source_files=list(sorted(sources)),
+        )
+
+    def _build_pc_sourcemap(self):
+        """
+        Prereq: self.teal_chunks - a Final member
+        """
+        algod = algod_with_assertion(
+            self.algod, msg="Adding PC's to sourcemap requires live Algod"
+        )
+        algod_compilation = algod.compile(self.compiled_teal(), source_map=True)
+        raw_sourcemap = algod_compilation.get("sourcemap")
+        if not raw_sourcemap:
+            raise TealInternalError(
+                f"algod compilation did not return 'sourcemap' as expected. {algod_compilation=}"
+            )
+        self._cached_pc_sourcemap = PCSourceMap(raw_sourcemap)
 
     def as_list(self) -> list[TealMapItem]:
         # TODO: finer grained caching/building
-        self._build()
+        self.build()
         return self._cached_teal_lines
 
     def as_r3sourcemap(self) -> R3SourceMap | None:
         # TODO: finer grained caching/building
-        self._build()
+        self.build()
         return self._cached_r3sourcemap
 
     def _search_for_better_frames_and_modify(
-        self, frames: list[PyTealFrame | None]
+        self, frames: list[PyTealFrame]
     ) -> list[int]:
         N = len(frames)
         mutated = []

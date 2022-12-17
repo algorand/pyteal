@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from contextlib import AbstractContextManager
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, cast
 
 from pyteal.stack_frame import Frames
 
@@ -12,7 +12,7 @@ class TealComponent(ABC):
     def __init__(self, expr: Optional["Expr"]):
         self.expr = expr
 
-        self._frames: Frames
+        self._frames: Optional[Frames] = None
         if not self.expr:  # expr already has the frame info
             self._frames = Frames()
 
@@ -33,7 +33,7 @@ class TealComponent(ABC):
             root_expr = getattr(self.expr, "root_expr", None) or self.expr
             return root_expr.frames
 
-        return self._frames
+        return cast(Frames, self._frames)
 
     @abstractmethod
     def assemble(self) -> str:

@@ -1,6 +1,6 @@
 import os
 import re
-from ast import AST, unparse
+from ast import AST, FunctionDef, unparse
 from configparser import ConfigParser
 from dataclasses import dataclass
 from enum import IntEnum
@@ -460,17 +460,6 @@ class PyTealFrame(StackFrame):
         self._raw_code: str | None = None
         self._status: PytealFrameStatus | None = None
 
-    # @classmethod
-    # def convert(
-    #     cls, frames: FrameSequence, rel_paths: bool = True
-    # ) -> "PyTealFrameSequence":  # type: ignore
-    #     if isinstance(frames, StackFrame):
-    #         return cls(frames, rel_paths)
-    #     return [cls.convert(f) for f in cast(Sequence[StackFrame], frames)]
-
-    # def frame(self) -> StackFrame:
-    #     return StackFrame(self.frame_info, self.node)
-
     def __repr__(self) -> str:
         """TODO: this repr isn't compliant. Should we keep it anyway for convenience?"""
         return self._str_impl(verbose=False)
@@ -527,7 +516,15 @@ class PyTealFrame(StackFrame):
         )
 
     def lineno(self) -> int | None:
-        return self.frame_info.lineno if self.frame_info else None
+        naive_lineno = self.frame_info.lineno if self.frame_info else None
+        if naive_lineno is None:
+            return naive_lineno
+
+        hybrid_line, offset = self._hybrid_w_offset()
+        if hybrid_line.startswith(self.raw_code()):
+            return naive_lineno
+
+        return naive_lineno + offset
 
     def column(self) -> int:
         """Provide accurate column info when available. Or 0 when not."""
@@ -562,11 +559,29 @@ class PyTealFrame(StackFrame):
         return self._raw_code
 
     def hybrid_unparsed(self) -> str:
-        pt_line = self.node_source()
-        if pt_line and len(pt_line.splitlines()) == 1:
-            return pt_line
+        """
+        Attempt to unparse the node and return the most apropos line
+        """
+        return self._hybrid_w_offset()[0]
 
-        return self.code()
+    def _hybrid_w_offset(self) -> tuple[str, int]:
+        """
+        Attempt to unparse the node and return the most apropos line, together with its offset
+        """
+        pt_chunk = self.node_source()
+        if pt_chunk:
+            pt_lines = pt_chunk.splitlines()
+            if len(pt_lines) == 1:
+                return pt_chunk, 0
+
+            if pt_lines and isinstance(
+                self.node, FunctionDef
+            ):  # >= 2 lines function definiton
+                if getattr(self.node, "decorator_list", False):
+                    return pt_lines[1], 1
+                return pt_lines[0], 0
+
+        return self.code(), 0
 
     def code(self) -> str:
         """using _PT_GEN here is DEPRECATED"""
