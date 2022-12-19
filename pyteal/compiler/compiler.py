@@ -54,7 +54,7 @@ class CompileOptions:
         *,
         mode: Mode = Mode.Signature,
         version: int = DEFAULT_PROGRAM_VERSION,
-        optimize: OptimizeOptions = None,
+        optimize: Optional[OptimizeOptions] = None,
     ) -> None:
         self.mode: Final[Mode] = mode
         self.version: Final[int] = version
@@ -285,7 +285,7 @@ class Compilation:
         self.mode = mode
         self.version = version
         self.assemble_constants = assemble_constants
-        self.optimize = optimize
+        self.optimize: OptimizeOptions = optimize or OptimizeOptions()
 
     # TODO: API needs refactor....
     def compile(
@@ -335,7 +335,7 @@ class Compilation:
                 )
             )
 
-        if with_sourcemap and Frames.skipping_all():
+        if with_sourcemap and Frames.sourcemapping_is_off():
             raise SourceMapDisabledError()
 
         if annotate_teal and not with_sourcemap:

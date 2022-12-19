@@ -464,6 +464,7 @@ class TealMapItem(PyTealFrame):
         super().__init__(
             frame_info=pt_frame.frame_info,
             node=pt_frame.node,
+            creator=pt_frame.creator,
             full_stack=pt_frame.full_stack,
             rel_paths=pt_frame.rel_paths,
             parent=pt_frame.parent,
@@ -547,87 +548,6 @@ class TealMapItem(PyTealFrame):
         )
 
 
-@dataclass
-class SourceMapItemDEPRECATED:
-    first_line: int  # 0-indexed
-    teal_chunk: str
-    component: "pt.TealComponent"
-    frame: PyTealFrame
-    extras: dict[str, Any] | None = None  # TODO: probly these shouldn't exist
-
-    def _tabulatable_teal(self, prefix_for_empty="//#") -> str:
-        return "\n".join((x or prefix_for_empty) for x in self.teal_chunk.splitlines())
-
-    def asdict(self, **kwargs) -> OrderedDict:
-        """kwargs serve as a rename mapping when present"""
-        attrs = {
-            _TEAL_LINE_NUMBER: self.first_line,
-            # _TEAL_COLUMN: self.column(),
-            # _TEAL_COLUMN_END: self.column_rbound(),
-            _TEAL_LINE: self.teal_chunk,
-            _TABULATABLE_TEAL: self._tabulatable_teal(),
-            _PYTEAL_HYBRID_UNPARSED: self.hybrid_unparsed(),
-            _PYTEAL_NODE_AST_UNPARSED: self.frame.node_source(),
-            _PYTEAL_NODE_AST_QUALNAME: self.frame.code_qualname(),
-            _PYTEAL_COMPONENT: self.component,
-            _PYTEAL_NODE_AST_SOURCE_BOUNDARIES: self.frame.node_source_window(),
-            _PYTEAL_FILENAME: self.frame.file(),
-            _PYTEAL_LINE_NUMBER: self.frame.lineno(),
-            _PYTEAL_LINE_NUMBER_END: self.frame.node_end_lineno(),
-            _PYTEAL_COLUMN: self.frame.column(),
-            _PYTEAL_COLUMN_END: self.frame.node_end_col_offset(),
-            _PYTEAL_LINE: self.frame.code(),
-            _PYTEAL_NODE_AST: self.frame.node,
-            _PYTEAL_FRAME: self.frame,
-            _PYTEAL_NODE_AST_NONE: self.frame.failed_ast(),
-            _STATUS_CODE: self.frame.status_code(),
-            _STATUS: self.frame.status(),
-        }
-
-        assert (
-            kwargs.keys() <= attrs.keys()
-        ), f"unrecognized parameters {kwargs.keys() - attrs.keys()}"
-
-        return OrderedDict(((kwargs[k], attrs[k]) for k in kwargs))
-
-    def validate_for_export(self) -> None:
-        """
-        Ensure providing necessary and unambiguous data before exporting.
-        """
-        # if self.first_line is None or self.column() is None:
-        #     raise ValueError(
-        #         f"unable to export without valid line and column for TARGET but got: {self.first_line=}, {self.column()=}"
-        #     )
-        if self.first_line is None:
-            raise ValueError(
-                f"unable to export without valid line number: {self.first_line=}"
-            )
-        if self.frame.lineno() is None or self.frame.column() is None:
-            raise ValueError(
-                f"unable to export without valid line and column for SOURCE but got: {self.frame.lineno()}, {self.frame.column()=}"
-            )
-
-    def source_mappings(self, hybrid: bool = True) -> list["R3SourceMapping"]:
-        self.validate_for_export()
-        return [
-            R3SourceMapping(
-                line=self.first_line + i,
-                column=0,
-                column_end=len(target_line),
-                source=self.frame.file(),
-                source_line=cast(int, self.frame.lineno()) - 1,
-                source_column=self.frame.column(),
-                source_line_end=self.frame.node_end_lineno(),
-                source_column_end=self.frame.node_end_col_offset(),
-                source_extract=self.frame._hybrid_w_offset()
-                if hybrid
-                else self.frame.code(),
-                target_extract=target_line,
-            )
-            for i, target_line in enumerate(self.teal_chunk.splitlines())
-        ]
-
-
 class PyTealSourceMap:
     def __init__(
         self,
@@ -670,7 +590,7 @@ class PyTealSourceMap:
         self._cached_r3sourcemap: R3SourceMap | None = None
         self._inferred_frames_at: list[int] = []
 
-        self._cached_teal_lines: list[TealMapItem] = []
+        self._cached_tmis: list[TealMapItem] = []
         self._cached_pc_sourcemap: PCSourceMap | None = None
 
         if build:
@@ -687,7 +607,7 @@ class PyTealSourceMap:
             [
                 not self.include_pcs or self._cached_pc_sourcemap,
                 self._cached_r3sourcemap,
-                self._cached_teal_lines,
+                self._cached_tmis,
             ]
         )
 
@@ -712,7 +632,7 @@ class PyTealSourceMap:
             if mutated:
                 self._inferred_frames_at = mutated
 
-        lineno = 0
+        lineno = 1
         for i, best_frame in enumerate(self._best_frames):
             teal_chunk = self.teal_chunks[i]
             for line in teal_chunk.splitlines():
@@ -720,7 +640,7 @@ class PyTealSourceMap:
                 pcs = None
                 if self.include_pcs:
                     pcs = pcsm.line_to_pc.get(lineno, [])
-                self._cached_teal_lines.append(
+                self._cached_tmis.append(
                     TealMapItem(
                         pt_frame=best_frame,
                         teal_lineno=lineno,
@@ -731,53 +651,26 @@ class PyTealSourceMap:
                 )
                 lineno += 1
 
-        def source_map_item(line, i, tc):
-            # return SMI_DEPR(
-            #     teal_chunk_lines=self.teal_chunks[i].splitlines(),
-            #
-            # )
-            return SourceMapItemDEPRECATED(
-                line, self.teal_chunks[i], tc, self._best_frames[i]
-            )
-
-        # DOING: remove dependency on SourceMapItemDEPRECATED
-        _map_DEPR = {}
-
-        @dataclass
-        class SMI_DEPR:
-            teal_lines: str
-
-        line = 0
-        for i, tc in enumerate(self.components):
-            _map_DEPR[line + 1] = (smi := source_map_item(line, i, tc))
-            line += len(smi.teal_chunk.splitlines())
-            if self.verbose:
-                print(f"{i}. {tc=}")
-
-        self._build_r3sourcemap(_map_DEPR)
+        self._build_r3sourcemap()
 
         if not Frames._debug:
             self._best_frames = []
             self._inferred_frames_at = []
 
-    def _build_r3sourcemap(self, _map_DEPR):
-        smi_and_r3sms = [
-            (smi, r3sm)
-            for smi in _map_DEPR.values()
-            for r3sm in smi.source_mappings(hybrid=self._hybrid)
-        ]
+    def _build_r3sourcemap(self):
+        assert self._cached_tmis, "Unexpected error: no cached TealMapItems found"
 
-        assert smi_and_r3sms, "Unexpected error: no source mappings found"
-
-        smis = [smi for smi, _ in smi_and_r3sms]
-        root = smis[0].frame.root()
+        root = self._cached_tmis[0].root()
         assert all(
-            root == r3sm.frame.root() for r3sm in smis
+            root == tmi.root() for tmi in self._cached_tmis
         ), "inconsistent sourceRoot - aborting"
 
-        r3sms = [r3sm for _, r3sm in smi_and_r3sms]
+        r3sms = [tmi.source_mapping(_hybrid=self._hybrid) for tmi in self._cached_tmis]
         entries = {(r3sm.line, r3sm.column): r3sm for r3sm in r3sms}
+        lines = [cast(str, r3sm.target_extract) for r3sm in r3sms]
+
         index_l: list[list[int]] = [[]]
+
         prev_line = 0
         for line, col in entries.keys():
             for _ in range(prev_line, line):
@@ -785,11 +678,11 @@ class PyTealSourceMap:
             curr = index_l[-1]
             curr.append(col)
             prev_line = line
+
         index: list[tuple[int, ...]] = [tuple(cs) for cs in index_l]
-        lines = [cast(str, r3sm.target_extract) for r3sm in r3sms]
         sources = []
-        for smi in smis:
-            if (f := smi.frame.file()) not in sources:
+        for tmi in self._cached_tmis:
+            if (f := tmi.file()) not in sources:
                 sources.append(f)
 
         self._cached_r3sourcemap = R3SourceMap(
@@ -819,7 +712,7 @@ class PyTealSourceMap:
     def as_list(self) -> list[TealMapItem]:
         # TODO: finer grained caching/building
         self.build()
-        return self._cached_teal_lines
+        return self._cached_tmis
 
     def as_r3sourcemap(self) -> R3SourceMap | None:
         # TODO: finer grained caching/building
@@ -856,6 +749,12 @@ class PyTealSourceMap:
                 ]:
                     return frame.spawn(
                         next_frame, PytealFrameStatus.PATCHED_BY_NEXT_OVERRIDE_PREV
+                    )
+
+                if reason == PT_GENERATED.FLAGGED_BY_DEV:
+                    # TODO: does this hack have any false positivies?
+                    return frame.spawn(
+                        prev_frame, PytealFrameStatus.PATCHED_BY_PREV_OVERRIDE_NEXT
                     )
 
                 # NO-OP otherwise:
@@ -965,12 +864,6 @@ class PyTealSourceMap:
         # DEAD CODE b/c required is empty
         # required = []
         renames = {self._tabulate_param_defaults[k]: v for k, v in kwargs.items()}
-        # for r in required:
-        #     if r not in kwargs:
-        #         renames[
-        #             self._tabulate_param_defaults[r]
-        #         ] = self._tabulate_param_defaults[r]
-
         rows = list(teal_item.asdict(**renames) for teal_item in self.as_list())
 
         if constant_columns:
@@ -1038,19 +931,15 @@ class PyTealSourceMap:
             numalign="left",
             teal=teal_col,
             const_col_2="//",
-            program_counters="PC",
         )
 
-        extras = (
-            dict(
-                pyteal_filename="PYTEAL PATH",
-                pyteal_line_number="LINE",
-                pyteal_hybrid_unparsed="PYTEAL",
-            )
-            if not concise
-            else dict(pyteal_hybrid_unparsed="PYTEAL")
-        )
+        if self.include_pcs:
+            kwargs["program_counters"] = "PC"
 
-        kwargs.update(extras)
+        if not concise:
+            kwargs["pyteal_filename"] = "PYTEAL PATH"
+            kwargs["pyteal_line_number"] = "LINE"
+
+        kwargs["pyteal_hybrid_unparsed"] = "PYTEAL"
 
         return self.tabulate(**kwargs)  # type: ignore

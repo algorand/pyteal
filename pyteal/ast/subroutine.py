@@ -990,7 +990,10 @@ class SubroutineEval:
             else int(subroutine.return_type != TealType.none)
         )
 
-        return Proto(subroutine.argument_count(), num_stack_outputs, mem_layout=layout)
+        # TODO: apply recursively to sub-AST?
+        proto = Proto(subroutine.argument_count(), num_stack_outputs, mem_layout=layout)
+        proto.frames._compiler_gen = True
+        return proto
 
     def __call__(self, subroutine: SubroutineDefinition) -> SubroutineDeclaration:
         proto = self.__proto(subroutine)

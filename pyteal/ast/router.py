@@ -1,6 +1,6 @@
-from dataclasses import astuple, dataclass, field, fields
+from dataclasses import astuple, dataclass, field
 from enum import IntFlag
-from typing import Callable, Optional, cast
+from typing import Callable, Final, Optional, cast
 
 from algosdk import abi as sdk_abi
 from algosdk import encoding
@@ -27,6 +27,7 @@ from pyteal.compiler.sourcemap import PyTealSourceMap
 from pyteal.config import METHOD_ARG_NUM_CUTOFF
 from pyteal.errors import TealInputError, TealInternalError
 from pyteal.ir.ops import Mode
+from pyteal.stack_frame import Frames
 from pyteal.types import TealType
 from pyteal.util import algod_with_assertion
 
@@ -131,22 +132,23 @@ class MethodConfig:
         return self.clear_state.clear_state_condition_under_config()
 
 
-@dataclass(frozen=True)
+@dataclass
 class OnCompleteAction:
     """
     OnComplete Action, registers bare calls to one single OnCompletion case.
     """
 
-    action: Optional[Expr | SubroutineFnWrapper | ABIReturnSubroutine] = field(
+    action: Final[Optional[Expr | SubroutineFnWrapper | ABIReturnSubroutine]] = field(
         kw_only=True, default=None
     )
-    call_config: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
+    call_config: Final[CallConfig] = field(kw_only=True, default=CallConfig.NEVER)
 
     def __post_init__(self):
         if bool(self.call_config) ^ bool(self.action):
             raise TealInputError(
                 f"action {self.action} and call_config {self.call_config!r} contradicts"
             )
+        self.frames: Frames = Frames()
 
     @staticmethod
     def never() -> "OnCompleteAction":
@@ -177,31 +179,42 @@ class OnCompleteAction:
 OnCompleteAction.__module__ = "pyteal"
 
 
-@dataclass(frozen=True)
 class BareCallActions:
     """
     BareCallActions keep track of bare-call registrations to all OnCompletion cases.
     """
 
-    close_out: OnCompleteAction = field(kw_only=True, default=OnCompleteAction.never())
-    clear_state: OnCompleteAction = field(
-        kw_only=True, default=OnCompleteAction.never()
-    )
-    delete_application: OnCompleteAction = field(
-        kw_only=True, default=OnCompleteAction.never()
-    )
-    no_op: OnCompleteAction = field(kw_only=True, default=OnCompleteAction.never())
-    opt_in: OnCompleteAction = field(kw_only=True, default=OnCompleteAction.never())
-    update_application: OnCompleteAction = field(
-        kw_only=True, default=OnCompleteAction.never()
-    )
+    def __init__(
+        self,
+        *,
+        close_out: OnCompleteAction = OnCompleteAction.never(),
+        clear_state: OnCompleteAction = OnCompleteAction.never(),
+        delete_application: OnCompleteAction = OnCompleteAction.never(),
+        no_op: OnCompleteAction = OnCompleteAction.never(),
+        opt_in: OnCompleteAction = OnCompleteAction.never(),
+        update_application: OnCompleteAction = OnCompleteAction.never(),
+    ):
+        self.close_out: Final[OnCompleteAction] = close_out
+        self.clear_state: Final[OnCompleteAction] = clear_state
+        self.delete_application: Final[OnCompleteAction] = delete_application
+        self.no_op: Final[OnCompleteAction] = no_op
+        self.opt_in: Final[OnCompleteAction] = opt_in
+        self.update_application: Final[OnCompleteAction] = update_application
+
+        self.frames: Frames = Frames()
+
+    def actions(self) -> list[OnCompleteAction]:
+        return [
+            self.close_out,
+            self.clear_state,
+            self.delete_application,
+            self.no_op,
+            self.opt_in,
+            self.update_application,
+        ]
 
     def is_empty(self) -> bool:
-        for action_field in fields(self):
-            action: OnCompleteAction = getattr(self, action_field.name)
-            if not action.is_empty():
-                return False
-        return True
+        return all([a.is_empty() for a in self.actions()])
 
     def approval_construction(self) -> Optional[Expr]:
         oc_action_pair: list[tuple[EnumInt, OnCompleteAction]] = [
@@ -237,12 +250,8 @@ class BareCallActions:
                     raise TealInternalError(
                         f"Unexpected CallConfig: {oca.call_config!r}"
                     )
-            conditions_n_branches.append(
-                CondNode(
-                    Txn.on_completion() == oc,
-                    cond_body,
-                )
-            )
+            cond = Txn.on_completion() == oc
+            conditions_n_branches.append(CondNode(cond, cond_body))
         return Cond(*[[n.condition, n.branch] for n in conditions_n_branches])
 
     def clear_state_construction(self) -> Optional[Expr]:
@@ -307,7 +316,11 @@ class ASTBuilder:
                         raise TealInputError(
                             f"bare appcall handler should be TealType.none not {handler.type_of()}."
                         )
-                    return handler if handler.has_return() else Seq(handler, Approve())
+                    if handler.has_return():
+                        return handler
+                    seq = Seq(handler, Approve())
+                    seq.frames = handler.frames
+                    return seq
                 case SubroutineFnWrapper():
                     if handler.type_of() != TealType.none:
                         raise TealInputError(
@@ -452,11 +465,13 @@ class ASTBuilder:
                 subroutine_call: abi.ReturnedValue = cast(
                     abi.ReturnedValue, handler(*arg_vals)
                 )
+                abi_return = abi.MethodReturn(output_temp)
+                approve = Approve()
                 return Seq(
                     *decode_instructions,
                     subroutine_call.store_into(output_temp),
-                    abi.MethodReturn(output_temp),
-                    Approve(),
+                    abi_return,
+                    approve,
                 )
 
     def add_method_to_ast(
@@ -465,12 +480,8 @@ class ASTBuilder:
         walk_in_cond = Txn.application_args[0] == MethodSignature(method_signature)
         match cond:
             case Expr():
-                self.conditions_n_branches.append(
-                    CondNode(
-                        walk_in_cond,
-                        Seq(Assert(cond), self.wrap_handler(True, handler)),
-                    )
-                )
+                act = Seq(Assert(cond), self.wrap_handler(True, handler))
+                self.conditions_n_branches.append(CondNode(walk_in_cond, act))
             case 1:
                 self.conditions_n_branches.append(
                     CondNode(walk_in_cond, self.wrap_handler(True, handler))
@@ -589,12 +600,11 @@ class Router:
         if bare_calls and not bare_calls.is_empty():
             bare_call_approval = bare_calls.approval_construction()
             if bare_call_approval:
-                self.approval_ast.conditions_n_branches.append(
-                    CondNode(
-                        Txn.application_args.length() == Int(0),
-                        cast(Expr, bare_call_approval),
-                    )
-                )
+                cond = Txn.application_args.length() == Int(0)
+                act = cast(Expr, bare_call_approval)
+                Frames.reframe_asts(bare_calls.frames, cond)
+                act.frames = bare_calls.frames
+                self.approval_ast.conditions_n_branches.append(CondNode(cond, act))
             bare_call_clear = bare_calls.clear_state_construction()
             if bare_call_clear:
                 self.clear_state_ast.conditions_n_branches.append(

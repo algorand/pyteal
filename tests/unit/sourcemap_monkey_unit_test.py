@@ -35,7 +35,7 @@ def test_r3sourcemap(_):
     ptsm = compile_bundle.approval_sourcemap
     assert ptsm
 
-    actual_unparsed = [x._hybrid_w_offset() for x in ptsm._cached_teal_lines]
+    actual_unparsed = [x._hybrid_w_offset() for x in ptsm._cached_tmis]
     assert_algobank_unparsed_as_expected(actual_unparsed)
 
     r3sm = ptsm._cached_r3sourcemap
@@ -124,8 +124,8 @@ def test_mocked_config_for_frames(_):
     assert config.getboolean("pyteal-source-mapper", "enabled") is True
     from pyteal.stack_frame import Frames
 
-    assert Frames.skipping_all() is False
-    assert Frames.skipping_all(_force_refresh=True) is False
+    assert Frames.sourcemapping_is_off() is False
+    assert Frames.sourcemapping_is_off(_force_refresh=True) is False
 
 
 def make(x, y, z):

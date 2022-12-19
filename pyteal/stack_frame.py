@@ -5,17 +5,19 @@ from configparser import ConfigParser
 from dataclasses import dataclass
 from enum import IntEnum
 from inspect import FrameInfo, stack
-from typing import Optional, cast
+from typing import Callable, Final, Optional, cast
 
 from executing import Source  # type: ignore
 
 
-@dataclass(frozen=True)
+@dataclass
 class StackFrame:
-    frame_info: FrameInfo
-    node: AST | None
+    frame_info: Final[FrameInfo]
+    node: Final[Optional[AST]]
+
+    creator: "Frames"
     # for debugging purposes:
-    full_stack: list[FrameInfo] | None = None
+    full_stack: Optional[list[FrameInfo]] = None
 
     def as_pyteal_frame(
         self,
@@ -25,6 +27,7 @@ class StackFrame:
         return PyTealFrame(
             frame_info=self.frame_info,
             node=self.node,
+            creator=self.creator,
             full_stack=self.full_stack,
             rel_paths=rel_paths,
             parent=parent,
@@ -56,11 +59,6 @@ class StackFrame:
     def _frame_info_is_right_before_core(cls, f: FrameInfo) -> bool:
         return bool(code := f.code_context or []) and "Frames" in "".join(code)
 
-    # 50% slower original method:
-    # def _is_pyteal(self) -> bool:
-    #     f = self.frame_info.filename
-    #     return any(w in f for w in self._internal_paths)
-
     def _is_pyteal(self) -> bool:
         return self._frame_info_is_pyteal(self.frame_info)
 
@@ -90,10 +88,10 @@ class StackFrame:
 
     @classmethod
     def _init_or_drop(
-        cls, f: FrameInfo, full_stack: list[FrameInfo]
+        cls, f: FrameInfo, creator: "Frames", full_stack: list[FrameInfo]
     ) -> Optional["StackFrame"]:
         node = cast(AST | None, Source.executing(f.frame).node)
-        frame = StackFrame(f, node, full_stack if Frames._debug else None)
+        frame = StackFrame(f, node, creator, full_stack if Frames._debug else None)
         return frame if not frame._is_py_crud() else None
 
     def __repr__(self) -> str:
@@ -102,6 +100,9 @@ class StackFrame:
         return f"{node=}; {context=}; frame_info={fi}"
 
     def compiler_generated(self) -> bool | None:
+        if self.creator._compiler_gen:
+            return True
+
         return self._frame_info_compiler_generated(self.frame_info)
 
     @classmethod
@@ -112,7 +113,7 @@ class StackFrame:
         return "# T2PT" in "".join(cc)
 
 
-def _skip_all_frames() -> bool:
+def _sourcmapping_is_off() -> bool:
     try:
         config = ConfigParser()
         config.read("pyteal.ini")
@@ -140,11 +141,11 @@ Could not read section (pyteal-source-mapper, debug) of config "pyteal.ini": {e}
 
 
 class Frames:
-    _skip_all: bool = _skip_all_frames()
+    _no_stackframes: bool = _sourcmapping_is_off()
     _debug: bool = _debug_frames()
 
     @classmethod
-    def skipping_all(cls, _force_refresh: bool = False) -> bool:
+    def sourcemapping_is_off(cls, _force_refresh: bool = False) -> bool:
         """
         The `_force_refresh` parameter, is mainly for test validation purposes.
         It is discouraged for use in the wild because:
@@ -152,12 +153,12 @@ class Frames:
             for a source mapping, it would be error prone to generate frames for
             a subset of analyzed PyTeal
         * Setting `_force_refresh = True` will cause a read from the file system every
-            time Frames are initialized, and will result in significant performance degredation
+            time Frames are initialized and will result in significant performance degredation
         """
         if _force_refresh:
-            cls._skip_all = _skip_all_frames()
+            cls._no_stackframes = _sourcmapping_is_off()
 
-        return cls._skip_all
+        return cls._no_stackframes
 
     def __init__(
         self,
@@ -166,8 +167,9 @@ class Frames:
         # DEPRECATED:
         immediate_stop_post_pyteal: bool = True,  # setting False doesn't work 90% of the time
     ):
+        self._compiler_gen: bool = False
         self.frames: list[StackFrame] = []
-        if self.skipping_all():
+        if self.sourcemapping_is_off():
             return
 
         full_stack = stack()
@@ -179,7 +181,7 @@ class Frames:
             return [
                 frame
                 for f in frame_infos
-                if (frame := StackFrame._init_or_drop(f, full_stack))
+                if (frame := StackFrame._init_or_drop(f, self, full_stack))
             ]
 
         if keep_all:
@@ -233,146 +235,89 @@ class Frames:
 
         self.frames = make_frames(frame_infos)
 
-        # return self._fast_initializer(
-        #     keep_all, keep_one_frame_only, immediate_stop_post_pyteal
-        # )
-        # return self._original_initializer_DEPRECATED(
-        #     keep_all, keep_one_frame_only, immediate_stop_post_pyteal
-        # )
-
-    # def _fast_initializer(
-    #     self, keep_all, keep_one_frame_only, immediate_stop_post_pyteal
-    # ):
-    #     frame_infos = [f for f in stack() if not StackFrame._frame_info_is_py_crud(f)]
-
-    #     def make_frames(frame_infos):
-    #         return [
-    #             frame for f in frame_infos if (frame := StackFrame._init_or_drop(f))
-    #         ]
-
-    #     if keep_all:
-    #         self.frames = make_frames(frame_infos)
-    #         return
-
-    #     last_drop_idx = -1
-    #     for i, frame_info in enumerate(frame_infos):
-    #         if StackFrame._frame_info_is_right_before_core(frame_info):
-    #             last_drop_idx = i
-    #             break
-
-    #     penultimate_idx = last_drop_idx
-    #     prev_file = ""
-    #     in_first_post_pyteal = False
-    #     for i in range(last_drop_idx + 1, len(frame_infos)):
-    #         frame_info = frame_infos[i]
-    #         curr_file = frame_info.filename
-    #         if StackFrame._frame_info_is_pyteal(frame_info):
-    #             penultimate_idx = i
-    #         else:
-    #             if penultimate_idx == i - 1:
-    #                 in_first_post_pyteal = True
-    #                 if immediate_stop_post_pyteal:
-    #                     break
-    #             elif in_first_post_pyteal:
-    #                 in_first_post_pyteal = prev_file == curr_file
-    #                 if not in_first_post_pyteal:
-    #                     penultimate_idx = i - 2
-    #                     break
-    #         prev_file = curr_file
-
-    #     last_keep_idx = penultimate_idx + 1
-
-    #     if StackFrame._frame_info_is_pyteal_import(frame_infos[last_keep_idx]):
-    #         # FAILURE CASE: Look for first pyteal generated code entry in stack trace:
-    #         found = False
-    #         i = -1
-    #         for i in range(last_keep_idx - 1, -1, -1):
-    #             if StackFrame._frame_info_compiler_generated(frame_infos[i]):
-    #                 found = True
-    #                 break
-
-    #         if found and i >= 0:
-    #             last_keep_idx = i
-
-    #     frame_infos = frame_infos[last_drop_idx + 1 : last_keep_idx + 1]
-
-    #     if keep_one_frame_only:
-    #         frame_infos = frame_infos[-1:]
-
-    #     self.frames = make_frames(frame_infos)
-
-    # def _original_initializer_DEPRECATED(
-    #     self, keep_all, keep_one_frame_only, immediate_stop_post_pyteal
-    # ):
-    #     # _init_or_drop does the heavy lifting of hydrating the AST node in the
-    #     # case of a "promising" frame_info
-    #     # BUT IT DOES NOT actually require the AST info for its logic
-    #     frames = [frame for f in stack() if (frame := StackFrame._init_or_drop(f))]
-
-    #     if keep_all:
-    #         self.frames = frames
-    #         return
-
-    #     last_drop_idx = -1
-    #     for i, f in enumerate(frames):
-    #         if f._is_right_before_core():  # _is_right_before_core DOESN'T need AST
-    #             last_drop_idx = i
-    #             break
-
-    #     penultimate_idx = last_drop_idx
-    #     prev_file = ""
-    #     in_first_post_pyteal = False
-    #     for i in range(last_drop_idx + 1, len(frames)):
-    #         f = frames[i]
-    #         curr_file = f.frame_info.filename
-    #         if f._is_pyteal():  # _is_pyteal DOESN'T need AST
-    #             penultimate_idx = i
-    #         else:
-    #             if penultimate_idx == i - 1:
-    #                 in_first_post_pyteal = True
-    #                 if immediate_stop_post_pyteal:
-    #                     break
-    #             elif in_first_post_pyteal:
-    #                 in_first_post_pyteal = prev_file == curr_file
-    #                 if not in_first_post_pyteal:
-    #                     penultimate_idx = i - 2
-    #                     break
-    #         prev_file = curr_file
-
-    #     last_keep_idx = penultimate_idx + 1
-
-    #     if frames[
-    #         last_keep_idx
-    #     ]._is_pyteal_import():  # _is_pyteal_import DOESN'T need AST
-    #         # FAILURE CASE: Look for first pyteal generated code entry in stack trace:
-    #         found = False
-    #         i = -1
-    #         for i in range(last_keep_idx - 1, -1, -1):
-    #             if frames[
-    #                 i
-    #             ].compiler_generated():  # compiler_generated DOESN'T NEED AST
-    #                 found = True
-    #                 break
-
-    #         if found and i >= 0:
-    #             last_keep_idx = i
-
-    #     self.frames = frames[last_drop_idx + 1 : last_keep_idx + 1]
-
-    #     if keep_one_frame_only:
-    #         self.frames = self.frames[-1:]
-
     def __len__(self) -> int:
         return len(self.frames)
 
     def __getitem__(self, index: int) -> StackFrame:
         return self.frames[index]
 
+    def __repr__(self) -> str:
+        return f"{'C' if self._compiler_gen else 'U'}{self.frames}"
+
     def frame_infos(self) -> list[FrameInfo]:
         return [f.frame_info for f in self.frames]
 
     def nodes(self) -> list[AST | None]:
         return [f.node for f in self.frames]
+
+    @classmethod
+    def _walk_asts(cls, func: Callable[["Expr"], None], *exprs: "Expr") -> None:  # type: ignore
+        from pyteal.ast import (
+            Assert,
+            BinaryExpr,
+            Cond,
+            Expr,
+            Seq,
+            SubroutineDeclaration,
+        )
+
+        for expr in exprs:
+            e = cast(Expr, expr)
+            func(e)
+
+            match e:
+                case Assert():
+                    cls._walk_asts(func, *e.cond)
+                case BinaryExpr():
+                    cls._walk_asts(func, e.argLeft, e.argRight)
+                case Cond():
+                    cls._walk_asts(func, *(y for x in e.args for y in x))
+                case Seq():
+                    cls._walk_asts(func, *e.args)
+                case SubroutineDeclaration():
+                    cls._walk_asts(func, e.body)
+                case _:
+                    # TODO: implement more cases
+                    pass
+
+    @classmethod
+    def _debug_asts(cls, *exprs: "Expr") -> None:  # type: ignore
+        """
+        For deubgging purposes only!
+        """
+        from pyteal.ast import Expr
+
+        if cls.sourcemapping_is_off():
+            return
+
+        def dbg(e: Expr):
+            print(type(e), ": ", e.frames[0].as_pyteal_frame().hybrid_unparsed())
+
+        cls._walk_asts(dbg, *exprs)
+
+    @classmethod
+    def mark_asts_as_compiler_gen(cls, *exprs: "Expr") -> None:  # type: ignore
+        from pyteal.ast import Expr
+
+        if cls.sourcemapping_is_off():
+            return
+
+        def mark(e: Expr):
+            e.frames._compiler_gen = True
+
+        cls._walk_asts(mark, *exprs)
+
+    @classmethod
+    def reframe_asts(cls, frames: "Frames", *exprs: "Expr") -> None:  # type: ignore
+        from pyteal.ast import Expr
+
+        if cls.sourcemapping_is_off():
+            return
+
+        def set_frames(e: Expr):
+            e.frames = frames
+
+        cls._walk_asts(set_frames, *exprs)
 
 
 class PT_GENERATED:
@@ -385,6 +330,7 @@ class PT_GENERATED:
     BRANCH_LABEL = "PyTeal generated branching label"
     TYPE_ENUM_TXN = "PyTeal generated transaction Type Enum"
     TYPE_ENUM_ONCOMPLETE = "PyTeal generated OnComplete Type Enum"
+    FLAGGED_BY_DEV = "Developer has flagged expression as compiler generated"
 
 
 _PT_GEN = {
@@ -449,11 +395,12 @@ class PyTealFrame(StackFrame):
         self,
         frame_info: FrameInfo,
         node: AST | None,
+        creator: Frames,
         full_stack: list[FrameInfo] | None,
         rel_paths: bool = True,
         parent: Optional["PyTealFrame"] | None = None,
     ):
-        super().__init__(frame_info, node, full_stack)
+        super().__init__(frame_info, node, creator, full_stack)
         self.rel_paths = rel_paths
         self.parent = parent
 
@@ -483,6 +430,7 @@ class PyTealFrame(StackFrame):
         ptf = PyTealFrame(
             frame_info=other.frame_info,
             node=other.node,
+            creator=other.creator,
             full_stack=other.full_stack,
             rel_paths=other.rel_paths,
             parent=self,
@@ -537,6 +485,9 @@ class PyTealFrame(StackFrame):
         """
         if not self.compiler_generated():
             return None
+
+        if self.creator._compiler_gen:
+            return PT_GENERATED.FLAGGED_BY_DEV
 
         for k, v in _PT_GEN.items():
             if k in self.raw_code():

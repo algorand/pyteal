@@ -21,7 +21,7 @@ ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 def test_frames():
     from pyteal.stack_frame import Frames
 
-    Frames._skip_all = False
+    Frames._no_stackframes = False
 
     this_file, this_func = "sourcemap_test.py", "test_frames"
     this_lineno, this_frame = 27, Frames(keep_all=True)[1]
@@ -47,7 +47,7 @@ def test_frames():
 def test_SourceMapItem_source_mapping():
     from pyteal.stack_frame import Frames
 
-    Frames._skip_all = False
+    Frames._no_stackframes = False
 
     import pyteal as pt
     from pyteal.compiler.sourcemap import TealMapItem
@@ -139,7 +139,7 @@ def test_no_regression_with_sourcemap_as_configured():
 def test_no_regression_with_sourcemap_enabled():
     from pyteal.stack_frame import Frames
 
-    Frames._skip_all = False
+    Frames._no_stackframes = False
 
     no_regressions()
 
@@ -147,7 +147,7 @@ def test_no_regression_with_sourcemap_enabled():
 def test_no_regression_with_sourcemap_disabled():
     from pyteal.stack_frame import Frames
 
-    Frames._skip_all = True
+    Frames._no_stackframes = True
 
     no_regressions()
 
@@ -236,7 +236,7 @@ def trial(func):
 def test_time_benchmark_under_config():
     from pyteal.stack_frame import Frames
 
-    print(f"{Frames.skipping_all()=}")
+    print(f"{Frames.sourcemapping_is_off()=}")
 
     trial(simple_compilation)
     trial(simple_compilation)
@@ -274,7 +274,7 @@ def test_time_benchmark_sourcemap_enabled(_):
     """
     from pyteal.stack_frame import Frames
 
-    print(f"{Frames.skipping_all()=}")
+    print(f"{Frames.sourcemapping_is_off()=}")
     print(
         """
 keep_all: bool = True,
@@ -374,8 +374,8 @@ def test_config():
     assert ["enabled"] == config.options("pyteal-source-mapper")
 
     assert config.getboolean("pyteal-source-mapper", "enabled") is False
-    assert Frames.skipping_all() is True
+    assert Frames.sourcemapping_is_off() is True
 
-    Frames._skip_all = False
-    assert Frames.skipping_all() is False
-    assert Frames.skipping_all(_force_refresh=True) is True
+    Frames._no_stackframes = False
+    assert Frames.sourcemapping_is_off() is False
+    assert Frames.sourcemapping_is_off(_force_refresh=True) is True
