@@ -63,7 +63,7 @@ class TestAcctParam:
 
         account_param_field = AccountParamField[field_name]
 
-        def test_unsupported_version(version: int, match: str = None):
+        def test_unsupported_version(version: int, match: str | None = None):
             with pytest.raises(pt.TealInputError, match=match):
                 unsupported_options_version = pt.CompileOptions(version=version)
                 expr.__teal__(unsupported_options_version)

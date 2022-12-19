@@ -22,9 +22,9 @@ from pyteal.ast.abi.type import TypeSpec, BaseType
 def substring_for_decoding(
     encoded: Expr,
     *,
-    start_index: Expr = None,
-    end_index: Expr = None,
-    length: Expr = None,
+    start_index: Expr | None = None,
+    end_index: Expr | None = None,
+    length: Expr | None = None,
 ) -> Expr:
     """A helper function for getting the substring to decode according to the rules of BaseType.decode."""
     if length is not None and end_index is not None:

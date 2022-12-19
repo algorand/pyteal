@@ -506,8 +506,8 @@ class Router:
     def __init__(
         self,
         name: str,
-        bare_calls: BareCallActions = None,
-        descr: str = None,
+        bare_calls: BareCallActions | None = None,
+        descr: str | None = None,
     ) -> None:
         """
         Args:
@@ -547,9 +547,9 @@ class Router:
     def add_method_handler(
         self,
         method_call: ABIReturnSubroutine,
-        overriding_name: str = None,
-        method_config: MethodConfig = None,
-        description: str = None,
+        overriding_name: str | None = None,
+        method_config: MethodConfig | None = None,
+        description: str | None = None,
     ) -> ABIReturnSubroutine:
         """Add a method call handler to this Router.
 
@@ -605,17 +605,17 @@ class Router:
 
     def method(
         self,
-        func: Callable = None,
+        func: Callable | None = None,
         /,
         *,
-        name: str = None,
-        description: str = None,
-        no_op: CallConfig = None,
-        opt_in: CallConfig = None,
-        close_out: CallConfig = None,
-        clear_state: CallConfig = None,
-        update_application: CallConfig = None,
-        delete_application: CallConfig = None,
+        name: str | None = None,
+        description: str | None = None,
+        no_op: CallConfig | None = None,
+        opt_in: CallConfig | None = None,
+        close_out: CallConfig | None = None,
+        clear_state: CallConfig | None = None,
+        update_application: CallConfig | None = None,
+        delete_application: CallConfig | None = None,
     ):
         """This is an alternative way to register a method, as supposed to :code:`add_method_handler`.
 

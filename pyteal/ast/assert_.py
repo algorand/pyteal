@@ -14,7 +14,7 @@ class Assert(Expr):
     """A control flow expression to verify that a condition is true."""
 
     def __init__(
-        self, cond: Expr, *additional_conds: Expr, comment: str = None
+        self, cond: Expr, *additional_conds: Expr, comment: str | None = None
     ) -> None:
         """Create an assert statement that raises an error if the condition is false.
 

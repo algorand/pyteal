@@ -94,9 +94,9 @@ class Bool(BaseType):
         self,
         encoded: Expr,
         *,
-        start_index: Expr = None,
-        end_index: Expr = None,
-        length: Expr = None
+        start_index: Expr | None = None,
+        end_index: Expr | None = None,
+        length: Expr | None = None
     ) -> Expr:
         if start_index is None:
             start_index = Int(0)

@@ -17,7 +17,7 @@ class If(Expr):
     """Simple two-way conditional expression."""
 
     def __init__(
-        self, cond: Expr, thenBranch: Expr = None, elseBranch: Expr = None
+        self, cond: Expr, thenBranch: Expr | None = None, elseBranch: Expr | None = None
     ) -> None:
         """Create a new If expression.
 
