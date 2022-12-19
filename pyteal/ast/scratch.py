@@ -1,4 +1,4 @@
-from typing import cast, TYPE_CHECKING, Optional
+from typing import cast, TYPE_CHECKING
 
 from pyteal.types import TealType, require_type
 from pyteal.config import NUM_SLOTS
@@ -169,7 +169,7 @@ class ScratchStore(Expr):
 
     def __init__(
         self,
-        slot: Optional[ScratchSlot],
+        slot: ScratchSlot | None,
         value: Expr,
         index_expression: Expr | None = None,
     ):

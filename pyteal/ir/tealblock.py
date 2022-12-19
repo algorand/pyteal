@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from typing import Dict, List, Tuple, Set, Iterator, cast, TYPE_CHECKING, Optional
+from typing import Dict, List, Tuple, Set, Iterator, cast, TYPE_CHECKING
 
 from pyteal.ir.tealop import TealOp, Op
 from pyteal.errors import TealCompileError
@@ -37,7 +37,7 @@ class TealBlock(ABC):
 
     def validateTree(
         self,
-        parent: Optional["TealBlock"] = None,
+        parent: "TealBlock | None" = None,
         visited: List["TealBlock"] | None = None,
     ) -> None:
         """Check that this block and its children have valid parent pointers.
@@ -65,7 +65,7 @@ class TealBlock(ABC):
 
     def addIncoming(
         self,
-        parent: Optional["TealBlock"] = None,
+        parent: "TealBlock | None" = None,
         visited: List["TealBlock"] | None = None,
     ) -> None:
         """Calculate the parent blocks for this block and its children.
