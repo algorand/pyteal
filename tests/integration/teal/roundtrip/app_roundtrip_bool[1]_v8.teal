@@ -28,6 +28,8 @@ proto 1 1
 byte ""
 int 0
 dupn 2
+byte ""
+dupn 1
 frame_dig -1
 int 0
 getbit
@@ -48,6 +50,8 @@ proto 1 1
 byte ""
 dupn 2
 int 0
+dupn 1
+byte ""
 dupn 1
 frame_dig -1
 callsub arraycomplement_1
