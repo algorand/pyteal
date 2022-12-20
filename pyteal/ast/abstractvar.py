@@ -49,7 +49,7 @@ def alloc_abstract_var(stack_type: TealType) -> AbstractVar:
     and swap to FrameVar to save the use of scratch slots.
 
     Arg:
-        stack_type: An TealType that represents stack type.
+        stack_type: TealType that represents stack type.
     """
 
     from pyteal.ast import ScratchVar
