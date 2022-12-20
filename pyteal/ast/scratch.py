@@ -1,4 +1,4 @@
-from typing import cast, TYPE_CHECKING, Optional
+from typing import cast, TYPE_CHECKING
 
 from pyteal.types import TealType, require_type
 from pyteal.config import NUM_SLOTS
@@ -17,7 +17,7 @@ class ScratchSlot:
     # Slot ids under 256 are manually reserved slots
     nextSlotId = NUM_SLOTS
 
-    def __init__(self, requestedSlotId: int = None):
+    def __init__(self, requestedSlotId: int | None = None):
         """Initializes a scratch slot with a particular id
 
         Args:
@@ -38,7 +38,7 @@ class ScratchSlot:
             self.id = requestedSlotId
             self.isReservedSlot = True
 
-    def store(self, value: Expr = None) -> Expr:
+    def store(self, value: Expr | None = None) -> Expr:
         """Get an expression to store a value in this slot.
 
         Args:
@@ -102,9 +102,9 @@ class ScratchLoad(Expr):
 
     def __init__(
         self,
-        slot: ScratchSlot = None,
+        slot: ScratchSlot | None = None,
         type: TealType = TealType.anytype,
-        index_expression: Expr = None,
+        index_expression: Expr | None = None,
     ):
         """Create a new ScratchLoad expression.
 
@@ -168,7 +168,10 @@ class ScratchStore(Expr):
     """Expression to store a value in scratch space."""
 
     def __init__(
-        self, slot: Optional[ScratchSlot], value: Expr, index_expression: Expr = None
+        self,
+        slot: ScratchSlot | None,
+        value: Expr,
+        index_expression: Expr | None = None,
     ):
         """Create a new ScratchStore expression.
 

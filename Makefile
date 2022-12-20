@@ -40,9 +40,8 @@ black:
 flake8:
 	flake8 $(ALLPY)
 
-MYPY = pyteal scripts tests
 mypy:
-	mypy --show-error-codes $(MYPY)
+	mypy
 
 lint: black flake8 mypy
 

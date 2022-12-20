@@ -98,9 +98,9 @@ class BaseType(ABC):
         self,
         encoded: Expr,
         *,
-        start_index: Expr = None,
-        end_index: Expr = None,
-        length: Expr = None,
+        start_index: Expr | None = None,
+        end_index: Expr | None = None,
+        length: Expr | None = None,
     ) -> Expr:
         """Decode a substring of the passed in encoded string and set it as this type's value.
 

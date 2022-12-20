@@ -302,9 +302,9 @@ class Tuple(BaseType):
         self,
         encoded: Expr,
         *,
-        start_index: Expr = None,
-        end_index: Expr = None,
-        length: Expr = None,
+        start_index: Expr | None = None,
+        end_index: Expr | None = None,
+        length: Expr | None = None,
     ) -> Expr:
         extracted = substring_for_decoding(
             encoded, start_index=start_index, end_index=end_index, length=length

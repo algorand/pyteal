@@ -36,7 +36,9 @@ class TealBlock(ABC):
         return len(self.getOutgoing()) == 0
 
     def validateTree(
-        self, parent: "TealBlock" = None, visited: List["TealBlock"] = None
+        self,
+        parent: "TealBlock | None" = None,
+        visited: List["TealBlock"] | None = None,
     ) -> None:
         """Check that this block and its children have valid parent pointers.
 
@@ -62,7 +64,9 @@ class TealBlock(ABC):
                 block.validateTree(self, visited)
 
     def addIncoming(
-        self, parent: "TealBlock" = None, visited: List["TealBlock"] = None
+        self,
+        parent: "TealBlock | None" = None,
+        visited: List["TealBlock"] | None = None,
     ) -> None:
         """Calculate the parent blocks for this block and its children.
 
@@ -85,8 +89,8 @@ class TealBlock(ABC):
 
     def validateSlots(
         self,
-        slotsInUse: Set["ScratchSlot"] = None,
-        visited: Set[Tuple[int, ...]] = None,
+        slotsInUse: Set["ScratchSlot"] | None = None,
+        visited: Set[Tuple[int, ...]] | None = None,
     ) -> List[TealCompileError]:
         if visited is None:
             visited = set()

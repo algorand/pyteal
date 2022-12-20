@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 class Return(Expr):
     """Return a value from the current execution context."""
 
-    def __init__(self, value: Expr = None) -> None:
+    def __init__(self, value: Expr | None = None) -> None:
         """Create a new Return expression.
 
         If called from the main program, this will immediately exit the program

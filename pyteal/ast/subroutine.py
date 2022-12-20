@@ -133,7 +133,7 @@ class SubroutineDefinition:
         self.__name: str = name_str if name_str else self.implementation.__name__
 
     def _validate(
-        self, input_types: list[TealType | None] = None
+        self, input_types: list[TealType | None] | None = None
     ) -> tuple[
         MappingProxyType[str, Parameter],
         dict[str, type],
@@ -433,7 +433,7 @@ class SubroutineCall(Expr):
         subroutine: SubroutineDefinition,
         args: list[Expr | ScratchVar | abi.BaseType],
         *,
-        output_kwarg: OutputKwArgInfo = None,
+        output_kwarg: OutputKwArgInfo | None = None,
     ) -> None:
         super().__init__()
         self.subroutine = subroutine
@@ -674,7 +674,7 @@ class ABIReturnSubroutine:
     def name(self) -> str:
         return self.subroutine.name()
 
-    def method_signature(self, overriding_name: str = None) -> str:
+    def method_signature(self, overriding_name: str | None = None) -> str:
         if not self.is_abi_routable():
             raise TealInputError(
                 "Only registrable methods may return a method signature"

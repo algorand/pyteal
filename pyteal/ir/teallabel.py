@@ -1,4 +1,4 @@
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from pyteal.ir.tealcomponent import TealComponent
 from pyteal.ir.labelref import LabelReference
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 class TealLabel(TealComponent):
     def __init__(
-        self, expr: Optional["Expr"], label: LabelReference, comment: str = None
+        self, expr: "Expr | None", label: LabelReference, comment: str | None = None
     ) -> None:
         super().__init__(expr)
         self.label = label

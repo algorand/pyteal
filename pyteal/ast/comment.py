@@ -43,7 +43,7 @@ class CommentExpr(Expr):
 CommentExpr.__module__ = "pyteal"
 
 
-def Comment(comment: str, expr: Expr = None) -> Expr:
+def Comment(comment: str, expr: Expr | None = None) -> Expr:
     """Wrap an existing expression with a comment.
 
     This comment will be present in the compiled TEAL source immediately before the first op of the
