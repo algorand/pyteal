@@ -9,27 +9,14 @@ if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
 
 
-def frames_adder(init):
-    def wrapper(*args, **kwargs):
-        args[0].stack_frames = StackFrames()
-
-        return init(*args, **kwargs)
-
-    return wrapper
-
-
 class Expr(ABC):
     """Abstract base class for PyTeal expressions."""
-
-    def __init_subclass__(cls):
-        cls.__init__ = frames_adder(cls.__init__)
 
     def __init__(self):
         import traceback
 
         self.trace = traceback.format_stack()[0:-1]
-        if not hasattr(self, "stack_frames"):
-            self.stack_frames: StackFrames
+        self.stack_frames: StackFrames = StackFrames()
 
     def getDefinitionTrace(self) -> list[str]:
         return self.trace
