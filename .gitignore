@@ -145,3 +145,7 @@ dmypy.json
 
 # fixtures
 tests/**/_*.txt
+
+# zzzzz
+py310*
+py311*

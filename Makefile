@@ -104,3 +104,7 @@ local-gh-simulate:
 
 coverage:
 	pytest --cov-report html --cov=pyteal
+
+temp-sourcemaps:
+	python tests/sourcemapping/private/goracle01.py > tests/sourcemapping/goracle01.teal
+	python tests/sourcemapping/public/decipher_poll_dapp.py > tests/sourcemapping/public/decipher_approval.teal
