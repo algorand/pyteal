@@ -25,8 +25,10 @@ def test_frames():
 
     this_file, this_func = "sourcemap_test.py", "test_frames"
     this_lineno, this_frame = 27, StackFrames(keep_all=True)[1]
-    code = f"    this_lineno, this_frame = {this_lineno}, Frames(keep_all=True)[1]\n"
-    this_col_offset, this_end_col_offset = 34, 55
+    code = (
+        f"    this_lineno, this_frame = {this_lineno}, StackFrames(keep_all=True)[1]\n"
+    )
+    this_col_offset, this_end_col_offset = 34, 60
     frame_info, node = this_frame.frame_info, this_frame.node
 
     assert frame_info.filename.endswith(this_file)
@@ -66,7 +68,7 @@ def test_SourceMapItem_source_mapping():
 
     teals = mock_teal(components)
     tmis = [
-        TealMapItem(op.expr.frames[0].as_pyteal_frame(), i, teals[i], op)
+        TealMapItem(op.expr.stack_frames[0].as_pyteal_frame(), i, teals[i], op)
         for i, op in enumerate(components)
     ]
 
@@ -82,7 +84,7 @@ def test_SourceMapItem_source_mapping():
         source_files=source_files,
         source_files_lines=[mock_source_lines],
     )
-    expected_json = '{"version": 3, "sources": ["tests/unit/sourcemap_test.py"], "names": [], "mappings": "AAsDW;AAAY;AAAZ", "file": "dohhh.teal", "sourceRoot": "~"}'
+    expected_json = '{"version": 3, "sources": ["tests/unit/sourcemap_test.py"], "names": [], "mappings": "AAwDW;AAAY;AAAZ", "file": "dohhh.teal", "sourceRoot": "~"}'
 
     assert expected_json == json.dumps(r3sm.to_json())
 
@@ -371,7 +373,7 @@ def test_config():
         "flake8"
     )
 
-    assert ["enabled"] == config.options("pyteal-source-mapper")
+    assert ["enabled", "debug"] == config.options("pyteal-source-mapper")
 
     assert config.getboolean("pyteal-source-mapper", "enabled") is False
     assert StackFrames.sourcemapping_is_off() is True

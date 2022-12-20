@@ -160,7 +160,6 @@ def compileSubroutine(
             ret_expr = Return(ast)  # T2PT3
             ret_expr.trace = ast.trace
             ast = ret_expr
-    ast.stack_frames._compiler_gen = True
 
     options.setSubroutine(currentSubroutine)
 

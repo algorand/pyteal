@@ -164,7 +164,7 @@ BIG_A2 = "pt.And(pt.Int(1) - pt.Int(2), pt.Not(pt.Int(3)), pt.Int(4) ^ pt.Int(5)
 BIG_C2 = "pt.Concat(pt.BytesDiv(pt.Bytes('101'), pt.Bytes('102')), pt.BytesNot(pt.Bytes('103')), pt.BytesZero(pt.Int(10)), pt.SetBit(pt.Bytes('105'), pt.Int(106), pt.Int(107)), pt.SetByte(pt.Bytes('108'), pt.Int(109), pt.Int(110)))"
 
 CONSTRUCTS = [
-    (
+    (  # 0
         lambda pt: pt.Return(pt.Int(42)),
         [[P, C], ["int 42", "pt.Int(42)"], ["return", "pt.Return(pt.Int(42))"]],
     ),
@@ -394,7 +394,7 @@ CONSTRUCTS = [
         ],
         5,
     ),
-    (
+    (  # 16
         lambda pt: pt.And(
             pt.Txn.type_enum() == pt.TxnType.Payment,
             pt.Txn.fee() < pt.Int(100),
