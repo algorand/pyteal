@@ -13,6 +13,7 @@ from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar, ScratchSlot
 from pyteal.ast.frame import FrameBury, Proto, FrameVar, ProtoStackLayout
 from pyteal.errors import TealInputError, TealInternalError, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
+from pyteal.stack_frame import StackFrames
 from pyteal.types import TealType
 
 if TYPE_CHECKING:
@@ -304,10 +305,6 @@ class SubroutineDefinition:
             f"Function has parameter {parameter_name} of disallowed type {ptype}. "
             f"Only the types {(Expr, ScratchVar, 'ABI')} are allowed"
         )
-
-    def get_declaration(self) -> "SubroutineDeclaration":
-        """MARK AS DEPRECATED, FOR WE ARE NOW GET DECLARATION BY COMPILE OPTIONS"""
-        return self.declarations.get_declaration()
 
     def get_declaration_by_option(
         self,
@@ -992,7 +989,8 @@ class SubroutineEval:
 
         # TODO: apply recursively to sub-AST?
         proto = Proto(subroutine.argument_count(), num_stack_outputs, mem_layout=layout)
-        proto.frames._compiler_gen = True
+        proto.stack_frames._compiler_gen = True
+        StackFrames.mark_asts_as_compiler_gen(proto)
         return proto
 
     def __call__(self, subroutine: SubroutineDefinition) -> SubroutineDeclaration:
@@ -1020,7 +1018,7 @@ class SubroutineEval:
             abi_output_kwargs[output_kwarg_info.name] = output_carrying_abi
 
         # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:
-        subroutine_body: Expr
+        subroutine_body: Optional[Expr] = None
         if not self.use_frame_pt:
             subroutine_body = subroutine.implementation(
                 *loaded_args, **abi_output_kwargs

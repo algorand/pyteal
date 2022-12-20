@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple
 from pyteal.ast.abi import BaseType
 from pyteal.types import TealType
 from pyteal.errors import TealInputError
@@ -6,8 +6,9 @@ from pyteal.ast.expr import Expr
 from pyteal.ast.unaryexpr import Log
 from pyteal.ast.naryexpr import Concat
 from pyteal.ast.bytes import Bytes
-from pyteal.ir import TealBlock, TealSimpleBlock, Op
 from pyteal.config import RETURN_HASH_PREFIX
+from pyteal.ir import TealBlock, TealSimpleBlock, Op
+from pyteal.stack_frame import StackFrames
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
@@ -19,15 +20,18 @@ class MethodReturn(Expr):
         if not isinstance(arg, BaseType):
             raise TealInputError(f"Expecting an ABI type argument but get {arg}")
         self.arg = arg
+        self.root_expr: Optional[Expr] = None
 
     def __teal__(self, options: "CompileOptions") -> Tuple[TealBlock, TealSimpleBlock]:
         if options.version < Op.log.min_version:
             raise TealInputError(
                 f"current version {options.version} is lower than log's min version {Op.log.min_version}"
             )
-        return Log(Concat(Bytes(RETURN_HASH_PREFIX), self.arg.encode())).__teal__(
+        str, end = Log(Concat(Bytes(RETURN_HASH_PREFIX), self.arg.encode())).__teal__(
             options
         )
+        StackFrames.reframe_ops_in_blocks(self.root_expr, str)
+        return str, end
 
     def __str__(self) -> str:
         return f"(MethodReturn {self.arg.type_spec()})"

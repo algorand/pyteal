@@ -3,7 +3,7 @@ from typing import Final, Optional, Set
 from pyteal.ast import ScratchSlot
 from pyteal.errors import TealInternalError, verifyProgramVersion
 from pyteal.ir import Op, TealBlock, TealOp
-from pyteal.stack_frame import Frames
+from pyteal.stack_frame import StackFrames
 
 
 class OptimizeOptions:
@@ -40,7 +40,7 @@ class OptimizeOptions:
         self._skip_slots: Set[ScratchSlot] = set()
 
         # TODO: Is this actually used?
-        self.frames = Frames()
+        self.frames = StackFrames()
 
     def optimize_scratch_slots(self, version: int) -> bool:
         from pyteal.compiler.compiler import DEFAULT_SCRATCH_SLOT_OPTIMIZE_VERSION

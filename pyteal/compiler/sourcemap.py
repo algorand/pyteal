@@ -23,7 +23,7 @@ from tabulate import tabulate  # type: ignore
 
 import pyteal as pt
 from pyteal.errors import TealInternalError
-from pyteal.stack_frame import Frames, PT_GENERATED, PyTealFrame, PytealFrameStatus
+from pyteal.stack_frame import StackFrames, PT_GENERATED, PyTealFrame, PytealFrameStatus
 from pyteal.util import algod_with_assertion
 
 
@@ -623,7 +623,7 @@ class PyTealSourceMap:
                 f"expected same number of teal chunks {n} and components {len(self.components)}"
             )
         self._best_frames = [
-            tc.frames()[-1].as_pyteal_frame() for tc in self.components
+            tc.stack_frames()[-1].as_pyteal_frame() for tc in self.components
         ]
 
         if self._source_inference:
@@ -653,7 +653,7 @@ class PyTealSourceMap:
 
         self._build_r3sourcemap()
 
-        if not Frames._debug:
+        if not StackFrames._debug:
             self._best_frames = []
             self._inferred_frames_at = []
 

@@ -19,12 +19,12 @@ ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 
 
 def test_frames():
-    from pyteal.stack_frame import Frames
+    from pyteal.stack_frame import StackFrames
 
-    Frames._no_stackframes = False
+    StackFrames._no_stackframes = False
 
     this_file, this_func = "sourcemap_test.py", "test_frames"
-    this_lineno, this_frame = 27, Frames(keep_all=True)[1]
+    this_lineno, this_frame = 27, StackFrames(keep_all=True)[1]
     code = f"    this_lineno, this_frame = {this_lineno}, Frames(keep_all=True)[1]\n"
     this_col_offset, this_end_col_offset = 34, 55
     frame_info, node = this_frame.frame_info, this_frame.node
@@ -45,9 +45,9 @@ def test_frames():
 
 
 def test_SourceMapItem_source_mapping():
-    from pyteal.stack_frame import Frames
+    from pyteal.stack_frame import StackFrames
 
-    Frames._no_stackframes = False
+    StackFrames._no_stackframes = False
 
     import pyteal as pt
     from pyteal.compiler.sourcemap import TealMapItem
@@ -137,17 +137,17 @@ def test_no_regression_with_sourcemap_as_configured():
 
 
 def test_no_regression_with_sourcemap_enabled():
-    from pyteal.stack_frame import Frames
+    from pyteal.stack_frame import StackFrames
 
-    Frames._no_stackframes = False
+    StackFrames._no_stackframes = False
 
     no_regressions()
 
 
 def test_no_regression_with_sourcemap_disabled():
-    from pyteal.stack_frame import Frames
+    from pyteal.stack_frame import StackFrames
 
-    Frames._no_stackframes = True
+    StackFrames._no_stackframes = True
 
     no_regressions()
 
@@ -234,9 +234,9 @@ def trial(func):
 
 @pytest.mark.skip()
 def test_time_benchmark_under_config():
-    from pyteal.stack_frame import Frames
+    from pyteal.stack_frame import StackFrames
 
-    print(f"{Frames.sourcemapping_is_off()=}")
+    print(f"{StackFrames.sourcemapping_is_off()=}")
 
     trial(simple_compilation)
     trial(simple_compilation)
@@ -272,9 +272,9 @@ def test_time_benchmark_sourcemap_enabled(_):
     """
     UPSHOT: expect deterioration of (5 to 15)X when enabling source maps.
     """
-    from pyteal.stack_frame import Frames
+    from pyteal.stack_frame import StackFrames
 
-    print(f"{Frames.sourcemapping_is_off()=}")
+    print(f"{StackFrames.sourcemapping_is_off()=}")
     print(
         """
 keep_all: bool = True,
@@ -352,7 +352,7 @@ Allocations results for tests/unit/sourcemap_test.py::test_time_benchmark_source
 
 
 def test_config():
-    from pyteal.stack_frame import Frames
+    from pyteal.stack_frame import StackFrames
 
     config = ConfigParser()
     config.read([".flake8", "mypy.ini", "pyteal.ini"])
@@ -374,8 +374,8 @@ def test_config():
     assert ["enabled"] == config.options("pyteal-source-mapper")
 
     assert config.getboolean("pyteal-source-mapper", "enabled") is False
-    assert Frames.sourcemapping_is_off() is True
+    assert StackFrames.sourcemapping_is_off() is True
 
-    Frames._no_stackframes = False
-    assert Frames.sourcemapping_is_off() is False
-    assert Frames.sourcemapping_is_off(_force_refresh=True) is True
+    StackFrames._no_stackframes = False
+    assert StackFrames.sourcemapping_is_off() is False
+    assert StackFrames.sourcemapping_is_off(_force_refresh=True) is True

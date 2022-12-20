@@ -27,7 +27,7 @@ from pyteal.compiler.sourcemap import PyTealSourceMap
 from pyteal.config import METHOD_ARG_NUM_CUTOFF
 from pyteal.errors import TealInputError, TealInternalError
 from pyteal.ir.ops import Mode
-from pyteal.stack_frame import Frames
+from pyteal.stack_frame import StackFrames
 from pyteal.types import TealType
 from pyteal.util import algod_with_assertion
 
@@ -148,7 +148,7 @@ class OnCompleteAction:
             raise TealInputError(
                 f"action {self.action} and call_config {self.call_config!r} contradicts"
             )
-        self.frames: Frames = Frames()
+        self.frames: StackFrames = StackFrames()
 
     @staticmethod
     def never() -> "OnCompleteAction":
@@ -201,7 +201,7 @@ class BareCallActions:
         self.opt_in: Final[OnCompleteAction] = opt_in
         self.update_application: Final[OnCompleteAction] = update_application
 
-        self.frames: Frames = Frames()
+        self.frames: StackFrames = StackFrames()
 
     def actions(self) -> list[OnCompleteAction]:
         return [
@@ -318,8 +318,9 @@ class ASTBuilder:
                         )
                     if handler.has_return():
                         return handler
-                    seq = Seq(handler, Approve())
-                    seq.frames = handler.frames
+                    seq = Seq(handler, a := Approve())
+                    a.stack_frames._compiler_gen = True
+                    seq.stack_frames = handler.stack_frames
                     return seq
                 case SubroutineFnWrapper():
                     if handler.type_of() != TealType.none:
@@ -331,7 +332,9 @@ class ASTBuilder:
                             f"subroutine call should take 0 arg for bare-app call. "
                             f"this subroutine takes {handler.subroutine.argument_count()}."
                         )
-                    return Seq(handler(), Approve())
+                    seq = Seq(handler(), a := Approve())
+                    a.stack_frames._compiler_gen = True
+                    return seq
                 case ABIReturnSubroutine():
                     if handler.type_of() != "void":
                         raise TealInputError(
@@ -342,7 +345,10 @@ class ASTBuilder:
                             f"abi-returning subroutine call should take 0 arg for bare-app call. "
                             f"this abi-returning subroutine takes {handler.subroutine.argument_count()}."
                         )
-                    return Seq(cast(Expr, handler()), Approve())
+
+                    seq = Seq(cast(Expr, handler()), a := Approve())
+                    a.stack_frames._compiler_gen = True
+                    return seq
                 case _:
                     raise TealInputError(
                         "bare appcall can only accept: none type Expr, or Subroutine/ABIReturnSubroutine with none return and no arg"
@@ -452,11 +458,12 @@ class ASTBuilder:
                 decode_instructions += de_tuple_instructions
 
             # NOTE: does not have to have return, can be void method
+            seq: Seq
             if handler.type_of() == "void":
-                return Seq(
+                seq = Seq(
                     *decode_instructions,
                     cast(Expr, handler(*arg_vals)),
-                    Approve(),
+                    a := Approve(),
                 )
             else:
                 output_temp: abi.BaseType = cast(
@@ -465,14 +472,15 @@ class ASTBuilder:
                 subroutine_call: abi.ReturnedValue = cast(
                     abi.ReturnedValue, handler(*arg_vals)
                 )
-                abi_return = abi.MethodReturn(output_temp)
-                approve = Approve()
-                return Seq(
+                seq = Seq(
                     *decode_instructions,
                     subroutine_call.store_into(output_temp),
-                    abi_return,
-                    approve,
+                    abi_return := abi.MethodReturn(output_temp),
+                    a := Approve(),
                 )
+                abi_return.root_expr = seq
+            a.stack_frames._compiler_gen = True
+            return seq
 
     def add_method_to_ast(
         self, method_signature: str, cond: Expr | int, handler: ABIReturnSubroutine
@@ -602,8 +610,8 @@ class Router:
             if bare_call_approval:
                 cond = Txn.application_args.length() == Int(0)
                 act = cast(Expr, bare_call_approval)
-                Frames.reframe_asts(bare_calls.frames, cond)
-                act.frames = bare_calls.frames
+                StackFrames.reframe_asts(bare_calls.frames, cond)
+                act.stack_frames = bare_calls.frames
                 self.approval_ast.conditions_n_branches.append(CondNode(cond, act))
             bare_call_clear = bare_calls.clear_state_construction()
             if bare_call_clear:

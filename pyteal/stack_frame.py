@@ -15,7 +15,7 @@ class StackFrame:
     frame_info: Final[FrameInfo]
     node: Final[Optional[AST]]
 
-    creator: "Frames"
+    creator: "StackFrames"
     # for debugging purposes:
     full_stack: Optional[list[FrameInfo]] = None
 
@@ -88,10 +88,10 @@ class StackFrame:
 
     @classmethod
     def _init_or_drop(
-        cls, f: FrameInfo, creator: "Frames", full_stack: list[FrameInfo]
+        cls, f: FrameInfo, creator: "StackFrames", full_stack: list[FrameInfo]
     ) -> Optional["StackFrame"]:
         node = cast(AST | None, Source.executing(f.frame).node)
-        frame = StackFrame(f, node, creator, full_stack if Frames._debug else None)
+        frame = StackFrame(f, node, creator, full_stack if StackFrames._debug else None)
         return frame if not frame._is_py_crud() else None
 
     def __repr__(self) -> str:
@@ -140,7 +140,7 @@ Could not read section (pyteal-source-mapper, debug) of config "pyteal.ini": {e}
     return False
 
 
-class Frames:
+class StackFrames:
     _no_stackframes: bool = _sourcmapping_is_off()
     _debug: bool = _debug_frames()
 
@@ -177,7 +177,7 @@ class Frames:
             f for f in full_stack if not StackFrame._frame_info_is_py_crud(f)
         ]
 
-        def make_frames(frame_infos):
+        def _make_stack_frames(frame_infos):
             return [
                 frame
                 for f in frame_infos
@@ -185,7 +185,7 @@ class Frames:
             ]
 
         if keep_all:
-            self.frames = make_frames(frame_infos)
+            self.frames = _make_stack_frames(frame_infos)
             return
 
         last_drop_idx = -1
@@ -233,7 +233,7 @@ class Frames:
         if keep_one_frame_only:
             frame_infos = frame_infos[-1:]
 
-        self.frames = make_frames(frame_infos)
+        self.frames = _make_stack_frames(frame_infos)
 
     def __len__(self) -> int:
         return len(self.frames)
@@ -260,6 +260,7 @@ class Frames:
             Seq,
             SubroutineDeclaration,
         )
+        from pyteal.ast.frame import Proto
 
         for expr in exprs:
             e = cast(Expr, expr)
@@ -272,12 +273,14 @@ class Frames:
                     cls._walk_asts(func, e.argLeft, e.argRight)
                 case Cond():
                     cls._walk_asts(func, *(y for x in e.args for y in x))
+                case Proto():
+                    cls._walk_asts(func, e.mem_layout)
                 case Seq():
                     cls._walk_asts(func, *e.args)
                 case SubroutineDeclaration():
                     cls._walk_asts(func, e.body)
                 case _:
-                    # TODO: implement more cases
+                    # TODO: implement more cases, but no need to error as this isn't used for functionality's sake.
                     pass
 
     @classmethod
@@ -291,7 +294,7 @@ class Frames:
             return
 
         def dbg(e: Expr):
-            print(type(e), ": ", e.frames[0].as_pyteal_frame().hybrid_unparsed())
+            print(type(e), ": ", e.stack_frames[0].as_pyteal_frame().hybrid_unparsed())
 
         cls._walk_asts(dbg, *exprs)
 
@@ -303,21 +306,30 @@ class Frames:
             return
 
         def mark(e: Expr):
-            e.frames._compiler_gen = True
+            e.stack_frames._compiler_gen = True
 
         cls._walk_asts(mark, *exprs)
 
     @classmethod
-    def reframe_asts(cls, frames: "Frames", *exprs: "Expr") -> None:  # type: ignore
+    def reframe_asts(cls, stack_frames: "StackFrames", *exprs: "Expr") -> None:  # type: ignore
         from pyteal.ast import Expr
 
         if cls.sourcemapping_is_off():
             return
 
         def set_frames(e: Expr):
-            e.frames = frames
+            e.stack_frames = stack_frames
 
         cls._walk_asts(set_frames, *exprs)
+
+    @classmethod
+    def reframe_ops_in_blocks(cls, root_expr: "Expr", start: "TealBlock") -> None:  # type: ignore
+        start.root_expr = root_expr
+        for op in start.ops:
+            op._root_expr = root_expr
+
+        if nxt := start.nextBlock:
+            cls.reframe_ops_in_blocks(root_expr, nxt)
 
 
 class PT_GENERATED:
@@ -395,7 +407,7 @@ class PyTealFrame(StackFrame):
         self,
         frame_info: FrameInfo,
         node: AST | None,
-        creator: Frames,
+        creator: StackFrames,
         full_stack: list[FrameInfo] | None,
         rel_paths: bool = True,
         parent: Optional["PyTealFrame"] | None = None,

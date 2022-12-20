@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 from pyteal.ir import TealBlock, TealSimpleBlock
-from pyteal.stack_frame import Frames
+from pyteal.stack_frame import StackFrames
 from pyteal.types import TealType
 
 if TYPE_CHECKING:
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 def frames_adder(init):
     def wrapper(*args, **kwargs):
-        args[0].frames = Frames()
+        args[0].stack_frames = StackFrames()
 
         return init(*args, **kwargs)
 
@@ -28,8 +28,8 @@ class Expr(ABC):
         import traceback
 
         self.trace = traceback.format_stack()[0:-1]
-        if not hasattr(self, "frames"):
-            self.frames: Frames
+        if not hasattr(self, "stack_frames"):
+            self.stack_frames: StackFrames
 
     def getDefinitionTrace(self) -> list[str]:
         return self.trace

@@ -45,12 +45,12 @@ class If(Expr):
             else:
                 # If there is only a thenBranch, then it should evaluate to none type
                 require_type(thenBranch, TealType.none)
-            self.then_frames = self.frames
+            self.then_frames = self.stack_frames
         else:
             self.alternateSyntaxFlag = True
 
         if elseBranch:
-            self.else_frames = self.frames
+            self.else_frames = self.stack_frames
 
         self.cond = cond
         self.thenBranch = thenBranch

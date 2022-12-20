@@ -21,7 +21,7 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
     Args:
         blocks: The blocks to lower.
     """
-    codeblocks = []
+    codeblocks: List[List[TealOp]] = []
     references: DefaultDict[int, int] = defaultdict(int)
     referer: dict[int, int] = {}
 
@@ -142,7 +142,7 @@ def flattenSubroutines(
 
         dexpr: Expr | None = None
         try:
-            dexpr = subroutine.get_declaration()
+            dexpr = subroutine.declarations.get_declaration()
         except TealInputError:
             pass  # NOOP - just ignoring, as only used for source mapping
 

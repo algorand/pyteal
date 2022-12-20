@@ -27,7 +27,7 @@ from pyteal.ir import (
     TealPragma,
     TealSimpleBlock,
 )
-from pyteal.stack_frame import Frames
+from pyteal.stack_frame import StackFrames
 from pyteal.types import TealType
 from pyteal.util import algod_with_assertion
 
@@ -148,6 +148,7 @@ def compileSubroutine(
         else None
     )
 
+    ret_expr: Optional[Expr] = None
     if not ast.has_return():
         if ast.type_of() == TealType.none:
             ret_expr = Return()  # T2PT2
@@ -159,26 +160,23 @@ def compileSubroutine(
             ret_expr = Return(ast)  # T2PT3
             ret_expr.trace = ast.trace
             ast = ret_expr
+    ast.stack_frames._compiler_gen = True
 
     options.setSubroutine(currentSubroutine)
 
     start, end = ast.__teal__(options)
     start.addIncoming()
     start.validateTree()
+    if currentSubroutine and end.ops:
+        end.ops[0]._root_expr = currentSubroutine.declarations.get_declaration()
 
-    if (
-        currentSubroutine
-        and currentSubroutine.get_declaration_by_option(
+    if currentSubroutine and (
+        de := currentSubroutine.get_declaration_by_option(
             options.use_frame_pointers
         ).deferred_expr
     ):
         # this represents code that should be inserted before each retsub op
-        deferred_expr = cast(
-            Expr,
-            currentSubroutine.get_declaration_by_option(
-                options.use_frame_pointers
-            ).deferred_expr,
-        )
+        deferred_expr = cast(Expr, de)
 
         for block in TealBlock.Iterate(start):
             if not any(op.getOp() == Op.retsub for op in block.ops):
@@ -335,7 +333,7 @@ class Compilation:
                 )
             )
 
-        if with_sourcemap and Frames.sourcemapping_is_off():
+        if with_sourcemap and StackFrames.sourcemapping_is_off():
             raise SourceMapDisabledError()
 
         if annotate_teal and not with_sourcemap:
@@ -378,7 +376,9 @@ class Compilation:
             for start in subroutine_start_blocks.values():
                 apply_global_optimizations(start, options.optimize, self.version)
 
-        localSlotAssignments = assignScratchSlotsToSubroutines(subroutine_start_blocks)
+        localSlotAssignments: Dict[
+            Optional[SubroutineDefinition], Set[int]
+        ] = assignScratchSlotsToSubroutines(subroutine_start_blocks)
 
         subroutineMapping: Dict[
             Optional[SubroutineDefinition], List[TealComponent]
