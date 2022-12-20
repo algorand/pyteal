@@ -40,7 +40,7 @@ option_count_keys = [
 
 @router.method(no_op=CallConfig.CREATE)
 def create(
-    question: abi.String, options: abi.StaticArray[abi.String, Literal[NUM_OPTIONS]], can_resubmit: abi.Bool  # type: ignore[valid-type]
+    question: abi.String, options: abi.StaticArray[abi.String, Literal[NUM_OPTIONS]], can_resubmit: abi.Bool  # type: ignore
 ) -> Expr:
     """Create a new polling application.
 
@@ -139,7 +139,7 @@ class PollStatus(abi.NamedTuple):
     question: abi.Field[abi.String]
     can_resubmit: abi.Field[abi.Bool]
     is_open: abi.Field[abi.Bool]
-    results: abi.Field[abi.StaticArray[abi.Tuple2[abi.String, abi.Uint64], Literal[NUM_OPTIONS]]]  # type: ignore[valid-type]
+    results: abi.Field[abi.StaticArray[abi.Tuple2[abi.String, abi.Uint64], Literal[NUM_OPTIONS]]]  # type: ignore
 
 
 @router.method
@@ -160,7 +160,7 @@ def status(*, output: PollStatus) -> Expr:
     partial_results = [
         abi.make(abi.Tuple2[abi.String, abi.Uint64]) for i in range(NUM_OPTIONS)
     ]
-    results = abi.make(abi.StaticArray[abi.Tuple2[abi.String, abi.Uint64], Literal[NUM_OPTIONS]])  # type: ignore[valid-type]
+    results = abi.make(abi.StaticArray[abi.Tuple2[abi.String, abi.Uint64], Literal[NUM_OPTIONS]])  # type: ignore
     return Seq(
         question.set(App.globalGet(question_key)),
         can_resubmit.set(App.globalGet(resubmit_key)),

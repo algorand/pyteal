@@ -1,3 +1,7 @@
+from configparser import ConfigParser
+import sys
+from unittest import mock
+
 """
 This file monkey-patches ConfigParser in order to enable source mapping
 and test the results of source mapping various PyTeal apps.
@@ -24,10 +28,6 @@ BTW: I don't think the algod logic needs to be THIS COMPLICATED!!!
 11. and supply it to a PCSourcemap() init
 12. and set the rstuls to the _cached_pc_sourcemap property
 """
-
-from configparser import ConfigParser
-import sys
-from unittest import mock
 
 
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)

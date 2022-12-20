@@ -3,10 +3,8 @@ from typing import Callable, Generic, Sequence, TypeVar, cast
 
 import algosdk.abi
 from graviton import blackbox
-from graviton.blackbox import DryRunInspector, DryRunExecutor
+from graviton.blackbox import DryRunExecutor, DryRunInspector
 from graviton.models import PyTypes
-
-from pyteal.ast.subroutine import OutputKwArgInfo
 
 from pyteal import (
     Arg,
@@ -176,6 +174,10 @@ class PyTealDryRunExecutor:
 
     def is_abi(self) -> bool:
         return isinstance(self.subr.subroutine, ABIReturnSubroutine)
+
+    def method_signature(self) -> str:
+        assert self.is_abi()
+        return cast(ABIReturnSubroutine, self.subr.subroutine).method_signature()
 
     def abi_argument_types(self) -> None | list[algosdk.abi.ABIType]:
         if not (self.input_types or self.is_abi()):

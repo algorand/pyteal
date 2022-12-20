@@ -458,9 +458,9 @@ class ASTBuilder:
                 decode_instructions += de_tuple_instructions
 
             # NOTE: does not have to have return, can be void method
-            seq: Seq
+            seq2: Seq
             if handler.type_of() == "void":
-                seq = Seq(
+                seq2 = Seq(
                     *decode_instructions,
                     cast(Expr, handler(*arg_vals)),
                     a := Approve(),
@@ -472,15 +472,15 @@ class ASTBuilder:
                 subroutine_call: abi.ReturnedValue = cast(
                     abi.ReturnedValue, handler(*arg_vals)
                 )
-                seq = Seq(
+                seq2 = Seq(
                     *decode_instructions,
                     subroutine_call.store_into(output_temp),
                     abi_return := abi.MethodReturn(output_temp),
                     a := Approve(),
                 )
-                abi_return.root_expr = seq
+                abi_return.root_expr = seq2
             a.stack_frames._compiler_gen = True
-            return seq
+            return seq2
 
     def add_method_to_ast(
         self, method_signature: str, cond: Expr | int, handler: ABIReturnSubroutine

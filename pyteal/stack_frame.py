@@ -5,15 +5,15 @@ from configparser import ConfigParser
 from dataclasses import dataclass
 from enum import IntEnum
 from inspect import FrameInfo, stack
-from typing import Callable, Final, Optional, cast
+from typing import Callable, Optional, cast
 
 from executing import Source  # type: ignore
 
 
 @dataclass
 class StackFrame:
-    frame_info: Final[FrameInfo]
-    node: Final[Optional[AST]]
+    frame_info: FrameInfo
+    node: Optional[AST]
 
     creator: "StackFrames"
     # for debugging purposes:

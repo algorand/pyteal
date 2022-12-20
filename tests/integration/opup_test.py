@@ -16,6 +16,9 @@ from algosdk.v2client.models import Account
 import algosdk
 
 
+# TODO: use keyword only args to fix the ugly API for graviton's DryRunExectuor.execute_one_dryryn()
+
+
 def _dryrun(
     bw: BlackboxWrapper,
     sp: algosdk.future.transaction.SuggestedParams,
@@ -27,8 +30,9 @@ def _dryrun(
         e.compile(pt.compiler.MAX_PROGRAM_VERSION),
         [],
         ExecutionMode.Application,
-        e.abi_argument_types(),
-        e.abi_return_type(),
+        e.method_signature(),
+        None,
+        None,
         txn_params=DryRunExecutor.transaction_params(
             sender=graviton.models.ZERO_ADDRESS,
             sp=sp,
