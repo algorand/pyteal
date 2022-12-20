@@ -1,5 +1,5 @@
 # This example is provided for informational purposes only and has not been audited for security.
-import json
+# import json
 from typing import Literal
 from pyteal import *
 

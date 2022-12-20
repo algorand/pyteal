@@ -32,7 +32,7 @@ per-file-ignores =
     tests/unit/module_test.py:                      F401, F403
 
     # THE FOLLOWING IS TEMPORARY. DO NOT MERGE AS IS:
-    tests/sourcemapping/public/decipher_poll_dapp.py: F405
+    tests/sourcemapping/public/decipher_poll_dapp.py: F403, F405
 
 # from flake8-tidy-imports
 ban-relative-imports = true

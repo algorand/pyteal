@@ -245,7 +245,7 @@ class ScratchStackStore(Expr):
         """
         super().__init__()
         self.slot = slot
-        self.root_expr: Optional[Expr] = None
+        self.root_expr: Expr | None = None
 
     def __str__(self):
         return "(StackStore {})".format(self.slot)

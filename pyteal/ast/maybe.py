@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional, Union, TYPE_CHECKING
+from typing import Callable, List, Union, TYPE_CHECKING
 
 from pyteal.errors import verifyProgramVersion
 from pyteal.types import TealType
