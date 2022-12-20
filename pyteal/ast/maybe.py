@@ -20,10 +20,10 @@ class MaybeValue(MultiValue):
         op: Op,
         type: TealType,
         *,
-        immediate_args: Optional[List[Union[int, str]]] = None,
-        args: Optional[List[Expr]] = None,
-        compile_check: Optional[Callable[["CompileOptions"], None]] = None,
-        root_expr: Optional[Expr] = None,
+        immediate_args: List[Union[int, str]] | None = None,
+        args: List[Expr] | None = None,
+        compile_check: Callable[["CompileOptions"], None] | None = None,
+        root_expr: Expr | None = None,
     ):
         """Create a new MaybeValue.
 

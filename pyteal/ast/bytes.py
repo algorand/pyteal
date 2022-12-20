@@ -21,7 +21,7 @@ class Bytes(LeafExpr):
     def __init__(self, arg1: str, arg2: str) -> None:
         pass
 
-    def __init__(self, arg1: str | bytes | bytearray, arg2: str = None) -> None:
+    def __init__(self, arg1: str | bytes | bytearray, arg2: str | None = None) -> None:
         """
         __init__(arg1: Union[str, bytes, bytearray]) -> None
         __init__(self, arg1: str, arg2: str) -> None

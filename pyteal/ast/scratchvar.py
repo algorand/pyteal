@@ -20,7 +20,7 @@ class ScratchVar(AbstractVar):
             ])
     """
 
-    def __init__(self, type: TealType = TealType.anytype, slotId: int = None):
+    def __init__(self, type: TealType = TealType.anytype, slotId: int | None = None):
         """Create a new ScratchVar with an optional type.
 
         Args:

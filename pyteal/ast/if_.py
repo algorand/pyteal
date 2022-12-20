@@ -18,7 +18,7 @@ class If(Expr):
 
     def __init__(
         self,
-        cond: Expr,
+        cond: Expr | None = None,
         thenBranch: Expr | None = None,
         elseBranch: Expr | None = None,
     ) -> None:

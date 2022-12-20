@@ -20,8 +20,8 @@ class MultiValue(LeafExpr):
         op: Op,
         types: List[TealType],
         *,
-        immediate_args: Optional[List[Union[int, str]]] = None,
-        args: Optional[List[Expr]] = None,
+        immediate_args: List[Union[int, str]] | None = None,
+        args: List[Expr] | None = None,
         compile_check: Callable[["CompileOptions"], None] = lambda _: None,
         root_expr: Optional[Expr] = None,
     ):
