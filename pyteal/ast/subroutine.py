@@ -1,10 +1,12 @@
 from contextlib import contextmanager
+import algosdk.abi as sdk_abi
+import warnings
+
 from dataclasses import dataclass
 from docstring_parser import parse as parse_docstring
 from inspect import isclass, Parameter, signature, get_annotations
 from types import MappingProxyType, NoneType
 from typing import Any, Callable, Final, Optional, TYPE_CHECKING, cast, ClassVar
-import algosdk.abi as sdk_abi
 
 from pyteal.ast import abi
 from pyteal.ast.expr import Expr
@@ -34,7 +36,10 @@ class _SubroutineDeclByOption:
         self.type_of: Optional[TealType] = None
 
     def get_declaration(self) -> "SubroutineDeclaration":
-        """MARK AS DEPRECATED, FOR WE ARE NOW GET DECLARATION BY COMPILE OPTIONS"""
+        warnings.warn(
+            "`get_declaration` is being deprecated: Please use `get_declaration_by_option` instead.",
+            DeprecationWarning,
+        )
         return self.get_declaration_by_option(False)
 
     def get_declaration_by_option(
@@ -306,7 +311,10 @@ class SubroutineDefinition:
         )
 
     def get_declaration(self) -> "SubroutineDeclaration":
-        """MARK AS DEPRECATED, FOR WE ARE NOW GET DECLARATION BY COMPILE OPTIONS"""
+        warnings.warn(
+            "`get_declaration` is being deprecated: Please use `get_declaration_by_option` instead.",
+            DeprecationWarning,
+        )
         return self.declarations.get_declaration()
 
     def get_declaration_by_option(
