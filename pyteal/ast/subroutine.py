@@ -315,7 +315,7 @@ class SubroutineDefinition:
             "`get_declaration` is being deprecated: Please use `get_declaration_by_option` instead.",
             DeprecationWarning,
         )
-        return self.declarations.get_declaration()
+        return self.declarations.get_declaration_by_option(False)
 
     def get_declaration_by_option(
         self,
