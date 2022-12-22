@@ -24,8 +24,8 @@ txna ApplicationArgs 0                                  //    def status(*, outp
 method "status()(string,bool,bool,(string,uint64)[7])"  //
 ==                                                      //
 bnz main_l7                                             //
-err                                                     //
-main_l7:                                                //
+err                                                     //    router.compile(version=8, assemble_constants=False, optimize=OptimizeOptions(scratch_slots=True, frame_pointers=True), with_sourcemaps=True, pcs_in_sourcemap=False, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=True)
+main_l7:                                                //    def status(*, output: PollStatus) -> Expr:
 txn OnCompletion                                        //
 int NoOp                                                //
 ==                                                      //
@@ -461,7 +461,41 @@ int 0                                                   //
 byte ""                                                 //
 dupn 7                                                  //
 int 0                                                   //
-dupn 17                                                 //
+dupn 1                                                  //
+byte ""                                                 //
+dupn 1                                                  //
+int 0                                                   //
+dupn 1                                                  //
+byte ""                                                 //
+dupn 1                                                  //
+int 0                                                   //
+dupn 1                                                  //
+byte ""                                                 //
+dupn 1                                                  //
+int 0                                                   //
+dupn 1                                                  //
+byte ""                                                 //
+dupn 1                                                  //
+int 0                                                   //
+dupn 1                                                  //
+byte ""                                                 //
+dupn 1                                                  //
+int 0                                                   //
+dupn 1                                                  //
+byte ""                                                 //
+dupn 1                                                  //
+int 0                                                   //
+dupn 1                                                  //
+byte ""                                                 //
+dupn 1                                                  //
+int 0                                                   //
+dupn 1                                                  //
+byte ""                                                 //
+dupn 1                                                  //
+int 0                                                   //
+dupn 1                                                  //
+byte ""                                                 //
+dupn 1                                                  //
 byte 0x7175657374696f6e                                 //    Bytes(b'question')
 app_global_get                                          //    App.globalGet(question_key)
 frame_bury 1                                            //    question.set(App.globalGet(question_key))
@@ -496,7 +530,9 @@ byte 0x6f7074696f6e5f636f756e745f00                     //    Bytes(option_count
 app_global_get                                          //    App.globalGet(option_count_keys[i])
 frame_bury 5                                            //    option_count.set(App.globalGet(option_count_keys[i]))
 frame_dig 4                                             //    partial_results[i].set(option_name, option_count)
-store 8                                                 //
+frame_bury 17                                           //
+frame_dig 17                                            //
+frame_bury 16                                           //
 int 10                                                  //
 frame_bury 14                                           //
 frame_dig 14                                            //
@@ -505,7 +541,7 @@ extract 6 0                                             //
 frame_dig 5                                             //
 itob                                                    //
 concat                                                  //
-load 8                                                  //
+frame_dig 16                                            //
 concat                                                  //
 frame_bury 6                                            //
 byte 0x6f7074696f6e5f6e616d655f01                       //    Bytes(option_name_prefix + bytes([i]))
@@ -522,16 +558,18 @@ byte 0x6f7074696f6e5f636f756e745f01                     //    Bytes(option_count
 app_global_get                                          //    App.globalGet(option_count_keys[i])
 frame_bury 5                                            //    option_count.set(App.globalGet(option_count_keys[i]))
 frame_dig 4                                             //    partial_results[i].set(option_name, option_count)
-store 9                                                 //
+frame_bury 21                                           //
+frame_dig 21                                            //
+frame_bury 20                                           //
 int 10                                                  //
-frame_bury 16                                           //
-frame_dig 16                                            //
+frame_bury 18                                           //
+frame_dig 18                                            //
 itob                                                    //
 extract 6 0                                             //
 frame_dig 5                                             //
 itob                                                    //
 concat                                                  //
-load 9                                                  //
+frame_dig 20                                            //
 concat                                                  //
 frame_bury 7                                            //
 byte 0x6f7074696f6e5f6e616d655f02                       //    Bytes(option_name_prefix + bytes([i]))
@@ -548,16 +586,18 @@ byte 0x6f7074696f6e5f636f756e745f02                     //    Bytes(option_count
 app_global_get                                          //    App.globalGet(option_count_keys[i])
 frame_bury 5                                            //    option_count.set(App.globalGet(option_count_keys[i]))
 frame_dig 4                                             //    partial_results[i].set(option_name, option_count)
-store 10                                                //
+frame_bury 25                                           //
+frame_dig 25                                            //
+frame_bury 24                                           //
 int 10                                                  //
-frame_bury 18                                           //
-frame_dig 18                                            //
+frame_bury 22                                           //
+frame_dig 22                                            //
 itob                                                    //
 extract 6 0                                             //
 frame_dig 5                                             //
 itob                                                    //
 concat                                                  //
-load 10                                                 //
+frame_dig 24                                            //
 concat                                                  //
 frame_bury 8                                            //
 byte 0x6f7074696f6e5f6e616d655f03                       //    Bytes(option_name_prefix + bytes([i]))
@@ -574,16 +614,18 @@ byte 0x6f7074696f6e5f636f756e745f03                     //    Bytes(option_count
 app_global_get                                          //    App.globalGet(option_count_keys[i])
 frame_bury 5                                            //    option_count.set(App.globalGet(option_count_keys[i]))
 frame_dig 4                                             //    partial_results[i].set(option_name, option_count)
-store 11                                                //
+frame_bury 29                                           //
+frame_dig 29                                            //
+frame_bury 28                                           //
 int 10                                                  //
-frame_bury 20                                           //
-frame_dig 20                                            //
+frame_bury 26                                           //
+frame_dig 26                                            //
 itob                                                    //
 extract 6 0                                             //
 frame_dig 5                                             //
 itob                                                    //
 concat                                                  //
-load 11                                                 //
+frame_dig 28                                            //
 concat                                                  //
 frame_bury 9                                            //
 byte 0x6f7074696f6e5f6e616d655f04                       //    Bytes(option_name_prefix + bytes([i]))
@@ -600,16 +642,18 @@ byte 0x6f7074696f6e5f636f756e745f04                     //    Bytes(option_count
 app_global_get                                          //    App.globalGet(option_count_keys[i])
 frame_bury 5                                            //    option_count.set(App.globalGet(option_count_keys[i]))
 frame_dig 4                                             //    partial_results[i].set(option_name, option_count)
-store 12                                                //
+frame_bury 33                                           //
+frame_dig 33                                            //
+frame_bury 32                                           //
 int 10                                                  //
-frame_bury 22                                           //
-frame_dig 22                                            //
+frame_bury 30                                           //
+frame_dig 30                                            //
 itob                                                    //
 extract 6 0                                             //
 frame_dig 5                                             //
 itob                                                    //
 concat                                                  //
-load 12                                                 //
+frame_dig 32                                            //
 concat                                                  //
 frame_bury 10                                           //
 byte 0x6f7074696f6e5f6e616d655f05                       //    Bytes(option_name_prefix + bytes([i]))
@@ -626,16 +670,18 @@ byte 0x6f7074696f6e5f636f756e745f05                     //    Bytes(option_count
 app_global_get                                          //    App.globalGet(option_count_keys[i])
 frame_bury 5                                            //    option_count.set(App.globalGet(option_count_keys[i]))
 frame_dig 4                                             //    partial_results[i].set(option_name, option_count)
-store 13                                                //
+frame_bury 37                                           //
+frame_dig 37                                            //
+frame_bury 36                                           //
 int 10                                                  //
-frame_bury 24                                           //
-frame_dig 24                                            //
+frame_bury 34                                           //
+frame_dig 34                                            //
 itob                                                    //
 extract 6 0                                             //
 frame_dig 5                                             //
 itob                                                    //
 concat                                                  //
-load 13                                                 //
+frame_dig 36                                            //
 concat                                                  //
 frame_bury 11                                           //
 byte 0x6f7074696f6e5f6e616d655f06                       //    Bytes(option_name_prefix + bytes([i]))
@@ -652,172 +698,174 @@ byte 0x6f7074696f6e5f636f756e745f06                     //    Bytes(option_count
 app_global_get                                          //    App.globalGet(option_count_keys[i])
 frame_bury 5                                            //    option_count.set(App.globalGet(option_count_keys[i]))
 frame_dig 4                                             //    partial_results[i].set(option_name, option_count)
-store 14                                                //
+frame_bury 41                                           //
+frame_dig 41                                            //
+frame_bury 40                                           //
 int 10                                                  //
-frame_bury 26                                           //
-frame_dig 26                                            //
+frame_bury 38                                           //
+frame_dig 38                                            //
 itob                                                    //
 extract 6 0                                             //
 frame_dig 5                                             //
 itob                                                    //
 concat                                                  //
-load 14                                                 //
+frame_dig 40                                            //
 concat                                                  //
 frame_bury 12                                           //
 frame_dig 6                                             //    results.set(partial_results)
-store 16                                                //
-load 16                                                 //
-store 15                                                //
+frame_bury 45                                           //
+frame_dig 45                                            //
+frame_bury 44                                           //
 int 14                                                  //
-frame_bury 28                                           //
-frame_dig 28                                            //
-load 16                                                 //
+frame_bury 42                                           //
+frame_dig 42                                            //
+frame_dig 45                                            //
 len                                                     //
 +                                                       //
-frame_bury 29                                           //
-frame_dig 29                                            //
+frame_bury 43                                           //
+frame_dig 43                                            //
 int 65536                                               //
 <                                                       //
 assert                                                  //
-frame_dig 28                                            //
+frame_dig 42                                            //
 itob                                                    //
 extract 6 0                                             //
 frame_dig 7                                             //
-store 16                                                //
-load 15                                                 //
-load 16                                                 //
+frame_bury 45                                           //
+frame_dig 44                                            //
+frame_dig 45                                            //
 concat                                                  //
-store 15                                                //
-frame_dig 29                                            //
-frame_bury 28                                           //
-frame_dig 28                                            //
-load 16                                                 //
+frame_bury 44                                           //
+frame_dig 43                                            //
+frame_bury 42                                           //
+frame_dig 42                                            //
+frame_dig 45                                            //
 len                                                     //
 +                                                       //
-frame_bury 29                                           //
-frame_dig 29                                            //
+frame_bury 43                                           //
+frame_dig 43                                            //
 int 65536                                               //
 <                                                       //
 assert                                                  //
-frame_dig 28                                            //
+frame_dig 42                                            //
 itob                                                    //
 extract 6 0                                             //
 concat                                                  //
 frame_dig 8                                             //
-store 16                                                //
-load 15                                                 //
-load 16                                                 //
+frame_bury 45                                           //
+frame_dig 44                                            //
+frame_dig 45                                            //
 concat                                                  //
-store 15                                                //
-frame_dig 29                                            //
-frame_bury 28                                           //
-frame_dig 28                                            //
-load 16                                                 //
+frame_bury 44                                           //
+frame_dig 43                                            //
+frame_bury 42                                           //
+frame_dig 42                                            //
+frame_dig 45                                            //
 len                                                     //
 +                                                       //
-frame_bury 29                                           //
-frame_dig 29                                            //
+frame_bury 43                                           //
+frame_dig 43                                            //
 int 65536                                               //
 <                                                       //
 assert                                                  //
-frame_dig 28                                            //
+frame_dig 42                                            //
 itob                                                    //
 extract 6 0                                             //
 concat                                                  //
 frame_dig 9                                             //
-store 16                                                //
-load 15                                                 //
-load 16                                                 //
+frame_bury 45                                           //
+frame_dig 44                                            //
+frame_dig 45                                            //
 concat                                                  //
-store 15                                                //
-frame_dig 29                                            //
-frame_bury 28                                           //
-frame_dig 28                                            //
-load 16                                                 //
+frame_bury 44                                           //
+frame_dig 43                                            //
+frame_bury 42                                           //
+frame_dig 42                                            //
+frame_dig 45                                            //
 len                                                     //
 +                                                       //
-frame_bury 29                                           //
-frame_dig 29                                            //
+frame_bury 43                                           //
+frame_dig 43                                            //
 int 65536                                               //
 <                                                       //
 assert                                                  //
-frame_dig 28                                            //
+frame_dig 42                                            //
 itob                                                    //
 extract 6 0                                             //
 concat                                                  //
 frame_dig 10                                            //
-store 16                                                //
-load 15                                                 //
-load 16                                                 //
+frame_bury 45                                           //
+frame_dig 44                                            //
+frame_dig 45                                            //
 concat                                                  //
-store 15                                                //
-frame_dig 29                                            //
-frame_bury 28                                           //
-frame_dig 28                                            //
-load 16                                                 //
+frame_bury 44                                           //
+frame_dig 43                                            //
+frame_bury 42                                           //
+frame_dig 42                                            //
+frame_dig 45                                            //
 len                                                     //
 +                                                       //
-frame_bury 29                                           //
-frame_dig 29                                            //
+frame_bury 43                                           //
+frame_dig 43                                            //
 int 65536                                               //
 <                                                       //
 assert                                                  //
-frame_dig 28                                            //
+frame_dig 42                                            //
 itob                                                    //
 extract 6 0                                             //
 concat                                                  //
 frame_dig 11                                            //
-store 16                                                //
-load 15                                                 //
-load 16                                                 //
+frame_bury 45                                           //
+frame_dig 44                                            //
+frame_dig 45                                            //
 concat                                                  //
-store 15                                                //
-frame_dig 29                                            //
-frame_bury 28                                           //
-frame_dig 28                                            //
-load 16                                                 //
+frame_bury 44                                           //
+frame_dig 43                                            //
+frame_bury 42                                           //
+frame_dig 42                                            //
+frame_dig 45                                            //
 len                                                     //
 +                                                       //
-frame_bury 29                                           //
-frame_dig 29                                            //
+frame_bury 43                                           //
+frame_dig 43                                            //
 int 65536                                               //
 <                                                       //
 assert                                                  //
-frame_dig 28                                            //
+frame_dig 42                                            //
 itob                                                    //
 extract 6 0                                             //
 concat                                                  //
 frame_dig 12                                            //
-store 16                                                //
-load 15                                                 //
-load 16                                                 //
+frame_bury 45                                           //
+frame_dig 44                                            //
+frame_dig 45                                            //
 concat                                                  //
-store 15                                                //
-frame_dig 29                                            //
-frame_bury 28                                           //
-frame_dig 28                                            //
+frame_bury 44                                           //
+frame_dig 43                                            //
+frame_bury 42                                           //
+frame_dig 42                                            //
 itob                                                    //
 extract 6 0                                             //
 concat                                                  //
-load 15                                                 //
+frame_dig 44                                            //
 concat                                                  //
 frame_bury 13                                           //
 frame_dig 1                                             //    output.set(question, can_resubmit, is_open, results)
-store 18                                                //
-load 18                                                 //
-store 17                                                //
+frame_bury 49                                           //
+frame_dig 49                                            //
+frame_bury 48                                           //
 int 5                                                   //
-frame_bury 30                                           //
-frame_dig 30                                            //
-load 18                                                 //
+frame_bury 46                                           //
+frame_dig 46                                            //
+frame_dig 49                                            //
 len                                                     //
 +                                                       //
-frame_bury 31                                           //
-frame_dig 31                                            //
+frame_bury 47                                           //
+frame_dig 47                                            //
 int 65536                                               //
 <                                                       //
 assert                                                  //
-frame_dig 30                                            //
+frame_dig 46                                            //
 itob                                                    //
 extract 6 0                                             //
 byte 0x00                                               //
@@ -829,18 +877,18 @@ frame_dig 3                                             //
 setbit                                                  //
 concat                                                  //
 frame_dig 13                                            //
-store 18                                                //
-load 17                                                 //
-load 18                                                 //
+frame_bury 49                                           //
+frame_dig 48                                            //
+frame_dig 49                                            //
 concat                                                  //
-store 17                                                //
-frame_dig 31                                            //
-frame_bury 30                                           //
-frame_dig 30                                            //
+frame_bury 48                                           //
+frame_dig 47                                            //
+frame_bury 46                                           //
+frame_dig 46                                            //
 itob                                                    //
 extract 6 0                                             //
 concat                                                  //
-load 17                                                 //
+frame_dig 48                                            //
 concat                                                  //
 frame_bury 0                                            //
 retsub                                                  //    def status(*, output: PollStatus) -> Expr:

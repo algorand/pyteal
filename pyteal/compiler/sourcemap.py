@@ -1,3 +1,4 @@
+import ast
 import bisect
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -474,6 +475,29 @@ class TealMapItem(PyTealFrame):
         self.teal_component: pt.TealComponent = teal_component
         self.pcs_hydrated: bool = pcs is not None
         self.pcs: list[int] | None = pcs if pcs else None
+
+    def _hybrid_w_offset(self) -> tuple[str, int]:
+        """
+        Delegates to super except in the very special case that this is a Return()
+        """
+        if (
+            isinstance(self.teal_component.expr, pt.Return)
+            and isinstance(self.teal_component, pt.TealOp)
+            and (teal_op := cast(pt.TealOp, self.teal_component))
+            and teal_op.op is pt.Op.retsub
+        ):
+            node = self.node
+            is_return = False
+            while node and not (is_return := isinstance(node, ast.Return)):
+                node = getattr(node, "parent", None)
+
+            if node and is_return:  # and (node := getattr(node, "parent", None)):
+                # if isinstance(node, ast.FunctionDef):
+                code = self.code()
+                pt_chunk = ast.unparse(node)
+                return self._hybrid_impl(code, node, pt_chunk)
+
+        return super()._hybrid_w_offset()
 
     def pcs_repr(self, prefix: str = "") -> str:
         if not self.pcs_hydrated:
