@@ -525,6 +525,7 @@ def blackbox_test_runner(
     inputs, predicates = Invariant.inputs_and_invariants(
         scenario, exec_mode, raw_predicates=True
     )
+    assert predicates, "Must configure >= 1 predicate"
 
     # 3. execute dry run sequence:
     execute = DryRunExecutor.execute_one_dryrun
