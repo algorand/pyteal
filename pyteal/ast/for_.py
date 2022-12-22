@@ -58,7 +58,6 @@ class For(Expr):
         stepEnd.root_expr = self
         doEnd.setNextBlock(stepStart)
 
-        # TODO: apparently supplied root_expr has no effect
         branchBlock = TealConditionalBlock([], root_expr=self)
         branchBlock.setTrueBlock(doStart)
         branchBlock.setFalseBlock(end)
