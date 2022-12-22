@@ -78,7 +78,7 @@ class OpUp:
             )
     """
 
-    def __init__(self, mode: OpUpMode, target_app_id: Expr = None):
+    def __init__(self, mode: OpUpMode, target_app_id: Expr | None = None):
         """Create a new OpUp object.
 
         Args:

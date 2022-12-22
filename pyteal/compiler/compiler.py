@@ -1,4 +1,4 @@
-from typing import List, Tuple, Set, Dict, Optional, cast
+from typing import Final, List, Tuple, Set, Dict, Optional, cast
 
 from pyteal.compiler.optimizer import OptimizeOptions, apply_global_optimizations
 
@@ -26,7 +26,8 @@ from pyteal.compiler.subroutines import (
 from pyteal.compiler.constants import createConstantBlocks
 
 MAX_PROGRAM_VERSION = 8
-FRAME_POINTER_VERSION = 8
+FRAME_POINTERS_VERSION = 8
+DEFAULT_SCRATCH_SLOT_OPTIMIZE_VERSION = 9
 MIN_PROGRAM_VERSION = 2
 DEFAULT_PROGRAM_VERSION = MIN_PROGRAM_VERSION
 
@@ -45,23 +46,14 @@ class CompileOptions:
         *,
         mode: Mode = Mode.Signature,
         version: int = DEFAULT_PROGRAM_VERSION,
-        optimize: OptimizeOptions = None,
-        frame_pointers: Optional[bool] = None,
+        optimize: Optional[OptimizeOptions] = None,
     ) -> None:
-        self.mode = mode
-        self.version = version
-        self.optimize = optimize if optimize is not None else OptimizeOptions()
-        self.use_frame_pointer: bool
-
-        if frame_pointers is None:
-            self.use_frame_pointer = self.version >= FRAME_POINTER_VERSION
-        else:
-            if frame_pointers and self.version < FRAME_POINTER_VERSION:
-                raise TealInputError(
-                    f"Try to use frame pointer with an insufficient version {self.version}."
-                )
-            else:
-                self.use_frame_pointer = frame_pointers
+        self.mode: Final[Mode] = mode
+        self.version: Final[int] = version
+        self.optimize: Final[OptimizeOptions] = optimize or OptimizeOptions()
+        self.use_frame_pointers: Final[bool] = self.optimize.use_frame_pointers(
+            self.version
+        )
 
         self.currentSubroutine: Optional[SubroutineDefinition] = None
 
@@ -168,14 +160,14 @@ def compileSubroutine(
     if (
         currentSubroutine
         and currentSubroutine.get_declaration_by_option(
-            options.use_frame_pointer
+            options.use_frame_pointers
         ).deferred_expr
     ):
         # this represents code that should be inserted before each retsub op
         deferred_expr = cast(
             Expr,
             currentSubroutine.get_declaration_by_option(
-                options.use_frame_pointer
+                options.use_frame_pointers
             ).deferred_expr,
         )
 
@@ -228,7 +220,7 @@ def compileSubroutine(
     newSubroutines = referencedSubroutines - subroutine_start_blocks.keys()
     for subroutine in sorted(newSubroutines, key=lambda subroutine: subroutine.id):
         compileSubroutine(
-            subroutine.get_declaration_by_option(options.use_frame_pointer),
+            subroutine.get_declaration_by_option(options.use_frame_pointers),
             options,
             subroutineGraph,
             subroutine_start_blocks,
@@ -256,8 +248,7 @@ def compileTeal(
     *,
     version: int = DEFAULT_PROGRAM_VERSION,
     assembleConstants: bool = False,
-    optimize: OptimizeOptions = None,
-    frame_pointers: Optional[bool] = None,
+    optimize: Optional[OptimizeOptions] = None,
 ) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 
@@ -291,9 +282,7 @@ def compileTeal(
             )
         )
 
-    options = CompileOptions(
-        mode=mode, version=version, optimize=optimize, frame_pointers=frame_pointers
-    )
+    options = CompileOptions(mode=mode, version=version, optimize=optimize)
 
     subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
     subroutine_start_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
@@ -307,12 +296,12 @@ def compileTeal(
     # control flow graph, the optimizer requires context across block boundaries. This
     # is necessary for the dependency checking of local slots. Global slots, slots
     # used by DynamicScratchVar, and reserved slots are not optimized.
-    if options.optimize.scratch_slots:
+    if options.optimize.optimize_scratch_slots(version):
         options.optimize._skip_slots = collect_unoptimized_slots(
             subroutine_start_blocks
         )
         for start in subroutine_start_blocks.values():
-            apply_global_optimizations(start, options.optimize)
+            apply_global_optimizations(start, options.optimize, version)
 
     localSlotAssignments = assignScratchSlotsToSubroutines(subroutine_start_blocks)
 

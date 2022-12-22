@@ -1,4 +1,4 @@
-from typing import NamedTuple
+from dataclasses import dataclass
 from enum import Enum, Flag, auto
 
 
@@ -11,7 +11,12 @@ class Mode(Flag):
 
 Mode.__module__ = "pyteal"
 
-OpType = NamedTuple("OpType", [("value", str), ("mode", Mode), ("min_version", int)])
+
+@dataclass
+class OpType:
+    value: str
+    mode: Mode
+    min_version: int
 
 
 class Op(Enum):

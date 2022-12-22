@@ -281,9 +281,9 @@ class Uint(BaseType):
         self,
         encoded: Expr,
         *,
-        start_index: Expr = None,
-        end_index: Expr = None,
-        length: Expr = None,
+        start_index: Expr | None = None,
+        end_index: Expr | None = None,
+        length: Expr | None = None,
     ) -> Expr:
         return uint_decode(
             self.type_spec().bit_size(),

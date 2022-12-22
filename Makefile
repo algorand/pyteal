@@ -40,9 +40,8 @@ black:
 flake8:
 	flake8 $(ALLPY)
 
-MYPY = pyteal scripts tests
 mypy:
-	mypy --show-error-codes $(MYPY)
+	mypy
 
 lint: black flake8 mypy
 
@@ -65,7 +64,8 @@ algod-stop:
 	docker compose stop algod
 
 integration-run:
-	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration
+	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration -m "not serial"
+	pytest --durations=10 -sv tests/integration -m serial
 
 test-integration: integration-run
 
@@ -80,7 +80,6 @@ local-gh-job:
 
 local-gh-simulate:
 	act
-
 
 # ---- Extras ---- #
 

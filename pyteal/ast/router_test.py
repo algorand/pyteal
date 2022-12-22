@@ -259,7 +259,7 @@ ON_COMPLETE_CASES: list[pt.EnumInt] = [
 ]
 
 
-def power_set(no_dup_list: list, length_override: int = None):
+def power_set(no_dup_list: list, length_override: int | None = None):
     """
     This function serves as a generator for all possible elements in power_set
     over `non_dup_list`, which is a list of non-duplicated elements (matches property of a set).

@@ -63,7 +63,7 @@ TransactionTypeSpec.__module__ = "pyteal.abi"
 
 
 class Transaction(BaseType):
-    def __init__(self, spec: TransactionTypeSpec = None) -> None:
+    def __init__(self, spec: TransactionTypeSpec | None = None) -> None:
         if spec is None:
             super().__init__(TransactionTypeSpec())
         else:
@@ -97,9 +97,9 @@ class Transaction(BaseType):
         self,
         encoded: Expr,
         *,
-        start_index: Expr = None,
-        end_index: Expr = None,
-        length: Expr = None,
+        start_index: Expr | None = None,
+        end_index: Expr | None = None,
+        length: Expr | None = None,
     ) -> Expr:
         raise TealInputError("A Transaction cannot be decoded")
 
