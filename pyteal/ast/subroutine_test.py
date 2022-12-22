@@ -1390,6 +1390,63 @@ def example_subroutine_no_args_abi_return(*, output: pt.abi.Uint64):
     )
 
 
+def example_subroutine_expr_args_uint64_return(a: pt.Expr, b: pt.Expr):
+    local_scratch_var = pt.ScratchVar(pt.TealType.uint64)
+    local_abi_type = pt.abi.Uint64()
+    return pt.Seq(
+        pt.Pop(a == pt.Len(b)),
+        local_scratch_var.store(pt.Int(1)),
+        local_abi_type.set(pt.Int(2)),
+        pt.Int(3),
+    )
+
+
+def example_subroutine_expr_args_bytes_return(a: pt.Expr, b: pt.Expr):
+    local_scratch_var = pt.ScratchVar(pt.TealType.uint64)
+    local_abi_type = pt.abi.Uint64()
+    return pt.Seq(
+        pt.Pop(a == pt.Len(b)),
+        local_scratch_var.store(pt.Int(1)),
+        local_abi_type.set(pt.Int(2)),
+        pt.Bytes(b"abc"),
+    )
+
+
+def example_subroutine_expr_args_abi_return(
+    a: pt.Expr, b: pt.Expr, *, output: pt.abi.StaticBytes[Literal[5]]
+):
+    local_scratch_var = pt.ScratchVar(pt.TealType.uint64)
+    local_abi_type = pt.abi.Uint64()
+    return pt.Seq(
+        pt.Pop(a == pt.Len(b)),
+        local_scratch_var.store(pt.Int(1)),
+        local_abi_type.set(pt.Int(2)),
+        output.set(b"hello"),
+    )
+
+
+def example_subroutine_abi_args_uint64_return(a: pt.abi.Uint8, b: pt.abi.String):
+    local_scratch_var = pt.ScratchVar(pt.TealType.uint64)
+    local_abi_type = pt.abi.Uint64()
+    return pt.Seq(
+        pt.Pop(a.get() == pt.Len(b.get())),
+        local_scratch_var.store(pt.Int(1)),
+        local_abi_type.set(pt.Int(2)),
+        pt.Int(3),
+    )
+
+
+def example_subroutine_abi_args_bytes_return(a: pt.abi.Uint8, b: pt.abi.String):
+    local_scratch_var = pt.ScratchVar(pt.TealType.uint64)
+    local_abi_type = pt.abi.Uint64()
+    return pt.Seq(
+        pt.Pop(a.get() == pt.Len(b.get())),
+        local_scratch_var.store(pt.Int(1)),
+        local_abi_type.set(pt.Int(2)),
+        pt.Bytes(b"abc"),
+    )
+
+
 def example_subroutine_abi_args_abi_return(
     a: pt.abi.Uint8, b: pt.abi.String, *, output: pt.abi.StaticBytes[Literal[5]]
 ):
@@ -1449,9 +1506,8 @@ def example_subroutine_abi_args_abi_return(
                 ),
                 pt.ScratchVar(pt.TealType.uint64).store(pt.Int(1)),
                 FrameBury(pt.Int(2), 0),
-                FrameBury(
-                    pt.Int(3), 0
-                ),  # overwrite 1st local variable with the return value
+                # overwrite 1st local variable with the return value
+                FrameBury(pt.Int(3), 0),
             ),
         ),
         LocalVariableTestCase(
@@ -1475,9 +1531,8 @@ def example_subroutine_abi_args_abi_return(
                 ),
                 pt.ScratchVar(pt.TealType.uint64).store(pt.Int(1)),
                 FrameBury(pt.Int(2), 0),
-                FrameBury(
-                    pt.Bytes(b"abc"), 0
-                ),  # overwrite 1st local variable with the return value
+                # overwrite 1st local variable with the return value
+                FrameBury(pt.Bytes(b"abc"), 0),
             ),
         ),
         LocalVariableTestCase(
@@ -1503,6 +1558,161 @@ def example_subroutine_abi_args_abi_return(
                 pt.ScratchVar(pt.TealType.uint64).store(pt.Int(1)),
                 FrameBury(pt.Int(2), 1),
                 FrameBury(pt.Int(3), 0),
+            ),
+        ),
+        LocalVariableTestCase(
+            input_subroutine=example_subroutine_expr_args_uint64_return,
+            input_subroutine_return_type=pt.TealType.uint64,
+            input_subroutine_abi_return=False,
+            expected_body_normal_evaluator=pt.Seq(
+                (arg2_expr := pt.ScratchVar()).slot.store(),
+                (arg1_expr := pt.ScratchVar()).slot.store(),
+                pt.Pop(arg1_expr.load() == pt.Len(arg2_expr.load())),
+                pt.ScratchVar().store(pt.Int(1)),
+                pt.abi.Uint64().set(pt.Int(2)),
+                pt.Int(3),
+            ),
+            expected_body_fp_evaluator=pt.Seq(
+                Proto(
+                    2,
+                    1,
+                    mem_layout=ProtoStackLayout(
+                        arg_stack_types=[pt.TealType.anytype, pt.TealType.anytype],
+                        local_stack_types=[pt.TealType.uint64],
+                        num_return_allocs=0,
+                    ),
+                ),
+                pt.Pop(FrameDig(-2) == pt.Len(FrameDig(-1))),
+                pt.ScratchVar(pt.TealType.uint64).store(pt.Int(1)),
+                FrameBury(pt.Int(2), 0),
+                # overwrite 1st local variable with the return value
+                FrameBury(pt.Int(3), 0),
+            ),
+        ),
+        LocalVariableTestCase(
+            input_subroutine=example_subroutine_expr_args_bytes_return,
+            input_subroutine_return_type=pt.TealType.bytes,
+            input_subroutine_abi_return=False,
+            expected_body_normal_evaluator=pt.Seq(
+                (arg2_expr := pt.ScratchVar()).slot.store(),
+                (arg1_expr := pt.ScratchVar()).slot.store(),
+                pt.Pop(arg1_expr.load() == pt.Len(arg2_expr.load())),
+                pt.ScratchVar().store(pt.Int(1)),
+                pt.abi.Uint64().set(pt.Int(2)),
+                pt.Bytes(b"abc"),
+            ),
+            expected_body_fp_evaluator=pt.Seq(
+                Proto(
+                    2,
+                    1,
+                    mem_layout=ProtoStackLayout(
+                        arg_stack_types=[pt.TealType.anytype, pt.TealType.anytype],
+                        local_stack_types=[pt.TealType.uint64],
+                        num_return_allocs=0,
+                    ),
+                ),
+                pt.Pop(FrameDig(-2) == pt.Len(FrameDig(-1))),
+                pt.ScratchVar(pt.TealType.uint64).store(pt.Int(1)),
+                FrameBury(pt.Int(2), 0),
+                # overwrite 1st local variable with the return value
+                FrameBury(pt.Bytes(b"abc"), 0),
+            ),
+        ),
+        LocalVariableTestCase(
+            input_subroutine=example_subroutine_expr_args_abi_return,
+            input_subroutine_return_type=pt.TealType.none,
+            input_subroutine_abi_return=True,
+            expected_body_normal_evaluator=pt.Seq(
+                (arg2_expr := pt.ScratchVar()).slot.store(),
+                (arg1_expr := pt.ScratchVar()).slot.store(),
+                pt.Pop(arg1_expr.load() == pt.Len(arg2_expr.load())),
+                pt.ScratchVar().store(pt.Int(1)),
+                pt.abi.Uint64().set(pt.Int(2)),
+                (
+                    output_static_bytes := pt.abi.make(pt.abi.StaticBytes[Literal[5]])
+                ).set(b"hello"),
+                output_static_bytes.get(),
+            ),
+            expected_body_fp_evaluator=pt.Seq(
+                Proto(
+                    2,
+                    1,
+                    mem_layout=ProtoStackLayout(
+                        arg_stack_types=[pt.TealType.anytype, pt.TealType.anytype],
+                        local_stack_types=[pt.TealType.bytes, pt.TealType.uint64],
+                        num_return_allocs=1,
+                    ),
+                ),
+                pt.Pop(FrameDig(-2) == pt.Len(FrameDig(-1))),
+                pt.ScratchVar(pt.TealType.uint64).store(pt.Int(1)),
+                FrameBury(pt.Int(2), 1),
+                FrameBury(pt.Bytes(b"hello"), 0),
+            ),
+        ),
+        LocalVariableTestCase(
+            input_subroutine=example_subroutine_abi_args_uint64_return,
+            input_subroutine_return_type=pt.TealType.uint64,
+            input_subroutine_abi_return=False,
+            expected_body_normal_evaluator=pt.Seq(
+                cast(
+                    pt.ScratchVar, (arg_string := pt.abi.String())._stored_value
+                ).slot.store(),
+                cast(
+                    pt.ScratchVar, (arg_uint8 := pt.abi.Uint8())._stored_value
+                ).slot.store(),
+                pt.Pop(arg_uint8.get() == pt.Len(arg_string.get())),
+                pt.ScratchVar().store(pt.Int(1)),
+                pt.abi.Uint64().set(pt.Int(2)),
+                pt.Int(3),
+            ),
+            expected_body_fp_evaluator=pt.Seq(
+                Proto(
+                    2,
+                    1,
+                    mem_layout=ProtoStackLayout(
+                        arg_stack_types=[pt.TealType.uint64, pt.TealType.bytes],
+                        local_stack_types=[pt.TealType.uint64],
+                        num_return_allocs=0,
+                    ),
+                ),
+                pt.Pop(FrameDig(-2) == pt.Len(pt.Suffix(FrameDig(-1), pt.Int(2)))),
+                pt.ScratchVar(pt.TealType.uint64).store(pt.Int(1)),
+                FrameBury(pt.Int(2), 0),
+                # overwrite 1st local variable with the return value
+                FrameBury(pt.Int(3), 0),
+            ),
+        ),
+        LocalVariableTestCase(
+            input_subroutine=example_subroutine_abi_args_bytes_return,
+            input_subroutine_return_type=pt.TealType.bytes,
+            input_subroutine_abi_return=False,
+            expected_body_normal_evaluator=pt.Seq(
+                cast(
+                    pt.ScratchVar, (arg_string := pt.abi.String())._stored_value
+                ).slot.store(),
+                cast(
+                    pt.ScratchVar, (arg_uint8 := pt.abi.Uint8())._stored_value
+                ).slot.store(),
+                pt.Pop(arg_uint8.get() == pt.Len(arg_string.get())),
+                pt.ScratchVar().store(pt.Int(1)),
+                pt.abi.Uint64().set(pt.Int(2)),
+                pt.Bytes(b"abc"),
+            ),
+            expected_body_fp_evaluator=pt.Seq(
+                Proto(
+                    2,
+                    1,
+                    mem_layout=ProtoStackLayout(
+                        arg_stack_types=[pt.TealType.uint64, pt.TealType.bytes],
+                        local_stack_types=[pt.TealType.uint64],
+                        num_return_allocs=0,
+                    ),
+                ),
+                pt.Pop(FrameDig(-2) == pt.Len(pt.Suffix(FrameDig(-1), pt.Int(2)))),
+                pt.ScratchVar(pt.TealType.uint64).store(pt.Int(1)),
+                FrameBury(pt.Int(2), 0),
+                # overwrite 1st local variable with the return value
+                FrameBury(pt.Bytes(b"abc"), 0),
             ),
         ),
         LocalVariableTestCase(
