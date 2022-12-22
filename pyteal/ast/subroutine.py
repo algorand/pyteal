@@ -1055,10 +1055,10 @@ class SubroutineEval:
                 deferred_expr = output_carrying_abi._stored_value.load()
 
         if self.use_frame_pt:
-            depth = len(proto.mem_layout.local_stack_types)
+            local_size = len(proto.mem_layout.local_stack_types)
             # only when we have 1 return, and with other local variables
             # we use bury to bury the result to 0 index against frame pointer
-            if not abi_output_kwargs and 0 < proto.num_returns < depth:
+            if not abi_output_kwargs and proto.num_returns > 0 and local_size > 0:
                 deferred_expr = FrameBury(Seq(), 0, inferred_type=TealType.none)
 
         # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
