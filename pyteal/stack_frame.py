@@ -531,20 +531,28 @@ class PyTealFrame(StackFrame):
         """
         Attempt to unparse the node and return the most apropos line, together with its offset
         """
+        code = self.code()
+        node = self.node
         pt_chunk = self.node_source()
+        return self._hybrid_impl(code, node, pt_chunk)
+
+    @classmethod
+    def _hybrid_impl(
+        cls, code: str, node: Optional[AST], pt_chunk: str
+    ) -> tuple[str, int]:
         if pt_chunk:
             pt_lines = pt_chunk.splitlines()
             if len(pt_lines) == 1:
                 return pt_chunk, 0
 
             if pt_lines and isinstance(
-                self.node, FunctionDef
+                node, FunctionDef
             ):  # >= 2 lines function definiton
-                if getattr(self.node, "decorator_list", False):
+                if getattr(node, "decorator_list", False):
                     return pt_lines[1], 1
                 return pt_lines[0], 0
 
-        return self.code(), 0
+        return code, 0
 
     def code(self) -> str:
         """using _PT_GEN here is DEPRECATED"""
