@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from docstring_parser import parse as parse_docstring
 from inspect import isclass, Parameter, signature, get_annotations
 from types import MappingProxyType, NoneType
-from typing import Any, Callable, Final, Optional, TYPE_CHECKING, cast, ClassVar
+from typing import Any, Callable, Final, TYPE_CHECKING, cast, ClassVar
 
 from pyteal.ast import abi
 from pyteal.ast.expr import Expr
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 class _SubroutineDeclByOption:
     def __init__(self, subroutine_def: "SubroutineDefinition") -> None:
         self.subroutine: SubroutineDefinition = subroutine_def
-        self.option_map: dict[bool, Optional[SubroutineDeclaration]] = {
+        self.option_map: dict[bool, SubroutineDeclaration | None] = {
             True: None,
             False: None,
         }
@@ -33,8 +33,8 @@ class _SubroutineDeclByOption:
             True: SubroutineEval.fp_evaluator(),
             False: SubroutineEval.normal_evaluator(),
         }
-        self.has_return: Optional[bool] = None
-        self.type_of: Optional[TealType] = None
+        self.has_return: bool | None = None
+        self.type_of: TealType | None = None
 
     def get_declaration(self) -> "SubroutineDeclaration":
         warnings.warn(
@@ -100,7 +100,7 @@ class SubroutineDefinition:
         self,
         implementation: Callable[..., Expr],
         return_type: TealType,
-        name_str: Optional[str] = None,
+        name_str: str | None = None,
         has_abi_output: bool = False,
     ) -> None:
         """
@@ -116,7 +116,7 @@ class SubroutineDefinition:
         SubroutineDefinition.nextSubroutineId += 1
 
         self.return_type = return_type
-        self.declaration: Optional["SubroutineDeclaration"] = None
+        self.declaration: "SubroutineDeclaration | None" = None
         self.declarations: _SubroutineDeclByOption = _SubroutineDeclByOption(self)
 
         self.implementation: Callable = implementation
@@ -388,7 +388,7 @@ class SubroutineDeclaration(Expr):
         self,
         subroutine: SubroutineDefinition,
         body: Expr,
-        deferred_expr: Optional[Expr] = None,
+        deferred_expr: Expr | None = None,
     ) -> None:
         super().__init__()
         self.subroutine = subroutine
@@ -417,7 +417,7 @@ class OutputKwArgInfo:
     abi_type: abi.TypeSpec
 
     @staticmethod
-    def from_dict(kwarg_info: dict[str, abi.TypeSpec]) -> Optional["OutputKwArgInfo"]:
+    def from_dict(kwarg_info: dict[str, abi.TypeSpec]) -> "OutputKwArgInfo | None":
         match list(kwarg_info.keys()):
             case []:
                 return None
@@ -528,7 +528,7 @@ class SubroutineFnWrapper:
         self,
         fn_implementation: Callable[..., Expr],
         return_type: TealType,
-        name: Optional[str] = None,
+        name: str | None = None,
     ) -> None:
         self.subroutine = SubroutineDefinition(
             fn_implementation,
@@ -600,9 +600,9 @@ class ABIReturnSubroutine:
         fn_implementation: Callable[..., Expr],
         /,
         *,
-        overriding_name: Optional[str] = None,
+        overriding_name: str | None = None,
     ) -> None:
-        self.output_kwarg_info: Optional[OutputKwArgInfo] = self._get_output_kwarg_info(
+        self.output_kwarg_info: OutputKwArgInfo | None = self._get_output_kwarg_info(
             fn_implementation
         )
         self.subroutine = SubroutineDefinition(
@@ -622,7 +622,7 @@ class ABIReturnSubroutine:
     @classmethod
     def _get_output_kwarg_info(
         cls, fn_implementation: Callable[..., Expr]
-    ) -> Optional[OutputKwArgInfo]:
+    ) -> OutputKwArgInfo | None:
         if not callable(fn_implementation):
             raise TealInputError("Input to ABIReturnSubroutine is not callable")
         sig = signature(fn_implementation)
@@ -799,7 +799,7 @@ class Subroutine:
             ])
     """
 
-    def __init__(self, return_type: TealType, name: Optional[str] = None) -> None:
+    def __init__(self, return_type: TealType, name: str | None = None) -> None:
         """Define a new subroutine with the given return type.
 
         Args:
@@ -897,17 +897,17 @@ class SubroutineEval:
     """
 
     var_n_loaded_method: Callable[
-        [SubroutineDefinition, str, Optional[Proto]],
-        tuple[Optional[ScratchVar], ScratchVar | abi.BaseType | Expr],
+        [SubroutineDefinition, str, Proto | None],
+        tuple[ScratchVar | None, ScratchVar | abi.BaseType | Expr],
     ]
     use_frame_pt: bool = False
-    _current_proto: ClassVar[Optional[Proto]] = None
+    _current_proto: ClassVar[Proto | None] = None
 
     @staticmethod
     def var_n_loaded_scratch(
         subroutine: SubroutineDefinition,
         param: str,
-        _: Optional[Proto] = None,
+        _: Proto | None = None,
     ) -> tuple[ScratchVar, ScratchVar | abi.BaseType | Expr]:
         loaded_var: ScratchVar | abi.BaseType | Expr
         argument_var: ScratchVar
@@ -929,15 +929,15 @@ class SubroutineEval:
     def var_n_loaded_fp(
         subroutine: SubroutineDefinition,
         param: str,
-        proto: Optional[Proto],
-    ) -> tuple[Optional[ScratchVar], ScratchVar | abi.BaseType | Expr]:
+        proto: Proto | None,
+    ) -> tuple[ScratchVar | None, ScratchVar | abi.BaseType | Expr]:
         if not proto:
             raise TealInternalError(
                 "proto should be available for frame pointer based subroutine."
             )
 
         loaded_var: ScratchVar | abi.BaseType | Expr
-        argument_var: Optional[ScratchVar]
+        argument_var: ScratchVar | None
 
         if param in subroutine.by_ref_args:
             argument_var = DynamicScratchVar(TealType.anytype)
@@ -1012,7 +1012,7 @@ class SubroutineEval:
 
         abi_output_kwargs: dict[str, abi.BaseType] = {}
         output_kwarg_info = OutputKwArgInfo.from_dict(subroutine.output_kwarg)
-        output_carrying_abi: Optional[abi.BaseType] = None
+        output_carrying_abi: abi.BaseType | None = None
 
         if output_kwarg_info:
             output_carrying_abi = output_kwarg_info.abi_type.new_instance()
@@ -1021,7 +1021,7 @@ class SubroutineEval:
             abi_output_kwargs[output_kwarg_info.name] = output_carrying_abi
 
         # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:
-        subroutine_body: Optional[Expr] = None
+        subroutine_body: Expr | None = None
         if not self.use_frame_pt:
             subroutine_body = subroutine.implementation(
                 *loaded_args, **abi_output_kwargs
@@ -1037,7 +1037,7 @@ class SubroutineEval:
                 f"Subroutine function does not return a PyTeal expression. Got type {type(subroutine_body)}."
             )
 
-        deferred_expr: Optional[Expr] = None
+        deferred_expr: Expr | None = None
 
         # if there is an output keyword argument for ABI
         # place the storing on the stack with deferred expr only when compile to scratch var

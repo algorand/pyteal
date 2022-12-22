@@ -178,7 +178,7 @@ def abi_example(pt):
         ]
 
     @pt.ABIReturnSubroutine
-    def status(*, output: PollStatus) -> pt.Expr:
+    def status(*, output: PollStatus) -> pt.Expr:  # type: ignore
         """Get the status of this poll.
 
         Returns:
@@ -1507,7 +1507,7 @@ CONSTRUCTS = [
             ("frame_dig 11", "output.set(question, can_resubmit, is_open, results)"),
             ("concat", "output.set(question, can_resubmit, is_open, results)"),
             ("frame_bury 0", "output.set(question, can_resubmit, is_open, results)"),
-            ("retsub", 'return pt.Seq(status().store_into(output), pt.Int(1))'),
+            ("retsub", "return pt.Seq(status().store_into(output), pt.Int(1))"),
         ],
         8,
         "Application",

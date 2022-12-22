@@ -3,7 +3,6 @@ from typing import Final, Optional, Set
 from pyteal.ast import ScratchSlot
 from pyteal.errors import TealInternalError, verifyProgramVersion
 from pyteal.ir import Op, TealBlock, TealOp
-from pyteal.stack_frame import StackFrames
 
 
 class OptimizeOptions:
