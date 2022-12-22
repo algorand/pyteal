@@ -45,12 +45,8 @@ class If(Expr):
             else:
                 # If there is only a thenBranch, then it should evaluate to none type
                 require_type(thenBranch, TealType.none)
-            self.then_frames = self.stack_frames
         else:
             self.alternateSyntaxFlag = True
-
-        if elseBranch:
-            self.else_frames = self.stack_frames
 
         self.cond = cond
         self.thenBranch = thenBranch
@@ -64,23 +60,20 @@ class If(Expr):
 
         condStart, condEnd = self.cond.__teal__(options)
         thenStart, thenEnd = self.thenBranch.__teal__(options)
-        end = TealSimpleBlock([], root_expr=self)
+        end = TealSimpleBlock([])
 
-        # TODO: should I supply self.cond as a cond_expr to branchBlock? If I don't want to see the If(...) wrapper...
         branchBlock = TealConditionalBlock([], root_expr=(self._label_cond or self))
-        branchBlock.setTrueBlock(
-            thenStart, true_expr=self.thenBranch
-        )  # probly can get rid of true/false_expr's
+        branchBlock.setTrueBlock(thenStart)
 
         condEnd.setNextBlock(branchBlock)
         thenEnd.setNextBlock(end)
 
         if self.elseBranch is None:
             branchBlock.setFalseBlock(end)
-            branchBlock.root_expr = self  # is this redundant?
+            branchBlock.root_expr = self
         else:
             elseStart, elseEnd = self.elseBranch.__teal__(options)
-            branchBlock.setFalseBlock(elseStart, false_expr=self.elseBranch)
+            branchBlock.setFalseBlock(elseStart)
             elseEnd.setNextBlock(end)
             elseEnd.root_expr = self
 

@@ -992,9 +992,7 @@ class SubroutineEval:
             else int(subroutine.return_type != TealType.none)
         )
 
-        # TODO: apply recursively to sub-AST?
         proto = Proto(subroutine.argument_count(), num_stack_outputs, mem_layout=layout)
-        proto.stack_frames._compiler_gen = True
         StackFrames.mark_asts_as_compiler_gen(proto)
         return proto
 

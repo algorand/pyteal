@@ -8,26 +8,17 @@ class TealConditionalBlock(TealBlock):
     """Represents a basic block of TealComponents in a graph ending with a branch condition."""
 
     def __init__(self, ops: List[TealOp], root_expr: Optional["Expr"] = None) -> None:  # type: ignore
-        # TODO: do I still need root_expr?
-        from pyteal.ast.expr import Expr
-
         super().__init__(ops, root_expr=root_expr)
         self.trueBlock: Optional[TealBlock] = None
         self.falseBlock: Optional[TealBlock] = None
 
-        # TODO: I probly don't need these!!!
-        self.true_expr: Optional[Expr] = None
-        self.false_expr: Optional[Expr] = None
-
-    def setTrueBlock(self, block: TealBlock, true_expr: Optional["Expr"] = None) -> None:  # type: ignore
+    def setTrueBlock(self, block: TealBlock) -> None:
         """Set the block that this one should branch to if its condition is true."""
         self.trueBlock = block
-        self.true_expr = true_expr
 
-    def setFalseBlock(self, block: TealBlock, false_expr: Optional["Expr"] = None) -> None:  # type: ignore
+    def setFalseBlock(self, block: TealBlock) -> None:
         """Set the block that this one should branch to if its condition is false."""
         self.falseBlock = block
-        self.false_expr = false_expr
 
     def getOutgoing(self) -> List[TealBlock]:
         outgoing = []

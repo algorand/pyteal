@@ -23,7 +23,6 @@ class MaybeValue(MultiValue):
         immediate_args: List[Union[int, str]] | None = None,
         args: List[Expr] | None = None,
         compile_check: Callable[["CompileOptions"], None] | None = None,
-        root_expr: Expr | None = None,
     ):
         """Create a new MaybeValue.
 
@@ -53,7 +52,7 @@ class MaybeValue(MultiValue):
             compile_check=(
                 local_version_check if compile_check is None else compile_check
             ),
-            root_expr=root_expr or self,
+            _root_expr=self,
         )
 
     def hasValue(self) -> ScratchLoad:

@@ -3,12 +3,11 @@ This file monkey-patches ConfigParser in order to enable source mapping
 and test the results of source mapping various PyTeal apps.
 """
 
-import ast
 from configparser import ConfigParser
 from copy import deepcopy
 from pathlib import Path
 import sys
-from typing import cast
+from typing import cast, Literal
 from unittest import mock
 
 import pytest
@@ -163,6 +162,46 @@ BIG_W = "pt.While(i.load() < pt.Global.group_size())"
 BIG_F = "pt.For(i.store(pt.Int(0)), i.load() < pt.Global.group_size(), i.store(i.load() + pt.Int(1)))"
 BIG_A2 = "pt.And(pt.Int(1) - pt.Int(2), pt.Not(pt.Int(3)), pt.Int(4) ^ pt.Int(5), ~pt.Int(6), pt.BytesEq(pt.Bytes('7'), pt.Bytes('8')), pt.GetBit(pt.Int(9), pt.Int(10)), pt.SetBit(pt.Int(11), pt.Int(12), pt.Int(13)), pt.GetByte(pt.Bytes('14'), pt.Int(15)), pt.Btoi(pt.Concat(pt.BytesDiv(pt.Bytes('101'), pt.Bytes('102')), pt.BytesNot(pt.Bytes('103')), pt.BytesZero(pt.Int(10)), pt.SetBit(pt.Bytes('105'), pt.Int(106), pt.Int(107)), pt.SetByte(pt.Bytes('108'), pt.Int(109), pt.Int(110)))))"
 BIG_C2 = "pt.Concat(pt.BytesDiv(pt.Bytes('101'), pt.Bytes('102')), pt.BytesNot(pt.Bytes('103')), pt.BytesZero(pt.Int(10)), pt.SetBit(pt.Bytes('105'), pt.Int(106), pt.Int(107)), pt.SetByte(pt.Bytes('108'), pt.Int(109), pt.Int(110)))"
+
+
+def abi_example(pt):
+    NUM_OPTIONS = 0
+
+    class PollStatus(pt.abi.NamedTuple):
+        question: pt.abi.Field[pt.abi.String]
+        can_resubmit: pt.abi.Field[pt.abi.Bool]
+        is_open: pt.abi.Field[pt.abi.Bool]
+        results: pt.abi.Field[
+            pt.abi.StaticArray[
+                pt.abi.Tuple2[pt.abi.String, pt.abi.Uint64], Literal[NUM_OPTIONS]  # type: ignore
+            ]
+        ]
+
+    @pt.ABIReturnSubroutine
+    def status(*, output: PollStatus) -> pt.Expr:
+        """Get the status of this poll.
+
+        Returns:
+            A tuple containing the following information, in order: the question is poll is asking,
+            whether the poll allows resubmission, whether the poll is open, and an array of the poll's
+            current results. This array contains one entry per option, and each entry is a tuple of that
+            option's value and the number of accounts who have voted for it.
+        """
+        question = pt.abi.make(pt.abi.String)
+        can_resubmit = pt.abi.make(pt.abi.Bool)
+        is_open = pt.abi.make(pt.abi.Bool)
+        results = pt.abi.make(pt.abi.StaticArray[pt.abi.Tuple2[pt.abi.String, pt.abi.Uint64], Literal[NUM_OPTIONS]])  # type: ignore
+        return pt.Seq(
+            question.set(pt.App.globalGet(pt.Bytes("1"))),
+            can_resubmit.set(pt.App.globalGet(pt.Bytes("2"))),
+            is_open.set(pt.App.globalGet(pt.Bytes("3"))),
+            results.set([]),
+            output.set(question, can_resubmit, is_open, results),
+        )
+
+    output = PollStatus()
+    return pt.Seq(status().store_into(output), pt.Int(1))  # type: ignore
+
 
 CONSTRUCTS = [
     (  # 0
@@ -1380,6 +1419,181 @@ CONSTRUCTS = [
         ],
         4,
     ),
+    (  # 33 - ABI Subroutine (frame pointers)
+        abi_example,
+        [
+            [P, C],
+            ("callsub status_0", "status()"),
+            ("store 0", "status().store_into(output)"),
+            ("int 1", "pt.Int(1)"),
+            ("return", "comp.compile(with_sourcemap=True)"),
+            ("", "status().store_into(output)"),
+            ("// status", "status().store_into(output)"),
+            ("status_0:", "status().store_into(output)"),
+            ("proto 0 1", "status().store_into(output)"),
+            ('byte ""', "status().store_into(output)"),
+            ("dupn 1", "status().store_into(output)"),
+            ("int 0", "status().store_into(output)"),
+            ("dupn 1", "status().store_into(output)"),
+            ('byte ""', "status().store_into(output)"),
+            ("int 0", "status().store_into(output)"),
+            ("dupn 1", "status().store_into(output)"),
+            ('byte ""', "status().store_into(output)"),
+            ("dupn 1", "status().store_into(output)"),
+            ("int 0", "status().store_into(output)"),
+            ("dupn 1", "status().store_into(output)"),
+            ('byte ""', "status().store_into(output)"),
+            ("dupn 1", "status().store_into(output)"),
+            ('byte "1"', "pt.Bytes('1')"),
+            ("app_global_get", "pt.App.globalGet(pt.Bytes('1'))"),
+            ("frame_bury 1", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("frame_dig 1", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("len", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("itob", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("extract 6 0", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("frame_dig 1", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("concat", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("frame_bury 1", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ('byte "2"', "pt.Bytes('2')"),
+            ("app_global_get", "pt.App.globalGet(pt.Bytes('2'))"),
+            ("!", "can_resubmit.set(pt.App.globalGet(pt.Bytes('2')))"),
+            ("!", "can_resubmit.set(pt.App.globalGet(pt.Bytes('2')))"),
+            ("frame_bury 2", "can_resubmit.set(pt.App.globalGet(pt.Bytes('2')))"),
+            ('byte "3"', "pt.Bytes('3')"),
+            ("app_global_get", "pt.App.globalGet(pt.Bytes('3'))"),
+            ("!", "is_open.set(pt.App.globalGet(pt.Bytes('3')))"),
+            ("!", "is_open.set(pt.App.globalGet(pt.Bytes('3')))"),
+            ("frame_bury 3", "is_open.set(pt.App.globalGet(pt.Bytes('3')))"),
+            ('byte ""', "results.set([])"),
+            ("frame_bury 4", "results.set([])"),
+            ("frame_dig 1", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_bury 12", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_dig 12", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_bury 11", "output.set(question, can_resubmit, is_open, results)"),
+            ("int 5", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_bury 9", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_dig 9", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_dig 12", "output.set(question, can_resubmit, is_open, results)"),
+            ("len", "output.set(question, can_resubmit, is_open, results)"),
+            ("+", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_bury 10", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_dig 10", "output.set(question, can_resubmit, is_open, results)"),
+            ("int 65536", "output.set(question, can_resubmit, is_open, results)"),
+            ("<", "output.set(question, can_resubmit, is_open, results)"),
+            ("assert", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_dig 9", "output.set(question, can_resubmit, is_open, results)"),
+            ("itob", "output.set(question, can_resubmit, is_open, results)"),
+            ("extract 6 0", "output.set(question, can_resubmit, is_open, results)"),
+            ("byte 0x00", "output.set(question, can_resubmit, is_open, results)"),
+            ("int 0", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_dig 2", "output.set(question, can_resubmit, is_open, results)"),
+            ("setbit", "output.set(question, can_resubmit, is_open, results)"),
+            ("int 1", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_dig 3", "output.set(question, can_resubmit, is_open, results)"),
+            ("setbit", "output.set(question, can_resubmit, is_open, results)"),
+            ("concat", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_dig 4", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_bury 12", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_dig 11", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_dig 12", "output.set(question, can_resubmit, is_open, results)"),
+            ("concat", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_bury 11", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_dig 10", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_bury 9", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_dig 9", "output.set(question, can_resubmit, is_open, results)"),
+            ("itob", "output.set(question, can_resubmit, is_open, results)"),
+            ("extract 6 0", "output.set(question, can_resubmit, is_open, results)"),
+            ("concat", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_dig 11", "output.set(question, can_resubmit, is_open, results)"),
+            ("concat", "output.set(question, can_resubmit, is_open, results)"),
+            ("frame_bury 0", "output.set(question, can_resubmit, is_open, results)"),
+            ("retsub", 'return pt.Seq(status().store_into(output), pt.Int(1))'),
+        ],
+        8,
+        "Application",
+        dict(frame_pointers=True),
+    ),
+    (  # 34 - ABI Subroutine (scratch slots)
+        abi_example,
+        [
+            [P, C],
+            ("callsub status_0", "status()"),
+            ("store 0", "status().store_into(output)"),
+            ("int 1", "pt.Int(1)"),
+            ("return", "comp.compile(with_sourcemap=True)"),
+            ("", "status().store_into(output)"),
+            ("// status", "status().store_into(output)"),
+            ("status_0:", "status().store_into(output)"),
+            ('byte "1"', "pt.Bytes('1')"),
+            ("app_global_get", "pt.App.globalGet(pt.Bytes('1'))"),
+            ("store 2", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("load 2", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("len", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("itob", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("extract 6 0", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("load 2", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("concat", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("store 2", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ('byte "2"', "pt.Bytes('2')"),
+            ("app_global_get", "pt.App.globalGet(pt.Bytes('2'))"),
+            ("!", "can_resubmit.set(pt.App.globalGet(pt.Bytes('2')))"),
+            ("!", "can_resubmit.set(pt.App.globalGet(pt.Bytes('2')))"),
+            ("store 3", "can_resubmit.set(pt.App.globalGet(pt.Bytes('2')))"),
+            ('byte "3"', "pt.Bytes('3')"),
+            ("app_global_get", "pt.App.globalGet(pt.Bytes('3'))"),
+            ("!", "is_open.set(pt.App.globalGet(pt.Bytes('3')))"),
+            ("!", "is_open.set(pt.App.globalGet(pt.Bytes('3')))"),
+            ("store 4", "is_open.set(pt.App.globalGet(pt.Bytes('3')))"),
+            ('byte ""', "results.set([])"),
+            ("store 5", "results.set([])"),
+            ("load 2", "output.set(question, can_resubmit, is_open, results)"),
+            ("store 9", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 9", "output.set(question, can_resubmit, is_open, results)"),
+            ("store 8", "output.set(question, can_resubmit, is_open, results)"),
+            ("int 5", "output.set(question, can_resubmit, is_open, results)"),
+            ("store 6", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 6", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 9", "output.set(question, can_resubmit, is_open, results)"),
+            ("len", "output.set(question, can_resubmit, is_open, results)"),
+            ("+", "output.set(question, can_resubmit, is_open, results)"),
+            ("store 7", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 7", "output.set(question, can_resubmit, is_open, results)"),
+            ("int 65536", "output.set(question, can_resubmit, is_open, results)"),
+            ("<", "output.set(question, can_resubmit, is_open, results)"),
+            ("assert", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 6", "output.set(question, can_resubmit, is_open, results)"),
+            ("itob", "output.set(question, can_resubmit, is_open, results)"),
+            ("extract 6 0", "output.set(question, can_resubmit, is_open, results)"),
+            ("byte 0x00", "output.set(question, can_resubmit, is_open, results)"),
+            ("int 0", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 3", "output.set(question, can_resubmit, is_open, results)"),
+            ("setbit", "output.set(question, can_resubmit, is_open, results)"),
+            ("int 1", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 4", "output.set(question, can_resubmit, is_open, results)"),
+            ("setbit", "output.set(question, can_resubmit, is_open, results)"),
+            ("concat", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 5", "output.set(question, can_resubmit, is_open, results)"),
+            ("store 9", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 8", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 9", "output.set(question, can_resubmit, is_open, results)"),
+            ("concat", "output.set(question, can_resubmit, is_open, results)"),
+            ("store 8", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 7", "output.set(question, can_resubmit, is_open, results)"),
+            ("store 6", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 6", "output.set(question, can_resubmit, is_open, results)"),
+            ("itob", "output.set(question, can_resubmit, is_open, results)"),
+            ("extract 6 0", "output.set(question, can_resubmit, is_open, results)"),
+            ("concat", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 8", "output.set(question, can_resubmit, is_open, results)"),
+            ("concat", "output.set(question, can_resubmit, is_open, results)"),
+            ("store 1", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 1", "status().store_into(output)"),
+            ("retsub", "return pt.Seq(status().store_into(output), pt.Int(1))"),
+        ],
+        5,
+        "Application",
+        dict(frame_pointers=False),
+    ),
 ]
 
 
@@ -1388,172 +1602,7 @@ CONSTRUCTS = [
 @pytest.mark.parametrize("version", range(2, 9))
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
 def test_constructs(_, i, test_case, mode, version):
-    """
-                                        Sanity check source mapping the most important PyTeal constructs
-
-                            ................FFF.F......
-
-                                        PERFORMANCE RESULTS 10Nov2022 AS ATTEMPT TO STREAMLINE THE SOURCE MAPPER.
-
-                                        TEST COMMAND:
-                                        > command gtime -v pytest --memray --durations=0 tests/unit/sourcemap_monkey_unit_test.py::test_constructs
-
-                                        FIRST RUN - BEFORE ANY REFACTORING
-                                ❯ command gtime -v pytest --memray --durations=0 tests/unit/sourcemap_monkey_unit_test.py::test_constructs
-                                ======================================================================================================= test session starts =======================================================================================================
-                                platform darwin -- Python 3.10.4, pytest-7.1.2, pluggy-1.0.0
-                                rootdir: /Users/zeph/github/tzaffi/pyteal
-                                plugins: xdist-2.5.0, forked-1.4.0, timeout-2.1.0, memray-1.3.0, cov-3.0.0
-                                collected 372 items
-
-                                tests/unit/sourcemap_monkey_unit_test.py .................................................................................................................................................................................. [ 47%]
-                                .................................................................................................................................................................................................
-
-
-                                ========================================================================================================== MEMRAY REPORT ==========================================================================================================
-                                Allocations results for tests/unit/sourcemap_monkey_unit_test.py::test_constructs[2-Application-0-test_case0]
-
-                                         📦 Total memory allocated: 28.9MiB
-                                         📏 Total allocations: 435609
-                                         📊 Histogram of allocation sizes: |  ▃ █    |
-                                         🥇 Biggest allocating functions:
-                                                - parse:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/ast.py:50 -> 11.0MiB
-                                                - <module>:/Users/zeph/github/tzaffi/pyteal/py310ptt/lib/python3.10/site-packages/pycparser/yacctab.py:16 -> 1.5MiB
-                                                - updatecache:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/linecache.py:137 -> 1.1MiB
-                                                - updatecache:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/linecache.py:137 -> 1.0MiB
-                                                - _call_with_frames_removed:<frozen importlib._bootstrap>:241 -> 1.0MiB
-                                . . .
-
-                                ======================================================================================================== slowest durations ========================================================================================================
-                                58.47s call     tests/unit/sourcemap_monkey_unit_test.py::test_constructs[2-Application-20-test_case20]
-                                43.22s call     tests/unit/sourcemap_monkey_unit_test.py::test_constructs[2-Application-18-test_case18]
-                                42.10s call     tests/unit/sourcemap_monkey_unit_test.py::test_constructs[2-Application-28-test_case28]
-
-                                . . .
-
-
-                                (744 durations < 0.005s hidden.  Use -vv to show these durations.)
-                                ================================================================================================= 372 passed in 537.85s (0:08:57) =================================================================================================
-                                        Command being timed: "pytest --memray --durations=0 tests/unit/sourcemap_monkey_unit_test.py::test_constructs"
-                                        User time (seconds): 515.76
-                                        System time (seconds): 11.91
-                                        Percent of CPU this job got: 97%
-                                        Elapsed (wall clock) time (h:mm:ss or m:ss): 8:58.53
-                                        Average shared text size (kbytes): 0
-                                        Average unshared data size (kbytes): 0
-                                        Average stack size (kbytes): 0
-                                        Average total size (kbytes): 0
-                                        Maximum resident set size (kbytes): 102644
-                                        Average resident set size (kbytes): 0
-                                        Major (requiring I/O) page faults: 66187
-                                        Minor (reclaiming a frame) page faults: 215076
-                                        Voluntary context switches: 189
-                                        Involuntary context switches: 268839
-                                        Swaps: 0
-                                        File system inputs: 0
-                                        File system outputs: 0
-                                        Socket messages sent: 0
-                                        Socket messages received: 0
-
-
-
-                        (741 durations < 0.005s hidden.  Use -vv to show these durations.)
-                        ================================================================================================= 372 passed in 545.95s (0:09:05) =================================================================================================
-                                Command being timed: "pytest --memray --durations=0 tests/unit/sourcemap_monkey_unit_test.py::test_constructs"
-                                User time (seconds): 507.70
-
-                        SECOND RUN - just use a regex to match instead of iterating over list
-
-                        ABOUT 5% faster
-
-                    (742 durations < 0.005s hidden.  Use -vv to show these durations.)
-                    ================================================================================================= 372 passed in 498.47s (0:08:18) =================================================================================================
-                            Command being timed: "pytest --memray --durations=0 tests/unit/sourcemap_monkey_unit_test.py::test_constructs"
-                            User time (seconds): 482.87
-
-                        THIRD RUN - can we keep only the most relevant `Frames` ?
-
-                3A: just extracted a new method _original_initializer()... don't expect much if any degredation
-
-                3B: more extractions... getting 20% slower...
-
-                3C: post new SUPPOSEDELY faster method - not really, but 25% less memory used
-
-                ❯ command gtime -v pytest --memray --durations=0 tests/unit/sourcemap_monkey_unit_test.py::test_constructs
-        ======================================================================================================= test session starts =======================================================================================================
-        platform darwin -- Python 3.10.4, pytest-7.1.2, pluggy-1.0.0
-        rootdir: /Users/zeph/github/tzaffi/pyteal
-        plugins: xdist-2.5.0, forked-1.4.0, timeout-2.1.0, memray-1.3.0, cov-3.0.0
-        collected 372 items
-
-        tests/unit/sourcemap_monkey_unit_test.py .................................................................................................................................................................................. [ 47%]
-        ..................................................................................................................................................................................................                          [100%]
-
-
-        ========================================================================================================== MEMRAY REPORT ==========================================================================================================
-        Allocations results for tests/unit/sourcemap_monkey_unit_test.py::test_constructs[2-Application-0-test_case0]
-
-                 📦 Total memory allocated: 16.9MiB
-                 📏 Total allocations: 398334
-                 📊 Histogram of allocation sizes: |    █    |
-                 🥇 Biggest allocating functions:
-                        - parse:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/ast.py:50 -> 3.0MiB
-                        - updatecache:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/linecache.py:137 -> 1.1MiB
-                        - updatecache:/Users/zeph/.asdf/installs/python/3.10.4/lib/python3.10/linecache.py:137 -> 1.0MiB
-                        - _compile_bytecode:<frozen importlib._bootstrap_external>:672 -> 1.0MiB
-                        - _compile_bytecode:<frozen importlib._bootstrap_external>:672 -> 1.0MiB
-
-
-
-        (742 durations < 0.005s hidden.  Use -vv to show these durations.)
-        ================================================================================================= 372 passed in 516.01s (0:08:36) =================================================================================================
-                Command being timed: "pytest --memray --durations=0 tests/unit/sourcemap_monkey_unit_test.py::test_constructs"
-                User time (seconds): 494.42
-                System time (seconds): 11.48
-                Percent of CPU this job got: 97%
-
-        3D: inline the initializer
-
-        4 - try upgrading to python 3.11:
-
-    ❯ command gtime -v pytest --memray --durations=0 tests/unit/sourcemap_monkey_unit_test.py::test_constructs
-    ======================================================================================================= test session starts =======================================================================================================
-    platform darwin -- Python 3.11.0, pytest-7.1.2, pluggy-1.0.0
-    rootdir: /Users/zeph/github/tzaffi/pyteal
-    plugins: xdist-2.5.0, forked-1.4.0, timeout-2.1.0, memray-1.3.0, cov-3.0.0
-    collected 372 items
-
-    tests/unit/sourcemap_monkey_unit_test.py .................................................................................................................................................................................. [ 47%]
-    ..................................................................................................................................................................................................                          [100%]
-
-
-    ========================================================================================================== MEMRAY REPORT ==========================================================================================================
-    Allocations results for tests/unit/sourcemap_monkey_unit_test.py::test_constructs[2-Application-0-test_case0]
-
-             📦 Total memory allocated: 22.9MiB
-             📏 Total allocations: 86866
-             📊 Histogram of allocation sizes: |    █    |
-             🥇 Biggest allocating functions:
-                    - _call_with_frames_removed:<frozen importlib._bootstrap>:241 -> 2.7MiB
-                    - parse:/Users/zeph/.asdf/installs/python/3.11.0/lib/python3.11/ast.py:50 -> 2.1MiB
-                    - updatecache:/Users/zeph/.asdf/installs/python/3.11.0/lib/python3.11/linecache.py:137 -> 2.1MiB
-                    - updatecache:/Users/zeph/.asdf/installs/python/3.11.0/lib/python3.11/linecache.py:137 -> 1.0MiB
-                    - _compile_bytecode:<frozen importlib._bootstrap_external>:729 -> 1.0MiB
-
-
-    (744 durations < 0.005s hidden.  Use -vv to show these durations.)
-    ====================================================================================================== 372 passed in 38.20s =======================================================================================================
-            Command being timed: "pytest --memray --durations=0 tests/unit/sourcemap_monkey_unit_test.py::test_constructs"
-            User time (seconds): 27.61
-            System time (seconds): 8.61
-
-
-    """
     import pyteal as pt
-
-    # Occatsionally we stop getting nodes from AST under random conditions
-    def unparse(tmis):
-        return list(map(lambda tmi: ast.unparse(tmi.node), tmis))
 
     expr, line2unparsed = test_case[:2]
     line2unparsed = deepcopy(line2unparsed)
@@ -1569,10 +1618,13 @@ def test_constructs(_, i, test_case, mode, version):
         fixed_mode = test_case[3]
         if mode != fixed_mode:
             return
+    optimize = None
+    if len(test_case) > 4:
+        optimize = pt.OptimizeOptions(**test_case[4])
 
     mode = getattr(pt.Mode, mode)
     comp = pt.Compilation(
-        expr, mode, version=version, assemble_constants=False, optimize=None
+        expr, mode, version=version, assemble_constants=False, optimize=optimize
     )
     bundle = comp.compile(with_sourcemap=True)
     sourcemap = bundle.sourcemap
@@ -1582,14 +1634,33 @@ def test_constructs(_, i, test_case, mode, version):
     assert sourcemap, msg
     assert sourcemap._hybrid is True, msg
     assert sourcemap._source_inference is True, msg
+    assert sourcemap.teal_chunks == bundle.teal_chunks
 
     tmis = sourcemap.as_list()
-    expected_chunks, unparsed = list(zip(*line2unparsed))
+    N = len(tmis)
+
+    teal_linenos = [tmi.teal_lineno for tmi in tmis]
+    assert list(range(1, N + 1)) == teal_linenos
+
+    teal_lines = [tmi.teal_line for tmi in tmis]
+    assert teal_lines == [
+        l for chunk in sourcemap.teal_chunks for l in chunk.splitlines()
+    ]
+
+    unparsed = [tmi.hybrid_unparsed() for tmi in tmis]  # type: ignore
+
+    expected_lines, expected_unparsed = list(zip(*line2unparsed))
 
     msg = f"{msg}, {tmis=}"
-    assert list(expected_chunks) == bundle.teal_chunks, msg
-    assert list(expected_chunks) == sourcemap.teal_chunks, msg
-    assert list(unparsed) == unparse(tmis), msg
+    force_fail_and_print_actual = False
+    if force_fail_and_print_actual:
+        ouch = [(t, unparsed[i]) for i, t in enumerate(teal_lines)]
+        print(ouch)
+        x = "DEBUG" * 100
+        assert not x, ouch
+
+    assert list(expected_lines) == teal_lines, msg
+    assert list(expected_unparsed) == unparsed, msg
 
 
 def assert_algobank_unparsed_as_expected(actual):

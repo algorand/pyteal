@@ -83,15 +83,14 @@ class Cond(Expr):
             predStart, predEnd = pred.__teal__(options)
 
             branchBlock = TealConditionalBlock([], root_expr=cond)
-            branchBlock.setTrueBlock(predStart, true_expr=pred)
+            branchBlock.setTrueBlock(predStart)
 
             condEnd.setNextBlock(branchBlock)
             predEnd.setNextBlock(end)
             if i == 0:
                 start = condStart
             else:
-                assert prevBranch
-                prevBranch.setFalseBlock(condStart, false_expr=cond)
+                cast(TealConditionalBlock, prevBranch).setFalseBlock(condStart)
 
             prevBranch = branchBlock
 

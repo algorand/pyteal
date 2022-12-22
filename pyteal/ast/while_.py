@@ -51,7 +51,7 @@ class While(Expr):
         doEnd.root_expr = self
 
         branchBlock = TealConditionalBlock([], root_expr=self)
-        branchBlock.setTrueBlock(doStart, true_expr=self.doBlock)
+        branchBlock.setTrueBlock(doStart)
         branchBlock.setFalseBlock(end)
 
         condEnd.setNextBlock(branchBlock)

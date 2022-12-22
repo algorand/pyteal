@@ -39,9 +39,6 @@ class OptimizeOptions:
 
         self._skip_slots: Set[ScratchSlot] = set()
 
-        # TODO: Is this actually used?
-        self.frames = StackFrames()
-
     def optimize_scratch_slots(self, version: int) -> bool:
         from pyteal.compiler.compiler import DEFAULT_SCRATCH_SLOT_OPTIMIZE_VERSION
 
