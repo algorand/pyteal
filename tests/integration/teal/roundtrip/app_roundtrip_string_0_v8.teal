@@ -16,9 +16,9 @@ stringreverse_0:
 proto 1 1
 byte ""
 int 0
-dupn 1
+dup
 byte ""
-dupn 1
+dup
 int 0
 int 0
 frame_bury 5
@@ -36,9 +36,9 @@ proto 1 1
 byte ""
 dupn 2
 int 0
-dupn 1
+dup
 byte ""
-dupn 1
+dup
 frame_dig -1
 callsub stringreverse_0
 frame_bury 1

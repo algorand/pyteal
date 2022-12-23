@@ -4,12 +4,12 @@ btoi
 store 0
 arg 1
 btoi
-store 1                         // 1 -> btoi(a)
+store 1
 arg 2
 store 2
-load 0                          // [a]
-int 1                           // [a, 1]
-load 2                          // [a, 1, b]
+load 0
+int 1
+load 2
 callsub fn3mixedargs0ret_0
 int 1
 return

@@ -44,14 +44,7 @@ class LocalTypeSegment(Expr):
                 )
 
     def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
-        if self.count == 1:
-            inst_srt, inst_end = self.auto_instance.__teal__(options)
-            return inst_srt, inst_end
-        else:
-            dupn_srt, dupn_end = DupN(self.auto_instance, self.count - 1).__teal__(
-                options
-            )
-            return dupn_srt, dupn_end
+        return DupN(self.auto_instance, self.count - 1).__teal__(options)
 
     def __str__(self) -> str:
         return f"(LocalTypeSegment: (type: {self.local_type}) (count: {self.count}))"
@@ -330,6 +323,14 @@ class DupN(Expr):
     """
 
     def __init__(self, value: Expr, repetition: int):
+        """Create a DupN expression.
+
+        Args:
+            value: The value to be duplicated.
+            repetition: How many additional times the value should be added to the stack. At the end
+                of this operation, `repetition+1` elements will be added to the stack. Zero can be
+                specified here to indicate no duplication.
+        """
         super().__init__()
         require_type(value, TealType.anytype)
         if repetition < 0:
@@ -338,6 +339,15 @@ class DupN(Expr):
         self.repetition = repetition
 
     def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
+        if self.repetition == 0:
+            # no duplication required
+            return self.value.__teal__(options)
+
+        if self.repetition == 1:
+            # use normal dup op for just 1 duplication
+            op = TealOp(self, Op.dup)
+            return TealBlock.FromOp(options, op, self.value)
+
         verifyProgramVersion(
             Op.dupn.min_version,
             options.version,

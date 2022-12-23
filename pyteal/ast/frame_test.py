@@ -92,7 +92,44 @@ def test_frame_bury_invalid():
         FrameBury(pt.Int(1), 1).__teal__(avm7Options)
 
 
-def test_dupn():
+def test_dupn_zero():
+    byte_expr = pt.Bytes("Astartes")
+    expr = DupN(byte_expr, 0)
+    assert not expr.has_return()
+    assert expr.type_of() == byte_expr.type_of()
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(byte_expr, pt.Op.byte, '"Astartes"'),
+        ]
+    )
+    actual, _ = expr.__teal__(avm8Options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+
+def test_dupn_single():
+    byte_expr = pt.Bytes("Astartes")
+    expr = DupN(byte_expr, 1)
+    assert not expr.has_return()
+    assert expr.type_of() == byte_expr.type_of()
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(byte_expr, pt.Op.byte, '"Astartes"'),
+            pt.TealOp(expr, pt.Op.dup),
+        ]
+    )
+    actual, _ = expr.__teal__(avm8Options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    assert actual == expected
+
+
+def test_dupn_multiple():
     byte_expr = pt.Bytes("Astartes")
     expr = DupN(byte_expr, 4)
     assert not expr.has_return()
@@ -113,13 +150,13 @@ def test_dupn():
 
 def test_dupn_invalid():
     with pytest.raises(pt.TealTypeError):
-        DupN(pt.Seq(), 1)
+        DupN(pt.Seq(), 10)
 
     with pytest.raises(pt.TealInputError):
-        DupN(pt.Int(1), -1)
+        DupN(pt.Int(1), -10)
 
     with pytest.raises(pt.TealInputError):
-        DupN(pt.Int(1), 1).__teal__(avm7Options)
+        DupN(pt.Int(1), 10).__teal__(avm7Options)
 
 
 def test_local_type_segment_invalid():

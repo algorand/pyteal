@@ -28,7 +28,7 @@ byte ""
 int 0
 dupn 3
 byte ""
-dupn 1
+dup
 int 0
 frame_dig -1
 int 8
@@ -58,9 +58,9 @@ proto 1 1
 byte ""
 dupn 2
 int 0
-dupn 1
+dup
 byte ""
-dupn 1
+dup
 frame_dig -1
 callsub arraycomplement_1
 frame_bury 1

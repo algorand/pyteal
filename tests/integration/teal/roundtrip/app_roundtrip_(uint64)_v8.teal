@@ -18,7 +18,7 @@ byte ""
 int 0
 dupn 3
 byte ""
-dupn 1
+dup
 frame_dig -1
 btoi
 store 0
@@ -36,9 +36,9 @@ proto 1 1
 byte ""
 dupn 2
 int 0
-dupn 1
+dup
 byte ""
-dupn 1
+dup
 frame_dig -1
 callsub tuplecomplement_0
 frame_bury 1
