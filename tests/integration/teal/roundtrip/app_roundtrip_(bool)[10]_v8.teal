@@ -15,6 +15,10 @@ return
 tuplecomplement_0:
 proto 1 1
 byte ""
+int 0
+dupn 3
+byte ""
+dupn 1
 frame_dig -1
 int 0
 getbit
@@ -33,124 +37,129 @@ retsub
 arraycomplement_1:
 proto 1 1
 byte ""
+dupn 10
+int 0
+dupn 1
+byte ""
+dupn 1
 frame_dig -1
 int 1
 int 0
 *
 int 1
 extract3
-store 5
+frame_bury 1
 frame_dig -1
 int 1
 int 1
 *
 int 1
 extract3
-store 6
+frame_bury 2
 frame_dig -1
 int 1
 int 2
 *
 int 1
 extract3
-store 7
+frame_bury 3
 frame_dig -1
 int 1
 int 3
 *
 int 1
 extract3
-store 8
+frame_bury 4
 frame_dig -1
 int 1
 int 4
 *
 int 1
 extract3
-store 9
+frame_bury 5
 frame_dig -1
 int 1
 int 5
 *
 int 1
 extract3
-store 10
+frame_bury 6
 frame_dig -1
 int 1
 int 6
 *
 int 1
 extract3
-store 11
+frame_bury 7
 frame_dig -1
 int 1
 int 7
 *
 int 1
 extract3
-store 12
+frame_bury 8
 frame_dig -1
 int 1
 int 8
 *
 int 1
 extract3
-store 13
+frame_bury 9
 frame_dig -1
 int 1
 int 9
 *
 int 1
 extract3
-store 14
-load 5
+frame_bury 10
+frame_dig 1
 callsub tuplecomplement_0
-store 5
-load 6
+frame_bury 1
+frame_dig 2
 callsub tuplecomplement_0
-store 6
-load 7
+frame_bury 2
+frame_dig 3
 callsub tuplecomplement_0
-store 7
-load 8
+frame_bury 3
+frame_dig 4
 callsub tuplecomplement_0
-store 8
-load 9
+frame_bury 4
+frame_dig 5
 callsub tuplecomplement_0
-store 9
-load 10
+frame_bury 5
+frame_dig 6
 callsub tuplecomplement_0
-store 10
-load 11
+frame_bury 6
+frame_dig 7
 callsub tuplecomplement_0
-store 11
-load 12
+frame_bury 7
+frame_dig 8
 callsub tuplecomplement_0
-store 12
-load 13
+frame_bury 8
+frame_dig 9
 callsub tuplecomplement_0
-store 13
-load 14
+frame_bury 9
+frame_dig 10
 callsub tuplecomplement_0
-store 14
-load 5
-load 6
+frame_bury 10
+frame_dig 1
+frame_dig 2
 concat
-load 7
+frame_dig 3
 concat
-load 8
+frame_dig 4
 concat
-load 9
+frame_dig 5
 concat
-load 10
+frame_dig 6
 concat
-load 11
+frame_dig 7
 concat
-load 12
+frame_dig 8
 concat
-load 13
+frame_dig 9
 concat
-load 14
+frame_dig 10
 concat
 frame_bury 0
 retsub
@@ -159,16 +168,21 @@ retsub
 roundtripper_2:
 proto 1 1
 byte ""
+dupn 2
+int 0
+dupn 1
+byte ""
+dupn 1
 frame_dig -1
 callsub arraycomplement_1
-store 3
-load 3
+frame_bury 1
+frame_dig 1
 callsub arraycomplement_1
-store 4
+frame_bury 2
 frame_dig -1
-load 3
+frame_dig 1
 concat
-load 4
+frame_dig 2
 concat
 frame_bury 0
 retsub

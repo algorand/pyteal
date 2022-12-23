@@ -1,5 +1,5 @@
 from itertools import groupby
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Final
 
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
@@ -11,6 +11,9 @@ from pyteal.ir import TealBlock, TealSimpleBlock, TealOp, Op
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
+
+
+MAX_FRAME_LOCAL_VARS: Final[int] = 128
 
 
 class LocalTypeSegment(Expr):
@@ -104,6 +107,14 @@ class ProtoStackLayout(Expr):
     def __str__(self) -> str:
         return f"(ProtoStackLayout: (args: {self.arg_stack_types}) (locals: {self.local_stack_types}))"
 
+    @classmethod
+    def from_proto(cls, proto: "Proto") -> "ProtoStackLayout":
+        return cls(
+            [TealType.anytype] * proto.num_args,
+            [TealType.anytype] * proto.num_returns,
+            proto.num_returns,
+        )
+
     def has_return(self) -> bool:
         return False
 
@@ -157,6 +168,9 @@ class Proto(Expr):
             raise TealInputError(
                 f"The number of returns provided to Proto must be >= 0 but {num_returns=}."
             )
+        self.num_args = num_args
+        self.num_returns = num_returns
+
         if mem_layout:
             if mem_layout.num_return_allocs > num_returns:
                 raise TealInternalError(
@@ -168,10 +182,10 @@ class Proto(Expr):
                     f"The number of arguments {num_args} should match with "
                     f"memory layout's number of arguments {len(mem_layout.arg_stack_types)}"
                 )
+        else:
+            mem_layout = ProtoStackLayout.from_proto(self)
 
-        self.num_args = num_args
-        self.num_returns = num_returns
-        self.mem_layout: Optional[ProtoStackLayout] = mem_layout
+        self.mem_layout: ProtoStackLayout = mem_layout
 
     def __teal__(self, options: "CompileOptions") -> tuple[TealBlock, TealSimpleBlock]:
         verifyProgramVersion(
@@ -181,8 +195,6 @@ class Proto(Expr):
         )
         op = TealOp(self, Op.proto, self.num_args, self.num_returns)
         proto_srt, proto_end = TealBlock.FromOp(options, op)
-        if not self.mem_layout:
-            return proto_srt, proto_end
         local_srt, local_end = self.mem_layout.__teal__(options)
         proto_end.setNextBlock(local_srt)
         return proto_srt, local_end
@@ -250,7 +262,7 @@ class FrameBury(Expr):
     ):
         super().__init__()
 
-        target_type = inferred_type if inferred_type else TealType.anytype
+        target_type = inferred_type if inferred_type is not None else TealType.anytype
         require_type(value, target_type)
 
         self.value = value
@@ -291,11 +303,7 @@ class FrameVar(AbstractVar):
         super().__init__()
         self.proto = under_proto
         self.frame_index = frame_index
-        self.stack_type = (
-            self.proto.mem_layout[frame_index]
-            if self.proto.mem_layout
-            else TealType.anytype
-        )
+        self.stack_type = self.proto.mem_layout[frame_index]
 
     def storage_type(self) -> TealType:
         return self.stack_type

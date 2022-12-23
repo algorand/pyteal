@@ -23,7 +23,7 @@ from pyteal.ast.bytes import Bytes
 from pyteal.ast.unaryexpr import Len
 from pyteal.ast.binaryexpr import ExtractUint16
 from pyteal.ast.naryexpr import Concat
-from pyteal.ast.scratchvar import ScratchVar
+from pyteal.ast.abstractvar import alloc_abstract_var
 
 from pyteal.ast.abi.type import TypeSpec, BaseType, ComputedValue
 from pyteal.ast.abi.bool import (
@@ -72,8 +72,8 @@ def _encode_tuple(values: Sequence[BaseType]) -> Expr:
 
     tail_offset = Uint16()
     tail_offset_accumulator = Uint16()
-    tail_holder = ScratchVar(TealType.bytes)
-    encoded_tail = ScratchVar(TealType.bytes)
+    tail_holder = alloc_abstract_var(TealType.bytes)
+    encoded_tail = alloc_abstract_var(TealType.bytes)
 
     firstDynamicTail = True
     for i, elem in enumerate(values):
