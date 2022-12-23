@@ -21,7 +21,7 @@ dupn 3
 int 0
 dupn 3
 byte ""
-dupn 1
+dup
 int 0
 dupn 97
 byte ""
@@ -29,10 +29,10 @@ dupn 3
 int 0
 dupn 7
 byte ""
-dupn 1
+dup
 int 0
 byte ""
-dupn 1
+dup
 int 0
 frame_dig -1
 int 0
@@ -132,7 +132,7 @@ dupn 2
 int 0
 dupn 3
 byte ""
-dupn 1
+dup
 int 0
 frame_dig -1
 frame_dig -1
@@ -264,9 +264,9 @@ proto 1 1
 byte ""
 dupn 2
 int 0
-dupn 1
+dup
 byte ""
-dupn 1
+dup
 frame_dig -1
 callsub arraycomplement_1
 frame_bury 1
@@ -375,7 +375,7 @@ byte ""
 int 0
 dupn 97
 byte ""
-dupn 1
+dup
 frame_dig -1
 int 1
 int 0
@@ -833,7 +833,7 @@ byte ""
 int 0
 dupn 7
 byte ""
-dupn 1
+dup
 int 0
 frame_dig -1
 int 1
@@ -892,9 +892,9 @@ int 0
 byte ""
 dupn 2
 int 0
-dupn 1
+dup
 byte ""
-dupn 1
+dup
 int 0
 dupn 97
 byte ""
@@ -1024,7 +1024,7 @@ byte ""
 int 0
 dupn 97
 byte ""
-dupn 1
+dup
 frame_dig -1
 int 1
 int 0
@@ -1479,7 +1479,7 @@ retsub
 tuplecomplement_11:
 proto 1 1
 byte ""
-dupn 1
+dup
 int 0
 dupn 3
 byte ""
@@ -1487,32 +1487,32 @@ dupn 4
 int 0
 dupn 2
 byte ""
-dupn 1
+dup
 int 0
 dupn 7
 byte ""
-dupn 1
+dup
 int 0
 byte ""
-dupn 1
-int 0
-dupn 7
-byte ""
-dupn 1
-int 0
-byte ""
-dupn 1
+dup
 int 0
 dupn 7
 byte ""
-dupn 1
+dup
+int 0
+byte ""
+dup
+int 0
+dupn 7
+byte ""
+dup
 int 0
 dupn 2
 byte ""
-dupn 1
+dup
 int 0
 byte ""
-dupn 1
+dup
 int 0
 dupn 7
 byte ""
@@ -1520,11 +1520,11 @@ dupn 3
 int 0
 dupn 3
 byte ""
-dupn 1
+dup
 int 0
 dupn 3
 byte ""
-dupn 1
+dup
 frame_dig -1
 int 0
 extract_uint32
@@ -1595,9 +1595,9 @@ proto 1 1
 byte ""
 dupn 2
 int 0
-dupn 1
+dup
 byte ""
-dupn 1
+dup
 frame_dig -1
 frame_dig -1
 int 2
@@ -1699,7 +1699,7 @@ byte ""
 int 0
 dupn 7
 byte ""
-dupn 1
+dup
 int 0
 frame_dig -1
 int 1
@@ -1766,7 +1766,7 @@ byte ""
 int 0
 dupn 4
 byte ""
-dupn 1
+dup
 int 0
 frame_dig -1
 int 0
@@ -1835,7 +1835,7 @@ byte ""
 int 0
 dupn 7
 byte ""
-dupn 1
+dup
 int 0
 frame_dig -1
 int 1
@@ -1892,29 +1892,29 @@ dupn 3
 int 0
 dupn 2
 byte ""
-dupn 1
+dup
 int 0
 dupn 7
 byte ""
-dupn 1
+dup
 int 0
 byte ""
-dupn 1
-int 0
-dupn 7
-byte ""
-dupn 1
-int 0
-byte ""
-dupn 1
+dup
 int 0
 dupn 7
 byte ""
-dupn 1
+dup
+int 0
+byte ""
+dup
+int 0
+dupn 7
+byte ""
+dup
 int 0
 dupn 2
 byte ""
-dupn 1
+dup
 int 0
 frame_dig -1
 frame_dig -1
@@ -2120,7 +2120,7 @@ byte ""
 int 0
 dupn 7
 byte ""
-dupn 1
+dup
 frame_dig -1
 int 0
 getbit
@@ -2152,7 +2152,7 @@ byte ""
 int 0
 dupn 3
 byte ""
-dupn 1
+dup
 frame_dig -1
 int 0
 getbyte

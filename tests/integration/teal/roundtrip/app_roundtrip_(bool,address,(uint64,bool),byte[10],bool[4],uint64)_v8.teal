@@ -18,7 +18,7 @@ byte ""
 int 0
 dupn 6
 byte ""
-dupn 1
+dup
 int 0
 dupn 97
 byte ""
@@ -91,9 +91,9 @@ proto 1 1
 byte ""
 dupn 4
 int 0
-dupn 1
+dup
 byte ""
-dupn 1
+dup
 frame_dig -1
 callsub tuplecomplement_0
 frame_bury 2
@@ -140,7 +140,7 @@ byte ""
 int 0
 dupn 97
 byte ""
-dupn 1
+dup
 frame_dig -1
 int 1
 int 0
@@ -598,7 +598,7 @@ byte ""
 int 0
 dupn 5
 byte ""
-dupn 1
+dup
 frame_dig -1
 int 0
 extract_uint64
@@ -644,7 +644,7 @@ byte ""
 int 0
 dupn 11
 byte ""
-dupn 1
+dup
 frame_dig -1
 int 1
 int 0
@@ -805,7 +805,7 @@ byte ""
 int 0
 dupn 5
 byte ""
-dupn 1
+dup
 frame_dig -1
 int 0
 getbit
