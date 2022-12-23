@@ -1,4 +1,5 @@
 from pathlib import Path
+from difflib import unified_diff
 
 from pyteal.compiler import compileTeal
 from pyteal.ir import Mode
@@ -8,7 +9,7 @@ FIXTURES = PATH / "teal"
 GENERATED = PATH / "generated"
 
 
-def compile_and_save(approval, version, test_name):
+def compile_and_save(approval, version: int, test_name: str) -> tuple[Path, str, str]:
     compiled = compileTeal(approval(), mode=Mode.Application, version=version)
     name = approval.__name__
     tealdir = GENERATED / test_name
@@ -24,43 +25,57 @@ compiled it into {len(compiled)} characters. See the results in:
     return tealdir, name, compiled
 
 
-def mismatch_ligature(expected, actual):
-    la, le = len(actual), len(expected)
-    mm_idx = -1
-    for i in range(min(la, le)):
-        if expected[i] != actual[i]:
-            mm_idx = i
-            break
-    if mm_idx < 0:
-        return ""
-    return " " * (mm_idx) + "X" + "-" * (max(la, le) - mm_idx - 1)
+def process_line(line: str) -> str:
+    quote_types = ("'", '"')
+    comment_start = "/"
+
+    processed_end = len(line) - 1
+
+    current_quote: str | None = None
+    for i, char in enumerate(line):
+        for qt in quote_types:
+            if char == qt:
+                if current_quote == qt:
+                    # breaking out of quote
+                    current_quote = None
+                elif current_quote is None:
+                    current_quote = qt
+                    # entering a quote
+        if current_quote is None:
+            # not in a quote
+            if (
+                char == comment_start
+                and i + 1 < len(line)
+                and line[i + 1] == comment_start
+            ):
+                # a comment is about to start, ignore rest of line
+                processed_end = i - 1
+                break
+
+    return line[:processed_end].strip() + "\n"
 
 
-def assert_teal_as_expected(path2actual, path2expected):
+def assert_teal_as_expected(path2actual: Path, path2expected: Path):
     with open(path2actual, "r") as fa, open(path2expected, "r") as fe:
-        alines = fa.read().split("\n")
-        elines = fe.read().split("\n")
+        actual_lines = [process_line(l) for l in fa.readlines()]
+        expected_lines = [process_line(l) for l in fe.readlines()]
 
-        assert len(elines) == len(
-            alines
-        ), f"""EXPECTED {len(elines)} lines for {path2expected} but ACTUALLY got {len(alines)} lines in {path2actual}"""
+    diff = list(
+        unified_diff(
+            expected_lines,
+            actual_lines,
+            fromfile=str(path2expected),
+            tofile=str(path2actual),
+            n=3,
+        )
+    )
 
-        for i, actual in enumerate(alines):
-            expected = elines[i]
-            assert expected.startswith(
-                actual
-            ), f"""ACTUAL line in {path2actual}
-LINE{i+1}:
-{actual}
-{mismatch_ligature(expected, actual)}
-DOES NOT prefix the EXPECTED (which should have been actual + some commentary) in {path2expected}:
-LINE{i+1}:
-{expected}  
-{mismatch_ligature(expected, actual)}
-"""
+    assert (
+        len(diff) == 0
+    ), f"Difference between expected and actual TEAL code:\n\n{''.join(diff)}"
 
 
-def assert_new_v_old(approve_func, version, test_name):
+def assert_new_v_old(approve_func, version: int, test_name: str):
     tealdir, name, compiled = compile_and_save(approve_func, version, test_name)
 
     print(
