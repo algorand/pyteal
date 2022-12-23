@@ -1460,6 +1460,11 @@ def example_subroutine_abi_args_abi_return(
     )
 
 
+def example_subroutine_many_local_vars():
+    local_abi_vars = [pt.abi.Uint64() for _ in range(200)]
+    return pt.Seq([v.set(pt.Int(i)) for i, v in enumerate(local_abi_vars)])
+
+
 @pytest.mark.parametrize(
     "test_case",
     [
@@ -1748,6 +1753,28 @@ def example_subroutine_abi_args_abi_return(
                 pt.ScratchVar(pt.TealType.uint64).store(pt.Int(1)),
                 FrameBury(pt.Int(2), 1),
                 FrameBury(pt.Bytes(b"hello"), 0),
+            ),
+        ),
+        LocalVariableTestCase(
+            input_subroutine=example_subroutine_many_local_vars,
+            input_subroutine_return_type=pt.TealType.none,
+            input_subroutine_abi_return=False,
+            expected_body_normal_evaluator=pt.Seq(
+                [pt.ScratchVar().store(pt.Int(i)) for i in range(200)]
+            ),
+            expected_body_fp_evaluator=pt.Seq(
+                Proto(
+                    0,
+                    0,
+                    mem_layout=ProtoStackLayout(
+                        arg_stack_types=[],
+                        local_stack_types=[pt.TealType.uint64] * 128,
+                        num_return_allocs=0,
+                    ),
+                ),
+                # 128 is the max number of frame pointer local+return vars
+                *[FrameBury(pt.Int(i), i) for i in range(128)],
+                *[pt.ScratchVar().store(pt.Int(i)) for i in range(128, 200)],
             ),
         ),
     ],
