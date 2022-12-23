@@ -25,40 +25,12 @@ compiled it into {len(compiled)} characters. See the results in:
     return tealdir, name, compiled
 
 
-def process_line(line: str) -> str:
-    quote_types = ("'", '"')
-    comment_start = "/"
-
-    processed_end = len(line) - 1
-
-    current_quote: str | None = None
-    for i, char in enumerate(line):
-        for qt in quote_types:
-            if char == qt:
-                if current_quote == qt:
-                    # breaking out of quote
-                    current_quote = None
-                elif current_quote is None:
-                    current_quote = qt
-                    # entering a quote
-        if current_quote is None:
-            # not in a quote
-            if (
-                char == comment_start
-                and i + 1 < len(line)
-                and line[i + 1] == comment_start
-            ):
-                # a comment is about to start, ignore rest of line
-                processed_end = i - 1
-                break
-
-    return line[:processed_end].strip() + "\n"
-
-
 def assert_teal_as_expected(path2actual: Path, path2expected: Path):
-    with open(path2actual, "r") as fa, open(path2expected, "r") as fe:
-        actual_lines = [process_line(l) for l in fa.readlines()]
-        expected_lines = [process_line(l) for l in fe.readlines()]
+    with open(path2actual, "r") as f:
+        actual_lines = f.readlines()
+
+    with open(path2expected, "r") as f:
+        expected_lines = f.readlines()
 
     diff = list(
         unified_diff(
