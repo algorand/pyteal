@@ -20,12 +20,19 @@ def test_proto(input_num: int, output_num: int):
     assert not expr.has_return()
     assert expr.type_of() == pt.TealType.none
 
-    expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.proto, input_num, output_num)])
+    block = [pt.TealOp(expr, pt.Op.proto, input_num, output_num)]
+    if output_num > 0:
+        block.append(pt.TealOp(None, pt.Op.int, 0))
+    if output_num > 1:
+        block.append(pt.TealOp(None, pt.Op.dupn, output_num - 1))
+
+    expected = pt.TealSimpleBlock(block)
     actual, _ = expr.__teal__(avm8Options)
     actual.addIncoming()
     actual = pt.TealBlock.NormalizeBlocks(actual)
 
-    assert actual == expected
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
 
 
 def test_proto_invalid():
