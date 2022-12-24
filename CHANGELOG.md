@@ -2,6 +2,7 @@
 
 # Added
 * Added frame pointer support for subroutine arguments, replacing the previous usage of scratch. ([#562](https://github.com/algorand/pyteal/pull/562))
+* Added frame pointer support for local ABI variables in subroutine. ([#606](https://github.com/algorand/pyteal/pull/606))
 * Added `frame_pointers` property in `OptimizeOptions` to optimize away scratch slots during subroutine calls. This defaults to frame pointer usage when not specified. ([#613](https://github.com/algorand/pyteal/pull/613))
 
 # Fixed

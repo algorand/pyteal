@@ -1,15 +1,18 @@
+from contextlib import contextmanager
+import algosdk.abi as sdk_abi
+import warnings
+
 from dataclasses import dataclass
 from docstring_parser import parse as parse_docstring
 from inspect import isclass, Parameter, signature, get_annotations
 from types import MappingProxyType, NoneType
-from typing import Any, Callable, Final, Optional, TYPE_CHECKING, cast
-import algosdk.abi as sdk_abi
+from typing import Any, Callable, Final, Optional, TYPE_CHECKING, cast, ClassVar
 
 from pyteal.ast import abi
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar, ScratchSlot
-from pyteal.ast.frame import Proto, FrameVar, ProtoStackLayout
+from pyteal.ast.frame import FrameBury, Proto, FrameVar, ProtoStackLayout
 from pyteal.errors import TealInputError, TealInternalError, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
 from pyteal.types import TealType
@@ -33,6 +36,10 @@ class _SubroutineDeclByOption:
         self.type_of: Optional[TealType] = None
 
     def get_declaration(self) -> "SubroutineDeclaration":
+        warnings.warn(
+            "`get_declaration` is being deprecated: Please use `get_declaration_by_option` instead.",
+            DeprecationWarning,
+        )
         return self.get_declaration_by_option(False)
 
     def get_declaration_by_option(
@@ -304,7 +311,11 @@ class SubroutineDefinition:
         )
 
     def get_declaration(self) -> "SubroutineDeclaration":
-        return self.declarations.get_declaration()
+        warnings.warn(
+            "`get_declaration` is being deprecated: Please use `get_declaration_by_option` instead.",
+            DeprecationWarning,
+        )
+        return self.declarations.get_declaration_by_option(False)
 
     def get_declaration_by_option(
         self,
@@ -815,6 +826,13 @@ class Subroutine:
 Subroutine.__module__ = "pyteal"
 
 
+@contextmanager
+def _frame_pointer_context(proto: Proto):
+    tmp, SubroutineEval._current_proto = SubroutineEval._current_proto, proto
+    yield proto
+    SubroutineEval._current_proto = tmp
+
+
 @dataclass
 class SubroutineEval:
     """
@@ -889,6 +907,7 @@ class SubroutineEval:
         tuple[Optional[ScratchVar], ScratchVar | abi.BaseType | Expr],
     ]
     use_frame_pt: bool = False
+    _current_proto: ClassVar[Optional[Proto]] = None
 
     @staticmethod
     def var_n_loaded_scratch(
@@ -1006,7 +1025,17 @@ class SubroutineEval:
             abi_output_kwargs[output_kwarg_info.name] = output_carrying_abi
 
         # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:
-        subroutine_body = subroutine.implementation(*loaded_args, **abi_output_kwargs)
+        subroutine_body: Expr
+        if not self.use_frame_pt:
+            subroutine_body = subroutine.implementation(
+                *loaded_args, **abi_output_kwargs
+            )
+        else:
+            with _frame_pointer_context(proto):
+                subroutine_body = subroutine.implementation(
+                    *loaded_args, **abi_output_kwargs
+                )
+
         if not isinstance(subroutine_body, Expr):
             raise TealInputError(
                 f"Subroutine function does not return a PyTeal expression. Got type {type(subroutine_body)}."
@@ -1024,6 +1053,13 @@ class SubroutineEval:
                 )
             if not self.use_frame_pt:
                 deferred_expr = output_carrying_abi._stored_value.load()
+
+        if self.use_frame_pt:
+            local_size = len(proto.mem_layout.local_stack_types)
+            # only when we have 1 return, and with other local variables
+            # we use bury to bury the result to 0 index against frame pointer
+            if not abi_output_kwargs and proto.num_returns > 0 and local_size > 0:
+                deferred_expr = FrameBury(Seq(), 0, inferred_type=TealType.none)
 
         # Arg usage "A" to be pick up and store in scratch parameters that have been placed on the stack
         # need to reverse order of argumentVars because the last argument will be on top of the stack
