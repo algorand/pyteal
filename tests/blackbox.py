@@ -207,6 +207,23 @@ class PyTealDryRunExecutor:
     def is_abi(self) -> bool:
         return isinstance(self.subr.subroutine, ABIReturnSubroutine)
 
+    def abi_method_signature(self) -> None | str:
+        if self.is_abi():
+            abi_subr = cast(ABIReturnSubroutine, self.subr.subroutine)
+            return abi_subr.method_signature()
+
+        # create an artificial method signature
+        # based on the `abi_argument_types()` and `abi_return_type()`
+        if arg_types := self.abi_argument_types():
+            if all(t is None for t in arg_types):
+                return None
+
+            ret_type = self.abi_return_type()
+            ret = str(ret_type) if ret_type else "void"
+            return f"ptdre_foo({','.join(map(str, arg_types))}){ret}"
+
+        return None
+
     def abi_argument_types(self) -> None | list[algosdk.abi.ABIType]:
         if not (self.input_types or self.is_abi()):
             return None
@@ -428,15 +445,15 @@ class PyTealDryRunExecutor:
                 algod=algod_with_assertion(),
                 teal=teal,
                 inputs=inputs,
-                abi_argument_types=self.abi_argument_types(),
-                abi_return_type=self.abi_return_type(),
+                abi_method_signature=self.abi_method_signature(),
+                omit_method_selector=True,
             ),
             signature_case=lambda: DryRunExecutor.dryrun_logicsig_on_sequence(
                 algod=algod_with_assertion(),
                 teal=teal,
                 inputs=inputs,
-                abi_argument_types=self.abi_argument_types(),
-                abi_return_type=self.abi_return_type(),
+                abi_method_signature=self.abi_method_signature(),
+                omit_method_selector=True,
             ),
             trace=teal,
         )(self.mode)
@@ -453,15 +470,15 @@ class PyTealDryRunExecutor:
                 algod_with_assertion(),
                 teal,
                 args,
-                self.abi_argument_types(),
-                self.abi_return_type(),
+                abi_method_signature=self.abi_method_signature(),
+                omit_method_selector=True,
             ),
             signature_case=lambda: DryRunExecutor.dryrun_logicsig(
                 algod_with_assertion(),
                 teal,
                 args,
-                self.abi_argument_types(),
-                self.abi_return_type(),
+                abi_method_signature=self.abi_method_signature(),
+                omit_method_selector=True,
             ),
             trace=teal,
         )(self.mode)
