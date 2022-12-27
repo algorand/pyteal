@@ -17,12 +17,14 @@ from pyteal.ir.ops import Mode
 from pyteal.ast import abi
 from pyteal.ast.subroutine import (
     OutputKwArgInfo,
+    Subroutine,
     SubroutineFnWrapper,
     ABIReturnSubroutine,
 )
 from pyteal.ast.assert_ import Assert
 from pyteal.ast.cond import Cond
 from pyteal.ast.expr import Expr
+from pyteal.ast.frame import FrameVar, Proto, ProtoStackLayout
 from pyteal.ast.app import OnComplete
 from pyteal.ast.int import Int, EnumInt
 from pyteal.ast.seq import Seq
@@ -71,7 +73,8 @@ class CallConfig(IntFlag):
                 return 1
             case CallConfig.CREATE | CallConfig.ALL:
                 raise TealInputError(
-                    "Only CallConfig.CALL or CallConfig.NEVER are valid for a clear state CallConfig, since clear state can never be invoked during creation"
+                    "Only CallConfig.CALL or CallConfig.NEVER are valid for a clear state CallConfig, "
+                    "since clear state can never be invoked during creation"
                 )
             case _:
                 raise TealInputError(f"unexpected CallConfig {self}")
@@ -130,6 +133,9 @@ class MethodConfig:
 
     def clear_state_cond(self) -> Expr | int:
         return self.clear_state.clear_state_condition_under_config()
+
+
+MethodConfig.__module__ = "pyteal"
 
 
 @dataclass(frozen=True)
@@ -274,13 +280,192 @@ class CondNode:
 CondNode.__module__ = "pyteal"
 
 
+@dataclass(frozen=True)
+class CondWithMethod:
+    method_sig: str
+    condition: Expr | int
+    method: ABIReturnSubroutine
+
+    def to_cond_node(self, use_frame_pt: bool = False) -> CondNode:
+        walk_in_cond = Txn.application_args[0] == MethodSignature(self.method_sig)
+
+        match self.condition:
+            case Expr():
+                return CondNode(
+                    walk_in_cond,
+                    Seq(
+                        Assert(self.condition),
+                        ASTBuilder.wrap_handler(
+                            True, self.method, use_frame_pt=use_frame_pt
+                        ),
+                    ),
+                )
+            case 1:
+                return CondNode(
+                    walk_in_cond,
+                    ASTBuilder.wrap_handler(
+                        True, self.method, use_frame_pt=use_frame_pt
+                    ),
+                )
+            case _:
+                raise TealInputError("Invalid condition input for add_method_to_ast")
+
+
+CondWithMethod.__module__ = "pyteal"
+
+
 @dataclass
 class ASTBuilder:
     conditions_n_branches: list[CondNode] = field(default_factory=list)
+    methods_with_conds: list[CondWithMethod] = field(default_factory=list)
+
+    @staticmethod
+    def __handler_validity_check(
+        subroutine: ABIReturnSubroutine | SubroutineFnWrapper | Expr,
+    ) -> ABIReturnSubroutine:
+        if not isinstance(subroutine, ABIReturnSubroutine):
+            raise TealInputError(
+                f"method call should be only registering ABIReturnSubroutine, got {type(subroutine)}."
+            )
+        if not subroutine.is_abi_routable():
+            raise TealInputError(
+                f"method call ABIReturnSubroutine is not routable: "
+                f"got {subroutine.subroutine.argument_count()} args "
+                f"with {len(subroutine.subroutine.abi_args)} ABI args."
+            )
+        return subroutine
+
+    @staticmethod
+    def __subroutine_argument_instance_generate(
+        subroutine: ABIReturnSubroutine,
+    ) -> tuple[list[abi.BaseType], list[abi.BaseType], list[abi.Transaction]]:
+        # All subroutine args types
+        type_specs = cast(list[abi.TypeSpec], subroutine.subroutine.expected_arg_types)
+
+        # All subroutine arg values, initialize here and use below instead of
+        # creating new instances on the fly, so we don't have to think about splicing
+        # back in the transaction types
+        arg_vals = [typespec.new_instance() for typespec in type_specs]
+
+        # Only args that appear in app args
+        app_arg_vals: list[abi.BaseType] = [
+            ats for ats in arg_vals if not isinstance(ats, abi.Transaction)
+        ]
+
+        # only transaction args (these are omitted from app args)
+        txn_arg_vals: list[abi.Transaction] = [
+            ats for ats in arg_vals if isinstance(ats, abi.Transaction)
+        ]
+
+        for aav in app_arg_vals:
+            # If we're here we know the top level isn't a Transaction but a transaction may
+            # be included in some collection type like a Tuple or Array, raise error
+            # as these are not supported
+            if abi.contains_type_spec(aav.type_spec(), abi.TransactionTypeSpecs):
+                raise TealInputError(
+                    "A Transaction type may not be included in Tuples or Arrays"
+                )
+
+        return arg_vals, app_arg_vals, txn_arg_vals
+
+    @staticmethod
+    def __decode_constructions_and_args(
+        arg_vals: list[abi.BaseType],
+        app_arg_vals: list[abi.BaseType],
+        txn_arg_vals: list[abi.Transaction],
+        subroutine: ABIReturnSubroutine,
+        use_frame_pt: bool = False,
+    ) -> tuple[list[Expr], list[abi.BaseType], Optional[Proto]]:
+        index_start_from = int(subroutine.output_kwarg_info is not None)
+
+        local_types = [i._stored_value.storage_type() for i in arg_vals]
+
+        if subroutine.output_kwarg_info:
+            local_types = [
+                subroutine.output_kwarg_info.abi_type.storage_type()
+            ] + local_types
+
+        # assign to a var here since we modify app_arg_vals later
+        tuplify = len(app_arg_vals) > METHOD_ARG_NUM_CUTOFF
+
+        # Tuple-ify any app args after the limit
+        tupled_app_args: list[abi.BaseType] = []
+
+        if tuplify:
+            tupled_app_args = app_arg_vals[METHOD_ARG_NUM_CUTOFF - 1 :]
+            last_arg_specs_grouped: list[abi.TypeSpec] = [
+                t.type_spec() for t in tupled_app_args
+            ]
+            app_arg_vals = app_arg_vals[: METHOD_ARG_NUM_CUTOFF - 1]
+            app_args_tupled = abi.TupleTypeSpec(*last_arg_specs_grouped).new_instance()
+            local_types.append(app_args_tupled._stored_value.storage_type())
+            app_arg_vals.append(app_args_tupled)
+
+        proto: Optional[Proto] = None
+        if use_frame_pt:
+            proto = Proto(0, 0, mem_layout=ProtoStackLayout([], local_types, 0))
+            for i, arg_val in enumerate(arg_vals):
+                arg_val._stored_value = FrameVar(proto, i + index_start_from)
+            if tuplify:
+                app_arg_vals[-1]._stored_value = FrameVar(proto, len(local_types) - 1)
+
+        # decode app args
+        decode_instructions: list[Expr] = [
+            app_arg.decode(Txn.application_args[idx + 1])
+            for idx, app_arg in enumerate(app_arg_vals)
+        ]
+
+        # "decode" transaction types by setting the relative index
+        if len(txn_arg_vals) > 0:
+            txn_arg_len = len(txn_arg_vals)
+            # The transactions should appear in the group in the order they're specified in the method signature
+            # and should be relative to the current transaction.
+
+            # ex:
+            # doit(axfer,pay,appl)
+            # would be 4 transactions
+            #      current_idx-3 = axfer
+            #      current_idx-2 = pay
+            #      current_idx-1 = appl
+            #      current_idx-0 = the txn that triggered the current eval (not specified but here for completeness)
+
+            # since we're iterating in order of the txns appearance in the args we
+            # subtract the current index from the total length to get the offset.
+            # and subtract that from the current index to get the absolute position
+            # in the group
+
+            txn_decode_instructions: list[Expr] = []
+
+            for idx, arg_val in enumerate(txn_arg_vals):
+                txn_decode_instructions.append(
+                    arg_val._set_index(Txn.group_index() - Int(txn_arg_len - idx))
+                )
+                spec = arg_val.type_spec()
+                if type(spec) is not abi.TransactionTypeSpec:
+                    # this is a specific transaction type
+                    txn_decode_instructions.append(
+                        Assert(arg_val.get().type_enum() == spec.txn_type_enum())
+                    )
+
+            decode_instructions += txn_decode_instructions
+
+        # de-tuple into specific values using `store_into` on
+        # each element of the tuple'd arguments
+        if tuplify:
+            tupled_arg: abi.Tuple = cast(abi.Tuple, app_arg_vals[-1])
+            de_tuple_instructions: list[Expr] = [
+                tupled_arg[idx].store_into(arg_val)
+                for idx, arg_val in enumerate(tupled_app_args)
+            ]
+            decode_instructions += de_tuple_instructions
+
+        return decode_instructions, arg_vals, proto
 
     @staticmethod
     def wrap_handler(
-        is_method_call: bool, handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr
+        is_method_call: bool,
+        handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr,
+        use_frame_pt: bool = False,
     ) -> Expr:
         """This is a helper function that handles transaction arguments passing in bare-app-call/abi-method handlers.
 
@@ -295,6 +480,7 @@ class ASTBuilder:
         Args:
             is_method_call: a boolean value that specify if the handler is an ABI method.
             handler: an `ABIReturnSubroutine`, or `SubroutineFnWrapper` (for `Subroutine` case), or an `Expr`.
+            use_frame_pt: a boolean value that specify if router is compiled to frame pointer based code.
         Returns:
             Expr:
                 - for bare-appcall it returns an expression that the handler takes no txn arg and Approve
@@ -333,111 +519,24 @@ class ASTBuilder:
                     return Seq(cast(Expr, handler()), Approve())
                 case _:
                     raise TealInputError(
-                        "bare appcall can only accept: none type Expr, or Subroutine/ABIReturnSubroutine with none return and no arg"
+                        "bare appcall can only accept: none type Expr, "
+                        "or Subroutine/ABIReturnSubroutine with none return and no arg"
                     )
-        else:
-            if not isinstance(handler, ABIReturnSubroutine):
-                raise TealInputError(
-                    f"method call should be only registering ABIReturnSubroutine, got {type(handler)}."
-                )
-            if not handler.is_abi_routable():
-                raise TealInputError(
-                    f"method call ABIReturnSubroutine is not routable "
-                    f"got {handler.subroutine.argument_count()} args with {len(handler.subroutine.abi_args)} ABI args."
-                )
+        elif not use_frame_pt:
+            handler = ASTBuilder.__handler_validity_check(handler)
+            (
+                arg_vals,
+                app_arg_vals,
+                txn_arg_vals,
+            ) = ASTBuilder.__subroutine_argument_instance_generate(handler)
 
-            # All subroutine args types
-            arg_type_specs = cast(
-                list[abi.TypeSpec], handler.subroutine.expected_arg_types
+            (
+                decode_instructions,
+                arg_vals,
+                _,
+            ) = ASTBuilder.__decode_constructions_and_args(
+                arg_vals, app_arg_vals, txn_arg_vals, handler
             )
-
-            # All subroutine arg values, initialize here and use below instead of
-            # creating new instances on the fly, so we don't have to think about splicing
-            # back in the transaction types
-            arg_vals = [typespec.new_instance() for typespec in arg_type_specs]
-
-            # Only args that appear in app args
-            app_arg_vals: list[abi.BaseType] = [
-                ats for ats in arg_vals if not isinstance(ats, abi.Transaction)
-            ]
-
-            for aav in app_arg_vals:
-                # If we're here we know the top level isnt a Transaction but a transaction may
-                # be included in some collection type like a Tuple or Array, raise error
-                # as these are not supported
-                if abi.contains_type_spec(aav.type_spec(), abi.TransactionTypeSpecs):
-                    raise TealInputError(
-                        "A Transaction type may not be included in Tuples or Arrays"
-                    )
-
-            # assign to a var here since we modify app_arg_vals later
-            tuplify = len(app_arg_vals) > METHOD_ARG_NUM_CUTOFF
-
-            # only transaction args (these are omitted from app args)
-            txn_arg_vals: list[abi.Transaction] = [
-                ats for ats in arg_vals if isinstance(ats, abi.Transaction)
-            ]
-
-            # Tuple-ify any app args after the limit
-            if tuplify:
-                tupled_app_args = app_arg_vals[METHOD_ARG_NUM_CUTOFF - 1 :]
-                last_arg_specs_grouped: list[abi.TypeSpec] = [
-                    t.type_spec() for t in tupled_app_args
-                ]
-                app_arg_vals = app_arg_vals[: METHOD_ARG_NUM_CUTOFF - 1]
-                app_arg_vals.append(
-                    abi.TupleTypeSpec(*last_arg_specs_grouped).new_instance()
-                )
-
-            # decode app args
-            decode_instructions: list[Expr] = [
-                app_arg.decode(Txn.application_args[idx + 1])
-                for idx, app_arg in enumerate(app_arg_vals)
-            ]
-
-            # "decode" transaction types by setting the relative index
-            if len(txn_arg_vals) > 0:
-                txn_arg_len = len(txn_arg_vals)
-                # The transactions should appear in the group in the order they're specified in the method signature
-                # and should be relative to the current transaction.
-
-                # ex:
-                # doit(axfer,pay,appl)
-                # would be 4 transactions
-                #      current_idx-3 = axfer
-                #      current_idx-2 = pay
-                #      current_idx-1 = appl
-                #      current_idx-0 = the txn that triggered the current eval (not specified but here for completeness)
-
-                # since we're iterating in order of the txns appearance in the args we
-                # subtract the current index from the total length to get the offset.
-                # and subtract that from the current index to get the absolute position
-                # in the group
-
-                txn_decode_instructions: list[Expr] = []
-
-                for idx, arg_val in enumerate(txn_arg_vals):
-                    txn_decode_instructions.append(
-                        arg_val._set_index(Txn.group_index() - Int(txn_arg_len - idx))
-                    )
-                    spec = arg_val.type_spec()
-                    if type(spec) is not abi.TransactionTypeSpec:
-                        # this is a specific transaction type
-                        txn_decode_instructions.append(
-                            Assert(arg_val.get().type_enum() == spec.txn_type_enum())
-                        )
-
-                decode_instructions += txn_decode_instructions
-
-            # de-tuple into specific values using `store_into` on
-            # each element of the tuple'd arguments
-            if tuplify:
-                tupled_arg: abi.Tuple = cast(abi.Tuple, app_arg_vals[-1])
-                de_tuple_instructions: list[Expr] = [
-                    tupled_arg[idx].store_into(arg_val)
-                    for idx, arg_val in enumerate(tupled_app_args)
-                ]
-                decode_instructions += de_tuple_instructions
 
             # NOTE: does not have to have return, can be void method
             if handler.type_of() == "void":
@@ -459,32 +558,88 @@ class ASTBuilder:
                     abi.MethodReturn(output_temp),
                     Approve(),
                 )
+        else:
+            subroutine_ify = ASTBuilder.__de_abify_subroutine(handler)
+            return Seq(
+                subroutine_ify(),
+                Approve(),
+            )
+
+    @staticmethod
+    def __de_abify_subroutine(
+        handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr,
+    ) -> SubroutineFnWrapper:
+        handler = ASTBuilder.__handler_validity_check(handler)
+        (
+            arg_vals,
+            app_arg_vals,
+            txn_arg_vals,
+        ) = ASTBuilder.__subroutine_argument_instance_generate(handler)
+
+        (
+            decode_instructions,
+            arg_vals,
+            proto,
+        ) = ASTBuilder.__decode_constructions_and_args(
+            arg_vals,
+            app_arg_vals,
+            txn_arg_vals,
+            handler,
+            use_frame_pt=True,
+        )
+
+        subroutine_caster = Subroutine(TealType.none, f"{handler.name()}_caster")
+        return_expr: Expr
+
+        if not proto or not proto.mem_layout:
+            raise TealInternalError(
+                "Assuming to be using frame pointer, memory layout and proto should be available."
+            )
+
+        if handler.type_of() == "void":
+            return_expr = Seq(
+                *decode_instructions,
+                cast(Expr, handler(*arg_vals)),
+            )
+        else:
+            output_temp: abi.BaseType = cast(
+                OutputKwArgInfo, handler.output_kwarg_info
+            ).abi_type.new_instance()
+            output_temp._stored_value = FrameVar(proto, 0)
+            subroutine_call: abi.ReturnedValue = cast(
+                abi.ReturnedValue, handler(*arg_vals)
+            )
+
+            return_expr = Seq(
+                *proto.mem_layout._succinct_repr(),
+                *decode_instructions,
+                subroutine_call.store_into(output_temp),
+                abi.MethodReturn(output_temp),
+            )
+
+        def declaration():
+            return return_expr
+
+        return subroutine_caster(declaration)
 
     def add_method_to_ast(
         self, method_signature: str, cond: Expr | int, handler: ABIReturnSubroutine
     ) -> None:
-        walk_in_cond = Txn.application_args[0] == MethodSignature(method_signature)
-        match cond:
-            case Expr():
-                self.conditions_n_branches.append(
-                    CondNode(
-                        walk_in_cond,
-                        Seq(Assert(cond), self.wrap_handler(True, handler)),
-                    )
-                )
-            case 1:
-                self.conditions_n_branches.append(
-                    CondNode(walk_in_cond, self.wrap_handler(True, handler))
-                )
-            case 0:
-                return
-            case _:
-                raise TealInputError("Invalid condition input for add_method_to_ast")
+        if isinstance(cond, int) and cond == 0:
+            return
+        self.methods_with_conds.append(CondWithMethod(method_signature, cond, handler))
 
-    def program_construction(self) -> Expr:
+    def program_construction(self, use_frame_pt: bool = False) -> Expr:
+        self.conditions_n_branches += [
+            i.to_cond_node(use_frame_pt=use_frame_pt) for i in self.methods_with_conds
+        ]
+
         if not self.conditions_n_branches:
             return Reject()
         return Cond(*[[n.condition, n.branch] for n in self.conditions_n_branches])
+
+
+ASTBuilder.__module__ = "pyteal"
 
 
 class Router:
@@ -506,8 +661,8 @@ class Router:
     def __init__(
         self,
         name: str,
-        bare_calls: BareCallActions | None = None,
-        descr: str | None = None,
+        bare_calls: BareCallActions = None,
+        descr: str = None,
     ) -> None:
         """
         Args:
@@ -547,9 +702,9 @@ class Router:
     def add_method_handler(
         self,
         method_call: ABIReturnSubroutine,
-        overriding_name: str | None = None,
-        method_config: MethodConfig | None = None,
-        description: str | None = None,
+        overriding_name: str = None,
+        method_config: MethodConfig = None,
+        description: str = None,
     ) -> ABIReturnSubroutine:
         """Add a method call handler to this Router.
 
@@ -605,17 +760,17 @@ class Router:
 
     def method(
         self,
-        func: Callable | None = None,
+        func: Callable = None,
         /,
         *,
-        name: str | None = None,
-        description: str | None = None,
-        no_op: CallConfig | None = None,
-        opt_in: CallConfig | None = None,
-        close_out: CallConfig | None = None,
-        clear_state: CallConfig | None = None,
-        update_application: CallConfig | None = None,
-        delete_application: CallConfig | None = None,
+        name: str = None,
+        description: str = None,
+        no_op: CallConfig = None,
+        opt_in: CallConfig = None,
+        close_out: CallConfig = None,
+        clear_state: CallConfig = None,
+        update_application: CallConfig = None,
+        delete_application: CallConfig = None,
     ):
         """This is an alternative way to register a method, as supposed to :code:`add_method_handler`.
 
@@ -696,7 +851,9 @@ class Router:
 
         return sdk_abi.Contract(self.name, self.methods, self.descr)
 
-    def build_program(self) -> tuple[Expr, Expr, sdk_abi.Contract]:
+    def build_program(
+        self, use_frame_pt: bool = False
+    ) -> tuple[Expr, Expr, sdk_abi.Contract]:
         """
         Constructs ASTs for approval and clear-state programs from the registered methods and bare
         app calls in the router, and also generates a Contract object to allow client read and call
@@ -713,8 +870,8 @@ class Router:
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
         return (
-            self.approval_ast.program_construction(),
-            self.clear_state_ast.program_construction(),
+            self.approval_ast.program_construction(use_frame_pt=use_frame_pt),
+            self.clear_state_ast.program_construction(use_frame_pt=use_frame_pt),
             self.contract_construct(),
         )
 
@@ -742,7 +899,9 @@ class Router:
             * clear_state_program: compiled clear-state program string
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
-        ap, csp, contract = self.build_program()
+        optimize = optimize if optimize else OptimizeOptions()
+
+        ap, csp, contract = self.build_program(optimize.use_frame_pointers(version))
         ap_compiled = compileTeal(
             ap,
             Mode.Application,

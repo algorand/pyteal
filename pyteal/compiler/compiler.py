@@ -264,6 +264,7 @@ def compileTeal(
             the compiled program's size. Enabling this option requires a minimum program version of 3.
             Defaults to false.
         optimize (optional): OptimizeOptions that determine which optimizations will be applied.
+        frame_pointers (optional): An option to opt out of building with frame pointer after version 8.
 
     Returns:
         A TEAL assembly program compiled from the input expression.

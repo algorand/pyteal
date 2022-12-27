@@ -3413,3 +3413,12 @@ approveifodd_2_l2:
 int 1
 return""".strip()
     assert actual_csp_without_oc_compiled == expected_csp_without_oc
+
+    _router_without_oc = pt.Router("yetAnotherContractConstructedFromRouter")
+    add_methods_to_router(_router_without_oc)
+    (
+        actual_ap_without_oc_compiled,
+        actual_csp_without_oc_compiled,
+        _,
+    ) = _router_without_oc.compile_program(version=8)
+    print(actual_ap_without_oc_compiled)
