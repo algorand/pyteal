@@ -17,6 +17,7 @@ AVM Version  PyTeal Version
 5            >= 0.9.0
 6            >= 0.10.0
 7            >= 0.15.0
+8            >= 0.20.0
 ============ ==============
 
 .. _version pragmas:
