@@ -22,6 +22,7 @@ from pyteal.ast.int import Int
 from pyteal.ast.bytes import Bytes
 from pyteal.ast.unaryexpr import Len
 from pyteal.ast.binaryexpr import ExtractUint16, GetBit
+from pyteal.ast.ternaryexpr import SetBit
 from pyteal.ast.naryexpr import Concat
 from pyteal.ast.abstractvar import alloc_abstract_var
 
@@ -155,7 +156,7 @@ def _index_tuple_bytes(
         else:
             # value is the beginning of a bool sequence (or a single bool)
             bitOffsetInEncoded = offset * NUM_BITS_IN_BYTE
-        return GetBit(encoded, Int(bitOffsetInEncoded))
+        return SetBit(Bytes(b"\x00"), Int(0), GetBit(encoded, Int(bitOffsetInEncoded)))
 
     if valueType.is_dynamic():
         hasNextDynamicValue = False
