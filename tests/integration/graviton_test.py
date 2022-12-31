@@ -22,7 +22,6 @@ from graviton.blackbox import (
     DryRunInspector,
     mode_has_property,
 )
-
 from graviton.invariant import Invariant, PredicateKind
 
 PATH = Path.cwd() / "tests" / "integration"
@@ -501,8 +500,7 @@ def blackbox_test_runner(
     assert isinstance(predicates, dict)
 
     # 3. execute dry run sequence:
-    execute = DryRunExecutor.execute_one_dryrun
-    inspectors = list(map(lambda a: execute(algod, teal, a, exec_mode), inputs))
+    inspectors = DryRunExecutor(algod, exec_mode, teal).run_sequence(inputs)
 
     # 4. Statistical report:
     csvpath = GENERATED / "blackbox" / f"{tealfile}_v{version}.csv"
@@ -579,10 +577,10 @@ def blackbox_pyteal_example1():
 
     def evaluate_and_check(version: int):
         # evaluate the programs
-        app_result = PyTealDryRunExecutor(square, Mode.Application).dryrun(
+        app_result = PyTealDryRunExecutor(square, Mode.Application).dryrun_one(
             args, compiler_version=version
         )
-        lsig_result = PyTealDryRunExecutor(square, Mode.Signature).dryrun(
+        lsig_result = PyTealDryRunExecutor(square, Mode.Signature).dryrun_one(
             args, compiler_version=version
         )
 
@@ -665,7 +663,7 @@ def blackbox_pyteal_example2():
 
     def test_and_report(version: int):
         # assert that each result is that same as what Python's math.gcd() computes
-        inspectors = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_on_sequence(
+        inspectors = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_sequence(
             inputs, compiler_version=version
         )
         for i, result in enumerate(inspectors):
@@ -759,7 +757,7 @@ def blackbox_pyteal_example3():
         )
 
     # Execute on the input sequence to get a dry-run inspectors:
-    inspectors6 = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_on_sequence(
+    inspectors6 = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_sequence(
         inputs, compiler_version=6
     )
 
@@ -768,7 +766,7 @@ def blackbox_pyteal_example3():
         Invariant(predicate).validates(property, inspectors6)
 
     # Execute on the input sequence to get a dry-run inspectors:
-    inspectors8 = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_on_sequence(
+    inspectors8 = PyTealDryRunExecutor(euclid, Mode.Application).dryrun_sequence(
         inputs, compiler_version=8
     )
 
@@ -850,10 +848,8 @@ def blackbox_pyteal_example4():
         inputs.append(tuple([random.sample(choices, n)]))
 
     def test_and_report_for_app_and_lsig(_version: int):
-        app_inspectors = app_pytealer.dryrun_on_sequence(
-            inputs, compiler_version=_version
-        )
-        lsig_inspectors = lsig_pytealer.dryrun_on_sequence(
+        app_inspectors = app_pytealer.dryrun_sequence(inputs, compiler_version=_version)
+        lsig_inspectors = lsig_pytealer.dryrun_sequence(
             inputs, compiler_version=_version
         )
         for i in range(N):
@@ -926,13 +922,11 @@ def blackbox_pyteal_example5():
     app_pytealer = PyTealDryRunExecutor(cubed, Mode.Application)
     lsig_pytealer = PyTealDryRunExecutor(cubed, Mode.Signature)
 
-    inputs = [[i] for i in range(1, 11)]
+    inputs = [(i,) for i in range(1, 11)]
 
     def test_app_and_lsig(_version: int):
-        app_inspect = app_pytealer.dryrun_on_sequence(inputs, compiler_version=_version)
-        lsig_inspect = lsig_pytealer.dryrun_on_sequence(
-            inputs, compiler_version=_version
-        )
+        app_inspect = app_pytealer.dryrun_sequence(inputs, compiler_version=_version)
+        lsig_inspect = lsig_pytealer.dryrun_sequence(inputs, compiler_version=_version)
 
         for index, inspect in enumerate(app_inspect):
             input_var = inputs[index][0]
@@ -1001,7 +995,7 @@ def blackbox_pyteal_while_continue_test():
 
     for x in range(30):
         args = [x]
-        lsig_result = executor.dryrun(args)
+        lsig_result = executor.dryrun_one(args)
         if x == 0:
             assert not lsig_result.passed()
         else:
@@ -1011,7 +1005,7 @@ def blackbox_pyteal_while_continue_test():
             args, "stack_top() gave unexpected results for lsig"
         )
 
-        lsig_result = executor.dryrun(args, compiler_version=8)
+        lsig_result = executor.dryrun_one(args, compiler_version=8)
         if x == 0:
             assert not lsig_result.passed()
         else:
@@ -1076,12 +1070,12 @@ def blackbox_pyteal_named_tupleness_test():
     lsig_pytealer = PyTealDryRunExecutor(named_tuple_field_access, Mode.Signature)
     args = (False, b"1" * 32, (0, False), b"0" * 10, [True] * 4, 0)
 
-    inspector6 = lsig_pytealer.dryrun(args, compiler_version=6)
+    inspector6 = lsig_pytealer.dryrun_one(args, compiler_version=6)
 
     assert inspector6.stack_top() == 1
     assert inspector6.passed()
 
-    inspector8 = lsig_pytealer.dryrun(args, compiler_version=8)
+    inspector8 = lsig_pytealer.dryrun_one(args, compiler_version=8)
     assert inspector8.passed()
     assert inspector8.stack_top() == 1
 
@@ -1092,7 +1086,7 @@ def blackbox_pyteal_named_tupleness_test():
         msg="Mode.Signature NamedTuple example",
     )
 
-    inspector = lsig_pytealer.dryrun(args, compiler_version=8)
+    inspector = lsig_pytealer.dryrun_one(args, compiler_version=8)
     assert inspector.passed()
     assert inspector.stack_top() == 1
 

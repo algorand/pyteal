@@ -1,5 +1,4 @@
-from typing import Any, Callable, Generic, Optional, Sequence, TypeVar, cast
-from dataclasses import dataclass
+from typing import Any, Callable, Sequence, cast
 
 import algosdk.abi
 from algosdk.v2client import algod
@@ -138,37 +137,13 @@ def Blackbox(input_types: list[TealType | None]):
 # ---- API ---- #
 
 
-Output = TypeVar("Output")
-Lazy = Callable[[], Output]
-
-
-@dataclass(frozen=True)
-class _MatchMode(Generic[Output]):
-    runner: Optional["PyTealDryRunExecutor"]
-    app_case: Lazy
-    signature_case: Lazy
-    trace: Any = None
-
-    def __post_init__(self):
-        if self.runner and self.trace:
-            self.runner.add_trace(self.trace)
-
-    def __call__(self, mode: Mode, *args, **kwargs) -> Output:
-        match mode:
-            case Mode.Application:
-                return self.app_case()
-            case Mode.Signature:
-                return self.signature_case()
-            case _:
-                raise Exception(f"Unknown mode {mode} of type {type(mode)}")
-
-
 def mode_to_execution_mode(mode: Mode) -> blackbox.ExecutionMode:
-    return _MatchMode(
-        runner=None,
-        app_case=lambda: blackbox.ExecutionMode.Application,
-        signature_case=lambda: blackbox.ExecutionMode.Signature,
-    )(mode)
+    if mode == Mode.Application:
+        return blackbox.ExecutionMode.Application
+    if mode == Mode.Signature:
+        return blackbox.ExecutionMode.Signature
+
+    raise ValueError(f"Can't handle {mode=}")
 
 
 class PyTealDryRunExecutor:
@@ -182,9 +157,11 @@ class PyTealDryRunExecutor:
             mode: type of program to produce: logic sig (Mode.Signature) or app (Mode.Application)
         """
         input_types = subr.input_types
-        assert (
-            input_types is not None
-        ), "please provide input_types in your @Subroutine or @ABIReturnSubroutine annotation (this is crucial for generating proper end-to-end testable PyTeal)"
+        assert input_types is not None, (
+            "please provide input_types in your @Subroutine or @ABIReturnSubroutine "
+            "annotation "
+            "(this is crucial for generating proper end-to-end testable PyTeal)"
+        )
 
         self.subr, self.mode, self.input_types = subr, mode, input_types
         match subr.subroutine:
@@ -417,68 +394,40 @@ class PyTealDryRunExecutor:
         return approval
 
     def compile(self, version: int, assemble_constants: bool = False) -> str:
-        return _MatchMode(
-            runner=self,
-            app_case=lambda: compileTeal(
-                self.program(),
-                self.mode,
-                version=version,
-                assembleConstants=assemble_constants,
-            ),
-            signature_case=lambda: compileTeal(
-                self.program(),
-                self.mode,
-                version=version,
-                assembleConstants=assemble_constants,
-            ),
-        )(self.mode)
+        return compileTeal(
+            self.program(),
+            self.mode,
+            version=version,
+            assembleConstants=assemble_constants,
+        )
 
-    def dryrun_on_sequence(
+    def dryrun_sequence(
         self,
         inputs: list[Sequence[PyTypes]],
         compiler_version=6,
     ) -> list[DryRunInspector]:
         teal = self.compile(compiler_version)
-        return _MatchMode(
-            self,
-            app_case=lambda: DryRunExecutor.dryrun_app_on_sequence(
+        return cast(
+            list[DryRunInspector],
+            DryRunExecutor(
                 algod=algod_with_assertion(),
+                mode=mode_to_execution_mode(self.mode),
                 teal=teal,
-                inputs=inputs,
                 abi_method_signature=self.abi_method_signature(),
                 omit_method_selector=True,
-            ),
-            signature_case=lambda: DryRunExecutor.dryrun_logicsig_on_sequence(
-                algod=algod_with_assertion(),
-                teal=teal,
-                inputs=inputs,
-                abi_method_signature=self.abi_method_signature(),
-                omit_method_selector=True,
-            ),
-            trace=teal,
-        )(self.mode)
+            ).run_sequence(inputs),
+        )
 
-    def dryrun(
+    def dryrun_one(
         self,
         args: Sequence[bytes | str | int],
         compiler_version=6,
     ) -> DryRunInspector:
         teal = self.compile(compiler_version)
-        return _MatchMode(
-            self,
-            app_case=lambda: DryRunExecutor.dryrun_app(
-                algod_with_assertion(),
-                teal,
-                args,
-                abi_method_signature=self.abi_method_signature(),
-                omit_method_selector=True,
-            ),
-            signature_case=lambda: DryRunExecutor.dryrun_logicsig(
-                algod_with_assertion(),
-                teal,
-                args,
-                abi_method_signature=self.abi_method_signature(),
-                omit_method_selector=True,
-            ),
-            trace=teal,
-        )(self.mode)
+        return DryRunExecutor(
+            algod=algod_with_assertion(),
+            mode=mode_to_execution_mode(self.mode),
+            teal=teal,
+            abi_method_signature=self.abi_method_signature(),
+            omit_method_selector=True,
+        ).run_one(args)

@@ -10,7 +10,12 @@ from tests.blackbox import (
     PyTealDryRunExecutor,
 )
 import tests
-from graviton.blackbox import DryRunExecutor, DryRunInspector, ExecutionMode
+from graviton.blackbox import (
+    DryRunExecutor,
+    DryRunInspector,
+    ExecutionMode,
+    DryRunTransactionParams as TxParams,
+)
 
 from algosdk.v2client.models import Account
 import algosdk
@@ -22,18 +27,19 @@ def _dryrun(
     accounts: list[Account],
 ) -> DryRunInspector:
     e = PyTealDryRunExecutor(bw, pt.Mode.Application)
-    return DryRunExecutor.execute_one_dryrun(
+    return DryRunExecutor(
         tests.blackbox.algod_with_assertion(),
-        e.compile(pt.compiler.MAX_PROGRAM_VERSION),
-        [],
         ExecutionMode.Application,
-        txn_params=DryRunExecutor.transaction_params(
+        e.compile(pt.compiler.MAX_PROGRAM_VERSION),
+    ).run_one(
+        [],
+        txn_params=TxParams.for_app(
             sender=graviton.models.ZERO_ADDRESS,
             sp=sp,
             index=DryRunExecutor.EXISTING_APP_CALL,
             on_complete=algosdk.future.transaction.OnComplete.NoOpOC,
+            dryrun_accounts=accounts,
         ),
-        accounts=accounts,
     )
 
 

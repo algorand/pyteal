@@ -12,6 +12,8 @@ from graviton.blackbox import (
     DryRunExecutor as Executor,
     DryRunInspector as Inspector,
     DryRunProperty as DRProp,
+    ExecutionMode,
+    DryRunTransactionParams as TxParams,
 )
 from graviton.invariant import Invariant
 
@@ -87,7 +89,11 @@ def factorizer_game_check(a: int, p: int, q: int, M: int, N: int):
     for args, amt in zip(inputs, amts):
         txn = {"amt": amt}
         txns.append(txn)
-        inspectors.append(Executor.dryrun_logicsig(ALGOD, compiled, args, **txn))
+        inspectors.append(
+            Executor(ALGOD, ExecutionMode.Signature, compiled).run_one(
+                args, txn_params=TxParams(**txn)
+            ),
+        )
 
     print(
         f"generating a report for (a,p,q) = {a,p,q} with {M, N} dry-run calls and spreadsheet rows"
