@@ -4,7 +4,11 @@ import algosdk.abi
 from algosdk.v2client import algod
 
 from graviton import blackbox
-from graviton.blackbox import DryRunInspector, DryRunExecutor
+from graviton.blackbox import (
+    DryRunInspector,
+    DryRunExecutor,
+    DryRunTransactionParams as TxParams,
+)
 from graviton.models import PyTypes
 
 from pyteal.ast.subroutine import OutputKwArgInfo
@@ -413,13 +417,26 @@ class PyTealDryRunExecutor:
     def dryrun_sequence(
         self,
         inputs: list[Sequence[PyTypes]],
-        compiler_version: int = 6,
+        *,
+        compiler_version=6,
+        txn_params: TxParams | None = None,
+        verbose: bool = False,
     ) -> list[DryRunInspector]:
-        return cast(list, self.executor(compiler_version).run_sequence(inputs))
+        return cast(
+            list,
+            self.executor(compiler_version).run_sequence(
+                inputs, txn_params=txn_params, verbose=verbose
+            ),
+        )
 
     def dryrun_one(
         self,
         args: Sequence[bytes | str | int],
+        *,
         compiler_version=6,
+        txn_params: TxParams | None = None,
+        verbose: bool = False,
     ) -> DryRunInspector:
-        return self.executor(compiler_version).run_one(args)
+        return self.executor(compiler_version).run_one(
+            args, txn_params=txn_params, verbose=verbose
+        )
