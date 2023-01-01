@@ -9,11 +9,9 @@ from tests.blackbox import (
     BlackboxWrapper,
     PyTealDryRunExecutor,
 )
-import tests
 from graviton.blackbox import (
     DryRunExecutor,
     DryRunInspector,
-    ExecutionMode,
     DryRunTransactionParams as TxParams,
 )
 
@@ -26,13 +24,9 @@ def _dryrun(
     sp: algosdk.future.transaction.SuggestedParams,
     accounts: list[Account],
 ) -> DryRunInspector:
-    e = PyTealDryRunExecutor(bw, pt.Mode.Application)
-    return DryRunExecutor(
-        tests.blackbox.algod_with_assertion(),
-        ExecutionMode.Application,
-        e.compile(pt.compiler.MAX_PROGRAM_VERSION),
-    ).run_one(
+    return PyTealDryRunExecutor(bw, pt.Mode.Application).dryrun_one(
         [],
+        compiler_version=pt.compiler.MAX_PROGRAM_VERSION,
         txn_params=TxParams.for_app(
             sender=graviton.models.ZERO_ADDRESS,
             sp=sp,
