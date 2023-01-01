@@ -180,11 +180,6 @@ class PyTealDryRunExecutor:
 
         self._pyteal_lambda: Callable[..., Expr] = approval
 
-        self.traces: list = []
-
-    def add_trace(self, trace: Any) -> None:
-        self.traces.append(trace)
-
     def is_abi(self) -> bool:
         return isinstance(self.subr.subroutine, ABIReturnSubroutine)
 
