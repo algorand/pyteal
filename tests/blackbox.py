@@ -401,33 +401,25 @@ class PyTealDryRunExecutor:
             assembleConstants=assemble_constants,
         )
 
+    def executor(self, compiler_version: int = 6) -> DryRunExecutor:
+        return DryRunExecutor(
+            algod=algod_with_assertion(),
+            mode=mode_to_execution_mode(self.mode),
+            teal=self.compile(compiler_version),
+            abi_method_signature=self.abi_method_signature(),
+            omit_method_selector=True,
+        )
+
     def dryrun_sequence(
         self,
         inputs: list[Sequence[PyTypes]],
-        compiler_version=6,
+        compiler_version: int = 6,
     ) -> list[DryRunInspector]:
-        teal = self.compile(compiler_version)
-        return cast(
-            list[DryRunInspector],
-            DryRunExecutor(
-                algod=algod_with_assertion(),
-                mode=mode_to_execution_mode(self.mode),
-                teal=teal,
-                abi_method_signature=self.abi_method_signature(),
-                omit_method_selector=True,
-            ).run_sequence(inputs),
-        )
+        return cast(list, self.executor(compiler_version).run_sequence(inputs))
 
     def dryrun_one(
         self,
         args: Sequence[bytes | str | int],
         compiler_version=6,
     ) -> DryRunInspector:
-        teal = self.compile(compiler_version)
-        return DryRunExecutor(
-            algod=algod_with_assertion(),
-            mode=mode_to_execution_mode(self.mode),
-            teal=teal,
-            abi_method_signature=self.abi_method_signature(),
-            omit_method_selector=True,
-        ).run_one(args)
+        return self.executor(compiler_version).run_one(args)
