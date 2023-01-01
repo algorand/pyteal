@@ -1,4 +1,4 @@
-from typing import Any, Callable, Sequence, cast
+from typing import Callable, Sequence, cast
 
 import algosdk.abi
 from algosdk.v2client import algod
