@@ -9,7 +9,7 @@ import examples.signature.factorizer_game as factorizer
 
 from tests.blackbox import algod_with_assertion
 from graviton.blackbox import (
-    DryRunExecutor as Executor,
+    DryRunExecutor,
     DryRunInspector as Inspector,
     DryRunProperty as DRProp,
     ExecutionMode,
@@ -71,6 +71,8 @@ def factorizer_game_check(a: int, p: int, q: int, M: int, N: int):
         mode=Mode.Signature,
         assembleConstants=True,
     )
+    executor = DryRunExecutor(ALGOD, ExecutionMode.Signature, compiled)
+
     inputs = list(inputs_for_coefficients(a, p, q, M, N))
     N = len(inputs)
 
@@ -90,9 +92,7 @@ def factorizer_game_check(a: int, p: int, q: int, M: int, N: int):
         txn = {"amt": amt}
         txns.append(txn)
         inspectors.append(
-            Executor(ALGOD, ExecutionMode.Signature, compiled).run_one(
-                args, txn_params=TxParams(**txn)
-            ),
+            executor.run_one(args, txn_params=TxParams(**txn)),
         )
 
     print(
