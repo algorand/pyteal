@@ -209,7 +209,7 @@ class ArrayElement(ComputedValue[T]):
     def produced_type_spec(self) -> TypeSpec:
         return self.array.type_spec().value_type_spec()
 
-    def __proto_encoding_store_into(self, output: T | None = None) -> Expr:
+    def __prototype_encoding_store_into(self, output: T | None = None) -> Expr:
         if output is not None and output.type_spec() != self.produced_type_spec():
             raise TealInputError("Output type does not match value type")
 
@@ -301,10 +301,10 @@ class ArrayElement(ComputedValue[T]):
         Returns:
             An expression that stores the byte string of the array element into value `output`.
         """
-        return self.__proto_encoding_store_into(output)
+        return self.__prototype_encoding_store_into(output)
 
     def encode(self) -> Expr:
-        return self.__proto_encoding_store_into()
+        return self.__prototype_encoding_store_into()
 
 
 ArrayElement.__module__ = "pyteal.abi"
