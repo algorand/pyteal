@@ -40,7 +40,7 @@ from pyteal.ast.abi.uint import NUM_BITS_IN_BYTE, Uint16
 from pyteal.ast.abi.util import (
     substring_for_decoding,
     type_spec_from_annotation,
-    _get_or_store_encoded_bytes,
+    _GetAgainstEncoding,
 )
 
 
@@ -171,12 +171,11 @@ class _IndexTuple:
                 # value is the beginning of a bool sequence (or a single bool)
                 bitOffsetInEncoded = offset * NUM_BITS_IN_BYTE
 
-            return _get_or_store_encoded_bytes(
+            return _GetAgainstEncoding(
                 BoolTypeSpec(),
                 self.encoded,
-                output,
                 start_index=Int(bitOffsetInEncoded),
-            )
+            ).get_or_store(output)
 
         if valueType.is_dynamic():
             hasNextDynamicValue = False
@@ -205,20 +204,19 @@ class _IndexTuple:
             if not hasNextDynamicValue:
                 # This is the final dynamic value, so decode the substring from start_index to the end of
                 # encoded
-                return _get_or_store_encoded_bytes(
-                    valueType, self.encoded, output, start_index=start_index
-                )
+                return _GetAgainstEncoding(
+                    valueType, self.encoded, start_index=start_index
+                ).get_or_store(output)
 
             # There is a dynamic value after this one, and end_index is where its tail starts, so decode
             # the substring from start_index to end_index
             end_index = ExtractUint16(self.encoded, Int(nextDynamicValueOffset))
-            return _get_or_store_encoded_bytes(
+            return _GetAgainstEncoding(
                 valueType,
                 self.encoded,
-                output,
                 start_index=start_index,
                 end_index=end_index,
-            )
+            ).get_or_store(output)
 
         start_index = Int(offset)
         length = Int(valueType.byte_length_static())
@@ -232,20 +230,20 @@ class _IndexTuple:
                     return output.decode(self.encoded)
             # This is the last value in the tuple, so decode the substring from start_index to the end of
             # encoded
-            return _get_or_store_encoded_bytes(
-                valueType, self.encoded, output, start_index=start_index
-            )
+            return _GetAgainstEncoding(
+                valueType, self.encoded, start_index=start_index
+            ).get_or_store(output)
 
         if offset == 0:
             # This is the first value in the tuple, so decode the substring from 0 with length length
-            return _get_or_store_encoded_bytes(
-                valueType, self.encoded, output, length=length
-            )
+            return _GetAgainstEncoding(
+                valueType, self.encoded, length=length
+            ).get_or_store(output)
 
         # This is not the first or last value, so decode the substring from start_index with length length
-        return _get_or_store_encoded_bytes(
-            valueType, self.encoded, output, start_index=start_index, length=length
-        )
+        return _GetAgainstEncoding(
+            valueType, self.encoded, start_index=start_index, length=length
+        ).get_or_store(output)
 
 
 class TupleTypeSpec(TypeSpec):

@@ -1,3 +1,4 @@
+from dataclasses import dataclass, field
 from typing import (
     Any,
     Literal,
@@ -599,46 +600,48 @@ def type_spec_is_assignable_to(a: TypeSpec, b: TypeSpec) -> bool:
     return False
 
 
-def _get_or_store_encoded_bytes(
-    encoding_type: TypeSpec,
-    full_encoding: Expr,
-    output: BaseType | None = None,
-    *,
-    start_index: Expr | None = None,
-    end_index: Expr | None = None,
-    length: Expr | None = None,
-) -> Expr:
-    from pyteal.ast.abi import BoolTypeSpec, Bool
+@dataclass
+class _GetAgainstEncoding:
+    type_spec: TypeSpec
+    full_encoding: Expr
+    start_index: Expr | None = field(kw_only=True, default=None)
+    end_index: Expr | None = field(kw_only=True, default=None)
+    length: Expr | None = field(kw_only=True, default=None)
 
-    require_type(full_encoding, TealType.bytes)
+    def __post_init__(self):
+        from pyteal.ast.abi import BoolTypeSpec
 
-    match encoding_type:
-        case BoolTypeSpec():
-            if start_index is None:
-                raise TealInputError(
-                    "on BoolTypeSpec, requiring start index to be not None."
-                )
+        require_type(self.full_encoding, TealType.bytes)
+        if self.type_spec == BoolTypeSpec():
+            require_type(self.start_index, TealType.uint64)
 
-            if output is None:
-                return SetBit(
-                    Bytes(b"\x00"),
-                    Int(0),
-                    GetBit(full_encoding, start_index),
-                )
-            else:
-                return cast(Bool, output).decode_bit(full_encoding, start_index)
-        case _:
-            if output is None:
-                return substring_for_decoding(
-                    encoded=full_encoding,
-                    start_index=start_index,
-                    end_index=end_index,
-                    length=length,
-                )
-            else:
-                return output.decode(
-                    full_encoding,
-                    start_index=start_index,
-                    end_index=end_index,
-                    length=length,
-                )
+    def get_or_store(self, output: BaseType | None = None) -> Expr:
+        from pyteal.ast.abi import BoolTypeSpec, Bool
+
+        match self.type_spec:
+            case BoolTypeSpec():
+                if output is None:
+                    return SetBit(
+                        Bytes(b"\x00"),
+                        Int(0),
+                        GetBit(self.full_encoding, cast(Expr, self.start_index)),
+                    )
+                else:
+                    return cast(Bool, output).decode_bit(
+                        self.full_encoding, cast(Expr, self.start_index)
+                    )
+            case _:
+                if output is None:
+                    return substring_for_decoding(
+                        encoded=self.full_encoding,
+                        start_index=self.start_index,
+                        end_index=self.end_index,
+                        length=self.length,
+                    )
+                else:
+                    return output.decode(
+                        self.full_encoding,
+                        start_index=self.start_index,
+                        end_index=self.end_index,
+                        length=self.length,
+                    )

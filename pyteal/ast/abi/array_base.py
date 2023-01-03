@@ -24,7 +24,7 @@ from pyteal.ast.abi.bool import BoolTypeSpec
 from pyteal.ast.abi.uint import Uint16, Uint16TypeSpec
 from pyteal.ast.abi.util import (
     substring_for_decoding,
-    _get_or_store_encoded_bytes,
+    _GetAgainstEncoding,
 )
 
 T = TypeVar("T", bound=BaseType)
@@ -224,9 +224,9 @@ class ArrayElement(ComputedValue[T]):
             bitIndex = self.index
             if arrayType.is_dynamic():
                 bitIndex = bitIndex + Int(Uint16TypeSpec().bit_size())
-            return _get_or_store_encoded_bytes(
-                BoolTypeSpec(), encodedArray, output, start_index=bitIndex
-            )
+            return _GetAgainstEncoding(
+                BoolTypeSpec(), encodedArray, start_index=bitIndex
+            ).get_or_store(output)
 
         # Compute the byteIndex (first byte indicating the element encoding)
         # (If the array is dynamic, add 2 to byte index for dynamic array length uint16 prefix)
@@ -264,26 +264,24 @@ class ArrayElement(ComputedValue[T]):
                 .Else(nextValueStart)
             )
 
-            return _get_or_store_encoded_bytes(
+            return _GetAgainstEncoding(
                 arrayType.value_type_spec(),
                 encodedArray,
-                output,
                 start_index=valueStart,
                 end_index=valueEnd,
-            )
+            ).get_or_store(output)
 
         # Handling case for array elements are static:
         # since array._stride() is element's static byte length
         # we partition the substring for array element.
         valueStart = byteIndex
         valueLength = Int(arrayType._stride())
-        return _get_or_store_encoded_bytes(
+        return _GetAgainstEncoding(
             arrayType.value_type_spec(),
             encodedArray,
-            output,
             start_index=valueStart,
             length=valueLength,
-        )
+        ).get_or_store(output)
 
     def store_into(self, output: T) -> Expr:
         """Partitions the byte string of the given ABI array and stores the byte string of array
