@@ -15,6 +15,9 @@ import algosdk.abi
 from pyteal.errors import TealInputError
 from pyteal.types import require_type, TealType
 from pyteal.ast.expr import Expr
+from pyteal.ast.bytes import Bytes
+from pyteal.ast.binaryexpr import GetBit
+from pyteal.ast.ternaryexpr import SetBit
 from pyteal.ast.int import Int
 from pyteal.ast.substring import Extract, Substring, Suffix
 from pyteal.ast.abi.type import TypeSpec, BaseType
@@ -606,9 +609,6 @@ def _get_or_store_encoded_bytes(
     length: Expr | None = None,
 ) -> Expr:
     from pyteal.ast.abi import BoolTypeSpec, Bool
-    from pyteal.ast.bytes import Bytes
-    from pyteal.ast.binaryexpr import GetBit
-    from pyteal.ast.ternaryexpr import SetBit
 
     require_type(full_encoding, TealType.bytes)
 
