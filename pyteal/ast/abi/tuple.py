@@ -15,15 +15,14 @@ from typing import (
 )
 from collections import OrderedDict
 
-from pyteal.types import TealType
+from pyteal.types import TealType, require_type
 from pyteal.errors import TealInputError, TealInternalError
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.int import Int
 from pyteal.ast.bytes import Bytes
 from pyteal.ast.unaryexpr import Len
-from pyteal.ast.binaryexpr import ExtractUint16, GetBit
-from pyteal.ast.ternaryexpr import SetBit
+from pyteal.ast.binaryexpr import ExtractUint16
 from pyteal.ast.naryexpr import Concat
 from pyteal.ast.abstractvar import alloc_abstract_var
 
@@ -38,7 +37,11 @@ from pyteal.ast.abi.bool import (
     _bool_aware_static_byte_length,
 )
 from pyteal.ast.abi.uint import NUM_BITS_IN_BYTE, Uint16
-from pyteal.ast.abi.util import substring_for_decoding, type_spec_from_annotation
+from pyteal.ast.abi.util import (
+    substring_for_decoding,
+    type_spec_from_annotation,
+    _get_encoding_or_store_from_encoded_bytes,
+)
 
 
 def _encode_tuple(values: Sequence[BaseType]) -> Expr:
@@ -124,6 +127,9 @@ class _IndexTuple:
     value_types: Sequence[TypeSpec]
     encoded: Expr
 
+    def __post_init__(self):
+        require_type(self.encoded, TealType.bytes)
+
     def __call__(self, index: int, output: BaseType | None = None) -> Expr:
         if index not in range(len(self.value_types)):
             raise ValueError("Index outside of range")
@@ -165,16 +171,12 @@ class _IndexTuple:
                 # value is the beginning of a bool sequence (or a single bool)
                 bitOffsetInEncoded = offset * NUM_BITS_IN_BYTE
 
-            if output is None:
-                return SetBit(
-                    Bytes(b"\x00"),
-                    Int(0),
-                    GetBit(self.encoded, Int(bitOffsetInEncoded)),
-                )
-            else:
-                return cast(Bool, output).decode_bit(
-                    self.encoded, Int(bitOffsetInEncoded)
-                )
+            return _get_encoding_or_store_from_encoded_bytes(
+                BoolTypeSpec(),
+                self.encoded,
+                output,
+                start_index=Int(bitOffsetInEncoded),
+            )
 
         if valueType.is_dynamic():
             hasNextDynamicValue = False
@@ -203,22 +205,20 @@ class _IndexTuple:
             if not hasNextDynamicValue:
                 # This is the final dynamic value, so decode the substring from start_index to the end of
                 # encoded
-                if output is None:
-                    return substring_for_decoding(self.encoded, start_index=start_index)
-                else:
-                    return output.decode(self.encoded, start_index=start_index)
+                return _get_encoding_or_store_from_encoded_bytes(
+                    valueType, self.encoded, output, start_index=start_index
+                )
 
             # There is a dynamic value after this one, and end_index is where its tail starts, so decode
             # the substring from start_index to end_index
             end_index = ExtractUint16(self.encoded, Int(nextDynamicValueOffset))
-            if output is None:
-                return substring_for_decoding(
-                    self.encoded, start_index=start_index, end_index=end_index
-                )
-            else:
-                return output.decode(
-                    self.encoded, start_index=start_index, end_index=end_index
-                )
+            return _get_encoding_or_store_from_encoded_bytes(
+                valueType,
+                self.encoded,
+                output,
+                start_index=start_index,
+                end_index=end_index,
+            )
 
         start_index = Int(offset)
         length = Int(valueType.byte_length_static())
@@ -232,25 +232,20 @@ class _IndexTuple:
                     return output.decode(self.encoded)
             # This is the last value in the tuple, so decode the substring from start_index to the end of
             # encoded
-            if output is None:
-                return substring_for_decoding(self.encoded, start_index=start_index)
-            else:
-                return output.decode(self.encoded, start_index=start_index)
+            return _get_encoding_or_store_from_encoded_bytes(
+                valueType, self.encoded, output, start_index=start_index
+            )
 
         if offset == 0:
             # This is the first value in the tuple, so decode the substring from 0 with length length
-            if output is None:
-                return substring_for_decoding(self.encoded, length=length)
-            else:
-                return output.decode(self.encoded, length=length)
+            return _get_encoding_or_store_from_encoded_bytes(
+                valueType, self.encoded, output, length=length
+            )
 
         # This is not the first or last value, so decode the substring from start_index with length length
-        if output is None:
-            return substring_for_decoding(
-                self.encoded, start_index=start_index, length=length
-            )
-        else:
-            return output.decode(self.encoded, start_index=start_index, length=length)
+        return _get_encoding_or_store_from_encoded_bytes(
+            valueType, self.encoded, output, start_index=start_index, length=length
+        )
 
 
 class TupleTypeSpec(TypeSpec):

@@ -13,18 +13,19 @@ from pyteal.errors import TealInputError
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.int import Int
-from pyteal.ast.bytes import Bytes
 from pyteal.ast.if_ import If
 from pyteal.ast.unaryexpr import Len
-from pyteal.ast.binaryexpr import ExtractUint16, GetBit
-from pyteal.ast.ternaryexpr import SetBit
+from pyteal.ast.binaryexpr import ExtractUint16
 from pyteal.ast.naryexpr import Concat
 
 from pyteal.ast.abi.type import TypeSpec, BaseType, ComputedValue
 from pyteal.ast.abi.tuple import _encode_tuple
-from pyteal.ast.abi.bool import Bool, BoolTypeSpec
+from pyteal.ast.abi.bool import BoolTypeSpec
 from pyteal.ast.abi.uint import Uint16, Uint16TypeSpec
-from pyteal.ast.abi.util import substring_for_decoding
+from pyteal.ast.abi.util import (
+    substring_for_decoding,
+    _get_encoding_or_store_from_encoded_bytes,
+)
 
 T = TypeVar("T", bound=BaseType)
 
@@ -223,11 +224,9 @@ class ArrayElement(ComputedValue[T]):
             bitIndex = self.index
             if arrayType.is_dynamic():
                 bitIndex = bitIndex + Int(Uint16TypeSpec().bit_size())
-
-            if output is not None:
-                return cast(Bool, output).decode_bit(encodedArray, bitIndex)
-            else:
-                return SetBit(Bytes(b"\x00"), Int(0), GetBit(encodedArray, bitIndex))
+            return _get_encoding_or_store_from_encoded_bytes(
+                BoolTypeSpec(), encodedArray, output, start_index=bitIndex
+            )
 
         # Compute the byteIndex (first byte indicating the element encoding)
         # (If the array is dynamic, add 2 to byte index for dynamic array length uint16 prefix)
@@ -265,28 +264,26 @@ class ArrayElement(ComputedValue[T]):
                 .Else(nextValueStart)
             )
 
-            if output is not None:
-                return output.decode(
-                    encodedArray, start_index=valueStart, end_index=valueEnd
-                )
-            else:
-                return substring_for_decoding(
-                    encodedArray, start_index=valueStart, end_index=valueEnd
-                )
+            return _get_encoding_or_store_from_encoded_bytes(
+                arrayType.value_type_spec(),
+                encodedArray,
+                output,
+                start_index=valueStart,
+                end_index=valueEnd,
+            )
 
         # Handling case for array elements are static:
         # since array._stride() is element's static byte length
         # we partition the substring for array element.
         valueStart = byteIndex
         valueLength = Int(arrayType._stride())
-        if output is not None:
-            return output.decode(
-                encodedArray, start_index=valueStart, length=valueLength
-            )
-        else:
-            return substring_for_decoding(
-                encodedArray, start_index=valueStart, length=valueLength
-            )
+        return _get_encoding_or_store_from_encoded_bytes(
+            arrayType.value_type_spec(),
+            encodedArray,
+            output,
+            start_index=valueStart,
+            length=valueLength,
+        )
 
     def store_into(self, output: T) -> Expr:
         """Partitions the byte string of the given ABI array and stores the byte string of array

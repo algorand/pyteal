@@ -13,6 +13,7 @@ from typing import (
 import algosdk.abi
 
 from pyteal.errors import TealInputError
+from pyteal.types import require_type, TealType
 from pyteal.ast.expr import Expr
 from pyteal.ast.int import Int
 from pyteal.ast.substring import Extract, Substring, Suffix
@@ -593,3 +594,51 @@ def type_spec_is_assignable_to(a: TypeSpec, b: TypeSpec) -> bool:
         return True
 
     return False
+
+
+def _get_encoding_or_store_from_encoded_bytes(
+    encoding_type: TypeSpec,
+    full_encoding: Expr,
+    output: BaseType | None = None,
+    *,
+    start_index: Expr | None = None,
+    end_index: Expr | None = None,
+    length: Expr | None = None,
+) -> Expr:
+    from pyteal.ast.abi import BoolTypeSpec, Bool
+    from pyteal.ast.bytes import Bytes
+    from pyteal.ast.binaryexpr import GetBit
+    from pyteal.ast.ternaryexpr import SetBit
+
+    require_type(full_encoding, TealType.bytes)
+
+    match encoding_type:
+        case BoolTypeSpec():
+            if start_index is None:
+                raise TealInputError(
+                    "on BoolTypeSpec, requiring start index to be not None."
+                )
+
+            if output is None:
+                return SetBit(
+                    Bytes(b"\x00"),
+                    Int(0),
+                    GetBit(full_encoding, start_index),
+                )
+            else:
+                return cast(Bool, output).decode_bit(full_encoding, start_index)
+        case _:
+            if output is None:
+                return substring_for_decoding(
+                    encoded=full_encoding,
+                    start_index=start_index,
+                    end_index=end_index,
+                    length=length,
+                )
+            else:
+                return output.decode(
+                    full_encoding,
+                    start_index=start_index,
+                    end_index=end_index,
+                    length=length,
+                )
