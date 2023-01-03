@@ -1,4 +1,4 @@
-from typing import NamedTuple, List, Callable, Literal, cast
+from typing import NamedTuple, Callable, Literal, cast
 import pytest
 
 import pyteal as pt
@@ -13,7 +13,7 @@ options = pt.CompileOptions(version=5)
 
 def test_encodeTuple():
     class EncodeTest(NamedTuple):
-        types: List[abi.BaseType]
+        types: list[abi.BaseType]
         expected: pt.Expr
 
     # variables used to construct the tests
@@ -30,7 +30,7 @@ def test_encodeTuple():
     tail_holder = pt.ScratchVar()
     encoded_tail = pt.ScratchVar()
 
-    tests: List[EncodeTest] = [
+    tests: list[EncodeTest] = [
         EncodeTest(types=[], expected=pt.Bytes("")),
         EncodeTest(types=[uint64_a], expected=uint64_a.encode()),
         EncodeTest(
@@ -225,7 +225,7 @@ def test_encodeTuple():
 
 def test_indexTuple():
     class IndexTest(NamedTuple):
-        types: List[abi.TypeSpec]
+        types: list[abi.TypeSpec]
         typeIndex: int
         expected: Callable[[abi.BaseType], pt.Expr]
 
@@ -239,7 +239,7 @@ def test_indexTuple():
 
     encoded = pt.Bytes("encoded")
 
-    tests: List[IndexTest] = [
+    tests: list[IndexTest] = [
         IndexTest(
             types=[uint64_t],
             typeIndex=0,
@@ -485,7 +485,7 @@ def test_TupleTypeSpec_value_type_specs():
 
 
 def test_TupleTypeSpec_length_static():
-    tests: List[List[abi.TypeSpec]] = [
+    tests: list[list[abi.TypeSpec]] = [
         [],
         [abi.Uint64TypeSpec()],
         [
@@ -751,7 +751,7 @@ def test_Tuple_encode():
 
 
 def test_Tuple_length():
-    tests: List[List[abi.TypeSpec]] = [
+    tests: list[list[abi.TypeSpec]] = [
         [],
         [abi.Uint64TypeSpec()],
         [
@@ -779,7 +779,7 @@ def test_Tuple_length():
 
 
 def test_Tuple_getitem():
-    tests: List[List[abi.TypeSpec]] = [
+    tests: list[list[abi.TypeSpec]] = [
         [],
         [abi.Uint64TypeSpec()],
         [
@@ -805,7 +805,7 @@ def test_Tuple_getitem():
 
 
 def test_TupleElement_store_into():
-    tests: List[List[abi.TypeSpec]] = [
+    tests: list[list[abi.TypeSpec]] = [
         [],
         [abi.Uint64TypeSpec()],
         [
