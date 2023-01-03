@@ -13,9 +13,11 @@ from pyteal.errors import TealInputError
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.int import Int
+from pyteal.ast.bytes import Bytes
 from pyteal.ast.if_ import If
 from pyteal.ast.unaryexpr import Len
-from pyteal.ast.binaryexpr import ExtractUint16
+from pyteal.ast.binaryexpr import ExtractUint16, GetBit
+from pyteal.ast.ternaryexpr import SetBit
 from pyteal.ast.naryexpr import Concat
 
 from pyteal.ast.abi.type import TypeSpec, BaseType, ComputedValue
@@ -281,6 +283,69 @@ class ArrayElement(ComputedValue[T]):
         valueStart = byteIndex
         valueLength = Int(arrayType._stride())
         return output.decode(encodedArray, start_index=valueStart, length=valueLength)
+
+    def encode(self) -> Expr:
+        encodedArray = self.array.encode()
+        arrayType = self.array.type_spec()
+
+        # If the array element type is Bool, we compute the bit index
+        # (if array is dynamic we add 16 to bit index for dynamic array length uint16 prefix)
+        # and decode bit with given array encoding and the bit index for boolean bit.
+        if self.array.type_spec() == BoolTypeSpec():
+            bitIndex = self.index
+            if arrayType.is_dynamic():
+                bitIndex = bitIndex + Int(Uint16TypeSpec().bit_size())
+            return SetBit(Bytes(b"\x00"), Int(0), GetBit(encodedArray, bitIndex))
+
+        # Compute the byteIndex (first byte indicating the element encoding)
+        # (If the array is dynamic, add 2 to byte index for dynamic array length uint16 prefix)
+        byteIndex = Int(arrayType._stride()) * self.index
+        if arrayType.is_length_dynamic():
+            byteIndex = byteIndex + Int(Uint16TypeSpec().byte_length_static())
+
+        arrayLength = self.array.length()
+
+        # Handling case for array elements are dynamic:
+        # * `byteIndex` is pointing at the uint16 byte encoding indicating the beginning offset of
+        #   the array element byte encoding.
+        #
+        # * `valueStart` is extracted from the uint16 bytes pointed by `byteIndex`.
+        #
+        # * If `index == arrayLength - 1` (last element in array), `valueEnd` is pointing at the
+        #   end of the array byte encoding.
+        #
+        # * otherwise, `valueEnd` is inferred from `nextValueStart`, which is the beginning offset
+        #   of the next array element byte encoding.
+
+        if arrayType.value_type_spec().is_dynamic():
+            valueStart = ExtractUint16(encodedArray, byteIndex)
+            nextValueStart = ExtractUint16(
+                encodedArray, byteIndex + Int(Uint16TypeSpec().byte_length_static())
+            )
+            if arrayType.is_length_dynamic():
+                valueStart = valueStart + Int(Uint16TypeSpec().byte_length_static())
+                nextValueStart = nextValueStart + Int(
+                    Uint16TypeSpec().byte_length_static()
+                )
+
+            valueEnd = (
+                If(self.index + Int(1) == arrayLength)
+                .Then(Len(encodedArray))
+                .Else(nextValueStart)
+            )
+
+            return substring_for_decoding(
+                encodedArray, start_index=valueStart, end_index=valueEnd
+            )
+
+        # Handling case for array elements are static:
+        # since array._stride() is element's static byte length
+        # we partition the substring for array element.
+        valueStart = byteIndex
+        valueLength = Int(arrayType._stride())
+        return substring_for_decoding(
+            encodedArray, start_index=valueStart, length=valueLength
+        )
 
 
 ArrayElement.__module__ = "pyteal.abi"
