@@ -172,8 +172,8 @@ class _IndexTuple:
                 bitOffsetInEncoded = offset * NUM_BITS_IN_BYTE
 
             return _GetAgainstEncoding(
-                BoolTypeSpec(),
                 self.encoded,
+                BoolTypeSpec(),
                 start_index=Int(bitOffsetInEncoded),
             ).get_or_store(output)
 
@@ -205,15 +205,15 @@ class _IndexTuple:
                 # This is the final dynamic value, so decode the substring from start_index to the end of
                 # encoded
                 return _GetAgainstEncoding(
-                    valueType, self.encoded, start_index=start_index
+                    self.encoded, valueType, start_index=start_index
                 ).get_or_store(output)
 
             # There is a dynamic value after this one, and end_index is where its tail starts, so decode
             # the substring from start_index to end_index
             end_index = ExtractUint16(self.encoded, Int(nextDynamicValueOffset))
             return _GetAgainstEncoding(
-                valueType,
                 self.encoded,
+                valueType,
                 start_index=start_index,
                 end_index=end_index,
             ).get_or_store(output)
@@ -231,18 +231,18 @@ class _IndexTuple:
             # This is the last value in the tuple, so decode the substring from start_index to the end of
             # encoded
             return _GetAgainstEncoding(
-                valueType, self.encoded, start_index=start_index
+                self.encoded, valueType, start_index=start_index
             ).get_or_store(output)
 
         if offset == 0:
             # This is the first value in the tuple, so decode the substring from 0 with length length
             return _GetAgainstEncoding(
-                valueType, self.encoded, length=length
+                self.encoded, valueType, length=length
             ).get_or_store(output)
 
         # This is not the first or last value, so decode the substring from start_index with length length
         return _GetAgainstEncoding(
-            valueType, self.encoded, start_index=start_index, length=length
+            self.encoded, valueType, start_index=start_index, length=length
         ).get_or_store(output)
 
 

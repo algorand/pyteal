@@ -225,7 +225,7 @@ class ArrayElement(ComputedValue[T]):
             if arrayType.is_dynamic():
                 bitIndex = bitIndex + Int(Uint16TypeSpec().bit_size())
             return _GetAgainstEncoding(
-                BoolTypeSpec(), encodedArray, start_index=bitIndex
+                encodedArray, BoolTypeSpec(), start_index=bitIndex
             ).get_or_store(output)
 
         # Compute the byteIndex (first byte indicating the element encoding)
@@ -265,8 +265,8 @@ class ArrayElement(ComputedValue[T]):
             )
 
             return _GetAgainstEncoding(
-                arrayType.value_type_spec(),
                 encodedArray,
+                arrayType.value_type_spec(),
                 start_index=valueStart,
                 end_index=valueEnd,
             ).get_or_store(output)
@@ -277,8 +277,8 @@ class ArrayElement(ComputedValue[T]):
         valueStart = byteIndex
         valueLength = Int(arrayType._stride())
         return _GetAgainstEncoding(
-            arrayType.value_type_spec(),
             encodedArray,
+            arrayType.value_type_spec(),
             start_index=valueStart,
             length=valueLength,
         ).get_or_store(output)

@@ -602,8 +602,8 @@ def type_spec_is_assignable_to(a: TypeSpec, b: TypeSpec) -> bool:
 
 @dataclass
 class _GetAgainstEncoding:
-    type_spec: TypeSpec
     full_encoding: Expr
+    type_spec: TypeSpec
     start_index: Expr | None = field(kw_only=True, default=None)
     end_index: Expr | None = field(kw_only=True, default=None)
     length: Expr | None = field(kw_only=True, default=None)
