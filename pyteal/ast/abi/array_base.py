@@ -209,6 +209,85 @@ class ArrayElement(ComputedValue[T]):
     def produced_type_spec(self) -> TypeSpec:
         return self.array.type_spec().value_type_spec()
 
+    def __proto_encoding_store_into(self, output: T | None = None) -> Expr:
+        if output is not None and output.type_spec() != self.produced_type_spec():
+            raise TealInputError("Output type does not match value type")
+
+        encodedArray = self.array.encode()
+        arrayType = self.array.type_spec()
+
+        # If the array element type is Bool, we compute the bit index
+        # (if array is dynamic we add 16 to bit index for dynamic array length uint16 prefix)
+        # and decode bit with given array encoding and the bit index for boolean bit.
+        if self.array.type_spec().value_type_spec() == BoolTypeSpec():
+            bitIndex = self.index
+            if arrayType.is_dynamic():
+                bitIndex = bitIndex + Int(Uint16TypeSpec().bit_size())
+
+            if output is not None:
+                return cast(Bool, output).decode_bit(encodedArray, bitIndex)
+            else:
+                return SetBit(Bytes(b"\x00"), Int(0), GetBit(encodedArray, bitIndex))
+
+        # Compute the byteIndex (first byte indicating the element encoding)
+        # (If the array is dynamic, add 2 to byte index for dynamic array length uint16 prefix)
+        byteIndex = Int(arrayType._stride()) * self.index
+        if arrayType.is_length_dynamic():
+            byteIndex = byteIndex + Int(Uint16TypeSpec().byte_length_static())
+
+        arrayLength = self.array.length()
+
+        # Handling case for array elements are dynamic:
+        # * `byteIndex` is pointing at the uint16 byte encoding indicating the beginning offset of
+        #   the array element byte encoding.
+        #
+        # * `valueStart` is extracted from the uint16 bytes pointed by `byteIndex`.
+        #
+        # * If `index == arrayLength - 1` (last element in array), `valueEnd` is pointing at the
+        #   end of the array byte encoding.
+        #
+        # * otherwise, `valueEnd` is inferred from `nextValueStart`, which is the beginning offset
+        #   of the next array element byte encoding.
+        if arrayType.value_type_spec().is_dynamic():
+            valueStart = ExtractUint16(encodedArray, byteIndex)
+            nextValueStart = ExtractUint16(
+                encodedArray, byteIndex + Int(Uint16TypeSpec().byte_length_static())
+            )
+            if arrayType.is_length_dynamic():
+                valueStart = valueStart + Int(Uint16TypeSpec().byte_length_static())
+                nextValueStart = nextValueStart + Int(
+                    Uint16TypeSpec().byte_length_static()
+                )
+
+            valueEnd = (
+                If(self.index + Int(1) == arrayLength)
+                .Then(Len(encodedArray))
+                .Else(nextValueStart)
+            )
+
+            if output is not None:
+                return output.decode(
+                    encodedArray, start_index=valueStart, end_index=valueEnd
+                )
+            else:
+                return substring_for_decoding(
+                    encodedArray, start_index=valueStart, end_index=valueEnd
+                )
+
+        # Handling case for array elements are static:
+        # since array._stride() is element's static byte length
+        # we partition the substring for array element.
+        valueStart = byteIndex
+        valueLength = Int(arrayType._stride())
+        if output is not None:
+            return output.decode(
+                encodedArray, start_index=valueStart, length=valueLength
+            )
+        else:
+            return substring_for_decoding(
+                encodedArray, start_index=valueStart, length=valueLength
+            )
+
     def store_into(self, output: T) -> Expr:
         """Partitions the byte string of the given ABI array and stores the byte string of array
         element in the ABI value output.
@@ -222,130 +301,10 @@ class ArrayElement(ComputedValue[T]):
         Returns:
             An expression that stores the byte string of the array element into value `output`.
         """
-        if output.type_spec() != self.produced_type_spec():
-            raise TealInputError("Output type does not match value type")
-
-        encodedArray = self.array.encode()
-        arrayType = self.array.type_spec()
-
-        # If the array element type is Bool, we compute the bit index
-        # (if array is dynamic we add 16 to bit index for dynamic array length uint16 prefix)
-        # and decode bit with given array encoding and the bit index for boolean bit.
-        if output.type_spec() == BoolTypeSpec():
-            bitIndex = self.index
-            if arrayType.is_dynamic():
-                bitIndex = bitIndex + Int(Uint16TypeSpec().bit_size())
-            return cast(Bool, output).decode_bit(encodedArray, bitIndex)
-
-        # Compute the byteIndex (first byte indicating the element encoding)
-        # (If the array is dynamic, add 2 to byte index for dynamic array length uint16 prefix)
-        byteIndex = Int(arrayType._stride()) * self.index
-        if arrayType.is_length_dynamic():
-            byteIndex = byteIndex + Int(Uint16TypeSpec().byte_length_static())
-
-        arrayLength = self.array.length()
-
-        # Handling case for array elements are dynamic:
-        # * `byteIndex` is pointing at the uint16 byte encoding indicating the beginning offset of
-        #   the array element byte encoding.
-        #
-        # * `valueStart` is extracted from the uint16 bytes pointed by `byteIndex`.
-        #
-        # * If `index == arrayLength - 1` (last element in array), `valueEnd` is pointing at the
-        #   end of the array byte encoding.
-        #
-        # * otherwise, `valueEnd` is inferred from `nextValueStart`, which is the beginning offset
-        #   of the next array element byte encoding.
-        if arrayType.value_type_spec().is_dynamic():
-            valueStart = ExtractUint16(encodedArray, byteIndex)
-            nextValueStart = ExtractUint16(
-                encodedArray, byteIndex + Int(Uint16TypeSpec().byte_length_static())
-            )
-            if arrayType.is_length_dynamic():
-                valueStart = valueStart + Int(Uint16TypeSpec().byte_length_static())
-                nextValueStart = nextValueStart + Int(
-                    Uint16TypeSpec().byte_length_static()
-                )
-
-            valueEnd = (
-                If(self.index + Int(1) == arrayLength)
-                .Then(Len(encodedArray))
-                .Else(nextValueStart)
-            )
-
-            return output.decode(
-                encodedArray, start_index=valueStart, end_index=valueEnd
-            )
-
-        # Handling case for array elements are static:
-        # since array._stride() is element's static byte length
-        # we partition the substring for array element.
-        valueStart = byteIndex
-        valueLength = Int(arrayType._stride())
-        return output.decode(encodedArray, start_index=valueStart, length=valueLength)
+        return self.__proto_encoding_store_into(output)
 
     def encode(self) -> Expr:
-        encodedArray = self.array.encode()
-        arrayType = self.array.type_spec()
-
-        # If the array element type is Bool, we compute the bit index
-        # (if array is dynamic we add 16 to bit index for dynamic array length uint16 prefix)
-        # and decode bit with given array encoding and the bit index for boolean bit.
-        if self.array.type_spec() == BoolTypeSpec():
-            bitIndex = self.index
-            if arrayType.is_dynamic():
-                bitIndex = bitIndex + Int(Uint16TypeSpec().bit_size())
-            return SetBit(Bytes(b"\x00"), Int(0), GetBit(encodedArray, bitIndex))
-
-        # Compute the byteIndex (first byte indicating the element encoding)
-        # (If the array is dynamic, add 2 to byte index for dynamic array length uint16 prefix)
-        byteIndex = Int(arrayType._stride()) * self.index
-        if arrayType.is_length_dynamic():
-            byteIndex = byteIndex + Int(Uint16TypeSpec().byte_length_static())
-
-        arrayLength = self.array.length()
-
-        # Handling case for array elements are dynamic:
-        # * `byteIndex` is pointing at the uint16 byte encoding indicating the beginning offset of
-        #   the array element byte encoding.
-        #
-        # * `valueStart` is extracted from the uint16 bytes pointed by `byteIndex`.
-        #
-        # * If `index == arrayLength - 1` (last element in array), `valueEnd` is pointing at the
-        #   end of the array byte encoding.
-        #
-        # * otherwise, `valueEnd` is inferred from `nextValueStart`, which is the beginning offset
-        #   of the next array element byte encoding.
-
-        if arrayType.value_type_spec().is_dynamic():
-            valueStart = ExtractUint16(encodedArray, byteIndex)
-            nextValueStart = ExtractUint16(
-                encodedArray, byteIndex + Int(Uint16TypeSpec().byte_length_static())
-            )
-            if arrayType.is_length_dynamic():
-                valueStart = valueStart + Int(Uint16TypeSpec().byte_length_static())
-                nextValueStart = nextValueStart + Int(
-                    Uint16TypeSpec().byte_length_static()
-                )
-
-            valueEnd = (
-                If(self.index + Int(1) == arrayLength)
-                .Then(Len(encodedArray))
-                .Else(nextValueStart)
-            )
-
-            return substring_for_decoding(
-                encodedArray, start_index=valueStart, end_index=valueEnd
-            )
-
-        # Handling case for array elements are static:
-        # since array._stride() is element's static byte length
-        # we partition the substring for array element.
-        valueStart = byteIndex
-        valueLength = Int(arrayType._stride())
-        return substring_for_decoding(
-            encodedArray, start_index=valueStart, length=valueLength
-        )
+        return self.__proto_encoding_store_into()
 
 
 ArrayElement.__module__ = "pyteal.abi"
