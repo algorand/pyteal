@@ -596,7 +596,7 @@ def type_spec_is_assignable_to(a: TypeSpec, b: TypeSpec) -> bool:
     return False
 
 
-def _get_encoding_or_store_from_encoded_bytes(
+def _get_or_store_encoded_bytes(
     encoding_type: TypeSpec,
     full_encoding: Expr,
     output: BaseType | None = None,

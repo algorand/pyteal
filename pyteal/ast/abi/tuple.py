@@ -40,7 +40,7 @@ from pyteal.ast.abi.uint import NUM_BITS_IN_BYTE, Uint16
 from pyteal.ast.abi.util import (
     substring_for_decoding,
     type_spec_from_annotation,
-    _get_encoding_or_store_from_encoded_bytes,
+    _get_or_store_encoded_bytes,
 )
 
 
@@ -171,7 +171,7 @@ class _IndexTuple:
                 # value is the beginning of a bool sequence (or a single bool)
                 bitOffsetInEncoded = offset * NUM_BITS_IN_BYTE
 
-            return _get_encoding_or_store_from_encoded_bytes(
+            return _get_or_store_encoded_bytes(
                 BoolTypeSpec(),
                 self.encoded,
                 output,
@@ -205,14 +205,14 @@ class _IndexTuple:
             if not hasNextDynamicValue:
                 # This is the final dynamic value, so decode the substring from start_index to the end of
                 # encoded
-                return _get_encoding_or_store_from_encoded_bytes(
+                return _get_or_store_encoded_bytes(
                     valueType, self.encoded, output, start_index=start_index
                 )
 
             # There is a dynamic value after this one, and end_index is where its tail starts, so decode
             # the substring from start_index to end_index
             end_index = ExtractUint16(self.encoded, Int(nextDynamicValueOffset))
-            return _get_encoding_or_store_from_encoded_bytes(
+            return _get_or_store_encoded_bytes(
                 valueType,
                 self.encoded,
                 output,
@@ -232,18 +232,18 @@ class _IndexTuple:
                     return output.decode(self.encoded)
             # This is the last value in the tuple, so decode the substring from start_index to the end of
             # encoded
-            return _get_encoding_or_store_from_encoded_bytes(
+            return _get_or_store_encoded_bytes(
                 valueType, self.encoded, output, start_index=start_index
             )
 
         if offset == 0:
             # This is the first value in the tuple, so decode the substring from 0 with length length
-            return _get_encoding_or_store_from_encoded_bytes(
+            return _get_or_store_encoded_bytes(
                 valueType, self.encoded, output, length=length
             )
 
         # This is not the first or last value, so decode the substring from start_index with length length
-        return _get_encoding_or_store_from_encoded_bytes(
+        return _get_or_store_encoded_bytes(
             valueType, self.encoded, output, start_index=start_index, length=length
         )
 

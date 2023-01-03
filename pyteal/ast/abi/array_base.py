@@ -24,7 +24,7 @@ from pyteal.ast.abi.bool import BoolTypeSpec
 from pyteal.ast.abi.uint import Uint16, Uint16TypeSpec
 from pyteal.ast.abi.util import (
     substring_for_decoding,
-    _get_encoding_or_store_from_encoded_bytes,
+    _get_or_store_encoded_bytes,
 )
 
 T = TypeVar("T", bound=BaseType)
@@ -224,7 +224,7 @@ class ArrayElement(ComputedValue[T]):
             bitIndex = self.index
             if arrayType.is_dynamic():
                 bitIndex = bitIndex + Int(Uint16TypeSpec().bit_size())
-            return _get_encoding_or_store_from_encoded_bytes(
+            return _get_or_store_encoded_bytes(
                 BoolTypeSpec(), encodedArray, output, start_index=bitIndex
             )
 
@@ -264,7 +264,7 @@ class ArrayElement(ComputedValue[T]):
                 .Else(nextValueStart)
             )
 
-            return _get_encoding_or_store_from_encoded_bytes(
+            return _get_or_store_encoded_bytes(
                 arrayType.value_type_spec(),
                 encodedArray,
                 output,
@@ -277,7 +277,7 @@ class ArrayElement(ComputedValue[T]):
         # we partition the substring for array element.
         valueStart = byteIndex
         valueLength = Int(arrayType._stride())
-        return _get_encoding_or_store_from_encoded_bytes(
+        return _get_or_store_encoded_bytes(
             arrayType.value_type_spec(),
             encodedArray,
             output,
