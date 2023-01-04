@@ -1,4 +1,5 @@
 from inspect import get_annotations
+from dataclasses import dataclass
 from typing import (
     List,
     Sequence,
@@ -14,15 +15,14 @@ from typing import (
 )
 from collections import OrderedDict
 
-from pyteal.types import TealType
+from pyteal.types import TealType, require_type
 from pyteal.errors import TealInputError, TealInternalError
 from pyteal.ast.expr import Expr
 from pyteal.ast.seq import Seq
 from pyteal.ast.int import Int
 from pyteal.ast.bytes import Bytes
 from pyteal.ast.unaryexpr import Len
-from pyteal.ast.binaryexpr import ExtractUint16, GetBit
-from pyteal.ast.ternaryexpr import SetBit
+from pyteal.ast.binaryexpr import ExtractUint16
 from pyteal.ast.naryexpr import Concat
 from pyteal.ast.abstractvar import alloc_abstract_var
 
@@ -37,7 +37,11 @@ from pyteal.ast.abi.bool import (
     _bool_aware_static_byte_length,
 )
 from pyteal.ast.abi.uint import NUM_BITS_IN_BYTE, Uint16
-from pyteal.ast.abi.util import substring_for_decoding, type_spec_from_annotation
+from pyteal.ast.abi.util import (
+    substring_for_decoding,
+    type_spec_from_annotation,
+    _GetAgainstEncoding,
+)
 
 
 def _encode_tuple(values: Sequence[BaseType]) -> Expr:
@@ -118,190 +122,128 @@ def _encode_tuple(values: Sequence[BaseType]) -> Expr:
     return Concat(*toConcat)
 
 
-def _index_tuple_bytes(
-    value_types: Sequence[TypeSpec], encoded: Expr, index: int
-) -> Expr:
-    if not (0 <= index < len(value_types)):
-        raise ValueError("Index outside of range")
+@dataclass
+class _IndexTuple:
+    value_types: Sequence[TypeSpec]
+    encoded: Expr
 
-    offset = 0
-    ignoreNext = 0
-    lastBoolStart = 0
-    lastBoolLength = 0
-    for i, typeBefore in enumerate(value_types[:index]):
-        if ignoreNext > 0:
-            ignoreNext -= 1
-            continue
+    def __post_init__(self):
+        require_type(self.encoded, TealType.bytes)
 
-        if typeBefore == BoolTypeSpec():
-            lastBoolStart = offset
-            lastBoolLength = _consecutive_bool_type_spec_num(value_types, i)
-            offset += _bool_sequence_length(lastBoolLength)
-            ignoreNext = lastBoolLength - 1
-            continue
+    def get_or_store(self, index: int, output: BaseType | None = None) -> Expr:
+        if index not in range(len(self.value_types)):
+            raise ValueError("Index outside of range")
 
-        if typeBefore.is_dynamic():
-            offset += 2
-            continue
-
-        offset += typeBefore.byte_length_static()
-
-    valueType = value_types[index]
-
-    if type(valueType) is Bool:
-        if ignoreNext > 0:
-            # value is in the middle of a bool sequence
-            bitOffsetInBoolSeq = lastBoolLength - ignoreNext
-            bitOffsetInEncoded = lastBoolStart * NUM_BITS_IN_BYTE + bitOffsetInBoolSeq
-        else:
-            # value is the beginning of a bool sequence (or a single bool)
-            bitOffsetInEncoded = offset * NUM_BITS_IN_BYTE
-        return SetBit(Bytes(b"\x00"), Int(0), GetBit(encoded, Int(bitOffsetInEncoded)))
-
-    if valueType.is_dynamic():
-        hasNextDynamicValue = False
-        nextDynamicValueOffset = offset + 2
+        offset = 0
         ignoreNext = 0
-        for i, typeAfter in enumerate(value_types[index + 1 :], start=index + 1):
+        lastBoolStart = 0
+        lastBoolLength = 0
+        for i, typeBefore in enumerate(self.value_types[:index]):
             if ignoreNext > 0:
                 ignoreNext -= 1
                 continue
 
-            if type(typeAfter) is BoolTypeSpec:
-                boolLength = _consecutive_bool_type_spec_num(value_types, i)
-                nextDynamicValueOffset += _bool_sequence_length(boolLength)
-                ignoreNext = boolLength - 1
+            if typeBefore == BoolTypeSpec():
+                lastBoolStart = offset
+                lastBoolLength = _consecutive_bool_type_spec_num(self.value_types, i)
+                offset += _bool_sequence_length(lastBoolLength)
+                ignoreNext = lastBoolLength - 1
                 continue
 
-            if typeAfter.is_dynamic():
-                hasNextDynamicValue = True
-                break
+            if typeBefore.is_dynamic():
+                offset += 2
+                continue
 
-            nextDynamicValueOffset += typeAfter.byte_length_static()
+            offset += typeBefore.byte_length_static()
 
-        start_index = ExtractUint16(encoded, Int(offset))
-        if not hasNextDynamicValue:
-            # This is the final dynamic value, so decode the substring from start_index to the end of
-            # encoded
-            return substring_for_decoding(encoded, start_index=start_index)
+        valueType = self.value_types[index]
+        if output is not None and output.type_spec() != valueType:
+            raise TypeError("Output type does not match value type")
 
-        # There is a dynamic value after this one, and end_index is where its tail starts, so decode
-        # the substring from start_index to end_index
-        end_index = ExtractUint16(encoded, Int(nextDynamicValueOffset))
-        return substring_for_decoding(
-            encoded, start_index=start_index, end_index=end_index
-        )
-
-    start_index = Int(offset)
-    length = Int(valueType.byte_length_static())
-
-    if index + 1 == len(value_types):
-        if offset == 0:
-            # This is the first and only value in the tuple, so decode all of encoded
-            return encoded
-        # This is the last value in the tuple, so decode the substring from start_index to the end of
-        # encoded
-        return substring_for_decoding(encoded, start_index=start_index)
-
-    if offset == 0:
-        # This is the first value in the tuple, so decode the substring from 0 with length length
-        return substring_for_decoding(encoded, length=length)
-
-    # This is not the first or last value, so decode the substring from start_index with length length
-    return substring_for_decoding(encoded, start_index=start_index, length=length)
-
-
-def _index_tuple(
-    value_types: Sequence[TypeSpec], encoded: Expr, index: int, output: BaseType
-) -> Expr:
-    if not (0 <= index < len(value_types)):
-        raise ValueError("Index outside of range")
-
-    offset = 0
-    ignoreNext = 0
-    lastBoolStart = 0
-    lastBoolLength = 0
-    for i, typeBefore in enumerate(value_types[:index]):
-        if ignoreNext > 0:
-            ignoreNext -= 1
-            continue
-
-        if typeBefore == BoolTypeSpec():
-            lastBoolStart = offset
-            lastBoolLength = _consecutive_bool_type_spec_num(value_types, i)
-            offset += _bool_sequence_length(lastBoolLength)
-            ignoreNext = lastBoolLength - 1
-            continue
-
-        if typeBefore.is_dynamic():
-            offset += 2
-            continue
-
-        offset += typeBefore.byte_length_static()
-
-    valueType = value_types[index]
-    if output.type_spec() != valueType:
-        raise TypeError("Output type does not match value type")
-
-    if type(output) is Bool:
-        if ignoreNext > 0:
-            # value is in the middle of a bool sequence
-            bitOffsetInBoolSeq = lastBoolLength - ignoreNext
-            bitOffsetInEncoded = lastBoolStart * NUM_BITS_IN_BYTE + bitOffsetInBoolSeq
-        else:
-            # value is the beginning of a bool sequence (or a single bool)
-            bitOffsetInEncoded = offset * NUM_BITS_IN_BYTE
-        return output.decode_bit(encoded, Int(bitOffsetInEncoded))
-
-    if valueType.is_dynamic():
-        hasNextDynamicValue = False
-        nextDynamicValueOffset = offset + 2
-        ignoreNext = 0
-        for i, typeAfter in enumerate(value_types[index + 1 :], start=index + 1):
+        if type(valueType) is BoolTypeSpec:
             if ignoreNext > 0:
-                ignoreNext -= 1
-                continue
+                # value is in the middle of a bool sequence
+                bitOffsetInBoolSeq = lastBoolLength - ignoreNext
+                bitOffsetInEncoded = (
+                    lastBoolStart * NUM_BITS_IN_BYTE + bitOffsetInBoolSeq
+                )
+            else:
+                # value is the beginning of a bool sequence (or a single bool)
+                bitOffsetInEncoded = offset * NUM_BITS_IN_BYTE
 
-            if type(typeAfter) is BoolTypeSpec:
-                boolLength = _consecutive_bool_type_spec_num(value_types, i)
-                nextDynamicValueOffset += _bool_sequence_length(boolLength)
-                ignoreNext = boolLength - 1
-                continue
+            return _GetAgainstEncoding(
+                self.encoded,
+                BoolTypeSpec(),
+                start_index=Int(bitOffsetInEncoded),
+            ).get_or_store(output)
 
-            if typeAfter.is_dynamic():
-                hasNextDynamicValue = True
-                break
+        if valueType.is_dynamic():
+            hasNextDynamicValue = False
+            nextDynamicValueOffset = offset + 2
+            ignoreNext = 0
+            for i, typeAfter in enumerate(
+                self.value_types[index + 1 :], start=index + 1
+            ):
+                if ignoreNext > 0:
+                    ignoreNext -= 1
+                    continue
 
-            nextDynamicValueOffset += typeAfter.byte_length_static()
+                if type(typeAfter) is BoolTypeSpec:
+                    boolLength = _consecutive_bool_type_spec_num(self.value_types, i)
+                    nextDynamicValueOffset += _bool_sequence_length(boolLength)
+                    ignoreNext = boolLength - 1
+                    continue
 
-        start_index = ExtractUint16(encoded, Int(offset))
-        if not hasNextDynamicValue:
-            # This is the final dynamic value, so decode the substring from start_index to the end of
+                if typeAfter.is_dynamic():
+                    hasNextDynamicValue = True
+                    break
+
+                nextDynamicValueOffset += typeAfter.byte_length_static()
+
+            start_index = ExtractUint16(self.encoded, Int(offset))
+            if not hasNextDynamicValue:
+                # This is the final dynamic value, so decode the substring from start_index to the end of
+                # encoded
+                return _GetAgainstEncoding(
+                    self.encoded, valueType, start_index=start_index
+                ).get_or_store(output)
+
+            # There is a dynamic value after this one, and end_index is where its tail starts, so decode
+            # the substring from start_index to end_index
+            end_index = ExtractUint16(self.encoded, Int(nextDynamicValueOffset))
+            return _GetAgainstEncoding(
+                self.encoded,
+                valueType,
+                start_index=start_index,
+                end_index=end_index,
+            ).get_or_store(output)
+
+        start_index = Int(offset)
+        length = Int(valueType.byte_length_static())
+
+        if index + 1 == len(self.value_types):
+            if offset == 0:
+                # This is the first and only value in the tuple, so decode all of encoded
+                if output is None:
+                    return self.encoded
+                else:
+                    return output.decode(self.encoded)
+            # This is the last value in the tuple, so decode the substring from start_index to the end of
             # encoded
-            return output.decode(encoded, start_index=start_index)
+            return _GetAgainstEncoding(
+                self.encoded, valueType, start_index=start_index
+            ).get_or_store(output)
 
-        # There is a dynamic value after this one, and end_index is where its tail starts, so decode
-        # the substring from start_index to end_index
-        end_index = ExtractUint16(encoded, Int(nextDynamicValueOffset))
-        return output.decode(encoded, start_index=start_index, end_index=end_index)
-
-    start_index = Int(offset)
-    length = Int(valueType.byte_length_static())
-
-    if index + 1 == len(value_types):
         if offset == 0:
-            # This is the first and only value in the tuple, so decode all of encoded
-            return output.decode(encoded)
-        # This is the last value in the tuple, so decode the substring from start_index to the end of
-        # encoded
-        return output.decode(encoded, start_index=start_index)
+            # This is the first value in the tuple, so decode the substring from 0 with length length
+            return _GetAgainstEncoding(
+                self.encoded, valueType, length=length
+            ).get_or_store(output)
 
-    if offset == 0:
-        # This is the first value in the tuple, so decode the substring from 0 with length length
-        return output.decode(encoded, length=length)
-
-    # This is not the first or last value, so decode the substring from start_index with length length
-    return output.decode(encoded, start_index=start_index, length=length)
+        # This is not the first or last value, so decode the substring from start_index with length length
+        return _GetAgainstEncoding(
+            self.encoded, valueType, start_index=start_index, length=length
+        ).get_or_store(output)
 
 
 class TupleTypeSpec(TypeSpec):
@@ -492,19 +434,17 @@ class TupleElement(ComputedValue[T]):
         return self.tuple.type_spec().value_type_specs()[self.index]
 
     def store_into(self, output: T) -> Expr:
-        return _index_tuple(
-            self.tuple.type_spec().value_type_specs(),
-            self.tuple.encode(),
+        return _IndexTuple(
+            self.tuple.type_spec().value_type_specs(), self.tuple.encode()
+        ).get_or_store(
             self.index,
             output,
         )
 
     def encode(self) -> Expr:
-        return _index_tuple_bytes(
-            self.tuple.type_spec().value_type_specs(),
-            self.tuple.encode(),
-            self.index,
-        )
+        return _IndexTuple(
+            self.tuple.type_spec().value_type_specs(), self.tuple.encode()
+        ).get_or_store(self.index)
 
 
 TupleElement.__module__ = "pyteal.abi"

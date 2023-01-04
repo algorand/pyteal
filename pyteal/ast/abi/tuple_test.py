@@ -1,9 +1,9 @@
-from typing import NamedTuple, List, Callable, Literal, cast
+from typing import NamedTuple, Callable, Literal, cast
 import pytest
 
 import pyteal as pt
 from pyteal import abi
-from pyteal.ast.abi.tuple import _encode_tuple, _index_tuple, TupleElement
+from pyteal.ast.abi.tuple import _encode_tuple, _IndexTuple, TupleElement
 from pyteal.ast.abi.bool import _encode_bool_sequence
 from pyteal.ast.abi.util import substring_for_decoding
 from pyteal.ast.abi.type_test import ContainerType
@@ -13,7 +13,7 @@ options = pt.CompileOptions(version=5)
 
 def test_encodeTuple():
     class EncodeTest(NamedTuple):
-        types: List[abi.BaseType]
+        types: list[abi.BaseType]
         expected: pt.Expr
 
     # variables used to construct the tests
@@ -30,7 +30,7 @@ def test_encodeTuple():
     tail_holder = pt.ScratchVar()
     encoded_tail = pt.ScratchVar()
 
-    tests: List[EncodeTest] = [
+    tests: list[EncodeTest] = [
         EncodeTest(types=[], expected=pt.Bytes("")),
         EncodeTest(types=[uint64_a], expected=uint64_a.encode()),
         EncodeTest(
@@ -225,9 +225,10 @@ def test_encodeTuple():
 
 def test_indexTuple():
     class IndexTest(NamedTuple):
-        types: List[abi.TypeSpec]
+        types: list[abi.TypeSpec]
         typeIndex: int
-        expected: Callable[[abi.BaseType], pt.Expr]
+        expected_store: Callable[[abi.BaseType], pt.Expr]
+        expected_encode: pt.Expr
 
     # variables used to construct the tests
     uint64_t = abi.Uint64TypeSpec()
@@ -239,103 +240,166 @@ def test_indexTuple():
 
     encoded = pt.Bytes("encoded")
 
-    tests: List[IndexTest] = [
+    tests: list[IndexTest] = [
         IndexTest(
             types=[uint64_t],
             typeIndex=0,
-            expected=lambda output: output.decode(encoded),
+            expected_store=lambda output: output.decode(encoded),
+            expected_encode=encoded,
         ),
         IndexTest(
             types=[uint64_t, uint64_t],
             typeIndex=0,
-            expected=lambda output: output.decode(encoded, length=pt.Int(8)),
+            expected_store=lambda output: output.decode(encoded, length=pt.Int(8)),
+            expected_encode=substring_for_decoding(encoded, length=pt.Int(8)),
         ),
         IndexTest(
             types=[uint64_t, uint64_t],
             typeIndex=1,
-            expected=lambda output: output.decode(encoded, start_index=pt.Int(8)),
+            expected_store=lambda output: output.decode(encoded, start_index=pt.Int(8)),
+            expected_encode=substring_for_decoding(encoded, start_index=pt.Int(8)),
         ),
         IndexTest(
             types=[uint64_t, byte_t, uint64_t],
             typeIndex=1,
-            expected=lambda output: output.decode(
+            expected_store=lambda output: output.decode(
+                encoded, start_index=pt.Int(8), length=pt.Int(1)
+            ),
+            expected_encode=substring_for_decoding(
                 encoded, start_index=pt.Int(8), length=pt.Int(1)
             ),
         ),
         IndexTest(
             types=[uint64_t, byte_t, uint64_t],
             typeIndex=2,
-            expected=lambda output: output.decode(
+            expected_store=lambda output: output.decode(
                 encoded, start_index=pt.Int(9), length=pt.Int(8)
             ),
+            expected_encode=substring_for_decoding(encoded, start_index=pt.Int(9)),
         ),
         IndexTest(
             types=[bool_t],
             typeIndex=0,
-            expected=lambda output: output.decode_bit(encoded, pt.Int(0)),
+            expected_store=lambda output: output.decode_bit(encoded, pt.Int(0)),
+            expected_encode=pt.SetBit(
+                pt.Bytes(b"\x00"),
+                pt.Int(0),
+                pt.GetBit(encoded, pt.Int(0)),
+            ),
         ),
         IndexTest(
             types=[bool_t, bool_t],
             typeIndex=0,
-            expected=lambda output: output.decode_bit(encoded, pt.Int(0)),
+            expected_store=lambda output: output.decode_bit(encoded, pt.Int(0)),
+            expected_encode=pt.SetBit(
+                pt.Bytes(b"\x00"),
+                pt.Int(0),
+                pt.GetBit(encoded, pt.Int(0)),
+            ),
         ),
         IndexTest(
             types=[bool_t, bool_t],
             typeIndex=1,
-            expected=lambda output: output.decode_bit(encoded, pt.Int(1)),
+            expected_store=lambda output: output.decode_bit(encoded, pt.Int(1)),
+            expected_encode=pt.SetBit(
+                pt.Bytes(b"\x00"),
+                pt.Int(0),
+                pt.GetBit(encoded, pt.Int(1)),
+            ),
         ),
         IndexTest(
             types=[uint64_t, bool_t],
             typeIndex=1,
-            expected=lambda output: output.decode_bit(encoded, pt.Int(8 * 8)),
+            expected_store=lambda output: output.decode_bit(encoded, pt.Int(8 * 8)),
+            expected_encode=pt.SetBit(
+                pt.Bytes(b"\x00"),
+                pt.Int(0),
+                pt.GetBit(encoded, pt.Int(64)),
+            ),
         ),
         IndexTest(
             types=[uint64_t, bool_t, bool_t],
             typeIndex=1,
-            expected=lambda output: output.decode_bit(encoded, pt.Int(8 * 8)),
+            expected_store=lambda output: output.decode_bit(encoded, pt.Int(8 * 8)),
+            expected_encode=pt.SetBit(
+                pt.Bytes(b"\x00"),
+                pt.Int(0),
+                pt.GetBit(encoded, pt.Int(64)),
+            ),
         ),
         IndexTest(
             types=[uint64_t, bool_t, bool_t],
             typeIndex=2,
-            expected=lambda output: output.decode_bit(encoded, pt.Int(8 * 8 + 1)),
+            expected_store=lambda output: output.decode_bit(encoded, pt.Int(8 * 8 + 1)),
+            expected_encode=pt.SetBit(
+                pt.Bytes(b"\x00"),
+                pt.Int(0),
+                pt.GetBit(encoded, pt.Int(65)),
+            ),
         ),
         IndexTest(
             types=[bool_t, uint64_t],
             typeIndex=0,
-            expected=lambda output: output.decode_bit(encoded, pt.Int(0)),
+            expected_store=lambda output: output.decode_bit(encoded, pt.Int(0)),
+            expected_encode=pt.SetBit(
+                pt.Bytes(b"\x00"),
+                pt.Int(0),
+                pt.GetBit(encoded, pt.Int(0)),
+            ),
         ),
         IndexTest(
             types=[bool_t, uint64_t],
             typeIndex=1,
-            expected=lambda output: output.decode(encoded, start_index=pt.Int(1)),
+            expected_store=lambda output: output.decode(encoded, start_index=pt.Int(1)),
+            expected_encode=substring_for_decoding(encoded, start_index=pt.Int(1)),
         ),
         IndexTest(
             types=[bool_t, bool_t, uint64_t],
             typeIndex=0,
-            expected=lambda output: output.decode_bit(encoded, pt.Int(0)),
+            expected_store=lambda output: output.decode_bit(encoded, pt.Int(0)),
+            expected_encode=pt.SetBit(
+                pt.Bytes(b"\x00"),
+                pt.Int(0),
+                pt.GetBit(encoded, pt.Int(0)),
+            ),
         ),
         IndexTest(
             types=[bool_t, bool_t, uint64_t],
             typeIndex=1,
-            expected=lambda output: output.decode_bit(encoded, pt.Int(1)),
+            expected_store=lambda output: output.decode_bit(encoded, pt.Int(1)),
+            expected_encode=pt.SetBit(
+                pt.Bytes(b"\x00"),
+                pt.Int(0),
+                pt.GetBit(encoded, pt.Int(1)),
+            ),
         ),
         IndexTest(
             types=[bool_t, bool_t, uint64_t],
             typeIndex=2,
-            expected=lambda output: output.decode(encoded, start_index=pt.Int(1)),
+            expected_store=lambda output: output.decode(encoded, start_index=pt.Int(1)),
+            expected_encode=substring_for_decoding(encoded, start_index=pt.Int(1)),
         ),
         IndexTest(
-            types=[tuple_t], typeIndex=0, expected=lambda output: output.decode(encoded)
+            types=[tuple_t],
+            typeIndex=0,
+            expected_store=lambda output: output.decode(encoded),
+            expected_encode=encoded,
         ),
         IndexTest(
             types=[byte_t, tuple_t],
             typeIndex=1,
-            expected=lambda output: output.decode(encoded, start_index=pt.Int(1)),
+            expected_store=lambda output: output.decode(encoded, start_index=pt.Int(1)),
+            expected_encode=substring_for_decoding(encoded, start_index=pt.Int(1)),
         ),
         IndexTest(
             types=[tuple_t, byte_t],
             typeIndex=0,
-            expected=lambda output: output.decode(
+            expected_store=lambda output: output.decode(
+                encoded,
+                start_index=pt.Int(0),
+                length=pt.Int(tuple_t.byte_length_static()),
+            ),
+            expected_encode=substring_for_decoding(
                 encoded,
                 start_index=pt.Int(0),
                 length=pt.Int(tuple_t.byte_length_static()),
@@ -344,7 +408,12 @@ def test_indexTuple():
         IndexTest(
             types=[byte_t, tuple_t, byte_t],
             typeIndex=1,
-            expected=lambda output: output.decode(
+            expected_store=lambda output: output.decode(
+                encoded,
+                start_index=pt.Int(1),
+                length=pt.Int(tuple_t.byte_length_static()),
+            ),
+            expected_encode=substring_for_decoding(
                 encoded,
                 start_index=pt.Int(1),
                 length=pt.Int(tuple_t.byte_length_static()),
@@ -353,35 +422,52 @@ def test_indexTuple():
         IndexTest(
             types=[dynamic_array_t1],
             typeIndex=0,
-            expected=lambda output: output.decode(
+            expected_store=lambda output: output.decode(
+                encoded, start_index=pt.ExtractUint16(encoded, pt.Int(0))
+            ),
+            expected_encode=substring_for_decoding(
                 encoded, start_index=pt.ExtractUint16(encoded, pt.Int(0))
             ),
         ),
         IndexTest(
             types=[byte_t, dynamic_array_t1],
             typeIndex=1,
-            expected=lambda output: output.decode(
+            expected_store=lambda output: output.decode(
+                encoded, start_index=pt.ExtractUint16(encoded, pt.Int(1))
+            ),
+            expected_encode=substring_for_decoding(
                 encoded, start_index=pt.ExtractUint16(encoded, pt.Int(1))
             ),
         ),
         IndexTest(
             types=[dynamic_array_t1, byte_t],
             typeIndex=0,
-            expected=lambda output: output.decode(
+            expected_store=lambda output: output.decode(
+                encoded, start_index=pt.ExtractUint16(encoded, pt.Int(0))
+            ),
+            expected_encode=substring_for_decoding(
                 encoded, start_index=pt.ExtractUint16(encoded, pt.Int(0))
             ),
         ),
         IndexTest(
             types=[byte_t, dynamic_array_t1, byte_t],
             typeIndex=1,
-            expected=lambda output: output.decode(
+            expected_store=lambda output: output.decode(
+                encoded, start_index=pt.ExtractUint16(encoded, pt.Int(1))
+            ),
+            expected_encode=substring_for_decoding(
                 encoded, start_index=pt.ExtractUint16(encoded, pt.Int(1))
             ),
         ),
         IndexTest(
             types=[byte_t, dynamic_array_t1, byte_t, dynamic_array_t2],
             typeIndex=1,
-            expected=lambda output: output.decode(
+            expected_store=lambda output: output.decode(
+                encoded,
+                start_index=pt.ExtractUint16(encoded, pt.Int(1)),
+                end_index=pt.ExtractUint16(encoded, pt.Int(4)),
+            ),
+            expected_encode=substring_for_decoding(
                 encoded,
                 start_index=pt.ExtractUint16(encoded, pt.Int(1)),
                 end_index=pt.ExtractUint16(encoded, pt.Int(4)),
@@ -390,14 +476,22 @@ def test_indexTuple():
         IndexTest(
             types=[byte_t, dynamic_array_t1, byte_t, dynamic_array_t2],
             typeIndex=3,
-            expected=lambda output: output.decode(
+            expected_store=lambda output: output.decode(
+                encoded, start_index=pt.ExtractUint16(encoded, pt.Int(4))
+            ),
+            expected_encode=substring_for_decoding(
                 encoded, start_index=pt.ExtractUint16(encoded, pt.Int(4))
             ),
         ),
         IndexTest(
             types=[byte_t, dynamic_array_t1, tuple_t, dynamic_array_t2],
             typeIndex=1,
-            expected=lambda output: output.decode(
+            expected_store=lambda output: output.decode(
+                encoded,
+                start_index=pt.ExtractUint16(encoded, pt.Int(1)),
+                end_index=pt.ExtractUint16(encoded, pt.Int(4)),
+            ),
+            expected_encode=substring_for_decoding(
                 encoded,
                 start_index=pt.ExtractUint16(encoded, pt.Int(1)),
                 end_index=pt.ExtractUint16(encoded, pt.Int(4)),
@@ -406,14 +500,22 @@ def test_indexTuple():
         IndexTest(
             types=[byte_t, dynamic_array_t1, tuple_t, dynamic_array_t2],
             typeIndex=3,
-            expected=lambda output: output.decode(
+            expected_store=lambda output: output.decode(
+                encoded, start_index=pt.ExtractUint16(encoded, pt.Int(4))
+            ),
+            expected_encode=substring_for_decoding(
                 encoded, start_index=pt.ExtractUint16(encoded, pt.Int(4))
             ),
         ),
         IndexTest(
             types=[byte_t, dynamic_array_t2, bool_t, bool_t, dynamic_array_t2],
             typeIndex=1,
-            expected=lambda output: output.decode(
+            expected_store=lambda output: output.decode(
+                encoded,
+                start_index=pt.ExtractUint16(encoded, pt.Int(1)),
+                end_index=pt.ExtractUint16(encoded, pt.Int(4)),
+            ),
+            expected_encode=substring_for_decoding(
                 encoded,
                 start_index=pt.ExtractUint16(encoded, pt.Int(1)),
                 end_index=pt.ExtractUint16(encoded, pt.Int(4)),
@@ -422,41 +524,68 @@ def test_indexTuple():
         IndexTest(
             types=[byte_t, dynamic_array_t1, bool_t, bool_t, dynamic_array_t2],
             typeIndex=4,
-            expected=lambda output: output.decode(
+            expected_store=lambda output: output.decode(
                 encoded, start_index=pt.ExtractUint16(encoded, pt.Int(4))
+            ),
+            expected_encode=substring_for_decoding(
+                encoded,
+                start_index=pt.ExtractUint16(encoded, pt.Int(4)),
             ),
         ),
     ]
 
     for i, test in enumerate(tests):
         output = test.types[test.typeIndex].new_instance()
-        expr = _index_tuple(test.types, encoded, test.typeIndex, output)
-        assert expr.type_of() == pt.TealType.none
-        assert not expr.has_return()
+        expr_store = _IndexTuple(test.types, encoded).get_or_store(
+            test.typeIndex, output
+        )
+        assert expr_store.type_of() == pt.TealType.none
+        assert not expr_store.has_return()
 
-        expected, _ = test.expected(output).__teal__(options)
-        expected.addIncoming()
-        expected = pt.TealBlock.NormalizeBlocks(expected)
+        expected_store, _ = test.expected_store(output).__teal__(options)
+        expected_store.addIncoming()
+        expected_store = pt.TealBlock.NormalizeBlocks(expected_store)
 
-        actual, _ = expr.__teal__(options)
-        actual.addIncoming()
-        actual = pt.TealBlock.NormalizeBlocks(actual)
+        actual_store, _ = expr_store.__teal__(options)
+        actual_store.addIncoming()
+        actual_store = pt.TealBlock.NormalizeBlocks(actual_store)
 
         with pt.TealComponent.Context.ignoreExprEquality():
-            assert actual == expected, "Test at index {} failed".format(i)
+            assert actual_store == expected_store, f"Test at index {i} failed"
 
         with pytest.raises(ValueError):
-            _index_tuple(test.types, encoded, len(test.types), output)
+            _IndexTuple(test.types, encoded).get_or_store(len(test.types), output)
 
         with pytest.raises(ValueError):
-            _index_tuple(test.types, encoded, -1, output)
+            _IndexTuple(test.types, encoded).get_or_store(-1, output)
 
         otherType = abi.Uint64()
         if output.type_spec() == otherType.type_spec():
             otherType = abi.Uint16()
 
         with pytest.raises(TypeError):
-            _index_tuple(test.types, encoded, test.typeIndex, otherType)
+            _IndexTuple(test.types, encoded).get_or_store(test.typeIndex, otherType)
+
+        expr_encode = _IndexTuple(test.types, encoded).get_or_store(test.typeIndex)
+        assert expr_encode.type_of() == pt.TealType.bytes
+        assert not expr_encode.has_return()
+
+        expected_encode, _ = test.expected_encode.__teal__(options)
+        expected_encode.addIncoming()
+        expected_encode = pt.TealBlock.NormalizeBlocks(expected_encode)
+
+        actual_encode, _ = expr_encode.__teal__(options)
+        actual_encode.addIncoming()
+        actual_encode = pt.TealBlock.NormalizeBlocks(actual_encode)
+
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert actual_encode == expected_encode, f"Test at index {i} failed"
+
+        with pytest.raises(ValueError):
+            _IndexTuple(test.types, encoded).get_or_store(len(test.types))
+
+        with pytest.raises(ValueError):
+            _IndexTuple(test.types, encoded).get_or_store(-1)
 
 
 def test_TupleTypeSpec_eq():
@@ -485,7 +614,7 @@ def test_TupleTypeSpec_value_type_specs():
 
 
 def test_TupleTypeSpec_length_static():
-    tests: List[List[abi.TypeSpec]] = [
+    tests: list[list[abi.TypeSpec]] = [
         [],
         [abi.Uint64TypeSpec()],
         [
@@ -751,7 +880,7 @@ def test_Tuple_encode():
 
 
 def test_Tuple_length():
-    tests: List[List[abi.TypeSpec]] = [
+    tests: list[list[abi.TypeSpec]] = [
         [],
         [abi.Uint64TypeSpec()],
         [
@@ -779,7 +908,7 @@ def test_Tuple_length():
 
 
 def test_Tuple_getitem():
-    tests: List[List[abi.TypeSpec]] = [
+    tests: list[list[abi.TypeSpec]] = [
         [],
         [abi.Uint64TypeSpec()],
         [
@@ -805,7 +934,7 @@ def test_Tuple_getitem():
 
 
 def test_TupleElement_store_into():
-    tests: List[List[abi.TypeSpec]] = [
+    tests: list[list[abi.TypeSpec]] = [
         [],
         [abi.Uint64TypeSpec()],
         [
@@ -825,7 +954,9 @@ def test_TupleElement_store_into():
             assert expr.type_of() == pt.TealType.none
             assert not expr.has_return()
 
-            expectedExpr = _index_tuple(test, tupleValue.encode(), j, output)
+            expectedExpr = _IndexTuple(test, tupleValue.encode()).get_or_store(
+                j, output
+            )
             expected, _ = expectedExpr.__teal__(options)
             expected.addIncoming()
             expected = pt.TealBlock.NormalizeBlocks(expected)

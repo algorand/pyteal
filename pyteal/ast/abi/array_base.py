@@ -20,9 +20,12 @@ from pyteal.ast.naryexpr import Concat
 
 from pyteal.ast.abi.type import TypeSpec, BaseType, ComputedValue
 from pyteal.ast.abi.tuple import _encode_tuple
-from pyteal.ast.abi.bool import Bool, BoolTypeSpec
+from pyteal.ast.abi.bool import BoolTypeSpec
 from pyteal.ast.abi.uint import Uint16, Uint16TypeSpec
-from pyteal.ast.abi.util import substring_for_decoding
+from pyteal.ast.abi.util import (
+    substring_for_decoding,
+    _GetAgainstEncoding,
+)
 
 T = TypeVar("T", bound=BaseType)
 
@@ -207,20 +210,8 @@ class ArrayElement(ComputedValue[T]):
     def produced_type_spec(self) -> TypeSpec:
         return self.array.type_spec().value_type_spec()
 
-    def store_into(self, output: T) -> Expr:
-        """Partitions the byte string of the given ABI array and stores the byte string of array
-        element in the ABI value output.
-
-        The function first checks if the output type matches with array element type, and throw
-        error if type-mismatch.
-
-        Args:
-            output: An ABI typed value that the array element byte string stores into.
-
-        Returns:
-            An expression that stores the byte string of the array element into value `output`.
-        """
-        if output.type_spec() != self.produced_type_spec():
+    def __prototype_encoding_store_into(self, output: T | None = None) -> Expr:
+        if output is not None and output.type_spec() != self.produced_type_spec():
             raise TealInputError("Output type does not match value type")
 
         encodedArray = self.array.encode()
@@ -229,11 +220,13 @@ class ArrayElement(ComputedValue[T]):
         # If the array element type is Bool, we compute the bit index
         # (if array is dynamic we add 16 to bit index for dynamic array length uint16 prefix)
         # and decode bit with given array encoding and the bit index for boolean bit.
-        if output.type_spec() == BoolTypeSpec():
+        if self.array.type_spec().value_type_spec() == BoolTypeSpec():
             bitIndex = self.index
             if arrayType.is_dynamic():
                 bitIndex = bitIndex + Int(Uint16TypeSpec().bit_size())
-            return cast(Bool, output).decode_bit(encodedArray, bitIndex)
+            return _GetAgainstEncoding(
+                encodedArray, BoolTypeSpec(), start_index=bitIndex
+            ).get_or_store(output)
 
         # Compute the byteIndex (first byte indicating the element encoding)
         # (If the array is dynamic, add 2 to byte index for dynamic array length uint16 prefix)
@@ -271,16 +264,42 @@ class ArrayElement(ComputedValue[T]):
                 .Else(nextValueStart)
             )
 
-            return output.decode(
-                encodedArray, start_index=valueStart, end_index=valueEnd
-            )
+            return _GetAgainstEncoding(
+                encodedArray,
+                arrayType.value_type_spec(),
+                start_index=valueStart,
+                end_index=valueEnd,
+            ).get_or_store(output)
 
         # Handling case for array elements are static:
         # since array._stride() is element's static byte length
         # we partition the substring for array element.
         valueStart = byteIndex
         valueLength = Int(arrayType._stride())
-        return output.decode(encodedArray, start_index=valueStart, length=valueLength)
+        return _GetAgainstEncoding(
+            encodedArray,
+            arrayType.value_type_spec(),
+            start_index=valueStart,
+            length=valueLength,
+        ).get_or_store(output)
+
+    def store_into(self, output: T) -> Expr:
+        """Partitions the byte string of the given ABI array and stores the byte string of array
+        element in the ABI value output.
+
+        The function first checks if the output type matches with array element type, and throw
+        error if type-mismatch.
+
+        Args:
+            output: An ABI typed value that the array element byte string stores into.
+
+        Returns:
+            An expression that stores the byte string of the array element into value `output`.
+        """
+        return self.__prototype_encoding_store_into(output)
+
+    def encode(self) -> Expr:
+        return self.__prototype_encoding_store_into()
 
 
 ArrayElement.__module__ = "pyteal.abi"

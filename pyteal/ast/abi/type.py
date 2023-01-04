@@ -177,6 +177,14 @@ class ComputedValue(ABC, Generic[T_co]):
         """
         pass
 
+    def encode(self) -> Expr:
+        """Get the encoding bytes of the value.
+
+        Returns:
+            An expression which represents the computed value.
+        """
+        return self.use(lambda value: value.encode())  # type: ignore
+
     def use(self, action: Callable[[T_co], Expr]) -> Expr:
         """Compute the value and pass it to a callable expression.
 
