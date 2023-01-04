@@ -430,7 +430,7 @@ def test_indexTuple():
 
     for i, test in enumerate(tests):
         output = test.types[test.typeIndex].new_instance()
-        expr = _IndexTuple(test.types, encoded)(test.typeIndex, output)
+        expr = _IndexTuple(test.types, encoded).get_or_store(test.typeIndex, output)
         assert expr.type_of() == pt.TealType.none
         assert not expr.has_return()
 
@@ -446,17 +446,17 @@ def test_indexTuple():
             assert actual == expected, "Test at index {} failed".format(i)
 
         with pytest.raises(ValueError):
-            _IndexTuple(test.types, encoded)(len(test.types), output)
+            _IndexTuple(test.types, encoded).get_or_store(len(test.types), output)
 
         with pytest.raises(ValueError):
-            _IndexTuple(test.types, encoded)(-1, output)
+            _IndexTuple(test.types, encoded).get_or_store(-1, output)
 
         otherType = abi.Uint64()
         if output.type_spec() == otherType.type_spec():
             otherType = abi.Uint16()
 
         with pytest.raises(TypeError):
-            _IndexTuple(test.types, encoded)(test.typeIndex, otherType)
+            _IndexTuple(test.types, encoded).get_or_store(test.typeIndex, otherType)
 
 
 def test_TupleTypeSpec_eq():
@@ -825,7 +825,9 @@ def test_TupleElement_store_into():
             assert expr.type_of() == pt.TealType.none
             assert not expr.has_return()
 
-            expectedExpr = _IndexTuple(test, tupleValue.encode())(j, output)
+            expectedExpr = _IndexTuple(test, tupleValue.encode()).get_or_store(
+                j, output
+            )
             expected, _ = expectedExpr.__teal__(options)
             expected.addIncoming()
             expected = pt.TealBlock.NormalizeBlocks(expected)

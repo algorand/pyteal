@@ -130,7 +130,7 @@ class _IndexTuple:
     def __post_init__(self):
         require_type(self.encoded, TealType.bytes)
 
-    def __call__(self, index: int, output: BaseType | None = None) -> Expr:
+    def get_or_store(self, index: int, output: BaseType | None = None) -> Expr:
         if index not in range(len(self.value_types)):
             raise ValueError("Index outside of range")
 
@@ -436,7 +436,7 @@ class TupleElement(ComputedValue[T]):
     def store_into(self, output: T) -> Expr:
         return _IndexTuple(
             self.tuple.type_spec().value_type_specs(), self.tuple.encode()
-        )(
+        ).get_or_store(
             self.index,
             output,
         )
@@ -444,7 +444,7 @@ class TupleElement(ComputedValue[T]):
     def encode(self) -> Expr:
         return _IndexTuple(
             self.tuple.type_spec().value_type_specs(), self.tuple.encode()
-        )(self.index)
+        ).get_or_store(self.index)
 
 
 TupleElement.__module__ = "pyteal.abi"
