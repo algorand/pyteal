@@ -1,4 +1,5 @@
-from typing import Callable, NamedTuple, Literal, Optional, Any, get_origin
+from dataclasses import dataclass, field
+from typing import Callable, NamedTuple, Literal, Optional, Any, get_origin, cast
 from inspect import isabstract
 import pytest
 
@@ -11,6 +12,7 @@ from pyteal.ast.abi.util import (
     int_literal_from_annotation,
     type_spec_from_algosdk,
     type_spec_is_assignable_to,
+    _GetAgainstEncoding,
 )
 
 options = pt.CompileOptions(version=5)
@@ -1057,3 +1059,146 @@ def test_type_spec_is_assignable_unsafe_bidirectional_full_coverage(ts: type):
         assert not exists_in_unsafe_bidirectional(ts)
     else:
         assert exists_in_unsafe_bidirectional(ts)
+
+
+@dataclass
+class GetAgainstEncodingTestcase:
+    type_spec: abi.TypeSpec
+    expected_store: Callable[[abi.BaseType, pt.Expr], pt.Expr]
+    expected_encode: Callable[[pt.Expr], pt.Expr]
+    start_index: Optional[pt.Int] = field(kw_only=True, default=None)
+    end_index: Optional[pt.Int] = field(kw_only=True, default=None)
+    length: Optional[pt.Int] = field(kw_only=True, default=None)
+
+
+@pytest.mark.parametrize(
+    "testcase",
+    [
+        GetAgainstEncodingTestcase(
+            type_spec=abi.Uint64TypeSpec(),
+            length=pt.Int(8),
+            expected_store=lambda output, encoded: output.decode(
+                encoded, length=pt.Int(8)
+            ),
+            expected_encode=lambda encoded: substring_for_decoding(
+                encoded, length=pt.Int(8)
+            ),
+        ),
+        GetAgainstEncodingTestcase(
+            type_spec=abi.Uint64TypeSpec(),
+            start_index=pt.Int(8),
+            expected_store=lambda output, encoded: output.decode(
+                encoded, start_index=pt.Int(8)
+            ),
+            expected_encode=lambda encoded: substring_for_decoding(
+                encoded, start_index=pt.Int(8)
+            ),
+        ),
+        GetAgainstEncodingTestcase(
+            type_spec=abi.ByteTypeSpec(),
+            start_index=pt.Int(8),
+            length=pt.Int(1),
+            expected_store=lambda output, encoded: output.decode(
+                encoded, start_index=pt.Int(8), length=pt.Int(1)
+            ),
+            expected_encode=lambda encoded: substring_for_decoding(
+                encoded, start_index=pt.Int(8), length=pt.Int(1)
+            ),
+        ),
+        GetAgainstEncodingTestcase(
+            type_spec=abi.BoolTypeSpec(),
+            start_index=pt.Int(0),
+            expected_store=lambda output, encoded: cast(abi.Bool, output).decode_bit(
+                encoded, pt.Int(0)
+            ),
+            expected_encode=lambda encoded: pt.SetBit(
+                pt.Bytes(b"\x00"),
+                pt.Int(0),
+                pt.GetBit(encoded, pt.Int(0)),
+            ),
+        ),
+        GetAgainstEncodingTestcase(
+            type_spec=abi.BoolTypeSpec(),
+            start_index=pt.Int(1),
+            expected_store=lambda output, encoded: cast(abi.Bool, output).decode_bit(
+                encoded, pt.Int(1)
+            ),
+            expected_encode=lambda encoded: pt.SetBit(
+                pt.Bytes(b"\x00"),
+                pt.Int(0),
+                pt.GetBit(encoded, pt.Int(1)),
+            ),
+        ),
+        GetAgainstEncodingTestcase(
+            type_spec=abi.BoolTypeSpec(),
+            start_index=pt.Int(64),
+            expected_store=lambda output, encoded: cast(abi.Bool, output).decode_bit(
+                encoded, pt.Int(64)
+            ),
+            expected_encode=lambda encoded: pt.SetBit(
+                pt.Bytes(b"\x00"),
+                pt.Int(0),
+                pt.GetBit(encoded, pt.Int(64)),
+            ),
+        ),
+        GetAgainstEncodingTestcase(
+            type_spec=abi.BoolTypeSpec(),
+            start_index=pt.Int(65),
+            expected_store=lambda output, encoded: cast(abi.Bool, output).decode_bit(
+                encoded, pt.Int(8 * 8 + 1)
+            ),
+            expected_encode=lambda encoded: pt.SetBit(
+                pt.Bytes(b"\x00"),
+                pt.Int(0),
+                pt.GetBit(encoded, pt.Int(65)),
+            ),
+        ),
+    ],
+)
+def test_get_against_encoding(testcase: GetAgainstEncodingTestcase):
+    encoded = pt.Bytes("encoded")
+
+    output_expr = testcase.type_spec.new_instance()
+    expected_store_expr = testcase.expected_store(output_expr, encoded)
+    expected_encode_expr = testcase.expected_encode(encoded)
+
+    get_against_encoding = _GetAgainstEncoding(
+        encoded,
+        testcase.type_spec,
+        start_index=testcase.start_index,
+        end_index=testcase.end_index,
+        length=testcase.length,
+    )
+    actual_store_expr = get_against_encoding.get_or_store(output_expr)
+    actual_encode_expr = get_against_encoding.get_or_store()
+
+    def expected_actual_assert(expected: pt.Expr, actual: pt.Expr):
+        expected_blocks, _ = expected.__teal__(options)
+        expected_blocks.addIncoming()
+        expected_blocks = pt.TealBlock.NormalizeBlocks(expected_blocks)
+
+        actual_blocks, _ = actual.__teal__(options)
+        actual_blocks.addIncoming()
+        actual_blocks = pt.TealBlock.NormalizeBlocks(actual_blocks)
+
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert actual_blocks == expected_blocks
+
+    expected_actual_assert(expected_store_expr, actual_store_expr)
+    expected_actual_assert(expected_encode_expr, actual_encode_expr)
+
+
+def test_get_against_encoding_negative_cases():
+    with pytest.raises(TypeError) as te:
+        _GetAgainstEncoding(
+            pt.Bytes("encoded"),
+            abi.BoolTypeSpec(),
+        )
+
+    assert "Expected a TealType.uint64 object" in str(te)
+
+    with pytest.raises(pt.TealTypeError):
+        _GetAgainstEncoding(
+            pt.Int(123),
+            abi.BoolTypeSpec(),
+        )
