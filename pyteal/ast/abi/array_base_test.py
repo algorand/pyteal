@@ -161,3 +161,105 @@ def test_ArrayElement_store_into():
 
         with pytest.raises(pt.TealInputError):
             element.store_into(abi.Tuple(abi.TupleTypeSpec(elementType)))
+
+
+def test_ArrayElement_encoding():
+    from pyteal.ast.abi.util import substring_for_decoding
+
+    for elementType in STATIC_TYPES + DYNAMIC_TYPES:
+        staticArrayType = abi.StaticArrayTypeSpec(elementType, 100)
+        staticArray = staticArrayType.new_instance()
+        index = pt.Int(9)
+
+        element = abi.ArrayElement(staticArray, index)
+        expr = element.encode()
+
+        encoded = staticArray.encode()
+        stride = pt.Int(staticArray.type_spec()._stride())
+        expectedLength = staticArray.length()
+        if elementType == abi.BoolTypeSpec():
+            expectedExpr = pt.SetBit(
+                pt.Bytes(b"\x00"),
+                pt.Int(0),
+                pt.GetBit(encoded, index),
+            )
+        elif not elementType.is_dynamic():
+            expectedExpr = substring_for_decoding(
+                encoded, start_index=stride * index, length=stride
+            )
+        else:
+            expectedExpr = substring_for_decoding(
+                encoded,
+                start_index=pt.ExtractUint16(encoded, stride * index),
+                end_index=pt.If(index + pt.Int(1) == expectedLength)
+                .Then(pt.Len(encoded))
+                .Else(pt.ExtractUint16(encoded, stride * index + pt.Int(2))),
+            )
+
+        expected, _ = expectedExpr.__teal__(options)
+        expected.addIncoming()
+        expected = pt.TealBlock.NormalizeBlocks(expected)
+
+        actual, _ = expr.__teal__(options)
+        actual.addIncoming()
+        actual = pt.TealBlock.NormalizeBlocks(actual)
+
+        with pt.TealComponent.Context.ignoreExprEquality():
+            assert actual == expected
+
+        with pytest.raises(pt.TealInputError):
+            element.store_into(abi.Tuple(abi.TupleTypeSpec(elementType)))
+
+    for elementType in STATIC_TYPES + DYNAMIC_TYPES:
+        dynamicArrayType = abi.DynamicArrayTypeSpec(elementType)
+        dynamicArray = dynamicArrayType.new_instance()
+        index = pt.Int(9)
+
+        element = abi.ArrayElement(dynamicArray, index)
+        expr = element.encode()
+
+        encoded = dynamicArray.encode()
+        stride = pt.Int(dynamicArray.type_spec()._stride())
+        expectedLength = dynamicArray.length()
+        if elementType == abi.BoolTypeSpec():
+            expectedExpr = pt.SetBit(
+                pt.Bytes(b"\x00"),
+                pt.Int(0),
+                pt.GetBit(encoded, index + pt.Int(16)),
+            )
+        elif not elementType.is_dynamic():
+            expectedExpr = substring_for_decoding(
+                encoded, start_index=stride * index + pt.Int(2), length=stride
+            )
+        else:
+            expectedExpr = substring_for_decoding(
+                encoded,
+                start_index=pt.ExtractUint16(encoded, stride * index + pt.Int(2))
+                + pt.Int(2),
+                end_index=pt.If(index + pt.Int(1) == expectedLength)
+                .Then(pt.Len(encoded))
+                .Else(
+                    pt.ExtractUint16(encoded, stride * index + pt.Int(2) + pt.Int(2))
+                    + pt.Int(2)
+                ),
+            )
+
+        expected, _ = expectedExpr.__teal__(options)
+        expected.addIncoming()
+        expected = pt.TealBlock.NormalizeBlocks(expected)
+
+        actual, _ = expr.__teal__(options)
+        actual.addIncoming()
+        actual = pt.TealBlock.NormalizeBlocks(actual)
+
+        with pt.TealComponent.Context.ignoreExprEquality():
+            with pt.TealComponent.Context.ignoreScratchSlotEquality():
+                assert actual == expected
+
+        assert pt.TealBlock.MatchScratchSlotReferences(
+            pt.TealBlock.GetReferencedScratchSlots(actual),
+            pt.TealBlock.GetReferencedScratchSlots(expected),
+        )
+
+        with pytest.raises(pt.TealInputError):
+            element.store_into(abi.Tuple(abi.TupleTypeSpec(elementType)))
