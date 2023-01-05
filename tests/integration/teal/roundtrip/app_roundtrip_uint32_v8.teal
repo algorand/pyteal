@@ -34,7 +34,7 @@ byte ""
 int 0
 dupn 3
 byte ""
-dupn 1
+dup
 frame_dig -1
 callsub numericalcomp_0
 frame_bury 1
