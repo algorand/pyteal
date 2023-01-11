@@ -1,4 +1,4 @@
-from typing import Callable, Generic, Sequence, TypeVar, cast
+from typing import Any, Callable, Generic, Optional, Sequence, TypeVar, cast
 from dataclasses import dataclass
 
 import algosdk.abi
@@ -144,8 +144,14 @@ Lazy = Callable[[], Output]
 
 @dataclass(frozen=True)
 class _MatchMode(Generic[Output]):
+    runner: Optional["PyTealDryRunExecutor"]
     app_case: Lazy
     signature_case: Lazy
+    trace: Any = None
+
+    def __post_init__(self):
+        if self.runner and self.trace:
+            self.runner.add_trace(self.trace)
 
     def __call__(self, mode: Mode, *args, **kwargs) -> Output:
         match mode:
@@ -159,6 +165,7 @@ class _MatchMode(Generic[Output]):
 
 def mode_to_execution_mode(mode: Mode) -> blackbox.ExecutionMode:
     return _MatchMode(
+        runner=None,
         app_case=lambda: blackbox.ExecutionMode.Application,
         signature_case=lambda: blackbox.ExecutionMode.Signature,
     )(mode)
@@ -192,8 +199,30 @@ class PyTealDryRunExecutor:
 
         self._pyteal_lambda: Callable[..., Expr] = approval
 
+        self.traces: list = []
+
+    def add_trace(self, trace: Any) -> None:
+        self.traces.append(trace)
+
     def is_abi(self) -> bool:
         return isinstance(self.subr.subroutine, ABIReturnSubroutine)
+
+    def abi_method_signature(self) -> None | str:
+        if self.is_abi():
+            abi_subr = cast(ABIReturnSubroutine, self.subr.subroutine)
+            return abi_subr.method_signature()
+
+        # create an artificial method signature
+        # based on the `abi_argument_types()` and `abi_return_type()`
+        if arg_types := self.abi_argument_types():
+            if all(t is None for t in arg_types):
+                return None
+
+            ret_type = self.abi_return_type()
+            ret = str(ret_type) if ret_type else "void"
+            return f"ptdre_foo({','.join(map(str, arg_types))}){ret}"
+
+        return None
 
     def abi_argument_types(self) -> None | list[algosdk.abi.ABIType]:
         if not (self.input_types or self.is_abi()):
@@ -389,6 +418,7 @@ class PyTealDryRunExecutor:
 
     def compile(self, version: int, assemble_constants: bool = False) -> str:
         return _MatchMode(
+            runner=self,
             app_case=lambda: compileTeal(
                 self.program(),
                 self.mode,
@@ -408,21 +438,24 @@ class PyTealDryRunExecutor:
         inputs: list[Sequence[PyTypes]],
         compiler_version=6,
     ) -> list[DryRunInspector]:
+        teal = self.compile(compiler_version)
         return _MatchMode(
+            self,
             app_case=lambda: DryRunExecutor.dryrun_app_on_sequence(
                 algod=algod_with_assertion(),
-                teal=self.compile(compiler_version),
+                teal=teal,
                 inputs=inputs,
-                abi_argument_types=self.abi_argument_types(),
-                abi_return_type=self.abi_return_type(),
+                abi_method_signature=self.abi_method_signature(),
+                omit_method_selector=True,
             ),
             signature_case=lambda: DryRunExecutor.dryrun_logicsig_on_sequence(
                 algod=algod_with_assertion(),
-                teal=self.compile(compiler_version),
+                teal=teal,
                 inputs=inputs,
-                abi_argument_types=self.abi_argument_types(),
-                abi_return_type=self.abi_return_type(),
+                abi_method_signature=self.abi_method_signature(),
+                omit_method_selector=True,
             ),
+            trace=teal,
         )(self.mode)
 
     def dryrun(
@@ -430,19 +463,22 @@ class PyTealDryRunExecutor:
         args: Sequence[bytes | str | int],
         compiler_version=6,
     ) -> DryRunInspector:
+        teal = self.compile(compiler_version)
         return _MatchMode(
+            self,
             app_case=lambda: DryRunExecutor.dryrun_app(
                 algod_with_assertion(),
-                self.compile(compiler_version),
+                teal,
                 args,
-                self.abi_argument_types(),
-                self.abi_return_type(),
+                abi_method_signature=self.abi_method_signature(),
+                omit_method_selector=True,
             ),
             signature_case=lambda: DryRunExecutor.dryrun_logicsig(
                 algod_with_assertion(),
-                self.compile(compiler_version),
+                teal,
                 args,
-                self.abi_argument_types(),
-                self.abi_return_type(),
+                abi_method_signature=self.abi_method_signature(),
+                omit_method_selector=True,
             ),
+            trace=teal,
         )(self.mode)
