@@ -43,7 +43,11 @@ flake8:
 mypy:
 	mypy
 
-lint: black flake8 mypy
+sdist-check:
+	python setup.py check -s
+	python setup.py check -s 2>&1 | (! grep -qEi 'error|warning')
+
+lint: black flake8 mypy sdist-check
 
 # ---- Unit Tests (no algod) ---- #
 
