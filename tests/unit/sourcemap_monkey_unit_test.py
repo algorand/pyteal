@@ -204,12 +204,12 @@ def abi_example(pt):
 
 
 CONSTRUCTS = [
-    (  # 0
+    (  # 0: Int
         lambda pt: pt.Return(pt.Int(42)),
         [[P, C], ["int 42", "pt.Int(42)"], ["return", "pt.Return(pt.Int(42))"]],
     ),
     (lambda pt: pt.Int(42), [[P, C], ["int 42", "pt.Int(42)"], ["return", C]]),
-    (
+    (  # 2: Bytes
         lambda pt: pt.Seq(pt.Pop(pt.Bytes("hello world")), pt.Int(1)),
         [
             [P, C],
@@ -219,7 +219,7 @@ CONSTRUCTS = [
             ["return", C],
         ],
     ),
-    (
+    (  # 3: *
         lambda pt: pt.Int(2) * pt.Int(3),
         [
             [P, C],
@@ -229,7 +229,7 @@ CONSTRUCTS = [
             ["return", C],
         ],
     ),
-    (
+    (  # 4: ^
         lambda pt: pt.Int(2) ^ pt.Int(3),
         [
             [P, C],
@@ -239,7 +239,7 @@ CONSTRUCTS = [
             ["return", C],
         ],
     ),
-    (
+    (  # 5: +*
         lambda pt: pt.Int(1) + pt.Int(2) * pt.Int(3),
         [
             [P, C],
@@ -251,11 +251,11 @@ CONSTRUCTS = [
             ["return", C],
         ],
     ),
-    (
+    (  # 6: ~
         lambda pt: ~pt.Int(1),
         [[P, C], ["int 1", "pt.Int(1)"], ["~", "~pt.Int(1)"], ["return", C]],
     ),
-    (
+    (  # 7: And Or
         lambda pt: pt.And(
             pt.Int(1),
             pt.Int(2),
@@ -289,7 +289,7 @@ CONSTRUCTS = [
             ["return", C],
         ],
     ),
-    (
+    (  # 8: Btoi BytesAnd
         lambda pt: pt.Btoi(
             pt.BytesAnd(pt.Bytes("base16", "0xBEEF"), pt.Bytes("base16", "0x1337"))
         ),
@@ -309,7 +309,7 @@ CONSTRUCTS = [
         ],
         4,
     ),
-    (
+    (  # 9: Btoi BytesZero
         lambda pt: pt.Btoi(pt.BytesZero(pt.Int(4))),
         [
             [P, C],
@@ -320,7 +320,7 @@ CONSTRUCTS = [
         ],
         4,
     ),
-    (
+    (  # 10: BytesNot
         lambda pt: pt.Btoi(pt.BytesNot(pt.Bytes("base16", "0xFF00"))),
         [
             [P, C],
@@ -331,7 +331,7 @@ CONSTRUCTS = [
         ],
         4,
     ),
-    (
+    (  # 11: Get/SetBit
         lambda pt: pt.Seq(
             pt.Pop(pt.SetBit(pt.Bytes("base16", "0x00"), pt.Int(3), pt.Int(1))),
             pt.GetBit(pt.Int(16), pt.Int(64)),
@@ -356,7 +356,7 @@ CONSTRUCTS = [
         ],
         3,
     ),
-    (
+    (  # 12: Get/SetByte
         lambda pt: pt.Seq(
             pt.Pop(pt.SetByte(pt.Bytes("base16", "0xff00"), pt.Int(0), pt.Int(0))),
             pt.GetByte(pt.Bytes("abc"), pt.Int(2)),
@@ -381,7 +381,7 @@ CONSTRUCTS = [
         ],
         3,
     ),
-    (
+    (  # 13: Concat
         lambda pt: pt.Btoi(pt.Concat(pt.Bytes("a"), pt.Bytes("b"), pt.Bytes("c"))),
         [
             [P, C],
@@ -397,7 +397,7 @@ CONSTRUCTS = [
             ("return", C),
         ],
     ),
-    (
+    (  # 14: Substring
         lambda pt: pt.Btoi(pt.Substring(pt.Bytes("algorand"), pt.Int(2), pt.Int(8))),
         [
             [P, C],
@@ -417,7 +417,7 @@ CONSTRUCTS = [
         ],
         5,
     ),
-    (
+    (  # 15: Extract
         lambda pt: pt.Btoi(pt.Extract(pt.Bytes("algorand"), pt.Int(2), pt.Int(6))),
         [
             [P, C],
@@ -434,7 +434,7 @@ CONSTRUCTS = [
         ],
         5,
     ),
-    (  # 16
+    (  # 16: Txn
         lambda pt: pt.And(
             pt.Txn.type_enum() == pt.TxnType.Payment,
             pt.Txn.fee() < pt.Int(100),
@@ -482,7 +482,7 @@ CONSTRUCTS = [
             ("return", C),
         ],
     ),
-    (  # 17
+    (  # 17: Cond
         lambda pt: [
             is_admin := pt.App.localGet(pt.Int(0), pt.Bytes("admin")),
             foo := pt.Return(pt.Int(1)),
@@ -590,7 +590,7 @@ CONSTRUCTS = [
         2,
         "Application",
     ),
-    (
+    (  # 18: Tmpl Gtxn TxnType
         lambda pt: [
             asset_c := pt.Tmpl.Int("TMPL_ASSET_C"),
             receiver := pt.Tmpl.Addr("TMPL_RECEIVER"),
@@ -664,7 +664,7 @@ CONSTRUCTS = [
             ("return", C),
         ],
     ),
-    (
+    (  # 19: Txn.application_args
         lambda pt: pt.And(
             pt.Txn.application_args.length(),  # get the number of application arguments in the transaction
             # as of AVM v5, PyTeal expressions can be used to dynamically index into array properties as well
@@ -694,7 +694,7 @@ CONSTRUCTS = [
         ],
         5,
     ),
-    (  # 20
+    (  # 20: App
         lambda pt: pt.Seq(
             receiver_max_balance := pt.App.localGetEx(  # noqa: F841
                 pt.Int(1), pt.App.id(), pt.Bytes("max balance")
@@ -797,7 +797,7 @@ CONSTRUCTS = [
         2,
         "Application",
     ),
-    (
+    (  # 21: EcdsaCurve Sha512_256
         lambda pt: pt.EcdsaVerify(
             pt.EcdsaCurve.Secp256k1,
             pt.Sha512_256(pt.Bytes("testdata")),
@@ -848,7 +848,7 @@ CONSTRUCTS = [
         ],
         5,
     ),
-    (  # 22
+    (  # 22: ScratchVar (simple Assert )
         lambda pt: [
             myvar := pt.ScratchVar(
                 pt.TealType.uint64
@@ -880,7 +880,7 @@ CONSTRUCTS = [
         ],
         3,
     ),
-    (
+    (  # 23: DynamicScratchVar
         lambda pt: [
             s := pt.ScratchVar(pt.TealType.uint64),
             d := pt.DynamicScratchVar(pt.TealType.uint64),
@@ -913,7 +913,7 @@ CONSTRUCTS = [
         ],
         5,
     ),
-    (  # 24
+    (  # 24: If/Then/Else ImportScratchVaplue
         lambda pt: [  # App is called at transaction index 0
             greeting := pt.ScratchVar(
                 pt.TealType.bytes, 20
@@ -980,7 +980,7 @@ CONSTRUCTS = [
         4,
         "Application",
     ),
-    (  # 25
+    (  # 25: If/Then/ElseIf/ElseIf/Else
         lambda pt: [
             arg := pt.Btoi(pt.Arg(1)),
             pt.If(arg == pt.Int(0))
@@ -1023,7 +1023,7 @@ CONSTRUCTS = [
         2,
         "Signature",
     ),
-    (
+    (  # 26: While/Do
         lambda pt: [
             totalFees := pt.ScratchVar(pt.TealType.uint64),
             i := pt.ScratchVar(pt.TealType.uint64),
@@ -1064,7 +1064,7 @@ CONSTRUCTS = [
         ),
         3,
     ),
-    (
+    (  # 27: For/Do
         lambda pt: [
             totalFees := pt.ScratchVar(pt.TealType.uint64),
             i := pt.ScratchVar(pt.TealType.uint64),
@@ -1105,7 +1105,7 @@ CONSTRUCTS = [
         ],
         3,
     ),
-    (  # 28
+    (  # 28: For/Do nested with If/Then/ElseIf/Then + Break/Continue
         lambda pt: [
             numPayments := pt.ScratchVar(pt.TealType.uint64),
             i := pt.ScratchVar(pt.TealType.uint64),
@@ -1180,7 +1180,7 @@ CONSTRUCTS = [
         ],
         3,
     ),
-    (  # 29
+    (  # 29: For/Do w embedded Cond + Break/Continue
         lambda pt: pt.Seq(
             pt.For(pt.Pop(pt.Int(1)), pt.Int(2), pt.Pop(pt.Int(3))).Do(
                 pt.Seq(
@@ -1226,7 +1226,7 @@ CONSTRUCTS = [
             ("return", "pt.Reject()"),
         ],
     ),
-    (  # 30
+    (  # 30: While/Do w empbedded Cond + Break/Continue
         lambda pt: pt.Seq(
             pt.Pop(pt.Int(0)),
             pt.While(pt.Int(1)).Do(
@@ -1289,7 +1289,7 @@ CONSTRUCTS = [
             ("return", "pt.Reject()"),
         ],
     ),
-    (  # 31
+    (  # 31: Assert (varargs)
         lambda pt: pt.Seq(
             foo := pt.App.globalGetEx(pt.Txn.applications[0], pt.Bytes("flo")),
             pt.Assert(
@@ -1432,18 +1432,18 @@ CONSTRUCTS = [
             ("status_0:", "status().store_into(output)"),
             ("proto 0 1", "status().store_into(output)"),
             ('byte ""', "status().store_into(output)"),
-            ("dupn 1", "status().store_into(output)"),
+            ("dup", "status().store_into(output)"),
             ("int 0", "status().store_into(output)"),
-            ("dupn 1", "status().store_into(output)"),
+            ("dup", "status().store_into(output)"),
             ('byte ""', "status().store_into(output)"),
             ("int 0", "status().store_into(output)"),
-            ("dupn 1", "status().store_into(output)"),
+            ("dup", "status().store_into(output)"),
             ('byte ""', "status().store_into(output)"),
-            ("dupn 1", "status().store_into(output)"),
+            ("dup", "status().store_into(output)"),
             ("int 0", "status().store_into(output)"),
-            ("dupn 1", "status().store_into(output)"),
+            ("dup", "status().store_into(output)"),
             ('byte ""', "status().store_into(output)"),
-            ("dupn 1", "status().store_into(output)"),
+            ("dup", "status().store_into(output)"),
             ('byte "1"', "pt.Bytes('1')"),
             ("app_global_get", "pt.App.globalGet(pt.Bytes('1'))"),
             ("frame_bury 1", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
@@ -1629,7 +1629,7 @@ def test_constructs(_, i, test_case, mode, version):
     bundle = comp.compile(with_sourcemap=True)
     sourcemap = bundle.sourcemap
 
-    msg = f"[CASE #{i+1}]: {expr=}, {bundle=}"
+    msg = f"[CASE #{i}]: {expr=}, {bundle=}"
 
     assert sourcemap, msg
     assert sourcemap._hybrid is True, msg

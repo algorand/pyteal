@@ -725,34 +725,24 @@ class Router:
         def wrap(_func) -> ABIReturnSubroutine:
             wrapped_subroutine = ABIReturnSubroutine(_func, overriding_name=name)
             call_configs: MethodConfig
-            if (
-                no_op is None
-                and opt_in is None
-                and close_out is None
-                and clear_state is None
-                and update_application is None
-                and delete_application is None
-            ):
+
+            ocs = dict(
+                no_op=no_op,
+                opt_in=opt_in,
+                close_out=close_out,
+                clear_state=clear_state,
+                update_application=update_application,
+                delete_application=delete_application,
+            )
+            if all(oc is None for oc in ocs.values()):
                 call_configs = MethodConfig(no_op=CallConfig.CALL)
             else:
 
                 def none_to_never(x: None | CallConfig):
                     return CallConfig.NEVER if x is None else x
 
-                _no_op = none_to_never(no_op)
-                _opt_in = none_to_never(opt_in)
-                _close_out = none_to_never(close_out)
-                _clear_state = none_to_never(clear_state)
-                _update_app = none_to_never(update_application)
-                _delete_app = none_to_never(delete_application)
-
                 call_configs = MethodConfig(
-                    no_op=_no_op,
-                    opt_in=_opt_in,
-                    close_out=_close_out,
-                    clear_state=_clear_state,
-                    update_application=_update_app,
-                    delete_application=_delete_app,
+                    **{k: none_to_never(v) for k, v in ocs.items()}
                 )
             return self.add_method_handler(
                 wrapped_subroutine, name, call_configs, description
