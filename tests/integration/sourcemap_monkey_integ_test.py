@@ -1,6 +1,5 @@
 from configparser import ConfigParser
 
-# import sys
 from unittest import mock
 
 """
