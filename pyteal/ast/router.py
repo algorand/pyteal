@@ -596,7 +596,7 @@ class ASTBuilder:
                 "Assuming to be using frame pointer, memory layout and proto should be available."
             )
 
-        if handler.type_of() == "void":
+        if handler.type_of() == sdk_abi.Returns.VOID:
             return_expr = Seq(
                 *decode_instructions,
                 cast(Expr, handler(*arg_vals)),
