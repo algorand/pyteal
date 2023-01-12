@@ -9,7 +9,7 @@ Below is an example of writing a basic stateless smart contract that allows a sp
 .. literalinclude:: ../examples/signature/basic.py
     :language: python
 
-As shown in this exmaple, the logic of smart contract is expressed using PyTeal expressions constructed in Python. PyTeal overloads Python's arithmetic operators 
+As shown in this example, the logic of smart contract is expressed using PyTeal expressions constructed in Python. PyTeal overloads Python's arithmetic operators 
 such as :code:`<` and :code:`==` (more overloaded operators can be found in :ref:`arithmetic_expressions`), allowing Python developers express smart contract logic more naturally.
 
 Lastly, :any:`compileTeal` is called to convert an PyTeal expression

@@ -22,7 +22,7 @@ setuptools.setup(
     ),
     install_requires=[
         # when changing this list, also update docs/requirements.txt
-        "py-algorand-sdk>=1.9.0,<2.0.0",
+        "py-algorand-sdk>=2.0.0,<3.0.0",
         "semantic-version>=2.9.0,<3.0.0",
         "docstring-parser==0.14.1",
     ],
