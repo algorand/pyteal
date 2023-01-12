@@ -282,6 +282,14 @@ CondNode.__module__ = "pyteal"
 
 @dataclass(frozen=True)
 class CondWithMethod:
+    """CondWithMethod unifies the generation to CondNode from compilation w/wo frame pointer.
+
+    It takes following arguments:
+    - method_sig: str
+    - condition: Expr | int, which matches the on_completion conditions
+    - method: ABIReturnSubroutine, assuming that the method is ABI routable
+    """
+
     method_sig: str
     condition: Expr | int
     method: ABIReturnSubroutine
@@ -308,7 +316,7 @@ class CondWithMethod:
                     ),
                 )
             case _:
-                raise TealInputError("Invalid condition input for add_method_to_ast")
+                raise TealInputError("Invalid condition input for CondWithMethod")
 
 
 CondWithMethod.__module__ = "pyteal"
