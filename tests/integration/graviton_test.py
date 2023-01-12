@@ -3,22 +3,6 @@ from pathlib import Path
 from typing import Any, Dict
 
 import pytest
-from graviton.blackbox import DryRunEncoder as Encoder
-from graviton.blackbox import DryRunExecutor, DryRunInspector
-from graviton.blackbox import DryRunProperty as DRProp
-from graviton.blackbox import mode_has_property
-from graviton.invariant import Invariant
-
-import pyteal as pt
-from pyteal.util import algod_with_assertion
-
-
-# from tests.blackbox import (
-#     Blackbox,
-#     BlackboxWrapper,
-#     PyTealDryRunExecutor,
-#     mode_to_execution_mode,
-# )
 
 from graviton.blackbox import (
     DryRunProperty as DRProp,
@@ -27,8 +11,18 @@ from graviton.blackbox import (
     DryRunInspector,
     mode_has_property,
 )
-
 from graviton.invariant import Invariant, PredicateKind
+
+import pyteal as pt
+from pyteal.util import algod_with_assertion
+
+from tests.blackbox import (
+    Blackbox,
+    BlackboxWrapper,
+    PyTealDryRunExecutor,
+    mode_to_execution_mode,
+)
+from tests.compile_asserts import assert_teal_as_expected
 
 PATH = Path.cwd() / "tests" / "integration"
 FIXTURES = PATH / "teal"

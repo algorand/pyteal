@@ -2,9 +2,8 @@ from dataclasses import dataclass
 from typing import Any, Callable, Generic, Sequence, TypeVar, cast
 
 import algosdk.abi
-from graviton import blackbox
 from graviton.blackbox import DryRunExecutor, DryRunInspector
-from graviton.models import PyTypes
+from graviton.models import ExecutionMode, PyTypes
 
 from pyteal import (
     Arg,
@@ -124,7 +123,7 @@ Lazy = Callable[[], Output]
 
 @dataclass(frozen=True)
 class _MatchMode(Generic[Output]):
-    runner: Optional["PyTealDryRunExecutor"]
+    runner: "PyTealDryRunExecutor | None"
     app_case: Lazy
     signature_case: Lazy
     trace: Any = None
@@ -143,11 +142,11 @@ class _MatchMode(Generic[Output]):
                 raise Exception(f"Unknown mode {mode} of type {type(mode)}")
 
 
-def mode_to_execution_mode(mode: Mode) -> blackbox.ExecutionMode:
+def mode_to_execution_mode(mode: Mode) -> ExecutionMode:
     return _MatchMode(
         runner=None,
-        app_case=lambda: blackbox.ExecutionMode.Application,
-        signature_case=lambda: blackbox.ExecutionMode.Signature,
+        app_case=lambda: ExecutionMode.Application,
+        signature_case=lambda: ExecutionMode.Signature,
     )(mode)
 
 

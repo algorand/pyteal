@@ -663,7 +663,7 @@ class PyTealSourceMap:
                 pcsm = cast(PCSourceMap, self._cached_pc_sourcemap)
                 pcs = None
                 if self.include_pcs:
-                    pcs = pcsm.line_to_pc.get(lineno, [])
+                    pcs = pcsm.line_to_pc.get(lineno - 1, [])
                 self._cached_tmis.append(
                     TealMapItem(
                         pt_frame=best_frame,
