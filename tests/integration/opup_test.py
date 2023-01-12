@@ -16,12 +16,9 @@ from algosdk.v2client.models import Account
 import algosdk
 
 
-# TODO: use keyword only args to fix the ugly API for graviton's DryRunExectuor.execute_one_dryryn()
-
-
 def _dryrun(
     bw: BlackboxWrapper,
-    sp: algosdk.future.transaction.SuggestedParams,
+    sp: algosdk.transaction.SuggestedParams,
     accounts: list[Account],
 ) -> DryRunInspector:
     e = PyTealDryRunExecutor(bw, pt.Mode.Application)
@@ -30,16 +27,13 @@ def _dryrun(
         e.compile(pt.compiler.MAX_PROGRAM_VERSION),
         [],
         ExecutionMode.Application,
-        e.method_signature(),
-        None,
-        None,
         txn_params=DryRunExecutor.transaction_params(
             sender=graviton.models.ZERO_ADDRESS,
             sp=sp,
             index=DryRunExecutor.EXISTING_APP_CALL,
-            on_complete=algosdk.future.transaction.OnComplete.NoOpOC,
+            on_complete=algosdk.transaction.OnComplete.NoOpOC,
         ),
-        accounts=accounts,
+        accounts=cast(list[str | Account], accounts),
     )
 
 
