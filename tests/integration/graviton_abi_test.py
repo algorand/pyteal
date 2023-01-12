@@ -312,7 +312,7 @@ def test_integer65(version: int):
 
     bbpt_add = PyTealDryRunExecutor(int65_add, pt.Mode.Application)
 
-    def pynum_to_tuple(n):
+    def pynum_to_int65tuple(n):
         return (n >= 0, abs(n))
 
     def pytuple_to_num(t):
@@ -323,10 +323,10 @@ def test_integer65(version: int):
     random.seed(42)
 
     choices = range(-9_999, 10_000)
-    unary_inputs = [(pynum_to_tuple(x),) for x in random.sample(choices, N)]
+    unary_inputs = [(pynum_to_int65tuple(x),) for x in random.sample(choices, N)]
 
     binary_inputs = [
-        (pynum_to_tuple(x), pynum_to_tuple(y))
+        (pynum_to_int65tuple(x), pynum_to_int65tuple(y))
         for x, y in zip(random.sample(choices, N), random.sample(choices, N))
     ]
 

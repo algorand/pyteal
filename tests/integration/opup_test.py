@@ -18,7 +18,7 @@ import algosdk
 
 def _dryrun(
     bw: BlackboxWrapper,
-    sp: algosdk.future.transaction.SuggestedParams,
+    sp: algosdk.transaction.SuggestedParams,
     accounts: list[Account],
 ) -> DryRunInspector:
     e = PyTealDryRunExecutor(bw, pt.Mode.Application)
@@ -27,15 +27,13 @@ def _dryrun(
         e.compile(pt.compiler.MAX_PROGRAM_VERSION),
         [],
         ExecutionMode.Application,
-        e.abi_argument_types(),
-        e.abi_return_type(),
         txn_params=DryRunExecutor.transaction_params(
             sender=graviton.models.ZERO_ADDRESS,
             sp=sp,
             index=DryRunExecutor.EXISTING_APP_CALL,
-            on_complete=algosdk.future.transaction.OnComplete.NoOpOC,
+            on_complete=algosdk.transaction.OnComplete.NoOpOC,
         ),
-        accounts=accounts,
+        accounts=cast(list[str | Account], accounts),
     )
 
 
