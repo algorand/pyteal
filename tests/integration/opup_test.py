@@ -1,16 +1,16 @@
-import graviton.models
-import pytest
 import math
+import pytest
 
 from typing import cast
 import pyteal as pt
 from tests.blackbox import (
+    algod_with_assertion,
     Blackbox,
     BlackboxWrapper,
     PyTealDryRunExecutor,
 )
-import tests
-from graviton.blackbox import DryRunExecutor, DryRunInspector, ExecutionMode
+from graviton.blackbox import DryRunExecutor, DryRunInspector
+from graviton.models import ExecutionMode, ZERO_ADDRESS
 
 from algosdk.v2client.models import Account
 import algosdk
@@ -23,12 +23,12 @@ def _dryrun(
 ) -> DryRunInspector:
     e = PyTealDryRunExecutor(bw, pt.Mode.Application)
     return DryRunExecutor.execute_one_dryrun(
-        tests.blackbox.algod_with_assertion(),
-        e.compile(pt.compiler.MAX_PROGRAM_VERSION),
+        algod_with_assertion(),
+        e.compile(pt.MAX_PROGRAM_VERSION),
         [],
         ExecutionMode.Application,
         txn_params=DryRunExecutor.transaction_params(
-            sender=graviton.models.ZERO_ADDRESS,
+            sender=ZERO_ADDRESS,
             sp=sp,
             index=DryRunExecutor.EXISTING_APP_CALL,
             on_complete=algosdk.transaction.OnComplete.NoOpOC,
