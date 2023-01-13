@@ -856,7 +856,10 @@ class Router:
         return sdk_abi.Contract(self.name, self.methods, self.descr)
 
     def build_program(
-        self, use_frame_pt: bool = False
+        self,
+        *,
+        version: int = DEFAULT_TEAL_VERSION,
+        optimize: Optional[OptimizeOptions] = None,
     ) -> tuple[Expr, Expr, sdk_abi.Contract]:
         """
         Constructs ASTs for approval and clear-state programs from the registered methods and bare
@@ -873,9 +876,14 @@ class Router:
             * clear_state_program: an AST for clear-state program
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
+        optimize = optimize if optimize else OptimizeOptions()
         return (
-            self.approval_ast.program_construction(use_frame_pt=use_frame_pt),
-            self.clear_state_ast.program_construction(use_frame_pt=use_frame_pt),
+            self.approval_ast.program_construction(
+                use_frame_pt=optimize.use_frame_pointers(version)
+            ),
+            self.clear_state_ast.program_construction(
+                use_frame_pt=optimize.use_frame_pointers(version)
+            ),
             self.contract_construct(),
         )
 
@@ -903,9 +911,7 @@ class Router:
             * clear_state_program: compiled clear-state program string
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
-        optimize = optimize if optimize else OptimizeOptions()
-
-        ap, csp, contract = self.build_program(optimize.use_frame_pointers(version))
+        ap, csp, contract = self.build_program(version=version, optimize=optimize)
         ap_compiled = compileTeal(
             ap,
             Mode.Application,
