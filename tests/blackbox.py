@@ -1,4 +1,5 @@
-from typing import Callable, Sequence, cast
+from typing import Any, Callable, Generic, Optional, Sequence, TypeVar, cast
+from dataclasses import dataclass
 
 import algosdk.abi
 from algosdk.v2client import algod
@@ -179,6 +180,11 @@ class PyTealDryRunExecutor:
                 )
 
         self._pyteal_lambda: Callable[..., Expr] = approval
+
+        self.traces: list = []
+
+    def add_trace(self, trace: Any) -> None:
+        self.traces.append(trace)
 
     def is_abi(self) -> bool:
         return isinstance(self.subr.subroutine, ABIReturnSubroutine)

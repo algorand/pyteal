@@ -21,7 +21,7 @@ import algosdk
 
 def _dryrun(
     bw: BlackboxWrapper,
-    sp: algosdk.future.transaction.SuggestedParams,
+    sp: algosdk.transaction.SuggestedParams,
     accounts: list[Account],
 ) -> DryRunInspector:
     return PyTealDryRunExecutor(bw, pt.Mode.Application).dryrun_one(

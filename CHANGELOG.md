@@ -14,6 +14,7 @@
 * Starting with program version 9, when `scratch_slots` flag isn't provided to `OptimizeOptions`, default to optimizing. For versions 8 and earlier the default is and remains to _not_ optimize. ([#613](https://github.com/algorand/pyteal/pull/613))
 * Replaced the usage of `typing.NamedTuple` with `dataclass` for `class OpType` in the **ir** package in order to avoid [a regression coming in Python 3.11.1](https://github.com/python/cpython/issues/100098). ([#615](https://github.com/algorand/pyteal/pull/615))
 * Upgrade mypy to v0.991. ([#618](https://github.com/algorand/pyteal/pull/618))
+* Upgrade py-algorand-sdk to v2.0.0. ([#626](https://github.com/algorand/pyteal/pull/626))
 
 # 0.20.1
 
