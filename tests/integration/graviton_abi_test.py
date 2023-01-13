@@ -1,7 +1,7 @@
 import random
 import pytest
 
-from graviton.blackbox import DryRunInspector
+from graviton.inspector import DryRunInspector
 
 import pyteal as pt
 from pyteal.ast.subroutine import ABIReturnSubroutine

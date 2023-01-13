@@ -10,11 +10,10 @@ import examples.signature.factorizer_game as factorizer
 from tests.blackbox import algod_with_assertion
 from graviton.blackbox import (
     DryRunExecutor,
-    DryRunInspector as Inspector,
-    DryRunProperty as DRProp,
     ExecutionMode,
     DryRunTransactionParams as TxParams,
 )
+from graviton.inspector import DryRunInspector as Inspector, DryRunProperty as DRProp
 from graviton.invariant import Invariant
 
 REPORTS_DIR = Path.cwd() / "tests" / "integration" / "reports"

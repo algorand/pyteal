@@ -15,14 +15,9 @@ from tests.blackbox import (
     PyTealDryRunExecutor,
 )
 
-from graviton.blackbox import (
-    DryRunProperty as DRProp,
-    DryRunEncoder as Encoder,
-    DryRunExecutor,
-    DryRunInspector,
-    mode_has_property,
-)
-from graviton.invariant import Invariant, PredicateKind
+from graviton.blackbox import DryRunEncoder as Encoder, DryRunExecutor
+from graviton.inspector import DryRunProperty as DRProp, DryRunInspector
+from graviton.invariant import Invariant, PredicateKind, mode_has_property
 
 PATH = Path.cwd() / "tests" / "integration"
 FIXTURES = PATH / "teal"
@@ -695,10 +690,8 @@ def blackbox_pyteal_example3():
     import math
     import random
 
-    from graviton.blackbox import (
-        DryRunEncoder,
-        DryRunProperty as DRProp,
-    )
+    from graviton.blackbox import DryRunEncoder
+    from graviton.inspector import DryRunProperty as DRProp
     from graviton.invariant import Invariant
 
     from pyteal import If, Int, Mod, Mode, Subroutine, TealType

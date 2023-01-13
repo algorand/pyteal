@@ -22,7 +22,7 @@ import algosdk
 def _dryrun(
     bw: BlackboxWrapper,
     sp: algosdk.transaction.SuggestedParams,
-    accounts: list[Account],
+    accounts: list[Account | str],
 ) -> DryRunInspector:
     return PyTealDryRunExecutor(bw, pt.Mode.Application).dryrun_one(
         [],
@@ -31,7 +31,7 @@ def _dryrun(
             sender=graviton.models.ZERO_ADDRESS,
             sp=sp,
             index=DryRunExecutor.EXISTING_APP_CALL,
-            on_complete=algosdk.future.transaction.OnComplete.NoOpOC,
+            on_complete=algosdk.transaction.OnComplete.NoOpOC,
             dryrun_accounts=accounts,
         ),
     )
@@ -60,7 +60,7 @@ def test_opup_maximize_budget(
         )
 
     if with_funding:
-        accounts = (
+        accounts: list[Account | str] = (
             [
                 Account(
                     address=algosdk.logic.get_application_address(
@@ -120,7 +120,7 @@ def test_opup_ensure_budget(
         )
 
     if with_funding:
-        accounts = (
+        accounts: list[Account | str] = (
             [
                 Account(
                     address=algosdk.logic.get_application_address(
