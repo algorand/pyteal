@@ -4022,6 +4022,7 @@ retsub
 // approve_if_odd_caster
 approveifoddcaster_5:
 proto 0 0
+int 0
 txna ApplicationArgs 1
 int 0
 extract_uint32
@@ -4613,6 +4614,7 @@ retsub
 // approve_if_odd_caster
 approveifoddcaster_5:
 proto 0 0
+int 0
 txna ApplicationArgs 1
 int 0
 extract_uint32

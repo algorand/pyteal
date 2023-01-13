@@ -384,9 +384,16 @@ class ASTBuilder:
         subroutine: ABIReturnSubroutine,
         use_frame_pt: bool = False,
     ) -> tuple[list[Expr], list[abi.BaseType], Optional[Proto]]:
+        """
+        Assumption: arg_vals = app_args_vals union with txn_arg_vals
+        """
+
+        # if subroutine has ABI output, then local variables start from 1
+        # otherwise local variables start from 0
         index_start_from = int(subroutine.output_kwarg_info is not None)
 
-        local_types = [i._stored_value.storage_type() for i in arg_vals]
+        # prepare the local stack type list for local variable allocation
+        local_types: list[TealType] = [i._stored_value.storage_type() for i in arg_vals]
 
         if subroutine.output_kwarg_info:
             local_types = [
@@ -606,6 +613,7 @@ class ASTBuilder:
 
         if handler.type_of() == sdk_abi.Returns.VOID:
             return_expr = Seq(
+                *proto.mem_layout._succinct_repr(),
                 *decode_instructions,
                 cast(Expr, handler(*arg_vals)),
             )
