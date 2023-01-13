@@ -1,5 +1,4 @@
-from typing import Any, Callable, Generic, Optional, Sequence, TypeVar, cast
-from dataclasses import dataclass
+from typing import Any, Callable, Sequence, cast
 
 import algosdk.abi
 from algosdk.v2client import algod
