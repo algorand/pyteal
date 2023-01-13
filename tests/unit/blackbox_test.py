@@ -151,6 +151,7 @@ ABI_UNITS = [
 
 
 @pytest.mark.parametrize("subr, mode", product(UNITS, pt.Mode))
+@pytest.mark.serial
 def test_blackbox_pyteal(subr: BlackboxWrapper, mode: pt.Mode):
     is_app = mode == pt.Mode.Application
     name = f"{'app' if is_app else 'lsig'}_{subr.name()}"
@@ -166,6 +167,7 @@ def test_blackbox_pyteal(subr: BlackboxWrapper, mode: pt.Mode):
 
 
 @pytest.mark.parametrize("subr_abi, mode", product(ABI_UNITS, pt.Mode))
+@pytest.mark.serial
 def test_abi_blackbox_pyteal(
     subr_abi: Tuple[BlackboxWrapper, Optional[pt.ast.abi.BaseType]], mode: pt.Mode
 ):
@@ -204,6 +206,7 @@ def test_abi_blackbox_pyteal(
 @pytest.mark.parametrize(
     "fn, expected_is_abi", ((utest_noop, False), (fn_0arg_uint64_ret, True))
 )
+@pytest.mark.serial
 def test_PyTealBlackboxExecutor_is_abi(
     mode: pt.Mode, fn: BlackboxWrapper, expected_is_abi: bool
 ):
@@ -228,6 +231,7 @@ def test_PyTealBlackboxExecutor_is_abi(
         (fn_2mixed_arg_1ret, 2),
     ),
 )
+@pytest.mark.serial
 def test_PyTealBlackboxExecutor_abi_argument_types(
     mode: pt.Mode, fn: BlackboxWrapper, expected_arg_count: int
 ):
@@ -247,6 +251,7 @@ def test_PyTealBlackboxExecutor_abi_argument_types(
         (fn_2mixed_arg_1ret, True),
     ),
 )
+@pytest.mark.serial
 def test_PyTealBlackboxExecutor_abi_return_type(
     mode: pt.Mode, fn: BlackboxWrapper, expected_does_produce_type: bool
 ):

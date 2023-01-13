@@ -5,6 +5,7 @@ import pytest
 
 
 @mock.patch.object(ConfigParser, "getboolean", side_effect=Exception("1337"))
+@pytest.mark.serial
 def test_sourcemap_fails_elegantly_when_no_ini(_):
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions

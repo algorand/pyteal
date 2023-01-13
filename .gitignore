@@ -143,5 +143,4 @@ dmypy.json
 # asdf
 .tool-versions
 
-# fixtures
-tests/**/_*.txt
+

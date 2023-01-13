@@ -18,13 +18,14 @@ from pyteal.compiler.sourcemap import R3SourceMap, R3SourceMapJSON
 ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 
 
+@pytest.mark.serial
 def test_frames():
     from pyteal.stack_frame import StackFrames
 
     StackFrames._no_stackframes = False
 
     this_file, this_func = "sourcemap_test.py", "test_frames"
-    this_lineno, this_frame = 27, StackFrames(keep_all=True)[1]
+    this_lineno, this_frame = 28, StackFrames(keep_all=True)[1]
     code = (
         f"    this_lineno, this_frame = {this_lineno}, StackFrames(keep_all=True)[1]\n"
     )
@@ -46,6 +47,7 @@ def test_frames():
     assert isinstance(node.parent, ast.Subscript)  # type: ignore
 
 
+@pytest.mark.serial
 def test_SourceMapItem_source_mapping():
     from pyteal.stack_frame import StackFrames
 
@@ -130,10 +132,12 @@ def no_regressions():
         assert expected == json.dumps(contract.dictify(), indent=4)
 
 
+@pytest.mark.serial
 def test_no_regression_with_sourcemap_as_configured():
     no_regressions()
 
 
+@pytest.mark.serial
 def test_no_regression_with_sourcemap_enabled():
     from pyteal.stack_frame import StackFrames
 
@@ -142,6 +146,7 @@ def test_no_regression_with_sourcemap_enabled():
     no_regressions()
 
 
+@pytest.mark.serial
 def test_no_regression_with_sourcemap_disabled():
     from pyteal.stack_frame import StackFrames
 
@@ -150,6 +155,7 @@ def test_no_regression_with_sourcemap_disabled():
     no_regressions()
 
 
+@pytest.mark.serial
 def test_sourcemap_fails_because_unconfigured():
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
@@ -231,6 +237,7 @@ def trial(func):
 
 
 @pytest.mark.skip()
+@pytest.mark.serial
 def test_time_benchmark_under_config():
     from pyteal.stack_frame import StackFrames
 
@@ -266,6 +273,7 @@ Allocations results for tests/unit/sourcemap_test.py::test_time_benchmark_under_
 
 @pytest.mark.skip()
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
+@pytest.mark.serial
 def test_time_benchmark_sourcemap_enabled(_):
     """
     UPSHOT: expect deterioration of (5 to 15)X when enabling source maps.
@@ -349,6 +357,7 @@ Allocations results for tests/unit/sourcemap_test.py::test_time_benchmark_source
 """
 
 
+@pytest.mark.serial
 def test_config():
     from pyteal.stack_frame import StackFrames
 

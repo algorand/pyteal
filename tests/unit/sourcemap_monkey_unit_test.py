@@ -17,8 +17,9 @@ ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 FIXTURES = Path.cwd() / "tests" / "unit" / "sourcemaps"
 
 
-@pytest.mark.skip("this is failing due to improvments. TODO: update the fixture.")
+# @pytest.mark.skip("this is failing due to improvments. TODO: update the fixture.")
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
+@pytest.mark.serial
 def test_r3sourcemap(_):
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
@@ -100,6 +101,7 @@ def test_r3sourcemap(_):
 
 
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
+@pytest.mark.serial
 def test_reconstruct(_):
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
@@ -119,6 +121,7 @@ def test_reconstruct(_):
 
 
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
+@pytest.mark.serial
 def test_mocked_config_for_frames(_):
     config = ConfigParser()
     assert config.getboolean("pyteal-source-mapper", "enabled") is True
@@ -135,6 +138,7 @@ def make(x, y, z):
 
 
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
+@pytest.mark.serial
 def test_lots_o_indirection(_):
     import pyteal as pt
 
@@ -1601,6 +1605,7 @@ CONSTRUCTS = [
 @pytest.mark.parametrize("mode", ["Application", "Signature"])
 @pytest.mark.parametrize("version", range(2, 9))
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
+@pytest.mark.serial
 def test_constructs(_, i, test_case, mode, version):
     import pyteal as pt
 
