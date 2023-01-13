@@ -297,26 +297,13 @@ class CondWithMethod:
     def to_cond_node(self, use_frame_pt: bool = False) -> CondNode:
         walk_in_cond = Txn.application_args[0] == MethodSignature(self.method_sig)
 
-        match self.condition:
-            case Expr():
-                return CondNode(
-                    walk_in_cond,
-                    Seq(
-                        Assert(self.condition),
-                        ASTBuilder.wrap_handler(
-                            True, self.method, use_frame_pt=use_frame_pt
-                        ),
-                    ),
-                )
-            case 1:
-                return CondNode(
-                    walk_in_cond,
-                    ASTBuilder.wrap_handler(
-                        True, self.method, use_frame_pt=use_frame_pt
-                    ),
-                )
-            case _:
-                raise TealInputError("Invalid condition input for CondWithMethod")
+        if not (isinstance(self.condition, Expr) or self.condition == 1):
+            raise TealInputError("Invalid condition input for CondWithMethod")
+
+        res = ASTBuilder.wrap_handler(True, self.method, use_frame_pt=use_frame_pt)
+        if isinstance(self.condition, Expr):
+            res = Seq(Assert(self.condition), res)
+        return CondNode(walk_in_cond, res)
 
 
 CondWithMethod.__module__ = "pyteal"
