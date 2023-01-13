@@ -634,7 +634,8 @@ class ASTBuilder:
 
     def program_construction(self, use_frame_pt: bool = False) -> Expr:
         self.conditions_n_branches += [
-            i.to_cond_node(use_frame_pt=use_frame_pt) for i in self.methods_with_conds
+            method_with_cond.to_cond_node(use_frame_pt=use_frame_pt)
+            for method_with_cond in self.methods_with_conds
         ]
 
         if not self.conditions_n_branches:
