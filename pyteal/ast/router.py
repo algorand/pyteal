@@ -315,9 +315,13 @@ class ASTBuilder:
     methods_with_conds: list[CondWithMethod] = field(default_factory=list)
 
     @staticmethod
-    def __handler_validity_check(
+    def __filter_invalid_handlers_and_typecast(
         subroutine: ABIReturnSubroutine | SubroutineFnWrapper | Expr,
     ) -> ABIReturnSubroutine:
+        """This method filters out invalid handlers that might be normal subroutine, Expr, or unroutable ABIReturnSubroutine.
+
+        It accepts only routable ABIReturnSubroutine, and shrink the type to ABIReturnSubroutine from argument's union type.
+        """
         if not isinstance(subroutine, ABIReturnSubroutine):
             raise TealInputError(
                 f"method call should be only registering ABIReturnSubroutine, got {type(subroutine)}."
@@ -525,7 +529,7 @@ class ASTBuilder:
                         "or Subroutine/ABIReturnSubroutine with none return and no arg"
                     )
         elif not use_frame_pt:
-            handler = ASTBuilder.__handler_validity_check(handler)
+            handler = ASTBuilder.__filter_invalid_handlers_and_typecast(handler)
             (
                 arg_vals,
                 app_arg_vals,
@@ -571,7 +575,7 @@ class ASTBuilder:
     def __de_abify_subroutine(
         handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr,
     ) -> SubroutineFnWrapper:
-        handler = ASTBuilder.__handler_validity_check(handler)
+        handler = ASTBuilder.__filter_invalid_handlers_and_typecast(handler)
         (
             arg_vals,
             app_arg_vals,
