@@ -859,7 +859,7 @@ class Router:
         self,
         *,
         version: int = DEFAULT_TEAL_VERSION,
-        optimize: Optional[OptimizeOptions] = None,
+        optimize: OptimizeOptions | None = None,
     ) -> tuple[Expr, Expr, sdk_abi.Contract]:
         """
         Constructs ASTs for approval and clear-state programs from the registered methods and bare
