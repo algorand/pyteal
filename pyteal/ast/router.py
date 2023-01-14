@@ -591,19 +591,20 @@ class ASTBuilder:
         )
 
         subroutine_caster = Subroutine(TealType.none, f"{handler.name()}_caster")
-        return_expr: Expr
 
         if not proto or not proto.mem_layout:
             raise TealInternalError(
                 "Assuming to be using frame pointer, memory layout and proto should be available."
             )
 
+        decoding_steps: list[Expr] = [
+            *proto.mem_layout._succinct_repr(),
+            *decode_instructions,
+        ]
+        returning_steps: list[Expr]
+
         if handler.type_of() == sdk_abi.Returns.VOID:
-            return_expr = Seq(
-                *proto.mem_layout._succinct_repr(),
-                *decode_instructions,
-                cast(Expr, handler(*arg_vals)),
-            )
+            returning_steps = [cast(Expr, handler(*arg_vals))]
         else:
             output_temp: abi.BaseType = cast(
                 OutputKwArgInfo, handler.output_kwarg_info
@@ -612,16 +613,13 @@ class ASTBuilder:
             subroutine_call: abi.ReturnedValue = cast(
                 abi.ReturnedValue, handler(*arg_vals)
             )
-
-            return_expr = Seq(
-                *proto.mem_layout._succinct_repr(),
-                *decode_instructions,
+            returning_steps = [
                 subroutine_call.store_into(output_temp),
                 abi.MethodReturn(output_temp),
-            )
+            ]
 
         def declaration():
-            return return_expr
+            return Seq(*decoding_steps, *returning_steps)
 
         return subroutine_caster(declaration)
 
@@ -877,13 +875,10 @@ class Router:
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
         optimize = optimize if optimize else OptimizeOptions()
+        use_frame_pt = optimize.use_frame_pointers(version)
         return (
-            self.approval_ast.program_construction(
-                use_frame_pt=optimize.use_frame_pointers(version)
-            ),
-            self.clear_state_ast.program_construction(
-                use_frame_pt=optimize.use_frame_pointers(version)
-            ),
+            self.approval_ast.program_construction(use_frame_pt=use_frame_pt),
+            self.clear_state_ast.program_construction(use_frame_pt=use_frame_pt),
             self.contract_construct(),
         )
 
