@@ -597,10 +597,8 @@ class ASTBuilder:
 
         subroutine_caster = Subroutine(TealType.none, f"{handler.name()}_caster")
 
-        if not proto or not proto.mem_layout:
-            raise TealInternalError(
-                "Assuming to be using frame pointer, memory layout and proto should be available."
-            )
+        proto = cast(Proto, proto)
+        proto.mem_layout = cast(ProtoStackLayout, proto.mem_layout)
 
         decoding_steps: list[Expr] = [
             *proto.mem_layout._succinct_repr(),
