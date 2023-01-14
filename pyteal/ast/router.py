@@ -529,52 +529,53 @@ class ASTBuilder:
                         "or Subroutine/ABIReturnSubroutine with none return and no arg"
                     )
         elif not use_frame_pt:
-            handler = ASTBuilder.__filter_invalid_handlers_and_typecast(handler)
-            (
-                arg_vals,
-                app_arg_vals,
-                txn_arg_vals,
-            ) = ASTBuilder.__subroutine_argument_instance_generate(handler)
-
-            (
-                decode_instructions,
-                arg_vals,
-                _,
-            ) = ASTBuilder.__decode_constructions_and_args(
-                arg_vals, app_arg_vals, txn_arg_vals, handler
-            )
-
-            # NOTE: does not have to have return, can be void method
-            if handler.type_of() == "void":
-                return Seq(
-                    *decode_instructions,
-                    cast(Expr, handler(*arg_vals)),
-                    Approve(),
-                )
-            else:
-                output_temp: abi.BaseType = cast(
-                    OutputKwArgInfo, handler.output_kwarg_info
-                ).abi_type.new_instance()
-                subroutine_call: abi.ReturnedValue = cast(
-                    abi.ReturnedValue, handler(*arg_vals)
-                )
-                return Seq(
-                    *decode_instructions,
-                    subroutine_call.store_into(output_temp),
-                    abi.MethodReturn(output_temp),
-                    Approve(),
-                )
+            return ASTBuilder.__de_abify_subroutine_vanilla(handler)
         else:
-            subroutine_ify = ASTBuilder.__de_abify_subroutine(handler)
+            return ASTBuilder.__de_abify_subroutine_frame_pointers(handler)
+
+    @staticmethod
+    def __de_abify_subroutine_vanilla(
+        handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr,
+    ) -> Expr:
+        handler = ASTBuilder.__filter_invalid_handlers_and_typecast(handler)
+        (
+            arg_vals,
+            app_arg_vals,
+            txn_arg_vals,
+        ) = ASTBuilder.__subroutine_argument_instance_generate(handler)
+
+        (
+            decode_instructions,
+            arg_vals,
+            _,
+        ) = ASTBuilder.__decode_constructions_and_args(
+            arg_vals, app_arg_vals, txn_arg_vals, handler
+        )
+
+        if handler.type_of() == sdk_abi.Returns.VOID:
             return Seq(
-                subroutine_ify(),
+                *decode_instructions,
+                cast(Expr, handler(*arg_vals)),
+                Approve(),
+            )
+        else:
+            output_temp: abi.BaseType = cast(
+                OutputKwArgInfo, handler.output_kwarg_info
+            ).abi_type.new_instance()
+            subroutine_call: abi.ReturnedValue = cast(
+                abi.ReturnedValue, handler(*arg_vals)
+            )
+            return Seq(
+                *decode_instructions,
+                subroutine_call.store_into(output_temp),
+                abi.MethodReturn(output_temp),
                 Approve(),
             )
 
     @staticmethod
-    def __de_abify_subroutine(
+    def __de_abify_subroutine_frame_pointers(
         handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr,
-    ) -> SubroutineFnWrapper:
+    ) -> Expr:
         handler = ASTBuilder.__filter_invalid_handlers_and_typecast(handler)
         (
             arg_vals,
@@ -625,7 +626,7 @@ class ASTBuilder:
         def declaration():
             return Seq(*decoding_steps, *returning_steps)
 
-        return subroutine_caster(declaration)
+        return Seq(subroutine_caster(declaration)(), Approve())
 
     def add_method_to_ast(
         self, method_signature: str, cond: Expr | int, handler: ABIReturnSubroutine
