@@ -1,0 +1,512 @@
+#pragma version 8
+txn NumAppArgs
+int 0
+==
+bnz main_l20
+txna ApplicationArgs 0
+method "add(uint64,uint64)uint64"
+==
+bnz main_l19
+txna ApplicationArgs 0
+method "sub(uint64,uint64)uint64"
+==
+bnz main_l18
+txna ApplicationArgs 0
+method "mul(uint64,uint64)uint64"
+==
+bnz main_l17
+txna ApplicationArgs 0
+method "div(uint64,uint64)uint64"
+==
+bnz main_l16
+txna ApplicationArgs 0
+method "mod(uint64,uint64)uint64"
+==
+bnz main_l15
+txna ApplicationArgs 0
+method "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
+==
+bnz main_l14
+txna ApplicationArgs 0
+method "empty_return_subroutine()void"
+==
+bnz main_l13
+txna ApplicationArgs 0
+method "log_1()uint64"
+==
+bnz main_l12
+txna ApplicationArgs 0
+method "log_creation()string"
+==
+bnz main_l11
+err
+main_l11:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+==
+&&
+assert
+callsub logcreationcaster_17
+int 1
+return
+main_l12:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+txn OnCompletion
+int OptIn
+==
+txn ApplicationID
+int 0
+!=
+&&
+||
+assert
+callsub log1caster_16
+int 1
+return
+main_l13:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+txn OnCompletion
+int OptIn
+==
+||
+assert
+callsub emptyreturnsubroutinecaster_15
+int 1
+return
+main_l14:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+callsub alllaidtoargscaster_14
+int 1
+return
+main_l15:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+callsub modcaster_13
+int 1
+return
+main_l16:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+callsub divcaster_12
+int 1
+return
+main_l17:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+callsub mulcaster_11
+int 1
+return
+main_l18:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+callsub subcaster_10
+int 1
+return
+main_l19:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+callsub addcaster_9
+int 1
+return
+main_l20:
+txn OnCompletion
+int OptIn
+==
+bnz main_l22
+err
+main_l22:
+txn ApplicationID
+int 0
+!=
+assert
+byte "optin call"
+log
+int 1
+return
+
+// add
+add_0:
+proto 2 1
+int 0
+frame_dig -2
+frame_dig -1
++
+frame_bury 0
+retsub
+
+// sub
+sub_1:
+proto 2 1
+int 0
+frame_dig -2
+frame_dig -1
+-
+frame_bury 0
+retsub
+
+// mul
+mul_2:
+proto 2 1
+int 0
+frame_dig -2
+frame_dig -1
+*
+frame_bury 0
+retsub
+
+// div
+div_3:
+proto 2 1
+int 0
+frame_dig -2
+frame_dig -1
+/
+frame_bury 0
+retsub
+
+// mod
+mod_4:
+proto 2 1
+int 0
+frame_dig -2
+frame_dig -1
+%
+frame_bury 0
+retsub
+
+// all_laid_to_args
+alllaidtoargs_5:
+proto 16 1
+int 0
+frame_dig -16
+frame_dig -15
++
+frame_dig -14
++
+frame_dig -13
++
+frame_dig -12
++
+frame_dig -11
++
+frame_dig -10
++
+frame_dig -9
++
+frame_dig -8
++
+frame_dig -7
++
+frame_dig -6
++
+frame_dig -5
++
+frame_dig -4
++
+frame_dig -3
++
+frame_dig -2
++
+frame_dig -1
++
+frame_bury 0
+retsub
+
+// empty_return_subroutine
+emptyreturnsubroutine_6:
+proto 0 0
+byte "appear in both approval and clear state"
+log
+retsub
+
+// log_1
+log1_7:
+proto 0 1
+int 0
+int 1
+frame_bury 0
+retsub
+
+// log_creation
+logcreation_8:
+proto 0 1
+byte ""
+byte 0x00106c6f6767696e67206372656174696f6e
+frame_bury 0
+retsub
+
+// add_caster
+addcaster_9:
+proto 0 0
+int 0
+dupn 2
+txna ApplicationArgs 1
+btoi
+frame_bury 1
+txna ApplicationArgs 2
+btoi
+frame_bury 2
+frame_dig 1
+frame_dig 2
+callsub add_0
+frame_bury 0
+byte 0x151f7c75
+frame_dig 0
+itob
+concat
+log
+retsub
+
+// sub_caster
+subcaster_10:
+proto 0 0
+int 0
+dupn 2
+txna ApplicationArgs 1
+btoi
+frame_bury 1
+txna ApplicationArgs 2
+btoi
+frame_bury 2
+frame_dig 1
+frame_dig 2
+callsub sub_1
+frame_bury 0
+byte 0x151f7c75
+frame_dig 0
+itob
+concat
+log
+retsub
+
+// mul_caster
+mulcaster_11:
+proto 0 0
+int 0
+dupn 2
+txna ApplicationArgs 1
+btoi
+frame_bury 1
+txna ApplicationArgs 2
+btoi
+frame_bury 2
+frame_dig 1
+frame_dig 2
+callsub mul_2
+frame_bury 0
+byte 0x151f7c75
+frame_dig 0
+itob
+concat
+log
+retsub
+
+// div_caster
+divcaster_12:
+proto 0 0
+int 0
+dupn 2
+txna ApplicationArgs 1
+btoi
+frame_bury 1
+txna ApplicationArgs 2
+btoi
+frame_bury 2
+frame_dig 1
+frame_dig 2
+callsub div_3
+frame_bury 0
+byte 0x151f7c75
+frame_dig 0
+itob
+concat
+log
+retsub
+
+// mod_caster
+modcaster_13:
+proto 0 0
+int 0
+dupn 2
+txna ApplicationArgs 1
+btoi
+frame_bury 1
+txna ApplicationArgs 2
+btoi
+frame_bury 2
+frame_dig 1
+frame_dig 2
+callsub mod_4
+frame_bury 0
+byte 0x151f7c75
+frame_dig 0
+itob
+concat
+log
+retsub
+
+// all_laid_to_args_caster
+alllaidtoargscaster_14:
+proto 0 0
+int 0
+dupn 16
+byte ""
+txna ApplicationArgs 1
+btoi
+frame_bury 1
+txna ApplicationArgs 2
+btoi
+frame_bury 2
+txna ApplicationArgs 3
+btoi
+frame_bury 3
+txna ApplicationArgs 4
+btoi
+frame_bury 4
+txna ApplicationArgs 5
+btoi
+frame_bury 5
+txna ApplicationArgs 6
+btoi
+frame_bury 6
+txna ApplicationArgs 7
+btoi
+frame_bury 7
+txna ApplicationArgs 8
+btoi
+frame_bury 8
+txna ApplicationArgs 9
+btoi
+frame_bury 9
+txna ApplicationArgs 10
+btoi
+frame_bury 10
+txna ApplicationArgs 11
+btoi
+frame_bury 11
+txna ApplicationArgs 12
+btoi
+frame_bury 12
+txna ApplicationArgs 13
+btoi
+frame_bury 13
+txna ApplicationArgs 14
+btoi
+frame_bury 14
+txna ApplicationArgs 15
+frame_bury 17
+frame_dig 17
+int 0
+extract_uint64
+frame_bury 15
+frame_dig 17
+int 8
+extract_uint64
+frame_bury 16
+frame_dig 1
+frame_dig 2
+frame_dig 3
+frame_dig 4
+frame_dig 5
+frame_dig 6
+frame_dig 7
+frame_dig 8
+frame_dig 9
+frame_dig 10
+frame_dig 11
+frame_dig 12
+frame_dig 13
+frame_dig 14
+frame_dig 15
+frame_dig 16
+callsub alllaidtoargs_5
+frame_bury 0
+byte 0x151f7c75
+frame_dig 0
+itob
+concat
+log
+retsub
+
+// empty_return_subroutine_caster
+emptyreturnsubroutinecaster_15:
+proto 0 0
+callsub emptyreturnsubroutine_6
+retsub
+
+// log_1_caster
+log1caster_16:
+proto 0 0
+int 0
+callsub log1_7
+frame_bury 0
+byte 0x151f7c75
+frame_dig 0
+itob
+concat
+log
+retsub
+
+// log_creation_caster
+logcreationcaster_17:
+proto 0 0
+byte ""
+callsub logcreation_8
+frame_bury 0
+byte 0x151f7c75
+frame_dig 0
+concat
+log
+retsub

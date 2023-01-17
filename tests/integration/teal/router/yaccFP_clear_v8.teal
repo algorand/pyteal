@@ -1,0 +1,85 @@
+#pragma version 8
+txna ApplicationArgs 0
+method "empty_return_subroutine()void"
+==
+bnz main_l6
+txna ApplicationArgs 0
+method "log_1()uint64"
+==
+bnz main_l5
+txna ApplicationArgs 0
+method "approve_if_odd(uint32)void"
+==
+bnz main_l4
+err
+main_l4:
+callsub approveifoddcaster_5
+int 1
+return
+main_l5:
+callsub log1caster_4
+int 1
+return
+main_l6:
+callsub emptyreturnsubroutinecaster_3
+int 1
+return
+
+// empty_return_subroutine
+emptyreturnsubroutine_0:
+proto 0 0
+byte "appear in both approval and clear state"
+log
+retsub
+
+// log_1
+log1_1:
+proto 0 1
+int 0
+int 1
+frame_bury 0
+retsub
+
+// approve_if_odd
+approveifodd_2:
+proto 1 0
+frame_dig -1
+int 2
+%
+bnz approveifodd_2_l2
+int 0
+return
+approveifodd_2_l2:
+int 1
+return
+
+// empty_return_subroutine_caster
+emptyreturnsubroutinecaster_3:
+proto 0 0
+callsub emptyreturnsubroutine_0
+retsub
+
+// log_1_caster
+log1caster_4:
+proto 0 0
+int 0
+callsub log1_1
+frame_bury 0
+byte 0x151f7c75
+frame_dig 0
+itob
+concat
+log
+retsub
+
+// approve_if_odd_caster
+approveifoddcaster_5:
+proto 0 0
+int 0
+txna ApplicationArgs 1
+int 0
+extract_uint32
+frame_bury 0
+frame_dig 0
+callsub approveifodd_2
+retsub
