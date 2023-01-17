@@ -9,10 +9,11 @@ import examples.signature.factorizer_game as factorizer
 
 from tests.blackbox import algod_with_assertion
 from graviton.blackbox import (
-    DryRunExecutor as Executor,
-    DryRunInspector as Inspector,
-    DryRunProperty as DRProp,
+    DryRunExecutor,
+    ExecutionMode,
+    DryRunTransactionParams as TxParams,
 )
+from graviton.inspector import DryRunInspector as Inspector, DryRunProperty as DRProp
 from graviton.invariant import Invariant
 
 REPORTS_DIR = Path.cwd() / "tests" / "integration" / "reports"
@@ -69,6 +70,8 @@ def factorizer_game_check(a: int, p: int, q: int, M: int, N: int):
         mode=Mode.Signature,
         assembleConstants=True,
     )
+    executor = DryRunExecutor(ALGOD, ExecutionMode.Signature, compiled)
+
     inputs = list(inputs_for_coefficients(a, p, q, M, N))
     N = len(inputs)
 
@@ -87,7 +90,9 @@ def factorizer_game_check(a: int, p: int, q: int, M: int, N: int):
     for args, amt in zip(inputs, amts):
         txn = {"amt": amt}
         txns.append(txn)
-        inspectors.append(Executor.dryrun_logicsig(ALGOD, compiled, args, **txn))
+        inspectors.append(
+            executor.run_one(args, txn_params=TxParams(**txn)),
+        )
 
     print(
         f"generating a report for (a,p,q) = {a,p,q} with {M, N} dry-run calls and spreadsheet rows"

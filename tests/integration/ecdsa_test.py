@@ -46,7 +46,7 @@ def test_verify():
         )
 
     args = []
-    app_result = PyTealDryRunExecutor(verify, Mode.Application).dryrun(
+    app_result = PyTealDryRunExecutor(verify, Mode.Application).dryrun_one(
         args, compiler_version=5
     )
 
@@ -81,7 +81,7 @@ def test_verify():
         )
 
     args = []
-    app_result = PyTealDryRunExecutor(verify_fail, Mode.Application).dryrun(
+    app_result = PyTealDryRunExecutor(verify_fail, Mode.Application).dryrun_one(
         args, compiler_version=5
     )
 
@@ -117,7 +117,7 @@ def test_decompress():
         )
 
     args = []
-    app_result = PyTealDryRunExecutor(decompress, Mode.Application).dryrun(
+    app_result = PyTealDryRunExecutor(decompress, Mode.Application).dryrun_one(
         args, compiler_version=5
     )
 
@@ -158,7 +158,7 @@ def test_recover():
         )
 
     args = []
-    app_result = PyTealDryRunExecutor(recover, Mode.Application).dryrun(
+    app_result = PyTealDryRunExecutor(recover, Mode.Application).dryrun_one(
         args, compiler_version=5
     )
 
