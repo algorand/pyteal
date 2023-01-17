@@ -1,4 +1,3 @@
-
 from pathlib import Path
 import pytest
 
@@ -178,7 +177,7 @@ def test_router_app():
 
     with open(FIXTURES / "questionable_approval_v6.teal") as f:
         expected_ap_with_oc = f.read()
-    
+
     assert expected_ap_with_oc == actual_ap_with_oc_compiled
 
     with open(FIXTURES / "questionable_clear_v6.teal") as f:
@@ -199,7 +198,7 @@ def test_router_app():
     assert actual_ap_without_oc_compiled == expected_ap_without_oc
 
     with open(FIXTURES / "yacc_clear_v6.teal") as f:
-        expected_csp_without_oc = f.read()    
+        expected_csp_without_oc = f.read()
     assert actual_csp_without_oc_compiled == expected_csp_without_oc
 
     _router_with_oc = pt.Router(
