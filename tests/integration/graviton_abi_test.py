@@ -1,7 +1,7 @@
 import random
 import pytest
 
-from graviton.blackbox import DryRunInspector
+from graviton.inspector import DryRunInspector
 
 import pyteal as pt
 from pyteal.ast.subroutine import ABIReturnSubroutine
@@ -331,7 +331,7 @@ def test_integer65(version: int):
     ]
 
     def binary_dryrun(p: PyTealDryRunExecutor) -> list[DryRunInspector]:
-        return p.dryrun_on_sequence(binary_inputs, compiler_version=version)  # type: ignore
+        return p.dryrun_sequence(binary_inputs, compiler_version=version)  # type: ignore
 
     # Binary:
     inspectors_subtract_slick = binary_dryrun(bbpt_subtract_slick)
@@ -343,7 +343,7 @@ def test_integer65(version: int):
     inspectors_add = binary_dryrun(bbpt_add)
 
     # Unary:
-    inspectors_negate = bbpt_negate.dryrun_on_sequence(
+    inspectors_negate = bbpt_negate.dryrun_sequence(
         unary_inputs, compiler_version=version  # type: ignore
     )
 
@@ -444,11 +444,11 @@ def test_complex130(version: int):
 
     # Binary:
     def binary_dryrun(p: PyTealDryRunExecutor) -> list[DryRunInspector]:
-        return p.dryrun_on_sequence(binary_inputs, compiler_version=version)  # type: ignore
+        return p.dryrun_sequence(binary_inputs, compiler_version=version)  # type: ignore
 
     # Unary:
     def unary_dryrun(p: PyTealDryRunExecutor) -> list[DryRunInspector]:
-        return p.dryrun_on_sequence(unary_inputs, compiler_version=version)  # type: ignore
+        return p.dryrun_sequence(unary_inputs, compiler_version=version)  # type: ignore
 
     inspectors_cplx_add = binary_dryrun(bbpt_cplx_add)
 
@@ -523,7 +523,7 @@ def test_conditional_factorial(version: int):
     ptdre = PyTealDryRunExecutor(conditional_factorial, pt.Mode.Application)
     inputs = [(n,) for n in range(20)]
 
-    inspectors = ptdre.dryrun_on_sequence(inputs, compiler_version=version)  # type: ignore
+    inspectors = ptdre.dryrun_sequence(inputs, compiler_version=version)  # type: ignore
     for i, args in enumerate(inputs):
         inspector = inspectors[i]
         n = args[0]
@@ -534,7 +534,7 @@ def test_conditional_factorial(version: int):
 
     n = 21
     args = (n,)
-    inspector = ptdre.dryrun(args)
+    inspector = ptdre.dryrun_one(args)
     assert inspector.rejected(), inspector.report(
         args, f"FAILED: should have rejected for {n=}", row=n + 1
     )
