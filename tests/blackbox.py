@@ -163,7 +163,7 @@ class PyTealDryRunExecutor:
         input_types = subr.input_types
         assert input_types is not None, (
             "please provide input_types in your @Subroutine or @ABIReturnSubroutine "
-            "annotation "
+            "annotation. "
             "(this is crucial for generating proper end-to-end testable PyTeal)"
         )
 
