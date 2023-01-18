@@ -63,19 +63,6 @@ class CallConfig(IntFlag):
             case _:
                 raise TealInternalError(f"unexpected CallConfig {self}")
 
-    def clear_state_condition_under_config(self) -> int:
-        match self:
-            case CallConfig.NEVER:
-                return 0
-            case CallConfig.CALL:
-                return 1
-            case CallConfig.CREATE | CallConfig.ALL:
-                raise TealInputError(
-                    "Only CallConfig.CALL or CallConfig.NEVER are valid for a clear state CallConfig, since clear state can never be invoked during creation"
-                )
-            case _:
-                raise TealInputError(f"unexpected CallConfig {self}")
-
 
 CallConfig.__module__ = "pyteal"
 
@@ -95,6 +82,13 @@ class MethodConfig:
     clear_state: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
     update_application: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
     delete_application: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
+
+    def __post_init__(self):
+        if self.clear_state != CallConfig.NEVER:
+            raise TealInputError(
+                "Attempt to construct clear state program from MethodConfig, "
+                "use Router top level argument `clear_state` instead"
+            )
 
     def is_never(self) -> bool:
         return all(map(lambda cc: cc == CallConfig.NEVER, astuple(self)))
@@ -127,9 +121,6 @@ class MethodConfig:
                             f"unexpected condition_under_config: {config_cond}"
                         )
             return Or(*cond_list)
-
-    def clear_state_cond(self) -> Expr | int:
-        return self.clear_state.clear_state_condition_under_config()
 
 
 @dataclass(frozen=True)
@@ -197,6 +188,13 @@ class BareCallActions:
         kw_only=True, default=OnCompleteAction.never()
     )
 
+    def __post_init__(self):
+        if not self.clear_state.is_empty():
+            raise TealInputError(
+                "Attempt to construct clear state program from bare app call, "
+                "use Router top level argument `clear_state` instead"
+            )
+
     def is_empty(self) -> bool:
         for action_field in fields(self):
             action: OnCompleteAction = getattr(self, action_field.name)
@@ -245,21 +243,6 @@ class BareCallActions:
                 )
             )
         return Cond(*[[n.condition, n.branch] for n in conditions_n_branches])
-
-    def clear_state_construction(self) -> Optional[Expr]:
-        if self.clear_state.is_empty():
-            return None
-
-        # call this to make sure we error if the CallConfig is CREATE or ALL
-        self.clear_state.call_config.clear_state_condition_under_config()
-
-        return ASTBuilder.wrap_handler(
-            False,
-            cast(
-                Expr | SubroutineFnWrapper | ABIReturnSubroutine,
-                self.clear_state.action,
-            ),
-        )
 
 
 BareCallActions.__module__ = "pyteal"
@@ -509,7 +492,7 @@ class Router:
         bare_calls: BareCallActions | None = None,
         descr: str | None = None,
         *,
-        csp_default: Expr | None = None,
+        clear_state: Expr | SubroutineFnWrapper | ABIReturnSubroutine | None = None,
     ) -> None:
         """
         Args:
@@ -522,8 +505,11 @@ class Router:
         self.descr = descr
 
         self.approval_ast = ASTBuilder()
-        self.clear_state_ast = ASTBuilder()
-        self.csp_default = Approve() if csp_default is None else csp_default
+        self.clear_state = (
+            Reject()
+            if clear_state is None
+            else ASTBuilder.wrap_handler(False, clear_state)
+        )
 
         self.methods: list[sdk_abi.Method] = []
         self.method_sig_to_selector: dict[str, bytes] = dict()
@@ -536,14 +522,6 @@ class Router:
                     CondNode(
                         Txn.application_args.length() == Int(0),
                         cast(Expr, bare_call_approval),
-                    )
-                )
-            bare_call_clear = bare_calls.clear_state_construction()
-            if bare_call_clear:
-                self.clear_state_ast.conditions_n_branches.append(
-                    CondNode(
-                        Txn.application_args.length() == Int(0),
-                        cast(Expr, bare_call_clear),
                     )
                 )
 
@@ -597,12 +575,8 @@ class Router:
         self.method_selector_to_sig[method_selector] = method_signature
 
         method_approval_cond = method_config.approval_cond()
-        method_clear_state_cond = method_config.clear_state_cond()
         self.approval_ast.add_method_to_ast(
             method_signature, method_approval_cond, method_call
-        )
-        self.clear_state_ast.add_method_to_ast(
-            method_signature, method_clear_state_cond, method_call
         )
         return method_call
 
@@ -647,6 +621,13 @@ class Router:
         # - None
         # - CallConfig.Never
         # both cases evaluate to False in if statement.
+
+        if clear_state is not None:
+            raise TealInputError(
+                "Attempt to register ABI method for clear state program. "
+                "Use Router top level argument `clear_state` instead."
+            )
+
         def wrap(_func) -> ABIReturnSubroutine:
             wrapped_subroutine = ABIReturnSubroutine(_func, overriding_name=name)
             call_configs: MethodConfig
@@ -654,7 +635,6 @@ class Router:
                 no_op is None
                 and opt_in is None
                 and close_out is None
-                and clear_state is None
                 and update_application is None
                 and delete_application is None
             ):
@@ -667,7 +647,6 @@ class Router:
                 _no_op = none_to_never(no_op)
                 _opt_in = none_to_never(opt_in)
                 _close_out = none_to_never(close_out)
-                _clear_state = none_to_never(clear_state)
                 _update_app = none_to_never(update_application)
                 _delete_app = none_to_never(delete_application)
 
@@ -675,7 +654,6 @@ class Router:
                     no_op=_no_op,
                     opt_in=_opt_in,
                     close_out=_close_out,
-                    clear_state=_clear_state,
                     update_application=_update_app,
                     delete_application=_delete_app,
                 )
@@ -715,12 +693,9 @@ class Router:
             * clear_state_program: an AST for clear-state program
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
-        if len(self.clear_state_ast.conditions_n_branches) > 0:
-            csp_default_branch: CondNode = CondNode(Int(1), self.csp_default)
-            self.clear_state_ast.conditions_n_branches.append(csp_default_branch)
         return (
             self.approval_ast.program_construction(),
-            self.clear_state_ast.program_construction(),
+            self.clear_state,
             self.contract_construct(),
         )
 

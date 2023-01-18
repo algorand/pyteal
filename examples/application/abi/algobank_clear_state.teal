@@ -1,15 +1,4 @@
 #pragma version 6
-txn NumAppArgs
-int 0
-==
-bnz main_l4
-int 1
-bnz main_l3
-err
-main_l3:
-int 1
-return
-main_l4:
 byte "lost"
 byte "lost"
 app_global_get
