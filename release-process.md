@@ -14,6 +14,8 @@ Usually, both of these changes will happen in a "release PR." For example: https
 
 The first section in `CHANGELOG.md` should be `Unreleased`. Ideally this section would be populated with all the changes since the last release and would have been updated with every PR. However, it's possible that some PRs may have forgotten to update the changelog. You should look at all the commits since the last release to see if anything that should be mentioned in the changelog is missing. If so, add it now.
 
+Not _every_ PR needs to be reflected in the changelog. As a general rule, if and only if the PR makes a change that's visible to consumers of the PyTeal library (including documentation), then it should be included in the changelog. Changes to tests or development tools that do not affect library consumers should generally not be reported.
+
 Once the `Unreleased` section is complete, change it to the version you are about to release, e.g. `v0.21.0`. If any subsections are empty, remove them.
 
 At this point, add a new placeholder to the top of the file for future changelog additions, like so:
