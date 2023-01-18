@@ -508,6 +508,8 @@ class Router:
         name: str,
         bare_calls: BareCallActions | None = None,
         descr: str | None = None,
+        *,
+        csp_default: Expr | None = None,
     ) -> None:
         """
         Args:
@@ -521,6 +523,7 @@ class Router:
 
         self.approval_ast = ASTBuilder()
         self.clear_state_ast = ASTBuilder()
+        self.csp_default = Approve() if csp_default is None else csp_default
 
         self.methods: list[sdk_abi.Method] = []
         self.method_sig_to_selector: dict[str, bytes] = dict()
@@ -712,6 +715,9 @@ class Router:
             * clear_state_program: an AST for clear-state program
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
+        if len(self.clear_state_ast.conditions_n_branches) > 0:
+            csp_default_branch: CondNode = CondNode(Int(1), self.csp_default)
+            self.clear_state_ast.conditions_n_branches.append(csp_default_branch)
         return (
             self.approval_ast.program_construction(),
             self.clear_state_ast.program_construction(),

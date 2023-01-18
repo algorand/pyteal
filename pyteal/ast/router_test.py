@@ -863,7 +863,10 @@ def test_build_program_clear_state_valid_config():
     _, actual_clear_state_with_bare_call, _ = router_with_bare_call.build_program()
 
     expected_clear_state_with_bare_call = assemble_helper(
-        pt.Cond([pt.Txn.application_args.length() == pt.Int(0), action])
+        pt.Cond(
+            [pt.Txn.application_args.length() == pt.Int(0), action],
+            [pt.Int(1), pt.Approve()],
+        )
     )
 
     with pt.TealComponent.Context.ignoreExprEquality():
@@ -890,7 +893,8 @@ def test_build_program_clear_state_valid_config():
                 pt.Txn.application_args[0]
                 == pt.MethodSignature("clear_state_method()void"),
                 pt.Seq(clear_state_method(), pt.Approve()),
-            ]
+            ],
+            [pt.Int(1), pt.Approve()],
         )
     )
 

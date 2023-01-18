@@ -2831,21 +2831,26 @@ retsub""".strip()
 txn NumAppArgs
 int 0
 ==
-bnz main_l8
+bnz main_l10
 txna ApplicationArgs 0
 method "empty_return_subroutine()void"
 ==
-bnz main_l7
+bnz main_l9
 txna ApplicationArgs 0
 method "log_1()uint64"
 ==
-bnz main_l6
+bnz main_l8
 txna ApplicationArgs 0
 method "approve_if_odd(uint32)void"
 ==
-bnz main_l5
+bnz main_l7
+int 1
+bnz main_l6
 err
-main_l5:
+main_l6:
+int 1
+return
+main_l7:
 txna ApplicationArgs 1
 int 0
 extract_uint32
@@ -2854,7 +2859,7 @@ load 2
 callsub approveifodd_2
 int 1
 return
-main_l6:
+main_l8:
 callsub log1_1
 store 1
 byte 0x151f7c75
@@ -2864,11 +2869,11 @@ concat
 log
 int 1
 return
-main_l7:
+main_l9:
 callsub emptyreturnsubroutine_0
 int 1
 return
-main_l8:
+main_l10:
 int 1
 return
 
@@ -3353,17 +3358,22 @@ retsub""".strip()
 txna ApplicationArgs 0
 method "empty_return_subroutine()void"
 ==
-bnz main_l6
+bnz main_l8
 txna ApplicationArgs 0
 method "log_1()uint64"
 ==
-bnz main_l5
+bnz main_l7
 txna ApplicationArgs 0
 method "approve_if_odd(uint32)void"
 ==
-bnz main_l4
+bnz main_l6
+int 1
+bnz main_l5
 err
-main_l4:
+main_l5:
+int 1
+return
+main_l6:
 txna ApplicationArgs 1
 int 0
 extract_uint32
@@ -3372,7 +3382,7 @@ load 2
 callsub approveifodd_2
 int 1
 return
-main_l5:
+main_l7:
 callsub log1_1
 store 1
 byte 0x151f7c75
@@ -3382,7 +3392,7 @@ concat
 log
 int 1
 return
-main_l6:
+main_l8:
 callsub emptyreturnsubroutine_0
 int 1
 return
