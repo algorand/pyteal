@@ -1,14 +1,24 @@
 # Unreleased
 
-# Added
+## Added
+
+## Changed
+
+## Fixed
+
+# v0.21.0
+
+## Added
 * Added frame pointer support for subroutine arguments, replacing the previous usage of scratch. ([#562](https://github.com/algorand/pyteal/pull/562))
 * Added frame pointer support for local ABI variables in subroutine. ([#606](https://github.com/algorand/pyteal/pull/606))
-* Added `frame_pointers` property in `OptimizeOptions` to optimize away scratch slots during subroutine calls. This defaults to frame pointer usage when not specified. ([#613](https://github.com/algorand/pyteal/pull/613))
+* Added `frame_pointers` property in `OptimizeOptions` to optimize away scratch slots during subroutine calls. This defaults to frame pointer usage when not specified for AVM version 8+. ([#613](https://github.com/algorand/pyteal/pull/613))
 
-# Fixed
+## Fixed
 * Allowing the `MethodCall` and `ExecuteMethodCall` to be passed `None` as app_id argument in the case of an app create transaction ([#592](https://github.com/algorand/pyteal/pull/592))
+* No longer accidentally include additional package folders in release ([#610](https://github.com/algorand/pyteal/pull/610), [#614](https://github.com/algorand/pyteal/pull/614))
+* Fixed mistakes in docs ([#612](https://github.com/algorand/pyteal/pull/612), [#625](https://github.com/algorand/pyteal/pull/625), [#627](https://github.com/algorand/pyteal/pull/627))
 
-# Changed
+## Changed
 * Introducing `AbstractVar` to abstract value access: store, load, and stack type. ([#584](https://github.com/algorand/pyteal/pull/584))
   * NOTE: a backwards incompatable change was imposed in this PR: previous ABI value's public member `stored_value` with type `ScratchVar`, is now changed to protected member `_stored_value` with type `AbstractVar`.
 * Starting with program version 9, when `scratch_slots` flag isn't provided to `OptimizeOptions`, default to optimizing. For versions 8 and earlier the default is and remains to _not_ optimize. ([#613](https://github.com/algorand/pyteal/pull/613))
