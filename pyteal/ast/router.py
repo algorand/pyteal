@@ -267,6 +267,15 @@ class BareCallActions:
             ),
         )
 
+    def get_method_config(self) -> MethodConfig:
+        return MethodConfig(
+            no_op=self.no_op.call_config,
+            opt_in=self.opt_in.call_config,
+            close_out=self.close_out.call_config,
+            clear_state=self.clear_state.call_config,
+            update_application=self.update_application.call_config,
+            delete_application=self.delete_application.call_config,
+        )
 
 BareCallActions.__module__ = "pyteal"
 
@@ -686,6 +695,8 @@ class Router:
         self.method_sig_to_selector: dict[str, bytes] = dict()
         self.method_selector_to_sig: dict[bytes, str] = dict()
 
+        self.method_configs: dict[str | None, MethodConfig] = dict()
+
         if bare_calls and not bare_calls.is_empty():
             bare_call_approval = bare_calls.approval_construction()
             if bare_call_approval:
@@ -703,6 +714,7 @@ class Router:
                         cast(Expr, bare_call_clear),
                     )
                 )
+            self.method_configs[None] = bare_calls.get_method_config()
 
     def add_method_handler(
         self,
@@ -729,6 +741,7 @@ class Router:
                 "for adding method handler, must be ABIReturnSubroutine"
             )
         method_signature = method_call.method_signature(overriding_name)
+        final_name = overriding_name or method_call.name()
         if method_config is None:
             method_config = MethodConfig(no_op=CallConfig.CALL)
         if method_config.is_never():
@@ -761,6 +774,7 @@ class Router:
         self.clear_state_ast.add_method_to_ast(
             method_signature, method_clear_state_cond, method_call
         )
+        self.method_configs[final_name] = method_config
         return method_call
 
     def method(
