@@ -365,6 +365,15 @@ def test_method_config_clear_state_failure():
         pt.MethodConfig(clear_state=pt.CallConfig.CALL)
 
 
+def test_bare_call_config_clear_state_failure():
+    with pytest.raises(pt.TealInputError):
+        pt.BareCallActions(
+            clear_state=pt.OnCompleteAction(
+                action=pt.Seq(), call_config=pt.CallConfig.CALL
+            )
+        )
+
+
 def test_call_config():
     for cc in pt.CallConfig:
         approval_cond_on_cc: pt.Expr | int = cc.approval_condition_under_config()
