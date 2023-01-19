@@ -151,8 +151,15 @@ def add_methods_to_router(router: pt.Router):
     assert meth.method_signature() == "approve_if_odd(uint32)void"
 
 
-def generate_and_test_routers():
+def generate_and_test_routers() -> tuple[str, int, pt.Router, str, str]:
     routers = []
+    sources = {}
+
+    def append_router_info(rinfo, programs):
+        assert len(rinfo) == 3
+        assert len(programs) == 2
+        routers.append(rinfo)
+        sources[rinfo[:2]] = programs
 
     # V6 not ready for Frame Pointers:
     on_completion_actions = pt.BareCallActions(
@@ -181,7 +188,17 @@ def generate_and_test_routers():
         expected_csp_with_oc = f.read()
     assert expected_ap_with_oc == actual_ap_with_oc_compiled
     assert expected_csp_with_oc == actual_csp_with_oc_compiled
-    routers.append(("questionable", 6, _router_with_oc))
+    append_router_info(
+        (
+            "questionable",
+            6,
+            _router_with_oc,
+        ),
+        (
+            actual_ap_with_oc_compiled,
+            actual_csp_with_oc_compiled,
+        ),
+    )
 
     # YACC V6:
     _router_without_oc = pt.Router("yetAnotherContractConstructedFromRouter")
@@ -197,7 +214,17 @@ def generate_and_test_routers():
         expected_csp_without_oc = f.read()
     assert actual_ap_without_oc_compiled == expected_ap_without_oc
     assert actual_csp_without_oc_compiled == expected_csp_without_oc
-    routers.append(("yacc", 6, _router_without_oc))
+    append_router_info(
+        (
+            "yacc",
+            6,
+            _router_without_oc,
+        ),
+        (
+            actual_ap_without_oc_compiled,
+            actual_csp_without_oc_compiled,
+        ),
+    )
 
     # QUESTIONABLE FP V8:
     _router_with_oc = pt.Router(
@@ -215,7 +242,17 @@ def generate_and_test_routers():
         expected_csp_with_oc = f.read()
     assert actual_ap_with_oc_compiled == expected_ap_with_oc
     assert actual_csp_with_oc_compiled == expected_csp_with_oc
-    routers.append(("questionable", 8, _router_with_oc))
+    append_router_info(
+        (
+            "questionable",
+            8,
+            _router_with_oc,
+        ),
+        (
+            actual_ap_with_oc_compiled,
+            actual_csp_with_oc_compiled,
+        ),
+    )
 
     # YACC FP V8:
     _router_without_oc = pt.Router(
@@ -233,12 +270,22 @@ def generate_and_test_routers():
         expected_csp_without_oc = f.read()
     assert actual_ap_without_oc_compiled == expected_ap_without_oc
     assert actual_csp_without_oc_compiled == expected_csp_without_oc
-    routers.append(("yacc", 8, _router_without_oc))
+    append_router_info(
+        (
+            "yacc",
+            8,
+            _router_without_oc,
+        ),
+        (
+            actual_ap_without_oc_compiled,
+            actual_csp_without_oc_compiled,
+        ),
+    )
 
-    return routers
+    return routers, sources
 
 
-ROUTER_CASES = generate_and_test_routers()
+ROUTER_CASES, ROUTER_SOURCES = generate_and_test_routers()
 
 TYPICAL_IAC_OC = pt.MethodConfig(no_op=pt.CallConfig.CALL)
 
@@ -361,6 +408,8 @@ def test_abi_router_positive(case, version, router):
         * consider each (OnComplete, CallConfig) combination
         * assert that all predicates hold for this call
     """
+    pregen_approval, pregen_clear = ROUTER_SOURCES[(case, version)]
+
     driver = DRIVERS[case]
     predicates, methconfigs = split_driver2predicates_methconfigs(driver)
     assert methconfigs == router.method_configs
@@ -377,9 +426,22 @@ def test_abi_router_positive(case, version, router):
         abi_args_mod=None,
         version=version,
         num_dryruns=NUM_ROUTER_DRYRUNS,
+        msg=msg(),
     )
-    assert all(
-        sim.succeeded for meth in results["results"].values() for sim in meth.values()
+    # won't even get here if there was an error, but some extra sanity checks:
+
+    assert (sim_results := results["results"]) and all(
+        sim.succeeded for meth in sim_results.values() for sim in meth.values()
     )
 
-    print(json.dumps(results["stats"], indent=2))
+    print(json.dumps(stats := results["stats"], indent=2))
+    assert stats and all(stats.values())
+
+    # wow!!! these fail because of label assignment non-determinism:
+    # assert pregen_approval == results["approval_simulator"].simulate_dre.program
+    # assert pregen_clear == results["clear_simulator"].simulate_dre.program
+    with open(FIXTURES / f"sim_approval_{case}_{version}.teal", "w") as f:
+        f.write(results["sim_cfg"].ap_compiled)
+
+    with open(FIXTURES / f"sim_clear_{case}_{version}.teal", "w") as f:
+        f.write(results["sim_cfg"].csp_compiled)

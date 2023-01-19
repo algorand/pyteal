@@ -508,34 +508,36 @@ class RouterSimulation:
     """
     Lifecycle of a RouterSimulation
 
-    1. Creation:
+    1. Creation (__init__ method):
         * router: Router (no version or other options specified)
         * predicates: CallPredicates - the Router ought satisfy. Type has shape:
             * method --> <property -> predicate ...> ...
-        * algod (optional) - if missing, just get one
         * model_router: Router (optional) - in the case when the predicates provided
             are of type PredicateKind.IdenticalPair, this parameter needs to be
             provided for comparison.
             NOTE: model_router may in fact be the same as router, and in this case
             it is expected that something else such as version or optimization option
             would differ between modeel_router and router during the simulation
+        * algod (optional) - if missing, just get one
 
-    2. Simulation:
-        * call_strat: ABICallStrategy - used for args generation
-        * version: int - for compiling router
-        * assemble_constants: bool (optional) - for compiling router
-        * optimize: OptimizeOptions (optional) - for compiling router
-        * method_configs: dict[str, MethodConfig] (optional)
+    Artifacts from Step 1 are stored in self.results: _SimConfig
+
+    2. Simulation (simulate_and_assert method): - using self.results artifacts Step 1, also takes params:
+        * arg_strat_type: Type[ABICallStrategy] - strategy type to use for args generation
+        * abi_args_mod: ABIArgsMod (default None) - used to specify any arg mutation
+        * version: int - for compiling self.router
+        * assemble_constants: bool (optional) - for compiling self.router
+        * optimize: OptimizeOptions (optional) - for compiling self.router
+        * method_configs: dict[str | None, MethodConfig] (optional)
             - if missing, pick up from router.method_configs
         * num_dryruns: int (default 1) - the number of input runs to generate
             per method X config combination
-        * abi_args_mod: ABIArgsMod (default None) - used to specify any arg mutation
         * txn_params: TxParams (optional) - other TxParams to append
             -in addition to the (is_app_create, OnComplete) information
         * msg: string (optional) - message to report when assert violation occurs
-        * model_version: int - for compiling model_router
-        * model_assemble_constants: bool (optional) - for compiling model_router
-        * model_optimize: OptimizeOptions (optional) - for compiling model_router
+        * model_version: int - for compiling self.model_router
+        * model_assemble_constants: bool (optional) - for compiling self.model_router
+        * model_optimize: OptimizeOptions (optional) - for compiling self.model_router
         * TODO: consider adding -->strict: bool (default True) - when True ensure
             that methods + call_config's to be tested are available in
             `router` and `model_router` if it exists
@@ -549,15 +551,13 @@ class RouterSimulation:
     def __init__(
         self,
         router: Router,
-        predicates: dict[str, Predicates],
+        predicates: CallPredicates,
         *,
         model_router: Router | None = None,
         algod: v2client.algod.AlgodClient | None = None,
     ):
         self.router: Router = router
-        self.predicates: dict[str | None, Predicates] = self._validate_predicates(
-            predicates
-        )
+        self.predicates: CallPredicates = self._validate_predicates(predicates)
         self.model_router: Router | None = model_router
         self.algod: v2client.algod.AlgodClient = algod or algod_with_assertion()
 
@@ -699,6 +699,18 @@ class RouterSimulation:
             model_contract=model_contract,
         )
 
+    def _get_sim(self, teal, meth, sim_cfg, identities_teal) -> Simulation:
+        return Simulation(
+            self.algod,
+            ExecutionMode.Application,
+            teal,
+            self.predicates[meth],
+            abi_method_signature=sim_cfg.call_strat.method_signature(meth),
+            # omit_method_selector=False ????
+            # validation=True ???
+            identities_teal=identities_teal,
+        )
+
     def simulate_and_assert(
         self,
         arg_strat_type: Type[ABIStrategy],
@@ -713,7 +725,7 @@ class RouterSimulation:
         model_version: int | None = None,
         model_assemble_constants: bool = False,
         model_optimize: OptimizeOptions | None = None,
-        # fail_on_first: bool = True, ??? future ???
+        msg: str = "",
     ) -> dict:
         sim_cfg = self._prep_simulation(
             arg_strat_type,
@@ -738,8 +750,9 @@ class RouterSimulation:
             assertions_count=0,
         )
 
-        def msg() -> str:
-            return f"""{meth=}
+        def msg4simulate() -> str:
+            return f"""user proviede message={msg}
+{meth=}
 {oc=}
 {call_cfg=}
 {is_app_create=}
@@ -749,23 +762,11 @@ class RouterSimulation:
 {stats["assertions_count"]=}
 """
 
-        def get_sim() -> Simulation:
-            return Simulation(
-                self.algod,
-                ExecutionMode.Application,
-                teal,
-                self.predicates[meth],
-                abi_method_signature=sim_cfg.call_strat.method_signature(meth),
-                # omit_method_selector=False ????
-                # validation=True ???
-                identities_teal=identities_teal,
-            )
-
         def simulate(stats, is_app_create):
             tp: TxParams = deepcopy(txn_params)
             tp.update(TxParams.for_app(is_app_create=is_app_create, on_complete=oc))
             sim_results = sim.run_and_assert(
-                sim_cfg.call_strat, txn_params=tp, msg=msg()
+                sim_cfg.call_strat, txn_params=tp, msg=msg4simulate()
             )
             assert sim_results.succeeded
             self.results[meth][(is_app_create, oc)] = sim_results
@@ -783,19 +784,22 @@ class RouterSimulation:
                 oc = as_on_complete(oc_str)
                 sim: Simulation
                 if oc is OnComplete.ClearStateOC:
-                    teal: str
-                    identities_teal: str | None
-
                     if not clear_sim:
-                        teal = sim_cfg.csp_compiled
-                        identities_teal = sim_cfg.model_csp_compiled
-                        clear_sim = get_sim()
+                        clear_sim = self._get_sim(
+                            sim_cfg.csp_compiled,
+                            meth,
+                            sim_cfg,
+                            sim_cfg.model_csp_compiled,
+                        )
                     sim = clear_sim
                 else:
                     if not approve_sim:
-                        teal = sim_cfg.ap_compiled
-                        identities_teal = sim_cfg.model_ap_compiled
-                        approve_sim = get_sim()
+                        approve_sim = self._get_sim(
+                            sim_cfg.ap_compiled,
+                            meth,
+                            sim_cfg,
+                            sim_cfg.model_ap_compiled,
+                        )
                     sim = approve_sim
 
                 is_app_create: bool
@@ -811,4 +815,6 @@ class RouterSimulation:
             "sim_cfg": sim_cfg,
             "stats": stats,
             "results": self.results,
+            "approval_simulator": approve_sim,
+            "clear_simulator": clear_sim,
         }
