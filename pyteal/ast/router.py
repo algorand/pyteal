@@ -123,6 +123,9 @@ class MethodConfig:
             return Or(*cond_list)
 
 
+MethodConfig.__module__ = "pyteal"
+
+
 @dataclass(frozen=True)
 class OnCompleteAction:
     """
@@ -505,7 +508,7 @@ class Router:
         self.descr = descr
 
         self.approval_ast = ASTBuilder()
-        self.clear_state = (
+        self.clear_state: Expr = (
             Reject()
             if clear_state is None
             else ASTBuilder.wrap_handler(False, clear_state)
@@ -614,6 +617,7 @@ class Router:
             opt_in (optional): The allowed calls during :code:`OnComplete.OptIn`.
             close_out (optional): The allowed calls during :code:`OnComplete.CloseOut`.
             clear_state (optional): The allowed calls during :code:`OnComplete.ClearState`.
+                This argument has been deprecated, and will error on compile time if one wants to access it.
             update_application (optional): The allowed calls during :code:`OnComplete.UpdateApplication`.
             delete_application (optional): The allowed calls during :code:`OnComplete.DeleteApplication`.
         """
