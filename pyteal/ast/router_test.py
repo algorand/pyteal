@@ -502,7 +502,7 @@ def test_wrap_handler_bare_call():
         ),
         (
             mult_over_u64_and_log,
-            "subroutine call should take 0 arg for bare-app call. this subroutine takes 2.",
+            "subroutine call should take 0 arg for bare appcall. this subroutine takes 2.",
         ),
         (
             eine_constant,
@@ -510,7 +510,7 @@ def test_wrap_handler_bare_call():
         ),
         (
             take_abi_and_log,
-            "abi-returning subroutine call should take 0 arg for bare-app call. this abi-returning subroutine takes 1.",
+            "abi-returning subroutine call should take 0 arg for bare appcall. this abi-returning subroutine takes 1.",
         ),
         (
             1,
