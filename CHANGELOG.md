@@ -3,6 +3,7 @@
 ## Added
 
 ## Changed
+* Improved Router clear state program generation. ([#636](https://github.com/algorand/pyteal/pull/636))
 
 ## Fixed
 
@@ -25,7 +26,6 @@
 * Replaced the usage of `typing.NamedTuple` with `dataclass` for `class OpType` in the **ir** package in order to avoid [a regression coming in Python 3.11.1](https://github.com/python/cpython/issues/100098). ([#615](https://github.com/algorand/pyteal/pull/615))
 * Upgrade mypy to v0.991. ([#618](https://github.com/algorand/pyteal/pull/618))
 * Upgrade py-algorand-sdk to v2.0.0. ([#626](https://github.com/algorand/pyteal/pull/626))
-* Improved Router clear state program generation. ([#636](https://github.com/algorand/pyteal/pull/636))
 
 # 0.20.1
 
