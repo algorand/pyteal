@@ -277,6 +277,7 @@ class BareCallActions:
             delete_application=self.delete_application.call_config,
         )
 
+
 BareCallActions.__module__ = "pyteal"
 
 

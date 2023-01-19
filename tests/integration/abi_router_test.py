@@ -252,7 +252,7 @@ TYPICAL_IAC_OC = pt.MethodConfig(no_op=pt.CallConfig.CALL)
 #
 # NOTE: the "yacc" routers will simply ignore the case with method `None`
 # as they do not have any bare-app-calls
-QUESTIONABLE_DRIVER: list[tuple[str, pt.MethodConfig, Predicates,]] = [
+QUESTIONABLE_DRIVER: list[tuple[str | None, pt.MethodConfig, Predicates]] = [
     (
         "add",
         TYPICAL_IAC_OC,

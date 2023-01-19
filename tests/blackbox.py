@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, Sequence, Type, cast
 
 import algosdk.abi as sdk_abi
 from algosdk.transaction import OnComplete
-import algosdk.v2client as v2client
+from algosdk import v2client
 
 from graviton import blackbox
 from graviton.abi_strategy import ABIArgsMod, ABICallStrategy, ABIStrategy
@@ -470,7 +470,7 @@ class _SimConfig:
     ap_compiled: str
     csp_compiled: str
     contract: sdk_abi.Contract
-    method_configs: dict[str, MethodConfig]
+    method_configs: dict[str | None, MethodConfig]
     call_strat: ABICallStrategy
     txn_params: TxParams
     model_version: int | None
@@ -549,13 +549,13 @@ class RouterSimulation:
     def __init__(
         self,
         router: Router,
-        predicates: dict[str, CallPredicates],
+        predicates: dict[str, Predicates],
         *,
         model_router: Router | None = None,
         algod: v2client.algod.AlgodClient | None = None,
     ):
         self.router: Router = router
-        self.predicates: dict[str, CallPredicates] = self._validate_predicates(
+        self.predicates: dict[str | None, Predicates] = self._validate_predicates(
             predicates
         )
         self.model_router: Router | None = model_router
@@ -600,7 +600,7 @@ class RouterSimulation:
         *,
         assemble_constants: bool = False,
         optimize: OptimizeOptions | None = None,
-        method_configs: dict[str, MethodConfig] | None = None,
+        method_configs: dict[str | None, MethodConfig] | None = None,
         num_dryruns: int = 1,
         txn_params: TxParams | None = None,
         model_version: int | None = None,
@@ -673,7 +673,7 @@ class RouterSimulation:
                 model_csp_compiled,
                 model_contract,
             ) = self.model_router.compile_program(
-                version=model_version,
+                version=cast(int, model_version),
                 assemble_constants=model_assemble_constants,
                 optimize=model_optimize,
             )
@@ -690,7 +690,7 @@ class RouterSimulation:
             contract=contract,
             method_configs=method_configs,
             call_strat=call_strat,
-            txn_params=txn_params,
+            txn_params=cast(TxParams, txn_params),
             model_version=model_version,
             model_assemble_constants=model_assemble_constants,
             model_optimize=model_optimize,
@@ -707,7 +707,7 @@ class RouterSimulation:
         *,
         assemble_constants: bool = False,
         optimize: OptimizeOptions | None = None,
-        method_configs: dict[str, MethodConfig] | None = None,
+        method_configs: dict[str | None, MethodConfig] | None = None,
         num_dryruns: int = 1,
         txn_params: TxParams | None = None,
         model_version: int | None = None,
@@ -749,7 +749,7 @@ class RouterSimulation:
 {stats["assertions_count"]=}
 """
 
-        def get_sim():
+        def get_sim() -> Simulation:
             return Simulation(
                 self.algod,
                 ExecutionMode.Application,

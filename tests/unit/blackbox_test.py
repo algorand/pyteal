@@ -5,7 +5,7 @@ from typing import Literal, Optional, Tuple
 from unittest.mock import MagicMock
 
 from algosdk.v2client.algod import AlgodClient
-from graviton.abi_strategy import ABIArgsMod, ABICallStrategy, RandomABIStrategy
+from graviton.abi_strategy import ABIArgsMod, RandomABIStrategy
 from graviton.inspector import DryRunProperty as DRProp
 import pyteal as pt
 
@@ -580,7 +580,7 @@ def test_prep_simulation():
         "m1": "foo",
         "m2": pt.MethodConfig(no_op=pt.CallConfig.ALL),
     }
-    err_msg = f"method_configs['m1'] = has type <class 'str'> but only MethodConfig is allowed."
+    err_msg = "method_configs['m1'] = has type <class 'str'> but only MethodConfig is allowed."
     failing_prep_simulate(
         rsim,
         arg_strat_type,
