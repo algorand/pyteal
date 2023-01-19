@@ -261,7 +261,7 @@ class ASTBuilder:
 
     @staticmethod
     def wrap_handler(
-        is_method_call: bool, handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr
+        is_method_call: bool, handler: ActionType, wrap_to_name: Optional[str] = None
     ) -> Expr:
         """This is a helper function that handles transaction arguments passing in bare-app-call/abi-method handlers.
 
@@ -283,11 +283,13 @@ class ASTBuilder:
                   passed in ABIReturnSubroutine and logged, then approve.
         """
         if not is_method_call:
+            wrap_to_name = "bare appcall" if wrap_to_name is None else wrap_to_name
+
             match handler:
                 case Expr():
                     if handler.type_of() != TealType.none:
                         raise TealInputError(
-                            f"bare appcall handler should be TealType.none not {handler.type_of()}."
+                            f"{wrap_to_name} handler should be TealType.none not {handler.type_of()}."
                         )
                     return handler if handler.has_return() else Seq(handler, Approve())
                 case SubroutineFnWrapper():
@@ -297,7 +299,7 @@ class ASTBuilder:
                         )
                     if handler.subroutine.argument_count() != 0:
                         raise TealInputError(
-                            f"subroutine call should take 0 arg for bare-app call. "
+                            f"subroutine call should take 0 arg for {wrap_to_name}. "
                             f"this subroutine takes {handler.subroutine.argument_count()}."
                         )
                     return Seq(handler(), Approve())
@@ -308,22 +310,23 @@ class ASTBuilder:
                         )
                     if handler.subroutine.argument_count() != 0:
                         raise TealInputError(
-                            f"abi-returning subroutine call should take 0 arg for bare-app call. "
+                            f"abi-returning subroutine call should take 0 arg for {wrap_to_name}. "
                             f"this abi-returning subroutine takes {handler.subroutine.argument_count()}."
                         )
                     return Seq(cast(Expr, handler()), Approve())
                 case _:
                     raise TealInputError(
-                        "bare appcall can only accept: none type Expr, or Subroutine/ABIReturnSubroutine with none return and no arg"
+                        f"{wrap_to_name} can only accept: none type Expr, or Subroutine/ABIReturnSubroutine with none return and no arg"
                     )
         else:
+            wrap_to_name = "method call" if wrap_to_name is None else wrap_to_name
             if not isinstance(handler, ABIReturnSubroutine):
                 raise TealInputError(
-                    f"method call should be only registering ABIReturnSubroutine, got {type(handler)}."
+                    f"{wrap_to_name} should be only registering ABIReturnSubroutine, got {type(handler)}."
                 )
             if not handler.is_abi_routable():
                 raise TealInputError(
-                    f"method call ABIReturnSubroutine is not routable "
+                    f"{wrap_to_name} ABIReturnSubroutine is not routable "
                     f"got {handler.subroutine.argument_count()} args with {len(handler.subroutine.abi_args)} ABI args."
                 )
 
@@ -507,7 +510,7 @@ class Router:
         self.clear_state: Expr = (
             Reject()
             if clear_state is None
-            else ASTBuilder.wrap_handler(False, clear_state)
+            else ASTBuilder.wrap_handler(False, clear_state, "clear state call")
         )
 
         self.methods: list[sdk_abi.Method] = []
