@@ -126,15 +126,16 @@ class MethodConfig:
 MethodConfig.__module__ = "pyteal"
 
 
+ActionType = Expr | SubroutineFnWrapper | ABIReturnSubroutine
+
+
 @dataclass(frozen=True)
 class OnCompleteAction:
     """
     OnComplete Action, registers bare calls to one single OnCompletion case.
     """
 
-    action: Optional[Expr | SubroutineFnWrapper | ABIReturnSubroutine] = field(
-        kw_only=True, default=None
-    )
+    action: Optional[ActionType] = field(kw_only=True, default=None)
     call_config: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
 
     def __post_init__(self):
@@ -148,21 +149,15 @@ class OnCompleteAction:
         return OnCompleteAction()
 
     @staticmethod
-    def create_only(
-        f: Expr | SubroutineFnWrapper | ABIReturnSubroutine,
-    ) -> "OnCompleteAction":
+    def create_only(f: ActionType) -> "OnCompleteAction":
         return OnCompleteAction(action=f, call_config=CallConfig.CREATE)
 
     @staticmethod
-    def call_only(
-        f: Expr | SubroutineFnWrapper | ABIReturnSubroutine,
-    ) -> "OnCompleteAction":
+    def call_only(f: ActionType) -> "OnCompleteAction":
         return OnCompleteAction(action=f, call_config=CallConfig.CALL)
 
     @staticmethod
-    def always(
-        f: Expr | SubroutineFnWrapper | ABIReturnSubroutine,
-    ) -> "OnCompleteAction":
+    def always(f: ActionType) -> "OnCompleteAction":
         return OnCompleteAction(action=f, call_config=CallConfig.ALL)
 
     def is_empty(self) -> bool:
@@ -221,7 +216,7 @@ class BareCallActions:
                 continue
             wrapped_handler = ASTBuilder.wrap_handler(
                 False,
-                cast(Expr | SubroutineFnWrapper | ABIReturnSubroutine, oca.action),
+                cast(ActionType, oca.action),
             )
             match oca.call_config:
                 case CallConfig.ALL:
@@ -495,13 +490,14 @@ class Router:
         bare_calls: BareCallActions | None = None,
         descr: str | None = None,
         *,
-        clear_state: Expr | SubroutineFnWrapper | ABIReturnSubroutine | None = None,
+        clear_state: Optional[ActionType] = None,
     ) -> None:
         """
         Args:
             name: the name of the smart contract, used in the JSON object.
             bare_calls: the bare app call registered for each on_completion.
             descr: a description of the smart contract, used in the JSON object.
+            clear_state: an expression describing the behavior of clear state program.
         """
 
         self.name: str = name
