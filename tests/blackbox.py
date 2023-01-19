@@ -1,16 +1,23 @@
-from typing import Any, Callable, Sequence, cast
+from dataclasses import dataclass
+import json
+from typing import Any, Callable, Sequence, Type, cast
 
-import algosdk.abi
+import algosdk.abi as sdk_abi
+from algosdk.transaction import OnComplete
 from algosdk.v2client import algod
 
 from graviton import blackbox
+from graviton.abi_strategy import ABIArgsMod, ABICallStrategy, ABIStrategy
 from graviton.blackbox import (
     DryRunInspector,
     DryRunExecutor,
     DryRunTransactionParams as TxParams,
 )
-from graviton.models import PyTypes
+from graviton.inspector import DryRunProperty as DRProp
+from graviton.models import ExecutionMode, PyTypes
+from graviton.sim import Simulation, SimulationResults
 
+from pyteal.compiler.compiler import OptimizeOptions
 from pyteal.ast.subroutine import OutputKwArgInfo
 
 from pyteal import (
@@ -18,14 +25,17 @@ from pyteal import (
     Arg,
     Btoi,
     Bytes,
+    CallConfig,
     compileTeal,
     Expr,
     Int,
     Itob,
     Len,
     Log,
+    MethodConfig,
     Mode,
     Pop,
+    Router,
     ScratchVar,
     Seq,
     SubroutineFnWrapper,
@@ -34,6 +44,14 @@ from pyteal import (
 )
 
 from pyteal.ast.subroutine import ABIReturnSubroutine
+
+# ---- Types ---- #
+
+Predicates = dict[DRProp, Any]  # same as in graviton
+
+# key `method_config == None` indicates that the MethodConfig's
+# should be picked up from the router
+CallPredicates = dict[str | None, Predicates]
 
 # ---- Clients ---- #
 
@@ -205,7 +223,7 @@ class PyTealDryRunExecutor:
 
         return None
 
-    def abi_argument_types(self) -> None | list[algosdk.abi.ABIType]:
+    def abi_argument_types(self) -> None | list[sdk_abi.ABIType]:
         if not (self.input_types or self.is_abi()):
             return None
 
@@ -216,7 +234,7 @@ class PyTealDryRunExecutor:
 
         return [handle_arg(arg) for arg in self.input_types]
 
-    def abi_return_type(self) -> None | algosdk.abi.ABIType:
+    def abi_return_type(self) -> None | sdk_abi.ABIType:
         if not self.is_abi():
             return None
 
@@ -439,4 +457,274 @@ class PyTealDryRunExecutor:
     ) -> DryRunInspector:
         return self.executor(compiler_version).run_one(
             args, txn_params=txn_params, verbose=verbose
+        )
+
+
+@dataclass(frozen=True)
+class _SimConfig:
+    version: int
+    assemble_constants: bool
+    optimize: OptimizeOptions | None
+    ap_compiled: str
+    csp_compiled: str
+    contract: sdk_abi.Contract
+    method_configs: dict[str, MethodConfig]
+    call_strat: ABICallStrategy
+    txn_params: TxParams
+    model_version: int | None
+    model_assemble_constants: bool | None
+    model_optimize: OptimizeOptions | None
+    model_ap_compiled: str | None
+    model_csp_compiled: str | None
+    model_contract: sdk_abi.Contract | None
+
+
+class RouterSimulation:
+    """
+    Lifecycle of a RouterSimulation
+
+    1. Creation:
+        * router: Router (no version or other options specified)
+        * predicates: CallPredicates - the Router ought satisfy. Type has shape:
+            * method --> <property -> predicate ...> ...
+        * algod (optional) - if missing, just get one
+        * model_router: Router (optional) - in the case when the predicates provided
+            are of type PredicateKind.IdenticalPair, this parameter needs to be
+            provided for comparison.
+            NOTE: model_router may in fact be the same as router, and in this case
+            it is expected that something else such as version or optimization option
+            would differ between modeel_router and router during the simulation
+
+    2. Simulation:
+        * call_strat: ABICallStrategy - used for args generation
+        * version: int - for compiling router
+        * assemble_constants: bool (optional) - for compiling router
+        * optimize: OptimizeOptions (optional) - for compiling router
+        * method_configs: dict[str, MethodConfig] (optional)
+            - if missing, pick up from router.method_configs
+        * num_dryruns: int (default 1) - the number of input runs to generate
+            per method X config combination
+        * abi_args_mod: ABIArgsMod (default None) - used to specify any arg mutation
+        * txn_params: TxParams (optional) - other TxParams to append
+            -in addition to the (is_app_create, OnComplete) information
+        * msg: string (optional) - message to report when assert violation occurs
+        * model_version: int - for compiling model_router
+        * model_assemble_constants: bool (optional) - for compiling model_router
+        * model_optimize: OptimizeOptions (optional) - for compiling model_router
+        * TODO: consider adding -->strict: bool (default True) - when True ensure
+            that methods + call_config's to be tested are available in
+            `router` and `model_router` if it exists
+        * TODO: in this current version, there is no way to specify any other
+            other txn information that might accompany the arguments
+        * TODO: do we need to pass along `handle_selector: bool = True`
+            into ABICallStrategy's init ???
+
+    """
+
+    def __init__(
+        self,
+        router: Router,
+        predicates: dict[str, CallPredicates],
+        *,
+        model_router: Router | None = None,
+        algod: algod.AlgodClient | None = None,
+    ):
+        self.router: Router = router
+        self.predicates: dict[str, CallPredicates] = self._validate_predicates(
+            predicates
+        )
+        self.model_router: Router | None = model_router
+        self.algod: algod.AlgodClient = algod or algod_with_assertion()
+
+    @classmethod
+    def _validate_predicates(cls, predicates):
+        assert isinstance(
+            predicates, dict
+        ), f"Wrong type for predicates: {type(predicates)}. Please provide: dict[str | None, dict[graviton.DryRunProporty, Any]."
+
+        assert (
+            predicates
+        ), "Please provide at least one method to call and assert against."
+
+        for method, preds in predicates.items():
+            assert isinstance(
+                method, (str, type(None))
+            ), f"Predicates method '{method}' has type {type(method)} but only 'str' and 'NoneType' are allowed."
+            assert (
+                preds
+            ), f"Every method must provide at least one predicate for assertion but method '{method}' is missing predicates."
+            assert isinstance(
+                preds, dict
+            ), f"Method '{method}' is expected to have dict[graviton.DryRunProperty, Any] for its predicates value but the type is {type(preds)}."
+            for prop in preds:
+                assert isinstance(
+                    prop, DRProp
+                ), f"Method '{method}' is expected to have dict[graviton.DryRunProperty, Any] for its predicates value but predicates['{method}'] has key '{prop}' of {type(prop)}."
+
+        return predicates
+
+    def _prep_simulation(
+        self,
+        arg_strat_type: Type[ABIStrategy],
+        abi_args_mod: ABIArgsMod | None,
+        version: int,
+        *,
+        assemble_constants: bool = False,
+        optimize: OptimizeOptions | None = None,
+        method_configs: dict[str, MethodConfig] | None = None,
+        num_dryruns: int = 1,
+        txn_params: TxParams | None = None,
+        model_version: int | None = None,
+        model_assemble_constants: bool = False,
+        model_optimize: OptimizeOptions | None = None,
+        # TODO: do I need to pass it on to ABICallStrategy() ???
+        # handle_selector: bool = True,
+    ) -> _SimConfig:
+        assert isinstance(arg_strat_type, type) and issubclass(
+            arg_strat_type, ABIStrategy
+        ), f"arg_strat_type should _BE_ a subtype of ABIStrategy but we have {arg_strat_type} (its type is {type(arg_strat_type)})."
+
+        assert isinstance(
+            abi_args_mod, (ABIArgsMod, type(None))
+        ), f"abi_args_mod '{abi_args_mod}' has type {type(abi_args_mod)} but only 'ABIArgsMod' and 'NoneType' are allowed."
+
+        ap_compiled, csp_compiled, contract = self.router.compile_program(
+            version=version, assemble_constants=assemble_constants, optimize=optimize
+        )
+        assert (
+            self.router.method_configs
+        ), f"Base router with name '{self.router.name}' is essentially empty, as compilation results in an empty method_configs."
+
+        assert isinstance(
+            method_configs, (dict, type(None))
+        ), f"method_configs '{method_configs}' has type {type(method_configs)} but only 'dict' and 'NoneType' are allowed."
+
+        if method_configs is None:
+            method_configs = self.router.method_configs
+        assert (
+            method_configs
+        ), "if providing explicit method_configs, make sure to give at least one"
+
+        for meth, meth_config in method_configs.items():
+            assert isinstance(
+                meth, (str, type(None))
+            ), f"method_configs dict key '{meth}' has type {type(meth)} but only str and NoneType are allowed."
+            assert isinstance(
+                meth_config, MethodConfig
+            ), f"method_configs['{meth}'] = has type {type(meth_config)} but only MethodConfig is allowed."
+            assert (
+                not meth_config.is_never()
+            ), f"method_configs['{meth}'] specifies NEVER to be called; for driving the test, each configured method should ACTUALLY be tested."
+
+        assert (
+            isinstance(num_dryruns, int) and num_dryruns >= 1
+        ), f"num_dryruns must be a positive int but is {num_dryruns}."
+        call_strat: ABICallStrategy = ABICallStrategy(
+            json.dumps(contract.dictify()),
+            arg_strat_type,
+            num_dryruns=num_dryruns,
+            abi_args_mod=abi_args_mod,
+        )
+
+        assert isinstance(
+            txn_params, (TxParams, type(None))
+        ), f"txn_params must have type DryRunTransactionParams or NoneType but has type {type(txn_params)}."
+
+        if not self.model_router:
+            assert (
+                model_version is None
+            ), f"model_version '{model_version}' was provided which is nonsensical because model_router was never provided for."
+
+        model_ap_compiled: str | None = None
+        model_csp_compiled: str | None = None
+        model_contract: sdk_abi.Contract | None = None
+        if self.model_router:
+            (
+                model_ap_compiled,
+                model_csp_compiled,
+                model_contract,
+            ) = self.router.compile_program(
+                version=model_version,
+                assemble_constants=model_assemble_constants,
+                optimize=model_optimize,
+            )
+            assert (
+                self.router.method_configs
+            ), f"Base router with name '{self.router.name}' is essentially empty, as compilation results in an empty method_configs."
+
+        return _SimConfig(
+            version=version,
+            assemble_constants=assemble_constants,
+            optimize=optimize,
+            ap_compiled=ap_compiled,
+            csp_compiled=csp_compiled,
+            contract=contract,
+            method_configs=method_configs,
+            call_strat=call_strat,
+            txn_params=txn_params,
+            model_version=model_version,
+            model_assemble_constants=model_assemble_constants,
+            model_optimize=model_optimize,
+            model_ap_compiled=model_ap_compiled,
+            model_csp_compiled=model_csp_compiled,
+            model_contract=model_contract,
+        )
+
+    def simulate_and_assert(
+        self,
+        is_approval: bool,  # False for clear
+        method: str | None,  # None for bare app call
+        args_strategy: ABICallStrategy,
+        is_app_create: bool,
+        on_complete: OnComplete,
+        *,
+        txn_params: TxParams | None = None,
+        verbose: bool = False,
+        msg: str = "",
+        force_recompile: bool = False,
+        version: int = 6,
+        identities_version: int = 8,
+        assemble_constants: bool = False,
+        optimize: OptimizeOptions | None = None,
+    ) -> SimulationResults:
+        self._lazy_compile(
+            version=version,
+            assemble_constants=assemble_constants,
+            optimize=optimize,
+            force=force_recompile,
+        )
+
+        abi_method_sig: sdk_abi.Method | None = None
+        if method:
+            abi_method_sig = self.contract.get_method_by_name(method).get_signature()
+
+        teal = self.approval_teal if is_approval else self.clear_teal
+        id_teal: str | None
+        if self.model_router:
+            id_ap, id_cl, id_con = self.model_router.compile_program(
+                version=identities_version,
+                assemble_constants=assemble_constants,
+                optimize=optimize,
+            )
+            id_abi_method_sig = id_con.get_method_by_name(method).get_signature()
+            assert abi_method_sig == id_abi_method_sig, (
+                f"To compare one router method against another, these "
+                f"must be identical. However, we have: "
+                f"{abi_method_sig=} vs. {id_abi_method_sig=}"
+            )
+            id_teal = id_ap if is_approval else id_cl
+
+        self.sim = Simulation(
+            self.algod,
+            ExecutionMode.Application,
+            teal,
+            self.predicates,
+            abi_method_signature=abi_method_sig,
+            identities_teal=id_teal
+            # omit_method_selector=False,
+            # validation=False,
+        )
+
+        return self.sim.run_and_assert(
+            args_strategy,
         )
