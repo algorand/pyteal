@@ -2,11 +2,11 @@ from copy import deepcopy
 from collections import defaultdict
 from dataclasses import dataclass, asdict
 import json
-from typing import Any, Callable, Sequence, Type, cast
+from typing import Any, Callable, Dict, Sequence, Type, cast
 
 import algosdk.abi as sdk_abi
 from algosdk.transaction import OnComplete
-from algosdk.v2client import algod
+import algosdk.v2client as v2client
 
 from graviton import blackbox
 from graviton.abi_strategy import ABIArgsMod, ABICallStrategy, ABIStrategy
@@ -66,9 +66,9 @@ def algod_with_assertion():
 
 def _algod_client(
     algod_address="http://localhost:4001", algod_token="a" * 64
-) -> algod.AlgodClient:
+) -> v2client.algod.AlgodClient:
     """Instantiate and return Algod client object."""
-    return algod.AlgodClient(algod_token, algod_address)
+    return v2client.algod.AlgodClient(algod_token, algod_address)
 
 
 # ---- Decorator ---- #
@@ -481,6 +481,11 @@ class _SimConfig:
     model_contract: sdk_abi.Contract | None
 
 
+class _AutoPathDict(defaultdict):
+    def __init__(self):
+        super().__init__(lambda: _AutoPathDict())
+
+
 def as_on_complete(oc_str: str) -> OnComplete:
     match oc_str:
         case "no_op":
@@ -497,11 +502,6 @@ def as_on_complete(oc_str: str) -> OnComplete:
             return OnComplete.DeleteApplicationOC
 
     raise ValueError(f"unrecognized {oc_str=}")
-
-
-# class _AutoDict(defaultdict):
-#     def __init__(self):
-#         super().__init__(lambda: _AutoDict())
 
 
 class RouterSimulation:
@@ -552,18 +552,18 @@ class RouterSimulation:
         predicates: dict[str, CallPredicates],
         *,
         model_router: Router | None = None,
-        algod: algod.AlgodClient | None = None,
+        algod: v2client.algod.AlgodClient | None = None,
     ):
         self.router: Router = router
         self.predicates: dict[str, CallPredicates] = self._validate_predicates(
             predicates
         )
         self.model_router: Router | None = model_router
-        self.algod: algod.AlgodClient = algod or algod_with_assertion()
+        self.algod: v2client.algod.AlgodClient = algod or algod_with_assertion()
 
-        self.results: dict[
+        self.results: Dict[
             str | None, dict[tuple[bool, OnComplete], SimulationResults]
-        ] = {}
+        ] = _AutoPathDict()
 
     @classmethod
     def _validate_predicates(cls, predicates):
@@ -672,14 +672,14 @@ class RouterSimulation:
                 model_ap_compiled,
                 model_csp_compiled,
                 model_contract,
-            ) = self.router.compile_program(
+            ) = self.model_router.compile_program(
                 version=model_version,
                 assemble_constants=model_assemble_constants,
                 optimize=model_optimize,
             )
             assert (
-                self.router.method_configs
-            ), f"Base router with name '{self.router.name}' is essentially empty, as compilation results in an empty method_configs."
+                self.model_router.method_configs
+            ), f"Model router with name '{self.model_router.name}' is essentially empty, as compilation results in an empty method_configs."
 
         return _SimConfig(
             version=version,
@@ -731,9 +731,12 @@ class RouterSimulation:
         if not txn_params:
             txn_params = TxParams()
 
-        method_combo_count = 0
-        dryrun_count = 0
-        assertions_count = 0
+        stats = dict(
+            name=self.router.name,
+            method_combo_count=0,
+            dryrun_count=0,
+            assertions_count=0,
+        )
 
         def msg() -> str:
             return f"""{meth=}
@@ -741,74 +744,71 @@ class RouterSimulation:
 {call_cfg=}
 {is_app_create=}
 {len(self.predicates[meth])=}
-{method_combo_count=}
-{dryrun_count=}
-{assertions_count=}
+{stats["method_combo_count"]=}
+{stats["dryrun_count"]=}
+{stats["assertions_count"]=}
 """
+
+        def get_sim():
+            return Simulation(
+                self.algod,
+                ExecutionMode.Application,
+                teal,
+                self.predicates[meth],
+                abi_method_signature=sim_cfg.call_strat.method_signature(meth),
+                # omit_method_selector=False ????
+                # validation=True ???
+                identities_teal=identities_teal,
+            )
+
+        def simulate(stats, is_app_create):
+            tp: TxParams = deepcopy(txn_params)
+            tp.update(TxParams.for_app(is_app_create=is_app_create, on_complete=oc))
+            sim_results = sim.run_and_assert(
+                sim_cfg.call_strat, txn_params=tp, msg=msg()
+            )
+            assert sim_results.succeeded
+            self.results[meth][(is_app_create, oc)] = sim_results
+
+            stats["method_combo_count"] += 1
+            stats["dryrun_count"] += sim_cfg.call_strat.num_dryruns
+            stats["assertions_count"] += sim_cfg.call_strat.num_dryruns * len(
+                self.predicates[meth]
+            )
 
         for meth, meth_cfg in sim_cfg.method_configs.items():
             approve_sim: Simulation | None = None
             clear_sim: Simulation | None = None
-            for oc_str, call_cfg in meth_cfg.items():
+            for oc_str, call_cfg in asdict(meth_cfg).items():
                 oc = as_on_complete(oc_str)
                 sim: Simulation
                 if oc is OnComplete.ClearStateOC:
+                    teal: str
+                    identities_teal: str | None
+
                     if not clear_sim:
-                        clear_sim = Simulation(
-                            algod,
-                            ExecutionMode.Application,
-                            sim_cfg.csp_compiled,
-                            self.predicates[meth],
-                            sim_cfg.call_strat.method_signature(),
-                            # omit_method_selector=False ????
-                            # validation=True ???
-                            identities_teal=sim_cfg.model_csp_compiled,
-                        )
+                        teal = sim_cfg.csp_compiled
+                        identities_teal = sim_cfg.model_csp_compiled
+                        clear_sim = get_sim()
                     sim = clear_sim
                 else:
                     if not approve_sim:
-                        approve_sim = Simulation(
-                            algod,
-                            ExecutionMode.Application,
-                            sim_cfg.ap_compiled,
-                            self.predicates[meth],
-                            sim_cfg.call_strat.method_signature(),
-                            # omit_method_selector=False ????
-                            # validation=True ???
-                            identities_teal=sim_cfg.model_ap_compiled,
-                        )
+                        teal = sim_cfg.ap_compiled
+                        identities_teal = sim_cfg.model_ap_compiled
+                        approve_sim = get_sim()
                     sim = approve_sim
 
                 is_app_create: bool
 
-                def simulate():
-                    tp: TxParams = deepcopy(txn_params)
-                    tp.update(
-                        TxParams.for_app(is_app_create=is_app_create, on_complete=oc)
-                    )
-                    sim_results = sim.run_and_assert(
-                        sim_cfg.call_strat, txn_params=tp, msg=msg()
-                    )
-                    assert sim_results.succeeded
-                    self.results[meth][(is_app_create, oc)] = sim_results
-
-                    method_combo_count += 1
-                    dryrun_count += sim_cfg.call_strat.num_dryruns
-                    assertions_count += sim_cfg.call_strat.num_dryruns * len(
-                        self.predicates[meth]
-                    )
-
                 if call_cfg & CallConfig.CALL:
                     is_app_create = False
-                    simulate()
+                    simulate(stats, is_app_create)
 
                 if call_cfg & CallConfig.CREATE:
                     is_app_create = True
-                    simulate()
+                    simulate(stats, is_app_create)
         return {
             "sim_cfg": sim_cfg,
-            "method_combo_count": method_combo_count,
-            "dryrun_count": dryrun_count,
-            "assertions_count": assertions_count,
+            "stats": stats,
             "results": self.results,
         }

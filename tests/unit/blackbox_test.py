@@ -325,9 +325,6 @@ def test_RouterSimulation_init():
     successful_RouterSimulation(router, model_router, predicates, algod)
 
 
-TYPICAL_IAC_OC = pt.MethodConfig(no_op=pt.CallConfig.CALL)
-
-
 def failing_prep_simulate(
     rsim,
     arg_strat_type,

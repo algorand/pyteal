@@ -1,13 +1,14 @@
+import json
 from pathlib import Path
 import pytest
-from typing import Any
 
-from algosdk.transaction import OnComplete
-from graviton.abi_strategy import ABIArgsMod, ABICallStrategy, RandomABIStrategyHalfSized
+from graviton.abi_strategy import RandomABIStrategyHalfSized
 from graviton.blackbox import DryRunEncoder
 from graviton.invariant import DryRunProperty as DRProp
 
 import pyteal as pt
+
+from tests.blackbox import Predicates, RouterSimulation
 
 NUM_ROUTER_DRYRUNS = 7
 FIXTURES = Path.cwd() / "tests" / "integration" / "teal" / "router"
@@ -239,41 +240,27 @@ def generate_and_test_routers():
 
 ROUTER_CASES = generate_and_test_routers()
 
-TYPICAL_IAC_OC = (False, OnComplete.NoOpOC)
+TYPICAL_IAC_OC = pt.MethodConfig(no_op=pt.CallConfig.CALL)
 
-# LEGEND FOR TEST CASES:
-#
+# TEST DRIVERS LEGEND - combines method_configs + predicates
 # * @0 - method: str. method == `None` indicates bare app call
 #
-# * @1 - approval_call_types: list[tuple[bool, OncComplete]]
-#   [(is_app_create, `OnComplete`), ...] contexts expected for approval program
+# * @1 - method_config: MethodConfig - defines how to call the method
 #
-# * @2 - clear_call_types: list[tuple[bool, Oncomplete]]
-#   [(is_app_create, `OnComplete`), ...] contexts expected for clear program
-#
-# * @3 - predicates: dict[DRProp, Any]
+# * @3 - predicates: Predicates ~ dict[DRProp, Any]
 #   these are being asserted after being processed into Invariant's
 #
 # NOTE: the "yacc" routers will simply ignore the case with method `None`
 # as they do not have any bare-app-calls
-QUESTIONABLE_CASES: list[
-    tuple[
-        str,
-        list[tuple[bool, OnComplete]],
-        list[tuple[bool, OnComplete]],
-        dict[DRProp, Any],
-    ]
-] = [
+QUESTIONABLE_DRIVER: list[tuple[str, pt.MethodConfig, Predicates,]] = [
     (
         "add",
-        [TYPICAL_IAC_OC],
-        [],
+        TYPICAL_IAC_OC,
         {DRProp.passed: True, DRProp.lastLog: lambda args: args[1] + args[2]},
     ),
     (
         "sub",
-        [TYPICAL_IAC_OC],
-        [],
+        TYPICAL_IAC_OC,
         {
             DRProp.passed: lambda args: args[1] >= args[2],
             DRProp.lastLog: (
@@ -285,38 +272,31 @@ QUESTIONABLE_CASES: list[
     ),
     (
         "mul",
-        [TYPICAL_IAC_OC],
-        [],
+        TYPICAL_IAC_OC,
         {DRProp.passed: True, DRProp.lastLog: lambda args: args[1] * args[2]},
     ),
     (
         "div",
-        [TYPICAL_IAC_OC],
-        [],
+        TYPICAL_IAC_OC,
         {DRProp.passed: True, DRProp.lastLog: lambda args: args[1] // args[2]},
     ),
     (
         "mod",
-        [TYPICAL_IAC_OC],
-        [],
+        TYPICAL_IAC_OC,
         {DRProp.passed: True, DRProp.lastLog: lambda args: args[1] % args[2]},
     ),
     (
         "all_laid_to_args",
-        [TYPICAL_IAC_OC],
-        [],
+        TYPICAL_IAC_OC,
         {DRProp.passed: True, DRProp.lastLog: lambda args: sum(args[1:])},
     ),
     (
         "empty_return_subroutine",
-        [
-            (False, OnComplete.NoOpOC),
-            (False, OnComplete.OptInOC),
-            (True, OnComplete.OptInOC),
-        ],
-        [
-            (False, OnComplete.ClearStateOC),
-        ],
+        pt.MethodConfig(
+            no_op=pt.CallConfig.CALL,
+            opt_in=pt.CallConfig.ALL,
+            clear_state=pt.CallConfig.CALL,
+        ),
         {
             DRProp.passed: True,
             DRProp.lastLog: DryRunEncoder.hex(
@@ -326,24 +306,21 @@ QUESTIONABLE_CASES: list[
     ),
     (
         "log_1",
-        [(False, OnComplete.NoOpOC), (False, OnComplete.OptInOC)],
-        [
-            (False, OnComplete.ClearStateOC),
-        ],
+        pt.MethodConfig(
+            no_op=pt.CallConfig.CALL,
+            opt_in=pt.CallConfig.CALL,
+            clear_state=pt.CallConfig.CALL,
+        ),
         {DRProp.passed: True, DRProp.lastLog: 1},
     ),
     (
         "log_creation",
-        [(True, OnComplete.NoOpOC)],
-        [],
+        pt.MethodConfig(no_op=pt.CallConfig.CREATE),
         {DRProp.passed: True, DRProp.lastLog: "logging creation"},
     ),
     (
         "approve_if_odd",  # this should only appear in the clear-state program
-        [],
-        [
-            (False, OnComplete.ClearStateOC),
-        ],
+        pt.MethodConfig(clear_state=pt.CallConfig.CALL),
         {
             DRProp.passed: lambda args: args[1] % 2 == 1,
             DRProp.lastLog: None,
@@ -351,10 +328,7 @@ QUESTIONABLE_CASES: list[
     ),
     (
         None,
-        [(False, OnComplete.OptInOC)],
-        [
-            (False, OnComplete.ClearStateOC),
-        ],
+        pt.MethodConfig(opt_in=pt.CallConfig.CALL, clear_state=pt.CallConfig.CALL),
         {
             DRProp.passed: True,
             DRProp.lastLog: lambda _, actual: actual
@@ -363,71 +337,49 @@ QUESTIONABLE_CASES: list[
     ),
 ]
 
+YACC_DRIVER = [case for case in QUESTIONABLE_DRIVER if case[0]]
 
+DRIVERS = {"questionable": QUESTIONABLE_DRIVER, "yacc": YACC_DRIVER}
+
+
+def split_driver2predicates_methconfigs(driver):
+    predicates = {}
+    methconfigs = {}
+    for meth, meth_config, predicate in driver:
+        predicates[meth] = predicate
+        methconfigs[meth] = meth_config
+
+    return predicates, methconfigs
 
 
 @pytest.mark.parametrize("case, version, router", ROUTER_CASES)
-@pytest.mark.parametrize(
-    "method, approval_call_types, clear_call_types, predicates", QUESTIONABLE_CASES
-)
-def test_abi_router_positive(
-    case, version, router, method, approval_call_types, clear_call_types, predicates
-):
+def test_abi_router_positive(case, version, router):
     """
-    Test the _positive_ version of a case. In other words, ensure that for the given:
-        * method or bare call
-        * OnComplete value
-        * number of arguments
-    that the app call succeeds according to the provided _invariants_ success definition
+    Test the _positive_ version of a case. In other words, ensure that for each
+    router encountered and its driver, iterate through the driver as follows:
+        * consider each method or bare call
+        * consider each (OnComplete, CallConfig) combination
+        * assert that all predicates hold for this call
     """
-    def get_aa_strat(method_runner, abi_args_mod=None) -> ABICallStrategy:
-        return ABICallStrategy(
-            method_runner.teal,
-            method_runner.contract,
-            RandomABIStrategyHalfSized,
-            num_dryruns=NUM_ROUTER_DRYRUNS,
-            abi_args_mod=abi_args_mod,
-        )
-
-
-    # def run_positive(is_approve, method_runner, call_types, invariants):
-    good_abi_args = get_aa_strat(method_runner)
-
-    algod = get_algod()
-
-    if not call_types:
-        return
-
-    method = method_runner.method
-    sim = Simulation(
-        algod,
-        ExecutionMode.Application,
-        method_runner.teal,
-        invariants,
-        abi_method_signature=good_abi_args.method_signature(method),
-        omit_method_selector=False,
-        validation=False,
-    )
+    driver = DRIVERS[case]
+    predicates, methconfigs = split_driver2predicates_methconfigs(driver)
+    assert methconfigs == router.method_configs
+    rsim = RouterSimulation(router, predicates)
 
     def msg():
-        return f"""
-TEST CASE [{method_runner}]({"APPROVAL" if is_approve else "CLEAR"}):
-test_function={inspect.stack()[2][3]}
-method={method}
-is_app_create={is_app_create}
-on_complete={on_complete!r}"""
+        return f"""test_abi_router_positive()
+{case=}
+{version=}
+{router.name=}"""
 
-    for is_app_create, on_complete in call_types:
-        sim_result = sim.run_and_assert(
-            good_abi_args,
-            method=method,
-            txn_params=TxParams.for_app(
-                is_app_create=is_app_create,
-                on_complete=on_complete,
-            ),
-            msg=msg(),
-        )
-        assert sim_result.succeeded
+    results = rsim.simulate_and_assert(
+        RandomABIStrategyHalfSized,
+        abi_args_mod=None,
+        version=version,
+        num_dryruns=NUM_ROUTER_DRYRUNS,
+    )
+    assert all(
+        sim.succeeded for meth in results["results"].values() for sim in meth.values()
+    )
 
-    # run_positive(True, approval_runner, approval_call_types, invariants)
-    # run_positive(False, clear_runner, clear_call_types, invariants)
+    print(json.dumps(results["stats"], indent=2))
