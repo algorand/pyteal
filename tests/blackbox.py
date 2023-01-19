@@ -1,4 +1,6 @@
-from dataclasses import dataclass
+from copy import deepcopy
+from collections import defaultdict
+from dataclasses import dataclass, asdict
 import json
 from typing import Any, Callable, Sequence, Type, cast
 
@@ -479,6 +481,29 @@ class _SimConfig:
     model_contract: sdk_abi.Contract | None
 
 
+def as_on_complete(oc_str: str) -> OnComplete:
+    match oc_str:
+        case "no_op":
+            return OnComplete.NoOpOC
+        case "opt_in":
+            return OnComplete.OptInOC
+        case "close_out":
+            return OnComplete.CloseOutOC
+        case "clear_state":
+            return OnComplete.ClearStateOC
+        case "update_application":
+            return OnComplete.UpdateApplicationOC
+        case "delete_application":
+            return OnComplete.DeleteApplicationOC
+
+    raise ValueError(f"unrecognized {oc_str=}")
+
+
+# class _AutoDict(defaultdict):
+#     def __init__(self):
+#         super().__init__(lambda: _AutoDict())
+
+
 class RouterSimulation:
     """
     Lifecycle of a RouterSimulation
@@ -535,6 +560,10 @@ class RouterSimulation:
         )
         self.model_router: Router | None = model_router
         self.algod: algod.AlgodClient = algod or algod_with_assertion()
+
+        self.results: dict[
+            str | None, dict[tuple[bool, OnComplete], SimulationResults]
+        ] = {}
 
     @classmethod
     def _validate_predicates(cls, predicates):
@@ -672,59 +701,114 @@ class RouterSimulation:
 
     def simulate_and_assert(
         self,
-        is_approval: bool,  # False for clear
-        method: str | None,  # None for bare app call
-        args_strategy: ABICallStrategy,
-        is_app_create: bool,
-        on_complete: OnComplete,
+        arg_strat_type: Type[ABIStrategy],
+        abi_args_mod: ABIArgsMod | None,
+        version: int,
         *,
-        txn_params: TxParams | None = None,
-        verbose: bool = False,
-        msg: str = "",
-        force_recompile: bool = False,
-        version: int = 6,
-        identities_version: int = 8,
         assemble_constants: bool = False,
         optimize: OptimizeOptions | None = None,
-    ) -> SimulationResults:
-        self._lazy_compile(
-            version=version,
+        method_configs: dict[str, MethodConfig] | None = None,
+        num_dryruns: int = 1,
+        txn_params: TxParams | None = None,
+        model_version: int | None = None,
+        model_assemble_constants: bool = False,
+        model_optimize: OptimizeOptions | None = None,
+        # fail_on_first: bool = True, ??? future ???
+    ) -> dict:
+        sim_cfg = self._prep_simulation(
+            arg_strat_type,
+            abi_args_mod,
+            version,
             assemble_constants=assemble_constants,
             optimize=optimize,
-            force=force_recompile,
+            method_configs=method_configs,
+            num_dryruns=num_dryruns,
+            txn_params=txn_params,
+            model_version=model_version,
+            model_assemble_constants=model_assemble_constants,
+            model_optimize=model_optimize,
         )
+        if not txn_params:
+            txn_params = TxParams()
 
-        abi_method_sig: sdk_abi.Method | None = None
-        if method:
-            abi_method_sig = self.contract.get_method_by_name(method).get_signature()
+        method_combo_count = 0
+        dryrun_count = 0
+        assertions_count = 0
 
-        teal = self.approval_teal if is_approval else self.clear_teal
-        id_teal: str | None
-        if self.model_router:
-            id_ap, id_cl, id_con = self.model_router.compile_program(
-                version=identities_version,
-                assemble_constants=assemble_constants,
-                optimize=optimize,
-            )
-            id_abi_method_sig = id_con.get_method_by_name(method).get_signature()
-            assert abi_method_sig == id_abi_method_sig, (
-                f"To compare one router method against another, these "
-                f"must be identical. However, we have: "
-                f"{abi_method_sig=} vs. {id_abi_method_sig=}"
-            )
-            id_teal = id_ap if is_approval else id_cl
+        def msg() -> str:
+            return f"""{meth=}
+{oc=}
+{call_cfg=}
+{is_app_create=}
+{len(self.predicates[meth])=}
+{method_combo_count=}
+{dryrun_count=}
+{assertions_count=}
+"""
 
-        self.sim = Simulation(
-            self.algod,
-            ExecutionMode.Application,
-            teal,
-            self.predicates,
-            abi_method_signature=abi_method_sig,
-            identities_teal=id_teal
-            # omit_method_selector=False,
-            # validation=False,
-        )
+        for meth, meth_cfg in sim_cfg.method_configs.items():
+            approve_sim: Simulation | None = None
+            clear_sim: Simulation | None = None
+            for oc_str, call_cfg in meth_cfg.items():
+                oc = as_on_complete(oc_str)
+                sim: Simulation
+                if oc is OnComplete.ClearStateOC:
+                    if not clear_sim:
+                        clear_sim = Simulation(
+                            algod,
+                            ExecutionMode.Application,
+                            sim_cfg.csp_compiled,
+                            self.predicates[meth],
+                            sim_cfg.call_strat.method_signature(),
+                            # omit_method_selector=False ????
+                            # validation=True ???
+                            identities_teal=sim_cfg.model_csp_compiled,
+                        )
+                    sim = clear_sim
+                else:
+                    if not approve_sim:
+                        approve_sim = Simulation(
+                            algod,
+                            ExecutionMode.Application,
+                            sim_cfg.ap_compiled,
+                            self.predicates[meth],
+                            sim_cfg.call_strat.method_signature(),
+                            # omit_method_selector=False ????
+                            # validation=True ???
+                            identities_teal=sim_cfg.model_ap_compiled,
+                        )
+                    sim = approve_sim
 
-        return self.sim.run_and_assert(
-            args_strategy,
-        )
+                is_app_create: bool
+
+                def simulate():
+                    tp: TxParams = deepcopy(txn_params)
+                    tp.update(
+                        TxParams.for_app(is_app_create=is_app_create, on_complete=oc)
+                    )
+                    sim_results = sim.run_and_assert(
+                        sim_cfg.call_strat, txn_params=tp, msg=msg()
+                    )
+                    assert sim_results.succeeded
+                    self.results[meth][(is_app_create, oc)] = sim_results
+
+                    method_combo_count += 1
+                    dryrun_count += sim_cfg.call_strat.num_dryruns
+                    assertions_count += sim_cfg.call_strat.num_dryruns * len(
+                        self.predicates[meth]
+                    )
+
+                if call_cfg & CallConfig.CALL:
+                    is_app_create = False
+                    simulate()
+
+                if call_cfg & CallConfig.CREATE:
+                    is_app_create = True
+                    simulate()
+        return {
+            "sim_cfg": sim_cfg,
+            "method_combo_count": method_combo_count,
+            "dryrun_count": dryrun_count,
+            "assertions_count": assertions_count,
+            "results": self.results,
+        }

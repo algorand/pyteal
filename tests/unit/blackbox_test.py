@@ -721,7 +721,7 @@ def test_prep_simulation():
     assert sim_cfg.version == version
     assert sim_cfg.assemble_constants == assemble_constants
     assert sim_cfg.optimize == optimize
-    
+
     assert sim_cfg.ap_compiled
     assert sim_cfg.csp_compiled
     assert sim_cfg.contract
