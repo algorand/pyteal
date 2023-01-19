@@ -360,6 +360,11 @@ def camel_to_snake(name: str) -> str:
     return "".join(["_" + c.lower() if c.isupper() else c for c in name]).lstrip("_")
 
 
+def test_method_config_clear_state_failure():
+    with pytest.raises(pt.TealInputError):
+        pt.MethodConfig(clear_state=pt.CallConfig.CALL)
+
+
 def test_call_config():
     for cc in pt.CallConfig:
         approval_cond_on_cc: pt.Expr | int = cc.approval_condition_under_config()
