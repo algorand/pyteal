@@ -632,7 +632,9 @@ class Router:
         if clear_state is not None:
             raise TealInputError(
                 "Attempt to register ABI method for clear state program. "
-                "Use Router top level argument `clear_state` instead."
+                "Use Router top level argument `clear_state` instead. "
+                "For more details please refer to "
+                "https://pyteal.readthedocs.io/en/latest/abi.html#registering-bare-app-calls"
             )
 
         def wrap(_func) -> ABIReturnSubroutine:
