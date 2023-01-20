@@ -338,5 +338,5 @@ def compileTeal(
         lines = ["#pragma version {}".format(version)]
         lines += [i.assemble() for i in teal]
         return "\n".join(lines)
-    finally:
+    finally:  # is this a nothing burger?
         ScratchSlot.reset_slot_numbering(starting_slot_id)

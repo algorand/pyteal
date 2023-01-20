@@ -827,14 +827,15 @@ def test_build_program_clear_state_empty():
 
 def test_build_program_clear_state_invalid_config():
     for config in (pt.CallConfig.CREATE, pt.CallConfig.ALL):
-        bareCalls = pt.BareCallActions(
-            clear_state=pt.OnCompleteAction(action=pt.Approve(), call_config=config)
-        )
         with pytest.raises(
             pt.TealInputError,
             match=r"Only CallConfig.CALL or CallConfig.NEVER are valid for a clear state CallConfig, since clear state can never be invoked during creation$",
         ):
-            pt.Router("test", bareCalls)
+            bareCalls = pt.BareCallActions(
+                clear_state=pt.OnCompleteAction(action=pt.Approve(), call_config=config)
+            )
+            _ = bareCalls  # temp linter hack
+            # pt.Router("test", bareCalls)
 
         router = pt.Router("test")
 
@@ -947,12 +948,12 @@ def test_router_build_idempotence():
     )
     router = pt.Router("questionable", on_completion_actions)
 
-    approval1, clear1, contract1 = router.build_program(version=6)
-    approval2, clear2, contract2 = router.build_program(version=6)
-
-    assert contract1.dictify() == contract2.dictify()
     approval1, clear1, contract1 = router.compile_program(version=6)
     approval2, clear2, contract2 = router.compile_program(version=6)
+
+    assert contract1.dictify() == contract2.dictify()
+    assert clear1 == clear2
+    assert approval1 == approval2
 
     @pt.ABIReturnSubroutine
     def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
@@ -961,9 +962,20 @@ def test_router_build_idempotence():
     meth = router.add_method_handler(add)
     assert meth.method_signature() == "add(uint64,uint64)uint64"
 
+    # formerly nextSlotId: 256 --> 262:
     approval1, clear1, contract1 = router.compile_program(version=6)
+    # formerly nextSlotId: 262 --> 265:
     approval2, clear2, contract2 = router.compile_program(version=6)
+    # formerly nextSlotId: 265 --> 268:
+    approval3, clear3, contract3 = router.compile_program(version=6)
 
-    assert contract1.dictify() == contract2.dictify()
-    assert clear1 == clear2
-    assert approval1 == approval2
+    assert contract2.dictify() == contract3.dictify()
+    assert clear3 == clear2
+    assert approval3 == approval3
+
+    assert contract2.dictify() == contract1.dictify()
+    assert clear2 == clear1
+    assert (
+        approval2 == approval1
+    ), f"""{approval1=}
+{approval2=}"""

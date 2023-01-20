@@ -4,17 +4,17 @@ btoi
 txna ApplicationArgs 1
 txna ApplicationArgs 2
 callsub utestintargs_0
-store 3
-load 3
+store 0
+load 0
 itob
 log
-load 3
+load 0
 return
 
 // utest_int_args
 utestintargs_0:
+store 3
 store 2
 store 1
-store 0
 int 0
 retsub

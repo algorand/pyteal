@@ -27,6 +27,7 @@ from pyteal.ast.expr import Expr
 from pyteal.ast.frame import FrameVar, Proto, ProtoStackLayout
 from pyteal.ast.app import OnComplete
 from pyteal.ast.int import Int, EnumInt
+from pyteal.ast.scratch import ScratchSlot
 from pyteal.ast.seq import Seq
 from pyteal.ast.methodsig import MethodSignature
 from pyteal.ast.naryexpr import And, Or
@@ -203,6 +204,10 @@ class BareCallActions:
         kw_only=True, default=OnCompleteAction.never()
     )
 
+    def __post_init__(self):
+        # call this to make sure we error if the CallConfig is CREATE or ALL
+        self.clear_state.call_config.clear_state_condition_under_config()
+
     def is_empty(self) -> bool:
         for action_field in fields(self):
             action: OnCompleteAction = getattr(self, action_field.name)
@@ -314,6 +319,13 @@ class ASTBuilder:
         self.conditions_n_branches: list[CondNode] = []
         self.methods_with_conds: list[CondWithMethod] = []
         self._bare_cnbs: list[CondNode] = []
+
+    def _clean(self) -> None:
+        self._bare_cnbs = []
+        # self.conditions_n_branches = []
+        # for mwc in self.methods_with_conds:
+        #     mwc.method.subroutine.declarations._clean()
+        # self.methods_with_conds = []
 
     @staticmethod
     def __filter_invalid_handlers_and_typecast(
@@ -687,23 +699,11 @@ class Router:
         self.method_sig_to_selector: dict[str, bytes] = dict()
         self.method_selector_to_sig: dict[bytes, str] = dict()
 
-        if bare_calls and not bare_calls.is_empty():
-            bare_call_approval = bare_calls.approval_construction()
-            if bare_call_approval:
-                self.approval_ast._bare_cnbs.append(
-                    CondNode(
-                        Txn.application_args.length() == Int(0),
-                        cast(Expr, bare_call_approval),
-                    )
-                )
-            bare_call_clear = bare_calls.clear_state_construction()
-            if bare_call_clear:
-                self.clear_state_ast._bare_cnbs.append(
-                    CondNode(
-                        Txn.application_args.length() == Int(0),
-                        cast(Expr, bare_call_clear),
-                    )
-                )
+        self.bare_calls: BareCallActions | None = bare_calls
+
+    def _clean(self) -> None:
+        self.approval_ast._clean()
+        self.clear_state_ast._clean()
 
     def add_method_handler(
         self,
@@ -878,6 +878,24 @@ class Router:
             * clear_state_program: an AST for clear-state program
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
+        if self.bare_calls and not self.bare_calls.is_empty():
+            bare_call_approval = self.bare_calls.approval_construction()
+            if bare_call_approval:
+                self.approval_ast._bare_cnbs.append(
+                    CondNode(
+                        Txn.application_args.length() == Int(0),
+                        cast(Expr, bare_call_approval),
+                    )
+                )
+            bare_call_clear = self.bare_calls.clear_state_construction()
+            if bare_call_clear:
+                self.clear_state_ast._bare_cnbs.append(
+                    CondNode(
+                        Txn.application_args.length() == Int(0),
+                        cast(Expr, bare_call_clear),
+                    )
+                )
+
         optimize = optimize if optimize else OptimizeOptions()
         use_frame_pt = optimize.use_frame_pointers(version)
         return (
@@ -910,22 +928,27 @@ class Router:
             * clear_state_program: compiled clear-state program string
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
-        ap, csp, contract = self.build_program(version=version, optimize=optimize)
-        ap_compiled = compileTeal(
-            ap,
-            Mode.Application,
-            version=version,
-            assembleConstants=assemble_constants,
-            optimize=optimize,
-        )
-        csp_compiled = compileTeal(
-            csp,
-            Mode.Application,
-            version=version,
-            assembleConstants=assemble_constants,
-            optimize=optimize,
-        )
-        return ap_compiled, csp_compiled, contract
+        starting_slot_id = ScratchSlot.nextSlotId
+        try:
+            ap, csp, contract = self.build_program(version=version, optimize=optimize)
+            ap_compiled = compileTeal(
+                ap,
+                Mode.Application,
+                version=version,
+                assembleConstants=assemble_constants,
+                optimize=optimize,
+            )
+            csp_compiled = compileTeal(
+                csp,
+                Mode.Application,
+                version=version,
+                assembleConstants=assemble_constants,
+                optimize=optimize,
+            )
+            return ap_compiled, csp_compiled, contract
+        finally:
+            self._clean()
+            ScratchSlot.reset_slot_numbering(starting_slot_id)
 
 
 Router.__module__ = "pyteal"
