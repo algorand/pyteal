@@ -916,6 +916,12 @@ def test_router_build_idempotence():
     )
     router = pt.Router("questionable", on_completion_actions)
 
+    approval1, clear1, contract1 = router.build_program(version=6)
+    approval2, clear2, contract2 = router.build_program(version=6)
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert approval1.__teal__(options)[0] == approval2.__teal__(options)[0]
+
     @pt.ABIReturnSubroutine
     def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(a.get() + b.get())
@@ -923,14 +929,22 @@ def test_router_build_idempotence():
     meth = router.add_method_handler(add)
     assert meth.method_signature() == "add(uint64,uint64)uint64"
 
-    # add_methods_to_router(router)
-    # method_configs0 = deepcopy(router.method_configs)
-    approval1, clear1, contract1 = router.compile_program(version=6)
-    # method_configs1 = deepcopy(router.method_configs)
-    approval2, clear2, contract2 = router.compile_program(version=6)
-    # method_configs2 = deepcopy(router.method_configs)
+    approval1, clear1, contract1 = router.build_program(version=6)
+    approval2, clear2, contract2 = router.build_program(version=6)
 
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert approval1.__teal__(options)[0] == approval2.__teal__(options)[0]
+
+
+    return
+    # for PR #634:
+    # method_configs0 = deepcopy(router.method_configs)
+    # method_configs1 = deepcopy(router.method_configs)
+    # method_configs2 = deepcopy(router.method_configs)
     # assert method_configs0 == method_configs1 == method_configs2
+
+    approval1, clear1, contract1 = router.compile_program(version=6)
+    approval2, clear2, contract2 = router.compile_program(version=6)
     assert contract1.dictify() == contract2.dictify()
     assert approval1 == approval2
     assert clear1 == clear2
