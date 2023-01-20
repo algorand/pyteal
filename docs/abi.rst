@@ -723,12 +723,11 @@ The following sections explain how to register bare app calls and methods with t
 Registering Bare App Calls
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The AVM supports 6 types of OnCompletion options that may be specified on an app call transaction. These actions are:
+The AVM supports 5 types of OnCompletion options that may be specified on an app call transaction. These actions are:
 
 #. **No-op**, the absence of an action, represented by :any:`OnComplete.NoOp`
 #. **Opt in**, which allocates account-local storage for an app, represented by :any:`OnComplete.OptIn`
 #. **Close out**, which removes account-local storage for an app, represented by :any:`OnComplete.CloseOut`
-#. **Clear state**, which forcibly removes account-local storage for an app, represented by :any:`OnComplete.ClearState`
 #. **Update application**, which updates an app, represented by :any:`OnComplete.UpdateApplication`
 #. **Delete application**, which deletes an app, represented by :any:`OnComplete.DeleteApplication`
 
@@ -820,6 +819,7 @@ The first way to register a method is with the :any:`Router.add_method_handler` 
             opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.CALL),
             close_out=OnCompleteAction(action=Approve(), call_config=CallConfig.CALL),
         ),
+        clear_state=Approve(),
     )
 
     @ABIReturnSubroutine
