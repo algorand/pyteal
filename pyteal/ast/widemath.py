@@ -84,8 +84,6 @@ def addU128(
         [
             # stack: [..., A, C, D, B]
             TealOp(expr, Op.uncover, 2),
-            # stack: [..., A, C, B, D]
-            TealOp(expr, Op.swap),
             # stack: [..., A, C, highword(B + D), lowword(B + D)]
             TealOp(expr, Op.addw),
             # stack: [..., lowword(B + D), A, C, highword(B + D)]
