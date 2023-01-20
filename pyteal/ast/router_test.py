@@ -941,7 +941,7 @@ def test_override_names():
     assert (ap1, cs1, c1) == (ap2, cs2, c2)
 
 
-def test_router_build_idempotence():
+def test_router_compile_program_idempotence():
     on_completion_actions = pt.BareCallActions(
         opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes("optin call"))),
         clear_state=pt.OnCompleteAction.call_only(pt.Approve()),
