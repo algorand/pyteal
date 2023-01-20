@@ -151,6 +151,7 @@ ABI_UNITS = [
 
 
 @pytest.mark.parametrize("subr, mode", product(UNITS, pt.Mode))
+@pytest.mark.serial  # Serial due to scratch generation
 def test_blackbox_pyteal(subr: BlackboxWrapper, mode: pt.Mode):
     is_app = mode == pt.Mode.Application
     name = f"{'app' if is_app else 'lsig'}_{subr.name()}"
@@ -166,6 +167,7 @@ def test_blackbox_pyteal(subr: BlackboxWrapper, mode: pt.Mode):
 
 
 @pytest.mark.parametrize("subr_abi, mode", product(ABI_UNITS, pt.Mode))
+@pytest.mark.serial  # Serial due to scratch generation
 def test_abi_blackbox_pyteal(
     subr_abi: Tuple[BlackboxWrapper, Optional[pt.ast.abi.BaseType]], mode: pt.Mode
 ):
