@@ -58,7 +58,7 @@ test-unit-async:
 	pytest -n $(NUM_PROCS) --durations=10 -sv pyteal tests/unit -m "not serial"
 
 test-unit-sync:
-	pytest --durations=10 -sv pyteal tests/unit tests/integration -m serial
+	pytest --durations=10 -sv pyteal tests/unit -m serial
 
 test-unit: test-unit-async test-unit-sync
 
