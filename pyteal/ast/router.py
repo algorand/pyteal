@@ -623,6 +623,7 @@ class Router:
             close_out (optional): The allowed calls during :code:`OnComplete.CloseOut`.
             clear_state (optional): The allowed calls during :code:`OnComplete.ClearState`.
                 This argument has been deprecated, and will error on compile time if one wants to access it.
+                Use Router top level argument `clear_state` instead.
             update_application (optional): The allowed calls during :code:`OnComplete.UpdateApplication`.
             delete_application (optional): The allowed calls during :code:`OnComplete.DeleteApplication`.
         """
