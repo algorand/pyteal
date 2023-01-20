@@ -690,7 +690,6 @@ class Router:
         if bare_calls and not bare_calls.is_empty():
             bare_call_approval = bare_calls.approval_construction()
             if bare_call_approval:
-
                 self.approval_ast._bare_cnbs.append(
                     CondNode(
                         Txn.application_args.length() == Int(0),
