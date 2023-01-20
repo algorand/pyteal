@@ -288,10 +288,16 @@ def compileTeal(
         options = CompileOptions(mode=mode, version=version, optimize=optimize)
 
         subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
-        subroutine_start_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
+        subroutine_start_blocks: Dict[
+            Optional[SubroutineDefinition], TealBlock
+        ] = dict()
         subroutine_end_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
         compileSubroutine(
-            ast, options, subroutineGraph, subroutine_start_blocks, subroutine_end_blocks
+            ast,
+            options,
+            subroutineGraph,
+            subroutine_start_blocks,
+            subroutine_end_blocks,
         )
 
         # note: optimizations are off by default, in which case, apply_global_optimizations
