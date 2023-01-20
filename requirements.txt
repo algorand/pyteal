@@ -1,5 +1,10 @@
-black==21.7b0
-mypy==0.931
-pytest
-pytest-timeout
-py-algorand-sdk
+black==22.3.0
+flake8==5.0.4
+flake8-tidy-imports==4.6.0
+graviton@git+https://github.com/algorand/graviton@v0.8.0
+mypy==0.991
+pytest==7.2.0
+pytest-cov==3.0.0
+pytest-timeout==2.1.0
+pytest-xdist==3.0.2
+types-setuptools==57.4.18

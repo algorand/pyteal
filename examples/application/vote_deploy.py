@@ -1,7 +1,6 @@
 # based off https://github.com/algorand/docs/blob/cdf11d48a4b1168752e6ccaf77c8b9e8e599713a/examples/smart_contracts/v2/python/stateful_smart_contracts.py
 
 import base64
-import datetime
 
 from algosdk.future import transaction
 from algosdk import account, mnemonic
@@ -401,17 +400,13 @@ def main():
     max_votes = 0
     max_votes_choice = None
     for key, value in global_state.items():
-        if (
-            key
-            not in (
-                "RegBegin",
-                "RegEnd",
-                "VoteBegin",
-                "VoteEnd",
-                "Creator",
-            )
-            and isinstance(value, int)
-        ):
+        if key not in (
+            "RegBegin",
+            "RegEnd",
+            "VoteBegin",
+            "VoteEnd",
+            "Creator",
+        ) and isinstance(value, int):
             if value > max_votes:
                 max_votes = value
                 max_votes_choice = key

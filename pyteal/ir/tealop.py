@@ -1,12 +1,12 @@
 from typing import Union, List, Optional, TYPE_CHECKING
 
-from .tealcomponent import TealComponent
-from .labelref import LabelReference
-from .ops import Op
-from ..errors import TealInternalError
+from pyteal.ir.tealcomponent import TealComponent
+from pyteal.ir.labelref import LabelReference
+from pyteal.ir.ops import Op
+from pyteal.errors import TealInternalError
 
 if TYPE_CHECKING:
-    from ..ast import Expr, ScratchSlot, SubroutineDefinition
+    from pyteal.ast import Expr, ScratchSlot, SubroutineDefinition
 
 
 class TealOp(TealComponent):
@@ -24,7 +24,7 @@ class TealOp(TealComponent):
         return self.op
 
     def getSlots(self) -> List["ScratchSlot"]:
-        from ..ast import ScratchSlot
+        from pyteal.ast import ScratchSlot
 
         return [arg for arg in self.args if isinstance(arg, ScratchSlot)]
 
@@ -34,7 +34,7 @@ class TealOp(TealComponent):
                 self.args[i] = location
 
     def getSubroutines(self) -> List["SubroutineDefinition"]:
-        from ..ast import SubroutineDefinition
+        from pyteal.ast import SubroutineDefinition
 
         return [arg for arg in self.args if isinstance(arg, SubroutineDefinition)]
 
@@ -44,7 +44,7 @@ class TealOp(TealComponent):
                 self.args[i] = label
 
     def assemble(self) -> str:
-        from ..ast import ScratchSlot, SubroutineDefinition
+        from pyteal.ast import ScratchSlot, SubroutineDefinition
 
         parts = [str(self.op)]
         for arg in self.args:
@@ -68,7 +68,7 @@ class TealOp(TealComponent):
         for a in self.args:
             args.append(repr(a))
 
-        return "TealOp({}, {})".format(self.expr, ", ".join(args))
+        return "TealOp({})".format(", ".join(args))
 
     def __hash__(self) -> int:
         return (self.op, *self.args).__hash__()
@@ -76,9 +76,24 @@ class TealOp(TealComponent):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, TealOp):
             return False
-        if TealComponent.Context.checkExpr and self.expr is not other.expr:
+
+        if TealComponent.Context.checkExprEquality and self.expr is not other.expr:
             return False
-        return self.op == other.op and self.args == other.args
+
+        if not TealComponent.Context.checkScratchSlotEquality:
+            from pyteal import ScratchSlot
+
+            if len(self.args) != len(other.args):
+                return False
+            for myArg, otherArg in zip(self.args, other.args):
+                if type(myArg) is ScratchSlot and type(otherArg) is ScratchSlot:
+                    continue
+                if myArg != otherArg:
+                    return False
+        elif self.args != other.args:
+            return False
+
+        return self.op == other.op
 
 
 TealOp.__module__ = "pyteal"

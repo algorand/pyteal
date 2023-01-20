@@ -1,4 +1,4 @@
-from .errors import TealInternalError
+from pyteal.errors import TealInternalError
 
 
 def escapeStr(s: str) -> str:

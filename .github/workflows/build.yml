@@ -6,57 +6,81 @@ on:
       - v**
     branches:
       - master
+
 jobs:
   build-test:
     runs-on: ubuntu-20.04
-    container: python:${{ matrix.python }}-slim
+    container: python:${{ matrix.python }}
     strategy:
       matrix:
-        python: ['3.6', '3.7', '3.8', '3.9', '3.10']
+        python: ["3.10", "3.11"]
     steps:
       - run: python3 --version
       - name: Check out code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Install pip dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install -e .
+      - name: Install python dependencies
+        run: make setup-development
       - name: Build and Test
-        run: |
-          python scripts/generate_init.py --check
-          black --check .
-          mypy pyteal
-          pytest
-  build-docset:
+        run: make lint-and-test
+
+  run-integration-tests:
     runs-on: ubuntu-20.04
-    container: python:3.9  # Needs `make`, can't be slim
+    strategy:
+      matrix:
+        python: ["3.10", "3.11"]
     steps:
       - name: Check out code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Install pip dependencies
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "${{ matrix.python }}"
+      - name: Test Python version
         run: |
-          pip install -r requirements.txt
-          pip install -r docs/requirements.txt
-          pip install doc2dash
+          installed="$(python --version)"
+          expected="${{ matrix.python }}"
+          echo $installed
+          [[ $installed =~ "Python ${expected}" ]] && echo "Configured Python" || (echo "Failed to configure Python" && exit 1)
+      - name: Start algod
+        run: make algod-start
+      - name: Install python dependencies
+        run: make setup-development
+      - name: Integration Tests Only
+        run: make test-integration
+      - name: Stop algod
+        run: make algod-stop
+
+  build-docset:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python: [ "3.10" ]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "${{ matrix.python }}"
+      - name: Install python dependencies
+        run: make setup-docs
       - name: Make docs
-        run: |
-          cd docs
-          make html
-          doc2dash --name pyteal --index-page index.html --online-redirect-url https://pyteal.readthedocs.io/en/ _build/html
-          tar -czvf pyteal.docset.tar.gz pyteal.docset
+        run: make bundle-docs
       - name: Archive docset
+        if: ${{ !env.ACT }}
         uses: actions/upload-artifact@v2
         with:
           name: pyteal.docset
           path: docs/pyteal.docset.tar.gz
+
   upload-to-pypi:
     runs-on: ubuntu-20.04
-    container: python:3.9
-    needs: ['build-test']
+    container: python:3.10
+    needs: ['build-test', 'run-integration-tests', 'build-docset']
     if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
     steps:
       - name: Check out code
@@ -64,9 +88,9 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install dependencies
-        run: pip install wheel
+        run: make setup-wheel
       - name: Build package
-        run: python setup.py sdist bdist_wheel
+        run: make bdist-wheel
       - name: Release
         uses: pypa/gh-action-pypi-publish@release/v1
         with:

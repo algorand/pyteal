@@ -1,0 +1,28 @@
+#pragma version 6
+arg 0
+btoi
+store 1
+arg 1
+store 2
+load 1
+int 2
+callsub fn2mixedarg1ret_0
+store 0
+load 0
+itob
+pop
+int 1
+return
+
+// fn_2mixed_arg_1ret
+fn2mixedarg1ret_0:
+store 4
+store 3
+load 4
+load 3
+itob
+stores
+load 3
+store 5
+load 5
+retsub

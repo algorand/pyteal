@@ -1,12 +1,12 @@
-from typing import cast, TYPE_CHECKING, Optional
+from typing import cast, TYPE_CHECKING
 
-from ..types import TealType, require_type
-from ..config import NUM_SLOTS
-from ..errors import TealInputError, TealInternalError
-from .expr import Expr
+from pyteal.types import TealType, require_type
+from pyteal.config import NUM_SLOTS
+from pyteal.errors import TealInputError, TealInternalError
+from pyteal.ast.expr import Expr
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class ScratchSlot:
@@ -17,12 +17,12 @@ class ScratchSlot:
     # Slot ids under 256 are manually reserved slots
     nextSlotId = NUM_SLOTS
 
-    def __init__(self, requestedSlotId: int = None):
+    def __init__(self, requestedSlotId: int | None = None):
         """Initializes a scratch slot with a particular id
 
         Args:
             requestedSlotId (optional): A scratch slot id that the compiler must store the value.
-            This id may be a Python int in the range [0-256).
+                This id may be a Python int in the range [0-256).
         """
         if requestedSlotId is None:
             self.id = ScratchSlot.nextSlotId
@@ -38,13 +38,14 @@ class ScratchSlot:
             self.id = requestedSlotId
             self.isReservedSlot = True
 
-    def store(self, value: Expr = None) -> Expr:
+    def store(self, value: Expr | None = None) -> Expr:
         """Get an expression to store a value in this slot.
 
         Args:
-            value (optional): The value to store in this slot. If not included, the last value on
-            the stack will be stored. NOTE: storing the last value on the stack breaks the typical
-            semantics of PyTeal, only use if you know what you're doing.
+            value (optional): The value to store in this slot.
+                If not included, the last value on the stack will be stored.
+                NOTE: storing the last value on the stack breaks the typical
+                semantics of PyTeal, only use if you know what you're doing.
         """
         if value is not None:
             return ScratchStore(self, value)
@@ -87,7 +88,7 @@ class ScratchIndex(Expr):
         return False
 
     def __teal__(self, options: "CompileOptions"):
-        from ..ir import TealOp, Op, TealBlock
+        from pyteal.ir import TealOp, Op, TealBlock
 
         op = TealOp(self, Op.int, self.slot)
         return TealBlock.FromOp(options, op)
@@ -101,9 +102,9 @@ class ScratchLoad(Expr):
 
     def __init__(
         self,
-        slot: ScratchSlot = None,
+        slot: ScratchSlot | None = None,
         type: TealType = TealType.anytype,
-        index_expression: Expr = None,
+        index_expression: Expr | None = None,
     ):
         """Create a new ScratchLoad expression.
 
@@ -143,7 +144,7 @@ class ScratchLoad(Expr):
         return "(Load {})".format(self.slot if self.slot else self.index_expression)
 
     def __teal__(self, options: "CompileOptions"):
-        from ..ir import TealOp, Op, TealBlock
+        from pyteal.ir import TealOp, Op, TealBlock
 
         if self.index_expression is not None:
             op = TealOp(self, Op.loads)
@@ -167,7 +168,10 @@ class ScratchStore(Expr):
     """Expression to store a value in scratch space."""
 
     def __init__(
-        self, slot: Optional[ScratchSlot], value: Expr, index_expression: Expr = None
+        self,
+        slot: ScratchSlot | None,
+        value: Expr,
+        index_expression: Expr | None = None,
     ):
         """Create a new ScratchStore expression.
 
@@ -203,7 +207,7 @@ class ScratchStore(Expr):
         )
 
     def __teal__(self, options: "CompileOptions"):
-        from ..ir import TealOp, Op, TealBlock
+        from pyteal.ir import TealOp, Op, TealBlock
 
         if self.index_expression is not None:
             op = TealOp(self, Op.stores)
@@ -246,7 +250,7 @@ class ScratchStackStore(Expr):
         return "(StackStore {})".format(self.slot)
 
     def __teal__(self, options: "CompileOptions"):
-        from ..ir import TealOp, Op, TealBlock
+        from pyteal.ir import TealOp, Op, TealBlock
 
         op = TealOp(self, Op.store, self.slot)
         return TealBlock.FromOp(options, op)

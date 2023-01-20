@@ -1,27 +1,31 @@
 from typing import List, TYPE_CHECKING, overload
 
-from ..types import TealType, require_type
-from ..errors import TealInputError
-from ..ir import TealSimpleBlock
-from .expr import Expr
+from pyteal.types import TealType, require_type
+from pyteal.errors import TealInputError
+from pyteal.ir import TealSimpleBlock
+from pyteal.ast.expr import Expr
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class Seq(Expr):
     """A control flow expression to represent a sequence of expressions."""
 
     @overload
-    def __init__(self, *exprs: Expr):
-        ...
+    def __init__(self, *exprs: Expr) -> None:
+        pass
 
     @overload
-    def __init__(self, exprs: List[Expr]):
-        ...
+    def __init__(self, exprs: List[Expr]) -> None:
+        pass
 
     def __init__(self, *exprs):
-        """Create a new Seq expression.
+        """
+        __init__(*exprs: Expr) -> None
+        __init__(exprs: List[Expr]) -> None
+
+        Create a new Seq expression.
 
         The new Seq expression will take on the return value of the final expression in the sequence.
 
@@ -83,3 +87,29 @@ class Seq(Expr):
 
 
 Seq.__module__ = "pyteal"
+
+
+@overload
+def _use_seq_if_multiple(exprs: list[Expr]) -> Expr:
+    ...
+
+
+@overload
+def _use_seq_if_multiple(*exprs: Expr) -> Expr:
+    ...
+
+
+def _use_seq_if_multiple(*exprs):
+    """If multiple expressions are provided, wrap them in a Seq expression."""
+
+    # Guard against no expressions
+    if len(exprs) == 0:
+        raise TealInputError("Expressions cannot be empty.")
+
+    # Handle case where a list of expressions is provided
+    if len(exprs) == 1 and isinstance(exprs[0], list):
+        exprs = exprs[0]
+
+    if len(exprs) > 1:
+        return Seq(*exprs)
+    return exprs[0]

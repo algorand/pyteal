@@ -1,0 +1,18 @@
+#pragma version 6
+txna ApplicationArgs 0
+btoi
+callsub square_0
+store 0
+load 0
+itob
+log
+load 0
+return
+
+// square
+square_0:
+store 1
+load 1
+pushint 2 // 2
+exp
+retsub

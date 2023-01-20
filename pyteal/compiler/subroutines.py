@@ -1,17 +1,17 @@
 import re
 from typing import List, Dict, Set, Optional, TypeVar
 from collections import OrderedDict
-from itertools import chain
 
-from ..types import TealType
-from ..ast import SubroutineDefinition
-from ..ir import TealComponent, TealOp, Op
+from pyteal.errors import TealInputError
+from pyteal.types import TealType
+from pyteal.ast import SubroutineDefinition
+from pyteal.ir import TealComponent, TealOp, Op
 
 # generic type variable
 Node = TypeVar("Node")
 
 
-def depthFirstSearch(graph: Dict[Node, Set[Node]], start: Node, end: Node) -> bool:
+def graph_search(graph: Dict[Node, Set[Node]], start: Node, end: Node) -> bool:
     """Check whether a path between start and end exists in the graph.
 
     This works even if start == end, in which case True is only returned if the
@@ -56,10 +56,36 @@ def findRecursionPoints(
         reentryPoints[subroutine] = set(
             callee
             for callee in subroutineGraph[subroutine]
-            if depthFirstSearch(subroutineGraph, callee, subroutine)
+            if graph_search(subroutineGraph, callee, subroutine)
         )
 
     return reentryPoints
+
+
+def find_recursive_path(
+    subroutine_graph: Dict[SubroutineDefinition, Set[SubroutineDefinition]],
+    subroutine: SubroutineDefinition,
+) -> List[SubroutineDefinition]:
+    visited = set()
+    loop = []
+
+    def dfs(x):
+        if x in visited:
+            return False
+
+        visited.add(x)
+        loop.append(x)
+        for y in subroutine_graph[x]:
+            if y == subroutine:
+                loop.append(y)
+                return True
+            if dfs(y):
+                return True
+        loop.pop()
+        return False
+
+    found = dfs(subroutine)
+    return loop if found else []
 
 
 def spillLocalSlotsDuringRecursion(
@@ -77,7 +103,7 @@ def spillLocalSlotsDuringRecursion(
     slots from being modifying by a new recursive invocation of the current subroutine.
 
     Args:
-        version: The current TEAL version being assembled.
+        version: The current program version being assembled.
         subroutineMapping: A dictionary containing a list of TealComponents for every subroutine in
             a program. The key None is taken to indicate the main program routine. This input may be
             modified by this function in order to spill subroutine slots.
@@ -90,11 +116,27 @@ def spillLocalSlotsDuringRecursion(
     """
     recursivePoints = findRecursionPoints(subroutineGraph)
 
+    recursive_byref = None
+    for k, v in recursivePoints.items():
+        if v and k.by_ref_args:
+            recursive_byref = k
+            break
+
+    if recursive_byref:
+        msg = "ScratchVar arguments not allowed in recursive subroutines, but a recursive call-path was detected: {}()"
+        raise TealInputError(
+            msg.format(
+                "()-->".join(
+                    f.name()
+                    for f in find_recursive_path(subroutineGraph, recursive_byref)
+                )
+            )
+        )
+
     coverAvailable = version >= Op.cover.min_version
 
     for subroutine, reentryPoints in recursivePoints.items():
         slots = list(sorted(slot for slot in localSlots[subroutine]))
-        numArgs = subroutine.argumentCount()
 
         if len(reentryPoints) == 0 or len(slots) == 0:
             # no need to spill slots
@@ -107,12 +149,25 @@ def spillLocalSlotsDuringRecursion(
             before: List[TealComponent] = []
             after: List[TealComponent] = []
 
-            if len(reentryPoints.intersection(stmt.getSubroutines())) != 0:
+            calledSubroutines = stmt.getSubroutines()
+            # the only opcode that references subroutines is callsub, and it should only ever
+            # reference one subroutine at a time
+            assert (
+                len(calledSubroutines) <= 1
+            ), "Multiple subroutines are called from the same TealComponent"
+
+            reentrySubroutineCalls = list(reentryPoints.intersection(calledSubroutines))
+            if len(reentrySubroutineCalls) != 0:
                 # A subroutine is being called which may reenter the current subroutine, so insert
                 # ops to spill local slots to the stack before calling the subroutine and also to
                 # restore the local slots after returning from the subroutine. This prevents a
                 # reentry into the current subroutine from modifying variables we are currently
                 # using.
+
+                # reentrySubroutineCalls should have a length of 1, since calledSubroutines has a
+                # maximum length of 1
+                reentrySubroutineCall = reentrySubroutineCalls[0]
+                numArgs = reentrySubroutineCall.argument_count()
 
                 digArgs = True
                 coverSpilledSlots = False
@@ -154,12 +209,12 @@ def spillLocalSlotsDuringRecursion(
                                 stackDistance,
                             )
                         )
-                        # because we are stuck using dig instead of uncover in TEAL 4, we'll need to
+                        # because we are stuck using dig instead of uncover in AVM 4, we'll need to
                         # pop all of the dug up arguments after the function returns
 
                 hideReturnValueInFirstSlot = False
 
-                if subroutine.returnType != TealType.none:
+                if subroutine.return_type != TealType.none:
                     # if the subroutine returns a value on the stack, we need to preserve this after
                     # restoring all local slots.
 
@@ -190,7 +245,7 @@ def spillLocalSlotsDuringRecursion(
                         # clear out the duplicate arguments that were dug up previously, since dig
                         # does not pop the dug values -- once we use cover/uncover to properly set up
                         # the spilled slots, this will no longer be necessary
-                        if subroutine.returnType != TealType.none:
+                        if subroutine.return_type != TealType.none:
                             # if there is a return value on top of the stack, we need to preserve
                             # it, so swap it with the subroutine argument that's below it on the
                             # stack

@@ -1,0 +1,23 @@
+#pragma version 5
+byte "hello"
+int 42
+callsub logcat_0
+byte "hello42"
+==
+assert
+int 1
+return
+
+// logcat
+logcat_0:
+store 1
+store 0
+load 0
+load 1
+itob
+concat
+store 2
+load 2
+log
+load 2
+retsub

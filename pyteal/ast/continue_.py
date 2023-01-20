@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING
 
-from ..types import TealType
-from ..errors import TealCompileError
-from .expr import Expr
-from ..ir import TealSimpleBlock
+from pyteal.types import TealType
+from pyteal.errors import TealCompileError
+from pyteal.ast.expr import Expr
+from pyteal.ir import TealSimpleBlock
 
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class Continue(Expr):

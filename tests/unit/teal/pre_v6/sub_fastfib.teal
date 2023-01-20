@@ -1,0 +1,35 @@
+#pragma version 5
+int 3
+callsub fastfibonacci_0
+return
+
+// fast_fibonacci
+fastfibonacci_0:
+store 0
+int 0
+store 2
+int 1
+store 3
+int 1
+store 1
+fastfibonacci_0_l1:
+load 1
+load 0
+<=
+bz fastfibonacci_0_l3
+load 2
+load 3
++
+store 3
+load 3
+load 2
+-
+store 2
+load 1
+int 1
++
+store 1
+b fastfibonacci_0_l1
+fastfibonacci_0_l3:
+load 2
+retsub

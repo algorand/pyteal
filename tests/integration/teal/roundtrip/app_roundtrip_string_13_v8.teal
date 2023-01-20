@@ -1,0 +1,269 @@
+#pragma version 8
+txna ApplicationArgs 0
+store 1
+load 1
+callsub roundtripper_1
+store 0
+byte 0x151f7c75
+load 0
+concat
+log
+int 1
+return
+
+// string_reverse
+stringreverse_0:
+proto 1 1
+byte ""
+int 0
+dupn 27
+byte ""
+dup
+int 0
+frame_dig -1
+int 1
+int 0
+*
+int 2
++
+getbyte
+frame_bury 13
+frame_dig -1
+int 1
+int 1
+*
+int 2
++
+getbyte
+frame_bury 12
+frame_dig -1
+int 1
+int 2
+*
+int 2
++
+getbyte
+frame_bury 11
+frame_dig -1
+int 1
+int 3
+*
+int 2
++
+getbyte
+frame_bury 10
+frame_dig -1
+int 1
+int 4
+*
+int 2
++
+getbyte
+frame_bury 9
+frame_dig -1
+int 1
+int 5
+*
+int 2
++
+getbyte
+frame_bury 8
+frame_dig -1
+int 1
+int 6
+*
+int 2
++
+getbyte
+frame_bury 7
+frame_dig -1
+int 1
+int 7
+*
+int 2
++
+getbyte
+frame_bury 6
+frame_dig -1
+int 1
+int 8
+*
+int 2
++
+getbyte
+frame_bury 5
+frame_dig -1
+int 1
+int 9
+*
+int 2
++
+getbyte
+frame_bury 4
+frame_dig -1
+int 1
+int 10
+*
+int 2
++
+getbyte
+frame_bury 3
+frame_dig -1
+int 1
+int 11
+*
+int 2
++
+getbyte
+frame_bury 2
+frame_dig -1
+int 1
+int 12
+*
+int 2
++
+getbyte
+frame_bury 1
+int 13
+frame_bury 31
+frame_dig 31
+itob
+extract 6 0
+byte 0x00
+int 0
+frame_dig 1
+setbyte
+byte 0x00
+int 0
+frame_dig 2
+setbyte
+concat
+byte 0x00
+int 0
+frame_dig 3
+setbyte
+concat
+byte 0x00
+int 0
+frame_dig 4
+setbyte
+concat
+byte 0x00
+int 0
+frame_dig 5
+setbyte
+concat
+byte 0x00
+int 0
+frame_dig 6
+setbyte
+concat
+byte 0x00
+int 0
+frame_dig 7
+setbyte
+concat
+byte 0x00
+int 0
+frame_dig 8
+setbyte
+concat
+byte 0x00
+int 0
+frame_dig 9
+setbyte
+concat
+byte 0x00
+int 0
+frame_dig 10
+setbyte
+concat
+byte 0x00
+int 0
+frame_dig 11
+setbyte
+concat
+byte 0x00
+int 0
+frame_dig 12
+setbyte
+concat
+byte 0x00
+int 0
+frame_dig 13
+setbyte
+concat
+concat
+frame_bury 0
+retsub
+
+// round_tripper
+roundtripper_1:
+proto 1 1
+byte ""
+dupn 2
+int 0
+dup
+byte ""
+dup
+frame_dig -1
+callsub stringreverse_0
+frame_bury 1
+frame_dig 1
+callsub stringreverse_0
+frame_bury 2
+frame_dig -1
+frame_bury 6
+frame_dig 6
+frame_bury 5
+int 6
+frame_bury 3
+frame_dig 3
+frame_dig 6
+len
++
+frame_bury 4
+frame_dig 4
+int 65536
+<
+assert
+frame_dig 3
+itob
+extract 6 0
+frame_dig 1
+frame_bury 6
+frame_dig 5
+frame_dig 6
+concat
+frame_bury 5
+frame_dig 4
+frame_bury 3
+frame_dig 3
+frame_dig 6
+len
++
+frame_bury 4
+frame_dig 4
+int 65536
+<
+assert
+frame_dig 3
+itob
+extract 6 0
+concat
+frame_dig 2
+frame_bury 6
+frame_dig 5
+frame_dig 6
+concat
+frame_bury 5
+frame_dig 4
+frame_bury 3
+frame_dig 3
+itob
+extract 6 0
+concat
+frame_dig 5
+concat
+frame_bury 0
+retsub

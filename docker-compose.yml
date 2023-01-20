@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  algod:
+    image: wwinder/algod:latest
+    ports:
+      - "4001:8080" # algod
+      - "4160:4160" # gossip
+      - "9100:9100" # prometheus
+    environment:
+      - DEV_MODE=true
+      - TOKEN=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    healthcheck:
+      test: goal node status
+      interval: 2s
+      retries: 10

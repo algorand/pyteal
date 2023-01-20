@@ -11,7 +11,7 @@ Exiting the Program: :code:`Approve` and :code:`Reject`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-    The :code:`Approve` and :code:`Reject` expressions are only available in TEAL version 4 or higher.
+    The :code:`Approve` and :code:`Reject` expressions are only available in program version 4 or higher.
     Prior to this, :code:`Return(Int(1))` is equivalent to :code:`Approve()` and :code:`Return(Int(0))`
     is equivalent to :code:`Reject()`.
 
@@ -166,7 +166,7 @@ Looping: :code:`While`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-    This expression is only available in TEAL version 4 or higher.
+    This expression is only available in program version 4 or higher.
 
 The :any:`While` expression can be used to create simple loops in PyTeal. The syntax of :code:`While` is:
 
@@ -191,10 +191,10 @@ current group and sum up all of their fees.
         Seq([
             i.store(Int(0)),
             totalFees.store(Int(0)),
-            While(i.load() < Global.group_size()).Do(Seq([
+            While(i.load() < Global.group_size()).Do(
                 totalFees.store(totalFees.load() + Gtxn[i.load()].fee()),
                 i.store(i.load() + Int(1))
-            ]))
+            )
         ])
 
 .. _loop_for_expr:
@@ -203,7 +203,7 @@ Looping: :code:`For`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-    This expression is only available in TEAL version 4 or higher.
+    This expression is only available in program version 4 or higher.
 
 Similar to :code:`While`, the :any:`For` expression can also be used to create loops in PyTeal. The
 syntax of :code:`For` is:
@@ -256,11 +256,11 @@ many are payments, using the :code:`Continue` expression.
 
         Seq([
             numPayments.store(Int(0)),
-            For(i.store(Int(0)), i.load() < Global.group_size(), i.store(i.load() + Int(1))).Do(Seq([
+            For(i.store(Int(0)), i.load() < Global.group_size(), i.store(i.load() + Int(1))).Do(
                 If(Gtxn[i.load()].type_enum() != TxnType.Payment)
                 .Then(Continue()),
                 numPayments.store(numPayments.load() + Int(1))
-            ]))
+            )
         ])
 
 When :code:`Break` is present in the loop body, it instructs the program to completely exit the
@@ -279,10 +279,10 @@ using the :code:`Break` expression.
             firstPaymentIndex.store(Global.group_size()),
             For(i.store(Int(0)), i.load() < Global.group_size(), i.store(i.load() + Int(1))).Do(
                 If(Gtxn[i.load()].type_enum() == TxnType.Payment)
-                .Then(Seq([
+                .Then(
                     firstPaymentIndex.store(i.load()),
                     Break()
-                ]))
+                )
             ),
             # assert that a payment was found
             Assert(firstPaymentIndex.load() < Global.group_size())
@@ -294,11 +294,13 @@ Subroutines
 ~~~~~~~~~~~
 
 .. note::
-    Subroutines are only available in TEAL version 4 or higher.
+    Subroutines are only available in program version 4 or higher.
 
-A subroutine is section of code that can be called multiple times from within a program. Subroutines
-are PyTeal's equivalent to functions. Subroutines can accept any number of arguments, and these
-arguments must be PyTeal expressions. Additionally, a subroutine may return a single value, or no value.
+A subroutine is section of code that can be called multiple times from within a program. Subroutines are PyTeal's equivalent to functions.  Subroutine constraints include:
+
+* Subroutines accept any number of arguments.
+* Subroutine argument types can be any `Expr` (PyTeal expression) or strictly `ScratchVar` (no subclasses allowed).  PyTeal applies pass-by-value semantics to `Expr` and pass-by-reference to `ScratchVar`.
+* Subroutines return a single value, or no value.
 
 Creating Subroutines
 --------------------
@@ -316,6 +318,24 @@ For example,
         @Subroutine(TealType.uint64)
         def isEven(i):
             return i % Int(2) == Int(0)
+
+PyTeal applies these parameter type annotation constraints when compiling subroutine definitions:
+
+* :any:`ScratchVar` parameters *require* a type annotation.
+* :any:`Expr` parameters do *not* require a type annotation.  PyTeal implicitly declares unannotated parameter types as :any:`Expr`.
+
+Here's an example illustrating `ScratchVar` parameter declaration with parameter type annotations:
+
+.. code-block:: python
+
+    @Subroutine(TealType.none)
+    def swap(x: ScratchVar, y: ScratchVar):
+        z = ScratchVar(TealType.anytype)
+        return Seq(
+            z.store(x.load()),
+            x.store(y.load()),
+            y.store(z.load()),
+        )
 
 Calling Subroutines
 -------------------
@@ -344,6 +364,27 @@ argument is even, but uses recursion to do so.
                 .Else(recursiveIsEven(i - Int(2)))
             )
 
+Recursion and `ScratchVar`'s
+----------------------------
+
+Recursion with parameters of type `ScratchVar` is disallowed. For example, the following
+subroutine is considered illegal and attempting compilation will result in a `TealInputError`:
+
+.. code-block:: python
+
+        @Subroutine(TealType.none)
+        def ILLEGAL_recursion(i: ScratchVar):
+            return (
+                If(i.load() == Int(0))
+                .Then(i.store(Int(1)))
+                .ElseIf(i.load() == Int(1))
+                .Then(i.store(Int(0)))
+                .Else(i.store(i.load() - Int(2)), ILLEGAL_recursion(i))
+            )
+
+
+
+
 Exiting Subroutines
 -------------------
 
@@ -362,10 +403,10 @@ fee of 0:
             return Seq([
                 For(i.store(Int(0)), i.load() < Global.group_size(), i.store(i.load() + Int(1))).Do(
                     If(Gtxn[i.load()].type_enum() == TxnType.Payment)
-                    .Then(Seq([
+                    .Then(
                         Assert(Gtxn[i.load()].fee() == Int(0)),
                         Return()
-                    ]))
+                    )
                 ),
                 # no payments found
                 Err()

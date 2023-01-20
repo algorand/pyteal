@@ -1,0 +1,50 @@
+#pragma version 6
+txna ApplicationArgs 1
+store 0
+load 0
+callsub abisum_0
+store 1
+byte 0x151f7c75
+load 1
+itob
+concat
+log
+int 1
+return
+
+// abi_sum
+abisum_0:
+store 2
+int 0
+store 3
+int 0
+store 4
+abisum_0_l1:
+load 4
+load 2
+int 0
+extract_uint16
+store 6
+load 6
+<
+bz abisum_0_l3
+load 2
+int 8
+load 4
+*
+int 2
++
+extract_uint64
+store 5
+load 3
+load 5
++
+store 3
+load 4
+int 1
++
+store 4
+b abisum_0_l1
+abisum_0_l3:
+load 3
+retsub

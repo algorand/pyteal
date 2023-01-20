@@ -1,14 +1,14 @@
 from typing import cast, Union, TYPE_CHECKING
 
-from ..types import TealType, require_type
-from ..ir import TealOp, Op, TealBlock
-from ..errors import TealInputError, verifyTealVersion
-from ..config import MAX_GROUP_SIZE, NUM_SLOTS
-from .expr import Expr
-from .leafexpr import LeafExpr
+from pyteal.types import TealType, require_type
+from pyteal.ir import TealOp, Op, TealBlock
+from pyteal.errors import TealInputError, verifyProgramVersion
+from pyteal.config import MAX_GROUP_SIZE, NUM_SLOTS
+from pyteal.ast.expr import Expr
+from pyteal.ast.leafexpr import LeafExpr
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class ImportScratchValue(LeafExpr):
@@ -17,7 +17,7 @@ class ImportScratchValue(LeafExpr):
     def __init__(self, txnIndex: Union[int, Expr], slotId: Union[int, Expr]) -> None:
         """Create an expression to load a scratch space slot from a transaction in the current group.
 
-        Requires TEAL version 4 or higher. This operation is only permitted in application mode.
+        Requires program version 4 or higher. This operation is only permitted in application mode.
 
         Args:
             txnIndex: The index of the transaction from which the created ID should be obtained.
@@ -62,10 +62,10 @@ class ImportScratchValue(LeafExpr):
 
     def __teal__(self, options: "CompileOptions"):
         def local_version_check(opcode: TealOp):
-            verifyTealVersion(
+            verifyProgramVersion(
                 opcode.op.min_version,
                 options.version,
-                "TEAL version too low to use {} experssion".format(opcode.op.name),
+                "Program version too low to use {} experssion".format(opcode.op.name),
             )
 
         # For txnIndex and slotId, there are only three scenario as following

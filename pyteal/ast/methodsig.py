@@ -1,14 +1,13 @@
 from typing import TYPE_CHECKING
+
 from pyteal.errors import TealInputError
-
 from pyteal.types import TealType
+from pyteal.ir import TealOp, Op, TealBlock
 
-from ..types import TealType
-from ..ir import TealOp, Op, TealBlock
-from .leafexpr import LeafExpr
+from pyteal.ast.leafexpr import LeafExpr
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class MethodSignature(LeafExpr):
@@ -34,7 +33,7 @@ class MethodSignature(LeafExpr):
         return TealBlock.FromOp(options, op)
 
     def __str__(self) -> str:
-        return "(method: {})".format(self.methodName)
+        return "(MethodSignature '{}')".format(self.methodName)
 
     def type_of(self) -> TealType:
         return TealType.bytes

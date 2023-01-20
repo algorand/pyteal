@@ -1,45 +1,129 @@
 import pytest
 
-from .. import *
+import pyteal as pt
 
-# this is not necessary but mypy complains if it's not included
-from .. import CompileOptions
-
-teal2Options = CompileOptions(version=2)
-teal3Options = CompileOptions(version=3)
+avm2Options = pt.CompileOptions(version=2)
+avm3Options = pt.CompileOptions(version=3)
 
 
 def test_teal_2_assert():
-    arg = Int(1)
-    expr = Assert(arg)
-    assert expr.type_of() == TealType.none
+    arg = pt.Int(1)
+    expr = pt.Assert(arg)
+    assert expr.type_of() == pt.TealType.none
 
-    expected, _ = arg.__teal__(teal2Options)
-    expectedBranch = TealConditionalBlock([])
-    expectedBranch.setTrueBlock(TealSimpleBlock([]))
-    expectedBranch.setFalseBlock(Err().__teal__(teal2Options)[0])
+    expected, _ = arg.__teal__(avm2Options)
+    expectedBranch = pt.TealConditionalBlock([])
+    expectedBranch.setTrueBlock(pt.TealSimpleBlock([]))
+    expectedBranch.setFalseBlock(pt.Err().__teal__(avm2Options)[0])
     expected.setNextBlock(expectedBranch)
 
-    actual, _ = expr.__teal__(teal2Options)
+    actual, _ = expr.__teal__(avm2Options)
 
-    with TealComponent.Context.ignoreExprEquality():
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
+def test_teal_2_assert_multi():
+    args = [pt.Int(1), pt.Int(2)]
+    expr = pt.Assert(*args)
+    assert expr.type_of() == pt.TealType.none
+
+    firstAssert = pt.Assert(args[0])
+    secondAssert = pt.Assert(args[1])
+
+    expected, _ = pt.Seq(firstAssert, secondAssert).__teal__(avm2Options)
+
+    actual, _ = expr.__teal__(avm2Options)
+
+    with pt.TealComponent.Context.ignoreExprEquality():
         assert actual == expected
 
 
 def test_teal_3_assert():
-    arg = Int(1)
-    expr = Assert(arg)
-    assert expr.type_of() == TealType.none
+    arg = pt.Int(1)
+    expr = pt.Assert(arg)
+    assert expr.type_of() == pt.TealType.none
 
-    expected = TealSimpleBlock([TealOp(arg, Op.int, 1), TealOp(expr, Op.assert_)])
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(arg, pt.Op.int, 1), pt.TealOp(expr, pt.Op.assert_)]
+    )
 
-    actual, _ = expr.__teal__(teal3Options)
+    actual, _ = expr.__teal__(avm3Options)
     actual.addIncoming()
-    actual = TealBlock.NormalizeBlocks(actual)
+    actual = pt.TealBlock.NormalizeBlocks(actual)
 
     assert actual == expected
 
 
+def test_teal_3_assert_multi():
+    args = [pt.Int(1), pt.Int(2)]
+    expr = pt.Assert(*args)
+    assert expr.type_of() == pt.TealType.none
+
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(args[0], pt.Op.int, 1), pt.TealOp(expr, pt.Op.assert_)]
+        + [pt.TealOp(args[1], pt.Op.int, 2), pt.TealOp(expr, pt.Op.assert_)]
+    )
+
+    actual, _ = expr.__teal__(avm3Options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
+def test_assert_comment():
+    comment = "Make sure 1 is true"
+    expr = pt.Assert(pt.Int(1), comment=comment)
+    assert expr.type_of() == pt.TealType.none
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.comment, comment),
+            pt.TealOp(None, pt.Op.assert_),
+        ]
+    )
+
+    actual, _ = expr.__teal__(avm3Options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
+def test_assert_comment_multi():
+    comment = "Make sure numbers > 0 are true"
+    expr = pt.Assert(pt.Int(1), pt.Int(2), pt.Int(3), comment=comment)
+    assert expr.type_of() == pt.TealType.none
+
+    expected = pt.TealSimpleBlock(
+        [
+            pt.TealOp(None, pt.Op.int, 1),
+            pt.TealOp(None, pt.Op.comment, comment),
+            pt.TealOp(None, pt.Op.assert_),
+            pt.TealOp(None, pt.Op.int, 2),
+            pt.TealOp(None, pt.Op.comment, comment),
+            pt.TealOp(None, pt.Op.assert_),
+            pt.TealOp(None, pt.Op.int, 3),
+            pt.TealOp(None, pt.Op.comment, comment),
+            pt.TealOp(None, pt.Op.assert_),
+        ]
+    )
+
+    actual, _ = expr.__teal__(avm3Options)
+    actual.addIncoming()
+    actual = pt.TealBlock.NormalizeBlocks(actual)
+
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert actual == expected
+
+
 def test_assert_invalid():
-    with pytest.raises(TealTypeError):
-        Assert(Txn.receiver())
+    with pytest.raises(pt.TealTypeError):
+        pt.Assert(pt.Txn.receiver())
+
+    with pytest.raises(pt.TealTypeError):
+        pt.Assert(pt.Int(1), pt.Txn.receiver())

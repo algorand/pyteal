@@ -1,8 +1,11 @@
 import pytest
 
-from .. import *
+import pyteal as pt
 
-from .scratchslots import collectScratchSlots, assignScratchSlotsToSubroutines
+from pyteal.compiler.scratchslots import (
+    collectScratchSlots,
+    assignScratchSlotsToSubroutines,
+)
 
 
 def test_collectScratchSlots():
@@ -15,65 +18,68 @@ def test_collectScratchSlots():
     def sub3Impl(a1, a2, a3):
         return None
 
-    subroutine1 = SubroutineDefinition(sub1Impl, TealType.uint64)
-    subroutine2 = SubroutineDefinition(sub2Impl, TealType.bytes)
-    subroutine3 = SubroutineDefinition(sub3Impl, TealType.none)
+    subroutine1 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+    subroutine2 = pt.SubroutineDefinition(sub2Impl, pt.TealType.bytes)
+    subroutine3 = pt.SubroutineDefinition(sub3Impl, pt.TealType.none)
 
-    globalSlot1 = ScratchSlot()
+    globalSlot1 = pt.ScratchSlot()
 
-    subroutine1Slot1 = ScratchSlot()
-    subroutine1Slot2 = ScratchSlot()
+    subroutine1Slot1 = pt.ScratchSlot()
+    subroutine1Slot2 = pt.ScratchSlot()
     subroutine1Ops = [
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.store, subroutine1Slot1),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.store, subroutine1Slot2),
-        TealOp(None, Op.load, globalSlot1),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.store, subroutine1Slot1),
+        pt.TealOp(None, pt.Op.int, 3),
+        pt.TealOp(None, pt.Op.store, subroutine1Slot2),
+        pt.TealOp(None, pt.Op.load, globalSlot1),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    subroutine2Slot1 = ScratchSlot()
+    subroutine2Slot1 = pt.ScratchSlot()
     subroutine2Ops = [
-        TealOp(None, Op.byte, '"value"'),
-        TealOp(None, Op.store, subroutine2Slot1),
-        TealOp(None, Op.load, subroutine2Slot1),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.byte, '"value"'),
+        pt.TealOp(None, pt.Op.store, subroutine2Slot1),
+        pt.TealOp(None, pt.Op.load, subroutine2Slot1),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     subroutine3Ops = [
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    mainSlot1 = ScratchSlot()
-    mainSlot2 = ScratchSlot()
+    mainSlot1 = pt.ScratchSlot()
+    mainSlot2 = pt.ScratchSlot()
     mainOps = [
-        TealOp(None, Op.int, 7),
-        TealOp(None, Op.store, globalSlot1),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.store, mainSlot1),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.store, mainSlot2),
-        TealOp(None, Op.load, mainSlot1),
-        TealOp(None, Op.return_),
+        pt.TealOp(None, pt.Op.int, 7),
+        pt.TealOp(None, pt.Op.store, globalSlot1),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.store, mainSlot1),
+        pt.TealOp(None, pt.Op.int, 2),
+        pt.TealOp(None, pt.Op.store, mainSlot2),
+        pt.TealOp(None, pt.Op.load, mainSlot1),
+        pt.TealOp(None, pt.Op.return_),
     ]
 
-    subroutineMapping = {
-        None: mainOps,
-        subroutine1: subroutine1Ops,
-        subroutine2: subroutine2Ops,
-        subroutine3: subroutine3Ops,
+    subroutineBlocks = {
+        None: pt.TealSimpleBlock(mainOps),
+        subroutine1: pt.TealSimpleBlock(subroutine1Ops),
+        subroutine2: pt.TealSimpleBlock(subroutine2Ops),
+        subroutine3: pt.TealSimpleBlock(subroutine3Ops),
     }
 
-    expected = {
-        None: {globalSlot1, mainSlot1, mainSlot2},
-        subroutine1: {globalSlot1, subroutine1Slot1, subroutine1Slot2},
+    expected_global = {globalSlot1}
+
+    expected_local = {
+        None: {mainSlot1, mainSlot2},
+        subroutine1: {subroutine1Slot1, subroutine1Slot2},
         subroutine2: {subroutine2Slot1},
         subroutine3: set(),
     }
 
-    actual = collectScratchSlots(subroutineMapping)
+    actual_global, actual_local = collectScratchSlots(subroutineBlocks)
 
-    assert actual == expected
+    assert actual_global == expected_global
+    assert actual_local == expected_local
 
 
 def test_assignScratchSlotsToSubroutines_no_requested_ids():
@@ -86,60 +92,53 @@ def test_assignScratchSlotsToSubroutines_no_requested_ids():
     def sub3Impl(a1, a2, a3):
         return None
 
-    subroutine1 = SubroutineDefinition(sub1Impl, TealType.uint64)
-    subroutine2 = SubroutineDefinition(sub2Impl, TealType.bytes)
-    subroutine3 = SubroutineDefinition(sub3Impl, TealType.none)
+    subroutine1 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+    subroutine2 = pt.SubroutineDefinition(sub2Impl, pt.TealType.bytes)
+    subroutine3 = pt.SubroutineDefinition(sub3Impl, pt.TealType.none)
 
-    globalSlot1 = ScratchSlot()
+    globalSlot1 = pt.ScratchSlot()
 
-    subroutine1Slot1 = ScratchSlot()
-    subroutine1Slot2 = ScratchSlot()
+    subroutine1Slot1 = pt.ScratchSlot()
+    subroutine1Slot2 = pt.ScratchSlot()
     subroutine1Ops = [
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.store, subroutine1Slot1),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.store, subroutine1Slot2),
-        TealOp(None, Op.load, globalSlot1),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.store, subroutine1Slot1),
+        pt.TealOp(None, pt.Op.int, 3),
+        pt.TealOp(None, pt.Op.store, subroutine1Slot2),
+        pt.TealOp(None, pt.Op.load, globalSlot1),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    subroutine2Slot1 = ScratchSlot()
+    subroutine2Slot1 = pt.ScratchSlot()
     subroutine2Ops = [
-        TealOp(None, Op.byte, '"value"'),
-        TealOp(None, Op.store, subroutine2Slot1),
-        TealOp(None, Op.load, subroutine2Slot1),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.byte, '"value"'),
+        pt.TealOp(None, pt.Op.store, subroutine2Slot1),
+        pt.TealOp(None, pt.Op.load, subroutine2Slot1),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     subroutine3Ops = [
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    mainSlot1 = ScratchSlot()
-    mainSlot2 = ScratchSlot()
+    mainSlot1 = pt.ScratchSlot()
+    mainSlot2 = pt.ScratchSlot()
     mainOps = [
-        TealOp(None, Op.int, 7),
-        TealOp(None, Op.store, globalSlot1),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.store, mainSlot1),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.store, mainSlot2),
-        TealOp(None, Op.load, mainSlot1),
-        TealOp(None, Op.return_),
+        pt.TealOp(None, pt.Op.int, 7),
+        pt.TealOp(None, pt.Op.store, globalSlot1),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.store, mainSlot1),
+        pt.TealOp(None, pt.Op.int, 2),
+        pt.TealOp(None, pt.Op.store, mainSlot2),
+        pt.TealOp(None, pt.Op.load, mainSlot1),
+        pt.TealOp(None, pt.Op.return_),
     ]
-
-    subroutineMapping = {
-        None: mainOps,
-        subroutine1: subroutine1Ops,
-        subroutine2: subroutine2Ops,
-        subroutine3: subroutine3Ops,
-    }
 
     subroutineBlocks = {
-        None: TealSimpleBlock(mainOps),
-        subroutine1: TealSimpleBlock(subroutine1Ops),
-        subroutine2: TealSimpleBlock(subroutine2Ops),
-        subroutine3: TealSimpleBlock(subroutine3Ops),
+        None: pt.TealSimpleBlock(mainOps),
+        subroutine1: pt.TealSimpleBlock(subroutine1Ops),
+        subroutine2: pt.TealSimpleBlock(subroutine2Ops),
+        subroutine3: pt.TealSimpleBlock(subroutine3Ops),
     }
 
     expectedAssignments = {
@@ -161,39 +160,39 @@ def test_assignScratchSlotsToSubroutines_no_requested_ids():
         subroutine3: set(),
     }
 
-    actual = assignScratchSlotsToSubroutines(subroutineMapping, subroutineBlocks)
+    actual = assignScratchSlotsToSubroutines(subroutineBlocks)
 
     assert actual == expected
 
     assert subroutine1Ops == [
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.store, expectedAssignments[subroutine1Slot1]),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.store, expectedAssignments[subroutine1Slot2]),
-        TealOp(None, Op.load, expectedAssignments[globalSlot1]),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.store, expectedAssignments[subroutine1Slot1]),
+        pt.TealOp(None, pt.Op.int, 3),
+        pt.TealOp(None, pt.Op.store, expectedAssignments[subroutine1Slot2]),
+        pt.TealOp(None, pt.Op.load, expectedAssignments[globalSlot1]),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     assert subroutine2Ops == [
-        TealOp(None, Op.byte, '"value"'),
-        TealOp(None, Op.store, expectedAssignments[subroutine2Slot1]),
-        TealOp(None, Op.load, expectedAssignments[subroutine2Slot1]),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.byte, '"value"'),
+        pt.TealOp(None, pt.Op.store, expectedAssignments[subroutine2Slot1]),
+        pt.TealOp(None, pt.Op.load, expectedAssignments[subroutine2Slot1]),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     assert subroutine3Ops == [
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     assert mainOps == [
-        TealOp(None, Op.int, 7),
-        TealOp(None, Op.store, expectedAssignments[globalSlot1]),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.store, expectedAssignments[mainSlot1]),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.store, expectedAssignments[mainSlot2]),
-        TealOp(None, Op.load, expectedAssignments[mainSlot1]),
-        TealOp(None, Op.return_),
+        pt.TealOp(None, pt.Op.int, 7),
+        pt.TealOp(None, pt.Op.store, expectedAssignments[globalSlot1]),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.store, expectedAssignments[mainSlot1]),
+        pt.TealOp(None, pt.Op.int, 2),
+        pt.TealOp(None, pt.Op.store, expectedAssignments[mainSlot2]),
+        pt.TealOp(None, pt.Op.load, expectedAssignments[mainSlot1]),
+        pt.TealOp(None, pt.Op.return_),
     ]
 
 
@@ -207,60 +206,53 @@ def test_assignScratchSlotsToSubroutines_with_requested_ids():
     def sub3Impl(a1, a2, a3):
         return None
 
-    subroutine1 = SubroutineDefinition(sub1Impl, TealType.uint64)
-    subroutine2 = SubroutineDefinition(sub2Impl, TealType.bytes)
-    subroutine3 = SubroutineDefinition(sub3Impl, TealType.none)
+    subroutine1 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+    subroutine2 = pt.SubroutineDefinition(sub2Impl, pt.TealType.bytes)
+    subroutine3 = pt.SubroutineDefinition(sub3Impl, pt.TealType.none)
 
-    globalSlot1 = ScratchSlot(requestedSlotId=8)
+    globalSlot1 = pt.ScratchSlot(requestedSlotId=8)
 
-    subroutine1Slot1 = ScratchSlot()
-    subroutine1Slot2 = ScratchSlot(requestedSlotId=5)
+    subroutine1Slot1 = pt.ScratchSlot()
+    subroutine1Slot2 = pt.ScratchSlot(requestedSlotId=5)
     subroutine1Ops = [
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.store, subroutine1Slot1),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.store, subroutine1Slot2),
-        TealOp(None, Op.load, globalSlot1),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.store, subroutine1Slot1),
+        pt.TealOp(None, pt.Op.int, 3),
+        pt.TealOp(None, pt.Op.store, subroutine1Slot2),
+        pt.TealOp(None, pt.Op.load, globalSlot1),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    subroutine2Slot1 = ScratchSlot()
+    subroutine2Slot1 = pt.ScratchSlot()
     subroutine2Ops = [
-        TealOp(None, Op.byte, '"value"'),
-        TealOp(None, Op.store, subroutine2Slot1),
-        TealOp(None, Op.load, subroutine2Slot1),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.byte, '"value"'),
+        pt.TealOp(None, pt.Op.store, subroutine2Slot1),
+        pt.TealOp(None, pt.Op.load, subroutine2Slot1),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     subroutine3Ops = [
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    mainSlot1 = ScratchSlot()
-    mainSlot2 = ScratchSlot(requestedSlotId=100)
+    mainSlot1 = pt.ScratchSlot()
+    mainSlot2 = pt.ScratchSlot(requestedSlotId=100)
     mainOps = [
-        TealOp(None, Op.int, 7),
-        TealOp(None, Op.store, globalSlot1),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.store, mainSlot1),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.store, mainSlot2),
-        TealOp(None, Op.load, mainSlot1),
-        TealOp(None, Op.return_),
+        pt.TealOp(None, pt.Op.int, 7),
+        pt.TealOp(None, pt.Op.store, globalSlot1),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.store, mainSlot1),
+        pt.TealOp(None, pt.Op.int, 2),
+        pt.TealOp(None, pt.Op.store, mainSlot2),
+        pt.TealOp(None, pt.Op.load, mainSlot1),
+        pt.TealOp(None, pt.Op.return_),
     ]
-
-    subroutineMapping = {
-        None: mainOps,
-        subroutine1: subroutine1Ops,
-        subroutine2: subroutine2Ops,
-        subroutine3: subroutine3Ops,
-    }
 
     subroutineBlocks = {
-        None: TealSimpleBlock(mainOps),
-        subroutine1: TealSimpleBlock(subroutine1Ops),
-        subroutine2: TealSimpleBlock(subroutine2Ops),
-        subroutine3: TealSimpleBlock(subroutine3Ops),
+        None: pt.TealSimpleBlock(mainOps),
+        subroutine1: pt.TealSimpleBlock(subroutine1Ops),
+        subroutine2: pt.TealSimpleBlock(subroutine2Ops),
+        subroutine3: pt.TealSimpleBlock(subroutine3Ops),
     }
 
     expectedAssignments = {
@@ -282,39 +274,39 @@ def test_assignScratchSlotsToSubroutines_with_requested_ids():
         subroutine3: set(),
     }
 
-    actual = assignScratchSlotsToSubroutines(subroutineMapping, subroutineBlocks)
+    actual = assignScratchSlotsToSubroutines(subroutineBlocks)
 
     assert actual == expected
 
     assert subroutine1Ops == [
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.store, expectedAssignments[subroutine1Slot1]),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.store, expectedAssignments[subroutine1Slot2]),
-        TealOp(None, Op.load, expectedAssignments[globalSlot1]),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.store, expectedAssignments[subroutine1Slot1]),
+        pt.TealOp(None, pt.Op.int, 3),
+        pt.TealOp(None, pt.Op.store, expectedAssignments[subroutine1Slot2]),
+        pt.TealOp(None, pt.Op.load, expectedAssignments[globalSlot1]),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     assert subroutine2Ops == [
-        TealOp(None, Op.byte, '"value"'),
-        TealOp(None, Op.store, expectedAssignments[subroutine2Slot1]),
-        TealOp(None, Op.load, expectedAssignments[subroutine2Slot1]),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.byte, '"value"'),
+        pt.TealOp(None, pt.Op.store, expectedAssignments[subroutine2Slot1]),
+        pt.TealOp(None, pt.Op.load, expectedAssignments[subroutine2Slot1]),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     assert subroutine3Ops == [
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     assert mainOps == [
-        TealOp(None, Op.int, 7),
-        TealOp(None, Op.store, expectedAssignments[globalSlot1]),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.store, expectedAssignments[mainSlot1]),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.store, expectedAssignments[mainSlot2]),
-        TealOp(None, Op.load, expectedAssignments[mainSlot1]),
-        TealOp(None, Op.return_),
+        pt.TealOp(None, pt.Op.int, 7),
+        pt.TealOp(None, pt.Op.store, expectedAssignments[globalSlot1]),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.store, expectedAssignments[mainSlot1]),
+        pt.TealOp(None, pt.Op.int, 2),
+        pt.TealOp(None, pt.Op.store, expectedAssignments[mainSlot2]),
+        pt.TealOp(None, pt.Op.load, expectedAssignments[mainSlot1]),
+        pt.TealOp(None, pt.Op.return_),
     ]
 
 
@@ -328,65 +320,58 @@ def test_assignScratchSlotsToSubroutines_invalid_requested_id():
     def sub3Impl(a1, a2, a3):
         return None
 
-    subroutine1 = SubroutineDefinition(sub1Impl, TealType.uint64)
-    subroutine2 = SubroutineDefinition(sub2Impl, TealType.bytes)
-    subroutine3 = SubroutineDefinition(sub3Impl, TealType.none)
+    subroutine1 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+    subroutine2 = pt.SubroutineDefinition(sub2Impl, pt.TealType.bytes)
+    subroutine3 = pt.SubroutineDefinition(sub3Impl, pt.TealType.none)
 
-    globalSlot1 = ScratchSlot(requestedSlotId=8)
+    globalSlot1 = pt.ScratchSlot(requestedSlotId=8)
 
-    subroutine1Slot1 = ScratchSlot()
-    subroutine1Slot2 = ScratchSlot(requestedSlotId=5)
+    subroutine1Slot1 = pt.ScratchSlot()
+    subroutine1Slot2 = pt.ScratchSlot(requestedSlotId=5)
     subroutine1Ops = [
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.store, subroutine1Slot1),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.store, subroutine1Slot2),
-        TealOp(None, Op.load, globalSlot1),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.store, subroutine1Slot1),
+        pt.TealOp(None, pt.Op.int, 3),
+        pt.TealOp(None, pt.Op.store, subroutine1Slot2),
+        pt.TealOp(None, pt.Op.load, globalSlot1),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    subroutine2Slot1 = ScratchSlot(requestedSlotId=100)
+    subroutine2Slot1 = pt.ScratchSlot(requestedSlotId=100)
     subroutine2Ops = [
-        TealOp(None, Op.byte, '"value"'),
-        TealOp(None, Op.store, subroutine2Slot1),
-        TealOp(None, Op.load, subroutine2Slot1),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.byte, '"value"'),
+        pt.TealOp(None, pt.Op.store, subroutine2Slot1),
+        pt.TealOp(None, pt.Op.load, subroutine2Slot1),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     subroutine3Ops = [
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    mainSlot1 = ScratchSlot()
-    mainSlot2 = ScratchSlot(requestedSlotId=100)
+    mainSlot1 = pt.ScratchSlot()
+    mainSlot2 = pt.ScratchSlot(requestedSlotId=100)
     mainOps = [
-        TealOp(None, Op.int, 7),
-        TealOp(None, Op.store, globalSlot1),
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.store, mainSlot1),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.store, mainSlot2),
-        TealOp(None, Op.load, mainSlot1),
-        TealOp(None, Op.return_),
+        pt.TealOp(None, pt.Op.int, 7),
+        pt.TealOp(None, pt.Op.store, globalSlot1),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.store, mainSlot1),
+        pt.TealOp(None, pt.Op.int, 2),
+        pt.TealOp(None, pt.Op.store, mainSlot2),
+        pt.TealOp(None, pt.Op.load, mainSlot1),
+        pt.TealOp(None, pt.Op.return_),
     ]
-
-    subroutineMapping = {
-        None: mainOps,
-        subroutine1: subroutine1Ops,
-        subroutine2: subroutine2Ops,
-        subroutine3: subroutine3Ops,
-    }
 
     subroutineBlocks = {
-        None: TealSimpleBlock(mainOps),
-        subroutine1: TealSimpleBlock(subroutine1Ops),
-        subroutine2: TealSimpleBlock(subroutine2Ops),
-        subroutine3: TealSimpleBlock(subroutine3Ops),
+        None: pt.TealSimpleBlock(mainOps),
+        subroutine1: pt.TealSimpleBlock(subroutine1Ops),
+        subroutine2: pt.TealSimpleBlock(subroutine2Ops),
+        subroutine3: pt.TealSimpleBlock(subroutine3Ops),
     }
 
     # mainSlot2 and subroutine2Slot1 request the same ID, 100
-    with pytest.raises(TealInternalError):
-        actual = assignScratchSlotsToSubroutines(subroutineMapping, subroutineBlocks)
+    with pytest.raises(pt.TealInternalError):
+        assignScratchSlotsToSubroutines(subroutineBlocks)
 
 
 def test_assignScratchSlotsToSubroutines_slot_used_before_assignment():
@@ -399,59 +384,52 @@ def test_assignScratchSlotsToSubroutines_slot_used_before_assignment():
     def sub3Impl(a1, a2, a3):
         return None
 
-    subroutine1 = SubroutineDefinition(sub1Impl, TealType.uint64)
-    subroutine2 = SubroutineDefinition(sub2Impl, TealType.bytes)
-    subroutine3 = SubroutineDefinition(sub3Impl, TealType.none)
+    subroutine1 = pt.SubroutineDefinition(sub1Impl, pt.TealType.uint64)
+    subroutine2 = pt.SubroutineDefinition(sub2Impl, pt.TealType.bytes)
+    subroutine3 = pt.SubroutineDefinition(sub3Impl, pt.TealType.none)
 
-    globalSlot1 = ScratchSlot()
+    globalSlot1 = pt.ScratchSlot()
 
-    subroutine1Slot1 = ScratchSlot()
-    subroutine1Slot2 = ScratchSlot()
+    subroutine1Slot1 = pt.ScratchSlot()
+    subroutine1Slot2 = pt.ScratchSlot()
     subroutine1Ops = [
-        TealOp(None, Op.int, 1),
-        TealOp(None, Op.store, subroutine1Slot1),
-        TealOp(None, Op.int, 3),
-        TealOp(None, Op.store, subroutine1Slot2),
-        TealOp(None, Op.load, globalSlot1),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.int, 1),
+        pt.TealOp(None, pt.Op.store, subroutine1Slot1),
+        pt.TealOp(None, pt.Op.int, 3),
+        pt.TealOp(None, pt.Op.store, subroutine1Slot2),
+        pt.TealOp(None, pt.Op.load, globalSlot1),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    subroutine2Slot1 = ScratchSlot()
+    subroutine2Slot1 = pt.ScratchSlot()
     subroutine2Ops = [
-        TealOp(None, Op.byte, '"value"'),
-        TealOp(None, Op.store, subroutine2Slot1),
-        TealOp(None, Op.load, subroutine2Slot1),
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.byte, '"value"'),
+        pt.TealOp(None, pt.Op.store, subroutine2Slot1),
+        pt.TealOp(None, pt.Op.load, subroutine2Slot1),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
     subroutine3Ops = [
-        TealOp(None, Op.retsub),
+        pt.TealOp(None, pt.Op.retsub),
     ]
 
-    mainSlot1 = ScratchSlot()
-    mainSlot2 = ScratchSlot()
+    mainSlot1 = pt.ScratchSlot()
+    mainSlot2 = pt.ScratchSlot()
     mainOps = [
-        TealOp(None, Op.int, 7),
-        TealOp(None, Op.store, globalSlot1),
-        TealOp(None, Op.int, 2),
-        TealOp(None, Op.store, mainSlot2),
-        TealOp(None, Op.load, mainSlot1),
-        TealOp(None, Op.return_),
+        pt.TealOp(None, pt.Op.int, 7),
+        pt.TealOp(None, pt.Op.store, globalSlot1),
+        pt.TealOp(None, pt.Op.int, 2),
+        pt.TealOp(None, pt.Op.store, mainSlot2),
+        pt.TealOp(None, pt.Op.load, mainSlot1),
+        pt.TealOp(None, pt.Op.return_),
     ]
-
-    subroutineMapping = {
-        None: mainOps,
-        subroutine1: subroutine1Ops,
-        subroutine2: subroutine2Ops,
-        subroutine3: subroutine3Ops,
-    }
 
     subroutineBlocks = {
-        None: TealSimpleBlock(mainOps),
-        subroutine1: TealSimpleBlock(subroutine1Ops),
-        subroutine2: TealSimpleBlock(subroutine2Ops),
-        subroutine3: TealSimpleBlock(subroutine3Ops),
+        None: pt.TealSimpleBlock(mainOps),
+        subroutine1: pt.TealSimpleBlock(subroutine1Ops),
+        subroutine2: pt.TealSimpleBlock(subroutine2Ops),
+        subroutine3: pt.TealSimpleBlock(subroutine3Ops),
     }
 
-    with pytest.raises(TealInternalError):
-        assignScratchSlotsToSubroutines(subroutineMapping, subroutineBlocks)
+    with pytest.raises(pt.TealInternalError):
+        assignScratchSlotsToSubroutines(subroutineBlocks)

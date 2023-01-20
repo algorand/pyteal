@@ -1,4 +1,4 @@
-from typing import NamedTuple
+from dataclasses import dataclass
 from enum import Enum, Flag, auto
 
 
@@ -11,7 +11,12 @@ class Mode(Flag):
 
 Mode.__module__ = "pyteal"
 
-OpType = NamedTuple("OpType", [("value", str), ("mode", Mode), ("min_version", int)])
+
+@dataclass
+class OpType:
+    value: str
+    mode: Mode
+    min_version: int
 
 
 class Op(Enum):
@@ -31,6 +36,9 @@ class Op(Enum):
         return self.value.min_version
 
     # fmt: off
+    # meta
+    comment             = OpType("//",                  Mode.Signature | Mode.Application, 0)
+    # avm
     err                 = OpType("err",                 Mode.Signature | Mode.Application, 2)
     sha256              = OpType("sha256",              Mode.Signature | Mode.Application, 2)
     keccak256           = OpType("keccak256",           Mode.Signature | Mode.Application, 2)
@@ -179,6 +187,27 @@ class Op(Enum):
     gitxnas             = OpType("gitxnas",             Mode.Application,                  6)
     gloadss             = OpType("gloadss",             Mode.Application,                  6)
     acct_params_get     = OpType("acct_params_get",     Mode.Application,                  6)
+    replace2            = OpType("replace2",            Mode.Signature | Mode.Application, 7)
+    replace3            = OpType("replace3",            Mode.Signature | Mode.Application, 7)
+    base64_decode       = OpType("base64_decode",       Mode.Signature | Mode.Application, 7)
+    json_ref            = OpType("json_ref",            Mode.Signature | Mode.Application, 7)
+    ed25519verify_bare  = OpType("ed25519verify_bare",  Mode.Signature | Mode.Application, 7)
+    sha3_256            = OpType("sha3_256",            Mode.Signature | Mode.Application, 7)
+    vrf_verify          = OpType("vrf_verify",          Mode.Signature | Mode.Application, 7)
+    block               = OpType("block",               Mode.Signature | Mode.Application, 7)
+    box_create          = OpType("box_create",          Mode.Application,                  8)
+    box_extract         = OpType("box_extract",         Mode.Application,                  8)
+    box_replace         = OpType("box_replace",         Mode.Application,                  8)
+    box_del             = OpType("box_del",             Mode.Application,                  8)
+    box_len             = OpType("box_len",             Mode.Application,                  8)
+    box_get             = OpType("box_get",             Mode.Application,                  8)
+    box_put             = OpType("box_put",             Mode.Application,                  8)
+    popn                = OpType("popn",                Mode.Signature | Mode.Application, 8)
+    dupn                = OpType("dupn",                Mode.Signature | Mode.Application, 8)
+    bury                = OpType("bury",                Mode.Signature | Mode.Application, 8)
+    frame_dig           = OpType("frame_dig",           Mode.Signature | Mode.Application, 8)
+    frame_bury          = OpType("frame_bury",          Mode.Signature | Mode.Application, 8)
+    proto               = OpType("proto",               Mode.Signature | Mode.Application, 8)
     # fmt: on
 
 

@@ -1,19 +1,19 @@
 from typing import TYPE_CHECKING
 
-from ..types import TealType, require_type, types_match
-from ..errors import verifyTealVersion, TealCompileError
-from ..ir import TealOp, Op, TealBlock
-from .expr import Expr
-from .int import Int
+from pyteal.types import TealType, require_type, types_match
+from pyteal.errors import verifyProgramVersion, TealCompileError
+from pyteal.ir import TealOp, Op, TealBlock
+from pyteal.ast.expr import Expr
+from pyteal.ast.int import Int
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class Return(Expr):
     """Return a value from the current execution context."""
 
-    def __init__(self, value: Expr = None) -> None:
+    def __init__(self, value: Expr | None = None) -> None:
         """Create a new Return expression.
 
         If called from the main program, this will immediately exit the program
@@ -31,12 +31,12 @@ class Return(Expr):
 
     def __teal__(self, options: "CompileOptions"):
         if options.currentSubroutine is not None:
-            verifyTealVersion(
+            verifyProgramVersion(
                 Op.retsub.min_version,
                 options.version,
-                "TEAL version too low to use subroutines",
+                "Program version too low to use subroutines",
             )
-            returnType = options.currentSubroutine.returnType
+            returnType = options.currentSubroutine.return_type
             if returnType == TealType.none:
                 if self.value is not None:
                     raise TealCompileError(
@@ -73,10 +73,7 @@ class Return(Expr):
                 )
             op = Op.return_
 
-        args = []
-        if self.value is not None:
-            args.append(self.value)
-
+        args = [] if self.value is None else [self.value]
         return TealBlock.FromOp(options, TealOp(self, op), *args)
 
     def __str__(self):

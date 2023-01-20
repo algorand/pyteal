@@ -1,12 +1,12 @@
 from typing import TYPE_CHECKING
 
-from ..types import TealType
-from ..ir import TealOp, Op, TealBlock
-from ..errors import TealInputError
-from .leafexpr import LeafExpr
+from pyteal.types import TealType
+from pyteal.ir import TealOp, Op, TealBlock
+from pyteal.errors import TealInputError
+from pyteal.ast.leafexpr import LeafExpr
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class Int(LeafExpr):
@@ -23,7 +23,7 @@ class Int(LeafExpr):
 
         if type(value) is not int:
             raise TealInputError("invalid input type {} to Int".format(type(value)))
-        elif value >= 0 and value < 2 ** 64:
+        elif value >= 0 and value < 2**64:
             self.value = value
         else:
             raise TealInputError("Int {} is out of range".format(value))
@@ -33,7 +33,7 @@ class Int(LeafExpr):
         return TealBlock.FromOp(options, op)
 
     def __str__(self):
-        return "(Int: {})".format(self.value)
+        return "(Int {})".format(self.value)
 
     def type_of(self):
         return TealType.uint64
@@ -59,7 +59,7 @@ class EnumInt(LeafExpr):
         return TealBlock.FromOp(options, op)
 
     def __str__(self):
-        return "(IntEnum: {})".format(self.name)
+        return "(IntEnum {})".format(self.name)
 
     def type_of(self):
         return TealType.uint64

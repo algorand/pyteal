@@ -1,0 +1,59 @@
+{
+    "name": "AlgoBank",
+    "methods": [
+        {
+            "name": "deposit",
+            "args": [
+                {
+                    "type": "pay",
+                    "name": "payment",
+                    "desc": "A payment transaction containing the amount of Algos the user wishes to deposit. The receiver of this transaction must be this app's escrow account."
+                },
+                {
+                    "type": "account",
+                    "name": "sender",
+                    "desc": "An account that is opted into this app (or will opt in during this method call). The deposited funds will be recorded in this account's local state. This account must be the same as the sender of the `payment` transaction."
+                }
+            ],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "This method receives a payment from an account opted into this app and records it as a deposit.\nThe caller may opt into this app during this call."
+        },
+        {
+            "name": "getBalance",
+            "args": [
+                {
+                    "type": "account",
+                    "name": "user",
+                    "desc": "The user whose balance you wish to look up. This user must be opted into this app."
+                }
+            ],
+            "returns": {
+                "type": "uint64",
+                "desc": "The balance corresponding to the given user, in microAlgos."
+            },
+            "desc": "Lookup the balance of a user held by this app."
+        },
+        {
+            "name": "withdraw",
+            "args": [
+                {
+                    "type": "uint64",
+                    "name": "amount",
+                    "desc": "The amount of Algos requested to be withdraw, in microAlgos. This method will fail if this amount exceeds the amount of Algos held by this app for the method call sender."
+                },
+                {
+                    "type": "account",
+                    "name": "recipient",
+                    "desc": "An account who will receive the withdrawn Algos. This may or may not be the same as the method call sender."
+                }
+            ],
+            "returns": {
+                "type": "void"
+            },
+            "desc": "Withdraw an amount of Algos held by this app.\nThe sender of this method call will be the source of the Algos, and the destination will be the `recipient` argument.\nThe Algos will be transferred to the recipient using an inner transaction whose fee is set to 0, meaning the caller's transaction must include a surplus fee to cover the inner transaction."
+        }
+    ],
+    "networks": {}
+}

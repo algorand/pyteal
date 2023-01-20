@@ -1,0 +1,10 @@
+#pragma version 6
+callsub exp_0
+return
+
+// exp
+exp_0:
+pushint 2 // 2
+pushint 10 // 10
+exp
+retsub

@@ -1,7 +1,7 @@
-from typing import List, Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .ast import Expr
+    from pyteal.ast import Expr
 
 
 class TealInternalError(Exception):
@@ -33,6 +33,9 @@ class TealInputError(Exception):
     def __str__(self) -> str:
         return self.message
 
+    def __eq__(self, other: Any) -> bool:
+        return type(other) is TealInputError and self.message == other.message
+
 
 TealInputError.__module__ = "pyteal"
 
@@ -61,7 +64,18 @@ class TealCompileError(Exception):
 TealCompileError.__module__ = "pyteal"
 
 
-def verifyTealVersion(minVersion: int, version: int, msg: str):
+class TealPragmaError(Exception):
+    def __init__(self, message: str) -> None:
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
+
+TealPragmaError.__module__ = "pyteal"
+
+
+def verifyProgramVersion(minVersion: int, version: int, msg: str):
     if minVersion > version:
         msg = "{}. Minimum version needed is {}, but current version being compiled is {}".format(
             msg, minVersion, version
@@ -70,8 +84,8 @@ def verifyTealVersion(minVersion: int, version: int, msg: str):
 
 
 def verifyFieldVersion(fieldName: str, fieldMinVersion: int, version: int):
-    verifyTealVersion(
+    verifyProgramVersion(
         fieldMinVersion,
         version,
-        "TEAL version too low to use field {}".format(fieldName),
+        "Program version too low to use field {}".format(fieldName),
     )

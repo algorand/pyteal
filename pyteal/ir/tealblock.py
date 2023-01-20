@@ -1,13 +1,14 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List, Tuple, Set, Iterator, cast, TYPE_CHECKING
 
-from .tealop import TealOp, Op
-from ..errors import TealCompileError
+from typing import Dict, List, Tuple, Set, Iterator, cast, TYPE_CHECKING
+
+from pyteal.ir.tealop import TealOp, Op
+from pyteal.errors import TealCompileError
 
 if TYPE_CHECKING:
-    from ..ast import Expr, ScratchSlot
-    from ..compiler import CompileOptions
-    from .tealsimpleblock import TealSimpleBlock
+    from pyteal.ast import Expr, ScratchSlot
+    from pyteal.compiler import CompileOptions
+    from pyteal.ir.tealsimpleblock import TealSimpleBlock
 
 
 class TealBlock(ABC):
@@ -35,7 +36,9 @@ class TealBlock(ABC):
         return len(self.getOutgoing()) == 0
 
     def validateTree(
-        self, parent: "TealBlock" = None, visited: List["TealBlock"] = None
+        self,
+        parent: "TealBlock | None" = None,
+        visited: List["TealBlock"] | None = None,
     ) -> None:
         """Check that this block and its children have valid parent pointers.
 
@@ -61,7 +64,9 @@ class TealBlock(ABC):
                 block.validateTree(self, visited)
 
     def addIncoming(
-        self, parent: "TealBlock" = None, visited: List["TealBlock"] = None
+        self,
+        parent: "TealBlock | None" = None,
+        visited: List["TealBlock"] | None = None,
     ) -> None:
         """Calculate the parent blocks for this block and its children.
 
@@ -84,8 +89,8 @@ class TealBlock(ABC):
 
     def validateSlots(
         self,
-        slotsInUse: Set["ScratchSlot"] = None,
-        visited: Set[Tuple[int, ...]] = None,
+        slotsInUse: Set["ScratchSlot"] | None = None,
+        visited: Set[Tuple[int, ...]] | None = None,
     ) -> List[TealCompileError]:
         if visited is None:
             visited = set()
@@ -140,7 +145,7 @@ class TealBlock(ABC):
         Returns:
             The starting and ending block of the path that encodes the given TealOp and arguments.
         """
-        from .tealsimpleblock import TealSimpleBlock
+        from pyteal.ir.tealsimpleblock import TealSimpleBlock
 
         opBlock = TealSimpleBlock([op])
 
@@ -163,7 +168,7 @@ class TealBlock(ABC):
 
     @classmethod
     def Iterate(cls, start: "TealBlock") -> Iterator["TealBlock"]:
-        """Perform a depth-first search of the graph of blocks starting with start."""
+        """Perform a breadth-first search of the graph of blocks starting with start."""
         queue = [start]
         visited = list(queue)
 
@@ -227,6 +232,64 @@ class TealBlock(ABC):
                         start = block
 
         return start
+
+    @classmethod
+    def GetReferencedScratchSlots(cls, start: "TealBlock") -> List["ScratchSlot"]:
+        """Get all scratch slot references for the graph starting at this TealBlock.
+
+        Returns:
+            A list of ScratchSlots where each element represents a reference to that slot by a
+            TealOp in the graph. The order of the list is consistent, and there may be duplicate
+            ScratchSlots in the list if the same slot is referenced multiple times.
+        """
+        slots: List[ScratchSlot] = []
+
+        for block in TealBlock.Iterate(start):
+            for op in block.ops:
+                slots += op.getSlots()
+
+        return slots
+
+    @classmethod
+    def MatchScratchSlotReferences(
+        cls, actual: List["ScratchSlot"], expected: List["ScratchSlot"]
+    ) -> bool:
+        """Determine if there is a mapping between the actual and expected lists of ScratchSlots.
+
+        A mapping is defined as follows:
+          * The actual and expected lists must have the same length.
+          * For every ScratchSlot referenced by either list:
+
+            * If the slot appears in both lists, it must appear the exact same number of times and at
+              the exact same indexes in both lists.
+
+            * If the slot appears only in one list, for each of its appearances in that list, there
+              must be a ScratchSlot in the other list that appears the exact same number of times
+              and at the exact same indexes.
+
+        Returns:
+            True if and only if a mapping as described above exists between actual and expected.
+        """
+        if len(actual) != len(expected):
+            return False
+
+        commonSlots = set(actual) & set(expected)
+        mapFromActualToExpected: Dict[ScratchSlot, ScratchSlot] = {
+            slot: slot for slot in commonSlots
+        }
+
+        for actualSlot, expectedSlot in zip(actual, expected):
+            if actualSlot not in mapFromActualToExpected:
+                if expectedSlot in mapFromActualToExpected.values():
+                    # this value was already seen
+                    return False
+                mapFromActualToExpected[actualSlot] = expectedSlot
+                continue
+
+            if mapFromActualToExpected[actualSlot] != expectedSlot:
+                return False
+
+        return True
 
 
 TealBlock.__module__ = "pyteal"

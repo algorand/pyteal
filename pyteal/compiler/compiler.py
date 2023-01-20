@@ -1,28 +1,43 @@
-from typing import List, Tuple, Set, Dict, Optional, cast
+from typing import Final, List, Tuple, Set, Dict, Optional, cast
 
-from ..types import TealType
-from ..ast import (
+from pyteal.compiler.optimizer import OptimizeOptions, apply_global_optimizations
+
+from pyteal.types import TealType
+from pyteal.ast import (
     Expr,
     Return,
     Seq,
     SubroutineDefinition,
     SubroutineDeclaration,
 )
-from ..ir import Mode, TealComponent, TealOp, TealBlock, TealSimpleBlock
-from ..errors import TealInputError, TealInternalError
+from pyteal.ir import Mode, Op, TealComponent, TealOp, TealBlock, TealSimpleBlock
+from pyteal.errors import TealInputError, TealInternalError
 
-from .sort import sortBlocks
-from .flatten import flattenBlocks, flattenSubroutines
-from .scratchslots import assignScratchSlotsToSubroutines
-from .subroutines import (
+from pyteal.compiler.sort import sortBlocks
+from pyteal.compiler.flatten import flattenBlocks, flattenSubroutines
+from pyteal.compiler.scratchslots import (
+    assignScratchSlotsToSubroutines,
+    collect_unoptimized_slots,
+)
+from pyteal.compiler.subroutines import (
     spillLocalSlotsDuringRecursion,
     resolveSubroutines,
 )
-from .constants import createConstantBlocks
+from pyteal.compiler.constants import createConstantBlocks
 
-MAX_TEAL_VERSION = 6
-MIN_TEAL_VERSION = 2
-DEFAULT_TEAL_VERSION = MIN_TEAL_VERSION
+MAX_PROGRAM_VERSION = 8
+FRAME_POINTERS_VERSION = 8
+DEFAULT_SCRATCH_SLOT_OPTIMIZE_VERSION = 9
+MIN_PROGRAM_VERSION = 2
+DEFAULT_PROGRAM_VERSION = MIN_PROGRAM_VERSION
+
+
+"""Deprecated. Use MAX_PROGRAM_VERSION instead."""
+MAX_TEAL_VERSION = MAX_PROGRAM_VERSION
+"""Deprecated. Use MIN_PROGRAM_VERSION instead."""
+MIN_TEAL_VERSION = MIN_PROGRAM_VERSION
+"""Deprecated. Use DEFAULT_PROGRAM_VERSION instead."""
+DEFAULT_TEAL_VERSION = DEFAULT_PROGRAM_VERSION
 
 
 class CompileOptions:
@@ -30,10 +45,15 @@ class CompileOptions:
         self,
         *,
         mode: Mode = Mode.Signature,
-        version: int = DEFAULT_TEAL_VERSION,
+        version: int = DEFAULT_PROGRAM_VERSION,
+        optimize: Optional[OptimizeOptions] = None,
     ) -> None:
-        self.mode = mode
-        self.version = version
+        self.mode: Final[Mode] = mode
+        self.version: Final[int] = version
+        self.optimize: Final[OptimizeOptions] = optimize or OptimizeOptions()
+        self.use_frame_pointers: Final[bool] = self.optimize.use_frame_pointers(
+            self.version
+        )
 
         self.currentSubroutine: Optional[SubroutineDefinition] = None
 
@@ -63,7 +83,7 @@ class CompileOptions:
     def exitLoop(self) -> Tuple[List[TealSimpleBlock], List[TealSimpleBlock]]:
         if len(self.breakBlocksStack) == 0 or len(self.continueBlocksStack) == 0:
             raise TealInternalError("Cannot exit loop when no loop is active")
-        return (self.breakBlocksStack.pop(), self.continueBlocksStack.pop())
+        return self.breakBlocksStack.pop(), self.continueBlocksStack.pop()
 
 
 def verifyOpsForVersion(teal: List[TealComponent], version: int):
@@ -81,7 +101,7 @@ def verifyOpsForVersion(teal: List[TealComponent], version: int):
             op = stmt.getOp()
             if op.min_version > version:
                 raise TealInputError(
-                    "Op not supported in TEAL version {}: {}. Minimum required version is {}".format(
+                    "Op not supported in program version {}: {}. Minimum required version is {}".format(
                         version, op, op.min_version
                     )
                 )
@@ -109,9 +129,9 @@ def verifyOpsForMode(teal: List[TealComponent], mode: Mode):
 def compileSubroutine(
     ast: Expr,
     options: CompileOptions,
-    subroutineMapping: Dict[Optional[SubroutineDefinition], List[TealComponent]],
     subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]],
-    subroutineBlocks: Dict[Optional[SubroutineDefinition], TealBlock],
+    subroutine_start_blocks: Dict[Optional[SubroutineDefinition], TealBlock],
+    subroutine_end_blocks: Dict[Optional[SubroutineDefinition], TealBlock],
 ) -> None:
     currentSubroutine = (
         cast(SubroutineDeclaration, ast).subroutine
@@ -121,66 +141,129 @@ def compileSubroutine(
 
     if not ast.has_return():
         if ast.type_of() == TealType.none:
-            ast = Seq([ast, Return()])
+            ret_expr = Return()
+            ret_expr.trace = ast.trace
+            seq_expr = Seq([ast, ret_expr])
+            seq_expr.trace = ret_expr.trace
+            ast = seq_expr
         else:
-            ast = Return(ast)
+            ret_expr = Return(ast)
+            ret_expr.trace = ast.trace
+            ast = ret_expr
 
     options.setSubroutine(currentSubroutine)
+
     start, end = ast.__teal__(options)
     start.addIncoming()
+    start.validateTree()
+
+    if (
+        currentSubroutine
+        and currentSubroutine.get_declaration_by_option(
+            options.use_frame_pointers
+        ).deferred_expr
+    ):
+        # this represents code that should be inserted before each retsub op
+        deferred_expr = cast(
+            Expr,
+            currentSubroutine.get_declaration_by_option(
+                options.use_frame_pointers
+            ).deferred_expr,
+        )
+
+        for block in TealBlock.Iterate(start):
+            if not any(op.getOp() == Op.retsub for op in block.ops):
+                continue
+
+            if len(block.ops) != 1:
+                # we expect all retsub ops to be in their own block at this point since
+                # TealBlock.NormalizeBlocks has not yet been used
+                raise TealInternalError(
+                    f"Expected retsub to be the only op in the block, but there are {len(block.ops)} ops"
+                )
+
+            # we invoke __teal__ here and not outside of this loop because the same block cannot be
+            # added in multiple places to the control flow graph
+            deferred_start, deferred_end = deferred_expr.__teal__(options)
+            deferred_start.addIncoming()
+            deferred_start.validateTree()
+
+            # insert deferred blocks between the previous block(s) and this one
+            deferred_start.incoming = block.incoming
+            block.incoming = [deferred_end]
+            deferred_end.nextBlock = block
+
+            for prev in deferred_start.incoming:
+                prev.replaceOutgoing(block, deferred_start)
+
+            if block is start:
+                # this is the start block, replace start
+                start = deferred_start
+
     start.validateTree()
 
     start = TealBlock.NormalizeBlocks(start)
     start.validateTree()
 
-    order = sortBlocks(start, end)
-    teal = flattenBlocks(order)
-
-    verifyOpsForVersion(teal, options.version)
-    verifyOpsForMode(teal, options.mode)
-
-    subroutineMapping[currentSubroutine] = teal
-    subroutineBlocks[currentSubroutine] = start
+    subroutine_start_blocks[currentSubroutine] = start
+    subroutine_end_blocks[currentSubroutine] = end
 
     referencedSubroutines: Set[SubroutineDefinition] = set()
-    for stmt in teal:
-        for subroutine in stmt.getSubroutines():
-            referencedSubroutines.add(subroutine)
+    for block in TealBlock.Iterate(start):
+        for stmt in block.ops:
+            for subroutine in stmt.getSubroutines():
+                referencedSubroutines.add(subroutine)
 
     if currentSubroutine is not None:
         subroutineGraph[currentSubroutine] = referencedSubroutines
 
-    newSubroutines = referencedSubroutines - subroutineMapping.keys()
+    newSubroutines = referencedSubroutines - subroutine_start_blocks.keys()
     for subroutine in sorted(newSubroutines, key=lambda subroutine: subroutine.id):
         compileSubroutine(
-            subroutine.getDeclaration(),
+            subroutine.get_declaration_by_option(options.use_frame_pointers),
             options,
-            subroutineMapping,
             subroutineGraph,
-            subroutineBlocks,
+            subroutine_start_blocks,
+            subroutine_end_blocks,
         )
+
+
+def sort_subroutine_blocks(
+    subroutine_start_blocks: Dict[Optional[SubroutineDefinition], TealBlock],
+    subroutine_end_blocks: Dict[Optional[SubroutineDefinition], TealBlock],
+) -> Dict[Optional[SubroutineDefinition], List[TealComponent]]:
+    subroutine_mapping: Dict[
+        Optional[SubroutineDefinition], List[TealComponent]
+    ] = dict()
+    for subroutine, start in subroutine_start_blocks.items():
+        order = sortBlocks(start, subroutine_end_blocks[subroutine])
+        subroutine_mapping[subroutine] = flattenBlocks(order)
+
+    return subroutine_mapping
 
 
 def compileTeal(
     ast: Expr,
     mode: Mode,
     *,
-    version: int = DEFAULT_TEAL_VERSION,
+    version: int = DEFAULT_PROGRAM_VERSION,
     assembleConstants: bool = False,
+    optimize: Optional[OptimizeOptions] = None,
 ) -> str:
     """Compile a PyTeal expression into TEAL assembly.
 
     Args:
         ast: The PyTeal expression to assemble.
         mode: The mode of the program to assemble. Must be Signature or Application.
-        version (optional): The TEAL version used to assemble the program. This will determine which
+        version (optional): The program version used to assemble the program. This will determine which
             expressions and fields are able to be used in the program and how expressions compile to
             TEAL opcodes. Defaults to 2 if not included.
         assembleConstants (optional): When true, the compiler will produce a program with fully
             assembled constants, rather than using the pseudo-ops `int`, `byte`, and `addr`. These
             constants will be assembled in the most space-efficient way, so enabling this may reduce
-            the compiled program's size. Enabling this option requires a minimum TEAL version of 3.
+            the compiled program's size. Enabling this option requires a minimum program version of 3.
             Defaults to false.
+        optimize (optional): OptimizeOptions that determine which optimizations will be applied.
 
     Returns:
         A TEAL assembly program compiled from the input expression.
@@ -190,29 +273,41 @@ def compileTeal(
         TealInternalError: if an internal error is encounter during compilation.
     """
     if (
-        not (MIN_TEAL_VERSION <= version <= MAX_TEAL_VERSION)
+        not (MIN_PROGRAM_VERSION <= version <= MAX_PROGRAM_VERSION)
         or type(version) is not int
     ):
         raise TealInputError(
-            "Unsupported TEAL version: {}. Excepted an integer in the range [{}, {}]".format(
-                version, MIN_TEAL_VERSION, MAX_TEAL_VERSION
+            "Unsupported program version: {}. Excepted an integer in the range [{}, {}]".format(
+                version, MIN_PROGRAM_VERSION, MAX_PROGRAM_VERSION
             )
         )
 
-    options = CompileOptions(mode=mode, version=version)
+    options = CompileOptions(mode=mode, version=version, optimize=optimize)
+
+    subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
+    subroutine_start_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
+    subroutine_end_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
+    compileSubroutine(
+        ast, options, subroutineGraph, subroutine_start_blocks, subroutine_end_blocks
+    )
+
+    # note: optimizations are off by default, in which case, apply_global_optimizations
+    # won't make any changes. Because the optimizer is invoked on a subroutine's
+    # control flow graph, the optimizer requires context across block boundaries. This
+    # is necessary for the dependency checking of local slots. Global slots, slots
+    # used by DynamicScratchVar, and reserved slots are not optimized.
+    if options.optimize.optimize_scratch_slots(version):
+        options.optimize._skip_slots = collect_unoptimized_slots(
+            subroutine_start_blocks
+        )
+        for start in subroutine_start_blocks.values():
+            apply_global_optimizations(start, options.optimize, version)
+
+    localSlotAssignments = assignScratchSlotsToSubroutines(subroutine_start_blocks)
 
     subroutineMapping: Dict[
         Optional[SubroutineDefinition], List[TealComponent]
-    ] = dict()
-    subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
-    subroutineBlocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
-    compileSubroutine(
-        ast, options, subroutineMapping, subroutineGraph, subroutineBlocks
-    )
-
-    localSlotAssignments = assignScratchSlotsToSubroutines(
-        subroutineMapping, subroutineBlocks
-    )
+    ] = sort_subroutine_blocks(subroutine_start_blocks, subroutine_end_blocks)
 
     spillLocalSlotsDuringRecursion(
         version, subroutineMapping, subroutineGraph, localSlotAssignments
@@ -221,12 +316,13 @@ def compileTeal(
     subroutineLabels = resolveSubroutines(subroutineMapping)
     teal = flattenSubroutines(subroutineMapping, subroutineLabels)
 
+    verifyOpsForVersion(teal, options.version)
+    verifyOpsForMode(teal, options.mode)
+
     if assembleConstants:
         if version < 3:
             raise TealInternalError(
-                "The minimum TEAL version required to enable assembleConstants is 3. The current version is {}".format(
-                    version
-                )
+                f"The minimum program version required to enable assembleConstants is 3. The current version is {version}."
             )
         teal = createConstantBlocks(teal)
 

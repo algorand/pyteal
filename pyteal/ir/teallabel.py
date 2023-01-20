@@ -1,15 +1,15 @@
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-from .tealcomponent import TealComponent
-from .labelref import LabelReference
+from pyteal.ir.tealcomponent import TealComponent
+from pyteal.ir.labelref import LabelReference
 
 if TYPE_CHECKING:
-    from ..ast import Expr
+    from pyteal.ast import Expr
 
 
 class TealLabel(TealComponent):
     def __init__(
-        self, expr: Optional["Expr"], label: LabelReference, comment: str = None
+        self, expr: "Expr | None", label: LabelReference, comment: str | None = None
     ) -> None:
         super().__init__(expr)
         self.label = label
@@ -33,7 +33,7 @@ class TealLabel(TealComponent):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, TealLabel):
             return False
-        if TealComponent.Context.checkExpr and self.expr is not other.expr:
+        if TealComponent.Context.checkExprEquality and self.expr is not other.expr:
             return False
         return self.label == other.label and self.comment == other.comment
 

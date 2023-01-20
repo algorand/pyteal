@@ -4,13 +4,13 @@ from typing import Union, List, Dict, cast
 from collections import OrderedDict
 from algosdk import encoding
 
-from ..ir import (
+from pyteal.ir import (
     Op,
     TealOp,
     TealComponent,
 )
-from ..util import unescapeStr, correctBase32Padding
-from ..errors import TealInternalError
+from pyteal.util import unescapeStr, correctBase32Padding
+from pyteal.errors import TealInternalError
 
 intEnumValues = {
     # OnComplete values
@@ -104,7 +104,7 @@ def extractMethodSigValue(op: TealOp) -> bytes:
         methodSignature = methodSignature[1:-1]
     else:
         raise TealInternalError(
-            "Method signature opcode error: signatue {} not wrapped with double-quotes".format(
+            "Method signature opcode error: signature {} not wrapped with double-quotes".format(
                 methodSignature
             )
         )
@@ -158,7 +158,7 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
     intBlock = [
         val
         for i, val in enumerate(sortedInts)
-        if intFreqs[val] > 1 and (i < 4 or isinstance(val, str) or val >= 2 ** 7)
+        if intFreqs[val] > 1 and (i < 4 or isinstance(val, str) or val >= 2**7)
     ]
 
     byteBlock = [

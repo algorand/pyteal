@@ -1,0 +1,59 @@
+#pragma version 8
+txna ApplicationArgs 0
+int 0
+getbyte
+store 1
+load 1
+callsub roundtripper_1
+store 0
+byte 0x151f7c75
+load 0
+concat
+log
+int 1
+return
+
+// numerical_comp
+numericalcomp_0:
+proto 1 1
+int 0
+int 255
+frame_dig -1
+-
+frame_bury 0
+frame_dig 0
+int 256
+<
+assert
+retsub
+
+// round_tripper
+roundtripper_1:
+proto 1 1
+byte ""
+int 0
+dupn 3
+byte ""
+dup
+frame_dig -1
+callsub numericalcomp_0
+frame_bury 1
+frame_dig 1
+callsub numericalcomp_0
+frame_bury 2
+byte 0x00
+int 0
+frame_dig -1
+setbyte
+byte 0x00
+int 0
+frame_dig 1
+setbyte
+concat
+byte 0x00
+int 0
+frame_dig 2
+setbyte
+concat
+frame_bury 0
+retsub

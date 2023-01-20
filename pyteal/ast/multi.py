@@ -1,14 +1,14 @@
 from typing import Callable, List, Union, TYPE_CHECKING
 
-from ..types import TealType
-from ..ir import TealOp, Op, TealBlock
-from .expr import Expr
-from .leafexpr import LeafExpr
-from .scratch import ScratchSlot
-from .seq import Seq
+from pyteal.types import TealType
+from pyteal.ir import TealOp, Op, TealBlock
+from pyteal.ast.expr import Expr
+from pyteal.ast.leafexpr import LeafExpr
+from pyteal.ast.scratch import ScratchSlot
+from pyteal.ast.seq import Seq
 
 if TYPE_CHECKING:
-    from ..compiler import CompileOptions
+    from pyteal.compiler import CompileOptions
 
 
 class MultiValue(LeafExpr):
@@ -19,8 +19,9 @@ class MultiValue(LeafExpr):
         op: Op,
         types: List[TealType],
         *,
-        immediate_args: List[Union[int, str]] = None,
-        args: List[Expr] = None
+        immediate_args: List[Union[int, str]] | None = None,
+        args: List[Expr] | None = None,
+        compile_check: Callable[["CompileOptions"], None] = lambda _: None,
     ):
         """Create a new MultiValue.
 
@@ -35,6 +36,7 @@ class MultiValue(LeafExpr):
         self.types = types
         self.immediate_args = immediate_args if immediate_args is not None else []
         self.args = args if args is not None else []
+        self.compile_check = compile_check
 
         self.output_slots = [ScratchSlot() for _ in self.types]
 
@@ -57,6 +59,8 @@ class MultiValue(LeafExpr):
         return ret_str
 
     def __teal__(self, options: "CompileOptions"):
+        self.compile_check(options)
+
         tealOp = TealOp(self, self.op, *self.immediate_args)
         callStart, callEnd = TealBlock.FromOp(options, tealOp, *self.args)
 
