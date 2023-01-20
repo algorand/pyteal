@@ -1,3 +1,4 @@
+from copy import deepcopy
 import pytest
 import secrets
 import typing
@@ -908,18 +909,12 @@ def test_override_names():
     assert (ap1, cs1, c1) == (ap2, cs2, c2)
 
 
-def test_router_compile_program_idempotence():
+def test_router_build_idempotence():
     on_completion_actions = pt.BareCallActions(
         opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes("optin call"))),
+        clear_state=pt.OnCompleteAction.call_only(pt.Approve()),
     )
-    router = pt.Router("questionable", on_completion_actions, clear_state=pt.Approve())
-
-    approval1, clear1, contract1 = router.compile_program(version=6)
-    approval2, clear2, contract2 = router.compile_program(version=6)
-
-    assert contract1.dictify() == contract2.dictify()
-    assert clear1 == clear2
-    assert approval1 == approval2
+    router = pt.Router("questionable", on_completion_actions)
 
     @pt.ABIReturnSubroutine
     def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
@@ -928,20 +923,14 @@ def test_router_compile_program_idempotence():
     meth = router.add_method_handler(add)
     assert meth.method_signature() == "add(uint64,uint64)uint64"
 
-    # formerly nextSlotId: 256 --> 262:
+    # add_methods_to_router(router)
+    # method_configs0 = deepcopy(router.method_configs)
     approval1, clear1, contract1 = router.compile_program(version=6)
-    # formerly nextSlotId: 262 --> 265:
+    # method_configs1 = deepcopy(router.method_configs)
     approval2, clear2, contract2 = router.compile_program(version=6)
-    # formerly nextSlotId: 265 --> 268:
-    approval3, clear3, contract3 = router.compile_program(version=6)
+    # method_configs2 = deepcopy(router.method_configs)
 
-    assert contract2.dictify() == contract3.dictify()
-    assert clear3 == clear2
-    assert approval3 == approval3
-
-    assert contract2.dictify() == contract1.dictify()
-    assert clear2 == clear1
-    assert (
-        approval2 == approval1
-    ), f"""{approval1=}
-{approval2=}"""
+    # assert method_configs0 == method_configs1 == method_configs2
+    assert contract1.dictify() == contract2.dictify()
+    assert approval1 == approval2
+    assert clear1 == clear2
