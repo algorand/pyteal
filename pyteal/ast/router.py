@@ -87,7 +87,9 @@ class MethodConfig:
         if self.clear_state != CallConfig.NEVER:
             raise TealInputError(
                 "Attempt to construct clear state program from MethodConfig, "
-                "use Router top level argument `clear_state` instead"
+                "use Router top level argument `clear_state` instead. "
+                "For more details please refer to "
+                "https://pyteal.readthedocs.io/en/latest/abi.html#registering-bare-app-calls"
             )
 
     def is_never(self) -> bool:
@@ -190,7 +192,9 @@ class BareCallActions:
         if not self.clear_state.is_empty():
             raise TealInputError(
                 "Attempt to construct clear state program from bare app call, "
-                "use Router top level argument `clear_state` instead"
+                "use Router top level argument `clear_state` instead. "
+                "For more details please refer to "
+                "https://pyteal.readthedocs.io/en/latest/abi.html#registering-bare-app-calls"
             )
 
     def is_empty(self) -> bool:
