@@ -504,7 +504,9 @@ class Router:
             name: the name of the smart contract, used in the JSON object.
             bare_calls: the bare app call registered for each on_completion.
             descr: a description of the smart contract, used in the JSON object.
-            clear_state: an expression describing the behavior of clear state program.
+            clear_state: an expression describing the behavior of clear state program. This
+                expression will be the entirety of the clear state program; no additional code is
+                inserted by the Router. If not provided, the clear state program will always reject.
         """
 
         self.name: str = name
