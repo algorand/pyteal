@@ -273,62 +273,64 @@ def compileTeal(
         TealInputError: if an operation in ast is not supported by the supplied mode and version.
         TealInternalError: if an internal error is encounter during compilation.
     """
-    ScratchSlot.reset_slot_numbering()
-
-    if (
-        not (MIN_PROGRAM_VERSION <= version <= MAX_PROGRAM_VERSION)
-        or type(version) is not int
-    ):
-        raise TealInputError(
-            "Unsupported program version: {}. Excepted an integer in the range [{}, {}]".format(
-                version, MIN_PROGRAM_VERSION, MAX_PROGRAM_VERSION
+    starting_slot_id = ScratchSlot.nextSlotId
+    try:
+        if (
+            not (MIN_PROGRAM_VERSION <= version <= MAX_PROGRAM_VERSION)
+            or type(version) is not int
+        ):
+            raise TealInputError(
+                "Unsupported program version: {}. Excepted an integer in the range [{}, {}]".format(
+                    version, MIN_PROGRAM_VERSION, MAX_PROGRAM_VERSION
+                )
             )
+
+        options = CompileOptions(mode=mode, version=version, optimize=optimize)
+
+        subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
+        subroutine_start_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
+        subroutine_end_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
+        compileSubroutine(
+            ast, options, subroutineGraph, subroutine_start_blocks, subroutine_end_blocks
         )
 
-    options = CompileOptions(mode=mode, version=version, optimize=optimize)
-
-    subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
-    subroutine_start_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
-    subroutine_end_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
-    compileSubroutine(
-        ast, options, subroutineGraph, subroutine_start_blocks, subroutine_end_blocks
-    )
-
-    # note: optimizations are off by default, in which case, apply_global_optimizations
-    # won't make any changes. Because the optimizer is invoked on a subroutine's
-    # control flow graph, the optimizer requires context across block boundaries. This
-    # is necessary for the dependency checking of local slots. Global slots, slots
-    # used by DynamicScratchVar, and reserved slots are not optimized.
-    if options.optimize.optimize_scratch_slots(version):
-        options.optimize._skip_slots = collect_unoptimized_slots(
-            subroutine_start_blocks
-        )
-        for start in subroutine_start_blocks.values():
-            apply_global_optimizations(start, options.optimize, version)
-
-    localSlotAssignments = assignScratchSlotsToSubroutines(subroutine_start_blocks)
-
-    subroutineMapping: Dict[
-        Optional[SubroutineDefinition], List[TealComponent]
-    ] = sort_subroutine_blocks(subroutine_start_blocks, subroutine_end_blocks)
-
-    spillLocalSlotsDuringRecursion(
-        version, subroutineMapping, subroutineGraph, localSlotAssignments
-    )
-
-    subroutineLabels = resolveSubroutines(subroutineMapping)
-    teal = flattenSubroutines(subroutineMapping, subroutineLabels)
-
-    verifyOpsForVersion(teal, options.version)
-    verifyOpsForMode(teal, options.mode)
-
-    if assembleConstants:
-        if version < 3:
-            raise TealInternalError(
-                f"The minimum program version required to enable assembleConstants is 3. The current version is {version}."
+        # note: optimizations are off by default, in which case, apply_global_optimizations
+        # won't make any changes. Because the optimizer is invoked on a subroutine's
+        # control flow graph, the optimizer requires context across block boundaries. This
+        # is necessary for the dependency checking of local slots. Global slots, slots
+        # used by DynamicScratchVar, and reserved slots are not optimized.
+        if options.optimize.optimize_scratch_slots(version):
+            options.optimize._skip_slots = collect_unoptimized_slots(
+                subroutine_start_blocks
             )
-        teal = createConstantBlocks(teal)
+            for start in subroutine_start_blocks.values():
+                apply_global_optimizations(start, options.optimize, version)
 
-    lines = ["#pragma version {}".format(version)]
-    lines += [i.assemble() for i in teal]
-    return "\n".join(lines)
+        localSlotAssignments = assignScratchSlotsToSubroutines(subroutine_start_blocks)
+
+        subroutineMapping: Dict[
+            Optional[SubroutineDefinition], List[TealComponent]
+        ] = sort_subroutine_blocks(subroutine_start_blocks, subroutine_end_blocks)
+
+        spillLocalSlotsDuringRecursion(
+            version, subroutineMapping, subroutineGraph, localSlotAssignments
+        )
+
+        subroutineLabels = resolveSubroutines(subroutineMapping)
+        teal = flattenSubroutines(subroutineMapping, subroutineLabels)
+
+        verifyOpsForVersion(teal, options.version)
+        verifyOpsForMode(teal, options.mode)
+
+        if assembleConstants:
+            if version < 3:
+                raise TealInternalError(
+                    f"The minimum program version required to enable assembleConstants is 3. The current version is {version}."
+                )
+            teal = createConstantBlocks(teal)
+
+        lines = ["#pragma version {}".format(version)]
+        lines += [i.assemble() for i in teal]
+        return "\n".join(lines)
+    finally:
+        ScratchSlot.reset_slot_numbering(starting_slot_id)

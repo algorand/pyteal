@@ -18,8 +18,8 @@ class ScratchSlot:
     nextSlotId: int = NUM_SLOTS
 
     @classmethod
-    def reset_slot_numbering(cls) -> None:
-        cls.nextSlotId = NUM_SLOTS
+    def reset_slot_numbering(cls, start_index: int = NUM_SLOTS) -> None:
+        cls.nextSlotId = start_index
 
     def __init__(self, requestedSlotId: int | None = None):
         """Initializes a scratch slot with a particular id
