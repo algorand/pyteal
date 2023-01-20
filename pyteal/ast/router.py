@@ -309,10 +309,11 @@ class CondWithMethod:
 CondWithMethod.__module__ = "pyteal"
 
 
-@dataclass
 class ASTBuilder:
-    conditions_n_branches: list[CondNode] = field(default_factory=list)
-    methods_with_conds: list[CondWithMethod] = field(default_factory=list)
+    def __init__(self):
+        self.conditions_n_branches: list[CondNode] = []
+        self.methods_with_conds: list[CondWithMethod] = []
+        self._bare_cnbs: list[CondNode] = []
 
     @staticmethod
     def __filter_invalid_handlers_and_typecast(
@@ -634,7 +635,7 @@ class ASTBuilder:
         self.methods_with_conds.append(CondWithMethod(method_signature, cond, handler))
 
     def program_construction(self, use_frame_pt: bool = False) -> Expr:
-        self.conditions_n_branches += [
+        self.conditions_n_branches = [cnb for cnb in self._bare_cnbs] + [
             method_with_cond.to_cond_node(use_frame_pt=use_frame_pt)
             for method_with_cond in self.methods_with_conds
         ]
@@ -689,7 +690,8 @@ class Router:
         if bare_calls and not bare_calls.is_empty():
             bare_call_approval = bare_calls.approval_construction()
             if bare_call_approval:
-                self.approval_ast.conditions_n_branches.append(
+
+                self.approval_ast._bare_cnbs.append(
                     CondNode(
                         Txn.application_args.length() == Int(0),
                         cast(Expr, bare_call_approval),
@@ -697,7 +699,7 @@ class Router:
                 )
             bare_call_clear = bare_calls.clear_state_construction()
             if bare_call_clear:
-                self.clear_state_ast.conditions_n_branches.append(
+                self.clear_state_ast._bare_cnbs.append(
                     CondNode(
                         Txn.application_args.length() == Int(0),
                         cast(Expr, bare_call_clear),
