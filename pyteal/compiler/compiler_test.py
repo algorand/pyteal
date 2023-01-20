@@ -2297,7 +2297,6 @@ def test_router_app():
             method_config=pt.MethodConfig(
                 no_op=pt.CallConfig.CALL,
                 opt_in=pt.CallConfig.ALL,
-                clear_state=pt.CallConfig.CALL,
             ),
         )
         assert meth.method_signature() == "empty_return_subroutine()void"
@@ -2311,7 +2310,6 @@ def test_router_app():
             method_config=pt.MethodConfig(
                 no_op=pt.CallConfig.CALL,
                 opt_in=pt.CallConfig.CALL,
-                clear_state=pt.CallConfig.CALL,
             ),
         )
 
@@ -2326,25 +2324,8 @@ def test_router_app():
         )
         assert meth.method_signature() == "log_creation()string"
 
-        @pt.ABIReturnSubroutine
-        def approve_if_odd(condition_encoding: pt.abi.Uint32) -> pt.Expr:
-            return (
-                pt.If(condition_encoding.get() % pt.Int(2))
-                .Then(pt.Approve())
-                .Else(pt.Reject())
-            )
-
-        meth = router.add_method_handler(
-            approve_if_odd,
-            method_config=pt.MethodConfig(
-                no_op=pt.CallConfig.NEVER, clear_state=pt.CallConfig.CALL
-            ),
-        )
-        assert meth.method_signature() == "approve_if_odd(uint32)void"
-
     on_completion_actions = pt.BareCallActions(
         opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes("optin call"))),
-        clear_state=pt.OnCompleteAction.call_only(pt.Approve()),
     )
 
     with pytest.raises(pt.TealInputError) as e:
@@ -2355,7 +2336,9 @@ def test_router_app():
     assert "Frame pointers aren't available" in str(e.value)
 
     _router_with_oc = pt.Router(
-        "ASimpleQuestionablyRobustContract", on_completion_actions
+        "ASimpleQuestionablyRobustContract",
+        on_completion_actions,
+        clear_state=pt.Approve(),
     )
     add_methods_to_router(_router_with_oc)
     (
@@ -2828,78 +2811,13 @@ retsub""".strip()
     assert expected_ap_with_oc == actual_ap_with_oc_compiled
 
     expected_csp_with_oc = """#pragma version 6
-txn NumAppArgs
-int 0
-==
-bnz main_l8
-txna ApplicationArgs 0
-method "empty_return_subroutine()void"
-==
-bnz main_l7
-txna ApplicationArgs 0
-method "log_1()uint64"
-==
-bnz main_l6
-txna ApplicationArgs 0
-method "approve_if_odd(uint32)void"
-==
-bnz main_l5
-err
-main_l5:
-txna ApplicationArgs 1
-int 0
-extract_uint32
-store 2
-load 2
-callsub approveifodd_2
-int 1
-return
-main_l6:
-callsub log1_1
-store 1
-byte 0x151f7c75
-load 1
-itob
-concat
-log
-int 1
-return
-main_l7:
-callsub emptyreturnsubroutine_0
-int 1
-return
-main_l8:
-int 1
-return
-
-// empty_return_subroutine
-emptyreturnsubroutine_0:
-byte "appear in both approval and clear state"
-log
-retsub
-
-// log_1
-log1_1:
-int 1
-store 0
-load 0
-retsub
-
-// approve_if_odd
-approveifodd_2:
-store 3
-load 3
-int 2
-%
-bnz approveifodd_2_l2
-int 0
-return
-approveifodd_2_l2:
 int 1
 return""".strip()
     assert expected_csp_with_oc == actual_csp_with_oc_compiled
 
-    _router_without_oc = pt.Router("yetAnotherContractConstructedFromRouter")
+    _router_without_oc = pt.Router(
+        "yetAnotherContractConstructedFromRouter", clear_state=pt.Approve()
+    )
     add_methods_to_router(_router_without_oc)
     (
         actual_ap_without_oc_compiled,
@@ -3350,66 +3268,6 @@ retsub""".strip()
     assert actual_ap_without_oc_compiled == expected_ap_without_oc
 
     expected_csp_without_oc = """#pragma version 6
-txna ApplicationArgs 0
-method "empty_return_subroutine()void"
-==
-bnz main_l6
-txna ApplicationArgs 0
-method "log_1()uint64"
-==
-bnz main_l5
-txna ApplicationArgs 0
-method "approve_if_odd(uint32)void"
-==
-bnz main_l4
-err
-main_l4:
-txna ApplicationArgs 1
-int 0
-extract_uint32
-store 2
-load 2
-callsub approveifodd_2
-int 1
-return
-main_l5:
-callsub log1_1
-store 1
-byte 0x151f7c75
-load 1
-itob
-concat
-log
-int 1
-return
-main_l6:
-callsub emptyreturnsubroutine_0
-int 1
-return
-
-// empty_return_subroutine
-emptyreturnsubroutine_0:
-byte "appear in both approval and clear state"
-log
-retsub
-
-// log_1
-log1_1:
-int 1
-store 0
-load 0
-retsub
-
-// approve_if_odd
-approveifodd_2:
-store 3
-load 3
-int 2
-%
-bnz approveifodd_2_l2
-int 0
-return
-approveifodd_2_l2:
 int 1
 return""".strip()
     assert actual_csp_without_oc_compiled == expected_csp_without_oc

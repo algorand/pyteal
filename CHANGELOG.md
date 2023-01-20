@@ -3,6 +3,8 @@
 ## Added
 
 ## Changed
+* Improved Router clear state program generation. ([#636](https://github.com/algorand/pyteal/pull/636))
+  * NOTE: a backwards incompatable change was imposed in this PR: previous Clear State Program (CSP) can be constructed in router by registering ABI methods or bare app calls, now one has to use `clear_state` argument in `Router.__init__` to construct the CSP.
 
 ## Fixed
 
