@@ -15,7 +15,11 @@ class ScratchSlot:
     # Unique identifier for the compiler to automatically assign slots
     # The id field is used by the compiler to map to an actual slot in the source code
     # Slot ids under 256 are manually reserved slots
-    nextSlotId = NUM_SLOTS
+    nextSlotId: int = NUM_SLOTS
+
+    @classmethod
+    def reset_slot_numbering(cls) -> None:
+        cls.nextSlotId = NUM_SLOTS
 
     def __init__(self, requestedSlotId: int | None = None):
         """Initializes a scratch slot with a particular id

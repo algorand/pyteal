@@ -6,6 +6,7 @@ from pyteal.types import TealType
 from pyteal.ast import (
     Expr,
     Return,
+    ScratchSlot,
     Seq,
     SubroutineDefinition,
     SubroutineDeclaration,
@@ -272,6 +273,8 @@ def compileTeal(
         TealInputError: if an operation in ast is not supported by the supplied mode and version.
         TealInternalError: if an internal error is encounter during compilation.
     """
+    ScratchSlot.reset_slot_numbering()
+
     if (
         not (MIN_PROGRAM_VERSION <= version <= MAX_PROGRAM_VERSION)
         or type(version) is not int
