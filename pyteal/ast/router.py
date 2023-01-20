@@ -86,8 +86,8 @@ class MethodConfig:
     def __post_init__(self):
         if self.clear_state != CallConfig.NEVER:
             raise TealInputError(
-                "Attempt to construct clear state program from MethodConfig, "
-                "use Router top level argument `clear_state` instead. "
+                "Attempt to construct clear state program from MethodConfig: "
+                "Use Router top level argument `clear_state` instead. "
                 "For more details please refer to "
                 "https://pyteal.readthedocs.io/en/latest/abi.html#registering-bare-app-calls"
             )
@@ -191,8 +191,8 @@ class BareCallActions:
     def __post_init__(self):
         if not self.clear_state.is_empty():
             raise TealInputError(
-                "Attempt to construct clear state program from bare app call, "
-                "use Router top level argument `clear_state` instead. "
+                "Attempt to construct clear state program from bare app call: "
+                "Use Router top level argument `clear_state` instead. "
                 "For more details please refer to "
                 "https://pyteal.readthedocs.io/en/latest/abi.html#registering-bare-app-calls"
             )
@@ -265,7 +265,7 @@ class ASTBuilder:
 
     @staticmethod
     def wrap_handler(
-        is_method_call: bool, handler: ActionType, wrap_to_name: Optional[str] = None
+        is_method_call: bool, handler: ActionType, wrap_to_name: str | None = None
     ) -> Expr:
         """This is a helper function that handles transaction arguments passing in bare-app-call/abi-method handlers.
 
@@ -633,7 +633,7 @@ class Router:
 
         if clear_state is not None:
             raise TealInputError(
-                "Attempt to register ABI method for clear state program. "
+                "Attempt to register ABI method for clear state program: "
                 "Use Router top level argument `clear_state` instead. "
                 "For more details please refer to "
                 "https://pyteal.readthedocs.io/en/latest/abi.html#registering-bare-app-calls"

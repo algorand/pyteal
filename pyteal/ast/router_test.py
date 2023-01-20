@@ -374,6 +374,16 @@ def test_bare_call_config_clear_state_failure():
         )
 
 
+def test_router_register_method_clear_state_failure():
+    router = pt.Router("doomedToFail")
+
+    with pytest.raises(pt.TealInputError):
+
+        @router.method(clear_state=pt.CallConfig.CALL)
+        def incr_by_1(a: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+            return output.set(a.get() + pt.Int(1))
+
+
 def test_call_config():
     for cc in pt.CallConfig:
         approval_cond_on_cc: pt.Expr | int = cc.approval_condition_under_config()
