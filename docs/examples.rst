@@ -5,43 +5,13 @@ PyTeal Examples
 
 Here are some additional PyTeal example programs:
 
-Signature Mode
---------------
+Currently, the majority of dApps do use application mode for signing and verifying transactions on the blockchain. 
+This is because application mode allows for a more user-friendly experience and can be integrated more easily into web and mobile interfaces. 
+Additionally, it allows dApps to handle the signing process on behalf of the user, which can simplify the process for non-technical users.
 
-Atomic Swap
-~~~~~~~~~~~~~~~
+In application mode, the dApp can handle the private key storage and signing process, so users do not need to manage their own private keys or use additional hardware wallets.
+This can make the process of using the dApp more convenient for users, as they do not need to worry about managing their own private keys.
 
-*Atomic Swap* allows the transfer of Algos from a buyer to a seller in exchange for a good or
-service. This is done using a *Hashed Time Locked Contract*. In this scheme, the buyer funds a
-TEAL account with the sale price. The buyer also picks a secret value and encodes a secure hash of
-this value in the TEAL program. The TEAL program will transfer its balance to the seller if the
-seller is able to provide the secret value that corresponds to the hash in the program. When the
-seller renders the good or service to the buyer, the buyer discloses the secret from the program.
-The seller can immediately verify the secret and withdraw the payment.
-
-.. literalinclude:: ../examples/signature/atomic_swap.py
-    :language: python
-
-Split Payment
-~~~~~~~~~~~~~
-
-*Split Payment* splits payment between :code:`tmpl_rcv1` and :code:`tmpl_rcv2` on the ratio of
-:code:`tmpl_ratn / tmpl_ratd`.
-
-.. literalinclude:: ../examples/signature/split.py
-    :language: python
-
-Periodic Payment
-~~~~~~~~~~~~~~~~
-
-*Periodic Payment* allows some account to execute periodic withdrawal of funds. This PyTeal program
-creates an contract account that allows :code:`tmpl_rcv` to withdraw :code:`tmpl_amt` every
-:code:`tmpl_period` rounds for :code:`tmpl_dur` after every multiple of :code:`tmpl_period`.
-
-After :code:`tmpl_timeout`, all remaining funds in the escrow are available to :code:`tmpl_rcv`.
-
-.. literalinclude:: ../examples/signature/periodic_payment.py
-    :language: python
 
 Application Mode
 ----------------
@@ -160,4 +130,46 @@ not frozen or temporarily locked, transfer group restrictions are not in place b
 receiver's account does not have a maximum balance restriction that would be invalidated.
 
 .. literalinclude:: ../examples/application/security_token.py
+    :language: python
+
+
+
+
+
+Signature Mode
+--------------
+
+Atomic Swap
+~~~~~~~~~~~~~~~
+
+*Atomic Swap* allows the transfer of Algos from a buyer to a seller in exchange for a good or
+service. This is done using a *Hashed Time Locked Contract*. In this scheme, the buyer funds a
+TEAL account with the sale price. The buyer also picks a secret value and encodes a secure hash of
+this value in the TEAL program. The TEAL program will transfer its balance to the seller if the
+seller is able to provide the secret value that corresponds to the hash in the program. When the
+seller renders the good or service to the buyer, the buyer discloses the secret from the program.
+The seller can immediately verify the secret and withdraw the payment.
+
+.. literalinclude:: ../examples/signature/atomic_swap.py
+    :language: python
+
+Split Payment
+~~~~~~~~~~~~~
+
+*Split Payment* splits payment between :code:`tmpl_rcv1` and :code:`tmpl_rcv2` on the ratio of
+:code:`tmpl_ratn / tmpl_ratd`.
+
+.. literalinclude:: ../examples/signature/split.py
+    :language: python
+
+Periodic Payment
+~~~~~~~~~~~~~~~~
+
+*Periodic Payment* allows some account to execute periodic withdrawal of funds. This PyTeal program
+creates an contract account that allows :code:`tmpl_rcv` to withdraw :code:`tmpl_amt` every
+:code:`tmpl_period` rounds for :code:`tmpl_dur` after every multiple of :code:`tmpl_period`.
+
+After :code:`tmpl_timeout`, all remaining funds in the escrow are available to :code:`tmpl_rcv`.
+
+.. literalinclude:: ../examples/signature/periodic_payment.py
     :language: python
