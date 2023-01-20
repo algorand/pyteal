@@ -1,4 +1,3 @@
-from copy import deepcopy
 import pytest
 import secrets
 import typing
@@ -954,7 +953,6 @@ def test_router_build_idempotence():
     assert contract1.dictify() == contract2.dictify()
     approval1, clear1, contract1 = router.compile_program(version=6)
     approval2, clear2, contract2 = router.compile_program(version=6)
-
 
     @pt.ABIReturnSubroutine
     def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
