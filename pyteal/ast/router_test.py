@@ -361,27 +361,33 @@ def camel_to_snake(name: str) -> str:
 
 
 def test_method_config_clear_state_failure():
-    with pytest.raises(pt.TealInputError):
+    with pytest.raises(pt.TealInputError) as tie:
         pt.MethodConfig(clear_state=pt.CallConfig.CALL)
+
+    assert "Attempt to construct clear state program from MethodConfig" in str(tie)
 
 
 def test_bare_call_config_clear_state_failure():
-    with pytest.raises(pt.TealInputError):
+    with pytest.raises(pt.TealInputError) as tie:
         pt.BareCallActions(
             clear_state=pt.OnCompleteAction(
                 action=pt.Seq(), call_config=pt.CallConfig.CALL
             )
         )
 
+    assert "Attempt to construct clear state program from bare app call" in str(tie)
+
 
 def test_router_register_method_clear_state_failure():
     router = pt.Router("doomedToFail")
 
-    with pytest.raises(pt.TealInputError):
+    with pytest.raises(pt.TealInputError) as tie:
 
         @router.method(clear_state=pt.CallConfig.CALL)
         def incr_by_1(a: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
             return output.set(a.get() + pt.Int(1))
+
+    assert "Attempt to register ABI method for clear state program" in str(tie)
 
 
 def test_call_config():
