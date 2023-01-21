@@ -732,13 +732,16 @@ The AVM supports 6 types of OnCompletion options that may be specified on an app
 #. **Update application**, which updates an app, represented by :any:`OnComplete.UpdateApplication`
 #. **Delete application**, which deletes an app, represented by :any:`OnComplete.DeleteApplication`
 
-In PyTeal, you have the ability to register a bare app call handler for each of these actions. Additionally, a bare app call handler must also specify whether the handler can be invoking during an **app creation transaction** (:any:`CallConfig.CREATE`), during a **non-creation app call** (:any:`CallConfig.CALL`), or during **either** (:any:`CallConfig.ALL`).
+.. note::
+    While **clear state** is a valid OnCompletion action, its behavior differs significantly from the others. For this reason, the :any:`Router` does not support bare app calls or methods to be called during clear state. Instead, you may use the :code:`clear_state` argument in :any:`Router.__init__` to do work during clear state.
+
+In PyTeal, you have the ability to register a bare app call handler for each of these actions, except for clear state. Additionally, a bare app call handler must also specify whether the handler can be invoking during an **app creation transaction** (:any:`CallConfig.CREATE`), during a **non-creation app call** (:any:`CallConfig.CALL`), or during **either** (:any:`CallConfig.ALL`).
 
 The :any:`BareCallActions` class is used to define a bare app call handler for on completion actions. Each bare app call handler must be an instance of the :any:`OnCompleteAction` class.
 
 The :any:`OnCompleteAction` class is responsible for holding the actual code for the bare app call handler (an instance of either :code:`Expr` or a subroutine that takes no args and returns nothing) as well as a :any:`CallConfig` option that indicates whether the action is able to be called during a creation app call, a non-creation app call, or either.
 
-All the bare app calls that an application wishes to support must be provided to the :any:`Router.__init__` method.
+All the bare app calls that an application wishes to support must be provided to the :any:`Router.__init__` method. Additionally, if you wish to perform actions during clear state, you can specify the :code:`clear_state` argument.
 
 A brief example is below:
 
@@ -785,6 +788,7 @@ A brief example is below:
                 action=assert_sender_is_creator, call_config=CallConfig.CALL
             ),
         ),
+        clear_state=Approve(),
     )
 
 .. note::
@@ -820,6 +824,7 @@ The first way to register a method is with the :any:`Router.add_method_handler` 
             opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.CALL),
             close_out=OnCompleteAction(action=Approve(), call_config=CallConfig.CALL),
         ),
+        clear_state=Approve(),
     )
 
     @ABIReturnSubroutine
