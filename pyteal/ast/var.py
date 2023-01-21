@@ -1,15 +1,11 @@
 from typing import TYPE_CHECKING
-from enum import Enum
 from pyteal.ast.expr import Expr
 from pyteal.ast.bytes import Bytes
 from pyteal.ast.int import Int
-from pyteal.ast.binaryexpr import BytesMul
 from pyteal.ast.unaryexpr import Itob, Btoi
-from pyteal.ast.seq import Seq
 from pyteal.ast.naryexpr import Concat
 from pyteal.ast.scratch import ScratchSlot
 from pyteal.types import TealType, TealTypeError
-from pyteal.ast import abi
 
 
 if TYPE_CHECKING:
@@ -79,10 +75,10 @@ class Var(Expr):
     def assign(self) -> Expr:
         return self.store(self.val)
 
-    def load(self):
+    def load(self) -> Expr:
         return self.slot.load(self.type)
 
-    def store(self, val: Expr):
+    def store(self, val: Expr) -> Expr:
         self.val = val
         self.type = val.type_of()
         return self.slot.store(val)
@@ -93,28 +89,23 @@ class Var(Expr):
     def type_of(self):
         return self.type
 
-    def __add__(self, other: "Var | Expr") -> Expr:
-        match other:
-            case Var():
-                # treat assertion special because this is evaluated prior to assignment
-                # so typecheck needs to be against val
-                assert other.val.type_of() == self.val.type_of()
-                match self.type:
-                    case TealType.uint64:
-                        return Seq(self.load() + other.load())
-                    case TealType.bytes:
-                        return Concat(self.load(), other.load())
-                    case _:
-                        raise Exception("????")
-            case Expr():
-                assert other.type_of() == self.val.type_of()
-                match self.type:
-                    case TealType.uint64:
-                        return self.load() + other
-                    case TealType.bytes:
-                        return Concat(self.load(), other)
-                    case _:
-                        raise Exception("????")
+    def incr(self) -> Expr:
+        assert self.type == TealType.uint64
+        return self.store(self.load() + Int(1))
+
+    def decr(self) -> Expr:
+        assert self.type == TealType.uint64
+        return self.store(self.load() - Int(1))
+
+    def __add__(self, other: Expr) -> Expr:
+        assert other.type_of() == self.type_of()
+        match self.type:
+            case TealType.uint64:
+                return self.load() + other
+            case TealType.bytes:
+                return Concat(self.load(), other)
+            case _:
+                raise Exception("howd we get here")
 
 
 Var.__module__ = "pyteal"
