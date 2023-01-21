@@ -34,7 +34,7 @@ from pyteal.errors import TealInputError, TealInternalError
 from pyteal.ir.ops import Mode
 from pyteal.stack_frame import StackFrames
 from pyteal.types import TealType
-from pyteal.util import algod_with_assertion
+from pyteal.util import algod_with_assertion, AlgodClientError
 
 ActionType = Expr | SubroutineFnWrapper | ABIReturnSubroutine
 
@@ -717,7 +717,12 @@ class _RouterCompileInput:
 
         if self.pcs_in_sourcemap:
             # bootstrap an algod_client if not provided, and in either case, run a healthcheck
-            self.algod_client = algod_with_assertion(self.algod_client)
+            try:
+                self.algod_client = algod_with_assertion(self.algod_client)
+            except AlgodClientError as ace:
+                raise ResourceWarning(
+                    "algod_with_assertion has failed: are you sure there is an available node such as Sandbox?"
+                ) from ace
 
     def get_compilation(self, program: Expr) -> Compilation:
         return Compilation(

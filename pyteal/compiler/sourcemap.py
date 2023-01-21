@@ -499,17 +499,10 @@ class TealMapItem(PyTealFrame):
 
         return super()._hybrid_w_offset()
 
-    def pcs_repr(self, prefix: str = "") -> str:
-        if not self.pcs_hydrated:
+    def pcs_repr(self, prefix: str = "", wrapper="({})") -> str:
+        if not (self.pcs_hydrated and self.pcs):
             return ""
-
-        pcs_repr = prefix + "PC[{}]"
-        internal = ""
-        if self.pcs:
-            internal += str(self.pcs[0])
-            if len(self.pcs) > 1:
-                internal += "-" + str(self.pcs[-1])
-        return pcs_repr.format(internal)
+        return f"{prefix}{wrapper.format(self.pcs[0])}"
 
     def __repr__(self) -> str:
         P = " // "

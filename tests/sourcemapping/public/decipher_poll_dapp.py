@@ -4,7 +4,7 @@ from typing import Literal
 from pyteal import *
 
 
-pragma(compiler_version="0.20.1")
+pragma(compiler_version=">0.19.0")
 
 on_delete = Seq(
     Assert(Txn.sender() == Global.creator_address()),
@@ -184,7 +184,7 @@ if __name__ == "__main__":
         assemble_constants=False,
         optimize=OptimizeOptions(scratch_slots=True, frame_pointers=True),
         with_sourcemaps=True,
-        pcs_in_sourcemap=False,
+        pcs_in_sourcemap=True,
         annotate_teal=True,
         annotate_teal_headers=True,
         annotate_teal_concise=True,
