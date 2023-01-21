@@ -6,6 +6,8 @@ from pyteal.ast.unaryexpr import Itob, Btoi
 from pyteal.ast.naryexpr import Concat
 from pyteal.ast.scratch import ScratchSlot
 from pyteal.types import TealType, TealTypeError
+from pyteal.ast import abi
+from algosdk import abi as sdkabi
 
 
 if TYPE_CHECKING:
@@ -60,23 +62,37 @@ def _type_cast(
 
 class Var(Expr):
     def __init__(
-        self, val: Expr | int | bytes | str, type_cast: TealType = TealType.anytype
+        self,
+        val: Expr | int | bytes | str,
+        type_cast: TealType | str = TealType.anytype,
     ):
-        self.val = _type_cast(val, type_cast)
+        self.abi_type: abi.TypeSpec | None = None
         self.slot = ScratchSlot()
+
+        match type_cast:
+            case str():
+                abi_type = sdkabi.ABIType.from_string(type_cast)
+                self.abi_type = abi.type_spec_from_algosdk(abi_type)
+                self.val = _type_cast(val, TealType.bytes)
+            case TealType.bytes | TealType.uint64 | TealType.anytype:
+                self.val = _type_cast(val, type_cast)
+
         self.type = self.val.type_of()
 
     def __str__(self):
         return self.slot.load(self.type).__str__()
 
     def __teal__(self, options: "CompileOptions"):
-        return self.load().__teal__(options)
-
-    def assign(self) -> Expr:
-        return self.store(self.val)
+        return self.slot.load(self.type).__teal__(options)
 
     def load(self) -> Expr:
         return self.slot.load(self.type)
+
+    def assign(self) -> Expr:
+        return self(self.val)
+
+    def __call__(self, val: Expr) -> Expr:
+        return self.store(val)
 
     def store(self, val: Expr) -> Expr:
         self.val = val
@@ -88,14 +104,6 @@ class Var(Expr):
 
     def type_of(self):
         return self.type
-
-    def incr(self) -> Expr:
-        assert self.type == TealType.uint64
-        return self.store(self.load() + Int(1))
-
-    def decr(self) -> Expr:
-        assert self.type == TealType.uint64
-        return self.store(self.load() - Int(1))
 
     def __add__(self, other: Expr) -> Expr:
         assert other.type_of() == self.type_of()
