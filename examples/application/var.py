@@ -1,4 +1,6 @@
 from pyteal import (
+    Subroutine,
+    OptimizeOptions,
     For,
     Len,
     App,
@@ -12,6 +14,11 @@ from pyteal import (
     Expr,
     Var,
 )
+
+# Just making sure it works for subrs
+@Subroutine(TealType.uint64)
+def add_vars(a: Expr, b: Expr) -> Expr:
+    return a + b
 
 
 # This method allows us to return a seq
@@ -36,6 +43,9 @@ program = Seq(
         z := Var(3),
     ),
     Assert(v + z == Int(4)),
+    # Subroutines ok?
+    assign(result := Var(add_vars(v, z))),
+    Assert(result == Int(4)),
     # Note: v += z does _not_ work and produces a syntax error
     #
     # Bytes can be concat'd with +
@@ -70,4 +80,12 @@ program = Seq(
     # ##
     Int(1),
 )
-print(compileTeal(program, mode=Mode.Application, version=6))
+
+print(
+    compileTeal(
+        program,
+        mode=Mode.Application,
+        version=8,
+        optimize=OptimizeOptions(scratch_slots=True, frame_pointers=True),
+    )
+)
