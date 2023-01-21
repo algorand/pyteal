@@ -6,7 +6,8 @@ and test the results of source mapping various PyTeal apps.
 from configparser import ConfigParser
 from copy import deepcopy
 from pathlib import Path
-import sys
+
+# import sys
 from typing import cast, Literal
 from unittest import mock
 

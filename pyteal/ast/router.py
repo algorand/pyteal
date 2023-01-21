@@ -3,7 +3,7 @@
 
 from dataclasses import astuple, dataclass, field
 from enum import IntFlag
-from typing import Callable, Final, Optional, cast
+from typing import Callable, Final, Optional, Union, cast
 
 from algosdk import abi as sdk_abi
 from algosdk import encoding
@@ -135,7 +135,7 @@ class MethodConfig:
 MethodConfig.__module__ = "pyteal"
 
 
-ActionType = Expr | SubroutineFnWrapper | ABIReturnSubroutine
+ActionType = Union[Expr, SubroutineFnWrapper, ABIReturnSubroutine]
 
 
 MethodConfig.__module__ = "pyteal"
