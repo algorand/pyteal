@@ -252,7 +252,6 @@ GOOD_SUBROUTINE_CASES: list[pt.ABIReturnSubroutine | pt.SubroutineFnWrapper] = [
 ON_COMPLETE_CASES: list[pt.EnumInt] = [
     pt.OnComplete.NoOp,
     pt.OnComplete.OptIn,
-    pt.OnComplete.ClearState,
     pt.OnComplete.CloseOut,
     pt.OnComplete.UpdateApplication,
     pt.OnComplete.DeleteApplication,
@@ -361,6 +360,36 @@ def camel_to_snake(name: str) -> str:
     return "".join(["_" + c.lower() if c.isupper() else c for c in name]).lstrip("_")
 
 
+def test_method_config_clear_state_failure():
+    with pytest.raises(pt.TealInputError) as tie:
+        pt.MethodConfig(clear_state=pt.CallConfig.CALL)
+
+    assert "Attempt to construct clear state program from MethodConfig" in str(tie)
+
+
+def test_bare_call_config_clear_state_failure():
+    with pytest.raises(pt.TealInputError) as tie:
+        pt.BareCallActions(
+            clear_state=pt.OnCompleteAction(
+                action=pt.Seq(), call_config=pt.CallConfig.CALL
+            )
+        )
+
+    assert "Attempt to construct clear state program from bare app call" in str(tie)
+
+
+def test_router_register_method_clear_state_failure():
+    router = pt.Router("doomedToFail")
+
+    with pytest.raises(pt.TealInputError) as tie:
+
+        @router.method(clear_state=pt.CallConfig.CALL)
+        def incr_by_1(a: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+            return output.set(a.get() + pt.Int(1))
+
+    assert "Attempt to register ABI method for clear state program" in str(tie)
+
+
 def test_call_config():
     for cc in pt.CallConfig:
         approval_cond_on_cc: pt.Expr | int = cc.approval_condition_under_config()
@@ -382,31 +411,11 @@ def test_call_config():
                     f"unexpected approval_cond_on_cc {approval_cond_on_cc}"
                 )
 
-        if cc in (pt.CallConfig.CREATE, pt.CallConfig.ALL):
-            with pytest.raises(
-                pt.TealInputError,
-                match=r"Only CallConfig.CALL or CallConfig.NEVER are valid for a clear state CallConfig, since clear state can never be invoked during creation$",
-            ):
-                cc.clear_state_condition_under_config()
-            continue
-
-        clear_state_cond_on_cc: int = cc.clear_state_condition_under_config()
-        match clear_state_cond_on_cc:
-            case 0:
-                assert cc == pt.CallConfig.NEVER
-            case 1:
-                assert cc == pt.CallConfig.CALL
-            case _:
-                raise pt.TealInternalError(
-                    f"unexpected clear_state_cond_on_cc {clear_state_cond_on_cc}"
-                )
-
 
 def test_method_config_call_config_never():
     never_mc = pt.MethodConfig(no_op=pt.CallConfig.NEVER)
     assert never_mc.is_never()
     assert never_mc.approval_cond() == 0
-    assert never_mc.clear_state_cond() == 0
 
 
 def _gen_method_configs(sample_count: int = 10):
@@ -427,17 +436,6 @@ def test_method_config(mc: pt.MethodConfig):
         if str(oc) != str(pt.OnComplete.ClearState)
     ]
 
-    match mc.clear_state:
-        case pt.CallConfig.NEVER:
-            assert mc.clear_state_cond() == 0
-        case pt.CallConfig.CALL:
-            assert mc.clear_state_cond() == 1
-        case pt.CallConfig.CREATE | pt.CallConfig.ALL:
-            with pytest.raises(
-                pt.TealInputError,
-                match=r"Only CallConfig.CALL or CallConfig.NEVER are valid for a clear state CallConfig, since clear state can never be invoked during creation$",
-            ):
-                mc.clear_state_cond()
     if mc.is_never() or all(
         getattr(mc, i) == pt.CallConfig.NEVER for i, _ in approval_check_names_n_ocs
     ):
@@ -520,7 +518,7 @@ def test_wrap_handler_bare_call():
         ),
         (
             mult_over_u64_and_log,
-            "subroutine call should take 0 arg for bare-app call. this subroutine takes 2.",
+            "subroutine call should take 0 arg for bare appcall. this subroutine takes 2.",
         ),
         (
             eine_constant,
@@ -528,7 +526,7 @@ def test_wrap_handler_bare_call():
         ),
         (
             take_abi_and_log,
-            "abi-returning subroutine call should take 0 arg for bare-app call. this abi-returning subroutine takes 1.",
+            "abi-returning subroutine call should take 0 arg for bare appcall. this abi-returning subroutine takes 1.",
         ),
         (
             1,
@@ -724,10 +722,7 @@ def test_contract_json_obj():
         filter(lambda x: isinstance(x, pt.ABIReturnSubroutine), GOOD_SUBROUTINE_CASES)
     )
     contract_name = "contract_name"
-    on_complete_actions = pt.BareCallActions(
-        clear_state=pt.OnCompleteAction.call_only(safe_clear_state_delete)
-    )
-    router = pt.Router(contract_name, on_complete_actions)
+    router = pt.Router(contract_name, clear_state=safe_clear_state_delete)
     method_list: list[sdk_abi.Method] = []
     for subroutine in abi_subroutines:
 
@@ -779,10 +774,7 @@ def test_build_program_all_empty():
 
 
 def test_build_program_approval_empty():
-    router = pt.Router(
-        "test",
-        pt.BareCallActions(clear_state=pt.OnCompleteAction.call_only(pt.Approve())),
-    )
+    router = pt.Router("test", clear_state=pt.Approve())
 
     approval, clear_state, contract = router.build_program()
 
@@ -823,81 +815,21 @@ def test_build_program_clear_state_empty():
     assert contract == expected_contract
 
 
-def test_build_program_clear_state_invalid_config():
-    for config in (pt.CallConfig.CREATE, pt.CallConfig.ALL):
-        bareCalls = pt.BareCallActions(
-            clear_state=pt.OnCompleteAction(action=pt.Approve(), call_config=config)
-        )
-        with pytest.raises(
-            pt.TealInputError,
-            match=r"Only CallConfig.CALL or CallConfig.NEVER are valid for a clear state CallConfig, since clear state can never be invoked during creation$",
-        ):
-            pt.Router("test", bareCalls)
-
-        router = pt.Router("test")
-
-        @pt.ABIReturnSubroutine
-        def clear_state_method():
-            return pt.Approve()
-
-        with pytest.raises(
-            pt.TealInputError,
-            match=r"Only CallConfig.CALL or CallConfig.NEVER are valid for a clear state CallConfig, since clear state can never be invoked during creation$",
-        ):
-            router.add_method_handler(
-                clear_state_method,
-                method_config=pt.MethodConfig(clear_state=config),
-            )
-
-
 def test_build_program_clear_state_valid_config():
     action = pt.If(pt.Txn.fee() == pt.Int(4)).Then(pt.Approve()).Else(pt.Reject())
-    config = pt.CallConfig.CALL
 
     router_with_bare_call = pt.Router(
         "test",
-        pt.BareCallActions(
-            clear_state=pt.OnCompleteAction(action=action, call_config=config)
-        ),
+        clear_state=action,
     )
     _, actual_clear_state_with_bare_call, _ = router_with_bare_call.build_program()
 
-    expected_clear_state_with_bare_call = assemble_helper(
-        pt.Cond([pt.Txn.application_args.length() == pt.Int(0), action])
-    )
+    expected_clear_state_with_bare_call = assemble_helper(action)
 
     with pt.TealComponent.Context.ignoreExprEquality():
         assert (
             assemble_helper(actual_clear_state_with_bare_call)
             == expected_clear_state_with_bare_call
-        )
-
-    router_with_method = pt.Router("test")
-
-    @pt.ABIReturnSubroutine
-    def clear_state_method():
-        return action
-
-    router_with_method.add_method_handler(
-        clear_state_method, method_config=pt.MethodConfig(clear_state=config)
-    )
-
-    _, actual_clear_state_with_method, _ = router_with_method.build_program()
-
-    expected_clear_state_with_method = assemble_helper(
-        pt.Cond(
-            [
-                pt.Txn.application_args[0]
-                == pt.MethodSignature("clear_state_method()void"),
-                pt.Seq(clear_state_method(), pt.Approve()),
-            ]
-        )
-    )
-
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert (
-            assemble_helper(actual_clear_state_with_method)
-            == expected_clear_state_with_method
         )
 
 

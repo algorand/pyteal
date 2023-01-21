@@ -70,19 +70,6 @@ class CallConfig(IntFlag):
             case _:
                 raise TealInternalError(f"unexpected CallConfig {self}")
 
-    def clear_state_condition_under_config(self) -> int:
-        match self:
-            case CallConfig.NEVER:
-                return 0
-            case CallConfig.CALL:
-                return 1
-            case CallConfig.CREATE | CallConfig.ALL:
-                raise TealInputError(
-                    "Only CallConfig.CALL or CallConfig.NEVER are valid for a clear state CallConfig, since clear state can never be invoked during creation"
-                )
-            case _:
-                raise TealInputError(f"unexpected CallConfig {self}")
-
 
 CallConfig.__module__ = "pyteal"
 
@@ -102,6 +89,15 @@ class MethodConfig:
     clear_state: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
     update_application: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
     delete_application: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
+
+    def __post_init__(self):
+        if self.clear_state != CallConfig.NEVER:
+            raise TealInputError(
+                "Attempt to construct clear state program from MethodConfig: "
+                "Use Router top level argument `clear_state` instead. "
+                "For more details please refer to "
+                "https://pyteal.readthedocs.io/en/latest/abi.html#registering-bare-app-calls"
+            )
 
     def is_never(self) -> bool:
         return all(map(lambda cc: cc == CallConfig.NEVER, astuple(self)))
@@ -135,8 +131,11 @@ class MethodConfig:
                         )
             return Or(*cond_list)
 
-    def clear_state_cond(self) -> Expr | int:
-        return self.clear_state.clear_state_condition_under_config()
+
+MethodConfig.__module__ = "pyteal"
+
+
+ActionType = Expr | SubroutineFnWrapper | ABIReturnSubroutine
 
 
 MethodConfig.__module__ = "pyteal"
@@ -148,8 +147,8 @@ class OnCompleteAction:
     OnComplete Action, registers bare calls to one single OnCompletion case.
     """
 
-    action: Final[Optional[ActionType]] = field(kw_only=True, default=None)
-    call_config: Final[CallConfig] = field(kw_only=True, default=CallConfig.NEVER)
+    action: ActionType | None = field(kw_only=True, default=None)
+    call_config: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
 
     def __post_init__(self):
         if bool(self.call_config) ^ bool(self.action):
@@ -163,21 +162,15 @@ class OnCompleteAction:
         return OnCompleteAction()
 
     @staticmethod
-    def create_only(
-        f: ActionType,
-    ) -> "OnCompleteAction":
+    def create_only(f: ActionType) -> "OnCompleteAction":
         return OnCompleteAction(action=f, call_config=CallConfig.CREATE)
 
     @staticmethod
-    def call_only(
-        f: ActionType,
-    ) -> "OnCompleteAction":
+    def call_only(f: ActionType) -> "OnCompleteAction":
         return OnCompleteAction(action=f, call_config=CallConfig.CALL)
 
     @staticmethod
-    def always(
-        f: ActionType,
-    ) -> "OnCompleteAction":
+    def always(f: ActionType) -> "OnCompleteAction":
         return OnCompleteAction(action=f, call_config=CallConfig.ALL)
 
     def is_empty(self) -> bool:
@@ -221,6 +214,15 @@ class BareCallActions:
             self.update_application,
         ]
 
+    def __post_init__(self):
+        if not self.clear_state.is_empty():
+            raise TealInputError(
+                "Attempt to construct clear state program from bare app call: "
+                "Use Router top level argument `clear_state` instead. "
+                "For more details please refer to "
+                "https://pyteal.readthedocs.io/en/latest/abi.html#registering-bare-app-calls"
+            )
+
     def is_empty(self) -> bool:
         return all([a.is_empty() for a in self.actions()])
 
@@ -262,21 +264,6 @@ class BareCallActions:
             conditions_n_branches.append(CondNode(cond, cond_body))
         return Cond(*[[n.condition, n.branch] for n in conditions_n_branches])
 
-    def clear_state_construction(self) -> Optional[Expr]:
-        if self.clear_state.is_empty():
-            return None
-
-        # call this to make sure we error if the CallConfig is CREATE or ALL
-        self.clear_state.call_config.clear_state_condition_under_config()
-
-        return ASTBuilder.wrap_handler(
-            False,
-            cast(
-                ActionType,
-                self.clear_state.action,
-            ),
-        )
-
 
 BareCallActions.__module__ = "pyteal"
 
@@ -308,6 +295,9 @@ class CondWithMethod:
             raise TealInputError("Invalid condition input for CondWithMethod")
 
         walk_in_cond = Txn.application_args[0] == MethodSignature(self.method_sig)
+
+        if not (isinstance(self.condition, Expr) or self.condition == 1):
+            raise TealInputError("Invalid condition input for CondWithMethod")
 
         res = ASTBuilder.wrap_handler(True, self.method, use_frame_pt=use_frame_pt)
         if isinstance(self.condition, Expr):
@@ -768,6 +758,9 @@ class Router:
             name: the name of the smart contract, used in the JSON object.
             bare_calls: the bare app call registered for each on_completion.
             descr: a description of the smart contract, used in the JSON object.
+            clear_state: an expression describing the behavior of clear state program. This
+                expression will be the entirety of the clear state program; no additional code is
+                inserted by the Router. If not provided, the clear state program will always reject.
         """
 
         self.name: str = name
@@ -884,6 +877,8 @@ class Router:
             opt_in (optional): The allowed calls during :code:`OnComplete.OptIn`.
             close_out (optional): The allowed calls during :code:`OnComplete.CloseOut`.
             clear_state (optional): The allowed calls during :code:`OnComplete.ClearState`.
+                This argument has been deprecated, and will error on compile time if one wants to access it.
+                Use Router top level argument `clear_state` instead.
             update_application (optional): The allowed calls during :code:`OnComplete.UpdateApplication`.
             delete_application (optional): The allowed calls during :code:`OnComplete.DeleteApplication`.
         """

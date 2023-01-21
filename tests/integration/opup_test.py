@@ -1,16 +1,19 @@
-import math
+import graviton.models
 import pytest
+import math
 
 from typing import cast
 import pyteal as pt
 from tests.blackbox import (
-    algod_with_assertion,
     Blackbox,
     BlackboxWrapper,
     PyTealDryRunExecutor,
 )
-from graviton.blackbox import DryRunExecutor, DryRunInspector
-from graviton.models import ExecutionMode, ZERO_ADDRESS
+from graviton.blackbox import (
+    DryRunExecutor,
+    DryRunInspector,
+    DryRunTransactionParams as TxParams,
+)
 
 from algosdk.v2client.models import Account
 import algosdk
@@ -19,21 +22,18 @@ import algosdk
 def _dryrun(
     bw: BlackboxWrapper,
     sp: algosdk.transaction.SuggestedParams,
-    accounts: list[Account],
+    accounts: list[Account | str],
 ) -> DryRunInspector:
-    e = PyTealDryRunExecutor(bw, pt.Mode.Application)
-    return DryRunExecutor.execute_one_dryrun(
-        algod_with_assertion(),
-        e.compile(pt.MAX_PROGRAM_VERSION),
+    return PyTealDryRunExecutor(bw, pt.Mode.Application).dryrun_one(
         [],
-        ExecutionMode.Application,
-        txn_params=DryRunExecutor.transaction_params(
-            sender=ZERO_ADDRESS,
+        compiler_version=pt.compiler.MAX_PROGRAM_VERSION,
+        txn_params=TxParams.for_app(
+            sender=graviton.models.ZERO_ADDRESS,
             sp=sp,
             index=DryRunExecutor.EXISTING_APP_CALL,
             on_complete=algosdk.transaction.OnComplete.NoOpOC,
+            dryrun_accounts=accounts,
         ),
-        accounts=cast(list[str | Account], accounts),
     )
 
 
@@ -60,7 +60,7 @@ def test_opup_maximize_budget(
         )
 
     if with_funding:
-        accounts = (
+        accounts: list[Account | str] = (
             [
                 Account(
                     address=algosdk.logic.get_application_address(
@@ -120,7 +120,7 @@ def test_opup_ensure_budget(
         )
 
     if with_funding:
-        accounts = (
+        accounts: list[Account | str] = (
             [
                 Account(
                     address=algosdk.logic.get_application_address(

@@ -257,7 +257,7 @@ def test_roundtrip(abi_type):
     args = (rand_abi_instance,)
 
     def dryrun_roundtrip(version: int):
-        inspector = roundtripper.dryrun(args, compiler_version=version)
+        inspector = roundtripper.dryrun_one(args, compiler_version=version)
 
         cost = inspector.cost()
         passed = inspector.passed()
