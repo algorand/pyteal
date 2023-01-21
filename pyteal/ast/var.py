@@ -16,86 +16,82 @@ if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
 
 
+def _type_cast(
+    val: Expr | int | bytes | str, type_cast: TealType = TealType.anytype
+) -> Expr:
+    match val:
+        case str() | bytes():
+            match type_cast:
+                case TealType.uint64:
+                    val = Itob(Bytes(val))
+                case TealType.bytes | TealType.anytype:
+                    val = Bytes(val)
+                case _:
+                    raise Exception("bytes or str cant map to none")
+        case int():
+            match type_cast:
+                case TealType.uint64 | TealType.anytype:
+                    val = Int(val)
+                case TealType.bytes:
+                    val = Itob(Int(val))
+                case _:
+                    raise Exception("int cant map to none")
+        case Expr():
+            got = val.type_of()
+            match got:
+                case TealType.uint64:
+                    match type_cast:
+                        case TealType.bytes:
+                            val = Btoi(val)
+                        case TealType.uint64 | TealType.anytype:
+                            pass
+                        case _:
+                            raise TealTypeError(type_cast, got)
+                case TealType.bytes:
+                    match type_cast:
+                        case TealType.uint64:
+                            val = Itob(val)
+                        case TealType.bytes | TealType.anytype:
+                            pass
+                        case _:
+                            raise TealTypeError(type_cast, got)
+                case TealType.anytype:
+                    pass
+                case _:
+                    raise TealTypeError(type_cast, got)
+    return val
+
+
 class Var(Expr):
     def __init__(
         self, val: Expr | int | bytes | str, type_cast: TealType = TealType.anytype
     ):
-        match val:
-            case str() | bytes():
-                match type_cast:
-                    case TealType.uint64:
-                        val = Itob(Bytes(val))
-                    case TealType.bytes | TealType.anytype:
-                        val = Bytes(val)
-                    case _:
-                        raise Exception("wat")
-            case int():
-                match type_cast:
-                    case TealType.uint64 | TealType.anytype:
-                        val = Int(val)
-                    case TealType.bytes:
-                        val = Itob(Int(val))
-                    case _:
-                        raise Exception("wat")
-            case Expr():
-                got = val.type_of()
-                match got:
-                    case TealType.uint64:
-                        match type_cast:
-                            case TealType.bytes:
-                                val = Btoi(val)
-                            case TealType.uint64 | TealType.anytype:
-                                pass
-                            case _:
-                                raise TealTypeError(type_cast, got)
-                    case TealType.bytes:
-                        match type_cast:
-                            case TealType.uint64:
-                                val = Itob(val)
-                            case TealType.bytes | TealType.anytype:
-                                pass
-                            case _:
-                                raise TealTypeError(type_cast, got)
-                    case TealType.anytype:
-                        pass
-                    case _:
-                        raise TealTypeError(type_cast, got)
-
-        self.val = val
+        self.val = _type_cast(val, type_cast)
         self.slot = ScratchSlot()
-        self.type = val.type_of()
-        self.has_stored = False
-        self.has_assigned = False
+        self.type = self.val.type_of()
 
     def __str__(self):
-        if self.has_stored:
-            return self.slot.load(self.type).__str__()
-        else:
-            return self.slot.store(self.val).__str__()
+        return self.slot.load(self.type).__str__()
 
     def __teal__(self, options: "CompileOptions"):
-        if not self.has_stored:
-            return self.store(self.val).__teal__(options)
         return self.load().__teal__(options)
+
+    def assign(self) -> Expr:
+        return self.store(self.val)
 
     def load(self):
         return self.slot.load(self.type)
 
     def store(self, val: Expr):
         self.val = val
-        self.has_stored = True
+        self.type = val.type_of()
         return self.slot.store(val)
 
     def has_return(self):
         return False
 
     def type_of(self):
-        # On assignment, nothing goes on the stack
-        if not self.has_assigned:
-            self.has_assigned = True
-            return TealType.none
-        else:
-            return self.val.type_of()
+        return self.type
 
     def __add__(self, other: "Var | Expr") -> Expr:
         match other:
