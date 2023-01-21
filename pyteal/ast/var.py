@@ -1,10 +1,15 @@
 from typing import TYPE_CHECKING
+from enum import Enum
 from pyteal.ast.expr import Expr
+from pyteal.ast.bytes import Bytes
+from pyteal.ast.int import Int
+from pyteal.ast.binaryexpr import BytesMul
 from pyteal.ast.unaryexpr import Itob, Btoi
 from pyteal.ast.seq import Seq
 from pyteal.ast.naryexpr import Concat
 from pyteal.ast.scratch import ScratchSlot
 from pyteal.types import TealType, TealTypeError
+from pyteal.ast import abi
 
 
 if TYPE_CHECKING:
@@ -12,29 +17,49 @@ if TYPE_CHECKING:
 
 
 class Var(Expr):
-    def __init__(self, val: Expr, type_cast: TealType = TealType.anytype):
-        got = val.type_of()
-        match got:
-            case TealType.uint64:
-                match type_cast:
-                    case TealType.bytes:
-                        val = Btoi(val)
-                    case TealType.uint64 | TealType.anytype:
-                        pass
-                    case _:
-                        raise TealTypeError(type_cast, got)
-            case TealType.bytes:
+    def __init__(
+        self, val: Expr | int | bytes | str, type_cast: TealType = TealType.anytype
+    ):
+        match val:
+            case str() | bytes():
                 match type_cast:
                     case TealType.uint64:
-                        val = Itob(val)
+                        val = Itob(Bytes(val))
                     case TealType.bytes | TealType.anytype:
+                        val = Bytes(val)
+                    case _:
+                        raise Exception("wat")
+            case int():
+                match type_cast:
+                    case TealType.uint64 | TealType.anytype:
+                        val = Int(val)
+                    case TealType.bytes:
+                        val = Itob(Int(val))
+                    case _:
+                        raise Exception("wat")
+            case Expr():
+                got = val.type_of()
+                match got:
+                    case TealType.uint64:
+                        match type_cast:
+                            case TealType.bytes:
+                                val = Btoi(val)
+                            case TealType.uint64 | TealType.anytype:
+                                pass
+                            case _:
+                                raise TealTypeError(type_cast, got)
+                    case TealType.bytes:
+                        match type_cast:
+                            case TealType.uint64:
+                                val = Itob(val)
+                            case TealType.bytes | TealType.anytype:
+                                pass
+                            case _:
+                                raise TealTypeError(type_cast, got)
+                    case TealType.anytype:
                         pass
                     case _:
                         raise TealTypeError(type_cast, got)
-            case TealType.anytype:
-                pass
-            case _:
-                raise TealTypeError(type_cast, got)
 
         self.val = val
         self.slot = ScratchSlot()
@@ -94,17 +119,6 @@ class Var(Expr):
                         return Concat(self.load(), other)
                     case _:
                         raise Exception("????")
-
-    # def __iadd__(self, other: "Var")->Expr:
-    #    assert other.type_of() == self.type_of()
-
-    #    match self.type:
-    #        case TealType.uint64:
-    #            return self.store(self.load() + other.load())
-    #        case TealType.bytes:
-    #            return self.store(Concat(self.load(), other.load()))
-    #        case _:
-    #            raise Exception("????")
 
 
 Var.__module__ = "pyteal"

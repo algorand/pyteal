@@ -1,4 +1,5 @@
 from pyteal import (
+    For,
     Len,
     App,
     Mode,
@@ -13,14 +14,14 @@ from pyteal import (
 
 program = Seq(
     # Types can be added directly
-    v := Var(Int(1)),
-    z := Var(Int(3)),
+    v := Var(1),
+    z := Var(3),
     Assert(v + z == Int(4)),
     # v += z does _not_ work because python thinks its a statement?
     #
     # Bytes can be concat'd with +
-    lol := Var(Bytes("lol.")),
-    lmao := Var(Bytes("lmao.")),
+    lol := Var("lol."),
+    lmao := Var("lmao."),
     Assert(lol + lmao == Bytes("lol.lmao.")),
     #
     # `cast` the type to coerce it
@@ -37,6 +38,7 @@ program = Seq(
     Assert(Len(sv.load()) > Int(0)),
     sv := Var(App.localGet(Int(0), Bytes("bytekey")), type_cast=TealType.uint64),
     Assert(iv.load() > Int(0)),
+    ###
     Int(1),
 )
 print(compileTeal(program, mode=Mode.Application, version=6))
