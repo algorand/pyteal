@@ -1,21 +1,16 @@
 from pyteal import (
     Len,
     App,
-    CompileOptions,
     Mode,
     Int,
     Seq,
     compileTeal,
     TealType,
-    Pop,
-    Itob,
-    Return,
     Assert,
     Bytes,
+    Var,
 )
-from pyteal.ast.var import Var
 
-# opts = CompileOptions(mode=Mode.Application, version=6)
 program = Seq(
     # Types can be added directly
     v := Var(Int(1)),
@@ -36,7 +31,7 @@ program = Seq(
     sv := Var(App.localGet(Int(0), Bytes("bytekey")), type_cast=TealType.bytes),
     Assert(Len(sv.load()) > Int(0)),
     #
-    ## auto convert with itob/btoi, too fancy?
+    # auto convert with itob/btoi, too fancy?
     #
     iv := Var(App.localGet(Int(0), Bytes("intkey")), type_cast=TealType.bytes),
     Assert(Len(sv.load()) > Int(0)),
