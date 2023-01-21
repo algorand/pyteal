@@ -177,6 +177,8 @@ from pyteal.ast.router import (
     BareCallActions,
 )
 
+from pyteal.ast.var import Var
+
 # abi
 import pyteal.ast.abi as abi  # noqa: I250
 
@@ -348,4 +350,5 @@ __all__ = [
     "EcdsaRecover",
     "JsonRef",
     "VrfVerify",
+    "Var",
 ]
