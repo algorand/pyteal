@@ -86,7 +86,7 @@ def test_SourceMapItem_source_mapping():
         source_files=source_files,
         source_files_lines=[mock_source_lines],
     )
-    expected_json = '{"version": 3, "sources": ["tests/unit/sourcemap_test.py"], "names": [], "mappings": "AAwDW;AAAY;AAAZ", "file": "dohhh.teal", "sourceRoot": "~"}'
+    expected_json = '{"version": 3, "sources": ["tests/unit/sourcemap_test.py"], "names": [], "mappings": "AA0DW;AAAY;AAAZ", "file": "dohhh.teal", "sourceRoot": "~"}'
 
     assert expected_json == json.dumps(r3sm.to_json())
 
@@ -386,3 +386,9 @@ def test_config():
     StackFrames._no_stackframes = False
     assert StackFrames.sourcemapping_is_off() is False
     assert StackFrames.sourcemapping_is_off(_force_refresh=True) is True
+
+
+@pytest.mark.serial
+def test_idempotent():
+    # make sure we get clean up properly and therefore get idempotent results
+    assert False

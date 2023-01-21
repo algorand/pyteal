@@ -256,6 +256,13 @@ class CompilationBundle:
     Therefore, it is recommended that `teal` be used for algod compilation purposes.
     """
 
+    # TODO: this will need to be a private object as we ought not hand back
+    # to the caller the following objects:
+    # * teal_chunks (not crucial, but seems redundant and confusing)
+    # * components (they hold on to the original expressions, violating the
+    #       compiler related idempotency edict "leave no compiler expressions behind")
+    # * sourcemap - has fields that connect to such Expr's (so same problem as with components)
+
     ast: Expr
     mode: Mode
     version: int
@@ -285,6 +292,8 @@ class Compilation:
         self.optimize: OptimizeOptions = optimize or OptimizeOptions()
 
     # TODO: API needs refactor....
+    # In particular, need to make this private, possible exposing a public
+    # version that returns a safer version of `CompilationBundle`
     def compile(
         self,
         with_sourcemap: bool = True,

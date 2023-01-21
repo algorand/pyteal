@@ -1,3 +1,6 @@
+# TODO: don't forget to get the imports right by setting
+# Foo.__module__ = "pyteal" and adding to various __init__.py/i files
+
 from dataclasses import astuple, dataclass, field
 from enum import IntFlag
 from typing import Callable, Final, Optional, cast

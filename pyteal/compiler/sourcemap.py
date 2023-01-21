@@ -582,7 +582,7 @@ class PyTealSourceMap:
         annotate_teal: bool = False,
         include_pcs: bool = False,
         algod: AlgodClient | None = None,
-        build: bool = True,
+        build: bool = True,  # NO NO NO NO NO! DON'T ALLOW BUILDING ON INIT
         verbose: bool = False,
         # deprecated:
         _source_inference: bool = True,
@@ -612,11 +612,14 @@ class PyTealSourceMap:
 
         self._best_frames: list[PyTealFrame] = []
         self._cached_r3sourcemap: R3SourceMap | None = None
-        self._inferred_frames_at: list[int] = []
 
         self._cached_tmis: list[TealMapItem] = []
         self._cached_pc_sourcemap: PCSourceMap | None = None
 
+        # FOR DEBUGGING PURPOSES ONLY:
+        self._inferred_frames_at: list[int] = []
+
+        # TODO: NO NO NO NO!!!! DON'T DO THIS INSIDE __init__() !!!!
         if build:
             self.build()
 
@@ -873,21 +876,21 @@ class PyTealSourceMap:
             A ready to print string containing the table information.
         """
         constant_columns = {}
+
         new_kwargs = {}
         for i, (k, v) in enumerate(kwargs.items()):
             if k.startswith("const_col_"):
                 constant_columns[i] = v
             else:
                 new_kwargs[k] = v
-        kwargs = new_kwargs
 
-        for k in kwargs:
+        for k in new_kwargs:
             assert k in self._tabulate_param_defaults, f"unrecognized parameter '{k}'"
 
         # TODO: probly should just insist that printin sumn, not any particular column
         # DEAD CODE b/c required is empty
         # required = []
-        renames = {self._tabulate_param_defaults[k]: v for k, v in kwargs.items()}
+        renames = {self._tabulate_param_defaults[k]: v for k, v in new_kwargs.items()}
         rows = list(teal_item.asdict(**renames) for teal_item in self.as_list())
 
         if constant_columns:
