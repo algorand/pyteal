@@ -51,23 +51,18 @@ lint: black flake8 mypy sdist-check
 
 # ---- Unit Tests (no algod) ---- #
 
-# TODO: add blackbox_test.py to multithreaded tests when following issue has been fixed https://github.com/algorand/pyteal/issues/199
 NUM_PROCS = auto
-test-async-unit:
-	pytest -n $(NUM_PROCS) --durations=10 -sv pyteal tests/unit \
-		--ignore tests/unit/blackbox_test.py \
-		--ignore tests/unit/user_guide_test.py \
-		--ignore tests/unit/sourcemap_test.py \
-		--ignore tests/unit/sourcemap_monkey_raises_test.py \
-		--ignore tests/unit/sourcemap_monkey_unit_test.py
+test-unit-async:
+	pytest -n $(NUM_PROCS) --durations=10 pyteal tests/unit -m "not serial"
 
-test-sync-unit:
-	pytest -n 1 --durations=10 -sv tests/unit/blackbox_test.py tests/unit/user_guide_test.py tests/unit/sourcemap_test.py tests/unit/sourcemap_monkey_raises_test.py
+# TODO: add blackbox_test.py to multithreaded tests when following issue has been fixed:
+# 	https://github.com/algorand/pyteal/issues/199
+# Running all the tests under tests/unit synchronously 1 at a time, 
+#	and only those with @pytest.mark.serial:
+test-unit-sync:
+	find tests/unit/ -name '*_test.py' | sort | xargs -t -n1 pytest --dist=no --durations=10 -m serial  2>&1 | grep -v "no tests collected" || true
 
-test-sync-unit-monkey:
-	pytest -n 1 --durations=10 -sv tests/unit/sourcemap_monkey_unit_test.py
-
-test-unit: test-async-unit test-sync-unit test-sync-unit-monkey
+test-unit: test-unit-async test-unit-sync
 
 lint-and-test: check-generate-init lint test-unit
 
@@ -79,20 +74,19 @@ algod-start:
 algod-stop:
 	docker compose stop algod
 
-# TODO: probly don't want the separate special ignore
-test-async-integration:
-	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration -m "not serial" --ignore tests/integration/sourcemap_monkey_integ_test.py
+test-integ-async:
+	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration -m "not serial"
 
+test-integ-sync:
+	find tests/integration -name '*_test.py' | sort | xargs -t -n1 pytest -v --dist=no --durations=10 -m serial 2>&1 | grep -v "no tests collected" || true
+	# find tests/integration/sourcemap_monkey_integ_test.py  -name '*_test.py' | sort | xargs -n1 pytest --dist=no --durations=10 -m serial 
+	# find tests/integration/algod_test.py | sort | xargs -t -n1 pytest -v --dist=no --durations=10 -m serial 2>&1 | grep -v "no tests collected" || true
 
-# TODO: consolidate running synchronous tests into one method only. 
-# a priori - let's use the "serial" pytest.ini tag approach in the second line:
-test-sync-integration:
-	pytest -n 1 --durations=10 -sv tests/integration/sourcemap_monkey_integ_test.py
-	pytest --durations=10 -sv tests/integration -m serial
+test-integration: test-integ-async test-integ-sync
 
-test-integration: test-async-integration test-sync-integration
+all-sync: test-unit-sync test-integ-sync
 
-all-tests: lint-and-test test-integration
+all-lint-unit-integ: lint-and-test test-integration
 
 # ---- Local Github Actions Simulation via `act` ---- #
 # assumes act is installed, e.g. via `brew install act`
