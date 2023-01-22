@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0
       - name: Install python dependencies
         run: make setup-development
-      - name: Build and Test
+      - name: Build and Unit Tests
         run: make lint-and-test
 
   run-integration-tests:

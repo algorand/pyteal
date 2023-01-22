@@ -4,9 +4,18 @@ from unittest import mock
 import pytest
 
 
-@mock.patch.object(ConfigParser, "getboolean", side_effect=Exception("1337"))
+@pytest.fixture(scope="module", autouse=True)
+def setup_teardown():
+    patcher = mock.patch.object(
+        ConfigParser, "getboolean", side_effect=Exception("1337")
+    )
+    patcher.start()
+    yield
+    patcher.stop()
+
+
 @pytest.mark.serial
-def test_sourcemap_fails_elegantly_when_no_ini(_):
+def test_sourcemap_fails_elegantly_when_no_ini():
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
     from pyteal.compiler.sourcemap import SourceMapDisabledError

@@ -3,7 +3,7 @@
 
 from dataclasses import astuple, dataclass, field
 from enum import IntFlag
-from typing import Callable, Final, Optional, Union, cast
+from typing import Callable, Final, Optional, cast
 
 from algosdk import abi as sdk_abi
 from algosdk import encoding
@@ -130,12 +130,6 @@ class MethodConfig:
                             f"unexpected condition_under_config: {config_cond}"
                         )
             return Or(*cond_list)
-
-
-MethodConfig.__module__ = "pyteal"
-
-
-ActionType = Union[Expr, SubroutineFnWrapper, ABIReturnSubroutine]
 
 
 MethodConfig.__module__ = "pyteal"

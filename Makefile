@@ -102,3 +102,15 @@ local-gh-simulate:
 
 coverage:
 	pytest --cov-report html --cov=pyteal
+
+refactor-test:
+	pytest tests/unit/sourcemap_monkey_unit_test.py
+	python tests/sourcemapping/private/goracle01.py > tests/sourcemapping/goracle01.teal
+	cd tests/sourcemapping/private && (python goracle01.py || 0) && cd -
+	# python tests/sourcemapping/public/decipher_poll_dapp.py > tests/sourcemapping/public/decipher_approval.teal
+	# diff tests/sourcemapping/goracle01.teal tests/sourcemapping/goracle01_FIXED.teal
+	# diff tests/sourcemapping/public/decipher_approval.teal tests/sourcemapping/public/decipher_approval_FIXED.teal
+
+profiler:
+	echo "TODO"
+

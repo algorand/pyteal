@@ -121,15 +121,16 @@ def no_regressions():
         version=6, optimize=OptimizeOptions(scratch_slots=True)
     )
 
-    with open(ALGOBANK / "algobank_approval.teal") as af:
-        assert approval == af.read()
+    def compare_and_assert(file, actual):
+        with open(ALGOBANK / file, "r") as f:
+            expected_lines = f.read().splitlines()
+            actual_lines = actual.splitlines()
+            assert len(expected_lines) == len(actual_lines)
+            assert expected_lines == actual_lines
 
-    with open(ALGOBANK / "algobank_clear_state.teal") as cf:
-        assert clear == cf.read()
-
-    with open(ALGOBANK / "algobank.json") as jf:
-        expected = jf.read()
-        assert expected == json.dumps(contract.dictify(), indent=4)
+    compare_and_assert("algobank.json", json.dumps(contract.dictify(), indent=4))
+    compare_and_assert("algobank_clear_state.teal", clear)
+    compare_and_assert("algobank_approval.teal", approval)
 
 
 @pytest.mark.serial
@@ -141,18 +142,25 @@ def test_no_regression_with_sourcemap_as_configured():
 def test_no_regression_with_sourcemap_enabled():
     from pyteal.stack_frame import StackFrames
 
+    originally = StackFrames._no_stackframes
     StackFrames._no_stackframes = False
 
     no_regressions()
+
+    StackFrames._no_stackframes = originally
 
 
 @pytest.mark.serial
 def test_no_regression_with_sourcemap_disabled():
     from pyteal.stack_frame import StackFrames
 
+    originally = StackFrames._no_stackframes
+
     StackFrames._no_stackframes = True
 
     no_regressions()
+
+    StackFrames._no_stackframes = originally
 
 
 @pytest.mark.serial
@@ -391,4 +399,20 @@ def test_config():
 @pytest.mark.serial
 def test_idempotent():
     # make sure we get clean up properly and therefore get idempotent results
-    assert False
+    from examples.application.abi.algobank import router
+    from pyteal import OptimizeOptions
+
+    approval1, clear1, contract1 = (
+        func := lambda: router.compile_program(
+            version=6, optimize=OptimizeOptions(scratch_slots=True)
+        )
+    )()
+    approval2, clear2, contract2 = func()
+
+    assert contract1.dictify() == contract2.dictify()
+    assert len(clear1.splitlines()) == len(clear2.splitlines())
+    assert clear1 == clear2
+    assert len(approval1.splitlines()) == len(
+        approval2.splitlines()
+    ), "TODO: this is probly because of a temporary change to the router"
+    assert approval1 == approval2

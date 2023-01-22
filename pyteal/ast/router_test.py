@@ -368,6 +368,8 @@ def test_method_config_clear_state_failure():
 
 
 def test_bare_call_config_clear_state_failure():
+    # TODO: this is a known issue and is expected to be resolved
+    # before the source mapper is ready to merge
     with pytest.raises(pt.TealInputError) as tie:
         pt.BareCallActions(
             clear_state=pt.OnCompleteAction(
@@ -375,7 +377,9 @@ def test_bare_call_config_clear_state_failure():
             )
         )
 
-    assert "Attempt to construct clear state program from bare app call" in str(tie)
+    assert "Attempt to construct clear state program from bare app call" in str(
+        tie.value
+    )
 
 
 def test_router_register_method_clear_state_failure():
