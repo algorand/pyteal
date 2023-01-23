@@ -55,13 +55,10 @@ NUM_PROCS = auto
 test-unit-async:
 	pytest -n $(NUM_PROCS) --durations=10 pyteal tests/unit -m "not serial"
 
-# TODO: add blackbox_test.py to multithreaded tests when following issue has been fixed:
-# 	https://github.com/algorand/pyteal/issues/199
-# Running all the tests under tests/unit synchronously 1 at a time, 
-#	and only those with @pytest.mark.serial:
+# Run tests w/ @pytest.mark.serial under ~/tests/unit each in its own proc:
 test-unit-sync:
-	find tests/unit/ -name '*_test.py' | sort | xargs -t -n1 pytest --dist=no --durations=10 -m serial  2>&1 | grep -v "no tests collected" || true
-
+	find tests/unit -name '*_test.py' | sort | xargs -t -I {} pytest --suppress-no-test-exit-code --dist=no --durations=10 {} -m serial
+ 
 test-unit: test-unit-async test-unit-sync
 
 lint-and-test: check-generate-init lint test-unit
@@ -77,10 +74,9 @@ algod-stop:
 test-integ-async:
 	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration -m "not serial"
 
+# Run tests w/ @pytest.mark.serial under ~/tests/integration each in its own proc:
 test-integ-sync:
-	find tests/integration -name '*_test.py' | sort | xargs -t -n1 pytest -v --dist=no --durations=10 -m serial 2>&1 | grep -v "no tests collected" || true
-	# find tests/integration/sourcemap_monkey_integ_test.py  -name '*_test.py' | sort | xargs -n1 pytest --dist=no --durations=10 -m serial 
-	# find tests/integration/algod_test.py | sort | xargs -t -n1 pytest -v --dist=no --durations=10 -m serial 2>&1 | grep -v "no tests collected" || true
+	find tests/integration -name '*_test.py' | sort | xargs -t -I {} pytest --suppress-no-test-exit-code --dist=no --durations=10 {} -m serial
 
 test-integration: test-integ-async test-integ-sync
 
@@ -102,15 +98,3 @@ local-gh-simulate:
 
 coverage:
 	pytest --cov-report html --cov=pyteal
-
-refactor-test:
-	pytest tests/unit/sourcemap_monkey_unit_test.py
-	python tests/sourcemapping/private/goracle01.py > tests/sourcemapping/goracle01.teal
-	cd tests/sourcemapping/private && (python goracle01.py || 0) && cd -
-	# python tests/sourcemapping/public/decipher_poll_dapp.py > tests/sourcemapping/public/decipher_approval.teal
-	# diff tests/sourcemapping/goracle01.teal tests/sourcemapping/goracle01_FIXED.teal
-	# diff tests/sourcemapping/public/decipher_approval.teal tests/sourcemapping/public/decipher_approval_FIXED.teal
-
-profiler:
-	echo "TODO"
-

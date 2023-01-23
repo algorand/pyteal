@@ -1,3 +1,7 @@
+# TODO: add blackbox_test.py to multithreaded tests when following issue has been fixed:
+# 	https://github.com/algorand/pyteal/issues/199
+
+
 from itertools import product
 from pathlib import Path
 import pytest

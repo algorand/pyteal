@@ -15,8 +15,8 @@ ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 FIXTURES = Path.cwd() / "tests" / "unit" / "sourcemaps"
 
 
-@pytest.fixture(scope="module", autouse=True)
-def setup_teardown():
+@pytest.fixture
+def mock_ConfigParser():
     patcher = mock.patch.object(ConfigParser, "getboolean", return_value=True)
     patcher.start()
     yield
@@ -24,7 +24,7 @@ def setup_teardown():
 
 
 @pytest.mark.serial
-def test_r3sourcemap():
+def test_r3sourcemap(mock_ConfigParser):
     """
     TODO: I believe 3.11 is stable enough we can drop the 3.10 case going forward. 🤞
     """
@@ -67,7 +67,7 @@ def test_r3sourcemap():
 
     assert "mappings" in r3sm_json
     assert (
-        "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"
+        "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"
         == r3sm_json["mappings"]
     )
     # r3sm_for_version = {
@@ -111,7 +111,7 @@ def test_r3sourcemap():
 
 
 @pytest.mark.serial
-def test_reconstruct():
+def test_reconstruct(mock_ConfigParser):
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
 
@@ -136,7 +136,7 @@ def test_reconstruct():
 
 
 @pytest.mark.serial
-def test_mocked_config_for_frames():
+def test_mocked_config_for_frames(mock_ConfigParser):
     config = ConfigParser()
     assert config.getboolean("pyteal-source-mapper", "enabled") is True
     from pyteal.stack_frame import StackFrames
@@ -152,7 +152,7 @@ def make(x, y, z):
 
 
 @pytest.mark.serial
-def test_lots_o_indirection():
+def test_lots_o_indirection(mock_ConfigParser):
     import pyteal as pt
 
     e1 = pt.Seq(pt.Pop(make(1, 2, 3)), pt.Pop(make(4, 5, 6)), make(7, 8, 9))
@@ -1627,7 +1627,7 @@ CONSTRUCTS = [
 @pytest.mark.parametrize("mode", ["Application", "Signature"])
 @pytest.mark.parametrize("version", range(2, CONSTRUCTS_LATEST_VERSION + 1))
 @pytest.mark.serial
-def test_constructs(i, test_case, mode, version):
+def test_constructs(mock_ConfigParser, i, test_case, mode, version):
     import pyteal as pt
 
     expr, line2unparsed = test_case[:2]

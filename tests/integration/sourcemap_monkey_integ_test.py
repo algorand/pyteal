@@ -9,8 +9,8 @@ and test the results of source mapping various PyTeal apps.
 """
 
 
-@pytest.fixture(scope="module", autouse=True)
-def setup_teardown():
+@pytest.fixture
+def mock_ConfigParser():
     patcher = mock.patch.object(ConfigParser, "getboolean", return_value=True)
     patcher.start()
     yield
@@ -41,7 +41,7 @@ BTW: I don't think the algod logic needs to be THIS COMPLICATED!!!
 
 
 @pytest.mark.serial
-def test_sourcemap_annotate():
+def test_sourcemap_annotate(mock_ConfigParser):
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
 
