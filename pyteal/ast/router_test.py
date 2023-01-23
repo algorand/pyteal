@@ -760,7 +760,7 @@ def test_contract_json_obj():
 def test_build_program_all_empty():
     router = pt.Router("test")
 
-    approval, clear_state, contract = router.build_program()
+    approval, clear_state, contract = router._build_program()
 
     expected_empty_program = pt.TealSimpleBlock(
         [
@@ -780,7 +780,7 @@ def test_build_program_all_empty():
 def test_build_program_approval_empty():
     router = pt.Router("test", clear_state=pt.Approve())
 
-    approval, clear_state, contract = router.build_program()
+    approval, clear_state, contract = router._build_program()
 
     expected_empty_program = pt.TealSimpleBlock(
         [
@@ -802,7 +802,7 @@ def test_build_program_clear_state_empty():
         "test", pt.BareCallActions(no_op=pt.OnCompleteAction.always(pt.Approve()))
     )
 
-    approval, clear_state, contract = router.build_program()
+    approval, clear_state, contract = router._build_program()
 
     expected_empty_program = pt.TealSimpleBlock(
         [
@@ -826,7 +826,7 @@ def test_build_program_clear_state_valid_config():
         "test",
         clear_state=action,
     )
-    _, actual_clear_state_with_bare_call, _ = router_with_bare_call.build_program()
+    _, actual_clear_state_with_bare_call, _ = router_with_bare_call._build_program()
 
     expected_clear_state_with_bare_call = assemble_helper(action)
 

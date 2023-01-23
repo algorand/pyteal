@@ -935,7 +935,7 @@ class Router:
 
         return sdk_abi.Contract(self.name, self.methods, self.descr)
 
-    def build_program(
+    def _build_program(
         self,
         *,
         version: int = DEFAULT_TEAL_VERSION,
@@ -979,7 +979,7 @@ class Router:
         bare app calls in the router, and also generates a Contract object to allow client read and call
         the methods easily.
 
-        This method combines :any:`Router.build_program` and :any:`compileTeal`.
+        This method combines `Router._build_program` and :any:`compileTeal`.
 
         Note that if no methods or bare app call actions have been registered to either the approval
         or clear state programs, then that program will reject all transactions.
@@ -1025,7 +1025,7 @@ class Router:
         bare app calls in the router, and also generates a Contract object to allow client read and call
         the methods easily.
 
-        This method combines :any:`Router.build_program` and :any:`compileTeal`.
+        This method combines :any:`Router._build_program` and :any:`compileTeal`.
 
         Note that if no methods or bare app call actions have been registered to either the approval
         or clear state programs, then that program will reject all transactions.
@@ -1059,7 +1059,7 @@ class Router:
         return self._build_impl(input)
 
     def _build_impl(self, input: _RouterCompileInput) -> RouterBundle:
-        ap, csp, contract = self.build_program(
+        ap, csp, contract = self._build_program(
             version=input.version, optimize=input.optimize
         )
 
