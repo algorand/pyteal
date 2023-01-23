@@ -105,7 +105,7 @@ def add_methods_to_router(router: pt.Router):
         method_config=pt.MethodConfig(
             no_op=pt.CallConfig.CALL,
             opt_in=pt.CallConfig.ALL,
-            clear_state=pt.CallConfig.CALL,
+            # clear_state=pt.CallConfig.CALL,
         ),
     )
     assert meth.method_signature() == "empty_return_subroutine()void"
@@ -119,7 +119,7 @@ def add_methods_to_router(router: pt.Router):
         method_config=pt.MethodConfig(
             no_op=pt.CallConfig.CALL,
             opt_in=pt.CallConfig.CALL,
-            clear_state=pt.CallConfig.CALL,
+            # clear_state=pt.CallConfig.CALL,
         ),
     )
 
@@ -145,13 +145,14 @@ def add_methods_to_router(router: pt.Router):
     meth = router.add_method_handler(
         approve_if_odd,
         method_config=pt.MethodConfig(
-            no_op=pt.CallConfig.NEVER, clear_state=pt.CallConfig.CALL
+            no_op=pt.CallConfig.CALL,  # clear_state=pt.CallConfig.CALL
         ),
     )
     assert meth.method_signature() == "approve_if_odd(uint32)void"
 
 
-def generate_and_test_routers() -> tuple[str, int, pt.Router, str, str]:
+def generate_and_test_routers() -> tuple[list[pt.Router], dict[list, str]]:
+    #  tuple[str, int, pt.Router, str, str]:
     routers = []
     sources = {}
 
@@ -164,7 +165,7 @@ def generate_and_test_routers() -> tuple[str, int, pt.Router, str, str]:
     # V6 not ready for Frame Pointers:
     on_completion_actions = pt.BareCallActions(
         opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes("optin call"))),
-        clear_state=pt.OnCompleteAction.call_only(pt.Approve()),
+        # clear_state=pt.OnCompleteAction.call_only(pt.Approve()),
     )
     with pytest.raises(pt.TealInputError) as e:
         pt.Router("will-error", on_completion_actions).compile_program(
@@ -342,7 +343,7 @@ QUESTIONABLE_DRIVER: list[tuple[str | None, pt.MethodConfig, Predicates]] = [
         pt.MethodConfig(
             no_op=pt.CallConfig.CALL,
             opt_in=pt.CallConfig.ALL,
-            clear_state=pt.CallConfig.CALL,
+            # clear_state=pt.CallConfig.CALL,
         ),
         {
             DRProp.passed: True,
@@ -356,7 +357,7 @@ QUESTIONABLE_DRIVER: list[tuple[str | None, pt.MethodConfig, Predicates]] = [
         pt.MethodConfig(
             no_op=pt.CallConfig.CALL,
             opt_in=pt.CallConfig.CALL,
-            clear_state=pt.CallConfig.CALL,
+            # clear_state=pt.CallConfig.CALL,
         ),
         {DRProp.passed: True, DRProp.lastLog: 1},
     ),
@@ -367,7 +368,7 @@ QUESTIONABLE_DRIVER: list[tuple[str | None, pt.MethodConfig, Predicates]] = [
     ),
     (
         "approve_if_odd",  # this should only appear in the clear-state program
-        pt.MethodConfig(clear_state=pt.CallConfig.CALL),
+        pt.MethodConfig(no_op=pt.CallConfig.CALL),
         {
             DRProp.passed: lambda args: args[1] % 2 == 1,
             DRProp.lastLog: None,
@@ -375,7 +376,9 @@ QUESTIONABLE_DRIVER: list[tuple[str | None, pt.MethodConfig, Predicates]] = [
     ),
     (
         None,
-        pt.MethodConfig(opt_in=pt.CallConfig.CALL, clear_state=pt.CallConfig.CALL),
+        pt.MethodConfig(
+            opt_in=pt.CallConfig.CALL,  # clear_state=pt.CallConfig.CALL
+        ),
         {
             DRProp.passed: True,
             DRProp.lastLog: lambda _, actual: actual

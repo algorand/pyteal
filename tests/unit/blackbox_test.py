@@ -362,13 +362,11 @@ def get_2meth_router():
     router = pt.Router(
         "router",
         pt.BareCallActions(
-            clear_state=pt.OnCompleteAction(
-                action=pt.Approve(), call_config=pt.CallConfig.CALL
-            ),
             opt_in=pt.OnCompleteAction(
                 action=pt.Reject(), call_config=pt.CallConfig.ALL
             ),
         ),
+        clear_state=pt.Approve(),
     )
 
     @router.method
@@ -511,7 +509,7 @@ def test_prep_simulation():
 
     router = get_2meth_router()
     router_method_configs = {
-        None: pt.MethodConfig(opt_in=pt.CallConfig.ALL, clear_state=pt.CallConfig.CALL),
+        None: pt.MethodConfig(opt_in=pt.CallConfig.ALL),
         "m1": pt.MethodConfig(no_op=pt.CallConfig.CALL),
         "m2": pt.MethodConfig(no_op=pt.CallConfig.CALL),
     }
@@ -554,7 +552,7 @@ def test_prep_simulation():
     )
 
     method_configs = {
-        None: pt.MethodConfig(opt_in=pt.CallConfig.ALL, clear_state=pt.CallConfig.CALL),
+        None: pt.MethodConfig(opt_in=pt.CallConfig.ALL),
         42: "foo",
         "m2": pt.MethodConfig(no_op=pt.CallConfig.ALL),
     }
@@ -576,7 +574,7 @@ def test_prep_simulation():
     )
 
     method_configs = {
-        None: pt.MethodConfig(opt_in=pt.CallConfig.ALL, clear_state=pt.CallConfig.CALL),
+        None: pt.MethodConfig(opt_in=pt.CallConfig.ALL),
         "m1": "foo",
         "m2": pt.MethodConfig(no_op=pt.CallConfig.ALL),
     }
@@ -598,7 +596,7 @@ def test_prep_simulation():
     )
 
     method_configs = {
-        None: pt.MethodConfig(opt_in=pt.CallConfig.ALL, clear_state=pt.CallConfig.CALL),
+        None: pt.MethodConfig(opt_in=pt.CallConfig.ALL),
         "m1": pt.MethodConfig(no_op=pt.CallConfig.CALL),
         "m2": pt.MethodConfig(no_op=pt.CallConfig.NEVER),
     }

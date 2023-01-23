@@ -2,52 +2,44 @@
 txna ApplicationArgs 0
 method "add(uint64,uint64)uint64"
 ==
-bnz main_l18
+bnz main_l20
 txna ApplicationArgs 0
 method "sub(uint64,uint64)uint64"
 ==
-bnz main_l17
+bnz main_l19
 txna ApplicationArgs 0
 method "mul(uint64,uint64)uint64"
 ==
-bnz main_l16
+bnz main_l18
 txna ApplicationArgs 0
 method "div(uint64,uint64)uint64"
 ==
-bnz main_l15
+bnz main_l17
 txna ApplicationArgs 0
 method "mod(uint64,uint64)uint64"
 ==
-bnz main_l14
+bnz main_l16
 txna ApplicationArgs 0
 method "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
 ==
-bnz main_l13
+bnz main_l15
 txna ApplicationArgs 0
 method "empty_return_subroutine()void"
 ==
-bnz main_l12
+bnz main_l14
 txna ApplicationArgs 0
 method "log_1()uint64"
 ==
-bnz main_l11
+bnz main_l13
 txna ApplicationArgs 0
 method "log_creation()string"
 ==
-bnz main_l10
+bnz main_l12
+txna ApplicationArgs 0
+method "approve_if_odd(uint32)void"
+==
+bnz main_l11
 err
-main_l10:
-txn OnCompletion
-int NoOp
-==
-txn ApplicationID
-int 0
-==
-&&
-assert
-callsub logcreationcaster_17
-int 1
-return
 main_l11:
 txn OnCompletion
 int NoOp
@@ -56,16 +48,8 @@ txn ApplicationID
 int 0
 !=
 &&
-txn OnCompletion
-int OptIn
-==
-txn ApplicationID
-int 0
-!=
-&&
-||
 assert
-callsub log1caster_16
+callsub approveifoddcaster_19
 int 1
 return
 main_l12:
@@ -74,14 +58,10 @@ int NoOp
 ==
 txn ApplicationID
 int 0
-!=
-&&
-txn OnCompletion
-int OptIn
 ==
-||
+&&
 assert
-callsub emptyreturnsubroutinecaster_15
+callsub logcreationcaster_18
 int 1
 return
 main_l13:
@@ -92,8 +72,16 @@ txn ApplicationID
 int 0
 !=
 &&
+txn OnCompletion
+int OptIn
+==
+txn ApplicationID
+int 0
+!=
+&&
+||
 assert
-callsub alllaidtoargscaster_14
+callsub log1caster_17
 int 1
 return
 main_l14:
@@ -104,8 +92,12 @@ txn ApplicationID
 int 0
 !=
 &&
+txn OnCompletion
+int OptIn
+==
+||
 assert
-callsub modcaster_13
+callsub emptyreturnsubroutinecaster_16
 int 1
 return
 main_l15:
@@ -117,7 +109,7 @@ int 0
 !=
 &&
 assert
-callsub divcaster_12
+callsub alllaidtoargscaster_15
 int 1
 return
 main_l16:
@@ -129,7 +121,7 @@ int 0
 !=
 &&
 assert
-callsub mulcaster_11
+callsub modcaster_14
 int 1
 return
 main_l17:
@@ -141,7 +133,7 @@ int 0
 !=
 &&
 assert
-callsub subcaster_10
+callsub divcaster_13
 int 1
 return
 main_l18:
@@ -153,7 +145,31 @@ int 0
 !=
 &&
 assert
-callsub addcaster_9
+callsub mulcaster_12
+int 1
+return
+main_l19:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+callsub subcaster_11
+int 1
+return
+main_l20:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+callsub addcaster_10
 int 1
 return
 
@@ -268,8 +284,21 @@ byte 0x00106c6f6767696e67206372656174696f6e
 frame_bury 0
 retsub
 
+// approve_if_odd
+approveifodd_9:
+proto 1 0
+frame_dig -1
+int 2
+%
+bnz approveifodd_9_l2
+int 0
+return
+approveifodd_9_l2:
+int 1
+return
+
 // add_caster
-addcaster_9:
+addcaster_10:
 proto 0 0
 int 0
 dupn 2
@@ -291,7 +320,7 @@ log
 retsub
 
 // sub_caster
-subcaster_10:
+subcaster_11:
 proto 0 0
 int 0
 dupn 2
@@ -313,7 +342,7 @@ log
 retsub
 
 // mul_caster
-mulcaster_11:
+mulcaster_12:
 proto 0 0
 int 0
 dupn 2
@@ -335,7 +364,7 @@ log
 retsub
 
 // div_caster
-divcaster_12:
+divcaster_13:
 proto 0 0
 int 0
 dupn 2
@@ -357,7 +386,7 @@ log
 retsub
 
 // mod_caster
-modcaster_13:
+modcaster_14:
 proto 0 0
 int 0
 dupn 2
@@ -379,7 +408,7 @@ log
 retsub
 
 // all_laid_to_args_caster
-alllaidtoargscaster_14:
+alllaidtoargscaster_15:
 proto 0 0
 int 0
 dupn 16
@@ -462,13 +491,13 @@ log
 retsub
 
 // empty_return_subroutine_caster
-emptyreturnsubroutinecaster_15:
+emptyreturnsubroutinecaster_16:
 proto 0 0
 callsub emptyreturnsubroutine_6
 retsub
 
 // log_1_caster
-log1caster_16:
+log1caster_17:
 proto 0 0
 int 0
 callsub log1_7
@@ -481,7 +510,7 @@ log
 retsub
 
 // log_creation_caster
-logcreationcaster_17:
+logcreationcaster_18:
 proto 0 0
 byte ""
 callsub logcreation_8
@@ -490,4 +519,16 @@ byte 0x151f7c75
 frame_dig 0
 concat
 log
+retsub
+
+// approve_if_odd_caster
+approveifoddcaster_19:
+proto 0 0
+int 0
+txna ApplicationArgs 1
+int 0
+extract_uint32
+frame_bury 0
+frame_dig 0
+callsub approveifodd_9
 retsub

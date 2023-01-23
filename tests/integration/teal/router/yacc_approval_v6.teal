@@ -2,41 +2,62 @@
 txna ApplicationArgs 0
 method "add(uint64,uint64)uint64"
 ==
-bnz main_l18
+bnz main_l20
 txna ApplicationArgs 0
 method "sub(uint64,uint64)uint64"
 ==
-bnz main_l17
+bnz main_l19
 txna ApplicationArgs 0
 method "mul(uint64,uint64)uint64"
 ==
-bnz main_l16
+bnz main_l18
 txna ApplicationArgs 0
 method "div(uint64,uint64)uint64"
 ==
-bnz main_l15
+bnz main_l17
 txna ApplicationArgs 0
 method "mod(uint64,uint64)uint64"
 ==
-bnz main_l14
+bnz main_l16
 txna ApplicationArgs 0
 method "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
 ==
-bnz main_l13
+bnz main_l15
 txna ApplicationArgs 0
 method "empty_return_subroutine()void"
 ==
-bnz main_l12
+bnz main_l14
 txna ApplicationArgs 0
 method "log_1()uint64"
 ==
-bnz main_l11
+bnz main_l13
 txna ApplicationArgs 0
 method "log_creation()string"
 ==
-bnz main_l10
+bnz main_l12
+txna ApplicationArgs 0
+method "approve_if_odd(uint32)void"
+==
+bnz main_l11
 err
-main_l10:
+main_l11:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+int 0
+extract_uint32
+store 69
+load 69
+callsub approveifodd_9
+int 1
+return
+main_l12:
 txn OnCompletion
 int NoOp
 ==
@@ -53,7 +74,7 @@ concat
 log
 int 1
 return
-main_l11:
+main_l13:
 txn OnCompletion
 int NoOp
 ==
@@ -79,7 +100,7 @@ concat
 log
 int 1
 return
-main_l12:
+main_l14:
 txn OnCompletion
 int NoOp
 ==
@@ -95,7 +116,7 @@ assert
 callsub emptyreturnsubroutine_6
 int 1
 return
-main_l13:
+main_l15:
 txn OnCompletion
 int NoOp
 ==
@@ -181,7 +202,7 @@ concat
 log
 int 1
 return
-main_l14:
+main_l16:
 txn OnCompletion
 int NoOp
 ==
@@ -207,7 +228,7 @@ concat
 log
 int 1
 return
-main_l15:
+main_l17:
 txn OnCompletion
 int NoOp
 ==
@@ -233,7 +254,7 @@ concat
 log
 int 1
 return
-main_l16:
+main_l18:
 txn OnCompletion
 int NoOp
 ==
@@ -259,7 +280,7 @@ concat
 log
 int 1
 return
-main_l17:
+main_l19:
 txn OnCompletion
 int NoOp
 ==
@@ -285,7 +306,7 @@ concat
 log
 int 1
 return
-main_l18:
+main_l20:
 txn OnCompletion
 int NoOp
 ==
@@ -439,3 +460,16 @@ byte 0x00106c6f6767696e67206372656174696f6e
 store 68
 load 68
 retsub
+
+// approve_if_odd
+approveifodd_9:
+store 70
+load 70
+int 2
+%
+bnz approveifodd_9_l2
+int 0
+return
+approveifodd_9_l2:
+int 1
+return

@@ -256,7 +256,6 @@ class BareCallActions:
             no_op=self.no_op.call_config,
             opt_in=self.opt_in.call_config,
             close_out=self.close_out.call_config,
-            clear_state=self.clear_state.call_config,
             update_application=self.update_application.call_config,
             delete_application=self.delete_application.call_config,
         )
