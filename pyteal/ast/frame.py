@@ -255,7 +255,7 @@ class FrameBury(Expr):
     ):
         super().__init__()
 
-        target_type = inferred_type if inferred_type is not None else TealType.anytype
+        target_type: TealType = inferred_type or TealType.anytype
         require_type(value, target_type)
 
         self.value = value
