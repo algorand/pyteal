@@ -25,9 +25,6 @@ router = Router(
         close_out=OnCompleteAction(
             action=transfer_balance_to_lost, call_config=CallConfig.CALL
         ),
-        clear_state=OnCompleteAction(
-            action=transfer_balance_to_lost, call_config=CallConfig.CALL
-        ),
         # only the creator can update or delete the app
         update_application=OnCompleteAction(
             action=assert_sender_is_creator, call_config=CallConfig.CALL
@@ -36,6 +33,7 @@ router = Router(
             action=assert_sender_is_creator, call_config=CallConfig.CALL
         ),
     ),
+    clear_state=transfer_balance_to_lost,
 )
 
 
