@@ -901,7 +901,7 @@ class Router:
         bare app calls in the router, and also generates a Contract object to allow client read and call
         the methods easily.
 
-        This method combines :any:`Router.build_program` and :any:`compileTeal`.
+        This method combines `Router._build_program` and :any:`compileTeal`.
 
         Note that if no methods or bare app call actions have been registered to either the approval
         or clear state programs, then that program will reject all transactions.
