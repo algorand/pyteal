@@ -1,8 +1,8 @@
 from typing import Final, Optional, Set
 
 from pyteal.ast import ScratchSlot
-from pyteal.ir import TealBlock, TealOp, Op
 from pyteal.errors import TealInternalError, verifyProgramVersion
+from pyteal.ir import Op, TealBlock, TealOp
 
 
 class OptimizeOptions:
