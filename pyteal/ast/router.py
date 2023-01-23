@@ -860,7 +860,7 @@ class Router:
 
         return sdk_abi.Contract(self.name, self.methods, self.descr)
 
-    def build_program(
+    def _build_program(
         self,
         *,
         version: int = DEFAULT_TEAL_VERSION,
@@ -913,7 +913,7 @@ class Router:
             * clear_state_program: compiled clear-state program string
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
-        ap, csp, contract = self.build_program(version=version, optimize=optimize)
+        ap, csp, contract = self._build_program(version=version, optimize=optimize)
         ap_compiled = compileTeal(
             ap,
             Mode.Application,
