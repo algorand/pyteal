@@ -2,6 +2,7 @@
 
 ## Added
 * Added frame pointer support for router. ([#600](https://github.com/algorand/pyteal/pull/600))
+ * NOTE: a backwards incompatable change was imposed in this PR: previous `build_program` method in `Router` was exported and public, now this method is hidden. Use `compile_program` only.
 
 ## Changed
 * Improved Router clear state program generation. ([#636](https://github.com/algorand/pyteal/pull/636))

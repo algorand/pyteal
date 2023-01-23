@@ -104,7 +104,7 @@ if __name__ == "__main__":
                 "The __init__.pyi needs to be regenerated. Please run scripts/generate_init.py"
             )
             sys.exit(1)
-        print("No changes in __init__.py")
+        print("No changes in __init__.pyi")
         sys.exit(0)
 
     overwrite(regen)

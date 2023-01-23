@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import List
 
 from pyteal.ir.tealop import TealOp
 from pyteal.ir.tealblock import TealBlock
@@ -9,8 +9,8 @@ class TealConditionalBlock(TealBlock):
 
     def __init__(self, ops: List[TealOp]) -> None:
         super().__init__(ops)
-        self.trueBlock: Optional[TealBlock] = None
-        self.falseBlock: Optional[TealBlock] = None
+        self.trueBlock: TealBlock | None = None
+        self.falseBlock: TealBlock | None = None
 
     def setTrueBlock(self, block: TealBlock) -> None:
         """Set the block that this one should branch to if its condition is true."""
