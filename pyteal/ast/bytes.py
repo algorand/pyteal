@@ -1,10 +1,10 @@
-from typing import cast, overload, TYPE_CHECKING
+from typing import TYPE_CHECKING, cast, overload
 
+from pyteal.ast.leafexpr import LeafExpr
+from pyteal.errors import TealInputError
+from pyteal.ir import Op, TealBlock, TealOp
 from pyteal.types import TealType, valid_base16, valid_base32, valid_base64
 from pyteal.util import escapeStr
-from pyteal.ir import TealOp, Op, TealBlock
-from pyteal.errors import TealInputError
-from pyteal.ast.leafexpr import LeafExpr
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
