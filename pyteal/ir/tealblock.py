@@ -18,7 +18,7 @@ class TealBlock(ABC):
         # TODO: do I still need root_expr?
         self.ops = ops
         self.incoming: List[TealBlock] = []
-        self.root_expr = root_expr
+        self._root_expr = root_expr
 
     @abstractmethod
     def getOutgoing(self) -> List["TealBlock"]:

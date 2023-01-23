@@ -30,7 +30,7 @@ class Assert(Expr):
 
         self.comment = comment
         self.cond = [cond] + list(additional_conds)
-        self.root_expr: Expr | None = None
+        self._root_expr: Expr | None = None
 
     def __teal__(self, options: "CompileOptions"):
         if len(self.cond) > 1:
@@ -38,7 +38,7 @@ class Assert(Expr):
             for cond in self.cond:
                 asrt = Assert(cond, comment=self.comment)
                 asrt.trace = cond.trace
-                asrt.root_expr = cond
+                asrt._root_expr = cond
                 asserts.append(asrt)
             return Seq(*asserts).__teal__(options)
 

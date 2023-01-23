@@ -55,7 +55,7 @@ class For(Expr):
 
         stepStart, stepEnd = self.step.__teal__(options)
         stepEnd.setNextBlock(condStart)
-        stepEnd.root_expr = self
+        stepEnd._root_expr = self
         doEnd.setNextBlock(stepStart)
 
         branchBlock = TealConditionalBlock([], root_expr=self)
