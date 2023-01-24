@@ -1,6 +1,7 @@
+from contextlib import contextmanager
 from dataclasses import dataclass, field, fields, astuple
-from typing import cast, Optional, Callable
 from enum import IntFlag
+from typing import cast, Optional, Callable
 
 from algosdk import abi as sdk_abi
 from algosdk import encoding
@@ -900,6 +901,13 @@ class Router:
             self.contract_construct(),
         )
 
+    @contextmanager
+    def __revert_side_effect(self):
+        starting_slot_id = ScratchSlot.nextSlotId
+        yield
+        self._clean()
+        ScratchSlot.reset_slot_numbering(starting_slot_id)
+
     def compile_program(
         self,
         *,
@@ -924,8 +932,7 @@ class Router:
             * clear_state_program: compiled clear-state program string
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
-        starting_slot_id = ScratchSlot.nextSlotId
-        try:
+        with self.__revert_side_effect():
             ap, csp, contract = self._build_program(version=version, optimize=optimize)
             ap_compiled = compileTeal(
                 ap,
@@ -941,10 +948,7 @@ class Router:
                 assembleConstants=assemble_constants,
                 optimize=optimize,
             )
-            return ap_compiled, csp_compiled, contract
-        finally:
-            self._clean()
-            ScratchSlot.reset_slot_numbering(starting_slot_id)
+        return ap_compiled, csp_compiled, contract
 
 
 Router.__module__ = "pyteal"
