@@ -4,11 +4,15 @@
 * Added frame pointer support for router. ([#600](https://github.com/algorand/pyteal/pull/600))
  * NOTE: a backwards incompatable change was imposed in this PR: previous `build_program` method in `Router` was exported and public, now this method is hidden. Use `compile_program` only.
 
+## Fixed
+
+## Changed
+
+# v0.22.0
+
 ## Changed
 * Improved Router clear state program generation. ([#636](https://github.com/algorand/pyteal/pull/636))
   * NOTE: a backwards incompatable change was imposed in this PR: previous Clear State Program (CSP) can be constructed in router by registering ABI methods or bare app calls, now one has to use `clear_state` argument in `Router.__init__` to construct the CSP.
-
-## Fixed
 
 # v0.21.0
 
