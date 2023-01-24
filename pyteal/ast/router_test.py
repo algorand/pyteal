@@ -737,7 +737,7 @@ def test_contract_json_obj():
 
         # Manually replace it since the override is applied in the method handler
         # not attached to the ABIReturnSubroutine itself
-        ms.desc = desc if desc is not None else ms.desc
+        ms.desc = desc or ms.desc
 
         sig_method = sdk_abi.Method.from_signature(subroutine.method_signature())
 

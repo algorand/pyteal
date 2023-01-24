@@ -489,7 +489,7 @@ class ASTBuilder:
                   passed in ABIReturnSubroutine and logged, then approve.
         """
         if not is_method_call:
-            wrap_to_name = "bare appcall" if wrap_to_name is None else wrap_to_name
+            wrap_to_name = wrap_to_name or "bare appcall"
 
             match handler:
                 case Expr():
@@ -524,7 +524,8 @@ class ASTBuilder:
                     raise TealInputError(
                         f"{wrap_to_name} can only accept: none type Expr, or Subroutine/ABIReturnSubroutine with none return and no arg"
                     )
-        wrap_to_name = "method call" if wrap_to_name is None else wrap_to_name
+
+        wrap_to_name = wrap_to_name or "method call"
         if not isinstance(handler, ABIReturnSubroutine):
             raise TealInputError(
                 f"{wrap_to_name} should be only registering ABIReturnSubroutine, got {type(handler)}."
@@ -837,15 +838,11 @@ class Router:
             ):
                 call_configs = MethodConfig(no_op=CallConfig.CALL)
             else:
-
-                def none_to_never(x: None | CallConfig):
-                    return CallConfig.NEVER if x is None else x
-
-                _no_op = none_to_never(no_op)
-                _opt_in = none_to_never(opt_in)
-                _close_out = none_to_never(close_out)
-                _update_app = none_to_never(update_application)
-                _delete_app = none_to_never(delete_application)
+                _no_op = no_op or CallConfig.NEVER
+                _opt_in = opt_in or CallConfig.NEVER
+                _close_out = close_out or CallConfig.NEVER
+                _update_app = update_application or CallConfig.NEVER
+                _delete_app = delete_application or CallConfig.NEVER
 
                 call_configs = MethodConfig(
                     no_op=_no_op,
