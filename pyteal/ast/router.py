@@ -902,7 +902,7 @@ class Router:
         )
 
     @contextmanager
-    def __revert_side_effect(self):
+    def _cleaning_context(self):
         starting_slot_id = ScratchSlot.nextSlotId
         yield
         self._clean()
@@ -932,7 +932,7 @@ class Router:
             * clear_state_program: compiled clear-state program string
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
-        with self.__revert_side_effect():
+        with self._cleaning_context():
             ap, csp, contract = self._build_program(version=version, optimize=optimize)
             ap_compiled = compileTeal(
                 ap,
