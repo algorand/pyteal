@@ -27,7 +27,8 @@ from pyteal.ast.subroutine import (
     SubroutineFnWrapper,
 )
 from pyteal.ast.txn import Txn
-from pyteal.compiler.compiler import DEFAULT_TEAL_VERSION, Compilation, OptimizeOptions
+from pyteal.compiler.options import DEFAULT_TEAL_VERSION
+from pyteal.compiler.compiler import Compilation, OptimizeOptions
 from pyteal.compiler.sourcemap import PyTealSourceMap
 from pyteal.config import METHOD_ARG_NUM_CUTOFF
 from pyteal.errors import TealInputError, TealInternalError
@@ -682,7 +683,6 @@ class _RouterCompileInput:
     assemble_constants: bool
     optimize: Optional[OptimizeOptions] = None
     with_sourcemap: bool = False
-    source_inference: bool = True
     pcs_in_sourcemap: bool = False
     approval_filename: Optional[str] = None
     clear_filename: Optional[str] = None
@@ -706,7 +706,7 @@ class _RouterCompileInput:
         # be provided on when there isn't a sourcemap
         if self.annotate_teal and not self.with_sourcemap:
             raise ValueError(
-                "In order annotate generated teal source, must set source_inference True"
+                "In order annotate generated teal source, need `with_sourcemap=True`"
             )
 
         if self.pcs_in_sourcemap:
@@ -784,7 +784,8 @@ class Router:
                 cond = Txn.application_args.length() == Int(0)
                 act = cast(Expr, bare_call_approval)
                 StackFrames.reframe_asts(bare_calls.frames, cond)
-                act.stack_frames = bare_calls.frames
+                StackFrames.reframe_expr(act, bare_calls.frames)
+                # act.stack_frames = bare_calls.frames
                 self.approval_ast.conditions_n_branches.append(CondNode(cond, act))
 
     def add_method_handler(
@@ -1015,7 +1016,6 @@ class Router:
         annotate_teal_headers: bool = False,
         annotate_teal_concise: bool = True,
         # deprecated:
-        _source_inference: bool = True,
         _hybrid_source: bool = True,
     ) -> RouterBundle:
         """
@@ -1053,7 +1053,6 @@ class Router:
             annotate_teal_headers=annotate_teal_headers,
             annotate_teal_concise=annotate_teal_concise,
             # deprecated:
-            source_inference=_source_inference,
             _hybrid_source=_hybrid_source,
         )
         return self._build_impl(input)
@@ -1072,7 +1071,6 @@ class Router:
             annotate_teal_headers=input.annotate_teal_headers,
             annotate_teal_concise=input.annotate_teal_concise,
             # deprecated:
-            _source_inference=input.source_inference,
             _hybrid_source=input._hybrid_source,
         )
 
@@ -1085,7 +1083,6 @@ class Router:
             annotate_teal_headers=input.annotate_teal_headers,
             annotate_teal_concise=input.annotate_teal_concise,
             # DEPRECATED:
-            _source_inference=input.source_inference,
             _hybrid_source=input._hybrid_source,
         )
 

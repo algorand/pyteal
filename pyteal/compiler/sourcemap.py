@@ -578,7 +578,6 @@ class PyTealSourceMap:
         build: bool = True,  # NO NO NO NO NO! DON'T ALLOW BUILDING ON INIT
         verbose: bool = False,
         # deprecated:
-        _source_inference: bool = True,
         _hybrid: bool = True,
     ):
         if include_pcs:
@@ -600,7 +599,6 @@ class PyTealSourceMap:
 
         # --- deprecated fields BEGIN
         self._hybrid: bool = _hybrid
-        self._source_inference: bool = _source_inference
         # --- deprecated fields END
 
         self._best_frames: list[PyTealFrame] = []
@@ -614,7 +612,7 @@ class PyTealSourceMap:
 
         # TODO: NO NO NO NO!!!! DON'T DO THIS INSIDE __init__() !!!!
         if build:
-            self.build()
+            self._build()
 
     def compiled_teal(self) -> str:
         return "\n".join(self.teal_chunks)
@@ -631,7 +629,7 @@ class PyTealSourceMap:
             ]
         )
 
-    def build(self) -> None:
+    def _build(self, with_r3sourcemap: bool = False) -> None:
         if self._built():
             return
 
@@ -642,15 +640,23 @@ class PyTealSourceMap:
             raise TealInternalError(
                 f"expected same number of teal chunks {n} and components {len(self.components)}"
             )
+
+        if n == 0:
+            raise TealInternalError("cannot generate empty source map: no teal chunks")
+
+        # PASS I. Deduce the Best Frame Candidate (BFC) from each individual `StackFrames`
         self._best_frames = [
             tc.stack_frames()[-1].as_pyteal_frame() for tc in self.components
         ]
 
-        if self._source_inference:
-            # TODO: hard-code this deprecated field to always be True ASAP
-            mutated = self._search_for_better_frames_and_modify(self._best_frames)
-            if mutated:
-                self._inferred_frames_at = mutated
+        if not self._best_frames:
+            return
+
+        # PASS II. Attempt to fill any "gaps" by inferring from adjacent BFC's
+        better_frames, inferred = self._infer(self._best_frames)
+        self._best_frames = better_frames
+        if inferred:
+            self._inferred_frames_at = inferred
 
         lineno = 1
         for i, best_frame in enumerate(self._best_frames):
@@ -671,7 +677,8 @@ class PyTealSourceMap:
                 )
                 lineno += 1
 
-        self._build_r3sourcemap()
+        if with_r3sourcemap:
+            self._build_r3sourcemap()
 
         if not StackFrames._debug:
             self._best_frames = []
@@ -683,7 +690,9 @@ class PyTealSourceMap:
         root = self._cached_tmis[0].root()
         assert all(
             root == tmi.root() for tmi in self._cached_tmis
-        ), "inconsistent sourceRoot - aborting"
+        ), "inconsistent sourceRoot - aborting: " + str(
+            {tmi.root() for tmi in self._cached_tmis}
+        )
 
         r3sms = [tmi.source_mapping(_hybrid=self._hybrid) for tmi in self._cached_tmis]
         entries = {(r3sm.line, r3sm.column): r3sm for r3sm in r3sms}
@@ -731,21 +740,29 @@ class PyTealSourceMap:
 
     def as_list(self) -> list[TealMapItem]:
         # TODO: finer grained caching/building
-        self.build()
+        self._build()
         return self._cached_tmis
 
     def as_r3sourcemap(self) -> R3SourceMap | None:
         # TODO: finer grained caching/building
-        self.build()
+        self._build(with_r3sourcemap=True)
         return self._cached_r3sourcemap
 
-    def _search_for_better_frames_and_modify(
-        self, frames: list[PyTealFrame]
-    ) -> list[int]:
+    def _infer(self, frames: list[PyTealFrame]) -> tuple[list[PyTealFrame], list[int]]:
+        """
+        NOTE: strictly speaking, this is _NOT_ a pure function as some frames become "parents" of babies born by PyTealFrame.spawn().
+        However, elements of `frames` are not replaced/rearranged/mutated.
+        """
+        inferred = []
+        new_frames = []
         N = len(frames)
-        mutated = []
+
+        compiler_code = self._best_frames[0].raw_code()
 
         def infer_source(i: int) -> PyTealFrame | None:
+            if i == 0:
+                return None
+
             frame = frames[i]
             if not frame:
                 return None
@@ -780,6 +797,10 @@ class PyTealSourceMap:
                 # NO-OP otherwise:
                 return None
 
+            # one frame isn't good enough for this case:
+            if frame.raw_code() == compiler_code:
+                return None
+
             if prev_frame and frame:
                 return frame.spawn(prev_frame, PytealFrameStatus.PATCHED_BY_PREV)
 
@@ -788,16 +809,26 @@ class PyTealSourceMap:
 
             return None
 
-        for i in range(N):
-            if (
-                f := frames[i]
-            ) and f.status_code() <= PytealFrameStatus.PYTEAL_GENERATED:
-                ptf_or_none = infer_source(i)
-                if ptf_or_none:
-                    mutated.append(i)
-                    frames[i] = ptf_or_none
+        def is_improvable(i, frame):
+            if i == 0 or not frame:
+                return False
 
-        return mutated
+            if compiler_code is not None and frame.raw_code() == compiler_code:
+                return True
+
+            if frame.status_code() <= PytealFrameStatus.PYTEAL_GENERATED:
+                return True
+
+            return False
+
+        for i in range(N):
+            if is_improvable(i, f := frames[i]):
+                if ptf_or_none := infer_source(i):
+                    f = ptf_or_none
+                    inferred.append(i)
+            new_frames.append(f)
+
+        return new_frames, inferred
 
     def pure_teal(self) -> str:
         return "\n".join(tmi.teal_line for tmi in self.as_list())

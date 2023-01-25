@@ -8,7 +8,7 @@ from dataclasses import dataclass
 import pyteal as pt
 from pyteal.ast.frame import Proto, ProtoStackLayout, FrameBury, FrameDig
 from pyteal.ast.subroutine import ABIReturnSubroutine, SubroutineEval
-from pyteal.compiler.compiler import FRAME_POINTERS_VERSION
+from pyteal.compiler.options import FRAME_POINTERS_VERSION
 
 options = pt.CompileOptions(version=5)
 options_v8 = pt.CompileOptions(version=8)

@@ -51,9 +51,8 @@ lint: black flake8 mypy sdist-check
 
 # ---- Unit Tests (no algod) ---- #
 
-NUM_PROCS = auto
 test-unit-async:
-	pytest -n $(NUM_PROCS) --durations=10 pyteal tests/unit -m "not serial"
+	pytest -n auto --durations=10 pyteal tests/unit -m "not serial"
 
 # Run tests w/ @pytest.mark.serial under ~/tests/unit each in its own proc:
 test-unit-sync:
@@ -72,7 +71,7 @@ algod-stop:
 	docker compose stop algod
 
 test-integ-async:
-	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration -m "not serial"
+	pytest -n auto --durations=10 -sv tests/integration -m "not serial"
 
 # Run tests w/ @pytest.mark.serial under ~/tests/integration each in its own proc:
 test-integ-sync:

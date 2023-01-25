@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, Final, List, Optional, Set, Tuple, cast
+from typing import Dict, List, Optional, Set, cast
 
 from algosdk.v2client.algod import AlgodClient
 
@@ -7,6 +7,12 @@ from pyteal.ast import Expr, Return, Seq, SubroutineDeclaration, SubroutineDefin
 from pyteal.compiler.constants import createConstantBlocks
 from pyteal.compiler.flatten import flattenBlocks, flattenSubroutines
 from pyteal.compiler.optimizer import OptimizeOptions, apply_global_optimizations
+from pyteal.compiler.options import (
+    CompileOptions,
+    DEFAULT_PROGRAM_VERSION,
+    MIN_PROGRAM_VERSION,
+    MAX_PROGRAM_VERSION,
+)
 from pyteal.compiler.scratchslots import (
     assignScratchSlotsToSubroutines,
     collect_unoptimized_slots,
@@ -25,73 +31,12 @@ from pyteal.ir import (
     TealComponent,
     TealOp,
     TealPragma,
-    TealSimpleBlock,
 )
 from pyteal.stack_frame import StackFrames
 from pyteal.types import TealType
 from pyteal.util import algod_with_assertion
 
 TComponents = TealComponent | TealPragma
-
-MAX_PROGRAM_VERSION = 8
-FRAME_POINTERS_VERSION = 8
-DEFAULT_SCRATCH_SLOT_OPTIMIZE_VERSION = 9
-MIN_PROGRAM_VERSION = 2
-DEFAULT_PROGRAM_VERSION = MIN_PROGRAM_VERSION
-
-
-"""Deprecated. Use MAX_PROGRAM_VERSION instead."""
-MAX_TEAL_VERSION = MAX_PROGRAM_VERSION
-"""Deprecated. Use MIN_PROGRAM_VERSION instead."""
-MIN_TEAL_VERSION = MIN_PROGRAM_VERSION
-"""Deprecated. Use DEFAULT_PROGRAM_VERSION instead."""
-DEFAULT_TEAL_VERSION = DEFAULT_PROGRAM_VERSION
-
-
-class CompileOptions:
-    def __init__(
-        self,
-        *,
-        mode: Mode = Mode.Signature,
-        version: int = DEFAULT_PROGRAM_VERSION,
-        optimize: Optional[OptimizeOptions] = None,
-    ) -> None:
-        self.mode: Final[Mode] = mode
-        self.version: Final[int] = version
-        self.optimize: Final[OptimizeOptions] = optimize or OptimizeOptions()
-        self.use_frame_pointers: Final[bool] = self.optimize.use_frame_pointers(
-            self.version
-        )
-
-        self.currentSubroutine: Optional[SubroutineDefinition] = None
-
-        self.breakBlocksStack: List[List[TealSimpleBlock]] = []
-        self.continueBlocksStack: List[List[TealSimpleBlock]] = []
-
-    def setSubroutine(self, subroutine: Optional[SubroutineDefinition]) -> None:
-        self.currentSubroutine = subroutine
-
-    def enterLoop(self) -> None:
-        self.breakBlocksStack.append([])
-        self.continueBlocksStack.append([])
-
-    def isInLoop(self) -> bool:
-        return len(self.breakBlocksStack) != 0
-
-    def addLoopBreakBlock(self, block: TealSimpleBlock) -> None:
-        if len(self.breakBlocksStack) == 0:
-            raise TealInternalError("Cannot add break block when no loop is active")
-        self.breakBlocksStack[-1].append(block)
-
-    def addLoopContinueBlock(self, block: TealSimpleBlock) -> None:
-        if len(self.continueBlocksStack) == 0:
-            raise TealInternalError("Cannot add continue block when no loop is active")
-        self.continueBlocksStack[-1].append(block)
-
-    def exitLoop(self) -> Tuple[List[TealSimpleBlock], List[TealSimpleBlock]]:
-        if len(self.breakBlocksStack) == 0 or len(self.continueBlocksStack) == 0:
-            raise TealInternalError("Cannot exit loop when no loop is active")
-        return self.breakBlocksStack.pop(), self.continueBlocksStack.pop()
 
 
 def verifyOpsForVersion(teal: List[TealComponent], version: int):
@@ -304,7 +249,6 @@ class Compilation:
         annotate_teal_headers: bool = False,
         annotate_teal_concise: bool = True,
         # deprecated:
-        _source_inference: bool = True,
         _hybrid_source: bool = True,
     ) -> CompilationBundle:
         """Compile a PyTeal expression into TEAL assembly.
@@ -346,7 +290,7 @@ class Compilation:
 
         if annotate_teal and not with_sourcemap:
             raise ValueError(
-                "In order annotate generated teal source, must set source_inference True"
+                "In order annotate generated teal source, must set `with_sourcemap=True`"
             )
 
         if pcs_in_sourcemap:
@@ -398,7 +342,7 @@ class Compilation:
 
         subroutineLabels = resolveSubroutines(subroutineMapping)
         components: list[TComponents] = flattenSubroutines(
-            subroutineMapping, subroutineLabels
+            subroutineMapping, subroutineLabels, options
         )
 
         verifyOpsForVersion(components, options.version)
@@ -439,7 +383,6 @@ class Compilation:
             algod=algod_client,
             annotate_teal=annotate_teal,
             # deprecated:
-            _source_inference=_source_inference,
             _hybrid=_hybrid_source,
         )
 

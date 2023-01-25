@@ -30,7 +30,7 @@ class MethodReturn(Expr):
         str, end = Log(Concat(Bytes(RETURN_HASH_PREFIX), self.arg.encode())).__teal__(
             options
         )
-        StackFrames.reframe_ops_in_blocks(self._root_expr, str)
+        # StackFrames.reframe_ops_in_blocks(self._root_expr, str)
         return str, end
 
     def __str__(self) -> str:

@@ -1,7 +1,7 @@
-from typing import List, Dict, DefaultDict
 from collections import defaultdict
 
 from pyteal.ast import Expr, SubroutineDefinition
+from pyteal.compiler.options import CompileOptions
 from pyteal.errors import TealInternalError, TealInputError
 from pyteal.ir import (
     Op,
@@ -15,21 +15,21 @@ from pyteal.ir import (
 )
 
 
-def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
+def flattenBlocks(blocks: list[TealBlock]) -> list[TealComponent]:
     """Lowers a list of TealBlocks into a list of TealComponents.
 
     Args:
         blocks: The blocks to lower.
     """
-    codeblocks: List[List[TealOp]] = []
-    references: DefaultDict[int, int] = defaultdict(int)
+    codeblocks: list[list[TealOp]] = []
+    references: defaultdict[int, int] = defaultdict(int)
     referer: dict[int, int] = {}
 
     def add_if_new(nextIndex, i):
         if nextIndex not in referer:
             referer[nextIndex] = i
 
-    labelRefs: Dict[int, LabelReference] = dict()
+    labelRefs: dict[int, LabelReference] = dict()
 
     def indexToLabel(index: int) -> LabelReference:
         if index not in labelRefs:
@@ -59,7 +59,7 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             if nextIndex != i + 1:
                 references[nextIndex] += 1
                 add_if_new(nextIndex, i)
-                code.append(TealOp(root_expr, Op.b, indexToLabel(nextIndex)))  # T2PT5
+                code.append(TealOp(root_expr, Op.b, indexToLabel(nextIndex)))
 
         elif type(block) is TealConditionalBlock:
             assert block.trueBlock is not None
@@ -71,42 +71,43 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
             if falseIndex == i + 1:
                 references[trueIndex] += 1
                 add_if_new(trueIndex, i)
-                code.append(TealOp(root_expr, Op.bnz, indexToLabel(trueIndex)))  # T2PT5
+                code.append(TealOp(root_expr, Op.bnz, indexToLabel(trueIndex)))
                 continue
 
             if trueIndex == i + 1:
                 references[falseIndex] += 1
                 add_if_new(falseIndex, i)
-                code.append(TealOp(root_expr, Op.bz, indexToLabel(falseIndex)))  # T2PT5
+                code.append(TealOp(root_expr, Op.bz, indexToLabel(falseIndex)))
                 continue
 
             references[trueIndex] += 1
             add_if_new(trueIndex, i)
-            code.append(TealOp(root_expr, Op.bnz, indexToLabel(trueIndex)))  # T2PT5
+            code.append(TealOp(root_expr, Op.bnz, indexToLabel(trueIndex)))
 
             references[falseIndex] += 1
             add_if_new(falseIndex, i)
-            code.append(TealOp(root_expr, Op.b, indexToLabel(falseIndex)))  # T2PT5
+            code.append(TealOp(root_expr, Op.b, indexToLabel(falseIndex)))
         else:
             raise TealInternalError("Unrecognized block type: {}".format(type(block)))
 
-    teal: List[TealComponent] = []
+    teal: list[TealComponent] = []
     root_expr = None
     for i, code in enumerate(codeblocks):
         if references[i] != 0:
             root_expr = (
                 blocks[i]._root_expr or blocks[referer[i]]._root_expr or root_expr
             )
-            teal.append(TealLabel(root_expr, indexToLabel(i)))  # T2PT6
+            teal.append(TealLabel(root_expr, indexToLabel(i)))
         teal += code
 
     return teal
 
 
 def flattenSubroutines(
-    subroutineMapping: Dict[SubroutineDefinition | None, List[TealComponent]],
-    subroutineToLabel: Dict[SubroutineDefinition, str],
-) -> List[TealComponent]:
+    subroutineMapping: dict[SubroutineDefinition | None, list[TealComponent]],
+    subroutineToLabel: dict[SubroutineDefinition, str],
+    options: CompileOptions,
+) -> list[TealComponent]:
     """Combines each subroutine's list of TealComponents into a single list of TealComponents that
     represents the entire program.
 
@@ -120,7 +121,7 @@ def flattenSubroutines(
     """
     from pyteal.ast import Expr
 
-    combinedOps: List[TealComponent] = []
+    combinedOps: list[TealComponent] = []
 
     # By default all branch labels in each subroutine will start from "l0". To
     # make each subroutine have unique labels, we prefix "main_" to the ones
@@ -142,13 +143,37 @@ def flattenSubroutines(
             if isinstance(stmt, TealLabel):
                 stmt.getLabelRef().addPrefix(labelPrefix)
 
-        dexpr: Expr | None = None
-        try:
-            dexpr = subroutine.declarations.get_declaration()
-        except TealInputError:
-            pass  # NOOP - just ignoring, as only used for source mapping
+        # TODO: As this is only used by source mapper consider
+        # adding sourcemaps options to `options`` and only call when sourcemaps is on
+        # dexpr: Expr | None = subroutine.declarations.get_declaration_by_option(
+        #     options.use_frame_pointers
+        # )
+        dexpr_good = subroutine.declarations.get_declaration()
 
-        combinedOps.append(TealLabel(dexpr, LabelReference(label), comment))  # T2PT1
+        # dexpr_bad = subroutine.declarations.get_declaration_by_option(
+        #     options.use_frame_pointers
+        # )
+
+        # # dexpr = dexpr_good
+
+        # fs_bad = dexpr_bad.body.stack_frames[0].full_stack
+        # fs_good = dexpr_good.body.stack_frames[0].full_stack
+        # assert fs_bad and fs_good
+
+        # comps = [
+        #     {"good": g, "bad": fs_bad[i]} if i < len(fs_bad) else None
+        #     for i, g in enumerate(fs_good)
+        # ]
+
+        # def vprop(d, prop):
+        #     return d and {k: getattr(v, prop) for k, v in d.items()}
+
+        # comps_cc = [vprop(c, "code_context") for c in comps]
+        # core = comps_cc[:10]
+
+        combinedOps.append(
+            TealLabel(dexpr_good, LabelReference(label), comment)
+        )  # T2PT1
         combinedOps += subroutineOps
 
     return combinedOps

@@ -1,4 +1,9 @@
 from pyteal.compiler.compiler import (
+    Compilation,
+    compileTeal,
+)
+from pyteal.compiler.optimizer import OptimizeOptions
+from pyteal.compiler.options import (
     MAX_TEAL_VERSION,
     MIN_TEAL_VERSION,
     DEFAULT_TEAL_VERSION,
@@ -6,10 +11,7 @@ from pyteal.compiler.compiler import (
     MIN_PROGRAM_VERSION,
     DEFAULT_PROGRAM_VERSION,
     CompileOptions,
-    Compilation,
-    compileTeal,
 )
-from pyteal.compiler.optimizer import OptimizeOptions
 from pyteal.compiler.sourcemap import PyTealSourceMap
 
 __all__ = [

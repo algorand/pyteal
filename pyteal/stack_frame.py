@@ -5,7 +5,7 @@ from configparser import ConfigParser
 from dataclasses import dataclass
 from enum import IntEnum
 from inspect import FrameInfo, stack
-from typing import Callable, Optional, cast
+from typing import Callable, cast
 
 from executing import Source  # type: ignore
 
@@ -13,16 +13,16 @@ from executing import Source  # type: ignore
 @dataclass
 class StackFrame:
     frame_info: FrameInfo
-    node: Optional[AST]
+    node: AST | None
 
     creator: "StackFrames"
     # for debugging purposes:
-    full_stack: Optional[list[FrameInfo]] = None
+    full_stack: list[FrameInfo] | None = None
 
     def as_pyteal_frame(
         self,
         rel_paths: bool = True,
-        parent: Optional["PyTealFrame"] | None = None,
+        parent: "PyTealFrame | None" = None,
     ) -> "PyTealFrame":
         return PyTealFrame(
             frame_info=self.frame_info,
@@ -89,7 +89,7 @@ class StackFrame:
     @classmethod
     def _init_or_drop(
         cls, f: FrameInfo, creator: "StackFrames", full_stack: list[FrameInfo]
-    ) -> Optional["StackFrame"]:
+    ) -> "StackFrame | None":
         node = cast(AST | None, Source.executing(f.frame).node)
         frame = StackFrame(f, node, creator, full_stack if StackFrames._debug else None)
         return frame if not frame._is_py_crud() else None
@@ -280,7 +280,7 @@ class StackFrames:
                 case SubroutineDeclaration():
                     cls._walk_asts(func, e.body)
                 case _:
-                    # TODO: implement more cases, but no need to error as this isn't used for functionality's sake.
+                    # TODO: implement more cases, but no need to error as this purely for source mapping.
                     pass
 
     @classmethod
@@ -299,28 +299,36 @@ class StackFrames:
         cls._walk_asts(dbg, *exprs)
 
     @classmethod
+    def mark_expr_as_compiler_gen(cls, expr: "Expr") -> None:  # type: ignore
+        expr.stack_frames._compile_gen = True
+
+    @classmethod
     def mark_asts_as_compiler_gen(cls, *exprs: "Expr") -> None:  # type: ignore
         from pyteal.ast import Expr
 
         if cls.sourcemapping_is_off():
             return
 
-        def mark(e: Expr):
-            e.stack_frames._compiler_gen = True
+        # def mark(e: Expr):
+        #     e.stack_frames._compiler_gen = True
 
-        cls._walk_asts(mark, *exprs)
+        cls._walk_asts(lambda e: cls.mark_expr_as_compiler_gen(e), *exprs)
+
+    @classmethod
+    def reframe_expr(cls, expr: "Expr", stack_frames: "StackFrames") -> None:  # type: ignore
+        expr.stack_frames = stack_frames
 
     @classmethod
     def reframe_asts(cls, stack_frames: "StackFrames", *exprs: "Expr") -> None:  # type: ignore
-        from pyteal.ast import Expr
+        # from pyteal.ast import Expr
 
         if cls.sourcemapping_is_off():
             return
 
-        def set_frames(e: Expr):
-            e.stack_frames = stack_frames
+        # def set_frames(e: Expr):
+        #     e.stack_frames = stack_frames
 
-        cls._walk_asts(set_frames, *exprs)
+        cls._walk_asts(lambda e: cls.reframe_expr(e, stack_frames), *exprs)
 
     @classmethod
     def reframe_ops_in_blocks(cls, root_expr: "Expr", start: "TealBlock") -> None:  # type: ignore
@@ -345,6 +353,7 @@ class PT_GENERATED:
     FLAGGED_BY_DEV = "Developer has flagged expression as compiler generated"
 
 
+# TODO: which of these still exist?
 _PT_GEN = {
     "# T2PT0": PT_GENERATED.PRAGMA,
     "# T2PT1": PT_GENERATED.SUBR_LABEL,
@@ -410,7 +419,7 @@ class PyTealFrame(StackFrame):
         creator: StackFrames,
         full_stack: list[FrameInfo] | None,
         rel_paths: bool = True,
-        parent: Optional["PyTealFrame"] | None = None,
+        parent: "PyTealFrame | None" = None,
     ):
         super().__init__(frame_info, node, creator, full_stack)
         self.rel_paths = rel_paths
@@ -538,7 +547,7 @@ class PyTealFrame(StackFrame):
 
     @classmethod
     def _hybrid_impl(
-        cls, code: str, node: Optional[AST], pt_chunk: str
+        cls, code: str, node: AST | None, pt_chunk: str
     ) -> tuple[str, int]:
         if pt_chunk:
             pt_lines = pt_chunk.splitlines()

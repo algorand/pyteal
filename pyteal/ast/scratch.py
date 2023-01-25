@@ -253,9 +253,7 @@ class ScratchStackStore(Expr):
     def __teal__(self, options: "CompileOptions"):
         from pyteal.ir import TealOp, Op, TealBlock
 
-        op = TealOp(self, Op.store, self.slot)
-        op._root_expr = self._root_expr
-        return TealBlock.FromOp(options, op)
+        return TealBlock.FromOp(options, TealOp(self, Op.store, self.slot))
 
     def type_of(self):
         return TealType.none

@@ -39,7 +39,7 @@ class OptimizeOptions:
         self._skip_slots: Set[ScratchSlot] = set()
 
     def optimize_scratch_slots(self, version: int) -> bool:
-        from pyteal.compiler.compiler import DEFAULT_SCRATCH_SLOT_OPTIMIZE_VERSION
+        from pyteal.compiler.options import DEFAULT_SCRATCH_SLOT_OPTIMIZE_VERSION
 
         if self._scratch_slots is None:
             return version >= DEFAULT_SCRATCH_SLOT_OPTIMIZE_VERSION
@@ -47,7 +47,7 @@ class OptimizeOptions:
         return self._scratch_slots
 
     def use_frame_pointers(self, version: int) -> bool:
-        from pyteal.compiler.compiler import FRAME_POINTERS_VERSION
+        from pyteal.compiler.options import FRAME_POINTERS_VERSION
 
         if self._frame_pointers is None:
             return version >= FRAME_POINTERS_VERSION
