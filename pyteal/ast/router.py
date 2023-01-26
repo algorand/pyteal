@@ -705,11 +705,11 @@ class Router:
         self.method_sig_to_selector: dict[str, bytes] = dict()
         self.method_selector_to_sig: dict[bytes, str] = dict()
 
-        self.bare_calls: BareCallActions = bare_calls or BareCallActions()
+        self.bare_call_actions: BareCallActions = bare_calls or BareCallActions()
 
         self.method_configs: dict[str | None, MethodConfig] = dict()
-        if not self.bare_calls.is_empty():
-            self.method_configs[None] = self.bare_calls.get_method_config()
+        if not self.bare_call_actions.is_empty():
+            self.method_configs[None] = self.bare_call_actions.get_method_config()
 
     def _clean(self) -> None:
         self.approval_ast._clean_bare_calls()
@@ -889,8 +889,8 @@ class Router:
             * clear_state_program: an AST for clear-state program
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
-        if self.bare_calls and not self.bare_calls.is_empty():
-            bare_call_approval = self.bare_calls.approval_construction()
+        if not self.bare_call_actions.is_empty():
+            bare_call_approval = self.bare_call_actions.approval_construction()
             if bare_call_approval:
                 self.approval_ast.bare_calls = [
                     CondNode(
