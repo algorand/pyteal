@@ -303,10 +303,6 @@ class ASTBuilder:
 
     def _clean(self) -> None:
         self._bare_cnbs = []
-        # self.conditions_n_branches = []
-        # for mwc in self.methods_with_conds:
-        #     mwc.method.subroutine.declarations._clean()
-        # self.methods_with_conds = []
 
     @staticmethod
     def __filter_invalid_handlers_and_typecast(
