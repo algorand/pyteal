@@ -287,9 +287,6 @@ class CondWithMethod:
     method: ABIReturnSubroutine
 
     def to_cond_node(self, use_frame_pt: bool = False) -> CondNode:
-        if not (isinstance(self.condition, Expr) or self.condition == 1):
-            raise TealInputError("Invalid condition input for CondWithMethod")
-
         walk_in_cond = Txn.application_args[0] == MethodSignature(self.method_sig)
 
         if not (isinstance(self.condition, Expr) or self.condition == 1):
