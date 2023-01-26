@@ -149,7 +149,7 @@ class OnCompleteAction:
             raise TealInputError(
                 f"action {self.action} and call_config {self.call_config!r} contradicts"
             )
-        self.frames: StackFrames = StackFrames()
+        self.stack_frames: StackFrames = StackFrames()
 
     @staticmethod
     def never() -> "OnCompleteAction":
@@ -195,20 +195,6 @@ class BareCallActions:
         self.no_op: Final[OnCompleteAction] = no_op
         self.opt_in: Final[OnCompleteAction] = opt_in
         self.update_application: Final[OnCompleteAction] = update_application
-
-        self.frames: StackFrames = StackFrames()
-
-    def actions(self) -> list[OnCompleteAction]:
-        return [
-            self.close_out,
-            self.clear_state,
-            self.delete_application,
-            self.no_op,
-            self.opt_in,
-            self.update_application,
-        ]
-
-    def __post_init__(self):
         if not self.clear_state.is_empty():
             raise TealInputError(
                 "Attempt to construct clear state program from bare app call: "
@@ -216,6 +202,18 @@ class BareCallActions:
                 "For more details please refer to "
                 "https://pyteal.readthedocs.io/en/latest/abi.html#registering-bare-app-calls"
             )
+
+        self.stack_frames: StackFrames = StackFrames()
+
+    def as_list(self) -> list[OnCompleteAction]:
+        return [
+            self.clear_state,
+            self.close_out,
+            self.delete_application,
+            self.no_op,
+            self.opt_in,
+            self.update_application,
+        ]
 
     def is_empty(self) -> bool:
         return all([a.is_empty() for a in self.actions()])
@@ -254,8 +252,12 @@ class BareCallActions:
                     raise TealInternalError(
                         f"Unexpected CallConfig: {oca.call_config!r}"
                     )
-            cond = Txn.on_completion() == oc
-            conditions_n_branches.append(CondNode(cond, cond_body))
+            conditions_n_branches.append(
+                CondNode(
+                    Txn.on_completion() == oc,
+                    cond_body,
+                )
+            )
         return Cond(*[[n.condition, n.branch] for n in conditions_n_branches])
 
 
@@ -784,8 +786,8 @@ class Router:
             if bare_call_approval:
                 cond = Txn.application_args.length() == Int(0)
                 act = cast(Expr, bare_call_approval)
-                StackFrames.reframe_asts(bare_calls.frames, cond)
-                act.stack_frames = bare_calls.frames
+                StackFrames.reframe_asts(bare_calls.stack_frames, cond)
+                act.stack_frames = bare_calls.stack_frames
                 self.approval_ast.conditions_n_branches.append(CondNode(cond, act))
 
     def add_method_handler(
@@ -909,6 +911,7 @@ class Router:
             if all(oc is None for oc in ocs.values()):
                 call_configs = MethodConfig(no_op=CallConfig.CALL)
             else:
+
                 def none_to_never(x: None | CallConfig):
                     return CallConfig.NEVER if x is None else x
 
