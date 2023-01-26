@@ -297,12 +297,11 @@ CondWithMethod.__module__ = "pyteal"
 
 class ASTBuilder:
     def __init__(self):
-        self.conditions_n_branches: list[CondNode] = []
         self.methods_with_conds: list[CondWithMethod] = []
-        self._bare_cnbs: list[CondNode] = []
+        self.bare_calls: list[CondNode] = []
 
-    def _clean(self) -> None:
-        self._bare_cnbs = []
+    def _clean_bare_calls(self) -> None:
+        self.bare_calls = []
 
     @staticmethod
     def __filter_invalid_handlers_and_typecast(
@@ -638,14 +637,14 @@ class ASTBuilder:
         self.methods_with_conds.append(CondWithMethod(method_signature, cond, handler))
 
     def program_construction(self, use_frame_pt: bool = False) -> Expr:
-        self.conditions_n_branches = self._bare_cnbs + [
+        conditions_n_branches: list[CondNode] = self.bare_calls + [
             method_with_cond.to_cond_node(use_frame_pt=use_frame_pt)
             for method_with_cond in self.methods_with_conds
         ]
 
-        if not self.conditions_n_branches:
+        if not conditions_n_branches:
             return Reject()
-        return Cond(*[[n.condition, n.branch] for n in self.conditions_n_branches])
+        return Cond(*[[n.condition, n.branch] for n in conditions_n_branches])
 
 
 ASTBuilder.__module__ = "pyteal"
@@ -704,7 +703,7 @@ class Router:
         self.bare_calls: BareCallActions | None = bare_calls
 
     def _clean(self) -> None:
-        self.approval_ast._clean()
+        self.approval_ast._clean_bare_calls()
 
     def add_method_handler(
         self,
@@ -882,12 +881,12 @@ class Router:
         if self.bare_calls and not self.bare_calls.is_empty():
             bare_call_approval = self.bare_calls.approval_construction()
             if bare_call_approval:
-                self.approval_ast._bare_cnbs.append(
+                self.approval_ast.bare_calls = [
                     CondNode(
                         Txn.application_args.length() == Int(0),
                         cast(Expr, bare_call_approval),
                     )
-                )
+                ]
 
         optimize = optimize if optimize else OptimizeOptions()
         use_frame_pt = optimize.use_frame_pointers(version)
