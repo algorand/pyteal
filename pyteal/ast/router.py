@@ -216,7 +216,7 @@ class BareCallActions:
         ]
 
     def is_empty(self) -> bool:
-        return all([a.is_empty() for a in self.actions()])
+        return all([a.is_empty() for a in self.as_list()])
 
     def approval_construction(self) -> Optional[Expr]:
         oc_action_pair: list[tuple[EnumInt, OnCompleteAction]] = [
