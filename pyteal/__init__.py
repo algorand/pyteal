@@ -61,5 +61,5 @@ __all__ = (
         "RETURN_HASH_PREFIX",
         "METHOD_ARG_NUM_CUTOFF",
     ]
-)  # type: ignore
+)
 # end __all__

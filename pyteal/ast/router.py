@@ -313,8 +313,6 @@ def _smap_friendly_approve():
 
 @dataclass
 class ASTBuilder:
-    # TODO: source mapping is broken here. Consider replacing _smap_friendly_approve() with a reframe_asts()
-
     conditions_n_branches: list[CondNode] = field(default_factory=list)
     methods_with_conds: list[CondWithMethod] = field(default_factory=list)
 
