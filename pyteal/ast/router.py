@@ -1,6 +1,7 @@
+from contextlib import contextmanager
 from dataclasses import dataclass, field, fields, astuple
-from typing import cast, Optional, Callable
 from enum import IntFlag
+from typing import cast, Optional, Callable
 
 from algosdk import abi as sdk_abi
 from algosdk import encoding
@@ -27,6 +28,7 @@ from pyteal.ast.expr import Expr
 from pyteal.ast.frame import FrameVar, Proto, ProtoStackLayout
 from pyteal.ast.app import OnComplete
 from pyteal.ast.int import Int, EnumInt
+from pyteal.ast.scratch import ScratchSlot
 from pyteal.ast.seq import Seq
 from pyteal.ast.methodsig import MethodSignature
 from pyteal.ast.naryexpr import And, Or
@@ -302,10 +304,13 @@ class CondWithMethod:
 CondWithMethod.__module__ = "pyteal"
 
 
-@dataclass
 class ASTBuilder:
-    conditions_n_branches: list[CondNode] = field(default_factory=list)
-    methods_with_conds: list[CondWithMethod] = field(default_factory=list)
+    def __init__(self):
+        self.methods_with_conds: list[CondWithMethod] = []
+        self.bare_calls: list[CondNode] = []
+
+    def _clean_bare_calls(self) -> None:
+        self.bare_calls = []
 
     @staticmethod
     def __filter_invalid_handlers_and_typecast(
@@ -641,14 +646,14 @@ class ASTBuilder:
         self.methods_with_conds.append(CondWithMethod(method_signature, cond, handler))
 
     def program_construction(self, use_frame_pt: bool = False) -> Expr:
-        self.conditions_n_branches += [
+        conditions_n_branches: list[CondNode] = self.bare_calls + [
             method_with_cond.to_cond_node(use_frame_pt=use_frame_pt)
             for method_with_cond in self.methods_with_conds
         ]
 
-        if not self.conditions_n_branches:
+        if not conditions_n_branches:
             return Reject()
-        return Cond(*[[n.condition, n.branch] for n in self.conditions_n_branches])
+        return Cond(*[[n.condition, n.branch] for n in conditions_n_branches])
 
 
 ASTBuilder.__module__ = "pyteal"
@@ -706,16 +711,13 @@ class Router:
 
         self.method_configs: dict[str | None, MethodConfig] = dict()
 
+        self.bare_calls: BareCallActions | None = bare_calls
+
         if bare_calls and not bare_calls.is_empty():
-            bare_call_approval = bare_calls.approval_construction()
-            if bare_call_approval:
-                self.approval_ast.conditions_n_branches.append(
-                    CondNode(
-                        Txn.application_args.length() == Int(0),
-                        cast(Expr, bare_call_approval),
-                    )
-                )
             self.method_configs[None] = bare_calls.get_method_config()
+
+    def _clean(self) -> None:
+        self.approval_ast._clean_bare_calls()
 
     def add_method_handler(
         self,
@@ -892,6 +894,16 @@ class Router:
             * clear_state_program: an AST for clear-state program
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
+        if self.bare_calls and not self.bare_calls.is_empty():
+            bare_call_approval = self.bare_calls.approval_construction()
+            if bare_call_approval:
+                self.approval_ast.bare_calls = [
+                    CondNode(
+                        Txn.application_args.length() == Int(0),
+                        cast(Expr, bare_call_approval),
+                    )
+                ]
+
         optimize = optimize if optimize else OptimizeOptions()
         use_frame_pt = optimize.use_frame_pointers(version)
         return (
@@ -899,6 +911,13 @@ class Router:
             self.clear_state,
             self.contract_construct(),
         )
+
+    @contextmanager
+    def _cleaning_context(self):
+        starting_slot_id = ScratchSlot.nextSlotId
+        yield
+        self._clean()
+        ScratchSlot.reset_slot_numbering(starting_slot_id)
 
     def compile_program(
         self,
@@ -924,21 +943,22 @@ class Router:
             * clear_state_program: compiled clear-state program string
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
-        ap, csp, contract = self._build_program(version=version, optimize=optimize)
-        ap_compiled = compileTeal(
-            ap,
-            Mode.Application,
-            version=version,
-            assembleConstants=assemble_constants,
-            optimize=optimize,
-        )
-        csp_compiled = compileTeal(
-            csp,
-            Mode.Application,
-            version=version,
-            assembleConstants=assemble_constants,
-            optimize=optimize,
-        )
+        with self._cleaning_context():
+            ap, csp, contract = self._build_program(version=version, optimize=optimize)
+            ap_compiled = compileTeal(
+                ap,
+                Mode.Application,
+                version=version,
+                assembleConstants=assemble_constants,
+                optimize=optimize,
+            )
+            csp_compiled = compileTeal(
+                csp,
+                Mode.Application,
+                version=version,
+                assembleConstants=assemble_constants,
+                optimize=optimize,
+            )
         return ap_compiled, csp_compiled, contract
 
 
