@@ -2,17 +2,7 @@ from typing import Final, List, Tuple, Set, Dict, Optional, cast
 
 from pyteal.compiler.optimizer import OptimizeOptions, apply_global_optimizations
 
-from pyteal.types import TealType
-from pyteal.ast import (
-    Expr,
-    Return,
-    Seq,
-    SubroutineDefinition,
-    SubroutineDeclaration,
-)
-from pyteal.ir import Mode, Op, TealComponent, TealOp, TealBlock, TealSimpleBlock
-from pyteal.errors import TealInputError, TealInternalError
-
+from pyteal.ast import Expr, Return, Seq, SubroutineDefinition, SubroutineDeclaration
 from pyteal.compiler.sort import sortBlocks
 from pyteal.compiler.flatten import flattenBlocks, flattenSubroutines
 from pyteal.compiler.scratchslots import (
@@ -24,6 +14,10 @@ from pyteal.compiler.subroutines import (
     resolveSubroutines,
 )
 from pyteal.compiler.constants import createConstantBlocks
+from pyteal.errors import TealInputError, TealInternalError
+from pyteal.ir import Mode, Op, TealComponent, TealOp, TealBlock, TealSimpleBlock
+from pyteal.types import TealType
+
 
 MAX_PROGRAM_VERSION = 8
 FRAME_POINTERS_VERSION = 8
