@@ -956,20 +956,6 @@ class Router:
         if self.bare_calls and not self.bare_calls.is_empty():
             bare_call_approval = self.bare_calls.approval_construction()
             if bare_call_approval:
-                # NEW BEG
-                # cond = Txn.application_args.length() == Int(0)
-                # act = cast(Expr, bare_call_approval)
-                # StackFrames.reframe_asts(bare_call_approval.stack_frames, cond)
-                # act.stack_frames = bare_call_approval.stack_frames
-                # self.approval_ast.bare_calls.append(CondNode(cond, act))
-                # NEW END/LIVE BEG
-                # self.approval_ast.bare_calls = [
-                #     CondNode(
-                #         Txn.application_args.length() == Int(0),
-                #         cast(Expr, bare_call_approval),
-                #     )
-                # ]
-                # # LIVE END/MERGE BEG
                 self.approval_ast.bare_calls = [
                     CondNode(
                         cond := Txn.application_args.length() == Int(0),
@@ -978,7 +964,6 @@ class Router:
                 ]
                 StackFrames.reframe_asts(bare_call_approval.stack_frames, cond)
                 act.stack_frames = bare_call_approval.stack_frames
-                # MERGE END
 
         optimize = optimize if optimize else OptimizeOptions()
         use_frame_pt = optimize.use_frame_pointers(version)
