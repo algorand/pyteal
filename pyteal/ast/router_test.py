@@ -1,4 +1,3 @@
-from copy import deepcopy
 import pytest
 import secrets
 import typing
@@ -909,18 +908,18 @@ def test_override_names():
     assert (ap1, cs1, c1) == (ap2, cs2, c2)
 
 
-def test_router_build_idempotence():
+def test_router_compile_program_idempotence():
     on_completion_actions = pt.BareCallActions(
         opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes("optin call"))),
-        clear_state=pt.OnCompleteAction.call_only(pt.Approve()),
     )
-    router = pt.Router("questionable", on_completion_actions)
+    router = pt.Router("questionable", on_completion_actions, clear_state=pt.Approve())
 
-    approval1, clear1, contract1 = router.build_program(version=6)
-    approval2, clear2, contract2 = router.build_program(version=6)
+    approval1, clear1, contract1 = router.compile_program(version=6)
+    approval2, clear2, contract2 = router.compile_program(version=6)
 
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert approval1.__teal__(options)[0] == approval2.__teal__(options)[0]
+    assert contract1.dictify() == contract2.dictify()
+    assert clear1 == clear2
+    assert approval1 == approval2
 
     @pt.ABIReturnSubroutine
     def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
@@ -929,22 +928,20 @@ def test_router_build_idempotence():
     meth = router.add_method_handler(add)
     assert meth.method_signature() == "add(uint64,uint64)uint64"
 
-    approval1, clear1, contract1 = router.build_program(version=6)
-    approval2, clear2, contract2 = router.build_program(version=6)
-
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert approval1.__teal__(options)[0] == approval2.__teal__(options)[0]
-
-
-    return
-    # for PR #634:
-    # method_configs0 = deepcopy(router.method_configs)
-    # method_configs1 = deepcopy(router.method_configs)
-    # method_configs2 = deepcopy(router.method_configs)
-    # assert method_configs0 == method_configs1 == method_configs2
-
+    # formerly nextSlotId: 256 --> 262:
     approval1, clear1, contract1 = router.compile_program(version=6)
+    # formerly nextSlotId: 262 --> 265:
     approval2, clear2, contract2 = router.compile_program(version=6)
-    assert contract1.dictify() == contract2.dictify()
-    assert approval1 == approval2
-    assert clear1 == clear2
+    # formerly nextSlotId: 265 --> 268:
+    approval3, clear3, contract3 = router.compile_program(version=6)
+
+    assert contract2.dictify() == contract3.dictify()
+    assert clear3 == clear2
+    assert approval3 == approval3
+
+    assert contract2.dictify() == contract1.dictify()
+    assert clear2 == clear1
+    assert (
+        approval2 == approval1
+    ), f"""{approval1=}
+{approval2=}"""
