@@ -1,9 +1,7 @@
-# TODO: don't forget to get the imports right by setting
-# Foo.__module__ = "pyteal" and adding to various __init__.py/i files
-
-from dataclasses import astuple, dataclass, field
+from contextlib import contextmanager
+from dataclasses import dataclass, field, fields, astuple
 from enum import IntFlag
-from typing import Callable, Final, Optional, cast
+from typing import cast, Optional, Callable
 
 from algosdk import abi as sdk_abi
 from algosdk import encoding
@@ -19,6 +17,7 @@ from pyteal.ast.int import EnumInt, Int
 from pyteal.ast.methodsig import MethodSignature
 from pyteal.ast.naryexpr import And, Or
 from pyteal.ast.return_ import Approve, Reject
+from pyteal.ast.scratch import ScratchSlot
 from pyteal.ast.seq import Seq
 from pyteal.ast.subroutine import (
     ABIReturnSubroutine,
@@ -228,6 +227,7 @@ class BareCallActions:
         ]
         if all(oca.is_empty() for _, oca in oc_action_pair):
             return None
+
         conditions_n_branches: list[CondNode] = list()
         for oc, oca in oc_action_pair:
             if oca.is_empty():
@@ -313,8 +313,12 @@ def _smap_friendly_approve():
 
 @dataclass
 class ASTBuilder:
-    conditions_n_branches: list[CondNode] = field(default_factory=list)
-    methods_with_conds: list[CondWithMethod] = field(default_factory=list)
+    def __init__(self):
+        self.methods_with_conds: list[CondWithMethod] = []
+        self.bare_calls: list[CondNode] = []
+
+    def _clean_bare_calls(self) -> None:
+        self.bare_calls = []
 
     @staticmethod
     def __filter_invalid_handlers_and_typecast(
@@ -650,14 +654,14 @@ class ASTBuilder:
         self.methods_with_conds.append(CondWithMethod(method_signature, cond, handler))
 
     def program_construction(self, use_frame_pt: bool = False) -> Expr:
-        self.conditions_n_branches += [
+        conditions_n_branches: list[CondNode] = self.bare_calls + [
             method_with_cond.to_cond_node(use_frame_pt=use_frame_pt)
             for method_with_cond in self.methods_with_conds
         ]
 
-        if not self.conditions_n_branches:
+        if not conditions_n_branches:
             return Reject()
-        return Cond(*[[n.condition, n.branch] for n in self.conditions_n_branches])
+        return Cond(*[[n.condition, n.branch] for n in conditions_n_branches])
 
 
 ASTBuilder.__module__ = "pyteal"
@@ -778,15 +782,10 @@ class Router:
         self.methods: list[sdk_abi.Method] = []
         self.method_sig_to_selector: dict[str, bytes] = dict()
         self.method_selector_to_sig: dict[bytes, str] = dict()
+        self.bare_calls: BareCallActions | None = bare_calls
 
-        if bare_calls and not bare_calls.is_empty():
-            bare_call_approval = bare_calls.approval_construction()
-            if bare_call_approval:
-                cond = Txn.application_args.length() == Int(0)
-                act = cast(Expr, bare_call_approval)
-                StackFrames.reframe_asts(bare_calls.stack_frames, cond)
-                act.stack_frames = bare_calls.stack_frames
-                self.approval_ast.conditions_n_branches.append(CondNode(cond, act))
+    def _clean(self) -> None:
+        self.approval_ast._clean_bare_calls()
 
     def add_method_handler(
         self,
@@ -957,6 +956,33 @@ class Router:
             * clear_state_program: an AST for clear-state program
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
+        if self.bare_calls and not self.bare_calls.is_empty():
+            bare_call_approval = self.bare_calls.approval_construction()
+            if bare_call_approval:
+                # NEW BEG
+                # cond = Txn.application_args.length() == Int(0)
+                # act = cast(Expr, bare_call_approval)
+                # StackFrames.reframe_asts(bare_call_approval.stack_frames, cond)
+                # act.stack_frames = bare_call_approval.stack_frames
+                # self.approval_ast.bare_calls.append(CondNode(cond, act))
+                # NEW END/LIVE BEG
+                # self.approval_ast.bare_calls = [
+                #     CondNode(
+                #         Txn.application_args.length() == Int(0),
+                #         cast(Expr, bare_call_approval),
+                #     )
+                # ]
+                # # LIVE END/MERGE BEG
+                self.approval_ast.bare_calls = [
+                    CondNode(
+                        cond := Txn.application_args.length() == Int(0),
+                        act := cast(Expr, bare_call_approval),
+                    )
+                ]
+                StackFrames.reframe_asts(bare_call_approval.stack_frames, cond)
+                act.stack_frames = bare_call_approval.stack_frames
+                # MERGE END
+
         optimize = optimize if optimize else OptimizeOptions()
         use_frame_pt = optimize.use_frame_pointers(version)
         return (
@@ -964,6 +990,13 @@ class Router:
             self.clear_state,
             self.contract_construct(),
         )
+
+    @contextmanager
+    def _cleaning_context(self):
+        starting_slot_id = ScratchSlot.nextSlotId
+        yield
+        self._clean()
+        ScratchSlot.reset_slot_numbering(starting_slot_id)
 
     def compile_program(
         self,
@@ -1060,35 +1093,41 @@ class Router:
         return self._build_impl(input)
 
     def _build_impl(self, input: _RouterCompileInput) -> RouterBundle:
-        ap, csp, contract = self._build_program(
-            version=input.version, optimize=input.optimize
-        )
+        with self._cleaning_context():
+            ap, csp, contract = self._build_program(
+                version=input.version, optimize=input.optimize
+            )
 
-        abundle = input.get_compilation(ap).compile(
-            with_sourcemap=input.with_sourcemap,
-            teal_filename=input.approval_filename,
-            pcs_in_sourcemap=input.pcs_in_sourcemap,
-            algod_client=input.algod_client,
-            annotate_teal=input.annotate_teal,
-            annotate_teal_headers=input.annotate_teal_headers,
-            annotate_teal_concise=input.annotate_teal_concise,
-            # deprecated:
-            _source_inference=input.source_inference,
-            _hybrid_source=input._hybrid_source,
-        )
+            abundle = input.get_compilation(ap).compile(
+                with_sourcemap=input.with_sourcemap,
+                teal_filename=input.approval_filename,
+                pcs_in_sourcemap=input.pcs_in_sourcemap,
+                algod_client=input.algod_client,
+                annotate_teal=input.annotate_teal,
+                annotate_teal_headers=input.annotate_teal_headers,
+                annotate_teal_concise=input.annotate_teal_concise,
+                # deprecated:
+                _source_inference=input.source_inference,
+                _hybrid_source=input._hybrid_source,
+            )
 
-        csbundle = input.get_compilation(csp).compile(
-            with_sourcemap=input.with_sourcemap,
-            teal_filename=input.clear_filename,
-            pcs_in_sourcemap=input.pcs_in_sourcemap,
-            algod_client=input.algod_client,
-            annotate_teal=input.annotate_teal,
-            annotate_teal_headers=input.annotate_teal_headers,
-            annotate_teal_concise=input.annotate_teal_concise,
-            # DEPRECATED:
-            _source_inference=input.source_inference,
-            _hybrid_source=input._hybrid_source,
-        )
+            # TODO: ideally, the clear-state compilation ought to be in it's own 
+            # _cleaning_context to allow for fresh slot numbering. However,
+            # the side effects of separating is not yet obvious and 
+            # clear state programs generally aren't so complex so this isn't
+            # of high urgency
+            csbundle = input.get_compilation(csp).compile(
+                with_sourcemap=input.with_sourcemap,
+                teal_filename=input.clear_filename,
+                pcs_in_sourcemap=input.pcs_in_sourcemap,
+                algod_client=input.algod_client,
+                annotate_teal=input.annotate_teal,
+                annotate_teal_headers=input.annotate_teal_headers,
+                annotate_teal_concise=input.annotate_teal_concise,
+                # DEPRECATED:
+                _source_inference=input.source_inference,
+                _hybrid_source=input._hybrid_source,
+            )
 
         return RouterBundle(
             approval_program=ap,
@@ -1102,6 +1141,5 @@ class Router:
             clear_annotated_teal=csbundle.annotated_teal,
             input=input,
         )
-
 
 Router.__module__ = "pyteal"
