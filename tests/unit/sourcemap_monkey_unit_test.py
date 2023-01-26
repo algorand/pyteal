@@ -166,11 +166,13 @@ def test_lots_o_indirection(mock_ConfigParser):
     )
 
 
-# ### ----------------- SANITY CHECKS SURVEY MOST PYTEAL CONSTRUCTS ----------------- ### #
+# ### -----------------BEGIN: SANITY CHECKS SURVEY MOST PYTEAL CONSTRUCTS ----------------- ### #
+
 
 P = "#pragma version {v}"  # fill the template at runtime
 
 C = "comp.compile(with_sourcemap=True)"
+R = "expr.compile(version=version, assemble_constants=False, optimize=optimize, with_sourcemaps=True)"
 
 BIG_A = "pt.And(pt.Gtxn[0].rekey_to() == pt.Global.zero_address(), pt.Gtxn[1].rekey_to() == pt.Global.zero_address(), pt.Gtxn[2].rekey_to() == pt.Global.zero_address(), pt.Gtxn[3].rekey_to() == pt.Global.zero_address(), pt.Gtxn[4].rekey_to() == pt.Global.zero_address(), pt.Gtxn[0].last_valid() == pt.Gtxn[1].last_valid(), pt.Gtxn[1].last_valid() == pt.Gtxn[2].last_valid(), pt.Gtxn[2].last_valid() == pt.Gtxn[3].last_valid(), pt.Gtxn[3].last_valid() == pt.Gtxn[4].last_valid(), pt.Gtxn[0].type_enum() == pt.TxnType.AssetTransfer, pt.Gtxn[0].xfer_asset() == asset_c, pt.Gtxn[0].receiver() == receiver)"
 BIG_OR = "pt.Or(pt.App.globalGet(pt.Bytes('paused')), pt.App.localGet(pt.Int(0), pt.Bytes('frozen')), pt.App.localGet(pt.Int(1), pt.Bytes('frozen')), pt.App.localGet(pt.Int(0), pt.Bytes('lock until')) >= pt.Global.latest_timestamp(), pt.App.localGet(pt.Int(1), pt.Bytes('lock until')) >= pt.Global.latest_timestamp(), pt.App.globalGet(pt.Concat(pt.Bytes('rule'), pt.Itob(pt.App.localGet(pt.Int(0), pt.Bytes('transfer group'))), pt.Itob(pt.App.localGet(pt.Int(1), pt.Bytes('transfer group'))))))"
@@ -181,7 +183,7 @@ BIG_A2 = "pt.And(pt.Int(1) - pt.Int(2), pt.Not(pt.Int(3)), pt.Int(4) ^ pt.Int(5)
 BIG_C2 = "pt.Concat(pt.BytesDiv(pt.Bytes('101'), pt.Bytes('102')), pt.BytesNot(pt.Bytes('103')), pt.BytesZero(pt.Int(10)), pt.SetBit(pt.Bytes('105'), pt.Int(106), pt.Int(107)), pt.SetByte(pt.Bytes('108'), pt.Int(109), pt.Int(110)))"
 
 
-def abi_example(pt):
+def abi_named_tuple_example(pt):
     NUM_OPTIONS = 0
 
     class PollStatus(pt.abi.NamedTuple):
@@ -218,6 +220,50 @@ def abi_example(pt):
 
     output = PollStatus()
     return pt.Seq(status().store_into(output), pt.Int(1))  # type: ignore
+
+
+def abi_method_return_example(pt):
+    @pt.ABIReturnSubroutine
+    def abi_sum(
+        toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64
+    ) -> pt.Expr:
+        i = pt.ScratchVar(pt.TealType.uint64)
+        valueAtIndex = pt.abi.Uint64()
+        return pt.Seq(
+            output.set(0),
+            pt.For(
+                i.store(pt.Int(0)),
+                i.load() < toSum.length(),
+                i.store(i.load() + pt.Int(1)),
+            ).Do(
+                pt.Seq(
+                    toSum[i.load()].store_into(valueAtIndex),
+                    output.set(output.get() + valueAtIndex.get()),
+                )
+            ),
+        )
+
+    return pt.Seq(
+        (to_sum_arr := pt.abi.make(pt.abi.DynamicArray[pt.abi.Uint64])).decode(
+            pt.Txn.application_args[1]
+        ),
+        (res := pt.abi.Uint64()).set(abi_sum(to_sum_arr)),  # type: ignore
+        pt.abi.MethodReturn(res),
+        pt.Approve(),
+    )
+
+
+def router_example(pt):
+    on_completion_actions = pt.BareCallActions(
+        opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes("optin call"))),
+    )
+    router = pt.Router("questionable", on_completion_actions, clear_state=pt.Approve())
+
+    @router.method
+    def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(a.get() + b.get())
+
+    return router
 
 
 CONSTRUCTS_LATEST_VERSION = 8
@@ -1445,8 +1491,89 @@ CONSTRUCTS = [
         ],
         4,
     ),
-    (  # 33 - ABI Subroutine (frame pointers)
-        abi_example,
+    (  # 33 - ABI Subroutine + NamedTuple (scratch slots)
+        abi_named_tuple_example,
+        [
+            [P, C],
+            ("callsub status_0", "status()"),
+            ("store 0", "status().store_into(output)"),
+            ("int 1", "pt.Int(1)"),
+            ("return", "comp.compile(with_sourcemap=True)"),
+            ("", "status().store_into(output)"),
+            ("// status", "status().store_into(output)"),
+            ("status_0:", "status().store_into(output)"),
+            ('byte "1"', "pt.Bytes('1')"),
+            ("app_global_get", "pt.App.globalGet(pt.Bytes('1'))"),
+            ("store 2", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("load 2", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("len", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("itob", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("extract 6 0", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("load 2", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("concat", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ("store 2", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
+            ('byte "2"', "pt.Bytes('2')"),
+            ("app_global_get", "pt.App.globalGet(pt.Bytes('2'))"),
+            ("!", "can_resubmit.set(pt.App.globalGet(pt.Bytes('2')))"),
+            ("!", "can_resubmit.set(pt.App.globalGet(pt.Bytes('2')))"),
+            ("store 3", "can_resubmit.set(pt.App.globalGet(pt.Bytes('2')))"),
+            ('byte "3"', "pt.Bytes('3')"),
+            ("app_global_get", "pt.App.globalGet(pt.Bytes('3'))"),
+            ("!", "is_open.set(pt.App.globalGet(pt.Bytes('3')))"),
+            ("!", "is_open.set(pt.App.globalGet(pt.Bytes('3')))"),
+            ("store 4", "is_open.set(pt.App.globalGet(pt.Bytes('3')))"),
+            ('byte ""', "results.set([])"),
+            ("store 5", "results.set([])"),
+            ("load 2", "output.set(question, can_resubmit, is_open, results)"),
+            ("store 9", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 9", "output.set(question, can_resubmit, is_open, results)"),
+            ("store 8", "output.set(question, can_resubmit, is_open, results)"),
+            ("int 5", "output.set(question, can_resubmit, is_open, results)"),
+            ("store 6", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 6", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 9", "output.set(question, can_resubmit, is_open, results)"),
+            ("len", "output.set(question, can_resubmit, is_open, results)"),
+            ("+", "output.set(question, can_resubmit, is_open, results)"),
+            ("store 7", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 7", "output.set(question, can_resubmit, is_open, results)"),
+            ("int 65536", "output.set(question, can_resubmit, is_open, results)"),
+            ("<", "output.set(question, can_resubmit, is_open, results)"),
+            ("assert", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 6", "output.set(question, can_resubmit, is_open, results)"),
+            ("itob", "output.set(question, can_resubmit, is_open, results)"),
+            ("extract 6 0", "output.set(question, can_resubmit, is_open, results)"),
+            ("byte 0x00", "output.set(question, can_resubmit, is_open, results)"),
+            ("int 0", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 3", "output.set(question, can_resubmit, is_open, results)"),
+            ("setbit", "output.set(question, can_resubmit, is_open, results)"),
+            ("int 1", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 4", "output.set(question, can_resubmit, is_open, results)"),
+            ("setbit", "output.set(question, can_resubmit, is_open, results)"),
+            ("concat", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 5", "output.set(question, can_resubmit, is_open, results)"),
+            ("store 9", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 8", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 9", "output.set(question, can_resubmit, is_open, results)"),
+            ("concat", "output.set(question, can_resubmit, is_open, results)"),
+            ("store 8", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 7", "output.set(question, can_resubmit, is_open, results)"),
+            ("store 6", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 6", "output.set(question, can_resubmit, is_open, results)"),
+            ("itob", "output.set(question, can_resubmit, is_open, results)"),
+            ("extract 6 0", "output.set(question, can_resubmit, is_open, results)"),
+            ("concat", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 8", "output.set(question, can_resubmit, is_open, results)"),
+            ("concat", "output.set(question, can_resubmit, is_open, results)"),
+            ("store 1", "output.set(question, can_resubmit, is_open, results)"),
+            ("load 1", "status().store_into(output)"),
+            ("retsub", "return pt.Seq(status().store_into(output), pt.Int(1))"),
+        ],
+        5,
+        "Application",
+        dict(frame_pointers=False),
+    ),
+    (  # 34 - ABI Subroutine + NamedTuple (frame pointers)
+        abi_named_tuple_example,
         [
             [P, C],
             ("callsub status_0", "status()"),
@@ -1539,86 +1666,618 @@ CONSTRUCTS = [
         "Application",
         dict(frame_pointers=True),
     ),
-    (  # 34 - ABI Subroutine (scratch slots)
-        abi_example,
+    (  # 35 - ABI Subroutine + MethodReturn (scratch slots)
+        abi_method_return_example,
         [
             [P, C],
-            ("callsub status_0", "status()"),
-            ("store 0", "status().store_into(output)"),
+            ("txna ApplicationArgs 1", "pt.Txn.application_args[1]"),
+            (
+                "store 0",
+                "(to_sum_arr := pt.abi.make(pt.abi.DynamicArray[pt.abi.Uint64])).decode(pt.Txn.application_args[1])",
+            ),
+            ("load 0", "comp.compile(with_sourcemap=True)"),
+            ("callsub abisum_0", "abi_sum(to_sum_arr)"),
+            ("store 1", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
+            ("byte 0x151f7c75", "comp.compile(with_sourcemap=True)"),
+            ("load 1", "comp.compile(with_sourcemap=True)"),
+            ("itob", "comp.compile(with_sourcemap=True)"),
+            ("concat", "comp.compile(with_sourcemap=True)"),
+            ("log", "comp.compile(with_sourcemap=True)"),
+            ("int 1", "pt.Approve()"),
+            ("return", "pt.Approve()"),
+            ("", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
+            ("// abi_sum", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
+            ("abisum_0:", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
+            ("store 2", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
+            ("int 0", "output.set(0)"),
+            ("store 3", "output.set(0)"),
+            ("int 0", "pt.Int(0)"),
+            ("store 4", "i.store(pt.Int(0))"),
+            (
+                "abisum_0_l1:",
+                "pt.For(i.store(pt.Int(0)), i.load() < toSum.length(), i.store(i.load() + pt.Int(1)))",
+            ),
+            ("load 4", "i.load()"),
+            ("load 2", "toSum.length()"),
+            ("int 0", "toSum.length()"),
+            ("extract_uint16", "toSum.length()"),
+            ("store 6", "toSum.length()"),
+            ("load 6", "toSum.length()"),
+            ("<", "i.load() < toSum.length()"),
+            (
+                "bz abisum_0_l3",
+                "pt.For(i.store(pt.Int(0)), i.load() < toSum.length(), i.store(i.load() + pt.Int(1)))",
+            ),
+            ("load 2", "toSum[i.load()].store_into(valueAtIndex)"),
+            ("int 8", "toSum[i.load()].store_into(valueAtIndex)"),
+            ("load 4", "i.load()"),
+            ("*", "toSum[i.load()].store_into(valueAtIndex)"),
+            ("int 2", "toSum[i.load()].store_into(valueAtIndex)"),
+            ("+", "toSum[i.load()].store_into(valueAtIndex)"),
+            ("extract_uint64", "toSum[i.load()].store_into(valueAtIndex)"),
+            ("store 5", "toSum[i.load()].store_into(valueAtIndex)"),
+            ("load 3", "output.get()"),
+            ("load 5", "valueAtIndex.get()"),
+            ("+", "output.get() + valueAtIndex.get()"),
+            ("store 3", "output.set(output.get() + valueAtIndex.get())"),
+            ("load 4", "i.load()"),
             ("int 1", "pt.Int(1)"),
-            ("return", "comp.compile(with_sourcemap=True)"),
-            ("", "status().store_into(output)"),
-            ("// status", "status().store_into(output)"),
-            ("status_0:", "status().store_into(output)"),
-            ('byte "1"', "pt.Bytes('1')"),
-            ("app_global_get", "pt.App.globalGet(pt.Bytes('1'))"),
-            ("store 2", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
-            ("load 2", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
-            ("len", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
-            ("itob", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
-            ("extract 6 0", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
-            ("load 2", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
-            ("concat", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
-            ("store 2", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
-            ('byte "2"', "pt.Bytes('2')"),
-            ("app_global_get", "pt.App.globalGet(pt.Bytes('2'))"),
-            ("!", "can_resubmit.set(pt.App.globalGet(pt.Bytes('2')))"),
-            ("!", "can_resubmit.set(pt.App.globalGet(pt.Bytes('2')))"),
-            ("store 3", "can_resubmit.set(pt.App.globalGet(pt.Bytes('2')))"),
-            ('byte "3"', "pt.Bytes('3')"),
-            ("app_global_get", "pt.App.globalGet(pt.Bytes('3'))"),
-            ("!", "is_open.set(pt.App.globalGet(pt.Bytes('3')))"),
-            ("!", "is_open.set(pt.App.globalGet(pt.Bytes('3')))"),
-            ("store 4", "is_open.set(pt.App.globalGet(pt.Bytes('3')))"),
-            ('byte ""', "results.set([])"),
-            ("store 5", "results.set([])"),
-            ("load 2", "output.set(question, can_resubmit, is_open, results)"),
-            ("store 9", "output.set(question, can_resubmit, is_open, results)"),
-            ("load 9", "output.set(question, can_resubmit, is_open, results)"),
-            ("store 8", "output.set(question, can_resubmit, is_open, results)"),
-            ("int 5", "output.set(question, can_resubmit, is_open, results)"),
-            ("store 6", "output.set(question, can_resubmit, is_open, results)"),
-            ("load 6", "output.set(question, can_resubmit, is_open, results)"),
-            ("load 9", "output.set(question, can_resubmit, is_open, results)"),
-            ("len", "output.set(question, can_resubmit, is_open, results)"),
-            ("+", "output.set(question, can_resubmit, is_open, results)"),
-            ("store 7", "output.set(question, can_resubmit, is_open, results)"),
-            ("load 7", "output.set(question, can_resubmit, is_open, results)"),
-            ("int 65536", "output.set(question, can_resubmit, is_open, results)"),
-            ("<", "output.set(question, can_resubmit, is_open, results)"),
-            ("assert", "output.set(question, can_resubmit, is_open, results)"),
-            ("load 6", "output.set(question, can_resubmit, is_open, results)"),
-            ("itob", "output.set(question, can_resubmit, is_open, results)"),
-            ("extract 6 0", "output.set(question, can_resubmit, is_open, results)"),
-            ("byte 0x00", "output.set(question, can_resubmit, is_open, results)"),
-            ("int 0", "output.set(question, can_resubmit, is_open, results)"),
-            ("load 3", "output.set(question, can_resubmit, is_open, results)"),
-            ("setbit", "output.set(question, can_resubmit, is_open, results)"),
-            ("int 1", "output.set(question, can_resubmit, is_open, results)"),
-            ("load 4", "output.set(question, can_resubmit, is_open, results)"),
-            ("setbit", "output.set(question, can_resubmit, is_open, results)"),
-            ("concat", "output.set(question, can_resubmit, is_open, results)"),
-            ("load 5", "output.set(question, can_resubmit, is_open, results)"),
-            ("store 9", "output.set(question, can_resubmit, is_open, results)"),
-            ("load 8", "output.set(question, can_resubmit, is_open, results)"),
-            ("load 9", "output.set(question, can_resubmit, is_open, results)"),
-            ("concat", "output.set(question, can_resubmit, is_open, results)"),
-            ("store 8", "output.set(question, can_resubmit, is_open, results)"),
-            ("load 7", "output.set(question, can_resubmit, is_open, results)"),
-            ("store 6", "output.set(question, can_resubmit, is_open, results)"),
-            ("load 6", "output.set(question, can_resubmit, is_open, results)"),
-            ("itob", "output.set(question, can_resubmit, is_open, results)"),
-            ("extract 6 0", "output.set(question, can_resubmit, is_open, results)"),
-            ("concat", "output.set(question, can_resubmit, is_open, results)"),
-            ("load 8", "output.set(question, can_resubmit, is_open, results)"),
-            ("concat", "output.set(question, can_resubmit, is_open, results)"),
-            ("store 1", "output.set(question, can_resubmit, is_open, results)"),
-            ("load 1", "status().store_into(output)"),
-            ("retsub", "return pt.Seq(status().store_into(output), pt.Int(1))"),
+            ("+", "i.load() + pt.Int(1)"),
+            ("store 4", "i.store(i.load() + pt.Int(1))"),
+            (
+                "b abisum_0_l1",
+                "pt.For(i.store(pt.Int(0)), i.load() < toSum.length(), i.store(i.load() + pt.Int(1)))",
+            ),
+            (
+                "abisum_0_l3:",
+                "pt.For(i.store(pt.Int(0)), i.load() < toSum.length(), i.store(i.load() + pt.Int(1)))",
+            ),
+            ("load 3", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
+            (
+                "retsub",
+                "return pt.Seq((to_sum_arr := pt.abi.make(pt.abi.DynamicArray[pt.abi.Uint64])).decode(pt.Txn.application_args[1]), (res := pt.abi.Uint64()).set(abi_sum(to_sum_arr)), pt.abi.MethodReturn(res), pt.Approve())",
+            ),
         ],
         5,
         "Application",
         dict(frame_pointers=False),
+    ),
+    (  # 36 - ABI Subroutine + MethodReturn (frame pointers)
+        abi_method_return_example,
+        [
+            [P, C],
+            ("txna ApplicationArgs 1", "pt.Txn.application_args[1]"),
+            (
+                "store 0",
+                "(to_sum_arr := pt.abi.make(pt.abi.DynamicArray[pt.abi.Uint64])).decode(pt.Txn.application_args[1])",
+            ),
+            ("load 0", "comp.compile(with_sourcemap=True)"),
+            ("callsub abisum_0", "abi_sum(to_sum_arr)"),
+            ("store 1", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
+            ("byte 0x151f7c75", "comp.compile(with_sourcemap=True)"),
+            ("load 1", "comp.compile(with_sourcemap=True)"),
+            ("itob", "comp.compile(with_sourcemap=True)"),
+            ("concat", "comp.compile(with_sourcemap=True)"),
+            ("log", "comp.compile(with_sourcemap=True)"),
+            ("int 1", "pt.Approve()"),
+            ("return", "pt.Approve()"),
+            ("", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
+            ("// abi_sum", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
+            ("abisum_0:", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
+            ("proto 1 1", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
+            ("int 0", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
+            ("dupn 3", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
+            ("int 0", "output.set(0)"),
+            ("frame_bury 0", "output.set(0)"),
+            ("int 0", "pt.Int(0)"),
+            ("store 2", "i.store(pt.Int(0))"),
+            (
+                "abisum_0_l1:",
+                "pt.For(i.store(pt.Int(0)), i.load() < toSum.length(), i.store(i.load() + pt.Int(1)))",
+            ),
+            ("load 2", "i.load()"),
+            ("frame_dig -1", "toSum.length()"),
+            ("int 0", "toSum.length()"),
+            ("extract_uint16", "toSum.length()"),
+            ("frame_bury 2", "toSum.length()"),
+            ("frame_dig 2", "toSum.length()"),
+            ("<", "i.load() < toSum.length()"),
+            (
+                "bz abisum_0_l3",
+                "pt.For(i.store(pt.Int(0)), i.load() < toSum.length(), i.store(i.load() + pt.Int(1)))",
+            ),
+            ("frame_dig -1", "toSum[i.load()].store_into(valueAtIndex)"),
+            ("int 8", "toSum[i.load()].store_into(valueAtIndex)"),
+            ("load 2", "i.load()"),
+            ("*", "toSum[i.load()].store_into(valueAtIndex)"),
+            ("int 2", "toSum[i.load()].store_into(valueAtIndex)"),
+            ("+", "toSum[i.load()].store_into(valueAtIndex)"),
+            ("extract_uint64", "toSum[i.load()].store_into(valueAtIndex)"),
+            ("frame_bury 1", "toSum[i.load()].store_into(valueAtIndex)"),
+            ("frame_dig 0", "output.get()"),
+            ("frame_dig 1", "valueAtIndex.get()"),
+            ("+", "output.get() + valueAtIndex.get()"),
+            ("frame_bury 0", "output.set(output.get() + valueAtIndex.get())"),
+            ("load 2", "i.load()"),
+            ("int 1", "pt.Int(1)"),
+            ("+", "i.load() + pt.Int(1)"),
+            ("store 2", "i.store(i.load() + pt.Int(1))"),
+            (
+                "b abisum_0_l1",
+                "pt.For(i.store(pt.Int(0)), i.load() < toSum.length(), i.store(i.load() + pt.Int(1)))",
+            ),
+            (
+                "abisum_0_l3:",
+                "pt.For(i.store(pt.Int(0)), i.load() < toSum.length(), i.store(i.load() + pt.Int(1)))",
+            ),
+            (
+                "retsub",
+                "return pt.Seq((to_sum_arr := pt.abi.make(pt.abi.DynamicArray[pt.abi.Uint64])).decode(pt.Txn.application_args[1]), (res := pt.abi.Uint64()).set(abi_sum(to_sum_arr)), pt.abi.MethodReturn(res), pt.Approve())",
+            ),
+        ],
+        8,
+        "Application",
+        dict(frame_pointers=True),
+    ),
+    (  # 37 - Router (scratch slots)
+        router_example,
+        [
+            [P, R],
+            (
+                "txn NumAppArgs",
+                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
+            ),
+            (
+                "int 0",
+                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
+            ),
+            (
+                "==",
+                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
+            ),
+            (
+                "bnz main_l4",
+                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
+            ),
+            (
+                "txna ApplicationArgs 0",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                'method "add(uint64,uint64)uint64"',
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "==",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "bnz main_l3",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "err",
+                "expr.compile(version=version, assemble_constants=False, optimize=optimize, with_sourcemaps=True)",
+            ),
+            (
+                "main_l3:",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "txn OnCompletion",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            ("int NoOp", "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:"),
+            (
+                "==",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "txn ApplicationID",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "int 0",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "!=",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "&&",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "assert",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "txna ApplicationArgs 1",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "btoi",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "store 0",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "txna ApplicationArgs 2",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "btoi",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "store 1",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "load 0",
+                "expr.compile(version=version, assemble_constants=False, optimize=optimize, with_sourcemaps=True)",
+            ),
+            (
+                "load 1",
+                "expr.compile(version=version, assemble_constants=False, optimize=optimize, with_sourcemaps=True)",
+            ),
+            (
+                "callsub add_0",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "store 2",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "byte 0x151f7c75",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "load 2",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "itob",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "concat",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "log",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "int 1",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "return",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "main_l4:",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "txn OnCompletion",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            ("int OptIn", "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())"),
+            (
+                "==",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "bnz main_l6",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "err",
+                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
+            ),
+            (
+                "main_l6:",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "txn ApplicationID",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "int 0",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "!=",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "assert",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            ('byte "optin call"', "pt.Bytes('optin call')"),
+            ("log", "pt.Log(pt.Bytes('optin call'))"),
+            (
+                "int 1",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "return",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "// add",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "add_0:",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "store 4",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "store 3",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            ("load 3", "a.get()"),
+            ("load 4", "b.get()"),
+            ("+", "a.get() + b.get()"),
+            ("store 5", "output.set(a.get() + b.get())"),
+            (
+                "load 5",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "retsub",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+        ],
+        5,
+        "Application",
+        dict(frame_pointers=False),
+    ),
+    (  # 38 - Router (frame pointers)
+        router_example,
+        [
+            [P, R],
+            (
+                "txn NumAppArgs",
+                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
+            ),
+            (
+                "int 0",
+                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
+            ),
+            (
+                "==",
+                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
+            ),
+            (
+                "bnz main_l4",
+                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
+            ),
+            (
+                "txna ApplicationArgs 0",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                'method "add(uint64,uint64)uint64"',
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "==",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "bnz main_l3",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "err",
+                "expr.compile(version=version, assemble_constants=False, optimize=optimize, with_sourcemaps=True)",
+            ),
+            (
+                "main_l3:",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "txn OnCompletion",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "int NoOp",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "==",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "txn ApplicationID",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "int 0",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "!=",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "&&",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "assert",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "txna ApplicationArgs 1",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "btoi",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "store 0",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "txna ApplicationArgs 2",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "btoi",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "store 1",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "load 0",
+                "expr.compile(version=version, assemble_constants=False, optimize=optimize, with_sourcemaps=True)",
+            ),
+            (
+                "load 1",
+                "expr.compile(version=version, assemble_constants=False, optimize=optimize, with_sourcemaps=True)",
+            ),
+            (
+                "callsub add_0",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "store 2",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "byte 0x151f7c75",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "load 2",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "itob",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "concat",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "log",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "int 1",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "return",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "main_l4:",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "txn OnCompletion",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "int OptIn",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "==",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "bnz main_l6",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "err",
+                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
+            ),
+            (
+                "main_l6:",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "txn ApplicationID",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "int 0",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "!=",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "assert",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            ('byte "optin call"', "pt.Bytes('optin call')"),
+            ("log", "pt.Log(pt.Bytes('optin call'))"),
+            (
+                "int 1",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "return",
+                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
+            ),
+            (
+                "",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "// add",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "add_0:",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "proto 2 1",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "int 0",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            ("frame_dig -2", "a.get()"),
+            ("frame_dig -1", "b.get()"),
+            ("+", "a.get() + b.get()"),
+            ("frame_bury 0", "output.set(a.get() + b.get())"),
+            (
+                "retsub",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+        ],
+        8,
+        "Application",
+        dict(frame_pointers=True),
     ),
 ]
 
@@ -1649,18 +2308,27 @@ def test_constructs(mock_ConfigParser, i, test_case, mode, version):
         optimize = pt.OptimizeOptions(**test_case[4])
 
     mode = getattr(pt.Mode, mode)
-    comp = pt.Compilation(
-        expr, mode, version=version, assemble_constants=False, optimize=optimize
-    )
-    bundle = comp.compile(with_sourcemap=True)
-    sourcemap = bundle.sourcemap
+    if isinstance(expr, pt.Router):
+        assert len(test_case) > 3 and fixed_mode == "Application"  # type: ignore
 
-    msg = f"[CASE #{i}]: {expr=}, {bundle=}"
+        router_bundle = expr.compile(
+            version=version,
+            assemble_constants=False,
+            optimize=optimize,
+            with_sourcemaps=True,
+        )
+        sourcemap = router_bundle.approval_sourcemap
+    else:
+        comp = pt.Compilation(
+            expr, mode, version=version, assemble_constants=False, optimize=optimize
+        )
+        bundle = comp.compile(with_sourcemap=True)
+        sourcemap = bundle.sourcemap
+
+    msg = f"[CASE #{i}]: {expr=}"
 
     assert sourcemap, msg
     assert sourcemap._hybrid is True, msg
-    assert sourcemap._source_inference is True, msg
-    assert sourcemap.teal_chunks == bundle.teal_chunks
 
     tmis = sourcemap.as_list()
     N = len(tmis)
@@ -1674,19 +2342,20 @@ def test_constructs(mock_ConfigParser, i, test_case, mode, version):
     ]
 
     unparsed = [tmi.hybrid_unparsed() for tmi in tmis]  # type: ignore
-
-    expected_lines, expected_unparsed = list(zip(*line2unparsed))
-
     msg = f"{msg}, {tmis=}"
-    force_fail_and_print_actual = False
-    if force_fail_and_print_actual:
+    FORCE_FAIL_FOR_CASE_CREATION = False
+    if FORCE_FAIL_FOR_CASE_CREATION:
         ouch = [(t, unparsed[i]) for i, t in enumerate(teal_lines)]
         print(ouch)
         x = "DEBUG" * 100
         assert not x, ouch
 
+    expected_lines, expected_unparsed = list(zip(*line2unparsed))
+
     assert list(expected_lines) == teal_lines, msg
     assert list(expected_unparsed) == unparsed, msg
+
+# ### -----------------END: SANITY CHECKS----------------- ### #
 
 
 def assert_algobank_unparsed_as_expected(actual):
