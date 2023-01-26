@@ -823,16 +823,24 @@ def test_build_program_clear_state_invalid_config():
             pt.TealInputError,
             match=r"^Attempt to construct clear state program from bare app call",
         ):
-            bareCalls = pt.BareCallActions(
+            pt.BareCallActions(
                 clear_state=pt.OnCompleteAction(action=pt.Approve(), call_config=config)
             )
-            _ = bareCalls  # temp linter hack
-            # pt.Router("test", bareCalls)
 
-        router = pt.Router("test")
+        router = pt.Router("test")  # once without a clear_state
+        router = pt.Router("test", clear_state=pt.Approve())  # and for the rest, with
+
+        with pytest.raises(
+            pt.TealInputError,
+            match=r"^Attempt to register ABI method for clear state program",
+        ):
+
+            @router.method(clear_state=pt.Int(1))
+            def clear_state_method_fails():
+                return pt.Approve()
 
         @pt.ABIReturnSubroutine
-        def clear_state_method():
+        def clear_state_method_succeeds():
             return pt.Approve()
 
         with pytest.raises(
@@ -840,7 +848,7 @@ def test_build_program_clear_state_invalid_config():
             match=r"^Attempt to construct clear state program from MethodConfig",
         ):
             router.add_method_handler(
-                clear_state_method,
+                clear_state_method_succeeds,
                 method_config=pt.MethodConfig(clear_state=config),
             )
 
