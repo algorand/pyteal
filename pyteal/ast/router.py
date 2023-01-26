@@ -35,6 +35,8 @@ from pyteal.ast.naryexpr import And, Or
 from pyteal.ast.txn import Txn
 from pyteal.ast.return_ import Approve, Reject
 
+ActionType = Expr | SubroutineFnWrapper | ABIReturnSubroutine
+
 
 class CallConfig(IntFlag):
     """
@@ -127,12 +129,6 @@ class MethodConfig:
                             f"unexpected condition_under_config: {config_cond}"
                         )
             return Or(*cond_list)
-
-
-MethodConfig.__module__ = "pyteal"
-
-
-ActionType = Expr | SubroutineFnWrapper | ABIReturnSubroutine
 
 
 MethodConfig.__module__ = "pyteal"
@@ -709,12 +705,11 @@ class Router:
         self.method_sig_to_selector: dict[str, bytes] = dict()
         self.method_selector_to_sig: dict[bytes, str] = dict()
 
+        self.bare_calls: BareCallActions = bare_calls or BareCallActions()
+
         self.method_configs: dict[str | None, MethodConfig] = dict()
-
-        self.bare_calls: BareCallActions | None = bare_calls
-
-        if bare_calls and not bare_calls.is_empty():
-            self.method_configs[None] = bare_calls.get_method_config()
+        if not self.bare_calls.is_empty():
+            self.method_configs[None] = self.bare_calls.get_method_config()
 
     def _clean(self) -> None:
         self.approval_ast._clean_bare_calls()
