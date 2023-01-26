@@ -1,7 +1,7 @@
 from contextlib import contextmanager
-from dataclasses import dataclass, field, fields, astuple
+from dataclasses import dataclass, field, astuple
 from enum import IntFlag
-from typing import cast, Optional, Callable
+from typing import cast, Callable, Final, Optional
 
 from algosdk import abi as sdk_abi
 from algosdk import encoding
@@ -1111,9 +1111,9 @@ class Router:
                 _hybrid_source=input._hybrid_source,
             )
 
-            # TODO: ideally, the clear-state compilation ought to be in it's own 
+            # TODO: ideally, the clear-state compilation ought to be in it's own
             # _cleaning_context to allow for fresh slot numbering. However,
-            # the side effects of separating is not yet obvious and 
+            # the side effects of separating is not yet obvious and
             # clear state programs generally aren't so complex so this isn't
             # of high urgency
             csbundle = input.get_compilation(csp).compile(
@@ -1141,5 +1141,6 @@ class Router:
             clear_annotated_teal=csbundle.annotated_teal,
             input=input,
         )
+
 
 Router.__module__ = "pyteal"
