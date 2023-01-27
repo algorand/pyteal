@@ -15,14 +15,6 @@ import pytest
 
 from pyteal.compiler.sourcemap import R3SourceMap, R3SourceMapJSON
 
-# TODO: DO NOT MERGE WITHOUT HAVING DEALT WITH CASES 37 & 38
-# & THE NON-IDEMPOTENCY FAILURE OF test_reconstruct:
-BRUTE_FORCE_TERRIBLE_SKIPPING = """
-1. router's compiler is presumed to be in a non-idempotent state
-2. cannot properly handle @router.method source maps, and haven't yet agreed to abandon
-"""
-
-
 ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 
 
@@ -34,7 +26,7 @@ def test_frames():
     StackFrames._no_stackframes = False
 
     this_file, this_func = "sourcemap_test.py", "test_frames"
-    this_lineno, this_frame = 37, StackFrames(keep_all=True)[1]
+    this_lineno, this_frame = 29, StackFrames(keep_all=True)[1]
     code = (
         f"    this_lineno, this_frame = {this_lineno}, StackFrames(keep_all=True)[1]\n"
     )
@@ -99,7 +91,7 @@ def test_SourceMapItem_source_mapping():
         source_files=source_files,
         source_files_lines=[mock_source_lines],
     )
-    expected_json = '{"version": 3, "sources": ["tests/unit/sourcemap_test.py"], "names": [], "mappings": "AAuEW;AAAY;AAAZ", "file": "dohhh.teal", "sourceRoot": "~"}'
+    expected_json = '{"version": 3, "sources": ["tests/unit/sourcemap_test.py"], "names": [], "mappings": "AA+DW;AAAY;AAAZ", "file": "dohhh.teal", "sourceRoot": "~"}'
 
     assert expected_json == json.dumps(r3sm.to_json())
 
@@ -153,7 +145,6 @@ def test_no_regression_with_sourcemap_as_configured():
     no_regressions()
 
 
-@pytest.mark.skipif(True, reason=BRUTE_FORCE_TERRIBLE_SKIPPING)
 @pytest.mark.serial
 def test_no_regression_with_sourcemap_enabled():
     from pyteal.stack_frame import StackFrames
@@ -166,7 +157,6 @@ def test_no_regression_with_sourcemap_enabled():
     StackFrames._no_stackframes = originally
 
 
-@pytest.mark.skipif(True, reason=BRUTE_FORCE_TERRIBLE_SKIPPING)
 @pytest.mark.serial
 def test_no_regression_with_sourcemap_disabled():
     from pyteal.stack_frame import StackFrames
@@ -260,7 +250,7 @@ def trial(func):
     )
 
 
-@pytest.mark.skip()
+@pytest.mark.skip(reason="Benchmarks are too slow to run every time")
 @pytest.mark.serial
 def test_time_benchmark_under_config():
     from pyteal.stack_frame import StackFrames
@@ -273,7 +263,7 @@ def test_time_benchmark_under_config():
     assert False
 
 
-@pytest.mark.skip()
+@pytest.mark.skip(reason="Benchmarks are too slow to run every time")
 @mock.patch.object(ConfigParser, "getboolean", return_value=True)
 @pytest.mark.serial
 def test_time_benchmark_sourcemap_enabled(_):
@@ -339,7 +329,12 @@ def test_config():
     StackFrames._no_stackframes = originally
 
 
-@pytest.mark.skipif(True, reason=BRUTE_FORCE_TERRIBLE_SKIPPING)
+@pytest.mark.skip(
+    reason="""Supressing this flaky test as 
+router_test::test_router_compile_program_idempotence is similar in its goals
+and we expect flakiness to persist until https://github.com/algorand/pyteal/issues/199
+is finally addressed """
+)
 @pytest.mark.serial
 def test_idempotent():
     # make sure we get clean up properly and therefore get idempotent results
@@ -356,7 +351,5 @@ def test_idempotent():
     assert contract1.dictify() == contract2.dictify()
     assert len(clear1.splitlines()) == len(clear2.splitlines())
     assert clear1 == clear2
-    assert len(approval1.splitlines()) == len(
-        approval2.splitlines()
-    ), "TODO: this is probly because of a temporary change to the router"
+    assert len(approval1.splitlines()) == len(approval2.splitlines())
     assert approval1 == approval2
