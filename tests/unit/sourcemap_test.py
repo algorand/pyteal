@@ -51,7 +51,7 @@ def test_frames():
 
 
 @pytest.mark.serial
-def test_SourceMapItem_source_mapping():
+def test_TealMapItem_source_mapping():
     from pyteal.stack_frame import StackFrames
 
     originally = StackFrames._no_stackframes
@@ -106,18 +106,6 @@ def test_SourceMapItem_source_mapping():
     assert expected_json == json.dumps(r3sm_unmarshalled.to_json())
 
     StackFrames._no_stackframes = originally
-
-
-"""
-# TODO: Additional examples needed before merging:
-
-1. Inline programs patched together from various sources
-2. Example with OpUp
-3. Run on the ABI Router example
-4. Run on Steve's Staking Contract
-5. Run an Ben's AMM (Beaker)
-
-"""
 
 
 def no_regressions():
@@ -183,6 +171,71 @@ def test_sourcemap_fails_because_unconfigured():
         )
 
     assert "pyteal.ini" in str(smde.value)
+
+
+@pytest.mark.serial
+def test_config():
+    from pyteal.stack_frame import StackFrames
+
+    config = ConfigParser()
+    config.read([".flake8", "mypy.ini", "pyteal.ini"])
+
+    assert [
+        "flake8",
+        "mypy",
+        "mypy-semantic_version.*",
+        "mypy-pytest.*",
+        "mypy-algosdk.*",
+        "pyteal",
+        "pyteal-source-mapper",
+    ] == config.sections()
+
+    assert ["ignore", "per-file-ignores", "ban-relative-imports"] == config.options(
+        "flake8"
+    )
+
+    assert ["enabled", "debug"] == config.options("pyteal-source-mapper")
+
+    assert config.getboolean("pyteal-source-mapper", "enabled") is False
+    assert StackFrames.sourcemapping_is_off() is True
+
+    originally = StackFrames._no_stackframes
+    StackFrames._no_stackframes = False
+
+    StackFrames._no_stackframes = False
+    assert StackFrames.sourcemapping_is_off() is False
+    assert StackFrames.sourcemapping_is_off(_force_refresh=True) is True
+
+    StackFrames._no_stackframes = originally
+
+
+@pytest.mark.skip(
+    reason="""Supressing this flaky test as 
+router_test::test_router_compile_program_idempotence is similar in its goals
+and we expect flakiness to persist until https://github.com/algorand/pyteal/issues/199
+is finally addressed """
+)
+@pytest.mark.serial
+def test_idempotent():
+    # make sure we get clean up properly and therefore get idempotent results
+    from examples.application.abi.algobank import router
+    from pyteal import OptimizeOptions
+
+    approval1, clear1, contract1 = (
+        func := lambda: router.compile_program(
+            version=6, optimize=OptimizeOptions(scratch_slots=True)
+        )
+    )()
+    approval2, clear2, contract2 = func()
+
+    assert contract1.dictify() == contract2.dictify()
+    assert len(clear1.splitlines()) == len(clear2.splitlines())
+    assert clear1 == clear2
+    assert len(approval1.splitlines()) == len(approval2.splitlines())
+    assert approval1 == approval2
+
+
+# ---- BENCHMARKS - SKIPPED BY DEFAULT ---- #
 
 
 def time_for_n_secs(f, n):
@@ -291,65 +344,3 @@ keep_one_frame_only: bool = True,
     trial(annotated_teal)
 
     assert False
-
-
-@pytest.mark.serial
-def test_config():
-    from pyteal.stack_frame import StackFrames
-
-    config = ConfigParser()
-    config.read([".flake8", "mypy.ini", "pyteal.ini"])
-
-    assert [
-        "flake8",
-        "mypy",
-        "mypy-semantic_version.*",
-        "mypy-pytest.*",
-        "mypy-algosdk.*",
-        "pyteal",
-        "pyteal-source-mapper",
-    ] == config.sections()
-
-    assert ["ignore", "per-file-ignores", "ban-relative-imports"] == config.options(
-        "flake8"
-    )
-
-    assert ["enabled", "debug"] == config.options("pyteal-source-mapper")
-
-    assert config.getboolean("pyteal-source-mapper", "enabled") is False
-    assert StackFrames.sourcemapping_is_off() is True
-
-    originally = StackFrames._no_stackframes
-    StackFrames._no_stackframes = False
-
-    StackFrames._no_stackframes = False
-    assert StackFrames.sourcemapping_is_off() is False
-    assert StackFrames.sourcemapping_is_off(_force_refresh=True) is True
-
-    StackFrames._no_stackframes = originally
-
-
-@pytest.mark.skip(
-    reason="""Supressing this flaky test as 
-router_test::test_router_compile_program_idempotence is similar in its goals
-and we expect flakiness to persist until https://github.com/algorand/pyteal/issues/199
-is finally addressed """
-)
-@pytest.mark.serial
-def test_idempotent():
-    # make sure we get clean up properly and therefore get idempotent results
-    from examples.application.abi.algobank import router
-    from pyteal import OptimizeOptions
-
-    approval1, clear1, contract1 = (
-        func := lambda: router.compile_program(
-            version=6, optimize=OptimizeOptions(scratch_slots=True)
-        )
-    )()
-    approval2, clear2, contract2 = func()
-
-    assert contract1.dictify() == contract2.dictify()
-    assert len(clear1.splitlines()) == len(clear2.splitlines())
-    assert clear1 == clear2
-    assert len(approval1.splitlines()) == len(approval2.splitlines())
-    assert approval1 == approval2
