@@ -164,8 +164,6 @@ class StackFrames:
         self,
         keep_all: bool = False,
         keep_one_frame_only: bool = True,
-        # DEPRECATED:
-        immediate_stop_post_pyteal: bool = True,  # setting False doesn't work 90% of the time
     ):
         self._compiler_gen: bool = False
         self.frames: list[StackFrame] = []
@@ -205,8 +203,7 @@ class StackFrames:
             else:
                 if penultimate_idx == i - 1:
                     in_first_post_pyteal = True
-                    if immediate_stop_post_pyteal:
-                        break
+                    break
                 elif in_first_post_pyteal:
                     in_first_post_pyteal = prev_file == curr_file
                     if not in_first_post_pyteal:

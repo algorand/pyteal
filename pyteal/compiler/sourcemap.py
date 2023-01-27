@@ -128,14 +128,6 @@ class R3SourceMapping:
             else ("", self.line, self.column)
         )
 
-    # TODO: THIS IS CURRENTLY BROKEN BUT USEFUL
-    # @property
-    # def content_line(self) -> Optional[str]:
-    #     try:
-    #         return self.source_content[self.source_line]
-    #     except (TypeError, IndexError):
-    #         return None
-
     @classmethod
     def extract_window(
         cls,
@@ -784,7 +776,6 @@ class _PyTealSourceMapper:
                     )
 
                 if reason == PT_GENERATED.FLAGGED_BY_DEV:
-                    # TODO: does this hack have any false positivies?
                     return frame.spawn(
                         prev_frame, PytealFrameStatus.PATCHED_BY_PREV_OVERRIDE_NEXT
                     )
@@ -891,9 +882,6 @@ class _PyTealSourceMapper:
         for k in new_kwargs:
             assert k in self._tabulate_param_defaults, f"unrecognized parameter '{k}'"
 
-        # TODO: probly should just insist that printin sumn, not any particular column
-        # DEAD CODE b/c required is empty
-        # required = []
         renames = {self._tabulate_param_defaults[k]: v for k, v in new_kwargs.items()}
         rows = list(teal_item.asdict(**renames) for teal_item in self.as_list())
 
@@ -924,8 +912,6 @@ class _PyTealSourceMapper:
             #
             # Consequently, when `teal_col` is repeating we need to take extra care NOT
             # to omit repeating source values, as these were likely coming from different portions of the source
-            #
-            # TODO: should also never omit the next line no. when the pyteal source isn't repeated
 
             def reduction(row, next_row):
                 same_gen_teal = row[teal_col_name] == next_row[teal_col_name]
