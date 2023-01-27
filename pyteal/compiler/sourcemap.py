@@ -491,8 +491,7 @@ class TealMapItem(PyTealFrame):
             while node and not (is_return := isinstance(node, ast.Return)):
                 node = getattr(node, "parent", None)
 
-            if node and is_return:  # and (node := getattr(node, "parent", None)):
-                # if isinstance(node, ast.FunctionDef):
+            if node and is_return:
                 code = self.code()
                 pt_chunk = ast.unparse(node)
                 return self._hybrid_impl(code, node, pt_chunk)
@@ -565,14 +564,20 @@ class TealMapItem(PyTealFrame):
         )
 
 
+@dataclass(frozen=True)
 class PyTealSourceMap:
+    teal_file: str | None
+    r3_sourcemap: R3SourceMap | None
+    pc_sourcemap: PCSourceMap | None
+
+
+class _PyTealSourceMapper:
     def __init__(
         self,
         teal_chunks: list[str],
         components: list["pt.TealComponent"],
         *,
         teal_file: str | None = None,
-        annotate_teal: bool = False,
         include_pcs: bool = False,
         algod: AlgodClient | None = None,
         build: bool = True,
@@ -590,7 +595,6 @@ class PyTealSourceMap:
         self.algod: AlgodClient | None = algod
 
         self.include_pcs: bool = include_pcs
-        self.annotate_teal: bool = annotate_teal
 
         self.teal_file: str | None = teal_file
         self.verbose: bool = verbose
@@ -607,6 +611,13 @@ class PyTealSourceMap:
         # TODO: NO NO NO NO!!!! DON'T DO THIS INSIDE __init__() !!!!
         if build:
             self.build()
+
+    def get_sourcemap(self):
+        return PyTealSourceMap(
+            self.teal_file,
+            self._cached_r3sourcemap,
+            self._cached_pc_sourcemap,
+        )
 
     def compiled_teal(self) -> str:
         return "\n".join(self.teal_chunks)

@@ -278,20 +278,6 @@ retsub                                 //    (350)  tests/integration/sourcemap_
     assert annotated_approval
     assert annotated_clear
 
-    approval_ptsm, clear_ptsm = (
-        compile_bundle.approval_sourcemap,
-        compile_bundle.clear_sourcemap,
-    )
-    assert approval_ptsm
-    assert clear_ptsm
-
-    kwargs = dict(omit_headers=not annotate_teal_headers, concise=annotate_teal_concise)
-    annotated_approval2, annotated_clear2 = approval_ptsm.annotated_teal(
-        **kwargs
-    ), clear_ptsm.annotated_teal(**kwargs)
-    assert annotated_approval == annotated_approval2
-    assert annotated_clear == annotated_clear2
-
     the_same = EXPECTED_ANNOTATED_TEAL_311 == annotated_approval
     print(f"{annotated_approval.splitlines()=}")
     assert the_same, first_diff(EXPECTED_ANNOTATED_TEAL_311, annotated_approval)

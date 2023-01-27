@@ -230,9 +230,9 @@ def annotated_teal():
         with_sourcemaps=True,
     )
 
-    assert compilation.approval_sourcemap
+    assert compilation.approval_sourcemapper
 
-    return compilation.approval_sourcemap.annotated_teal()
+    return compilation.approval_sourcemapper.annotated_teal()
 
 
 summaries_only = True

@@ -12,7 +12,11 @@ from pyteal.compiler.scratchslots import (
     collect_unoptimized_slots,
 )
 from pyteal.compiler.sort import sortBlocks
-from pyteal.compiler.sourcemap import PyTealSourceMap, SourceMapDisabledError
+from pyteal.compiler.sourcemap import (
+    _PyTealSourceMapper,
+    PyTealSourceMap,
+    SourceMapDisabledError,
+)
 from pyteal.compiler.subroutines import (
     resolveSubroutines,
     spillLocalSlotsDuringRecursion,
@@ -284,11 +288,14 @@ class _FullCompilationBundle:
     teal: str
     teal_chunks: list[str]
     components: list[TealComponent]
-    sourcemap: PyTealSourceMap | None = None
+    sourcemapper: _PyTealSourceMapper | None = None
     annotated_teal: str | None = None
 
     def get_results(self) -> CompileResults:
-        return CompileResults(self.teal, self.sourcemap, self.annotated_teal)
+        sourcemap: PyTealSourceMap | None = None
+        if self.sourcemapper:
+            sourcemap = self.sourcemapper.get_sourcemap()
+        return CompileResults(self.teal, sourcemap, self.annotated_teal)
 
 
 class Compilation:
@@ -447,7 +454,7 @@ class Compilation:
         teal_chunks = [tl.assemble() for tl in components]
         teal_code = "\n".join(teal_chunks)
 
-        cpb = _FullCompilationBundle(
+        full_cpb = _FullCompilationBundle(
             ast=self.ast,
             mode=self.mode,
             version=self.version,
@@ -458,24 +465,24 @@ class Compilation:
             components=components,
         )
         if not with_sourcemap:
-            return cpb
+            return full_cpb
 
-        cpb.sourcemap = PyTealSourceMap(
+        source_mapper = _PyTealSourceMapper(
             teal_chunks=teal_chunks,
             components=components,
             build=True,
             teal_file=teal_filename,
             include_pcs=pcs_in_sourcemap,
             algod=algod_client,
-            annotate_teal=annotate_teal,
         )
+        full_cpb.sourcemapper = source_mapper
 
         if annotate_teal:
-            cpb.annotated_teal = cpb.sourcemap.annotated_teal(
+            full_cpb.annotated_teal = source_mapper.annotated_teal(
                 omit_headers=not annotate_teal_headers, concise=annotate_teal_concise
             )
 
-        return cpb
+        return full_cpb
 
 
 def compileTeal(

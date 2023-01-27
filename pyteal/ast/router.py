@@ -27,7 +27,7 @@ from pyteal.ast.subroutine import (
 )
 from pyteal.ast.txn import Txn
 from pyteal.compiler.compiler import DEFAULT_TEAL_VERSION, Compilation, OptimizeOptions
-from pyteal.compiler.sourcemap import PyTealSourceMap
+from pyteal.compiler.sourcemap import _PyTealSourceMapper, PyTealSourceMap
 from pyteal.config import METHOD_ARG_NUM_CUTOFF
 from pyteal.errors import TealInputError, TealInternalError
 from pyteal.ir.ops import Mode
@@ -664,18 +664,49 @@ class ASTBuilder:
 ASTBuilder.__module__ = "pyteal"
 
 
+@dataclass(frozen=True)
+class RouterResults:
+    approval_teal: str
+    clear_teal: str
+    abi_contract: sdk_abi.Contract
+    approval_sourcemap: Optional[PyTealSourceMap] = None
+    clear_sourcemap: Optional[PyTealSourceMap] = None
+    approval_annotated_teal: Optional[str] = None
+    clear_annotated_teal: Optional[str] = None
+
+
 @dataclass
-class RouterBundle:
+class _RouterBundle:
+    """Private class that includes a full sourcemapper object"""
+
     approval_program: Expr
     clear_program: Expr
     abi_contract: sdk_abi.Contract
     approval_teal: str
     clear_teal: str
-    approval_sourcemap: Optional[PyTealSourceMap] = None
-    clear_sourcemap: Optional[PyTealSourceMap] = None
+    approval_sourcemapper: Optional[_PyTealSourceMapper] = None
+    clear_sourcemapper: Optional[_PyTealSourceMapper] = None
     approval_annotated_teal: Optional[str] = None
     clear_annotated_teal: Optional[str] = None
     input: Optional["_RouterCompileInput"] = None
+
+    def get_results(self) -> RouterResults:
+        approval_sourcemap: PyTealSourceMap | None = None
+        clear_sourcemap: PyTealSourceMap | None = None
+        if self.approval_sourcemapper:
+            approval_sourcemap = self.approval_sourcemapper.get_sourcemap()
+        if self.clear_sourcemapper:
+            clear_sourcemap = self.clear_sourcemapper.get_sourcemap()
+
+        return RouterResults(
+            self.approval_teal,
+            self.clear_teal,
+            self.abi_contract,
+            approval_sourcemap,
+            clear_sourcemap,
+            self.approval_annotated_teal,
+            self.clear_annotated_teal,
+        )
 
 
 @dataclass
@@ -683,8 +714,8 @@ class _RouterCompileInput:
     version: int
     assemble_constants: bool
     optimize: Optional[OptimizeOptions] = None
-    with_sourcemap: bool = False
-    pcs_in_sourcemap: bool = False
+    with_sourcemaps: bool = False
+    pcs_in_sourcemaps: bool = False
     approval_filename: Optional[str] = None
     clear_filename: Optional[str] = None
     algod_client: Optional[AlgodClient] = None
@@ -703,12 +734,12 @@ class _RouterCompileInput:
 
         # On the other hand, self.annotate_teal indicates a user request which cannot
         # be provided on when there isn't a sourcemap
-        if self.annotate_teal and not self.with_sourcemap:
+        if self.annotate_teal and not self.with_sourcemaps:
             raise ValueError(
                 "In order annotate generated teal source, must set with_sourcemap True"
             )
 
-        if self.pcs_in_sourcemap:
+        if self.pcs_in_sourcemaps:
             # bootstrap an algod_client if not provided, and in either case, run a healthcheck
             try:
                 self.algod_client = algod_with_assertion(self.algod_client)
@@ -1027,7 +1058,7 @@ class Router:
         annotate_teal: bool = True,
         annotate_teal_headers: bool = False,
         annotate_teal_concise: bool = True,
-    ) -> RouterBundle:
+    ) -> RouterResults:
         """
         TODO: out of date comment
 
@@ -1054,27 +1085,27 @@ class Router:
             version=version,
             assemble_constants=assemble_constants,
             optimize=optimize,
-            with_sourcemap=with_sourcemaps,
+            with_sourcemaps=with_sourcemaps,
             approval_filename=approval_filename,
             clear_filename=clear_filename,
-            pcs_in_sourcemap=pcs_in_sourcemap,
+            pcs_in_sourcemaps=pcs_in_sourcemap,
             algod_client=algod_client,
             annotate_teal=annotate_teal,
             annotate_teal_headers=annotate_teal_headers,
             annotate_teal_concise=annotate_teal_concise,
         )
-        return self._build_impl(input)
+        return self._build_impl(input).get_results()
 
-    def _build_impl(self, input: _RouterCompileInput) -> RouterBundle:
+    def _build_impl(self, input: _RouterCompileInput) -> _RouterBundle:
         with self._cleaning_context():
             ap, csp, contract = self._build_program(
                 version=input.version, optimize=input.optimize
             )
 
             abundle = input.get_compilation(ap)._compile_impl(
-                with_sourcemap=input.with_sourcemap,
+                with_sourcemap=input.with_sourcemaps,
                 teal_filename=input.approval_filename,
-                pcs_in_sourcemap=input.pcs_in_sourcemap,
+                pcs_in_sourcemap=input.pcs_in_sourcemaps,
                 algod_client=input.algod_client,
                 annotate_teal=input.annotate_teal,
                 annotate_teal_headers=input.annotate_teal_headers,
@@ -1087,23 +1118,23 @@ class Router:
             # clear state programs generally aren't so complex so this isn't
             # of high urgency
             csbundle = input.get_compilation(csp)._compile_impl(
-                with_sourcemap=input.with_sourcemap,
+                with_sourcemap=input.with_sourcemaps,
                 teal_filename=input.clear_filename,
-                pcs_in_sourcemap=input.pcs_in_sourcemap,
+                pcs_in_sourcemap=input.pcs_in_sourcemaps,
                 algod_client=input.algod_client,
                 annotate_teal=input.annotate_teal,
                 annotate_teal_headers=input.annotate_teal_headers,
                 annotate_teal_concise=input.annotate_teal_concise,
             )
 
-        return RouterBundle(
+        return _RouterBundle(
             approval_program=ap,
             clear_program=csp,
             abi_contract=contract,
             approval_teal=abundle.teal,
             clear_teal=csbundle.teal,
-            approval_sourcemap=abundle.sourcemap,
-            clear_sourcemap=csbundle.sourcemap,
+            approval_sourcemapper=abundle.sourcemapper,
+            clear_sourcemapper=csbundle.sourcemapper,
             approval_annotated_teal=abundle.annotated_teal,
             clear_annotated_teal=csbundle.annotated_teal,
             input=input,

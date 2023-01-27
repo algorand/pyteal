@@ -11,7 +11,7 @@ import sys
 from typing import Literal
 from unittest import mock
 
-# TODO: DO NOT MERGE WITHOUT HAVING DEALT WITH CASES 37 & 38:
+# TODO: DO NOT MERGE WITHOUT HAVING DEALT WITH CASES 37 & 38 (and fixing test_constructs to use Router._build_impl)
 BRUTE_FORCE_TERRIBLE_SKIPPING = """cannot properly handle @router.method source maps
 and haven't yet agreed to abandon"""
 
@@ -36,18 +36,21 @@ def mock_ConfigParser():
 @pytest.mark.serial
 def test_r3sourcemap(mock_ConfigParser):
     from examples.application.abi.algobank import router
+    from pyteal.ast.router import _RouterCompileInput
     from pyteal import OptimizeOptions
     from pyteal.compiler.sourcemap import R3SourceMap
 
     filename = "dummy filename"
-    compile_bundle = router.compile(
+    rci = _RouterCompileInput(
         version=6,
+        assemble_constants=False,
         optimize=OptimizeOptions(scratch_slots=True),
         approval_filename=filename,
         with_sourcemaps=True,
     )
+    compile_bundle = router._build_impl(rci)
 
-    ptsm = compile_bundle.approval_sourcemap
+    ptsm = compile_bundle.approval_sourcemapper
     assert ptsm
 
     actual_unparsed = [x._hybrid_w_offset() for x in ptsm._cached_tmis]
@@ -74,7 +77,7 @@ def test_r3sourcemap(mock_ConfigParser):
 
     assert "mappings" in r3sm_json
     assert (
-        "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"
+        "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"
         == r3sm_json["mappings"]
     )
 
@@ -102,16 +105,19 @@ def test_r3sourcemap(mock_ConfigParser):
 @pytest.mark.serial
 def test_reconstruct(mock_ConfigParser):
     from examples.application.abi.algobank import router
+    from pyteal.ast.router import _RouterCompileInput
     from pyteal import OptimizeOptions
 
-    compile_bundle = router.compile(
+    rci = _RouterCompileInput(
         version=6,
+        assemble_constants=False,
         optimize=OptimizeOptions(scratch_slots=True),
         with_sourcemaps=True,
     )
+    compile_bundle = router._build_impl(rci)
 
-    assert compile_bundle.approval_sourcemap
-    assert compile_bundle.clear_sourcemap
+    assert compile_bundle.approval_sourcemapper
+    assert compile_bundle.clear_sourcemapper
 
     def compare_and_assert(file, sourcemap):
         with open(ALGOBANK / file, "r") as f:
@@ -120,8 +126,8 @@ def test_reconstruct(mock_ConfigParser):
             assert len(expected_lines) == len(actual_lines)
             assert expected_lines == actual_lines
 
-    compare_and_assert("algobank_approval.teal", compile_bundle.approval_sourcemap)
-    compare_and_assert("algobank_clear_state.teal", compile_bundle.clear_sourcemap)
+    compare_and_assert("algobank_approval.teal", compile_bundle.approval_sourcemapper)
+    compare_and_assert("algobank_clear_state.teal", compile_bundle.clear_sourcemapper)
 
 
 @pytest.mark.serial
@@ -160,7 +166,7 @@ def test_lots_o_indirection(mock_ConfigParser):
 
 P = "#pragma version {v}"  # fill the template at runtime
 
-C = "comp.compile(with_sourcemap=True)"
+C = "comp._compile_impl(with_sourcemap=True)"
 R = "expr.compile(version=version, assemble_constants=False, optimize=optimize, with_sourcemaps=True)"
 
 BIG_A = "pt.And(pt.Gtxn[0].rekey_to() == pt.Global.zero_address(), pt.Gtxn[1].rekey_to() == pt.Global.zero_address(), pt.Gtxn[2].rekey_to() == pt.Global.zero_address(), pt.Gtxn[3].rekey_to() == pt.Global.zero_address(), pt.Gtxn[4].rekey_to() == pt.Global.zero_address(), pt.Gtxn[0].last_valid() == pt.Gtxn[1].last_valid(), pt.Gtxn[1].last_valid() == pt.Gtxn[2].last_valid(), pt.Gtxn[2].last_valid() == pt.Gtxn[3].last_valid(), pt.Gtxn[3].last_valid() == pt.Gtxn[4].last_valid(), pt.Gtxn[0].type_enum() == pt.TxnType.AssetTransfer, pt.Gtxn[0].xfer_asset() == asset_c, pt.Gtxn[0].receiver() == receiver)"
@@ -1487,7 +1493,7 @@ CONSTRUCTS = [
             ("callsub status_0", "status()"),
             ("store 0", "status().store_into(output)"),
             ("int 1", "pt.Int(1)"),
-            ("return", "comp.compile(with_sourcemap=True)"),
+            ("return", C),
             ("", "status().store_into(output)"),
             ("// status", "status().store_into(output)"),
             ("status_0:", "status().store_into(output)"),
@@ -1568,7 +1574,7 @@ CONSTRUCTS = [
             ("callsub status_0", "status()"),
             ("store 0", "status().store_into(output)"),
             ("int 1", "pt.Int(1)"),
-            ("return", "comp.compile(with_sourcemap=True)"),
+            ("return", C),
             ("", "status().store_into(output)"),
             ("// status", "status().store_into(output)"),
             ("status_0:", "status().store_into(output)"),
@@ -1664,14 +1670,14 @@ CONSTRUCTS = [
                 "store 0",
                 "(to_sum_arr := pt.abi.make(pt.abi.DynamicArray[pt.abi.Uint64])).decode(pt.Txn.application_args[1])",
             ),
-            ("load 0", "comp.compile(with_sourcemap=True)"),
+            ("load 0", C),
             ("callsub abisum_0", "abi_sum(to_sum_arr)"),
             ("store 1", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
-            ("byte 0x151f7c75", "comp.compile(with_sourcemap=True)"),
-            ("load 1", "comp.compile(with_sourcemap=True)"),
-            ("itob", "comp.compile(with_sourcemap=True)"),
-            ("concat", "comp.compile(with_sourcemap=True)"),
-            ("log", "comp.compile(with_sourcemap=True)"),
+            ("byte 0x151f7c75", C),
+            ("load 1", C),
+            ("itob", C),
+            ("concat", C),
+            ("log", C),
             ("int 1", "pt.Approve()"),
             ("return", "pt.Approve()"),
             ("", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
@@ -1740,14 +1746,14 @@ CONSTRUCTS = [
                 "store 0",
                 "(to_sum_arr := pt.abi.make(pt.abi.DynamicArray[pt.abi.Uint64])).decode(pt.Txn.application_args[1])",
             ),
-            ("load 0", "comp.compile(with_sourcemap=True)"),
+            ("load 0", C),
             ("callsub abisum_0", "abi_sum(to_sum_arr)"),
             ("store 1", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
-            ("byte 0x151f7c75", "comp.compile(with_sourcemap=True)"),
-            ("load 1", "comp.compile(with_sourcemap=True)"),
-            ("itob", "comp.compile(with_sourcemap=True)"),
-            ("concat", "comp.compile(with_sourcemap=True)"),
-            ("log", "comp.compile(with_sourcemap=True)"),
+            ("byte 0x151f7c75", C),
+            ("load 1", C),
+            ("itob", C),
+            ("concat", C),
+            ("log", C),
             ("int 1", "pt.Approve()"),
             ("return", "pt.Approve()"),
             ("", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
@@ -2316,13 +2322,13 @@ def test_constructs(mock_ConfigParser, i, test_case, mode, version):
             optimize=optimize,
             with_sourcemaps=True,
         )
-        sourcemap = router_bundle.approval_sourcemap
+        sourcemap = router_bundle.approval_sourcemapper
     else:
         comp = pt.Compilation(
             expr, mode, version=version, assemble_constants=False, optimize=optimize
         )
-        bundle = comp.compile(with_sourcemap=True)
-        sourcemap = bundle.sourcemap
+        bundle = comp._compile_impl(with_sourcemap=True)
+        sourcemap = bundle.sourcemapper
 
     msg = f"[CASE #{i}]: {expr=}"
 
@@ -2360,79 +2366,79 @@ def test_constructs(mock_ConfigParser, i, test_case, mode, version):
 def assert_algobank_unparsed_as_expected(actual):
     expected = [
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1),
@@ -2443,59 +2449,59 @@ def assert_algobank_unparsed_as_expected(actual):
         ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1),
         ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1),
@@ -2506,59 +2512,59 @@ def assert_algobank_unparsed_as_expected(actual):
         ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1),
         ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
@@ -2622,251 +2628,251 @@ def assert_algobank_unparsed_as_expected(actual):
             1,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         ("Bytes('lost')", 0),
@@ -2884,51 +2890,51 @@ def assert_algobank_unparsed_as_expected(actual):
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
-            0,
-        ),
-        ("Approve()", 0),
-        ("Approve()", 0),
-        (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
-            0,
-        ),
-        (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
-            0,
-        ),
-        (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
-            0,
-        ),
-        (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
-            0,
-        ),
-        (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         ("Approve()", 0),
         ("Approve()", 0),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
+            0,
+        ),
+        (
+            "router._build_impl(rci)",
+            0,
+        ),
+        (
+            "router._build_impl(rci)",
+            0,
+        ),
+        ("Approve()", 0),
+        ("Approve()", 0),
+        (
+            "router._build_impl(rci)",
+            0,
+        ),
+        (
+            "router._build_impl(rci)",
+            0,
+        ),
+        (
+            "router._build_impl(rci)",
             0,
         ),
         ("Txn.sender()", 0),
@@ -2936,27 +2942,27 @@ def assert_algobank_unparsed_as_expected(actual):
         ("Txn.sender() == Global.creator_address()", 0),
         ("Assert(Txn.sender() == Global.creator_address())", 0),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         ("payment.get()", 0),
@@ -2988,46 +2994,46 @@ def assert_algobank_unparsed_as_expected(actual):
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         ("user.address()", 0),
         ("Bytes('balance')", 0),
         ("App.localGet(user.address(), Bytes('balance'))", 0),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
         ("Txn.sender()", 0),
@@ -3068,7 +3074,7 @@ def assert_algobank_unparsed_as_expected(actual):
         ),
         ("InnerTxnBuilder.Submit()", 0),
         (
-            "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), approval_filename=filename, with_sourcemaps=True)",
+            "router._build_impl(rci)",
             0,
         ),
     ]
