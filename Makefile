@@ -21,6 +21,8 @@ bdist-wheel:
 
 bundle-docs-clean:
 	rm -rf docs/pyteal.docset
+	rm -rf docs/_build
+	rm -f docs/pyteal.docset.tar.gz
 
 bundle-docs: bundle-docs-clean
 	cd docs && \
