@@ -5,12 +5,12 @@ blacklist, we need to move the test elsewhere to get reliable results.
 """
 
 import ast
+import difflib
 import json
 import time
 from configparser import ConfigParser
 from pathlib import Path
 from unittest import mock
-
 import pytest
 
 from pyteal.compiler.sourcemap import R3SourceMap, R3SourceMapJSON
@@ -18,7 +18,6 @@ from pyteal.compiler.sourcemap import R3SourceMap, R3SourceMapJSON
 ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 
 
-@pytest.mark.serial
 def test_frames():
     from pyteal.stack_frame import StackFrames
 
@@ -50,7 +49,6 @@ def test_frames():
     StackFrames._no_stackframes = originally
 
 
-@pytest.mark.serial
 def test_TealMapItem_source_mapping():
     from pyteal.stack_frame import StackFrames
 
@@ -128,12 +126,10 @@ def no_regressions():
     compare_and_assert("algobank_approval.teal", approval)
 
 
-@pytest.mark.serial
 def test_no_regression_with_sourcemap_as_configured():
     no_regressions()
 
 
-@pytest.mark.serial
 def test_no_regression_with_sourcemap_enabled():
     from pyteal.stack_frame import StackFrames
 
@@ -145,7 +141,6 @@ def test_no_regression_with_sourcemap_enabled():
     StackFrames._no_stackframes = originally
 
 
-@pytest.mark.serial
 def test_no_regression_with_sourcemap_disabled():
     from pyteal.stack_frame import StackFrames
 
@@ -157,7 +152,6 @@ def test_no_regression_with_sourcemap_disabled():
     StackFrames._no_stackframes = originally
 
 
-@pytest.mark.serial
 def test_sourcemap_fails_because_unconfigured():
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
@@ -173,7 +167,6 @@ def test_sourcemap_fails_because_unconfigured():
     assert "pyteal.ini" in str(smde.value)
 
 
-@pytest.mark.serial
 def test_config():
     from pyteal.stack_frame import StackFrames
 
@@ -209,30 +202,41 @@ def test_config():
     StackFrames._no_stackframes = originally
 
 
-@pytest.mark.skip(
-    reason="""Supressing this flaky test as 
-router_test::test_router_compile_program_idempotence is similar in its goals
-and we expect flakiness to persist until https://github.com/algorand/pyteal/issues/199
-is finally addressed """
-)
-@pytest.mark.serial
 def test_idempotent():
     # make sure we get clean up properly and therefore get idempotent results
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
 
-    approval1, clear1, contract1 = (
+    def assert_same_results(first_compilation, second_compilation):
+        approval1, clear1, contract1 = first_compilation
+        approval2, clear2, contract2 = second_compilation
+
+        assert contract1.dictify() == contract2.dictify()
+
+        assert len(clear1.splitlines()) == len(clear2.splitlines())
+        assert clear1 == clear2
+
+        assert len(a1 := approval1.splitlines()) == len(a2 := approval2.splitlines())
+        print(
+            '----------unified_diff(a1, a2, "approval1.teal", "approval2.teal")----------'
+        )
+        for d in list(difflib.unified_diff(a1, a2, "approval1.teal", "approval2.teal")):
+            print(d)
+
+        assert approval1 == approval2
+
+    compilation_1 = (
         func := lambda: router.compile_program(
             version=6, optimize=OptimizeOptions(scratch_slots=True)
         )
     )()
-    approval2, clear2, contract2 = func()
+    compilation_2 = func()
+    compilation_3 = func()
+    compilation_4 = func()
 
-    assert contract1.dictify() == contract2.dictify()
-    assert len(clear1.splitlines()) == len(clear2.splitlines())
-    assert clear1 == clear2
-    assert len(approval1.splitlines()) == len(approval2.splitlines())
-    assert approval1 == approval2
+    assert_same_results(compilation_1, compilation_4)
+    assert_same_results(compilation_1, compilation_3)
+    assert_same_results(compilation_1, compilation_2)
 
 
 # ---- BENCHMARKS - SKIPPED BY DEFAULT ---- #
