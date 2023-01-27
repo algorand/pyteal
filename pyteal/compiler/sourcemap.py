@@ -575,7 +575,7 @@ class PyTealSourceMap:
         annotate_teal: bool = False,
         include_pcs: bool = False,
         algod: AlgodClient | None = None,
-        build: bool = True,  # NO NO NO NO NO! DON'T ALLOW BUILDING ON INIT
+        build: bool = True,
         verbose: bool = False,
     ):
         if include_pcs:

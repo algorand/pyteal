@@ -248,20 +248,33 @@ def sort_subroutine_blocks(
     return subroutine_mapping
 
 
+@dataclass(frozen=True)
+class CompileResults:
+    """Summary of compilation"""
+
+    teal: str
+    sourcemap: PyTealSourceMap | None = None
+    annotated_teal: str | None = None
+
+
 @dataclass
-class CompilationBundle:
+class _FullCompilationBundle:
     """
+    Private class that groups together various artifacts required and produced by the compiler.
+
+    The following artifacts should _NOT_ be returned to the user, as they could
+    interfere with the compiler's idempotency. For example, keeping these
+    artifacts around could make it difficult to guarantee that scratchslots
+    are allocated as efficiently as possible, and assuming that such artifacts
+    might continue existing after compilation interferes with the goal of making
+    the compiler as reliable and efficient as possible:
+    * teal_chunks
+    * components
+
     NOTE: `annotated_teal` can grow quite large and become unsuitable for compilation as algod's compile
     endpoint may throw a "request body too large" error.
     Therefore, it is recommended that `teal` be used for algod compilation purposes.
     """
-
-    # TODO: this will need to be a private object as we ought not hand back
-    # to the caller the following objects:
-    # * teal_chunks (not crucial, but seems redundant and confusing)
-    # * components (they hold on to the original expressions, violating the
-    #       compiler related idempotency edict "leave no compiler expressions behind")
-    # * sourcemap - has fields that connect to such Expr's (so same problem as with components)
 
     ast: Expr
     mode: Mode
@@ -273,6 +286,9 @@ class CompilationBundle:
     components: list[TealComponent]
     sourcemap: PyTealSourceMap | None = None
     annotated_teal: str | None = None
+
+    def get_results(self) -> CompileResults:
+        return CompileResults(self.teal, self.sourcemap, self.annotated_teal)
 
 
 class Compilation:
@@ -291,9 +307,6 @@ class Compilation:
         self.assemble_constants = assemble_constants
         self.optimize: OptimizeOptions = optimize or OptimizeOptions()
 
-    # TODO: API needs refactor....
-    # In particular, need to make this private, possible exposing a public
-    # version that returns a safer version of `CompilationBundle`
     def compile(
         self,
         with_sourcemap: bool = True,
@@ -303,7 +316,27 @@ class Compilation:
         annotate_teal: bool = False,
         annotate_teal_headers: bool = False,
         annotate_teal_concise: bool = True,
-    ) -> CompilationBundle:
+    ) -> CompileResults:
+        return self._compile_impl(
+            with_sourcemap=with_sourcemap,
+            teal_filename=teal_filename,
+            pcs_in_sourcemap=pcs_in_sourcemap,
+            algod_client=algod_client,
+            annotate_teal=annotate_teal,
+            annotate_teal_headers=annotate_teal_headers,
+            annotate_teal_concise=annotate_teal_concise,
+        ).get_results()
+
+    def _compile_impl(
+        self,
+        with_sourcemap: bool = True,
+        teal_filename: str | None = None,
+        pcs_in_sourcemap: bool = False,
+        algod_client: AlgodClient | None = None,
+        annotate_teal: bool = False,
+        annotate_teal_headers: bool = False,
+        annotate_teal_concise: bool = True,
+    ) -> _FullCompilationBundle:
         """Compile a PyTeal expression into TEAL assembly.
 
         TODO: this comment is out of date!!!
@@ -414,7 +447,7 @@ class Compilation:
         teal_chunks = [tl.assemble() for tl in components]
         teal_code = "\n".join(teal_chunks)
 
-        cpb = CompilationBundle(
+        cpb = _FullCompilationBundle(
             ast=self.ast,
             mode=self.mode,
             version=self.version,
@@ -459,5 +492,5 @@ def compileTeal(
         version=version,
         assemble_constants=assembleConstants,
         optimize=optimize,
-    ).compile(with_sourcemap=False)
+    )._compile_impl(with_sourcemap=False)
     return bundle.teal

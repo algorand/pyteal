@@ -1071,7 +1071,7 @@ class Router:
                 version=input.version, optimize=input.optimize
             )
 
-            abundle = input.get_compilation(ap).compile(
+            abundle = input.get_compilation(ap)._compile_impl(
                 with_sourcemap=input.with_sourcemap,
                 teal_filename=input.approval_filename,
                 pcs_in_sourcemap=input.pcs_in_sourcemap,
@@ -1086,7 +1086,7 @@ class Router:
             # the side effects of separating is not yet obvious and
             # clear state programs generally aren't so complex so this isn't
             # of high urgency
-            csbundle = input.get_compilation(csp).compile(
+            csbundle = input.get_compilation(csp)._compile_impl(
                 with_sourcemap=input.with_sourcemap,
                 teal_filename=input.clear_filename,
                 pcs_in_sourcemap=input.pcs_in_sourcemap,

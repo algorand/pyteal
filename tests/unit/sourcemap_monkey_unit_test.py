@@ -150,7 +150,7 @@ def test_lots_o_indirection(mock_ConfigParser):
     def foo(x):
         return pt.Seq(pt.Pop(e1), e1)
 
-    pt.Compilation(foo(pt.Int(42)), pt.Mode.Application, version=6).compile(
+    pt.Compilation(foo(pt.Int(42)), pt.Mode.Application, version=6)._compile_impl(
         with_sourcemap=True
     )
 
