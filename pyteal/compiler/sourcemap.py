@@ -577,9 +577,6 @@ class PyTealSourceMap:
         algod: AlgodClient | None = None,
         build: bool = True,  # NO NO NO NO NO! DON'T ALLOW BUILDING ON INIT
         verbose: bool = False,
-        # deprecated:
-        _source_inference: bool = True,
-        _hybrid: bool = True,
     ):
         if include_pcs:
             # bootstrap an algod_client if not provided, and in either case, run a healthcheck
@@ -597,11 +594,6 @@ class PyTealSourceMap:
 
         self.teal_file: str | None = teal_file
         self.verbose: bool = verbose
-
-        # --- deprecated fields BEGIN
-        self._hybrid: bool = _hybrid
-        self._source_inference: bool = _source_inference
-        # --- deprecated fields END
 
         self._best_frames: list[PyTealFrame] = []
         self._cached_r3sourcemap: R3SourceMap | None = None
@@ -646,11 +638,9 @@ class PyTealSourceMap:
             tc.stack_frames()[-1].as_pyteal_frame() for tc in self.components
         ]
 
-        if self._source_inference:
-            # TODO: hard-code this deprecated field to always be True ASAP
-            mutated = self._search_for_better_frames_and_modify(self._best_frames)
-            if mutated:
-                self._inferred_frames_at = mutated
+        mutated = self._search_for_better_frames_and_modify(self._best_frames)
+        if mutated:
+            self._inferred_frames_at = mutated
 
         lineno = 1
         for i, best_frame in enumerate(self._best_frames):
@@ -685,7 +675,7 @@ class PyTealSourceMap:
             root == tmi.root() for tmi in self._cached_tmis
         ), "inconsistent sourceRoot - aborting"
 
-        r3sms = [tmi.source_mapping(_hybrid=self._hybrid) for tmi in self._cached_tmis]
+        r3sms = [tmi.source_mapping() for tmi in self._cached_tmis]
         entries = {(r3sm.line, r3sm.column): r3sm for r3sm in r3sms}
         lines = [cast(str, r3sm.target_extract) for r3sm in r3sms]
 

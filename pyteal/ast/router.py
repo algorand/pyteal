@@ -684,7 +684,6 @@ class _RouterCompileInput:
     assemble_constants: bool
     optimize: Optional[OptimizeOptions] = None
     with_sourcemap: bool = False
-    source_inference: bool = True
     pcs_in_sourcemap: bool = False
     approval_filename: Optional[str] = None
     clear_filename: Optional[str] = None
@@ -692,8 +691,6 @@ class _RouterCompileInput:
     annotate_teal: bool = False
     annotate_teal_headers: bool = False
     annotate_teal_concise: bool = True
-    # deprecated:
-    _hybrid_source: bool = True
 
     def __post_init__(self):
         # The following params are non-sensical when truthy without sourcemaps.
@@ -708,7 +705,7 @@ class _RouterCompileInput:
         # be provided on when there isn't a sourcemap
         if self.annotate_teal and not self.with_sourcemap:
             raise ValueError(
-                "In order annotate generated teal source, must set source_inference True"
+                "In order annotate generated teal source, must set with_sourcemap True"
             )
 
         if self.pcs_in_sourcemap:
@@ -1030,9 +1027,6 @@ class Router:
         annotate_teal: bool = True,
         annotate_teal_headers: bool = False,
         annotate_teal_concise: bool = True,
-        # deprecated:
-        _source_inference: bool = True,
-        _hybrid_source: bool = True,
     ) -> RouterBundle:
         """
         TODO: out of date comment
@@ -1068,9 +1062,6 @@ class Router:
             annotate_teal=annotate_teal,
             annotate_teal_headers=annotate_teal_headers,
             annotate_teal_concise=annotate_teal_concise,
-            # deprecated:
-            source_inference=_source_inference,
-            _hybrid_source=_hybrid_source,
         )
         return self._build_impl(input)
 
@@ -1088,9 +1079,6 @@ class Router:
                 annotate_teal=input.annotate_teal,
                 annotate_teal_headers=input.annotate_teal_headers,
                 annotate_teal_concise=input.annotate_teal_concise,
-                # deprecated:
-                _source_inference=input.source_inference,
-                _hybrid_source=input._hybrid_source,
             )
 
             # TODO: ideally, the clear-state compilation ought to be in it's own
@@ -1106,9 +1094,6 @@ class Router:
                 annotate_teal=input.annotate_teal,
                 annotate_teal_headers=input.annotate_teal_headers,
                 annotate_teal_concise=input.annotate_teal_concise,
-                # DEPRECATED:
-                _source_inference=input.source_inference,
-                _hybrid_source=input._hybrid_source,
             )
 
         return RouterBundle(

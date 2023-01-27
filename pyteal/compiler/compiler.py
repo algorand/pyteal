@@ -303,9 +303,6 @@ class Compilation:
         annotate_teal: bool = False,
         annotate_teal_headers: bool = False,
         annotate_teal_concise: bool = True,
-        # deprecated:
-        _source_inference: bool = True,
-        _hybrid_source: bool = True,
     ) -> CompilationBundle:
         """Compile a PyTeal expression into TEAL assembly.
 
@@ -346,7 +343,7 @@ class Compilation:
 
         if annotate_teal and not with_sourcemap:
             raise ValueError(
-                "In order annotate generated teal source, must set source_inference True"
+                "In order annotate generated teal source, must set with_sourcemap True"
             )
 
         if pcs_in_sourcemap:
@@ -438,9 +435,6 @@ class Compilation:
             include_pcs=pcs_in_sourcemap,
             algod=algod_client,
             annotate_teal=annotate_teal,
-            # deprecated:
-            _source_inference=_source_inference,
-            _hybrid=_hybrid_source,
         )
 
         if annotate_teal:
