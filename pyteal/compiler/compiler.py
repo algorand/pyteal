@@ -314,6 +314,7 @@ class Compilation:
 
     def compile(
         self,
+        *,
         with_sourcemap: bool = True,
         teal_filename: str | None = None,
         pcs_in_sourcemap: bool = False,
