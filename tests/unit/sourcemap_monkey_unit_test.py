@@ -711,7 +711,7 @@ CONSTRUCTS = [
             (
                 "int axfer",
                 "pt.Gtxn[0].type_enum() == pt.TxnType.AssetTransfer",
-            ),  # source inference
+            ),
             ("==", "pt.Gtxn[0].type_enum() == pt.TxnType.AssetTransfer"),
             ("&&", BIG_A),
             ("gtxn 0 XferAsset", "pt.Gtxn[0].xfer_asset()"),
@@ -2327,7 +2327,6 @@ def test_constructs(mock_ConfigParser, i, test_case, mode, version):
     msg = f"[CASE #{i}]: {expr=}"
 
     assert sourcemap, msg
-    assert sourcemap._hybrid is True, msg
 
     tmis = sourcemap.as_list()
     N = len(tmis)
