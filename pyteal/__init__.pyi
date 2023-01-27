@@ -22,6 +22,7 @@ from pyteal.compiler import (
 from pyteal.types import TealType
 from pyteal.errors import (
     AlgodClientError,
+    SourceMapDisabledError,
     TealInternalError,
     TealTypeError,
     TealInputError,
@@ -199,6 +200,7 @@ __all__ = [
     "Sha512_256",
     "ShiftLeft",
     "ShiftRight",
+    "SourceMapDisabledError",
     "Sqrt",
     "Subroutine",
     "SubroutineCall",

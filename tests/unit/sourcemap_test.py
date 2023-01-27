@@ -173,7 +173,7 @@ def test_no_regression_with_sourcemap_disabled():
 def test_sourcemap_fails_because_unconfigured():
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
-    from pyteal.compiler.sourcemap import SourceMapDisabledError
+    from pyteal.errors import SourceMapDisabledError
 
     with pytest.raises(SourceMapDisabledError) as smde:
         router.compile(

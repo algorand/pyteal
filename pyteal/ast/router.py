@@ -29,11 +29,11 @@ from pyteal.ast.txn import Txn
 from pyteal.compiler.compiler import DEFAULT_TEAL_VERSION, Compilation, OptimizeOptions
 from pyteal.compiler.sourcemap import _PyTealSourceMapper, PyTealSourceMap
 from pyteal.config import METHOD_ARG_NUM_CUTOFF
-from pyteal.errors import TealInputError, TealInternalError
+from pyteal.errors import AlgodClientError, TealInputError, TealInternalError
 from pyteal.ir.ops import Mode
 from pyteal.stack_frame import StackFrames
 from pyteal.types import TealType
-from pyteal.util import algod_with_assertion, AlgodClientError
+from pyteal.util import algod_with_assertion
 
 ActionType = Expr | SubroutineFnWrapper | ABIReturnSubroutine
 

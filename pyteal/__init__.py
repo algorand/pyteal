@@ -19,6 +19,7 @@ from pyteal.compiler import (
 from pyteal.types import TealType
 from pyteal.errors import (
     AlgodClientError,
+    SourceMapDisabledError,
     TealInternalError,
     TealTypeError,
     TealInputError,
@@ -51,6 +52,7 @@ __all__ = (
         "PyTealSourceMap",
         "TealType",
         "AlgodClientError",
+        "SourceMapDisabledError",
         "TealInternalError",
         "TealTypeError",
         "TealInputError",

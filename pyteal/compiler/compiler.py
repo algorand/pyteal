@@ -15,13 +15,12 @@ from pyteal.compiler.sort import sortBlocks
 from pyteal.compiler.sourcemap import (
     _PyTealSourceMapper,
     PyTealSourceMap,
-    SourceMapDisabledError,
 )
 from pyteal.compiler.subroutines import (
     resolveSubroutines,
     spillLocalSlotsDuringRecursion,
 )
-from pyteal.errors import TealInputError, TealInternalError
+from pyteal.errors import SourceMapDisabledError, TealInputError, TealInternalError
 from pyteal.ir import (
     Mode,
     Op,

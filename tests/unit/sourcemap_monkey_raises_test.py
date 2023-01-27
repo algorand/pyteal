@@ -18,7 +18,7 @@ def mock_ConfigParser():
 def test_sourcemap_fails_elegantly_when_no_ini(mock_ConfigParser):
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
-    from pyteal.compiler.sourcemap import SourceMapDisabledError
+    from pyteal.errors import SourceMapDisabledError
 
     with pytest.raises(SourceMapDisabledError) as smde:
         router.compile(

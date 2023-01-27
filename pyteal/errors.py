@@ -86,6 +86,20 @@ class AlgodClientError(Exception):
 AlgodClientError.__module__ = "pyteal"
 
 
+class SourceMapDisabledError(RuntimeError):
+    msg = value = """
+    Cannot calculate Teal to PyTeal source map because stack frame discovery is turned off.
+
+    To enable source maps, set `enabled = True` in `pyteal.ini`'s [pyteal-source-mapper] section.
+    """
+
+    def __str__(self):
+        return self.msg
+
+
+SourceMapDisabledError.__module__ = "pyteal"
+
+
 def verifyProgramVersion(minVersion: int, version: int, msg: str):
     if minVersion > version:
         msg = "{}. Minimum version needed is {}, but current version being compiled is {}".format(
