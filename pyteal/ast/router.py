@@ -671,8 +671,6 @@ class RouterResults:
     abi_contract: sdk_abi.Contract
     approval_sourcemap: Optional[PyTealSourceMap] = None
     clear_sourcemap: Optional[PyTealSourceMap] = None
-    approval_annotated_teal: Optional[str] = None
-    clear_annotated_teal: Optional[str] = None
 
 
 @dataclass
@@ -686,8 +684,6 @@ class _RouterBundle:
     clear_teal: str
     approval_sourcemapper: Optional[_PyTealSourceMapper] = None
     clear_sourcemapper: Optional[_PyTealSourceMapper] = None
-    approval_annotated_teal: Optional[str] = None
-    clear_annotated_teal: Optional[str] = None
     input: Optional["_RouterCompileInput"] = None
 
     def get_results(self) -> RouterResults:
@@ -704,8 +700,6 @@ class _RouterBundle:
             self.abi_contract,
             approval_sourcemap,
             clear_sourcemap,
-            self.approval_annotated_teal,
-            self.clear_annotated_teal,
         )
 
 
@@ -1135,8 +1129,6 @@ class Router:
             clear_teal=csbundle.teal,
             approval_sourcemapper=abundle.sourcemapper,
             clear_sourcemapper=csbundle.sourcemapper,
-            approval_annotated_teal=abundle.annotated_teal,
-            clear_annotated_teal=csbundle.annotated_teal,
             input=input,
         )
 

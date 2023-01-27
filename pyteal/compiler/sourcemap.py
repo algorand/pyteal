@@ -546,9 +546,9 @@ class TealMapItem(PyTealFrame):
 
 @dataclass(frozen=True)
 class PyTealSourceMap:
-    teal_file: str | None
     r3_sourcemap: R3SourceMap | None
     pc_sourcemap: PCSourceMap | None
+    annotated_teal: str | None
 
 
 class _PyTealSourceMapper:
@@ -569,6 +569,9 @@ class _PyTealSourceMapper:
         algod: AlgodClient | None = None,
         build: bool = True,
         verbose: bool = False,
+        annotate_teal: bool = False,
+        annotate_teal_headers: bool = False,
+        annotate_teal_concise: bool = True,
     ):
         if include_pcs:
             # bootstrap an algod_client if not provided, and in either case, run a healthcheck
@@ -595,14 +598,18 @@ class _PyTealSourceMapper:
         # FOR DEBUGGING PURPOSES ONLY:
         self._inferred_frames_at: list[int] = []
 
-        if build:
+        if annotate_teal or build:
             self.build()
+
+        self._annotated_teal: str | None = None
+        if annotate_teal:
+            self._annotated_teal = self.annotated_teal(
+                omit_headers=not annotate_teal_headers, concise=annotate_teal_concise
+            )
 
     def get_sourcemap(self):
         return PyTealSourceMap(
-            self.teal_file,
-            self._cached_r3sourcemap,
-            self._cached_pc_sourcemap,
+            self._cached_r3sourcemap, self._cached_pc_sourcemap, self._annotated_teal
         )
 
     def compiled_teal(self) -> str:

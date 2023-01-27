@@ -257,7 +257,6 @@ class CompileResults:
 
     teal: str
     sourcemap: PyTealSourceMap | None = None
-    annotated_teal: str | None = None
 
 
 @dataclass
@@ -294,7 +293,7 @@ class _FullCompilationBundle:
         sourcemap: PyTealSourceMap | None = None
         if self.sourcemapper:
             sourcemap = self.sourcemapper.get_sourcemap()
-        return CompileResults(self.teal, sourcemap, self.annotated_teal)
+        return CompileResults(self.teal, sourcemap)
 
 
 class Compilation:
@@ -448,7 +447,6 @@ class Compilation:
                 )
             components = createConstantBlocks(components)
 
-        # TODO: do we really need this cast?
         components = [cast(TComponents, TealPragma(self.version))] + components  # T2PT0
         teal_chunks = [tl.assemble() for tl in components]
         teal_code = "\n".join(teal_chunks)
@@ -473,13 +471,11 @@ class Compilation:
             teal_file=teal_filename,
             include_pcs=pcs_in_sourcemap,
             algod=algod_client,
+            annotate_teal=annotate_teal,
+            annotate_teal_headers=annotate_teal_headers,
+            annotate_teal_concise=annotate_teal_concise,
         )
         full_cpb.sourcemapper = source_mapper
-
-        if annotate_teal:
-            full_cpb.annotated_teal = source_mapper.annotated_teal(
-                omit_headers=not annotate_teal_headers, concise=annotate_teal_concise
-            )
 
         return full_cpb
 

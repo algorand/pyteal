@@ -272,8 +272,8 @@ itxn_submit                            //    (349)                              
 retsub                                 //    (350)  tests/integration/sourcemap_monkey_integ_test.py  {CL}      {COMPILE}
 """.strip()
     annotated_approval, annotated_clear = (
-        compile_bundle.approval_annotated_teal,
-        compile_bundle.clear_annotated_teal,
+        compile_bundle.approval_sourcemap.annotated_teal,
+        compile_bundle.clear_sourcemap.annotated_teal,
     )
     assert annotated_approval
     assert annotated_clear
