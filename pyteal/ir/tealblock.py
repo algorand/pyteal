@@ -15,7 +15,6 @@ class TealBlock(ABC):
     """Represents a basic block of TealComponents in a graph."""
 
     def __init__(self, ops: List[TealOp], root_expr: Optional["Expr"] = None) -> None:
-        # TODO: do I still need root_expr?
         self.ops = ops
         self.incoming: List[TealBlock] = []
         self._root_expr = root_expr
