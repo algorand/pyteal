@@ -644,7 +644,7 @@ class _PyTealSourceMapper:
 
         # PASS I. Deduce the Best Frame Candidate (BFC) from each individual `StackFrames`
         self._best_frames = [
-            tc.stack_frames()[-1].as_pyteal_frame() for tc in self.components
+            tc.stack_frames().best().as_pyteal_frame() for tc in self.components
         ]
 
         assert (

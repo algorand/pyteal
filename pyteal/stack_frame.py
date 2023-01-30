@@ -187,7 +187,13 @@ class StackFrames:
     When source mapping is disabled (cf. `pyteal.ini`), StackFrames'
     constructor is a no-op.
 
+    When source mapping is enabled, it wraps a list of StackFrame's.
 
+    Under normal operations, only the "best" frame is kept in the list, so
+    the name is misleading.
+
+    TODO: Rename this to somethling less misleading. EG: NatalStackFrame
+    TODO: Privatize frames member
     """
 
     _no_stackframes: bool = _sourcmapping_is_off()
@@ -215,6 +221,7 @@ class StackFrames:
     ):
         self._compiler_gen: bool = False
         self.frames: list[StackFrame] = []
+
         if self.sourcemapping_is_off():
             return
 
@@ -282,8 +289,13 @@ class StackFrames:
     def __len__(self) -> int:
         return len(self.frames)
 
-    def __getitem__(self, index: int) -> StackFrame:
-        return self.frames[index]
+    def best(self) -> StackFrame:
+        """
+        Return the best guess as to the user-authored birthplace of the
+        associated StackFrame's
+        """
+        assert self.frames, f"expected to have some frames but currently {self.frames=}"
+        return self.frames[-1]
 
     def __repr__(self) -> str:
         return f"{'C' if self._compiler_gen else 'U'}{self.frames}"
@@ -338,7 +350,9 @@ class StackFrames:
             return
 
         def dbg(e: Expr):
-            print(type(e), ": ", e.stack_frames[0].as_pyteal_frame().hybrid_unparsed())
+            print(
+                type(e), ": ", e.stack_frames.best().as_pyteal_frame().hybrid_unparsed()
+            )
 
         cls._walk_asts(dbg, *exprs)
 

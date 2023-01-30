@@ -26,10 +26,8 @@ def test_frames():
     StackFrames._no_stackframes = False
 
     this_file, this_func = "sourcemap_test.py", "test_frames"
-    this_lineno, this_frame = 29, StackFrames(_keep_all=True)[1]
-    code = (
-        f"    this_lineno, this_frame = {this_lineno}, StackFrames(_keep_all=True)[1]\n"
-    )
+    this_lineno, this_frame = 29, StackFrames(_keep_all=True).frames[1]
+    code = f"    this_lineno, this_frame = {this_lineno}, StackFrames(_keep_all=True).frames[1]\n"
     this_col_offset, this_end_col_offset = 34, 61
     frame_info, node = this_frame.frame_info, this_frame.node
 
@@ -45,7 +43,8 @@ def test_frames():
     assert this_col_offset == node.col_offset
     assert this_end_col_offset == node.end_col_offset
     assert isinstance(node, ast.Call)
-    assert isinstance(node.parent, ast.Subscript)  # type: ignore
+    assert isinstance(node.parent, ast.Attribute)  # type: ignore
+    assert isinstance(node.parent.parent, ast.Subscript)  # type: ignore
 
     StackFrames._no_stackframes = originally
 
@@ -75,7 +74,7 @@ def test_TealMapItem_source_mapping():
 
     teals = mock_teal(components)
     tmis = [
-        TealMapItem(op.expr.stack_frames[0].as_pyteal_frame(), i, teals[i], op)
+        TealMapItem(op.expr.stack_frames.frames[0].as_pyteal_frame(), i, teals[i], op)
         for i, op in enumerate(components)
     ]
 
@@ -91,7 +90,7 @@ def test_TealMapItem_source_mapping():
         source_files=source_files,
         source_files_lines=[mock_source_lines],
     )
-    expected_json = '{"version": 3, "sources": ["tests/unit/sourcemap_test.py"], "names": [], "mappings": "AA+DW;AAAY;AAAZ", "file": "dohhh.teal", "sourceRoot": "~"}'
+    expected_json = '{"version": 3, "sources": ["tests/unit/sourcemap_test.py"], "names": [], "mappings": "AA8DW;AAAY;AAAZ", "file": "dohhh.teal", "sourceRoot": "~"}'
 
     assert expected_json == json.dumps(r3sm.to_json())
 
