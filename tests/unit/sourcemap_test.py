@@ -20,14 +20,14 @@ ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 
 @pytest.mark.serial
 def test_frames():
-    from pyteal.stack_frame import StackFrames
+    from pyteal.stack_frame import NatalStackFrame
 
-    originally = StackFrames._no_stackframes
-    StackFrames._no_stackframes = False
+    originally = NatalStackFrame._no_stackframes
+    NatalStackFrame._no_stackframes = False
 
     this_file, this_func = "sourcemap_test.py", "test_frames"
-    this_lineno, this_frame = 29, StackFrames(_keep_all=True)._frames[1]
-    code = f"    this_lineno, this_frame = {this_lineno}, StackFrames(_keep_all=True)._frames[1]\n"
+    this_lineno, this_frame = 29, NatalStackFrame(_keep_all=True)._frames[1]
+    code = f"    this_lineno, this_frame = {this_lineno}, NatalStackFrame(_keep_all=True)._frames[1]\n"
     this_col_offset, this_end_col_offset = 34, 61
     frame_info, node = this_frame.frame_info, this_frame.node
 
@@ -46,16 +46,16 @@ def test_frames():
     assert isinstance(node.parent, ast.Attribute)  # type: ignore
     assert isinstance(node.parent.parent, ast.Subscript)  # type: ignore
 
-    StackFrames._no_stackframes = originally
+    NatalStackFrame._no_stackframes = originally
 
 
 @pytest.mark.serial
 def test_TealMapItem_source_mapping():
-    from pyteal.stack_frame import StackFrames
+    from pyteal.stack_frame import NatalStackFrame
 
-    originally = StackFrames._no_stackframes
+    originally = NatalStackFrame._no_stackframes
 
-    StackFrames._no_stackframes = False
+    NatalStackFrame._no_stackframes = False
 
     import pyteal as pt
     from pyteal.compiler.sourcemap import TealMapItem
@@ -104,7 +104,7 @@ def test_TealMapItem_source_mapping():
 
     assert expected_json == json.dumps(r3sm_unmarshalled.to_json())
 
-    StackFrames._no_stackframes = originally
+    NatalStackFrame._no_stackframes = originally
 
 
 def no_regressions():
@@ -134,26 +134,26 @@ def test_no_regression_with_sourcemap_as_configured():
 
 @pytest.mark.serial
 def test_no_regression_with_sourcemap_enabled():
-    from pyteal.stack_frame import StackFrames
+    from pyteal.stack_frame import NatalStackFrame
 
-    originally = StackFrames._no_stackframes
-    StackFrames._no_stackframes = False
+    originally = NatalStackFrame._no_stackframes
+    NatalStackFrame._no_stackframes = False
 
     no_regressions()
 
-    StackFrames._no_stackframes = originally
+    NatalStackFrame._no_stackframes = originally
 
 
 @pytest.mark.serial
 def test_no_regression_with_sourcemap_disabled():
-    from pyteal.stack_frame import StackFrames
+    from pyteal.stack_frame import NatalStackFrame
 
-    originally = StackFrames._no_stackframes
-    StackFrames._no_stackframes = True
+    originally = NatalStackFrame._no_stackframes
+    NatalStackFrame._no_stackframes = True
 
     no_regressions()
 
-    StackFrames._no_stackframes = originally
+    NatalStackFrame._no_stackframes = originally
 
 
 @pytest.mark.serial
@@ -174,7 +174,7 @@ def test_sourcemap_fails_because_unconfigured():
 
 @pytest.mark.serial
 def test_config():
-    from pyteal.stack_frame import StackFrames
+    from pyteal.stack_frame import NatalStackFrame
 
     config = ConfigParser()
     config.read([".flake8", "mypy.ini", "pyteal.ini"])
@@ -196,16 +196,16 @@ def test_config():
     assert ["enabled", "debug"] == config.options("pyteal-source-mapper")
 
     assert config.getboolean("pyteal-source-mapper", "enabled") is False
-    assert StackFrames.sourcemapping_is_off() is True
+    assert NatalStackFrame.sourcemapping_is_off() is True
 
-    originally = StackFrames._no_stackframes
-    StackFrames._no_stackframes = False
+    originally = NatalStackFrame._no_stackframes
+    NatalStackFrame._no_stackframes = False
 
-    StackFrames._no_stackframes = False
-    assert StackFrames.sourcemapping_is_off() is False
-    assert StackFrames.sourcemapping_is_off(_force_refresh=True) is True
+    NatalStackFrame._no_stackframes = False
+    assert NatalStackFrame.sourcemapping_is_off() is False
+    assert NatalStackFrame.sourcemapping_is_off(_force_refresh=True) is True
 
-    StackFrames._no_stackframes = originally
+    NatalStackFrame._no_stackframes = originally
 
 
 @pytest.mark.skip(
@@ -305,9 +305,9 @@ def trial(func):
 @pytest.mark.skip(reason="Benchmarks are too slow to run every time")
 @pytest.mark.serial
 def test_time_benchmark_under_config():
-    from pyteal.stack_frame import StackFrames
+    from pyteal.stack_frame import NatalStackFrame
 
-    print(f"{StackFrames.sourcemapping_is_off()=}")
+    print(f"{NatalStackFrame.sourcemapping_is_off()=}")
 
     trial(simple_compilation)
     trial(simple_compilation)
@@ -322,9 +322,9 @@ def test_time_benchmark_sourcemap_enabled(_):
     """
     UPSHOT: expect deterioration of (5 to 15)X when enabling source maps.
     """
-    from pyteal.stack_frame import StackFrames
+    from pyteal.stack_frame import NatalStackFrame
 
-    print(f"{StackFrames.sourcemapping_is_off()=}")
+    print(f"{NatalStackFrame.sourcemapping_is_off()=}")
     print(
         """
 keep_all: bool = True,

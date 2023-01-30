@@ -30,7 +30,7 @@ class StackFrame:
     the frame_info's creation, _usually_ succeeds in recovering the
     associated AST node.
 
-    In the current usage, there is a `creator` member which is a `StackFrames`
+    In the current usage, there is a `creator` member which is a `NatalStackFrame`
     object -usually belonging to a PyTeal Expr- and which is assumed to have called
     the private constructor `_init_or_drop()`.
 
@@ -44,22 +44,24 @@ class StackFrame:
     QUIRKS:
     * Unfortunately, this means that if a user created file satisfies the above pattern,
     the performance of the source mapper will degrade.
-    * User generated code that includes the pattern `StackFrames` may produce degraded results
+    * User generated code that includes the pattern `NatalStackFrame` may produce degraded results
     """
 
     frame_info: FrameInfo
     node: Optional[AST]
-    creator: "StackFrames"
+    creator: "NatalStackFrame"
 
     # for debugging purposes:
     full_stack: Optional[list[FrameInfo]] = None
 
     @classmethod
     def _init_or_drop(
-        cls, creator: "StackFrames", f: FrameInfo, full_stack: list[FrameInfo]
+        cls, creator: "NatalStackFrame", f: FrameInfo, full_stack: list[FrameInfo]
     ) -> Optional["StackFrame"]:
         node = cast(AST | None, Source.executing(f.frame).node)
-        frame = StackFrame(f, node, creator, full_stack if StackFrames._debug else None)
+        frame = StackFrame(
+            f, node, creator, full_stack if NatalStackFrame._debug else None
+        )
         return frame if not frame._is_py_crud() else None
 
     # TODO: when a source mapper is instantiated, it ought to survey
@@ -104,7 +106,7 @@ class StackFrame:
     @classmethod
     def _frame_info_is_right_before_core(cls, f: FrameInfo) -> bool:
         # TODO: this is a hack and the false positive surface area shuould be reduced
-        return bool(code := f.code_context or []) and "StackFrames" in "".join(code)
+        return bool(code := f.code_context or []) and "NatalStackFrame" in "".join(code)
 
     def _is_pyteal(self) -> bool:
         return self._frame_info_is_pyteal(self.frame_info)
@@ -179,21 +181,18 @@ Could not read section (pyteal-source-mapper, debug) of config "pyteal.ini": {e}
     return False
 
 
-class StackFrames:
+class NatalStackFrame:
     """
     PyTeal's source mapper deduces the code-location of a user's Expr
-    via a StackFrames object that is associated with the Expr object.
+    via a NatalStackFrame object that is associated with the Expr object.
 
-    When source mapping is disabled (cf. `pyteal.ini`), StackFrames'
+    When source mapping is disabled (cf. `pyteal.ini`), NatalStackFrame'
     constructor is a no-op.
 
     When source mapping is enabled, it wraps a list of StackFrame's.
 
     Under normal operations, only the "best" frame is kept in the list, so
     the name is misleading.
-
-    TODO: Rename this to somethling less misleading. EG: NatalStackFrame
-    TODO: Privatize frames member
     """
 
     _no_stackframes: bool = _sourcmapping_is_off()
@@ -368,7 +367,7 @@ class StackFrames:
         cls._walk_asts(mark, *exprs)
 
     @classmethod
-    def reframe_asts(cls, stack_frames: "StackFrames", *exprs: "Expr") -> None:  # type: ignore
+    def reframe_asts(cls, stack_frames: "NatalStackFrame", *exprs: "Expr") -> None:  # type: ignore
         from pyteal.ast import Expr
 
         if cls.sourcemapping_is_off():
@@ -464,7 +463,7 @@ class PyTealFrame(StackFrame):
         self,
         frame_info: FrameInfo,
         node: AST | None,
-        creator: StackFrames,
+        creator: NatalStackFrame,
         full_stack: list[FrameInfo] | None,
         rel_paths: bool = True,
         parent: Optional["PyTealFrame"] | None = None,

@@ -30,7 +30,7 @@ from pyteal.ir import (
     TealPragma,
     TealSimpleBlock,
 )
-from pyteal.stack_frame import StackFrames
+from pyteal.stack_frame import NatalStackFrame
 from pyteal.types import TealType
 from pyteal.util import algod_with_assertion
 
@@ -377,7 +377,7 @@ class Compilation:
                 )
             )
 
-        if with_sourcemap and StackFrames.sourcemapping_is_off():
+        if with_sourcemap and NatalStackFrame.sourcemapping_is_off():
             raise SourceMapDisabledError()
 
         if annotate_teal and not with_sourcemap:

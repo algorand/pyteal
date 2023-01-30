@@ -15,7 +15,7 @@ from pyteal.ast.scratchvar import DynamicScratchVar, ScratchVar, ScratchSlot
 from pyteal.ast.frame import FrameBury, Proto, FrameVar, ProtoStackLayout
 from pyteal.errors import TealInputError, TealInternalError, verifyProgramVersion
 from pyteal.ir import TealOp, Op, TealBlock
-from pyteal.stack_frame import StackFrames
+from pyteal.stack_frame import NatalStackFrame
 from pyteal.types import TealType
 
 if TYPE_CHECKING:
@@ -1000,7 +1000,7 @@ class SubroutineEval:
         )
 
         proto = Proto(subroutine.argument_count(), num_stack_outputs, mem_layout=layout)
-        StackFrames.mark_asts_as_compiler_gen(proto)
+        NatalStackFrame.mark_asts_as_compiler_gen(proto)
         return proto
 
     def __call__(self, subroutine: SubroutineDefinition) -> SubroutineDeclaration:

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from contextlib import AbstractContextManager
 from typing import TYPE_CHECKING, List, cast
 
-from pyteal.stack_frame import StackFrames
+from pyteal.stack_frame import NatalStackFrame
 
 if TYPE_CHECKING:
     from pyteal.ast import Expr, ScratchSlot, SubroutineDefinition
@@ -13,9 +13,9 @@ class TealComponent(ABC):
         self.expr: Expr | None = expr
 
         # ALL BELOW: for source mapping only
-        self._stack_frames: StackFrames | None = None
+        self._stack_frames: NatalStackFrame | None = None
         if not self.expr:  # expr already has the frame info
-            self._stack_frames = StackFrames()
+            self._stack_frames = NatalStackFrame()
 
         self._root_expr: Expr | None = None
 
@@ -31,7 +31,7 @@ class TealComponent(ABC):
     def resolveSubroutine(self, subroutine: "SubroutineDefinition", label: str) -> None:
         pass
 
-    def stack_frames(self) -> StackFrames:
+    def stack_frames(self) -> NatalStackFrame:
         from pyteal.ast import Expr
 
         root_expr = self._root_expr or self.expr
@@ -40,7 +40,7 @@ class TealComponent(ABC):
                 root_expr = cast(Expr, subroot)
             return root_expr.stack_frames
 
-        return cast(StackFrames, self._stack_frames)
+        return cast(NatalStackFrame, self._stack_frames)
 
     @abstractmethod
     def assemble(self) -> str:

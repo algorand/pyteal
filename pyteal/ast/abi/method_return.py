@@ -8,7 +8,7 @@ from pyteal.ast.naryexpr import Concat
 from pyteal.ast.bytes import Bytes
 from pyteal.config import RETURN_HASH_PREFIX
 from pyteal.ir import TealBlock, TealSimpleBlock, Op
-from pyteal.stack_frame import StackFrames
+from pyteal.stack_frame import NatalStackFrame
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
@@ -30,7 +30,7 @@ class MethodReturn(Expr):
         str, end = Log(Concat(Bytes(RETURN_HASH_PREFIX), self.arg.encode())).__teal__(
             options
         )
-        StackFrames.reframe_ops_in_blocks(self._root_expr, str)
+        NatalStackFrame.reframe_ops_in_blocks(self._root_expr, str)
         return str, end
 
     def __str__(self) -> str:

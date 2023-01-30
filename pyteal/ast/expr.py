@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 from pyteal.ir import TealBlock, TealSimpleBlock
-from pyteal.stack_frame import StackFrames
+from pyteal.stack_frame import NatalStackFrame
 from pyteal.types import TealType
 
 if TYPE_CHECKING:
@@ -16,7 +16,7 @@ class Expr(ABC):
         import traceback
 
         self.trace = traceback.format_stack()[0:-1]
-        self.stack_frames: StackFrames = StackFrames()
+        self.stack_frames: NatalStackFrame = NatalStackFrame()
 
     def getDefinitionTrace(self) -> list[str]:
         return self.trace

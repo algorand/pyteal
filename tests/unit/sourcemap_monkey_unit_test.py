@@ -134,10 +134,10 @@ def test_reconstruct(mock_ConfigParser):
 def test_mocked_config_for_frames(mock_ConfigParser):
     config = ConfigParser()
     assert config.getboolean("pyteal-source-mapper", "enabled") is True
-    from pyteal.stack_frame import StackFrames
+    from pyteal.stack_frame import NatalStackFrame
 
-    assert StackFrames.sourcemapping_is_off() is False
-    assert StackFrames.sourcemapping_is_off(_force_refresh=True) is False
+    assert NatalStackFrame.sourcemapping_is_off() is False
+    assert NatalStackFrame.sourcemapping_is_off(_force_refresh=True) is False
 
 
 def make(x, y, z):

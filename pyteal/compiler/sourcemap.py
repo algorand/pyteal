@@ -24,7 +24,12 @@ from tabulate import tabulate  # type: ignore
 
 import pyteal as pt
 from pyteal.errors import TealInternalError
-from pyteal.stack_frame import StackFrames, PT_GENERATED, PyTealFrame, PytealFrameStatus
+from pyteal.stack_frame import (
+    NatalStackFrame,
+    PT_GENERATED,
+    PyTealFrame,
+    PytealFrameStatus,
+)
 from pyteal.util import algod_with_assertion
 
 
@@ -642,7 +647,7 @@ class _PyTealSourceMapper:
         if n == 0:
             raise TealInternalError("cannot generate empty source map: no components")
 
-        # PASS I. Deduce the Best Frame Candidate (BFC) from each individual `StackFrames`
+        # PASS I. Deduce the Best Frame Candidate (BFC) from each individual `NatalStackFrame`
         self._best_frames = [
             tc.stack_frames().best().as_pyteal_frame() for tc in self.components
         ]
@@ -677,7 +682,7 @@ class _PyTealSourceMapper:
 
         self._build_r3sourcemap()
 
-        if not StackFrames._debug:
+        if not NatalStackFrame._debug:
             self._best_frames = []
             self._inferred_frames_at = []
 

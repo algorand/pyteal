@@ -31,7 +31,7 @@ from pyteal.compiler.sourcemap import _PyTealSourceMapper, PyTealSourceMap
 from pyteal.config import METHOD_ARG_NUM_CUTOFF
 from pyteal.errors import AlgodClientError, TealInputError, TealInternalError
 from pyteal.ir.ops import Mode
-from pyteal.stack_frame import StackFrames
+from pyteal.stack_frame import NatalStackFrame
 from pyteal.types import TealType
 from pyteal.util import algod_with_assertion
 
@@ -148,7 +148,7 @@ class OnCompleteAction:
             raise TealInputError(
                 f"action {self.action} and call_config {self.call_config!r} contradicts"
             )
-        self.stack_frames: StackFrames = StackFrames()
+        self.stack_frames: NatalStackFrame = NatalStackFrame()
 
     @staticmethod
     def never() -> "OnCompleteAction":
@@ -202,7 +202,7 @@ class BareCallActions:
                 "https://pyteal.readthedocs.io/en/latest/abi.html#registering-bare-app-calls"
             )
 
-        self.stack_frames: StackFrames = StackFrames()
+        self.stack_frames: NatalStackFrame = NatalStackFrame()
 
     def as_list(self) -> list[OnCompleteAction]:
         return [
@@ -984,7 +984,7 @@ class Router:
                         act := cast(Expr, bare_call_approval),
                     )
                 ]
-                StackFrames.reframe_asts(bare_call_approval.stack_frames, cond)
+                NatalStackFrame.reframe_asts(bare_call_approval.stack_frames, cond)
                 act.stack_frames = bare_call_approval.stack_frames
 
         optimize = optimize if optimize else OptimizeOptions()
