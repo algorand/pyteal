@@ -21,6 +21,9 @@ class StackFrame:
                             |
     compiler.sourcemap.TealMapItem
 
+    Somewhat confusingly, NatalStackFrame is _NOT_ in this hierarchy
+    so not "is-a" StackFrame, but it pretends to be and "has-a" list of StackFrame's.
+
     Its most important members are:
         * frame_info of type inspect.FrameInfo
         * node of type ast.AST
@@ -456,7 +459,9 @@ class PytealFrameStatus(IntEnum):
 
 class PyTealFrame(StackFrame):
     """
-    TODO: Inherit from util::Frame and remove code duplications
+    PyTealFrame is the middle generation in the StackFrame class hierarchy.
+
+    It adds a richer and more polished set of methods to learn about the PytTeal source.
     """
 
     def __init__(
