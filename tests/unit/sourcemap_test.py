@@ -26,8 +26,8 @@ def test_frames():
     StackFrames._no_stackframes = False
 
     this_file, this_func = "sourcemap_test.py", "test_frames"
-    this_lineno, this_frame = 29, StackFrames(_keep_all=True).frames[1]
-    code = f"    this_lineno, this_frame = {this_lineno}, StackFrames(_keep_all=True).frames[1]\n"
+    this_lineno, this_frame = 29, StackFrames(_keep_all=True)._frames[1]
+    code = f"    this_lineno, this_frame = {this_lineno}, StackFrames(_keep_all=True)._frames[1]\n"
     this_col_offset, this_end_col_offset = 34, 61
     frame_info, node = this_frame.frame_info, this_frame.node
 
@@ -74,7 +74,7 @@ def test_TealMapItem_source_mapping():
 
     teals = mock_teal(components)
     tmis = [
-        TealMapItem(op.expr.stack_frames.frames[0].as_pyteal_frame(), i, teals[i], op)
+        TealMapItem(op.expr.stack_frames._frames[0].as_pyteal_frame(), i, teals[i], op)
         for i, op in enumerate(components)
     ]
 

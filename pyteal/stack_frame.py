@@ -220,7 +220,7 @@ class StackFrames:
         _keep_all: bool = False,
     ):
         self._compiler_gen: bool = False
-        self.frames: list[StackFrame] = []
+        self._frames: list[StackFrame] = []
 
         if self.sourcemapping_is_off():
             return
@@ -239,7 +239,7 @@ class StackFrames:
 
         # degugging only:
         if _keep_all:
-            self.frames = _make_stack_frames(frame_infos)
+            self._frames = _make_stack_frames(frame_infos)
             return
 
         last_drop_idx = -1
@@ -284,24 +284,26 @@ class StackFrames:
         frame_infos = frame_infos[last_drop_idx + 1 : last_keep_idx + 1]
         frame_infos = frame_infos[-1:]
 
-        self.frames = _make_stack_frames(frame_infos)
+        self._frames = _make_stack_frames(frame_infos)
 
     def __len__(self) -> int:
-        return len(self.frames)
+        return len(self._frames)
 
     def best(self) -> StackFrame:
         """
         Return the best guess as to the user-authored birthplace of the
         associated StackFrame's
         """
-        assert self.frames, f"expected to have some frames but currently {self.frames=}"
-        return self.frames[-1]
+        assert (
+            self._frames
+        ), f"expected to have some frames but currently {self._frames=}"
+        return self._frames[-1]
 
     def __repr__(self) -> str:
-        return f"{'C' if self._compiler_gen else 'U'}{self.frames}"
+        return f"{'C' if self._compiler_gen else 'U'}{self._frames}"
 
     def nodes(self) -> list[AST | None]:
-        return [f.node for f in self.frames]
+        return [f.node for f in self._frames]
 
     @classmethod
     def _walk_asts(cls, func: Callable[["Expr"], None], *exprs: "Expr") -> None:  # type: ignore
@@ -425,7 +427,7 @@ class PytealFrameStatus(IntEnum):
     PATCHED_BY_PREV = 6
     PATCHED_BY_NEXT = 7
     PATCHED_BY_PREV_AND_NEXT = 8
-    COPACETIC = 9  # currently, 90% confidient is as good as it gets
+    COPACETIC = 9  # currently, 90% confident is as good as it gets
 
     def human(self) -> str:
         match self:
@@ -491,7 +493,7 @@ class PyTealFrame(StackFrame):
             ]
         )
 
-    def spawn(self, other: "PyTealFrame", status: "PytealFrameStatus") -> "PyTealFrame":
+    def spawn(self, other: "PyTealFrame", status: PytealFrameStatus) -> "PyTealFrame":
         assert isinstance(other, PyTealFrame)
 
         ptf = PyTealFrame(
