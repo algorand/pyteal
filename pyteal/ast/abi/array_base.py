@@ -220,7 +220,7 @@ class ArrayElement(ComputedValue[T]):
         # If the array element type is Bool, we compute the bit index
         # (if array is dynamic we add 16 to bit index for dynamic array length uint16 prefix)
         # and decode bit with given array encoding and the bit index for boolean bit.
-        if self.array.type_spec().value_type_spec() == BoolTypeSpec():
+        if arrayType.value_type_spec() == BoolTypeSpec():
             bitIndex = self.index
             if arrayType.is_dynamic():
                 bitIndex = bitIndex + Int(Uint16TypeSpec().bit_size())
