@@ -33,7 +33,7 @@ from pyteal.stack_frame import (
 from pyteal.util import algod_with_assertion
 
 
-# ### ---- Based on mjpieters CODE ---- ### #
+# ### ---- R3SourceMap is based on mjpieters code snippets ---- ### #
 #
 #     Modified from the original `SourceMap` available under MIT License here (as of Nov. 12, 2022): https://gist.github.com/mjpieters/86b0d152bb51d5f5979346d11005588b
 #    `R3` is a nod to "Revision 3" of John Lenz's Source Map Proposal: https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?hl=en_US&pli=1&pli=1
@@ -432,7 +432,6 @@ _PYTEAL_COLUMN = "PTC"
 _PYTEAL_COLUMN_END = "PTCE"
 _PYTEAL_LINE = "PyTeal"
 _PYTEAL_NODE_AST = "PT AST"
-_PYTEAL_FRAME = "PT Frame"
 _PYTEAL_NODE_AST_NONE = "FAILED"
 _STATUS_CODE = "Sourcemap Status Code"
 _STATUS = "Sourcemap Status"
