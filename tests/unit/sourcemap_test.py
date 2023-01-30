@@ -26,11 +26,11 @@ def test_frames():
     StackFrames._no_stackframes = False
 
     this_file, this_func = "sourcemap_test.py", "test_frames"
-    this_lineno, this_frame = 29, StackFrames(keep_all=True)[1]
+    this_lineno, this_frame = 29, StackFrames(_keep_all=True)[1]
     code = (
-        f"    this_lineno, this_frame = {this_lineno}, StackFrames(keep_all=True)[1]\n"
+        f"    this_lineno, this_frame = {this_lineno}, StackFrames(_keep_all=True)[1]\n"
     )
-    this_col_offset, this_end_col_offset = 34, 60
+    this_col_offset, this_end_col_offset = 34, 61
     frame_info, node = this_frame.frame_info, this_frame.node
 
     assert frame_info.filename.endswith(this_file)

@@ -39,9 +39,12 @@ class StackFrame:
     Of special note, is the class variable `_internal_paths`.
     This is a whitelist of file patterns which signal to the logic
     of method `_frame_info_is_pyteal()` that a particular
-    frame was _NOT_ created by the user. Unfortunately, this means
-    that if a user created file actually satisfies the pattern, the performance
-    of the source mapper will degrade.
+    frame was _NOT_ created by the user.
+
+    QUIRKS:
+    * Unfortunately, this means that if a user created file satisfies the above pattern,
+    the performance of the source mapper will degrade.
+    * User generated code that includes the pattern `StackFrames` may produce degraded results
     """
 
     frame_info: FrameInfo
@@ -100,6 +103,7 @@ class StackFrame:
 
     @classmethod
     def _frame_info_is_right_before_core(cls, f: FrameInfo) -> bool:
+        # TODO: this is a hack and the false positive surface area shuould be reduced
         return bool(code := f.code_context or []) and "StackFrames" in "".join(code)
 
     def _is_pyteal(self) -> bool:
@@ -176,6 +180,16 @@ Could not read section (pyteal-source-mapper, debug) of config "pyteal.ini": {e}
 
 
 class StackFrames:
+    """
+    PyTeal's source mapper deduces the code-location of a user's Expr
+    via a StackFrames object that is associated with the Expr object.
+
+    When source mapping is disabled (cf. `pyteal.ini`), StackFrames'
+    constructor is a no-op.
+
+
+    """
+
     _no_stackframes: bool = _sourcmapping_is_off()
     _debug: bool = _debug_frames()
 
@@ -197,8 +211,7 @@ class StackFrames:
 
     def __init__(
         self,
-        keep_all: bool = False,
-        keep_one_frame_only: bool = True,
+        _keep_all: bool = False,
     ):
         self._compiler_gen: bool = False
         self.frames: list[StackFrame] = []
@@ -217,7 +230,8 @@ class StackFrames:
                 if (frame := StackFrame._init_or_drop(self, f, full_stack))
             ]
 
-        if keep_all:
+        # degugging only:
+        if _keep_all:
             self.frames = _make_stack_frames(frame_infos)
             return
 
@@ -261,9 +275,7 @@ class StackFrames:
                 last_keep_idx = i
 
         frame_infos = frame_infos[last_drop_idx + 1 : last_keep_idx + 1]
-
-        if keep_one_frame_only:
-            frame_infos = frame_infos[-1:]
+        frame_infos = frame_infos[-1:]
 
         self.frames = _make_stack_frames(frame_infos)
 
