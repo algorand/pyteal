@@ -1,23 +1,56 @@
-import os
-import re
 from ast import AST, FunctionDef, unparse
 from configparser import ConfigParser
 from dataclasses import dataclass
 from enum import IntEnum
 from inspect import FrameInfo, stack
 from typing import Callable, Optional, cast
+import os
+import re
 
 from executing import Source  # type: ignore
 
 
 @dataclass
 class StackFrame:
+    """
+    StackFrame is an _internal_ PyTeal class and is
+    the ancestor in the following linear class hierarchy:
+                        StackFrame
+                            |
+                        PyTealFrame
+                            |
+    compiler.sourcemap.TealMapItem
+
+    Its most important members are:
+        * frame_info of type inspect.FrameInfo
+        * node of type ast.AST
+    The first is a python representation of a stack frame, and the
+    second represents a python AST node. The imported package `executing`
+    features the method `Source.executing` which when run shortly after
+    the frame_info's creation, _usually_ succeeds in recovering the
+    associated AST node.
+
+    In the current usage, there is a `creator` member which is a `StackFrames`
+    object -usually belonging to a PyTeal Expr- and which is assumed to have called
+    the private constructor `_init_or_drop()`.
+
+    It is not recommended that the this class be accessed directly.
+    """
+
     frame_info: FrameInfo
     node: Optional[AST]
-
     creator: "StackFrames"
+
     # for debugging purposes:
     full_stack: Optional[list[FrameInfo]] = None
+
+    @classmethod
+    def _init_or_drop(
+        cls, creator: "StackFrames", f: FrameInfo, full_stack: list[FrameInfo]
+    ) -> Optional["StackFrame"]:
+        node = cast(AST | None, Source.executing(f.frame).node)
+        frame = StackFrame(f, node, creator, full_stack if StackFrames._debug else None)
+        return frame if not frame._is_py_crud() else None
 
     def as_pyteal_frame(
         self,
@@ -85,14 +118,6 @@ class StackFrame:
     @classmethod
     def _frame_info_is_py_crud(cls, f: FrameInfo) -> bool:
         return f.code_context is None and f.filename.startswith("<")
-
-    @classmethod
-    def _init_or_drop(
-        cls, f: FrameInfo, creator: "StackFrames", full_stack: list[FrameInfo]
-    ) -> Optional["StackFrame"]:
-        node = cast(AST | None, Source.executing(f.frame).node)
-        frame = StackFrame(f, node, creator, full_stack if StackFrames._debug else None)
-        return frame if not frame._is_py_crud() else None
 
     def __repr__(self) -> str:
         node = unparse(n) if (n := self.node) else None
@@ -179,7 +204,7 @@ class StackFrames:
             return [
                 frame
                 for f in frame_infos
-                if (frame := StackFrame._init_or_drop(f, self, full_stack))
+                if (frame := StackFrame._init_or_drop(self, f, full_stack))
             ]
 
         if keep_all:
