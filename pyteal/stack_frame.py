@@ -300,9 +300,6 @@ class StackFrames:
     def __repr__(self) -> str:
         return f"{'C' if self._compiler_gen else 'U'}{self.frames}"
 
-    def frame_infos(self) -> list[FrameInfo]:
-        return [f.frame_info for f in self.frames]
-
     def nodes(self) -> list[AST | None]:
         return [f.node for f in self.frames]
 
