@@ -612,6 +612,8 @@ class _GetAgainstEncoding:
         from pyteal.ast.abi import BoolTypeSpec
 
         require_type(self.full_encoding, TealType.bytes)
+        # The check is to see the existence of `start_index` for bool case
+        # Bool case need only start_index, and must have type uint64
         if self.type_spec == BoolTypeSpec():
             require_type(self.start_index, TealType.uint64)
 
