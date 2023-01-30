@@ -14,7 +14,7 @@ from executing import Source  # type: ignore
 class StackFrame:
     """
     StackFrame is an _internal_ PyTeal class and is
-    the ancestor in the following linear class hierarchy:
+    the first ancestor in the following linear class hierarchy:
                         StackFrame
                             |
                         PyTealFrame
@@ -34,7 +34,14 @@ class StackFrame:
     object -usually belonging to a PyTeal Expr- and which is assumed to have called
     the private constructor `_init_or_drop()`.
 
-    It is not recommended that the this class be accessed directly.
+    It is not recommended that this class be accessed directly.
+
+    Of special note, is the class variable `_internal_paths`.
+    This is a whitelist of file patterns which signal to the logic
+    of method `_frame_info_is_pyteal()` that a particular
+    frame was _NOT_ created by the user. Unfortunately, this means
+    that if a user created file actually satisfies the pattern, the performance
+    of the source mapper will degrade.
     """
 
     frame_info: FrameInfo
@@ -52,20 +59,9 @@ class StackFrame:
         frame = StackFrame(f, node, creator, full_stack if StackFrames._debug else None)
         return frame if not frame._is_py_crud() else None
 
-    def as_pyteal_frame(
-        self,
-        rel_paths: bool = True,
-        parent: Optional["PyTealFrame"] | None = None,
-    ) -> "PyTealFrame":
-        return PyTealFrame(
-            frame_info=self.frame_info,
-            node=self.node,
-            creator=self.creator,
-            full_stack=self.full_stack,
-            rel_paths=rel_paths,
-            parent=parent,
-        )
-
+    # TODO: when a source mapper is instantiated, it ought to survey
+    # the user's project files and warn in the case that some file
+    # matches the _internal_paths pattern
     _internal_paths = [
         "beaker/__init__.py",
         "beaker/application.py",
@@ -85,12 +81,26 @@ class StackFrame:
     ]
     _internal_paths_re = re.compile("|".join(_internal_paths))
 
-    def _is_right_before_core(self) -> bool:
-        return self._frame_info_is_right_before_core(self.frame_info)
+    def as_pyteal_frame(
+        self,
+        rel_paths: bool = True,
+        parent: Optional["PyTealFrame"] | None = None,
+    ) -> "PyTealFrame":
+        """
+        Downcast one level in the class hierarchy
+        """
+        return PyTealFrame(
+            frame_info=self.frame_info,
+            node=self.node,
+            creator=self.creator,
+            full_stack=self.full_stack,
+            rel_paths=rel_paths,
+            parent=parent,
+        )
 
     @classmethod
     def _frame_info_is_right_before_core(cls, f: FrameInfo) -> bool:
-        return bool(code := f.code_context or []) and "Frames" in "".join(code)
+        return bool(code := f.code_context or []) and "StackFrames" in "".join(code)
 
     def _is_pyteal(self) -> bool:
         return self._frame_info_is_pyteal(self.frame_info)
