@@ -181,6 +181,18 @@ class R3SourceMapJSON(TypedDict, total=False):
 
 @dataclass(frozen=True)
 class R3SourceMap:
+    """
+    This class is renames mjpieters' SourceMap
+    (https://gist.github.com/mjpieters/86b0d152bb51d5f5979346d11005588b#file-sourcemap-py-L62)
+    and tweaks it a bit, adding the following functionality:
+    * adds fields `file_liens`, `source_files`, `entries`
+    * __post_init__ (new) - runs a sanity check validation on the ordering of provided entries
+    * __repr__ - printing out "R3SourceMap(...)" instead of "MJPSourceMap(...)"
+    * from_json - accepting new params `sources_override`, `sources_content_override`, `target`, `add_right_bounds`
+    * add_right_bounds (new) - allow specifying the right column bounds
+    * to_json - accepting new param `with_contents`
+    """
+
     file: Optional[str]
     source_root: Optional[str]
     entries: Mapping[Tuple[int, int], "R3SourceMapping"]
@@ -207,7 +219,7 @@ class R3SourceMap:
         if self.source_root is not None:
             parts += [f"source_root={self.source_root!r}"]
         parts += [f"len={len(self.entries)}"]
-        return f"<MJPSourceMap({', '.join(parts)})>"
+        return f"<R3SourceMap({', '.join(parts)})>"
 
     @classmethod
     def from_json(
