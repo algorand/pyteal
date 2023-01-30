@@ -662,7 +662,7 @@ def test_Tuple_set():
     with pytest.raises(pt.TealInputError):
         tupleValue.set(uint8, uint16, uint32, uint32)
 
-    with pytest.raises(pt.TealInputError):
+    with pytest.raises(pt.TealInputError, match="at index=1: uint32 != uint16"):
         tupleValue.set(uint8, uint32, uint16)
 
     with pytest.raises(pt.TealInputError):
