@@ -349,9 +349,9 @@ class Tuple(BaseType):
         for index, (value, myType) in enumerate(zip(values, myTypes)):
             if not isinstance(value, BaseType):
                 raise TealInputError(f"Expected BaseType, got {value}")
-            if not myType == value.type_spec():
+            if myType != value.type_spec():
                 raise TealInputError(
-                    f"Input values do not match type at {index}: {value.type_spec()} != {myType}"
+                    f"Input values do not match type at {index=}: {value.type_spec()} != {myType}"
                 )
         return self._stored_value.store(_encode_tuple(values))
 

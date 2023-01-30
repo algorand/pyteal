@@ -1,6 +1,7 @@
 # Unreleased
 
 ## Added
+* Improved error handling for tuple type mismatch: added information on position and expected type. ([#655](https://github.com/algorand/pyteal/pull/655))
 
 ## Fixed
 
