@@ -59,7 +59,7 @@ test-unit-async:
 # Run tests w/ @pytest.mark.serial under ~/tests/unit each in its own proc:
 test-unit-sync:
 	find tests/unit -name '*_test.py' | sort | xargs -t -I {} pytest --suppress-no-test-exit-code --dist=no --durations=10 {} -m serial
- 
+
 test-unit: test-unit-async test-unit-sync
 
 lint-and-test: check-generate-init lint test-unit

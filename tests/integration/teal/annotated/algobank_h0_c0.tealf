@@ -1,4 +1,4 @@
-#pragma version 6                      //  (0)    tests/integration/sourcemap_monkey_integ_test.py  34   {COMPILE}
+#pragma version 6                      //  (0)    {CFILE}  {CL}   {COMPILE}
 txn NumAppArgs                         //  (20)
 int 0                                  //  (22)
 ==                                     //  (23)
@@ -24,7 +24,7 @@ txn ApplicationID                      //  (71)
 int 0                                  //  (73)
 !=                                     //  (74)
 &&                                     //  (75)
-assert                                 //  (76)   tests/integration/sourcemap_monkey_integ_test.py  34   {COMPILE}
+assert                                 //  (76)   {CFILE}  {CL}   {COMPILE}
 txna ApplicationArgs 1                 //  (77)
 btoi                                   //  (80)
 store 3                                //  (81)
@@ -45,7 +45,7 @@ txn ApplicationID                      //  (103)
 int 0                                  //  (105)
 !=                                     //  (106)
 &&                                     //  (107)
-assert                                 //  (108)  tests/integration/sourcemap_monkey_integ_test.py  34   {COMPILE}
+assert                                 //  (108)  {CFILE}  {CL}   {COMPILE}
 txna ApplicationArgs 1                 //  (109)
 int 0                                  //  (112)
 getbyte                                //  (113)
@@ -74,7 +74,7 @@ int 0                                  //  (147)
 !=                                     //  (148)
 &&                                     //  (149)
 ||                                     //  (150)
-assert                                 //  (151)  tests/integration/sourcemap_monkey_integ_test.py  34   {COMPILE}
+assert                                 //  (151)  {CFILE}  {CL}   {COMPILE}
 txna ApplicationArgs 1                 //  (152)
 int 0                                  //  (155)
 getbyte                                //  (156)
@@ -144,26 +144,26 @@ byte "balance"                         //  (250)                                
 app_local_get                          //  (251)                                                         App.localGet(Txn.sender(), Bytes('balance'))
 +                                      //  (252)                                                         App.globalGet(Bytes('lost')) + App.localGet(Txn.sender(), Bytes('balance'))
 app_global_put                         //  (253)                                                    12   App.globalPut(Bytes('lost'), App.globalGet(Bytes('lost')) + App.localGet(Txn.sender(), Bytes('balance')))
-int 1                                  //  (254)  tests/integration/sourcemap_monkey_integ_test.py  34   {COMPILE}
+int 1                                  //  (254)  {CFILE}  {CL}   {COMPILE}
 return                                 //  (255)
 main_l17:                              //
 int 1                                  //  (256)  examples/application/abi/algobank.py              23   Approve()
 return                                 //  (257)
-main_l18:                              //         tests/integration/sourcemap_monkey_integ_test.py  34   {COMPILE}
+main_l18:                              //         {CFILE}  {CL}   {COMPILE}
 txn ApplicationID                      //  (258)
 int 0                                  //  (260)
 ==                                     //  (261)
 assert                                 //  (262)
 int 1                                  //  (263)  examples/application/abi/algobank.py              21   Approve()
 return                                 //  (264)
-                                       //         tests/integration/sourcemap_monkey_integ_test.py  34   {COMPILE}
+                                       //         {CFILE}  {CL}   {COMPILE}
 // assert_sender_is_creator            //
 assertsenderiscreator_0:               //
 txn Sender                             //  (265)  examples/application/abi/algobank.py              8    Txn.sender()
 global CreatorAddress                  //  (267)                                                         Global.creator_address()
 ==                                     //  (269)                                                         Txn.sender() == Global.creator_address()
 assert                                 //  (270)                                                         Assert(Txn.sender() == Global.creator_address())
-retsub                                 //  (271)  tests/integration/sourcemap_monkey_integ_test.py  34   {COMPILE}
+retsub                                 //  (271)  {CFILE}  {CL}   {COMPILE}
                                        //
 // deposit                             //
 deposit_1:                             //
@@ -191,14 +191,14 @@ load 5                                 //  (305)                                
 gtxns Amount                           //  (307)                                                         payment.get().amount()
 +                                      //  (309)                                                         App.localGet(sender.address(), Bytes('balance')) + payment.get().amount()
 app_local_put                          //  (310)                                                    56   App.localPut(sender.address(), Bytes('balance'), App.localGet(sender.address(), Bytes('balance')) + payment.get().amount())
-retsub                                 //  (311)  tests/integration/sourcemap_monkey_integ_test.py  34   {COMPILE}
+retsub                                 //  (311)  {CFILE}  {CL}   {COMPILE}
                                        //
 // getBalance                          //
 getBalance_2:                          //
 txnas Accounts                         //  (312)  examples/application/abi/algobank.py              74   user.address()
 byte "balance"                         //  (314)                                                         Bytes('balance')
 app_local_get                          //  (315)                                                         App.localGet(user.address(), Bytes('balance'))
-retsub                                 //  (316)  tests/integration/sourcemap_monkey_integ_test.py  34   {COMPILE}
+retsub                                 //  (316)  {CFILE}  {CL}   {COMPILE}
                                        //
 // withdraw                            //
 withdraw_3:                            //
@@ -223,4 +223,4 @@ itxn_field Amount                      //  (344)                                
 int 0                                  //  (346)                                                    108  Int(0)
 itxn_field Fee                         //  (347)                                                    103  {INNERTXN}
 itxn_submit                            //  (349)                                                    111  InnerTxnBuilder.Submit()
-retsub                                 //  (350)  tests/integration/sourcemap_monkey_integ_test.py  34   {COMPILE}
+retsub                                 //  (350)  {CFILE}  {CL}   {COMPILE}

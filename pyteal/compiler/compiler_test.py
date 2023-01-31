@@ -2195,152 +2195,146 @@ retsub
         pt.compileTeal(program_access_b4_store_broken, pt.Mode.Application, version=6)
 
 
-def test_router_app():
-    def add_methods_to_router(router: pt.Router):
-        @pt.ABIReturnSubroutine
-        def add(
-            a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
-        ) -> pt.Expr:
-            return output.set(a.get() + b.get())
+def add_methods_to_router(router: pt.Router):
+    @pt.ABIReturnSubroutine
+    def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(a.get() + b.get())
 
-        meth = router.add_method_handler(add)
-        assert meth.method_signature() == "add(uint64,uint64)uint64"
+    meth = router.add_method_handler(add)
+    assert meth.method_signature() == "add(uint64,uint64)uint64"
 
-        @pt.ABIReturnSubroutine
-        def sub(
-            a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
-        ) -> pt.Expr:
-            return output.set(a.get() - b.get())
+    @pt.ABIReturnSubroutine
+    def sub(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(a.get() - b.get())
 
-        meth = router.add_method_handler(sub)
-        assert meth.method_signature() == "sub(uint64,uint64)uint64"
+    meth = router.add_method_handler(sub)
+    assert meth.method_signature() == "sub(uint64,uint64)uint64"
 
-        @pt.ABIReturnSubroutine
-        def mul(
-            a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
-        ) -> pt.Expr:
-            return output.set(a.get() * b.get())
+    @pt.ABIReturnSubroutine
+    def mul(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(a.get() * b.get())
 
-        meth = router.add_method_handler(mul)
-        assert meth.method_signature() == "mul(uint64,uint64)uint64"
+    meth = router.add_method_handler(mul)
+    assert meth.method_signature() == "mul(uint64,uint64)uint64"
 
-        @pt.ABIReturnSubroutine
-        def div(
-            a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
-        ) -> pt.Expr:
-            return output.set(a.get() / b.get())
+    @pt.ABIReturnSubroutine
+    def div(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(a.get() / b.get())
 
-        meth = router.add_method_handler(div)
-        assert meth.method_signature() == "div(uint64,uint64)uint64"
+    meth = router.add_method_handler(div)
+    assert meth.method_signature() == "div(uint64,uint64)uint64"
 
-        @pt.ABIReturnSubroutine
-        def mod(
-            a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
-        ) -> pt.Expr:
-            return output.set(a.get() % b.get())
+    @pt.ABIReturnSubroutine
+    def mod(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(a.get() % b.get())
 
-        meth = router.add_method_handler(mod)
-        assert meth.method_signature() == "mod(uint64,uint64)uint64"
+    meth = router.add_method_handler(mod)
+    assert meth.method_signature() == "mod(uint64,uint64)uint64"
 
-        @pt.ABIReturnSubroutine
-        def all_laid_to_args(
-            _a: pt.abi.Uint64,
-            _b: pt.abi.Uint64,
-            _c: pt.abi.Uint64,
-            _d: pt.abi.Uint64,
-            _e: pt.abi.Uint64,
-            _f: pt.abi.Uint64,
-            _g: pt.abi.Uint64,
-            _h: pt.abi.Uint64,
-            _i: pt.abi.Uint64,
-            _j: pt.abi.Uint64,
-            _k: pt.abi.Uint64,
-            _l: pt.abi.Uint64,
-            _m: pt.abi.Uint64,
-            _n: pt.abi.Uint64,
-            _o: pt.abi.Uint64,
-            _p: pt.abi.Uint64,
-            *,
-            output: pt.abi.Uint64,
-        ):
-            return output.set(
-                _a.get()
-                + _b.get()
-                + _c.get()
-                + _d.get()
-                + _e.get()
-                + _f.get()
-                + _g.get()
-                + _h.get()
-                + _i.get()
-                + _j.get()
-                + _k.get()
-                + _l.get()
-                + _m.get()
-                + _n.get()
-                + _o.get()
-                + _p.get()
-            )
-
-        meth = router.add_method_handler(all_laid_to_args)
-        assert (
-            meth.method_signature()
-            == "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
+    @pt.ABIReturnSubroutine
+    def all_laid_to_args(
+        _a: pt.abi.Uint64,
+        _b: pt.abi.Uint64,
+        _c: pt.abi.Uint64,
+        _d: pt.abi.Uint64,
+        _e: pt.abi.Uint64,
+        _f: pt.abi.Uint64,
+        _g: pt.abi.Uint64,
+        _h: pt.abi.Uint64,
+        _i: pt.abi.Uint64,
+        _j: pt.abi.Uint64,
+        _k: pt.abi.Uint64,
+        _l: pt.abi.Uint64,
+        _m: pt.abi.Uint64,
+        _n: pt.abi.Uint64,
+        _o: pt.abi.Uint64,
+        _p: pt.abi.Uint64,
+        *,
+        output: pt.abi.Uint64,
+    ):
+        return output.set(
+            _a.get()
+            + _b.get()
+            + _c.get()
+            + _d.get()
+            + _e.get()
+            + _f.get()
+            + _g.get()
+            + _h.get()
+            + _i.get()
+            + _j.get()
+            + _k.get()
+            + _l.get()
+            + _m.get()
+            + _n.get()
+            + _o.get()
+            + _p.get()
         )
 
-        @pt.ABIReturnSubroutine
-        def empty_return_subroutine() -> pt.Expr:
-            return pt.Log(pt.Bytes("appear in both approval and clear state"))
-
-        meth = router.add_method_handler(
-            empty_return_subroutine,
-            method_config=pt.MethodConfig(
-                no_op=pt.CallConfig.CALL,
-                opt_in=pt.CallConfig.ALL,
-            ),
-        )
-        assert meth.method_signature() == "empty_return_subroutine()void"
-
-        @pt.ABIReturnSubroutine
-        def log_1(*, output: pt.abi.Uint64) -> pt.Expr:
-            return output.set(1)
-
-        meth = router.add_method_handler(
-            log_1,
-            method_config=pt.MethodConfig(
-                no_op=pt.CallConfig.CALL,
-                opt_in=pt.CallConfig.CALL,
-            ),
-        )
-
-        assert meth.method_signature() == "log_1()uint64"
-
-        @pt.ABIReturnSubroutine
-        def log_creation(*, output: pt.abi.String) -> pt.Expr:
-            return output.set("logging creation")
-
-        meth = router.add_method_handler(
-            log_creation, method_config=pt.MethodConfig(no_op=pt.CallConfig.CREATE)
-        )
-        assert meth.method_signature() == "log_creation()string"
-
-    on_completion_actions = pt.BareCallActions(
-        opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes("optin call"))),
+    meth = router.add_method_handler(all_laid_to_args)
+    assert (
+        meth.method_signature()
+        == "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
     )
 
+    @pt.ABIReturnSubroutine
+    def empty_return_subroutine() -> pt.Expr:
+        return pt.Log(pt.Bytes("appear in both approval and clear state"))
+
+    meth = router.add_method_handler(
+        empty_return_subroutine,
+        method_config=pt.MethodConfig(
+            no_op=pt.CallConfig.CALL,
+            opt_in=pt.CallConfig.ALL,
+        ),
+    )
+    assert meth.method_signature() == "empty_return_subroutine()void"
+
+    @pt.ABIReturnSubroutine
+    def log_1(*, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(1)
+
+    meth = router.add_method_handler(
+        log_1,
+        method_config=pt.MethodConfig(
+            no_op=pt.CallConfig.CALL,
+            opt_in=pt.CallConfig.CALL,
+        ),
+    )
+
+    assert meth.method_signature() == "log_1()uint64"
+
+    @pt.ABIReturnSubroutine
+    def log_creation(*, output: pt.abi.String) -> pt.Expr:
+        return output.set("logging creation")
+
+    meth = router.add_method_handler(
+        log_creation, method_config=pt.MethodConfig(no_op=pt.CallConfig.CREATE)
+    )
+    assert meth.method_signature() == "log_creation()string"
+
+
+ON_COMPLETION_ACTIONS = pt.BareCallActions(
+    opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes("optin call"))),
+)
+
+FIRST_ROUTER = pt.Router(
+    "ASimpleQuestionablyRobustContract",
+    ON_COMPLETION_ACTIONS,
+    clear_state=pt.Approve(),
+)
+add_methods_to_router(FIRST_ROUTER)
+
+
+def test_router_app():
     with pytest.raises(pt.TealInputError) as e:
-        pt.Router("will-error", on_completion_actions).compile_program(
+        pt.Router("will-error", ON_COMPLETION_ACTIONS).compile_program(
             version=6, optimize=pt.OptimizeOptions(frame_pointers=True)
         )
 
     assert "Frame pointers aren't available" in str(e.value)
 
-    _router_with_oc = pt.Router(
-        "ASimpleQuestionablyRobustContract",
-        on_completion_actions,
-        clear_state=pt.Approve(),
-    )
-    add_methods_to_router(_router_with_oc)
+    _router_with_oc = FIRST_ROUTER
     (
         actual_ap_with_oc_compiled,
         actual_csp_with_oc_compiled,
@@ -3274,7 +3268,7 @@ return""".strip()
 
     _router_with_oc = pt.Router(
         "QuestionableRouterGenerateCodeWithFramePointer",
-        on_completion_actions,
+        ON_COMPLETION_ACTIONS,
         clear_state=pt.Approve(),
     )
     add_methods_to_router(_router_with_oc)

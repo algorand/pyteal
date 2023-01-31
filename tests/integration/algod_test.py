@@ -15,7 +15,7 @@ def test_algod_with_assertion_copacetic():
     assert client
 
     reclient = algod_with_assertion(client)
-    assert client == reclient
+    assert client is reclient
 
 
 def test_algod_errors():
