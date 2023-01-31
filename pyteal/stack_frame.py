@@ -61,6 +61,11 @@ class StackFrame:
     def _init_or_drop(
         cls, creator: "NatalStackFrame", f: FrameInfo, full_stack: list[FrameInfo]
     ) -> Optional["StackFrame"]:
+        """
+        Attempt to create a StackFrame object.
+        However, if the resulting is considered "Python Crud" abandon and return None.
+        When debugging, also persist the full_stack that was provided.
+        """
         node = cast(AST | None, Source.executing(f.frame).node)
         frame = StackFrame(
             f, node, creator, full_stack if NatalStackFrame._debug else None
