@@ -18,17 +18,28 @@ from pyteal.compiler.sourcemap import R3SourceMap, R3SourceMapJSON
 ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 
 
+@pytest.fixture
+def context_StackFrame_keep_all_debugging():
+    from pyteal.stack_frame import NatalStackFrame
+
+    NatalStackFrame._keep_all_debugging = True
+    yield
+    NatalStackFrame._keep_all_debugging = False
+
+
 @pytest.mark.serial
-def test_frames():
+def test_frames(context_StackFrame_keep_all_debugging):
     from pyteal.stack_frame import NatalStackFrame
 
     originally = NatalStackFrame._no_stackframes
     NatalStackFrame._no_stackframes = False
 
     this_file, this_func = "sourcemap_test.py", "test_frames"
-    this_lineno, this_frame = 29, NatalStackFrame(_keep_all=True)._frames[1]
-    code = f"    this_lineno, this_frame = {this_lineno}, NatalStackFrame(_keep_all=True)._frames[1]\n"
-    this_col_offset, this_end_col_offset = 34, 65
+    this_lineno, this_frame = 38, NatalStackFrame()._frames[1]
+    code = (
+        f"    this_lineno, this_frame = {this_lineno}, NatalStackFrame()._frames[1]\n"
+    )
+    this_col_offset, this_end_col_offset = 34, 51
     frame_info, node = this_frame.frame_info, this_frame.node
 
     assert frame_info.filename.endswith(this_file)
@@ -90,7 +101,7 @@ def test_TealMapItem_source_mapping():
         source_files=source_files,
         source_files_lines=[mock_source_lines],
     )
-    expected_json = '{"version": 3, "sources": ["tests/unit/sourcemap_test.py"], "names": [], "mappings": "AA8DW;AAAY;AAAZ", "file": "dohhh.teal", "sourceRoot": "~"}'
+    expected_json = '{"version": 3, "sources": ["tests/unit/sourcemap_test.py"], "names": [], "mappings": "AAyEW;AAAY;AAAZ", "file": "dohhh.teal", "sourceRoot": "~"}'
 
     assert expected_json == json.dumps(r3sm.to_json())
 
