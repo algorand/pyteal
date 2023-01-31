@@ -183,7 +183,7 @@ def test_frame_info_is_right_before_core_last_drop_idx(
     last_drop_idx = 1
     assert StackFrame._frame_info_is_right_before_core(
         frame_infos[last_drop_idx].frame_info
-    ), "Uh oh! Something about NatalStackFrames as changes which puts in jeopardy Source Map functionality"
+    ), "Uh oh! Something about NatalStackFrame as changes which puts in jeopardy Source Map functionality"
 
 
 # ### -----------------BEGIN: SANITY CHECKS SURVEY MOST PYTEAL CONSTRUCTS ----------------- ### #

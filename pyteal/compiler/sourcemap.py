@@ -611,16 +611,57 @@ class _PyTealSourceMapper:
 
     # PASS I. Deduce the Best Frame Candidate (BFC) from each individual `NatalStackFrame`
     # NOTE: this logic actually occurs at creation of the PyTeal Expr which is responsible
-    # for teal component. The `build()` method simply retrieve the result of this pre-computation.
+    # for teal component. The `build()` method simply retrieves the result of this pre-computation
+    # through NatalStackFrame.best()
     for each component in components:
+        # Inside NatalStackFrame.__init__() @ Expr's creation:
         # deduce the "best" frame for the component's PyTeal source (@ Expr creation)
         1. call inspect.stack() to generate a full stack trace
-        2. filter out "py crud" frames whose filename starts with "<"
-        3. find the frame that created the Expr's NatalStackFrame
+        2. filter out "py crud" frames whose filename starts with "<" and don't have a code_context
+        3. start searching at frame index i = 2 (right before Expr's NatalStackFrame was constructed)
         4. fast forward through PyTeal frames until the first non PyTeal frame is found
         5. in the case this was in import statement, back up until a known compiler generated line is discovered
-        6. self._best_frames[i] = this frame   # i == component's index of the component
+        6. keep the last frame in the list
+        7. convert this into a list[StackFrame] of size 1
 
+        # Inside _PyTealSourceMapper.build() @ source-map creation:
+        8. self._best_frames[i] = the singleton StackFrame in 7 converted to PyTealFrame  # i == component's index of the component
+
+    # PASS II. Attempt to fill any "gaps" by inferring from adjacent BFC's
+    # This logic is contained in _PyTealSourceMapper.infer():
+    # NOTE: the mutations of self._best_framed described below are "sticky" in the sense
+    # that when this `pyteal_frame` is modified, and then becomes in the next iteration
+    # `prev_pyteal_frame`, it is the new modified version when considered
+    for each pyteal_frame in self._best_frames:
+        status = pyteal_frame.status()
+        if status NOT in PyTealFrameStatus.{MISSING, MISSING_AST, MISSING_CODE, PYTEAL_GENERATED}
+            NO-OP # we can't do any better
+
+        else: # call local method _PyTealSourceMapper.infer.infer_source()
+            prev_pyteal_frame, next_pyteal_frame <--- get these from self._best_frames (or None if doesn't exist)
+            if both exist:
+                if both are equal (have the equal `frame_info, node, rel_paths`):
+                    replace this pyteal_frame by next_pyteal_frame
+
+                if pyteal_frame is flagged as compiler generated:
+                    if its reason is one of PT_GENERATED.{TYPE_ENUM_ONCOMPLETE, TYPE_ENUM_TXN, BRANCH_LABEL, BRANCH}:
+                        # these occur when one of the # T2PT* comments is encountered
+                        replace this pyteal_frame by next_pyteal_frame
+                    if its reason is PT_GENERATED.FLAGGED_BY_DEV:
+                        # this occurs when NatalStackFrame._compiler_gen is set True
+                        replace this pyteal_frame by prev_pyteal_frame
+
+            if ONLY prev_frame exists:
+                replace this pyteal_frame by prev_pyteal_frame
+
+            # NOTE: Coverage shows we never get past here.
+            # I.e. the first frame never results in one of the PyTealFrameStatus'es listed above
+            if ONLY next_frame exists:
+                replace this pyteal_frame by next_pyteal_frame
+
+            if NEITHER next_frame NOR pyteal_frame exist:
+                # this is basically impossible
+                NO-OP # we can't do any better
 
     """
 
@@ -731,6 +772,11 @@ class _PyTealSourceMapper:
             raise TealInternalError("cannot generate empty source map: no components")
 
         # PASS I. Deduce the Best Frame Candidate (BFC) from each individual `NatalStackFrame`
+        # See NatalStackFrame.__init__() for steps 1-7 which happen when an Expr is created
+        # 8. the list comprehension below converts each element
+        #   FROM: the component's NatalStackFrame._frames : list[StackFrame]
+        #   TO:   a PyTealFrame
+        # overall resulting in a list[PyTealFrame]
         self._best_frames = [
             tc.stack_frames().best().as_pyteal_frame() for tc in self.components
         ]
@@ -881,6 +927,8 @@ class _PyTealSourceMapper:
             if prev_frame and frame:
                 return frame.spawn(prev_frame, PytealFrameStatus.PATCHED_BY_PREV)
 
+            # TODO: We never get here because we have no trouble with the #pragma component
+            # Either remove or make it useful
             if next_frame and frame:
                 return frame.spawn(next_frame, PytealFrameStatus.PATCHED_BY_NEXT)
 

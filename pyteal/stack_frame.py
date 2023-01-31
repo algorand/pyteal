@@ -248,7 +248,7 @@ class NatalStackFrame:
             self._frames = _make_stack_frames(frame_infos)
             return
 
-        # 3. start the best frame search right after where NatalStackFrames() was constructed
+        # 3. start the best frame search right after where NatalStackFrame() was constructed
         # For more details see the unit test:
         # tests/unit/sourcemap_monkey_unit_test.py::test_frame_info_is_right_before_core_last_drop_idx
         i = 2  # formerly this was `last_drop_idx = 1; i = last_drop_idx + 1`
@@ -278,7 +278,7 @@ class NatalStackFrame:
         # TODO: this is likely obsolete since full_stack is available on the PyTealFrame object when debugging
         frame_infos = frame_infos[last_keep_idx : last_keep_idx + 1]
 
-        # 7. we finish by constructing PyTealFrames from our remaining frame_infos
+        # 7. we finish by constructing a list[StackFrame] from our one remaining frame_info
         self._frames = _make_stack_frames(frame_infos)
 
     def __len__(self) -> int:
@@ -684,8 +684,6 @@ class PyTealFrame(StackFrame):
         if not verbose:
             return short
 
-        # {self.source=}
-        # {self.ast=}
         return f"""{short}
 {self.frame_info.index=}
 {self.frame_info.function=}

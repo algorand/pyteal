@@ -302,7 +302,7 @@ CondWithMethod.__module__ = "pyteal"
 
 
 def _smap_friendly_approve():
-    # source mapping is at callers. Consider replacing _smap_friendly_approve() with a reframe_asts()
+    # TODO: Consider replacing _smap_friendly_approve() with a reframe_asts()
     a = Approve()
     a.stack_frames._compiler_gen = True
     return a
