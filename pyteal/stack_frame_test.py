@@ -2,10 +2,6 @@ from unittest.mock import Mock
 
 from pyteal.stack_frame import NatalStackFrame, StackFrame
 
-"""
-TODO: some MORE unit tests
-"""
-
 
 def test_is_pyteal():
     FrameInfo = Mock()

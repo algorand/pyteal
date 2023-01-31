@@ -108,7 +108,11 @@ class StackFrame:
 
     @classmethod
     def _frame_info_is_right_before_core(cls, f: FrameInfo) -> bool:
-        # TODO: this is a hack and the false positive surface area shuould be reduced
+        # We keep this method around to be used in a test . Originally,
+        # it was actually used in the __init__ method of StackFrame
+        # to calculate `last_drop_idx`. However, as -at the time of writing-
+        # last_drop_idx =ALWAYS= 1, the logic was simplified and
+        # this method was removed from the live calculation.
         return bool(code := f.code_context or []) and "NatalStackFrame" in "".join(code)
 
     def _is_pyteal(self) -> bool:
@@ -200,6 +204,7 @@ class NatalStackFrame:
 
     _no_stackframes: bool = _sourcmapping_is_off()
     _debug: bool = _debug_frames()
+    _keep_all_debugging = False
 
     @classmethod
     def sourcemapping_is_off(cls, _force_refresh: bool = False) -> bool:
@@ -219,7 +224,6 @@ class NatalStackFrame:
 
     def __init__(
         self,
-        _keep_all: bool = False,
     ):
         self._compiler_gen: bool = False
         self._frames: list[StackFrame] = []
@@ -240,24 +244,17 @@ class NatalStackFrame:
                 if (frame := StackFrame._init_or_drop(self, f, full_stack))
             ]
 
-        # degugging only:
-        if _keep_all:
+        if self._keep_all_debugging or len(frame_infos) <= 1:
             self._frames = _make_stack_frames(frame_infos)
             return
 
-        # 3. fast forward the left bound until the constructor NatalStackFrames is found
-        # Currently, this forwards exactly 2 frames and sets last_drop_idx == 1
-        # TODO: Should we simply hard-code last_drop_idx = 1?
-        for i, fi in enumerate(frame_infos):
-            if StackFrame._frame_info_is_right_before_core(fi):
-                last_drop_idx = i
-                break
-        else:
-            last_drop_idx = -1
+        # 3. start the best frame search right after where NatalStackFrames() was constructed
+        # For more details see the unit test:
+        # tests/unit/sourcemap_monkey_unit_test.py::test_frame_info_is_right_before_core_last_drop_idx
+        i = 2  # formerly this was `last_drop_idx = 1; i = last_drop_idx + 1`
 
         # 4. fast forward the right bound until we're out of pyteal-library code
         # This sets last_keep_idx to the first frame index which isn't pyteal
-        i = last_drop_idx + 1
         while i < len(frame_infos) and StackFrame._frame_info_is_pyteal(frame_infos[i]):
             i += 1
         last_keep_idx = i
