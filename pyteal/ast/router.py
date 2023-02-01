@@ -197,6 +197,16 @@ class BareCallActions:
                 "https://pyteal.readthedocs.io/en/latest/abi.html#registering-bare-app-calls"
             )
 
+    def asdict(self) -> dict[str, OnCompleteAction]:
+        return {
+            "clear_state": self.clear_state,
+            "close_out": self.close_out,
+            "delete_application": self.delete_application,
+            "no_op": self.no_op,
+            "opt_in": self.opt_in,
+            "update_application": self.update_application,
+        }
+
     def is_empty(self) -> bool:
         for action_field in fields(self):
             action: OnCompleteAction = getattr(self, action_field.name)
