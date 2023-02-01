@@ -397,15 +397,14 @@ def test_bare_call_actions_asdict():
         "opt_in",
         "update_application",
     }
-    with pt.TealComponent.Context.ignoreExprEquality():
-        assert bcad == {
-            "clear_state": no_action,
-            "close_out": close_action,
-            "delete_application": del_action,
-            "no_op": no_action,
-            "opt_in": no_action,
-            "update_application": no_action,
-        }
+    assert bcad == {
+        "clear_state": no_action,
+        "close_out": close_action,
+        "delete_application": del_action,
+        "no_op": no_action,
+        "opt_in": no_action,
+        "update_application": no_action,
+    }
 
 
 def test_router_register_method_clear_state_failure():
