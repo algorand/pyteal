@@ -1,7 +1,9 @@
 # Unreleased
 
 ## Added
+
 * Improved error handling for tuple type mismatch: added information on position and expected type. ([#655](https://github.com/algorand/pyteal/pull/655))
+* Added an `asdict()` method to `ast.router.BareCallActions`. ([#656](https://github.com/algorand/pyteal/pull/656))
 
 ## Fixed
 
