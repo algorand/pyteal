@@ -135,9 +135,6 @@ MethodConfig.__module__ = "pyteal"
 ActionType = Expr | SubroutineFnWrapper | ABIReturnSubroutine
 
 
-MethodConfig.__module__ = "pyteal"
-
-
 @dataclass(frozen=True)
 class OnCompleteAction:
     """
