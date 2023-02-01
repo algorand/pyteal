@@ -566,9 +566,43 @@ class ASTBuilder:
             return ASTBuilder.__de_abify_subroutine_frame_pointers(handler)
 
     @staticmethod
-    def __de_abify_subroutine_vanilla(
-        handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr,
-    ) -> Expr:
+    def __de_abify_subroutine_vanilla(handler: ActionType) -> Expr:
+        """This private function retains the previous (pre-frame-pointer) logic of handling ABIReturnSubroutine method's IO.
+
+        This function can be roughly separated into following 4 parts:
+        - handler type check
+        - handler argument instance generate
+        - handler argument decode from Txn.application_args
+        - generating execution branch that calles handler and handles handler return.
+
+        |
+        | main execution
+        |
+        `-> (assuming satisfying all preconditions: method selector match + OnComplete options match)
+            +-----------------------------------------------------------------------------------+
+            |                                                                                   |
+            |  | We need to allocate some stack space to handle memory of 2 following cases:    |
+            |  | - If handler has an ABI output returning, need to store in a grid on stack.    |
+            |  | - All of the other handler arguments from `Txn.application_args` should be     |
+            |  |   decoded into ABI values and placed on stack.                                 |
+            |  |   NOTE: if handler has more than 15 args, we need to de-tuple the last one.    |
+            |  |         The detupling process is also done over the stack with frame pointer.  |
+            |  |                                                                                |
+            |  | To keep track of each arg's memory location,                                   |
+            |  | we use FrameVar to keep track of relative dist against stack height at proto.  |
+            |  |                                                                                |
+            |  | This section represents the expressions in `decoding_steps`.                   |
+            |  +--------------------------------------------------------------------------------+
+            |  | At this point, all of the handler arguments (ABI typed) are prepared.          |
+            |  | We call the handler with all these handler arguments.                          |
+            |  | If handler has output, we dig the result to top of the stack, and log it.      |
+            |  |                                                                                |
+            |  | This section represents the expressions in `returning_steps`.                  |
+            +  +--------------------------------------------------------------------------------+
+            |                                                                                   |
+            | Now that handler return (if exists) is handled, we `Approve()` and exit prog.     |
+            +-----------------------------------------------------------------------------------+
+        """
         handler = ASTBuilder.__filter_invalid_handlers_and_typecast(handler)
         (
             arg_vals,
@@ -605,9 +639,53 @@ class ASTBuilder:
             )
 
     @staticmethod
-    def __de_abify_subroutine_frame_pointers(
-        handler: ABIReturnSubroutine | SubroutineFnWrapper | Expr,
-    ) -> Expr:
+    def __de_abify_subroutine_frame_pointers(handler: ActionType) -> Expr:
+        """This private function implements the frame-pointer-based logic of handling ABIReturnSubroutine method's IO.
+
+        This function can be roughly separated into following 4 parts:
+        - handler type check
+        - handler argument instance generate
+        - handler argument decode from Txn.application_args (with use_frame_pt=True option on)
+        - generating execution branch that calles handler and handles handler return.
+          NOTE: the very last step is handled different from pre-frame-pt version, see illustration below:
+
+        |
+        | main execution
+        |
+        `-> (assuming satisfying all preconditions: method selector match + OnComplete options match)
+            +-----------------------------------------------------------------------------------+
+            | We wrap the following section up in an intermediate function:                     |
+            +-----------------------------------------------------------------------------------+
+            |                                                                                   |
+            |  We construct a intermediate subroutine with 0 arg and 0 return as follows:       |
+            |  +--------------------------------------------------------------------------------+
+            |  | Thus we use `proto 0 0` to clean up stack once completed handler computation.  |
+            |  +--------------------------------------------------------------------------------+
+            |  | We need to allocate some stack space to handle memory of 2 following cases:    |
+            |  | - If handler has an ABI output returning, need to store in a grid on stack.    |
+            |  | - All of the other handler arguments from `Txn.application_args` should be     |
+            |  |   decoded into ABI values and placed on stack.                                 |
+            |  |   NOTE: if handler has more than 15 args, we need to de-tuple the last one.    |
+            |  |         The detupling process is also done over the stack with frame pointer.  |
+            |  |                                                                                |
+            |  | To keep track of each arg's memory location,                                   |
+            |  | we use FrameVar to keep track of relative dist against stack height at proto.  |
+            |  |                                                                                |
+            |  | Also notice that, all of the decoding operations are done over local vars,     |
+            |  | proto 0 0 can come in and clean all the stack variables away.                  |
+            |  |                                                                                |
+            |  | This section represents the expressions in `decoding_steps`.                   |
+            |  +--------------------------------------------------------------------------------+
+            |  | At this point, all of the handler arguments (ABI typed) are prepared.          |
+            |  | We call the handler with all these handler arguments.                          |
+            |  | If handler has output, we dig the result to top of the stack, and log it.      |
+            |  |                                                                                |
+            |  | This section represents the expressions in `returning_steps`.                  |
+            +  +--------------------------------------------------------------------------------+
+            |                                                                                   |
+            | Now that handler return (if exists) is handled, we `Approve()` and exit prog.     |
+            +-----------------------------------------------------------------------------------+
+        """
         handler = ASTBuilder.__filter_invalid_handlers_and_typecast(handler)
         (
             arg_vals,
