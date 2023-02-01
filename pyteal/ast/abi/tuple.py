@@ -132,7 +132,7 @@ class _IndexTuple:
 
     def get_or_store(self, index: int, output: BaseType | None = None) -> Expr:
         if not (0 <= index < len(self.value_types)):
-            raise ValueError("Index outside of range")
+            raise ValueError(f"Index i outside of range [0, {len(self.value_types)})")
 
         offset = 0
         ignoreNext = 0
