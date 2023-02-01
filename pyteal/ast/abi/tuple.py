@@ -131,7 +131,7 @@ class _IndexTuple:
         require_type(self.encoded, TealType.bytes)
 
     def get_or_store(self, index: int, output: BaseType | None = None) -> Expr:
-        if index not in range(len(self.value_types)):
+        if not (0 <= index < len(self.value_types)):
             raise ValueError("Index outside of range")
 
         offset = 0
