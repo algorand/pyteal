@@ -204,18 +204,21 @@ class BareCallActions:
 
         self.stack_frames: NatalStackFrame = NatalStackFrame()
 
-    def as_list(self) -> list[OnCompleteAction]:
-        return [
-            self.clear_state,
-            self.close_out,
-            self.delete_application,
-            self.no_op,
-            self.opt_in,
-            self.update_application,
-        ]
+    def asdict(self) -> dict[str, OnCompleteAction]:
+        return {
+            "clear_state": self.clear_state,
+            "close_out": self.close_out,
+            "delete_application": self.delete_application,
+            "no_op": self.no_op,
+            "opt_in": self.opt_in,
+            "update_application": self.update_application,
+        }
+
+    def aslist(self) -> list[OnCompleteAction]:
+        return list(self.asdict().values())
 
     def is_empty(self) -> bool:
-        return all([a.is_empty() for a in self.as_list()])
+        return all([a.is_empty() for a in self.aslist()])
 
     def approval_construction(self) -> Optional[Expr]:
         oc_action_pair: list[tuple[EnumInt, OnCompleteAction]] = [

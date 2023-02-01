@@ -382,6 +382,60 @@ def test_bare_call_config_clear_state_failure():
     )
 
 
+def test_bare_call_actions_asdict():
+    no_action = pt.OnCompleteAction()
+    del_action = pt.OnCompleteAction(action=pt.Int(1), call_config=pt.CallConfig.ALL)
+    close_action = pt.OnCompleteAction(action=pt.Int(2), call_config=pt.CallConfig.CALL)
+
+    bca = pt.BareCallActions(
+        delete_application=del_action,
+        close_out=close_action,
+    )
+
+    bcad = bca.asdict()
+    assert set(bcad.keys()) == {
+        "clear_state",
+        "close_out",
+        "delete_application",
+        "no_op",
+        "opt_in",
+        "update_application",
+    }
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert bcad == {
+            "clear_state": no_action,
+            "close_out": close_action,
+            "delete_application": del_action,
+            "no_op": no_action,
+            "opt_in": no_action,
+            "update_application": no_action,
+        }
+
+
+def test_bare_call_actions_aslist():
+    no_action = pt.OnCompleteAction()
+    optin_action = pt.OnCompleteAction(action=pt.Int(1), call_config=pt.CallConfig.ALL)
+    update_action = pt.OnCompleteAction(
+        action=pt.Int(2), call_config=pt.CallConfig.CALL
+    )
+
+    bca = pt.BareCallActions(
+        update_application=update_action,
+        opt_in=optin_action,
+    )
+
+    bcal = bca.aslist()
+    with pt.TealComponent.Context.ignoreExprEquality():
+        assert bcal == [
+            no_action,
+            no_action,
+            no_action,
+            no_action,
+            optin_action,
+            update_action,
+        ]
+
+
 def test_router_register_method_clear_state_failure():
     router = pt.Router("doomedToFail")
 
