@@ -4,19 +4,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import partial
 from itertools import count
-from typing import (
-    Any,
-    Final,
-    List,
-    Literal,
-    Mapping,
-    Optional,
-    OrderedDict,
-    Tuple,
-    TypedDict,
-    Union,
-    cast,
-)
+from typing import Any, Final, Literal, Mapping, OrderedDict, TypedDict, cast
 
 from algosdk.source_map import SourceMap as PCSourceMap
 from algosdk.v2client.algod import AlgodClient
@@ -25,13 +13,12 @@ from tabulate import tabulate  # type: ignore
 import pyteal as pt
 from pyteal.errors import TealInternalError
 from pyteal.stack_frame import (
-    NatalStackFrame,
     PT_GENERATED,
+    NatalStackFrame,
     PyTealFrame,
     PytealFrameStatus,
 )
 from pyteal.util import algod_with_assertion
-
 
 # ### ---- R3SourceMap is based on mjpieters code snippets ---- ### #
 #
@@ -48,7 +35,7 @@ for i, b in enumerate(_b64chars):
 shiftsize, flag, mask = 5, 1 << 5, (1 << 5) - 1
 
 
-def _base64vlq_decode(vlqval: str) -> List[int]:
+def _base64vlq_decode(vlqval: str) -> list[int]:
     """Decode Base64 VLQ value"""
     results = []
     shift = value = 0
@@ -91,16 +78,16 @@ class R3SourceMapping:
     line: int
     # line_end: Optional[int] = None #### NOT PROVIDED (AND NOT CONFORMING WITH R3 SPEC) AS TARGETS ARE ASSUMED TO SPAN AT MOST ONE LINE ####
     column: int
-    source: Optional[str] = None
-    source_line: Optional[int] = None
-    source_column: Optional[int] = None
-    source_content: Optional[List[str]] = None
-    source_extract: Optional[str] = None
-    target_extract: Optional[str] = None
-    name: Optional[str] = None
-    source_line_end: Optional[int] = None
-    source_column_end: Optional[int] = None
-    column_end: Optional[int] = None
+    source: str | None = None
+    source_line: int | None = None
+    source_column: int | None = None
+    source_content: list[str] | None = None
+    source_extract: str | None = None
+    target_extract: str | None = None
+    name: str | None = None
+    source_line_end: int | None = None
+    source_column_end: int | None = None
+    column_end: int | None = None
 
     def __post_init__(self):
         if self.source is not None and (
@@ -122,7 +109,7 @@ class R3SourceMapping:
     def __ge__(self, other: "R3SourceMapping") -> bool:
         return not self < other
 
-    def location(self, source=False) -> Tuple[str, int, int]:
+    def location(self, source=False) -> tuple[str, int, int]:
         return (
             (
                 self.source if self.source else "",
@@ -136,11 +123,11 @@ class R3SourceMapping:
     @classmethod
     def extract_window(
         cls,
-        source_lines: Optional[List[str]],
+        source_lines: list[str] | None,
         line: int,
         column: int,
-        right_column: Optional[int],
-    ) -> Optional[str]:
+        right_column: int | None,
+    ) -> str | None:
         return (
             (
                 source_lines[line][column:right_column]
@@ -171,11 +158,11 @@ class R3SourceMapping:
 
 class R3SourceMapJSON(TypedDict, total=False):
     version: Literal[3]
-    file: Optional[str]
-    sourceRoot: Optional[str]
-    sources: List[str]
-    sourcesContent: Optional[List[Optional[str]]]
-    names: List[str]
+    file: str | None
+    sourceRoot: str | None
+    sources: list[str]
+    sourcesContent: list[str | None] | None
+    names: list[str]
     mappings: str
 
 
@@ -197,13 +184,13 @@ class R3SourceMap:
     (https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?hl=en_US&pli=1&pli=1)
     """
 
-    file: Optional[str]
-    source_root: Optional[str]
-    entries: Mapping[Tuple[int, int], "R3SourceMapping"]
-    index: List[Tuple[int, ...]] = field(default_factory=list)
-    file_lines: Optional[List[str]] = None
-    source_files: Optional[List[str]] = None
-    source_files_lines: Optional[List[List[str] | None]] = None
+    file: str | None
+    source_root: str | None
+    entries: Mapping[tuple[int, int], "R3SourceMapping"]
+    index: list[tuple[int, ...]] = field(default_factory=list)
+    file_lines: list[str] | None = None
+    source_files: list[str] | None = None
+    source_files_lines: list[list[str] | None] | None = None
 
     def __post_init__(self):
         entries = list(self.entries.values())
@@ -229,9 +216,9 @@ class R3SourceMap:
     def from_json(
         cls,
         smap: R3SourceMapJSON,
-        sources_override: Optional[List[str]] = None,
-        sources_content_override: List[str] = [],
-        target: Optional[str] = None,
+        sources_override: list[str] | None = None,
+        sources_content_override: list[str] = [],
+        target: str | None = None,
         add_right_bounds: bool = True,
     ) -> "R3SourceMap":
         """
@@ -256,7 +243,7 @@ class R3SourceMap:
             raise AssertionError("ambiguous sources from JSON and method argument")
         sources = sources or sources_override or ["unknown"]
 
-        contents: List[str | None] | List[str] | None = smap.get("sourcesContent")
+        contents: list[str | None] | list[str] | None = smap.get("sourcesContent")
         if contents and sources_content_override:
             raise AssertionError(
                 "ambiguous sourcesContent from JSON and method argument"
@@ -411,7 +398,7 @@ class R3SourceMap:
             encoded["sourceRoot"] = self.source_root
         return encoded  # type: ignore
 
-    def __getitem__(self, idx: Union[int, Tuple[int, int]]):
+    def __getitem__(self, idx: int | tuple[int, int]):
         l: int
         c: int
         try:
@@ -583,6 +570,7 @@ class PyTealSourceMap:
     NOTE: type `PCSourceMap` is an alias for algosdk.source_map.SourceMap
     """
 
+    teal_filename: str | None
     r3_sourcemap: R3SourceMap | None
     pc_sourcemap: PCSourceMap | None
     annotated_teal: str | None
@@ -738,7 +726,10 @@ class _PyTealSourceMapper:
 
     def get_sourcemap(self):
         return PyTealSourceMap(
-            self._cached_r3sourcemap, self._cached_pc_sourcemap, self._annotated_teal
+            self.teal_file,
+            self._cached_r3sourcemap,
+            self._cached_pc_sourcemap,
+            self._annotated_teal,
         )
 
     def compiled_teal(self) -> str:
@@ -849,7 +840,7 @@ class _PyTealSourceMapper:
             entries=entries,
             index=index,
             file_lines=lines,
-            source_files=list(sorted(sources)),
+            source_files=sorted(sources),
         )
 
     def _build_pc_sourcemap(self):
@@ -887,7 +878,7 @@ class _PyTealSourceMapper:
         However, elements of `frames` are not replaced/rearranged/mutated.
         """
         inferred = []
-        frames = [f for f in best_frames]
+        frames = list(best_frames)
         N = len(frames)
 
         def infer_source(i: int) -> PyTealFrame | None:
@@ -1026,7 +1017,7 @@ class _PyTealSourceMapper:
             assert k in self._tabulate_param_defaults, f"unrecognized parameter '{k}'"
 
         renames = {self._tabulate_param_defaults[k]: v for k, v in new_kwargs.items()}
-        rows = list(teal_item.asdict(**renames) for teal_item in self.as_list())
+        rows = [teal_item.asdict(**renames) for teal_item in self.as_list()]
 
         if constant_columns:
 
@@ -1075,7 +1066,7 @@ class _PyTealSourceMapper:
                 map(lambda r_and_n: reduction(*r_and_n), zip(rows[:-1], rows[1:]))
             )
 
-        calling_kwargs: dict[str, Any] = dict(tablefmt=tablefmt, numalign=numalign)
+        calling_kwargs: dict[str, Any] = {"tablefmt": tablefmt, "numalign": numalign}
         if not omit_headers:
             calling_kwargs["headers"] = renames
 
