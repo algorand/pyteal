@@ -585,6 +585,31 @@ class ASTBuilder:
         - handler argument instance generate
         - handler argument decode from Txn.application_args
         - generating execution branch that calles handler and handles handler return.
+          NOTE: the very last step is handled different from frame-pt version, see illustration below:
+
+        |
+        | main execution
+        |
+        `-> (assuming satisfying all preconditions: method selector match + OnComplete options match)
+            +-----------------------------------------------------------------------------------+
+            | We need to first allocate some scratch slots for handler's ABI arguments,         |
+            | for we don't want the intermediate steps in handler destroy memory on arguments.  |
+            |                                                                                   |
+            | Decoding scheme relies on internal storage in ABI value (default scratch slot).   |
+            | NOTE: if handler has more than 15 args, we need to de-tuple the last one.         |
+            |       The detupling process is also done over the scratch slots.                  |
+            |                                                                                   |
+            | This section represents the expressions in `decoding_steps`.                      |
+            +-----------------------------------------------------------------------------------+
+            | At this point, all of the handler arguments (ABI typed) are prepared.             |
+            | We call the handler with all these handler arguments.                             |
+            | If handler has output, we dig the result to top of the stack, and log it.         |
+            |                                                                                   |
+            | NOTE: if output exists, inside of subroutine, we alloc a scratch slot for output, |
+            |       Right before retsub, use `deferred_expr` to place output encoding on stack. |
+            +-----------------------------------------------------------------------------------+
+            | Now that handler return (if exists) is handled, we `Approve()` and exit prog.     |
+            +-----------------------------------------------------------------------------------+
         """
         handler = ASTBuilder.__filter_invalid_handlers_and_typecast(handler)
         (
@@ -654,6 +679,9 @@ class ASTBuilder:
             |  | To keep track of each arg's memory location,                                   |
             |  | we use FrameVar to keep track of relative dist against stack height at proto.  |
             |  |                                                                                |
+            |  | Also notice that, all of the decoding operations are done over local vars,     |
+            |  | proto 0 0 can come in and clean all the stack variables away.                  |
+            |  |                                                                                |
             |  | This section represents the expressions in `decoding_steps`.                   |
             |  +--------------------------------------------------------------------------------+
             |  | At this point, all of the handler arguments (ABI typed) are prepared.          |
@@ -663,7 +691,8 @@ class ASTBuilder:
             |  | This section represents the expressions in `returning_steps`.                  |
             +  +--------------------------------------------------------------------------------+
             |                                                                                   |
-            | Now that handler return (if exists) is handled, we `Approve()` and exit prog.     |
+            | Now that handler is done computing in the intermediate function,                  |
+            | we `Approve()` and exit prog.                                                     |
             +-----------------------------------------------------------------------------------+
         """
         handler = ASTBuilder.__filter_invalid_handlers_and_typecast(handler)
