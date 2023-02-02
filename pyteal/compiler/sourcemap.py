@@ -6,7 +6,7 @@ from functools import partial
 from itertools import count
 from typing import Any, Final, Literal, Mapping, OrderedDict, TypedDict, cast
 
-from algosdk.source_map import SourceMap as PCSourceMap
+from algosdk.source_map import SourceMap as PCSourceMap # disambiguate
 from algosdk.v2client.algod import AlgodClient
 from tabulate import tabulate  # type: ignore
 
