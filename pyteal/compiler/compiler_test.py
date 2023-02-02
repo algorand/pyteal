@@ -2462,7 +2462,8 @@ def router_app_tester() -> tuple[list[pt.Router], dict[str, str]]:
 
     return routers, sources
 
+
 def test_router_app():
-    # TODO: this test is redundant as router_app_tester is imported and run by 
+    # TODO: this test is redundant as router_app_tester is imported and run by
     # tests/integration/abi_router_test.py's setup
     router_app_tester()

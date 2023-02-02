@@ -13,7 +13,7 @@ from tests.blackbox import Predicates, RouterSimulation
 
 BRUTE_FORCE_TERRIBLE_SKIPPING = True
 NUM_ROUTER_DRYRUNS = 7
-FIXTURES = Path.cwd() / "tests"  / "teal" / "router"
+FIXTURES = Path.cwd() / "tests" / "teal" / "router"
 
 
 ROUTER_CASES, ROUTER_SOURCES = router_app_tester()
