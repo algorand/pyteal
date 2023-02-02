@@ -27,11 +27,11 @@ class MethodReturn(Expr):
             raise TealInputError(
                 f"current version {options.version} is lower than log's min version {Op.log.min_version}"
             )
-        str, end = Log(Concat(Bytes(RETURN_HASH_PREFIX), self.arg.encode())).__teal__(
+        start, end = Log(Concat(Bytes(RETURN_HASH_PREFIX), self.arg.encode())).__teal__(
             options
         )
-        NatalStackFrame.reframe_ops_in_blocks(self._root_expr, str)
-        return str, end
+        NatalStackFrame.reframe_ops_in_blocks(self._root_expr, start)
+        return start, end
 
     def __str__(self) -> str:
         return f"(MethodReturn {self.arg.type_spec()})"
