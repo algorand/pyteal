@@ -173,3 +173,8 @@ def test_abi_router_positive(case, version, router):
         f.write(results["sim_cfg"].ap_compiled)
     with open(FIXTURES / f"sim_clear_{case}_{version}.teal", "w") as f:
         f.write(results["sim_cfg"].csp_compiled)
+
+
+@pytest.mark.parametrize("case, version, router", ROUTER_CASES)
+def test_abi_router_negative(case, version, router):
+    pass

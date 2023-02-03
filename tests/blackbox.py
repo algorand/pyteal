@@ -567,9 +567,10 @@ class RouterSimulation:
 
     @classmethod
     def _validate_predicates(cls, predicates):
-        assert isinstance(
-            predicates, dict
-        ), f"Wrong type for predicates: {type(predicates)}. Please provide: dict[str | None, dict[graviton.DryRunProporty, Any]."
+        assert isinstance(predicates, dict), (
+            f"Wrong type for predicates: {type(predicates)}. Please provide: "
+            f"dict[str | None, dict[graviton.DryRunProporty, Any]."
+        )
 
         assert (
             predicates
@@ -780,39 +781,23 @@ class RouterSimulation:
             )
 
         for meth, meth_cfg in sim_cfg.method_configs.items():
-            approve_sim: Simulation | None = None
-            clear_sim: Simulation | None = None
+
+            def sim_get(teal, model_teal):
+                return self._get_sim(teal, meth, sim_cfg, model_teal)
+
+            approve_sim = sim_get(sim_cfg.ap_compiled, sim_cfg.model_ap_compiled)
+            clear_sim = sim_get(sim_cfg.csp_compiled, sim_cfg.model_csp_compiled)
+
             for oc_str, call_cfg in asdict(meth_cfg).items():
                 oc = as_on_complete(oc_str)
                 sim: Simulation
-                if oc is OnComplete.ClearStateOC:
-                    if not clear_sim:
-                        clear_sim = self._get_sim(
-                            sim_cfg.csp_compiled,
-                            meth,
-                            sim_cfg,
-                            sim_cfg.model_csp_compiled,
-                        )
-                    sim = clear_sim
-                else:
-                    if not approve_sim:
-                        approve_sim = self._get_sim(
-                            sim_cfg.ap_compiled,
-                            meth,
-                            sim_cfg,
-                            sim_cfg.model_ap_compiled,
-                        )
-                    sim = approve_sim
+                sim = clear_sim if oc is OnComplete.ClearStateOC else approve_sim
 
-                is_app_create: bool
-
+                # weird walrus is_app_create := ... to fill closure of msg4simulate()
                 if call_cfg & CallConfig.CALL:
-                    is_app_create = False
-                    simulate(stats, is_app_create)
-
+                    simulate(stats, is_app_create := False)
                 if call_cfg & CallConfig.CREATE:
-                    is_app_create = True
-                    simulate(stats, is_app_create)
+                    simulate(stats, is_app_create := True)
         return {
             "sim_cfg": sim_cfg,
             "stats": stats,
