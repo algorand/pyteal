@@ -764,7 +764,9 @@ class RouterSimulation:
 
         def simulate(stats, is_app_create):
             tp: TxParams = deepcopy(txn_params)
-            tp.update(TxParams.for_app(is_app_create=is_app_create, on_complete=oc))
+            tp.update_fields(
+                TxParams.for_app(is_app_create=is_app_create, on_complete=oc)
+            )
             sim_results = sim.run_and_assert(
                 sim_cfg.call_strat, txn_params=tp, msg=msg4simulate()
             )
