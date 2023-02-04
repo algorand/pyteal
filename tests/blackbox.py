@@ -741,12 +741,8 @@ class RouterSimulation:
         if not txn_params:
             txn_params = TxParams()
 
-        stats = dict(
-            name=self.router.name,
-            method_combo_count=0,
-            dryrun_count=0,
-            assertions_count=0,
-        )
+        stats = defaultdict(int)
+        stats["name"] = self.router.name
 
         def msg4simulate() -> str:
             return f"""user provide message={msg}
@@ -761,7 +757,9 @@ call_strat={type(approval_strat)}
 {stats["assertions_count"]=}
 """
 
-        def simulate(call_strat, stats, is_app_create):
+        def simulate(
+            meth: CallType, call_strat: ABICallStrategy, stats: defaultdict, is_app_create: bool
+        ) -> None:
             tp: TxParams = deepcopy(txn_params)
             tp.update_fields(
                 TxParams.for_app(is_app_create=is_app_create, on_complete=oc)
@@ -772,6 +770,7 @@ call_strat={type(approval_strat)}
             assert sim_results.succeeded
             self.auto_path_results[meth][(is_app_create, oc)] = sim_results
 
+            stats[meth] += call_strat.num_dryruns
             stats["method_combo_count"] += 1
             stats["dryrun_count"] += call_strat.num_dryruns
             stats["assertions_count"] += call_strat.num_dryruns * len(
@@ -799,9 +798,9 @@ call_strat={type(approval_strat)}
 
                 # weird walrus is_app_create := ... to fill closure of msg4simulate()
                 if call_cfg & CallConfig.CALL:
-                    simulate(approval_strat, stats, is_app_create := False)
+                    simulate(meth, approval_strat, stats, is_app_create := False)
                 if call_cfg & CallConfig.CREATE:
-                    simulate(approval_strat, stats, is_app_create := True)
+                    simulate(meth, approval_strat, stats, is_app_create := True)
 
         return self.RouterSimulationResults(
             stats=stats,

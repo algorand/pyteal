@@ -173,18 +173,21 @@ def test_abi_router_positive(case, version, router):
         sim.succeeded for meth in sim_results.values() for sim in meth.values()
     )
 
-    print("stats:", json.dumps(stats := results.stats, indent=2))
+    print("\nstats:", json.dumps(stats := results.stats, indent=2))
     assert stats and all(stats.values())
 
-    def deepstr(d):
-        if isinstance(d, dict):
-            return {str(k): deepstr(v) for k, v in d.items()}
-        return d
+    if want_to_keep_annoying_details := False:
 
-    print(
-        "results:",
-        json.dumps(deepstr(sim_results), indent=2, default=str),
-    )
+        def deepstr(d):
+            if isinstance(d, dict):
+                return {str(k): deepstr(v) for k, v in d.items()}
+            return d
+
+        print(
+            "results:",
+            json.dumps(deepstr(sim_results), indent=2, default=str),
+        )
+    print(f"{want_to_keep_annoying_details=}")
 
     # wow!!! these fail because of differing scratch slot assignments
     if BRUTE_FORCE_TERRIBLE_SKIPPING:
