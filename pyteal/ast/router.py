@@ -844,7 +844,7 @@ class Router:
         """
         if not isinstance(method_call, ABIReturnSubroutine):
             raise TealInputError(
-                "for adding method handler, must be ABIReturnSubroutine"
+                "for adding method handler, must be ABIReturnSubroutine but method_call is {type(method_call)}"
             )
         method_signature = method_call.method_signature(overriding_name)
         final_name = overriding_name or method_call.name()

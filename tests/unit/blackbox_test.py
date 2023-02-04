@@ -293,13 +293,20 @@ def failing_RouterSimulation(router, model_router, predicates, algod, err_msg):
 
 
 def test_RouterSimulation_init():
-    router = MagicMock(spec=pt.Router)
-    model_router = MagicMock(spec=pt.Router)
-    assert router != model_router
-
+    router = "not a router"
+    model_router = "not a router either"
     predicates = "totally unchecked at init"
     algod = MagicMock(spec=AlgodClient)
 
+    # many paths to misery:
+    err_msg = "Wrong type for Base Router: <class 'str'>. Please provide: Router."
+    failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
+
+    router = pt.Router("test_router")
+    err_msg = "make sure to give at least one key/value pair in method_configs"
+    failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
+
+    router.add_method_handler(pt.ABIReturnSubroutine(lambda : pt.Int(1)), overriding_name="foo")
     err_msg = "Wrong type for predicates: <class 'str'>. Please provide: dict[str | None, dict[graviton.DryRunProporty, Any]."
     failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
 
@@ -308,7 +315,11 @@ def test_RouterSimulation_init():
     failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
 
     predicates = {3: "blah"}
-    err_msg = "Predicates method '3' has type <class 'int'> but only 'str' and 'NoneType' are allowed."
+    err_msg = "Predicates method '3' has type <class 'int'> but only 'str' and 'NoneType' and Literal['ClearStateCall'] (== ClearStateCall) are allowed."
+    failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
+
+    predicates = {Literal[42]: "blah"}
+    err_msg = "Predicates method 'typing.Literal[42]' is not allowed. Only Literal['ClearStateCall'] (== ClearStateCall) is allowed for a Literal."
     failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
 
     predicates = {"bar": {DRProp.passed: True}, "foo": {}}
@@ -324,7 +335,20 @@ def test_RouterSimulation_init():
     failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
 
     predicates = {"bar": {DRProp.passed: True}, "foo": {DRProp.budgetAdded: 45}}
+    err_msg = "Wrong type for Model Router: <class 'str'>. Please provide: Router."
+    failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
+
+    model_router = pt.Router("test_router")
+    err_msg = "make sure to give at least one key/value pair in method_configs"
+    failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
+
+    # Finally, two happy paths
+    model_router.add_method_handler(pt.ABIReturnSubroutine(lambda : pt.Int(1)), overriding_name="foo")
     successful_RouterSimulation(router, model_router, predicates, algod)
+
+    model_router = None
+    successful_RouterSimulation(router, model_router, predicates, algod)
+
 
 
 def failing_prep_simulate(
@@ -702,7 +726,7 @@ def test_prep_simulation():
     model_version = 8  # FINALLY FINALLY FINALLY FIXED
     # OK! we should be GTG
 
-    sim_cfg = rsim._prep_simulation(
+    sim_cfg = rsim._prep_simulation_borked(
         arg_strat_type,
         abi_args_mod,
         version,
@@ -719,7 +743,7 @@ def test_prep_simulation():
     assert sim_cfg.assemble_constants == assemble_constants
     assert sim_cfg.optimize == optimize
 
-    assert sim_cfg.ap_compiled
+    assert sim_cfg.teal
     assert sim_cfg.csp_compiled
     assert sim_cfg.contract
 
@@ -734,6 +758,6 @@ def test_prep_simulation():
     assert sim_cfg.model_assemble_constants == model_assemble_constants
     assert sim_cfg.model_optimize == model_optimize
 
-    assert sim_cfg.model_ap_compiled
+    assert sim_cfg.model_teal
     assert sim_cfg.model_csp_compiled
     assert sim_cfg.model_contract

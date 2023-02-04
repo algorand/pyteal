@@ -1,15 +1,21 @@
-from copy import deepcopy
 from collections import defaultdict
+from copy import deepcopy
 from dataclasses import dataclass, asdict
 import json
-from typing import Any, Callable, Dict, Sequence, Type, cast
+from typing import Any, Callable, Dict, Literal, Sequence, Type, cast
 
 import algosdk.abi as sdk_abi
 from algosdk.transaction import OnComplete
 from algosdk import v2client
 
 from graviton import blackbox
-from graviton.abi_strategy import ABIArgsMod, ABICallStrategy, ABIStrategy
+from graviton.abi_strategy import (
+    ABIArgsMod,
+    ABICallStrategy,
+    ABIStrategy,
+    CallStrategy,
+    RandomArgLengthCallStrategy,
+)
 from graviton.blackbox import (
     DryRunInspector,
     DryRunExecutor,
@@ -51,9 +57,20 @@ from pyteal.ast.subroutine import ABIReturnSubroutine
 
 Predicates = dict[DRProp, Any]  # same as in graviton
 
+
+ClearStateCall = Literal["ClearStateCall"]
+
+# str for methods, None for bare app calls:
+CallType = str | None
+
+# CallType for app calls, ClearStateCall for clear state calls:
+RouterCallType = CallType | ClearStateCall
+
+ABICallConfigs = dict[CallType, MethodConfig]
+
 # key `method_config == None` indicates that the MethodConfig's
 # should be picked up from the router
-CallPredicates = dict[str | None, Predicates]
+CallPredicates = dict[RouterCallType, Predicates]
 
 # ---- Clients ---- #
 
@@ -462,25 +479,6 @@ class PyTealDryRunExecutor:
         )
 
 
-@dataclass(frozen=True)
-class _SimConfig:
-    version: int
-    assemble_constants: bool
-    optimize: OptimizeOptions | None
-    ap_compiled: str
-    csp_compiled: str
-    contract: sdk_abi.Contract
-    method_configs: dict[str | None, MethodConfig]
-    call_strat: ABICallStrategy
-    txn_params: TxParams
-    model_version: int | None
-    model_assemble_constants: bool | None
-    model_optimize: OptimizeOptions | None
-    model_ap_compiled: str | None
-    model_csp_compiled: str | None
-    model_contract: sdk_abi.Contract | None
-
-
 class _AutoPathDict(defaultdict):
     def __init__(self):
         super().__init__(lambda: _AutoPathDict())
@@ -556,14 +554,58 @@ class RouterSimulation:
         model_router: Router | None = None,
         algod: v2client.algod.AlgodClient | None = None,
     ):
-        self.router: Router = router
+        self.router: Router = self._validate_router(router)
+
         self.predicates: CallPredicates = self._validate_predicates(predicates)
-        self.model_router: Router | None = model_router
+
+        self.model_router: Router | None = None
+        if model_router:
+            self.model_router = self._validate_router(model_router, kind="Model")
+
         self.algod: v2client.algod.AlgodClient = algod or algod_with_assertion()
 
-        self.results: Dict[
+        self.auto_path_results: Dict[
             str | None, dict[tuple[bool, OnComplete], SimulationResults]
         ] = _AutoPathDict()
+
+    # ---- Validation ---- #
+
+    @classmethod
+    def _validate_router(cls, router: Router, kind: str = "Base") -> Router:
+        assert isinstance(router, Router), (
+            f"Wrong type for {kind} Router: {type(router)}. Please provide: " f"Router."
+        )
+        cls._validate_method_configs(router.method_configs)
+
+        return router
+
+    @classmethod
+    def _validate_method_configs(cls, method_configs):
+        assert isinstance(
+            method_configs, (dict)
+        ), f"method_configs '{method_configs}' has type {type(method_configs)} but only 'dict' and 'NoneType' are allowed."
+
+        assert (
+            method_configs
+        ), "make sure to give at least one key/value pair in method_configs"
+
+        for call, meth_config in method_configs.items():
+            assert isinstance(
+                call, CallType
+            ), f"method_configs dict key '{call}' has type {type(call)} but only str and NoneType are allowed."
+            cls._validate_single_method_config(call, meth_config)
+
+    @classmethod
+    def _validate_single_method_config(cls, call, meth_config):
+        assert isinstance(
+            meth_config, MethodConfig
+        ), f"method_configs['{call}'] = has type {type(meth_config)} but only MethodConfig is allowed."
+        assert (
+            not meth_config.is_never()
+        ), f"method_configs['{call}'] specifies NEVER to be called; for driving the test, each configured method should ACTUALLY be tested."
+        assert (
+            meth_config.clear_state is CallConfig.NEVER
+        ), f"meth_config's clear_state must be None, but isn't"
 
     @classmethod
     def _validate_predicates(cls, predicates):
@@ -577,9 +619,17 @@ class RouterSimulation:
         ), "Please provide at least one method to call and assert against."
 
         for method, preds in predicates.items():
-            assert isinstance(
-                method, (str, type(None))
-            ), f"Predicates method '{method}' has type {type(method)} but only 'str' and 'NoneType' are allowed."
+            assert isinstance(method, (str, type(None), type(ClearStateCall))), (
+                f"Predicates method '{method}' has type {type(method)} but only "
+                "'str' and 'NoneType' and Literal['ClearStateCall'] (== ClearStateCall)"
+                " are allowed."
+            )
+            if isinstance(method, type(ClearStateCall)):
+                assert method == ClearStateCall, (
+                    f"Predicates method '{method}' is not allowed. "
+                    "Only Literal['ClearStateCall'] (== ClearStateCall) "
+                    "is allowed for a Literal."
+                )
             assert (
                 preds
             ), f"Every method must provide at least one predicate for assertion but method '{method}' is missing predicates."
@@ -593,23 +643,15 @@ class RouterSimulation:
 
         return predicates
 
-    def _prep_simulation(
+    def _validate_simulation(
         self,
-        arg_strat_type: Type[ABIStrategy],
-        abi_args_mod: ABIArgsMod | None,
-        version: int,
-        *,
-        assemble_constants: bool = False,
-        optimize: OptimizeOptions | None = None,
-        method_configs: dict[str | None, MethodConfig] | None = None,
-        num_dryruns: int = 1,
-        txn_params: TxParams | None = None,
-        model_version: int | None = None,
-        model_assemble_constants: bool = False,
-        model_optimize: OptimizeOptions | None = None,
-        # TODO: do I need to pass it on to ABICallStrategy() ???
-        # handle_selector: bool = True,
-    ) -> _SimConfig:
+        arg_strat_type,
+        abi_args_mod,
+        method_configs,
+        num_dryruns,
+        txn_params,
+        model_version,
+    ):
         assert isinstance(arg_strat_type, type) and issubclass(
             arg_strat_type, ABIStrategy
         ), f"arg_strat_type should _BE_ a subtype of ABIStrategy but we have {arg_strat_type} (its type is {type(arg_strat_type)})."
@@ -618,43 +660,11 @@ class RouterSimulation:
             abi_args_mod, (ABIArgsMod, type(None))
         ), f"abi_args_mod '{abi_args_mod}' has type {type(abi_args_mod)} but only 'ABIArgsMod' and 'NoneType' are allowed."
 
-        ap_compiled, csp_compiled, contract = self.router.compile_program(
-            version=version, assemble_constants=assemble_constants, optimize=optimize
-        )
-        assert (
-            self.router.method_configs
-        ), f"Base router with name '{self.router.name}' is essentially empty, as compilation results in an empty method_configs."
-
-        assert isinstance(
-            method_configs, (dict, type(None))
-        ), f"method_configs '{method_configs}' has type {type(method_configs)} but only 'dict' and 'NoneType' are allowed."
-
-        if method_configs is None:
-            method_configs = self.router.method_configs
-        assert (
-            method_configs
-        ), "if providing explicit method_configs, make sure to give at least one"
-
-        for meth, meth_config in method_configs.items():
-            assert isinstance(
-                meth, (str, type(None))
-            ), f"method_configs dict key '{meth}' has type {type(meth)} but only str and NoneType are allowed."
-            assert isinstance(
-                meth_config, MethodConfig
-            ), f"method_configs['{meth}'] = has type {type(meth_config)} but only MethodConfig is allowed."
-            assert (
-                not meth_config.is_never()
-            ), f"method_configs['{meth}'] specifies NEVER to be called; for driving the test, each configured method should ACTUALLY be tested."
+        self._validate_method_configs(method_configs)
 
         assert (
             isinstance(num_dryruns, int) and num_dryruns >= 1
         ), f"num_dryruns must be a positive int but is {num_dryruns}."
-        call_strat: ABICallStrategy = ABICallStrategy(
-            json.dumps(contract.dictify()),
-            arg_strat_type,
-            num_dryruns=num_dryruns,
-            abi_args_mod=abi_args_mod,
-        )
 
         assert isinstance(
             txn_params, (TxParams, type(None))
@@ -665,62 +675,22 @@ class RouterSimulation:
                 model_version is None
             ), f"model_version '{model_version}' was provided which is nonsensical because model_router was never provided for."
 
-        model_ap_compiled: str | None = None
-        model_csp_compiled: str | None = None
-        model_contract: sdk_abi.Contract | None = None
-        if self.model_router:
-            (
-                model_ap_compiled,
-                model_csp_compiled,
-                model_contract,
-            ) = self.model_router.compile_program(
-                version=cast(int, model_version),
-                assemble_constants=model_assemble_constants,
-                optimize=model_optimize,
-            )
-            assert (
-                self.model_router.method_configs
-            ), f"Model router with name '{self.model_router.name}' is essentially empty, as compilation results in an empty method_configs."
-
-        return _SimConfig(
-            version=version,
-            assemble_constants=assemble_constants,
-            optimize=optimize,
-            ap_compiled=ap_compiled,
-            csp_compiled=csp_compiled,
-            contract=contract,
-            method_configs=method_configs,
-            call_strat=call_strat,
-            txn_params=cast(TxParams, txn_params),
-            model_version=model_version,
-            model_assemble_constants=model_assemble_constants,
-            model_optimize=model_optimize,
-            model_ap_compiled=model_ap_compiled,
-            model_csp_compiled=model_csp_compiled,
-            model_contract=model_contract,
-        )
-
-    def _get_sim(self, teal, meth, sim_cfg, identities_teal) -> Simulation:
-        return Simulation(
-            self.algod,
-            ExecutionMode.Application,
-            teal,
-            self.predicates[meth],
-            abi_method_signature=sim_cfg.call_strat.method_signature(meth),
-            # omit_method_selector=False ????
-            # validation=True ???
-            identities_teal=identities_teal,
-        )
+    @dataclass(frozen=True)
+    class RouterSimulationResults:
+        stats: dict
+        results: dict
+        approval_simulator: Simulation
+        clear_simulator: Simulation
 
     def simulate_and_assert(
         self,
         arg_strat_type: Type[ABIStrategy],
         abi_args_mod: ABIArgsMod | None,
         version: int,
+        call_configs: ABICallConfigs,
         *,
         assemble_constants: bool = False,
         optimize: OptimizeOptions | None = None,
-        method_configs: dict[str | None, MethodConfig] | None = None,
         num_dryruns: int = 1,
         txn_params: TxParams | None = None,
         model_version: int | None = None,
@@ -728,19 +698,46 @@ class RouterSimulation:
         model_optimize: OptimizeOptions | None = None,
         msg: str = "",
     ) -> dict:
-        sim_cfg = self._prep_simulation(
+        # clear_call_config = MethodConfig(clear_state=CallConfig.CALL)
+        # del call_configs[ClearStateCall]
+        method_configs = call_configs
+
+        # self._validate_single_method_config(ClearStateCall, clear_call_config)
+        # TODO: simulate the clear state call as well
+
+        self._validate_simulation(
             arg_strat_type,
             abi_args_mod,
-            version,
-            assemble_constants=assemble_constants,
-            optimize=optimize,
-            method_configs=method_configs,
-            num_dryruns=num_dryruns,
-            txn_params=txn_params,
-            model_version=model_version,
-            model_assemble_constants=model_assemble_constants,
-            model_optimize=model_optimize,
+            method_configs,
+            num_dryruns,
+            txn_params,
+            model_version,
         )
+
+        approval_teal, _, contract = self.router.compile_program(
+            version=version, assemble_constants=assemble_constants, optimize=optimize
+        )
+
+        approval_strat = ABICallStrategy(
+            json.dumps(contract.dictify()),
+            arg_strat_type,
+            num_dryruns=num_dryruns,
+            abi_args_mod=abi_args_mod,
+        )
+
+        model_approval_teal: str | None = None
+        model_contract: sdk_abi.Contract | None = None
+        if self.model_router:
+            (
+                model_approval_teal,
+                _,
+                model_contract,
+            ) = self.model_router.compile_program(
+                version=cast(int, model_version),
+                assemble_constants=model_assemble_constants,
+                optimize=model_optimize,
+            )
+
         if not txn_params:
             txn_params = TxParams()
 
@@ -752,7 +749,8 @@ class RouterSimulation:
         )
 
         def msg4simulate() -> str:
-            return f"""user proviede message={msg}
+            return f"""user provide message={msg}
+call_strat={type(approval_strat)}
 {meth=}
 {oc=}
 {call_cfg=}
@@ -763,45 +761,51 @@ class RouterSimulation:
 {stats["assertions_count"]=}
 """
 
-        def simulate(stats, is_app_create):
+        def simulate(call_strat, stats, is_app_create):
             tp: TxParams = deepcopy(txn_params)
             tp.update_fields(
                 TxParams.for_app(is_app_create=is_app_create, on_complete=oc)
             )
-            sim_results = sim.run_and_assert(
-                sim_cfg.call_strat, txn_params=tp, msg=msg4simulate()
+            sim_results = approve_sim.run_and_assert(
+                call_strat, txn_params=tp, msg=msg4simulate()
             )
             assert sim_results.succeeded
-            self.results[meth][(is_app_create, oc)] = sim_results
+            self.auto_path_results[meth][(is_app_create, oc)] = sim_results
 
             stats["method_combo_count"] += 1
-            stats["dryrun_count"] += sim_cfg.call_strat.num_dryruns
-            stats["assertions_count"] += sim_cfg.call_strat.num_dryruns * len(
+            stats["dryrun_count"] += call_strat.num_dryruns
+            stats["assertions_count"] += call_strat.num_dryruns * len(
                 self.predicates[meth]
             )
 
-        for meth, meth_cfg in sim_cfg.method_configs.items():
+        for meth, meth_cfg in method_configs.items():
+            sig = approval_strat.method_signature(meth)
 
-            def sim_get(teal, model_teal):
-                return self._get_sim(teal, meth, sim_cfg, model_teal)
-
-            approve_sim = sim_get(sim_cfg.ap_compiled, sim_cfg.model_ap_compiled)
-            clear_sim = sim_get(sim_cfg.csp_compiled, sim_cfg.model_csp_compiled)
+            approve_sim = Simulation(
+                self.algod,
+                ExecutionMode.Application,
+                approval_teal,
+                self.predicates[meth],
+                abi_method_signature=sig,
+                # omit_method_selector=False ????
+                # validation=True ???
+                identities_teal=model_approval_teal,
+            )
 
             for oc_str, call_cfg in asdict(meth_cfg).items():
                 oc = as_on_complete(oc_str)
-                sim: Simulation
-                sim = clear_sim if oc is OnComplete.ClearStateOC else approve_sim
+                # sim: Simulation
+                # sim = clear_sim if oc is OnComplete.ClearStateOC else approve_sim
 
                 # weird walrus is_app_create := ... to fill closure of msg4simulate()
                 if call_cfg & CallConfig.CALL:
-                    simulate(stats, is_app_create := False)
+                    simulate(approval_strat, stats, is_app_create := False)
                 if call_cfg & CallConfig.CREATE:
-                    simulate(stats, is_app_create := True)
-        return {
-            "sim_cfg": sim_cfg,
-            "stats": stats,
-            "results": self.results,
-            "approval_simulator": approve_sim,
-            "clear_simulator": clear_sim,
-        }
+                    simulate(approval_strat, stats, is_app_create := True)
+
+        return self.RouterSimulationResults(
+            stats=stats,
+            results=self.auto_path_results,
+            approval_simulator=approve_sim,
+            clear_simulator=None,
+        )

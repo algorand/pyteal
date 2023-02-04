@@ -1,15 +1,20 @@
 import json
 from pathlib import Path
-import pytest
 
+import pytest
 from graviton.abi_strategy import RandomABIStrategyHalfSized
 from graviton.blackbox import DryRunEncoder
 from graviton.invariant import DryRunProperty as DRProp
 
-from pyteal.compiler.compiler_test import router_app_tester
 import pyteal as pt
-
-from tests.blackbox import Predicates, RouterSimulation
+from pyteal.compiler.compiler_test import router_app_tester
+from tests.blackbox import (
+    ABICallConfigs,
+    ClearStateCall,
+    Predicates,
+    RouterCallType,
+    RouterSimulation,
+)
 
 BRUTE_FORCE_TERRIBLE_SKIPPING = True
 NUM_ROUTER_DRYRUNS = 7
@@ -30,7 +35,7 @@ TYPICAL_IAC_OC = pt.MethodConfig(no_op=pt.CallConfig.CALL)
 #
 # NOTE: the "yacc" routers will simply ignore the case with method `None`
 # as they do not have any bare-app-calls
-QUESTIONABLE_DRIVER: list[tuple[str | None, pt.MethodConfig, Predicates]] = [
+QUESTIONABLE_DRIVER: list[tuple[RouterCallType, pt.MethodConfig, Predicates]] = [
     (
         "add",
         TYPICAL_IAC_OC,
@@ -73,7 +78,6 @@ QUESTIONABLE_DRIVER: list[tuple[str | None, pt.MethodConfig, Predicates]] = [
         pt.MethodConfig(
             no_op=pt.CallConfig.CALL,
             opt_in=pt.CallConfig.ALL,
-            # clear_state=pt.CallConfig.CALL,
         ),
         {
             DRProp.passed: True,
@@ -99,12 +103,20 @@ QUESTIONABLE_DRIVER: list[tuple[str | None, pt.MethodConfig, Predicates]] = [
     (
         None,
         pt.MethodConfig(
-            opt_in=pt.CallConfig.CALL,  # clear_state=pt.CallConfig.CALL
+            opt_in=pt.CallConfig.CALL,
         ),
         {
             DRProp.passed: True,
             DRProp.lastLog: lambda _, actual: actual
             in (None, DryRunEncoder.hex("optin call")),
+        },
+    ),
+    (
+        ClearStateCall,
+        pt.MethodConfig(),  # ignored in this case
+        {
+            DRProp.passed: True,
+            DRProp.cost: 1,
         },
     ),
 ]
@@ -114,12 +126,13 @@ YACC_DRIVER = [case for case in QUESTIONABLE_DRIVER if case[0]]
 DRIVERS = {"questionable": QUESTIONABLE_DRIVER, "yacc": YACC_DRIVER}
 
 
-def split_driver2predicates_methconfigs(driver):
+def split_driver2predicates_methconfigs(driver) -> tuple[Predicates, ABICallConfigs]:
     predicates = {}
     methconfigs = {}
     for meth, meth_config, predicate in driver:
         predicates[meth] = predicate
-        methconfigs[meth] = meth_config
+        if meth != ClearStateCall:
+            methconfigs[meth] = meth_config
 
     return predicates, methconfigs
 
@@ -150,29 +163,43 @@ def test_abi_router_positive(case, version, router):
         RandomABIStrategyHalfSized,
         abi_args_mod=None,
         version=version,
+        call_configs=methconfigs,
         num_dryruns=NUM_ROUTER_DRYRUNS,
         msg=msg(),
     )
     # won't even get here if there was an error, but some extra sanity checks:
 
-    assert (sim_results := results["results"]) and all(
+    assert (sim_results := results.results) and all(
         sim.succeeded for meth in sim_results.values() for sim in meth.values()
     )
 
-    print(json.dumps(stats := results["stats"], indent=2))
+    print("stats:", json.dumps(stats := results.stats, indent=2))
     assert stats and all(stats.values())
+
+    def deepstr(d):
+        if isinstance(d, dict):
+            return {str(k): deepstr(v) for k, v in d.items()}
+        return d
+
+    print(
+        "results:",
+        json.dumps(deepstr(sim_results), indent=2, default=str),
+    )
 
     # wow!!! these fail because of differing scratch slot assignments
     if BRUTE_FORCE_TERRIBLE_SKIPPING:
         pass
     else:
         assert pregen_approval == results["approval_simulator"].simulate_dre.program
-        assert pregen_clear == results["clear_simulator"].simulate_dre.program
 
-    with open(FIXTURES / f"sim_approval_{case}_{version}.teal", "w") as f:
-        f.write(results["sim_cfg"].ap_compiled)
-    with open(FIXTURES / f"sim_clear_{case}_{version}.teal", "w") as f:
-        f.write(results["sim_cfg"].csp_compiled)
+        # TODO: uncomment the following when ready
+        # assert pregen_clear == results["clear_simulator"].simulate_dre.program
+
+    # TODO: uncomment eventually ...
+    # with open(FIXTURES / f"sim_approval_{case}_{version}.teal", "w") as f:
+    #     f.write(results["sim_cfg"].ap_compiled)
+    # with open(FIXTURES / f"sim_clear_{case}_{version}.teal", "w") as f:
+    #     f.write(results["sim_cfg"].csp_compiled)
 
 
 @pytest.mark.parametrize("case, version, router", ROUTER_CASES)
