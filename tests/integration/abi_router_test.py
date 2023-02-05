@@ -9,8 +9,8 @@ from graviton.invariant import DryRunProperty as DRProp
 import pyteal as pt
 from pyteal.compiler.compiler_test import router_app_tester
 from tests.blackbox import (
+    CLEAR_STATE_CALL,
     ABICallConfigs,
-    ClearStateCall,
     Predicates,
     RouterCallType,
     RouterSimulation,
@@ -112,7 +112,7 @@ QUESTIONABLE_DRIVER: list[tuple[RouterCallType, pt.MethodConfig, Predicates]] = 
         },
     ),
     (
-        ClearStateCall,
+        CLEAR_STATE_CALL,
         pt.MethodConfig(),  # ignored in this case
         {
             DRProp.passed: True,
@@ -131,7 +131,7 @@ def split_driver2predicates_methconfigs(driver) -> tuple[Predicates, ABICallConf
     methconfigs = {}
     for meth, meth_config, predicate in driver:
         predicates[meth] = predicate
-        if meth != ClearStateCall:
+        if meth != CLEAR_STATE_CALL:
             methconfigs[meth] = meth_config
 
     return predicates, methconfigs

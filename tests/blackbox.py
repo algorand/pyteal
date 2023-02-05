@@ -2,7 +2,7 @@ from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass, asdict
 import json
-from typing import Any, Callable, Dict, Literal, Sequence, Type, cast
+from typing import Any, Callable, Dict, Final, Literal, Sequence, Type, cast
 
 import algosdk.abi as sdk_abi
 from algosdk.transaction import OnComplete
@@ -57,13 +57,14 @@ from pyteal.ast.subroutine import ABIReturnSubroutine
 Predicates = dict[DRProp, Any]  # same as in graviton
 
 
-ClearStateCall = Literal["ClearStateCall"]
+CLEAR_STATE_CALL: Final[str] = "ClearStateCall"
+ClearStateCallType = Literal["ClearStateCall"]
 
 # str for methods, None for bare app calls:
 CallType = str | None
 
-# CallType for app calls, ClearStateCall for clear state calls:
-RouterCallType = CallType | ClearStateCall
+# CallType for app calls, CLEAR_STATE_CALL for clear state calls:
+RouterCallType = CallType | ClearStateCallType  # type: ignore
 
 ABICallConfigs = dict[CallType, MethodConfig]
 
@@ -591,7 +592,7 @@ class RouterSimulation:
         ), "make sure to give at least one key/value pair in method_configs"
 
         for call, meth_config in method_configs.items():
-            assert isinstance(
+            assert isinstance(  # type: ignore
                 call, CallType
             ), f"method_configs dict key '{call}' has type {type(call)} but only str and NoneType are allowed."
             cls._validate_single_method_config(call, meth_config)
@@ -620,13 +621,13 @@ class RouterSimulation:
         ), "Please provide at least one method to call and assert against."
 
         for method, preds in predicates.items():
-            assert isinstance(method, (str, type(None), type(ClearStateCall))), (
+            assert isinstance(method, (str, type(None), type(ClearStateCallType))), (
                 f"Predicates method '{method}' has type {type(method)} but only "
                 "'str' and 'NoneType' and Literal['ClearStateCall'] (== ClearStateCall)"
                 " are allowed."
             )
-            if isinstance(method, type(ClearStateCall)):
-                assert method == ClearStateCall, (
+            if isinstance(method, type(ClearStateCallType)):
+                assert method == ClearStateCallType, (
                     f"Predicates method '{method}' is not allowed. "
                     "Only Literal['ClearStateCall'] (== ClearStateCall) "
                     "is allowed for a Literal."
@@ -704,7 +705,7 @@ class RouterSimulation:
 
     @dataclass(frozen=True)
     class RouterSimulationResults:
-        stats: dict
+        stats: dict[str, Any]
         results: dict
         approval_simulator: Simulation
         clear_simulator: Simulation
@@ -725,7 +726,7 @@ class RouterSimulation:
         model_assemble_constants: bool = False,
         model_optimize: OptimizeOptions | None = None,
         msg: str = "",
-    ) -> dict:
+    ) -> RouterSimulationResults:
         # --- Compile Programs --- #
         approval_teal, clear_teal, contract = self.router.compile_program(
             version=version, assemble_constants=assemble_constants, optimize=optimize
@@ -760,10 +761,12 @@ class RouterSimulation:
         if not txn_params:
             txn_params = TxParams()
 
-        stats = defaultdict(int)
+        stats: dict[str, int | str] = defaultdict(int)
         stats["name"] = self.router.name
 
         # --- setup reporter and stats --- #
+
+        meth: Any
 
         def msg4simulate() -> str:
             return f"""user provide message={msg}
@@ -794,7 +797,6 @@ call_strat={type(approval_strat)}
         double_check_at_least_one_method = False
         for meth, meth_cfg in method_configs.items():
             sig = approval_strat.method_signature(meth)
-
             approve_sim = Simulation(
                 self.algod,
                 ExecutionMode.Application,
@@ -838,7 +840,7 @@ call_strat={type(approval_strat)}
             type_for_args=sdk_abi.ABIType.from_string("byte[8]"),
         )
 
-        meth = ClearStateCall
+        meth = CLEAR_STATE_CALL
         is_app_create = False
         oc = OnComplete.ClearStateOC
         clear_sim = Simulation(
