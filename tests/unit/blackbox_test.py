@@ -306,7 +306,9 @@ def test_RouterSimulation_init():
     err_msg = "make sure to give at least one key/value pair in method_configs"
     failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
 
-    router.add_method_handler(pt.ABIReturnSubroutine(lambda : pt.Int(1)), overriding_name="foo")
+    router.add_method_handler(
+        pt.ABIReturnSubroutine(lambda: pt.Int(1)), overriding_name="foo"
+    )
     err_msg = "Wrong type for predicates: <class 'str'>. Please provide: dict[str | None, dict[graviton.DryRunProporty, Any]."
     failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
 
@@ -343,12 +345,13 @@ def test_RouterSimulation_init():
     failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
 
     # Finally, two happy paths
-    model_router.add_method_handler(pt.ABIReturnSubroutine(lambda : pt.Int(1)), overriding_name="foo")
+    model_router.add_method_handler(
+        pt.ABIReturnSubroutine(lambda: pt.Int(1)), overriding_name="foo"
+    )
     successful_RouterSimulation(router, model_router, predicates, algod)
 
     model_router = None
     successful_RouterSimulation(router, model_router, predicates, algod)
-
 
 
 def failing_prep_simulate(

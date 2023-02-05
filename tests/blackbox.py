@@ -606,7 +606,7 @@ class RouterSimulation:
         ), f"method_configs['{call}'] specifies NEVER to be called; for driving the test, each configured method should ACTUALLY be tested."
         assert (
             meth_config.clear_state is CallConfig.NEVER
-        ), f"meth_config's clear_state must be None, but isn't"
+        ), "meth_config's clear_state must be None, but isn't"
 
     @classmethod
     def _validate_predicates(cls, predicates):
@@ -763,7 +763,7 @@ class RouterSimulation:
         stats = defaultdict(int)
         stats["name"] = self.router.name
 
-        # --- setup reporter --- #
+        # --- setup reporter and stats --- #
 
         def msg4simulate() -> str:
             return f"""user provide message={msg}
@@ -778,6 +778,12 @@ call_strat={type(approval_strat)}
 {stats["assertions_count"]=}
 """
 
+        def update_stats(meth, num_preds):
+            stats[str(meth)] += num_dryruns
+            stats["method_combo_count"] += 1
+            stats["dryrun_count"] += num_dryruns
+            stats["assertions_count"] += num_dryruns * num_preds
+
         # ---- APPROVAL PROGRAM SIMULATION ---- #
         approval_strat = ABICallStrategy(
             json.dumps(contract.dictify()),
@@ -785,30 +791,6 @@ call_strat={type(approval_strat)}
             num_dryruns=num_dryruns,
             abi_args_mod=approval_abi_args_mod,
         )
-
-        def simulate_approval(
-            meth: CallType,
-            call_strat: ABICallStrategy,
-            stats: defaultdict,
-            is_app_create: bool,
-        ) -> None:
-            tp: TxParams = deepcopy(txn_params)
-            tp.update_fields(
-                TxParams.for_app(is_app_create=is_app_create, on_complete=oc)
-            )
-            sim_results = approve_sim.run_and_assert(
-                call_strat, txn_params=tp, msg=msg4simulate()
-            )
-            assert sim_results.succeeded
-            self.auto_path_results[meth][(is_app_create, oc)] = sim_results
-
-            stats[meth] += call_strat.num_dryruns
-            stats["method_combo_count"] += 1
-            stats["dryrun_count"] += call_strat.num_dryruns
-            stats["assertions_count"] += call_strat.num_dryruns * len(
-                self.predicates[meth]
-            )
-
         double_check_at_least_one_method = False
         for meth, meth_cfg in method_configs.items():
             sig = approval_strat.method_signature(meth)
@@ -825,17 +807,26 @@ call_strat={type(approval_strat)}
             for oc_str, call_cfg in asdict(meth_cfg).items():
                 oc = as_on_complete(oc_str)
 
+                def simulate_approval(on_create):
+                    tp: TxParams = deepcopy(txn_params)
+                    tp.update_fields(
+                        TxParams.for_app(is_app_create=on_create, on_complete=oc)
+                    )
+                    sim_results = approve_sim.run_and_assert(
+                        approval_strat, txn_params=tp, msg=msg4simulate()
+                    )
+                    assert sim_results.succeeded
+                    self.auto_path_results[meth][(on_create, oc)] = sim_results
+                    update_stats(meth, len(self.predicates[meth]))
+
                 # weird walrus is_app_create := ... to fill closure of msg4simulate()
                 if call_cfg & CallConfig.CALL:
                     double_check_at_least_one_method = True
-                    simulate_approval(
-                        meth, approval_strat, stats, is_app_create := False
-                    )
+                    simulate_approval(is_app_create := False)
+
                 if call_cfg & CallConfig.CREATE:
                     double_check_at_least_one_method = True
-                    simulate_approval(
-                        meth, approval_strat, stats, is_app_create := True
-                    )
+                    simulate_approval(is_app_create := True)
         assert double_check_at_least_one_method, "no method was simulated"
 
         # ---- CLEAR PROGRAM SIMULATION ---- #
@@ -863,11 +854,7 @@ call_strat={type(approval_strat)}
         sim_results = clear_sim.run_and_assert(clear_strat, msg=msg4simulate())
         assert sim_results.succeeded
         self.auto_path_results[meth][(is_app_create, oc)] = sim_results
-
-        stats[str(meth)] += num_dryruns
-        stats["method_combo_count"] += 1
-        stats["dryrun_count"] += num_dryruns
-        stats["assertions_count"] += num_dryruns
+        update_stats(meth, len(self.predicates[meth]))
 
         return self.RouterSimulationResults(
             stats=stats,
