@@ -649,10 +649,12 @@ class RouterSimulation:
         approval_args_strat_type,
         clear_args_strat_type,
         approval_abi_args_mod,
-        method_configs,
         num_dryruns,
         txn_params,
         model_version,
+        method_configs,
+        contract,
+        model_contract,
     ):
         assert isinstance(approval_args_strat_type, type) and issubclass(
             approval_args_strat_type, ABIStrategy
@@ -667,6 +669,13 @@ class RouterSimulation:
 
         self._validate_method_configs(method_configs)
 
+        self._validate_meths_in_contract(method_configs, contract)
+
+        if model_contract:
+            self._validate_meths_in_contract(
+                method_configs, model_contract, router_prefix="model"
+            )
+
         assert (
             isinstance(num_dryruns, int) and num_dryruns >= 1
         ), f"num_dryruns must be a positive int but is {num_dryruns}."
@@ -679,6 +688,19 @@ class RouterSimulation:
             assert (
                 model_version is None
             ), f"model_version '{model_version}' was provided which is nonsensical because model_router was never provided for."
+
+    def _validate_meths_in_contract(
+        self, method_configs, contract, router_prefix="base"
+    ):
+        for meth in method_configs:
+            if meth is None:
+                continue
+            try:
+                contract.get_method_by_name(meth)
+            except KeyError:
+                raise ValueError(
+                    f"method_configs has a method '{meth}' missing from {router_prefix}-Router's contract."
+                )
 
     @dataclass(frozen=True)
     class RouterSimulationResults:
@@ -704,32 +726,36 @@ class RouterSimulation:
         model_optimize: OptimizeOptions | None = None,
         msg: str = "",
     ) -> dict:
-        self._validate_simulation(
-            approval_args_strat_type,
-            clear_args_strat_type,
-            approval_abi_args_mod,
-            method_configs,
-            num_dryruns,
-            txn_params,
-            model_version,
-        )
-
         # --- Compile Programs --- #
         approval_teal, clear_teal, contract = self.router.compile_program(
             version=version, assemble_constants=assemble_constants, optimize=optimize
         )
+
         model_approval_teal: str | None = None
         model_clear_teal: str | None = None
+        model_contract: sdk_abi.Contract | None = None
         if self.model_router:
             (
                 model_approval_teal,
                 model_clear_teal,
-                _,
+                model_contract,
             ) = self.model_router.compile_program(
                 version=cast(int, model_version),
                 assemble_constants=model_assemble_constants,
                 optimize=model_optimize,
             )
+
+        self._validate_simulation(
+            approval_args_strat_type,
+            clear_args_strat_type,
+            approval_abi_args_mod,
+            num_dryruns,
+            txn_params,
+            model_version,
+            method_configs,
+            contract,
+            model_contract,
+        )
 
         if not txn_params:
             txn_params = TxParams()

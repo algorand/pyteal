@@ -150,7 +150,10 @@ def test_abi_router_positive(case, version, router):
 
     driver = DRIVERS[case]
     predicates, methconfigs = split_driver2predicates_methconfigs(driver)
+
+    # assert FULL coverage:
     assert methconfigs == router.method_configs
+
     rsim = RouterSimulation(router, predicates)
 
     def msg():
