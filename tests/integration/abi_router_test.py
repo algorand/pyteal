@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 import pytest
-from graviton.abi_strategy import RandomABIStrategyHalfSized
+from graviton.abi_strategy import RandomABIStrategy, RandomABIStrategyHalfSized
 from graviton.blackbox import DryRunEncoder
 from graviton.invariant import DryRunProperty as DRProp
 
@@ -116,7 +116,7 @@ QUESTIONABLE_DRIVER: list[tuple[RouterCallType, pt.MethodConfig, Predicates]] = 
         pt.MethodConfig(),  # ignored in this case
         {
             DRProp.passed: True,
-            DRProp.cost: 1,
+            DRProp.cost: 2,
         },
     ),
 ]
@@ -160,10 +160,11 @@ def test_abi_router_positive(case, version, router):
 {router.name=}"""
 
     results = rsim.simulate_and_assert(
-        RandomABIStrategyHalfSized,
-        abi_args_mod=None,
+        approval_args_strat_type=RandomABIStrategyHalfSized,
+        clear_args_strat_type=RandomABIStrategy,
+        approval_abi_args_mod=None,
         version=version,
-        call_configs=methconfigs,
+        method_configs=methconfigs,
         num_dryruns=NUM_ROUTER_DRYRUNS,
         msg=msg(),
     )
@@ -193,10 +194,8 @@ def test_abi_router_positive(case, version, router):
     if BRUTE_FORCE_TERRIBLE_SKIPPING:
         pass
     else:
-        assert pregen_approval == results["approval_simulator"].simulate_dre.program
-
-        # TODO: uncomment the following when ready
-        # assert pregen_clear == results["clear_simulator"].simulate_dre.program
+        assert pregen_clear == results.clear_simulator.simulate_dre.program
+        assert pregen_approval == results.approval_simulator.simulate_dre.program
 
     # TODO: uncomment eventually ...
     # with open(FIXTURES / f"sim_approval_{case}_{version}.teal", "w") as f:

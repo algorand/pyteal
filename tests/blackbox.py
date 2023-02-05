@@ -13,7 +13,6 @@ from graviton.abi_strategy import (
     ABIArgsMod,
     ABICallStrategy,
     ABIStrategy,
-    CallStrategy,
     RandomArgLengthCallStrategy,
 )
 from graviton.blackbox import (
@@ -504,6 +503,8 @@ def as_on_complete(oc_str: str) -> OnComplete:
 
 class RouterSimulation:
     """
+    TODO: the following is out of date!!!
+
     Lifecycle of a RouterSimulation
 
     1. Creation (__init__ method):
@@ -645,20 +646,24 @@ class RouterSimulation:
 
     def _validate_simulation(
         self,
-        arg_strat_type,
-        abi_args_mod,
+        approval_args_strat_type,
+        clear_args_strat_type,
+        approval_abi_args_mod,
         method_configs,
         num_dryruns,
         txn_params,
         model_version,
     ):
-        assert isinstance(arg_strat_type, type) and issubclass(
-            arg_strat_type, ABIStrategy
-        ), f"arg_strat_type should _BE_ a subtype of ABIStrategy but we have {arg_strat_type} (its type is {type(arg_strat_type)})."
+        assert isinstance(approval_args_strat_type, type) and issubclass(
+            approval_args_strat_type, ABIStrategy
+        ), f"approval_args_strat_type should _BE_ a subtype of ABIStrategy but we have {approval_args_strat_type} (its type is {type(approval_args_strat_type)})."
+        assert isinstance(clear_args_strat_type, type) and issubclass(
+            clear_args_strat_type, ABIStrategy
+        ), f"clear_args_strat_type should _BE_ a subtype of ABIStrategy but we have {clear_args_strat_type} (its type is {type(clear_args_strat_type)})."
 
         assert isinstance(
-            abi_args_mod, (ABIArgsMod, type(None))
-        ), f"abi_args_mod '{abi_args_mod}' has type {type(abi_args_mod)} but only 'ABIArgsMod' and 'NoneType' are allowed."
+            approval_abi_args_mod, (ABIArgsMod, type(None))
+        ), f"approval_abi_args_mod '{approval_abi_args_mod}' has type {type(approval_abi_args_mod)} but only 'ABIArgsMod' and 'NoneType' are allowed."
 
         self._validate_method_configs(method_configs)
 
@@ -684,10 +689,11 @@ class RouterSimulation:
 
     def simulate_and_assert(
         self,
-        arg_strat_type: Type[ABIStrategy],
-        abi_args_mod: ABIArgsMod | None,
+        approval_args_strat_type: Type[ABIStrategy],
+        clear_args_strat_type: Type[ABIStrategy],
+        approval_abi_args_mod: ABIArgsMod | None,
         version: int,
-        call_configs: ABICallConfigs,
+        method_configs: ABICallConfigs,
         *,
         assemble_constants: bool = False,
         optimize: OptimizeOptions | None = None,
@@ -698,40 +704,27 @@ class RouterSimulation:
         model_optimize: OptimizeOptions | None = None,
         msg: str = "",
     ) -> dict:
-        # clear_call_config = MethodConfig(clear_state=CallConfig.CALL)
-        # del call_configs[ClearStateCall]
-        method_configs = call_configs
-
-        # self._validate_single_method_config(ClearStateCall, clear_call_config)
-        # TODO: simulate the clear state call as well
-
         self._validate_simulation(
-            arg_strat_type,
-            abi_args_mod,
+            approval_args_strat_type,
+            clear_args_strat_type,
+            approval_abi_args_mod,
             method_configs,
             num_dryruns,
             txn_params,
             model_version,
         )
 
-        approval_teal, _, contract = self.router.compile_program(
+        # --- Compile Programs --- #
+        approval_teal, clear_teal, contract = self.router.compile_program(
             version=version, assemble_constants=assemble_constants, optimize=optimize
         )
-
-        approval_strat = ABICallStrategy(
-            json.dumps(contract.dictify()),
-            arg_strat_type,
-            num_dryruns=num_dryruns,
-            abi_args_mod=abi_args_mod,
-        )
-
         model_approval_teal: str | None = None
-        model_contract: sdk_abi.Contract | None = None
+        model_clear_teal: str | None = None
         if self.model_router:
             (
                 model_approval_teal,
+                model_clear_teal,
                 _,
-                model_contract,
             ) = self.model_router.compile_program(
                 version=cast(int, model_version),
                 assemble_constants=model_assemble_constants,
@@ -743,6 +736,8 @@ class RouterSimulation:
 
         stats = defaultdict(int)
         stats["name"] = self.router.name
+
+        # --- setup reporter --- #
 
         def msg4simulate() -> str:
             return f"""user provide message={msg}
@@ -757,8 +752,19 @@ call_strat={type(approval_strat)}
 {stats["assertions_count"]=}
 """
 
-        def simulate(
-            meth: CallType, call_strat: ABICallStrategy, stats: defaultdict, is_app_create: bool
+        # ---- APPROVAL PROGRAM SIMULATION ---- #
+        approval_strat = ABICallStrategy(
+            json.dumps(contract.dictify()),
+            approval_args_strat_type,
+            num_dryruns=num_dryruns,
+            abi_args_mod=approval_abi_args_mod,
+        )
+
+        def simulate_approval(
+            meth: CallType,
+            call_strat: ABICallStrategy,
+            stats: defaultdict,
+            is_app_create: bool,
         ) -> None:
             tp: TxParams = deepcopy(txn_params)
             tp.update_fields(
@@ -777,6 +783,7 @@ call_strat={type(approval_strat)}
                 self.predicates[meth]
             )
 
+        double_check_at_least_one_method = False
         for meth, meth_cfg in method_configs.items():
             sig = approval_strat.method_signature(meth)
 
@@ -786,25 +793,59 @@ call_strat={type(approval_strat)}
                 approval_teal,
                 self.predicates[meth],
                 abi_method_signature=sig,
-                # omit_method_selector=False ????
-                # validation=True ???
                 identities_teal=model_approval_teal,
             )
 
             for oc_str, call_cfg in asdict(meth_cfg).items():
                 oc = as_on_complete(oc_str)
-                # sim: Simulation
-                # sim = clear_sim if oc is OnComplete.ClearStateOC else approve_sim
 
                 # weird walrus is_app_create := ... to fill closure of msg4simulate()
                 if call_cfg & CallConfig.CALL:
-                    simulate(meth, approval_strat, stats, is_app_create := False)
+                    double_check_at_least_one_method = True
+                    simulate_approval(
+                        meth, approval_strat, stats, is_app_create := False
+                    )
                 if call_cfg & CallConfig.CREATE:
-                    simulate(meth, approval_strat, stats, is_app_create := True)
+                    double_check_at_least_one_method = True
+                    simulate_approval(
+                        meth, approval_strat, stats, is_app_create := True
+                    )
+        assert double_check_at_least_one_method, "no method was simulated"
+
+        # ---- CLEAR PROGRAM SIMULATION ---- #
+        clear_strat = RandomArgLengthCallStrategy(
+            clear_args_strat_type,
+            max_args=2,
+            num_dryruns=num_dryruns,
+            min_args=0,
+            type_for_args=sdk_abi.ABIType.from_string("byte[8]"),
+        )
+
+        meth = ClearStateCall
+        is_app_create = False
+        oc = OnComplete.ClearStateOC
+        clear_sim = Simulation(
+            self.algod,
+            ExecutionMode.Application,
+            clear_teal,
+            self.predicates[meth],
+            identities_teal=model_clear_teal,
+        )
+
+        # ---- Summary Statistics ---- #
+
+        sim_results = clear_sim.run_and_assert(clear_strat, msg=msg4simulate())
+        assert sim_results.succeeded
+        self.auto_path_results[meth][(is_app_create, oc)] = sim_results
+
+        stats[str(meth)] += num_dryruns
+        stats["method_combo_count"] += 1
+        stats["dryrun_count"] += num_dryruns
+        stats["assertions_count"] += num_dryruns
 
         return self.RouterSimulationResults(
             stats=stats,
             results=self.auto_path_results,
             approval_simulator=approve_sim,
-            clear_simulator=None,
+            clear_simulator=clear_sim,
         )
