@@ -24,7 +24,6 @@ from tests.blackbox import (
     negate_cc,
 )
 
-BRUTE_FORCE_TERRIBLE_SKIPPING = True
 NUM_ROUTER_DRYRUNS = 7
 FIXTURES = Path.cwd() / "tests" / "teal" / "router"
 
@@ -187,18 +186,9 @@ def test_abi_router_positive(case, version, router):
     print("\nstats:", json.dumps(stats := results.stats, indent=2))
     assert stats and all(stats.values())
 
-    # wow!!! these fail because of differing scratch slot assignments
-    if BRUTE_FORCE_TERRIBLE_SKIPPING:
-        pass
-    else:
-        assert pregen_clear == results.clear_simulator.simulate_dre.program
-        assert pregen_approval == results.approval_simulator.simulate_dre.program
-
-    # TODO: uncomment eventually ...
-    # with open(FIXTURES / f"sim_approval_{case}_{version}.teal", "w") as f:
-    #     f.write(results["sim_cfg"].ap_compiled)
-    # with open(FIXTURES / f"sim_clear_{case}_{version}.teal", "w") as f:
-    #     f.write(results["sim_cfg"].csp_compiled)
+    # These fail because of differing scratch slot assignments
+    # assert pregen_clear == results.clear_simulator.simulate_dre.program
+    # assert pregen_approval == results.approval_simulator.simulate_dre.program
 
 
 # cf. https://death.andgravity.com/f-re for an explanation of verbose regex'es
@@ -206,7 +196,7 @@ EXPECTED_ERR_PATTERN = r"""
     err\ opcode                                 # pyteal generated err's ok
 |   assert\ failed\ pc=                         # pyteal generated assert's ok
 |   invalid\ ApplicationArgs\ index             # failing because an app arg wasn't provided
-|   extract\ range\ beyond\ length\ of\ string  # failing because couldn't extract when omitted final arg or jammed in tuple
+|   extraction\ end\ 16\ is\ beyond\ length     # failing because couldn't extract when omitted final arg or jammed in tuple
 """
 
 
