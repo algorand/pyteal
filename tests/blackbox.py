@@ -502,6 +502,10 @@ def as_on_complete(oc_str: str) -> OnComplete:
     raise ValueError(f"unrecognized {oc_str=}")
 
 
+def negate_cc(cc: CallConfig) -> CallConfig:
+    return CallConfig(3 - cc)
+
+
 class RouterSimulation:
     """
     TODO: the following is out of date!!!
@@ -656,13 +660,15 @@ class RouterSimulation:
         method_configs,
         contract,
         model_contract,
+        omit_clear_call,
     ):
         assert isinstance(approval_args_strat_type, type) and issubclass(
             approval_args_strat_type, ABIStrategy
         ), f"approval_args_strat_type should _BE_ a subtype of ABIStrategy but we have {approval_args_strat_type} (its type is {type(approval_args_strat_type)})."
-        assert isinstance(clear_args_strat_type, type) and issubclass(
-            clear_args_strat_type, ABIStrategy
-        ), f"clear_args_strat_type should _BE_ a subtype of ABIStrategy but we have {clear_args_strat_type} (its type is {type(clear_args_strat_type)})."
+        if not omit_clear_call:
+            assert isinstance(clear_args_strat_type, type) and issubclass(
+                clear_args_strat_type, ABIStrategy
+            ), f"clear_args_strat_type should _BE_ a subtype of ABIStrategy but we have {clear_args_strat_type} (its type is {type(clear_args_strat_type)})."
 
         assert isinstance(
             approval_abi_args_mod, (ABIArgsMod, type(None))
@@ -708,12 +714,12 @@ class RouterSimulation:
         stats: dict[str, Any]
         results: dict
         approval_simulator: Simulation
-        clear_simulator: Simulation
+        clear_simulator: Simulation | None
 
     def simulate_and_assert(
         self,
         approval_args_strat_type: Type[ABIStrategy],
-        clear_args_strat_type: Type[ABIStrategy],
+        clear_args_strat_type: Type[ABIStrategy] | None,
         approval_abi_args_mod: ABIArgsMod | None,
         version: int,
         method_configs: ABICallConfigs,
@@ -721,7 +727,9 @@ class RouterSimulation:
         assemble_constants: bool = False,
         optimize: OptimizeOptions | None = None,
         num_dryruns: int = 1,
+        omit_clear_call: bool = False,
         txn_params: TxParams | None = None,
+        executor_validation: bool = True,
         model_version: int | None = None,
         model_assemble_constants: bool = False,
         model_optimize: OptimizeOptions | None = None,
@@ -756,6 +764,7 @@ class RouterSimulation:
             method_configs,
             contract,
             model_contract,
+            omit_clear_call,
         )
 
         if not txn_params:
@@ -804,6 +813,7 @@ call_strat={type(approval_strat)}
                 self.predicates[meth],
                 abi_method_signature=sig,
                 identities_teal=model_approval_teal,
+                validation=executor_validation,
             )
 
             for oc_str, call_cfg in asdict(meth_cfg).items():
@@ -832,32 +842,34 @@ call_strat={type(approval_strat)}
         assert double_check_at_least_one_method, "no method was simulated"
 
         # ---- CLEAR PROGRAM SIMULATION ---- #
-        clear_strat = RandomArgLengthCallStrategy(
-            clear_args_strat_type,
-            max_args=2,
-            num_dryruns=num_dryruns,
-            min_args=0,
-            type_for_args=sdk_abi.ABIType.from_string("byte[8]"),
-        )
+        clear_sim: Simulation | None = None
+        if not omit_clear_call:
+            clear_strat = RandomArgLengthCallStrategy(
+                cast(Type[ABIStrategy], clear_args_strat_type),
+                max_args=2,
+                num_dryruns=num_dryruns,
+                min_args=0,
+                type_for_args=sdk_abi.ABIType.from_string("byte[8]"),
+            )
 
-        meth = CLEAR_STATE_CALL
-        is_app_create = False
-        oc = OnComplete.ClearStateOC
-        clear_sim = Simulation(
-            self.algod,
-            ExecutionMode.Application,
-            clear_teal,
-            self.predicates[meth],
-            identities_teal=model_clear_teal,
-        )
+            meth = CLEAR_STATE_CALL
+            is_app_create = False
+            oc = OnComplete.ClearStateOC
+            clear_sim = Simulation(
+                self.algod,
+                ExecutionMode.Application,
+                clear_teal,
+                self.predicates[meth],
+                identities_teal=model_clear_teal,
+                validation=executor_validation,
+            )
+
+            sim_results = clear_sim.run_and_assert(clear_strat, msg=msg4simulate())
+            assert sim_results.succeeded
+            self.auto_path_results[meth][(is_app_create, oc)] = sim_results
+            update_stats(meth, len(self.predicates[meth]))
 
         # ---- Summary Statistics ---- #
-
-        sim_results = clear_sim.run_and_assert(clear_strat, msg=msg4simulate())
-        assert sim_results.succeeded
-        self.auto_path_results[meth][(is_app_create, oc)] = sim_results
-        update_stats(meth, len(self.predicates[meth]))
-
         return self.RouterSimulationResults(
             stats=stats,
             results=self.auto_path_results,

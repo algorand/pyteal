@@ -1,8 +1,15 @@
 import json
+import re
+from collections import defaultdict
+from dataclasses import asdict
 from pathlib import Path
 
 import pytest
-from graviton.abi_strategy import RandomABIStrategy, RandomABIStrategyHalfSized
+from graviton.abi_strategy import (
+    ABIArgsMod,
+    RandomABIStrategy,
+    RandomABIStrategyHalfSized,
+)
 from graviton.blackbox import DryRunEncoder
 from graviton.invariant import DryRunProperty as DRProp
 
@@ -14,6 +21,7 @@ from tests.blackbox import (
     Predicates,
     RouterCallType,
     RouterSimulation,
+    negate_cc,
 )
 
 BRUTE_FORCE_TERRIBLE_SKIPPING = True
@@ -172,26 +180,12 @@ def test_abi_router_positive(case, version, router):
         msg=msg(),
     )
     # won't even get here if there was an error, but some extra sanity checks:
-
     assert (sim_results := results.results) and all(
         sim.succeeded for meth in sim_results.values() for sim in meth.values()
     )
 
     print("\nstats:", json.dumps(stats := results.stats, indent=2))
     assert stats and all(stats.values())
-
-    if want_to_keep_annoying_details := False:
-
-        def deepstr(d):
-            if isinstance(d, dict):
-                return {str(k): deepstr(v) for k, v in d.items()}
-            return d
-
-        print(
-            "results:",
-            json.dumps(deepstr(sim_results), indent=2, default=str),
-        )
-    print(f"{want_to_keep_annoying_details=}")
 
     # wow!!! these fail because of differing scratch slot assignments
     if BRUTE_FORCE_TERRIBLE_SKIPPING:
@@ -207,6 +201,217 @@ def test_abi_router_positive(case, version, router):
     #     f.write(results["sim_cfg"].csp_compiled)
 
 
+# cf. https://death.andgravity.com/f-re for an explanation of verbose regex'es
+EXPECTED_ERR_PATTERN = r"""
+    err\ opcode                                 # pyteal generated err's ok
+|   assert\ failed\ pc=                         # pyteal generated assert's ok
+|   invalid\ ApplicationArgs\ index             # failing because an app arg wasn't provided
+|   extract\ range\ beyond\ length\ of\ string  # failing because couldn't extract when omitted final arg or jammed in tuple
+"""
+
+
+APPROVAL_NEGATIVE_PREDS = {
+    DRProp.rejected: True,
+    DRProp.error: True,
+    DRProp.errorMessage: lambda _, actual: (
+        bool(re.search(EXPECTED_ERR_PATTERN, actual, re.VERBOSE))
+    ),
+}
+
+CLEAR_NEGATIVE_INVARIANTS_MUST_APPROVE = [
+    inv for m, _, inv in QUESTIONABLE_DRIVER if m == CLEAR_STATE_CALL
+][0]
+
+
 @pytest.mark.parametrize("case, version, router", ROUTER_CASES)
 def test_abi_router_negative(case, version, router):
-    pass
+    totals = defaultdict(int)
+
+    def scenario_assert_stats(scenario, results):
+        part_a = f"""
+SCENARIO: {scenario} 
+"""
+        if results:
+            part_b = json.dumps(stats := results.stats, indent=2)
+            assert stats and all(stats.values())
+            for k, v in stats.items():
+                if isinstance(v, int):
+                    totals[k] += v
+        else:
+            part_b = "SKIPPED"
+        print(f"{part_a}stats:", part_b)
+
+    contract = router.contract_construct()
+
+    driver = DRIVERS[case]
+    pos_predicates, pos_mconfigs = split_driver2predicates_methconfigs(driver)
+    # assert FULL coverage (before modifying the dict):
+    assert pos_mconfigs == router.method_configs
+
+    if None not in pos_mconfigs:
+        pos_mconfigs[None] = pt.MethodConfig()
+        pos_predicates[None] = APPROVAL_NEGATIVE_PREDS
+
+    pure_meth_mconfigs = {
+        meth: methconfig
+        for meth, methconfig in pos_mconfigs.items()
+        if meth is not None
+    }
+
+    neg_predicates = {
+        meth: (
+            APPROVAL_NEGATIVE_PREDS
+            if meth != CLEAR_STATE_CALL
+            else CLEAR_NEGATIVE_INVARIANTS_MUST_APPROVE
+        )
+        for meth in pos_predicates
+    }
+
+    rsim = RouterSimulation(router, neg_predicates)
+
+    def msg():
+        return f"""test_abi_router_negative()
+{scenario=}
+{case=}
+{version=}
+{router.name=}"""
+
+    scenario = "I. explore all UNEXPECTED (is_app_create, on_complete) combos"
+
+    # NOTE: We're NOT including clear_state calls for the approval program
+    # as though they would never be applied.
+    # Also, we're ONLY including clear_state for the clear program.
+    # Finally, when no bare app calls are provided in method_configs,
+    # we still test the bare app call case.
+    neg_mconfigs = {
+        meth: pt.MethodConfig(
+            **{k: negate_cc(v) for k, v in asdict(mc).items() if k != "clear_state"}
+        )
+        for meth, mc in pos_mconfigs.items()
+    }
+
+    results = rsim.simulate_and_assert(
+        approval_args_strat_type=RandomABIStrategyHalfSized,
+        clear_args_strat_type=RandomABIStrategy,
+        approval_abi_args_mod=None,
+        version=version,
+        method_configs=neg_mconfigs,
+        num_dryruns=NUM_ROUTER_DRYRUNS,
+        executor_validation=False,
+        msg=msg(),
+    )
+    # won't even get here if there was an error, but some extra sanity checks:
+    assert (sim_results := results.results) and all(
+        sim.succeeded for meth in sim_results.values() for sim in meth.values()
+    )
+    scenario_assert_stats(scenario, results)
+
+    # II. the case of bare-app-calls
+    scenario = "II. adding an argument to a bare app call"
+    if None in pos_mconfigs and not pos_mconfigs[None].is_never():
+        bare_only_methconfigs = {None: pos_mconfigs[None]}
+        results = rsim.simulate_and_assert(
+            approval_args_strat_type=RandomABIStrategyHalfSized,
+            clear_args_strat_type=None,
+            approval_abi_args_mod=ABIArgsMod.parameter_append,
+            version=version,
+            method_configs=bare_only_methconfigs,
+            omit_clear_call=True,
+            num_dryruns=NUM_ROUTER_DRYRUNS,
+            executor_validation=False,
+            msg=msg(),
+        )
+        assert (sim_results := results.results) and all(
+            sim.succeeded for meth in sim_results.values() for sim in meth.values()
+        )
+        scenario_assert_stats(scenario, results)
+    else:
+        scenario_assert_stats(scenario, None)
+
+    # For the rest, we may assume method calls (non bare-app-call)
+    # III. explore changing method selector arg[0] by edit distance 1
+
+    # NOTE: We don't test the case of adding an argument to method calls
+    # because the SDK's will guard against this case.
+    # However, we should re-think this assumption.
+    # Cf: https://github.com/algorand/go-algorand-internal/issues/2772
+    # Cf. https://github.com/algorand/algorand-sdk-testing/issues/190
+
+    scenario = "III(a). inserting an extra random byte into method selector"
+    results = rsim.simulate_and_assert(
+        approval_args_strat_type=RandomABIStrategyHalfSized,
+        clear_args_strat_type=None,
+        approval_abi_args_mod=ABIArgsMod.selector_byte_insert,
+        version=version,
+        method_configs=pure_meth_mconfigs,
+        omit_clear_call=True,
+        num_dryruns=NUM_ROUTER_DRYRUNS,
+        executor_validation=False,
+        msg=msg(),
+    )
+    assert (sim_results := results.results) and all(
+        sim.succeeded for meth in sim_results.values() for sim in meth.values()
+    )
+    scenario_assert_stats(scenario, results)
+
+    scenario = "III(b). removing a random byte from method selector"
+    results = rsim.simulate_and_assert(
+        approval_args_strat_type=RandomABIStrategyHalfSized,
+        clear_args_strat_type=None,
+        approval_abi_args_mod=ABIArgsMod.selector_byte_delete,
+        version=version,
+        method_configs=pure_meth_mconfigs,
+        omit_clear_call=True,
+        num_dryruns=NUM_ROUTER_DRYRUNS,
+        executor_validation=False,
+        msg=msg(),
+    )
+    assert (sim_results := results.results) and all(
+        sim.succeeded for meth in sim_results.values() for sim in meth.values()
+    )
+    scenario_assert_stats(scenario, results)
+
+    scenario = "III(c). replacing a random byte in method selector"
+    results = rsim.simulate_and_assert(
+        approval_args_strat_type=RandomABIStrategyHalfSized,
+        clear_args_strat_type=None,
+        approval_abi_args_mod=ABIArgsMod.selector_byte_replace,
+        version=version,
+        method_configs=pure_meth_mconfigs,
+        omit_clear_call=True,
+        num_dryruns=NUM_ROUTER_DRYRUNS,
+        executor_validation=False,
+        msg=msg(),
+    )
+    assert (sim_results := results.results) and all(
+        sim.succeeded for meth in sim_results.values() for sim in meth.values()
+    )
+    scenario_assert_stats(scenario, results)
+
+    # IV. explore changing the number of args over the 'good' call_types
+    # NOTE: We don't test the case of adding an argument to method calls
+    # We also remove methods with 0 arguments, as these degenerate to the
+    # already tested bare-app call case.
+    scenario = "IV. removing the final argument"
+    atleast_one_param_mconfigs = {
+        meth: mconfig
+        for meth, mconfig in pure_meth_mconfigs.items()
+        if len(contract.get_method_by_name(meth).args) > 0
+    }
+    results = rsim.simulate_and_assert(
+        approval_args_strat_type=RandomABIStrategyHalfSized,
+        clear_args_strat_type=None,
+        approval_abi_args_mod=ABIArgsMod.parameter_delete,
+        version=version,
+        method_configs=atleast_one_param_mconfigs,
+        omit_clear_call=True,
+        num_dryruns=NUM_ROUTER_DRYRUNS,
+        executor_validation=False,
+        msg=msg(),
+    )
+    assert (sim_results := results.results) and all(
+        sim.succeeded for meth in sim_results.values() for sim in meth.values()
+    )
+    scenario_assert_stats(scenario, results)
+
+    print("SUMMARY STATS: ", json.dumps(totals, indent=2))
