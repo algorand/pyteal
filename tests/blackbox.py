@@ -521,35 +521,28 @@ class RouterSimulation:
             provided for comparison.
             NOTE: model_router may in fact be the same as router, and in this case
             it is expected that something else such as version or optimization option
-            would differ between modeel_router and router during the simulation
+            would differ between model_router and router during the simulation
         * algod (optional) - if missing, just get one
 
     Artifacts from Step 1 are stored in self.results: _SimConfig
 
     2. Simulation (simulate_and_assert method): - using self.results artifacts Step 1, also takes params:
-        * arg_strat_type: Type[ABICallStrategy] - strategy type to use for args generation
-        * abi_args_mod: ABIArgsMod (default None) - used to specify any arg mutation
+        * approval_arg_strat_type: Type[ABICallStrategy] - strategy type to use for approval program's arg generation
+        * clear_arg_strat_type: Type[ABICallStrategy] | None - strategy type to use for clear program's arg generation
+        * approval_abi_args_mod: ABIArgsMod (default None) - used to specify any arg mutation
+        # TODO: currently there aren't any clear_abi_args_mod, but we might need for testing non-trivial clear programs
         * version: int - for compiling self.router
+        * method_configs: ABICallConfigs - these drive all the test cases
         * assemble_constants: bool (optional) - for compiling self.router
         * optimize: OptimizeOptions (optional) - for compiling self.router
-        * method_configs: dict[str | None, MethodConfig] (optional)
-            - if missing, pick up from router.method_configs
         * num_dryruns: int (default 1) - the number of input runs to generate
             per method X config combination
         * txn_params: TxParams (optional) - other TxParams to append
             -in addition to the (is_app_create, OnComplete) information
-        * msg: string (optional) - message to report when assert violation occurs
         * model_version: int - for compiling self.model_router
         * model_assemble_constants: bool (optional) - for compiling self.model_router
         * model_optimize: OptimizeOptions (optional) - for compiling self.model_router
-        * TODO: consider adding -->strict: bool (default True) - when True ensure
-            that methods + call_config's to be tested are available in
-            `router` and `model_router` if it exists
-        * TODO: in this current version, there is no way to specify any other
-            other txn information that might accompany the arguments
-        * TODO: do we need to pass along `handle_selector: bool = True`
-            into ABICallStrategy's init ???
-
+        * msg: string (optional) - message to report when an assertion is violated
     """
 
     def __init__(

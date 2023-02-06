@@ -33,9 +33,11 @@ ROUTER_CASES, ROUTER_SOURCES = router_app_tester()
 TYPICAL_IAC_OC = pt.MethodConfig(no_op=pt.CallConfig.CALL)
 
 # TEST DRIVERS LEGEND - combines method_configs + predicates
-# * @0 - method: str. method == `None` indicates bare app call
+# * @0 - method: str
+#   method == `None` indicates bare app call
 #
-# * @1 - method_config: MethodConfig - defines how to call the method
+# * @1 - method_config: MethodConfig
+#   defines how to call the method
 #
 # * @3 - predicates: Predicates ~ dict[DRProp, Any]
 #   these are being asserted after being processed into Invariant's
@@ -323,7 +325,7 @@ SCENARIO: {scenario}
     # NOTE: We don't test the case of adding an argument to method calls
     # because the SDK's will guard against this case.
     # However, we should re-think this assumption.
-    # Cf: https://github.com/algorand/go-algorand-internal/issues/2772
+    # Cf. https://github.com/algorand/go-algorand-internal/issues/2772
     # Cf. https://github.com/algorand/algorand-sdk-testing/issues/190
 
     scenario = "III(a). inserting an extra random byte into method selector"
