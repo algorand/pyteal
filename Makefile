@@ -69,9 +69,14 @@ lint-and-test: check-generate-init lint test-unit
 algod-start:
 	docker compose up -d algod --wait
 
+algod-version:
+	docker compose exec algod goal --version
+
+algod-start-report: algod-start algod-version
+
 algod-stop:
 	docker compose stop algod
-
+	
 integration-run:
 	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration -m "not serial"
 	pytest --durations=10 -sv tests/integration -m serial
