@@ -153,8 +153,6 @@ def test_abi_router_positive(case, version, router):
         * consider each (OnComplete, CallConfig) combination
         * assert that all predicates hold for this call
     """
-    pregen_approval, pregen_clear = ROUTER_SOURCES[(case, version)]
-
     driver = DRIVERS[case]
     predicates, methconfigs = split_driver2predicates_methconfigs(driver)
 
@@ -186,7 +184,8 @@ def test_abi_router_positive(case, version, router):
     print("\nstats:", json.dumps(stats := results.stats, indent=2))
     assert stats and all(stats.values())
 
-    # These fail because of differing scratch slot assignments
+    # These fail because of differing scratch slot assignments:
+    # pregen_approval, pregen_clear = ROUTER_SOURCES[(case, version)]
     # assert pregen_clear == results.clear_simulator.simulate_dre.program
     # assert pregen_approval == results.approval_simulator.simulate_dre.program
 
