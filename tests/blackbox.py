@@ -508,8 +508,6 @@ def negate_cc(cc: CallConfig) -> CallConfig:
 
 class RouterSimulation:
     """
-    TODO: the following is out of date!!!
-
     Lifecycle of a RouterSimulation
 
     1. Creation (__init__ method):
@@ -527,22 +525,30 @@ class RouterSimulation:
     Artifacts from Step 1 are stored in self.results: _SimConfig
 
     2. Simulation (simulate_and_assert method): - using self.results artifacts Step 1, also takes params:
-        * approval_arg_strat_type: Type[ABICallStrategy] - strategy type to use for approval program's arg generation
-        * clear_arg_strat_type: Type[ABICallStrategy] | None - strategy type to use for clear program's arg generation
-        * approval_abi_args_mod: ABIArgsMod (default None) - used to specify any arg mutation
-        # TODO: currently there aren't any clear_abi_args_mod, but we might need for testing non-trivial clear programs
+        * approval_arg_strat_type: Type[ABICallStrategy]
+            - strategy type to use for approval program's arg generation
+        * clear_arg_strat_type_or_inputs: Type[ABICallStrategy] | Iterable[Sequence[PyTypes]] | None
+            - strategy type to use for clear program's arg generation
+        * approval_abi_args_mod: ABIArgsMod (default None)
+            - used to specify any arg mutation
+        # TODO: currently there aren't any clear_abi_args_mod, but we might need these for testing non-trivial clear programs
         * version: int - for compiling self.router
         * method_configs: ABICallConfigs - these drive all the test cases
         * assemble_constants: bool (optional) - for compiling self.router
         * optimize: OptimizeOptions (optional) - for compiling self.router
-        * num_dryruns: int (default 1) - the number of input runs to generate
-            per method X config combination
-        * txn_params: TxParams (optional) - other TxParams to append
-            -in addition to the (is_app_create, OnComplete) information
+        * num_dryruns: int (default 1)
+            - the number of input runs to generate per method X config combination
+        * txn_params: TxParams (optional)
+            - other TxParams to append in addition to the (is_app_create, OnComplete) information
         * model_version: int - for compiling self.model_router
         * model_assemble_constants: bool (optional) - for compiling self.model_router
         * model_optimize: OptimizeOptions (optional) - for compiling self.model_router
         * msg: string (optional) - message to report when an assertion is violated
+        * omit_approval_call: bool (default False) - allow purely testing the clear program
+        * omit_clear_call: bool (default False) - allow purely testing the approval program
+        NOTE: one of omit_approval_call or omit_clear_call must remain False
+        * executor_validation (default True) - when False, skip the DryRunExecutor's validation
+        * skip_validation (default False) - when False, skip the Router's validation
     """
 
     def __init__(
@@ -571,9 +577,9 @@ class RouterSimulation:
 
     @classmethod
     def _validate_router(cls, router: Router, kind: str = "Base") -> Router:
-        assert isinstance(router, Router), (
-            f"Wrong type for {kind} Router: {type(router)}. Please provide: " f"Router."
-        )
+        assert isinstance(
+            router, Router
+        ), f"Wrong type for {kind} Router: {type(router)}"
         cls._validate_method_configs(router.method_configs)
 
         return router
@@ -604,7 +610,7 @@ class RouterSimulation:
         ), f"method_configs['{call}'] specifies NEVER to be called; for driving the test, each configured method should ACTUALLY be tested."
         assert (
             meth_config.clear_state is CallConfig.NEVER
-        ), "meth_config's clear_state must be None, but isn't"
+        ), "unexpected value for method_config's clear_state"
 
     @classmethod
     def _validate_predicates(cls, predicates):
@@ -722,14 +728,14 @@ class RouterSimulation:
         assemble_constants: bool = False,
         optimize: OptimizeOptions | None = None,
         num_dryruns: int = 1,
-        omit_approval_call: bool = False,
-        omit_clear_call: bool = False,
         txn_params: TxParams | None = None,
-        executor_validation: bool = True,
         model_version: int | None = None,
         model_assemble_constants: bool = False,
         model_optimize: OptimizeOptions | None = None,
         msg: str = "",
+        omit_approval_call: bool = False,
+        omit_clear_call: bool = False,
+        executor_validation: bool = True,
         skip_validation: bool = False,
     ) -> RouterSimulationResults:
         assert not (

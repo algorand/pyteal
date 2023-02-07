@@ -298,7 +298,7 @@ def test_RouterSimulation_init():
     algod = MagicMock(spec=AlgodClient)
 
     # many paths to misery:
-    err_msg = "Wrong type for Base Router: <class 'str'>. Please provide: Router."
+    err_msg = "Wrong type for Base Router: <class 'str'>"
     failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
 
     router = pt.Router("test_router")
@@ -336,7 +336,7 @@ def test_RouterSimulation_init():
     failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
 
     predicates = {"bar": {DRProp.passed: True}, "foo": {DRProp.budgetAdded: 45}}
-    err_msg = "Wrong type for Model Router: <class 'str'>. Please provide: Router."
+    err_msg = "Wrong type for Model Router: <class 'str'>"
     failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
 
     model_router = pt.Router("test_router")
