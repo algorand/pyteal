@@ -506,6 +506,14 @@ def negate_cc(cc: CallConfig) -> CallConfig:
     return CallConfig(3 - cc)
 
 
+@dataclass(frozen=True)
+class RouterSimulationResults:
+    stats: dict[str, Any]
+    results: dict
+    approval_simulator: Simulation | None
+    clear_simulator: Simulation | None
+
+
 class RouterSimulation:
     """
     Lifecycle of a RouterSimulation
@@ -620,7 +628,7 @@ class RouterSimulation:
         )
 
         assert (
-            predicates
+            len(predicates) > 0
         ), "Please provide at least one method to call and assert against."
 
         for method, preds in predicates.items():
@@ -707,13 +715,6 @@ class RouterSimulation:
                 raise ValueError(
                     f"method_configs has a method '{meth}' missing from {router_prefix}-Router's contract."
                 )
-
-    @dataclass(frozen=True)
-    class RouterSimulationResults:
-        stats: dict[str, Any]
-        results: dict
-        approval_simulator: Simulation | None
-        clear_simulator: Simulation | None
 
     def simulate_and_assert(
         self,
@@ -886,7 +887,7 @@ call_strat={type(approval_strat)}
             update_stats(meth_name, len(self.predicates[meth_name]))
 
         # ---- Summary Statistics ---- #
-        return self.RouterSimulationResults(
+        return RouterSimulationResults(
             stats=stats,
             results=self.auto_path_results,
             approval_simulator=approve_sim,
