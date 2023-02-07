@@ -733,7 +733,7 @@ class RouterSimulation:
         skip_validation: bool = False,
     ) -> RouterSimulationResults:
         assert not (
-            omit_approval_call and omit_approval_call
+            omit_approval_call and omit_clear_call
         ), "Aborting and failing as all tests are being omitted"
 
         # --- Compile Programs --- #
