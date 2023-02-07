@@ -153,6 +153,16 @@ def split_driver2predicates_methconfigs(driver) -> tuple[Predicates, ABICallConf
     return predicates, methconfigs
 
 
+def assert_full_method_coverage(router, methconfigs):
+    assert len(methconfigs) == len(rmc := router.method_configs)
+    for meth_sig, meth_config in rmc.items():
+        k = meth_sig
+        if k:
+            k = meth_sig.split("(")[0]
+        assert k in methconfigs, f"{k=} (derived from {meth_sig=} not in methconfigs"
+        assert meth_config == methconfigs[k]
+
+
 @pytest.mark.parametrize("case, version, router", ROUTER_CASES)
 def test_abi_router_positive(case, version, router):
     """
@@ -165,8 +175,7 @@ def test_abi_router_positive(case, version, router):
     driver = DRIVERS[case]
     predicates, methconfigs = split_driver2predicates_methconfigs(driver)
 
-    # assert FULL coverage:
-    assert methconfigs == router.method_configs
+    assert_full_method_coverage(router, methconfigs)
 
     rsim = RouterSimulation(router, predicates)
 
@@ -244,8 +253,9 @@ def test_abi_router_negative(case, version, router):
 
     driver = DRIVERS[case]
     pos_predicates, pos_mconfigs = split_driver2predicates_methconfigs(driver)
+
     # assert FULL coverage (before modifying the dict):
-    assert pos_mconfigs == router.method_configs
+    assert_full_method_coverage(router, pos_mconfigs)
 
     if None not in pos_mconfigs:
         pos_mconfigs[None] = pt.MethodConfig()

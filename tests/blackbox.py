@@ -777,16 +777,16 @@ class RouterSimulation:
 
         # --- setup reporter and stats --- #
 
-        meth: Any
+        meth_name: Any
 
         def msg4simulate() -> str:
             return f"""user provide message={msg}
 call_strat={type(approval_strat)}
-{meth=}
+{meth_name=}
 {oc=}
 {call_cfg=}
 {is_app_create=}
-{len(self.predicates[meth])=}
+{len(self.predicates[meth_name])=}
 {stats["method_combo_count"]=}
 {stats["dryrun_count"]=}
 {stats["assertions_count"]=}
@@ -810,13 +810,13 @@ call_strat={type(approval_strat)}
                 abi_args_mod=approval_abi_args_mod,
             )
             double_check_at_least_one_method = False
-            for meth, meth_cfg in method_configs.items():
-                sig = approval_strat.method_signature(meth)
+            for meth_name, meth_cfg in method_configs.items():
+                sig = approval_strat.method_signature(meth_name)
                 approve_sim = Simulation(
                     self.algod,
                     ExecutionMode.Application,
                     approval_teal,
-                    self.predicates[meth],
+                    self.predicates[meth_name],
                     abi_method_signature=sig,
                     identities_teal=model_approval_teal,
                     validation=executor_validation,
@@ -834,8 +834,8 @@ call_strat={type(approval_strat)}
                             approval_strat, txn_params=tp, msg=msg4simulate()
                         )
                         assert sim_results.succeeded
-                        self.auto_path_results[meth][(on_create, oc)] = sim_results
-                        update_stats(meth, len(self.predicates[meth]))
+                        self.auto_path_results[meth_name][(on_create, oc)] = sim_results
+                        update_stats(meth_name, len(self.predicates[meth_name]))
 
                     # weird walrus is_app_create := ... to fill closure of msg4simulate()
                     if call_cfg & CallConfig.CALL:
@@ -862,22 +862,22 @@ call_strat={type(approval_strat)}
                     type_for_args=sdk_abi.ABIType.from_string("byte[8]"),
                 )  # type: ignore
 
-            meth = CLEAR_STATE_CALL
+            meth_name = CLEAR_STATE_CALL
             is_app_create = False
             oc = OnComplete.ClearStateOC
             clear_sim = Simulation(
                 self.algod,
                 ExecutionMode.Application,
                 clear_teal,
-                self.predicates[meth],
+                self.predicates[meth_name],
                 identities_teal=model_clear_teal,
                 validation=executor_validation,
             )
 
             sim_results = clear_sim.run_and_assert(clear_strat, msg=msg4simulate())
             assert sim_results.succeeded
-            self.auto_path_results[meth][(is_app_create, oc)] = sim_results
-            update_stats(meth, len(self.predicates[meth]))
+            self.auto_path_results[meth_name][(is_app_create, oc)] = sim_results
+            update_stats(meth_name, len(self.predicates[meth_name]))
 
         # ---- Summary Statistics ---- #
         return self.RouterSimulationResults(

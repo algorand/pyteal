@@ -815,7 +815,9 @@ class Router:
 
         self.bare_call_actions: BareCallActions = bare_calls or BareCallActions()
 
+        # maps method signature (or None for bare call) to MethodConfig:
         self.method_configs: dict[str | None, MethodConfig] = dict()
+
         if not self.bare_call_actions.is_empty():
             self.method_configs[None] = self.bare_call_actions.get_method_config()
 
@@ -847,7 +849,6 @@ class Router:
                 f"for adding method handler, must be ABIReturnSubroutine but method_call is {type(method_call)}"
             )
         method_signature = method_call.method_signature(overriding_name)
-        final_name = overriding_name or method_call.name()
         if method_config is None:
             method_config = MethodConfig(no_op=CallConfig.CALL)
         if method_config.is_never():
@@ -876,7 +877,7 @@ class Router:
         self.approval_ast.add_method_to_ast(
             method_signature, method_approval_cond, method_call
         )
-        self.method_configs[final_name] = method_config
+        self.method_configs[method_signature] = method_config
         return method_call
 
     def method(
