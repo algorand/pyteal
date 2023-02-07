@@ -1,9 +1,10 @@
 from pathlib import Path
+
 import pytest
 
 import pyteal as pt
 
-FIXTURES = Path.cwd() / "tests" / "teal" / "router"
+ROUTER_FIXTURES = Path.cwd() / "tests" / "teal" / "router"
 
 
 def test_compile_single():
@@ -2350,14 +2351,14 @@ def router_app_tester() -> tuple[list[pt.Router], dict[str, str]]:
         (actual_ap, actual_csp, _) = router.compile_program(version=version)
 
         # if write:
-        #     with open(FIXTURES / fixture_ap, "w") as f:
+        #     with open(ROUTER_FIXTURES / fixture_ap, "w") as f:
         #         f.write(actual_ap)
-        #     with open(FIXTURES / fixture_csp, "w") as f:
+        #     with open(ROUTER_FIXTURES / fixture_csp, "w") as f:
         #         f.write(actual_csp)
 
-        with open(FIXTURES / fixture_ap) as f:
+        with open(ROUTER_FIXTURES / fixture_ap) as f:
             expected_ap_with_oc = f.read()
-        with open(FIXTURES / fixture_csp) as f:
+        with open(ROUTER_FIXTURES / fixture_csp) as f:
             expected_csp_with_oc = f.read()
         assert expected_ap_with_oc == actual_ap
         assert expected_csp_with_oc == actual_csp

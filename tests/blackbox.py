@@ -734,7 +734,7 @@ class RouterSimulation:
     ) -> RouterSimulationResults:
         assert not (
             omit_approval_call and omit_approval_call
-        ), f"Aborting and failing as all tests are being omitted"
+        ), "Aborting and failing as all tests are being omitted"
 
         # --- Compile Programs --- #
         approval_teal, clear_teal, contract = self.router.compile_program(
