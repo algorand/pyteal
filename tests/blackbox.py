@@ -2,7 +2,7 @@ from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass, asdict
 import json
-from typing import Any, Callable, Dict, Final, Literal, Sequence, Type, cast
+from typing import Any, Callable, Dict, Final, Iterable, Literal, Sequence, Type, cast
 
 import algosdk.abi as sdk_abi
 from algosdk.transaction import OnComplete
@@ -706,13 +706,15 @@ class RouterSimulation:
     class RouterSimulationResults:
         stats: dict[str, Any]
         results: dict
-        approval_simulator: Simulation
+        approval_simulator: Simulation | None
         clear_simulator: Simulation | None
 
     def simulate_and_assert(
         self,
         approval_args_strat_type: Type[ABIStrategy],
-        clear_args_strat_type: Type[ABIStrategy] | None,
+        clear_args_strat_type_or_inputs: Type[ABIStrategy]
+        | Iterable[Sequence[PyTypes]]
+        | None,
         approval_abi_args_mod: ABIArgsMod | None,
         version: int,
         method_configs: ABICallConfigs,
@@ -720,6 +722,7 @@ class RouterSimulation:
         assemble_constants: bool = False,
         optimize: OptimizeOptions | None = None,
         num_dryruns: int = 1,
+        omit_approval_call: bool = False,
         omit_clear_call: bool = False,
         txn_params: TxParams | None = None,
         executor_validation: bool = True,
@@ -727,7 +730,12 @@ class RouterSimulation:
         model_assemble_constants: bool = False,
         model_optimize: OptimizeOptions | None = None,
         msg: str = "",
+        skip_validation: bool = False,
     ) -> RouterSimulationResults:
+        assert not (
+            omit_approval_call and omit_approval_call
+        ), f"Aborting and failing as all tests are being omitted"
+
         # --- Compile Programs --- #
         approval_teal, clear_teal, contract = self.router.compile_program(
             version=version, assemble_constants=assemble_constants, optimize=optimize
@@ -747,18 +755,19 @@ class RouterSimulation:
                 optimize=model_optimize,
             )
 
-        self._validate_simulation(
-            approval_args_strat_type,
-            clear_args_strat_type,
-            approval_abi_args_mod,
-            num_dryruns,
-            txn_params,
-            model_version,
-            method_configs,
-            contract,
-            model_contract,
-            omit_clear_call,
-        )
+        if not skip_validation:
+            self._validate_simulation(
+                approval_args_strat_type,
+                clear_args_strat_type_or_inputs,
+                approval_abi_args_mod,
+                num_dryruns,
+                txn_params,
+                model_version,
+                method_configs,
+                contract,
+                model_contract,
+                omit_clear_call,
+            )
 
         if not txn_params:
             txn_params = TxParams()
@@ -790,60 +799,68 @@ call_strat={type(approval_strat)}
             stats["assertions_count"] += num_dryruns * num_preds
 
         # ---- APPROVAL PROGRAM SIMULATION ---- #
-        approval_strat = ABICallStrategy(
-            json.dumps(contract.dictify()),
-            approval_args_strat_type,
-            num_dryruns=num_dryruns,
-            abi_args_mod=approval_abi_args_mod,
-        )
-        double_check_at_least_one_method = False
-        for meth, meth_cfg in method_configs.items():
-            sig = approval_strat.method_signature(meth)
-            approve_sim = Simulation(
-                self.algod,
-                ExecutionMode.Application,
-                approval_teal,
-                self.predicates[meth],
-                abi_method_signature=sig,
-                identities_teal=model_approval_teal,
-                validation=executor_validation,
+        approval_strat = None
+        call_cfg = None
+        approve_sim = None
+        if not omit_approval_call:
+            approval_strat = ABICallStrategy(
+                json.dumps(contract.dictify()),
+                approval_args_strat_type,
+                num_dryruns=num_dryruns,
+                abi_args_mod=approval_abi_args_mod,
             )
+            double_check_at_least_one_method = False
+            for meth, meth_cfg in method_configs.items():
+                sig = approval_strat.method_signature(meth)
+                approve_sim = Simulation(
+                    self.algod,
+                    ExecutionMode.Application,
+                    approval_teal,
+                    self.predicates[meth],
+                    abi_method_signature=sig,
+                    identities_teal=model_approval_teal,
+                    validation=executor_validation,
+                )
 
-            for oc_str, call_cfg in asdict(meth_cfg).items():
-                oc = as_on_complete(oc_str)
+                for oc_str, call_cfg in asdict(meth_cfg).items():
+                    oc = as_on_complete(oc_str)
 
-                def simulate_approval(on_create):
-                    tp: TxParams = deepcopy(txn_params)
-                    tp.update_fields(
-                        TxParams.for_app(is_app_create=on_create, on_complete=oc)
-                    )
-                    sim_results = approve_sim.run_and_assert(
-                        approval_strat, txn_params=tp, msg=msg4simulate()
-                    )
-                    assert sim_results.succeeded
-                    self.auto_path_results[meth][(on_create, oc)] = sim_results
-                    update_stats(meth, len(self.predicates[meth]))
+                    def simulate_approval(on_create):
+                        tp: TxParams = deepcopy(txn_params)
+                        tp.update_fields(
+                            TxParams.for_app(is_app_create=on_create, on_complete=oc)
+                        )
+                        sim_results = approve_sim.run_and_assert(
+                            approval_strat, txn_params=tp, msg=msg4simulate()
+                        )
+                        assert sim_results.succeeded
+                        self.auto_path_results[meth][(on_create, oc)] = sim_results
+                        update_stats(meth, len(self.predicates[meth]))
 
-                # weird walrus is_app_create := ... to fill closure of msg4simulate()
-                if call_cfg & CallConfig.CALL:
-                    double_check_at_least_one_method = True
-                    simulate_approval(is_app_create := False)
+                    # weird walrus is_app_create := ... to fill closure of msg4simulate()
+                    if call_cfg & CallConfig.CALL:
+                        double_check_at_least_one_method = True
+                        simulate_approval(is_app_create := False)
 
-                if call_cfg & CallConfig.CREATE:
-                    double_check_at_least_one_method = True
-                    simulate_approval(is_app_create := True)
-        assert double_check_at_least_one_method, "no method was simulated"
+                    if call_cfg & CallConfig.CREATE:
+                        double_check_at_least_one_method = True
+                        simulate_approval(is_app_create := True)
+            assert double_check_at_least_one_method, "no method was simulated"
 
         # ---- CLEAR PROGRAM SIMULATION ---- #
         clear_sim: Simulation | None = None
         if not omit_clear_call:
-            clear_strat = RandomArgLengthCallStrategy(
-                cast(Type[ABIStrategy], clear_args_strat_type),
-                max_args=2,
-                num_dryruns=num_dryruns,
-                min_args=0,
-                type_for_args=sdk_abi.ABIType.from_string("byte[8]"),
-            )
+            if isinstance(clear_args_strat_type_or_inputs, list):
+                clear_strat = clear_args_strat_type_or_inputs
+                num_dryruns = len(clear_strat)
+            else:
+                clear_strat = RandomArgLengthCallStrategy(
+                    cast(Type[ABIStrategy], clear_args_strat_type_or_inputs),
+                    max_args=2,
+                    num_dryruns=num_dryruns,
+                    min_args=0,
+                    type_for_args=sdk_abi.ABIType.from_string("byte[8]"),
+                )  # type: ignore
 
             meth = CLEAR_STATE_CALL
             is_app_create = False

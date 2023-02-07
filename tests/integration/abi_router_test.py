@@ -12,6 +12,7 @@ from graviton.abi_strategy import (
 )
 from graviton.blackbox import DryRunEncoder
 from graviton.invariant import DryRunProperty as DRProp
+from graviton.invariant import PredicateKind
 
 import pyteal as pt
 from pyteal.compiler.compiler_test import router_app_tester
@@ -28,7 +29,9 @@ NUM_ROUTER_DRYRUNS = 7
 FIXTURES = Path.cwd() / "tests" / "teal" / "router"
 
 
-ROUTER_CASES, ROUTER_SOURCES = router_app_tester()
+ALL_ROUTER_CASES, ROUTER_SOURCES = router_app_tester()
+
+ROUTER_CASES, NONTRIV_CLEAR_ROUTER_CASES = ALL_ROUTER_CASES[:-2], ALL_ROUTER_CASES[-2:]
 
 TYPICAL_IAC_OC = pt.MethodConfig(no_op=pt.CallConfig.CALL)
 
@@ -132,7 +135,11 @@ QUESTIONABLE_DRIVER: list[tuple[RouterCallType, pt.MethodConfig, Predicates]] = 
 
 YACC_DRIVER = [case for case in QUESTIONABLE_DRIVER if case[0]]
 
-DRIVERS = {"questionable": QUESTIONABLE_DRIVER, "yacc": YACC_DRIVER}
+DRIVERS = {
+    "questionable": QUESTIONABLE_DRIVER,
+    "yacc": YACC_DRIVER,
+    "nontriv_clear": QUESTIONABLE_DRIVER,
+}
 
 
 def split_driver2predicates_methconfigs(driver) -> tuple[Predicates, ABICallConfigs]:
@@ -171,7 +178,7 @@ def test_abi_router_positive(case, version, router):
 
     results = rsim.simulate_and_assert(
         approval_args_strat_type=RandomABIStrategyHalfSized,
-        clear_args_strat_type=RandomABIStrategy,
+        clear_args_strat_type_or_inputs=RandomABIStrategy,
         approval_abi_args_mod=None,
         version=version,
         method_configs=methconfigs,
@@ -214,23 +221,24 @@ CLEAR_NEGATIVE_INVARIANTS_MUST_APPROVE = [
 ][0]
 
 
+def scenario_assert_stats(scenario, results, totals):
+    part_a = f"""
+SCENARIO: {scenario} 
+"""
+    if results:
+        part_b = json.dumps(stats := results.stats, indent=2)
+        assert stats and all(stats.values())
+        for k, v in stats.items():
+            if isinstance(v, int):
+                totals[k] += v
+    else:
+        part_b = "SKIPPED"
+    print(f"{part_a}stats:", part_b)
+
+
 @pytest.mark.parametrize("case, version, router", ROUTER_CASES)
 def test_abi_router_negative(case, version, router):
     totals = defaultdict(int)
-
-    def scenario_assert_stats(scenario, results):
-        part_a = f"""
-SCENARIO: {scenario} 
-"""
-        if results:
-            part_b = json.dumps(stats := results.stats, indent=2)
-            assert stats and all(stats.values())
-            for k, v in stats.items():
-                if isinstance(v, int):
-                    totals[k] += v
-        else:
-            part_b = "SKIPPED"
-        print(f"{part_a}stats:", part_b)
 
     contract = router.contract_construct()
 
@@ -283,7 +291,7 @@ SCENARIO: {scenario}
 
     results = rsim.simulate_and_assert(
         approval_args_strat_type=RandomABIStrategyHalfSized,
-        clear_args_strat_type=RandomABIStrategy,
+        clear_args_strat_type_or_inputs=RandomABIStrategy,
         approval_abi_args_mod=None,
         version=version,
         method_configs=neg_mconfigs,
@@ -295,7 +303,7 @@ SCENARIO: {scenario}
     assert (sim_results := results.results) and all(
         sim.succeeded for meth in sim_results.values() for sim in meth.values()
     )
-    scenario_assert_stats(scenario, results)
+    scenario_assert_stats(scenario, results, totals)
 
     # II. the case of bare-app-calls
     scenario = "II. adding an argument to a bare app call"
@@ -303,7 +311,7 @@ SCENARIO: {scenario}
         bare_only_methconfigs = {None: pos_mconfigs[None]}
         results = rsim.simulate_and_assert(
             approval_args_strat_type=RandomABIStrategyHalfSized,
-            clear_args_strat_type=None,
+            clear_args_strat_type_or_inputs=None,
             approval_abi_args_mod=ABIArgsMod.parameter_append,
             version=version,
             method_configs=bare_only_methconfigs,
@@ -315,9 +323,9 @@ SCENARIO: {scenario}
         assert (sim_results := results.results) and all(
             sim.succeeded for meth in sim_results.values() for sim in meth.values()
         )
-        scenario_assert_stats(scenario, results)
+        scenario_assert_stats(scenario, results, totals)
     else:
-        scenario_assert_stats(scenario, None)
+        scenario_assert_stats(scenario, None, totals)
 
     # For the rest, we may assume method calls (non bare-app-call)
     # III. explore changing method selector arg[0] by edit distance 1
@@ -331,7 +339,7 @@ SCENARIO: {scenario}
     scenario = "III(a). inserting an extra random byte into method selector"
     results = rsim.simulate_and_assert(
         approval_args_strat_type=RandomABIStrategyHalfSized,
-        clear_args_strat_type=None,
+        clear_args_strat_type_or_inputs=None,
         approval_abi_args_mod=ABIArgsMod.selector_byte_insert,
         version=version,
         method_configs=pure_meth_mconfigs,
@@ -343,12 +351,12 @@ SCENARIO: {scenario}
     assert (sim_results := results.results) and all(
         sim.succeeded for meth in sim_results.values() for sim in meth.values()
     )
-    scenario_assert_stats(scenario, results)
+    scenario_assert_stats(scenario, results, totals)
 
     scenario = "III(b). removing a random byte from method selector"
     results = rsim.simulate_and_assert(
         approval_args_strat_type=RandomABIStrategyHalfSized,
-        clear_args_strat_type=None,
+        clear_args_strat_type_or_inputs=None,
         approval_abi_args_mod=ABIArgsMod.selector_byte_delete,
         version=version,
         method_configs=pure_meth_mconfigs,
@@ -360,12 +368,12 @@ SCENARIO: {scenario}
     assert (sim_results := results.results) and all(
         sim.succeeded for meth in sim_results.values() for sim in meth.values()
     )
-    scenario_assert_stats(scenario, results)
+    scenario_assert_stats(scenario, results, totals)
 
     scenario = "III(c). replacing a random byte in method selector"
     results = rsim.simulate_and_assert(
         approval_args_strat_type=RandomABIStrategyHalfSized,
-        clear_args_strat_type=None,
+        clear_args_strat_type_or_inputs=None,
         approval_abi_args_mod=ABIArgsMod.selector_byte_replace,
         version=version,
         method_configs=pure_meth_mconfigs,
@@ -377,7 +385,7 @@ SCENARIO: {scenario}
     assert (sim_results := results.results) and all(
         sim.succeeded for meth in sim_results.values() for sim in meth.values()
     )
-    scenario_assert_stats(scenario, results)
+    scenario_assert_stats(scenario, results, totals)
 
     # IV. explore changing the number of args over the 'good' call_types
     # NOTE: We don't test the case of adding an argument to method calls
@@ -391,7 +399,7 @@ SCENARIO: {scenario}
     }
     results = rsim.simulate_and_assert(
         approval_args_strat_type=RandomABIStrategyHalfSized,
-        clear_args_strat_type=None,
+        clear_args_strat_type_or_inputs=None,
         approval_abi_args_mod=ABIArgsMod.parameter_delete,
         version=version,
         method_configs=atleast_one_param_mconfigs,
@@ -403,6 +411,120 @@ SCENARIO: {scenario}
     assert (sim_results := results.results) and all(
         sim.succeeded for meth in sim_results.values() for sim in meth.values()
     )
-    scenario_assert_stats(scenario, results)
+    scenario_assert_stats(scenario, results, totals)
 
     print("SUMMARY STATS: ", json.dumps(totals, indent=2))
+
+
+IDENTITY_PREDICATES = {
+    DRProp.lastLog: PredicateKind.IdenticalPair,
+    DRProp.status: PredicateKind.IdenticalPair,
+    DRProp.error: PredicateKind.IdenticalPair,
+}
+
+
+def test_nontriv_clear():
+    totals = defaultdict(int)
+
+    questionable = [
+        r for name, ver, r in ALL_ROUTER_CASES if name == "questionable" and ver == 6
+    ][0]
+    nontriv_clear = [
+        r for name, ver, r in ALL_ROUTER_CASES if name == "nontriv_clear" and ver == 6
+    ][0]
+
+    _, mconfigs = split_driver2predicates_methconfigs(DRIVERS["nontriv_clear"])
+    predicates = {meth: IDENTITY_PREDICATES for meth in mconfigs}
+
+    rsim_nt_vs_q = RouterSimulation(
+        nontriv_clear, predicates, model_router=questionable
+    )
+
+    # Sanity check the approval programs (POSITIVE CASES):
+    msg = "APPROVAL nontriv@v6 vs. questionable@v8"
+    version = 6
+    results = rsim_nt_vs_q.simulate_and_assert(
+        approval_args_strat_type=RandomABIStrategyHalfSized,
+        clear_args_strat_type_or_inputs=None,
+        approval_abi_args_mod=None,
+        version=version,
+        method_configs=mconfigs,
+        num_dryruns=7,
+        omit_clear_call=True,
+        model_version=8,
+        msg=msg,
+    )
+    assert (sim_results := results.results) and all(
+        sim.succeeded for meth in sim_results.values() for sim in meth.values()
+    )
+    scenario_assert_stats(msg, results, totals)
+
+    msg = "APPROVAL nontriv@v8 vs. questionable@v8"
+    version = 8
+    results = rsim_nt_vs_q.simulate_and_assert(
+        approval_args_strat_type=RandomABIStrategyHalfSized,
+        clear_args_strat_type_or_inputs=None,
+        approval_abi_args_mod=None,
+        version=version,
+        method_configs=mconfigs,
+        num_dryruns=7,
+        omit_clear_call=True,
+        model_version=8,
+        msg=msg,
+    )
+    assert (sim_results := results.results) and all(
+        sim.succeeded for meth in sim_results.values() for sim in meth.values()
+    )
+    scenario_assert_stats(msg, results, totals)
+
+    print("PARTIAL SUMMARY STATS: ", json.dumps(totals, indent=2))
+
+    # Finally, a bespoke test for the non-trivial clear program:
+    bespoke = {
+        DRProp.passed: {
+            (): True,
+            (b"random bytes",): True,
+            (b"CLEANUP",): True,
+            (b"CLEANUP", b"random bytes"): True,
+            (b"CLEANUP", b"ABORTING"): False,
+            (b"CLEANUP", b"ABORTING", b"random bytes"): False,
+        }
+    }
+    inputs = list(bespoke[DRProp.passed].keys())
+    clear_preds = {CLEAR_STATE_CALL: bespoke}
+
+    msg = "CLEAR nontriv@v6"
+    version = 6
+    clear_rsim = RouterSimulation(nontriv_clear, clear_preds)
+    results = clear_rsim.simulate_and_assert(
+        approval_args_strat_type=None,
+        clear_args_strat_type_or_inputs=inputs,
+        approval_abi_args_mod=None,
+        version=version,
+        method_configs=None,
+        msg=msg,
+        omit_approval_call=True,
+        skip_validation=True,
+    )
+    assert (sim_results := results.results) and all(
+        sim.succeeded for meth in sim_results.values() for sim in meth.values()
+    )
+    scenario_assert_stats(msg, results, totals)
+
+    msg = "CLEAR nontriv@v8"
+    version = 8
+    clear_rsim = RouterSimulation(nontriv_clear, clear_preds)
+    results = clear_rsim.simulate_and_assert(
+        approval_args_strat_type=None,
+        clear_args_strat_type_or_inputs=inputs,
+        approval_abi_args_mod=None,
+        version=version,
+        method_configs=None,
+        msg=msg,
+        omit_approval_call=True,
+        skip_validation=True,
+    )
+    assert (sim_results := results.results) and all(
+        sim.succeeded for meth in sim_results.values() for sim in meth.values()
+    )
+    scenario_assert_stats(msg, results, totals)

@@ -2346,29 +2346,41 @@ def router_app_tester() -> tuple[list[pt.Router], dict[str, str]]:
         )
     assert "Frame pointers aren't available" in str(e.value)
 
+    def router_compilarison(router, version, fixture_ap, fixture_csp, key, write=False):
+        (actual_ap, actual_csp, _) = router.compile_program(version=version)
+
+        # if write:
+        #     with open(FIXTURES / fixture_ap, "w") as f:
+        #         f.write(actual_ap)
+        #     with open(FIXTURES / fixture_csp, "w") as f:
+        #         f.write(actual_csp)
+
+        with open(FIXTURES / fixture_ap) as f:
+            expected_ap_with_oc = f.read()
+        with open(FIXTURES / fixture_csp) as f:
+            expected_csp_with_oc = f.read()
+        assert expected_ap_with_oc == actual_ap
+        assert expected_csp_with_oc == actual_csp
+        append_router_info(
+            (
+                key,
+                version,
+                router,
+            ),
+            (
+                actual_ap,
+                actual_csp,
+            ),
+        )
+
     # QUESTIONABLE V6:
     _router_with_oc = FIRST_ROUTER
-    (
-        actual_ap_with_oc_compiled,
-        actual_csp_with_oc_compiled,
-        _,
-    ) = _router_with_oc.compile_program(version=6)
-    with open(FIXTURES / "questionable_approval_v6.teal") as f:
-        expected_ap_with_oc = f.read()
-    with open(FIXTURES / "questionable_clear_v6.teal") as f:
-        expected_csp_with_oc = f.read()
-    assert expected_ap_with_oc == actual_ap_with_oc_compiled
-    assert expected_csp_with_oc == actual_csp_with_oc_compiled
-    append_router_info(
-        (
-            "questionable",
-            6,
-            _router_with_oc,
-        ),
-        (
-            actual_ap_with_oc_compiled,
-            actual_csp_with_oc_compiled,
-        ),
+    router_compilarison(
+        _router_with_oc,
+        6,
+        "questionable_approval_v6.teal",
+        "questionable_clear_v6.teal",
+        "questionable",
     )
 
     # YACC V6:
@@ -2376,27 +2388,8 @@ def router_app_tester() -> tuple[list[pt.Router], dict[str, str]]:
         "yetAnotherContractConstructedFromRouter", clear_state=pt.Approve()
     )
     add_methods_to_router(_router_without_oc)
-    (
-        actual_ap_without_oc_compiled,
-        actual_csp_without_oc_compiled,
-        _,
-    ) = _router_without_oc.compile_program(version=6)
-    with open(FIXTURES / "yacc_approval_v6.teal") as f:
-        expected_ap_without_oc = f.read()
-    with open(FIXTURES / "yacc_clear_v6.teal") as f:
-        expected_csp_without_oc = f.read()
-    assert actual_ap_without_oc_compiled == expected_ap_without_oc
-    assert actual_csp_without_oc_compiled == expected_csp_without_oc
-    append_router_info(
-        (
-            "yacc",
-            6,
-            _router_without_oc,
-        ),
-        (
-            actual_ap_without_oc_compiled,
-            actual_csp_without_oc_compiled,
-        ),
+    router_compilarison(
+        _router_without_oc, 6, "yacc_approval_v6.teal", "yacc_clear_v6.teal", "yacc"
     )
 
     # QUESTIONABLE FP V8:
@@ -2406,29 +2399,13 @@ def router_app_tester() -> tuple[list[pt.Router], dict[str, str]]:
         clear_state=pt.Approve(),
     )
     add_methods_to_router(_router_with_oc)
-    (
-        actual_ap_with_oc_compiled,
-        actual_csp_with_oc_compiled,
-        _,
-    ) = _router_with_oc.compile_program(version=8)
-    with open(FIXTURES / "questionableFP_approval_v8.teal") as f:
-        expected_ap_with_oc = f.read()
-    with open(FIXTURES / "questionableFP_clear_v8.teal") as f:
-        expected_csp_with_oc = f.read()
-    assert actual_ap_with_oc_compiled == expected_ap_with_oc
-    assert actual_csp_with_oc_compiled == expected_csp_with_oc
-    append_router_info(
-        (
-            "questionable",
-            8,
-            _router_with_oc,
-        ),
-        (
-            actual_ap_with_oc_compiled,
-            actual_csp_with_oc_compiled,
-        ),
+    router_compilarison(
+        _router_with_oc,
+        8,
+        "questionableFP_approval_v8.teal",
+        "questionableFP_clear_v8.teal",
+        "questionable",
     )
-    assert actual_csp_with_oc_compiled == expected_csp_with_oc
 
     # YACC FP V8:
     _router_without_oc = pt.Router(
@@ -2436,29 +2413,44 @@ def router_app_tester() -> tuple[list[pt.Router], dict[str, str]]:
         clear_state=pt.Approve(),
     )
     add_methods_to_router(_router_without_oc)
-    (
-        actual_ap_without_oc_compiled,
-        actual_csp_without_oc_compiled,
-        _,
-    ) = _router_without_oc.compile_program(version=8)
-    with open(FIXTURES / "yaccFP_approval_v8.teal") as f:
-        expected_ap_without_oc = f.read()
-    with open(FIXTURES / "yaccFP_clear_v8.teal") as f:
-        expected_csp_without_oc = f.read()
-    assert actual_ap_without_oc_compiled == expected_ap_without_oc
-    assert actual_csp_without_oc_compiled == expected_csp_without_oc
-    append_router_info(
-        (
-            "yacc",
-            8,
-            _router_without_oc,
-        ),
-        (
-            actual_ap_without_oc_compiled,
-            actual_csp_without_oc_compiled,
-        ),
+    router_compilarison(
+        _router_without_oc,
+        8,
+        "yaccFP_approval_v8.teal",
+        "yaccFP_clear_v8.teal",
+        "yacc",
     )
-    assert actual_csp_without_oc_compiled == expected_csp_without_oc
+
+    non_trivial = pt.Seq(
+        pt.Cond(
+            [pt.Txn.application_args.length() < pt.Int(2), pt.Approve()],
+            [pt.Txn.application_args[0] != pt.Bytes("CLEANUP"), pt.Approve()],
+            [pt.Txn.application_args[1] != pt.Bytes("ABORTING"), pt.Approve()],
+        ),
+        pt.Reject(),
+    )
+    _router_with_nontriv_clear = pt.Router(
+        "QuestionableRouterWithNontrivialClear",
+        bare_calls=ON_COMPLETION_ACTIONS,
+        clear_state=non_trivial,
+    )
+    add_methods_to_router(_router_with_nontriv_clear)
+
+    router_compilarison(
+        _router_with_nontriv_clear,
+        6,
+        "nontriv_clear_approval_v6.teal",
+        "nontriv_clear_clear_v6.teal",
+        "nontriv_clear",
+    )
+
+    router_compilarison(
+        _router_with_nontriv_clear,
+        8,
+        "nontriv_clear_approval_v8.teal",
+        "nontriv_clear_clear_v8.teal",
+        "nontriv_clear",
+    )
 
     return routers, sources
 
