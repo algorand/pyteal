@@ -2,24 +2,27 @@
 txn NumAppArgs
 int 2
 <
-bnz main_l6
+bnz main_l8
 txna ApplicationArgs 0
 byte "CLEANUP"
 !=
-bnz main_l5
+bnz main_l7
 txna ApplicationArgs 1
 byte "ABORTING"
 !=
-bnz main_l4
+bnz main_l6
+int 1
+bnz main_l5
 err
-main_l4:
-int 1
-return
 main_l5:
-int 1
+int 0
 return
 main_l6:
 int 1
 return
-int 0
+main_l7:
+int 1
+return
+main_l8:
+int 1
 return

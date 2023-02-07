@@ -2427,8 +2427,8 @@ def router_app_tester() -> tuple[list[pt.Router], dict[str, str]]:
             [pt.Txn.application_args.length() < pt.Int(2), pt.Approve()],
             [pt.Txn.application_args[0] != pt.Bytes("CLEANUP"), pt.Approve()],
             [pt.Txn.application_args[1] != pt.Bytes("ABORTING"), pt.Approve()],
+            [pt.Int(1), pt.Reject()],
         ),
-        pt.Reject(),
     )
     _router_with_nontriv_clear = pt.Router(
         "QuestionableRouterWithNontrivialClear",
