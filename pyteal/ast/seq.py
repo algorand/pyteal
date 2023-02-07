@@ -1,7 +1,7 @@
 from typing import List, TYPE_CHECKING, overload
 
 from pyteal.types import TealType, require_type
-from pyteal.errors import TealInputError
+from pyteal.errors import TealInputError, TealTypeError, TealSeqError
 from pyteal.ir import TealSimpleBlock
 from pyteal.ast.expr import Expr
 
@@ -51,7 +51,17 @@ class Seq(Expr):
             if not isinstance(expr, Expr):
                 raise TealInputError("{} is not a pyteal expression.".format(expr))
             if i + 1 < len(exprs):
-                require_type(expr, TealType.none)
+                try:
+                    require_type(expr, TealType.none)
+                except TealTypeError:
+                    message = "{} must have a return type of TealType.none. ".format(
+                        expr
+                    )
+                    message += (
+                        "Only the last entry of a Seq array can have a return value."
+                    )
+                    seq_error = TealSeqError(message)
+                    raise seq_error
 
         self.args = exprs
 

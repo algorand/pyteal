@@ -90,13 +90,13 @@ def test_seq_has_return():
 
 
 def test_seq_invalid():
-    with pytest.raises(pt.TealTypeError):
+    with pytest.raises(pt.TealSeqError):
         pt.Seq([pt.Int(1), pt.Pop(pt.Int(2))])
 
-    with pytest.raises(pt.TealTypeError):
+    with pytest.raises(pt.TealSeqError):
         pt.Seq([pt.Int(1), pt.Int(2)])
 
-    with pytest.raises(pt.TealTypeError):
+    with pytest.raises(pt.TealSeqError):
         pt.Seq([pt.Seq([pt.Pop(pt.Int(1)), pt.Int(2)]), pt.Int(3)])
 
 
