@@ -2348,7 +2348,7 @@ def router_app_tester() -> tuple[list[pt.Router], dict[str, str]]:
     assert "Frame pointers aren't available" in str(e.value)
 
     def router_compilarison(router, version, fixture_ap, fixture_csp, key, write=False):
-        (actual_ap, actual_csp, _) = router.compile_program(version=version)
+        actual_ap, actual_csp, _ = router.compile_program(version=version)
 
         # if write:
         #     with open(ROUTER_FIXTURES / fixture_ap, "w") as f:
