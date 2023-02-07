@@ -2,7 +2,7 @@ from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass, asdict
 import json
-from typing import Any, Callable, Dict, Final, Iterable, Literal, Sequence, Type, cast
+from typing import Any, Callable, Final, Literal, Sequence, Type, cast
 
 import algosdk.abi as sdk_abi
 from algosdk.transaction import OnComplete
@@ -22,7 +22,7 @@ from graviton.blackbox import (
 )
 from graviton.inspector import DryRunProperty as DRProp
 from graviton.models import ExecutionMode, PyTypes
-from graviton.sim import Simulation, SimulationResults
+from graviton.sim import InputStrategy, Simulation, SimulationResults
 
 from pyteal.compiler.compiler import OptimizeOptions
 from pyteal.ast.subroutine import OutputKwArgInfo
@@ -479,11 +479,6 @@ class PyTealDryRunExecutor:
         )
 
 
-class _AutoPathDict(defaultdict):
-    def __init__(self):
-        super().__init__(lambda: _AutoPathDict())
-
-
 def as_on_complete(oc_str: str) -> OnComplete:
     match oc_str:
         case "no_op":
@@ -577,9 +572,9 @@ class RouterSimulation:
 
         self.algod: v2client.algod.AlgodClient = algod or algod_with_assertion()
 
-        self.auto_path_results: Dict[
+        self.results: dict[
             str | None, dict[tuple[bool, OnComplete], SimulationResults]
-        ] = _AutoPathDict()
+        ] = {}
 
     # ---- Validation ---- #
 
@@ -720,7 +715,7 @@ class RouterSimulation:
         self,
         approval_args_strat_type: Type[ABIStrategy],
         clear_args_strat_type_or_inputs: Type[ABIStrategy]
-        | Iterable[Sequence[PyTypes]]
+        | list[Sequence[PyTypes]]
         | None,
         approval_abi_args_mod: ABIArgsMod | None,
         version: int,
@@ -841,7 +836,9 @@ call_strat={type(approval_strat)}
                             approval_strat, txn_params=tp, msg=msg4simulate()
                         )
                         assert sim_results.succeeded
-                        self.auto_path_results[meth_name][(on_create, oc)] = sim_results
+                        if meth_name not in self.results:
+                            self.results[meth_name] = {}
+                        self.results[meth_name][(on_create, oc)] = sim_results
                         update_stats(meth_name, len(self.predicates[meth_name]))
 
                     # weird walrus is_app_create := ... to fill closure of msg4simulate()
@@ -855,19 +852,24 @@ call_strat={type(approval_strat)}
             assert double_check_at_least_one_method, "no method was simulated"
 
         # ---- CLEAR PROGRAM SIMULATION ---- #
+        clear_strat_or_inputs: InputStrategy  # CallStrategy | Iterable[Sequence[PyTypes]]
         clear_sim: Simulation | None = None
         if not omit_clear_call:
+            assert clear_args_strat_type_or_inputs  # therefore Type[ABIStrategy] | list[Sequence[PyTypes]]
             if isinstance(clear_args_strat_type_or_inputs, list):
-                clear_strat = clear_args_strat_type_or_inputs
-                num_dryruns = len(clear_strat)
+                clear_strat_or_inputs = cast(
+                    list[Sequence[PyTypes]], clear_args_strat_type_or_inputs
+                )
+                # for the closure of local update_stats():
+                num_dryruns = len(clear_strat_or_inputs)
             else:
-                clear_strat = RandomArgLengthCallStrategy(
+                clear_strat_or_inputs = RandomArgLengthCallStrategy(
                     cast(Type[ABIStrategy], clear_args_strat_type_or_inputs),
                     max_args=2,
                     num_dryruns=num_dryruns,
                     min_args=0,
                     type_for_args=sdk_abi.ABIType.from_string("byte[8]"),
-                )  # type: ignore
+                )
 
             meth_name = CLEAR_STATE_CALL
             is_app_create = False
@@ -881,15 +883,19 @@ call_strat={type(approval_strat)}
                 validation=executor_validation,
             )
 
-            sim_results = clear_sim.run_and_assert(clear_strat, msg=msg4simulate())
+            sim_results = clear_sim.run_and_assert(
+                clear_strat_or_inputs, msg=msg4simulate()
+            )
             assert sim_results.succeeded
-            self.auto_path_results[meth_name][(is_app_create, oc)] = sim_results
+            if meth_name not in self.results:
+                self.results[meth_name] = {}
+            self.results[meth_name][(is_app_create, oc)] = sim_results
             update_stats(meth_name, len(self.predicates[meth_name]))
 
         # ---- Summary Statistics ---- #
         return RouterSimulationResults(
             stats=stats,
-            results=self.auto_path_results,
+            results=self.results,
             approval_simulator=approve_sim,
             clear_simulator=clear_sim,
         )
