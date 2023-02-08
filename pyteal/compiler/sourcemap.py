@@ -586,8 +586,6 @@ class _PyTealSourceMapper:
     * as_r3sourcemap()
     * annotated_teal()
 
-
-
     Source Mapping Algorithm:
 
     INPUT: (teal_chunks, components) - these are present in the output object of
@@ -595,16 +593,16 @@ class _PyTealSourceMapper:
 
     OUTPUT: (self._cached_tmis, _cached_r3sourcemap, self._cached_pc_sourcemap)
 
-    # Validation: sanity check teal_chunks, but discard them in the rest of the computation
-    assert teal_chunks <--1-to-1--> components
+    PASS I. Deduce the Best Frame Candidate (BFC) from each individual `NatalStackFrame`
 
-    # PASS I. Deduce the Best Frame Candidate (BFC) from each individual `NatalStackFrame`
-    # NOTE: this logic actually occurs at creation of the PyTeal Expr which is responsible
-    # for teal component. The `build()` method simply retrieves the result of this pre-computation
-    # through NatalStackFrame.best()
+    NOTE: this logic actually occurs at creation of the PyTeal Expr which is responsible
+    for each teal component. The `build()` method simply retrieves the result of this
+    pre-computation through NatalStackFrame.best()
+
     for each component in components:
-        # Inside NatalStackFrame.__init__() @ Expr's creation:
-        # deduce the "best" frame for the component's PyTeal source (@ Expr creation)
+        # Deduce the "best" frame for the component's PyTeal source (@ Expr creation)
+
+        # [1-7] Inside NatalStackFrame.__init__()
         1. call inspect.stack() to generate a full stack trace
         2. filter out "py crud" frames whose filename starts with "<" and don't have a code_context
         3. start searching at frame index i = 2 (right before Expr's NatalStackFrame was constructed)
@@ -613,14 +611,16 @@ class _PyTealSourceMapper:
         6. keep the last frame in the list
         7. convert this into a list[StackFrame] of size 1
 
-        # Inside _PyTealSourceMapper.build() @ source-map creation:
+        # [8] Inside _PyTealSourceMapper.build() @ source-map creation:
         8. self._best_frames[i] = the singleton StackFrame in 7 converted to PyTealFrame  # i == component's index of the component
 
-    # PASS II. Attempt to fill any "gaps" by inferring from adjacent BFC's
-    # This logic is contained in _PyTealSourceMapper.infer():
-    # NOTE: the mutations of self._best_framed described below are "sticky" in the sense
-    # that when this `pyteal_frame` is modified, and then becomes in the next iteration
-    # `prev_pyteal_frame`, it is the new modified version when considered
+    PASS II. Attempt to fill any "gaps" by inferring from adjacent BFC's
+    This logic is contained in _PyTealSourceMapper.infer():
+
+    NOTE: the mutations of self._best_framed described below are "sticky" in the sense
+    that when this `pyteal_frame` is modified and referenced by `prev_pyteal_frame`
+    in the next interation, it is the new _modified_ version that is used.
+
     for each pyteal_frame in self._best_frames:
         status = pyteal_frame.status()
         if status NOT in PyTealFrameStatus.{MISSING, MISSING_AST, MISSING_CODE, PYTEAL_GENERATED}
@@ -754,6 +754,10 @@ class _PyTealSourceMapper:
 
         if self.include_pcs:
             self._build_pc_sourcemap()
+
+        # Validation
+        # sanity check teal_chunks, but discard them in the rest of the computation
+        # assert teal_chunks <--1-to-1--> components
 
         if (n := len(self.teal_chunks)) != len(self.components):
             raise TealInternalError(
