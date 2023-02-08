@@ -17,7 +17,7 @@ class TealComponent(ABC):
         if not self.expr:  # expr already has the frame info
             self._stack_frames = NatalStackFrame()
 
-        self._root_expr: Expr | None = None
+        self._sframes_container: Expr | None = None
 
     def getSlots(self) -> List["ScratchSlot"]:
         return []
@@ -34,9 +34,9 @@ class TealComponent(ABC):
     def stack_frames(self) -> NatalStackFrame:
         from pyteal.ast import Expr
 
-        root_expr = self._root_expr or self.expr
+        root_expr = self._sframes_container or self.expr
         if root_expr:
-            if subroot := getattr(root_expr, "_root_expr", None):
+            if subroot := getattr(root_expr, "_sframes_container", None):
                 root_expr = cast(Expr, subroot)
             return root_expr.stack_frames
 

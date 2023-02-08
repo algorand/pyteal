@@ -49,7 +49,7 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
         if block.isTerminal():
             continue
 
-        root_expr = block._root_expr
+        root_expr = block._sframes_container
 
         if type(block) is TealSimpleBlock:
             assert block.nextBlock is not None
@@ -95,7 +95,9 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
     for i, code in enumerate(codeblocks):
         if references[i] != 0:
             root_expr = (
-                blocks[i]._root_expr or blocks[referer[i]]._root_expr or root_expr
+                blocks[i]._sframes_container
+                or blocks[referer[i]]._sframes_container
+                or root_expr
             )
             teal.append(TealLabel(root_expr, indexToLabel(i)))  # T2PT6
         teal += code

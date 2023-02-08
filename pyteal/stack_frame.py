@@ -381,9 +381,9 @@ class NatalStackFrame:
 
     @classmethod
     def reframe_ops_in_blocks(cls, root_expr: "Expr", start: "TealBlock") -> None:  # type: ignore
-        start._root_expr = root_expr
+        start._sframes_container = root_expr
         for op in start.ops:
-            op._root_expr = root_expr
+            op._sframes_container = root_expr
 
         if nxt := start.nextBlock:
             cls.reframe_ops_in_blocks(root_expr, nxt)

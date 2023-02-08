@@ -67,12 +67,12 @@ class If(Expr):
 
         if self.elseBranch is None:
             branchBlock.setFalseBlock(end)
-            branchBlock._root_expr = self
+            branchBlock._sframes_container = self
         else:
             elseStart, elseEnd = self.elseBranch.__teal__(options)
             branchBlock.setFalseBlock(elseStart)
             elseEnd.setNextBlock(end)
-            elseEnd._root_expr = self
+            elseEnd._sframes_container = self
 
         return condStart, end
 

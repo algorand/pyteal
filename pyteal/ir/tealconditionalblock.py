@@ -39,7 +39,7 @@ class TealConditionalBlock(TealBlock):
             repr(self.ops),
             repr(self.trueBlock),
             repr(self.falseBlock),
-            repr(self._root_expr),
+            repr(self._sframes_container),
         )
 
     def __eq__(self, other: object) -> bool:

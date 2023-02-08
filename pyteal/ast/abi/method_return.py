@@ -20,7 +20,7 @@ class MethodReturn(Expr):
         if not isinstance(arg, BaseType):
             raise TealInputError(f"Expecting an ABI type argument but get {arg}")
         self.arg = arg
-        self._root_expr: Expr | None = None
+        self._sframes_container: Expr | None = None
 
     def __teal__(self, options: "CompileOptions") -> Tuple[TealBlock, TealSimpleBlock]:
         if options.version < Op.log.min_version:
@@ -30,7 +30,7 @@ class MethodReturn(Expr):
         start, end = Log(Concat(Bytes(RETURN_HASH_PREFIX), self.arg.encode())).__teal__(
             options
         )
-        NatalStackFrame.reframe_ops_in_blocks(self._root_expr, start)
+        NatalStackFrame.reframe_ops_in_blocks(self._sframes_container, start)
         return start, end
 
     def __str__(self) -> str:

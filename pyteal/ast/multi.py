@@ -41,7 +41,7 @@ class MultiValue(LeafExpr):
         self.compile_check = compile_check
 
         self.output_slots = [ScratchSlot() for _ in self.types]
-        self._root_expr = root_expr
+        self._sframes_container = root_expr
 
     def outputReducer(self, reducer: Callable[..., Expr]) -> Expr:
         input = [slot.load(self.types[i]) for i, slot in enumerate(self.output_slots)]
@@ -73,7 +73,7 @@ class MultiValue(LeafExpr):
         # B->output_slots[1], and A->output_slots[0].
         for slot in reversed(self.output_slots):
             store = cast(ScratchStackStore, slot.store())
-            store._root_expr = self._root_expr
+            store._sframes_container = self._sframes_container
             storeStart, storeEnd = store.__teal__(options)
             curEnd.setNextBlock(storeStart)
             curEnd = storeEnd

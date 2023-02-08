@@ -170,7 +170,7 @@ def compileSubroutine(
     start.addIncoming()
     start.validateTree()
     if currentSubroutine and end.ops:
-        end.ops[0]._root_expr = currentSubroutine.declarations.get_declaration()
+        end.ops[0]._sframes_container = currentSubroutine.declarations.get_declaration()
 
     if currentSubroutine and (
         de := currentSubroutine.get_declaration_by_option(

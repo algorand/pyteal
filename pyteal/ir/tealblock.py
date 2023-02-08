@@ -17,7 +17,7 @@ class TealBlock(ABC):
     def __init__(self, ops: List[TealOp], root_expr: Optional["Expr"] = None) -> None:
         self.ops = ops
         self.incoming: List[TealBlock] = []
-        self._root_expr = root_expr
+        self._sframes_container = root_expr
 
     @abstractmethod
     def getOutgoing(self) -> List["TealBlock"]:

@@ -403,8 +403,8 @@ class SubroutineDeclaration(Expr):
         self.subroutine = subroutine
         self.body = body
         self.deferred_expr = deferred_expr
-        # TODO: gotta rename _root_expr --> _frames_holder
-        self._root_expr: SubroutineDefinition = subroutine
+        # TODO: gotta rename _sframes_container --> _frames_holder
+        self._sframes_container: SubroutineDefinition = subroutine
 
     def __teal__(self, options: "CompileOptions"):
         return self.body.__teal__(options)
