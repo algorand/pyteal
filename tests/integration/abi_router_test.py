@@ -42,7 +42,7 @@ TYPICAL_IAC_OC = pt.MethodConfig(no_op=pt.CallConfig.CALL)
 # * @1 - method_config: MethodConfig
 #   defines how to call the method
 #
-# * @3 - predicates: Predicates ~ dict[DRProp, Any]
+# * @2 - predicates: Predicates ~ dict[DRProp, Any]
 #   these are being asserted after being processed into Invariant's
 #
 # NOTE: the "yacc" routers will simply ignore the case with method `None`
