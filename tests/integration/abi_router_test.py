@@ -38,6 +38,7 @@ TYPICAL_IAC_OC = pt.MethodConfig(no_op=pt.CallConfig.CALL)
 # TEST DRIVERS LEGEND - combines method_configs + predicates
 # * @0 - method: RouterCallType
 #   method == None indicates bare app call
+#   method == CLEAR_STATE_CALL indicates clear state app call
 #
 # * @1 - method_config: MethodConfig
 #   defines how to call the method
