@@ -738,6 +738,59 @@ class RouterSimulation:
             omit_approval_call and omit_clear_call
         ), "Aborting and failing as all tests are being omitted"
 
+        # --- setup local functions including reporter and stats. Also declare closure vars --- #
+
+        # for purposes of clarity, defining all the variables for closures before each function:
+        approve_sim: Simulation | None  # required for return RouterResults
+
+        # msg4simulate:
+
+        # msg - cf. parameters
+        approval_strat: ABICallStrategy | None
+        meth_name: str | None  # simulate_approval's closure as well
+        call_cfg: CallConfig | None
+        is_app_create: bool
+        stats: dict[str, int | str] = defaultdict(int)
+
+        def msg4simulate() -> str:
+            return f"""user provide message={msg}
+call_strat={type(approval_strat)}
+{meth_name=}
+{oc=}
+{call_cfg=}
+{is_app_create=}
+{len(self.predicates[meth_name])=}
+{stats["method_combo_count"]=}
+{stats["dryrun_count"]=}
+{stats["assertions_count"]=}
+"""
+
+        # update_stats:
+        # num_dryruns - cf. parameters
+        # stats - cf. above
+        def update_stats(meth, num_preds):
+            stats[str(meth)] += num_dryruns
+            stats["method_combo_count"] += 1
+            stats["dryrun_count"] += num_dryruns
+            stats["assertions_count"] += num_dryruns * num_preds
+
+        # simulate_approval:
+        # txn_params - cf. parameters
+        oc: OnComplete
+        # approval_strat - cf. above
+
+        def simulate_approval(on_create):
+            tp: TxParams = deepcopy(txn_params)
+            tp.update_fields(TxParams.for_app(is_app_create=on_create, on_complete=oc))
+            sim_results = approve_sim.run_and_assert(
+                approval_strat, txn_params=tp, msg=msg4simulate()
+            )
+            assert sim_results.succeeded
+            if meth_name not in self.results:
+                self.results[meth_name] = {}
+            self.results[meth_name][(on_create, oc)] = sim_results
+            update_stats(meth_name, len(self.predicates[meth_name]))
+
         # --- Compile Programs --- #
         approval_teal, clear_teal, contract = self.router.compile_program(
             version=version, assemble_constants=assemble_constants, optimize=optimize
@@ -774,36 +827,9 @@ class RouterSimulation:
         if not txn_params:
             txn_params = TxParams()
 
-        stats: dict[str, int | str] = defaultdict(int)
         stats["name"] = self.router.name
 
-        # --- setup reporter and stats --- #
-
-        meth_name: Any
-
-        def msg4simulate() -> str:
-            return f"""user provide message={msg}
-call_strat={type(approval_strat)}
-{meth_name=}
-{oc=}
-{call_cfg=}
-{is_app_create=}
-{len(self.predicates[meth_name])=}
-{stats["method_combo_count"]=}
-{stats["dryrun_count"]=}
-{stats["assertions_count"]=}
-"""
-
-        def update_stats(meth, num_preds):
-            stats[str(meth)] += num_dryruns
-            stats["method_combo_count"] += 1
-            stats["dryrun_count"] += num_dryruns
-            stats["assertions_count"] += num_dryruns * num_preds
-
         # ---- APPROVAL PROGRAM SIMULATION ---- #
-        approval_strat = None
-        call_cfg = None
-        approve_sim = None
         if not omit_approval_call:
             approval_strat = ABICallStrategy(
                 json.dumps(contract.dictify()),
@@ -827,31 +853,20 @@ call_strat={type(approval_strat)}
                 for oc_str, call_cfg in asdict(meth_cfg).items():
                     oc = as_on_complete(oc_str)
 
-                    def simulate_approval(on_create):
-                        tp: TxParams = deepcopy(txn_params)
-                        tp.update_fields(
-                            TxParams.for_app(is_app_create=on_create, on_complete=oc)
-                        )
-                        sim_results = approve_sim.run_and_assert(
-                            approval_strat, txn_params=tp, msg=msg4simulate()
-                        )
-                        assert sim_results.succeeded
-                        if meth_name not in self.results:
-                            self.results[meth_name] = {}
-                        self.results[meth_name][(on_create, oc)] = sim_results
-                        update_stats(meth_name, len(self.predicates[meth_name]))
-
                     # weird walrus is_app_create := ... to fill closure of msg4simulate()
-                    if call_cfg & CallConfig.CALL:
+                    if cast(CallConfig, call_cfg) & CallConfig.CALL:
                         double_check_at_least_one_method = True
                         simulate_approval(is_app_create := False)
 
-                    if call_cfg & CallConfig.CREATE:
+                    if cast(CallConfig, call_cfg) & CallConfig.CREATE:
                         double_check_at_least_one_method = True
                         simulate_approval(is_app_create := True)
             assert double_check_at_least_one_method, "no method was simulated"
 
         # ---- CLEAR PROGRAM SIMULATION ---- #
+        approval_strat = None
+        call_cfg = None
+        approve_sim = None
         clear_strat_or_inputs: InputStrategy  # CallStrategy | Iterable[Sequence[PyTypes]]
         clear_sim: Simulation | None = None
         if not omit_clear_call:
