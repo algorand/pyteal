@@ -157,18 +157,18 @@ int 0                                  //    (260)
 assert                                 //    (262)
 int 1                                  //    (263)  Approve()
 return                                 //    (264)
-                                       //           {COMPILE}
+                                       //           def assert_sender_is_creator() -> Expr:
 // assert_sender_is_creator            //
 assertsenderiscreator_0:               //
 txn Sender                             //    (265)  Txn.sender()
 global CreatorAddress                  //    (267)  Global.creator_address()
 ==                                     //    (269)  Txn.sender() == Global.creator_address()
 assert                                 //    (270)  Assert(Txn.sender() == Global.creator_address())
-retsub                                 //    (271)  {COMPILE}
-                                       //
+retsub                                 //    (271)  def assert_sender_is_creator() -> Expr:
+                                       //           def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
 // deposit                             //
 deposit_1:                             //
-store 6                                //    (272)
+store 6                                //    (272)  {COMPILE}
 store 5                                //    (274)
 load 5                                 //    (276)  payment.get()
 gtxns Sender                           //    (278)  payment.get().sender()
@@ -192,18 +192,18 @@ load 5                                 //    (305)  payment.get()
 gtxns Amount                           //    (307)  payment.get().amount()
 +                                      //    (309)  App.localGet(sender.address(), Bytes('balance')) + payment.get().amount()
 app_local_put                          //    (310)  App.localPut(sender.address(), Bytes('balance'), App.localGet(sender.address(), Bytes('balance')) + payment.get().amount())
-retsub                                 //    (311)  {COMPILE}
-                                       //
+retsub                                 //    (311)  def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
+                                       //           def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
 // getBalance                          //
 getBalance_2:                          //
 txnas Accounts                         //    (312)  user.address()
 byte "balance"                         //    (314)  Bytes('balance')
 app_local_get                          //    (315)  App.localGet(user.address(), Bytes('balance'))
-retsub                                 //    (316)  {COMPILE}
-                                       //
+retsub                                 //    (316)  def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
+                                       //           def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
 // withdraw                            //
 withdraw_3:                            //
-store 8                                //    (317)
+store 8                                //    (317)  {COMPILE}
 store 7                                //    (319)
 txn Sender                             //    (321)  Txn.sender()
 byte "balance"                         //    (323)  Bytes('balance')
@@ -224,4 +224,4 @@ itxn_field Amount                      //    (344)  {INNERTXN}
 int 0                                  //    (346)  Int(0)
 itxn_field Fee                         //    (347)  {INNERTXN}
 itxn_submit                            //    (349)  InnerTxnBuilder.Submit()
-retsub                                 //    (350)  {COMPILE}
+retsub                                 //    (350)  def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:

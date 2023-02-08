@@ -157,18 +157,18 @@ int 0                                  //    (260)
 assert                                 //    (262)
 int 1                                  //    (263)  examples/application/abi/algobank.py              21      Approve()
 return                                 //    (264)
-                                       //           {CFILE}  {CL}      {COMPILE}
+                                       //                                                             7       def assert_sender_is_creator() -> Expr:
 // assert_sender_is_creator            //
 assertsenderiscreator_0:               //
-txn Sender                             //    (265)  examples/application/abi/algobank.py              8       Txn.sender()
+txn Sender                             //    (265)                                                    8       Txn.sender()
 global CreatorAddress                  //    (267)                                                            Global.creator_address()
 ==                                     //    (269)                                                            Txn.sender() == Global.creator_address()
 assert                                 //    (270)                                                            Assert(Txn.sender() == Global.creator_address())
-retsub                                 //    (271)  {CFILE}  {CL}      {COMPILE}
-                                       //
+retsub                                 //    (271)                                                    7       def assert_sender_is_creator() -> Expr:
+                                       //                                                             41      def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
 // deposit                             //
 deposit_1:                             //
-store 6                                //    (272)
+store 6                                //    (272)  {CFILE}  {CL}      {COMPILE}
 store 5                                //    (274)
 load 5                                 //    (276)  examples/application/abi/algobank.py              54      payment.get()
 gtxns Sender                           //    (278)                                                            payment.get().sender()
@@ -192,18 +192,18 @@ load 5                                 //    (305)                              
 gtxns Amount                           //    (307)                                                            payment.get().amount()
 +                                      //    (309)                                                            App.localGet(sender.address(), Bytes('balance')) + payment.get().amount()
 app_local_put                          //    (310)                                                    56      App.localPut(sender.address(), Bytes('balance'), App.localGet(sender.address(), Bytes('balance')) + payment.get().amount())
-retsub                                 //    (311)  {CFILE}  {CL}      {COMPILE}
-                                       //
+retsub                                 //    (311)                                                    41      def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
+                                       //                                                             65      def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
 // getBalance                          //
 getBalance_2:                          //
-txnas Accounts                         //    (312)  examples/application/abi/algobank.py              74      user.address()
+txnas Accounts                         //    (312)                                                    74      user.address()
 byte "balance"                         //    (314)                                                            Bytes('balance')
 app_local_get                          //    (315)                                                            App.localGet(user.address(), Bytes('balance'))
-retsub                                 //    (316)  {CFILE}  {CL}      {COMPILE}
-                                       //
+retsub                                 //    (316)                                                    65      def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
+                                       //                                                             78      def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
 // withdraw                            //
 withdraw_3:                            //
-store 8                                //    (317)
+store 8                                //    (317)  {CFILE}  {CL}      {COMPILE}
 store 7                                //    (319)
 txn Sender                             //    (321)  examples/application/abi/algobank.py              98      Txn.sender()
 byte "balance"                         //    (323)                                                    99      Bytes('balance')
@@ -224,4 +224,4 @@ itxn_field Amount                      //    (344)                              
 int 0                                  //    (346)                                                    108     Int(0)
 itxn_field Fee                         //    (347)                                                    103     {INNERTXN}
 itxn_submit                            //    (349)                                                    111     InnerTxnBuilder.Submit()
-retsub                                 //    (350)  {CFILE}  {CL}      {COMPILE}
+retsub                                 //    (350)                                                    78      def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:

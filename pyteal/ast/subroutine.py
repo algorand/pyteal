@@ -140,6 +140,8 @@ class SubroutineDefinition:
 
         self.__name: str = name_str if name_str else self.implementation.__name__
 
+        self.stack_frames: NatalStackFrame = NatalStackFrame()
+
     def _validate(
         self, input_types: list[TealType | None] | None = None
     ) -> tuple[
@@ -401,6 +403,8 @@ class SubroutineDeclaration(Expr):
         self.subroutine = subroutine
         self.body = body
         self.deferred_expr = deferred_expr
+        # TODO: gotta rename _root_expr --> _frames_holder
+        self._root_expr: SubroutineDefinition = subroutine
 
     def __teal__(self, options: "CompileOptions"):
         return self.body.__teal__(options)

@@ -86,7 +86,7 @@ def test_r3sourcemap(mock_ConfigParser):
 
     assert "mappings" in r3sm_json
     assert (
-        "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"
+        "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"
         == r3sm_json["mappings"]
     )
 
@@ -1519,9 +1519,9 @@ CONSTRUCTS = [
             ("store 0", "status().store_into(output)"),
             ("int 1", "pt.Int(1)"),
             ("return", C),
-            ("", "status().store_into(output)"),
-            ("// status", "status().store_into(output)"),
-            ("status_0:", "status().store_into(output)"),
+            ("", "def status(*, output: PollStatus) -> pt.Expr:"),
+            ("// status", "def status(*, output: PollStatus) -> pt.Expr:"),
+            ("status_0:", "def status(*, output: PollStatus) -> pt.Expr:"),
             ('byte "1"', "pt.Bytes('1')"),
             ("app_global_get", "pt.App.globalGet(pt.Bytes('1'))"),
             ("store 2", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
@@ -1586,7 +1586,7 @@ CONSTRUCTS = [
             ("concat", "output.set(question, can_resubmit, is_open, results)"),
             ("store 1", "output.set(question, can_resubmit, is_open, results)"),
             ("load 1", "status().store_into(output)"),
-            ("retsub", "return pt.Seq(status().store_into(output), pt.Int(1))"),
+            ("retsub", "def status(*, output: PollStatus) -> pt.Expr:"),
         ],
         5,
         "Application",
@@ -1600,23 +1600,23 @@ CONSTRUCTS = [
             ("store 0", "status().store_into(output)"),
             ("int 1", "pt.Int(1)"),
             ("return", C),
-            ("", "status().store_into(output)"),
-            ("// status", "status().store_into(output)"),
-            ("status_0:", "status().store_into(output)"),
-            ("proto 0 1", "status().store_into(output)"),
-            ('byte ""', "status().store_into(output)"),
-            ("dup", "status().store_into(output)"),
-            ("int 0", "status().store_into(output)"),
-            ("dup", "status().store_into(output)"),
-            ('byte ""', "status().store_into(output)"),
-            ("int 0", "status().store_into(output)"),
-            ("dup", "status().store_into(output)"),
-            ('byte ""', "status().store_into(output)"),
-            ("dup", "status().store_into(output)"),
-            ("int 0", "status().store_into(output)"),
-            ("dup", "status().store_into(output)"),
-            ('byte ""', "status().store_into(output)"),
-            ("dup", "status().store_into(output)"),
+            ("", "def status(*, output: PollStatus) -> pt.Expr:"),
+            ("// status", "def status(*, output: PollStatus) -> pt.Expr:"),
+            ("status_0:", "def status(*, output: PollStatus) -> pt.Expr:"),
+            ("proto 0 1", "def status(*, output: PollStatus) -> pt.Expr:"),
+            ('byte ""', "def status(*, output: PollStatus) -> pt.Expr:"),
+            ("dup", "def status(*, output: PollStatus) -> pt.Expr:"),
+            ("int 0", "def status(*, output: PollStatus) -> pt.Expr:"),
+            ("dup", "def status(*, output: PollStatus) -> pt.Expr:"),
+            ('byte ""', "def status(*, output: PollStatus) -> pt.Expr:"),
+            ("int 0", "def status(*, output: PollStatus) -> pt.Expr:"),
+            ("dup", "def status(*, output: PollStatus) -> pt.Expr:"),
+            ('byte ""', "def status(*, output: PollStatus) -> pt.Expr:"),
+            ("dup", "def status(*, output: PollStatus) -> pt.Expr:"),
+            ("int 0", "def status(*, output: PollStatus) -> pt.Expr:"),
+            ("dup", "def status(*, output: PollStatus) -> pt.Expr:"),
+            ('byte ""', "def status(*, output: PollStatus) -> pt.Expr:"),
+            ("dup", "def status(*, output: PollStatus) -> pt.Expr:"),
             ('byte "1"', "pt.Bytes('1')"),
             ("app_global_get", "pt.App.globalGet(pt.Bytes('1'))"),
             ("frame_bury 1", "question.set(pt.App.globalGet(pt.Bytes('1')))"),
@@ -1680,7 +1680,7 @@ CONSTRUCTS = [
             ("frame_dig 11", "output.set(question, can_resubmit, is_open, results)"),
             ("concat", "output.set(question, can_resubmit, is_open, results)"),
             ("frame_bury 0", "output.set(question, can_resubmit, is_open, results)"),
-            ("retsub", "return pt.Seq(status().store_into(output), pt.Int(1))"),
+            ("retsub", "def status(*, output: PollStatus) -> pt.Expr:"),
         ],
         8,
         "Application",
@@ -1705,9 +1705,18 @@ CONSTRUCTS = [
             ("log", C),
             ("int 1", "pt.Approve()"),
             ("return", "pt.Approve()"),
-            ("", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
-            ("// abi_sum", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
-            ("abisum_0:", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
+            (
+                "",
+                "def abi_sum(toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "// abi_sum",
+                "def abi_sum(toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "abisum_0:",
+                "def abi_sum(toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
             ("store 2", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
             ("int 0", "output.set(0)"),
             ("store 3", "output.set(0)"),
@@ -1755,7 +1764,7 @@ CONSTRUCTS = [
             ("load 3", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
             (
                 "retsub",
-                "return pt.Seq((to_sum_arr := pt.abi.make(pt.abi.DynamicArray[pt.abi.Uint64])).decode(pt.Txn.application_args[1]), (res := pt.abi.Uint64()).set(abi_sum(to_sum_arr)), pt.abi.MethodReturn(res), pt.Approve())",
+                "def abi_sum(toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64) -> pt.Expr:",
             ),
         ],
         5,
@@ -1781,12 +1790,30 @@ CONSTRUCTS = [
             ("log", C),
             ("int 1", "pt.Approve()"),
             ("return", "pt.Approve()"),
-            ("", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
-            ("// abi_sum", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
-            ("abisum_0:", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
-            ("proto 1 1", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
-            ("int 0", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
-            ("dupn 3", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
+            (
+                "",
+                "def abi_sum(toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "// abi_sum",
+                "def abi_sum(toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "abisum_0:",
+                "def abi_sum(toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "proto 1 1",
+                "def abi_sum(toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "int 0",
+                "def abi_sum(toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "dupn 3",
+                "def abi_sum(toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
             ("int 0", "output.set(0)"),
             ("frame_bury 0", "output.set(0)"),
             ("int 0", "pt.Int(0)"),
@@ -1832,7 +1859,7 @@ CONSTRUCTS = [
             ),
             (
                 "retsub",
-                "return pt.Seq((to_sum_arr := pt.abi.make(pt.abi.DynamicArray[pt.abi.Uint64])).decode(pt.Txn.application_args[1]), (res := pt.abi.Uint64()).set(abi_sum(to_sum_arr)), pt.abi.MethodReturn(res), pt.Approve())",
+                "def abi_sum(toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64) -> pt.Expr:",
             ),
         ],
         8,
@@ -2390,724 +2417,419 @@ def test_constructs(mock_ConfigParser, i, test_case, mode, version):
 
 def assert_algobank_unparsed_as_expected(actual):
     expected = [
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1),
-        ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1),
-        ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1),
-        ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1),
-        ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1),
-        ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1),
-        ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1),
-        ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1),
-        ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1),
-        ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1),
-        ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1),
-        ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1),
-        ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-            1,
-        ),
-        (
-            "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-            1,
-        ),
-        (
-            "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-            1,
-        ),
-        (
-            "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-            1,
-        ),
-        (
-            "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-            1,
-        ),
-        (
-            "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-            1,
-        ),
-        (
-            "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-            1,
-        ),
-        (
-            "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-            1,
-        ),
-        (
-            "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-            1,
-        ),
-        (
-            "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-            1,
-        ),
-        (
-            "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-            1,
-        ),
-        (
-            "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-            1,
-        ),
-        (
-            "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-            1,
-        ),
-        (
-            "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-            1,
-        ),
-        (
-            "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-            1,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        ("Bytes('lost')", 0),
-        ("Bytes('lost')", 0),
-        ("App.globalGet(Bytes('lost'))", 0),
-        ("Txn.sender()", 0),
-        ("Bytes('balance')", 0),
-        ("App.localGet(Txn.sender(), Bytes('balance'))", 0),
-        (
-            "App.globalGet(Bytes('lost')) + App.localGet(Txn.sender(), Bytes('balance'))",
-            0,
-        ),
-        (
-            "App.globalPut(Bytes('lost'), App.globalGet(Bytes('lost')) + App.localGet(Txn.sender(), Bytes('balance')))",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        ("Approve()", 0),
-        ("Approve()", 0),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        ("Approve()", 0),
-        ("Approve()", 0),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        ("Txn.sender()", 0),
-        ("Global.creator_address()", 0),
-        ("Txn.sender() == Global.creator_address()", 0),
-        ("Assert(Txn.sender() == Global.creator_address())", 0),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        ("payment.get()", 0),
-        ("payment.get().sender()", 0),
-        ("sender.address()", 0),
-        ("sender.address()", 0),
-        ("payment.get().sender() == sender.address()", 0),
-        ("Assert(payment.get().sender() == sender.address())", 0),
-        ("payment.get()", 0),
-        ("payment.get().receiver()", 0),
-        ("Global.current_application_address()", 0),
-        ("payment.get().receiver() == Global.current_application_address()", 0),
-        ("Assert(payment.get().receiver() == Global.current_application_address())", 0),
-        ("sender.address()", 0),
-        ("sender.address()", 0),
-        ("Bytes('balance')", 0),
-        ("sender.address()", 0),
-        ("sender.address()", 0),
-        ("Bytes('balance')", 0),
-        ("App.localGet(sender.address(), Bytes('balance'))", 0),
-        ("payment.get()", 0),
-        ("payment.get().amount()", 0),
-        (
-            "App.localGet(sender.address(), Bytes('balance')) + payment.get().amount()",
-            0,
-        ),
-        (
-            "App.localPut(sender.address(), Bytes('balance'), App.localGet(sender.address(), Bytes('balance')) + payment.get().amount())",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        ("user.address()", 0),
-        ("Bytes('balance')", 0),
-        ("App.localGet(user.address(), Bytes('balance'))", 0),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
-        ("Txn.sender()", 0),
-        ("Bytes('balance')", 0),
-        ("Txn.sender()", 0),
-        ("Bytes('balance')", 0),
-        ("App.localGet(Txn.sender(), Bytes('balance'))", 0),
-        ("amount.get()", 0),
-        ("App.localGet(Txn.sender(), Bytes('balance')) - amount.get()", 0),
-        (
-            "App.localPut(Txn.sender(), Bytes('balance'), App.localGet(Txn.sender(), Bytes('balance')) - amount.get())",
-            0,
-        ),
-        ("InnerTxnBuilder.Begin()", 0),
-        (
-            "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
-            0,
-        ),
-        (
-            "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
-            0,
-        ),
-        ("recipient.address()", 0),
-        ("recipient.address()", 0),
-        (
-            "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
-            0,
-        ),
-        ("amount.get()", 0),
-        (
-            "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
-            0,
-        ),
-        ("Int(0)", 0),
-        (
-            "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
-            0,
-        ),
-        ("InnerTxnBuilder.Submit()", 0),
-        (
-            "router._build_impl(rci)",
-            0,
-        ),
+        (0, ("router._build_impl(rci)", 0)),
+        (1, ("router._build_impl(rci)", 0)),
+        (2, ("router._build_impl(rci)", 0)),
+        (3, ("router._build_impl(rci)", 0)),
+        (4, ("router._build_impl(rci)", 0)),
+        (5, ("router._build_impl(rci)", 0)),
+        (6, ("router._build_impl(rci)", 0)),
+        (7, ("router._build_impl(rci)", 0)),
+        (8, ("router._build_impl(rci)", 0)),
+        (9, ("router._build_impl(rci)", 0)),
+        (10, ("router._build_impl(rci)", 0)),
+        (11, ("router._build_impl(rci)", 0)),
+        (12, ("router._build_impl(rci)", 0)),
+        (13, ("router._build_impl(rci)", 0)),
+        (14, ("router._build_impl(rci)", 0)),
+        (15, ("router._build_impl(rci)", 0)),
+        (16, ("router._build_impl(rci)", 0)),
+        (17, ("router._build_impl(rci)", 0)),
+        (18, ("router._build_impl(rci)", 0)),
+        (19, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
+        (20, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
+        (21, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
+        (22, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
+        (23, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
+        (24, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
+        (25, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
+        (26, ("router._build_impl(rci)", 0)),
+        (27, ("router._build_impl(rci)", 0)),
+        (28, ("router._build_impl(rci)", 0)),
+        (29, ("router._build_impl(rci)", 0)),
+        (30, ("router._build_impl(rci)", 0)),
+        (31, ("router._build_impl(rci)", 0)),
+        (32, ("router._build_impl(rci)", 0)),
+        (33, ("router._build_impl(rci)", 0)),
+        (34, ("router._build_impl(rci)", 0)),
+        (35, ("router._build_impl(rci)", 0)),
+        (36, ("router._build_impl(rci)", 0)),
+        (37, ("router._build_impl(rci)", 0)),
+        (38, ("router._build_impl(rci)", 0)),
+        (39, ("router._build_impl(rci)", 0)),
+        (40, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
+        (41, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
+        (42, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
+        (43, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
+        (44, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
+        (45, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
+        (46, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
+        (47, ("router._build_impl(rci)", 0)),
+        (48, ("router._build_impl(rci)", 0)),
+        (49, ("router._build_impl(rci)", 0)),
+        (50, ("router._build_impl(rci)", 0)),
+        (51, ("router._build_impl(rci)", 0)),
+        (52, ("router._build_impl(rci)", 0)),
+        (53, ("router._build_impl(rci)", 0)),
+        (54, ("router._build_impl(rci)", 0)),
+        (55, ("router._build_impl(rci)", 0)),
+        (56, ("router._build_impl(rci)", 0)),
+        (57, ("router._build_impl(rci)", 0)),
+        (58, ("router._build_impl(rci)", 0)),
+        (59, ("router._build_impl(rci)", 0)),
+        (60, ("router._build_impl(rci)", 0)),
+        (
+            61,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            62,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            63,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            64,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            65,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            66,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            67,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            68,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            69,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            70,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            71,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            72,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            73,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            74,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            75,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (76, ("router._build_impl(rci)", 0)),
+        (77, ("router._build_impl(rci)", 0)),
+        (78, ("router._build_impl(rci)", 0)),
+        (79, ("router._build_impl(rci)", 0)),
+        (80, ("router._build_impl(rci)", 0)),
+        (81, ("router._build_impl(rci)", 0)),
+        (82, ("router._build_impl(rci)", 0)),
+        (83, ("router._build_impl(rci)", 0)),
+        (84, ("router._build_impl(rci)", 0)),
+        (85, ("router._build_impl(rci)", 0)),
+        (86, ("router._build_impl(rci)", 0)),
+        (87, ("router._build_impl(rci)", 0)),
+        (88, ("router._build_impl(rci)", 0)),
+        (89, ("router._build_impl(rci)", 0)),
+        (90, ("router._build_impl(rci)", 0)),
+        (91, ("router._build_impl(rci)", 0)),
+        (92, ("router._build_impl(rci)", 0)),
+        (93, ("router._build_impl(rci)", 0)),
+        (94, ("router._build_impl(rci)", 0)),
+        (95, ("router._build_impl(rci)", 0)),
+        (96, ("router._build_impl(rci)", 0)),
+        (97, ("router._build_impl(rci)", 0)),
+        (98, ("router._build_impl(rci)", 0)),
+        (99, ("router._build_impl(rci)", 0)),
+        (100, ("router._build_impl(rci)", 0)),
+        (101, ("router._build_impl(rci)", 0)),
+        (102, ("router._build_impl(rci)", 0)),
+        (103, ("router._build_impl(rci)", 0)),
+        (104, ("router._build_impl(rci)", 0)),
+        (105, ("router._build_impl(rci)", 0)),
+        (106, ("router._build_impl(rci)", 0)),
+        (107, ("router._build_impl(rci)", 0)),
+        (108, ("router._build_impl(rci)", 0)),
+        (109, ("router._build_impl(rci)", 0)),
+        (110, ("router._build_impl(rci)", 0)),
+        (111, ("router._build_impl(rci)", 0)),
+        (112, ("router._build_impl(rci)", 0)),
+        (113, ("router._build_impl(rci)", 0)),
+        (114, ("router._build_impl(rci)", 0)),
+        (115, ("router._build_impl(rci)", 0)),
+        (116, ("router._build_impl(rci)", 0)),
+        (117, ("router._build_impl(rci)", 0)),
+        (118, ("router._build_impl(rci)", 0)),
+        (119, ("router._build_impl(rci)", 0)),
+        (120, ("router._build_impl(rci)", 0)),
+        (121, ("router._build_impl(rci)", 0)),
+        (122, ("router._build_impl(rci)", 0)),
+        (123, ("router._build_impl(rci)", 0)),
+        (124, ("router._build_impl(rci)", 0)),
+        (125, ("router._build_impl(rci)", 0)),
+        (126, ("router._build_impl(rci)", 0)),
+        (127, ("router._build_impl(rci)", 0)),
+        (128, ("router._build_impl(rci)", 0)),
+        (129, ("router._build_impl(rci)", 0)),
+        (130, ("router._build_impl(rci)", 0)),
+        (131, ("router._build_impl(rci)", 0)),
+        (132, ("router._build_impl(rci)", 0)),
+        (133, ("router._build_impl(rci)", 0)),
+        (134, ("router._build_impl(rci)", 0)),
+        (135, ("router._build_impl(rci)", 0)),
+        (136, ("router._build_impl(rci)", 0)),
+        (137, ("router._build_impl(rci)", 0)),
+        (138, ("Bytes('lost')", 0)),
+        (139, ("Bytes('lost')", 0)),
+        (140, ("App.globalGet(Bytes('lost'))", 0)),
+        (141, ("Txn.sender()", 0)),
+        (142, ("Bytes('balance')", 0)),
+        (143, ("App.localGet(Txn.sender(), Bytes('balance'))", 0)),
+        (
+            144,
+            (
+                "App.globalGet(Bytes('lost')) + App.localGet(Txn.sender(), Bytes('balance'))",
+                0,
+            ),
+        ),
+        (
+            145,
+            (
+                "App.globalPut(Bytes('lost'), App.globalGet(Bytes('lost')) + App.localGet(Txn.sender(), Bytes('balance')))",
+                0,
+            ),
+        ),
+        (146, ("router._build_impl(rci)", 0)),
+        (147, ("router._build_impl(rci)", 0)),
+        (148, ("router._build_impl(rci)", 0)),
+        (149, ("Approve()", 0)),
+        (150, ("Approve()", 0)),
+        (151, ("router._build_impl(rci)", 0)),
+        (152, ("router._build_impl(rci)", 0)),
+        (153, ("router._build_impl(rci)", 0)),
+        (154, ("router._build_impl(rci)", 0)),
+        (155, ("router._build_impl(rci)", 0)),
+        (156, ("Approve()", 0)),
+        (157, ("Approve()", 0)),
+        (158, ("def assert_sender_is_creator() -> Expr:", 1)),
+        (159, ("def assert_sender_is_creator() -> Expr:", 1)),
+        (160, ("def assert_sender_is_creator() -> Expr:", 1)),
+        (161, ("Txn.sender()", 0)),
+        (162, ("Global.creator_address()", 0)),
+        (163, ("Txn.sender() == Global.creator_address()", 0)),
+        (164, ("Assert(Txn.sender() == Global.creator_address())", 0)),
+        (165, ("def assert_sender_is_creator() -> Expr:", 1)),
+        (
+            166,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            167,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            168,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (169, ("router._build_impl(rci)", 0)),
+        (170, ("router._build_impl(rci)", 0)),
+        (171, ("payment.get()", 0)),
+        (172, ("payment.get().sender()", 0)),
+        (173, ("sender.address()", 0)),
+        (174, ("sender.address()", 0)),
+        (175, ("payment.get().sender() == sender.address()", 0)),
+        (176, ("Assert(payment.get().sender() == sender.address())", 0)),
+        (177, ("payment.get()", 0)),
+        (178, ("payment.get().receiver()", 0)),
+        (179, ("Global.current_application_address()", 0)),
+        (180, ("payment.get().receiver() == Global.current_application_address()", 0)),
+        (
+            181,
+            (
+                "Assert(payment.get().receiver() == Global.current_application_address())",
+                0,
+            ),
+        ),
+        (182, ("sender.address()", 0)),
+        (183, ("sender.address()", 0)),
+        (184, ("Bytes('balance')", 0)),
+        (185, ("sender.address()", 0)),
+        (186, ("sender.address()", 0)),
+        (187, ("Bytes('balance')", 0)),
+        (188, ("App.localGet(sender.address(), Bytes('balance'))", 0)),
+        (189, ("payment.get()", 0)),
+        (190, ("payment.get().amount()", 0)),
+        (
+            191,
+            (
+                "App.localGet(sender.address(), Bytes('balance')) + payment.get().amount()",
+                0,
+            ),
+        ),
+        (
+            192,
+            (
+                "App.localPut(sender.address(), Bytes('balance'), App.localGet(sender.address(), Bytes('balance')) + payment.get().amount())",
+                0,
+            ),
+        ),
+        (
+            193,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (194, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
+        (195, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
+        (196, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
+        (197, ("user.address()", 0)),
+        (198, ("Bytes('balance')", 0)),
+        (199, ("App.localGet(user.address(), Bytes('balance'))", 0)),
+        (200, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
+        (201, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
+        (202, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
+        (203, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
+        (204, ("router._build_impl(rci)", 0)),
+        (205, ("router._build_impl(rci)", 0)),
+        (206, ("Txn.sender()", 0)),
+        (207, ("Bytes('balance')", 0)),
+        (208, ("Txn.sender()", 0)),
+        (209, ("Bytes('balance')", 0)),
+        (210, ("App.localGet(Txn.sender(), Bytes('balance'))", 0)),
+        (211, ("amount.get()", 0)),
+        (212, ("App.localGet(Txn.sender(), Bytes('balance')) - amount.get()", 0)),
+        (
+            213,
+            (
+                "App.localPut(Txn.sender(), Bytes('balance'), App.localGet(Txn.sender(), Bytes('balance')) - amount.get())",
+                0,
+            ),
+        ),
+        (214, ("InnerTxnBuilder.Begin()", 0)),
+        (
+            215,
+            (
+                "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
+                0,
+            ),
+        ),
+        (
+            216,
+            (
+                "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
+                0,
+            ),
+        ),
+        (217, ("recipient.address()", 0)),
+        (218, ("recipient.address()", 0)),
+        (
+            219,
+            (
+                "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
+                0,
+            ),
+        ),
+        (220, ("amount.get()", 0)),
+        (
+            221,
+            (
+                "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
+                0,
+            ),
+        ),
+        (222, ("Int(0)", 0)),
+        (
+            223,
+            (
+                "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
+                0,
+            ),
+        ),
+        (224, ("InnerTxnBuilder.Submit()", 0)),
+        (225, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
     ]
     assert len(expected) == len(actual)
-    print(actual)
+    print(list(enumerate(actual)))
+
     for i, a in enumerate(actual):
         assert (
-            e := expected[i]
+            e := expected[i][1]
         ) == a, f"""discrepancy at index {i=} 
 expected:
 {e}
