@@ -36,8 +36,8 @@ ROUTER_CASES, NONTRIV_CLEAR_ROUTER_CASES = ALL_ROUTER_CASES[:-2], ALL_ROUTER_CAS
 TYPICAL_IAC_OC = pt.MethodConfig(no_op=pt.CallConfig.CALL)
 
 # TEST DRIVERS LEGEND - combines method_configs + predicates
-# * @0 - method: str
-#   method == `None` indicates bare app call
+# * @0 - method: RouterCallType
+#   method == None indicates bare app call
 #
 # * @1 - method_config: MethodConfig
 #   defines how to call the method
@@ -202,6 +202,7 @@ def test_abi_router_positive(case, version, router):
     print("\nstats:", json.dumps(stats := results.stats, indent=2))
     assert stats and all(stats.values())
 
+    # TODO: add these assertions after the flakiness of issue #199 is fixed for good
     # These fail because of differing scratch slot assignments:
     # pregen_approval, pregen_clear = ROUTER_SOURCES[(case, version)]
     # assert pregen_clear == results.clear_simulator.simulate_dre.program
@@ -288,10 +289,8 @@ def test_abi_router_negative(case, version, router):
     scenario = "I. explore all UNEXPECTED (is_app_create, on_complete) combos"
 
     # NOTE: We're NOT including clear_state calls for the approval program
-    # as though they would never be applied.
+    # as they would never be applied.
     # Also, we're ONLY including clear_state for the clear program.
-    # Finally, when no bare app calls are provided in method_configs,
-    # we still test the bare app call case.
     neg_mconfigs = {
         meth: pt.MethodConfig(
             **{k: negate_cc(v) for k, v in asdict(mc).items() if k != "clear_state"}
@@ -337,7 +336,7 @@ def test_abi_router_negative(case, version, router):
     else:
         scenario_assert_stats(scenario, None, totals)
 
-    # For the rest, we may assume method calls (non bare-app-call)
+    # For the rest, we may assume method calls (i.e. non bare-app calls)
     # III. explore changing method selector arg[0] by edit distance 1
 
     # NOTE: We don't test the case of adding an argument to method calls
@@ -450,7 +449,7 @@ def test_nontriv_clear():
         nontriv_clear, predicates, model_router=questionable
     )
 
-    # Sanity check the approval programs (POSITIVE CASES):
+    # Sanity check the approval programs (_POSITIVE_ cases only):
     msg = "APPROVAL nontriv@v6 vs. questionable@v8"
     version = 6
     results = rsim_nt_vs_q.simulate_and_assert(

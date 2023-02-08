@@ -740,7 +740,7 @@ class RouterSimulation:
 
         # --- setup local functions including reporter and stats. Also declare closure vars --- #
 
-        # for purposes of clarity, defining all the variables for closures before each function:
+        # for purposes of clarity, declare all the variables for closures before each function:
         approve_sim: Simulation | None  # required for return RouterResults
 
         # msg4simulate:
