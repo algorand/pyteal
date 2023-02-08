@@ -590,7 +590,7 @@ class RouterSimulation:
     @classmethod
     def _validate_method_configs(cls, method_configs):
         assert isinstance(
-            method_configs, (dict)
+            method_configs, dict
         ), f"method_configs '{method_configs}' has type {type(method_configs)} but only 'dict' and 'NoneType' are allowed."
 
         assert (
