@@ -330,7 +330,9 @@ def test_indexTuple():
         IndexTest(
             types=[byte_t, tuple_t],
             typeIndex=1,
-            expected=lambda output: output.decode(encoded, start_index=pt.Int(1)),
+            expected=lambda output: output.decode(
+                encoded, start_index=pt.Int(1), length=pt.Int(1)
+            ),
         ),
         IndexTest(
             types=[tuple_t, byte_t],
