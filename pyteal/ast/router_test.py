@@ -380,7 +380,7 @@ def test_bare_call_config_clear_state_failure():
     assert "Attempt to construct clear state program from bare app call" in str(tie)
 
 
-def test_bare_call_actions_asdict():
+def test_BareCallActions_asdict():
     no_action = pt.OnCompleteAction()
     del_action = pt.OnCompleteAction(action=pt.Int(1), call_config=pt.CallConfig.ALL)
     close_action = pt.OnCompleteAction(action=pt.Int(2), call_config=pt.CallConfig.CALL)
@@ -407,6 +407,35 @@ def test_bare_call_actions_asdict():
         "opt_in": no_action,
         "update_application": no_action,
     }
+
+
+def test_BareCallActions_get_method_config():
+    from pyteal.ast.router import MethodConfig, CallConfig
+
+    cc_all, cc_call, cc_create = (
+        pt.CallConfig.ALL,
+        pt.CallConfig.CALL,
+        pt.CallConfig.CREATE,
+    )
+    optin_action = pt.OnCompleteAction(action=pt.Int(1), call_config=cc_all)
+    noop_action = pt.OnCompleteAction(action=pt.Int(2), call_config=cc_call)
+    update_action = pt.OnCompleteAction(action=pt.Int(3), call_config=cc_create)
+
+    bca = pt.BareCallActions(
+        update_application=update_action,
+        opt_in=optin_action,
+        no_op=noop_action,
+    )
+
+    mc = bca.get_method_config()
+    assert mc == MethodConfig(
+        close_out=CallConfig.NEVER,
+        delete_application=CallConfig.NEVER,
+        no_op=cc_call,
+        opt_in=cc_all,
+        update_application=cc_create,
+        clear_state=CallConfig.NEVER,
+    )
 
 
 def test_router_register_method_clear_state_failure():
