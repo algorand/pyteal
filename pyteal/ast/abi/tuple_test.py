@@ -374,6 +374,15 @@ def test_indexTuple():
             ),
         ),
         IndexTest(
+            types=[dynamic_array_t1, byte_t],
+            typeIndex=1,
+            expected=lambda output: output.decode(
+                encoded,
+                start_index=pt.Int(2),
+                length=pt.Int(1),
+            ),
+        ),
+        IndexTest(
             types=[byte_t, dynamic_array_t1, byte_t],
             typeIndex=1,
             expected=lambda output: output.decode(
