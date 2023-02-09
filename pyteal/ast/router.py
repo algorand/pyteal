@@ -263,6 +263,15 @@ class BareCallActions:
             )
         return Cond(*[[n.condition, n.branch] for n in conditions_n_branches])
 
+    def get_method_config(self) -> MethodConfig:
+        return MethodConfig(
+            no_op=self.no_op.call_config,
+            opt_in=self.opt_in.call_config,
+            close_out=self.close_out.call_config,
+            update_application=self.update_application.call_config,
+            delete_application=self.delete_application.call_config,
+        )
+
 
 BareCallActions.__module__ = "pyteal"
 
@@ -906,6 +915,12 @@ class Router:
 
         self.bare_call_actions: BareCallActions = bare_calls or BareCallActions()
 
+        # maps method signature (or None for bare call) to MethodConfig:
+        self.method_configs: dict[str | None, MethodConfig] = dict()
+
+        if not self.bare_call_actions.is_empty():
+            self.method_configs[None] = self.bare_call_actions.get_method_config()
+
     def _clean(self) -> None:
         self.approval_ast._clean_bare_calls()
 
@@ -931,7 +946,7 @@ class Router:
         """
         if not isinstance(method_call, ABIReturnSubroutine):
             raise TealInputError(
-                "for adding method handler, must be ABIReturnSubroutine"
+                f"for adding method handler, must be ABIReturnSubroutine but method_call is {type(method_call)}"
             )
         method_signature = method_call.method_signature(overriding_name)
         if method_config is None:
@@ -962,6 +977,7 @@ class Router:
         self.approval_ast.add_method_to_ast(
             method_signature, method_approval_cond, method_call
         )
+        self.method_configs[method_signature] = method_config
         return method_call
 
     def method(

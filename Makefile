@@ -69,6 +69,11 @@ lint-and-test: check-generate-init lint test-unit
 algod-start:
 	docker compose up -d algod --wait
 
+algod-version:
+	docker compose exec algod goal --version
+
+algod-start-report: algod-start algod-version
+
 algod-stop:
 	docker compose stop algod
 
