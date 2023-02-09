@@ -194,12 +194,10 @@ def _index_tuple(
     start_index = Int(offset)
     length = Int(valueType.byte_length_static())
 
-    if index + 1 == len(value_types):
-        if offset == 0:
+    if offset == 0:
+        if index + 1 == len(value_types):
             # This is the first and only value in the tuple, so decode all of encoded
             return output.decode(encoded)
-
-    if offset == 0:
         # This is the first value in the tuple, so decode the substring from 0 with length length
         return output.decode(encoded, length=length)
 
