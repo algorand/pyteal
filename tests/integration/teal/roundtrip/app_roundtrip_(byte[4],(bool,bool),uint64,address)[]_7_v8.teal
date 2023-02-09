@@ -44,7 +44,7 @@ int 5
 extract_uint64
 store 2
 frame_dig -1
-extract 13 32
+extract 13 0
 store 3
 load 0
 callsub arraycomplement_4
