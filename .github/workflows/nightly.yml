@@ -1,13 +1,7 @@
 name: "Nightly Build"
 on:
-  pull_request:
-  push:
-    tags:
-      - v**
-    branches:
-      - source-map-b1
   schedule:
-    - cron: "57 0 * * *"
+    - cron: "3 1 * * *"
 
 jobs:
   check-date:
