@@ -1,0 +1,11 @@
+name: "Nightly Workflow"
+on:
+  schedule:
+    - cron: "17 * * * *"
+
+jobs:
+  hello:
+    runs-on: ubuntu-20.04
+    steps:
+      - run: echo "hello there"
+      - run: echo "goodbye"
