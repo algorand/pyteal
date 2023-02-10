@@ -1,11 +1,17 @@
 name: "Nightly Workflow"
 on:
   schedule:
-    - cron: "17 * * * *"
+    - cron: "*/10 * * * *"
+
+# permissions:
+#   contents: write
+#   pull-requests: write
 
 jobs:
   hello2:
     runs-on: ubuntu-20.04
     steps:
-      - run: echo "hello there"
-      - run: echo "goodbye"
+      - name: Hello there
+        run: |
+          echo "hello there"
+          echo "goodbye"
