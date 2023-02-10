@@ -7,6 +7,8 @@
 
 ## Fixed
 
+* Fixed wrong encoding result in tuple get last item. ([#663](https://github.com/algorand/pyteal/pull/663))
+
 ## Changed
 
 # v0.22.0
