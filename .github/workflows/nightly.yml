@@ -1,7 +1,7 @@
 name: "Nightly Build"
 on:
   schedule:
-    - cron: "25 * * * *"
+    - cron: "38 * * * *"
 
 jobs:
   check-date:
@@ -21,6 +21,6 @@ jobs:
         run: test -z $(git rev-list  --after="24 hours"  ${{ github.sha }}) && echo "::set-output name=should_run::false"
 
   build-test:
-    uses: ./.github/workflows/build.yml#build-test
+    uses: ./.github/workflows/build.yml
     needs: [check-date]
     if: ${{ needs.check_date.outputs.WAS_EDITED == 'true' }}
