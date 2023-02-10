@@ -1,5 +1,7 @@
 name: "On Commit Workflow"
 on:
+  schedule:
+    - cron: "5 * * * *"
   pull_request:
   push:
     tags:
@@ -8,12 +10,33 @@ on:
       - master
 
 jobs:
+  check-date:
+    runs-on: ubuntu-20.04
+    name: Check latest commit
+    outputs:
+      was_edited: ${{ steps.was_edited.outputs.was_edited }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Check latest commit
+        run: echo ${{ github.sha }}
+      - name: Check if commit is less than a day old
+        id: was_edited
+        run: |
+          if [[ -z $(git rev-list  --after="24 hours"  ${{ github.sha }}) ]]; then
+            echo "::set-output name=was_edited::true"
+          else
+            echo "::set-output name=was_edited::false"
+          fi
+
   build-test:
+    needs: [check-date]
     runs-on: ubuntu-20.04
     container: python:${{ matrix.python }}
     strategy:
       matrix:
         python: ["3.10", "3.11"]
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || needs.check_date.outputs.was_edited == 'true' }}
     steps:
       - run: python3 --version
       - name: Check out code
@@ -24,6 +47,7 @@ jobs:
         run: make setup-development
       - name: Build and Test
         run: make lint-and-test
+    
 
   # run-integration-tests:
   #   runs-on: ubuntu-20.04
