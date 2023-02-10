@@ -4,7 +4,7 @@ on:
     - cron: "17 * * * *"
 
 jobs:
-  hello:
+  hello2:
     runs-on: ubuntu-20.04
     steps:
       - run: echo "hello there"
