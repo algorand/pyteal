@@ -1,4 +1,4 @@
-name: "Build workflow"
+name: "On Commit Workflow"
 on:
   pull_request:
   push:
