@@ -198,7 +198,7 @@ def _index_tuple(
         if offset == 0:
             # This is the first and only value in the tuple, so decode all of encoded
             return output.decode(encoded)
-        elif all(not x.is_dynamic() for x in value_types):
+        if all(not x.is_dynamic() for x in value_types):
             # This is the last element in tuple with all elements being static typed
             return output.decode(encoded, start_index=start_index)
 
