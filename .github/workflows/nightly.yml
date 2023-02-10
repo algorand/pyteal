@@ -7,7 +7,7 @@ on:
     branches:
       - source-map-b1
   schedule:
-    - cron: "54 0 * * *"
+    - cron: "57 0 * * *"
 
 jobs:
   check-date:
@@ -27,7 +27,7 @@ jobs:
         run: test -z $(git rev-list  --after="24 hours"  ${{ github.sha }}) && echo "::set-output name=should_run::false"
 
   build-test:
-    needs: [check_date]
+    needs: [check-date]
     if: ${{ github.event_name == 'release' || needs.check_date.outputs.WAS_EDITED == 'true' }}
 
     runs-on: ubuntu-20.04
