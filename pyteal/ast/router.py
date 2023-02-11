@@ -1168,7 +1168,7 @@ class Router:
         with_sourcemaps: bool = False,
         pcs_in_sourcemap: bool = False,
         algod_client: Optional[AlgodClient] = None,
-        annotate_teal: bool = True,
+        annotate_teal: bool = False,
         annotate_teal_headers: bool = False,
         annotate_teal_concise: bool = True,
     ) -> RouterResults:
