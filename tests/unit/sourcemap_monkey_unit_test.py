@@ -315,6 +315,8 @@ def router_example_subroutine(pt):
     return router
 
 
+SUCCESSFUL_SUBROUTINE_LINENO = 302
+
 CONSTRUCTS_LATEST_VERSION = 8
 
 
@@ -322,6 +324,44 @@ def test_constructs_handles_latest_pyteal():
     import pyteal as pt
 
     assert CONSTRUCTS_LATEST_VERSION == pt.MAX_PROGRAM_VERSION
+
+
+def test_hybrid_w_offset(mock_ConfigParser):
+    import pyteal as pt
+
+    router = router_example_subroutine(pt)
+    rci = pt.ast.router._RouterCompileInput(
+        version=7,
+        assemble_constants=True,
+        with_sourcemaps=True,
+    )
+
+    sourcemap = router._build_impl(rci).approval_sourcemapper
+
+    # expected:
+    etarget = "def set_foo(_app_id: AppId) -> pt.Expr:"
+    func_source = f'@staticmethod\n@pt.ABIReturnSubroutine\n{etarget}\n    """Some docstring"""\n    return Foo.app_id.set(_app_id)'
+
+    # actual:
+    lbf = sourcemap._best_frames[-1]
+    hwo = lbf._hybrid_w_offset()
+    nsource = lbf.node_source()
+    code = lbf.code()
+    naive_line = lbf.frame_info.lineno
+
+    # consistent across versions:
+    assert etarget == hwo[0]
+    assert func_source == nsource
+
+    # inconsistent between 3.10 and 3.11:
+    if sys.version_info[:2] <= (3, 10):
+        assert 0 == hwo[1]
+        assert "def set_foo(" == code
+        assert SUCCESSFUL_SUBROUTINE_LINENO == naive_line
+    else:
+        assert 1 == hwo[1]
+        assert "@pt.ABIReturnSubroutine" == code
+        assert SUCCESSFUL_SUBROUTINE_LINENO - 1 == naive_line
 
 
 CONSTRUCTS = [

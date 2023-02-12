@@ -588,7 +588,8 @@ class PyTealFrame(StackFrame):
 
     def _hybrid_w_offset(self) -> tuple[str, int]:
         """
-        Attempt to unparse the node and return the most apropos line, together with its offset
+        Attempt to unparse the node and return the most apropos line,
+        together with its offset in comparison with its raw code.
         """
         code = self.code()
         node = self.node
@@ -604,13 +605,17 @@ class PyTealFrame(StackFrame):
             if len(pt_lines) == 1:
                 return pt_chunk, 0
 
+            offset = i = 0
             if pt_lines and isinstance(node, FunctionDef):
-                idx = 0
+                code_idx = -1
                 for i, line in enumerate(pt_lines):
+                    if line.startswith(code):
+                        code_idx = i
                     if line.startswith("def"):
-                        idx = i
+                        if code_idx >= 0:
+                            offset = i - code_idx
                         break
-                return pt_lines[idx], idx
+                return pt_lines[i], offset
 
         return code, 0
 
