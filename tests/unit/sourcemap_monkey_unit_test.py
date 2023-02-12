@@ -192,7 +192,7 @@ def test_frame_info_is_right_before_core_last_drop_idx(
 P = "#pragma version {v}"  # fill the template at runtime
 
 C = "comp._compile_impl(with_sourcemap=True)"
-R = "expr.compile(version=version, assemble_constants=False, optimize=optimize, with_sourcemaps=True)"
+R = "expr._build_impl(rci)"
 
 BIG_A = "pt.And(pt.Gtxn[0].rekey_to() == pt.Global.zero_address(), pt.Gtxn[1].rekey_to() == pt.Global.zero_address(), pt.Gtxn[2].rekey_to() == pt.Global.zero_address(), pt.Gtxn[3].rekey_to() == pt.Global.zero_address(), pt.Gtxn[4].rekey_to() == pt.Global.zero_address(), pt.Gtxn[0].last_valid() == pt.Gtxn[1].last_valid(), pt.Gtxn[1].last_valid() == pt.Gtxn[2].last_valid(), pt.Gtxn[2].last_valid() == pt.Gtxn[3].last_valid(), pt.Gtxn[3].last_valid() == pt.Gtxn[4].last_valid(), pt.Gtxn[0].type_enum() == pt.TxnType.AssetTransfer, pt.Gtxn[0].xfer_asset() == asset_c, pt.Gtxn[0].receiver() == receiver)"
 BIG_OR = "pt.Or(pt.App.globalGet(pt.Bytes('paused')), pt.App.localGet(pt.Int(0), pt.Bytes('frozen')), pt.App.localGet(pt.Int(1), pt.Bytes('frozen')), pt.App.localGet(pt.Int(0), pt.Bytes('lock until')) >= pt.Global.latest_timestamp(), pt.App.localGet(pt.Int(1), pt.Bytes('lock until')) >= pt.Global.latest_timestamp(), pt.App.globalGet(pt.Concat(pt.Bytes('rule'), pt.Itob(pt.App.localGet(pt.Int(0), pt.Bytes('transfer group'))), pt.Itob(pt.App.localGet(pt.Int(1), pt.Bytes('transfer group'))))))"
@@ -273,7 +273,7 @@ def abi_method_return_example(pt):
     )
 
 
-def router_example(pt):
+def router_example_method(pt):
     on_completion_actions = pt.BareCallActions(
         opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes("optin call"))),
     )
@@ -283,6 +283,35 @@ def router_example(pt):
     def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:  # type: ignore
         return output.set(a.get() + b.get())
 
+    return router
+
+
+def router_example_subroutine(pt):
+    AppId = pt.abi.Uint64
+
+    class Foo:
+        """Some class docstring"""
+
+        page_size = pt.Int(128 - 1)
+
+        account = pt.abi.Address()
+        app_id = pt.abi.Uint64()
+
+        @staticmethod
+        @pt.ABIReturnSubroutine
+        def set_foo(
+            _app_id: AppId,
+        ) -> pt.Expr:  # type: ignore
+            "Some docstring"
+            return Foo.app_id.set(_app_id)
+
+    router = pt.Router("foo")
+    router.add_method_handler(
+        Foo.set_foo,
+        "set_foo",
+        pt.MethodConfig(no_op=pt.CallConfig.CALL),
+        "Foo the foo",
+    )
     return router
 
 
@@ -1867,7 +1896,7 @@ CONSTRUCTS = [
         dict(frame_pointers=True),
     ),
     (  # 37 - Router (scratch slots)
-        router_example,
+        router_example_method,
         [
             [P, R],
             (
@@ -2102,7 +2131,7 @@ CONSTRUCTS = [
         dict(frame_pointers=False),
     ),
     (  # 38 - Router (frame pointers)
-        router_example,
+        router_example_method,
         [
             [P, R],
             (
@@ -2332,6 +2361,129 @@ CONSTRUCTS = [
         "Application",
         dict(frame_pointers=True),
     ),
+    (  # 39 - Router static subroutine (scratch slots)
+        router_example_subroutine,
+        [
+            [P, R],
+            ("txna ApplicationArgs 0", R),
+            ('method "set_foo(uint64)void"', R),
+            ("==", R),
+            ("bnz main_l2", R),
+            ("err", R),
+            ("main_l2:", R),
+            (
+                "txn OnCompletion",
+                "router.add_method_handler(Foo.set_foo, 'set_foo', pt.MethodConfig(no_op=pt.CallConfig.CALL), 'Foo the foo')",
+            ),
+            (
+                "int NoOp",
+                "router.add_method_handler(Foo.set_foo, 'set_foo', pt.MethodConfig(no_op=pt.CallConfig.CALL), 'Foo the foo')",
+            ),
+            (
+                "==",
+                "router.add_method_handler(Foo.set_foo, 'set_foo', pt.MethodConfig(no_op=pt.CallConfig.CALL), 'Foo the foo')",
+            ),
+            (
+                "txn ApplicationID",
+                "router.add_method_handler(Foo.set_foo, 'set_foo', pt.MethodConfig(no_op=pt.CallConfig.CALL), 'Foo the foo')",
+            ),
+            (
+                "int 0",
+                "router.add_method_handler(Foo.set_foo, 'set_foo', pt.MethodConfig(no_op=pt.CallConfig.CALL), 'Foo the foo')",
+            ),
+            (
+                "!=",
+                "router.add_method_handler(Foo.set_foo, 'set_foo', pt.MethodConfig(no_op=pt.CallConfig.CALL), 'Foo the foo')",
+            ),
+            (
+                "&&",
+                "router.add_method_handler(Foo.set_foo, 'set_foo', pt.MethodConfig(no_op=pt.CallConfig.CALL), 'Foo the foo')",
+            ),
+            ("assert", R),
+            ("txna ApplicationArgs 1", R),
+            ("btoi", R),
+            ("store 1", R),
+            ("load 1", R),
+            ("callsub setfoo_0", R),
+            ("int 1", R),
+            ("return", R),
+            ("", "def set_foo(_app_id: AppId) -> pt.Expr:"),
+            ("// set_foo", "def set_foo(_app_id: AppId) -> pt.Expr:"),
+            ("setfoo_0:", "def set_foo(_app_id: AppId) -> pt.Expr:"),
+            ("store 2", R),
+            ("load 2", "Foo.app_id.set(_app_id)"),
+            ("store 0", "Foo.app_id.set(_app_id)"),
+            ("retsub", "def set_foo(_app_id: AppId) -> pt.Expr:"),
+        ],
+        5,
+        "Application",
+        dict(frame_pointers=False),
+    ),
+    (  # 40 - Router static subroutine (frame pointers)
+        router_example_subroutine,
+        [
+            [P, R],
+            ("txna ApplicationArgs 0", R),
+            ('method "set_foo(uint64)void"', R),
+            ("==", R),
+            ("bnz main_l2", R),
+            ("err", R),
+            ("main_l2:", R),
+            (
+                "txn OnCompletion",
+                "router.add_method_handler(Foo.set_foo, 'set_foo', pt.MethodConfig(no_op=pt.CallConfig.CALL), 'Foo the foo')",
+            ),
+            (
+                "int NoOp",
+                "router.add_method_handler(Foo.set_foo, 'set_foo', pt.MethodConfig(no_op=pt.CallConfig.CALL), 'Foo the foo')",
+            ),
+            (
+                "==",
+                "router.add_method_handler(Foo.set_foo, 'set_foo', pt.MethodConfig(no_op=pt.CallConfig.CALL), 'Foo the foo')",
+            ),
+            (
+                "txn ApplicationID",
+                "router.add_method_handler(Foo.set_foo, 'set_foo', pt.MethodConfig(no_op=pt.CallConfig.CALL), 'Foo the foo')",
+            ),
+            (
+                "int 0",
+                "router.add_method_handler(Foo.set_foo, 'set_foo', pt.MethodConfig(no_op=pt.CallConfig.CALL), 'Foo the foo')",
+            ),
+            (
+                "!=",
+                "router.add_method_handler(Foo.set_foo, 'set_foo', pt.MethodConfig(no_op=pt.CallConfig.CALL), 'Foo the foo')",
+            ),
+            (
+                "&&",
+                "router.add_method_handler(Foo.set_foo, 'set_foo', pt.MethodConfig(no_op=pt.CallConfig.CALL), 'Foo the foo')",
+            ),
+            ("assert", R),
+            ("callsub setfoocaster_1", R),
+            ("int 1", R),
+            ("return", R),
+            ("", "def set_foo(_app_id: AppId) -> pt.Expr:"),
+            ("// set_foo", "def set_foo(_app_id: AppId) -> pt.Expr:"),
+            ("setfoo_0:", "def set_foo(_app_id: AppId) -> pt.Expr:"),
+            ("proto 1 0", "def set_foo(_app_id: AppId) -> pt.Expr:"),
+            ("frame_dig -1", "Foo.app_id.set(_app_id)"),
+            ("store 0", "Foo.app_id.set(_app_id)"),
+            ("retsub", "def set_foo(_app_id: AppId) -> pt.Expr:"),
+            ("", R),
+            ("// set_foo_caster", R),
+            ("setfoocaster_1:", R),
+            ("proto 0 0", R),
+            ("int 0", R),
+            ("txna ApplicationArgs 1", R),
+            ("btoi", R),
+            ("frame_bury 0", R),
+            ("frame_dig 0", R),
+            ("callsub setfoo_0", R),
+            ("retsub", R),
+        ],
+        8,
+        "Application",
+        dict(frame_pointers=True),
+    ),
 ]
 
 if BRUTE_FORCE_TERRIBLE_SKIPPING:
@@ -2368,13 +2520,13 @@ def test_constructs(mock_ConfigParser, i, test_case, mode, version):
     if isinstance(expr, pt.Router):
         assert len(test_case) > 3 and fixed_mode == "Application"  # type: ignore
 
-        router_bundle = expr.compile(
+        rci = pt.ast.router._RouterCompileInput(
             version=version,
             assemble_constants=False,
             optimize=optimize,
             with_sourcemaps=True,
         )
-        sourcemap = router_bundle.approval_sourcemapper
+        sourcemap = expr._build_impl(rci).approval_sourcemapper
     else:
         comp = pt.Compilation(
             expr, mode, version=version, assemble_constants=False, optimize=optimize

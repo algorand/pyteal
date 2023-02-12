@@ -604,12 +604,13 @@ class PyTealFrame(StackFrame):
             if len(pt_lines) == 1:
                 return pt_chunk, 0
 
-            if pt_lines and isinstance(
-                node, FunctionDef
-            ):  # >= 2 lines function definiton
-                if getattr(node, "decorator_list", False):
-                    return pt_lines[1], 1
-                return pt_lines[0], 0
+            if pt_lines and isinstance(node, FunctionDef):
+                idx = 0
+                for i, line in enumerate(pt_lines):
+                    if line.startswith("def"):
+                        idx = i
+                        break
+                return pt_lines[idx], idx
 
         return code, 0
 
