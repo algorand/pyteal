@@ -286,7 +286,7 @@ def router_example_method(pt):
     return router
 
 
-def router_example_subroutine(pt):
+def router_static_abisubroutine(pt):
     AppId = pt.abi.Uint64
 
     class Foo:
@@ -326,10 +326,11 @@ def test_constructs_handles_latest_pyteal():
     assert CONSTRUCTS_LATEST_VERSION == pt.MAX_PROGRAM_VERSION
 
 
+@pytest.mark.serial
 def test_hybrid_w_offset(mock_ConfigParser):
     import pyteal as pt
 
-    router = router_example_subroutine(pt)
+    router = router_static_abisubroutine(pt)
     rci = pt.ast.router._RouterCompileInput(
         version=7,
         assemble_constants=True,
@@ -2402,7 +2403,7 @@ CONSTRUCTS = [
         dict(frame_pointers=True),
     ),
     (  # 39 - Router static subroutine (scratch slots)
-        router_example_subroutine,
+        router_static_abisubroutine,
         [
             [P, R],
             ("txna ApplicationArgs 0", R),
@@ -2460,7 +2461,7 @@ CONSTRUCTS = [
         dict(frame_pointers=False),
     ),
     (  # 40 - Router static subroutine (frame pointers)
-        router_example_subroutine,
+        router_static_abisubroutine,
         [
             [P, R],
             ("txna ApplicationArgs 0", R),
