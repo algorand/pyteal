@@ -32,9 +32,9 @@ txna ApplicationArgs 2                 //  (83)
 int 0                                  //  (86)
 getbyte                                //  (87)
 store 4                                //  (88)
-load 3                                 //  (90)
+load 3                                 //  (90)   def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
 load 4                                 //  (92)
-callsub withdraw_3                     //  (94)
+callsub withdraw_3                     //  (94)   {COMPILE}
 int 1                                  //  (97)
 return                                 //  (98)
 main_l6:                               //
@@ -88,9 +88,9 @@ gtxns TypeEnum                         //  (167)
 int pay                                //  (169)
 ==                                     //  (170)
 assert                                 //  (171)
-load 0                                 //  (172)
+load 0                                 //  (172)  def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
 load 1                                 //  (174)
-callsub deposit_1                      //  (176)
+callsub deposit_1                      //  (176)  {COMPILE}
 int 1                                  //  (179)
 return                                 //  (180)
 main_l8:                               //

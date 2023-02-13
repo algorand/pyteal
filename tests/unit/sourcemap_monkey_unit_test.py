@@ -11,10 +11,6 @@ import sys
 from typing import Literal
 from unittest import mock
 
-# TODO: DO NOT MERGE WITHOUT HAVING DEALT WITH CASES 37 & 38 (and fixing test_constructs to use Router._build_impl)
-BRUTE_FORCE_TERRIBLE_SKIPPING = """cannot properly handle @router.method source maps
-and haven't yet agreed to abandon"""
-
 
 ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 
@@ -86,7 +82,7 @@ def test_r3sourcemap(mock_ConfigParser):
 
     assert "mappings" in r3sm_json
     assert (
-        "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"
+        "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"
         == r3sm_json["mappings"]
     )
 
@@ -315,7 +311,7 @@ def router_static_abisubroutine(pt):
     return router
 
 
-SUCCESSFUL_SUBROUTINE_LINENO = 302
+SUCCESSFUL_SUBROUTINE_LINENO = 298
 
 CONSTRUCTS_LATEST_VERSION = 8
 
@@ -1765,7 +1761,10 @@ CONSTRUCTS = [
                 "store 0",
                 "(to_sum_arr := pt.abi.make(pt.abi.DynamicArray[pt.abi.Uint64])).decode(pt.Txn.application_args[1])",
             ),
-            ("load 0", C),
+            (
+                "load 0",
+                "def abi_sum(toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
             ("callsub abisum_0", "abi_sum(to_sum_arr)"),
             ("store 1", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
             ("byte 0x151f7c75", "pt.abi.MethodReturn(res)"),
@@ -1850,7 +1849,10 @@ CONSTRUCTS = [
                 "store 0",
                 "(to_sum_arr := pt.abi.make(pt.abi.DynamicArray[pt.abi.Uint64])).decode(pt.Txn.application_args[1])",
             ),
-            ("load 0", C),
+            (
+                "load 0",
+                "def abi_sum(toSum: pt.abi.DynamicArray[pt.abi.Uint64], *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
             ("callsub abisum_0", "abi_sum(to_sum_arr)"),
             ("store 1", "(res := pt.abi.Uint64()).set(abi_sum(to_sum_arr))"),
             ("byte 0x151f7c75", "pt.abi.MethodReturn(res)"),
@@ -1940,46 +1942,16 @@ CONSTRUCTS = [
         router_example_method,
         [
             [P, R],
-            (
-                "txn NumAppArgs",
-                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
-            ),
-            (
-                "int 0",
-                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
-            ),
-            (
-                "==",
-                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
-            ),
-            (
-                "bnz main_l4",
-                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
-            ),
-            (
-                "txna ApplicationArgs 0",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                'method "add(uint64,uint64)uint64"',
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "==",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "bnz main_l3",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "err",
-                "expr.compile(version=version, assemble_constants=False, optimize=optimize, with_sourcemaps=True)",
-            ),
-            (
-                "main_l3:",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
+            ("txn NumAppArgs", R),
+            ("int 0", R),
+            ("==", R),
+            ("bnz main_l4", R),
+            ("txna ApplicationArgs 0", R),
+            ('method "add(uint64,uint64)uint64"', R),
+            ("==", R),
+            ("bnz main_l3", R),
+            ("err", R),
+            ("main_l3:", R),
             (
                 "txn OnCompletion",
                 "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
@@ -2008,132 +1980,45 @@ CONSTRUCTS = [
                 "&&",
                 "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
             ),
-            (
-                "assert",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "txna ApplicationArgs 1",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "btoi",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "store 0",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "txna ApplicationArgs 2",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "btoi",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "store 1",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
+            ("assert", R),
+            ("txna ApplicationArgs 1", R),
+            ("btoi", R),
+            ("store 0", R),
+            ("txna ApplicationArgs 2", R),
+            ("btoi", R),
+            ("store 1", R),
             (
                 "load 0",
-                "expr.compile(version=version, assemble_constants=False, optimize=optimize, with_sourcemaps=True)",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
             ),
             (
                 "load 1",
-                "expr.compile(version=version, assemble_constants=False, optimize=optimize, with_sourcemaps=True)",
-            ),
-            (
-                "callsub add_0",
                 "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
             ),
-            (
-                "store 2",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "byte 0x151f7c75",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "load 2",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "itob",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "concat",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "log",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "int 1",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "return",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "main_l4:",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "txn OnCompletion",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "int OptIn",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "==",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "bnz main_l6",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "err",
-                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
-            ),
-            (
-                "main_l6:",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "txn ApplicationID",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "int 0",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "!=",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "assert",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
+            ("callsub add_0", R),
+            ("store 2", R),
+            ("byte 0x151f7c75", R),
+            ("load 2", R),
+            ("itob", R),
+            ("concat", R),
+            ("log", R),
+            ("int 1", R),
+            ("return", R),
+            ("main_l4:", R),
+            ("txn OnCompletion", R),
+            ("int OptIn", R),
+            ("==", R),
+            ("bnz main_l6", R),
+            ("err", R),
+            ("main_l6:", R),
+            ("txn ApplicationID", R),
+            ("int 0", R),
+            ("!=", R),
+            ("assert", R),
             ('byte "optin call"', "pt.Bytes('optin call')"),
             ("log", "pt.Log(pt.Bytes('optin call'))"),
-            (
-                "int 1",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "return",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
+            ("int 1", R),
+            ("return", R),
             (
                 "",
                 "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
@@ -2146,22 +2031,13 @@ CONSTRUCTS = [
                 "add_0:",
                 "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
             ),
-            (
-                "store 4",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "store 3",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
+            ("store 4", R),
+            ("store 3", R),
             ("load 3", "a.get()"),
             ("load 4", "b.get()"),
             ("+", "a.get() + b.get()"),
             ("store 5", "output.set(a.get() + b.get())"),
-            (
-                "load 5",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
+            ("load 5", R),
             (
                 "retsub",
                 "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
@@ -2175,46 +2051,16 @@ CONSTRUCTS = [
         router_example_method,
         [
             [P, R],
-            (
-                "txn NumAppArgs",
-                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
-            ),
-            (
-                "int 0",
-                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
-            ),
-            (
-                "==",
-                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
-            ),
-            (
-                "bnz main_l4",
-                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
-            ),
-            (
-                "txna ApplicationArgs 0",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                'method "add(uint64,uint64)uint64"',
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "==",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "bnz main_l3",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "err",
-                "expr.compile(version=version, assemble_constants=False, optimize=optimize, with_sourcemaps=True)",
-            ),
-            (
-                "main_l3:",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
+            ("txn NumAppArgs", R),
+            ("int 0", R),
+            ("==", R),
+            ("bnz main_l4", R),
+            ("txna ApplicationArgs 0", R),
+            ('method "add(uint64,uint64)uint64"', R),
+            ("==", R),
+            ("bnz main_l3", R),
+            ("err", R),
+            ("main_l3:", R),
             (
                 "txn OnCompletion",
                 "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
@@ -2243,132 +2089,25 @@ CONSTRUCTS = [
                 "&&",
                 "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
             ),
-            (
-                "assert",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "txna ApplicationArgs 1",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "btoi",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "store 0",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "txna ApplicationArgs 2",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "btoi",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "store 1",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "load 0",
-                "expr.compile(version=version, assemble_constants=False, optimize=optimize, with_sourcemaps=True)",
-            ),
-            (
-                "load 1",
-                "expr.compile(version=version, assemble_constants=False, optimize=optimize, with_sourcemaps=True)",
-            ),
-            (
-                "callsub add_0",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "store 2",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "byte 0x151f7c75",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "load 2",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "itob",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "concat",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "log",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "int 1",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "return",
-                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
-            ),
-            (
-                "main_l4:",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "txn OnCompletion",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "int OptIn",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "==",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "bnz main_l6",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "err",
-                "pt.BareCallActions(opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call'))))",
-            ),
-            (
-                "main_l6:",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "txn ApplicationID",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "int 0",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "!=",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "assert",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
+            ("assert", R),
+            ("callsub addcaster_1", R),
+            ("int 1", R),
+            ("return", R),
+            ("main_l4:", R),
+            ("txn OnCompletion", R),
+            ("int OptIn", R),
+            ("==", R),
+            ("bnz main_l6", R),
+            ("err", R),
+            ("main_l6:", R),
+            ("txn ApplicationID", R),
+            ("int 0", R),
+            ("!=", R),
+            ("assert", R),
             ('byte "optin call"', "pt.Bytes('optin call')"),
             ("log", "pt.Log(pt.Bytes('optin call'))"),
-            (
-                "int 1",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
-            (
-                "return",
-                "pt.Router('questionable', on_completion_actions, clear_state=pt.Approve())",
-            ),
+            ("int 1", R),
+            ("return", R),
             (
                 "",
                 "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
@@ -2397,6 +2136,34 @@ CONSTRUCTS = [
                 "retsub",
                 "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
             ),
+            ("", R),
+            ("// add_caster", R),
+            ("addcaster_1:", R),
+            ("proto 0 0", R),
+            ("int 0", R),
+            ("dupn 2", R),
+            ("txna ApplicationArgs 1", R),
+            ("btoi", R),
+            ("frame_bury 1", R),
+            ("txna ApplicationArgs 2", R),
+            ("btoi", R),
+            ("frame_bury 2", R),
+            (
+                "frame_dig 1",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            (
+                "frame_dig 2",
+                "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:",
+            ),
+            ("callsub add_0", R),
+            ("frame_bury 0", R),
+            ("byte 0x151f7c75", R),
+            ("frame_dig 0", R),
+            ("itob", R),
+            ("concat", R),
+            ("log", R),
+            ("retsub", R),
         ],
         8,
         "Application",
@@ -2444,7 +2211,7 @@ CONSTRUCTS = [
             ("txna ApplicationArgs 1", R),
             ("btoi", R),
             ("store 1", R),
-            ("load 1", R),
+            ("load 1", "def set_foo(_app_id: AppId) -> pt.Expr:"),
             ("callsub setfoo_0", R),
             ("int 1", R),
             ("return", R),
@@ -2517,7 +2284,7 @@ CONSTRUCTS = [
             ("txna ApplicationArgs 1", R),
             ("btoi", R),
             ("frame_bury 0", R),
-            ("frame_dig 0", R),
+            ("frame_dig 0", "def set_foo(_app_id: AppId) -> pt.Expr:"),
             ("callsub setfoo_0", R),
             ("retsub", R),
         ],
@@ -2526,10 +2293,6 @@ CONSTRUCTS = [
         dict(frame_pointers=True),
     ),
 ]
-
-if BRUTE_FORCE_TERRIBLE_SKIPPING:
-    del CONSTRUCTS[38]
-    del CONSTRUCTS[37]
 
 
 @pytest.mark.parametrize("i, test_case", enumerate(CONSTRUCTS))
@@ -2644,8 +2407,8 @@ def assert_algobank_unparsed_as_expected(actual):
         (31, ("router._build_impl(rci)", 0)),
         (32, ("router._build_impl(rci)", 0)),
         (33, ("router._build_impl(rci)", 0)),
-        (34, ("router._build_impl(rci)", 0)),
-        (35, ("router._build_impl(rci)", 0)),
+        (34, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
+        (35, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
         (36, ("router._build_impl(rci)", 0)),
         (37, ("router._build_impl(rci)", 0)),
         (38, ("router._build_impl(rci)", 0)),
@@ -2790,8 +2553,20 @@ def assert_algobank_unparsed_as_expected(actual):
         (87, ("router._build_impl(rci)", 0)),
         (88, ("router._build_impl(rci)", 0)),
         (89, ("router._build_impl(rci)", 0)),
-        (90, ("router._build_impl(rci)", 0)),
-        (91, ("router._build_impl(rci)", 0)),
+        (
+            90,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            91,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
         (92, ("router._build_impl(rci)", 0)),
         (93, ("router._build_impl(rci)", 0)),
         (94, ("router._build_impl(rci)", 0)),
