@@ -498,16 +498,21 @@ class SubroutineCall(Expr):
         )
 
         def handle_arg(arg: Expr | ScratchVar | abi.BaseType) -> Expr:
+            ret_expr: Expr
             if isinstance(arg, ScratchVar):
-                return arg.index()
+                ret_expr = arg.index()
+                ret_expr.stack_frames = self.subroutine.stack_frames
             elif isinstance(arg, Expr):
-                return arg
+                ret_expr = arg
             elif isinstance(arg, abi.BaseType):
-                return arg._stored_value.load()
+                ret_expr = arg._stored_value.load()
+                ret_expr.stack_frames = self.subroutine.stack_frames
             else:
                 raise TealInputError(
                     f"cannot handle current arg: {arg} to put it on stack"
                 )
+
+            return ret_expr
 
         op = TealOp(self, Op.callsub, self.subroutine)
         return TealBlock.FromOp(options, op, *[handle_arg(x) for x in self.args])
