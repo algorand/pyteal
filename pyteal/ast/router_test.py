@@ -411,7 +411,7 @@ def test_BareCallActions_asdict():
     }
 
 
-def test_bare_call_actions_aslist():
+def test_BareCallActions_aslist():
     no_action = pt.OnCompleteAction()
     optin_action = pt.OnCompleteAction(action=pt.Int(1), call_config=pt.CallConfig.ALL)
     update_action = pt.OnCompleteAction(
