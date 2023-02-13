@@ -1,4 +1,6 @@
 from configparser import ConfigParser
+from importlib import import_module
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -8,8 +10,6 @@ This file monkey-patches ConfigParser in order to enable source mapping
 and test the results of source mapping various PyTeal dapps.
 """
 
-from importlib import import_module
-from pathlib import Path
 
 BRUTE_FORCE_TERRIBLE_SKIPPING = (
     """The second router is flaky due to issue 199, so skipping for now"""
