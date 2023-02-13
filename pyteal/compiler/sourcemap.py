@@ -973,6 +973,7 @@ class _PyTealSourceMapper:
         numalign="right",
         omit_headers: bool = False,
         omit_repeating_col_except: list[str] = [],
+        post_process_delete_cols: list[str] = [],
         **kwargs,
     ) -> str:
         """
@@ -1043,6 +1044,7 @@ class _PyTealSourceMapper:
         teal_col_name = renames[_TEAL_LINE]
         pt_simple_col_name = renames.get(_PYTEAL_COLUMN)
         pt_hybrid_col_name = renames.get(_PYTEAL_HYBRID_UNPARSED)
+        pt_window_col_name = renames.get(_PYTEAL_NODE_AST_SOURCE_BOUNDARIES)
         if omit_repeating_col_except:
             # Assume the following column structure:
             # * col 0 is the generated source with column name stored in `teal_col`
@@ -1053,7 +1055,15 @@ class _PyTealSourceMapper:
             # to omit repeating source values, as these were likely coming from different portions of the source
 
             def reduction(row, next_row):
-                same_gen_teal = row[teal_col_name] == next_row[teal_col_name]
+                drop_2nd_pyteal = True
+                if pt_window_col_name and (
+                    row[pt_window_col_name] or next_row[pt_window_col_name]
+                ):
+                    drop_2nd_pyteal = (
+                        row[pt_window_col_name] == next_row[pt_window_col_name]
+                    )
+                else:
+                    drop_2nd_pyteal = row[teal_col_name] != next_row[teal_col_name]
                 return {
                     k: v2
                     for k, v in row.items()
@@ -1061,8 +1071,8 @@ class _PyTealSourceMapper:
                         [
                             (v2 := next_row[k]) != v,
                             k in omit_repeating_col_except,
-                            same_gen_teal and k == pt_hybrid_col_name,
-                            same_gen_teal and k == pt_simple_col_name,
+                            k in (pt_hybrid_col_name, pt_simple_col_name)
+                            and not drop_2nd_pyteal,
                         ]
                     )
                 }
@@ -1070,6 +1080,12 @@ class _PyTealSourceMapper:
             rows = [rows[0]] + list(
                 map(lambda r_and_n: reduction(*r_and_n), zip(rows[:-1], rows[1:]))
             )
+
+        for col in post_process_delete_cols:
+            col_name = renames.pop(col)
+            for row in rows:
+                if col_name in row:
+                    del row[col_name]
 
         calling_kwargs: dict[str, Any] = {"tablefmt": tablefmt, "numalign": numalign}
         if not omit_headers:
@@ -1097,5 +1113,7 @@ class _PyTealSourceMapper:
             kwargs["pyteal_line_number"] = "LINE"
 
         kwargs["pyteal_hybrid_unparsed"] = "PYTEAL"
+        kwargs["pyteal_node_ast_source_boundaries"] = "PYTEAL RANGE"
 
+        kwargs["post_process_delete_cols"] = [_PYTEAL_NODE_AST_SOURCE_BOUNDARIES]
         return self.tabulate(**kwargs)  # type: ignore
