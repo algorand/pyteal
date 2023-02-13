@@ -30,7 +30,7 @@ class MethodReturn(Expr):
         start, end = Log(Concat(Bytes(RETURN_HASH_PREFIX), self.arg.encode())).__teal__(
             options
         )
-        NatalStackFrame.reframe_ops_in_blocks(self._sframes_container, start)
+        NatalStackFrame.reframe_ops_in_blocks(self._sframes_container or self, start)
         return start, end
 
     def __str__(self) -> str:
