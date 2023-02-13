@@ -651,7 +651,9 @@ class ASTBuilder:
             return Seq(
                 *decode_instructions,
                 subroutine_call.store_into(output_temp),
-                abi.MethodReturn(output_temp),
+                abi.MethodReturn(
+                    output_temp
+                ),  # TODO: set MethodReturn._sframes_container
                 _smap_friendly_approve(),
             )
 
@@ -746,7 +748,9 @@ class ASTBuilder:
             )
             returning_steps = [
                 subroutine_call.store_into(output_temp),
-                abi.MethodReturn(output_temp),
+                abi.MethodReturn(
+                    output_temp
+                ),  # TODO: set MethodReturn._sframes_container
             ]
 
         def declaration():
