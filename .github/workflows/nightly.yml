@@ -4,6 +4,44 @@ on:
     - cron: "10 * * * *"
 
 jobs:
+  build-when-changes:
+    runs-on: ubuntu-20.04
+    name: Build When Changes
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Check for code changes
+        id: check
+        run: |
+          if [ -n "$(git log --since='24 hours ago')" ]; then
+            echo "::set-output name=should_run::true"
+          else
+            echo "::set-output name=should_run::false"
+          fi
+      - name: Run job if there are code changes
+        if: ${{ steps.check.outputs.should_run == 'true' }}
+        run: |
+          echo 'this job would run when there HAVE BEEN changes in the last 24 hrs'
+
+  build-when-no-changes:
+    runs-on: ubuntu-20.04
+    name: Build When NO Changes
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Check for code changes
+        id: check
+        run: |
+          if [ -n "$(git log --since='24 hours ago')" ]; then
+            echo "::set-output name=should_run::false"
+          else
+            echo "::set-output name=should_run::true"
+          fi
+      - name: Run job if there are code changes
+        if: ${{ steps.check.outputs.should_run == 'true' }}
+        run: |
+          echo 'this job would run when there HAVE NOT BEEN changes in the last 24 hrs'
+
   check-date:
     runs-on: ubuntu-20.04
     name: Check latest commit
