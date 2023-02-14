@@ -41,7 +41,7 @@ jobs:
           else
             echo "should_run=true" >> $GITHUB_ENV
           fi
-      - name: Run job if there are code changes
+      - name: Run job if there are NO code changes
         if: ${{ env.should_run == 'true' }}
         run: |
           echo 'this job would run when there HAVE NOT BEEN changes in the last 24 hrs'
