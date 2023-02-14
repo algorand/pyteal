@@ -141,13 +141,17 @@ jobs:
         if: ${{ env.should_run == 'true' }}
         run: |
           echo "Run the rest of the nightly steps becuse env.should_run=${{ env.should_run }}"
-      - uses: actions/setup-python@v4
-        if: ${{ env.should_run == 'true' }}
-        with:
-          python-version: "${{ matrix.python }}"
-      - name: Print the python version
-        if: ${{ env.should_run == 'true' }}
-        run: python --version
+      # TODO: Does nightly need this?
+      # - uses: actions/setup-python@v4
+      #   if: ${{ env.should_run == 'true' }}
+      #   with:
+      #     python-version: "${{ matrix.python }}"
+      - name: Test Python version
+        run: |
+          installed="$(python --version)"
+          expected="${{ matrix.python }}"
+          echo $installed
+          [[ $installed =~ "Python ${expected}" ]] && echo "Configured Python" || (echo "Failed to configure Python" && exit 1)
       - name: The Slow Bits
         if: ${{ env.should_run == 'true' }}
         run: make nightly-slow
