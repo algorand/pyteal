@@ -145,7 +145,7 @@ jobs:
         if: ${{ env.should_run == 'true' }}
         with:
           python-version: "${{ matrix.python }}"
-      - uses: Print the python version
+      - name: Print the python version
         if: ${{ env.should_run == 'true' }}
         run: python --version
       - name: The Slow Bits
