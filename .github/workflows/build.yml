@@ -127,7 +127,7 @@ jobs:
       - name: git log Sanity Check
         run: |
           echo 'The following commits have occurred in the previous 24 hours:'
-          git --no-pager log --since='24 hours ago' --format='%h' --oneline
+          git --no-pager log --since='24 hours ago' --format='%H'
       - name: Check for code changes
         id: check
         run: |
