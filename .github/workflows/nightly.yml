@@ -42,7 +42,7 @@ jobs:
       - name: Install Python dependencies, Build, and Test
         run: make setup-build-test
 
-  integration-test:
+  run-integration-tests:
     needs: [check-date]
     if: ${{ github.event_name == 'release' || needs.check_date.outputs.should_run == 'true' }}
 

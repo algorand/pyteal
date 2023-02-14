@@ -87,7 +87,7 @@ nightly-slow:
 # ---- Local Github Actions Simulation via `act` ---- #
 # assumes act is installed, e.g. via `brew install act`
 
-ACT_JOB = integration-tests
+ACT_JOB = run-integration-tests
 local-gh-job:
 	act -j $(ACT_JOB)
 
