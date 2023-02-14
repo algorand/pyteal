@@ -150,7 +150,7 @@ jobs:
         run: python --version
       - name: The Slow Bits
         if: ${{ env.should_run == 'true' }}
-        run: make nighly-slow
+        run: make nightly-slow
       - name: Install Python dependencies, Build, and Test
         if: ${{ env.should_run == 'true' }}
         run: make setup-build-test
