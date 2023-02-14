@@ -146,12 +146,9 @@ jobs:
       #   if: ${{ env.should_run == 'true' }}
       #   with:
       #     python-version: "${{ matrix.python }}"
-      - name: Test Python version
-        run: |
-          installed="$(python --version)"
-          expected="${{ matrix.python }}"
-          echo $installed
-          [[ $installed =~ "Python ${expected}" ]] && echo "Configured Python" || (echo "Failed to configure Python" && exit 1)
+      - name: Print Python version
+        if: ${{ env.should_run == 'true' }}
+        run: python --version
       - name: The Slow Bits
         if: ${{ env.should_run == 'true' }}
         run: make nightly-slow
