@@ -158,3 +158,61 @@ jobs:
       - name: Integration tests using algod
         if: ${{ env.should_run == 'true' }}
         run: make algod-integration
+
+  x-build-test:
+    name: build-test if changes in the previous 24 hours
+    runs-on: ubuntu-20.04
+    container: python:${{ matrix.python }}
+    strategy:
+      matrix:
+        python: ["3.10", "3.11"]
+    steps:
+      - run: python3 --version
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Check for code changes
+        id: check
+        run: |
+          if [ -n "$(git log --since='24 hours ago')" ]; then
+            echo "should_run=true" >> $GITHUB_ENV
+          else
+            echo "should_run=false" >> $GITHUB_ENV
+          fi
+      - name: Install Python dependencies, Build, and Test
+        if: ${{ env.should_run == 'true' }}
+        run: make setup-build-test
+
+  x-run-integration-tests:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python: ["3.10", "3.11"]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Check for code changes
+        id: check
+        run: |
+          if [ -n "$(git log --since='24 hours ago')" ]; then
+            echo "should_run=true" >> $GITHUB_ENV
+          else
+            echo "should_run=false" >> $GITHUB_ENV
+          fi
+      - uses: actions/setup-python@v4
+        if: ${{ env.should_run == 'true' }}
+        with:
+          python-version: "${{ matrix.python }}"
+      - name: Test Python version
+        if: ${{ env.should_run == 'true' }}
+        run: |
+          installed="$(python --version)"
+          expected="${{ matrix.python }}"
+          echo $installed
+          [[ $installed =~ "Python ${expected}" ]] && echo "Configured Python" || (echo "Failed to configure Python" && exit 1)
+      - name: Integration tests using algod
+        if: ${{ env.should_run == 'true' }}
+        run: make algod-integration
