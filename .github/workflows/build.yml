@@ -18,12 +18,12 @@ jobs:
         id: check
         run: |
           if [ -n "$(git log --since='24 hours ago')" ]; then
-            echo "::set-output name=should_run::true"
+            echo "should_run=true" >> $GITHUB_ENV
           else
-            echo "::set-output name=should_run::false"
+            echo "should_run=false" >> $GITHUB_ENV
           fi
       - name: Run job if there are code changes
-        if: ${{ steps.check.outputs.should_run == 'true' }}
+        if: ${{ env.should_run == 'true' }}
         run: |
           echo 'this job would run when there HAVE BEEN changes in the last 24 hrs'
 
@@ -37,12 +37,12 @@ jobs:
         id: check
         run: |
           if [ -n "$(git log --since='24 hours ago')" ]; then
-            echo "::set-output name=should_run::false"
+            echo "should_run=false" >> $GITHUB_ENV
           else
-            echo "::set-output name=should_run::true"
+            echo "should_run=true" >> $GITHUB_ENV
           fi
       - name: Run job if there are code changes
-        if: ${{ steps.check.outputs.should_run == 'true' }}
+        if: ${{ env.should_run == 'true' }}
         run: |
           echo 'this job would run when there HAVE NOT BEEN changes in the last 24 hrs'
 
