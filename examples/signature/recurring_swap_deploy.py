@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import base64
 from nacl import encoding, hash
 import params
@@ -7,26 +5,13 @@ import re
 import time
 import uuid
 
-from algosdk import algod
-from algosdk.future import transaction
-
+from algosdk import algod, account, encoding as algosdk_encoding, transaction
 from pyteal import *
 
 from recurring_swap import recurring_swap
 
-
 # ------- generate provider's account -----------------------------------------------
-key_fn = str(uuid.uuid4()) + ".key"
-execute(["algokey", "generate", "-f", key_fn])
-stdout, stderr = execute(["algokey", "export", "-f", key_fn])
-print("generated key file {}".format(key_fn))
-
-if stderr != "":
-    print(stderr)
-    raise
-
-result = re.search(r"key: \w+", stdout)
-provider_addr = result.group(0)[5:]
+private_key, provider_addr = account.generate_account()
 print("provider addr: {}".format(provider_addr))
 
 # ------- instantiate template, compile teal source, get escrow address -------------
@@ -36,23 +21,10 @@ teal_source = compileTeal(program, mode=Mode.Signature, version=2)
 # print(teal_source)
 
 # compile teal
-teal_base = str(uuid.uuid4())
-teal_file = teal_base + ".teal"
-with open(teal_file, "w+") as f:
-    f.write(teal_source)
-lsig_fname = teal_base + ".tealc"
+teal_bytes = teal_source.encode()
+escrow_lsig = transaction.LogicSig(account.logic_sign(teal_bytes))
 
-stdout, stderr = execute(["goal", "clerk", "compile", "-o", lsig_fname, teal_file])
-
-if stderr != "":
-    print(stderr)
-    raise
-elif len(stdout) < 59:
-    print("error in compile teal")
-    raise
-
-result = re.search(r": \w+", stdout)
-escrow_addr = result.group(0)[2:]
+escrow_addr = algosdk_encoding.encode_address(escrow_lsig.address())
 print("Dispense at least 202000 microAlgo to {}".format(escrow_addr))
 input("Make sure you did that. Press Enter to continue...")
 
@@ -68,41 +40,12 @@ print("first valid: {}".format(first_valid))
 
 txn = transaction.PaymentTxn(escrow_addr, sp, provider_addr, 100000, lease=lease_bytes)
 
-with open(lsig_fname, "rb") as f:
-    teal_bytes = f.read()
-lsig = transaction.LogicSig(teal_bytes)
-lstx = transaction.LogicSigTransaction(txn, lsig)
+lstx = transaction.LogicSigTransaction(txn, escrow_lsig)
 
 assert lstx.verify()
 
-# send LogicSigTransaction to network
-transaction.write_to_file([lstx], "r_s_1.txn")
-
-stdout, stderr = execute(
-    [
-        "goal",
-        "clerk",
-        "tealsign",
-        "--data-b64",
-        base64.b64encode(data),
-        "--lsig-txn",
-        "r_s_1.txn",
-        "--keyfile",
-        key_fn,
-        "--set-lsig-arg-idx",
-        "0",
-    ]
-)
-if stderr != "":
-    print(stderr)
-    raise
-
-print(stdout)
-
-lstx = transaction.retrieve_from_file("r_s_1.txn")
-txid = acl.send_transactions(lstx)
-
-print("1st withraw Succesfull! txid:{}".format(txid))
+txid = acl.send_transaction(lstx)
+print("1st withdraw Succesfull! txid:{}".format(txid))
 
 # at least sleep to the next round
 time.sleep(6)
@@ -117,37 +60,9 @@ print("first valid: {}".format(first_valid))
 
 txn = transaction.PaymentTxn(escrow_addr, sp, provider_addr, 100000, lease=lease_bytes)
 
-with open(lsig_fname, "rb") as f:
-    teal_bytes = f.read()
-lsig = transaction.LogicSig(teal_bytes)
-lstx = transaction.LogicSigTransaction(txn, lsig)
+lstx = transaction.LogicSigTransaction(txn, escrow_lsig)
 
 assert lstx.verify()
 
-# send LogicSigTransaction to network
-transaction.write_to_file([lstx], "r_s_2.txn")
-
-stdout, stderr = execute(
-    [
-        "goal",
-        "clerk",
-        "tealsign",
-        "--data-b64",
-        base64.b64encode(data),
-        "--lsig-txn",
-        "r_s_2.txn",
-        "--keyfile",
-        key_fn,
-        "--set-lsig-arg-idx",
-        "0",
-    ]
-)
-if stderr != "":
-    print(stderr)
-    raise
-
-print(stdout)
-
-lstx = transaction.retrieve_from_file("r_s_2.txn")
-txid = acl.send_transactions(lstx)
-print("2nd withraw Succesfull! txid:{}".format(txid))
+txid = acl.send_transaction(lstx)
+print("2nd withdraw Succesfull! txid:{}".format(txid))
