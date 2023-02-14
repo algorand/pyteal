@@ -19,7 +19,7 @@ jobs:
         name: check latest commit is less than a day
         if: ${{ github.event_name == 'schedule' }}
         run: test -z "$(git rev-list  --after='24 hours'  ${{ github.sha }})" && echo "::set-output name=should_run::false"
-
+    
   build-test:
     needs: [check-date]
     if: ${{ github.event_name == 'release' || needs.check_date.outputs.should_run == 'true' }}
