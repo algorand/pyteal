@@ -45,6 +45,26 @@ jobs:
       - name: Integration tests using algod
         run: make algod-integration
 
+  test-check-date:
+    runs-on: ubuntu-20.04
+    name: Check latest commit second try
+    outputs:
+      should_run: ${{ steps.should_run.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Current Boston time
+        run: TZ='America/New_York' && export TZ && date +"%A, %B %d, %Y %I:%M:%S %p %Z"
+
+      - name: print latest_commit
+        run: echo ${{ github.sha }}
+
+      - id: should_run
+        continue-on-error: true
+        name: check latest commit is less than a day
+        if: ${{ github.event_name == 'schedule' }}
+        run: test -z "$(git rev-list  --after='24 hours'  ${{ github.sha }})" && echo "::set-output name=should_run::false"
+
   build-docset:
     runs-on: ubuntu-20.04
     strategy:
