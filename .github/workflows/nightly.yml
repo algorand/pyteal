@@ -5,95 +5,35 @@ on:
 
 jobs:
   build-when-changes:
-    runs-on: ubuntu-20.04
-    name: Build When Changes
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Check for code changes
-        id: check
-        run: |
-          if [ -n "$(git log --since='24 hours ago')" ]; then
-            echo "::set-output name=should_run::true"
-          else
-            echo "::set-output name=should_run::false"
-          fi
-      - name: Run job if there are code changes
-        if: ${{ steps.check.outputs.should_run == 'true' }}
-        run: |
-          echo 'this job would run when there HAVE BEEN changes in the last 24 hrs'
-
-  build-when-no-changes:
-    runs-on: ubuntu-20.04
-    name: Build When NO Changes
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Check for code changes
-        id: check
-        run: |
-          if [ -n "$(git log --since='24 hours ago')" ]; then
-            echo "::set-output name=should_run::false"
-          else
-            echo "::set-output name=should_run::true"
-          fi
-      - name: Run job if there are code changes
-        if: ${{ steps.check.outputs.should_run == 'true' }}
-        run: |
-          echo 'this job would run when there HAVE NOT BEEN changes in the last 24 hrs'
-
-  check-date:
-    runs-on: ubuntu-20.04
-    name: Check latest commit
-    outputs:
-      should_run: ${{ steps.should_run.outputs.should_run }}
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Current Boston time
-        run: TZ='America/New_York' && export TZ && date +"%A, %B %d, %Y %I:%M:%S %p %Z"
-
-      - name: print latest_commit
-        run: echo ${{ github.sha }}
-
-      - id: should_run
-        continue-on-error: true
-        name: check latest commit is less than a day
-        if: ${{ github.event_name == 'schedule' }}
-        run: test -z "$(git rev-list  --after='24 hours'  ${{ github.sha }})" && echo "::set-output name=should_run::false"
-
-  build-test:
-    needs: [check-date]
-    if: ${{ github.event_name == 'release' || needs.check_date.outputs.should_run == 'true' }}
-
+    name: Run if Code has Changed in the Previous 24 Hours
     runs-on: ubuntu-20.04
     container: python:${{ matrix.python }}
     strategy:
       matrix:
         python: ["3.10", "3.11"]
     steps:
-      - run: python3 --version
-      - name: Check out code
+      - name: Checkout code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Install Python dependencies, Build, and Test
-        run: make setup-build-test
-
-  run-integration-tests:
-    needs: [check-date]
-    if: ${{ github.event_name == 'release' || needs.check_date.outputs.should_run == 'true' }}
-
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        python: ["3.10", "3.11"]
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+      - name: git log Sanity Check
+        run: |
+          echo 'The following commits have occurred in the previous 24 hours:'
+          git --no-pager log --since='24 hours ago' --format='%h' --oneline
+      - name: Check for code changes
+        id: check
+        run: |
+          if [ -n "$(git log --since='24 hours ago')" ]; then
+            echo "should_run=true" >> $GITHUB_ENV
+          else
+            echo "should_run=false" >> $GITHUB_ENV
+          fi
+      - name: Welcome to the nightly tests!
+        if: ${{ env.should_run == 'true' }}
+        run: |
+          echo "Run the rest of the nightly steps becuse env.should_run=${{ env.should_run }}"
       - uses: actions/setup-python@v3
+        if: ${{ env.should_run == 'true' }}
         with:
           python-version: "${{ matrix.python }}"
       - name: Test Python version
@@ -102,24 +42,12 @@ jobs:
           expected="${{ matrix.python }}"
           echo $installed
           [[ $installed =~ "Python ${expected}" ]] && echo "Configured Python" || (echo "Failed to configure Python" && exit 1)
-      - name: Integration tests using algod
-        run: make algod-integration
-
-  nighly-slow:
-    needs: [check-date]
-    if: ${{ github.event_name == 'release' || needs.check_date.outputs.should_run == 'true' }}
-
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        python: ["3.10", "3.11"]
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v3
-        with:
-          python-version: "${{ matrix.python }}"
-      - name: Insert slow tests here
+      - name: The Slow Bits
+        if: ${{ env.should_run == 'true' }}
         run: make nighly-slow
+      - name: Install Python dependencies, Build, and Test
+        if: ${{ env.should_run == 'true' }}
+        run: make setup-build-test
+      - name: Integration tests using algod
+        if: ${{ env.should_run == 'true' }}
+        run: make algod-integration
