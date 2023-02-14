@@ -59,6 +59,9 @@ jobs:
       - name: print latest_commit
         run: echo ${{ github.sha }}
 
+      - name: what git version?
+        run: git --version
+
       - id: should_run
         continue-on-error: true
         name: check latest commit is less than a day
