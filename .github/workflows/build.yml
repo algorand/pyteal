@@ -60,7 +60,7 @@ jobs:
         run: echo ${{ github.sha }}
 
       - id: should_run
-        continue-on-error: true
+        continue-on-error: false
         name: check latest commit is less than a day
         if: ${{ github.event_name == 'schedule' }}
         run: test -z "$(git rev-list  --after='24 hours'  ${{ github.sha }})" && echo "::set-output name=should_run::false"
