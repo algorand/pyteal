@@ -124,15 +124,6 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "${{ matrix.python }}"
-      - name: Test Python version
-        run: |
-          installed="$(python --version)"
-          expected="${{ matrix.python }}"
-          echo $installed
-          [[ $installed =~ "Python ${expected}" ]] && echo "Configured Python" || (echo "Failed to configure Python" && exit 1)
       - name: git log Sanity Check
         run: |
           echo 'The following commits have occurred in the previous 24 hours:'
@@ -150,6 +141,13 @@ jobs:
         if: ${{ env.should_run == 'true' }}
         run: |
           echo "Run the rest of the nightly steps becuse env.should_run=${{ env.should_run }}"
+      - uses: actions/setup-python@v4
+        if: ${{ env.should_run == 'true' }}
+        with:
+          python-version: "${{ matrix.python }}"
+      - uses: Print the python version
+        if: ${{ env.should_run == 'true' }}
+        run: python --version
       - name: The Slow Bits
         if: ${{ env.should_run == 'true' }}
         run: make nighly-slow
