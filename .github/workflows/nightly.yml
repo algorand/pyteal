@@ -11,6 +11,10 @@ jobs:
       should_run: ${{ steps.should_run.outputs.should_run }}
     steps:
       - uses: actions/checkout@v2
+
+      - name: current Boston time
+        run: TZ='America/New_York' && export TZ && date +"%A, %B %d, %Y %I:%M:%S %p %Z"
+
       - name: print latest_commit
         run: echo ${{ github.sha }}
 
