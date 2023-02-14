@@ -75,6 +75,15 @@ test-integration: integration-run
 
 all-tests: lint-and-test test-integration
 
+# ---- Github Actions 1-Liners ---- #
+
+setup-build-test: setup-development lint-and-test
+
+algod-integration: algod-start setup-development test-integration algod-stop
+
+nightly-slow:
+	echo "TODO - this is a stub for a very slow test"
+
 # ---- Local Github Actions Simulation via `act` ---- #
 # assumes act is installed, e.g. via `brew install act`
 
