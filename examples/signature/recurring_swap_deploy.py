@@ -1,9 +1,9 @@
 import base64
 from nacl import encoding, hash
 import params
-import re
+
 import time
-import uuid
+
 
 from algosdk import algod, account, encoding as algosdk_encoding, transaction
 from pyteal import *

@@ -1,5 +1,5 @@
-import base64
-import uuid
+
+
 
 from algosdk import algod, account, mnemonic, transaction
 from algosdk.future import template
