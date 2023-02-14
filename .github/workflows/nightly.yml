@@ -1,7 +1,7 @@
 name: "Nightly Build"
 on:
   schedule:
-    - cron: "10 * * * *"
+    - cron: "*/5 * * * *"
 
 jobs:
   check-date:
