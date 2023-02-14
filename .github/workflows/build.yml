@@ -146,6 +146,7 @@ jobs:
         with:
           python-version: "${{ matrix.python }}"
       - name: Test Python version
+        if: ${{ env.should_run == 'true' }}
         run: |
           installed="$(python --version)"
           expected="${{ matrix.python }}"
