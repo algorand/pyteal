@@ -32,7 +32,7 @@ jobs:
         if: ${{ env.should_run == 'true' }}
         run: |
           echo "Run the rest of the nightly steps becuse env.should_run=${{ env.should_run }}"
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v4
         if: ${{ env.should_run == 'true' }}
         with:
           python-version: "${{ matrix.python }}"
