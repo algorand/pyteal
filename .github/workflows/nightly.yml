@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: current Boston time
+      - name: Current Boston time
         run: TZ='America/New_York' && export TZ && date +"%A, %B %d, %Y %I:%M:%S %p %Z"
 
       - name: print latest_commit
