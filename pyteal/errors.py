@@ -26,6 +26,17 @@ class TealTypeError(Exception):
 TealTypeError.__module__ = "pyteal"
 
 
+class TealSeqError(TealTypeError):
+    def __init__(self, message: str) -> None:
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
+
+TealSeqError.__module__ = "pyteal"
+
+
 class TealInputError(Exception):
     def __init__(self, msg: str) -> None:
         self.message = msg
