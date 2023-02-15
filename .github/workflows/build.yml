@@ -149,7 +149,3 @@ jobs:
       - name: Integration tests using algod
         if: ${{ env.should_run == 'true' }}
         run: make algod-integration
-
-  x-from-template:
-    name: Try to run a sub-job from a template
-    uses: algorand/pyteal/.github/workflows/templates/units.yml@experiment-nightly-3
