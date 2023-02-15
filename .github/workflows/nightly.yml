@@ -52,6 +52,6 @@ jobs:
           expected="${{ matrix.python }}"
           echo $installed
           [[ $installed =~ "Python ${expected}" ]] && echo "Configured Python" || (echo "Failed to configure Python" && exit 1)
-      - name: Very slow unit tests
+      - name: Integration tests using algod
         if: ${{ env.should_run == 'true' }}
-        run: make nightly-slow
+        run: make algod-integration
