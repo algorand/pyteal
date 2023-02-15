@@ -122,7 +122,7 @@ jobs:
           fetch-depth: 0
       - name: Check for code changes
         id: check
-        run: 
+        run: make check-code-changes
       - uses: actions/setup-python@v4
         if: ${{ env.should_run == 'true' }}
         with:
