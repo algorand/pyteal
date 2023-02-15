@@ -479,7 +479,9 @@ class PyTealFrame(StackFrame):
         self._status: PytealFrameStatus | None = None
 
     def __repr__(self) -> str:
-        """TODO: this repr isn't compliant. Should we keep it anyway for convenience?"""
+        """
+        This repr isn't compliant, but keeping as it's useful for debugging in VSCode
+        """
         return self._str_impl(verbose=False)
 
     def __eq__(self, other: object) -> bool:
