@@ -118,7 +118,15 @@ def test_TealMapItem_source_mapping():
     NatalStackFrame._no_stackframes = originally
 
 
-def no_regressions():
+def compare_and_assert(file, actual):
+    with open(file, "r") as f:
+        expected_lines = f.read().splitlines()
+        actual_lines = actual.splitlines()
+        assert len(expected_lines) == len(actual_lines)
+        assert expected_lines == actual_lines
+
+
+def no_regressions_algobank():
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
 
@@ -126,43 +134,38 @@ def no_regressions():
         version=6, optimize=OptimizeOptions(scratch_slots=True)
     )
 
-    def compare_and_assert(file, actual):
-        with open(ALGOBANK / file, "r") as f:
-            expected_lines = f.read().splitlines()
-            actual_lines = actual.splitlines()
-            assert len(expected_lines) == len(actual_lines)
-            assert expected_lines == actual_lines
-
-    compare_and_assert("algobank.json", json.dumps(contract.dictify(), indent=4))
-    compare_and_assert("algobank_clear_state.teal", clear)
-    compare_and_assert("algobank_approval.teal", approval)
+    compare_and_assert(
+        ALGOBANK / "algobank.json", json.dumps(contract.dictify(), indent=4)
+    )
+    compare_and_assert(ALGOBANK / "algobank_clear_state.teal", clear)
+    compare_and_assert(ALGOBANK / "algobank_approval.teal", approval)
 
 
 @pytest.mark.serial
-def test_no_regression_with_sourcemap_as_configured():
-    no_regressions()
+def test_no_regression_with_sourcemap_as_configured_algobank():
+    no_regressions_algobank()
 
 
 @pytest.mark.serial
-def test_no_regression_with_sourcemap_enabled():
+def test_no_regression_with_sourcemap_enabled_algobank():
     from pyteal.stack_frame import NatalStackFrame
 
     originally = NatalStackFrame._no_stackframes
     NatalStackFrame._no_stackframes = False
 
-    no_regressions()
+    no_regressions_algobank()
 
     NatalStackFrame._no_stackframes = originally
 
 
 @pytest.mark.serial
-def test_no_regression_with_sourcemap_disabled():
+def test_no_regression_with_sourcemap_disabled_algobank():
     from pyteal.stack_frame import NatalStackFrame
 
     originally = NatalStackFrame._no_stackframes
     NatalStackFrame._no_stackframes = True
 
-    no_regressions()
+    no_regressions_algobank()
 
     NatalStackFrame._no_stackframes = originally
 
