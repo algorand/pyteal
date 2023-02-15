@@ -150,6 +150,6 @@ jobs:
         if: ${{ env.should_run == 'true' }}
         run: make algod-integration
 
-  x-from-template:
-    name: Try to run a sub-job from a template
-    uses: ./templates/units.yml
+  # x-from-template:
+  #   name: Try to run a sub-job from a template
+  #   uses: ./templates/units.yml
