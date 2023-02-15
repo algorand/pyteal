@@ -4,7 +4,7 @@ on:
     - cron: "10 * * * *"
 
 jobs:
-  night-slow-unit-tests:
+  nightly-slow-unit-tests:
     name: build-test if changes in the previous 24 hours
     runs-on: ubuntu-20.04
     container: python:${{ matrix.python }}
@@ -33,7 +33,7 @@ jobs:
         if: ${{ env.should_run == 'true' }}
         run: make setup-build-test
 
-  night-run-integration-tests:
+  nightly-run-integration-tests:
     name: run-integration-tests if changes in the previous 24 hours
     runs-on: ubuntu-20.04
     strategy:
