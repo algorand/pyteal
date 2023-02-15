@@ -1,0 +1,57 @@
+name: "Nightly Build"
+on:
+  schedule:
+    - cron: "10 * * * *"
+
+jobs:
+  nightly-slow-unit-tests:
+    name: build-test + nightly-slow if changes in the previous 24 hours
+    runs-on: ubuntu-20.04
+    container: python:${{ matrix.python }}
+    strategy:
+      matrix:
+        python: ["3.10", "3.11"]
+    steps:
+      - run: python3 --version
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Check for code changes
+        id: check
+        run: make check-code-changes
+      - name: Install Python dependencies, Build, and Test
+        if: ${{ env.should_run == 'true' }}
+        run: make setup-build-test
+      - name: Super slow unit tests
+        if: ${{ env.should_run == 'true' }}
+        run: make nightly-slow
+
+  nightly-run-integration-tests:
+    name: run-integration-tests if changes in the previous 24 hours
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python: ["3.10", "3.11"]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Check for code changes
+        id: check
+        run: make check-code-changes
+      - uses: actions/setup-python@v4
+        if: ${{ env.should_run == 'true' }}
+        with:
+          python-version: "${{ matrix.python }}"
+      - name: Test Python version
+        if: ${{ env.should_run == 'true' }}
+        run: |
+          installed="$(python --version)"
+          expected="${{ matrix.python }}"
+          echo $installed
+          [[ $installed =~ "Python ${expected}" ]] && echo "Configured Python" || (echo "Failed to configure Python" && exit 1)
+      - name: Integration tests using algod
+        if: ${{ env.should_run == 'true' }}
+        run: make algod-integration

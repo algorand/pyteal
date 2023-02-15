@@ -90,6 +90,19 @@ all-sync: test-unit-sync test-integ-sync
 
 all-lint-unit-integ: lint-and-test test-integration
 
+# ---- Github Actions 1-Liners ---- #
+
+setup-build-test: setup-development lint-and-test
+
+algod-integration: algod-start setup-development test-integration algod-stop
+
+check-code-changes:
+	git config --global --add safe.directory /__w/pyteal/pyteal
+	[ -n "$$(git log --since='24 hours ago')" ] && (echo "should_run=true" >> $(GITHUB_ENV)) || (echo "should_run=false" >> $(GITHUB_ENV))
+
+nightly-slow:
+	echo "TODO - this is a stub for a very slow test"
+
 # ---- Local Github Actions Simulation via `act` ---- #
 # assumes act is installed, e.g. via `brew install act`
 
