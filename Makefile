@@ -90,7 +90,7 @@ check-code-changes-old:
 	fi
 
 check-code-changes:
-	[ -n "$$(git log --since='24 hours ago')" ] && echo "should_run=true" >> $(GITHUB_ENV) || echo "should_run=false" >> $(GITHUB_ENV)
+	[ -n "$$(git log --since='24 hours ago')" ] && (echo "should_run=true" >> $(GITHUB_ENV)) || (echo "should_run=false" >> $(GITHUB_ENV))
 
 nightly-slow:
 	echo "TODO - this is a stub for a very slow test"
