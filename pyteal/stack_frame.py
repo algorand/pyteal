@@ -459,7 +459,7 @@ class PyTealFrame(StackFrame):
     """
     PyTealFrame is the middle generation in the StackFrame class hierarchy.
 
-    It adds a richer and more polished set of methods to learn about the PytTeal source.
+    It adds a richer and more polished set of methods to learn about the PyTeal source.
     """
 
     def __init__(
