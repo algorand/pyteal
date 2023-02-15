@@ -25,7 +25,7 @@ jobs:
         run: make setup-build-test
       - name: Super slow unit tests
         if: ${{ env.should_run == 'true' }}
-        run: make setup-build-test
+        run: make nightly-slow
 
   nightly-run-integration-tests:
     name: run-integration-tests if changes in the previous 24 hours
