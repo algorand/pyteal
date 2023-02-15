@@ -45,6 +45,50 @@ jobs:
       - name: Integration tests using algod
         run: make algod-integration
 
+  build-docset:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python: [ "3.10" ]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "${{ matrix.python }}"
+      - name: Install python dependencies
+        run: make setup-docs
+      - name: Make docs
+        run: make bundle-docs
+      - name: Archive docset
+        if: ${{ !env.ACT }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: pyteal.docset
+          path: docs/pyteal.docset.tar.gz
+
+  upload-to-pypi:
+    runs-on: ubuntu-20.04
+    container: python:3.10
+    needs: ['build-test', 'run-integration-tests', 'build-docset']
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Install dependencies
+        run: make setup-wheel
+      - name: Build package
+        run: make bdist-wheel
+      - name: Release
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
   x-build-test:
     name: build-test if changes in the previous 24 hours
     runs-on: ubuntu-20.04
@@ -105,116 +149,3 @@ jobs:
       - name: Integration tests using algod
         if: ${{ env.should_run == 'true' }}
         run: make algod-integration
-
-  # test-check-date:
-  #   runs-on: ubuntu-20.04
-  #   name: Check latest commit second try
-  #   outputs:
-  #     should_run: ${{ steps.should_run.outputs.should_run }}
-  #   steps:
-  #     - uses: actions/checkout@v2
-
-  #     - name: Current Boston time
-  #       run: TZ='America/New_York' && export TZ && date +"%A, %B %d, %Y %I:%M:%S %p %Z"
-
-  #     - name: print latest_commit
-  #       run: echo ${{ github.sha }}
-
-  #     - name: what git version?
-  #       run: git --version
-
-  #     - id: should_run
-  #       continue-on-error: true
-  #       name: check latest commit is less than a day
-  #       # if: ${{ github.event_name == 'schedule' }}
-  #       run: test -z "$(git rev-list  --after='24 hours'  ${{ github.sha }})" && echo "::set-output name=should_run::false"
-
-  build-docset:
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        python: [ "3.10" ]
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "${{ matrix.python }}"
-      - name: Install python dependencies
-        run: make setup-docs
-      - name: Make docs
-        run: make bundle-docs
-      - name: Archive docset
-        if: ${{ !env.ACT }}
-        uses: actions/upload-artifact@v2
-        with:
-          name: pyteal.docset
-          path: docs/pyteal.docset.tar.gz
-
-  upload-to-pypi:
-    runs-on: ubuntu-20.04
-    container: python:3.10
-    needs: ['build-test', 'run-integration-tests', 'build-docset']
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Install dependencies
-        run: make setup-wheel
-      - name: Build package
-        run: make bdist-wheel
-      - name: Release
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
-
-  # build-when-changes:
-  #   name: Run if Code has Changed in the Previous 24 Hours
-  #   runs-on: ubuntu-20.04
-  #   container: python:${{ matrix.python }}
-  #   strategy:
-  #     matrix:
-  #       python: ["3.10", "3.11"]
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v2
-  #       with:
-  #         fetch-depth: 0
-  #     - name: git log Sanity Check
-  #       run: |
-  #         echo 'The following commits have occurred in the previous 24 hours:'
-  #         git config --global --add safe.directory /__w/pyteal/pyteal
-  #         git --no-pager log --since='24 hours ago' --format='%h' --oneline
-  #     - name: Check for code changes
-  #       id: check
-  #       run: |
-  #         if [ -n "$(git log --since='24 hours ago')" ]; then
-  #           echo "should_run=true" >> $GITHUB_ENV
-  #         else
-  #           echo "should_run=false" >> $GITHUB_ENV
-  #         fi
-  #     - name: Welcome to the nightly tests!
-  #       if: ${{ env.should_run == 'true' }}
-  #       run: |
-  #         echo "Run the rest of the nightly steps becuse env.should_run=${{ env.should_run }}"
-  #     # - uses: actions/setup-python@v4
-  #     #   if: ${{ env.should_run == 'true' }}
-  #     #   with:
-  #     #     python-version: "${{ matrix.python }}"
-  #     - name: Print Python version
-  #       if: ${{ env.should_run == 'true' }}
-  #       run: python --version
-  #     - name: The Slow Bits
-  #       if: ${{ env.should_run == 'true' }}
-  #       run: make nightly-slow
-  #     - name: Install Python dependencies, Build, and Test
-  #       if: ${{ env.should_run == 'true' }}
-  #       run: make setup-build-test
-  #     - name: Integration tests using algod
-  #       if: ${{ env.should_run == 'true' }}
-  #       run: make algod-integration
