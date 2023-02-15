@@ -137,7 +137,7 @@ def assert_lines_start_with(prefixes, lines):
 
 
 @pytest.mark.serial
-def test_no_regressions_via_fixtures(mock_ConfigParser):
+def test_no_regressions_via_fixtures_algobank(mock_ConfigParser):
     import pyteal as pt
 
     module_path, obj = ROUTERS[0]
@@ -194,6 +194,52 @@ def test_no_regressions_via_fixtures(mock_ConfigParser):
 
         assert_lines_start_with(approval_prefixes, actual_approval_lines)
         assert_lines_start_with(clear_prefixes, actual_clear_lines)
+
+    for pcs, headers, concise in product([True, False], repeat=3):
+        assert_didnt_regress(pcs, headers, concise)
+
+
+RPS = Path.cwd() / "tests" / "teal"
+
+
+@pytest.mark.serial
+def test_no_regressions_via_fixtures_rps(mock_ConfigParser):
+    import pyteal as pt
+    from tests.teal.rps import approval_program
+
+    actual_approval = pt.compileTeal(approval_program(), pt.Mode.Application, version=6)
+
+    with open(RPS / "rps.teal") as f:
+        expected_approval = f.read()
+
+    assert expected_approval == actual_approval
+
+    compilation = pt.Compilation(approval_program(), pt.Mode.Application, version=6)
+
+    bundle = compilation.compile()
+
+    assert expected_approval == bundle.teal
+
+    assert bundle.sourcemap is None
+
+    approval_prefixes = expected_approval.splitlines()
+
+    def assert_didnt_regress(pcs, headers, concise):
+        bundle = compilation.compile(
+            with_sourcemap=True,
+            pcs_in_sourcemap=pcs,
+            annotate_teal=True,
+            annotate_teal_headers=headers,
+            annotate_teal_concise=concise,
+        )
+        assert expected_approval == bundle.teal
+
+        actual_approval_lines = bundle.sourcemap.annotated_teal.splitlines()
+
+        if headers:
+            del actual_approval_lines[0]
+
+        assert_lines_start_with(approval_prefixes, actual_approval_lines)
 
     for pcs, headers, concise in product([True, False], repeat=3):
         assert_didnt_regress(pcs, headers, concise)
