@@ -76,6 +76,7 @@ ABI_TYPES = [
     abi.Tuple1[abi.Uint32],
     abi.Tuple1[abi.Uint64],
     abi.Tuple2[abi.Bool, abi.Byte],
+    abi.Tuple2[abi.DynamicBytes, abi.StaticBytes[Literal[3]]],
     abi.Tuple3[abi.Bool, abi.Uint64, abi.Uint32],
     abi.Tuple3[abi.Byte, abi.Bool, abi.Uint64],
     abi.Tuple3[abi.Uint8, abi.Byte, abi.Bool],
