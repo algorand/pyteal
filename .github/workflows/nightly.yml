@@ -19,13 +19,7 @@ jobs:
           fetch-depth: 0
       - name: Check for code changes
         id: check
-        run: |
-          git config --global --add safe.directory /__w/pyteal/pyteal
-          if [ -n "$(git log --since='24 hours ago')" ]; then
-            echo "should_run=true" >> $GITHUB_ENV
-          else
-            echo "should_run=false" >> $GITHUB_ENV
-          fi
+        run: make check-code-changes
       - name: Install Python dependencies, Build, and Test
         if: ${{ env.should_run == 'true' }}
         run: make setup-build-test
@@ -46,13 +40,7 @@ jobs:
           fetch-depth: 0
       - name: Check for code changes
         id: check
-        run: |
-          git config --global --add safe.directory /__w/pyteal/pyteal
-          if [ -n "$(git log --since='24 hours ago')" ]; then
-            echo "should_run=true" >> $GITHUB_ENV
-          else
-            echo "should_run=false" >> $GITHUB_ENV
-          fi
+        run: make check-code-changes
       - uses: actions/setup-python@v4
         if: ${{ env.should_run == 'true' }}
         with:
