@@ -1,5 +1,6 @@
 from configparser import ConfigParser
 from importlib import import_module
+from itertools import product
 from pathlib import Path
 from unittest import mock
 
@@ -14,7 +15,6 @@ and test the results of source mapping various PyTeal dapps.
 BRUTE_FORCE_TERRIBLE_SKIPPING = (
     """The second router is flaky due to issue 199, so skipping for now"""
 )
-
 FIXTURES = Path.cwd() / "tests" / "integration" / "teal" / "annotated"
 
 ROUTERS = [
@@ -34,7 +34,7 @@ def mock_ConfigParser():
     patcher.stop()
 
 
-@pytest.mark.serial("headers")
+@pytest.mark.serial
 @pytest.mark.parametrize("path, obj", ROUTERS)
 @pytest.mark.parametrize("annotate_teal_headers", [True, False])
 @pytest.mark.parametrize("annotate_teal_concise", [True, False])
@@ -130,4 +130,70 @@ VS.
     return ""
 
 
-# --- scratch --- #
+def assert_lines_start_with(prefixes, lines):
+    assert len(prefixes) == len(lines)
+    for prefix, line in zip(prefixes, lines):
+        assert line.startswith(prefix)
+
+
+@pytest.mark.serial
+def test_no_regressions_via_fixtures(mock_ConfigParser):
+    import pyteal as pt
+
+    module_path, obj = ROUTERS[0]
+    algobank_router = getattr(import_module(module_path), obj)
+    assert algobank_router.name == "AlgoBank"
+
+    actual_approval, actual_clear, _ = algobank_router.compile_program(
+        version=6, optimize=pt.OptimizeOptions(scratch_slots=True)
+    )
+
+    algobank_path = Path.cwd() / "examples" / "application" / "abi"
+
+    with open(algobank_path / "algobank_approval.teal") as f:
+        expected_approval = f.read()
+
+    with open(algobank_path / "algobank_clear_state.teal") as f:
+        expected_clear = f.read()
+
+    assert expected_approval == actual_approval
+    assert expected_clear == actual_clear
+
+    bundle = algobank_router.compile(
+        version=6,
+        optimize=pt.OptimizeOptions(scratch_slots=True),
+    )
+    assert expected_approval == bundle.approval_teal
+    assert expected_clear == bundle.clear_teal
+
+    assert bundle.approval_sourcemap is None
+    assert bundle.clear_sourcemap is None
+
+    approval_prefixes = expected_approval.splitlines()
+    clear_prefixes = expected_clear.splitlines()
+
+    def assert_didnt_regress(pcs, headers, concise):
+        bundle = algobank_router.compile(
+            version=6,
+            optimize=pt.OptimizeOptions(scratch_slots=True),
+            with_sourcemaps=True,
+            pcs_in_sourcemap=pcs,
+            annotate_teal=True,
+            annotate_teal_headers=headers,
+            annotate_teal_concise=concise,
+        )
+        assert expected_approval == bundle.approval_teal
+        assert expected_clear == bundle.clear_teal
+
+        actual_approval_lines = bundle.approval_sourcemap.annotated_teal.splitlines()
+        actual_clear_lines = bundle.clear_sourcemap.annotated_teal.splitlines()
+
+        if headers:
+            del actual_approval_lines[0]
+            del actual_clear_lines[0]
+
+        assert_lines_start_with(approval_prefixes, actual_approval_lines)
+        assert_lines_start_with(clear_prefixes, actual_clear_lines)
+
+    for pcs, headers, concise in product([True, False], repeat=3):
+        assert_didnt_regress(pcs, headers, concise)
