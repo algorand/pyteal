@@ -600,6 +600,20 @@ class PyTealFrame(StackFrame):
     def _hybrid_impl(
         cls, code: str, node: Optional[AST], pt_chunk: str
     ) -> tuple[str, int]:
+        """
+        Given a chunk of PyTeal `pt_chunk` represending a node's source,
+        and `code` representing a FrameInfo's code_context,
+        return information about the most appropriate code to use in
+        the source map.
+        When the node source isn't available, return `code`
+        and an offset of 0.
+        When the node source is a single line, return `pt_chunk`
+        and an offset of 0.
+        When the node source is a multi-line chunk, in the case of
+        a non-FunctionDef node, we assume that the offset is 0.
+        Finally, in the case of a FunctionDef node, find the offset
+        by finding where the prefix `def` appears in the chunk.
+        """
         if pt_chunk:
             pt_lines = pt_chunk.splitlines()
             if len(pt_lines) == 1:
