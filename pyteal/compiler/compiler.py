@@ -315,7 +315,7 @@ class Compilation:
     def compile(
         self,
         *,
-        with_sourcemap: bool = True,
+        with_sourcemap: bool = False,
         teal_filename: str | None = None,
         pcs_in_sourcemap: bool = False,
         algod_client: AlgodClient | None = None,
