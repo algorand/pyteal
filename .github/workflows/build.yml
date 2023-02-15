@@ -61,6 +61,7 @@ jobs:
       - name: Check for code changes
         id: check
         run: |
+          git config --global --add safe.directory /__w/pyteal/pyteal
           if [ -n "$(git log --since='24 hours ago')" ]; then
             echo "should_run=true" >> $GITHUB_ENV
           else
@@ -84,6 +85,7 @@ jobs:
       - name: Check for code changes
         id: check
         run: |
+          git config --global --add safe.directory /__w/pyteal/pyteal
           if [ -n "$(git log --since='24 hours ago')" ]; then
             echo "should_run=true" >> $GITHUB_ENV
           else
