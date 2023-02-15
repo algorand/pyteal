@@ -149,3 +149,11 @@ jobs:
       - name: Integration tests using algod
         if: ${{ env.should_run == 'true' }}
         run: make algod-integration
+
+  x-from-template:
+    name: Try to run a sub-job from a template
+    uses: ./templates/units.yml
+
+  y-from-template:
+    name: Try to run a sub-job from a template
+    uses: ./.github/workflows/templates/units.yml
