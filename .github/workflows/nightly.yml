@@ -4,50 +4,66 @@ on:
     - cron: "10 * * * *"
 
 jobs:
-  build-when-changes:
-    name: Run if Code has Changed in the Previous 24 Hours
+  night-slow-unit-tests:
+    name: build-test if changes in the previous 24 hours
     runs-on: ubuntu-20.04
     container: python:${{ matrix.python }}
     strategy:
       matrix:
         python: ["3.10", "3.11"]
     steps:
-      - name: Checkout code
+      - run: python3 --version
+      - name: Check out code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: git log Sanity Check
-        run: |
-          echo 'The following commits have occurred in the previous 24 hours:'
-          git --no-pager log --since='24 hours ago' --format='%h' --oneline
       - name: Check for code changes
         id: check
         run: |
+          git config --global --add safe.directory /__w/pyteal/pyteal
           if [ -n "$(git log --since='24 hours ago')" ]; then
             echo "should_run=true" >> $GITHUB_ENV
           else
             echo "should_run=false" >> $GITHUB_ENV
           fi
-      - name: Welcome to the nightly tests!
+      - name: Install Python dependencies, Build, and Test
         if: ${{ env.should_run == 'true' }}
+        run: make setup-build-test
+      - name: Super slow unit tests
+        if: ${{ env.should_run == 'true' }}
+        run: make setup-build-test
+
+  night-run-integration-tests:
+    name: run-integration-tests if changes in the previous 24 hours
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python: ["3.10", "3.11"]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Check for code changes
+        id: check
         run: |
-          echo "Run the rest of the nightly steps becuse env.should_run=${{ env.should_run }}"
+          git config --global --add safe.directory /__w/pyteal/pyteal
+          if [ -n "$(git log --since='24 hours ago')" ]; then
+            echo "should_run=true" >> $GITHUB_ENV
+          else
+            echo "should_run=false" >> $GITHUB_ENV
+          fi
       - uses: actions/setup-python@v4
         if: ${{ env.should_run == 'true' }}
         with:
           python-version: "${{ matrix.python }}"
       - name: Test Python version
+        if: ${{ env.should_run == 'true' }}
         run: |
           installed="$(python --version)"
           expected="${{ matrix.python }}"
           echo $installed
           [[ $installed =~ "Python ${expected}" ]] && echo "Configured Python" || (echo "Failed to configure Python" && exit 1)
-      - name: The Slow Bits
-        if: ${{ env.should_run == 'true' }}
-        run: make nighly-slow
-      - name: Install Python dependencies, Build, and Test
-        if: ${{ env.should_run == 'true' }}
-        run: make setup-build-test
       - name: Integration tests using algod
         if: ${{ env.should_run == 'true' }}
-        run: make algod-integration
+        run: make nightly-slow
