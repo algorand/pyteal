@@ -5,7 +5,7 @@ on:
 
 jobs:
   nightly-slow-unit-tests:
-    name: build-test if changes in the previous 24 hours
+    name: build-test + nightly-slow if changes in the previous 24 hours
     runs-on: ubuntu-20.04
     container: python:${{ matrix.python }}
     strategy:
