@@ -81,13 +81,16 @@ setup-build-test: setup-development lint-and-test
 
 algod-integration: algod-start setup-development test-integration algod-stop
 
-check-code-changes:
+check-code-changes-old:
 	git config --global --add safe.directory /__w/pyteal/pyteal
-	if [ -n "$(git log --since='24 hours ago')" ]; then \
-		echo "should_run=true" >> $(GITHUB_ENV) \
-	else \
-		echo "should_run=false" >> $(GITHUB_ENV) \
+	if [ -n "$(git log --since='24 hours ago')" ]; then
+		echo "should_run=true" >> $(GITHUB_ENV)
+	else
+		echo "should_run=false" >> $(GITHUB_ENV)
 	fi
+
+check-code-changes:
+	[ -n "$(git log --since='24 hours ago')" ] && echo "should_run=true" >> $(GITHUB_ENV) || echo "should_run=false" >> $(GITHUB_ENV)
 
 nightly-slow:
 	echo "TODO - this is a stub for a very slow test"
