@@ -1,3 +1,6 @@
+from configparser import ConfigParser
+from unittest import mock
+
 import pytest
 
 from tests.unit.sourcemap_constructs311_test import (
@@ -5,7 +8,14 @@ from tests.unit.sourcemap_constructs311_test import (
     CONSTRUCTS_LATEST_VERSION,
     constructs_test,
 )
-from tests.unit.sourcemap_monkey_unit_test import mock_ConfigParser
+
+
+@pytest.fixture
+def mock_ConfigParser():
+    patcher = mock.patch.object(ConfigParser, "getboolean", return_value=True)
+    patcher.start()
+    yield
+    patcher.stop()
 
 
 @pytest.mark.slow

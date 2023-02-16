@@ -1,13 +1,20 @@
+from configparser import ConfigParser
 from copy import deepcopy
 import sys
 from typing import Literal
+from unittest import mock
 
 import pytest
 
-from tests.unit.sourcemap_monkey_unit_test import (
-    mock_ConfigParser,
-    router_static_abisubroutine,
-)
+from tests.unit.sourcemap_monkey_unit_test import router_static_abisubroutine
+
+
+@pytest.fixture
+def mock_ConfigParser():
+    patcher = mock.patch.object(ConfigParser, "getboolean", return_value=True)
+    patcher.start()
+    yield
+    patcher.stop()
 
 
 P = "#pragma version {v}"  # fill the template at runtime
