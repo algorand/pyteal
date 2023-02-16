@@ -330,6 +330,7 @@ class CondWithMethod:
         res = ASTBuilder.wrap_handler(True, self.method, use_frame_pt=use_frame_pt)
         if isinstance(self.condition, Expr):
             res = Seq(Assert(self.condition), res)
+            NatalStackFrame.reframe_asts(self.condition.stack_frames, res)
         return CondNode(walk_in_cond, res)
 
 

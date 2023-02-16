@@ -53,12 +53,19 @@ lint: black flake8 mypy sdist-check
 
 # ---- Unit Tests (no algod) ---- #
 
+# Slow test which are fast enough on python 3.11+
+test-unit-slow: 
+	pytest tests/unit/sourcemap_constructs311_test.py -m serial
+
+test-unit-very-slow: 
+	pytest tests/unit/sourcemap_constructs_allpy_test.py -m serial
+
 test-unit-async:
-	pytest -n auto --durations=10 pyteal tests/unit -m "not serial"
+	pytest -n auto --durations=10 pyteal tests/unit -m "not slow" -m "not serial"
 
 # Run tests w/ @pytest.mark.serial under ~/tests/unit each in its own proc:
-test-unit-sync:
-	find tests/unit -name '*_test.py' | sort | xargs -t -I {} pytest --suppress-no-test-exit-code --dist=no --durations=10 {} -m serial
+test-unit-sync: test-unit-slow
+	find tests/unit -name '*_test.py' | sort | xargs -t -I {} pytest --suppress-no-test-exit-code --dist=no --durations=10 {} -m serial -m "not slow"
 
 test-unit: test-unit-async test-unit-sync
 
@@ -100,8 +107,7 @@ check-code-changes:
 	git config --global --add safe.directory /__w/pyteal/pyteal
 	[ -n "$$(git log --since='24 hours ago')" ] && (echo "should_run=true" >> $(GITHUB_ENV)) || (echo "should_run=false" >> $(GITHUB_ENV))
 
-nightly-slow:
-	echo "TODO - this is a stub for a very slow test"
+nightly-slow: test-unit-very-slow
 
 # ---- Local Github Actions Simulation via `act` ---- #
 # assumes act is installed, e.g. via `brew install act`

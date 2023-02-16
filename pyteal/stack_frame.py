@@ -312,6 +312,7 @@ class NatalStackFrame:
             BinaryExpr,
             Cond,
             Expr,
+            Return,
             Seq,
             SubroutineDeclaration,
         )
@@ -332,6 +333,8 @@ class NatalStackFrame:
                     cls._walk_asts(func, e.mem_layout)
                 case Seq():
                     cls._walk_asts(func, *e.args)
+                case Return():
+                    cls._walk_asts(func, e.value)
                 case SubroutineDeclaration():
                     cls._walk_asts(func, e.body)
                 case _:

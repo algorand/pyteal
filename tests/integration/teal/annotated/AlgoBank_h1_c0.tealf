@@ -25,20 +25,20 @@ txn ApplicationID                      //    (71)
 int 0                                  //    (73)
 !=                                     //    (74)
 &&                                     //    (75)
-assert                                 //    (76)   {CFILE}  {CL}      {COMPILE}
-txna ApplicationArgs 1                 //    (77)
+assert                                 //    (76)
+txna ApplicationArgs 1                 //    (77)   {CFILE}  {CL}      {COMPILE}
 btoi                                   //    (80)
-store 3                                //    (81)
-txna ApplicationArgs 2                 //    (83)
+store 3                                //    (81)   examples/application/abi/algobank.py              78      def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
+txna ApplicationArgs 2                 //    (83)   {CFILE}  {CL}      {COMPILE}
 int 0                                  //    (86)
 getbyte                                //    (87)
-store 4                                //    (88)
-load 3                                 //    (90)   examples/application/abi/algobank.py              78      def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
+store 4                                //    (88)   examples/application/abi/algobank.py              78      def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
+load 3                                 //    (90)
 load 4                                 //    (92)
-callsub withdraw_3                     //    (94)   {CFILE}  {CL}      {COMPILE}
-int 1                                  //    (97)
-return                                 //    (98)
-main_l6:                               //
+callsub withdraw_3                     //    (94)
+int 1                                  //    (97)   {CFILE}  {CL}      {COMPILE}
+return                                 //    (98)   examples/application/abi/algobank.py              78      def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
+main_l6:                               //           {CFILE}  {CL}      {COMPILE}
 txn OnCompletion                       //    (99)   examples/application/abi/algobank.py              65      def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
 int NoOp                               //    (101)
 ==                                     //    (102)
@@ -46,20 +46,20 @@ txn ApplicationID                      //    (103)
 int 0                                  //    (105)
 !=                                     //    (106)
 &&                                     //    (107)
-assert                                 //    (108)  {CFILE}  {CL}      {COMPILE}
-txna ApplicationArgs 1                 //    (109)
+assert                                 //    (108)
+txna ApplicationArgs 1                 //    (109)  {CFILE}  {CL}      {COMPILE}
 int 0                                  //    (112)
 getbyte                                //    (113)
 callsub getBalance_2                   //    (114)
-store 2                                //    (117)
+store 2                                //    (117)  examples/application/abi/algobank.py              65      def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
 byte 0x151f7c75                        //    (119)
 load 2                                 //    (125)
 itob                                   //    (127)
 concat                                 //    (128)
 log                                    //    (129)
-int 1                                  //    (130)
-return                                 //    (131)
-main_l7:                               //
+int 1                                  //    (130)  {CFILE}  {CL}      {COMPILE}
+return                                 //    (131)  examples/application/abi/algobank.py              65      def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
+main_l7:                               //           {CFILE}  {CL}      {COMPILE}
 txn OnCompletion                       //    (132)  examples/application/abi/algobank.py              41      def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
 int NoOp                               //    (134)
 ==                                     //    (135)
@@ -75,26 +75,26 @@ int 0                                  //    (147)
 !=                                     //    (148)
 &&                                     //    (149)
 ||                                     //    (150)
-assert                                 //    (151)  {CFILE}  {CL}      {COMPILE}
-txna ApplicationArgs 1                 //    (152)
+assert                                 //    (151)
+txna ApplicationArgs 1                 //    (152)  {CFILE}  {CL}      {COMPILE}
 int 0                                  //    (155)
 getbyte                                //    (156)
-store 1                                //    (157)
-txn GroupIndex                         //    (159)
+store 1                                //    (157)  examples/application/abi/algobank.py              41      def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
+txn GroupIndex                         //    (159)  {CFILE}  {CL}      {COMPILE}
 int 1                                  //    (161)
 -                                      //    (162)
-store 0                                //    (163)
-load 0                                 //    (165)
-gtxns TypeEnum                         //    (167)
+store 0                                //    (163)  examples/application/abi/algobank.py              41      def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
+load 0                                 //    (165)  {CFILE}  {CL}      {COMPILE}
+gtxns TypeEnum                         //    (167)  examples/application/abi/algobank.py              41      def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
 int pay                                //    (169)
 ==                                     //    (170)
 assert                                 //    (171)
-load 0                                 //    (172)  examples/application/abi/algobank.py              41      def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
+load 0                                 //    (172)
 load 1                                 //    (174)
-callsub deposit_1                      //    (176)  {CFILE}  {CL}      {COMPILE}
-int 1                                  //    (179)
-return                                 //    (180)
-main_l8:                               //
+callsub deposit_1                      //    (176)
+int 1                                  //    (179)  {CFILE}  {CL}      {COMPILE}
+return                                 //    (180)  examples/application/abi/algobank.py              41      def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
+main_l8:                               //           {CFILE}  {CL}      {COMPILE}
 txn OnCompletion                       //    (181)
 int NoOp                               //    (183)
 ==                                     //    (184)
@@ -214,8 +214,8 @@ load 7                                 //    (328)                              
 -                                      //    (330)                                                            App.localGet(Txn.sender(), Bytes('balance')) - amount.get()
 app_local_put                          //    (331)                                                    97      App.localPut(Txn.sender(), Bytes('balance'), App.localGet(Txn.sender(), Bytes('balance')) - amount.get())
 itxn_begin                             //    (332)                                                    102     InnerTxnBuilder.Begin()
-int pay                                //    (333)                                                    103     {INNERTXN}
-itxn_field TypeEnum                    //    (334)
+int pay                                //    (333)                                                    41      def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
+itxn_field TypeEnum                    //    (334)                                                    103     {INNERTXN}
 load 8                                 //    (336)                                                    106     recipient.address()
 txnas Accounts                         //    (338)
 itxn_field Receiver                    //    (340)                                                    103     {INNERTXN}
