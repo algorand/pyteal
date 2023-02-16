@@ -305,8 +305,44 @@ class NatalStackFrame:
     def nodes(self) -> list[AST | None]:
         return [f.node for f in self._frames]
 
+    # @classmethod
+    # def _walk_asts(cls, func: Callable[["Expr"], None], *exprs: "Expr") -> None:  # type: ignore
+    #     from pyteal.ast import (
+    #         Assert,
+    #         BinaryExpr,
+    #         Cond,
+    #         Expr,
+    #         Return,
+    #         Seq,
+    #         SubroutineDeclaration,
+    #     )
+    #     from pyteal.ast.frame import Proto
+
+    #     for expr in exprs:
+    #         e = cast(Expr, expr)
+    #         func(e)
+
+    #         match e:
+    #             case Assert():
+    #                 cls._walk_asts(func, *e.cond)
+    #             case BinaryExpr():
+    #                 cls._walk_asts(func, e.argLeft, e.argRight)
+    #             case Cond():
+    #                 cls._walk_asts(func, *(y for x in e.args for y in x))
+    #             case Proto():
+    #                 cls._walk_asts(func, e.mem_layout)
+    #             case Seq():
+    #                 cls._walk_asts(func, *e.args)
+    #             case Return():
+    #                 cls._walk_asts(func, e.value)
+    #             case SubroutineDeclaration():
+    #                 cls._walk_asts(func, e.body)
+    #             case _:
+    #                 # TODO: implement more cases, but no need to error as this isn't used for functionality's sake.
+    #                 pass
+
     @classmethod
-    def _walk_asts(cls, func: Callable[["Expr"], None], *exprs: "Expr") -> None:  # type: ignore
+    def _walk_asts(cls, func: Callable[["Expr"], None], *exprs: "Expr", force_root_apply: bool = False) -> None:  # type: ignore
         from pyteal.ast import (
             Assert,
             BinaryExpr,
@@ -318,28 +354,32 @@ class NatalStackFrame:
         )
         from pyteal.ast.frame import Proto
 
-        for expr in exprs:
-            e = cast(Expr, expr)
-            func(e)
-
-            match e:
+        for e in exprs:
+            supported_type = True
+            expr = cast(Expr, e)
+            match expr:
                 case Assert():
-                    cls._walk_asts(func, *e.cond)
+                    cls._walk_asts(func, *expr.cond, force_root_apply)
                 case BinaryExpr():
-                    cls._walk_asts(func, e.argLeft, e.argRight)
+                    cls._walk_asts(func, expr.argLeft, expr.argRight, force_root_apply)
                 case Cond():
-                    cls._walk_asts(func, *(y for x in e.args for y in x))
+                    cls._walk_asts(
+                        func, *(y for x in expr.args for y in x), force_root_apply
+                    )
                 case Proto():
-                    cls._walk_asts(func, e.mem_layout)
+                    cls._walk_asts(func, expr.mem_layout, force_root_apply)
                 case Seq():
-                    cls._walk_asts(func, *e.args)
+                    cls._walk_asts(func, *expr.args, force_root_apply)
                 case Return():
-                    cls._walk_asts(func, e.value)
+                    cls._walk_asts(func, expr.value, force_root_apply)
                 case SubroutineDeclaration():
-                    cls._walk_asts(func, e.body)
+                    cls._walk_asts(func, expr.body, force_root_apply)
+                    func(expr)
                 case _:
-                    # TODO: implement more cases, but no need to error as this isn't used for functionality's sake.
-                    pass
+                    supported_type = False
+
+            if supported_type or force_root_apply:
+                func(expr)
 
     @classmethod
     def _debug_asts(cls, *exprs: "Expr") -> None:  # type: ignore
@@ -356,7 +396,7 @@ class NatalStackFrame:
                 type(e), ": ", e.stack_frames.best().as_pyteal_frame().hybrid_unparsed()
             )
 
-        cls._walk_asts(dbg, *exprs)
+        cls._walk_asts(dbg, *exprs, force_root_apply=True)
 
     @classmethod
     def mark_asts_as_compiler_gen(cls, *exprs: "Expr") -> None:  # type: ignore
