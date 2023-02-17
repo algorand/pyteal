@@ -601,7 +601,7 @@ class ASTBuilder:
             +-----------------------------------------------------------------------------------+
             | At this point, all of the handler arguments (ABI typed) are prepared.             |
             | We call the handler with all these handler arguments.                             |
-            | If handler has output, we dig the result to top of the stack, and log it.         |
+            | If the handler has output, we dig the result to top of the stack and log it.      |
             |                                                                                   |
             | NOTE: if output exists, inside of subroutine, we alloc a scratch slot for output, |
             |       Right before retsub, use `deferred_expr` to place output encoding on stack. |
