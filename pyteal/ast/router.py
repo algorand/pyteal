@@ -559,6 +559,7 @@ class ASTBuilder:
                         f"{wrap_to_name} can only accept: none type Expr, or Subroutine/ABIReturnSubroutine with none return and no arg"
                     )
 
+        # else: method case
         wrap_to_name = wrap_to_name or "method call"
         if not isinstance(handler, ABIReturnSubroutine):
             raise TealInputError(
