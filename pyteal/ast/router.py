@@ -19,6 +19,7 @@ from pyteal.ast import abi
 from pyteal.ast.subroutine import (
     OutputKwArgInfo,
     Subroutine,
+    SubroutineCall,
     SubroutineFnWrapper,
     ABIReturnSubroutine,
 )
@@ -626,19 +627,19 @@ class ASTBuilder:
         if handler.type_of() == sdk_abi.Returns.VOID:
             return Seq(
                 *decode_instructions,
-                cast(Expr, handler(*arg_vals)),
+                cast(SubroutineCall, handler(*arg_vals)),
                 Approve(),
             )
         else:
             output_temp: abi.BaseType = cast(
                 OutputKwArgInfo, handler.output_kwarg_info
             ).abi_type.new_instance()
-            subroutine_call: abi.ReturnedValue = cast(
+            returned_val: abi.ReturnedValue = cast(
                 abi.ReturnedValue, handler(*arg_vals)
             )
             return Seq(
                 *decode_instructions,
-                subroutine_call.store_into(output_temp),
+                returned_val.store_into(output_temp),
                 abi.MethodReturn(output_temp),
                 Approve(),
             )
@@ -723,17 +724,17 @@ class ASTBuilder:
         returning_steps: list[Expr]
 
         if handler.type_of() == sdk_abi.Returns.VOID:
-            returning_steps = [cast(Expr, handler(*arg_vals))]
+            returning_steps = [cast(SubroutineCall, handler(*arg_vals))]
         else:
             output_temp: abi.BaseType = cast(
                 OutputKwArgInfo, handler.output_kwarg_info
             ).abi_type.new_instance()
             output_temp._stored_value = FrameVar(proto, 0)
-            subroutine_call: abi.ReturnedValue = cast(
+            returned_val: abi.ReturnedValue = cast(
                 abi.ReturnedValue, handler(*arg_vals)
             )
             returning_steps = [
-                subroutine_call.store_into(output_temp),
+                returned_val.store_into(output_temp),
                 abi.MethodReturn(output_temp),
             ]
 

@@ -542,7 +542,9 @@ class SubroutineFnWrapper:
             name_str=name,
         )
 
-    def __call__(self, *args: Expr | ScratchVar | abi.BaseType, **kwargs: Any) -> Expr:
+    def __call__(
+        self, *args: Expr | ScratchVar | abi.BaseType, **kwargs: Any
+    ) -> SubroutineCall:
         if len(kwargs) != 0:
             raise TealInputError(
                 f"Subroutine cannot be called with keyword arguments. "
@@ -662,7 +664,7 @@ class ABIReturnSubroutine:
 
     def __call__(
         self, *args: Expr | ScratchVar | abi.BaseType, **kwargs
-    ) -> abi.ReturnedValue | Expr:
+    ) -> abi.ReturnedValue | SubroutineCall:
         if len(kwargs) != 0:
             raise TealInputError(
                 f"Subroutine cannot be called with keyword arguments. "
