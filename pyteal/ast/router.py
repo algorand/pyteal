@@ -582,7 +582,7 @@ class ASTBuilder:
         - handler type check
         - handler argument instance generate
         - handler argument decode from Txn.application_args
-        - generating execution branch that calles handler and handles handler return.
+        - generating execution branch that calls handler and handles handler return.
           NOTE: the very last step is handled different from frame-pt version, see illustration below:
 
         |
