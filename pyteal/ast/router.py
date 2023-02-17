@@ -672,7 +672,7 @@ class ASTBuilder:
             |  | - If handler has an ABI output returning, need to store in a grid on stack.    |
             |  | - All of the other handler arguments from `Txn.application_args` should be     |
             |  |   decoded into ABI values and placed on stack.                                 |
-            |  |   NOTE: if handler has more than 15 args, we need to de-tuple the last one.    |
+            |  |   NOTE: if the handler has more than 15 args, we need to de-tuple the last one.|
             |  |         The detupling process is also done over the stack with frame pointers. |
             |  |                                                                                |
             |  | To keep track of each arg's memory location,                                   |
