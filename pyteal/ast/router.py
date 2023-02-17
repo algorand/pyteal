@@ -592,7 +592,7 @@ class ASTBuilder:
         `-> (assuming satisfying all preconditions: method selector match + OnComplete options match)
             +-----------------------------------------------------------------------------------+
             | We need to first allocate some scratch slots for the handler's ABI arguments,     |
-            | for we don't want the intermediate steps in handler destroy memory on arguments.  |
+            | for we don't want the intermediate handler steps to destroy memory on arguments.   |
             |                                                                                   |
             | Decoding scheme relies on internal storage in ABI value (default scratch slot).   |
             | NOTE: if handler has more than 15 args, we need to de-tuple the last one.         |
