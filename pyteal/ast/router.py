@@ -595,7 +595,7 @@ class ASTBuilder:
             | for we don't want the intermediate handler steps to destroy memory on arguments.   |
             |                                                                                   |
             | Decoding scheme relies on internal storage in ABI value (default scratch slot).   |
-            | NOTE: if handler has more than 15 args, we need to de-tuple the last one.         |
+            | NOTE: if the handler has more than 15 args, we need to de-tuple the last one.     |
             |       The detupling process is also done over the scratch slots.                  |
             |                                                                                   |
             | This section represents the expressions in `decoding_steps`.                      |
