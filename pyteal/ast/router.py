@@ -673,7 +673,7 @@ class ASTBuilder:
             |  | - All of the other handler arguments from `Txn.application_args` should be     |
             |  |   decoded into ABI values and placed on stack.                                 |
             |  |   NOTE: if handler has more than 15 args, we need to de-tuple the last one.    |
-            |  |         The detupling process is also done over the stack with frame pointer.  |
+            |  |         The detupling process is also done over the stack with frame pointers. |
             |  |                                                                                |
             |  | To keep track of each arg's memory location,                                   |
             |  | we use FrameVar to keep track of relative dist against stack height at proto.  |
