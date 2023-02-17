@@ -198,9 +198,9 @@ def _index_tuple(
         if offset == 0:
             # This is the first and only value in the tuple, so decode all of encoded
             return output.decode(encoded)
-        # This is the last value in the tuple, so decode the substring from start_index to the end of
-        # encoded
-        return output.decode(encoded, start_index=start_index)
+        if all(not x.is_dynamic() for x in value_types):
+            # This is the last element in tuple with all elements being static typed
+            return output.decode(encoded, start_index=start_index)
 
     if offset == 0:
         # This is the first value in the tuple, so decode the substring from 0 with length length

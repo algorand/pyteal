@@ -2,12 +2,20 @@
 
 ## Added
 
+## Fixed
+
+## Changed
+
+# v0.23.0
+
+## Added
+
 * Improved error handling for tuple type mismatch: added information on position and expected type. ([#655](https://github.com/algorand/pyteal/pull/655))
 * Added an `asdict()` method to `ast.router.BareCallActions`. ([#656](https://github.com/algorand/pyteal/pull/656))
 
 ## Fixed
 
-## Changed
+* Fixed wrong encoding result in tuple get last item. ([#663](https://github.com/algorand/pyteal/pull/663))
 
 # v0.22.0
 
