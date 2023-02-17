@@ -668,7 +668,7 @@ class ASTBuilder:
             |  +--------------------------------------------------------------------------------+
             |  | Thus we use `proto 0 0` to clean up stack once completed handler computation.  |
             |  +--------------------------------------------------------------------------------+
-            |  | We need to allocate some stack space to handle memory of 2 following cases:    |
+            |  |We need to allocate some stack space to handle memory for the following 2 cases:|
             |  | - If handler has an ABI output returning, need to store in a grid on stack.    |
             |  | - All of the other handler arguments from `Txn.application_args` should be     |
             |  |   decoded into ABI values and placed on stack.                                 |
