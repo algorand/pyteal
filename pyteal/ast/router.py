@@ -604,7 +604,7 @@ class ASTBuilder:
             | We call the handler with all these handler arguments.                             |
             | If the handler has output, we dig the result to top of the stack and log it.      |
             |                                                                                   |
-            | NOTE: if output exists, inside of subroutine, we alloc a scratch slot for output, |
+            | NOTE: if output exists inside of a subroutine, we alloc a scratch slot for output.|
             |       Right before retsub, use `deferred_expr` to place output encoding on stack. |
             +-----------------------------------------------------------------------------------+
             | Now that handler return (if exists) is handled, we `Approve()` and exit prog.     |
