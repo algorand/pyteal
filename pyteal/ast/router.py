@@ -666,7 +666,7 @@ class ASTBuilder:
             |                                                                                   |
             |  We construct a intermediate subroutine with 0 arg and 0 return as follows:       |
             |  +--------------------------------------------------------------------------------+
-            |  | Thus we use `proto 0 0` to clean up stack once completed handler computation.  |
+            |  | Thus we use `proto 0 0` to clean up stack once handler computation completes.  |
             |  +--------------------------------------------------------------------------------+
             |  |We need to allocate some stack space to handle memory for the following 2 cases:|
             |  | - If handler has an ABI output returning, need to store in a grid on stack.    |
