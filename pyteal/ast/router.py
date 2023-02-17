@@ -664,7 +664,7 @@ class ASTBuilder:
             | We wrap the following section up in an intermediate function:                     |
             +-----------------------------------------------------------------------------------+
             |                                                                                   |
-            |  We construct a intermediate subroutine with 0 arg and 0 return as follows:       |
+            |  We construct an intermediate subroutine with 0 args and 0 returns as follows:    |
             |  +--------------------------------------------------------------------------------+
             |  | Thus we use `proto 0 0` to clean up stack once handler computation completes.  |
             |  +--------------------------------------------------------------------------------+
