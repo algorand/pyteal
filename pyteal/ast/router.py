@@ -678,7 +678,7 @@ class ASTBuilder:
             |  | To keep track of each arg's memory location,                                   |
             |  | we use FrameVar to keep track of relative dist against stack height at proto.  |
             |  |                                                                                |
-            |  | Also notice that, all of the decoding operations are done over local vars,     |
+            |  | Also notice that all of the decoding operations are done over local vars,      |
             |  | proto 0 0 can come in and clean all the stack variables away.                  |
             |  |                                                                                |
             |  | This section represents the expressions in `decoding_steps`.                   |
