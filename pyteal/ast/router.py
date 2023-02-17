@@ -30,6 +30,7 @@ from pyteal.ast.methodsig import MethodSignature
 from pyteal.ast.naryexpr import And, Or
 from pyteal.ast.txn import Txn
 from pyteal.ast.return_ import Approve, Reject
+from pyteal.ast.scratch import ScratchSlot
 
 
 class CallConfig(IntFlag):
@@ -745,6 +746,7 @@ class Router:
             * clear_state_program: compiled clear-state program string
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
         """
+        ScrathSlot.reset_next_slot()
         ap, csp, contract = self.build_program()
         ap_compiled = compileTeal(
             ap,

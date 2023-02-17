@@ -17,6 +17,10 @@ class ScratchSlot:
     # Slot ids under 256 are manually reserved slots
     nextSlotId = NUM_SLOTS
 
+    @classmethod
+    def reset_next_slot(cls):
+        cls.nextSlotId = NUM_SLOTS
+
     def __init__(self, requestedSlotId: int | None = None):
         """Initializes a scratch slot with a particular id
 
