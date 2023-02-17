@@ -408,7 +408,7 @@ class ASTBuilder:
 
         # if subroutine has ABI output, then local variables start from 1
         # otherwise local variables start from 0
-        index_start_from = 1 if subroutine.output_kwarg_info is not None else 0
+        index_start_from = 0 if subroutine.output_kwarg_info is None else 1
 
         # prepare the local stack type list for local variable allocation
         local_types: list[TealType] = [i._stored_value.storage_type() for i in arg_vals]
