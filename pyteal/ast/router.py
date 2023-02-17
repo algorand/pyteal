@@ -607,7 +607,7 @@ class ASTBuilder:
             | NOTE: if output exists inside of a subroutine, we alloc a scratch slot for output.|
             |       Right before retsub, use `deferred_expr` to place output encoding on stack. |
             +-----------------------------------------------------------------------------------+
-            | Now that handler return (if exists) is handled, we `Approve()` and exit prog.     |
+            | Now that the handler return (if exists) is handled, we `Approve()` and exit prog. |
             +-----------------------------------------------------------------------------------+
         """
         handler = ASTBuilder.__filter_invalid_handlers_and_typecast(handler)
