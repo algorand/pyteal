@@ -654,7 +654,7 @@ class ASTBuilder:
         - handler argument instance generate
         - handler argument decode from Txn.application_args (with use_frame_pt=True option on)
         - generating execution branch that calls the handler and handles handler return.
-          NOTE: the very last step is handled different from pre-frame-pt version, see illustration below:
+          NOTE: the very last step is handled differently from the frame pointer version; see the illustration below:
 
         |
         | main execution
