@@ -1009,7 +1009,7 @@ class Router:
                     )
                 ]
 
-        optimize = optimize if optimize else OptimizeOptions()
+        optimize = optimize or OptimizeOptions()
         use_frame_pt = optimize.use_frame_pointers(version)
         return (
             self.approval_ast.program_construction(use_frame_pt=use_frame_pt),
