@@ -31,6 +31,8 @@ BIG_A2 = "pt.And(pt.Int(1) - pt.Int(2), pt.Not(pt.Int(3)), pt.Int(4) ^ pt.Int(5)
 BIG_C2 = "pt.Concat(pt.BytesDiv(pt.Bytes('101'), pt.Bytes('102')), pt.BytesNot(pt.Bytes('103')), pt.BytesZero(pt.Int(10)), pt.SetBit(pt.Bytes('105'), pt.Int(106), pt.Int(107)), pt.SetByte(pt.Bytes('108'), pt.Int(109), pt.Int(110)))"
 A = "def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:"
 RA = "router.add_method_handler(Foo.set_foo, 'set_foo', pt.MethodConfig(no_op=pt.CallConfig.CALL), 'Foo the foo')"
+BCAOC = "pt.OnCompleteAction.call_only(pt.Log(pt.Bytes('optin call')))"
+BCAs = f"pt.BareCallActions(opt_in={BCAOC})"
 
 
 def abi_named_tuple_example(pt):
@@ -110,7 +112,7 @@ def router_example_method(pt):
     router = pt.Router("questionable", on_completion_actions, clear_state=pt.Approve())
 
     @router.method
-    def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:  # type: ignore
+    def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
         return output.set(a.get() + b.get())
 
     return router
@@ -1706,16 +1708,16 @@ CONSTRUCTS = [
         router_example_method,
         [
             [P, R],
-            ("txn NumAppArgs", R),
-            ("int 0", R),
-            ("==", R),
-            ("bnz main_l4", R),
-            ("txna ApplicationArgs 0", R),
-            ('method "add(uint64,uint64)uint64"', R),
-            ("==", R),
-            ("bnz main_l3", R),
+            ("txn NumAppArgs", BCAs),
+            ("int 0", BCAs),
+            ("==", BCAs),
+            ("bnz main_l4", BCAs),
+            ("txna ApplicationArgs 0", A),
+            ('method "add(uint64,uint64)uint64"', A),
+            ("==", A),
+            ("bnz main_l3", A),
             ("err", R),
-            ("main_l3:", R),
+            ("main_l3:", A),
             ("txn OnCompletion", A),
             ("int NoOp", A),
             ("==", A),
@@ -1741,26 +1743,26 @@ CONSTRUCTS = [
             ("log", A),
             ("int 1", R),
             ("return", A),
-            ("main_l4:", R),
-            ("txn OnCompletion", R),
-            ("int OptIn", R),
-            ("==", R),
-            ("bnz main_l6", R),
-            ("err", R),
-            ("main_l6:", R),
-            ("txn ApplicationID", R),
-            ("int 0", R),
-            ("!=", R),
-            ("assert", R),
+            ("main_l4:", BCAOC),
+            ("txn OnCompletion", BCAOC),
+            ("int OptIn", BCAOC),
+            ("==", BCAOC),
+            ("bnz main_l6", BCAOC),
+            ("err", BCAs),
+            ("main_l6:", BCAOC),
+            ("txn ApplicationID", BCAOC),
+            ("int 0", BCAOC),
+            ("!=", BCAOC),
+            ("assert", BCAOC),
             ('byte "optin call"', "pt.Bytes('optin call')"),
             ("log", "pt.Log(pt.Bytes('optin call'))"),
             ("int 1", R),
-            ("return", R),
+            ("return", BCAOC),
             ("", A),
             ("// add", A),
             ("add_0:", A),
-            ("store 4", R),
-            ("store 3", R),
+            ("store 4", A),
+            ("store 3", A),
             ("load 3", "a.get()"),
             ("load 4", "b.get()"),
             ("+", "a.get() + b.get()"),

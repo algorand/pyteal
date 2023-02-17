@@ -305,81 +305,74 @@ class NatalStackFrame:
     def nodes(self) -> list[AST | None]:
         return [f.node for f in self._frames]
 
-    # @classmethod
-    # def _walk_asts(cls, func: Callable[["Expr"], None], *exprs: "Expr") -> None:  # type: ignore
-    #     from pyteal.ast import (
-    #         Assert,
-    #         BinaryExpr,
-    #         Cond,
-    #         Expr,
-    #         Return,
-    #         Seq,
-    #         SubroutineDeclaration,
-    #     )
-    #     from pyteal.ast.frame import Proto
-
-    #     for expr in exprs:
-    #         e = cast(Expr, expr)
-    #         func(e)
-
-    #         match e:
-    #             case Assert():
-    #                 cls._walk_asts(func, *e.cond)
-    #             case BinaryExpr():
-    #                 cls._walk_asts(func, e.argLeft, e.argRight)
-    #             case Cond():
-    #                 cls._walk_asts(func, *(y for x in e.args for y in x))
-    #             case Proto():
-    #                 cls._walk_asts(func, e.mem_layout)
-    #             case Seq():
-    #                 cls._walk_asts(func, *e.args)
-    #             case Return():
-    #                 cls._walk_asts(func, e.value)
-    #             case SubroutineDeclaration():
-    #                 cls._walk_asts(func, e.body)
-    #             case _:
-    #                 # TODO: implement more cases, but no need to error as this isn't used for functionality's sake.
-    #                 pass
-
     @classmethod
-    def _walk_asts(cls, func: Callable[["Expr"], None], *exprs: "Expr", force_root_apply: bool = False) -> None:  # type: ignore
+    def _walk_asts(
+        cls,
+        func: Callable[["Expr"], bool],
+        *exprs: "Expr",
+        force_root_apply: bool = True,
+        exit_on_user_defined: bool = False,
+        exit_when_stop_signal: bool = False,
+    ) -> None:  # type: ignore
         from pyteal.ast import (
             Assert,
             BinaryExpr,
             Cond,
             Expr,
+            MethodSignature,
             Return,
+            ScratchStackStore,
+            ScratchStore,
             Seq,
             SubroutineDeclaration,
+            TxnaExpr,
         )
         from pyteal.ast.frame import Proto
 
         for e in exprs:
+            if e._user_defined and exit_on_user_defined:
+                continue
+
             supported_type = True
             expr = cast(Expr, e)
+            walker_args: list[Expr] = []
             match expr:
                 case Assert():
-                    cls._walk_asts(func, *expr.cond, force_root_apply)
+                    walker_args = expr.cond
                 case BinaryExpr():
-                    cls._walk_asts(func, expr.argLeft, expr.argRight, force_root_apply)
+                    walker_args = [expr.argLeft, expr.argRight]
                 case Cond():
-                    cls._walk_asts(
-                        func, *(y for x in expr.args for y in x), force_root_apply
-                    )
+                    walker_args = [y for x in expr.args for y in x]
                 case Proto():
-                    cls._walk_asts(func, expr.mem_layout, force_root_apply)
+                    walker_args = [expr.mem_layout]
                 case Seq():
-                    cls._walk_asts(func, *expr.args, force_root_apply)
+                    walker_args = expr.args
                 case Return():
-                    cls._walk_asts(func, expr.value, force_root_apply)
+                    walker_args = [expr.value]
                 case SubroutineDeclaration():
-                    cls._walk_asts(func, expr.body, force_root_apply)
-                    func(expr)
+                    walker_args = [expr.body]
+                case ScratchStore():
+                    walker_args = (
+                        [expr.index_expression] if expr.index_expression else []
+                    )
+                case MethodSignature(), ScratchStackStore(), TxnaExpr():
+                    pass
                 case _:
                     supported_type = False
 
+            should_stop = True
             if supported_type or force_root_apply:
-                func(expr)
+                should_stop = func(expr)
+            if exit_when_stop_signal and should_stop:
+                return
+            if walker_args:
+                cls._walk_asts(
+                    func,
+                    *walker_args,
+                    force_root_apply=force_root_apply,
+                    exit_on_user_defined=exit_on_user_defined,
+                    exit_when_stop_signal=exit_when_stop_signal,
+                )
 
     @classmethod
     def _debug_asts(cls, *exprs: "Expr") -> None:  # type: ignore
@@ -391,10 +384,11 @@ class NatalStackFrame:
         if cls.sourcemapping_is_off():
             return
 
-        def dbg(e: Expr):
+        def dbg(e: Expr) -> bool:
             print(
                 type(e), ": ", e.stack_frames.best().as_pyteal_frame().hybrid_unparsed()
             )
+            return False
 
         cls._walk_asts(dbg, *exprs, force_root_apply=True)
 
@@ -405,8 +399,9 @@ class NatalStackFrame:
         if cls.sourcemapping_is_off():
             return
 
-        def mark(e: Expr):
+        def mark(e: Expr) -> bool:
             e.stack_frames._compiler_gen = True
+            return False
 
         cls._walk_asts(mark, *exprs)
 
@@ -417,10 +412,19 @@ class NatalStackFrame:
         if cls.sourcemapping_is_off():
             return
 
-        def set_frames(e: Expr):
+        def set_frames(e: Expr) -> bool:
+            if e.stack_frames == stack_frames:
+                return True
             e.stack_frames = stack_frames
+            return False
 
-        cls._walk_asts(set_frames, *exprs)
+        cls._walk_asts(
+            set_frames,
+            *exprs,
+            force_root_apply=True,
+            exit_on_user_defined=True,
+            exit_when_stop_signal=True,
+        )
 
     @classmethod
     def reframe_ops_in_blocks(cls, root_expr: "Expr", start: "TealBlock") -> None:  # type: ignore

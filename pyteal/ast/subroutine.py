@@ -551,7 +551,9 @@ class SubroutineFnWrapper:
             name_str=name,
         )
 
-    def __call__(self, *args: Expr | ScratchVar | abi.BaseType, **kwargs: Any) -> Expr:
+    def __call__(
+        self, *args: Expr | ScratchVar | abi.BaseType, **kwargs: Any
+    ) -> SubroutineCall:
         if len(kwargs) != 0:
             raise TealInputError(
                 f"Subroutine cannot be called with keyword arguments. "
@@ -671,7 +673,7 @@ class ABIReturnSubroutine:
 
     def __call__(
         self, *args: Expr | ScratchVar | abi.BaseType, **kwargs
-    ) -> abi.ReturnedValue | Expr:
+    ) -> abi.ReturnedValue | SubroutineCall:
         if len(kwargs) != 0:
             raise TealInputError(
                 f"Subroutine cannot be called with keyword arguments. "
@@ -1087,6 +1089,8 @@ class SubroutineEval:
                 for var, index in arg_var_n_frame_index_pairs[::-1]
             ]
 
+        # don't reframe the subroutine body
+        NatalStackFrame.reframe_asts(subroutine.stack_frames, *body_ops)
         body_ops.append(subroutine_body)
         sd = SubroutineDeclaration(subroutine, Seq(body_ops), deferred_expr)
         sd.trace = subroutine_body.trace

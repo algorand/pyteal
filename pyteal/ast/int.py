@@ -64,5 +64,9 @@ class EnumInt(LeafExpr):
     def type_of(self):
         return TealType.uint64
 
+    def clone(self) -> "EnumInt":
+        """TODO: this is an experimental hack for source mapping"""
+        return EnumInt(self.name)
+
 
 EnumInt.__module__ = "pyteal"

@@ -121,8 +121,9 @@ class OpUp:
         if self.mode == OpUpMode.Explicit:
             fields |= {TxnField.application_id: cast(Expr, self.target_app_id)}
         else:
+            # TODO: cloning the DeleteApplication this is a hack for sourcemampping
             fields |= {
-                TxnField.on_completion: OnComplete.DeleteApplication,
+                TxnField.on_completion: OnComplete.DeleteApplication.clone(),
                 TxnField.approval_program: ON_CALL_APP,
                 TxnField.clear_state_program: ON_CALL_APP,
             }

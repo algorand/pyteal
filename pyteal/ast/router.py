@@ -23,6 +23,8 @@ from pyteal.ast.subroutine import (
     ABIReturnSubroutine,
     OutputKwArgInfo,
     Subroutine,
+    SubroutineCall,
+    SubroutineDefinition,
     SubroutineFnWrapper,
 )
 from pyteal.ast.txn import Txn
@@ -134,20 +136,25 @@ class MethodConfig:
 MethodConfig.__module__ = "pyteal"
 
 
-@dataclass
 class OnCompleteAction:
     """
     OnComplete Action, registers bare calls to one single OnCompletion case.
     """
 
-    action: ActionType | None = field(kw_only=True, default=None)
-    call_config: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
-
-    def __post_init__(self):
+    def __init__(
+        self,
+        action: ActionType | None = None,
+        call_config: CallConfig = CallConfig.NEVER,
+    ):
+        self.action: Final[ActionType | None] = action
+        self.call_config: Final[CallConfig] = call_config
         if bool(self.call_config) ^ bool(self.action):
             raise TealInputError(
                 f"action {self.action} and call_config {self.call_config!r} contradicts"
             )
+        if isinstance(self.action, Expr):
+            self.action._user_defined = True
+
         self.stack_frames: NatalStackFrame = NatalStackFrame()
 
     @staticmethod
@@ -236,8 +243,7 @@ class BareCallActions:
             if oca.is_empty():
                 continue
             wrapped_handler = ASTBuilder.wrap_handler(
-                False,
-                cast(ActionType, oca.action),
+                False, cast(ActionType, oca.action)
             )
             match oca.call_config:
                 case CallConfig.ALL:
@@ -255,13 +261,12 @@ class BareCallActions:
                     raise TealInternalError(
                         f"Unexpected CallConfig: {oca.call_config!r}"
                     )
-            conditions_n_branches.append(
-                CondNode(
-                    Txn.on_completion() == oc,
-                    cond_body,
-                )
-            )
-        return Cond(*[[n.condition, n.branch] for n in conditions_n_branches])
+            cn = CondNode(Txn.on_completion() == oc, cond_body)
+            cn.reframe_asts(oca.stack_frames)
+            conditions_n_branches.append(cn)
+        cond = Cond(*[[n.condition, n.branch] for n in conditions_n_branches])
+        cond.stack_frames = self.stack_frames
+        return cond
 
     def get_method_config(self) -> MethodConfig:
         return MethodConfig(
@@ -286,6 +291,10 @@ class CondNode:
 
     condition: Expr
     branch: Expr
+
+    def reframe_asts(self, stack_frames: NatalStackFrame) -> None:
+        NatalStackFrame.reframe_asts(stack_frames, self.condition)
+        NatalStackFrame.reframe_asts(stack_frames, self.branch)
 
 
 CondNode.__module__ = "pyteal"
@@ -327,21 +336,27 @@ class CondWithMethod:
         if not (isinstance(self.condition, Expr) or self.condition == 1):
             raise TealInputError("Invalid condition input for CondWithMethod")
 
-        res = ASTBuilder.wrap_handler(True, self.method, use_frame_pt=use_frame_pt)
+        user_frames_holder: list[NatalStackFrame] = []
+        res = ASTBuilder.wrap_handler(
+            True,
+            self.method,
+            use_frame_pt=use_frame_pt,
+            handler_stack_frames_container=user_frames_holder,
+        )
+        assert (
+            ufhlen := len(user_frames_holder)
+        ) == 1, f"Unexpected length for user_frames_holder: {ufhlen}"
+        user_frames: NatalStackFrame = user_frames_holder[0]
+
         if isinstance(self.condition, Expr):
             res = Seq(Assert(self.condition), res)
-            NatalStackFrame.reframe_asts(self.condition.stack_frames, res)
-        return CondNode(walk_in_cond, res)
+
+        cn = CondNode(walk_in_cond, res)
+        cn.reframe_asts(user_frames)
+        return cn
 
 
 CondWithMethod.__module__ = "pyteal"
-
-
-def _smap_friendly_approve():
-    # TODO: Consider replacing _smap_friendly_approve() with a reframe_asts()
-    a = Approve()
-    a.stack_frames._compiler_gen = True
-    return a
 
 
 @dataclass
@@ -512,6 +527,7 @@ class ASTBuilder:
         *,
         wrap_to_name: str | None = None,
         use_frame_pt: bool = False,
+        handler_stack_frames_container: list[NatalStackFrame] | None = None,
     ) -> Expr:
         """This is a helper function that handles transaction arguments passing in bare-app-call/abi-method handlers.
         If `is_method_call` is True, then it can only be `ABIReturnSubroutine`,
@@ -530,6 +546,13 @@ class ASTBuilder:
                 - for abi-method it returns the txn args correctly decomposed into ABI variables,
                   passed in ABIReturnSubroutine and logged, then approve.
         """
+
+        def scavenge(frames_holder) -> None:
+            if handler_stack_frames_container is not None:
+                handler_stack_frames_container.append(frames_holder.stack_frames)
+
+        handler_evald: abi.ReturnedValue | SubroutineCall
+
         if not is_method_call:
             wrap_to_name = wrap_to_name or "bare appcall"
 
@@ -539,11 +562,8 @@ class ASTBuilder:
                         raise TealInputError(
                             f"{wrap_to_name} handler should be TealType.none not {handler.type_of()}."
                         )
-                    return (
-                        handler
-                        if handler.has_return()
-                        else Seq(handler, _smap_friendly_approve())
-                    )
+                    scavenge(handler)
+                    return handler if handler.has_return() else Seq(handler, Approve())
                 case SubroutineFnWrapper():
                     if handler.type_of() != TealType.none:
                         raise TealInputError(
@@ -554,7 +574,11 @@ class ASTBuilder:
                             f"subroutine call should take 0 arg for {wrap_to_name}. "
                             f"this subroutine takes {handler.subroutine.argument_count()}."
                         )
-                    return Seq(handler(), _smap_friendly_approve())
+                    handler_evald = handler()
+                    if isinstance(handler_evald, abi.ReturnedValue):
+                        handler_evald = handler_evald.computation
+                    scavenge(cast(SubroutineCall, handler_evald).subroutine)
+                    return Seq(handler_evald, Approve())
                 case ABIReturnSubroutine():
                     if handler.type_of() != "void":
                         raise TealInputError(
@@ -565,12 +589,18 @@ class ASTBuilder:
                             f"abi-returning subroutine call should take 0 arg for {wrap_to_name}. "
                             f"this abi-returning subroutine takes {handler.subroutine.argument_count()}."
                         )
-                    return Seq(cast(Expr, handler()), _smap_friendly_approve())
+                    handler_evald = handler()
+                    if isinstance(handler_evald, abi.ReturnedValue):
+                        handler_evald = handler_evald.computation
+
+                    scavenge(handler_evald)
+                    return Seq(cast(Expr, handler_evald), Approve())
                 case _:
                     raise TealInputError(
                         f"{wrap_to_name} can only accept: none type Expr, or Subroutine/ABIReturnSubroutine with none return and no arg"
                     )
 
+        # else: is_method_call
         wrap_to_name = wrap_to_name or "method call"
         if not isinstance(handler, ABIReturnSubroutine):
             raise TealInputError(
@@ -581,13 +611,19 @@ class ASTBuilder:
                 f"{wrap_to_name} ABIReturnSubroutine is not routable "
                 f"got {handler.subroutine.argument_count()} args with {len(handler.subroutine.abi_args)} ABI args."
             )
-        if not use_frame_pt:
-            return ASTBuilder.__de_abify_subroutine_vanilla(handler)
-        else:
-            return ASTBuilder.__de_abify_subroutine_frame_pointers(handler)
+
+        ret_expr, subdef = (
+            ASTBuilder.__de_abify_subroutine_frame_pointers(handler)
+            if use_frame_pt
+            else ASTBuilder.__de_abify_subroutine_vanilla(handler)
+        )
+        scavenge(subdef)
+        return ret_expr
 
     @staticmethod
-    def __de_abify_subroutine_vanilla(handler: ActionType) -> Expr:
+    def __de_abify_subroutine_vanilla(
+        handler: ActionType,
+    ) -> tuple[Expr, SubroutineDefinition]:
         """This private function retains the previous (pre-frame-pointer) logic of handling ABIReturnSubroutine method's IO.
 
         This function can be roughly separated into following 4 parts:
@@ -636,30 +672,37 @@ class ASTBuilder:
             arg_vals, app_arg_vals, txn_arg_vals, handler
         )
 
+        ret_expr: Expr
+        handler_evald: abi.ReturnedValue | SubroutineCall
         if handler.type_of() == sdk_abi.Returns.VOID:
-            return Seq(
+            ret_expr = Seq(
                 *decode_instructions,
-                cast(Expr, handler(*arg_vals)),
-                _smap_friendly_approve(),
+                cast(Expr, handler_evald := handler(*arg_vals)),
+                Approve(),
             )
         else:
             output_temp: abi.BaseType = cast(
                 OutputKwArgInfo, handler.output_kwarg_info
             ).abi_type.new_instance()
             subroutine_call: abi.ReturnedValue = cast(
-                abi.ReturnedValue, handler(*arg_vals)
+                abi.ReturnedValue, handler_evald := handler(*arg_vals)
             )
-            return Seq(
+            ret_expr = Seq(
                 *decode_instructions,
                 subroutine_call.store_into(output_temp),
-                abi.MethodReturn(
-                    output_temp
-                ),  # TODO: set MethodReturn._sframes_container
-                _smap_friendly_approve(),
+                abi.MethodReturn(output_temp),
+                Approve(),
             )
 
+        if isinstance(handler_evald, abi.ReturnedValue):
+            handler_evald = handler_evald.computation
+
+        return ret_expr, cast(SubroutineCall, handler_evald).subroutine
+
     @staticmethod
-    def __de_abify_subroutine_frame_pointers(handler: ActionType) -> Expr:
+    def __de_abify_subroutine_frame_pointers(
+        handler: ActionType,
+    ) -> tuple[Expr, SubroutineDefinition]:
         """This private function implements the frame-pointer-based logic of handling ABIReturnSubroutine method's IO.
 
         This function can be roughly separated into following 4 parts:
@@ -737,27 +780,32 @@ class ASTBuilder:
         ]
         returning_steps: list[Expr]
 
+        handler_evald: abi.ReturnedValue | SubroutineCall
         if handler.type_of() == sdk_abi.Returns.VOID:
-            returning_steps = [cast(Expr, handler(*arg_vals))]
+            returning_steps = [cast(Expr, handler_evald := handler(*arg_vals))]
         else:
             output_temp: abi.BaseType = cast(
                 OutputKwArgInfo, handler.output_kwarg_info
             ).abi_type.new_instance()
             output_temp._stored_value = FrameVar(proto, 0)
             subroutine_call: abi.ReturnedValue = cast(
-                abi.ReturnedValue, handler(*arg_vals)
+                abi.ReturnedValue, handler_evald := handler(*arg_vals)
             )
             returning_steps = [
                 subroutine_call.store_into(output_temp),
-                abi.MethodReturn(
-                    output_temp
-                ),  # TODO: set MethodReturn._sframes_container
+                abi.MethodReturn(output_temp),
             ]
 
         def declaration():
             return Seq(*decoding_steps, *returning_steps)
 
-        return Seq(subroutine_caster(declaration)(), _smap_friendly_approve())
+        if isinstance(handler_evald, abi.ReturnedValue):
+            handler_evald = handler_evald.computation
+
+        return (
+            Seq(subroutine_caster(declaration)(), Approve()),
+            cast(SubroutineCall, handler_evald).subroutine,
+        )
 
     def add_method_to_ast(
         self, method_signature: str, cond: Expr | int, handler: ABIReturnSubroutine
@@ -1105,11 +1153,10 @@ class Router:
                 self.approval_ast.bare_calls = [
                     CondNode(
                         cond := Txn.application_args.length() == Int(0),
-                        act := cast(Expr, bare_call_approval),
+                        cast(Expr, bare_call_approval),
                     )
                 ]
                 NatalStackFrame.reframe_asts(bare_call_approval.stack_frames, cond)
-                act.stack_frames = bare_call_approval.stack_frames
 
         optimize = optimize if optimize else OptimizeOptions()
         use_frame_pt = optimize.use_frame_pointers(version)
