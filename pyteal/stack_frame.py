@@ -329,6 +329,7 @@ class NatalStackFrame:
             SubroutineCall,
             SubroutineDeclaration,
             TxnaExpr,
+            UnaryExpr,
         )
 
         # from pyteal.ast.abi import MethodReturn
@@ -356,13 +357,16 @@ class NatalStackFrame:
                 case Seq():
                     walker_args = cast(list[Expr], expr.args)
                 case Return():
-                    walker_args = [expr.value] if expr.value else []
+                    if expr.value:
+                        walker_args = [expr.value]
                 case SubroutineDeclaration():
                     walker_args = [expr.body]
                 case ScratchStore():
                     walker_args = [expr.value]
                     if expr.index_expression:
                         walker_args.append(expr.index_expression)
+                case UnaryExpr():
+                    walker_args = [expr.arg]
                 case Int(), MethodSignature(), ScratchStackStore(), SubroutineCall(), TxnaExpr():  # ScratchIndex(), MethodReturn(),
                     pass
                 case _:

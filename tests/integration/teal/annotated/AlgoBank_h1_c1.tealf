@@ -26,8 +26,8 @@ int 0                                  //    (73)
 !=                                     //    (74)
 &&                                     //    (75)
 assert                                 //    (76)
-txna ApplicationArgs 1                 //    (77)   {COMPILE}
-btoi                                   //    (80)   def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
+txna ApplicationArgs 1                 //    (77)
+btoi                                   //    (80)
 store 3                                //    (81)
 txna ApplicationArgs 2                 //    (83)
 int 0                                  //    (86)
