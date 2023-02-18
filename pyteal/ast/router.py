@@ -1,7 +1,7 @@
 from contextlib import contextmanager
-from dataclasses import dataclass, field, astuple
+from dataclasses import astuple, dataclass, field
 from enum import IntFlag
-from typing import cast, Callable, Final, Optional
+from typing import Callable, Final, Optional, cast
 
 from algosdk import abi as sdk_abi
 from algosdk import encoding
@@ -29,7 +29,7 @@ from pyteal.ast.subroutine import (
 )
 from pyteal.ast.txn import Txn
 from pyteal.compiler.compiler import DEFAULT_TEAL_VERSION, Compilation, OptimizeOptions
-from pyteal.compiler.sourcemap import _PyTealSourceMapper, PyTealSourceMap
+from pyteal.compiler.sourcemap import PyTealSourceMap, _PyTealSourceMapper
 from pyteal.config import METHOD_ARG_NUM_CUTOFF
 from pyteal.errors import AlgodClientError, TealInputError, TealInternalError
 from pyteal.ir.ops import Mode
@@ -434,7 +434,7 @@ class ASTBuilder:
 
         # if subroutine has ABI output, then local variables start from 1
         # otherwise local variables start from 0
-        index_start_from = 1 if subroutine.output_kwarg_info is not None else 0
+        index_start_from = 0 if subroutine.output_kwarg_info is None else 1
 
         # prepare the local stack type list for local variable allocation
         local_types: list[TealType] = [i._stored_value.storage_type() for i in arg_vals]
@@ -600,7 +600,7 @@ class ASTBuilder:
                         f"{wrap_to_name} can only accept: none type Expr, or Subroutine/ABIReturnSubroutine with none return and no arg"
                     )
 
-        # else: is_method_call
+        # else: method case
         wrap_to_name = wrap_to_name or "method call"
         if not isinstance(handler, ABIReturnSubroutine):
             raise TealInputError(
@@ -630,31 +630,31 @@ class ASTBuilder:
         - handler type check
         - handler argument instance generate
         - handler argument decode from Txn.application_args
-        - generating execution branch that calles handler and handles handler return.
-          NOTE: the very last step is handled different from frame-pt version, see illustration below:
+        - generating execution branch that calls handler and handles handler return.
+          NOTE: the very last step is handled differently from the frame pointer version; see the illustration below:
 
         |
         | main execution
         |
         `-> (assuming satisfying all preconditions: method selector match + OnComplete options match)
             +-----------------------------------------------------------------------------------+
-            | We need to first allocate some scratch slots for handler's ABI arguments,         |
-            | for we don't want the intermediate steps in handler destroy memory on arguments.  |
+            | We need to first allocate some scratch slots for the handler's ABI arguments,     |
+            | for we don't want the intermediate handler steps to destroy memory on arguments.  |
             |                                                                                   |
             | Decoding scheme relies on internal storage in ABI value (default scratch slot).   |
-            | NOTE: if handler has more than 15 args, we need to de-tuple the last one.         |
+            | NOTE: if the handler has more than 15 args, we need to de-tuple the last one.     |
             |       The detupling process is also done over the scratch slots.                  |
             |                                                                                   |
             | This section represents the expressions in `decoding_steps`.                      |
             +-----------------------------------------------------------------------------------+
             | At this point, all of the handler arguments (ABI typed) are prepared.             |
             | We call the handler with all these handler arguments.                             |
-            | If handler has output, we dig the result to top of the stack, and log it.         |
+            | If the handler has output, we dig the result to top of the stack and log it.      |
             |                                                                                   |
-            | NOTE: if output exists, inside of subroutine, we alloc a scratch slot for output, |
+            | NOTE: if output exists inside of a subroutine, we alloc a scratch slot for output.|
             |       Right before retsub, use `deferred_expr` to place output encoding on stack. |
             +-----------------------------------------------------------------------------------+
-            | Now that handler return (if exists) is handled, we `Approve()` and exit prog.     |
+            | Now that the handler return (if exists) is handled, we `Approve()` and exit prog. |
             +-----------------------------------------------------------------------------------+
         """
         handler = ASTBuilder.__filter_invalid_handlers_and_typecast(handler)
@@ -677,19 +677,19 @@ class ASTBuilder:
         if handler.type_of() == sdk_abi.Returns.VOID:
             ret_expr = Seq(
                 *decode_instructions,
-                cast(Expr, handler_evald := handler(*arg_vals)),
+                cast(SubroutineCall, handler_evald := handler(*arg_vals)),
                 Approve(),
             )
         else:
             output_temp: abi.BaseType = cast(
                 OutputKwArgInfo, handler.output_kwarg_info
             ).abi_type.new_instance()
-            subroutine_call: abi.ReturnedValue = cast(
+            returned_val: abi.ReturnedValue = cast(
                 abi.ReturnedValue, handler_evald := handler(*arg_vals)
             )
             ret_expr = Seq(
                 *decode_instructions,
-                subroutine_call.store_into(output_temp),
+                returned_val.store_into(output_temp),
                 abi.MethodReturn(output_temp),
                 Approve(),
             )
@@ -709,8 +709,8 @@ class ASTBuilder:
         - handler type check
         - handler argument instance generate
         - handler argument decode from Txn.application_args (with use_frame_pt=True option on)
-        - generating execution branch that calles handler and handles handler return.
-          NOTE: the very last step is handled different from pre-frame-pt version, see illustration below:
+        - generating execution branch that calls the handler and handles handler return.
+          NOTE: the very last step is handled differently from the frame pointer version; see the illustration below:
 
         |
         | main execution
@@ -720,28 +720,28 @@ class ASTBuilder:
             | We wrap the following section up in an intermediate function:                     |
             +-----------------------------------------------------------------------------------+
             |                                                                                   |
-            |  We construct a intermediate subroutine with 0 arg and 0 return as follows:       |
+            |  We construct an intermediate subroutine with 0 args and 0 returns as follows:    |
             |  +--------------------------------------------------------------------------------+
-            |  | Thus we use `proto 0 0` to clean up stack once completed handler computation.  |
+            |  | Thus we use `proto 0 0` to clean up stack once handler computation completes.  |
             |  +--------------------------------------------------------------------------------+
-            |  | We need to allocate some stack space to handle memory of 2 following cases:    |
+            |  |We need to allocate some stack space to handle memory for the following 2 cases:|
             |  | - If handler has an ABI output returning, need to store in a grid on stack.    |
             |  | - All of the other handler arguments from `Txn.application_args` should be     |
             |  |   decoded into ABI values and placed on stack.                                 |
-            |  |   NOTE: if handler has more than 15 args, we need to de-tuple the last one.    |
-            |  |         The detupling process is also done over the stack with frame pointer.  |
+            |  |   NOTE: if the handler has more than 15 args, we need to de-tuple the last one.|
+            |  |         The detupling process is also done over the stack with frame pointers. |
             |  |                                                                                |
             |  | To keep track of each arg's memory location,                                   |
             |  | we use FrameVar to keep track of relative dist against stack height at proto.  |
             |  |                                                                                |
-            |  | Also notice that, all of the decoding operations are done over local vars,     |
+            |  | Also notice that all of the decoding operations are done over local vars,      |
             |  | proto 0 0 can come in and clean all the stack variables away.                  |
             |  |                                                                                |
             |  | This section represents the expressions in `decoding_steps`.                   |
             |  +--------------------------------------------------------------------------------+
             |  | At this point, all of the handler arguments (ABI typed) are prepared.          |
-            |  | We call the handler with all these handler arguments.                          |
-            |  | If handler has output, we dig the result to top of the stack, and log it.      |
+            |  | We call the handler with all of these handler arguments.                       |
+            |  | If the handler has output, we dig the result to the top of stack and log it.   |
             |  |                                                                                |
             |  | This section represents the expressions in `returning_steps`.                  |
             +  +--------------------------------------------------------------------------------+
@@ -788,11 +788,11 @@ class ASTBuilder:
                 OutputKwArgInfo, handler.output_kwarg_info
             ).abi_type.new_instance()
             output_temp._stored_value = FrameVar(proto, 0)
-            subroutine_call: abi.ReturnedValue = cast(
+            returned_val: abi.ReturnedValue = cast(
                 abi.ReturnedValue, handler_evald := handler(*arg_vals)
             )
             returning_steps = [
-                subroutine_call.store_into(output_temp),
+                returned_val.store_into(output_temp),
                 abi.MethodReturn(output_temp),
             ]
 
@@ -1158,7 +1158,7 @@ class Router:
                 ]
                 NatalStackFrame.reframe_asts(bare_call_approval.stack_frames, cond)
 
-        optimize = optimize if optimize else OptimizeOptions()
+        optimize = optimize or OptimizeOptions()
         use_frame_pt = optimize.use_frame_pointers(version)
         return (
             self.approval_ast.program_construction(use_frame_pt=use_frame_pt),
