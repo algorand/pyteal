@@ -319,6 +319,7 @@ class NatalStackFrame:
             BinaryExpr,
             Cond,
             Expr,
+            Int,
             MethodSignature,
             Return,
             ScratchStackStore,
@@ -328,6 +329,7 @@ class NatalStackFrame:
             TxnaExpr,
         )
         from pyteal.ast.frame import Proto
+        from pyteal.ast.return_ import ExitProgram
 
         for e in exprs:
             if e._user_defined and exit_on_user_defined:
@@ -343,6 +345,8 @@ class NatalStackFrame:
                     walker_args = [expr.argLeft, expr.argRight]
                 case Cond():
                     walker_args = [y for x in expr.args for y in x]
+                case ExitProgram():
+                    walker_args = [expr.success]
                 case Proto():
                     walker_args = [expr.mem_layout]
                 case Seq():
@@ -355,7 +359,7 @@ class NatalStackFrame:
                     walker_args = (
                         [expr.index_expression] if expr.index_expression else []
                     )
-                case MethodSignature(), ScratchStackStore(), TxnaExpr():
+                case Int(), MethodSignature(), ScratchStackStore(), TxnaExpr():
                     pass
                 case _:
                     supported_type = False
