@@ -684,12 +684,10 @@ class ASTBuilder:
             output_temp: abi.BaseType = cast(
                 OutputKwArgInfo, handler.output_kwarg_info
             ).abi_type.new_instance()
-            returned_val: abi.ReturnedValue = cast(
-                abi.ReturnedValue, handler_evald := handler(*arg_vals)
-            )
+            handler_evald = cast(abi.ReturnedValue, handler(*arg_vals))
             ret_expr = Seq(
                 *decode_instructions,
-                returned_val.store_into(output_temp),
+                handler_evald.store_into(output_temp),
                 abi.MethodReturn(output_temp),
                 Approve(),
             )

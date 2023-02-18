@@ -20,6 +20,7 @@ class MethodReturn(Expr):
         if not isinstance(arg, BaseType):
             raise TealInputError(f"Expecting an ABI type argument but get {arg}")
         self.arg = arg
+        # TODO: _sframes_container doesn't seem to ever be set
         self._sframes_container: Expr | None = None
 
     def __teal__(self, options: "CompileOptions") -> Tuple[TealBlock, TealSimpleBlock]:

@@ -322,12 +322,16 @@ class NatalStackFrame:
             Int,
             MethodSignature,
             Return,
+            # ScratchIndex,
             ScratchStackStore,
             ScratchStore,
             Seq,
+            SubroutineCall,
             SubroutineDeclaration,
             TxnaExpr,
         )
+
+        # from pyteal.ast.abi import MethodReturn
         from pyteal.ast.frame import Proto
         from pyteal.ast.return_ import ExitProgram
 
@@ -356,10 +360,10 @@ class NatalStackFrame:
                 case SubroutineDeclaration():
                     walker_args = [expr.body]
                 case ScratchStore():
-                    walker_args = (
-                        [expr.index_expression] if expr.index_expression else []
-                    )
-                case Int(), MethodSignature(), ScratchStackStore(), TxnaExpr():
+                    walker_args = [expr.value]
+                    if expr.index_expression:
+                        walker_args.append(expr.index_expression)
+                case Int(), MethodSignature(), ScratchStackStore(), SubroutineCall(), TxnaExpr():  # ScratchIndex(), MethodReturn(),
                     pass
                 case _:
                     supported_type = False

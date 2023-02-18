@@ -27,12 +27,12 @@ int 0                                  //    (73)
 &&                                     //    (75)
 assert                                 //    (76)
 txna ApplicationArgs 1                 //    (77)   {COMPILE}
-btoi                                   //    (80)
-store 3                                //    (81)   def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
-txna ApplicationArgs 2                 //    (83)   {COMPILE}
+btoi                                   //    (80)   def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
+store 3                                //    (81)
+txna ApplicationArgs 2                 //    (83)
 int 0                                  //    (86)
 getbyte                                //    (87)
-store 4                                //    (88)   def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
+store 4                                //    (88)
 load 3                                 //    (90)
 load 4                                 //    (92)
 callsub withdraw_3                     //    (94)
@@ -47,11 +47,11 @@ int 0                                  //    (105)
 !=                                     //    (106)
 &&                                     //    (107)
 assert                                 //    (108)
-txna ApplicationArgs 1                 //    (109)  {COMPILE}
+txna ApplicationArgs 1                 //    (109)
 int 0                                  //    (112)
 getbyte                                //    (113)
 callsub getBalance_2                   //    (114)
-store 2                                //    (117)  def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
+store 2                                //    (117)
 byte 0x151f7c75                        //    (119)
 load 2                                 //    (125)
 itob                                   //    (127)
@@ -76,14 +76,14 @@ int 0                                  //    (147)
 &&                                     //    (149)
 ||                                     //    (150)
 assert                                 //    (151)
-txna ApplicationArgs 1                 //    (152)  {COMPILE}
+txna ApplicationArgs 1                 //    (152)
 int 0                                  //    (155)
 getbyte                                //    (156)
-store 1                                //    (157)  def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
-txn GroupIndex                         //    (159)  {COMPILE}
+store 1                                //    (157)
+txn GroupIndex                         //    (159)
 int 1                                  //    (161)
 -                                      //    (162)
-store 0                                //    (163)  def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
+store 0                                //    (163)
 load 0                                 //    (165)  {COMPILE}
 gtxns TypeEnum                         //    (167)  def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
 int pay                                //    (169)
