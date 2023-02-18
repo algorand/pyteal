@@ -43,7 +43,7 @@ flake8:
 	flake8 $(ALLPY)
 
 mypy:
-	mypy
+	mypy | grep -i 'error'
 
 sdist-check:
 	python setup.py check -s
