@@ -80,7 +80,7 @@ def test_r3sourcemap(mock_ConfigParser):
 
     assert "mappings" in r3sm_json
     assert (
-        "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"
+        "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"
         == r3sm_json["mappings"]
     )
 
@@ -328,17 +328,17 @@ def assert_algobank_unparsed_as_expected(actual):
         (24, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
         (25, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
         (26, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
-        (27, ("router._build_impl(rci)", 0)),
-        (28, ("router._build_impl(rci)", 0)),
+        (27, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
+        (28, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
         (29, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
-        (30, ("router._build_impl(rci)", 0)),
-        (31, ("router._build_impl(rci)", 0)),
-        (32, ("router._build_impl(rci)", 0)),
+        (30, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
+        (31, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
+        (32, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
         (33, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
         (34, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
         (35, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
         (36, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
-        (37, ("router._build_impl(rci)", 0)),
+        (37, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
         (38, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
         (39, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
         (40, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
@@ -349,17 +349,17 @@ def assert_algobank_unparsed_as_expected(actual):
         (45, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
         (46, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
         (47, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
-        (48, ("router._build_impl(rci)", 0)),
-        (49, ("router._build_impl(rci)", 0)),
-        (50, ("router._build_impl(rci)", 0)),
-        (51, ("router._build_impl(rci)", 0)),
+        (48, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
+        (49, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
+        (50, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
+        (51, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
         (52, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
         (53, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
         (54, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
         (55, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
         (56, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
         (57, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
-        (58, ("router._build_impl(rci)", 0)),
+        (58, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
         (59, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
         (
             60,
@@ -480,9 +480,27 @@ def assert_algobank_unparsed_as_expected(actual):
                 1,
             ),
         ),
-        (77, ("router._build_impl(rci)", 0)),
-        (78, ("router._build_impl(rci)", 0)),
-        (79, ("router._build_impl(rci)", 0)),
+        (
+            77,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            78,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            79,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
         (
             80,
             (
@@ -490,9 +508,27 @@ def assert_algobank_unparsed_as_expected(actual):
                 1,
             ),
         ),
-        (81, ("router._build_impl(rci)", 0)),
-        (82, ("router._build_impl(rci)", 0)),
-        (83, ("router._build_impl(rci)", 0)),
+        (
+            81,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            82,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            83,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
         (
             84,
             (
@@ -550,7 +586,13 @@ def assert_algobank_unparsed_as_expected(actual):
                 1,
             ),
         ),
-        (93, ("router._build_impl(rci)", 0)),
+        (
+            93,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
         (
             94,
             (
@@ -700,7 +742,13 @@ def assert_algobank_unparsed_as_expected(actual):
                 0,
             ),
         ),
-        (123, ("router._build_impl(rci)", 0)),
+        (
+            123,
+            (
+                "OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)",
+                0,
+            ),
+        ),
         (
             124,
             (
@@ -750,7 +798,13 @@ def assert_algobank_unparsed_as_expected(actual):
                 0,
             ),
         ),
-        (131, ("router._build_impl(rci)", 0)),
+        (
+            131,
+            (
+                "OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)",
+                0,
+            ),
+        ),
         (
             132,
             (
@@ -813,7 +867,13 @@ def assert_algobank_unparsed_as_expected(actual):
                 0,
             ),
         ),
-        (146, ("router._build_impl(rci)", 0)),
+        (
+            146,
+            (
+                "OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL)",
+                0,
+            ),
+        ),
         (
             147,
             (
