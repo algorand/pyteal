@@ -308,12 +308,12 @@ class NatalStackFrame:
     @classmethod
     def _walk_asts(
         cls,
-        func: Callable[["Expr"], bool],
-        *exprs: "Expr",
+        func: Callable[["Expr"], bool],  # type: ignore[name-defined]
+        *exprs: "Expr",  # type: ignore[name-defined]
         force_root_apply: bool = True,
         exit_on_user_defined: bool = False,
         exit_when_stop_signal: bool = False,
-    ) -> None:  # type: ignore
+    ) -> None:
         from pyteal.ast import (
             Assert,
             BinaryExpr,
@@ -346,9 +346,9 @@ class NatalStackFrame:
                 case Proto():
                     walker_args = [expr.mem_layout]
                 case Seq():
-                    walker_args = expr.args
+                    walker_args = cast(list[Expr], expr.args)
                 case Return():
-                    walker_args = [expr.value]
+                    walker_args = [expr.value] if expr.value else []
                 case SubroutineDeclaration():
                     walker_args = [expr.body]
                 case ScratchStore():

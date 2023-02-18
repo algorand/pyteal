@@ -1,23 +1,23 @@
 #pragma version 6                      //  (0)    {COMPILE}
-txn NumAppArgs                         //  (20)
+txn NumAppArgs                         //  (20)   BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL))
 int 0                                  //  (22)
 ==                                     //  (23)
 bnz main_l8                            //  (24)
-txna ApplicationArgs 0                 //  (27)
+txna ApplicationArgs 0                 //  (27)   def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
 method "deposit(pay,account)void"      //  (30)
 ==                                     //  (36)
 bnz main_l7                            //  (37)
-txna ApplicationArgs 0                 //  (40)
+txna ApplicationArgs 0                 //  (40)   def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
 method "getBalance(account)uint64"     //  (43)
 ==                                     //  (49)
 bnz main_l6                            //  (50)
-txna ApplicationArgs 0                 //  (53)
+txna ApplicationArgs 0                 //  (53)   def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
 method "withdraw(uint64,account)void"  //  (56)
 ==                                     //  (62)
 bnz main_l5                            //  (63)
-err                                    //  (66)
-main_l5:                               //
-txn OnCompletion                       //  (67)   def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
+err                                    //  (66)   {COMPILE}
+main_l5:                               //         def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
+txn OnCompletion                       //  (67)
 int NoOp                               //  (69)
 ==                                     //  (70)
 txn ApplicationID                      //  (71)
@@ -37,8 +37,8 @@ load 4                                 //  (92)
 callsub withdraw_3                     //  (94)
 int 1                                  //  (97)   {COMPILE}
 return                                 //  (98)   def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
-main_l6:                               //         {COMPILE}
-txn OnCompletion                       //  (99)   def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
+main_l6:                               //         def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
+txn OnCompletion                       //  (99)
 int NoOp                               //  (101)
 ==                                     //  (102)
 txn ApplicationID                      //  (103)
@@ -58,8 +58,8 @@ concat                                 //  (128)
 log                                    //  (129)
 int 1                                  //  (130)  {COMPILE}
 return                                 //  (131)  def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:
-main_l7:                               //         {COMPILE}
-txn OnCompletion                       //  (132)  def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
+main_l7:                               //         def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
+txn OnCompletion                       //  (132)
 int NoOp                               //  (134)
 ==                                     //  (135)
 txn ApplicationID                      //  (136)
@@ -93,45 +93,45 @@ load 1                                 //  (174)
 callsub deposit_1                      //  (176)
 int 1                                  //  (179)  {COMPILE}
 return                                 //  (180)  def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
-main_l8:                               //         {COMPILE}
+main_l8:                               //         OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE)
 txn OnCompletion                       //  (181)
 int NoOp                               //  (183)
 ==                                     //  (184)
 bnz main_l18                           //  (185)
-txn OnCompletion                       //  (188)
+txn OnCompletion                       //  (188)  OnCompleteAction(action=Approve(), call_config=CallConfig.ALL)
 int OptIn                              //  (190)
 ==                                     //  (191)
 bnz main_l17                           //  (192)
-txn OnCompletion                       //  (195)
+txn OnCompletion                       //  (195)  OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL)
 int CloseOut                           //  (197)
 ==                                     //  (199)
 bnz main_l16                           //  (200)
-txn OnCompletion                       //  (203)
+txn OnCompletion                       //  (203)  OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)
 int UpdateApplication                  //  (205)
 ==                                     //  (207)
 bnz main_l15                           //  (208)
-txn OnCompletion                       //  (211)
+txn OnCompletion                       //  (211)  OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)
 int DeleteApplication                  //  (213)
 ==                                     //  (215)
 bnz main_l14                           //  (216)
-err                                    //  (219)
-main_l14:                              //
+err                                    //  (219)  BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL))
+main_l14:                              //         OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)
 txn ApplicationID                      //  (220)
 int 0                                  //  (222)
 !=                                     //  (223)
 assert                                 //  (224)
 callsub assertsenderiscreator_0        //  (225)
-int 1                                  //  (228)
-return                                 //  (229)
-main_l15:                              //
+int 1                                  //  (228)  {COMPILE}
+return                                 //  (229)  OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)
+main_l15:                              //         OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)
 txn ApplicationID                      //  (230)
 int 0                                  //  (232)
 !=                                     //  (233)
 assert                                 //  (234)
 callsub assertsenderiscreator_0        //  (235)
-int 1                                  //  (238)
-return                                 //  (239)
-main_l16:                              //
+int 1                                  //  (238)  {COMPILE}
+return                                 //  (239)  OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)
+main_l16:                              //         OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL)
 txn ApplicationID                      //  (240)
 int 0                                  //  (242)
 !=                                     //  (243)
@@ -145,11 +145,11 @@ app_local_get                          //  (251)  App.localGet(Txn.sender(), Byt
 +                                      //  (252)  App.globalGet(Bytes('lost')) + App.localGet(Txn.sender(), Bytes('balance'))
 app_global_put                         //  (253)  App.globalPut(Bytes('lost'), App.globalGet(Bytes('lost')) + App.localGet(Txn.sender(), Bytes('balance')))
 int 1                                  //  (254)  {COMPILE}
-return                                 //  (255)
-main_l17:                              //
+return                                 //  (255)  OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL)
+main_l17:                              //         OnCompleteAction(action=Approve(), call_config=CallConfig.ALL)
 int 1                                  //  (256)  Approve()
 return                                 //  (257)
-main_l18:                              //         {COMPILE}
+main_l18:                              //         OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE)
 txn ApplicationID                      //  (258)
 int 0                                  //  (260)
 ==                                     //  (261)
@@ -167,7 +167,7 @@ retsub                                 //  (271)  def assert_sender_is_creator()
                                        //         def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
 // deposit                             //
 deposit_1:                             //
-store 6                                //  (272)  {COMPILE}
+store 6                                //  (272)
 store 5                                //  (274)
 load 5                                 //  (276)  payment.get()
 gtxns Sender                           //  (278)  payment.get().sender()
@@ -202,7 +202,7 @@ retsub                                 //  (316)  def getBalance(user: abi.Accou
                                        //         def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
 // withdraw                            //
 withdraw_3:                            //
-store 8                                //  (317)  {COMPILE}
+store 8                                //  (317)
 store 7                                //  (319)
 txn Sender                             //  (321)  Txn.sender()
 byte "balance"                         //  (323)  Bytes('balance')

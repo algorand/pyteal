@@ -55,10 +55,10 @@ lint: black flake8 mypy sdist-check
 
 # Slow test which are fast enough on python 3.11+
 test-unit-slow: 
-	pytest tests/unit/sourcemap_constructs311_test.py -m serial
+	pytest -n auto tests/unit/sourcemap_constructs311_test.py -m serial
 
 test-unit-very-slow: 
-	pytest tests/unit/sourcemap_constructs_allpy_test.py -m serial
+	pytest -n auto tests/unit/sourcemap_constructs_allpy_test.py -m serial
 
 test-unit-async:
 	pytest -n auto --durations=10 pyteal tests/unit -m "not slow" -m "not serial"

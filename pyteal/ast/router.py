@@ -105,11 +105,11 @@ class MethodConfig:
 
     def approval_cond(self) -> Expr | int:
         config_oc_pairs: list[tuple[CallConfig, EnumInt]] = [
-            (self.no_op, OnComplete.NoOp),
-            (self.opt_in, OnComplete.OptIn),
-            (self.close_out, OnComplete.CloseOut),
-            (self.update_application, OnComplete.UpdateApplication),
-            (self.delete_application, OnComplete.DeleteApplication),
+            (self.no_op, OnComplete.NoOp.clone()),
+            (self.opt_in, OnComplete.OptIn.clone()),
+            (self.close_out, OnComplete.CloseOut.clone()),
+            (self.update_application, OnComplete.UpdateApplication.clone()),
+            (self.delete_application, OnComplete.DeleteApplication.clone()),
         ]
         if all(config == CallConfig.NEVER for config, _ in config_oc_pairs):
             return 0
@@ -229,11 +229,11 @@ class BareCallActions:
 
     def approval_construction(self) -> Optional[Expr]:
         oc_action_pair: list[tuple[EnumInt, OnCompleteAction]] = [
-            (OnComplete.NoOp, self.no_op),
-            (OnComplete.OptIn, self.opt_in),
-            (OnComplete.CloseOut, self.close_out),
-            (OnComplete.UpdateApplication, self.update_application),
-            (OnComplete.DeleteApplication, self.delete_application),
+            (OnComplete.NoOp.clone(), self.no_op),
+            (OnComplete.OptIn.clone(), self.opt_in),
+            (OnComplete.CloseOut.clone(), self.close_out),
+            (OnComplete.UpdateApplication.clone(), self.update_application),
+            (OnComplete.DeleteApplication.clone(), self.delete_application),
         ]
         if all(oca.is_empty() for _, oca in oc_action_pair):
             return None

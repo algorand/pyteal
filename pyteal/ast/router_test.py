@@ -382,6 +382,17 @@ def test_bare_call_config_clear_state_failure():
     )
 
 
+def equal_ocas(oca1, oca2):
+    assert oca1.call_config == oca2.call_config
+    if oca1.action is None:
+        assert oca2.action is None
+    else:
+        assert isinstance(oca1.action, pt.Int)
+        assert isinstance(oca2.action, pt.Int)
+
+    return True
+
+
 def test_BareCallActions_asdict():
     no_action = pt.OnCompleteAction()
     del_action = pt.OnCompleteAction(action=pt.Int(1), call_config=pt.CallConfig.ALL)
@@ -392,16 +403,7 @@ def test_BareCallActions_asdict():
         close_out=close_action,
     )
 
-    bcad = bca.asdict()
-    assert set(bcad.keys()) == {
-        "clear_state",
-        "close_out",
-        "delete_application",
-        "no_op",
-        "opt_in",
-        "update_application",
-    }
-    assert bcad == {
+    expected = {
         "clear_state": no_action,
         "close_out": close_action,
         "delete_application": del_action,
@@ -409,6 +411,13 @@ def test_BareCallActions_asdict():
         "opt_in": no_action,
         "update_application": no_action,
     }
+
+    bcad = bca.asdict()
+    assert set(bcad.keys()) == set(expected.keys())
+
+    for k, oca1 in bcad.items():
+        oca2 = expected[k]
+        equal_ocas(oca1, oca2)
 
 
 def test_BareCallActions_aslist():
@@ -423,8 +432,7 @@ def test_BareCallActions_aslist():
         opt_in=optin_action,
     )
 
-    bcal = bca.aslist()
-    assert bcal == [
+    expected = [
         no_action,
         no_action,
         no_action,
@@ -432,6 +440,10 @@ def test_BareCallActions_aslist():
         optin_action,
         update_action,
     ]
+    bcal = bca.aslist()
+    assert len(expected) == len(bcal)
+
+    assert all([equal_ocas(expected[i], actual) for i, actual in enumerate(bcal)])
 
 
 def test_BareCallActions_get_method_config():
