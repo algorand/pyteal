@@ -1010,7 +1010,7 @@ class SubroutineEval:
         )
 
         proto = Proto(subroutine.argument_count(), num_stack_outputs, mem_layout=layout)
-        NatalStackFrame.mark_asts_as_compiler_gen(proto)
+        NatalStackFrame.mark_asts_as_compiler_gen_DEPRECATED(proto)
         return proto
 
     def __call__(self, subroutine: SubroutineDefinition) -> SubroutineDeclaration:

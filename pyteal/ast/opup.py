@@ -14,6 +14,7 @@ from pyteal.ast.for_ import For
 from pyteal.types import TealType, require_type
 from enum import Enum
 
+# TODO: does this need signaling for the source mapper?
 ON_CALL_APP = Bytes("base16", "068101")  # v6 program "int 1"
 
 

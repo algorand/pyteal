@@ -637,7 +637,7 @@ class _PyTealSourceMapper:
                         # these occur when one of the # T2PT* comments is encountered
                         replace this pyteal_frame by next_pyteal_frame
                     if its reason is PT_GENERATED.FLAGGED_BY_DEV:
-                        # this occurs when NatalStackFrame._compiler_gen is set True
+                        # this occurs when NatalStackFrame._compiler_gen_DEPRECATED is set True
                         replace this pyteal_frame by prev_pyteal_frame
 
             if ONLY prev_frame exists:

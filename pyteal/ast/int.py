@@ -66,7 +66,8 @@ class EnumInt(LeafExpr):
 
     def clone(self) -> "EnumInt":
         """TODO: this is an experimental hack for source mapping"""
-        return EnumInt(self.name)
+        # return EnumInt(self.name)
+        return self
 
 
 EnumInt.__module__ = "pyteal"

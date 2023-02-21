@@ -152,8 +152,9 @@ class OnCompleteAction:
             raise TealInputError(
                 f"action {self.action} and call_config {self.call_config!r} contradicts"
             )
-        if isinstance(self.action, Expr):
-            self.action._user_defined = True
+        # TODO: is this now obsolete?
+        # if isinstance(self.action, Expr):
+        #     self.action._user_defined = True
 
         self.stack_frames: NatalStackFrame = NatalStackFrame()
 
