@@ -1,7 +1,7 @@
 name: "Nightly Build"
 on:
   schedule:
-    - cron: "10 17 * * *"
+    - cron: "10 1 * * *"
 
 jobs:
   nightly-slow-unit-tests:
