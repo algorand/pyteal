@@ -166,30 +166,32 @@ class StackFrame:
         return "# T2PT" in "".join(cc)
 
 
-def _sourcmapping_is_off() -> bool:
+def _sourcmapping_is_off(verbose=False) -> bool:
     try:
         config = ConfigParser()
         config.read("pyteal.ini")
         enabled = config.getboolean("pyteal-source-mapper", "enabled")
         return not enabled
     except Exception as e:
-        print(
-            f"""Turning off frame capture and disabling sourcemaps. 
+        if verbose:
+            print(
+                f"""Turning off frame capture and disabling sourcemaps. 
 Could not read section (pyteal-source-mapper, enabled) of config "pyteal.ini": {e}"""
-        )
+            )
     return True
 
 
-def _debug_frames() -> bool:
+def _debug_frames(verbose=False) -> bool:
     try:
         config = ConfigParser()
         config.read("pyteal.ini")
         return config.getboolean("pyteal-source-mapper", "debug")
     except Exception as e:
-        print(
-            f"""Disabling `debug` status for sourcemaps. 
+        if verbose:
+            print(
+                f"""Disabling `debug` status for sourcemaps. 
 Could not read section (pyteal-source-mapper, debug) of config "pyteal.ini": {e}"""
-        )
+            )
     return False
 
 
