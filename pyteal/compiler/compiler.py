@@ -30,7 +30,7 @@ from pyteal.ir import (
     TealPragma,
     TealSimpleBlock,
 )
-from pyteal.stack_frame import NatalStackFrame
+from pyteal.stack_frame import NatalStackFrame, sourcemapping_off_context
 from pyteal.types import TealType
 from pyteal.util import algod_with_assertion
 
@@ -478,6 +478,22 @@ class Compilation:
             annotate_teal_concise=annotate_teal_concise,
         )
         full_cpb.sourcemapper = source_mapper
+
+        # run a second time without, and assert that the same teal is produced
+        with sourcemapping_off_context():
+            bundle_wo = self._compile_impl(
+                with_sourcemap=False,
+                pcs_in_sourcemap=False,
+                annotate_teal=False,
+                annotate_teal_headers=False,
+                annotate_teal_concise=True,
+            )
+
+            _PyTealSourceMapper._validate_teal_identical(
+                bundle_wo.teal,
+                teal_code,
+                msg="FATAL ERROR. Program without sourcemaps (LEFT) differs from Program with (RIGHT)",
+            )
 
         return full_cpb
 

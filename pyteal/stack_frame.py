@@ -1,5 +1,6 @@
 from ast import AST, FunctionDef, unparse
 from configparser import ConfigParser
+from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import IntEnum
 from inspect import FrameInfo, stack
@@ -193,6 +194,22 @@ def _debug_frames(verbose=False) -> bool:
 Could not read section (pyteal-source-mapper, debug) of config "pyteal.ini": {e}"""
             )
     return False
+
+
+@contextmanager
+def sourcemapping_off_context():
+    """Context manager that turns off sourcemapping for the duration of the context"""
+    _no_stackframes_before = NatalStackFrame._no_stackframes
+    _debug_before = NatalStackFrame._debug
+    NatalStackFrame._no_stackframes = True
+    NatalStackFrame._debug = False
+
+    try:
+        yield
+
+    finally:
+        NatalStackFrame._no_stackframes = _no_stackframes_before
+        NatalStackFrame._debug = _debug_before
 
 
 class NatalStackFrame:

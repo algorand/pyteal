@@ -2,6 +2,7 @@ import ast
 import bisect
 from collections import defaultdict
 from dataclasses import dataclass, field
+from difflib import unified_diff
 from functools import partial
 from itertools import count
 import re
@@ -1197,12 +1198,13 @@ class _PyTealSourceMapper:
 
         return annotated
 
+    @classmethod
     def _validate_annotated(
-        self, omit_headers: bool, teal_lines: list[str], annotated_lines: list[str]
+        cls, omit_headers: bool, teal_lines: list[str], annotated_lines: list[str]
     ):
         header_delta = 1 - bool(omit_headers)
         if (ltl := len(teal_lines)) + header_delta != (latl := len(annotated_lines)):
-            raise self._unexpected_error(
+            raise cls._unexpected_error(
                 f"mismatch between count of teal_lines ({ltl}) and annotated_lines ({latl}) for the case {omit_headers=}",
             )
 
@@ -1210,11 +1212,28 @@ class _PyTealSourceMapper:
             zip(teal_lines, annotated_lines[header_delta:])
         ):
             if not annotated_line.startswith(teal_line):
-                raise self._unexpected_error(
+                raise cls._unexpected_error(
                     f"annotated teal ought to begin exactly with the teal line but line {i+1} [{annotated_line}] doesn't start with [{teal_line}]",
                 )
             pattern = r"^\s*($|//.*)"
             if not re.match(pattern, annotated_line[len(teal_line) :]):
-                raise self._unexpected_error(
+                raise cls._unexpected_error(
                     f"annotated teal ought to begin exactly with the teal line followed by annotation in comments but line {i+1} [{annotated_line}] has non-commented out annotations"
                 )
+
+    @classmethod
+    def _validate_teal_identical(
+        cls,
+        original_teal: str,
+        new_teal: str,
+        msg: str,
+    ):
+        if original_teal == new_teal:
+            return
+
+        diff = list(unified_diff(original_teal.splitlines(), new_teal.splitlines()))
+        if diff:
+            raise cls._unexpected_error(
+                f"""{msg}. Original teal differs with new: 
+{''.join(diff)}"""
+            )
