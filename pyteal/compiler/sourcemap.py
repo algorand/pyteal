@@ -1232,8 +1232,7 @@ class _PyTealSourceMapper:
             return
 
         diff = list(unified_diff(original_teal.splitlines(), new_teal.splitlines()))
-        if diff:
-            raise cls._unexpected_error(
-                f"""{msg}. Original teal differs with new: 
-{''.join(diff)}"""
-            )
+        raise cls._unexpected_error(
+            f"""{msg}. Original teal differs with new: 
+    {''.join(diff)}"""
+        )

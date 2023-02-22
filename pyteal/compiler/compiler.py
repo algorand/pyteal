@@ -481,6 +481,7 @@ class Compilation:
 
         # run a second time without, and assert that the same teal is produced
         with sourcemapping_off_context():
+            assert NatalStackFrame.sourcemapping_is_off()
             bundle_wo = self._compile_impl(
                 with_sourcemap=False,
                 pcs_in_sourcemap=False,
