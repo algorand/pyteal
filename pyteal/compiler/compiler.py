@@ -292,7 +292,8 @@ class _FullCompilationBundle:
     def get_results(self) -> CompileResults:
         sourcemap: PyTealSourceMap | None = None
         if self.sourcemapper:
-            sourcemap = self.sourcemapper.get_sourcemap()
+            sourcemap = self.sourcemapper.get_sourcemap(self.teal)
+
         return CompileResults(self.teal, sourcemap)
 
 

@@ -801,19 +801,19 @@ class _RouterBundle:
     input: Optional["_RouterCompileInput"] = None
 
     def get_results(self) -> RouterResults:
-        approval_sourcemap: PyTealSourceMap | None = None
-        clear_sourcemap: PyTealSourceMap | None = None
+        approval_sm: PyTealSourceMap | None = None
+        clear_sm: PyTealSourceMap | None = None
         if self.approval_sourcemapper:
-            approval_sourcemap = self.approval_sourcemapper.get_sourcemap()
+            approval_sm = self.approval_sourcemapper.get_sourcemap(self.approval_teal)
         if self.clear_sourcemapper:
-            clear_sourcemap = self.clear_sourcemapper.get_sourcemap()
+            clear_sm = self.clear_sourcemapper.get_sourcemap(self.clear_teal)
 
         return RouterResults(
             self.approval_teal,
             self.clear_teal,
             self.abi_contract,
-            approval_sourcemap,
-            clear_sourcemap,
+            approval_sm,
+            clear_sm,
         )
 
 

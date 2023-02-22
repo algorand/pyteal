@@ -222,6 +222,188 @@ def test_config():
     NatalStackFrame._no_stackframes = originally
 
 
+def test_PyTealSourceMapper_validate_build_annotate():
+    from pyteal import TealInternalError
+    from pyteal.compiler.sourcemap import _PyTealSourceMapper
+
+    # --- CONSTRUCTOR VALIDATIONS --- #
+    match = "Please provide non-empty teal_chunks"
+    with pytest.raises(TealInternalError, match=match):
+        _PyTealSourceMapper([], [], build=False, annotate_teal=False)
+
+    match = "Please provide non-empty components"
+    with pytest.raises(TealInternalError, match=match):
+        _PyTealSourceMapper(["a chunk"], [], build=False, annotate_teal=False)
+
+    # --- BUILD VALIDATIONS --- #
+    ptsm = _PyTealSourceMapper(
+        ["a chunk"], ["a component", "another"], build=False, annotate_teal=False
+    )
+
+    def full_match(s):
+        return f"""{s}
+        {_PyTealSourceMapper.UNEXPECTED_ERROR_SUFFIX}"""
+
+    match = full_match(
+        r"expected same number of teal chunks \(1\) and components \(2\)"
+    )
+    with pytest.raises(TealInternalError, match=match):
+        ptsm.build()
+
+    ptsm.teal_chunks = ptsm.components = []
+    match = full_match("cannot generate empty source map: no components")
+    with pytest.raises(TealInternalError, match=match):
+        ptsm.build()
+
+    teal_chunks = ["first line\nsecond line", "third line\nfourth line\nfifth line"]
+    teal = [
+        "first line",
+        "second line",
+        "third line",
+        "fourth line",
+        "fifth line",
+    ]
+    i = 0
+    for chunk in teal_chunks:
+        for line in chunk.splitlines():
+            assert teal[i] == line
+            i += 1
+
+    def mock_TealMapItem(s):
+        tmi = mock.Mock()
+        tmi.teal_line = s
+        return tmi
+
+    def mock_R3SourceMap(lines):
+        r3sm = mock.Mock()
+        r3sm.file_lines = lines
+        return r3sm
+
+    ptsm.teal_chunks = teal_chunks
+    ptsm._cached_tmis = [mock_TealMapItem(s) for s in teal]
+    ptsm._cached_r3sourcemap = mock_R3SourceMap(teal)
+
+    ptsm._validate_build()
+    ptsm.teal_chunks.append("sixth line")
+    match = full_match(
+        r"teal chunks has 6 teal lines which doesn't match the number of cached TealMapItem's \(5\)"
+    )
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_build()
+
+    ptsm._cached_tmis.append(mock_TealMapItem("sixth line"))
+    ptsm._cached_r3sourcemap.file_lines.append("sixth line")
+    ptsm._validate_build()
+
+    match = full_match(
+        r"teal chunks has 6 teal lines which doesn't match the number of cached TealMapItem's \(7\)"
+    )
+    ptsm._cached_tmis.append(mock_TealMapItem("seventh line"))
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_build()
+
+    del ptsm._cached_tmis[-1]
+    ptsm._validate_build()
+
+    ptsm._cached_tmis[-1] = mock_TealMapItem("NOT the sixth line")
+    match = full_match(
+        r"teal chunk lines don't match TealMapItem's at index 5. \('sixth line' v. 'NOT the sixth line'\)"
+    )
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_build()
+
+    ptsm._cached_tmis[-1] = mock_TealMapItem("sixth line")
+    ptsm._validate_build()
+
+    ptsm._cached_r3sourcemap.file_lines.append("seventh line")
+    match = full_match(
+        r"there are 6 TealMapItem's which doesn't match the number of file_lines in the cached R3SourceMap \(7\)"
+    )
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_build()
+
+    del ptsm._cached_r3sourcemap.file_lines[-1]
+    ptsm._validate_build()
+
+    ptsm._cached_r3sourcemap.file_lines[-1] = "NOT the sixth line"
+    match = full_match(
+        r"TealMapItem's don't match R3SourceMap.file_lines at index 5. \('sixth line' v. 'NOT the sixth line'\)"
+    )
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_build()
+
+    ptsm._cached_r3sourcemap.file_lines[-1] = "sixth line"
+    ptsm._validate_build()
+
+    # --- ANNOTATE VALIDATIONS --- #
+    annotated = [f"{teal}   // some other stuff{i}" for i, teal in enumerate(teal)]
+    omit_headers = True
+    ptsm._validate_annotated(omit_headers, teal, annotated)
+
+    omit_headers = False
+    match = full_match(
+        r"mismatch between count of teal_lines \(6\) and annotated_lines \(6\) for the case omit_headers=False"
+    )
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_annotated(omit_headers, teal, annotated)
+
+    annotated_w_headers = ["// some header"] + annotated
+    ptsm._validate_annotated(omit_headers, teal, annotated_w_headers)
+
+    omit_headers = True
+    match = full_match(
+        r"mismatch between count of teal_lines \(6\) and annotated_lines \(7\) for the case omit_headers=True"
+    )
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_annotated(omit_headers, teal, annotated_w_headers)
+
+    annotated_3 = annotated[3]
+    annotated[3] = "doesn't begin with the teal line"
+    match = full_match(
+        r"annotated teal ought to begin exactly with the teal line but line 4 \[doesn't begin with the teal line\] doesn't start with \[fourth line\]"
+    )
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_annotated(omit_headers, teal, annotated)
+
+    annotated[3] = annotated_3
+    ptsm._validate_annotated(omit_headers, teal, annotated)
+
+    annotated_w_headers[4] = "doesn't begin with the teal line"
+    omit_headers = False
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_annotated(omit_headers, teal, annotated_w_headers)
+
+    annotated_w_headers[4] = annotated_3
+    ptsm._validate_annotated(omit_headers, teal, annotated_w_headers)
+
+    omit_headers = True
+    annotated_2 = annotated[2]
+    annotated[2] = f"{teal[2]}   some other stuff not all // commented out"
+    match = full_match(
+        rf"annotated teal ought to begin exactly with the teal line followed by annotation in comments but line 3 \[{annotated[2]}\] has non-commented out annotations"
+    )
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_annotated(omit_headers, teal, annotated)
+
+    annotated[2] = annotated_2
+    ptsm._validate_annotated(omit_headers, teal, annotated)
+
+    omit_headers = False
+    annotated_w_headers[3] = f"{teal[2]}   some other stuff not all // commented out"
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_annotated(omit_headers, teal, annotated_w_headers)
+
+    annotated_w_headers[3] = annotated_2
+    ptsm._validate_annotated(omit_headers, teal, annotated_w_headers)
+
+    # --- ANNOTATE VALIDATIONS - SPECIAL CASE --- #
+    meth_sig = "deposit(pay,account)void"
+    special = f"method {meth_sig}      //    (30)"
+    teal.append(special)
+    annotated_w_headers.append(special)
+    ptsm._validate_annotated(omit_headers, teal, annotated_w_headers)
+
+
 @pytest.mark.skip(
     reason="""Supressing this flaky test as 
 router_test::test_router_compile_program_idempotence is similar in its goals

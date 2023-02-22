@@ -4,6 +4,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import partial
 from itertools import count
+import re
 from typing import Any, Final, Literal, Mapping, OrderedDict, TypedDict, cast
 
 from tabulate import tabulate  # type: ignore
@@ -654,6 +655,9 @@ class _PyTealSourceMapper:
 
     """
 
+    UNEXPECTED_ERROR_SUFFIX = """This is an unexpected error. Please report this to the PyTeal team or create an issue at:
+    https://github.com/algorand/pyteal/issues"""
+
     def __init__(
         self,
         teal_chunks: list[str],
@@ -697,6 +701,12 @@ class _PyTealSourceMapper:
                 algod, msg="Adding PC's to sourcemap requires live Algod"
             )
 
+        if not teal_chunks:
+            raise TealInternalError("Please provide non-empty teal_chunks")
+
+        if not components:
+            raise TealInternalError("Please provide non-empty components")
+
         self.teal_chunks: Final[list[str]] = teal_chunks
         self.components: Final[list["pt.TealComponent"]] = components
 
@@ -713,6 +723,8 @@ class _PyTealSourceMapper:
         self._cached_tmis: list[TealMapItem] = []
         self._cached_pc_sourcemap: PCSourceMap | None = None
 
+        self._most_recent_omit_headers: bool | None = None
+
         # FOR DEBUGGING PURPOSES ONLY:
         self._inferred_frames_at: list[int] = []
 
@@ -722,10 +734,25 @@ class _PyTealSourceMapper:
         self._annotated_teal: str | None = None
         if annotate_teal:
             self._annotated_teal = self.annotated_teal(
-                omit_headers=not annotate_teal_headers, concise=annotate_teal_concise
+                omit_headers=(oh := not annotate_teal_headers),
+                concise=annotate_teal_concise,
+            )
+            self._most_recent_omit_headers = oh
+
+    def get_sourcemap(self, teal_for_validation: str) -> PyTealSourceMap:
+        if not self._built():
+            raise self._unexpected_error("source map not built yet")
+
+        if self._annotated_teal:
+            if (oh := self._most_recent_omit_headers) is None:
+                raise self._unexpected_error(
+                    "_most_recent_omit_headers is None unexpectedly after calculating annotated_teal"
+                )
+
+            self._validate_annotated(
+                oh, teal_for_validation.splitlines(), self._annotated_teal.splitlines()
             )
 
-    def get_sourcemap(self):
         return PyTealSourceMap(
             self.teal_file,
             self._cached_r3sourcemap,
@@ -748,6 +775,13 @@ class _PyTealSourceMapper:
             ]
         )
 
+    @classmethod
+    def _unexpected_error(cls, msg: str) -> TealInternalError:
+        return TealInternalError(
+            f"""{msg}
+        {cls.UNEXPECTED_ERROR_SUFFIX}"""
+        )
+
     def build(self) -> None:
         if self._built():
             return
@@ -760,12 +794,14 @@ class _PyTealSourceMapper:
         # assert teal_chunks <--1-to-1--> components
 
         if (n := len(self.teal_chunks)) != len(self.components):
-            raise TealInternalError(
-                f"expected same number of teal chunks {n} and components {len(self.components)}"
+            raise self._unexpected_error(
+                f"expected same number of teal chunks ({n}) and components ({len(self.components)})"
             )
 
         if n == 0:
-            raise TealInternalError("cannot generate empty source map: no components")
+            raise self._unexpected_error(
+                "cannot generate empty source map: no components"
+            )
 
         # PASS I. Deduce the Best Frame Candidate (BFC) from each individual `NatalStackFrame`
         # See NatalStackFrame.__init__() for steps 1-7 which happen when an Expr is created
@@ -777,9 +813,10 @@ class _PyTealSourceMapper:
             tc.stack_frames().best().as_pyteal_frame() for tc in self.components
         ]
 
-        assert (
-            self._best_frames
-        ), f"This shouldn't have happened as we already checked! Check again: {len(self.components)=}"
+        if not self._best_frames:
+            raise self._unexpected_error(
+                f"This shouldn't have happened as we already checked! Check again: {len(self.components)=}"
+            )
 
         # PASS II. Attempt to fill any "gaps" by inferring from adjacent BFC's
         self._best_frames, inferred = self._infer(self._best_frames)
@@ -810,6 +847,31 @@ class _PyTealSourceMapper:
         if not NatalStackFrame._debug:
             self._best_frames = []
             self._inferred_frames_at = []
+
+        self._validate_build()
+
+    def _validate_build(self):
+        dechunked = [line for chunk in self.teal_chunks for line in chunk.splitlines()]
+
+        if (ld := len(dechunked)) != (ltmi := len(self._cached_tmis)):
+            raise self._unexpected_error(
+                f"teal chunks has {ld} teal lines which doesn't match the number of cached TealMapItem's ({ltmi})"
+            )
+
+        if (lr3 := len(r3_target_lines := self._cached_r3sourcemap.file_lines)) != ltmi:
+            raise self._unexpected_error(
+                f"there are {ltmi} TealMapItem's which doesn't match the number of file_lines in the cached R3SourceMap ({lr3})"
+            )
+
+        for i, line in enumerate(dechunked):
+            if line != (tmi_line := self._cached_tmis[i].teal_line):
+                raise self._unexpected_error(
+                    f"teal chunk lines don't match TealMapItem's at index {i}. ('{line}' v. '{tmi_line}')"
+                )
+            if tmi_line != (target_line := r3_target_lines[i]):
+                raise self._unexpected_error(
+                    f"TealMapItem's don't match R3SourceMap.file_lines at index {i}. ('{tmi_line}' v. '{target_line}')"
+                )
 
     def _build_r3sourcemap(self):
         assert self._cached_tmis, "Unexpected error: no cached TealMapItems found"
@@ -1094,6 +1156,19 @@ class _PyTealSourceMapper:
         return tabulate(rows, **calling_kwargs)
 
     def annotated_teal(self, omit_headers: bool = True, concise: bool = True) -> str:
+        if not self._built():
+            raise ValueError(
+                "not ready for annotated_teal() because build() has yet to be called"
+            )
+
+        if not (r3sm := cast(R3SourceMap, self._cached_r3sourcemap)):
+            raise self._unexpected_error("R3SourceMap not available but should be")
+
+        if not (file_lines := cast(list[str], r3sm.file_lines)):
+            raise self._unexpected_error(
+                "_cached_r3sourcemap.file_lines not available but should be"
+            )
+
         teal_col = "// GENERATED TEAL"
         comment_col = "_1"
         kwargs = dict(
@@ -1116,4 +1191,30 @@ class _PyTealSourceMapper:
         kwargs["pyteal_node_ast_source_boundaries"] = "PYTEAL RANGE"
 
         kwargs["post_process_delete_cols"] = [_PYTEAL_NODE_AST_SOURCE_BOUNDARIES]
-        return self.tabulate(**kwargs)  # type: ignore
+        annotated = self.tabulate(**kwargs)  # type: ignore
+
+        self._validate_annotated(omit_headers, file_lines, annotated.splitlines())
+
+        return annotated
+
+    def _validate_annotated(
+        self, omit_headers: bool, teal_lines: list[str], annotated_lines: list[str]
+    ):
+        header_delta = 1 - bool(omit_headers)
+        if (ltl := len(teal_lines)) + header_delta != (latl := len(annotated_lines)):
+            raise self._unexpected_error(
+                f"mismatch between count of teal_lines ({ltl}) and annotated_lines ({latl}) for the case {omit_headers=}",
+            )
+
+        for i, (teal_line, annotated_line) in enumerate(
+            zip(teal_lines, annotated_lines[header_delta:])
+        ):
+            if not annotated_line.startswith(teal_line):
+                raise self._unexpected_error(
+                    f"annotated teal ought to begin exactly with the teal line but line {i+1} [{annotated_line}] doesn't start with [{teal_line}]",
+                )
+            pattern = r"^\s*($|//.*)"
+            if not re.match(pattern, annotated_line[len(teal_line) :]):
+                raise self._unexpected_error(
+                    f"annotated teal ought to begin exactly with the teal line followed by annotation in comments but line {i+1} [{annotated_line}] has non-commented out annotations"
+                )
