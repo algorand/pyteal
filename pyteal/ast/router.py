@@ -1134,7 +1134,6 @@ class Router:
         optimize: Optional[OptimizeOptions] = None,
     ) -> tuple[str, str, sdk_abi.Contract]:
         """
-        TODO: Not so sure about the following _DEPRECATION_ anymore !!!!
         DEPRECATED BUT KEPT FOR BACKWARDS COMPATIBILITY. PREFER Router.compile().
 
         Constructs and compiles approval and clear-state programs from the registered methods and
@@ -1178,8 +1177,6 @@ class Router:
         annotate_teal_concise: bool = True,
     ) -> RouterResults:
         """
-        TODO: out of date comment
-
         Constructs and compiles approval and clear-state programs from the registered methods and
         bare app calls in the router, and also generates a Contract object to allow client read and call
         the methods easily.
@@ -1190,11 +1187,12 @@ class Router:
         or clear state programs, then that program will reject all transactions.
 
         Returns:
-            A tuple of three objects.
-
-            * approval_program: compiled approval program string
-            * clear_state_program: compiled clear-state program string
-            * contract: a Python SDK Contract object to allow clients to make off-chain calls
+            A RouterResults containing the following:
+            * approval_teal (str): compiled approval program
+            * clear_teal (str): compiled clear-state program
+            * abi_contract (abi.Contract): a Python SDK Contract object to allow clients to make off-chain calls
+            * approval_sourcemap (PyTealSourceMap | None): source map results for approval program
+            * clear_sourcemap (PyTealSourceMap | None): source map results for clear-state program
         """
         approval_filename = approval_filename or f"{self.name}_approval.teal"
         clear_filename = clear_filename or f"{self.name}_clear.teal"
