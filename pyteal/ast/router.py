@@ -1021,9 +1021,11 @@ class Router:
     @contextmanager
     def _cleaning_context(self):
         starting_slot_id = ScratchSlot.nextSlotId
-        yield
-        self._clean()
-        ScratchSlot.reset_slot_numbering(starting_slot_id)
+        try:
+            yield
+        finally:
+            self._clean()
+            ScratchSlot.reset_slot_numbering(starting_slot_id)
 
     def compile_program(
         self,
