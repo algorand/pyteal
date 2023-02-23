@@ -103,7 +103,7 @@ def abi_method_return_example(pt):
     )
 
 
-def router_example_method(pt):
+def router_method_example(pt):
     on_completion_actions = pt.BareCallActions(
         opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes("optin call"))),
     )
@@ -114,6 +114,23 @@ def router_example_method(pt):
         return output.set(a.get() + b.get())
 
     return router
+
+
+def get_fib_example(pt):
+    @pt.Subroutine(pt.TealType.uint64)
+    def fib(n) -> pt.Expr:  # type: ignore
+        return pt.If(
+            n <= pt.Int(1),
+            n,
+            fib(n - pt.Int(1)) + fib(n - pt.Int(2)),
+        )
+
+    return fib
+
+
+def recursive_subroutine_example(pt):
+    fib = get_fib_example(pt)
+    return fib(pt.Int(10))
 
 
 CONSTRUCTS_LATEST_VERSION = 8
@@ -1703,7 +1720,7 @@ CONSTRUCTS = [
         dict(frame_pointers=True),
     ),
     (  # 37 - Router (scratch slots)
-        router_example_method,
+        router_method_example,
         [
             [P, R],
             ("txn NumAppArgs", R),
@@ -1773,7 +1790,7 @@ CONSTRUCTS = [
         dict(frame_pointers=False),
     ),
     (  # 38 - Router (frame pointers)
-        router_example_method,
+        router_method_example,
         [
             [P, R],
             ("txn NumAppArgs", R),
@@ -1927,6 +1944,106 @@ CONSTRUCTS = [
             ("retsub", R),
         ],
         8,
+        "Application",
+        dict(frame_pointers=True),
+    ),
+    (  # 41 - Recursive Subroutine (scratch slots)
+        recursive_subroutine_example,
+        [
+            [P, C],
+            ("int 10", "pt.Int(10)"),
+            ("callsub fib_0", "fib(pt.Int(10))"),
+            ("return", C),
+            ("", "def fib(n) -> pt.Expr:"),
+            ("// fib", "def fib(n) -> pt.Expr:"),
+            ("fib_0:", "def fib(n) -> pt.Expr:"),
+            ("store 0", C),
+            ("load 0", C),
+            ("int 1", "pt.Int(1)"),
+            ("<=", "n <= pt.Int(1)"),
+            (
+                "bnz fib_0_l2",
+                "pt.If(n <= pt.Int(1), n, fib(n - pt.Int(1)) + fib(n - pt.Int(2)))",
+            ),
+            ("load 0", C),
+            ("int 1", "pt.Int(1)"),
+            ("-", "n - pt.Int(1)"),
+            ("load 0", C),
+            ("swap", C),
+            ("callsub fib_0", "fib(n - pt.Int(1))"),
+            ("swap", C),
+            ("store 0", C),
+            ("load 0", C),
+            ("int 2", "pt.Int(2)"),
+            ("-", "n - pt.Int(2)"),
+            ("load 0", C),
+            ("swap", C),
+            ("callsub fib_0", "fib(n - pt.Int(2))"),
+            ("swap", C),
+            ("store 0", C),
+            ("+", "fib(n - pt.Int(1)) + fib(n - pt.Int(2))"),
+            (
+                "b fib_0_l3",
+                "pt.If(n <= pt.Int(1), n, fib(n - pt.Int(1)) + fib(n - pt.Int(2)))",
+            ),
+            (
+                "fib_0_l2:",
+                "pt.If(n <= pt.Int(1), n, fib(n - pt.Int(1)) + fib(n - pt.Int(2)))",
+            ),
+            ("load 0", C),
+            (
+                "fib_0_l3:",
+                "pt.If(n <= pt.Int(1), n, fib(n - pt.Int(1)) + fib(n - pt.Int(2)))",
+            ),
+            ("retsub", "def fib(n) -> pt.Expr:"),
+        ],
+        5,
+        "Application",
+        dict(frame_pointers=False),
+    ),
+    (  # 42 - Recursive Subroutine (frame pointers)
+        recursive_subroutine_example,
+        [
+            [P, C],
+            ("int 10", "pt.Int(10)"),
+            ("callsub fib_0", "fib(pt.Int(10))"),
+            ("return", C),
+            ("", "def fib(n) -> pt.Expr:"),
+            ("// fib", "def fib(n) -> pt.Expr:"),
+            ("fib_0:", "def fib(n) -> pt.Expr:"),
+            ("proto 1 1", "def fib(n) -> pt.Expr:"),
+            ("frame_dig -1", C),
+            ("int 1", "pt.Int(1)"),
+            ("<=", "n <= pt.Int(1)"),
+            (
+                "bnz fib_0_l2",
+                "pt.If(n <= pt.Int(1), n, fib(n - pt.Int(1)) + fib(n - pt.Int(2)))",
+            ),
+            ("frame_dig -1", C),
+            ("int 1", "pt.Int(1)"),
+            ("-", "n - pt.Int(1)"),
+            ("callsub fib_0", "fib(n - pt.Int(1))"),
+            ("frame_dig -1", C),
+            ("int 2", "pt.Int(2)"),
+            ("-", "n - pt.Int(2)"),
+            ("callsub fib_0", "fib(n - pt.Int(2))"),
+            ("+", "fib(n - pt.Int(1)) + fib(n - pt.Int(2))"),
+            (
+                "b fib_0_l3",
+                "pt.If(n <= pt.Int(1), n, fib(n - pt.Int(1)) + fib(n - pt.Int(2)))",
+            ),
+            (
+                "fib_0_l2:",
+                "pt.If(n <= pt.Int(1), n, fib(n - pt.Int(1)) + fib(n - pt.Int(2)))",
+            ),
+            ("frame_dig -1", C),
+            (
+                "fib_0_l3:",
+                "pt.If(n <= pt.Int(1), n, fib(n - pt.Int(1)) + fib(n - pt.Int(2)))",
+            ),
+            ("retsub", "def fib(n) -> pt.Expr:"),
+        ],
+        5,
         "Application",
         dict(frame_pointers=True),
     ),
