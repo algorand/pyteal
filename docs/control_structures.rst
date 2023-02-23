@@ -20,7 +20,7 @@ is used, then the execution is marked as successful, and if :code:`Reject` is us
 is marked as unsuccessful.
 
 These expressions also work inside :ref:`subroutines <subroutine_expr>`. When used inside subroutines, they
-also cause the program to immediately exit, contrary to :code:`Return(...)` which just returns the subroutine.
+also cause the program to immediately exit, contrary to :code:`Return(...)` which just returns from the subroutine.
 
 .. _seq_expr:
 
