@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import IntEnum
 from inspect import FrameInfo, stack
-from typing import Callable, Optional, cast
+from typing import Callable, cast
 import os
 import re
 
@@ -52,16 +52,16 @@ class StackFrame:
     """
 
     frame_info: FrameInfo
-    node: Optional[AST]
+    node: AST | None
     creator: "NatalStackFrame"
 
     # for debugging purposes:
-    full_stack: Optional[list[FrameInfo]] = None
+    full_stack: list[FrameInfo] | None = None
 
     @classmethod
     def _init_or_drop(
         cls, creator: "NatalStackFrame", f: FrameInfo, full_stack: list[FrameInfo]
-    ) -> Optional["StackFrame"]:
+    ) -> "StackFrame | None":
         """
         Attempt to create a StackFrame object.
         However, if the resulting is considered "Python Crud" abandon and return None.
@@ -98,7 +98,7 @@ class StackFrame:
     def as_pyteal_frame(
         self,
         rel_paths: bool = True,
-        parent: Optional["PyTealFrame"] | None = None,
+        parent: "PyTealFrame | None" = None,
     ) -> "PyTealFrame":
         """
         Downcast one level in the class hierarchy
@@ -491,7 +491,7 @@ class PyTealFrame(StackFrame):
         creator: NatalStackFrame,
         full_stack: list[FrameInfo] | None,
         rel_paths: bool = True,
-        parent: Optional["PyTealFrame"] | None = None,
+        parent: "PyTealFrame | None" = None,
     ):
         super().__init__(frame_info, node, creator, full_stack)
         self.rel_paths = rel_paths
@@ -622,7 +622,7 @@ class PyTealFrame(StackFrame):
 
     @classmethod
     def _hybrid_impl(
-        cls, code: str, node: Optional[AST], pt_chunk: str
+        cls, code: str, node: AST | None, pt_chunk: str
     ) -> tuple[str, int]:
         """
         Given a chunk of PyTeal `pt_chunk` represending a node's source,
