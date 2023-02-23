@@ -2043,7 +2043,7 @@ CONSTRUCTS = [
             ),
             ("retsub", "def fib(n) -> pt.Expr:"),
         ],
-        5,
+        8,
         "Application",
         dict(frame_pointers=True),
     ),
