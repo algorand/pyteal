@@ -1,4 +1,3 @@
-from typing import List, Dict, DefaultDict
 from collections import defaultdict
 
 from pyteal.ast import Expr, SubroutineDefinition
@@ -15,21 +14,21 @@ from pyteal.ir import (
 )
 
 
-def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
+def flattenBlocks(blocks: list[TealBlock]) -> list[TealComponent]:
     """Lowers a list of TealBlocks into a list of TealComponents.
 
     Args:
         blocks: The blocks to lower.
     """
-    codeblocks: List[List[TealOp]] = []
-    references: DefaultDict[int, int] = defaultdict(int)
+    codeblocks: list[list[TealOp]] = []
+    references: defaultdict[int, int] = defaultdict(int)
     referer: dict[int, int] = {}
 
     def add_if_new(nextIndex, i):
         if nextIndex not in referer:
             referer[nextIndex] = i
 
-    labelRefs: Dict[int, LabelReference] = dict()
+    labelRefs: dict[int, LabelReference] = dict()
 
     def indexToLabel(index: int) -> LabelReference:
         if index not in labelRefs:
@@ -90,7 +89,7 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
         else:
             raise TealInternalError("Unrecognized block type: {}".format(type(block)))
 
-    teal: List[TealComponent] = []
+    teal: list[TealComponent] = []
     root_expr = None
     for i, code in enumerate(codeblocks):
         if references[i] != 0:
@@ -106,9 +105,9 @@ def flattenBlocks(blocks: List[TealBlock]) -> List[TealComponent]:
 
 
 def flattenSubroutines(
-    subroutineMapping: Dict[SubroutineDefinition | None, List[TealComponent]],
-    subroutineToLabel: Dict[SubroutineDefinition, str],
-) -> List[TealComponent]:
+    subroutineMapping: dict[SubroutineDefinition | None, list[TealComponent]],
+    subroutineToLabel: dict[SubroutineDefinition, str],
+) -> list[TealComponent]:
     """Combines each subroutine's list of TealComponents into a single list of TealComponents that
     represents the entire program.
 
@@ -120,9 +119,7 @@ def flattenSubroutines(
     Returns:
         A single list of TealComponents representing the entire program.
     """
-    from pyteal.ast import Expr
-
-    combinedOps: List[TealComponent] = []
+    combinedOps: list[TealComponent] = []
 
     # By default all branch labels in each subroutine will start from "l0". To
     # make each subroutine have unique labels, we prefix "main_" to the ones
