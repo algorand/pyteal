@@ -10,6 +10,7 @@
 
 ## Added
 
+* Clarify that `Approve` and `Reject` always exit in the documentation. ([#660](https://github.com/algorand/pyteal/pull/660))
 * Improved error handling for tuple type mismatch: added information on position and expected type. ([#655](https://github.com/algorand/pyteal/pull/655))
 * Added an `asdict()` method to `ast.router.BareCallActions`. ([#656](https://github.com/algorand/pyteal/pull/656))
 * Added frame pointer support for router. ([#600](https://github.com/algorand/pyteal/pull/600))
