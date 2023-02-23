@@ -17,7 +17,7 @@ def compile_and_save(approval, version: int, test_name: str) -> tuple[Path, str,
     with open(tealdir / (name + ".teal"), "w") as f:
         f.write(compiled)
     print(
-        f"""Successfuly tested approval program <<{name}>> having 
+        f"""Successfuly tested approval program <<{name}>> having
 compiled it into {len(compiled)} characters. See the results in:
 {tealdir}
 """
@@ -51,7 +51,7 @@ def assert_new_v_old(approve_func, version: int, test_name: str):
     tealdir, name, compiled = compile_and_save(approve_func, version, test_name)
 
     print(
-        f"""Compilation resulted in TEAL program of length {len(compiled)}. 
+        f"""Compilation resulted in TEAL program of length {len(compiled)}.
 To view output SEE <{name}.teal> in ({tealdir})
 --------------"""
     )

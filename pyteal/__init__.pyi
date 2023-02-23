@@ -21,6 +21,7 @@ from pyteal.types import TealType
 from pyteal.errors import (
     TealInternalError,
     TealTypeError,
+    TealSeqError,
     TealInputError,
     TealCompileError,
     TealPragmaError,
@@ -210,6 +211,7 @@ __all__ = [
     "TealLabel",
     "TealOp",
     "TealPragmaError",
+    "TealSeqError",
     "TealSimpleBlock",
     "TealType",
     "TealTypeError",
