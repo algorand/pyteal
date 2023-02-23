@@ -34,7 +34,6 @@ from pyteal.stack_frame import NatalStackFrame, sourcemapping_off_context
 from pyteal.types import TealType
 from pyteal.util import algod_with_assertion
 
-TComponents = TealComponent | TealPragma
 
 MAX_PROGRAM_VERSION = 8
 FRAME_POINTERS_VERSION = 8
@@ -434,7 +433,7 @@ class Compilation:
         )
 
         subroutineLabels = resolveSubroutines(subroutineMapping)
-        components: list[TComponents] = flattenSubroutines(
+        components: list[TealComponent] = flattenSubroutines(
             subroutineMapping, subroutineLabels
         )
 
@@ -449,7 +448,7 @@ class Compilation:
                 )
             components = createConstantBlocks(components)
 
-        components = [cast(TComponents, TealPragma(self.version))] + components  # T2PT0
+        components = [TealPragma(self.version)] + components  # T2PT0
         teal_chunks = [tl.assemble() for tl in components]
         teal_code = "\n".join(teal_chunks)
 
