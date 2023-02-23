@@ -2,6 +2,8 @@
 
 ## Added
 
+* Clarify that `Approve` and `Reject` always exit in the documentation.
+
 ## Fixed
 
 ## Changed
