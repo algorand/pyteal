@@ -19,7 +19,8 @@ The :any:`Approve` and :any:`Reject` expressions cause the program to immediatel
 is used, then the execution is marked as successful, and if :code:`Reject` is used, then the execution
 is marked as unsuccessful.
 
-These expressions also work inside :ref:`subroutines <subroutine_expr>`.
+These expressions also work inside :ref:`subroutines <subroutine_expr>`. When used inside subroutines, they
+also cause the program to immediately exit, contrary to :code:`Return(...)` which just returns from the subroutine.
 
 .. _seq_expr:
 
