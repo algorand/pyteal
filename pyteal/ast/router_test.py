@@ -1,9 +1,11 @@
-import pyteal as pt
-import secrets
-from pyteal.ast.router import ASTBuilder
 import pytest
+import secrets
 import typing
+
 import algosdk.abi as sdk_abi
+
+import pyteal as pt
+from pyteal.ast.router import ASTBuilder
 
 
 options = pt.CompileOptions(version=5)
@@ -378,7 +380,7 @@ def test_bare_call_config_clear_state_failure():
     assert "Attempt to construct clear state program from bare app call" in str(tie)
 
 
-def test_bare_call_actions_asdict():
+def test_BareCallActions_asdict():
     no_action = pt.OnCompleteAction()
     del_action = pt.OnCompleteAction(action=pt.Int(1), call_config=pt.CallConfig.ALL)
     close_action = pt.OnCompleteAction(action=pt.Int(2), call_config=pt.CallConfig.CALL)
@@ -405,6 +407,35 @@ def test_bare_call_actions_asdict():
         "opt_in": no_action,
         "update_application": no_action,
     }
+
+
+def test_BareCallActions_get_method_config():
+    from pyteal.ast.router import MethodConfig, CallConfig
+
+    cc_all, cc_call, cc_create = (
+        pt.CallConfig.ALL,
+        pt.CallConfig.CALL,
+        pt.CallConfig.CREATE,
+    )
+    optin_action = pt.OnCompleteAction(action=pt.Int(1), call_config=cc_all)
+    noop_action = pt.OnCompleteAction(action=pt.Int(2), call_config=cc_call)
+    update_action = pt.OnCompleteAction(action=pt.Int(3), call_config=cc_create)
+
+    bca = pt.BareCallActions(
+        update_application=update_action,
+        opt_in=optin_action,
+        no_op=noop_action,
+    )
+
+    mc = bca.get_method_config()
+    assert mc == MethodConfig(
+        close_out=CallConfig.NEVER,
+        delete_application=CallConfig.NEVER,
+        no_op=cc_call,
+        opt_in=cc_all,
+        update_application=cc_create,
+        clear_state=CallConfig.NEVER,
+    )
 
 
 def test_router_register_method_clear_state_failure():
@@ -766,7 +797,7 @@ def test_contract_json_obj():
 
         # Manually replace it since the override is applied in the method handler
         # not attached to the ABIReturnSubroutine itself
-        ms.desc = desc if desc is not None else ms.desc
+        ms.desc = desc or ms.desc
 
         sig_method = sdk_abi.Method.from_signature(subroutine.method_signature())
 
@@ -785,7 +816,7 @@ def test_contract_json_obj():
 def test_build_program_all_empty():
     router = pt.Router("test")
 
-    approval, clear_state, contract = router.build_program()
+    approval, clear_state, contract = router._build_program()
 
     expected_empty_program = pt.TealSimpleBlock(
         [
@@ -805,7 +836,7 @@ def test_build_program_all_empty():
 def test_build_program_approval_empty():
     router = pt.Router("test", clear_state=pt.Approve())
 
-    approval, clear_state, contract = router.build_program()
+    approval, clear_state, contract = router._build_program()
 
     expected_empty_program = pt.TealSimpleBlock(
         [
@@ -827,7 +858,7 @@ def test_build_program_clear_state_empty():
         "test", pt.BareCallActions(no_op=pt.OnCompleteAction.always(pt.Approve()))
     )
 
-    approval, clear_state, contract = router.build_program()
+    approval, clear_state, contract = router._build_program()
 
     expected_empty_program = pt.TealSimpleBlock(
         [
@@ -844,6 +875,42 @@ def test_build_program_clear_state_empty():
     assert contract == expected_contract
 
 
+def test_build_program_clear_state_invalid_config():
+    for config in (pt.CallConfig.CREATE, pt.CallConfig.ALL):
+        with pytest.raises(
+            pt.TealInputError,
+            match=r"^Attempt to construct clear state program from bare app call",
+        ):
+            pt.BareCallActions(
+                clear_state=pt.OnCompleteAction(action=pt.Approve(), call_config=config)
+            )
+
+        router = pt.Router("test")  # once without a clear_state
+        router = pt.Router("test", clear_state=pt.Approve())  # and for the rest, with
+
+        with pytest.raises(
+            pt.TealInputError,
+            match=r"^Attempt to register ABI method for clear state program",
+        ):
+
+            @router.method(clear_state=pt.Int(1))
+            def clear_state_method_fails():
+                return pt.Approve()
+
+        @pt.ABIReturnSubroutine
+        def clear_state_method_succeeds():
+            return pt.Approve()
+
+        with pytest.raises(
+            pt.TealInputError,
+            match=r"^Attempt to construct clear state program from MethodConfig",
+        ):
+            router.add_method_handler(
+                clear_state_method_succeeds,
+                method_config=pt.MethodConfig(clear_state=config),
+            )
+
+
 def test_build_program_clear_state_valid_config():
     action = pt.If(pt.Txn.fee() == pt.Int(4)).Then(pt.Approve()).Else(pt.Reject())
 
@@ -851,7 +918,7 @@ def test_build_program_clear_state_valid_config():
         "test",
         clear_state=action,
     )
-    _, actual_clear_state_with_bare_call, _ = router_with_bare_call.build_program()
+    _, actual_clear_state_with_bare_call, _ = router_with_bare_call._build_program()
 
     expected_clear_state_with_bare_call = assemble_helper(action)
 
@@ -897,3 +964,42 @@ def test_override_names():
     ap2, cs2, c2 = r2.compile_program(version=pt.compiler.MAX_PROGRAM_VERSION)
 
     assert (ap1, cs1, c1) == (ap2, cs2, c2)
+
+
+def test_router_compile_program_idempotence():
+    on_completion_actions = pt.BareCallActions(
+        opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes("optin call"))),
+    )
+    router = pt.Router("questionable", on_completion_actions, clear_state=pt.Approve())
+
+    approval1, clear1, contract1 = router.compile_program(version=6)
+    approval2, clear2, contract2 = router.compile_program(version=6)
+
+    assert contract1.dictify() == contract2.dictify()
+    assert clear1 == clear2
+    assert approval1 == approval2
+
+    @pt.ABIReturnSubroutine
+    def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(a.get() + b.get())
+
+    meth = router.add_method_handler(add)
+    assert meth.method_signature() == "add(uint64,uint64)uint64"
+
+    # formerly nextSlotId: 256 --> 262:
+    approval1, clear1, contract1 = router.compile_program(version=6)
+    # formerly nextSlotId: 262 --> 265:
+    approval2, clear2, contract2 = router.compile_program(version=6)
+    # formerly nextSlotId: 265 --> 268:
+    approval3, clear3, contract3 = router.compile_program(version=6)
+
+    assert contract2.dictify() == contract3.dictify()
+    assert clear3 == clear2
+    assert approval3 == approval3
+
+    assert contract2.dictify() == contract1.dictify()
+    assert clear2 == clear1
+    assert (
+        approval2 == approval1
+    ), f"""{approval1=}
+{approval2=}"""

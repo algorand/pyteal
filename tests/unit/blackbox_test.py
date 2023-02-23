@@ -1,12 +1,19 @@
 from itertools import product
 from pathlib import Path
-import pytest
 from typing import Literal, Optional, Tuple
+from unittest.mock import MagicMock
+
+import pytest
+from algosdk.v2client.algod import AlgodClient
+from graviton.inspector import DryRunProperty as DRProp
 
 import pyteal as pt
-
-from tests.blackbox import Blackbox, BlackboxWrapper, PyTealDryRunExecutor
-
+from tests.blackbox import (
+    Blackbox,
+    BlackboxWrapper,
+    PyTealDryRunExecutor,
+    RouterSimulation,
+)
 from tests.compile_asserts import assert_teal_as_expected
 
 PATH = Path.cwd() / "tests" / "unit"
@@ -151,6 +158,7 @@ ABI_UNITS = [
 
 
 @pytest.mark.parametrize("subr, mode", product(UNITS, pt.Mode))
+@pytest.mark.serial  # Serial due to scratch generation
 def test_blackbox_pyteal(subr: BlackboxWrapper, mode: pt.Mode):
     is_app = mode == pt.Mode.Application
     name = f"{'app' if is_app else 'lsig'}_{subr.name()}"
@@ -166,6 +174,7 @@ def test_blackbox_pyteal(subr: BlackboxWrapper, mode: pt.Mode):
 
 
 @pytest.mark.parametrize("subr_abi, mode", product(ABI_UNITS, pt.Mode))
+@pytest.mark.serial  # Serial due to scratch generation
 def test_abi_blackbox_pyteal(
     subr_abi: Tuple[BlackboxWrapper, Optional[pt.ast.abi.BaseType]], mode: pt.Mode
 ):
@@ -254,3 +263,91 @@ def test_PyTealBlackboxExecutor_abi_return_type(
         assert PyTealDryRunExecutor(fn, mode).abi_return_type() is not None
     else:
         assert PyTealDryRunExecutor(fn, mode).abi_return_type() is None
+
+
+def successful_RouterSimulation(router, model_router, predicates, algod):
+    rsim = RouterSimulation(
+        router,
+        predicates,
+        model_router=model_router,
+        algod=algod,
+    )
+    assert rsim.router == router
+    assert rsim.predicates == predicates
+    assert rsim.model_router == model_router
+    assert rsim.algod == algod
+
+    return rsim
+
+
+def failing_RouterSimulation(router, model_router, predicates, algod, err_msg):
+    with pytest.raises(AssertionError) as ae:
+        RouterSimulation(
+            router,
+            predicates,
+            model_router=model_router,
+            algod=algod,
+        )
+    assert err_msg == str(ae.value)
+
+
+def test_RouterSimulation_init():
+    router = "not a router"
+    model_router = "not a router either"
+    predicates = "totally unchecked at init"
+    algod = MagicMock(spec=AlgodClient)
+
+    # many paths to misery:
+    err_msg = "Wrong type for Base Router: <class 'str'>"
+    failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
+
+    router = pt.Router("test_router")
+    err_msg = "make sure to give at least one key/value pair in method_configs"
+    failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
+
+    router.add_method_handler(
+        pt.ABIReturnSubroutine(lambda: pt.Int(1)), overriding_name="foo"
+    )
+    err_msg = "Wrong type for predicates: <class 'str'>. Please provide: dict[str | None, dict[graviton.DryRunProporty, Any]."
+    failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
+
+    predicates = {}
+    err_msg = "Please provide at least one method to call and assert against."
+    failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
+
+    predicates = {3: "blah"}
+    err_msg = "Predicates method '3' has type <class 'int'> but only 'str' and 'NoneType' and Literal['ClearStateCall'] (== ClearStateCall) are allowed."
+    failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
+
+    predicates = {Literal[42]: "blah"}
+    err_msg = "Predicates method 'typing.Literal[42]' is not allowed. Only Literal['ClearStateCall'] (== ClearStateCall) is allowed for a Literal."
+    failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
+
+    predicates = {"bar": {DRProp.passed: True}, "foo": {}}
+    err_msg = "Every method must provide at least one predicate for assertion but method 'foo' is missing predicates."
+    failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
+
+    predicates = {"bar": {DRProp.passed: True}, "foo": 42}
+    err_msg = "Method 'foo' is expected to have dict[graviton.DryRunProperty, Any] for its predicates value but the type is <class 'int'>."
+    failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
+
+    predicates = {"bar": {DRProp.passed: True}, "foo": {"blah": 45}}
+    err_msg = "Method 'foo' is expected to have dict[graviton.DryRunProperty, Any] for its predicates value but predicates['foo'] has key 'blah' of <class 'str'>."
+    failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
+
+    predicates = {"bar": {DRProp.passed: True}, "foo": {DRProp.budgetAdded: 45}}
+    err_msg = "Wrong type for Model Router: <class 'str'>"
+    failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
+
+    model_router = pt.Router("test_router")
+    err_msg = "make sure to give at least one key/value pair in method_configs"
+    failing_RouterSimulation(router, model_router, predicates, algod, err_msg)
+
+    # Finally, two happy paths
+    model_router.add_method_handler(
+        pt.ABIReturnSubroutine(lambda: pt.Int(1)), overriding_name="foo"
+    )
+    successful_RouterSimulation(router, model_router, predicates, algod)
+
+    model_router = None
+    successful_RouterSimulation(router, model_router, predicates, algod)

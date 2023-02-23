@@ -1,6 +1,10 @@
+from pathlib import Path
+
 import pytest
 
 import pyteal as pt
+
+ROUTER_FIXTURES = Path.cwd() / "tests" / "teal" / "router"
 
 
 def test_compile_single():
@@ -2195,1079 +2199,258 @@ retsub
         pt.compileTeal(program_access_b4_store_broken, pt.Mode.Application, version=6)
 
 
-def test_router_app():
-    def add_methods_to_router(router: pt.Router):
-        @pt.ABIReturnSubroutine
-        def add(
-            a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
-        ) -> pt.Expr:
-            return output.set(a.get() + b.get())
+def add_methods_to_router(router: pt.Router):
+    @pt.ABIReturnSubroutine
+    def add(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(a.get() + b.get())
 
-        meth = router.add_method_handler(add)
-        assert meth.method_signature() == "add(uint64,uint64)uint64"
+    meth = router.add_method_handler(add)
+    assert meth.method_signature() == "add(uint64,uint64)uint64"
 
-        @pt.ABIReturnSubroutine
-        def sub(
-            a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
-        ) -> pt.Expr:
-            return output.set(a.get() - b.get())
+    @pt.ABIReturnSubroutine
+    def sub(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(a.get() - b.get())
 
-        meth = router.add_method_handler(sub)
-        assert meth.method_signature() == "sub(uint64,uint64)uint64"
+    meth = router.add_method_handler(sub)
+    assert meth.method_signature() == "sub(uint64,uint64)uint64"
 
-        @pt.ABIReturnSubroutine
-        def mul(
-            a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
-        ) -> pt.Expr:
-            return output.set(a.get() * b.get())
+    @pt.ABIReturnSubroutine
+    def mul(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(a.get() * b.get())
 
-        meth = router.add_method_handler(mul)
-        assert meth.method_signature() == "mul(uint64,uint64)uint64"
+    meth = router.add_method_handler(mul)
+    assert meth.method_signature() == "mul(uint64,uint64)uint64"
 
-        @pt.ABIReturnSubroutine
-        def div(
-            a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
-        ) -> pt.Expr:
-            return output.set(a.get() / b.get())
+    @pt.ABIReturnSubroutine
+    def div(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(a.get() / b.get())
 
-        meth = router.add_method_handler(div)
-        assert meth.method_signature() == "div(uint64,uint64)uint64"
+    meth = router.add_method_handler(div)
+    assert meth.method_signature() == "div(uint64,uint64)uint64"
 
-        @pt.ABIReturnSubroutine
-        def mod(
-            a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64
-        ) -> pt.Expr:
-            return output.set(a.get() % b.get())
+    @pt.ABIReturnSubroutine
+    def mod(a: pt.abi.Uint64, b: pt.abi.Uint64, *, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(a.get() % b.get())
 
-        meth = router.add_method_handler(mod)
-        assert meth.method_signature() == "mod(uint64,uint64)uint64"
+    meth = router.add_method_handler(mod)
+    assert meth.method_signature() == "mod(uint64,uint64)uint64"
 
-        @pt.ABIReturnSubroutine
-        def all_laid_to_args(
-            _a: pt.abi.Uint64,
-            _b: pt.abi.Uint64,
-            _c: pt.abi.Uint64,
-            _d: pt.abi.Uint64,
-            _e: pt.abi.Uint64,
-            _f: pt.abi.Uint64,
-            _g: pt.abi.Uint64,
-            _h: pt.abi.Uint64,
-            _i: pt.abi.Uint64,
-            _j: pt.abi.Uint64,
-            _k: pt.abi.Uint64,
-            _l: pt.abi.Uint64,
-            _m: pt.abi.Uint64,
-            _n: pt.abi.Uint64,
-            _o: pt.abi.Uint64,
-            _p: pt.abi.Uint64,
-            *,
-            output: pt.abi.Uint64,
-        ):
-            return output.set(
-                _a.get()
-                + _b.get()
-                + _c.get()
-                + _d.get()
-                + _e.get()
-                + _f.get()
-                + _g.get()
-                + _h.get()
-                + _i.get()
-                + _j.get()
-                + _k.get()
-                + _l.get()
-                + _m.get()
-                + _n.get()
-                + _o.get()
-                + _p.get()
-            )
-
-        meth = router.add_method_handler(all_laid_to_args)
-        assert (
-            meth.method_signature()
-            == "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
+    @pt.ABIReturnSubroutine
+    def all_laid_to_args(
+        _a: pt.abi.Uint64,
+        _b: pt.abi.Uint64,
+        _c: pt.abi.Uint64,
+        _d: pt.abi.Uint64,
+        _e: pt.abi.Uint64,
+        _f: pt.abi.Uint64,
+        _g: pt.abi.Uint64,
+        _h: pt.abi.Uint64,
+        _i: pt.abi.Uint64,
+        _j: pt.abi.Uint64,
+        _k: pt.abi.Uint64,
+        _l: pt.abi.Uint64,
+        _m: pt.abi.Uint64,
+        _n: pt.abi.Uint64,
+        _o: pt.abi.Uint64,
+        _p: pt.abi.Uint64,
+        *,
+        output: pt.abi.Uint64,
+    ):
+        return output.set(
+            _a.get()
+            + _b.get()
+            + _c.get()
+            + _d.get()
+            + _e.get()
+            + _f.get()
+            + _g.get()
+            + _h.get()
+            + _i.get()
+            + _j.get()
+            + _k.get()
+            + _l.get()
+            + _m.get()
+            + _n.get()
+            + _o.get()
+            + _p.get()
         )
 
-        @pt.ABIReturnSubroutine
-        def empty_return_subroutine() -> pt.Expr:
-            return pt.Log(pt.Bytes("appear in both approval and clear state"))
-
-        meth = router.add_method_handler(
-            empty_return_subroutine,
-            method_config=pt.MethodConfig(
-                no_op=pt.CallConfig.CALL,
-                opt_in=pt.CallConfig.ALL,
-            ),
-        )
-        assert meth.method_signature() == "empty_return_subroutine()void"
-
-        @pt.ABIReturnSubroutine
-        def log_1(*, output: pt.abi.Uint64) -> pt.Expr:
-            return output.set(1)
-
-        meth = router.add_method_handler(
-            log_1,
-            method_config=pt.MethodConfig(
-                no_op=pt.CallConfig.CALL,
-                opt_in=pt.CallConfig.CALL,
-            ),
-        )
-
-        assert meth.method_signature() == "log_1()uint64"
-
-        @pt.ABIReturnSubroutine
-        def log_creation(*, output: pt.abi.String) -> pt.Expr:
-            return output.set("logging creation")
-
-        meth = router.add_method_handler(
-            log_creation, method_config=pt.MethodConfig(no_op=pt.CallConfig.CREATE)
-        )
-        assert meth.method_signature() == "log_creation()string"
-
-    on_completion_actions = pt.BareCallActions(
-        opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes("optin call"))),
+    meth = router.add_method_handler(all_laid_to_args)
+    assert (
+        meth.method_signature()
+        == "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
     )
 
+    @pt.ABIReturnSubroutine
+    def empty_return_subroutine() -> pt.Expr:
+        return pt.Log(pt.Bytes("appear in both approval and clear state"))
+
+    meth = router.add_method_handler(
+        empty_return_subroutine,
+        method_config=pt.MethodConfig(
+            no_op=pt.CallConfig.CALL,
+            opt_in=pt.CallConfig.ALL,
+        ),
+    )
+    assert meth.method_signature() == "empty_return_subroutine()void"
+
+    @pt.ABIReturnSubroutine
+    def log_1(*, output: pt.abi.Uint64) -> pt.Expr:
+        return output.set(1)
+
+    meth = router.add_method_handler(
+        log_1,
+        method_config=pt.MethodConfig(
+            no_op=pt.CallConfig.CALL,
+            opt_in=pt.CallConfig.CALL,
+        ),
+    )
+
+    assert meth.method_signature() == "log_1()uint64"
+
+    @pt.ABIReturnSubroutine
+    def log_creation(*, output: pt.abi.String) -> pt.Expr:
+        return output.set("logging creation")
+
+    meth = router.add_method_handler(
+        log_creation, method_config=pt.MethodConfig(no_op=pt.CallConfig.CREATE)
+    )
+    assert meth.method_signature() == "log_creation()string"
+
+
+ON_COMPLETION_ACTIONS = pt.BareCallActions(
+    opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes("optin call"))),
+)
+
+FIRST_ROUTER = pt.Router(
+    "ASimpleQuestionablyRobustContract",
+    ON_COMPLETION_ACTIONS,
+    clear_state=pt.Approve(),
+)
+add_methods_to_router(FIRST_ROUTER)
+
+
+def router_app_tester() -> tuple[list[pt.Router], dict[str, str]]:
+    routers = []
+    sources = {}
+
+    def append_router_info(rinfo, programs):
+        assert len(rinfo) == 3
+        assert len(programs) == 2
+        routers.append(rinfo)
+        sources[rinfo[:2]] = programs
+
+    # V6 not ready for Frame Pointers:
     with pytest.raises(pt.TealInputError) as e:
-        pt.Router("will-error", on_completion_actions).compile_program(
+        pt.Router("will-error", ON_COMPLETION_ACTIONS).compile_program(
             version=6, optimize=pt.OptimizeOptions(frame_pointers=True)
         )
-
     assert "Frame pointers aren't available" in str(e.value)
 
-    _router_with_oc = pt.Router(
-        "ASimpleQuestionablyRobustContract",
-        on_completion_actions,
-        clear_state=pt.Approve(),
+    def router_compilarison(router, version, fixture_ap, fixture_csp, key):
+        actual_ap, actual_csp, _ = router.compile_program(version=version)
+
+        with open(ROUTER_FIXTURES / fixture_ap) as f:
+            expected_ap_with_oc = f.read()
+        with open(ROUTER_FIXTURES / fixture_csp) as f:
+            expected_csp_with_oc = f.read()
+        assert expected_ap_with_oc == actual_ap
+        assert expected_csp_with_oc == actual_csp
+        append_router_info(
+            (
+                key,
+                version,
+                router,
+            ),
+            (
+                actual_ap,
+                actual_csp,
+            ),
+        )
+
+    # QUESTIONABLE V6:
+    _router_with_oc = FIRST_ROUTER
+    router_compilarison(
+        _router_with_oc,
+        6,
+        "questionable_approval_v6.teal",
+        "questionable_clear_v6.teal",
+        "questionable",
     )
-    add_methods_to_router(_router_with_oc)
-    (
-        actual_ap_with_oc_compiled,
-        actual_csp_with_oc_compiled,
-        _,
-    ) = _router_with_oc.compile_program(version=6)
 
-    expected_ap_with_oc = """#pragma version 6
-txn NumAppArgs
-int 0
-==
-bnz main_l20
-txna ApplicationArgs 0
-method "add(uint64,uint64)uint64"
-==
-bnz main_l19
-txna ApplicationArgs 0
-method "sub(uint64,uint64)uint64"
-==
-bnz main_l18
-txna ApplicationArgs 0
-method "mul(uint64,uint64)uint64"
-==
-bnz main_l17
-txna ApplicationArgs 0
-method "div(uint64,uint64)uint64"
-==
-bnz main_l16
-txna ApplicationArgs 0
-method "mod(uint64,uint64)uint64"
-==
-bnz main_l15
-txna ApplicationArgs 0
-method "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
-==
-bnz main_l14
-txna ApplicationArgs 0
-method "empty_return_subroutine()void"
-==
-bnz main_l13
-txna ApplicationArgs 0
-method "log_1()uint64"
-==
-bnz main_l12
-txna ApplicationArgs 0
-method "log_creation()string"
-==
-bnz main_l11
-err
-main_l11:
-txn OnCompletion
-int NoOp
-==
-txn ApplicationID
-int 0
-==
-&&
-assert
-callsub logcreation_8
-store 67
-byte 0x151f7c75
-load 67
-concat
-log
-int 1
-return
-main_l12:
-txn OnCompletion
-int NoOp
-==
-txn ApplicationID
-int 0
-!=
-&&
-txn OnCompletion
-int OptIn
-==
-txn ApplicationID
-int 0
-!=
-&&
-||
-assert
-callsub log1_7
-store 65
-byte 0x151f7c75
-load 65
-itob
-concat
-log
-int 1
-return
-main_l13:
-txn OnCompletion
-int NoOp
-==
-txn ApplicationID
-int 0
-!=
-&&
-txn OnCompletion
-int OptIn
-==
-||
-assert
-callsub emptyreturnsubroutine_6
-int 1
-return
-main_l14:
-txn OnCompletion
-int NoOp
-==
-txn ApplicationID
-int 0
-!=
-&&
-assert
-txna ApplicationArgs 1
-btoi
-store 30
-txna ApplicationArgs 2
-btoi
-store 31
-txna ApplicationArgs 3
-btoi
-store 32
-txna ApplicationArgs 4
-btoi
-store 33
-txna ApplicationArgs 5
-btoi
-store 34
-txna ApplicationArgs 6
-btoi
-store 35
-txna ApplicationArgs 7
-btoi
-store 36
-txna ApplicationArgs 8
-btoi
-store 37
-txna ApplicationArgs 9
-btoi
-store 38
-txna ApplicationArgs 10
-btoi
-store 39
-txna ApplicationArgs 11
-btoi
-store 40
-txna ApplicationArgs 12
-btoi
-store 41
-txna ApplicationArgs 13
-btoi
-store 42
-txna ApplicationArgs 14
-btoi
-store 43
-txna ApplicationArgs 15
-store 46
-load 46
-int 0
-extract_uint64
-store 44
-load 46
-int 8
-extract_uint64
-store 45
-load 30
-load 31
-load 32
-load 33
-load 34
-load 35
-load 36
-load 37
-load 38
-load 39
-load 40
-load 41
-load 42
-load 43
-load 44
-load 45
-callsub alllaidtoargs_5
-store 47
-byte 0x151f7c75
-load 47
-itob
-concat
-log
-int 1
-return
-main_l15:
-txn OnCompletion
-int NoOp
-==
-txn ApplicationID
-int 0
-!=
-&&
-assert
-txna ApplicationArgs 1
-btoi
-store 24
-txna ApplicationArgs 2
-btoi
-store 25
-load 24
-load 25
-callsub mod_4
-store 26
-byte 0x151f7c75
-load 26
-itob
-concat
-log
-int 1
-return
-main_l16:
-txn OnCompletion
-int NoOp
-==
-txn ApplicationID
-int 0
-!=
-&&
-assert
-txna ApplicationArgs 1
-btoi
-store 18
-txna ApplicationArgs 2
-btoi
-store 19
-load 18
-load 19
-callsub div_3
-store 20
-byte 0x151f7c75
-load 20
-itob
-concat
-log
-int 1
-return
-main_l17:
-txn OnCompletion
-int NoOp
-==
-txn ApplicationID
-int 0
-!=
-&&
-assert
-txna ApplicationArgs 1
-btoi
-store 12
-txna ApplicationArgs 2
-btoi
-store 13
-load 12
-load 13
-callsub mul_2
-store 14
-byte 0x151f7c75
-load 14
-itob
-concat
-log
-int 1
-return
-main_l18:
-txn OnCompletion
-int NoOp
-==
-txn ApplicationID
-int 0
-!=
-&&
-assert
-txna ApplicationArgs 1
-btoi
-store 6
-txna ApplicationArgs 2
-btoi
-store 7
-load 6
-load 7
-callsub sub_1
-store 8
-byte 0x151f7c75
-load 8
-itob
-concat
-log
-int 1
-return
-main_l19:
-txn OnCompletion
-int NoOp
-==
-txn ApplicationID
-int 0
-!=
-&&
-assert
-txna ApplicationArgs 1
-btoi
-store 0
-txna ApplicationArgs 2
-btoi
-store 1
-load 0
-load 1
-callsub add_0
-store 2
-byte 0x151f7c75
-load 2
-itob
-concat
-log
-int 1
-return
-main_l20:
-txn OnCompletion
-int OptIn
-==
-bnz main_l22
-err
-main_l22:
-txn ApplicationID
-int 0
-!=
-assert
-byte "optin call"
-log
-int 1
-return
-
-// add
-add_0:
-store 4
-store 3
-load 3
-load 4
-+
-store 5
-load 5
-retsub
-
-// sub
-sub_1:
-store 10
-store 9
-load 9
-load 10
--
-store 11
-load 11
-retsub
-
-// mul
-mul_2:
-store 16
-store 15
-load 15
-load 16
-*
-store 17
-load 17
-retsub
-
-// div
-div_3:
-store 22
-store 21
-load 21
-load 22
-/
-store 23
-load 23
-retsub
-
-// mod
-mod_4:
-store 28
-store 27
-load 27
-load 28
-%
-store 29
-load 29
-retsub
-
-// all_laid_to_args
-alllaidtoargs_5:
-store 63
-store 62
-store 61
-store 60
-store 59
-store 58
-store 57
-store 56
-store 55
-store 54
-store 53
-store 52
-store 51
-store 50
-store 49
-store 48
-load 48
-load 49
-+
-load 50
-+
-load 51
-+
-load 52
-+
-load 53
-+
-load 54
-+
-load 55
-+
-load 56
-+
-load 57
-+
-load 58
-+
-load 59
-+
-load 60
-+
-load 61
-+
-load 62
-+
-load 63
-+
-store 64
-load 64
-retsub
-
-// empty_return_subroutine
-emptyreturnsubroutine_6:
-byte "appear in both approval and clear state"
-log
-retsub
-
-// log_1
-log1_7:
-int 1
-store 66
-load 66
-retsub
-
-// log_creation
-logcreation_8:
-byte 0x00106c6f6767696e67206372656174696f6e
-store 68
-load 68
-retsub""".strip()
-
-    assert expected_ap_with_oc == actual_ap_with_oc_compiled
-
-    expected_csp_with_oc = """#pragma version 6
-int 1
-return""".strip()
-    assert expected_csp_with_oc == actual_csp_with_oc_compiled
-
+    # YACC V6:
     _router_without_oc = pt.Router(
         "yetAnotherContractConstructedFromRouter", clear_state=pt.Approve()
     )
     add_methods_to_router(_router_without_oc)
-    (
-        actual_ap_without_oc_compiled,
-        actual_csp_without_oc_compiled,
-        _,
-    ) = _router_without_oc.compile_program(version=6)
-    expected_ap_without_oc = """#pragma version 6
-txna ApplicationArgs 0
-method "add(uint64,uint64)uint64"
-==
-bnz main_l18
-txna ApplicationArgs 0
-method "sub(uint64,uint64)uint64"
-==
-bnz main_l17
-txna ApplicationArgs 0
-method "mul(uint64,uint64)uint64"
-==
-bnz main_l16
-txna ApplicationArgs 0
-method "div(uint64,uint64)uint64"
-==
-bnz main_l15
-txna ApplicationArgs 0
-method "mod(uint64,uint64)uint64"
-==
-bnz main_l14
-txna ApplicationArgs 0
-method "all_laid_to_args(uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64)uint64"
-==
-bnz main_l13
-txna ApplicationArgs 0
-method "empty_return_subroutine()void"
-==
-bnz main_l12
-txna ApplicationArgs 0
-method "log_1()uint64"
-==
-bnz main_l11
-txna ApplicationArgs 0
-method "log_creation()string"
-==
-bnz main_l10
-err
-main_l10:
-txn OnCompletion
-int NoOp
-==
-txn ApplicationID
-int 0
-==
-&&
-assert
-callsub logcreation_8
-store 67
-byte 0x151f7c75
-load 67
-concat
-log
-int 1
-return
-main_l11:
-txn OnCompletion
-int NoOp
-==
-txn ApplicationID
-int 0
-!=
-&&
-txn OnCompletion
-int OptIn
-==
-txn ApplicationID
-int 0
-!=
-&&
-||
-assert
-callsub log1_7
-store 65
-byte 0x151f7c75
-load 65
-itob
-concat
-log
-int 1
-return
-main_l12:
-txn OnCompletion
-int NoOp
-==
-txn ApplicationID
-int 0
-!=
-&&
-txn OnCompletion
-int OptIn
-==
-||
-assert
-callsub emptyreturnsubroutine_6
-int 1
-return
-main_l13:
-txn OnCompletion
-int NoOp
-==
-txn ApplicationID
-int 0
-!=
-&&
-assert
-txna ApplicationArgs 1
-btoi
-store 30
-txna ApplicationArgs 2
-btoi
-store 31
-txna ApplicationArgs 3
-btoi
-store 32
-txna ApplicationArgs 4
-btoi
-store 33
-txna ApplicationArgs 5
-btoi
-store 34
-txna ApplicationArgs 6
-btoi
-store 35
-txna ApplicationArgs 7
-btoi
-store 36
-txna ApplicationArgs 8
-btoi
-store 37
-txna ApplicationArgs 9
-btoi
-store 38
-txna ApplicationArgs 10
-btoi
-store 39
-txna ApplicationArgs 11
-btoi
-store 40
-txna ApplicationArgs 12
-btoi
-store 41
-txna ApplicationArgs 13
-btoi
-store 42
-txna ApplicationArgs 14
-btoi
-store 43
-txna ApplicationArgs 15
-store 46
-load 46
-int 0
-extract_uint64
-store 44
-load 46
-int 8
-extract_uint64
-store 45
-load 30
-load 31
-load 32
-load 33
-load 34
-load 35
-load 36
-load 37
-load 38
-load 39
-load 40
-load 41
-load 42
-load 43
-load 44
-load 45
-callsub alllaidtoargs_5
-store 47
-byte 0x151f7c75
-load 47
-itob
-concat
-log
-int 1
-return
-main_l14:
-txn OnCompletion
-int NoOp
-==
-txn ApplicationID
-int 0
-!=
-&&
-assert
-txna ApplicationArgs 1
-btoi
-store 24
-txna ApplicationArgs 2
-btoi
-store 25
-load 24
-load 25
-callsub mod_4
-store 26
-byte 0x151f7c75
-load 26
-itob
-concat
-log
-int 1
-return
-main_l15:
-txn OnCompletion
-int NoOp
-==
-txn ApplicationID
-int 0
-!=
-&&
-assert
-txna ApplicationArgs 1
-btoi
-store 18
-txna ApplicationArgs 2
-btoi
-store 19
-load 18
-load 19
-callsub div_3
-store 20
-byte 0x151f7c75
-load 20
-itob
-concat
-log
-int 1
-return
-main_l16:
-txn OnCompletion
-int NoOp
-==
-txn ApplicationID
-int 0
-!=
-&&
-assert
-txna ApplicationArgs 1
-btoi
-store 12
-txna ApplicationArgs 2
-btoi
-store 13
-load 12
-load 13
-callsub mul_2
-store 14
-byte 0x151f7c75
-load 14
-itob
-concat
-log
-int 1
-return
-main_l17:
-txn OnCompletion
-int NoOp
-==
-txn ApplicationID
-int 0
-!=
-&&
-assert
-txna ApplicationArgs 1
-btoi
-store 6
-txna ApplicationArgs 2
-btoi
-store 7
-load 6
-load 7
-callsub sub_1
-store 8
-byte 0x151f7c75
-load 8
-itob
-concat
-log
-int 1
-return
-main_l18:
-txn OnCompletion
-int NoOp
-==
-txn ApplicationID
-int 0
-!=
-&&
-assert
-txna ApplicationArgs 1
-btoi
-store 0
-txna ApplicationArgs 2
-btoi
-store 1
-load 0
-load 1
-callsub add_0
-store 2
-byte 0x151f7c75
-load 2
-itob
-concat
-log
-int 1
-return
+    router_compilarison(
+        _router_without_oc, 6, "yacc_approval_v6.teal", "yacc_clear_v6.teal", "yacc"
+    )
 
-// add
-add_0:
-store 4
-store 3
-load 3
-load 4
-+
-store 5
-load 5
-retsub
+    # QUESTIONABLE FP V8:
+    _router_with_oc = pt.Router(
+        "QuestionableRouterGenerateCodeWithFramePointer",
+        ON_COMPLETION_ACTIONS,
+        clear_state=pt.Approve(),
+    )
+    add_methods_to_router(_router_with_oc)
+    router_compilarison(
+        _router_with_oc,
+        8,
+        "questionableFP_approval_v8.teal",
+        "questionableFP_clear_v8.teal",
+        "questionable",
+    )
 
-// sub
-sub_1:
-store 10
-store 9
-load 9
-load 10
--
-store 11
-load 11
-retsub
+    # YACC FP V8:
+    _router_without_oc = pt.Router(
+        "yetAnotherContractConstructedFromRouterWithFramePointer",
+        clear_state=pt.Approve(),
+    )
+    add_methods_to_router(_router_without_oc)
+    router_compilarison(
+        _router_without_oc,
+        8,
+        "yaccFP_approval_v8.teal",
+        "yaccFP_clear_v8.teal",
+        "yacc",
+    )
 
-// mul
-mul_2:
-store 16
-store 15
-load 15
-load 16
-*
-store 17
-load 17
-retsub
+    non_trivial = pt.Seq(
+        pt.Cond(
+            [pt.Txn.application_args.length() < pt.Int(2), pt.Approve()],
+            [pt.Txn.application_args[0] != pt.Bytes("CLEANUP"), pt.Approve()],
+            [pt.Txn.application_args[1] != pt.Bytes("ABORTING"), pt.Approve()],
+            [pt.Int(1), pt.Reject()],
+        ),
+    )
+    _router_with_nontriv_clear = pt.Router(
+        "QuestionableRouterWithNontrivialClear",
+        bare_calls=ON_COMPLETION_ACTIONS,
+        clear_state=non_trivial,
+    )
+    add_methods_to_router(_router_with_nontriv_clear)
 
-// div
-div_3:
-store 22
-store 21
-load 21
-load 22
-/
-store 23
-load 23
-retsub
+    router_compilarison(
+        _router_with_nontriv_clear,
+        6,
+        "nontriv_clear_approval_v6.teal",
+        "nontriv_clear_clear_v6.teal",
+        "nontriv_clear",
+    )
 
-// mod
-mod_4:
-store 28
-store 27
-load 27
-load 28
-%
-store 29
-load 29
-retsub
+    router_compilarison(
+        _router_with_nontriv_clear,
+        8,
+        "nontriv_clear_approval_v8.teal",
+        "nontriv_clear_clear_v8.teal",
+        "nontriv_clear",
+    )
 
-// all_laid_to_args
-alllaidtoargs_5:
-store 63
-store 62
-store 61
-store 60
-store 59
-store 58
-store 57
-store 56
-store 55
-store 54
-store 53
-store 52
-store 51
-store 50
-store 49
-store 48
-load 48
-load 49
-+
-load 50
-+
-load 51
-+
-load 52
-+
-load 53
-+
-load 54
-+
-load 55
-+
-load 56
-+
-load 57
-+
-load 58
-+
-load 59
-+
-load 60
-+
-load 61
-+
-load 62
-+
-load 63
-+
-store 64
-load 64
-retsub
+    return routers, sources
 
-// empty_return_subroutine
-emptyreturnsubroutine_6:
-byte "appear in both approval and clear state"
-log
-retsub
 
-// log_1
-log1_7:
-int 1
-store 66
-load 66
-retsub
-
-// log_creation
-logcreation_8:
-byte 0x00106c6f6767696e67206372656174696f6e
-store 68
-load 68
-retsub""".strip()
-    assert actual_ap_without_oc_compiled == expected_ap_without_oc
-
-    expected_csp_without_oc = """#pragma version 6
-int 1
-return""".strip()
-    assert actual_csp_without_oc_compiled == expected_csp_without_oc
+def test_router_app():
+    # TODO: this test is redundant as router_app_tester is imported and run by
+    # tests/integration/abi_router_test.py's setup
+    router_app_tester()

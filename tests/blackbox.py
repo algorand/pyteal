@@ -1,16 +1,30 @@
-from typing import Any, Callable, Sequence, cast
+from collections import defaultdict
+from copy import deepcopy
+from dataclasses import dataclass, asdict
+import json
+from typing import Any, Callable, Final, Literal, Sequence, Type, cast
 
-import algosdk.abi
-from algosdk.v2client import algod
+import algosdk.abi as sdk_abi
+from algosdk.transaction import OnComplete
+from algosdk import v2client
 
 from graviton import blackbox
+from graviton.abi_strategy import (
+    ABIArgsMod,
+    ABICallStrategy,
+    ABIStrategy,
+    RandomArgLengthCallStrategy,
+)
 from graviton.blackbox import (
     DryRunInspector,
     DryRunExecutor,
     DryRunTransactionParams as TxParams,
 )
-from graviton.models import PyTypes
+from graviton.inspector import DryRunProperty as DRProp
+from graviton.models import ExecutionMode, PyTypes
+from graviton.sim import InputStrategy, Simulation, SimulationResults
 
+from pyteal.compiler.compiler import OptimizeOptions
 from pyteal.ast.subroutine import OutputKwArgInfo
 
 from pyteal import (
@@ -18,14 +32,17 @@ from pyteal import (
     Arg,
     Btoi,
     Bytes,
+    CallConfig,
     compileTeal,
     Expr,
     Int,
     Itob,
     Len,
     Log,
+    MethodConfig,
     Mode,
     Pop,
+    Router,
     ScratchVar,
     Seq,
     SubroutineFnWrapper,
@@ -34,6 +51,26 @@ from pyteal import (
 )
 
 from pyteal.ast.subroutine import ABIReturnSubroutine
+
+# ---- Types ---- #
+
+Predicates = dict[DRProp, Any]  # same as in graviton
+
+
+CLEAR_STATE_CALL: Final[str] = "ClearStateCall"
+ClearStateCallType = Literal["ClearStateCall"]
+
+# str for methods, None for bare app calls:
+CallType = str | None
+
+# CallType for app calls, CLEAR_STATE_CALL for clear state calls:
+RouterCallType = CallType | ClearStateCallType  # type: ignore
+
+ABICallConfigs = dict[CallType, MethodConfig]
+
+# key `method_config == None` indicates that the MethodConfig's
+# should be picked up from the router
+CallPredicates = dict[RouterCallType, Predicates]
 
 # ---- Clients ---- #
 
@@ -46,9 +83,9 @@ def algod_with_assertion():
 
 def _algod_client(
     algod_address="http://localhost:4001", algod_token="a" * 64
-) -> algod.AlgodClient:
+) -> v2client.algod.AlgodClient:
     """Instantiate and return Algod client object."""
-    return algod.AlgodClient(algod_token, algod_address)
+    return v2client.algod.AlgodClient(algod_token, algod_address)
 
 
 # ---- Decorator ---- #
@@ -205,7 +242,7 @@ class PyTealDryRunExecutor:
 
         return None
 
-    def abi_argument_types(self) -> None | list[algosdk.abi.ABIType]:
+    def abi_argument_types(self) -> None | list[sdk_abi.ABIType]:
         if not (self.input_types or self.is_abi()):
             return None
 
@@ -216,7 +253,7 @@ class PyTealDryRunExecutor:
 
         return [handle_arg(arg) for arg in self.input_types]
 
-    def abi_return_type(self) -> None | algosdk.abi.ABIType:
+    def abi_return_type(self) -> None | sdk_abi.ABIType:
         if not self.is_abi():
             return None
 
@@ -439,4 +476,441 @@ class PyTealDryRunExecutor:
     ) -> DryRunInspector:
         return self.executor(compiler_version).run_one(
             args, txn_params=txn_params, verbose=verbose
+        )
+
+
+def as_on_complete(oc_str: str) -> OnComplete:
+    match oc_str:
+        case "no_op":
+            return OnComplete.NoOpOC
+        case "opt_in":
+            return OnComplete.OptInOC
+        case "close_out":
+            return OnComplete.CloseOutOC
+        case "clear_state":
+            return OnComplete.ClearStateOC
+        case "update_application":
+            return OnComplete.UpdateApplicationOC
+        case "delete_application":
+            return OnComplete.DeleteApplicationOC
+
+    raise ValueError(f"unrecognized {oc_str=}")
+
+
+def negate_cc(cc: CallConfig) -> CallConfig:
+    return CallConfig(3 - cc)
+
+
+@dataclass(frozen=True)
+class RouterSimulationResults:
+    stats: dict[str, Any]
+    results: dict
+    approval_simulator: Simulation | None
+    clear_simulator: Simulation | None
+
+
+class RouterSimulation:
+    """
+    Lifecycle of a RouterSimulation
+
+    1. Creation (__init__ method):
+        * router: Router (no version or other options specified)
+        * predicates: CallPredicates - the Router ought satisfy. Type has shape:
+            * method --> <property -> predicate ...> ...
+        * model_router: Router (optional) - in the case when the predicates provided
+            are of type PredicateKind.IdenticalPair, this parameter needs to be
+            provided for comparison.
+            NOTE: model_router may in fact be the same as router, and in this case
+            it is expected that something else such as version or optimization option
+            would differ between model_router and router during the simulation
+        * algod (optional) - if missing, just get one
+
+    Artifacts from Step 1 are stored in self.results: _SimConfig
+
+    2. Simulation (simulate_and_assert method): - using self.results artifacts Step 1, also takes params:
+        * approval_arg_strat_type: Type[ABICallStrategy]
+            - strategy type to use for approval program's arg generation
+        * clear_arg_strat_type_or_inputs: Type[ABICallStrategy] | Iterable[Sequence[PyTypes]] | None
+            - strategy type to use for clear program's arg generation
+        * approval_abi_args_mod: ABIArgsMod (default None)
+            - used to specify any arg mutation
+        # TODO: currently there aren't any clear_abi_args_mod, but we might need these for testing non-trivial clear programs
+        * version: int - for compiling self.router
+        * method_configs: ABICallConfigs - these drive all the test cases
+        * assemble_constants: bool (optional) - for compiling self.router
+        * optimize: OptimizeOptions (optional) - for compiling self.router
+        * num_dryruns: int (default 1)
+            - the number of input runs to generate per method X config combination
+        * txn_params: TxParams (optional)
+            - other TxParams to append in addition to the (is_app_create, OnComplete) information
+        * model_version: int - for compiling self.model_router
+        * model_assemble_constants: bool (optional) - for compiling self.model_router
+        * model_optimize: OptimizeOptions (optional) - for compiling self.model_router
+        * msg: string (optional) - message to report when an assertion is violated
+        * omit_approval_call: bool (default False) - allow purely testing the clear program
+        * omit_clear_call: bool (default False) - allow purely testing the approval program
+        NOTE: one of omit_approval_call or omit_clear_call must remain False
+        * executor_validation (default True) - when False, skip the DryRunExecutor's validation
+        * skip_validation (default False) - when False, skip the Router's validation
+    """
+
+    def __init__(
+        self,
+        router: Router,
+        predicates: CallPredicates,
+        *,
+        model_router: Router | None = None,
+        algod: v2client.algod.AlgodClient | None = None,
+    ):
+        self.router: Router = self._validate_router(router)
+
+        self.predicates: CallPredicates = self._validate_predicates(predicates)
+
+        self.model_router: Router | None = None
+        if model_router:
+            self.model_router = self._validate_router(model_router, kind="Model")
+
+        self.algod: v2client.algod.AlgodClient = algod or algod_with_assertion()
+
+        self.results: dict[
+            str | None, dict[tuple[bool, OnComplete], SimulationResults]
+        ] = {}
+
+    # ---- Validation ---- #
+
+    @classmethod
+    def _validate_router(cls, router: Router, kind: str = "Base") -> Router:
+        assert isinstance(
+            router, Router
+        ), f"Wrong type for {kind} Router: {type(router)}"
+        cls._validate_method_configs(router.method_configs)
+
+        return router
+
+    @classmethod
+    def _validate_method_configs(cls, method_configs):
+        assert isinstance(
+            method_configs, dict
+        ), f"method_configs '{method_configs}' has type {type(method_configs)} but only 'dict' and 'NoneType' are allowed."
+
+        assert (
+            method_configs
+        ), "make sure to give at least one key/value pair in method_configs"
+
+        for call, meth_config in method_configs.items():
+            assert isinstance(  # type: ignore
+                call, CallType
+            ), f"method_configs dict key '{call}' has type {type(call)} but only str and NoneType are allowed."
+            cls._validate_single_method_config(call, meth_config)
+
+    @classmethod
+    def _validate_single_method_config(cls, call, meth_config):
+        assert isinstance(
+            meth_config, MethodConfig
+        ), f"method_configs['{call}'] = has type {type(meth_config)} but only MethodConfig is allowed."
+        assert (
+            not meth_config.is_never()
+        ), f"method_configs['{call}'] specifies NEVER to be called; for driving the test, each configured method should ACTUALLY be tested."
+        assert (
+            meth_config.clear_state is CallConfig.NEVER
+        ), "unexpected value for method_config's clear_state"
+
+    @classmethod
+    def _validate_predicates(cls, predicates):
+        assert isinstance(predicates, dict), (
+            f"Wrong type for predicates: {type(predicates)}. Please provide: "
+            f"dict[str | None, dict[graviton.DryRunProporty, Any]."
+        )
+
+        assert (
+            len(predicates) > 0
+        ), "Please provide at least one method to call and assert against."
+
+        for method, preds in predicates.items():
+            assert isinstance(method, (str, type(None), type(ClearStateCallType))), (
+                f"Predicates method '{method}' has type {type(method)} but only "
+                "'str' and 'NoneType' and Literal['ClearStateCall'] (== ClearStateCall)"
+                " are allowed."
+            )
+            if isinstance(method, type(ClearStateCallType)):
+                assert method == ClearStateCallType, (
+                    f"Predicates method '{method}' is not allowed. "
+                    "Only Literal['ClearStateCall'] (== ClearStateCall) "
+                    "is allowed for a Literal."
+                )
+            assert (
+                preds
+            ), f"Every method must provide at least one predicate for assertion but method '{method}' is missing predicates."
+            assert isinstance(
+                preds, dict
+            ), f"Method '{method}' is expected to have dict[graviton.DryRunProperty, Any] for its predicates value but the type is {type(preds)}."
+            for prop in preds:
+                assert isinstance(
+                    prop, DRProp
+                ), f"Method '{method}' is expected to have dict[graviton.DryRunProperty, Any] for its predicates value but predicates['{method}'] has key '{prop}' of {type(prop)}."
+
+        return predicates
+
+    def _validate_simulation(
+        self,
+        approval_args_strat_type,
+        clear_args_strat_type,
+        approval_abi_args_mod,
+        num_dryruns,
+        txn_params,
+        model_version,
+        method_configs,
+        contract,
+        model_contract,
+        omit_clear_call,
+    ):
+        assert isinstance(approval_args_strat_type, type) and issubclass(
+            approval_args_strat_type, ABIStrategy
+        ), f"approval_args_strat_type should _BE_ a subtype of ABIStrategy but we have {approval_args_strat_type} (its type is {type(approval_args_strat_type)})."
+        if not omit_clear_call:
+            assert isinstance(clear_args_strat_type, type) and issubclass(
+                clear_args_strat_type, ABIStrategy
+            ), f"clear_args_strat_type should _BE_ a subtype of ABIStrategy but we have {clear_args_strat_type} (its type is {type(clear_args_strat_type)})."
+
+        assert isinstance(
+            approval_abi_args_mod, (ABIArgsMod, type(None))
+        ), f"approval_abi_args_mod '{approval_abi_args_mod}' has type {type(approval_abi_args_mod)} but only 'ABIArgsMod' and 'NoneType' are allowed."
+
+        self._validate_method_configs(method_configs)
+
+        self._validate_meths_in_contract(method_configs, contract)
+
+        if model_contract:
+            self._validate_meths_in_contract(
+                method_configs, model_contract, router_prefix="model"
+            )
+
+        assert (
+            isinstance(num_dryruns, int) and num_dryruns >= 1
+        ), f"num_dryruns must be a positive int but is {num_dryruns}."
+
+        assert isinstance(
+            txn_params, (TxParams, type(None))
+        ), f"txn_params must have type DryRunTransactionParams or NoneType but has type {type(txn_params)}."
+
+        if not self.model_router:
+            assert (
+                model_version is None
+            ), f"model_version '{model_version}' was provided which is nonsensical because model_router was never provided for."
+
+    def _validate_meths_in_contract(
+        self, method_configs, contract, router_prefix="base"
+    ):
+        for meth in method_configs:
+            if meth is None:
+                continue
+            try:
+                contract.get_method_by_name(meth)
+            except KeyError:
+                raise ValueError(
+                    f"method_configs has a method '{meth}' missing from {router_prefix}-Router's contract."
+                )
+
+    def simulate_and_assert(
+        self,
+        approval_args_strat_type: Type[ABIStrategy],
+        clear_args_strat_type_or_inputs: Type[ABIStrategy]
+        | list[Sequence[PyTypes]]
+        | None,
+        approval_abi_args_mod: ABIArgsMod | None,
+        version: int,
+        method_configs: ABICallConfigs,
+        *,
+        assemble_constants: bool = False,
+        optimize: OptimizeOptions | None = None,
+        num_dryruns: int = 1,
+        txn_params: TxParams | None = None,
+        model_version: int | None = None,
+        model_assemble_constants: bool = False,
+        model_optimize: OptimizeOptions | None = None,
+        msg: str = "",
+        omit_approval_call: bool = False,
+        omit_clear_call: bool = False,
+        executor_validation: bool = True,
+        skip_validation: bool = False,
+    ) -> RouterSimulationResults:
+        assert not (
+            omit_approval_call and omit_clear_call
+        ), "Aborting and failing as all tests are being omitted"
+
+        # --- setup local functions including reporter and stats. Also declare closure vars --- #
+
+        # for purposes of clarity, declare all the variables for closures before each function:
+        approve_sim: Simulation | None  # required for return RouterResults
+
+        # msg4simulate:
+
+        # msg - cf. parameters
+        approval_strat: ABICallStrategy | None
+        meth_name: str | None  # simulate_approval's closure as well
+        call_cfg: CallConfig | None
+        is_app_create: bool
+        stats: dict[str, int | str] = defaultdict(int)
+
+        def msg4simulate() -> str:
+            return f"""user provide message={msg}
+call_strat={type(approval_strat)}
+{meth_name=}
+{oc=}
+{call_cfg=}
+{is_app_create=}
+{len(self.predicates[meth_name])=}
+{stats["method_combo_count"]=}
+{stats["dryrun_count"]=}
+{stats["assertions_count"]=}
+"""
+
+        # update_stats:
+        # num_dryruns - cf. parameters
+        # stats - cf. above
+        def update_stats(meth, num_preds):
+            stats[str(meth)] += num_dryruns
+            stats["method_combo_count"] += 1
+            stats["dryrun_count"] += num_dryruns
+            stats["assertions_count"] += num_dryruns * num_preds
+
+        # simulate_approval:
+        # txn_params - cf. parameters
+        oc: OnComplete
+        # approval_strat - cf. above
+
+        def simulate_approval(on_create):
+            tp: TxParams = deepcopy(txn_params)
+            tp.update_fields(TxParams.for_app(is_app_create=on_create, on_complete=oc))
+            sim_results = approve_sim.run_and_assert(
+                approval_strat, txn_params=tp, msg=msg4simulate()
+            )
+            assert sim_results.succeeded
+            if meth_name not in self.results:
+                self.results[meth_name] = {}
+            self.results[meth_name][(on_create, oc)] = sim_results
+            update_stats(meth_name, len(self.predicates[meth_name]))
+
+        # --- Compile Programs --- #
+        approval_teal, clear_teal, contract = self.router.compile_program(
+            version=version, assemble_constants=assemble_constants, optimize=optimize
+        )
+
+        model_approval_teal: str | None = None
+        model_clear_teal: str | None = None
+        model_contract: sdk_abi.Contract | None = None
+        if self.model_router:
+            (
+                model_approval_teal,
+                model_clear_teal,
+                model_contract,
+            ) = self.model_router.compile_program(
+                version=cast(int, model_version),
+                assemble_constants=model_assemble_constants,
+                optimize=model_optimize,
+            )
+
+        if not skip_validation:
+            self._validate_simulation(
+                approval_args_strat_type,
+                clear_args_strat_type_or_inputs,
+                approval_abi_args_mod,
+                num_dryruns,
+                txn_params,
+                model_version,
+                method_configs,
+                contract,
+                model_contract,
+                omit_clear_call,
+            )
+
+        if not txn_params:
+            txn_params = TxParams()
+
+        stats["name"] = self.router.name
+
+        # ---- APPROVAL PROGRAM SIMULATION ---- #
+        if not omit_approval_call:
+            approval_strat = ABICallStrategy(
+                json.dumps(contract.dictify()),
+                approval_args_strat_type,
+                num_dryruns=num_dryruns,
+                abi_args_mod=approval_abi_args_mod,
+            )
+            double_check_at_least_one_method = False
+            for meth_name, meth_cfg in method_configs.items():
+                sig = approval_strat.method_signature(meth_name)
+                approve_sim = Simulation(
+                    self.algod,
+                    ExecutionMode.Application,
+                    approval_teal,
+                    self.predicates[meth_name],
+                    abi_method_signature=sig,
+                    identities_teal=model_approval_teal,
+                    validation=executor_validation,
+                )
+
+                for oc_str, call_cfg in asdict(meth_cfg).items():
+                    oc = as_on_complete(oc_str)
+
+                    # weird walrus is_app_create := ... to fill closure of msg4simulate()
+                    if cast(CallConfig, call_cfg) & CallConfig.CALL:
+                        double_check_at_least_one_method = True
+                        simulate_approval(is_app_create := False)
+
+                    if cast(CallConfig, call_cfg) & CallConfig.CREATE:
+                        double_check_at_least_one_method = True
+                        simulate_approval(is_app_create := True)
+            assert double_check_at_least_one_method, "no method was simulated"
+
+        # ---- CLEAR PROGRAM SIMULATION ---- #
+        approval_strat = None
+        call_cfg = None
+        approve_sim = None
+        clear_strat_or_inputs: InputStrategy  # CallStrategy | Iterable[Sequence[PyTypes]]
+        clear_sim: Simulation | None = None
+        if not omit_clear_call:
+            assert clear_args_strat_type_or_inputs  # therefore Type[ABIStrategy] | list[Sequence[PyTypes]]
+            if isinstance(clear_args_strat_type_or_inputs, list):
+                clear_strat_or_inputs = cast(
+                    list[Sequence[PyTypes]], clear_args_strat_type_or_inputs
+                )
+                # for the closure of local update_stats():
+                num_dryruns = len(clear_strat_or_inputs)
+            else:
+                clear_strat_or_inputs = RandomArgLengthCallStrategy(
+                    cast(Type[ABIStrategy], clear_args_strat_type_or_inputs),
+                    max_args=2,
+                    num_dryruns=num_dryruns,
+                    min_args=0,
+                    type_for_args=sdk_abi.ABIType.from_string("byte[8]"),
+                )
+
+            meth_name = CLEAR_STATE_CALL
+            is_app_create = False
+            oc = OnComplete.ClearStateOC
+            clear_sim = Simulation(
+                self.algod,
+                ExecutionMode.Application,
+                clear_teal,
+                self.predicates[meth_name],
+                identities_teal=model_clear_teal,
+                validation=executor_validation,
+            )
+
+            sim_results = clear_sim.run_and_assert(
+                clear_strat_or_inputs, msg=msg4simulate()
+            )
+            assert sim_results.succeeded
+            if meth_name not in self.results:
+                self.results[meth_name] = {}
+            self.results[meth_name][(is_app_create, oc)] = sim_results
+            update_stats(meth_name, len(self.predicates[meth_name]))
+
+        # ---- Summary Statistics ---- #
+        return RouterSimulationResults(
+            stats=stats,
+            results=self.results,
+            approval_simulator=approve_sim,
+            clear_simulator=clear_sim,
         )
