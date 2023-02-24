@@ -481,16 +481,18 @@ class Compilation:
         # run a second time without, and assert that the same teal is produced
         with sourcemapping_off_context():
             assert NatalStackFrame.sourcemapping_is_off()
-            bundle_wo = self._compile_impl(
-                with_sourcemap=False,
-                pcs_in_sourcemap=False,
-                annotate_teal=False,
-                annotate_teal_headers=False,
-                annotate_teal_concise=True,
+
+            # Implicitly recursive call!!
+            teal_code_wo = compileTeal(
+                self.ast,
+                self.mode,
+                version=self.version,
+                assembleConstants=self.assemble_constants,
+                optimize=self.optimize,
             )
 
             _PyTealSourceMapper._validate_teal_identical(
-                bundle_wo.teal,
+                teal_code_wo,
                 teal_code,
                 msg="FATAL ERROR. Program without sourcemaps (LEFT) differs from Program with (RIGHT)",
             )
