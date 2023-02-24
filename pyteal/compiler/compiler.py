@@ -110,7 +110,6 @@ def verifyOpsForVersion(teal: List[TealComponent], version: int):
         if isinstance(stmt, TealOp):
             op = stmt.getOp()
             if op.min_version > version:
-                # TODO: convert this to a `verifyProgramVersion()` call
                 raise TealInputError(
                     "Op not supported in program version {}: {}. Minimum required version is {}".format(
                         version, op, op.min_version
