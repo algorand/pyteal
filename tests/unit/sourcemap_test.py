@@ -93,7 +93,7 @@ def test_TealMapItem_source_mapping():
     mock_source_lines[expr_line_offset] = expr_str
     source_files = ["sourcemap_test.py"]
     r3sm = R3SourceMap(
-        file="dohhh.teal",
+        filename="dohhh.teal",
         source_root="~",
         entries={(i, 0): tmi.source_mapping() for i, tmi in enumerate(tmis)},
         index=[(0,) for _ in range(3)],

@@ -62,7 +62,7 @@ def test_r3sourcemap(mock_ConfigParser):
     r3sm = ptsm._cached_r3sourcemap
     assert r3sm
 
-    assert filename == r3sm.file
+    assert filename == r3sm.filename
     assert str(r3sm.source_root).startswith(str(Path.cwd()))
     assert list(range(len(r3sm.entries))) == [line for line, _ in r3sm.entries]
     assert all(c == 0 for _, c in r3sm.entries)
