@@ -2470,8 +2470,6 @@ def buggy_compile(debug_const):
 
     @pt.ABIReturnSubroutine
     def get_fie(y: pt.abi.Uint8, *, output: pt.abi.Uint64) -> pt.Expr:
-        """Returns the asset balance for the given instrument ID"""
-
         data = pt.abi.make(pt.abi.DynamicBytes)
         return pt.Seq(
             data.set(get(foo, y)),
