@@ -1,0 +1,87 @@
+#pragma version 8
+intcblock 0
+bytecblock 0x
+txna ApplicationArgs 0
+pushbytes 0xef6682e4 // "fie(uint8)void"
+==
+bnz main_l2
+err
+main_l2:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+callsub fiecaster_4
+pushint 1 // 1
+return
+
+// get
+get_0:
+proto 2 1
+bytec_0 // ""
+bytec_0 // ""
+frame_bury 0
+frame_dig 0
+len
+itob
+extract 6 0
+frame_dig 0
+concat
+frame_bury 0
+retsub
+
+// get_fie
+getfie_1:
+proto 1 1
+intc_0 // 0
+bytec_0 // ""
+intc_0 // 0
+dup
+bytec_0 // ""
+load 0
+frame_dig -1
+callsub get_0
+frame_bury 1
+frame_dig 1
+extract 2 0
+btoi
+frame_bury 0
+retsub
+
+// set_
+set_2:
+proto 2 0
+retsub
+
+// fie
+fie_3:
+proto 1 0
+intc_0 // 0
+dupn 2
+bytec_0 // ""
+intc_0 // 0
+dup
+bytec_0 // ""
+frame_dig -1
+callsub getfie_1
+frame_bury 0
+load 0
+frame_dig -1
+callsub set_2
+retsub
+
+// fie_caster
+fiecaster_4:
+proto 0 0
+intc_0 // 0
+txna ApplicationArgs 1
+intc_0 // 0
+getbyte
+frame_bury 0
+frame_dig 0
+callsub fie_3
+retsub
