@@ -971,7 +971,7 @@ class _PyTealSourceMapper:
     def pure_teal(self) -> str:
         return "\n".join(tmi.teal_line for tmi in self.as_list())
 
-    _tabulate_param_defaults = dict(
+    _tabulate_param_defaults: Final[dict[str, str]] = dict(
         teal=_TEAL_LINE,
         tabulatable_teal=_TABULATABLE_TEAL,
         pyteal_hybrid_unparsed=_PYTEAL_HYBRID_UNPARSED,
