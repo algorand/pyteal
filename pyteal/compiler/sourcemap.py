@@ -819,8 +819,9 @@ class _PyTealSourceMapper:
         self._build_r3sourcemap()
 
         if not NatalStackFrame._debug:
-            self._best_frames = []
-            self._inferred_frames_at = []
+            # cf. https://stackoverflow.com/questions/850795/different-ways-of-clearing-lists#answer-44349418
+            self._best_frames *= 0
+            self._inferred_frames_at *= 0
 
         self._validate_build()
 
