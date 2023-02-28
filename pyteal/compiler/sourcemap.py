@@ -493,9 +493,9 @@ class TealMapItem(PyTealFrame):
                 node = getattr(node, "parent", None)
 
             if node and is_return:
-                code = self.code()
+                raw_code = self.raw_code()
                 pt_chunk = ast.unparse(node)
-                return self._hybrid_impl(code, node, pt_chunk)
+                return self._hybrid_impl(raw_code, node, pt_chunk)
 
         return super()._hybrid_w_offset()
 
@@ -524,7 +524,7 @@ class TealMapItem(PyTealFrame):
             _PYTEAL_LINE_NUMBER_END: self.node_end_lineno(),
             _PYTEAL_COLUMN: self.column(),
             _PYTEAL_COLUMN_END: self.node_end_col_offset(),
-            _PYTEAL_LINE: self.code(),
+            _PYTEAL_LINE: self.raw_code(),
             _PYTEAL_NODE_AST: self.node,
             _PYTEAL_NODE_AST_NONE: self.failed_ast(),
             _STATUS_CODE: self.status_code(),
@@ -546,7 +546,7 @@ class TealMapItem(PyTealFrame):
         if self.lineno() is None:
             raise ValueError("unable to export without valid target PyTEAL line number")
 
-    def source_mapping(self, _hybrid: bool = True) -> "R3SourceMapping":
+    def source_mapping(self) -> "R3SourceMapping":
         self.validate_for_export()
         return R3SourceMapping(
             line=cast(int, self.teal_lineno) - 1,
@@ -557,7 +557,7 @@ class TealMapItem(PyTealFrame):
             source_column=self.column(),
             source_line_end=nel - 1 if (nel := self.node_end_lineno()) else None,
             source_column_end=self.node_end_col_offset(),
-            source_extract=self.hybrid_unparsed() if _hybrid else self.code(),
+            source_extract=self.hybrid_unparsed(),
             target_extract=self.teal_line,
         )
 
