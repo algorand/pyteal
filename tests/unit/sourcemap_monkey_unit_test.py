@@ -233,7 +233,7 @@ def test_hybrid_w_offset(mock_ConfigParser):
     lbf = sourcemap._best_frames[-1]
     hwo = lbf._hybrid_w_offset()
     nsource = lbf.node_source()
-    code = lbf.code()
+    raw_code = lbf.raw_code()
     naive_line = lbf.frame_info.lineno
 
     # consistent across versions:
@@ -243,11 +243,11 @@ def test_hybrid_w_offset(mock_ConfigParser):
     # inconsistent between 3.10 and 3.11:
     if sys.version_info[:2] <= (3, 10):
         assert 0 == hwo[1]
-        assert "def set_foo(" == code
+        assert "def set_foo(" == raw_code
         assert SUCCESSFUL_SUBROUTINE_LINENO == naive_line
     else:
         assert 1 == hwo[1]
-        assert "@pt.ABIReturnSubroutine" == code
+        assert "@pt.ABIReturnSubroutine" == raw_code
         assert SUCCESSFUL_SUBROUTINE_LINENO - 1 == naive_line
 
 
@@ -302,7 +302,7 @@ def patch_pt_frame(code, is_funcdef, pt_chunk):
     frame = PyTealFrame(
         frame_info="dummy frame_info", node=node, creator=None, full_stack=None
     )
-    with mock.patch.object(frame, "code", return_value=code), mock.patch.object(
+    with mock.patch.object(frame, "raw_code", return_value=code), mock.patch.object(
         frame, "node_source", return_value=pt_chunk
     ):
 

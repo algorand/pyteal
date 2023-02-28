@@ -612,10 +612,10 @@ class PyTealFrame(StackFrame):
         Attempt to unparse the node and return the most apropos line,
         together with its offset in comparison with its raw code.
         """
-        code = self.code()
+        raw_code = self.raw_code()
         node = self.node
         pt_chunk = self.node_source()
-        return self._hybrid_impl(code, node, pt_chunk)
+        return self._hybrid_impl(raw_code, node, pt_chunk)
 
     @classmethod
     def _hybrid_impl(
@@ -655,20 +655,7 @@ class PyTealFrame(StackFrame):
 
         return code, 0
 
-    def code(self) -> str:
-        """using _PT_GEN here is DEPRECATED"""
-        raw = self.raw_code()
-        if not self.compiler_generated():
-            return raw
-
-        for k, v in _PT_GEN.items():
-            if k in raw:
-                return f"{v}: {raw}"
-
-        return f"Unhandled # T2PT commentary: {raw}"
-
     # END OF VARIATIONS ON A THEME OF CODE
-
     def failed_ast(self) -> bool:
         return not self.node
 
@@ -727,7 +714,7 @@ class PyTealFrame(StackFrame):
             return "None"
 
         spaces = "\n\t\t\t"
-        short = f"<{self.code()}>{spaces}@{self.location()}"
+        short = f"<{self.raw_code()}>{spaces}@{self.location()}"
         if not verbose:
             return short
 
