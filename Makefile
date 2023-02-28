@@ -125,4 +125,4 @@ coverage:
 	pytest --cov-report html --cov=pyteal
 
 sourcemap-coverage:
-	pytest --cov-report html --cov=pyteal.stack_frame --cov=pyteal.compiler.sourcemap --cov=pyteal.compiler.compiler  --dist=no  tests/unit/sourcemap_monkey_unit_test.py -m serial
+	pytest --cov-report html --cov=pyteal.stack_frame --cov=pyteal.compiler.sourcemap --cov=pyteal.compiler.compiler --dist=no tests/unit/sourcemap_monkey_unit_test.py -m serial

@@ -649,8 +649,9 @@ class PyTealFrame(StackFrame):
                     if line.startswith("def"):
                         if code_idx >= 0:
                             offset = i - code_idx
-                        break
-                return pt_lines[i], offset
+                        return pt_lines[i], offset
+                if code_idx >= 0:
+                    return pt_lines[code_idx], 0
 
         return code, 0
 

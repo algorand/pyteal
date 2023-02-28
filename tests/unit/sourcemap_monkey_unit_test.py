@@ -1,8 +1,8 @@
-"""
-This file monkey-patches ConfigParser in order to enable source mapping
-and test the results of source mapping various PyTeal apps.
+"""Includeds monkey-patches of ConfigParser
 """
 
+from ast import FunctionDef
+from contextlib import contextmanager
 from configparser import ConfigParser
 from pathlib import Path
 import pytest
@@ -249,6 +249,70 @@ def test_hybrid_w_offset(mock_ConfigParser):
         assert 1 == hwo[1]
         assert "@pt.ABIReturnSubroutine" == code
         assert SUCCESSFUL_SUBROUTINE_LINENO - 1 == naive_line
+
+
+PyTealFrame_CASES = [
+    (
+        "some code",
+        False,
+        "some chunk",
+        ("some chunk", 0),
+    ),
+    (
+        "some code",
+        True,
+        "some chunk",
+        ("some chunk", 0),
+    ),
+    (
+        "first line",
+        True,
+        "first line and more\nsecond line",
+        ("first line and more", 0),
+    ),
+    (
+        "first line",
+        True,
+        "first line and more\ndef second line",
+        ("def second line", 1),
+    ),
+    (
+        "first line",
+        False,
+        None,
+        ("first line", 0),
+    ),
+    (
+        "first line",
+        True,
+        None,
+        ("first line", 0),
+    ),
+]
+
+
+@contextmanager
+def patch_pt_frame(code, is_funcdef, pt_chunk):
+    from pyteal.stack_frame import PyTealFrame
+
+    node = None
+    if is_funcdef:
+        node = FunctionDef(name="foo", body=[], decorator_list=[], returns=None)
+
+    frame = PyTealFrame(
+        frame_info="dummy frame_info", node=node, creator=None, full_stack=None
+    )
+    with mock.patch.object(frame, "code", return_value=code), mock.patch.object(
+        frame, "node_source", return_value=pt_chunk
+    ):
+
+        yield frame
+
+
+@pytest.mark.parametrize("code, is_funcdef, pt_chunk, expected", PyTealFrame_CASES)
+def test_mock_hybrid_w_offset(code, is_funcdef, pt_chunk, expected):
+    with patch_pt_frame(code, is_funcdef, pt_chunk) as pt_frame:
+        assert expected == pt_frame._hybrid_w_offset()
 
 
 def assert_algobank_unparsed_as_expected(actual):
