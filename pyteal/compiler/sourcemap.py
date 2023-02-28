@@ -543,12 +543,9 @@ class TealMapItem(PyTealFrame):
         Ensure providing necessary and unambiguous data before exporting.
         """
         if self.teal_lineno is None:
-            raise ValueError("unable to export without valid line number: None")
-        if (line := self.lineno()) is None or self.column() is None:
-            col = self.column()
-            raise ValueError(
-                f"unable to export without valid line and column for SOURCE but got: {line=}, {col=}"
-            )
+            raise ValueError("unable to export without valid target TEAL line number")
+        if self.lineno() is None:
+            raise ValueError("unable to export without valid target PyTEAL line number")
 
     def source_mapping(self, _hybrid: bool = True) -> "R3SourceMapping":
         self.validate_for_export()
