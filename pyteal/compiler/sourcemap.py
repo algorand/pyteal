@@ -1000,8 +1000,8 @@ class _PyTealSourceMapper:
         tablefmt="fancy_grid",
         numalign="right",
         omit_headers: bool = False,
-        omit_repeating_col_except: list[str] = [],
-        post_process_delete_cols: list[str] = [],
+        omit_repeating_col_except: list[str] | None = None,
+        post_process_delete_cols: list[str] | None = None,
         **kwargs,
     ) -> str:
         """
@@ -1109,11 +1109,12 @@ class _PyTealSourceMapper:
                 map(lambda r_and_n: reduction(*r_and_n), zip(rows[:-1], rows[1:]))
             )
 
-        for col in post_process_delete_cols:
-            col_name = renames.pop(col)
-            for row in rows:
-                if col_name in row:
-                    del row[col_name]
+        if post_process_delete_cols:
+            for col in post_process_delete_cols:
+                col_name = renames.pop(col)
+                for row in rows:
+                    if col_name in row:
+                        del row[col_name]
 
         calling_kwargs: dict[str, Any] = {"tablefmt": tablefmt, "numalign": numalign}
         if not omit_headers:
