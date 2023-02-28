@@ -936,11 +936,6 @@ class _PyTealSourceMapper:
     def _infer(
         cls, best_frames: list[PyTealFrame]
     ) -> tuple[list[PyTealFrame], list[int]]:
-        """
-        NOTE: strictly speaking, this is _NOT_ a pure function as some frames
-        become "parents" of babies born by PyTealFrame.spawn().
-        However, elements of `frames` are not replaced/rearranged/mutated.
-        """
         inferred = []
         frames = list(best_frames)
         N = len(frames)
@@ -954,9 +949,7 @@ class _PyTealSourceMapper:
             next_frame = None if N <= i + 1 else frames[i + 1]
             if prev_frame and next_frame:
                 if prev_frame == next_frame:
-                    return frame.spawn(
-                        prev_frame, PytealFrameStatus.PATCHED_BY_PREV_AND_NEXT
-                    )
+                    return prev_frame.clone(PytealFrameStatus.PATCHED_BY_PREV_AND_NEXT)
 
                 # PT Generated TypeEnum's presumably happened because of setting an transaction
                 # field in the next step:
@@ -967,25 +960,25 @@ class _PyTealSourceMapper:
                     PT_GENERATED.BRANCH_LABEL,
                     PT_GENERATED.BRANCH,
                 ]:
-                    return frame.spawn(
-                        next_frame, PytealFrameStatus.PATCHED_BY_NEXT_OVERRIDE_PREV
+                    return next_frame.clone(
+                        PytealFrameStatus.PATCHED_BY_NEXT_OVERRIDE_PREV
                     )
 
                 if reason == PT_GENERATED.FLAGGED_BY_DEV:
-                    return frame.spawn(
-                        prev_frame, PytealFrameStatus.PATCHED_BY_PREV_OVERRIDE_NEXT
+                    return prev_frame.clone(
+                        PytealFrameStatus.PATCHED_BY_PREV_OVERRIDE_NEXT
                     )
 
                 # NO-OP otherwise:
                 return None
 
             if prev_frame and frame:
-                return frame.spawn(prev_frame, PytealFrameStatus.PATCHED_BY_PREV)
+                return prev_frame.clone(PytealFrameStatus.PATCHED_BY_PREV)
 
             # TODO: We never get here because we have no trouble with the #pragma component
             # Either remove or make it useful
             if next_frame and frame:
-                return frame.spawn(next_frame, PytealFrameStatus.PATCHED_BY_NEXT)
+                return next_frame.clone(PytealFrameStatus.PATCHED_BY_NEXT)
 
             return None
 

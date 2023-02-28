@@ -519,16 +519,13 @@ class PyTealFrame(StackFrame):
             ]
         )
 
-    def spawn(self, other: "PyTealFrame", status: PytealFrameStatus) -> "PyTealFrame":
-        assert isinstance(other, PyTealFrame)
-
+    def clone(self, status: PytealFrameStatus) -> "PyTealFrame":
         ptf = PyTealFrame(
-            frame_info=other.frame_info,
-            node=other.node,
-            creator=other.creator,
-            full_stack=other.full_stack,
-            rel_paths=other.rel_paths,
-            parent=self,
+            frame_info=self.frame_info,
+            node=self.node,
+            creator=self.creator,
+            full_stack=self.full_stack,
+            rel_paths=self.rel_paths,
         )
         ptf._status = status
 
