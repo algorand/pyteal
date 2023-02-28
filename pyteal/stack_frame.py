@@ -4,14 +4,14 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import IntEnum
 from inspect import FrameInfo, stack
-from typing import Callable, cast
+from typing import Callable, Final, cast
 import os
 import re
 
 from executing import Source  # type: ignore
 
 
-@dataclass
+@dataclass(frozen=True)
 class StackFrame:
     """
     StackFrame is an _internal_ PyTeal class and is
@@ -494,8 +494,8 @@ class PyTealFrame(StackFrame):
         parent: "PyTealFrame | None" = None,
     ):
         super().__init__(frame_info, node, creator, full_stack)
-        self.rel_paths = rel_paths
-        self.parent = parent
+        self.rel_paths: Final[bool] = rel_paths
+        self.parent: "Final[PyTealFrame | None]" = parent
 
         self._raw_code: str | None = None
         self._status: PytealFrameStatus | None = None

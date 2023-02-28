@@ -472,11 +472,10 @@ class TealMapItem(PyTealFrame):
             rel_paths=pt_frame.rel_paths,
             parent=pt_frame.parent,
         )
-        self.teal_lineno: int = teal_lineno
-        self.teal_line: str = teal_line
-        self.teal_component: pt.TealComponent = teal_component
-        self.pcs_hydrated: bool = pcs is not None
-        self.pcs: list[int] | None = pcs if pcs else None
+        self.teal_lineno: Final[int] = teal_lineno
+        self.teal_line: Final[str] = teal_line
+        self.teal_component: Final[pt.TealComponent] = teal_component
+        self.pcs: Final[list[int] | None] = pcs if pcs else None
 
     def _hybrid_w_offset(self) -> tuple[str, int]:
         """
@@ -501,7 +500,7 @@ class TealMapItem(PyTealFrame):
         return super()._hybrid_w_offset()
 
     def pcs_repr(self, prefix: str = "") -> str:
-        if not (self.pcs_hydrated and self.pcs):
+        if not self.pcs:
             return ""
         return f"{prefix}({self.pcs[0]})"
 
