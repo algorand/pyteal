@@ -900,12 +900,10 @@ class _PyTealSourceMapper:
         self._cached_pc_sourcemap = PCSourceMap(raw_sourcemap)
 
     def as_list(self) -> list[TealMapItem]:
-        # TODO: finer grained caching/building
         self.build()
         return self._cached_tmis
 
     def as_r3sourcemap(self) -> R3SourceMap | None:
-        # TODO: finer grained caching/building
         self.build()
         return self._cached_r3sourcemap
 
