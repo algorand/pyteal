@@ -423,7 +423,6 @@ _TEAL_LINE_NUMBER = "TL"
 _TEAL_COLUMN = "TC"
 _TEAL_COLUMN_END = "TCE"
 _TEAL_LINE = "Teal Line"
-_TABULATABLE_TEAL = "Tabulatable Teal"
 _PROGRAM_COUNTERS = "PC"
 _PYTEAL_HYBRID_UNPARSED = "PyTeal Hybrid Unparsed"
 _PYTEAL_NODE_AST_UNPARSED = "PyTeal AST Unparsed"
@@ -973,7 +972,6 @@ class _PyTealSourceMapper:
 
     _tabulate_param_defaults: Final[dict[str, str]] = dict(
         teal=_TEAL_LINE,
-        tabulatable_teal=_TABULATABLE_TEAL,
         pyteal_hybrid_unparsed=_PYTEAL_HYBRID_UNPARSED,
         pyteal=_PYTEAL_NODE_AST_UNPARSED,
         teal_line_number=_TEAL_LINE_NUMBER,
