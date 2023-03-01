@@ -437,7 +437,7 @@ _PT_GEN = {
 }
 
 
-class PytealFrameStatus(IntEnum):
+class PyTealFrameStatus(IntEnum):
     """integer values indicate 'confidence' on a scale of 0 - 10"""
 
     MISSING = 0
@@ -498,7 +498,7 @@ class PyTealFrame(StackFrame):
         self.parent: "Final[PyTealFrame | None]" = parent
 
         self._raw_code: str | None = None
-        self._status: PytealFrameStatus | None = None
+        self._status: PyTealFrameStatus | None = None
 
     def __repr__(self) -> str:
         """
@@ -519,7 +519,7 @@ class PyTealFrame(StackFrame):
             ]
         )
 
-    def clone(self, status: PytealFrameStatus) -> "PyTealFrame":
+    def clone(self, status: PyTealFrameStatus) -> "PyTealFrame":
         ptf = PyTealFrame(
             frame_info=self.frame_info,
             node=self.node,
@@ -659,23 +659,23 @@ class PyTealFrame(StackFrame):
     def failed_ast(self) -> bool:
         return not self.node
 
-    def status_code(self) -> PytealFrameStatus:
+    def status_code(self) -> PyTealFrameStatus:
         if self._status is not None:
             return self._status
 
         if self.frame_info is None:
-            return PytealFrameStatus.MISSING
+            return PyTealFrameStatus.MISSING
 
         if self.node is None:
-            return PytealFrameStatus.MISSING_AST
+            return PyTealFrameStatus.MISSING_AST
 
         if self.compiler_generated():
-            return PytealFrameStatus.PYTEAL_GENERATED
+            return PyTealFrameStatus.PYTEAL_GENERATED
 
         if not self.raw_code():
-            return PytealFrameStatus.MISSING_CODE
+            return PyTealFrameStatus.MISSING_CODE
 
-        return PytealFrameStatus.COPACETIC
+        return PyTealFrameStatus.COPACETIC
 
     def status(self) -> str:
         return self.status_code().human()
