@@ -1,57 +1,54 @@
 #!/usr/bin/env python3
 
 import base64
-import params
 import uuid
 
-from algosdk import account, algod, mnemonic, transaction
+from algosdk import account, algod, encoding, mnemonic, transaction
 from pyteal import *
 
 from recurring_swap import recurring_swap
 
-# Compile TEAL source code
+# compile teal
 teal_source = compileTeal(recurring_swap(), mode=Mode.Signature, version=2)
+teal_bytes = base64.b64decode(teal_source)
 
-# Compile TEAL program with Python SDK
-compiled_teal = transaction.compile_teal(teal_source)
-
-# Create an algod client
-acl = algod.AlgodClient(params.algod_token, params.algod_address)
+# create algod clients
+algod_client = algod.AlgodClient("<algod-token>", "<algod-address>")
 
 # Recover the account that is wanting to delegate signature
-passphrase = "patrol crawl rule faculty enemy sick reveal embody trumpet win shy zero ill draw swim excuse tongue under exact baby moral kite spring absent double"
+passphrase = "your-account-passphrase-here"
 sk = mnemonic.to_private_key(passphrase)
-addr = account.address_from_private_key(sk)
-print("Dispense at least 201000 microAlgo to {}".format(addr))
-input("Make sure you did that. Press Enter to continue...")
+sender = account.address_from_private_key(sk)
 
-# Get suggested parameters
-params = acl.suggested_params()
-gen = params["genesisID"]
-gh = params["genesishashb64"]
-startRound = params["lastRound"] - (params["lastRound"] % 1000)
-endRound = startRound + 1000
-fee = 1000
-amount = 200000
-receiver = "ZZAF5ARA4MEC5PVDOP64JM5O5MQST63Q2KOY2FLYFLXXD3PFSNJJBYAFZM"
-lease = base64.b64decode("y9OJ5MRLCHQj8GqbikAUKMBI7hom+SOj8dlopNdNHXI=")
+# get suggested parameters
+params = algod_client.suggested_params()
+params.fee = 1000
 
-# Create a transaction
-txn = transaction.PaymentTxn(addr, fee, startRound, endRound, gh, receiver, amount, flat_fee=True, lease=lease)
+# create the transaction
+txn = transaction.PaymentTxn(
+    sender=sender,
+    fee=params.fee,
+    first=params.first,
+    last=params.last,
+    gh=params.genesis_hash,
+    receiver=sender,
+    amount=0,
+    close_remainder_to=sender,
+    lease=base64.b64decode("oR/ACMN6EDwCwstJcrNQrgI6T3F6NQPDnmYVcLrz1v4="),
+)
 
-# Create a logic signature from compiled TEAL program
-lsig = transaction.LogicSig(compiled_teal)
+# create the logic signature
+lsig = transaction.LogicSig(teal_bytes)
 
-# Sign the logic signature with an account sk
+# sign the logic signature with an account sk
 lsig.sign(sk)
 
-# Create a logic signature transaction with the contract account LogicSig
+# create the logic signature transaction
 lstx = transaction.LogicSigTransaction(txn, lsig)
 
-# Write the transaction to a file
-txns = [lstx]
-transaction.write_to_file(txns, "r_swap.stxn")
+# write the transaction to file
+transaction.write_to_file([lstx], "<filename>.stxn")
 
-# Send the raw LogicSigTransaction to the network
-txid = acl.send_transaction(lstx)
+# send the transaction
+txid = algod_client.send_transaction(lstx)
 print("Transaction ID: " + txid)
