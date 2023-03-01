@@ -198,9 +198,9 @@ def _index_tuple(
         if offset == 0:
             # This is the first and only value in the tuple, so decode all of encoded
             return output.decode(encoded)
-        # This is the last value in the tuple, so decode the substring from start_index to the end of
-        # encoded
-        return output.decode(encoded, start_index=start_index)
+        if all(not x.is_dynamic() for x in value_types):
+            # This is the last element in tuple with all elements being static typed
+            return output.decode(encoded, start_index=start_index)
 
     if offset == 0:
         # This is the first value in the tuple, so decode the substring from 0 with length length
@@ -341,17 +341,18 @@ class Tuple(BaseType):
         if len(values) == 1 and isinstance(values[0], ComputedValue):
             return self._set_with_computed_type(values[0])
 
-        for value in values:
-            if not isinstance(value, BaseType):
-                raise TealInputError(f"Expected BaseType, got {value}")
-
         myTypes = self.type_spec().value_type_specs()
         if len(myTypes) != len(values):
             raise TealInputError(
                 f"Incorrect length for values. Expected {len(myTypes)}, got {len(values)}"
             )
-        if not all(myTypes[i] == values[i].type_spec() for i in range(len(myTypes))):
-            raise TealInputError("Input values do not match type")
+        for index, (value, myType) in enumerate(zip(values, myTypes)):
+            if not isinstance(value, BaseType):
+                raise TealInputError(f"Expected BaseType, got {value}")
+            if myType != value.type_spec():
+                raise TealInputError(
+                    f"Input values do not match type at {index=}: {value.type_spec()} != {myType}"
+                )
         return self._stored_value.store(_encode_tuple(values))
 
     def encode(self) -> Expr:

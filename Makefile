@@ -52,10 +52,15 @@ lint: black flake8 mypy sdist-check
 # ---- Unit Tests (no algod) ---- #
 
 # TODO: add blackbox_test.py to multithreaded tests when following issue has been fixed https://github.com/algorand/pyteal/issues/199
+
 NUM_PROCS = auto
-test-unit:
-	pytest -n $(NUM_PROCS) --durations=10 -sv pyteal tests/unit --ignore tests/unit/blackbox_test.py --ignore tests/unit/user_guide_test.py
-	pytest -n 1 -sv tests/unit/blackbox_test.py tests/unit/user_guide_test.py
+test-unit-async:
+	pytest -n $(NUM_PROCS) --durations=10 -sv pyteal tests/unit -m "not serial"
+
+test-unit-sync:
+	pytest --durations=10 -sv pyteal tests/unit -m serial
+
+test-unit: test-unit-async test-unit-sync
 
 lint-and-test: check-generate-init lint test-unit
 
@@ -64,9 +69,13 @@ lint-and-test: check-generate-init lint test-unit
 algod-start:
 	docker compose up -d algod --wait
 
+algod-version:
+	docker compose exec algod goal --version
+
+algod-start-report: algod-start algod-version
+
 algod-stop:
 	docker compose stop algod
-
 integration-run:
 	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration -m "not serial"
 	pytest --durations=10 -sv tests/integration -m serial
@@ -74,6 +83,19 @@ integration-run:
 test-integration: integration-run
 
 all-tests: lint-and-test test-integration
+
+# ---- Github Actions 1-Liners ---- #
+
+setup-build-test: setup-development lint-and-test
+
+algod-integration: algod-start setup-development test-integration algod-stop
+
+check-code-changes:
+	git config --global --add safe.directory /__w/pyteal/pyteal
+	[ -n "$$(git log --since='24 hours ago')" ] && (echo "should_run=true" >> $(GITHUB_ENV)) || (echo "should_run=false" >> $(GITHUB_ENV))
+
+nightly-slow:
+	echo "TODO - this is a stub for a very slow test"
 
 # ---- Local Github Actions Simulation via `act` ---- #
 # assumes act is installed, e.g. via `brew install act`

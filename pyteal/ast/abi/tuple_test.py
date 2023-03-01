@@ -236,6 +236,7 @@ def test_indexTuple():
     tuple_t = abi.TupleTypeSpec(abi.BoolTypeSpec(), abi.BoolTypeSpec())
     dynamic_array_t1 = abi.DynamicArrayTypeSpec(abi.Uint64TypeSpec())
     dynamic_array_t2 = abi.DynamicArrayTypeSpec(abi.Uint16TypeSpec())
+    static_bytes_t = abi.StaticBytesTypeSpec(2)
 
     encoded = pt.Bytes("encoded")
 
@@ -369,6 +370,23 @@ def test_indexTuple():
             typeIndex=0,
             expected=lambda output: output.decode(
                 encoded, start_index=pt.ExtractUint16(encoded, pt.Int(0))
+            ),
+        ),
+        IndexTest(
+            types=[dynamic_array_t1, static_bytes_t],
+            typeIndex=1,
+            expected=lambda output: output.decode(
+                encoded,
+                start_index=pt.Int(2),
+                length=pt.Int(2),
+            ),
+        ),
+        IndexTest(
+            types=[static_bytes_t, static_bytes_t],
+            typeIndex=1,
+            expected=lambda output: output.decode(
+                encoded,
+                start_index=pt.Int(2),
             ),
         ),
         IndexTest(
@@ -662,7 +680,7 @@ def test_Tuple_set():
     with pytest.raises(pt.TealInputError):
         tupleValue.set(uint8, uint16, uint32, uint32)
 
-    with pytest.raises(pt.TealInputError):
+    with pytest.raises(pt.TealInputError, match="at index=1: uint32 != uint16"):
         tupleValue.set(uint8, uint32, uint16)
 
     with pytest.raises(pt.TealInputError):

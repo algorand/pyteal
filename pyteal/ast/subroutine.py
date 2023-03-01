@@ -53,13 +53,13 @@ class _SubroutineDeclByOption:
         return cast(SubroutineDeclaration, self.option_map[fp_option])
 
     def __probe_info(self, fp_option: bool) -> tuple[bool, TealType]:
-        current_slot_id = ScratchSlot.nextSlotId
+        starting_slot_id = ScratchSlot.nextSlotId
         is_pre_existing = self.option_map[fp_option] is not None
         decl = self.get_declaration_by_option(fp_option)
         has_return, type_of = decl.has_return(), decl.type_of()
         if not is_pre_existing:
             self.option_map[fp_option] = None
-        ScratchSlot.nextSlotId = current_slot_id
+        ScratchSlot.reset_slot_numbering(starting_slot_id)
         return has_return, type_of
 
     def __info_prepare(self) -> None:
@@ -542,7 +542,9 @@ class SubroutineFnWrapper:
             name_str=name,
         )
 
-    def __call__(self, *args: Expr | ScratchVar | abi.BaseType, **kwargs: Any) -> Expr:
+    def __call__(
+        self, *args: Expr | ScratchVar | abi.BaseType, **kwargs: Any
+    ) -> SubroutineCall:
         if len(kwargs) != 0:
             raise TealInputError(
                 f"Subroutine cannot be called with keyword arguments. "
@@ -662,7 +664,7 @@ class ABIReturnSubroutine:
 
     def __call__(
         self, *args: Expr | ScratchVar | abi.BaseType, **kwargs
-    ) -> abi.ReturnedValue | Expr:
+    ) -> abi.ReturnedValue | SubroutineCall:
         if len(kwargs) != 0:
             raise TealInputError(
                 f"Subroutine cannot be called with keyword arguments. "

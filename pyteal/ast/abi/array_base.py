@@ -84,7 +84,7 @@ class Array(BaseType, Generic[T]):
         *,
         start_index: Expr | None = None,
         end_index: Expr | None = None,
-        length: Expr | None = None
+        length: Expr | None = None,
     ) -> Expr:
         """Decode a substring of the passed in encoded byte string and set it as this type's value.
 
@@ -128,11 +128,7 @@ class Array(BaseType, Generic[T]):
         for index, value in enumerate(values):
             if self.type_spec().value_type_spec() != value.type_spec():
                 raise TealInputError(
-                    "Cannot assign type {} at index {} to {}".format(
-                        value.type_spec(),
-                        index,
-                        self.type_spec().value_type_spec(),
-                    )
+                    f"Cannot assign type {value.type_spec()} at index {index} to {self.type_spec().value_type_spec()}"
                 )
 
         encoded = _encode_tuple(values)
