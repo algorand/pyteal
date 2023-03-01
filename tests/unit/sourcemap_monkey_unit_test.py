@@ -315,6 +315,20 @@ def test_mock_hybrid_w_offset(code, is_funcdef, pt_chunk, expected):
         assert expected == pt_frame._hybrid_w_offset()
 
 
+def test_tabulate_args_can_be_dictified():
+    from pyteal.compiler.sourcemap import _PyTealSourceMapper, TealMapItem
+
+    tmi = TealMapItem(
+        pt_frame=mock.MagicMock(),
+        teal_lineno=13,
+        teal_line="some teal line",
+        teal_component="some teal component",
+    )
+    all_cols = {v: v for v in _PyTealSourceMapper._tabulate_param_defaults.values()}
+    full_dict = tmi.asdict(**all_cols)
+    assert set(all_cols.keys()) == set(full_dict.keys())
+
+
 def assert_algobank_unparsed_as_expected(actual):
     expected = [
         (0, ("router._build_impl(rci)", 0)),

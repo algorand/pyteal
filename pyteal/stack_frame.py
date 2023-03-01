@@ -567,7 +567,7 @@ class PyTealFrame(StackFrame):
         return naive_lineno + offset
 
     def column(self) -> int:
-        """Provide accurate column info when available. Or 0 when not."""
+        """Provide accurate 0-indexed column offset when available. Or 0 when not."""
         return self.node_col_offset() or 0
 
     def compiler_generated_reason(self) -> str | None:
@@ -687,12 +687,14 @@ class PyTealFrame(StackFrame):
         return getattr(self.node, "lineno", None) if self.node else None
 
     def node_col_offset(self) -> int | None:
+        """0-indexed BEGINNING column offset"""
         return getattr(self.node, "col_offset", None) if self.node else None
 
     def node_end_lineno(self) -> int | None:
         return getattr(self.node, "end_lineno", None) if self.node else None
 
     def node_end_col_offset(self) -> int | None:
+        """0-indexed ENDING column offset"""
         return getattr(self.node, "end_col_offset", None) if self.node else None
 
     def node_source_window(self) -> str:

@@ -484,11 +484,21 @@ class TealMapItem(PyTealFrame):
         P = " // "
         return f"TealLine({self.teal_lineno}: {self.teal_line}{self.pcs_repr(prefix=P)} // PyTeal: {self._hybrid_w_offset()[0]}"
 
+    def teal_column(self) -> int:
+        """Always returns 0 as the 0-index STARTING column offset"""
+        return 0
+
+    def teal_column_end(self) -> int:
+        """The 0-index ENDING column offset"""
+        return len(self.teal_line)
+
     def asdict(self, **kwargs) -> OrderedDict[str, Any]:
         """kwargs serve as a rename mapping when present"""
         attrs = {
             _TEAL_LINE_NUMBER: lambda tmi: tmi.teal_lineno,
             _TEAL_LINE: lambda tmi: tmi.teal_line,
+            _TEAL_COLUMN: lambda tmi: tmi.teal_column(),
+            _TEAL_COLUMN_END: lambda tmi: tmi.teal_column_end(),
             _PROGRAM_COUNTERS: lambda tmi: tmi.pcs_repr(),
             _PYTEAL_HYBRID_UNPARSED: lambda tmi: tmi.hybrid_unparsed(),
             _PYTEAL_NODE_AST_UNPARSED: lambda tmi: tmi.node_source(),
