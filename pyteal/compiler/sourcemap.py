@@ -1010,7 +1010,7 @@ class _PyTealSourceMapper:
         omit_headers: bool = False,
         omit_repeating_col_except: list[str] | None = None,
         post_process_delete_cols: list[str] | None = None,
-        **kwargs,
+        **kwargs: dict[str, str],
     ) -> str:
         """
         Tabulate a sourcemap using Python's tabulate package: https://pypi.org/project/tabulate/
@@ -1217,7 +1217,7 @@ class _PyTealSourceMapper:
                 col_name = renames.pop(col)
                 for row in rows:
                     if col_name in row:
-                        del row[col_name]
+                        del row[col_name]  # type: ignore
         # 8. now we've removed any columns requested for deletion
 
         calling_kwargs: dict[str, Any] = {"tablefmt": tablefmt, "numalign": numalign}
@@ -1227,6 +1227,16 @@ class _PyTealSourceMapper:
         return tabulate(rows, **calling_kwargs)
 
     def annotated_teal(self, omit_headers: bool = True, concise: bool = True) -> str:
+        """
+        Helper function that hardcodes various tabulate parameters to produce a
+        reasonably formatted annotated teal output.
+
+        In theory, the output can be compiled.
+
+        In practice the output maybe be very large and therefore unacceptable to Algod.
+
+        In such cases, you should use the original accompanying Teal compilation.
+        """
         if not self._built():
             raise ValueError(
                 "not ready for annotated_teal() because build() has yet to be called"
