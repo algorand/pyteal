@@ -58,10 +58,6 @@ retsub
 fie_3:
 proto 1 0
 intc_0 // 0
-dupn 2
-bytec_0 // ""
-intc_0 // 0
-dup
 bytec_0 // ""
 frame_dig -1
 callsub getfie_1

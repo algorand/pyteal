@@ -1025,7 +1025,8 @@ class SubroutineEval:
         output_carrying_abi: Optional[abi.BaseType] = None
 
         if output_kwarg_info:
-            output_carrying_abi = output_kwarg_info.abi_type.new_instance()
+            with _frame_pointer_context(None):
+                output_carrying_abi = output_kwarg_info.abi_type.new_instance()
             if self.use_frame_pt:
                 output_carrying_abi._stored_value = FrameVar(proto, 0)
             abi_output_kwargs[output_kwarg_info.name] = output_carrying_abi

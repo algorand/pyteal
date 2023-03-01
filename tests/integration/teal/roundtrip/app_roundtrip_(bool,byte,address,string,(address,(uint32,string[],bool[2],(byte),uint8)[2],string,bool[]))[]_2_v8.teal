@@ -19,39 +19,37 @@ int 0
 byte ""
 dupn 3
 int 0
+dupn 33
+byte ""
 dup
-byte ""
-int 0
-dupn 34
-byte ""
-dupn 2
 int 0
 dupn 7
 byte ""
 dup
 int 0
-byte ""
-int 0
-byte ""
-int 0
-byte ""
-dupn 2
-int 0
 dup
 byte ""
 int 0
-dupn 34
 byte ""
-dupn 6
+dupn 2
+int 0
+dupn 35
+byte ""
+dupn 4
+int 0
+dup
+byte ""
+dupn 2
+int 0
+dupn 10
+byte ""
+dup
 int 0
 dupn 2
 byte ""
-dupn 3
+dup
 int 0
-dupn 2
-byte ""
-int 0
-dupn 6
+dupn 4
 frame_dig -1
 int 0
 getbit
@@ -910,51 +908,41 @@ int 0
 byte ""
 dupn 2
 int 0
+dupn 35
+byte ""
+dupn 4
+int 0
 dup
 byte ""
-int 0
-dupn 34
-byte ""
-dupn 6
-int 0
 dupn 2
-byte ""
-dupn 3
 int 0
-dupn 2
-byte ""
-int 0
-dupn 7
+dupn 10
 byte ""
 dup
 int 0
 dupn 2
 byte ""
 dup
-int 0
-byte ""
 int 0
 dupn 4
 byte ""
-dupn 2
-int 0
-dupn 2
-byte ""
 dup
 int 0
-dupn 2
+dup
 byte ""
 dup
 int 0
 dup
 byte ""
-dupn 2
+dup
+int 0
+dup
+byte ""
+dup
 int 0
 dupn 7
 byte ""
 dup
-int 0
-byte ""
 int 0
 dupn 5
 byte ""
@@ -1006,58 +994,58 @@ callsub arraycomplement_15
 frame_bury 5
 frame_dig 2
 frame_dig 3
-frame_bury 127
-frame_dig 127
-frame_bury 126
+frame_bury 112
+frame_dig 112
+frame_bury 111
 int 38
-frame_bury 124
-frame_dig 124
-frame_dig 127
+frame_bury 109
+frame_dig 109
+frame_dig 112
 len
 +
-frame_bury 125
-frame_dig 125
+frame_bury 110
+frame_dig 110
 int 65536
 <
 assert
-frame_dig 124
+frame_dig 109
 itob
 extract 6 0
 concat
 frame_dig 4
-frame_bury 127
-frame_dig 126
-frame_dig 127
+frame_bury 112
+frame_dig 111
+frame_dig 112
 concat
-frame_bury 126
-frame_dig 125
-frame_bury 124
-frame_dig 124
-frame_dig 127
+frame_bury 111
+frame_dig 110
+frame_bury 109
+frame_dig 109
+frame_dig 112
 len
 +
-frame_bury 125
-frame_dig 125
+frame_bury 110
+frame_dig 110
 int 65536
 <
 assert
-frame_dig 124
+frame_dig 109
 itob
 extract 6 0
 concat
 frame_dig 5
-frame_bury 127
-frame_dig 126
-frame_dig 127
+frame_bury 112
+frame_dig 111
+frame_dig 112
 concat
-frame_bury 126
-frame_dig 125
-frame_bury 124
-frame_dig 124
+frame_bury 111
+frame_dig 110
+frame_bury 109
+frame_dig 109
 itob
 extract 6 0
 concat
-frame_dig 126
+frame_dig 111
 concat
 frame_bury 0
 retsub
@@ -1540,32 +1528,27 @@ proto 1 1
 byte ""
 dup
 int 0
-dupn 2
+dup
 byte ""
-dupn 3
-int 0
 dupn 2
-byte ""
 int 0
-dupn 7
+dupn 10
 byte ""
 dup
 int 0
 dupn 2
 byte ""
 dup
-int 0
-byte ""
 int 0
 dupn 4
 byte ""
-dupn 2
+dup
 int 0
-dupn 2
+dup
 byte ""
 dup
 int 0
-dupn 2
+dup
 byte ""
 dup
 frame_dig -1
@@ -1609,12 +1592,12 @@ frame_dig 3
 itob
 extract 4 0
 frame_dig 4
-frame_bury 47
-frame_dig 47
-frame_bury 46
+frame_bury 39
+frame_dig 39
+frame_bury 38
 int 9
-frame_bury 44
-frame_dig 44
+frame_bury 36
+frame_dig 36
 itob
 extract 6 0
 concat
@@ -1627,7 +1610,7 @@ int 0
 frame_dig 7
 setbyte
 concat
-frame_dig 46
+frame_dig 38
 concat
 frame_bury 0
 retsub
@@ -2171,7 +2154,7 @@ tuplecomplement_21:
 proto 1 1
 byte ""
 int 0
-dupn 2
+dup
 byte ""
 dup
 frame_dig -1

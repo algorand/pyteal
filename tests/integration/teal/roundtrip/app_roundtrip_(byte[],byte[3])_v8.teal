@@ -16,14 +16,9 @@ tuplecomplement_0:
 proto 1 1
 byte ""
 int 0
-dup
-byte ""
-int 0
-dupn 8
+dupn 9
 byte ""
 dup
-int 0
-byte ""
 int 0
 dupn 5
 byte ""
@@ -50,17 +45,17 @@ load 1
 callsub arraycomplement_5
 store 1
 load 0
-frame_bury 28
-frame_dig 28
-frame_bury 27
+frame_bury 24
+frame_dig 24
+frame_bury 23
 int 5
-frame_bury 25
-frame_dig 25
+frame_bury 21
+frame_dig 21
 itob
 extract 6 0
 load 1
 concat
-frame_dig 27
+frame_dig 23
 concat
 frame_bury 0
 retsub

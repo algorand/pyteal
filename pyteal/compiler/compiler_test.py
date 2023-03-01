@@ -2500,8 +2500,8 @@ def buggy_compile(debug_const):
     return approval
 
 
-def open_fixture(debug_const):
-    tfile = BUG_FIXTURES / f"buggy_d{int(debug_const)}.teal"
+def open_fixture():
+    tfile = BUG_FIXTURES / "buggy.teal"
     with open(tfile) as f:
         return f.read()
 
@@ -2511,3 +2511,6 @@ def test_in_a_single_process():
     new = buggy_compile(debug_const=True)
 
     assert orig == new
+
+    expected = open_fixture()
+    assert expected == orig
