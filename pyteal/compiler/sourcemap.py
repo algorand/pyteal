@@ -492,33 +492,33 @@ class TealMapItem(PyTealFrame):
         """The 0-index ENDING column offset"""
         return len(self.teal_line)
 
+    _dict_lazy_attrs = {
+        _TEAL_LINE_NUMBER: lambda tmi: tmi.teal_lineno,
+        _TEAL_LINE: lambda tmi: tmi.teal_line,
+        _TEAL_COLUMN: lambda tmi: tmi.teal_column(),
+        _TEAL_COLUMN_END: lambda tmi: tmi.teal_column_end(),
+        _PROGRAM_COUNTERS: lambda tmi: tmi.pcs_repr(),
+        _PYTEAL_HYBRID_UNPARSED: lambda tmi: tmi.hybrid_unparsed(),
+        _PYTEAL_NODE_AST_UNPARSED: lambda tmi: tmi.node_source(),
+        _PYTEAL_NODE_AST_QUALNAME: lambda tmi: tmi.code_qualname(),
+        _PYTEAL_COMPONENT: lambda tmi: tmi.teal_component,
+        _PYTEAL_NODE_AST_SOURCE_BOUNDARIES: lambda tmi: tmi.node_source_window(),
+        _PYTEAL_FILENAME: lambda tmi: tmi.file(),
+        _PYTEAL_LINE_NUMBER: lambda tmi: tmi.lineno(),
+        _PYTEAL_LINE_NUMBER_END: lambda tmi: tmi.node_end_lineno(),
+        _PYTEAL_COLUMN: lambda tmi: tmi.column(),
+        _PYTEAL_COLUMN_END: lambda tmi: tmi.node_end_col_offset(),
+        _PYTEAL_LINE: lambda tmi: tmi.raw_code(),
+        _PYTEAL_NODE_AST: lambda tmi: tmi.node,
+        _PYTEAL_NODE_AST_NONE: lambda tmi: tmi.failed_ast(),
+        _STATUS_CODE: lambda tmi: tmi.status_code(),
+        _STATUS: lambda tmi: tmi.status(),
+    }
+
     def asdict(self, **kwargs) -> OrderedDict[str, Any]:
         """kwargs serve as a rename mapping when present"""
-        attrs = {
-            _TEAL_LINE_NUMBER: lambda tmi: tmi.teal_lineno,
-            _TEAL_LINE: lambda tmi: tmi.teal_line,
-            _TEAL_COLUMN: lambda tmi: tmi.teal_column(),
-            _TEAL_COLUMN_END: lambda tmi: tmi.teal_column_end(),
-            _PROGRAM_COUNTERS: lambda tmi: tmi.pcs_repr(),
-            _PYTEAL_HYBRID_UNPARSED: lambda tmi: tmi.hybrid_unparsed(),
-            _PYTEAL_NODE_AST_UNPARSED: lambda tmi: tmi.node_source(),
-            _PYTEAL_NODE_AST_QUALNAME: lambda tmi: tmi.code_qualname(),
-            _PYTEAL_COMPONENT: lambda tmi: tmi.teal_component,
-            _PYTEAL_NODE_AST_SOURCE_BOUNDARIES: lambda tmi: tmi.node_source_window(),
-            _PYTEAL_FILENAME: lambda tmi: tmi.file(),
-            _PYTEAL_LINE_NUMBER: lambda tmi: tmi.lineno(),
-            _PYTEAL_LINE_NUMBER_END: lambda tmi: tmi.node_end_lineno(),
-            _PYTEAL_COLUMN: lambda tmi: tmi.column(),
-            _PYTEAL_COLUMN_END: lambda tmi: tmi.node_end_col_offset(),
-            _PYTEAL_LINE: lambda tmi: tmi.raw_code(),
-            _PYTEAL_NODE_AST: lambda tmi: tmi.node,
-            _PYTEAL_NODE_AST_NONE: lambda tmi: tmi.failed_ast(),
-            _STATUS_CODE: lambda tmi: tmi.status_code(),
-            _STATUS: lambda tmi: tmi.status(),
-        }
-
         assert (
-            kwargs.keys() <= attrs.keys()
+            kwargs.keys() <= (attrs := self._dict_lazy_attrs).keys()
         ), f"unrecognized parameters {kwargs.keys() - attrs.keys()}"
 
         return OrderedDict(((kwargs[k], attrs[k](self)) for k in kwargs))
