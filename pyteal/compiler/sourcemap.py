@@ -488,31 +488,31 @@ class TealMapItem(PyTealFrame):
     def asdict(self, **kwargs) -> OrderedDict[str, Any]:
         """kwargs serve as a rename mapping when present"""
         attrs = {
-            _TEAL_LINE_NUMBER: self.teal_lineno,
-            _TEAL_LINE: self.teal_line,
-            _PROGRAM_COUNTERS: self.pcs_repr(),
-            _PYTEAL_HYBRID_UNPARSED: self.hybrid_unparsed(),
-            _PYTEAL_NODE_AST_UNPARSED: self.node_source(),
-            _PYTEAL_NODE_AST_QUALNAME: self.code_qualname(),
-            _PYTEAL_COMPONENT: self.teal_component,
-            _PYTEAL_NODE_AST_SOURCE_BOUNDARIES: self.node_source_window(),
-            _PYTEAL_FILENAME: self.file(),
-            _PYTEAL_LINE_NUMBER: self.lineno(),
-            _PYTEAL_LINE_NUMBER_END: self.node_end_lineno(),
-            _PYTEAL_COLUMN: self.column(),
-            _PYTEAL_COLUMN_END: self.node_end_col_offset(),
-            _PYTEAL_LINE: self.raw_code(),
-            _PYTEAL_NODE_AST: self.node,
-            _PYTEAL_NODE_AST_NONE: self.failed_ast(),
-            _STATUS_CODE: self.status_code(),
-            _STATUS: self.status(),
+            _TEAL_LINE_NUMBER: lambda self: self.teal_lineno,
+            _TEAL_LINE: lambda self: self.teal_line,
+            _PROGRAM_COUNTERS: lambda self: self.pcs_repr(),
+            _PYTEAL_HYBRID_UNPARSED: lambda self: self.hybrid_unparsed(),
+            _PYTEAL_NODE_AST_UNPARSED: lambda self: self.node_source(),
+            _PYTEAL_NODE_AST_QUALNAME: lambda self: self.code_qualname(),
+            _PYTEAL_COMPONENT: lambda self: self.teal_component,
+            _PYTEAL_NODE_AST_SOURCE_BOUNDARIES: lambda self: self.node_source_window(),
+            _PYTEAL_FILENAME: lambda self: self.file(),
+            _PYTEAL_LINE_NUMBER: lambda self: self.lineno(),
+            _PYTEAL_LINE_NUMBER_END: lambda self: self.node_end_lineno(),
+            _PYTEAL_COLUMN: lambda self: self.column(),
+            _PYTEAL_COLUMN_END: lambda self: self.node_end_col_offset(),
+            _PYTEAL_LINE: lambda self: self.raw_code(),
+            _PYTEAL_NODE_AST: lambda self: self.node,
+            _PYTEAL_NODE_AST_NONE: lambda self: self.failed_ast(),
+            _STATUS_CODE: lambda self: self.status_code(),
+            _STATUS: lambda self: self.status(),
         }
 
         assert (
             kwargs.keys() <= attrs.keys()
         ), f"unrecognized parameters {kwargs.keys() - attrs.keys()}"
 
-        return OrderedDict(((kwargs[k], attrs[k]) for k in kwargs))
+        return OrderedDict(((kwargs[k], attrs[k](self)) for k in kwargs))
 
     def validate_for_export(self) -> None:
         """
