@@ -1091,7 +1091,7 @@ class _PyTealSourceMapper:
         #     pyteal_filename           =   "PATH",
         #     pyteal_line_number        =   "LINE",
         #     const_col_5               =   "|",
-        #     pyteal_hybrid_unparsed   =   "PYTEAL",
+        #     pyteal_hybrid_unparsed    =   "PYTEAL",
         # )
 
         constant_columns = {}
@@ -1108,7 +1108,7 @@ class _PyTealSourceMapper:
         #     teal                      =   "// TEAL",
         #     pyteal_filename           =   "PATH",
         #     pyteal_line_number        =   "LINE",
-        #     pyteal_hybrid_unparsed   =   "PYTEAL",
+        #     pyteal_hybrid_unparsed    =   "PYTEAL",
         # )
         #
         # and
