@@ -49,7 +49,9 @@ class _SubroutineDeclByOption:
         decl = self.option_map[fp_option]
         if decl is not None:
             return decl
-        self.option_map[fp_option] = self.option_method[fp_option](self.subroutine)
+        self.option_map[fp_option] = self.option_method[fp_option].evaluate(
+            self.subroutine
+        )
         return cast(SubroutineDeclaration, self.option_map[fp_option])
 
     def __probe_info(self, fp_option: bool) -> tuple[bool, TealType]:
@@ -829,7 +831,7 @@ Subroutine.__module__ = "pyteal"
 
 
 @contextmanager
-def _frame_pointer_context(proto: Proto):
+def _frame_pointer_context(proto: Proto | None):
     tmp, SubroutineEval._current_proto = SubroutineEval._current_proto, proto
     yield proto
     SubroutineEval._current_proto = tmp
@@ -924,7 +926,8 @@ class SubroutineEval:
             argument_var = DynamicScratchVar(TealType.anytype)
             loaded_var = argument_var
         elif param in subroutine.abi_args:
-            internal_abi_var = subroutine.abi_args[param].new_instance()
+            with _frame_pointer_context(None):
+                internal_abi_var = subroutine.abi_args[param].new_instance()
             argument_var = cast(ScratchVar, internal_abi_var._stored_value)
             loaded_var = internal_abi_var
         else:
@@ -951,7 +954,8 @@ class SubroutineEval:
             argument_var = DynamicScratchVar(TealType.anytype)
             loaded_var = argument_var
         elif param in subroutine.abi_args:
-            internal_abi_var = subroutine.abi_args[param].new_instance()
+            with _frame_pointer_context(None):
+                internal_abi_var = subroutine.abi_args[param].new_instance()
             dig_index = (
                 subroutine.arguments().index(param) - subroutine.argument_count()
             )
@@ -1002,7 +1006,7 @@ class SubroutineEval:
 
         return Proto(subroutine.argument_count(), num_stack_outputs, mem_layout=layout)
 
-    def __call__(self, subroutine: SubroutineDefinition) -> SubroutineDeclaration:
+    def evaluate(self, subroutine: SubroutineDefinition) -> SubroutineDeclaration:
         proto = self.__proto(subroutine)
 
         args = subroutine.arguments()

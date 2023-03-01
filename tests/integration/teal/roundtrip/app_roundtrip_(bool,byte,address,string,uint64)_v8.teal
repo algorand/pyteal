@@ -16,19 +16,18 @@ tuplecomplement_0:
 proto 1 1
 byte ""
 int 0
-dupn 4
+dupn 2
 byte ""
-dup
 int 0
-dupn 97
+dupn 34
 byte ""
-dupn 3
+dupn 2
 int 0
 dupn 7
 byte ""
 dup
 int 0
-dupn 4
+dupn 3
 byte ""
 dup
 frame_dig -1
@@ -81,19 +80,19 @@ concat
 load 2
 concat
 load 3
-frame_bury 126
-frame_dig 126
-frame_bury 125
+frame_bury 58
+frame_dig 58
+frame_bury 57
 int 44
-frame_bury 123
-frame_dig 123
+frame_bury 55
+frame_dig 55
 itob
 extract 6 0
 concat
 load 4
 itob
 concat
-frame_dig 125
+frame_dig 57
 concat
 frame_bury 0
 retsub
@@ -213,7 +212,7 @@ arraycomplement_5:
 proto 1 1
 byte ""
 int 0
-dupn 97
+dupn 33
 byte ""
 dup
 frame_dig -1

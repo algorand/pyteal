@@ -2497,10 +2497,6 @@ def buggy_compile(debug_const):
         version=8, assemble_constants=True, optimize=oo
     )
 
-    tfile = BUG_FIXTURES / f"buggy_d{int(debug_const)}.teal"
-    with open(tfile, "w") as f:
-        f.write(approval)
-
     return approval
 
 
@@ -2510,54 +2506,8 @@ def open_fixture(debug_const):
         return f.read()
 
 
-def test_trial_and_error():
-    # This was useful while honing in on the bug example, but probably
-    # not needed any longer.
-    from multiprocessing import Pool
-
-    pool = Pool(2)
-
-    debug4c3s = [False, True]
-    try:
-        results = pool.map(buggy_compile, debug4c3s)
-    except Exception as e:
-        pool.terminate()
-        pool.join()
-        raise e
-    else:
-        pool.close()
-        pool.join()
-
-    orig = open_fixture(debug_const=debug4c3s[0])
-    new = open_fixture(debug_const=debug4c3s[1])
-
-    assert orig == results[0]
-    assert new == results[1]
-    assert orig != new
-
-
-def test_trial_and_error0():
-    buggy_compile(debug_const=False)
-
-
-def test_trial_and_error1():
-    buggy_compile(debug_const=True)
-
-
-def test_that_still_diff():
-    orig = open_fixture(debug_const=False)
-    new = open_fixture(debug_const=True)
-    assert orig != new
-
-
 def test_in_a_single_process():
-    expected_orig = open_fixture(debug_const=False)
-    expected_new = open_fixture(debug_const=True)
-
     orig = buggy_compile(debug_const=False)
     new = buggy_compile(debug_const=True)
 
-    assert expected_orig == orig
-    assert expected_new == new
-
-    assert orig != new
+    assert orig == new

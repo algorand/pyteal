@@ -18,16 +18,14 @@ byte ""
 int 0
 dup
 byte ""
-dup
 int 0
-dupn 13
+dupn 8
 byte ""
 dup
 int 0
 byte ""
-dup
 int 0
-dupn 10
+dupn 5
 byte ""
 dup
 int 0
@@ -52,17 +50,17 @@ load 1
 callsub arraycomplement_5
 store 1
 load 0
-frame_bury 40
-frame_dig 40
-frame_bury 39
+frame_bury 28
+frame_dig 28
+frame_bury 27
 int 5
-frame_bury 37
-frame_dig 37
+frame_bury 25
+frame_dig 25
 itob
 extract 6 0
 load 1
 concat
-frame_dig 39
+frame_dig 27
 concat
 frame_bury 0
 retsub
@@ -157,7 +155,7 @@ arraycomplement_3:
 proto 1 1
 byte ""
 int 0
-dupn 13
+dupn 7
 byte ""
 dup
 int 0
@@ -195,8 +193,8 @@ frame_dig 3
 callsub numericalcomp_2
 frame_bury 3
 int 3
-frame_bury 17
-frame_dig 17
+frame_bury 11
+frame_dig 11
 itob
 extract 6 0
 byte 0x00
@@ -236,7 +234,7 @@ arraycomplement_5:
 proto 1 1
 byte ""
 int 0
-dupn 10
+dupn 4
 byte ""
 dup
 frame_dig -1

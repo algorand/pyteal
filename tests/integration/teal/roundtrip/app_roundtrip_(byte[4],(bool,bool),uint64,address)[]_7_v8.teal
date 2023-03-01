@@ -18,21 +18,24 @@ byte ""
 int 0
 dupn 3
 byte ""
-dup
 int 0
-dupn 13
+dupn 6
 byte ""
+dupn 2
+int 0
 dupn 3
+byte ""
+dup
 int 0
-dupn 5
+byte ""
+int 0
+dupn 34
 byte ""
 dup
 int 0
 dup
 byte ""
 dup
-int 0
-dupn 90
 frame_dig -1
 extract 0 4
 store 0
@@ -275,7 +278,7 @@ arraycomplement_4:
 proto 1 1
 byte ""
 int 0
-dupn 13
+dupn 5
 byte ""
 dup
 frame_dig -1
@@ -341,7 +344,7 @@ tuplecomplement_5:
 proto 1 1
 byte ""
 int 0
-dupn 5
+dupn 3
 byte ""
 dup
 frame_dig -1
