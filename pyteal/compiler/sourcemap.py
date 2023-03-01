@@ -1043,15 +1043,15 @@ class _PyTealSourceMapper:
 
                 pyteal (optional): PyTeal source via `executing.unparse` when available, or otherwise "" (empty string)
 
-                teal_line_number (optional): Teal target's line numnber (1-based)
+                teal_line_number (optional): Teal target's line number (1-based)
 
                 teal_column (optional): Teal target's 0-indexed starting column (CURRENTLY THIS IS ALWAYS 0)
 
-                teal_column_end (optional): Teal target's 0-indexed right boundary column (CURRENTLY THIS IS len(teal_line))
+                teal_column_end (optional): Teal target's 0-indexed right boundary column (CURRENTLY THIS IS len(teal))
 
-                program_counters (optional): Starting program counter as assembled by algod
+                program_counters (optional): starting program counter as assembled by algod
 
-                pyteal_component (optional): representatin of the PyTeal source component mapping to target
+                pyteal_component (optional): representation of the PyTeal source component mapping to target
 
                 pyteal_node_ast_qualname (optional): the Python qualname of the PyTeal source
 
@@ -1061,15 +1061,15 @@ class _PyTealSourceMapper:
 
                 pyteal_line_number_end (optional): the PyTeal source's ending line number
 
-                pyteal_column (optional): the PyTeal source's starting 0-indexed column number
+                pyteal_column (optional): the PyTeal source's starting 0-indexed column
 
-                pyteal_column_end (optional): the PyTeal source's ending 0-indexed column number
+                pyteal_column_end (optional): the PyTeal source's ending 0-indexed boundary column
 
                 pyteal_line (optional): the PyTeal source as provided by `FrameInfo.code_context`
 
                 pyteal_node_ast_source_boundaries (optional): formatted representation of the PyTeal source's line and column boundaries. Eg "L17:5-L42:3"
 
-                pyteal_node_ast_none (optional): boolean indicator of whether the AST node was extracted for the PyTEAL source
+                pyteal_node_ast_none (optional): boolean indicator of whether the AST node was successfully extracted for the PyTeal source
 
                 status_code (optional): `PyTealFrameStatus` int value indicating confidence level for locating the PyTeal source responsible for generated Teal
 
@@ -1091,7 +1091,7 @@ class _PyTealSourceMapper:
         #     pyteal_filename           =   "PATH",
         #     pyteal_line_number        =   "LINE",
         #     const_col_5               =   "|",
-        #     pyteal_hypbrid_unparsed   =   "PYTEAL",
+        #     pyteal_hybrid_unparsed   =   "PYTEAL",
         # )
 
         constant_columns = {}
@@ -1108,7 +1108,7 @@ class _PyTealSourceMapper:
         #     teal                      =   "// TEAL",
         #     pyteal_filename           =   "PATH",
         #     pyteal_line_number        =   "LINE",
-        #     pyteal_hypbrid_unparsed   =   "PYTEAL",
+        #     pyteal_hybrid_unparsed   =   "PYTEAL",
         # )
         #
         # and
