@@ -2457,7 +2457,7 @@ def test_router_app():
     router_app_tester()
 
 
-def buggy_compile(debug_const):
+def consistency_compile_test(debug_const):
     foo = pt.abi.Uint64()
 
     @pt.ABIReturnSubroutine
@@ -2506,9 +2506,35 @@ def open_fixture():
         return f.read()
 
 
+def test_trial_and_error():
+    # This was useful while honing in on the bug example, but probably
+    # not needed any longer.
+    from multiprocessing import Pool
+
+    pool = Pool(2)
+
+    debug4c3s = [False, True]
+    try:
+        results = pool.map(consistency_compile_test, debug4c3s)
+    except Exception as e:
+        pool.terminate()
+        pool.join()
+        raise e
+    else:
+        pool.close()
+        pool.join()
+
+    orig = consistency_compile_test(debug_const=False)
+    new = consistency_compile_test(debug_const=True)
+
+    assert orig == results[0]
+    assert new == results[1]
+    assert orig == new
+
+
 def test_in_a_single_process():
-    orig = buggy_compile(debug_const=False)
-    new = buggy_compile(debug_const=True)
+    orig = consistency_compile_test(debug_const=False)
+    new = consistency_compile_test(debug_const=True)
 
     assert orig == new
 
