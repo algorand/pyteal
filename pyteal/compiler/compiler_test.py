@@ -5,7 +5,7 @@ import pytest
 import pyteal as pt
 
 ROUTER_FIXTURES = Path.cwd() / "tests" / "teal" / "router"
-BUG_FIXTURES = Path.cwd() / "tests" / "teal" / "router_bug"
+BUG_FIXTURES = Path.cwd() / "tests" / "teal" / "sourcemap_compile_consistency"
 
 
 def test_compile_single():
@@ -2501,7 +2501,7 @@ def buggy_compile(debug_const):
 
 
 def open_fixture():
-    tfile = BUG_FIXTURES / "buggy.teal"
+    tfile = BUG_FIXTURES / "consistent.teal"
     with open(tfile) as f:
         return f.read()
 
