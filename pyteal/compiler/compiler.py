@@ -35,8 +35,6 @@ DEFAULT_TEAL_VERSION = DEFAULT_PROGRAM_VERSION
 
 
 class CompileOptions:
-    TEMP4DEBUG: bool = False
-
     def __init__(
         self,
         *,
@@ -152,10 +150,6 @@ def compileSubroutine(
     start, end = ast.__teal__(options)
     start.addIncoming()
     start.validateTree()
-
-    if CompileOptions.TEMP4DEBUG and currentSubroutine:
-        # TESTING ... 1 2 3 ... TESTING
-        currentSubroutine.get_declaration_by_option(False)
 
     if (
         currentSubroutine

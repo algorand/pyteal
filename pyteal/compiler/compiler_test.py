@@ -5,7 +5,6 @@ import pytest
 import pyteal as pt
 
 ROUTER_FIXTURES = Path.cwd() / "tests" / "teal" / "router"
-BUG_FIXTURES = Path.cwd() / "tests" / "teal" / "sourcemap_compile_consistency"
 
 
 def test_compile_single():
@@ -2455,88 +2454,3 @@ def test_router_app():
     # TODO: this test is redundant as router_app_tester is imported and run by
     # tests/integration/abi_router_test.py's setup
     router_app_tester()
-
-
-def consistency_compile_test(debug_const):
-    foo = pt.abi.Uint64()
-
-    @pt.ABIReturnSubroutine
-    def get(
-        x: pt.abi.Uint64, y: pt.abi.Uint8, *, output: pt.abi.DynamicBytes
-    ) -> pt.Expr:
-        return pt.Seq(
-            output.set(pt.Bytes("")),
-        )
-
-    @pt.ABIReturnSubroutine
-    def get_fie(y: pt.abi.Uint8, *, output: pt.abi.Uint64) -> pt.Expr:
-        data = pt.abi.make(pt.abi.DynamicBytes)
-        return pt.Seq(
-            data.set(get(foo, y)),
-            output.set(pt.Btoi(data.get())),
-        )
-
-    @pt.ABIReturnSubroutine
-    def set_(x: pt.abi.Uint64, y: pt.abi.Uint8) -> pt.Expr:
-        return pt.Seq()
-
-    router = pt.Router("Jane Doe")
-
-    @router.method
-    def fie(y: pt.abi.Uint8) -> pt.Expr:
-        old_amount = pt.abi.Uint64()
-
-        return pt.Seq(
-            old_amount.set(get_fie(y)),
-            set_(foo, y),
-        )
-
-    pt.CompileOptions.TEMP4DEBUG = debug_const
-    oo = pt.OptimizeOptions(scratch_slots=True)
-    approval, _, _ = router.compile_program(
-        version=8, assemble_constants=True, optimize=oo
-    )
-
-    return approval
-
-
-def open_fixture():
-    tfile = BUG_FIXTURES / "consistent.teal"
-    with open(tfile) as f:
-        return f.read()
-
-
-def test_trial_and_error():
-    # This was useful while honing in on the bug example, but probably
-    # not needed any longer.
-    from multiprocessing import Pool
-
-    pool = Pool(2)
-
-    debug4c3s = [False, True]
-    try:
-        results = pool.map(consistency_compile_test, debug4c3s)
-    except Exception as e:
-        pool.terminate()
-        pool.join()
-        raise e
-    else:
-        pool.close()
-        pool.join()
-
-    orig = consistency_compile_test(debug_const=False)
-    new = consistency_compile_test(debug_const=True)
-
-    assert orig == results[0]
-    assert new == results[1]
-    assert orig == new
-
-
-def test_in_a_single_process():
-    orig = consistency_compile_test(debug_const=False)
-    new = consistency_compile_test(debug_const=True)
-
-    assert orig == new
-
-    expected = open_fixture()
-    assert expected == orig
