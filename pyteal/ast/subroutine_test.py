@@ -6,7 +6,7 @@ import pytest
 from dataclasses import dataclass
 
 import pyteal as pt
-from pyteal.ast.frame import Proto, ProtoStackLayout, FrameBury, FrameDig
+from pyteal.ast.frame import FrameVar, Proto, ProtoStackLayout, FrameBury, FrameDig
 from pyteal.ast.subroutine import ABIReturnSubroutine, SubroutineEval
 from pyteal.compiler.compiler import FRAME_POINTERS_VERSION
 
@@ -2044,3 +2044,27 @@ def test_frame_option_version_range_well_formed():
     assert (
         pt.Op.callsub.min_version < FRAME_POINTERS_VERSION < pt.MAX_PROGRAM_VERSION + 1
     )
+
+
+def test_new_abi_instance_from_storage():
+    current_proto = Proto(num_args=2, num_returns=1)
+
+    current_scratch_slot_id = pt.ScratchSlot.nextSlotId
+
+    arg_storage = FrameVar(current_proto, -1)
+    some_arg_from_proto = SubroutineEval._new_abi_instance_from_storage(
+        pt.abi.Uint64TypeSpec(),
+        arg_storage,
+    )
+
+    assert some_arg_from_proto._stored_value == arg_storage
+    assert current_scratch_slot_id == pt.ScratchSlot.nextSlotId
+
+    ret_storage = FrameVar(current_proto, 0)
+    ret_from_proto = SubroutineEval._new_abi_instance_from_storage(
+        pt.abi.AddressTypeSpec(),
+        ret_storage,
+    )
+
+    assert ret_from_proto._stored_value == ret_storage
+    assert current_scratch_slot_id == pt.ScratchSlot.nextSlotId
