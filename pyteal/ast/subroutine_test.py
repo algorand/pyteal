@@ -2068,3 +2068,30 @@ def test_new_abi_instance_from_storage():
 
     assert ret_from_proto._stored_value == ret_storage
     assert current_scratch_slot_id == pt.ScratchSlot.nextSlotId
+
+
+def test_subroutine_evaluation_local_allocation_correct():
+    foo = pt.abi.Uint64()
+
+    @pt.ABIReturnSubroutine
+    def get(
+        x: pt.abi.Uint64, y: pt.abi.Uint8, *, output: pt.abi.DynamicBytes
+    ) -> pt.Expr:
+        return pt.Seq(
+            output.set(pt.Bytes("")),
+        )
+
+    @pt.ABIReturnSubroutine
+    def get_fie(y: pt.abi.Uint8, *, output: pt.abi.Uint64) -> pt.Expr:
+        data = pt.abi.make(pt.abi.DynamicBytes)
+        return pt.Seq(
+            data.set(get(foo, y)),
+            output.set(pt.Btoi(data.get())),
+        )
+
+    evaluator = SubroutineEval.fp_evaluator()
+
+    evaluated_fie = evaluator.evaluate(cast(pt.ABIReturnSubroutine, get_fie).subroutine)
+    layout = cast(Proto, cast(pt.Seq, evaluated_fie.body).args[0]).mem_layout
+
+    assert len(layout.local_stack_types) == 2
