@@ -49,9 +49,12 @@ class _SubroutineDeclByOption:
         decl = self.option_map[fp_option]
         if decl is not None:
             return decl
-        self.option_map[fp_option] = self.option_method[fp_option].evaluate(
-            self.subroutine
-        )
+        with _frame_pointer_context(
+            SubroutineEval._current_proto if fp_option else None
+        ):
+            self.option_map[fp_option] = self.option_method[fp_option].evaluate(
+                self.subroutine
+            )
         return cast(SubroutineDeclaration, self.option_map[fp_option])
 
     def __probe_info(self, fp_option: bool) -> tuple[bool, TealType]:
@@ -1055,9 +1058,10 @@ class SubroutineEval:
         # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:
         subroutine_body: Expr
         if not self.use_frame_pt:
-            subroutine_body = subroutine.implementation(
-                *loaded_args, **abi_output_kwargs
-            )
+            with _frame_pointer_context(None):
+                subroutine_body = subroutine.implementation(
+                    *loaded_args, **abi_output_kwargs
+                )
         else:
             with _frame_pointer_context(proto):
                 subroutine_body = subroutine.implementation(

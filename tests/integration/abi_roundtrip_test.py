@@ -137,6 +137,13 @@ ABI_TYPES = [
         ],
         2,
     ),
+    abi.Tuple1[
+        abi.Tuple3[
+            abi.Uint64,
+            abi.DynamicBytes,
+            abi.StaticArray[abi.Uint64, Literal[1]],
+        ],
+    ],
     NamedTupleInherit,
 ]
 
@@ -223,6 +230,9 @@ def test_pure_compilation(abi_type):
 
         save_to = tealdir / filename
         with open(save_to, "w") as f:
+            f.write(teal)
+
+        with open(FIXTURES / "roundtrip" / filename, "w") as f:
             f.write(teal)
 
         assert_teal_as_expected(save_to, FIXTURES / "roundtrip" / filename)

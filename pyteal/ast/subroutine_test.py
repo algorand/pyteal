@@ -2089,9 +2089,33 @@ def test_subroutine_evaluation_local_allocation_correct():
             output.set(pt.Btoi(data.get())),
         )
 
+    @pt.ABIReturnSubroutine
+    def set_(x: pt.abi.Uint64, y: pt.abi.Uint8) -> pt.Expr:
+        return pt.Seq()
+
+    router = pt.Router("Jane Doe")
+
+    @router.method
+    def fie(y: pt.abi.Uint8) -> pt.Expr:
+        old_amount = pt.abi.Uint64()
+
+        return pt.Seq(
+            old_amount.set(get_fie(y)),
+            set_(foo, y),
+        )
+
     evaluator = SubroutineEval.fp_evaluator()
 
-    evaluated_fie = evaluator.evaluate(cast(pt.ABIReturnSubroutine, get_fie).subroutine)
-    layout = cast(Proto, cast(pt.Seq, evaluated_fie.body).args[0]).mem_layout
+    evaluated_fie = evaluator.evaluate(cast(pt.ABIReturnSubroutine, fie).subroutine)
+    layout_fie = cast(Proto, cast(pt.Seq, evaluated_fie.body).args[0]).mem_layout
 
-    assert len(layout.local_stack_types) == 2
+    assert len(layout_fie.local_stack_types) == 1
+
+    evaluated_get_fie = evaluator.evaluate(
+        cast(pt.ABIReturnSubroutine, get_fie).subroutine
+    )
+    layout_get_fie = cast(
+        Proto, cast(pt.Seq, evaluated_get_fie.body).args[0]
+    ).mem_layout
+
+    assert len(layout_get_fie.local_stack_types) == 2
