@@ -1,4 +1,4 @@
-from pyteal import *
+from pyteal import App, Assert, Bytes, Int, Itob, ScratchVar, Seq, TealType
 
 
 def box_create():

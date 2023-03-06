@@ -1,4 +1,18 @@
-from pyteal import *
+from pyteal import (
+    AppParam,
+    Assert,
+    Bytes,
+    Global,
+    InnerTxnBuilder,
+    Int,
+    OnComplete,
+    Seq,
+    Subroutine,
+    TealType,
+    Txn,
+    TxnField,
+    TxnType,
+)
 
 
 @Subroutine(TealType.none)

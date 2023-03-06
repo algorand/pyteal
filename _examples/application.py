@@ -1,4 +1,17 @@
-from pyteal import *
+from pyteal import (
+    App,
+    Bytes,
+    Cond,
+    Err,
+    Global,
+    Int,
+    Mode,
+    OnComplete,
+    Return,
+    Seq,
+    Txn,
+    compileTeal,
+)
 
 
 def opted_in():

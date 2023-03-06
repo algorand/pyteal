@@ -1,4 +1,4 @@
-from pyteal import *
+from pyteal import App, Bytes, If, Int, Mode, Return, Seq, Txn, compileTeal
 
 
 def write_to_global_state():

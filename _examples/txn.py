@@ -1,4 +1,19 @@
-from pyteal import *
+from pyteal import (
+    Approve,
+    Assert,
+    Btoi,
+    Bytes,
+    Global,
+    Gtxn,
+    If,
+    Int,
+    Mode,
+    OnComplete,
+    Reject,
+    Txn,
+    TxnType,
+    compileTeal,
+)
 
 
 def on_complete():
