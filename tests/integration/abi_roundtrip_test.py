@@ -232,9 +232,6 @@ def test_pure_compilation(abi_type):
         with open(save_to, "w") as f:
             f.write(teal)
 
-        with open(FIXTURES / "roundtrip" / filename, "w") as f:
-            f.write(teal)
-
         assert_teal_as_expected(save_to, FIXTURES / "roundtrip" / filename)
 
     compile_and_compare(6)
