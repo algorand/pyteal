@@ -8,6 +8,7 @@ from pyteal.ast.abstractvar import AbstractVar
 from pyteal.types import TealType, require_type
 from pyteal.errors import TealInputError, TealInternalError, verifyProgramVersion
 from pyteal.ir import TealBlock, TealSimpleBlock, TealOp, Op
+from pyteal.stack_frame import NatalStackFrame
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
@@ -190,6 +191,7 @@ class Proto(Expr):
         proto_srt, proto_end = TealBlock.FromOp(options, op)
         local_srt, local_end = self.mem_layout.__teal__(options)
         proto_end.setNextBlock(local_srt)
+        NatalStackFrame.reframe_ops_in_blocks(self, proto_srt)
         return proto_srt, local_end
 
     def __str__(self) -> str:

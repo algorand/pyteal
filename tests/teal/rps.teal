@@ -1,0 +1,442 @@
+#pragma version 6
+txn ApplicationID
+int 0
+==
+bnz main_l19
+txn OnCompletion
+int DeleteApplication
+==
+bnz main_l18
+txn OnCompletion
+int UpdateApplication
+==
+bnz main_l17
+txn OnCompletion
+int OptIn
+==
+bnz main_l16
+txn OnCompletion
+int CloseOut
+==
+bnz main_l15
+txn OnCompletion
+int NoOp
+==
+bnz main_l7
+err
+main_l7:
+txna ApplicationArgs 0
+byte "challenge"
+==
+bnz main_l14
+txna ApplicationArgs 0
+byte "accept"
+==
+bnz main_l13
+txna ApplicationArgs 0
+byte "reveal"
+==
+bnz main_l11
+err
+main_l11:
+callsub reveal_8
+main_l12:
+int 0
+return
+main_l13:
+callsub acceptchallenge_7
+b main_l12
+main_l14:
+callsub createchallenge_6
+b main_l12
+main_l15:
+int 0
+return
+main_l16:
+int 0
+callsub reset_0
+int 1
+return
+main_l17:
+int 0
+return
+main_l18:
+int 0
+return
+main_l19:
+int 1
+return
+
+// reset
+reset_0:
+store 0
+load 0
+byte "opponent"
+byte ""
+app_local_put
+load 0
+byte "bet"
+int 0
+app_local_put
+load 0
+byte "private_play"
+byte ""
+app_local_put
+load 0
+byte "play"
+byte ""
+app_local_put
+retsub
+
+// is_account_empty
+isaccountempty_1:
+store 3
+load 3
+byte "opponent"
+app_local_get
+byte ""
+==
+load 3
+byte "bet"
+app_local_get
+int 0
+==
+&&
+load 3
+byte "private_play"
+app_local_get
+byte ""
+==
+&&
+load 3
+byte "play"
+app_local_get
+byte ""
+==
+&&
+retsub
+
+// is_valid_play
+isvalidplay_2:
+store 1
+load 1
+extract 0 1
+store 2
+load 2
+byte "r"
+==
+load 2
+byte "p"
+==
+||
+load 2
+byte "s"
+==
+||
+retsub
+
+// play_value
+playvalue_3:
+store 8
+load 8
+extract 0 1
+store 9
+load 9
+byte "r"
+==
+bnz playvalue_3_l6
+load 9
+byte "p"
+==
+bnz playvalue_3_l5
+load 9
+byte "s"
+==
+bnz playvalue_3_l4
+err
+playvalue_3_l4:
+int 2
+b playvalue_3_l7
+playvalue_3_l5:
+int 1
+b playvalue_3_l7
+playvalue_3_l6:
+int 0
+playvalue_3_l7:
+retsub
+
+// get_winner_account_index
+getwinneraccountindex_4:
+store 11
+store 10
+load 10
+load 11
+==
+bnz getwinneraccountindex_4_l6
+load 10
+int 1
++
+int 3
+%
+load 11
+==
+bnz getwinneraccountindex_4_l5
+load 11
+int 1
++
+int 3
+%
+load 10
+==
+bnz getwinneraccountindex_4_l4
+err
+getwinneraccountindex_4_l4:
+int 0
+b getwinneraccountindex_4_l7
+getwinneraccountindex_4_l5:
+int 1
+b getwinneraccountindex_4_l7
+getwinneraccountindex_4_l6:
+int 2
+getwinneraccountindex_4_l7:
+retsub
+
+// send_reward
+sendreward_5:
+store 13
+store 12
+itxn_begin
+int pay
+itxn_field TypeEnum
+load 12
+txnas Accounts
+itxn_field Receiver
+load 13
+itxn_field Amount
+itxn_submit
+retsub
+
+// create_challenge
+createchallenge_6:
+global GroupSize
+int 2
+==
+txn GroupIndex
+int 0
+==
+&&
+gtxn 1 CloseRemainderTo
+global ZeroAddress
+==
+&&
+gtxn 0 RekeyTo
+global ZeroAddress
+==
+&&
+gtxn 1 RekeyTo
+global ZeroAddress
+==
+&&
+gtxn 1 TypeEnum
+int pay
+==
+&&
+gtxn 1 Receiver
+global CurrentApplicationAddress
+==
+&&
+gtxn 1 Amount
+txna Accounts 1
+byte "bet"
+app_local_get
+==
+&&
+txna Accounts 1
+global CurrentApplicationID
+app_opted_in
+&&
+txn Sender
+txna Accounts 1
+byte "opponent"
+app_local_get
+==
+&&
+txn NumAppArgs
+int 2
+==
+&&
+txna ApplicationArgs 1
+callsub isvalidplay_2
+&&
+assert
+txn Sender
+byte "opponent"
+txna Accounts 1
+app_local_put
+txn Sender
+byte "bet"
+gtxn 1 Amount
+app_local_put
+txn Sender
+byte "play"
+txna ApplicationArgs 1
+app_local_put
+int 1
+return
+
+// accept_challenge
+acceptchallenge_7:
+global GroupSize
+int 2
+==
+txn GroupIndex
+int 0
+==
+&&
+gtxn 1 CloseRemainderTo
+global ZeroAddress
+==
+&&
+gtxn 0 RekeyTo
+global ZeroAddress
+==
+&&
+gtxn 1 RekeyTo
+global ZeroAddress
+==
+&&
+gtxn 1 TypeEnum
+int pay
+==
+&&
+gtxn 1 Receiver
+global CurrentApplicationAddress
+==
+&&
+txna Accounts 1
+global CurrentApplicationID
+app_opted_in
+&&
+txn Sender
+callsub isaccountempty_1
+&&
+txna Accounts 1
+callsub isaccountempty_1
+&&
+txn NumAppArgs
+int 2
+==
+&&
+assert
+txn Sender
+byte "opponent"
+txna Accounts 1
+app_local_put
+txn Sender
+byte "bet"
+gtxn 1 Amount
+app_local_put
+txn Sender
+byte "private_play"
+txna ApplicationArgs 1
+app_local_put
+int 1
+return
+
+// reveal
+reveal_8:
+global GroupSize
+int 1
+==
+txn GroupIndex
+int 0
+==
+&&
+gtxn 0 RekeyTo
+global ZeroAddress
+==
+&&
+txn Sender
+byte "opponent"
+app_local_get
+txna Accounts 1
+==
+&&
+txna Accounts 1
+byte "opponent"
+app_local_get
+txn Sender
+==
+&&
+txn Sender
+byte "bet"
+app_local_get
+txna Accounts 1
+byte "bet"
+app_local_get
+==
+&&
+txn Sender
+byte "private_play"
+app_local_get
+byte ""
+!=
+&&
+txna Accounts 1
+byte "play"
+app_local_get
+byte ""
+!=
+&&
+txn NumAppArgs
+int 2
+==
+&&
+txna ApplicationArgs 1
+sha256
+int 0
+byte "private_play"
+app_local_get
+==
+&&
+assert
+txna ApplicationArgs 1
+callsub playvalue_3
+store 4
+txna Accounts 1
+byte "play"
+app_local_get
+callsub playvalue_3
+store 5
+txn Sender
+byte "bet"
+app_local_get
+store 7
+load 4
+load 5
+callsub getwinneraccountindex_4
+store 6
+load 6
+int 2
+==
+bnz reveal_8_l2
+load 6
+load 7
+int 2
+*
+callsub sendreward_5
+b reveal_8_l3
+reveal_8_l2:
+txn Sender
+load 7
+callsub sendreward_5
+txna Accounts 1
+load 7
+callsub sendreward_5
+reveal_8_l3:
+txn Sender
+callsub reset_0
+txna Accounts 1
+callsub reset_0
+int 1
+return

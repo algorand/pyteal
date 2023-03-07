@@ -21,13 +21,13 @@ if TYPE_CHECKING:
 class TxnType:
     """Enum of all possible transaction types."""
 
-    Unknown = EnumInt("unknown")
-    Payment = EnumInt("pay")
-    KeyRegistration = EnumInt("keyreg")
-    AssetConfig = EnumInt("acfg")
-    AssetTransfer = EnumInt("axfer")
-    AssetFreeze = EnumInt("afrz")
-    ApplicationCall = EnumInt("appl")
+    Unknown = EnumInt("unknown")  # T2PT7
+    Payment = EnumInt("pay")  # T2PT7
+    KeyRegistration = EnumInt("keyreg")  # T2PT7
+    AssetConfig = EnumInt("acfg")  # T2PT7
+    AssetTransfer = EnumInt("axfer")  # T2PT7
+    AssetFreeze = EnumInt("afrz")  # T2PT7
+    ApplicationCall = EnumInt("appl")  # T2PT7
 
 
 TxnType.__module__ = "pyteal"

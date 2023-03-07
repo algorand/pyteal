@@ -52,6 +52,7 @@ class MaybeValue(MultiValue):
             compile_check=(
                 local_version_check if compile_check is None else compile_check
             ),
+            root_expr=self,
         )
 
     def hasValue(self) -> ScratchLoad:

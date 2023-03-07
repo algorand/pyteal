@@ -1,4 +1,4 @@
-from typing import Callable, List, Union, TYPE_CHECKING
+from typing import Callable, List, Union, TYPE_CHECKING, cast
 
 from pyteal.types import TealType
 from pyteal.ir import TealOp, Op, TealBlock
@@ -6,6 +6,7 @@ from pyteal.ast.expr import Expr
 from pyteal.ast.leafexpr import LeafExpr
 from pyteal.ast.scratch import ScratchSlot
 from pyteal.ast.seq import Seq
+from pyteal.ast.scratch import ScratchStackStore
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
@@ -22,6 +23,7 @@ class MultiValue(LeafExpr):
         immediate_args: List[Union[int, str]] | None = None,
         args: List[Expr] | None = None,
         compile_check: Callable[["CompileOptions"], None] = lambda _: None,
+        root_expr: Expr | None = None,
     ):
         """Create a new MultiValue.
 
@@ -39,6 +41,7 @@ class MultiValue(LeafExpr):
         self.compile_check = compile_check
 
         self.output_slots = [ScratchSlot() for _ in self.types]
+        self._sframes_container = root_expr
 
     def outputReducer(self, reducer: Callable[..., Expr]) -> Expr:
         input = [slot.load(self.types[i]) for i, slot in enumerate(self.output_slots)]
@@ -69,7 +72,8 @@ class MultiValue(LeafExpr):
         # values. ie the output to stack [A, B, C] should correspond to C->output_slots[2]
         # B->output_slots[1], and A->output_slots[0].
         for slot in reversed(self.output_slots):
-            store = slot.store()
+            store = cast(ScratchStackStore, slot.store())
+            store._sframes_container = self._sframes_container
             storeStart, storeEnd = store.__teal__(options)
             curEnd.setNextBlock(storeStart)
             curEnd = storeEnd

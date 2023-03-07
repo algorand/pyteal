@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING
 
+from pyteal.ast.expr import Expr
+from pyteal.ast.seq import _use_seq_if_multiple
 from pyteal.errors import (
     TealCompileError,
     TealInputError,
 )
 from pyteal.types import TealType, require_type
 from pyteal.ir import TealSimpleBlock, TealConditionalBlock
-from pyteal.ast.expr import Expr
-from pyteal.ast.seq import _use_seq_if_multiple
 
 if TYPE_CHECKING:
     from pyteal.compiler import CompileOptions
@@ -49,6 +49,8 @@ class If(Expr):
         self.thenBranch = thenBranch
         self.elseBranch = elseBranch
 
+        self._label_cond: Expr | None = None
+
     def __teal__(self, options: "CompileOptions"):
         if self.thenBranch is None:
             raise TealCompileError("If expression must have a thenBranch", self)
@@ -57,7 +59,7 @@ class If(Expr):
         thenStart, thenEnd = self.thenBranch.__teal__(options)
         end = TealSimpleBlock([])
 
-        branchBlock = TealConditionalBlock([])
+        branchBlock = TealConditionalBlock([], root_expr=(self._label_cond or self))
         branchBlock.setTrueBlock(thenStart)
 
         condEnd.setNextBlock(branchBlock)
@@ -65,10 +67,12 @@ class If(Expr):
 
         if self.elseBranch is None:
             branchBlock.setFalseBlock(end)
+            branchBlock._sframes_container = self
         else:
             elseStart, elseEnd = self.elseBranch.__teal__(options)
             branchBlock.setFalseBlock(elseStart)
             elseEnd.setNextBlock(end)
+            elseEnd._sframes_container = self
 
         return condStart, end
 
@@ -120,6 +124,7 @@ class If(Expr):
 
         if not self.elseBranch:
             self.elseBranch = If(cond)
+            self.elseBranch._label_cond = cond
         else:
             if not isinstance(self.elseBranch, If):
                 raise TealInputError("Else-ElseIf block is malformed")

@@ -22,9 +22,11 @@ setuptools.setup(
     ),
     install_requires=[
         # when changing this list, also update docs/requirements.txt
+        "docstring-parser==0.14.1",
+        "executing==1.2.0",
         "py-algorand-sdk>=2.0.0,<3.0.0",
         "semantic-version>=2.9.0,<3.0.0",
-        "docstring-parser==0.14.1",
+        "tabulate>=0.9.0,<0.10.0",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

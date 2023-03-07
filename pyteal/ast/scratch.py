@@ -249,6 +249,7 @@ class ScratchStackStore(Expr):
         """
         super().__init__()
         self.slot = slot
+        self._sframes_container: Expr | None = None
 
     def __str__(self):
         return "(StackStore {})".format(self.slot)
@@ -257,6 +258,7 @@ class ScratchStackStore(Expr):
         from pyteal.ir import TealOp, Op, TealBlock
 
         op = TealOp(self, Op.store, self.slot)
+        op._sframes_container = self._sframes_container
         return TealBlock.FromOp(options, op)
 
     def type_of(self):

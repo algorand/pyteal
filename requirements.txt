@@ -5,6 +5,7 @@ graviton@git+https://github.com/algorand/graviton@v0.9.0
 mypy==0.991
 pytest==7.2.0
 pytest-cov==3.0.0
+pytest-custom-exit-code==0.3.0
 pytest-timeout==2.1.0
 pytest-xdist==3.0.2
 types-setuptools==57.4.18

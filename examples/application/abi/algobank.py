@@ -112,11 +112,11 @@ def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
     )
 
 
-approval_program, clear_state_program, contract = router.compile_program(
-    version=6, optimize=OptimizeOptions(scratch_slots=True)
-)
-
 if __name__ == "__main__":
+    approval_program, clear_state_program, contract = router.compile_program(
+        version=6, optimize=OptimizeOptions(scratch_slots=True)
+    )
+
     with open("algobank_approval.teal", "w") as f:
         f.write(approval_program)
 

@@ -14,9 +14,10 @@ if TYPE_CHECKING:
 class TealBlock(ABC):
     """Represents a basic block of TealComponents in a graph."""
 
-    def __init__(self, ops: List[TealOp]) -> None:
+    def __init__(self, ops: List[TealOp], root_expr: "Expr | None" = None) -> None:
         self.ops = ops
         self.incoming: List[TealBlock] = []
+        self._sframes_container = root_expr
 
     @abstractmethod
     def getOutgoing(self) -> List["TealBlock"]:

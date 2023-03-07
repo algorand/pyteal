@@ -1,4 +1,36 @@
-from pyteal.errors import TealInternalError
+from algosdk.v2client import algod
+
+from pyteal.errors import AlgodClientError, TealInternalError
+
+
+def algod_with_assertion(
+    client: algod.AlgodClient | None = None, msg: str = ""
+) -> algod.AlgodClient:
+    def wrap(e, msg):
+        raise AlgodClientError(f"{msg}: {e}" if msg else str(e))
+
+    if not client:
+        try:
+            client = _algod_client()
+        except Exception as e:
+            wrap(e, msg)
+
+    assert client
+    try:
+        if not client.status():
+            wrap("algod.status() did not produce any results", msg)
+
+    except Exception as e:
+        wrap(e, msg)
+
+    return client
+
+
+def _algod_client(
+    algod_address="http://localhost:4001", algod_token="a" * 64
+) -> algod.AlgodClient:
+    """Instantiate and return Algod client object."""
+    return algod.AlgodClient(algod_token, algod_address)
 
 
 def escapeStr(s: str) -> str:

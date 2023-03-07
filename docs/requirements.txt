@@ -1,6 +1,8 @@
 sphinx==5.1.1
 sphinx-rtd-theme==1.0.0
 # dependencies from setup.py
+docstring-parser==0.14.1
+executing==1.2.0
 py-algorand-sdk>=2.0.0,<3.0.0
 semantic-version>=2.9.0,<3.0.0
-docstring-parser==0.14.1
+tabulate>=0.9.0,<0.10.0

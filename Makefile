@@ -21,6 +21,8 @@ bdist-wheel:
 
 bundle-docs-clean:
 	rm -rf docs/pyteal.docset
+	rm -rf docs/_build
+	rm -f docs/pyteal.docset.tar.gz
 
 bundle-docs: bundle-docs-clean
 	cd docs && \
@@ -51,14 +53,19 @@ lint: black flake8 mypy sdist-check
 
 # ---- Unit Tests (no algod) ---- #
 
-# TODO: add blackbox_test.py to multithreaded tests when following issue has been fixed https://github.com/algorand/pyteal/issues/199
+# Slow test which are fast enough on python 3.11+
+test-unit-slow: 
+	pytest tests/unit/sourcemap_constructs311_test.py -m serial
 
-NUM_PROCS = auto
+test-unit-very-slow: 
+	pytest tests/unit/sourcemap_constructs_allpy_test.py -m serial
+
 test-unit-async:
-	pytest -n $(NUM_PROCS) --durations=10 -sv pyteal tests/unit -m "not serial"
+	pytest -n auto --durations=10 pyteal tests/unit -m "not slow" -m "not serial"
 
-test-unit-sync:
-	pytest --durations=10 -sv pyteal tests/unit -m serial
+# Run tests w/ @pytest.mark.serial under ~/tests/unit each in its own proc:
+test-unit-sync: test-unit-slow
+	find tests/unit -name '*_test.py' | sort | xargs -t -I {} pytest --suppress-no-test-exit-code --dist=no --durations=10 {} -m serial -m "not slow"
 
 test-unit: test-unit-async test-unit-sync
 
@@ -76,13 +83,19 @@ algod-start-report: algod-start algod-version
 
 algod-stop:
 	docker compose stop algod
-integration-run:
-	pytest -n $(NUM_PROCS) --durations=10 -sv tests/integration -m "not serial"
-	pytest --durations=10 -sv tests/integration -m serial
 
-test-integration: integration-run
+test-integ-async:
+	pytest -n auto --durations=10 -sv tests/integration -m "not serial"
 
-all-tests: lint-and-test test-integration
+# Run tests w/ @pytest.mark.serial under ~/tests/integration each in its own proc:
+test-integ-sync:
+	find tests/integration -name '*_test.py' | sort | xargs -t -I {} pytest --suppress-no-test-exit-code --dist=no --durations=10 {} -m serial
+
+test-integration: test-integ-async test-integ-sync
+
+all-sync: test-unit-sync test-integ-sync
+
+all-lint-unit-integ: lint-and-test test-integration
 
 # ---- Github Actions 1-Liners ---- #
 
@@ -94,8 +107,7 @@ check-code-changes:
 	git config --global --add safe.directory /__w/pyteal/pyteal
 	[ -n "$$(git log --since='24 hours ago')" ] && (echo "should_run=true" >> $(GITHUB_ENV)) || (echo "should_run=false" >> $(GITHUB_ENV))
 
-nightly-slow:
-	echo "TODO - this is a stub for a very slow test"
+nightly-slow: test-unit-very-slow
 
 # ---- Local Github Actions Simulation via `act` ---- #
 # assumes act is installed, e.g. via `brew install act`
@@ -111,3 +123,6 @@ local-gh-simulate:
 
 coverage:
 	pytest --cov-report html --cov=pyteal
+
+sourcemap-coverage:
+	pytest --cov-report html --cov=pyteal.stack_frame --cov=pyteal.compiler.sourcemap --cov=pyteal.compiler.compiler --dist=no tests/unit/sourcemap_monkey_unit_test.py -m serial

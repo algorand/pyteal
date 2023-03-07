@@ -377,7 +377,9 @@ def test_bare_call_config_clear_state_failure():
             )
         )
 
-    assert "Attempt to construct clear state program from bare app call" in str(tie)
+    assert "Attempt to construct clear state program from bare app call" in str(
+        tie.value
+    )
 
 
 def test_BareCallActions_asdict():
@@ -407,6 +409,29 @@ def test_BareCallActions_asdict():
         "opt_in": no_action,
         "update_application": no_action,
     }
+
+
+def test_BareCallActions_aslist():
+    no_action = pt.OnCompleteAction()
+    optin_action = pt.OnCompleteAction(action=pt.Int(1), call_config=pt.CallConfig.ALL)
+    update_action = pt.OnCompleteAction(
+        action=pt.Int(2), call_config=pt.CallConfig.CALL
+    )
+
+    bca = pt.BareCallActions(
+        update_application=update_action,
+        opt_in=optin_action,
+    )
+
+    bcal = bca.aslist()
+    assert bcal == [
+        no_action,
+        no_action,
+        no_action,
+        no_action,
+        optin_action,
+        update_action,
+    ]
 
 
 def test_BareCallActions_get_method_config():

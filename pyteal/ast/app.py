@@ -25,12 +25,12 @@ if TYPE_CHECKING:
 class OnComplete:
     """An enum of values that :any:`TxnObject.on_completion()` may return."""
 
-    NoOp = EnumInt("NoOp")
-    OptIn = EnumInt("OptIn")
-    CloseOut = EnumInt("CloseOut")
-    ClearState = EnumInt("ClearState")
-    UpdateApplication = EnumInt("UpdateApplication")
-    DeleteApplication = EnumInt("DeleteApplication")
+    NoOp = EnumInt("NoOp")  # T2PT8
+    OptIn = EnumInt("OptIn")  # T2PT8
+    CloseOut = EnumInt("CloseOut")  # T2PT8
+    ClearState = EnumInt("ClearState")  # T2PT8
+    UpdateApplication = EnumInt("UpdateApplication")  # T2PT8
+    DeleteApplication = EnumInt("DeleteApplication")  # T2PT8
 
 
 OnComplete.__module__ = "pyteal"

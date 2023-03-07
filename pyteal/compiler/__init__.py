@@ -6,10 +6,11 @@ from pyteal.compiler.compiler import (
     MIN_PROGRAM_VERSION,
     DEFAULT_PROGRAM_VERSION,
     CompileOptions,
+    Compilation,
     compileTeal,
 )
-
 from pyteal.compiler.optimizer import OptimizeOptions
+from pyteal.compiler.sourcemap import PyTealSourceMap
 
 __all__ = [
     "MAX_TEAL_VERSION",
@@ -19,6 +20,8 @@ __all__ = [
     "MIN_PROGRAM_VERSION",
     "DEFAULT_PROGRAM_VERSION",
     "CompileOptions",
+    "Compilation",
     "compileTeal",
     "OptimizeOptions",
+    "PyTealSourceMap",
 ]
