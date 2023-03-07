@@ -49,7 +49,9 @@ class _SubroutineDeclByOption:
         decl = self.option_map[fp_option]
         if decl is not None:
             return decl
-        self.option_map[fp_option] = self.option_method[fp_option](self.subroutine)
+        self.option_map[fp_option] = self.option_method[fp_option].evaluate(
+            self.subroutine
+        )
         return cast(SubroutineDeclaration, self.option_map[fp_option])
 
     def __probe_info(self, fp_option: bool) -> tuple[bool, TealType]:
@@ -829,7 +831,7 @@ Subroutine.__module__ = "pyteal"
 
 
 @contextmanager
-def _frame_pointer_context(proto: Proto):
+def _frame_pointer_context(proto: Proto | None):
     tmp, SubroutineEval._current_proto = SubroutineEval._current_proto, proto
     yield proto
     SubroutineEval._current_proto = tmp
@@ -912,6 +914,23 @@ class SubroutineEval:
     _current_proto: ClassVar[Optional[Proto]] = None
 
     @staticmethod
+    def _new_abi_instance_from_storage(
+        spec: abi.TypeSpec, storage: FrameVar
+    ) -> abi.BaseType:
+        """
+        This hidden method generates new ABI instance that is tied to the storage: FrameVar as follows:
+        - generates new instance that is based on scratch vars
+        - rewind the new instance to be using storage: FrameVar
+        - rewind the state changed by scratch slot allocation
+        """
+        current_scratch_id = ScratchSlot.nextSlotId
+        with _frame_pointer_context(None):
+            instance = spec.new_instance()
+        instance._stored_value = storage
+        ScratchSlot.reset_slot_numbering(current_scratch_id)
+        return instance
+
+    @staticmethod
     def var_n_loaded_scratch(
         subroutine: SubroutineDefinition,
         param: str,
@@ -924,7 +943,8 @@ class SubroutineEval:
             argument_var = DynamicScratchVar(TealType.anytype)
             loaded_var = argument_var
         elif param in subroutine.abi_args:
-            internal_abi_var = subroutine.abi_args[param].new_instance()
+            with _frame_pointer_context(None):
+                internal_abi_var = subroutine.abi_args[param].new_instance()
             argument_var = cast(ScratchVar, internal_abi_var._stored_value)
             loaded_var = internal_abi_var
         else:
@@ -951,11 +971,12 @@ class SubroutineEval:
             argument_var = DynamicScratchVar(TealType.anytype)
             loaded_var = argument_var
         elif param in subroutine.abi_args:
-            internal_abi_var = subroutine.abi_args[param].new_instance()
             dig_index = (
                 subroutine.arguments().index(param) - subroutine.argument_count()
             )
-            internal_abi_var._stored_value = FrameVar(proto, dig_index)
+            internal_abi_var = SubroutineEval._new_abi_instance_from_storage(
+                subroutine.abi_args[param], FrameVar(proto, dig_index)
+            )
             argument_var = None
             loaded_var = internal_abi_var
         else:
@@ -1002,7 +1023,7 @@ class SubroutineEval:
 
         return Proto(subroutine.argument_count(), num_stack_outputs, mem_layout=layout)
 
-    def __call__(self, subroutine: SubroutineDefinition) -> SubroutineDeclaration:
+    def evaluate(self, subroutine: SubroutineDefinition) -> SubroutineDeclaration:
         proto = self.__proto(subroutine)
 
         args = subroutine.arguments()
@@ -1021,22 +1042,23 @@ class SubroutineEval:
         output_carrying_abi: Optional[abi.BaseType] = None
 
         if output_kwarg_info:
-            output_carrying_abi = output_kwarg_info.abi_type.new_instance()
-            if self.use_frame_pt:
-                output_carrying_abi._stored_value = FrameVar(proto, 0)
+            if not self.use_frame_pt:
+                with _frame_pointer_context(None):
+                    output_carrying_abi = output_kwarg_info.abi_type.new_instance()
+            else:
+                output_carrying_abi = SubroutineEval._new_abi_instance_from_storage(
+                    output_kwarg_info.abi_type, FrameVar(proto, 0)
+                )
+
             abi_output_kwargs[output_kwarg_info.name] = output_carrying_abi
 
         # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:
         subroutine_body: Expr
-        if not self.use_frame_pt:
+
+        with _frame_pointer_context(proto if self.use_frame_pt else None):
             subroutine_body = subroutine.implementation(
                 *loaded_args, **abi_output_kwargs
             )
-        else:
-            with _frame_pointer_context(proto):
-                subroutine_body = subroutine.implementation(
-                    *loaded_args, **abi_output_kwargs
-                )
 
         if not isinstance(subroutine_body, Expr):
             raise TealInputError(

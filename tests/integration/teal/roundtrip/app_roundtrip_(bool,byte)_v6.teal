@@ -1,11 +1,11 @@
 #pragma version 6
 txna ApplicationArgs 0
-store 3
-load 3
+store 1
+load 1
 callsub roundtripper_1
-store 2
+store 0
 byte 0x151f7c75
-load 2
+load 0
 concat
 log
 int 1
@@ -13,50 +13,50 @@ return
 
 // tuple_complement
 tuplecomplement_0:
-store 8
-load 8
+store 6
+load 6
 int 0
 getbit
-store 0
-load 8
+store 8
+load 6
 int 1
 getbyte
-store 1
-load 0
+store 9
+load 8
 callsub boolcomp_2
-store 0
-load 1
+store 8
+load 9
 callsub numericalcomp_3
-store 1
+store 9
 byte 0x00
 int 0
-load 0
+load 8
 setbit
 byte 0x00
 int 0
-load 1
+load 9
 setbyte
 concat
-store 9
-load 9
+store 7
+load 7
 retsub
 
 // round_tripper
 roundtripper_1:
+store 2
+load 2
+callsub tuplecomplement_0
 store 4
 load 4
 callsub tuplecomplement_0
-store 6
-load 6
-callsub tuplecomplement_0
-store 7
-load 4
-load 6
-concat
-load 7
-concat
 store 5
+load 2
+load 4
+concat
 load 5
+concat
+store 3
+load 3
 retsub
 
 // bool_comp

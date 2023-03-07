@@ -137,6 +137,13 @@ ABI_TYPES = [
         ],
         2,
     ),
+    abi.Tuple1[
+        abi.Tuple3[
+            abi.Uint64,
+            abi.DynamicBytes,
+            abi.StaticArray[abi.Uint64, Literal[1]],
+        ],
+    ],
     NamedTupleInherit,
 ]
 
