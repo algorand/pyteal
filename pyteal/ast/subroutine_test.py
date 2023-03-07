@@ -6,7 +6,7 @@ import pytest
 from dataclasses import dataclass
 
 import pyteal as pt
-from pyteal.ast.frame import Proto, ProtoStackLayout, FrameBury, FrameDig
+from pyteal.ast.frame import FrameVar, Proto, ProtoStackLayout, FrameBury, FrameDig
 from pyteal.ast.subroutine import ABIReturnSubroutine, SubroutineEval
 from pyteal.compiler.compiler import FRAME_POINTERS_VERSION
 
@@ -374,7 +374,7 @@ def test_subroutine_definition_validate():
     )
 
     # Now we get to _validate_annotation():
-    one_vanilla = mock_subroutine_definition(lambda x: pt.Return(pt.Int(1)))
+    one_vanilla = mock_subroutine_definition(lambda _: pt.Return(pt.Int(1)))
 
     params, anns, arg_types, byrefs, abi_args, output_kwarg = one_vanilla._validate()
     assert len(params) == 1
@@ -1159,7 +1159,7 @@ def test_evaluate_subroutine_no_args(return_type: pt.TealType, return_value: pt.
     definition = pt.SubroutineDefinition(mySubroutine, return_type)
     evaluate_subroutine = SubroutineEval.normal_evaluator()
 
-    declaration = evaluate_subroutine(definition)
+    declaration = evaluate_subroutine.evaluate(definition)
 
     assert isinstance(declaration, pt.SubroutineDeclaration)
     assert declaration.subroutine is definition
@@ -1187,7 +1187,7 @@ def test_evaluate_subroutine_1_arg(return_type: pt.TealType, return_value: pt.Ex
     definition = pt.SubroutineDefinition(mySubroutine, return_type)
 
     evaluate_subroutine = SubroutineEval.normal_evaluator()
-    declaration = evaluate_subroutine(definition)
+    declaration = evaluate_subroutine.evaluate(definition)
 
     assert isinstance(declaration, pt.SubroutineDeclaration)
     assert declaration.subroutine is definition
@@ -1224,7 +1224,7 @@ def test_evaluate_subroutine_2_args(return_type: pt.TealType, return_value: pt.E
     definition = pt.SubroutineDefinition(mySubroutine, return_type)
 
     evaluate_subroutine = SubroutineEval.normal_evaluator()
-    declaration = evaluate_subroutine(definition)
+    declaration = evaluate_subroutine.evaluate(definition)
 
     assert isinstance(declaration, pt.SubroutineDeclaration)
     assert declaration.subroutine is definition
@@ -1264,7 +1264,7 @@ def test_evaluate_subroutine_10_args(return_type: pt.TealType, return_value: pt.
     definition = pt.SubroutineDefinition(mySubroutine, return_type)
 
     evaluate_subroutine = SubroutineEval.normal_evaluator()
-    declaration = evaluate_subroutine(definition)
+    declaration = evaluate_subroutine.evaluate(definition)
 
     assert isinstance(declaration, pt.SubroutineDeclaration)
     assert declaration.subroutine is definition
@@ -1315,7 +1315,7 @@ def test_evaluate_subroutine_frame_pt_version(
         definition = pt.SubroutineDefinition(subr, return_type)
         evaluate_subroutine = SubroutineEval.fp_evaluator()
 
-        declaration = evaluate_subroutine(definition)
+        declaration = evaluate_subroutine.evaluate(definition)
 
         assert isinstance(declaration, pt.SubroutineDeclaration)
         assert declaration.subroutine is definition
@@ -1790,7 +1790,7 @@ def test_evaluate_subroutine_local_variables(test_case: LocalVariableTestCase):
         (SubroutineEval.normal_evaluator(), test_case.expected_body_normal_evaluator),
         (SubroutineEval.fp_evaluator(), test_case.expected_body_fp_evaluator),
     ):
-        declaration = evaluator(definition)
+        declaration = evaluator.evaluate(definition)
 
         evaluator_type = "fp" if evaluator.use_frame_pt else "normal"
         failure_msg = f"assertion failed for {evaluator_type} evaluator"
@@ -2044,3 +2044,78 @@ def test_frame_option_version_range_well_formed():
     assert (
         pt.Op.callsub.min_version < FRAME_POINTERS_VERSION < pt.MAX_PROGRAM_VERSION + 1
     )
+
+
+def test_new_abi_instance_from_storage():
+    current_proto = Proto(num_args=2, num_returns=1)
+
+    current_scratch_slot_id = pt.ScratchSlot.nextSlotId
+
+    arg_storage = FrameVar(current_proto, -1)
+    some_arg_from_proto = SubroutineEval._new_abi_instance_from_storage(
+        pt.abi.Uint64TypeSpec(),
+        arg_storage,
+    )
+
+    assert some_arg_from_proto._stored_value == arg_storage
+    assert current_scratch_slot_id == pt.ScratchSlot.nextSlotId
+
+    ret_storage = FrameVar(current_proto, 0)
+    ret_from_proto = SubroutineEval._new_abi_instance_from_storage(
+        pt.abi.AddressTypeSpec(),
+        ret_storage,
+    )
+
+    assert ret_from_proto._stored_value == ret_storage
+    assert current_scratch_slot_id == pt.ScratchSlot.nextSlotId
+
+
+def test_subroutine_evaluation_local_allocation_correct():
+    foo = pt.abi.Uint64()
+
+    @pt.ABIReturnSubroutine
+    def get(
+        x: pt.abi.Uint64, y: pt.abi.Uint8, *, output: pt.abi.DynamicBytes
+    ) -> pt.Expr:
+        return pt.Seq(
+            output.set(pt.Bytes("")),
+        )
+
+    @pt.ABIReturnSubroutine
+    def get_fie(y: pt.abi.Uint8, *, output: pt.abi.Uint64) -> pt.Expr:
+        data = pt.abi.make(pt.abi.DynamicBytes)
+        return pt.Seq(
+            data.set(get(foo, y)),
+            output.set(pt.Btoi(data.get())),
+        )
+
+    @pt.ABIReturnSubroutine
+    def set_(x: pt.abi.Uint64, y: pt.abi.Uint8) -> pt.Expr:
+        return pt.Seq()
+
+    router = pt.Router("Jane Doe")
+
+    @router.method
+    def fie(y: pt.abi.Uint8) -> pt.Expr:
+        old_amount = pt.abi.Uint64()
+
+        return pt.Seq(
+            old_amount.set(get_fie(y)),
+            set_(foo, y),
+        )
+
+    evaluator = SubroutineEval.fp_evaluator()
+
+    evaluated_fie = evaluator.evaluate(cast(pt.ABIReturnSubroutine, fie).subroutine)
+    layout_fie = cast(Proto, cast(pt.Seq, evaluated_fie.body).args[0]).mem_layout
+
+    assert len(layout_fie.local_stack_types) == 1
+
+    evaluated_get_fie = evaluator.evaluate(
+        cast(pt.ABIReturnSubroutine, get_fie).subroutine
+    )
+    layout_get_fie = cast(
+        Proto, cast(pt.Seq, evaluated_get_fie.body).args[0]
+    ).mem_layout
+
+    assert len(layout_get_fie.local_stack_types) == 2

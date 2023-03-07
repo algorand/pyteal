@@ -101,13 +101,13 @@ class ABIRoundtrip(Generic[T]):
 
     def tuple_comp_factory(self) -> pt.ABIReturnSubroutine:  # type: ignore[name-defined]
         value_type_specs: list[abi.TypeSpec] = self.type_spec.value_type_specs()  # type: ignore[attr-defined]
-        insts = [vts.new_instance() for vts in value_type_specs]
-        roundtrips: list[ABIRoundtrip[T]] = [
-            ABIRoundtrip(inst, length=None) for inst in insts  # type: ignore[arg-type]
-        ]
 
         @pt.ABIReturnSubroutine
         def tuple_complement(x: self.annotation, *, output: self.annotation):  # type: ignore[name-defined]
+            insts = [vts.new_instance() for vts in value_type_specs]
+            roundtrips: list[ABIRoundtrip[T]] = [
+                ABIRoundtrip(inst, length=None) for inst in insts  # type: ignore[arg-type]
+            ]
             setters = [inst.set(x[i]) for i, inst in enumerate(insts)]  # type: ignore[attr-defined]
             comp_funcs = [rtrip.mutator_factory() for rtrip in roundtrips]
             compers = [inst.set(comp_funcs[i](inst)) for i, inst in enumerate(insts)]  # type: ignore[attr-defined]

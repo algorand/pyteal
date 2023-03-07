@@ -1,0 +1,266 @@
+#pragma version 6
+txna ApplicationArgs 0
+store 1
+load 1
+callsub roundtripper_1
+store 0
+byte 0x151f7c75
+load 0
+concat
+log
+int 1
+return
+
+// tuple_complement
+tuplecomplement_0:
+store 6
+load 6
+load 6
+int 0
+extract_uint16
+dig 1
+len
+substring3
+store 8
+load 8
+callsub tuplecomplement_2
+store 8
+load 8
+store 34
+load 34
+store 33
+int 2
+store 32
+load 32
+itob
+extract 6 0
+load 33
+concat
+store 7
+load 7
+retsub
+
+// round_tripper
+roundtripper_1:
+store 2
+load 2
+callsub tuplecomplement_0
+store 4
+load 4
+callsub tuplecomplement_0
+store 5
+load 2
+store 38
+load 38
+store 37
+int 6
+store 35
+load 35
+load 38
+len
++
+store 36
+load 36
+int 65536
+<
+assert
+load 35
+itob
+extract 6 0
+load 4
+store 38
+load 37
+load 38
+concat
+store 37
+load 36
+store 35
+load 35
+load 38
+len
++
+store 36
+load 36
+int 65536
+<
+assert
+load 35
+itob
+extract 6 0
+concat
+load 5
+store 38
+load 37
+load 38
+concat
+store 37
+load 36
+store 35
+load 35
+itob
+extract 6 0
+concat
+load 37
+concat
+store 3
+load 3
+retsub
+
+// tuple_complement
+tuplecomplement_2:
+store 9
+load 9
+int 0
+extract_uint64
+store 11
+load 9
+load 9
+int 8
+extract_uint16
+dig 1
+len
+substring3
+store 12
+load 9
+extract 10 8
+store 13
+load 11
+callsub numericalcomp_3
+store 11
+load 12
+callsub arraycomplement_5
+store 12
+load 13
+callsub arraycomplement_7
+store 13
+load 11
+itob
+load 12
+store 31
+load 31
+store 30
+int 18
+store 29
+load 29
+itob
+extract 6 0
+concat
+load 13
+concat
+load 30
+concat
+store 10
+load 10
+retsub
+
+// numerical_comp
+numericalcomp_3:
+store 14
+int 18446744073709551615
+load 14
+-
+store 15
+load 15
+retsub
+
+// numerical_comp
+numericalcomp_4:
+store 21
+int 255
+load 21
+-
+store 22
+load 22
+int 256
+<
+assert
+load 22
+retsub
+
+// array_complement
+arraycomplement_5:
+store 16
+load 16
+int 1
+int 0
+*
+int 2
++
+getbyte
+store 18
+load 16
+int 1
+int 1
+*
+int 2
++
+getbyte
+store 19
+load 16
+int 1
+int 2
+*
+int 2
++
+getbyte
+store 20
+load 18
+callsub numericalcomp_4
+store 18
+load 19
+callsub numericalcomp_4
+store 19
+load 20
+callsub numericalcomp_4
+store 20
+int 3
+store 23
+load 23
+itob
+extract 6 0
+byte 0x00
+int 0
+load 18
+setbyte
+byte 0x00
+int 0
+load 19
+setbyte
+concat
+byte 0x00
+int 0
+load 20
+setbyte
+concat
+concat
+store 17
+load 17
+retsub
+
+// numerical_comp
+numericalcomp_6:
+store 27
+int 18446744073709551615
+load 27
+-
+store 28
+load 28
+retsub
+
+// array_complement
+arraycomplement_7:
+store 24
+load 24
+int 8
+int 0
+*
+extract_uint64
+store 26
+load 26
+callsub numericalcomp_6
+store 26
+load 26
+itob
+store 25
+load 25
+retsub
