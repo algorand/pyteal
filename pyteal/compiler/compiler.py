@@ -174,7 +174,6 @@ def compileSubroutine(
 
         if deferred_expr := decl.deferred_expr:
             # this represents code that should be inserted before each retsub op
-
             for block in TealBlock.Iterate(start):
                 if not any(op.getOp() == Op.retsub for op in block.ops):
                     continue
