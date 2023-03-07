@@ -167,47 +167,42 @@ def compileSubroutine(
     start, end = ast.__teal__(options)
     start.addIncoming()
     start.validateTree()
-    if currentSubroutine and end.ops:
-        end.ops[0]._sframes_container = currentSubroutine.get_declaration_by_option(
-            options.use_frame_pointers
-        )
+    if currentSubroutine:
+        decl = currentSubroutine.get_declaration_by_option(options.use_frame_pointers)
+        if end.ops:
+            end.ops[0]._sframes_container = decl
 
-    if currentSubroutine and (
-        de := currentSubroutine.get_declaration_by_option(
-            options.use_frame_pointers
-        ).deferred_expr
-    ):
-        # this represents code that should be inserted before each retsub op
-        deferred_expr = cast(Expr, de)
+        if deferred_expr := decl.deferred_expr:
+            # this represents code that should be inserted before each retsub op
 
-        for block in TealBlock.Iterate(start):
-            if not any(op.getOp() == Op.retsub for op in block.ops):
-                continue
+            for block in TealBlock.Iterate(start):
+                if not any(op.getOp() == Op.retsub for op in block.ops):
+                    continue
 
-            if len(block.ops) != 1:
-                # we expect all retsub ops to be in their own block at this point since
-                # TealBlock.NormalizeBlocks has not yet been used
-                raise TealInternalError(
-                    f"Expected retsub to be the only op in the block, but there are {len(block.ops)} ops"
-                )
+                if len(block.ops) != 1:
+                    # we expect all retsub ops to be in their own block at this point since
+                    # TealBlock.NormalizeBlocks has not yet been used
+                    raise TealInternalError(
+                        f"Expected retsub to be the only op in the block, but there are {len(block.ops)} ops"
+                    )
 
-            # we invoke __teal__ here and not outside of this loop because the same block cannot be
-            # added in multiple places to the control flow graph
-            deferred_start, deferred_end = deferred_expr.__teal__(options)
-            deferred_start.addIncoming()
-            deferred_start.validateTree()
+                # we invoke __teal__ here and not outside of this loop because the same block cannot be
+                # added in multiple places to the control flow graph
+                deferred_start, deferred_end = deferred_expr.__teal__(options)
+                deferred_start.addIncoming()
+                deferred_start.validateTree()
 
-            # insert deferred blocks between the previous block(s) and this one
-            deferred_start.incoming = block.incoming
-            block.incoming = [deferred_end]
-            deferred_end.nextBlock = block
+                # insert deferred blocks between the previous block(s) and this one
+                deferred_start.incoming = block.incoming
+                block.incoming = [deferred_end]
+                deferred_end.nextBlock = block
 
-            for prev in deferred_start.incoming:
-                prev.replaceOutgoing(block, deferred_start)
+                for prev in deferred_start.incoming:
+                    prev.replaceOutgoing(block, deferred_start)
 
-            if block is start:
-                # this is the start block, replace start
-                start = deferred_start
+                if block is start:
+                    # this is the start block, replace start
+                    start = deferred_start
 
     start.validateTree()
 
