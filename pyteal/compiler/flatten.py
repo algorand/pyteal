@@ -1,6 +1,7 @@
 from collections import defaultdict
 
-from pyteal.ast import Expr, SubroutineDefinition
+from pyteal.ast import Expr, SubroutineDeclaration, SubroutineDefinition
+from pyteal import compiler
 from pyteal.errors import TealInternalError, TealInputError
 from pyteal.ir import (
     Op,
@@ -107,6 +108,7 @@ def flattenBlocks(blocks: list[TealBlock]) -> list[TealComponent]:
 def flattenSubroutines(
     subroutineMapping: dict[SubroutineDefinition | None, list[TealComponent]],
     subroutineToLabel: dict[SubroutineDefinition, str],
+    options: "compiler.CompileOptions",
 ) -> list[TealComponent]:
     """Combines each subroutine's list of TealComponents into a single list of TealComponents that
     represents the entire program.
@@ -141,11 +143,14 @@ def flattenSubroutines(
             if isinstance(stmt, TealLabel):
                 stmt.getLabelRef().addPrefix(labelPrefix)
 
-        dexpr: Expr | None = None
+        # this is needed for source map generation
+        dexpr: SubroutineDeclaration | None
         try:
-            dexpr = subroutine.declarations.get_declaration()
+            dexpr = subroutine.declarations.get_declaration_by_option(
+                options.use_frame_pointers
+            )
         except TealInputError:
-            pass  # NOOP - just ignoring, as only used for source mapping
+            dexpr = None
 
         combinedOps.append(TealLabel(dexpr, LabelReference(label), comment))  # T2PT1
         combinedOps += subroutineOps

@@ -295,7 +295,8 @@ def test_flattenSubroutines_no_subroutines():
         pt.TealOp(None, pt.Op.return_),
     ]
 
-    actual = flattenSubroutines(subroutineMapping, subroutineToLabel)
+    opts = pt.CompileOptions()
+    actual = flattenSubroutines(subroutineMapping, subroutineToLabel, opts)
 
     assert actual == expected
 
@@ -363,7 +364,8 @@ def test_flattenSubroutines_1_subroutine():
         pt.TealOp(None, pt.Op.retsub),
     ]
 
-    actual = flattenSubroutines(subroutineMapping, subroutineToLabel)
+    opts = pt.CompileOptions()
+    actual = flattenSubroutines(subroutineMapping, subroutineToLabel, opts)
 
     assert list(map(without_expr, actual)) == expected
 
@@ -548,6 +550,7 @@ def test_flattenSubroutines_multiple_subroutines():
         pt.TealOp(None, pt.Op.b, expectedSubroutine3L1Label),
     ]
 
-    actual = flattenSubroutines(subroutineMapping, subroutineToLabel)
+    opts = pt.CompileOptions()
+    actual = flattenSubroutines(subroutineMapping, subroutineToLabel, opts)
 
     assert actual == expected

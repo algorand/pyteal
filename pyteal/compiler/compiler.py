@@ -461,7 +461,7 @@ class Compilation:
 
         subroutineLabels = resolveSubroutines(subroutineMapping)
         components: list[TealComponent] = flattenSubroutines(
-            subroutineMapping, subroutineLabels
+            subroutineMapping, subroutineLabels, options
         )
 
         verifyOpsForVersion(components, options.version)
