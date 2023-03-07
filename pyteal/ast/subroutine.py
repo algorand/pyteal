@@ -49,12 +49,9 @@ class _SubroutineDeclByOption:
         decl = self.option_map[fp_option]
         if decl is not None:
             return decl
-        with _frame_pointer_context(
-            SubroutineEval._current_proto if fp_option else None
-        ):
-            self.option_map[fp_option] = self.option_method[fp_option].evaluate(
-                self.subroutine
-            )
+        self.option_map[fp_option] = self.option_method[fp_option].evaluate(
+            self.subroutine
+        )
         return cast(SubroutineDeclaration, self.option_map[fp_option])
 
     def __probe_info(self, fp_option: bool) -> tuple[bool, TealType]:
