@@ -146,9 +146,7 @@ def flattenSubroutines(
         # this is needed for source map generation
         dexpr: SubroutineDeclaration | None
         try:
-            dexpr = subroutine.declarations.get_declaration_by_option(
-                options.use_frame_pointers
-            )
+            dexpr = subroutine.get_declaration_by_option(options.use_frame_pointers)
         except TealInputError:
             dexpr = None
 
