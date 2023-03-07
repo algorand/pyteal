@@ -1054,16 +1054,11 @@ class SubroutineEval:
 
         # Arg usage "B" supplied to build an AST from the user-defined PyTEAL function:
         subroutine_body: Expr
-        if not self.use_frame_pt:
-            with _frame_pointer_context(None):
-                subroutine_body = subroutine.implementation(
-                    *loaded_args, **abi_output_kwargs
-                )
-        else:
-            with _frame_pointer_context(proto):
-                subroutine_body = subroutine.implementation(
-                    *loaded_args, **abi_output_kwargs
-                )
+
+        with _frame_pointer_context(proto if self.use_frame_pt else None):
+            subroutine_body = subroutine.implementation(
+                *loaded_args, **abi_output_kwargs
+            )
 
         if not isinstance(subroutine_body, Expr):
             raise TealInputError(
