@@ -172,7 +172,6 @@ def compileSubroutine(
             options.use_frame_pointers
         )
 
-
     if currentSubroutine and (
         de := currentSubroutine.get_declaration_by_option(
             options.use_frame_pointers
