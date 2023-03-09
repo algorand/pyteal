@@ -41,7 +41,10 @@ def test_feature_gates():
 
 @pytest.mark.serial
 def test_feature_gates_load():
-    # before loading, the gates are empty
+    # reset the gates by force
+    FeatureGates._gates = _FeatureGatesConfig()
+
+    # simulate before loading - the gates are empty
     all_empty = _FeatureGatesConfig(None, None)
     assert all_empty == FeatureGates._gates
 
