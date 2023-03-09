@@ -61,7 +61,7 @@ def test_subroutine_definition():
         (fnWithPartialExprAnnotations, 2, "fnWithPartialExprAnnotations"),
     )
 
-    for (fn, numArgs, name) in cases:
+    for fn, numArgs, name in cases:
         definition = pt.SubroutineDefinition(fn, pt.TealType.none)
         assert definition.argument_count() == numArgs
         assert definition.name() == name
@@ -1062,7 +1062,7 @@ def test_subroutine_declaration():
         (pt.TealType.anytype, pt.App.globalGet(pt.Bytes("key"))),
     )
 
-    for (returnType, value) in cases:
+    for returnType, value in cases:
 
         def mySubroutine():
             return value

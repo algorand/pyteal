@@ -6,7 +6,6 @@ options = pt.CompileOptions()
 
 
 def test_break_fail():
-
     with pytest.raises(pt.TealCompileError):
         pt.Break().__teal__(options)
 
@@ -21,7 +20,6 @@ def test_break_fail():
 
 
 def test_break():
-
     expr = pt.Break()
 
     assert expr.type_of() == pt.TealType.none

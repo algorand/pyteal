@@ -59,7 +59,6 @@ class TealComponent(ABC):
         pass
 
     class Context:
-
         checkExprEquality = True
 
         class ExprEqualityContext(AbstractContextManager):

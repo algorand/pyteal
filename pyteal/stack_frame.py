@@ -13,11 +13,11 @@ from executing import Source  # type: ignore
 
 
 def _sourcmapping_is_off() -> bool:
-    return not FeatureGates.sourcemap_enabled()
+    return not FeatureGates.sourcemap_enabled()  # type: ignore[attr-defined]
 
 
 def _debug_frames() -> bool:
-    return FeatureGates.sourcemap_debug()
+    return FeatureGates.sourcemap_debug()  # type: ignore[attr-defined]
 
 
 @dataclass(frozen=True)

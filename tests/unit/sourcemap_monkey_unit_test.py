@@ -305,7 +305,6 @@ def patch_pt_frame(code, is_funcdef, pt_chunk):
     with mock.patch.object(frame, "raw_code", return_value=code), mock.patch.object(
         frame, "node_source", return_value=pt_chunk
     ):
-
         yield frame
 
 

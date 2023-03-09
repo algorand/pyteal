@@ -424,7 +424,7 @@ def test_size_of():
         (abi.StaticBytes[Literal[36]], 36),
     ]
 
-    for (t, s) in values:
+    for t, s in values:
         assert abi.size_of(t) == s
 
     with pytest.raises(pt.TealInputError):

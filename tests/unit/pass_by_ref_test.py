@@ -7,6 +7,7 @@ from tests.compile_asserts import assert_new_v_old
 # TODO: remove these skips when the following is fixed: https://github.com/algorand/pyteal/issues/199
 STABLE_SLOT_GENERATION = False
 
+
 # ### TESTS FOR NEW PyTEAL THAT USES PASS-BY-REF / DYNAMIC
 @pt.Subroutine(pt.TealType.none)
 def logcat_dynamic(first: pt.ScratchVar, an_int):

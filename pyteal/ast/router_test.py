@@ -810,7 +810,6 @@ def test_contract_json_obj():
     router = pt.Router(contract_name, clear_state=safe_clear_state_delete)
     method_list: list[sdk_abi.Method] = []
     for subroutine in abi_subroutines:
-
         doc = subroutine.subroutine.implementation.__doc__
         desc = None
         if doc is not None and doc.strip() == "replace me":

@@ -506,7 +506,6 @@ def blackbox_test_runner(
 
     # 5. Sequential assertions (if provided any)
     for i, (dr_prop, predicate) in enumerate(predicates.items()):
-
         if SKIP_SCRATCH_ASSERTIONS and dr_prop == DRProp.finalScratch:
             print("skipping scratch assertions because unstable slots produced")
             continue

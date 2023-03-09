@@ -553,7 +553,8 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.AssetConfig`.
 
-        For more information, see https://developer.algorand.org/docs/reference/transactions/#total"""
+        For more information, see https://developer.algorand.org/docs/reference/transactions/#total
+        """
         return self.makeTxnExpr(TxnField.config_asset_total)
 
     def config_asset_decimals(self) -> TxnExpr:
@@ -570,7 +571,8 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.AssetConfig`.
 
-        For more information, see https://developer.algorand.org/docs/reference/transactions/#defaultfrozen"""
+        For more information, see https://developer.algorand.org/docs/reference/transactions/#defaultfrozen
+        """
         return self.makeTxnExpr(TxnField.config_asset_default_frozen)
 
     def config_asset_unit_name(self) -> TxnExpr:
@@ -578,7 +580,8 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.AssetConfig`.
 
-        For more information, see https://developer.algorand.org/docs/reference/transactions/#unitname"""
+        For more information, see https://developer.algorand.org/docs/reference/transactions/#unitname
+        """
         return self.makeTxnExpr(TxnField.config_asset_unit_name)
 
     def config_asset_name(self) -> TxnExpr:
@@ -586,7 +589,8 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.AssetConfig`.
 
-        For more information, see https://developer.algorand.org/docs/reference/transactions/#assetname"""
+        For more information, see https://developer.algorand.org/docs/reference/transactions/#assetname
+        """
         return self.makeTxnExpr(TxnField.config_asset_name)
 
     def config_asset_url(self) -> TxnExpr:
@@ -594,7 +598,8 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.AssetConfig`.
 
-        For more information, see https://developer.algorand.org/docs/reference/transactions/#url"""
+        For more information, see https://developer.algorand.org/docs/reference/transactions/#url
+        """
         return self.makeTxnExpr(TxnField.config_asset_url)
 
     def config_asset_metadata_hash(self) -> TxnExpr:
@@ -611,7 +616,8 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.AssetConfig`.
 
-        For more information, see https://developer.algorand.org/docs/reference/transactions/#manageraddr"""
+        For more information, see https://developer.algorand.org/docs/reference/transactions/#manageraddr
+        """
         return self.makeTxnExpr(TxnField.config_asset_manager)
 
     def config_asset_reserve(self) -> TxnExpr:
@@ -619,7 +625,8 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.AssetConfig`.
 
-        For more information, see https://developer.algorand.org/docs/reference/transactions/#reserveaddr"""
+        For more information, see https://developer.algorand.org/docs/reference/transactions/#reserveaddr
+        """
         return self.makeTxnExpr(TxnField.config_asset_reserve)
 
     def config_asset_freeze(self) -> TxnExpr:
@@ -627,7 +634,8 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.AssetConfig`.
 
-        For more information, see https://developer.algorand.org/docs/reference/transactions/#freezeaddr"""
+        For more information, see https://developer.algorand.org/docs/reference/transactions/#freezeaddr
+        """
         return self.makeTxnExpr(TxnField.config_asset_freeze)
 
     def config_asset_clawback(self) -> TxnExpr:
@@ -635,7 +643,8 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.AssetConfig`.
 
-        For more information, see https://developer.algorand.org/docs/reference/transactions/#clawbackaddr"""
+        For more information, see https://developer.algorand.org/docs/reference/transactions/#clawbackaddr
+        """
         return self.makeTxnExpr(TxnField.config_asset_clawback)
 
     def created_asset_id(self) -> TxnExpr:
@@ -655,7 +664,8 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.AssetFreeze`.
 
-        For more information, see https://developer.algorand.org/docs/reference/transactions/#freezeasset"""
+        For more information, see https://developer.algorand.org/docs/reference/transactions/#freezeasset
+        """
         return self.makeTxnExpr(TxnField.freeze_asset)
 
     def freeze_asset_account(self) -> TxnExpr:
@@ -663,7 +673,8 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.AssetFreeze`.
 
-        For more information, see https://developer.algorand.org/docs/reference/transactions/#freezeaccount"""
+        For more information, see https://developer.algorand.org/docs/reference/transactions/#freezeaccount
+        """
         return self.makeTxnExpr(TxnField.freeze_asset_account)
 
     def freeze_asset_frozen(self) -> TxnExpr:
@@ -671,7 +682,8 @@ class TxnObject:
 
         Only set when :any:`type_enum()` is :any:`TxnType.AssetFreeze`.
 
-        For more information, see https://developer.algorand.org/docs/reference/transactions/#assetfrozen"""
+        For more information, see https://developer.algorand.org/docs/reference/transactions/#assetfrozen
+        """
         return self.makeTxnExpr(TxnField.freeze_asset_frozen)
 
     def global_num_uints(self) -> TxnExpr:

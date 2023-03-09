@@ -20,7 +20,6 @@ def test_continue_fail():
 
 
 def test_continue():
-
     expr = pt.Continue()
 
     assert expr.type_of() == pt.TealType.none

@@ -16,6 +16,7 @@ user_mnemonic = "A second distinct 25-word mnemonic goes here"
 algod_address = "http://localhost:4001"
 algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
+
 # helper function to compile program source
 def compile_program(client, source_code):
     compile_response = client.compile(source_code)
