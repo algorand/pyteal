@@ -4,7 +4,7 @@ This example shows how to use the sourcemap feature to generate a source map for
 For this example, no `pyteal.ini` file is assumed and to enable the feature
 one must import `FeatureGate` from `feature_gates` and set `FeatureGate.sourcemap_enabled` to `True`.
 This import must occur before any object from PyTeal is imported, as PyTeal will
-default to it's own sourcemap configuration if not set before hand.
+default to its own sourcemap configuration if not set before hand.
 """
 
 from feature_gates import FeatureGates
