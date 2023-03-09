@@ -16,6 +16,7 @@ setuptools.setup(
     url="https://github.com/algorand/pyteal",
     packages=setuptools.find_packages(
         include=(
+            "feature_gates",
             "pyteal",
             "pyteal.*",
         )
