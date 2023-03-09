@@ -2,6 +2,7 @@ import pytest
 
 from feature_gates import FeatureGates, _FeatureGatesConfig
 
+
 @pytest.mark.serial
 def test_feature_gates():
     with pytest.raises(ValueError, match="Unknown feature='foo'"):
@@ -26,6 +27,7 @@ def test_feature_gates():
     FeatureGates.load()
 
     from pyteal.stack_frame import NatalStackFrame
+
     # `sourcemap_enabled` wasn't affected by loading:
     assert FeatureGates.get("sourcemap_enabled") is True
     assert FeatureGates.sourcemap_enabled() is True
@@ -35,6 +37,7 @@ def test_feature_gates():
     assert FeatureGates.get("sourcemap_debug") is False
     assert FeatureGates.sourcemap_debug() is False
     assert NatalStackFrame._debug is False
+
 
 @pytest.mark.serial
 def test_feature_gates_load():
