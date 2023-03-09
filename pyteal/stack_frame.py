@@ -1,5 +1,6 @@
+from feature_gates import FeatureGates
+
 from ast import AST, FunctionDef, unparse
-from configparser import ConfigParser
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import IntEnum
@@ -9,6 +10,14 @@ import os
 import re
 
 from executing import Source  # type: ignore
+
+
+def _sourcmapping_is_off() -> bool:
+    return not FeatureGates.sourcemap_enabled()
+
+
+def _debug_frames() -> bool:
+    return FeatureGates.sourcemap_debug()
 
 
 @dataclass(frozen=True)
@@ -167,35 +176,6 @@ class StackFrame:
         return "# T2PT" in "".join(cc)
 
 
-def _sourcmapping_is_off(verbose=False) -> bool:
-    try:
-        config = ConfigParser()
-        config.read("pyteal.ini")
-        enabled = config.getboolean("pyteal-source-mapper", "enabled")
-        return not enabled
-    except Exception as e:
-        if verbose:
-            print(
-                f"""Turning off frame capture and disabling sourcemaps. 
-Could not read section (pyteal-source-mapper, enabled) of config "pyteal.ini": {e}"""
-            )
-    return True
-
-
-def _debug_frames(verbose=False) -> bool:
-    try:
-        config = ConfigParser()
-        config.read("pyteal.ini")
-        return config.getboolean("pyteal-source-mapper", "debug")
-    except Exception as e:
-        if verbose:
-            print(
-                f"""Disabling `debug` status for sourcemaps. 
-Could not read section (pyteal-source-mapper, debug) of config "pyteal.ini": {e}"""
-            )
-    return False
-
-
 @contextmanager
 def sourcemapping_off_context():
     """Context manager that turns off sourcemapping for the duration of the context"""
@@ -231,17 +211,11 @@ class NatalStackFrame:
     _keep_all_debugging = False
 
     @classmethod
-    def sourcemapping_is_off(cls, _force_refresh: bool = False) -> bool:
+    def sourcemapping_is_off(cls, _force_from_config: bool = False) -> bool:
         """
-        The `_force_refresh` parameter, is mainly for test validation purposes.
-        It is discouraged for use in the wild because:
-        * Frames are useful in an "all or nothing" capacity. For example, in preparing
-            for a source mapping, it would be error prone to generate frames for
-            a subset of analyzed PyTeal
-        * Setting `_force_refresh = True` will cause a read from the file system every
-            time Frames are initialized and will result in significant performance degredation
+        The `_force_from_config` parameter reverts sourcemapping enablement to the configuration.
         """
-        if _force_refresh:
+        if _force_from_config:
             cls._no_stackframes = _sourcmapping_is_off()
 
         return cls._no_stackframes

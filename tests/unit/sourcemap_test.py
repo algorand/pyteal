@@ -217,7 +217,7 @@ def test_config():
 
     NatalStackFrame._no_stackframes = False
     assert NatalStackFrame.sourcemapping_is_off() is False
-    assert NatalStackFrame.sourcemapping_is_off(_force_refresh=True) is True
+    assert NatalStackFrame.sourcemapping_is_off(_force_from_config=True) is True
 
     NatalStackFrame._no_stackframes = originally
 

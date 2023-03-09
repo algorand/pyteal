@@ -140,7 +140,7 @@ def test_mocked_config_for_frames(mock_ConfigParser):
     from pyteal.stack_frame import NatalStackFrame
 
     assert NatalStackFrame.sourcemapping_is_off() is False
-    assert NatalStackFrame.sourcemapping_is_off(_force_refresh=True) is False
+    assert NatalStackFrame.sourcemapping_is_off(_force_from_config=True) is False
 
 
 def make(x, y, z):
