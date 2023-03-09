@@ -200,16 +200,16 @@ def test_config():
         "mypy-pytest.*",
         "mypy-algosdk.*",
         "pyteal",
-        "pyteal-source-mapper",
+        "pyteal-sourcemap",
     ] == config.sections()
 
     assert ["ignore", "per-file-ignores", "ban-relative-imports"] == config.options(
         "flake8"
     )
 
-    assert ["enabled", "debug"] == config.options("pyteal-source-mapper")
+    assert ["enabled", "debug"] == config.options("pyteal-sourcemap")
 
-    assert config.getboolean("pyteal-source-mapper", "enabled") is False
+    assert config.getboolean("pyteal-sourcemap", "enabled") is False
     assert NatalStackFrame.sourcemapping_is_off() is True
 
     originally = NatalStackFrame._no_stackframes
