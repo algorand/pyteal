@@ -38,7 +38,7 @@ def test_subroutine_return_value():
         (pt.TealType.anytype, pt.Bytes("value"), pt.Op.byte, '"value"'),
     )
 
-    for (tealType, value, op, opValue) in cases:
+    for tealType, value, op, opValue in cases:
         expr = pt.Return(value)
 
         def mySubroutine():
@@ -69,7 +69,7 @@ def test_subroutine_return_value_invalid():
         (pt.TealType.uint64, pt.Bytes("value")),
     )
 
-    for (tealType, value) in cases:
+    for tealType, value in cases:
         expr = pt.Return(value)
 
         def mySubroutine():

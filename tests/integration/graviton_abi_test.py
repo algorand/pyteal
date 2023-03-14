@@ -129,6 +129,7 @@ def int65_mult(x: Int65, y: Int65, *, output: Int65):
     """
     WARNING: not an ideal implementation. See explanation in first WARNING above.
     """
+
     # TODO: can we get something like the following one-liner working?
     # return output.set(pt.Not(x[0].get() ^ y[0].get()), x[1].get() * y[1].get())
     def get(x):

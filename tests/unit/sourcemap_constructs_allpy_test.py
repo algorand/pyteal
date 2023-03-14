@@ -1,5 +1,4 @@
-from configparser import ConfigParser
-from unittest import mock
+from feature_gates import FeatureGates
 
 import pytest
 
@@ -11,11 +10,11 @@ from tests.unit.sourcemap_constructs311_test import (
 
 
 @pytest.fixture
-def mock_ConfigParser():
-    patcher = mock.patch.object(ConfigParser, "getboolean", return_value=True)
-    patcher.start()
+def sourcemap_enabled():
+    previous = FeatureGates.sourcemap_enabled()
+    FeatureGates.set_sourcemap_enabled(True)
     yield
-    patcher.stop()
+    FeatureGates.set_sourcemap_enabled(previous)
 
 
 @pytest.mark.slow
@@ -23,5 +22,5 @@ def mock_ConfigParser():
 @pytest.mark.parametrize("i, test_case", enumerate(CONSTRUCTS))
 @pytest.mark.parametrize("mode", ["Application", "Signature"])
 @pytest.mark.parametrize("version", range(2, CONSTRUCTS_LATEST_VERSION + 1))
-def test_constructs_very_slow(mock_ConfigParser, i, test_case, mode, version):
+def test_constructs_very_slow(sourcemap_enabled, i, test_case, mode, version):
     constructs_test(i, test_case, mode, version)

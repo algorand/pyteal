@@ -216,7 +216,6 @@ return
 
 
 def test_slot_load_before_store():
-
     program = pt.AssetHolding.balance(pt.Int(0), pt.Int(0)).value()
     with pytest.raises(pt.TealInternalError):
         pt.compileTeal(program, pt.Mode.Application, version=2)
@@ -535,7 +534,6 @@ return
 
 
 def test_compile_break():
-
     # pt.While
     i = pt.ScratchVar()
     program = pt.Seq(
@@ -761,7 +759,6 @@ return
 
 
 def test_compile_continue_break_nested():
-
     i = pt.ScratchVar()
     program = pt.Seq(
         [

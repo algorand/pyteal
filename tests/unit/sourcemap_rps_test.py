@@ -1,18 +1,25 @@
-from configparser import ConfigParser
 from pathlib import Path
-from unittest import mock
-
 import pytest
+
+from feature_gates import FeatureGates
 
 RPS = Path.cwd() / "tests" / "teal"
 
 
 @pytest.fixture
-def mock_ConfigParser():
-    patcher = mock.patch.object(ConfigParser, "getboolean", return_value=True)
-    patcher.start()
+def sourcemap_enabled():
+    previous = FeatureGates.sourcemap_enabled()
+    FeatureGates.set_sourcemap_enabled(True)
     yield
-    patcher.stop()
+    FeatureGates.set_sourcemap_enabled(previous)
+
+
+@pytest.fixture
+def sourcemap_disabled():
+    previous = FeatureGates.sourcemap_enabled()
+    FeatureGates.set_sourcemap_enabled(False)
+    yield
+    FeatureGates.set_sourcemap_enabled(previous)
 
 
 def compare_and_assert(file, actual):
@@ -32,7 +39,7 @@ def no_regressions_rps():
 
 
 @pytest.mark.serial
-def test_annotated_rps(mock_ConfigParser):
+def test_annotated_rps(sourcemap_enabled):
     from pyteal import Compilation, Mode
     from pyteal.compiler.sourcemap import _PyTealSourceMapper
     from tests.teal.rps import approval_program
@@ -64,24 +71,18 @@ def test_no_regression_with_sourcemap_as_configured_rps():
 
 
 @pytest.mark.serial
-def test_no_regression_with_sourcemap_enabled_rps():
+def test_no_regression_with_sourcemap_enabled_rps(sourcemap_enabled):
     from pyteal.stack_frame import NatalStackFrame
 
-    originally = NatalStackFrame._no_stackframes
-    NatalStackFrame._no_stackframes = False
+    assert NatalStackFrame.sourcemapping_is_off() is False
 
     no_regressions_rps()
-
-    NatalStackFrame._no_stackframes = originally
 
 
 @pytest.mark.serial
-def test_no_regression_with_sourcemap_disabled_rps():
+def test_no_regression_with_sourcemap_disabled_rps(sourcemap_disabled):
     from pyteal.stack_frame import NatalStackFrame
 
-    originally = NatalStackFrame._no_stackframes
-    NatalStackFrame._no_stackframes = True
+    assert NatalStackFrame.sourcemapping_is_off()
 
     no_regressions_rps()
-
-    NatalStackFrame._no_stackframes = originally

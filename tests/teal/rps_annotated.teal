@@ -1,5 +1,5 @@
 // GENERATED TEAL                 //    PYTEAL PATH                        LINE    PYTEAL
-#pragma version 6                 //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+#pragma version 6                 //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
 txn ApplicationID                 //    tests/teal/rps_helpers/program.py  22      Txn.application_id()
 int 0                             //                                               Int(0)
 ==                                //                                               Txn.application_id() == Int(0)
@@ -25,38 +25,38 @@ int NoOp                          //                                            
 ==                                //
 bnz main_l7                       //
 err                               //                                       21      Cond([Txn.application_id() == Int(0), init], [Txn.on_completion() == OnComplete.DeleteApplication, delete], [Txn.on_completion() == OnComplete.UpdateApplication, update], [Txn.on_completion() == OnComplete.OptIn, opt_in], [Txn.on_completion() == OnComplete.CloseOut, close_out], [Txn.on_completion() == OnComplete.NoOp, no_op])
-main_l7:                          //    tests/teal/rps.py                  221     Txn.application_args[0] == op_challenge
+main_l7:                          //    tests/teal/rps.py                  220     Txn.application_args[0] == op_challenge
 txna ApplicationArgs 0            //                                               Txn.application_args[0]
-byte "challenge"                  //                                       17      Bytes('challenge')
-==                                //                                       221     Txn.application_args[0] == op_challenge
+byte "challenge"                  //                                       16      Bytes('challenge')
+==                                //                                       220     Txn.application_args[0] == op_challenge
 bnz main_l14                      //
-txna ApplicationArgs 0            //                                       225     Txn.application_args[0]
-byte "accept"                     //                                       18      Bytes('accept')
-==                                //                                       225     Txn.application_args[0] == op_accept
+txna ApplicationArgs 0            //                                       224     Txn.application_args[0]
+byte "accept"                     //                                       17      Bytes('accept')
+==                                //                                       224     Txn.application_args[0] == op_accept
 bnz main_l13                      //
-txna ApplicationArgs 0            //                                       229     Txn.application_args[0]
-byte "reveal"                     //                                       19      Bytes('reveal')
-==                                //                                       229     Txn.application_args[0] == op_reveal
+txna ApplicationArgs 0            //                                       228     Txn.application_args[0]
+byte "reveal"                     //                                       18      Bytes('reveal')
+==                                //                                       228     Txn.application_args[0] == op_reveal
 bnz main_l11                      //
-err                               //                                       219     Cond([Txn.application_args[0] == op_challenge, create_challenge()], [Txn.application_args[0] == op_accept, accept_challenge()], [Txn.application_args[0] == op_reveal, reveal()])
-main_l11:                         //                                       229     Txn.application_args[0] == op_reveal
-callsub reveal_8                  //                                       230     reveal()
-main_l12:                         //                                       229     Txn.application_args[0] == op_reveal
-int 0                             //                                       233     Reject()
+err                               //                                       218     Cond([Txn.application_args[0] == op_challenge, create_challenge()], [Txn.application_args[0] == op_accept, accept_challenge()], [Txn.application_args[0] == op_reveal, reveal()])
+main_l11:                         //                                       228     Txn.application_args[0] == op_reveal
+callsub reveal_8                  //                                       229     reveal()
+main_l12:                         //                                       228     Txn.application_args[0] == op_reveal
+int 0                             //                                       232     Reject()
 return                            //
-main_l13:                         //                                       225     Txn.application_args[0] == op_accept
-callsub acceptchallenge_7         //                                       226     accept_challenge()
-b main_l12                        //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-main_l14:                         //    tests/teal/rps.py                  221     Txn.application_args[0] == op_challenge
-callsub createchallenge_6         //                                       222     create_challenge()
-b main_l12                        //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+main_l13:                         //                                       224     Txn.application_args[0] == op_accept
+callsub acceptchallenge_7         //                                       225     accept_challenge()
+b main_l12                        //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+main_l14:                         //    tests/teal/rps.py                  220     Txn.application_args[0] == op_challenge
+callsub createchallenge_6         //                                       221     create_challenge()
+b main_l12                        //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
 main_l15:                         //    tests/teal/rps_helpers/program.py  26      Txn.on_completion() == OnComplete.CloseOut
 int 0                             //                                       18      Reject()
 return                            //
 main_l16:                         //                                       25      Txn.on_completion() == OnComplete.OptIn
-int 0                             //    tests/teal/rps.py                  215     Int(0)
+int 0                             //    tests/teal/rps.py                  214     Int(0)
 callsub reset_0                   //                                               reset(Int(0))
-int 1                             //                                       216     Approve()
+int 1                             //                                       215     Approve()
 return                            //
 main_l17:                         //    tests/teal/rps_helpers/program.py  24      Txn.on_completion() == OnComplete.UpdateApplication
 int 0                             //                                       16      Reject()
@@ -65,379 +65,379 @@ main_l18:                         //                                       23   
 int 0                             //                                       15      Reject()
 return                            //
 main_l19:                         //                                       22      Txn.application_id() == Int(0)
-int 1                             //    tests/teal/rps.py                  213     Approve()
+int 1                             //    tests/teal/rps.py                  212     Approve()
 return                            //
-                                  //                                       22      def reset(account: Expr):
+                                  //                                       21      def reset(account: Expr):
 // reset                          //
 reset_0:                          //
-store 0                           //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+store 0                           //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
 load 0                            //
-byte "opponent"                   //    tests/teal/rps.py                  12      Bytes('opponent')
-byte ""                           //                                       24      Bytes('')
+byte "opponent"                   //    tests/teal/rps.py                  11      Bytes('opponent')
+byte ""                           //                                       23      Bytes('')
 app_local_put                     //                                               App.localPut(account, local_opponent, Bytes(''))
-load 0                            //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-byte "bet"                        //    tests/teal/rps.py                  13      Bytes('bet')
-int 0                             //                                       25      Int(0)
+load 0                            //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+byte "bet"                        //    tests/teal/rps.py                  12      Bytes('bet')
+int 0                             //                                       24      Int(0)
 app_local_put                     //                                               App.localPut(account, local_bet, Int(0))
-load 0                            //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-byte "private_play"               //    tests/teal/rps.py                  14      Bytes('private_play')
-byte ""                           //                                       26      Bytes('')
+load 0                            //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+byte "private_play"               //    tests/teal/rps.py                  13      Bytes('private_play')
+byte ""                           //                                       25      Bytes('')
 app_local_put                     //                                               App.localPut(account, local_private_play, Bytes(''))
-load 0                            //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-byte "play"                       //    tests/teal/rps.py                  15      Bytes('play')
-byte ""                           //                                       27      Bytes('')
+load 0                            //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+byte "play"                       //    tests/teal/rps.py                  14      Bytes('play')
+byte ""                           //                                       26      Bytes('')
 app_local_put                     //                                               App.localPut(account, local_play, Bytes(''))
-retsub                            //                                       22      def reset(account: Expr):
-                                  //                                       31      def is_account_empty(account: Expr):
+retsub                            //                                       21      def reset(account: Expr):
+                                  //                                       30      def is_account_empty(account: Expr):
 // is_account_empty               //
 isaccountempty_1:                 //
-store 3                           //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+store 3                           //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
 load 3                            //
-byte "opponent"                   //    tests/teal/rps.py                  12      Bytes('opponent')
-app_local_get                     //                                       34      App.localGet(account, local_opponent)
+byte "opponent"                   //    tests/teal/rps.py                  11      Bytes('opponent')
+app_local_get                     //                                       33      App.localGet(account, local_opponent)
 byte ""                           //                                               Bytes('')
 ==                                //                                               App.localGet(account, local_opponent) == Bytes('')
-load 3                            //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-byte "bet"                        //    tests/teal/rps.py                  13      Bytes('bet')
-app_local_get                     //                                       35      App.localGet(account, local_bet)
+load 3                            //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+byte "bet"                        //    tests/teal/rps.py                  12      Bytes('bet')
+app_local_get                     //                                       34      App.localGet(account, local_bet)
 int 0                             //                                               Int(0)
 ==                                //                                               App.localGet(account, local_bet) == Int(0)
-&&                                //                                       33      And(App.localGet(account, local_opponent) == Bytes(''), App.localGet(account, local_bet) == Int(0), App.localGet(account, local_private_play) == Bytes(''), App.localGet(account, local_play) == Bytes(''))
-load 3                            //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-byte "private_play"               //    tests/teal/rps.py                  14      Bytes('private_play')
-app_local_get                     //                                       36      App.localGet(account, local_private_play)
+&&                                //                                       32      And(App.localGet(account, local_opponent) == Bytes(''), App.localGet(account, local_bet) == Int(0), App.localGet(account, local_private_play) == Bytes(''), App.localGet(account, local_play) == Bytes(''))
+load 3                            //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+byte "private_play"               //    tests/teal/rps.py                  13      Bytes('private_play')
+app_local_get                     //                                       35      App.localGet(account, local_private_play)
 byte ""                           //                                               Bytes('')
 ==                                //                                               App.localGet(account, local_private_play) == Bytes('')
-&&                                //                                       33      And(App.localGet(account, local_opponent) == Bytes(''), App.localGet(account, local_bet) == Int(0), App.localGet(account, local_private_play) == Bytes(''), App.localGet(account, local_play) == Bytes(''))
-load 3                            //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-byte "play"                       //    tests/teal/rps.py                  15      Bytes('play')
-app_local_get                     //                                       37      App.localGet(account, local_play)
+&&                                //                                       32      And(App.localGet(account, local_opponent) == Bytes(''), App.localGet(account, local_bet) == Int(0), App.localGet(account, local_private_play) == Bytes(''), App.localGet(account, local_play) == Bytes(''))
+load 3                            //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+byte "play"                       //    tests/teal/rps.py                  14      Bytes('play')
+app_local_get                     //                                       36      App.localGet(account, local_play)
 byte ""                           //                                               Bytes('')
 ==                                //                                               App.localGet(account, local_play) == Bytes('')
-&&                                //                                       33      And(App.localGet(account, local_opponent) == Bytes(''), App.localGet(account, local_bet) == Int(0), App.localGet(account, local_private_play) == Bytes(''), App.localGet(account, local_play) == Bytes(''))
-retsub                            //                                       31      def is_account_empty(account: Expr):
-                                  //                                       42      def is_valid_play(play: Expr):
+&&                                //                                       32      And(App.localGet(account, local_opponent) == Bytes(''), App.localGet(account, local_bet) == Int(0), App.localGet(account, local_private_play) == Bytes(''), App.localGet(account, local_play) == Bytes(''))
+retsub                            //                                       30      def is_account_empty(account: Expr):
+                                  //                                       41      def is_valid_play(play: Expr):
 // is_valid_play                  //
 isvalidplay_2:                    //
-store 1                           //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+store 1                           //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
 load 1                            //
-extract 0 1                       //    tests/teal/rps.py                  45      Substring(play, Int(0), Int(1))
+extract 0 1                       //    tests/teal/rps.py                  44      Substring(play, Int(0), Int(1))
 store 2                           //                                               first_ch.store(Substring(play, Int(0), Int(1)))
-load 2                            //                                       48      first_ch.load()
+load 2                            //                                       47      first_ch.load()
 byte "r"                          //                                               Bytes('r')
 ==                                //                                               first_ch.load() == Bytes('r')
-load 2                            //                                       49      first_ch.load()
+load 2                            //                                       48      first_ch.load()
 byte "p"                          //                                               Bytes('p')
 ==                                //                                               first_ch.load() == Bytes('p')
-||                                //                                       47      Or(first_ch.load() == Bytes('r'), first_ch.load() == Bytes('p'), first_ch.load() == Bytes('s'))
-load 2                            //                                       50      first_ch.load()
+||                                //                                       46      Or(first_ch.load() == Bytes('r'), first_ch.load() == Bytes('p'), first_ch.load() == Bytes('s'))
+load 2                            //                                       49      first_ch.load()
 byte "s"                          //                                               Bytes('s')
 ==                                //                                               first_ch.load() == Bytes('s')
-||                                //                                       47      Or(first_ch.load() == Bytes('r'), first_ch.load() == Bytes('p'), first_ch.load() == Bytes('s'))
-retsub                            //                                       42      def is_valid_play(play: Expr):
-                                  //                                       56      def play_value(p: Expr):
+||                                //                                       46      Or(first_ch.load() == Bytes('r'), first_ch.load() == Bytes('p'), first_ch.load() == Bytes('s'))
+retsub                            //                                       41      def is_valid_play(play: Expr):
+                                  //                                       55      def play_value(p: Expr):
 // play_value                     //
 playvalue_3:                      //
-store 8                           //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+store 8                           //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
 load 8                            //
-extract 0 1                       //    tests/teal/rps.py                  59      Substring(p, Int(0), Int(1))
+extract 0 1                       //    tests/teal/rps.py                  58      Substring(p, Int(0), Int(1))
 store 9                           //                                               first_letter.store(Substring(p, Int(0), Int(1)))
-load 9                            //                                       62      first_letter.load()
+load 9                            //                                       61      first_letter.load()
 byte "r"                          //                                               Bytes('r')
 ==                                //                                               first_letter.load() == Bytes('r')
 bnz playvalue_3_l6                //
-load 9                            //                                       63      first_letter.load()
+load 9                            //                                       62      first_letter.load()
 byte "p"                          //                                               Bytes('p')
 ==                                //                                               first_letter.load() == Bytes('p')
 bnz playvalue_3_l5                //
-load 9                            //                                       64      first_letter.load()
+load 9                            //                                       63      first_letter.load()
 byte "s"                          //                                               Bytes('s')
 ==                                //                                               first_letter.load() == Bytes('s')
 bnz playvalue_3_l4                //
-err                               //                                       61      Cond([first_letter.load() == Bytes('r'), Int(0)], [first_letter.load() == Bytes('p'), Int(1)], [first_letter.load() == Bytes('s'), Int(2)])
-playvalue_3_l4:                   //                                       64      first_letter.load() == Bytes('s')
+err                               //                                       60      Cond([first_letter.load() == Bytes('r'), Int(0)], [first_letter.load() == Bytes('p'), Int(1)], [first_letter.load() == Bytes('s'), Int(2)])
+playvalue_3_l4:                   //                                       63      first_letter.load() == Bytes('s')
 int 2                             //                                               Int(2)
-b playvalue_3_l7                  //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-playvalue_3_l5:                   //    tests/teal/rps.py                  63      first_letter.load() == Bytes('p')
+b playvalue_3_l7                  //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+playvalue_3_l5:                   //    tests/teal/rps.py                  62      first_letter.load() == Bytes('p')
 int 1                             //                                               Int(1)
-b playvalue_3_l7                  //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-playvalue_3_l6:                   //    tests/teal/rps.py                  62      first_letter.load() == Bytes('r')
+b playvalue_3_l7                  //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+playvalue_3_l6:                   //    tests/teal/rps.py                  61      first_letter.load() == Bytes('r')
 int 0                             //                                               Int(0)
 playvalue_3_l7:                   //                                               first_letter.load() == Bytes('r')
-retsub                            //                                       56      def play_value(p: Expr):
-                                  //                                       70      def get_winner_account_index(challanger_play: Expr, opponent_play: Expr):
+retsub                            //                                       55      def play_value(p: Expr):
+                                  //                                       69      def get_winner_account_index(challanger_play: Expr, opponent_play: Expr):
 // get_winner_account_index       //
 getwinneraccountindex_4:          //
-store 11                          //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+store 11                          //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
 store 10                          //
 load 10                           //
 load 11                           //
-==                                //    tests/teal/rps.py                  73      challanger_play == opponent_play
+==                                //    tests/teal/rps.py                  72      challanger_play == opponent_play
 bnz getwinneraccountindex_4_l6    //
-load 10                           //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-int 1                             //    tests/teal/rps.py                  75      Int(1)
+load 10                           //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+int 1                             //    tests/teal/rps.py                  74      Int(1)
 +                                 //                                               challanger_play + Int(1)
 int 3                             //                                               Int(3)
 %                                 //                                               (challanger_play + Int(1)) % Int(3)
-load 11                           //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-==                                //    tests/teal/rps.py                  75      (challanger_play + Int(1)) % Int(3) == opponent_play
+load 11                           //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+==                                //    tests/teal/rps.py                  74      (challanger_play + Int(1)) % Int(3) == opponent_play
 bnz getwinneraccountindex_4_l5    //
-load 11                           //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-int 1                             //    tests/teal/rps.py                  79      Int(1)
+load 11                           //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+int 1                             //    tests/teal/rps.py                  78      Int(1)
 +                                 //                                               opponent_play + Int(1)
 int 3                             //                                               Int(3)
 %                                 //                                               (opponent_play + Int(1)) % Int(3)
-load 10                           //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-==                                //    tests/teal/rps.py                  79      (opponent_play + Int(1)) % Int(3) == challanger_play
+load 10                           //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+==                                //    tests/teal/rps.py                  78      (opponent_play + Int(1)) % Int(3) == challanger_play
 bnz getwinneraccountindex_4_l4    //
-err                               //                                       72      Cond([challanger_play == opponent_play, Int(2)], [(challanger_play + Int(1)) % Int(3) == opponent_play, Int(1)], [(opponent_play + Int(1)) % Int(3) == challanger_play, Int(0)])
-getwinneraccountindex_4_l4:       //                                       79      (opponent_play + Int(1)) % Int(3) == challanger_play
-int 0                             //                                       80      Int(0)
-b getwinneraccountindex_4_l7      //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-getwinneraccountindex_4_l5:       //    tests/teal/rps.py                  75      (challanger_play + Int(1)) % Int(3) == opponent_play
-int 1                             //                                       76      Int(1)
-b getwinneraccountindex_4_l7      //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-getwinneraccountindex_4_l6:       //    tests/teal/rps.py                  73      challanger_play == opponent_play
+err                               //                                       71      Cond([challanger_play == opponent_play, Int(2)], [(challanger_play + Int(1)) % Int(3) == opponent_play, Int(1)], [(opponent_play + Int(1)) % Int(3) == challanger_play, Int(0)])
+getwinneraccountindex_4_l4:       //                                       78      (opponent_play + Int(1)) % Int(3) == challanger_play
+int 0                             //                                       79      Int(0)
+b getwinneraccountindex_4_l7      //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+getwinneraccountindex_4_l5:       //    tests/teal/rps.py                  74      (challanger_play + Int(1)) % Int(3) == opponent_play
+int 1                             //                                       75      Int(1)
+b getwinneraccountindex_4_l7      //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+getwinneraccountindex_4_l6:       //    tests/teal/rps.py                  72      challanger_play == opponent_play
 int 2                             //                                               Int(2)
 getwinneraccountindex_4_l7:       //                                               challanger_play == opponent_play
-retsub                            //                                       70      def get_winner_account_index(challanger_play: Expr, opponent_play: Expr):
-                                  //                                       86      def send_reward(account_index: Expr, amount: Expr):
+retsub                            //                                       69      def get_winner_account_index(challanger_play: Expr, opponent_play: Expr):
+                                  //                                       85      def send_reward(account_index: Expr, amount: Expr):
 // send_reward                    //
 sendreward_5:                     //
-store 13                          //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+store 13                          //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
 store 12                          //
-itxn_begin                        //    tests/teal/rps.py                  88      InnerTxnBuilder.Begin()
-int pay                           //                                       89      InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: Txn.accounts[account_index], TxnField.amount: amount})
+itxn_begin                        //    tests/teal/rps.py                  87      InnerTxnBuilder.Begin()
+int pay                           //                                       88      InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: Txn.accounts[account_index], TxnField.amount: amount})
 itxn_field TypeEnum               //
-load 12                           //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-txnas Accounts                    //    tests/teal/rps.py                  92      Txn.accounts[account_index]
-itxn_field Receiver               //                                       89      InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: Txn.accounts[account_index], TxnField.amount: amount})
-load 13                           //    tests/unit/sourcemap_rps_test.py   46      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-itxn_field Amount                 //    tests/teal/rps.py                  89      InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: Txn.accounts[account_index], TxnField.amount: amount})
-itxn_submit                       //                                       96      InnerTxnBuilder.Submit()
-retsub                            //                                       86      def send_reward(account_index: Expr, amount: Expr):
-                                  //                                       100     def create_challenge():
+load 12                           //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+txnas Accounts                    //    tests/teal/rps.py                  91      Txn.accounts[account_index]
+itxn_field Receiver               //                                       88      InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: Txn.accounts[account_index], TxnField.amount: amount})
+load 13                           //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+itxn_field Amount                 //    tests/teal/rps.py                  88      InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: Txn.accounts[account_index], TxnField.amount: amount})
+itxn_submit                       //                                       95      InnerTxnBuilder.Submit()
+retsub                            //                                       85      def send_reward(account_index: Expr, amount: Expr):
+                                  //                                       99      def create_challenge():
 // create_challenge               //
 createchallenge_6:                //
-global GroupSize                  //                                       105     Global.group_size()
+global GroupSize                  //                                       104     Global.group_size()
 int 2                             //                                               Int(2)
 ==                                //                                               Global.group_size() == Int(2)
-txn GroupIndex                    //                                       106     Txn.group_index()
+txn GroupIndex                    //                                       105     Txn.group_index()
 int 0                             //                                               Int(0)
 ==                                //                                               Txn.group_index() == Int(0)
-&&                                //                                       103     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
-gtxn 1 CloseRemainderTo           //                                       108     Gtxn[1].close_remainder_to()
+&&                                //                                       102     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
+gtxn 1 CloseRemainderTo           //                                       107     Gtxn[1].close_remainder_to()
 global ZeroAddress                //                                               Global.zero_address()
 ==                                //                                               Gtxn[1].close_remainder_to() == Global.zero_address()
-&&                                //                                       103     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
-gtxn 0 RekeyTo                    //                                       109     Gtxn[0].rekey_to()
+&&                                //                                       102     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
+gtxn 0 RekeyTo                    //                                       108     Gtxn[0].rekey_to()
 global ZeroAddress                //                                               Global.zero_address()
 ==                                //                                               Gtxn[0].rekey_to() == Global.zero_address()
-&&                                //                                       103     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
-gtxn 1 RekeyTo                    //                                       110     Gtxn[1].rekey_to()
+&&                                //                                       102     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
+gtxn 1 RekeyTo                    //                                       109     Gtxn[1].rekey_to()
 global ZeroAddress                //                                               Global.zero_address()
 ==                                //                                               Gtxn[1].rekey_to() == Global.zero_address()
-&&                                //                                       103     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
-gtxn 1 TypeEnum                   //                                       112     Gtxn[1].type_enum()
+&&                                //                                       102     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
+gtxn 1 TypeEnum                   //                                       111     Gtxn[1].type_enum()
 int pay                           //                                               Gtxn[1].type_enum() == TxnType.Payment
 ==                                //
-&&                                //                                       103     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
-gtxn 1 Receiver                   //                                       114     Gtxn[1].receiver()
+&&                                //                                       102     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
+gtxn 1 Receiver                   //                                       113     Gtxn[1].receiver()
 global CurrentApplicationAddress  //                                               Global.current_application_address()
 ==                                //                                               Gtxn[1].receiver() == Global.current_application_address()
-&&                                //                                       103     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
-gtxn 1 Amount                     //                                       116     Gtxn[1].amount()
+&&                                //                                       102     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
+gtxn 1 Amount                     //                                       115     Gtxn[1].amount()
 txna Accounts 1                   //                                               Txn.accounts[1]
-byte "bet"                        //                                       13      Bytes('bet')
-app_local_get                     //                                       116     App.localGet(Txn.accounts[1], local_bet)
+byte "bet"                        //                                       12      Bytes('bet')
+app_local_get                     //                                       115     App.localGet(Txn.accounts[1], local_bet)
 ==                                //                                               Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet)
-&&                                //                                       103     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
-txna Accounts 1                   //                                       118     Txn.accounts[1]
+&&                                //                                       102     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
+txna Accounts 1                   //                                       117     Txn.accounts[1]
 global CurrentApplicationID       //                                               Global.current_application_id()
 app_opted_in                      //                                               App.optedIn(Txn.accounts[1], Global.current_application_id())
-&&                                //                                       103     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
-txn Sender                        //                                       120     Txn.sender()
+&&                                //                                       102     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
+txn Sender                        //                                       119     Txn.sender()
 txna Accounts 1                   //                                               Txn.accounts[1]
-byte "opponent"                   //                                       12      Bytes('opponent')
-app_local_get                     //                                       120     App.localGet(Txn.accounts[1], local_opponent)
+byte "opponent"                   //                                       11      Bytes('opponent')
+app_local_get                     //                                       119     App.localGet(Txn.accounts[1], local_opponent)
 ==                                //                                               Txn.sender() == App.localGet(Txn.accounts[1], local_opponent)
-&&                                //                                       103     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
-txn NumAppArgs                    //                                       122     Txn.application_args.length()
+&&                                //                                       102     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
+txn NumAppArgs                    //                                       121     Txn.application_args.length()
 int 2                             //                                               Int(2)
 ==                                //                                               Txn.application_args.length() == Int(2)
-&&                                //                                       103     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
-txna ApplicationArgs 1            //                                       123     Txn.application_args[1]
+&&                                //                                       102     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
+txna ApplicationArgs 1            //                                       122     Txn.application_args[1]
 callsub isvalidplay_2             //                                               is_valid_play(Txn.application_args[1])
-&&                                //                                       103     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
-assert                            //                                       102     Assert(And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1])))
-txn Sender                        //                                       126     Txn.sender()
-byte "opponent"                   //                                       12      Bytes('opponent')
-txna Accounts 1                   //                                       126     Txn.accounts[1]
+&&                                //                                       102     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1]))
+assert                            //                                       101     Assert(And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), Gtxn[1].amount() == App.localGet(Txn.accounts[1], local_bet), App.optedIn(Txn.accounts[1], Global.current_application_id()), Txn.sender() == App.localGet(Txn.accounts[1], local_opponent), Txn.application_args.length() == Int(2), is_valid_play(Txn.application_args[1])))
+txn Sender                        //                                       125     Txn.sender()
+byte "opponent"                   //                                       11      Bytes('opponent')
+txna Accounts 1                   //                                       125     Txn.accounts[1]
 app_local_put                     //                                               App.localPut(Txn.sender(), local_opponent, Txn.accounts[1])
-txn Sender                        //                                       127     Txn.sender()
-byte "bet"                        //                                       13      Bytes('bet')
-gtxn 1 Amount                     //                                       127     Gtxn[1].amount()
+txn Sender                        //                                       126     Txn.sender()
+byte "bet"                        //                                       12      Bytes('bet')
+gtxn 1 Amount                     //                                       126     Gtxn[1].amount()
 app_local_put                     //                                               App.localPut(Txn.sender(), local_bet, Gtxn[1].amount())
-txn Sender                        //                                       128     Txn.sender()
-byte "play"                       //                                       15      Bytes('play')
-txna ApplicationArgs 1            //                                       128     Txn.application_args[1]
+txn Sender                        //                                       127     Txn.sender()
+byte "play"                       //                                       14      Bytes('play')
+txna ApplicationArgs 1            //                                       127     Txn.application_args[1]
 app_local_put                     //                                               App.localPut(Txn.sender(), local_play, Txn.application_args[1])
-int 1                             //                                       129     Approve()
-return                            //                                       100     def create_challenge():
-                                  //                                       133     def accept_challenge():
+int 1                             //                                       128     Approve()
+return                            //                                       99      def create_challenge():
+                                  //                                       132     def accept_challenge():
 // accept_challenge               //
 acceptchallenge_7:                //
-global GroupSize                  //                                       138     Global.group_size()
+global GroupSize                  //                                       137     Global.group_size()
 int 2                             //                                               Int(2)
 ==                                //                                               Global.group_size() == Int(2)
-txn GroupIndex                    //                                       139     Txn.group_index()
+txn GroupIndex                    //                                       138     Txn.group_index()
 int 0                             //                                               Int(0)
 ==                                //                                               Txn.group_index() == Int(0)
-&&                                //                                       136     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
-gtxn 1 CloseRemainderTo           //                                       141     Gtxn[1].close_remainder_to()
+&&                                //                                       135     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
+gtxn 1 CloseRemainderTo           //                                       140     Gtxn[1].close_remainder_to()
 global ZeroAddress                //                                               Global.zero_address()
 ==                                //                                               Gtxn[1].close_remainder_to() == Global.zero_address()
-&&                                //                                       136     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
-gtxn 0 RekeyTo                    //                                       142     Gtxn[0].rekey_to()
+&&                                //                                       135     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
+gtxn 0 RekeyTo                    //                                       141     Gtxn[0].rekey_to()
 global ZeroAddress                //                                               Global.zero_address()
 ==                                //                                               Gtxn[0].rekey_to() == Global.zero_address()
-&&                                //                                       136     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
-gtxn 1 RekeyTo                    //                                       143     Gtxn[1].rekey_to()
+&&                                //                                       135     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
+gtxn 1 RekeyTo                    //                                       142     Gtxn[1].rekey_to()
 global ZeroAddress                //                                               Global.zero_address()
 ==                                //                                               Gtxn[1].rekey_to() == Global.zero_address()
-&&                                //                                       136     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
-gtxn 1 TypeEnum                   //                                       145     Gtxn[1].type_enum()
+&&                                //                                       135     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
+gtxn 1 TypeEnum                   //                                       144     Gtxn[1].type_enum()
 int pay                           //                                               Gtxn[1].type_enum() == TxnType.Payment
 ==                                //
-&&                                //                                       136     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
-gtxn 1 Receiver                   //                                       147     Gtxn[1].receiver()
+&&                                //                                       135     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
+gtxn 1 Receiver                   //                                       146     Gtxn[1].receiver()
 global CurrentApplicationAddress  //                                               Global.current_application_address()
 ==                                //                                               Gtxn[1].receiver() == Global.current_application_address()
-&&                                //                                       136     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
-txna Accounts 1                   //                                       149     Txn.accounts[1]
+&&                                //                                       135     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
+txna Accounts 1                   //                                       148     Txn.accounts[1]
 global CurrentApplicationID       //                                               Global.current_application_id()
 app_opted_in                      //                                               App.optedIn(Txn.accounts[1], Global.current_application_id())
-&&                                //                                       136     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
-txn Sender                        //                                       151     Txn.sender()
+&&                                //                                       135     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
+txn Sender                        //                                       150     Txn.sender()
 callsub isaccountempty_1          //                                               is_account_empty(Txn.sender())
-&&                                //                                       136     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
-txna Accounts 1                   //                                       152     Txn.accounts[1]
+&&                                //                                       135     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
+txna Accounts 1                   //                                       151     Txn.accounts[1]
 callsub isaccountempty_1          //                                               is_account_empty(Txn.accounts[1])
-&&                                //                                       136     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
-txn NumAppArgs                    //                                       154     Txn.application_args.length()
+&&                                //                                       135     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
+txn NumAppArgs                    //                                       153     Txn.application_args.length()
 int 2                             //                                               Int(2)
 ==                                //                                               Txn.application_args.length() == Int(2)
-&&                                //                                       136     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
-assert                            //                                       135     Assert(And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2)))
-txn Sender                        //                                       157     Txn.sender()
-byte "opponent"                   //                                       12      Bytes('opponent')
-txna Accounts 1                   //                                       157     Txn.accounts[1]
+&&                                //                                       135     And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2))
+assert                            //                                       134     Assert(And(Global.group_size() == Int(2), Txn.group_index() == Int(0), Gtxn[1].close_remainder_to() == Global.zero_address(), Gtxn[0].rekey_to() == Global.zero_address(), Gtxn[1].rekey_to() == Global.zero_address(), Gtxn[1].type_enum() == TxnType.Payment, Gtxn[1].receiver() == Global.current_application_address(), App.optedIn(Txn.accounts[1], Global.current_application_id()), is_account_empty(Txn.sender()), is_account_empty(Txn.accounts[1]), Txn.application_args.length() == Int(2)))
+txn Sender                        //                                       156     Txn.sender()
+byte "opponent"                   //                                       11      Bytes('opponent')
+txna Accounts 1                   //                                       156     Txn.accounts[1]
 app_local_put                     //                                               App.localPut(Txn.sender(), local_opponent, Txn.accounts[1])
-txn Sender                        //                                       158     Txn.sender()
-byte "bet"                        //                                       13      Bytes('bet')
-gtxn 1 Amount                     //                                       158     Gtxn[1].amount()
+txn Sender                        //                                       157     Txn.sender()
+byte "bet"                        //                                       12      Bytes('bet')
+gtxn 1 Amount                     //                                       157     Gtxn[1].amount()
 app_local_put                     //                                               App.localPut(Txn.sender(), local_bet, Gtxn[1].amount())
-txn Sender                        //                                       159     Txn.sender()
-byte "private_play"               //                                       14      Bytes('private_play')
-txna ApplicationArgs 1            //                                       159     Txn.application_args[1]
+txn Sender                        //                                       158     Txn.sender()
+byte "private_play"               //                                       13      Bytes('private_play')
+txna ApplicationArgs 1            //                                       158     Txn.application_args[1]
 app_local_put                     //                                               App.localPut(Txn.sender(), local_private_play, Txn.application_args[1])
-int 1                             //                                       160     Approve()
-return                            //                                       133     def accept_challenge():
-                                  //                                       164     def reveal():
+int 1                             //                                       159     Approve()
+return                            //                                       132     def accept_challenge():
+                                  //                                       163     def reveal():
 // reveal                         //
 reveal_8:                         //
-global GroupSize                  //                                       174     Global.group_size()
+global GroupSize                  //                                       173     Global.group_size()
 int 1                             //                                               Int(1)
 ==                                //                                               Global.group_size() == Int(1)
-txn GroupIndex                    //                                       175     Txn.group_index()
+txn GroupIndex                    //                                       174     Txn.group_index()
 int 0                             //                                               Int(0)
 ==                                //                                               Txn.group_index() == Int(0)
-&&                                //                                       172     And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play))
-gtxn 0 RekeyTo                    //                                       177     Gtxn[0].rekey_to()
+&&                                //                                       171     And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play))
+gtxn 0 RekeyTo                    //                                       176     Gtxn[0].rekey_to()
 global ZeroAddress                //                                               Global.zero_address()
 ==                                //                                               Gtxn[0].rekey_to() == Global.zero_address()
-&&                                //                                       172     And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play))
-txn Sender                        //                                       179     Txn.sender()
-byte "opponent"                   //                                       12      Bytes('opponent')
-app_local_get                     //                                       179     App.localGet(Txn.sender(), local_opponent)
+&&                                //                                       171     And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play))
+txn Sender                        //                                       178     Txn.sender()
+byte "opponent"                   //                                       11      Bytes('opponent')
+app_local_get                     //                                       178     App.localGet(Txn.sender(), local_opponent)
 txna Accounts 1                   //                                               Txn.accounts[1]
 ==                                //                                               App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1]
-&&                                //                                       172     And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play))
-txna Accounts 1                   //                                       180     Txn.accounts[1]
-byte "opponent"                   //                                       12      Bytes('opponent')
-app_local_get                     //                                       180     App.localGet(Txn.accounts[1], local_opponent)
+&&                                //                                       171     And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play))
+txna Accounts 1                   //                                       179     Txn.accounts[1]
+byte "opponent"                   //                                       11      Bytes('opponent')
+app_local_get                     //                                       179     App.localGet(Txn.accounts[1], local_opponent)
 txn Sender                        //                                               Txn.sender()
 ==                                //                                               App.localGet(Txn.accounts[1], local_opponent) == Txn.sender()
-&&                                //                                       172     And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play))
-txn Sender                        //                                       182     Txn.sender()
-byte "bet"                        //                                       13      Bytes('bet')
-app_local_get                     //                                       182     App.localGet(Txn.sender(), local_bet)
-txna Accounts 1                   //                                       183     Txn.accounts[1]
-byte "bet"                        //                                       13      Bytes('bet')
-app_local_get                     //                                       183     App.localGet(Txn.accounts[1], local_bet)
-==                                //                                       182     App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet)
-&&                                //                                       172     And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play))
-txn Sender                        //                                       185     Txn.sender()
-byte "private_play"               //                                       14      Bytes('private_play')
-app_local_get                     //                                       185     App.localGet(Txn.sender(), local_private_play)
+&&                                //                                       171     And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play))
+txn Sender                        //                                       181     Txn.sender()
+byte "bet"                        //                                       12      Bytes('bet')
+app_local_get                     //                                       181     App.localGet(Txn.sender(), local_bet)
+txna Accounts 1                   //                                       182     Txn.accounts[1]
+byte "bet"                        //                                       12      Bytes('bet')
+app_local_get                     //                                       182     App.localGet(Txn.accounts[1], local_bet)
+==                                //                                       181     App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet)
+&&                                //                                       171     And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play))
+txn Sender                        //                                       184     Txn.sender()
+byte "private_play"               //                                       13      Bytes('private_play')
+app_local_get                     //                                       184     App.localGet(Txn.sender(), local_private_play)
 byte ""                           //                                               Bytes('')
 !=                                //                                               App.localGet(Txn.sender(), local_private_play) != Bytes('')
-&&                                //                                       172     And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play))
-txna Accounts 1                   //                                       186     Txn.accounts[1]
-byte "play"                       //                                       15      Bytes('play')
-app_local_get                     //                                       186     App.localGet(Txn.accounts[1], local_play)
+&&                                //                                       171     And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play))
+txna Accounts 1                   //                                       185     Txn.accounts[1]
+byte "play"                       //                                       14      Bytes('play')
+app_local_get                     //                                       185     App.localGet(Txn.accounts[1], local_play)
 byte ""                           //                                               Bytes('')
 !=                                //                                               App.localGet(Txn.accounts[1], local_play) != Bytes('')
-&&                                //                                       172     And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play))
-txn NumAppArgs                    //                                       188     Txn.application_args.length()
+&&                                //                                       171     And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play))
+txn NumAppArgs                    //                                       187     Txn.application_args.length()
 int 2                             //                                               Int(2)
 ==                                //                                               Txn.application_args.length() == Int(2)
-&&                                //                                       172     And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play))
-txna ApplicationArgs 1            //                                       189     Txn.application_args[1]
+&&                                //                                       171     And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play))
+txna ApplicationArgs 1            //                                       188     Txn.application_args[1]
 sha256                            //                                               Sha256(Txn.application_args[1])
-int 0                             //                                       190     Int(0)
-byte "private_play"               //                                       14      Bytes('private_play')
-app_local_get                     //                                       190     App.localGet(Int(0), local_private_play)
-==                                //                                       189     Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play)
-&&                                //                                       172     And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play))
-assert                            //                                       171     Assert(And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play)))
-txna ApplicationArgs 1            //                                       193     Txn.application_args[1]
+int 0                             //                                       189     Int(0)
+byte "private_play"               //                                       13      Bytes('private_play')
+app_local_get                     //                                       189     App.localGet(Int(0), local_private_play)
+==                                //                                       188     Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play)
+&&                                //                                       171     And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play))
+assert                            //                                       170     Assert(And(Global.group_size() == Int(1), Txn.group_index() == Int(0), Gtxn[0].rekey_to() == Global.zero_address(), App.localGet(Txn.sender(), local_opponent) == Txn.accounts[1], App.localGet(Txn.accounts[1], local_opponent) == Txn.sender(), App.localGet(Txn.sender(), local_bet) == App.localGet(Txn.accounts[1], local_bet), App.localGet(Txn.sender(), local_private_play) != Bytes(''), App.localGet(Txn.accounts[1], local_play) != Bytes(''), Txn.application_args.length() == Int(2), Sha256(Txn.application_args[1]) == App.localGet(Int(0), local_private_play)))
+txna ApplicationArgs 1            //                                       192     Txn.application_args[1]
 callsub playvalue_3               //                                               play_value(Txn.application_args[1])
 store 4                           //                                               challenger_play.store(play_value(Txn.application_args[1]))
-txna Accounts 1                   //                                       194     Txn.accounts[1]
-byte "play"                       //                                       15      Bytes('play')
-app_local_get                     //                                       194     App.localGet(Txn.accounts[1], local_play)
+txna Accounts 1                   //                                       193     Txn.accounts[1]
+byte "play"                       //                                       14      Bytes('play')
+app_local_get                     //                                       193     App.localGet(Txn.accounts[1], local_play)
 callsub playvalue_3               //                                               play_value(App.localGet(Txn.accounts[1], local_play))
 store 5                           //                                               opponent_play.store(play_value(App.localGet(Txn.accounts[1], local_play)))
-txn Sender                        //                                       195     Txn.sender()
-byte "bet"                        //                                       13      Bytes('bet')
-app_local_get                     //                                       195     App.localGet(Txn.sender(), local_bet)
+txn Sender                        //                                       194     Txn.sender()
+byte "bet"                        //                                       12      Bytes('bet')
+app_local_get                     //                                       194     App.localGet(Txn.sender(), local_bet)
 store 7                           //                                               bet.store(App.localGet(Txn.sender(), local_bet))
-load 4                            //                                       197     challenger_play.load()
+load 4                            //                                       196     challenger_play.load()
 load 5                            //                                               opponent_play.load()
 callsub getwinneraccountindex_4   //                                               get_winner_account_index(challenger_play.load(), opponent_play.load())
-store 6                           //                                       196     winner_index.store(get_winner_account_index(challenger_play.load(), opponent_play.load()))
-load 6                            //                                       199     winner_index.load()
+store 6                           //                                       195     winner_index.store(get_winner_account_index(challenger_play.load(), opponent_play.load()))
+load 6                            //                                       198     winner_index.load()
 int 2                             //                                               Int(2)
 ==                                //                                               winner_index.load() == Int(2)
 bnz reveal_8_l2                   //                                               If(winner_index.load() == Int(2))
-load 6                            //                                       206     winner_index.load()
+load 6                            //                                       205     winner_index.load()
 load 7                            //                                               bet.load()
 int 2                             //                                               Int(2)
 *                                 //                                               bet.load() * Int(2)
 callsub sendreward_5              //                                               send_reward(winner_index.load(), bet.load() * Int(2))
-b reveal_8_l3                     //                                       199     If(winner_index.load() == Int(2))
+b reveal_8_l3                     //                                       198     If(winner_index.load() == Int(2))
 reveal_8_l2:                      //
-txn Sender                        //                                       202     Txn.sender()
+txn Sender                        //                                       201     Txn.sender()
 load 7                            //                                               bet.load()
 callsub sendreward_5              //                                               send_reward(Txn.sender(), bet.load())
-txna Accounts 1                   //                                       203     Txn.accounts[1]
+txna Accounts 1                   //                                       202     Txn.accounts[1]
 load 7                            //                                               bet.load()
 callsub sendreward_5              //                                               send_reward(Txn.accounts[1], bet.load())
-reveal_8_l3:                      //                                       199     If(winner_index.load() == Int(2))
-txn Sender                        //                                       207     Txn.sender()
+reveal_8_l3:                      //                                       198     If(winner_index.load() == Int(2))
+txn Sender                        //                                       206     Txn.sender()
 callsub reset_0                   //                                               reset(Txn.sender())
-txna Accounts 1                   //                                       208     Txn.accounts[1]
+txna Accounts 1                   //                                       207     Txn.accounts[1]
 callsub reset_0                   //                                               reset(Txn.accounts[1])
-int 1                             //                                       209     Approve()
-return                            //                                       164     def reveal():
+int 1                             //                                       208     Approve()
+return                            //                                       163     def reveal():

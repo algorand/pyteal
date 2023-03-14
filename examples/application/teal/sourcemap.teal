@@ -1,0 +1,38 @@
+#pragma version 8
+byte "n:"
+log
+txna ApplicationArgs 0
+log
+byte "is_even(n):"
+log
+txna ApplicationArgs 0
+btoi
+callsub iseven_0
+itob
+log
+int 1
+return
+
+// is_even
+iseven_0:
+proto 1 1
+frame_dig -1
+int 0
+==
+bnz iseven_0_l4
+frame_dig -1
+int 1
+==
+bnz iseven_0_l3
+frame_dig -1
+int 2
+-
+callsub iseven_0
+b iseven_0_l5
+iseven_0_l3:
+int 0
+b iseven_0_l5
+iseven_0_l4:
+int 1
+iseven_0_l5:
+retsub

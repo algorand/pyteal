@@ -1,5 +1,6 @@
+from feature_gates import FeatureGates
+
 from ast import AST, FunctionDef, unparse
-from configparser import ConfigParser
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import IntEnum
@@ -69,7 +70,7 @@ class StackFrame:
         """
         node = cast(AST | None, Source.executing(f.frame).node)
         frame = StackFrame(
-            f, node, creator, full_stack if NatalStackFrame._debug else None
+            f, node, creator, full_stack if NatalStackFrame._debugging() else None
         )
         return frame if frame._not_py_crud() else None
 
@@ -167,49 +168,34 @@ class StackFrame:
         return "# T2PT" in "".join(cc)
 
 
-def _sourcmapping_is_off(verbose=False) -> bool:
-    try:
-        config = ConfigParser()
-        config.read("pyteal.ini")
-        enabled = config.getboolean("pyteal-source-mapper", "enabled")
-        return not enabled
-    except Exception as e:
-        if verbose:
-            print(
-                f"""Turning off frame capture and disabling sourcemaps. 
-Could not read section (pyteal-source-mapper, enabled) of config "pyteal.ini": {e}"""
-            )
-    return True
-
-
-def _debug_frames(verbose=False) -> bool:
-    try:
-        config = ConfigParser()
-        config.read("pyteal.ini")
-        return config.getboolean("pyteal-source-mapper", "debug")
-    except Exception as e:
-        if verbose:
-            print(
-                f"""Disabling `debug` status for sourcemaps. 
-Could not read section (pyteal-source-mapper, debug) of config "pyteal.ini": {e}"""
-            )
-    return False
-
-
 @contextmanager
 def sourcemapping_off_context():
     """Context manager that turns off sourcemapping for the duration of the context"""
-    _no_stackframes_before = NatalStackFrame._no_stackframes
-    _debug_before = NatalStackFrame._debug
-    NatalStackFrame._no_stackframes = True
-    NatalStackFrame._debug = False
+    from feature_gates import FeatureGates
+
+    _sourcemap_before = FeatureGates.sourcemap_enabled()
+    _sourcemap_debug_before = FeatureGates.sourcemap_debug()
+    FeatureGates.set_sourcemap_enabled(False)
+    FeatureGates.set_sourcemap_debug(False)
+    assert (
+        NatalStackFrame.sourcemapping_is_off()
+    ), "Unexpected error. Please report to PyTeal team."
+    assert (
+        not NatalStackFrame._debugging()
+    ), "Unexpected error. Please report to PyTeal team."
 
     try:
         yield
 
     finally:
-        NatalStackFrame._no_stackframes = _no_stackframes_before
-        NatalStackFrame._debug = _debug_before
+        FeatureGates.set_sourcemap_debug(_sourcemap_debug_before)
+        FeatureGates.set_sourcemap_enabled(_sourcemap_before)
+        assert (
+            NatalStackFrame.sourcemapping_is_off() is not _sourcemap_before
+        ), "Unexpected error. Please report to PyTeal team."
+        assert (
+            NatalStackFrame._debugging() is _sourcemap_debug_before
+        ), "Unexpected error. Please report to PyTeal team."
 
 
 class NatalStackFrame:
@@ -226,25 +212,15 @@ class NatalStackFrame:
     the name is misleading.
     """
 
-    _no_stackframes: bool = _sourcmapping_is_off()
-    _debug: bool = _debug_frames()
     _keep_all_debugging = False
 
-    @classmethod
-    def sourcemapping_is_off(cls, _force_refresh: bool = False) -> bool:
-        """
-        The `_force_refresh` parameter, is mainly for test validation purposes.
-        It is discouraged for use in the wild because:
-        * Frames are useful in an "all or nothing" capacity. For example, in preparing
-            for a source mapping, it would be error prone to generate frames for
-            a subset of analyzed PyTeal
-        * Setting `_force_refresh = True` will cause a read from the file system every
-            time Frames are initialized and will result in significant performance degredation
-        """
-        if _force_refresh:
-            cls._no_stackframes = _sourcmapping_is_off()
+    @staticmethod
+    def sourcemapping_is_off() -> bool:
+        return not FeatureGates.sourcemap_enabled()  # type: ignore[attr-defined]
 
-        return cls._no_stackframes
+    @staticmethod
+    def _debugging() -> bool:
+        return FeatureGates.sourcemap_debug()  # type: ignore[attr-defined]
 
     def __init__(
         self,

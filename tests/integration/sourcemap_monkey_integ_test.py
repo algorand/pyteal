@@ -1,14 +1,14 @@
-from configparser import ConfigParser
 from importlib import import_module
 from itertools import product
 from pathlib import Path
-from unittest import mock
 
 import pytest
 
+from feature_gates import FeatureGates
+
 """
-This file monkey-patches ConfigParser in order to enable source mapping
-and test the results of source mapping various PyTeal dapps.
+Tests run with a fixture that enables the sourcemap
+via feature gate.
 """
 
 
@@ -27,11 +27,11 @@ if BRUTE_FORCE_TERRIBLE_SKIPPING:
 
 
 @pytest.fixture
-def mock_ConfigParser():
-    patcher = mock.patch.object(ConfigParser, "getboolean", return_value=True)
-    patcher.start()
+def sourcemap_enabled():
+    previous = FeatureGates.sourcemap_enabled()
+    FeatureGates.set_sourcemap_enabled(True)
     yield
-    patcher.stop()
+    FeatureGates.set_sourcemap_enabled(previous)
 
 
 @pytest.mark.serial
@@ -39,7 +39,7 @@ def mock_ConfigParser():
 @pytest.mark.parametrize("annotate_teal_headers", [True, False])
 @pytest.mark.parametrize("annotate_teal_concise", [True, False])
 def test_sourcemap_annotate(
-    mock_ConfigParser, path, obj, annotate_teal_headers, annotate_teal_concise
+    sourcemap_enabled, path, obj, annotate_teal_headers, annotate_teal_concise
 ):
     from pyteal import OptimizeOptions
 
@@ -137,7 +137,7 @@ def assert_lines_start_with(prefixes, lines):
 
 
 @pytest.mark.serial
-def test_no_regressions_via_fixtures_algobank(mock_ConfigParser):
+def test_no_regressions_via_fixtures_algobank(sourcemap_enabled):
     import pyteal as pt
 
     module_path, obj = ROUTERS[0]
@@ -203,7 +203,7 @@ RPS = Path.cwd() / "tests" / "teal"
 
 
 @pytest.mark.serial
-def test_no_regressions_via_fixtures_rps(mock_ConfigParser):
+def test_no_regressions_via_fixtures_rps(sourcemap_enabled):
     import pyteal as pt
     from tests.teal.rps import approval_program
 

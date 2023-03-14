@@ -91,7 +91,6 @@ def uint_decode(
 
 
 def uint_encode(size: int, uint_var: Expr | AbstractVar) -> Expr:
-
     if isinstance(uint_var, AbstractVar):
         uint_var = uint_var.load()
 

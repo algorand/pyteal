@@ -1,14 +1,9 @@
-"""Includeds monkey-patches of ConfigParser
-"""
-
 from ast import FunctionDef
 from contextlib import contextmanager
-from configparser import ConfigParser
 from pathlib import Path
 import pytest
 import sys
 from unittest import mock
-
 
 ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 
@@ -16,15 +11,17 @@ FIXTURES = Path.cwd() / "tests" / "unit" / "sourcemaps"
 
 
 @pytest.fixture
-def mock_ConfigParser():
-    patcher = mock.patch.object(ConfigParser, "getboolean", return_value=True)
-    patcher.start()
+def sourcemap_enabled():
+    from feature_gates import FeatureGates
+
+    previous = FeatureGates.sourcemap_enabled()
+    FeatureGates.set_sourcemap_enabled(True)
     yield
-    patcher.stop()
+    FeatureGates.set_sourcemap_enabled(previous)
 
 
 @pytest.fixture
-def context_StackFrame_keep_all_debugging():
+def StackFrame_keep_all_debugging():
     from pyteal.stack_frame import NatalStackFrame
 
     NatalStackFrame._keep_all_debugging = True
@@ -32,12 +29,22 @@ def context_StackFrame_keep_all_debugging():
     NatalStackFrame._keep_all_debugging = False
 
 
+@pytest.fixture
+def sourcemap_debug():
+    from feature_gates import FeatureGates
+
+    previous = FeatureGates.sourcemap_debug()
+    FeatureGates.set_sourcemap_debug(True)
+    yield
+    FeatureGates.set_sourcemap_debug(previous)
+
+
 @pytest.mark.skipif(
     sys.version_info < (3, 11),
     reason="Currently, this test only works in python 3.11 and above",
 )
 @pytest.mark.serial
-def test_r3sourcemap(mock_ConfigParser):
+def test_r3sourcemap(sourcemap_debug, sourcemap_enabled):
     from examples.application.abi.algobank import router
     from pyteal.ast.router import _RouterCompileInput
     from pyteal import OptimizeOptions
@@ -80,7 +87,7 @@ def test_r3sourcemap(mock_ConfigParser):
 
     assert "mappings" in r3sm_json
     assert (
-        "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"
+        "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"
         == r3sm_json["mappings"]
     )
 
@@ -106,7 +113,7 @@ def test_r3sourcemap(mock_ConfigParser):
 
 
 @pytest.mark.serial
-def test_reconstruct(mock_ConfigParser):
+def test_reconstruct(sourcemap_enabled):
     from examples.application.abi.algobank import router
     from pyteal.ast.router import _RouterCompileInput
     from pyteal import OptimizeOptions
@@ -134,13 +141,13 @@ def test_reconstruct(mock_ConfigParser):
 
 
 @pytest.mark.serial
-def test_mocked_config_for_frames(mock_ConfigParser):
-    config = ConfigParser()
-    assert config.getboolean("pyteal-source-mapper", "enabled") is True
+def test_feature_gate_for_frames(sourcemap_enabled):
+    from feature_gates import FeatureGates
+
+    assert FeatureGates.sourcemap_enabled() is True
     from pyteal.stack_frame import NatalStackFrame
 
     assert NatalStackFrame.sourcemapping_is_off() is False
-    assert NatalStackFrame.sourcemapping_is_off(_force_refresh=True) is False
 
 
 def make(x, y, z):
@@ -150,7 +157,7 @@ def make(x, y, z):
 
 
 @pytest.mark.serial
-def test_lots_o_indirection(mock_ConfigParser):
+def test_lots_o_indirection(sourcemap_enabled):
     import pyteal as pt
 
     e1 = pt.Seq(pt.Pop(make(1, 2, 3)), pt.Pop(make(4, 5, 6)), make(7, 8, 9))
@@ -166,7 +173,8 @@ def test_lots_o_indirection(mock_ConfigParser):
 
 @pytest.mark.serial
 def test_frame_info_is_right_before_core_last_drop_idx(
-    context_StackFrame_keep_all_debugging,
+    sourcemap_enabled,
+    StackFrame_keep_all_debugging,
 ):
     import pyteal as pt
     from pyteal.stack_frame import StackFrame
@@ -177,7 +185,7 @@ def test_frame_info_is_right_before_core_last_drop_idx(
     last_drop_idx = 1
     assert StackFrame._frame_info_is_right_before_core(
         frame_infos[last_drop_idx].frame_info
-    ), "Uh oh! Something about NatalStackFrame as changes which puts in jeopardy Source Map functionality"
+    ), "Uh oh! Something about NatalStackFrame has changes which puts in jeopardy Source Map functionality"
 
 
 def router_static_abisubroutine(pt):
@@ -209,11 +217,19 @@ def router_static_abisubroutine(pt):
     return router
 
 
-SUCCESSFUL_SUBROUTINE_LINENO = 196
+SUCCESSFUL_SUBROUTINE_LINENO = 204
 
 
 @pytest.mark.serial
-def test_hybrid_w_offset(mock_ConfigParser):
+def test_hybrid_w_offset(sourcemap_debug, sourcemap_enabled):
+    from feature_gates import FeatureGates
+    from pyteal import stack_frame
+
+    assert FeatureGates.sourcemap_enabled() is True
+    assert FeatureGates.sourcemap_debug() is True
+    assert stack_frame.NatalStackFrame.sourcemapping_is_off() is False
+    assert stack_frame.NatalStackFrame._debugging() is True
+
     import pyteal as pt
 
     router = router_static_abisubroutine(pt)
@@ -305,7 +321,6 @@ def patch_pt_frame(code, is_funcdef, pt_chunk):
     with mock.patch.object(frame, "raw_code", return_value=code), mock.patch.object(
         frame, "node_source", return_value=pt_chunk
     ):
-
         yield frame
 
 

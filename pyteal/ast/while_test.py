@@ -6,7 +6,6 @@ options = pt.CompileOptions()
 
 
 def test_while_compiles():
-
     i = pt.ScratchVar()
     expr = pt.While(pt.Int(2)).Do(pt.Seq([i.store(pt.Int(0))]))
     assert expr.type_of() == pt.TealType.none
@@ -121,7 +120,6 @@ def test_while_break():
 
 
 def test_while_invalid():
-
     with pytest.raises(TypeError):
         expr = pt.While()
 
