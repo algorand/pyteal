@@ -219,7 +219,8 @@ class NatalStackFrame:
         return not FeatureGates.sourcemap_enabled()  # type: ignore[attr-defined]
 
     @staticmethod
-    def _debugging() -> bool:        return FeatureGates.sourcemap_debug()  # type: ignore[attr-defined]
+    def _debugging() -> bool:
+        return FeatureGates.sourcemap_debug()  # type: ignore[attr-defined]
 
     def __init__(
         self,
