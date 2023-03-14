@@ -11,6 +11,8 @@
 
 ## Changed
 
+* Enable source maps using the new `FeatureGate` class. See `examples/applications/sourcemap.py` for a usage example. ([#687](https://github.com/algorand/pyteal/pull/687))
+
 # v0.23.0
 
 ## Added
