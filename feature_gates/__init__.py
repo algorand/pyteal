@@ -17,6 +17,17 @@ class _FeatureGatesConfig:
 
 
 class FeatureGates:
+    """
+    Feature gates work as follows:
+    1. Add a new feature gate to the _FeatureGatesConfig dataclass
+    2. Set the default value for the feature gate in the _gates field below
+
+    Automagically, a new setter and getter will be available for the feature gate.
+    For example, given feature `foo_on` by adding _FeatureGatesConfig.foo_on,
+    the following methods will be available:
+    * FeatureGates.foo_on() -> bool
+    * FeatureGates.set_foo_on(gate: bool)
+    """
     # default values for feature gates:
     _gates: Final[_FeatureGatesConfig] = _FeatureGatesConfig(
         sourcemap_enabled=False,
